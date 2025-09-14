@@ -6,8 +6,9 @@
 The **a2a-services** package provides shared services and middleware for agent-to-agent (A2A) communication within Cortex OS.
 
 ### Current Features
-- In-memory JSON schema registry service with RESTful endpoints.
-- Express-compatible rate limiting middleware.
+- JSON schema registry service with RESTful endpoints (in-memory and SQLite backends).
+- Express-compatible rate limiting middleware (in-memory and Redis backends).
+- Durable outbox repository for persistent message storage (SQLite backend).
 
 ### Planned Features
 - Persistent storage backend for the schema registry.

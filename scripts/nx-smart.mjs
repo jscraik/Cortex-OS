@@ -41,7 +41,17 @@ const isDryRun = flags.includes('--dry-run');
 // Detect interactive preference (default: non-interactive to avoid manual h/q prompts)
 const forceInteractive = flags.includes('--interactive');
 // Remove our custom flags before forwarding to nx
-const forwardedFlags = flags.filter(f => !['--interactive', '--dry-run', '--json', '--verbose'].includes(f));
+// Remove wrapper-specific flags and sanitize unsupported ones like --filter that should not leak to executors
+let forwardedFlags = [];
+for (let i = 0; i < flags.length; i++) {
+    const f = flags[i];
+    if (['--interactive', '--dry-run', '--json', '--verbose'].includes(f)) continue;
+    if (f === '--filter') { // skip flag and its value if present
+        if (flags[i + 1] && !flags[i + 1].startsWith('--')) i++; // consume value
+        continue;
+    }
+    forwardedFlags.push(f);
+}
 const json = flags.includes('--json');
 const verbose = flags.includes('--verbose');
 

@@ -45,11 +45,11 @@ export function build(config: AppConfig): FastifyInstance {
 	const fastify = Fastify({
 		logger: validatedConfig.logger
 			? {
-					level: "info",
-					transport: {
-						target: "pino-pretty",
-					},
-				}
+				level: "info",
+				transport: {
+					target: "pino-pretty",
+				},
+			}
 			: false,
 	});
 
@@ -103,14 +103,21 @@ export function build(config: AppConfig): FastifyInstance {
 	return fastify;
 }
 
+// Temporary compatibility helper to smooth Fastify v5 + plugin type gaps
+// (Upstream plugins may not yet publish v5-ready types)
+// NOTE: Fastify v5 ecosystem plugin types are lagging; localized cast retains safety elsewhere
+function compat<T>(plugin: T): any { // eslint-disable-line @typescript-eslint/no-explicit-any
+	return plugin as unknown as any; // Narrow scope escape hatch
+}
+
 function registerPlugins(fastify: FastifyInstance): void {
 	// Security
-	fastify.register(helmet, {
+	fastify.register(compat(helmet), {
 		contentSecurityPolicy: false, // Disable for Swagger UI
 	});
 
 	// CORS
-	fastify.register(cors, {
+	fastify.register(compat(cors), {
 		origin: [
 			"https://cortex-os.dev",
 			"https://claude.ai",
@@ -124,10 +131,10 @@ function registerPlugins(fastify: FastifyInstance): void {
 	});
 
 	// Rate limiting
-	fastify.register(rateLimit, {
+	fastify.register(compat(rateLimit), {
 		max: 100,
 		timeWindow: "1 minute",
-		errorResponseBuilder: (_request, context) => ({
+		errorResponseBuilder: (_request: unknown, context: { ttl: number }) => ({
 			success: false,
 			error: {
 				code: "RATE_LIMITED",
@@ -138,7 +145,7 @@ function registerPlugins(fastify: FastifyInstance): void {
 	});
 
 	// Swagger documentation
-	fastify.register(swagger, {
+	fastify.register(compat(swagger), {
 		swagger: {
 			info: {
 				title: "Cortex MCP Marketplace API",
@@ -159,22 +166,22 @@ function registerPlugins(fastify: FastifyInstance): void {
 		},
 	});
 
-	fastify.register(swaggerUi, {
+	fastify.register(compat(swaggerUi), {
 		routePrefix: "/documentation",
 		uiConfig: {
 			docExpansion: "full",
 			deepLinking: false,
 		},
 		uiHooks: {
-			onRequest: (_request, _reply, next) => {
+			onRequest: (_request: unknown, _reply: unknown, next: () => void) => {
 				next();
 			},
-			preHandler: (_request, _reply, next) => {
+			preHandler: (_request: unknown, _reply: unknown, next: () => void) => {
 				next();
 			},
 		},
 		staticCSP: true,
-		transformStaticCSP: (header) => header,
+		transformStaticCSP: (header: string) => header,
 	});
 }
 

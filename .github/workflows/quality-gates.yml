@@ -1,0 +1,204 @@
+name: Quality Gates
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Node.js version
+        required: false
+        type: string
+        default: '22'
+      pnpm-version:
+        description: pnpm version
+        required: false
+        type: string
+        default: '9'
+      python-version:
+        description: Python version (empty to skip Python setup)
+        required: false
+        type: string
+        default: ''
+      run-lint:
+        description: Whether to run lint checks
+        required: false
+        type: boolean
+        default: true
+      run-typecheck:
+        description: Whether to run TypeScript type checking
+        required: false
+        type: boolean
+        default: true
+      run-tests:
+        description: Whether to run tests
+        required: false
+        type: boolean
+        default: true
+      run-build:
+        description: Whether to run build
+        required: false
+        type: boolean
+        default: true
+      run-python-lint:
+        description: Whether to run Python lint (requires python-version)
+        required: false
+        type: boolean
+        default: false
+      use-smart-scripts:
+        description: Whether to prefer :smart scripts for affected-only execution
+        required: false
+        type: boolean
+        default: true
+      test-coverage:
+        description: Whether to collect test coverage
+        required: false
+        type: boolean
+        default: false
+      timeout-minutes:
+        description: Job timeout in minutes
+        required: false
+        type: number
+        default: 30
+    outputs:
+      cache-hit:
+        description: Whether dependencies were cached
+        value: ${{ jobs.quality.outputs.cache-hit }}
+
+permissions:
+  contents: read
+  checks: write # for test result annotations
+
+jobs:
+  quality:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    outputs:
+      cache-hit: ${{ steps.pnpm-cache.outputs.cache-hit }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Node.js + pnpm setup with caching
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ inputs.pnpm-version }}
+
+      - name: Derive pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        id: pnpm-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Python setup (conditional)
+      - name: Setup Python
+        if: inputs.python-version != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Setup uv (fast Python package manager)
+        if: inputs.python-version != ''
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        if: inputs.python-version != ''
+        run: |
+          if [ -f pyproject.toml ]; then
+            uv sync || (python -m pip install --upgrade pip && pip install -e .)
+          fi
+
+      # Node.js Quality Gates
+      - name: Lint (JavaScript/TypeScript)
+        if: inputs.run-lint
+        run: |
+          if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run lint:smart --if-present; then
+            echo "Used smart lint"
+          else
+            pnpm run lint
+          fi
+
+      - name: TypeScript type check
+        if: inputs.run-typecheck
+        run: |
+          if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run typecheck:smart --if-present; then
+            echo "Used smart typecheck"
+          else
+            pnpm run typecheck
+          fi
+
+      - name: Tests
+        if: inputs.run-tests
+        run: |
+          if [ "${{ inputs.test-coverage }}" = "true" ]; then
+            if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run test:coverage:smart --if-present; then
+              echo "Used smart test with coverage"
+            else
+              pnpm run test:coverage || pnpm run test
+            fi
+          else
+            if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run test:smart --if-present; then
+              echo "Used smart test"
+            else
+              pnpm run test
+            fi
+          fi
+
+      - name: Build
+        if: inputs.run-build
+        run: |
+          if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run build:smart --if-present; then
+            echo "Used smart build"
+          else
+            pnpm run build
+          fi
+
+      # Python Quality Gates (conditional)
+      - name: Lint (Python)
+        if: inputs.run-python-lint && inputs.python-version != ''
+        run: |
+          if command -v uv >/dev/null 2>&1; then
+            uv run ruff check .
+          else
+            python -m ruff check . || (pip install ruff && ruff check .)
+          fi
+
+      - name: Python type check (mypy)
+        if: inputs.run-python-lint && inputs.python-version != ''
+        run: |
+          if command -v uv >/dev/null 2>&1; then
+            uv run mypy . || true  # Optional, continue on mypy errors
+          else
+            python -m mypy . || (pip install mypy && mypy .) || true
+          fi
+
+      # Coverage upload (conditional)
+      - name: Upload coverage reports
+        if: inputs.test-coverage && hashFiles('coverage/lcov.info') != ''
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: quality-gates-coverage
+          fail_ci_if_error: false

@@ -300,9 +300,10 @@ app = FastAPI(
 # Setup comprehensive security middleware (includes CORS, observability, and more)
 security_config = setup_security_middleware(app)
 
-# Add observability middleware (if not already added by security middleware)
-if not any(isinstance(m, ObservabilityMiddleware) for m in app.middleware_stack):
-    app.add_middleware(ObservabilityMiddleware)
+# Add observability middleware
+# Note: FastAPI doesn't expose middleware stack, so we'll add it unconditionally
+# The middleware will handle duplicate registration internally if needed
+app.add_middleware(ObservabilityMiddleware)
 
 # Add Problem+JSON error handler
 from starlette.exceptions import HTTPException as StarletteHTTPException

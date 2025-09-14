@@ -5,39 +5,39 @@ on:
 
 permissions:
   contents: read
+  security-events: write # for potential future SARIF uploads (can be narrowed if unused)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/setup
-        with:
-          node-version: '22'
-          pnpm-version: '9'
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test:coverage:threshold
-      - run: pnpm build
+  quality:
+    name: Quality Gates (Lint • Typecheck • Test • Build)
+    uses: ./.github/workflows/quality-gates.yml
+    with:
+      node-version: '22'
+      pnpm-version: '9'
+      use-smart-scripts: true
+      test-coverage: true
 
   bun-lane:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac
+      - name: Setup mise (Node + Bun)
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac
         with:
           tool_versions: |
             nodejs 22
             bun 1.2.2
-      - run: bun -v
-      - run: bun install --frozen-lockfile || true
-      - run: bun run -T nx run-many -t test --parallel || true
+      - name: Print bun version
+        run: bun -v
+      - name: Install deps (bun)
+        run: bun install --frozen-lockfile || true
+      - name: Run tests (bun, non-blocking)
+        run: bun run -T nx run-many -t test --parallel || true

@@ -51,6 +51,7 @@ For detailed protocol specifications and implementation standards, see the [A2A 
 - **📊 Observability** - Comprehensive tracing and monitoring support
 - **🧪 Fully Tested** - 94% test coverage with unit and integration tests
 - **🏗️ Modular Architecture** - Clean separation of contracts, core, and transport layers
+- **💾 Durable Storage** - SQLite-based outbox repository for persistent message storage
 
 ## 🚀 Quick Start
 

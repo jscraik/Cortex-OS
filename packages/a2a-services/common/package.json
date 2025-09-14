@@ -1,14 +1,19 @@
 {
-	"name": "@cortex-os/a2a-common",
-	"version": "0.1.0",
-	"private": true,
-	"main": "src/index.ts",
-	"scripts": {
-		"test": "vitest"
-	},
-	"devDependencies": {
-		"typescript": "^5.0.0",
-		"vitest": "^3.2.4",
-		"@types/express": "^4.17.13"
-	}
+  "name": "@cortex-os/a2a-common",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "dependencies": {
+    "redis": "^4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4",
+    "@types/express": "^4.17.13",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^2.0.16"
+  }
 }

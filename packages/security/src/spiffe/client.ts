@@ -1,11 +1,12 @@
+// Shared fallback message to reduce literal duplication and satisfy lint rule
+const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
 /**
  * @file SPIFFE Client Implementation
  * @description SPIFFE Workload API client for certificate management and workload attestation
  */
 
-import { readFileSync } from 'node:fs';
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
-import { Agent as UndiciAgent } from 'undici';
+// Using global WHATWG fetch; remove Undici-specific Agent to simplify typing for dts build
 import { z } from 'zod';
 import {
 	type CertificateBundle,
@@ -86,22 +87,14 @@ export class SpiffeClient {
 		{ bundle: CertificateBundle; expiresAt: number }
 	> = new Map();
 	private readonly certificateTtl: number;
-	private readonly dispatcher?: UndiciAgent;
+// TLS cert material retained for potential future https.Agent usage (not bound now)
 
 	constructor(config: TrustDomainConfig, certificateTtl = 3600000) {
 		this.config = config;
 		this.certificateTtl = certificateTtl;
 		this.baseUrl = `https://${config.spireServerAddress}:${config.spireServerPort}`;
 
-		if (config.certificateFile && config.keyFile && config.caBundleFile) {
-			this.dispatcher = new UndiciAgent({
-				connect: {
-					cert: readFileSync(config.certificateFile),
-					key: readFileSync(config.keyFile),
-					ca: readFileSync(config.caBundleFile),
-				},
-			});
-		}
+		// (Optional) If mutual TLS to SPIRE server is required via node https Agent, introduce it here.
 	}
 
 	/**
@@ -116,13 +109,19 @@ export class SpiffeClient {
 		try {
 			const response = await fetch(`${this.baseUrl}${path}`, {
 				...init,
-				dispatcher: this.dispatcher,
 				signal: controller.signal,
 				headers: {
 					'Content-Type': 'application/json',
 					...(init?.headers || {}),
 				},
 			});
+			// Provide a minimal bytes() polyfill if absent (some environments use undici Response with bytes method)
+			if (!(response as any).bytes) {
+				(response as any).bytes = async () => {
+					const arrayBuffer = await response.arrayBuffer();
+					return Buffer.from(arrayBuffer);
+				};
+			}
 			return response;
 		} finally {
 			clearTimeout(timeoutId);
@@ -202,7 +201,7 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch workload identity',
 					{
-						error: error instanceof Error ? error.message : 'Unknown error',
+						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						trustDomain: this.config.name,
 					},
 					span,
@@ -210,7 +209,7 @@ export class SpiffeClient {
 
 				throw new SPIFFEError(
 					`Failed to fetch workload identity: ${
-						error instanceof Error ? error.message : 'Unknown error'
+						error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE
 					}`,
 					undefined,
 					{ trustDomain: this.config.name, originalError: error },
@@ -295,14 +294,14 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch SVID certificates',
 					{
-						error: error instanceof Error ? error.message : 'Unknown error',
+						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						spiffeId: spiffeId || 'default',
 					},
 					span,
 				);
 
 				throw new SPIFFEError(
-					`Failed to fetch SVID: ${error instanceof Error ? error.message : 'Unknown error'}`,
+					`Failed to fetch SVID: ${error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE}`,
 					spiffeId,
 					{ originalError: error },
 				);
@@ -391,7 +390,7 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch trust bundle',
 					{
-						error: error instanceof Error ? error.message : 'Unknown error',
+						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						trustDomain: this.config.name,
 					},
 					span,
@@ -399,7 +398,7 @@ export class SpiffeClient {
 
 				throw new SPIFFEError(
 					`Failed to fetch trust bundle: ${
-						error instanceof Error ? error.message : 'Unknown error'
+						error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE
 					}`,
 					undefined,
 					{ trustDomain: this.config.name, originalError: error },

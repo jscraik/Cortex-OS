@@ -6,6 +6,18 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { DEFAULT_LIMIT, MAX_LIMIT } from "../constants.js";
+// Local enriched shape used by marketplace (non-breaking superset of base registry manifest)
+type MarketplaceServer = import('@cortex-os/mcp-registry').ServerManifest & {
+	install?: Record<string, unknown>;
+	downloads?: number;
+	rating?: number;
+	featured?: boolean;
+	category?: string;
+	updatedAt?: string;
+	capabilities?: Record<string, boolean>;
+	publisher?: { name?: string };
+	security?: { riskLevel?: 'low' | 'medium' | 'high' };
+};
 
 const SearchQuerySchema = z.object({
 	q: z.string().optional(),
@@ -125,6 +137,13 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 							},
 						},
 					},
+					400: {
+						type: "object",
+						properties: {
+							success: { type: "boolean" },
+							error: { type: "object" },
+						},
+					},
 				},
 			},
 		},
@@ -197,6 +216,10 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 								},
 							},
 						},
+					},
+					400: {
+						type: "object",
+						properties: { success: { type: "boolean" }, error: { type: "object" } },
 					},
 				},
 			},
@@ -290,6 +313,8 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 							},
 						},
 					},
+					404: { type: "object", properties: { success: { type: "boolean" }, error: { type: "object" } } },
+					400: { type: "object", properties: { success: { type: "boolean" }, error: { type: "object" } } },
 				},
 			},
 		},
@@ -298,7 +323,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 			const { client } = request.query as { client?: string };
 
 			const validatedId = ServerIdSchema.parse(id);
-			const server = await fastify.marketplaceService.getServer(validatedId);
+			const server = await fastify.marketplaceService.getServer(validatedId) as MarketplaceServer | null;
 
 			if (!server) {
 				return (reply as any).status(404).send({
@@ -311,41 +336,43 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 			}
 
 			// Generate client-specific installation instructions
-			const installData = server.install;
+			const installData = server.install ?? {};
 			let instructions = "";
 			let command = "";
 			let config = {};
 
 			switch (client) {
-				case "claude":
-					command = installData.claude || "";
-					instructions = `Run this command in Claude Desktop: ${command}`;
-					config = installData.json || {};
+				case "claude": {
+					command = typeof installData.claude === 'string' ? installData.claude : "";
+					instructions = command
+						? `Run this command in Claude Desktop: ${command}`
+						: "Install via Claude settings";
+					config = (installData.json as Record<string, unknown>) || {};
 					break;
-				case "cline":
-					command = installData.cline || "";
-					instructions = installData.cline
+				}
+				case "cline": {
+					command = typeof installData.cline === 'string' ? installData.cline : "";
+					instructions = command
 						? `Run this command in Cline: ${command}`
 						: "Install via Cline MCP settings";
 					break;
-				case "cursor":
-					command = installData.cursor || "";
-					instructions =
-						installData.cursor || "Add to Cursor MCP configuration";
+				}
+				case "cursor": {
+					command = typeof installData.cursor === 'string' ? installData.cursor : "";
+					instructions = command || "Add to Cursor MCP configuration";
 					break;
-				case "continue":
-					command = installData.continue || "";
-					instructions =
-						installData.continue || "Configure in Continue settings";
+				}
+				case "continue": {
+					command = typeof installData.continue === 'string' ? installData.continue : "";
+					instructions = command || "Configure in Continue settings";
 					break;
+				}
 				default:
 					// Return all available installation options
 					return {
 						success: true,
 						data: {
-							available: Object.keys(installData).filter(
-								(key) => key !== "json",
-							),
+							available: Object.keys(installData).filter((key) => key !== "json"),
 							claude: installData.claude,
 							cline: installData.cline,
 							cursor: installData.cursor,

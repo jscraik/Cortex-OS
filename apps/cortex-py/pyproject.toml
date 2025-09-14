@@ -1,20 +1,20 @@
 [project]
 name = "cortex-py"
 version = "0.1.0"
-requires-python = ">=3.13"
-license = {text = "Apache-2.0"}
+requires-python = ">=3.11,<3.13"
+license = { text = "Apache-2.0" }
 dependencies = [
-    "fastapi>=0.116.1",
-    "uvicorn>=0.35.0",
-    "mlx>=0.29.0; sys_platform == 'darwin'",
-    "mlx-lm>=0.27.0; sys_platform == 'darwin'",
-    "mlx-vlm>=0.3.0; sys_platform == 'darwin'",
-    "llama-cpp-python>=0.2.90",
-    "sentence-transformers>=3.3.0",
-    "transformers>=4.55.4",
-    "torch>=2.8.0",
-    "gguf>=0.1.0",
-    "numpy>=1.26.4",
+  "fastapi>=0.116.1",
+  "uvicorn>=0.35.0",
+  "mlx>=0.29.0; sys_platform == 'darwin'",
+  "mlx-lm>=0.27.0; sys_platform == 'darwin'",
+  "mlx-vlm>=0.3.0; sys_platform == 'darwin'",
+  "llama-cpp-python>=0.2.90",
+  "sentence-transformers>=3.3.0",
+  "transformers>=4.55.4",
+  "torch>=2.8.0",
+  "gguf>=0.1.0",
+  "numpy>=1.26.4",
 ]
 
 [build-system]
@@ -23,7 +23,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.uv]
 package = true
-dev-dependencies = [
-  "pytest>=8",
-  "ruff>=0.6"
-]
+dev-dependencies = ["pytest>=8", "ruff>=0.6"]

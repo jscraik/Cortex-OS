@@ -1,0 +1,26 @@
+{
+    "extends": "../../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src"
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "dist",
+        "**/*.test.ts",
+        "**/*.spec.ts"
+    ],
+    "references": [
+        {
+            "path": "../../agents"
+        },
+        {
+            "path": "../../orchestration"
+        },
+        {
+            "path": "../../rag"
+        }
+    ]
+}

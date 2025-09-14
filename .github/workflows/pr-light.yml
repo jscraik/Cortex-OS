@@ -13,10 +13,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quick-signal:
-    name: Quick PR Checks
+  quick-quality-checks:
+    name: Quick Quality Checks
+    uses: ./.github/workflows/quality-gates.yml
+    with:
+      node-version: '20'
+      pnpm-version: '10.3.0'
+      python-version: '3.11'
+      run-lint: true
+      run-typecheck: true
+      run-tests: false  # Skip tests for speed
+      run-build: false # Skip build for speed
+      run-python-lint: true
+      use-smart-scripts: true
+      test-coverage: false
+      timeout-minutes: 15
+
+  security-quick-scan:
+    name: Quick Security Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,9 +53,6 @@ jobs:
       - name: Install dependencies (frozen)
         run: pnpm install --frozen-lockfile
 
-      - name: TypeScript typecheck (fast)
-        run: pnpm security:typecheck
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -48,9 +61,6 @@ jobs:
       - name: Python deps
         run: |
           if command -v uv >/dev/null 2>&1; then uv sync; else python -m pip install --upgrade pip && pip install ruff; fi
-
-      - name: Ruff lint (fast)
-        run: pnpm python:lint
 
       - name: Semgrep high severity gate
         run: |

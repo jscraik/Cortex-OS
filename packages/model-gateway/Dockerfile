@@ -20,11 +20,16 @@ RUN pnpm deploy /out/model-gateway
 FROM node:20-slim AS runner
 ENV NODE_ENV=production
 ENV OLLAMA_AVAILABLE=true
+ENV MLX_HOST_AVAILABLE=true
+ENV MLX_BASE_URL=http://host.docker.internal:8081
+ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 RUN groupadd -r nodegrp && useradd -r -g nodegrp nodeusr \
     && apt-get update && apt-get install -y --no-install-recommends \
-    tini curl python3 python3-pip \
-    && pip3 install --no-cache-dir numpy mlx mlx-lm mlx-vlm torch instructor openai \
+    curl python3 python3-pip python3-venv tini \
+    && python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir --break-system-packages \
+    numpy torch instructor openai requests httpx \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /out/model-gateway .
 USER nodeusr

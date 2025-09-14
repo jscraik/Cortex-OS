@@ -42,7 +42,7 @@ Setup:
 
 - Start the Local Memory daemon (default base URL `http://localhost:3002/api/v1`).
 - Export envs:
-  - `LOCAL_MEMORY_BASE_URL` (e.g., `http://localhost:3002/api/v1`)
+  - `LOCAL_MEMORY_BASE_URL` (e.g., `http://localhost:3010/api/v1`)
   - `LOCAL_MEMORY_API_KEY` (if configured)
   - `LOCAL_MEMORY_NAMESPACE` (optional)
   - `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`

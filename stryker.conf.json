@@ -1,0 +1,31 @@
+{
+    "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/schema/stryker-schema.json",
+    "mutate": [
+        "packages/agents/src/agents/security-agent.ts",
+        "packages/agents/src/lib/utils.ts",
+        "packages/agents/src/lib/validate.ts"
+    ],
+    "testRunner": "vitest",
+    "vitest": {
+        "configFile": "vitest.config.ts",
+        "coverageAnalysis": "off"
+    },
+    "checkers": [
+        "typescript"
+    ],
+    "tsconfigFile": "tsconfig.json",
+    "thresholds": {
+        "high": 80,
+        "low": 60,
+        "break": 50
+    },
+    "ignorePatterns": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/coverage/**",
+        "**/reports/**"
+    ],
+    "timeoutMS": 60000,
+    "concurrency": 2,
+    "cleanTempDir": true
+}

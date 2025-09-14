@@ -83,7 +83,7 @@ export class LocalMemoryStore implements MemoryStore {
     private timeoutMs: number;
 
     constructor(opts: LocalMemoryOptions = {}) {
-        this.baseUrl = (opts.baseUrl ?? process.env.LOCAL_MEMORY_BASE_URL ?? 'http://localhost:3002/api/v1').replace(/\/$/, '');
+        this.baseUrl = (opts.baseUrl ?? process.env.LOCAL_MEMORY_BASE_URL ?? 'http://localhost:3010/api/v1').replace(/\/$/, '');
         this.apiKey = opts.apiKey ?? process.env.LOCAL_MEMORY_API_KEY;
         this.defaultNs = opts.defaultNamespace ?? process.env.LOCAL_MEMORY_NAMESPACE ?? undefined;
         this.timeoutMs = opts.timeoutMs ?? 10_000;

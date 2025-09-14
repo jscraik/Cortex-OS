@@ -1,9 +1,11 @@
 export * from './bus.js';
 export * from './dlq.js';
 export * from './idempotency.js';
+export * from './metrics.js';
 export * from './outbox.js';
 export * from './router.js';
 export * from './saga.js';
 export * from './schema-registry.js';
 export * from './trace-context-manager.js';
 export * from './transport.js';
+

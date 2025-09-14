@@ -113,3 +113,37 @@ jobs:
             --with pytest-asyncio \
             --with redis \
             pytest -q tests/integration/test_redis_integration.py -q
+
+  python-mcp-qdrant-integration:
+    name: Python MCP Qdrant-backed tests
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+        options: >-
+          --health-cmd "wget -qO- http://localhost:6333/readyz || exit 1"
+          --health-interval 2s
+          --health-timeout 1s
+          --health-retries 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv and set Python 3.12
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Run ChatGPT connector tests against Qdrant
+        working-directory: packages/mcp
+        env:
+          QDRANT_HOST: localhost
+          QDRANT_PORT: "6333"
+        run: |
+          uv run --no-sync \
+            --with pytest \
+            --with pytest-asyncio \
+            pytest -q mcp_servers/chatgpt_connector -q

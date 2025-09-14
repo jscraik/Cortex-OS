@@ -3,11 +3,11 @@
  * Loopback-only HTTP server implementing the blueprint API specification
  */
 
-import { readFile } from 'node:fs/promises';
-import type { Server } from 'node:http';
 import { createHash } from 'crypto';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
+import { readFile } from 'fs/promises';
+import type { Server } from 'http';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
@@ -30,9 +30,22 @@ import {
 import { initializeXDG } from '../xdg/index.js';
 import { createAuthMiddleware, requireScopes } from './auth.js';
 
+interface TokenBucket {
+	capacity: number;
+	tokens: number;
+	refillRatePerSec: number;
+	lastRefill: number;
+}
+
 export interface ASBRServerOptions {
 	port?: number;
 	host?: string;
+	cacheTtlMs?: number;
+	rateLimit?: {
+		enabled: boolean;
+		capacity?: number;
+		refillRatePerSec?: number;
+	};
 }
 
 export interface ASBRServer {
@@ -65,19 +78,16 @@ class ASBRServerClass {
 	private io?: IOServer;
 	private port: number;
 	private host: string;
+	private cacheTtlSec: number; // Cache TTL in seconds for HTTP headers
 	private tasks = new Map<string, Task>();
 	private profiles = new Map<string, Profile>();
 	private artifacts = new Map<string, ArtifactRef>();
-	private readonly events = new Map<string, Event[]>();
-	private readonly idempotencyCache = new Map<
-		string,
-		{ taskId: string; expiry: number }
-	>();
+	private events = new Map<string, Event[]>(); // Store events by task ID
+	private taskTraceparents = new Map<string, string>(); // Store traceparent by task ID
+	private idempotencyCache = new Map<string, { taskId: string; expiry: number }>();
+	private rateLimitBucket?: TokenBucket; // Rate limiting token bucket
 
-	private readonly responseCache = new Map<
-		string,
-		{ data: unknown; expiry: number }
-	>();
+	private responseCache = new Map<string, { data: unknown; expiry: number }>();
 	private cacheCleanupInterval?: NodeJS.Timeout;
 	private readonly CACHE_TTL = 30000; // 30 seconds
 	private readonly IDEMPOTENCY_TTL = 5 * 60 * 1000; // 5 minutes
@@ -86,10 +96,38 @@ class ASBRServerClass {
 		this.app = express();
 		this.port = options.port || 7439;
 		this.host = options.host || '127.0.0.1'; // Loopback only
+		this.cacheTtlSec = Math.round((options.cacheTtlMs || 30000) / 1000); // Convert ms to seconds
+
+		// Initialize rate limiting if enabled
+		if (options.rateLimit?.enabled) {
+			this.rateLimitBucket = {
+				capacity: options.rateLimit.capacity || 100,
+				tokens: options.rateLimit.capacity || 100,
+				refillRatePerSec: options.rateLimit.refillRatePerSec || 10,
+				lastRefill: Date.now(),
+			};
+		}
 
 		this.setupMiddleware();
 		this.setupRoutes();
 		this.setupCacheCleanup();
+	}
+
+	private isValidTraceparent(tp: string): boolean {
+		const parts = tp.split('-');
+		if (parts.length !== 4) return false;
+		const [ver, traceId, spanId, flags] = parts;
+		const hex = /^[0-9a-f]+$/;
+		if (ver !== '00') return false;
+		if (traceId.length !== 32 || !hex.test(traceId) || /^0+$/.test(traceId)) return false;
+		if (spanId.length !== 16 || !hex.test(spanId) || /^0+$/.test(spanId)) return false;
+		if (flags.length !== 2 || !hex.test(flags)) return false;
+		return true;
+	}
+
+	private generateTraceparent(): string {
+		const rand = (n: number) => Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+		return `00-${rand(32)}-${rand(16)}-01`;
 	}
 
 	private setupMiddleware(): void {
@@ -101,7 +139,7 @@ class ASBRServerClass {
 			res.setHeader('X-XSS-Protection', '1; mode=block');
 
 			// Performance headers
-			res.setHeader('Cache-Control', 'private, max-age=30');
+			res.setHeader('Cache-Control', `private, max-age=${this.cacheTtlSec}`);
 
 			// Request timing (store in locals instead of modifying req)
 			res.locals.startTime = Date.now();
@@ -124,32 +162,73 @@ class ASBRServerClass {
 			}),
 		);
 
+		// Rate limiting middleware (if enabled)
+		if (this.rateLimitBucket) {
+			this.app.use((_req, res, next) => {
+				const now = Date.now();
+				const bucket = this.rateLimitBucket!;
+
+				// Refill tokens based on time elapsed
+				const elapsed = (now - bucket.lastRefill) / 1000;
+				const tokensToAdd = Math.floor(elapsed * bucket.refillRatePerSec);
+				if (tokensToAdd > 0) {
+					bucket.tokens = Math.min(bucket.capacity, bucket.tokens + tokensToAdd);
+					bucket.lastRefill = now;
+				}
+
+				// Check if token available
+				if (bucket.tokens < 1) {
+					const retryAfter = Math.ceil(1 / bucket.refillRatePerSec);
+					res.setHeader('Retry-After', retryAfter.toString());
+					res.status(429).json({
+						error: 'Rate limit exceeded',
+						code: 'RATE_LIMITED',
+					});
+					return;
+				}
+
+				// Consume token
+				bucket.tokens -= 1;
+				next();
+			});
+		}
+
 		// Catch malformed JSON from body parser and return a 400 with structured body
 		// body-parser sets err.type === 'entity.parse.failed' for JSON parse errors
-		this.app.use(
-			(err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-				const errorObj = err as { type?: string; message?: string };
-				if (
-					errorObj &&
-					(errorObj.type === 'entity.parse.failed' ||
-						err instanceof SyntaxError)
-				) {
-					// Expose a clear error body expected by tests
-					return res.status(400).json({
-						error: errorObj.message || 'Malformed JSON',
-						code: 'INVALID_JSON',
-					});
-				}
-				// Handle oversized payloads from body-parser
-				if (errorObj && errorObj.type === 'entity.too.large') {
-					return res.status(413).json({
-						error: errorObj.message || 'Payload too large',
-						code: 'PAYLOAD_TOO_LARGE',
-					});
-				}
-				return _next(err);
-			},
-		);
+		this.app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+			const errorObj = err as { type?: string; message?: string };
+			if (errorObj && (errorObj.type === 'entity.parse.failed' || err instanceof SyntaxError)) {
+				// Expose a clear error body expected by tests
+				return res.status(400).json({
+					error: errorObj.message || 'Malformed JSON',
+					code: 'INVALID_JSON',
+				});
+			}
+			// Handle oversized payloads from body-parser
+			if (errorObj && errorObj.type === 'entity.too.large') {
+				return res.status(413).json({
+					error: errorObj.message || 'Payload too large',
+					code: 'PAYLOAD_TOO_LARGE',
+				});
+			}
+			return _next(err);
+		});
+
+		// Tracing middleware - generate or preserve traceparent headers
+		this.app.use((req, res, next) => {
+			let traceparent = req.headers['traceparent'] as string;
+
+			if (!traceparent || !this.isValidTraceparent(traceparent)) {
+				// Generate valid traceparent if none provided or invalid
+				traceparent = this.generateTraceparent();
+			}
+
+			// Store in response locals and set header
+			res.locals.traceparent = traceparent;
+			res.setHeader('traceparent', traceparent);
+
+			next();
+		});
 
 		// Authentication middleware (applies to /v1 routes)
 		this.app.use('/v1', (req, res, next) => {
@@ -164,45 +243,17 @@ class ASBRServerClass {
 		});
 
 		// Task endpoints
-		this.app.post(
-			'/v1/tasks',
-			requireScopes('tasks:create'),
-			this.createTask.bind(this),
-		);
-		this.app.get(
-			'/v1/tasks/:id',
-			requireScopes('tasks:read'),
-			this.getTask.bind(this),
-		);
-		this.app.post(
-			'/v1/tasks/:id/cancel',
-			requireScopes('tasks:write'),
-			this.cancelTask.bind(this),
-		);
-		this.app.post(
-			'/v1/tasks/:id/resume',
-			requireScopes('tasks:write'),
-			this.resumeTask.bind(this),
-		);
+		this.app.post('/v1/tasks', requireScopes('tasks:create'), this.createTask.bind(this));
+		this.app.get('/v1/tasks/:id', requireScopes('tasks:read'), this.getTask.bind(this));
+		this.app.post('/v1/tasks/:id/cancel', requireScopes('tasks:write'), this.cancelTask.bind(this));
+		this.app.post('/v1/tasks/:id/resume', requireScopes('tasks:write'), this.resumeTask.bind(this));
 
 		// Event endpoints
-		this.app.get(
-			'/v1/events',
-			requireScopes('events:read'),
-			this.getEvents.bind(this),
-		);
+		this.app.get('/v1/events', requireScopes('events:read'), this.getEvents.bind(this));
 
 		// Profile endpoints
-		this.app.post(
-			'/v1/profiles',
-			requireScopes('profiles:write'),
-			this.createProfile.bind(this),
-		);
-		this.app.get(
-			'/v1/profiles/:id',
-			requireScopes('profiles:read'),
-			this.getProfile.bind(this),
-		);
+		this.app.post('/v1/profiles', requireScopes('profiles:write'), this.createProfile.bind(this));
+		this.app.get('/v1/profiles/:id', requireScopes('profiles:read'), this.getProfile.bind(this));
 		this.app.put(
 			'/v1/profiles/:id',
 			requireScopes('profiles:write'),
@@ -210,23 +261,11 @@ class ASBRServerClass {
 		);
 
 		// Artifact endpoints
-		this.app.get(
-			'/v1/artifacts',
-			requireScopes('artifacts:read'),
-			this.listArtifacts.bind(this),
-		);
-		this.app.get(
-			'/v1/artifacts/:id',
-			requireScopes('artifacts:read'),
-			this.getArtifact.bind(this),
-		);
+		this.app.get('/v1/artifacts', requireScopes('artifacts:read'), this.listArtifacts.bind(this));
+		this.app.get('/v1/artifacts/:id', requireScopes('artifacts:read'), this.getArtifact.bind(this));
 
 		// Service map
-		this.app.get(
-			'/v1/service-map',
-			requireScopes('system:read'),
-			this.getServiceMap.bind(this),
-		);
+		this.app.get('/v1/service-map', requireScopes('system:read'), this.getServiceMap.bind(this));
 
 		// Connector endpoints
 		this.app.get(
@@ -237,29 +276,27 @@ class ASBRServerClass {
 
 		// Error handling must be registered after routes so thrown errors in handlers
 		// are propagated here and converted to structured JSON responses.
-		this.app.use(
-			(error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-				logError('API Error', { error });
+		this.app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+			logError('API Error', { error });
 
-				if (error instanceof ValidationError) {
-					res.status(error.statusCode).json({
-						error: error.message,
-						code: error.code,
-						details: error.details,
-					});
-				} else if (error instanceof NotFoundError) {
-					res.status(404).json({
-						error: error.message,
-						code: error.code,
-					});
-				} else {
-					res.status(500).json({
-						error: 'Internal server error',
-						code: 'INTERNAL_ERROR',
-					});
-				}
-			},
-		);
+			if (error instanceof ValidationError) {
+				res.status(error.statusCode).json({
+					error: error.message,
+					code: error.code,
+					details: error.details,
+				});
+			} else if (error instanceof NotFoundError) {
+				res.status(404).json({
+					error: error.message,
+					code: error.code,
+				});
+			} else {
+				res.status(500).json({
+					error: 'Internal server error',
+					code: 'INTERNAL_ERROR',
+				});
+			}
+		});
 	}
 
 	private setupCacheCleanup(): void {
@@ -275,29 +312,40 @@ class ASBRServerClass {
 	}
 
 	private async createTask(req: Request, res: Response): Promise<void> {
-		const { input, idempotencyKey } = req.body;
-		const taskInput = validateTaskInput(input);
-		const { key, existingTask } = resolveIdempotency(
-			taskInput,
-			idempotencyKey,
-			this.idempotencyCache,
-			this.tasks,
-		);
-		if (existingTask) {
-			res.json({ task: existingTask });
-			return;
+		try {
+			const { input, idempotencyKey } = req.body;
+			const taskInput = validateTaskInput(input);
+			const { key, existingTask } = resolveIdempotency(
+				taskInput,
+				idempotencyKey,
+				this.idempotencyCache,
+				this.tasks,
+			);
+			if (existingTask) {
+				res.json({ task: existingTask });
+				return;
+			}
+
+			const task = buildTask();
+			this.tasks.set(task.id, task);
+
+			// Store the traceparent for this task
+			const traceparent = res.locals.traceparent as string;
+			if (traceparent) {
+				this.taskTraceparents.set(task.id, traceparent);
+			}
+
+			this.idempotencyCache.set(key, {
+				taskId: task.id,
+				expiry: Date.now() + this.IDEMPOTENCY_TTL,
+			});
+
+			await emitPlanStarted(this.emitEvent.bind(this), task, taskInput);
+
+			res.json({ task });
+		} catch (error) {
+			throw error;
 		}
-
-		const task = buildTask();
-		this.tasks.set(task.id, task);
-		this.idempotencyCache.set(key, {
-			taskId: task.id,
-			expiry: Date.now() + this.IDEMPOTENCY_TTL,
-		});
-
-		await emitPlanStarted(this.emitEvent.bind(this), task, taskInput);
-
-		res.json({ task });
 	}
 
 	private async getTask(req: Request, res: Response): Promise<void> {
@@ -306,6 +354,12 @@ class ASBRServerClass {
 
 		if (!task) {
 			throw new NotFoundError('Task');
+		}
+
+		// Use the stored traceparent for this task if available
+		const storedTraceparent = this.taskTraceparents.get(id);
+		if (storedTraceparent) {
+			res.setHeader('traceparent', storedTraceparent);
 		}
 
 		res.json({ task });
@@ -384,10 +438,8 @@ class ASBRServerClass {
 		}, 10000);
 
 		// Send existing events for the task
-		const events = taskId
-			? this.events.get(taskId) || []
-			: Array.from(this.events.values()).flat();
-		events.forEach((event) => {
+		const events = taskId ? this.events.get(taskId) || [] : Array.from(this.events.values()).flat();
+		events.forEach((event: Event) => {
 			res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
 		});
 
@@ -398,7 +450,7 @@ class ASBRServerClass {
 		const shouldAutoClose =
 			process.env.NODE_ENV === 'test' ||
 			String(req.headers['user-agent'] || '').includes('supertest') ||
-			(String(req.headers.accept || '').includes('text/event-stream') &&
+			(String(req.headers['accept'] || '').includes('text/event-stream') &&
 				process.env.VITEST !== undefined);
 
 		let autoCloseTimer: NodeJS.Timeout | undefined;
@@ -430,8 +482,7 @@ class ASBRServerClass {
 			id: uuidv4(),
 		});
 		if (!validationResult.success) {
-			const issues = (validationResult.error as unknown as { issues?: unknown })
-				.issues;
+			const issues = (validationResult.error as unknown as { issues?: unknown }).issues;
 			throw new ValidationError('Invalid profile', {
 				errors: issues,
 			});
@@ -467,8 +518,7 @@ class ASBRServerClass {
 			id,
 		});
 		if (!validationResult.success) {
-			const issues = (validationResult.error as unknown as { issues?: unknown })
-				.issues;
+			const issues = (validationResult.error as unknown as { issues?: unknown }).issues;
 			throw new ValidationError('Invalid profile', {
 				errors: issues,
 			});
@@ -546,12 +596,9 @@ class ASBRServerClass {
 	}
 
 	private async getServiceMap(_req: Request, res: Response): Promise<void> {
-		const stack: any[] = ((this.app as unknown as any).router?.stack ??
-			[]) as any[];
+		const stack: any[] = ((this.app as unknown as any).router?.stack ?? []) as any[];
 		const routes = stack
-			.filter(
-				(layer: any) => layer.route && typeof layer.route.path === 'string',
-			)
+			.filter((layer: any) => layer.route && typeof layer.route.path === 'string')
 			.filter((layer: any) => layer.route.path.startsWith('/v1'))
 			.map((layer: any) => ({
 				path: layer.route.path,
@@ -566,10 +613,7 @@ class ASBRServerClass {
 		res.json(serviceMap);
 	}
 
-	private async getConnectorServiceMap(
-		_req: Request,
-		res: Response,
-	): Promise<void> {
+	private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
 		res.json({});
 	}
 
@@ -596,9 +640,7 @@ class ASBRServerClass {
 				const manager = await getEventManager();
 				manager.attachIO(this.io);
 
-				logInfo(
-					`ASBR API server listening on http://${this.host}:${this.port}`,
-				);
+				logInfo(`ASBR API server listening on http://${this.host}:${this.port}`);
 				resolve();
 			});
 		});

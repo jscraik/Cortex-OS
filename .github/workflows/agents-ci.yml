@@ -11,8 +11,16 @@ on:
       - 'packages/agents/**'
       - '.github/workflows/agents-ci.yml'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   agents-checks:
+    name: Agents Package Checks
     uses: ./.github/workflows/ci-node-setup.yml
     with:
       node-version: '22'

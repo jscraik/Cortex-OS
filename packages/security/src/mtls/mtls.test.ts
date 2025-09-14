@@ -6,6 +6,8 @@ const config = {
 	caCertificate: 'ca',
 	clientCertificate: 'cert',
 	clientKey: 'key',
+	rejectUnauthorized: true,
+	minVersion: 'TLSv1.2' as const,
 };
 
 describe('MTLSClient.receive', () => {

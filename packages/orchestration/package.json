@@ -26,6 +26,8 @@
     "zod": "^3.23.8",
     "@cortex-os/agents": "workspace:*",
     "@cortex-os/memories": "workspace:*",
+    "@cortex-os/prp-runner": "workspace:*",
+    "@cortex-os/observability": "workspace:*",
     "@langchain/community": "^0.3.49",
     "@langchain/core": "^0.3.30",
     "@langchain/openai": "^0.6.3",

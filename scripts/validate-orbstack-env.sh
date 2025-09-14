@@ -49,14 +49,17 @@ validate_docker_orbstack() {
             log_success "Docker daemon is running"
 
             # Check if this is OrbStack
-            if docker version 2>/dev/null | grep -q "orbstack"; then
+            DOCKER_CONTEXT=$(docker context show 2>/dev/null || echo "default")
+            if [[ "$DOCKER_CONTEXT" == "orbstack" ]]; then
                 log_success "OrbStack is detected and running"
 
                 # Get OrbStack version if possible
                 ORBSTACK_VERSION=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "unknown")
                 log_info "OrbStack version: $ORBSTACK_VERSION"
+                
+                log_success "OrbStack context is active"
             else
-                log_warning "OrbStack not detected - using standard Docker"
+                log_warning "OrbStack not detected or not active context: $DOCKER_CONTEXT"
                 log_warning "Some OrbStack-specific optimizations may not work"
             fi
 
@@ -89,11 +92,14 @@ validate_project_structure() {
 
     local required_dirs=(
         "apps/cortex-os"
-        "apps/cortex-codex"
         "apps/cortex-py"
         "packages"
         "infra/compose"
         "infra/monitoring"
+    )
+    
+    local optional_dirs=(
+        "apps/cortex-codex"
     )
 
     # Check required files
@@ -114,6 +120,15 @@ validate_project_structure() {
         fi
     done
 
+    # Check optional directories
+    for dir in "${optional_dirs[@]}"; do
+        if [[ -d "$ROOT_DIR/$dir" ]]; then
+            log_success "Found optional directory: $dir"
+        else
+            log_info "Optional directory not present: $dir"
+        fi
+    done
+
     # Check if orbstack-dev.sh is executable
     if [[ -x "$ROOT_DIR/scripts/orbstack-dev.sh" ]]; then
         log_success "orbstack-dev.sh is executable"
@@ -128,11 +143,14 @@ validate_docker_configs() {
 
     local dockerfile_locations=(
         "apps/cortex-os/Dockerfile"
-        "apps/cortex-codex/Dockerfile"
         "apps/cortex-py/Dockerfile"
         "packages/model-gateway/Dockerfile"
         "packages/agents/Dockerfile"
         "packages/mcp/Dockerfile"
+    )
+
+    local optional_dockerfile_locations=(
+        "apps/cortex-codex/Dockerfile"
     )
 
     for dockerfile in "${dockerfile_locations[@]}"; do
@@ -154,6 +172,28 @@ validate_docker_configs() {
             fi
         else
             log_error "Missing Dockerfile: $dockerfile"
+        fi
+    done
+
+    for dockerfile in "${optional_dockerfile_locations[@]}"; do
+        if [[ -f "$ROOT_DIR/$dockerfile" ]]; then
+            log_success "Found optional Dockerfile: $dockerfile"
+
+            # Check for OrbStack-specific optimizations
+            if grep -q "orbstack.optimize" "$ROOT_DIR/$dockerfile" 2>/dev/null; then
+                log_success "  → Contains OrbStack optimizations"
+            else
+                log_warning "  → Missing OrbStack optimization labels"
+            fi
+
+            # Check for multi-platform support
+            if grep -q "\--platform=\$BUILDPLATFORM" "$ROOT_DIR/$dockerfile" 2>/dev/null; then
+                log_success "  → Multi-platform build support enabled"
+            else
+                log_warning "  → Missing multi-platform build support"
+            fi
+        else
+            log_info "Optional Dockerfile not present: $dockerfile"
         fi
     done
 }
@@ -216,7 +256,7 @@ validate_rust_environment() {
                 log_success "Workspace configuration detected"
             fi
         else
-            log_error "Missing Cortex Codex Cargo.toml"
+            log_info "Cortex Codex not present (optional component)"
         fi
     else
         log_warning "Cargo not installed locally - will use containerized version"
@@ -310,14 +350,19 @@ validate_orbstack_features() {
     log_section "OrbStack Feature Validation"
 
     # Test multi-platform build capability
-    if docker buildx ls | grep -q "linux/arm64.*linux/amd64" 2>/dev/null; then
+    if docker buildx ls >/dev/null 2>&1 && docker buildx ls | grep -q "linux/arm64.*linux/amd64" 2>/dev/null; then
         log_success "Multi-platform build support is available"
     else
-        log_warning "Multi-platform build support may be limited"
+        # Try to create a multi-platform builder
+        if docker buildx create --name multiplatform --use >/dev/null 2>&1; then
+            log_success "Multi-platform build support created and configured"
+        else
+            log_warning "Multi-platform build support may be limited"
+        fi
     fi
 
     # Test BuildKit
-    if docker info | grep -q "BuildKit" 2>/dev/null; then
+    if docker info | grep -q "BuildKit" 2>/dev/null || [[ "${DOCKER_BUILDKIT:-0}" == "1" ]]; then
         log_success "BuildKit is enabled"
     else
         log_warning "BuildKit is not enabled - set DOCKER_BUILDKIT=1"

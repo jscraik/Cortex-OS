@@ -1,6 +1,7 @@
 import importlib.util
-from pathlib import Path
 import json
+import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -15,17 +16,23 @@ spec.loader.exec_module(eg)
 
 
 def test_init_fails_without_mlx(monkeypatch):
+    os.environ.pop("CORTEX_PY_FAST_TEST", None)
     monkeypatch.setattr(eg, "MLX_AVAILABLE", False)
+    monkeypatch.setattr(eg, "SENTENCE_TRANSFORMERS_AVAILABLE", False)
     with pytest.raises(RuntimeError):
-        eg.MLXEmbeddingGenerator()
+        eg.MLXEmbeddingGenerator(model_name="qwen3-embedding-4b-mlx")
 
 
 def test_generate_embedding_normalizes(monkeypatch):
+    os.environ.pop("CORTEX_PY_FAST_TEST", None)
     monkeypatch.setattr(eg, "MLX_AVAILABLE", True)
+    monkeypatch.setattr(eg, "SENTENCE_TRANSFORMERS_AVAILABLE", False)
 
     class Stub(eg.MLXEmbeddingGenerator):
         def _load_model(self):
-            pass
+            # Provide minimal placeholders so _can_use_model() returns True
+            self.model = object()
+            self.tokenizer = object()
 
         def _can_use_mlx_model(self):
             return True
@@ -40,11 +47,14 @@ def test_generate_embedding_normalizes(monkeypatch):
 
 
 def test_generate_embeddings_batch(monkeypatch):
+    os.environ.pop("CORTEX_PY_FAST_TEST", None)
     monkeypatch.setattr(eg, "MLX_AVAILABLE", True)
+    monkeypatch.setattr(eg, "SENTENCE_TRANSFORMERS_AVAILABLE", False)
 
     class Stub(eg.MLXEmbeddingGenerator):
         def _load_model(self):
-            pass
+            self.model = object()
+            self.tokenizer = object()
 
         def _can_use_mlx_model(self):
             return True
@@ -59,7 +69,9 @@ def test_generate_embeddings_batch(monkeypatch):
 
 
 def test_load_custom_model_config(tmp_path, monkeypatch):
+    os.environ.pop("CORTEX_PY_FAST_TEST", None)
     monkeypatch.setattr(eg, "MLX_AVAILABLE", True)
+    monkeypatch.setattr(eg, "SENTENCE_TRANSFORMERS_AVAILABLE", False)
     config = {
         "custom": {
             "path": "custom/path",
@@ -73,7 +85,8 @@ def test_load_custom_model_config(tmp_path, monkeypatch):
 
     class Stub(eg.MLXEmbeddingGenerator):
         def _load_model(self):
-            pass
+            self.model = object()
+            self.tokenizer = object()
 
         def _can_use_mlx_model(self):
             return True

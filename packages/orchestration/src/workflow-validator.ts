@@ -1,10 +1,94 @@
 import { createHash } from 'node:crypto';
-import { workflowZ } from './schemas/workflow.zod.js';
+import type { Logger } from 'winston';
+import winston from 'winston';
+import type { z } from 'zod';
+import { type retryZ, type stepZ, workflowZ } from './schemas/workflow.zod.js';
+
+// Strongly typed workflow structures derived from Zod schemas (eliminates drift risk)
+export type Workflow = z.infer<typeof workflowZ>;
+export type WorkflowStep = z.infer<typeof stepZ>;
+export type WorkflowRetryConfig = z.infer<typeof retryZ>;
+export type WorkflowStepKind = Workflow['steps'][string]['kind'];
+export type WorkflowBranch = NonNullable<WorkflowStep['branches']>[number];
+export type WorkflowBudget = NonNullable<Workflow['budget']>;
+export type WorkflowMetadata = NonNullable<Workflow['metadata']>;
+
+/**
+ * Metrics emitter abstraction for telemetry integration
+ */
+export interface ValidationMetricsEmitter {
+	incrementCounter(
+		metric: string,
+		tags?: Record<string, string | number | boolean>,
+	): void;
+	recordTiming(
+		metric: string,
+		value: number,
+		tags?: Record<string, string | number | boolean>,
+	): void;
+	recordHistogram(
+		metric: string,
+		value: number,
+		tags?: Record<string, string | number | boolean>,
+	): void;
+}
+
+/**
+ * Logger-based metrics emitter implementation
+ */
+export class LoggerMetricsEmitter implements ValidationMetricsEmitter {
+	constructor(
+		private readonly logger: Logger = winston.createLogger({
+			level: 'info',
+			format: winston.format.json(),
+			transports: [new winston.transports.Console()],
+		}),
+	) { }
+
+	incrementCounter(
+		metric: string,
+		tags?: Record<string, string | number | boolean>,
+	): void {
+		this.logger.info(`counter.${metric}`, { ...tags, value: 1 });
+	}
+
+	recordTiming(
+		metric: string,
+		value: number,
+		tags?: Record<string, string | number | boolean>,
+	): void {
+		this.logger.info(`timing.${metric}`, { ...tags, value, unit: 'ms' });
+	}
+
+	recordHistogram(
+		metric: string,
+		value: number,
+		tags?: Record<string, string | number | boolean>,
+	): void {
+		this.logger.info(`histogram.${metric}`, { ...tags, value });
+	}
+}
+
+// Global metrics emitter (can be replaced for testing or integration)
+let metricsEmitter: ValidationMetricsEmitter = new LoggerMetricsEmitter();
+
+/**
+ * Set a custom metrics emitter (for testing or telemetry integration)
+ */
+export function setMetricsEmitter(emitter: ValidationMetricsEmitter): void {
+	metricsEmitter = emitter;
+}
 
 // Validation cache to avoid re-validating identical workflows
 const validationCache = new Map<
 	string,
-	{ valid: boolean; result?: any; error?: Error }
+	{
+		valid: boolean;
+		result?: ValidationResult;
+		error?: Error;
+		timestamp: number;
+		softExpiry?: number;
+	}
 >();
 
 // Maximum workflow depth to prevent stack overflow
@@ -15,7 +99,7 @@ const CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000;
 let cacheCleanupTimer: NodeJS.Timeout | null = null;
 
 interface ValidationResult {
-	workflow: any;
+	workflow: Workflow;
 	stats: {
 		totalSteps: number;
 		unreachableSteps: string[];
@@ -28,7 +112,7 @@ interface ValidationResult {
 /**
  * Create a hash key for workflow caching
  */
-function createWorkflowHash(workflow: any): string {
+function createWorkflowHash(workflow: Workflow): string {
 	// Create a hash based on the workflow structure for caching
 	const structureData = JSON.stringify({
 		entry: workflow.entry,
@@ -64,7 +148,7 @@ function initializeCacheCleanup(): void {
 	}
 }
 
-function topologicalSort(wf: any, nodes: Set<string>): string[] {
+function topologicalSort(wf: Workflow, nodes: Set<string>): string[] {
 	const inDegree = new Map<string, number>();
 	const adj = new Map<string, string[]>();
 
@@ -138,15 +222,37 @@ export function validateWorkflow(input: unknown): ValidationResult {
 	// Create cache key for performance optimization
 	const cacheKey = createWorkflowHash(wf);
 
-	// Check cache first
+	// Check cache first (with soft TTL support)
 	if (validationCache.has(cacheKey)) {
 		const cached = validationCache.get(cacheKey)!;
-		if (cached.valid) {
+		const now = Date.now();
+
+		// Check soft TTL (10 minutes) - mark stale but still usable
+		const softTtl = 10 * 60 * 1000; // 10 minutes
+		const isStale = cached.softExpiry && now > cached.softExpiry;
+
+		if (cached.valid && cached.result) {
+			if (isStale) {
+				metricsEmitter.incrementCounter('validation.cache.stale_hits', {
+					cache_key: cacheKey,
+				});
+				// Return stale result but could trigger background refresh later
+			} else {
+				metricsEmitter.incrementCounter('validation.cache.hits', {
+					cache_key: cacheKey,
+				});
+			}
 			return cached.result;
 		} else {
 			throw cached.error;
 		}
 	}
+
+	// Cache miss - emit metric
+	metricsEmitter.incrementCounter('validation.cache.misses', {
+		cache_key: cacheKey,
+	});
+	const startTime = Date.now();
 
 	// Initialize cache cleanup on first use
 	initializeCacheCleanup();
@@ -154,13 +260,35 @@ export function validateWorkflow(input: unknown): ValidationResult {
 	try {
 		const result = validateWorkflowStructure(wf);
 
+		// Record timing metrics
+		const latency = Date.now() - startTime;
+		metricsEmitter.recordTiming('validation.latency.ms', latency, {
+			step_count: Object.keys(wf.steps).length,
+			has_budget: Boolean(wf.budget),
+		});
+
 		// Cache successful validation
-		validationCache.set(cacheKey, { valid: true, result });
+		const now = Date.now();
+		const softTtl = 10 * 60 * 1000; // 10 minutes
+		validationCache.set(cacheKey, {
+			valid: true,
+			result,
+			timestamp: now,
+			softExpiry: now + softTtl,
+		});
+		metricsEmitter.incrementCounter('validation.cache.sets', {
+			cache_key: cacheKey,
+		});
 
 		return result;
 	} catch (error) {
 		// Cache validation error
-		validationCache.set(cacheKey, { valid: false, error: error as Error });
+		const now = Date.now();
+		validationCache.set(cacheKey, {
+			valid: false,
+			error: error as Error,
+			timestamp: now,
+		});
 		throw error;
 	}
 }
@@ -168,7 +296,7 @@ export function validateWorkflow(input: unknown): ValidationResult {
 /**
  * Optimized workflow structure validation
  */
-function validateWorkflowStructure(wf: any): ValidationResult {
+function validateWorkflowStructure(wf: Workflow): ValidationResult {
 	const visited = new Set<string>();
 	const stack = new Set<string>();
 	const unreachableSteps = new Set(Object.keys(wf.steps));
@@ -184,7 +312,7 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 	}
 
 	// Pre-validate all next/branch references
-	for (const [stepId, step] of Object.entries(wf.steps) as [string, any][]) {
+	for (const [stepId, step] of Object.entries(wf.steps)) {
 		if (step.next && !stepIds.has(step.next)) {
 			throw new Error(
 				`Step '${stepId}' references non-existent next step: ${step.next}`,
@@ -332,21 +460,43 @@ export function clearValidationCache(): void {
 }
 
 /**
- * Get validation cache statistics
+ * Get validation cache diagnostics for ops monitoring
  */
-export function getValidationCacheStats(): {
+export function getValidationCache(): {
 	size: number;
-	hitRate: number;
+	hitRate?: number;
+	oldestEntryAge?: number;
+	staleEntryCount: number;
 	memoryUsage: number;
 } {
-	// This is a simplified approximation
+	const now = Date.now();
+	let oldestTimestamp = now;
+	let staleCount = 0;
+
+	// Calculate oldest entry age and stale count
+	for (const entry of validationCache.values()) {
+		if (entry.timestamp < oldestTimestamp) {
+			oldestTimestamp = entry.timestamp;
+		}
+
+		// Check if entry is soft-expired
+		if (entry.softExpiry && now > entry.softExpiry) {
+			staleCount++;
+		}
+	}
+
+	const oldestEntryAge =
+		validationCache.size > 0 ? now - oldestTimestamp : undefined;
+
+	// Simplified memory usage approximation
 	const memoryUsage = JSON.stringify(
 		Array.from(validationCache.entries()),
 	).length;
 
 	return {
 		size: validationCache.size,
-		hitRate: 0, // Would need separate tracking for actual hit rate
+		oldestEntryAge,
+		staleEntryCount: staleCount,
 		memoryUsage,
 	};
 }
@@ -400,7 +550,7 @@ export function estimateValidationCost(input: unknown): {
 		const stepCount = Object.keys(wf.steps).length;
 
 		let totalBranches = 0;
-		for (const step of Object.values(wf.steps) as any[]) {
+		for (const step of Object.values(wf.steps)) {
 			if (step.branches) {
 				totalBranches += step.branches.length;
 			}

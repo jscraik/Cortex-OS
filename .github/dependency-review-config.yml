@@ -1,0 +1,46 @@
+# Dependency Review Configuration
+# Controls what gets flagged during dependency review in PRs
+
+# Fail the check if new vulnerabilities are detected above this level
+# Valid values: low, moderate, high, critical
+fail_on_severity: high
+
+# License allowlist - dependencies with these licenses will be approved
+allow_licenses:
+  - MIT
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - ISC
+  - 0BSD
+  - CC0-1.0
+
+# License denylist - dependencies with these licenses will be rejected
+deny_licenses:
+  - GPL-2.0
+  - GPL-3.0
+  - LGPL-2.0
+  - LGPL-2.1
+  - LGPL-3.0
+  - AGPL-1.0
+  - AGPL-3.0
+
+# Vulnerability allowlist - specific vulnerabilities to ignore
+# Format: GHSA-xxxx-xxxx-xxxx or CVE-YYYY-NNNN
+allow_ghsas: []
+allow_cves: []
+
+# Package allowlist - specific packages that are exempt from checks
+allow_dependencies:
+  # Example: Allow specific dev dependencies that might have looser license requirements
+  # - name: "example-dev-tool"
+  #   version: ">= 1.0.0"
+
+# Additional configuration options
+config:
+  # Whether to check for license changes
+  license_check: true
+  # Whether to check for vulnerability changes
+  vulnerability_check: true
+  # Whether to include development dependencies in checks
+  include_dev_dependencies: true

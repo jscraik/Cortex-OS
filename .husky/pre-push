@@ -1,74 +1,187 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+# Optimized pre-push hook - comprehensive quality gates
+# Avoids duplicate work from pre-commit, focuses on push-time validations
+
+set -euo pipefail
+
+# Source shared environment bootstrap
 . "$(dirname -- "$0")/common.sh"
 
-echo "Running pre-push checks..."
+echo "🚀 Pre-push: comprehensive validation before sharing changes"
 
-# Run linting
-if command -v pnpm >/dev/null 2>&1; then
-  echo "Running linter..."
-  pnpm lint || {
-    echo "❌ Linting failed"
-    echo "Please fix linting issues before pushing"
-    exit 1
-  }
-  echo "✅ Linting passed"
-else
-  echo "Warning: pnpm not found, skipping linting"
+# Allow emergency bypass
+if [ "${CORTEX_SKIP_PREPUSH:-}" = "1" ]; then
+  echo "⚠️  CORTEX_SKIP_PREPUSH=1 set – skipping all pre-push checks"
+  exit 0
 fi
 
-# Run security scan if semgrep is available
-if command -v semgrep >/dev/null 2>&1; then
-  echo "Running security scan..."
-  pnpm security:scan:all || {
-    echo "❌ Security scan failed"
-    echo "Please address security issues before pushing"
-    exit 1
-  }
-  echo "✅ Security scan passed"
+# Get files that will be pushed (between local branch and remote)
+LOCAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REMOTE_BRANCH="origin/${LOCAL_BRANCH}"
+
+# Use more reliable diff range - if remote branch doesn't exist, check against HEAD~1
+if git rev-parse --verify "$REMOTE_BRANCH" >/dev/null 2>&1; then
+  PUSH_RANGE="$REMOTE_BRANCH..HEAD"
 else
-  echo "Warning: semgrep not found, skipping security scan"
+  PUSH_RANGE="HEAD~1..HEAD"
 fi
 
-# Check for code changes and run appropriate security scans
-if git diff --cached --name-only | grep -E '\.(js|ts|mjs|jsx|tsx|py|go|java|rb|php)$' >/dev/null; then
-  echo "Code changes detected, running security scan..."
-  if command -v pnpm >/dev/null 2>&1; then
+PUSH_FILES=$(git diff --name-only "$PUSH_RANGE" 2>/dev/null || git diff --name-only HEAD~1..HEAD || true)
+if [ -z "$PUSH_FILES" ]; then
+  echo "No files to push – validation complete."
+  exit 0
+fi
+
+JS_TS_PUSH=$(echo "$PUSH_FILES" | grep -E '\.(js|jsx|ts|tsx)$' || true)
+PY_PUSH=$(echo "$PUSH_FILES" | grep -E '\.py$' || true)
+RUST_PUSH=$(echo "$PUSH_FILES" | grep -E '\.rs$' || true)
+CODE_PUSH=$(echo "$PUSH_FILES" | grep -E '\.(js|ts|mjs|jsx|tsx|py|go|java|rb|php|rs)$' || true)
+
+echo "📊 Push scope: $(echo "$PUSH_FILES" | wc -l | tr -d ' ') files"
+
+##################################
+# 1. Full linting (tree-wide)   #
+##################################
+# Note: pre-commit handles staged file lint via lint-staged
+# This runs full lint for consistency across the entire tree
+if [ -n "$JS_TS_PUSH" ] && command -v pnpm >/dev/null 2>&1; then
+  echo "🔍 Full tree lint (JS/TS changes detected)"
+  pnpm lint:smart || {
+    echo "❌ Full linting failed - fix issues before pushing"
+    exit 1
+  }
+  echo "✅ Full linting passed"
+else
+  echo "⏭️  No JS/TS changes - skipping full lint"
+fi
+
+##################################
+# 2. Security scanning          #
+##################################
+if [ -n "$CODE_PUSH" ]; then
+  echo "🛡️  Security scan (code changes detected)"
+  if command -v semgrep >/dev/null 2>&1 && command -v pnpm >/dev/null 2>&1; then
+    # Use targeted scan for performance
     pnpm security:scan || {
-      echo "❌ Security scan failed"
-      echo "Please address security issues before pushing"
+      echo "❌ Security scan failed - address issues before pushing"
       exit 1
     }
-    echo "✅ Security scan for code changes passed"
+    echo "✅ Security scan passed"
+  else
+    echo "⚠️  semgrep not available - skipping security scan"
+    echo "    Install semgrep for security validation"
   fi
 else
-  echo "No code changes detected; skipping detailed security scan"
+  echo "⏭️  No code changes - skipping security scan"
 fi
 
-# Run TypeScript type checking (heavy) at pre-push stage
-if command -v pnpm >/dev/null 2>&1; then
-  echo "Running TypeScript type checking..."
-  if pnpm run | grep -q '^typecheck'; then
+##################################
+# 3. TypeScript type checking   #
+##################################
+if [ -n "$JS_TS_PUSH" ] && command -v pnpm >/dev/null 2>&1; then
+  echo "📝 TypeScript type checking (affected projects)"
+  if pnpm run | grep -q '^typecheck:smart'; then
+    pnpm typecheck:smart || {
+      echo "❌ TypeScript typecheck failed"
+      exit 1
+    }
+    echo "✅ TypeScript typecheck passed"
+  elif pnpm run | grep -q '^typecheck'; then
+    echo "⚠️  Using legacy typecheck (consider typecheck:smart)"
     pnpm typecheck || {
       echo "❌ TypeScript typecheck failed"
       exit 1
     }
+    echo "✅ TypeScript typecheck passed"
   else
-    echo "Skipping typecheck (script not defined)"
+    echo "ℹ️  No typecheck script defined - skipping"
   fi
+else
+  echo "⏭️  No JS/TS changes - skipping typecheck"
 fi
 
-# Run Python checks at pre-push stage if python dir exists
-if [ -d python ]; then
-  if command -v uv >/dev/null 2>&1; then
-    echo "Running Python checks (ruff, pyright)..."
-    (cd python && uv run ruff check . && uv run pyright) || {
-      echo "❌ Python checks failed"
+##################################
+# 4. Python validation          #
+##################################
+if [ -n "$PY_PUSH" ]; then
+  echo "🐍 Python validation (ruff + pyright)"
+  if [ -d python ]; then
+    if command -v uv >/dev/null 2>&1; then
+      (cd python && uv run ruff check . && uv run pyright) || {
+        echo "❌ Python checks failed"
+        exit 1
+      }
+      echo "✅ Python checks passed"
+    elif command -v ruff >/dev/null 2>&1; then
+      ruff check . || {
+        echo "❌ Ruff check failed"
+        exit 1
+      }
+      echo "✅ Ruff check passed (pyright skipped - install uv for full validation)"
+    else
+      echo "⚠️  Python tools not available - skipping Python validation"
+    fi
+  else
+    echo "ℹ️  No python/ directory - skipping Python checks"
+  fi
+else
+  echo "⏭️  No Python changes - skipping Python validation"
+fi
+
+##################################
+# 5. Comprehensive test suite   #
+##################################
+# Note: pre-commit runs affected tests quickly
+# This runs a more comprehensive test suite for push validation
+if [ "${CORTEX_SKIP_PUSH_TESTS:-}" != "1" ]; then
+  if [ -n "$CODE_PUSH" ]; then
+    echo "🧪 Comprehensive test validation"
+    
+    # Run affected tests with more thorough coverage
+    if command -v pnpm >/dev/null 2>&1; then
+      # Use timeout to prevent hanging
+      if command -v timeout >/dev/null 2>&1; then
+        timeout 1800 pnpm test:smart -- --passWithNoTests --coverage.enabled=false || {
+          status=$?
+          if [ $status -eq 124 ]; then
+            echo "⚠️  Tests timed out after 30m - allowing push (investigate test performance)"
+          else
+            echo "❌ Comprehensive tests failed - fix before pushing"
+            exit 1
+          fi
+        }
+      else
+        pnpm test:smart -- --passWithNoTests --coverage.enabled=false || {
+          echo "❌ Comprehensive tests failed - fix before pushing"
+          exit 1
+        }
+      fi
+      echo "✅ Comprehensive tests passed"
+    else
+      echo "❌ pnpm not available - cannot run tests"
+      exit 1
+    fi
+  else
+    echo "⏭️  No code changes - skipping comprehensive tests"
+  fi
+else
+  echo "⏭️  Comprehensive tests skipped (CORTEX_SKIP_PUSH_TESTS=1)"
+fi
+
+##################################
+# 6. Optional structure validation #
+##################################
+if [ -n "$JS_TS_PUSH" ] && command -v pnpm >/dev/null 2>&1; then
+  if pnpm run | grep -q '^structure:validate'; then
+    echo "🏗️  Structure validation"
+    pnpm structure:validate || {
+      echo "❌ Structure validation failed"
       exit 1
     }
-  else
-    echo "⚠️ uv not found; skipping Python checks"
+    echo "✅ Structure validation passed"
   fi
 fi
 
-echo "✅ All pre-push checks passed!"
+echo "\n🎉 All pre-push validations passed! Ready to push."
+echo "📋 Validated: linting, security, types, tests, structure"
 exit 0

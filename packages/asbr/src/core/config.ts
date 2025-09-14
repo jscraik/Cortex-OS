@@ -3,8 +3,9 @@
  * Handles loading and validation of configuration files from XDG directories
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
 import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
+import { readFile, writeFile } from 'node:fs/promises';
+import { deepMerge } from '../lib/deep-merge.js';
 import {
 	type Config,
 	ConfigSchema,
@@ -16,34 +17,9 @@ import {
 } from '../types/index.js';
 import { getConfigPath, pathExists } from '../xdg/index.js';
 
-// Simple deep-merge for plain records (arrays and primitives are overwritten)
-function deepMerge<T extends Record<string, unknown>>(
-	base: T,
-	override: Partial<T>,
-): T {
-	const result: Record<string, unknown> = { ...base };
-	for (const [key, value] of Object.entries(
-		override as Record<string, unknown>,
-	)) {
-		const current = result[key];
-		if (
-			value !== null &&
-			typeof value === 'object' &&
-			!Array.isArray(value) &&
-			current !== null &&
-			typeof current === 'object' &&
-			!Array.isArray(current)
-		) {
-			result[key] = deepMerge(
-				current as Record<string, unknown>,
-				value as Record<string, unknown>,
-			);
-		} else {
-			result[key] = value;
-		}
-	}
-	return result as T;
-}
+// Note: Using shared deepMerge utility from lib/deep-merge which concatenates arrays.
+// This improves extensibility for future config list fields (e.g., allowlists) while
+// preserving primitive overwrite semantics.
 
 /**
  * Default ASBR configuration
@@ -83,17 +59,14 @@ export async function loadConfig(): Promise<Config> {
 	try {
 		const content = await readFile(configPath, 'utf-8');
 		const raw = yamlLoad(content);
-		const rawConfig =
-			raw && typeof raw === 'object' ? (raw as Partial<Config>) : undefined;
+		const rawConfig: Partial<Config> =
+			raw && typeof raw === 'object' ? (raw as Partial<Config>) : {};
 
-		// In test mode, merge with defaults before validating to reduce brittleness
-		const candidateConfig: unknown =
-			process.env.NODE_ENV === 'test' && rawConfig
-				? deepMerge(DEFAULT_CONFIG, rawConfig)
-				: rawConfig;
+		// Always merge with defaults so missing future optional fields don't break validation.
+		const merged = deepMerge(DEFAULT_CONFIG, rawConfig);
 
 		// Validate against schema
-		const result = ConfigSchema.safeParse(candidateConfig);
+		const result = ConfigSchema.safeParse(merged);
 		if (!result.success) {
 			throw new ValidationError('Invalid configuration', {
 				errors: result.error.errors,

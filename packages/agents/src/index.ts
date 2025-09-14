@@ -6,39 +6,40 @@
  * - MCP provider system with fallback chains
  * - A2A event integration
  * - Type-safe contracts and validation
+ * - Archon MCP integration for external tools and knowledge base
  */
 
 export type {
 	CodeAnalysisAgentConfig,
 	CodeAnalysisInput,
-	CodeAnalysisOutput,
-} from './agents/code-analysis-agent.js';
+	CodeAnalysisOutput
+} from './agents/code-analysis-agent';
 // Agents - Single-focused implementations
-export { createCodeAnalysisAgent } from './agents/code-analysis-agent.js';
+export { createCodeAnalysisAgent } from './agents/code-analysis-agent';
+export { createDocumentationAgent } from './agents/documentation-agent';
 export type {
 	DocumentationAgentConfig,
 	DocumentationInput,
-	DocumentationOutput,
-} from './agents/documentation-agent.js';
-export { createDocumentationAgent } from './agents/documentation-agent.js';
+	DocumentationOutput
+} from './agents/documentation-agent';
+export { createLangGraphAgent } from './agents/langgraph-agent';
 export type {
 	LangGraphInput,
-	LangGraphOutput,
-} from './agents/langgraph-agent.js';
-export { createLangGraphAgent } from './agents/langgraph-agent.js';
+	LangGraphOutput
+} from './agents/langgraph-agent';
 export type {
 	SecurityAgentConfig,
 	SecurityInput,
-	SecurityOutput,
-} from './agents/security-agent.js';
+	SecurityOutput
+} from './agents/security-agent';
 // Security Agent (LlamaGuard-backed via MLX or provider chain)
-export { createSecurityAgent } from './agents/security-agent.js';
+export { createSecurityAgent } from './agents/security-agent';
+export { createTestGenerationAgent } from './agents/test-generation-agent';
 export type {
 	TestGenerationAgentConfig,
 	TestGenerationInput,
-	TestGenerationOutput,
-} from './agents/test-generation-agent.js';
-export { createTestGenerationAgent } from './agents/test-generation-agent.js';
+	TestGenerationOutput
+} from './agents/test-generation-agent';
 export type {
 	AgentCompletedEvent,
 	AgentFailedEvent,
@@ -49,8 +50,8 @@ export type {
 	MemoryPressureEvent,
 	ProviderFallbackEvent,
 	ProviderSuccessEvent,
-	ThermalThrottleEvent,
-} from './events/agent-events.js';
+	ThermalThrottleEvent
+} from './events/agent-events';
 // Event schemas and types
 export {
 	agentCompletedEventSchema,
@@ -62,32 +63,31 @@ export {
 	memoryPressureEventSchema,
 	providerFallbackEventSchema,
 	providerSuccessEventSchema,
-	thermalThrottleEventSchema,
-	// workflow event schemas
-	// (available via agentEventCatalog indexing)
-} from './events/agent-events.js';
-export type { DSPConfig } from './lib/dsp.js';
-export { DynamicSpeculativePlanner } from './lib/dsp.js';
+	thermalThrottleEventSchema
+} from './events/agent-events';
+export {
+	AgentMCPClient, MCPCapableAgent, createAgentMCPClient
+} from './integrations/mcp-client';
+export { DynamicSpeculativePlanner } from './lib/dsp';
+export type { DSPConfig } from './lib/dsp';
 export type {
 	CloudEvent,
 	EventBusConfig,
-	EventSubscriber,
-} from './lib/event-bus.js';
+	EventSubscriber
+} from './lib/event-bus';
 // Event Bus Integration
 export {
 	createAgentEventBus,
 	createEventBus,
 	createEventBusForEnvironment,
 	createEventPublisher,
-	createEventSubscriber,
-} from './lib/event-bus.js';
-export { getSecret, redactSecrets } from './lib/secret-store.js';
+	createEventSubscriber
+} from './lib/event-bus';
+export { getSecret, redactSecrets } from './lib/secret-store';
 // Core types and interfaces
 export type {
-	Agent,
 	AgentCapability,
-	AgentDependencies,
-	EventBus,
+	AgentDependencies, Agent as BaseAgent, EventBus,
 	EventSubscription,
 	ExecutionContext,
 	GenerateOptions,
@@ -95,10 +95,10 @@ export type {
 	MCPClient,
 	MCPServerInfo,
 	ModelProvider,
-	ProviderChainConfig,
-} from './lib/types.js';
+	ProviderChainConfig
+} from './lib/types';
 // Error types
-export { AgentError, ProviderError, ValidationError } from './lib/types.js';
+export { AgentError, ProviderError, ValidationError } from './lib/types';
 // Utility functions
 export {
 	debounce,
@@ -114,8 +114,8 @@ export {
 	throttle,
 	timeout,
 	truncateToTokens,
-	withTimeout,
-} from './lib/utils.js';
+	withTimeout
+} from './lib/utils';
 // Validation utilities
 export {
 	createValidator,
@@ -124,44 +124,59 @@ export {
 	validateExecutionContext,
 	validateInput,
 	validateOutput,
-	validateSchema,
-} from './lib/validate.js';
+	validateSchema
+} from './lib/validate';
 export type {
 	AgentOrchestrator,
 	OrchestrationResult,
 	OrchestratorConfig,
 	Workflow,
-	WorkflowTask,
-} from './orchestration/agent-orchestrator.js';
+	WorkflowTask
+} from './orchestration/agent-orchestrator';
 // Orchestration Layer
 export {
-	createOrchestrator,
-	WorkflowBuilder,
-} from './orchestration/agent-orchestrator.js';
-export type { FallbackChainConfig } from './providers/fallback-chain.js';
+	WorkflowBuilder, createOrchestrator
+} from './orchestration/agent-orchestrator';
 export {
 	createFallbackChain,
 	createLocalFallbackChain,
-	createStandardFallbackChain,
-} from './providers/fallback-chain.js';
-export type { MCPProviderConfig } from './providers/mcp-provider.js';
+	createStandardFallbackChain
+} from './providers/fallback-chain';
+export type { FallbackChainConfig } from './providers/fallback-chain';
+export type { MCPProviderConfig } from './providers/mcp-provider';
 // Providers - Full implementation with MLX integration
 export {
 	createMCPProvider,
 	createMCPProviders,
-	discoverMCPProviders,
-} from './providers/mcp-provider.js';
-export type {
-	MemoryStatus,
-	MLXProviderConfig,
-	ThermalStatus,
-} from './providers/mlx-provider/index.js';
+	discoverMCPProviders
+} from './providers/mcp-provider';
 export {
 	createAutoMLXProvider,
 	createMLXProvider,
 	getMLXMemoryStatus,
-	getMLXThermalStatus,
-} from './providers/mlx-provider/index.js';
+	getMLXThermalStatus
+} from './providers/mlx-provider/index';
+export type {
+	MLXProviderConfig, MemoryStatus, ThermalStatus
+} from './providers/mlx-provider/index';
+// MCP Integration for Archon
+export type {
+	Agent,
+	AgentResult,
+	ArchonIntegrationConfig,
+	ContentType,
+	DocumentMetadata,
+	ExternalTool,
+	KnowledgeSearchFilters,
+	KnowledgeSearchResult,
+	MCPClientConfig,
+	MCPClientEvents,
+	Priority,
+	Task,
+	TaskCreationResult,
+	TaskStatus,
+	ToolParameter
+} from './types/mcp';
 
 // Package information
 export const AGENTS_PACKAGE_VERSION = '0.1.0';
@@ -172,16 +187,25 @@ export const ARCHITECTURE_STATUS = 'COMPLETE';
  */
 export const packageInfo = {
 	version: AGENTS_PACKAGE_VERSION,
-	architecture: 'MCP + A2A + Single-Focused Agents',
+	architecture: 'MCP + A2A + Single-Focused Agents + Archon Integration',
 	status: ARCHITECTURE_STATUS,
-	capabilities: ['code-analysis', 'test-generation', 'documentation'] as const,
-	providers: ['mlx', 'ollama', 'frontier'] as const,
+	capabilities: [
+		'code-analysis',
+		'test-generation',
+		'documentation',
+		'mcp-tools',
+		'external-search',
+	] as const,
+	providers: ['mlx', 'ollama', 'frontier', 'archon'] as const,
 	features: [
 		'thermal-aware-fallback',
 		'mcp-tool-integration',
 		'a2a-event-emission',
 		'schema-validation',
 		'provider-chaining',
+		'archon-knowledge-search',
+		'archon-task-management',
+		'external-document-upload',
 	] as const,
 };
 

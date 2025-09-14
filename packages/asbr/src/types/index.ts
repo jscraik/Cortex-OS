@@ -183,6 +183,11 @@ export const EventSchema = z.object({
 	evidenceDelta: z.array(z.string().uuid()).optional(),
 	timestamp: z.string().datetime(),
 	data: z.record(z.string(), z.unknown()).optional(),
+	// Optional W3C trace context parent (added for cross-service tracing)
+	traceparent: z
+		.string()
+		.regex(/^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$/)
+		.optional(),
 });
 
 export type Event = z.infer<typeof EventSchema>;
@@ -252,8 +257,8 @@ export const ConfigSchema = z.object({
 			trim_trailing_ws: z.boolean(),
 			strip_dates: z.boolean(),
 		}),
-        }),
-        cache_ttl_ms: z.number().positive(),
+	}),
+	cache_ttl_ms: z.number().positive(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

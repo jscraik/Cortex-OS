@@ -42,8 +42,22 @@ function buildAgentResult(
   result: DocumentationOutput,
   validatedInput: DocumentationInput,
 ): DocumentationOutput {
+  type Section = DocumentationOutput['sections'][number];
+  const normalizeSection = (s: Section): Section => ({
+    title: s.title,
+    type: s.type,
+    content: s.content,
+    examples: s.examples ?? [],
+    parameters: s.parameters ?? [],
+    returnType: s.returnType,
+  });
+
+  const normalizedSections: Section[] = Array.isArray(result.sections)
+    ? result.sections.map(normalizeSection)
+    : [];
+
   return {
-    sections: Array.isArray(result.sections) ? result.sections : [],
+    sections: normalizedSections,
     format: result.format || validatedInput.outputFormat || 'markdown',
     language: result.language || validatedInput.language,
     documentationType:
@@ -170,21 +184,31 @@ export interface DocumentationAgentConfig {
   mcpClient: MCPClient;
   timeout?: number;
   maxRetries?: number;
-  memoryPolicy?: import('../lib/types.js').MemoryPolicy;
+  memoryPolicy?: import('../lib/types').MemoryPolicy;
 }
 
 /**
  * Creates a documentation agent instance
  */
 // Helper: Normalize input
-function normalizeInput(
-  context: ExecutionContext<DocumentationInput> | DocumentationInput,
-): DocumentationInput {
-  if (typeof context === 'object' && context !== null && 'input' in context) {
-    return context.input;
+  function isExecutionContext(
+    value: unknown,
+  ): value is ExecutionContext<DocumentationInput> {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'input' in (value as Record<string, unknown>)
+    );
   }
-  return context;
-}
+
+  function normalizeInput(
+    context: ExecutionContext<DocumentationInput> | DocumentationInput,
+  ): DocumentationInput {
+    if (isExecutionContext(context)) {
+      return context.input;
+    }
+    return context;
+  }
 
 // Helper: Should publish lifecycle event
 function shouldPublishLifecycle(input: unknown): boolean {
@@ -229,7 +253,7 @@ export const createDocumentationAgent = (
   const agentId = generateAgentId();
   const timeout = config.timeout || 45000; // Longer timeout for documentation
 
-  return {
+  const agent: Agent<DocumentationInput, DocumentationOutput> = {
     id: agentId,
     name: 'documentation-agent',
     capability: 'documentation',
@@ -245,7 +269,7 @@ export const createDocumentationAgent = (
     execute: async (
       context: ExecutionContext<DocumentationInput> | DocumentationInput,
     ): Promise<DocumentationOutput> => {
-      const input = normalizeInput(context);
+  const input = normalizeInput(context);
       const traceId = generateTraceId();
       const startTime = Date.now();
 
@@ -316,6 +340,7 @@ export const createDocumentationAgent = (
       return buildAgentResult(result, safeInput);
     },
   };
+  return agent;
 };
 
 /**
@@ -386,9 +411,25 @@ const generateDocumentation = async (
     documentationType,
   );
 
-  // Validate output schema
-  // @ts-expect-error - Type assertion for schema compatibility
-  return validateSchema(documentationOutputSchema, result);
+  // Validate output schema (runtime schema enforces structure)
+  // Ensure sections conform to schema expectations before validation
+  const prevalidated: DocumentationOutput = {
+    sections: result.sections.map((s) => ({
+      title: s.title,
+      type: s.type,
+      content: s.content,
+      examples: Array.isArray(s.examples) ? s.examples : [],
+      parameters: Array.isArray(s.parameters) ? s.parameters : [],
+      returnType: s.returnType,
+    })),
+    format: result.format,
+    language: result.language,
+    documentationType: result.documentationType,
+    metadata: result.metadata,
+    confidence: result.confidence,
+    processingTime: result.processingTime,
+  };
+  return validateSchema(documentationOutputSchema, prevalidated);
 };
 
 /**
@@ -679,8 +720,10 @@ const parseDocumentationResponse = (
       | 'example';
     const content =
       typeof s.content === 'string' ? s.content : String(s.content ?? '');
-    const examples = Array.isArray(s.examples) ? s.examples.map(String) : [];
-    const parameters = Array.isArray(s.parameters)
+    const examples: string[] = Array.isArray(s.examples)
+      ? s.examples.map(String)
+      : [];
+    const parameters: string[] = Array.isArray(s.parameters)
       ? s.parameters.map(String)
       : [];
     let returnType: string | null | undefined;
@@ -694,8 +737,21 @@ const parseDocumentationResponse = (
     return { title, type, content, examples, parameters, returnType };
   });
 
+  const normalizedSections = sections.map((sec) => ({
+    ...sec,
+    examples: Array.isArray(sec.examples) ? sec.examples : [],
+    parameters: Array.isArray(sec.parameters) ? sec.parameters : [],
+  }));
+
   return {
-    sections,
+    sections: normalizedSections.map((s) => ({
+      title: s.title,
+      type: s.type,
+      content: s.content,
+      examples: Array.isArray(s.examples) ? s.examples : [],
+      parameters: Array.isArray(s.parameters) ? s.parameters : [],
+      returnType: s.returnType,
+    })),
     format,
     language,
     documentationType,

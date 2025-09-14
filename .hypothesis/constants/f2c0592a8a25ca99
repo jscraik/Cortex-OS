@@ -1,0 +1,4 @@
+# file: /Users/jamiecraik/.Cortex-OS/services/ml-inference/src/mlx_inference.py
+# hypothesis_version: 6.138.16
+
+[0.7, 128, 512, 1000, 'Model not loaded', 'Model unloaded', 'cache_info', 'content', 'currsize', 'enabled', 'hit_rate', 'hits', 'inference', 'initialized', 'maxsize', 'memory_available', 'misses', 'mlx_available', 'model_info', 'model_loaded']

@@ -1,7 +1,9 @@
 [project]
 name = "cortex-os"
 version = "1.0.0"
-requires-python = ">=3.13"
+# Pin to <3.13 because grpcio-tools (transitive via qdrant-client) fails to build against Python 3.13.
+# Once upstream wheels support 3.13 (grpcio / grpcio-tools), this can be relaxed.
+requires-python = ">=3.11,<3.13"
 description = "ASBR Cortex-OS Platform"
 license = { text = "MIT" }
 dependencies = [
@@ -55,7 +57,8 @@ members = [
 [tool.ruff]
 line-length = 88
 indent-width = 4
-target-version = "py313"
+# Align target-version with supported runtime (<3.13)
+target-version = "py312"
 src = ["services", "libs/python", "packages", "apps/cortex-py", "servers/src"]
 exclude = [
   ".venv",
@@ -125,7 +128,8 @@ ignore = ["E501"]
 "docker/gpl-tools/gpl_service.py" = ["B008"]                # FastAPI File/Form default pattern
 
 [tool.mypy]
-python_version = "3.13"
+# Match runtime interpreter version constraint
+python_version = "3.12"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -141,15 +145,21 @@ namespace_packages = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-testpaths = ["tests", "services/*/tests", "libs/python/*/tests"]
+testpaths = [
+  "tests",
+  "services/*/tests",
+  "libs/python/*/tests",
+  "apps/cortex-py/tests",
+]
 python_files = ["test_*.py", "*_test.py"]
 addopts = [
   "--cov=services",
   "--cov=libs/python",
+  "--cov=apps/cortex-py/src",
   "--cov-report=term-missing",
   "--cov-report=xml",
   "--cov-report=html",
-  "--cov-fail-under=70",
+  "--cov-fail-under=95",
   "--strict-markers",
   "-vv",
 ]

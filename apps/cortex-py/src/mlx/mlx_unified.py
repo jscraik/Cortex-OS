@@ -12,12 +12,58 @@ import sys
 
 from pydantic import BaseModel as PydanticBaseModel
 
-# Constants
-DEFAULT_MAX_LENGTH = 512
-DEFAULT_MAX_TOKENS = 4096
-DEFAULT_TEMPERATURE = 0.7
-DEFAULT_CACHE_DIR = "/Volumes/ExternalSSD/huggingface_cache"
-DEFAULT_MLX_CACHE_DIR = "/Volumes/ExternalSSD/ai-cache"
+# Default constant fallbacks (overridable via env helpers below)
+_FALLBACK_MAX_LENGTH = 512
+_FALLBACK_MAX_TOKENS = 4096
+_FALLBACK_TEMPERATURE = 0.7
+
+
+def _read_int_env(var: str, default: int) -> int:
+    val = os.getenv(var)
+    if not val:
+        return default
+    try:
+        parsed = int(val)
+        if parsed <= 0:
+            return default
+        return parsed
+    except ValueError:
+        return default
+
+
+def _read_float_env(var: str, default: float) -> float:
+    val = os.getenv(var)
+    if not val:
+        return default
+    try:
+        parsed = float(val)
+        if parsed <= 0:
+            return default
+        return parsed
+    except ValueError:
+        return default
+
+
+def get_default_max_length() -> int:
+    return _read_int_env("MLX_DEFAULT_MAX_LENGTH", _FALLBACK_MAX_LENGTH)
+
+
+def get_default_max_tokens() -> int:
+    return _read_int_env("MLX_DEFAULT_MAX_TOKENS", _FALLBACK_MAX_TOKENS)
+
+
+def get_default_temperature() -> float:
+    return _read_float_env("MLX_DEFAULT_TEMPERATURE", _FALLBACK_TEMPERATURE)
+
+
+# Backward-compatible aliases used elsewhere in argument parsing
+DEFAULT_MAX_LENGTH = get_default_max_length()
+DEFAULT_MAX_TOKENS = get_default_max_tokens()
+DEFAULT_TEMPERATURE = get_default_temperature()
+# Default cache directories now derive from HOME to avoid hard-coded platform paths.
+_HOME = os.path.expanduser("~")
+DEFAULT_CACHE_DIR = os.path.join(_HOME, ".cache", "huggingface")
+DEFAULT_MLX_CACHE_DIR = os.path.join(_HOME, ".cache", "mlx")
 FALLBACK_TEST_TEXT = "test"
 
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +72,7 @@ logger = logging.getLogger(__name__)
 try:
     import mlx_lm
     import mlx_vlm
-except ImportError as e:
+except ImportError as e:  # pragma: no cover - dependency resolution
     logger.error("Error importing MLX dependencies: %s", e)
     logger.error(
         "Please install with: pip install mlx mlx-lm mlx-vlm transformers torch numpy"
@@ -36,10 +82,16 @@ except ImportError as e:
 try:
     import torch
     from transformers import AutoModel, AutoTokenizer
-except ImportError as e:
+except ImportError as e:  # pragma: no cover - transformer deps
     logger.error("Error importing transformer dependencies: %s", e)
     torch = None
     AutoModel = AutoTokenizer = None
+
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError as e:  # pragma: no cover - sentence transformers optional
+    logger.info("SentenceTransformers not available for CPU fallback: %s", e)
+    SentenceTransformer = None
 
 try:
     import instructor
@@ -72,16 +124,30 @@ except ImportError as e:
 
 # Cache directory getters
 
+
 def get_hf_home() -> str:
-    return os.environ.get("HF_HOME", DEFAULT_CACHE_DIR)
+    """Return HuggingFace home cache directory.
+
+    Resolution order:
+    1. HF_HOME env var
+    2. TRANSFORMERS_CACHE env var (compat)
+    3. DEFAULT_CACHE_DIR under user home
+    """
+    return (
+        os.environ.get("HF_HOME")
+        or os.environ.get("TRANSFORMERS_CACHE")
+        or DEFAULT_CACHE_DIR
+    )
 
 
 def get_transformers_cache() -> str:
-    return os.environ.get("TRANSFORMERS_CACHE", get_hf_home())
+    """Return transformers cache directory, falling back to HF_HOME logic."""
+    return os.environ.get("TRANSFORMERS_CACHE") or get_hf_home()
 
 
 def get_mlx_cache_dir() -> str:
-    return os.environ.get("MLX_CACHE_DIR", DEFAULT_MLX_CACHE_DIR)
+    """Return MLX cache directory (models, weights)."""
+    return os.environ.get("MLX_CACHE_DIR") or DEFAULT_MLX_CACHE_DIR
 
 
 class ChatResponse(BaseModel):
@@ -114,65 +180,143 @@ class MLXUnified:
         else:
             self.model_type = "chat"  # Default to chat
 
-        logger.info("Detected model type %s for %s", self.model_type, model_name)
+        # Detect platform capabilities
+        import platform
+
+        self.is_darwin = platform.system() == "Darwin"
+        self.mlx_available = (
+            mlx_lm is not None and mlx_vlm is not None and self.is_darwin
+        )
+        self.torch_available = torch is not None
+        self.sentence_transformers_available = SentenceTransformer is not None
+
+        logger.info(
+            "Detected model type %s for %s (MLX: %s, Torch: %s, CPU fallback: %s)",
+            self.model_type,
+            model_name,
+            self.mlx_available,
+            self.torch_available,
+            self.sentence_transformers_available,
+        )
 
     def load_model(self) -> None:  # pragma: no cover - heavy I/O
-        """Load the appropriate model based on type"""
+        """Load the appropriate model based on type with cross-platform fallbacks"""
         try:
             if self.model_type == "embedding":
-                self.model = AutoModel.from_pretrained(
-                    self.model_path,
-                    cache_dir=get_transformers_cache(),
-                )
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model_path, cache_dir=get_transformers_cache()
-                )
-            elif self.model_type == "chat":
-                # Use MLX-LM for chat models
-                if "vl" in self.model_name.lower():
-                    # Vision-language model
-                    self.model = mlx_vlm.load(self.model_path)
+                if self.sentence_transformers_available:
+                    # Use sentence-transformers for cross-platform compatibility
+                    logger.info(
+                        "Loading embedding model with sentence-transformers: %s",
+                        self.model_path,
+                    )
+                    self.model = SentenceTransformer(
+                        self.model_path, cache_folder=get_transformers_cache()
+                    )
+                    self.tokenizer = None  # Not needed for sentence-transformers
+                elif self.torch_available and AutoModel is not None:
+                    # Fallback to transformers + torch
+                    logger.info(
+                        "Loading embedding model with transformers: %s", self.model_path
+                    )
+                    self.model = AutoModel.from_pretrained(
+                        self.model_path,
+                        cache_dir=get_transformers_cache(),
+                    )
+                    self.tokenizer = AutoTokenizer.from_pretrained(
+                        self.model_path, cache_dir=get_transformers_cache()
+                    )
                 else:
-                    # Regular chat model
-                    self.model, self.tokenizer = mlx_lm.load(self.model_path)
-            elif self.model_type == "reranking":
-                self.model = AutoModel.from_pretrained(
-                    self.model_path,
-                    cache_dir=get_transformers_cache(),
-                )
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model_path, cache_dir=get_transformers_cache()
-                )
+                    raise RuntimeError(
+                        "No embedding backend available (need sentence-transformers or torch+transformers)"
+                    )
 
-            logger.info("Loaded %s model: %s", self.model_type, self.model_name)
+            elif self.model_type == "chat":
+                if self.mlx_available:
+                    # Use MLX-LM for chat models on macOS
+                    if "vl" in self.model_name.lower():
+                        logger.info("Loading VL model with MLX: %s", self.model_path)
+                        self.model = mlx_vlm.load(self.model_path)
+                    else:
+                        logger.info("Loading chat model with MLX: %s", self.model_path)
+                        self.model, self.tokenizer = mlx_lm.load(self.model_path)
+                elif self.torch_available and AutoModel is not None:
+                    # Fallback to transformers for CPU inference
+                    logger.info(
+                        "Loading chat model with transformers (CPU): %s",
+                        self.model_path,
+                    )
+                    self.model = AutoModel.from_pretrained(
+                        self.model_path,
+                        cache_dir=get_transformers_cache(),
+                    )
+                    self.tokenizer = AutoTokenizer.from_pretrained(
+                        self.model_path, cache_dir=get_transformers_cache()
+                    )
+                else:
+                    raise RuntimeError(
+                        "No chat backend available (need MLX or torch+transformers)"
+                    )
+
+            elif self.model_type == "reranking":
+                if self.torch_available and AutoModel is not None:
+                    logger.info(
+                        "Loading reranking model with transformers: %s", self.model_path
+                    )
+                    self.model = AutoModel.from_pretrained(
+                        self.model_path,
+                        cache_dir=get_transformers_cache(),
+                    )
+                    self.tokenizer = AutoTokenizer.from_pretrained(
+                        self.model_path, cache_dir=get_transformers_cache()
+                    )
+                else:
+                    raise RuntimeError(
+                        "No reranking backend available (need torch+transformers)"
+                    )
+
+            logger.info(
+                "Successfully loaded %s model: %s", self.model_type, self.model_name
+            )
 
         except Exception as e:
             logger.exception("Failed to load model %s: %s", self.model_name, e)
             raise
 
     def generate_embedding(self, text: str) -> list[float]:
-        """Generate embedding for single text"""
-        if not self.model or self.model_type != "embedding":
+        """Generate embedding for single text with cross-platform support"""
+        if not text:
+            raise ValueError("Text must be a non-empty string")
+        if self.model_type != "embedding" or self.model is None:
             raise ValueError("Embedding model not loaded")
 
-        if not text or not isinstance(text, str):
-            raise ValueError("Text must be a non-empty string")
+        # Use sentence-transformers if available (cross-platform)
+        if self.sentence_transformers_available and hasattr(self.model, "encode"):
+            embedding = self.model.encode(text, convert_to_numpy=True)
+            return embedding.tolist()
+
+        # Fallback to transformers + torch
+        if self.tokenizer is None:
+            raise RuntimeError("Tokenizer not initialized for transformers backend")
+        if torch is None:
+            raise RuntimeError("Torch not available for embedding generation")
 
         inputs = self.tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=DEFAULT_MAX_LENGTH
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=get_default_max_length(),
         )
 
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-            # Use CLS token or mean pooling
+        with torch.no_grad():  # type: ignore[union-attr]
+            outputs = self.model(**inputs)  # type: ignore[operator]
             if hasattr(outputs, "last_hidden_state"):
-                embedding = outputs.last_hidden_state.mean(dim=1).squeeze()
+                embedding_tensor = outputs.last_hidden_state.mean(dim=1).squeeze()
             elif hasattr(outputs, "pooler_output"):
-                embedding = outputs.pooler_output.squeeze()
+                embedding_tensor = outputs.pooler_output.squeeze()
             else:
-                embedding = outputs[0].mean(dim=1).squeeze()
+                embedding_tensor = outputs[0].mean(dim=1).squeeze()
 
-        return embedding.numpy().tolist()
+        return embedding_tensor.numpy().tolist()  # type: ignore[union-attr]
 
     def generate_embeddings(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for multiple texts"""
@@ -181,8 +325,8 @@ class MLXUnified:
     def generate_chat(
         self,
         messages: list[dict[str, str]],
-        max_tokens: int = DEFAULT_MAX_TOKENS,
-        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
     ) -> dict[str, str | dict[str, int]]:
         """Generate chat completion using instructor for structured outputs"""
         if not self.model or self.model_type != "chat":
@@ -203,8 +347,8 @@ class MLXUnified:
                 response = ollama_client.chat.completions.create(
                     model=self.model_name,
                     messages=messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
+                    max_tokens=max_tokens or get_default_max_tokens(),
+                    temperature=temperature or get_default_temperature(),
                     response_model=ChatResponse,
                 )
                 return {
@@ -216,41 +360,77 @@ class MLXUnified:
                 logger.warning(
                     "Instructor not available, falling back to direct MLX inference"
                 )
-                return self._generate_chat_fallback(messages, max_tokens, temperature)
+                return self._generate_chat_fallback(
+                    messages,
+                    max_tokens or get_default_max_tokens(),
+                    temperature or get_default_temperature(),
+                )
 
         except Exception as e:
             logger.error("Error with instructor inference, falling back to MLX: %s", e)
-            return self._generate_chat_fallback(messages, max_tokens, temperature)
+            return self._generate_chat_fallback(
+                messages,
+                max_tokens or get_default_max_tokens(),
+                temperature or get_default_temperature(),
+            )
 
     def _generate_chat_fallback(  # pragma: no cover - heavy inference
         self,
         messages: list[dict[str, str]],
-        max_tokens: int = DEFAULT_MAX_TOKENS,
-        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
     ) -> dict[str, str | dict[str, int]]:
-        """Fallback chat generation using direct MLX inference"""
+        """Cross-platform chat generation fallback"""
+        max_tokens = max_tokens or get_default_max_tokens()
+        temperature = temperature or get_default_temperature()
+
         # Format messages into prompt
-        if "vl" in self.model_name.lower():
-            # Vision-language model - handle specially
-            prompt = self._format_vl_messages(messages)
-            response = mlx_vlm.generate(
-                self.model,
-                self.tokenizer,
+        prompt = self._format_chat_messages(messages)
+
+        # Use MLX if available (macOS)
+        if self.mlx_available:
+            if "vl" in self.model_name.lower():
+                # Vision-language model
+                response = mlx_vlm.generate(
+                    self.model,
+                    self.tokenizer,
+                    prompt,
+                    max_tokens=max_tokens,
+                    temp=temperature,
+                )
+            else:
+                # Regular chat model
+                response = mlx_lm.generate(
+                    self.model,
+                    self.tokenizer,
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                    temp=temperature,
+                    verbose=False,
+                )
+        elif self.torch_available and self.tokenizer is not None:
+            # CPU fallback using transformers
+            logger.info("Using CPU fallback for chat generation")
+            inputs = self.tokenizer(
                 prompt,
-                max_tokens=max_tokens,
-                temp=temperature,
+                return_tensors="pt",
+                truncation=True,
+                max_length=get_default_max_length(),
             )
+
+            with torch.no_grad():  # type: ignore[union-attr]
+                # Simple completion - this is basic but operational
+                outputs = self.model.generate(  # type: ignore[union-attr]
+                    **inputs,
+                    max_new_tokens=min(max_tokens, 100),  # Conservative limit for CPU
+                    temperature=temperature,
+                    do_sample=temperature > 0.0,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                )
+                response_ids = outputs[0][inputs["input_ids"].shape[1] :]
+                response = self.tokenizer.decode(response_ids, skip_special_tokens=True)
         else:
-            # Regular chat model
-            prompt = self._format_chat_messages(messages)
-            response = mlx_lm.generate(
-                self.model,
-                self.tokenizer,
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temp=temperature,
-                verbose=False,
-            )
+            raise RuntimeError("No chat generation backend available")
 
         return {
             "content": response,
@@ -264,9 +444,12 @@ class MLXUnified:
     def generate_reranking(  # pragma: no cover - heavy inference
         self, query: str, documents: list[str]
     ) -> list[dict[str, int | float]]:
-        """Generate reranking scores"""
+        """Generate reranking scores with cross-platform support"""
         if not self.model or self.model_type != "reranking":
             raise ValueError("Reranking model not loaded")
+
+        if not self.torch_available or self.tokenizer is None:
+            raise RuntimeError("Torch and tokenizer required for reranking")
 
         scores = []
         for i, doc in enumerate(documents):
@@ -275,21 +458,21 @@ class MLXUnified:
                 f"Query: {query} Document: {doc}",
                 return_tensors="pt",
                 truncation=True,
-                max_length=DEFAULT_MAX_LENGTH,
+                max_length=get_default_max_length(),
             )
 
-            with torch.no_grad():
-                outputs = self.model(**inputs)
+            with torch.no_grad():  # type: ignore[union-attr]
+                outputs = self.model(**inputs)  # type: ignore[operator]
                 # Extract relevance score (model-specific logic)
                 if hasattr(outputs, "logits"):
-                    score = torch.sigmoid(outputs.logits).item()
+                    score = torch.sigmoid(outputs.logits).item()  # type: ignore[union-attr]
                 else:
                     # Fallback: use similarity between query and document embeddings
                     query_embedding = outputs.last_hidden_state[:, 0, :]  # CLS token
                     doc_embedding = outputs.last_hidden_state.mean(
                         dim=1
                     )  # Mean pooling
-                    score = torch.cosine_similarity(
+                    score = torch.cosine_similarity(  # type: ignore[union-attr]
                         query_embedding, doc_embedding
                     ).item()
 
@@ -298,7 +481,9 @@ class MLXUnified:
         # Sort by score descending
         return sorted(scores, key=lambda x: x["score"], reverse=True)
 
-    def _format_chat_messages(self, messages: list[dict[str, str]]) -> str:  # pragma: no cover - formatting utility
+    def _format_chat_messages(
+        self, messages: list[dict[str, str]]
+    ) -> str:  # pragma: no cover - formatting utility
         """Format messages for chat models"""
         formatted = []
         for msg in messages:
@@ -309,7 +494,9 @@ class MLXUnified:
         formatted.append("Assistant: ")  # Prompt for response
         return "\n".join(formatted)
 
-    def _format_vl_messages(self, messages: list[dict[str, str]]) -> str:  # pragma: no cover - formatting utility
+    def _format_vl_messages(
+        self, messages: list[dict[str, str]]
+    ) -> str:  # pragma: no cover - formatting utility
         """Format messages for vision-language models"""
         # Simple formatting for VL models
         return "\n".join([f"{msg['role']}: {msg['content']}" for msg in messages])

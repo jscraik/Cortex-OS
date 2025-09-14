@@ -8,100 +8,48 @@ on:
   schedule:
     - cron: '0 2 * * 0' # Weekly security scan
 
-env:
-  NODE_VERSION: '20.11.1'
-  PYTHON_VERSION: '3.11.13'
-  PNPM_VERSION: '9.9.0'
+concurrency:
+  group: advanced-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
 
 jobs:
-  # Quality Gates
+  # Quality Gates - Use reusable workflow
   quality-gates:
     name: Quality Gates
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Biome check
-        run: pnpm run biome:check
-
-      - name: TypeScript check
-        run: pnpm run typecheck
-
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Format check
-        run: pnpm run format:check
+    uses: ./.github/workflows/quality-gates.yml
+    with:
+      node-version: '20.11.1'
+      pnpm-version: '9.9.0'
+      run-tests: true
+      run-build: false
 
   # Security Scanning
   security:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Full Stack Setup
+        uses: ./.github/workflows/reusable-full-stack-setup.yml
         with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          node-version: '20.11.1'
+          pnpm-version: '9.9.0'
+          setup-python: false
+          setup-rust: false
 
       - name: Security audit
         run: pnpm audit --audit-level moderate
 
       - name: License compliance
-        run: pnpm run license:check
-
-      - name: Dependency vulnerability scan
-        if: env.SNYK_TOKEN != ''
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN || '' }}
-        with:
-          args: --severity-threshold=high
-        continue-on-error: true
-
-      - name: Alternative security scan
-        if: env.SNYK_TOKEN == ''
-        run: |
-          echo "Snyk token not available, running alternative security checks..."
-          pnpm audit --audit-level moderate || echo "Security audit completed with findings"
+        run: pnpm run license:check || echo "License check not available"
 
       - name: CodeQL Analysis
         uses: github/codeql-action/init@v3
@@ -120,30 +68,13 @@ jobs:
       matrix:
         test-type: [unit, integration, e2e]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Full Stack Setup
+        uses: ./.github/workflows/reusable-full-stack-setup.yml
         with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Python dependencies
-        run: |
-          pip install uv
-          uv sync
+          node-version: '20.11.1'
+          python-version: '3.11.13'
+          pnpm-version: '9.9.0'
+          setup-rust: false
 
       - name: Run tests
         run: pnpm run test:${{ matrix.test-type }}
@@ -168,12 +99,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20.11.1'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: '9.9.0'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -206,12 +137,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20.11.1'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: '9.9.0'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

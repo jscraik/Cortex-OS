@@ -39,7 +39,7 @@ export class WorkloadIdentityManager {
 				// Check cache first
 				const cached = this.attestationCache.get(spiffeId);
 				if (cached && cached.expiresAt > Date.now()) {
-					logWithSpan('debug', 'Using cached workload identity', {
+					logWithSpan('info', 'Using cached workload identity', {
 						spiffeId,
 						cacheExpiresAt: new Date(cached.expiresAt).toISOString(),
 					});
@@ -149,7 +149,7 @@ export class WorkloadIdentityManager {
 		for (const [key, expectedValue] of Object.entries(requiredSelectors)) {
 			const actualValue = identity.selectors[key];
 			if (actualValue !== expectedValue) {
-				logWithSpan('debug', 'Selector validation failed', {
+				logWithSpan('info', 'Selector validation failed', {
 					spiffeId,
 					selector: key,
 					expected: expectedValue,

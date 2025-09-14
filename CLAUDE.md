@@ -237,7 +237,7 @@ pnpm codex:doctor      # Rust-specific environment check
 Use Local Memory to persist agent context across runs. It is auto-selected when `LOCAL_MEMORY_BASE_URL` is set, or explicitly via `MEMORIES_ADAPTER=local` (alias: `MEMORY_STORE=local`).
 
 Environment variables:
-- `LOCAL_MEMORY_BASE_URL` (default: `http://localhost:3002/api/v1`)
+- `LOCAL_MEMORY_BASE_URL` (default: `http://localhost:3010/api/v1`)
 - `LOCAL_MEMORY_API_KEY` (optional)
 - `LOCAL_MEMORY_NAMESPACE` (optional namespace tag)
 - `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`
@@ -251,7 +251,7 @@ Quick code usage (Node):
 ```ts
 import { createStoreFromEnv } from '@cortex-os/memories';
 
-process.env.LOCAL_MEMORY_BASE_URL = process.env.LOCAL_MEMORY_BASE_URL || 'http://localhost:3002/api/v1';
+process.env.LOCAL_MEMORY_BASE_URL = process.env.LOCAL_MEMORY_BASE_URL || 'http://localhost:3010/api/v1';
 process.env.MEMORIES_ADAPTER = 'local'; // optional, auto-detected if BASE_URL is set
 
 const store = await createStoreFromEnv();

@@ -6,7 +6,7 @@ import traceback
 import uuid
 from contextlib import contextmanager
 from contextvars import ContextVar
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +33,7 @@ class JSONFormatter(logging.Formatter):
         """Format log record as JSON."""
         # Base log structure
         log_data = {
-            "timestamp": datetime.utcfromtimestamp(record.created).isoformat() + "Z",
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "service": self.service_name,
             "level": record.levelname,
             "logger": record.name,

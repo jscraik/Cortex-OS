@@ -1,0 +1,4 @@
+# file: /Users/jamiecraik/.Cortex-OS/apps/cortex-py/src/mlx/embedding_generator.py
+# hypothesis_version: 6.138.16
+
+[0.0, '+', '--json-only', '--model', '--no-normalize', '--verbose', '-v', '.json', '.tml', '.toml', '1', 'CORTEX_PY_FAST_TEST', 'Darwin', 'Error: %s', 'HF_CACHE_PATH', 'Loading model: %s', 'MLX retry failed: %s', 'Model not loaded', 'Texts to embed', 'Unexpected error: %s', 'Verbose output', '__main__', 'backend', 'context_length', 'dimensions', 'encode', 'last_hidden_state', 'memory_gb', 'mlx', 'mlx_available', 'model_loaded', 'model_name', 'model_path', 'path', 'rb', 'store_true', 'texts', 'utf-8', '~/.cache/huggingface']

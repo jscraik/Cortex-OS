@@ -1,0 +1,4 @@
+# file: /Users/jamiecraik/.Cortex-OS/libs/python/memories/src/brainwav_memories/__init__.py
+# hypothesis_version: 6.138.16
+
+['0.1.0', 'MemoriesClient', 'Memory']

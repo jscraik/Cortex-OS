@@ -1,8 +1,18 @@
 /**
  * Cortex OS Orchestration Package
- * Simplified exports focusing on PRP neural orchestration
+ * Simplified exports focusing on PRP neural orchestration with Archon integration
  */
 
+// Archon Task Manager Integration
+export {
+	ArchonTaskManager, OrchestrationArchonIntegration, createArchonTaskManager,
+	createOrchestrationArchonIntegration
+} from './integrations/archon-task-manager.js';
+export type {
+	ArchonTaskManagerConfig,
+	OrchestrationTask,
+	TaskManagerEvents
+} from './integrations/archon-task-manager.js';
 // Core types and interfaces
 // Enum types
 export type {
@@ -33,7 +43,7 @@ export type {
 	QdrantConfig,
 	StrategicDecision,
 	SynchronizationPoint,
-	Task,
+	Task
 } from './types.js';
 // Enums
 export {
@@ -41,7 +51,7 @@ export {
 	CoordinationStrategy,
 	DecisionStrategy,
 	OrchestrationStrategy,
-	Schemas,
+	Schemas
 } from './types.js';
 
 // Utility defaults

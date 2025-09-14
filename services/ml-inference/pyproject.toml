@@ -1,13 +1,10 @@
 [project]
 name = "cortex-ml-inference"
 version = "0.1.0"
-requires-python = ">=3.13"
+# Aligned with root constraint for grpcio-tools compatibility
+requires-python = ">=3.11,<3.13"
 description = "ML inference microservice"
-dependencies = [
-  "fastapi",
-  "uvicorn",
-  "prometheus-client",
-]
+dependencies = ["fastapi", "uvicorn", "prometheus-client"]
 
 [build-system]
 requires = ["hatchling"]
@@ -17,8 +14,4 @@ build-backend = "hatchling.build"
 packages = ["src"]
 
 [tool.uv]
-dev-dependencies = [
-  "httpx",
-  "pytest",
-  "pytest-asyncio",
-]
+dev-dependencies = ["httpx", "pytest", "pytest-asyncio"]

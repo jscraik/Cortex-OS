@@ -9,30 +9,33 @@
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"strict": true,
+		"composite": false,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"declaration": true,
+		"declarationMap": true,
 		"outDir": "./dist",
-		"rootDir": ".",
-		"baseUrl": ".",
+		"rootDir": "./src",
+		"baseUrl": "./src",
 		"paths": {
 			"@/*": [
-				"./src/*"
+				"./*"
 			],
 			"@tests/*": [
-				"./tests/*"
+				"../tests/*"
 			],
 			"@cortex-os/memories": [
-				"../memories/src/index.ts"
+				"../../memories/src/index.ts"
 			]
 		},
 		"types": [
 			"vitest/globals",
 			"node"
-		]
+		],
+		"allowArbitraryExtensions": true
 	},
 	"include": [
-		"src/**/*"
+		"src/**/*.ts"
 	],
 	"exclude": [
 		"node_modules",

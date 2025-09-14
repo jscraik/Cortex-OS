@@ -18,7 +18,50 @@
 
 ## 🎯 Overview
 
-Cortex Orchestration provides **production-ready multi-agent coordination** for the Cortex-OS ASBR runtime. This package implements real AI agent execution using LangGraph and CrewAI frameworks via a sophisticated Python-TypeScript bridge architecture, enabling intelligent task distribution, resource management, and collaborative problem-solving.
+Cortex Orchestration provides **production-ready multi-agent coordination** for the Cortex-OS ASBR runtime following the **BVOO (Bounded, Validated, Observable Orchestration)** engineering principle. This package implements real AI agent execution using LangGraph and CrewAI frameworks via a sophisticated Python-TypeScript bridge architecture, enabling intelligent task distribution, resource management, and collaborative problem-solving.
+
+### BVOO Engineering Principle
+
+**Bounded, Validated, Observable Orchestration (BVOO)** ensures every orchestration workflow:
+
+- **🔢 Bounded**: Enforces explicit limits on concurrency, execution time, and cache size
+- **✅ Validated**: Validates all inputs before execution with comprehensive schema checking  
+- **👁️ Observable**: Emits structured telemetry for all lifecycle events and decisions
+
+#### BVOO Implementation
+
+```typescript
+import { provideOrchestration, validateWorkflow, OrchestrationDefaults } from '@cortex-os/orchestration';
+
+// All orchestrations are bounded by default
+const orchestration = provideOrchestration();
+
+console.log('Default Bounds:', OrchestrationDefaults);
+// Output: { 
+//   maxConcurrentOrchestrations: 10,
+//   executionTimeout: 1800000, // 30 minutes
+//   planningTimeout: 300000,   // 5 minutes
+//   qualityThreshold: 0.8
+// }
+
+// All workflows are validated before execution
+const validatedWorkflow = validateWorkflow(workflowDefinition);
+// Throws descriptive error if invalid, caches valid results with TTL
+
+// All orchestrations emit structured telemetry
+orchestration.engine.emitter.on('orchestrationCompleted', (event) => {
+  logger.info('Orchestration completed', {
+    orchestrationId: event.data.orchestrationId,
+    taskId: event.data.taskId,
+    duration: event.data.performance.totalDuration,
+    success: event.data.success,
+    agentsUsed: event.data.coordinationResults?.agentPerformance
+  });
+});
+
+// Proper lifecycle management with cleanup
+await orchestration.shutdown(); // Cleans up active orchestrations and resources
+```
 
 ## ✨ Key Features
 

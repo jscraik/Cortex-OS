@@ -1,0 +1,42 @@
+name: CI Smoke Micro Edge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'packages/agents/src/agents/security-agent.ts'
+      - 'packages/agents/tests/unit/agents/security-agent.*.test.ts'
+      - 'packages/a2a/a2a-contracts/tests/negative/**'
+      - 'vitest.config.ts'
+      - '.github/workflows/ci-smoke-micro-edge.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: micro-edge-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.16.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install (frozen-lockfile)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Run focused micro edge tests
+        run: >-
+          npx vitest run
+          packages/agents/tests/unit/agents/security-agent.negative.test.ts
+          packages/agents/tests/unit/agents/security-agent.coverage.test.ts
+          packages/a2a/a2a-contracts/tests/negative/envelope.malformed.test.ts
+          --reporter=dot --silent --no-coverage
+      - name: Summary
+        run: echo "Micro edge smoke tests completed." 

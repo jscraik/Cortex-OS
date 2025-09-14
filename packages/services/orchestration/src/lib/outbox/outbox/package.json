@@ -17,6 +17,6 @@
 		"vite-tsconfig-paths": "^4.2.0",
 		"node-fetch": "^3.3.2",
 		"@types/node-fetch": "^2.6.4",
-		"axios": "^1.4.0"
+		"axios": "^1.12.0"
 	}
 }

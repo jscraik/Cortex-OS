@@ -15,7 +15,7 @@ describe('store-from-env', () => {
     });
 
     it('prefers LocalMemory when LOCAL_MEMORY_BASE_URL is set', async () => {
-        process.env.LOCAL_MEMORY_BASE_URL = 'http://localhost:3002/api/v1';
+        process.env.LOCAL_MEMORY_BASE_URL = 'http://localhost:3010/api/v1';
         const kind = resolveStoreKindFromEnv();
         expect(kind).toBe('local');
         const store = await createStoreFromEnv();

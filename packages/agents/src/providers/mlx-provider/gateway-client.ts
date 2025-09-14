@@ -9,13 +9,33 @@ import type { GenerateOptions, GenerateResult } from '../../lib/types.js';
 import { estimateTokens } from '../../lib/utils.js';
 import type { MLXState } from './types.js';
 
+interface MLXGatewayProblemDetails {
+	/** Problem type URI or code */
+	type?: string;
+	title?: string;
+	detail?: string;
+	status?: number;
+	[key: string]: unknown; // allow passthrough
+}
+
+interface MLXGatewayTokenUsage {
+	promptTokens: number;
+	completionTokens: number;
+	totalTokens: number;
+}
+
+interface MLXGatewayResult extends GenerateResult {
+	text: string;
+	provider: string;
+	usage: MLXGatewayTokenUsage;
+	latencyMs: number;
+}
+
 export const executeMLXGeneration = async (
 	prompt: string,
 	options: GenerateOptions,
 	state: MLXState,
-): Promise<
-	GenerateResult & { text: string; provider: string; usage: any; latencyMs: number }
-> => {
+): Promise<MLXGatewayResult> => {
 	const startTime = Date.now();
 	const adjustedOptions = adjustGenerationParams(options, state);
 	const url = `${state.config.gatewayUrl?.replace(/\/$/, '')}/chat`;
@@ -27,7 +47,7 @@ export const executeMLXGeneration = async (
 		temperature: adjustedOptions.temperature ?? 0.7,
 	};
 
-	let res: any;
+	let res: Response;
 	try {
 		if (!state.config.gatewayUrl) {
 			throw new Error('fetch failed: gateway URL not configured');
@@ -38,7 +58,7 @@ export const executeMLXGeneration = async (
 			body: JSON.stringify(body),
 		});
 		if (!res.ok) {
-			let problem: any = null;
+			let problem: MLXGatewayProblemDetails | null = null;
 			try {
 				const text = await res.text();
 				problem = JSON.parse(text);
@@ -49,17 +69,23 @@ export const executeMLXGeneration = async (
 			const title = problem?.title || 'mlx_gateway_error';
 			const detail = problem?.detail || (problem ? JSON.stringify(problem) : '');
 			const msg = `MLX gateway error: ${status} ${title} ${detail}`.trim();
-			const error: any = new Error(redactSecrets(msg));
+			const error = new Error(redactSecrets(msg)) as Error & {
+				code?: string;
+				status?: number;
+			};
 			error.code = problem?.type || String(status);
 			error.status = status;
 			throw error;
 		}
-	} catch (e) {
-		if (typeof (e as any)?.message === 'string' && (e as any).message.includes('MLX gateway error')) {
+	} catch (e: unknown) {
+		if (
+			typeof (e as { message?: string })?.message === 'string' &&
+			(e as { message?: string }).message!.includes('MLX gateway error')
+		) {
 			throw e;
 		}
-		const err: any = new Error('fetch failed');
-		(err as any).cause = e;
+		const err = new Error('fetch failed') as Error & { cause?: unknown };
+		err.cause = e;
 		throw err;
 	}
 
@@ -71,7 +97,7 @@ export const executeMLXGeneration = async (
 
 	const text: string = data?.content || '';
 	const latencyMs = Date.now() - startTime;
-	const tokenUsage = {
+	const tokenUsage: MLXGatewayTokenUsage = {
 		promptTokens: estimateTokens(prompt),
 		completionTokens: estimateTokens(text),
 		totalTokens: estimateTokens(prompt + text),

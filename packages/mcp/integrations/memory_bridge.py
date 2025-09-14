@@ -485,6 +485,50 @@ class QdrantVectorStore:
             for result in results
         ]
 
+    async def retrieve(self, memory_id: str) -> dict[str, Any] | None:
+        """Retrieve a stored embedding payload by memory ID."""
+        if self.client is None:
+            raise RuntimeError("Vector store not initialized")
+        try:
+            result = self.client.retrieve(
+                collection_name=self.collection_name,
+                ids=[memory_id],
+            )
+            if not result:
+                return None
+            point = result[0]
+            return {
+                "memory_id": str(point.id),
+                "metadata": point.payload or {},
+            }
+        except Exception as e:
+            logger.error(f"Failed to retrieve memory {memory_id}: {e}")
+            return None
+
+    async def retrieve_many(self, memory_ids: list[str]) -> list[dict[str, Any]]:
+        """Batch retrieve payloads by memory IDs."""
+        if self.client is None:
+            raise RuntimeError("Vector store not initialized")
+        if not memory_ids:
+            return []
+        try:
+            results = self.client.retrieve(
+                collection_name=self.collection_name,
+                ids=memory_ids,
+            )
+            mapped: list[dict[str, Any]] = []
+            for point in results or []:
+                mapped.append(
+                    {
+                        "memory_id": str(point.id),
+                        "metadata": point.payload or {},
+                    }
+                )
+            return mapped
+        except Exception as e:
+            logger.error(f"Failed to batch retrieve memories: {e}")
+            return []
+
     async def delete_embedding(self, memory_id: str) -> None:
         """Delete an embedding by memory ID."""
         if self.client is None or qdrant_models is None:

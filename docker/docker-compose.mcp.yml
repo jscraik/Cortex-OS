@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # MCP Registry Service
+  mcp-registry:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../packages/mcp-registry:/app
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=1024
+    command: sh -c "cd /app && npm install && npm run start"
+    ports:
+      - "3002:3002"
+    networks:
+      - cortex-network
+    mem_limit: 1024m
+    mem_reservation: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3002/health', res => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MCP Bridge Service
+  mcp-bridge:
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - ../packages/mcp-bridge:/app
+    environment:
+      - PYTHONPATH=/app
+    command: sh -c "cd /app && pip install -e . && python -m mcp_bridge.cli"
+    ports:
+      - "3003:3003"
+    networks:
+      - cortex-network
+    mem_limit: 512m
+    mem_reservation: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; exit(0 if requests.get('http://localhost:3003/health').status_code == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MCP Core Service
+  mcp-core:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../packages/mcp-core:/app
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=1024
+    command: sh -c "cd /app && npm install && npm run start"
+    ports:
+      - "3010:3010"
+    networks:
+      - cortex-network
+    mem_limit: 1024m
+    mem_reservation: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3010/health', res => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  cortex-network:
+    driver: bridge

@@ -1,0 +1,77 @@
+name: Upload Security Artifacts
+description: Composite action to upload coverage, SARIF, SBOM and security reports
+
+inputs:
+  name:
+    description: Base name for artifacts
+    required: true
+  coverage-path:
+    description: Path to coverage files (optional)
+    required: false
+    default: ""
+  sarif-path:
+    description: Path to SARIF files (optional)
+    required: false
+    default: ""
+  sbom-path:
+    description: Path to SBOM files (optional)
+    required: false
+    default: ""
+  reports-path:
+    description: Path to additional reports (optional)
+    required: false
+    default: ""
+  retention-days:
+    description: Artifact retention days
+    required: false
+    default: "30"
+
+runs:
+  using: composite
+  steps:
+    - name: Upload coverage
+      if: inputs.coverage-path != '' && hashFiles(inputs.coverage-path) != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.name }}-coverage
+        path: ${{ inputs.coverage-path }}
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Upload SARIF to GitHub
+      if: inputs.sarif-path != '' && hashFiles(inputs.sarif-path) != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif-path }}
+
+    - name: Upload SARIF as artifact
+      if: inputs.sarif-path != '' && hashFiles(inputs.sarif-path) != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.name }}-sarif
+        path: ${{ inputs.sarif-path }}
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Upload SBOM
+      if: inputs.sbom-path != '' && hashFiles(inputs.sbom-path) != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.name }}-sbom
+        path: ${{ inputs.sbom-path }}
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Upload reports
+      if: inputs.reports-path != '' && hashFiles(inputs.reports-path) != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.name }}-reports
+        path: ${{ inputs.reports-path }}
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Upload to CodeCov (if coverage exists)
+      if: inputs.coverage-path != '' && contains(inputs.coverage-path, 'lcov.info')
+      uses: codecov/codecov-action@v4
+      with:
+        file: ${{ inputs.coverage-path }}
+        flags: security-tests
+        name: ${{ inputs.name }}-codecov
+        fail_ci_if_error: false

@@ -1,0 +1,68 @@
+name: Nightly Badge Refresh
+
+on:
+  schedule:
+    - cron: '17 2 * * *' # 02:17 UTC nightly – off-peak
+  workflow_dispatch: {}
+
+permissions:
+  contents: write     # to push updated badges
+  pages: write        # to deploy GitHub Pages
+  id-token: write     # to verify deployment origin
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.16.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Run coverage & record branch history
+        run: |
+          pnpm coverage:branches:record
+      - name: Run mutation tests (no enforcement)
+        run: pnpm mutation:test
+      - name: Generate badges & metrics
+        run: pnpm badges:generate
+      - name: Embed inline sparkline in README
+        run: pnpm sparkline:inline || echo "Sparkline inline embed skipped"
+      - name: Commit updated badges (if changed)
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          if ! git diff --quiet reports/badges || ! git diff --quiet reports/branch-coverage-history.json || ! git diff --quiet README.md; then
+            git add reports/badges reports/branch-coverage-history.json reports/mutation/mutation.json README.md || true
+            git commit -m "chore(badges): nightly refresh" || echo "No badge changes to commit"
+            git push || echo "No push (possibly no changes)"
+          else
+            echo "No badge / metrics changes detected"
+          fi
+      - name: Prepare Pages artifact (badges + metrics)
+        run: |
+          mkdir -p public
+          cp -R reports/badges public/
+          # Provide top-level index and JSON alias copies for caching strategies
+          if [ -f reports/badges/metrics.json ]; then cp reports/badges/metrics.json public/metrics.json; fi
+          # Basic index file (will be overridden if repo supplies its own later)
+          echo '<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Cortex-OS Quality Metrics</title></head><body><h1>Cortex-OS Quality Metrics</h1><ul><li><img src="badges/branch-coverage.svg" alt="Branch Coverage"/></li><li><img src="badges/mutation-score.svg" alt="Mutation Score"/></li></ul><pre id="json"></pre><script>fetch("metrics.json").then(r=>r.json()).then(j=>{document.getElementById("json").textContent=JSON.stringify(j,null,2)}).catch(()=>{})</script></body></html>' > public/index.html
+          echo > public/.nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

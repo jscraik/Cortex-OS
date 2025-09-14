@@ -23,24 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/workflows/reusable-full-stack-setup.yml
         with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.3.0
-
-      - name: Install dependencies (frozen)
-        run: pnpm install --frozen-lockfile
+          node-version: '20'
+          pnpm-version: '10.3.0'
+          setup-python: true
+          setup-rust: false
 
       - name: Biome (changed files baseline)
         run: pnpm biome:ci || true

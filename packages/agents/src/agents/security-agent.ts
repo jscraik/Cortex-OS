@@ -10,23 +10,23 @@
 
 import { z } from 'zod';
 import {
-    assessDependabotConfig,
-    loadDependabotConfig,
+	assessDependabotConfig,
+	loadDependabotConfig,
 } from '../integrations/dependabot.js';
 import type {
-    Agent,
-    EventBus,
-    ExecutionContext,
-    GenerateOptions,
-    GenerateResult,
-    MCPClient,
-    MemoryPolicy,
-    ModelProvider,
+	Agent,
+	EventBus,
+	ExecutionContext,
+	GenerateOptions,
+	GenerateResult,
+	MCPClient,
+	MemoryPolicy,
+	ModelProvider,
 } from '../lib/types.js';
 import {
-    generateAgentId,
-    generateTraceId,
-    withTimeout,
+	generateAgentId,
+	generateTraceId,
+	withTimeout,
 } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
@@ -181,10 +181,42 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		}));
 	}
 
+	function buildHeuristicFallback(raw: string, latency: number): SecurityOutput {
+		const blockHeuristic = /\bblock\b/.test(raw) && (raw.includes('policy violation') || /\bunsafe\b/.test(raw));
+		const decision: 'allow' | 'flag' | 'block' = blockHeuristic ? 'block' : 'flag';
+		const cats: string[] = [];
+		if (/tool|command|shell/.test(raw)) cats.push('tool-abuse');
+		if (/exfil|leak|secret/.test(raw)) cats.push('data-exfiltration');
+		if (/block|unsafe|violation/.test(raw)) cats.push('policy-violation');
+		if (cats.length === 0) cats.push('parsing-fallback');
+		return {
+			decision,
+			risk: decision === 'block' ? 'high' : 'medium',
+			categories: cats,
+			findings: [
+				{
+					id: 'FALLBACK-JSON',
+					title: 'Unable to parse security JSON',
+					description: 'Fallback applied; review content manually',
+					refs: [],
+					severity: decision === 'block' ? 'high' : 'medium',
+				},
+			],
+			mitigations: ['Re-run with stricter policy', 'Manual review required'],
+			labels: { owasp_llm10: [], mitre_attack: [], mitre_atlas: [], cwe: [], capec: [], d3fend: [] },
+			confidence: 0.5,
+			processingTime: latency,
+		};
+	}
+
 	const parseResult = (response: ModelResponse): SecurityOutput => {
 		try {
 			const parsed = extractFirstJsonObject(response.text);
 			const safe = ensureObjectType(parsed);
+			// If no JSON object was detected at all (empty parse), treat as parsing failure -> fallback
+			if (Object.keys(safe).length === 0) {
+				return buildHeuristicFallback(response.text.toLowerCase(), response.latencyMs || 1000);
+			}
 			const labels = ensureObjectType(safe.labels);
 
 			const decision = determineSecurityDecision(safe, response.text);
@@ -224,9 +256,15 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 			return safe.decision;
 		}
 
-		// Apply heuristics when no explicit decision
+		// Heuristic escalation (revised): only escalate to 'block' if both the word 'block'
+		// and either 'policy violation' or 'unsafe' appear. A lone 'block' mention may be
+		// descriptive ("should block?"), so we downgrade that to a flag. This preserves
+		// stricter semantics while reducing false positives.
 		const raw = rawText.toLowerCase();
-		if (/\bblock\b/.test(raw)) return 'block';
+		const hasBlock = /\bblock\b/.test(raw);
+		const hasViolationPhrase = raw.includes('policy violation') || /\bunsafe\b/.test(raw);
+		if (hasBlock && hasViolationPhrase) return 'block';
+		if (hasBlock) return 'flag';
 		if (/\bflag\b|\brisk\b|\bunsafe\b|\bviolation\b/.test(raw)) return 'flag';
 
 		// Check findings as last resort

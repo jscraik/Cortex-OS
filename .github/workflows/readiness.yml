@@ -1,21 +1,32 @@
 name: readiness
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+
+concurrency:
+  group: readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   readiness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - name: Setup Environment
+        uses: ./.github/workflows/reusable-full-stack-setup.yml
         with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+          node-version: '20'
+          setup-python: false
+          setup-rust: false
+          
       - name: Generate readiness.yml files (if missing)
         run: node tools/readiness/generate-readiness-yml.mjs
+        
       - name: Run package tests with coverage (per package)
         run: node tools/readiness/run-package-tests.mjs
+        
       - name: Enforce coverage thresholds per package (>=95%)
         run: node tools/readiness/check-readiness.mjs

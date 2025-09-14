@@ -1,0 +1,4 @@
+# file: /Users/jamiecraik/.Cortex-OS/apps/cortex-py/src/mlx/mlx_unified.py
+# hypothesis_version: 6.138.16
+
+[0.0, 0.7, 100, 512, 4096, '*', '--chat-mode', '--embedding-mode', '--json-only', '--max-tokens', '--model', '--model-path', '--rerank-mode', '--temperature', '.cache', 'Assistant: ', 'BaseModel', 'Darwin', 'Error: %s', 'Generate embeddings', 'HF_HOME', 'JSON', 'Local model path', 'MLX_CACHE_DIR', 'Mode', 'Model name/path', 'OLLAMA_BASE_URL', 'Output JSON only', 'TRANSFORMERS_CACHE', '__main__', 'chat', 'coder', 'completion_tokens', 'content', 'embedding', 'encode', 'error', 'huggingface', 'index', 'input_data', 'input_ids', 'instruct', 'last_hidden_state', 'logits', 'mlx', 'ollama', 'pooler_output', 'prompt_tokens', 'pt', 'rerank', 'reranking', 'role', 'score', 'scores', 'store_true', 'test', 'total_tokens', 'usage', 'user', 'vl', '~']

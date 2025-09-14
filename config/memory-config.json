@@ -1,0 +1,29 @@
+{
+    "memoryLimits": {
+        "mcpServices": {
+            "default": "1024m",
+            "minimum": "512m",
+            "maximum": "2048m"
+        },
+        "testSuites": {
+            "maxWorkers": 1,
+            "fileParallelism": false,
+            "singleFork": true,
+            "maxOldSpaceSize": "2048"
+        }
+    },
+    "processManagement": {
+        "mcpProcessThreshold": 512000,
+        "exemptProcessPatterns": [
+            "mcp.*server",
+            "mcp.*registry",
+            "mcp.*bridge"
+        ]
+    },
+    "dockerConfig": {
+        "composeFiles": [
+            "docker-compose.mcp.yml",
+            "docker-compose.mcp-dev.yml"
+        ]
+    }
+}

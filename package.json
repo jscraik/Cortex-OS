@@ -239,7 +239,17 @@
     "pnpm:list": "ps aux | grep -E '(pnpm|node)' | grep -v grep | head -20",
     "watch:kill-all": "pkill -f 'tsc.*watch' 2>/dev/null || true && pkill -f 'vitest.*watch' 2>/dev/null || true && pkill -f 'chokidar' 2>/dev/null || true && pkill -f 'mkdocs.*serve' 2>/dev/null || true",
     "nx:reset": "pnpm nx reset && echo 'Nx daemon and cache reset'",
-    "dev:single": "NX_DAEMON=false NODE_OPTIONS='--max-old-space-size=2048' pnpm build:smart"
+    "dev:single": "NX_DAEMON=false NODE_OPTIONS='--max-old-space-size=2048' pnpm build:smart",
+    "mutation:test": "stryker run",
+    "mutation:enforce": "stryker run && node scripts/code-quality/enforce-mutation-threshold.mjs",
+    "mutation:badges": "stryker run && node scripts/code-quality/generate-badges.mjs",
+    "badges:generate": "node scripts/code-quality/generate-badges.mjs",
+    "test:badges": "node scripts/code-quality/test-generate-badges.mjs",
+    "quality:gate": "node scripts/code-quality/quality-gate-check.mjs",
+    "sparkline:inline": "node scripts/code-quality/embed-sparkline.mjs",
+    "coverage:branches:record": "pnpm test:coverage && node scripts/code-quality/branch-coverage-history.mjs append",
+    "coverage:branches:report": "node scripts/code-quality/branch-coverage-history.mjs report",
+    "coverage:branches:enforce": "pnpm test:coverage && node scripts/code-quality/ensure-branch-threshold.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
@@ -250,7 +260,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
-    "axios": "^1.11.0",
+    "axios": "^1.12.1",
     "better-sqlite3": "^12.2.0",
     "chalk": "^5.6.0",
     "chokidar": "^3.6.0",
@@ -292,7 +302,7 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^3.2.4",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "bats": "1.12.0",
@@ -315,7 +325,10 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.1.0",
-    "vitest": "^2.1.9",
+    "vitest": "^3.2.4",
+    "@stryker-mutator/core": "^8.5.0",
+    "@stryker-mutator/vitest-runner": "^8.5.0",
+    "@stryker-mutator/typescript-checker": "^8.5.0",
     "yaml": "^2.8.1"
   },
   "pnpm": {

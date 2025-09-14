@@ -1,5 +1,4 @@
 # OrbStack-specific service additions for Cortex-OS
-version: '3.8'
 
 services:
   # Add Rust-based services
@@ -25,6 +24,10 @@ services:
       orbstack.service: "cortex-code-cli"
       orbstack.tier: "tools"
       orbstack.rosetta: "false"
+      orbstack.project: "cortex-os"
+      orbstack.description: "Cortex Code CLI tool for development"
+      orbstack.profile: "dev-full,tools"
+      orbstack.language: "rust"
     command: ["codex", "--help"]
 
   cortex-code-mcp:
@@ -49,6 +52,10 @@ services:
       orbstack.service: "cortex-code-mcp"
       orbstack.tier: "integration"
       orbstack.rosetta: "false"
+      orbstack.project: "cortex-os"
+      orbstack.description: "Model Context Protocol server for Cortex Code"
+      orbstack.profile: "mcp,dev-full"
+      orbstack.language: "rust"
     command: ["codex-mcp-server", "--port", "8004"]
 
   cortex-code-tui:
@@ -74,6 +81,10 @@ services:
       orbstack.service: "cortex-code-tui"
       orbstack.tier: "ui"
       orbstack.rosetta: "false"
+      orbstack.project: "cortex-os"
+      orbstack.description: "Terminal UI for Cortex Code development"
+      orbstack.profile: "tui"
+      orbstack.language: "rust"
     command: ["codex-tui"]
 
   # Python ML services
@@ -103,7 +114,21 @@ services:
       orbstack.service: "python-ml"
       orbstack.tier: "ai"
       orbstack.python: "true"
-    command: ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+      orbstack.project: "cortex-os"
+      orbstack.description: "Python machine learning services and models"
+      orbstack.profile: "ml,dev-full"
+      orbstack.language: "python"
+    command:
+      [
+        "python",
+        "-m",
+        "uvicorn",
+        "src.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+      ]
 
 volumes:
   codex_cache:

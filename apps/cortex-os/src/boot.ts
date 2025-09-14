@@ -1,3 +1,4 @@
+import { SpanStatusCode } from '@opentelemetry/api';
 import { Container } from 'inversify';
 import {
 	provideMCP,
@@ -36,11 +37,11 @@ function validateContainer(container: Container): void {
 			const service = container.get(token as unknown as symbol);
 			if (!service) throw new Error(`Failed to resolve ${token.toString()}`);
 		}
-		span.setStatus({ code: 1 });
+		span.setStatus({ code: SpanStatusCode.OK });
 	} catch (error) {
 		span.recordException(error as Error);
 		span.setStatus({
-			code: 2,
+			code: SpanStatusCode.ERROR,
 			message: error instanceof Error ? error.message : undefined,
 		});
 		throw error;

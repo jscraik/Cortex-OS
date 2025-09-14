@@ -47,11 +47,11 @@ export interface OrchestratorState {
 import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import { createCodeAnalysisAgent } from '../agents/code-analysis-agent.js';
-import { createDocumentationAgent } from '../agents/documentation-agent.js';
-import { createSecurityAgent } from '../agents/security-agent.js';
-import { createTestGenerationAgent } from '../agents/test-generation-agent.js';
-import { wireOutbox } from '../integrations/outbox.js';
+import { createCodeAnalysisAgent } from '../agents/code-analysis-agent';
+import { createDocumentationAgent } from '../agents/documentation-agent';
+import { createSecurityAgent } from '../agents/security-agent';
+import { createTestGenerationAgent } from '../agents/test-generation-agent';
+import { wireOutbox } from '../integrations/outbox';
 
 const AGENT_SOURCE_URN = 'urn:cortex:agents';
 
@@ -62,8 +62,8 @@ import type {
 	MemoryPolicy,
 	MemoryStore,
 	ModelProvider,
-} from '../lib/types.js';
-import { generateAgentId, withTimeout } from '../lib/utils.js';
+} from '../lib/types';
+import { generateAgentId, withTimeout } from '../lib/utils';
 
 // Orchestration schemas
 export const workflowTaskSchema = z.object({

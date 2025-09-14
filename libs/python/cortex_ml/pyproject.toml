@@ -1,7 +1,8 @@
 [project]
 name = "cortex-ml"
 version = "0.1.0"
-requires-python = ">=3.13"
+# Align with workspace python version range
+requires-python = ">=3.11,<3.13"
 dependencies = ["openai>=1.52.0", "instructor>=1.11.2"]
 
 [build-system]

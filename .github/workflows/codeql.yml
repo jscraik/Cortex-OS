@@ -1,4 +1,5 @@
 name: CodeQL
+
 on:
   push:
     branches: [ main ]
@@ -6,6 +7,10 @@ on:
     branches: [ main ]
   schedule:
     - cron: '0 3 * * 0'
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   analyze:
     permissions:
@@ -18,8 +23,11 @@ jobs:
       matrix:
         language: [ 'javascript-typescript' ]
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-      - uses: github/codeql-action/init@4dd16135b69a43b6c8efb853346f8437d92d3c93
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-      - uses: github/codeql-action/analyze@4dd16135b69a43b6c8efb853346f8437d92d3c93
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3

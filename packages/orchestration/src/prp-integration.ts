@@ -2,8 +2,8 @@
  * PRP orchestration engine using functional API
  */
 
-import { EventEmitter } from 'node:events';
 import { type Neuron, PRPOrchestrator } from '@cortex-os/prp-runner';
+import { EventEmitter } from 'node:events';
 import { v4 as uuid } from 'uuid';
 import winston from 'winston';
 
@@ -77,15 +77,39 @@ export async function orchestrateTask(
 	const blueprint = {
 		id,
 		title: task.title,
+		description: task.description || `Orchestration task: ${task.title}`,
 		requirements: task.requiredCapabilities,
 		context,
 		agents,
 	};
 
 	const start = Date.now();
-	const run = engine.prp
+
+	// Create a timeout promise with explicit cancellation handling
+	const timeoutMs = engine.config.executionTimeout;
+	let timeoutId: NodeJS.Timeout | null = null;
+	let timedOut = false;
+
+	const timeoutPromise = new Promise<never>((_, reject) => {
+		timeoutId = setTimeout(() => {
+			timedOut = true;
+			reject(new Error(`Task execution timeout after ${timeoutMs}ms for task ${task.id}`));
+		}, timeoutMs);
+	});
+
+	// Execute PRP cycle
+	const executionPromise = engine.prp
 		.executePRPCycle(blueprint)
 		.then((prp) => {
+			// If we've already timed out, suppress emission & just return silently
+			if (timedOut) {
+				return toResult(id, task.id, prp, start); // value ignored by race winner
+			}
+			// Clear timeout on success
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+				timeoutId = null;
+			}
 			const result = toResult(id, task.id, prp, start);
 			engine.emitter.emit('orchestrationCompleted', {
 				type: 'task_completed',
@@ -96,7 +120,28 @@ export async function orchestrateTask(
 			});
 			return result;
 		})
-		.finally(() => engine.active.delete(id));
+		.catch((err) => {
+			// If timed out already, swallow to prevent unhandled rejection; otherwise propagate
+			if (timedOut) {
+				engine.logger.debug('Suppressed post-timeout PRP resolution', { taskId: task.id });
+				return toResult(id, task.id, { phase: undefined }, start);
+			}
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+				timeoutId = null;
+			}
+			throw err;
+		});
+
+	// Race between execution and timeout; ensure cleanup
+	const run = Promise.race([executionPromise, timeoutPromise])
+		.finally(() => {
+			engine.active.delete(id);
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+				timeoutId = null;
+			}
+		});
 
 	engine.active.set(id, run);
 	return run;
@@ -127,10 +172,20 @@ function toResult(
 		plan: null,
 		executionResults: prp.outputs || {},
 		coordinationResults: {
-			strategy: prp.metadata?.cerebrum?.decision,
-			reasoning: prp.metadata?.cerebrum?.reasoning,
-			neuronOutputs: prp.outputs,
-			validationResults: prp.validationResults,
+			coordinationId: id,
+			success: prp.phase === 'completed',
+			results: prp.outputs || {},
+			agentPerformance: {},
+			communicationStats: {
+				messagesSent: 0,
+				messagesReceived: 0,
+				errors: 0,
+			},
+			synchronizationEvents: [],
+			resourceUtilization: {},
+			executionTime: Date.now() - start,
+			completedPhases: prp.phase ? [prp.phase] : [],
+			errors: [],
 		},
 		decisions: [],
 		performance: {

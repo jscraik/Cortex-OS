@@ -1,13 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
 
 // NOTE: This is a simplified rate limiter for demonstration purposes.
-// It is not suitable for production use due to the following limitations:
-// 1. In-memory storage: The request counts are stored in memory and will be lost on restart.
-//    A persistent store like Redis should be used for production.
-// 2. Inefficient cleanup: The cleanup of stale entries is inefficient and can cause performance issues.
-//    A store with TTL support would be a better choice.
-// 3. Global state: The default `rateLimiter` instance shares state across all routes.
-//    For more granular control, create a new instance using `createRateLimiter`.
+// For production use, consider using the Redis-based rate limiter which provides:
+// 1. Persistent storage: Request counts are stored in Redis and survive restarts.
+// 2. Efficient cleanup: Uses Redis TTL for automatic cleanup of stale entries.
+// 3. Better performance: Atomic operations via Lua scripts.
+// Import `createRedisRateLimiter` from `@cortex-os/a2a-common` for production use.
 
 interface RequestRecord {
 	count: number;

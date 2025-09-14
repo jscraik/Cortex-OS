@@ -15,7 +15,11 @@
    ```
 3. Start the schema registry service:
    ```bash
+   # For in-memory storage (development)
    pnpm ts-node src/index.ts
+   
+   # For SQLite storage (production)
+   DATABASE_PATH=./schemas.db pnpm ts-node src/service.db.ts
    ```
    The service listens on `http://localhost:3000` by default.
 

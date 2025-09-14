@@ -5,6 +5,7 @@ import {
 	createMemoryService,
 	createPolicyAwareStoreFromEnv,
 } from '@cortex-os/memories';
+import { trace } from '@opentelemetry/api';
 
 export type MemoryService = PkgMemoryService;
 
@@ -29,15 +30,8 @@ export function provideMCP() {
 	};
 }
 
-export const tracer = {
-	startSpan() {
-		return {
-			setStatus() { },
-			recordException() { },
-			end() { },
-		};
-	},
-};
+// Real tracer (no-op if no SDK registered in runtime)
+export const tracer = trace.getTracer('cortex-os');
 
 export function configureAuditPublisherWithBus() {
 	// TODO: wire audit events to bus (currently no-op stub)

@@ -1,6 +1,29 @@
+from importlib import util as importlib_util
+
 import httpx
 import pytest
-from app import COMMIT_HASH, MODEL_NAME, app
+
+
+def _safe_has_module(name: str) -> bool:
+    try:
+        spec = importlib_util.find_spec(name)
+    except ValueError:  # shim modules without proper __spec__
+        return False
+    return spec is not None
+
+
+INSTRUCTOR_AVAILABLE = _safe_has_module("instructor")
+MLX_AVAILABLE = _safe_has_module("mlx")
+
+if not (
+    INSTRUCTOR_AVAILABLE and MLX_AVAILABLE
+):  # pragma: no cover - environment dependent skip path
+    pytest.skip(
+        "'instructor' or 'mlx' dependency not installed; skipping ml-inference endpoint tests.",
+        allow_module_level=True,
+    )
+
+from app import COMMIT_HASH, MODEL_NAME, app  # noqa: E402
 
 
 @pytest.mark.asyncio

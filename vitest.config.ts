@@ -71,6 +71,10 @@ export default defineConfig({
 		// Route to explicit project config for proper isolation.
 		// Use a relative path that Vitest resolves from the repo root.
 		// @ts-expect-error projects is supported by Vitest at runtime
+		tests: {
+			// This is a placeholder to satisfy the defineConfig function
+			// Test execution is handled by project-specific configurations
+		},
 		projects: ["vitest.basic.config.ts"],
 		setupFiles: ["tests/setup/vitest.setup.ts"],
 		// Quality gates enforcement

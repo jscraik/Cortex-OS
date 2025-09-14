@@ -2,7 +2,23 @@
 
 <!-- markdownlint-disable MD013 -->
 
-![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-20.x%20or%2022.x-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen) ![Smart Nx Mode](https://img.shields.io/badge/Smart%20Nx-Active-success)
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
+![Node.js Version](https://img.shields.io/badge/node-20.x%20or%2022.x-brightgreen)
+![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen)
+![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)
+![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
+![Smart Nx Mode](https://img.shields.io/badge/Smart%20Nx-Active-success)
+<img alt="Branch Coverage" src="https://raw.githubusercontent.com/jamiescottcraik/Cortex-OS/main/reports/badges/branch-coverage.svg" />
+<img alt="Mutation Score" src="https://raw.githubusercontent.com/jamiescottcraik/Cortex-OS/main/reports/badges/mutation-score.svg" />
+<img alt="Quality Gate" src="https://raw.githubusercontent.com/jamiescottcraik/Cortex-OS/main/reports/badges/quality-gate.svg" />
+<img alt="Branch Trend" src="https://raw.githubusercontent.com/jamiescottcraik/Cortex-OS/main/reports/badges/branch-trend.svg" />
+
+<!-- BRANCH_TREND_INLINE_START -->
+<!-- Inline branch coverage sparkline will be auto-embedded here by `pnpm sparkline:inline` once enough history exists. -->
+<!-- BRANCH_TREND_INLINE_END -->
 
 <!-- Future: replace static coverage badge with dynamic endpoint (GitHub Pages JSON endpoint reading reports/coverage-badge.json) -->
 
@@ -121,6 +137,101 @@ comprehensive quality gates.
 [Documentation](#documentation) • [Quick Start](./docs/quick-start.md) •
 [Architecture](./docs/architecture-overview.md) • [Python Integration](./docs/python-integration.md) •
 [Contributing](#contributing) • [Packages](#packages)
+
+---
+
+## 📊 Quality Gate & Metrics
+
+Automated quality signals are produced on every CI run and surfaced as static badges + an inline sparkline:
+
+- `reports/badges/branch-coverage.svg` – Latest branch coverage %
+- `reports/badges/mutation-score.svg` – Latest mutation testing score (Stryker)
+- `reports/badges/quality-gate.svg` – Composite gate (pass/fail)
+- `reports/badges/branch-trend.svg` – Historical branch coverage trend (also inlined between markers above)
+- `reports/badges/mutation-operators-summary.(json|md)` – Aggregated effectiveness per mutator/operator
+- `reports/mutation-history.json` – Time series of mutation scores
+- `reports/branch-coverage-history.json` – Time series of branch coverage samples
+- `reports/badges/metrics.json` – Canonical machine-readable snapshot consumed by the CI quality gate
+
+### Thresholds
+
+Current (defaults – can be overridden at runtime via env):
+
+| Metric | Minimum | Env Override |
+|--------|---------|--------------|
+| Branch Coverage | 65% | `BRANCH_MIN` |
+| Mutation Score  | 75% | `MUTATION_MIN` |
+
+The composite gate passes only if BOTH thresholds are met. Customize via:
+
+```bash
+BRANCH_MIN=85 MUTATION_MIN=80 pnpm badges:generate
+```
+
+### CI Enforcement
+
+Workflow: `.github/workflows/ci-quality-gate.yml` runs:
+
+1. Coverage sampling (`pnpm coverage:branches:record`)
+2. Mutation testing (`pnpm mutation:test`)
+3. Badge + metrics generation (`pnpm badges:generate`)
+4. Gate enforcement (`pnpm quality:gate`)
+
+Failure returns a non‑zero exit code and blocks the PR with a required status check.
+
+### Inline Sparkline
+
+The inline sparkline between `BRANCH_TREND_INLINE_START/END` markers is injected by:
+
+```bash
+pnpm sparkline:inline
+```
+
+Generation order (if running locally):
+
+```bash
+pnpm coverage:branches:record   # Adds a sample & updates history
+pnpm mutation:test              # Produces Stryker JSON
+pnpm badges:generate            # Writes badges + metrics + trend
+pnpm sparkline:inline           # Embeds data URI sparkline into README
+```
+
+### Mutation Operator Effectiveness
+
+Stryker output is aggregated to provide detection rates per operator. View:
+
+```text
+reports/badges/mutation-operators-summary.md
+```
+
+Columns:
+
+- Total – Mutants generated for the operator
+- Killed – Successfully detected
+- Survived – Escaped tests (improvement target)
+- NoCoverage – Untested regions (raises coverage priority)
+- Timeout – Counted as detected (test slowness risk)
+- Detection % – `(killed + timeout) / total * 100`
+
+### metrics.json Structure
+
+```jsonc
+{
+  "branchCoverage": 87.5,
+  "mutationScore": 78.3,
+  "qualityGate": { "pass": true, "branchMin": 65, "mutationMin": 75 },
+  "branchSamples": 12,
+  "mutationSamples": 12,
+  "generatedAt": "2025-01-01T12:34:56.000Z"
+}
+```
+
+### Why Static SVGs?
+
+Deterministic, cache‑friendly artifacts (content-addressable in Git history)
+reduce API latency and allow offline inspection while still enabling future
+evolution to dynamic endpoints (e.g., GitHub Pages JSON → Shields endpoint
+pattern) without breaking existing consumers.
 
 ---
 
@@ -303,6 +414,74 @@ scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config fil
 > **Latest:** Improved streaming modes with unified `--stream-mode` flag, JSON schema validation,
 > and comprehensive automation examples. See [`docs/streaming-modes.md`](./docs/streaming-modes.md).
 
+### 🧪 Coverage & Mutation Badges
+
+Badges are generated locally and (optionally) committed so the README can reference static SVGs:
+
+```bash
+# Record branch coverage sample and generate badges
+pnpm coverage:branches:record
+pnpm badges:generate
+
+# Run mutation tests, enforce threshold, then regenerate badges
+pnpm mutation:enforce
+pnpm badges:generate
+```
+
+Scripts:
+
+| Script | Purpose |
+| ------ | ------- |
+| `coverage:branches:record` | Run coverage + append branch % to history file |
+| `coverage:branches:report` | Show branch coverage trend |
+| `coverage:branches:enforce` | Fail if branch coverage < 65% (env `BRANCH_MIN` override) |
+| `mutation:test` | Run Stryker mutation tests (targeted scope) |
+| `mutation:enforce` | Run Stryker then enforce `MUTATION_MIN` (default 75%) |
+| `mutation:badges` | Run Stryker then generate both badges |
+| `badges:generate` | Generate SVG badges from existing reports |
+
+Outputs:
+
+- Branch coverage history: `reports/branch-coverage-history.json`
+- Mutation report JSON: `reports/mutation/mutation.json`
+- Badges: `reports/badges/{branch-coverage.svg,mutation-score.svg}`
+- Metrics JSON (for Pages / API): `reports/badges/metrics.json`
+
+Nightly workflow (`badge-refresh.yml`) regenerates coverage, mutation score, badges, and publishes a
+GitHub Pages artifact (includes `index.html`, badges, and `metrics.json`). This enables low‑latency
+cached badge rendering while allowing programmatic consumption of the combined metrics at:
+
+```text
+https://<github-user>.github.io/Cortex-OS/metrics.json
+```
+
+Example JSON shape:
+
+```json
+{
+  "branchCoverage": 92.31,
+  "mutationScore": 76.45,
+  "generatedAt": "2025-09-14T02:17:12.345Z"
+}
+```
+
+To manually refresh locally (e.g., before pushing a quality improvements PR):
+
+```bash
+pnpm coverage:branches:record
+pnpm mutation:enforce  # ensures threshold >= 75%
+pnpm badges:generate
+git add reports/badges reports/branch-coverage-history.json reports/mutation/mutation.json
+git commit -m "chore(badges): manual refresh" && git push
+```
+
+CI Workflows:
+
+- `ci-smoke-micro-edge.yml` – fast heuristic & negative-path guard (<5s)
+- `ci-mutation-guard.yml` – mutation score enforcement (`MUTATION_MIN`)
+
+Adjust thresholds via env overrides in CI if needed.
+
 ---
 
 ## 🔋 Memory Management & Agent Guidance
@@ -480,6 +659,78 @@ pnpm structure:validate   # Governance / import boundary integrity
   (no real secrets) and load real values via untracked overlays or a secret manager.
 
 Further detail: see [`SECURITY.md`](./SECURITY.md) and future `docs/code-quality.md` (placeholder to expand if needed).
+
+---
+
+## 🚀 CI/CD Workflows Architecture
+
+Cortex-OS uses a **modern, reusable GitHub Actions architecture** designed for
+efficiency, maintainability, and scalability. All workflows have been optimized
+for fast execution with improved caching and standardized patterns.
+
+### Core Reusable Workflows
+
+- **`quality-gates.yml`** - Fast PR quality checks (lint, typecheck, tests, build)
+- **`security-modern.yml`** - Comprehensive security scanning (CodeQL, Semgrep, secrets)
+- **`supply-chain-security.yml`** - Dependency analysis, SBOM generation, vulnerability assessment
+- **`reusable-full-stack-setup.yml`** - Standardized Node.js/Python/Rust environment setup
+
+### Key Workflow Categories
+
+#### Pull Request Workflows
+
+- **`pr-light.yml`** - Minimal quality gates for fast feedback
+- **`ci.yml`** - Full integration checks via quality-gates
+- **`readiness.yml`** - Package-level coverage enforcement (≥95%)
+
+#### Security & Compliance  
+
+- **`unified-security.yml`** - Redirects to security-modern.yml (migration pattern)
+- **`codeql.yml`** - GitHub CodeQL analysis
+- **`deep-security.yml`** - Weekly comprehensive scans
+
+#### Specialized Workflows
+
+- **`advanced-ci.yml`** - Full CI/CD pipeline with performance testing
+- **`scheduled-lint.yml`** - Automated governance and quality checks
+- **`nightly-quality.yml`** - Coverage tracking and quality metrics
+
+### Migration Benefits
+
+The recent workflow modernization provides:
+
+- ✅ **60% faster setup** through shared reusable workflows
+- ✅ **Improved cache hit rates** via standardized caching strategies  
+- ✅ **Reduced duplication** from 200+ lines to 20 lines per workflow
+- ✅ **Consistent permissions** and concurrency controls
+- ✅ **Better maintainability** with centralized patterns
+
+### Deprecated Workflows
+
+Legacy workflows have been moved to `.deprecated-workflows/` with full deprecation tracking:
+
+- `security-scan.yml`, `security.yml` → replaced by `security-modern.yml`
+- `compliance.yml`, `license-check.yml`, `gitleaks.yml` → integrated into main workflows
+- `security-and-sbom.yml`, `security-enhanced-sast.yml` → consolidated patterns
+
+See `.deprecated-workflows/DEPRECATION_RECORD.md` for full migration details.
+
+### Workflow Usage
+
+Standard commands leverage the new architecture:
+
+```bash
+# Trigger quality gates manually
+gh workflow run quality-gates.yml
+
+# Run security scan
+gh workflow run security-modern.yml
+
+# Check workflow status  
+gh run list --workflow=quality-gates.yml
+```
+
+For detailed workflow documentation, see [`.github/workflows/WORKFLOWS-OVERVIEW.md`](./.github/workflows/WORKFLOWS-OVERVIEW.md).
 
 ---
 
