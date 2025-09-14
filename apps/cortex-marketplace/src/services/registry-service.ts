@@ -6,19 +6,8 @@
 import { constants as fsConstants } from "node:fs";
 import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-// Local type definitions for mcp-registry (to avoid import path issues)
-interface RegistryIndex {
-	updatedAt: string;
-	servers: Array<{
-		id: string;
-		name: string;
-		description?: string;
-		tags?: string[];
-		transports: Record<string, unknown>;
-	}>;
-}
-
 // import type { RegistryIndex } from "../../packages/mcp-registry/dist/types";
+import type { RegistryIndex } from "../../packages/mcp-registry/dist/types";
 
 export interface RegistryConfig {
 	registries: Record<string, string>;
