@@ -12,4 +12,4 @@ pnpm build
 pnpm test
 ```
 
-Follow the monorepo [Contributing Guide](../../CONTRIBUTING.md).
+Follow the monorepo [Contributing Guide](/CONTRIBUTING.md).
