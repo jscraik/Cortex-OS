@@ -1,226 +1,252 @@
 /**
- * MCP Tool definitions for Memories package
- * Exposes memory management capabilities as external tools for AI agents
+ * MCP Tool definitions for the memories package.
+ * These tools expose high-level memory operations (set, get, list, delete, search)
+ * that wrap the core MemoryService functionality.
  */
 
 import { z } from 'zod';
+import type { Memory } from '../domain/types.js';
+import type { MemoryService } from '../service/memory-service.js';
+import { memoryZ } from '../schemas/memory.zod.js';
 
-// Define memory tool interface
-interface MemoryTool {
-	name: string;
-	description: string;
-	inputSchema: z.ZodSchema;
-	handler: (
-		params: unknown,
-	) => Promise<{ content: Array<{ type: string; text: string }> }>;
+export interface MemoryTool {
+        name: string;
+        description: string;
+        inputSchema: z.ZodTypeAny;
+        handler: (
+                params: unknown,
+        ) => Promise<{ content: Array<{ type: 'text'; text: string }> }>;
 }
 
-// Memory tool schemas
-export const memoryStoreToolSchema = z.object({
-	kind: z
-		.string()
-		.min(1)
-		.describe('Type of memory item (note, document, conversation, etc.)'),
-	text: z.string().min(1).describe('Content to store'),
-	tags: z.array(z.string()).default([]).describe('Tags for categorization'),
-	metadata: z.record(z.unknown()).optional().describe('Additional metadata'),
+export interface MemoryToolDeps {
+        service: Pick<MemoryService, 'save' | 'get' | 'del' | 'search' | 'list'>;
+        now?: () => Date;
+        idFactory?: () => string;
+}
+
+const provenanceSchema = z.object({
+        source: z.enum(['user', 'agent', 'system']).default('agent'),
+        actor: z.string().optional(),
+        evidence: z
+                .array(
+                        z.object({
+                                uri: z.string(),
+                                range: z.tuple([z.number(), z.number()]).optional(),
+                        }),
+                )
+                .optional(),
+        hash: z.string().optional(),
 });
 
-export const memoryRetrieveToolSchema = z.object({
-	query: z.string().min(1).describe('Query to search for similar memories'),
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.max(100)
-		.default(10)
-		.describe('Maximum number of results'),
-	kind: z.string().optional().describe('Filter by memory type'),
-	tags: z.array(z.string()).optional().describe('Filter by tags'),
+const policySchema = z.object({
+        pii: z.boolean().optional(),
+        scope: z.enum(['session', 'user', 'org']).optional(),
+        requiresConsent: z.boolean().optional(),
 });
 
-export const memoryUpdateToolSchema = z.object({
-	id: z.string().min(1).describe('Memory item ID to update'),
-	text: z.string().optional().describe('Updated content'),
-	tags: z.array(z.string()).optional().describe('Updated tags'),
-	metadata: z.record(z.unknown()).optional().describe('Updated metadata'),
+export const memorySetToolSchema = z
+        .object({
+                id: z.string().optional(),
+                kind: z.enum(['note', 'event', 'artifact', 'embedding']).default('note'),
+                text: z.string().optional(),
+                vector: z.array(z.number()).min(1).optional(),
+                tags: z.array(z.string()).default([]),
+                ttl: z.string().optional(),
+                createdAt: z.string().optional(),
+                updatedAt: z.string().optional(),
+                provenance: provenanceSchema.default({ source: 'agent' }),
+                policy: policySchema.optional(),
+                embeddingModel: z.string().optional(),
+        })
+        .superRefine((value, ctx) => {
+                if (!value.text && (!value.vector || value.vector.length === 0)) {
+                        ctx.addIssue({
+                                code: z.ZodIssueCode.custom,
+                                message: 'Provide text or vector content to store a memory',
+                                path: ['text'],
+                        });
+                }
+        });
+
+export const memoryGetToolSchema = z.object({
+        id: z.string().min(1, 'Memory id is required'),
 });
 
 export const memoryDeleteToolSchema = z.object({
-	id: z.string().min(1).describe('Memory item ID to delete'),
+        id: z.string().min(1, 'Memory id is required'),
 });
 
-export const memoryStatsToolSchema = z.object({
-	includeDetails: z
-		.boolean()
-		.default(false)
-		.describe('Include detailed statistics'),
+export const memoryListToolSchema = z.object({
+        limit: z.number().int().positive().max(100).default(20),
+        tags: z.array(z.string()).optional(),
+        text: z.string().optional(),
 });
 
-// Memory MCP Tool definitions
-export const memoryStoreTool: MemoryTool = {
-	name: 'memory_store',
-	description: 'Store information in the memory system',
-	inputSchema: memoryStoreToolSchema,
-	handler: async (params: unknown) => {
-		const { kind, text, tags, metadata } = memoryStoreToolSchema.parse(params);
+export const memorySearchToolSchema = z
+        .object({
+                text: z.string().min(1).optional(),
+                vector: z.array(z.number()).min(1).optional(),
+                topK: z.number().int().positive().max(100).default(8),
+                tags: z.array(z.string()).optional(),
+        })
+        .refine((input) => input.text || input.vector, {
+                message: 'Provide either text or vector search criteria',
+        });
 
-		// Implement memory storage logic
-		const memoryItem = {
-			id: `mem-${Date.now()}`,
-			kind,
-			text,
-			tags,
-			metadata,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			provenance: { source: 'mcp-tool' },
-		};
+const toContent = (payload: unknown) => ({
+        content: [
+                {
+                        type: 'text' as const,
+                        text: JSON.stringify(payload),
+                },
+        ],
+});
 
-		return {
-			content: [
-				{
-					type: 'text',
-					text: JSON.stringify({
-						stored: true,
-						id: memoryItem.id,
-						kind: memoryItem.kind,
-						textLength: text.length,
-						tags: tags.length,
-					}),
-				},
-			],
-		};
-	},
+const defaultIdFactory = () => `mem-${Date.now()}`;
+const defaultNow = () => new Date();
+
+function buildMemory(input: z.infer<typeof memorySetToolSchema>, deps: MemoryToolDeps): Memory {
+        const now = (deps.now ?? defaultNow)();
+        const id = input.id ?? (deps.idFactory ?? defaultIdFactory)();
+        const createdAt = input.createdAt ?? now.toISOString();
+        const updatedAt = input.updatedAt ?? now.toISOString();
+        return memoryZ.parse({
+                id,
+                kind: input.kind,
+                text: input.text,
+                vector: input.vector,
+                tags: input.tags,
+                ttl: input.ttl,
+                createdAt,
+                updatedAt,
+                provenance: input.provenance,
+                policy: input.policy,
+                embeddingModel: input.embeddingModel,
+        });
+}
+
+function createMemorySetTool(deps: MemoryToolDeps): MemoryTool {
+        return {
+                name: 'memory_set',
+                description: 'Store or update a memory entry',
+                inputSchema: memorySetToolSchema,
+                handler: async (params: unknown) => {
+                        const input = memorySetToolSchema.parse(params);
+                        const memory = buildMemory(input, deps);
+                        const saved = await deps.service.save(memory);
+                        return toContent({
+                                status: saved.status ?? 'stored',
+                                memory: saved,
+                        });
+                },
+        };
+}
+
+function createMemoryGetTool(deps: MemoryToolDeps): MemoryTool {
+        return {
+                name: 'memory_get',
+                description: 'Retrieve a memory entry by identifier',
+                inputSchema: memoryGetToolSchema,
+                handler: async (params: unknown) => {
+                        const { id } = memoryGetToolSchema.parse(params);
+                        const memory = await deps.service.get(id);
+                        if (!memory) {
+                                return toContent({ found: false, id });
+                        }
+                        return toContent({ found: true, memory });
+                },
+        };
+}
+
+function createMemoryDeleteTool(deps: MemoryToolDeps): MemoryTool {
+        return {
+                name: 'memory_delete',
+                description: 'Delete a memory entry by identifier',
+                inputSchema: memoryDeleteToolSchema,
+                handler: async (params: unknown) => {
+                        const { id } = memoryDeleteToolSchema.parse(params);
+                        await deps.service.del(id);
+                        return toContent({ id, deleted: true });
+                },
+        };
+}
+
+function createMemoryListTool(deps: MemoryToolDeps): MemoryTool {
+        return {
+                name: 'memory_list',
+                description: 'List stored memories with optional filtering',
+                inputSchema: memoryListToolSchema,
+                handler: async (params: unknown) => {
+                        const input = memoryListToolSchema.parse(params);
+                        const results = await deps.service.list({
+                                limit: input.limit,
+                                tags: input.tags,
+                                text: input.text,
+                        });
+                        return toContent({
+                                count: results.length,
+                                results,
+                                query: {
+                                        limit: input.limit,
+                                        tags: input.tags,
+                                        text: input.text,
+                                },
+                        });
+                },
+        };
+}
+
+function createMemorySearchTool(deps: MemoryToolDeps): MemoryTool {
+        return {
+                name: 'memory_search',
+                description: 'Search memories by text or vector similarity',
+                inputSchema: memorySearchToolSchema,
+                handler: async (params: unknown) => {
+                        const input = memorySearchToolSchema.parse(params);
+                        const results = await deps.service.search({
+                                text: input.text,
+                                vector: input.vector,
+                                topK: input.topK,
+                                tags: input.tags,
+                        });
+                        return toContent({
+                                count: results.length,
+                                results,
+                                query: {
+                                        text: input.text,
+                                        vector: input.vector,
+                                        topK: input.topK,
+                                        tags: input.tags,
+                                },
+                        });
+                },
+        };
+}
+
+export interface MemoryMcpToolset {
+        set: MemoryTool;
+        get: MemoryTool;
+        delete: MemoryTool;
+        list: MemoryTool;
+        search: MemoryTool;
+        tools: MemoryTool[];
+}
+
+export const createMemoryMcpTools = (deps: MemoryToolDeps): MemoryMcpToolset => {
+        const set = createMemorySetTool(deps);
+        const get = createMemoryGetTool(deps);
+        const del = createMemoryDeleteTool(deps);
+        const list = createMemoryListTool(deps);
+        const search = createMemorySearchTool(deps);
+        return {
+                set,
+                get,
+                delete: del,
+                list,
+                search,
+                tools: [set, get, del, list, search],
+        };
 };
 
-export const memoryRetrieveTool: MemoryTool = {
-	name: 'memory_retrieve',
-	description: 'Retrieve information from the memory system',
-	inputSchema: memoryRetrieveToolSchema,
-	handler: async (params: unknown) => {
-		const { query, limit, kind, tags } = memoryRetrieveToolSchema.parse(params);
-
-		// Implement memory retrieval logic - placeholder for now
-		const results = [
-			{
-				id: 'mem-example',
-				kind: kind || 'note',
-				text: `Sample memory result for query: ${query}`,
-				score: 0.9,
-				tags: tags || ['example'],
-				createdAt: new Date().toISOString(),
-			},
-		];
-
-		return {
-			content: [
-				{
-					type: 'text',
-					text: JSON.stringify({
-						query,
-						results: results.slice(0, limit),
-						totalFound: results.length,
-					}),
-				},
-			],
-		};
-	},
-};
-
-export const memoryUpdateTool: MemoryTool = {
-	name: 'memory_update',
-	description: 'Update existing memory items',
-	inputSchema: memoryUpdateToolSchema,
-	handler: async (params: unknown) => {
-		const { id, text, tags, metadata } = memoryUpdateToolSchema.parse(params);
-
-		// Implement memory update logic
-		const updateResult = {
-			id,
-			updated: true,
-			changes: {
-				text: text !== undefined,
-				tags: tags !== undefined,
-				metadata: metadata !== undefined,
-			},
-			updatedAt: new Date().toISOString(),
-		};
-
-		return {
-			content: [
-				{
-					type: 'text',
-					text: JSON.stringify(updateResult),
-				},
-			],
-		};
-	},
-};
-
-export const memoryDeleteTool: MemoryTool = {
-	name: 'memory_delete',
-	description: 'Delete memory items',
-	inputSchema: memoryDeleteToolSchema,
-	handler: async (params: unknown) => {
-		const { id } = memoryDeleteToolSchema.parse(params);
-
-		// Implement memory deletion logic
-		const deleteResult = {
-			id,
-			deleted: true,
-			deletedAt: new Date().toISOString(),
-		};
-
-		return {
-			content: [
-				{
-					type: 'text',
-					text: JSON.stringify(deleteResult),
-				},
-			],
-		};
-	},
-};
-
-export const memoryStatsTool: MemoryTool = {
-	name: 'memory_stats',
-	description: 'Get memory system statistics',
-	inputSchema: memoryStatsToolSchema,
-	handler: async (params: unknown) => {
-		const { includeDetails } = memoryStatsToolSchema.parse(params);
-
-		// Implement memory statistics logic
-		const stats = {
-			totalItems: 0,
-			totalSize: 0,
-			itemsByKind: {},
-			lastActivity: new Date().toISOString(),
-			...(includeDetails && {
-				details: {
-					storageBackend: 'sqlite',
-					indexedFields: ['kind', 'tags', 'createdAt'],
-					averageItemSize: 0,
-				},
-			}),
-		};
-
-		return {
-			content: [
-				{
-					type: 'text',
-					text: JSON.stringify(stats),
-				},
-			],
-		};
-	},
-};
-
-// Export all Memory MCP tools
-export const memoryMcpTools: MemoryTool[] = [
-	memoryStoreTool,
-	memoryRetrieveTool,
-	memoryUpdateTool,
-	memoryDeleteTool,
-	memoryStatsTool,
-];
+export const memoryMcpTools = (deps: MemoryToolDeps): MemoryTool[] =>
+        createMemoryMcpTools(deps).tools;
