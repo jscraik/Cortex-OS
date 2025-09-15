@@ -6,9 +6,10 @@ This session focused on systematically fixing lint errors and type issues across
 
 ## Issues Fixed
 
-### 1. cortex-cli Package (✅ FIXED)
+### 1. cortex-cli Package (✅ FIXED) — Deprecated
 
 **Files Fixed:**
+> Note: cortex-cli has been deprecated and removed; references here are historical.
 - `apps/cortex-cli/src/commands/rag/eval.ts`
 - `apps/cortex-cli/src/commands/rag/ingest.ts`
 
@@ -79,8 +80,8 @@ This session focused on systematically fixing lint errors and type issues across
 
 **Before Session:** 221+ errors across codebase
 **After Session:**
-- ✅ cortex-cli: 0 errors
-- ✅ cortex-marketplace: 0 errors  
+- ✅ cortex-cli: 0 errors (package deprecated)
+- ✅ cortex-marketplace: 0 errors
 - ✅ simlab: 0 errors
 - ⚠️ agent-toolkit: Complex module resolution issues remain
 - 📊 Overall reduction: ~90% of critical errors fixed

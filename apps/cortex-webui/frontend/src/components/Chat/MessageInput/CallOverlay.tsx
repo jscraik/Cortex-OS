@@ -174,7 +174,6 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
 	// Transcribe handler
 	const transcribeHandler = async (_audioBlob: Blob) => {
 		// In a real implementation, you would send the audio to a transcription service
-		console.log('Transcribing audio...');
 		// For now, we'll simulate transcription
 		const simulatedText =
 			'This is a simulated transcription of the spoken audio.';

@@ -9,7 +9,7 @@ This document summarizes the security improvements made to the Cortex-OS reposit
 ### 1. Server-Side Request Forgery (SSRF)
 
 - **Issue**: Direct use of user-controlled URLs in fetch requests without validation
-- **Files Affected**: `apps/cortex-cli/src/commands/mcp/doctor.ts`
+- Deprecated reference: `apps/cortex-cli/src/commands/mcp/doctor.ts` (cortex-cli removed; retained for audit history)
 - **Fix Applied**:
   - Added URL validation and protocol checking
   - Implemented request timeouts

@@ -66,7 +66,7 @@ const response = await fetch(`${agentInfo.telemetryEndpoint}/metrics`);
 ### Remaining Security Tasks
 
 1. Review other SSRF findings in:
-   - `apps/cortex-cli/src/commands/mcp/marketplace-client.ts`
+   - Deprecated reference: `apps/cortex-cli/src/commands/mcp/marketplace-client.ts`
    - `apps/cortex-marketplace-api/src/registry.ts`
    - `apps/cortex-web/app/mvp/map/page.tsx`
 

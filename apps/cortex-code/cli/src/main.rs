@@ -330,7 +330,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 // Default to help when no action provided
                 let mut app = MultitoolCli::command();
                 // Find and print the `mcp` subcommand help
-                if let Some(mut mcp_cmd) = app.find_subcommand_mut("mcp") {
+                if let Some(mcp_cmd) = app.find_subcommand_mut("mcp") {
                     // Ensure subcommands show in help
                     mcp_cmd.print_help()?;
                     println!();
@@ -351,7 +351,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             }
             None => {
                 let mut app = MultitoolCli::command();
-                if let Some(mut a2a_cmd) = app.find_subcommand_mut("a2a") {
+                if let Some(a2a_cmd) = app.find_subcommand_mut("a2a") {
                     a2a_cmd.print_help()?;
                     println!();
                 }
@@ -369,7 +369,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             }
             None => {
                 let mut app = MultitoolCli::command();
-                if let Some(mut rag_cmd) = app.find_subcommand_mut("rag") {
+                if let Some(rag_cmd) = app.find_subcommand_mut("rag") {
                     rag_cmd.print_help()?;
                     println!();
                 }
@@ -390,7 +390,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             }
             None => {
                 let mut app = MultitoolCli::command();
-                if let Some(mut s_cmd) = app.find_subcommand_mut("simlab") {
+                if let Some(s_cmd) = app.find_subcommand_mut("simlab") {
                     s_cmd.print_help()?;
                     println!();
                 }
@@ -402,7 +402,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             }
             None => {
                 let mut app = MultitoolCli::command();
-                if let Some(mut c_cmd) = app.find_subcommand_mut("ctl") {
+                if let Some(c_cmd) = app.find_subcommand_mut("ctl") {
                     c_cmd.print_help()?;
                     println!();
                 }
@@ -414,7 +414,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             }
             None => {
                 let mut app = MultitoolCli::command();
-                if let Some(mut e_cmd) = app.find_subcommand_mut("eval") {
+                if let Some(e_cmd) = app.find_subcommand_mut("eval") {
                     e_cmd.print_help()?;
                     println!();
                 }
@@ -426,7 +426,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             }
             None => {
                 let mut app = MultitoolCli::command();
-                if let Some(mut a_cmd) = app.find_subcommand_mut("agent") {
+                if let Some(a_cmd) = app.find_subcommand_mut("agent") {
                     a_cmd.print_help()?;
                     println!();
                 }

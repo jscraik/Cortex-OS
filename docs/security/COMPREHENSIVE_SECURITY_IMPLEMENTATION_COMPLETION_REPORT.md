@@ -10,7 +10,7 @@ This report confirms the successful completion of the security implementation pl
 
 - **Status**: ✅ **Fully Resolved**
 - **Issues Fixed**: 2 SSRF vulnerabilities
-- **Files Affected**: `apps/cortex-cli/src/commands/mcp/doctor.ts`
+- Deprecated reference: `apps/cortex-cli/src/commands/mcp/doctor.ts` (cortex-cli removed; retained for audit history)
 - **Fixes Applied**:
   - Added URL validation and protocol checking
   - Implemented request timeouts
@@ -104,7 +104,7 @@ This report confirms the successful completion of the security implementation pl
 - 0 real injection vulnerabilities (100% of actual issues resolved)
 - 28 false positive injection vulnerabilities (to be resolved by refining Semgrep rules)
 
-### Security Scanning
+### Security Scanning (Summary)
 
 - ✅ No ERROR severity issues found with precise Semgrep rules
 - ✅ All real vulnerabilities have been addressed
@@ -184,7 +184,7 @@ This report confirms the successful completion of the security implementation pl
 
 ## CI/CD Pipeline Integration
 
-### Security Scanning
+### Security Scanning (CI/CD)
 
 - ✅ Added security scanning to CI/CD pipeline
 - ✅ Integrated Semgrep with GitHub Actions

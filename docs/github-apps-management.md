@@ -60,7 +60,7 @@ cat config/ports.env
 
 Each app requires configuration via `.env` files:
 
-#### cortex-ai-github
+#### cortex-ai-github (Permissions)
 
 ```bash
 # packages/cortex-ai-github/.env
@@ -74,7 +74,7 @@ PRIVATE_KEY_PATH="/secure/path/to/your/github-app-private-key.pem"
 # GITHUB_APP_PRIVATE_KEY_B64="<base64-encoded-key-from-secrets-manager>"
 ```
 
-#### cortex-semgrep-github
+#### cortex-semgrep-github (Permissions)
 
 ```bash
 # packages/cortex-semgrep-github/.env
@@ -83,7 +83,7 @@ WEBHOOK_SECRET=your_webhook_secret
 SEMGREP_TOKEN=your_semgrep_token
 ```
 
-#### cortex-structure-github
+#### cortex-structure-github (Permissions)
 
 ```bash
 # packages/cortex-structure-github/.env

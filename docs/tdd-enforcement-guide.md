@@ -9,7 +9,7 @@ This guide explains how to enforce Test-Driven Development (TDD) practices using
 3. [Integration Methods](#integration-methods)
    - [Pre-commit Hooks](#pre-commit-hooks)
    - [IDE Integration](#ide-integration)
-   - [CI/CD Pipeline](#ci-cd-pipeline)
+   - [CI/CD Pipeline](#cicd-pipeline)
    - [Command Line Usage](#command-line-usage)
 4. [Makefile Integration](#makefile-integration)
 5. [Universal Tool Integration](#universal-tool-integration)

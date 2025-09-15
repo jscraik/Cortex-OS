@@ -29,6 +29,11 @@ import sys
 import time
 from datetime import datetime, timezone
 
+try:
+    import psutil  # optional runtime enhancement only
+except Exception:  # pragma: no cover
+    psutil = None
+
 PORT = 3004
 ADDR = ("0.0.0.0", PORT)
 
@@ -41,9 +46,33 @@ def ts() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def log(msg: str) -> None:
-    sys.stdout.write(f"[{ts()}] {msg}\n")
-    sys.stdout.flush()
+def log(msg: str):
+    ts = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
+    print(f"[{ts}] {msg}", flush=True)
+
+
+# Add helper to dump limited process tree for attribution
+def dump_process_context(verbose: bool):
+    if not verbose:
+        return
+    log("PROCESS CONTEXT (limited)")
+    try:
+        if psutil:
+            try:
+                p = psutil.Process(os.getpid())
+                ancestors = []
+                for ancestor in p.parents():
+                    ancestors.append(
+                        f"PID {ancestor.pid} : {ancestor.name()} ({ancestor.username()})"
+                    )
+                for entry in ancestors:
+                    log("  ancestor -> " + entry)
+            except Exception as e:  # pragma: no cover
+                log(f"Failed to capture process context: {e}")
+        else:
+            log("psutil not available; skipping parent process tree")
+    except Exception:
+        pass
 
 
 def handle_signal(signum, frame):  # type: ignore[no-untyped-def]
@@ -89,6 +118,11 @@ def parse_args():
         default=3004,
         help="Override port (control / comparative tests)",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable extra forensic logging (process tree, runningboardd snapshot)",
+    )
     return parser.parse_args()
 
 
@@ -106,6 +140,7 @@ def main():  # noqa: C901
     start_monotonic = time.monotonic()
     log("Starting port3004 bind loop diagnostic")
     install_signal_handlers()
+    dump_process_context(args.verbose)
 
     # Create listening socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -247,13 +247,13 @@ Reason: The fallbackMode option is defined but never implemented or used anywher
 
 ### 1. Fixed SSE Transport Implementation
 
-#### Requirements
+#### Requirements (Enhanced HTTPS Rate Limiter)
 
 - Must properly import EventSource
 - Must handle all error cases gracefully
 - Must provide complete connection lifecycle management
 
-#### Test Cases
+#### Test Cases (Enhanced HTTPS Rate Limiter)
 
 ```typescript
 // Test 1: Valid connection establishment
@@ -284,13 +284,13 @@ test('should handle incoming messages correctly', async () => {
 
 ### 2. Enhanced HTTPS Rate Limiter
 
-#### Requirements
+#### Requirements (Improved STDIO Resource Management)
 
 - Must clean up old entries to prevent memory leaks
 - Must provide accurate rate limit information
 - Must handle edge cases gracefully
 
-#### Test Cases
+#### Test Cases (Improved STDIO Resource Management)
 
 ```typescript
 // Test 1: Rate limit enforcement
@@ -325,13 +325,13 @@ test('should clean up resources when disposed', () => {
 
 ### 3. Improved STDIO Resource Management
 
-#### Requirements
+#### Requirements (Enhanced Type Safety)
 
 - Must properly manage process lifecycle
 - Must handle timeouts correctly
 - Must clean up resources on disposal
 
-#### Test Cases
+#### Test Cases (Enhanced Type Safety)
 
 ```typescript
 // Test 1: Process timeout handling

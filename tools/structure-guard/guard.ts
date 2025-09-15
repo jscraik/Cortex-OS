@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { globby } from 'globby';
 import micromatch from 'micromatch';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { z } from 'zod';
 
 type Policy = {
@@ -70,9 +70,9 @@ await (async () => {
       '.claude/**',
 
       // Root files that should be allowed (from policy.allowedRootEntries)
-      ...allowedRootEntries.filter((entry: string) => 
-        !entry.startsWith('.') && 
-        !entry.includes('/') && 
+      ...allowedRootEntries.filter((entry: string) =>
+        !entry.startsWith('.') &&
+        !entry.includes('/') &&
         !entry.includes('*') &&
         !['apps', 'packages', 'libs', 'tools', 'docs', 'scripts', 'config', 'examples', 'reports', 'tmp', 'bin', 'infra', 'k6', 'ops', 'data', 'docker', 'prisma', 'project-documentation', 'python', 'sbom', 'schemas', 'servers', 'simple-tests', 'src', 'patches', 'comparisons', 'contracts', 'logs', 'services', '.cortex', '.github', '.changeset', '.husky', '.nx', '.vscode', '.semgrep', '.claude'].includes(entry)
       ),

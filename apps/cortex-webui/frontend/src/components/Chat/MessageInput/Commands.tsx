@@ -9,10 +9,10 @@ import Prompts from './Commands/Prompts';
 
 interface CommandsProps {
 	show: boolean;
-	files: any[];
+	files: File[];
 	command: string;
-	onSelect: (data: any) => void;
-	onUpload: (data: any) => void;
+	onSelect: (data: { type: string; data: unknown }) => void;
+	onUpload: (data: { type: string; files: File[] }) => void;
 	insertTextHandler: (text: string) => void;
 }
 
@@ -97,7 +97,7 @@ const Commands: React.FC<CommandsProps> = ({
 			<Prompts
 				ref={commandElementRef}
 				command={command}
-				onSelect={(data: any) => {
+				onSelect={(data: { type: string; data: { content: string } }) => {
 					const { type, data: promptData } = data;
 
 					if (type === 'prompt') {

@@ -44,11 +44,6 @@ This document outlines how we keep Cortex-OS friendly to Apache-2.0 open source 
 - Open WebUI uses a customized BSD-3 license with a branding restriction; do not copy code/assets.
 - Safe: treat as inspiration only; optionally support it as an external UI via OpenAI-compatible APIs.
 
-## Notes on Open WebUI
-
-- Open WebUI uses a customized BSD-3 license with a branding restriction; do not copy code/assets.
-- Safe: treat as inspiration only; optionally support it as an external UI via OpenAI-compatible APIs.
-
 ## How to run compliance locally
 
 - License policy scan (Node + Python best-effort):

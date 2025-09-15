@@ -113,6 +113,8 @@ command_exists_timeout() {
     
     if command -v timeout >/dev/null 2>&1; then
         timeout "$timeout_sec" command -v "$cmd" >/dev/null 2>&1
+    elif command -v gtimeout >/dev/null 2>&1; then
+        gtimeout "$timeout_sec" command -v "$cmd" >/dev/null 2>&1
     else
         command -v "$cmd" >/dev/null 2>&1
     fi

@@ -2,7 +2,9 @@
 
 import {
 	forwardRef,
+	useCallback,
 	useEffect,
+	useId,
 	useImperativeHandle,
 	useRef,
 	useState,
@@ -15,20 +17,24 @@ interface KnowledgeItem {
 	description: string;
 	type: 'file' | 'collection' | 'note';
 	legacy?: boolean;
-	meta?: any;
+	meta?: {
+		document?: boolean;
+		[key: string]: unknown;
+	};
 }
 
 interface KnowledgeProps {
 	command: string;
-	onSelect: (data: { type: string; data: any }) => void;
+	onSelect: (data: { type: string; data: unknown }) => void;
 }
 
 const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 	const [selectedIdx, setSelectedIdx] = useState(0);
 	const [filteredItems, setFilteredItems] = useState<KnowledgeItem[]>([]);
-	const [_items, setItems] = useState<KnowledgeItem[]>([]);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const adjustHeightDebounce = useRef<NodeJS.Timeout | null>(null);
+	const containerId = useId();
+	const optionsId = useId();
 
 	// Mock knowledge data - in a real implementation, this would come from a store or API
 	const mockKnowledge: KnowledgeItem[] = [
@@ -80,13 +86,8 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 		setSelectedIdx(0);
 	}, [command]);
 
-	// Initialize items
-	useEffect(() => {
-		setItems(mockKnowledge);
-	}, []);
-
 	// Adjust container height
-	const adjustHeight = () => {
+	const adjustHeight = useCallback(() => {
 		if (containerRef.current) {
 			if (adjustHeightDebounce.current) {
 				clearTimeout(adjustHeightDebounce.current);
@@ -100,7 +101,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 				containerRef.current.style.maxHeight = `${Math.max(Math.min(240, rect.bottom - 100), 100)}px`;
 			}, 100);
 		}
-	};
+	}, []);
 
 	// Handle window resize
 	useEffect(() => {
@@ -117,18 +118,11 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 	}, [adjustHeight]);
 
 	// Confirm selection
-	const confirmSelect = (type: string, data: any) => {
+	const confirmSelect = (type: string, data: unknown) => {
 		onSelect({ type, data });
 	};
 
-	// Decode string
-	const decodeString = (str: string) => {
-		try {
-			return decodeURIComponent(str);
-		} catch (_e) {
-			return str;
-		}
-	};
+	// (Removed decode utility for simplicity; item names displayed raw)
 
 	// Expose methods to parent component
 	useImperativeHandle(ref, () => ({
@@ -140,25 +134,70 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 		},
 	}));
 
+	// Render badge for knowledge item type/meta
+	const renderBadge = (item: KnowledgeItem) => {
+		if (item.legacy) {
+			return (
+				<div className="bg-gray-500/20 text-gray-700 dark:text-gray-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
+					Legacy
+				</div>
+			);
+		}
+		if (item.meta?.document) {
+			return (
+				<div className="bg-gray-500/20 text-gray-700 dark:text-gray-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
+					Document
+				</div>
+			);
+		}
+		switch (item.type) {
+			case 'file':
+				return (
+					<div className="bg-gray-500/20 text-gray-700 dark:text-gray-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
+						File
+					</div>
+				);
+			case 'note':
+				return (
+					<div className="bg-blue-500/20 text-blue-700 dark:text-blue-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
+						Note
+					</div>
+				);
+			case 'collection':
+			default:
+				return (
+					<div className="bg-green-500/20 text-green-700 dark:text-green-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
+						Collection
+					</div>
+				);
+		}
+	};
+
+	const urlCommand = command.substring(1);
+	const isYoutube =
+		urlCommand.startsWith('https://www.youtube.com') ||
+		urlCommand.startsWith('https://youtu.be');
+	const isHttp = !isYoutube && urlCommand.startsWith('http');
+
 	if (filteredItems.length === 0 && !command.substring(1).startsWith('http')) {
 		return null;
 	}
 
 	return (
 		<div
-			id="commands-container"
+			id={containerId}
 			className="px-2 mb-2 text-left w-full absolute bottom-0 left-0 right-0 z-10"
 		>
 			<div className="flex w-full rounded-xl border border-gray-100 dark:border-gray-850">
 				<div className="flex flex-col w-full rounded-xl bg-white dark:bg-gray-900 dark:text-gray-100">
 					<div
 						className="m-1 overflow-y-auto p-1 rounded-r-xl space-y-0.5 scrollbar-hidden max-h-60"
-						id="command-options-container"
+						id={optionsId}
 						ref={containerRef}
 					>
 						{filteredItems.map((item, idx) => (
 							<button
-								key={idx}
+								key={item.id}
 								className={`px-3 py-1.5 rounded-xl w-full text-left flex justify-between items-center ${
 									idx === selectedIdx
 										? 'bg-gray-50 dark:bg-gray-850 dark:text-gray-100 selected-command-option-button'
@@ -166,7 +205,6 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 								}`}
 								type="button"
 								onClick={() => {
-									console.log(item);
 									confirmSelect('knowledge', item);
 								}}
 								onMouseMove={() => {
@@ -175,31 +213,8 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 							>
 								<div>
 									<div className="font-medium text-black dark:text-gray-100 flex items-center gap-1">
-										{item.legacy ? (
-											<div className="bg-gray-500/20 text-gray-700 dark:text-gray-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
-												Legacy
-											</div>
-										) : item?.meta?.document ? (
-											<div className="bg-gray-500/20 text-gray-700 dark:text-gray-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
-												Document
-											</div>
-										) : item?.type === 'file' ? (
-											<div className="bg-gray-500/20 text-gray-700 dark:text-gray-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
-												File
-											</div>
-										) : item?.type === 'note' ? (
-											<div className="bg-blue-500/20 text-blue-700 dark:text-blue-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
-												Note
-											</div>
-										) : (
-											<div className="bg-green-500/20 text-green-700 dark:text-green-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">
-												Collection
-											</div>
-										)}
-
-										<div className="line-clamp-1">
-											{decodeString(item?.name)}
-										</div>
+										{renderBadge(item)}
+										<div className="line-clamp-1">{item.name}</div>
 									</div>
 
 									<div className="text-xs text-gray-600 dark:text-gray-100 line-clamp-1">
@@ -209,36 +224,34 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 							</button>
 						))}
 
-						{command.substring(1).startsWith('https://www.youtube.com') ||
-						command.substring(1).startsWith('https://youtu.be') ? (
+						{isYoutube && (
 							<button
 								className="px-3 py-1.5 rounded-xl w-full text-left bg-gray-50 dark:bg-gray-850 dark:text-gray-100 selected-command-option-button"
 								type="button"
 								onClick={() => {
-									if (isValidHttpUrl(command.substring(1))) {
-										confirmSelect('youtube', command.substring(1));
+									if (isValidHttpUrl(urlCommand)) {
+										confirmSelect('youtube', urlCommand);
 									} else {
-										// In a real implementation, you would show a toast notification
 										console.error('Invalid URL');
 									}
 								}}
 							>
 								<div className="font-medium text-black dark:text-gray-100 line-clamp-1">
-									{command.substring(1)}
+									{urlCommand}
 								</div>
 								<div className="text-xs text-gray-600 line-clamp-1">
 									Youtube
 								</div>
 							</button>
-						) : command.substring(1).startsWith('http') ? (
+						)}
+						{isHttp && (
 							<button
 								className="px-3 py-1.5 rounded-xl w-full text-left bg-gray-50 dark:bg-gray-850 dark:text-gray-100 selected-command-option-button"
 								type="button"
 								onClick={() => {
-									if (isValidHttpUrl(command.substring(1))) {
-										confirmSelect('web', command.substring(1));
+									if (isValidHttpUrl(urlCommand)) {
+										confirmSelect('web', urlCommand);
 									} else {
-										// In a real implementation, you would show a toast notification
 										console.error('Invalid URL');
 									}
 								}}
@@ -248,7 +261,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 								</div>
 								<div className="text-xs text-gray-600 line-clamp-1">Web</div>
 							</button>
-						) : null}
+						)}
 					</div>
 				</div>
 			</div>

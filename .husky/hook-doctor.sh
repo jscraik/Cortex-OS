@@ -66,12 +66,12 @@ check_husky_config() {
     # Check git hooks path
     local hooks_path
     hooks_path=$(git config core.hooksPath 2>/dev/null || echo "")
-    if [ "$hooks_path" = ".husky" ]; then
-        print_status "ok" "Git hooks path correctly set to .husky"
+    if [ "$hooks_path" = ".husky/_" ]; then
+        print_status "ok" "Git hooks path correctly set to .husky/_"
     elif [ -z "$hooks_path" ]; then
         print_status "warn" "Git hooks path not set (using default .git/hooks)"
     else
-        print_status "warn" "Git hooks path set to: $hooks_path (expected .husky)"
+        print_status "warn" "Git hooks path set to: $hooks_path (expected .husky/_)"
     fi
     
     # Check .husky directory

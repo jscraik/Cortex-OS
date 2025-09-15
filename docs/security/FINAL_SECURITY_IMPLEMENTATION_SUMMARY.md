@@ -10,7 +10,7 @@ This document provides a comprehensive summary of all security improvements made
 
 - **Status**: ✅ **Fully Resolved**
 - **Issues Fixed**: 2 SSRF vulnerabilities
-- **Files Affected**: `apps/cortex-cli/src/commands/mcp/doctor.ts`
+- Deprecated reference: `apps/cortex-cli/src/commands/mcp/doctor.ts` (cortex-cli removed; retained for audit history)
 - **Fixes Applied**:
   - Added URL validation and protocol checking
   - Implemented request timeouts

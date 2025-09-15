@@ -41,6 +41,7 @@ const InputMenu: React.FC<InputMenuProps> = ({
 }) => {
 	const [show, setShow] = useState(false);
 	const [tools, setTools] = useState<Record<string, Tool> | null>(null);
+	const [activeToolIds, setActiveToolIds] = useState<string[]>(selectedToolIds);
 	const [showAllTools, setShowAllTools] = useState(false);
 	const [fileUploadEnabled, setFileUploadEnabled] = useState(true);
 	const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -92,38 +93,43 @@ const InputMenu: React.FC<InputMenuProps> = ({
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const files = Array.from(event.target?.files || []);
 		if (files.length > 0) {
-			console.log(files);
 			inputFilesHandler(files);
 		}
 	};
 
 	// Detect mobile device
-	const detectMobile = () => {
-		const userAgent =
-			navigator.userAgent || navigator.vendor || (window as any).opera;
-		return /android|iphone|ipad|ipod|windows phone/i.test(userAgent);
+	// Basic mobile detection; vendor/opera fallbacks removed for simplicity
+	const detectMobile = () =>
+		/android|iphone|ipad|ipod|windows phone/i.test(navigator.userAgent);
+
+	// Toggle tool enabled state & maintain local active selection list (avoid prop reassignment)
+	const toggleTool = (toolId: string, explicit?: boolean) => {
+		if (!tools) return;
+		setTools((prev) => ({
+			...prev,
+			[toolId]: {
+				...prev[toolId],
+				enabled: explicit !== undefined ? explicit : !prev[toolId].enabled,
+			},
+		}));
+		setActiveToolIds((prev) => {
+			const shouldEnable =
+				explicit !== undefined ? explicit : !prev.includes(toolId);
+			if (shouldEnable && !prev.includes(toolId)) return [...prev, toolId];
+			if (!shouldEnable) return prev.filter((id) => id !== toolId);
+			return prev;
+		});
 	};
 
-	// Toggle tool enabled state
-	const toggleTool = (toolId: string) => {
-		if (tools) {
-			setTools((prev) => ({
-				...prev,
-				[toolId]: {
-					...prev[toolId],
-					enabled: !prev[toolId].enabled,
-				},
-			}));
+	// Derived tooltip text for file upload state
+	const fileUploadTooltip = () => {
+		if (fileUploadCapableModels.length !== selectedModels.length) {
+			return 'Model(s) do not support file upload';
 		}
-	};
-
-	// Handle tool selection change
-	const handleToolSelectionChange = (toolId: string, enabled: boolean) => {
-		if (enabled) {
-			selectedToolIds = [...selectedToolIds, toolId];
-		} else {
-			selectedToolIds = selectedToolIds.filter((id) => id !== toolId);
+		if (!fileUploadEnabled) {
+			return 'You do not have permission to upload files.';
 		}
+		return '';
 	};
 
 	return (
@@ -167,55 +173,62 @@ const InputMenu: React.FC<InputMenuProps> = ({
 									<div
 										className={`${showAllTools ? 'max-h-96' : 'max-h-28'} overflow-y-auto scrollbar-thin`}
 									>
-										{Object.keys(tools).map((toolId) => (
-											<button
-												key={toolId}
-												className="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800"
-												onClick={() => toggleTool(toolId)}
-											>
-												<div className="flex-1 truncate">
-													<Tooltip
-														content={tools[toolId]?.description ?? ''}
-														placement="top-start"
-														className="flex flex-1 gap-2 items-center"
+										{Object.keys(tools).map((toolId) => {
+											const tool = tools[toolId];
+											return (
+												<div key={toolId} className="w-full">
+													<button
+														type="button"
+														className="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+														onClick={() => toggleTool(toolId)}
+														aria-pressed={tool.enabled}
 													>
-														<div className="shrink-0">
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																viewBox="0 0 24 24"
-																fill="currentColor"
-																className="w-5 h-5"
+														<div className="flex-1 truncate">
+															<Tooltip
+																content={tool?.description ?? ''}
+																placement="top-start"
+																className="flex flex-1 gap-2 items-center"
 															>
-																<path
-																	fillRule="evenodd"
-																	d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 0 0 4.25 22.5h15.5a1.875 1.875 0 0 0 1.865-2.071l-1.263-12a1.875 1.875 0 0 0-1.865-1.679H16.5V6a4.5 4.5 0 1 0-9 0ZM12 3a3 3 0 0 0-3 3v.75h6V6a3 3 0 0 0-3-3Zm-3 8.25a3 3 0 1 0 6 0v-.75a.75.75 0 0 1 1.5 0v.75a4.5 4.5 0 1 1-9 0v-.75a.75.75 0 0 1 1.5 0v.75Z"
-																	clipRule="evenodd"
-																/>
-															</svg>
+																<div className="shrink-0" aria-hidden="true">
+																	<svg
+																		xmlns="http://www.w3.org/2000/svg"
+																		viewBox="0 0 24 24"
+																		fill="currentColor"
+																		className="w-5 h-5"
+																	>
+																		<title>{tool.name} icon</title>
+																		<path
+																			fillRule="evenodd"
+																			d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 0 0 4.25 22.5h15.5a1.875 1.875 0 0 0 1.865-2.071l-1.263-12a1.875 1.875 0 0 0-1.865-1.679H16.5V6a4.5 4.5 0 1 0-9 0ZM12 3a3 3 0 0 0-3 3v.75h6V6a3 3 0 0 0-3-3Zm-3 8.25a3 3 0 1 0 6 0v-.75a.75.75 0 0 1 1.5 0v.75a4.5 4.5 0 1 1-9 0v-.75a.75.75 0 0 1 1.5 0v.75Z"
+																			clipRule="evenodd"
+																		/>
+																	</svg>
+																</div>
+																<div className="truncate">{tool.name}</div>
+															</Tooltip>
 														</div>
-
-														<div className="truncate">{tools[toolId].name}</div>
-													</Tooltip>
+														<div className="shrink-0">
+															<Switch
+																checked={tool.enabled}
+																onChange={(checked) =>
+																	toggleTool(toolId, checked)
+																}
+															/>
+														</div>
+													</button>
 												</div>
-
-												<div className="shrink-0">
-													<Switch
-														checked={tools[toolId].enabled}
-														onChange={(checked) => {
-															handleToolSelectionChange(toolId, checked);
-														}}
-													/>
-												</div>
-											</button>
-										))}
+											);
+										})}
 									</div>
 									{Object.keys(tools).length > 3 && (
 										<button
-											className="flex w-full justify-center items-center text-sm font-medium cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
-											onClick={() => {
-												setShowAllTools(!showAllTools);
-											}}
-											title={showAllTools ? 'Show Less' : 'Show All'}
+											type="button"
+											className="flex w-full justify-center items-center text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+											onClick={() => setShowAllTools(!showAllTools)}
+											aria-expanded={showAllTools}
+											aria-label={
+												showAllTools ? 'Show fewer tools' : 'Show all tools'
+											}
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -226,7 +239,9 @@ const InputMenu: React.FC<InputMenuProps> = ({
 												className={`size-3 transition-transform duration-200 ${
 													showAllTools ? 'rotate-180' : ''
 												} text-gray-300 dark:text-gray-600`}
+												aria-hidden="true"
 											>
+												<title>Toggle tool list length</title>
 												<path
 													strokeLinecap="round"
 													strokeLinejoin="round"
@@ -244,138 +259,128 @@ const InputMenu: React.FC<InputMenuProps> = ({
 							</div>
 						)}
 
-						<Tooltip
-							content={
-								fileUploadCapableModels.length !== selectedModels.length
-									? 'Model(s) do not support file upload'
-									: !fileUploadEnabled
-										? 'You do not have permission to upload files.'
-										: ''
-							}
-							className="w-full"
-						>
+						<Tooltip content={fileUploadTooltip()} className="w-full">
 							<div
-								className={`flex gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl ${
-									!fileUploadEnabled ? 'opacity-50' : ''
-								}`}
-								onClick={() => {
-									if (fileUploadEnabled) {
+								className={`flex gap-2 items-center px-3 py-2 text-sm font-medium rounded-xl ${!fileUploadEnabled ? 'opacity-50' : ''}`}
+							>
+								<button
+									type="button"
+									className="flex gap-2 items-center w-full text-left"
+									disabled={!fileUploadEnabled}
+									onClick={() => {
+										if (!fileUploadEnabled) return;
 										if (!detectMobile()) {
 											screenCaptureHandler();
-										} else {
-											if (cameraInputRef.current) {
-												cameraInputRef.current.click();
-											}
+										} else if (cameraInputRef.current) {
+											cameraInputRef.current.click();
 										}
-									}
-								}}
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-									className="w-5 h-5"
+									}}
 								>
-									<path d="M12 9a3.75 3.75 0 1 0 0 7.5A3.75 3.75 0 0 0 12 9Z" />
-									<path
-										fillRule="evenodd"
-										d="M9.344 3.071a49.52 49.52 0 0 1 5.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 0 1-3 3h-15a3 3 0 0 1-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 0 0 1.11-.71l.822-1.315a2.942 2.942 0 0 1 2.332-1.39ZM6.75 12.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Zm12-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
-										clipRule="evenodd"
-									/>
-								</svg>
-								<div className="line-clamp-1">Capture</div>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										className="w-5 h-5"
+										aria-hidden="true"
+									>
+										<title>Capture image</title>
+										<path d="M12 9a3.75 3.75 0 1 0 0 7.5A3.75 3.75 0 0 0 12 9Z" />
+										<path
+											fillRule="evenodd"
+											d="M9.344 3.071a49.52 49.52 0 0 1 5.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 0 1-3 3h-15a3 3 0 0 1-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 0 0 1.11-.71l.822-1.315a2.942 2.942 0 0 1 2.332-1.39ZM6.75 12.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Zm12-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+											clipRule="evenodd"
+										/>
+									</svg>
+									<div className="line-clamp-1">Capture</div>
+								</button>
 							</div>
 						</Tooltip>
 
-						<Tooltip
-							content={
-								fileUploadCapableModels.length !== selectedModels.length
-									? 'Model(s) do not support file upload'
-									: !fileUploadEnabled
-										? 'You do not have permission to upload files.'
-										: ''
-							}
-							className="w-full"
-						>
+						<Tooltip content={fileUploadTooltip()} className="w-full">
 							<div
-								className={`flex gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl ${
-									!fileUploadEnabled ? 'opacity-50' : ''
-								}`}
-								onClick={() => {
-									if (fileUploadEnabled) {
-										uploadFilesHandler();
-									}
-								}}
+								className={`flex gap-2 items-center px-3 py-2 text-sm font-medium rounded-xl ${!fileUploadEnabled ? 'opacity-50' : ''}`}
 							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-									className="w-5 h-5"
+								<button
+									type="button"
+									className="flex gap-2 items-center w-full text-left"
+									disabled={!fileUploadEnabled}
+									onClick={() => fileUploadEnabled && uploadFilesHandler()}
 								>
-									<path
-										fillRule="evenodd"
-										d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z"
-										clipRule="evenodd"
-									/>
-								</svg>
-								<div className="line-clamp-1">Upload Files</div>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										className="w-5 h-5"
+										aria-hidden="true"
+									>
+										<title>Upload files</title>
+										<path
+											fillRule="evenodd"
+											d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z"
+											clipRule="evenodd"
+										/>
+									</svg>
+									<div className="line-clamp-1">Upload Files</div>
+								</button>
 							</div>
 						</Tooltip>
 
 						{fileUploadEnabled && (
 							<>
-								<div
-									className="flex gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
-									onClick={() => {
-										uploadGoogleDriveHandler();
-									}}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 87.3 78"
-										className="w-5 h-5"
+								<div className="px-3 py-2">
+									<button
+										type="button"
+										className="flex gap-2 items-center text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										onClick={() => uploadGoogleDriveHandler()}
 									>
-										<path
-											d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z"
-											fill="#0066da"
-										/>
-										<path
-											d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z"
-											fill="#00ac47"
-										/>
-										<path
-											d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z"
-											fill="#ea4335"
-										/>
-										<path
-											d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z"
-											fill="#00832d"
-										/>
-										<path
-											d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"
-											fill="#2684fc"
-										/>
-										<path
-											d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"
-											fill="#ffba00"
-										/>
-									</svg>
-									<div className="line-clamp-1">Google Drive</div>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 87.3 78"
+											className="w-5 h-5"
+											aria-hidden="true"
+										>
+											<path
+												d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z"
+												fill="#0066da"
+											/>
+											<path
+												d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z"
+												fill="#00ac47"
+											/>
+											<path
+												d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z"
+												fill="#ea4335"
+											/>
+											<path
+												d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z"
+												fill="#00832d"
+											/>
+											<path
+												d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"
+												fill="#2684fc"
+											/>
+											<path
+												d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"
+												fill="#ffba00"
+											/>
+										</svg>
+										<div className="line-clamp-1">Google Drive</div>
+									</button>
 								</div>
 
-								<div className="relative">
-									<div
-										className="flex gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl w-full"
+								<div className="relative px-3 py-2">
+									<button
+										type="button"
+										className="flex gap-2 items-center text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
 										onClick={() => {
-											// In a real implementation, you would show a submenu
-											console.log('Microsoft OneDrive clicked');
+											/* OneDrive integration placeholder */
 										}}
 									>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
 											viewBox="0 0 32 32"
 											className="w-5 h-5"
+											aria-hidden="true"
 										>
 											<defs>
 												<linearGradient
@@ -441,7 +446,7 @@ const InputMenu: React.FC<InputMenuProps> = ({
 											/>
 										</svg>
 										<div className="line-clamp-1">Microsoft OneDrive</div>
-									</div>
+									</button>
 									{/* Submenu would go here in a real implementation */}
 								</div>
 							</>

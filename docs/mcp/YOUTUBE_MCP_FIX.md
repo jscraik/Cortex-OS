@@ -23,14 +23,14 @@ because it was trying to process an undefined `YOUTUBE_API_KEY` environment vari
 
 ### Step 2: Set the Environment Variable
 
-**Option A: System-wide (Recommended for Claude Desktop)**
+#### Option A: System-wide (Recommended for Claude Desktop)
 
 ```bash
 # Set for all applications (including Claude Desktop)
 launchctl setenv YOUTUBE_API_KEY "your_api_key_here"
 ```
 
-**Option B: Shell session only**
+#### Option B: Shell session only
 
 ```bash
 # For current terminal session

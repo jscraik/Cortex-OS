@@ -2,13 +2,13 @@
 
 ## Cortex AI GitHub App (Agent Type)
 
-### Basic Configuration
+### Basic Configuration (Cortex AI)
 
 - **App Type**: Agent
 - **Port**: 3001
 - **URL**: <https://cortex-github.brainwav.io>
 
-### Authorization Settings
+### Authorization Settings (Cortex AI)
 
 - **Pre-authorization URL**: `https://cortex-github.brainwav.io/auth`
 - **Authorization**: Not required (but recommended for better security)
@@ -28,7 +28,7 @@ AI-powered code review and automation agent using GitHub Models API. Provides:
 - Support for TypeScript, Python, JavaScript, and more
 ```
 
-### OpenID Connect Token Exchange
+### OpenID Connect Token Exchange (Cortex AI)
 
 - **Enabled**: ✅ (Recommended for secure authentication)
 - Exchange GitHub identity for third-party tokens
@@ -37,13 +37,13 @@ AI-powered code review and automation agent using GitHub Models API. Provides:
 
 ## Cortex Semgrep GitHub App (Skillset Type)
 
-### Basic Configuration
+### Basic Configuration (Semgrep)
 
 - **App Type**: Skillset
 - **Port**: 3002
 - **URL**: <https://semgrep-github.brainwav.io>
 
-### Authorization Settings
+### Authorization Settings (Semgrep)
 
 - **Pre-authorization URL**: `https://semgrep-github.brainwav.io/auth`
 - **Authorization**: Required for accessing private repositories
@@ -121,7 +121,7 @@ AI-powered code review and automation agent using GitHub Models API. Provides:
 }
 ```
 
-### OpenID Connect Token Exchange
+### OpenID Connect Token Exchange (Semgrep)
 
 - **Enabled**: ✅ (Required for repository access)
 - Exchange GitHub identity for accessing private repositories

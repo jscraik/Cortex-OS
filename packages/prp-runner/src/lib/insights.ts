@@ -20,9 +20,7 @@ export function summarizeEvidence(evidenceCollection: EvidenceItem[]): string {
 
 export async function invokeRagAnalysis(
 	aiCapabilities: {
-		ragQuery: (
-			args: any,
-		) => Promise<{
+		ragQuery: (args: any) => Promise<{
 			answer: string;
 			sources?: any[];
 			prompt?: string;

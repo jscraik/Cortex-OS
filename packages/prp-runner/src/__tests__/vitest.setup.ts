@@ -328,14 +328,12 @@ vi.mock('../embedding-adapter.js', () => {
 			});
 			scored.sort((a, b) => b.similarity - a.similarity);
 			const filtered = scored.filter((s) => s.similarity >= threshold);
-			return filtered
-				.slice(0, topK)
-				.map((s) => ({
-					id: s.id,
-					text: s.text,
-					similarity: s.similarity,
-					metadata: s.metadata,
-				}));
+			return filtered.slice(0, topK).map((s) => ({
+				id: s.id,
+				text: s.text,
+				similarity: s.similarity,
+				metadata: s.metadata,
+			}));
 		}
 
 		async clearDocuments() {

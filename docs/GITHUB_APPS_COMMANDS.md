@@ -18,7 +18,7 @@ This document provides a comprehensive reference for all available commands acro
 **Trigger:** `@cortex <command>`  
 **Description:** AI-powered code analysis and automation with real MLX integration
 
-### Available Commands
+### Available Commands (Cortex AI)
 
 | Command | Task Type | Description |
 |---------|-----------|-------------|
@@ -31,7 +31,7 @@ This document provides a comprehensive reference for all available commands acro
 | `@cortex health` | repo_health | Repository health assessment |
 | `@cortex fix [description]` | auto_fix | Automated code fixes and improvements |
 
-### Example Usage
+### Example Usage (Cortex AI)
 
 ```bash
 # Basic commands
@@ -45,7 +45,7 @@ This document provides a comprehensive reference for all available commands acro
 @cortex document the new API endpoints
 ```
 
-### Security Features
+### Security Features (Cortex AI)
 - ✅ **MLX Integration:** Real Apple Silicon AI processing
 - ✅ **Input Sanitization:** All prompts sanitized to prevent command injection
 - ✅ **Rate Limiting:** Built-in GitHub API rate limit handling
@@ -58,7 +58,7 @@ This document provides a comprehensive reference for all available commands acro
 **Trigger:** `@semgrep <command>`  
 **Description:** Production-grade security scanning with comprehensive vulnerability detection
 
-### Available Commands
+### Available Commands (Semgrep Security)
 
 | Command | Action | Description |
 |---------|--------|-------------|
@@ -69,7 +69,7 @@ This document provides a comprehensive reference for all available commands acro
 | `@semgrep help` | show_help | Display available commands |
 | `@semgrep commands` | show_help | List all commands (alias for help) |
 
-### Example Usage
+### Example Usage (Semgrep Security)
 
 ```bash
 # Basic security scanning
@@ -82,7 +82,7 @@ This document provides a comprehensive reference for all available commands acro
 @semgrep check for SQL injection vulnerabilities
 ```
 
-### Security Features
+### Security Features (Semgrep Security)
 - ✅ **OWASP Compliance:** Comprehensive Top-10 vulnerability detection
 - ✅ **Input Validation:** Comprehensive GitHub parameter validation
 - ✅ **Safe Execution:** Secure Semgrep binary execution with timeouts
@@ -102,7 +102,7 @@ This document provides a comprehensive reference for all available commands acro
 **Trigger:** `@insula <command>`  
 **Description:** Repository structure analysis and enforcement with intelligent recommendations
 
-### Available Commands
+### Available Commands (Insula Structure)
 
 | Command | Action | Description |
 |---------|--------|-------------|
@@ -114,7 +114,7 @@ This document provides a comprehensive reference for all available commands acro
 | `@insula help` | show_help | Display available commands |
 | `@insula commands` | show_help | List all commands (alias) |
 
-### Example Usage
+### Example Usage (Insula Structure)
 
 ```bash
 # Structure analysis
@@ -127,7 +127,7 @@ This document provides a comprehensive reference for all available commands acro
 @insula autofix file organization
 ```
 
-### Security Features
+### Security Features (Insula Structure)
 - ✅ **URL Validation:** Comprehensive GitHub URL pattern validation
 - ✅ **Path Security:** Complete path traversal prevention
 - ✅ **Input Sanitization:** All repository parameters validated

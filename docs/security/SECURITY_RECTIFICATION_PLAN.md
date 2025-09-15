@@ -83,7 +83,7 @@ Semgrep scan identified 38 security issues in the codebase, categorized into two
 
 **Files affected:**
 
-- `apps/cortex-cli/src/commands/mcp/doctor.ts` (line 28)
+- Deprecated reference: `apps/cortex-cli/src/commands/mcp/doctor.ts` (cortex-cli removed; retained for audit history)
 
 **Issue:** Direct use of user-controlled URLs in fetch requests without validation.
 
@@ -99,7 +99,7 @@ Semgrep scan identified 38 security issues in the codebase, categorized into two
 
 ### Phase 1: Immediate Fixes (High Priority)
 
-1. Fix SSRF vulnerabilities in `apps/cortex-cli/src/commands/mcp/doctor.ts`
+1. Deprecated: original target `apps/cortex-cli/src/commands/mcp/doctor.ts` — the cortex-cli package was removed. Security guidance remains for historical context.
 2. Address critical injection vulnerabilities in database queries
 3. Fix command injection issues in Python files
 

@@ -6,7 +6,7 @@
 
 #### 1. Server-Side Request Forgery (SSRF) Vulnerabilities Fixed
 
-- **apps/cortex-cli/src/commands/mcp/marketplace-client.ts**
+- Deprecated reference: `apps/cortex-cli/src/commands/mcp/marketplace-client.ts`
   - Added `validateMarketplaceUrl()` function with domain allowlisting
   - Protected `fetchRegistry()` method with URL validation
   - Allowlisted domains: marketplace.cortex-os.com, registry.cortex-os.com, localhost

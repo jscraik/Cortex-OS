@@ -80,10 +80,10 @@ echo "✅ TDD Coach is healthy"
 
 ### 1. Cortex CLI Integration
 
-Add TDD validation to the Cortex CLI (`apps/cortex-cli`):
+Add TDD validation to the Cortex CLI (`apps/cortex-cli`) — Deprecated: cortex-cli has been removed; use the Rust-based `codex` CLI (apps/cortex-code).
 
 ```typescript
-// Example: apps/cortex-cli/src/commands/validate.ts
+// Example (historical): apps/cortex-cli/src/commands/validate.ts
 import { Command } from 'commander';
 import { execSync } from 'child_process';
 

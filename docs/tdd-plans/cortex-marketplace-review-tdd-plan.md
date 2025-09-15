@@ -6,12 +6,12 @@
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Architecture** | Entry point (`index.ts`) loads config and bootstraps Fastify via `build()` in `app.ts`. Plugin-based structure registers security middleware (helmet, cors, rate-limit) and exposes modular routes (health, servers, registries, categories, stats).                                                                                                      |
 | **Strengths**    | Uses TypeScript with strict mode, Zod for runtime validation, Swagger/OpenAPI for docs, and Vitest tests (unit + integration). Caching strategy via disk & memory, graceful shutdown hooks, and detailed health endpoints.                                                                                                                                |
-| **Issues**       | <ul><li><strong>Undeclared <code>request</code> usage</strong> in route handlers causes compilation/runtime failures.</li><li><strong>Schema registration order</strong>: <code>categories</code> routes reference <code>ServerManifest</code> before it is added.</li><li><strong>Test suite failing</strong>: <code>pnpm --filter @cortex-os/marketplace-api test</code> shows 26 failing tests due to above issues and incomplete route implementations.</li></ul> |
+| **Issues**       | Undeclared `request` usage in route handlers causes compilation/runtime failures; schema registration order problems (e.g., `categories` routes reference `ServerManifest` before it is added); test suite failing (`pnpm --filter @cortex-os/marketplace-api test` shows 26 failing tests) due to the above issues and incomplete route implementations. |
 | **Risk**         | Failing tests and undefined variable errors block deployment; missing schemas can reject valid requests.                                                                                                                                                                                                                                                  |
 
 ## Engineering Principle
 
-**Explicit Route Contract Principle**
+### Explicit Route Contract Principle
 
 > Every Fastify route must:
 >
@@ -23,10 +23,10 @@
 ## TDD Implementation Plan
 
 1. **Regression test for registries route** – add failing test reproducing `request` undefined error.
-   <details>
-   <summary>Example (Vitest):</summary>
+
+#### Example (Vitest)
    
-   ```ts
+```ts
    // registries.test.ts
    it('should fail if request is undefined in handler', async () => {
      // Simulate calling the route handler without declaring request
@@ -34,9 +34,11 @@
      await expect(registriesHandler()).rejects.toThrow(/request is not defined/);
    });
    // Expected error: ReferenceError: request is not defined
-6. Expand unit tests for route validation (invalid params, missing fields) ensuring coverage.
-7. Run `pre-commit`, `pnpm lint`, and `pnpm test` per commit.
-8. Document environment variables and configuration loader behavior in `README.md`; add docs lint test.
+```
+
+1. Expand unit tests for route validation (invalid params, missing fields) ensuring coverage.
+2. Run `pre-commit`, `pnpm lint`, and `pnpm test` per commit.
+3. Document environment variables and configuration loader behavior in `README.md`; add docs lint test.
 
 ## Deployment Readiness Checklist
 

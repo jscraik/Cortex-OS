@@ -1,3 +1,5 @@
+> Deprecated: cortex-cli has been superseded by the Rust-based `codex` CLI (apps/cortex-code). This document is retained for historical reference.
+
 # Cortex-CLI v2.0 Upgrade: TDD Implementation Complete
 
 ## Summary

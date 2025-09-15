@@ -7,7 +7,15 @@ import { useSettingsStore } from '@/stores/settingsStore';
 interface ModelItemMenuProps {
 	show: boolean;
 	setShow: (show: boolean) => void;
-	model: any;
+	model: {
+		id: string;
+		name: string;
+		info?: {
+			meta?: {
+				profile_image_url?: string;
+			};
+		};
+	};
 	pinModelHandler: (modelId: string) => void;
 	copyLinkHandler: () => void;
 	children: React.ReactNode;

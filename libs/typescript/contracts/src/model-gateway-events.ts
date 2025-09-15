@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { evidenceArraySchema } from './evidence.js';
 
 /**
  * Model Gateway-related A2A event schemas for inter-package communication
@@ -25,6 +26,9 @@ export const ModelResponseEventSchema = z.object({
 		})
 		.optional(),
 	completedAt: z.string(),
+	evidence: evidenceArraySchema
+		.optional()
+		.describe('Supporting evidence citations (max 50) for model output provenance'),
 });
 
 // Model Error Event
@@ -35,6 +39,9 @@ export const ModelErrorEventSchema = z.object({
 	error: z.string(),
 	errorCode: z.string().optional(),
 	failedAt: z.string(),
+	evidence: evidenceArraySchema
+		.optional()
+		.describe('Evidence supporting error diagnostics (e.g., logs, policies)'),
 });
 
 // Provider Health Event

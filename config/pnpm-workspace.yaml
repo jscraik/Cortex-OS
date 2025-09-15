@@ -1,12 +1,12 @@
 packages:
-  - "apps/*"
-  - "apps/*/frontend"
-  - "apps/*/backend"
-  - "apps/*/packages/*"
-  - "packages/*"
-  - "packages/*/*"
-  - "libs/typescript/*"
-  - "website"
+  - "../apps/*"
+  - "../apps/*/frontend"
+  - "../apps/*/backend"
+  - "../apps/*/packages/*"
+  - "../packages/*"
+  - "../packages/*/*"
+  - "../libs/typescript/*"
+  - "../website"
 neverBuiltDependencies: []
 packageImportMethod: auto
 # Memory & build tuning additions (added by assistant)

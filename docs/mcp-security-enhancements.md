@@ -6,7 +6,7 @@ This document outlines the security enhancements made to the Model Context Proto
 
 ## 1. Complete SSE Transport Implementation ✅
 
-### Features Implemented
+### Features Implemented (SSE Transport)
 
 - Full EventSource-based SSE transport with proper connection handling
 - Automatic reconnection with exponential backoff
@@ -14,14 +14,14 @@ This document outlines the security enhancements made to the Model Context Proto
 - Support for custom event types
 - Process monitoring and resource management
 
-### Security Features
+### Security Features (SSE Transport)
 
 - Proper CORS handling
 - Message validation and sanitization
 - Secure reconnection mechanisms
 - Authentication support via HTTP headers
 
-### Interface
+### Interface (SSE Transport)
 
 ```typescript
 const sseClient = createSSE({
@@ -37,20 +37,20 @@ await sseClient.connect();
 
 ## 2. Add Rate Limiting Mechanisms ✅
 
-### Features Implemented
+### Features Implemented (Rate Limiting)
 
 - Built-in rate limiting for HTTPS transport
 - Configurable time windows and request limits
 - Per-tool rate limiting
 - Rate limit information retrieval
 
-### Security Features
+### Security Features (Rate Limiting)
 
 - Prevents denial of service attacks
 - Fair usage policies enforcement
 - Automatic cleanup of old rate limit data
 
-### Interface
+### Interface (Rate Limiting)
 
 ```typescript
 const httpsClient = createHTTPS({
@@ -66,21 +66,21 @@ console.log('Rate limit remaining:', httpsClient.getRateLimitInfo('search'));
 
 ## 3. Enhance Data Redaction ✅
 
-### Features Implemented
+### Features Implemented (Data Redaction)
 
 - Comprehensive data redaction for sensitive information
 - Multiple pattern matching for API keys, tokens, passwords, and secrets
 - Automatic redaction in both sent and received messages
 - Process monitoring and restart capabilities
 
-### Security Features
+### Security Features (Data Redaction)
 
 - Prevents API key leakage
 - Protects authentication tokens
 - Redacts passwords and secrets
 - Maintains data structure while removing sensitive content
 
-### Interface
+### Interface (Data Redaction)
 
 ```typescript
 const stdioClient = createStdIo({
@@ -97,7 +97,7 @@ stdioClient.send({ apiKey: 'sk-1234567890abcdef' });
 
 ## 4. Improve Documentation ✅
 
-### Features Implemented
+### Features Implemented (Documentation)
 
 - Comprehensive inline documentation for all modules
 - Detailed security considerations for each component

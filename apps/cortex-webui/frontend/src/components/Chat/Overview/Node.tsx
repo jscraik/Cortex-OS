@@ -2,8 +2,19 @@
 
 import type React from 'react';
 
+interface GraphNode {
+	id: string;
+	type: 'chat' | 'document' | 'user' | 'tool';
+	title?: string;
+	description?: string; // used in JSX conditional
+	content?: string;
+	x?: number;
+	y?: number;
+	timestamp?: number | string; // used for date display if present
+}
+
 interface NodeProps {
-	node: any;
+	node: GraphNode;
 	onSelect: (nodeId: string) => void;
 }
 
@@ -31,7 +42,9 @@ const Node: React.FC<NodeProps> = ({ node, onSelect }) => {
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
+						aria-hidden="true"
 					>
+						<title id={`node-icon-${node.id}`}>Chat node</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -48,7 +61,9 @@ const Node: React.FC<NodeProps> = ({ node, onSelect }) => {
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
+						aria-hidden="true"
 					>
+						<title id={`node-icon-${node.id}`}>Document node</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -65,7 +80,9 @@ const Node: React.FC<NodeProps> = ({ node, onSelect }) => {
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
+						aria-hidden="true"
 					>
+						<title id={`node-icon-${node.id}`}>Tool node</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -88,7 +105,9 @@ const Node: React.FC<NodeProps> = ({ node, onSelect }) => {
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
+						aria-hidden="true"
 					>
+						<title id={`node-icon-${node.id}`}>Generic node</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -100,15 +119,25 @@ const Node: React.FC<NodeProps> = ({ node, onSelect }) => {
 		}
 	};
 
+	const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			onSelect(node.id);
+		}
+	};
+
 	return (
-		<div
-			className={`absolute p-3 rounded-lg border-2 shadow-sm cursor-pointer transition-all hover:shadow-md ${getNodeStyle()}`}
+		<button
+			type="button"
+			className={`absolute p-3 text-left rounded-lg border-2 shadow-sm cursor-pointer transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${getNodeStyle()}`}
 			style={{
 				left: `${node.x}px`,
 				top: `${node.y}px`,
 				width: '120px',
 			}}
+			aria-label={`Select ${node.type} node ${node.title || node.id}`}
 			onClick={() => onSelect(node.id)}
+			onKeyDown={handleKeyDown}
 		>
 			<div className="flex items-center">
 				{getNodeIcon()}
@@ -125,7 +154,7 @@ const Node: React.FC<NodeProps> = ({ node, onSelect }) => {
 					<span>{new Date(node.timestamp).toLocaleDateString()}</span>
 				)}
 			</div>
-		</div>
+		</button>
 	);
 };
 

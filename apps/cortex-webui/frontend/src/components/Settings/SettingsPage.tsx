@@ -1,5 +1,7 @@
+'use client';
+
 import type React from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
 
 interface SettingsPageProps {
@@ -13,18 +15,39 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 }) => {
 	const [apiKey, setApiKey] = useState('');
 	const [model, setModel] = useState('gpt-4');
+	const modelId = useId();
+	const apiKeyId = useId();
+	const statusId = useId();
+	const [status, setStatus] = useState<string | null>(null);
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSave = () => {
+		try {
+			if (typeof window !== 'undefined') {
+				localStorage.setItem('settings:apiKey', apiKey);
+				localStorage.setItem('settings:model', model);
+			}
+			setStatus('Settings saved');
+			setTimeout(() => setStatus(null), 2500);
+		} catch (e) {
+			console.error('Failed to save settings', e);
+			setStatus('Failed to save');
+		}
+	};
+
+	const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
 		e.preventDefault();
-		// Handle saving settings
-		console.log('Saving settings:', { apiKey, model, theme });
+		handleSave();
 	};
 
 	return (
 		<div className="max-w-2xl mx-auto p-6">
 			<h1 className="text-2xl font-bold mb-6">Settings</h1>
 
-			<form onSubmit={handleSubmit} className="space-y-6">
+			<form
+				onSubmit={handleSubmit}
+				className="space-y-6"
+				aria-describedby={status ? statusId : undefined}
+			>
 				<div className="border-b pb-6">
 					<h2 className="text-lg font-medium mb-4">Appearance</h2>
 					<ThemeSwitcher theme={theme} onThemeChange={onThemeChange} />
@@ -35,13 +58,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 					<div className="space-y-4">
 						<div>
 							<label
-								htmlFor="model"
+								htmlFor={modelId}
 								className="block text-sm font-medium text-gray-700"
 							>
 								Default Model
 							</label>
 							<select
-								id="model"
+								id={modelId}
 								value={model}
 								onChange={(e) => setModel(e.target.value)}
 								className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
@@ -60,13 +83,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 					<div className="space-y-4">
 						<div>
 							<label
-								htmlFor="apiKey"
+								htmlFor={apiKeyId}
 								className="block text-sm font-medium text-gray-700"
 							>
 								API Key
 							</label>
 							<input
-								id="apiKey"
+								id={apiKeyId}
 								type="password"
 								value={apiKey}
 								onChange={(e) => setApiKey(e.target.value)}
@@ -89,6 +112,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 						Save Settings
 					</button>
 				</div>
+
+				{status && (
+					<output
+						id={statusId}
+						className="text-sm text-gray-600"
+						aria-live="polite"
+					>
+						{status}
+					</output>
+				)}
 			</form>
 		</div>
 	);

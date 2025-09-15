@@ -37,7 +37,7 @@ const ModelItem: React.FC<ModelItemProps> = ({
 	const user = useUserStore();
 	const itemRef = useRef<HTMLButtonElement>(null);
 
-	const copyLinkHandler = async (model: any) => {
+	const copyLinkHandler = async (model: ModelItemProps['item']) => {
 		const baseUrl = window.location.origin;
 		const res = await copyToClipboard(
 			`${baseUrl}/?model=${encodeURIComponent(model.id)}`,

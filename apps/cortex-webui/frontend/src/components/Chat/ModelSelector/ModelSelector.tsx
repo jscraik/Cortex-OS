@@ -42,8 +42,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 	};
 
 	const saveDefaultModel = () => {
-		// In a real implementation, this would save to user settings
-		console.log('Default model saved:', selectedModelIds);
 		// Store in localStorage or send to backend
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('defaultModels', JSON.stringify(selectedModelIds));

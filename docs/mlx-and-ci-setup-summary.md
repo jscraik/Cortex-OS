@@ -28,7 +28,7 @@ lint-triage to make the workspace reviewable.
   - Contents: declares a `mlx-orchestrator` app that runs the Node orchestrator script
     and sets `MLX_CONCURRENCY=3` in the environment by default.
 
-- `apps/cortex-cli/scripts/mlx-orchestrator.js`
+- Deprecated: `apps/cortex-cli/scripts/mlx-orchestrator.js` (see `scripts/start-mlx-host.sh`)
   - Purpose: a small Node script that spawns MLX worker processes and enforces
     concurrency based on the `MLX_CONCURRENCY` environment variable (default target:
     3). It acts as the in-process gate so even if the supervisor attempts to start more
@@ -95,7 +95,7 @@ lint-triage to make the workspace reviewable.
     (project eslint rule requires unused caught errors to start with `_`). Files edited
     include:
     - `apps/cortex-os/brain/router/src/capabilities.ts`
-    - `apps/cortex-cli/packages/cli-tools/src/commands/mcp-sync.js`
+- Deprecated: `apps/cortex-cli/packages/cli-tools/src/commands/mcp-sync.js`
   - Added file-level
     `/* eslint-disable no-console, @typescript-eslint/no-explicit-any */` to CLI
     entrypoints where console output is the UX surface
@@ -205,7 +205,7 @@ minimize permission and signing friction.
 ## Files of interest (for reviewers)
 
 - `ecosystem.config.cjs` — PM2 CommonJS ecosystem file.
-- `apps/cortex-cli/scripts/mlx-orchestrator.js` — orchestrator that enforces
+- Deprecated: `apps/cortex-cli/scripts/mlx-orchestrator.js` — see maintained host script
   MLX_CONCURRENCY.
 - `.github/scripts/run-model-on-chunk.sh.template` — provider-agnostic per-chunk runner
   template.

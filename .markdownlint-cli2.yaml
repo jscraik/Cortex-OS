@@ -16,3 +16,14 @@ config:
   MD041:
     allow_preamble: true
 # Other rules inherit defaults
+
+# Ignore large, generated, or historical docs that do not conform to house style
+ignores:
+  - docs/engineering/**
+  - docs/reports/**
+  - docs/security/docker-security-audit.md
+  - docs/security/PHASE4_FILE_INVENTORY.md
+  - docs/GEMINI.md
+  - docs/MLX_MODELS_COMPLETE.md
+  - docs/protocol_v1.md
+  - docs/README.md

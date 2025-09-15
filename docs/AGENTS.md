@@ -69,7 +69,6 @@ Enforcement through automated checks:
 - Documentation synchronization checks
 - Pull request descriptions must follow `.github/pull_request_template.md`; the `review-automation` workflow fails otherwise
 
-
 ## Agent Toolkit
 
 Agents must use scripts under `agent-toolkit/tools` for search, codemods, diff review and validation. Invoke via `just` recipes or direct script calls to keep outputs deterministic.

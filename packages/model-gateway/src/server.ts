@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
 import client from 'prom-client';
@@ -9,6 +10,26 @@ import {
 import { auditEvent, record } from './audit.js';
 import { createModelRouter, type IModelRouter } from './model-router.js';
 import { enforce, loadGrant } from './policy.js';
+
+// Minimal evidence builder (local to gateway; formal contract via @cortex-os/contracts evidenceItemSchema)
+function buildEvidence(snippets: Array<{ text?: string; uri?: string }>) {
+	return snippets
+		.filter((s) => s.text || s.uri)
+		.slice(0, 50)
+		.map((s, idx) => {
+			const basis = s.text || s.uri || '';
+			const hash = createHash('sha256').update(basis).digest('hex');
+			return {
+				id: `gw-${Date.now()}-${idx}`,
+				kind: s.uri ? 'web' : 'other',
+				text: s.text,
+				uri: s.uri,
+				hash,
+				timestamp: new Date().toISOString(),
+				metadata: { gateway: true },
+			};
+		});
+}
 
 // Request validation schemas
 const EmbeddingsBodySchema = z.object({
@@ -183,10 +204,14 @@ export function createServer(
 				modelUsed = result.model;
 			}
 
+			const evidence = buildEvidence(
+				body.texts.slice(0, 3).map((t) => ({ text: t })),
+			);
 			const resBody = {
 				vectors,
 				dimensions: vectors[0]?.length || 0,
 				modelUsed,
+				evidence,
 			};
 			reqCounter.inc({ route: 'embeddings', status: '200' });
 			endTimer();
@@ -267,6 +292,10 @@ export function createServer(
 			const resBody = {
 				rankedItems: ranked.slice(0, body.topK ?? ranked.length),
 				modelUsed: result.model,
+				evidence: buildEvidence([
+					{ text: body.query },
+					...body.docs.slice(0, 2).map((d) => ({ text: d })),
+				]),
 			};
 			reqCounter.inc({ route: 'rerank', status: '200' });
 			endTimer();
@@ -342,9 +371,15 @@ export function createServer(
 				temperature: 0.7,
 			});
 
+			const lastUser = [...body.msgs].reverse().find((m) => m.role === 'user');
 			const resBody = {
 				content: result.content,
 				modelUsed: result.model,
+				evidence: buildEvidence(
+					[lastUser?.content && { text: lastUser.content }].filter(
+						Boolean,
+					) as any,
+				),
 			};
 			reqCounter.inc({ route: 'chat', status: '200' });
 			endTimer();

@@ -150,6 +150,16 @@ if [ "${CORTEX_SKIP_PUSH_TESTS:-}" != "1" ]; then
             exit 1
           fi
         }
+      elif command -v gtimeout >/dev/null 2>&1; then
+        gtimeout 1800 pnpm test:smart -- --passWithNoTests --coverage.enabled=false || {
+          status=$?
+          if [ $status -eq 124 ]; then
+            echo "⚠️  Tests timed out after 30m - allowing push (investigate test performance)"
+          else
+            echo "❌ Comprehensive tests failed - fix before pushing"
+            exit 1
+          fi
+        }
       else
         pnpm test:smart -- --passWithNoTests --coverage.enabled=false || {
           echo "❌ Comprehensive tests failed - fix before pushing"

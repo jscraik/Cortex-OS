@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { evidenceArraySchema } from './evidence.js';
 
 // RAG Event Type Constants
 export const RagEventTypes = {
@@ -38,6 +39,7 @@ export const ragQueryCompletedSchema = z.object({
 	provider: z.string(),
 	duration: z.number().positive(),
 	timestamp: z.string().datetime(),
+	evidence: evidenceArraySchema.optional().describe('Supporting evidence citations for the aggregated results'),
 });
 
 export const ragIngestStartedSchema = z.object({
