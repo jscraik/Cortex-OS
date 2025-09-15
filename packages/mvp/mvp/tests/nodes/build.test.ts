@@ -30,7 +30,7 @@ describe('BuildNode', () => {
 			cmd: string,
 			options: unknown,
 			cb?: ExecCallback,
-		) => void | { stdout?: string; stderr?: string },
+		) => undefined | { stdout?: string; stderr?: string },
 	) {
 		(
 			exec as unknown as {
@@ -39,7 +39,7 @@ describe('BuildNode', () => {
 						cmd: string,
 						options: unknown,
 						callback?: ExecCallback,
-					) => void | { stdout?: string; stderr?: string },
+					) => undefined | { stdout?: string; stderr?: string },
 				) => void;
 			}
 		).mockImplementation(impl as any);

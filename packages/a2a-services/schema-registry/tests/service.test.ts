@@ -1,6 +1,6 @@
+import type { Server } from 'node:http';
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Express } from 'express';
-import type { Server } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createService } from '../src/service';
 
@@ -9,11 +9,16 @@ function validateTestUrl(url: string): void {
 	const parsed = new URL(url);
 	// Only allow localhost for tests
 	if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
-		throw new Error(`Test fetch blocked: hostname ${parsed.hostname} not allowed`);
+		throw new Error(
+			`Test fetch blocked: hostname ${parsed.hostname} not allowed`,
+		);
 	}
 }
 
-function safeFetchForTests(url: string, options?: RequestInit): Promise<Response> {
+function safeFetchForTests(
+	url: string,
+	options?: RequestInit,
+): Promise<Response> {
 	validateTestUrl(url);
 	return fetch(url, options);
 }

@@ -73,6 +73,7 @@ export type SimlabCommand = z.infer<typeof SimlabCommandSchema>;
 
 export * from './agent-events.js';
 export * from './agent-toolkit.js';
+export * from './evidence.js';
 export * from './gateway-events.js';
 // New event schemas for comprehensive MCP/A2A integration
 export * from './kernel-events.js';

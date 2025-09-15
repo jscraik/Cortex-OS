@@ -55,3 +55,30 @@ This document inventories all known references to `cortex-cli` and `apps/cortex-
 - Keep history linear; each migration slice: tests → minimal impl → refactor.
 - Update docs and CI alongside code changes to avoid drift.
 
+---
+
+## Updated References (ongoing)
+
+- README.md: mark `cortex-cli` as deprecated and point to `apps/cortex-code`.
+- website/docs/apps/cortex-cli/index.md: add deprecation note pointing to `cortex-code`.
+- docs/PACKAGING.md: replace packaging target reference to use `apps/cortex-code`.
+- bin/README.md: update build/copy instructions to `codex` and link docs to `apps/cortex-code`.
+- config/vitest.workspace.ts: annotated `apps/cortex-cli` as deprecated (kept for now).
+- config/ecosystem.config.{cjs,js}: added deprecation notes for cortex-cli orchestrator path.
+
+## New Codex Parity (so far)
+
+- `codex a2a doctor` → { ok: true, service: "a2a" }
+- `codex mcp list` → []
+- `codex mcp doctor` → { ok: true, service: "mcp" }
+- `codex mcp get <name>` → { name, exists: false }
+- `codex mcp show <name>` → { name, url: null }
+- `codex mcp add <name> [url]` → { name, [url], added: true }
+- `codex mcp remove <name>` → { name, removed: true }
+- `codex mcp search <query>` → [ { name } ]
+- `codex mcp bridge` → { ok: true, service: "mcp-bridge" }
+- `codex a2a list` → []
+- `codex a2a send <type>` → { ok: true, type }
+- `codex rag ingest <path>` → { ok: true }
+- `codex rag query <q>` → []
+- `codex rag eval` → { ok: true }

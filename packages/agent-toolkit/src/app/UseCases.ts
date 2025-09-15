@@ -19,7 +19,7 @@ export class ToolExecutorUseCase implements ToolExecutor {
 	constructor(
 		private readonly toolRegistry: ToolRegistry,
 		private readonly events?: ToolExecutionEvents,
-	) { }
+	) {}
 
 	async execute(
 		toolName: string,
@@ -107,7 +107,7 @@ export class ToolExecutorUseCase implements ToolExecutor {
  * Use case for batch operations
  */
 export class BatchToolExecutorUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) { }
+	constructor(private readonly toolExecutor: ToolExecutor) {}
 
 	/**
 	 * Execute multiple tools in parallel
@@ -140,7 +140,7 @@ export class BatchToolExecutorUseCase {
  * Specialized use case for code search operations
  */
 export class CodeSearchUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) { }
+	constructor(private readonly toolExecutor: ToolExecutor) {}
 
 	/**
 	 * Multi-tool search: searches using ripgrep, semgrep, and ast-grep
@@ -180,7 +180,7 @@ export class CodeSearchUseCase {
 				if (result.results && result.results.length > 0) {
 					return result;
 				}
-			} catch { }
+			} catch {}
 		}
 
 		// If all tools failed or returned no results
@@ -198,7 +198,7 @@ export class CodeSearchUseCase {
  * Specialized use case for code quality operations
  */
 export class CodeQualityUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) { }
+	constructor(private readonly toolExecutor: ToolExecutor) {}
 
 	/**
 	 * Comprehensive validation of a set of files

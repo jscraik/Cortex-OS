@@ -45,7 +45,7 @@ const Textarea: React.FC<TextareaProps> = ({
 		}, 100);
 
 		return () => clearInterval(interval);
-	}, [text]);
+	}, [resize]);
 
 	const resize = () => {
 		if (textareaRef.current) {

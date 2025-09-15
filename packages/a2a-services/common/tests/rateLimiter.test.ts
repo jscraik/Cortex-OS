@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRateLimiter } from '../src/middleware/rateLimiter';
 
 // Test constants to avoid hardcoded IPs
-const TEST_IP = '203.0.113.1'; // RFC 5737 test IP range
+const _TEST_IP = '203.0.113.1'; // RFC 5737 test IP range
 const TEST_FORWARDED_IP = '203.0.113.2'; // RFC 5737 test IP range
 
 function mockRequest(
@@ -89,12 +89,16 @@ describe('rateLimiter', () => {
 		const limiter = createRateLimiter({ limit: 1 });
 		const next = vi.fn();
 
-		const req1 = mockRequest('127.0.0.1', { 'x-forwarded-for': TEST_FORWARDED_IP });
+		const req1 = mockRequest('127.0.0.1', {
+			'x-forwarded-for': TEST_FORWARDED_IP,
+		});
 		const res1 = mockResponse();
 		limiter(req1, res1, next);
 		expect(next).toHaveBeenCalledTimes(1);
 
-		const req2 = mockRequest('127.0.0.1', { 'x-forwarded-for': TEST_FORWARDED_IP });
+		const req2 = mockRequest('127.0.0.1', {
+			'x-forwarded-for': TEST_FORWARDED_IP,
+		});
 		const res2 = mockResponse();
 		limiter(req2, res2, next);
 		expect(next).toHaveBeenCalledTimes(1);

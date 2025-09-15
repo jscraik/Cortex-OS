@@ -3,19 +3,42 @@
 Simple standalone MCP server that doesn't rely on relative imports.
 """
 
+import logging
+import os
+import signal
 import sys
+from datetime import datetime
+
+# Configure logging early
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler("/Users/jamiecraik/.Cortex-OS/logs/mcp-server-python.log"),
+    ],
+)
+logger = logging.getLogger(__name__)
+
+logger.info(f"Starting MCP Server at {datetime.now()}")
+logger.info(f"Python version: {sys.version}")
+logger.info(f"Python path: {sys.path}")
+logger.info(f"Environment variables: {dict(os.environ)}")
 
 # Add the MCP directory to the Python path
 MCP_DIR = "/Users/jamiecraik/.Cortex-OS/packages/mcp"
 sys.path.insert(0, MCP_DIR)
+logger.info(f"Added {MCP_DIR} to Python path")
 
 # Import required modules after setting up the path
 try:
     import uvicorn
     from fastapi import FastAPI
+
+    logger.info("Successfully imported FastAPI and Uvicorn")
 except ImportError as e:
-    print(f"Error importing required modules: {e}")
-    print("Make sure uvicorn and fastapi are installed")
+    logger.error(f"Error importing required modules: {e}")
+    logger.error("Make sure uvicorn and fastapi are installed")
     sys.exit(1)
 
 # Create a simple FastAPI app
@@ -61,9 +84,44 @@ async def get_tools():
     }
 
 
-if __name__ == "__main__":
-    print("Starting MCP Server...")
-    print("Server will be available at http://127.0.0.1:3000")
+# Signal handlers for graceful shutdown
+running = True
 
-    # Run the server
-    uvicorn.run(app, host="127.0.0.1", port=3000, log_level="info")
+
+def signal_handler(signum: int, _frame) -> None:
+    global running
+    logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+    running = False
+
+
+if __name__ == "__main__":
+    # Register signal handlers
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    logger.info("Starting MCP Server...")
+    logger.info("Server will be available at http://0.0.0.0:3004")
+    logger.info("Local access: http://127.0.0.1:3004")
+    logger.info("External access via tunnel: https://cortex-mcp.brainwav.io")
+
+    print("Starting MCP Server...")
+    print("Server will be available at http://0.0.0.0:3004")
+    print("Local access: http://127.0.0.1:3004")
+
+    try:
+        # Run the server with better configuration
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=3004,
+            log_level="info",
+            access_log=True,
+            loop="asyncio",
+        )
+    except KeyboardInterrupt:
+        logger.info("Server interrupted by user")
+    except Exception as e:
+        logger.error(f"Server error: {e}")
+        sys.exit(1)
+    finally:
+        logger.info("MCP Server shutdown complete")

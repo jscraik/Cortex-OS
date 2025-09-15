@@ -97,6 +97,7 @@ const sidebars: SidebarsConfig = {
           "type": "category",
           "label": "Command Line Interface",
           "items": [
+            // Deprecated: cortex-cli docs kept for historical notes
             "apps/cortex-cli/index"
           ]
         },

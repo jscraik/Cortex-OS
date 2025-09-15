@@ -3,10 +3,10 @@
  * XDG-compliant persistence for evidence with governance features
  */
 
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
-import { gunzip, gzip } from 'zlib';
+import { gunzip, gzip } from 'node:zlib';
 import type { Evidence } from '../types/index.js';
 import { ValidationError } from '../types/index.js';
 import { getDataPath, pathExists } from '../xdg/index.js';

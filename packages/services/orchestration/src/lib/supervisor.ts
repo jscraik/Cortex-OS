@@ -111,7 +111,7 @@ async function withRetry(
 	let attempt = 0;
 	// First attempt + retries
 	// attempt 0: initial, then 1..maxRetries for retries
-	for (; ;) {
+	for (;;) {
 		try {
 			return await fn();
 		} catch (err) {

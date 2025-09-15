@@ -125,7 +125,9 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								min="1"
 								max="20"
 								value={recentChatCount}
-								onChange={(e) => setRecentChatCount(parseInt(e.target.value))}
+								onChange={(e) =>
+									setRecentChatCount(parseInt(e.target.value, 10))
+								}
 								className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
 							/>
 							<div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -148,7 +150,9 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								min="1"
 								max="365"
 								value={chatHistoryLimit}
-								onChange={(e) => setChatHistoryLimit(parseInt(e.target.value))}
+								onChange={(e) =>
+									setChatHistoryLimit(parseInt(e.target.value, 10))
+								}
 								className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
 							/>
 							<div className="flex justify-between text-xs text-gray-500 mt-1">

@@ -1,27 +1,27 @@
 import { z } from 'zod';
 import { CitationBundler } from './lib/citation-bundler.js';
 import type { Chunk, CitationBundle, Embedder, Store } from './lib/index.js';
-import { routeByFreshness } from './retrieval/freshness-router.js';
 import { ingestText as ingestTextHelper } from './pipeline/ingest.js';
+import { routeByFreshness } from './retrieval/freshness-router.js';
 
 export interface RAGPipelineConfig {
-    embedder: Embedder;
-    store: Store;
-    chunkSize?: number;
-    chunkOverlap?: number;
-    freshnessEpsilon?: number;
+	embedder: Embedder;
+	store: Store;
+	chunkSize?: number;
+	chunkOverlap?: number;
+	freshnessEpsilon?: number;
 }
 
 export class RAGPipeline {
 	private E: Embedder;
 	private S: Store;
 	private chunkSize: number;
-    private chunkOverlap: number;
-    private freshnessEpsilon: number;
+	private chunkOverlap: number;
+	private freshnessEpsilon: number;
 
 	constructor(config: RAGPipelineConfig) {
-        const schema = z.object({
-            embedder: z.custom<Embedder>(
+		const schema = z.object({
+			embedder: z.custom<Embedder>(
 				(e): e is Embedder =>
 					typeof e === 'object' &&
 					e !== null &&
@@ -34,16 +34,16 @@ export class RAGPipeline {
 					typeof (s as any).upsert === 'function' &&
 					typeof (s as any).query === 'function',
 			),
-            chunkSize: z.number().int().positive().default(300),
-            chunkOverlap: z.number().int().nonnegative().default(0),
-            freshnessEpsilon: z.number().min(0).max(1).default(0.02),
-        });
-        const parsed = schema.parse(config);
-        this.E = parsed.embedder;
-        this.S = parsed.store;
-        this.chunkSize = parsed.chunkSize;
-        this.chunkOverlap = parsed.chunkOverlap;
-        this.freshnessEpsilon = parsed.freshnessEpsilon;
+			chunkSize: z.number().int().positive().default(300),
+			chunkOverlap: z.number().int().nonnegative().default(0),
+			freshnessEpsilon: z.number().min(0).max(1).default(0.02),
+		});
+		const parsed = schema.parse(config);
+		this.E = parsed.embedder;
+		this.S = parsed.store;
+		this.chunkSize = parsed.chunkSize;
+		this.chunkOverlap = parsed.chunkOverlap;
+		this.freshnessEpsilon = parsed.freshnessEpsilon;
 	}
 
 	async ingest(chunks: Chunk[]): Promise<void> {
@@ -69,11 +69,11 @@ export class RAGPipeline {
 		});
 	}
 
-    async retrieve(query: string, topK = 5): Promise<CitationBundle> {
-        const [emb] = await this.E.embed([query]);
-        const chunks = await this.S.query(emb, topK);
-        const routed = routeByFreshness(chunks, { epsilon: this.freshnessEpsilon });
-        const bundler = new CitationBundler();
-        return bundler.bundle(routed);
-    }
+	async retrieve(query: string, topK = 5): Promise<CitationBundle> {
+		const [emb] = await this.E.embed([query]);
+		const chunks = await this.S.query(emb, topK);
+		const routed = routeByFreshness(chunks, { epsilon: this.freshnessEpsilon });
+		const bundler = new CitationBundler();
+		return bundler.bundle(routed);
+	}
 }

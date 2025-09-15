@@ -39,7 +39,14 @@ const generateViaMCP = async (
 	prompt: string,
 	options: GenerateOptions,
 	config: MCPProviderConfig,
-): Promise<GenerateResult & { text: string; provider: string; usage: any; latencyMs: number }> => {
+): Promise<
+	GenerateResult & {
+		text: string;
+		provider: string;
+		usage: any;
+		latencyMs: number;
+	}
+> => {
 	const startTime = Date.now();
 	const mergedOptions = {
 		...DEFAULT_OPTIONS,
@@ -134,8 +141,8 @@ export const createMCPProviders = async (
 			return [];
 		}
 
-		const modelOptions: string[] =
-			(textGenTools[0] as any)?.schema?.properties?.model?.enum || ['default'];
+		const modelOptions: string[] = (textGenTools[0] as any)?.schema?.properties
+			?.model?.enum || ['default'];
 
 		return modelOptions.map((model: string) =>
 			createMCPProvider({

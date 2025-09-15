@@ -1,6 +1,6 @@
+import { EventEmitter } from 'node:events';
+import fs from 'node:fs';
 import chokidar, { type FSWatcher } from 'chokidar';
-import { EventEmitter } from 'events';
-import fs from 'fs';
 import { z } from 'zod';
 
 // Advanced policy schema

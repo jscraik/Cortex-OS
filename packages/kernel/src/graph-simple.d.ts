@@ -10,56 +10,57 @@ import { type PRPState } from './state.js';
  * Minimal interface to break circular dependency
  */
 interface PRPOrchestrator {
-    getNeuronCount(): number;
+	getNeuronCount(): number;
 }
 /**
  * Factory function to create a new CortexKernel instance
  */
-export declare function createKernel(orchestrator: PRPOrchestrator): CortexKernel;
+export declare function createKernel(
+	orchestrator: PRPOrchestrator,
+): CortexKernel;
 interface Blueprint {
-    title: string;
-    description: string;
-    requirements: string[];
+	title: string;
+	description: string;
+	requirements: string[];
 }
 interface RunOptions {
-    runId?: string;
-    deterministic?: boolean;
+	runId?: string;
+	deterministic?: boolean;
 }
 /**
  * Execute the PRP workflow sequence for a blueprint.
  */
 export declare class CortexKernel {
-    private readonly orchestrator;
-    private readonly executionHistory;
-    constructor(orchestrator: PRPOrchestrator);
-    /**
-     * Add a state to execution history
-     */
-    private addToHistory;
-    /**
-     * Execute build phase
-     */
-    private executeBuildPhase;
-    /**
-     * Expose orchestrator neuron count
-     */
-    getNeuronCount(): number;
-    /**
-     * Run a complete PRP workflow
-     */
-    runPRPWorkflow(blueprint: Blueprint, options?: RunOptions): Promise<PRPState>;
-    /**
-     * Execute strategy phase
-     */
-    private executeStrategyPhase;
-    /**
-     * Get execution history for a run
-     */
-    getExecutionHistory(runId: string): PRPState[];
-    /**
-     * Execute evaluation phase
-     */
-    private executeEvaluationPhase;
+	private readonly orchestrator;
+	private readonly executionHistory;
+	constructor(orchestrator: PRPOrchestrator);
+	/**
+	 * Add a state to execution history
+	 */
+	private addToHistory;
+	/**
+	 * Execute build phase
+	 */
+	private executeBuildPhase;
+	/**
+	 * Expose orchestrator neuron count
+	 */
+	getNeuronCount(): number;
+	/**
+	 * Run a complete PRP workflow
+	 */
+	runPRPWorkflow(blueprint: Blueprint, options?: RunOptions): Promise<PRPState>;
+	/**
+	 * Execute strategy phase
+	 */
+	private executeStrategyPhase;
+	/**
+	 * Get execution history for a run
+	 */
+	getExecutionHistory(runId: string): PRPState[];
+	/**
+	 * Execute evaluation phase
+	 */
+	private executeEvaluationPhase;
 }
-export {};
 //# sourceMappingURL=graph-simple.d.ts.map

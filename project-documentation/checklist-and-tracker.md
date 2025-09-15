@@ -53,15 +53,26 @@ Missing or underspecified in plan (added to tracker below):
 
 - [x] Structure-guard: policy schema and test harness (deny cross-feature imports)
 - [x] Structure-guard: ESLint/plugin enforcement + CLI integration (`just verify`)
-- [ ] Policy hot-reload: runtime reload of guard/policy configs without restart
+- [x] Policy hot-reload: runtime reload of guard/policy configs without restart
+  - Hybrid watcher: fs.watch + watchFile + polling fallback
+  - Validated reload events (reload, parse/validation errors, deletion)
+  - Atomic consumer pattern helper (`policy-state.ts`)
+  - Contract + mutation tests + integration docs cross-linked
 - [x] Deny-by-default egress: allowlist + error type + env toggles
 - [x] Tool allowlist enforcement in MCP core (structured policy errors)
 - [x] Audit logging for allow/deny decisions (CloudEvents + redaction)
 - [x] Explicit secret scoping/accessor; redact in logs
+- [x] Agent Isolation Sandbox: worker-based execution with comprehensive API restrictions, policy violation detection,
+  configurable thresholds, structured violation codes, and complete audit logging
 
 ### Evidence-First RAG & CloudEvents
 
-- [ ] CloudEvents: evidence schema + validation (serialize/deserialize)
+- [x] CloudEvents: evidence schema + validation (serialize/deserialize)
+  - Implemented `evidenceItemSchema` & `evidenceArraySchema` (`libs/typescript/contracts/src/evidence.ts`)
+    with max 50 items, offset validation, at-least-one-of text|uri rule, relevance score,
+    hashing & metadata.
+  - Added contract test `evidence.contract.test.ts` validating ordering, constraints, CloudEvent embedding.
+  - Added `withEvidence` helper (`packages/a2a/a2a-contracts/src/envelope.ts`) for non-mutating attachment.
 - [ ] Model Gateway: attach evidence/citations to responses; propagate downstream
 - [ ] RAG: retrieval with citations per-claim; “no evidence” path
 - [ ] RAG: bundles with grouped/de-duped citations, deterministic order
@@ -193,7 +204,17 @@ just verify changed.txt
 
 ### Additional Completed (Not Originally Explicitly Listed)
 
-- Agent Isolation Sandbox (worker-based, restricted API passed as param, fs/network/memory/timeout/dynamic-code guards with audit events)
+- [x] Agent Isolation Sandbox: **Production-ready TDD implementation** with comprehensive features:
+  - **Worker-based isolation**: Complete API surface restriction with restricted API passed as parameter
+  - **Multi-layer security**: File system, network, process control, memory, timeout, and dynamic code execution guards
+  - **Robust serialization**: structuredClone primary with JSON.stringify fallback and error handling
+  - **Configurable thresholds**: maxViolations setting with severity escalation (default: 5)
+  - **Structured violation codes**: Clear enum system (NETWORK_ACCESS, FILE_SYSTEM, PROCESS_CONTROL, etc.)
+  - **Comprehensive audit logging**: CloudEvents-based with violation metadata and redaction support
+  - **Contract validation**: Zod schema with complete contract test suite
+  - **Centralized event architecture**: Reusable helpers for consistent audit event emission
+  - **Full test coverage**: 14/14 tests passing (sandbox + contracts)
+  - **Complete documentation**: README updated with usage examples and violation code reference
 
 ---
 
@@ -205,3 +226,4 @@ just verify changed.txt
   - Acceptance: no remaining references to `apps/cortex-cli`; parity commands available in `cortex-code`; smart Nx targets green.
   - Commands affected (initial set to verify): MCP subcommands (list/add/remove/get/show), A2A doctor/send.
   - Validation: `pnpm build:smart && pnpm test:smart && pnpm lint:smart && pnpm docs:lint`
+  - Status: Parity stubs implemented in `codex` for MCP, A2A, RAG, Simlab, CTL, Eval, Agent; references sweep in progress (docs/PM2 updated); removal planned as next PR.

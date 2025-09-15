@@ -10,5 +10,4 @@ export * as TypeGuards from './type-guards.js';
 export * from './validation.js';
 export * from './vector.js';
 export * from './with-fallback.js';
-export const noop = () => { };
-
+export const noop = () => {};

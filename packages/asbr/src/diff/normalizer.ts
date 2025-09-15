@@ -3,7 +3,7 @@
  * Implements configurable normalization as specified in the blueprint
  */
 
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import type { Config } from '../types/index.js';
 
 export interface NormalizationOptions {
@@ -186,9 +186,7 @@ export class ContentNormalizer {
 	private normalizeXML(content: string): string {
 		// Basic XML normalization - remove extra whitespace between tags
 		// Group alternation to make precedence explicit and prevent backtracking
-		return content
-			.replace(/>\s+</g, '><')
-			.replace(/^(\s+|\s+)$/g, '');
+		return content.replace(/>\s+</g, '><').replace(/^(\s+|\s+)$/g, '');
 	}
 
 	private normalizeYAML(content: string): string {

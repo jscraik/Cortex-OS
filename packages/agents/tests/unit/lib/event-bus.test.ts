@@ -11,7 +11,9 @@ describe('Event Bus', () => {
 		});
 
 		const handler = vi.fn();
-		const sub = bus.subscribe('agent.started', (event: Envelope) => handler(event));
+		const sub = bus.subscribe('agent.started', (event: Envelope) =>
+			handler(event),
+		);
 
 		const evt = {
 			type: 'agent.started',

@@ -32,7 +32,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 	// Adjust height when input changes
 	useEffect(() => {
 		adjustTextareaHeight();
-	}, [input, adjustTextareaHeight]);
+	}, [adjustTextareaHeight]);
 
 	// Add message to history when sent
 	const addToHistory = useCallback((message: string) => {

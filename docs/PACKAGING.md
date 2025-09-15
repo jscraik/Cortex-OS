@@ -10,7 +10,7 @@ This guide covers how to package Cortex-OS for distribution: containers (recomme
 
 ## NPM packages (CLI and libraries)
 
-- Targets: `apps/cortex-cli`, `libs/typescript/*`, selected `packages/*`.
+- Targets: `apps/cortex-code` (CLI replacement for deprecated cortex-cli), `libs/typescript/*`, selected `packages/*`.
 - Ensure each package has: main/module/types, `files` whitelist, build script, optional `publishConfig.registry`.
 
 ## Python packaging (cortex-py)

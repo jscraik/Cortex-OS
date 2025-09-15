@@ -5,13 +5,13 @@
  * @version 1.0.0
  */
 
-import { nanoid } from 'nanoid';
 // Import from proper package boundaries instead of relative paths
 import type { PRPState } from '@cortex-os/kernel';
-import { 
-	createInitialPRPState, 
-	validateStateTransition 
+import {
+	createInitialPRPState,
+	validateStateTransition,
 } from '@cortex-os/kernel';
+import { nanoid } from 'nanoid';
 // Temporarily comment out observability imports to fix build
 // import { recordMetric, startSpan } from '@cortex-os/observability';
 import { executeBuildNode } from './build-node.js';
@@ -29,7 +29,11 @@ function generateDeterministicHash(obj: any): string {
 }
 
 // Temporary stub functions for observability
-function recordMetric(name: string, value: number, labels?: Record<string, string>) {
+function recordMetric(
+	name: string,
+	value: number,
+	labels?: Record<string, string>,
+) {
 	// Stub implementation
 	console.debug(`Metric: ${name}=${value}`, labels);
 }
@@ -39,8 +43,8 @@ function startSpan(name: string) {
 	console.debug(`Starting span: ${name}`);
 	return {
 		end: () => console.debug(`Ending span: ${name}`),
-		setStatus: (_status: any) => {}, 
-		setAttribute: (_key: string, _value: any) => {}
+		setStatus: (_status: any) => {},
+		setAttribute: (_key: string, _value: any) => {},
 	};
 }
 

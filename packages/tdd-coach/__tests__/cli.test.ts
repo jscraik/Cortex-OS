@@ -1,9 +1,9 @@
-import { spawn } from 'child_process';
-import { resolve } from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { spawn } from 'node:child_process';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 describe('TDD Coach CLI', () => {
-	const cliPath = resolve(__dirname, '../dist/cli/tdd-coach.js');
+	const _cliPath = resolve(__dirname, '../dist/cli/tdd-coach.js');
 
 	it('should show help when run without arguments', async () => {
 		const { stdout, stderr } = await runCLI([]);

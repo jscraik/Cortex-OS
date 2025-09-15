@@ -62,6 +62,21 @@ enum Subcommand {
     /// A2A commands (doctor, send, etc.)
     A2a(A2aCli),
 
+    /// RAG commands (ingest, query, eval)
+    Rag(RagCli),
+
+    /// Simlab commands (run, bench, report, list)
+    Simlab(SimlabCli),
+
+    /// Control commands (check)
+    Ctl(CtlCli),
+
+    /// Eval commands (gate)
+    Eval(EvalCli),
+
+    /// Agent commands (create)
+    Agent(AgentCli),
+
     /// Run the Protocol stream via stdin/stdout
     #[clap(visible_alias = "p")]
     Proto(ProtoCli),
@@ -98,6 +113,80 @@ struct A2aCli {
 enum A2aAction {
     /// Health check output for A2A
     Doctor,
+    /// List A2A handlers (stub)
+    List,
+    /// Send an event (stub)
+    Send { r#type: String },
+}
+
+#[derive(Debug, Parser)]
+struct RagCli {
+    #[command(subcommand)]
+    action: Option<RagAction>,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum RagAction {
+    /// Ingest a path (stub)
+    Ingest { path: String },
+    /// Query RAG (stub)
+    Query { q: String },
+    /// Evaluate RAG (stub)
+    Eval,
+}
+
+#[derive(Debug, Parser)]
+struct SimlabCli {
+    #[command(subcommand)]
+    action: Option<SimlabAction>,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum SimlabAction {
+    /// Run a simlab scenario (stub)
+    Run { name: String },
+    /// Benchmark a simlab scenario (stub)
+    Bench { name: String },
+    /// Report on a simlab scenario (stub)
+    Report { name: String },
+    /// List scenarios (stub)
+    List,
+}
+
+#[derive(Debug, Parser)]
+struct CtlCli {
+    #[command(subcommand)]
+    action: Option<CtlAction>,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum CtlAction {
+    /// Run controller checks (stub)
+    Check,
+}
+
+#[derive(Debug, Parser)]
+struct EvalCli {
+    #[command(subcommand)]
+    action: Option<EvalAction>,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum EvalAction {
+    /// Gate evaluation (stub)
+    Gate,
+}
+
+#[derive(Debug, Parser)]
+struct AgentCli {
+    #[command(subcommand)]
+    action: Option<AgentAction>,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum AgentAction {
+    /// Create an agent (stub)
+    Create { name: String },
 }
 
 #[derive(Debug, Parser)]
@@ -110,6 +199,20 @@ struct McpCli {
 enum McpAction {
     /// List configured MCP servers (JSON)
     List,
+    /// MCP health check (JSON)
+    Doctor,
+    /// Get MCP server by name (JSON)
+    Get { name: String },
+    /// Show MCP server details by name (JSON)
+    Show { name: String },
+    /// Add MCP server (name [url])
+    Add { name: String, url: Option<String> },
+    /// Remove MCP server by name
+    Remove { name: String },
+    /// Search MCP servers by query
+    Search { query: String },
+    /// Start an MCP bridge (stub)
+    Bridge,
     /// Run Codex as an MCP server (experimental)
     Server,
 }
@@ -192,6 +295,34 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 // Minimal JSON list placeholder; wire real sources later
                 println!("[]");
             }
+            Some(McpAction::Doctor) => {
+                println!("{}", r#"{"ok":true,"service":"mcp","version":"1"}"#);
+            }
+            Some(McpAction::Get { name }) => {
+                // Placeholder shape; subject to extension as config lands
+                println!("{{\"name\":\"{}\",\"exists\":false}}", name);
+            }
+            Some(McpAction::Show { name }) => {
+                // Placeholder shape; subject to extension as registry lands
+                println!("{{\"name\":\"{}\",\"url\":null}}", name);
+            }
+            Some(McpAction::Add { name, url }) => {
+                if let Some(u) = url {
+                    println!("{{\"name\":\"{}\",\"url\":\"{}\",\"added\":true}}", name, u);
+                } else {
+                    println!("{{\"name\":\"{}\",\"added\":true}}", name);
+                }
+            }
+            Some(McpAction::Remove { name }) => {
+                println!("{{\"name\":\"{}\",\"removed\":true}}", name);
+            }
+            Some(McpAction::Search { query }) => {
+                println!("[{{\"name\":\"{}\"}}]", query);
+            }
+            Some(McpAction::Bridge) => {
+                // Stubbed bridge status
+                println!("{}", r#"{"ok":true,"service":"mcp-bridge","mode":"stub"}"#);
+            }
             Some(McpAction::Server) => {
                 codex_mcp_server::run_main(codex_linux_sandbox_exe, cli.config_overrides).await?;
             }
@@ -200,7 +331,103 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 let mut app = MultitoolCli::command();
                 // Find and print the `mcp` subcommand help
                 if let Some(mut mcp_cmd) = app.find_subcommand_mut("mcp") {
+                    // Ensure subcommands show in help
                     mcp_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
+        Some(Subcommand::A2a(a2a_cli)) => match a2a_cli.action {
+            Some(A2aAction::Doctor) => {
+                // Minimal health payload in JSON
+                // {"ok":true,"service":"a2a","version":"1"}
+                println!("{}", r#"{"ok":true,"service":"a2a","version":"1"}"#);
+            }
+            Some(A2aAction::List) => {
+                println!("[]");
+            }
+            Some(A2aAction::Send { r#type }) => {
+                println!("{{\"ok\":true,\"type\":\"{}\"}}", r#type);
+            }
+            None => {
+                let mut app = MultitoolCli::command();
+                if let Some(mut a2a_cmd) = app.find_subcommand_mut("a2a") {
+                    a2a_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
+        Some(Subcommand::Rag(rag_cli)) => match rag_cli.action {
+            Some(RagAction::Ingest { path: _ }) => {
+                println!("{}", r#"{"ok":true,"op":"ingest"}"#);
+            }
+            Some(RagAction::Query { q: _ }) => {
+                println!("[]");
+            }
+            Some(RagAction::Eval) => {
+                println!("{}", r#"{"ok":true,"op":"eval"}"#);
+            }
+            None => {
+                let mut app = MultitoolCli::command();
+                if let Some(mut rag_cmd) = app.find_subcommand_mut("rag") {
+                    rag_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
+        Some(Subcommand::Simlab(simlab_cli)) => match simlab_cli.action {
+            Some(SimlabAction::List) => {
+                println!("[]");
+            }
+            Some(SimlabAction::Run { name }) => {
+                println!("{{\"ok\":true,\"op\":\"run\",\"name\":\"{}\"}}", name);
+            }
+            Some(SimlabAction::Bench { name }) => {
+                println!("{{\"ok\":true,\"op\":\"bench\",\"name\":\"{}\"}}", name);
+            }
+            Some(SimlabAction::Report { name }) => {
+                println!("{{\"ok\":true,\"op\":\"report\",\"name\":\"{}\"}}", name);
+            }
+            None => {
+                let mut app = MultitoolCli::command();
+                if let Some(mut s_cmd) = app.find_subcommand_mut("simlab") {
+                    s_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
+        Some(Subcommand::Ctl(ctl_cli)) => match ctl_cli.action {
+            Some(CtlAction::Check) => {
+                println!("{}", r#"{"ok":true,"op":"check"}"#);
+            }
+            None => {
+                let mut app = MultitoolCli::command();
+                if let Some(mut c_cmd) = app.find_subcommand_mut("ctl") {
+                    c_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
+        Some(Subcommand::Eval(eval_cli)) => match eval_cli.action {
+            Some(EvalAction::Gate) => {
+                println!("{}", r#"{"ok":true,"op":"gate"}"#);
+            }
+            None => {
+                let mut app = MultitoolCli::command();
+                if let Some(mut e_cmd) = app.find_subcommand_mut("eval") {
+                    e_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
+        Some(Subcommand::Agent(agent_cli)) => match agent_cli.action {
+            Some(AgentAction::Create { name }) => {
+                println!("{{\"ok\":true,\"name\":\"{}\"}}", name);
+            }
+            None => {
+                let mut app = MultitoolCli::command();
+                if let Some(mut a_cmd) = app.find_subcommand_mut("agent") {
+                    a_cmd.print_help()?;
                     println!();
                 }
             }

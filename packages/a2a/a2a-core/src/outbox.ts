@@ -28,7 +28,7 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
 			publish: (envelope: Envelope) => Promise<void>;
 		},
 		private readonly config: OutboxConfig = {},
-	) { }
+	) {}
 	async publish(message: OutboxMessage): Promise<void> {
 		// Inject current trace context if available
 		const traceContext = getCurrentTraceContext();
@@ -282,7 +282,7 @@ export class EnhancedOutbox {
 		private readonly repository: OutboxRepository,
 		readonly _publisher: OutboxPublisher,
 		private readonly processor: OutboxProcessor,
-	) { }
+	) {}
 
 	/**
 	 * Add message to outbox within a database transaction

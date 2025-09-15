@@ -203,3 +203,30 @@ describe('glob matcher mutation tests', () => {
 		});
 	});
 });
+
+import fs from 'node:fs';
+import path from 'node:path';
+// Additional policy schema mutation tests
+import { validatePolicy } from './policy-schema';
+
+describe('policy schema mutation guards', () => {
+	function loadBaseline() {
+		const p = path.resolve(__dirname, 'policy.json');
+		return JSON.parse(fs.readFileSync(p, 'utf8'));
+	}
+
+	it('rejects invalid regex in bannedPatterns', () => {
+		const baseline = loadBaseline();
+		const mutated = {
+			...baseline,
+			importRules: {
+				...baseline.importRules,
+				bannedPatterns: ['[unclosed'],
+				allowedCrossPkgImports: baseline.importRules.allowedCrossPkgImports,
+			},
+		};
+		expect(() => validatePolicy(mutated, { version: mutated.version })).toThrow(
+			/Invalid regex pattern/,
+		);
+	});
+});

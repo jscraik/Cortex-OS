@@ -100,7 +100,7 @@ export class MLXEmbedder implements Embedder {
 			return (data as any).embeddings as number[][];
 		}
 		if (Array.isArray((data as any).embedding)) {
-			return [((data as any).embedding as number[])];
+			return [(data as any).embedding as number[]];
 		}
 		throw new Error('Invalid response format from MLX service');
 	}
@@ -110,8 +110,16 @@ export class MLXEmbedder implements Embedder {
 		const pythonScriptPath = path.join(__dirname, 'mlx-embedder.py');
 
 		// Dynamic import from shared python exec utility; typed as any to avoid coupling
-		type PyExec = { runPython: (script: string, args: string[], opts: Record<string, unknown>) => Promise<unknown> };
-		const mod = (await import('../../../../libs/python/exec.js')) as unknown as PyExec;
+		type PyExec = {
+			runPython: (
+				script: string,
+				args: string[],
+				opts: Record<string, unknown>,
+			) => Promise<unknown>;
+		};
+		const mod = (await import(
+			'../../../../libs/python/exec.js'
+		)) as unknown as PyExec;
 		const { runPython } = mod;
 
 		const run = () =>

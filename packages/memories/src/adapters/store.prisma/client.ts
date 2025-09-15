@@ -46,10 +46,10 @@ export type PrismaLike = {
 
 // Local helper to mark variables as used
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _use = (..._args: unknown[]): void => { };
+const _use = (..._args: unknown[]): void => {};
 
 export class PrismaStore implements MemoryStore {
-	constructor(private readonly prisma: PrismaLike) { }
+	constructor(private readonly prisma: PrismaLike) {}
 
 	async upsert(m: Memory, _namespace = 'default'): Promise<Memory> {
 		_use(_namespace);
@@ -196,11 +196,11 @@ function isAllowedKind(v: unknown): v is AllowedKind {
 function prismaToDomain(row: PrismaRow): Memory {
 	const provenance = row.provenance
 		? {
-			source: row.provenance.source ?? 'system',
-			actor: row.provenance.actor,
-			evidence: row.provenance.evidence,
-			hash: row.provenance.hash,
-		}
+				source: row.provenance.source ?? 'system',
+				actor: row.provenance.actor,
+				evidence: row.provenance.evidence,
+				hash: row.provenance.hash,
+			}
 		: { source: 'system' as const };
 
 	return {

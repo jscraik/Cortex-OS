@@ -33,7 +33,7 @@ const ModelItem: React.FC<ModelItemProps> = ({
 	onClick,
 }) => {
 	const [showMenu, setShowMenu] = useState(false);
-	const settings = useSettingsStore();
+	const _settings = useSettingsStore();
 	const user = useUserStore();
 	const itemRef = useRef<HTMLButtonElement>(null);
 
@@ -116,7 +116,7 @@ const ModelItem: React.FC<ModelItemProps> = ({
 											className="self-end"
 											title={`${
 												item.model.ollama?.details?.quantization_level
-													? item.model.ollama?.details?.quantization_level + ' '
+													? `${item.model.ollama?.details?.quantization_level} `
 													: ''
 											}${
 												item.model.ollama?.size

@@ -47,11 +47,9 @@ interface TestSummaryShape {
 const isTestSummary = (v: unknown): v is TestSummaryShape =>
 	!!v &&
 	typeof v === 'object' &&
-	(
-		'numPassedTests' in (v as Record<string, unknown>) ||
+	('numPassedTests' in (v as Record<string, unknown>) ||
 		'numFailedTests' in (v as Record<string, unknown>) ||
-		'numTotalTests' in (v as Record<string, unknown>)
-	);
+		'numTotalTests' in (v as Record<string, unknown>));
 
 export interface MCPTool {
 	name: string;
@@ -459,10 +457,19 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				let passed = 0,
 					failed = 0,
 					total = 0;
-				if (isTestSummary(summary) && typeof summary.numPassedTests === 'number') {
+				if (
+					isTestSummary(summary) &&
+					typeof summary.numPassedTests === 'number'
+				) {
 					passed = summary.numPassedTests;
-					failed = typeof summary.numFailedTests === 'number' ? summary.numFailedTests : 0;
-					total = typeof summary.numTotalTests === 'number' ? summary.numTotalTests : passed + failed;
+					failed =
+						typeof summary.numFailedTests === 'number'
+							? summary.numFailedTests
+							: 0;
+					total =
+						typeof summary.numTotalTests === 'number'
+							? summary.numTotalTests
+							: passed + failed;
 				}
 				return {
 					command: cmd,

@@ -1,7 +1,7 @@
+import { spawn } from 'node:child_process';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Transport } from '@cortex-os/a2a-core/transport';
 import { createLogger } from '@cortex-os/observability';
-import { spawn } from 'node:child_process';
 
 const logger = createLogger('a2a-stdio-transport');
 

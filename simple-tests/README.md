@@ -11,6 +11,10 @@
 
 This directory contains simple, fast-running tests for basic functionality validation and continuous integration smoke tests.
 
+Note: cortex-cli is deprecated and being replaced by the Rust-based `codex` CLI (apps/cortex-code).
+Some historical examples may reference cortex-cli modules; these will be migrated or removed in a
+follow-up PR. New examples should prefer invoking `codex` for CLI behavior.
+
 ## Test Overview
 
 ### Purpose
@@ -729,3 +733,111 @@ if (result.success) {
 - Optional write sandbox (temp overlay FS)
 
 ---
+
+## Policy Hot Reload (Structure Guard)
+
+The `PolicyHotReloader` enables runtime updates to structure guard policies without process restarts.
+
+### Features
+
+- Hybrid watcher: combines `fs.watch`, `fs.watchFile`, and a lightweight polling fallback for reliability.
+- Baseline load does not emit an update event; only subsequent validated content changes trigger `policyReloaded`.
+- Resilient to file deletion and later recreation (`fileDeleted` then `policyReloaded`).
+- Differentiated error events for parse vs validation vs operational I/O issues.
+
+### Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `policyReloaded` | `policy` | Emitted after a successful parse+validate with new serialized content |
+| `validationError` | `Error` | Structural/schema validation failed (policy unchanged) |
+| `parseError` | `Error` | JSON syntax error (policy unchanged) |
+| `fileDeleted` | none | Policy file removed (last good policy retained) |
+| `policyError` | `Error` | Operational error (watcher failure, read error, polling failure) |
+
+### Usage
+
+```ts
+import { PolicyHotReloader } from './policy-hot-reloader-impl';
+
+const reloader = new PolicyHotReloader('tools/structure-guard/policy.json');
+
+reloader.on('policyReloaded', (p) => console.log('Policy updated to', p.version));
+reloader.on('validationError', (e) => console.warn('Policy validation failed', e.message));
+reloader.on('parseError', (e) => console.warn('Policy parse error', e.message));
+reloader.on('fileDeleted', () => console.warn('Policy file deleted – using last good policy'));
+reloader.on('policyError', (e) => console.warn('Policy operational error', e.message));
+
+await reloader.startWatching();
+// ... later ...
+await reloader.stopWatching();
+```
+
+### Test Coverage
+
+`policy-hot-reload.test.ts` validates:
+
+- Change detection and new policy materialization
+- Event emission correctness (`policyReloaded` with updated payload)
+- Schema validation rejection path
+- JSON parse error handling
+- File deletion + recreation resilience
+
+### Implementation Notes
+
+- Debounce kept minimal (5ms) to keep tests deterministic; consider increasing for production to batch rapid successive writes.
+- Polling interval (120ms) is a fallback; in production you can disable by code change if native watchers prove stable on your deployment platform.
+- Initial baseline load avoids emitting `policyReloaded` so downstream consumers treat first event as a real change.
+
+### Integration Pattern (Atomic Swap)
+
+Downstream subsystems (e.g., an orchestration guard) should maintain an atomic reference to the
+latest validated policy to avoid TOCTOU hazards across async handlers.
+
+```ts
+// policy-state.ts
+import { PolicyHotReloader } from '../simple-tests/policy-hot-reloader-impl';
+import { readFileSync } from 'node:fs';
+
+// Atomic reference (single mutable binding – avoids partial copies)
+let currentPolicy: any = undefined;
+
+export function getCurrentPolicy() {
+  return currentPolicy;
+}
+
+export async function initPolicyState(path = 'tools/structure-guard/policy.json') {
+  // Optional: load baseline synchronously early during boot
+  try {
+    currentPolicy = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (_) {
+    // baseline may not exist yet – rely on reloader events
+  }
+
+  const reloader = new PolicyHotReloader(path);
+  reloader.on('policyReloaded', (p) => {
+    // Atomic swap: single assignment; readers always see either old or new, never a torn state
+    currentPolicy = p;
+  });
+  reloader.on('validationError', (e) => console.warn('[policy] validationError', e.message));
+  reloader.on('parseError', (e) => console.warn('[policy] parseError', e.message));
+  reloader.on('fileDeleted', () => console.warn('[policy] fileDeleted – retaining last good snapshot'));
+  reloader.on('policyError', (e) => console.warn('[policy] operational error', e.message));
+  await reloader.startWatching();
+  return { reloader };
+}
+
+// Example consumer usage inside a request / event handler
+export function isActionAllowed(action: string) {
+  const policy = getCurrentPolicy();
+  if (!policy) return false; // Conservative deny until first load
+  return policy.allowedActions?.includes(action);
+}
+```
+
+Key Points:
+
+- Use a module-level mutable binding (or a small wrapper with `Atomics` if crossing worker boundaries).
+- Never deep-clone on every read; hot path stays O(1) pointer dereference.
+- Treat absence of policy as deny-by-default or fallback to a compiled-in safe baseline.
+- Log errors but do not crash the process on transient parse/validation failures; last good policy remains active.

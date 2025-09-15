@@ -11,7 +11,7 @@
 
 import { EventEmitter } from 'node:events';
 import { Matrix } from 'ml-matrix';
-import pino from 'pino';
+import pino, { type Logger } from 'pino';
 import type {
 	AgentMetrics,
 	AnalyticsConfig,
@@ -27,7 +27,7 @@ import type {
  * Generates recommendations based on pattern analysis and predictive modeling
  */
 export class OptimizationEngine extends EventEmitter {
-	private logger: pino.Logger;
+	private logger: Logger;
 	private config: AnalyticsConfig;
 	private isOptimizing = false;
 	private optimizationInterval?: NodeJS.Timeout;

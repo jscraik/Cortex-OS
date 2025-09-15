@@ -26,9 +26,9 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 
 	if (token.type !== 'html') return null;
 
-	if (sanitizedHtml && sanitizedHtml.includes('<video')) {
+	if (sanitizedHtml?.includes('<video')) {
 		const videoMatch = sanitizedHtml.match(/<video[^>]*>([\s\S]*?)<\/video>/);
-		const videoSrc = videoMatch && videoMatch[1];
+		const videoSrc = videoMatch?.[1];
 
 		if (videoSrc) {
 			return (
@@ -46,9 +46,9 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 		} else {
 			return <div dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }} />;
 		}
-	} else if (sanitizedHtml && sanitizedHtml.includes('<audio')) {
+	} else if (sanitizedHtml?.includes('<audio')) {
 		const audioMatch = sanitizedHtml.match(/<audio[^>]*>([\s\S]*?)<\/audio>/);
-		const audioSrc = audioMatch && audioMatch[1];
+		const audioSrc = audioMatch?.[1];
 
 		if (audioSrc) {
 			return (
@@ -71,7 +71,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 		const match = token.text.match(
 			/<iframe\s+[^>]*src="https:\/\/www\.youtube\.com\/embed\/([a-zA-Z0-9_-]{11})(?:\?[^"]*)?"[^>]*><\/iframe>/,
 		);
-		const ytId = match && match[1];
+		const ytId = match?.[1];
 
 		if (ytId) {
 			return (
@@ -87,11 +87,11 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 				/>
 			);
 		}
-	} else if (token.text && token.text.includes('<iframe')) {
+	} else if (token.text?.includes('<iframe')) {
 		const match = token.text.match(
 			/<iframe\s+[^>]*src="([^"]+)"[^>]*><\/iframe>/,
 		);
-		const iframeSrc = match && match[1];
+		const iframeSrc = match?.[1];
 
 		if (iframeSrc) {
 			return (
@@ -106,9 +106,8 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 						const iframe = e.target as HTMLIFrameElement;
 						try {
 							// @ts-expect-error contentWindow may be null due to cross-origin restrictions
-							iframe.style.height =
-								iframe.contentWindow.document.body.scrollHeight + 20 + 'px';
-						} catch (err) {
+							iframe.style.height = `${iframe.contentWindow.document.body.scrollHeight + 20}px`;
+						} catch (_err) {
 							// Cross-origin restriction, can't access height
 						}
 					}}
@@ -117,11 +116,11 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 		} else {
 			return <div dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }} />;
 		}
-	} else if (token.text && token.text.includes('<status')) {
+	} else if (token.text?.includes('<status')) {
 		const match = token.text.match(
 			/<status title="([^"]+)" done="(true|false)" ?\/?>/,
 		);
-		const statusTitle = match && match[1];
+		const statusTitle = match?.[1];
 		const statusDone = match && match[2] === 'true';
 
 		if (statusTitle) {
@@ -137,9 +136,9 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 		} else {
 			return <div dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }} />;
 		}
-	} else if (token.text && token.text.includes(`<file type="html"`)) {
+	} else if (token.text?.includes(`<file type="html"`)) {
 		const match = token.text.match(/<file type="html" id="([^"]+)"/);
-		const fileId = match && match[1];
+		const fileId = match?.[1];
 
 		if (fileId) {
 			const sandboxOptions = [
@@ -166,19 +165,18 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 						const iframe = e.target as HTMLIFrameElement;
 						try {
 							// @ts-expect-error contentWindow may be null due to cross-origin restrictions
-							iframe.style.height =
-								iframe.contentWindow.document.body.scrollHeight + 20 + 'px';
-						} catch (err) {
+							iframe.style.height = `${iframe.contentWindow.document.body.scrollHeight + 20}px`;
+						} catch (_err) {
 							// Cross-origin restriction, can't access height
 						}
 					}}
 				/>
 			);
 		}
-	} else if (token.text && token.text.includes(`<source_id`)) {
+	} else if (token.text?.includes(`<source_id`)) {
 		return <Source id={id} token={token} onClick={onSourceClick} />;
 	} else {
-		const brMatch = token.text && token.text.match(/<br\s*\/?>/);
+		const brMatch = token.text?.match(/<br\s*\/?>/);
 
 		if (brMatch) {
 			return <br />;

@@ -128,7 +128,6 @@ const Selector: React.FC<SelectorProps> = ({
 									onChange={(e) => setSearchValue(e.target.value)}
 									className="w-full text-sm bg-transparent outline-none"
 									placeholder={searchPlaceholder}
-									autoFocus
 								/>
 							</div>
 							<hr className="border-gray-100 dark:border-gray-850" />

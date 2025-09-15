@@ -187,11 +187,11 @@ describe('StdioHttpBridge', () => {
 			// Simulate stdin input
 			mockStdio.emit(
 				'stdin',
-				JSON.stringify({
+				`${JSON.stringify({
 					id: '1',
 					method: 'test',
 					params: { foo: 'bar' },
-				}) + '\n',
+				})}\n`,
 			);
 
 			// Wait for processing

@@ -3,8 +3,8 @@
  * Updates GitHub comments in real-time to show task progress
  */
 
-import { Octokit } from '@octokit/rest';
 import { randomUUID } from 'node:crypto';
+import { Octokit } from '@octokit/rest';
 
 export interface ProgressStep {
 	step: number;

@@ -90,7 +90,7 @@ const Dropdown: React.FC<DropdownProps> = ({
 
 			{isOpen && (
 				<div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 ring-1 ring-black ring-opacity-5 focus:outline-none">
-					<ul role="listbox" className="max-h-60 overflow-auto">
+					<ul className="max-h-60 overflow-auto">
 						{options.map((option) => (
 							<li
 								key={option.value}

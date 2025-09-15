@@ -1,7 +1,7 @@
-import { createLogger } from '@cortex-os/observability';
-import { TypeGuards } from '@cortex-os/utils';
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
+import { createLogger } from '@cortex-os/observability';
+import { TypeGuards } from '@cortex-os/utils';
 
 interface HitlRequest {
 	id: string;

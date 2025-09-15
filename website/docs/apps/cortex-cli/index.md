@@ -54,7 +54,7 @@ Current features are preserved in `cortex-code`:
 - **Agent Lifecycle** - create agents from templates.
 - **System Control** - health checks and diagnostics.
 
-Planned features for `cortex-cli` are frozen; new capabilities target `cortex-code`.
+Note: `cortex-cli` is deprecated. New capabilities target `cortex-code` (see `apps/cortex-code/`).
 
 ## Getting Started
 

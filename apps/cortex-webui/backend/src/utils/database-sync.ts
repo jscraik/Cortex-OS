@@ -1,8 +1,8 @@
 // Database utility using synchronous sqlite3 operations for Cortex WebUI backend
 // Simple sqlite3 wrapper to match better-sqlite3-style API
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import sqlite3 from 'sqlite3';
 import { DATABASE_PATH } from '../config/constants';
 import { ConversationModel } from '../models/conversation';

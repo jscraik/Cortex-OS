@@ -2,7 +2,8 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 // We test the module executes without throwing and prints expected keys when JSON flag is set.
-describe("rag eval CLI smoke", async () => {
+// Deprecated: cortex-cli has been removed. Skip legacy test until ported to codex.
+describe.skip("rag eval CLI smoke", async () => {
 	it("runs and produces JSON with metrics", async () => {
 		const mod = await import("../apps/cortex-cli/src/commands/rag/eval");
 		const dataset = path.resolve(

@@ -100,6 +100,10 @@ Out of scope:
 - Tests: rerun smart targets.
 - Actions: remove directory and any lingering references.
 
+9) chore(ci): update Vitest workspace and PM2 configs
+- Tests: run TS test suites to ensure no breakage.
+- Actions: replace or remove `apps/cortex-cli` entries in `config/vitest.workspace.ts` and migrate orchestrator paths in PM2 ecosystem configs to cortex-code equivalents.
+
 8) docs(release): migration notes and changelog
 - Tests: docs lint.
 - Actions: add a release note describing deprecation and functional mapping in `project-documentation/legacy/`.

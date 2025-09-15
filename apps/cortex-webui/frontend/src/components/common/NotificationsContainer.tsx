@@ -46,7 +46,7 @@ const NotificationsContainer: React.FC = () => {
 			// @ts-expect-error - deleting custom method from window object
 			delete window.addNotification;
 		};
-	}, []);
+	}, [addNotification]);
 
 	return (
 		<div className="fixed top-4 right-4 z-50 space-y-2">

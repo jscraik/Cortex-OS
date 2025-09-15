@@ -64,9 +64,9 @@ const Messages: React.FC<MessagesProps> = ({
 		if (assistantMessages.length > 1) {
 			// Put first user message and first assistant message in main branch
 			if (userMessages.length > 0) {
-				branches['main'].push(userMessages[0]);
+				branches.main.push(userMessages[0]);
 			}
-			branches['main'].push(assistantMessages[0]);
+			branches.main.push(assistantMessages[0]);
 
 			// Create additional branches for remaining assistant messages
 			assistantMessages.slice(1).forEach((message, index) => {
@@ -75,7 +75,7 @@ const Messages: React.FC<MessagesProps> = ({
 			});
 		} else {
 			// Simple linear conversation
-			branches['main'] = messages;
+			branches.main = messages;
 		}
 
 		return branches;
@@ -104,25 +104,21 @@ const Messages: React.FC<MessagesProps> = ({
 					</div>
 				) : (
 					// Show linear conversation
-					<>
-						{messageBranches['main'].map((message) => (
-							<Message
-								key={message.id}
-								message={message}
-								isUser={message.role === 'user'}
-								onEdit={
-									onEditMessage
-										? (content) => onEditMessage(message.id, content)
-										: undefined
-								}
-								onDelete={
-									onDeleteMessage
-										? () => onDeleteMessage(message.id)
-										: undefined
-								}
-							/>
-						))}
-					</>
+					messageBranches.main.map((message) => (
+						<Message
+							key={message.id}
+							message={message}
+							isUser={message.role === 'user'}
+							onEdit={
+								onEditMessage
+									? (content) => onEditMessage(message.id, content)
+									: undefined
+							}
+							onDelete={
+								onDeleteMessage ? () => onDeleteMessage(message.id) : undefined
+							}
+						/>
+					))
 				)}
 				{streaming && (
 					<div className="flex justify-start">

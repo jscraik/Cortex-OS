@@ -501,8 +501,6 @@
 		".npmrc",
 		".nxignore",
 		".prettierignore",
-		".markdownlintignore",
-		".prettierrc",
 		".structure-override",
 		".tool-versions",
 		".vitestrc",

@@ -6,15 +6,15 @@ export interface Embedder {
 }
 
 export interface Chunk {
-    id: string;
-    text: string;
-    source?: string;
-    // Unix ms timestamp when the source/chunk was last updated
-    updatedAt?: number;
-    // Optional free-form metadata for future routing/policies
-    metadata?: Record<string, unknown>;
-    embedding?: number[];
-    score?: number;
+	id: string;
+	text: string;
+	source?: string;
+	// Unix ms timestamp when the source/chunk was last updated
+	updatedAt?: number;
+	// Optional free-form metadata for future routing/policies
+	metadata?: Record<string, unknown>;
+	embedding?: number[];
+	score?: number;
 }
 
 export interface Citation {

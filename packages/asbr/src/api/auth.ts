@@ -71,12 +71,10 @@ export function createAuthMiddleware() {
 		// Extract token from Authorization header
 		const authHeader = req.headers.authorization;
 		if (!authHeader?.startsWith('Bearer ')) {
-			res
-				.status(401)
-				.json({
-					error: 'Authentication required',
-					code: 'AUTHENTICATION_ERROR',
-				});
+			res.status(401).json({
+				error: 'Authentication required',
+				code: 'AUTHENTICATION_ERROR',
+			});
 			return;
 		}
 
@@ -104,12 +102,10 @@ export function createAuthMiddleware() {
 					.status(error.statusCode)
 					.json({ error: error.message, code: error.code });
 			} else {
-				res
-					.status(500)
-					.json({
-						error: 'Authentication failed',
-						code: 'AUTHENTICATION_ERROR',
-					});
+				res.status(500).json({
+					error: 'Authentication failed',
+					code: 'AUTHENTICATION_ERROR',
+				});
 			}
 		}
 	};
@@ -121,12 +117,10 @@ export function createAuthMiddleware() {
 export function requireScopes(...requiredScopes: string[]) {
 	return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
 		if (!req.auth) {
-			res
-				.status(401)
-				.json({
-					error: 'Authentication required',
-					code: 'AUTHENTICATION_ERROR',
-				});
+			res.status(401).json({
+				error: 'Authentication required',
+				code: 'AUTHENTICATION_ERROR',
+			});
 			return;
 		}
 

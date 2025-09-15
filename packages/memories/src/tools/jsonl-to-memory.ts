@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import readline from 'node:readline';
 import { z } from 'zod';
-import { createEmbedderFromEnv } from '../service/embedder-factory.js';
 import { InMemoryStore } from '../adapters/store.memory.js';
 import type { Memory } from '../domain/types.js';
+import { createEmbedderFromEnv } from '../service/embedder-factory.js';
 import { createMemoryService } from '../service/memory-service.js';
 
 const cliSchema = z.object({
@@ -37,7 +37,10 @@ async function main() {
 		crlfDelay: Infinity,
 	});
 
-  const service = createMemoryService(new InMemoryStore(), createEmbedderFromEnv());
+	const service = createMemoryService(
+		new InMemoryStore(),
+		createEmbedderFromEnv(),
+	);
 	const memories: Memory[] = [];
 
 	for await (const line of rl) {

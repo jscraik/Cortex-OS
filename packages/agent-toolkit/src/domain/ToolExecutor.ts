@@ -10,7 +10,10 @@ export interface ToolExecutor {
 	/**
 	 * Execute a tool with given inputs
 	 */
-	execute(toolName: string, inputs: AgentToolkitInput): Promise<AgentToolkitResult>;
+	execute(
+		toolName: string,
+		inputs: AgentToolkitInput,
+	): Promise<AgentToolkitResult>;
 
 	/**
 	 * Check if a tool is available
@@ -38,6 +41,14 @@ export interface ToolExecutionContext {
  */
 export interface ToolExecutionEvents {
 	onStart: (context: ToolExecutionContext, inputs: AgentToolkitInput) => void;
-	onComplete: (context: ToolExecutionContext, result: AgentToolkitResult, duration: number) => void;
-	onError: (context: ToolExecutionContext, error: Error, duration: number) => void;
+	onComplete: (
+		context: ToolExecutionContext,
+		result: AgentToolkitResult,
+		duration: number,
+	) => void;
+	onError: (
+		context: ToolExecutionContext,
+		error: Error,
+		duration: number,
+	) => void;
 }

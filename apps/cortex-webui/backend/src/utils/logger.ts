@@ -1,6 +1,6 @@
 // Structured logging utility using Winston
 
-import path from 'path';
+import path from 'node:path';
 import winston from 'winston';
 
 // Define log levels
@@ -172,7 +172,7 @@ export const logPerformance = (
 };
 
 // Ensure logs directory exists
-import { mkdirSync } from 'fs';
+import { mkdirSync } from 'node:fs';
 
 const logDir = process.env.LOG_DIR || './logs';
 try {

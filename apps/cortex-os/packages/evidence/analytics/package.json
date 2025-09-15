@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc",
-		"typecheck": "pnpm -w exec tsc -p apps/cortex-os/brain/evidence/analytics/tsconfig.typecheck.json --noEmit",
+		"typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
 		"test": "vitest",
 		"test:watch": "vitest watch",
 		"test:coverage": "vitest run --coverage",

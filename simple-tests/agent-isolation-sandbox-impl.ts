@@ -59,11 +59,67 @@ interface InternalState {
   violations: AuditEvent[];
   memoryAllocated: number;
   disposed: boolean;
+  thresholdEmitted?: boolean;
 }
 
 function emit(state: InternalState, evt: AuditEvent) {
   state.violations.push(evt);
   state.options.onAuditEvent?.(evt);
+  // Inline threshold check so fast-completing user code still records threshold event synchronously.
+  const { maxViolations } = state.options;
+  if (maxViolations && !state.thresholdEmitted && state.violations.length === maxViolations) {
+    const already = state.violations.some(v => v.code === ViolationCode.ThresholdExceeded);
+    if (!already) {
+      state.thresholdEmitted = true;
+      const thresholdEvent = makeAuditEvent({
+        type: 'sandbox.violation.threshold',
+        severity: 'medium',
+        message: `Violation threshold ${maxViolations} reached`,
+        code: ViolationCode.ThresholdExceeded
+      });
+      state.violations.push(thresholdEvent);
+      state.options.onAuditEvent?.(thresholdEvent);
+    }
+  }
+}
+
+// Central helper to ensure consistent prefix + shape for synthetic (main-thread) audit events.
+function makeAuditEvent(partial: Omit<AuditEvent, 'type'> & { type: string }): AuditEvent {
+  const ensuredType = partial.type.startsWith('sandbox.') ? partial.type : `sandbox.${partial.type}`;
+  return { ...partial, type: ensuredType };
+}
+
+function emitSynthetic(state: InternalState, partial: Omit<AuditEvent, 'type'> & { type: string }) {
+  emit(state, makeAuditEvent(partial));
+}
+
+// Specialized helpers for common violation patterns
+function emitTimeout(state: InternalState, maxMs: number) {
+  emitSynthetic(state, {
+    type: 'sandbox.timeout',
+    severity: 'high',
+    message: `Execution exceeded ${maxMs}ms`,
+    code: ViolationCode.Timeout
+  });
+}
+
+function emitSerializationError(state: InternalState, context?: { originalFnSource?: string; error?: string }) {
+  emitSynthetic(state, {
+    type: 'sandbox.serialize.error',
+    severity: 'medium',
+    message: context?.error ? 'Serialization or closure capture error' : 'Value not serializable',
+    meta: context,
+    code: ViolationCode.SerializeError
+  });
+}
+
+function emitThresholdExceeded(state: InternalState, maxViolations: number) {
+  emitSynthetic(state, {
+    type: 'sandbox.violation.threshold',
+    severity: 'medium',
+    message: `Violation threshold ${maxViolations} reached`,
+    code: ViolationCode.ThresholdExceeded
+  });
 }
 
 // All policy enforcement occurs inside the worker (fs/network/memory/dynamic code)
@@ -161,7 +217,7 @@ async function executeInWorker<T>(code: (api: SandboxApi) => T | Promise<T>, inj
       if (/is not defined/.test(msg.error)) {
         const exists = state.violations.some(v => v.type === 'sandbox.serialize.error');
         if (!exists) {
-          emit(state, { type: 'sandbox.serialize.error', severity: 'medium', message: 'Serialization or closure capture error', meta: { originalFnSource, error: msg.error }, code: ViolationCode.SerializeError });
+          emitSerializationError(state, { originalFnSource, error: msg.error });
         }
       }
       void worker.terminate();
@@ -174,8 +230,7 @@ async function executeInWorker<T>(code: (api: SandboxApi) => T | Promise<T>, inj
     const elapsed = performance.now() - start;
     if (elapsed > deadlineMs && !runError) {
       worker.terminate();
-      const evt: AuditEvent = { type: 'sandbox.timeout', severity: 'high', message: `Execution exceeded ${options.maxExecutionMs}ms`, code: ViolationCode.Timeout };
-      emit(state, evt);
+      emitTimeout(state, options.maxExecutionMs);
       runError = new Error('timeout exceeded');
       finished = true;
       break;
@@ -183,8 +238,11 @@ async function executeInWorker<T>(code: (api: SandboxApi) => T | Promise<T>, inj
     // early abort if maxViolations reached
     if (options.maxViolations && state.violations.length >= options.maxViolations && !runError) {
       worker.terminate();
-      const evt: AuditEvent = { type: 'sandbox.violation.threshold', severity: 'medium', message: `Violation threshold ${options.maxViolations} reached`, code: ViolationCode.ThresholdExceeded };
-      emit(state, evt);
+      // Threshold event may have already been emitted synchronously in emit(); avoid duplication.
+      const hasThreshold = state.violations.some(v => v.code === ViolationCode.ThresholdExceeded);
+      if (!hasThreshold) {
+        emitThresholdExceeded(state, options.maxViolations);
+      }
       runError = new Error('violation threshold reached');
       finished = true;
       break;

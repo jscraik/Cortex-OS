@@ -30,7 +30,7 @@ function getMCPServerInfo(): ServerInfo | null {
 				// Validate using zod. If MCPRequestSchema.shape.args exists, use it; otherwise, fallback to z.any()
 				// For demonstration, we'll use z.any() as the schema for args.
 				args = z.any().parse(parsed);
-			} catch (e) {
+			} catch (_e) {
 				// Invalid JSON or schema, set args to undefined
 				args = undefined;
 			}

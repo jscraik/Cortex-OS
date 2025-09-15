@@ -2,7 +2,7 @@
 
 // Validation script to check all configuration and dependencies
 
-const fs = require('fs');
+const fs = require('node:fs');
 // const path = require('path'); // Removed unused import
 
 const errors = [];

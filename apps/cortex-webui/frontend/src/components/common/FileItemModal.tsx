@@ -41,8 +41,8 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 	onClose,
 }) => {
 	const [enableFullContent, setEnableFullContent] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [selectedTab, setSelectedTab] = useState('');
+	const [loading, _setLoading] = useState(false);
+	const [_selectedTab, _setSelectedTab] = useState('');
 
 	useEffect(() => {
 		if (item?.context === 'full') {
@@ -55,7 +55,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 		const k = 1024;
 		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / k ** i).toFixed(2)) + ' ' + sizes[i];
+		return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 	};
 
 	const getLineCount = (content?: string): number => {
@@ -65,15 +65,15 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 
 	const isPDF =
 		item?.meta?.content_type === 'application/pdf' ||
-		(item?.name && item.name.toLowerCase().endsWith('.pdf'));
+		item?.name?.toLowerCase().endsWith('.pdf');
 
-	const isAudio =
+	const _isAudio =
 		(item?.meta?.content_type ?? '').startsWith('audio/') ||
-		(item?.name && item.name.toLowerCase().endsWith('.mp3')) ||
-		(item?.name && item.name.toLowerCase().endsWith('.wav')) ||
-		(item?.name && item.name.toLowerCase().endsWith('.ogg')) ||
-		(item?.name && item.name.toLowerCase().endsWith('.m4a')) ||
-		(item?.name && item.name.toLowerCase().endsWith('.webm'));
+		item?.name?.toLowerCase().endsWith('.mp3') ||
+		item?.name?.toLowerCase().endsWith('.wav') ||
+		item?.name?.toLowerCase().endsWith('.ogg') ||
+		item?.name?.toLowerCase().endsWith('.m4a') ||
+		item?.name?.toLowerCase().endsWith('.webm');
 
 	const handleOpenFile = () => {
 		if (!isPDF && item?.url) {

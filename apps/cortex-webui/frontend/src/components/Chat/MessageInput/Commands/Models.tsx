@@ -115,8 +115,7 @@ const Models = forwardRef(({ command, onSelect }: ModelsProps, ref) => {
 
 				// Ensure the container is visible before adjusting height
 				const rect = containerRef.current.getBoundingClientRect();
-				containerRef.current.style.maxHeight =
-					Math.max(Math.min(240, rect.bottom - 100), 100) + 'px';
+				containerRef.current.style.maxHeight = `${Math.max(Math.min(240, rect.bottom - 100), 100)}px`;
 			}, 100);
 		}
 	};
@@ -139,7 +138,7 @@ const Models = forwardRef(({ command, onSelect }: ModelsProps, ref) => {
 				clearTimeout(adjustHeightDebounce.current);
 			}
 		};
-	}, []);
+	}, [adjustHeight]);
 
 	// Confirm selection
 	const confirmSelect = (model: ModelItem) => {

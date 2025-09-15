@@ -21,7 +21,7 @@ const DragGhost: React.FC<DragGhostProps> = ({ x, y, show, children }) => {
 		}
 
 		return () => {
-			if (popupElementRef.current && popupElementRef.current.parentNode) {
+			if (popupElementRef.current?.parentNode) {
 				popupElementRef.current.parentNode.removeChild(popupElementRef.current);
 			}
 			document.body.style.overflow = 'unset';

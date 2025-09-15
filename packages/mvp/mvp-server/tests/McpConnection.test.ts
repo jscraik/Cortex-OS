@@ -28,7 +28,9 @@ class MockWebSocket {
 	}
 
 	emit(event: string, ...args: unknown[]) {
-		(this.listeners[event] || []).forEach((l) => { l(...args); });
+		(this.listeners[event] || []).forEach((l) => {
+			l(...args);
+		});
 		return true;
 	}
 

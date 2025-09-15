@@ -243,7 +243,9 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Phase 1: Analyze context and create collection plan
 	 */
-	private async analyzeContext(context: EvidenceTaskContext): Promise<EvidencePlan> {
+	private async analyzeContext(
+		context: EvidenceTaskContext,
+	): Promise<EvidencePlan> {
 		return {
 			searchQueries: this.generateSearchQueries(context),
 			evidenceTypes: ['documentation', 'code', 'requirements', 'decisions'],
@@ -255,7 +257,10 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Phase 2: Collect raw evidence from multiple sources
 	 */
-	private async collectRawEvidence(context: EvidenceTaskContext, plan: EvidencePlan): Promise<RawEvidenceItem[]> {
+	private async collectRawEvidence(
+		context: EvidenceTaskContext,
+		plan: EvidencePlan,
+	): Promise<RawEvidenceItem[]> {
 		const evidence: RawEvidenceItem[] = [];
 
 		// Use ASBR integration for enhanced evidence collection
@@ -270,7 +275,10 @@ export class UnifiedAIEvidenceWorkflow {
 					},
 				);
 
-				const determineSource = (enhancedSource: unknown, originalSource: unknown): string => {
+				const determineSource = (
+					enhancedSource: unknown,
+					originalSource: unknown,
+				): string => {
 					if (typeof enhancedSource === 'string') return enhancedSource;
 					if (typeof originalSource === 'string') return originalSource;
 					return 'asbr-integration';
@@ -286,7 +294,7 @@ export class UnifiedAIEvidenceWorkflow {
 							'No content available',
 						source: determineSource(
 							result.aiEnhancedEvidence.source,
-							result.originalEvidence.source
+							result.originalEvidence.source,
 						),
 						relevanceScore: 0.8, // Default relevance score
 						metadata: {
@@ -302,7 +310,10 @@ export class UnifiedAIEvidenceWorkflow {
 						.map((additional, index: number) => ({
 							id: `evidence-${context.taskId}-${evidence.length + index + 1}`,
 							content: additional.content || 'No content',
-							source: typeof additional.source === 'string' ? additional.source : 'asbr-integration',
+							source:
+								typeof additional.source === 'string'
+									? additional.source
+									: 'asbr-integration',
 							relevanceScore: 0.7, // Slightly lower score for additional evidence
 							metadata: {
 								query,
@@ -377,23 +388,34 @@ export class UnifiedAIEvidenceWorkflow {
 			const existingContent = new Set(evidence.map((e) => e.content));
 
 			// Process related claims from the result
-			relatedEvidence.relatedClaims.forEach((related: { claim?: string; text?: string; source?: string; similarity?: number; confidence?: number }, index: number) => {
-				const content = related.claim || related.text || String(related);
-				if (!existingContent.has(content)) {
-					allEvidence.push({
-						id: `semantic-${context.taskId}-${index}`,
-						content,
-						source: related.source || 'semantic-search',
-						relevanceScore: related.similarity || 0.6,
-						metadata: {
-							similarity: related.similarity,
-							confidence: related.confidence,
-							searchMethod: 'semantic',
-						},
-					});
-					existingContent.add(content);
-				}
-			});
+			relatedEvidence.relatedClaims.forEach(
+				(
+					related: {
+						claim?: string;
+						text?: string;
+						source?: string;
+						similarity?: number;
+						confidence?: number;
+					},
+					index: number,
+				) => {
+					const content = related.claim || related.text || String(related);
+					if (!existingContent.has(content)) {
+						allEvidence.push({
+							id: `semantic-${context.taskId}-${index}`,
+							content,
+							source: related.source || 'semantic-search',
+							relevanceScore: related.similarity || 0.6,
+							metadata: {
+								similarity: related.similarity,
+								confidence: related.confidence,
+								searchMethod: 'semantic',
+							},
+						});
+						existingContent.add(content);
+					}
+				},
+			);
 
 			return allEvidence;
 		} catch (error) {
@@ -436,8 +458,11 @@ export class UnifiedAIEvidenceWorkflow {
 						factCheckResult: {
 							verified: factCheckResult.factualConsistency > 0.7, // Consider verified if consistency > 0.7
 							confidence: factCheckResult.factualConsistency,
-							supportingEvidence: factCheckResult.supportingEvidence.map((evidence) =>
-								typeof evidence === 'string' ? evidence : evidence.content || evidence.id
+							supportingEvidence: factCheckResult.supportingEvidence.map(
+								(evidence) =>
+									typeof evidence === 'string'
+										? evidence
+										: evidence.content || evidence.id,
 							),
 						},
 					};

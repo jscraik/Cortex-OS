@@ -61,3 +61,15 @@ pnpm-lock.yaml.bak
 
 # Misc backup & transient files
 *.bak
+.covenv/
+# Additional files to ignore
+.covenv/
+.hypothesis/
+.playwright-mcp/
+.vitest-tmp-docs/
+.vitest-tmp-target/
+htmlcov/
+public/
+report/
+UPSTREAM_REF
+pnpm-lock.yaml.bak

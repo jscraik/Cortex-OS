@@ -1,3 +1,4 @@
+import { type EvidenceArray, evidenceArraySchema } from '@cortex-os/contracts';
 import { z } from 'zod';
 
 /**
@@ -130,4 +131,26 @@ export function createEnvelope(params: {
 		baggage: params.baggage,
 		time: now,
 	});
+}
+
+/**
+ * Non-mutating helper that returns a new envelope with validated evidence attached under data.evidence.
+ * If the existing envelope already has data.evidence it will be replaced.
+ */
+export function withEvidence<T extends Envelope>(
+	envelope: T,
+	evidence: EvidenceArray,
+): T & { data: Record<string, unknown> & { evidence: EvidenceArray } } {
+	const parsed = evidenceArraySchema.parse(evidence);
+	const baseData: Record<string, unknown> =
+		typeof envelope.data === 'object' && envelope.data !== null
+			? (envelope.data as Record<string, unknown>)
+			: {};
+	return {
+		...envelope,
+		data: {
+			...baseData,
+			evidence: parsed,
+		},
+	} as T & { data: Record<string, unknown> & { evidence: EvidenceArray } };
 }

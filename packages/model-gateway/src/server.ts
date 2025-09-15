@@ -377,9 +377,13 @@ export async function start(
 
 		// Log privacy mode status
 		if (modelRouter.isPrivacyModeEnabled()) {
-			console.warn('🔒 Privacy mode is ENABLED. Only local MLX models will be used.');
+			console.warn(
+				'🔒 Privacy mode is ENABLED. Only local MLX models will be used.',
+			);
 		} else {
-			console.warn('🔓 Privacy mode is DISABLED. All available providers will be used.');
+			console.warn(
+				'🔓 Privacy mode is DISABLED. All available providers will be used.',
+			);
 		}
 	} catch (error) {
 		console.error('Failed to initialize ModelRouter:', error);
@@ -404,7 +408,9 @@ export async function start(
 
 	// Log privacy mode status after startup
 	if (modelRouter.isPrivacyModeEnabled()) {
-		app.log.info('🔒 Privacy mode is ACTIVE. Only local MLX models will be used.');
+		app.log.info(
+			'🔒 Privacy mode is ACTIVE. Only local MLX models will be used.',
+		);
 	}
 
 	return app;

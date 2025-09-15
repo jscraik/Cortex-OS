@@ -1,7 +1,8 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
-describe("eval gate CLI smoke", async () => {
+// Deprecated: cortex-cli has been removed. Skip legacy test until ported to codex.
+describe.skip("eval gate CLI smoke", async () => {
 	it("runs and emits JSON with outcomes", async () => {
 		const mod = await import("../apps/cortex-cli/src/commands/eval/gate");
 		const cmd = mod.evalGate;

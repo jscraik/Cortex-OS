@@ -12,7 +12,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 export function deepClone<T>(obj: T): T {
 	if (obj === null || typeof obj !== 'object') return obj;
 	if (obj instanceof Date) return new Date(obj.getTime()) as T;
-	if (obj instanceof Array) return obj.map((item) => deepClone(item)) as T;
+	if (Array.isArray(obj)) return obj.map((item) => deepClone(item)) as T;
 	if (typeof obj === 'object') {
 		const cloned: Record<string, unknown> = {};
 		for (const key in obj as Record<string, unknown>) {
@@ -45,7 +45,7 @@ export function filterDefined<T>(array: (T | undefined | null)[]): T[] {
 // Secure ID helpers (local fallback using Node crypto)
 import crypto from 'node:crypto';
 
-function secureId(prefix: string): string {
+function _secureId(prefix: string): string {
 	const id = crypto.randomUUID?.() ?? crypto.randomBytes(16).toString('hex');
 	return `${prefix}-${id}`;
 }

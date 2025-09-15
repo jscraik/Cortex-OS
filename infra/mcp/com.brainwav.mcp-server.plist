@@ -31,6 +31,12 @@
         <string>/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin:/usr/local/bin:/usr/bin:/bin</string>
         <key>PYTHONPATH</key>
         <string>/Users/jamiecraik/.Cortex-OS/packages/mcp</string>
+        <key>UVICORN_LOG_LEVEL</key>
+        <string>info</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+        <key>HOME</key>
+        <string>/Users/jamiecraik</string>
     </dict>
 </dict>
 </plist>

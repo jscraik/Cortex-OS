@@ -12,9 +12,7 @@ import {
 	isProposalShape,
 	isRecord,
 	isString,
-	type ProposalShape,
 	safeValidate,
-	type ValidationResult,
 } from '../type-guards';
 
 describe('Type Guards', () => {

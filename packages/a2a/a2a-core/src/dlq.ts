@@ -232,7 +232,7 @@ export class DeadLetterQueue {
 		private readonly store: DeadLetterStore,
 		private readonly retryPolicy: RetryPolicy = defaultRetryPolicy,
 		private readonly quarantinePolicy: QuarantinePolicy = defaultQuarantinePolicy,
-	) { }
+	) {}
 
 	/**
 	 * Check circuit breaker state for a message type
@@ -377,8 +377,8 @@ export class DeadLetterQueue {
 				quarantineLevel: classification.quarantineLevel,
 				nextRetryAt: classification.recoverable
 					? new Date(
-						Date.now() + this.quarantinePolicy.quarantineDurationMs,
-					).toISOString()
+							Date.now() + this.quarantinePolicy.quarantineDurationMs,
+						).toISOString()
 					: undefined,
 				circuitBreakerState: circuitState,
 				metadata: {

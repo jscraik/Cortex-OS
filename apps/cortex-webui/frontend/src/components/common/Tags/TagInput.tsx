@@ -40,7 +40,6 @@ const TagInput: React.FC<TagInputProps> = ({ label = '', onAdd }) => {
 				onKeyDown={handleKeyPress}
 				placeholder={label || 'Add tag...'}
 				className="px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-				autoFocus
 			/>
 			<button
 				onClick={handleAddTag}

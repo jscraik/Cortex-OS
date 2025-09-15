@@ -1,10 +1,9 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
 	type OutboxMessage,
 	OutboxMessageStatus,
 	type OutboxRepository,
 } from '../a2a-contracts/src/outbox-types.js';
-
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * In-Memory Outbox Repository Implementation

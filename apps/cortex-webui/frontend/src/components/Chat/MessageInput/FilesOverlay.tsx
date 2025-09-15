@@ -22,17 +22,14 @@ const FilesOverlay: React.FC<FilesOverlayProps> = ({
 		if (show && overlayElementRef.current) {
 			document.body.appendChild(overlayElementRef.current);
 			document.body.style.overflow = 'hidden';
-		} else if (
-			overlayElementRef.current &&
-			overlayElementRef.current.parentNode
-		) {
+		} else if (overlayElementRef.current?.parentNode) {
 			document.body.removeChild(overlayElementRef.current);
 			document.body.style.overflow = 'unset';
 		}
 
 		// Cleanup function
 		return () => {
-			if (overlayElementRef.current && overlayElementRef.current.parentNode) {
+			if (overlayElementRef.current?.parentNode) {
 				document.body.removeChild(overlayElementRef.current);
 				document.body.style.overflow = 'unset';
 			}

@@ -70,7 +70,7 @@ const WebSearch: React.FC<WebSearchProps> = ({ query, onResults, onError }) => {
 		if (query) {
 			performSearch();
 		}
-	}, [query]);
+	}, [query, performSearch]);
 
 	return (
 		<div className="my-2 rounded border border-gray-300">

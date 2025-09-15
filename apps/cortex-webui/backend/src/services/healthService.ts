@@ -1,8 +1,7 @@
 // Comprehensive health check service
 
-
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { getDatabase } from '../utils/database';
 import logger from '../utils/logger';
 
@@ -15,19 +14,19 @@ export interface HealthCheckResult {
 }
 
 export interface HealthCheck {
-  status: 'pass' | 'fail' | 'warn';
-  message?: string;
-  observedValue?: number | string | boolean;
-  observedUnit?: string;
-  time?: string;
-  componentId?: string;
-  componentType?: string;
+	status: 'pass' | 'fail' | 'warn';
+	message?: string;
+	observedValue?: number | string | boolean;
+	observedUnit?: string;
+	time?: string;
+	componentId?: string;
+	componentType?: string;
 }
 
 export class HealthService {
 	private static instance: HealthService;
 
-	private constructor() { }
+	private constructor() {}
 
 	public static getInstance(): HealthService {
 		if (!HealthService.instance) {

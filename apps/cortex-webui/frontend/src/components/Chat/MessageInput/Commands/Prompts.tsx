@@ -1,6 +1,6 @@
 'use client';
 
-import React, {
+import {
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
@@ -76,8 +76,7 @@ const Prompts = forwardRef(({ command, onSelect }: PromptsProps, ref) => {
 
 				// Ensure the container is visible before adjusting height
 				const rect = containerRef.current.getBoundingClientRect();
-				containerRef.current.style.maxHeight =
-					Math.max(Math.min(240, rect.bottom - 80), 100) + 'px';
+				containerRef.current.style.maxHeight = `${Math.max(Math.min(240, rect.bottom - 80), 100)}px`;
 			}, 100);
 		}
 	};
@@ -94,7 +93,7 @@ const Prompts = forwardRef(({ command, onSelect }: PromptsProps, ref) => {
 				clearTimeout(adjustHeightDebounce.current);
 			}
 		};
-	}, []);
+	}, [adjustHeight]);
 
 	// Confirm prompt selection
 	const confirmPrompt = (promptItem: PromptItem) => {

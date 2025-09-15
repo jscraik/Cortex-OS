@@ -202,7 +202,7 @@ export function createEmbeddingAdapter(provider: string): EmbeddingAdapter {
 }
 
 /** Factory to create a reranker adapter for provider name. */
-export function createRerankerAdapter(provider: string): RerankerAdapter {
+export function createRerankerAdapter(_provider: string): RerankerAdapter {
 	// SimpleLexicalReranker is stateless and doesn't need provider parameter
 	return new SimpleLexicalReranker();
 }

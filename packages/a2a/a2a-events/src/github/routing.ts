@@ -297,7 +297,9 @@ export class GitHubEventRouter {
 
 		// Check action
 		if (rule.compiledConditions.actionRegex && 'action' in envelope.event) {
-			const eventWithAction = envelope.event as typeof envelope.event & { action: string };
+			const eventWithAction = envelope.event as typeof envelope.event & {
+				action: string;
+			};
 			if (rule.compiledConditions.actionRegex.test(eventWithAction.action)) {
 				matched.push('action');
 			}
@@ -621,7 +623,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 		},
 	},
 	// eslint-enable no-template-curly-in-string
-};// Routing utilities
+}; // Routing utilities
 export function createRoutingRule(
 	name: string,
 	conditions: RoutingRule['conditions'],

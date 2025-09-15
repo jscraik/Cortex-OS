@@ -1,8 +1,8 @@
 'use client';
 
-import Modal from '@/components/common/Modal';
 import type React from 'react';
 import { useId, useRef, useState } from 'react';
+import Modal from '@/components/common/Modal';
 
 type OnImportFn = (file: File, options: ImportOptions) => void | Promise<void>;
 

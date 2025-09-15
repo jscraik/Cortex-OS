@@ -47,13 +47,13 @@ export interface AutomatedCheck {
 
 export interface HumanApprovalSpec {
 	role:
-	| 'product-owner'
-	| 'architect'
-	| 'qa-lead'
-	| 'code-reviewer'
-	| 'security-reviewer'
-	| 'maintainer'
-	| 'release-manager';
+		| 'product-owner'
+		| 'architect'
+		| 'qa-lead'
+		| 'code-reviewer'
+		| 'security-reviewer'
+		| 'maintainer'
+		| 'release-manager';
 	description: string;
 	requiredDecision: 'approved' | 'rejected';
 	timeoutMs?: number;

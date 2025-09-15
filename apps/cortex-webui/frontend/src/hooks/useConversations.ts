@@ -31,7 +31,7 @@ const useConversations = (): UseConversationsReturn => {
 	// Load conversations on mount
 	useEffect(() => {
 		loadConversations();
-	}, []);
+	}, [loadConversations]);
 
 	// Load messages when active conversation changes
 	useEffect(() => {
@@ -40,7 +40,7 @@ const useConversations = (): UseConversationsReturn => {
 		} else {
 			setMessages([]);
 		}
-	}, [activeConversation]);
+	}, [activeConversation, loadMessages]);
 
 	const loadConversations = async () => {
 		setLoading(true);

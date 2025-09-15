@@ -151,7 +151,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				setInput(combinedContent);
 			}
 		},
-		[input, setFiles],
+		[input, setFiles, processDocument],
 	);
 
 	const getFileIcon = (file: File) => {
@@ -199,7 +199,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 	// Adjust height when input changes
 	useEffect(() => {
 		adjustTextareaHeight();
-	}, [input, adjustTextareaHeight]);
+	}, [adjustTextareaHeight]);
 
 	// Add message to history when sent
 	const addToHistory = useCallback((message: string) => {

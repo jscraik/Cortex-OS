@@ -86,7 +86,7 @@ apps/cortex-os - ASBR-lite brain
  • Nice: Admin health/routing UI.
  • Use cases: start workflow; route capability; emit lifecycle events.
 
-apps/cortex-cli - Command line
+apps/cortex-cli - Command line (deprecated; use apps/cortex-code `codex`)
  • Vision: Fast local control.
  • Mission: Invoke workflows, subagents, diagnostics.
  • Must: cortex agents|use|do, --plain A11y.
@@ -384,7 +384,7 @@ Component Containerized Notes
 apps/cortex-os Yes Node, non-root, RO FS
 apps/api Yes Public REST/Webhooks
 apps/cortex-web Yes Next.js standalone
-apps/cortex-cli No Host binary; optional thin image
+apps/cortex-cli No Host binary; optional thin image (deprecated)
 apps/cortex-marketplace Yes Static/SSR
 apps/cortex-marketplace-api Yes Backend
 apps/cortex-py (MLX) Host-native Metal; http://localhost:8081

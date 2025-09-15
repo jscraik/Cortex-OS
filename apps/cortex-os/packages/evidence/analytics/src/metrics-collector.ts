@@ -11,6 +11,7 @@
 
 import { EventEmitter } from 'node:events';
 import pino from 'pino';
+import { safeErrorMessage } from './utils/error-utils.js';
 
 // Minimal tracer types to avoid hard dependency on @opentelemetry/api
 type MinimalSpan = {
@@ -26,8 +27,8 @@ function getMinimalTracer(): MinimalTracer {
 	return {
 		startSpan: (_name: string) => {
 			return {
-				setStatus: () => { },
-				end: () => { },
+				setStatus: () => {},
+				end: () => {},
 			};
 		},
 	};
@@ -133,8 +134,9 @@ export class MetricsCollector extends EventEmitter {
 		// Start periodic collection
 		this.collectionInterval = setInterval(() => {
 			this.collectMetrics().catch((error) => {
+				const message = safeErrorMessage(error);
 				this.logger.error('Error during metrics collection', {
-					error: error.message,
+					error: message,
 				});
 				this.collectionErrors++;
 			});

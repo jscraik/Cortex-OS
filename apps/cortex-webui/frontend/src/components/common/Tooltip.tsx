@@ -24,7 +24,7 @@ const Tooltip: React.FC<TooltipProps> = ({
 	// Adjust tooltip position if it would go off screen
 	useEffect(() => {
 		if (isVisible && triggerRef.current && tooltipRef.current) {
-			const triggerRect = triggerRef.current.getBoundingClientRect();
+			const _triggerRect = triggerRef.current.getBoundingClientRect();
 			const tooltipRect = tooltipRef.current.getBoundingClientRect();
 			const viewportWidth = window.innerWidth;
 			const viewportHeight = window.innerHeight;

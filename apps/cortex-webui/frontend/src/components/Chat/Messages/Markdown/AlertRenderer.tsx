@@ -114,7 +114,7 @@ export function alertComponent(token: Token): AlertData | false {
 	const regExp = new RegExp(regExpStr);
 	const matches = token.text?.match(regExp);
 
-	if (matches && matches.length) {
+	if (matches?.length) {
 		const alertType = matches[1] as AlertType;
 		const newText = token.text.replace(regExp, '');
 		// In a real implementation, you would need to parse the newText into tokens

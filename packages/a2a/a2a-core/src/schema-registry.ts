@@ -199,7 +199,7 @@ export class SchemaRegistry {
 
 		if (options.tags && options.tags.length > 0) {
 			results = results.filter((s) =>
-				options.tags!.some((tag) => s.tags?.includes(tag)),
+				options.tags?.some((tag) => s.tags?.includes(tag)),
 			);
 		}
 

@@ -11,7 +11,7 @@
 
 import { EventEmitter } from 'node:events';
 import * as net from 'node:net';
-import WebSocket from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import type { AnalyticsConfig, DashboardData } from './types.js';
 
 /**
@@ -49,7 +49,7 @@ async function isPortAvailable(port: number): Promise<boolean> {
  * Real-time data streaming service for analytics dashboard
  */
 export class RealtimeDataStream extends EventEmitter {
-	private server?: WebSocket.Server;
+	private server?: WebSocketServer;
 	private clients: Set<WebSocket> = new Set();
 
 	constructor(
@@ -63,9 +63,9 @@ export class RealtimeDataStream extends EventEmitter {
 	 * Start WebSocket server for real-time data streaming
 	 */
 	start(): void {
-		this.server = new WebSocket.Server({ port: this.port });
+		this.server = new WebSocketServer({ port: this.port });
 
-		this.server.on('connection', (ws) => {
+		this.server.on('connection', (ws: WebSocket) => {
 			this.clients.add(ws);
 
 			ws.on('close', () => {

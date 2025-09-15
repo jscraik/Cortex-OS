@@ -24,7 +24,7 @@ try {
 
 // Local helper to mark variables as used (avoids unused-param lint while keeping signature)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _use = (..._args: unknown[]): void => { };
+const _use = (..._args: unknown[]): void => {};
 
 // Minimal types to avoid depending on native module types
 interface StatementLike {

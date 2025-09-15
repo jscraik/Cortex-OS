@@ -53,7 +53,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({
 		handleInput();
 	};
 
-	const formatText = (command: string, value: string = '') => {
+	const formatText = (_command: string, _value: string = '') => {
 		// Modern approach instead of deprecated execCommand
 		if (editorRef.current) {
 			editorRef.current.focus();

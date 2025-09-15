@@ -162,86 +162,82 @@ const InputMenu: React.FC<InputMenuProps> = ({
 						}}
 					>
 						{tools ? (
-							<>
-								{Object.keys(tools).length > 0 && (
-									<>
-										<div
-											className={`${showAllTools ? 'max-h-96' : 'max-h-28'} overflow-y-auto scrollbar-thin`}
-										>
-											{Object.keys(tools).map((toolId) => (
-												<button
-													key={toolId}
-													className="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800"
-													onClick={() => toggleTool(toolId)}
-												>
-													<div className="flex-1 truncate">
-														<Tooltip
-															content={tools[toolId]?.description ?? ''}
-															placement="top-start"
-															className="flex flex-1 gap-2 items-center"
-														>
-															<div className="shrink-0">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 24 24"
-																	fill="currentColor"
-																	className="w-5 h-5"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 0 0 4.25 22.5h15.5a1.875 1.875 0 0 0 1.865-2.071l-1.263-12a1.875 1.875 0 0 0-1.865-1.679H16.5V6a4.5 4.5 0 1 0-9 0ZM12 3a3 3 0 0 0-3 3v.75h6V6a3 3 0 0 0-3-3Zm-3 8.25a3 3 0 1 0 6 0v-.75a.75.75 0 0 1 1.5 0v.75a4.5 4.5 0 1 1-9 0v-.75a.75.75 0 0 1 1.5 0v.75Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
-															</div>
-
-															<div className="truncate">
-																{tools[toolId].name}
-															</div>
-														</Tooltip>
-													</div>
-
-													<div className="shrink-0">
-														<Switch
-															checked={tools[toolId].enabled}
-															onChange={(checked) => {
-																handleToolSelectionChange(toolId, checked);
-															}}
-														/>
-													</div>
-												</button>
-											))}
-										</div>
-										{Object.keys(tools).length > 3 && (
+							Object.keys(tools).length > 0 && (
+								<>
+									<div
+										className={`${showAllTools ? 'max-h-96' : 'max-h-28'} overflow-y-auto scrollbar-thin`}
+									>
+										{Object.keys(tools).map((toolId) => (
 											<button
-												className="flex w-full justify-center items-center text-sm font-medium cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
-												onClick={() => {
-													setShowAllTools(!showAllTools);
-												}}
-												title={showAllTools ? 'Show Less' : 'Show All'}
+												key={toolId}
+												className="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800"
+												onClick={() => toggleTool(toolId)}
 											>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													fill="none"
-													viewBox="0 0 24 24"
-													strokeWidth={2.5}
-													stroke="currentColor"
-													className={`size-3 transition-transform duration-200 ${
-														showAllTools ? 'rotate-180' : ''
-													} text-gray-300 dark:text-gray-600`}
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														d="m19.5 8.25-7.5 7.5-7.5-7.5"
-													></path>
-												</svg>
+												<div className="flex-1 truncate">
+													<Tooltip
+														content={tools[toolId]?.description ?? ''}
+														placement="top-start"
+														className="flex flex-1 gap-2 items-center"
+													>
+														<div className="shrink-0">
+															<svg
+																xmlns="http://www.w3.org/2000/svg"
+																viewBox="0 0 24 24"
+																fill="currentColor"
+																className="w-5 h-5"
+															>
+																<path
+																	fillRule="evenodd"
+																	d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 0 0 4.25 22.5h15.5a1.875 1.875 0 0 0 1.865-2.071l-1.263-12a1.875 1.875 0 0 0-1.865-1.679H16.5V6a4.5 4.5 0 1 0-9 0ZM12 3a3 3 0 0 0-3 3v.75h6V6a3 3 0 0 0-3-3Zm-3 8.25a3 3 0 1 0 6 0v-.75a.75.75 0 0 1 1.5 0v.75a4.5 4.5 0 1 1-9 0v-.75a.75.75 0 0 1 1.5 0v.75Z"
+																	clipRule="evenodd"
+																/>
+															</svg>
+														</div>
+
+														<div className="truncate">{tools[toolId].name}</div>
+													</Tooltip>
+												</div>
+
+												<div className="shrink-0">
+													<Switch
+														checked={tools[toolId].enabled}
+														onChange={(checked) => {
+															handleToolSelectionChange(toolId, checked);
+														}}
+													/>
+												</div>
 											</button>
-										)}
-										<hr className="border-black/5 dark:border-white/5 my-1" />
-									</>
-								)}
-							</>
+										))}
+									</div>
+									{Object.keys(tools).length > 3 && (
+										<button
+											className="flex w-full justify-center items-center text-sm font-medium cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+											onClick={() => {
+												setShowAllTools(!showAllTools);
+											}}
+											title={showAllTools ? 'Show Less' : 'Show All'}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+												strokeWidth={2.5}
+												stroke="currentColor"
+												className={`size-3 transition-transform duration-200 ${
+													showAllTools ? 'rotate-180' : ''
+												} text-gray-300 dark:text-gray-600`}
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													d="m19.5 8.25-7.5 7.5-7.5-7.5"
+												></path>
+											</svg>
+										</button>
+									)}
+									<hr className="border-black/5 dark:border-white/5 my-1" />
+								</>
+							)
 						) : (
 							<div className="py-4">
 								<Spinner />

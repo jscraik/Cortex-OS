@@ -1,7 +1,9 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
-		"lib": ["ES2022"],
+		"lib": [
+			"ES2022"
+		],
 		"module": "ESNext",
 		"moduleResolution": "node",
 		"useUnknownInCatchVariables": false,
@@ -12,8 +14,16 @@
 		"forceConsistentCasingInFileNames": true,
 		"declaration": true,
 		"outDir": "dist",
-		"rootDir": "src"
+		"rootDir": "src",
+		"downlevelIteration": true
 	},
-	"include": ["src/**/*", "src/types/**/*.d.ts"],
-	"exclude": ["node_modules", "dist", "tests"]
+	"include": [
+		"src/**/*",
+		"src/types/**/*.d.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"tests"
+	]
 }

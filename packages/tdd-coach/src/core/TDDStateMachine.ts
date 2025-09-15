@@ -108,7 +108,7 @@ export class TDDStateMachine {
 					);
 					return hasFailingTest && isTestFile;
 				},
-				action: async (ctx) => {
+				action: async (_ctx) => {
 					await this.initiateTDDCycle();
 					this.logTransition(
 						'UNCLEAR → RED: TDD cycle initiated with failing test',

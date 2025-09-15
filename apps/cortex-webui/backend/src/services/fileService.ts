@@ -1,8 +1,8 @@
 // File service for Cortex WebUI backend
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { FileUpload } from '@shared/types';
-import fs from 'fs/promises';
-import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { UPLOAD_DIR } from '../config/constants';
 

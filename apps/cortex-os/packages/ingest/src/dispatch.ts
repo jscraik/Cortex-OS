@@ -74,7 +74,7 @@ export async function crawl(url: string) {
 			if (addrs.some((a) => isPrivateIp(a.address))) {
 				throw new Error('Private IP denied');
 			}
-		} catch (e) {
+		} catch (_e) {
 			// If DNS fails, keep conservative: allow only if we already passed host validations
 		}
 	}

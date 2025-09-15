@@ -301,9 +301,16 @@ describe('Full Agent Workflow Integration', () => {
 			expect(events[1].type).toBe('agent.completed');
 
 			// Verify event data structure
-			expect((events[0].data as { capability: string }).capability).toBe('code-analysis');
-			expect((events[1].data as { capability: string }).capability).toBe('code-analysis');
-			expect((events[1].data as { metrics: { latencyMs: number } }).metrics.latencyMs).toBeGreaterThan(0);
+			expect((events[0].data as { capability: string }).capability).toBe(
+				'code-analysis',
+			);
+			expect((events[1].data as { capability: string }).capability).toBe(
+				'code-analysis',
+			);
+			expect(
+				(events[1].data as { metrics: { latencyMs: number } }).metrics
+					.latencyMs,
+			).toBeGreaterThan(0);
 		});
 
 		it('should track event bus metrics', () => {

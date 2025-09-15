@@ -15,8 +15,8 @@ export const authenticateToken = async (
 	res: Response,
 	next: NextFunction,
 ): Promise<void> => {
-	const authHeader = req.headers['authorization'];
-	const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+	const authHeader = req.headers.authorization;
+	const token = authHeader?.split(' ')[1]; // Bearer TOKEN
 
 	if (!token) {
 		res.status(401).json({ error: 'Access token required' });
@@ -39,7 +39,7 @@ export const authenticateToken = async (
 
 		req.user = decoded;
 		next();
-        } catch {
-                res.status(403).json({ error: 'Invalid token' });
-        }
+	} catch {
+		res.status(403).json({ error: 'Invalid token' });
+	}
 };

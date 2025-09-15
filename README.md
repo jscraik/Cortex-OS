@@ -337,6 +337,8 @@ Full guide: [Python Integration](./docs/python-integration.md)
 - **[Contributing Guide](./CONTRIBUTING.md)** – How to contribute
 - **[Code of Conduct](./CODE_OF_CONDUCT.md)** – Community guidelines
 - **[Memory Tuning Guide](./docs/memory-tuning.md)** – Current temporary workspace memory mitigation
+- **Policy Hot Reload (Structure Guard)** – Runtime dynamic policy updates. Integration & events:
+  [simple-tests/README.md#policy-hot-reload-structure-guard](./simple-tests/README.md#policy-hot-reload-structure-guard)
 
 ### 📖 Package Documentation
 
@@ -383,7 +385,8 @@ Full guide: [Python Integration](./docs/python-integration.md)
 - **[cortex-os](./apps/cortex-os/)** – Runtime application
 - **[cortex-code](./apps/cortex-code/)** – Terminal UI
 - **[cortex-webui](./apps/cortex-webui/)** – Web dashboard
-- **[cortex-cli](./apps/cortex-cli/)** – Command-line tools
+- ~~**[cortex-cli](./apps/cortex-cli/)** – Command-line tools~~ (deprecated)
+- **[cortex-code](./apps/cortex-code/)** – Command-line tools (replacement for cortex-cli)
 
 ---
 

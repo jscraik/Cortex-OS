@@ -3,14 +3,14 @@
  * Monitors repository changes and maintains organizational standards
  */
 
+import { spawn } from 'node:child_process';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import * as path from 'node:path';
 import { Octokit } from '@octokit/rest';
 import { Webhooks } from '@octokit/webhooks';
 import dotenv from 'dotenv';
 import express from 'express';
 import * as fs from 'fs-extra';
-import { spawn } from 'node:child_process';
-import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
-import * as path from 'node:path';
 import { z } from 'zod';
 
 // Load environment variables from .env file
@@ -1322,16 +1322,17 @@ async function createPRComment(payload: any, analysis: any) {
 **Violations:** ${analysis.summary.violationsCount}
 **Auto-fixable:** ${analysis.summary.autoFixableCount}
 
-${analysis.violations.length > 0
-				? `### Issues Found:\n${analysis.violations
-					.slice(0, 5)
-					.map(
-						(v: any) =>
-							`- **${v.file}**: ${v.message}${v.suggestedPath ? `\n  - Suggested: \`${v.suggestedPath}\`` : ''}`,
-					)
-					.join('\n')}`
-				: '🎉 No structural issues found!'
-			}
+${
+	analysis.violations.length > 0
+		? `### Issues Found:\n${analysis.violations
+				.slice(0, 5)
+				.map(
+					(v: any) =>
+						`- **${v.file}**: ${v.message}${v.suggestedPath ? `\n  - Suggested: \`${v.suggestedPath}\`` : ''}`,
+				)
+				.join('\n')}`
+		: '🎉 No structural issues found!'
+}
 
 ---
 *Powered by Cortex Structure Guard*`;

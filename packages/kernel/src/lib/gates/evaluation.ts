@@ -9,9 +9,9 @@ export async function validateTDDCycle(
 	const hasTests = tddEvidence.length > 0;
 	const hasCoverage = Boolean(
 		state.outputs?.testCoverage ||
-		state.validationResults?.build?.evidence?.some((id) =>
-			state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
-		)
+			state.validationResults?.build?.evidence?.some((id) =>
+				state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
+			),
 	);
 	return {
 		passed: hasTests && hasCoverage,

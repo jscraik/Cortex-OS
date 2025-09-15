@@ -75,7 +75,7 @@ const MemoryQuery: React.FC<MemoryQueryProps> = ({
 		if (query) {
 			performMemorySearch();
 		}
-	}, [query]);
+	}, [query, performMemorySearch]);
 
 	const formatTimeAgo = (timestamp: number) => {
 		const now = Date.now();

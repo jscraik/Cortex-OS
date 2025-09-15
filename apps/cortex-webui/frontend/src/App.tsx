@@ -27,7 +27,7 @@ import {
 
 const AppContent: React.FC = () => {
 	const navigate = useNavigate();
-	const [theme, setTheme] = useState<Theme>('system');
+	const [_theme, setTheme] = useState<Theme>('system');
 	const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(
 		'light',
 	);
@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
 	// Update effective theme when theme changes
 	useEffect(() => {
 		setEffectiveTheme(getEffectiveTheme());
-	}, [theme]);
+	}, []);
 
 	// Theme update handler
 	const handleThemeChange = (newTheme: Theme) => {

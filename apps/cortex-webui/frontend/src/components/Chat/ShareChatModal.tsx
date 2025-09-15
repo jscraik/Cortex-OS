@@ -47,7 +47,7 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 				// @ts-expect-error - window.addNotification is added by external script
 				window.addNotification('success', 'Link copied to clipboard!');
 			}
-		} catch (err) {
+		} catch (_err) {
 			// @ts-expect-error - window.addNotification is added by external script
 			if (typeof window !== 'undefined' && window.addNotification) {
 				// @ts-expect-error - window.addNotification is added by external script

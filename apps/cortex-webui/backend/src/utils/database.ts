@@ -1,8 +1,8 @@
 // Database utility for Cortex WebUI backend
 
+import fs from 'node:fs';
+import path from 'node:path';
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
-import fs from 'fs';
-import path from 'path';
 import { DATABASE_PATH } from '../config/constants';
 import { ConversationModel } from '../models/conversation';
 import { MessageModel } from '../models/message';

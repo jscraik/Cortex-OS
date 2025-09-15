@@ -23,7 +23,7 @@ const MAX_PATCH_LINES = 20;
 const truncatePatch = (patch: string, maxLines = MAX_PATCH_LINES): string => {
 	const lines = patch.split('\n');
 	if (lines.length <= maxLines) return patch;
-	return lines.slice(0, maxLines).join('\n') + '\n...truncated...';
+	return `${lines.slice(0, maxLines).join('\n')}\n...truncated...`;
 };
 
 const taskParamsSchema = z.object({
@@ -352,7 +352,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 		if (issue.labels && issue.labels.length > 0) {
 			section += `Labels: ${issue.labels.join(', ')}\n`;
 		}
-		return section + '\n';
+		return `${section}\n`;
 	}
 
 	private buildCommitSection(commit: GitHubContext['commit']): string {

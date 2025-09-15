@@ -8,11 +8,11 @@ import type { PRPState } from '../state.js';
  * - ✅ Docs complete with API + usage notes
  */
 export declare class BuildNode {
-    execute(state: PRPState): Promise<PRPState>;
-    private validateBackend;
-    private validateAPISchema;
-    private runSecurityScan;
-    private validateFrontend;
-    private validateDocumentation;
+	execute(state: PRPState): Promise<PRPState>;
+	private validateBackend;
+	private validateAPISchema;
+	private runSecurityScan;
+	private validateFrontend;
+	private validateDocumentation;
 }
 //# sourceMappingURL=build.d.ts.map

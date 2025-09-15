@@ -3,8 +3,8 @@
  * Automatically fixes structural violations when safe to do so
  */
 
+import * as path from 'node:path';
 import * as fs from 'fs-extra';
-import * as path from 'path';
 import type { StructureViolation } from './structure-validator.js';
 
 export interface AutoFixResult {

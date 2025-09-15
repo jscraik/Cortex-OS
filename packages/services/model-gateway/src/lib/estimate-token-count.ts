@@ -16,9 +16,11 @@ export function estimateTokenCount(
 ): number {
 	try {
 		// Cast to TiktokenModel with fallback to supported models
-		const tikTokenModel = (['gpt-3.5-turbo', 'gpt-4', 'text-davinci-003'].includes(model) 
-			? model 
-			: 'gpt-3.5-turbo') as TiktokenModel;
+		const tikTokenModel = (
+			['gpt-3.5-turbo', 'gpt-4', 'text-davinci-003'].includes(model)
+				? model
+				: 'gpt-3.5-turbo'
+		) as TiktokenModel;
 		const enc = encodingForModel(tikTokenModel);
 		const tokens = enc.encode(text);
 		return tokens.length;

@@ -63,10 +63,7 @@ export const getEffectiveTheme = (): 'light' | 'dark' => {
 
 	if (storedTheme === 'system') {
 		// Check system preference
-		if (
-			window.matchMedia &&
-			window.matchMedia('(prefers-color-scheme: dark)').matches
-		) {
+		if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
 			return 'dark';
 		}
 		return 'light';
@@ -108,7 +105,6 @@ export const toggleTheme = (): Theme => {
 		case 'dark':
 			newTheme = 'system';
 			break;
-		case 'system':
 		default:
 			newTheme = 'light';
 			break;
@@ -151,17 +147,12 @@ const announceThemeChange = (theme: 'light' | 'dark'): void => {
 
 // Check for reduced motion preference
 export const prefersReducedMotion = (): boolean => {
-	return (
-		window.matchMedia &&
-		window.matchMedia('(prefers-reduced-motion: reduce)').matches
-	);
+	return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 };
 
 // High contrast mode detection
 export const prefersHighContrast = (): boolean => {
-	return (
-		window.matchMedia && window.matchMedia('(prefers-contrast: high)').matches
-	);
+	return window.matchMedia?.('(prefers-contrast: high)').matches;
 };
 
 // Apply motion preferences

@@ -158,8 +158,8 @@ export class ContextualCoach {
 
 	private generateBlock(
 		violation: string,
-		context: { currentPhase: string; previousViolations: string[] },
-		skillLevel: TDDSkillLevel,
+		_context: { currentPhase: string; previousViolations: string[] },
+		_skillLevel: TDDSkillLevel,
 	): CoachingAction {
 		return {
 			type: 'block',
@@ -199,7 +199,7 @@ export class ContextualCoach {
 	}
 
 	private getPhaseSpecificGuidance(
-		violation: string,
+		_violation: string,
 		phase: string,
 		skillLevel: TDDSkillLevel,
 	): {

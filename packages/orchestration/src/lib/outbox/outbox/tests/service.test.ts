@@ -1,7 +1,7 @@
+import type { Server } from 'node:http';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { send } from '@cortex-os/a2a-core/send';
 import axios from 'axios';
-import type { Server } from 'node:http';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createTestService } from '../src/service';
 
@@ -10,7 +10,9 @@ function validateTestUrl(url: string): void {
 	const parsed = new URL(url);
 	// Only allow localhost for tests
 	if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
-		throw new Error(`Test request blocked: hostname ${parsed.hostname} not allowed`);
+		throw new Error(
+			`Test request blocked: hostname ${parsed.hostname} not allowed`,
+		);
 	}
 }
 
@@ -23,7 +25,7 @@ const safeAxios = {
 	post: (url: string, data?: any, config?: any) => {
 		validateTestUrl(url);
 		return axios.post(url, data, config);
-	}
+	},
 };
 
 const MAX_RETRIES = 3;

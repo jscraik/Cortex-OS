@@ -5,36 +5,41 @@
 import type { HumanApproval, PRPState } from '@cortex-os/kernel';
 import type { GateContext } from './gates/base.js';
 export interface RepoInfo {
-    owner: string;
-    repo: string;
-    branch: string;
-    commitSha: string;
+	owner: string;
+	repo: string;
+	branch: string;
+	commitSha: string;
 }
 export interface RunOptions {
-    workingDirectory: string;
-    projectRoot: string;
-    initialMdPath?: string;
-    actor?: string;
-    strictMode?: boolean;
-    outputPath?: string;
+	workingDirectory: string;
+	projectRoot: string;
+	initialMdPath?: string;
+	actor?: string;
+	strictMode?: boolean;
+	outputPath?: string;
 }
 export interface Blueprint {
-    title: string;
-    description: string;
-    requirements: string[];
-    metadata?: Record<string, unknown>;
+	title: string;
+	description: string;
+	requirements: string[];
+	metadata?: Record<string, unknown>;
 }
 export interface HumanApprovalProvider {
-    requestApproval(input: {
-        gateId: string;
-        role: string;
-        description: string;
-        context: GateContext;
-    }): Promise<HumanApproval>;
+	requestApproval(input: {
+		gateId: string;
+		role: string;
+		description: string;
+		context: GateContext;
+	}): Promise<HumanApproval>;
 }
-export declare function runPRPWorkflow(blueprint: Blueprint, repoInfo: RepoInfo, options: RunOptions, approvalProvider?: HumanApprovalProvider): Promise<{
-    state: PRPState;
-    prpPath: string;
-    markdown: string;
+export declare function runPRPWorkflow(
+	blueprint: Blueprint,
+	repoInfo: RepoInfo,
+	options: RunOptions,
+	approvalProvider?: HumanApprovalProvider,
+): Promise<{
+	state: PRPState;
+	prpPath: string;
+	markdown: string;
 }>;
 //# sourceMappingURL=runner.d.ts.map

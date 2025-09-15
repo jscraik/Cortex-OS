@@ -1,11 +1,11 @@
-import type {
-	AgentToolkitValidationInput,
-	AgentToolkitValidationResult
-} from '@cortex-os/contracts';
 import { exec } from 'node:child_process';
 import { unlink, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
+import type {
+	AgentToolkitValidationInput,
+	AgentToolkitValidationResult,
+} from '@cortex-os/contracts';
 import type { ValidationTool } from '../domain/ToolInterfaces.js';
 
 const execAsync = promisify(exec);
@@ -149,7 +149,7 @@ export class MultiValidatorAdapter implements ValidationTool {
 		try {
 			await writeFile(tempFile, inputs.files.join('\n'));
 			const { stdout } = await execAsync(`"${this.scriptPath}" "${tempFile}"`);
-			const result = JSON.parse(stdout) as {
+			const _result = JSON.parse(stdout) as {
 				tool: string;
 				op: string;
 				results: unknown[];

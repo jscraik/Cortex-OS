@@ -359,7 +359,7 @@ const AudioSettings: React.FC<AudioSettingsProps> = ({ saveSettings }) => {
 								min="0"
 								max="100"
 								value={audioVolume}
-								onChange={(e) => setAudioVolume(parseInt(e.target.value))}
+								onChange={(e) => setAudioVolume(parseInt(e.target.value, 10))}
 								className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
 							/>
 							<div className="flex justify-between text-xs text-gray-500 mt-1">

@@ -26,7 +26,7 @@ interface KnowledgeProps {
 const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 	const [selectedIdx, setSelectedIdx] = useState(0);
 	const [filteredItems, setFilteredItems] = useState<KnowledgeItem[]>([]);
-	const [items, setItems] = useState<KnowledgeItem[]>([]);
+	const [_items, setItems] = useState<KnowledgeItem[]>([]);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const adjustHeightDebounce = useRef<NodeJS.Timeout | null>(null);
 
@@ -97,8 +97,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 
 				// Ensure the container is visible before adjusting height
 				const rect = containerRef.current.getBoundingClientRect();
-				containerRef.current.style.maxHeight =
-					Math.max(Math.min(240, rect.bottom - 100), 100) + 'px';
+				containerRef.current.style.maxHeight = `${Math.max(Math.min(240, rect.bottom - 100), 100)}px`;
 			}, 100);
 		}
 	};
@@ -115,7 +114,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 				clearTimeout(adjustHeightDebounce.current);
 			}
 		};
-	}, []);
+	}, [adjustHeight]);
 
 	// Confirm selection
 	const confirmSelect = (type: string, data: any) => {
@@ -126,7 +125,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 	const decodeString = (str: string) => {
 		try {
 			return decodeURIComponent(str);
-		} catch (e) {
+		} catch (_e) {
 			return str;
 		}
 	};

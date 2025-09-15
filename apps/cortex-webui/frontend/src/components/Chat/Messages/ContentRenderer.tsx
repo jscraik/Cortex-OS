@@ -28,7 +28,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 		switch (contentType) {
 			case 'code':
 				return <CodeBlock code={content} language="text" />;
-			case 'markdown':
 			default:
 				return <Markdown content={content} />;
 		}

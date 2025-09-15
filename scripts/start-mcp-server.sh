@@ -3,28 +3,76 @@
 # Start MCP Server for brAInwav Cortex-OS
 # This script starts the MCP server with the correct configuration
 
-set -e
+set -euo pipefail
+
+# Enable logging
+exec 1> >(tee -a /Users/jamiecraik/.Cortex-OS/logs/mcp-server-startup.log)
+exec 2>&1
+
+echo "[$(date)] Starting MCP Server startup script..."
 
 # Define paths
 MCP_DIR="/Users/jamiecraik/.Cortex-OS/packages/mcp"
 PYTHON_PATH="/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python"
+LOG_DIR="/Users/jamiecraik/.Cortex-OS/logs"
 
-# Check if the MCP directory exists
-if [ ! -d "$MCP_DIR" ]; then
-    echo "Error: MCP directory not found at $MCP_DIR"
+# Ensure log directory exists
+mkdir -p "$LOG_DIR"
+
+echo "[$(date)] MCP_DIR: $MCP_DIR"
+echo "[$(date)] PYTHON_PATH: $PYTHON_PATH"
+echo "[$(date)] LOG_DIR: $LOG_DIR"
+
+# Check if the Python interpreter exists
+if [ ! -f "$PYTHON_PATH" ]; then
+    echo "[$(date)] Error: Python interpreter not found at $PYTHON_PATH"
     exit 1
 fi
 
+# Check if the MCP directory exists
+if [ ! -d "$MCP_DIR" ]; then
+    echo "[$(date)] Error: MCP directory not found at $MCP_DIR"
+    exit 1
+fi
+
+# Validate Python interpreter and check packages
+echo "[$(date)] Validating Python environment..."
+"$PYTHON_PATH" -c "import sys; print(f'Python version: {sys.version}')" || {
+    echo "[$(date)] Error: Python interpreter validation failed"
+    exit 1
+}
+
+# Check FastAPI and Uvicorn
+"$PYTHON_PATH" -c "import fastapi, uvicorn; print('FastAPI and Uvicorn available')" || {
+    echo "[$(date)] Error: FastAPI or Uvicorn not available"
+    echo "[$(date)] Installing required packages..."
+    "$PYTHON_PATH" -m pip install fastapi uvicorn
+}
+
 # Change to MCP directory
-cd "$MCP_DIR"
+cd "$MCP_DIR" || {
+    echo "[$(date)] Error: Failed to change to MCP directory"
+    exit 1
+}
+
 
 # Start the MCP server with proper Python path
-echo "Starting MCP Server for brAInwav Cortex-OS..."
-echo "Server will be available at http://127.0.0.1:3000"
-echo "Access via Cloudflare tunnel at: https://cortex-mcp.brainwav.io"
+echo "[$(date)] Starting MCP Server for brAInwav Cortex-OS..."
+echo "[$(date)] Server will be available at http://0.0.0.0:3004"
+echo "[$(date)] Local access: http://127.0.0.1:3004"
+echo "[$(date)] Access via Cloudflare tunnel at: https://cortex-mcp.brainwav.io"
 
-# Set PYTHONPATH to include the MCP directory
-export PYTHONPATH="$MCP_DIR:$PYTHONPATH"
+# Set environment variables
+export PYTHONPATH="$MCP_DIR:${PYTHONPATH:-}"
+export UVICORN_LOG_LEVEL="info"
+export PYTHONUNBUFFERED="1"
+
+echo "[$(date)] Environment:"
+echo "[$(date)] PYTHONPATH=$PYTHONPATH"
+echo "[$(date)] UVICORN_LOG_LEVEL=$UVICORN_LOG_LEVEL"
+echo "[$(date)] PYTHONUNBUFFERED=$PYTHONUNBUFFERED"
+echo "[$(date)] PWD=$(pwd)"
 
 # Run the server directly with proper error handling
+echo "[$(date)] Executing: $PYTHON_PATH run_server.py"
 exec "$PYTHON_PATH" run_server.py

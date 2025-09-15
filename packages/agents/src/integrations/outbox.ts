@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import type { Envelope, EventBus, Memory, MemoryStore, TextQuery, VectorQuery } from '../lib/types.js';
+import type {
+	Envelope,
+	EventBus,
+	Memory,
+	MemoryStore,
+	TextQuery,
+	VectorQuery,
+} from '../lib/types.js';
 import { redactPII } from '../lib/utils.js';
 
 const DEFAULT_TYPES = [
@@ -38,9 +45,7 @@ export const wireOutbox = async (
 	const base: OutboxOptions =
 		typeof optionsOrResolver === 'function' ? {} : optionsOrResolver || {};
 	const resolver: OptionsResolver =
-		typeof optionsOrResolver === 'function'
-			? optionsOrResolver
-			: () => base;
+		typeof optionsOrResolver === 'function' ? optionsOrResolver : () => base;
 
 	for (const t of types) {
 		bus.subscribe(t, async (evt: Envelope<unknown>) => {
@@ -69,7 +74,9 @@ export const wireOutbox = async (
 
 				// best-effort actor extraction
 				let actor = 'unknown';
-				const d = evt.data as (Partial<{ agentId: string; serverId: string }> | undefined);
+				const d = evt.data as
+					| Partial<{ agentId: string; serverId: string }>
+					| undefined;
 				if (d?.agentId) actor = d.agentId;
 				else if (d?.serverId) actor = d.serverId;
 
@@ -122,10 +129,7 @@ export class LocalInMemoryStore implements MemoryStore {
 		this.data.delete(key);
 	}
 
-	async searchByText(
-		q?: TextQuery,
-		namespace?: string,
-	): Promise<Memory[]> {
+	async searchByText(q?: TextQuery, namespace?: string): Promise<Memory[]> {
 		const nsPrefix = `${namespace ?? 'default'}:`;
 		const items = Array.from(this.data.entries())
 			.filter(([k]) => k.startsWith(nsPrefix))
@@ -134,10 +138,7 @@ export class LocalInMemoryStore implements MemoryStore {
 		return items.slice(0, Math.max(0, topK));
 	}
 
-	async searchByVector(
-		q: VectorQuery,
-		namespace?: string,
-	): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]> {
 		const nsPrefix = `${namespace ?? 'default'}:`;
 		const values = Array.from(this.data.entries())
 			.filter(([k]) => k.startsWith(nsPrefix))

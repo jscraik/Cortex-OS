@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 /**
  * Code Analysis Agent
  *
@@ -14,7 +14,7 @@ import type {
 	GenerateOptions,
 	MCPClient,
 	MemoryPolicy,
-	ModelProvider
+	ModelProvider,
 } from '../lib/types.js';
 import {
 	estimateTokens,
@@ -148,9 +148,10 @@ export const createCodeAnalysisAgent = (
 		execute: async (
 			context: ExecutionContext<CodeAnalysisInput> | CodeAnalysisInput,
 		): Promise<CodeAnalysisOutput> => {
-			const input = (typeof context === 'object' && context !== null && 'input' in context)
-				? context.input
-				: context;
+			const input =
+				typeof context === 'object' && context !== null && 'input' in context
+					? context.input
+					: context;
 			const traceId = generateTraceId();
 			const startTime = Date.now();
 
@@ -220,12 +221,25 @@ export const createCodeAnalysisAgent = (
 
 				// Return output matching codeAnalysisOutputSchema (all required fields)
 				return {
-					suggestions: Array.isArray(result.suggestions) ? result.suggestions : [],
-					complexity: result.complexity || { cyclomatic: 0, maintainability: 'poor' },
-					security: result.security || { vulnerabilities: [], riskLevel: 'low' },
-					performance: result.performance || { bottlenecks: [], memoryUsage: 'low' },
-					confidence: typeof result.confidence === 'number' ? result.confidence : 1,
-					analysisTime: typeof result.analysisTime === 'number' ? result.analysisTime : 0,
+					suggestions: Array.isArray(result.suggestions)
+						? result.suggestions
+						: [],
+					complexity: result.complexity || {
+						cyclomatic: 0,
+						maintainability: 'poor',
+					},
+					security: result.security || {
+						vulnerabilities: [],
+						riskLevel: 'low',
+					},
+					performance: result.performance || {
+						bottlenecks: [],
+						memoryUsage: 'low',
+					},
+					confidence:
+						typeof result.confidence === 'number' ? result.confidence : 1,
+					analysisTime:
+						typeof result.analysisTime === 'number' ? result.analysisTime : 0,
 				};
 			} catch (error) {
 				const executionTime = Math.max(1, Date.now() - startTime);
@@ -281,7 +295,10 @@ const analyzeCode = async (
 	};
 
 	// Call the model provider
-	const providerResult = await config.provider.generate(prompt, generateOptions);
+	const providerResult = await config.provider.generate(
+		prompt,
+		generateOptions,
+	);
 
 	// Ensure the object passed to parseAnalysisResponse has the correct shape
 	const response = {
@@ -404,9 +421,10 @@ const calculateMaxTokens = (
 /**
  * Parse analysis response from the model
  */
-const parseAnalysisResponse = (
-	response: { text: string; latencyMs?: number },
-): CodeAnalysisOutput => {
+const parseAnalysisResponse = (response: {
+	text: string;
+	latencyMs?: number;
+}): CodeAnalysisOutput => {
 	type PartialAnalysis = Partial<CodeAnalysisOutput>;
 	let parsedResponse: PartialAnalysis;
 
@@ -448,12 +466,12 @@ const parseAnalysisResponse = (
 		parsedResponse.suggestions = parsedResponse.suggestions.map((s) =>
 			typeof s === 'string'
 				? {
-					type: 'improvement' as const,
-					message: s,
-					severity: 'low' as const,
-					category: 'maintainability' as const,
-				}
-				: s
+						type: 'improvement' as const,
+						message: s,
+						severity: 'low' as const,
+						category: 'maintainability' as const,
+					}
+				: s,
 		);
 	}
 
@@ -465,21 +483,40 @@ const parseAnalysisResponse = (
 	return {
 		suggestions: parsedResponse.suggestions ?? [],
 		complexity: {
-			cyclomatic: typeof complexity?.cyclomatic === 'number' ? complexity.cyclomatic : 5,
-			cognitive: typeof complexity?.cognitive === 'number' ? complexity.cognitive : 3,
-			maintainability: typeof complexity?.maintainability === 'string' ? complexity.maintainability : 'good',
+			cyclomatic:
+				typeof complexity?.cyclomatic === 'number' ? complexity.cyclomatic : 5,
+			cognitive:
+				typeof complexity?.cognitive === 'number' ? complexity.cognitive : 3,
+			maintainability:
+				typeof complexity?.maintainability === 'string'
+					? complexity.maintainability
+					: 'good',
 		},
 		security: {
-			vulnerabilities: Array.isArray(security?.vulnerabilities) ? security.vulnerabilities : [],
-			riskLevel: typeof security?.riskLevel === 'string' ? security.riskLevel : 'low',
+			vulnerabilities: Array.isArray(security?.vulnerabilities)
+				? security.vulnerabilities
+				: [],
+			riskLevel:
+				typeof security?.riskLevel === 'string' ? security.riskLevel : 'low',
 		},
 		performance: {
-			bottlenecks: Array.isArray(performance?.bottlenecks) ? performance.bottlenecks : [],
-			memoryUsage: typeof performance?.memoryUsage === 'string' ? performance.memoryUsage : 'low',
+			bottlenecks: Array.isArray(performance?.bottlenecks)
+				? performance.bottlenecks
+				: [],
+			memoryUsage:
+				typeof performance?.memoryUsage === 'string'
+					? performance.memoryUsage
+					: 'low',
 			algorithmicComplexity: performance?.algorithmicComplexity,
 		},
-		confidence: typeof parsedResponse.confidence === 'number' ? parsedResponse.confidence : 0.85,
-		analysisTime: typeof parsedResponse.analysisTime === 'number' ? parsedResponse.analysisTime : response.latencyMs || 1500,
+		confidence:
+			typeof parsedResponse.confidence === 'number'
+				? parsedResponse.confidence
+				: 0.85,
+		analysisTime:
+			typeof parsedResponse.analysisTime === 'number'
+				? parsedResponse.analysisTime
+				: response.latencyMs || 1500,
 	};
 };
 

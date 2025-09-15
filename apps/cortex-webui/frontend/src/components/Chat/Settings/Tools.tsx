@@ -12,9 +12,9 @@ function toggleLanguage(
 	return base.filter((l) => l !== lang);
 }
 
-import { useSettingsStore } from '@/stores/settingsStore';
 import type React from 'react';
 import { useEffect, useId, useState } from 'react';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ToolConfigMap {
 	searchEngine?: string;
@@ -260,7 +260,10 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 																	onChange={(e) =>
 																		updateToolConfig(tool.id, {
 																			...tool.config,
-																			resultsLimit: parseInt(e.target.value),
+																			resultsLimit: parseInt(
+																				e.target.value,
+																				10,
+																			),
 																		})
 																	}
 																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -302,7 +305,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 																	onChange={(e) =>
 																		updateToolConfig(tool.id, {
 																			...tool.config,
-																			timeout: parseInt(e.target.value),
+																			timeout: parseInt(e.target.value, 10),
 																		})
 																	}
 																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"

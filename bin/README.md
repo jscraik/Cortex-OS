@@ -90,10 +90,13 @@ Binaries are typically built from source code in:
 pnpm build
 
 # Build specific application
-pnpm build:cortex-cli
+Note: cortex-cli is deprecated. Use `codex` from apps/cortex-code.
 
-# Copy built binaries to bin/
-cp apps/cortex-cli/dist/cortex bin/
+Build the codex binary and copy to bin/:
+```
+cd apps/cortex-code && cargo build --release -p codex-cli
+cp target/release/codex ../../bin/cortex
+```
 ```
 
 ## Platform Support
@@ -154,7 +157,7 @@ ls -la bin/
 
 ## Related Documentation
 
-- [CLI Documentation](/apps/cortex-cli/README.md)
+- [CLI Documentation](/apps/cortex-code/README.md)
 - [Build Process](/docs/)
 - [Development Setup](/.github/copilot-instructions.md)
 - [Installation Guide](/README.md)

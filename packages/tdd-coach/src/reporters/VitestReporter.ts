@@ -1,6 +1,6 @@
-import { spawn } from 'child_process';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { TestResult } from '../types/TDDTypes.js';
 import { BaseTestReporter } from './BaseTestReporter.js';
 

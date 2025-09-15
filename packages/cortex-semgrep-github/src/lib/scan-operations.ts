@@ -36,7 +36,10 @@ export const validateScanRequest = (
 	}
 
 	const sha =
-		(typeof payload === 'object' && payload && 'pull_request' in payload ? (payload as { pull_request?: { head?: { sha?: string } } }).pull_request?.head?.sha : undefined) ||
+		(typeof payload === 'object' && payload && 'pull_request' in payload
+			? (payload as { pull_request?: { head?: { sha?: string } } }).pull_request
+					?.head?.sha
+			: undefined) ||
 		payload.repository.default_branch ||
 		'HEAD';
 

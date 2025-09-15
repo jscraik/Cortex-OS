@@ -1,5 +1,5 @@
-import { isExpired } from '../core/ttl.js';
 import { decayEnabled, decayFactor, getHalfLifeMs } from '../core/decay.js';
+import { isExpired } from '../core/ttl.js';
 import type { Memory, MemoryId } from '../domain/types.js';
 import type {
 	MemoryStore,
@@ -48,48 +48,48 @@ export class InMemoryStore implements MemoryStore {
 	}
 
 	async searchByText(q: TextQuery, namespace = 'default') {
-    let items = [...this.ns(namespace).values()].filter(
-      (x) =>
-        (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))) &&
-        (x.text?.toLowerCase().includes(q.text.toLowerCase()) ?? false),
-    );
-    if (decayEnabled()) {
-      const now = new Date().toISOString();
-      const half = getHalfLifeMs();
-      items = items
-        .map((m) => ({ m, s: decayFactor(m.createdAt, now, half) }))
-        .sort((a, b) => b.s - a.s)
-        .map((x) => x.m);
-    }
-    return items.slice(0, q.topK);
-  }
+		let items = [...this.ns(namespace).values()].filter(
+			(x) =>
+				(!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))) &&
+				(x.text?.toLowerCase().includes(q.text.toLowerCase()) ?? false),
+		);
+		if (decayEnabled()) {
+			const now = new Date().toISOString();
+			const half = getHalfLifeMs();
+			items = items
+				.map((m) => ({ m, s: decayFactor(m.createdAt, now, half) }))
+				.sort((a, b) => b.s - a.s)
+				.map((x) => x.m);
+		}
+		return items.slice(0, q.topK);
+	}
 
 	async searchByVector(q: VectorQuery, namespace = 'default') {
-    let itemsWithScores = [...this.ns(namespace).values()]
-      .filter(
-        (x) =>
-          x.vector &&
-          (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))),
-      )
-      .map((x) => ({
-        memory: x,
-        score: cosineSimilarity(q.vector, x.vector!),
-      }))
-    if (decayEnabled()) {
-      const now = new Date().toISOString();
-      const half = getHalfLifeMs();
-      itemsWithScores = itemsWithScores.map((it) => ({
-        ...it,
-        score: it.score * decayFactor(it.memory.createdAt, now, half),
-      }));
-    }
-    const sorted = itemsWithScores
-      .sort((a, b) => b.score - a.score)
-      .slice(0, q.topK)
-      .map((item) => item.memory);
+		let itemsWithScores = [...this.ns(namespace).values()]
+			.filter(
+				(x) =>
+					x.vector &&
+					(!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))),
+			)
+			.map((x) => ({
+				memory: x,
+				score: cosineSimilarity(q.vector, x.vector!),
+			}));
+		if (decayEnabled()) {
+			const now = new Date().toISOString();
+			const half = getHalfLifeMs();
+			itemsWithScores = itemsWithScores.map((it) => ({
+				...it,
+				score: it.score * decayFactor(it.memory.createdAt, now, half),
+			}));
+		}
+		const sorted = itemsWithScores
+			.sort((a, b) => b.score - a.score)
+			.slice(0, q.topK)
+			.map((item) => item.memory);
 
-    return sorted;
-  }
+		return sorted;
+	}
 
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
 		let purgedCount = 0;

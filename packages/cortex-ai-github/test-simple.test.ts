@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Simple Test', () => {
 	it('should pass', () => {

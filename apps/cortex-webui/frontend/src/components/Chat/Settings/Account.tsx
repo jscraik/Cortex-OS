@@ -1,12 +1,12 @@
 'use client';
 
+import type React from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { createAPIKey, getAPIKey, updateUserProfile } from '@/lib/api/auth';
 import { copyToClipboard, generateInitialsImage } from '@/lib/utils';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUserStore } from '@/stores/userStore';
-import type React from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
-import { toast } from 'sonner';
 
 interface AccountSettingsProps {
 	saveSettings: (settings: {

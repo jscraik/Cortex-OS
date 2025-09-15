@@ -26,8 +26,8 @@ async function secureFetch(url, options = {}) {
 	const isAllowed = ALLOWED_API_ENDPOINTS.some((endpoint) => {
 		return (
 			url === endpoint ||
-			url.startsWith(endpoint + '?') ||
-			url.startsWith(endpoint + '/')
+			url.startsWith(`${endpoint}?`) ||
+			url.startsWith(`${endpoint}/`)
 		);
 	});
 
@@ -262,10 +262,11 @@ class MCPDashboard {
                 </div>
                 <p class="tool-description">${tool.description || 'No description available'}</p>
                 <div class="tool-params">
-                    ${Object.keys(tool.parameters || {}).length > 0
-						? `Parameters: ${Object.keys(tool.parameters).join(', ')}`
-						: 'No parameters'
-					}
+                    ${
+											Object.keys(tool.parameters || {}).length > 0
+												? `Parameters: ${Object.keys(tool.parameters).join(', ')}`
+												: 'No parameters'
+										}
                 </div>
             </div>
         `,
@@ -296,23 +297,25 @@ class MCPDashboard {
                     <div class="result-time">
                         Execution Time: ${(result.execution_time * 1000).toFixed(2)}ms
                     </div>
-                    ${result.error
-					? `
+                    ${
+											result.error
+												? `
                         <div class="result-error">
                             <strong>Error:</strong> ${result.error}
                         </div>
                     `
-					: ''
-				}
-                    ${result.result
-					? `
+												: ''
+										}
+                    ${
+											result.result
+												? `
                         <div class="result-data">
                             <strong>Result:</strong>
                             <pre>${JSON.stringify(result.result, null, 2)}</pre>
                         </div>
                     `
-					: ''
-				}
+												: ''
+										}
                 </div>
             `,
 			);

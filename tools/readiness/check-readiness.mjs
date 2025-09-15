@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
 import Ajv from "ajv";
+import yaml from "js-yaml";
 
 function loadJsonSummary(pkgPath) {
 	const covPath = path.join(pkgPath, "coverage", "coverage-summary.json");

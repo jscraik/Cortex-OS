@@ -32,7 +32,7 @@ const Commands: React.FC<CommandsProps> = ({
 		if (show) {
 			init();
 		}
-	}, [show]);
+	}, [show, init]);
 
 	const init = async () => {
 		setLoading(true);
@@ -70,7 +70,7 @@ const Commands: React.FC<CommandsProps> = ({
 				delete (window as any).commandsSelectDown;
 			}
 		};
-	}, []);
+	}, [selectDown, selectUp]);
 
 	if (!show) {
 		return null;

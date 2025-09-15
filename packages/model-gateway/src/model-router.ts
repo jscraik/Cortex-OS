@@ -450,7 +450,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All embedding models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -512,7 +513,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All batch embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All batch embedding models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -576,7 +578,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All chat models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All chat models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -660,7 +663,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All reranking models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All reranking models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}

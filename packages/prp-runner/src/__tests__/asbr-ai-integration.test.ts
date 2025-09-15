@@ -359,7 +359,9 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 			});
 
 			// Should not have race conditions in cache
-			const cacheSize = (asbrAI as unknown as { processingCache: Map<string, unknown> }).processingCache.size;
+			const cacheSize = (
+				asbrAI as unknown as { processingCache: Map<string, unknown> }
+			).processingCache.size;
 			expect(cacheSize).toBe(5);
 		});
 

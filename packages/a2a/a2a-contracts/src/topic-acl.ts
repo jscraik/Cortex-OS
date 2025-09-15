@@ -5,8 +5,8 @@
  * Topics without an entry are denied for both actions by default.
  */
 export interface TopicACL {
-  [topic: string]: {
-    publish?: boolean;
-    subscribe?: boolean;
-  };
+	[topic: string]: {
+		publish?: boolean;
+		subscribe?: boolean;
+	};
 }

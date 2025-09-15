@@ -19,7 +19,7 @@ class SocketService {
 		// Close existing connection if any
 		this.disconnect();
 
-		const wsUrl = API_BASE_URL.replace('http', 'ws') + '/ws?token=' + token;
+		const wsUrl = `${API_BASE_URL.replace('http', 'ws')}/ws?token=${token}`;
 		this.socket = new WebSocket(wsUrl);
 
 		this.socket.onopen = () => {

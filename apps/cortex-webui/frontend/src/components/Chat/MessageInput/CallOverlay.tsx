@@ -29,7 +29,7 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
 	const [wakeLock, setWakeLock] = useState<any>(null);
 	const [loading, setLoading] = useState(false);
 	const [confirmed, setConfirmed] = useState(false);
-	const [interrupted, setInterrupted] = useState(false);
+	const [_interrupted, setInterrupted] = useState(false);
 	const [assistantSpeaking, setAssistantSpeaking] = useState(false);
 	const [emoji, setEmoji] = useState<string | null>(null);
 	const [camera, setCamera] = useState(false);
@@ -169,10 +169,10 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
 
 	// Constants
 	const MIN_DECIBELS = -55;
-	const VISUALIZER_BUFFER_LENGTH = 300;
+	const _VISUALIZER_BUFFER_LENGTH = 300;
 
 	// Transcribe handler
-	const transcribeHandler = async (audioBlob: Blob) => {
+	const transcribeHandler = async (_audioBlob: Blob) => {
 		// In a real implementation, you would send the audio to a transcription service
 		console.log('Transcribing audio...');
 		// For now, we'll simulate transcription
@@ -401,7 +401,7 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
 	const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
 
 	// Speak using speech synthesis
-	const speakSpeechSynthesisHandler = (content: string) => {
+	const _speakSpeechSynthesisHandler = (content: string) => {
 		return new Promise<void>((resolve) => {
 			let voices: SpeechSynthesisVoice[] = [];
 			const getVoicesLoop = setInterval(async () => {
@@ -696,7 +696,20 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
 			// Remove visibility change listener
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 		};
-	}, []);
+	}, [
+		chatEventHandler,
+		chatFinishHandler,
+		chatStartHandler,
+		eventTarget.addEventListener,
+		eventTarget.removeEventListener,
+		handleVisibilityChange,
+		setWakeLockHandler, // Start recording
+		startRecording,
+		stopAllAudio,
+		stopAudioStream,
+		stopCamera,
+		stopRecordingCallback,
+	]);
 
 	// Effect for unmounting
 	useEffect(() => {
@@ -725,7 +738,16 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
 
 			stopAllAudio();
 		};
-	}, []);
+	}, [
+		chatEventHandler,
+		chatFinishHandler,
+		chatStartHandler,
+		eventTarget.removeEventListener,
+		stopAllAudio,
+		stopAudioStream,
+		stopCamera,
+		stopRecordingCallback,
+	]);
 
 	return (
 		<div className="max-w-lg w-full h-full max-h-[100dvh] flex flex-col justify-between p-3 md:p-6">

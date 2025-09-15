@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { agentEventCatalog } from '@/events/agent-events.js';
 
 const iso = () => new Date().toISOString();
-const base = (type: string, data: unknown) => ({ specversion: '1.0', type, data });
+const base = (type: string, data: unknown) => ({
+	specversion: '1.0',
+	type,
+	data,
+});
 
 describe('Event Contract: agentEventCatalog', () => {
 	it('validates all known event schemas with sample payloads', () => {
-	const samples: Record<string, unknown> = {
+		const samples: Record<string, unknown> = {
 			'agent.started': base('agent.started', {
 				agentId: 'a',
 				traceId: 't',
@@ -116,18 +120,15 @@ describe('Event Contract: agentEventCatalog', () => {
 				score: 100,
 				timestamp: iso(),
 			}),
-			'security.workflow_unauthorized': base(
-				'security.workflow_unauthorized',
-				{
-					workflowId: 'wf1',
-					attemptedAction: 'deploy',
-					requiredCapability: 'deployment:write',
-					actor: 'user123',
-					reason: 'missing capability',
-					severity: 'high',
-					timestamp: iso(),
-				},
-			),
+			'security.workflow_unauthorized': base('security.workflow_unauthorized', {
+				workflowId: 'wf1',
+				attemptedAction: 'deploy',
+				requiredCapability: 'deployment:write',
+				actor: 'user123',
+				reason: 'missing capability',
+				severity: 'high',
+				timestamp: iso(),
+			}),
 		};
 
 		for (const key of Object.keys(agentEventCatalog)) {

@@ -1,8 +1,8 @@
 'use client';
 
-import Modal from '@/components/common/Modal';
 import type React from 'react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import Modal from '@/components/common/Modal';
 
 interface Tag {
 	id: string;
@@ -30,6 +30,9 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 	const [selectedColor, setSelectedColor] = useState('#3b82f6'); // Default blue
 
 	const newTagInputId = useId();
+	const colorGroupId = useId();
+	const currentTagsHeadingId = useId();
+	const liveRegionId = useId();
 
 	const predefinedColors = [
 		'#3b82f6', // blue
@@ -42,31 +45,46 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 		'#84cc16', // lime
 	];
 
+	// Sync tags if initialTags prop changes
+	useEffect(() => {
+		setTags(initialTags);
+	}, [initialTags]);
+
+	const generateId = () => {
+		try {
+			return (
+				globalThis.crypto?.randomUUID() ??
+				Math.random().toString(36).slice(2, 11)
+			);
+		} catch {
+			return Math.random().toString(36).slice(2, 11);
+		}
+	};
+
 	const addTag = () => {
-		if (newTag.trim() === '') return;
+		const trimmed = newTag.trim();
+		if (trimmed === '') return;
 
 		const tag: Tag = {
-			id: Math.random().toString(36).substring(2, 11),
-			name: newTag.trim(),
+			id: generateId(),
+			name: trimmed,
 			color: selectedColor,
 		};
 
-		setTags([...tags, tag]);
+		setTags((prev) => [...prev, tag]);
 		setNewTag('');
 	};
 
 	const removeTag = (id: string) => {
-		setTags(tags.filter((tag) => tag.id !== id));
+		setTags((prev) => prev.filter((tag) => tag.id !== id));
 	};
 
 	const handleSave = () => {
 		onTagsUpdate(tags);
 		onClose();
 
-		// @ts-expect-error - window.addNotification is added by external script
-		if (typeof window !== 'undefined' && window.addNotification) {
-			// @ts-expect-error - window.addNotification is added by external script
-			window.addNotification('success', 'Tags updated successfully!');
+		if (typeof window !== 'undefined') {
+			window.addNotification?.('success', 'Tags updated successfully!');
 		}
 	};
 
@@ -99,71 +117,98 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 								onKeyDown={(e) => e.key === 'Enter' && addTag()}
 								placeholder="Enter tag name"
 								className="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+								aria-describedby={liveRegionId}
 							/>
 							<button
 								type="button"
 								onClick={addTag}
-								className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+								disabled={newTag.trim() === ''}
+								className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								Add
 							</button>
 						</div>
 					</div>
 
-					<div>
-						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+					<fieldset aria-labelledby={colorGroupId}>
+						<legend
+							id={colorGroupId}
+							className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
 							Tag Color
-						</label>
+						</legend>
 						<div className="flex space-x-2">
-							{predefinedColors.map((color) => (
-								<button
-									key={color}
-									type="button"
-									onClick={() => setSelectedColor(color)}
-									className={`w-8 h-8 rounded-full border-2 ${
-										selectedColor === color
-											? 'border-gray-900 dark:border-white'
-											: 'border-gray-300 dark:border-gray-600'
-									}`}
-									style={{ backgroundColor: color }}
-									aria-label={`Select color ${color}`}
-								/>
-							))}
+							{predefinedColors.map((color) => {
+								const id = `${colorGroupId}-${color.replace('#', '')}`;
+								return (
+									<div key={color} className="relative">
+										<input
+											id={id}
+											type="radio"
+											name="tag-color"
+											value={color}
+											checked={selectedColor === color}
+											onChange={() => setSelectedColor(color)}
+											className="sr-only"
+										/>
+										<label
+											htmlFor={id}
+											className={`w-8 h-8 rounded-full border-2 cursor-pointer inline-block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+												selectedColor === color
+													? 'border-gray-900 dark:border-white'
+													: 'border-gray-300 dark:border-gray-600'
+											}`}
+											style={{ backgroundColor: color }}
+										>
+											<span className="sr-only">Select color {color}</span>
+										</label>
+									</div>
+								);
+							})}
 						</div>
-					</div>
+					</fieldset>
 
 					{tags.length > 0 && (
-						<div>
-							<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						<section aria-labelledby={currentTagsHeadingId}>
+							<h4
+								id={currentTagsHeadingId}
+								className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+							>
 								Current Tags
-							</label>
-							<div className="flex flex-wrap gap-2">
+							</h4>
+							<ul
+								className="flex flex-wrap gap-2"
+								aria-label="List of current tags"
+							>
 								{tags.map((tag) => (
-									<div
-										key={tag.id}
-										className="flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
-										style={{ backgroundColor: tag.color }}
-									>
-										{tag.name}
-										<button
-											type="button"
-											onClick={() => removeTag(tag.id)}
-											className="ml-2 text-white hover:text-gray-200 focus:outline-none"
+									<li key={tag.id} className="flex items-center">
+										<div
+											className="flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+											style={{ backgroundColor: tag.color }}
 										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												viewBox="0 0 20 20"
-												fill="currentColor"
-												className="size-4"
+											<span>{tag.name}</span>
+											<button
+												type="button"
+												onClick={() => removeTag(tag.id)}
+												className="ml-2 text-white hover:text-gray-200 focus:outline-none"
+												aria-label={`Remove tag ${tag.name}`}
 											>
-												<title>Remove tag</title>
-												<path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-											</svg>
-										</button>
-									</div>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 20 20"
+													fill="currentColor"
+													className="size-4"
+													focusable="false"
+													aria-hidden="true"
+												>
+													<path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+												</svg>
+											</button>
+										</div>
+									</li>
 								))}
-							</div>
-						</div>
+							</ul>
+						</section>
 					)}
 
 					<div className="flex justify-end space-x-3">
@@ -181,6 +226,11 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 						>
 							Save Tags
 						</button>
+					</div>
+
+					{/* Live region for assistive tech updates */}
+					<div id={liveRegionId} aria-live="polite" className="sr-only">
+						{tags.length} tag{tags.length === 1 ? '' : 's'} selected.
 					</div>
 				</div>
 			</div>

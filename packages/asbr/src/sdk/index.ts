@@ -3,7 +3,7 @@
  * Implements the SDK surface as specified in the blueprint
  */
 
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import type {
 	ArtifactRef,
 	CreateProfileRequest,

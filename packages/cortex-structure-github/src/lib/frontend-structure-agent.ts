@@ -3,7 +3,7 @@
  * Specialized analysis for React, Vue, Angular, and other frontend frameworks
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 
 export interface FrontendStructureConfig {
 	framework: 'react' | 'vue' | 'angular' | 'next' | 'nuxt' | 'svelte' | 'auto';
@@ -83,10 +83,33 @@ export async function analyzeFrontendStructure(
 ): Promise<FrontendAnalysisResult> {
 	const detectedFramework = await detectFramework(repoPath);
 	const finalConfig: FrontendStructureConfig = {
-		framework: (['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const).includes(config.framework as any) ? config.framework as any : (['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const).includes(detectedFramework as any) ? detectedFramework as any : 'auto',
+		framework: (
+			['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const
+		).includes(config.framework as any)
+			? (config.framework as any)
+			: (
+						[
+							'react',
+							'vue',
+							'angular',
+							'next',
+							'nuxt',
+							'svelte',
+							'auto',
+						] as const
+					).includes(detectedFramework as any)
+				? (detectedFramework as any)
+				: 'auto',
 		componentConvention: config.componentConvention || 'PascalCase',
 		fileExtensions:
-			config.fileExtensions || getDefaultExtensions((['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const).includes(detectedFramework as any) ? detectedFramework as any : 'auto'),
+			config.fileExtensions ||
+			getDefaultExtensions(
+				(
+					['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const
+				).includes(detectedFramework as any)
+					? (detectedFramework as any)
+					: 'auto',
+			),
 		enforceBarrelExports: config.enforceBarrelExports ?? true,
 		maxComponentSize: config.maxComponentSize || 300,
 	};

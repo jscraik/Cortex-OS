@@ -10,25 +10,26 @@
  */
 
 import { EventEmitter } from 'node:events';
-// import pino from 'pino';
+import pino, { type Logger } from 'pino';
 import { createAnalyticsConfig } from './config.js';
 import { MetricsCollector } from './metrics-collector.js';
 import { OptimizationEngine } from './optimization-engine.js';
 import { PatternAnalyzer } from './pattern-analyzer.js';
 import type { AnalyticsConfig } from './types.js';
+import { safeErrorMessage } from './utils/error-utils.js';
 
 /**
  * Main analytics engine that coordinates all analytics components
  */
 export class AnalyticsEngine extends EventEmitter {
-	private logger: pino.Logger;
-	private config: AnalyticsConfig;
+	private readonly logger: Logger;
+	private readonly config: AnalyticsConfig;
 	private isRunning = false;
 
 	// Core components
-	private metricsCollector: MetricsCollector;
-	private patternAnalyzer: PatternAnalyzer;
-	private optimizationEngine: OptimizationEngine;
+	private readonly metricsCollector: MetricsCollector;
+	private readonly patternAnalyzer: PatternAnalyzer;
+	private readonly optimizationEngine: OptimizationEngine;
 
 	constructor(config: Partial<AnalyticsConfig> = {}) {
 		super();
@@ -93,17 +94,20 @@ export class AnalyticsEngine extends EventEmitter {
 
 		// Error handling
 		this.metricsCollector.on('error', (error) => {
-			this.logger.error('Metrics collector error', { error: error.message });
+			const message = safeErrorMessage(error);
+			this.logger.error('Metrics collector error', { error: message });
 			this.emit('error', error);
 		});
 
 		this.patternAnalyzer.on('error', (error) => {
-			this.logger.error('Pattern analyzer error', { error: error.message });
+			const message = safeErrorMessage(error);
+			this.logger.error('Pattern analyzer error', { error: message });
 			this.emit('error', error);
 		});
 
 		this.optimizationEngine.on('error', (error) => {
-			this.logger.error('Optimization engine error', { error: error.message });
+			const message = safeErrorMessage(error);
+			this.logger.error('Optimization engine error', { error: message });
 			this.emit('error', error);
 		});
 	}
@@ -129,9 +133,8 @@ export class AnalyticsEngine extends EventEmitter {
 			this.logger.info('Analytics engine started successfully');
 			this.emit('started');
 		} catch (error) {
-			this.logger.error('Failed to start analytics engine', {
-				error: error.message,
-			});
+			const message = safeErrorMessage(error);
+			this.logger.error('Failed to start analytics engine', { error: message });
 			this.emit('error', error);
 			throw error;
 		}
@@ -158,9 +161,8 @@ export class AnalyticsEngine extends EventEmitter {
 			this.logger.info('Analytics engine stopped successfully');
 			this.emit('stopped');
 		} catch (error) {
-			this.logger.error('Failed to stop analytics engine', {
-				error: error.message,
-			});
+			const message = safeErrorMessage(error);
+			this.logger.error('Failed to stop analytics engine', { error: message });
 			this.emit('error', error);
 			throw error;
 		}
@@ -245,8 +247,9 @@ export class AnalyticsEngine extends EventEmitter {
 
 			this.logger.info('Analytics engine cleanup completed');
 		} catch (error) {
+			const message = safeErrorMessage(error);
 			this.logger.error('Error during analytics engine cleanup', {
-				error: error.message,
+				error: message,
 			});
 			throw error;
 		}

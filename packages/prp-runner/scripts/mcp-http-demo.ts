@@ -4,10 +4,10 @@
  * Run with: pnpm nx run @cortex-os/prp-runner:demo:mcp -- --port 8081
  */
 
-import chalk from 'chalk';
-import { glob } from 'glob';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import chalk from 'chalk';
+import { glob } from 'glob';
 import { getDocsSemsearchConfig } from '../../../.cortex/library/mcp/semsearch';
 import { ASBRAIMcpIntegration } from '../src/asbr-ai-mcp-integration.js';
 

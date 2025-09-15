@@ -68,7 +68,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				optimizeContext();
 			}
 		}
-	}, [messages, contextOptimized]);
+	}, [messages, contextOptimized, optimizeContext]);
 
 	const optimizeContext = useCallback(async () => {
 		try {

@@ -16,7 +16,7 @@ function flushLine(line) {
 		return;
 	}
 	try {
-		process.stdout.write(JSON.stringify({ id: ++id, echo: req.name }) + '\n');
+		process.stdout.write(`${JSON.stringify({ id: ++id, echo: req.name })}\n`);
 	} catch (e) {
 		console.error('write error', e?.message);
 	}

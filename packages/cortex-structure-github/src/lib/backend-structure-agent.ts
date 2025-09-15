@@ -3,7 +3,7 @@
  * Specialized analysis for Node.js, Python, Go, Rust, and other backend frameworks
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 
 export interface BackendStructureConfig {
 	framework:
@@ -134,9 +134,58 @@ export async function analyzeBackendStructure(
 	);
 
 	const finalConfig: BackendStructureConfig = {
-		framework: (['express', 'fastapi', 'gin', 'django', 'flask', 'fiber', 'axum', 'auto'] as const).includes(config.framework as any) ? config.framework as any : (['express', 'fastapi', 'gin', 'django', 'flask', 'fiber', 'axum', 'auto'] as const).includes(detectedFramework as any) ? detectedFramework as any : 'auto',
-		architecture: (['mvc', 'clean', 'hexagonal', 'layered', 'auto'] as const).includes(config.architecture as any) ? config.architecture as any : (['mvc', 'clean', 'hexagonal', 'layered', 'auto'] as const).includes(detectedArchitecture as any) ? detectedArchitecture as any : 'auto',
-		language: (['typescript', 'javascript', 'python', 'go', 'rust', 'auto'] as const).includes(config.language as any) ? config.language as any : (['typescript', 'javascript', 'python', 'go', 'rust', 'auto'] as const).includes(detectedLanguage as any) ? detectedLanguage as any : 'auto',
+		framework: (
+			[
+				'express',
+				'fastapi',
+				'gin',
+				'django',
+				'flask',
+				'fiber',
+				'axum',
+				'auto',
+			] as const
+		).includes(config.framework as any)
+			? (config.framework as any)
+			: (
+						[
+							'express',
+							'fastapi',
+							'gin',
+							'django',
+							'flask',
+							'fiber',
+							'axum',
+							'auto',
+						] as const
+					).includes(detectedFramework as any)
+				? (detectedFramework as any)
+				: 'auto',
+		architecture: (
+			['mvc', 'clean', 'hexagonal', 'layered', 'auto'] as const
+		).includes(config.architecture as any)
+			? (config.architecture as any)
+			: (['mvc', 'clean', 'hexagonal', 'layered', 'auto'] as const).includes(
+						detectedArchitecture as any,
+					)
+				? (detectedArchitecture as any)
+				: 'auto',
+		language: (
+			['typescript', 'javascript', 'python', 'go', 'rust', 'auto'] as const
+		).includes(config.language as any)
+			? (config.language as any)
+			: (
+						[
+							'typescript',
+							'javascript',
+							'python',
+							'go',
+							'rust',
+							'auto',
+						] as const
+					).includes(detectedLanguage as any)
+				? (detectedLanguage as any)
+				: 'auto',
 		enforceLayerSeparation: config.enforceLayerSeparation ?? true,
 		maxFunctionSize: config.maxFunctionSize || 40,
 		requireTests: config.requireTests ?? true,

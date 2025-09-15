@@ -1,4 +1,4 @@
-import type { AddressInfo } from 'net';
+import type { AddressInfo } from 'node:net';
 import { createServer, type ServerComponents } from '../src/server';
 
 export interface TestServer {

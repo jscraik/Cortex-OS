@@ -14,7 +14,7 @@ export * from "./workflow";
 import type { A2AEventEnvelope, GitHubEventData } from "./envelope";
 import { type ErrorEvent, isErrorEvent, validateErrorEvent } from "./error";
 
-import { isIssueEvent, type IssueEvent, validateIssueEvent } from "./issue";
+import { type IssueEvent, isIssueEvent, validateIssueEvent } from "./issue";
 import {
 	isPullRequestEvent,
 	type PullRequestEvent,

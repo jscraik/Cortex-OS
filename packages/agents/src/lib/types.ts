@@ -1,4 +1,3 @@
-
 // Local minimal CloudEvents-style envelope used within agents package.
 // (Decoupled from external a2a-contracts to avoid build-time dependency churn.)
 export interface Envelope<T = unknown> {
@@ -27,9 +26,7 @@ export interface Agent<TInput = unknown, TOutput = unknown> {
 	inputSchema?: unknown;
 	outputSchema?: unknown;
 	// Accept either full execution context or direct input and return output shape
-	execute: (
-		context: ExecutionContext<TInput> | TInput,
-	) => Promise<TOutput>;
+	execute: (context: ExecutionContext<TInput> | TInput) => Promise<TOutput>;
 }
 
 export interface AgentCapability {

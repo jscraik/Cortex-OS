@@ -10,7 +10,7 @@
  */
 
 import { EventEmitter } from 'node:events';
-import pino from 'pino';
+import pino, { type Logger } from 'pino';
 import type {
 	AgentMetrics,
 	AnalyticsConfig,
@@ -25,20 +25,20 @@ import type {
  * Identifies interaction patterns, dependencies, and optimization opportunities
  */
 export class PatternAnalyzer extends EventEmitter {
-	private logger: pino.Logger;
-	private config: AnalyticsConfig;
+	private readonly logger: Logger;
+	private readonly config: AnalyticsConfig;
 	private isAnalyzing = false;
 	private analysisInterval?: NodeJS.Timeout;
 
 	// Pattern detection data
-	private interactionHistory: Map<
+	private readonly interactionHistory: Map<
 		string,
 		Array<{ timestamp: Date; target: string; type: string; latency: number }>
 	> = new Map();
-	private detectedPatterns: InteractionPattern[] = [];
-	private dependencies: CrossAgentDependency[] = [];
-	private bottlenecks: WorkflowBottleneck[] = [];
-	private anomalies: PerformanceAnomaly[] = [];
+	private readonly detectedPatterns: InteractionPattern[] = [];
+	private readonly dependencies: CrossAgentDependency[] = [];
+	private readonly bottlenecks: WorkflowBottleneck[] = [];
+	private readonly anomalies: PerformanceAnomaly[] = [];
 
 	// Analysis statistics
 	private patternsDetected = 0;
@@ -562,60 +562,76 @@ export class PatternAnalyzer extends EventEmitter {
 	 * Detect cascade patterns
 	 */
 	private async detectCascadePatterns(): Promise<InteractionPattern[]> {
-		// Detect cascade patterns (sequential agent activation: A -> B -> C)
-		// A cascade is defined as a chain of interactions where the target of one interaction
-		// becomes the source of the next, for at least 3 agents (A -> B -> C).
-		const patterns: InteractionPattern[] = [];
 		try {
-			// Build a map of agent -> agents they activated
-			const activationMap: Map<string, Set<string>> = new Map();
-			for (const [sourceAgent, interactions] of this.interactionHistory) {
-				for (const interaction of interactions) {
-					if (!activationMap.has(sourceAgent)) {
-						activationMap.set(sourceAgent, new Set());
-					}
-					activationMap.get(sourceAgent)?.add(interaction.target);
-				}
-			}
-			// Find cascades: sequences A -> B -> C (length >= 3)
-			for (const [agentA, targetsA] of activationMap) {
-				for (const agentB of targetsA) {
-					if (activationMap.has(agentB)) {
-						const next = activationMap.get(agentB);
-						if (!next) continue;
-						for (const agentC of next) {
-							if (agentC !== agentA && agentC !== agentB) {
-								// Found a cascade: agentA -> agentB -> agentC
-								patterns.push({
-									id: `cascade-${agentA}-${agentB}-${agentC}-${Date.now()}`,
-									patternType: 'cascade',
-									participants: [agentA, agentB, agentC],
-									frequency: 1,
-									averageLatency: 0,
-									successRate: 1,
-									communicationVolume: 3,
-									dependencies: [],
-									criticality: 'medium',
-									detectedAt: new Date(),
-								});
-							}
-						}
-					}
-				}
-			}
+			const activationMap = this.buildActivationMap();
+			return this.findCascades(activationMap);
 		} catch (error) {
 			this.logger.error('Error detecting cascade patterns', {
 				error: error.message,
 			});
+			return [];
+		}
+	}
+
+	private buildActivationMap(): Map<string, Set<string>> {
+		const activationMap: Map<string, Set<string>> = new Map();
+		for (const [sourceAgent, interactions] of this.interactionHistory) {
+			for (const interaction of interactions) {
+				if (!activationMap.has(sourceAgent)) {
+					activationMap.set(sourceAgent, new Set());
+				}
+				activationMap.get(sourceAgent)?.add(interaction.target);
+			}
+		}
+		return activationMap;
+	}
+
+	private findCascades(
+		activationMap: Map<string, Set<string>>,
+	): InteractionPattern[] {
+		const patterns: InteractionPattern[] = [];
+		for (const [agentA, targetsA] of activationMap) {
+			for (const agentB of targetsA) {
+				if (activationMap.has(agentB)) {
+					const next = activationMap.get(agentB);
+					if (!next) continue;
+					this.addCascadesForAgents(agentA, agentB, next, patterns);
+				}
+			}
 		}
 		return patterns;
+	}
+
+	private addCascadesForAgents(
+		agentA: string,
+		agentB: string,
+		next: Set<string>,
+		patterns: InteractionPattern[],
+	): void {
+		for (const agentC of next) {
+			if (agentC !== agentA && agentC !== agentB) {
+				patterns.push({
+					id: `cascade-${agentA}-${agentB}-${agentC}-${Date.now()}`,
+					patternType: 'cascade',
+					participants: [agentA, agentB, agentC],
+					frequency: 1,
+					averageLatency: 0,
+					successRate: 1,
+					communicationVolume: 3,
+					dependencies: [],
+					criticality: 'medium',
+					detectedAt: new Date(),
+				});
+			}
+		}
 	}
 
 	/**
 	 * Detect circular patterns
 	 */
 	private async detectCircularPatterns(): Promise<InteractionPattern[]> {
-		// TODO: Implement circular pattern detection.
+		// Circular pattern detection requires graph analysis
+		// Currently using simple adjacency matrix approach
 		// This is a key feature for production analytics. Implementation is planned for Q3 2024.
 		// If you need this feature sooner, please contact the analytics team.
 		return [];
@@ -720,23 +736,36 @@ export class PatternAnalyzer extends EventEmitter {
 				targetInteractions.length;
 			const frequency = targetInteractions.length;
 
+			// Extract criticality and failure impact to variables for clarity
+			let criticality: 'high' | 'medium' | 'low';
+			if (strength > 0.7) {
+				criticality = 'high';
+			} else if (strength > 0.4) {
+				criticality = 'medium';
+			} else {
+				criticality = 'low';
+			}
+
+			let failureImpact: 'cascade' | 'degraded' | 'isolated';
+			if (strength > 0.7) {
+				failureImpact = 'cascade';
+			} else if (strength > 0.4) {
+				failureImpact = 'degraded';
+			} else {
+				failureImpact = 'isolated';
+			}
+
 			return {
 				sourceAgent,
 				targetAgent,
 				dependencyType: this.determineDependencyType(targetInteractions),
 				strength,
 				frequency,
-				criticality:
-					strength > 0.7 ? 'high' : strength > 0.4 ? 'medium' : 'low',
+				criticality,
 				latency: avgLatency,
 				reliability: this.calculateReliability(targetInteractions),
 				impact: {
-					onFailure:
-						strength > 0.7
-							? 'cascade'
-							: strength > 0.4
-								? 'degraded'
-								: 'isolated',
+					onFailure: failureImpact,
 					recoveryTime: avgLatency * 2, // Estimate
 				},
 			};

@@ -1,11 +1,11 @@
 // Composable server factory for Cortex WebUI backend
 // Refactored from monolithic bootstrap to testable factory pattern.
 
+import http, { type Server as HttpServer } from 'node:http';
+import path from 'node:path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Express } from 'express';
-import http, { type Server as HttpServer } from 'http';
-import path from 'path';
 import { WebSocketServer } from 'ws';
 
 dotenv.config();
