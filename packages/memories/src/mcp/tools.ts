@@ -1,3 +1,4 @@
+
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { Memory } from '../domain/types.js';
@@ -95,18 +96,22 @@ export const memoryGetToolSchema = z.object({
 
 export const memoryDeleteToolSchema = z.object({
         id: z.string().min(1, 'id is required'),
+
 });
 
 export const memoryListToolSchema = z.object({
         limit: z.number().int().positive().max(100).default(20),
+
         tags: z.array(z.string()).default([]),
         kind: z.enum(['note', 'event', 'artifact', 'embedding']).optional(),
         includePending: z.boolean().default(false),
+
 });
 
 export const memorySearchToolSchema = z
         .object({
                 text: z.string().min(1).optional(),
+
                 vector: z.array(z.number()).nonempty().optional(),
                 topK: z.number().int().positive().max(100).default(8),
                 tags: z.array(z.string()).default([]),
@@ -226,3 +231,4 @@ export const memoryMcpTools: MemoryTool[] = [
         memoryListTool,
         memorySearchTool,
 ];
+

@@ -10,20 +10,26 @@ export type NodeName =
 	| 'verify'
 	| 'done';
 
-export interface Checkpoint<TState = any> {
-	runId: string;
-	threadId: string;
-	node: NodeName;
-	state: TState;
-	ts: string; // ISO timestamp
-	idempotencyKey?: string;
+const isErrnoException = (error: unknown): error is NodeJS.ErrnoException & { code: string } =>
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof (error as { code?: unknown }).code === 'string';
+
+export interface Checkpoint<TState = unknown> {
+        runId: string;
+        threadId: string;
+        node: NodeName;
+        state: TState;
+        ts: string; // ISO timestamp
+        idempotencyKey?: string;
 }
 
-export interface CheckpointWithIntegrity<TState = any>
-	extends Checkpoint<TState> {
-	checksum: string;
-	version: string;
-	size: number;
+export interface CheckpointWithIntegrity<TState = unknown>
+        extends Checkpoint<TState> {
+        checksum: string;
+        version: string;
+        size: number;
 }
 
 // Current checkpoint format version
@@ -47,8 +53,8 @@ function calculateChecksum(checkpoint: Checkpoint): string {
 /**
  * Validate checkpoint integrity
  */
-function validateCheckpointIntegrity<TState = any>(
-	checkpoint: CheckpointWithIntegrity<TState>,
+function validateCheckpointIntegrity<TState = unknown>(
+        checkpoint: CheckpointWithIntegrity<TState>,
 ): boolean {
 	try {
 		const expectedChecksum = calculateChecksum(checkpoint);
@@ -75,8 +81,8 @@ function fileFor(runId: string): string {
 	return path.join(dir, `${runId}.jsonl`);
 }
 
-export async function saveCheckpoint<TState = any>(
-	cp: Checkpoint<TState>,
+export async function saveCheckpoint<TState = unknown>(
+        cp: Checkpoint<TState>,
 ): Promise<void> {
 	const dir = getDir();
 	await ensureDir(dir);
@@ -97,8 +103,8 @@ export async function saveCheckpoint<TState = any>(
 /**
  * Enhanced checkpoint save with explicit integrity validation
  */
-export async function saveCheckpointWithIntegrity<TState = any>(
-	cp: Checkpoint<TState>,
+export async function saveCheckpointWithIntegrity<TState = unknown>(
+        cp: Checkpoint<TState>,
 ): Promise<CheckpointWithIntegrity<TState>> {
 	const dir = getDir();
 	await ensureDir(dir);
@@ -124,8 +130,8 @@ export async function saveCheckpointWithIntegrity<TState = any>(
 	return checkpointWithIntegrity;
 }
 
-export async function loadCheckpointHistory<TState = any>(
-	runId: string,
+export async function loadCheckpointHistory<TState = unknown>(
+        runId: string,
 ): Promise<Checkpoint<TState>[]> {
 	const file = fileFor(runId);
 	try {
@@ -151,8 +157,12 @@ export async function loadCheckpointHistory<TState = any>(
 					}
 
 					// Extract the base checkpoint (remove integrity fields)
-					const { checksum, version, size, ...checkpoint } =
-						checkpointWithIntegrity;
+                                        const {
+                                                checksum: _checksum,
+                                                version: _version,
+                                                size: _size,
+                                                ...checkpoint
+                                        } = checkpointWithIntegrity;
 					checkpoints.push(checkpoint);
 				} else {
 					// Legacy checkpoint without integrity validation
@@ -161,27 +171,26 @@ export async function loadCheckpointHistory<TState = any>(
 					);
 					checkpoints.push(parsed);
 				}
-			} catch (parseError) {
-				console.warn(
-					`Failed to parse checkpoint line for runId: ${runId}:`,
-					parseError,
-				);
-				// Continue processing other checkpoints
-			}
+                        } catch {
+                                console.warn(
+                                        `Failed to parse checkpoint line for runId: ${runId}: ${line}`,
+                                );
+                                // Continue processing other checkpoints
+                        }
 		}
 
 		return checkpoints;
-	} catch (err: any) {
-		if (err && err.code === 'ENOENT') return [];
-		throw err;
-	}
+        } catch (error) {
+                if (isErrnoException(error) && error.code === 'ENOENT') return [];
+                throw error;
+        }
 }
 
 /**
  * Load checkpoint history with full integrity validation
  */
-export async function loadCheckpointHistoryWithIntegrity<TState = any>(
-	runId: string,
+export async function loadCheckpointHistoryWithIntegrity<TState = unknown>(
+        runId: string,
 ): Promise<CheckpointWithIntegrity<TState>[]> {
 	const file = fileFor(runId);
 	try {
@@ -206,38 +215,37 @@ export async function loadCheckpointHistoryWithIntegrity<TState = any>(
 						);
 					}
 				}
-			} catch (parseError) {
-				console.warn(
-					`Failed to parse checkpoint line for runId: ${runId}:`,
-					parseError,
-				);
-			}
+                        } catch {
+                                console.warn(
+                                        `Failed to parse checkpoint line for runId: ${runId}: ${line}`,
+                                );
+                        }
 		}
 
 		return checkpoints;
-	} catch (err: any) {
-		if (err && err.code === 'ENOENT') return [];
-		throw err;
-	}
+        } catch (error) {
+                if (isErrnoException(error) && error.code === 'ENOENT') return [];
+                throw error;
+        }
 }
 
-export async function loadLatestCheckpoint<TState = any>(
-	runId: string,
+export async function loadLatestCheckpoint<TState = unknown>(
+        runId: string,
 ): Promise<Checkpoint<TState> | null> {
-	const history = await loadCheckpointHistory<TState>(runId);
-	if (history.length === 0) return null;
-	return history[history.length - 1] as Checkpoint<TState>;
+        const history = await loadCheckpointHistory<TState>(runId);
+        if (history.length === 0) return null;
+        return history[history.length - 1];
 }
 
 /**
  * Load latest checkpoint with integrity validation
  */
-export async function loadLatestCheckpointWithIntegrity<TState = any>(
-	runId: string,
+export async function loadLatestCheckpointWithIntegrity<TState = unknown>(
+        runId: string,
 ): Promise<CheckpointWithIntegrity<TState> | null> {
-	const history = await loadCheckpointHistoryWithIntegrity<TState>(runId);
-	if (history.length === 0) return null;
-	return history[history.length - 1];
+        const history = await loadCheckpointHistoryWithIntegrity<TState>(runId);
+        if (history.length === 0) return null;
+        return history[history.length - 1];
 }
 
 /**
@@ -306,15 +314,15 @@ export async function verifyCheckpointFile(runId: string): Promise<{
 					// Legacy checkpoint
 					stats.legacy++;
 				}
-			} catch (_parseError) {
-				stats.invalid++;
-			}
+                        } catch {
+                                stats.invalid++;
+                        }
 		}
-	} catch (err: any) {
-		if (err && err.code !== 'ENOENT') {
-			throw err;
-		}
-	}
+        } catch (error) {
+                if (isErrnoException(error) && error.code !== 'ENOENT') {
+                        throw error;
+                }
+        }
 
 	return stats;
 }

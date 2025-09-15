@@ -1,3 +1,4 @@
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { InMemoryStore } from '../src/adapters/store.memory.js';
@@ -180,6 +181,7 @@ describe('memory MCP tools', () => {
 
                 await expect(memorySearchTool.handler({} as unknown)).rejects.toThrow(
                         /text or vector/i,
+
                 );
         });
 });

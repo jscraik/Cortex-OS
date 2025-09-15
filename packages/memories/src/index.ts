@@ -28,6 +28,7 @@ export {
 } from './events/memory-events.js';
 // MCP Tools for external AI agent integration
 export {
+
         memoryDeleteTool,
         memoryDeleteToolSchema,
         memoryGetTool,
