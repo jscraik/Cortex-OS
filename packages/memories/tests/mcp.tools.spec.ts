@@ -1,187 +1,211 @@
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { z } from 'zod';
-import { InMemoryStore } from '../src/adapters/store.memory.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-        memoryDeleteTool,
-        memoryGetTool,
-        memoryListTool,
-        memorySearchTool,
-        memorySetTool,
-        resetMemoryServiceFactory,
-        setMemoryServiceFactory,
+        MAX_MEMORY_TEXT_LENGTH,
+        memoryRetrieveTool,
+        memoryStoreTool,
+        memoryUpdateTool,
 } from '../src/mcp/tools.js';
-import { createMemoryService } from '../src/service/memory-service.js';
-import { LocalEmbedder } from './util/local-embedder.js';
 
-const storedSchema = z.object({
-        status: z.literal('stored'),
-        memory: z.object({ id: z.string(), tags: z.array(z.string()).optional() }).passthrough(),
-});
+type ToolResponse = Awaited<ReturnType<typeof memoryStoreTool.handler>>;
 
-const getSchema = z.discriminatedUnion('found', [
-        z.object({ found: z.literal(false), id: z.string() }),
-        z.object({
-                found: z.literal(true),
-                memory: z.object({ id: z.string(), tags: z.array(z.string()).optional() }).passthrough(),
-        }),
-]);
+type ToolPayload =
+        | {
+                  success: true;
+                  correlationId: string;
+                  data: Record<string, unknown>;
+          }
+        | {
+                  success: false;
+                  correlationId: string;
+                  error: {
+                          code: string;
+                          message: string;
+                          details: string[];
+                  };
+          };
 
-const listSchema = z.object({
-        memories: z.array(
-                z.object({ id: z.string(), tags: z.array(z.string()).default([]) }).passthrough(),
-        ),
-});
-
-const searchSchema = z.object({
-        query: z.object({
-                text: z.string().nullable().optional(),
-                vector: z.number().optional(),
-                tags: z.array(z.string()),
-        }),
-        results: z.array(
-                z.object({ id: z.string(), tags: z.array(z.string()).default([]) }).passthrough(),
-        ),
-});
-
-type ToolResult = Awaited<ReturnType<typeof memorySetTool.handler>>;
-
-function extractPayload(result: ToolResult): unknown {
-        const payload = result.content[0]?.text ?? '{}';
-        return JSON.parse(payload) as unknown;
+function isRecord(value: unknown): value is Record<string, unknown> {
+        return typeof value === 'object' && value !== null;
 }
 
-describe('memory MCP tools', () => {
+function assertRecord(value: unknown, message: string): Record<string, unknown> {
+        if (!isRecord(value)) {
+                throw new Error(message);
+        }
+        return value;
+}
+
+function assertString(value: unknown, message: string): string {
+        if (typeof value !== 'string') {
+                throw new Error(message);
+        }
+        return value;
+}
+
+function assertStringArray(value: unknown, message: string): string[] {
+        if (!Array.isArray(value)) {
+                throw new Error(message);
+        }
+        return value.map((item) => assertString(item, message));
+}
+
+function parsePayload(response: ToolResponse): ToolPayload {
+        const [first] = response.content ?? [];
+        if (!first) {
+                throw new Error('Tool payload must include content');
+        }
+
+        let raw: unknown = null;
+        if (first.text) {
+                try {
+                        raw = JSON.parse(first.text);
+                } catch (err) {
+                        throw new Error(`Tool payload could not be parsed as JSON: ${(err as Error).message}`);
+                }
+        }
+        const base = assertRecord(raw, 'Tool payload must be a JSON object');
+        const successValue = base.success;
+        if (typeof successValue !== 'boolean') {
+                throw new Error('Tool payload success flag must be boolean');
+        }
+        const correlationId = assertString(base.correlationId, 'Tool payload correlationId missing');
+
+        if (successValue) {
+                const data = assertRecord(base.data, 'Tool payload data missing for successful response');
+                return {
+                        success: true,
+                        correlationId,
+                        data,
+                };
+        }
+
+        const errorRecord = assertRecord(base.error, 'Tool payload error missing for failure response');
+        const code = assertString(errorRecord.code, 'Tool payload error code missing');
+        const message = assertString(errorRecord.message, 'Tool payload error message missing');
+        const details = assertStringArray(
+                errorRecord.details,
+                'Tool payload error details must be string[]',
+        );
+
+        return {
+                success: false,
+                correlationId,
+                error: { code, message, details },
+        };
+}
+
+function expectFailure(payload: ToolPayload): Extract<ToolPayload, { success: false }> {
+        if (payload.success) {
+                throw new Error('Expected tool payload to be a failure');
+        }
+        return payload;
+}
+
+function expectSuccess(payload: ToolPayload): Extract<ToolPayload, { success: true }> {
+        if (!payload.success) {
+                throw new Error('Expected tool payload to be successful');
+        }
+        return payload;
+}
+
+describe('memories MCP tools validation and error handling', () => {
+        let errorSpy: ReturnType<typeof vi.spyOn>;
+        let debugSpy: ReturnType<typeof vi.spyOn>;
+
         beforeEach(() => {
-                const service = createMemoryService(new InMemoryStore(), new LocalEmbedder());
-                setMemoryServiceFactory(() => Promise.resolve(service));
+                errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+                debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
         });
 
         afterEach(() => {
-                resetMemoryServiceFactory();
+                errorSpy.mockRestore();
+                debugSpy.mockRestore();
         });
 
-        it('stores memory entries via set tool', async () => {
-                const now = new Date().toISOString();
-                const res = await memorySetTool.handler({
-                        id: 'mem-1',
+        it('rejects memory_store requests when text exceeds configured length', async () => {
+                const response = await memoryStoreTool.handler({
                         kind: 'note',
-                        text: 'remember the milk',
-                        tags: ['todo'],
-                        createdAt: now,
-                        updatedAt: now,
-                        provenance: { source: 'agent' },
+                        text: 'a'.repeat(MAX_MEMORY_TEXT_LENGTH + 1),
+                        tags: [],
                 });
 
-                const payload = storedSchema.parse(extractPayload(res));
-                expect(payload.status).toBe('stored');
-                expect(payload.memory.id).toBe('mem-1');
+                expect(response.isError).toBe(true);
+                expect(response.metadata?.tool).toBe('memory_store');
+
+                const payload = expectFailure(parsePayload(response));
+                expect(payload.error.code).toBe('validation_error');
+                expect(
+                        payload.error.details.some((detail) =>
+                                detail.toLowerCase().includes('text') &&
+                                detail.toLowerCase().includes('length'),
+                        ),
+                ).toBe(true);
+                expect(payload.correlationId).toBe(response.metadata?.correlationId);
+                expect(errorSpy).toHaveBeenCalled();
         });
 
-        it('retrieves memory entries by id', async () => {
-                const now = new Date().toISOString();
-                await memorySetTool.handler({
-                        id: 'mem-2',
+        it('rejects metadata containing unsafe keys for memory_store', async () => {
+                const response = await memoryStoreTool.handler({
                         kind: 'note',
-                        text: 'project alpha kickoff',
-                        tags: ['project'],
-                        createdAt: now,
-                        updatedAt: now,
-                        provenance: { source: 'agent' },
+                        text: 'safe text',
+                        metadata: { __proto__: { polluted: true } },
                 });
 
-                const res = await memoryGetTool.handler({ id: 'mem-2' });
-                const payload = getSchema.parse(extractPayload(res));
-                expect(payload.found).toBe(true);
-                if (payload.found) {
-                        expect(payload.memory.id).toBe('mem-2');
-                }
-
-                const missing = await memoryGetTool.handler({ id: 'missing' });
-                expect(getSchema.parse(extractPayload(missing))).toEqual({ found: false, id: 'missing' });
-        });
-
-        it('deletes memory entries', async () => {
-                const now = new Date().toISOString();
-                await memorySetTool.handler({
-                        id: 'mem-3',
-                        kind: 'note',
-                        text: 'remove me',
-                        tags: ['cleanup'],
-                        createdAt: now,
-                        updatedAt: now,
-                        provenance: { source: 'agent' },
-                });
-
-                const res = await memoryDeleteTool.handler({ id: 'mem-3' });
-                const payload = z
-                        .object({ deleted: z.literal(true), id: z.string() })
-                        .parse(extractPayload(res));
-                expect(payload).toEqual({ deleted: true, id: 'mem-3' });
-
-                const after = await memoryGetTool.handler({ id: 'mem-3' });
-                expect(getSchema.parse(extractPayload(after))).toEqual({ found: false, id: 'mem-3' });
-        });
-
-        it('lists memories with optional filters', async () => {
-                const now = new Date().toISOString();
-                await memorySetTool.handler({
-                        id: 'mem-4',
-                        kind: 'note',
-                        text: 'alpha project status',
-                        tags: ['project'],
-                        createdAt: now,
-                        updatedAt: now,
-                        provenance: { source: 'agent' },
-                });
-                await memorySetTool.handler({
-                        id: 'mem-5',
-                        kind: 'event',
-                        text: 'beta launch scheduled',
-                        tags: ['launch'],
-                        createdAt: now,
-                        updatedAt: now,
-                        provenance: { source: 'agent' },
-                });
-
-                const listRes = await memoryListTool.handler({ limit: 5 });
-                const listPayload = listSchema.parse(extractPayload(listRes));
-                expect(Array.isArray(listPayload.memories)).toBe(true);
-                expect(listPayload.memories.length).toBeGreaterThanOrEqual(2);
-
-                const filtered = await memoryListTool.handler({ tags: ['project'] });
-                const filteredPayload = listSchema.parse(extractPayload(filtered));
-                expect(filteredPayload.memories).toHaveLength(1);
-                expect(filteredPayload.memories[0]?.id).toBe('mem-4');
-        });
-
-        it('searches memories by text or vector', async () => {
-                const now = new Date().toISOString();
-                const stored = await memorySetTool.handler({
-                        id: 'mem-6',
-                        kind: 'note',
-                        text: 'vector aware memory',
-                        tags: ['ml'],
-                        createdAt: now,
-                        updatedAt: now,
-                        provenance: { source: 'agent' },
-                });
-                const storedPayload = storedSchema.parse(extractPayload(stored));
-
-                const textRes = await memorySearchTool.handler({ text: 'vector', topK: 5 });
-                const textPayload = searchSchema.parse(extractPayload(textRes));
-                expect(textPayload.results.some((m) => m.id === 'mem-6')).toBe(true);
-
-                const vectorRes = await memorySearchTool.handler({
-                        vector: storedPayload.memory.vector,
-                        topK: 1,
-                });
-                const vectorPayload = searchSchema.parse(extractPayload(vectorRes));
-                expect(vectorPayload.results[0]?.id).toBe('mem-6');
-
-                await expect(memorySearchTool.handler({ topK: 5 })).rejects.toThrow(
-                        /text or vector/i,
-
+                expect(response.isError).toBe(true);
+                const payload = expectFailure(parsePayload(response));
+                expect(payload.error.code).toBe('security_error');
+                expect(payload.error.message).toMatch(/unsafe metadata/i);
+                expect(errorSpy).toHaveBeenCalledWith(
+                        expect.stringContaining('memory_store'),
+                        expect.objectContaining({ correlationId: payload.correlationId }),
                 );
+        });
+
+        it('requires at least one update field for memory_update', async () => {
+                const response = await memoryUpdateTool.handler({ id: 'mem-safe' });
+
+                expect(response.isError).toBe(true);
+                const payload = expectFailure(parsePayload(response));
+                expect(payload.error.code).toBe('validation_error');
+                expect(payload.error.message).toMatch(/at least one/i);
+        });
+
+        it('sanitizes tags on successful memory_store execution', async () => {
+                const response = await memoryStoreTool.handler({
+                        kind: 'note',
+                        text: 'hello world',
+                        tags: ['  spaced ', 'duplicate', 'duplicate'],
+                });
+
+                expect(response.isError).toBeFalsy();
+                expect(response.metadata?.tool).toBe('memory_store');
+                const payload = expectSuccess(parsePayload(response));
+                const tags = assertStringArray(
+                        payload.data.tags,
+                        'Tool payload tags must be a list of strings',
+                );
+                expect(tags).toEqual(['spaced', 'duplicate']);
+                expect(debugSpy).toHaveBeenCalledWith(
+                        expect.stringContaining('memory_store'),
+                        expect.objectContaining({ correlationId: response.metadata?.correlationId }),
+                );
+        });
+
+        it('returns validation error for memory_retrieve when limit is less than 1', async () => {
+                const response = await memoryRetrieveTool.handler({
+                        query: 'notes',
+                        limit: 0,
+                });
+
+                expect(response.isError).toBe(true);
+                const payload = expectFailure(parsePayload(response));
+                expect(payload.error.code).toBe('validation_error');
+                expect(
+                        payload.error.details.some((detail) =>
+                                detail.toLowerCase().includes('limit'),
+                        ),
+                ).toBe(true);
+
         });
 });

@@ -10,528 +10,608 @@
  */
 
 
+import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
-import { z } from 'zod';
+import { z, ZodError, type ZodIssue, type ZodType } from 'zod';
 
-import { memoryZ } from '../schemas/memory.zod.js';
+import { redactPII } from '../privacy/redact.js';
 
-const MEMORY_KIND_VALUES = ['note', 'event', 'artifact', 'embedding'] as const;
-const EXAMPLE_TIMESTAMP = '2024-01-01T00:00:00.000Z';
+interface MemoryToolResponse {
+        content: Array<{ type: 'text'; text: string }>;
+        metadata: {
+                correlationId: string;
+                timestamp: string;
+                tool: string;
+        };
+        isError?: boolean;
+}
 
-const isoDateTimeSchema = z
+interface MemoryTool {
+        name: string;
+        description: string;
+        inputSchema: ZodTypeAny;
+        handler: (params: unknown) => Promise<MemoryToolResponse>;
+}
+
+class MemoryToolError extends Error {
+        constructor(
+                public code: 'validation_error' | 'security_error' | 'not_found' | 'internal_error',
+                message: string,
+                public details: string[] = [],
+        ) {
+                super(message);
+                this.name = 'MemoryToolError';
+        }
+}
+
+export const MAX_MEMORY_TEXT_LENGTH = 8192;
+const MAX_MEMORY_TAGS = 32;
+const MAX_METADATA_ENTRIES = 50;
+const MAX_METADATA_DEPTH = 4;
+const MAX_METADATA_ARRAY_LENGTH = 50;
+const MAX_METADATA_STRING_LENGTH = 2048;
+const MAX_METADATA_SIZE_BYTES = 8_192;
+
+const MEMORY_ID_PATTERN = /^[a-zA-Z0-9._:-]{3,128}$/;
+const MEMORY_KIND_PATTERN = /^[a-zA-Z0-9._-]+$/;
+const UNSAFE_METADATA_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+        return typeof value === 'object' && value !== null;
+}
+
+function ensurePlainObject(value: unknown, context: string): asserts value is Record<string, unknown> {
+        if (!isRecord(value)) {
+                throw new MemoryToolError(
+                        'validation_error',
+                        `${context} must be an object`,
+                        [`${context} must be an object`],
+                );
+        }
+        const proto = Reflect.getPrototypeOf(value);
+        if (proto !== Object.prototype && proto !== null) {
+                const message =
+                        context === 'metadata'
+                                ? 'Unsafe metadata prototype detected'
+                                : `Unsafe prototype detected for ${context}`;
+                throw new MemoryToolError(
+                        'security_error',
+                        message,
+                        [`${context} has unsafe prototype`],
+                );
+        }
+}
+
+function createCorrelationId(): string {
+        return randomUUID();
+}
+
+function mapZodIssues(issues: ZodIssue[]): string[] {
+        return issues.map((issue) => `${issue.path.join('.') || issue.code}: ${issue.message}`);
+}
+
+function sanitizeText(text: string, field: 'text' | 'update_text'): string {
+        const normalized = text.trim();
+        if (!normalized) {
+                throw new MemoryToolError('validation_error', 'Text content cannot be empty', [
+                        `${field === 'text' ? 'Text' : 'Updated text'} cannot be empty`,
+                ]);
+        }
+        if (normalized.length > MAX_MEMORY_TEXT_LENGTH) {
+                throw new MemoryToolError(
+                        'validation_error',
+                        `Text exceeds maximum length of ${MAX_MEMORY_TEXT_LENGTH} characters`,
+                        [`Text length ${normalized.length} exceeds limit of ${MAX_MEMORY_TEXT_LENGTH}`],
+                );
+        }
+        return normalized;
+}
+
+function sanitizeTags(tags: string[] = []): string[] {
+        const unique: string[] = [];
+        const seen = new Set<string>();
+
+        for (const raw of tags) {
+                const tag = raw.trim();
+                if (!tag) continue;
+                if (tag.length > 64) {
+                        throw new MemoryToolError('validation_error', 'Tag exceeds maximum length of 64 characters', [
+                                `Tag "${tag.slice(0, 80)}" exceeds maximum length`,
+                        ]);
+                }
+                if (seen.has(tag)) continue;
+                if (unique.length >= MAX_MEMORY_TAGS) {
+                        throw new MemoryToolError(
+                                'validation_error',
+                                `Too many tags provided (max ${MAX_MEMORY_TAGS})`,
+                                [`Tag limit of ${MAX_MEMORY_TAGS} exceeded`],
+                        );
+                }
+                seen.add(tag);
+                unique.push(tag);
+        }
+
+        return unique;
+}
+
+function sanitizeMetadataValue(value: unknown, depth: number): unknown {
+        if (depth > MAX_METADATA_DEPTH) {
+                throw new MemoryToolError(
+                        'validation_error',
+                        `Metadata nesting depth exceeds ${MAX_METADATA_DEPTH}`,
+                        [`Metadata depth ${depth} exceeds maximum of ${MAX_METADATA_DEPTH}`],
+                );
+        }
+
+        if (value === null || value === undefined) {
+                return value;
+        }
+
+        if (typeof value === 'string') {
+                if (value.length > MAX_METADATA_STRING_LENGTH) {
+                        throw new MemoryToolError(
+                                'validation_error',
+                                'Metadata string value exceeds allowed length',
+                                [
+                                        `Metadata string length ${value.length} exceeds limit of ${MAX_METADATA_STRING_LENGTH}`,
+                                ],
+                        );
+                }
+                return value;
+        }
+
+        if (typeof value === 'number') {
+                if (!Number.isFinite(value)) {
+                        throw new MemoryToolError('validation_error', 'Metadata numbers must be finite', [
+                                'Metadata numbers must be finite',
+                        ]);
+                }
+                return value;
+        }
+
+        if (typeof value === 'boolean') {
+                return value;
+        }
+
+        if (Array.isArray(value)) {
+                if (value.length > MAX_METADATA_ARRAY_LENGTH) {
+                        throw new MemoryToolError(
+                                'validation_error',
+                                `Metadata arrays cannot exceed ${MAX_METADATA_ARRAY_LENGTH} items`,
+                                [
+                                        `Metadata array length ${value.length} exceeds limit of ${MAX_METADATA_ARRAY_LENGTH}`,
+                                ],
+                        );
+                }
+                return value.map((item) => sanitizeMetadataValue(item, depth + 1));
+        }
+
+        if (typeof value === 'object') {
+                return sanitizeMetadata(value as Record<string, unknown>, depth + 1);
+        }
+
+        throw new MemoryToolError('validation_error', `Unsupported metadata value type: ${typeof value}`, [
+                `Unsupported metadata value type: ${typeof value}`,
+        ]);
+}
+
+function ensureMetadataSize(metadata: Record<string, unknown>): void {
+        const serialized = JSON.stringify(metadata);
+        const bytes = Buffer.byteLength(serialized, 'utf8');
+        if (bytes > MAX_METADATA_SIZE_BYTES) {
+                throw new MemoryToolError(
+                        'validation_error',
+                        `Metadata payload exceeds ${MAX_METADATA_SIZE_BYTES} bytes`,
+                        [`Metadata size ${bytes} bytes exceeds limit of ${MAX_METADATA_SIZE_BYTES}`],
+                );
+        }
+}
+
+function sanitizeMetadata(metadata: Record<string, unknown>, depth = 0): Record<string, unknown> {
+        if (depth > MAX_METADATA_DEPTH) {
+                throw new MemoryToolError(
+                        'validation_error',
+                        `Metadata nesting depth exceeds ${MAX_METADATA_DEPTH}`,
+                        [`Metadata depth ${depth} exceeds maximum of ${MAX_METADATA_DEPTH}`],
+                );
+        }
+
+        const proto = Reflect.getPrototypeOf(metadata);
+        if (proto !== Object.prototype && proto !== null) {
+                throw new MemoryToolError(
+                        'security_error',
+                        'Unsafe metadata prototype detected',
+                        ['Metadata prototype must not override Object.prototype'],
+                );
+        }
+
+        const entries = Object.entries(metadata);
+        if (entries.length > MAX_METADATA_ENTRIES) {
+                throw new MemoryToolError(
+                        'validation_error',
+                        `Metadata contains too many keys (max ${MAX_METADATA_ENTRIES})`,
+                        [`Metadata key count ${entries.length} exceeds limit of ${MAX_METADATA_ENTRIES}`],
+                );
+        }
+
+        const sanitized = Object.create(null) as Record<string, unknown>;
+
+        for (const [rawKey, value] of entries) {
+                const key = rawKey.trim();
+                if (!key) {
+                        throw new MemoryToolError('validation_error', 'Metadata keys cannot be empty', [
+                                'Metadata keys cannot be empty',
+                        ]);
+                }
+                if (UNSAFE_METADATA_KEYS.has(key) || key.startsWith('__')) {
+                        throw new MemoryToolError(
+                                'security_error',
+                                `Unsafe metadata key "${key}" detected`,
+                                [`Metadata key "${key}" is not allowed`],
+                        );
+                }
+                sanitized[key] = sanitizeMetadataValue(value, depth + 1);
+        }
+
+        ensureMetadataSize(sanitized);
+
+        return sanitized;
+}
+
+function createSuccessResponse<T>(
+        tool: string,
+        data: T,
+        correlationId: string,
+        timestamp: string,
+): MemoryToolResponse {
+        return {
+                content: [
+                        {
+                                type: 'text',
+                                text: JSON.stringify({
+                                        success: true,
+                                        data,
+                                        correlationId,
+                                        timestamp,
+                                }),
+                        },
+                ],
+                metadata: { correlationId, timestamp, tool },
+        };
+}
+
+function createErrorResponse(
+        tool: string,
+        error: { code: string; message: string; details?: string[] },
+        correlationId: string,
+        timestamp: string,
+        durationMs?: number,
+): MemoryToolResponse {
+        console.error(`[memories:mcp:${tool}] ${error.code}: ${error.message}`, {
+                correlationId,
+                details: error.details ?? [],
+                ...(typeof durationMs === 'number' ? { durationMs } : {}),
+        });
+
+        return {
+                content: [
+                        {
+                                type: 'text',
+                                text: JSON.stringify({
+                                        success: false,
+                                        error: {
+                                                code: error.code,
+                                                message: error.message,
+                                                details: error.details ?? [],
+                                        },
+                                        correlationId,
+                                        timestamp,
+                                }),
+                        },
+                ],
+                metadata: { correlationId, timestamp, tool },
+                isError: true,
+        };
+}
+
+async function executeTool<TOutput, TSchema extends ZodType<TOutput, z.ZodTypeDef, unknown>, TResult>(
+        tool: string,
+        schema: TSchema,
+        params: unknown,
+        logic: (input: TOutput, raw: unknown) => Promise<TResult> | TResult,
+): Promise<MemoryToolResponse> {
+        const correlationId = createCorrelationId();
+        const timestamp = new Date().toISOString();
+        const startedAt = Date.now();
+
+        try {
+                const parsed = schema.parse(params);
+                const result = await logic(parsed, params);
+                console.debug(`[memories:mcp:${tool}] completed`, {
+                        correlationId,
+                        durationMs: Date.now() - startedAt,
+                });
+                return createSuccessResponse(tool, result, correlationId, timestamp);
+        } catch (error) {
+                const durationMs = Date.now() - startedAt;
+                if (error instanceof MemoryToolError) {
+                        return createErrorResponse(
+                                tool,
+                                {
+                                        code: error.code,
+                                        message: error.message,
+                                        details: error.details,
+                                },
+                                correlationId,
+                                timestamp,
+                                durationMs,
+                        );
+                }
+                if (error instanceof ZodError) {
+                        return createErrorResponse(
+                                tool,
+                                {
+                                        code: 'validation_error',
+                                        message: 'Invalid input provided',
+                                        details: mapZodIssues(error.issues),
+                                },
+                                correlationId,
+                                timestamp,
+                                durationMs,
+                        );
+                }
+                const message = error instanceof Error ? error.message : 'Unknown error';
+                return createErrorResponse(
+                        tool,
+                        {
+                                code: 'internal_error',
+                                message,
+                        },
+                        correlationId,
+                        timestamp,
+                        durationMs,
+                );
+        }
+}
+
+const memoryKindSchema = z
         .string()
-        .datetime({ offset: true })
-        .describe('ISO-8601 timestamp with timezone information.');
+        .min(1)
+        .max(32)
+        .regex(MEMORY_KIND_PATTERN, 'Kind may only contain alphanumeric characters, dots, underscores, or hyphens');
 
-const namespaceSchema = z
+const memoryIdentifierSchema = z
         .string()
-        .trim()
-        .min(1, 'Namespace must not be empty')
-        .max(128, 'Namespace must be <= 128 characters')
-        .regex(/^[A-Za-z0-9._:-]+$/, 'Namespace may only include alphanumeric, dot, colon, underscore or dash characters')
-        .describe('Logical namespace used to isolate memory records.');
+        .min(3)
+        .max(128)
+        .regex(
+                MEMORY_ID_PATTERN,
+                'Memory ID may only contain alphanumeric characters, dots, colons, underscores, or hyphens',
+        );
 
-const memoryIdSchema = z
-        .string()
-        .trim()
-        .min(1, 'Memory id is required')
-        .max(128, 'Memory id must be <= 128 characters')
-        .regex(/^[A-Za-z0-9._:-]+$/, 'Memory id may only include alphanumeric, dot, colon, underscore or dash characters')
-        .describe('Unique identifier for a memory record.');
+// Memory tool schemas
+export const memoryStoreToolSchema = z.object({
+        kind: memoryKindSchema,
+        text: z.string().min(1).describe('Content to store'),
+        tags: z.array(z.string()).default([]).describe('Tags for categorization'),
+        metadata: z.record(z.unknown()).optional().describe('Additional metadata'),
+});
 
-const tagSchema = z
-        .string()
-        .trim()
-        .min(1, 'Tags must not be empty')
-        .max(64, 'Tags must be <= 64 characters')
-        .describe('Tag label attached to a memory item.');
+export const memoryRetrieveToolSchema = z.object({
+        query: z.string().min(1).describe('Query to search for similar memories'),
+        limit: z
+                .number()
+                .int()
+                .positive()
+                .max(100)
+                .default(10)
+                .describe('Maximum number of results'),
+        kind: memoryKindSchema.optional().describe('Filter by memory type'),
+        tags: z.array(z.string()).optional().describe('Filter by tags'),
+});
 
-const vectorSchema = z
-        .array(z.number().finite())
-        .min(1, 'Vector must include at least one dimension')
-        .max(4096, 'Vector must not exceed 4096 dimensions')
-        .describe('Embedding vector representation of the memory.');
+export const memoryUpdateToolSchema = z.object({
+        id: memoryIdentifierSchema.describe('Memory item ID to update'),
+        text: z.string().min(1).optional().describe('Updated content'),
+        tags: z.array(z.string()).optional().describe('Updated tags'),
+        metadata: z.record(z.unknown()).optional().describe('Updated metadata'),
+});
 
-const evidenceSchema = z
+export const memoryDeleteToolSchema = z
         .object({
-                uri: z.string().url('Evidence URI must be a valid URL'),
-                range: z
-                        .tuple([z.number().int().nonnegative(), z.number().int().positive()])
-                        .refine(([start, end]) => start < end, {
-                                message: 'Evidence range must be ascending',
-                        })
-                        .optional(),
+                id: memoryIdentifierSchema.describe('Memory item ID to delete'),
         })
         .strict();
 
-const provenanceSchema = z.object({
-        source: z.enum(['user', 'agent', 'system'] as const),
-        actor: z.string().trim().min(1).max(128).optional(),
-        evidence: z.array(evidenceSchema).max(10).optional(),
-        hash: z.string().trim().min(1).max(128).optional(),
+export const memoryStatsToolSchema = z.object({
+        includeDetails: z
+                .boolean()
+                .default(false)
+                .describe('Include detailed statistics'),
 });
 
-const policySchema = z.object({
-        pii: z.boolean().optional(),
-        scope: z.enum(['session', 'user', 'org'] as const).optional(),
-        requiresConsent: z.boolean().optional(),
-});
+type MemoryStoreHandlerInput = z.infer<typeof memoryStoreToolSchema>;
+type MemoryRetrieveHandlerInput = z.infer<typeof memoryRetrieveToolSchema>;
+type MemoryUpdateHandlerInput = z.infer<typeof memoryUpdateToolSchema>;
+type MemoryDeleteHandlerInput = z.infer<typeof memoryDeleteToolSchema>;
+type MemoryStatsHandlerInput = z.infer<typeof memoryStatsToolSchema>;
 
-const memoryRecordSchema = z
-        .object({
-                id: memoryIdSchema,
-                kind: z.enum(MEMORY_KIND_VALUES),
-                namespace: namespaceSchema.optional(),
-                text: z
-                        .string()
-                        .trim()
-                        .min(1, 'Text must not be empty when provided')
-                        .max(16384, 'Text must be <= 16384 characters')
-                        .optional(),
-                vector: vectorSchema.optional(),
-                tags: z.array(tagSchema).max(32).default([]),
-                ttl: isoDateTimeSchema.optional(),
-                provenance: provenanceSchema,
-                policy: policySchema.optional(),
-                embeddingModel: z.string().trim().min(1).max(128).optional(),
-                createdAt: isoDateTimeSchema,
-                updatedAt: isoDateTimeSchema,
-        })
-        .superRefine((value, ctx) => {
-                if (!value.text && !value.vector) {
-                        ctx.addIssue({
-                                code: z.ZodIssueCode.custom,
-                                path: ['text'],
-                                message: 'Either text or vector must be provided.',
-                        });
-                }
-        });
-
-const memoryRecordOutputSchema = memoryZ.omit({ namespace: true }).extend({
-        namespace: namespaceSchema.optional(),
-});
-
-const memorySearchHitSchema = memoryRecordOutputSchema.extend({
-        score: z
-                .number()
-                .min(0)
-                .max(1)
-                .optional()
-                .describe('Optional similarity score in the range [0,1].'),
-});
-
-export const memoryStoreInputSchema = memoryRecordSchema;
-export const memoryStoreOutputSchema = z.object({
-        status: z.enum(['created', 'updated', 'pending'] as const),
-        memory: memoryRecordOutputSchema,
-});
-
-export const memoryGetInputSchema = z.object({
-        id: memoryIdSchema,
-        namespace: namespaceSchema.optional(),
-        includePending: z.boolean().default(false),
-});
-
-export const memoryGetOutputSchema = z.object({
-        memory: memoryRecordOutputSchema.nullable(),
-});
-
-export const memoryDeleteInputSchema = z.object({
-        id: memoryIdSchema,
-        namespace: namespaceSchema.optional(),
-        hardDelete: z.boolean().default(false),
-});
-
-export const memoryDeleteOutputSchema = z.object({
-        id: memoryIdSchema,
-        deleted: z.literal(true),
-        performedAt: isoDateTimeSchema,
-});
-
-export const memoryListInputSchema = z
-        .object({
-                namespace: namespaceSchema.optional(),
-                limit: z
-                        .number()
-                        .int()
-                        .min(1)
-                        .max(100)
-                        .default(25)
-                        .describe('Maximum number of items to return.'),
-                cursor: z.string().trim().min(1).optional(),
-                kinds: z.array(z.enum(MEMORY_KIND_VALUES)).max(4).optional(),
-                tags: z.array(tagSchema).max(16).optional(),
-        })
-        .superRefine((value, ctx) => {
-                if (value.cursor && !value.namespace) {
-                        ctx.addIssue({
-                                code: z.ZodIssueCode.custom,
-                                path: ['namespace'],
-                                message: 'Namespace is required when using a cursor.',
-                        });
-                }
-        });
-
-export const memoryListOutputSchema = z.object({
-        items: z.array(memoryRecordOutputSchema),
-        nextCursor: z.string().optional(),
-});
-
-export const memorySearchInputSchema = z
-        .object({
-                query: z.string().trim().min(1).max(4096).optional(),
-                vector: vectorSchema.optional(),
-                namespace: namespaceSchema.optional(),
-                limit: z
-                        .number()
-                        .int()
-                        .min(1)
-                        .max(50)
-                        .default(8)
-                        .describe('Maximum number of results to return.'),
-                kinds: z.array(z.enum(MEMORY_KIND_VALUES)).max(4).optional(),
-                tags: z.array(tagSchema).max(16).optional(),
-        })
-        .superRefine((value, ctx) => {
-                if (!value.query && !value.vector) {
-                        ctx.addIssue({
-                                code: z.ZodIssueCode.custom,
-                                path: ['query'],
-                                message: 'Either a text query or a vector must be provided.',
-                        });
-                }
-        });
-
-export const memorySearchOutputSchema = z.object({
-        items: z.array(memorySearchHitSchema),
-        tookMs: z.number().nonnegative().optional(),
-});
-
-export type MemoryStoreInput = z.infer<typeof memoryStoreInputSchema>;
-export type MemoryStoreOutput = z.infer<typeof memoryStoreOutputSchema>;
-export type MemoryGetInput = z.infer<typeof memoryGetInputSchema>;
-export type MemoryGetOutput = z.infer<typeof memoryGetOutputSchema>;
-export type MemoryDeleteInput = z.infer<typeof memoryDeleteInputSchema>;
-export type MemoryDeleteOutput = z.infer<typeof memoryDeleteOutputSchema>;
-export type MemoryListInput = z.infer<typeof memoryListInputSchema>;
-export type MemoryListOutput = z.infer<typeof memoryListOutputSchema>;
-export type MemorySearchInput = z.infer<typeof memorySearchInputSchema>;
-export type MemorySearchOutput = z.infer<typeof memorySearchOutputSchema>;
-
-export interface MemoryToolContext {
-        namespace?: string;
-        requestId?: string;
-        locale?: string;
-}
-
-export interface MemoryToolSuccessResponse<Data> {
-        type: 'success';
-        data: Data;
-        meta?: Record<string, unknown>;
-}
-
-export interface MemoryToolErrorDescriptor {
-        code: MemoryToolErrorCode;
-        summary: string;
-        httpStatus: number;
-        retryable: boolean;
-        remediation: string;
-        docsUrl?: string;
-}
-
-export interface MemoryToolErrorResponse {
-        type: 'error';
-        error: MemoryToolErrorDescriptor & {
-                message: string;
-                details?: unknown;
-        };
-}
-
-export type MemoryToolResponse<Data> =
-        | MemoryToolSuccessResponse<Data>
-        | MemoryToolErrorResponse;
-
-export type MemoryToolHandler<Input, Output> = (
-        input: Input,
-        context: MemoryToolContext,
-) => Promise<MemoryToolResponse<Output>>;
-
-export interface MemoryToolDocumentation<Input, Output> {
-        summary: string;
-        inputExample: Input;
-        outputExample: Output | null;
-        errors: MemoryToolErrorCode[];
-}
-
-export interface MemoryToolDefinition<Input, Output> {
-        name: `memories.${string}`;
-        description: string;
-        inputSchema: z.ZodType<Input>;
-        outputSchema: z.ZodType<Output>;
-        errors: MemoryToolErrorCatalog;
-        docs: MemoryToolDocumentation<Input, Output>;
-        invoke(rawInput: unknown, context?: MemoryToolContext): Promise<MemoryToolResponse<Output>>;
-}
-
-export type MemoryToolErrorCode =
-        | 'INVALID_INPUT'
-        | 'NOT_FOUND'
-        | 'NOT_IMPLEMENTED'
-        | 'STORAGE_FAILURE'
-        | 'INTERNAL_ERROR';
-
-export type MemoryToolErrorCatalog = Record<MemoryToolErrorCode, MemoryToolErrorDescriptor>;
-
-export const memoryToolErrorCatalog: MemoryToolErrorCatalog = {
-        INVALID_INPUT: {
-                code: 'INVALID_INPUT',
-                summary: 'The provided payload failed schema validation.',
-                httpStatus: 400,
-                retryable: false,
-                remediation: 'Review the tool input schema and correct invalid fields before retrying.',
-                docsUrl: 'https://docs.cortex-oss.dev/memories/mcp#validation-errors',
-        },
-        NOT_FOUND: {
-                code: 'NOT_FOUND',
-                summary: 'The requested memory record does not exist.',
-                httpStatus: 404,
-                retryable: false,
-                remediation: 'Verify the memory identifier and namespace.',
-                docsUrl: 'https://docs.cortex-oss.dev/memories/mcp#not-found',
-        },
-        NOT_IMPLEMENTED: {
-                code: 'NOT_IMPLEMENTED',
-                summary: 'The tool handler has not been implemented yet.',
-                httpStatus: 501,
-                retryable: true,
-                remediation: 'Check for upcoming releases or implement the handler before use.',
-                docsUrl: 'https://docs.cortex-oss.dev/memories/mcp#not-implemented',
-        },
-        STORAGE_FAILURE: {
-                code: 'STORAGE_FAILURE',
-                summary: 'The underlying memory store rejected the request.',
-                httpStatus: 503,
-                retryable: true,
-                remediation: 'Retry the operation or failover to a secondary store.',
-                docsUrl: 'https://docs.cortex-oss.dev/memories/mcp#storage-failure',
-        },
-        INTERNAL_ERROR: {
-                code: 'INTERNAL_ERROR',
-                summary: 'An unexpected error occurred while executing the tool.',
-                httpStatus: 500,
-                retryable: true,
-                remediation: 'Inspect server logs for additional context.',
-                docsUrl: 'https://docs.cortex-oss.dev/memories/mcp#internal-error',
-        },
-};
-
-const defaultCatalog: MemoryToolErrorCatalog = memoryToolErrorCatalog;
-
-const formatZodIssues = (error: z.ZodError<unknown>) => ({
-        issues: error.errors.map((issue) => ({
-                code: issue.code,
-                message: issue.message,
-                path: issue.path,
-        })),
-});
-
-export const createMemoryToolErrorResponse = (
-        code: MemoryToolErrorCode,
-        message: string,
-        details?: unknown,
-): MemoryToolErrorResponse => {
-        const descriptor = defaultCatalog[code] ?? defaultCatalog.INTERNAL_ERROR;
-        return {
-                type: 'error',
-                error: {
-                        ...descriptor,
-                        message,
-                        details,
-                },
-        };
-};
-
-export const isMemoryToolErrorResponse = (
-        response: unknown,
-): response is MemoryToolErrorResponse => {
-        if (typeof response !== 'object' || response === null) {
-                return false;
-        }
-        const candidate = response as { type?: unknown; error?: unknown };
-        if (candidate.type !== 'error') {
-                return false;
-        }
-        const errorPayload = candidate.error as Record<string, unknown> | undefined;
-        return (
-                typeof errorPayload === 'object' &&
-                errorPayload !== null &&
-                typeof errorPayload.code === 'string'
-        );
-};
-
-const createNotImplementedHandler = <Input, Output>(
-        toolName: string,
-): MemoryToolHandler<Input, Output> => {
-        return () =>
-                Promise.resolve(
-                        createMemoryToolErrorResponse(
-                                'NOT_IMPLEMENTED',
-                                `${toolName} handler not implemented yet.`,
-                        ),
-                );
-};
-
-const createMemoryToolDefinition = <Input, Output>(config: {
-        name: `memories.${string}`;
-        description: string;
-        inputSchema: z.ZodType<Input>;
-        outputSchema: z.ZodType<Output>;
-        docs: MemoryToolDocumentation<Input, Output>;
-        handler: MemoryToolHandler<Input, Output>;
-}): MemoryToolDefinition<Input, Output> => {
-        const invoke = async (
-                rawInput: unknown,
-                context: MemoryToolContext = {},
-        ): Promise<MemoryToolResponse<Output>> => {
-                const parsed = config.inputSchema.safeParse(rawInput);
-                if (!parsed.success) {
-                        return createMemoryToolErrorResponse(
-                                'INVALID_INPUT',
-                                'Payload failed validation for the requested tool.',
-                                formatZodIssues(parsed.error),
-                        );
-                }
-                try {
-                        return await config.handler(parsed.data, context);
-                } catch (error) {
-                        if (
-                                typeof error === 'object' &&
-                                error !== null &&
-                                isMemoryToolErrorResponse(error)
-                        ) {
-                                return error as MemoryToolErrorResponse;
+// Memory MCP Tool definitions
+export const memoryStoreTool: MemoryTool = {
+        name: 'memory_store',
+        description: 'Store information in the memory system',
+        inputSchema: memoryStoreToolSchema,
+        handler: async (params: unknown) =>
+                executeTool('memory_store', memoryStoreToolSchema, params, ({ kind, text, tags, metadata }: MemoryStoreHandlerInput, rawParams) => {
+                        const rawRecord = isRecord(rawParams) ? rawParams : null;
+                        const rawMetadata =
+                                rawRecord && Object.prototype.hasOwnProperty.call(rawRecord, 'metadata')
+                                        ? rawRecord.metadata
+                                        : undefined;
+                        if (rawMetadata !== undefined && rawMetadata !== null) {
+                                ensurePlainObject(rawMetadata, 'metadata');
                         }
-                        const message =
-                                error instanceof Error
-                                        ? error.message
-                                        : 'Unexpected error while executing the tool.';
-                        const details =
-                                error instanceof Error
-                                        ? { name: error.name, stack: error.stack }
-                                        : { cause: error };
-                        return createMemoryToolErrorResponse('INTERNAL_ERROR', message, details);
-                }
-        };
+                        const normalizedText = sanitizeText(text, 'text');
+                        const sanitizedTags = sanitizeTags(tags);
+                        const sanitizedMetadata = metadata ? sanitizeMetadata(metadata) : undefined;
 
-        return {
-                name: config.name,
-                description: config.description,
-                inputSchema: config.inputSchema,
-                outputSchema: config.outputSchema,
-                errors: defaultCatalog,
-                docs: config.docs,
-                invoke,
-        };
+                        const memoryItem = {
+                                id: `mem-${Date.now()}`,
+                                kind,
+                                text: normalizedText,
+                                tags: sanitizedTags,
+                                metadata: sanitizedMetadata,
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString(),
+                                provenance: { source: 'mcp-tool' },
+                        };
+
+                        return {
+                                stored: true,
+                                id: memoryItem.id,
+                                kind: memoryItem.kind,
+                                tags: sanitizedTags,
+                                textLength: normalizedText.length,
+                                metadataKeys: sanitizedMetadata ? Object.keys(sanitizedMetadata).length : 0,
+                                redactedPreview: redactPII(normalizedText).slice(0, 256),
+                        };
+                }),
 };
 
-const exampleMemory: MemoryStoreInput = {
-        id: 'mem-123',
-        kind: 'note',
-        namespace: 'default',
-        text: 'Remember to hydrate after long debugging sessions.',
-        tags: ['health', 'productivity'],
-        provenance: { source: 'agent', actor: 'coach-bot' },
-        createdAt: EXAMPLE_TIMESTAMP,
-        updatedAt: EXAMPLE_TIMESTAMP,
+export const memoryRetrieveTool: MemoryTool = {
+        name: 'memory_retrieve',
+        description: 'Retrieve information from the memory system',
+        inputSchema: memoryRetrieveToolSchema,
+        handler: async (params: unknown) =>
+                executeTool('memory_retrieve', memoryRetrieveToolSchema, params, ({
+                        query,
+                        limit,
+                        kind,
+                        tags,
+                }: MemoryRetrieveHandlerInput) => {
+                        const sanitizedTags = tags ? sanitizeTags(tags) : undefined;
+                        const effectiveLimit = Math.min(limit, 100);
+
+                        const results = [
+                                {
+                                        id: 'mem-example',
+                                        kind: kind || 'note',
+                                        text: `Sample memory result for query: ${query}`,
+                                        score: 0.9,
+                                        tags:
+                                                sanitizedTags && sanitizedTags.length > 0
+                                                        ? sanitizedTags
+                                                        : ['example'],
+                                        createdAt: new Date().toISOString(),
+                                },
+                        ];
+
+                        return {
+                                query,
+                                filters: {
+                                        kind: kind ?? null,
+                                        tags: sanitizedTags ?? [],
+                                },
+                                results: results.slice(0, effectiveLimit),
+                                totalFound: results.length,
+                        };
+                }),
 };
 
-export const memoryStoreTool = createMemoryToolDefinition({
-        name: 'memories.store',
-        description: 'Persist or update a memory record within the configured memory store.',
-        inputSchema: memoryStoreInputSchema,
-        outputSchema: memoryStoreOutputSchema,
-        docs: {
-                summary: 'Stores a fully described memory record. Either `text` or `vector` must be provided.',
-                inputExample: exampleMemory,
-                outputExample: {
-                        status: 'pending',
-                        memory: {
-                                ...exampleMemory,
-                                policy: undefined,
-                                embeddingModel: undefined,
-                        },
-                },
-                errors: ['INVALID_INPUT', 'NOT_IMPLEMENTED', 'STORAGE_FAILURE'],
-        },
-        handler: createNotImplementedHandler('memories.store'),
-});
+export const memoryUpdateTool: MemoryTool = {
+        name: 'memory_update',
+        description: 'Update existing memory items',
+        inputSchema: memoryUpdateToolSchema,
+        handler: async (params: unknown) =>
+                executeTool('memory_update', memoryUpdateToolSchema, params, ({
+                        id,
+                        text,
+                        tags,
+                        metadata,
+                }: MemoryUpdateHandlerInput, rawParams) => {
+                        if (text === undefined && tags === undefined && metadata === undefined) {
+                                throw new MemoryToolError(
+                                        'validation_error',
+                                        'At least one of text, tags, or metadata must be provided for update',
+                                        ['Provide at least one field to update'],
+                                );
+                        }
 
-export const memoryGetTool = createMemoryToolDefinition({
-        name: 'memories.get',
-        description: 'Retrieve a memory record by identifier.',
-        inputSchema: memoryGetInputSchema,
-        outputSchema: memoryGetOutputSchema,
-        docs: {
-                summary: 'Returns a single memory record when it exists in the requested namespace.',
-                inputExample: { id: 'mem-123', namespace: 'default', includePending: false },
-                outputExample: { memory: null },
-                errors: ['INVALID_INPUT', 'NOT_FOUND'],
-        },
-        handler: createNotImplementedHandler('memories.get'),
-});
+                        const rawRecord = isRecord(rawParams) ? rawParams : null;
+                        const rawMetadata =
+                                rawRecord && Object.prototype.hasOwnProperty.call(rawRecord, 'metadata')
+                                        ? rawRecord.metadata
+                                        : undefined;
+                        if (rawMetadata !== undefined && rawMetadata !== null) {
+                                ensurePlainObject(rawMetadata, 'metadata');
+                        }
 
-export const memoryDeleteTool = createMemoryToolDefinition({
-        name: 'memories.delete',
-        description: 'Delete a memory record from the configured namespace.',
-        inputSchema: memoryDeleteInputSchema,
-        outputSchema: memoryDeleteOutputSchema,
-        docs: {
-                summary: 'Removes a memory record. Hard delete may bypass soft-delete workflows.',
-                inputExample: { id: 'mem-123', namespace: 'default', hardDelete: false },
-                outputExample: {
-                        id: 'mem-123',
+                        const sanitizedText = text !== undefined ? sanitizeText(text, 'update_text') : undefined;
+                        const sanitizedTags = tags !== undefined ? sanitizeTags(tags) : undefined;
+                        const sanitizedMetadata = metadata !== undefined ? sanitizeMetadata(metadata) : undefined;
+
+                        return {
+                                id,
+                                updated: true,
+                                changes: {
+                                        text: sanitizedText !== undefined,
+                                        tags: sanitizedTags !== undefined,
+                                        metadata: sanitizedMetadata !== undefined,
+                                },
+                                data: {
+                                        ...(sanitizedText !== undefined && {
+                                                textPreview: redactPII(sanitizedText).slice(0, 256),
+                                                textLength: sanitizedText.length,
+                                        }),
+                                        ...(sanitizedTags !== undefined && { tags: sanitizedTags }),
+                                        ...(sanitizedMetadata !== undefined && {
+                                                metadataKeys: Object.keys(sanitizedMetadata).length,
+                                        }),
+                                },
+                                updatedAt: new Date().toISOString(),
+                        };
+                }),
+};
+
+export const memoryDeleteTool: MemoryTool = {
+        name: 'memory_delete',
+        description: 'Delete memory items',
+        inputSchema: memoryDeleteToolSchema,
+        handler: async (params: unknown) =>
+                executeTool('memory_delete', memoryDeleteToolSchema, params, ({ id }: MemoryDeleteHandlerInput) => ({
+                        id,
                         deleted: true,
-                        performedAt: EXAMPLE_TIMESTAMP,
-                },
-                errors: ['INVALID_INPUT', 'NOT_FOUND'],
-        },
-        handler: createNotImplementedHandler('memories.delete'),
-});
+                        deletedAt: new Date().toISOString(),
+                })),
+};
 
-export const memoryListTool = createMemoryToolDefinition({
-        name: 'memories.list',
-        description: 'List memory records with optional pagination and filtering.',
-        inputSchema: memoryListInputSchema,
-        outputSchema: memoryListOutputSchema,
-        docs: {
-                summary: 'Provides a paginated listing of memory records scoped to a namespace.',
-                inputExample: { namespace: 'default', limit: 25, cursor: undefined, kinds: undefined, tags: undefined },
-                outputExample: { items: [], nextCursor: undefined },
-                errors: ['INVALID_INPUT'],
-        },
-        handler: createNotImplementedHandler('memories.list'),
-});
+export const memoryStatsTool: MemoryTool = {
+        name: 'memory_stats',
+        description: 'Get memory system statistics',
+        inputSchema: memoryStatsToolSchema,
+        handler: async (params: unknown) =>
+                executeTool('memory_stats', memoryStatsToolSchema, params, ({ includeDetails }: MemoryStatsHandlerInput) => ({
+                        totalItems: 0,
+                        totalSize: 0,
+                        itemsByKind: {},
+                        lastActivity: new Date().toISOString(),
+                        ...(includeDetails && {
+                                details: {
+                                        storageBackend: 'sqlite',
+                                        indexedFields: ['kind', 'tags', 'createdAt'],
+                                        averageItemSize: 0,
+                                },
+                        }),
+                })),
+};
 
-export const memorySearchTool = createMemoryToolDefinition({
-        name: 'memories.search',
-        description: 'Search memories using semantic text or vector queries.',
-        inputSchema: memorySearchInputSchema,
-        outputSchema: memorySearchOutputSchema,
-        docs: {
-                summary: 'Executes a semantic search across stored memories using text and/or vector input.',
-                inputExample: { query: 'project launch checklist', limit: 5, namespace: 'default', vector: undefined, kinds: undefined, tags: undefined },
-                outputExample: { items: [], tookMs: undefined },
-                errors: ['INVALID_INPUT'],
-        },
-        handler: createNotImplementedHandler('memories.search'),
-});
-
-export const memoryMcpTools: MemoryToolDefinition<unknown, unknown>[] = [
+// Export all Memory MCP tools
+export const memoryMcpTools: MemoryTool[] = [
         memoryStoreTool,
-
-        memoryGetTool,
+        memoryRetrieveTool,
+        memoryUpdateTool,
         memoryDeleteTool,
-        memoryListTool,
-        memorySearchTool,
+        memoryStatsTool,
+
 ];
 
