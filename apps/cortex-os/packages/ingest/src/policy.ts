@@ -37,8 +37,14 @@ export function parseIngestPolicy(data: unknown): IngestPolicy {
         return toIngestPolicy(filtered);
 }
 
-const defaultReadFile = (filePath: string, encoding: BufferEncoding) =>
-        fs.readFileSync(filePath, encoding);
+const defaultReadFile = (filePath: string, encoding?: BufferEncoding) => {
+        if (encoding) {
+                return fs.readFileSync(filePath, encoding);
+        } else {
+                // Default to utf8 if encoding is not provided
+                return fs.readFileSync(filePath, 'utf8');
+        }
+};
 
 const defaultLoader = (input: string) => yaml.load(input);
 
