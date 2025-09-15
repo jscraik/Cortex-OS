@@ -125,7 +125,7 @@ export const createMemoryService = (
 					return performVectorSearch({ ...q, vector: q.vector }, topK);
 				}
 
-				if (q.text) {
+				if (typeof q.text === 'string') {
 					return performTextSearch(
 						{ ...q, text: q.text },
 						topK,
