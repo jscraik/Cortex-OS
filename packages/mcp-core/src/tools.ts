@@ -116,13 +116,6 @@ export class ToolRegistry {
                         );
                 }
 
-                if (context?.signal) {
-                        if (context.signal.aborted) {
-                                throw new ToolExecutionError(`Execution for tool "${name}" was aborted.`, {
-                                        code: 'E_TOOL_ABORTED',
-                                });
-                        }
-                }
 
                 try {
                         const result = await tool.execute(parsed.data, context);
