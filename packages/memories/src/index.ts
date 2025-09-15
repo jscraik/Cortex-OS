@@ -28,17 +28,16 @@ export {
 } from './events/memory-events.js';
 // MCP Tools for external AI agent integration
 export {
-	memoryDeleteTool,
-	memoryDeleteToolSchema,
-	memoryMcpTools,
-	memoryRetrieveTool,
-	memoryRetrieveToolSchema,
-	memoryStatsTool,
-	memoryStatsToolSchema,
-	memoryStoreTool,
-	memoryStoreToolSchema,
-	memoryUpdateTool,
-	memoryUpdateToolSchema,
+        createMemoryMcpTools,
+        memoryDeleteToolSchema,
+        memoryGetToolSchema,
+        memoryListToolSchema,
+        memoryMcpTools,
+        memorySearchToolSchema,
+        memorySetToolSchema,
+        type MemoryMcpToolset,
+        type MemoryTool,
+        type MemoryToolDeps,
 } from './mcp/tools.js';
 export * from './ports/Embedder.js';
 export * from './ports/MemoryStore.js';
