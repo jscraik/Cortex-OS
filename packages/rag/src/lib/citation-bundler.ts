@@ -1,4 +1,4 @@
-import type { Chunk, CitationBundle, Citation } from './types.js';
+import type { Chunk, Citation, CitationBundle } from './types.js';
 
 export interface ClaimCitation {
 	claim: string;
@@ -34,14 +34,14 @@ export class CitationBundler {
 
 	bundleWithClaims(
 		chunks: Array<Chunk & { score?: number }>,
-		claims: string[]
+		claims: string[],
 	): EnhancedCitationBundle {
 		const basicBundle = this.bundle(chunks);
 		const claimCitations: ClaimCitation[] = claims.map((claim) => {
 			// Simple keyword matching for citation assignment
 			// In production, this would use semantic similarity
 			const relevantCitations = basicBundle.citations.filter((citation) =>
-				this.isRelevantToClaim(claim, citation)
+				this.isRelevantToClaim(claim, citation),
 			);
 
 			return {
@@ -58,7 +58,7 @@ export class CitationBundler {
 	}
 
 	bundleWithDeduplication(
-		chunks: Array<Chunk & { score?: number }>
+		chunks: Array<Chunk & { score?: number }>,
 	): EnhancedCitationBundle {
 		const basicBundle = this.bundle(chunks);
 
@@ -89,8 +89,8 @@ export class CitationBundler {
 		const claimWords = claim.toLowerCase().split(/\s+/);
 		const citationText = citation.text.toLowerCase();
 
-		return claimWords.some((word) =>
-			word.length > 3 && citationText.includes(word)
+		return claimWords.some(
+			(word) => word.length > 3 && citationText.includes(word),
 		);
 	}
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useSettingsStore } from '@/stores/settingsStore';
 import { useEffect, useId, useState } from 'react';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 // =========================
 // Types

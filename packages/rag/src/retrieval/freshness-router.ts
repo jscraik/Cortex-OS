@@ -14,7 +14,7 @@ export function routeByFreshness<T extends Chunk & { score?: number }>(
 	const {
 		epsilon = 0.02,
 		cacheThresholdMs = 30 * 60 * 1000, // 30 minutes default
-		preferCache = false
+		preferCache = false,
 	} = opts;
 
 	if (!Array.isArray(chunks) || chunks.length <= 1) return chunks.slice();
@@ -36,8 +36,8 @@ export function routeByFreshness<T extends Chunk & { score?: number }>(
 		const bu = b.updatedAt ?? -Infinity;
 
 		// Check if content is considered "fresh"
-		const aIsFresh = (now - au) < cacheThresholdMs;
-		const bIsFresh = (now - bu) < cacheThresholdMs;
+		const aIsFresh = now - au < cacheThresholdMs;
+		const bIsFresh = now - bu < cacheThresholdMs;
 
 		if (preferCache) {
 			// Prefer cached (older) content when scores are similar
@@ -59,7 +59,7 @@ export function routeByFreshness<T extends Chunk & { score?: number }>(
 
 export function routeByCache<T extends Chunk & { score?: number }>(
 	chunks: readonly T[],
-	cacheThresholdMs = 30 * 60 * 1000
+	cacheThresholdMs = 30 * 60 * 1000,
 ): T[] {
 	return routeByFreshness(chunks, {
 		epsilon: 0.05,
@@ -70,7 +70,7 @@ export function routeByCache<T extends Chunk & { score?: number }>(
 
 export function routeByLive<T extends Chunk & { score?: number }>(
 	chunks: readonly T[],
-	freshnessThresholdMs = 5 * 60 * 1000
+	freshnessThresholdMs = 5 * 60 * 1000,
 ): T[] {
 	return routeByFreshness(chunks, {
 		epsilon: 0.03,
@@ -78,4 +78,3 @@ export function routeByLive<T extends Chunk & { score?: number }>(
 		preferCache: false,
 	});
 }
-

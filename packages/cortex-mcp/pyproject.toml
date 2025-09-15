@@ -120,6 +120,7 @@ all = ["cortex-mcp[dev,security,performance,docs]"]
 [project.scripts]
 mcp-server = "cli.main:main"
 mcp-chatgpt-connector-sse = "mcp.servers.chatgpt_connector.mcp_sse_server:main"
+cortex-mcp = "cortex_fastmcp_server_v2:main"
 
 [project.urls]
 Homepage = "https://github.com/cortex-os/cortex-mcp"

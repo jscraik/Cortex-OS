@@ -8,7 +8,9 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { useUserStore } from '@/stores/userStore';
 
 interface AccountSettingsProps {
-	readonly saveSettings: (settings: { notifications?: { webhook_url?: string } }) => void;
+	readonly saveSettings: (settings: {
+		notifications?: { webhook_url?: string };
+	}) => void;
 }
 
 function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {

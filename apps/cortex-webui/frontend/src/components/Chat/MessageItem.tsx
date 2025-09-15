@@ -1,9 +1,3 @@
-import React from 'react';
-import type { Message } from '../../types';
-
-interface MessageItemProps {
-	message: Message;
-}
 
 interface MessageItemProps {
 	readonly message: {

@@ -65,48 +65,57 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 		return fetch(url);
 	};
 
-		const buildFileName = (mimeType: string) =>
-			alt ? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}` : 'download.png';
+	const buildFileName = (mimeType: string) =>
+		alt
+			? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
+			: 'download.png';
 
-		const triggerDownload = (blob: Blob) => {
-			const mimeType = blob.type || 'image/png';
-			const fileName = buildFileName(mimeType);
-			const link = document.createElement('a');
-			link.href = URL.createObjectURL(blob);
-			link.download = fileName;
-			link.click();
-		};
+	const triggerDownload = (blob: Blob) => {
+		const mimeType = blob.type || 'image/png';
+		const fileName = buildFileName(mimeType);
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(blob);
+		link.download = fileName;
+		link.click();
+	};
 
-		const downloadDataImage = () => {
-			const base64Data = src.split(',')[1];
-			if (!base64Data) return;
-			const byteCharacters = atob(base64Data);
-			const byteNumbers = Array.from(byteCharacters).map((c) => c.charCodeAt(0));
-			const byteArray = new Uint8Array(byteNumbers);
-			triggerDownload(new Blob([byteArray], { type: 'image/png' }));
-		};
+	const downloadDataImage = () => {
+		const base64Data = src.split(',')[1];
+		if (!base64Data) return;
+		const byteCharacters = atob(base64Data);
+		const byteNumbers = Array.from(byteCharacters).map((c) => c.charCodeAt(0));
+		const byteArray = new Uint8Array(byteNumbers);
+		triggerDownload(new Blob([byteArray], { type: 'image/png' }));
+	};
 
-		const downloadViaFetch = async () => {
-			try {
-				const response = await safeFetch(src);
-				const blob = await response.blob();
-				triggerDownload(blob);
-			} catch (error) {
-				console.error('Error downloading image:', error);
+	const downloadViaFetch = async () => {
+		try {
+			const response = await safeFetch(src);
+			const blob = await response.blob();
+			triggerDownload(blob);
+		} catch (error) {
+			console.error('Error downloading image:', error);
+		}
+	};
+
+	const handleDownload = async () => {
+		if (src.startsWith('data:image/')) return downloadDataImage();
+		if (src.startsWith('blob:')) return downloadViaFetch();
+		if (
+			src.startsWith('/') ||
+			src.startsWith('http://') ||
+			src.startsWith('https://')
+		) {
+			if (
+				(src.startsWith('http://') || src.startsWith('https://')) &&
+				!isAllowedRemoteHostname(src)
+			) {
+				console.warn('Blocked download from disallowed host:', src);
+				return;
 			}
-		};
-
-		const handleDownload = async () => {
-			if (src.startsWith('data:image/')) return downloadDataImage();
-			if (src.startsWith('blob:')) return downloadViaFetch();
-			if (src.startsWith('/') || src.startsWith('http://') || src.startsWith('https://')) {
-				if ((src.startsWith('http://') || src.startsWith('https://')) && !isAllowedRemoteHostname(src)) {
-					console.warn('Blocked download from disallowed host:', src);
-					return;
-				}
-				return downloadViaFetch();
-			}
-		};
+			return downloadViaFetch();
+		}
+	};
 
 	if (!show) {
 		return null;

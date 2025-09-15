@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
-import { readFile } from 'fs/promises';
-import * as tls from 'tls';
+import { readFile } from 'node:fs/promises';
+import * as tls from 'node:tls';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type MTLSConfig, MTLSError } from '../types.js';
 import { createClientSocket, loadCertificates } from './helpers.js';

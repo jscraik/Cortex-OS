@@ -1,9 +1,21 @@
 import { z } from 'zod';
-import { CitationBundler, type EnhancedCitationBundle } from './lib/citation-bundler.js';
+import {
+	CitationBundler,
+	type EnhancedCitationBundle,
+} from './lib/citation-bundler.js';
 import type { Chunk, Embedder, Store } from './lib/index.js';
 import { ingestText as ingestTextHelper } from './pipeline/ingest.js';
-import { routeByFreshness, routeByCache, routeByLive, type FreshnessOptions } from './retrieval/freshness-router.js';
-import { EvidenceGate, type EvidenceGateOptions, type EvidenceGateResult } from './retrieval/evidence-gate.js';
+import {
+	EvidenceGate,
+	type EvidenceGateOptions,
+	type EvidenceGateResult,
+} from './retrieval/evidence-gate.js';
+import {
+	type FreshnessOptions,
+	routeByCache,
+	routeByFreshness,
+	routeByLive,
+} from './retrieval/freshness-router.js';
 
 export interface RAGPipelineConfig {
 	embedder: Embedder;
@@ -49,7 +61,10 @@ export class RAGPipeline {
 			chunkSize: z.number().int().positive().default(300),
 			chunkOverlap: z.number().int().nonnegative().default(0),
 			freshnessEpsilon: z.number().min(0).max(1).default(0.02),
-			cacheThresholdMs: z.number().positive().default(30 * 60 * 1000),
+			cacheThresholdMs: z
+				.number()
+				.positive()
+				.default(30 * 60 * 1000),
 			preferCache: z.boolean().default(false),
 			evidenceGate: z.any().optional(),
 		});
@@ -100,7 +115,7 @@ export class RAGPipeline {
 	async retrieveWithClaims(
 		query: string,
 		claims: string[],
-		topK = 5
+		topK = 5,
 	): Promise<EnhancedCitationBundle> {
 		const [emb] = await this.E.embed([query]);
 		const chunks = await this.S.query(emb, topK);
@@ -111,7 +126,7 @@ export class RAGPipeline {
 
 	async retrieveWithDeduplication(
 		query: string,
-		topK = 5
+		topK = 5,
 	): Promise<EnhancedCitationBundle> {
 		const [emb] = await this.E.embed([query]);
 		const chunks = await this.S.query(emb, topK);
@@ -123,7 +138,7 @@ export class RAGPipeline {
 	async retrieveFromCache(
 		query: string,
 		topK = 5,
-		cacheThresholdMs?: number
+		cacheThresholdMs?: number,
 	): Promise<EnhancedCitationBundle> {
 		const [emb] = await this.E.embed([query]);
 		const chunks = await this.S.query(emb, topK);
@@ -135,7 +150,7 @@ export class RAGPipeline {
 	async retrieveLive(
 		query: string,
 		topK = 5,
-		freshnessThresholdMs?: number
+		freshnessThresholdMs?: number,
 	): Promise<EnhancedCitationBundle> {
 		const [emb] = await this.E.embed([query]);
 		const chunks = await this.S.query(emb, topK);
@@ -150,7 +165,7 @@ export class RAGPipeline {
 	async retrieveWithEvidenceGate(
 		query: string,
 		claims?: string[],
-		topK = 5
+		topK = 5,
 	): Promise<EvidenceFirstResult> {
 		// First, retrieve evidence
 		const evidence = claims

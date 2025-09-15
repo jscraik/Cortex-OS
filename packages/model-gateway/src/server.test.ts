@@ -84,9 +84,7 @@ describe('evidence attachment', () => {
 			method: 'POST',
 			url: '/chat',
 			payload: {
-				msgs: [
-					{ role: 'user', content: 'Hello, what is the weather today?' },
-				],
+				msgs: [{ role: 'user', content: 'Hello, what is the weather today?' }],
 			},
 		});
 

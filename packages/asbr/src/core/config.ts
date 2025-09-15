@@ -3,7 +3,7 @@
  * Handles loading and validation of configuration files from XDG directories
  */
 
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 import { deepMerge } from '../lib/deep-merge.js';
 import {
@@ -236,7 +236,7 @@ export async function loadSecurityPolicies(): Promise<SecurityPolicy[]> {
 	}
 
 	try {
-		const { readdir } = await import('fs/promises');
+		const { readdir } = await import('node:fs/promises');
 		const files = await readdir(policiesDir);
 		const yamlFiles = files.filter(
 			(f) => f.endsWith('.yaml') || f.endsWith('.yml'),

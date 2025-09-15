@@ -1,7 +1,7 @@
 'use client';
 
-import Modal from '@/components/common/Modal';
 import { useState } from 'react';
+import Modal from '@/components/common/Modal';
 import AccountSettings from './Settings/Account';
 import { AdvancedSettings } from './Settings/Advanced';
 import AudioSettings from './Settings/Audio';

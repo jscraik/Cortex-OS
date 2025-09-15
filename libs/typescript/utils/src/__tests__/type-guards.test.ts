@@ -4,6 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { ProposalShape } from '../type-guards.js';
 import {
 	hasProperties,
 	isBoolean,
@@ -14,7 +15,6 @@ import {
 	isString,
 	safeValidate,
 } from '../type-guards.js';
-import type { ProposalShape } from '../type-guards.js';
 
 describe('Type Guards', () => {
 	describe('isRecord', () => {

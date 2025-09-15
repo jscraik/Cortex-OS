@@ -1,14 +1,12 @@
-import React from 'react';
-import type { Message } from '../../types';
 import MessageItem from './MessageItem';
 
 interface MessageListProps {
-	messages: Message[];
-	streaming: boolean;
-}
-
-interface MessageListProps {
-	readonly messages: Array<{ id: string; role: string; content: string; [key: string]: any }>;
+	readonly messages: Array<{
+		id: string;
+		role: string;
+		content: string;
+		[key: string]: any;
+	}>;
 	readonly streaming: boolean;
 }
 

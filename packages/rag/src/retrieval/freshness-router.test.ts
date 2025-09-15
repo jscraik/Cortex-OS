@@ -57,8 +57,8 @@ describe('routeByFreshness', () => {
 			const result = routeByFreshness(mockChunks, { epsilon: 0.05 });
 
 			// Among similar scores, fresher should come first
-			const chunk2Index = result.findIndex(c => c.id === 'chunk-2');
-			const chunk3Index = result.findIndex(c => c.id === 'chunk-3');
+			const chunk2Index = result.findIndex((c) => c.id === 'chunk-2');
+			const chunk3Index = result.findIndex((c) => c.id === 'chunk-3');
 
 			expect(chunk2Index).toBeLessThan(chunk3Index);
 		});
@@ -69,7 +69,9 @@ describe('routeByFreshness', () => {
 				{ id: 'chunk-b', text: 'With timestamp', score: 0.8, updatedAt: now },
 			];
 
-			const result = routeByFreshness(chunksWithMissingTimestamps, { epsilon: 0.1 });
+			const result = routeByFreshness(chunksWithMissingTimestamps, {
+				epsilon: 0.1,
+			});
 
 			// Chunk with timestamp should come first
 			expect(result[0].id).toBe('chunk-b');
@@ -120,7 +122,11 @@ describe('routeByFreshness', () => {
 			const result = routeByFreshness(identical, { epsilon: 0.1 });
 
 			// Should maintain original order (stable sort)
-			expect(result.map(c => c.id)).toEqual(['chunk-a', 'chunk-b', 'chunk-c']);
+			expect(result.map((c) => c.id)).toEqual([
+				'chunk-a',
+				'chunk-b',
+				'chunk-c',
+			]);
 		});
 	});
 
@@ -129,7 +135,7 @@ describe('routeByFreshness', () => {
 			// Simulate a scenario where we want to prefer fresh content
 			const cacheThreshold = now - 30 * 60 * 1000; // 30 minutes ago
 
-			const chunks = mockChunks.map(chunk => ({
+			const chunks = mockChunks.map((chunk) => ({
 				...chunk,
 				isFresh: (chunk.updatedAt ?? 0) > cacheThreshold,
 			}));
@@ -142,7 +148,8 @@ describe('routeByFreshness', () => {
 				.filter(({ chunk }) => (chunk as any).isFresh)
 				.map(({ index }) => index);
 
-			const avgFreshIndex = freshIndices.reduce((a, b) => a + b, 0) / freshIndices.length;
+			const avgFreshIndex =
+				freshIndices.reduce((a, b) => a + b, 0) / freshIndices.length;
 			expect(avgFreshIndex).toBeLessThan(result.length / 2);
 		});
 	});

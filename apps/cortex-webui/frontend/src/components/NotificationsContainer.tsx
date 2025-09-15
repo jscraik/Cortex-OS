@@ -1,6 +1,3 @@
-import React from 'react'; // This line will be removed
-// 'use client'; // This line will be removed
-
 import { useEffect, useState } from 'react';
 import type {
 	Notification,

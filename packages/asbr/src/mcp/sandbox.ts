@@ -4,8 +4,8 @@
  */
 
 import { type ChildProcess, spawn } from 'node:child_process';
-import { existsSync } from 'fs';
-import { mkdir } from 'fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import pidusage from 'pidusage';
 import { loadMCPAllowlist, loadSecurityPolicies } from '../core/config.js';

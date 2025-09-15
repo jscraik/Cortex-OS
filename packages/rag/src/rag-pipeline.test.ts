@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { Embedder, Store, Chunk } from './lib/index.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Chunk, Embedder, Store } from './lib/index.js';
 import { RAGPipeline } from './rag-pipeline.js';
 
 // Mock implementations
@@ -33,7 +33,7 @@ class MockStore implements Store {
 
 	async query(
 		_embedding: number[],
-		k = 5
+		k = 5,
 	): Promise<Array<Chunk & { score?: number }>> {
 		return this.chunks.slice(0, k);
 	}
@@ -85,11 +85,11 @@ describe('RAGPipeline enhanced features', () => {
 
 			const result = await pipeline.retrieveWithClaims(
 				'climate science',
-				claims
+				claims,
 			);
 
 			expect(result.claimCitations).toHaveLength(2);
-			expect(result.claimCitations![0]).toMatchObject({
+			expect(result.claimCitations?.[0]).toMatchObject({
 				claim: 'Greenhouse gases cause climate change',
 				citations: expect.arrayContaining([
 					expect.objectContaining({
@@ -107,10 +107,10 @@ describe('RAGPipeline enhanced features', () => {
 
 			const result = await pipeline.retrieveWithClaims(
 				'climate science',
-				claims
+				claims,
 			);
 
-			expect(result.claimCitations![1]).toMatchObject({
+			expect(result.claimCitations?.[1]).toMatchObject({
 				claim: 'The moon is made of cheese',
 				citations: [],
 				noEvidence: true,
@@ -123,8 +123,8 @@ describe('RAGPipeline enhanced features', () => {
 			const result = await pipeline.retrieveWithDeduplication('climate');
 
 			expect(result.sourceGroups).toBeDefined();
-			expect(result.sourceGroups!['climate-doc-1']).toHaveLength(1);
-			expect(result.sourceGroups!['climate-doc-2']).toHaveLength(1);
+			expect(result.sourceGroups?.['climate-doc-1']).toHaveLength(1);
+			expect(result.sourceGroups?.['climate-doc-2']).toHaveLength(1);
 		});
 
 		it('should maintain score-based ordering within groups', async () => {

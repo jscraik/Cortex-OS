@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import {
-	GitHubRepositorySchema,
-	GitHubUserSchema,
 	type GitHubRepository,
+	GitHubRepositorySchema,
 	type GitHubUser,
+	GitHubUserSchema,
 } from './repository';
 
 // Issue Label Schema

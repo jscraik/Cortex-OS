@@ -1,9 +1,6 @@
-
-import Modal from '@/components/common/Modal';
+import type React from 'react';
 import { useId, useRef, useState } from 'react';
-
-
-import React from 'react';
+import Modal from '@/components/common/Modal';
 
 interface ImportOptions {
 	format: 'json' | 'csv' | 'txt' | 'markdown';
@@ -12,9 +9,9 @@ interface ImportOptions {
 }
 
 interface ImportModalProps {
-		readonly isOpen: boolean;
-		readonly onClose: () => void;
-		readonly onImport: (file: File) => void;
+	readonly isOpen: boolean;
+	readonly onClose: () => void;
+	readonly onImport: (file: File) => void;
 }
 
 const ImportModal: React.FC<ImportModalProps> = ({
@@ -72,9 +69,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
 		setIsImporting(true);
 		try {
 			const maybePromise = onImport(file);
-					if (typeof maybePromise === 'object' && maybePromise !== null && typeof (maybePromise as Promise<any>).then === 'function') {
-						await maybePromise;
-					}
+			if (typeof maybePromise === 'object' && maybePromise !== null && typeof (maybePromise as Promise<any>).then === 'function') {
+				await maybePromise;
+			}
 			onClose();
 			if (
 				typeof window !== 'undefined' &&

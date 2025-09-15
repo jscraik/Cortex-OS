@@ -3,7 +3,7 @@
  * @description Mutual TLS implementation for secure service-to-service communication
  */
 
-import * as tls from 'tls';
+import * as tls from 'node:tls';
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 import { type MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.js';
 import { createClientSocket, loadCertificates } from './helpers.js';

@@ -1,40 +1,40 @@
 // GitHub A2A Events - Main Export
-export const GITHUB_A2A_EVENTS_VERSION = "1.0.0";
+export const GITHUB_A2A_EVENTS_VERSION = '1.0.0';
 
 // Event Envelope and Routing
-export * from "./envelope";
-export * from "./error";
-export * from "./issue";
-export * from "./pull-request";
+export * from './envelope';
+export * from './error';
+export * from './issue';
+export * from './pull-request';
 // Core Event Types
-export * from "./repository";
-export * from "./routing";
-export * from "./workflow";
+export * from './repository';
+export * from './routing';
+export * from './workflow';
 
 import {
-	createA2AEventEnvelope,
 	type A2AEventEnvelope,
+	createA2AEventEnvelope,
 	type GitHubEventData,
-} from "./envelope";
-import { type ErrorEvent, isErrorEvent, validateErrorEvent } from "./error";
+} from './envelope';
+import { type ErrorEvent, isErrorEvent, validateErrorEvent } from './error';
 
-import { type IssueEvent, isIssueEvent, validateIssueEvent } from "./issue";
+import { type IssueEvent, isIssueEvent, validateIssueEvent } from './issue';
 import {
 	isPullRequestEvent,
 	type PullRequestEvent,
 	validatePullRequestEvent,
-} from "./pull-request";
+} from './pull-request';
 // Type Guards and Validators
 import {
 	isRepositoryEvent,
 	type RepositoryEvent,
 	validateRepositoryEvent,
-} from "./repository";
+} from './repository';
 import {
 	isWorkflowEvent,
 	validateWorkflowEvent,
 	type WorkflowEvent,
-} from "./workflow";
+} from './workflow';
 
 // Union type for all GitHub events
 export type GitHubEvent =
@@ -81,27 +81,27 @@ export function validateGitHubEvent(data: unknown): GitHubEvent {
 	}
 
 	throw new Error(
-		"Invalid GitHub event data: does not match any known event schema",
+		'Invalid GitHub event data: does not match any known event schema',
 	);
 }
 
 // Event type detection
 export function getGitHubEventType(data: unknown): string | null {
-	if (!data || typeof data !== "object" || !("event_type" in data)) {
+	if (!data || typeof data !== 'object' || !('event_type' in data)) {
 		return null;
 	}
 
 	const eventType = (data as { event_type: unknown }).event_type;
-	if (typeof eventType !== "string") {
+	if (typeof eventType !== 'string') {
 		return null;
 	}
 
 	const validTypes = [
-		"github.repository",
-		"github.pull_request",
-		"github.issue",
-		"github.workflow",
-		"github.error",
+		'github.repository',
+		'github.pull_request',
+		'github.issue',
+		'github.workflow',
+		'github.error',
 	];
 
 	return validTypes.includes(eventType) ? eventType : null;
@@ -180,14 +180,14 @@ export function analyzeGitHubEvents(events: GitHubEvent[]): GitHubEventStats {
 		}
 
 		// Track repositories
-		if ("repository" in event && event.repository) {
+		if ('repository' in event && event.repository) {
 			const repoName = event.repository.full_name;
 			repositories.add(repoName);
 			repoCount.set(repoName, (repoCount.get(repoName) || 0) + 1);
 		}
 
 		// Track actors
-		if ("actor" in event && event.actor) {
+		if ('actor' in event && event.actor) {
 			const actorLogin = event.actor.login;
 			actors.add(actorLogin);
 			actorCount.set(actorLogin, (actorCount.get(actorLogin) || 0) + 1);
@@ -262,14 +262,14 @@ export function filterGitHubEvents(
 		}
 
 		// Filter by repository
-		if (filter.repositoryNames && "repository" in event && event.repository) {
+		if (filter.repositoryNames && 'repository' in event && event.repository) {
 			if (!filter.repositoryNames.includes(event.repository.full_name)) {
 				return false;
 			}
 		}
 
 		// Filter by actor
-		if (filter.actorLogins && "actor" in event && event.actor) {
+		if (filter.actorLogins && 'actor' in event && event.actor) {
 			if (!filter.actorLogins.includes(event.actor.login)) {
 				return false;
 			}
@@ -295,8 +295,8 @@ export function createGitHubEventBatch(
 	events: GitHubEvent[],
 	options?: {
 		batchSize?: number;
-		groupBy?: "type" | "repository" | "actor";
-		priority?: "low" | "normal" | "high" | "critical";
+		groupBy?: 'type' | 'repository' | 'actor';
+		priority?: 'low' | 'normal' | 'high' | 'critical';
 	},
 ): A2AEventEnvelope[] {
 	const batchSize = options?.batchSize ?? 100;
@@ -327,7 +327,7 @@ export function createGitHubEventBatch(
 				metadata: {
 					labels: {
 						batch_size: batch.length.toString(),
-						batch_type: options?.groupBy || "sequence",
+						batch_type: options?.groupBy || 'sequence',
 					},
 				},
 			}),
@@ -336,7 +336,7 @@ export function createGitHubEventBatch(
 
 function groupEvents(
 	events: GitHubEvent[],
-	groupBy: "type" | "repository" | "actor",
+	groupBy: 'type' | 'repository' | 'actor',
 ): Map<string, GitHubEvent[]> {
 	const groups = new Map<string, GitHubEvent[]>();
 
@@ -344,17 +344,17 @@ function groupEvents(
 		let key: string;
 
 		switch (groupBy) {
-			case "type":
+			case 'type':
 				key = event.event_type;
 				break;
-			case "repository":
+			case 'repository':
 				key =
-					"repository" in event && event.repository
+					'repository' in event && event.repository
 						? event.repository.full_name
-						: "unknown";
+						: 'unknown';
 				break;
-			case "actor":
-				key = "actor" in event && event.actor ? event.actor.login : "unknown";
+			case 'actor':
+				key = 'actor' in event && event.actor ? event.actor.login : 'unknown';
 				break;
 		}
 
@@ -406,7 +406,7 @@ export async function processEventStream(
 			processed++;
 		} catch (error) {
 			errors++;
-			console.warn("Error processing GitHub event:", error, { eventData });
+			console.warn('Error processing GitHub event:', error, { eventData });
 		}
 	}
 
@@ -423,4 +423,3 @@ export type {
 	RepositoryEvent,
 	WorkflowEvent,
 };
-

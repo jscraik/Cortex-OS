@@ -22,7 +22,9 @@ export class EvidenceGate {
 		this.options = {
 			minimumScore: options.minimumScore ?? 0.3,
 			minimumCitations: options.minimumCitations ?? 1,
-			noEvidenceResponse: options.noEvidenceResponse ?? 'No supporting evidence found in knowledge base.',
+			noEvidenceResponse:
+				options.noEvidenceResponse ??
+				'No supporting evidence found in knowledge base.',
 			evidenceThreshold: options.evidenceThreshold ?? 0.5,
 		};
 	}
@@ -53,7 +55,7 @@ export class EvidenceGate {
 
 		// Check citation quality (scores)
 		const validCitations = evidence.citations.filter(
-			c => (c.score ?? 0) >= this.options.minimumScore
+			(c) => (c.score ?? 0) >= this.options.minimumScore,
 		);
 
 		if (validCitations.length === 0) {
@@ -68,10 +70,11 @@ export class EvidenceGate {
 		// Check per-claim evidence if available
 		if (evidence.claimCitations) {
 			const claimsWithEvidence = evidence.claimCitations.filter(
-				cc => !cc.noEvidence && cc.citations.length > 0
+				(cc) => !cc.noEvidence && cc.citations.length > 0,
 			);
 
-			const evidenceRatio = claimsWithEvidence.length / evidence.claimCitations.length;
+			const evidenceRatio =
+				claimsWithEvidence.length / evidence.claimCitations.length;
 
 			if (evidenceRatio < this.options.evidenceThreshold) {
 				return {
@@ -85,7 +88,9 @@ export class EvidenceGate {
 		}
 
 		// Calculate overall confidence
-		const avgScore = validCitations.reduce((sum, c) => sum + (c.score ?? 0), 0) / validCitations.length;
+		const avgScore =
+			validCitations.reduce((sum, c) => sum + (c.score ?? 0), 0) /
+			validCitations.length;
 		const scoreNormalized = Math.min(avgScore / 1.0, 1); // assuming max score is 1
 		const citationCount = Math.min(validCitations.length / 5, 1); // normalize to 5 citations
 		const confidence = (scoreNormalized + citationCount) / 2;
@@ -102,7 +107,10 @@ export class EvidenceGate {
 	/**
 	 * Convenience method for evidence-first routing decision
 	 */
-	shouldRoute(evidence: EnhancedCitationBundle, query: string): {
+	shouldRoute(
+		evidence: EnhancedCitationBundle,
+		_query: string,
+	): {
 		route: 'evidence' | 'llm' | 'no-answer';
 		result: EvidenceGateResult;
 		response?: string;
@@ -121,7 +129,7 @@ export class EvidenceGate {
 			// Provide evidence-only response
 			const citationText = evidence.citations
 				.slice(0, 3)
-				.map(c => c.text)
+				.map((c) => c.text)
 				.join(' ');
 
 			return {

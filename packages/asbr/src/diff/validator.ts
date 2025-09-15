@@ -3,7 +3,7 @@
  * Ensures deterministic diff generation and validates integrity
  */
 
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import type { Config } from '../types/index.js';
 import { DiffGenerator, type DiffResult, type FileDiff } from './generator.js';
 import { ContentNormalizer } from './normalizer.js';

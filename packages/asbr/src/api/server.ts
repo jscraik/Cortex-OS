@@ -3,8 +3,8 @@
  * Loopback-only HTTP server implementing the blueprint API specification
  */
 
-import { createHash } from 'crypto';
-import { readFile } from 'fs/promises';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';

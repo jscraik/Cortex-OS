@@ -440,21 +440,23 @@ const generateDocumentation = async (
 					: undefined,
 	});
 
-	const sectionsInput = result.sections.map((section) => sanitizeSection(section));
-	const sanitizedSections = documentationOutputSchema.shape.sections.parse(sectionsInput) as DocumentationOutput['sections'];
+	const sectionsInput = result.sections.map((section) =>
+		sanitizeSection(section),
+	);
+	const sanitizedSections = documentationOutputSchema.shape.sections.parse(
+		sectionsInput,
+	) as DocumentationOutput['sections'];
 	const sectionsForValidation = sanitizedSections.map((section) => ({
 		...section,
 		examples: section.examples ?? [],
 		parameters: section.parameters ?? [],
 	}));
 	const metadata: DocumentationOutput['metadata'] = {
-		generatedAt:
-			result.metadata?.generatedAt ?? new Date().toISOString(),
+		generatedAt: result.metadata?.generatedAt ?? new Date().toISOString(),
 		wordCount:
 			result.metadata?.wordCount ??
 			countWords(sanitizedSections[0]?.content ?? ''),
-		sectionsCount:
-			result.metadata?.sectionsCount ?? sanitizedSections.length,
+		sectionsCount: result.metadata?.sectionsCount ?? sanitizedSections.length,
 		hasExamples:
 			result.metadata?.hasExamples ??
 			sanitizedSections.some((section) => section.examples.length > 0),
@@ -462,8 +464,7 @@ const generateDocumentation = async (
 			result.metadata?.hasTypes ??
 			sanitizedSections.some(
 				(section) =>
-					section.parameters.length > 0 ||
-					section.returnType !== undefined,
+					section.parameters.length > 0 || section.returnType !== undefined,
 			),
 		complexity: result.metadata?.complexity,
 		hasAsyncOperations: result.metadata?.hasAsyncOperations,

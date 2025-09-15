@@ -6,7 +6,7 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { appendFile } from 'fs/promises';
+import { appendFile } from 'node:fs/promises';
 import type { Response } from 'express';
 import type { DefaultEventsMap, Server as IOServer, Socket } from 'socket.io';
 import { logError } from '../lib/logger.js';

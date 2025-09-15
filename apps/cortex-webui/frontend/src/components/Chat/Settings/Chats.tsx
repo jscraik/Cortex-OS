@@ -1,5 +1,6 @@
-import React from 'react';
-'use client';
+import type React from 'react';
+
+('use client');
 
 import { useEffect, useId, useState } from 'react';
 import { useSettingsStore } from '@/stores/settingsStore';

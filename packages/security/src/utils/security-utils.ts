@@ -3,7 +3,7 @@
  * @description Utility functions for security operations
  */
 
-import { X509Certificate } from 'crypto';
+import { X509Certificate } from 'node:crypto';
 import type { SecurityError } from '../types.js';
 
 export type { SecurityError };

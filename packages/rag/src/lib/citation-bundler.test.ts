@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Chunk } from './types.js';
 import { CitationBundler } from './citation-bundler.js';
+import type { Chunk } from './types.js';
 
 describe('CitationBundler', () => {
 	const mockChunks: Array<Chunk & { score?: number }> = [
@@ -29,7 +29,7 @@ describe('CitationBundler', () => {
 			const bundler = new CitationBundler();
 			const result = bundler.bundle(mockChunks);
 
-			expect(result.text).toBe(mockChunks.map(c => c.text).join('\n'));
+			expect(result.text).toBe(mockChunks.map((c) => c.text).join('\n'));
 			expect(result.citations).toHaveLength(3);
 			expect(result.citations[0]).toMatchObject({
 				id: 'chunk-1',
@@ -63,7 +63,7 @@ describe('CitationBundler', () => {
 			expect(result.claimCitations[0]).toMatchObject({
 				claim: 'Greenhouse gases cause climate change',
 				citations: expect.arrayContaining([
-					expect.objectContaining({ id: 'chunk-1' })
+					expect.objectContaining({ id: 'chunk-1' }),
 				]),
 			});
 		});
