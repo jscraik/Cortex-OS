@@ -179,7 +179,7 @@ describe('memory MCP tools', () => {
                 const vectorPayload = searchSchema.parse(extractPayload(vectorRes));
                 expect(vectorPayload.results[0]?.id).toBe('mem-6');
 
-                await expect(memorySearchTool.handler({} as unknown)).rejects.toThrow(
+                await expect(memorySearchTool.handler({ topK: 5 })).rejects.toThrow(
                         /text or vector/i,
 
                 );
