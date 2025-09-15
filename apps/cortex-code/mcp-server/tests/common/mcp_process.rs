@@ -343,6 +343,28 @@ impl McpProcess {
         self.send_request("loginChatGpt", None).await
     }
 
+    /// Send a `tools/list` JSON-RPC request.
+    pub async fn send_list_tools_request(&mut self) -> anyhow::Result<i64> {
+        self
+            .send_request(mcp_types::ListToolsRequest::METHOD, None)
+            .await
+    }
+
+    /// Send a `tools/call` JSON-RPC request for an arbitrary tool.
+    pub async fn send_call_tool_request(
+        &mut self,
+        name: &str,
+        arguments: serde_json::Value,
+    ) -> anyhow::Result<i64> {
+        let params = CallToolRequestParams {
+            name: name.to_string(),
+            arguments: Some(arguments),
+        };
+        let params = serde_json::to_value(params)?;
+        self.send_request(mcp_types::CallToolRequest::METHOD, Some(params))
+            .await
+    }
+
     /// Send a `cancelLoginChatGpt` JSON-RPC request.
     pub async fn send_cancel_login_chat_gpt_request(
         &mut self,
