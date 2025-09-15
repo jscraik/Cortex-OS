@@ -1,6 +1,6 @@
-import os from 'os';
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import os from 'node:os';
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Embedder } from '../ports/Embedder.js';
 
 const __filename = fileURLToPath(import.meta.url);

@@ -1,6 +1,6 @@
+import React from 'react';
 'use client';
 
-import type React from 'react';
 import { useEffect, useId, useState } from 'react';
 import { useSettingsStore } from '@/stores/settingsStore';
 
@@ -18,6 +18,10 @@ type ChatsSettingsShape = {
 
 interface ChatsSettingsProps {
 	saveSettings: (settings: ChatsSettingsShape) => void;
+}
+
+interface ChatsSettingsProps {
+	readonly saveSettings: (settings: any) => void;
 }
 
 const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {

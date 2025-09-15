@@ -1,21 +1,20 @@
-'use client';
 
-import type React from 'react';
-import { useId, useRef, useState } from 'react';
 import Modal from '@/components/common/Modal';
+import { useId, useRef, useState } from 'react';
 
-type OnImportFn = (file: File, options: ImportOptions) => void | Promise<void>;
 
-interface ImportModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onImport: OnImportFn;
-}
+import React from 'react';
 
 interface ImportOptions {
 	format: 'json' | 'csv' | 'txt' | 'markdown';
 	includeAttachments: boolean;
 	overwriteExisting: boolean;
+}
+
+interface ImportModalProps {
+		readonly isOpen: boolean;
+		readonly onClose: () => void;
+		readonly onImport: (file: File) => void;
 }
 
 const ImportModal: React.FC<ImportModalProps> = ({
@@ -72,22 +71,34 @@ const ImportModal: React.FC<ImportModalProps> = ({
 		if (!file) return;
 		setIsImporting(true);
 		try {
-			const maybePromise = onImport(file, importOptions);
-			if (maybePromise instanceof Promise) {
-				await maybePromise;
-			}
+			const maybePromise = onImport(file);
+					if (typeof maybePromise === 'object' && maybePromise !== null && typeof (maybePromise as Promise<any>).then === 'function') {
+						await maybePromise;
+					}
 			onClose();
-			// @ts-expect-error optional global notification hook
-			if (typeof window !== 'undefined' && window.addNotification) {
-				// @ts-expect-error
-				window.addNotification('success', 'Import completed successfully!');
+			if (
+				typeof window !== 'undefined' &&
+				'addNotification' in window &&
+				typeof (
+					window as { addNotification?: (type: string, msg: string) => void }
+				).addNotification === 'function'
+			) {
+				(
+					window as { addNotification: (type: string, msg: string) => void }
+				).addNotification('success', 'Import completed successfully!');
 			}
 		} catch (_error) {
 			console.debug('[ImportModal] import failed', _error);
-			// @ts-expect-error optional global notification hook
-			if (typeof window !== 'undefined' && window.addNotification) {
-				// @ts-expect-error
-				window.addNotification('error', 'Import failed. Please try again.');
+			if (
+				typeof window !== 'undefined' &&
+				'addNotification' in window &&
+				typeof (
+					window as { addNotification?: (type: string, msg: string) => void }
+				).addNotification === 'function'
+			) {
+				(
+					window as { addNotification: (type: string, msg: string) => void }
+				).addNotification('error', 'Import failed. Please try again.');
 			}
 		} finally {
 			setIsImporting(false);

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import type { Conversation } from '../../types';
 import SearchModal from './SearchModal';
 
@@ -11,17 +10,14 @@ interface SidebarProps {
 	onLogout?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-	conversations = [],
-	activeConversationId = null,
-	onSelectConversation,
-	onCreateConversation,
-	onLogout,
-}) => {
-	const navigate = useNavigate();
-	const location = useLocation();
+const Sidebar: React.FC<SidebarProps> = (props) => {
+	const {
+		conversations = [],
+		activeConversationId = null,
+		onCreateConversation,
+		onLogout,
+	} = props;
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
-
 	const navItems = [
 		{ name: 'Chat', href: '/mvp/chat' },
 		{ name: 'Map', href: '/mvp/map' },
@@ -29,20 +25,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 		{ name: 'Crawl', href: '/crawl' },
 		{ name: 'Puck', href: '/puck' },
 	];
-
-	const handleSelectConversation = (id: string) => {
-		if (onSelectConversation) {
-			onSelectConversation(id);
-		}
-		navigate(`/chat/${id}`);
-	};
-
 	const handleCreateConversation = () => {
 		if (onCreateConversation) {
 			onCreateConversation();
 		}
 	};
-
 	return (
 		<>
 			<div className="w-64 bg-white border-r flex flex-col">
@@ -50,7 +37,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 					<h1 className="text-xl font-bold text-blue-600">brAInwav</h1>
 					<p className="text-xs text-gray-500">Cortex WebUI</p>
 				</div>
-
 				<div className="p-2">
 					<button
 						onClick={() => setIsSearchOpen(true)}
@@ -75,7 +61,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 						<span className="ml-auto text-xs text-gray-400">⌘K</span>
 					</button>
 				</div>
-
 				{/* Conversations Section */}
 				{conversations && conversations.length > 0 && (
 					<div className="px-2 py-2 border-b">
@@ -93,15 +78,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 						</div>
 						<div className="space-y-1 max-h-40 overflow-y-auto">
 							{conversations.map((conversation) => (
-								<button
+								<a
 									key={conversation.id}
-									onClick={() => handleSelectConversation(conversation.id)}
+									href={`/chat/${conversation.id}`}
 									className={`w-full text-left p-2 text-sm rounded-lg ${
 										conversation.id === activeConversationId
 											? 'bg-blue-100 text-blue-800'
 											: 'text-gray-700 hover:bg-gray-100'
 									}`}
-									type="button"
+									tabIndex={0}
 								>
 									<div className="font-medium truncate">
 										{conversation.title || 'Untitled'}
@@ -109,32 +94,30 @@ const Sidebar: React.FC<SidebarProps> = ({
 									<div className="text-xs text-gray-500">
 										{new Date(conversation.updatedAt).toLocaleDateString()}
 									</div>
-								</button>
+								</a>
 							))}
 						</div>
 					</div>
 				)}
-
 				<nav className="flex-1 px-2 py-4">
 					<ul className="space-y-1">
 						{navItems.map((item) => (
 							<li key={item.name}>
-								<button
-									onClick={() => navigate(item.href)}
+								<a
+									href={item.href}
 									className={`w-full text-left flex items-center p-2 text-sm rounded-lg ${
-										location.pathname === item.href
+										window.location.pathname === item.href
 											? 'bg-blue-100 text-blue-800'
 											: 'text-gray-700 hover:bg-gray-100'
 									}`}
-									type="button"
+									tabIndex={0}
 								>
 									<span className="ml-3">{item.name}</span>
-								</button>
+								</a>
 							</li>
 						))}
 					</ul>
 				</nav>
-
 				<div className="p-4 border-t">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center">
@@ -158,7 +141,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 					</div>
 				</div>
 			</div>
-
 			<SearchModal
 				isOpen={isSearchOpen}
 				onClose={() => setIsSearchOpen(false)}
@@ -166,5 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 		</>
 	);
 };
+
+// Removed duplicate export
 
 export default Sidebar;

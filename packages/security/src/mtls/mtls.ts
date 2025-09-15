@@ -3,10 +3,10 @@
  * @description Mutual TLS implementation for secure service-to-service communication
  */
 
-import * as tls from 'node:tls';
+import * as tls from 'tls';
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
-import { type MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.ts';
-import { createClientSocket, loadCertificates } from './helpers.ts';
+import { type MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.js';
+import { createClientSocket, loadCertificates } from './helpers.js';
 
 // Centralized unknown error fallback to avoid repeated literal and satisfy lint rule
 const UNKNOWN_ERROR_MESSAGE = 'Unknown error';

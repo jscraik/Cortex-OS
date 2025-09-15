@@ -9,11 +9,11 @@ import {
 	type WorkloadIdentity,
 	WorkloadIdentityError,
 	WorkloadIdentitySchema,
-} from '../types.ts';
+} from '../types.js';
 import {
 	extractTrustDomain,
 	extractWorkloadPath,
-} from '../utils/security-utils.ts';
+} from '../utils/security-utils.js';
 
 /**
  * Workload Identity Manager

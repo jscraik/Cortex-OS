@@ -3,8 +3,8 @@
  * Manages config, data, state, and cache directories according to the blueprint
  */
 
-import { constants } from 'node:fs';
-import { access, mkdir, stat } from 'node:fs/promises';
+import { constants } from 'fs';
+import { access, mkdir, stat } from 'fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { logWarn } from '../lib/logger.js';
@@ -154,7 +154,7 @@ export async function cleanupTempFiles(
 	}
 
 	try {
-		const { readdir, stat, rm } = await import('node:fs/promises');
+		const { readdir, stat, rm } = await import('fs/promises');
 		const files = await readdir(tmpDir);
 		const now = Date.now();
 

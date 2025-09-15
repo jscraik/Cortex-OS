@@ -1,8 +1,17 @@
-import type React from 'react';
+import React from 'react';
 import type { Message } from '../../types';
 
 interface MessageItemProps {
 	message: Message;
+}
+
+interface MessageItemProps {
+	readonly message: {
+		id: string;
+		role: string;
+		content: string;
+		[key: string]: any;
+	};
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({ message }) => {

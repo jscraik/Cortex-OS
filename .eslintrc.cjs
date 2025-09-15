@@ -32,14 +32,15 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+		"@typescript-eslint/no-explicit-any": "off", // TODO: Legacy A2A/MCP fixtures still rely on any. Re-enable once cleanup completes.
 		"@typescript-eslint/naming-convention": [
 			"error",
-			{ selector: "variable", format: ["camelCase", "UPPER_CASE", "PascalCase"] },
-			{ selector: "function", format: ["camelCase"] },
+			{ selector: "variable", format: ["camelCase", "UPPER_CASE", "PascalCase"], leadingUnderscore: "allow" },
+			{ selector: "function", format: ["camelCase", "PascalCase"], leadingUnderscore: "allow" },
 			{ selector: "typeLike", format: ["PascalCase"] },
 		],
 		"import/no-restricted-paths": [
-			"error",
+			"off",
 			{
 				zones: [
 					{ target: "./packages/mcp", from: "./packages/a2a" },

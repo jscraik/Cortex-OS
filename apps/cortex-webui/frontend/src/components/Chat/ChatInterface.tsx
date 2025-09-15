@@ -1,13 +1,13 @@
-import type React from 'react';
 import type { Message } from '../../types';
 import MessageInput from './MessageInput';
 import MessageList from './MessageList';
+import React from 'react';
 
 interface ChatInterfaceProps {
-	messages: Message[];
-	onSendMessage: (content: string) => void;
-	streaming: boolean;
-	error: string | null;
+	readonly messages: Array<{ id: string; role: string; content: string; [key: string]: any }>;
+	readonly onSendMessage: (message: string) => void;
+	readonly streaming: boolean;
+	readonly error?: string;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({

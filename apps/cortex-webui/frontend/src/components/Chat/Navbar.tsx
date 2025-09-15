@@ -45,7 +45,10 @@ const Navbar: React.FC<NavbarProps> = ({
 						aria-expanded={isMenuOpen}
 						type="button"
 					>
-						<span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center">
+						<span
+							aria-hidden="true"
+							className="inline-flex h-5 w-5 items-center justify-center"
+						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								className="h-5 w-5"
@@ -63,7 +66,11 @@ const Navbar: React.FC<NavbarProps> = ({
 					</button>
 
 					{isMenuOpen && (
-						<div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10" role="menu" aria-label="User menu">
+						<div
+							className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10"
+							role="menu"
+							aria-label="User menu"
+						>
 							<a
 								href="/settings"
 								className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

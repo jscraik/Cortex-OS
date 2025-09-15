@@ -3,7 +3,7 @@
  * Generates unified diffs with SHA-256 digests as per blueprint specification
  */
 
-import { createHash } from 'node:crypto';
+import { createHash } from 'crypto';
 import { createTwoFilesPatch } from 'diff';
 import type { Config } from '../types/index.js';
 import { ContentNormalizer } from './normalizer.js';

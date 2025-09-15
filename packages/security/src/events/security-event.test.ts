@@ -3,7 +3,7 @@ import {
 	type ContractRegistry,
 	type PolicyRouter,
 	SecurityEventEmitter,
-} from './security-event.ts';
+} from './security-event.js';
 
 describe('SecurityEventEmitter', () => {
 	it('emits event after registry validation and policy enforcement', async () => {

@@ -13,7 +13,8 @@ import {
 	isRecord,
 	isString,
 	safeValidate,
-} from '../type-guards';
+} from '../type-guards.js';
+import type { ProposalShape } from '../type-guards.js';
 
 describe('Type Guards', () => {
 	describe('isRecord', () => {
@@ -201,9 +202,9 @@ describe('Type Guards', () => {
 			const value: unknown = { dataClass: 'sensitive', path: '/test' };
 
 			if (isProposalShape(value)) {
-				// TypeScript should know value is ProposalShape here
-				expect(typeof value.dataClass).toBe('string');
-				expect(typeof value.path).toBe('string');
+				const proposal: ProposalShape = value;
+				expect(typeof proposal.dataClass).toBe('string');
+				expect(typeof proposal.path).toBe('string');
 			}
 		});
 

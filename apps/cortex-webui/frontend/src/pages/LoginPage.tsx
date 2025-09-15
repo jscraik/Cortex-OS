@@ -1,4 +1,3 @@
-import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '../components/Auth/LoginForm';
 
@@ -8,7 +7,7 @@ interface LoginPageProps {
 	error: string | null;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loading, error }) => {
+function LoginPage({ onLogin, loading, error }: LoginPageProps) {
 	const navigate = useNavigate();
 
 	const handleSwitchToRegister = () => {
@@ -39,6 +38,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loading, error }) => {
 			</div>
 		</div>
 	);
-};
+}
 
 export default LoginPage;

@@ -19,7 +19,7 @@ describe('schema-driven redaction', () => {
 			nested: { token: 'abc', value: 42 },
 		};
 
-		const result = redact(schema, payload) as any;
+		const result = redact(schema, payload) as { id: string; nested: { value: number } };
 		expect(result).toEqual({ id: '1', nested: { value: 42 } });
 		expect(result).not.toHaveProperty('secret');
 		expect(result.nested).not.toHaveProperty('token');

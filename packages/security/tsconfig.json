@@ -1,36 +1,38 @@
 {
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"module": "ESNext",
-		"moduleResolution": "node",
-		"declaration": true,
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"baseUrl": ".",
-		"emitDeclarationOnly": true,
-		"allowImportingTsExtensions": true,
-		"paths": {
-			"@/*": [
-				"./src/*"
-			],
-			"@cortex-os/a2a-contracts": [
-				"../../packages/a2a/a2a-contracts/dist"
-			],
-			"@cortex-os/utils": [
-				"../../libs/typescript/utils/dist"
-			],
-			"@cortex-os/telemetry": [
-				"../../libs/typescript/telemetry/dist"
-			]
-		}
-	},
-	"include": [
-		"src/**/*"
-	],
-	"exclude": [
-		"dist",
-		"node_modules",
-		"**/*.test.ts",
-		"**/*.spec.ts"
-	]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "emitDeclarationOnly": false,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@cortex-os/a2a-contracts": [
+        "../../packages/a2a/a2a-contracts/dist"
+      ],
+      "@cortex-os/utils": [
+        "../../libs/typescript/utils/dist"
+      ],
+      "@cortex-os/telemetry": [
+        "../../libs/typescript/telemetry/dist"
+      ]
+    },
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }

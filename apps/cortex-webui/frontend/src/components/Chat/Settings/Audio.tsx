@@ -1,15 +1,14 @@
 'use client';
 
-import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface AudioSettingsProps {
-	saveSettings: (settings: any) => void;
+	readonly saveSettings: (settings: Record<string, unknown>) => void;
 }
 
-const AudioSettings: React.FC<AudioSettingsProps> = ({ saveSettings }) => {
+function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 	const settings = useSettingsStore();
 	const [loaded, setLoaded] = useState(false);
 
@@ -383,6 +382,6 @@ const AudioSettings: React.FC<AudioSettingsProps> = ({ saveSettings }) => {
 			</div>
 		</div>
 	);
-};
+}
 
 export default AudioSettings;

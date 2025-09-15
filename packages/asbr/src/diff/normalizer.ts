@@ -3,7 +3,7 @@
  * Implements configurable normalization as specified in the blueprint
  */
 
-import { createHash } from 'node:crypto';
+import { createHash } from 'crypto';
 import type { Config } from '../types/index.js';
 
 export interface NormalizationOptions {

@@ -1,6 +1,5 @@
 'use client';
 
-import type React from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { createAPIKey, getAPIKey, updateUserProfile } from '@/lib/api/auth';
@@ -9,12 +8,10 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { useUserStore } from '@/stores/userStore';
 
 interface AccountSettingsProps {
-	saveSettings: (settings: {
-		notifications?: { webhook_url?: string };
-	}) => void;
+	readonly saveSettings: (settings: { notifications?: { webhook_url?: string } }) => void;
 }
 
-const AccountSettings: React.FC<AccountSettingsProps> = ({ saveSettings }) => {
+function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 	const [loaded, setLoaded] = useState(false);
 	const [profileImageUrl, setProfileImageUrl] = useState('');
 	const [name, setName] = useState('');
@@ -395,6 +392,6 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ saveSettings }) => {
 			</div>
 		</div>
 	);
-};
+}
 
 export default AccountSettings;

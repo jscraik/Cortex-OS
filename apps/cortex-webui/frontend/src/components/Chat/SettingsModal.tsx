@@ -1,7 +1,6 @@
 'use client';
 
 import Modal from '@/components/common/Modal';
-import type React from 'react';
 import { useState } from 'react';
 import AccountSettings from './Settings/Account';
 import { AdvancedSettings } from './Settings/Advanced';
@@ -45,10 +44,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 		// In a real implementation, this would save to a store or API
 		console.log('Saving settings:', newSettings);
 		// For now, we'll just show a notification
-		// @ts-expect-error - window.addNotification is added by external script
-		if (typeof window !== 'undefined' && window.addNotification) {
-			// @ts-expect-error - window.addNotification is added by external script
-			window.addNotification('success', 'Settings saved successfully!');
+		if (
+			typeof window !== 'undefined' &&
+			'addNotification' in window &&
+			typeof (
+				window as { addNotification?: (type: string, msg: string) => void }
+			).addNotification === 'function'
+		) {
+			(
+				window as { addNotification: (type: string, msg: string) => void }
+			).addNotification('success', 'Settings saved successfully!');
 		}
 	};
 

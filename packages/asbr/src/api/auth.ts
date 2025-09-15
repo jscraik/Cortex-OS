@@ -35,6 +35,9 @@ export interface TokensConfig {
  * Authentication middleware for Express
  */
 export interface AuthenticatedRequest extends Request {
+	headers: Request['headers'];
+	ip: Request['ip'];
+	socket: Request['socket'];
 	auth?: { tokenId: string; scopes: string[] };
 }
 

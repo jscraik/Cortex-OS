@@ -1,4 +1,3 @@
-import type React from 'react';
 
 interface HeaderProps {
 	title: string;
@@ -25,10 +24,11 @@ const Header: React.FC<HeaderProps> = ({ title, onToggleSidebar }) => {
 								fillRule="evenodd"
 								d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
 								clipRule="evenodd"
+							import React from 'react';
 							/>
 						</svg>
-					</button>
-				)}
+								readonly title: string;
+								readonly onToggleSidebar?: () => void;
 				<h1 className="text-xl font-semibold">{title}</h1>
 			</div>
 			<div className="flex items-center space-x-4">

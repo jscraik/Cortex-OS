@@ -7,7 +7,7 @@ import {
 	extractWorkloadPath,
 	generateNonce,
 	isCertificateExpired,
-} from './security-utils.ts';
+} from './security-utils.js';
 
 describe('SPIFFE helpers', () => {
 	it('extracts trust domain and workload path', () => {

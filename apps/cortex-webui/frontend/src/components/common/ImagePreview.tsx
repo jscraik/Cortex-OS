@@ -1,6 +1,5 @@
 'use client';
 
-import type React from 'react';
 import { useEffect, useRef } from 'react';
 
 interface ImagePreviewProps {
@@ -66,90 +65,58 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 		return fetch(url);
 	};
 
-	const handleDownload = async () => {
-		if (src.startsWith('data:image/')) {
+		const buildFileName = (mimeType: string) =>
+			alt ? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}` : 'download.png';
+
+		const triggerDownload = (blob: Blob) => {
+			const mimeType = blob.type || 'image/png';
+			const fileName = buildFileName(mimeType);
+			const link = document.createElement('a');
+			link.href = URL.createObjectURL(blob);
+			link.download = fileName;
+			link.click();
+		};
+
+		const downloadDataImage = () => {
 			const base64Data = src.split(',')[1];
-			if (base64Data) {
-				const byteCharacters = atob(base64Data);
-				const byteNumbers = new Array(byteCharacters.length);
-				for (let i = 0; i < byteCharacters.length; i++) {
-					byteNumbers[i] = byteCharacters.charCodeAt(i);
-				}
-				const byteArray = new Uint8Array(byteNumbers);
-				const blob = new Blob([byteArray], { type: 'image/png' });
+			if (!base64Data) return;
+			const byteCharacters = atob(base64Data);
+			const byteNumbers = Array.from(byteCharacters).map((c) => c.charCodeAt(0));
+			const byteArray = new Uint8Array(byteNumbers);
+			triggerDownload(new Blob([byteArray], { type: 'image/png' }));
+		};
 
-				const mimeType = blob.type || 'image/png';
-				const fileName = alt
-					? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
-					: 'download.png';
-
-				const link = document.createElement('a');
-				link.href = URL.createObjectURL(blob);
-				link.download = fileName;
-				link.click();
-			}
-		} else if (src.startsWith('blob:')) {
-			// Handle blob URLs
-			// Blob URLs are considered safe when originated from the browser
+		const downloadViaFetch = async () => {
 			try {
 				const response = await safeFetch(src);
 				const blob = await response.blob();
-				const mimeType = blob.type || 'image/png';
-				const fileName = alt
-					? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
-					: 'download.png';
-
-				const link = document.createElement('a');
-				link.href = URL.createObjectURL(blob);
-				link.download = fileName;
-				link.click();
+				triggerDownload(blob);
 			} catch (error) {
-				console.error('Error downloading blob:', error);
+				console.error('Error downloading image:', error);
 			}
-		} else if (
-			src.startsWith('/') ||
-			src.startsWith('http://') ||
-			src.startsWith('https://')
-		) {
-			// Handle remote URLs
-			// Validate hostname against allowlist to prevent SSRF
-			if (src.startsWith('http://') || src.startsWith('https://')) {
-				if (!isAllowedRemoteHostname(src)) {
+		};
+
+		const handleDownload = async () => {
+			if (src.startsWith('data:image/')) return downloadDataImage();
+			if (src.startsWith('blob:')) return downloadViaFetch();
+			if (src.startsWith('/') || src.startsWith('http://') || src.startsWith('https://')) {
+				if ((src.startsWith('http://') || src.startsWith('https://')) && !isAllowedRemoteHostname(src)) {
 					console.warn('Blocked download from disallowed host:', src);
 					return;
 				}
+				return downloadViaFetch();
 			}
-
-			try {
-				const response = await safeFetch(src);
-				const blob = await response.blob();
-				const mimeType = blob.type || 'image/png';
-				const fileName = alt
-					? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
-					: 'download.png';
-
-				const link = document.createElement('a');
-				link.href = URL.createObjectURL(blob);
-				link.download = fileName;
-				link.click();
-			} catch (error) {
-				console.error('Error downloading remote image:', error);
-			}
-		}
-	};
+		};
 
 	if (!show) {
 		return null;
 	}
 
 	return (
-		<div
-			className="fixed top-0 right-0 left-0 bottom-0 bg-black text-white w-full min-h-screen h-screen flex justify-center z-50 overflow-hidden overscroll-contain"
-			onClick={(e) => {
-				if (e.target === e.currentTarget && onClose) {
-					onClose();
-				}
-			}}
+		<dialog
+			className="fixed top-0 right-0 left-0 bottom-0 bg-black/80 text-white w-full min-h-screen h-screen flex justify-center z-50 overflow-hidden overscroll-contain m-0 p-0 border-0"
+			open
+			aria-label="Image preview"
 		>
 			<div className="absolute left-0 w-full flex justify-between select-none z-20">
 				<div>
@@ -200,7 +167,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 					draggable="false"
 				/>
 			</div>
-		</div>
+		</dialog>
 	);
 };
 

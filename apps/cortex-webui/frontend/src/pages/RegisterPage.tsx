@@ -1,4 +1,3 @@
-import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/Auth/RegisterForm';
 
@@ -8,11 +7,7 @@ interface RegisterPageProps {
 	error: string | null;
 }
 
-const RegisterPage: React.FC<RegisterPageProps> = ({
-	onRegister,
-	loading,
-	error,
-}) => {
+function RegisterPage({ onRegister, loading, error }: RegisterPageProps) {
 	const navigate = useNavigate();
 
 	const handleSwitchToLogin = () => {
@@ -43,6 +38,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
 			</div>
 		</div>
 	);
-};
+}
 
 export default RegisterPage;

@@ -3,6 +3,9 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "node",
+    "types": [
+      "node"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -12,9 +15,6 @@
     "sourceMap": true,
     "rootDir": ".",
     "outDir": "dist",
-    "types": [
-      "node"
-    ],
     "baseUrl": ".",
     "paths": {
       "@cortex-os/a2a-core/*": [

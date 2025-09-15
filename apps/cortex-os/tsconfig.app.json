@@ -6,7 +6,14 @@
         "outDir": "../../dist/apps/cortex-os",
         "declaration": true,
         "types": [
-            "node"
+            "node",
+            "react",
+            "react-dom"
+        ],
+        "jsx": "react-jsx",
+        "typeRoots": [
+            "./node_modules/@types",
+            "../../node_modules/@types"
         ]
     },
     "include": [

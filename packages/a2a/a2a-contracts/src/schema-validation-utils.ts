@@ -287,7 +287,7 @@ export function generateSchemaDocs(
 	if (schema instanceof z.ZodObject) {
 		isObject = true;
 		// Cast to ZodObject to access shape safely
-		const obj = schema as unknown as z.ZodObject<any>;
+		const obj = schema as unknown as z.ZodObject<Record<string, z.ZodTypeAny>>;
 		shape = Object.keys(obj.shape);
 	}
 

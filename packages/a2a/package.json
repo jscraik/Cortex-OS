@@ -22,10 +22,10 @@
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/telemetry": "workspace:*",
-    "@types/uuid": "^10.0.0",
-    "uuid": "^13.0.0",
+    "uuid": "^9.0.1",
     "zod": "^3.22.4",
-    "better-sqlite3": "^12.2.0"
+    "better-sqlite3": "^12.2.0",
+    "@types/uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",

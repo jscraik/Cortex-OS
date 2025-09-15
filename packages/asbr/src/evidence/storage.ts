@@ -3,8 +3,8 @@
  * XDG-compliant persistence for evidence with governance features
  */
 
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { join } from 'node:path';
 import { gunzip, gzip } from 'node:zlib';
 import type { Evidence } from '../types/index.js';
@@ -285,7 +285,7 @@ export class EvidenceStorage {
 
 					for (const file of files) {
 						const filepath = join(dateDirPath, file);
-						const stats = await import('node:fs/promises').then((fs) =>
+						const stats = await import('fs/promises').then((fs) =>
 							fs.stat(filepath),
 						);
 						freedBytes += stats.size;
@@ -359,7 +359,7 @@ export class EvidenceStorage {
 					if (!file.endsWith('.json')) continue;
 
 					const filepath = join(dateDirPath, file);
-					const stats = await import('node:fs/promises').then((fs) =>
+					const stats = await import('fs/promises').then((fs) =>
 						fs.stat(filepath),
 					);
 					sizeBytes += stats.size;

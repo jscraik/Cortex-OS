@@ -12,7 +12,7 @@ if [[ -f config/ports.env ]]; then
 fi
 
 export NODE_ENV="production"
-PORT_TO_USE="${MCP_PORT:-3000}"
+PORT_TO_USE="${PORT:-3024}"  # Use port 3024 as standard for MCP
 
 # Free port if already in use
 if lsof -ti tcp:"${PORT_TO_USE}" >/dev/null 2>&1; then
@@ -26,21 +26,18 @@ if lsof -ti tcp:"${PORT_TO_USE}" >/dev/null 2>&1; then
 fi
 
 export PORT="${PORT_TO_USE}"
-echo "[mcp] Starting Cortex MCP server on PORT=${PORT}"
+echo "[mcp] Starting Cortex FastMCP server on PORT=${PORT}"
 
-# Change into MCP package directory
-cd packages/mcp
+# Run from the root directory to avoid local package shadowing
+cd "$ROOT_DIR"
 
-# Start FastAPI server (web UI + API) via uvicorn
-HOST="0.0.0.0"
-UVICORN_APP="mcp.webui.app:app"
-
+# Start the FastMCP server (ChatGPT-compatible with HTTP transport)
 if command -v uv >/dev/null 2>&1; then
-  exec uv run python -m uvicorn "${UVICORN_APP}" --host "${HOST}" --port "${PORT}"
+  exec uv run python packages/mcp/cortex_fastmcp_server_v2.py
 elif command -v python3 >/dev/null 2>&1; then
-  exec python3 -m uvicorn "${UVICORN_APP}" --host "${HOST}" --port "${PORT}"
+  exec python3 packages/mcp/cortex_fastmcp_server_v2.py
 elif command -v python >/dev/null 2>&1; then
-  exec python -m uvicorn "${UVICORN_APP}" --host "${HOST}" --port "${PORT}"
+  exec python packages/mcp/cortex_fastmcp_server_v2.py
 else
   echo "[mcp] No Python runtime found (need uv or python3/python)." >&2
   exit 127

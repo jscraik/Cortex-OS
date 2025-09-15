@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 interface SearchResult {
 	id: string;
@@ -18,7 +17,6 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 	const [results, setResults] = useState<SearchResult[]>([]);
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const inputRef = useRef<HTMLInputElement>(null);
-	const navigate = useNavigate();
 
 	const renderResultIcon = (type: SearchResult['type']) => {
 		if (type === 'chat') {
@@ -136,14 +134,14 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 
 			// Navigate to the selected result
 			if (result.type === 'chat') {
-				navigate(`/chat/${result.id}`);
+				window.location.href = `/chat/${result.id}`;
 			} else if (result.type === 'note') {
-				navigate(`/notes/${result.id}`);
+				window.location.href = `/notes/${result.id}`;
 			} else {
-				navigate(`/documents/${result.id}`);
+				window.location.href = `/documents/${result.id}`;
 			}
 		},
-		[onClose, navigate],
+		[onClose],
 	);
 
 	// Handle keyboard navigation

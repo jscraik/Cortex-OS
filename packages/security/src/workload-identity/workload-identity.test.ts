@@ -6,7 +6,7 @@ import {
 	type WorkloadAPIClient,
 	WorkloadIdentityAttestor,
 	WorkloadIdentityManager,
-} from './workload-identity.ts';
+} from './workload-identity.js';
 
 const SAMPLE_ID = 'spiffe://example.org/my/service';
 

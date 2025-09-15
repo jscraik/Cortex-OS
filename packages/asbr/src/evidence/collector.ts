@@ -3,8 +3,8 @@
  * Manages evidence pointer collection and validation per blueprint specification
  */
 
-import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { createHash } from 'crypto';
+import { readFile } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 import type {
 	Evidence,

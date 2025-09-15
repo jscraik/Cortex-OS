@@ -26,7 +26,7 @@ export const createLangGraphAgent = (): Agent<
 
 	const CountAnnotation = Annotation.Root({
 		count: Annotation<number>({
-			reducer: (_left, right) => right,
+			reducer: (_left: number, right: number) => right,
 			default: () => 0,
 		}),
 	});

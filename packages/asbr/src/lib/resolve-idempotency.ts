@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash } from 'crypto';
 import type { Task, TaskInput } from '../types/index.js';
 
 /**

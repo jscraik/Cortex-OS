@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MTLSConfigSchema } from './types.ts';
+import { MTLSConfigSchema } from './types.js';
 
 const baseConfig = {
 	caCertificate: 'ca',

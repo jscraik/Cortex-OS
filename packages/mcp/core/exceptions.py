@@ -48,12 +48,6 @@ class PluginError(MCPError):
     pass
 
 
-class ConnectionPoolError(MCPError):
-    """Connection pool-related errors."""
-
-    pass
-
-
 class ToolExecutionError(MCPError):
     """Tool execution errors."""
 
@@ -92,12 +86,6 @@ class RateLimitError(MCPError):
 
 class ResourceError(MCPError):
     """Resource-related errors (memory, disk, etc.)."""
-
-    pass
-
-
-class CircuitBreakerError(MCPError):
-    """Circuit breaker errors."""
 
     pass
 

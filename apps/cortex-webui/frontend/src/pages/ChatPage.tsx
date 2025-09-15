@@ -1,21 +1,21 @@
-import type React from 'react';
+import React from 'react';
 import ChatInterface from '../components/Chat/ChatInterface';
 import Header from '../components/Layout/Header';
 import Sidebar from '../components/Layout/Sidebar';
 import type { Conversation, Message } from '../types';
 
 interface ChatPageProps {
-	conversation: Conversation;
-	messages: Message[];
-	conversations: Conversation[];
-	activeConversationId: string | null;
-	onSendMessage: (content: string) => void;
-	onSelectConversation: (id: string) => void;
-	onCreateConversation: () => void;
-	onLogout: () => void;
-	onToggleSidebar: () => void;
-	streaming: boolean;
-	error: string | null;
+		readonly conversation: Conversation;
+		readonly messages: Array<{ id: string; role: string; content: string; [key: string]: any }>;
+		readonly conversations: Conversation[];
+		readonly activeConversationId: string;
+		readonly onSendMessage: (message: string) => void;
+		readonly onSelectConversation: (id: string) => void;
+		readonly onCreateConversation: () => void;
+		readonly onLogout: () => void;
+		readonly onToggleSidebar?: () => void;
+		readonly streaming: boolean;
+		readonly error?: string;
 }
 
 const ChatPage: React.FC<ChatPageProps> = ({

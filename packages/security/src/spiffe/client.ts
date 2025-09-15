@@ -18,7 +18,7 @@ import {
 	type TrustDomainConfig,
 	type WorkloadIdentity,
 } from '../types.js';
-import { extractWorkloadPath } from '../utils/security-utils.ts';
+import { extractWorkloadPath } from '../utils/security-utils.js';
 
 export function convertSelectors(
 	selectors: Array<{ type?: string; value?: string }>,
