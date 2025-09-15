@@ -18,13 +18,9 @@
       "import": "./dist/contracts.js",
       "types": "./dist/contracts.d.ts"
     },
-    "./tools": {
-      "import": "./dist/tools.js",
-      "types": "./dist/tools.d.ts"
-    },
-    "./tools/echo-tool": {
-      "import": "./dist/tools/echo-tool.js",
-      "types": "./dist/tools/echo-tool.d.ts"
+    "./testing": {
+      "import": "./dist/testing/index.js",
+      "types": "./dist/testing/index.d.ts"
     }
   },
   "scripts": {
