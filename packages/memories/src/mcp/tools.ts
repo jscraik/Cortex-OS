@@ -107,7 +107,7 @@ const memoryRecordSchema = z
                 }
         });
 
-const memoryRecordOutputSchema = memoryZ.extend({
+const memoryRecordOutputSchema = memoryZ.omit({ namespace: true }).extend({
         namespace: namespaceSchema.optional(),
 });
 
