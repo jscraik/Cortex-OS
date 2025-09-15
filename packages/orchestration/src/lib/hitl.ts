@@ -5,22 +5,34 @@ const STORE =
 	process.env.CORTEX_HITL_STORE ||
 	path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
 
-async function appendJsonl(file: string, obj: any) {
-	await fs.mkdir(path.dirname(file), { recursive: true });
-	await fs.appendFile(file, `${JSON.stringify(obj)}\n`, 'utf8');
+type ProposalLike = {
+        dataClass?: unknown;
+        path?: unknown;
+};
+
+const isNodeErrorWithCode = (error: unknown, code: string): boolean =>
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof (error as { code?: unknown }).code === 'string' &&
+        (error as { code: string }).code === code;
+
+async function appendJsonl(file: string, obj: unknown) {
+        await fs.mkdir(path.dirname(file), { recursive: true });
+        await fs.appendFile(file, `${JSON.stringify(obj)}\n`, 'utf8');
 }
 
-async function readJsonl(file: string): Promise<any[]> {
-	try {
-		const text = await fs.readFile(file, 'utf8');
-		return text
-			.split(/\n+/)
-			.filter(Boolean)
-			.map((l) => JSON.parse(l));
-	} catch (e: any) {
-		if (e?.code === 'ENOENT') return [];
-		throw e;
-	}
+async function readJsonl(file: string): Promise<unknown[]> {
+        try {
+                const text = await fs.readFile(file, 'utf8');
+                return text
+                        .split(/\n+/)
+                        .filter(Boolean)
+                        .map((l) => JSON.parse(l));
+        } catch (error) {
+                if (isNodeErrorWithCode(error, 'ENOENT')) return [];
+                throw error;
+        }
 }
 
 export async function waitForApproval(
@@ -52,16 +64,20 @@ export async function waitForApproval(
 	throw new Error('HITL approval timeout');
 }
 export function requiresApproval(proposal: unknown) {
-	// naive heuristic: if proposal includes dataClass === 'sensitive' or path outside workspace
-	try {
-		const p = proposal as any;
-		if (p?.dataClass === 'sensitive') return true;
-		if (p?.path && typeof p.path === 'string') {
-			const cwd = process.cwd();
-			return !p.path.startsWith(cwd);
-		}
-	} catch {
-		// Intentionally ignore parsing / shape errors; absence of required fields -> no approval required.
-	}
-	return false;
+        // naive heuristic: if proposal includes dataClass === 'sensitive' or path outside workspace
+        if (typeof proposal !== 'object' || proposal === null) {
+                return false;
+        }
+
+        const candidate = proposal as ProposalLike;
+        if (candidate.dataClass === 'sensitive') {
+                return true;
+        }
+
+        if (typeof candidate.path === 'string') {
+                const cwd = process.cwd();
+                return !candidate.path.startsWith(cwd);
+        }
+
+        return false;
 }

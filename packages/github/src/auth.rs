@@ -73,7 +73,7 @@ impl TokenManager {
     pub async fn get_token(&mut self) -> GitHubResult<String> {
         // Check if current token is still valid
         if let Some(ref token) = self.current_token {
-            if !self.is_token_expired(&token) {
+            if !self.is_token_expired(token) {
                 return Ok(token.token.clone());
             }
         }

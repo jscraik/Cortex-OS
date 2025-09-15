@@ -10,6 +10,101 @@ Minimal building blocks for the Model Context Protocol.
 - **Runtime validation** via Zod schemas
 - **Enhanced client** with HTTP and stdio transports
 - **Typed contracts** for server configuration
+- **Tool interface & registry** with first-class error handling
+
+## MCP Tool Template
+
+`@cortex-os/mcp-core` provides a contract-first interface for defining MCP tools in TypeScript. Tools declare a `zod` input schema, an async `execute` method, and optional execution context metadata. The `ToolRegistry` coordinates validation, invocation, and error normalization.
+
+```typescript
+import {
+  ToolRegistry,
+  ToolValidationError,
+  ToolExecutionError,
+  echoTool,
+} from '@cortex-os/mcp-core';
+
+const registry = new ToolRegistry();
+registry.register(echoTool);
+
+try {
+  const result = await registry.execute('echo', {
+    message: 'hello cortex',
+    uppercase: true,
+  });
+  console.log(result.message); // "HELLO CORTEX"
+} catch (error) {
+  if (error instanceof ToolValidationError) {
+    console.error('Bad input:', error.issues);
+  } else if (error instanceof ToolExecutionError) {
+    console.error('Tool failed:', error.cause);
+  } else {
+    throw error;
+  }
+}
+```
+
+### Error codes
+
+| Code | Description |
+|------|-------------|
+| `E_TOOL_REGISTER` | Tool names must be unique inside a registry |
+| `E_TOOL_NOT_FOUND` | Requested tool is not registered |
+| `E_TOOL_VALIDATION` | Zod schema validation failed |
+| `E_TOOL_EXECUTION` | Tool threw an unexpected error |
+| `E_TOOL_ABORTED` | Execution aborted via `AbortSignal` |
+
+### Built-in `echo` tool
+
+A ready-to-use `echo` tool ships with the package for connectivity and contract testing.
+
+```typescript
+import { echoTool } from '@cortex-os/mcp-core/tools/echo-tool';
+
+const result = await echoTool.execute({ message: 'ping' });
+console.log(result.message); // "ping"
+```
+
+Combine it with the registry to expose an HTTP endpoint that is compatible with the enhanced MCP client:
+
+```typescript
+import { createServer } from 'node:http';
+import {
+  ToolRegistry,
+  McpToolError,
+  echoTool,
+} from '@cortex-os/mcp-core';
+
+const registry = new ToolRegistry();
+registry.register(echoTool);
+
+const readBody = async (req: import('node:http').IncomingMessage) => {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString('utf8');
+};
+
+const server = createServer(async (req, res) => {
+  const { name, arguments: args } = JSON.parse(await readBody(req));
+  try {
+    const result = await registry.execute(name, args);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, result }));
+  } catch (error) {
+    if (error instanceof McpToolError) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: { code: error.code, message: error.message } }));
+      return;
+    }
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: false, error: { code: 'E_INTERNAL', message: 'Unexpected failure' } }));
+  }
+});
+
+server.listen(3000);
+```
 
 ## Transport Matrix
 
