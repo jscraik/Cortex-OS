@@ -22,6 +22,7 @@ Minimal building blocks for the Model Context Protocol.
 - [Getting Started](./getting-started.md)
 - [Configuration](./configuration.md)
 - [Architecture](./architecture.md)
+- [Transport Protocols](./transport-protocols.md)
 - [CLI Reference](./cli-reference.md)
 - [API Reference](./api-reference.md)
 - [User Guide](./user-guide.md)
