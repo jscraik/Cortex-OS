@@ -33,8 +33,8 @@ class EchoTool(BaseMCPTool[EchoInput]):
     name = "echo"
     description = (
         "Echo the provided message with optional uppercase transformation and repetition. "
-        "This tool is intended as a reference implementation for building MCP tools using"
-        " Cortex-OS primitives."
+        "This tool is intended as a reference implementation for building MCP tools using "
+        "Cortex-OS primitives."
     )
     InputModel = EchoInput
 
