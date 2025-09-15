@@ -270,23 +270,27 @@ baseline:
 - Rotation success criteria: consecutive healthy probes (`ROTATE_MIN_SUCCESSES`).
 
 Tail primary logs:
+
 ```bash
 tail -f logs/mcp-server.log
 tail -f logs/tunnel-cortex-mcp*.log
 ```
 
 Sample health probe (non-200 indicates failure):
+
 ```bash
 curl -i https://cortex-mcp.brainwav.io/health
 ```
 
 Planned (not yet implemented):
+
 - OpenTelemetry span emission on request handling.
 - Emission of per-stream token counters (aggregate vs delta) as events.
 
 ## Cloudflare Tunnel Log Patterns
 
 Healthy startup excerpt:
+
 ```text
 2025-09-15T10:12:04Z INF Initial protocol h2mux
 2025-09-15T10:12:05Z INF Route propagating tunnelID=1234abcd region=AMS
@@ -296,6 +300,7 @@ Healthy startup excerpt:
 ```
 
 Failing (app unavailable) excerpt:
+
 ```text
 2025-09-15T10:12:04Z INF Initial protocol h2mux
 2025-09-15T10:12:05Z ERR Upstream connection failed error="dial tcp 127.0.0.1:3024: connect: connection refused" retry=1
@@ -304,6 +309,7 @@ Failing (app unavailable) excerpt:
 ```
 
 Actionable signals:
+
 - Repeated `connection refused`: MCP server not running.
 - Repeated 5xx with server running: inspect server logs or dependency.
 - No `Registered ingress rules`: config path or credentials issue.
@@ -332,6 +338,7 @@ Extract from `contracts/streaming-events.schema.json` (simplified):
 ```
 
 Validation notes:
+
 - Only one of: `delta`, `item`, or stream terminator `completed` per event.
 - `delta` events are order-sensitive; consumers should append in arrival order.
 - `completed` guarantees no further events for the stream ID (if envelope used).
