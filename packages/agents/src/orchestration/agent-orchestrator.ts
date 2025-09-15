@@ -63,7 +63,7 @@ import type {
 	MemoryStore,
 	ModelProvider,
 } from '../lib/types';
-import { generateAgentId, withTimeout } from '../lib/utils';
+import { generateAgentId, generateTraceId, withTimeout } from '../lib/utils';
 
 // Orchestration schemas
 export const workflowTaskSchema = z.object({
@@ -215,65 +215,95 @@ const executeTask = async (
 
 	state.runningTasks.add(task.id);
 
-	try {
-		const startTime = Date.now();
-		const useProxy = !!state.config.emitLifecycleProxy;
-		const agentId =
-			typeof (agent as { id?: string }).id === 'string'
-				? (agent as { id: string }).id
-				: generateAgentId();
-		if (useProxy) {
-			await state.config.eventBus.publish({
-				specversion: '1.0',
-				id: randomUUID(),
-				type: 'agent.started',
+        const startTime = Date.now();
+        const useProxy = !!state.config.emitLifecycleProxy;
+        const agentId =
+                typeof (agent as { id?: string }).id === 'string'
+                        ? (agent as { id: string }).id
+                        : generateAgentId();
+        let traceId: string | undefined;
+
+        try {
+                if (useProxy) {
+                        traceId = generateTraceId();
+                        await state.config.eventBus.publish({
+                                specversion: '1.0',
+                                id: randomUUID(),
+                                type: 'agent.started',
+                                source: AGENT_SOURCE_URN,
+                                time: new Date().toISOString(),
+                                ttlMs: 60000,
+                                headers: {},
+                                data: {
+                                        agentId,
+                                        traceId,
+                                        capability: task.agentType,
+                                        input: task.input ?? {},
+                                },
+                        });
+                }
+
+                const agentInput = useProxy
+                        ? { ...(task.input as Record<string, unknown>), _suppressLifecycle: true }
+                        : (task.input as Record<string, unknown>);
+                const result = await withTimeout(agent.execute(agentInput), task.timeout);
+
+                if (useProxy && traceId) {
+                        const latency = Math.max(1, Date.now() - startTime);
+                        await state.config.eventBus.publish({
+                                specversion: '1.0',
+                                id: randomUUID(),
+                                type: 'agent.completed',
 				source: AGENT_SOURCE_URN,
 				time: new Date().toISOString(),
-				ttlMs: 60000,
-				headers: {},
-				data: {
-					agentId,
-					traceId: generateAgentId(),
-					capability: task.agentType,
-					input: task.input ?? {},
-				},
+                                ttlMs: 60000,
+                                headers: {},
+                                data: {
+                                        agentId,
+                                        traceId,
+                                        capability: task.agentType,
+                                        result,
+                                        evidence: [],
+                                        metrics: { latencyMs: latency },
+                                },
 			});
 		}
 
-		const agentInput = useProxy
-			? { ...(task.input as Record<string, unknown>), _suppressLifecycle: true }
-			: (task.input as Record<string, unknown>);
-		const result = await withTimeout(agent.execute(agentInput), task.timeout);
+                if (state.config.enableMetrics) {
+                        state.metrics.tasksCompleted++;
+                }
 
-		if (useProxy) {
-			const latency = Math.max(1, Date.now() - startTime);
-			await state.config.eventBus.publish({
-				specversion: '1.0',
-				id: randomUUID(),
-				type: 'agent.completed',
-				source: AGENT_SOURCE_URN,
-				time: new Date().toISOString(),
-				ttlMs: 60000,
-				headers: {},
-				data: {
-					agentId,
-					traceId: generateAgentId(),
-					capability: task.agentType,
-					result,
-					evidence: [],
-					metrics: { latencyMs: latency },
-				},
-			});
-		}
-
-		if (state.config.enableMetrics) {
-			state.metrics.tasksCompleted++;
-		}
-
-		return result;
-	} finally {
-		state.runningTasks.delete(task.id);
-	}
+                return result;
+        } catch (error) {
+                if (useProxy && traceId) {
+                        const latency = Math.max(1, Date.now() - startTime);
+                        await state.config.eventBus.publish({
+                                specversion: '1.0',
+                                id: randomUUID(),
+                                type: 'agent.failed',
+                                source: AGENT_SOURCE_URN,
+                                time: new Date().toISOString(),
+                                ttlMs: 60000,
+                                headers: {},
+                                data: {
+                                        agentId,
+                                        traceId,
+                                        capability: task.agentType,
+                                        error: error instanceof Error ? error.message : 'Unknown error',
+                                        errorCode:
+                                                (error as { code?: string | number })?.code || undefined,
+                                        status:
+                                                typeof (error as { status?: unknown })?.status === 'number'
+                                                        ? (error as { status?: number })?.status
+                                                        : undefined,
+                                        metrics: { latencyMs: latency },
+                                },
+                        });
+                }
+                throw error;
+        } finally {
+                state.runningTasks.delete(task.id);
+        }
 };
 
 const executeTasksInParallel = async (
