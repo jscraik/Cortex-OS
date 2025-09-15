@@ -207,11 +207,13 @@ pub struct RepositoryVariable {
     pub updated_at: String,
 }
 
+type WorkflowCallback = Box<dyn Fn(&WorkflowRunEvent) + Send + Sync>;
+
 /// Workflow monitoring for real-time updates
 pub struct WorkflowMonitor {
     actions_api: ActionsAPI,
     active_runs: HashMap<u64, WorkflowRun>,
-    callbacks: Vec<Box<dyn Fn(&WorkflowRunEvent) + Send + Sync>>,
+    callbacks: Vec<WorkflowCallback>,
 }
 
 #[derive(Debug, Clone)]

@@ -6,9 +6,9 @@ const STORE =
 	process.env.CORTEX_HITL_STORE ||
 	path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
 
-async function appendJsonl(file: string, obj: any) {
-	await fs.mkdir(path.dirname(file), { recursive: true });
-	await fs.appendFile(file, `${JSON.stringify(obj)}\n`, 'utf8');
+async function appendJsonl(file: string, obj: unknown) {
+        await fs.mkdir(path.dirname(file), { recursive: true });
+        await fs.appendFile(file, `${JSON.stringify(obj)}\n`, 'utf8');
 }
 
 async function main() {

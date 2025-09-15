@@ -1,7 +1,14 @@
+
 /**
- * MCP Tool definitions for Memories package
- * Exposes memory management capabilities as external tools for AI agents
+ * MCP tool contract definitions for the memories package.
+ *
+ * These definitions provide contract-first metadata, schemas, and
+ * validation helpers for exposing Cortex memories over the Model Context
+ * Protocol. Handlers are intentionally left as `NOT_IMPLEMENTED` so that
+ * subsequent tasks can focus on execution logic while reusing the shared
+ * contracts defined here.
  */
+
 
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
@@ -605,4 +612,6 @@ export const memoryMcpTools: MemoryTool[] = [
         memoryUpdateTool,
         memoryDeleteTool,
         memoryStatsTool,
+
 ];
+

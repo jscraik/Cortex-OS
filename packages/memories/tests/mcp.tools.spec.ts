@@ -1,3 +1,4 @@
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
         MAX_MEMORY_TEXT_LENGTH,
@@ -205,5 +206,6 @@ describe('memories MCP tools validation and error handling', () => {
                                 detail.toLowerCase().includes('limit'),
                         ),
                 ).toBe(true);
+
         });
 });
