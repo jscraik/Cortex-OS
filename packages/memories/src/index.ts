@@ -29,20 +29,49 @@ export {
 // MCP Tools for external AI agent integration
 export {
 
+        createMemoryToolErrorResponse,
+        isMemoryToolErrorResponse,
+        memoryDeleteInputSchema,
+        memoryDeleteOutputSchema,
         memoryDeleteTool,
-        memoryDeleteToolSchema,
+        memoryGetInputSchema,
+        memoryGetOutputSchema,
         memoryGetTool,
-        memoryGetToolSchema,
+        memoryListInputSchema,
+        memoryListOutputSchema,
         memoryListTool,
-        memoryListToolSchema,
         memoryMcpTools,
+        memorySearchInputSchema,
+        memorySearchOutputSchema,
         memorySearchTool,
-        memorySearchToolSchema,
-        memorySetTool,
-        memorySetToolSchema,
-        resetMemoryServiceFactory,
-        setMemoryServiceFactory,
+        memoryStoreInputSchema,
+        memoryStoreOutputSchema,
+        memoryStoreTool,
+        memoryToolErrorCatalog,
+
 } from './mcp/tools.js';
+export type {
+        MemoryDeleteInput,
+        MemoryDeleteOutput,
+        MemoryGetInput,
+        MemoryGetOutput,
+        MemoryListInput,
+        MemoryListOutput,
+        MemorySearchInput,
+        MemorySearchOutput,
+        MemoryStoreInput,
+        MemoryStoreOutput,
+        MemoryToolContext,
+        MemoryToolDefinition,
+        MemoryToolDocumentation,
+        MemoryToolErrorCode,
+        MemoryToolErrorDescriptor,
+        MemoryToolErrorResponse,
+        MemoryToolHandler,
+        MemoryToolResponse,
+        MemoryToolSuccessResponse,
+} from './mcp/tools.js';
+
 export * from './ports/Embedder.js';
 export * from './ports/MemoryStore.js';
 export * from './service/embedder-factory.js';
