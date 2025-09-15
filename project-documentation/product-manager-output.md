@@ -27,10 +27,10 @@ category: product
   - Governance policies, OWASP-oriented scans, Renovate, SBOM direction, and CI patterns documented. A PM2-based concurrency cap design exists for MLX workers.
 - Material gaps before MVP:
   1. End-to-end tests exercising Model Gateway + RAG + agents via A2A, including traces/audits.
-  2. SSE transport completion and parity validation across MCP clients; rate limiting and improved log redaction.
-  3. CI “green” baseline: lint/type/test across workspace; fix or quarantine flaky durability/bridge tests noted in docs.
-  4. Production compose with health checks for NATS, Qdrant/FAISS, Model Gateway 8081, and OTEL exporter; smoke tests.
-  5. Approvals UI a11y smoke tests and HITL flow validation; WCAG 2.2 AA checks automated.
+  1. SSE transport completion and parity validation across MCP clients; rate limiting and improved log redaction.
+  1. CI "green" baseline: lint/type/test across workspace; fix or quarantine flaky durability/bridge tests noted in docs.
+  1. Production compose with health checks for NATS, Qdrant/FAISS, Model Gateway 8081, and OTEL exporter; smoke tests.
+  1. Approvals UI a11y smoke tests and HITL flow validation; WCAG 2.2 AA checks automated.
 
 Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by closing the listed gaps; core architecture is sound and implemented.
 
@@ -40,10 +40,10 @@ Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by cl
 
 - User Story: As a platform engineer, I want a single HTTP API for embeddings, rerank, and chat, so that agents can use local MLX models with safe fallbacks and consistent auditing.
 - Acceptance Criteria:
-  - GIVEN valid texts WHEN POST /embeddings THEN return vectors[ ] with dimensions and modelUsed.
-  - GIVEN invalid payload WHEN POST /embeddings THEN 400 with error.
-  - GIVEN query+docs WHEN POST /rerank THEN rankedItems sorted by score and modelUsed.
-  - GIVEN msgs WHEN POST /chat AND MLX unavailable THEN fallback model used if policy allows, with audit trail containing runId/traceId.
+  1. GIVEN valid texts WHEN POST /embeddings THEN return vectors[ ] with dimensions and modelUsed.
+  1. GIVEN invalid payload WHEN POST /embeddings THEN 400 with error.
+  1. GIVEN query+docs WHEN POST /rerank THEN rankedItems sorted by score and modelUsed.
+  1. GIVEN msgs WHEN POST /chat AND MLX unavailable THEN fallback model used if policy allows, with audit trail containing runId/traceId.
 - Priority: P0 (foundation for all model use)
 - Dependencies: MLX runtime availability; Ollama service; policy engine; audit store; config at config/mlx-models.json.
 - Technical Constraints: Apple Silicon optimized MLX; localhost 127.0.0.1:8081; timeouts and retry policy; JSON payload size limits.
@@ -53,8 +53,8 @@ Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by cl
 
 - User Story: As an orchestrator developer, I want agents to communicate via CloudEvents over A2A subjects, so that boundaries are enforced and flows are observable.
 - Acceptance Criteria:
-  - GIVEN agent.plan.request WHEN published THEN agent.plan.result follows contract and includes runId, traceId, evidence.
-  - GIVEN malformed message WHEN received THEN reject with structured error and OTEL span recorded.
+  1. GIVEN agent.plan.request WHEN published THEN agent.plan.result follows contract and includes runId, traceId, evidence.
+  1. GIVEN malformed message WHEN received THEN reject with structured error and OTEL span recorded.
 - Priority: P0
 - Dependencies: NATS (or broker); contracts library; OTEL tracer.
 - Technical Constraints: AsyncAPI subjects stable; backpressure handling (NATS limits); idempotency keys.
@@ -64,8 +64,8 @@ Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by cl
 
 - User Story: As a security engineer, I want universal CLI and API to add/list/status MCP servers with risk classification, so that external tools are onboarded safely across frontends.
 - Acceptance Criteria:
-  - GIVEN https URL + auth WHEN add THEN risk tier computed and policy applied; high risk requires force/approval.
-  - GIVEN invalid URL or dangerous domain WHEN add THEN operation blocked with rationale.
+  1. GIVEN https URL + auth WHEN add THEN risk tier computed and policy applied; high risk requires force/approval.
+  1. GIVEN invalid URL or dangerous domain WHEN add THEN operation blocked with rationale.
 - Priority: P1
 - Dependencies: Policy framework; storage for registry; HTTP client with validation.
 - Technical Constraints: HTTPS enforcement; domain/IP allowlists; API key pattern checks; optional tunnels.
@@ -75,8 +75,8 @@ Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by cl
 
 - User Story: As a knowledge engineer, I want embeddings+rereank via the gateway for retrieval, so that we use consistent models and logs.
 - Acceptance Criteria:
-  - GIVEN corpus indexed WHEN query THEN return top-k with scores and model tags; latency p95 under target.
-  - GIVEN MLX failure WHEN query THEN fallback to Ollama embedding model per policy and record fallback reason.
+  1. GIVEN corpus indexed WHEN query THEN return top-k with scores and model tags; latency p95 under target.
+  1. GIVEN MLX failure WHEN query THEN fallback to Ollama embedding model per policy and record fallback reason.
 - Priority: P1
 - Dependencies: FAISS/Qdrant; gateway; config/model-strategy; caches.
 - Technical Constraints: Vector dimensions 768; shard settings; batch sizes.
@@ -86,8 +86,8 @@ Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by cl
 
 - User Story: As a reviewer, I want accessible approvals and audit trails, so that risky actions are reviewed and compliant.
 - Acceptance Criteria:
-  - GIVEN pending approval WHEN keyboard-only THEN all controls reachable with visible focus; Axe checks pass; WCAG 2.2 AA.
-  - GIVEN decision WHEN approved/rejected THEN CloudEvent recorded with actor id and reason.
+  1. GIVEN pending approval WHEN keyboard-only THEN all controls reachable with visible focus; Axe checks pass; WCAG 2.2 AA.
+  1. GIVEN decision WHEN approved/rejected THEN CloudEvent recorded with actor id and reason.
 - Priority: P1
 - Dependencies: UI app; A2A events; audit log; review policies.
 - Technical Constraints: SSR-friendly; OTEL IDs; rate limits on approval actions.
@@ -111,7 +111,7 @@ Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by cl
 
 1. User Experience Requirements
 
-- IA: “Agents,” “Models,” “Policies,” “Runs,” “Approvals.”
+- IA: "Agents," "Models," "Policies," "Runs," "Approvals."
 - Progressive disclosure: hide advanced model tuning; show fallback info on demand.
 - Error prevention: schema validation; confirmation for high-risk actions; dry-run mode.
 - Feedback: OTEL trace link per run; audit IDs shown in UI; structured error codes.
@@ -133,12 +133,12 @@ Conclusion: With 1–2 focused sprints, the system can reach MVP readiness by cl
 
 - Now (Sprint 1)
   1. Finish MCP SSE transport and add rate limiting + log redaction.
-  2. E2E smoke: agent → A2A → gateway → RAG; assert audit/trace; add to pnpm test:integration.
-  3. Compose: NATS, Qdrant/FAISS, gateway:8081, OTEL; health checks + wait scripts.
+  1. E2E smoke: agent → A2A → gateway → RAG; assert audit/trace; add to pnpm test:integration.
+  1. Compose: NATS, Qdrant/FAISS, gateway:8081, OTEL; health checks + wait scripts.
 
-- Next (Sprint 2) 4) Approvals UI a11y tests (Playwright + Axe); HITL CloudEvents. 5) Stabilize CI: fix lint/type/test; quarantine flaky tests behind :launch gate. 6) Simlab KPIs: precision@k vs latency matrix for 0.6B/4B/8B embeddings and reranker variants.
+- Next (Sprint 2) 1) Approvals UI a11y tests (Playwright + Axe); HITL CloudEvents. 2) Stabilize CI: fix lint/type/test; quarantine flaky tests behind :launch gate. 3) Simlab KPIs: precision@k vs latency matrix for 0.6B/4B/8B embeddings and reranker variants.
 
-- Later 7) Structured logging with redaction + key rotation. 8) Replay CLI for any runId/node; link to OTEL traces. 9) Dynamic policy updates and compliance reporting.
+- Later 1) Structured logging with redaction + key rotation. 2) Replay CLI for any runId/node; link to OTEL traces. 3) Dynamic policy updates and compliance reporting.
 
 ## Metrics
 

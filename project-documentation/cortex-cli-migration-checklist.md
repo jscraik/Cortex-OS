@@ -69,42 +69,51 @@ Out of scope:
 ## Detailed TDD Task Plan (Bite-Size Commits)
 
 1) chore(inventory): enumerate cortex-cli usage — COMPLETED
+
 - Tests: none (documentation-only task)
 - Actions:
   - Use Agent Toolkit search to locate: `just scout "cortex-cli|apps/cortex-cli|cortex code mcp|cortex mcp" .`
   - Produce a short `inventory.md` in this folder with references.
   - Output: `project-documentation/cortex-cli-inventory.md` (kept up to date during migration)
 
-2) test(code): port CLI behavior tests to cortex-code — COMPLETED
+1) test(code): port CLI behavior tests to cortex-code — COMPLETED
+
 - Tests: add failing tests in `apps/cortex-code` that codify behaviors to keep (e.g., mcp list/add/remove/get/show, a2a doctor/send).
 - Actions: copy/translate existing CLI tests or write new unit/integration tests with minimal fixtures.
- - Output: initial failing tests for `codex a2a doctor` and `codex mcp list`.
+- Output: initial failing tests for `codex a2a doctor` and `codex mcp list`.
 
-3) feat(code): implement command shims in cortex-code — COMPLETED
+1) feat(code): implement command shims in cortex-code — COMPLETED
+
 - Tests: make step (2) pass with minimal implementations.
 - Actions: add subcommands to `cortex-code` (or route to existing modules) to satisfy tests.
 
-4) refactor(docs): update references from cortex-cli to cortex-code — COMPLETED (deprecation notes + substitutions)
+1) refactor(docs): update references from cortex-cli to cortex-code — COMPLETED (deprecation notes + substitutions)
+
 - Tests: docs lint (`pnpm docs:lint`).
 - Actions: replace CLI command examples in docs, README, tutorials.
 
-5) chore(ci): switch pipelines to cortex-code — PARTIAL (PM2 configs updated; Nx smart wrapper; docs-lint workflow added)
+1) chore(ci): switch pipelines to cortex-code — PARTIAL (PM2 configs updated; Nx smart wrapper; docs-lint workflow added)
+
 - Tests: pipeline dry-run or local script validation.
 - Actions: update CI workflows, scripts, and any automation invoking cortex-cli.
 
-6) chore(workspace): remove cortex-cli from workspace configs — COMPLETED (vitest workspace updated; nx.json added for nx-smart)
+1) chore(workspace): remove cortex-cli from workspace configs — COMPLETED (vitest workspace updated; nx.json added for nx-smart)
+
 - Tests: `pnpm build:smart` and `pnpm test:smart` remain green; ensure affected-only targets run.
 - Actions: remove `apps/cortex-cli` entries from pnpm workspaces, Nx `project.json`, `tsconfig.*` path maps.
 
-7) perf/cleanup: delete apps/cortex-cli directory — COMPLETED
+1) perf/cleanup: delete apps/cortex-cli directory — COMPLETED
+
 - Tests: rerun smart targets.
 - Actions: remove directory and any lingering references.
 
-9) chore(ci): update Vitest workspace and PM2 configs — COMPLETED
+1) chore(ci): update Vitest workspace and PM2 configs — COMPLETED
+
 - Tests: run TS test suites to ensure no breakage.
 - Actions: replace or remove `apps/cortex-cli` entries in `config/vitest.workspace.ts` and migrate orchestrator paths in PM2 ecosystem configs to cortex-code equivalents.
 
-8) docs(release): migration notes and changelog — COMPLETED
+1) docs(release): migration notes and changelog — COMPLETED
+
 - Tests: docs lint.
 - Actions: added `project-documentation/legacy/cortex-cli-deprecation-release-notes.md` with parity matrix and communication plan.
 

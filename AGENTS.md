@@ -128,6 +128,36 @@ Behavior:
 
 Rationale: Prevents wasteful monorepo-wide execution and reduces memory churn + CI wall time.
 
+### Focused Runs (Selective Affected Subset)
+
+When you only care about a narrow slice of the affected graph (e.g., iterating on a
+single package), you can constrain execution with a focus filter:
+
+```bash
+# Limit to a couple of projects (intersection with affected set)
+node scripts/nx-smart.mjs test --focus @cortex-os/agent-toolkit,@cortex-os/telemetry
+
+# Environment variable form (preferred for CI matrix or aliases)
+CORTEX_SMART_FOCUS=@cortex-os/agent-toolkit pnpm test:smart
+
+# Combine with dry-run to preview the trimmed set
+node scripts/nx-smart.mjs lint --focus @cortex-os/agent-toolkit --dry-run
+```
+
+Behavior:
+
+- The full affected list is computed first; focus then reduces it to the intersection.
+- If no overlap exists, the original affected list is used (a notice is logged).
+- Works with all targets (`build|test|lint|typecheck`) and supports `--json` + `--dry-run` modes.
+- Use sparingly in CI to avoid hiding transitive breakages; ideal for fast local iteration.
+
+Anti-patterns:
+
+- Forcing focus in shared CI without a separate full coverage job.
+- Using focus to bypass required dependent builds (e.g., skipping contracts when modifying a consumer).
+
+Tip: Pair with `--dry-run` before committing to ensure you are not masking an expected dependency.
+
 ## 🤖 Non-Interactive Nx Mode
 
 The wrapper enforces non-interactive execution by default:

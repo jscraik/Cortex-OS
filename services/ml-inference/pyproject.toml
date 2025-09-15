@@ -4,7 +4,7 @@ version = "0.1.0"
 # Aligned with root constraint for grpcio-tools compatibility
 requires-python = ">=3.11,<3.13"
 description = "ML inference microservice"
-dependencies = ["fastapi", "uvicorn", "prometheus-client"]
+dependencies = ["fastapi>=0.65.2", "uvicorn", "prometheus-client"]
 
 [build-system]
 requires = ["hatchling"]

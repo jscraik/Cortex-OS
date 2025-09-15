@@ -251,7 +251,9 @@
     "sparkline:inline": "node scripts/code-quality/embed-sparkline.mjs",
     "coverage:branches:record": "pnpm test:coverage && node scripts/code-quality/branch-coverage-history.mjs append",
     "coverage:branches:report": "node scripts/code-quality/branch-coverage-history.mjs report",
-    "coverage:branches:enforce": "pnpm test:coverage && node scripts/code-quality/ensure-branch-threshold.mjs"
+    "coverage:branches:enforce": "pnpm test:coverage && node scripts/code-quality/ensure-branch-threshold.mjs",
+    "mcp:diagnose": "bash scripts/mcp/mcp_diagnose.sh",
+    "ci:mcp:tunnel-validate": "bash scripts/mcp/validate_cloudflare_tunnel.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
@@ -330,6 +332,7 @@
     "eslint-plugin-sonarjs": "^3.0.5",
     "express": "4.18.2",
     "fast-glob": "^3.3.3",
+    "globals": "^16.4.0",
     "globby": "^14.1.0",
     "husky": "^9.1.7",
     "inversify": "6.0.1",

@@ -4,12 +4,15 @@ import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
 // import type { ChatMessage } from '../../../../shared/types/chat';
-// TODO: Fix import path when shared types are properly set up
+// TODO: Unify message shape across codebase (createdAt/timestamp)
 type ChatMessage = {
 	id: string;
 	role: 'user' | 'assistant' | 'system';
 	content: string;
 	createdAt: string;
+	timestamp?: number;
+	model?: string;
+	[key: string]: unknown;
 };
 
 import Message from './Message';
@@ -85,6 +88,17 @@ const Messages: React.FC<MessagesProps> = ({
 
 	const branchKeys = Object.keys(messageBranches);
 
+	// Helper to ensure createdAt is always a string
+	const ensureCreatedAt = (msg: ChatMessage): ChatMessage => ({
+		...msg,
+		createdAt:
+			typeof msg.createdAt === 'string'
+				? msg.createdAt
+				: msg.timestamp !== undefined
+					? new Date(msg.timestamp).toISOString()
+					: new Date().toISOString(),
+	});
+
 	return (
 		<div className="flex-1 overflow-y-auto p-4">
 			<div className="space-y-4">
@@ -94,7 +108,7 @@ const Messages: React.FC<MessagesProps> = ({
 						{branchKeys.map((branchId, index) => (
 							<MessageBranch
 								key={branchId}
-								messages={messageBranches[branchId]}
+								messages={messageBranches[branchId].map(ensureCreatedAt)}
 								branchId={branchId}
 								isActive={index === 0} // First branch is active by default
 								onEditMessage={onEditMessage}
@@ -107,7 +121,7 @@ const Messages: React.FC<MessagesProps> = ({
 					messageBranches.main.map((message) => (
 						<Message
 							key={message.id}
-							message={message}
+							message={ensureCreatedAt(message)}
 							isUser={message.role === 'user'}
 							onEdit={
 								onEditMessage

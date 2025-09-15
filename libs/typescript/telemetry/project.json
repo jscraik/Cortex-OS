@@ -9,6 +9,19 @@
 			"options": {
 				"lintFilePatterns": ["libs/typescript/telemetry/src/**/*.ts"]
 			}
+		},
+		"test": {
+			"executor": "@nx/vite:test",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"configFile": "libs/typescript/telemetry/vitest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"coverage": true
+				}
+			}
 		}
 	}
 }

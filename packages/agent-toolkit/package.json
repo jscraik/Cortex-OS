@@ -14,6 +14,7 @@
   "dependencies": {
     "@cortex-os/a2a": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
@@ -21,6 +22,9 @@
     "eslint": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^1.6.1"
+  },
+  "bin": {
+    "agent-toolkit-diagnostics": "dist/cli/diagnostics.js"
   },
   "files": [
     "dist",

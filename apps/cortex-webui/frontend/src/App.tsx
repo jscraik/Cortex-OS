@@ -17,17 +17,15 @@ import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SettingsPage from './pages/SettingsPage';
-import type { Theme } from './utils/theme';
 import {
 	applyMotionPreferences,
 	applyTheme,
 	getEffectiveTheme,
-	getStoredTheme,
 } from './utils/theme';
 
 const AppContent: React.FC = () => {
 	const navigate = useNavigate();
-	const [_theme, setTheme] = useState<Theme>('system');
+	// Removed unused theme state
 	const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(
 		'light',
 	);
@@ -41,8 +39,8 @@ const AppContent: React.FC = () => {
 	useEffect(() => {
 		applyTheme();
 		applyMotionPreferences();
-		const storedTheme = getStoredTheme();
-		setTheme(storedTheme);
+		// storedTheme removed; not used
+		// setTheme removed; theme is applied via applyTheme and setEffectiveTheme
 		setEffectiveTheme(getEffectiveTheme());
 	}, []);
 
@@ -52,8 +50,7 @@ const AppContent: React.FC = () => {
 	}, []);
 
 	// Theme update handler
-	const handleThemeChange = (newTheme: Theme) => {
-		setTheme(newTheme);
+	const handleThemeChange = () => {
 		applyTheme();
 		setEffectiveTheme(getEffectiveTheme());
 	};
@@ -127,7 +124,7 @@ const AppContent: React.FC = () => {
 							<Dashboard
 								conversations={conversations.conversations}
 								activeConversationId={
-									conversations.activeConversation?.id || null
+									conversations.activeConversation?.id ?? ''
 								}
 								onSelectConversation={handleSelectConversation}
 								onCreateConversation={handleCreateConversation}
@@ -148,7 +145,7 @@ const AppContent: React.FC = () => {
 								messages={messages.messages}
 								conversations={conversations.conversations}
 								activeConversationId={
-									conversations.activeConversation?.id || null
+									conversations.activeConversation?.id ?? ''
 								}
 								onSendMessage={handleSendMessage}
 								onSelectConversation={handleSelectConversation}
@@ -156,7 +153,7 @@ const AppContent: React.FC = () => {
 								onLogout={auth.logout}
 								onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
 								streaming={messages.streaming}
-								error={messages.error}
+								error={messages.error ?? undefined}
 							/>
 						) : (
 							<Navigate to="/dashboard" />

@@ -19,6 +19,7 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 					viewBox="0 0 24 24"
 					stroke="currentColor"
 				>
+					<title>Multi-Model Support</title>
 					<path
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -39,6 +40,7 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 					viewBox="0 0 24 24"
 					stroke="currentColor"
 				>
+					<title>File Attachments</title>
 					<path
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -59,6 +61,7 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 					viewBox="0 0 24 24"
 					stroke="currentColor"
 				>
+					<title>Voice Input</title>
 					<path
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -79,6 +82,7 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 					viewBox="0 0 24 24"
 					stroke="currentColor"
 				>
+					<title>Code Execution</title>
 					<path
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -101,6 +105,7 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 						viewBox="0 0 24 24"
 						stroke="currentColor"
 					>
+						<title>Chat Icon</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -130,6 +135,7 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 							viewBox="0 0 20 20"
 							fill="currentColor"
 						>
+							<title>Start New Chat</title>
 							<path
 								fillRule="evenodd"
 								d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
@@ -167,11 +173,11 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 				<div className="mt-12 text-sm text-gray-500">
 					<p>
 						Need help? Check out our{' '}
-						<Link href="/docs" className="text-blue-600 hover:text-blue-500">
+						<Link to="/docs" className="text-blue-600 hover:text-blue-500">
 							documentation
 						</Link>{' '}
 						or{' '}
-						<Link href="/support" className="text-blue-600 hover:text-blue-500">
+						<Link to="/support" className="text-blue-600 hover:text-blue-500">
 							contact support
 						</Link>
 						.

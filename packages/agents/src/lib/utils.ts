@@ -45,11 +45,6 @@ export function filterDefined<T>(array: (T | undefined | null)[]): T[] {
 // Secure ID helpers (local fallback using Node crypto)
 import crypto from 'node:crypto';
 
-function _secureId(prefix: string): string {
-	const id = crypto.randomUUID?.() ?? crypto.randomBytes(16).toString('hex');
-	return `${prefix}-${id}`;
-}
-
 export function generateAgentId(): string {
 	return crypto.randomUUID?.() ?? crypto.randomBytes(16).toString('hex');
 }

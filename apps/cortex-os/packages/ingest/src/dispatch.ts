@@ -5,20 +5,37 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 
-// import yaml from 'js-yaml';
+import yaml from 'js-yaml';
 
 type Job = { url?: string; filePath?: string; file?: Buffer; mime: string };
 
-function readPolicy() {
-	const y = yaml.load(
+type IngestPolicy = { allow_mime?: string[] };
+
+function parseIngestPolicy(data: unknown): IngestPolicy {
+	if (!data || typeof data !== 'object') {
+		return { allow_mime: [] };
+	}
+	const ingest = (data as { ingest?: unknown }).ingest;
+	if (!ingest || typeof ingest !== 'object') {
+		return { allow_mime: [] };
+	}
+	const allow = (ingest as { allow_mime?: unknown }).allow_mime;
+	if (!Array.isArray(allow)) {
+		return { allow_mime: [] };
+	}
+	return { allow_mime: allow.filter((value): value is string => typeof value === 'string') };
+}
+
+function readPolicy(): IngestPolicy {
+	const loaded = yaml.load(
 		fs.readFileSync('configs/ingest.policy.yaml', 'utf8'),
-	) as any;
-	return y?.ingest || {};
+	);
+	return parseIngestPolicy(loaded);
 }
 
 export function assertAllowedMime(mime: string) {
 	const ingest = readPolicy();
-	const allow: string[] = ingest.allow_mime || [];
+	const allow = ingest.allow_mime ?? [];
 	if (!allow.includes(mime)) {
 		const msg = `Denied MIME: ${mime}`;
 		throw Object.assign(new Error(msg), { code: 'DENY_MIME' });

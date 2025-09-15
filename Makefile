@@ -1,100 +1,144 @@
-SHELL := /bin/sh
+# MCP TDD Enforcement Makefile
+# Standardized commands for MCP integration development
 
-# OrbStack dev profiles via Makefile wrappers
+# Default target
+.PHONY: help
+help:
+	@echo "Cortex-OS MCP TDD Enforcement Commands"
+	@echo "====================================="
+	@echo "mcp-setup     - Set up MCP development environment"
+	@echo "mcp-status    - Show MCP integration status"
+	@echo "mcp-validate  - Validate MCP implementations"
+	@echo "mcp-watch     - Watch for MCP changes"
+	@echo "mcp-enforce   - Enforce MCP TDD practices"
+	@echo "mcp-test      - Run MCP tests"
+	@echo "mcp-docs      - Generate MCP documentation"
+	@echo "mcp-clean     - Clean MCP build artifacts"
 
-.PHONY: dev-min dev-full web api workers obs demo down ps logs codex-test codex-test-unit codex-test-integration codex-test-coverage cortex-code-tui-test-snapshots cortex-code-test submodules-sync tdd-validate tdd-watch tdd-status tdd-setup
+# Setup MCP development environment
+.PHONY: mcp-setup
+mcp-setup:
+	@echo "Setting up MCP development environment..."
+	# Install MCP core dependencies
+	cd packages/mcp-core && pnpm install
+	cd packages/mcp-bridge && pnpm install
+	cd packages/mcp-registry && pnpm install
+	# Install Python MCP dependencies
+	cd packages/cortex-mcp && pip install -e .
+	# Install Rust MCP dependencies
+	cd apps/cortex-code/mcp-types && cargo build
+	cd apps/cortex-code/mcp-client && cargo build
+	cd apps/cortex-code/mcp-server && cargo build
+	@echo "MCP development environment setup complete"
 
-dev-min:
-	pnpm dev:orbstack:min
+# Show MCP integration status
+.PHONY: mcp-status
+mcp-status:
+	@echo "MCP Integration Status"
+	@echo "===================="
+	@echo "Checking MCP integration status..."
+	python3 scripts/verify-mcp-setup.py || true
+	@echo "Status check complete"
 
-dev-full:
-	pnpm dev:orbstack:full
+# Validate MCP implementations
+.PHONY: mcp-validate
+mcp-validate:
+	@echo "Validating MCP implementations..."
+	# Run contract tests
+	pnpm run test:contracts
+	# Validate MCP schemas
+	python3 scripts/validate-mcp-schemas.py
+	# Check for MCP compliance
+	python3 tools/structure-guard/guard.ts --mcp-check
+	@echo "MCP validation complete"
 
-web:
-	pnpm dev:orbstack:web
+# Watch for MCP changes
+.PHONY: mcp-watch
+mcp-watch:
+	@echo "Watching for MCP changes..."
+	# Start file watchers for MCP files
+	pnpm run watch:mcp &
+	@echo "MCP watch started"
 
-api:
-	pnpm dev:orbstack:api
+# Enforce MCP TDD practices
+.PHONY: mcp-enforce
+mcp-enforce:
+	@echo "Enforcing MCP TDD practices..."
+	# Run TDD coach validation
+	cd packages/tdd-coach && pnpm run validate
+	# Check test coverage
+	pnpm run coverage:mcp
+	# Enforce code quality
+	pnpm run lint:mcp
+	@echo "MCP TDD enforcement complete"
 
-workers:
-	pnpm dev:orbstack:workers
+# Run MCP tests
+.PHONY: mcp-test
+mcp-test:
+	@echo "Running MCP tests..."
+	# Run unit tests
+	pnpm run test:mcp:unit
+	# Run integration tests
+	pnpm run test:mcp:integration
+	# Run contract tests
+	pnpm run test:mcp:contract
+	# Run security tests
+	pnpm run test:mcp:security
+	@echo "MCP tests complete"
 
-obs:
-	pnpm dev:orbstack:obs
+# Generate MCP documentation
+.PHONY: mcp-docs
+mcp-docs:
+	@echo "Generating MCP documentation..."
+	# Generate API documentation
+	pnpm run docs:mcp
+	# Generate tool references
+	python3 scripts/generate-mcp-docs.py
+	@echo "MCP documentation generated"
 
-demo:
-	# Full stack demo: core + web + observability
-	 docker compose --env-file infra/compose/.env.dev -f infra/compose/docker-compose.dev.yml \
-		--profile dev-full --profile web --profile observability up --build -d
+# Clean MCP build artifacts
+.PHONY: mcp-clean
+mcp-clean:
+	@echo "Cleaning MCP build artifacts..."
+	# Clean TypeScript builds
+	rm -rf packages/mcp-core/dist
+	rm -rf packages/mcp-bridge/dist
+	rm -rf packages/mcp-registry/dist
+	# Clean Python builds
+	cd packages/cortex-mcp && pip uninstall cortex-mcp -y
+	# Clean Rust builds
+	cd apps/cortex-code && cargo clean
+	@echo "MCP build artifacts cleaned"
 
-down:
-	pnpm dev:orbstack:down
+# Run full MCP TDD cycle
+.PHONY: mcp-tdd
+mcp-tdd: mcp-setup mcp-validate mcp-test mcp-docs
+	@echo "MCP TDD cycle complete"
 
-ps:
-	pnpm dev:orbstack:ps
+# Install MCP pre-commit hooks
+.PHONY: mcp-hooks
+mcp-hooks:
+	@echo "Installing MCP pre-commit hooks..."
+	# Install pre-commit hooks for MCP
+	pre-commit install -c .pre-commit-config-mcp.yaml
+	@echo "MCP pre-commit hooks installed"
 
-logs:
-	pnpm dev:orbstack:logs
+# Run MCP security audit
+.PHONY: mcp-audit
+mcp-audit:
+	@echo "Running MCP security audit..."
+	# Run security audit on Python packages
+	cd packages/cortex-mcp && pip audit
+	# Run security audit on TypeScript packages
+	pnpm audit
+	# Run security audit on Rust packages
+	cd apps/cortex-code && cargo audit
+	@echo "MCP security audit complete"
 
-# Cortex Codex Rust test helpers
-codex-test:
-	pnpm codex:test
-
-codex-test-unit:
-	pnpm codex:test:unit
-
-codex-test-integration:
-	pnpm codex:test:integration
-
-codex-test-coverage:
-	pnpm codex:test:coverage
-
-# Cortex Code (Rust fork) helpers
-cortex-code-test:
-	pnpm cortex-code:test
-
-cortex-code-tui-test-snapshots:
-	pnpm cortex-code:tui:test-snapshots
-
-# Sync and update all git submodules (init + remote tracking)
-submodules-sync:
-	@git submodule sync --recursive
-	@git submodule update --init --recursive
-	# Optionally pull latest remote tracking branches (comment out if strict pinning)
-	@git submodule update --remote --recursive || echo "(remote update skipped / non-critical)"
-	@echo "✅ Submodules synchronized"
-
-# TDD Coach Integration for brAInwav Development
-tdd-setup:
-	@echo "🏗️  Setting up TDD Coach for brAInwav development..."
-	cd packages/tdd-coach && pnpm build
-	@echo "✅ TDD Coach is ready for use"
-
-tdd-status:
-	@echo "📊 Checking current TDD status..."
-	cd packages/tdd-coach && node dist/cli/tdd-coach.js status
-
-tdd-validate:
-	@echo "🔍 Validating code with TDD Coach..."
-	cd packages/tdd-coach && node dist/cli/tdd-coach.js validate --files $(FILES)
-
-tdd-watch:
-	@echo "👀 Starting TDD Coach in watch mode..."
-	@echo "Press Ctrl+C to stop"
-	cd packages/tdd-coach && node dist/cli/tdd-coach.js validate --watch
-
-tdd-enforce:
-	@echo "🚀 Running TDD Enforcer script..."
-	./scripts/tdd-enforcer.sh
-# MLX embeddings service (FastAPI)
-.PHONY: mlx-embed.run
-mlx-embed.run:
-	cd services/py-mlx-server && uvicorn py_mlx_server.main:app --host $${HOST:-127.0.0.1} --port $${PORT:-8000}
-
-.PHONY: mlx-embed.docker.build
-mlx-embed.docker.build:
-	docker build -t cortex-mlx-embed:local services/py-mlx-server
-
-.PHONY: mlx-embed.docker.run
-mlx-embed.docker.run:
-	docker run --rm -p $${PORT:-8000}:8000 cortex-mlx-embed:local
+# Run MCP performance tests
+.PHONY: mcp-perf
+mcp-perf:
+	@echo "Running MCP performance tests..."
+	# Run performance benchmarks
+	pnpm run bench:mcp
+	@echo "MCP performance tests complete"

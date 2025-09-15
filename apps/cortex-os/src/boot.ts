@@ -11,7 +11,6 @@ import { TOKENS } from './tokens';
 export function createContainer(): Container {
 	const container = new Container({
 		defaultScope: 'Singleton',
-		skipBaseClassChecks: true,
 		autoBindInjectable: false,
 	});
 

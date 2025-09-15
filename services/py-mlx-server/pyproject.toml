@@ -3,10 +3,7 @@ name = "cortex-py-mlx-server"
 version = "0.1.0"
 requires-python = ">=3.13"
 description = "Experimental FastAPI server backed by optional MLX runtime"
-dependencies = [
-  "fastapi",
-  "uvicorn",
-]
+dependencies = ["fastapi>=0.65.2", "uvicorn"]
 
 [build-system]
 requires = ["hatchling"]
@@ -16,7 +13,4 @@ build-backend = "hatchling.build"
 packages = ["src"]
 
 [tool.uv]
-dev-dependencies = [
-  "httpx",
-  "pytest",
-]
+dev-dependencies = ["httpx", "pytest"]

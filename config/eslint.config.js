@@ -101,8 +101,8 @@ export default [
     rules: {
       'no-console': ['warn', { allow: ['error', 'warn'] }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off', // TODO: Legacy TypeScript fixtures still rely on any. Re-enable once cleaned.
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'sonarjs/cognitive-complexity': ['warn', 25],
       'sonarjs/no-duplicate-string': ['warn', { threshold: 6 }],
       'sonarjs/no-duplicated-branches': 'warn',

@@ -57,19 +57,6 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const eventSourceRef = useRef<EventSource | null>(null);
 
-	// Update memory stats when messages change
-	useEffect(() => {
-		if (messages.length > 0) {
-			const stats = contextManager.getMemoryStats(messages);
-			setMemoryStats(stats);
-
-			// Auto-optimize context if approaching limits
-			if (stats.utilizationPercent > 80 && !contextOptimized) {
-				optimizeContext();
-			}
-		}
-	}, [messages, contextOptimized, optimizeContext]);
-
 	const optimizeContext = useCallback(async () => {
 		try {
 			const optimizedWindow: ContextWindow =
@@ -96,6 +83,19 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		}
 	}, [messages, addMessage, clearMessages]);
 
+	// Update memory stats when messages change
+	useEffect(() => {
+		if (messages.length > 0) {
+			const stats = contextManager.getMemoryStats(messages);
+			setMemoryStats(stats);
+
+			// Auto-optimize context if approaching limits
+			if (stats.utilizationPercent > 80 && !contextOptimized) {
+				optimizeContext();
+			}
+		}
+	}, [messages, contextOptimized, optimizeContext]);
+
 	// Load models from API
 	useEffect(() => {
 		const fetchModels = async (): Promise<void> => {
@@ -117,10 +117,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 							: mapped[0].id;
 					setSelectedModelIds([initial]);
 				}
-			} catch (error: unknown) {
-				if (process.env.NODE_ENV !== 'production') {
-					console.error('Failed to fetch models:', error);
-				}
+			} catch {
 				addNotification({
 					type: 'error',
 					message: 'Failed to load models',
@@ -148,6 +145,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			role: 'user' as ChatMessageRole,
 			content,
 			timestamp: Date.now(),
+			createdAt: new Date().toISOString(),
 			model: selectedModelIds[0],
 		};
 
@@ -160,6 +158,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			role: 'assistant' as ChatMessageRole,
 			content: '',
 			timestamp: Date.now(),
+			createdAt: new Date().toISOString(),
 			model: selectedModelIds[0],
 		};
 
@@ -210,11 +209,8 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 						es.close();
 						eventSourceRef.current = null;
 					}
-				} catch (e) {
-					// Ignore malformed chunks, but log in dev
-					if (process.env.NODE_ENV !== 'production') {
-						console.error('Bad SSE message', e);
-					}
+				} catch {
+					// Ignore malformed chunks
 				}
 			};
 
@@ -240,13 +236,9 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				'name' in (error as Record<string, unknown>) &&
 				(error as Record<string, unknown>).name === 'AbortError';
 			if (isAbort) {
-				if (process.env.NODE_ENV !== 'production') {
-					console.log('Stream cancelled');
-				}
+				// Dev-only logging removed for frontend compatibility
 			} else {
-				if (process.env.NODE_ENV !== 'production') {
-					console.error('Error streaming response:', error);
-				}
+				// Dev-only logging removed for frontend compatibility
 				updateMessage(assistantMessageId, {
 					content: 'Sorry, I encountered an error processing your request.',
 				});

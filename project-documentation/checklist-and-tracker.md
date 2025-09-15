@@ -160,48 +160,48 @@ Missing or underspecified in plan (added to tracker below):
 ## TDD Micro-Tasks Backlog (bitesize, test-first)
 
 1. Structure-guard: policy schema tests → minimal impl
-2. Structure-guard: ESLint rule tests → plugin + wiring
-3. Deny-by-default egress: policy tests → wrapper + envs
-4. MCP tool allowlist: policy tests → enforcement + errors
-5. Audit events: emission tests → redaction + spans
-6. Secret scoping: accessor tests → redact on logs
-7. Evidence schema: zod tests → CE attach/parse
-8. RAG citations: retrieval tests → cite in results
-9. RAG bundles: grouping tests → deterministic output
-10. RAG freshness: threshold tests → cache/live routing
-11. Agents: evidence attach tests → write-through memories
-12. A2A rate limits: window tests → headers + retry-after
-13. Quotas: monthly caps tests → over-quota errors
-14. Burst smoothing: token bucket tests → starvation-free
-15. Replay helpers: outbox/DLQ replay tests → idempotency
-16. Circuit breakers: state machine tests → metrics
-17. Sticky sessions: affinity tests → opt-out
-18. Token/VRAM budgets: session tracking tests → rejections
-19. Provider scoring: routing tests → decay/recovery
-20. Multi-GPU sharding: placement tests → capacity map
-21. Epistemic confidence: tagging tests → propagation
-22. Simulation gate: feasibility/safety tests → blockers
-23. LLM planning: strategy interface tests → mock impl
-24. Curriculum building: path-gen tests → scoring
-25. Golden outputs: snapshot tests → update guard
-26. Agent streaming: event/chunk tests → backpressure
-27. Interactive corrections: HITL flow tests → audit
-28. Span propagation: cross-boundary tests → baggage
-29. Observability viewer: local load/filter tests
-30. Error budget calc: SLI/SLO tests → alert math
-31. Flamegraphs: profiler hook tests → artifact store
-32. MCP health pings: heartbeat tests → liveness
-33. MCP streaming control: size/end-marker tests
-34. MCP cost/latency meters: metric tags tests
-35. MCP capability discovery: introspection tests
-36. Consolidation job: merge tests → scheduler
-37. Decay heuristics: curve tests → exemptions
-38. Memory tiers: routing tests → promotion
-39. OSV scanner: failing dep test → allowlist
-40. SBOM: artifact presence tests → per-package
-41. gitleaks: secret catch test → baseline allowlist
-42. CodeQL: workflow smoke tests
-43. cosign: sign/verify tests → CI gate
+1. Structure-guard: ESLint rule tests → plugin + wiring
+1. Deny-by-default egress: policy tests → wrapper + envs
+1. MCP tool allowlist: policy tests → enforcement + errors
+1. Audit events: emission tests → redaction + spans
+1. Secret scoping: accessor tests → redact on logs
+1. Evidence schema: zod tests → CE attach/parse
+1. RAG citations: retrieval tests → cite in results
+1. RAG bundles: grouping tests → deterministic output
+1. RAG freshness: threshold tests → cache/live routing
+1. Agents: evidence attach tests → write-through memories
+1. A2A rate limits: window tests → headers + retry-after
+1. Quotas: monthly caps tests → over-quota errors
+1. Burst smoothing: token bucket tests → starvation-free
+1. Replay helpers: outbox/DLQ replay tests → idempotency
+1. Circuit breakers: state machine tests → metrics
+1. Sticky sessions: affinity tests → opt-out
+1. Token/VRAM budgets: session tracking tests → rejections
+1. Provider scoring: routing tests → decay/recovery
+1. Multi-GPU sharding: placement tests → capacity map
+1. Epistemic confidence: tagging tests → propagation
+1. Simulation gate: feasibility/safety tests → blockers
+1. LLM planning: strategy interface tests → mock impl
+1. Curriculum building: path-gen tests → scoring
+1. Golden outputs: snapshot tests → update guard
+1. Agent streaming: event/chunk tests → backpressure
+1. Interactive corrections: HITL flow tests → audit
+1. Span propagation: cross-boundary tests → baggage
+1. Observability viewer: local load/filter tests
+1. Error budget calc: SLI/SLO tests → alert math
+1. Flamegraphs: profiler hook tests → artifact store
+1. MCP health pings: heartbeat tests → liveness
+1. MCP streaming control: size/end-marker tests
+1. MCP cost/latency meters: metric tags tests
+1. MCP capability discovery: introspection tests
+1. Consolidation job: merge tests → scheduler
+1. Decay heuristics: curve tests → exemptions
+1. Memory tiers: routing tests → promotion
+1. OSV scanner: failing dep test → allowlist
+1. SBOM: artifact presence tests → per-package
+1. gitleaks: secret catch test → baseline allowlist
+1. CodeQL: workflow smoke tests
+1. cosign: sign/verify tests → CI gate
 
 Each task should land as a single focused commit with tests + minimal implementation.
 

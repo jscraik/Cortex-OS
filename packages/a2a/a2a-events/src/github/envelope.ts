@@ -298,14 +298,16 @@ export function shouldRetryEnvelope(envelope: A2AEventEnvelope): boolean {
 
 export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 	const state = envelope.processing_state;
-	if (!state) return envelope.retry_policy.initial_delay_ms;
-
-	const { initial_delay_ms, max_delay_ms, backoff_multiplier, jitter } =
-		envelope.retry_policy;
+	const policy = envelope.retry_policy;
+	const initialDelayMs = policy.initial_delay_ms;
+	const maxDelayMs = policy.max_delay_ms;
+	const backoffMultiplier = policy.backoff_multiplier;
+	const { jitter } = policy;
+	if (!state) return initialDelayMs;
 
 	// Calculate exponential backoff
-	let delay = initial_delay_ms * backoff_multiplier ** state.attempt_count;
-	delay = Math.min(delay, max_delay_ms);
+	let delay = initialDelayMs * backoffMultiplier ** state.attempt_count;
+	delay = Math.min(delay, maxDelayMs);
 
 	// Add jitter if enabled
 	if (jitter) {
@@ -317,8 +319,39 @@ export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 }
 
 // Envelope Transformation Helpers
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return (
+		value !== null &&
+		typeof value === 'object' &&
+		(Object.getPrototypeOf(value) === Object.prototype ||
+			Object.getPrototypeOf(value) === null)
+	);
+}
+
+function restoreUndefinedFields(source: unknown, target: unknown): void {
+	if (Array.isArray(source) && Array.isArray(target)) {
+		for (let index = 0; index < source.length; index += 1) {
+			restoreUndefinedFields(source[index], target[index]);
+		}
+		return;
+	}
+
+	if (isPlainObject(source) && isPlainObject(target)) {
+		for (const key of Object.keys(source)) {
+			const sourceValue = source[key];
+			if (!(key in target) && sourceValue === undefined) {
+				target[key] = undefined;
+				continue;
+			}
+			restoreUndefinedFields(sourceValue, target[key]);
+		}
+	}
+}
+
 export function cloneEnvelope(envelope: A2AEventEnvelope): A2AEventEnvelope {
-	return JSON.parse(JSON.stringify(envelope));
+	const clone = JSON.parse(JSON.stringify(envelope)) as A2AEventEnvelope;
+	restoreUndefinedFields(envelope, clone);
+	return clone;
 }
 
 export function updateProcessingState(

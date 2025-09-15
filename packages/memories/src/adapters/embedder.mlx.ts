@@ -3,8 +3,8 @@ import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Embedder } from '../ports/Embedder.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const currentFilename = fileURLToPath(import.meta.url);
+const currentDirname = dirname(currentFilename);
 
 const DEFAULT_MLX_MODELS_DIR = path.join(os.homedir(), '.cache', 'huggingface');
 
@@ -107,7 +107,7 @@ export class MLXEmbedder implements Embedder {
 
 	private async embedViaPython(texts: string[]): Promise<number[][]> {
 		// Use centralized Python runner to handle PYTHONPATH and env merging
-		const pythonScriptPath = path.join(__dirname, 'mlx-embedder.py');
+		const pythonScriptPath = path.join(currentDirname, 'mlx-embedder.py');
 
 		// Dynamic import from shared python exec utility; typed as any to avoid coupling
 		type PyExec = {

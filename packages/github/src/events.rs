@@ -4,11 +4,13 @@ use tokio::time::{interval, Duration, Instant};
 use tokio_stream::{wrappers::IntervalStream, StreamExt};
 use tracing::{debug, info, warn};
 
+type EventCallback = Box<dyn Fn(&GitHubEventData) + Send + Sync>;
+
 /// GitHub event stream for real-time repository monitoring
 pub struct GitHubEventStream {
     client: GitHubClient,
     active_streams: HashMap<String, EventStreamState>,
-    callbacks: Vec<Box<dyn Fn(&GitHubEventData) + Send + Sync>>,
+    callbacks: Vec<EventCallback>,
     #[allow(dead_code)]
     event_publisher: Option<crate::a2a_integration::GitHubA2APublisher>,
 }
@@ -125,7 +127,7 @@ impl GitHubEventStream {
         tokio::spawn(async move {
             let mut interval_stream = IntervalStream::new(interval(Duration::from_secs(30)));
 
-            while let Some(_) = interval_stream.next().await {
+            while interval_stream.next().await.is_some() {
                 if let Err(e) = Self::poll_repository_events(&client, &owner, &repo).await {
                     warn!("Error polling events for {}: {:?}", repo_key_clone, e);
                 }
@@ -157,7 +159,7 @@ impl GitHubEventStream {
         tokio::spawn(async move {
             let mut interval_stream = IntervalStream::new(interval(Duration::from_secs(60)));
 
-            while let Some(_) = interval_stream.next().await {
+            while interval_stream.next().await.is_some() {
                 if let Err(e) = Self::poll_user_events(&client, &username).await {
                     warn!("Error polling user events for {}: {:?}", user_key_clone, e);
                 }

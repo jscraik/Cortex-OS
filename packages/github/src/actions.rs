@@ -255,7 +255,7 @@ impl WorkflowMonitor {
 
         info!("Starting workflow monitoring for {}/{}", owner, repo);
 
-        while let Some(_) = interval_stream.next().await {
+        while interval_stream.next().await.is_some() {
             if let Err(e) = self.poll_workflow_runs(&owner, &repo).await {
                 warn!("Error polling workflow runs: {:?}", e);
                 // Continue monitoring even if one poll fails

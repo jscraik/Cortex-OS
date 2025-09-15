@@ -1,0 +1,85 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://cortex-os.dev/schemas/diagnostics.schema.json",
+    "title": "DiagnosticsResult",
+    "type": "object",
+    "required": [
+        "timestamp",
+        "port_guard",
+        "health",
+        "tunnel",
+        "summary"
+    ],
+    "properties": {
+        "timestamp": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "port_guard": {
+            "$ref": "#/definitions/diagnosticCheckStatus"
+        },
+        "health": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/diagnosticCheckStatus"
+                },
+                {
+                    "properties": {
+                        "latencyMs": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    }
+                }
+            ]
+        },
+        "tunnel": {
+            "$ref": "#/definitions/diagnosticCheckStatus"
+        },
+        "summary": {
+            "type": "object",
+            "required": [
+                "overall"
+            ],
+            "properties": {
+                "overall": {
+                    "type": "string",
+                    "enum": [
+                        "ok",
+                        "degraded",
+                        "failed"
+                    ]
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false,
+    "definitions": {
+        "diagnosticCheckStatus": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "ok",
+                        "freed",
+                        "error",
+                        "degraded"
+                    ]
+                },
+                "details": {
+                    "type": "string"
+                },
+                "latencyMs": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

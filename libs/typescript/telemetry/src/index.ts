@@ -6,12 +6,14 @@
 import {
 	type Context,
 	createTraceState,
+	type Meter,
 	metrics,
 	type Span,
 	type SpanContext,
 	SpanStatusCode,
-	TraceFlags,
 	trace,
+	TraceFlags,
+	type Tracer,
 } from '@opentelemetry/api';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -32,13 +34,40 @@ const sdk = new NodeSDK({
 try {
 	sdk.start();
 } catch (err) {
-	// eslint-disable-next-line no-console
-	console.error('Telemetry start error', err);
+	console.error(
+		'Telemetry start error',
+		err instanceof Error ? err.message : err,
+	);
 }
 
 // Export configured instances
-export const tracer = trace.getTracer('cortex-os', '1.0.0');
-export const meter = metrics.getMeter('cortex-os', '1.0.0');
+// Defensive wrappers to avoid "error" typed values flagged by eslint when instrumentation overrides types
+function safeGetTracer(name: string, version?: string): Tracer {
+	try {
+		return trace.getTracer(name, version);
+	} catch (error) {
+		console.warn(
+			'[telemetry] tracer acquisition failed, returning noop tracer:',
+			error instanceof Error ? error.message : error,
+		);
+		return trace.getTracer('noop');
+	}
+}
+
+function safeGetMeter(name: string, version?: string): Meter {
+	try {
+		return metrics.getMeter(name, version);
+	} catch (error) {
+		console.warn(
+			'[telemetry] meter acquisition failed, returning fallback meter:',
+			error instanceof Error ? error.message : error,
+		);
+		return metrics.getMeter('noop');
+	}
+}
+
+export const tracer = safeGetTracer('cortex-os', '1.0.0');
+export const meter = safeGetMeter('cortex-os', '1.0.0');
 
 // Re-export selected OpenTelemetry enums for convenience
 export { SpanStatusCode } from '@opentelemetry/api';
@@ -67,12 +96,14 @@ export function withSpan<T>(
 				span.setStatus({ code: SpanStatusCode.OK });
 				resolve(result);
 			} catch (error) {
-				span.recordException(error as Error);
+				const errObj =
+					error instanceof Error ? error : new Error(String(error));
+				span.recordException(errObj);
 				span.setStatus({
 					code: SpanStatusCode.ERROR,
-					message: error instanceof Error ? error.message : 'Unknown error',
+					message: errObj.message,
 				});
-				reject(error instanceof Error ? error : new Error(String(error)));
+				reject(errObj);
 			} finally {
 				span.end();
 			}
@@ -215,7 +246,35 @@ export function logWithSpan(
 			console.error(message, logAttributes);
 			break;
 		default:
-			// Optionally, handle unexpected levels
 			console.log(message, logAttributes);
+	}
+}
+
+/**
+ * Gracefully flush and shutdown the OpenTelemetry SDK.
+ * Ensures metrics are exported before process exit. Idempotent & safe.
+ */
+export async function shutdownTelemetry(options?: {
+	timeoutMs?: number;
+}): Promise<void> {
+	const timeoutMs = options?.timeoutMs ?? 5000;
+	// If sdk already shut down, this should resolve quickly.
+	let timedOut = false;
+	const timer = setTimeout(() => {
+		timedOut = true;
+		console.warn('[telemetry] shutdown timeout reached');
+	}, timeoutMs);
+	try {
+		await sdk.shutdown();
+		if (!timedOut) {
+			console.info('[telemetry] shutdown complete');
+		}
+	} catch (error) {
+		console.error(
+			'[telemetry] shutdown error',
+			error instanceof Error ? error.message : error,
+		);
+	} finally {
+		clearTimeout(timer);
 	}
 }
