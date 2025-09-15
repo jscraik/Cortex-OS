@@ -105,9 +105,7 @@ class BaseMCPTool(Generic[InputModelT]):
         payload = self.validate_input(raw)
 
         try:
-            result = self.run(payload)
-            if inspect.isawaitable(result):
-                result = await result  # type: ignore[assignment]
+            result = await self.run(payload)
         except MCPToolExecutionError:
             raise
         except Exception as exc:  # pragma: no cover - exercised via tests
