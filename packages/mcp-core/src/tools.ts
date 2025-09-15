@@ -119,11 +119,6 @@ export class ToolRegistry {
 
                 try {
                         const result = await tool.execute(parsed.data, context);
-                        if (context?.signal?.aborted) {
-                                throw new ToolExecutionError(`Execution for tool "${name}" was aborted.`, {
-                                        code: 'E_TOOL_ABORTED',
-                                });
-                        }
                         return result;
                 } catch (error) {
                         if (error instanceof McpToolError) {
