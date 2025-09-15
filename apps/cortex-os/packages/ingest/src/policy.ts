@@ -15,7 +15,7 @@ export interface LoadIngestPolicyOptions {
 }
 
 function toIngestPolicy(values: string[]): IngestPolicy {
-        return { allowMime: [...values] };
+        return { allowMime: values };
 }
 
 export function parseIngestPolicy(data: unknown): IngestPolicy {
