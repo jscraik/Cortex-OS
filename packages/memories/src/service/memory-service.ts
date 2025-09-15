@@ -126,14 +126,16 @@ export const createMemoryService = (
                                         return performVectorSearch({ ...q, vector: q.vector }, topK);
                                 }
 
-                                if (q.text) {
-                                        return performTextSearch(
-                                                { ...q, text: q.text },
-                                                topK,
-                                                embedder,
-                                                store,
-                                        );
-                                }
+
+				if (typeof q.text === 'string') {
+					return performTextSearch(
+						{ ...q, text: q.text },
+						topK,
+						embedder,
+						store,
+					);
+				}
+
 
                                 return [];
                         });

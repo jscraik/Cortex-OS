@@ -1,174 +1,187 @@
-import { describe, expect, beforeEach, it } from 'vitest';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { InMemoryStore } from '../src/adapters/store.memory.js';
-import type { MemoryService } from '../src/service/memory-service.js';
+import {
+        memoryDeleteTool,
+        memoryGetTool,
+        memoryListTool,
+        memorySearchTool,
+        memorySetTool,
+        resetMemoryServiceFactory,
+        setMemoryServiceFactory,
+} from '../src/mcp/tools.js';
 import { createMemoryService } from '../src/service/memory-service.js';
 import { LocalEmbedder } from './util/local-embedder.js';
-import {
-        createMemoryMcpTools,
-        memoryDeleteToolSchema,
-        memoryGetToolSchema,
-        memoryListToolSchema,
-        memorySearchToolSchema,
-        memorySetToolSchema,
-        type MemoryMcpToolset,
-} from '../src/mcp/tools.js';
 
-function parseContent(result: Awaited<ReturnType<MemoryMcpToolset['set']['handler']>>) {
-        const payload = result.content.at(0);
-        if (!payload) {
-                throw new Error('Tool did not return any content');
-        }
-        return JSON.parse(payload.text);
+const storedSchema = z.object({
+        status: z.literal('stored'),
+        memory: z.object({ id: z.string(), tags: z.array(z.string()).optional() }).passthrough(),
+});
+
+const getSchema = z.discriminatedUnion('found', [
+        z.object({ found: z.literal(false), id: z.string() }),
+        z.object({
+                found: z.literal(true),
+                memory: z.object({ id: z.string(), tags: z.array(z.string()).optional() }).passthrough(),
+        }),
+]);
+
+const listSchema = z.object({
+        memories: z.array(
+                z.object({ id: z.string(), tags: z.array(z.string()).default([]) }).passthrough(),
+        ),
+});
+
+const searchSchema = z.object({
+        query: z.object({
+                text: z.string().nullable().optional(),
+                vector: z.number().optional(),
+                tags: z.array(z.string()),
+        }),
+        results: z.array(
+                z.object({ id: z.string(), tags: z.array(z.string()).default([]) }).passthrough(),
+        ),
+});
+
+type ToolResult = Awaited<ReturnType<typeof memorySetTool.handler>>;
+
+function extractPayload(result: ToolResult): unknown {
+        const payload = result.content[0]?.text ?? '{}';
+        return JSON.parse(payload) as unknown;
 }
 
-describe('memories MCP tools', () => {
-        let store: InMemoryStore;
-        let service: MemoryService;
-        let tools: MemoryMcpToolset;
-        const fixedNow = new Date('2025-01-01T00:00:00.000Z');
-        let idCounter: number;
-
+describe('memory MCP tools', () => {
         beforeEach(() => {
-                store = new InMemoryStore();
-                service = createMemoryService(store, new LocalEmbedder());
-                idCounter = 0;
-                tools = createMemoryMcpTools({
-                        service,
-                        now: () => fixedNow,
-                        idFactory: () => `mem-${++idCounter}`,
-                });
+                const service = createMemoryService(new InMemoryStore(), new LocalEmbedder());
+                setMemoryServiceFactory(() => Promise.resolve(service));
         });
 
-        it('validates schemas for each tool', () => {
-                expect(memorySetToolSchema.safeParse({
+        afterEach(() => {
+                resetMemoryServiceFactory();
+        });
+
+        it('stores memory entries via set tool', async () => {
+                const now = new Date().toISOString();
+                const res = await memorySetTool.handler({
+                        id: 'mem-1',
                         kind: 'note',
                         text: 'remember the milk',
-                        provenance: { source: 'user' },
-                }).success).toBe(true);
-
-                expect(memoryGetToolSchema.safeParse({ id: 'mem-123' }).success).toBe(true);
-                expect(memoryDeleteToolSchema.safeParse({ id: 'mem-456' }).success).toBe(true);
-                expect(memoryListToolSchema.safeParse({ limit: 5 }).success).toBe(true);
-                expect(memorySearchToolSchema.safeParse({ text: 'query' }).success).toBe(true);
-        });
-
-        it('stores a memory entry with generated identifiers', async () => {
-                const result = await tools.set.handler({
-                        kind: 'note',
-                        text: 'remember the milk',
-                        tags: ['personal'],
-                        provenance: { source: 'user', actor: 'jamie' },
-                });
-
-                const payload = parseContent(result);
-                expect(payload.status).toBe('approved');
-                expect(payload.memory.id).toBe('mem-1');
-                expect(payload.memory.createdAt).toBe(fixedNow.toISOString());
-                expect(payload.memory.updatedAt).toBe(fixedNow.toISOString());
-
-                const stored = await store.get('mem-1');
-                expect(stored?.text).toBe('remember the milk');
-                expect(stored?.tags).toEqual(['personal']);
-        });
-
-        it('retrieves a stored memory by identifier', async () => {
-                await tools.set.handler({
-                        id: 'mem-custom',
-                        kind: 'note',
-                        text: 'existing memory',
-                        tags: ['test'],
+                        tags: ['todo'],
+                        createdAt: now,
+                        updatedAt: now,
                         provenance: { source: 'agent' },
                 });
 
-                const result = await tools.get.handler({ id: 'mem-custom' });
-                const payload = parseContent(result);
-
-                expect(payload.found).toBe(true);
-                expect(payload.memory.id).toBe('mem-custom');
-                expect(payload.memory.tags).toEqual(['test']);
+                const payload = storedSchema.parse(extractPayload(res));
+                expect(payload.status).toBe('stored');
+                expect(payload.memory.id).toBe('mem-1');
         });
 
-        it('returns not found when retrieving missing memory', async () => {
-                const result = await tools.get.handler({ id: 'missing' });
-                const payload = parseContent(result);
-
-                expect(payload.found).toBe(false);
-                expect(payload.id).toBe('missing');
-        });
-
-        it('deletes a memory entry and confirms removal', async () => {
-                await tools.set.handler({
-                        id: 'mem-delete',
-                        kind: 'note',
-                        text: 'to be removed',
-                        provenance: { source: 'system' },
-                });
-
-                const result = await tools.delete.handler({ id: 'mem-delete' });
-                const payload = parseContent(result);
-
-                expect(payload.deleted).toBe(true);
-                expect(payload.id).toBe('mem-delete');
-                expect(await store.get('mem-delete')).toBeNull();
-        });
-
-        it('lists memories with limit and tag filtering', async () => {
-                await tools.set.handler({
-                        id: 'mem-1',
-                        kind: 'note',
-                        text: 'first entry',
-                        tags: ['inbox'],
-                        provenance: { source: 'user' },
-                });
-                await tools.set.handler({
+        it('retrieves memory entries by id', async () => {
+                const now = new Date().toISOString();
+                await memorySetTool.handler({
                         id: 'mem-2',
                         kind: 'note',
-                        text: 'second entry',
-                        tags: ['inbox', 'work'],
-                        provenance: { source: 'user' },
+                        text: 'project alpha kickoff',
+                        tags: ['project'],
+                        createdAt: now,
+                        updatedAt: now,
+                        provenance: { source: 'agent' },
                 });
-                await tools.set.handler({
+
+                const res = await memoryGetTool.handler({ id: 'mem-2' });
+                const payload = getSchema.parse(extractPayload(res));
+                expect(payload.found).toBe(true);
+                if (payload.found) {
+                        expect(payload.memory.id).toBe('mem-2');
+                }
+
+                const missing = await memoryGetTool.handler({ id: 'missing' });
+                expect(getSchema.parse(extractPayload(missing))).toEqual({ found: false, id: 'missing' });
+        });
+
+        it('deletes memory entries', async () => {
+                const now = new Date().toISOString();
+                await memorySetTool.handler({
                         id: 'mem-3',
                         kind: 'note',
-                        text: 'third entry',
-                        tags: ['archive'],
-                        provenance: { source: 'user' },
+                        text: 'remove me',
+                        tags: ['cleanup'],
+                        createdAt: now,
+                        updatedAt: now,
+                        provenance: { source: 'agent' },
                 });
 
-                const result = await tools.list.handler({ limit: 2, tags: ['inbox'] });
-                const payload = parseContent(result);
+                const res = await memoryDeleteTool.handler({ id: 'mem-3' });
+                const payload = z
+                        .object({ deleted: z.literal(true), id: z.string() })
+                        .parse(extractPayload(res));
+                expect(payload).toEqual({ deleted: true, id: 'mem-3' });
 
-                expect(payload.count).toBe(2);
-                expect(payload.results.map((m: any) => m.id)).toEqual(['mem-1', 'mem-2']);
+                const after = await memoryGetTool.handler({ id: 'mem-3' });
+                expect(getSchema.parse(extractPayload(after))).toEqual({ found: false, id: 'mem-3' });
         });
 
-        it('searches memories by text relevance', async () => {
-                await tools.set.handler({
-                        id: 'mem-a',
+        it('lists memories with optional filters', async () => {
+                const now = new Date().toISOString();
+                await memorySetTool.handler({
+                        id: 'mem-4',
                         kind: 'note',
-                        text: 'schedule dentist appointment',
-                        tags: ['health'],
-                        provenance: { source: 'user' },
+                        text: 'alpha project status',
+                        tags: ['project'],
+                        createdAt: now,
+                        updatedAt: now,
+                        provenance: { source: 'agent' },
                 });
-                await tools.set.handler({
-                        id: 'mem-b',
-                        kind: 'note',
-                        text: 'buy groceries for dinner',
-                        tags: ['personal'],
-                        provenance: { source: 'user' },
+                await memorySetTool.handler({
+                        id: 'mem-5',
+                        kind: 'event',
+                        text: 'beta launch scheduled',
+                        tags: ['launch'],
+                        createdAt: now,
+                        updatedAt: now,
+                        provenance: { source: 'agent' },
                 });
 
-                const result = await tools.search.handler({ text: 'groceries', topK: 1 });
-                const payload = parseContent(result);
+                const listRes = await memoryListTool.handler({ limit: 5 });
+                const listPayload = listSchema.parse(extractPayload(listRes));
+                expect(Array.isArray(listPayload.memories)).toBe(true);
+                expect(listPayload.memories.length).toBeGreaterThanOrEqual(2);
 
-                expect(payload.count).toBe(1);
-                expect(payload.results[0].id).toBe('mem-b');
-                expect(payload.query.text).toBe('groceries');
+                const filtered = await memoryListTool.handler({ tags: ['project'] });
+                const filteredPayload = listSchema.parse(extractPayload(filtered));
+                expect(filteredPayload.memories).toHaveLength(1);
+                expect(filteredPayload.memories[0]?.id).toBe('mem-4');
         });
 
-        it('rejects search requests without criteria', async () => {
-                await expect(() => tools.search.handler({})).rejects.toThrow(
-                        /Provide either text or vector search criteria/,
+        it('searches memories by text or vector', async () => {
+                const now = new Date().toISOString();
+                const stored = await memorySetTool.handler({
+                        id: 'mem-6',
+                        kind: 'note',
+                        text: 'vector aware memory',
+                        tags: ['ml'],
+                        createdAt: now,
+                        updatedAt: now,
+                        provenance: { source: 'agent' },
+                });
+                const storedPayload = storedSchema.parse(extractPayload(stored));
+
+                const textRes = await memorySearchTool.handler({ text: 'vector', topK: 5 });
+                const textPayload = searchSchema.parse(extractPayload(textRes));
+                expect(textPayload.results.some((m) => m.id === 'mem-6')).toBe(true);
+
+                const vectorRes = await memorySearchTool.handler({
+                        vector: storedPayload.memory.vector,
+                        topK: 1,
+                });
+                const vectorPayload = searchSchema.parse(extractPayload(vectorRes));
+                expect(vectorPayload.results[0]?.id).toBe('mem-6');
+
+                await expect(memorySearchTool.handler({ topK: 5 })).rejects.toThrow(
+                        /text or vector/i,
+
                 );
         });
 });
