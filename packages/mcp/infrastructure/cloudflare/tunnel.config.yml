@@ -1,13 +1,25 @@
-# Cloudflare Tunnel Configuration for Cortex MCP
-# Exposes: core MCP app on 3000 and ChatGPT Connector (SSE/JSON-RPC) on 8007
+# Cloudflare Tunnel Configuration for Cortex MCP (updated)
+# Exposes:
+#   * Main MCP service (including ChatGPT connector) on 3024
+#   * Main app on 3000
 
 # Use your **named** tunnel (UUID from `cloudflared tunnel list`)
-tunnel: af4eed03-2d4e-4683-8cb7-6d4b8e47b564
-credentials-file: /Users/jamiecraik/.cloudflared/af4eed03-2d4e-4683-8cb7-6d4b8e47b564.json
+tunnel: 8109c0a4-6704-4119-b38e-5faa28f0903e
+credentials-file: /Users/jamiecraik/.cloudflared/8109c0a4-6704-4119-b38e-5faa28f0903e.json
 
 # Ingress routing
 ingress:
-  # 1) Main MCP app (dashboard / APIs) on port 3000
+  # 1) Fixed MCP core service (Python) on port 3024
+  - hostname: cortex-mcp.brainwav.io
+    service: http://127.0.0.1:3024
+    originRequest:
+      http2Origin: true
+      connectTimeout: 30s
+      noTLSVerify: true
+      keepAliveConnections: 16
+      keepAliveTimeout: 90s
+
+  # 2) Main MCP web/dashboard (if still required) on port 3000
   - hostname: mcp.brainwav.io
     service: http://127.0.0.1:3000
     originRequest:
@@ -17,19 +29,8 @@ ingress:
       keepAliveConnections: 16
       keepAliveTimeout: 90s
 
-  # 2) ChatGPT Connector MCP server (SSE + JSON-RPC) on port 8007
-  #    ChatGPT will call https://cortexgpt-mcp.brainwav.io/mcp/sse
-  - hostname: cortexgpt-mcp.brainwav.io
-    service: http://127.0.0.1:8007
-    originRequest:
-      # SSE over H2 is okay, but keep classic H1 semantics
-      http2Origin: true
-      connectTimeout: 60s
-      noTLSVerify: true
-      keepAliveConnections: 32
-      keepAliveTimeout: 120s
 
-  # 3) Fallback 404 (must be last)
+  # 4) Fallback 404 (must be last)
   - service: http_status:404
 
 # Logging & metrics

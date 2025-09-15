@@ -14,10 +14,9 @@
 			}
 		},
 		"lint": {
-			"executor": "@nx/linter:eslint",
-			"outputs": ["{options.outputPath}"],
+			"executor": "@nx/eslint:lint",
 			"options": {
-				"lintFilePatterns": ["packages/a2a/a2a-events/**/*.ts"]
+				"lintFilePatterns": ["packages/a2a/a2a-events/src/**/*.ts"]
 			}
 		},
 		"test": {

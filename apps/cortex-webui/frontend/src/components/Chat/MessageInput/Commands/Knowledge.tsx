@@ -163,7 +163,6 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 						Note
 					</div>
 				);
-			case 'collection':
 			default:
 				return (
 					<div className="bg-green-500/20 text-green-700 dark:text-green-200 rounded-sm uppercase text-xs font-bold px-1 shrink-0">

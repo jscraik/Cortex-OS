@@ -3,5 +3,12 @@
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "libs/typescript/telemetry/src",
 	"projectType": "library",
-	"targets": {}
+	"targets": {
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"options": {
+				"lintFilePatterns": ["libs/typescript/telemetry/src/**/*.ts"]
+			}
+		}
+	}
 }

@@ -1,16 +1,24 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useSettingsStore } from '@/stores/settingsStore';
 
-interface ConnectionsSettingsProps {
-	saveSettings: (settings: any) => void;
+// Type for the connections settings object
+export interface ConnectionsSettingsShape {
+	openaiApiKey: string;
+	anthropicApiKey: string;
+	googleApiKey: string;
+	mistralApiKey: string;
+	groqApiKey: string;
+	openRouterApiKey: string;
+	customOpenaiEndpoint: string;
+	customOpenaiApiKey: string;
 }
 
-const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
-	saveSettings,
-}) => {
+const ConnectionsSettings: React.FC<{
+	saveSettings: (settings: { connections: ConnectionsSettingsShape }) => void;
+}> = ({ saveSettings }) => {
 	const settings = useSettingsStore();
 	const [loaded, setLoaded] = useState(false);
 
@@ -23,6 +31,20 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 	const [openRouterApiKey, setOpenRouterApiKey] = useState('');
 	const [customOpenaiEndpoint, setCustomOpenaiEndpoint] = useState('');
 	const [customOpenaiApiKey, setCustomOpenaiApiKey] = useState('');
+
+	// useId for unique id prefixes
+	const idPrefix = useId();
+
+	// Generate unique ids for each input
+	const openaiApiKeyId = `${idPrefix}-openai-api-key`;
+	const anthropicApiKeyId = `${idPrefix}-anthropic-api-key`;
+	const googleApiKeyId = `${idPrefix}-google-api-key`;
+	const mistralApiKeyId = `${idPrefix}-mistral-api-key`;
+	const groqApiKeyId = `${idPrefix}-groq-api-key`;
+	const openRouterApiKeyId = `${idPrefix}-openrouter-api-key`;
+	const customOpenaiEndpointId = `${idPrefix}-custom-openai-endpoint`;
+	const customOpenaiApiKeyId = `${idPrefix}-custom-openai-api-key`;
+	const rootDivId = `${idPrefix}-tab-connections`;
 
 	useEffect(() => {
 		if (settings) {
@@ -66,7 +88,7 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 
 	return (
 		<div
-			id="tab-connections"
+			id={rootDivId}
 			className="flex flex-col h-full justify-between text-sm"
 		>
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
@@ -80,14 +102,14 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 					<div className="space-y-4">
 						<div>
 							<label
-								htmlFor="openai-api-key"
+								htmlFor={openaiApiKeyId}
 								className="block text-sm font-medium mb-1"
 							>
 								OpenAI API Key
 							</label>
 							<div className="flex space-x-2">
 								<input
-									id="openai-api-key"
+									id={openaiApiKeyId}
 									type="password"
 									value={openaiApiKey}
 									onChange={(e) => setOpenaiApiKey(e.target.value)}
@@ -106,14 +128,14 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 
 						<div>
 							<label
-								htmlFor="anthropic-api-key"
+								htmlFor={anthropicApiKeyId}
 								className="block text-sm font-medium mb-1"
 							>
 								Anthropic API Key
 							</label>
 							<div className="flex space-x-2">
 								<input
-									id="anthropic-api-key"
+									id={anthropicApiKeyId}
 									type="password"
 									value={anthropicApiKey}
 									onChange={(e) => setAnthropicApiKey(e.target.value)}
@@ -132,14 +154,14 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 
 						<div>
 							<label
-								htmlFor="google-api-key"
+								htmlFor={googleApiKeyId}
 								className="block text-sm font-medium mb-1"
 							>
 								Google API Key
 							</label>
 							<div className="flex space-x-2">
 								<input
-									id="google-api-key"
+									id={googleApiKeyId}
 									type="password"
 									value={googleApiKey}
 									onChange={(e) => setGoogleApiKey(e.target.value)}
@@ -158,14 +180,14 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 
 						<div>
 							<label
-								htmlFor="mistral-api-key"
+								htmlFor={mistralApiKeyId}
 								className="block text-sm font-medium mb-1"
 							>
 								Mistral API Key
 							</label>
 							<div className="flex space-x-2">
 								<input
-									id="mistral-api-key"
+									id={mistralApiKeyId}
 									type="password"
 									value={mistralApiKey}
 									onChange={(e) => setMistralApiKey(e.target.value)}
@@ -184,14 +206,14 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 
 						<div>
 							<label
-								htmlFor="groq-api-key"
+								htmlFor={groqApiKeyId}
 								className="block text-sm font-medium mb-1"
 							>
 								Groq API Key
 							</label>
 							<div className="flex space-x-2">
 								<input
-									id="groq-api-key"
+									id={groqApiKeyId}
 									type="password"
 									value={groqApiKey}
 									onChange={(e) => setGroqApiKey(e.target.value)}
@@ -210,14 +232,14 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 
 						<div>
 							<label
-								htmlFor="openrouter-api-key"
+								htmlFor={openRouterApiKeyId}
 								className="block text-sm font-medium mb-1"
 							>
 								OpenRouter API Key
 							</label>
 							<div className="flex space-x-2">
 								<input
-									id="openrouter-api-key"
+									id={openRouterApiKeyId}
 									type="password"
 									value={openRouterApiKey}
 									onChange={(e) => setOpenRouterApiKey(e.target.value)}
@@ -242,13 +264,13 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 					<div className="space-y-4">
 						<div>
 							<label
-								htmlFor="custom-openai-endpoint"
+								htmlFor={customOpenaiEndpointId}
 								className="block text-sm font-medium mb-1"
 							>
 								Custom OpenAI Endpoint
 							</label>
 							<input
-								id="custom-openai-endpoint"
+								id={customOpenaiEndpointId}
 								type="url"
 								value={customOpenaiEndpoint}
 								onChange={(e) => setCustomOpenaiEndpoint(e.target.value)}
@@ -259,13 +281,13 @@ const ConnectionsSettings: React.FC<ConnectionsSettingsProps> = ({
 
 						<div>
 							<label
-								htmlFor="custom-openai-api-key"
+								htmlFor={customOpenaiApiKeyId}
 								className="block text-sm font-medium mb-1"
 							>
 								Custom OpenAI API Key
 							</label>
 							<input
-								id="custom-openai-api-key"
+								id={customOpenaiApiKeyId}
 								type="password"
 								value={customOpenaiApiKey}
 								onChange={(e) => setCustomOpenaiApiKey(e.target.value)}

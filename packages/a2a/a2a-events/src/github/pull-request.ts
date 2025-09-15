@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
+import {
+	GitHubRepositorySchema,
+	GitHubUserSchema,
+	type GitHubRepository,
+	type GitHubUser,
+} from './repository';
 
 // Pull Request Branch Schema
 export const PullRequestBranchSchema = z.object({
@@ -155,12 +160,12 @@ export function isPullRequestEvent(data: unknown): data is PullRequestEvent {
 export function createPullRequestEvent(
 	action: PullRequestAction,
 	pullRequest: PullRequest,
-	repository: GitHubRepositorySchema,
-	actor: GitHubUserSchema,
+	repository: GitHubRepository,
+	actor: GitHubUser,
 	changes?: PullRequestChanges,
 	additionalData?: {
-		assignee?: GitHubUserSchema;
-		requestedReviewer?: GitHubUserSchema;
+		assignee?: GitHubUser;
+		requestedReviewer?: GitHubUser;
 		label?: {
 			id: number;
 			name: string;

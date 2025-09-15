@@ -383,10 +383,8 @@ Full guide: [Python Integration](./docs/python-integration.md)
 ### 🖥️ User Interfaces
 
 - **[cortex-os](./apps/cortex-os/)** – Runtime application
-- **[cortex-code](./apps/cortex-code/)** – Terminal UI
+- **[cortex-code](./apps/cortex-code/)** – Terminal UI & command-line tooling (successor to cortex-cli)
 - **[cortex-webui](./apps/cortex-webui/)** – Web dashboard
-- ~~**[cortex-cli](./apps/cortex-cli/)** – Command-line tools~~ (deprecated)
-- **[cortex-code](./apps/cortex-code/)** – Command-line tools (replacement for cortex-cli)
 
 ---
 

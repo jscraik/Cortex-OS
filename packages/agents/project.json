@@ -26,10 +26,12 @@
       }
     },
     "lint": {
-      "executor": "nx:run-commands",
+      "executor": "@nx/eslint:lint",
       "options": {
-        "command": "pnpm lint",
-        "cwd": "packages/agents"
+        "lintFilePatterns": [
+          "packages/agents/src/**/*.ts",
+          "packages/agents/tests/**/*.ts"
+        ]
       }
     }
   }

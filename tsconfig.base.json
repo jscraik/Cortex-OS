@@ -1,0 +1,43 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "strict": false,
+        "resolveJsonModule": true,
+        "baseUrl": ".",
+        "types": ["node"],
+        "paths": {
+            "@cortex-os/a2a": ["packages/a2a/src/index.ts"],
+            "@cortex-os/a2a/*": ["packages/a2a/src/*"],
+            "@cortex-os/a2a-core": ["packages/a2a/a2a-core/src/index.ts"],
+            "@cortex-os/a2a-core/*": ["packages/a2a/a2a-core/src/*"],
+            "@cortex-os/a2a-contracts": ["packages/a2a/a2a-contracts/src/index.ts"],
+            "@cortex-os/a2a-contracts/*": ["packages/a2a/a2a-contracts/src/*"],
+            "@cortex-os/a2a-events": ["packages/a2a/a2a-events/src/index.ts"],
+            "@cortex-os/a2a-events/*": ["packages/a2a/a2a-events/src/*"],
+            "@cortex-os/telemetry": ["libs/typescript/telemetry/src/index.ts"],
+            "@cortex-os/telemetry/*": ["libs/typescript/telemetry/src/*"],
+            "@cortex-os/security": ["packages/security/src/index.ts"],
+            "@cortex-os/security/*": ["packages/security/src/*"],
+            "@cortex-os/utils": ["libs/typescript/utils/src/index.ts"],
+            "@cortex-os/utils/*": ["libs/typescript/utils/src/*"],
+            "@cortex-os/types": ["libs/typescript/types/src/index.ts"],
+            "@cortex-os/types/*": ["libs/typescript/types/src/*"]
+        }
+    },
+    "include": [
+        "simple-tests/**/*.ts",
+        "libs/**/*.ts",
+        "packages/**/*.ts",
+        "apps/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "build"
+    ]
+}

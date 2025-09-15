@@ -13,7 +13,7 @@ This document serves as the authoritative reference for the Cortex-OS project st
 cortex-os-clean/
 ├── .cortex/                          # Governance hub (single source of truth)
 ├── apps/                             # Applications and services
-│   ├── cortex-cli/                   # Command-line interface for Cortex-OS
+│   ├── cortex-code/                  # Command-line interface for Cortex-OS (codex binary)
 │   ├── cortex-marketplace/           # Frontend for the MCP Marketplace
 │   ├── cortex-marketplace-api/       # API for the MCP Marketplace
 │   ├── cortex-os/                    # ASBR Runtime (main application)
@@ -54,14 +54,14 @@ cortex-os-clean/
 The `apps/` directory contains all user-facing applications and services:
 
 - **`cortex-os/`**: The main ASBR (Agent Service Bus Runtime) application that coordinates agents and services.
-- **`cortex-cli/`**: A command-line interface for interacting with Cortex-OS.
+- **`cortex-code/`**: The `codex` terminal application that replaces the retired `cortex-cli` tooling.
 - **`cortex-marketplace/` & `cortex-marketplace-api/`**: The frontend and API for the MCP Marketplace.
 - **`cortex-web/`**: Contains shared web-based UI components.
 - **`cortex-py/`**: Hosts Python-based services and agents.
 
 ### Shared Libraries and Services
 
-The `packages/` directory contains all shared libraries and services that provide cross-cutting concerns and infrastructure:
+The `packages/` directory contains all shared libraries and services that provide cross-cutting concerns and infrastructure. Any legacy references to `cortex-cli` packages have been removed; the new CLI shares components with `cortex-code` instead.
 
 - **`a2a/`**: Agent-to-Agent communication bus.
 - **`orchestration/`**: Workflow coordination with outbox/DLQ patterns.

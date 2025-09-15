@@ -1,34 +1,35 @@
 {
-	"name": "@cortex-os/gateway",
-	"version": "0.0.1",
-	"private": true,
-	"type": "module",
-	"main": "src/server.ts",
-	"scripts": {
-		"dev": "tsx src/server.ts",
-		"build": "tsc -p tsconfig.json && node ./scripts/build-openapi.cjs",
-		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"lint": "eslint .",
-		"test": "node ./scripts/build-openapi.cjs && vitest run --config ./vitest.config.ts",
-		"test:coverage": "node ./scripts/build-openapi.cjs && vitest run --coverage --config ./vitest.config.ts",
-		"start": "node dist/server.js"
-	},
-	"dependencies": {
-		"@cortex-os/a2a": "workspace:*",
-		"@cortex-os/contracts": "workspace:*",
-		"@cortex-os/lib": "workspace:*",
-		"@cortex-os/mcp-core": "workspace:*",
-		"@cortex-os/rag": "workspace:*",
-		"@cortex-os/simlab": "workspace:*",
-		"fastify": "^4.28.1",
-		"prom-client": "^15.1.3",
-		"zod": "^3.23.8"
-	},
-	"devDependencies": {
-		"@pact-foundation/pact": "^12.2.0",
-		"@types/node": "^22.5.0",
-		"tsx": "^4.16.2",
-		"typescript": "^5.5.4",
-		"vitest": "^2.1.9"
-	}
+  "name": "@cortex-os/gateway",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/server.ts",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.json && node ./scripts/build-openapi.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "node ./scripts/build-openapi.cjs && vitest run --config ./vitest.config.ts",
+    "test:coverage": "node ./scripts/build-openapi.cjs && vitest run --coverage --config ./vitest.config.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@cortex-os/a2a": "workspace:*",
+    "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/lib": "workspace:*",
+    "@cortex-os/mcp-core": "workspace:*",
+    "@cortex-os/rag": "workspace:*",
+    "@cortex-os/simlab": "workspace:*",
+    "fastify": "^4.28.1",
+    "prom-client": "^15.1.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "^12.2.0",
+    "@types/node": "^22.5.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.9",
+    "eslint": "^9.35.0"
+  }
 }

@@ -5,29 +5,29 @@
 
 ## Overview
 
-The MCP packages provide a complete implementation of the Model Context Protocol, enabling standardized communication between AI models and tools. These packages are designed for production use with strict memory management and comprehensive test coverage.
+The MCP packages implement the Model Context Protocol for standardized
+communication between AI models and tools. They are production-oriented
+with strict memory management and comprehensive test coverage.
 
 ## Packages
 
-### [@cortex-os/mcp-core](file:///Users/jamiecraik/.Cortex-OS/packages/mcp-core)
+### @cortex-os/mcp-core
 
-Minimal building blocks for the Model Context Protocol with TypeScript implementation.
+Minimal building blocks for the Model Context Protocol (TypeScript).
 
-### [@cortex-os/mcp-registry](file:///Users/jamiecraik/.Cortex-OS/packages/mcp-registry)
+### @cortex-os/mcp-registry
 
 File-system backed registry for managing MCP server configurations.
 
-### [@cortex-os/mcp-bridge](file:///Users/jamiecraik/.Cortex-OS/packages/mcp-bridge)
+### @cortex-os/mcp-bridge
 
 Stdio ↔ HTTP/SSE bridge for MCP transports with rate limiting.
 
-### [mcp](file:///Users/jamiecraik/.Cortex-OS/packages/mcp)
+### mcp (Python)
 
 Complete Python implementation of the Model Context Protocol.
 
 ## Memory Management
-
-To prevent memory issues during development and testing:
 
 1. Use the MCP-aware memory manager:
 
@@ -41,7 +41,7 @@ To prevent memory issues during development and testing:
    ./scripts/run-mcp-tests.sh all
    ```
 
-3. For coverage reports:
+3. Coverage reports:
 
    ```bash
    ./scripts/run-mcp-tests.sh all true
@@ -49,34 +49,32 @@ To prevent memory issues during development and testing:
 
 ## Docker Deployment
 
-Deploy MCP services using the dedicated Docker Compose configuration:
-
 ```bash
 docker-compose -f docker/docker-compose.mcp.yml up
 ```
 
 ## Test Coverage
 
-All MCP packages maintain 90%+ test coverage:
+All MCP packages target 90%+ coverage:
 
-- `mcp-core`: 94%+ coverage
-- `mcp-registry`: 94%+ coverage  
-- `mcp-bridge`: 94%+ coverage
-- `mcp`: 90%+ coverage
+- `mcp-core`: 94%+
+- `mcp-registry`: 94%+
+- `mcp-bridge`: 94%+
+- `mcp`: 90%+
 
 ## Development Guidelines
 
 1. Always run tests with memory constraints
-2. Use the TDD approach (Red → Green → Refactor)
+2. TDD (Red → Green → Refactor)
 3. Maintain 90%+ test coverage
-4. Follow the contract-driven modular architecture principles
+4. Follow contract-driven modular architecture
 5. Ensure cross-package compatibility
 
 ## Quality Gates
 
-All changes must pass:
+Changes must pass:
 
-- Unit tests with 90%+ coverage
+- Unit tests (≥90% coverage)
 - Integration tests
 - Security scanning
 - Code quality checks
@@ -85,3 +83,284 @@ All changes must pass:
 ## License
 
 Apache 2.0
+
+## Operational Notes
+
+## Quick Start
+
+Most common local workflows:
+
+```bash
+# 1. Start MCP Python server
+scripts/start-mcp-server.sh
+
+# 2. Run constrained tests
+./scripts/run-mcp-tests.sh all
+
+# 3. Memory manager (gentle mode)
+./scripts/memory-manager-mcp.sh --gentle
+
+# 4. Launch Cloudflare tunnel (foreground)
+cloudflared tunnel --config packages/mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
+
+# 5. Health probe via tunnel hostname
+scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
+
+# (Alt) Dev mode via root package scripts
+pnpm mcp:dev
+
+# (Alt) Start with tunnel helper script
+pnpm mcp:start-with-tunnel
+```
+
+## Contracts
+
+Relevant contract/schema assets for MCP-related events & streaming:
+
+- `contracts/streaming-events.schema.json`
+- `contracts/cloudevents/` (envelope + event shape definitions)
+- `contracts/asyncapi/` (AsyncAPI specs for event catalogue)
+
+When adding new cross-boundary events, follow the Contract Versioning Rules in the root playbook and add a validation test under `contracts/tests/`.
+
+## Status Matrix
+
+| Category | Item / Purpose | Path / Command |
+|----------|----------------|----------------|
+| Port | Fixed MCP server port | `3024` |
+| Port (forbidden) | Historical blocked port | `3004` (guarded) |
+| Startup Script | Launch & guard checks | `scripts/start-mcp-server.sh` |
+| CI Guard | Block reintroduction of 3004 | `scripts/ci/guard_port_3004.sh` |
+| Tunnel Config | Canonical Cloudflare config | `packages/mcp/infrastructure/cloudflare/tunnel.config.yml` |
+| Tunnel Rotate Config | Blue/Green template | `packages/mcp/infrastructure/cloudflare/tunnel.rotate.config.yml` |
+| Rotation Script | Zero-downtime tunnel swap | `scripts/cloudflare/mcp-tunnel-rotate.sh` |
+| Tunnel Health Script | Endpoint health probe | `scripts/cloudflare/mcp-tunnel-health.sh` |
+| Memory Manager | Constrained memory helper | `./scripts/memory-manager-mcp.sh` |
+| Tests Runner | MCP test harness | `./scripts/run-mcp-tests.sh` |
+| Forensic Script | Port 3004 attribution loop | `scripts/port3004_bind_loop.py` |
+| Forensic Script | Capture killer attribution | `scripts/capture_port3004_attribution.sh` |
+| Forensic Script | Mitigation experiment | `scripts/mitigate_port3004.sh` |
+
+> NOTE: Any addition touching external event shapes must include a schema update + test.
+
+### Fixed MCP Port
+
+The Python MCP server binds exclusively to port `3024` (migrated off
+`3004` after forensic analysis showed macOS `syspolicyd` terminated any
+listener there). A startup guard and CI check enforce this. Do NOT
+reintroduce `3004`.
+
+### CI Guard
+
+Script: `scripts/ci/guard_port_3004.sh`
+
+Manual run:
+
+```bash
+pnpm ci:guard:ports
+```
+
+Extended governance (includes guard):
+
+```bash
+pnpm ci:governance:extended
+```
+
+### Startup Self-Check
+
+`scripts/start-mcp-server.sh` aborts if:
+
+- `run_server.py` contains `3004`
+- `MCP_PORT` resolves to `3004`
+
+### Cloudflare Tunnel
+
+Canonical config: `packages/mcp/infrastructure/cloudflare/tunnel.config.yml`
+
+Deploy example:
+
+```bash
+cloudflared tunnel --config packages/mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
+```
+
+### Zero-Downtime Tunnel Rotation
+
+Blue/Green rotation keeps the hostname serving while updating tunnel identity.
+
+1. Create new tunnel (green):
+
+   ```bash
+   cloudflared tunnel create cortex-mcp-green
+   ```
+
+2. Populate `packages/mcp/infrastructure/cloudflare/tunnel.rotate.config.yml` with the new tunnel UUID or token.
+
+3. Rotate:
+
+   ```bash
+   scripts/cloudflare/mcp-tunnel-rotate.sh \
+     --new-config packages/mcp/infrastructure/cloudflare/tunnel.rotate.config.yml \
+     --old-name cortex-mcp \
+     --new-name cortex-mcp-green \
+     --hostname cortex-mcp.brainwav.io \
+     --health-path /health \
+     --grace 20
+   ```
+
+4. Observe logs:
+
+   ```bash
+   tail -f logs/tunnel-cortex-mcp-green.log
+   ```
+
+5. (Optional) Delete old tunnel:
+
+   ```bash
+   cloudflared tunnel delete cortex-mcp
+   ```
+
+Environment tuning (defaults):
+
+```bash
+ROTATE_MIN_SUCCESSES=3
+ROTATE_POLL_INTERVAL=3
+ROTATE_MAX_ATTEMPTS=20
+```
+
+Manual health probe:
+
+```bash
+scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
+```
+
+Ingress maps `cortex-mcp.brainwav.io` → `http://localhost:3024`; other hostnames 404.
+
+### Forensic Artifacts
+
+Legacy diagnostic scripts (evidence & regression testing):
+
+- `scripts/port3004_bind_loop.py`
+- `scripts/capture_port3004_attribution.sh`
+- `scripts/mitigate_port3004.sh`
+
+These are allow‑listed by the CI guard.
+
+## Architecture Reference
+
+High-level system architecture (overall Cortex-OS, includes MCP integration points):
+
+- Rendered diagram: `docs/architecture.png`
+- Source (Mermaid): `docs/architecture.mmd`
+
+Regenerate after edits:
+
+```bash
+pnpm mermaid:generate
+```
+
+## Metrics & Observability
+
+The MCP Python service surfaces operational signals via logs (and can be
+integrated into broader Cortex-OS tracing if configured). Current
+baseline:
+
+- Structured logs: written under `logs/` (e.g., `logs/tunnel-*.log`,
+   future: `logs/mcp-server.log`).
+- Health endpoint: `GET /health` (used by tunnel rotation & probes).
+- Rotation success criteria: consecutive healthy probes (`ROTATE_MIN_SUCCESSES`).
+
+Tail primary logs:
+```bash
+tail -f logs/mcp-server.log
+tail -f logs/tunnel-cortex-mcp*.log
+```
+
+Sample health probe (non-200 indicates failure):
+```bash
+curl -i https://cortex-mcp.brainwav.io/health
+```
+
+Planned (not yet implemented):
+- OpenTelemetry span emission on request handling.
+- Emission of per-stream token counters (aggregate vs delta) as events.
+
+## Cloudflare Tunnel Log Patterns
+
+Healthy startup excerpt:
+```text
+2025-09-15T10:12:04Z INF Initial protocol h2mux
+2025-09-15T10:12:05Z INF Route propagating tunnelID=1234abcd region=AMS
+2025-09-15T10:12:06Z INF Connected to edge ip=198.41.x.y
+2025-09-15T10:12:07Z INF Registered ingress rules count=2
+2025-09-15T10:12:09Z INF Health probe succeeded status=200 path=/health consecutive=3
+```
+
+Failing (app unavailable) excerpt:
+```text
+2025-09-15T10:12:04Z INF Initial protocol h2mux
+2025-09-15T10:12:05Z ERR Upstream connection failed error="dial tcp 127.0.0.1:3024: connect: connection refused" retry=1
+2025-09-15T10:12:07Z ERR Upstream connection failed error="dial tcp 127.0.0.1:3024: connect: connection refused" retry=2
+2025-09-15T10:12:12Z WRN Health probe failed status=502 path=/health consecutiveFails=3
+```
+
+Actionable signals:
+- Repeated `connection refused`: MCP server not running.
+- Repeated 5xx with server running: inspect server logs or dependency.
+- No `Registered ingress rules`: config path or credentials issue.
+
+## Streaming Event Contract (Example)
+
+Extract from `contracts/streaming-events.schema.json` (simplified):
+
+```json
+// Token delta as content streams
+{ "type": "delta", "delta": "Hello" }
+
+// Completion of a full assistant message
+{
+   "type": "item",
+   "item": {
+      "Message": {
+         "role": "assistant",
+         "content": [ { "OutputText": { "text": "Hello world" } } ]
+      }
+   }
+}
+
+// End of stream marker
+{ "type": "completed" }
+```
+
+Validation notes:
+- Only one of: `delta`, `item`, or stream terminator `completed` per event.
+- `delta` events are order-sensitive; consumers should append in arrival order.
+- `completed` guarantees no further events for the stream ID (if envelope used).
+- Future extensions (e.g., `error`, `metrics`) must remain backward compatible.
+
+## Troubleshooting
+
+| Symptom | Likely Cause | Resolution |
+|---------|--------------|------------|
+| Tunnel health check failing during rotation | New tunnel not yet fully established or ingress misconfigured | Check logs `tail -f logs/tunnel-<new>.log`; verify hostname in rotate config; ensure DNS (Cloudflare) entry exists |
+| Rotation script exits with timeout | Health never reached required successes | Increase `ROTATE_MAX_ATTEMPTS` or lower `ROTATE_MIN_SUCCESSES`; manually probe health script to isolate app vs tunnel |
+| CI guard fails on forbidden port | Accidental reintroduction of `3004` in runtime code | Replace with `3024`; run `pnpm ci:guard:ports` locally before commit |
+| Startup script aborts (port conflict) | Another process already bound to `3024` | Identify with `lsof -i :3024`; stop process or adjust local dev by proxy (do NOT change server port) |
+| Tunnel connects but 404 on health | App not running or wrong service URL in `tunnel.config.yml` | Ensure MCP server listening on `3024`; confirm ingress service URL `http://localhost:3024` |
+| Rotation rollback needed (new tunnel unhealthy) | New tunnel never stabilized | Re-run rotation script swapping old/new names or delete faulty tunnel and retain old |
+| High memory during tests | Missing constrained test invocation | Use `./scripts/run-mcp-tests.sh all` and memory manager `./scripts/memory-manager-mcp.sh --gentle` |
+
+Rollback (manual) example:
+
+```bash
+# If new (green) failed; revert to old (blue) as primary
+cloudflared tunnel run cortex-mcp &
+# Optionally delete failed green tunnel after validation
+cloudflared tunnel delete cortex-mcp-green
+```
+
+If issues persist capture environment details and attach logs from `logs/tunnel-*.log` plus output of:
+
+```bash
+cloudflared tunnel list
+scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
+```

@@ -4,6 +4,19 @@
 	"projectType": "library",
 	"sourceRoot": "packages/a2a/a2a-observability/src",
 	"targets": {
+		"build": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "pnpm build",
+				"cwd": "packages/a2a/a2a-observability"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"options": {
+				"lintFilePatterns": ["packages/a2a/a2a-observability/src/**/*.ts"]
+			}
+		},
 		"test": {
 			"executor": "@nx/vite:test",
 			"options": {

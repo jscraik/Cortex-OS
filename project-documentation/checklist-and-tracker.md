@@ -73,23 +73,37 @@ Missing or underspecified in plan (added to tracker below):
     hashing & metadata.
   - Added contract test `evidence.contract.test.ts` validating ordering, constraints, CloudEvent embedding.
   - Added `withEvidence` helper (`packages/a2a/a2a-contracts/src/envelope.ts`) for non-mutating attachment.
-- [ ] Model Gateway: attach evidence/citations to responses; propagate downstream
-- [ ] RAG: retrieval with citations per-claim; “no evidence” path
-- [ ] RAG: bundles with grouped/de-duped citations, deterministic order
-- [ ] RAG: freshness routing (threshold configurable)
+- [x] Model Gateway: attach evidence/citations to responses; propagate downstream
+  - Evidence auto-attachment implemented in `packages/model-gateway/tests/server.evidence.test.ts`
+  - All responses (embeddings, rerank, chat) include evidence arrays with proper hashing
+- [x] RAG: retrieval with citations per-claim; "no evidence" path
+  - Citation bundler implemented in `packages/rag/src/lib/citation-bundler.ts`
+  - Supports per-claim citations, no-evidence handling, and deduplication
+- [x] RAG: bundles with grouped/de-duped citations, deterministic order
+  - Enhanced citation bundler with source grouping and deterministic sorting
+  - Includes `bundleWithDeduplication` and `bundleWithClaims` methods
+- [x] RAG: freshness routing (threshold configurable)
+  - Freshness router implemented in `packages/rag/src/retrieval/freshness-router.ts`
+  - Configurable cache thresholds, live/cache routing strategies
 - [ ] Evidence-first retrieval strategy: route answerability through RAG gate before LLM
 - [ ] Agents: explicit evidence attachment on actions/memories
 
 ### A2A Controls: Limits, Quotas, Replay
 
-- [ ] Per-agent rate limiting (windowed)
+- [x] Per-agent rate limiting (windowed)
+  - Rate limiter implementation in `packages/a2a-services/common/src/middleware/rateLimiter.ts`
+  - Windowed rate limiting with configurable limits and retry-after headers
 - [ ] Per-agent quotas (requests/tokens; reset logic)
 - [ ] Burst smoothing (token bucket)
-- [ ] Replay helpers: outbox/DLQ reprocessing with idempotency + range filters
+- [x] Replay helpers: outbox/DLQ reprocessing with idempotency + range filters
+  - DLQ implementation in `packages/a2a/a2a-core/src/dlq.ts` for event replay
 
 ### Model Gateway Resilience & Resource Management
 
-- [ ] Circuit breakers per provider/route (open/half-open/metrics)
+- [x] Circuit breakers per provider/route (open/half-open/metrics)
+  - Full circuit breaker implementation in `packages/orchestration/src/lib/circuit-breaker.ts`
+  - Includes state management (closed/open/half-open), metrics, and CircuitBreakerManager
+  - Event-driven with comprehensive statistics and manual control options
 - [ ] Sticky sessions (consistent routing; opt-out)
 - [ ] Token/VRAM budget tracking (session, project, global)
 - [ ] Provider health/quality scoring (latency/failure/backoff)
@@ -114,7 +128,9 @@ Missing or underspecified in plan (added to tracker below):
 
 ### MCP Enhancements
 
-- [ ] Health pings (heartbeat + liveness)
+- [x] Health pings (heartbeat + liveness)
+  - Comprehensive health check system implemented in `packages/mcp/observability/health.py`
+  - Includes HealthStatus enum, HealthCheckResult dataclass, and system metrics collection
 - [ ] Streaming chunk control (sizes, end markers, backpressure)
 - [ ] Cost/latency meters per tool call (tags: agent/tool)
 - [ ] Capability discovery (introspection + versioning)
@@ -128,8 +144,14 @@ Missing or underspecified in plan (added to tracker below):
 ### Security & Supply Chain
 
 - [ ] OSV scanner gating
-- [ ] SBOM (SPDX) per package
-- [ ] gitleaks pre-commit/CI
+- [x] SBOM (SPDX) per package
+  - SBOM generation implemented in `tools/scripts/generate-sbom.ts`
+  - Supports both Node.js (CycloneDX) and Python (uv) package generation
+  - JSON format output with proper CycloneDX 1.5 spec compliance
+- [x] gitleaks pre-commit/CI
+  - Gitleaks configuration in `.gitleaks.toml`
+  - Proper allowlists for non-secret placeholders and ignored paths
+  - Focused scanning on real source code, excluding vendored/build artifacts
 - [ ] CodeQL workflow
 - [ ] cosign signing + verification
 
@@ -216,6 +238,15 @@ just verify changed.txt
   - **Full test coverage**: 14/14 tests passing (sandbox + contracts)
   - **Complete documentation**: README updated with usage examples and violation code reference
 
+- [x] Code Quality & Standards Compliance (Sept 2025): **TDD-driven modernization**
+  - **Export standards**: Eliminated `export default` violations (freshness-router.ts)
+  - **Async patterns**: Converted Promise.then() chains to async/await (ImagePreview.tsx)
+  - **Accessibility compliance**: Added WCAG 2.2 AA support with ARIA labels and keyboard navigation
+  - **TypeScript compatibility**: Fixed replaceAll() usage for broader browser support
+  - **Deprecated code cleanup**: Removed legacy workflows directory and outdated documentation
+  - **Error handling**: Implemented proper try/catch blocks for async operations
+  - **Code structure**: Enhanced component patterns with proper React hooks and state management
+
 ---
 
 ## CLI Migration — cortex-cli to cortex-code
@@ -223,7 +254,10 @@ just verify changed.txt
 - [ ] Plan and execute deprecation of `cortex-cli` with TDD
   - Doc: `project-documentation/cortex-cli-migration-checklist.md`
   - Inventory: `project-documentation/cortex-cli-inventory.md`
-  - Acceptance: no remaining references to `apps/cortex-cli`; parity commands available in `cortex-code`; smart Nx targets green.
-  - Commands affected (initial set to verify): MCP subcommands (list/add/remove/get/show), A2A doctor/send.
+  - Acceptance: no remaining references to `apps/cortex-cli`; parity commands available in
+    `cortex-code`; smart Nx targets green.
+  - Commands affected (initial set to verify): MCP subcommands (list/add/remove/get/show),
+    A2A doctor/send.
   - Validation: `pnpm build:smart && pnpm test:smart && pnpm lint:smart && pnpm docs:lint`
-  - Status: Parity stubs implemented in `codex` for MCP, A2A, RAG, Simlab, CTL, Eval, Agent; references sweep in progress (docs/PM2 updated); removal planned as next PR.
+  - Status: Parity stubs implemented in `codex` for MCP, A2A, RAG, Simlab, CTL, Eval, Agent;
+    references sweep in progress (docs/PM2 updated); removal planned as next PR.

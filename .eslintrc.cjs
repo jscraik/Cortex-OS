@@ -8,7 +8,7 @@ module.exports = {
 		project: false,
 		ecmaVersion: "latest",
 	},
-	plugins: ["@typescript-eslint", "import", "boundaries"],
+	plugins: ["@typescript-eslint", "import", "boundaries", "sonarjs"],
 	extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
 	settings: {
 		"import/resolver": {
@@ -34,7 +34,7 @@ module.exports = {
 		"@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
 		"@typescript-eslint/naming-convention": [
 			"error",
-			{ selector: "variable", format: ["camelCase", "UPPER_CASE"] },
+			{ selector: "variable", format: ["camelCase", "UPPER_CASE", "PascalCase"] },
 			{ selector: "function", format: ["camelCase"] },
 			{ selector: "typeLike", format: ["PascalCase"] },
 		],

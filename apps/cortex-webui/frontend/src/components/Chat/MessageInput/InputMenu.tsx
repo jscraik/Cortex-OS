@@ -41,7 +41,8 @@ const InputMenu: React.FC<InputMenuProps> = ({
 }) => {
 	const [show, setShow] = useState(false);
 	const [tools, setTools] = useState<Record<string, Tool> | null>(null);
-	const [activeToolIds, setActiveToolIds] = useState<string[]>(selectedToolIds);
+	const [_activeToolIds, setActiveToolIds] =
+		useState<string[]>(selectedToolIds);
 	const [showAllTools, setShowAllTools] = useState(false);
 	const [fileUploadEnabled, setFileUploadEnabled] = useState(true);
 	const cameraInputRef = useRef<HTMLInputElement>(null);

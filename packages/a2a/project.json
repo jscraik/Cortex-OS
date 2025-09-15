@@ -18,7 +18,12 @@
 		"lint": {
 			"executor": "@nx/eslint:lint",
 			"options": {
-				"lintFilePatterns": ["packages/a2a/**/*.ts"]
+				"lintFilePatterns": [
+					"packages/a2a/src/**/*.ts",
+					"packages/a2a/tests/**/*.ts",
+					"packages/a2a/a2a-core/src/**/*.ts",
+					"packages/a2a/a2a-contracts/src/**/*.ts"
+				]
 			}
 		},
 		"test": {

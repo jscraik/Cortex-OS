@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
+import {
+	GitHubRepositorySchema,
+	GitHubUserSchema,
+	type GitHubRepository,
+	type GitHubUser,
+} from './repository';
 
 // Workflow Commit Schema
 export const WorkflowCommitSchema = z.object({
@@ -196,8 +201,8 @@ export function isWorkflowEvent(data: unknown): data is WorkflowEvent {
 export function createWorkflowEvent(
 	action: WorkflowAction,
 	workflowRun: WorkflowRun,
-	repository: GitHubRepositorySchema,
-	actor: GitHubUserSchema,
+	repository: GitHubRepository,
+	actor: GitHubUser,
 	additionalData?: {
 		jobs?: WorkflowJob[];
 		triggeringEvent?: string;

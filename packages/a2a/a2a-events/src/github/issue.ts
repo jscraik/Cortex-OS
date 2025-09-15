@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
+import {
+	GitHubRepositorySchema,
+	GitHubUserSchema,
+	type GitHubRepository,
+	type GitHubUser,
+} from './repository';
 
 // Issue Label Schema
 export const IssueLabelSchema = z.object({
@@ -165,11 +170,11 @@ export function isIssueEvent(data: unknown): data is IssueEvent {
 export function createIssueEvent(
 	action: IssueAction,
 	issue: Issue,
-	repository: GitHubRepositorySchema,
-	actor: GitHubUserSchema,
+	repository: GitHubRepository,
+	actor: GitHubUser,
 	changes?: IssueChanges,
 	additionalData?: {
-		assignee?: GitHubUserSchema;
+		assignee?: GitHubUser;
 		label?: IssueLabel;
 		milestone?: IssueMilestone;
 	},

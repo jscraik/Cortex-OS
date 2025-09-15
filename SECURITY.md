@@ -5,7 +5,6 @@
 [![Security](https://img.shields.io/badge/security-OWASP%20compliant-green.svg)](#owasp-compliance)
 [![Vulnerability Reporting](https://img.shields.io/badge/vulnerability-reporting-available-blue.svg)](#reporting-vulnerabilities)
 [![Response Time](https://img.shields.io/badge/response%20time-72h-brightgreen.svg)](#response-timeline)
-[![Bug Bounty](https://img.shields.io/badge/bug%20bounty-available-orange.svg)](#bug-bounty-program)
 
 **Security-First AI Agent Development Platform**  
 _We take security seriously and appreciate responsible disclosure of vulnerabilities_
@@ -36,13 +35,13 @@ Instead, please report security vulnerabilities through our secure channels:
 
 #### Primary Contact
 
-- **Email**: security@cortex-os.dev
+- **Email**: <security@cortex-os.dev>
 - **Subject Line**: `[SECURITY] Brief description of vulnerability`
 - **Encryption**: Use our PGP key for sensitive reports (available below)
 
 #### Alternative Contacts
 
-- **Security Team Lead**: security-lead@cortex-os.dev
+- **Security Team Lead**: <security-lead@cortex-os.dev>
 - **Emergency Contact**: +1-XXX-XXX-XXXX (for critical vulnerabilities only)
 
 ### What to Include in Your Report
@@ -105,7 +104,7 @@ If you have ideas for fixes, please include them.
 
 ### PGP Key for Encrypted Reports
 
-```
+```bash
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 [PGP key will be provided here - placeholder for actual implementation]
 -----END PGP PUBLIC KEY BLOCK-----
@@ -322,60 +321,6 @@ Our security team conducts regular manual testing:
 | **LLM09: Overreliance**                     | ✅ Compliant | Human oversight, confidence scoring   |
 | **LLM10: Model Theft**                      | ✅ Compliant | Access controls, model protection     |
 
-## 💰 Bug Bounty Program
-
-### Scope and Rewards
-
-We offer rewards for security vulnerabilities in our supported systems:
-
-#### In Scope
-
-- **Core ASBR Runtime** (`apps/cortex-os/`)
-- **MCP Implementation** (`packages/mcp/`)
-- **A2A Communication** (`packages/a2a/`)
-- **AI GitHub App** (`packages/cortex-ai-github/`)
-- **TUI Application** (`apps/cortex-code/`)
-- **Web Interface** (`apps/cortex-webui/`)
-
-#### Reward Structure
-
-| Severity                | Reward Range    |
-| ----------------------- | --------------- |
-| **Critical (9.0-10.0)** | $1,000 - $5,000 |
-| **High (7.0-8.9)**      | $500 - $1,000   |
-| **Medium (4.0-6.9)**    | $100 - $500     |
-| **Low (0.1-3.9)**       | $50 - $100      |
-
-#### Bonus Rewards
-
-- **First report of vulnerability type**: +50% bonus
-- **High-quality report with PoC**: +25% bonus
-- **Suggested fix included**: +25% bonus
-
-### Bug Bounty Rules
-
-#### Eligibility
-
-- Security researchers and ethical hackers
-- Must follow responsible disclosure guidelines
-- Must not access or modify data without permission
-- Must not perform attacks against production systems
-
-#### Testing Guidelines
-
-- Use only test accounts and data
-- Do not perform DoS attacks
-- Do not access other users' data
-- Report findings promptly
-
-#### Exclusions
-
-- Social engineering attacks
-- Physical attacks
-- Issues in third-party dependencies (report to vendors)
-- Already known vulnerabilities
-- Issues requiring physical access
-
 ## 📋 Security Checklist for Contributors
 
 ### Code Security Checklist
@@ -454,20 +399,20 @@ We offer rewards for security vulnerabilities in our supported systems:
 
 ### Security Team
 
-- **Primary**: security@cortex-os.dev
-- **Security Lead**: security-lead@cortex-os.dev
-- **Incident Response**: incident-response@cortex-os.dev
+- **Primary**: <security@cortex-os.dev>
+- **Security Lead**: <security-lead@cortex-os.dev>
+- **Incident Response**: <incident-response@cortex-os.dev>
 
 ### Emergency Contacts
 
-- **Critical Vulnerabilities**: Available 24/7 via security@cortex-os.dev
+- **Critical Vulnerabilities**: Available 24/7 via <security@cortex-os.dev>
 - **Security Incidents**: Include "URGENT" in subject line
 
 ### Legal and Compliance
 
-- **Privacy Officer**: privacy@cortex-os.dev
-- **Compliance Team**: compliance@cortex-os.dev
-- **Legal Team**: legal@cortex-os.dev
+- **Privacy Officer**: <privacy@cortex-os.dev>
+- **Compliance Team**: <compliance@cortex-os.dev>
+- **Legal Team**: <legal@cortex-os.dev>
 
 ## 📜 Security Policies
 
@@ -517,7 +462,6 @@ _Help us keep Cortex-OS secure for everyone_
 
 [![Report Vulnerability](https://img.shields.io/badge/report-vulnerability-red.svg)](mailto:security@cortex-os.dev)
 [![Security Documentation](https://img.shields.io/badge/security-documentation-blue.svg)](#security-overview)
-[![Bug Bounty](https://img.shields.io/badge/bug-bounty-available-orange.svg)](#bug-bounty-program)
 
 **Last Updated**: September 1, 2025 | **Version**: 1.0
 

@@ -39,7 +39,9 @@ export const ragQueryCompletedSchema = z.object({
 	provider: z.string(),
 	duration: z.number().positive(),
 	timestamp: z.string().datetime(),
-	evidence: evidenceArraySchema.optional().describe('Supporting evidence citations for the aggregated results'),
+	evidence: evidenceArraySchema
+		.optional()
+		.describe('Supporting evidence citations for the aggregated results'),
 });
 
 export const ragIngestStartedSchema = z.object({

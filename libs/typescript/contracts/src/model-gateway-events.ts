@@ -28,7 +28,9 @@ export const ModelResponseEventSchema = z.object({
 	completedAt: z.string(),
 	evidence: evidenceArraySchema
 		.optional()
-		.describe('Supporting evidence citations (max 50) for model output provenance'),
+		.describe(
+			'Supporting evidence citations (max 50) for model output provenance',
+		),
 });
 
 // Model Error Event

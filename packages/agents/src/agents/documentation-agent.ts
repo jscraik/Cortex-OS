@@ -415,24 +415,74 @@ const generateDocumentation = async (
 	);
 
 	// Validate output schema (runtime schema enforces structure)
-	// Ensure sections conform to schema expectations before validation
-	const prevalidated: DocumentationOutput = {
-		sections: result.sections.map((s) => ({
-			title: s.title,
-			type: s.type,
-			content: s.content,
-			examples: Array.isArray(s.examples) ? s.examples : [],
-			parameters: Array.isArray(s.parameters) ? s.parameters : [],
-			returnType: s.returnType,
-		})),
-		format: result.format,
-		language: result.language,
-		documentationType: result.documentationType,
-		metadata: result.metadata,
-		confidence: result.confidence,
-		processingTime: result.processingTime,
+	// Normalize sections, metadata, and numeric fields prior to validation
+	const clamp = (value: number, min: number, max: number) =>
+		Math.min(max, Math.max(min, value));
+	const toFiniteOr = (value: number | undefined, fallback: number) =>
+		typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+	type Section = DocumentationOutput['sections'][number];
+	type NormalizedSection = Omit<Section, 'examples' | 'parameters'> & {
+		examples: string[];
+		parameters: string[];
 	};
-	return validateSchema(documentationOutputSchema, prevalidated);
+	const sanitizeSection = (section: Section): NormalizedSection => ({
+		title: String(section.title ?? ''),
+		type: section.type,
+		content: String(section.content ?? ''),
+		examples: (section.examples ?? []).map(String),
+		parameters: (section.parameters ?? []).map(String),
+		returnType:
+			typeof section.returnType === 'string'
+				? section.returnType
+				: section.returnType === null
+					? null
+					: undefined,
+	});
+
+	const sectionsInput = result.sections.map((section) => sanitizeSection(section));
+	const sanitizedSections = documentationOutputSchema.shape.sections.parse(sectionsInput) as DocumentationOutput['sections'];
+	const sectionsForValidation = sanitizedSections.map((section) => ({
+		...section,
+		examples: section.examples ?? [],
+		parameters: section.parameters ?? [],
+	}));
+	const metadata: DocumentationOutput['metadata'] = {
+		generatedAt:
+			result.metadata?.generatedAt ?? new Date().toISOString(),
+		wordCount:
+			result.metadata?.wordCount ??
+			countWords(sanitizedSections[0]?.content ?? ''),
+		sectionsCount:
+			result.metadata?.sectionsCount ?? sanitizedSections.length,
+		hasExamples:
+			result.metadata?.hasExamples ??
+			sanitizedSections.some((section) => section.examples.length > 0),
+		hasTypes:
+			result.metadata?.hasTypes ??
+			sanitizedSections.some(
+				(section) =>
+					section.parameters.length > 0 ||
+					section.returnType !== undefined,
+			),
+		complexity: result.metadata?.complexity,
+		hasAsyncOperations: result.metadata?.hasAsyncOperations,
+		hasErrorHandling: result.metadata?.hasErrorHandling,
+	};
+
+	const prevalidated = {
+		sections: sectionsForValidation as DocumentationOutput['sections'],
+		format: result.format || outputFormat,
+		language: result.language || language,
+		documentationType: result.documentationType || documentationType,
+		metadata,
+		confidence: clamp(toFiniteOr(result.confidence, 0.85), 0, 1),
+		processingTime: Math.max(
+			toFiniteOr(result.processingTime, response.latencyMs ?? 0),
+			0,
+		),
+	};
+	return documentationOutputSchema.parse(prevalidated);
 };
 
 /**

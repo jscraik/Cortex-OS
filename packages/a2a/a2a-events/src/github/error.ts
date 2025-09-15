@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
+import {
+	GitHubRepositorySchema,
+	GitHubUserSchema,
+	type GitHubRepository,
+	type GitHubUser,
+} from './repository';
 
 // Error Severity Levels
 export const ErrorSeveritySchema = z.enum([
@@ -98,8 +103,8 @@ export function isErrorEvent(data: unknown): data is ErrorEvent {
 // Helper Functions
 export function createErrorEvent(
 	error: GitHubError,
-	repository?: GitHubRepositorySchema,
-	actor?: GitHubUserSchema,
+	repository?: GitHubRepository,
+	actor?: GitHubUser,
 	additionalData?: {
 		recoverySuggestion?: string;
 		autoRetryScheduled?: boolean;

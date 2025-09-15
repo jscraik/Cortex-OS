@@ -1,10 +1,10 @@
 'use client';
 
+import Modal from '@/components/common/Modal';
 import type React from 'react';
 import { useState } from 'react';
-import Modal from '@/components/common/Modal';
 import AccountSettings from './Settings/Account';
-import AdvancedSettings from './Settings/Advanced';
+import { AdvancedSettings } from './Settings/Advanced';
 import AudioSettings from './Settings/Audio';
 import ChatsSettings from './Settings/Chats';
 import ConnectionsSettings from './Settings/Connections';
@@ -83,9 +83,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 			case 'advanced':
 				return <AdvancedSettings saveSettings={saveSettings} />;
 			case 'account':
-				return (
-					<AccountSettings saveSettings={saveSettings} saveHandler={() => {}} />
-				);
+				return <AccountSettings saveSettings={saveSettings} />;
 			default:
 				return <GeneralSettings saveSettings={saveSettings} />;
 		}
@@ -98,6 +96,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 					<nav className="-mb-px flex space-x-8 overflow-x-auto pb-2">
 						{tabs.map((tab) => (
 							<button
+								type="button"
 								key={tab.id}
 								onClick={() => setActiveTab(tab.id)}
 								className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${

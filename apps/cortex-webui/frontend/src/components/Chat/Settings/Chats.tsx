@@ -1,11 +1,23 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useSettingsStore } from '@/stores/settingsStore';
 
+type ChatsSettingsShape = {
+	autoTitleChat: boolean;
+	recentChatCount: number;
+	chatDirection: string;
+	chatSpacing: string;
+	showCodeByDefault: boolean;
+	continuousChat: boolean;
+	exportFormat: string;
+	autoSaveChat: boolean;
+	chatHistoryLimit: number;
+};
+
 interface ChatsSettingsProps {
-	saveSettings: (settings: any) => void;
+	saveSettings: (settings: ChatsSettingsShape) => void;
 }
 
 const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
@@ -40,29 +52,24 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 
 	const handleSubmit = () => {
 		saveSettings({
-			chats: {
-				autoTitleChat,
-				recentChatCount,
-				chatDirection,
-				chatSpacing,
-				showCodeByDefault,
-				continuousChat,
-				exportFormat,
-				autoSaveChat,
-				chatHistoryLimit,
-			},
+			autoTitleChat,
+			recentChatCount,
+			chatDirection,
+			chatSpacing,
+			showCodeByDefault,
+			continuousChat,
+			exportFormat,
+			autoSaveChat,
+			chatHistoryLimit,
 		});
 	};
 
+	const id = useId();
 	if (!loaded) {
 		return <div>Loading...</div>;
 	}
-
 	return (
-		<div
-			id="tab-chats"
-			className="flex flex-col h-full justify-between text-sm"
-		>
+		<div id={id} className="flex flex-col h-full justify-between text-sm">
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
 				<div>
 					<div className="text-base font-medium mb-3">Chat Management</div>
@@ -120,7 +127,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								Recent Chats Count: {recentChatCount}
 							</label>
 							<input
-								id="recent-chat-count"
+								id={`${id}-recent-chat-count`}
 								type="range"
 								min="1"
 								max="20"
@@ -145,7 +152,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								Chat History Limit: {chatHistoryLimit} days
 							</label>
 							<input
-								id="chat-history-limit"
+								id={`${id}-chat-history-limit`}
 								type="range"
 								min="1"
 								max="365"
@@ -176,7 +183,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								Chat Direction
 							</label>
 							<select
-								id="chat-direction"
+								id={`${id}-chat-direction`}
 								value={chatDirection}
 								onChange={(e) => setChatDirection(e.target.value)}
 								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -194,7 +201,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								Chat Spacing
 							</label>
 							<select
-								id="chat-spacing"
+								id={`${id}-chat-spacing`}
 								value={chatSpacing}
 								onChange={(e) => setChatSpacing(e.target.value)}
 								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -267,7 +274,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								Default Export Format
 							</label>
 							<select
-								id="export-format"
+								id={`${id}-export-format`}
 								value={exportFormat}
 								onChange={(e) => setExportFormat(e.target.value)}
 								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"

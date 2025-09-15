@@ -24,8 +24,8 @@
 
 1. **Regression test for registries route** – add failing test reproducing `request` undefined error.
 
-#### Example (Vitest)
-   
+### Example (Vitest)
+
 ```ts
    // registries.test.ts
    it('should fail if request is undefined in handler', async () => {

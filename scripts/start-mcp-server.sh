@@ -58,9 +58,21 @@ cd "$MCP_DIR" || {
 
 # Start the MCP server with proper Python path
 echo "[$(date)] Starting MCP Server for brAInwav Cortex-OS..."
-echo "[$(date)] Server will be available at http://0.0.0.0:3004"
-echo "[$(date)] Local access: http://127.0.0.1:3004"
+echo "[$(date)] Server will be available at http://0.0.0.0:3024"
+echo "[$(date)] Local access: http://127.0.0.1:3024"
 echo "[$(date)] Access via Cloudflare tunnel at: https://cortex-mcp.brainwav.io"
+
+# Self-check guard: refuse startup if legacy port 3004 reintroduced
+if grep -En '3004' "$MCP_DIR/run_server.py" >/dev/null; then
+    echo "[$(date)] ERROR: Detected forbidden legacy port 3004 in run_server.py. Aborting startup." >&2
+    grep -En '3004' "$MCP_DIR/run_server.py" | head -5 >&2
+    exit 1
+fi
+
+if [ "${MCP_PORT:-3024}" = "3004" ]; then
+    echo "[$(date)] ERROR: MCP_PORT resolved to forbidden legacy port 3004. Set MCP_PORT=3024 (fixed) or update config." >&2
+    exit 1
+fi
 
 # Set environment variables
 export PYTHONPATH="$MCP_DIR:${PYTHONPATH:-}"

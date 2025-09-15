@@ -3,5 +3,15 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/memories/src",
 	"projectType": "library",
-	"targets": {}
+	"targets": {
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"options": {
+				"lintFilePatterns": [
+					"packages/memories/src/**/*.ts",
+					"packages/memories/tests/**/*.ts"
+				]
+			}
+		}
+	}
 }

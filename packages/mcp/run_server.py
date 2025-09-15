@@ -8,6 +8,7 @@ import os
 import signal
 import sys
 from datetime import datetime
+from types import FrameType
 
 # Configure logging early
 logging.basicConfig(
@@ -88,7 +89,7 @@ async def get_tools():
 running = True
 
 
-def signal_handler(signum: int, _frame) -> None:
+def signal_handler(signum: int, _frame: FrameType | None) -> None:
     global running
     logger.info(f"Received signal {signum}, initiating graceful shutdown...")
     running = False
@@ -99,21 +100,21 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-    logger.info("Starting MCP Server...")
-    logger.info("Server will be available at http://0.0.0.0:3004")
-    logger.info("Local access: http://127.0.0.1:3004")
+    logger.info("Starting MCP Server (fixed port 3024)...")
+    logger.info("Server will be available at http://0.0.0.0:3024")
+    logger.info("Local access: http://127.0.0.1:3024")
     logger.info("External access via tunnel: https://cortex-mcp.brainwav.io")
 
-    print("Starting MCP Server...")
-    print("Server will be available at http://0.0.0.0:3004")
-    print("Local access: http://127.0.0.1:3004")
+    print("Starting MCP Server (fixed port 3024)...")
+    print("Server will be available at http://0.0.0.0:3024")
+    print("Local access: http://127.0.0.1:3024")
 
     try:
         # Run the server with better configuration
         uvicorn.run(
             app,
             host="0.0.0.0",
-            port=3004,
+            port=3024,  # Fixed MCP port
             log_level="info",
             access_log=True,
             loop="asyncio",

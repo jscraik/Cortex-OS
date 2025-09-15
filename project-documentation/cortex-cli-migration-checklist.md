@@ -56,13 +56,13 @@ Out of scope:
   - [x] Remove from workspace (vitest workspace, Nx named inputs added for nx-smart)
   - [x] Remove app-specific configs (workspace entry)
 - [ ] Validation gates
-  - [ ] `pnpm build:smart` passes (affected projects only) — dry-run validated; run locally to confirm
-  - [ ] `pnpm test:smart` fully green — dry-run validated; run locally to confirm
-  - [ ] `pnpm lint:smart` clean — dry-run validated; run locally to confirm
+  - [ ] `pnpm build:smart` passes (affected projects only) — dry-run validated; run locally to confirm *(fails: `a2a:build` and `@cortex-os/agents:build` TypeScript errors around GitHub event schemas and documentation-agent typings)*
+  - [ ] `pnpm test:smart` fully green — dry-run validated; run locally to confirm *(fails: blocked by `a2a:build`; see above)*
+  - [ ] `pnpm lint:smart` clean — dry-run validated; run locally to confirm *(fails: `eslint` binary missing in multiple packages and `packages/a2a` emits naming-convention/import resolver errors)*
   - [x] Docs lint: markdownlint added in CI, major issues reduced; remaining editorial fixes tracked
-- [ ] Release & comms
-  - [ ] Release notes: breaking changes and migration notes
-  - [ ] Update READMEs and tutorials to reflect `cortex-code`
+- [x] Release & comms
+  - [x] Release notes: breaking changes and migration notes
+  - [x] Update READMEs and tutorials to reflect `cortex-code`
 
 ---
 
@@ -104,9 +104,9 @@ Out of scope:
 - Tests: run TS test suites to ensure no breakage.
 - Actions: replace or remove `apps/cortex-cli` entries in `config/vitest.workspace.ts` and migrate orchestrator paths in PM2 ecosystem configs to cortex-code equivalents.
 
-8) docs(release): migration notes and changelog — TODO
+8) docs(release): migration notes and changelog — COMPLETED
 - Tests: docs lint.
-- Actions: add a release note describing deprecation and functional mapping in `project-documentation/legacy/`.
+- Actions: added `project-documentation/legacy/cortex-cli-deprecation-release-notes.md` with parity matrix and communication plan.
 
 ---
 

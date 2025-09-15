@@ -66,7 +66,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 		return fetch(url);
 	};
 
-	const handleDownload = () => {
+	const handleDownload = async () => {
 		if (src.startsWith('data:image/')) {
 			const base64Data = src.split(',')[1];
 			if (base64Data) {
@@ -80,7 +80,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 
 				const mimeType = blob.type || 'image/png';
 				const fileName = alt
-					? `${alt.replaceAll('.', '')}.${mimeType.split('/')[1]}`
+					? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
 					: 'download.png';
 
 				const link = document.createElement('a');
@@ -91,22 +91,21 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 		} else if (src.startsWith('blob:')) {
 			// Handle blob URLs
 			// Blob URLs are considered safe when originated from the browser
-			safeFetch(src)
-				.then((response) => response.blob())
-				.then((blob) => {
-					const mimeType = blob.type || 'image/png';
-					const fileName = alt
-						? `${alt.replaceAll('.', '')}.${mimeType.split('/')[1]}`
-						: 'download.png';
+			try {
+				const response = await safeFetch(src);
+				const blob = await response.blob();
+				const mimeType = blob.type || 'image/png';
+				const fileName = alt
+					? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
+					: 'download.png';
 
-					const link = document.createElement('a');
-					link.href = URL.createObjectURL(blob);
-					link.download = fileName;
-					link.click();
-				})
-				.catch((error) => {
-					console.error('Error downloading blob:', error);
-				});
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = fileName;
+				link.click();
+			} catch (error) {
+				console.error('Error downloading blob:', error);
+			}
 		} else if (
 			src.startsWith('/') ||
 			src.startsWith('http://') ||
@@ -121,22 +120,21 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 				}
 			}
 
-			safeFetch(src)
-				.then((response) => response.blob())
-				.then((blob) => {
-					const mimeType = blob.type || 'image/png';
-					const fileName = alt
-						? `${alt.replaceAll('.', '')}.${mimeType.split('/')[1]}`
-						: 'download.png';
+			try {
+				const response = await safeFetch(src);
+				const blob = await response.blob();
+				const mimeType = blob.type || 'image/png';
+				const fileName = alt
+					? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
+					: 'download.png';
 
-					const link = document.createElement('a');
-					link.href = URL.createObjectURL(blob);
-					link.download = fileName;
-					link.click();
-				})
-				.catch((error) => {
-					console.error('Error downloading remote image:', error);
-				});
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = fileName;
+				link.click();
+			} catch (error) {
+				console.error('Error downloading remote image:', error);
+			}
 		}
 	};
 

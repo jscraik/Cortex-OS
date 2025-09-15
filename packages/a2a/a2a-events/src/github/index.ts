@@ -11,7 +11,11 @@ export * from "./repository";
 export * from "./routing";
 export * from "./workflow";
 
-import type { A2AEventEnvelope, GitHubEventData } from "./envelope";
+import {
+	createA2AEventEnvelope,
+	type A2AEventEnvelope,
+	type GitHubEventData,
+} from "./envelope";
 import { type ErrorEvent, isErrorEvent, validateErrorEvent } from "./error";
 
 import { type IssueEvent, isIssueEvent, validateIssueEvent } from "./issue";
@@ -39,6 +43,13 @@ export type GitHubEvent =
 	| IssueEvent
 	| WorkflowEvent
 	| ErrorEvent;
+
+type ActionableGitHubEvent = GitHubEvent & { action: string };
+
+const hasAction = (event: GitHubEvent): event is ActionableGitHubEvent =>
+	'event_type' in event &&
+	'action' in event &&
+	typeof (event as { action?: unknown }).action === 'string';
 
 // Comprehensive event type guard
 export function isGitHubEvent(data: unknown): data is GitHubEvent {
@@ -163,8 +174,8 @@ export function analyzeGitHubEvents(events: GitHubEvent[]): GitHubEventStats {
 			(stats.eventsByType[event.event_type] || 0) + 1;
 
 		// Count by action (if present)
-		if ("action" in event) {
-			const action = (event as unknown).action;
+		if (hasAction(event)) {
+			const action = event.action;
 			stats.eventsByAction[action] = (stats.eventsByAction[action] || 0) + 1;
 		}
 
@@ -243,8 +254,8 @@ export function filterGitHubEvents(
 		}
 
 		// Filter by action
-		if (filter.actions && "action" in event) {
-			const action = (event as unknown).action;
+		if (filter.actions && hasAction(event)) {
+			const action = event.action;
 			if (!filter.actions.includes(action)) {
 				return false;
 			}
@@ -294,7 +305,7 @@ export function createGitHubEventBatch(
 	// Group events if requested
 	if (options?.groupBy) {
 		const groups = groupEvents(events, options.groupBy);
-		for (const group of groups.values()) {
+		for (const group of Array.from(groups.values())) {
 			// Split large groups into smaller batches
 			for (let i = 0; i < group.length; i += batchSize) {
 				batches.push(group.slice(i, i + batchSize));
@@ -308,18 +319,19 @@ export function createGitHubEventBatch(
 	}
 
 	// Create envelopes for each batch
-	import { createA2AEventEnvelope } from "./envelope";
-	return batches.map((batch) =>
-		createA2AEventEnvelope(batch[0] as GitHubEventData, {
-			priority: options?.priority,
-			metadata: {
-				labels: {
-					batch_size: batch.length.toString(),
-					batch_type: options?.groupBy || "sequence",
+	return batches
+		.filter((batch) => batch.length > 0)
+		.map((batch) =>
+			createA2AEventEnvelope(batch[0] as GitHubEventData, {
+				priority: options?.priority,
+				metadata: {
+					labels: {
+						batch_size: batch.length.toString(),
+						batch_type: options?.groupBy || "sequence",
+					},
 				},
-			},
-		}),
-	);
+			}),
+		);
 }
 
 function groupEvents(
@@ -403,11 +415,12 @@ export async function processEventStream(
 
 // Export type helpers for external consumers
 export type {
-	// Envelope and routing
-	A2AEventEnvelope, ErrorEvent,
-	// Utilities
-	GitHubEvent, GitHubEventData, IssueEvent, PullRequestEvent,
-	// Core events
-	RepositoryEvent, WorkflowEvent
+	A2AEventEnvelope,
+	ErrorEvent,
+	GitHubEventData,
+	IssueEvent,
+	PullRequestEvent,
+	RepositoryEvent,
+	WorkflowEvent,
 };
 

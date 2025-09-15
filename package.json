@@ -172,6 +172,8 @@
     "pw:test:debug": "playwright test --debug",
     "pw:test:ui": "playwright test --ui",
     "ci:governance": "pnpm format:check && pnpm lint && pnpm test:security && pnpm structure:validate && pnpm license:validate && pnpm ci:mcp-path",
+    "ci:guard:ports": "bash scripts/ci/guard_port_3004.sh",
+    "ci:governance:extended": "pnpm ci:governance && pnpm ci:guard:ports",
     "cli:check": "cd apps/cortex-code && cargo run -- ctl validate",
     "codemap": "tsx tools/scripts/generate-code-map.ts",
     "tui:preview": "cd apps/cortex-code && cargo run -- tui",

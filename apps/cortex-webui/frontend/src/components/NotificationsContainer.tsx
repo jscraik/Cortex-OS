@@ -2,16 +2,19 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import notificationStore, {
-	type Notification,
+import type {
+	Notification,
+	NotificationStore,
 } from '../utils/notification-store';
+import notificationStore from '../utils/notification-store';
 import NotificationToast from './NotificationToast';
 
 const NotificationsContainer: React.FC = () => {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 
 	useEffect(() => {
-		const unsubscribe = notificationStore.subscribe((notifications) => {
+		const store = notificationStore as unknown as NotificationStore;
+		const unsubscribe = store.subscribe((notifications: Notification[]) => {
 			setNotifications(notifications);
 		});
 
