@@ -214,3 +214,71 @@ Action for agents: investigate git environment (shallow clone? detached HEAD?) b
 
 Legacy scripts using blanket `nx run-many` will be pruned; keep memory management scripts (`memory:*`)
 intact. Prefer adding any new orchestration logic to the smart wrapper or agent-toolkit utilities.
+
+## 🔍 Focus Validation & Dependency Safety
+
+The smart wrapper can perform dependency graph validation when you supply `--focus` plus `--validate-focus`:
+
+```bash
+node scripts/nx-smart.mjs test --focus @cortex-os/telemetry --validate-focus --dry-run
+```
+
+Behavior:
+
+- Builds the Nx project graph (`nx graph`) and traverses dependencies of each focused project.
+- Warns if an affected dependency would be excluded by the chosen focus set.
+- Still executes with the narrowed set; warnings help you decide if you should drop focus.
+- Passes the narrowed list to Nx via `--projects=<list>` for faster task scheduling.
+
+Disable validation simply by omitting `--validate-focus`.
+
+## 📡 OpenTelemetry Instrumentation (Optional)
+
+Set `NX_SMART_OTEL=1` to emit tracing + metrics via `@cortex-os/telemetry`:
+
+Metrics exported:
+
+- `nx_smart_duration_ms` (histogram) – wrapper wall-clock duration per run
+- `nx_smart_runs_total` (counter) – total runs labeled by `target`
+
+Span attributes:
+
+- `nx.smart.target`, `nx.smart.strategy`, `nx.smart.duration_ms`, `nx.smart.skipped`
+
+Example:
+
+```bash
+NX_SMART_OTEL=1 PROMETHEUS_PORT=9464 pnpm test:smart
+curl -s localhost:9464/metrics | grep nx_smart_duration_ms
+```
+
+Telemetry shutdown is graceful (2s timeout). Failures do not abort builds.
+
+## ⏱ Performance History & Auto-Tuning
+
+After a successful run with metrics JSON output you can record performance history automatically.
+`perf-check.mjs` now appends entries to `performance-history.json` (override path with `PERF_HISTORY_FILE`).
+
+History entry shape:
+
+```json
+{ "target": "test", "durationMs": 123456, "timestamp": "2025-09-15T12:34:56Z", "gitSha": "..." }
+```
+
+Limit retained entries via `PERF_HISTORY_LIMIT` (default 200).
+
+### Auto-Tune Baseline
+
+Use the new script to update `performance-baseline.json` based on medians of recent history:
+
+```bash
+node scripts/perf-autotune.mjs performance-baseline.json performance-history.json --window 15 --headroom 30
+```
+
+Rules:
+
+- Median of last `N` (window) samples per target.
+- Applies configurable headroom percentage (default 25%).
+- Only updates if change >5% or baseline missing.
+
+Integrate into CI (post-success) to keep gates realistic while catching regressions.

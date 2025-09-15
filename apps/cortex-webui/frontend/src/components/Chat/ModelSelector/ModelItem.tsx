@@ -75,6 +75,7 @@ function ModelItem({
 						fill="currentColor"
 						className="size-3"
 					>
+						<title>Direct model icon</title>
 						<path
 							fillRule="evenodd"
 							d="M2 2.75A.75.75 0 0 1 2.75 2C8.963 2 14 7.037 14 13.25a.75.75 0 0 1-1.5 0c0-5.385-4.365-9.75-9.75-9.75A.75.75 0 0 1 2 2.75Zm0 4.5a.75.75 0 0 1 .75-.75 6.75 6.75 0 0 1 6.75 6.75.75.75 0 0 1-1.5 0C8 10.35 5.65 8 2.75 8A.75.75 0 0 1 2 7.25ZM3.5 11a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"
@@ -96,6 +97,7 @@ function ModelItem({
 						fill="currentColor"
 						className="size-3"
 					>
+						<title>External model icon</title>
 						<path
 							fillRule="evenodd"
 							d="M8.914 6.025a.75.75 0 0 1 1.06 0 3.5 3.5 0 0 1 0 4.95l-2 2a3.5 3.5 0 0 1-5.396-4.402.75.75 0 0 1 1.251.827 2 2 0 0 0 3.085 2.514l2-2a2 2 0 0 0 0-2.828.75.75 0 0 1 0-1.06Z"
@@ -240,7 +242,11 @@ function ModelItem({
 				<ModelItemMenu
 					show={showMenu}
 					setShow={setShowMenu}
-					model={item.model}
+					model={{
+						id: item.model.id ?? item.value,
+						name: item.label,
+						info: item.model.info,
+					}}
 					pinModelHandler={pinModelHandler}
 					copyLinkHandler={copyLinkHandler}
 				>
@@ -261,6 +267,7 @@ function ModelItem({
 							className="size-4"
 							aria-hidden="true"
 						>
+							<title>More options</title>
 							<path d="M3 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM15.5 8.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z" />
 						</svg>
 					</button>
@@ -274,6 +281,7 @@ function ModelItem({
 							fill="currentColor"
 							className="size-3"
 						>
+							<title>Selected model</title>
 							<path
 								fillRule="evenodd"
 								d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"

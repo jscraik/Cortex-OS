@@ -62,6 +62,32 @@ describe('nx-smart focus filtering', () => {
             await import(scriptPath + '?cacheBust=' + Date.now()).catch(e => {
                 if (!String(e.message).startsWith('__early_exit_')) throw e;
             });
+
+            it('--validate-focus warns when focused project not affected', async () => {
+                process.argv = ['node', 'nx-smart.mjs', 'lint', '--dry-run', '--focus', 'missing-project', '--validate-focus'];
+                const origLog = console.log;
+                const origWarn = console.warn;
+                const origExit = process.exit;
+                let exitCode;
+                // @ts-ignore
+                process.exit = (code) => { exitCode = code; throw new Error(`__early_exit_${code}`); };
+                console.log = () => { };
+                const warnings = [];
+                console.warn = (msg) => { warnings.push(String(msg)); };
+                try {
+                    await import(scriptPath + '?cacheBust=' + Date.now()).catch(e => {
+                        if (!String(e.message).startsWith('__early_exit_')) throw e;
+                    });
+                } finally {
+                    console.log = origLog;
+                    console.warn = origWarn;
+                    process.exit = origExit;
+                }
+                expect(exitCode).toBe(0);
+                // Because missing-project isn't in affected list, we expect a validate-focus warning
+                const foundWarn = warnings.some(w => w.includes('[validate-focus]'));
+                expect(foundWarn).toBe(true);
+            });
         } finally {
             console.log = origLog;
             process.exit = origExit;

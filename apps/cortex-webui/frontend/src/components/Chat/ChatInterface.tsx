@@ -6,7 +6,7 @@ interface ChatInterfaceProps {
 		id: string;
 		role: string;
 		content: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	}>;
 	readonly onSendMessage: (message: string) => void;
 	readonly streaming: boolean;

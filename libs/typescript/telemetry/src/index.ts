@@ -11,9 +11,9 @@ import {
 	type Span,
 	type SpanContext,
 	SpanStatusCode,
-	trace,
 	TraceFlags,
 	type Tracer,
+	trace,
 } from '@opentelemetry/api';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { NodeSDK } from '@opentelemetry/sdk-node';

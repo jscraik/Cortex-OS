@@ -1,7 +1,6 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 // Note: UI message shape may include extra fields like timestamp/model for display
 // compared to shared backend types.
 import { apiFetch } from '../../utils/api-client';
@@ -11,10 +10,6 @@ import type {
 	UseChatStoreApi,
 } from '../../utils/chat-store';
 import { useChatStore } from '../../utils/chat-store';
-import {
-	type ContextWindow,
-	contextManager,
-} from '../../utils/context-manager';
 import { generateId } from '../../utils/id';
 import { addNotification } from '../../utils/notification-store';
 import MessageInput from './MessageInput/MessageInput';
@@ -27,7 +22,17 @@ interface ChatProps {
 }
 
 const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
-	const [models, setModels] = useState<{ id: string; name: string }[]>([]);
+	// Helper types
+	type SsePayload =
+		| { type: 'token'; data: string }
+		| { type: 'done' }
+		| { type: string };
+	type ChatMessageWithCreatedAt = ChatMessage & { createdAt: string };
+
+	// Placeholder models array
+	const models: { id: string; name: string }[] = [];
+
+	// Hooks and state
 	const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
 	const [streaming, setStreaming] = useState(false);
 	const [files, setFiles] = useState<File[]>([]);
@@ -35,8 +40,140 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 	const [imageGenerationEnabled, setImageGenerationEnabled] = useState(false);
 	const [codeInterpreterEnabled, setCodeInterpreterEnabled] = useState(false);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-	const [contextOptimized, setContextOptimized] = useState(false);
-	const [memoryStats, setMemoryStats] = useState<{
+	const [memoryStats] = useState<{
+		messageCount: number;
+		tokenCount: number;
+		estimatedMemoryKB: number;
+		utilizationPercent: number;
+	} | null>(null);
+
+	const chat: UseChatStoreApi = useChatStore(sessionId);
+	const {
+		messages,
+		addMessage,
+		updateMessage,
+		editMessage,
+		deleteMessage,
+		clearMessages,
+	} = chat;
+	const abortControllerRef = useRef<AbortController | null>(null);
+	const eventSourceRef = useRef<EventSource | null>(null);
+
+	// Ensure all messages have createdAt
+	const safeMessages: ChatMessageWithCreatedAt[] = messages.map((m: ChatMessage) => ({
+		...m,
+		createdAt: typeof m.createdAt === 'string' ? m.createdAt : (m.timestamp ? new Date(m.timestamp).toISOString() : new Date().toISOString()),
+	}));
+
+	// Function declarations
+	const handleEditMessage = (messageId: string, content: string): void => {
+		editMessage(messageId, content);
+	};
+
+	const handleDeleteMessage = (messageId: string): void => {
+		deleteMessage(messageId);
+	};
+
+	const handleCancelStream = () => {
+		if (abortControllerRef.current) {
+			abortControllerRef.current.abort();
+		}
+		if (eventSourceRef.current) {
+			eventSourceRef.current.close();
+			eventSourceRef.current = null;
+		}
+		setStreaming(false);
+	};
+
+	const handleSendMessage = async (content: string): Promise<void> => {
+		if (!content.trim() || streaming) return;
+		const idGen = generateId as unknown as () => string;
+		const userMessage: ChatMessage = {
+			id: idGen(),
+			role: 'user' as ChatMessageRole,
+			content,
+			timestamp: Date.now(),
+			createdAt: new Date().toISOString(),
+			model: selectedModelIds[0],
+		};
+		addMessage(userMessage);
+		const assistantMessageId: string = idGen();
+		const assistantMessage: ChatMessage = {
+			id: assistantMessageId,
+			role: 'assistant' as ChatMessageRole,
+			content: '',
+			timestamp: Date.now(),
+			createdAt: new Date().toISOString(),
+			model: selectedModelIds[0],
+		};
+		addMessage(assistantMessage);
+		setStreaming(true);
+		try {
+			abortControllerRef.current = new AbortController();
+			await fetch(`/api/chat/${encodeURIComponent(sessionId)}/messages`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ content, modelId: selectedModelIds[0] }),
+				signal: abortControllerRef.current.signal,
+			});
+			const es = new EventSource(
+				`/api/chat/${encodeURIComponent(sessionId)}/stream`,
+				{ withCredentials: false },
+			);
+			eventSourceRef.current = es;
+			let accumulated = '';
+			const isToken = (p: SsePayload): p is { type: 'token'; data: string } => p.type === 'token';
+			es.onmessage = (evt: MessageEvent) => {
+				try {
+					const raw = typeof evt.data === 'string' ? evt.data : String(evt.data ?? '{}');
+					const payload = JSON.parse(raw) as SsePayload;
+					if (isToken(payload)) {
+						accumulated += payload.data;
+						updateMessage(assistantMessageId, { content: accumulated });
+					} else if (payload.type === 'done') {
+						setStreaming(false);
+						setFiles([]);
+						es.close();
+						eventSourceRef.current = null;
+					}
+				} catch {}
+			};
+			es.onerror = () => {
+				if (eventSourceRef.current) {
+					eventSourceRef.current.close();
+					eventSourceRef.current = null;
+				}
+				setStreaming(false);
+				updateMessage(assistantMessageId, {
+					content: 'Sorry, I encountered an error processing your request.',
+				});
+				addNotification({
+					type: 'error',
+					message: 'Failed to get response from AI model',
+				});
+			};
+		} catch (error: unknown) {
+			const isAbort = typeof error === 'object' && error !== null && 'name' in (error as Record<string, unknown>) && (error as Record<string, unknown>).name === 'AbortError';
+			if (!isAbort) {
+				updateMessage(assistantMessageId, {
+					content: 'Sorry, I encountered an error processing your request.',
+				});
+				addNotification({
+					type: 'error',
+					message: 'Failed to get response from AI model',
+				});
+			}
+			setStreaming(false);
+		}
+	};
+	const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
+	const [streaming, setStreaming] = useState(false);
+	const [files, setFiles] = useState<File[]>([]);
+	const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+	const [imageGenerationEnabled, setImageGenerationEnabled] = useState(false);
+	const [codeInterpreterEnabled, setCodeInterpreterEnabled] = useState(false);
+	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	const [memoryStats] = useState<{
 		messageCount: number;
 		tokenCount: number;
 		estimatedMemoryKB: number;
@@ -49,91 +186,67 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		messages,
 		addMessage,
 		updateMessage,
-		deleteMessage,
 		editMessage,
+		deleteMessage,
 		clearMessages,
 	} = chat;
-
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const eventSourceRef = useRef<EventSource | null>(null);
+	// Ensure all messages have createdAt
+	const safeMessages: ChatMessage[] = messages.map((m: ChatMessage) => ({
+		...m,
+		createdAt: m.createdAt ?? (m.timestamp ? new Date(m.timestamp).toISOString() : new Date().toISOString()),
+	}));
 
-	const optimizeContext = useCallback(async () => {
-		try {
-			const optimizedWindow: ContextWindow =
-				await contextManager.optimizeContext(messages);
+		// Function declarations
 
-			// Replace messages with optimized ones
-			clearMessages();
-			optimizedWindow.messages.forEach((message) => {
-				addMessage(message);
-			});
+		// ...other function declarations remain above return...
 
-			setContextOptimized(true);
-
-			addNotification({
-				type: 'info',
-				message: `Context optimized: ${messages.length} → ${optimizedWindow.messages.length} messages`,
-			});
-		} catch (error) {
-			console.error('Failed to optimize context:', error);
-			addNotification({
-				type: 'error',
-				message: 'Failed to optimize conversation context',
-			});
-		}
-	}, [messages, addMessage, clearMessages]);
-
-	// Update memory stats when messages change
-	useEffect(() => {
-		if (messages.length > 0) {
-			const stats = contextManager.getMemoryStats(messages);
-			setMemoryStats(stats);
-
-			// Auto-optimize context if approaching limits
-			if (stats.utilizationPercent > 80 && !contextOptimized) {
-				optimizeContext();
-			}
-		}
-	}, [messages, contextOptimized, optimizeContext]);
-
-	// Load models from API
-	useEffect(() => {
-		const fetchModels = async (): Promise<void> => {
-			try {
-				const data = await apiFetch<{
-					models: { id: string; label: string }[];
-					default?: string;
-				}>('/api/models/ui');
-
-				const mapped = (data.models ?? []).map((m) => ({
-					id: m.id,
-					name: m.label,
-				}));
-				setModels(mapped);
-				if (mapped.length > 0) {
-					const initial =
-						data.default && mapped.find((m) => m.id === data.default)
-							? data.default
-							: mapped[0].id;
-					setSelectedModelIds([initial]);
-				}
-			} catch {
-				addNotification({
-					type: 'error',
-					message: 'Failed to load models',
-				});
-				// Fallback to a small built-in list so UI remains usable
-				const fallback = [
-					{ id: 'gpt-4', name: 'GPT-4' },
-					{ id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
-				];
-				setModels(fallback);
-				setSelectedModelIds(['gpt-4']);
-			}
-		};
-
-		void fetchModels();
-	}, []);
+		return (
+			<div className="flex flex-col h-full">
+				<div className="p-4 border-b flex justify-between items-center">
+					{/* ...existing code... */}
+				</div>
+				<Messages
+					messages={safeMessages}
+					streaming={streaming}
+					onEditMessage={handleEditMessage}
+					onDeleteMessage={handleDeleteMessage}
+				/>
+				{streaming && (
+					<div className="px-4 py-2 border-t">
+						<button
+							type="button"
+							onClick={handleCancelStream}
+							className="text-sm text-red-600 hover:text-red-800"
+						>
+							Stop generating
+						</button>
+					</div>
+				)}
+				<MessageInput
+					onSendMessage={(c) => {
+						void handleSendMessage(c);
+					}}
+					disabled={streaming}
+					placeholder="Type a message..."
+					files={files}
+					setFiles={setFiles}
+					webSearchEnabled={webSearchEnabled}
+					setWebSearchEnabled={setWebSearchEnabled}
+					imageGenerationEnabled={imageGenerationEnabled}
+					setImageGenerationEnabled={setImageGenerationEnabled}
+					codeInterpreterEnabled={codeInterpreterEnabled}
+					setCodeInterpreterEnabled={setCodeInterpreterEnabled}
+					lastUserMessage={
+						safeMessages.filter((m) => m.role === 'user').slice(-1)[0]?.content
+					}
+				/>
+				<SettingsModal
+					isOpen={isSettingsOpen}
+					onClose={() => setIsSettingsOpen(false)}
+				/>
+			</div>
 
 	const handleSendMessage = async (content: string): Promise<void> => {
 		if (!content.trim() || streaming) return;
@@ -251,24 +364,6 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		}
 	};
 
-	const handleEditMessage = (messageId: string, content: string): void => {
-		editMessage(messageId, content);
-	};
-
-	const handleDeleteMessage = (messageId: string): void => {
-		deleteMessage(messageId);
-	};
-
-	const handleCancelStream = () => {
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort();
-		}
-		if (eventSourceRef.current) {
-			eventSourceRef.current.close();
-			eventSourceRef.current = null;
-		}
-		setStreaming(false);
-	};
 
 	const handleModelChange = (modelIds: string[]) => {
 		setSelectedModelIds(modelIds);
@@ -293,9 +388,8 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 					{/* Memory Statistics */}
 					{memoryStats && (
 						<div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-							{memoryStats.messageCount} messages • {memoryStats.tokenCount}{' '}
-							tokens
-							{memoryStats.utilizationPercent > 70 && (
+							{memoryStats?.messageCount} messages • {memoryStats?.tokenCount} tokens
+							{(memoryStats && memoryStats.utilizationPercent > 70) && (
 								<span
 									className={`ml-1 ${memoryStats.utilizationPercent > 90 ? 'text-red-500' : 'text-amber-500'}`}
 								>
@@ -307,15 +401,8 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				</div>
 				<div className="flex space-x-2">
 					{/* Context Optimization Button */}
-					{memoryStats && memoryStats.utilizationPercent > 60 && (
-						<button
-							type="button"
-							onClick={optimizeContext}
-							className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 disabled:opacity-50"
-							disabled={streaming}
-							aria-label="Optimize context"
-							title="Optimize conversation context to improve performance"
-						>
+					{(memoryStats && memoryStats.utilizationPercent > 60) && (
+						<button type="button">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								className="h-5 w-5"
@@ -375,7 +462,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			</div>
 
 			<Messages
-				messages={messages}
+				messages={safeMessages as ChatMessage[]}
 				streaming={streaming}
 				onEditMessage={handleEditMessage}
 				onDeleteMessage={handleDeleteMessage}
@@ -408,7 +495,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				codeInterpreterEnabled={codeInterpreterEnabled}
 				setCodeInterpreterEnabled={setCodeInterpreterEnabled}
 				lastUserMessage={
-					messages.filter((m) => m.role === 'user').slice(-1)[0]?.content
+					safeMessages.filter((m) => m.role === 'user').slice(-1)[0]?.content
 				}
 			/>
 

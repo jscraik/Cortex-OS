@@ -1,89 +1,50 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "skipLibCheck": true,
-        "strict": false,
-        "resolveJsonModule": true,
-        "baseUrl": ".",
-        "types": [
-            "node"
-        ],
-        "paths": {
-            "@cortex-os/a2a": [
-                "packages/a2a/src/index.ts"
-            ],
-            "@cortex-os/a2a/*": [
-                "packages/a2a/src/*"
-            ],
-            "@cortex-os/a2a-core": [
-                "packages/a2a/a2a-core/src/index.ts"
-            ],
-            "@cortex-os/a2a-core/*": [
-                "packages/a2a/a2a-core/src/*"
-            ],
-            "@cortex-os/a2a-contracts": [
-                "packages/a2a/a2a-contracts/src/index.ts"
-            ],
-            "@cortex-os/a2a-contracts/*": [
-                "packages/a2a/a2a-contracts/src/*"
-            ],
-            "@cortex-os/a2a-events": [
-                "packages/a2a/a2a-events/src/index.ts"
-            ],
-            "@cortex-os/a2a-events/*": [
-                "packages/a2a/a2a-events/src/*"
-            ],
-            "@cortex-os/telemetry": [
-                "libs/typescript/telemetry/src/index.ts"
-            ],
-            "@cortex-os/telemetry/*": [
-                "libs/typescript/telemetry/src/*"
-            ],
-            "@cortex-os/security": [
-                "packages/security/src/index.ts"
-            ],
-            "@cortex-os/security/*": [
-                "packages/security/src/*"
-            ],
-            "@cortex-os/utils": [
-                "libs/typescript/utils/src/index.ts"
-            ],
-            "@cortex-os/utils/*": [
-                "libs/typescript/utils/src/*"
-            ],
-            "@cortex-os/types": [
-                "libs/typescript/types/src/index.ts"
-            ],
-            "@cortex-os/types/*": [
-                "libs/typescript/types/src/*"
-            ],
-            "inversify": [
-                "node_modules/inversify/dist/inversify.d.ts"
-            ],
-            "socket.io": [
-                "node_modules/socket.io/dist/index.d.ts"
-            ],
-            "@cortex-os/mcp-core": [
-                "packages/mcp-core/src/index.ts"
-            ],
-            "@cortex-os/mcp-core/*": [
-                "packages/mcp-core/src/*"
-            ]
-        }
-    },
-    "include": [
-        "simple-tests/**/*.ts",
-        "libs/**/*.ts",
-        "packages/**/*.ts",
-        "apps/**/*.ts"
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "lib": [
+      "ES2023",
+      "DOM"
     ],
-    "exclude": [
-        "node_modules",
-        "dist",
-        "build"
-    ]
+    "types": [
+      "node"
+    ],
+    "noEmit": true,
+    "strict": true,
+    "downlevelIteration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@cortex-os/lib": [
+        "src/lib/index.ts"
+      ],
+      "@cortex-os/rag": [
+        "packages/rag/src/index.ts"
+      ],
+      "@cortex-os/rag/*": [
+        "packages/rag/src/*"
+      ],
+      "@cortex-os/rag-embed/*": [
+        "packages/rag/src/embed/*"
+      ],
+      "@cortex-os/rag-pipeline/*": [
+        "packages/rag/src/pipeline/*"
+      ],
+      "@cortex-os/rag-store/*": [
+        "packages/rag/src/store/*"
+      ],
+      "@cortex-os/*": [
+        "packages/*/src/index.ts"
+      ],
+      "@cortex/*": [
+        "packages/*/src/index.ts"
+      ]
+    }
+  },
+  "exclude": [
+    "**/dist",
+    "**/.nx"
+  ]
 }

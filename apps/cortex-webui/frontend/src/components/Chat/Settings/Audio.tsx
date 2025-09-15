@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useId } from 'react';
 import { toast } from 'sonner';
 import { useSettingsStore } from '@/stores/settingsStore';
 
@@ -9,6 +9,15 @@ interface AudioSettingsProps {
 }
 
 function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
+	// Unique IDs for accessibility
+	const tabAudioId = useId();
+	const ttsEngineId = useId();
+	const ttsVoiceId = useId();
+	const ttsSpeedId = useId();
+	const sttEngineId = useId();
+	const audioOutputId = useId();
+	const audioInputId = useId();
+	const audioVolumeId = useId();
 	const settings = useSettingsStore();
 	const [loaded, setLoaded] = useState(false);
 
@@ -135,7 +144,7 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 	return (
 		<div
-			id="tab-audio"
+			id={tabAudioId}
 			className="flex flex-col h-full justify-between text-sm"
 		>
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
@@ -169,13 +178,13 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 							<>
 								<div>
 									<label
-										htmlFor="tts-engine"
+										htmlFor={ttsEngineId}
 										className="block text-sm font-medium mb-1"
 									>
 										TTS Engine
 									</label>
 									<select
-										id="tts-engine"
+										id={ttsEngineId}
 										value={ttsEngine}
 										onChange={(e) => setTtsEngine(e.target.value)}
 										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -188,13 +197,13 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 								<div>
 									<label
-										htmlFor="tts-voice"
+										htmlFor={ttsVoiceId}
 										className="block text-sm font-medium mb-1"
 									>
 										Voice
 									</label>
 									<select
-										id="tts-voice"
+										id={ttsVoiceId}
 										value={ttsVoice}
 										onChange={(e) => setTtsVoice(e.target.value)}
 										className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -210,13 +219,13 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 								<div>
 									<label
-										htmlFor="tts-speed"
+										htmlFor={ttsSpeedId}
 										className="block text-sm font-medium mb-1"
 									>
 										Speed: {ttsSpeed.toFixed(1)}
 									</label>
 									<input
-										id="tts-speed"
+										id={ttsSpeedId}
 										type="range"
 										min="0.5"
 										max="2.0"
@@ -275,13 +284,13 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 						{sttEnabled && (
 							<div>
 								<label
-									htmlFor="stt-engine"
+									htmlFor={sttEngineId}
 									className="block text-sm font-medium mb-1"
 								>
 									STT Engine
 								</label>
 								<select
-									id="stt-engine"
+									id={sttEngineId}
 									value={sttEngine}
 									onChange={(e) => setSttEngine(e.target.value)}
 									className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -301,13 +310,13 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 					<div className="space-y-4">
 						<div>
 							<label
-								htmlFor="audio-output"
+								htmlFor={audioOutputId}
 								className="block text-sm font-medium mb-1"
 							>
 								Audio Output Device
 							</label>
 							<select
-								id="audio-output"
+								id={audioOutputId}
 								value={audioDevice}
 								onChange={(e) => setAudioDevice(e.target.value)}
 								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -324,13 +333,13 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 						<div>
 							<label
-								htmlFor="audio-input"
+								htmlFor={audioInputId}
 								className="block text-sm font-medium mb-1"
 							>
 								Audio Input Device
 							</label>
 							<select
-								id="audio-input"
+								id={audioInputId}
 								value={inputDevice}
 								onChange={(e) => setInputDevice(e.target.value)}
 								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -347,13 +356,13 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 						<div>
 							<label
-								htmlFor="audio-volume"
+								htmlFor={audioVolumeId}
 								className="block text-sm font-medium mb-1"
 							>
 								Volume: {audioVolume}%
 							</label>
 							<input
-								id="audio-volume"
+								id={audioVolumeId}
 								type="range"
 								min="0"
 								max="100"

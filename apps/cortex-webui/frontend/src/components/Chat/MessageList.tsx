@@ -5,7 +5,7 @@ interface MessageListProps {
 		id: string;
 		role: string;
 		content: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	}>;
 	readonly streaming: boolean;
 }

@@ -8,7 +8,29 @@
  */
 import { execSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
 import process from 'node:process';
+
+// Lazy import telemetry only if enabled to avoid unnecessary startup cost in minimal environments.
+let telemetry;
+let span;
+let durationHistogram;
+let runCounter;
+const telemetryEnabled = process.env.NX_SMART_OTEL === '1';
+if (telemetryEnabled) {
+  try {
+    // eslint-disable-next-line import/no-extraneous-dependencies -- internal workspace package
+    telemetry = await import('@cortex-os/telemetry');
+    span = telemetry.tracer.startSpan('nx-smart.run', {
+      attributes: { 'nx.smart.enabled': true }
+    });
+    durationHistogram = telemetry.createHistogram('nx_smart_duration_ms', 'Duration of nx-smart wrapper execution', 'ms');
+    runCounter = telemetry.createCounter('nx_smart_runs_total', 'Total nx-smart wrapper runs');
+    runCounter.add(1, { target: process.argv[2] || 'unknown' });
+  } catch (e) {
+    console.warn('[nx-smart][otel] disabled (init failed):', e.message);
+  }
+}
 
 // Early debug (can be removed later) to ensure script executes.
 if (process.env.NX_SMART_DEBUG_BOOT) {
@@ -26,18 +48,26 @@ if (!process.env.CI) {
   process.env.CI = '1';
 }
 
+const startTime = Date.now();
 const args = process.argv.slice(2);
 if (args.length === 0) {
   console.error('Usage: nx-smart <target> [--json] [--verbose] [--dry-run] [--interactive]');
   console.error('Examples:');
   console.error('  nx-smart build         # run affected build');
   console.error('  nx-smart test --dry-run # show affected summary only');
-  process.exit(1);
+  await finalizeAndExit(1);
 }
 
 const target = args[0];
 const flags = args.slice(1);
 const isDryRun = flags.includes('--dry-run');
+const metricsJsonIndex = flags.indexOf('--metrics-json');
+let metricsJsonPath;
+if (metricsJsonIndex !== -1) {
+  const val = flags[metricsJsonIndex + 1];
+  if (val && !val.startsWith('--')) metricsJsonPath = val;
+}
+const validateFocus = flags.includes('--validate-focus');
 // Focus list: allow narrowing affected projects via --focus a,b,c or env CORTEX_SMART_FOCUS
 let focusList = [];
 const focusFlagIndex = flags.indexOf('--focus');
@@ -58,7 +88,7 @@ let forwardedFlags = [];
 let idx = 0;
 while (idx < flags.length) {
   const f = flags[idx];
-  if (['--interactive', '--dry-run', '--json', '--verbose', '--focus'].includes(f)) {
+  if (['--interactive', '--dry-run', '--json', '--verbose', '--focus', '--metrics-json', '--validate-focus'].includes(f)) {
     idx += 1;
     continue;
   }
@@ -79,6 +109,48 @@ const verbose = flags.includes('--verbose');
 
 function log(msg) {
   if (!json) console.log(msg);
+}
+
+function writeMetrics(metaExtra = {}) {
+  const durationMs = Date.now() - startTime;
+  const metrics = { target, durationMs, strategy, ...metaExtra };
+  if (telemetryEnabled && durationHistogram) {
+    try { durationHistogram.record(durationMs, { target, strategy, skipped: Boolean(metaExtra.skipped) }); } catch { }
+  }
+  if (telemetryEnabled && span) {
+    try {
+      span.setAttribute('nx.smart.target', target);
+      span.setAttribute('nx.smart.strategy', strategy);
+      span.setAttribute('nx.smart.duration_ms', durationMs);
+      if (metaExtra.skipped) span.setAttribute('nx.smart.skipped', String(metaExtra.reason || true));
+    } catch { }
+  }
+  if (metricsJsonPath) {
+    try {
+      fs.mkdirSync(path.dirname(metricsJsonPath), { recursive: true });
+      fs.writeFileSync(metricsJsonPath, JSON.stringify(metrics, null, 2));
+      if (!json) log(`[nx-smart] metrics written: ${metricsJsonPath}`);
+    } catch (e) {
+      console.warn('[nx-smart] failed to write metrics json:', e.message);
+    }
+  }
+}
+
+async function finalizeAndExit(code, metaExtra = {}) {
+  try {
+    await writeMetrics(metaExtra);
+  } catch { }
+  if (telemetryEnabled && span) {
+    try {
+      if (code === 0) span.setStatus({ code: (await import('@opentelemetry/api')).SpanStatusCode.OK });
+      else span.setStatus({ code: (await import('@opentelemetry/api')).SpanStatusCode.ERROR });
+      span.end();
+    } catch { }
+  }
+  if (telemetryEnabled && telemetry) {
+    try { await telemetry.shutdownTelemetry({ timeoutMs: 2000 }); } catch { }
+  }
+  process.exit(code);
 }
 
 function getBaseRef() {
@@ -168,7 +240,8 @@ if (['build', 'test', 'lint', 'typecheck'].includes(target) && nonDocChanged.len
   } else {
     console.log(`[nx-smart] No relevant source changes for target '${target}' (doc-only). Skipping.`);
   }
-  process.exit(0);
+  writeMetrics({ skipped: true, reason: 'doc-only' });
+  await finalizeAndExit(0, { skipped: true, reason: 'doc-only' });
 }
 
 if (json) meta.strategy = strategy;
@@ -236,7 +309,8 @@ if (strategy === 'affected') {
       console.log(`Would execute: nx run-many -t ${target} --parallel`);
       console.log(`\n💡 To execute: pnpm ${target}`);
     }
-    process.exit(0);
+    writeMetrics({ skipped: true, reason: 'dry-run' });
+    await finalizeAndExit(0, { skipped: true, reason: 'dry-run' });
   }
 
   if (strategy === 'affected' && affectedList.length === 0) {
@@ -246,7 +320,8 @@ if (strategy === 'affected') {
     } else {
       console.log('[nx-smart] No affected projects for target', target, '- skipping.');
     }
-    process.exit(0);
+    writeMetrics({ skipped: true, reason: 'no-affected' });
+    await finalizeAndExit(0, { skipped: true, reason: 'no-affected' });
   }
 
   if (strategy === 'affected') {
@@ -261,11 +336,77 @@ if (strategy === 'affected') {
         log('[nx-smart] focus requested but no overlap with affected set; proceeding with original affected list');
       }
     }
+    if (validateFocus && focusList.length > 0) {
+      // Naive dependency validation: ensure each focused project is actually in affectedList; warn if not.
+      const missing = focusList.filter(f => !affectedList.includes(f));
+      if (missing.length > 0 && !json) {
+        console.warn(`[nx-smart][validate-focus] WARNING: focused projects not in affected set: ${missing.join(', ')}`);
+      }
+    }
+    // Advanced focus validation: if focus provided and validateFocus enabled, build dependency graph and ensure
+    // no affected dependencies are silently excluded by focus narrowing.
+    let narrowedProjectsArg = '';
+    if (focusList.length > 0) {
+      try {
+        // Use nx graph to obtain project graph JSON. We suppress DOT output by using --file and reading the JSON file.
+        const graphTmp = path.join('.nx-smart-graph.json');
+        // Some Nx versions expose `nx graph --file=... --focus=...` but we need full graph for dependency inspection.
+        execSync(`nx graph --file=${graphTmp} --focus=null --exclude=null`, { stdio: 'ignore' });
+        if (fs.existsSync(graphTmp)) {
+          const graphRaw = fs.readFileSync(graphTmp, 'utf8');
+          // The file contains a self-invoking function wrapper: (function(){ window.projectGraph = {...}; })()
+          const jsonStart = graphRaw.indexOf('{');
+          const jsonEnd = graphRaw.lastIndexOf('}');
+          if (jsonStart !== -1 && jsonEnd !== -1) {
+            const graphJson = JSON.parse(graphRaw.slice(jsonStart, jsonEnd + 1));
+            const nodes = graphJson.graph?.nodes || {};
+            const dependencies = graphJson.graph?.dependencies || {};
+            // Build reverse dependency map for quick lookup
+            const depWarnings = [];
+            for (const focused of focusList) {
+              if (!nodes[focused]) continue; // skip unknown
+              const stack = [focused];
+              const visited = new Set();
+              while (stack.length) {
+                const current = stack.pop();
+                if (!current || visited.has(current)) continue;
+                visited.add(current);
+                const deps = dependencies[current] || [];
+                for (const dep of deps) {
+                  const targetProject = dep.target;
+                  if (!targetProject) continue;
+                  if (!affectedList.includes(targetProject) && focusList.includes(focused)) {
+                    // Not affected -> ignore for this run.
+                    continue;
+                  }
+                  // If dependency is affected but was filtered out (not in affectedList intersection after focus), warn.
+                  if (affectedList.includes(targetProject) && focusList.length > 0 && !focusList.includes(targetProject)) {
+                    depWarnings.push(`${focused} -> ${targetProject}`);
+                  }
+                  stack.push(targetProject);
+                }
+              }
+            }
+            if (depWarnings.length > 0 && validateFocus && !json) {
+              console.warn('[nx-smart][validate-focus] WARNING: focused set excludes affected dependency paths:\n  ' + depWarnings.slice(0, 10).join('\n  ') + (depWarnings.length > 10 ? `\n  ... (+${depWarnings.length - 10} more)` : ''));
+            }
+            // Provide narrowed project list to Nx directly for faster execution when focus intersects.
+            if (focusList.length > 0) {
+              // Determine final project list actually being run from affectedList (post-focus intersection) to pass via --projects
+              narrowedProjectsArg = `--projects=${affectedList.join(',')}`;
+            }
+          }
+          try { fs.unlinkSync(graphTmp); } catch { }
+        }
+      } catch (e) {
+        if (verbose && !json) console.warn('[nx-smart] graph generation failed (continuing without deep validation):', e.message);
+      }
+    }
     if (!json) log(`[nx-smart] affected projects: ${affectedList.join(', ')}`);
     // Rely on NX_INTERACTIVE env (set above) instead of passing --no-interactive which Nx forwards to executors.
     // Passing --no-interactive caused underlying tools (tsc/tsup/vite/cargo) to error due to unknown flag.
     const interactiveFlag = forceInteractive ? '--interactive' : '';
-    run(`nx affected -t ${target} --base=${baseRef} --head=${headRef} ${interactiveFlag} ${forwardedFlags.join(' ')}`.trim());
+    run(`nx affected -t ${target} --base=${baseRef} --head=${headRef} ${narrowedProjectsArg} ${interactiveFlag} ${forwardedFlags.join(' ')}`.replace(/  +/g, ' ').trim());
   } else {
     const interactiveFlag = forceInteractive ? '--interactive' : '';
     run(`nx run-many -t ${target} --parallel ${interactiveFlag} ${forwardedFlags.join(' ')}`.trim());
@@ -275,4 +416,12 @@ if (strategy === 'affected') {
   run(`nx run-many -t ${target} --parallel ${interactiveFlag} ${forwardedFlags.join(' ')}`.trim());
 }
 
+writeMetrics();
+await writeMetrics();
 if (json) console.log(JSON.stringify({ ...meta, completed: true }));
+if (telemetryEnabled && span) {
+  try { span.end(); } catch { }
+  if (telemetry && telemetry.shutdownTelemetry) {
+    try { await telemetry.shutdownTelemetry({ timeoutMs: 2000 }); } catch { }
+  }
+}

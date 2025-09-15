@@ -1,3 +1,11 @@
+// Helper to check if a value is a Promise
+function isPromise<T = unknown>(value: unknown): value is Promise<T> {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		typeof (value as { then?: unknown }).then === 'function'
+	);
+}
 import type React from 'react';
 import { useId, useRef, useState } from 'react';
 import Modal from '@/components/common/Modal';
@@ -68,34 +76,27 @@ const ImportModal: React.FC<ImportModalProps> = ({
 		if (!file) return;
 		setIsImporting(true);
 		try {
-			const maybePromise = onImport(file);
-			if (typeof maybePromise === 'object' && maybePromise !== null && typeof (maybePromise as Promise<any>).then === 'function') {
-				await maybePromise;
+			const result = onImport(file);
+			// Strict type guard for Promise
+			if (isPromise(result)) {
+				await result;
 			}
 			onClose();
 			if (
 				typeof window !== 'undefined' &&
 				'addNotification' in window &&
-				typeof (
-					window as { addNotification?: (type: string, msg: string) => void }
-				).addNotification === 'function'
+				typeof (window as { addNotification?: (type: string, msg: string) => void }).addNotification === 'function'
 			) {
-				(
-					window as { addNotification: (type: string, msg: string) => void }
-				).addNotification('success', 'Import completed successfully!');
+				(window as { addNotification: (type: string, msg: string) => void }).addNotification('success', 'Import completed successfully!');
 			}
 		} catch (_error) {
 			console.debug('[ImportModal] import failed', _error);
 			if (
 				typeof window !== 'undefined' &&
 				'addNotification' in window &&
-				typeof (
-					window as { addNotification?: (type: string, msg: string) => void }
-				).addNotification === 'function'
+				typeof (window as { addNotification?: (type: string, msg: string) => void }).addNotification === 'function'
 			) {
-				(
-					window as { addNotification: (type: string, msg: string) => void }
-				).addNotification('error', 'Import failed. Please try again.');
+				(window as { addNotification: (type: string, msg: string) => void }).addNotification('error', 'Import failed. Please try again.');
 			}
 		} finally {
 			setIsImporting(false);
