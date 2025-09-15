@@ -49,7 +49,7 @@ export const resetMemoryServiceFactory = () => {
 
 async function getMemoryService(): Promise<MemoryService> {
         if (!cachedServicePromise) {
-                        cachedServicePromise = activeFactory();
+                cachedServicePromise = activeFactory();
         }
         return cachedServicePromise;
 }
