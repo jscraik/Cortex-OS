@@ -111,10 +111,11 @@ where
         let metadata = self.metadata();
         let schema = Self::schema();
         #[expect(clippy::expect_used)]
-        let schema_value = serde_json::to_value(schema).expect("schema should serialize");
+        let schema_value = serde_json::to_value(schema)
+            .expect("Failed to serialize JSON schema for tool registration");
         #[expect(clippy::expect_used)]
         let input_schema: ToolInputSchema = serde_json::from_value(schema_value)
-            .expect("schema should deserialize to ToolInputSchema");
+            .expect("Failed to convert schema to ToolInputSchema format");
 
         Tool {
             name: metadata.name.to_string(),
