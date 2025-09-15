@@ -55,7 +55,14 @@ function parsePayload(response: ToolResponse): ToolPayload {
                 throw new Error('Tool payload must include content');
         }
 
-        const raw: unknown = first.text ? JSON.parse(first.text) : null;
+        let raw: unknown = null;
+        if (first.text) {
+                try {
+                        raw = JSON.parse(first.text);
+                } catch (err) {
+                        throw new Error(`Tool payload could not be parsed as JSON: ${(err as Error).message}`);
+                }
+        }
         const base = assertRecord(raw, 'Tool payload must be a JSON object');
         const successValue = base.success;
         if (typeof successValue !== 'boolean') {
