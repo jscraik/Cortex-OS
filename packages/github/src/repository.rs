@@ -19,9 +19,6 @@ pub struct FileUpdateOptions<'a> {
 }
 
 impl<'a> FileUpdateOptions<'a> {
-    pub fn new() -> Self {
-        Self::default()
-    }
 
     pub fn with_sha(mut self, sha: &'a str) -> Self {
         self.sha = Some(sha);
