@@ -215,15 +215,16 @@ const executeTask = async (
 
 	state.runningTasks.add(task.id);
 
+        // Grouped variable declarations for readability
         const startTime = Date.now();
         const useProxy = !!state.config.emitLifecycleProxy;
         const agentId =
                 typeof (agent as { id?: string }).id === 'string'
                         ? (agent as { id: string }).id
                         : generateAgentId();
-        let traceId: string | undefined;
 
         try {
+                let traceId: string | undefined;
                 if (useProxy) {
                         traceId = generateTraceId();
                         await state.config.eventBus.publish({
