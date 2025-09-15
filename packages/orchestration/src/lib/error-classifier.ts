@@ -212,72 +212,86 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 	},
 };
 
+const toRecord = (value: unknown): Record<string, unknown> | null =>
+        typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
+
+const toMessage = (value: unknown): string => {
+        if (typeof value === 'string') {
+                return value;
+        }
+        const record = toRecord(value);
+        if (record && typeof record.message === 'string') {
+                return record.message;
+        }
+        return '';
+};
+
 /**
  * Classify an error to determine retry behavior
  */
-export function classifyError(error: any): ErrorClassification {
-	// Check for error code first
-	if (error.code && ERROR_CODE_MAPPINGS[error.code]) {
-		const errorType = ERROR_CODE_MAPPINGS[error.code];
-		return ERROR_CLASSIFICATIONS[errorType];
-	}
+export function classifyError(error: unknown): ErrorClassification {
+        const record = toRecord(error);
 
-	// Check HTTP status code
-	if (error.status || error.statusCode) {
-		const statusCode = error.status || error.statusCode;
-		if (HTTP_STATUS_MAPPINGS[statusCode]) {
-			const errorType = HTTP_STATUS_MAPPINGS[statusCode];
-			return ERROR_CLASSIFICATIONS[errorType];
-		}
-	}
+        // Check for error code first
+        if (record && typeof record.code === 'string') {
+                const mapped = ERROR_CODE_MAPPINGS[record.code];
+                if (mapped) return ERROR_CLASSIFICATIONS[mapped];
+        }
 
-	// Check error message patterns
-	const message = (error.message || '').toLowerCase();
+        // Check HTTP status code
+        const statusCandidate = record && (record.status ?? record.statusCode);
+        if (typeof statusCandidate === 'number') {
+                const mapped = HTTP_STATUS_MAPPINGS[statusCandidate];
+                if (mapped) return ERROR_CLASSIFICATIONS[mapped];
+        }
 
-	if (message.includes('timeout')) {
-		return ERROR_CLASSIFICATIONS[ErrorType.TIMEOUT];
-	}
+        // Check error message patterns
+        const message = toMessage(error).toLowerCase();
 
-	if (message.includes('rate limit') || message.includes('too many requests')) {
-		return ERROR_CLASSIFICATIONS[ErrorType.RATE_LIMITED];
-	}
+        if (message.includes('timeout')) {
+                return ERROR_CLASSIFICATIONS[ErrorType.TIMEOUT];
+        }
 
-	if (message.includes('network') || message.includes('connection')) {
-		return ERROR_CLASSIFICATIONS[ErrorType.NETWORK_ERROR];
-	}
+        if (message.includes('rate limit') || message.includes('too many requests')) {
+                return ERROR_CLASSIFICATIONS[ErrorType.RATE_LIMITED];
+        }
 
-	if (message.includes('validation') || message.includes('invalid')) {
-		return ERROR_CLASSIFICATIONS[ErrorType.VALIDATION_ERROR];
-	}
+        if (message.includes('network') || message.includes('connection')) {
+                return ERROR_CLASSIFICATIONS[ErrorType.NETWORK_ERROR];
+        }
 
-	if (
-		message.includes('auth') ||
-		message.includes('permission') ||
-		message.includes('access denied')
-	) {
-		return ERROR_CLASSIFICATIONS[ErrorType.AUTHORIZATION_ERROR];
-	}
+        if (message.includes('validation') || message.includes('invalid')) {
+                return ERROR_CLASSIFICATIONS[ErrorType.VALIDATION_ERROR];
+        }
 
-	if (
-		message.includes('resource') ||
-		message.includes('memory') ||
-		message.includes('disk')
-	) {
-		return ERROR_CLASSIFICATIONS[ErrorType.RESOURCE_EXHAUSTED];
-	}
+        if (
+                message.includes('auth') ||
+                message.includes('permission') ||
+                message.includes('access denied')
+        ) {
+                return ERROR_CLASSIFICATIONS[ErrorType.AUTHORIZATION_ERROR];
+        }
 
-	// Default to retryable for unknown errors with conservative settings
-	return {
-		type: ErrorType.RETRYABLE,
-		retryable: true,
-		strategy: RetryStrategy.EXPONENTIAL_WITH_JITTER,
-		baseDelayMs: 1000,
-		maxRetries: 2,
-		backoffMultiplier: 2,
-		jitter: true,
-		circuitBreakerEnabled: false,
-		description: 'Unknown error, assuming retryable with conservative settings',
-	};
+        if (
+                message.includes('resource') ||
+                message.includes('memory') ||
+                message.includes('disk')
+        ) {
+                return ERROR_CLASSIFICATIONS[ErrorType.RESOURCE_EXHAUSTED];
+        }
+
+        // Default to retryable for unknown errors with conservative settings
+        return {
+                type: ErrorType.RETRYABLE,
+                retryable: true,
+                strategy: RetryStrategy.EXPONENTIAL_WITH_JITTER,
+                baseDelayMs: 1000,
+                maxRetries: 2,
+                backoffMultiplier: 2,
+                jitter: true,
+                circuitBreakerEnabled: false,
+                description: 'Unknown error, assuming retryable with conservative settings',
+        };
 }
 
 /**
@@ -342,23 +356,23 @@ export function shouldTriggerCircuitBreaker(
 /**
  * Get a human-readable description of the error classification
  */
-export function getErrorDescription(error: any): string {
-	const classification = classifyError(error);
-	return `${classification.description} (Type: ${classification.type}, Retryable: ${classification.retryable})`;
+export function getErrorDescription(error: unknown): string {
+        const classification = classifyError(error);
+        return `${classification.description} (Type: ${classification.type}, Retryable: ${classification.retryable})`;
 }
 
 /**
  * Enhanced retry policy based on error classification
  */
 export interface EnhancedRetryPolicy {
-	maxRetries: number;
-	baseDelayMs: number;
-	maxBackoffMs: number;
-	strategy: RetryStrategy;
-	backoffMultiplier: number;
-	jitter: boolean;
-	circuitBreakerEnabled: boolean;
-	errorFilter?: (error: any) => boolean;
+        maxRetries: number;
+        baseDelayMs: number;
+        maxBackoffMs: number;
+        strategy: RetryStrategy;
+        backoffMultiplier: number;
+        jitter: boolean;
+        circuitBreakerEnabled: boolean;
+        errorFilter?: (error: unknown) => boolean;
 }
 
 /**
@@ -381,6 +395,6 @@ export function createRetryPolicy(
 /**
  * Utility function to check if an error is retryable
  */
-export function isRetryableError(error: any): boolean {
-	return classifyError(error).retryable;
+export function isRetryableError(error: unknown): boolean {
+        return classifyError(error).retryable;
 }
