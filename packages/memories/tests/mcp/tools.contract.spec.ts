@@ -26,7 +26,9 @@ const expectIssueForPath = (details: unknown, expectedPath: string[]) => {
         }
         const matchFound = issues.some((issue) => {
                 const path = issue.path;
-                return Array.isArray(path) && expectedPath.every((segment) => path.includes(segment));
+                return Array.isArray(path) &&
+                        path.length === expectedPath.length &&
+                        path.every((segment, i) => segment === expectedPath[i]);
         });
         expect(matchFound).toBe(true);
 };
