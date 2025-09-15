@@ -1,4 +1,6 @@
 export * from './client.js';
 export * from './contracts.js';
-export * from './tool-schemas.js';
-export * from './validation.js';
+
+export * from './tools.js';
+export * from './tools/echo-tool.js';
+

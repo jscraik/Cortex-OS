@@ -38,6 +38,7 @@ Minimal building blocks for the Model Context Protocol.
 - [Testing & QA](./testing.md)
 - [Deployment](./deployment.md)
 - [Examples & Tutorials](./examples.md)
+- [Tool Template](./mcp-tool-template.md)
 - [Performance & Benchmarking](./performance.md)
 - [Logging & Monitoring](./logging-monitoring.md)
 - [Glossary](./glossary.md)
