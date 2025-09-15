@@ -64,4 +64,17 @@ This document explains why certain files must remain in the project root directo
 - `.env*` - Environment files
 - `.dockerignore` - Docker ignore patterns
 
+### Husky Git Hooks
+- `.husky/` - Directory containing Husky git hooks configuration
+  - `pre-commit` - Pre-commit validation script
+  - `pre-push` - Pre-push comprehensive validation script
+  - `commit-msg` - Commit message validation
+  - Other hook scripts that enforce code quality before sharing changes
+
 These files must remain in the root directory because various tools and frameworks expect to find them there. Moving them would break tooling integrations and make the project incompatible with standard development practices.
+
+The project uses **Husky** for git hooks management, not pre-commit. Husky hooks are configured in the `.husky/` directory and provide:
+1. Pre-commit validation (fast checks on staged files)
+2. Pre-push validation (comprehensive checks before sharing changes)
+3. Commit message validation
+4. Other quality gates to ensure code quality and consistency
