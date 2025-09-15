@@ -404,7 +404,11 @@ const createMemoryToolDefinition = <Input, Output>(config: {
                 try {
                         return await config.handler(parsed.data, context);
                 } catch (error) {
-                        if (isMemoryToolErrorResponse(error as MemoryToolResponse<Output>)) {
+                        if (
+                                typeof error === 'object' &&
+                                error !== null &&
+                                isMemoryToolErrorResponse(error)
+                        ) {
                                 return error as MemoryToolErrorResponse;
                         }
                         const message =
