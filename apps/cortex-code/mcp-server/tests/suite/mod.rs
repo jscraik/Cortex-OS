@@ -5,6 +5,7 @@ mod codex_message_processor_flow;
 mod codex_tool;
 mod config;
 mod create_conversation;
+mod echo_tool;
 mod interrupt;
 mod list_resume;
 mod login;

@@ -8,6 +8,8 @@ use crate::codex_tool_config::create_tool_for_codex_tool_call_param;
 use crate::codex_tool_config::create_tool_for_codex_tool_call_reply_param;
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
 use crate::outgoing_message::OutgoingMessageSender;
+use crate::tools::EchoTool;
+use crate::tools::ToolRegistry;
 use codex_protocol::mcp_protocol::ClientRequest;
 use codex_protocol::mcp_protocol::ConversationId;
 
@@ -45,6 +47,7 @@ pub(crate) struct MessageProcessor {
     codex_linux_sandbox_exe: Option<PathBuf>,
     conversation_manager: Arc<ConversationManager>,
     running_requests_id_to_codex_uuid: Arc<Mutex<HashMap<RequestId, ConversationId>>>,
+    tool_registry: Arc<ToolRegistry>,
 }
 
 impl MessageProcessor {
@@ -58,6 +61,12 @@ impl MessageProcessor {
         let outgoing = Arc::new(outgoing);
         let auth_manager = AuthManager::shared(config.codex_home.clone());
         let conversation_manager = Arc::new(ConversationManager::new(auth_manager.clone()));
+        let mut tool_registry = ToolRegistry::new();
+        tool_registry
+            .register_tool(EchoTool::default())
+            .expect("echo tool registration should succeed");
+        let tool_registry = Arc::new(tool_registry);
+
         let codex_message_processor = CodexMessageProcessor::new(
             auth_manager,
             conversation_manager.clone(),
@@ -72,6 +81,7 @@ impl MessageProcessor {
             codex_linux_sandbox_exe,
             conversation_manager,
             running_requests_id_to_codex_uuid: Arc::new(Mutex::new(HashMap::new())),
+            tool_registry,
         }
     }
 
@@ -320,10 +330,12 @@ impl MessageProcessor {
     ) {
         tracing::trace!("tools/list -> {params:?}");
         let result = ListToolsResult {
-            tools: vec![
-                create_tool_for_codex_tool_call_param(),
-                create_tool_for_codex_tool_call_reply_param(),
-            ],
+            tools: {
+                let mut tools = self.tool_registry.list_tools();
+                tools.push(create_tool_for_codex_tool_call_param());
+                tools.push(create_tool_for_codex_tool_call_reply_param());
+                tools
+            },
             next_cursor: None,
         };
 
@@ -338,6 +350,20 @@ impl MessageProcessor {
     ) {
         tracing::info!("tools/call -> params: {:?}", params);
         let CallToolRequestParams { name, arguments } = params;
+
+        if let Some(tool_result) = self
+            .tool_registry
+            .call_tool(name.as_str(), arguments.clone())
+            .await
+        {
+            let call_result = match tool_result {
+                Ok(result) => result,
+                Err(error) => error.into_call_tool_result(),
+            };
+            self.send_response::<mcp_types::CallToolRequest>(id, call_result)
+                .await;
+            return;
+        }
 
         match name.as_str() {
             "codex" => self.handle_tool_call_codex(id, arguments).await,
