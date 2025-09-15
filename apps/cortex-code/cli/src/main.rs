@@ -59,6 +59,9 @@ enum Subcommand {
     /// MCP commands (list, server, etc.)
     Mcp(McpCli),
 
+    /// A2A commands (doctor, send, etc.)
+    A2a(A2aCli),
+
     /// Run the Protocol stream via stdin/stdout
     #[clap(visible_alias = "p")]
     Proto(ProtoCli),
@@ -233,8 +236,6 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 prepend_config_flags(&mut seatbelt_cli.config_overrides, cli.config_overrides);
                 codex_cli::debug_sandbox::run_command_under_seatbelt(
                     seatbelt_cli,
-    /// A2A commands (doctor, send, etc.)
-    A2a(A2aCli),
                     codex_linux_sandbox_exe,
                 )
                 .await?;
@@ -276,17 +277,4 @@ fn print_completion(cmd: CompletionCommand) {
     let name = "codex";
     generate(cmd.shell, &mut app, name, &mut std::io::stdout());
 }
-        Some(Subcommand::A2a(a2a_cli)) => match a2a_cli.action {
-            Some(A2aAction::Doctor) => {
-                // Minimal health payload in JSON
-                // {"ok":true,"service":"a2a","version":"1"}
-                println!("{{\"ok\":true,\"service\":\"a2a\",\"version\":\"1\"}}");
-            }
-            None => {
-                let mut app = MultitoolCli::command();
-                if let Some(mut a2a_cmd) = app.find_subcommand_mut("a2a") {
-                    a2a_cmd.print_help()?;
-                    println!();
-                }
-            }
-        },
+        
