@@ -1,3 +1,4 @@
+
 /**
  * MCP tool contract definitions for the memories package.
  *
@@ -8,7 +9,10 @@
  * contracts defined here.
  */
 
+
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+
 import { memoryZ } from '../schemas/memory.zod.js';
 
 const MEMORY_KIND_VALUES = ['note', 'event', 'artifact', 'embedding'] as const;
@@ -520,8 +524,10 @@ export const memorySearchTool = createMemoryToolDefinition({
 
 export const memoryMcpTools: MemoryToolDefinition<unknown, unknown>[] = [
         memoryStoreTool,
+
         memoryGetTool,
         memoryDeleteTool,
         memoryListTool,
         memorySearchTool,
 ];
+

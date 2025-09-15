@@ -11,6 +11,26 @@ pub struct RepositoryAPI {
     event_publisher: Option<crate::a2a_integration::GitHubA2APublisher>,
 }
 
+/// Optional parameters used when updating repository files
+#[derive(Debug, Clone, Copy, Default)]
+pub struct FileUpdateOptions<'a> {
+    pub sha: Option<&'a str>,
+    pub branch: Option<&'a str>,
+}
+
+impl<'a> FileUpdateOptions<'a> {
+
+    pub fn with_sha(mut self, sha: &'a str) -> Self {
+        self.sha = Some(sha);
+        self
+    }
+
+    pub fn with_branch(mut self, branch: &'a str) -> Self {
+        self.branch = Some(branch);
+        self
+    }
+}
+
 impl RepositoryAPI {
     pub fn new(client: GitHubClient) -> Self {
         Self {
@@ -225,8 +245,7 @@ impl RepositoryAPI {
                 .unwrap_or(false)
             {
                 // Decode base64 content
-                let decoded_bytes = BASE64.decode(&encoded_content.replace('\n', ""))?;
-                let content_str = String::from_utf8(decoded_bytes)?;
+                let content_str = Self::decode_base64_content(&encoded_content)?;
                 Ok(content_str)
             } else {
                 Ok(encoded_content)
@@ -246,21 +265,32 @@ impl RepositoryAPI {
         path: &str,
         content: &str,
         message: &str,
-        sha: Option<&str>,
-        branch: Option<&str>,
+        options: FileUpdateOptions<'_>,
     ) -> GitHubResult<FileResponse> {
-        let encoded_content = BASE64.encode(content.as_bytes());
-
-        let data = FileUpdateData {
-            message: message.to_string(),
-            content: encoded_content,
-            sha: sha.map(|s| s.to_string()),
-            branch: branch.map(|b| b.to_string()),
-            committer: None,
-            author: None,
-        };
+        let data = Self::build_file_update_payload(content, message, options);
 
         self.create_or_update_file(owner, repo, path, data).await
+    }
+
+    fn decode_base64_content(encoded: &str) -> GitHubResult<String> {
+        let sanitized = encoded.replace('\n', "");
+        let decoded_bytes = BASE64.decode(sanitized)?;
+        Ok(String::from_utf8(decoded_bytes)?)
+    }
+
+    fn build_file_update_payload(
+        content: &str,
+        message: &str,
+        options: FileUpdateOptions<'_>,
+    ) -> FileUpdateData {
+        FileUpdateData {
+            message: message.to_string(),
+            content: BASE64.encode(content.as_bytes()),
+            sha: options.sha.map(str::to_owned),
+            branch: options.branch.map(str::to_owned),
+            committer: None,
+            author: None,
+        }
     }
 
     // Branch operations
@@ -588,5 +618,27 @@ mod tests {
             "https://github.com/user/repo.git"
         );
         assert_eq!(repo.get_clone_url(true), "git@github.com:user/repo.git");
+    }
+
+    #[test]
+    fn decode_base64_content_strips_newlines() {
+        let encoded = "Zm9v\nYmFy";
+        let decoded = RepositoryAPI::decode_base64_content(encoded).expect("should decode");
+
+        assert_eq!(decoded, "foobar");
+    }
+
+    #[test]
+    fn build_file_update_payload_includes_options() {
+        let options = FileUpdateOptions::default()
+            .with_sha("abc123")
+            .with_branch("main");
+
+        let payload = RepositoryAPI::build_file_update_payload("hello", "update file", options);
+
+        assert_eq!(payload.message, "update file");
+        assert_eq!(payload.content, BASE64.encode("hello"));
+        assert_eq!(payload.sha.as_deref(), Some("abc123"));
+        assert_eq!(payload.branch.as_deref(), Some("main"));
     }
 }
