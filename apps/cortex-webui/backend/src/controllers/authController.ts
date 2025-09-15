@@ -18,11 +18,11 @@ const registerSchema = z.object({
 });
 
 export class AuthController {
-	static login(req: Request, res: Response): void {
+	static async login(req: Request, res: Response): Promise<void> {
 		try {
 			const { email, password } = loginSchema.parse(req.body);
 
-			const result = AuthService.login(email, password);
+			const result = await AuthService.login(email, password);
 			if (!result) {
 				throw new HttpError(401, 'Invalid email or password');
 			}
@@ -41,13 +41,14 @@ export class AuthController {
 		}
 	}
 
-	static register(req: Request, res: Response): void {
+	static async register(req: Request, res: Response): Promise<void> {
 		try {
 			const { name, email, password } = registerSchema.parse(req.body);
 
-			const result = AuthService.register(name, email, password);
+			const result = await AuthService.register(name, email, password);
 			res.status(201).json(result);
 		} catch (error) {
+			console.error('Registration error:', error);
 			if (error instanceof z.ZodError) {
 				res
 					.status(400)
@@ -58,17 +59,18 @@ export class AuthController {
 			) {
 				res.status(409).json({ error: error.message });
 			} else {
-				res.status(500).json({ error: 'Internal server error' });
+				res.status(500).json({ error: 'Internal server error', debug: error instanceof Error ? error.message : 'Unknown error' });
 			}
 		}
 	}
 
-	static async logout(req: Request, res: Response): Promise<void> {
+	static async logout(_req: Request, res: Response): Promise<void> {
 		try {
 			// In a real implementation, we might want to blacklist the token
 			// For now, we'll just return success
 			res.json({ message: 'Logged out successfully' });
-		} catch (_error) {
+		} catch (error) {
+			console.error('Logout error:', error);
 			res.status(500).json({ error: 'Internal server error' });
 		}
 	}

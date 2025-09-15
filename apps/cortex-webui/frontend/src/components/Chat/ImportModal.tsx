@@ -1,13 +1,15 @@
 'use client';
 
-import type React from 'react';
-import { useRef, useState } from 'react';
 import Modal from '@/components/common/Modal';
+import type React from 'react';
+import { useId, useRef, useState } from 'react';
+
+type OnImportFn = (file: File, options: ImportOptions) => void | Promise<void>;
 
 interface ImportModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onImport: (file: File, options: ImportOptions) => void;
+	onImport: OnImportFn;
 }
 
 interface ImportOptions {
@@ -30,6 +32,14 @@ const ImportModal: React.FC<ImportModalProps> = ({
 	});
 	const [isImporting, setIsImporting] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// Generate stable unique IDs for accessibility (avoid static ids / collisions)
+	const fileInputId = useId();
+	const formatSelectId = useId();
+	const includeAttachmentsId = useId();
+	const overwriteExistingId = useId();
+	const uploadHintId = useId();
+	const spinnerTitleId = useId();
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -60,25 +70,34 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
 	const handleImport = async () => {
 		if (!file) return;
-
 		setIsImporting(true);
 		try {
-			await onImport(file, importOptions);
+			const maybePromise = onImport(file, importOptions);
+			if (maybePromise instanceof Promise) {
+				await maybePromise;
+			}
 			onClose();
-
-			// @ts-expect-error
+			// @ts-expect-error optional global notification hook
 			if (typeof window !== 'undefined' && window.addNotification) {
 				// @ts-expect-error
 				window.addNotification('success', 'Import completed successfully!');
 			}
-		} catch (error) {
-			// @ts-expect-error
+		} catch (_error) {
+			console.debug('[ImportModal] import failed', _error);
+			// @ts-expect-error optional global notification hook
 			if (typeof window !== 'undefined' && window.addNotification) {
 				// @ts-expect-error
 				window.addNotification('error', 'Import failed. Please try again.');
 			}
 		} finally {
 			setIsImporting(false);
+		}
+	};
+
+	const handleDropAreaKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			fileInputRef.current?.click();
 		}
 	};
 
@@ -113,19 +132,27 @@ const ImportModal: React.FC<ImportModalProps> = ({
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+						<label
+							htmlFor={fileInputId}
+							className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+						>
 							Select File
 						</label>
 
-						<div
-							className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${
+						<button
+							type="button"
+							className={`w-full mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
 								isDragOver
 									? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
 									: 'border-gray-300 dark:border-gray-600'
 							}`}
+							aria-describedby={uploadHintId}
+							aria-label="File upload dropzone"
+							onKeyDown={handleDropAreaKeyDown}
 							onDragOver={handleDragOver}
 							onDragLeave={handleDragLeave}
 							onDrop={handleDrop}
+							onClick={() => fileInputRef.current?.click()}
 						>
 							<div className="space-y-1 text-center">
 								<svg
@@ -134,6 +161,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
 									fill="none"
 									viewBox="0 0 48 48"
 									aria-hidden="true"
+									focusable="false"
 								>
 									<path
 										d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
@@ -144,12 +172,12 @@ const ImportModal: React.FC<ImportModalProps> = ({
 								</svg>
 								<div className="flex text-sm text-gray-600 dark:text-gray-400">
 									<label
-										htmlFor="file-upload"
+										htmlFor={fileInputId}
 										className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
 									>
 										<span>Upload a file</span>
 										<input
-											id="file-upload"
+											id={fileInputId}
 											name="file-upload"
 											type="file"
 											className="sr-only"
@@ -160,11 +188,14 @@ const ImportModal: React.FC<ImportModalProps> = ({
 									</label>
 									<p className="pl-1">or drag and drop</p>
 								</div>
-								<p className="text-xs text-gray-500 dark:text-gray-400">
+								<p
+									id={uploadHintId}
+									className="text-xs text-gray-500 dark:text-gray-400"
+								>
 									JSON, CSV, TXT, or Markdown up to 10MB
 								</p>
 							</div>
-						</div>
+						</button>
 
 						{file && (
 							<div className="mt-2 flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
@@ -174,6 +205,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
 										className="h-5 w-5 text-gray-400"
 										viewBox="0 0 20 20"
 										fill="currentColor"
+										aria-hidden="true"
+										focusable="false"
 									>
 										<path
 											fillRule="evenodd"
@@ -200,6 +233,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
 										className="h-5 w-5"
 										viewBox="0 0 20 20"
 										fill="currentColor"
+										aria-hidden="true"
+										focusable="false"
 									>
 										<path
 											fillRule="evenodd"
@@ -211,32 +246,36 @@ const ImportModal: React.FC<ImportModalProps> = ({
 							</div>
 						)}
 					</div>
+					{/* end file select block */}
 
-					<div>
-						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							Import Format
-						</label>
-						<select
-							value={importOptions.format}
-							onChange={(e) =>
-								setImportOptions({
-									...importOptions,
-									format: e.target.value as any,
-								})
-							}
-							className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-						>
-							<option value="json">JSON</option>
-							<option value="csv">CSV</option>
-							<option value="txt">Plain Text</option>
-							<option value="markdown">Markdown</option>
-						</select>
-					</div>
-
-					<div className="space-y-3">
+					<div className="mt-6 space-y-5">
+						<div>
+							<label
+								htmlFor={formatSelectId}
+								className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+							>
+								Import Format
+							</label>
+							<select
+								id={formatSelectId}
+								value={importOptions.format}
+								onChange={(e) =>
+									setImportOptions({
+										...importOptions,
+										format: e.target.value as ImportOptions['format'],
+									})
+								}
+								className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+							>
+								<option value="json">JSON</option>
+								<option value="csv">CSV</option>
+								<option value="txt">Plain Text</option>
+								<option value="markdown">Markdown</option>
+							</select>
+						</div>
 						<div className="flex items-center">
 							<input
-								id="include-attachments"
+								id={includeAttachmentsId}
 								name="include-attachments"
 								type="checkbox"
 								checked={importOptions.includeAttachments}
@@ -249,16 +288,15 @@ const ImportModal: React.FC<ImportModalProps> = ({
 								className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
 							/>
 							<label
-								htmlFor="include-attachments"
+								htmlFor={includeAttachmentsId}
 								className="ml-2 block text-sm text-gray-900 dark:text-white"
 							>
 								Include attachments
 							</label>
 						</div>
-
 						<div className="flex items-center">
 							<input
-								id="overwrite-existing"
+								id={overwriteExistingId}
 								name="overwrite-existing"
 								type="checkbox"
 								checked={importOptions.overwriteExisting}
@@ -271,7 +309,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
 								className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
 							/>
 							<label
-								htmlFor="overwrite-existing"
+								htmlFor={overwriteExistingId}
 								className="ml-2 block text-sm text-gray-900 dark:text-white"
 							>
 								Overwrite existing data
@@ -304,7 +342,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
 										xmlns="http://www.w3.org/2000/svg"
 										fill="none"
 										viewBox="0 0 24 24"
+										aria-labelledby={spinnerTitleId}
 									>
+										<title id={spinnerTitleId}>Import in progress</title>
 										<circle
 											className="opacity-25"
 											cx="12"
@@ -326,8 +366,11 @@ const ImportModal: React.FC<ImportModalProps> = ({
 							)}
 						</button>
 					</div>
+					{/* end actions row */}
 				</div>
+				{/* end space-y-6 */}
 			</div>
+			{/* end p-6 */}
 		</Modal>
 	);
 };

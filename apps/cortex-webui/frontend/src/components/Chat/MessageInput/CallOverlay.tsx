@@ -20,9 +20,9 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
 	eventTarget,
 	submitPrompt,
 	stopResponse,
-	files,
-	chatId,
-	modelId,
+	files: _files, // Mark as unused with underscore prefix
+	chatId: _chatId, // Mark as unused with underscore prefix
+	modelId: _modelId, // Mark as unused with underscore prefix
 	model,
 	onClose,
 }) => {

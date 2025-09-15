@@ -796,7 +796,9 @@ async def api_metrics():
         return {"tools": tools, "summary": summary}
     except Exception as e:
         logger.error("Failed to generate API metrics", error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to generate API metrics") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to generate API metrics"
+        ) from e
 
 
 @app.get("/metrics/summary")

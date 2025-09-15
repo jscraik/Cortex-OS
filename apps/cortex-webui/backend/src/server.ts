@@ -10,6 +10,22 @@ import { WebSocketServer } from 'ws';
 
 dotenv.config();
 
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+	// Don't exit in development, just log
+	if (process.env.NODE_ENV === 'production') {
+		process.exit(1);
+	}
+});
+
+process.on('uncaughtException', (error) => {
+	console.error('Uncaught Exception:', error);
+	if (process.env.NODE_ENV === 'production') {
+		process.exit(1);
+	}
+});
+
 import { getCorsOptions, getServerConfig } from './config/config';
 // Import constants from backend config (domain separation)
 import { API_BASE_PATH, WS_BASE_PATH } from './config/constants';
@@ -45,7 +61,7 @@ import { errorHandler } from './middleware/errorHandler';
 // Import services
 import { FileService } from './services/fileService';
 import { ModelService } from './services/modelService';
-import { initializeDatabase } from './utils/database';
+import { initializeDatabase } from './utils/database-temp';
 import logger, { logWithContext } from './utils/logger';
 
 export interface ServerComponents {

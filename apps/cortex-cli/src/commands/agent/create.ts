@@ -1,6 +1,6 @@
 // plated: cortex
 
-import { intro, outro, select, text } from '@clack/prompts';
+// import { intro, outro, select, text } from '@clack/prompts';
 import { Command } from 'commander';
 import { z } from 'zod';
 

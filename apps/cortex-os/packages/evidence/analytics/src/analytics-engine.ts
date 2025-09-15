@@ -10,7 +10,7 @@
  */
 
 import { EventEmitter } from 'node:events';
-import pino from 'pino';
+// import pino from 'pino';
 import { createAnalyticsConfig } from './config.js';
 import { MetricsCollector } from './metrics-collector.js';
 import { OptimizationEngine } from './optimization-engine.js';

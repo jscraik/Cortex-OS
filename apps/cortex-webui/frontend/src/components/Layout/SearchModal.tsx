@@ -99,19 +99,19 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 			{
 				id: '1',
 				title: 'AI Development Discussion',
-				type: 'chat',
+				type: 'chat' as const,
 				lastModified: new Date(),
 			},
 			{
 				id: '2',
 				title: 'Project Planning Notes',
-				type: 'note',
+				type: 'note' as const,
 				lastModified: new Date(Date.now() - 86400000),
 			},
 			{
 				id: '3',
 				title: 'Research on Machine Learning',
-				type: 'document',
+				type: 'document' as const,
 				lastModified: new Date(Date.now() - 172800000),
 			},
 		].filter((result) =>

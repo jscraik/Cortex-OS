@@ -25,5 +25,6 @@ export default defineWorkspace([
 	"packages/simlab",
 	"packages/cortex-logging",
 	"libs/typescript/contracts",
+	"simple-tests",
 	"website",
 ]);

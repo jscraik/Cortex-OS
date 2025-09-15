@@ -4,7 +4,8 @@ import dns from 'node:dns/promises';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
-import yaml from 'js-yaml';
+
+// import yaml from 'js-yaml';
 
 type Job = { url?: string; filePath?: string; file?: Buffer; mime: string };
 

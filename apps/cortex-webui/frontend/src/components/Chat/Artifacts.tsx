@@ -1,7 +1,6 @@
 'use client';
 
 import type React from 'react';
-import { useState } from 'react';
 import Collapsible from '../common/Collapsible';
 
 interface Artifact {
@@ -21,10 +20,6 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 	artifacts,
 	onArtifactSelect,
 }) => {
-	const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(
-		null,
-	);
-
 	if (artifacts.length === 0) return null;
 
 	const getTypeIcon = (type: string) => {
@@ -38,6 +33,7 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 						viewBox="0 0 24 24"
 						stroke="currentColor"
 					>
+						<title>Code artifact</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -55,6 +51,7 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 						viewBox="0 0 24 24"
 						stroke="currentColor"
 					>
+						<title>Document artifact</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -72,6 +69,7 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 						viewBox="0 0 24 24"
 						stroke="currentColor"
 					>
+						<title>Image artifact</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -89,6 +87,7 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 						viewBox="0 0 24 24"
 						stroke="currentColor"
 					>
+						<title>Default artifact</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -108,11 +107,11 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 			>
 				<div className="space-y-2">
 					{artifacts.map((artifact) => (
-						<div
+						<button
+							type="button"
 							key={artifact.id}
-							className="flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer"
+							className="flex items-center p-2 border rounded hover:bg-gray-50 cursor-pointer w-full text-left"
 							onClick={() => {
-								setSelectedArtifact(artifact);
 								if (onArtifactSelect) {
 									onArtifactSelect(artifact);
 								}
@@ -127,7 +126,7 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 									{artifact.timestamp.toLocaleDateString()}
 								</p>
 							</div>
-						</div>
+						</button>
 					))}
 				</div>
 			</Collapsible>

@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getServerConfig } from '../config/config';
 import { JWT_EXPIRES_IN } from '../config/constants';
 import { UserModel } from '../models/user';
-import { getDatabase } from '../utils/database';
+import { dbGet, dbRun } from '../utils/database-temp';
 
 export const AuthService = {
 	hashPassword(password: string): string {
@@ -39,17 +39,13 @@ export const AuthService = {
 		}
 	},
 
-	register(
+	async register(
 		name: string,
 		email: string,
 		password: string,
-	): { user: User; token: string } {
-		const db = getDatabase();
-
+	): Promise<{ user: User; token: string }> {
 		// Check if user already exists
-		const existingUser = db
-			.prepare(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`)
-			.get(email) as UserRecord | undefined;
+		const existingUser = await dbGet(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`, [email]) as UserRecord | undefined;
 		if (existingUser) {
 			throw new Error('User with this email already exists');
 		}
@@ -69,15 +65,16 @@ export const AuthService = {
 			updated_at: now,
 		};
 
-		db.prepare(
+		await dbRun(
 			`INSERT INTO ${UserModel.tableName} (id, email, name, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
-		).run(
-			userRecord.id,
-			userRecord.email,
-			userRecord.name,
-			userRecord.password,
-			userRecord.created_at,
-			userRecord.updated_at,
+			[
+				userRecord.id,
+				userRecord.email,
+				userRecord.name,
+				userRecord.password,
+				userRecord.created_at,
+				userRecord.updated_at,
+			]
 		);
 
 		const user = UserModel.fromRecord(userRecord);
@@ -89,13 +86,9 @@ export const AuthService = {
 		return { user: userWithoutPassword, token };
 	},
 
-	login(email: string, password: string): { user: User; token: string } | null {
-		const db = getDatabase();
-
+	async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
 		// Find user
-		const userRecord = db
-			.prepare(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`)
-			.get(email) as UserRecord | undefined;
+		const userRecord = await dbGet(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`, [email]) as UserRecord | undefined;
 		if (!userRecord) {
 			return null;
 		}

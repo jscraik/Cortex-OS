@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { ChatMessage } from '../../../../shared/types/chat';
+
+// import type { ChatMessage } from '../../../../shared/types/chat';
+// TODO: Fix import path when shared types are properly set up
+type ChatMessage = {
+	id: string;
+	role: 'user' | 'assistant' | 'system';
+	content: string;
+	createdAt: string;
+};
+
 import MemoryQuery from '../MemoryQuery';
 import WebSearch from '../WebSearch';
 import Citations from './Citations';

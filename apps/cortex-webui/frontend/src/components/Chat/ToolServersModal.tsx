@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import notificationStore from '../../utils/notification-store';
 import Modal from '../common/Modal';
 
@@ -32,6 +32,11 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 		url: '',
 		apiKey: '',
 	});
+
+	// Unique IDs for form controls
+	const serverNameId = useId();
+	const serverUrlId = useId();
+	const apiKeyId = useId();
 
 	const handleAddServer = () => {
 		if (newServer.name && newServer.url) {
@@ -86,10 +91,14 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 					</h3>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-1">
+							<label
+								htmlFor={serverNameId}
+								className="block text-sm font-medium text-gray-700 mb-1"
+							>
 								Server Name
 							</label>
 							<input
+								id={serverNameId}
 								type="text"
 								value={newServer.name}
 								onChange={(e) =>
@@ -100,10 +109,14 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 							/>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-1">
+							<label
+								htmlFor={serverUrlId}
+								className="block text-sm font-medium text-gray-700 mb-1"
+							>
 								Server URL
 							</label>
 							<input
+								id={serverUrlId}
 								type="url"
 								value={newServer.url}
 								onChange={(e) =>
@@ -114,10 +127,14 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 							/>
 						</div>
 						<div className="sm:col-span-2">
-							<label className="block text-sm font-medium text-gray-700 mb-1">
+							<label
+								htmlFor={apiKeyId}
+								className="block text-sm font-medium text-gray-700 mb-1"
+							>
 								API Key (Optional)
 							</label>
 							<input
+								id={apiKeyId}
 								type="password"
 								value={newServer.apiKey}
 								onChange={(e) =>
@@ -130,6 +147,7 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 					</div>
 					<div className="mt-4">
 						<button
+							type="button"
 							onClick={handleAddServer}
 							className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 						>
@@ -150,7 +168,10 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
+								aria-hidden="true"
+								focusable="false"
 							>
+								<title>No tool servers icon</title>
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
@@ -185,6 +206,7 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 										</div>
 									</div>
 									<button
+										type="button"
 										onClick={() => handleRemoveServer(server.id)}
 										className="text-red-600 hover:text-red-900"
 										aria-label={`Remove ${server.name}`}
@@ -195,6 +217,7 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 											viewBox="0 0 20 20"
 											fill="currentColor"
 										>
+											<title>Delete tool server</title>
 											<path
 												fillRule="evenodd"
 												d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
@@ -210,12 +233,14 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 
 				<div className="flex justify-end space-x-3">
 					<button
+						type="button"
 						onClick={onClose}
 						className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 					>
 						Cancel
 					</button>
 					<button
+						type="button"
 						onClick={handleSave}
 						className="px-4 py-2 text-sm font-medium text-white bg-blue-500 border border-transparent rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 					>

@@ -215,6 +215,7 @@ module = [
   "qdrant_client.*",
   "prometheus_client.*",
   "jsonrpclib.*",
+  "httpx",
 ]
 ignore_missing_imports = true
 

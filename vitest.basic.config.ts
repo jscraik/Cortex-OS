@@ -1,4 +1,4 @@
-import path from "node:path";
+import * as path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -9,7 +9,10 @@ export default defineConfig({
 	workspace: [],
 	test: {
 		environment: "node",
-		include: ["simple-tests/**/*.test.ts"],
+		include: [
+			"simple-tests/**/*.test.ts",
+			"libs/typescript/contracts/tests/**/*.contract.test.ts"
+		],
 		globals: true,
 		name: "simple-tests",
 	},

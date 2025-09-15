@@ -1,24 +1,51 @@
 'use client';
+// Helper to compute new languages array
+function toggleLanguage(
+	existing: string[] | undefined,
+	lang: string,
+	add: boolean,
+): string[] {
+	const base = Array.isArray(existing) ? existing : [];
+	if (add) {
+		return base.includes(lang) ? base : [...base, lang];
+	}
+	return base.filter((l) => l !== lang);
+}
 
-import type React from 'react';
-import { useEffect, useState } from 'react';
 import { useSettingsStore } from '@/stores/settingsStore';
+import type React from 'react';
+import { useEffect, useId, useState } from 'react';
+
+interface ToolConfigMap {
+	searchEngine?: string;
+	resultsLimit?: number;
+	languages?: string[];
+	timeout?: number;
+	model?: string;
+	size?: string;
+}
 
 interface Tool {
 	id: string;
 	name: string;
 	description: string;
 	enabled: boolean;
-	config?: any;
+	config?: ToolConfigMap;
 }
 
 interface ToolsSettingsProps {
-	saveSettings: (settings: any) => void;
+	saveSettings: (settings: Record<string, unknown>) => void;
 }
 
 const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
-	const settings = useSettingsStore();
+	const settings = useSettingsStore() as unknown as { tools?: Tool[] } & Record<
+		string,
+		unknown
+	>;
 	const [loaded, setLoaded] = useState(false);
+
+	// Generate unique ID for tab
+	const tabId = useId();
 
 	// Tools settings state
 	const [tools, setTools] = useState<Tool[]>([
@@ -80,10 +107,42 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 		);
 	};
 
-	const updateToolConfig = (toolId: string, config: any) => {
+	const updateToolConfig = (
+		toolId: string,
+		config: Record<string, unknown>,
+	) => {
 		setTools(
 			tools.map((tool) => (tool.id === toolId ? { ...tool, config } : tool)),
 		);
+	};
+
+	// Helper renderer to avoid deep nesting inside JSX
+	const renderLanguageCheckboxes = (tool: Tool) => {
+		return ['python', 'javascript', 'bash'].map((lang) => {
+			const checked =
+				Array.isArray(tool.config?.languages) &&
+				tool.config.languages.includes(lang);
+			const existing = Array.isArray(tool.config?.languages)
+				? tool.config.languages
+				: [];
+			const onToggle = (isChecked: boolean) => {
+				updateToolConfig(tool.id, {
+					...tool.config,
+					languages: toggleLanguage(existing, lang, isChecked),
+				});
+			};
+			return (
+				<label key={lang} className="flex items-center text-xs">
+					<input
+						type="checkbox"
+						checked={checked}
+						onChange={(e) => onToggle(e.target.checked)}
+						className="mr-1 rounded"
+					/>
+					{lang}
+				</label>
+			);
+		});
 	};
 
 	if (!loaded) {
@@ -91,10 +150,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 	}
 
 	return (
-		<div
-			id="tab-tools"
-			className="flex flex-col h-full justify-between text-sm"
-		>
+		<div id={tabId} className="flex flex-col h-full justify-between text-sm">
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
 				<div>
 					<div className="text-base font-medium mb-3">Available Tools</div>
@@ -155,41 +211,63 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 										{tool.id === 'web-search' && (
 											<div className="space-y-3">
 												<div>
-													<label className="block text-xs font-medium mb-1">
-														Search Engine
-													</label>
-													<select
-														value={tool.config?.searchEngine || 'google'}
-														onChange={(e) =>
-															updateToolConfig(tool.id, {
-																...tool.config,
-																searchEngine: e.target.value,
-															})
-														}
-														className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-													>
-														<option value="google">Google</option>
-														<option value="bing">Bing</option>
-														<option value="duckduckgo">DuckDuckGo</option>
-													</select>
+													{(() => {
+														const selectId = `${tool.id}-search-engine`;
+														return (
+															<>
+																<label
+																	htmlFor={selectId}
+																	className="block text-xs font-medium mb-1"
+																>
+																	Search Engine
+																</label>
+																<select
+																	id={selectId}
+																	value={tool.config?.searchEngine ?? 'google'}
+																	onChange={(e) =>
+																		updateToolConfig(tool.id, {
+																			...tool.config,
+																			searchEngine: e.target.value,
+																		})
+																	}
+																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+																>
+																	<option value="google">Google</option>
+																	<option value="bing">Bing</option>
+																	<option value="duckduckgo">DuckDuckGo</option>
+																</select>
+															</>
+														);
+													})()}
 												</div>
 												<div>
-													<label className="block text-xs font-medium mb-1">
-														Results Limit
-													</label>
-													<input
-														type="number"
-														min="1"
-														max="20"
-														value={tool.config?.resultsLimit || 5}
-														onChange={(e) =>
-															updateToolConfig(tool.id, {
-																...tool.config,
-																resultsLimit: parseInt(e.target.value),
-															})
-														}
-														className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-													/>
+													{(() => {
+														const inputId = `${tool.id}-results-limit`;
+														return (
+															<>
+																<label
+																	htmlFor={inputId}
+																	className="block text-xs font-medium mb-1"
+																>
+																	Results Limit
+																</label>
+																<input
+																	id={inputId}
+																	type="number"
+																	min="1"
+																	max="20"
+																	value={tool.config?.resultsLimit ?? 5}
+																	onChange={(e) =>
+																		updateToolConfig(tool.id, {
+																			...tool.config,
+																			resultsLimit: parseInt(e.target.value),
+																		})
+																	}
+																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+																/>
+															</>
+														);
+													})()}
 												</div>
 											</div>
 										)}
@@ -197,58 +275,41 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 										{tool.id === 'code-interpreter' && (
 											<div className="space-y-3">
 												<div>
-													<label className="block text-xs font-medium mb-1">
-														Supported Languages
-													</label>
-													<div className="flex flex-wrap gap-2">
-														{['python', 'javascript', 'bash'].map((lang) => (
-															<label
-																key={lang}
-																className="flex items-center text-xs"
-															>
-																<input
-																	type="checkbox"
-																	checked={
-																		tool.config?.languages?.includes(lang) ||
-																		false
-																	}
-																	onChange={(e) => {
-																		const languages =
-																			tool.config?.languages || [];
-																		const newLanguages = e.target.checked
-																			? [...languages, lang]
-																			: languages.filter(
-																					(l: string) => l !== lang,
-																				);
-																		updateToolConfig(tool.id, {
-																			...tool.config,
-																			languages: newLanguages,
-																		});
-																	}}
-																	className="mr-1 rounded"
-																/>
-																{lang}
-															</label>
-														))}
-													</div>
+													<fieldset className="flex flex-wrap gap-2">
+														<legend className="sr-only">
+															Supported Languages
+														</legend>
+														{renderLanguageCheckboxes(tool)}
+													</fieldset>
 												</div>
 												<div>
-													<label className="block text-xs font-medium mb-1">
-														Timeout (seconds)
-													</label>
-													<input
-														type="number"
-														min="1"
-														max="300"
-														value={tool.config?.timeout || 30}
-														onChange={(e) =>
-															updateToolConfig(tool.id, {
-																...tool.config,
-																timeout: parseInt(e.target.value),
-															})
-														}
-														className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-													/>
+													{(() => {
+														const timeoutId = `${tool.id}-timeout`;
+														return (
+															<>
+																<label
+																	htmlFor={timeoutId}
+																	className="block text-xs font-medium mb-1"
+																>
+																	Timeout (seconds)
+																</label>
+																<input
+																	id={timeoutId}
+																	type="number"
+																	min="1"
+																	max="300"
+																	value={tool.config?.timeout ?? 30}
+																	onChange={(e) =>
+																		updateToolConfig(tool.id, {
+																			...tool.config,
+																			timeout: parseInt(e.target.value),
+																		})
+																	}
+																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+																/>
+															</>
+														);
+													})()}
 												</div>
 											</div>
 										)}
@@ -256,44 +317,66 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 										{tool.id === 'image-generator' && (
 											<div className="space-y-3">
 												<div>
-													<label className="block text-xs font-medium mb-1">
-														Default Model
-													</label>
-													<select
-														value={tool.config?.model || 'dall-e-3'}
-														onChange={(e) =>
-															updateToolConfig(tool.id, {
-																...tool.config,
-																model: e.target.value,
-															})
-														}
-														className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-													>
-														<option value="dall-e-3">DALL-E 3</option>
-														<option value="dall-e-2">DALL-E 2</option>
-														<option value="stable-diffusion">
-															Stable Diffusion
-														</option>
-													</select>
+													{(() => {
+														const modelId = `${tool.id}-model`;
+														return (
+															<>
+																<label
+																	htmlFor={modelId}
+																	className="block text-xs font-medium mb-1"
+																>
+																	Default Model
+																</label>
+																<select
+																	id={modelId}
+																	value={tool.config?.model ?? 'dall-e-3'}
+																	onChange={(e) =>
+																		updateToolConfig(tool.id, {
+																			...tool.config,
+																			model: e.target.value,
+																		})
+																	}
+																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+																>
+																	<option value="dall-e-3">DALL-E 3</option>
+																	<option value="dall-e-2">DALL-E 2</option>
+																	<option value="stable-diffusion">
+																		Stable Diffusion
+																	</option>
+																</select>
+															</>
+														);
+													})()}
 												</div>
 												<div>
-													<label className="block text-xs font-medium mb-1">
-														Image Size
-													</label>
-													<select
-														value={tool.config?.size || '1024x1024'}
-														onChange={(e) =>
-															updateToolConfig(tool.id, {
-																...tool.config,
-																size: e.target.value,
-															})
-														}
-														className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-													>
-														<option value="256x256">256x256</option>
-														<option value="512x512">512x512</option>
-														<option value="1024x1024">1024x1024</option>
-													</select>
+													{(() => {
+														const sizeId = `${tool.id}-size`;
+														return (
+															<>
+																<label
+																	htmlFor={sizeId}
+																	className="block text-xs font-medium mb-1"
+																>
+																	Image Size
+																</label>
+																<select
+																	id={sizeId}
+																	value={tool.config?.size ?? '1024x1024'}
+																	onChange={(e) =>
+																		updateToolConfig(tool.id, {
+																			...tool.config,
+																			size: e.target.value,
+																		})
+																	}
+																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+																>
+																	<option value="256x256">256x256</option>
+																	<option value="512x512">512x512</option>
+																	<option value="1024x1024">1024x1024</option>
+																</select>
+															</>
+														);
+													})()}
 												</div>
 											</div>
 										)}

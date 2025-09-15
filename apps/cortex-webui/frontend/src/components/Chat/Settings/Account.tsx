@@ -1,22 +1,20 @@
 'use client';
 
-import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { createAPIKey, getAPIKey, updateUserProfile } from '@/lib/api/auth';
 import { copyToClipboard, generateInitialsImage } from '@/lib/utils';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUserStore } from '@/stores/userStore';
+import type React from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface AccountSettingsProps {
-	saveHandler: () => void;
-	saveSettings: (settings: any) => void;
+	saveSettings: (settings: {
+		notifications?: { webhook_url?: string };
+	}) => void;
 }
 
-const AccountSettings: React.FC<AccountSettingsProps> = ({
-	saveHandler,
-	saveSettings,
-}) => {
+const AccountSettings: React.FC<AccountSettingsProps> = ({ saveSettings }) => {
 	const [loaded, setLoaded] = useState(false);
 	const [profileImageUrl, setProfileImageUrl] = useState('');
 	const [name, setName] = useState('');
@@ -24,14 +22,20 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 	const [gender, setGender] = useState('');
 	const [dateOfBirth, setDateOfBirth] = useState('');
 	const [webhookUrl, setWebhookUrl] = useState('');
-	const [showAPIKeys, setShowAPIKeys] = useState(false);
-	const [JWTTokenCopied, setJWTTokenCopied] = useState(false);
 	const [APIKey, setAPIKey] = useState('');
 	const [APIKeyCopied, setAPIKeyCopied] = useState(false);
 
 	const user = useUserStore();
 	const settings = useSettingsStore();
 	const profileImageInputElement = useRef<HTMLInputElement>(null);
+
+	const accountTabId = useId();
+	const profileImageInputId = useId();
+	const nameInputId = useId();
+	const bioInputId = useId();
+	const genderSelectId = useId();
+	const dateOfBirthInputId = useId();
+	const webhookInputId = useId();
 
 	useEffect(() => {
 		const initialize = async () => {
@@ -81,9 +85,9 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 			const updatedUser = await updateUserProfile({
 				name: name,
 				profile_image_url: profileImageUrl,
-				bio: bio ? bio : null,
-				gender: gender ? gender : null,
-				date_of_birth: dateOfBirth ? dateOfBirth : null,
+				bio: bio || null,
+				gender: gender || null,
+				date_of_birth: dateOfBirth || null,
 			});
 
 			if (updatedUser) {
@@ -93,6 +97,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 				return true;
 			}
 		} catch (error) {
+			console.error('Profile update error:', error);
 			toast.error('Failed to update profile');
 		}
 		return false;
@@ -108,6 +113,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 				toast.error('Failed to create API Key.');
 			}
 		} catch (error) {
+			console.error('API key creation error:', error);
 			toast.error('Failed to create API Key.');
 		}
 	};
@@ -142,7 +148,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 				const aspectRatio = img.width / img.height;
 
 				// Calculate the new width and height to fit within 250x250
-				let newWidth, newHeight;
+				let newWidth: number, newHeight: number;
 				if (aspectRatio > 1) {
 					newWidth = 250 * aspectRatio;
 					newHeight = 250;
@@ -183,12 +189,12 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 
 	return (
 		<div
-			id="tab-account"
+			id={accountTabId}
 			className="flex flex-col h-full justify-between text-sm"
 		>
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full">
 				<input
-					id="profile-image-input"
+					id={profileImageInputId}
 					ref={profileImageInputElement}
 					type="file"
 					hidden
@@ -236,6 +242,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 											fill="currentColor"
 											className="size-4"
 										>
+											<title>Edit profile photo</title>
 											<path d="M10 3a3 3 0 0 0-3 3v7.5a3 3 0 1 0 6 0V6a3 3 0 0 0-3-3ZM8.5 6a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
 											<path d="M4 10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.586A3 3 0 0 1 11.586 3H8.414A3 3 0 0 0 6.586 4H5a2 2 0 0 0-2 2v4Z" />
 										</svg>
@@ -247,13 +254,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 						<div className="flex-1">
 							<div className="mb-2">
 								<label
-									htmlFor="name"
+									htmlFor={nameInputId}
 									className="block text-sm font-medium mb-1"
 								>
 									Name
 								</label>
 								<input
-									id="name"
+									id={nameInputId}
 									type="text"
 									value={name}
 									onChange={(e) => setName(e.target.value)}
@@ -262,11 +269,14 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 							</div>
 
 							<div>
-								<label htmlFor="bio" className="block text-sm font-medium mb-1">
+								<label
+									htmlFor={bioInputId}
+									className="block text-sm font-medium mb-1"
+								>
 									Bio
 								</label>
 								<textarea
-									id="bio"
+									id={bioInputId}
 									value={bio}
 									onChange={(e) => setBio(e.target.value)}
 									rows={3}
@@ -279,13 +289,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
 							<label
-								htmlFor="gender"
+								htmlFor={genderSelectId}
 								className="block text-sm font-medium mb-1"
 							>
 								Gender
 							</label>
 							<select
-								id="gender"
+								id={genderSelectId}
 								value={gender}
 								onChange={(e) => setGender(e.target.value)}
 								className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -299,13 +309,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 
 						<div>
 							<label
-								htmlFor="date-of-birth"
+								htmlFor={dateOfBirthInputId}
 								className="block text-sm font-medium mb-1"
 							>
 								Date of Birth
 							</label>
 							<input
-								id="date-of-birth"
+								id={dateOfBirthInputId}
 								type="date"
 								value={dateOfBirth}
 								onChange={(e) => setDateOfBirth(e.target.value)}
@@ -318,13 +328,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 						<div className="text-base font-medium mb-2">Notifications</div>
 						<div>
 							<label
-								htmlFor="webhook-url"
+								htmlFor={webhookInputId}
 								className="block text-sm font-medium mb-1"
 							>
 								Webhook URL
 							</label>
 							<input
-								id="webhook-url"
+								id={webhookInputId}
 								type="url"
 								value={webhookUrl}
 								onChange={(e) => setWebhookUrl(e.target.value)}

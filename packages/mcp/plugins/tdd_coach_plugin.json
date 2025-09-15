@@ -1,0 +1,15 @@
+{
+  "name": "tdd_coach",
+  "version": "1.0.0",
+  "description": "TDD Coach plugin for Test-Driven Development assistance",
+  "author": "brAInwav",
+  "dependencies": [],
+  "entry_point": "TDDCoachPlugin",
+  "config_schema": {
+    "tdd_coach_path": {
+      "type": "string",
+      "default": "/Users/jamiecraik/.Cortex-OS/packages/tdd-coach",
+      "description": "Path to the TDD Coach package"
+    }
+  }
+}

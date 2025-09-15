@@ -1,0 +1,19 @@
+[Unit]
+Description=MCP Server for brAInwav Cortex-OS
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=jamiecraik
+WorkingDirectory=/Users/jamiecraik/.Cortex-OS/packages/mcp
+Environment=PATH=/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin
+Environment=PYTHONPATH=/Users/jamiecraik/.Cortex-OS/packages/mcp
+ExecStart=/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python cli/main.py serve --host 127.0.0.1 --port 3000
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,8 +1,17 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useRef } from 'react';
-import type { ChatMessage } from '../../../../shared/types/chat';
+import { useCallback, useEffect, useRef } from 'react';
+
+// import type { ChatMessage } from '../../../../shared/types/chat';
+// TODO: Fix import path when shared types are properly set up
+type ChatMessage = {
+	id: string;
+	role: 'user' | 'assistant' | 'system';
+	content: string;
+	createdAt: string;
+};
+
 import Message from './Message';
 import MessageBranch from './MessageBranch';
 
@@ -21,13 +30,13 @@ const Messages: React.FC<MessagesProps> = ({
 }) => {
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const scrollToBottom = () => {
+	const scrollToBottom = useCallback(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	};
+	}, []);
 
 	useEffect(() => {
 		scrollToBottom();
-	}, [messages, streaming]);
+	}, [scrollToBottom]);
 
 	// Group messages by branches for branching visualization
 	const groupMessagesByBranch = (messages: ChatMessage[]) => {

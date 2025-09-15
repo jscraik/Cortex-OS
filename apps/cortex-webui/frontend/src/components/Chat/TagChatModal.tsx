@@ -1,8 +1,8 @@
 'use client';
 
-import type React from 'react';
-import { useState } from 'react';
 import Modal from '@/components/common/Modal';
+import type React from 'react';
+import { useId, useState } from 'react';
 
 interface Tag {
 	id: string;
@@ -13,7 +13,6 @@ interface Tag {
 interface TagChatModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	chatId: string;
 	chatTitle: string;
 	initialTags: Tag[];
 	onTagsUpdate: (tags: Tag[]) => void;
@@ -22,7 +21,6 @@ interface TagChatModalProps {
 const TagChatModal: React.FC<TagChatModalProps> = ({
 	isOpen,
 	onClose,
-	chatId,
 	chatTitle,
 	initialTags,
 	onTagsUpdate,
@@ -30,6 +28,8 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 	const [tags, setTags] = useState<Tag[]>(initialTags);
 	const [newTag, setNewTag] = useState('');
 	const [selectedColor, setSelectedColor] = useState('#3b82f6'); // Default blue
+
+	const newTagInputId = useId();
 
 	const predefinedColors = [
 		'#3b82f6', // blue
@@ -46,7 +46,7 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 		if (newTag.trim() === '') return;
 
 		const tag: Tag = {
-			id: Math.random().toString(36).substr(2, 9),
+			id: Math.random().toString(36).substring(2, 11),
 			name: newTag.trim(),
 			color: selectedColor,
 		};
@@ -85,7 +85,7 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 
 					<div>
 						<label
-							htmlFor="new-tag"
+							htmlFor={newTagInputId}
 							className="block text-sm font-medium text-gray-700 dark:text-gray-300"
 						>
 							Add New Tag
@@ -93,7 +93,7 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 						<div className="mt-1 flex">
 							<input
 								type="text"
-								id="new-tag"
+								id={newTagInputId}
 								value={newTag}
 								onChange={(e) => setNewTag(e.target.value)}
 								onKeyDown={(e) => e.key === 'Enter' && addTag()}
@@ -156,6 +156,7 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 												fill="currentColor"
 												className="size-4"
 											>
+												<title>Remove tag</title>
 												<path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
 											</svg>
 										</button>

@@ -17,7 +17,7 @@ interface CitationsProps {
 
 const Citations: React.FC<CitationsProps> = ({
 	citations,
-	onCitationClick,
+	onCitationClick: _onCitationClick,
 }) => {
 	const [expandedCitation, setExpandedCitation] = useState<string | null>(null);
 
@@ -50,6 +50,7 @@ const Citations: React.FC<CitationsProps> = ({
 						className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden"
 					>
 						<button
+							type="button"
 							className="flex items-center justify-between w-full p-3 text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
 							onClick={() => toggleCitation(citation.id)}
 						>
@@ -70,6 +71,10 @@ const Citations: React.FC<CitationsProps> = ({
 								fill="currentColor"
 								className={`size-5 text-gray-400 transition-transform duration-200 ${expandedCitation === citation.id ? 'rotate-180' : ''}`}
 							>
+								<title>
+									{expandedCitation === citation.id ? 'Collapse' : 'Expand'}{' '}
+									citation details
+								</title>
 								<path
 									fillRule="evenodd"
 									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"

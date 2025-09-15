@@ -620,3 +620,112 @@ it('should call external service', () => {
 - [Integration Tests](/tests/)
 - [Performance Tests](/k6/README.md)
 - [CI/CD Configuration](/.github/workflows/)
+
+---
+
+## Agent Isolation Sandbox (Experimental Hardened Execution)
+
+The sandbox provides a constrained execution environment for untrusted or tool-generated functions.
+It runs user code inside a `worker_threads` isolate with a narrow API surface and emits structured
+audit events for policy violations.
+
+### Key Goals
+
+- Prevent dynamic code injection (`eval`, `Function`)
+- Restrict filesystem reads to declared allowlist paths (virtual file layer for tests)
+- Block network egress except explicit allowlist hosts
+- Enforce execution time budget (`maxExecutionMs`)
+- Enforce memory soft cap via cooperative `alloc` API
+- Detect non-serializable return values (structured cloning + JSON fallback)
+- Abort early after excessive policy breaches (`maxViolations`)
+- Emit consistent audit events with machine-consumable violation codes
+
+### API (createAgentSandbox options)
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `allowedReadPaths` | `string[]` | yes | Root(s) (POSIX style) allowed for virtual file reads. Normalized path traversal outside these roots is denied. |
+| `networkAllowlist` | `string[]` | yes | Hostnames permitted for `fetch`. All others produce `NET_DENIED` violation. |
+| `maxExecutionMs` | `number` | yes | Hard wall-clock timeout; triggers `TIMEOUT` violation and termination. |
+| `onAuditEvent` | `(evt) => void` | no | Callback invoked for each violation/audit event. |
+| `memorySoftLimitBytes` | `number` | no | Cooperative soft limit; `alloc(bytes)` increments internal counter and throws + emits `MEMORY_SOFT_LIMIT` when exceeded. |
+| `virtualFiles` | `Record<string,string>` | no | In-memory file map keyed by normalized absolute paths. Prevents real FS access in tests. |
+| `maxViolations` | `number` | no | Early abort threshold. When reached, emits `VIOLATION_THRESHOLD` and terminates run. |
+
+### Violation Codes
+
+Codes are enumerated in the implementation and mirrored in the Zod contract schema (`libs/typescript/contracts/src/sandbox-audit-events.ts`).
+
+| Code | Meaning | Typical Trigger |
+|------|---------|-----------------|
+| `DYNAMIC_CODE` | Dynamic evaluation attempt blocked | `eval('...')` or `new Function()` |
+| `FS_DENIED` | Unauthorized filesystem path | Reading outside `allowedReadPaths` |
+| `FS_TRAVERSAL` | Path traversal attempt detected | `../` escaping root without allowlist coverage |
+| `NET_DENIED` | Network egress blocked | Host not in `networkAllowlist` |
+| `MEMORY_SOFT_LIMIT` | Memory soft limit exceeded | Cumulative `alloc` bytes > `memorySoftLimitBytes` |
+| `TIMEOUT` | Execution exceeded time budget | Wall clock runtime > `maxExecutionMs` |
+| `SERIALIZE_ERROR` | Return value not serializable | Cyclic/closure-bound object rejected by `structuredClone` / JSON |
+| `VIOLATION_THRESHOLD` | Abort due to too many violations | Reached configured `maxViolations` |
+
+### Audit Event Shape (Contract)
+
+Validated by Zod: `SandboxAuditEventSchema`.
+
+```ts
+{
+  type: 'sandbox.<category>.<kind>',
+  severity: 'low' | 'medium' | 'high',
+  message: string,
+  meta?: Record<string, unknown>,
+  code?: ViolationCodeEnum
+}
+```
+
+All sandbox events must start with the `sandbox.` prefix; the contract test enforces this.
+
+### Serialization Guard
+
+Return values are checked with:
+
+1. `structuredClone(value)` – fast structural validation
+2. `JSON.stringify(value)` – catches some edge shapes not rejected by clone
+
+Failure emits `SERIALIZE_ERROR` and the sandbox run resolves with `success: false`.
+
+### Early Abort Strategy
+
+If `maxViolations` is set and the count of recorded violations meets or exceeds it, the worker is
+terminated and a synthetic `sandbox.violation.threshold` event with code `VIOLATION_THRESHOLD` is
+emitted before returning a failure result.
+
+### Example Usage
+
+```ts
+import { createAgentSandbox } from './agent-isolation-sandbox-impl';
+
+const sandbox = createAgentSandbox({
+  allowedReadPaths: ['/allowed'],
+  networkAllowlist: ['api.example.com'],
+  maxExecutionMs: 200,
+  memorySoftLimitBytes: 50_000,
+  maxViolations: 3,
+  virtualFiles: { '/allowed/config.json': '{"ok":true}' },
+  onAuditEvent: evt => console.log('AUDIT', evt.code, evt.type)
+});
+
+const result = await sandbox.run(api => api.readFile('/allowed/config.json'));
+if (result.success) {
+  console.log('Value:', result.returnValue);
+} else {
+  console.warn('Sandbox failure', result.error?.message, result.violations.map(v => v.code));
+}
+```
+
+### Future Hardening Ideas
+
+- Syscall-level CPU budgeting (profiling + instruction sampling)
+- Built-in resource metering (IO op counters)
+- Per-run trace correlation IDs
+- Optional write sandbox (temp overlay FS)
+
+---

@@ -56,8 +56,8 @@ enum Subcommand {
     /// Remove stored authentication credentials.
     Logout(LogoutCommand),
 
-    /// Experimental: run Codex as an MCP server.
-    Mcp,
+    /// MCP commands (list, server, etc.)
+    Mcp(McpCli),
 
     /// Run the Protocol stream via stdin/stdout
     #[clap(visible_alias = "p")]
@@ -83,6 +83,32 @@ struct CompletionCommand {
     /// Shell to generate completions for
     #[clap(value_enum, default_value_t = Shell::Bash)]
     shell: Shell,
+}
+
+#[derive(Debug, Parser)]
+struct A2aCli {
+    #[command(subcommand)]
+    action: Option<A2aAction>,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum A2aAction {
+    /// Health check output for A2A
+    Doctor,
+}
+
+#[derive(Debug, Parser)]
+struct McpCli {
+    #[command(subcommand)]
+    action: Option<McpAction>,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum McpAction {
+    /// List configured MCP servers (JSON)
+    List,
+    /// Run Codex as an MCP server (experimental)
+    Server,
 }
 
 #[derive(Debug, Parser)]
@@ -158,9 +184,24 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             prepend_config_flags(&mut exec_cli.config_overrides, cli.config_overrides);
             codex_exec::run_main(exec_cli, codex_linux_sandbox_exe).await?;
         }
-        Some(Subcommand::Mcp) => {
-            codex_mcp_server::run_main(codex_linux_sandbox_exe, cli.config_overrides).await?;
-        }
+        Some(Subcommand::Mcp(mcp_cli)) => match mcp_cli.action {
+            Some(McpAction::List) => {
+                // Minimal JSON list placeholder; wire real sources later
+                println!("[]");
+            }
+            Some(McpAction::Server) => {
+                codex_mcp_server::run_main(codex_linux_sandbox_exe, cli.config_overrides).await?;
+            }
+            None => {
+                // Default to help when no action provided
+                let mut app = MultitoolCli::command();
+                // Find and print the `mcp` subcommand help
+                if let Some(mut mcp_cmd) = app.find_subcommand_mut("mcp") {
+                    mcp_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
         Some(Subcommand::Login(mut login_cli)) => {
             prepend_config_flags(&mut login_cli.config_overrides, cli.config_overrides);
             match login_cli.action {
@@ -192,6 +233,8 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 prepend_config_flags(&mut seatbelt_cli.config_overrides, cli.config_overrides);
                 codex_cli::debug_sandbox::run_command_under_seatbelt(
                     seatbelt_cli,
+    /// A2A commands (doctor, send, etc.)
+    A2a(A2aCli),
                     codex_linux_sandbox_exe,
                 )
                 .await?;
@@ -233,3 +276,17 @@ fn print_completion(cmd: CompletionCommand) {
     let name = "codex";
     generate(cmd.shell, &mut app, name, &mut std::io::stdout());
 }
+        Some(Subcommand::A2a(a2a_cli)) => match a2a_cli.action {
+            Some(A2aAction::Doctor) => {
+                // Minimal health payload in JSON
+                // {"ok":true,"service":"a2a","version":"1"}
+                println!("{{\"ok\":true,\"service\":\"a2a\",\"version\":\"1\"}}");
+            }
+            None => {
+                let mut app = MultitoolCli::command();
+                if let Some(mut a2a_cmd) = app.find_subcommand_mut("a2a") {
+                    a2a_cmd.print_help()?;
+                    println!();
+                }
+            }
+        },
