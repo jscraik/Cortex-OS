@@ -200,4 +200,4 @@ export const SCHEMA_VERSIONS = {
  * Runtime sentinel to guarantee JS emission even if future refactors make other exports type-only.
  * This also supports build-output tests expecting a concrete `dist/index.js` artifact.
  */
-export const __ASBR_RUNTIME_SENTINEL__ = true;
+export const ASBR_RUNTIME_SENTINEL = true;

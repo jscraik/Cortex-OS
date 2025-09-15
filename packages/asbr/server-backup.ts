@@ -404,8 +404,17 @@ class ASBRServerClass {
 				clearInterval(heartbeat);
 				try {
 					res.end();
-				} catch (_e) {
-					/* swallow */
+				} catch (error) {
+					const meta =
+						error instanceof Error
+							? {
+								error: {
+									message: error.message,
+									stack: error.stack,
+								},
+							}
+							: { error: { message: String(error) } };
+					logError('Failed to close SSE stream gracefully', meta);
 				}
 			}, 50);
 		}

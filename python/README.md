@@ -28,6 +28,42 @@ The project uses `uv` for Python package management:
 - **Data Processing** - Data transformation and analysis
 - **API Bindings** - Python API client libraries
 
+
+## MCP Tools
+
+Cortex-OS provides a reusable foundation for building Model Context Protocol (MCP) tools in Python.
+The `cortex_mlx.mcp` package offers a `BaseMCPTool` with built-in Pydantic validation, structured
+error handling, and a registry for discovery.
+
+### Base tool overview
+
+- `BaseMCPTool` enforces Pydantic-based input validation and normalized responses.
+- `ToolRegistry` centralizes tool registration and execution for MCP servers.
+- Standard exceptions (`MCPToolValidationError`, `MCPToolExecutionError`) provide actionable errors.
+
+### Echo tool reference implementation
+
+The repository now includes `EchoTool`, a minimal MCP tool that demonstrates how to build tools on top of the shared base class. It supports optional uppercasing and message repetition while exposing
+rich metadata for discovery.
+
+#### Usage example
+
+```python
+import asyncio
+from cortex_mlx.mcp import EchoTool, ToolRegistry
+
+async def main() -> None:
+    registry = ToolRegistry()
+    echo_tool = registry.register(EchoTool())
+    result = await echo_tool.execute({"message": "Hello Cortex", "uppercase": True})
+    print(result["content"][0]["text"])  # -> HELLO CORTEX
+
+asyncio.run(main())
+```
+
+Validation errors raise `MCPToolValidationError`, making it easy to surface actionable feedback to
+MCP clients. Execution issues are wrapped in `MCPToolExecutionError` with tool names for observability.
+
 ## Key Features
 
 ### MLX Integration

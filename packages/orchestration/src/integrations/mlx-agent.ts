@@ -288,9 +288,9 @@ export class MLXAgent extends EventEmitter implements Agent {
 				models: healthData.loaded_models,
 				memory: healthData.memory,
 			};
-		} catch (_error) {
-			return { available: false };
-		}
+                } catch {
+                        return { available: false };
+                }
 	}
 
 	/**
