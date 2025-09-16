@@ -267,7 +267,6 @@ const baseIngestSchema = z.object({
 });
 
 export const ragDocumentIngestToolSchema = baseIngestSchema;
-export const ragIngestToolSchema = baseIngestSchema;
 
 export const ragSearchToolSchema = z.object({
 	query: z
