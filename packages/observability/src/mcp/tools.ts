@@ -380,13 +380,6 @@ function postProcessInput<TTool extends ObservabilityToolName>(
                         const input = parsed as RecordMetricInput;
                         const tags = sanitizeTags(input.tags, 'tags');
                         const timestamp = sanitizeTimestamp(input.timestamp, 'timestamp');
-                        if (!Number.isFinite(input.value)) {
-                                throw new ObservabilityToolError(
-                                        'validation_error',
-                                        'value must be a finite number',
-                                        ['value must be a finite number'],
-                                );
-                        }
                         return {
                                 name: input.name.trim(),
                                 value: input.value,
