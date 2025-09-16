@@ -83,7 +83,7 @@ function validateEnvelope(envelope: Envelope): ObservabilityEventEnvelope {
                 throw new Error(`Unsupported observability event type: ${envelope.type}`);
         }
         const schema = OBSERVABILITY_EVENT_SCHEMAS[envelope.type];
-        const data = schema.parse(envelope.data) as ObservabilityEventPayloadMap[ObservabilityEventType];
+        const data = schema.parse(envelope.data);
         return { ...envelope, data } as ObservabilityEventEnvelope;
 }
 
