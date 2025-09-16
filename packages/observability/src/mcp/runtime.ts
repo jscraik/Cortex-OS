@@ -331,14 +331,46 @@ function summarize(values: number[]): {
         };
 }
 
+// Quickselect algorithm to find the k-th smallest element
+function quickselect(arr: number[], k: number): number {
+        if (arr.length === 1) return arr[0];
+        let left = 0, right = arr.length - 1;
+        while (left <= right) {
+                // Choose a random pivot
+                const pivotIndex = left + Math.floor(Math.random() * (right - left + 1));
+                const pivotValue = arr[pivotIndex];
+                // Partition
+                let i = left, j = right;
+                while (i <= j) {
+                        while (arr[i] < pivotValue) i++;
+                        while (arr[j] > pivotValue) j--;
+                        if (i <= j) {
+                                [arr[i], arr[j]] = [arr[j], arr[i]];
+                                i++;
+                                j--;
+                        }
+                }
+                if (k <= j) {
+                        right = j;
+                } else if (k >= i) {
+                        left = i;
+                } else {
+                        return arr[k];
+                }
+        }
+        return arr[k];
+}
+
 function percentile(values: number[], percentileValue: number): number {
         if (values.length === 0) return 0;
-        const sorted = [...values].sort((a, b) => a - b);
+        const n = values.length;
         const index = Math.min(
-                sorted.length - 1,
-                Math.max(0, Math.ceil((percentileValue / 100) * sorted.length) - 1),
+                n - 1,
+                Math.max(0, Math.ceil((percentileValue / 100) * n) - 1),
         );
-        return sorted[index];
+        // Make a copy to avoid mutating the original array
+        const arrCopy = [...values];
+        return quickselect(arrCopy, index);
 }
 
 function compareThreshold(value: number, threshold: number, comparison: AlertComparison): boolean {
