@@ -200,7 +200,7 @@ class EmbeddingService:
             cached_hits=cached_hits,
         )
         return BatchEmbeddingServiceResult(
-            embeddings=[list(vec) for vec in embeddings if vec is not None],
+            embeddings=[list(vec) for vec in embeddings],
             cached_hits=cached_hits,
             metadata=metadata,
         )
