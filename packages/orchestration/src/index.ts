@@ -76,3 +76,11 @@ export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
 export { MLXAgent } from './integrations/mlx-agent.js';
 // PRP Neural Orchestration Engine
 export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';
+
+// MCP tool exports
+export {
+        orchestrationMcpTools,
+        processMonitoringTool,
+        taskManagementTool,
+        workflowOrchestrationTool,
+} from './mcp/tools.js';
