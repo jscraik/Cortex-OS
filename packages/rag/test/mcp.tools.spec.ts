@@ -200,6 +200,3 @@ describe('citation bundler tool', () => {
         });
 });
 
-afterEach(() => {
-        vi.clearAllMocks();
-});
