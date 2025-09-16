@@ -101,7 +101,7 @@ export function createRagBus(options: RagBusOptions = {}): RagBus {
                                 throw new Error(`Unsupported RAG event type: ${type}`);
                         }
                         const schema = RAGEventSchemas[type];
-                        const data = schema.parse(payload) as RagEventPayloadMap[TType];
+                        const data = schema.parse(payload);
                         const envelope = createEnvelope({
                                 type,
                                 source,
