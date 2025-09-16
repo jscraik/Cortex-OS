@@ -1,4 +1,5 @@
 /**
+
  * MCP Tool definitions for the RAG package.
  * Implements ingestion, search, retrieval, reranking, and citation helpers
  * that expose the core RAG pipeline over the Model Context Protocol (MCP).
@@ -543,3 +544,4 @@ export const ragMcpTools: RAGTool[] = [
 	ragCitationTool,
 	ragStatusTool,
 ];
+
