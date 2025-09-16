@@ -20,6 +20,7 @@ vi.mock('@opentelemetry/resources', () => ({
 	Resource: class Resource {
 		constructor(public attrs: any) {}
 	},
+	resourceFromAttributes: (attrs: Record<string, unknown>) => ({ attributes: attrs }),
 }));
 vi.mock('@opentelemetry/semantic-conventions', () => ({
 	ATTR_SERVICE_NAME: 'service.name',
