@@ -104,7 +104,7 @@ export function createObservabilityBus(options: ObservabilityBusOptions = {}): O
                                 throw new Error(`Unsupported observability event type: ${type}`);
                         }
                         const schema = OBSERVABILITY_EVENT_SCHEMAS[type];
-                        const data = schema.parse(payload) as ObservabilityEventPayloadMap[TType];
+                        const data = schema.parse(payload);
                         const envelope = createEnvelope({
                                 type,
                                 source,
