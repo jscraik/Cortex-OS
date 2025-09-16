@@ -5,23 +5,31 @@
 
 // A2A Events for inter-package communication
 export type {
-	AlertTriggeredEvent,
-	MetricRecordedEvent,
-	TraceCompletedEvent,
-	TraceCreatedEvent,
+        AlertTriggeredEvent,
+        MetricRecordedEvent,
+        TraceCompletedEvent,
+        TraceCreatedEvent,
 } from './events/observability-events.js';
 export {
-	AlertTriggeredEventSchema,
-	createObservabilityEvent,
-	MetricRecordedEventSchema,
-	TraceCompletedEventSchema,
-	TraceCreatedEventSchema,
+        AlertTriggeredEventSchema,
+        OBSERVABILITY_EVENT_SCHEMAS,
+        OBSERVABILITY_EVENT_TYPES,
+        createObservabilityEvent,
+        MetricRecordedEventSchema,
+        TraceCompletedEventSchema,
+        TraceCreatedEventSchema,
 } from './events/observability-events.js';
+export type {
+        ObservabilityBus,
+        ObservabilityEventEnvelope,
+        ObservabilityEventHandler,
+        ObservabilityPublishOptions,
+} from './events/observability-bus.js';
+export { createObservabilityBus } from './events/observability-bus.js';
 export * from './flamegraph.js';
 export * from './logging/index.js';
 // MCP Tools for external AI agent integration
 export type {
-
         AlertQueryInput,
         DashboardRequestInput,
         LogSearchInput,

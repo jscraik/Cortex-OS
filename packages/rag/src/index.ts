@@ -35,6 +35,13 @@ export {
 	ragQueryResultEventSchema,
 } from './events/rag-events.js';
 export type {
+	RagBus,
+	RagEventEnvelope,
+	RagEventHandler,
+	RagPublishOptions,
+} from './events/rag-bus.js';
+export { createRagBus } from './events/rag-bus.js';
+export type {
 	ArchonRAGConfig,
 	DocumentSyncResult,
 	MinimalStore,

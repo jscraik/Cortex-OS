@@ -19,7 +19,10 @@
     "@cortex-os/contracts": "workspace:*",
     "@cortex-os/model-gateway": "workspace:*",
     "@cortex-os/agents": "workspace:*",
-    "@cortex-os/observability": "workspace:*"
+    "@cortex-os/observability": "workspace:*",
+    "@cortex-os/a2a-contracts": "workspace:*",
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/a2a-transport": "workspace:*"
   },
   "devDependencies": {
     "@types/micromatch": "^4.0.9",
