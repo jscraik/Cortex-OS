@@ -62,7 +62,7 @@ function createDataset(): ObservabilityDataset {
                         runId,
                         traceId: 'trace-beta',
                         metadata: {
-                                token: 'very-secret-token',
+                                token: 'fake-test-token',
                                 requestId: 'req-1',
                         },
                 },
