@@ -9,7 +9,11 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol
 
 import httpx
-import instructor
+
+try:
+    import instructor
+except ImportError:
+    instructor = None
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -141,10 +145,13 @@ class OllamaAdapter:
         self.base_url = base_url
         self.models = models
         self.embed_models = embed_models
-        self._client = instructor.from_openai(
-            OpenAI(base_url=f"{base_url}/v1", api_key=api_key),
-            mode=instructor.Mode.JSON,
-        )
+        if instructor is not None:
+            self._client = instructor.from_openai(
+                OpenAI(base_url=f"{base_url}/v1", api_key=api_key),
+                mode=instructor.Mode.JSON,
+            )
+        else:
+            self._client = OpenAI(base_url=f"{base_url}/v1", api_key=api_key)
 
     def available(self) -> bool:
         try:

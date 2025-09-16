@@ -13,7 +13,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 __all__ = [
     "MockMCPError",
@@ -164,13 +164,15 @@ class MockMCPServer:
         tool_name: str, handler: ToolHandler, payload: ToolArguments
     ) -> dict[str, Any]:
         try:
-            result = handler(payload)
+            result: ToolResponse | Awaitable[ToolResponse] = handler(payload)
             if asyncio.iscoroutine(result):
                 result = await result
+            # After awaiting, result is definitely ToolResponse
+            final_result = cast(ToolResponse, result)
         except Exception as exc:  # pragma: no cover - defensive path
             msg = f"Tool '{tool_name}' raised an exception: {exc}"
             raise MockMCPError(msg) from exc
-        return _normalize_result(result)
+        return _normalize_result(final_result)
 
 
 class MCPTestClient:

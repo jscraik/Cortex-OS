@@ -97,7 +97,7 @@ class ArchonMCPClient:
 
     async def call(self, method: str, params: Dict[str, Any] | None = None) -> Any:
         """Send a JSON-RPC request with retry logic."""
-        last_error = None
+        last_error: Exception = MCPError("No attempts made")
 
         for attempt in range(self._max_retries + 1):
             try:
@@ -209,7 +209,11 @@ class ArchonMCPClient:
     ) -> Dict[str, Any]:
         """Create a new task in Archon."""
         try:
-            arguments = {"title": title, "description": description, "priority": priority}
+            arguments: Dict[str, Any] = {
+                "title": title,
+                "description": description,
+                "priority": priority,
+            }
             if project_id:
                 arguments["project_id"] = project_id
             if tags:
@@ -257,7 +261,7 @@ class ArchonMCPClient:
             if isinstance(content, bytes):
                 content = content.decode("utf-8")
 
-            arguments = {"content": content, "filename": filename}
+            arguments: Dict[str, Any] = {"content": content, "filename": filename}
             if content_type:
                 arguments["content_type"] = content_type
             if tags:
@@ -281,7 +285,7 @@ class ArchonMCPClient:
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """Stream AI response from Archon's agents."""
         try:
-            arguments = {"messages": messages}
+            arguments: Dict[str, Any] = {"messages": messages}
             if model:
                 arguments["model"] = model
             if max_tokens:
@@ -318,7 +322,7 @@ class ArchonMCPClient:
         """Check if the MCP server is healthy."""
         try:
             # Try a simple ping operation
-            await self.call("ping", timeout=5.0)
+            await self.call("ping")
             return True
         except Exception as e:
             logger.warning("Health check failed: %s", e)
@@ -337,7 +341,7 @@ class ArchonMCPClient:
         await self.initialize()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Async context manager exit."""
         await self.aclose()
 
