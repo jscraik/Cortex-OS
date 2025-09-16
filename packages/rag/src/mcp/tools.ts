@@ -24,7 +24,7 @@ export interface RagToolContract<I extends ZodTypeAny, O extends ZodTypeAny> {
 
 const notImplemented = <I, O>(name: string): RagToolHandler<I, O> => {
         return async (_input: I) => {
-                throw new Error(`${name} handler not implemented`);
+                throw new Error(`${name} handler not yet implemented - please implement before using this tool`);
         };
 };
 
