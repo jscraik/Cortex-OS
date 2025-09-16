@@ -37,6 +37,7 @@ await withSpan('task', async () => { /* ... */ });
 - [Architecture](./architecture.md)
 - [CLI Reference](./cli-reference.md)
 - [API Reference](./api-reference.md)
+- [MCP Tools](./mcp-tools.md)
 - [User Guide](./user-guide.md)
 - [Best Practices](./best-practices.md)
 - [Providers Setup](./providers-setup.md)
