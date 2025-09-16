@@ -320,7 +320,7 @@ function logContainsText(log: LogRecord, text?: string): boolean {
                                 return true;
                         }
                 } catch (error) {
-                        // ignore serialization errors and treat as non-match
+                        // Ignore serialization errors and treat as non-match.
                 }
         }
         return false;
