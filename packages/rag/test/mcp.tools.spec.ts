@@ -85,21 +85,21 @@ describe('semantic search tool', () => {
         });
 
         it('applies default configuration when optional fields are omitted', async () => {
-                        handleRAGMock.mockResolvedValueOnce('ok');
-                        const { ragQueryTool } = await import('../src/mcp/tools');
+                handleRAGMock.mockResolvedValueOnce('ok');
+                const { ragQueryTool } = await import('../src/mcp/tools');
 
-                        await ragQueryTool.handler({ query: 'ocean acidity trends' });
+                await ragQueryTool.handler({ query: 'ocean acidity trends' });
 
-                        const [input] = handleRAGMock.mock.calls[0] ?? [];
-                        expect(input?.config).toMatchObject({
-                                maxTokens: 1024,
-                                timeoutMs: 30000,
-                                memory: {
-                                        maxItems: 50,
-                                        maxBytes: 4096,
-                                },
-                        });
-                        expect(input?.query).toMatchObject({ query: 'ocean acidity trends', topK: 5 });
+                const [input] = handleRAGMock.mock.calls[0] ?? [];
+                expect(input?.config).toMatchObject({
+                        maxTokens: 1024,
+                        timeoutMs: 30000,
+                        memory: {
+                                maxItems: 50,
+                                maxBytes: 4096,
+                        },
+                });
+                expect(input?.query).toMatchObject({ query: 'ocean acidity trends', topK: 5 });
         });
 });
 
