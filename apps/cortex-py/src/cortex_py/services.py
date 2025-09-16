@@ -186,7 +186,7 @@ class EmbeddingService:
             except Exception as exc:  # pragma: no cover - delegated failure
                 raise ServiceError(f"batch embedding generation failed: {exc}") from exc
 
-            for (idx, _sanitized, key), vector in zip(pending, computed, strict=False):
+            for (idx, _sanitized, key), vector in zip(pending, computed, strict=True):
                 metadata = self._build_metadata(generator, vector, cached=False)
                 self._store_cache(key, vector, metadata)
                 embeddings[idx] = list(vector)
