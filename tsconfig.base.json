@@ -66,6 +66,12 @@
             ],
             "socket.io": [
                 "node_modules/socket.io/dist/index.d.ts"
+            ],
+            "@cortex-os/mcp-core": [
+                "packages/mcp-core/src/index.ts"
+            ],
+            "@cortex-os/mcp-core/*": [
+                "packages/mcp-core/src/*"
             ]
         }
     },
