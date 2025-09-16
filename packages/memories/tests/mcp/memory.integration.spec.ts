@@ -36,38 +36,13 @@ type FailureEnvelope = {
 
 const RESPONSE_PARSE_ERROR = 'MCP tool response must include a text content payload';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-        return typeof value === 'object' && value !== null;
-}
-
-function assertRecord(value: unknown, message: string): Record<string, unknown> {
-        if (!isRecord(value)) {
-                throw new Error(message);
-        }
-        return value;
-}
-
-function assertString(value: unknown, message: string): string {
-        if (typeof value !== 'string') {
-                throw new Error(message);
-        }
-        return value;
-}
-
-function assertStringArray(value: unknown, message: string): string[] {
-        if (!Array.isArray(value)) {
-                throw new Error(message);
-        }
-        return value.map((item) => assertString(item, message));
-}
-
-function assertNumber(value: unknown, message: string): number {
-        if (typeof value !== 'number' || Number.isNaN(value)) {
-                throw new Error(message);
-        }
-        return value;
-}
-
+import {
+        isRecord,
+        assertRecord,
+        assertString,
+        assertStringArray,
+        assertNumber,
+} from '../../../mcp-core/src/testing/assertions.js';
 function parseEnvelope(result: unknown): SuccessEnvelope | FailureEnvelope {
         const response = assertRecord(result, 'MCP tool response must be an object');
         const metadata = assertRecord(response.metadata, 'MCP tool metadata missing');
