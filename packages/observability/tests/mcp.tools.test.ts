@@ -1,3 +1,4 @@
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const loggerSpies = vi.hoisted(() => {
@@ -180,5 +181,6 @@ describe('observability MCP tools validation', () => {
                         }),
                         'get_metrics validation failed',
                 );
+
         });
 });

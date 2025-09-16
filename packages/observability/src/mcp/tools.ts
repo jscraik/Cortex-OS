@@ -1,3 +1,4 @@
+
 import { randomUUID } from 'node:crypto';
 
 import { z, ZodError, type ZodIssue, type ZodTypeAny } from 'zod';
@@ -507,3 +508,4 @@ export function createObservabilityErrorResponse(
                 isError: true,
         };
 }
+
