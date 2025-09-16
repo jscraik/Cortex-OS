@@ -6,6 +6,7 @@ function isPromise<T = unknown>(value: unknown): value is Promise<T> {
 		typeof (value as { then?: unknown }).then === 'function'
 	);
 }
+
 import type React from 'react';
 import { useId, useRef, useState } from 'react';
 import Modal from '@/components/common/Modal';
@@ -85,18 +86,26 @@ const ImportModal: React.FC<ImportModalProps> = ({
 			if (
 				typeof window !== 'undefined' &&
 				'addNotification' in window &&
-				typeof (window as { addNotification?: (type: string, msg: string) => void }).addNotification === 'function'
+				typeof (
+					window as { addNotification?: (type: string, msg: string) => void }
+				).addNotification === 'function'
 			) {
-				(window as { addNotification: (type: string, msg: string) => void }).addNotification('success', 'Import completed successfully!');
+				(
+					window as { addNotification: (type: string, msg: string) => void }
+				).addNotification('success', 'Import completed successfully!');
 			}
 		} catch (_error) {
 			console.debug('[ImportModal] import failed', _error);
 			if (
 				typeof window !== 'undefined' &&
 				'addNotification' in window &&
-				typeof (window as { addNotification?: (type: string, msg: string) => void }).addNotification === 'function'
+				typeof (
+					window as { addNotification?: (type: string, msg: string) => void }
+				).addNotification === 'function'
 			) {
-				(window as { addNotification: (type: string, msg: string) => void }).addNotification('error', 'Import failed. Please try again.');
+				(
+					window as { addNotification: (type: string, msg: string) => void }
+				).addNotification('error', 'Import failed. Please try again.');
 			}
 		} finally {
 			setIsImporting(false);

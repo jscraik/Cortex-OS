@@ -4,15 +4,21 @@
 export * from './events/security-event';
 // MCP Tools for external AI agent integration
 export {
+	SecurityTool,
+	SecurityToolError,
+	SecurityToolResponse,
+	securityAccessControlTool,
+	securityAccessControlToolSchema,
 	securityAuditTool,
 	securityAuditToolSchema,
-	securityGenerateTool,
-	securityGenerateToolSchema,
+	securityEncryptionTool,
+	securityEncryptionToolSchema,
 	securityMcpTools,
-	securityScanTool,
-	securityScanToolSchema,
-	securityValidateTool,
-	securityValidateToolSchema,
+	securityPolicyValidationTool,
+	securityPolicyValidationToolSchema,
+	securityThreatDetectionTool,
+	securityThreatDetectionToolSchema,
+	securityToolSchemas,
 } from './mcp/tools.js';
 // mTLS Implementation
 export * from './mtls/index';

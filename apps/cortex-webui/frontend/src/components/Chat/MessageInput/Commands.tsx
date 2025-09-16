@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Spinner from '../../common/Spinner';
 import Knowledge from './Commands/Knowledge';
 import Models from './Commands/Models';
@@ -9,7 +9,6 @@ import Prompts from './Commands/Prompts';
 
 interface CommandsProps {
 	show: boolean;
-	files: File[];
 	command: string;
 	onSelect: (data: { type: string; data: unknown }) => void;
 	onUpload: (data: { type: string; files: File[] }) => void;
@@ -18,59 +17,84 @@ interface CommandsProps {
 
 const Commands: React.FC<CommandsProps> = ({
 	show,
-	files,
 	command,
 	onSelect,
 	onUpload,
 	insertTextHandler,
 }) => {
+	const _uniqueId = useId();
 	const [loading, setLoading] = useState(false);
-	const commandElementRef = useRef<any>(null);
+	// Use a more specific type for the ref
+	type CommandElementRefType = {
+		selectUp: () => void;
+		selectDown: () => void;
+	} | null;
+	const commandElementRef = useRef<CommandElementRefType>(null);
 
-	// Initialize data when component is shown
-	useEffect(() => {
-		if (show) {
-			init();
-		}
-	}, [show, init]);
-
-	const init = async () => {
+	const init = useCallback(async () => {
 		setLoading(true);
 		// In a real implementation, you would fetch prompts and knowledge bases
 		// For now, we'll simulate with a timeout
 		await new Promise((resolve) => setTimeout(resolve, 500));
 		setLoading(false);
-	};
+	}, []);
+
+	// Initialize data when component is shown
+	useEffect(() => {
+		if (show) {
+			void init();
+		}
+	}, [show, init]);
 
 	// Public methods for parent components to control selection
-	const selectUp = () => {
+	const selectUp = useCallback(() => {
 		if (commandElementRef.current) {
 			commandElementRef.current.selectUp();
 		}
-	};
+	}, []);
 
-	const selectDown = () => {
+	const selectDown = useCallback(() => {
 		if (commandElementRef.current) {
 			commandElementRef.current.selectDown();
 		}
-	};
+	}, []);
 
 	// Expose methods to parent component
 	useEffect(() => {
 		// This is a simplified way to expose methods to parent
 		// In a real implementation, you might use a callback or context
 		if (typeof window !== 'undefined') {
-			(window as any).commandsSelectUp = selectUp;
-			(window as any).commandsSelectDown = selectDown;
+			(
+				window as unknown as {
+					commandsSelectUp?: () => void;
+					commandsSelectDown?: () => void;
+				}
+			).commandsSelectUp = selectUp;
+			(
+				window as unknown as {
+					commandsSelectUp?: () => void;
+					commandsSelectDown?: () => void;
+				}
+			).commandsSelectDown = selectDown;
 		}
 
 		return () => {
 			if (typeof window !== 'undefined') {
-				delete (window as any).commandsSelectUp;
-				delete (window as any).commandsSelectDown;
+				delete (
+					window as unknown as {
+						commandsSelectUp?: () => void;
+						commandsSelectDown?: () => void;
+					}
+				).commandsSelectUp;
+				delete (
+					window as unknown as {
+						commandsSelectUp?: () => void;
+						commandsSelectDown?: () => void;
+					}
+				).commandsSelectDown;
 			}
 		};
-	}, [selectDown, selectUp]);
+	}, [selectUp, selectDown]);
 
 	if (!show) {
 		return null;
@@ -79,7 +103,7 @@ const Commands: React.FC<CommandsProps> = ({
 	if (loading) {
 		return (
 			<div
-				id="commands-container"
+				id={`commands-container-${_uniqueId}`}
 				className="px-2 mb-2 text-left w-full absolute bottom-0 left-0 right-0 z-10"
 			>
 				<div className="flex w-full rounded-xl border border-gray-100 dark:border-gray-850">
@@ -92,7 +116,7 @@ const Commands: React.FC<CommandsProps> = ({
 	}
 
 	// Render different components based on command type
-	if (command?.charAt(0) === '/') {
+	if (command?.startsWith('/')) {
 		return (
 			<Prompts
 				ref={commandElementRef}
@@ -107,48 +131,44 @@ const Commands: React.FC<CommandsProps> = ({
 			/>
 		);
 	} else if (
-		(command?.charAt(0) === '#' &&
-			command.startsWith('#') &&
-			!command.includes('# ')) ||
-		('\\#' === command.slice(0, 2) &&
-			command.startsWith('#') &&
-			!command.includes('# '))
+		(command?.startsWith('#') && !command.includes('# ')) ||
+		(command?.startsWith('\\#') && !command.includes('# '))
 	) {
 		return (
 			<Knowledge
 				ref={commandElementRef}
 				command={command.includes('\\#') ? command.slice(2) : command}
-				onSelect={(data: any) => {
+				onSelect={(data: { type: string; data: unknown }) => {
 					const { type, data: knowledgeData } = data;
 
 					if (type === 'knowledge') {
 						insertTextHandler('');
 						onUpload({
 							type: 'file',
-							data: knowledgeData,
+							files: Array.isArray(knowledgeData) ? knowledgeData : [],
 						});
 					} else if (type === 'youtube') {
 						insertTextHandler('');
 						onUpload({
 							type: 'youtube',
-							data: knowledgeData,
+							files: Array.isArray(knowledgeData) ? knowledgeData : [],
 						});
 					} else if (type === 'web') {
 						insertTextHandler('');
 						onUpload({
 							type: 'web',
-							data: knowledgeData,
+							files: Array.isArray(knowledgeData) ? knowledgeData : [],
 						});
 					}
 				}}
 			/>
 		);
-	} else if (command?.charAt(0) === '@') {
+	} else if (command?.startsWith('@')) {
 		return (
 			<Models
 				ref={commandElementRef}
 				command={command}
-				onSelect={(data: any) => {
+				onSelect={(data: { type: string; data: unknown }) => {
 					const { type, data: modelData } = data;
 
 					if (type === 'model') {

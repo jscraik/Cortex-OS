@@ -18,13 +18,12 @@ const Tooltip: React.FC<TooltipProps> = ({
 }) => {
 	const [isVisible, setIsVisible] = useState(false);
 	const [tooltipPosition, setTooltipPosition] = useState(position);
-	const triggerRef = useRef<HTMLDivElement>(null);
+	const triggerRef = useRef<HTMLButtonElement>(null);
 	const tooltipRef = useRef<HTMLDivElement>(null);
 
 	// Adjust tooltip position if it would go off screen
 	useEffect(() => {
 		if (isVisible && triggerRef.current && tooltipRef.current) {
-			const _triggerRect = triggerRef.current.getBoundingClientRect();
 			const tooltipRect = tooltipRef.current.getBoundingClientRect();
 			const viewportWidth = window.innerWidth;
 			const viewportHeight = window.innerHeight;
@@ -60,13 +59,32 @@ const Tooltip: React.FC<TooltipProps> = ({
 		}
 	};
 
+	// Extract arrow positioning class
+	let arrowClass = '';
+	if (tooltipPosition === 'top') {
+		arrowClass = 'top-full left-1/2 -translate-x-1/2 -translate-y-1/2';
+	} else if (tooltipPosition === 'bottom') {
+		arrowClass = 'bottom-full left-1/2 -translate-x-1/2 translate-y-1/2';
+	} else if (tooltipPosition === 'left') {
+		arrowClass = 'left-full top-1/2 -translate-x-1/2 -translate-y-1/2';
+	} else {
+		arrowClass = 'right-full top-1/2 translate-x-1/2 -translate-y-1/2';
+	}
+
 	return (
-		<div
+		<button
+			type="button"
 			className={`relative inline-block ${className}`}
+			aria-label={typeof content === 'string' ? content : 'Tooltip'}
 			onMouseEnter={() => setIsVisible(true)}
 			onMouseLeave={() => setIsVisible(false)}
 			onFocus={() => setIsVisible(true)}
 			onBlur={() => setIsVisible(false)}
+			onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					setIsVisible((v: boolean) => !v);
+				}
+			}}
 			ref={triggerRef}
 		>
 			{children}
@@ -80,20 +98,12 @@ const Tooltip: React.FC<TooltipProps> = ({
 					<div className="relative">
 						{content}
 						<div
-							className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${
-								tooltipPosition === 'top'
-									? 'top-full left-1/2 -translate-x-1/2 -translate-y-1/2'
-									: tooltipPosition === 'bottom'
-										? 'bottom-full left-1/2 -translate-x-1/2 translate-y-1/2'
-										: tooltipPosition === 'left'
-											? 'left-full top-1/2 -translate-x-1/2 -translate-y-1/2'
-											: 'right-full top-1/2 translate-x-1/2 -translate-y-1/2'
-							}`}
+							className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${arrowClass}`}
 						/>
 					</div>
 				</div>
 			)}
-		</div>
+		</button>
 	);
 };
 

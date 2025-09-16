@@ -16,9 +16,21 @@
 export { createTopicAcl, TopicAcl } from './acl.js';
 // In-memory outbox repository
 export { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
+export type { A2AMcpTool } from './mcp/tools.js';
+// MCP Tools (initial integration layer)
+export { createA2AMcpTools } from './mcp/tools.js';
 export type { A2AOutboxIntegration } from './outbox-integration.js';
 // Outbox integration
 export { createA2AOutboxIntegration } from './outbox-integration.js';
+export type {
+	CleanupResultMetrics,
+	DlqStatsMetrics,
+	OutboxService,
+	OutboxSyncAction,
+	ProcessResultMetrics,
+} from './outbox-service.js';
+// Outbox service scaffold (domain abstraction for MCP / future metrics)
+export { createInMemoryOutboxService } from './outbox-service.js';
 export type {
 	A2AErrorCode,
 	JsonRpcRequest,

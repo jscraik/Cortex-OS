@@ -1,8 +1,9 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "types": [
       "node"
     ],
@@ -13,10 +14,13 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "rootDir": ".",
+    "rootDir": "../..",
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
+      "@cortex-os/contracts": [
+        "../../libs/typescript/contracts/src/index.ts"
+      ],
       "@cortex-os/a2a-core/*": [
         "a2a-core/src/*"
       ],
@@ -31,7 +35,8 @@
   "include": [
     "src/**/*",
     "a2a-core/src/**/*",
-    "a2a-contracts/src/**/*"
+    "a2a-contracts/src/**/*",
+    "../../libs/typescript/contracts/src/**/*"
   ],
   "exclude": [
     "node_modules",

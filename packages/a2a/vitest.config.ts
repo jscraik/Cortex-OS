@@ -9,6 +9,7 @@ export default defineConfig({
 				__dirname,
 				'../../tests/utils/telemetry-mock.ts',
 			),
+			'@cortex-os/contracts': resolve(__dirname, './tests/contracts-shim.ts'),
 			'@cortex-os/a2a-core': resolve(__dirname, './a2a-core/src'),
 			'@cortex-os/a2a-contracts': resolve(__dirname, './a2a-contracts/src'),
 		},

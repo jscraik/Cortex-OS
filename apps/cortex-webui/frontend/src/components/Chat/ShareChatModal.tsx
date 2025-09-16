@@ -1,8 +1,119 @@
 'use client';
 
 import type React from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Modal from '@/components/common/Modal';
+
+type PermissionKey =
+	| 'allowEdit'
+	| 'allowCopy'
+	| 'allowDownload'
+	| 'requireLogin';
+interface ShareSettings {
+	allowEdit: boolean;
+	allowCopy: boolean;
+	allowDownload: boolean;
+	requireLogin: boolean;
+	expiration: string;
+}
+
+interface PermissionsSectionProps {
+	shareSettings: ShareSettings;
+	setShareSettings: React.Dispatch<React.SetStateAction<ShareSettings>>;
+	expirationSelectId: string;
+}
+
+const PermissionsSection: React.FC<PermissionsSectionProps> = ({
+	shareSettings,
+	setShareSettings,
+	expirationSelectId,
+}) => {
+	const permissionOptions: {
+		key: PermissionKey;
+		label: string;
+		desc: string;
+	}[] = [
+		{
+			key: 'allowEdit',
+			label: 'Allow Editing',
+			desc: 'Allow others to edit this chat',
+		},
+		{
+			key: 'allowCopy',
+			label: 'Allow Copying',
+			desc: 'Allow others to copy content',
+		},
+		{
+			key: 'allowDownload',
+			label: 'Allow Download',
+			desc: 'Allow others to download the chat',
+		},
+		{
+			key: 'requireLogin',
+			label: 'Require Login',
+			desc: 'Users must log in to view',
+		},
+	];
+	return (
+		<div className="space-y-6">
+			<div>
+				<h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">
+					Permissions
+				</h4>
+				<div className="space-y-3">
+					{permissionOptions.map(({ key, label, desc }) => (
+						<div className="flex items-center justify-between" key={key}>
+							<div>
+								<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+									{label}
+								</span>
+								<p className="text-xs text-gray-500 dark:text-gray-400">
+									{desc}
+								</p>
+							</div>
+							<button
+								type="button"
+								onClick={() =>
+									setShareSettings({
+										...shareSettings,
+										[key]: !shareSettings[key],
+									})
+								}
+								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${shareSettings[key] ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+							>
+								<span
+									className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${shareSettings[key] ? 'translate-x-6' : 'translate-x-1'}`}
+								/>
+							</button>
+						</div>
+					))}
+				</div>
+			</div>
+			<div>
+				<label
+					htmlFor={expirationSelectId}
+					className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+				>
+					Link Expiration
+				</label>
+				<select
+					id={expirationSelectId}
+					value={shareSettings.expiration}
+					onChange={(e) =>
+						setShareSettings({ ...shareSettings, expiration: e.target.value })
+					}
+					className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+				>
+					<option value="never">Never</option>
+					<option value="1h">1 Hour</option>
+					<option value="1d">1 Day</option>
+					<option value="7d">7 Days</option>
+					<option value="30d">30 Days</option>
+				</select>
+			</div>
+		</div>
+	);
+};
 
 interface ShareChatModalProps {
 	isOpen: boolean;
@@ -17,22 +128,17 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 	chatId,
 	chatTitle,
 }) => {
+	const shareLinkInputId = useId();
+	const expirationSelectId = useId();
 	const [shareLink, setShareLink] = useState('');
 	const [isCopied, setIsCopied] = useState(false);
-	const [shareSettings, setShareSettings] = useState({
+	const [shareSettings, setShareSettings] = useState<ShareSettings>({
 		allowEdit: false,
 		allowCopy: true,
 		allowDownload: true,
 		requireLogin: false,
 		expiration: 'never',
 	});
-
-	const generateShareLink = () => {
-		// In a real implementation, this would call an API to generate a share link
-		const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-		const link = `${baseUrl}/share/${chatId}?title=${encodeURIComponent(chatTitle)}`;
-		setShareLink(link);
-	};
 
 	const copyToClipboard = async () => {
 		if (!shareLink) return;
@@ -42,28 +148,16 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 			setIsCopied(true);
 			setTimeout(() => setIsCopied(false), 2000);
 
-			// @ts-expect-error - window.addNotification is added by external script
 			if (typeof window !== 'undefined' && window.addNotification) {
-				// @ts-expect-error - window.addNotification is added by external script
 				window.addNotification('success', 'Link copied to clipboard!');
 			}
-		} catch (_err) {
-			// @ts-expect-error - window.addNotification is added by external script
+		} catch (err) {
 			if (typeof window !== 'undefined' && window.addNotification) {
-				// @ts-expect-error - window.addNotification is added by external script
 				window.addNotification('error', 'Failed to copy link');
 			}
-		}
-	};
-
-	const handleShare = async () => {
-		// In a real implementation, this would call an API to create the share
-		generateShareLink();
-
-		// @ts-expect-error - window.addNotification is added by external script
-		if (typeof window !== 'undefined' && window.addNotification) {
-			// @ts-expect-error - window.addNotification is added by external script
-			window.addNotification('success', 'Chat sharing link generated!');
+			// Optionally log the error for debugging
+			// eslint-disable-next-line no-console
+			console.error('Failed to copy link:', err);
 		}
 	};
 
@@ -84,7 +178,7 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 						<div className="space-y-4">
 							<div>
 								<label
-									htmlFor="share-link"
+									htmlFor={shareLinkInputId}
 									className="block text-sm font-medium text-gray-700 dark:text-gray-300"
 								>
 									Share Link
@@ -92,7 +186,7 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 								<div className="mt-1 flex rounded-md shadow-sm">
 									<input
 										type="text"
-										id="share-link"
+										id={shareLinkInputId}
 										value={shareLink}
 										readOnly
 										className="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -129,6 +223,7 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 										viewBox="0 0 20 20"
 										fill="currentColor"
 									>
+										<title>Share icon</title>
 										<path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
 									</svg>
 									Share
@@ -146,189 +241,11 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 							</div>
 						</div>
 					) : (
-						<div className="space-y-6">
-							<div>
-								<h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">
-									Permissions
-								</h4>
-								<div className="space-y-3">
-									<div className="flex items-center justify-between">
-										<div>
-											<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-												Allow Editing
-											</label>
-											<p className="text-xs text-gray-500 dark:text-gray-400">
-												Allow others to edit this chat
-											</p>
-										</div>
-										<button
-											type="button"
-											onClick={() =>
-												setShareSettings({
-													...shareSettings,
-													allowEdit: !shareSettings.allowEdit,
-												})
-											}
-											className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-												shareSettings.allowEdit
-													? 'bg-blue-600'
-													: 'bg-gray-300 dark:bg-gray-600'
-											}`}
-										>
-											<span
-												className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-													shareSettings.allowEdit
-														? 'translate-x-6'
-														: 'translate-x-1'
-												}`}
-											/>
-										</button>
-									</div>
-
-									<div className="flex items-center justify-between">
-										<div>
-											<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-												Allow Copying
-											</label>
-											<p className="text-xs text-gray-500 dark:text-gray-400">
-												Allow others to copy content
-											</p>
-										</div>
-										<button
-											type="button"
-											onClick={() =>
-												setShareSettings({
-													...shareSettings,
-													allowCopy: !shareSettings.allowCopy,
-												})
-											}
-											className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-												shareSettings.allowCopy
-													? 'bg-blue-600'
-													: 'bg-gray-300 dark:bg-gray-600'
-											}`}
-										>
-											<span
-												className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-													shareSettings.allowCopy
-														? 'translate-x-6'
-														: 'translate-x-1'
-												}`}
-											/>
-										</button>
-									</div>
-
-									<div className="flex items-center justify-between">
-										<div>
-											<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-												Allow Download
-											</label>
-											<p className="text-xs text-gray-500 dark:text-gray-400">
-												Allow others to download the chat
-											</p>
-										</div>
-										<button
-											type="button"
-											onClick={() =>
-												setShareSettings({
-													...shareSettings,
-													allowDownload: !shareSettings.allowDownload,
-												})
-											}
-											className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-												shareSettings.allowDownload
-													? 'bg-blue-600'
-													: 'bg-gray-300 dark:bg-gray-600'
-											}`}
-										>
-											<span
-												className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-													shareSettings.allowDownload
-														? 'translate-x-6'
-														: 'translate-x-1'
-												}`}
-											/>
-										</button>
-									</div>
-
-									<div className="flex items-center justify-between">
-										<div>
-											<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-												Require Login
-											</label>
-											<p className="text-xs text-gray-500 dark:text-gray-400">
-												Users must log in to view
-											</p>
-										</div>
-										<button
-											type="button"
-											onClick={() =>
-												setShareSettings({
-													...shareSettings,
-													requireLogin: !shareSettings.requireLogin,
-												})
-											}
-											className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-												shareSettings.requireLogin
-													? 'bg-blue-600'
-													: 'bg-gray-300 dark:bg-gray-600'
-											}`}
-										>
-											<span
-												className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-													shareSettings.requireLogin
-														? 'translate-x-6'
-														: 'translate-x-1'
-												}`}
-											/>
-										</button>
-									</div>
-								</div>
-							</div>
-
-							<div>
-								<label
-									htmlFor="expiration"
-									className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-								>
-									Link Expiration
-								</label>
-								<select
-									id="expiration"
-									value={shareSettings.expiration}
-									onChange={(e) =>
-										setShareSettings({
-											...shareSettings,
-											expiration: e.target.value,
-										})
-									}
-									className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-								>
-									<option value="never">Never</option>
-									<option value="1h">1 Hour</option>
-									<option value="1d">1 Day</option>
-									<option value="7d">7 Days</option>
-									<option value="30d">30 Days</option>
-								</select>
-							</div>
-
-							<div className="flex justify-end space-x-3">
-								<button
-									type="button"
-									onClick={onClose}
-									className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-								>
-									Cancel
-								</button>
-								<button
-									type="button"
-									onClick={handleShare}
-									className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-								>
-									Generate Link
-								</button>
-							</div>
-						</div>
+						<PermissionsSection
+							shareSettings={shareSettings}
+							setShareSettings={setShareSettings}
+							expirationSelectId={expirationSelectId}
+						/>
 					)}
 				</div>
 			</div>

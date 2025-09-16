@@ -1,24 +1,22 @@
 # Cortex A2A (Agent-to-Agent)
 
-<div align="center">
-
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/a2a)](https://www.npmjs.com/package/@cortex-os/a2a)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#testing)
 [![Test Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](#testing)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security-features)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
 
 **Agent-to-Agent Communication Framework for Cortex-OS**  
 _Event-driven messaging, CloudEvents 1.0 compliant, W3C Trace Context support_
 
-</div>
-
 ---
 
 ## 🎯 Overview
 
-Cortex A2A provides a comprehensive Agent-to-Agent communication framework for the Cortex-OS ASBR runtime. Built on CloudEvents 1.0 specification and W3C Trace Context standards, it enables seamless coordination between AI agents through event-driven messaging patterns with strong type safety and distributed tracing capabilities.
+Cortex A2A provides a comprehensive Agent-to-Agent communication framework for the Cortex-OS ASBR runtime.
+Built on CloudEvents 1.0 specification and W3C Trace Context standards, it enables seamless coordination between
+AI agents through event-driven messaging patterns with strong type safety and distributed tracing capabilities.
 
 For detailed protocol specifications and implementation standards, see the [A2A Protocol Documentation](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/context/protocols/network/a2a-protocol-documentation.md).
 
@@ -364,6 +362,199 @@ npm run test:watch
 | Trace Context      | 94%      | W3C specification compliance     |
 | **Overall**        | **94%**  | Industry leading coverage        |
 
+## 🧰 MCP Tools (Model Context Protocol)
+
+The A2A package exposes a set of MCP tools enabling external agent runtimes /
+IDEs to interact with Cortex-OS task and event infrastructure in a
+contract‑driven, validated manner.
+
+### Available Tools
+
+| Tool Name | Purpose | Input Schema | Result Schema |
+| --------- | ------- | ------------ | ------------- |
+| `a2a_queue_message` | Queue (send) a task/message for processing; returns immediate task state (may already be completed for fast tasks) | `A2AQueueMessageInputSchema` | `A2AQueueMessageResultSchema` |
+| `a2a_event_stream_subscribe` | Establish (pre‑stream) subscription; currently returns a snapshot of matching task lifecycle events | `A2AEventStreamSubscribeInputSchema` | `A2AEventStreamSubscribeResultSchema` |
+| `a2a_outbox_sync` | Perform outbox / data synchronization actions (processing, retries, cleanup, DLQ stats) | `A2AOutboxSyncInputSchema` | `A2AOutboxSyncResultSchema` |
+
+All schemas live in: `libs/typescript/contracts/src/a2a-mcp.ts` and are
+re‑exported through the contracts package (`@cortex-os/contracts`). They are
+Zod schemas and serve as both runtime validators and TypeScript type sources.
+
+### 1. Queue Message Tool
+
+Queues a new task/message into the A2A task manager. The tool performs full
+input validation and validates the handler result shape before returning it to
+the MCP client.
+
+Example Invocation (JSON over MCP):
+
+```jsonc
+{
+  "name": "a2a_queue_message",
+  "arguments": {
+    "message": {
+      "role": "user",
+      "parts": [ { "text": "Summarize the following dataset" } ]
+    },
+    "context": [
+      { "role": "system", "parts": [ { "text": "You are a data summarizer" } ] }
+    ]
+  }
+}
+```
+
+Successful Result (simplified):
+
+```jsonc
+{
+  "id": "task-abc123",
+  "status": "completed",
+  "message": {
+    "role": "assistant",
+    "parts": [ { "text": "High level summary..." } ]
+  }
+}
+```
+
+### 2. Event Stream Subscribe Tool
+
+Returns a snapshot of recent / current tasks that match the requested lifecycle
+event types. Full streaming over MCP is planned but not yet implemented; a
+`note` field communicates this limitation.
+
+Example:
+
+```jsonc
+{
+  "name": "a2a_event_stream_subscribe",
+  "arguments": { "includeCurrent": true, "events": ["taskCompleted", "taskFailed"] }
+}
+```
+
+Result:
+
+```jsonc
+{
+  "subscriptionId": "3d1df0d6-0d2d-4b59-8dfa-b1e3f0e7a9ab",
+  "events": [
+    {
+      "type": "taskCompleted",
+      "id": "task-abc123",
+      "status": "completed",
+      "timestamp": "2025-09-15T12:34:56.000Z"
+    }
+  ],
+  "note": "Streaming over MCP not yet implemented; returning snapshot only."
+}
+```
+
+### 3. Outbox Sync Tool
+
+Executes housekeeping or processing actions against the (future) persistent
+outbox / DLQ subsystem. Currently returns placeholder metrics until the
+physical outbox repository + processor are wired.
+
+Example (DLQ stats):
+
+```jsonc
+{
+  "name": "a2a_outbox_sync",
+  "arguments": { "action": "dlqStats" }
+}
+```
+
+Example (cleanup older than 60 days):
+
+```jsonc
+{
+  "name": "a2a_outbox_sync",
+  "arguments": { "action": "cleanup", "olderThanDays": 60 }
+}
+```
+
+Result (placeholder):
+
+```jsonc
+{
+  "action": "dlqStats",
+  "dlqStats": { "size": 0 },
+  "durationMs": 2,
+  "timestamp": "2025-09-15T12:35:04.123Z",
+  "note": "Outbox integration not yet wired. Metrics are placeholders."
+}
+```
+
+### Error Shape
+
+Validation or runtime errors are normalized as:
+
+```jsonc
+{
+  "error": { "code": "VALIDATION_ERROR", "message": "<details>" },
+  "timestamp": "<RFC3339>"
+}
+```
+
+### Design Guarantees
+
+- All inputs & outputs pass through Zod schemas (strict shape enforcement).
+- Tool handlers never throw; failures are converted to standardized error envelopes.
+- Result validation happens after business logic to avoid leaking internal structures.
+- Snapshot streaming path is side‑effect free and idempotent.
+
+### Roadmap / Future Enhancements
+
+- True incremental streaming via MCP (server → client deltas).
+- Rich task filtering (status, time windows, tags).
+- Real outbox metrics (processed counts, retry histograms, DLQ aging curves).
+- Structured error taxonomy (user vs system vs transient).
+- Pagination for large snapshot responses.
+
+### Testing
+
+Contract + runtime smoke tests live in: `packages/a2a/tests/mcp-tools.contract.test.ts` covering:
+
+1. Schema validation (happy + negative cases)
+2. Tool name registry integrity
+3. Handler runtime responses and placeholder metrics
+
+> NOTE: Additional integration tests will be added once the persistent outbox wiring lands.
+
+## 🗄️ OutboxService (Scaffold)
+
+An early domain abstraction `OutboxService` is provided to decouple MCP tool
+handlers and future orchestration code from the concrete outbox integration
+wiring. The current in‑memory implementation returns zero/placeholder metrics
+while real persistence + retry logic is integrated.
+
+### Interface
+
+```typescript
+export interface OutboxService {
+  processPending(): Promise<{ processed: number; successful: number; failed: number; deadLettered: number }>;
+  processRetries(): Promise<{ processed: number; successful: number; failed: number; deadLettered: number }>;
+  cleanup(olderThanDays?: number): Promise<{ cleanupDeleted: number }>;
+  dlqStats(): Promise<{ size: number }>;
+}
+```
+
+### Usage (Stub)
+
+```typescript
+import { createInMemoryOutboxService } from '@cortex-os/a2a';
+
+const outbox = createInMemoryOutboxService();
+const pending = await outbox.processPending();
+// => { processed: 0, successful: 0, failed: 0, deadLettered: 0 }
+```
+
+### Future Metrics (Optional Additions Only)
+
+- `oldestAgeMs`: Age in ms of the oldest pending or DLQ entry
+- `byErrorCode`: Histogram keyed by error/retry code
+
+These will be added as optional properties only to avoid breaking existing consumers.
+
 ### Testing Utilities
 
 ```typescript
@@ -551,11 +742,7 @@ pnpm build
 
 ---
 
-<div align="center">
-
-**Built with 💙 TypeScript and ❤️ by the Cortex-OS Team**
+### Built with 💙 TypeScript and ❤️ by the Cortex-OS Team
 
 [![TypeScript](https://img.shields.io/badge/made%20with-TypeScript-blue)](https://www.typescriptlang.org/)
 [![CloudEvents](https://img.shields.io/badge/powered%20by-CloudEvents-green)](https://cloudevents.io/)
-
-</div>

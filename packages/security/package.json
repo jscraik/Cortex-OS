@@ -47,13 +47,14 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@cortex-os/mcp-core": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/sdk-trace-base": "^2.1.0",
     "@types/node": "^20.9.0",
+    "eslint": "^9.35.0",
     "tsup": "^8.0.2",
     "typescript": "^5.2.2",
-    "vitest": "^3.2.4",
-    "eslint": "^9.35.0"
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "@cortex-os/a2a-core": "workspace:*"

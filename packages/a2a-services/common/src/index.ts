@@ -1,4 +1,5 @@
 export * from './cache/schemaCache';
+export * from './mcp/tools';
 export * from './metrics/serviceMetrics';
 export * from './middleware/burstSmoother';
 export * from './middleware/perAgentQuota';

@@ -17,6 +17,9 @@
     "downlevelIteration": true,
     "baseUrl": ".",
     "paths": {
+      "@cortex-os/contracts": [
+        "libs/typescript/contracts/src/index.ts"
+      ],
       "@cortex-os/lib": [
         "src/lib/index.ts"
       ],
