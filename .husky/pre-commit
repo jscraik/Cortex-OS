@@ -135,6 +135,35 @@ if [ -n "$PY_CHANGED" ]; then
   fi
 fi
 
+#############################################
+# 5. Opportunistic memory regression check #
+#############################################
+# Non-blocking by default. Set CORTEX_MEMORY_BLOCK=1 to enforce.
+# Runs a very small snapshot + guard only if baseline + log dir exist.
+if [ "${CORTEX_SKIP_MEMORY_PRECOMMIT:-0}" = "1" ]; then
+  log_info "Skipping memory quick check (CORTEX_SKIP_MEMORY_PRECOMMIT=1)"
+else
+  if [ -f reports/memory-baseline.json ]; then
+    log_info "Running quick memory snapshot (non-blocking)"
+    if pnpm memory:quick >/dev/null 2>&1; then
+      if pnpm memory:regression >/dev/null 2>&1; then
+        log_info "Memory guard quick PASS"
+      else
+        if [ "${CORTEX_MEMORY_BLOCK:-0}" = "1" ]; then
+          log_error "Memory regression detected (blocking due to CORTEX_MEMORY_BLOCK=1)"
+          exit 1
+        else
+          log_warn "Memory regression detected (non-blocking pre-commit). Review reports/memory-regression-last.json"
+        fi
+      fi
+    else
+      log_warn "Quick memory snapshot failed (ignoring in pre-commit)"
+    fi
+  else
+    log_info "No memory baseline present – skip quick memory check"
+  fi
+fi
+
 # Report overall performance and cleanup
 overall_duration=$(end_timer "overall")
 report_performance "pre-commit overall" "$overall_duration"

@@ -6,10 +6,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "vitest",
+    "test": "node ../../scripts/vitest-safe.mjs run",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src/**/*.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@cortex-os/a2a": "workspace:*",

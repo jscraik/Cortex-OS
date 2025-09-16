@@ -11,7 +11,8 @@
     "prestart": "pnpm run build",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run -c vitest.config.ts"
+    "test": "node ../../scripts/vitest-safe.mjs run -c vitest.config.ts",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@cortex-os/orchestration": "workspace:*",

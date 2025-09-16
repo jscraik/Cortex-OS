@@ -15,11 +15,12 @@
     "dev": "tsc --watch",
     "build": "echo \"No build step required for this package\"",
     "lint": "eslint src --ext .ts --no-ignore",
-    "test": "vitest",
+    "test": "node ../../scripts/vitest-safe.mjs run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:coverage": "vitest --coverage",
     "replay": "tsx src/cli/replay.ts",
-    "approve": "tsx src/cli/approve.ts"
+    "approve": "tsx src/cli/approve.ts",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",

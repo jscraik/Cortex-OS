@@ -6,7 +6,8 @@
   "main": "src/index.ts",
   "scripts": {
     "lint": "eslint .",
-    "test": "vitest run --config ./vitest.config.ts"
+    "test": "node ../../scripts/vitest-safe.mjs run --config ./vitest.config.ts",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@ag-ui/core": "^0.0.37"

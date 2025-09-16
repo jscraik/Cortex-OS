@@ -9,8 +9,6 @@ interface CodeExecutionModalProps {
 	onClose: () => void;
 	code: string;
 	language: string;
-	result?: string;
-	error?: string;
 }
 
 const CodeExecutionModal: React.FC<CodeExecutionModalProps> = ({
@@ -18,8 +16,6 @@ const CodeExecutionModal: React.FC<CodeExecutionModalProps> = ({
 	onClose,
 	code,
 	language,
-	result,
-	error,
 }) => {
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} title="Code Execution" size="lg">
@@ -27,8 +23,7 @@ const CodeExecutionModal: React.FC<CodeExecutionModalProps> = ({
 				<CodeExecution
 					code={code}
 					language={language}
-					result={result}
-					error={error}
+					// ...existing code...
 					onResult={() => {}}
 					onError={() => {}}
 				/>

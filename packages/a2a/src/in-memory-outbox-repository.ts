@@ -13,8 +13,8 @@ import {
  */
 
 export class InMemoryOutboxRepository implements OutboxRepository {
-	private messages: Map<string, OutboxMessage> = new Map();
-	private idempotencyKeys: Set<string> = new Set();
+	private readonly messages: Map<string, OutboxMessage> = new Map();
+	private readonly idempotencyKeys: Set<string> = new Set();
 
 	async save(
 		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
@@ -35,7 +35,7 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 			this.idempotencyKeys.add(message.idempotencyKey);
 		}
 
-		return outboxMessage;
+		return Promise.resolve(outboxMessage);
 	}
 
 	async saveBatch(
@@ -44,11 +44,12 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 		const savedMessages: OutboxMessage[] = [];
 
 		for (const message of messages) {
+			// Use await to match async signature
 			const saved = await this.save(message);
 			savedMessages.push(saved);
 		}
 
-		return savedMessages;
+		return Promise.resolve(savedMessages);
 	}
 
 	async findByStatus(
@@ -59,7 +60,7 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 			.filter((msg) => msg.status === status)
 			.slice(0, limit);
 
-		return messages;
+		return Promise.resolve(messages);
 	}
 
 	async findReadyForRetry(limit?: number): Promise<OutboxMessage[]> {
@@ -73,7 +74,7 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 			)
 			.slice(0, limit);
 
-		return messages;
+		return Promise.resolve(messages);
 	}
 
 	async findByAggregate(
@@ -85,10 +86,10 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 				msg.aggregateType === aggregateType && msg.aggregateId === aggregateId,
 		);
 
-		return messages;
+		return Promise.resolve(messages);
 	}
 
-	async updateStatus(
+	updateStatus(
 		id: string,
 		status: OutboxMessageStatus,
 		error?: string,
@@ -101,9 +102,10 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 			}
 			this.messages.set(id, message);
 		}
+		return Promise.resolve();
 	}
 
-	async markProcessed(id: string, publishedAt?: Date): Promise<void> {
+	markProcessed(id: string, publishedAt?: Date): Promise<void> {
 		const message = this.messages.get(id);
 		if (message) {
 			message.status = OutboxMessageStatus.PUBLISHED;
@@ -111,9 +113,10 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 			message.processedAt = new Date();
 			this.messages.set(id, message);
 		}
+		return Promise.resolve();
 	}
 
-	async incrementRetry(id: string, error: string): Promise<void> {
+	incrementRetry(id: string, error: string): Promise<void> {
 		const message = this.messages.get(id);
 		if (message) {
 			message.retryCount = (message.retryCount || 0) + 1;
@@ -132,9 +135,10 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 
 			this.messages.set(id, message);
 		}
+		return Promise.resolve();
 	}
 
-	async moveToDeadLetter(id: string, error: string): Promise<void> {
+	moveToDeadLetter(id: string, error: string): Promise<void> {
 		const message = this.messages.get(id);
 		if (message) {
 			message.status = OutboxMessageStatus.DEAD_LETTER;
@@ -142,6 +146,7 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 			message.processedAt = new Date();
 			this.messages.set(id, message);
 		}
+		return Promise.resolve();
 	}
 
 	async cleanup(olderThan: Date): Promise<number> {
@@ -162,10 +167,10 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 				}
 			}
 		}
-		return count;
+		return Promise.resolve(count);
 	}
 
 	async existsByIdempotencyKey(idempotencyKey: string): Promise<boolean> {
-		return this.idempotencyKeys.has(idempotencyKey);
+		return Promise.resolve(this.idempotencyKeys.has(idempotencyKey));
 	}
 }

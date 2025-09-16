@@ -44,8 +44,8 @@ export interface OrchestratorState {
  * No custom classes - pure functional approach
  */
 
-import { randomUUID } from 'node:crypto';
 import { createEnvelope } from '@cortex-os/a2a-contracts';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { createCodeAnalysisAgent } from '../agents/code-analysis-agent';
 import { createDocumentationAgent } from '../agents/documentation-agent';
@@ -586,7 +586,7 @@ export const getAvailableAgents = (
 			).capability === 'string'
 				? (agent as { capability: string }).capability
 				: (agent as { capabilities?: Array<{ name: string }> })
-						.capabilities?.[0]?.name || 'unknown',
+					.capabilities?.[0]?.name || 'unknown',
 	}));
 
 export const shutdownOrchestrator = (state: OrchestratorState): void => {

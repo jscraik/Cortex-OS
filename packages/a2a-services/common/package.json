@@ -4,7 +4,8 @@
   "private": true,
   "main": "src/index.ts",
   "scripts": {
-    "test": "vitest"
+    "test": "node ../../../scripts/vitest-safe.mjs run",
+    "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "redis": "^4.6.7"

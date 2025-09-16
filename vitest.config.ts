@@ -5,31 +5,33 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
 	test: {
 		globals: true,
-		// Strict worker limits to prevent memory exhaustion
+		// EMERGENCY MEMORY CONSTRAINTS - NEVER REMOVE OR BYPASS
 		fileParallelism: false, // ensure only one file runs at a time
-		maxWorkers: 1,
+		maxWorkers: 1, // CRITICAL: prevents multiple memory-hungry processes
 		// Memory management settings
 		isolate: true,
 		sequence: {
 			concurrent: false, // Run tests sequentially to save memory
 		},
 		// Force garbage collection between test files
-		testTimeout: 30000,
-		hookTimeout: 30000,
-		// Memory leak prevention
-		teardownTimeout: 10000,
+		testTimeout: 20000, // Reduced to prevent hanging processes
+		hookTimeout: 20000,
+		// Memory leak prevention - aggressive timeouts
+		teardownTimeout: 5000,
 		// Use forks pool to avoid tinypool thread conflicts in CI/Node 22
 		pool: "forks",
 		poolOptions: {
 			forks: {
-				// Enforce a single child process and cap memory per worker
+				// CRITICAL: single fork with strict memory limits
 				singleFork: true,
 				maxForks: 1,
 				minForks: 1,
 				execArgv: [
-					"--max-old-space-size=2048",
-					"--heapsnapshot-near-heap-limit=2",
+					"--max-old-space-size=1536", // Reduced from 2048 to prevent system freeze
+					"--heapsnapshot-near-heap-limit=1", // More aggressive heap monitoring
 					"--expose-gc",
+					"--max-semi-space-size=64", // Limit young generation space
+					"--optimize-for-size", // Optimize for memory usage over speed
 				],
 			},
 		},

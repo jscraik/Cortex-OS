@@ -6,6 +6,8 @@ import {
 	createPolicyAwareStoreFromEnv,
 } from '@cortex-os/memories';
 import { trace } from '@opentelemetry/api';
+import { createMcpGateway } from './mcp/gateway';
+import type { CortexOsToolName } from './mcp/tools';
 
 export type MemoryService = PkgMemoryService;
 
@@ -20,19 +22,33 @@ export function provideOrchestration() {
 	return { config: {} };
 }
 
-export function provideMCP() {
-	// Minimal MCP facade; extend with tool registry + lifecycle as needed.
-	return {
-		async callTool() {
-			return {};
+export function provideMCP(opts?: { audit?: (e: Record<string, unknown>) => void; publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void }) {
+	const gateway = createMcpGateway({
+		memories: provideMemories(),
+		orchestration: provideOrchestration(),
+		config: { runtime: {} },
+		audit: opts?.audit,
+		publishMcpEvent: opts?.publishMcpEvent,
+		security: {
+			allowTool: (name: string) => {
+				if (['system.restart_service', 'config.set'].includes(name)) {
+					return process.env.CORTEX_MCP_ALLOW_MUTATIONS === 'true';
+				}
+				return true;
+			},
 		},
-		async close() {},
+	});
+	return {
+		listTools: () => gateway.listTools(),
+		callTool: (tool: CortexOsToolName, input: unknown) => gateway.callTool(tool, input),
+		async close() { },
 	};
 }
 
 // Real tracer (no-op if no SDK registered in runtime)
 export const tracer = trace.getTracer('cortex-os');
 
-export function configureAuditPublisherWithBus() {
-	// TODO: wire audit events to bus (currently no-op stub)
+export function configureAuditPublisherWithBus(publishMcp?: (evt: { type: string; payload: Record<string, unknown> }) => void) {
+	if (!publishMcp) return { publishMcpEvent: undefined };
+	return { publishMcpEvent: publishMcp };
 }

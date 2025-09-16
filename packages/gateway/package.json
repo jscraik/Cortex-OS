@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "test": "node ./scripts/build-openapi.cjs && vitest run --config ./vitest.config.ts",
     "test:coverage": "node ./scripts/build-openapi.cjs && vitest run --coverage --config ./vitest.config.ts",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@cortex-os/a2a": "workspace:*",

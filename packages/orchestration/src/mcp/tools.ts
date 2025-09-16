@@ -2,6 +2,19 @@
 import { randomUUID } from 'node:crypto';
 import { z, type ZodIssue, ZodError } from 'zod';
 import {
+        executeWorkflowThroughCore,
+        getDefaultOrchestrationPlanningContext,
+        RateLimitError,
+} from './core-adapter.js';
+import {
+        AgentRole,
+        OrchestrationStrategy,
+        TaskStatus,
+        type Agent,
+        type PlanningContext,
+        type Task,
+} from '../types.js';
+import {
         recordAgentActivation,
         recordAgentDeactivation,
         recordWorkflowEnd,
@@ -70,9 +83,11 @@ function sanitizeString(value: string, field: string, { min, max }: { min: numbe
                         ]);
         }
         if (CONTROL_CHARS.test(normalized)) {
-                                'Remove control characters from input',
-                                `${field} contains control characters`,
-                        ]);
+                CONTROL_CHARS.lastIndex = 0;
+                throw new OrchestrationToolError('validation_error', `${field} contains control characters`, [
+                        'Remove control characters from input',
+                        `${field} contains control characters`,
+                ]);
         }
         CONTROL_CHARS.lastIndex = 0;
         return normalized;
@@ -151,6 +166,24 @@ function sanitizeOptionalRecord(
         return sanitizeMetadataValue(value, context, 1) as Record<string, unknown>;
 }
 
+function stableStringify(value: unknown): string {
+        if (value === null || value === undefined) {
+                return String(value);
+        }
+        if (Array.isArray(value)) {
+                return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
+        }
+        if (typeof value === 'object') {
+                const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+                        a.localeCompare(b),
+                );
+                return `{${entries
+                        .map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
+                        .join(',')}}`;
+        }
+        return JSON.stringify(value);
+}
+
 function createSuccessResponse<T>(tool: string, data: T, correlationId: string, timestamp: string): MCPToolResponse {
         return {
                 content: [
@@ -215,6 +248,18 @@ async function executeTool<TInput>(options: {
                                 timestamp,
                         );
                 }
+                if (error instanceof RateLimitError) {
+                        return createErrorResponse(
+                                tool,
+                                {
+                                        code: 'rate_limited',
+                                        message: 'Orchestration service is busy',
+                                        details: [`retry_in_ms=${error.retryInMs}`],
+                                },
+                                correlationId,
+                                timestamp,
+                        );
+                }
                 if (error instanceof ZodError) {
                         return createErrorResponse(
                                 tool,
@@ -248,12 +293,25 @@ const workflowStepSchema = z.object({
         estimatedDurationMs: z.number().int().positive().max(86_400_000).optional(),
 });
 
+const agentInputSchema = z.object({
+        id: z.string().min(1).max(128),
+        name: z.string().min(1).max(160),
+        role: z.nativeEnum(AgentRole).optional(),
+        status: z.enum(['available', 'busy', 'offline']).optional(),
+        capabilities: z.array(z.string().min(1).max(120)).max(64).optional(),
+        metadata: z.record(z.unknown()).optional(),
+});
+
 const workflowInputSchema = z.object({
         workflowId: z.string().min(3).max(128).optional(),
         workflowName: z.string().min(1).max(180),
         goal: z.string().min(1).max(4096),
         steps: z.array(workflowStepSchema).min(1).max(50),
         context: z.record(z.unknown()).optional(),
+        agents: z.array(agentInputSchema).min(1).max(32),
+        strategy: z.nativeEnum(OrchestrationStrategy).optional(),
+        priority: z.number().int().min(1).max(10).optional(),
+        metadata: z.record(z.unknown()).optional(),
 });
 
 function sanitizeWorkflowStep(step: z.infer<typeof workflowStepSchema>, index: number) {
@@ -281,6 +339,35 @@ function sanitizeWorkflowStep(step: z.infer<typeof workflowStepSchema>, index: n
         };
 }
 
+function sanitizeAgent(agent: z.infer<typeof agentInputSchema>, index: number): Agent {
+        const id = sanitizeString(agent.id, `agents[${index}].id`, { min: 1, max: 128 });
+        const name = sanitizeString(agent.name, `agents[${index}].name`, { min: 1, max: 160 });
+        const normalizedStatus = (agent.status ?? 'available').toLowerCase();
+        if (!['available', 'busy', 'offline'].includes(normalizedStatus)) {
+                throw new OrchestrationToolError('validation_error', `Invalid status for agent ${id}`, [
+                        `agents[${index}].status must be available, busy, or offline`,
+                ]);
+        }
+        const capabilities = agent.capabilities
+                ? agent.capabilities.map((capability, capIndex) =>
+                          sanitizeString(capability, `agents[${index}].capabilities[${capIndex}]`, {
+                                  min: 1,
+                                  max: 120,
+                          }),
+                  )
+                : [];
+        const metadata = sanitizeOptionalRecord(agent.metadata, `agents[${index}].metadata`) ?? {};
+        return {
+                id,
+                name,
+                role: agent.role ?? AgentRole.EXECUTOR,
+                capabilities,
+                status: normalizedStatus as Agent['status'],
+                metadata,
+                lastSeen: new Date(),
+        };
+}
+
 export const workflowOrchestrationTool: MCPToolDefinition = {
         name: 'orchestration.workflow.execute',
         description: 'Validate and summarize a multi-agent workflow orchestration request.',
@@ -300,56 +387,127 @@ export const workflowOrchestrationTool: MCPToolDefinition = {
                                         ? sanitizeString(input.workflowId, 'workflowId', { min: 3, max: 128 })
                                         : `workflow-${randomUUID()}`;
                                 const context = sanitizeOptionalRecord(input.context, 'context') ?? {};
-                                const startedAt = new Date().toISOString();
-                                const agents = new Set<string>();
+                                const metadata = sanitizeOptionalRecord(input.metadata, 'metadata') ?? {};
+                                const sanitizedSteps = input.steps.map((step, index) =>
+                                        sanitizeWorkflowStep(step, index),
+                                );
+                                const agents = input.agents.map((agent, index) => sanitizeAgent(agent, index));
+                                const strategy = input.strategy ?? OrchestrationStrategy.ADAPTIVE;
+                                const priority = input.priority ?? 5;
+                                const startedAtIso = new Date().toISOString();
+
                                 recordWorkflowStart(workflowId, workflowName);
+                                for (const agent of agents) {
+                                        recordAgentActivation(agent.id, []);
+                                }
+
                                 let success = false;
                                 try {
-                                        const sanitizedSteps = input.steps.map((step, index) => {
-                                                const sanitized = sanitizeWorkflowStep(step, index);
-                                                agents.add(sanitized.agent);
-                                                return sanitized;
-                                        });
-                                        for (const agentId of agents) {
-                                                recordAgentActivation(agentId, []);
-                                        }
                                         const pendingSteps = sanitizedSteps.filter((step) => step.status === 'pending').length;
                                         const completedSteps = sanitizedSteps.filter((step) => step.status === 'completed').length;
                                         const totalDurationMs = sanitizedSteps.reduce(
                                                 (acc, step) => acc + (step.estimatedDurationMs ?? 0),
                                                 0,
                                         );
+                                        const task: Task = {
+                                                id: workflowId,
+                                                title: workflowName,
+                                                description: goal,
+                                                status: TaskStatus.PLANNING,
+                                                priority,
+                                                dependencies: [],
+                                                requiredCapabilities: Array.from(
+                                                        new Set(agents.flatMap((agent) => agent.capabilities)),
+                                                ),
+                                                context,
+                                                metadata: { ...metadata, goal, steps: sanitizedSteps },
+                                                createdAt: new Date(startedAtIso),
+                                                updatedAt: new Date(startedAtIso),
+                                                completedAt: undefined,
+                                                estimatedDuration: totalDurationMs || undefined,
+                                                actualDuration: undefined,
+                                        };
+                                        const planningContext: Partial<PlanningContext> = {
+                                                ...getDefaultOrchestrationPlanningContext(
+                                                        strategy,
+                                                        totalDurationMs,
+                                                        agents,
+                                                ),
+                                                task,
+                                                context,
+                                        };
+                                        const cacheKey = stableStringify({
+                                                workflowId,
+                                                workflowName,
+                                                goal,
+                                                strategy,
+                                                priority,
+                                                context,
+                                                metadata,
+                                                steps: sanitizedSteps,
+                                                agents: agents.map((agent) => ({
+                                                        id: agent.id,
+                                                        role: agent.role,
+                                                        status: agent.status,
+                                                        capabilities: agent.capabilities,
+                                                })),
+                                        });
                                         const spanContext: EnhancedSpanContext = {
                                                 workflowId,
                                                 workflowName,
                                                 stepKind: 'workflow',
                                                 phase: 'coordination',
                                         };
-                                        const result = await withEnhancedSpan(
+                                        const payload = await withEnhancedSpan(
                                                 'mcp.tool.orchestration.workflow.execute',
-                                                async () => ({
-                                                        workflowId,
-                                                        workflowName,
-                                                        goal,
-                                                        summary: {
-                                                                totalSteps: sanitizedSteps.length,
-                                                                pendingSteps,
-                                                                completedSteps,
-                                                                assignedAgents: Array.from(agents),
-                                                                estimatedDurationMs: totalDurationMs || null,
-                                                        },
-                                                        steps: sanitizedSteps,
-                                                        context,
-                                                        startedAt,
-                                                        completedAt: new Date().toISOString(),
-                                                }),
+                                                async () => {
+                                                        const execution = await executeWorkflowThroughCore({
+                                                                cacheKey,
+                                                                workflowId,
+                                                                task,
+                                                                agents,
+                                                                planningContext,
+                                                                metadata: { goal, workflowName },
+                                                        });
+                                                        return {
+                                                                workflowId,
+                                                                workflowName,
+                                                                goal,
+                                                                strategy,
+                                                                priority,
+                                                                summary: {
+                                                                        totalSteps: sanitizedSteps.length,
+                                                                        pendingSteps,
+                                                                        completedSteps,
+                                                                        assignedAgents: Array.from(
+                                                                                new Set(
+                                                                                        sanitizedSteps.map((step) => step.agent),
+                                                                                ),
+                                                                        ),
+                                                                        estimatedDurationMs: totalDurationMs || null,
+                                                                },
+                                                                steps: sanitizedSteps,
+                                                                agents: agents.map((agent) => ({
+                                                                        id: agent.id,
+                                                                        name: agent.name,
+                                                                        role: agent.role,
+                                                                        status: agent.status,
+                                                                })),
+                                                                context,
+                                                                metadata,
+                                                                startedAt: startedAtIso,
+                                                                completedAt: new Date().toISOString(),
+                                                                result: execution.result,
+                                                                cacheHit: execution.fromCache,
+                                                        };
+                                                },
                                                 spanContext,
                                         );
                                         success = true;
-                                        return result;
+                                        return payload;
                                 } finally {
-                                        for (const agentId of agents) {
-                                                recordAgentDeactivation(agentId);
+                                        for (const agent of agents) {
+                                                recordAgentDeactivation(agent.id);
                                         }
                                         recordWorkflowEnd(workflowId, workflowName, success);
                                 }
@@ -621,3 +779,4 @@ export const orchestrationMcpTools = [
         taskManagementTool,
         processMonitoringTool,
 ];
+export { configureOrchestrationMcp, __resetOrchestrationMcpState } from './core-adapter.js';

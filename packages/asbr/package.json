@@ -39,17 +39,18 @@
     "prepare": "pnpm -s build",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:watch": "node ../../scripts/vitest-safe.mjs run",
+    "test:coverage": "node ../../scripts/vitest-safe.mjs run --coverage",
     "test:perf": "PERF_METRICS=1 vitest run tests/performance --reporter=dot",
-    "test:a11y": "vitest run --config vitest.a11y.config.ts",
+    "test:a11y": "node ../../scripts/vitest-safe.mjs run --config vitest.a11y.config.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit --incremental",
     "build:fast": "tsc --build --incremental --assumeChangesOnlyAffectDirectDependencies",
-    "build:prod": "NODE_ENV=production tsc --build --incremental"
+    "build:prod": "NODE_ENV=production tsc --build --incremental",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "diff": "^8.0.2",

@@ -8,12 +8,13 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run -c vitest.config.ts",
-    "test:coverage": "vitest run -c vitest.config.ts --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary",
+    "test": "node ../../scripts/vitest-safe.mjs run -c vitest.config.ts",
+    "test:coverage": "node ../../scripts/vitest-safe.mjs run -c vitest.config.ts --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary",
     "verify:coverage": "node ./scripts/verify-coverage.mjs",
     "verify:coverage:auto": "node ./scripts/verify-coverage.mjs --auto-raise",
     "verify:coverage:dry": "node ./scripts/verify-coverage.mjs --auto-raise --dry-run",
-    "docs:verify": "./scripts/verify-docs.sh"
+    "docs:verify": "./scripts/verify-docs.sh",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@cortex-os/contracts": "workspace:*",

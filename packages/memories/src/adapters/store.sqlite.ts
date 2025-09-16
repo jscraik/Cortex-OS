@@ -242,26 +242,22 @@ export class SQLiteStore implements MemoryStore {
 	): Promise<Memory[]> {
 		_use(_namespace);
 		const padded = padVector(q.vector, this.dim);
-		let sql =
-			'SELECT m.*, v.distance FROM memory_embeddings v JOIN memories m ON m.rowid = v.rowid WHERE v.embedding MATCH ?';
 		const initialLimit = Math.max(q.topK * 10, q.topK);
-		const params: (string | number)[] = [JSON.stringify(padded)];
+		const knnSubquery =
+			'SELECT rowid, distance FROM memory_embeddings WHERE embedding MATCH ? ORDER BY distance LIMIT ?';
+		const rows = this.db
+			.prepare(
+				`SELECT m.*, knn.distance FROM (${knnSubquery}) knn JOIN memories m ON m.rowid = knn.rowid`,
+			)
+			.all(JSON.stringify(padded), initialLimit);
+		let candidates = rows.map((row) => this.rowToMemory(row));
 
 		if (q.filterTags && q.filterTags.length > 0) {
-			sql += ' AND (';
-			q.filterTags.forEach((tag, i) => {
-				if (i > 0) sql += ' OR ';
-				sql += 'm.tags LIKE ?';
-				params.push(`%"${tag}"%`);
-			});
-			sql += ')';
+			const tagSet = new Set(q.filterTags);
+			candidates = candidates.filter((memory) =>
+				memory.tags.some((tag) => tagSet.has(tag)),
+			);
 		}
-
-		sql += ' ORDER BY v.distance LIMIT ?';
-		params.push(initialLimit);
-
-		const rows = this.db.prepare(sql).all(...params);
-		const candidates = rows.map((row) => this.rowToMemory(row));
 
 		let results = candidates.slice(0, q.topK);
 		if (decayEnabled()) {

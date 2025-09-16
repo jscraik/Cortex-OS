@@ -8,6 +8,12 @@ interface CodeExecutionsProps {
 }
 
 const CodeExecutions: React.FC<CodeExecutionsProps> = ({ executions }) => {
+	type SafeExecution = {
+		code: string;
+		language: string;
+		error?: string;
+	};
+
 	if (executions.length === 0) return null;
 
 	return (
@@ -16,17 +22,25 @@ const CodeExecutions: React.FC<CodeExecutionsProps> = ({ executions }) => {
 				Code Executions
 			</h4>
 			<div className="space-y-2">
-				{executions.map((execution, index) => (
-					<CodeExecution
-						key={index}
-						code={execution.code}
-						language={execution.language}
-						result={execution.result}
-						error={execution.error}
-						onResult={() => {}}
-						onError={() => {}}
-					/>
-				))}
+				{executions.map((execution, index) => {
+					const safe: SafeExecution = {
+						code: typeof execution.code === 'string' ? execution.code : '',
+						language:
+							typeof execution.language === 'string' ? execution.language : '',
+						error:
+							typeof execution.error === 'string' ? execution.error : undefined,
+					};
+					return (
+						<CodeExecution
+							key={index}
+							code={safe.code}
+							language={safe.language}
+							// ...existing code...
+							onResult={() => {}}
+							onError={() => {}}
+						/>
+					);
+				})}
 			</div>
 		</div>
 	);

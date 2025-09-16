@@ -13,6 +13,19 @@ vi.mock('../src/observability/otel.js', async (importOriginal) => {
         };
 });
 
+const executeWorkflowThroughCoreMock = vi.fn(async () => ({
+        result: { orchestrationId: 'test-orchestration', success: true },
+        fromCache: false,
+}));
+
+vi.mock('../src/mcp/core-adapter.js', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('../src/mcp/core-adapter.js')>();
+        return {
+                ...actual,
+                executeWorkflowThroughCore: executeWorkflowThroughCoreMock,
+        };
+});
+
 let workflowTool: any;
 let taskTool: any;
 let processTool: any;
@@ -28,6 +41,10 @@ beforeAll(async () => {
 
 beforeEach(() => {
         vi.clearAllMocks();
+        executeWorkflowThroughCoreMock.mockResolvedValue({
+                result: { orchestrationId: 'test-orchestration', success: true },
+                fromCache: false,
+        });
 });
 
 describe('workflow orchestration handler', () => {
@@ -51,6 +68,15 @@ describe('workflow orchestration handler', () => {
                                 },
                         ],
                         context: { priority: 'high' },
+                        agents: [
+                                {
+                                        id: ' agent-one ',
+                                        name: ' Planner ',
+                                        role: 'executor',
+                                        status: 'available',
+                                        capabilities: [' planning '],
+                                },
+                        ],
                 });
 
                 expect(response.metadata.tool).toBe('orchestration.workflow.execute');
@@ -69,6 +95,13 @@ describe('workflow orchestration handler', () => {
                         'validator-agent',
                 ]);
                 expect(payload.data.context).toEqual({ priority: 'high' });
+                expect(payload.data.agents[0]).toEqual(
+                        expect.objectContaining({ id: 'agent-one', role: 'executor', status: 'available' }),
+                );
+                expect(payload.data.result).toEqual({
+                        orchestrationId: 'test-orchestration',
+                        success: true,
+                });
 
                 expect(otel.recordWorkflowStart).toHaveBeenCalledWith(
                         expect.any(String),

@@ -12,7 +12,8 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm --clean",
-    "test": "vitest run"
+    "test": "node ../../../scripts/vitest-safe.mjs run",
+    "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "nanoid": "^5.0.4",

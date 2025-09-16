@@ -18,8 +18,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:coverage": "node ../../scripts/vitest-safe.mjs run --coverage",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@cortex-os/mcp-core": "workspace:*",

@@ -26,9 +26,11 @@ interface MemoryToolResponse {
 
 interface MemoryTool {
 	name: string;
+	aliases?: string[];
 	description: string;
 	inputSchema: ZodType;
 	handler: (params: unknown) => Promise<MemoryToolResponse>;
+	invoke?: ToolContractInvoker;
 }
 class MemoryToolError extends Error {
 	constructor(
@@ -44,6 +46,25 @@ class MemoryToolError extends Error {
 		this.name = 'MemoryToolError';
 	}
 }
+
+ type ContractErrorDetail = { issues: ZodIssue[] } | undefined;
+
+ type ContractInvocationError = {
+	code: string;
+	message: string;
+	httpStatus: number;
+	retryable: boolean;
+	details?: ContractErrorDetail;
+};
+
+ type ToolContractResult =
+	| { type: 'error'; error: ContractInvocationError }
+	| { type: 'result'; result: Record<string, unknown> };
+
+ type ToolContractInvoker = (
+	input: unknown,
+	context?: Record<string, unknown>,
+) => Promise<ToolContractResult>;
 
 export const MAX_MEMORY_TEXT_LENGTH = 8192;
 const MAX_MEMORY_TAGS = 32;
@@ -427,7 +448,7 @@ export const memoryStoreToolSchema = z.object({
 	metadata: z.record(z.unknown()).optional().describe('Additional metadata'),
 });
 
-export const memoryRetrieveToolSchema = z.object({
+export const memorySearchToolSchema = z.object({
 	query: z.string().min(1).describe('Query to search for similar memories'),
 	limit: z
 		.number()
@@ -460,11 +481,38 @@ export const memoryStatsToolSchema = z.object({
 		.describe('Include detailed statistics'),
 });
 
+export const memoryGetToolSchema = z
+	.object({
+		id: memoryIdentifierSchema.describe('Memory item ID to retrieve'),
+		namespace: z.string().min(1).default('default'),
+	})
+	.strict();
+
+export const memoryListToolSchema = z
+	.object({
+		namespace: z.string().min(1).optional(),
+		limit: z.number().int().min(1).max(100).default(20),
+		cursor: z.string().min(1).optional(),
+		tags: z.array(z.string()).max(32).optional(),
+	})
+	.superRefine((value, ctx) => {
+		if (value.cursor && !value.namespace) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'Namespace is required when cursor is provided',
+				path: ['namespace'],
+			});
+		}
+	});
+
 type MemoryStoreHandlerInput = z.infer<typeof memoryStoreToolSchema>;
-type MemoryRetrieveHandlerInput = z.infer<typeof memoryRetrieveToolSchema>;
+type MemorySearchHandlerInput = z.infer<typeof memorySearchToolSchema>;
 type MemoryUpdateHandlerInput = z.infer<typeof memoryUpdateToolSchema>;
 type MemoryDeleteHandlerInput = z.infer<typeof memoryDeleteToolSchema>;
+type MemoryGetHandlerInput = z.infer<typeof memoryGetToolSchema>;
+type MemoryListHandlerInput = z.infer<typeof memoryListToolSchema>;
 type MemoryStatsHandlerInput = z.infer<typeof memoryStatsToolSchema>;
+
 
 // Memory MCP Tool definitions
 export const memoryStoreTool: MemoryTool = {

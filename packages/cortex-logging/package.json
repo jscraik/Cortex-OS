@@ -10,9 +10,10 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "clean": "rm -rf dist"
+    "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:watch": "echo 'DISABLED: watch/UI mode blocked for memory safety'",
+    "clean": "rm -rf dist",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "pino": "^9.9.2"

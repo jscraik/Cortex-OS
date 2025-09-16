@@ -96,3 +96,33 @@ pnpm test
 - [Feature Package Guidelines](/.github/copilot-instructions.md)
 - [Agent Development](/../AGENTS.md)
 - [Integration Patterns](/packages/README.md)
+
+## Cortex OS MCP Additions
+
+Recent enhancements to the MCP gateway (in `apps/cortex-os`):
+
+- Workflow run persistence: Calls to `orchestration.run_workflow` now persist an
+  in-memory run record keyed by `runId`. Subsequent
+  `orchestration.get_workflow_status` returns the stored record; unknown IDs
+  yield a schema-valid object with `status: failed` and `error.code: not_found`.
+- Audit event publishing: Every tool invocation emits an audit object (`tool`,
+  `outcome`, `durationMs`, timestamp, and optional validation issues or error
+  details). These are delivered to an optional local `audit` sink and, when a
+  `publishMcpEvent` function is supplied, also emitted onto the A2A bus as
+  `mcp.tool.audit.v1` events.
+
+Example wiring snippet:
+
+```ts
+import { wireA2A } from './boot/a2a';
+import { provideMCP, configureAuditPublisherWithBus } from './services';
+
+const { publishMcp } = wireA2A();
+const { publishMcpEvent } = configureAuditPublisherWithBus(publishMcp);
+const mcp = provideMCP({
+  audit: (e) => console.debug('[mcp-audit]', e),
+  publishMcpEvent
+});
+```
+
+Tests covering these behaviors: `tests/mcp/workflow.persistence.test.ts` and `tests/mcp/facade.contract.test.ts`.

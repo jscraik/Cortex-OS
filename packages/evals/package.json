@@ -1,20 +1,21 @@
 {
-	"name": "@cortex-os/evals",
-	"version": "0.0.1",
-	"private": true,
-	"type": "module",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"scripts": {
-		"build": "tsc -p tsconfig.json",
-		"test": "vitest -c vitest.config.ts"
-	},
-	"dependencies": {
-		"zod": "^3.23.8"
-	},
-	"devDependencies": {
-		"@vitest/coverage-istanbul": "^3.2.4",
-		"typescript": "^5.9.2",
-		"vitest": "^3.2.4"
-	}
+  "name": "@cortex-os/evals",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest -c vitest.config.ts",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
 }

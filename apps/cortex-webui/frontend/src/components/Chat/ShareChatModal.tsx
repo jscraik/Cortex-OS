@@ -1,8 +1,8 @@
 'use client';
 
+import Modal from '@/components/common/Modal';
 import type React from 'react';
 import { useId, useState } from 'react';
-import Modal from '@/components/common/Modal';
 
 type PermissionKey =
 	| 'allowEdit'
@@ -125,7 +125,7 @@ interface ShareChatModalProps {
 const ShareChatModal: React.FC<ShareChatModalProps> = ({
 	isOpen,
 	onClose,
-	chatId,
+	// ...existing code...
 	chatTitle,
 }) => {
 	const shareLinkInputId = useId();
@@ -156,7 +156,7 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 				window.addNotification('error', 'Failed to copy link');
 			}
 			// Optionally log the error for debugging
-			// eslint-disable-next-line no-console
+
 			console.error('Failed to copy link:', err);
 		}
 	};

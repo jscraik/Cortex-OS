@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest"
+    "test": "node ../../../scripts/vitest-safe.mjs run",
+    "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "zod": "^3.25.76",

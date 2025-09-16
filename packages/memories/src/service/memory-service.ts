@@ -162,5 +162,19 @@ export const createMemoryService = (
 			pending.delete(id);
 		},
 		listPending: async () => Array.from(pending.values()),
+		testEmbedders: async () => {
+			const maybeComposite = embedder as unknown as {
+				testEmbedders?: () => Promise<Array<{ name: string; available: boolean }>>;
+			};
+			if (typeof maybeComposite.testEmbedders === 'function') {
+				return maybeComposite.testEmbedders();
+			}
+			try {
+				await embedder.embed(['ping']);
+				return [{ name: embedder.name(), available: true }];
+			} catch {
+				return [{ name: embedder.name(), available: false }];
+			}
+		},
 	};
 };

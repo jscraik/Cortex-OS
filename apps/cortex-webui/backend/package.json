@@ -8,8 +8,9 @@
     "dev": "ts-node -r dotenv/config src/server.ts",
     "build": "tsc",
     "start": "node -r dotenv/config dist/backend/src/server.js",
-    "test": "vitest",
-    "lint": "eslint \"src/**/*.ts\" --report-unused-disable-directives --max-warnings 0"
+    "test": "node ../../../scripts/vitest-safe.mjs run",
+    "lint": "eslint \"src/**/*.ts\" --report-unused-disable-directives --max-warnings 0",
+    "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

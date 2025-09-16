@@ -1,10 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Envelope } from '../a2a-contracts/src/envelope.js';
+import { createEnvelope, type Envelope } from '../a2a-contracts/src/envelope.js';
+import type { OutboxRepository } from '../a2a-contracts/src/outbox-types';
 import { InMemoryOutboxRepository } from './in-memory-outbox-repository';
 import { createA2AOutboxIntegration } from './outbox-integration';
 
 describe('A2A Outbox Integration', () => {
-	it('should create an outbox integration', async () => {
+	/**
+	 * NOTE: This test purposefully constructs envelopes via `createEnvelope`.
+	 *
+	 * Domain distinction:
+	 * - Envelope: CloudEvents wrapper (uses `data`) defined in envelope contract.
+	 * - OutboxMessage: Persistence layer entity (uses `payload`) defined in outbox-types.
+	 *
+	 * The integration maps Envelope.data -> OutboxMessage.payload when persisting,
+	 * and the reverse when publishing. Any lingering direct `payload` usage on
+	 * Envelope objects would be a regression and should be replaced with `data`.
+	 */
+	it('should create an outbox integration', () => {
 		// Mock transport
 		const transport = {
 			publish: vi.fn().mockResolvedValue(undefined),
@@ -29,7 +41,6 @@ describe('A2A Outbox Integration', () => {
 	});
 
 	it('should call transport publish when outbox fails', async () => {
-		// Mock transport
 		const transport = {
 			publish: vi.fn().mockResolvedValue(undefined),
 		};
@@ -50,21 +61,31 @@ describe('A2A Outbox Integration', () => {
 		};
 
 		// Create integration
-		const integration = createA2AOutboxIntegration(
-			transport,
-			repository as any,
-		);
+		// Ensure repository mock matches OutboxRepository interface
+		const repoMock: OutboxRepository = {
+			save: repository.save,
+			saveBatch: repository.saveBatch,
+			findByStatus: repository.findByStatus,
+			findReadyForRetry: repository.findReadyForRetry,
+			findByAggregate: repository.findByAggregate,
+			updateStatus: repository.updateStatus,
+			markProcessed: repository.markProcessed,
+			incrementRetry: repository.incrementRetry,
+			moveToDeadLetter: repository.moveToDeadLetter,
+			cleanup: repository.cleanup,
+			existsByIdempotencyKey: repository.existsByIdempotencyKey,
+		};
+		const integration = createA2AOutboxIntegration(transport, repoMock);
 
-		// Create test envelope
-		const envelope: Envelope = {
+		// Create test envelope via helper (auto-populates spec fields)
+		const envelope: Envelope = createEnvelope({
 			id: 'test-id',
 			type: 'test.event',
-			source: 'test-source',
-			occurredAt: new Date().toISOString(),
+			source: 'https://test-source.local',
+			data: { test: 'data' },
 			ttlMs: 60000,
 			headers: {},
-			payload: { test: 'data' },
-		};
+		});
 
 		// Publish message
 		await integration.publish(envelope);
@@ -95,31 +116,40 @@ describe('A2A Outbox Integration', () => {
 		};
 
 		// Create integration
-		const integration = createA2AOutboxIntegration(
-			transport,
-			repository as any,
-		);
+		// Ensure repository mock matches OutboxRepository interface
+		const repoMock: OutboxRepository = {
+			save: repository.save,
+			saveBatch: repository.saveBatch,
+			findByStatus: repository.findByStatus,
+			findReadyForRetry: repository.findReadyForRetry,
+			findByAggregate: repository.findByAggregate,
+			updateStatus: repository.updateStatus,
+			markProcessed: repository.markProcessed,
+			incrementRetry: repository.incrementRetry,
+			moveToDeadLetter: repository.moveToDeadLetter,
+			cleanup: repository.cleanup,
+			existsByIdempotencyKey: repository.existsByIdempotencyKey,
+		};
+		const integration = createA2AOutboxIntegration(transport, repoMock);
 
-		// Create test envelopes
+		// Create test envelopes via helper
 		const envelopes: Envelope[] = [
-			{
+			createEnvelope({
 				id: 'test-id-1',
 				type: 'test.event.1',
-				source: 'test-source',
-				occurredAt: new Date().toISOString(),
+				source: 'https://test-source.local',
+				data: { test: 'data1' },
 				ttlMs: 60000,
 				headers: {},
-				payload: { test: 'data1' },
-			},
-			{
+			}),
+			createEnvelope({
 				id: 'test-id-2',
 				type: 'test.event.2',
-				source: 'test-source',
-				occurredAt: new Date().toISOString(),
+				source: 'https://test-source.local',
+				data: { test: 'data2' },
 				ttlMs: 60000,
 				headers: {},
-				payload: { test: 'data2' },
-			},
+			}),
 		];
 
 		// Publish messages

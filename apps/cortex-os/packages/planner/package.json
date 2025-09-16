@@ -1,36 +1,37 @@
 {
-	"name": "@cortex-os/planner",
-	"version": "1.0.0",
-	"private": true,
-	"type": "module",
-	"description": "Task planning and orchestration feature package for Cortex-OS",
-	"keywords": [
-		"cortex-os",
-		"planner",
-		"orchestration",
-		"task-management"
-	],
-     "license": "Apache-2.0",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"scripts": {
-		"build": "tsc -p tsconfig.json",
-		"dev": "tsc -p tsconfig.json --watch",
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"lint": "eslint .",
-		"typecheck": "tsc -p tsconfig.json --noEmit"
-	},
-	"dependencies": {
-		"@cortex-os/asbr": "workspace:*",
-		"@cortex-os/contracts": "workspace:*",
-		"@cortex-os/a2a": "workspace:*",
-		"@cortex-os/orchestration": "workspace:*"
-	},
-	"devDependencies": {
-		"@types/node": "^20.0.0",
-		"typescript": "^5.0.0",
-		"vitest": "^3.2.4",
-		"eslint": "^8.0.0"
-	}
+  "name": "@cortex-os/planner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Task planning and orchestration feature package for Cortex-OS",
+  "keywords": [
+    "cortex-os",
+    "planner",
+    "orchestration",
+    "task-management"
+  ],
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "node ../../../../scripts/vitest-safe.mjs run",
+    "test:watch": "node ../../../../scripts/vitest-safe.mjs run",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:safe": "node ../../../../scripts/vitest-safe.mjs run"
+  },
+  "dependencies": {
+    "@cortex-os/asbr": "workspace:*",
+    "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/a2a": "workspace:*",
+    "@cortex-os/orchestration": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4",
+    "eslint": "^8.0.0"
+  }
 }

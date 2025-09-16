@@ -1,44 +1,45 @@
 {
-    "name": "@cortex-os/archon-integration",
-    "version": "0.1.0",
-    "description": "Cortex-OS integration with Archon knowledge base and task management",
-    "type": "module",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "files": [
-        "dist"
-    ],
-    "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
-        "clean": "rm -rf dist",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "typecheck": "tsc --noEmit"
-    },
-    "dependencies": {
-        "@cortex-os/agents": "workspace:*",
-        "@cortex-os/orchestration": "workspace:*",
-        "@cortex-os/rag": "workspace:*",
-        "events": "^3.3.0"
-    },
-    "devDependencies": {
-        "@types/node": "^20.0.0",
-        "typescript": "^5.0.0",
-        "vitest": "^1.0.0"
-    },
-    "keywords": [
-        "cortex-os",
-        "archon",
-        "integration",
-        "mcp",
-        "knowledge-base",
-        "task-management"
-    ],
-    "author": "Cortex-OS Team",
-    "license": "MIT"
+  "name": "@cortex-os/archon-integration",
+  "version": "0.1.0",
+  "description": "Cortex-OS integration with Archon knowledge base and task management",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "node ../../../scripts/vitest-safe.mjs run",
+    "test:watch": "node ../../../scripts/vitest-safe.mjs run",
+    "typecheck": "tsc --noEmit",
+    "test:safe": "node ../../../scripts/vitest-safe.mjs run"
+  },
+  "dependencies": {
+    "@cortex-os/agents": "workspace:*",
+    "@cortex-os/orchestration": "workspace:*",
+    "@cortex-os/rag": "workspace:*",
+    "events": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "keywords": [
+    "cortex-os",
+    "archon",
+    "integration",
+    "mcp",
+    "knowledge-base",
+    "task-management"
+  ],
+  "author": "Cortex-OS Team",
+  "license": "MIT"
 }

@@ -22,9 +22,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage"
+    "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:watch": "echo 'DISABLED: watch/UI mode blocked for memory safety'",
+    "test:coverage": "node ../../scripts/vitest-safe.mjs run --coverage",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
     "@cortex-os/mcp-core": "workspace:*",

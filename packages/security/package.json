@@ -27,10 +27,11 @@
     "build": "tsup src/index.ts src/spiffe/index.ts src/mtls/index.ts src/workload-identity/index.ts --dts --format esm --clean",
     "dev": "tsup src/index.ts src/spiffe/index.ts src/mtls/index.ts src/workload-identity/index.ts --dts --format esm --clean --watch",
     "lint": "eslint src/**/*.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "semgrep": "semgrep scan --config=semgrep.yml --severity=WARNING --sarif -o semgrep.sarif ."
+    "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:watch": "node ../../scripts/vitest-safe.mjs run",
+    "test:coverage": "node ../../scripts/vitest-safe.mjs run --coverage",
+    "semgrep": "semgrep scan --config=semgrep.yml --severity=WARNING --sarif -o semgrep.sarif .",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "keywords": [
     "security",
