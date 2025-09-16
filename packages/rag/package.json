@@ -18,7 +18,8 @@
   "dependencies": {
     "@cortex-os/contracts": "workspace:*",
     "@cortex-os/model-gateway": "workspace:*",
-    "@cortex-os/agents": "workspace:*"
+    "@cortex-os/agents": "workspace:*",
+    "@cortex-os/observability": "workspace:*"
   },
   "devDependencies": {
     "@types/micromatch": "^4.0.9",

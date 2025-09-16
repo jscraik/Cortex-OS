@@ -1,160 +1,148 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import {
-	__resetRagPipelineForTesting,
-	ragCitationTool,
-	ragDocumentIngestTool,
-	ragRerankTool,
-	ragRetrieveTool,
-	ragSearchTool,
-} from './tools';
 
-type ToolResponse = Awaited<ReturnType<typeof ragDocumentIngestTool.handler>>;
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-function parseResponse(response: ToolResponse) {
-	const [first] = response.content;
-	expect(first, 'tool response should include text content').toBeDefined();
-	return JSON.parse(first.text);
-}
+const loggerMocks = vi.hoisted(() => {
+        const mockLogger = {
+                debug: vi.fn(),
+                info: vi.fn(),
+                warn: vi.fn(),
+                error: vi.fn(),
+        };
 
-describe('RAG MCP tools', () => {
-	beforeEach(() => {
-		__resetRagPipelineForTesting();
-	});
+        return {
+                mockLogger,
+                createLogger: vi.fn(() => mockLogger),
+        };
+});
 
-	describe('document ingestion tool', () => {
-		it('persists ingested documents for downstream search', async () => {
-			const ingestResult = await ragDocumentIngestTool.handler({
-				documentId: 'doc-animals',
-				text: 'The quick brown fox jumps over the lazy dog while exploring the forest.',
-				metadata: { topic: 'animals', source: 'test-suite' },
-				chunkSize: 64,
-			});
+import type { handleRAG as HandleRAGType } from '../index.js';
 
-			const ingestPayload = parseResponse(ingestResult);
-			expect(ingestPayload.status).toBe('ingested');
-			expect(ingestPayload.documentId).toBe('doc-animals');
-			expect(ingestPayload.chunks).toBeGreaterThan(0);
+const ragHandlerMock = vi.hoisted(() => ({
+        handleRAG: vi.fn<HandleRAGType>(),
+}));
 
-			const searchResult = await ragSearchTool.handler({
-				query: 'quick fox in forest',
-				topK: 1,
-			});
+vi.mock('@cortex-os/observability', () => ({
+        createLogger: loggerMocks.createLogger,
+}));
 
-			const searchPayload = parseResponse(searchResult);
-			expect(searchPayload.results).toHaveLength(1);
-			expect(searchPayload.results[0].documentId).toBe('doc-animals');
-			expect(searchPayload.results[0].metadata).toMatchObject({
-				topic: 'animals',
-			});
-			expect(searchPayload.results[0].score).toBeGreaterThan(0);
-		});
-	});
+vi.mock('../index.js', () => ({
+        handleRAG: ragHandlerMock.handleRAG,
+}));
 
-	describe('search tool', () => {
-		it('orders results by semantic similarity', async () => {
-			await ragDocumentIngestTool.handler({
-				documentId: 'doc-energy',
-				text: 'Solar energy reduces greenhouse gas emissions and provides reliable renewable power.',
-			});
-			await ragDocumentIngestTool.handler({
-				documentId: 'doc-history',
-				text: 'Medieval history explores knights, castles, and feudal societies.',
-			});
+// Import after mocks
+import { ragIngestTool, ragQueryTool, ragStatusTool } from './tools.js';
 
-			const searchResult = await ragSearchTool.handler({
-				query: 'renewable energy power',
-				topK: 2,
-			});
+describe('rag MCP tool error handling', () => {
+        beforeEach(() => {
+                vi.clearAllMocks();
+                ragHandlerMock.handleRAG.mockResolvedValue('mock response');
+        });
 
-			const payload = parseResponse(searchResult);
-			expect(payload.results[0].documentId).toBe('doc-energy');
-			expect(payload.results[0].score).toBeGreaterThan(
-				payload.results[1].score,
-			);
-		});
-	});
+        it('returns a structured validation error when query is whitespace', async () => {
+                const response = await ragQueryTool.handler({
+                        query: '   ',
+                        topK: 3,
+                        maxTokens: 256,
+                        timeoutMs: 1_000,
+                });
 
-	describe('retrieval tool', () => {
-		it('aggregates relevant context with citations', async () => {
-			await ragDocumentIngestTool.handler({
-				documentId: 'doc-solar',
-				text: 'Solar panels convert sunlight into energy and reduce electricity costs.',
-			});
-			await ragDocumentIngestTool.handler({
-				documentId: 'doc-wind',
-				text: 'Wind turbines capture kinetic energy from the wind to generate clean power.',
-			});
+                expect(response.isError).toBe(true);
+                expect(response.metadata.tool).toBe('rag_query');
 
-			const retrievalResult = await ragRetrieveTool.handler({
-				query: 'clean energy sources',
-				topK: 2,
-			});
+                const payload = JSON.parse(response.content[0]?.text ?? '{}');
+                expect(payload.error.code).toBe('validation_error');
+                expect(payload.error.message).toContain('Query cannot be empty');
+                expect(ragHandlerMock.handleRAG).not.toHaveBeenCalled();
+                expect(loggerMocks.mockLogger.warn).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                                correlationId: response.metadata.correlationId,
+                                tool: 'rag_query',
+                                error: expect.objectContaining({ code: 'validation_error' }),
+                        }),
+                        'rag_query validation failed',
+                );
+        });
 
-			const payload = parseResponse(retrievalResult);
-			expect(payload.citations.length).toBeGreaterThan(0);
-			expect(payload.context).toContain('Solar panels');
-			expect(payload.citations[0].text).toContain('energy');
-			expect(payload.noEvidence).toBeFalsy();
-		});
-	});
+        it('wraps upstream errors with diagnostic metadata', async () => {
+                ragHandlerMock.handleRAG.mockRejectedValueOnce(new Error('upstream failed'));
 
-	describe('reranking tool', () => {
-		it('prioritizes documents matching the query intent', async () => {
-			const rerankResult = await ragRerankTool.handler({
-				query: 'cat care tips',
-				documents: [
-					{
-						id: 'doc-cats',
-						content:
-							'Cats require gentle grooming and enjoy quiet naps in sunny spaces.',
-					},
-					{
-						id: 'doc-dogs',
-						content:
-							'Dogs thrive on daily walks, obedience training, and interactive play.',
-					},
-				],
-				topK: 2,
-			});
+                const response = await ragQueryTool.handler({
+                        query: 'tell me about cortex os',
+                        topK: 2,
+                        maxTokens: 512,
+                        timeoutMs: 2_000,
+                });
 
-			const payload = parseResponse(rerankResult);
-			expect(payload.documents[0].id).toBe('doc-cats');
-			expect(payload.documents[0].similarity).toBeGreaterThan(
-				payload.documents[1].similarity,
-			);
-		});
-	});
+                expect(response.isError).toBe(true);
+                expect(response.metadata.tool).toBe('rag_query');
 
-	describe('citation tool', () => {
-		it('maps claims to supporting evidence when available', async () => {
-			await ragDocumentIngestTool.handler({
-				documentId: 'doc-claims',
-				text: 'Solar power reduces carbon emissions and lowers long-term electricity costs.',
-			});
+                const payload = JSON.parse(response.content[0]?.text ?? '{}');
+                expect(payload.error.code).toBe('internal_error');
+                expect(payload.error.details).toContain('upstream failed');
+                expect(loggerMocks.mockLogger.error).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                                correlationId: response.metadata.correlationId,
+                                tool: 'rag_query',
+                        }),
+                        'rag_query failed',
+                );
+        });
 
-			const citationResult = await ragCitationTool.handler({
-				query: 'benefits of solar power',
-				claims: [
-					'Solar power reduces carbon emissions',
-					'Cats operate solar farms on the moon',
-				],
-				topK: 3,
-			});
+        it('enforces metadata safety for ingestion requests', async () => {
+                const response = await ragIngestTool.handler({
+                        content: 'valid chunk',
+                        metadata: {
+                                __proto__: {
+                                        injected: true,
+                                },
+                        },
+                });
 
-			const payload = parseResponse(citationResult);
-			expect(payload.citations.length).toBeGreaterThan(0);
+                expect(response.isError).toBe(true);
+                expect(response.metadata.tool).toBe('rag_ingest');
 
-			const supportedClaim = payload.claimCitations.find(
-				(claim: { claim: string }) =>
-					claim.claim.includes('reduces carbon emissions'),
-			);
-			expect(supportedClaim?.citations.length).toBeGreaterThan(0);
+                const payload = JSON.parse(response.content[0]?.text ?? '{}');
+                expect(payload.error.code).toBe('security_error');
+                expect(payload.error.message).toContain('Unsafe metadata');
+                expect(loggerMocks.mockLogger.warn).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                                correlationId: response.metadata.correlationId,
+                                tool: 'rag_ingest',
+                                error: expect.objectContaining({ code: 'security_error' }),
+                        }),
+                        'rag_ingest validation failed',
+                );
+        });
 
-			const unsupportedClaim = payload.claimCitations.find(
-				(claim: { claim: string }) =>
-					claim.claim.includes('Cats operate solar farms'),
-			);
-			expect(unsupportedClaim?.noEvidence).toBe(true);
-		});
-	});
+        it('limits ingestion content size', async () => {
+                const response = await ragIngestTool.handler({
+                        content: 'a'.repeat(25_001),
+                });
+
+                expect(response.isError).toBe(true);
+                expect(response.metadata.tool).toBe('rag_ingest');
+
+                const payload = JSON.parse(response.content[0]?.text ?? '{}');
+                expect(payload.error.code).toBe('validation_error');
+                expect(payload.error.message).toContain('Content exceeds maximum length');
+        });
+
+        it('returns validation error for invalid status input', async () => {
+                const response = await ragStatusTool.handler({
+                        // @ts-expect-error intentional invalid type for validation test
+                        includeStats: 'yes',
+                });
+
+                expect(response.isError).toBe(true);
+                expect(response.metadata.tool).toBe('rag_status');
+
+                const payload = JSON.parse(response.content[0]?.text ?? '{}');
+                expect(payload.error.code).toBe('validation_error');
+                expect(payload.error.details).toEqual(
+                        expect.arrayContaining([
+                                expect.stringContaining('Expected boolean'),
+                        ]),
+                );
+        });
+
 });
