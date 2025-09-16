@@ -118,7 +118,7 @@ export function createOrchestrationBus(options: OrchestrationBusOptions = {}): O
                                 throw new Error(`Unsupported orchestration event type: ${type}`);
                         }
                         const schema = ORCHESTRATION_EVENT_SCHEMAS[type];
-                        const data = schema.parse(payload) as OrchestrationEventPayloadMap[TType];
+                        const data = schema.parse(payload);
                         const envelope = createEnvelope({
                                 type,
                                 source,
