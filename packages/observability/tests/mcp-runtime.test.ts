@@ -90,7 +90,7 @@ function buildDataset(): ObservabilityDataset {
                         component: 'worker',
                         runId,
                         metadata: {
-                                apiKey: 'abc123',
+                                apiKey: 'test-api-key',
                                 attempt: 1,
                         },
                 },
