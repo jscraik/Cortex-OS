@@ -28,6 +28,7 @@ Cortex RAG provides retrieval-augmented generation utilities for Cortex-OS. This
 | [Architecture](./architecture.md) | Component breakdown and data flow |
 | [CLI Reference](./cli-reference.md) | Command-line options and scripts |
 | [API Reference](./api-reference.md) | SDK classes and methods |
+| [MCP Tools](./mcp-tools.md) | MCP tool contracts, schemas, and integration recipes |
 | [User Guide](./user-guide.md) | Everyday tasks and navigation |
 | [Best Practices](./best-practices.md) | Recommended settings and security |
 | [Providers Setup](./providers-setup.md) | External service configuration |
