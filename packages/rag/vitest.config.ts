@@ -7,7 +7,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
         resolve: {
                 alias: {
-                        '@cortex-os/agents': resolve(currentDir, '__tests__/stubs/agent-mcp-client.ts'),
+                        '@cortex-os/agents': resolve(currentDir, '__tests__/stubs/agent-mcp-client.js'),
                 },
         },
         test: {
