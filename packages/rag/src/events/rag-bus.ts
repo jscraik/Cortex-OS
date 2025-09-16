@@ -80,8 +80,8 @@ function validateEnvelope(envelope: Envelope): RagEventEnvelope {
                 throw new Error(`Unsupported RAG event type: ${envelope.type}`);
         }
         const schema = RAGEventSchemas[envelope.type];
-        const data = schema.parse(envelope.data) as RagEventPayloadMap[RAGEventType];
-        return { ...envelope, data } as RagEventEnvelope;
+        const data = schema.parse(envelope.data);
+        return { ...envelope, data };
 }
 
 export function createRagBus(options: RagBusOptions = {}): RagBus {
