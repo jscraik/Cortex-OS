@@ -21,13 +21,34 @@ export * from './flamegraph.js';
 export * from './logging/index.js';
 // MCP Tools for external AI agent integration
 export type {
-	CreateTraceInput,
-	GetMetricsInput,
-	ObservabilityTool,
-	QueryTracesInput,
-	RecordMetricInput,
+
+        AlertQueryInput,
+        DashboardRequestInput,
+        LogSearchInput,
+        MetricRetrievalInput,
+        ObservabilityTool,
+        TraceQueryInput,
 } from './mcp/tools.js';
 export { observabilityMcpTools } from './mcp/tools.js';
+export {
+        createObservabilityToolHandlers,
+        createObservabilityToolRuntime,
+} from './mcp/runtime.js';
+export type {
+        AlertEvaluationResult,
+        AlertRule,
+        DashboardDefinition,
+        DashboardSummary,
+        LogRecord,
+        LogSearchResult,
+        MetricRecord,
+        MetricRetrievalResult,
+        ObservabilityDataset,
+        ObservabilityToolHandlers,
+        ObservabilityToolRuntime,
+        TraceQueryResult,
+        TraceRecord,
+} from './mcp/runtime.js';
 export * from './metrics/index.js';
 export * from './tracing/index.js';
 export * from './types.js';
