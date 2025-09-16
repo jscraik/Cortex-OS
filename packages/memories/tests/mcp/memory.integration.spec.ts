@@ -149,7 +149,7 @@ describe('memories MCP integration', () => {
                 fixture = await setupMockServer();
                 for (const tool of memoryMcpTools) {
                         fixture.server.registerTool(tool.name, async (args): Promise<MemoryToolResponse> => {
-                                return await tool.handler(args);
+                                return tool.handler(args);
                         });
                 }
                 await fixture.client.ping();
