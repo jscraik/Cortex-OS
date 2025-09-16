@@ -111,12 +111,7 @@ export const RagDocumentIngestionInputSchema = z.object({
                 .array(RagDocumentSchema)
                 .min(1, 'At least one document must be provided for ingestion')
                 .max(500, 'Batch ingestion limited to 500 documents'),
-        options: RagDocumentIngestionOptionsSchema.default({
-                mode: 'upsert',
-                deduplicate: true,
-                chunking: { maxChars: 2_000, overlap: 200 },
-                disableEmbeddings: false,
-        }),
+        options: RagDocumentIngestionOptionsSchema,
 });
 
 export const RagDocumentIngestionOutputSchema = z.object({
