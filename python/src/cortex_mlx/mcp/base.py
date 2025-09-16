@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Dict, Generic, Iterable, Mapping, Type, TypeVar
+from typing import Any, ClassVar, Dict, Generic, Iterable, Mapping, TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    from typing import Type
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -54,7 +57,7 @@ class BaseMCPTool(Generic[InputModelT]):
 
     name: ClassVar[str]
     description: ClassVar[str] = ""
-    InputModel: ClassVar[Type[InputModelT]]
+    InputModel: ClassVar[Any]  # Type[BaseModel] but avoiding type variable issues
 
     def __init__(self) -> None:
         if not getattr(self, "name", None):
