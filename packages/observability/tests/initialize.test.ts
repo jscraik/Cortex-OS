@@ -18,10 +18,12 @@ vi.mock('@opentelemetry/auto-instrumentations-node', () => ({
 }));
 vi.mock('@opentelemetry/resources', () => ({
 
-	Resource: class Resource {
-		constructor(public attrs: any) {}
-	},
-	resourceFromAttributes: (attrs: Record<string, unknown>) => ({ attributes: attrs }),
+        Resource: class Resource {
+                constructor(public attrs: any) {}
+        },
+        resourceFromAttributes: (attributes: Record<string, unknown>) => ({
+                attributes,
+        }),
 
 }));
 vi.mock('@opentelemetry/semantic-conventions', () => ({
