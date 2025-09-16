@@ -66,6 +66,42 @@ export const OrchestrationDefaults = {
 	confidenceThreshold: 0.7,
 };
 
+
+// MCP tool contracts
+export {
+        ToolErrorCode,
+        ToolValidationError,
+        createToolErrorResponse,
+        toolErrorResponseSchema,
+        workflowOrchestrationTools,
+        taskManagementTools,
+        processMonitoringTools,
+        orchestrationToolContracts,
+} from './mcp/tools.js';
+
+export type {
+        ToolContract,
+        ToolErrorResponse,
+        PlanWorkflowInput,
+        PlanWorkflowResult,
+        StartWorkflowInput,
+        StartWorkflowResult,
+        ReviewWorkflowInput,
+        ReviewWorkflowResult,
+        CreateTaskInput,
+        CreateTaskResult,
+        UpdateTaskStatusInput,
+        UpdateTaskStatusResult,
+        AssignTaskInput,
+        AssignTaskResult,
+        GetProcessStatusInput,
+        GetProcessStatusResult,
+        StreamProcessEventsInput,
+        StreamProcessEventsResult,
+        RecordProcessSignalInput,
+        RecordProcessSignalResult,
+} from './mcp/tools.js';
+
 // Version info
 export const version = '1.0.0';
 export const name = '@cortex-os/orchestration';
