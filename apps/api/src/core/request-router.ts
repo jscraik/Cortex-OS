@@ -91,7 +91,7 @@ export class RequestRouter {
   }
 
   register(route: RouteDefinition, inputShape: Record<string, unknown>, outputShape: Record<string, unknown>): void {
-    const id = route.id || randomUUID();
+    const id = route.id ?? randomUUID();
     const normalized = { route: { ...route, id }, inputShape, outputShape } satisfies RouteResolution;
     this.routes.set(id, normalized);
   }
