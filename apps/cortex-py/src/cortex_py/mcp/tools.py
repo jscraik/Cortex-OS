@@ -128,7 +128,7 @@ class CortexPyMCPTools:
         return HealthStatusResponse(**status)
 
     def _error(self, code: str, message: str, *, details: dict[str, Any] | None = None) -> ToolErrorResponse:
-        full_message = f"{message}"
+        full_message = message
         description = ERROR_DESCRIPTIONS.get(code)
         if description and description not in full_message:
             full_message = f"{message} ({description})"
