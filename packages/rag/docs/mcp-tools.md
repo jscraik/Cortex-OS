@@ -39,8 +39,9 @@ mirroring the payload from `handleRAG` with the following structure:
 {
   "answer": "Generated answer text",
   "sources": [{ "text": "...", "score": 0.42, "metadata": { /* chunk metadata */ } }],
-  "provider": "qwen3"
+  "provider": "example-provider"
 }
+// Note: The provider field value is illustrative; the actual provider may differ depending on configuration.
 ```
 
 Use `JSON.parse(result.content[0].text)` to obtain the structured object.
