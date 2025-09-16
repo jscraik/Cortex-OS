@@ -86,13 +86,15 @@ export class AuditLogger {
 }
 
 export class PerformanceMonitor {
-  async measure<T>(name: string, fn: () => Promise<T>): Promise<{ result: T; durationMs: number }>; // overload signature
-  measure<T>(name: string, fn: () => T | Promise<T>): Promise<{ result: T; durationMs: number }> | { result: T; durationMs: number } {
+  measure<T>(name: string, fn: () => T): { result: T; durationMs: number } {
     const start = performance.now();
-    const value = fn();
-    if (value instanceof Promise) {
-      return value.then((resolved) => ({ result: resolved, durationMs: performance.now() - start }));
-    }
-    return { result: value, durationMs: performance.now() - start };
+    const result = fn();
+    return { result, durationMs: performance.now() - start };
+  }
+
+  async measureAsync<T>(name: string, fn: () => Promise<T>): Promise<{ result: T; durationMs: number }> {
+    const start = performance.now();
+    const result = await fn();
+    return { result, durationMs: performance.now() - start };
   }
 }
