@@ -6,7 +6,7 @@ The RAG package exposes three contract-first Model Context Protocol tools via th
 export: `rag_query`, `rag_ingest`, and `rag_status`. Each tool ships with a Zod input schema and a
 promise-based handler so that registries can perform validation before delegating to the
 implementation. The `rag_query` tool internally calls the `handleRAG` entry point, which composes the
-in-memory store, Qwen3 development embedder, and multi-model generator to return answers and citation
+in-memory store, the configured embedder (currently Qwen3 by default), and multi-model generator to return answers and citation
 metadata.
 
 ## Tool Summary
