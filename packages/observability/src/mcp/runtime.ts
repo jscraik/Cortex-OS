@@ -242,24 +242,24 @@ function matchesTags(
         return true;
 }
 
-function sanitizeLogs(records: LogRecord[]): LogSearchResultItem[] {
-        return records.map((log) => {
-                const extra = log.metadata
-                        ? createLogEntry(
-                                  log.component,
-                                  log.level,
-                                  log.message,
-                                  log.runId,
-                                  log.traceContext,
-                                  log.metadata,
-                          ).extra
-                        : undefined;
+function sanitizeMetadata(metadata: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+        if (!metadata) return undefined;
+        // Example redaction: remove sensitive keys (e.g., 'password', 'token')
+        const SENSITIVE_KEYS = ['password', 'token', 'secret', 'apiKey'];
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(metadata)) {
+                if (!SENSITIVE_KEYS.includes(key)) {
+                        sanitized[key] = value;
+                }
+        }
+        return sanitized;
+}
 
-                return {
-                        ...log,
-                        metadata: extra,
-                };
-        });
+function sanitizeLogs(records: LogRecord[]): LogSearchResultItem[] {
+        return records.map((log) => ({
+                ...log,
+                metadata: sanitizeMetadata(log.metadata),
+        }));
 }
 
 function metadataContains(
