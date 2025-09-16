@@ -76,10 +76,14 @@ export function createToolErrorResponse(
         message: string,
         options: { details?: string[]; retryable?: boolean; timestamp?: string } = {},
 ): ToolErrorResponse {
-        const sanitizedDetails = (options.details ?? [])
-                .map((detail) => detail.trim())
-                .filter((detail) => detail.length > 0)
-                .slice(0, MAX_ERROR_DETAILS);
+        const sanitizedDetails: string[] = [];
+        const details = options.details ?? [];
+        for (let i = 0; i < details.length && sanitizedDetails.length < MAX_ERROR_DETAILS; i++) {
+            const trimmed = details[i].trim();
+            if (trimmed.length > 0) {
+                sanitizedDetails.push(trimmed);
+            }
+        }
 
         return toolErrorResponseSchema.parse({
                 code,
