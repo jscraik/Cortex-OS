@@ -32,6 +32,6 @@ If a namespace is undefined, the default policy applies. Define policies in `rea
 
 ## Retrieval or stats responses look like placeholders
 Current handlers return stub data so teams can validate contracts ahead of full persistence wiring.
-- Wrap the exported `inputSchema` in your own handler and call the real `MemoryService` implementation to produce authoritative results.
+- Wrap the exported `handler` function in your own handler and call the real `MemoryService` implementation to produce authoritative results.
 - Keep the response envelope (success/error structure and metadata) intact so downstream clients continue to parse results correctly.
 - Once storage integration lands, remove temporary wrappers to avoid duplicate writes or conflicting telemetry.
