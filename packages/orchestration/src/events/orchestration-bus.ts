@@ -97,8 +97,8 @@ function validateEnvelope(envelope: Envelope): OrchestrationEventEnvelope {
                 throw new Error(`Unsupported orchestration event type: ${envelope.type}`);
         }
         const schema = ORCHESTRATION_EVENT_SCHEMAS[envelope.type];
-        const data = schema.parse(envelope.data) as OrchestrationEventPayloadMap[OrchestrationEventType];
-        return { ...envelope, data } as OrchestrationEventEnvelope;
+        const data = schema.parse(envelope.data);
+        return { ...envelope, data };
 }
 
 export function createOrchestrationBus(options: OrchestrationBusOptions = {}): OrchestrationBus {
