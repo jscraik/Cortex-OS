@@ -11,9 +11,9 @@ from typing import Any, Dict, Optional, Protocol
 import httpx
 
 try:
-    import instructor
+    import instructor  # type: ignore[import-untyped]
 except ImportError:
-    instructor = None
+    instructor = None  # type: ignore[assignment]
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -164,13 +164,21 @@ class OllamaAdapter:
         last_err: Exception | None = None
         for model in self.models:
             try:
-                res = self._client.chat.completions.create(
-                    model=model,
-                    response_model=_OllamaChat,
-                    messages=[{"role": "user", "content": prompt}],
-                    timeout=timeout,
-                )
-                return res.response
+                if instructor is not None:
+                    res = self._client.chat.completions.create(  # type: ignore[misc]
+                        model=model,
+                        response_model=_OllamaChat,
+                        messages=[{"role": "user", "content": prompt}],
+                        timeout=timeout,
+                    )
+                    return res.response  # type: ignore[return-value]
+                else:
+                    res = self._client.chat.completions.create(
+                        model=model,
+                        messages=[{"role": "user", "content": prompt}],
+                        timeout=timeout,
+                    )
+                    return res.choices[0].message.content or ""
             except Exception as exc:  # pragma: no cover - depends on model availability
                 last_err = exc
                 logger.warning("chat model %s failed: %s", model, exc)
