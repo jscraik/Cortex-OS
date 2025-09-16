@@ -89,7 +89,7 @@ export class ASBRAIMcpIntegration {
 						parsed.server_type = parsed.server_type || 'ASBR-AI-MCP-Server';
 						// mark registered only after capabilities parsed successfully
 						this.isRegistered = true;
-					} catch (_e) {
+					} catch {
 						// ignore parse errors but treat as capability failure
 						throw new Error('AI capabilities parse error');
 					}

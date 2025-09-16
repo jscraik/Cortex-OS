@@ -115,6 +115,52 @@ function mapZodIssues(issues: ZodIssue[]): string[] {
 	);
 }
 
+function toContractIssues(issues: ZodIssue[]): ContractErrorDetail {
+	return { issues };
+}
+
+function createContractInvoker(
+	canonicalName: string,
+	schema: ZodType,
+): ToolContractInvoker {
+	return async (input: unknown): Promise<ToolContractResult> => {
+		try {
+			schema.parse(input);
+		} catch (error) {
+			if (error instanceof ZodError) {
+				return {
+					type: 'error',
+					error: {
+						code: 'INVALID_INPUT',
+						message: `${canonicalName} received invalid input`,
+						httpStatus: 400,
+						retryable: false,
+						details: toContractIssues(error.issues),
+					},
+				};
+			}
+			return {
+				type: 'error',
+				error: {
+					code: 'INVALID_INPUT',
+					message: `${canonicalName} validation failed`,
+					httpStatus: 400,
+					retryable: false,
+				},
+			};
+		}
+		return {
+			type: 'error',
+			error: {
+				code: 'NOT_IMPLEMENTED',
+				message: `${canonicalName} handler not implemented`,
+				httpStatus: 501,
+				retryable: false,
+			},
+		};
+	};
+}
+
 function sanitizeText(text: string, field: 'text' | 'update_text'): string {
 	const normalized = text.trim();
 	if (!normalized) {
@@ -516,12 +562,14 @@ type MemoryStatsHandlerInput = z.infer<typeof memoryStatsToolSchema>;
 
 // Memory MCP Tool definitions
 export const memoryStoreTool: MemoryTool = {
-	name: 'memory_store',
+	name: 'memories.store',
+	aliases: ['memory_store'],
 	description: 'Store information in the memory system',
 	inputSchema: memoryStoreToolSchema,
+	invoke: createContractInvoker('memories.store', memoryStoreToolSchema),
 	handler: async (params: unknown) =>
 		executeTool(
-			'memory_store',
+			'memories.store',
 			memoryStoreToolSchema,
 			params,
 			({ kind, text, tags, metadata }: MemoryStoreHandlerInput, rawParams) => {
@@ -565,16 +613,18 @@ export const memoryStoreTool: MemoryTool = {
 		),
 };
 
-export const memoryRetrieveTool: MemoryTool = {
-	name: 'memory_retrieve',
+export const memorySearchTool: MemoryTool = {
+	name: 'memories.search',
+	aliases: ['memory_retrieve'],
 	description: 'Retrieve information from the memory system',
-	inputSchema: memoryRetrieveToolSchema,
+	inputSchema: memorySearchToolSchema,
+	invoke: createContractInvoker('memories.search', memorySearchToolSchema),
 	handler: async (params: unknown) =>
 		executeTool(
-			'memory_retrieve',
-			memoryRetrieveToolSchema,
+			'memories.search',
+			memorySearchToolSchema,
 			params,
-			({ query, limit, kind, tags }: MemoryRetrieveHandlerInput) => {
+			({ query, limit, kind, tags }: MemorySearchHandlerInput) => {
 				const sanitizedTags = tags ? sanitizeTags(tags) : undefined;
 				const effectiveLimit = Math.min(limit, 100);
 
@@ -606,12 +656,14 @@ export const memoryRetrieveTool: MemoryTool = {
 };
 
 export const memoryUpdateTool: MemoryTool = {
-	name: 'memory_update',
+	name: 'memories.update',
+	aliases: ['memory_update'],
 	description: 'Update existing memory items',
 	inputSchema: memoryUpdateToolSchema,
+	invoke: createContractInvoker('memories.update', memoryUpdateToolSchema),
 	handler: async (params: unknown) =>
 		executeTool(
-			'memory_update',
+			'memories.update',
 			memoryUpdateToolSchema,
 			params,
 			({ id, text, tags, metadata }: MemoryUpdateHandlerInput, rawParams) => {
@@ -668,12 +720,14 @@ export const memoryUpdateTool: MemoryTool = {
 };
 
 export const memoryDeleteTool: MemoryTool = {
-	name: 'memory_delete',
+	name: 'memories.delete',
+	aliases: ['memory_delete'],
 	description: 'Delete memory items',
 	inputSchema: memoryDeleteToolSchema,
+	invoke: createContractInvoker('memories.delete', memoryDeleteToolSchema),
 	handler: async (params: unknown) =>
 		executeTool(
-			'memory_delete',
+			'memories.delete',
 			memoryDeleteToolSchema,
 			params,
 			({ id }: MemoryDeleteHandlerInput) => ({
@@ -684,13 +738,57 @@ export const memoryDeleteTool: MemoryTool = {
 		),
 };
 
-export const memoryStatsTool: MemoryTool = {
-	name: 'memory_stats',
-	description: 'Get memory system statistics',
-	inputSchema: memoryStatsToolSchema,
+export const memoryGetTool: MemoryTool = {
+	name: 'memories.get',
+	aliases: ['memory_get'],
+	description: 'Retrieve a specific memory item by identifier',
+	inputSchema: memoryGetToolSchema,
+	invoke: createContractInvoker('memories.get', memoryGetToolSchema),
 	handler: async (params: unknown) =>
 		executeTool(
-			'memory_stats',
+			'memories.get',
+			memoryGetToolSchema,
+			params,
+			({ id, namespace }: MemoryGetHandlerInput) => ({
+				id,
+				namespace,
+				found: false,
+				status: 'NOT_IMPLEMENTED',
+			}),
+		),
+};
+
+export const memoryListTool: MemoryTool = {
+	name: 'memories.list',
+	aliases: ['memory_list'],
+	description: 'List memory items with pagination support',
+	inputSchema: memoryListToolSchema,
+	invoke: createContractInvoker('memories.list', memoryListToolSchema),
+	handler: async (params: unknown) =>
+		executeTool(
+			'memories.list',
+			memoryListToolSchema,
+			params,
+			({ namespace, limit, cursor, tags }: MemoryListHandlerInput) => ({
+				namespace: namespace ?? null,
+				limit,
+				cursor: cursor ?? null,
+				tags: tags ?? [],
+				items: [],
+				nextCursor: null,
+			}),
+		),
+};
+
+export const memoryStatsTool: MemoryTool = {
+	name: 'memories.stats',
+	aliases: ['memory_stats'],
+	description: 'Get memory system statistics',
+	inputSchema: memoryStatsToolSchema,
+	invoke: createContractInvoker('memories.stats', memoryStatsToolSchema),
+	handler: async (params: unknown) =>
+		executeTool(
+			'memories.stats',
 			memoryStatsToolSchema,
 			params,
 			({ includeDetails }: MemoryStatsHandlerInput) => ({
@@ -712,8 +810,8 @@ export const memoryStatsTool: MemoryTool = {
 // Export all Memory MCP tools
 export const memoryMcpTools: MemoryTool[] = [
 	memoryStoreTool,
-	memoryRetrieveTool,
-	memoryUpdateTool,
+	memoryGetTool,
+	memoryListTool,
+	memorySearchTool,
 	memoryDeleteTool,
-	memoryStatsTool,
 ];

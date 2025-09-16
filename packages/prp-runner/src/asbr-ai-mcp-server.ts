@@ -717,7 +717,7 @@ export class ASBRAIMcpServer {
 				tools: tools.tools.length,
 				features: capabilities?.features || ['degraded-mode'],
 			};
-		} catch (_error) {
+		} catch {
 			// Return degraded but operational status for testing scenarios
 			const tools = await this.listTools();
 			return {

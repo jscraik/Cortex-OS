@@ -11,6 +11,7 @@ This is the backend component of the Cortex WebUI project, built with Node.js, E
 - AI model management
 - RESTful API design
 - SQLite database for data persistence
+- MCP Tool Execution (contract-driven, rate limited)
 
 ## Tech Stack
 
@@ -93,6 +94,125 @@ const port = (server.address() as any).port;
 await stop();
 ```
 
+## MCP Tool Execution Layer
+
+The backend exposes a Model Context Protocol (MCP) compliant tool execution surface for WebUI interactions. This is contract‑driven using shared schemas under `libs/typescript/contracts` (see `webui-tools.ts`).
+
+### Endpoints
+
+- `GET /api/v1/mcp/tools` – Returns an array of available tools: `{ name, description }`.
+- `POST /api/v1/mcp/execute` – Executes a tool.
+
+Request body shape:
+
+```jsonc
+{
+  "tool": "open_panel",              // string, required
+  "args": { /* tool-specific */ },    // validated via Zod per tool
+  "correlationId": "optional-id"     // echoed for tracing
+}
+```
+
+Successful response:
+
+```jsonc
+{
+  "success": true,
+  "tool": "open_panel",
+  "data": { /* tool result */ },
+  "correlationId": "optional-id",
+  "timestamp": "2025-01-01T12:34:56.000Z"
+}
+```
+
+Error response (contracted):
+
+```jsonc
+{
+  "success": false,
+  "error": {
+    "tool": "open_panel",
+    "code": "validation_error | unknown_tool | rate_limited | internal_error",
+    "message": "Human readable detail",
+    "details": { /* optional structured context */ },
+    "correlationId": "optional-id"
+  }
+}
+```
+
+### Available Tools (summary)
+
+| Tool | Purpose |
+| ---- | ------- |
+| `open_panel` | Open a UI panel (e.g. side navigation) |
+| `update_component_state` | Patch component state via path & value |
+| `navigate` | Trigger client navigation |
+| `simulate_click` | Programmatic click on a UI element |
+| `submit_form` | Submit (or validate) a form |
+| `send_chat_message` | Queue a chat message |
+| `render_chart` | Schedule chart render |
+| `generate_timeline` | Produce timeline data summary |
+| `render_tree` | Render / summarize a tree structure |
+
+(Authoritative definitions live in `webuiMcpTools` contracts.)
+
+### Validation & Contracts
+
+All tool invocations are validated by `validateWebuiToolInput()` which applies the Zod schema bound to the tool definition. This guarantees:
+
+- Stable, forward-compatible shape
+- Fast rejection of malformed input (400 + `validation_error`)
+- Tool-specific structured `details` when present
+
+### Rate Limiting
+
+Each tool call is subject to a simple in-memory rate limiter with a sliding window:
+
+Environment variables:
+
+- `WEBUI_MCP_RATE_LIMIT` (default: `100`)
+- `WEBUI_MCP_RATE_WINDOW_MS` (default: `60000`)
+
+If the threshold is exceeded the handler returns HTTP `429` with error code `rate_limited`.
+
+#### Test Override Helper
+
+For deterministic testing the limiter can be overridden:
+
+```typescript
+import { __setMcpRateLimitForTests } from '../src/mcp/tools';
+__setMcpRateLimitForTests(2, 10_000); // limit=2 in a 10s window
+```
+
+Avoid using this outside tests.
+
+### Service Abstractions
+
+`tools.ts` defines lightweight service interfaces (`PanelService`, `NavigationService`, etc.) and a `WebuiMcpServices` shape. Stubs implement deterministic returns for early integration. Future wiring should:
+
+1. Provide concrete implementations in `src/services/`.
+2. Inject them into `executeTool` (e.g. through factory pattern or DI container).
+3. Preserve contract boundaries (no cross-feature reach‑through imports).
+
+### Extending with a New Tool
+
+1. Add the tool definition & schema to contracts (`webuiMcpTools`).
+2. Add validation schema mapping entry if needed.
+3. Implement its execution branch in `executeTool()`.
+4. Add contract test (`contracts/tests/…`).
+5. Add handler test if logic has branching / side effects.
+
+### Error Categories
+
+| Code | Meaning | HTTP |
+| ---- | ------- | ---- |
+| `validation_error` | Input failed schema validation | 400 |
+| `unknown_tool` | Tool name not recognized | 400 |
+| `rate_limited` | Rate limit exceeded | 429 |
+| `internal_error` | Unexpected server error | 500 |
+
+Internal errors are logged with `webui_mcp_tool_internal_error` and scrubbed to a generic message.
+
 ## Project Structure
 
 ```
@@ -102,6 +222,7 @@ src/
 ├── models/         # Database models
 ├── services/       # Business logic
 ├── utils/          # Utility functions
+├── mcp/            # MCP tool execution layer (tools.ts)
 ├── types/          # TypeScript types
 └── server.ts       # Main server file
 ```

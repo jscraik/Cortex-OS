@@ -150,7 +150,7 @@ export class EvaluationNode {
 				}
 
 				testResults.testCount = testResults.testFiles.length;
-			} catch (_globError) {
+			} catch {
 				// Glob failed, continue with other checks
 			}
 
@@ -199,11 +199,11 @@ export class EvaluationNode {
 								testOutput.includes('passing') ||
 								testOutput.includes('✓') ||
 								testOutput.includes('✗');
-						} catch (_testError) {
+						} catch {
 							// Test command failed, but we can still check for test files
 						}
 					}
-				} catch (_packageError) {
+				} catch {
 					// Package.json parsing failed
 				}
 			}
@@ -245,7 +245,7 @@ export class EvaluationNode {
 						);
 						testResults.hasRedGreenEvidence = true;
 					}
-				} catch (_pytestError) {
+				} catch {
 					// pytest failed or not available
 				}
 			}
@@ -284,7 +284,7 @@ export class EvaluationNode {
 							Math.round(avgCoverage),
 						);
 					}
-				} catch (_coverageParseError) {
+				} catch {
 					// Coverage summary parsing failed
 				}
 			}
@@ -304,7 +304,7 @@ export class EvaluationNode {
 					commits.includes('red') ||
 					commits.includes('green') ||
 					commits.includes('refactor');
-			} catch (_gitError) {
+			} catch {
 				// Git not available or failed
 			}
 
@@ -401,7 +401,7 @@ export class EvaluationNode {
 						tools.push('ESLint');
 					}
 				}
-			} catch (_eslintError) {
+			} catch {
 				// ESLint not available or failed
 			}
 
@@ -443,7 +443,7 @@ export class EvaluationNode {
 						throw new Error(`Pylint execution failed: ${pylintError}`);
 					}
 				}
-			} catch (_pythonError) {
+			} catch {
 				// Python linting failed
 			}
 

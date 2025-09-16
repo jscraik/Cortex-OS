@@ -1,11 +1,11 @@
 // Composable server factory for Cortex WebUI backend
 // Refactored from monolithic bootstrap to testable factory pattern.
 
-import http, { type Server as HttpServer } from 'node:http';
-import path from 'node:path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Express } from 'express';
+import http, { type Server as HttpServer } from 'node:http';
+import path from 'node:path';
 import { WebSocketServer } from 'ws';
 
 dotenv.config();
@@ -55,6 +55,8 @@ import { MessageController } from './controllers/messageController';
 import { getModelById, getModels } from './controllers/modelController';
 import { getChatTools } from './controllers/toolController';
 import { getUiModels } from './controllers/uiModelsController';
+// MCP tool execution handlers
+import { listWebuiMcpTools, mcpExecuteHandler } from './mcp/tools';
 // Import middleware
 import { authenticateToken } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
@@ -162,6 +164,15 @@ export const createApp = (): Express => {
 		parseDocument,
 	);
 	app.get(`${API_BASE_PATH}/documents/supported-types`, getSupportedTypes);
+
+	// MCP tool execution (initial HTTP binding)
+	app.post(`${API_BASE_PATH}/mcp/execute`, mcpExecuteHandler);
+	app.get(`${API_BASE_PATH}/mcp/tools`, (_req, res) => {
+		res.json({
+			tools: listWebuiMcpTools(),
+			timestamp: new Date().toISOString(),
+		});
+	});
 
 	// Error handling last
 	app.use(errorHandler);

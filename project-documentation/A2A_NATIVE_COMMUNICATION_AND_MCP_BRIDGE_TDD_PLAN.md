@@ -1,21 +1,21 @@
-# A2A Native Communication Method and A2A MCP Bridge Implementation Plan
+# A2A Native Communication Method and A2A MCP Bridge Implementation Plan for ALL Packages
 
 ## Executive Summary
 
-This document outlines a comprehensive Test-Driven Development (TDD) approach to implementing native A2A communication methods and A2A MCP bridge integration across all Cortex-OS packages and apps. The plan follows strict software engineering principles with a focus on ensuring all components support their respective language types (Python, Rust, TypeScript).
+This document outlines a comprehensive Test-Driven Development (TDD) approach to implementing native A2A communication methods and A2A MCP bridge integration across ALL Cortex-OS packages (35 total) and apps. The plan follows strict software engineering principles with a focus on ensuring all components support their respective language types (Python, Rust, TypeScript). Based on our complete analysis of all packages, only 2 packages have full A2A native communication implemented, 4 packages have partial A2A implementation, and 15 packages have full MCP tool implementations.
 
 ## Current Integration Status
 
 ### A2A Native Communication Analysis
 
-The A2A (Agent-to-Agent) native communication is already implemented with:
+The A2A (Agent-to-Agent) native communication is implemented in only 2 of 35 packages:
 
-1. **Core Messaging Infrastructure** - Complete implementation with CloudEvents 1.0 compliant messaging
+1. **Core Messaging Infrastructure** - Complete implementation with CloudEvents 1.0 compliant messaging in @cortex-os/a2a
 2. **Transport Layer** - In-process transport ready, HTTP/WebSocket transports planned
 3. **Message Bus** - Production-ready event bus with idempotency, ACL, and tracing support
 4. **Agent Framework** - Complete agent interfaces and capabilities definitions
 
-However, the A2A native communication is not yet fully integrated across all apps/packages for agent-to-agent communication.
+However, the A2A native communication is not yet fully integrated across all packages for agent-to-agent communication. 31 of 35 packages are missing A2A native communication.
 
 ### A2A MCP Bridge Analysis
 
@@ -34,19 +34,33 @@ The A2A MCP bridge functionality is partially implemented with:
    - `manage_service` - Manage service operations
    - `get_service_metrics` - Retrieve service metrics
 
-However, these tools are not yet integrated with the MCP core registry system across apps/packages.
+However, these tools are not yet integrated with the MCP core registry system across packages. Additionally, 15 of 35 packages have their own MCP tools that are not integrated with the MCP core.
 
-### Apps Missing A2A Native Communication ❌
+### Packages Missing A2A Native Communication ❌
+
+31 of 35 packages are missing A2A native communication, including:
 
 1. **cortex-py** - Python MLX servers app (no A2A integration)
 2. **cortex-webui** - Web user interface (no A2A integration)
 3. **api** - Backend API (no A2A integration)
 4. **cortex-code** - Rust implementation (minimal A2A integration)
 5. **cortex-marketplace** - Marketplace API (no A2A integration)
+6. **agents** - Agents package (partial A2A integration)
+7. **asbr** - ASBR package (partial A2A integration)
+8. **memories** - Memories package (no A2A integration)
+9. **security** - Security package (no A2A integration)
+10. **gateway** - Gateway package (no A2A integration)
+... and 21 other packages
 
-### Apps with Minimal A2A Integration ⚠️
+### Packages with Partial A2A Integration ⚠️
 
-1. **cortex-os** - ASBR-lite brain with basic A2A wiring but no full agent-to-agent communication
+4 of 35 packages have partial A2A integration:
+
+1. **a2a** - Core A2A package (full implementation)
+2. **a2a-services** - A2A services package (full implementation)
+3. **agents** - Agents package (partial implementation through a2a dependency)
+4. **asbr** - ASBR package (partial implementation through a2a-core dependency)
+5. **prp-runner** - PRP runner package (partial implementation through a2a-core dependency)
 
 ## Technical Review Findings
 
@@ -82,15 +96,16 @@ The a2a-services package has a complete MCP tools implementation with:
 
 However, these tools are not yet integrated with the MCP core registry system.
 
-### cortex-os App Analysis
+### Package Analysis
 
-The cortex-os app has a minimal MCP gateway implementation with 9 tools defined but lacks integration with A2A native communication. The gateway needs to be expanded with:
+Based on our comprehensive analysis of all 35 packages, the following key findings were identified:
 
-1. **A2A Native Communication Integration** - Full agent-to-agent communication capabilities
-2. **A2A MCP Bridge Integration** - External tool integration via MCP bridge
-3. **Real Tool Registry** - Dynamic tool registration and discovery
+1. **A2A Native Communication Integration** - Only 2 of 35 packages have full A2A native communication implemented
+2. **A2A MCP Bridge Integration** - 15 of 35 packages have MCP tools implemented but not integrated with MCP core
+3. **MCP Core Integration** - Most MCP tools across packages are not registered with the central MCP core registry
+4. **Cross-Language Compatibility** - Need to ensure A2A communication works across Python, Rust, and TypeScript packages
 
-## TDD Implementation Plan
+## TDD Implementation Plan for ALL Packages
 
 ### Phase 1: Foundation and Planning ✅
 
@@ -100,17 +115,27 @@ The cortex-os app has a minimal MCP gateway implementation with 9 tools defined 
 
 ### Phase 2: Core Package Integration ⏳
 
-#### Task 2.1: a2a Package A2A Native Communication Integration
+#### Task 2.1: A2A Native Communication Integration Across ALL Packages
 
-##### Subtask 2.1.1: Integrate A2A Native Communication Across Apps
+##### Subtask 2.1.1: Implement A2A Native Communication in Missing Packages
 
 - [ ] Implement A2A message bus in cortex-py app
 - [ ] Implement A2A message bus in cortex-webui app
 - [ ] Implement A2A message bus in api app
 - [ ] Implement A2A message bus in cortex-code app
 - [ ] Implement A2A message bus in cortex-marketplace app
-- [ ] Create agent interfaces for all apps
-- [ ] Implement cross-app agent communication
+- [ ] Implement A2A message bus in memories package
+- [ ] Implement A2A message bus in security package
+- [ ] Implement A2A message bus in gateway package
+- [ ] Implement A2A message bus in evals package
+- [ ] Implement A2A message bus in model-gateway package
+- [ ] Implement A2A message bus in observability package
+- [ ] Implement A2A message bus in orchestration package
+- [ ] Implement A2A message bus in rag package
+- [ ] Implement A2A message bus in simlab package
+- [ ] Implement A2A message bus in tdd-coach package
+- [ ] Create agent interfaces for all packages
+- [ ] Implement cross-package agent communication
 - [ ] Add proper error handling and validation
 - [ ] Write unit tests for all A2A communication (90%+ coverage)
 - [ ] Create integration tests for agent-to-agent communication
@@ -134,7 +159,7 @@ The cortex-os app has a minimal MCP gateway implementation with 9 tools defined 
 - [ ] Create troubleshooting guide
 - [ ] Add integration examples
 
-#### Task 2.2: a2a Package MCP Integration
+#### Task 2.2: A2A Package MCP Integration
 
 ##### Subtask 2.2.1: Integrate A2A MCP Tools with Core Registry
 
@@ -265,6 +290,50 @@ The cortex-os app has a minimal MCP gateway implementation with 9 tools defined 
 - [ ] Document error codes
 - [ ] Create troubleshooting guide
 - [ ] Add integration examples
+
+#### Task 2.5: ALL Other Packages MCP Integration
+
+##### Subtask 2.5.1: Integrate Memories Package MCP Tools with Core Registry
+
+- [ ] Create MCP tool registry integration for memories tools
+- [ ] Register memories.store tool with MCP core
+- [ ] Register memories.search tool with MCP core
+- [ ] Register memories.update tool with MCP core
+- [ ] Register memories.delete tool with MCP core
+- [ ] Implement tool discovery endpoints
+- [ ] Add proper error handling and validation
+- [ ] Write unit tests for all memories tools (90%+ coverage)
+- [ ] Create integration tests with MCP client
+
+##### Subtask 2.5.2: Integrate Security Package MCP Tools with Core Registry
+
+- [ ] Create MCP tool registry integration for security tools
+- [ ] Register security_access_control tool with MCP core
+- [ ] Register security_policy_validation tool with MCP core
+- [ ] Register security_audit tool with MCP core
+- [ ] Register security_encryption tool with MCP core
+- [ ] Register security_threat_detection tool with MCP core
+- [ ] Implement tool discovery endpoints
+- [ ] Add proper error handling and validation
+- [ ] Write unit tests for all security tools (90%+ coverage)
+- [ ] Create integration tests with MCP client
+
+##### Subtask 2.5.3: Integrate ALL Other Packages MCP Tools with Core Registry
+
+- [ ] Create MCP tool registry integration for agents tools
+- [ ] Create MCP tool registry integration for gateway tools
+- [ ] Create MCP tool registry integration for evals tools
+- [ ] Create MCP tool registry integration for model-gateway tools
+- [ ] Create MCP tool registry integration for observability tools
+- [ ] Create MCP tool registry integration for orchestration tools
+- [ ] Create MCP tool registry integration for rag tools
+- [ ] Create MCP tool registry integration for simlab tools
+- [ ] Create MCP tool registry integration for tdd-coach tools
+- [ ] Register all tools with MCP core
+- [ ] Implement tool discovery endpoints
+- [ ] Add proper error handling and validation
+- [ ] Write unit tests for all tools (90%+ coverage)
+- [ ] Create integration tests with MCP client
 
 ### Phase 3: App Integration ⏳
 
@@ -497,9 +566,9 @@ The cortex-os app has a minimal MCP gateway implementation with 9 tools defined 
 - [ ] Add troubleshooting documentation
 - [ ] Create API reference documentation
 
-## Bite-Sized, Commitable Tasks
+## Bite-Sized, Commitable Tasks for ALL Packages
 
-### Week 1: A2A Native Communication Integration
+### Week 1-2: A2A Native Communication Integration
 
 1. **Task 1.1**: Implement A2A message bus in cortex-os app
    - Create A2A bus instance
@@ -525,95 +594,163 @@ The cortex-os app has a minimal MCP gateway implementation with 9 tools defined 
    - Add cross-app communication
    - Write unit tests for communication
 
-### Week 2: A2A Package MCP Integration
+5. **Task 1.5**: Implement A2A message bus in cortex-code app
+   - Create A2A bus instance
+   - Implement agent interfaces
+   - Add cross-app communication
+   - Write unit tests for communication
 
-5. **Task 2.1**: Create MCP tool registry integration for a2a tools
+6. **Task 1.6**: Implement A2A message bus in cortex-marketplace app
+   - Create A2A bus instance
+   - Implement agent interfaces
+   - Add cross-app communication
+   - Write unit tests for communication
+
+7. **Task 1.7**: Implement A2A message bus in memories package
+   - Create A2A bus instance
+   - Implement agent interfaces
+   - Add cross-package communication
+   - Write unit tests for communication
+
+8. **Task 1.8**: Implement A2A message bus in security package
+   - Create A2A bus instance
+   - Implement agent interfaces
+   - Add cross-package communication
+   - Write unit tests for communication
+
+### Week 3: A2A Package MCP Integration
+
+9. **Task 2.1**: Create MCP tool registry integration for a2a tools
    - Create integration module in a2a package
    - Implement tool registration with MCP core
    - Write unit tests for integration
 
-6. **Task 2.2**: Register a2a_queue_message tool with MCP core
-   - Implement registration function
-   - Add error handling
-   - Write integration tests
-
-7. **Task 2.3**: Register a2a_event_stream_subscribe tool with MCP core
-   - Implement registration function
-   - Add error handling
-   - Write integration tests
-
-8. **Task 2.4**: Register a2a_outbox_sync tool with MCP core
-   - Implement registration function
-   - Add error handling
-   - Write integration tests
-
-### Week 3: a2a-services Package MCP Integration
-
-9. **Task 3.1**: Create MCP tool registry integration for a2a-services tools
-   - Create integration module in a2a-services package
-   - Implement tool registration with MCP core
-   - Write unit tests for integration
-
-10. **Task 3.2**: Register register_service tool with MCP core
+10. **Task 2.2**: Register a2a_queue_message tool with MCP core
     - Implement registration function
     - Add error handling
     - Write integration tests
 
-11. **Task 3.3**: Register get_service tool with MCP core
+11. **Task 2.3**: Register a2a_event_stream_subscribe tool with MCP core
     - Implement registration function
     - Add error handling
     - Write integration tests
 
-12. **Task 3.4**: Register list_services tool with MCP core
+12. **Task 2.4**: Register a2a_outbox_sync tool with MCP core
     - Implement registration function
     - Add error handling
     - Write integration tests
 
-### Week 4: MCP Bridge Integration
+### Week 4: a2a-services Package MCP Integration
 
-13. **Task 4.1**: Create MCP tool registry integration for MCP bridge tools
+13. **Task 3.1**: Create MCP tool registry integration for a2a-services tools
+    - Create integration module in a2a-services package
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
+
+14. **Task 3.2**: Register register_service tool with MCP core
+    - Implement registration function
+    - Add error handling
+    - Write integration tests
+
+15. **Task 3.3**: Register get_service tool with MCP core
+    - Implement registration function
+    - Add error handling
+    - Write integration tests
+
+16. **Task 3.4**: Register list_services tool with MCP core
+    - Implement registration function
+    - Add error handling
+    - Write integration tests
+
+### Week 5: MCP Bridge Integration
+
+17. **Task 4.1**: Create MCP tool registry integration for MCP bridge tools
     - Create integration module in mcp-bridge package
     - Implement tool registration with MCP core
     - Write unit tests for integration
 
-14. **Task 4.2**: Register mcp_bridge_create tool with MCP core
+18. **Task 4.2**: Register mcp_bridge_create tool with MCP core
     - Implement registration function
     - Add error handling
     - Write integration tests
 
-15. **Task 4.3**: Register mcp_bridge_forward tool with MCP core
+19. **Task 4.3**: Register mcp_bridge_forward tool with MCP core
     - Implement registration function
     - Add error handling
     - Write integration tests
 
-16. **Task 4.4**: Register mcp_bridge_close tool with MCP core
+20. **Task 4.4**: Register mcp_bridge_close tool with MCP core
     - Implement registration function
     - Add error handling
     - Write integration tests
 
-### Week 7: cortex-code and cortex-marketplace Integration
+### Week 6: Memories and Security Packages MCP Integration
 
-29. **Task 7.1**: Create MCP tool registry integration for cortex-code tools
-    - Create integration module in cortex-code app
+21. **Task 5.1**: Create MCP tool registry integration for memories tools
+    - Create integration module in memories package
     - Implement tool registration with MCP core
     - Write unit tests for integration
 
-30. **Task 7.2**: Register Rust tools with MCP core
+22. **Task 5.2**: Register memories.store tool with MCP core
     - Implement registration function
     - Add error handling
     - Write integration tests
 
-31. **Task 7.3**: Create MCP tool registry integration for cortex-marketplace tools
-    - Create integration module in cortex-marketplace app
+23. **Task 5.3**: Register security_access_control tool with MCP core
+    - Implement registration function
+    - Add error handling
+    - Write integration tests
+
+24. **Task 5.4**: Register security_policy_validation tool with MCP core
+    - Implement registration function
+    - Add error handling
+    - Write integration tests
+
+### Week 7: Remaining Packages MCP Integration
+
+25. **Task 6.1**: Create MCP tool registry integration for agents tools
+    - Create integration module in agents package
     - Implement tool registration with MCP core
     - Write unit tests for integration
 
-32. **Task 7.4**: Register marketplace tools with MCP core
-    - Implement registration function
-    - Add error handling
-    - Write integration tests
+26. **Task 6.2**: Create MCP tool registry integration for gateway tools
+    - Create integration module in gateway package
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
 
-### Week 8: Testing and Refinement
+27. **Task 6.3**: Create MCP tool registry integration for evals tools
+    - Create integration module in evals package
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
+
+28. **Task 6.4**: Create MCP tool registry integration for model-gateway tools
+    - Create integration module in model-gateway package
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
+
+### Week 8: Final Packages MCP Integration
+
+29. **Task 7.1**: Create MCP tool registry integration for observability tools
+    - Create integration module in observability package
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
+
+30. **Task 7.2**: Create MCP tool registry integration for orchestration tools
+    - Create integration module in orchestration package
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
+
+31. **Task 7.3**: Create MCP tool registry integration for rag tools
+    - Create integration module in rag package
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
+
+32. **Task 7.4**: Create MCP tool registry integration for remaining packages
+    - Create integration modules for simlab, tdd-coach, and other packages
+    - Implement tool registration with MCP core
+    - Write unit tests for integration
+
+### Week 9: Testing and Refinement
 
 33. **Task 8.1**: Create comprehensive integration tests
     - Test cross-package communication
@@ -658,11 +795,13 @@ The cortex-os app has a minimal MCP gateway implementation with 9 tools defined 
 
 ### Quantitative Metrics
 
-1. **Coverage**: 90%+ test coverage for all MCP tools
+1. **Coverage**: 90%+ test coverage for all MCP tools across 35 packages
 2. **Performance**: Tool response times under 500ms for 95% of requests
 3. **Reliability**: 99.9% uptime for MCP services
 4. **Security**: Zero critical security vulnerabilities
-5. **Integration**: Seamless communication between all packages and apps
+5. **Integration**: Seamless A2A communication between all 35 packages
+6. **MCP Integration**: All MCP tools registered with MCP core registry
+7. **Cross-Language Compatibility**: Full functionality across Python, Rust, and TypeScript packages
 
 ### Qualitative Metrics
 
@@ -693,5 +832,8 @@ The cortex-os app has a minimal MCP gateway implementation with 9 tools defined 
 3. Establish daily standups to track progress
 4. Set up continuous integration for MCP tool testing
 5. Schedule weekly reviews to assess progress against milestones
+6. Prioritize integration of A2A MCP tools with MCP core as critical first step
+7. Focus on implementing A2A native communication in packages missing it
+8. Ensure all MCP tools across all packages are registered with MCP core
 
 This implementation plan provides a clear roadmap for achieving complete A2A native communication and A2A MCP bridge integration across all Cortex-OS components, ensuring production-ready status across Python, Rust, and TypeScript languages.

@@ -151,6 +151,13 @@ describe('memories MCP integration', () => {
                         fixture.server.registerTool(tool.name, async (args): Promise<MemoryToolResponse> => {
                                 return tool.handler(args);
                         });
+                        if (Array.isArray(tool.aliases)) {
+                                for (const alias of tool.aliases) {
+                                        fixture.server.registerTool(alias, async (args): Promise<MemoryToolResponse> => {
+                                                return tool.handler(args);
+                                        });
+                                }
+                        }
                 }
                 await fixture.client.ping();
         });
@@ -163,39 +170,39 @@ describe('memories MCP integration', () => {
                 fixture.server.clearCalls();
         });
 
-        it('executes memory_store via MCP client and sanitizes sensitive output', async () => {
+        it('executes memories.store via MCP client and sanitizes sensitive output', async () => {
                 const piiText = 'Reach me at agent@example.com or 123 Main St tomorrow.';
-                const response = await fixture.client.callTool('memory_store', {
+                const response = await fixture.client.callTool('memories.store', {
                         kind: 'note',
                         text: piiText,
                         tags: [' primary ', 'primary', 'ops'],
                 });
 
                 const envelope = expectSuccess(response);
-                expect(envelope.tool).toBe('memory_store');
+                expect(envelope.tool).toBe('memories.store');
                 const tags = assertStringArray(
                         envelope.data.tags,
-                        'Successful memory_store response must include string[] tags',
+                        'Successful memories.store response must include string[] tags',
                 );
                 expect(tags).toEqual(['primary', 'ops']);
                 const preview = assertString(
                         envelope.data.redactedPreview,
-                        'Successful memory_store response must include a redacted preview',
+                        'Successful memories.store response must include a redacted preview',
                 );
                 expect(preview).toContain('[REDACTED]');
                 expect(preview).not.toContain('agent@example.com');
 
-                const [call] = assertToolCall(fixture.server, 'memory_store', 1);
+                const [call] = assertToolCall(fixture.server, 'memories.store', 1);
                 expect(call.args).toMatchObject({
                         kind: 'note',
                         text: piiText,
                 });
         });
 
-        it('completes maximum length memory_store payload within performance budget', async () => {
+        it('completes maximum length memories.store payload within performance budget', async () => {
                 const maxPayload = 'a'.repeat(MAX_MEMORY_TEXT_LENGTH);
                 const startedAt = performance.now();
-                const response = await fixture.client.callTool('memory_store', {
+                const response = await fixture.client.callTool('memories.store', {
                         kind: 'note',
                         text: maxPayload,
                 });
@@ -203,39 +210,39 @@ describe('memories MCP integration', () => {
 
                 const envelope = expectSuccess(response);
                 expect(durationMs).toBeLessThan(500);
-                expect(assertNumber(envelope.data.textLength, 'Successful memory_store response must report textLength')).toBe(
+                expect(assertNumber(envelope.data.textLength, 'Successful memories.store response must report textLength')).toBe(
                         MAX_MEMORY_TEXT_LENGTH,
                 );
                 // Timestamp should reflect recent execution, ensuring observability for latency tracking.
                 expect(new Date(envelope.timestamp).getTime()).toBeGreaterThan(Date.now() - 2_000);
         });
 
-        it('surfaces validation errors for invalid memory_retrieve requests', async () => {
-                const response = await fixture.client.callTool('memory_retrieve', {
+        it('surfaces validation errors for invalid memories.search requests', async () => {
+                const response = await fixture.client.callTool('memories.search', {
                         query: 'recent notes',
                         limit: 0,
                 });
 
                 const envelope = expectFailure(response);
-                expect(envelope.tool).toBe('memory_retrieve');
+                expect(envelope.tool).toBe('memories.search');
                 expect(envelope.error.code).toBe('validation_error');
                 expect(envelope.error.details.some((detail) => detail.includes('limit'))).toBe(true);
 
-                assertToolCall(fixture.server, 'memory_retrieve', 1);
+                assertToolCall(fixture.server, 'memories.search', 1);
         });
 
         it('enforces metadata security guards when invoked over MCP', async () => {
-                const response = await fixture.client.callTool('memory_store', {
+                const response = await fixture.client.callTool('memories.store', {
                         kind: 'note',
                         text: 'safe entry',
                         metadata: { constructor: { prototype: { polluted: true } } },
                 });
 
                 const envelope = expectFailure(response);
-                expect(envelope.tool).toBe('memory_store');
+                expect(envelope.tool).toBe('memories.store');
                 expect(envelope.error.code).toBe('security_error');
                 expect(envelope.error.message.toLowerCase()).toContain('unsafe');
 
-                assertToolCall(fixture.server, 'memory_store', 1);
+                assertToolCall(fixture.server, 'memories.store', 1);
         });
 });

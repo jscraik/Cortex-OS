@@ -86,7 +86,7 @@ const runStaticAnalysis = async (): Promise<ReviewIssue[]> => {
 
 			const lintResults = parseLintOutput(stdout);
 			issues.push(...lintResults);
-		} catch (_error) {
+		} catch {
 			// Lint errors are captured in the output
 		}
 	} catch (error) {
@@ -116,7 +116,7 @@ const runSecurityScan = async (): Promise<ReviewIssue[]> => {
 			await execAsync('pnpm audit --audit-level=moderate', {
 				timeout: 30000,
 			});
-		} catch (_error) {
+		} catch {
 			issues.push({
 				severity: 'major',
 				category: 'security',

@@ -18,7 +18,7 @@ import { z } from 'zod';
 interface Tool {
 	name: string;
 	description?: string;
-	run(args: unknown): Promise<any>;
+	run(args: unknown): Promise<unknown>;
 }
 
 /**
@@ -171,7 +171,7 @@ export class ConfigValidator implements Tool {
 			const schema = this.getValidationSchema(input);
 
 			// Perform validation
-			const result = await this.validateConfig(input, schema, startTime);
+			const result = await this.validateConfig(input, schema);
 
 			// Add performance metrics
 			const endTime = performance.now();
@@ -234,7 +234,6 @@ export class ConfigValidator implements Tool {
 	private async validateConfig(
 		input: ConfigValidatorInput,
 		schema: z.ZodSchema,
-		_startTime: number,
 	): Promise<ValidationResult> {
 		const result: ValidationResult = {
 			valid: false,
@@ -271,7 +270,6 @@ export class ConfigValidator implements Tool {
 					result.warnings = await this.generateWarnings(
 						input.configType,
 						parseResult.data,
-						input.options,
 					);
 				}
 
@@ -314,7 +312,6 @@ export class ConfigValidator implements Tool {
 	private async generateWarnings(
 		configType: string,
 		config: unknown,
-		_options: ConfigValidatorInput['options'],
 	): Promise<
 		Array<{
 			path: string;
@@ -355,6 +352,7 @@ export class ConfigValidator implements Tool {
 		}> = [];
 
 		if (typeof config === 'object' && config !== null) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const cortexConfig = config as any;
 
 			// Check for deprecated settings
@@ -404,6 +402,7 @@ export class ConfigValidator implements Tool {
 		}> = [];
 
 		if (typeof config === 'object' && config !== null) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const mcpConfig = config as any;
 
 			// Check for no servers configured
@@ -450,6 +449,7 @@ export class ConfigValidator implements Tool {
 		}> = [];
 
 		if (typeof config === 'object' && config !== null) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const cliConfig = config as any;
 
 			// Check telemetry settings

@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
         MAX_MEMORY_TEXT_LENGTH,
-        memoryRetrieveTool,
+        memorySearchTool,
         memoryStoreTool,
         memoryUpdateTool,
 } from '../src/mcp/tools.js';
@@ -123,7 +123,7 @@ describe('memories MCP tools validation and error handling', () => {
                 debugSpy.mockRestore();
         });
 
-        it('rejects memory_store requests when text exceeds configured length', async () => {
+        it('rejects memories.store requests when text exceeds configured length', async () => {
                 const response = await memoryStoreTool.handler({
                         kind: 'note',
                         text: 'a'.repeat(MAX_MEMORY_TEXT_LENGTH + 1),
@@ -131,7 +131,7 @@ describe('memories MCP tools validation and error handling', () => {
                 });
 
                 expect(response.isError).toBe(true);
-                expect(response.metadata?.tool).toBe('memory_store');
+                expect(response.metadata?.tool).toBe('memories.store');
 
                 const payload = expectFailure(parsePayload(response));
                 expect(payload.error.code).toBe('validation_error');
@@ -145,7 +145,7 @@ describe('memories MCP tools validation and error handling', () => {
                 expect(errorSpy).toHaveBeenCalled();
         });
 
-        it('rejects metadata containing unsafe keys for memory_store', async () => {
+        it('rejects metadata containing unsafe keys for memories.store', async () => {
                 const response = await memoryStoreTool.handler({
                         kind: 'note',
                         text: 'safe text',
@@ -157,7 +157,7 @@ describe('memories MCP tools validation and error handling', () => {
                 expect(payload.error.code).toBe('security_error');
                 expect(payload.error.message).toMatch(/unsafe metadata/i);
                 expect(errorSpy).toHaveBeenCalledWith(
-                        expect.stringContaining('memory_store'),
+                        expect.stringContaining('memories.store'),
                         expect.objectContaining({ correlationId: payload.correlationId }),
                 );
         });
@@ -171,7 +171,7 @@ describe('memories MCP tools validation and error handling', () => {
                 expect(payload.error.message).toMatch(/at least one/i);
         });
 
-        it('sanitizes tags on successful memory_store execution', async () => {
+        it('sanitizes tags on successful memories.store execution', async () => {
                 const response = await memoryStoreTool.handler({
                         kind: 'note',
                         text: 'hello world',
@@ -179,7 +179,7 @@ describe('memories MCP tools validation and error handling', () => {
                 });
 
                 expect(response.isError).toBeFalsy();
-                expect(response.metadata?.tool).toBe('memory_store');
+                expect(response.metadata?.tool).toBe('memories.store');
                 const payload = expectSuccess(parsePayload(response));
                 const tags = assertStringArray(
                         payload.data.tags,
@@ -187,13 +187,13 @@ describe('memories MCP tools validation and error handling', () => {
                 );
                 expect(tags).toEqual(['spaced', 'duplicate']);
                 expect(debugSpy).toHaveBeenCalledWith(
-                        expect.stringContaining('memory_store'),
+                        expect.stringContaining('memories.store'),
                         expect.objectContaining({ correlationId: response.metadata?.correlationId }),
                 );
         });
 
-        it('returns validation error for memory_retrieve when limit is less than 1', async () => {
-                const response = await memoryRetrieveTool.handler({
+        it('returns validation error for memories.search when limit is less than 1', async () => {
+                const response = await memorySearchTool.handler({
                         query: 'notes',
                         limit: 0,
                 });

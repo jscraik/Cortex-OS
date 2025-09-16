@@ -83,7 +83,7 @@ const measureAccessibilityScore = async (): Promise<BudgetMetric> => {
 				metric: 'Accessibility Code Analysis',
 			};
 		}
-	} catch (_error) {
+	} catch {
 		return {
 			score: 0,
 			threshold: QUALITY_THRESHOLDS.ACCESSIBILITY,
@@ -120,7 +120,7 @@ const measurePerformanceScore = async (): Promise<BudgetMetric> => {
 			passed: score >= QUALITY_THRESHOLDS.PERFORMANCE,
 			metric: 'Bundle Size Analysis',
 		};
-	} catch (_error) {
+	} catch {
 		return {
 			score: 0,
 			threshold: QUALITY_THRESHOLDS.PERFORMANCE,
@@ -144,7 +144,7 @@ const measureSecurityScore = async (): Promise<BudgetMetric> => {
 			passed: score >= QUALITY_THRESHOLDS.SECURITY,
 			metric: 'Security Analysis',
 		};
-	} catch (_error) {
+	} catch {
 		return {
 			score: 0,
 			threshold: QUALITY_THRESHOLDS.SECURITY,

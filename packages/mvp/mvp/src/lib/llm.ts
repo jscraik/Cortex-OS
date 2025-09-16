@@ -18,7 +18,7 @@ export async function generateText(
 		if (!res.ok) throw new Error(`MLX error ${res.status}`);
 		const data = await res.json();
 		return data.response ?? data.data ?? '';
-	} catch (_err) {
+	} catch {
 		const frontierUrl =
 			process.env.FRONTIER_API_URL ?? 'http://localhost:11435/api/generate';
 		const res = await fetch(frontierUrl, {

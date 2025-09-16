@@ -389,7 +389,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 						? ` ${escapeStr(params.testPath)}`
 						: '';
 					cmd = `pnpm vitest run --reporter=json ${cov}${target}`.trim();
-				} catch (_vitestDetectionError) {
+				} catch {
 					// Silently ignore: absence of Vitest is non-fatal, we'll try Jest next
 				}
 			}
@@ -401,8 +401,8 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 						? ` ${escapeStr(params.testPath)}`
 						: '';
 					cmd = `pnpm jest --runInBand --reporters=json ${cov}${target}`.trim();
-				} catch (_jestDetectionError) {
-					// Silently ignore: absence of Jest is fine; fallback logic below will run generic tests
+				} catch {
+					// Silently ignore: Jest unavailable is non-fatal
 				}
 			}
 			if (!cmd) {
@@ -422,7 +422,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				try {
 					const parsed = JSON.parse(stdout) as unknown;
 					if (isTestSummary(parsed)) summary = parsed;
-				} catch (_parseSummaryError) {
+				} catch {
 					// Ignore JSON parse errors: we'll return raw stdout which still contains useful info.
 				}
 				let coveragePct: number | undefined;
@@ -451,7 +451,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 								vals.reduce((a: number, b: number) => a + b, 0) / vals.length,
 							);
 					}
-				} catch (_coverageReadError) {
+				} catch {
 					// Ignore coverage errors; coverage is optional and won't fail the overall test run result.
 				}
 				let passed = 0,

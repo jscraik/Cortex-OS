@@ -31,8 +31,12 @@ export {
 	memoryDeleteTool,
 	memoryDeleteToolSchema,
 	memoryMcpTools,
-	memoryRetrieveTool,
-	memoryRetrieveToolSchema,
+	memoryGetTool,
+	memoryGetToolSchema,
+	memoryListTool,
+	memoryListToolSchema,
+	memorySearchTool,
+	memorySearchToolSchema,
 	memoryStatsTool,
 	memoryStatsToolSchema,
 	memoryStoreTool,
@@ -45,4 +49,3 @@ export * from './ports/MemoryStore.js';
 export * from './service/embedder-factory.js';
 export * from './service/memory-service.js';
 export * from './service/store-factory.js';
-

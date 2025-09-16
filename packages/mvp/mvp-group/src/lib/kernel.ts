@@ -11,7 +11,6 @@ import {
 	createInitialPRPState,
 	validateStateTransition,
 } from '@cortex-os/kernel';
-import { nanoid } from 'nanoid';
 // Temporarily comment out observability imports to fix build
 // import { recordMetric, startSpan } from '@cortex-os/observability';
 import { executeBuildNode } from './build-node.js';
@@ -21,11 +20,6 @@ import { executeStrategyNode } from './strategy-node.js';
 // Define PRPOrchestrator interface locally for now
 interface PRPOrchestrator {
 	executeStep(step: string, state: PRPState): Promise<PRPState>;
-}
-
-// Simple deterministic hash function as a fallback
-function generateDeterministicHash(obj: any): string {
-	return JSON.stringify(obj).replace(/\W/g, '').slice(0, 8);
 }
 
 // Temporary stub functions for observability
@@ -43,8 +37,8 @@ function startSpan(name: string) {
 	console.debug(`Starting span: ${name}`);
 	return {
 		end: () => console.debug(`Ending span: ${name}`),
-		setStatus: (_status: any) => {},
-		setAttribute: (_key: string, _value: any) => {},
+		setStatus: (_status: string) => {},
+		setAttribute: (_key: string, _value: string) => {},
 	};
 }
 
@@ -76,8 +70,8 @@ export const runPRPWorkflow = async (
 		const runId =
 			options.runId ||
 			(deterministic
-				? `prp-deterministic-${generateDeterministicHash(blueprint)}`
-				: nanoid());
+				? `prp-deterministic-${Date.now()}`
+				: `prp-${Date.now()}`);
 
 		const initialState = createInitialPRPState(blueprint, {
 			runId,
