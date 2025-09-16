@@ -47,7 +47,7 @@ describe('contract:model-gateway-events evidence extension', () => {
 	});
 
 	it('rejects invalid evidence item missing text and uri', () => {
-		const badEvidence = [{ kind: 'code', hash: 'b'.repeat(64) } as any];
+		const badEvidence = [{ kind: 'code', hash: 'b'.repeat(64) } as unknown];
 		const eventData = {
 			requestId: 'req-125',
 			model: 'mlx:phi-3',
