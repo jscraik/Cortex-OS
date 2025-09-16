@@ -70,7 +70,7 @@ function sanitizeString(value: string, field: string, { min, max }: { min: numbe
                         ]);
         }
         if (CONTROL_CHARS.test(normalized)) {
-                        throw new OrchestrationToolError('validation_error', `${field} contains control characters`, [
+                                'Remove control characters from input',
                                 `${field} contains control characters`,
                         ]);
         }
