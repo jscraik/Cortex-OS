@@ -271,11 +271,9 @@ function hasUnsafePrototype(value: unknown): boolean {
         if (typeof value !== 'object' || value === null) {
                 return false;
         }
-        if (Array.isArray(value)) {
-                return true;
-        }
         const proto = Reflect.getPrototypeOf(value);
-        return proto !== Object.prototype;
+        // Only return true if the prototype is not Object.prototype or Array.prototype
+        return proto !== Object.prototype && proto !== Array.prototype;
 }
 
 function sanitizeMetadataObject(object: Record<string, unknown>, depth: number): Record<string, unknown> {
