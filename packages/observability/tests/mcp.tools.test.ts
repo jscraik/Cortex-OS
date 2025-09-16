@@ -115,7 +115,7 @@ const seedData = (store: InMemoryObservabilityDataSource) => {
                 },
                 {
                         name: 'http.latency',
-                        value: 980,
+                        value: 880,
                         type: 'histogram',
                         unit: 'ms',
                         timestamp: iso(1),
