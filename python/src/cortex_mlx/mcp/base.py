@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Dict, Generic, Iterable, Mapping, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, Iterable, Mapping, TypeVar
 
 if TYPE_CHECKING:
     from typing import Type
