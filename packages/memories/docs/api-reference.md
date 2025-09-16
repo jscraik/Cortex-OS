@@ -20,52 +20,229 @@ Key methods:
 
 ## MCP Tool Contracts
 
-The memories package now ships contract-first Model Context Protocol tools for external agents. The
-TypeScript definitions live in `src/mcp/tools.ts` and are exported from the package root for reuse.
-Each tool exposes a Zod input schema, an output schema, rich documentation metadata, and a shared
-error catalogue.
+`@cortex-os/memories` publishes contract-first Model Context Protocol tool definitions from `src/mcp/tools.ts`. Each export is a `{ name, description, inputSchema, handler }` object backed by shared validation and structured logging. The `memoryMcpTools` array is convenient when bulk-registering all tools.
 
-### Shared Error Response
+### Registering Tools
 
-```ts
-import type { MemoryToolErrorResponse } from '@cortex-os/memories';
+```typescript
+import { memoryMcpTools } from '@cortex-os/memories';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
-type ErrorShape = MemoryToolErrorResponse;
-// {
-//   type: 'error';
-//   error: {
-//     code: 'INVALID_INPUT' | 'NOT_FOUND' | 'NOT_IMPLEMENTED' | 'STORAGE_FAILURE' | 'INTERNAL_ERROR';
-//     summary: string;
-//     message: string;
-//     httpStatus: number;
-//     retryable: boolean;
-//     remediation: string;
-//     docsUrl?: string;
-//     details?: unknown; // Zod issues or failure metadata
-//   };
-// }
+const server = new Server({ name: 'memories' });
+
+for (const tool of memoryMcpTools) {
+  server.tool(
+    tool.name,
+    tool.description,
+    tool.inputSchema,
+    async (input) => tool.handler(input)
+  );
+}
 ```
 
-Use `createMemoryToolErrorResponse(code, message, details)` to build compliant error payloads when
-implementing handlers.
+This wiring keeps the built-in input sanitation, correlation IDs, and error reporting intact.
 
-### Available Tools
+### Response Envelope
 
-| Tool name         | Description                                      | Key input fields                                                                 | Output payload                                                |
-| ----------------- | ------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `memories.store`  | Persist or update a fully described memory item. | `id`, `kind`, `namespace?`, `text?`, `vector?`, `tags[]`, `provenance`, timestamps | `{ status: 'created' &#124; 'updated' &#124; 'pending', memory }` |
-| `memories.get`    | Retrieve a memory by identifier.                 | `id`, `namespace?`, `includePending?`                                            | `{ memory: Memory or null }`                                   |
-| `memories.delete` | Remove a memory record.                          | `id`, `namespace?`, `hardDelete?`                                                | `{ id, deleted: true, performedAt }`                            |
-| `memories.list`   | List memories with pagination.                   | `namespace?`, `limit?`, `cursor?`, `kinds?`, `tags?`                              | `{ items: Memory[], nextCursor? }`                              |
-| `memories.search` | Semantic search across memories.                 | `query?`, `vector?`, `namespace?`, `limit?`, `kinds?`, `tags?`                    | `{ items: (Memory & { score? })[], tookMs? }`                  |
+Every handler resolves to a `MemoryToolResponse` with the following structure:
 
-> **Note:** The `memoryStoreTool` schema enforces that either `text` or `vector` is supplied. The
-> `memoryListTool` requires `namespace` whenever a pagination cursor is provided, ensuring stable
-> iteration across namespaces.
+- `content`: single entry whose `text` field contains a JSON payload.
+- `metadata`: `{ correlationId, timestamp, tool }` for traceability.
+- `isError`: present and truthy when validation or execution fails.
 
-### Validation Helpers
+The JSON payload embedded in `content[0].text` follows one of two shapes:
 
-All tool definitions expose an `invoke(rawInput, context)` helper that executes validation before
-calling the underlying handler. Invalid payloads are automatically converted into `INVALID_INPUT`
-responses with structured Zod issue data. Handlers that are not yet implemented return a
-`NOT_IMPLEMENTED` response so integration tests can focus on schema compliance during development.
+```json
+{
+  "success": true,
+  "data": { "... tool-specific payload ..." },
+  "correlationId": "8861e150-...",
+  "timestamp": "2025-01-15T18:05:12.382Z"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "validation_error",
+    "message": "Invalid input provided",
+    "details": ["text: Text content cannot be empty"]
+  },
+  "correlationId": "3da5051e-...",
+  "timestamp": "2025-01-15T18:05:12.382Z"
+}
+```
+
+Correlation IDs are echoed to `console.debug` on success and `console.error` on failures, making it easy to line up client traces with server logs.
+
+### Error Codes
+
+| Code | Description | Typical triggers | Remediation |
+| ----------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `validation_error`| Input failed schema or sanitization. | Empty text, text longer than 8,192 chars, over 32 tags, limit < 1, metadata depth/size violations, missing update fields. | Fix the offending field and resubmit. Refer to tool-specific validation notes below. |
+| `security_error`  | Unsafe prototype pollution detected in metadata. | Keys such as `__proto__`, `constructor`, leading `__`, or non-plain objects. | Strip unsafe keys and ensure metadata objects inherit from `Object.prototype` or `null`. |
+| `not_found`       | Requested entity is absent. Reserved for future persistence-backed handlers. | Will be surfaced when `memory_get` style handlers look up nonexistent IDs. | Verify IDs/filters; provision fallback behavior in clients. |
+| `internal_error`  | Unexpected exception bubbled out of the handler. | Downstream adapter failures, serialization issues, unhandled errors inside custom logic. | Check server logs using the correlation ID, fix the root cause, retry if the issue is transient. |
+
+The `details` array inside failure payloads lists human-readable diagnostics (e.g., offending paths from Zod validation).
+
+### Tool Catalog
+
+#### `memory_store`
+
+Stores sanitized memory text plus optional tags/metadata.
+
+**Inputs**
+
+| Field | Type | Required | Notes |
+| --------- | --------- | -------- | ----- |
+| `kind` | `string` | ✔ | 1–32 chars matching `/^[a-zA-Z0-9._-]+$/`. |
+| `text` | `string` | ✔ | Trimmed, non-empty, capped at 8,192 chars. |
+| `tags` | `string[]`| ✖ (defaults to `[]`) | Trimmed, unique, ≤32 entries, ≤64 chars each. |
+| `metadata`| `object` | ✖ | Plain object only; ≤50 keys, ≤4 levels deep, ≤8 KB serialized, no keys starting with `__`. |
+
+**Success payload (`data`)**
+
+```json
+{
+  "stored": true,
+  "id": "mem-1736951112345",
+  "kind": "note",
+  "tags": ["project", "summary"],
+  "textLength": 128,
+  "metadataKeys": 3,
+  "redactedPreview": "PII-safe preview of text…"
+}
+```
+
+**Failure highlights**
+
+- `validation_error` if text is empty/too long, or metadata exceeds size/depth limits.
+- `security_error` when metadata contains unsafe keys or non-plain prototypes.
+
+#### `memory_retrieve`
+
+Performs semantic lookup over stored memories (placeholder implementation currently returns sample data for contract testing).
+
+**Inputs**
+
+| Field | Type | Required | Notes |
+| -------- | -------- | -------- | ----- |
+| `query` | `string` | ✔ | Search text (min length 1). |
+| `limit` | `number` | ✖ | Positive integer, defaults to 10, capped at 100. |
+| `kind` | `string` | ✖ | Optional kind filter. |
+| `tags` | `string[]` | ✖ | Optional tags; sanitized identically to `memory_store`. |
+
+**Success payload (`data`)**
+
+```json
+{
+  "query": "notes about launch",
+  "filters": { "kind": "note", "tags": ["launch"] },
+  "results": [
+    {
+      "id": "mem-example",
+      "kind": "note",
+      "text": "Sample memory result for query: notes about launch",
+      "score": 0.9,
+      "tags": ["launch"],
+      "createdAt": "2025-01-15T18:05:12.382Z"
+    }
+  ],
+  "totalFound": 1
+}
+```
+
+**Failure highlights**
+
+- `validation_error` if `limit` < 1 or non-integer.
+- Sanitization ensures duplicate tags are removed before querying.
+
+#### `memory_update`
+
+Applies partial updates to an existing memory item.
+
+**Inputs**
+
+| Field | Type | Required | Notes |
+| ---------- | ---------- | -------- | ----- |
+| `id` | `string` | ✔ | 3–128 chars, matches `/^[a-zA-Z0-9._:-]+$/`. |
+| `text` | `string` | ✖ | Optional replacement text; sanitized like `memory_store`. |
+| `tags` | `string[]` | ✖ | Optional replacement tags; sanitized/uniqued. |
+| `metadata` | `object` | ✖ | Optional replacement metadata; same safety rules as store. |
+
+**Success payload (`data`)**
+
+```json
+{
+  "id": "mem-safe",
+  "updated": true,
+  "changes": { "text": true, "tags": false, "metadata": true },
+  "data": {
+    "textPreview": "sanitized preview…",
+    "textLength": 42,
+    "metadataKeys": 2
+  },
+  "updatedAt": "2025-01-15T18:05:12.382Z"
+}
+```
+
+**Failure highlights**
+
+- `validation_error` when no fields are provided or sanitization fails.
+- `security_error` for unsafe metadata payloads.
+
+#### `memory_delete`
+
+Acknowledges removal of a memory item.
+
+**Inputs**
+
+| Field | Type | Required | Notes |
+| ----- | -------- | -------- | ----- |
+| `id` | `string` | ✔ | Uses the same identifier constraints as `memory_update`. |
+
+**Success payload (`data`)**
+
+```json
+{
+  "id": "mem-safe",
+  "deleted": true,
+  "deletedAt": "2025-01-15T18:05:12.382Z"
+}
+```
+
+**Failure highlights**
+
+- Future implementations may return `not_found` when the ID is missing.
+
+#### `memory_stats`
+
+Returns aggregate metrics about the memory system.
+
+**Inputs**
+
+| Field | Type | Required | Notes |
+| ---------------- | --------- | -------- | ----- |
+| `includeDetails` | `boolean` | ✖ | Defaults to `false`; when true, emits backend diagnostics. |
+
+**Success payload (`data`)**
+
+```json
+{
+  "totalItems": 0,
+  "totalSize": 0,
+  "itemsByKind": {},
+  "lastActivity": "2025-01-15T18:05:12.382Z",
+  "details": {
+    "storageBackend": "sqlite",
+    "indexedFields": ["kind", "tags", "createdAt"],
+    "averageItemSize": 0
+  }
+}
+```
+
+The detail block only appears when `includeDetails` is `true`.
+
+Use the shared `memoryMcpTools` export when you want to expose every tool simultaneously, or import individual definitions (`memoryStoreTool`, `memoryRetrieveTool`, etc.) when composing bespoke handlers.
