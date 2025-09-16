@@ -14,18 +14,10 @@ const loggerMocks = vi.hoisted(() => {
         };
 });
 
+import type { handleRAG as HandleRAGType } from '../index.js';
+
 const ragHandlerMock = vi.hoisted(() => ({
-        handleRAG: vi.fn<[
-                {
-                        config: {
-                                maxTokens: number;
-                                timeoutMs: number;
-                                memory: { maxItems: number; maxBytes: number };
-                        };
-                        query: { query: string; topK: number };
-                        json: boolean;
-                },
-        ], Promise<string>>(),
+        handleRAG: vi.fn<HandleRAGType>(),
 }));
 
 vi.mock('@cortex-os/observability', () => ({
