@@ -378,7 +378,6 @@ const ragDocumentIngestToolImpl: RAGTool = {
 };
 
 export const ragDocumentIngestTool = ragDocumentIngestToolImpl;
-export const ragIngestTool = ragDocumentIngestToolImpl;
 
 export const ragSearchTool: RAGTool = {
 	name: 'rag_search',
