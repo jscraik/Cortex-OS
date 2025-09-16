@@ -38,7 +38,9 @@
     "neo4j-driver": "^5.25.0",
     "uuid": "^10.0.0",
     "winston": "^3.14.2",
-    "@cortex-os/a2a-core": "workspace:*"
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/a2a-contracts": "workspace:*",
+    "@cortex-os/a2a-transport": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

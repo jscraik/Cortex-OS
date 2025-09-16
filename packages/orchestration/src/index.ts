@@ -4,6 +4,32 @@
  */
 
 export type {
+        AgentAssignedEvent,
+        AgentFreedEvent,
+        CoordinationStartedEvent,
+        DecisionMadeEvent,
+        OrchestrationEventType,
+        PlanCreatedEvent,
+        PlanUpdatedEvent,
+        ResourceAllocatedEvent,
+        TaskCompletedEvent,
+        TaskCreatedEvent,
+        TaskFailedEvent,
+        TaskStartedEvent,
+} from './events/orchestration-events.js';
+export {
+        ORCHESTRATION_EVENT_SCHEMAS,
+        OrchestrationEventTypes,
+} from './events/orchestration-events.js';
+export type {
+        OrchestrationBus,
+        OrchestrationEventEnvelope,
+        OrchestrationEventHandler,
+        OrchestrationPublishOptions,
+} from './events/orchestration-bus.js';
+export { createOrchestrationBus } from './events/orchestration-bus.js';
+
+export type {
 	ArchonTaskManagerConfig,
 	OrchestrationTask,
 	TaskManagerEvents,
