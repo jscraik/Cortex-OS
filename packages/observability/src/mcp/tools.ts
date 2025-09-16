@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import { LogLevelSchema, TraceContextSchema, ULIDSchema } from '../types.js';
 
@@ -126,10 +127,3 @@ export const observabilityMcpTools: ObservabilityTool[] = [
 
 // Export types for external use
 export type AggregationMode = (typeof aggregationModes)[number];
-export type CreateTraceInput = z.infer<typeof CreateTraceInputSchema>;
-export type RecordMetricInput = z.infer<typeof RecordMetricInputSchema>;
-export type QueryTracesInput = z.infer<typeof QueryTracesInputSchema>;
-export type GetMetricsInput = z.infer<typeof GetMetricsInputSchema>;
-export type SearchLogsInput = z.infer<typeof SearchLogsInputSchema>;
-export type EvaluateAlertInput = z.infer<typeof EvaluateAlertInputSchema>;
-export type GenerateDashboardInput = z.infer<typeof GenerateDashboardInputSchema>;
