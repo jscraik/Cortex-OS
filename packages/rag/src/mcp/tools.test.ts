@@ -1,3 +1,4 @@
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const loggerMocks = vi.hoisted(() => {
@@ -143,4 +144,5 @@ describe('rag MCP tool error handling', () => {
                         ]),
                 );
         });
+
 });

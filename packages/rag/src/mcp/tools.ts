@@ -1,7 +1,10 @@
 /**
- * MCP Tool definitions for RAG package
- * Exposes RAG capabilities as external tools for AI agents
+
+ * MCP Tool definitions for the RAG package.
+ * Implements ingestion, search, retrieval, reranking, and citation helpers
+ * that expose the core RAG pipeline over the Model Context Protocol (MCP).
  */
+
 
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
@@ -9,8 +12,17 @@ import { randomUUID } from 'node:crypto';
 import { createLogger } from '@cortex-os/observability';
 import { z, ZodError, type ZodIssue } from 'zod';
 
+
 import { handleRAG } from '../index.js';
+import { CitationBundler } from '../lib/citation-bundler.js';
 import type { RAGQuerySchema } from '../lib/contracts-shim.js';
+import type { Chunk, Document, Embedder, Store } from '../lib/index.js';
+import { retrieveDocs } from '../lib/retrieve-docs.js';
+import { RAGPipeline } from '../rag-pipeline.js';
+
+type MCPContent = { type: 'text'; text: string };
+type MCPResponse = { content: MCPContent[] };
+
 
 interface RAGToolResponse {
         content: Array<{ type: 'text'; text: string }>;
@@ -372,9 +384,9 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
                 `Unsupported metadata value type: ${typeof value}`,
                 [`Unsupported metadata value type: ${typeof value}`],
         );
+
 }
 
-// MCP tool schemas
 export const ragQueryToolSchema = z.object({
         query: z
                 .string()
@@ -404,6 +416,7 @@ export const ragQueryToolSchema = z.object({
                 .describe('Timeout in milliseconds'),
 });
 
+
 export const ragIngestToolSchema = z.object({
         content: z
                 .string()
@@ -424,9 +437,9 @@ export const ragStatusToolSchema = z.object({
                 .boolean()
                 .default(false)
                 .describe('Include detailed statistics'),
+
 });
 
-// MCP Tool definitions
 export const ragQueryTool: RAGTool = {
         name: 'rag_query',
         description: 'Query the RAG knowledge base using semantic search',
@@ -473,6 +486,7 @@ export const ragQueryTool: RAGTool = {
                 }
         },
 };
+
 
 export const ragIngestTool: RAGTool = {
         name: 'rag_ingest',
@@ -562,11 +576,14 @@ export const ragStatusTool: RAGTool = {
                         return respondWithError('rag_status', correlationId, error);
                 }
         },
+
 };
 
-// Export all RAG MCP tools
 export const ragMcpTools: RAGTool[] = [
+
         ragQueryTool,
         ragIngestTool,
         ragStatusTool,
+
 ];
+
