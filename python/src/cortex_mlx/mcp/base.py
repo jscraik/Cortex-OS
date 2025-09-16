@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 from typing import Any, ClassVar, Dict, Generic, Iterable, Mapping, Type, TypeVar
 
 from pydantic import BaseModel, Field, ValidationError
