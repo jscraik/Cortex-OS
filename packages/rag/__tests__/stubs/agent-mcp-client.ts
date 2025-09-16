@@ -1,6 +1,8 @@
-import type { ArchonIntegrationConfig as BaseConfig } from '../../../agents/src/types/mcp';
+// Locally define ArchonIntegrationConfig to avoid tight coupling with agents package
 
-export interface ArchonIntegrationConfig extends BaseConfig {}
+export interface ArchonIntegrationConfig {
+    // Define only the properties needed for the stub, or leave empty if not used
+}
 
 export interface KnowledgeSearchFilters {
         category?: string[];
