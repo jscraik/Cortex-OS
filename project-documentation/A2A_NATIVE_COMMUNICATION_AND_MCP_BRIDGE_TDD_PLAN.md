@@ -44,7 +44,7 @@ This document outlines a comprehensive Test-Driven Development (TDD) approach to
 
 **✅ TRUE A2A PATTERN** (8 packages follow this):
 
-```typescript
+``typescript
 // Example from observability package
 import { createBus } from '@cortex-os/a2a-core/bus';
 
@@ -52,10 +52,11 @@ export function createObservabilityBus(options = {}) {
   const transport = options.transport ?? inproc();
   const bus = createBus(transport, validateEnvelope, undefined, acl, options.busOptions);
   return {
-    async publish(type, payload, publishOptions) { /* ... */ },
-    async bind(handlers) { /* ... */ }
+    async publish(type, payload, publishOptions) { /*... */ },
+    async bind(handlers) { /* ...*/ }
   };
 }
+
 ```
 
 #### Priority Packages Needing Full A2A Integration
@@ -144,11 +145,12 @@ export function createObservabilityBus(options = {}) {
 
 **Cross-Package Communication**: The 4 newly completed implementations demonstrate full cross-package coordination:
 
-```markdown
+```
+
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   PRP-Runner    │◄──►│   Model-Gateway │◄──►│    Memories     │
 │ • Code Review   │    │ • AI Routing    │    │ • Knowledge Mgmt│
-│ • PRP Execution │    │ • Embeddings    │    │ • Evidence Store│ 
+│ • PRP Execution │    │ • Embeddings    │    │ • Evidence Store│
 │ • Evidence      │    │ • Chat/Rerank   │    │ • Search/Recall │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
           │                      │                      │
@@ -161,6 +163,7 @@ export function createObservabilityBus(options = {}) {
                      │ • Audit/Attest  │
                      │ • mTLS/SPIFFE   │
                      └─────────────────┘
+
 ```
 
 **Realistic Status Assessment**:
@@ -191,6 +194,32 @@ The A2A MCP bridge functionality is partially implemented with:
    - `get_service_metrics` - Retrieve service metrics
 
 However, these tools are not yet integrated with the MCP core registry system across packages. Additionally, 15 of 35 packages have their own MCP tools that are not integrated with the MCP core.
+
+### Orchestration MCP Implementation Status - RECENTLY COMPLETED ✅
+
+**✅ SUBTASK 2.5.1 COMPLETED**: The orchestration package now has complete MCP tool contract definitions:
+
+1. **Workflow Orchestration Tools**:
+   - `workflow.plan` - Creates a workflow plan for multi-agent orchestration
+
+2. **Task Management Tools**:
+   - `task.update_status` - Update the status of a task in the orchestration system
+
+3. **Process Monitoring Tools**:
+   - `process.get_status` - Get the current status of a workflow process
+
+4. **Key Components Implemented**:
+   - `ToolErrorCode` enum with all required error codes
+   - `ToolValidationError` class for validation failures
+   - `toolErrorResponseSchema` for consistent error responses
+   - `createToolErrorResponse` helper function
+   - Proper Zod schemas for all tool inputs and outputs
+   - Complete documentation in README.md and docs/mcp-tools.md
+
+**Documentation**: Comprehensive documentation has been added to the orchestration package including:
+- Updated README.md with MCP integration section
+- Detailed docs/mcp-tools.md with current tool contracts
+- Usage examples and error handling documentation
 
 ### A2A Integration Status - WORK REQUIRED ⚠️
 
@@ -487,7 +516,27 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 
 #### Task 2.5: ALL Other Packages MCP Integration
 
-##### Subtask 2.5.1: Integrate Memories Package MCP Tools with Core Registry
+##### Subtask 2.5.1: Create MCP Tool Definitions for Orchestration Package
+
+- [x] ✅ Define workflow orchestration tool interface
+- [x] ✅ Define task management tool interface
+- [x] ✅ Define process monitoring tool interface
+- [x] ✅ Create Zod schemas for all operations
+- [x] ✅ Implement input validation
+- [x] ✅ Define error response formats
+- [x] ✅ Document tool contracts
+
+##### Subtask 2.5.2: Implement Tool Handlers
+
+- [ ] Implement workflow orchestration handler
+- [ ] Implement task management handler
+- [ ] Implement process monitoring handler
+- [ ] Add proper error handling
+- [ ] Implement logging and monitoring
+- [ ] Add input sanitization
+- [ ] Implement result formatting
+
+##### Subtask 2.5.3: Integrate Memories Package MCP Tools with Core Registry
 
 - [ ] Create MCP tool registry integration for memories tools
 - [ ] Register memories.store tool with MCP core
@@ -499,7 +548,7 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 - [ ] Write unit tests for all memories tools (90%+ coverage)
 - [ ] Create integration tests with MCP client
 
-##### Subtask 2.5.2: Integrate Security Package MCP Tools with Core Registry
+##### Subtask 2.5.4: Integrate Security Package MCP Tools with Core Registry
 
 - [ ] Create MCP tool registry integration for security tools
 - [ ] Register security_access_control tool with MCP core
@@ -512,7 +561,7 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 - [ ] Write unit tests for all security tools (90%+ coverage)
 - [ ] Create integration tests with MCP client
 
-##### Subtask 2.5.3: Integrate ALL Other Packages MCP Tools with Core Registry
+##### Subtask 2.5.5: Integrate ALL Other Packages MCP Tools with Core Registry
 
 - [ ] Create MCP tool registry integration for agents tools
 - [ ] Create MCP tool registry integration for gateway tools
@@ -528,6 +577,14 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 - [ ] Add proper error handling and validation
 - [ ] Write unit tests for all tools (90%+ coverage)
 - [ ] Create integration tests with MCP client
+
+##### Subtask 2.5.6: Document Orchestration MCP Tools
+
+- [x] ✅ Create API documentation
+- [x] ✅ Provide usage examples
+- [x] ✅ Document error codes
+- [ ] Create troubleshooting guide
+- [ ] Add integration examples
 
 ### Phase 3: App Integration ⏳
 
@@ -930,9 +987,9 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
     - Write unit tests for integration
 
 30. **Task 7.2**: Create MCP tool registry integration for orchestration tools
-    - Create integration module in orchestration package
-    - Implement tool registration with MCP core
-    - Write unit tests for integration
+    - [x] ✅ Create integration module in orchestration package
+    - [ ] Implement tool registration with MCP core
+    - [ ] Write unit tests for integration
 
 31. **Task 7.3**: Create MCP tool registry integration for rag tools
     - Create integration module in rag package
@@ -998,7 +1055,7 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 5. **Reliability**: 99.9% uptime for MCP services 🔄 **PENDING DEPLOYMENT**
 6. **Security**: Zero critical security vulnerabilities 🔄 **ONGOING**
 7. **Integration**: Seamless A2A communication between 6 packages ✅ **ACHIEVED**
-8. **MCP Integration**: All MCP tools registered with MCP core registry 🔄 **IN PROGRESS**
+8. **MCP Integration**: All MCP tools registered with MCP core registry 🔄 **IN PROGRESS** (Orchestration tool contracts completed)
 9. **Cross-Language Compatibility**: Full functionality across Python, Rust, and TypeScript packages 🔄 **IN PROGRESS**
 
 ### Qualitative Metrics
@@ -1054,6 +1111,12 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
    - ✅ Events: AccessEvaluated, PolicyViolation, ThreatDetected, AuditLogged
    - ⚠️ Add comprehensive security event coordination
 
+6. **✅ PARTIALLY COMPLETE**: **@cortex-os/orchestration** Package MCP Integration
+   - ✅ Subtask 2.5.1: Create MCP Tool Definitions - COMPLETED
+   - ✅ Documentation updated with MCP tool contracts
+   - ⏳ Subtask 2.5.2: Implement Tool Handlers - IN PROGRESS
+   - ⏳ Subtask 2.5.3-2.5.6: Integration, Testing, and Documentation - PENDING
+
 ### 🎯 **Success Metrics & Validation**
 
 | Metric | Current | Target | Timeline |
@@ -1064,5 +1127,6 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 | **App Coverage** | 2/7 (29%) | 5/7 (71%) | Week 4 |
 | **Cross-Language Support** | TS + Python | TS + Python + Rust | Week 4 |
 | **Real-time UI Integration** | Backend only | Full stack | Week 2 |
+| **Orchestration MCP Tools** | 3 tools defined | 3 tools + handlers | Week 3 |
 
 This implementation plan provides a **realistic roadmap** based on verified technical findings from comprehensive codebase examination. With 8 packages having proven A2A integration and clear patterns established, the focus shifts to systematic expansion across critical packages and conversion of mock implementations to real A2A core integration.

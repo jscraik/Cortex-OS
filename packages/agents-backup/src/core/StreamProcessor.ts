@@ -5,13 +5,12 @@
 
 import { EventEmitter } from 'node:events';
 import type {
-  StreamEvent,
   AgentInput,
+  StreamProcessor as IStreamProcessor, 
   ModelProvider,
-  ToolCall,
-  ToolResult,
+  StreamEvent,
   TokenUsage,
-  StreamProcessor as IStreamProcessor
+  ToolCall,
 } from '../types';
 
 export interface StreamProcessorConfig {

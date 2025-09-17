@@ -267,13 +267,13 @@ await engine.cleanup();
 
 ### LangGraph State Workflows
 
-```python
+``python
 # Example: LangGraph workflow for data processing
 from langgraph import StateGraph, END
 
 def create_data_processing_workflow():
     workflow = StateGraph()
-    
+
     # Define workflow states
     workflow.add_node("validate", validate_data)
     workflow.add_node("analyze", analyze_data)  
@@ -291,7 +291,7 @@ def create_data_processing_workflow():
 
 ### CrewAI Role-Based Coordination
 
-```python
+``python
 # Example: CrewAI crew for collaborative analysis
 from crewai import Agent, Task, Crew
 
@@ -319,11 +319,96 @@ analysis_crew = Crew(
 )
 ```
 
+## 🌐 Model Context Protocol (MCP) Integration
+
+The orchestration package exposes workflow coordination capabilities over the Model Context Protocol (MCP), enabling seamless integration with AI agents and tools across the Cortex-OS ecosystem.
+
+### MCP Tool Contracts
+
+The package provides contract-first tool definitions that include:
+
+- **Zod Input Schemas** - Strict input validation with detailed error messages
+- **Typed Result Schemas** - Consistent output structures for predictable consumption
+- **Documented Error Codes** - Enumerated error types with recovery guidance
+- **Runtime Validation** - Automatic validation that surfaces consistent error responses
+
+### Available MCP Tools
+
+#### Workflow Orchestration
+- `workflow.plan` - Creates a workflow plan for multi-agent orchestration
+
+#### Task Management  
+- `task.update_status` - Update the status of a task in the orchestration system
+
+#### Process Monitoring
+- `process.get_status` - Get the current status of a workflow process
+
+### Usage Example
+
+``typescript
+import {
+  workflowOrchestrationTools,
+  taskManagementTools,
+  processMonitoringTools,
+  ToolErrorCode,
+  createToolErrorResponse
+} from '@cortex-os/orchestration/mcp/tools';
+
+// Find a specific tool
+const planTool = workflowOrchestrationTools.find(
+  (tool) => tool.name === 'workflow.plan'
+);
+
+// Validate input
+try {
+  const validatedInput = planTool?.validateInput({
+    workflowName: 'Data Processing Pipeline',
+    goal: 'Process quarterly sales data',
+    tasks: [
+      {
+        title: 'Data Validation',
+        summary: 'Validate input data integrity',
+        requiredCapabilities: ['data-validation'],
+        dependencies: []
+      }
+    ]
+  });
+  
+  // Use validated input for execution
+  // ...
+} catch (error) {
+  // Handle validation errors
+  if (error instanceof ToolValidationError) {
+    const errorResponse = createToolErrorResponse(
+      ToolErrorCode.INVALID_INPUT,
+      error.message,
+      { details: error.details, retryable: false }
+    );
+  }
+}
+```
+
+### Error Handling
+
+All MCP tools emit structured error responses with the following format:
+
+``typescript
+interface ToolErrorResponse {
+  code: ToolErrorCode;        // Enumerated error code
+  message: string;            // Human-readable explanation
+  details?: string[];         // Optional validation details
+  retryable?: boolean;        // Indicates if operation can be retried
+  timestamp: string;          // ISO 8601 timestamp
+}
+```
+
+For detailed API documentation, see [MCP Tools Documentation](./docs/mcp-tools.md).
+
 ## 🔧 Configuration
 
 ### Orchestration Engine Configuration
 
-```typescript
+``typescript
 interface OrchestrationConfig {
   // Concurrency settings
   maxConcurrentOrchestrations: number;     // Default: 5
@@ -568,7 +653,7 @@ await engine.scaleAgents('data-analyst', 5); // Scale to 5 instances
 
 ### Workflow Composition
 
-```typescript
+``typescript
 // Compose complex workflows from reusable components
 const dataProcessingWorkflow = {
   name: 'data-processing-pipeline',
@@ -612,7 +697,7 @@ We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING
 
 ### Development Setup
 
-```bash
+``bash
 # Clone and install dependencies
 git clone https://github.com/cortex-os/cortex-os.git
 cd cortex-os/packages/orchestration

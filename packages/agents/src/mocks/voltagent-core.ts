@@ -23,10 +23,12 @@ export function createTool<T = any>(
 
 // Mock VoltAgent class
 export class VoltAgent {
+	private tools = new Map<string, ToolDefinition>();
+
 	constructor(public config: any) {}
 
-	addTool(_tool: ToolDefinition): void {
-		// Mock implementation
+	addTool(tool: ToolDefinition): void {
+		this.tools.set(tool.id, tool);
 	}
 
 	addMemory(_memory: Memory): void {
@@ -39,6 +41,27 @@ export class VoltAgent {
 
 	async execute(input?: string, options?: any): Promise<any> {
 		return { success: true, message: 'Mock agent execution', input, options };
+	}
+
+	// IToolRegistry implementation
+	register(tool: ToolDefinition): void {
+		this.addTool(tool);
+	}
+
+	unregister(toolId: string): boolean {
+		return this.tools.delete(toolId);
+	}
+
+	get(toolId: string): ToolDefinition | null {
+		return this.tools.get(toolId) || null;
+	}
+
+	list(): ToolDefinition[] {
+		return Array.from(this.tools.values());
+	}
+
+	has(toolId: string): boolean {
+		return this.tools.has(toolId);
 	}
 }
 

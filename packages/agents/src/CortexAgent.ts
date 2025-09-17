@@ -1,4 +1,4 @@
-import { type Memory, type Tool, VoltAgent } from './mocks/voltagent-core';
+import { type Memory, VoltAgent } from './mocks/voltagent-core';
 import { createLogger } from './mocks/voltagent-logger';
 import { createA2AReceiveEventTool } from './tools/A2AReceiveEventTool';
 import { createA2ASendEventTool } from './tools/A2ASendEventTool';
@@ -19,6 +19,9 @@ import { createSecurityGuardTool } from './tools/SecurityGuardTool';
 import { createA2ABridge } from './utils/a2aBridge';
 // Import utilities
 import { createModelRouter } from './utils/modelRouter';
+// Import subagent system
+import { createSubagentSystem, type SubagentSystemConfig } from './subagents';
+import { DelegationRouter } from './subagents/router';
 
 const logger = createLogger('CortexAgent');
 
@@ -35,6 +38,22 @@ export interface CortexAgentConfig {
 	 * Default model to use
 	 */
 	model?: string;
+	/**
+	 * Model provider
+	 */
+	modelProvider?: string;
+	/**
+	 * Enable memory
+	 */
+	enableMemory?: boolean;
+	/**
+	 * Available tools
+	 */
+	tools?: any[];
+	/**
+	 * Model router instance
+	 */
+	modelRouter?: any;
 	/**
 	 * Cortex-OS specific configuration
 	 */
@@ -72,6 +91,48 @@ export interface CortexAgentConfig {
 			maxContextualMemory?: number;
 			retentionDays?: number;
 		};
+		/**
+		 * Subagent system configuration
+		 */
+		subagents?: {
+			/**
+			 * Enable subagent system
+			 */
+			enabled?: boolean;
+			/**
+			 * Enable delegation between subagents
+			 */
+			enableDelegation?: boolean;
+			/**
+			 * Auto-reload on file changes
+			 */
+			watch?: boolean;
+			/**
+			 * Custom search paths
+			 */
+			searchPaths?: string[];
+			/**
+			 * Delegation configuration
+			 */
+			delegation?: {
+				/**
+				 * Default subagent for delegation
+				 */
+				defaultSubagent?: string;
+				/**
+				 * Maximum fanout count
+				 */
+				maxFanout?: number;
+				/**
+				 * Confidence threshold for auto-delegation
+				 */
+				confidenceThreshold?: number;
+				/**
+				 * Enable parallel execution
+				 */
+				enableParallel?: boolean;
+			};
+		};
 	};
 }
 
@@ -79,7 +140,8 @@ export class CortexAgent extends VoltAgent {
 	private modelRouter: ReturnType<typeof createModelRouter>;
 	private a2aBridge: ReturnType<typeof createA2ABridge>;
 	private memory: Memory;
-	private tools: Tool[] = [];
+	private subagentSystem?: any; // SubagentSystem
+	// private delegationRouter?: DelegationRouter; // Unused for now
 
 	constructor(config: CortexAgentConfig) {
 		super({
@@ -96,12 +158,14 @@ Your capabilities include:
 - Communicating with other agents via A2A
 - Accessing MCP tools and services
 - Managing contextual memory
+- Delegating to specialized subagents when appropriate
 
 Always:
 1. Use appropriate tools for tasks
 2. Maintain clear communication
 3. Store important information in memory
-4. Follow Cortex-OS architecture principles`,
+4. Follow Cortex-OS architecture principles
+5. Consider delegating to specialized subagents for complex tasks`,
 			model: config.model || 'gpt-4',
 		});
 
@@ -114,41 +178,43 @@ Always:
 			importance: 5,
 			timestamp: new Date().toISOString(),
 		};
-		this.modelRouter = createModelRouter(config.cortex);
+		this.modelRouter = config.modelRouter || createModelRouter(config.cortex);
 		this.a2aBridge = createA2ABridge();
 
 		// Initialize tools
 		this.initializeTools();
+
+		// Initialize subagent system if enabled
+		if (config.cortex?.subagents?.enabled) {
+			this.initializeSubagents(config);
+		}
 	}
 
 	private initializeTools(): void {
-		this.tools = [
-			// System tools
-			CortexHealthCheckTool,
-			PackageManagerTool,
-			FileOperationTool,
-			createModelRouterTool(this.modelRouter),
-			createSecurityGuardTool(),
+		// Add system tools
+		this.addTool(CortexHealthCheckTool);
+		this.addTool(PackageManagerTool);
+		this.addTool(FileOperationTool);
+		this.addTool(createModelRouterTool(this.modelRouter));
+		this.addTool(createSecurityGuardTool());
 
-			// A2A communication tools
-			createA2ASendEventTool(this.a2aBridge),
-			createA2AReceiveEventTool(this.a2aBridge),
+		// Add A2A communication tools
+		this.addTool(createA2ASendEventTool(this.a2aBridge));
+		this.addTool(createA2AReceiveEventTool(this.a2aBridge));
 
-			// MCP integration tools
-			MCPListServersTool,
-			MCPCallToolTool,
-			MCPServerInfoTool,
+		// Add MCP integration tools
+		this.addTool(MCPListServersTool);
+		this.addTool(MCPCallToolTool);
+		this.addTool(MCPServerInfoTool);
 
-			// Memory management tools
-			createMemoryStoreTool(this.memory),
-			createMemoryRetrieveTool(),
-			createMemorySearchTool(),
-			createMemoryUpdateTool(),
-			createMemoryDeleteTool(),
-		];
+		// Add memory management tools
+		this.addTool(createMemoryStoreTool(this.memory));
+		this.addTool(createMemoryRetrieveTool());
+		this.addTool(createMemorySearchTool());
+		this.addTool(createMemoryUpdateTool());
+		this.addTool(createMemoryDeleteTool());
 
-		// Tools are automatically registered with the agent
-		logger.info(`Initialized ${this.tools.length} tools`);
+		logger.info(`Initialized ${this.list().length} tools`);
 	}
 
 	/**
@@ -166,13 +232,16 @@ Always:
 	): Promise<any> {
 		// Perform security check on input if enabled
 		if (options?.securityCheck !== false) {
-			const securityTool = this.tools.find(t => t.name === 'security_guard');
+			const securityTool = Array.from(this.tools.values()).find((t) => t.name === 'security_guard');
 			if (securityTool) {
-				const inputCheck = await securityTool.execute({
-					content: input,
-					checkType: 'input',
-					strictness: 'medium',
-				}, {});
+				const inputCheck = await securityTool.execute(
+					{
+						content: input,
+						checkType: 'input',
+						strictness: 'medium',
+					},
+					{},
+				);
 
 				if (!inputCheck.isSafe && inputCheck.riskLevel === 'critical') {
 					return {
@@ -192,7 +261,7 @@ Always:
 		// Determine best model
 		const model =
 			options?.modelOverride ||
-			(await this.modelRouter.selectModel(input, this.tools));
+			(await this.modelRouter.selectModel(input, this.list()));
 
 		logger.info(`Executing with model: ${model}`);
 
@@ -207,13 +276,16 @@ Always:
 
 		// Perform security check on output if enabled
 		if (options?.securityCheck !== false) {
-			const securityTool = this.tools.find(t => t.name === 'security_guard');
+			const securityTool = Array.from(this.tools.values()).find((t) => t.name === 'security_guard');
 			if (securityTool) {
-				const outputCheck = await securityTool.execute({
-					content: response.response,
-					checkType: 'output',
-					strictness: 'medium',
-				}, {});
+				const outputCheck = await securityTool.execute(
+					{
+						content: response.response,
+						checkType: 'output',
+						strictness: 'medium',
+					},
+					{},
+				);
 
 				if (!outputCheck.isSafe) {
 					logger.warn('Security warning for output:', outputCheck.violations);
@@ -230,12 +302,55 @@ Always:
 	}
 
 	/**
+	 * Initialize subagent system
+	 */
+	private async initializeSubagents(config: CortexAgentConfig): Promise<void> {
+		logger.info('Initializing subagent system...');
+
+		const subagentConfig: SubagentSystemConfig = {
+			toolRegistry: this as any, // IToolRegistry
+			globalTools: this.list(),
+			loader: {
+				searchPaths: config.cortex?.subagents?.searchPaths,
+			},
+			enableDelegation: config.cortex?.subagents?.enableDelegation ?? true,
+			watch: config.cortex?.subagents?.watch ?? false,
+		};
+
+		// Create subagent system
+		this.subagentSystem = await createSubagentSystem(subagentConfig);
+
+		// Initialize delegation router if enabled
+		if (config.cortex?.subagents?.delegation) {
+			this.delegationRouter = new DelegationRouter(
+				this.subagentSystem.getRegistry(),
+				config.cortex.subagents.delegation
+			);
+		}
+
+		logger.info(`Subagent system initialized with ${this.subagentSystem.getToolNames().length} subagents`);
+	}
+
+	/**
+	 * Set delegator for subagent delegation
+	 */
+	setDelegator(_delegator: any): void {
+		// This would be used by subagents to delegate back to the main agent
+		// Implementation depends on the actual delegator interface
+	}
+
+	/**
 	 * Get agent status and health
 	 */
 	async getStatus(): Promise<{
 		status: 'healthy' | 'degraded' | 'unhealthy';
 		model: string;
 		tools: string[];
+		subagents?: {
+			enabled: boolean;
+			count: number;
+			tools: string[];
+		};
 		memoryStats?: {
 			totalMemories: number;
 			workingMemory: number;
@@ -244,11 +359,24 @@ Always:
 	}> {
 		const model = await this.modelRouter.getCurrentModel();
 
-		return {
-			status: 'healthy',
+		const status = {
+			status: 'healthy' as const,
 			model: model.name,
-			tools: this.tools.map((t) => t.name),
-			// Memory stats would need to be implemented based on actual memory usage
+			tools: this.list().map((t) => t.name),
 		};
+
+		// Add subagent info if enabled
+		if (this.subagentSystem) {
+			return {
+				...status,
+				subagents: {
+					enabled: true,
+					count: this.subagentSystem.getToolNames().length,
+					tools: this.subagentSystem.getToolNames(),
+				},
+			};
+		}
+
+		return status;
 	}
 }

@@ -6,32 +6,41 @@ const logger = createLogger('MCPServerInfoTool');
 
 // Default MCP server configuration
 const defaultMCPConfig = {
-  servers: {
-    filesystem: {
-      name: 'filesystem',
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-filesystem', '/Users/jamiecraik'],
-    },
-    memory: {
-      name: 'memory',
-      command: 'npx',
-      args: ['-y', '@cortex-os/mcp-server-memory'],
-    },
-    git: {
-      name: 'git',
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-git', '--repository', '/Users/jamiecraik/.Cortex-OS'],
-    },
-  },
+	servers: {
+		filesystem: {
+			name: 'filesystem',
+			command: 'npx',
+			args: [
+				'-y',
+				'@modelcontextprotocol/server-filesystem',
+				'/Users/jamiecraik',
+			],
+		},
+		memory: {
+			name: 'memory',
+			command: 'npx',
+			args: ['-y', '@cortex-os/mcp-server-memory'],
+		},
+		git: {
+			name: 'git',
+			command: 'npx',
+			args: [
+				'-y',
+				'@modelcontextprotocol/server-git',
+				'--repository',
+				'/Users/jamiecraik/.Cortex-OS',
+			],
+		},
+	},
 };
 
 let mcpClient: MCPClient | null = null;
 
 function getMCPClient(): MCPClient {
-  if (!mcpClient) {
-    mcpClient = new MCPClient(defaultMCPConfig);
-  }
-  return mcpClient;
+	if (!mcpClient) {
+		mcpClient = new MCPClient(defaultMCPConfig);
+	}
+	return mcpClient;
 }
 
 export const MCPServerInfoTool = createTool({
@@ -49,7 +58,10 @@ export const MCPServerInfoTool = createTool({
 
 		try {
 			const client = getMCPClient();
-			const serverInfo = await client.getServerInfo(params.serverName, params.detailed);
+			const serverInfo = await client.getServerInfo(
+				params.serverName,
+				params.detailed,
+			);
 
 			return {
 				success: true,
@@ -57,7 +69,10 @@ export const MCPServerInfoTool = createTool({
 				timestamp: new Date().toISOString(),
 			};
 		} catch (error) {
-			logger.error(`Failed to get MCP server info: ${params.serverName}:`, error);
+			logger.error(
+				`Failed to get MCP server info: ${params.serverName}:`,
+				error,
+			);
 			return {
 				success: false,
 				error: error instanceof Error ? error.message : String(error),

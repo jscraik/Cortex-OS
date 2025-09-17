@@ -443,7 +443,10 @@ const EventHistoryTab: React.FC = () => {
 			{/* Controls */}
 			<div className="flex justify-between items-center">
 				<div className="flex items-center space-x-3">
-					<label htmlFor="event-type-filter" className="text-sm font-medium text-gray-700">
+					<label
+						htmlFor="event-type-filter"
+						className="text-sm font-medium text-gray-700"
+					>
 						Filter by type:
 					</label>
 					<select

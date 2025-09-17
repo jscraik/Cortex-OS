@@ -6,32 +6,41 @@ const logger = createLogger('MCPListServersTool');
 
 // Default MCP server configuration
 const defaultMCPConfig = {
-  servers: {
-    filesystem: {
-      name: 'filesystem',
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-filesystem', '/Users/jamiecraik'],
-    },
-    memory: {
-      name: 'memory',
-      command: 'npx',
-      args: ['-y', '@cortex-os/mcp-server-memory'],
-    },
-    git: {
-      name: 'git',
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-git', '--repository', '/Users/jamiecraik/.Cortex-OS'],
-    },
-  },
+	servers: {
+		filesystem: {
+			name: 'filesystem',
+			command: 'npx',
+			args: [
+				'-y',
+				'@modelcontextprotocol/server-filesystem',
+				'/Users/jamiecraik',
+			],
+		},
+		memory: {
+			name: 'memory',
+			command: 'npx',
+			args: ['-y', '@cortex-os/mcp-server-memory'],
+		},
+		git: {
+			name: 'git',
+			command: 'npx',
+			args: [
+				'-y',
+				'@modelcontextprotocol/server-git',
+				'--repository',
+				'/Users/jamiecraik/.Cortex-OS',
+			],
+		},
+	},
 };
 
 let mcpClient: MCPClient | null = null;
 
 function getMCPClient(): MCPClient {
-  if (!mcpClient) {
-    mcpClient = new MCPClient(defaultMCPConfig);
-  }
-  return mcpClient;
+	if (!mcpClient) {
+		mcpClient = new MCPClient(defaultMCPConfig);
+	}
+	return mcpClient;
 }
 
 export const MCPListServersTool = createTool({
@@ -44,10 +53,7 @@ export const MCPListServersTool = createTool({
 			.enum(['all', 'connected', 'disconnected'])
 			.optional()
 			.default('all'),
-		detailed: z
-			.boolean()
-			.optional()
-			.default(false),
+		detailed: z.boolean().optional().default(false),
 	}),
 
 	async execute(params, _context) {

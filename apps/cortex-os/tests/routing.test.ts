@@ -5,7 +5,7 @@ describe('routing', () => {
 	test('health events route to handler', async () => {
 		const { bus } = wireA2A();
 		const spy = vi.spyOn(healthHandler, 'handle');
-		
+
 		// Create a proper CloudEvents envelope for the real A2A bus
 		const envelope = {
 			specversion: '1.0',
@@ -16,7 +16,7 @@ describe('routing', () => {
 			data: {},
 			datacontenttype: 'application/json',
 		};
-		
+
 		await bus.publish(envelope);
 		expect(spy).toHaveBeenCalled();
 		spy.mockRestore();

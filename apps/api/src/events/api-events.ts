@@ -62,10 +62,16 @@ export const ApiJobCreatedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type ApiRequestReceivedEvent = z.infer<typeof ApiRequestReceivedEventSchema>;
+export type ApiRequestReceivedEvent = z.infer<
+	typeof ApiRequestReceivedEventSchema
+>;
 export type ApiRequestRoutedEvent = z.infer<typeof ApiRequestRoutedEventSchema>;
-export type ApiResponseGeneratedEvent = z.infer<typeof ApiResponseGeneratedEventSchema>;
-export type ApiWebhookReceivedEvent = z.infer<typeof ApiWebhookReceivedEventSchema>;
+export type ApiResponseGeneratedEvent = z.infer<
+	typeof ApiResponseGeneratedEventSchema
+>;
+export type ApiWebhookReceivedEvent = z.infer<
+	typeof ApiWebhookReceivedEventSchema
+>;
 export type ApiJobCreatedEvent = z.infer<typeof ApiJobCreatedEventSchema>;
 
 // Helper object to create API events

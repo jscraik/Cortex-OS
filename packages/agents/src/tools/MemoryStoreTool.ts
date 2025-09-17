@@ -1,6 +1,6 @@
 import { createTool, z } from '../mocks/voltagent-core';
 
-export const createMemoryStoreTool = (_memory: any) =>
+export const createMemoryStoreTool = (_memory: unknown) =>
 	createTool({
 		id: 'memory-store',
 		name: 'memory_store',
@@ -26,7 +26,7 @@ export const createMemoryStoreTool = (_memory: any) =>
 		}),
 
 		async execute(params, _context) {
-			const memoryId = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+			const memoryId = `mem_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
 			return {
 				success: true,

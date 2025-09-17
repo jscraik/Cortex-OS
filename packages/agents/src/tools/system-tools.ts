@@ -213,16 +213,19 @@ export const listAgentsTool = createTool({
 					name: 'Main Cortex Agent',
 					status: 'active',
 					type: 'cortex',
-					capabilities: ['reasoning', 'tool-calling', 'memory']
-				}
+					capabilities: ['reasoning', 'tool-calling', 'memory'],
+				},
 			];
 
 			const result = {
-				agents: params.status === 'all' ? agents : agents.filter(a => a.status === params.status),
+				agents:
+					params.status === 'all'
+						? agents
+						: agents.filter((a) => a.status === params.status),
 				count: agents.length,
 				status: params.status,
 				detailed: params.detailed,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			};
 
 			logger.info(`Found ${result.agents.length} agents`);
@@ -231,5 +234,5 @@ export const listAgentsTool = createTool({
 			logger.error('Failed to list agents:', error);
 			throw error;
 		}
-	}
+	},
 });

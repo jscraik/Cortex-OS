@@ -55,7 +55,7 @@ export const createA2AReceiveEventTool = (a2aBridge: any) =>
 									return false;
 								}
 								return true;
-						  }
+							}
 						: undefined,
 				});
 

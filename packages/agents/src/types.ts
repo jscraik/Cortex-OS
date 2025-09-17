@@ -30,3 +30,33 @@ export interface AgentMessage {
 	timestamp: string;
 	metadata?: Record<string, any>;
 }
+
+/**
+ * Tool registry interface for registering and managing tools
+ */
+export interface IToolRegistry {
+	/**
+	 * Register a new tool
+	 */
+	register(tool: any): void;
+
+	/**
+	 * Unregister a tool by ID
+	 */
+	unregister(toolId: string): boolean;
+
+	/**
+	 * Get a tool by ID
+	 */
+	get(toolId: string): any | null;
+
+	/**
+	 * List all registered tools
+	 */
+	list(): any[];
+
+	/**
+	 * Check if a tool is registered
+	 */
+	has(toolId: string): boolean;
+}

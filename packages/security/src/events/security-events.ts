@@ -18,7 +18,7 @@ export const SecurityAccessEventSchema = z.object({
 	evaluatedAt: z.string(),
 });
 
-// Security Policy Violation Event  
+// Security Policy Violation Event
 export const SecurityPolicyViolationEventSchema = z.object({
 	violationId: z.string(),
 	policyId: z.string(),
@@ -55,8 +55,12 @@ export const SecurityAuditEventSchema = z.object({
 
 // Export event type definitions
 export type SecurityAccessEvent = z.infer<typeof SecurityAccessEventSchema>;
-export type SecurityPolicyViolationEvent = z.infer<typeof SecurityPolicyViolationEventSchema>;
-export type SecurityThreatDetectionEvent = z.infer<typeof SecurityThreatDetectionEventSchema>;
+export type SecurityPolicyViolationEvent = z.infer<
+	typeof SecurityPolicyViolationEventSchema
+>;
+export type SecurityThreatDetectionEvent = z.infer<
+	typeof SecurityThreatDetectionEventSchema
+>;
 export type SecurityAuditEvent = z.infer<typeof SecurityAuditEventSchema>;
 
 // Helper object to create security events

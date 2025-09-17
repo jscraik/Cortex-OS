@@ -176,29 +176,33 @@ export class ApiBusIntegration {
 	async start(): Promise<void> {
 		try {
 			this.logger.info('Starting API A2A bus integration');
-			
+
 			// Bind event handlers to the real A2A bus
-			const handlerMappings = Object.entries(this.eventHandlers).map(([eventType, handlers]) => ({
-				type: eventType,
-				handle: async (envelope: A2AEnvelope) => {
-					// Store for history tracking
-					this.events.push(envelope);
-					
-					// Execute all handlers
-					for (const handler of handlers) {
-						try {
-							await handler(envelope);
-						} catch (error) {
-							this.logger.error(`Error in event handler for ${eventType}`, { error });
+			const handlerMappings = Object.entries(this.eventHandlers).map(
+				([eventType, handlers]) => ({
+					type: eventType,
+					handle: async (envelope: A2AEnvelope) => {
+						// Store for history tracking
+						this.events.push(envelope);
+
+						// Execute all handlers
+						for (const handler of handlers) {
+							try {
+								await handler(envelope);
+							} catch (error) {
+								this.logger.error(`Error in event handler for ${eventType}`, {
+									error,
+								});
+							}
 						}
-					}
-				},
-			}));
-			
+					},
+				}),
+			);
+
 			if (handlerMappings.length > 0) {
 				await this.a2aBus.bus.bind(handlerMappings);
 			}
-			
+
 			this.logger.info('API A2A bus integration started successfully');
 		} catch (error) {
 			this.logger.error('Failed to start API A2A bus integration', { error });
@@ -209,12 +213,12 @@ export class ApiBusIntegration {
 	async stop(): Promise<void> {
 		try {
 			this.logger.info('Stopping API A2A bus integration');
-			
+
 			// Stop the real A2A bus
 			if (this.a2aBus.bus && typeof this.a2aBus.bus.close === 'function') {
 				await this.a2aBus.bus.close();
 			}
-			
+
 			this.activeJobs.clear();
 			this.webhookHandlers.clear();
 			this.eventHandlers.clear();
@@ -247,17 +251,21 @@ export class ApiBusIntegration {
 		// Publish through real A2A bus instead of local handlers
 		try {
 			await this.a2aBus.bus.publish(envelope);
-			this.logger.debug(`Published A2A event via real bus: ${type}`, { eventId: envelope.id });
+			this.logger.debug(`Published A2A event via real bus: ${type}`, {
+				eventId: envelope.id,
+			});
 		} catch (error) {
 			this.logger.error(`Failed to publish A2A event: ${type}`, { error });
-			
+
 			// Fallback to local handlers if bus publish fails
 			const handlers = this.eventHandlers.get(type) || [];
 			for (const handler of handlers) {
 				try {
 					await handler(envelope);
 				} catch (handlerError) {
-					this.logger.error(`Error in fallback handler for ${type}`, { error: handlerError });
+					this.logger.error(`Error in fallback handler for ${type}`, {
+						error: handlerError,
+					});
 				}
 			}
 		}
@@ -597,22 +605,30 @@ export class ApiBusIntegration {
 		}
 		this.eventHandlers.get(eventType)?.push(handler);
 		this.logger.info('Subscribed to event type', { eventType });
-		
+
 		// If bus is already started, bind this handler immediately
 		if (this.a2aBus) {
-			this.a2aBus.bus.bind([{
-				type: eventType,
-				handle: async (envelope: A2AEnvelope) => {
-					this.events.push(envelope);
-					try {
-						await handler(envelope);
-					} catch (error) {
-						this.logger.error(`Error in event handler for ${eventType}`, { error });
-					}
-				},
-			}]).catch(error => {
-				this.logger.error(`Failed to bind handler for ${eventType}`, { error });
-			});
+			this.a2aBus.bus
+				.bind([
+					{
+						type: eventType,
+						handle: async (envelope: A2AEnvelope) => {
+							this.events.push(envelope);
+							try {
+								await handler(envelope);
+							} catch (error) {
+								this.logger.error(`Error in event handler for ${eventType}`, {
+									error,
+								});
+							}
+						},
+					},
+				])
+				.catch((error) => {
+					this.logger.error(`Failed to bind handler for ${eventType}`, {
+						error,
+					});
+				});
 		}
 	}
 

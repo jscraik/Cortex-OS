@@ -73,7 +73,7 @@ export function createA2ABridge(_config?: A2ABridgeConfig) {
 			if (!eventBus.has(validated.type)) {
 				eventBus.set(validated.type, []);
 			}
-			eventBus.get(validated.type)!.push(validated);
+			eventBus.get(validated.type)?.push(validated);
 
 			// Notify subscribers
 			const subs = subscriptions.get(validated.type) || [];

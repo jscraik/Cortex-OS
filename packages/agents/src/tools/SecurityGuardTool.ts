@@ -13,20 +13,26 @@ export const createSecurityGuardTool = () =>
 				.enum(['input', 'output', 'conversation'])
 				.optional()
 				.default('input'),
-			strictness: z.enum(['low', 'medium', 'high']).optional().default('medium'),
+			strictness: z
+				.enum(['low', 'medium', 'high'])
+				.optional()
+				.default('medium'),
 		}),
 
-		async execute(params: {
-			content: string;
-			checkType?: 'input' | 'output' | 'conversation';
-			strictness?: 'low' | 'medium' | 'high';
-		}, _context: any) {
-				// Mock implementation - in real usage would call the Python MLX service
-				const securityCheck = await performSecurityCheck(
-					params.content,
-					params.checkType || 'input',
-					params.strictness || 'medium',
-				);
+		async execute(
+			params: {
+				content: string;
+				checkType?: 'input' | 'output' | 'conversation';
+				strictness?: 'low' | 'medium' | 'high';
+			},
+			_context: any,
+		) {
+			// Mock implementation - in real usage would call the Python MLX service
+			const securityCheck = await performSecurityCheck(
+				params.content,
+				params.checkType || 'input',
+				params.strictness || 'medium',
+			);
 
 			return {
 				success: true,
@@ -68,7 +74,8 @@ async function performSecurityCheck(
 
 	// Check for common patterns (simplified)
 	const patterns = {
-		personalInfo: /\b(?:ssn|social security|credit card|password|secret key)\b/i,
+		personalInfo:
+			/\b(?:ssn|social security|credit card|password|secret key)\b/i,
 		maliciousCode: /\b(?:rm -rf|format c:|drop table)\b/i,
 		harmfulContent: /\b(?:hate|violence|abuse|illegal)\b/i,
 		pii: /\b\d{3}-\d{2}-\d{4}\b|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
@@ -118,13 +125,14 @@ async function performSecurityCheck(
 		if (riskLevel === 'low') riskLevel = 'medium';
 	}
 
-	const recommendations = violations.length > 0
-		? [
-				'Review content for sensitive information',
-				'Consider redacting personal data',
-				'Ensure content follows security guidelines',
-			]
-		: ['Content appears safe'];
+	const recommendations =
+		violations.length > 0
+			? [
+					'Review content for sensitive information',
+					'Consider redacting personal data',
+					'Ensure content follows security guidelines',
+				]
+			: ['Content appears safe'];
 
 	return {
 		isSafe: violations.length === 0,

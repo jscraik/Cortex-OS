@@ -14,8 +14,8 @@ describe('MCP Facade Contract', () => {
         const listed = mcp
             .listTools()
             .map((t: { name: CortexOsToolName; description: string }) => t.name)
-            .sort();
-        const registry = cortexOsMcpTools.map((t) => t.name).sort();
+            .sort((a, b) => a.localeCompare(b));
+        const registry = cortexOsMcpTools.map((t) => t.name).sort((a, b) => a.localeCompare(b));
         expect(listed).toEqual(registry);
     });
 

@@ -24,16 +24,16 @@ describe('API A2A Real Bus Integration', () => {
 	describe('Real A2A Bus Lifecycle', () => {
 		it('should start and provide access to real A2A bus', async () => {
 			await apiBus.start();
-			
+
 			// Verify real A2A bus is accessible
 			expect(apiBus.getA2ABus()).toBeDefined();
 			expect(apiBus.isA2ABusReady()).toBe(true);
-			
+
 			const a2aBus = apiBus.getA2ABus();
 			expect(a2aBus.bus).toBeDefined();
 			expect(a2aBus.schemaRegistry).toBeDefined();
 			expect(a2aBus.transport).toBeDefined();
-			
+
 			expect(
 				logger.history.some((entry) =>
 					entry.message.includes('started successfully'),
@@ -75,7 +75,7 @@ describe('API A2A Real Bus Integration', () => {
 			await apiBus.publishRequestReceived(request, metadata);
 
 			// Allow time for event propagation
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(capturedEvents).toHaveLength(1);
 			expect(capturedEvents[0]?.data).toMatchObject({
@@ -83,7 +83,7 @@ describe('API A2A Real Bus Integration', () => {
 				method: 'GET',
 				path: '/users',
 			});
-			
+
 			// Verify logging shows real bus usage
 			expect(
 				logger.history.some((entry) =>
@@ -111,7 +111,7 @@ describe('API A2A Real Bus Integration', () => {
 			await apiBus.publishWebhookReceived(webhook);
 
 			// Allow time for event propagation
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(capturedEvents).toHaveLength(1);
 			expect(capturedEvents[0]?.data).toMatchObject({
@@ -129,9 +129,9 @@ describe('API A2A Real Bus Integration', () => {
 			});
 
 			const jobId = await apiBus.createJob('test-job', { data: 'test' });
-			
+
 			// Allow time for event propagation
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(jobId).toBeDefined();
 			expect(jobEvents).toHaveLength(1);
@@ -146,18 +146,21 @@ describe('API A2A Real Bus Integration', () => {
 	describe('Fallback Behavior', () => {
 		it('should gracefully handle bus failures', async () => {
 			await apiBus.start();
-			
+
 			// This should not throw even if there are internal bus issues
-			await apiBus.publishRequestReceived({
-				operationId: 'test',
-				method: 'GET',
-				path: '/test',
-				headers: {},
-				metadata: { source: 'test' },
-			}, {
-				requestId: 'test-req',
-				timestamp: Date.now(),
-			});
+			await apiBus.publishRequestReceived(
+				{
+					operationId: 'test',
+					method: 'GET',
+					path: '/test',
+					headers: {},
+					metadata: { source: 'test' },
+				},
+				{
+					requestId: 'test-req',
+					timestamp: Date.now(),
+				},
+			);
 
 			// Should log any fallback behavior
 			expect(logger.history.length).toBeGreaterThan(0);

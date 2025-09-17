@@ -1,0 +1,50 @@
+version: "1"
+subagent:
+  name: code-analysis
+  version: "1.0.0"
+  description: "Specialized agent for code analysis, review, and quality assessment"
+
+  # Scope: project-specific or user-level
+  scope: project
+
+  # Tool access control
+  allowed_tools:
+    - "read"
+    - "write"
+    - "execute"
+    - "bash"
+    - "grep"
+    - "model_router"
+  blocked_tools:
+    - "security_guard" # No need for nested security checks
+
+  # Model configuration
+  model: "qwen3-coder-30b"
+  model_provider: "mlx"
+  model_config:
+    temperature: 0.1
+    max_tokens: 4000
+
+  # Behavior flags
+  parallel_fanout: false
+  auto_delegate: true
+  max_recursion: 2
+
+  # Context management
+  context_isolation: true
+  context_window: 32000
+  memory_enabled: true
+
+  # Execution limits
+  timeout_ms: 60000
+  max_tokens: 8000
+
+  # Metadata
+  tags:
+    - "code"
+    - "analysis"
+    - "quality"
+    - "review"
+  author: "Cortex-OS"
+  created: "2024-01-01T00:00:00Z"
+  modified: "2024-01-01T00:00:00Z"

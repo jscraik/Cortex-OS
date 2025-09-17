@@ -3,6 +3,17 @@ import { createLogger } from '../mocks/voltagent-logger';
 
 const logger = createLogger('MemoryTools');
 
+// Memory interfaces
+interface MemoryResult {
+	id: string;
+	content: string;
+	type: 'working' | 'contextual' | 'episodic' | 'semantic' | 'procedural';
+	tags: string[];
+	importance: number;
+	timestamp: string;
+	relevanceScore?: number;
+}
+
 // Tool for storing memories
 export const storeMemoryTool = createTool({
 	id: 'store-memory',
@@ -39,7 +50,7 @@ export const storeMemoryTool = createTool({
 		logger.info('Storing memory');
 
 		try {
-			const memoryId = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+			const memoryId = `mem_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
 			// Simulate memory storage
 			const result = {
@@ -99,7 +110,7 @@ export const retrieveMemoryTool = createTool({
 
 		try {
 			// Simulate memory retrieval
-			const results: any[] = [];
+			const results: MemoryResult[] = [];
 			const result = {
 				memories: results,
 				count: results.length,
@@ -151,7 +162,7 @@ export const searchMemoryTool = createTool({
 
 		try {
 			// Simulate semantic search
-			const results: any[] = [];
+			const results: MemoryResult[] = [];
 			const result = {
 				results,
 				count: results.length,
@@ -186,9 +197,9 @@ export const getMemoryStatsTool = createTool({
 		 */
 		types: z
 			.array(
-				z.enum(['working', 'contextual', 'episodic', 'semantic', 'procedural'])
+				z.enum(['working', 'contextual', 'episodic', 'semantic', 'procedural']),
 			)
-			.optional()
+			.optional(),
 	}),
 
 	async execute(params) {
@@ -203,16 +214,16 @@ export const getMemoryStatsTool = createTool({
 					contextual: Math.floor(Math.random() * 5000),
 					episodic: Math.floor(Math.random() * 3000),
 					semantic: Math.floor(Math.random() * 2000),
-					procedural: Math.floor(Math.random() * 500)
+					procedural: Math.floor(Math.random() * 500),
 				},
 				averageImportance: 5 + Math.random() * 2,
 				storageUsage: {
 					total: '1.2GB',
 					used: '800MB',
-					free: '400MB'
+					free: '400MB',
 				},
 				detailed: params.detailed,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			};
 
 			logger.info('Memory stats retrieved successfully');
@@ -221,5 +232,5 @@ export const getMemoryStatsTool = createTool({
 			logger.error('Failed to get memory stats:', error);
 			throw error;
 		}
-	}
+	},
 });

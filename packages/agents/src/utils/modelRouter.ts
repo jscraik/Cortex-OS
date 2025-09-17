@@ -6,7 +6,6 @@ const logger = {
 	warn: (msg: string, ...args: any[]) => console.warn(`[WARN] ${msg}`, ...args),
 };
 
-
 export interface ModelRouterConfig {
 	enableMLX?: boolean;
 	ollamaBaseUrl?: string;
@@ -44,7 +43,16 @@ export interface ModelRouterConfig {
 
 export interface ModelCapability {
 	name: string;
-	provider: 'mlx' | 'ollama' | 'openai' | 'anthropic' | 'google' | 'zai' | 'moonshot' | 'openrouter' | 'groq';
+	provider:
+		| 'mlx'
+		| 'ollama'
+		| 'openai'
+		| 'anthropic'
+		| 'google'
+		| 'zai'
+		| 'moonshot'
+		| 'openrouter'
+		| 'groq';
 	capabilities: {
 		codeAnalysis: boolean;
 		testGeneration: boolean;
@@ -68,7 +76,7 @@ export function createModelRouter(config?: ModelRouterConfig) {
 		// For now, we'll use a simplified approach without async loading
 		// In a real implementation, this would be pre-loaded or cached
 		ollamaConfig = null; // Will use fallback models
-	} catch (error) {
+	} catch (_error) {
 		logger.warn('Failed to load Ollama config, using fallback models');
 	}
 
@@ -116,9 +124,12 @@ export function createModelRouter(config?: ModelRouterConfig) {
 					name: `ollama/${model.model_tag}`,
 					provider: 'ollama' as const,
 					capabilities: {
-						codeAnalysis: model.type === 'code_specialist' || model.coding_tasks?.includes('code_generation'),
+						codeAnalysis:
+							model.type === 'code_specialist' ||
+							model.coding_tasks?.includes('code_generation'),
 						testGeneration: model.coding_tasks?.includes('debugging') || false,
-						documentation: model.recommended_for?.includes('documentation') || false,
+						documentation:
+							model.recommended_for?.includes('documentation') || false,
 						securityAnalysis: false,
 						multimodal: false,
 						streaming: true,
@@ -447,7 +458,7 @@ export function createModelRouter(config?: ModelRouterConfig) {
 			if (model.provider === 'mlx') {
 				try {
 					// Check if MLX is available
-					const { execSync } = await import('child_process');
+					const { execSync } = await import('node:child_process');
 					execSync('python3 -c "import mlx.core; print(1)"', {
 						stdio: 'pipe',
 						timeout: 5000,
@@ -456,12 +467,15 @@ export function createModelRouter(config?: ModelRouterConfig) {
 					// Check if specific model is available
 					const modelNameSplit = modelName.split('/');
 					const actualModelName = modelNameSplit[1]; // Extract model name from "mlx/model-name"
-					execSync(`python3 -c "import mlx_lm; print('${actualModelName} available')"`, {
-						stdio: 'pipe',
-						timeout: 5000,
-					});
+					execSync(
+						`python3 -c "import mlx_lm; print('${actualModelName} available')"`,
+						{
+							stdio: 'pipe',
+							timeout: 5000,
+						},
+					);
 					return { healthy: true, latency: 10 };
-				} catch (error) {
+				} catch (_error) {
 					return { healthy: false, error: 'MLX not available' };
 				}
 			}
@@ -470,10 +484,11 @@ export function createModelRouter(config?: ModelRouterConfig) {
 			if (model.provider === 'ollama') {
 				try {
 					const startTime = Date.now();
-					const ollamaBaseUrl = ollamaConfig?.service_configuration?.ollama_endpoint || config?.ollamaBaseUrl || 'http://localhost:11434';
-					const response = await fetch(
-						`${ollamaBaseUrl}/api/tags`,
-					);
+					const ollamaBaseUrl =
+						ollamaConfig?.service_configuration?.ollama_endpoint ||
+						config?.ollamaBaseUrl ||
+						'http://localhost:11434';
+					const response = await fetch(`${ollamaBaseUrl}/api/tags`);
 					const latency = Date.now() - startTime;
 
 					if (response.ok) {
@@ -484,13 +499,23 @@ export function createModelRouter(config?: ModelRouterConfig) {
 						return { healthy: available, latency };
 					}
 					return { healthy: false, error: 'Ollama not responding' };
-				} catch (error) {
+				} catch (_error) {
 					return { healthy: false, error: 'Ollama connection failed' };
 				}
 			}
 
 			// API providers are assumed healthy if configured
-			if (['openai', 'anthropic', 'google', 'zai', 'moonshot', 'openrouter', 'groq'].includes(model.provider)) {
+			if (
+				[
+					'openai',
+					'anthropic',
+					'google',
+					'zai',
+					'moonshot',
+					'openrouter',
+					'groq',
+				].includes(model.provider)
+			) {
 				return { healthy: true, latency: 100 };
 			}
 
