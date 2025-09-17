@@ -53,8 +53,12 @@ export const AgentCommunicationEventSchema = z.object({
 // Export event type definitions
 export type AgentCreatedEvent = z.infer<typeof AgentCreatedEventSchema>;
 export type AgentTaskStartedEvent = z.infer<typeof AgentTaskStartedEventSchema>;
-export type AgentTaskCompletedEvent = z.infer<typeof AgentTaskCompletedEventSchema>;
-export type AgentCommunicationEvent = z.infer<typeof AgentCommunicationEventSchema>;
+export type AgentTaskCompletedEvent = z.infer<
+	typeof AgentTaskCompletedEventSchema
+>;
+export type AgentCommunicationEvent = z.infer<
+	typeof AgentCommunicationEventSchema
+>;
 
 // Helper object to create agent events
 export const createAgentEvent = {

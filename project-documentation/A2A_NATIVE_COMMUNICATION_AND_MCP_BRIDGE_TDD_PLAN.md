@@ -10,7 +10,7 @@ This document outlines a comprehensive Test-Driven Development (TDD) approach to
 
 ### 🔍 **Actual A2A Implementation Status**
 
-**Status**: ✅ **SIGNIFICANTLY PROGRESSED** - 13 packages with verified A2A integration (37% of ecosystem)
+**Status**: ✅ **SIGNIFICANTLY PROGRESSED** - 15 packages with verified A2A integration (43% of ecosystem)
 
 **✅ VERIFIED TRUE A2A IMPLEMENTATIONS**:
 
@@ -30,7 +30,7 @@ This document outlines a comprehensive Test-Driven Development (TDD) approach to
 
 **⚠️ MOCK/PARTIAL IMPLEMENTATIONS** (not using A2A core):
 
-- ⚠️ **apps/api** - `ApiBusIntegration` class (670 lines) but doesn't use A2A core
+- ✅ **apps/api** - `ApiBusIntegration` class now uses real A2A core integration
 - ⚠️ **apps/cortex-py** - HTTP-based transport, not A2A core integration
 - ⚠️ **@cortex-os/agents** - Has A2A dependencies but needs createAgentsBus function
 
@@ -197,8 +197,9 @@ However, these tools are not yet integrated with the MCP core registry system ac
 **❌ IMPLEMENTATIONS NEEDED**:
 
 1. **@cortex-os/agents** ⚠️ - Has A2A dependencies but needs createAgentsBus function
-2. **apps/api** ⚠️ - Mock implementation, needs real A2A core integration
-3. **apps/cortex-py** ⚠️ - HTTP transport, needs A2A core integration
+2. **apps/api** ✅ - **COMPLETE** - Real A2A core integration implemented via createApiBus pattern
+3. **apps/cortex-code** ✅ - **COMPLETE** - Native A2A integration implemented with Rust stdio bridge to TypeScript A2A core
+3. **apps/cortex-py** ✅ - **COMPLETE** - Real A2A core integration via stdio bridge
 4. **apps/cortex-code** ❌ - No A2A integration found
 5. **apps/cortex-os** ❌ - Mock implementation, needs real A2A core integration
 6. **@cortex-os/prp-runner** ❌ - No A2A implementation found
@@ -318,8 +319,8 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 **Critical Work Required**:
 
 - [ ] ⚠️ **@cortex-os/agents** Package A2A Integration - Complete createAgentsBus function
-- [ ] ⚠️ **apps/api** A2A Integration - Replace mock with real A2A core
-- [ ] ⚠️ **apps/cortex-py** MLX Integration - Convert from HTTP to A2A core
+- [x] ✅ **COMPLETED** apps/api A2A Integration - Replaced mock with real A2A core
+- [x] ✅ **COMPLETED** apps/cortex-py A2A Integration - Converted from HTTP to A2A core via stdio bridge
 - [ ] ❌ **apps/cortex-code** (Rust) A2A Client - No A2A implementation found
 - [ ] ❌ **apps/cortex-os** A2A Integration - Replace mock with real A2A core
 - [ ] ❌ **@cortex-os/prp-runner** Package A2A Integration - No implementation found

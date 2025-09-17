@@ -1,3 +1,5 @@
+import { createCortexOsBus } from '../a2a.js';
+
 export interface Envelope {
 	id: string;
 	type: string;
@@ -33,65 +35,64 @@ export function createEnvelope({
 	};
 }
 
-function createBus() {
-	const handlers: Record<string, Handler[]> = {};
-	return {
-		bind(hs: Handler[]) {
-			for (const h of hs) {
-				handlers[h.type] = handlers[h.type] || [];
-				handlers[h.type].push(h);
-			}
-		},
-		async publish(env: Envelope) {
-			for (const h of handlers[env.type] || []) {
-				await h.handle(env);
-			}
-		},
-	};
-}
-
-export const healthHandler: Handler = {
-	type: 'event.health.v1',
-	handle: async () => {},
-};
-
+// Updated to use real A2A core instead of mock implementation
 export interface A2AWiring {
-	bus: ReturnType<typeof createBus>;
+	bus: ReturnType<typeof createCortexOsBus>['bus'];
 	publish: (
 		type: string,
 		data: Record<string, unknown>,
 		source?: string,
-	) => void;
+	) => Promise<void>;
 	publishMcp?: (event: {
 		type: string;
 		payload: Record<string, unknown>;
-	}) => void;
+	}) => Promise<void>;
 }
 
 export function wireA2A(): A2AWiring {
-	const bus = createBus();
-	bus.bind([healthHandler]);
+	// Initialize real A2A core integration
+	const { bus } = createCortexOsBus({
+		busOptions: {
+			enableTracing: true,
+			strictValidation: true,
+		},
+	});
 
 	let publishMcp: A2AWiring['publishMcp'];
 	if (process.env.CORTEX_MCP_A2A_TELEMETRY === '1') {
-		publishMcp = (evt) => {
-			void bus.publish(
-				createEnvelope({
-					type: evt.type,
-					data: evt.payload,
-					source: 'urn:cortex-os:mcp',
-				}),
-			);
+		publishMcp = async (evt) => {
+			await bus.publish({
+				specversion: '1.0',
+				id: crypto.randomUUID(),
+				source: 'urn:cortex-os:mcp',
+				type: evt.type,
+				time: new Date().toISOString(),
+				data: evt.payload,
+				datacontenttype: 'application/json',
+			});
 		};
 	}
 
-	const publish = (
+	const publish = async (
 		type: string,
 		data: Record<string, unknown>,
 		source = 'urn:cortex-os:runtime',
 	) => {
-		void bus.publish(createEnvelope({ type, data, source }));
+		await bus.publish({
+			specversion: '1.0',
+			id: crypto.randomUUID(),
+			source,
+			type,
+			time: new Date().toISOString(),
+			data,
+			datacontenttype: 'application/json',
+		});
 	};
 
 	return { bus, publish, publishMcp };
 }
+
+export const healthHandler: Handler = {
+	type: 'cortex.health.check',
+	handle: async () => {},
+};

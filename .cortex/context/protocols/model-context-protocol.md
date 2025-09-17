@@ -2,23 +2,33 @@
 
 ## Introduction
 
-The Model Context Protocol (MCP) is an open standard that enables AI applications to securely connect to data sources and tools. Think of MCP as a universal adapter for AI—similar to how USB-C provides a standardized connection for devices, MCP provides a standardized way to connect AI models to different data sources and capabilities.
+The Model Context Protocol (MCP) is comprehensively implemented across Cortex-OS as a central hub architecture
+that enables secure, scalable AI tool integration. Our implementation follows a **centralized hub pattern**
+with **A2A event bridge integration** for internal communication and **secure external access** via Cloudflare tunnels.
 
-### Key Benefits
+### Cortex-OS MCP Architecture
 
-- **Pre-built integrations** that AI applications can immediately use
-- **Standardized protocol** for building custom connections
-- **Open source ecosystem** free for everyone to implement
-- **Portability** to move context between different applications
+- **Central Hub**: All MCP communication routes through a centralized server (port 3024)
+- **A2A Integration**: Internal communication flows through Application-to-Application events
+- **Multi-Language Support**: TypeScript, Python, and Rust implementations
+- **Secure External Access**: Cloudflare tunnel at `https://cortex-mcp.brainwav.io`
+- **Zero-Downtime Operations**: Automated tunnel rotation and health monitoring
 
-### Getting Started
+### Implementation Status
 
-Choose your path based on your goals:
+✅ **58+ MCP Tool Files** across all packages and applications
+✅ **Central MCP Server** with FastMCP Python implementation
+✅ **Transport Bridge** with circuit breaker and rate limiting
+✅ **Registry System** with validation and discovery
+✅ **A2A Event Bridge** for internal agent communication
+✅ **Cloudflare Tunnel** with zero-downtime rotation
 
-- **Learn concepts**: Understand MCP architecture and core principles
-- **Use existing servers**: Connect to available MCP servers immediately
-- **Build servers**: Create servers to expose your data and tools
-- **Build clients**: Develop applications that use MCP servers
+### Quick Start
+
+- **Use MCP Tools**: Connect via central hub at `https://cortex-mcp.brainwav.io`
+- **Internal Integration**: Use A2A events for agent-to-agent MCP calls
+- **Develop Tools**: Follow package-specific MCP tool patterns
+- **Deploy Services**: Leverage existing infrastructure and patterns
 
 ## SDKs
 
@@ -35,27 +45,47 @@ All SDKs support:
 
 ## Architecture
 
-### Core Participants
+### Implementation Overview
 
-**MCP Host**: The AI application (like Claude Desktop) that manages connections
-**MCP Client**: Component that connects to a specific MCP server
-**MCP Server**: Program that provides context and capabilities to clients
+**Central MCP Hub**: Centralized server handling all external MCP communication
+**A2A Event Bridge**: Internal communication layer using CloudEvents for agent coordination
+**MCP Registry**: Discovery and validation service for available tools and servers
+**Transport Bridge**: Protocol translation between stdio, HTTP, and WebSocket transports
 
-Each client maintains a dedicated one-to-one connection with its server, allowing hosts to connect to multiple servers simultaneously.
+### Core Components
+
+**packages/mcp-core**: Enhanced MCP client with multi-transport support
+**packages/mcp-registry**: File-based registry with schema validation
+**packages/mcp-bridge**: Transport bridging with circuit breaker patterns
+**packages/cortex-mcp**: Python FastMCP server implementation
+
+### Communication Patterns
+
+**Internal Communication (A2A Events)**:
+
+```typescript
+await bridge.sendEvent({
+  source: 'urn:cortex:agents',
+  type: 'cortex.mcp.tool.requested',
+  data: { tool: 'search', serverName: 'cortex', args: {...} }
+});
+```
+
+**External Communication (Central Hub)**:
+
+```typescript
+const client = createEnhancedClient({
+  transport: 'http',
+  endpoint: 'https://cortex-mcp.brainwav.io'
+});
+```
 
 ### Protocol Layers
 
-**Data Layer**: JSON-RPC 2.0 protocol defining message structure and semantics
-
-- Lifecycle management for connections
-- Core primitives (tools, resources, prompts)
-- Client capabilities (sampling, logging)
-- Real-time notifications
-
-**Transport Layer**: Communication mechanisms between clients and servers
-
-- **Stdio**: Direct process communication for local servers
-- **HTTP**: Remote server communication with authentication support
+**Application Layer**: A2A CloudEvents for internal agent communication
+**MCP Layer**: Standard JSON-RPC 2.0 for external tool integration
+**Transport Layer**: HTTP/WebSocket/Stdio with automatic bridge translation
+**Security Layer**: Cloudflare tunnel with certificate-based authentication
 
 ### Core Primitives
 
@@ -124,7 +154,8 @@ Templates enable dynamic queries with parameter completion for better UX.
 
 ## Client Concepts
 
-MCP clients can expose additional capabilities that servers leverage. One example is sampling: servers may request model completions via the client, enabling intelligent behaviors while keeping credentials in the host.
+MCP clients can expose additional capabilities that servers leverage. One example is sampling: servers may request
+model completions via the client, enabling intelligent behaviors while keeping credentials in the host.
 
 ## Concepts of MCP
 
@@ -138,25 +169,86 @@ Enables servers to request specific information from users during interactions, 
 
 ## Versioning
 
-MCP uses date-based versioning (YYYY-MM-DD) indicating the last backwards-incompatible change. The current version is 2025-06-18. Version negotiation occurs during initialization, with graceful fallback when versions are incompatible.
+MCP uses date-based versioning (YYYY-MM-DD) indicating the last backwards-incompatible change.
+The current version is 2025-06-18. Version negotiation occurs during initialization, with graceful fallback
+when versions are incompatible.
+
+## Implementation Coverage
+
+### Language Support
+
+**TypeScript (58+ tool files)**:
+
+- `apps/cortex-webui/backend/src/mcp/tools.ts` - WebUI operations
+- `packages/model-gateway/src/adapters/mcp-adapter.ts` - Model routing
+- `packages/memories/src/mcp/tools.ts` - Memory management
+- `packages/rag/src/mcp/tools.ts` - RAG operations
+- `packages/agents/src/tools/MCPCallToolTool.ts` - Agent tool execution
+
+**Python**:
+
+- `packages/cortex-mcp/cortex_fastmcp_server_v2.py` - Main MCP server
+- `apps/cortex-py/src/cortex_py/mcp/` - Embedding and health tools
+- FastMCP 2.0 compatible implementation
+
+**Rust**:
+
+- `apps/cortex-code/codex-rs/mcp-client/src/mcp_client.rs` - Async MCP client
+- `apps/cortex-code/codex-rs/mcp-types/src/lib.rs` - Generated type system
+- Full protocol compliance with typed interfaces
+
+### Infrastructure
+
+**Central Server**:
+
+- Script: `scripts/start-mcp-server.sh`
+- Port: 3024 (enforced, legacy port 3004 deprecated)
+- Health checks and process management
+
+**Cloudflare Tunnel**:
+
+- Config: `config/cloudflared/mcp-tunnel.yml`
+- Rotation: `scripts/cloudflare/mcp-tunnel-rotate.sh`
+- External endpoint: `https://cortex-mcp.brainwav.io`
+
+**A2A Bridge**:
+
+- Implementation: `packages/agents/src/utils/a2aBridge.ts`
+- CloudEvent-compliant internal communication
+- Agent registry and capability discovery
 
 ## Frequently Asked Questions
 
-### What is MCP?
+### How is MCP implemented in Cortex-OS?
 
-MCP is a standard protocol that allows AI applications to connect to your data sources and tools, making AI assistants more helpful by giving them access to your specific information and capabilities.
+Cortex-OS uses a **central hub architecture** where all MCP communication flows through a centralized server.
+Internal communication between agents uses A2A events, while external tool access goes through the central MCP hub
+with Cloudflare tunnel security.
 
-### Why does MCP matter?
+### What tools are available?
 
-For users: More personalized AI assistance with access to your actual data
-For developers: Reusable connections instead of building custom integrations.
+We have **58+ MCP tool implementations** covering:
 
-### How does it work?
+- Memory management and vector search
+- Model gateway and routing
+- RAG pipeline operations  
+- Web UI interactions
+- Security and compliance tools
+- Agent orchestration and coordination
 
-1. MCP servers connect to data sources/tools
-2. AI applications use MCP clients to connect to servers
-3. With user permission, AI models access these connections
-4. Results flow back through the protocol layers
+### How do I add new MCP tools?
+
+1. Create tool in appropriate package's `src/mcp/tools.ts`
+2. Follow existing patterns for parameter validation
+3. Register with central MCP registry
+4. Add A2A event handlers if needed for internal communication
+
+### How does security work?
+
+- All external MCP communication secured via Cloudflare tunnels
+- Certificate-based authentication
+- Rate limiting and circuit breaker patterns
+- Zero-downtime tunnel rotation for maintenance
 
 ### Who maintains MCP servers?
 
@@ -172,4 +264,5 @@ The ecosystem grows as each new server becomes available to all MCP-compatible a
 - Enterprise development teams building servers for their internal systems
 - Software providers making their applications AI-ready
 
-Once an open source MCP server is created for a data source, it can be used by any MCP-compatible AI application, creating a growing ecosystem of connections. See example servers at <https://github.com/modelcontextprotocol/servers>.
+Once an open source MCP server is created for a data source, it can be used by any MCP-compatible AI application,
+creating a growing ecosystem of connections. See example servers at <https://github.com/modelcontextprotocol/servers>.

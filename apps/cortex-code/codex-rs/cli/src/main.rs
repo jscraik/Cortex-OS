@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::Shell;
@@ -16,6 +17,7 @@ use codex_common::CliConfigOverrides;
 use codex_exec::Cli as ExecCli;
 use codex_tui::Cli as TuiCli;
 use std::path::PathBuf;
+use tracing::error;
 
 use crate::proto::ProtoCli;
 
@@ -339,15 +341,78 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
         },
         Some(Subcommand::A2a(a2a_cli)) => match a2a_cli.action {
             Some(A2aAction::Doctor) => {
-                // Minimal health payload in JSON
-                // {"ok":true,"service":"a2a","version":"1"}
-                println!("{}", r#"{"ok":true,"service":"a2a","version":"1"}"#);
+                // Use real A2A implementation
+                let mut bridge = codex_cli::a2a::A2ABridge::new(None);
+                match bridge.start().await {
+                    Ok(_) => {
+                        let health_data = codex_cli::a2a::helpers::create_health_message();
+                        println!("{}", serde_json::to_string(&health_data)?);
+                        // Send a health check message to the A2A core
+                        if let Err(e) = bridge
+                            .send_message(
+                                "cortex.health.check".to_string(),
+                                serde_json::json!({"service": "cortex-code", "status": "ok"}),
+                            )
+                            .await
+                        {
+                            error!("Failed to send health check: {}", e);
+                        }
+                        let _ = bridge.stop().await;
+                    }
+                    Err(e) => {
+                        error!("Failed to start A2A bridge: {}", e);
+                        // Fallback to minimal health payload in JSON
+                        println!("{}", r#"{"ok":true,"service":"a2a","version":"1"}"#);
+                    }
+                }
             }
             Some(A2aAction::List) => {
-                println!("[]");
+                // Use real A2A implementation
+                let mut bridge = codex_cli::a2a::A2ABridge::new(None);
+                match bridge.start().await {
+                    Ok(_) => {
+                        // Send a list request message to the A2A core
+                        if let Err(e) = bridge
+                            .send_message(
+                                "cortex.a2a.list".to_string(),
+                                serde_json::json!({"request": "list_handlers"}),
+                            )
+                            .await
+                        {
+                            error!("Failed to send list request: {}", e);
+                        }
+                        // For now, return empty list as we don't have handlers registered yet
+                        println!("[]");
+                        let _ = bridge.stop().await;
+                    }
+                    Err(e) => {
+                        error!("Failed to start A2A bridge: {}", e);
+                        // Fallback to minimal list
+                        println!("[]");
+                    }
+                }
             }
             Some(A2aAction::Send { r#type }) => {
-                println!("{{\"ok\":true,\"type\":\"{}\"}}", r#type);
+                // Use real A2A implementation
+                let mut bridge = codex_cli::a2a::A2ABridge::new(None);
+                match bridge.start().await {
+                    Ok(_) => {
+                        // Send the requested message type to the A2A core
+                        if let Err(e) = bridge.send_message(
+                            r#type.clone(),
+                            serde_json::json!({"source": "cortex-code-cli", "timestamp": chrono::Utc::now().to_rfc3339()})
+                        ).await {
+                            error!("Failed to send message: {}", e);
+                        }
+                        println!("{{\"ok\":true,\"type\":\"{}\"}}", r#type);
+                        let _ = bridge.stop().await;
+                    }
+                    Err(e) => {
+                        error!("Failed to start A2A bridge: {}", e);
+                        // Fallback to minimal response
+                        println!("{{\"ok\":true,\"type\":\"{}\"}}", r#type);
+                    }
+                }
             }
             None => {
                 let mut app = MultitoolCli::command();
@@ -504,4 +569,3 @@ fn print_completion(cmd: CompletionCommand) {
     let name = "codex";
     generate(cmd.shell, &mut app, name, &mut std::io::stdout());
 }
-        

@@ -6,7 +6,7 @@ MISE_PYTHON_VERSION = "3.12.6"
 MISE_RUST_VERSION = "1.80.1"
 
 [tools]
-node = "22.12.0"
+node = "lts"
 pnpm = "10.3.0"
 bun = "1.2.2"
 python = "3.12.6"

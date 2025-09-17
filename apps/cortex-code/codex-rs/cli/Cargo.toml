@@ -30,11 +30,14 @@ codex-tui = { path = "../tui" }
 serde_json = "1"
 tokio = { version = "1", features = [
     "io-std",
+    "io-util",
     "macros",
     "process",
     "rt-multi-thread",
     "signal",
 ] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 codex-protocol-ts = { path = "../protocol-ts" }

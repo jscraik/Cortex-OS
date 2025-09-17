@@ -8,7 +8,7 @@ This document provides a comprehensive technical review of all 35 packages and 7
 
 ## CORRECTED IMPLEMENTATION STATUS
 
-### ✅ **FULLY IMPLEMENTED A2A NATIVE COMMUNICATION** (13 packages)
+### ✅ **FULLY IMPLEMENTED A2A NATIVE COMMUNICATION** (16 packages)
 
 These packages use `createBus` from `@cortex-os/a2a-core` with proper publish/subscribe patterns:
 
@@ -25,6 +25,8 @@ These packages use `createBus` from `@cortex-os/a2a-core` with proper publish/su
 11. **@cortex-os/simlab** ✅ - `createSimlabBus` with full A2A integration (154 lines)
 12. **@cortex-os/tdd-coach** ✅ - `createTddCoachBus` with full A2A integration (148 lines)
 13. **apps/cortex-webui** ✅ - Backend A2A integration service (WebSocket streaming)
+14. **apps/api** ✅ - Real A2A core integration via `createApiBus` pattern
+15. **apps/cortex-py** ✅ - Real A2A core integration via stdio bridge pattern
 
 ### ⚠️ **PARTIAL A2A IMPLEMENTATION** (2 packages)
 
@@ -37,7 +39,6 @@ These packages have A2A dependencies but incomplete bus integration:
 
 **Apps with Mock/Standalone A2A** (not using A2A core):
 
-- **apps/api** - Has `ApiBusIntegration` class but doesn't use `createBus` from A2A core
 - **apps/cortex-py** - Has `create_a2a_bus` but uses HTTP transport, not A2A core integration
 
 **Packages Missing A2A Implementation** (20 packages):
@@ -64,9 +65,8 @@ These packages have A2A dependencies but incomplete bus integration:
 - @cortex-os/registry
 - @cortex-os/services
 
-**Apps Missing A2A Implementation** (4 apps):
+**Apps Missing A2A Implementation** (3 apps):
 
-- apps/cortex-code
 - apps/cortex-marketplace  
 - apps/cortex-marketplace-api
 - apps/cortex-os

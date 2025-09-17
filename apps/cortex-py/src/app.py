@@ -1,17 +1,20 @@
-
 # Top-level endpoint handlers
-def embed_endpoint(req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus) -> Any:
+def embed_endpoint(
+    req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus
+) -> Any:
     text = req.text
     if text is None:
         return _validation_error("text field missing")
     try:
         import time
+
         start_time = time.time()
         result = embedding_service.generate_single(
             text, normalize=req.normalize is not False
         )
         processing_time = time.time() - start_time
         import asyncio
+
         try:
             event = create_mlx_embedding_event(
                 request_id=f"embed_{int(time.time() * 1000)}",
@@ -29,17 +32,22 @@ def embed_endpoint(req: EmbedRequest, embedding_service: EmbeddingService, a2a: 
         return _handle_service_error(exc)
     return {"embedding": result.embedding}
 
-def embeddings_endpoint(req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus) -> Any:
+
+def embeddings_endpoint(
+    req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus
+) -> Any:
     if req.texts is None or not req.texts:
         return _validation_error("texts field must be a non-empty list")
     try:
         import time
+
         start_time = time.time()
         result = embedding_service.generate_batch(
             req.texts, normalize=req.normalize is not False
         )
         processing_time = time.time() - start_time
         import asyncio
+
         try:
             total_chars = sum(len(text) for text in req.texts)
             event = create_mlx_embedding_event(
@@ -60,6 +68,7 @@ def embeddings_endpoint(req: EmbedRequest, embedding_service: EmbeddingService, 
         return _handle_service_error(exc)
     return {"embeddings": result.embeddings}
 
+
 def _register_endpoints(app: FastAPI, embedding_service: EmbeddingService, a2a: A2ABus):
     app.post("/embed", responses={422: {"model": ErrorResponse}})(
         lambda req: embed_endpoint(req, embedding_service, a2a)
@@ -67,6 +76,8 @@ def _register_endpoints(app: FastAPI, embedding_service: EmbeddingService, a2a: 
     app.post("/embeddings", responses={422: {"model": ErrorResponse}})(
         lambda req: embeddings_endpoint(req, embedding_service, a2a)
     )
+
+
 from __future__ import annotations
 
 import logging
@@ -95,8 +106,6 @@ from cortex_py.a2a import (  # noqa: E402
     create_mlx_embedding_event,
 )
 from cortex_py.generator import (  # noqa: E402  - import after sys.path mutation
-    DummyEmbeddingGenerator,
-    LazyEmbeddingGenerator,
     build_embedding_generator,
 )
 from cortex_py.services import (  # noqa: E402
@@ -160,7 +169,19 @@ def create_app(
     app.embedding_service = embedding_service  # type: ignore[attr-defined]
 
     # Initialize A2A bus for cross-language communication
-    a2a = a2a_bus or create_a2a_bus(source="urn:cortex:py:mlx")
+    # Check if we should use real A2A core integration via stdio bridge
+    use_real_core = (
+        os.getenv("CORTEX_PY_A2A_MODE") == "stdio"
+        or os.getenv("CORTEX_PY_USE_REAL_A2A", "true").lower() == "true"
+    )
+
+    if use_real_core:
+        logger.info("Using real A2A core integration via stdio bridge")
+        a2a = a2a_bus or create_a2a_bus(source="urn:cortex:py:mlx", use_real_core=True)
+    else:
+        logger.info("Using legacy HTTP transport for A2A")
+        a2a = a2a_bus or create_a2a_bus(source="urn:cortex:py:mlx", use_real_core=False)
+
     app.a2a_bus = a2a  # type: ignore[attr-defined]
 
     def _validation_error(message: str, code: str = "VALIDATION_ERROR"):
@@ -248,7 +269,13 @@ def create_app(
                     if result.embeddings and result.embeddings[0]
                     else 0,
                     success=True,
+                )
+                asyncio.create_task(a2a.publish(event))
+            except Exception as e:
+                logger.warning(f"Failed to publish A2A batch embedding event: {e}")
 
-                # Top-level endpoint handlers
+        except ServiceError as exc:
+            return _handle_service_error(exc)
+        return {"embeddings": result.embeddings}
 
-    _register_endpoints(app, embedding_service, a2a)
+    return app

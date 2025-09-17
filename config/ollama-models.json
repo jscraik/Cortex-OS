@@ -1,0 +1,271 @@
+{
+  "embedding_models": {
+    "nomic-embed": {
+      "name": "nomic-ai/nomic-embed-text-v1.5",
+      "model_tag": "nomic-embed-text:v1.5",
+      "dimensions": 768,
+      "max_tokens": 8192,
+      "memory_gb": 1.5,
+      "context_length": 8192,
+      "status": "available",
+      "size_bytes": 274302450,
+      "recommended_for": [
+        "general_embedding",
+        "semantic_search",
+        "rag_systems"
+      ],
+      "ollama_model": "nomic-embed-text:v1.5",
+      "priority": 1
+    },
+    "granite-embed": {
+      "name": "ibm/granite-embedding-278m",
+      "model_tag": "granite-embedding:278m",
+      "dimensions": 384,
+      "max_tokens": 512,
+      "memory_gb": 1.0,
+      "context_length": 512,
+      "status": "available",
+      "size_bytes": 562777301,
+      "recommended_for": [
+        "enterprise_embedding",
+        "ibm_ecosystem",
+        "lightweight_rag"
+      ],
+      "ollama_model": "granite-embedding:278m",
+      "priority": 2
+    }
+  },
+  "chat_models": {
+    "deepseek-coder": {
+      "name": "deepseek-coder:6.7b",
+      "model_tag": "deepseek-coder:6.7b",
+      "context_length": 16384,
+      "memory_gb": 8.0,
+      "priority": 1,
+      "status": "available",
+      "size_bytes": 3827834503,
+      "modified": "2025-08-05T21:00:30.365815382+01:00",
+      "recommended_for": [
+        "code_generation",
+        "completion",
+        "debugging",
+        "refactoring"
+      ],
+      "coding_tasks": [
+        "code_generation",
+        "completion",
+        "debugging",
+        "refactoring",
+        "code_review"
+      ],
+      "ollama_model": "deepseek-coder:6.7b",
+      "quantization": "q4_0",
+      "type": "code_specialist"
+    },
+    "gpt-oss": {
+      "name": "gpt-oss:20b",
+      "model_tag": "gpt-oss:20b",
+      "context_length": 8192,
+      "memory_gb": 24.0,
+      "priority": 2,
+      "status": "available",
+      "size_bytes": 13780173724,
+      "modified": "2025-08-30T18:28:50.563989624+01:00",
+      "recommended_for": [
+        "advanced_algorithms",
+        "performance_optimization",
+        "system_design",
+        "complex_reasoning"
+      ],
+      "coding_tasks": [
+        "advanced_algorithms",
+        "performance_optimization",
+        "system_design",
+        "architecture_planning"
+      ],
+      "ollama_model": "gpt-oss:20b",
+      "quantization": "q4_0",
+      "type": "general_purpose"
+    },
+    "qwen3-coder": {
+      "name": "qwen3-coder:30b",
+      "model_tag": "qwen3-coder:30b",
+      "context_length": 32768,
+      "memory_gb": 32.0,
+      "priority": 3,
+      "status": "available",
+      "size_bytes": 18556701140,
+      "modified": "2025-08-26T14:22:44.773672199+01:00",
+      "recommended_for": [
+        "architecture",
+        "complex_refactoring",
+        "large_codebase",
+        "system_design"
+      ],
+      "coding_tasks": [
+        "architecture",
+        "complex_refactoring",
+        "large_codebase",
+        "system_design",
+        "enterprise_patterns"
+      ],
+      "ollama_model": "qwen3-coder:30b",
+      "quantization": "q4_0",
+      "type": "code_specialist"
+    },
+    "phi4-mini-reasoning": {
+      "name": "phi4-mini-reasoning:latest",
+      "model_tag": "phi4-mini-reasoning:latest",
+      "context_length": 4096,
+      "memory_gb": 4.0,
+      "priority": 4,
+      "status": "available",
+      "size_bytes": 3152479391,
+      "modified": "2025-08-19T00:05:50.162097785+01:00",
+      "recommended_for": [
+        "fast_reasoning",
+        "quick_fixes",
+        "code_review",
+        "lightweight_tasks"
+      ],
+      "coding_tasks": [
+        "quick_fixes",
+        "simple_generation",
+        "code_review",
+        "reasoning_tasks"
+      ],
+      "ollama_model": "phi4-mini-reasoning:latest",
+      "quantization": "q4_0",
+      "type": "reasoning"
+    },
+    "gemma3n": {
+      "name": "gemma3n:e4b",
+      "model_tag": "gemma3n:e4b",
+      "context_length": 8192,
+      "memory_gb": 4.0,
+      "priority": 5,
+      "status": "available",
+      "size_bytes": 7547589116,
+      "modified": "2025-08-05T22:22:57.456060359+01:00",
+      "recommended_for": [
+        "efficient_inference",
+        "google_ecosystem",
+        "balanced_performance",
+        "multimodal_fallback"
+      ],
+      "coding_tasks": [
+        "general",
+        "code_review",
+        "documentation",
+        "explanation"
+      ],
+      "ollama_model": "gemma3n:e4b",
+      "quantization": "q4_0",
+      "type": "general_purpose"
+    }
+  },
+  "reranker_models": {},
+  "safety_models": {},
+  "default_models": {
+    "embedding": "nomic-embed",
+    "chat": "deepseek-coder",
+    "coding": "deepseek-coder",
+    "lightweight": "phi4-mini-reasoning",
+    "large_context": "qwen3-coder",
+    "reasoning": "phi4-mini-reasoning",
+    "general_purpose": "gemma3n",
+    "enterprise": "granite-embed"
+  },
+  "task_routing": {
+    "quick_fix": "phi4-mini-reasoning",
+    "code_generation": "deepseek-coder",
+    "refactoring": "deepseek-coder",
+    "debugging": "deepseek-coder",
+    "documentation": "gemma3n",
+    "architecture": "qwen3-coder",
+    "complex_analysis": "qwen3-coder",
+    "performance_optimization": "gpt-oss",
+    "system_design": "gpt-oss",
+    "reasoning_tasks": "phi4-mini-reasoning",
+    "lightweight_tasks": "phi4-mini-reasoning",
+    "general_purpose": "gemma3n",
+    "code_review": "deepseek-coder",
+    "enterprise_patterns": "qwen3-coder",
+    "enterprise_embedding": "granite-embed",
+    "default": "deepseek-coder"
+  },
+  "service_configuration": {
+    "ollama_endpoint": "http://localhost:11434",
+    "api_timeout_ms": 30000,
+    "max_concurrent_requests": 4,
+    "auto_pull_models": true,
+    "model_pull_timeout_ms": 300000,
+    "health_check_interval_ms": 10000,
+    "retry_attempts": 3,
+    "retry_delay_ms": 1000
+  },
+  "fallback_chains": {
+    "coding": [
+      "deepseek-coder",
+      "qwen3-coder",
+      "gpt-oss",
+      "gemma3n"
+    ],
+    "reasoning": [
+      "phi4-mini-reasoning",
+      "gpt-oss",
+      "gemma3n",
+      "deepseek-coder"
+    ],
+    "lightweight": [
+      "phi4-mini-reasoning",
+      "gemma3n",
+      "deepseek-coder"
+    ],
+    "heavy_lifting": [
+      "gpt-oss",
+      "qwen3-coder",
+      "deepseek-coder",
+      "gemma3n"
+    ]
+  },
+  "performance_tiers": {
+    "ultra_fast": {
+      "models": [
+        "phi4-mini-reasoning",
+        "gemma3n"
+      ],
+      "max_latency_ms": 2000,
+      "memory_limit_gb": 6
+    },
+    "balanced": {
+      "models": [
+        "deepseek-coder",
+        "gemma3n"
+      ],
+      "max_latency_ms": 5000,
+      "memory_limit_gb": 12
+    },
+    "high_performance": {
+      "models": [
+        "gpt-oss",
+        "qwen3-coder"
+      ],
+      "max_latency_ms": 10000,
+      "memory_limit_gb": 40
+    }
+  },
+  "model_management": {
+    "auto_unload_inactive_models": true,
+    "inactive_timeout_minutes": 15,
+    "memory_pressure_threshold": 0.8,
+    "preload_models": [
+      "deepseek-coder",
+      "phi4-mini-reasoning"
+    ],
+    "warm_standby": [
+      "gemma3n",
+      "nomic-embed-text:v1.5"
+    ]
+  }
+}
