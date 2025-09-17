@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const createMemoryStoreTool = (_memory: unknown) =>
 	createTool({

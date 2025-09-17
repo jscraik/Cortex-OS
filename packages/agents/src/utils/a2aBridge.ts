@@ -1,7 +1,7 @@
+import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
-import { createLogger } from '../mocks/voltagent-logger';
 
-const logger = createLogger('A2ABridge');
+const logger = createPinoLogger({ name: 'A2ABridge' });
 
 // CloudEvent schema
 const CloudEventSchema = z.object({
@@ -81,7 +81,7 @@ export function createA2ABridge(_config?: A2ABridgeConfig) {
 				try {
 					callback(validated);
 				} catch (error) {
-					logger.error('Error in event subscription:', error);
+					logger.error('Error in event subscription:', error as Error);
 				}
 			});
 

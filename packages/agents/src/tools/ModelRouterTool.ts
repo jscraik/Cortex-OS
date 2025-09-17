@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const createModelRouterTool = (_modelRouter: any) =>
 	createTool({
@@ -15,7 +16,16 @@ export const createModelRouterTool = (_modelRouter: any) =>
 			model: z.string().optional(),
 		}),
 
-		async execute(params, _context) {
+		async execute(
+			params: {
+				action: 'select' | 'list' | 'health' | 'current';
+				input?: string;
+				preferredModel?: string;
+				tools?: string[];
+				model?: string;
+			},
+			_context: unknown,
+		) {
 			return {
 				success: true,
 				action: params.action,

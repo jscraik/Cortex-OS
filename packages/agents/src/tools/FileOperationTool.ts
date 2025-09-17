@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const FileOperationTool = createTool({
 	id: 'file-operation',
@@ -12,7 +13,15 @@ export const FileOperationTool = createTool({
 		encoding: z.enum(['utf8', 'base64']).optional().default('utf8'),
 	}),
 
-	async execute(params, _context) {
+	async execute(
+		params: {
+			operation: 'read' | 'write' | 'list' | 'delete';
+			path: string;
+			content?: string;
+			encoding?: 'utf8' | 'base64';
+		},
+		_context: unknown,
+	) {
 		// Mock implementation
 		return {
 			success: true,

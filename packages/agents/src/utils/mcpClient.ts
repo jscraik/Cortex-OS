@@ -1,6 +1,6 @@
-import { createLogger } from '../mocks/voltagent-logger';
+import { createPinoLogger } from '@voltagent/logger';
 
-const logger = createLogger('MCPClient');
+const logger = createPinoLogger({ name: 'MCPClient' });
 
 export interface MCPServerConfig {
 	name: string;
@@ -67,7 +67,10 @@ export class MCPClient {
 			logger.info(`Connected to MCP server: ${serverName}`);
 			return true;
 		} catch (error) {
-			logger.error(`Failed to connect to MCP server ${serverName}:`, error);
+			logger.error(
+				`Failed to connect to MCP server ${serverName}:`,
+				error as Error,
+			);
 			this.servers.set(serverName, {
 				name: serverName,
 				status: 'error',
@@ -145,7 +148,10 @@ export class MCPClient {
 				}),
 			};
 		} catch (error) {
-			logger.error(`Tool call failed: ${serverName}.${toolName}:`, error);
+			logger.error(
+				`Tool call failed: ${serverName}.${toolName}:`,
+				error as Error,
+			);
 			throw error;
 		}
 	}

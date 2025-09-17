@@ -5,22 +5,23 @@
  * exposing them as `agent.{name}` tools in the main agent.
  */
 
-import { createTool } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool, type Tool, type ToolSchema } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 import type { IToolRegistry } from '../types';
 import { type ISubagentDelegator, SubagentRunner } from './runner';
 import type { SubagentConfig, SubagentTool } from './types';
 
-const logger = createLogger('SubagentTools');
+const logger = createPinoLogger({ name: 'SubagentTools' });
 
 export class SubagentToolFactory {
-	private runners = new Map<string, SubagentRunner>();
+	public readonly runners = new Map<string, SubagentRunner>();
 	private delegator?: ISubagentDelegator;
-	private recursionDepth = new Map<string, number>();
+	private readonly recursionDepth = new Map<string, number>();
 
 	constructor(
-		private toolRegistry: IToolRegistry,
-		private globalTools: any[],
+		private readonly toolRegistry: IToolRegistry,
+		private readonly globalTools: any[],
 	) {}
 
 	/**
@@ -38,21 +39,14 @@ export class SubagentToolFactory {
 			id: `agent.${config.name}`,
 			name: `agent.${config.name}`,
 			description: `${config.description} (Model: ${config.model || 'default'})`,
-			parameters: {
-				type: 'object',
-				properties: {
-					message: {
-						type: 'string',
-						description: 'Message or task for the subagent',
-					},
-					context: {
-						type: 'string',
-						description: 'Optional context or background information',
-					},
-				},
-				required: ['message'],
-			},
-			execute: async (params: any) => {
+			parameters: z.object({
+				message: z.string().describe('Message or task for the subagent'),
+				context: z
+					.string()
+					.optional()
+					.describe('Optional context or background information'),
+			}),
+			execute: async (params) => {
 				const depth = this.recursionDepth.get(config.name) || 0;
 
 				// Check recursion limit
@@ -107,7 +101,7 @@ export class SubagentToolFactory {
 		this.toolRegistry.register(tool);
 
 		logger.info(`Created subagent tool: ${tool.name}`);
-		return tool as SubagentTool;
+		return tool as unknown as SubagentTool;
 	}
 
 	/**
@@ -140,10 +134,18 @@ export class SubagentToolFactory {
 				// Get target subagent config (simplified)
 				const config = {
 					name: request.to,
+					version: '1.0.0',
 					description: `Delegated subagent: ${request.to}`,
 					scope: 'project' as const,
+					parallel_fanout: false,
 					auto_delegate: false,
 					max_recursion: 0,
+					context_isolation: true,
+					memory_enabled: false,
+					allow_network: false,
+					sandbox: true,
+					timeout_ms: 30000,
+					tags: [],
 				};
 
 				const context = {
@@ -164,7 +166,10 @@ export class SubagentToolFactory {
 					success: result.success,
 					response: result.output,
 					error: result.error,
-					metrics: result.metrics,
+					metrics: {
+						duration: result.metrics.duration,
+						agent: request.to,
+					},
 				};
 			},
 		};
@@ -180,9 +185,12 @@ export class SubagentToolFactory {
 	/**
 	 * Filter tools based on subagent configuration
 	 */
-	private filterTools(tools: any[], config: SubagentConfig): any[] {
+	private filterTools(
+		tools: Tool<ToolSchema>[],
+		config: SubagentConfig,
+	): Tool<ToolSchema>[] {
 		return tools.filter((tool) => {
-			const toolName = tool.name || tool.id;
+			const toolName = tool.name || (tool as any).id;
 
 			// Check blocked tools
 			if (config.blocked_tools?.length) {
@@ -225,9 +233,17 @@ export class SubagentToolFactory {
 			lastUsed?: number;
 		}
 	> {
-		const status: any = {};
+		const status: Record<
+			string,
+			{
+				name: string;
+				healthy: boolean;
+				recursionDepth: number;
+				lastUsed?: number;
+			}
+		> = {};
 
-		for (const [name, _runner] of this.runners) {
+		for (const [name] of this.runners) {
 			status[name] = {
 				name: `agent.${name}`,
 				healthy: false, // Would need health check implementation

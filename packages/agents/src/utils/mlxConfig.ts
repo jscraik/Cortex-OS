@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createPinoLogger } from '@voltagent/logger';
 
-const logger = createLogger('MLXConfig');
+const logger = createPinoLogger({ name: 'MLXConfig' });
 
 export interface MLXModelConfig {
 	name: string;
@@ -45,7 +45,7 @@ export async function loadMLXConfig(configPath?: string): Promise<MLXConfig> {
 		logger.info('MLX configuration loaded successfully');
 		return config;
 	} catch (error) {
-		logger.error('Failed to load MLX configuration:', error);
+		logger.error('Failed to load MLX configuration:', error as Error);
 		throw error;
 	}
 }

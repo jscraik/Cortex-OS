@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const createMemoryDeleteTool = () =>
 	createTool({
@@ -11,7 +12,10 @@ export const createMemoryDeleteTool = () =>
 			confirm: z.boolean().optional().default(false),
 		}),
 
-		async execute(params, _context) {
+		async execute(
+			params: { memoryId: string; confirm?: boolean },
+			_context: unknown,
+		) {
 			return {
 				success: true,
 				memoryId: params.memoryId,

@@ -1,8 +1,9 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 import { MCPClient } from '../utils/mcpClient';
 
-const logger = createLogger('MCPCallToolTool');
+const logger = createPinoLogger({ name: 'MCPCallToolTool' });
 
 // Default MCP server configuration
 const defaultMCPConfig = {
@@ -75,7 +76,14 @@ export const MCPCallToolTool = createTool({
 		autoConnect: z.boolean().optional().default(true),
 	}),
 
-	async execute(params) {
+	async execute(params: {
+		serverName: string;
+		toolName: string;
+		parameters?: Record<string, unknown>;
+		timeout?: number;
+		includeMetadata?: boolean;
+		autoConnect?: boolean;
+	}) {
 		logger.info(`Calling MCP tool: ${params.serverName}.${params.toolName}`);
 
 		try {
@@ -144,7 +152,7 @@ export const MCPCallToolTool = createTool({
 		} catch (error: unknown) {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
-			logger.error(`MCP tool call failed:`, error);
+			logger.error(`MCP tool call failed:`, error as Error);
 			return {
 				success: false,
 				error: errorMessage || 'Unknown error occurred',

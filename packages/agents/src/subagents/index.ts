@@ -5,13 +5,13 @@
  * specialized agents on disk and materializing them as tools in the main agent.
  */
 
-import { createLogger } from '../mocks/voltagent-logger';
+import { createPinoLogger } from '@voltagent/logger';
 import type { IToolRegistry } from '../types';
 import { SubagentLoader } from './loader';
 import { SubagentRegistry } from './registry';
 import { SubagentToolFactory } from './tools';
 
-const logger = createLogger('SubagentSystem');
+const logger = createPinoLogger({ name: 'SubagentSystem' });
 
 export interface SubagentSystemConfig {
 	/** Tool registry for registering subagent tools */
@@ -72,7 +72,10 @@ export class SubagentSystem {
 			try {
 				await this.registry.register(config);
 			} catch (error) {
-				logger.error(`Failed to register subagent ${config.name}:`, error);
+				logger.error(
+					`Failed to register subagent ${config.name}:`,
+					error as Error,
+				);
 			}
 		}
 
@@ -129,7 +132,7 @@ export class SubagentSystem {
 			try {
 				await this.registry.unregister(subagent.name);
 			} catch (error) {
-				logger.error(`Failed to unregister ${subagent.name}:`, error);
+				logger.error(`Failed to unregister ${subagent.name}:`, error as Error);
 			}
 		}
 
@@ -147,7 +150,7 @@ export class SubagentSystem {
 				// Reload all subagents on any change
 				await this.registry.reload(this.loader);
 			} catch (error) {
-				logger.error('Failed to reload subagents:', error);
+				logger.error('Failed to reload subagents:', error as Error);
 			}
 		});
 

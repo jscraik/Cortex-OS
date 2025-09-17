@@ -6,7 +6,7 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createPinoLogger } from '@voltagent/logger';
 import type { SubagentToolFactory } from './tools';
 import {
 	type ISubagentRegistry,
@@ -14,7 +14,7 @@ import {
 	SubagentEvents,
 } from './types';
 
-const logger = createLogger('SubagentRegistry');
+const logger = createPinoLogger({ name: 'SubagentRegistry' });
 
 export class SubagentRegistry
 	extends EventEmitter
@@ -128,8 +128,10 @@ export class SubagentRegistry
 		const loaded = await loader.loadAll();
 
 		// Find new and removed subagents
-		const loadedNames = new Set(loaded.keys());
-		const toAdd = Array.from(loadedNames).filter((name) => !current.has(name));
+		const loadedNames = new Set<string>(loaded.keys() as Iterable<string>);
+		const toAdd = Array.from(loadedNames.values()).filter(
+			(name) => !current.has(name),
+		);
 		const toRemove = Array.from(current).filter(
 			(name) => !loadedNames.has(name),
 		);
@@ -139,7 +141,7 @@ export class SubagentRegistry
 			try {
 				await this.unregister(name);
 			} catch (error) {
-				logger.error(`Failed to unregister subagent ${name}:`, error);
+				logger.error(`Failed to unregister subagent ${name}:`, error as Error);
 			}
 		}
 
@@ -148,7 +150,7 @@ export class SubagentRegistry
 			try {
 				await this.register(loaded.get(name)!);
 			} catch (error) {
-				logger.error(`Failed to register subagent ${name}:`, error);
+				logger.error(`Failed to register subagent ${name}:`, error as Error);
 			}
 		}
 

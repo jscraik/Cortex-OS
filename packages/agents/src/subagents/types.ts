@@ -151,6 +151,11 @@ export interface DelegationRequest {
 		priority?: number;
 		timeout?: number;
 		tags?: string[];
+		reason?: string;
+		confidence?: number;
+		strategy?: 'single' | 'fanout';
+		rank?: number;
+		total?: number;
 	};
 }
 

@@ -5,10 +5,11 @@
  * YAML (.subagent.yml) and Markdown (.subagent.md) formats.
  */
 
-import fs from 'node:fs/promises';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
 import path from 'node:path';
+import { createPinoLogger } from '@voltagent/logger';
 import { parse as parseYaml } from 'yaml';
-import { createLogger } from '../mocks/voltagent-logger';
 import {
 	type MarkdownSubagentFile,
 	type SubagentConfig,
@@ -16,7 +17,7 @@ import {
 	type YamlSubagentFile,
 } from './types';
 
-const logger = createLogger('SubagentLoader');
+const logger = createPinoLogger({ name: 'SubagentLoader' });
 
 export interface LoaderConfig {
 	/** Directory paths to search for subagent configurations */
@@ -28,10 +29,11 @@ export interface LoaderConfig {
 }
 
 export class SubagentLoader {
-	private config: LoaderConfig;
+	private readonly _config: LoaderConfig;
+	private _reloadTimeout?: NodeJS.Timeout;
 
 	constructor(config?: Partial<LoaderConfig>) {
-		this.config = {
+		this._config = {
 			searchPaths: [
 				'./subagents',
 				'./.cortex/subagents',
@@ -43,13 +45,17 @@ export class SubagentLoader {
 		};
 	}
 
+	get config(): LoaderConfig {
+		return this._config;
+	}
+
 	/**
 	 * Load all subagent configurations from disk
 	 */
 	async loadAll(): Promise<Map<string, SubagentConfig>> {
 		const subagents = new Map<string, SubagentConfig>();
 
-		for (const searchPath of this.config.searchPaths) {
+		for (const searchPath of this._config.searchPaths) {
 			const resolvedPath = path.resolve(
 				searchPath.replace(/^~\//, `${process.env.HOME}/`),
 			);
@@ -65,8 +71,9 @@ export class SubagentLoader {
 					subagents.set(name, config);
 				}
 			} catch (error) {
-				if ((error as any).code !== 'ENOENT') {
-					logger.warn(`Failed to load subagents from ${resolvedPath}:`, error);
+				const err = error as NodeJS.ErrnoException;
+				if (err.code !== 'ENOENT') {
+					logger.warn(`Failed to load subagents from ${resolvedPath}:`, err);
 				}
 			}
 		}
@@ -82,13 +89,13 @@ export class SubagentLoader {
 		dirPath: string,
 	): Promise<Map<string, SubagentConfig>> {
 		const subagents = new Map<string, SubagentConfig>();
-		const entries = await fs.readdir(dirPath, { withFileTypes: true });
+		const entries = await fsp.readdir(dirPath, { withFileTypes: true });
 
 		for (const entry of entries) {
 			if (!entry.isFile()) continue;
 
 			const ext = path.extname(entry.name);
-			if (!this.config.extensions.includes(ext)) continue;
+			if (!this._config.extensions.includes(ext)) continue;
 
 			const filePath = path.join(dirPath, entry.name);
 			const baseName = path.basename(entry.name, ext);
@@ -97,7 +104,10 @@ export class SubagentLoader {
 				const config = await this.loadFile(filePath);
 				subagents.set(baseName, config);
 			} catch (error) {
-				logger.error(`Failed to load subagent from ${filePath}:`, error);
+				logger.error(
+					`Failed to load subagent from ${filePath}:`,
+					error as Error,
+				);
 			}
 		}
 
@@ -109,12 +119,12 @@ export class SubagentLoader {
 	 */
 	private async loadFile(filePath: string): Promise<SubagentConfig> {
 		// Check file size
-		const stats = await fs.stat(filePath);
-		if (stats.size > this.config.maxFileSize) {
+		const stats = await fsp.stat(filePath);
+		if (stats.size > this._config.maxFileSize) {
 			throw new Error(`File too large: ${filePath}`);
 		}
 
-		const content = await fs.readFile(filePath, 'utf-8');
+		const content = await fsp.readFile(filePath, 'utf-8');
 		const ext = path.extname(filePath);
 
 		if (ext === '.md') {
@@ -149,15 +159,15 @@ export class SubagentLoader {
 	private parseMarkdownFile(content: string, filePath: string): SubagentConfig {
 		try {
 			// Extract front matter between --- delimiters
-			const frontMatterMatch = content.match(
-				/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/,
+			const frontMatterMatch = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/.exec(
+				content,
 			);
 
 			if (!frontMatterMatch) {
 				throw new Error('No front matter found in markdown file');
 			}
 
-			const [, frontMatter, _body] = frontMatterMatch;
+			const [, frontMatter] = frontMatterMatch;
 			const data = parseYaml(frontMatter) as MarkdownSubagentFile;
 
 			// Validate required fields
@@ -204,13 +214,16 @@ export class SubagentLoader {
 	 * Watch for changes in subagent directories
 	 */
 	async watch(
-		callback: (event: 'add' | 'change' | 'unlink', path: string) => void,
+		_callback: (
+			event: 'add' | 'change' | 'unlink',
+			changedPath: string,
+		) => void,
 	): Promise<fs.FSWatcher> {
 		// For now, we'll use a simple polling approach
 		// In production, you might want to use chokidar or similar
 		const watchers: fs.FSWatcher[] = [];
 
-		for (const searchPath of this.config.searchPaths) {
+		for (const searchPath of this._config.searchPaths) {
 			const resolvedPath = path.resolve(
 				searchPath.replace(/^~\//, `${process.env.HOME}/`),
 			);
@@ -219,28 +232,35 @@ export class SubagentLoader {
 				const watcher = fs.watch(
 					resolvedPath,
 					{ recursive: true },
-					(eventType, filename) => {
+					(_eventType: string, filename: string | null) => {
 						if (!filename) return;
 
-						const ext = path.extname(filename);
-						if (this.config.extensions.includes(ext)) {
-							const filePath = path.join(resolvedPath, filename);
-							callback(eventType as 'add' | 'change' | 'unlink', filePath);
+						if (filename.endsWith('.ts') || filename.endsWith('.js')) {
+							logger.debug(`File change detected: ${filename}`);
+							// Debounce file changes
+							if (this._reloadTimeout) clearTimeout(this._reloadTimeout);
+							this._reloadTimeout = setTimeout(() => {
+								this.loadAll().catch(() => {});
+							}, 500);
 						}
 					},
 				);
-
 				watchers.push(watcher);
 			} catch (error) {
-				if ((error as any).code !== 'ENOENT') {
-					logger.warn(`Failed to watch ${resolvedPath}:`, error);
+				const err = error as NodeJS.ErrnoException;
+				if (err.code !== 'ENOENT') {
+					logger.warn(`Failed to watch ${resolvedPath}:`, err);
 				}
 			}
 		}
 
 		// Return a composite watcher that closes all watchers
 		return {
-			close: () => watchers.forEach((w) => w.close()),
+			close: () => {
+				watchers.forEach((w) => {
+					w.close();
+				});
+			},
 		} as fs.FSWatcher;
 	}
 }

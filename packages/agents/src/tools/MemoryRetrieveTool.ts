@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const createMemoryRetrieveTool = () =>
 	createTool({
@@ -24,7 +25,18 @@ export const createMemoryRetrieveTool = () =>
 			limit: z.number().int().min(1).max(50).optional().default(10),
 		}),
 
-		async execute(_params, _context) {
+		async execute(
+			_params: {
+				memoryId?: string;
+				query?: string;
+				types?: Array<
+					'working' | 'contextual' | 'episodic' | 'semantic' | 'procedural'
+				>;
+				tags?: string[];
+				limit?: number;
+			},
+			_context: unknown,
+		) {
 			return {
 				success: true,
 				memories: [],

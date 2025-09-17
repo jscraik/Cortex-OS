@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const PackageManagerTool = createTool({
 	id: 'package-manager',
@@ -12,7 +13,15 @@ export const PackageManagerTool = createTool({
 		devDependency: z.boolean().optional().default(false),
 	}),
 
-	async execute(params, _context) {
+	async execute(
+		params: {
+			operation: 'install' | 'remove' | 'update' | 'list';
+			packageName?: string;
+			version?: string;
+			devDependency?: boolean;
+		},
+		_context: unknown,
+	) {
 		return {
 			success: true,
 			operation: params.operation,

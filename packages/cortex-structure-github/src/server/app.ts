@@ -238,9 +238,7 @@ app.post('/webhook', async (req, res) => {
 			| undefined;
 		const payload = Buffer.isBuffer(rawBody)
 			? rawBody.toString('utf8')
-			: typeof rawBody === 'string'
-				? rawBody
-				: JSON.stringify(rawBody ?? {});
+			: pckage;
 
 		await webhooks.verifyAndReceive({
 			id: id || '',

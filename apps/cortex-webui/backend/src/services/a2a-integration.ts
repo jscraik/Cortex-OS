@@ -13,7 +13,7 @@ export interface WebUIEventData {
 	sessionId: string;
 	userId?: string;
 	timestamp: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 export interface WebUIUserEvent extends WebUIEventData {
@@ -24,7 +24,7 @@ export interface WebUIUserEvent extends WebUIEventData {
 export interface WebUISystemEvent extends WebUIEventData {
 	eventType: 'system_status' | 'model_update' | 'error_notification';
 	status?: string;
-	modelInfo?: any;
+	modelInfo?: Record<string, unknown>;
 	error?: string;
 }
 
@@ -36,25 +36,54 @@ export interface WebUIAgentEvent extends WebUIEventData {
 	error?: string;
 }
 
-export class WebUIEventTypes {
-	static readonly USER_CONNECTED = 'webui.user.connected';
-	static readonly USER_DISCONNECTED = 'webui.user.disconnected';
-	static readonly USER_MESSAGE = 'webui.user.message';
-	static readonly SYSTEM_STATUS = 'webui.system.status';
-	static readonly MODEL_UPDATE = 'webui.model.update';
-	static readonly ERROR_NOTIFICATION = 'webui.system.error';
-	static readonly AGENT_RESPONSE = 'webui.agent.response';
-	static readonly AGENT_THINKING = 'webui.agent.thinking';
-	static readonly AGENT_ERROR = 'webui.agent.error';
+// MLX Event Data Interfaces
+export interface MLXThermalData {
+	device_id: string;
+	temperature: number;
+	threshold: number;
+	status: string;
+	action_taken: string;
+	timestamp: string;
+}
+
+export interface MLXModelData {
+	model_id: string;
+	model_name: string;
+	event_type: string;
+	memory_usage?: number;
+	load_time?: number;
+	error_message?: string;
+	timestamp: string;
+}
+
+export interface MLXEmbeddingData {
+	request_id: string;
+	text_count: number;
+	processing_time: number;
+	model_used: string;
+	success: boolean;
+	timestamp: string;
+}
+
+export const WebUIEventTypes = {
+	USER_CONNECTED: 'webui.user.connected' as const,
+	USER_DISCONNECTED: 'webui.user.disconnected' as const,
+	USER_MESSAGE: 'webui.user.message' as const,
+	SYSTEM_STATUS: 'webui.system.status' as const,
+	MODEL_UPDATE: 'webui.model.update' as const,
+	ERROR_NOTIFICATION: 'webui.system.error' as const,
+	AGENT_RESPONSE: 'webui.agent.response' as const,
+	AGENT_THINKING: 'webui.agent.thinking' as const,
+	AGENT_ERROR: 'webui.agent.error' as const,
 
 	// Subscribe to external events
-	static readonly MLX_THERMAL = 'mlx.thermal.warning';
-	static readonly MLX_THERMAL_CRITICAL = 'mlx.thermal.critical';
-	static readonly MLX_MODEL_LOADED = 'mlx.model.loaded';
-	static readonly MLX_MODEL_ERROR = 'mlx.model.error';
-	static readonly MLX_EMBEDDING_COMPLETED = 'mlx.embedding.completed';
-	static readonly MLX_EMBEDDING_BATCH = 'mlx.embedding.batch.completed';
-}
+	MLX_THERMAL: 'mlx.thermal.warning' as const,
+	MLX_THERMAL_CRITICAL: 'mlx.thermal.critical' as const,
+	MLX_MODEL_LOADED: 'mlx.model.loaded' as const,
+	MLX_MODEL_ERROR: 'mlx.model.error' as const,
+	MLX_EMBEDDING_COMPLETED: 'mlx.embedding.completed' as const,
+	MLX_EMBEDDING_BATCH: 'mlx.embedding.batch.completed' as const,
+} as const;
 
 export interface WebSocketManager {
 	broadcast(message: any): void;
@@ -194,7 +223,7 @@ export class WebUIBusIntegration {
 	 * Handle MLX thermal warning events
 	 */
 	private async handleMLXThermalEvent(envelope: Envelope): Promise<void> {
-		const thermalData = envelope.data;
+		const thermalData = envelope.data as MLXThermalData;
 
 		if (this.wsManager) {
 			this.wsManager.broadcast({
@@ -219,7 +248,7 @@ export class WebUIBusIntegration {
 	private async handleMLXThermalCriticalEvent(
 		envelope: Envelope,
 	): Promise<void> {
-		const thermalData = envelope.data;
+		const thermalData = envelope.data as MLXThermalData;
 
 		if (this.wsManager) {
 			this.wsManager.broadcast({
@@ -242,7 +271,7 @@ export class WebUIBusIntegration {
 	 * Handle MLX model lifecycle events
 	 */
 	private async handleMLXModelEvent(envelope: Envelope): Promise<void> {
-		const modelData = envelope.data;
+		const modelData = envelope.data as MLXModelData;
 
 		if (this.wsManager) {
 			this.wsManager.broadcast({
@@ -264,7 +293,7 @@ export class WebUIBusIntegration {
 	 * Handle MLX model error events
 	 */
 	private async handleMLXModelErrorEvent(envelope: Envelope): Promise<void> {
-		const modelData = envelope.data;
+		const modelData = envelope.data as MLXModelData;
 
 		if (this.wsManager) {
 			this.wsManager.broadcast({
@@ -285,7 +314,7 @@ export class WebUIBusIntegration {
 	 * Handle MLX embedding completion events
 	 */
 	private async handleMLXEmbeddingEvent(envelope: Envelope): Promise<void> {
-		const embeddingData = envelope.data;
+		const embeddingData = envelope.data as MLXEmbeddingData;
 
 		if (this.wsManager) {
 			this.wsManager.broadcast({

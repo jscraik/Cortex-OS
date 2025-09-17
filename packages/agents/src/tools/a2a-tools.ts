@@ -1,7 +1,8 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 
-const logger = createLogger('A2ATools');
+const logger = createPinoLogger({ name: 'A2ATools' });
 
 // Tool for sending A2A events
 export const sendA2AEventTool = createTool({
@@ -55,7 +56,7 @@ export const sendA2AEventTool = createTool({
 			logger.info(`A2A event sent: ${eventId}`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to send A2A event:', error);
+			logger.error('Failed to send A2A event:', error as Error);
 			throw error;
 		}
 	},
@@ -103,7 +104,7 @@ export const subscribeToA2AEventsTool = createTool({
 			logger.info(`A2A subscription created: ${subscriptionId}`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to create A2A subscription:', error);
+			logger.error('Failed to create A2A subscription:', error as Error);
 			throw error;
 		}
 	},
@@ -143,7 +144,7 @@ export const getA2AStatsTool = createTool({
 			logger.info('A2A stats retrieved successfully');
 			return stats;
 		} catch (error) {
-			logger.error('Failed to get A2A stats:', error);
+			logger.error('Failed to get A2A stats:', error as Error);
 			throw error;
 		}
 	},

@@ -1,8 +1,9 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 import { MCPClient } from '../utils/mcpClient';
 
-const logger = createLogger('MCPServerInfoTool');
+const logger = createPinoLogger({ name: 'MCPServerInfoTool' });
 
 // Default MCP server configuration
 const defaultMCPConfig = {
@@ -53,7 +54,7 @@ export const MCPServerInfoTool = createTool({
 		detailed: z.boolean().optional().default(false),
 	}),
 
-	async execute(params, _context) {
+	async execute(params) {
 		logger.info(`Getting info for MCP server: ${params.serverName}`);
 
 		try {
@@ -71,7 +72,7 @@ export const MCPServerInfoTool = createTool({
 		} catch (error) {
 			logger.error(
 				`Failed to get MCP server info: ${params.serverName}:`,
-				error,
+				error as Error,
 			);
 			return {
 				success: false,

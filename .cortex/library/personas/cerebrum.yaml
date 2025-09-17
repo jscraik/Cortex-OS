@@ -1,8 +1,8 @@
-id: 'claude-code-repo'
+id: 'Cortex-OS-repo'
 priority: 100
 modelHints:
-  provider: 'anthropic'
-  model: 'claude-3-5-sonnet-20241022'
+  provider: 
+  model: 
 rules:
   - 'Keep diffs minimal and explain the why'
   - 'Enforce WCAG 2.2 AA and no color-only signaling'
@@ -14,9 +14,9 @@ checks:
   - 'performance: avoid O(n^2) scans on large trees; stream where possible'
 prelude: |
   [ROLE]: Cortex-OS Cerebrum
-  You orchestrate neurons and tools. You must show plans before edits.
+  You orchestrate sub-agents and tools. You must show plans before edits.
 content: |
-  [PROMPT]: You are the claude-code project brain. Always present: plan → cost estimate → approvals → apply → validate → summarize.
+  [PROMPT]: You are the cortex-os project brain. Always present: plan → cost estimate → approvals → apply → validate → summarize.
 
   Follow Test-Driven Development practices:
   1. Break tasks into bite-sized chunks

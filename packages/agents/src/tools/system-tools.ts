@@ -1,7 +1,8 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 
-const logger = createLogger('SystemTools');
+const logger = createPinoLogger({ name: 'SystemTools' });
 
 // Tool for executing system commands
 export const executeCommandTool = createTool({
@@ -36,7 +37,7 @@ export const executeCommandTool = createTool({
 		captureStderr: z.boolean().optional().default(true),
 	}),
 
-	async execute(params, _context) {
+	async execute(params) {
 		logger.info(`Executing command: ${params.command}`);
 
 		try {
@@ -56,7 +57,7 @@ export const executeCommandTool = createTool({
 			logger.info(`Command executed successfully`);
 			return result;
 		} catch (error) {
-			logger.error('Command execution failed:', error);
+			logger.error('Command execution failed:', error as Error);
 			throw error;
 		}
 	},
@@ -82,7 +83,7 @@ export const systemHealthTool = createTool({
 		detailed: z.boolean().optional().default(false),
 	}),
 
-	async execute(params, _context) {
+	async execute(params) {
 		logger.info('Checking system health');
 
 		try {
@@ -127,7 +128,7 @@ export const systemHealthTool = createTool({
 			logger.info('System health check completed');
 			return result;
 		} catch (error) {
-			logger.error('System health check failed:', error);
+			logger.error('System health check failed:', error as Error);
 			throw error;
 		}
 	},
@@ -160,7 +161,7 @@ export const readFileTool = createTool({
 			.default(1024 * 1024),
 	}),
 
-	async execute(params, _context) {
+	async execute(params) {
 		logger.info(`Reading file: ${params.path}`);
 
 		try {
@@ -176,7 +177,7 @@ export const readFileTool = createTool({
 			logger.info(`File read successfully: ${params.path}`);
 			return result;
 		} catch (error) {
-			logger.error('File reading failed:', error);
+			logger.error('File reading failed:', error as Error);
 			throw error;
 		}
 	},
@@ -231,7 +232,7 @@ export const listAgentsTool = createTool({
 			logger.info(`Found ${result.agents.length} agents`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to list agents:', error);
+			logger.error('Failed to list agents:', error as Error);
 			throw error;
 		}
 	},

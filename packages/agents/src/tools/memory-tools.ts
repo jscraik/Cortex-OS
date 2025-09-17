@@ -1,7 +1,8 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 
-const logger = createLogger('MemoryTools');
+const logger = createPinoLogger({ name: 'MemoryTools' });
 
 // Memory interfaces
 interface MemoryResult {
@@ -46,7 +47,13 @@ export const storeMemoryTool = createTool({
 		ttl: z.number().int().min(0).optional(),
 	}),
 
-	async execute(params, _context) {
+	async execute(params: {
+		content: string;
+		type?: 'working' | 'contextual' | 'episodic' | 'semantic' | 'procedural';
+		tags?: string[];
+		importance?: number;
+		ttl?: number;
+	}) {
 		logger.info('Storing memory');
 
 		try {
@@ -66,7 +73,7 @@ export const storeMemoryTool = createTool({
 			logger.info(`Memory stored: ${memoryId}`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to store memory:', error);
+			logger.error('Failed to store memory:', error as Error);
 			throw error;
 		}
 	},
@@ -105,7 +112,15 @@ export const retrieveMemoryTool = createTool({
 		limit: z.number().int().min(1).max(50).optional().default(10),
 	}),
 
-	async execute(params, _context) {
+	async execute(params: {
+		memoryId?: string;
+		query?: string;
+		types?: Array<
+			'working' | 'contextual' | 'episodic' | 'semantic' | 'procedural'
+		>;
+		tags?: string[];
+		limit?: number;
+	}) {
 		logger.info('Retrieving memories');
 
 		try {
@@ -123,7 +138,7 @@ export const retrieveMemoryTool = createTool({
 			logger.info(`Retrieved ${results.length} memories`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to retrieve memories:', error);
+			logger.error('Failed to retrieve memories:', error as Error);
 			throw error;
 		}
 	},
@@ -157,7 +172,12 @@ export const searchMemoryTool = createTool({
 		limit: z.number().int().min(1).max(50).optional().default(10),
 	}),
 
-	async execute(params, _context) {
+	async execute(params: {
+		query: string;
+		scope?: 'all' | 'content' | 'tags' | 'metadata';
+		minScore?: number;
+		limit?: number;
+	}) {
 		logger.info(`Searching memories: ${params.query}`);
 
 		try {
@@ -175,7 +195,7 @@ export const searchMemoryTool = createTool({
 			logger.info(`Found ${results.length} relevant memories`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to search memories:', error);
+			logger.error('Failed to search memories:', error as Error);
 			throw error;
 		}
 	},
@@ -202,7 +222,12 @@ export const getMemoryStatsTool = createTool({
 			.optional(),
 	}),
 
-	async execute(params) {
+	async execute(params: {
+		detailed?: boolean;
+		types?: Array<
+			'working' | 'contextual' | 'episodic' | 'semantic' | 'procedural'
+		>;
+	}) {
 		logger.info('Getting memory system stats');
 
 		try {
@@ -229,7 +254,7 @@ export const getMemoryStatsTool = createTool({
 			logger.info('Memory stats retrieved successfully');
 			return stats;
 		} catch (error) {
-			logger.error('Failed to get memory stats:', error);
+			logger.error('Failed to get memory stats:', error as Error);
 			throw error;
 		}
 	},

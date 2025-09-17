@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createPinoLogger } from '@voltagent/logger';
 
-const logger = createLogger('OllamaConfig');
+const logger = createPinoLogger({ name: 'OllamaConfig' });
 
 export interface OllamaModelConfig {
 	name: string;
@@ -69,7 +69,7 @@ export async function loadOllamaConfig(
 		logger.info('Ollama configuration loaded successfully');
 		return config;
 	} catch (error) {
-		logger.error('Failed to load Ollama configuration:', error);
+		logger.error('Failed to load Ollama configuration:', error as Error);
 		throw error;
 	}
 }

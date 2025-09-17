@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const createMemorySearchTool = () =>
 	createTool({
@@ -35,7 +36,26 @@ export const createMemorySearchTool = () =>
 			limit: z.number().int().min(1).max(50).optional().default(10),
 		}),
 
-		async execute(params, _context) {
+		async execute(
+			params: {
+				query: string;
+				strategy?: 'semantic' | 'keyword' | 'hybrid';
+				scope?: 'all' | 'content' | 'summary' | 'tags' | 'metadata';
+				types?: Array<
+					| 'working'
+					| 'contextual'
+					| 'episodic'
+					| 'semantic'
+					| 'procedural'
+					| 'declarative'
+				>;
+				tags?: string[];
+				timeRange?: number;
+				minScore?: number;
+				limit?: number;
+			},
+			_context: unknown,
+		) {
 			return {
 				success: true,
 				results: [],

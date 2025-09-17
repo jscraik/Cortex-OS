@@ -26,9 +26,9 @@ export interface ToolConfig {
 export interface AgentMessage {
 	id: string;
 	type: string;
-	content: any;
+	content: unknown;
 	timestamp: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 /**
@@ -38,7 +38,7 @@ export interface IToolRegistry {
 	/**
 	 * Register a new tool
 	 */
-	register(tool: any): void;
+	register(tool: unknown): void;
 
 	/**
 	 * Unregister a tool by ID
@@ -48,12 +48,12 @@ export interface IToolRegistry {
 	/**
 	 * Get a tool by ID
 	 */
-	get(toolId: string): any | null;
+	get(toolId: string): unknown;
 
 	/**
 	 * List all registered tools
 	 */
-	list(): any[];
+	list(): unknown[];
 
 	/**
 	 * Check if a tool is registered

@@ -1,10 +1,6 @@
-// Mock logger
-const logger = {
-	info: (msg: string, ...args: any[]) => console.log(`[INFO] ${msg}`, ...args),
-	error: (msg: string, ...args: any[]) =>
-		console.error(`[ERROR] ${msg}`, ...args),
-	warn: (msg: string, ...args: any[]) => console.warn(`[WARN] ${msg}`, ...args),
-};
+import { createPinoLogger } from '@voltagent/logger';
+
+const logger = createPinoLogger({ name: 'ModelRouter' });
 
 export interface ModelRouterConfig {
 	enableMLX?: boolean;

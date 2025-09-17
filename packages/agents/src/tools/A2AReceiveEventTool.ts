@@ -1,7 +1,8 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 
-const logger = createLogger('A2AReceiveEventTool');
+const logger = createPinoLogger({ name: 'A2AReceiveEventTool' });
 
 export const createA2AReceiveEventTool = (a2aBridge: any) =>
 	createTool({
@@ -33,7 +34,7 @@ export const createA2AReceiveEventTool = (a2aBridge: any) =>
 				.optional(),
 		}),
 
-		async execute(params, _context) {
+		async execute(params) {
 			logger.info(`Receiving A2A events of type: ${params.eventType}`);
 
 			try {
@@ -69,7 +70,7 @@ export const createA2AReceiveEventTool = (a2aBridge: any) =>
 					timestamp: new Date().toISOString(),
 				};
 			} catch (error) {
-				logger.error('Failed to receive A2A events:', error);
+				logger.error('Failed to receive A2A events:', error as Error);
 				return {
 					success: false,
 					error: error instanceof Error ? error.message : String(error),

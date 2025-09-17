@@ -1,7 +1,8 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 
-const logger = createLogger('A2ASendEventTool');
+const logger = createPinoLogger({ name: 'A2ASendEventTool' });
 
 export const createA2ASendEventTool = (a2aBridge: any) =>
 	createTool({
@@ -94,7 +95,7 @@ export const createA2ASendEventTool = (a2aBridge: any) =>
 					delivery: 'broadcast',
 				};
 			} catch (error) {
-				logger.error('Failed to send A2A event:', error);
+				logger.error('Failed to send A2A event:', error as Error);
 				return {
 					success: false,
 					error: error instanceof Error ? error.message : String(error),

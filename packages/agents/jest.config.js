@@ -9,7 +9,7 @@ module.exports = {
 	moduleNameMapping: {
 		'^@/(.*)$': '<rootDir>/src/$1',
 	},
-	collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/mocks/**/*'],
+	collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'lcov', 'html'],
 	setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],

@@ -1,8 +1,9 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 import { MCPClient } from '../utils/mcpClient';
 
-const logger = createLogger('MCPListServersTool');
+const logger = createPinoLogger({ name: 'MCPListServersTool' });
 
 // Default MCP server configuration
 const defaultMCPConfig = {
@@ -56,7 +57,10 @@ export const MCPListServersTool = createTool({
 		detailed: z.boolean().optional().default(false),
 	}),
 
-	async execute(params, _context) {
+	async execute(params: {
+		status?: 'all' | 'connected' | 'disconnected';
+		detailed?: boolean;
+	}) {
 		logger.info('Listing MCP servers');
 
 		try {
@@ -72,7 +76,7 @@ export const MCPListServersTool = createTool({
 				timestamp: new Date().toISOString(),
 			};
 		} catch (error) {
-			logger.error('Failed to list MCP servers:', error);
+			logger.error('Failed to list MCP servers:', error as Error);
 			return {
 				success: false,
 				error: error instanceof Error ? error.message : String(error),

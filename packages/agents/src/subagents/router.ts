@@ -5,10 +5,14 @@
  * based on message content, user preferences, and agent capabilities.
  */
 
-import { createLogger } from '../mocks/voltagent-logger';
-import type { DelegationRequest, SubagentConfig } from './types';
+import { createPinoLogger } from '@voltagent/logger';
+import type {
+	DelegationRequest,
+	ISubagentRegistry,
+	SubagentConfig,
+} from './types';
 
-const logger = createLogger('DelegationRouter');
+const logger = createPinoLogger({ name: 'DelegationRouter' });
 
 export interface RoutingRule {
 	/** Pattern to match in the message */
@@ -137,7 +141,6 @@ export class DelegationRouter {
 				message,
 				context: context?.input,
 				metadata: {
-					confidence: target.confidence,
 					reason: target.reason,
 					strategy: 'single',
 				},
@@ -153,7 +156,6 @@ export class DelegationRouter {
 					message,
 					context: context?.input,
 					metadata: {
-						confidence: candidate.confidence,
 						reason: candidate.reason,
 						strategy: 'fanout',
 						rank: i + 1,
@@ -358,7 +360,7 @@ export class DelegationRouter {
 	 */
 	removeRule(index: number): void {
 		if (index >= 0 && index < this.rules.length) {
-			const _removed = this.rules.splice(index, 1)[0];
+			this.rules.splice(index, 1);
 			logger.info('Removed routing rule');
 		}
 	}

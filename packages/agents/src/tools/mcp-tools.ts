@@ -1,7 +1,8 @@
-import { createTool, z } from '../mocks/voltagent-core';
-import { createLogger } from '../mocks/voltagent-logger';
+import { createTool } from '@voltagent/core';
+import { createPinoLogger } from '@voltagent/logger';
+import { z } from 'zod';
 
-const logger = createLogger('MCPTools');
+const logger = createPinoLogger({ name: 'MCPTools' });
 
 // Tool for listing available MCP servers
 export const listMCPServersTool = createTool({
@@ -20,7 +21,10 @@ export const listMCPServersTool = createTool({
 		detailed: z.boolean().optional().default(false),
 	}),
 
-	async execute(params, _context) {
+	async execute(params: {
+		status?: 'all' | 'running' | 'stopped';
+		detailed?: boolean;
+	}) {
 		logger.info('Listing MCP servers');
 
 		try {
@@ -54,7 +58,7 @@ export const listMCPServersTool = createTool({
 			logger.info(`Found ${result.servers.length} MCP servers`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to list MCP servers:', error);
+			logger.error('Failed to list MCP servers:', error as Error);
 			throw error;
 		}
 	},
@@ -85,7 +89,12 @@ export const callMCPTool = createTool({
 		timeout: z.number().int().min(1000).max(300000).optional().default(30000),
 	}),
 
-	async execute(params, _context) {
+	async execute(params: {
+		server: string;
+		tool: string;
+		parameters?: Record<string, unknown>;
+		timeout?: number;
+	}) {
 		logger.info(`Calling MCP tool: ${params.server}.${params.tool}`);
 
 		try {
@@ -105,7 +114,7 @@ export const callMCPTool = createTool({
 			logger.info(`MCP tool call completed: ${params.server}.${params.tool}`);
 			return result;
 		} catch (error) {
-			logger.error('Failed to call MCP tool:', error);
+			logger.error('Failed to call MCP tool:', error as Error);
 			throw error;
 		}
 	},

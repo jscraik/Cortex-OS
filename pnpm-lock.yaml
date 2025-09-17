@@ -432,6 +432,15 @@ importers:
 
   apps/cortex-os:
     dependencies:
+      '@cortex-os/a2a-contracts':
+        specifier: workspace:*
+        version: link:../../packages/a2a/a2a-contracts
+      '@cortex-os/a2a-core':
+        specifier: workspace:*
+        version: link:../../packages/a2a/a2a-core
+      '@cortex-os/a2a-transport':
+        specifier: workspace:*
+        version: link:../../packages/a2a/a2a-transport
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -1081,6 +1090,9 @@ importers:
 
   packages/agents:
     dependencies:
+      '@ai-sdk/openai':
+        specifier: ^2.0.31
+        version: 2.0.32(zod@3.25.76)
       '@voltagent/cli':
         specifier: ^0.1.10
         version: 0.1.10(@types/node@22.18.1)
@@ -1427,6 +1439,15 @@ importers:
 
   packages/evals:
     dependencies:
+      '@cortex-os/a2a-contracts':
+        specifier: workspace:*
+        version: link:../a2a/a2a-contracts
+      '@cortex-os/a2a-core':
+        specifier: workspace:*
+        version: link:../a2a/a2a-core
+      '@cortex-os/a2a-transport':
+        specifier: workspace:*
+        version: link:../a2a/a2a-transport
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -1446,6 +1467,15 @@ importers:
       '@cortex-os/a2a':
         specifier: workspace:*
         version: link:../a2a
+      '@cortex-os/a2a-contracts':
+        specifier: workspace:*
+        version: link:../a2a/a2a-contracts
+      '@cortex-os/a2a-core':
+        specifier: workspace:*
+        version: link:../a2a/a2a-core
+      '@cortex-os/a2a-transport':
+        specifier: workspace:*
+        version: link:../a2a/a2a-transport
       '@cortex-os/contracts':
         specifier: workspace:*
         version: link:../../libs/typescript/contracts
@@ -1622,6 +1652,15 @@ importers:
 
   packages/memories:
     dependencies:
+      '@cortex-os/a2a-contracts':
+        specifier: workspace:*
+        version: link:../a2a/a2a-contracts
+      '@cortex-os/a2a-core':
+        specifier: workspace:*
+        version: link:../a2a/a2a-core
+      '@cortex-os/a2a-transport':
+        specifier: workspace:*
+        version: link:../a2a/a2a-transport
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -1671,6 +1710,15 @@ importers:
 
   packages/model-gateway:
     dependencies:
+      '@cortex-os/a2a-contracts':
+        specifier: workspace:*
+        version: link:../a2a/a2a-contracts
+      '@cortex-os/a2a-core':
+        specifier: workspace:*
+        version: link:../a2a/a2a-core
+      '@cortex-os/a2a-transport':
+        specifier: workspace:*
+        version: link:../a2a/a2a-transport
       '@cortex-os/orchestration':
         specifier: workspace:*
         version: link:../orchestration
@@ -2206,6 +2254,9 @@ importers:
       '@cortex-os/a2a-core':
         specifier: workspace:*
         version: link:../a2a/a2a-core
+      '@cortex-os/a2a-transport':
+        specifier: workspace:*
+        version: link:../a2a/a2a-transport
       '@cortex-os/telemetry':
         specifier: workspace:*
         version: link:../../libs/typescript/telemetry
@@ -2396,6 +2447,12 @@ packages:
 
   '@ai-sdk/gateway@1.0.23':
     resolution: {integrity: sha512-ynV7WxpRK2zWLGkdOtrU2hW22mBVkEYVS3iMg1+ZGmAYSgzCqzC74bfOJZ2GU1UdcrFWUsFI9qAYjsPkd+AebA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4
+
+  '@ai-sdk/openai@2.0.32':
+    resolution: {integrity: sha512-p7giSkCs66Q1qYO/NPYI41CrSg65mcm8R2uAdF86+Y1D1/q4mUrWMyf5UTOJ0bx/z4jIPiNgGDCg2Kabi5zrKQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -13087,7 +13144,6 @@ packages:
 
   libsql@0.5.22:
     resolution: {integrity: sha512-NscWthMQt7fpU8lqd7LXMvT9pi+KhhmTHAJWUB/Lj6MWa0MKFv0F2V4C6WKKpjCVZl0VwcDz4nOI3CyaT1DDiA==}
-    cpu: [x64, arm64, wasm32, arm]
     os: [darwin, linux, win32]
 
   libxmljs2@0.37.0:
@@ -18669,6 +18725,12 @@ snapshots:
       zod: 3.25.76
 
   '@ai-sdk/gateway@1.0.23(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.9(zod@3.25.76)
+      zod: 3.25.76
+
+  '@ai-sdk/openai@2.0.32(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.9(zod@3.25.76)
@@ -31499,7 +31561,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.12.1(debug@4.4.1))
+      retry-axios: 2.6.0(axios@1.12.1)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -36590,7 +36652,7 @@ snapshots:
 
   ret@0.5.0: {}
 
-  retry-axios@2.6.0(axios@1.12.1(debug@4.4.1)):
+  retry-axios@2.6.0(axios@1.12.1):
     dependencies:
       axios: 1.12.1(debug@4.4.1)
 

@@ -1,4 +1,5 @@
-import { createTool, z } from '../mocks/voltagent-core';
+import { createTool } from '@voltagent/core';
+import { z } from 'zod';
 
 export const CortexHealthCheckTool = createTool({
 	id: 'cortex-health-check',
@@ -13,7 +14,13 @@ export const CortexHealthCheckTool = createTool({
 		detailed: z.boolean().optional().default(false),
 	}),
 
-	async execute(params, _context) {
+	async execute(
+		params: {
+			component?: 'all' | 'agents' | 'a2a' | 'mcp' | 'memory';
+			detailed?: boolean;
+		},
+		_context: unknown,
+	) {
 		return {
 			status: 'healthy',
 			component: params.component,

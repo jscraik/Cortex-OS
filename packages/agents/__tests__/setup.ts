@@ -3,8 +3,8 @@
  */
 
 // Mock logger to reduce noise in tests
-jest.mock('../src/mocks/voltagent-logger', () => ({
-	createLogger: (_name: string) => ({
+jest.mock('@voltagent/logger', () => ({
+	createPinoLogger: (_config: any) => ({
 		info: jest.fn(),
 		warn: jest.fn(),
 		error: jest.fn(),

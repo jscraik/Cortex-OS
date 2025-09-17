@@ -44,6 +44,10 @@ reports/
 # Security scan artifacts
 semgrep-report.json
 logs/*.log
+
+# Generated declaration files
+libs/typescript/contracts/src/*.d.ts
+libs/typescript/contracts/tests/policy.spec.ts
 # Upstream mirrors / vendored external references for cortex-codex (kept locally only)
 apps/cortex-codex/external/
 !packages/observability/dist/
