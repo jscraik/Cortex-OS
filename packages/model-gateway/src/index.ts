@@ -1,4 +1,11 @@
 // A2A Events for inter-package communication
+
+// A2A Bus for native communication
+export {
+	createModelGatewayBus,
+	createModelGatewaySchemaRegistry,
+	type ModelGatewayBusConfig,
+} from './a2a.js';
 export type {
 	ModelErrorEvent,
 	ModelResponseEvent,

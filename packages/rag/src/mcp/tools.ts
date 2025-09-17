@@ -14,7 +14,6 @@ import { ZodError, type ZodIssue, z } from 'zod';
 import { handleRAG } from '../index.js';
 import type { RAGQuerySchema } from '../lib/contracts-shim.js';
 
-type MCPContent = { type: 'text'; text: string };
 // Removed unused type MCPResponse
 
 interface RAGToolResponse {

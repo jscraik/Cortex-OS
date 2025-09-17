@@ -1,10 +1,7 @@
 import { type EvidenceArray, evidenceArraySchema } from '@cortex-os/contracts';
 import { z } from 'zod';
 
-/**
- * CloudEvents 1.0 compliant envelope extending ASBR requirements
- * See: https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md
- */
+// CloudEvents 1.0 compliant envelope extending ASBR requirements
 export const Envelope = z
 	.object({
 		// CloudEvents 1.0 Required Attributes
@@ -45,7 +42,7 @@ export const Envelope = z
 			.optional()
 			.describe('Timestamp of when the event occurred'),
 
-		// ASBR Extensions
+		// ASBR-specific extensions
 		causationId: z
 			.string()
 			.uuid()
@@ -137,7 +134,8 @@ export function createEnvelope(params: {
  * Non-mutating helper that returns a new envelope with validated evidence attached under data.evidence.
  * If the existing envelope already has data.evidence it will be replaced.
  */
-export function withEvidence<T extends Envelope>(
+export function withEvidence<T extends z.infer<typeof Envelope>>(
+	// Use z.infer<typeof Envelope>
 	envelope: T,
 	evidence: EvidenceArray,
 ): T & { data: Record<string, unknown> & { evidence: EvidenceArray } } {

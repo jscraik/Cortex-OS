@@ -51,6 +51,12 @@ export async function runGate(
 	return { pass, outcomes, startedAt, finishedAt } satisfies GateResult;
 }
 
+// A2A Bus for native communication
+export {
+	createEvalsBus,
+	createEvalsSchemaRegistry,
+	type EvalsBusConfig,
+} from './a2a.js';
 // A2A Events
 export {
 	type BenchmarkResultEvent,

@@ -1,7 +1,14 @@
 // SPIFFE/SPIRE Implementation
 
+// A2A Bus for native communication
+export {
+	createSecurityBus,
+	createSecuritySchemaRegistry,
+	type SecurityBusConfig,
+} from './a2a.js';
 // Security Events
 export * from './events/security-event';
+export * from './events/security-events';
 // MCP Tools for external AI agent integration
 export {
 	SecurityTool,

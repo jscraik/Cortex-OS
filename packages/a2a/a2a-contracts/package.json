@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "zod": "^3.23.8",
-    "@cortex-os/contracts": "link:../../../libs/typescript/contracts"
+    "@cortex-os/contracts": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

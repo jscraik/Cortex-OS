@@ -4,90 +4,139 @@
 
 This document outlines a comprehensive Test-Driven Development (TDD) approach to implementing native A2A communication methods and A2A MCP bridge integration across ALL Cortex-OS packages (35 total) and apps. The plan follows strict software engineering principles with a focus on ensuring all components support their respective language types (Python, Rust, TypeScript).
 
-**MAJOR UPDATE**: Complete A2A ecosystem implementation achieved! **All requested priorities successfully completed** with comprehensive A2A communication across frontend, backend, and cross-language integration. Cortex-OS now has full A2A native communication with real-time coordination, WebSocket streaming, and multi-language agent communication.
+**TECHNICAL REVIEW UPDATE**: Based on comprehensive codebase examination, **previous claims of complete implementation were significantly overstated**. The true status shows **8 packages with verified A2A implementation (23%)** and **significant work remaining** to achieve full ecosystem coordination.
 
-## ✅ **MAJOR BREAKTHROUGH - CURRENT STATUS UPDATE**
+## ⚠️ **TECHNICAL REVIEW FINDINGS - CORRECTED STATUS**
 
-### 🎉 **Complete A2A Ecosystem - OPERATIONAL**
+### 🔍 **Actual A2A Implementation Status**
 
-**Status**: ✅ **FULLY OPERATIONAL** - Complete A2A ecosystem successfully implemented
+**Status**: ✅ **SIGNIFICANTLY PROGRESSED** - 13 packages with verified A2A integration (37% of ecosystem)
 
-- ✅ **Frontend Integration**: cortex-webui React dashboard with real-time A2A events
-- ✅ **WebSocket Streaming**: Real-time MLX thermal, model, and embedding events
-- ✅ **Cross-Language Integration**: Python MLX ↔ TypeScript WebUI ↔ Rust CLI coordination
-- ✅ **Gateway Coordination**: Complete /a2a endpoint with request routing
-- ✅ **Evaluation Coordination**: Distributed evaluation system with MCP integration
-- ✅ **Rust CLI Integration**: Existing A2A implementation verified in cortex-code
-- ✅ **Core Infrastructure**: All foundational packages operational and tested
+**✅ VERIFIED TRUE A2A IMPLEMENTATIONS**:
 
-### 🚀 **Complete A2A Ecosystem Implementation**
+- ✅ **@cortex-os/a2a** - Core messaging infrastructure with CloudEvents 1.0
+- ✅ **@cortex-os/a2a-services** - Service registry and discovery
+- ✅ **@cortex-os/gateway** - `createGatewayBus` with request routing coordination
+- ✅ **@cortex-os/model-gateway** - `createModelGatewayBus` with AI model routing
+- ✅ **@cortex-os/evals** - `createEvalsBus` with evaluation workflow coordination
+- ✅ **@cortex-os/memories** - `createMemoryBus` with memory management events
+- ✅ **@cortex-os/security** - `createSecurityBus` with security event coordination
+- ✅ **@cortex-os/observability** - `createObservabilityBus` (168 lines)
+- ✅ **@cortex-os/orchestration** - `createOrchestrationBus` (182 lines)
+- ✅ **@cortex-os/rag** - `createRagBus` (157 lines)
+- ✅ **@cortex-os/simlab** - `createSimlabBus` (154 lines)
+- ✅ **@cortex-os/tdd-coach** - `createTddCoachBus` (148 lines)
+- ✅ **apps/cortex-webui** - Backend A2A integration service
 
-**Status**: ✅ **ALL REQUESTED PRIORITIES COMPLETED** - Full A2A ecosystem operational
+**⚠️ MOCK/PARTIAL IMPLEMENTATIONS** (not using A2A core):
 
-#### Core A2A Priorities - COMPLETED
+- ⚠️ **apps/api** - `ApiBusIntegration` class (670 lines) but doesn't use A2A core
+- ⚠️ **apps/cortex-py** - HTTP-based transport, not A2A core integration
+- ⚠️ **@cortex-os/agents** - Has A2A dependencies but needs createAgentsBus function
 
-1. **cortex-webui Frontend React Integration** ✅ **COMPLETE**
-   - **Frontend Dashboard**: 525 lines - Real-time A2A event dashboard with tabbed interface
-   - **WebSocket Hooks**: 383 lines - React hooks for connection management and event streaming
-   - **WebSocket Service**: 488 lines - CloudEvents 1.0 compatible messaging with auto-reconnection
-   - **Features**: MLX thermal monitoring, system events, connection status, event history
+**❌ NO A2A IMPLEMENTATION**: 20+ packages and 4+ apps require full implementation
 
-2. **cortex-code (Rust) A2A Client** ✅ **COMPLETE**
-   - **Implementation**: Existing CLI integration verified with doctor/list/send commands
-   - **Cross-Language**: Python MLX ↔ TypeScript WebUI ↔ Rust CLI coordination
-   - **Features**: Health checks, event sending, cross-language integration capabilities
+### 🎯 **Priority Implementation Requirements**
 
-3. **gateway Package A2A Integration** ✅ **COMPLETE**
-   - **Implementation**: Complete /a2a endpoint with handleA2A function
-   - **Gateway Events**: RouteCreated, RequestReceived, ResponseSent, RateLimitExceeded
-   - **Features**: Fastify-based HTTP server with comprehensive routing coordination
+**Status**: ⚠️ **MAJOR WORK REQUIRED** - Most packages need A2A integration
 
-4. **evals Package A2A Integration** ✅ **COMPLETE**
-   - **Implementation**: Complete evaluation lifecycle events (started, executed, results, completed)
-   - **MCP Integration**: evalsMcpTools for external coordination with 98% test coverage
-   - **Features**: Distributed evaluation coordination with robust error handling
+#### Verified Implementation Patterns
 
-#### Supporting A2A Infrastructure - COMPLETE
+**✅ TRUE A2A PATTERN** (8 packages follow this):
 
-5. **@cortex-os/a2a** ✅ **COMPLETE** - Core A2A messaging infrastructure
-6. **@cortex-os/a2a-services** ✅ **COMPLETE** - Service registry and discovery
-7. **@cortex-os/observability** ✅ **COMPLETE** - Cross-package communication monitoring (147 lines)
-8. **@cortex-os/orchestration** ✅ **COMPLETE** - Workflow coordination events (161 lines)
-9. **@cortex-os/rag** ✅ **COMPLETE** - Retrieval coordination events
-10. **@cortex-os/cortex-py** ✅ **COMPLETE** - Python MLX model coordination and thermal management (233+ lines)
-11. **@cortex-os/api** ✅ **COMPLETE** - Webhook processing and async job coordination (612+ lines)
-12. **@cortex-os/cortex-os** ✅ **COMPLETE** - Main app with A2A wiring implementation
-13. **@cortex-os/simlab** ✅ **COMPLETE** - Simulation coordination A2A integration
-14. **@cortex-os/tdd-coach** ✅ **COMPLETE** - TDD workflow A2A integration
-15. **@cortex-os/prp-runner** ✅ **COMPLETE** - AI-powered code review (450 lines)
-16. **@cortex-os/memories** ✅ **COMPLETE** - Knowledge management coordination (486 lines)
-17. **@cortex-os/model-gateway** ✅ **COMPLETE** - AI model routing coordination (504 lines)
-18. **@cortex-os/security** ✅ **COMPLETE** - System-wide security coordination (471 lines)
+```typescript
+// Example from observability package
+import { createBus } from '@cortex-os/a2a-core/bus';
+
+export function createObservabilityBus(options = {}) {
+  const transport = options.transport ?? inproc();
+  const bus = createBus(transport, validateEnvelope, undefined, acl, options.busOptions);
+  return {
+    async publish(type, payload, publishOptions) { /* ... */ },
+    async bind(handlers) { /* ... */ }
+  };
+}
+```
+
+#### Priority Packages Needing Full A2A Integration
+
+1. **@cortex-os/agents** ⚠️ **PRIORITY** - Convert from partial to complete A2A integration
+2. **apps/api** ⚠️ **HIGH PRIORITY** - Replace mock `ApiBusIntegration` with real A2A core
+3. **apps/cortex-py** ⚠️ **HIGH PRIORITY** - Integrate with TypeScript A2A core instead of HTTP
+4. **apps/cortex-code** ❌ **PRIORITY** - Add native A2A integration (Rust)
+5. **apps/cortex-os** ❌ **PRIORITY** - Replace mock implementation with real A2A core
+6. **@cortex-os/prp-runner** ❌ **PRIORITY** - Add A2A integration for code review coordination
+7. **@cortex-os/agent-toolkit** ❌ **UTILITY** - Add A2A integration for tool coordination
+8. **@cortex-os/mcp-*" packages** ❌ **UTILITY** - Add A2A integration for MCP coordination
+
+#### Packages Requiring A2A Implementation
+
+**❌ NO IMPLEMENTATION** (25+ packages need full A2A integration):
+
+- @cortex-os/agent-toolkit
+- @cortex-os/agui  
+- @cortex-os/cortex-ai-github
+- @cortex-os/cortex-logging
+- @cortex-os/cortex-mcp
+- @cortex-os/cortex-sec
+- @cortex-os/cortex-semgrep-github
+- @cortex-os/cortex-structure-github
+- @cortex-os/github
+- @cortex-os/integrations
+- @cortex-os/mcp
+- @cortex-os/mcp-bridge
+- @cortex-os/mcp-core
+- @cortex-os/mcp-registry
+- @cortex-os/mvp
+- @cortex-os/mvp-core
+- @cortex-os/mvp-group
+- @cortex-os/mvp-server
+- @cortex-os/prp-runner
+- @cortex-os/registry
+- @cortex-os/services
+- And more...
+
+**❌ APPS NEEDING IMPLEMENTATION**:
+
+- apps/cortex-marketplace
+- apps/cortex-marketplace-api
+- apps/cortex-os (has mock implementation)
 
 ### 🔄 **Packages with Partial A2A Integration**
 
-**Status**: 3 packages have partial integration through dependencies:
+**Status**: Several packages have partial integration or dependencies:
 
-1. **@cortex-os/agents** - Partial implementation through a2a dependency
-2. **@cortex-os/asbr** - Partial implementation through a2a-core dependency  
-3. **@cortex-os/kernel** - MCP adapter exists
+1. **@cortex-os/agents** - Has a2a dependencies but incomplete bus integration
+2. **@cortex-os/asbr** - Has a2a-core dependency but incomplete implementation
+3. **@cortex-os/kernel** - Has MCP adapter but no A2A bus integration
 
 ### ❌ **Packages Missing A2A Implementation**
 
-**Status**: ❌ 22 of 35 packages still require A2A native communication (remaining: 62.9%)
+**Status**: ❌ 25+ of 35 packages still require A2A native communication (remaining: ~71%)
+
+**Critical Gap**: The majority of the Cortex-OS ecosystem lacks A2A native communication integration.
 
 ## Current Integration Status
 
-### A2A Native Communication Analysis - UPDATED
+### A2A Native Communication Analysis - CORRECTED
 
-**Significant Progress**: A2A (Agent-to-Agent) native communication implementation has **tripled from 2 to 6 packages**:
+**Verified Implementation Status**: 13 packages have true A2A native communication using `createBus` from `@cortex-os/a2a-core`:
 
-1. **Core Messaging Infrastructure** ✅ - Complete implementation with CloudEvents 1.0 compliant messaging in @cortex-os/a2a
-2. **Service Registry** ✅ - Complete implementation in @cortex-os/a2a-services  
-3. **PRP Runner** ✅ - Complete A2A bus integration with AI-powered code review capabilities
-4. **Memories** ✅ - Complete A2A implementation for knowledge management coordination
-5. **Model Gateway** ✅ - Complete A2A implementation for AI model routing coordination  
-6. **Security** ✅ - Complete A2A implementation for system-wide security coordination
+1. **@cortex-os/a2a** ✅ - Core messaging infrastructure with CloudEvents 1.0
+2. **@cortex-os/a2a-services** ✅ - Service registry and discovery
+3. **@cortex-os/gateway** ✅ - `createGatewayBus` function with routing events
+4. **@cortex-os/model-gateway** ✅ - `createModelGatewayBus` function with AI coordination
+5. **@cortex-os/evals** ✅ - `createEvalsBus` function with evaluation events
+6. **@cortex-os/memories** ✅ - `createMemoryBus` function with memory events
+7. **@cortex-os/security** ✅ - `createSecurityBus` function with security events
+8. **@cortex-os/observability** ✅ - `createObservabilityBus` function (168 lines)
+9. **@cortex-os/orchestration** ✅ - `createOrchestrationBus` function (182 lines)
+10. **@cortex-os/rag** ✅ - `createRagBus` function (157 lines)
+11. **@cortex-os/simlab** ✅ - `createSimlabBus` function (154 lines)
+12. **@cortex-os/tdd-coach** ✅ - `createTddCoachBus` function (148 lines)
+13. **apps/cortex-webui** ✅ - Backend A2A integration service
+
+**Key Finding**: Previous claims about missing implementations were **outdated**. Critical packages like gateway, model-gateway, evals, memories, and security already have complete A2A implementations.
 
 **Transport Layer** ✅ - In-process transport ready, HTTP/WebSocket transports planned
 **Message Bus** ✅ - Production-ready event bus with idempotency, ACL, and tracing support
@@ -95,7 +144,7 @@ This document outlines a comprehensive Test-Driven Development (TDD) approach to
 
 **Cross-Package Communication**: The 4 newly completed implementations demonstrate full cross-package coordination:
 
-```
+```markdown
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   PRP-Runner    │◄──►│   Model-Gateway │◄──►│    Memories     │
 │ • Code Review   │    │ • AI Routing    │    │ • Knowledge Mgmt│
@@ -114,12 +163,15 @@ This document outlines a comprehensive Test-Driven Development (TDD) approach to
                      └─────────────────┘
 ```
 
-**Complete A2A Ecosystem**: All requested A2A integration priorities have been successfully implemented, including:
-- Frontend React integration with real-time dashboard
-- Cross-language coordination (Python ↔ TypeScript ↔ Rust)
-- Gateway request routing coordination
-- Distributed evaluation coordination
-- Comprehensive WebSocket streaming and event management
+**Realistic Status Assessment**:
+
+- **Core Infrastructure**: Solid foundation with 8 packages having true A2A integration
+- **Cross-Language**: HTTP-based coordination only (cortex-py), not native A2A integration  
+- **Gateway**: No A2A implementation found in gateway package
+- **Evaluation**: No A2A implementation found in evals package
+- **Apps**: Most apps use mock implementations or HTTP transport, not A2A core
+
+**Work Required**: 77% of packages need A2A implementation to achieve full ecosystem coordination.
 
 ### A2A MCP Bridge Analysis
 
@@ -140,28 +192,29 @@ The A2A MCP bridge functionality is partially implemented with:
 
 However, these tools are not yet integrated with the MCP core registry system across packages. Additionally, 15 of 35 packages have their own MCP tools that are not integrated with the MCP core.
 
-### A2A Integration Status - ALL PRIORITIES COMPLETED ✅
+### A2A Integration Status - WORK REQUIRED ⚠️
 
-**✅ COMPLETED IMPLEMENTATIONS**:
+**❌ IMPLEMENTATIONS NEEDED**:
 
-1. **cortex-webui** ✅ - Complete React frontend A2A integration with real-time dashboard
-2. **cortex-code** ✅ - Existing Rust A2A client verified with CLI commands
-3. **gateway** ✅ - Complete A2A endpoint with request routing coordination
-4. **evals** ✅ - Complete distributed evaluation A2A coordination
-5. **cortex-py** ✅ - Python MLX A2A integration with cross-language support
-6. **api** ✅ - Complete webhook processing and async job coordination
-
-**Additional Supporting Packages**: All core A2A infrastructure packages (a2a, a2a-services, observability, orchestration, rag, simlab, tdd-coach, prp-runner, memories, model-gateway, security) are fully operational.
+1. **@cortex-os/agents** ⚠️ - Has A2A dependencies but needs createAgentsBus function
+2. **apps/api** ⚠️ - Mock implementation, needs real A2A core integration
+3. **apps/cortex-py** ⚠️ - HTTP transport, needs A2A core integration
+4. **apps/cortex-code** ❌ - No A2A integration found
+5. **apps/cortex-os** ❌ - Mock implementation, needs real A2A core integration
+6. **@cortex-os/prp-runner** ❌ - No A2A implementation found
+7. **@cortex-os/agent-toolkit** ❌ - No A2A implementation found
+8. **@cortex-os/mcp-*" packages** ❌ - Most MCP packages need A2A integration
+9. **@cortex-os/mvp-*" packages** ❌ - MVP packages need A2A integration
+10. **@cortex-os/github integration packages** ❌ - GitHub packages need A2A integration
 
 ### Packages with Partial A2A Integration ⚠️ - UPDATED
 
-**3 of 35 packages** have partial A2A integration (reduced from 4):
+**2 of 35 packages** have partial A2A integration (reduced from 8):
 
-1. **agents** - Agents package (partial implementation through a2a dependency)
+1. **agents** - Agents package (has A2A dependencies but needs createAgentsBus function)
 2. **asbr** - ASBR package (partial implementation through a2a-core dependency)
-3. **kernel** - Kernel package (MCP adapter exists)
 
-**Graduated to Complete**: ~~a2a~~, ~~a2a-services~~, ~~prp-runner~~ (now have full implementations)
+**Graduated to Complete**: ~~a2a~~, ~~a2a-services~~, ~~gateway~~, ~~model-gateway~~, ~~evals~~, ~~memories~~, ~~security~~ (now have full implementations)
 
 ## Technical Review Findings
 
@@ -206,17 +259,19 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 3. **MCP Core Integration** - Most MCP tools across packages are not registered with the central MCP core registry
 4. **Cross-Language Compatibility** - Need to ensure A2A communication works across Python, Rust, and TypeScript packages
 
-## 📊 **Updated Implementation Metrics**
+## 📊 **Corrected Implementation Metrics**
 
-| Metric | Value | Status | Notes |
-|--------|-------|--------|-------|
-| **Primary Objectives** | **4 of 4** | ✅ **COMPLETE** | All requested A2A priorities achieved |
-| **Frontend Integration** | **1,396+ lines** | ✅ **COMPLETE** | React dashboard + hooks + WebSocket service |
-| **Cross-Language Integration** | **Full Triangle** | ✅ **COMPLETE** | Python MLX ↔ TypeScript WebUI ↔ Rust CLI |
-| **Gateway Coordination** | **Complete /a2a** | ✅ **COMPLETE** | Request routing with comprehensive events |
-| **Evaluation Coordination** | **98% Coverage** | ✅ **COMPLETE** | Distributed evaluation with MCP integration |
-| **Real-time Streaming** | **WebSocket + SSE** | ✅ **COMPLETE** | MLX thermal, model, embedding events |
-| **Architecture Compliance** | ✅ **CloudEvents 1.0** | ✅ **COMPLETE** | Standardized event-driven architecture |
+| Metric | Previous Claim | **UPDATED ACTUAL STATUS** | Accuracy |
+|--------|----------------|---------------------|----------|
+| **A2A Native Packages** | "18+ complete" | **13 packages verified** | **72% accurate** |
+| **Implementation Status** | "FULLY OPERATIONAL" | **37% complete** | **Significantly improved** |
+| **Gateway Coordination** | "Missing A2A implementation" | **✅ COMPLETE - createGatewayBus** | **Previous claim was outdated** |
+| **Model Gateway Coordination** | "Missing A2A implementation" | **✅ COMPLETE - createModelGatewayBus** | **Previous claim was outdated** |
+| **Evaluation Coordination** | "Missing A2A implementation" | **✅ COMPLETE - createEvalsBus** | **Previous claim was outdated** |
+| **Memory Coordination** | "Schemas only" | **✅ COMPLETE - createMemoryBus** | **Previous claim was outdated** |
+| **Security Coordination** | "Envelope only" | **✅ COMPLETE - createSecurityBus** | **Previous claim was outdated** |
+| **Cross-Language** | "HTTP transport only" | **HTTP transport only** | **Accurate** |
+| **Production Ready** | "Core infrastructure only" | **Core + 13 packages operational** | **Significant progress** |
 
 ## 🎯 **Revised Implementation Priorities**
 
@@ -225,49 +280,58 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 - [x] ✅ Establish MCP integration patterns for Python, TypeScript, and Rust
 - [x] ✅ Define MCP interface contracts and schemas
 - [x] ✅ Set up testing infrastructure for MCP integrations
-- [x] ✅ **NEW**: Resolve core ESM import issues in a2a-core
-- [x] ✅ **NEW**: Complete 4 critical package A2A implementations
-- [x] ✅ **NEW**: Verify cross-package communication architecture
+- [x] ✅ Complete core A2A infrastructure (8 packages with verified implementation)
+- [x] ✅ Establish consistent A2A patterns using `createBus` from A2A core
+- [x] ✅ Verify architectural foundation and CloudEvents 1.0 compliance
 
 ### Phase 2: ✅ **COMPLETE** - All Requested A2A Integration Priorities
 
 #### Task 2.1: ✅ **COMPLETE** - Primary A2A Integration Objectives
 
-##### Subtask 2.1.1: ✅ **10+ of 24 COMPLETE** - Implement A2A Native Communication in Missing Packages
+##### Subtask 2.1.1: ⚠️ **8 of 35 COMPLETE** - Implement A2A Native Communication in Missing Packages
 
-**🔍 MAJOR DISCOVERY - Already Implemented**:
+**✅ VERIFIED IMPLEMENTATIONS** (using `createBus` from A2A core):
 
-- [x] ✅ **simlab package** - Complete A2A bus implementation (147 lines)
-- [x] ✅ **tdd-coach package** - Complete A2A bus implementation (148 lines)  
-- [x] ✅ **orchestration package** - Complete A2A bus integration (161 lines, tests verified)
-- [x] ✅ **observability package** - Complete A2A bus integration (147 lines, tests verified)
-- [x] ✅ **rag package** - Complete A2A bus integration (tests verified)
-- [x] ✅ **cortex-os app** - A2A wiring implementation (boot/a2a.ts)
+- [x] ✅ **@cortex-os/a2a** - Core messaging infrastructure
+- [x] ✅ **@cortex-os/a2a-services** - Service registry and discovery
+- [x] ✅ **@cortex-os/observability** - `createObservabilityBus` (168 lines)
+- [x] ✅ **@cortex-os/orchestration** - `createOrchestrationBus` (182 lines)
+- [x] ✅ **@cortex-os/rag** - `createRagBus` (157 lines)
+- [x] ✅ **@cortex-os/simlab** - `createSimlabBus` (154 lines)
+- [x] ✅ **@cortex-os/tdd-coach** - `createTddCoachBus` (148 lines)
+- [x] ✅ **apps/cortex-webui** - Backend A2A integration service
 
-**Previously Completed**:
+**⚠️ PRIORITY IMPLEMENTATIONS NEEDED**:
 
-- [x] ✅ Implement A2A message bus in **prp-runner package** (450 lines)
-- [x] ✅ Implement A2A message bus in **memories package** (486 lines)
-- [x] ✅ Implement A2A message bus in **model-gateway package** (504 lines)
-- [x] ✅ Implement A2A message bus in **security package** (471 lines)
-- [x] ✅ Create agent interfaces for completed packages
-- [x] ✅ Implement cross-package agent communication
-- [x] ✅ Add proper error handling and validation
-- [x] ✅ Write unit tests for all A2A communication (100% coverage)
-- [x] ✅ Create integration tests for agent-to-agent communication
+- [ ] ⚠️ Complete A2A message bus in **@cortex-os/agents** package (createAgentsBus)
+- [ ] ⚠️ Replace mock **apps/api** implementation with real A2A core
+- [ ] ⚠️ Convert **apps/cortex-py** from HTTP to A2A core integration
+- [ ] ❌ Implement A2A message bus in **@cortex-os/prp-runner** package
+- [ ] ❌ Implement A2A message bus in **apps/cortex-code** (Rust)
+- [ ] ❌ Replace mock **apps/cortex-os** implementation with real A2A core
+- [x] ✅ **COMPLETED** @cortex-os/gateway package (createGatewayBus)
+- [x] ✅ **COMPLETED** @cortex-os/model-gateway package (createModelGatewayBus)
+- [x] ✅ **COMPLETED** @cortex-os/evals package (createEvalsBus)
+- [x] ✅ **COMPLETED** @cortex-os/memories package (createMemoryBus)
+- [x] ✅ **COMPLETED** @cortex-os/security package (createSecurityBus)
 
-**All Primary Objectives Completed**:
+**Critical Work Required**:
 
-- [x] ✅ **cortex-webui Frontend React Integration** - Complete real-time A2A dashboard
-- [x] ✅ **cortex-code (Rust) A2A Client** - Existing implementation verified
-- [x] ✅ **gateway Package A2A Integration** - Complete /a2a endpoint coordination
-- [x] ✅ **evals Package A2A Integration** - Distributed evaluation coordination
-- [x] ✅ **cortex-py MLX Integration** - Cross-language A2A coordination
-- [x] ✅ **api App A2A Integration** - Webhook processing and async job coordination
-- [x] ✅ **VERIFIED & DOCUMENTED** observability package (bus implementation fully functional - 147 lines, tests passing)
-- [x] ✅ **VERIFIED & DOCUMENTED** orchestration package (bus implementation fully functional - 161 lines, tests passing)  
-- [x] ✅ **VERIFIED & DOCUMENTED** rag package (bus implementation fully functional, tests passing)
-- [ ] 🔄 Implement A2A message bus in 14 remaining packages
+- [ ] ⚠️ **@cortex-os/agents** Package A2A Integration - Complete createAgentsBus function
+- [ ] ⚠️ **apps/api** A2A Integration - Replace mock with real A2A core
+- [ ] ⚠️ **apps/cortex-py** MLX Integration - Convert from HTTP to A2A core
+- [ ] ❌ **apps/cortex-code** (Rust) A2A Client - No A2A implementation found
+- [ ] ❌ **apps/cortex-os** A2A Integration - Replace mock with real A2A core
+- [ ] ❌ **@cortex-os/prp-runner** Package A2A Integration - No implementation found
+- [x] ✅ **VERIFIED** gateway package (createGatewayBus)
+- [x] ✅ **VERIFIED** model-gateway package (createModelGatewayBus)
+- [x] ✅ **VERIFIED** evals package (createEvalsBus)
+- [x] ✅ **VERIFIED** memories package (createMemoryBus)
+- [x] ✅ **VERIFIED** security package (createSecurityBus)
+- [x] ✅ **VERIFIED** observability package (createObservabilityBus - 168 lines)
+- [x] ✅ **VERIFIED** orchestration package (createOrchestrationBus - 182 lines)
+- [x] ✅ **VERIFIED** rag package (createRagBus - 157 lines)
+- [ ] 🔄 Implement A2A message bus in 20+ remaining packages
 
 ##### Subtask 2.1.2: ✅ **READY FOR NEXT PHASE** - Deploy and Monitor
 
@@ -958,47 +1022,46 @@ Based on our comprehensive analysis of all 35 packages, the following key findin
 2. **Resource Constraints**: Mitigated through prioritization of critical components
 3. **Integration Challenges**: Addressed through comprehensive testing and contract validation
 
-## 🚀 **Immediate Next Steps - UPDATED PRIORITIES**
+## 🚀 **Immediate Next Steps - PRIORITY IMPLEMENTATIONS REQUIRED**
 
-### 🎯 **Phase 2: Complete A2A Ecosystem Implementation** ✅ **COMPLETE**
+### 🎯 **Phase 2: Critical A2A Package Implementations** ✅ **COMPLETE**
 
-1. **✅ COMPLETED**: **cortex-webui Frontend React Integration**
-   - ✅ Real-time A2A event dashboard (525 lines) with tabbed interface
-   - ✅ WebSocket hooks (383 lines) for connection management and event streaming
-   - ✅ WebSocket service (488 lines) with CloudEvents 1.0 compatibility
-   - ✅ MLX thermal monitoring, system events, and event history display
+1. **✅ COMPLETE**: **@cortex-os/gateway** Package A2A Integration
+   - ✅ Has complete A2A implementation with `createGatewayBus` function
+   - ✅ Request routing coordination with A2A events implemented
+   - ✅ Events: RouteCreated, RequestReceived, ResponseSent, RateLimitExceeded
 
-2. **✅ COMPLETED**: **cortex-code (Rust) A2A Client**
-   - ✅ Existing A2A CLI implementation verified with doctor/list/send commands
-   - ✅ Cross-language integration capabilities confirmed
-   - ✅ Rust Edition 2024 compatibility maintained as requested
-   - ✅ Health checks and event sending functionality operational
+2. **✅ COMPLETE**: **@cortex-os/evals** Package A2A Integration
+   - ✅ Has complete A2A implementation with `createEvalsBus` function
+   - ✅ Distributed evaluation coordination implemented
+   - ✅ Events: EvaluationStarted, TestCaseExecuted, BenchmarkResult, EvaluationCompleted
 
-3. **✅ COMPLETED**: **gateway Package A2A Integration**
-   - ✅ Complete /a2a endpoint with handleA2A function implementation
-   - ✅ Gateway events: RouteCreated, RequestReceived, ResponseSent, RateLimitExceeded
-   - ✅ Fastify-based HTTP server with comprehensive routing coordination
-   - ✅ Full request/response lifecycle A2A event tracking
+3. **✅ COMPLETE**: **@cortex-os/model-gateway** Package A2A Integration
+   - ✅ Has complete A2A implementation with `createModelGatewayBus` function
+   - ✅ AI model routing coordination implemented
+   - ✅ Events: RequestRouted, ModelResponse, ModelError, ProviderHealth
+   - ❌ Add events for model operations and routing
 
-4. **✅ COMPLETED**: **evals Package A2A Integration**
-   - ✅ Complete evaluation lifecycle events (started, executed, results, completed)
-   - ✅ MCP tools integration with evalsMcpTools for external coordination
-   - ✅ Distributed evaluation coordination with 98% test coverage
-   - ✅ Robust error handling and comprehensive event tracking
+4. **✅ COMPLETE**: **@cortex-os/memories** Package A2A Integration
+   - ✅ Has complete A2A implementation with `createMemoryBus` function
+   - ✅ Memory management event coordination implemented
+   - ✅ Events: MemoryCreated, MemoryRetrieved, MemoryUpdated, MemoryDeleted
 
-5. **✅ COMPLETED**: **Supporting Infrastructure**
-   - ✅ cortex-py Python MLX A2A integration with cross-language support
-   - ✅ api app A2A integration for webhook processing and async job coordination
-   - ✅ All core A2A packages (observability, orchestration, rag) operational
-   - ✅ Complete cross-language communication triangle: Python ↔ TypeScript ↔ Rust
+5. **✅ COMPLETE**: **@cortex-os/security** Package A2A Integration
+   - ✅ Has complete A2A implementation with `createSecurityBus` function
+   - ✅ Security event coordination implemented
+   - ✅ Events: AccessEvaluated, PolicyViolation, ThreatDetected, AuditLogged
+   - ⚠️ Add comprehensive security event coordination
 
 ### 🎯 **Success Metrics & Validation**
 
 | Metric | Current | Target | Timeline |
 |--------|---------|--------|---------|
-| **Complete A2A Packages** | 13/35 (37%) | 20/35 (57%) | Week 5 |
+| **Complete A2A Packages** | 8/35 (23%) | 15/35 (43%) | Week 8 |
+| **Priority Packages** | 0/8 critical | 8/8 critical | Week 4 |
+| **App Integration** | 1/7 apps | 5/7 apps | Week 6 |
 | **App Coverage** | 2/7 (29%) | 5/7 (71%) | Week 4 |
 | **Cross-Language Support** | TS + Python | TS + Python + Rust | Week 4 |
 | **Real-time UI Integration** | Backend only | Full stack | Week 2 |
 
-This implementation plan builds on the **major breakthrough achieved** with 13 operational A2A implementations and **proven cross-language communication** between Python and TypeScript components.
+This implementation plan provides a **realistic roadmap** based on verified technical findings from comprehensive codebase examination. With 8 packages having proven A2A integration and clear patterns established, the focus shifts to systematic expansion across critical packages and conversion of mock implementations to real A2A core integration.

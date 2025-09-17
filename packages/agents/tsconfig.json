@@ -1,48 +1,36 @@
 {
-	"compilerOptions": {
-		"target": "ES2022",
-		"module": "ESNext",
-		"moduleResolution": "bundler",
-		"lib": [
-			"ES2022"
-		],
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"strict": true,
-		"composite": false,
-		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true,
-		"declaration": true,
-		"declarationMap": true,
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"baseUrl": "./src",
-		"paths": {
-			"@/*": [
-				"./*"
-			],
-			"@tests/*": [
-				"../tests/*"
-			],
-			"@cortex-os/memories": [
-				"../../memories/src/index.ts"
-			]
-		},
-		"types": [
-			"vitest/globals",
-			"node"
-		],
-		"allowArbitraryExtensions": true
-	},
-	"include": [
-		"src/**/*.ts"
-	],
-	"exclude": [
-		"node_modules",
-		"dist",
-		"tests/**/*",
-		"**/*.test.ts",
-		"**/*.spec.ts",
-		"vitest.config.ts"
-	]
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".voltagent"
+  ]
 }

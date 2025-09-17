@@ -4,6 +4,8 @@ import { z } from 'zod';
  * Model Gateway-related A2A event schemas for inter-package communication
  */
 
+export const MODEL_GATEWAY_EVENT_SOURCE = 'urn:cortex:model-gateway';
+
 // Request Routed Event
 export const RequestRoutedEventSchema = z.object({
 	requestId: z.string(),

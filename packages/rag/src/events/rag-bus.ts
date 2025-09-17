@@ -1,35 +1,55 @@
+import type { Envelope, TopicACL } from '@cortex-os/a2a-contracts';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
+import type { BusOptions, Transport } from '@cortex-os/a2a-core';
+import { createBus } from '@cortex-os/a2a-core';
+import { inproc } from '@cortex-os/a2a-transport';
 import {
-	createEnvelope,
-	type Envelope,
-	type TopicACL,
-} from '../../a2a/a2a-contracts/dist/index.js';
-import {
-	type BusOptions,
-	createBus,
-	type Transport,
-} from '../../a2a/a2a-core/dist/bus.js';
-import { inproc } from '../../a2a/a2a-transport/dist/inproc.js';
+	RAGEventSchemas
+} from './rag-events';
 
-import {
-	RAGEventSchemas,
-	type RAGEventType,
-	RAGEventTypes,
-	type RAGIngestCompleteEvent,
-	type RAGIngestEvent,
-	type RAGQueryEvent,
-	type RAGQueryResultEvent,
-} from './rag-events.js';
-
-type RagEventPayloadMap = {
-	[RAGEventTypes.QueryExecuted]: RAGQueryEvent;
-	[RAGEventTypes.QueryCompleted]: RAGQueryResultEvent;
-	[RAGEventTypes.IngestStarted]: RAGIngestEvent;
-	[RAGEventTypes.IngestCompleted]: RAGIngestCompleteEvent;
+// Type definitions for payload mapping
+export type RagEventPayloadMap = {
+	[RAGEventTypes.QueryExecuted]: {
+		queryId: string;
+		query: string;
+		topK: number;
+		timestamp: string;
+		userId?: string;
+	};
+	[RAGEventTypes.QueryCompleted]: {
+		queryId: string;
+		results: Array<{
+			text: string;
+			score: number;
+			metadata?: Record<string, unknown>;
+		}>;
+		provider: string;
+		duration: number;
+		timestamp: string;
+	};
+	[RAGEventTypes.IngestStarted]: {
+		ingestId: string;
+		contentLength: number;
+		source?: string;
+		chunkCount: number;
+		timestamp: string;
+	};
+	[RAGEventTypes.IngestCompleted]: {
+		ingestId: string;
+		success: boolean;
+		documentsProcessed: number;
+		embeddings: number;
+		duration: number;
+		timestamp: string;
+		error?: string;
+	};
 };
 
-export type RagEventEnvelope<
-	TType extends keyof RagEventPayloadMap = keyof RagEventPayloadMap,
-> = Envelope & { type: TType; data: RagEventPayloadMap[TType] };
+export type RagEventEnvelope<TType extends RAGEventType = RAGEventType> =
+	Envelope & {
+		type: TType;
+		data: RagEventPayloadMap[TType];
+	};
 
 export type RagEventHandler<TType extends RAGEventType = RAGEventType> = {
 	type: TType;
@@ -78,9 +98,18 @@ const DEFAULT_TOPIC_ACL: TopicACL = Object.freeze(
 ) as TopicACL;
 
 function cloneAcl(acl: TopicACL): TopicACL {
-	return Object.fromEntries(
-		Object.entries(acl).map(([topic, rule]) => [topic, { ...rule }]),
-	);
+	const result: TopicACL = {};
+	for (const [topic, permissions] of Object.entries(acl)) {
+		const typedPerms = permissions as {
+			publish?: boolean;
+			subscribe?: boolean;
+		};
+		result[topic] = {
+			publish: typedPerms.publish ?? false,
+			subscribe: typedPerms.subscribe ?? false,
+		};
+	}
+	return result;
 }
 
 function isRagEventType(type: string): type is RAGEventType {
@@ -95,7 +124,7 @@ function validateEnvelope(envelope: Envelope): RagEventEnvelope {
 		envelope.type
 	];
 	const data = schema.parse(envelope.data);
-	return { ...envelope, data };
+	return { ...envelope, type: envelope.type as RAGEventType, data };
 }
 
 export function createRagBus(options: RagBusOptions = {}): RagBus {
@@ -136,7 +165,7 @@ export function createRagBus(options: RagBusOptions = {}): RagBus {
 				traceparent: publishOptions?.traceparent,
 				tracestate: publishOptions?.tracestate,
 				baggage: publishOptions?.baggage,
-			}) as RagEventEnvelope<TType>;
+			});
 			await bus.publish(envelope);
 		},
 		async publishEnvelope(envelope) {

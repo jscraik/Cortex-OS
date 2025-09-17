@@ -4,6 +4,8 @@ import { z } from 'zod';
  * Evaluation-related A2A event schemas for inter-package communication
  */
 
+export const EVALS_EVENT_SOURCE = 'urn:cortex:evals';
+
 // Evaluation Started Event
 export const EvaluationStartedEventSchema = z.object({
 	evaluationId: z.string(),

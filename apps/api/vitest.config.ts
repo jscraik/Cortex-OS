@@ -4,12 +4,12 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [
 		tsconfigPaths({
-			projects: ['apps/api/tsconfig.json', 'tsconfig.base.json'],
+			projects: ['tsconfig.json', '../../tsconfig.base.json'],
 		}),
 	],
 	test: {
 		globals: true,
-		include: ['tests/**/*.test.ts', 'apps/api/tests/**/*.test.ts'],
+		include: ['tests/**/*.test.ts'],
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json-summary'],

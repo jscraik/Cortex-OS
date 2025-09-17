@@ -1,5 +1,11 @@
 // Adapters (exported for consumers to avoid cross-domain src imports elsewhere)
 
+// A2A Bus for native communication
+export {
+	createMemoryBus,
+	createMemorySchemaRegistry,
+	type MemoryBusConfig,
+} from './a2a.js';
 export { EncryptedStore } from './adapters/store.encrypted.js';
 export { PolicyEncryptedStore } from './adapters/store.encrypted.policy.js';
 export { LayeredMemoryStore } from './adapters/store.layered.js';

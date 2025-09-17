@@ -4,6 +4,8 @@ import { z } from 'zod';
  * Memory-related A2A event schemas for inter-package communication
  */
 
+export const MEMORY_EVENT_SOURCE = 'urn:cortex:memories';
+
 // Memory Created Event
 export const MemoryCreatedEventSchema = z.object({
 	memoryId: z.string(),

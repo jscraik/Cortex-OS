@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	type ApiBusIntegration,
@@ -33,6 +33,10 @@ describe('API A2A Integration', () => {
 					entry.message.includes('started successfully'),
 				),
 			).toBe(true);
+
+			// Verify real A2A bus is accessible
+			expect(apiBus.getA2ABus()).toBeDefined();
+			expect(apiBus.isA2ABusReady()).toBe(true);
 
 			await apiBus.stop();
 			expect(

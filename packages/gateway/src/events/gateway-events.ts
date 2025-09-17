@@ -4,6 +4,8 @@ import { z } from 'zod';
  * Gateway-related A2A event schemas for inter-package communication
  */
 
+export const GATEWAY_EVENT_SOURCE = 'urn:cortex:gateway';
+
 // Route Created Event
 export const RouteCreatedEventSchema = z.object({
 	routeId: z.string(),
@@ -47,7 +49,7 @@ export type RateLimitExceededEvent = z.infer<
 	typeof RateLimitExceededEventSchema
 >;
 
-// Helper function to create gateway events
+// Helper object to create gateway events
 export const createGatewayEvent = {
 	routeCreated: (data: RouteCreatedEvent) => ({
 		type: 'gateway.route.created' as const,
