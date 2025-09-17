@@ -3,8 +3,11 @@
  * Enables event-driven communication with other packages
  */
 
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts';
 import { z } from 'zod';
+import {
+	createEnvelope,
+	type Envelope,
+} from '../../a2a/a2a-contracts/dist/index.js';
 
 // RAG Event Schemas
 export const ragQueryEventSchema = z.object({
@@ -48,6 +51,7 @@ export const ragIngestCompleteEventSchema = z.object({
 });
 
 // Event type constants
+
 export const RAGEventTypes = {
 	QueryExecuted: 'rag.query.executed',
 	QueryCompleted: 'rag.query.completed',

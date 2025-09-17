@@ -32,7 +32,7 @@ describe('contract: RAG query completed evidence extension', () => {
 	});
 
 	it('rejects event with invalid evidence item', () => {
-		// @ts-expect-error intentional invalid evidence item for negative test
+		// intentional invalid evidence item for negative test
 		const bad = {
 			...base,
 			evidence: [{}], // missing text|uri

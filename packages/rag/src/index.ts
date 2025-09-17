@@ -59,34 +59,16 @@ export {
 } from './integrations/archon-mcp.js';
 export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
 export * as lib from './lib/index.js';
-export type {
-	RagDocument,
-	RagDocumentIngestionInput,
-	RagDocumentIngestionOutput,
-	RagRetrievalInput,
-	RagRetrievalOutput,
-	RagSearchInput,
-	RagSearchOutput,
-} from './mcp/tools.js';
 // MCP Tools for external AI agent integration
 export {
-	RagDocumentIngestionInputSchema,
-	RagDocumentIngestionOptionsSchema,
-	RagDocumentIngestionOutputSchema,
-	RagDocumentSchema,
-	RagMetadataSchema,
-	RagRetrievalInputSchema,
-	RagRetrievalOutputSchema,
-	RagRetrievedChunkSchema,
-	RagRetrievedDocumentSchema,
-	RagSearchInputSchema,
-	RagSearchOutputSchema,
-	RagSearchResultSchema,
-	ragDocumentIngestionTool,
-	ragRetrievalTool,
-	ragSearchTool,
-	ragToolContracts,
-} from './mcp/tools.js';
+	ragIngestTool,
+	ragIngestToolSchema,
+	ragMcpTools,
+	ragQueryTool,
+	ragQueryToolSchema,
+	ragStatusTool,
+	ragStatusToolSchema,
+} from './mcp/tools';
 export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
 export { fileStore } from './store/file.js';
 export { memoryStore } from './store/memory.js';

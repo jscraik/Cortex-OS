@@ -1,3 +1,72 @@
+
+# Top-level endpoint handlers
+def embed_endpoint(req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus) -> Any:
+    text = req.text
+    if text is None:
+        return _validation_error("text field missing")
+    try:
+        import time
+        start_time = time.time()
+        result = embedding_service.generate_single(
+            text, normalize=req.normalize is not False
+        )
+        processing_time = time.time() - start_time
+        import asyncio
+        try:
+            event = create_mlx_embedding_event(
+                request_id=f"embed_{int(time.time() * 1000)}",
+                text_count=1,
+                total_chars=len(text),
+                processing_time=processing_time,
+                model_used=getattr(result, "model_name", "unknown"),
+                dimension=len(result.embedding) if result.embedding else 0,
+                success=True,
+            )
+            asyncio.create_task(a2a.publish(event))
+        except Exception as e:
+            logger.warning(f"Failed to publish A2A embedding event: {e}")
+    except ServiceError as exc:
+        return _handle_service_error(exc)
+    return {"embedding": result.embedding}
+
+def embeddings_endpoint(req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus) -> Any:
+    if req.texts is None or not req.texts:
+        return _validation_error("texts field must be a non-empty list")
+    try:
+        import time
+        start_time = time.time()
+        result = embedding_service.generate_batch(
+            req.texts, normalize=req.normalize is not False
+        )
+        processing_time = time.time() - start_time
+        import asyncio
+        try:
+            total_chars = sum(len(text) for text in req.texts)
+            event = create_mlx_embedding_event(
+                request_id=f"batch_{int(time.time() * 1000)}",
+                text_count=len(req.texts),
+                total_chars=total_chars,
+                processing_time=processing_time,
+                model_used=getattr(result, "model_name", "unknown"),
+                dimension=len(result.embeddings[0])
+                if result.embeddings and result.embeddings[0]
+                else 0,
+                success=True,
+            )
+            asyncio.create_task(a2a.publish(event))
+        except Exception as e:
+            logger.warning(f"Failed to publish A2A batch embedding event: {e}")
+    except ServiceError as exc:
+        return _handle_service_error(exc)
+    return {"embeddings": result.embeddings}
+
+def _register_endpoints(app: FastAPI, embedding_service: EmbeddingService, a2a: A2ABus):
+    app.post("/embed", responses={422: {"model": ErrorResponse}})(
+        lambda req: embed_endpoint(req, embedding_service, a2a)
+    )
+    app.post("/embeddings", responses={422: {"model": ErrorResponse}})(
+        lambda req: embeddings_endpoint(req, embedding_service, a2a)
+    )
 from __future__ import annotations
 
 import logging
@@ -179,60 +248,7 @@ def create_app(
                     if result.embeddings and result.embeddings[0]
                     else 0,
                     success=True,
-                )
-                asyncio.create_task(a2a.publish(event))
-            except Exception as e:
-                logger.warning(f"Failed to publish A2A batch embedding event: {e}")
 
-        except ServiceError as exc:
-            return _handle_service_error(exc)
-        return {"embeddings": result.embeddings}
+                # Top-level endpoint handlers
 
-    @app.get("/model-info")
-    def model_info():
-        try:
-            return embedding_service.get_model_info()
-        except Exception as exc:  # pragma: no cover - unexpected runtime error
-            raise HTTPException(
-                status_code=500,
-                detail={"code": "INTERNAL_ERROR", "message": str(exc)},
-            ) from exc
-
-    @app.get("/health")
-    def health():
-        import platform
-
-        status = embedding_service.health_status()
-        status.setdefault("status", "healthy")
-        status["platform"] = platform.system()
-        return status
-
-    @app.on_event("startup")
-    async def startup_event():
-        """Initialize A2A bus on startup."""
-        try:
-            await a2a.start()
-            logger.info("A2A bus started successfully")
-        except Exception as e:
-            logger.error(f"Failed to start A2A bus: {e}")
-
-    @app.on_event("shutdown")
-    async def shutdown_event():
-        """Clean up A2A bus on shutdown."""
-        try:
-            await a2a.stop()
-            logger.info("A2A bus stopped successfully")
-        except Exception as e:
-            logger.error(f"Failed to stop A2A bus: {e}")
-
-    return app
-
-
-__all__ = [
-    "DummyEmbeddingGenerator",
-    "LazyEmbeddingGenerator",
-    "EmbedRequest",
-    "ErrorResponse",
-    "ErrorModel",
-    "create_app",
-]
+    _register_endpoints(app, embedding_service, a2a)

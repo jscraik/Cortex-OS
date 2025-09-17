@@ -15,7 +15,7 @@ import { handleRAG } from '../index.js';
 import type { RAGQuerySchema } from '../lib/contracts-shim.js';
 
 type MCPContent = { type: 'text'; text: string };
-type MCPResponse = { content: MCPContent[] };
+// Removed unused type MCPResponse
 
 interface RAGToolResponse {
 	content: Array<{ type: 'text'; text: string }>;
@@ -398,8 +398,9 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
 
 	if (typeof value === 'object') {
 		ensurePlainObject(value, 'metadata');
-		return sanitizeMetadataObject(value as Record<string, unknown>, depth + 1);
+		return sanitizeMetadataObject(value, depth + 1);
 	}
+	// Removed unused type MCPResponse
 
 	throw new RAGToolError(
 		'validation_error',

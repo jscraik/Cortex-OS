@@ -2,13 +2,13 @@ import {
 	createEnvelope,
 	type Envelope,
 	type TopicACL,
-} from '@cortex-os/a2a-contracts';
+} from '../../a2a/a2a-contracts/dist/index.js';
 import {
 	type BusOptions,
 	createBus,
 	type Transport,
-} from '@cortex-os/a2a-core/bus';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
+} from '../../a2a/a2a-core/dist/bus.js';
+import { inproc } from '../../a2a/a2a-transport/dist/inproc.js';
 
 import {
 	RAGEventSchemas,
@@ -27,8 +27,9 @@ type RagEventPayloadMap = {
 	[RAGEventTypes.IngestCompleted]: RAGIngestCompleteEvent;
 };
 
-export type RagEventEnvelope<TType extends RAGEventType = RAGEventType> =
-	Envelope & { type: TType; data: RagEventPayloadMap[TType] };
+export type RagEventEnvelope<
+	TType extends keyof RagEventPayloadMap = keyof RagEventPayloadMap,
+> = Envelope & { type: TType; data: RagEventPayloadMap[TType] };
 
 export type RagEventHandler<TType extends RAGEventType = RAGEventType> = {
 	type: TType;
@@ -90,7 +91,9 @@ function validateEnvelope(envelope: Envelope): RagEventEnvelope {
 	if (!isRagEventType(envelope.type)) {
 		throw new Error(`Unsupported RAG event type: ${envelope.type}`);
 	}
-	const schema = RAGEventSchemas[envelope.type];
+	const schema = (RAGEventSchemas as Record<string, import('zod').ZodTypeAny>)[
+		envelope.type
+	];
 	const data = schema.parse(envelope.data);
 	return { ...envelope, data };
 }
@@ -144,9 +147,9 @@ export function createRagBus(options: RagBusOptions = {}): RagBus {
 			const unsubscribe = await bus.bind(
 				handlers.map((handler) => ({
 					type: handler.type,
-					handle: async (msg) => {
+					handle: async (msg: Envelope) => {
 						const validated = validateEnvelope(msg);
-						await handler.handle(validated as RagEventEnvelope);
+						await handler.handle(validated);
 					},
 				})),
 			);
