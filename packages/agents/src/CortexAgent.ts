@@ -334,12 +334,9 @@ Always:
 	/**
 	 * Set delegator for subagent delegation
 	 */
-	setDelegator(_delegator: any): void {
-		// This would be used by subagents to delegate back to the main agent
-		// Implementation depends on the actual delegator interface
-	}
-
-	/**
+	setDelegator(_delegator: unknown): void {
+		// Delegator functionality not implemented yet
+	}	/**
 	 * Get agent status and health
 	 */
 	async getStatus(): Promise<{
