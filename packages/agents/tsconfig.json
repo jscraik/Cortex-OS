@@ -1,12 +1,5 @@
-{  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext", 
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "composite": true,
-    "jsx": "preserve",lerOptions": {
+{
+  "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",

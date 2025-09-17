@@ -1,5 +1,7 @@
 import { type Memory, VoltAgent } from './mocks/voltagent-core';
 import { createLogger } from './mocks/voltagent-logger';
+// Import subagent system
+import { createSubagentSystem, type SubagentSystemConfig } from './subagents';
 import { createA2AReceiveEventTool } from './tools/A2AReceiveEventTool';
 import { createA2ASendEventTool } from './tools/A2ASendEventTool';
 // Import tools
@@ -19,9 +21,6 @@ import { createSecurityGuardTool } from './tools/SecurityGuardTool';
 import { createA2ABridge } from './utils/a2aBridge';
 // Import utilities
 import { createModelRouter } from './utils/modelRouter';
-// Import subagent system
-import { createSubagentSystem, type SubagentSystemConfig } from './subagents';
-import { DelegationRouter } from './subagents/router';
 
 const logger = createLogger('CortexAgent');
 
@@ -322,10 +321,11 @@ Always:
 
 		// Initialize delegation router if enabled
 		if (config.cortex?.subagents?.delegation) {
-			this.delegationRouter = new DelegationRouter(
-				this.subagentSystem.getRegistry(),
-				config.cortex.subagents.delegation
-			);
+			// TODO: Initialize delegation router when DelegationRouter is properly defined
+			// this.delegationRouter = new DelegationRouter(
+			//	this.subagentSystem.getRegistry(),
+			//	config.cortex.subagents.delegation
+			// );
 		}
 
 		logger.info(`Subagent system initialized with ${this.subagentSystem.getToolNames().length} subagents`);

@@ -25,7 +25,7 @@ export const createMemoryStoreTool = (_memory: unknown) =>
 			ttl: z.number().int().min(0).optional(),
 		}),
 
-		async execute(params, _context) {
+		async execute(params) {
 			const memoryId = `mem_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
 			return {

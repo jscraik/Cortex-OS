@@ -4,13 +4,13 @@
 
 // Mock logger to reduce noise in tests
 jest.mock('../src/mocks/voltagent-logger', () => ({
-  createLogger: (name: string) => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    trace: jest.fn(),
-  }),
+	createLogger: (_name: string) => ({
+		info: jest.fn(),
+		warn: jest.fn(),
+		error: jest.fn(),
+		debug: jest.fn(),
+		trace: jest.fn(),
+	}),
 }));
 
 // Mock file system operations for cleaner tests
