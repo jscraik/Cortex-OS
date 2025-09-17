@@ -274,8 +274,8 @@ export class StreamProcessor extends EventEmitter implements IStreamProcessor {
 
         // Set up flush timer
         if (!this.flushTimer) {
-          this.flushTimer = setTimeout(() => {
-            yield* this.flushBuffer();
+          this.flushTimer = setTimeout(async () => {
+            await this.flushBuffer();
           }, this.config.flushInterval);
         }
 
