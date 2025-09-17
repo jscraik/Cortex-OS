@@ -47,9 +47,9 @@ class MemoryToolError extends Error {
 	}
 }
 
- type ContractErrorDetail = { issues: ZodIssue[] } | undefined;
+type ContractErrorDetail = { issues: ZodIssue[] } | undefined;
 
- type ContractInvocationError = {
+type ContractInvocationError = {
 	code: string;
 	message: string;
 	httpStatus: number;
@@ -57,11 +57,11 @@ class MemoryToolError extends Error {
 	details?: ContractErrorDetail;
 };
 
- type ToolContractResult =
+type ToolContractResult =
 	| { type: 'error'; error: ContractInvocationError }
 	| { type: 'result'; result: Record<string, unknown> };
 
- type ToolContractInvoker = (
+type ToolContractInvoker = (
 	input: unknown,
 	context?: Record<string, unknown>,
 ) => Promise<ToolContractResult>;
@@ -558,7 +558,6 @@ type MemoryDeleteHandlerInput = z.infer<typeof memoryDeleteToolSchema>;
 type MemoryGetHandlerInput = z.infer<typeof memoryGetToolSchema>;
 type MemoryListHandlerInput = z.infer<typeof memoryListToolSchema>;
 type MemoryStatsHandlerInput = z.infer<typeof memoryStatsToolSchema>;
-
 
 // Memory MCP Tool definitions
 export const memoryStoreTool: MemoryTool = {

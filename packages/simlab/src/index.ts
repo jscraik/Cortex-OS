@@ -67,19 +67,19 @@ export async function handleSimlab(input: unknown): Promise<string> {
 	});
 }
 
+export {
+	createSimlabBus,
+	createSimlabSchemaRegistry,
+	type SimlabBusConfig,
+} from './a2a.js';
 // A2A Events
 export {
-        type AgentCreatedEvent,
-        createSimLabEvent,
-        type ExperimentResultEvent,
-        SIMLAB_EVENT_SOURCE,
-        type SimulationCompletedEvent,
-        type SimulationStartedEvent,
+	type AgentCreatedEvent,
+	createSimLabEvent,
+	type ExperimentResultEvent,
+	SIMLAB_EVENT_SOURCE,
+	type SimulationCompletedEvent,
+	type SimulationStartedEvent,
 } from './events/simlab-events.js';
-export {
-        createSimlabBus,
-        createSimlabSchemaRegistry,
-        type SimlabBusConfig,
-} from './a2a.js';
 // MCP Integration
 export { simlabMcpTools } from './mcp/tools.js';

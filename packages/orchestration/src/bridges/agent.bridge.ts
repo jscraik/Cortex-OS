@@ -4,7 +4,11 @@ import type { Step } from '../domain/types.js';
 type ExecutorRunResult = Awaited<ReturnType<Executor['run']>>;
 
 export type AgentBridge = {
-        run: (step: Step, taskId: string, input: unknown) => Promise<ExecutorRunResult>;
+	run: (
+		step: Step,
+		taskId: string,
+		input: unknown,
+	) => Promise<ExecutorRunResult>;
 };
 
 export const createAgentBridge = (

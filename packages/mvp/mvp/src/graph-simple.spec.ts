@@ -23,7 +23,9 @@ describe('SimplePRPGraph', () => {
 		};
 		const graph = new SimplePRPGraph(orchestrator);
 
-		const result = await graph.runPRPWorkflow(blueprint, { deterministic: true });
+		const result = await graph.runPRPWorkflow(blueprint, {
+			deterministic: true,
+		});
 
 		expect(result.phase).toBe('completed');
 		expect(result.cerebrum?.decision).toBe('promote');

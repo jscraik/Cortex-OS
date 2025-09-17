@@ -380,10 +380,10 @@ export class McpGateway {
 export function createMcpGateway(deps: GatewayDeps) {
   return new McpGateway(deps);
 }
-const start = performance.now();
-const previousStatus = 'running';
+const _start = performance.now();
+const _previousStatus = 'running';
 await new Promise((r) => setTimeout(r, 25));
-const newStatus = 'running';
+const _newStatus = 'running';
 return {
   service: input.service,
   previousStatus,

@@ -408,11 +408,11 @@ class ASBRServerClass {
 					const meta =
 						error instanceof Error
 							? {
-								error: {
-									message: error.message,
-									stack: error.stack,
-								},
-							}
+									error: {
+										message: error.message,
+										stack: error.stack,
+									},
+								}
 							: { error: { message: String(error) } };
 					logError('Failed to close SSE stream gracefully', meta);
 				}

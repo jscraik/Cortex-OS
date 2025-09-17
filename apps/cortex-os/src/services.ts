@@ -22,7 +22,13 @@ export function provideOrchestration() {
 	return { config: {} };
 }
 
-export function provideMCP(opts?: { audit?: (e: Record<string, unknown>) => void; publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void }) {
+export function provideMCP(opts?: {
+	audit?: (e: Record<string, unknown>) => void;
+	publishMcpEvent?: (evt: {
+		type: string;
+		payload: Record<string, unknown>;
+	}) => void;
+}) {
 	const gateway = createMcpGateway({
 		memories: provideMemories(),
 		orchestration: provideOrchestration(),
@@ -40,15 +46,21 @@ export function provideMCP(opts?: { audit?: (e: Record<string, unknown>) => void
 	});
 	return {
 		listTools: () => gateway.listTools(),
-		callTool: (tool: CortexOsToolName, input: unknown) => gateway.callTool(tool, input),
-		async close() { },
+		callTool: (tool: CortexOsToolName, input: unknown) =>
+			gateway.callTool(tool, input),
+		async close() {},
 	};
 }
 
 // Real tracer (no-op if no SDK registered in runtime)
 export const tracer = trace.getTracer('cortex-os');
 
-export function configureAuditPublisherWithBus(publishMcp?: (evt: { type: string; payload: Record<string, unknown> }) => void) {
+export function configureAuditPublisherWithBus(
+	publishMcp?: (evt: {
+		type: string;
+		payload: Record<string, unknown>;
+	}) => void,
+) {
 	if (!publishMcp) return { publishMcpEvent: undefined };
 	return { publishMcpEvent: publishMcp };
 }

@@ -69,9 +69,7 @@ export const runPRPWorkflow = async (
 		const deterministic = options.deterministic || false;
 		const runId =
 			options.runId ||
-			(deterministic
-				? `prp-deterministic-${Date.now()}`
-				: `prp-${Date.now()}`);
+			(deterministic ? `prp-deterministic-${Date.now()}` : `prp-${Date.now()}`);
 
 		const initialState = createInitialPRPState(blueprint, {
 			runId,

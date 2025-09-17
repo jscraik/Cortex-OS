@@ -22,7 +22,7 @@ describe('MCP Facade Contract', () => {
     it('system.status returns expected shape subset', async () => {
         const res = await mcp.callTool('system.status', {});
         if (!res || typeof res !== 'object') throw new Error('Result not object');
-        const maybeServices = (res as Record<string, unknown>)['services'];
+        const maybeServices = (res as Record<string, unknown>).services;
         expect(Array.isArray(maybeServices)).toBe(true);
     });
 

@@ -113,6 +113,18 @@ pnpm mcp:dev
 pnpm mcp:start-with-tunnel
 ```
 
+## Available MCP Tools (Python server)
+
+The FastMCP server exposes these core tools:
+
+- `search(query: str, max_results: int = 10)` — Find Cortex-OS docs/content
+- `fetch(resource_id: str)` — Retrieve full content for a specific resource
+- `ping(transport?: str)` — Basic status with transport echo
+- `health_check()` — Minimal health probe returning `{status, version}`
+- `list_capabilities()` — Lists tools/resources/prompts and version
+
+An HTTP `GET /health` route is also provided when running with HTTP/SSE transports.
+
 ## Contracts
 
 Relevant contract/schema assets for MCP-related events & streaming:

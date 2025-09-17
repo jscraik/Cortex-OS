@@ -9,6 +9,7 @@ mod echo_tool;
 mod interrupt;
 mod list_resume;
 mod login;
+mod new_tools;
 mod send_message;
 mod set_default_model;
 mod user_agent;

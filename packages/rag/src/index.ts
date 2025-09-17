@@ -16,6 +16,13 @@ import {
 import { memoryStore } from './store/memory.js';
 
 export type {
+	RagBus,
+	RagEventEnvelope,
+	RagEventHandler,
+	RagPublishOptions,
+} from './events/rag-bus.js';
+export { createRagBus } from './events/rag-bus.js';
+export type {
 	RAGIngestCompleteEvent,
 	RAGIngestEvent,
 	RAGQueryEvent,
@@ -35,13 +42,6 @@ export {
 	ragQueryResultEventSchema,
 } from './events/rag-events.js';
 export type {
-	RagBus,
-	RagEventEnvelope,
-	RagEventHandler,
-	RagPublishOptions,
-} from './events/rag-bus.js';
-export { createRagBus } from './events/rag-bus.js';
-export type {
 	ArchonRAGConfig,
 	DocumentSyncResult,
 	MinimalStore,
@@ -59,33 +59,33 @@ export {
 } from './integrations/archon-mcp.js';
 export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
 export * as lib from './lib/index.js';
+export type {
+	RagDocument,
+	RagDocumentIngestionInput,
+	RagDocumentIngestionOutput,
+	RagRetrievalInput,
+	RagRetrievalOutput,
+	RagSearchInput,
+	RagSearchOutput,
+} from './mcp/tools.js';
 // MCP Tools for external AI agent integration
 export {
-        RagDocumentSchema,
-        RagDocumentIngestionInputSchema,
-        RagDocumentIngestionOptionsSchema,
-        RagDocumentIngestionOutputSchema,
-        RagMetadataSchema,
-        RagRetrievedChunkSchema,
-        RagRetrievedDocumentSchema,
-        RagRetrievalInputSchema,
-        RagRetrievalOutputSchema,
-        RagSearchInputSchema,
-        RagSearchOutputSchema,
-        RagSearchResultSchema,
-        ragDocumentIngestionTool,
-        ragRetrievalTool,
-        ragSearchTool,
-        ragToolContracts,
-} from './mcp/tools.js';
-export type {
-        RagDocument,
-        RagDocumentIngestionInput,
-        RagDocumentIngestionOutput,
-        RagRetrievalInput,
-        RagRetrievalOutput,
-        RagSearchInput,
-        RagSearchOutput,
+	RagDocumentIngestionInputSchema,
+	RagDocumentIngestionOptionsSchema,
+	RagDocumentIngestionOutputSchema,
+	RagDocumentSchema,
+	RagMetadataSchema,
+	RagRetrievalInputSchema,
+	RagRetrievalOutputSchema,
+	RagRetrievedChunkSchema,
+	RagRetrievedDocumentSchema,
+	RagSearchInputSchema,
+	RagSearchOutputSchema,
+	RagSearchResultSchema,
+	ragDocumentIngestionTool,
+	ragRetrievalTool,
+	ragSearchTool,
+	ragToolContracts,
 } from './mcp/tools.js';
 export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
 export { fileStore } from './store/file.js';

@@ -297,7 +297,8 @@ export function shouldRetryEnvelope(envelope: A2AEventEnvelope): boolean {
 }
 
 export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
-	const { processing_state: processingState, retry_policy: retryPolicy } = envelope;
+	const { processing_state: processingState, retry_policy: retryPolicy } =
+		envelope;
 	const {
 		initial_delay_ms: initialDelayMs,
 		max_delay_ms: maxDelayMs,
@@ -310,7 +311,8 @@ export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 	}
 
 	// Calculate exponential backoff
-	let delay = initialDelayMs * backoffMultiplier ** processingState.attempt_count;
+	let delay =
+		initialDelayMs * backoffMultiplier ** processingState.attempt_count;
 	delay = Math.min(delay, maxDelayMs);
 
 	// Add jitter if enabled

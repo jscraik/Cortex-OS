@@ -9,21 +9,27 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 import { runCommand } from '../lib/run-command.js';
-import type { PRPState } from '../state.js';
+import type { Evidence, PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 
 interface Neuron {
 	id: string;
+	role: string;
+	phase: 'strategy' | 'build' | 'evaluation';
+	dependencies: string[];
+	tools: string[];
+	requiresLLM?: boolean;
 	execute(
-		state: ExecutionState,
-		context: ExecutionContext,
+		state: PRPState,
+		context: { workingDirectory?: string },
 	): Promise<NeuronResult>;
 }
 
+// Local execution wiring types retained for potential future expansion
+// but Neuron.execute uses PRPState directly for type safety.
 interface ExecutionState {
 	[key: string]: unknown;
 }
-
 interface ExecutionContext {
 	input: unknown;
 	workingDirectory?: unknown;
@@ -31,7 +37,7 @@ interface ExecutionContext {
 
 interface NeuronResult {
 	output: unknown;
-	evidence: Record<string, unknown>[];
+	evidence: Evidence[];
 	nextSteps: string[];
 	artifacts: unknown[];
 	metrics: ExecutionMetrics;
@@ -80,6 +86,12 @@ export interface MCPContext {
 export class MCPAdapter {
 	private readonly tools: Map<string, MCPTool> = new Map();
 	private readonly contexts: Map<string, MCPContext> = new Map();
+
+	constructor(options?: { tools?: MCPTool[] }) {
+		if (options?.tools?.length) {
+			for (const t of options.tools) this.registerTool(t);
+		}
+	}
 
 	/**
 	 * Register MCP tool for kernel integration
@@ -178,10 +190,13 @@ export class MCPAdapter {
 			tools: [tool.name],
 			requiresLLM: false,
 
-			execute: async (state: PRPState, context: Record<string, unknown>) => {
+			execute: async (
+				state: PRPState,
+				context: { workingDirectory?: string },
+			) => {
 				// Create context for tool execution (side effect: stores in this.contexts)
 				this.createContext(state, {
-					workingDirectory: context.workingDirectory as string,
+					workingDirectory: context.workingDirectory,
 				});
 
 				// Extract parameters from blueprint for tool execution
@@ -225,7 +240,7 @@ export class MCPAdapter {
 
 				return result;
 			},
-		} as unknown as Neuron;
+		};
 	}
 
 	/**

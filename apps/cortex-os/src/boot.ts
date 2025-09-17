@@ -34,7 +34,8 @@ function validateContainer(container: Container): void {
 			if (!container.isBound(token))
 				throw new Error(`Missing binding for ${token.toString()}`);
 			const service = container.get(token as unknown as symbol);
-			if (!service) throw new Error(`Failed to resolve binding for ${token.toString()}`);
+			if (!service)
+				throw new Error(`Failed to resolve binding for ${token.toString()}`);
 		}
 		span.setStatus({ code: SpanStatusCode.OK });
 	} catch (error) {

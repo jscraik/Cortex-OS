@@ -4,87 +4,128 @@ This document tracks the MCP integration status across all Cortex-OS packages an
 
 ## Packages MCP Integration Status
 
-| Package | Status | Notes |
-|---------|--------|-------|
-| mcp-core | ✅ Complete | Core MCP protocol implementation |
-| mcp-bridge | ❌ Not Started | Transport bridging (stdio↔HTTP/SSE) |
-| mcp-registry | ❌ Not Started | Server discovery and registration |
-| cortex-mcp | ❌ Not Started | Main MCP package |
-| memories | ✅ Complete | 5 MCP tools implemented |
-| rag | ✅ Complete | 3 MCP tools implemented |
-| security | ✅ Complete | 5 MCP tools implemented (access control, policy validation, audit, encryption, threat detection) |
-| observability | ✅ Complete | 4 MCP tools defined |
-| gateway | ✅ Complete | MCP tools implemented |
-| evals | ✅ Complete | MCP tools implemented |
-| simlab | ✅ Complete | MCP tools implemented |
-| asbr | ✅ Complete | MCP tools implemented |
-| prp-runner | ✅ Complete | MCP tools implemented |
-| tdd-coach | ✅ Complete | MCP tools implemented |
-| agents | ✅ Complete | MCP tools implemented |
-| model-gateway | ✅ Complete | MCP tools implemented |
-| kernel | ⚠️ Partial | Has some MCP integration |
-| orchestration | ⚠️ Partial | Has MCP client connections but no tools defined |
-| a2a | ❌ Not Started | No MCP integration |
-| a2a-services | ❌ Not Started | No MCP integration |
+| Package | Status | Tools Count | Notes |
+|---------|--------|-------------|--------|
+| mcp-core | ✅ Complete | Core | Core MCP protocol implementation |
+| mcp-bridge | ✅ Complete | 3 | Transport bridging (create_bridge, forward_request, close_bridge) |
+| mcp-registry | ❌ Not Started | 0 | Server discovery and registration |
+| cortex-mcp | ❌ Not Started | 0 | Main MCP package |
+| memories | ✅ Complete | 5 | Memory store, get, list, search, delete tools |
+| rag | ✅ Complete | 3 | Query, ingest, status tools |
+| security | ✅ Complete | 5 | Access control, policy validation, audit, encryption, threat detection |
+| observability | ✅ Complete | 7 | Trace, metric, query, logs, alert, dashboard tools |
+| gateway | ✅ Complete | 4 | Route management, authentication, load balancing tools |
+| evals | ✅ Complete | 4 | Test execution, result analysis, benchmark tools |
+| simlab | ✅ Complete | 4 | Scenario execution, result comparison tools |
+| asbr | ✅ Complete | 5 | Sandboxing, resource management tools |
+| prp-runner | ✅ Complete | 4 | ASBR AI capabilities, execution tools |
+| tdd-coach | ✅ Complete | 6 | Test generation, guidance, validation tools |
+| agents | ✅ Complete | 4 | Create, execute, list, status agent tools |
+| model-gateway | ✅ Complete | 3 | Chat completion, embedding, reranking tools |
+| kernel | ✅ Complete | Adapter | MCP adapter integration (adapter implemented with proper typing and constructor-based tool registration) |
+| orchestration | ✅ Complete | 5 | Workflow management, task coordination tools |
+| a2a | ✅ Complete | 4 | Event publishing, subscription, routing tools |
+| a2a-services | ✅ Complete | 6 | Rate limiting, schema validation, monitoring tools |
 
 ## Apps MCP Integration Status
 
-| App | Status | Notes |
-|-----|--------|-------|
-| cortex-code | ⚠️ Minimal | Rust MCP client implementation |
-| cortex-marketplace | ⚠️ Minimal | MCP marketplace integration |
-| cortex-py | ❌ Not Started | No MCP integration |
-| cortex-webui | ❌ Not Started | No MCP integration |
-| api | ❌ Not Started | No MCP integration |
-| cortex-os | ⚠️ Minimal | Has MCP gateway but no tools defined |
+| App | Status | Tools Count | Notes |
+|-----|--------|-------------|-------|
+| cortex-code | ✅ Complete | 5 | File operations, search, patch, analysis, echo tools |
+| cortex-marketplace | ⚠️ Minimal | Integration | MCP marketplace integration |
+| cortex-py | ✅ Complete | 5+ | MLX servers with MCP tools |
+| cortex-webui | ✅ Complete | 4+ | Web UI with MCP integration |
+| api | ✅ Complete | 3 | Backend API with MCP tools |
+| cortex-os | ✅ Complete | 11 | OS-level operations and orchestration |
 
 ## Overall Progress
 
-- **Packages**: 13/20 with complete MCP integration (65%)
-- **Apps**: 0/6 with complete MCP integration (0%)
-- **Total**: 13/26 components with complete integration (50.0%)
+- **Packages**: 18/20 with complete MCP integration (90%)
+- **Apps**: 5/6 with complete MCP integration (83%)
+- **Total**: 23/26 components with complete integration (88.5%)
 
 ## Detailed Progress by Component Type
 
-### Core Packages (7)
+### Core Packages (4)
 
-- Complete: 1 (14.3%)
-- Partial/Minimal: 3 (42.9%)
-- Not Started: 3 (42.9%)
+- Complete: 2/4 (50%) - mcp-core, kernel
+- Partial/Minimal: 0/4 (0%)
+- Not Started: 2/4 (50%) - mcp-registry, cortex-mcp
 
-### Service Packages (10)
+### Service Packages (16)
 
-- Complete: 9 (90%)
-- Partial/Minimal: 1 (10%)
-- Not Started: 0 (0%)
+- Complete: 15/16 (94%)
+- Partial/Minimal: 0/16 (0%)
+- Not Started: 0/16 (0%)
 
 ### Applications (6)
 
-- Complete: 0 (0%)
-- Partial/Minimal: 3 (50%)
-- Not Started: 3 (50%)
+- Complete: 5/6 (83%)
+- Partial/Minimal: 1/6 (17%)
+- Not Started: 0/6 (0%)
 
 ## Next Steps
 
-1. Complete MCP integration for packages with partial implementation:
-   - mcp-core (needs tools implementation)
-   - mcp-bridge (Task 3.2)
-   - mcp-registry (Task 3.3)
-   - cortex-mcp (Task 3.4)
-   - kernel (expand implementation)
-   - orchestration (Task 2.5)
-   - a2a (Task 2.6)
-   - a2a-services (Task 2.7)
+### Priority 1: Complete Core Infrastructure
 
-2. Implement MCP integration for apps with no implementation:
-   - cortex-py (Task 2.11)
-   - cortex-webui (Task 2.12)
-   - api (Task 2.13)
+1. **mcp-registry** - Implement server discovery and registration (Task 3.3)
+2. **cortex-mcp** - Implement main MCP package tools (Task 3.4)
+3. **kernel** - Adapter complete; consider expanding integration (e.g., dynamic tool registration, end-to-end tests)
 
-3. Expand minimal MCP implementations:
-   - cortex-code (expand Rust MCP client)
-   - cortex-marketplace (expand marketplace integration)
-   - cortex-os (Task 2.10 - expand implementation)
+### Priority 2: Enhance App Implementations
+
+1. **cortex-marketplace** - Enhance marketplace integration with more tools
+
+## Cortex-Code MCP Tools
+
+The cortex-code app now provides a comprehensive set of 5 MCP tools implemented in Rust:
+
+### File Operations Tool (`file_operations`)
+
+- **read** - Read file contents
+- **write** - Write content to files  
+- **list** - List directory contents
+- **create_dir** - Create directories
+
+### File Search Tool (`file_search`)
+
+- Pattern-based file searching with fuzzy matching
+- Directory scoping and result limits
+- Integrated with cortex-code's file-search capabilities
+
+### Apply Patch Tool (`apply_patch`)
+
+- Unified diff format validation and application
+- Working directory support
+- Integrated with cortex-code's patch application system
+
+### Code Analysis Tool (`code_analysis`)
+
+- **metrics** - Line counts, comments, code complexity analysis
+- **dependencies** - Import/use statements detection for Rust, Python, JS/TS
+- **structure** - Functions, structs, classes detection across languages
+
+### Echo Tool (`echo`)
+
+- Enhanced testing and validation tool
+- Proper error handling and input validation
+
+These tools provide comprehensive development capabilities through MCP, making cortex-code a
+fully-featured development environment accessible via the Model Context Protocol.
+
+### Current Status Summary
+
+**Ready for Production:**
+
+- 18/20 packages with complete MCP integration
+- 5/6 apps with complete MCP integration
+- 88.5% overall completion rate
+
+**Remaining Work:**
+
+- 2 core packages need full implementation
+- 1 app needs expansion from minimal to complete
+- Focus on infrastructure completeness rather than new features
 
 ## Verification
 

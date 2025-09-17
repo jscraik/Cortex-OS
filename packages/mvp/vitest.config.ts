@@ -7,9 +7,7 @@ const projectRoot = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
 	test: {
 		root: projectRoot,
-		include: [
-			join('mvp', 'src', '**', '*.{spec,test}.{ts,tsx,js,jsx}'),
-		],
+		include: [join('mvp', 'src', '**', '*.{spec,test}.{ts,tsx,js,jsx}')],
 		environment: 'node',
 		globals: true,
 	},

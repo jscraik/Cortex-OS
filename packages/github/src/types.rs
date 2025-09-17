@@ -116,7 +116,7 @@ pub struct Content {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileUpdateData {
     pub message: String,
-    pub content: String, // Base64 encoded
+    pub content: String,     // Base64 encoded
     pub sha: Option<String>, // Required for updates
     pub branch: Option<String>,
     pub committer: Option<CommitAuthor>,
@@ -181,7 +181,7 @@ pub struct WorkflowRun {
     pub display_title: String,
     pub run_number: u64,
     pub event: String,
-    pub status: String, // queued, in_progress, completed
+    pub status: String,             // queued, in_progress, completed
     pub conclusion: Option<String>, // success, failure, neutral, cancelled, timed_out, action_required, stale
     pub workflow_id: u64,
     pub check_suite_id: u64,

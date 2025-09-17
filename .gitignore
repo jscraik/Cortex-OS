@@ -73,3 +73,4 @@ public/
 report/
 UPSTREAM_REF
 pnpm-lock.yaml.bak
+.venv311/

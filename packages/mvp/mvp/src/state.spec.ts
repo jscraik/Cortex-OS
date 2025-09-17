@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	PRPStateSchema,
 	createInitialPRPState,
 	generateDeterministicHash,
+	PRPStateSchema,
 	validateStateTransition,
 } from './state.js';
 

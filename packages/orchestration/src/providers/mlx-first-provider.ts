@@ -29,39 +29,40 @@ export interface EmbeddingRequest {
 }
 
 export interface EmbeddingResponse {
-        embeddings: number[][];
-        model: string;
-        provider: 'mlx' | 'ollama';
-        dimensions: number;
+	embeddings: number[][];
+	model: string;
+	provider: 'mlx' | 'ollama';
+	dimensions: number;
 }
 
-type ProviderPayload = Pick<ModelResponse, 'content' | 'tokens' | 'cached'> & Record<string, unknown>;
+type ProviderPayload = Pick<ModelResponse, 'content' | 'tokens' | 'cached'> &
+	Record<string, unknown>;
 
 type MLXGenerateRequest = ModelRequest & { model: string };
 type MLXGenerateResponse = ProviderPayload;
 
 interface MLXEmbedRequest {
-        model: string;
-        texts: string[];
+	model: string;
+	texts: string[];
 }
 
 type MLXEmbedResponse = {
-        embeddings: number[][];
-        model?: string;
-        dimensions?: number;
+	embeddings: number[][];
+	model?: string;
+	dimensions?: number;
 } & Record<string, unknown>;
 
 interface MLXRerankRequest {
-        model: string;
-        query: string;
-        documents: string[];
+	model: string;
+	query: string;
+	documents: string[];
 }
 
 interface OllamaGenerateRequest {
-        model: string;
-        prompt: string;
-        temperature?: number;
-        maxTokens?: number;
+	model: string;
+	prompt: string;
+	temperature?: number;
+	maxTokens?: number;
 }
 
 type OllamaGenerateResponse = { content: string };
@@ -285,43 +286,43 @@ export class MLXFirstModelProvider {
  * MLX Service Implementation
  */
 class MLXService {
-        private readonly baseUrl =
-                process.env.MLX_SERVICE_URL || 'http://localhost:8765';
+	private readonly baseUrl =
+		process.env.MLX_SERVICE_URL || 'http://localhost:8765';
 
-        async generate(request: MLXGenerateRequest): Promise<MLXGenerateResponse> {
-                const response = await fetch(`${this.baseUrl}/generate`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(request),
-                });
+	async generate(request: MLXGenerateRequest): Promise<MLXGenerateResponse> {
+		const response = await fetch(`${this.baseUrl}/generate`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(request),
+		});
 
 		if (!response.ok) {
 			throw new Error(`MLX service error: ${response.statusText}`);
 		}
 
-                return (await response.json()) as MLXGenerateResponse;
-        }
+		return (await response.json()) as MLXGenerateResponse;
+	}
 
-        async embed(request: MLXEmbedRequest): Promise<MLXEmbedResponse> {
-                const response = await fetch(`${this.baseUrl}/embed`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(request),
-                });
+	async embed(request: MLXEmbedRequest): Promise<MLXEmbedResponse> {
+		const response = await fetch(`${this.baseUrl}/embed`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(request),
+		});
 
 		if (!response.ok) {
 			throw new Error(`MLX embedding error: ${response.statusText}`);
 		}
 
-                return (await response.json()) as MLXEmbedResponse;
-        }
+		return (await response.json()) as MLXEmbedResponse;
+	}
 
-        async rerank(request: MLXRerankRequest): Promise<number[]> {
-                const response = await fetch(`${this.baseUrl}/rerank`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(request),
-                });
+	async rerank(request: MLXRerankRequest): Promise<number[]> {
+		const response = await fetch(`${this.baseUrl}/rerank`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(request),
+		});
 
 		if (!response.ok) {
 			throw new Error(`MLX rerank error: ${response.statusText}`);
@@ -331,31 +332,33 @@ class MLXService {
 		return result.scores;
 	}
 
-        async healthCheck(): Promise<{ healthy: boolean }> {
-                try {
-                        // Note: global fetch doesn't support timeout option; use AbortController if needed.
-                        const response = await fetch(`${this.baseUrl}/health`, {
-                                method: 'GET',
-                        });
-                        return { healthy: response.ok };
-                } catch {
-                        return { healthy: false };
-                }
-        }
+	async healthCheck(): Promise<{ healthy: boolean }> {
+		try {
+			// Note: global fetch doesn't support timeout option; use AbortController if needed.
+			const response = await fetch(`${this.baseUrl}/health`, {
+				method: 'GET',
+			});
+			return { healthy: response.ok };
+		} catch {
+			return { healthy: false };
+		}
+	}
 }
 
 /**
  * Ollama Service Implementation
  */
 class OllamaService {
-        private readonly baseUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+	private readonly baseUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
 
-        async generate(request: OllamaGenerateRequest): Promise<OllamaGenerateResponse> {
-                const response = await fetch(`${this.baseUrl}/api/generate`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                                model: request.model,
+	async generate(
+		request: OllamaGenerateRequest,
+	): Promise<OllamaGenerateResponse> {
+		const response = await fetch(`${this.baseUrl}/api/generate`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				model: request.model,
 				prompt: request.prompt,
 				stream: false,
 				options: {
@@ -367,16 +370,16 @@ class OllamaService {
 
 		if (!response.ok) {
 			throw new Error(`Ollama service error: ${response.statusText}`);
-                }
+		}
 
-                const result = await response.json();
-                return { content: String(result.response ?? '') };
-        }
+		const result = await response.json();
+		return { content: String(result.response ?? '') };
+	}
 
-        async embed(request: {
-                model: string;
-                texts: string[];
-        }): Promise<number[][]> {
+	async embed(request: {
+		model: string;
+		texts: string[];
+	}): Promise<number[][]> {
 		const response = await fetch(`${this.baseUrl}/api/embed`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -414,17 +417,17 @@ Output only a decimal number between 0 and 1:`,
 		return scores;
 	}
 
-        async healthCheck(): Promise<{ healthy: boolean }> {
-                try {
-                        // Note: global fetch doesn't support timeout option; use AbortController if needed.
-                        const response = await fetch(`${this.baseUrl}/api/tags`, {
-                                method: 'GET',
-                        });
-                        return { healthy: response.ok };
-                } catch {
-                        return { healthy: false };
-                }
-        }
+	async healthCheck(): Promise<{ healthy: boolean }> {
+		try {
+			// Note: global fetch doesn't support timeout option; use AbortController if needed.
+			const response = await fetch(`${this.baseUrl}/api/tags`, {
+				method: 'GET',
+			});
+			return { healthy: response.ok };
+		} catch {
+			return { healthy: false };
+		}
+	}
 }
 
 // Internal service classes intentionally not exported

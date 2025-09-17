@@ -13,6 +13,7 @@ import Fastify from "fastify";
 import { z } from "zod";
 import { categoryRoutes } from "./routes/categories.js";
 import { healthRoutes } from "./routes/health.js";
+import { mcpRoutes } from "./routes/mcp.js";
 import { registryRoutes } from "./routes/registries.js";
 import { serverRoutes } from "./routes/servers.js";
 import { statsRoutes } from "./routes/stats.js";
@@ -69,6 +70,9 @@ export function build(config: AppConfig): FastifyInstance {
 	// Register plugins
 	registerPlugins(fastify);
 
+	// Add global schemas
+	registerGlobalSchemas(fastify);
+
 	// Register routes
 	registerRoutes(fastify);
 
@@ -107,7 +111,7 @@ export function build(config: AppConfig): FastifyInstance {
 // (Upstream plugins may not yet publish v5-ready types)
 // NOTE: Fastify v5 ecosystem plugin types are lagging; localized cast retains safety elsewhere
 function compat<T>(plugin: T): any { // eslint-disable-line @typescript-eslint/no-explicit-any
-	return plugin as unknown as any; // Narrow scope escape hatch
+	return plugin as unknown as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 function registerPlugins(fastify: FastifyInstance): void {
@@ -192,10 +196,62 @@ function registerRoutes(fastify: FastifyInstance): void {
 	fastify.register(registryRoutes, { prefix: "/api/v1" });
 	fastify.register(categoryRoutes, { prefix: "/api/v1" });
 	fastify.register(statsRoutes, { prefix: "/api/v1" });
+	fastify.register(mcpRoutes, { prefix: "/api/v1" });
 
 	// Root redirect to documentation
 	fastify.get("/", async (_request, reply) => {
 		return reply.redirect("/documentation");
+	});
+}
+
+function registerGlobalSchemas(fastify: FastifyInstance): void {
+	// Add ServerManifest schema globally so all routes can reference it
+	fastify.addSchema({
+		$id: "ServerManifest",
+		type: "object",
+		properties: {
+			id: { type: "string" },
+			name: { type: "string" },
+			description: { type: "string" },
+			mcpVersion: { type: "string" },
+			capabilities: {
+				type: "object",
+				properties: {
+					tools: { type: "boolean" },
+					resources: { type: "boolean" },
+					prompts: { type: "boolean" },
+				},
+			},
+			publisher: {
+				type: "object",
+				properties: {
+					name: { type: "string" },
+					email: { type: "string" },
+					verified: { type: "boolean" },
+				},
+			},
+			version: { type: "string" },
+			repository: { type: "string" },
+			homepage: { type: "string" },
+			license: { type: "string" },
+			category: { type: "string" },
+			tags: { type: "array", items: { type: "string" } },
+			transport: { type: "object" },
+			install: { type: "object" },
+			permissions: { type: "array", items: { type: "string" } },
+			security: {
+				type: "object",
+				properties: {
+					riskLevel: { type: "string", enum: ["low", "medium", "high"] },
+					sigstore: { type: "string" },
+					sbom: { type: "string" },
+				},
+			},
+			featured: { type: "boolean" },
+			downloads: { type: "integer" },
+			rating: { type: "number" },
+			updatedAt: { type: "string" },
+		},
 	});
 }
 

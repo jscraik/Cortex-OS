@@ -17,14 +17,12 @@ vi.mock('@opentelemetry/auto-instrumentations-node', () => ({
 	getNodeAutoInstrumentations: () => [],
 }));
 vi.mock('@opentelemetry/resources', () => ({
-
-        Resource: class Resource {
-                constructor(public attrs: any) {}
-        },
-        resourceFromAttributes: (attributes: Record<string, unknown>) => ({
-                attributes,
-        }),
-
+	Resource: class Resource {
+		constructor(public attrs: any) {}
+	},
+	resourceFromAttributes: (attributes: Record<string, unknown>) => ({
+		attributes,
+	}),
 }));
 vi.mock('@opentelemetry/semantic-conventions', () => ({
 	ATTR_SERVICE_NAME: 'service.name',

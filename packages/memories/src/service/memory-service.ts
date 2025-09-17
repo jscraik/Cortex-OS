@@ -5,17 +5,21 @@ import type { MemoryStore } from '../ports/MemoryStore.js';
 import { memoryZ } from '../schemas/memory.zod.js';
 
 export type MemoryService = {
-        save: (raw: unknown) => Promise<Memory & { status?: string }>;
-        get: (id: string) => Promise<(Memory & { status?: string }) | null>;
-        del: (id: string) => Promise<void>;
-        search: (q: {
-                text?: string;
-                vector?: number[];
-                topK?: number;
-                tags?: string[];
-        }) => Promise<Memory[]>;
-        list: (opts?: { limit?: number; tags?: string[]; text?: string }) => Promise<Memory[]>;
-        purge: (nowISO?: string) => Promise<number>;
+	save: (raw: unknown) => Promise<Memory & { status?: string }>;
+	get: (id: string) => Promise<(Memory & { status?: string }) | null>;
+	del: (id: string) => Promise<void>;
+	search: (q: {
+		text?: string;
+		vector?: number[];
+		topK?: number;
+		tags?: string[];
+	}) => Promise<Memory[]>;
+	list: (opts?: {
+		limit?: number;
+		tags?: string[];
+		text?: string;
+	}) => Promise<Memory[]>;
+	purge: (nowISO?: string) => Promise<number>;
 	approve?: (id: string) => Promise<void>;
 	discard?: (id: string) => Promise<void>;
 	listPending?: () => Promise<Array<Memory & { status: 'pending' }>>;
@@ -118,14 +122,13 @@ export const createMemoryService = (
 			pending.delete(id);
 			return store.delete(id);
 		},
-                search: async (q) => {
-                        return withSpan('memories.search', async () => {
-                                const topK = q.topK ?? 8;
+		search: async (q) => {
+			return withSpan('memories.search', async () => {
+				const topK = q.topK ?? 8;
 
-                                if (q.vector) {
-                                        return performVectorSearch({ ...q, vector: q.vector }, topK);
-                                }
-
+				if (q.vector) {
+					return performVectorSearch({ ...q, vector: q.vector }, topK);
+				}
 
 				if (typeof q.text === 'string') {
 					return performTextSearch(
@@ -136,22 +139,21 @@ export const createMemoryService = (
 					);
 				}
 
-
-                                return [];
-                        });
-                },
-                list: async (opts) => {
-                        const { limit = 20, tags, text } = opts ?? {};
-                        return store.searchByText({
-                                text: text ?? '',
-                                topK: limit,
-                                filterTags: tags,
-                        });
-                },
-                purge: (nowISO) =>
-                        withSpan('memories.purge', async () =>
-                                store.purgeExpired(nowISO ?? new Date().toISOString()),
-                        ),
+				return [];
+			});
+		},
+		list: async (opts) => {
+			const { limit = 20, tags, text } = opts ?? {};
+			return store.searchByText({
+				text: text ?? '',
+				topK: limit,
+				filterTags: tags,
+			});
+		},
+		purge: (nowISO) =>
+			withSpan('memories.purge', async () =>
+				store.purgeExpired(nowISO ?? new Date().toISOString()),
+			),
 		approve: async (id) => {
 			const mem = pending.get(id);
 			if (!mem) return;
@@ -164,7 +166,9 @@ export const createMemoryService = (
 		listPending: async () => Array.from(pending.values()),
 		testEmbedders: async () => {
 			const maybeComposite = embedder as unknown as {
-				testEmbedders?: () => Promise<Array<{ name: string; available: boolean }>>;
+				testEmbedders?: () => Promise<
+					Array<{ name: string; available: boolean }>
+				>;
 			};
 			if (typeof maybeComposite.testEmbedders === 'function') {
 				return maybeComposite.testEmbedders();

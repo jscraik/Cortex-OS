@@ -20,6 +20,11 @@ if str(_HERE) not in _sys.path:
 logger = logging.getLogger(__name__)
 FAST_TEST = os.getenv("CORTEX_PY_FAST_TEST") == "1"
 
+from cortex_py.a2a import (  # noqa: E402
+    A2ABus,
+    create_a2a_bus,
+    create_mlx_embedding_event,
+)
 from cortex_py.generator import (  # noqa: E402  - import after sys.path mutation
     DummyEmbeddingGenerator,
     LazyEmbeddingGenerator,
@@ -55,6 +60,7 @@ def create_app(
     generator: Any | None = None,
     *,
     service: EmbeddingService | None = None,
+    a2a_bus: A2ABus | None = None,
 ) -> FastAPI:
     """Instantiate the FastAPI application and shared embedding service."""
 
@@ -84,6 +90,10 @@ def create_app(
     )
     app.embedding_service = embedding_service  # type: ignore[attr-defined]
 
+    # Initialize A2A bus for cross-language communication
+    a2a = a2a_bus or create_a2a_bus(source="urn:cortex:py:mlx")
+    app.a2a_bus = a2a  # type: ignore[attr-defined]
+
     def _validation_error(message: str, code: str = "VALIDATION_ERROR"):
         logger.error(message)
         return JSONResponse(
@@ -112,7 +122,31 @@ def create_app(
         if text is None:
             return _validation_error("text field missing")
         try:
-            result = embedding_service.generate_single(text, normalize=req.normalize is not False)
+            import time
+
+            start_time = time.time()
+            result = embedding_service.generate_single(
+                text, normalize=req.normalize is not False
+            )
+            processing_time = time.time() - start_time
+
+            # Publish A2A event for embedding completion
+            import asyncio
+
+            try:
+                event = create_mlx_embedding_event(
+                    request_id=f"embed_{int(time.time() * 1000)}",
+                    text_count=1,
+                    total_chars=len(text),
+                    processing_time=processing_time,
+                    model_used=getattr(result, "model_name", "unknown"),
+                    dimension=len(result.embedding) if result.embedding else 0,
+                    success=True,
+                )
+                asyncio.create_task(a2a.publish(event))
+            except Exception as e:
+                logger.warning(f"Failed to publish A2A embedding event: {e}")
+
         except ServiceError as exc:
             return _handle_service_error(exc)
         return {"embedding": result.embedding}
@@ -122,7 +156,34 @@ def create_app(
         if req.texts is None or not req.texts:
             return _validation_error("texts field must be a non-empty list")
         try:
-            result = embedding_service.generate_batch(req.texts, normalize=req.normalize is not False)
+            import time
+
+            start_time = time.time()
+            result = embedding_service.generate_batch(
+                req.texts, normalize=req.normalize is not False
+            )
+            processing_time = time.time() - start_time
+
+            # Publish A2A event for batch embedding completion
+            import asyncio
+
+            try:
+                total_chars = sum(len(text) for text in req.texts)
+                event = create_mlx_embedding_event(
+                    request_id=f"batch_{int(time.time() * 1000)}",
+                    text_count=len(req.texts),
+                    total_chars=total_chars,
+                    processing_time=processing_time,
+                    model_used=getattr(result, "model_name", "unknown"),
+                    dimension=len(result.embeddings[0])
+                    if result.embeddings and result.embeddings[0]
+                    else 0,
+                    success=True,
+                )
+                asyncio.create_task(a2a.publish(event))
+            except Exception as e:
+                logger.warning(f"Failed to publish A2A batch embedding event: {e}")
+
         except ServiceError as exc:
             return _handle_service_error(exc)
         return {"embeddings": result.embeddings}
@@ -146,6 +207,24 @@ def create_app(
         status["platform"] = platform.system()
         return status
 
+    @app.on_event("startup")
+    async def startup_event():
+        """Initialize A2A bus on startup."""
+        try:
+            await a2a.start()
+            logger.info("A2A bus started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start A2A bus: {e}")
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        """Clean up A2A bus on shutdown."""
+        try:
+            await a2a.stop()
+            logger.info("A2A bus stopped successfully")
+        except Exception as e:
+            logger.error(f"Failed to stop A2A bus: {e}")
+
     return app
 
 
@@ -157,5 +236,3 @@ __all__ = [
     "ErrorModel",
     "create_app",
 ]
-
-

@@ -57,12 +57,11 @@ impl GitHubError {
     pub fn is_retryable(&self) -> bool {
         match self {
             GitHubError::RateLimit(_) => true,
-            GitHubError::Network(req_err) => {
-                req_err.is_timeout() || req_err.is_connect()
-            }
+            GitHubError::Network(req_err) => req_err.is_timeout() || req_err.is_connect(),
             GitHubError::Api(msg) => {
                 // Retry on 5xx errors
-                msg.contains("50") && (msg.contains("502") || msg.contains("503") || msg.contains("504"))
+                msg.contains("50")
+                    && (msg.contains("502") || msg.contains("503") || msg.contains("504"))
             }
             _ => false,
         }
@@ -71,9 +70,7 @@ impl GitHubError {
     /// Get HTTP status code if available
     pub fn status_code(&self) -> Option<u16> {
         match self {
-            GitHubError::Network(req_err) => {
-                req_err.status().map(|s| s.as_u16())
-            }
+            GitHubError::Network(req_err) => req_err.status().map(|s| s.as_u16()),
             GitHubError::Authentication(_) => Some(401),
             GitHubError::PermissionDenied(_) => Some(403),
             GitHubError::NotFound(_) | GitHubError::RepositoryNotFound(_) => Some(404),
@@ -92,7 +89,8 @@ impl GitHubError {
                 GitHubError::NotFound(_) => "not_found",
                 GitHubError::Network(_) => "network_error",
                 _ => "unknown_error",
-            }.to_string(),
+            }
+            .to_string(),
             message: self.to_string(),
             retryable: self.is_retryable(),
             status_code: self.status_code(),
@@ -132,10 +130,22 @@ mod tests {
 
     #[test]
     fn test_status_codes() {
-        assert_eq!(GitHubError::Authentication("test".to_string()).status_code(), Some(401));
-        assert_eq!(GitHubError::PermissionDenied("test".to_string()).status_code(), Some(403));
-        assert_eq!(GitHubError::NotFound("test".to_string()).status_code(), Some(404));
-        assert_eq!(GitHubError::RateLimit("test".to_string()).status_code(), Some(429));
+        assert_eq!(
+            GitHubError::Authentication("test".to_string()).status_code(),
+            Some(401)
+        );
+        assert_eq!(
+            GitHubError::PermissionDenied("test".to_string()).status_code(),
+            Some(403)
+        );
+        assert_eq!(
+            GitHubError::NotFound("test".to_string()).status_code(),
+            Some(404)
+        );
+        assert_eq!(
+            GitHubError::RateLimit("test".to_string()).status_code(),
+            Some(429)
+        );
     }
 
     #[test]

@@ -211,11 +211,11 @@ Focus on maintainable, testable code.`;
 	/**
 	 * Real-time workflow coordination using fast reasoning
 	 */
-        async coordinateWorkflow(
-                workflowId: string,
-                currentState: unknown,
-                incomingEvents: unknown[],
-        ): Promise<CoordinationDecision> {
+	async coordinateWorkflow(
+		workflowId: string,
+		currentState: unknown,
+		incomingEvents: unknown[],
+	): Promise<CoordinationDecision> {
 		const parsed = coordinateWorkflowSchema.safeParse({
 			workflowId,
 			currentState,

@@ -8,7 +8,6 @@ use crate::codex_tool_config::create_tool_for_codex_tool_call_param;
 use crate::codex_tool_config::create_tool_for_codex_tool_call_reply_param;
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
 use crate::outgoing_message::OutgoingMessageSender;
-use crate::tools::EchoTool;
 use crate::tools::ToolRegistry;
 use codex_protocol::mcp_protocol::ClientRequest;
 use codex_protocol::mcp_protocol::ConversationId;
@@ -61,11 +60,7 @@ impl MessageProcessor {
         let outgoing = Arc::new(outgoing);
         let auth_manager = AuthManager::shared(config.codex_home.clone());
         let conversation_manager = Arc::new(ConversationManager::new(auth_manager.clone()));
-        let mut tool_registry = ToolRegistry::new();
-        tool_registry
-            .register_tool(EchoTool::default())
-            .expect("echo tool registration should succeed");
-        let tool_registry = Arc::new(tool_registry);
+        let tool_registry = Arc::new(ToolRegistry::new());
 
         let codex_message_processor = CodexMessageProcessor::new(
             auth_manager,

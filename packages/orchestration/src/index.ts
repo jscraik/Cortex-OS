@@ -4,30 +4,30 @@
  */
 
 export type {
-        AgentAssignedEvent,
-        AgentFreedEvent,
-        CoordinationStartedEvent,
-        DecisionMadeEvent,
-        OrchestrationEventType,
-        PlanCreatedEvent,
-        PlanUpdatedEvent,
-        ResourceAllocatedEvent,
-        TaskCompletedEvent,
-        TaskCreatedEvent,
-        TaskFailedEvent,
-        TaskStartedEvent,
-} from './events/orchestration-events.js';
-export {
-        ORCHESTRATION_EVENT_SCHEMAS,
-        OrchestrationEventTypes,
-} from './events/orchestration-events.js';
-export type {
-        OrchestrationBus,
-        OrchestrationEventEnvelope,
-        OrchestrationEventHandler,
-        OrchestrationPublishOptions,
+	OrchestrationBus,
+	OrchestrationEventEnvelope,
+	OrchestrationEventHandler,
+	OrchestrationPublishOptions,
 } from './events/orchestration-bus.js';
 export { createOrchestrationBus } from './events/orchestration-bus.js';
+export type {
+	AgentAssignedEvent,
+	AgentFreedEvent,
+	CoordinationStartedEvent,
+	DecisionMadeEvent,
+	OrchestrationEventType,
+	PlanCreatedEvent,
+	PlanUpdatedEvent,
+	ResourceAllocatedEvent,
+	TaskCompletedEvent,
+	TaskCreatedEvent,
+	TaskFailedEvent,
+	TaskStartedEvent,
+} from './events/orchestration-events.js';
+export {
+	ORCHESTRATION_EVENT_SCHEMAS,
+	OrchestrationEventTypes,
+} from './events/orchestration-events.js';
 
 export type {
 	ArchonTaskManagerConfig,
@@ -92,40 +92,38 @@ export const OrchestrationDefaults = {
 	confidenceThreshold: 0.7,
 };
 
-
+export type {
+	AssignTaskInput,
+	AssignTaskResult,
+	CreateTaskInput,
+	CreateTaskResult,
+	GetProcessStatusInput,
+	GetProcessStatusResult,
+	PlanWorkflowInput,
+	PlanWorkflowResult,
+	RecordProcessSignalInput,
+	RecordProcessSignalResult,
+	ReviewWorkflowInput,
+	ReviewWorkflowResult,
+	StartWorkflowInput,
+	StartWorkflowResult,
+	StreamProcessEventsInput,
+	StreamProcessEventsResult,
+	ToolContract,
+	ToolErrorResponse,
+	UpdateTaskStatusInput,
+	UpdateTaskStatusResult,
+} from './mcp/tools.js';
 // MCP tool contracts
 export {
-        ToolErrorCode,
-        ToolValidationError,
-        createToolErrorResponse,
-        toolErrorResponseSchema,
-        workflowOrchestrationTools,
-        taskManagementTools,
-        processMonitoringTools,
-        orchestrationToolContracts,
-} from './mcp/tools.js';
-
-export type {
-        ToolContract,
-        ToolErrorResponse,
-        PlanWorkflowInput,
-        PlanWorkflowResult,
-        StartWorkflowInput,
-        StartWorkflowResult,
-        ReviewWorkflowInput,
-        ReviewWorkflowResult,
-        CreateTaskInput,
-        CreateTaskResult,
-        UpdateTaskStatusInput,
-        UpdateTaskStatusResult,
-        AssignTaskInput,
-        AssignTaskResult,
-        GetProcessStatusInput,
-        GetProcessStatusResult,
-        StreamProcessEventsInput,
-        StreamProcessEventsResult,
-        RecordProcessSignalInput,
-        RecordProcessSignalResult,
+	createToolErrorResponse,
+	orchestrationToolContracts,
+	processMonitoringTools,
+	ToolErrorCode,
+	ToolValidationError,
+	taskManagementTools,
+	toolErrorResponseSchema,
+	workflowOrchestrationTools,
 } from './mcp/tools.js';
 
 // Version info
@@ -136,13 +134,12 @@ export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
 
 // MLX agent integration
 export { MLXAgent } from './integrations/mlx-agent.js';
-// PRP Neural Orchestration Engine
-export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';
-
 // MCP tool exports
 export {
-        orchestrationMcpTools,
-        processMonitoringTool,
-        taskManagementTool,
-        workflowOrchestrationTool,
+	orchestrationMcpTools,
+	processMonitoringTool,
+	taskManagementTool,
+	workflowOrchestrationTool,
 } from './mcp/tools.js';
+// PRP Neural Orchestration Engine
+export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';

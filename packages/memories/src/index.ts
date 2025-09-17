@@ -9,32 +9,33 @@ export { PrismaStore } from './adapters/store.prisma/client.js';
 export { SQLiteStore } from './adapters/store.sqlite.js';
 export {
 	createStoreFromEnv,
-	resolveStoreKindFromEnv
+	resolveStoreKindFromEnv,
 } from './config/store-from-env.js';
 export * from './domain/types.js';
-// A2A Events for inter-package communication
-export {
-	MemoryCreatedEventSchema,
-	MemoryDeletedEventSchema,
-	MemoryRetrievedEventSchema,
-	MemoryUpdatedEventSchema, createMemoryEvent
-} from './events/memory-events.js';
 export type {
 	MemoryCreatedEvent,
 	MemoryDeletedEvent,
 	MemoryRetrievedEvent,
-	MemoryUpdatedEvent
+	MemoryUpdatedEvent,
+} from './events/memory-events.js';
+// A2A Events for inter-package communication
+export {
+	createMemoryEvent,
+	MemoryCreatedEventSchema,
+	MemoryDeletedEventSchema,
+	MemoryRetrievedEventSchema,
+	MemoryUpdatedEventSchema,
 } from './events/memory-events.js';
 // MCP Tools for external AI agent integration
 export {
 	MAX_MEMORY_TEXT_LENGTH,
 	memoryDeleteTool,
 	memoryDeleteToolSchema,
-	memoryMcpTools,
 	memoryGetTool,
 	memoryGetToolSchema,
 	memoryListTool,
 	memoryListToolSchema,
+	memoryMcpTools,
 	memorySearchTool,
 	memorySearchToolSchema,
 	memoryStatsTool,
@@ -42,7 +43,7 @@ export {
 	memoryStoreTool,
 	memoryStoreToolSchema,
 	memoryUpdateTool,
-	memoryUpdateToolSchema
+	memoryUpdateToolSchema,
 } from './mcp/tools.js';
 export * from './ports/Embedder.js';
 export * from './ports/MemoryStore.js';

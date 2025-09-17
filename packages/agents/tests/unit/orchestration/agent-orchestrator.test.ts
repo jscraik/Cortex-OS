@@ -208,11 +208,11 @@ describe('AgentOrchestrator', () => {
 		});
 	});
 
-        describe('Parallel Workflow Execution', () => {
-                it('should execute tasks in parallel', async () => {
-                        const workflow = WorkflowBuilder.create(
-                                'parallel-workflow',
-                                'Parallel Workflow',
+	describe('Parallel Workflow Execution', () => {
+		it('should execute tasks in parallel', async () => {
+			const workflow = WorkflowBuilder.create(
+				'parallel-workflow',
+				'Parallel Workflow',
 			)
 				.parallel(true)
 				.addCodeAnalysis(
@@ -245,9 +245,9 @@ describe('AgentOrchestrator', () => {
 			// Parallel execution should be faster than sequential
 			// (accounting for some overhead, should be less than 1.5x sequential time)
 			expect(executionTime).toBeLessThan(3000);
-                });
+		});
 
-                it('should execute a security task', async () => {
+		it('should execute a security task', async () => {
 			// Mock provider to return security agent JSON
 			vi.mocked(mockProvider.generate).mockResolvedValueOnce({
 				text: JSON.stringify({
@@ -276,60 +276,60 @@ describe('AgentOrchestrator', () => {
 			const result = await orchestrator.executeWorkflow(workflow);
 			expect(result.status).toBe('completed');
 			expect(result.results).toHaveProperty('sec');
-                });
-        });
+		});
+	});
 
-        describe('Lifecycle proxy events', () => {
-                it('uses trace ID generator for lifecycle proxy events', async () => {
-                        const utils = await import('@/lib/utils.js');
-                        const agentIdSpy = vi.spyOn(utils, 'generateAgentId');
-                        const traceIdSpy = vi
-                                .spyOn(utils, 'generateTraceId')
-                                .mockReturnValue('proxy-trace-id');
+	describe('Lifecycle proxy events', () => {
+		it('uses trace ID generator for lifecycle proxy events', async () => {
+			const utils = await import('@/lib/utils.js');
+			const agentIdSpy = vi.spyOn(utils, 'generateAgentId');
+			const traceIdSpy = vi
+				.spyOn(utils, 'generateTraceId')
+				.mockReturnValue('proxy-trace-id');
 
-                        const proxyEventBus = createMockEventBus();
-                        const proxyOrchestrator = createOrchestrator({
-                                providers: { primary: mockProvider },
-                                eventBus: proxyEventBus,
-                                mcpClient: mockMCPClient,
-                                emitLifecycleProxy: true,
-                        });
-                        const baselineAgentCalls = agentIdSpy.mock.calls.length;
+			const proxyEventBus = createMockEventBus();
+			const proxyOrchestrator = createOrchestrator({
+				providers: { primary: mockProvider },
+				eventBus: proxyEventBus,
+				mcpClient: mockMCPClient,
+				emitLifecycleProxy: true,
+			});
+			const baselineAgentCalls = agentIdSpy.mock.calls.length;
 
-                        const workflow = WorkflowBuilder.create(
-                                'proxy-workflow',
-                                'Proxy Workflow',
-                        )
-                                .addCodeAnalysis(
-                                        {
-                                                sourceCode: 'function demo() { return 1; }',
-                                                language: 'javascript',
-                                                analysisType: 'review',
-                                        },
-                                        { id: 'proxy-task' },
-                                )
-                                .build();
+			const workflow = WorkflowBuilder.create(
+				'proxy-workflow',
+				'Proxy Workflow',
+			)
+				.addCodeAnalysis(
+					{
+						sourceCode: 'function demo() { return 1; }',
+						language: 'javascript',
+						analysisType: 'review',
+					},
+					{ id: 'proxy-task' },
+				)
+				.build();
 
-                        await proxyOrchestrator.executeWorkflow(workflow);
+			await proxyOrchestrator.executeWorkflow(workflow);
 
-                        expect(traceIdSpy).toHaveBeenCalledTimes(2);
-                        expect(agentIdSpy.mock.calls.length).toBe(baselineAgentCalls);
+			expect(traceIdSpy).toHaveBeenCalledTimes(2);
+			expect(agentIdSpy.mock.calls.length).toBe(baselineAgentCalls);
 
-                        const startedEvent = proxyEventBus.published.find(
-                                (event) => event.type === 'agent.started',
-                        );
-                        const completedEvent = proxyEventBus.published.find(
-                                (event) => event.type === 'agent.completed',
-                        );
+			const startedEvent = proxyEventBus.published.find(
+				(event) => event.type === 'agent.started',
+			);
+			const completedEvent = proxyEventBus.published.find(
+				(event) => event.type === 'agent.completed',
+			);
 
-                        expect(startedEvent?.data.traceId).toBe('proxy-trace-id');
-                        expect(completedEvent?.data.traceId).toBe('proxy-trace-id');
+			expect(startedEvent?.data.traceId).toBe('proxy-trace-id');
+			expect(completedEvent?.data.traceId).toBe('proxy-trace-id');
 
-                        proxyOrchestrator.shutdown();
-                });
-        });
+			proxyOrchestrator.shutdown();
+		});
+	});
 
-        describe('Workflow Status and Control', () => {
+	describe('Workflow Status and Control', () => {
 		it('should track workflow status', async () => {
 			const workflow = WorkflowBuilder.create(
 				'status-workflow',
@@ -567,11 +567,11 @@ describe('WorkflowBuilder', () => {
 			}).toThrow();
 		});
 
-                it('should generate task IDs when not provided', () => {
-                        const workflow = WorkflowBuilder.create('auto-id', 'Auto ID Workflow')
-                                .addCodeAnalysis({
-                                        sourceCode: 'test',
-                                        language: 'javascript',
+		it('should generate task IDs when not provided', () => {
+			const workflow = WorkflowBuilder.create('auto-id', 'Auto ID Workflow')
+				.addCodeAnalysis({
+					sourceCode: 'test',
+					language: 'javascript',
 					analysisType: 'review',
 				})
 				.addCodeAnalysis({
@@ -581,28 +581,28 @@ describe('WorkflowBuilder', () => {
 				})
 				.build();
 
-                        expect(workflow.tasks[0].id).toBeDefined();
-                        expect(workflow.tasks[1].id).toBeDefined();
-                        expect(workflow.tasks[0].id).not.toBe(workflow.tasks[1].id);
-                });
+			expect(workflow.tasks[0].id).toBeDefined();
+			expect(workflow.tasks[1].id).toBeDefined();
+			expect(workflow.tasks[0].id).not.toBe(workflow.tasks[1].id);
+		});
 
-                it('delegates task ID generation to utility helper', async () => {
-                        const utils = await import('@/lib/utils.js');
-                        const idSpy = vi
-                                .spyOn(utils, 'generateAgentId')
-                                .mockReturnValueOnce('generated-task-id');
+		it('delegates task ID generation to utility helper', async () => {
+			const utils = await import('@/lib/utils.js');
+			const idSpy = vi
+				.spyOn(utils, 'generateAgentId')
+				.mockReturnValueOnce('generated-task-id');
 
-                        const workflow = WorkflowBuilder.create('generated-id', 'Generated IDs')
-                                .addTestGeneration({
-                                        sourceCode: 'function calc() { return 1; }',
-                                        language: 'javascript',
-                                        testType: 'unit',
-                                        framework: 'vitest',
-                                })
-                                .build();
+			const workflow = WorkflowBuilder.create('generated-id', 'Generated IDs')
+				.addTestGeneration({
+					sourceCode: 'function calc() { return 1; }',
+					language: 'javascript',
+					testType: 'unit',
+					framework: 'vitest',
+				})
+				.build();
 
-                        expect(idSpy).toHaveBeenCalledTimes(1);
-                        expect(workflow.tasks[0].id).toBe('generated-task-id');
-                });
-        });
+			expect(idSpy).toHaveBeenCalledTimes(1);
+			expect(workflow.tasks[0].id).toBe('generated-task-id');
+		});
+	});
 });

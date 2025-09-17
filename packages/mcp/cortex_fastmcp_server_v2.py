@@ -111,14 +111,38 @@ def create_server():
         }
 
     @mcp.tool()
+    async def health_check() -> dict[str, Any]:
+        """Simple health-check tool returning server status and version."""
+        return {"status": "ok", "version": "2.0.0"}
+
+    @mcp.tool()
     async def list_capabilities() -> dict[str, Any]:
         """List all available capabilities"""
         return {
-            "tools": ["search", "fetch", "ping", "list_capabilities"],
+            "tools": [
+                "search",
+                "fetch",
+                "ping",
+                "health_check",
+                "list_capabilities",
+            ],
             "resources": [],
             "prompts": [],
             "version": "2.0.0",
         }
+
+    # Optionally expose an HTTP /health route if FastAPI app is available
+    app = getattr(mcp, "app", None)
+    if app is not None:  # pragma: no cover - depends on FastAPI transport being present
+        try:
+
+            @app.get("/health")  # type: ignore[attr-defined]
+            async def _health_route() -> dict[str, Any]:
+                return {"status": "ok", "version": "2.0.0"}
+        except (
+            Exception
+        ):  # pragma: no cover - be resilient if transport not initialized
+            pass
 
     return mcp
 
