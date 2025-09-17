@@ -1,5 +1,0 @@
-FROM node:20-alpine
-WORKDIR /app
-COPY . .
-RUN corepack enable && corepack prepare pnpm@9.7.0 --activate && pnpm -v
-CMD ["node", "-v"]

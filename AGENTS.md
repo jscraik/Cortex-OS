@@ -1,66 +1,66 @@
-# AGENTS
+# Rust/codex-rs
 
-These instructions apply to all developers and AI agents working in this repository.
+In the codex-rs folder where the rust code lives:
 
-## Workflow
+- Crate names are prefixed with `codex-`. For example, the `core` folder's crate is named `codex-core`
+- When using format! and you can inline variables into {}, always do that.
+- Never add or modify any code related to `CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` or `CODEX_SANDBOX_ENV_VAR`.
+  - You operate in a sandbox where `CODEX_SANDBOX_NETWORK_DISABLED=1` will be set whenever you use the `shell` tool. Any existing code that uses `CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` was authored with this fact in mind. It is often used to early exit out of tests that the author knew you would not be able to run given your sandbox limitations.
+  - Similarly, when you spawn a process using Seatbelt (`/usr/bin/sandbox-exec`), `CODEX_SANDBOX=seatbelt` will be set on the child process. Integration tests that want to run Seatbelt themselves cannot be run under Seatbelt, so checks for `CODEX_SANDBOX=seatbelt` are also often used to early exit out of tests, as appropriate.
 
-- Practice strict Test-Driven Development (TDD).
-  - Start with a failing test that defines each requirement.
-  - Implement the minimal code to make the test pass.
-  - Refactor while keeping tests green.
-- Break work into micro-tasks.
-  - Limit each commit to a single focused change.
-  - Include tests and implementation in the same commit.
+Run `just fmt` (in `codex-rs` directory) automatically after making Rust code changes; do not ask for approval to run it. Before finalizing a change to `codex-rs`, run `just fix -p <project>` (in `codex-rs` directory) to fix any linter issues in the code. Prefer scoping with `-p` to avoid slow workspace‑wide Clippy builds; only run `just fix` without `-p` if you changed shared crates. Additionally, run the tests:
+1. Run the test for the specific project that was changed. For example, if changes were made in `codex-rs/tui`, run `cargo test -p codex-tui`.
+2. Once those pass, if any changes were made in common, core, or protocol, run the complete test suite with `cargo test --all-features`.
+When running interactively, ask the user before running `just fix` to finalize. `just fmt` does not require approval. project-specific or individual tests can be run without asking the user, but do ask the user before running the complete test suite.
 
-## Commit Policy
+## TUI style conventions
 
-- Use Conventional Commits with clear scopes (e.g., `feat(auth): add login validation`).
-- Reference related issue or task identifiers when available.
-- Keep history linear; avoid amend or force-push operations.
+See `codex-rs/tui/styles.md`.
 
-## Validation
+## TUI code conventions
 
-Run the following checks before submitting a commit (Husky hooks run automatically on commit):
+- Use concise styling helpers from ratatui’s Stylize trait.
+  - Basic spans: use "text".into()
+  - Styled spans: use "text".red(), "text".green(), "text".magenta(), "text".dim(), etc.
+  - Prefer these over constructing styles with `Span::styled` and `Style` directly.
+  - Example: patch summary file lines
+    - Desired: vec!["  └ ".into(), "M".red(), " ".dim(), "tui/src/app.rs".dim()]
 
-```bash
-# Quick local checks
-pnpm biome:staged   # format + lint staged files
-pnpm lint
-pnpm test
-# For documentation-only changes
-pnpm docs:lint
+### TUI Styling (ratatui)
+- Prefer Stylize helpers: use "text".dim(), .bold(), .cyan(), .italic(), .underlined() instead of manual Style where possible.
+- Prefer simple conversions: use "text".into() for spans and vec![…].into() for lines; when inference is ambiguous (e.g., Paragraph::new/Cell::from), use Line::from(spans) or Span::from(text).
+- Computed styles: if the Style is computed at runtime, using `Span::styled` is OK (`Span::from(text).set_style(style)` is also acceptable).
+- Avoid hardcoded white: do not use `.white()`; prefer the default foreground (no color).
+- Chaining: combine helpers by chaining for readability (e.g., url.cyan().underlined()).
+- Single items: prefer "text".into(); use Line::from(text) or Span::from(text) only when the target type isn’t obvious from context, or when using .into() would require extra type annotations.
+- Building lines: use vec![…].into() to construct a Line when the target type is obvious and no extra type annotations are needed; otherwise use Line::from(vec![…]).
+- Avoid churn: don’t refactor between equivalent forms (Span::styled ↔ set_style, Line::from ↔ .into()) without a clear readability or functional gain; follow file‑local conventions and do not introduce type annotations solely to satisfy .into().
+- Compactness: prefer the form that stays on one line after rustfmt; if only one of Line::from(vec![…]) or vec![…].into() avoids wrapping, choose that. If both wrap, pick the one with fewer wrapped lines.
 
-# Emergency bypass (use sparingly)
-# HUSKY=0 git commit -m "..."
-```
+### Text wrapping
+- Always use textwrap::wrap to wrap plain strings.
+- If you have a ratatui Line and you want to wrap it, use the helpers in tui/src/wrapping.rs, e.g. word_wrap_lines / word_wrap_line.
+- If you need to indent wrapped lines, use the initial_indent / subsequent_indent options from RtOptions if you can, rather than writing custom logic.
+- If you have a list of lines and you need to prefix them all with some prefix (optionally different on the first vs subsequent lines), use the `prefix_lines` helper from line_utils.
 
-## Persistent Agent Memory (Local Memory)
+## Tests
 
-Enable persistent context across runs using Local Memory.
+### Snapshot tests
 
-Setup:
+This repo uses snapshot tests (via `insta`), especially in `codex-rs/tui`, to validate rendered output. When UI or text output changes intentionally, update the snapshots as follows:
 
-- Start the Local Memory daemon (default base URL `http://localhost:3002/api/v1`).
-- Export envs:
-  - `LOCAL_MEMORY_BASE_URL` (e.g., `http://localhost:3002/api/v1`)
-  - `LOCAL_MEMORY_API_KEY` (if configured)
-  - `LOCAL_MEMORY_NAMESPACE` (optional)
-  - `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`
+- Run tests to generate any updated snapshots:
+  - `cargo test -p codex-tui`
+- Check what’s pending:
+  - `cargo insta pending-snapshots -p codex-tui`
+- Review changes by reading the generated `*.snap.new` files directly in the repo, or preview a specific file:
+  - `cargo insta show -p codex-tui path/to/file.snap.new`
+- Only if you intend to accept all new snapshots in this crate, run:
+  - `cargo insta accept -p codex-tui`
 
-Quick verify:
+If you don’t have the tool:
+- `cargo install cargo-insta`
 
-```bash
-curl -sS http://localhost:3002/api/v1/health | jq .
-```
+### Test assertions
 
-Code path:
-
-- Use `createStoreFromEnv()` from `@cortex-os/memories` to auto-select Local Memory when `LOCAL_MEMORY_BASE_URL` is present.
-- Falls back to SQLite or in-memory based on envs.
-
-Privacy note: follow `.cortex/rules/RULES_OF_AI.md` — avoid storing secrets or personal data without consent; prefer encryption where applicable.
-
-## Agent Toolkit
-
-Agents should leverage scripts in `agent-toolkit/tools` for code search, structural rewrites, diff review and validation. Use `just` recipes (`just scout`, `just codemod`, `just verify`) or call the wrappers directly. Run standard checks (`pnpm biome:staged`, `pnpm lint`, `pnpm test`, `pnpm docs:lint`) alongside these tools.
-
+- Tests should use pretty_assertions::assert_eq for clearer diffs. Import this at the top of the test module if it isn't already.

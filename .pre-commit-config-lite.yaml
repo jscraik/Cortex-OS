@@ -1,9 +1,0 @@
-# Lightweight pre-commit hooks for faster setup
-repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-added-large-files
-        args: ["--maxkb=1000"]

@@ -1,8 +1,0 @@
-[
-	{
-		"name": "greeting",
-		"input": "Hello from Cortex-OS!",
-		"expected": { "contains": "Hello" }
-	},
-	{ "name": "math", "input": "What is 2+2?", "expected": { "contains": "4" } }
-]

@@ -1,7 +1,0 @@
-{
-	"name": "@cortex-os/memories",
-	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/memories/src",
-	"projectType": "library",
-	"targets": {}
-}

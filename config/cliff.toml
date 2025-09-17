@@ -1,4 +1,0 @@
-[changelog]
-header = "# Changelog\n\nAll notable changes to this project will be documented in this file."
-body = "{{#each releases}}{{#if not-patch}}\n\n## {{version}} - {{date}}\n{{/if}}\n{{#each commits}}- {{message}}{{/each}}{{/each}}"
-trim = true

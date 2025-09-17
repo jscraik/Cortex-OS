@@ -1,12 +1,11 @@
 {
-	"recommendations": [
-		"biomejs.biome",
-		"redhat.vscode-yaml",
-		"tamasfe.even-better-toml",
-		"dbaeumer.vscode-eslint",
-		"esbenp.prettier-vscode",
-		"ms-python.python",
-		"orta.vscode-jest",
-		"rust-lang.rust-analyzer"
-	]
+    "recommendations": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "vadimcn.vscode-lldb",
+
+        // Useful if touching files in .github/workflows, though most
+        // contributors will not be doing that?
+        // "github.vscode-github-actions",
+    ]
 }

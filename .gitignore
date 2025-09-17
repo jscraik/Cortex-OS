@@ -1,63 +1,83 @@
-node_modules/
-.nx/
+# deps
+# Node.js dependencies
+node_modules
+.pnpm-store
+.pnpm-debug.log
+
+# Keep pnpm-lock.yaml
+!pnpm-lock.yaml
+
+# build
 dist/
-target/
-.venv/
-.mcp-quick-venv/
-.uv/
-.tmp/
-**/.tmp/
-apps/cortex-webui/open-webui/
+build/
+out/
+storybook-static/
 
-# Build artifacts
+# ignore README for publishing
+codex-cli/README.md
+
+# ignore Nix derivation results
+result
+
+# editor
+.vscode/
+.idea/
+.history/
+.zed/
+*.swp
+*~
+
+# cli tools
+CLAUDE.md
+.claude/
+
+# caches
+.cache/
+.turbo/
+.parcel-cache/
+.eslintcache
+.nyc_output/
+.jest/
 *.tsbuildinfo
-*.d.ts.map
-*.js.map
-*.pyc
-__pycache__/
-.coverage
-coverage.xml
-**/coverage/
-coverage/
-htmlcov/
-**/htmlcov/
 
-# Environment files
-.env
-**/.env
-
-# Temporary and cache files
-tmp/
-.venv-*/
-comparisons/
-
-# Security scan reports (do not commit large artifacts)
-semgrep-report.json
-reports/
-
-# Backup files
-*.backup
-
-# Development files
+# logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Security scan artifacts
-semgrep-report.json
-logs/*.log
-# Upstream mirrors / vendored external references for cortex-codex (kept locally only)
-apps/cortex-codex/external/
-!packages/observability/dist/
+# env
+.env*
+!.env.example
 
-# Docusaurus build/cache artifacts (exclude generated site outputs)
-website/.docusaurus/
-website/build/
+# package
+*.tgz
 
-# Rust compiler ICE diagnostic dumps
-apps/cortex-codex/rustc-ice-*.txt
+# ci
+.vercel/
+.netlify/
 
-# Lockfile conflict & backups
-pnpm-lock.conflicted
-pnpm-lock.yaml.bak
+# patches
+apply_patch/
 
-# Misc backup & transient files
-*.bak
+# coverage
+coverage/
+
+# os
+.DS_Store
+Thumbs.db
+Icon?
+.Spotlight-V100/
+
+# Unwanted package managers
+.yarn/
+yarn.lock
+
+# release
+package.json-e
+session.ts-e
+CHANGELOG.ignore.md
+
+# nix related
+.direnv
+.envrc

@@ -1,9 +1,0 @@
-/Users/jamiecraik/.pyenv/versions/3.11.13/lib/python3.11/site-packages/transformers/utils/hub.py:111: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
-  warnings.warn(
-
-⚠️  Found 1 models in legacy location: /Volumes/ExternalSSD/ai-cache/huggingface
-   Please move them to: /Volumes/ExternalSSD/ai-cache/huggingface/hub
-   Command: mv /Volumes/ExternalSSD/ai-cache/huggingface/models--* /Volumes/ExternalSSD/ai-cache/huggingface/hub/
-   This warning will appear until models are moved.
-
-No models found matching 'qwen3-embedding-0.6b-mlx'!

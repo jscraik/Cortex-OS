@@ -1,8 +1,0 @@
-#!/bin/sh
-
-# Source common utilities
-. "$(dirname "$0")/common.sh"
-
-# Validate commit message using commitlint
-echo "Validating commit message..."
-pnpm exec commitlint --edit "$1"

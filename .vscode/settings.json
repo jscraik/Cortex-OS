@@ -1,69 +1,18 @@
 {
-	"security.workspace.trust.enabled": false,
-	"typescript.tsdk": "node_modules/typescript/lib",
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "biomejs.biome",
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit"
-	},
-	"[javascript]": {
-		"editor.defaultFormatter": "vscode.typescript-language-features"
-	},
-	"[typescript]": {
-		"editor.defaultFormatter": "vscode.typescript-language-features"
-	},
-	"[typescriptreact]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
-	"[javascriptreact]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
-	"[json]": {
-		"editor.defaultFormatter": "vscode.json-language-features"
-	},
-	"[jsonc]": {
-		"editor.defaultFormatter": "vscode.json-language-features"
-	},
-	"files.eol": "\n",
-	"nxConsole.generateAiAgentRules": true,
-	"dependi.vulnerability.enabled": true,
-	"dependi.vulnerability.ghsa.enabled": true,
-	"dependi.rust.enabled": true,
-	"dependi.rust.lockFileEnabled": true,
-	"dependi.npm.enabled": true,
-	"dependi.npm.lockFileEnabled": true,
-	"dependi.go.enabled": true,
-	"dependi.python.enabled": true,
-	"dependi.python.lockFileEnabled": true,
-	"dependi.php.enabled": true,
-	"dependi.php.lockFileEnabled": true,
-	"dependi.dart.enabled": true,
-	"dependi.dart.lockFileEnabled": true,
-	"python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python",
-	"debug.javascript.defaultRuntimeExecutable": {
-		"pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
-	},
-	"[yaml]": {
-		"editor.defaultFormatter": "redhat.vscode-yaml",
-		"editor.codeActionsOnSave": {
-			"source.organizeImports.biome": "never"
-		}
-	},
-	"[rust]": {
-		"editor.defaultFormatter": "rust-lang.rust-analyzer"
-	},
-	"[toml]": {
-		"editor.defaultFormatter": "tamasfe.even-better-toml",
-		"editor.codeActionsOnSave": {
-			"source.organizeImports.biome": "never"
-		}
-	},
-	"sonarlint.connectedMode.project": {
-		"connectionId": "jamiescottcraik",
-		"projectKey": "jamiescottcraik_cortex-os"
-	},
-	"[markdown]": {
-		"editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-	},
-	"python.terminal.useEnvFile": true
+    "rust-analyzer.checkOnSave": true,
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.check.extraArgs": ["--all-features", "--tests"],
+    "rust-analyzer.rustfmt.extraArgs": ["--config", "imports_granularity=Item"],
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true,
+    },
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml",
+        "editor.formatOnSave": true,
+    },
+    // Array order for options in ~/.codex/config.toml such as `notify` and the
+    // `args` for an MCP server is significant, so we disable reordering.
+    "evenBetterToml.formatter.reorderArrays": false,
+    "evenBetterToml.formatter.reorderKeys": true,
 }

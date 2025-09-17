@@ -1,43 +1,45 @@
 name: ci
+
 on:
-  push: { branches: ["main"] }
-  pull_request:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  pull_request: { branches: [main] }
+  push: { branches: [main] }
 
 jobs:
-  setup:
+  build-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/setup
-        with:
-          node-version: '22'
-          pnpm-version: '9'
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test:coverage:threshold
-      - run: pnpm build
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-  bun-lane:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          fetch-depth: 0
-      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
-          tool_versions: |
-            nodejs 22
-            bun 1.2.2
-      - run: bun -v
-      - run: bun install --frozen-lockfile || true
-      - run: bun run -T nx run-many -t test --parallel || true
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Run all tasks using workspace filters
+
+      - name: Ensure staging a release works.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./codex-cli/scripts/stage_release.sh
+
+      - name: Ensure root README.md contains only ASCII and certain Unicode code points
+        run: ./scripts/asciicheck.py README.md
+      - name: Check root README ToC
+        run: python3 scripts/readme_toc.py README.md
+
+      - name: Ensure codex-cli/README.md contains only ASCII and certain Unicode code points
+        run: ./scripts/asciicheck.py codex-cli/README.md
+      - name: Check codex-cli/README ToC
+        run: python3 scripts/readme_toc.py codex-cli/README.md

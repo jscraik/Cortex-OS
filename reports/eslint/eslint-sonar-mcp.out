@@ -1,7 +1,0 @@
-ERROR running sonar scan for mcp: Error: No files matching '!/Users/jamiecraik/.Cortex-OS-clean/packages/mcp/dist/**' were found.
-    at FileEnumerator.iterateFiles (/Users/jamiecraik/.Cortex-OS-clean/node_modules/.pnpm/eslint@8.57.1/node_modules/eslint/lib/cli-engine/file-enumerator.js:320:27)
-    at iterateFiles.next (<anonymous>)
-    at CLIEngine.executeOnFiles (/Users/jamiecraik/.Cortex-OS-clean/node_modules/.pnpm/eslint@8.57.1/node_modules/eslint/lib/cli-engine/cli-engine.js:797:48)
-    at ESLint.lintFiles (/Users/jamiecraik/.Cortex-OS-clean/node_modules/.pnpm/eslint@8.57.1/node_modules/eslint/lib/eslint/eslint.js:551:23)
-    at runForDir (file:///Users/jamiecraik/.Cortex-OS-clean/scripts/run-sonarjs-per-package.mjs:94:34)
-    at async main (file:///Users/jamiecraik/.Cortex-OS-clean/scripts/run-sonarjs-per-package.mjs:135:15)

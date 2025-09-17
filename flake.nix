@@ -1,5 +1,5 @@
 {
-  description = "Dev shells for Cortex-OS (Rust nightly + node)";
+  description = "Development Nix flake for OpenAI Codex CLI";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -10,31 +10,48 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, rust-overlay, ... }:
+  outputs = { nixpkgs, flake-utils, rust-overlay, ... }: 
     flake-utils.lib.eachDefaultSystem (system:
       let
-        overlays = [ rust-overlay.overlays.default ];
-        pkgs = import nixpkgs { inherit system overlays; };
-        rust = pkgs.rust-bin.nightly.latest.default;
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          name = "cortex-os-dev";
-          packages = [
-            rust
-            pkgs.cargo
-            pkgs.pkg-config
-            pkgs.openssl
-            pkgs.nodejs_22
-            pkgs.pnpm
-          ];
-          shellHook = ''
-            echo "[cortex-os] Dev shell (nightly rust + node)"
-            rustc --version || true
-            node --version || true
-            pnpm --version || true
-          '';
+        pkgs = import nixpkgs {
+          inherit system;
         };
+        pkgsWithRust = import nixpkgs {
+          inherit system;
+          overlays = [ rust-overlay.overlays.default ];
+        };
+        monorepo-deps = with pkgs; [
+          # for precommit hook
+          pnpm
+          husky
+        ];
+        codex-cli = import ./codex-cli {
+          inherit pkgs monorepo-deps;
+        };
+        codex-rs = import ./codex-rs {
+          pkgs = pkgsWithRust;
+          inherit monorepo-deps;
+        };
+      in
+      rec {
+        packages = {
+          codex-cli = codex-cli.package;
+          codex-rs = codex-rs.package;
+        };
+
+        devShells = {
+          codex-cli = codex-cli.devShell;
+          codex-rs = codex-rs.devShell;
+        };
+
+        apps = {
+          codex-cli = codex-cli.app;
+          codex-rs = codex-rs.app;
+        };
+
+        defaultPackage = packages.codex-cli;
+        defaultApp = apps.codex-cli;
+        defaultDevShell = devShells.codex-cli;
       }
     );
 }

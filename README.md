@@ -1,450 +1,105 @@
-# Cortex-OS
+<h1 align="center">OpenAI Codex CLI</h1>
 
-<!-- markdownlint-disable MD013 -->
+<p align="center"><code>npm i -g @openai/codex</code><br />or <code>brew install codex</code></p>
 
-![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-20.x%20or%2022.x-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
+<p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
+</br>
+</br>If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="https://developers.openai.com/codex/ide">install in your IDE</a>
+</br>If you are looking for the <em>cloud-based agent</em> from OpenAI, <strong>Codex Web</strong>, go to <a href="https://chatgpt.com/codex">chatgpt.com/codex</a></p>
 
-<!-- Future: replace static coverage badge with dynamic endpoint (GitHub Pages JSON endpoint reading reports/coverage-badge.json) -->
-
-<!-- markdownlint-enable MD013 -->
-
-## Autonomous Software Behavior Reasoning (ASBR) Runtime
-
-Clean, governed monorepo with strict architectural boundaries and
-comprehensive quality gates.
-
-[Documentation](#documentation) • [Quick Start](./docs/quick-start.md) •
-[Architecture](./docs/architecture-overview.md) • [Python Integration](./docs/python-integration.md) •
-[Contributing](#contributing) • [Packages](#packages)
+<p align="center">
+  <img src="./.github/codex-cli-splash.png" alt="Codex CLI splash" width="80%" />
+  </p>
 
 ---
 
-## Overview
+## Quickstart
 
-Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR)
-Runtime** enabling AI agents to collaborate through event-driven architecture
-and Model Context Protocol (MCP) integrations. The system implements strict
-governance boundaries, comprehensive testing, and security practices.
+### Installing and running Codex CLI
 
-### 🎯 Key Features
+Install globally with your preferred package manager. If you use npm:
 
-- **🤖 AI Agent Orchestration** – Multi-agent workflows with A2A communication
-- **🔌 MCP Integration** – Standardized tool integration via MCP
-- **🛡️ Security First** – OWASP compliance, SBOM generation, vulnerability scanning
-- **📊 Observability** – Monitoring, tracing, analytics hooks
-- **🏗️ Governed Architecture** – Import boundaries (ESLint + Nx)
-- **🧪 Quality Gates** – 90% test coverage & automated scans
-- **🚀 Production Ready** – Docker deployment & CI/CD pipelines
+```shell
+npm install -g @openai/codex
+```
+
+Alternatively, if you use Homebrew:
+
+```shell
+brew install codex
+```
+
+Then simply run `codex` to get started:
+
+```shell
+codex
+```
+
+<details>
+<summary>You can also go to the <a href="https://github.com/openai/codex/releases/latest">latest GitHub Release</a> and download the appropriate binary for your platform.</summary>
+
+Each GitHub Release contains many executables, but in practice, you likely want one of these:
+
+- macOS
+  - Apple Silicon/arm64: `codex-aarch64-apple-darwin.tar.gz`
+  - x86_64 (older Mac hardware): `codex-x86_64-apple-darwin.tar.gz`
+- Linux
+  - x86_64: `codex-x86_64-unknown-linux-musl.tar.gz`
+  - arm64: `codex-aarch64-unknown-linux-musl.tar.gz`
+
+Each archive contains a single entry with the platform baked into the name (e.g., `codex-x86_64-unknown-linux-musl`), so you likely want to rename it to `codex` after extracting it.
+
+</details>
+
+### Using Codex with your ChatGPT plan
+
+<p align="center">
+  <img src="./.github/codex-cli-login.png" alt="Codex CLI login" width="80%" />
+  </p>
+
+Run `codex` and select **Sign in with ChatGPT**. We recommend signing into your ChatGPT account to use Codex as part of your Plus, Pro, Team, Edu, or Enterprise plan. [Learn more about what's included in your ChatGPT plan](https://help.openai.com/en/articles/11369540-codex-in-chatgpt).
+
+You can also use Codex with an API key, but this requires [additional setup](./docs/authentication.md#usage-based-billing-alternative-use-an-openai-api-key). If you previously used an API key for usage-based billing, see the [migration steps](./docs/authentication.md#migrating-from-usage-based-billing-api-key). If you're having trouble with login, please comment on [this issue](https://github.com/openai/codex/issues/1243).
+
+### Model Context Protocol (MCP)
+
+Codex CLI supports [MCP servers](./docs/advanced.md#model-context-protocol-mcp). Enable by adding an `mcp_servers` section to your `~/.codex/config.toml`.
+
+
+### Configuration
+
+Codex CLI supports a rich set of configuration options, with preferences stored in `~/.codex/config.toml`. For full configuration options, see [Configuration](./docs/config.md).
 
 ---
 
-## Quick Start (Condensed)
-
-See the full guide: [docs/quick-start.md](./docs/quick-start.md)
-
-```bash
-git clone https://github.com/cortex-os/cortex-os.git
-cd cortex-os
-
-# Run automated setup (installs deps, auto-trusts mise, sets up hooks, lints, validates structure)
-./scripts/dev-setup.sh
-
-# For a minimal setup with lightweight hooks:
-# ./scripts/dev-setup.sh --minimal
-
-# Optional: customize workspace home (defaults to ~/.Cortex-OS)
-export CORTEX_OS_HOME="$HOME/.Cortex-OS"
-
-# Verify installation
-pnpm readiness:check
-pnpm dev
-```
-
-Helpful:
-
-```bash
-pnpm build
-pnpm test:coverage
-pnpm security:scan
-pnpm structure:validate
-
-# Husky-only hooks
-# Manually run a quick pre-commit equivalent if needed:
-pnpm biome:staged  # format + lint staged files
-pnpm test:safe     # safe, minimal tests
-
-# Emergency: bypass hooks (use sparingly)
-HUSKY=0 git commit -m "chore: temp bypass"
-```
-
----
-
-## Architecture Snapshot
-
-High‑level governed monorepo:
-
-- UI + runtime apps mount feature packages via DI
-- Feature packages communicate via **A2A events** and **MCP tools**
-- Contracts + schemas in `libs/typescript/contracts`
-- Governance rules & structure validation in `.cortex/`
-
-More detail: [Architecture Overview](./docs/architecture-overview.md) • Full reference: [architecture.md](./docs/architecture.md)
-
----
-
-## Python Integration (Instructor + Ollama)
-
-Structured LLM usage standardized via `cortex_ml.instructor_client` with
-Instructor + Ollama (OpenAI-compatible). Deterministic defaults
-(`temperature=0.0`, `seed=42`).
-
-Full guide: [Python Integration](./docs/python-integration.md)
-
----
-
-## Documentation
-
-### 📚 Core Documentation
-
-- **[Architecture Guide](./docs/architecture.md)** – System design and patterns
-- **[Architecture Overview](./docs/architecture-overview.md)** – High-level summary
-- **[Quick Start](./docs/quick-start.md)** – Fast setup path
-- **[Python Integration](./docs/python-integration.md)** – Instructor + Ollama
-- **[Deployment Guide](./docs/deployment.md)** – Production deployment
-- **[Security Guide](./docs/security.md)** – Security practices and compliance
-- **[Streaming Modes](./docs/streaming-modes.md)** – Token, aggregated, and JSON streaming (CLI + config)
-
-### 🛠️ Development Documentation
-
-- **[Development Setup](./docs/development-setup.md)** – Local environment
-- **[Testing Guide](./docs/testing.md)** – Strategies and practices
-- **[Contributing Guide](./CONTRIBUTING.md)** – How to contribute
-- **[Code of Conduct](./CODE_OF_CONDUCT.md)** – Community guidelines
-
-### 📖 Package Documentation
-
-| Package            | Description                  | Documentation                                   |
-| ------------------ | ---------------------------- | ----------------------------------------------- |
-| `cortex-ai-github` | AI-powered GitHub automation | [README](./packages/cortex-ai-github/README.md) |
-| `cortex-code`      | Terminal user interface      | [README](./apps/cortex-code/README.md)          |
-| `a2a`              | Agent-to-agent communication | [README](./packages/a2a/README.md)              |
-| `mcp`              | Model Context Protocol       | [README](./packages/mcp/README.md)              |
-| `orchestration`    | Multi-agent workflows        | [README](./packages/orchestration/README.md)    |
-
----
-
-## Packages
-
-### 🤖 AI & Automation
-
-- **[cortex-ai-github](./packages/cortex-ai-github/)** – GitHub automation
-- **[agents](./packages/agents/)** – Core AI agent behaviors
-- **[rag](./packages/rag/)** – Retrieval-Augmented Generation pipeline
-- **[orchestration](./packages/orchestration/)** – Multi-agent workflows
-
-### 🔌 Communication & Integration
-
-- **[a2a](./packages/a2a/)** – JSON-RPC 2.0 agent messaging
-- **[mcp](./packages/mcp/)** – Model Context Protocol integration
-- **[mcp-bridge](./packages/mcp-bridge/)** – MCP transport bridge
-- **[mcp-registry](./packages/mcp-registry/)** – MCP plugin registry
-
-### 💾 Data & Memory
-
-- **[memories](./packages/memories/)** – State management (Neo4j/Qdrant)
-- **[registry](./packages/registry/)** – Service registry and discovery
-- **[mvp](./packages/mvp/)** – MVP core functionality
-
-### 🛡️ Security & Quality
-
-- **[security](./packages/security/)** – OWASP compliance and mTLS
-- **[simlab](./packages/simlab/)** – Simulation test environment
-- **[contracts](./libs/typescript/contracts/)** – Type-safe contracts
-
-### 🖥️ User Interfaces
-
-- **[cortex-os](./apps/cortex-os/)** – Runtime application
-- **[cortex-code](./apps/cortex-code/)** – Terminal UI
-- **[cortex-webui](./apps/cortex-webui/)** – Web dashboard
-- **[cortex-cli](./apps/cortex-cli/)** – Command-line tools
-
----
-
-## Development & Quality Gates (Summary)
-
-### 🔁 Streaming Modes (CLI Summary)
-
-The CLI and runtime support flexible model output streaming with strict precedence control.
-
-- Default behavior: token deltas streamed to stdout
-- Aggregated final output: use `--aggregate` (or set config `stream.mode = "aggregate"`)
-- Force token streaming when aggregate is configured: `--no-aggregate`
-- JSON event streaming for programmatic consumption: `--json` (alias) or `--stream-json` (emits events: `delta`, `item`, `completed`)
-- Precedence: CLI flag > environment (`CORTEX_STREAM_MODE`) > config file > internal default
-
-See full spec & examples: [Streaming Modes Documentation](./docs/streaming-modes.md)
-
-```bash
-pnpm lint               # ESLint + Prettier
-pnpm test:coverage      # 90% coverage threshold
-pnpm security:scan      # Semgrep OWASP profiles
-pnpm structure:validate # Governance/import rules
-pnpm nx graph           # Dependency visualization
-scripts/list-rust-editions.sh -e 2024  # Audit crates pinned to Rust 2024 edition
-scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config files
-```
-
-> **Latest:** Improved streaming modes with unified `--stream-mode` flag, JSON schema validation,
-> and comprehensive automation examples. See [`docs/streaming-modes.md`](./docs/streaming-modes.md).
-
-### 🛡️ Code Quality & Security Automation
-
-This repository enforces a layered quality model combining fast local feedback, pre-push hard gates, and CI/PR decoration:
-
-| Layer             | Scope             | Tools                                                                                                     | Failing Effect                    |
-| ----------------- | ----------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| Pre-commit (fast) | Staged files only | Biome/ESLint formatting, minimal lint, pattern guard, `.env` presence check                               | Blocks commit (fix immediately)   |
-| Pre-push (full)   | Entire workspace  | Typecheck (TS/py), Ruff, Semgrep focused profiles, tests + coverage, structural governance                | Blocks push (stops degraded code) |
-| CI Workflows      | Trusted baseline  | Semgrep SARIF (OWASP + LLM + Top 10), optional SonarCloud, structure validation, license + security scans | Blocks merge via required checks  |
-
-### 🧪 TDD Enforcement
-
-This repository enforces Test-Driven Development practices using the TDD Coach package:
-
-| Layer          | Scope         | Tools                  | Failing Effect                     |
-| -------------- | ------------- | ---------------------- | ---------------------------------- |
-| Development    | Real-time     | TDD Coach Watch Mode   | Immediate feedback in IDE          |
-| Pre-commit     | Staged files  | TDD Coach Validation   | Blocks non-TDD compliant commits   |
-| CI/CD Pipeline | Pull requests | TDD Coach Status Check | Blocks merge of non-compliant code |
-
-To enforce TDD practices:
-
-```bash
-# Set up TDD Coach
-make tdd-setup
-
-# Check current TDD status
-make tdd-status
-
-# Validate specific files
-make tdd-validate FILES="src/file1.ts src/file2.ts"
-
-# Run in watch mode during development
-make tdd-watch
-```
-
-See [TDD Enforcement Guide](./docs/tdd-enforcement-guide.md) for detailed instructions.
-
-#### Semgrep Usage
-
-Baseline (captures current state – do NOT run casually unless intentionally resetting):
-
-```bash
-pnpm security:scan:baseline   # writes reports/semgrep-baseline.json
-```
-
-Diff against baseline (local developer check before large refactors / PR polish):
-
-```bash
-pnpm security:scan:diff       # generates current + compares; exits non-zero on NEW findings
-```
-
-CI pipeline runs (excerpt):
-
-```bash
-pnpm security:scan:ci         # produces JSON report consumed for SARIF conversion
-```
-
-Reports directory structure (examples):
-
-```text
-reports/
-  semgrep-baseline.json   # canonical baseline – versioned in repo if approved
-  semgrep-current.json    # transient diff artefact
-  semgrep-results.json    # CI raw scan output
-```
-
-#### SonarCloud (Optional)
-
-`sonar-project.properties` config exists at repo root. CI workflow (`sonar.yml`) performs:
-
-1. Install + cache dependencies
-2. Run tests & collect coverage
-3. Invoke Sonar scanner for PR decoration + quality gate
-
-To disable: delete the workflow or restrict with a branch condition.
-
-#### Common Commands
-
-```bash
-pnpm lint:all             # Full lint suite across workspace
-pnpm security:scan        # Focused Semgrep (primary OWASP profile)
-pnpm security:scan:all    # Expanded profiles (OWASP + LLM + MITRE ATLAS)
-pnpm security:scan:diff   # New issues vs baseline only
-pnpm test:coverage        # Enforces 90%+ threshold
-pnpm structure:validate   # Governance / import boundary integrity
-```
-
-#### Developer Workflow Tips
-
-- Keep baseline churn intentional – treat resets as mini change-control events.
-- Prefer suppressions (`// semgrep-disable-next-line <rule-id>`) with justification comments.
-- Run `pnpm security:scan:diff` before pushing if you touched risky surfaces (auth, network, dynamic exec, file IO).
-- Use `nx graph` to visualize dependency impact of refactors prior to wide code moves.
-- Use the canonical variable catalog in `.env.example`; keep the tracked `.env` scrubbed
-  (no real secrets) and load real values via untracked overlays or a secret manager.
-
-Further detail: see [`SECURITY.md`](./SECURITY.md) and future `docs/code-quality.md` (placeholder to expand if needed).
-
----
-
-## Automated Linting & Scheduled Quality Runs
-
-In addition to on-demand commands and the existing **nightly quality** workflow, the repository includes a **scheduled lint** workflow: `scheduled-lint.yml`.
-
-### Schedule
-
-Runs three times daily at 10:00, 14:00, and 20:00 UTC (GMT). You can also trigger it manually via the Actions tab.
-
-### Workflow Steps
-
-| Phase             | Command                      | Purpose                                               |
-| ----------------- | ---------------------------- | ----------------------------------------------------- |
-| Biome (changed)   | `pnpm biome:ci`              | Fast style + formatting validation                    |
-| ESLint (quality)  | `pnpm lint:quality`          | Core quality & import rules                           |
-| ESLint (security) | `pnpm lint:security`         | Security-focused rules (sonarjs, boundaries)          |
-| Ruff (Python)     | `pnpm python:lint`           | Python style & lint consistency                       |
-| Structure         | `pnpm structure:validate`    | Enforces architecture governance                      |
-| Pattern Guard     | `pnpm lint:ripgrep:hardened` | Detects secrets, debug statements, forbidden patterns |
-| AST Policy        | `pnpm lint:ast-grep:check`   | Enforces structural AST policies                      |
-
-All steps soft-fail (`|| true`) to ensure an aggregated summary; review logs for violations.
-Promote to hard failure by removing `|| true` once baseline is clean.
-
-### Local Parity
-
-```bash
-pnpm lint:all            # Aggregated lint suite
-pnpm structure:validate  # Governance integrity
-# Manual pre-commit equivalent (Husky hooks run automatically on commit)
-pnpm biome:staged  # format + lint staged files
-pnpm test:safe     # quick, low-risk tests
-```
-
-### Future Enhancements (Optional)
-
-1. Open an issue automatically if violations increase week-over-week.
-2. Upload SARIF for AST-Grep + pattern guard to unify security dashboards.
-3. Persist weekly lint trend JSON similar to coverage trend.
-
----
-
-## Contributing
-
-We welcome contributions! See the [Contributing Guide](./CONTRIBUTING.md) for details.
-
-Quick Flow:
-
-1. Fork
-2. Branch: `git checkout -b feature/awesome`
-3. Implement + tests + docs
-4. `pnpm lint && pnpm test`
-5. Commit & push
-6. Open PR (follows template)
+### Docs & FAQ
+
+- [**Getting started**](./docs/getting-started.md)
+  - [CLI usage](./docs/getting-started.md#cli-usage)
+  - [Running with a prompt as input](./docs/getting-started.md#running-with-a-prompt-as-input)
+  - [Example prompts](./docs/getting-started.md#example-prompts)
+  - [Memory with AGENTS.md](./docs/getting-started.md#memory-with-agentsmd)
+  - [Configuration](./docs/config.md)
+- [**Sandbox & approvals**](./docs/sandbox.md)
+- [**Authentication**](./docs/authentication.md)
+  - [Auth methods](./docs/authentication.md#forcing-a-specific-auth-method-advanced)
+  - [Login on a "Headless" machine](./docs/authentication.md#connecting-on-a-headless-machine)
+- [**Advanced**](./docs/advanced.md)
+  - [Non-interactive / CI mode](./docs/advanced.md#non-interactive--ci-mode)
+  - [Tracing / verbose logging](./docs/advanced.md#tracing--verbose-logging)
+  - [Model Context Protocol (MCP)](./docs/advanced.md#model-context-protocol-mcp)
+- [**Zero data retention (ZDR)**](./docs/zdr.md)
+- [**Contributing**](./docs/contributing.md)
+- [**Install & build**](./docs/install.md)
+  - [System Requirements](./docs/install.md#system-requirements)
+  - [DotSlash](./docs/install.md#dotslash)
+  - [Build from source](./docs/install.md#build-from-source)
+- [**FAQ**](./docs/faq.md)
+- [**Open source fund**](./docs/open-source-fund.md)
 
 ---
 
 ## License
 
-MIT – see [LICENSE](./LICENSE)
+This repository is licensed under the [Apache-2.0 License](LICENSE).
 
----
-
-## Support
-
-- **📧 Email**: <support@cortex-os.dev>
-- **💬 Discussions**: [GitHub Discussions](https://github.com/cortex-os/cortex-os/discussions)
-- **🐛 Issues**: [GitHub Issues](https://github.com/cortex-os/cortex-os/issues)
-- **📖 Documentation**: <https://docs.cortex-os.dev>
-
----
-
-## Acknowledgments
-
-- Model Context Protocol (MCP)
-- A2A event-driven agent patterns
-- OWASP & MITRE guidance
-- OpenAI + Instructor ecosystem
-
----
-
-Built with ❤️ by the Cortex-OS Team
-
-<!-- markdownlint-disable MD013 -->
-
-![GitHub Stars](https://img.shields.io/github/stars/cortex-os/cortex-os?style=social) ![GitHub Forks](https://img.shields.io/github/forks/cortex-os/cortex-os?style=social) ![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os) ![GitHub PRs](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)
-
-<!-- markdownlint-enable MD013 -->
-
-## Submodules
-
-This repository uses `git submodule` for certain external, read-only references.
-
-Currently included:
-
-| Path                    | Upstream                              | Purpose                                                                                            |
-| ----------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `external/openai-codex` | <https://github.com/openai/codex.git> | Reference implementation; selectively copy patterns (no direct cross-imports in governed domains). |
-
-See overlay governance guide: [openai-codex overlay](./docs/submodules/openai-codex.md)
-
-### Working With Submodules
-
-Clone (including submodules):
-
-```bash
-git clone --recurse-submodules https://github.com/cortex-os/cortex-os.git
-```
-
-If you already cloned without `--recurse-submodules`:
-
-```bash
-git submodule update --init --recursive
-```
-
-Pull latest (root + all submodules):
-
-```bash
-git pull --recurse-submodules
-# Or explicitly
-git submodule update --remote --merge
-```
-
-Inspect status:
-
-```bash
-git submodule status
-```
-
-Pin a submodule to a newer upstream commit:
-
-```bash
-cd external/openai-codex
-git fetch origin
-git checkout <new-commit-or-tag>
-cd -
-git add external/openai-codex
-git commit -m "chore(submodule): bump openai-codex to <sha>"
-```
-
-Remove a submodule (example for `external/openai-codex`):
-
-```bash
-git submodule deinit -f external/openai-codex
-rm -rf .git/modules/external/openai-codex
-git rm -f external/openai-codex
-# Edit .gitmodules if other entries remain
-```
-
-> Governance: Do **not** import submodule code directly across feature boundaries.
-> Copy needed snippets into governed packages and add tests + attribution.

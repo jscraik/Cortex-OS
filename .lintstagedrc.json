@@ -1,5 +1,0 @@
-{
-	"**/*.{js,jsx,ts,tsx,json,jsonc}": [
-		"biome check --write --no-errors-on-unmatched --max-diagnostics=none"
-	]
-}

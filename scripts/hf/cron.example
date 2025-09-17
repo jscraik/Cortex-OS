@@ -1,3 +1,0 @@
-# Run daily at 3am (edit path and user as needed)
-# m h  dom mon dow   command
-0 3 * * * /Users/jamiecraik/.Cortex-OS/scripts/hf/migrate_models_to_hub.sh >> /tmp/migrate-hf-models.log 2>&1

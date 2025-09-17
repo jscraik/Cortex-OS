@@ -1,9 +1,0 @@
-{
-	"$schema": "../../schemas/policy.tools.schema.json",
-	"tool": "git-map",
-	"actions": ["tree", "snippet", "search"],
-	"args": { "repo": { "type": "string" }, "path": { "type": "string" } },
-	"dataClass": "internal",
-	"rate": { "perMinute": 30 },
-	"fsScope": ["apps/cortex-os", "packages", "docs"]
-}

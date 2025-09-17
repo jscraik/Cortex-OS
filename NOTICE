@@ -1,20 +1,6 @@
-Cortex-OS
+OpenAI Codex
+Copyright 2025 OpenAI
 
-Copyright (c) 2025 Cortex-OS contributors
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this product except in compliance with the License. You may obtain a copy of the License at:
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
-This NOTICE file is for informational purposes only and does not modify the License. Any additional attributions included below are provided for convenience.
-
-Third-party notices and attributions:
-
-- This product may include software components licensed under their respective open-source licenses. See individual source files and package manifests for details.
-- A complete list of third-party licenses is available in dependency manifests (e.g., package.json, pyproject.toml) and any generated SBOMs.
-
-Trademarks:
-
-- "Cortex-OS" and related marks are trademarks or registered trademarks of their respective owners. Use of trademarks is subject to applicable trademark policies.
+This project includes code derived from [Ratatui](https://github.com/ratatui/ratatui), licensed under the MIT license.
+Copyright (c) 2016-2022 Florian Dehau
+Copyright (c) 2023-2025 The Ratatui Developers
