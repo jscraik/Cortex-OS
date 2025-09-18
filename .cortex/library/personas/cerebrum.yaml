@@ -1,8 +1,12 @@
 id: 'Cortex-OS-repo'
 priority: 100
 modelHints:
-  provider: 
+  provider: mlx
   model: 
+    - glm-4.5-mlx
+    - qwen3-coder:30b
+    - gpt-oss:20b
+    - phi4-mini-reasoning
 rules:
   - 'Keep diffs minimal and explain the why'
   - 'Enforce WCAG 2.2 AA and no color-only signaling'
