@@ -19,7 +19,7 @@ export abstract class ShellScriptAdapter {
 	/**
 	 * Execute shell script with arguments and return parsed JSON result
 	 */
-	protected async executeScript(args: string[]): Promise<unknown> {
+	public async executeScript(args: string[]): Promise<unknown> {
 		try {
 			const { stdout, stderr } = await execFileAsync(this.scriptPath, args, {
 				timeout: this.timeout,
@@ -54,7 +54,7 @@ export abstract class ShellScriptAdapter {
 	/**
 	 * Check if script file exists and is executable
 	 */
-	protected async validateScript(): Promise<void> {
+	public async validateScript(): Promise<void> {
 		try {
 			const fs = await import('node:fs/promises');
 			await fs.access(this.scriptPath, fs.constants.F_OK | fs.constants.X_OK);

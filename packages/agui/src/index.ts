@@ -1,5 +1,5 @@
-import type { EventEmitter } from 'node:events';
 import { createAGUIClient } from '@ag-ui/core';
+import type { EventEmitter } from 'node:events';
 
 export function createAGUIAdapter(emitter: EventEmitter) {
 	const agui = createAGUIClient({ transport: 'sse' });
@@ -11,13 +11,10 @@ export function createAGUIAdapter(emitter: EventEmitter) {
 	return agui;
 }
 
-// A2A Events
-export {
-	type AiRecommendationEvent,
-	createAguiEvent,
-	type UiComponentRenderedEvent,
-	type UiStateChangedEvent,
-	type UserInteractionEvent,
-} from './events/agui-events.js';
+// Re-export AGUI events from shared contracts location
+export * from '@cortex-os/contracts/agui';
+// Legacy exports for backward compatibility (deprecated)
+/** @deprecated Use imports from '@cortex-os/contracts/agui' instead */
+export { createAguiEvent } from '@cortex-os/contracts/agui';
 // MCP Integration
 export { aguiMcpTools } from './mcp/tools.js';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTopicAcl } from './acl';
+import { createTopicAcl } from './acl.js';
 
 describe('Topic ACL', () => {
 	const acl = createTopicAcl({

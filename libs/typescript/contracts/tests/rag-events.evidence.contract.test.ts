@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ragQueryCompletedSchema } from '../src/rag-events';
+import { ragQueryCompletedSchema } from '../src/rag-events.js';
 
 describe('contract: RAG query completed evidence extension', () => {
 	const base = {

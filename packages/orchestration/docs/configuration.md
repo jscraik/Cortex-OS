@@ -9,9 +9,7 @@ Set environment variables in `.env` or process environment.
 - `CORTEX_HITL_TIMEOUT_MS` – wait time for approval (default 300000)
 
 ## Provider URLs
-- `MLX_SERVICE_URL` – base URL for MLX inference
 - `OLLAMA_URL` – Ollama service endpoint
-- `MLX_CACHE_DIR` – model cache directory
 
 ## Python Bridge
 - `PYTHONPATH` extends module lookup when spawning agents

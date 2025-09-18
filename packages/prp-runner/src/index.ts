@@ -29,6 +29,9 @@ export {
 } from './events/prp-runner-events.js';
 export { createExecutionContext } from './lib/create-execution-context.js';
 export { executeNeuron } from './lib/execute-neuron.js';
+
+// New architecture components
+export * from './lib/index.js';
 export type { LLMConfig } from './llm-bridge.js';
 export { LLMBridge } from './llm-bridge.js';
 // MCP Integration

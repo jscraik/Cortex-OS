@@ -1,15 +1,19 @@
 /**
  * Cortex OS Orchestration Package
- * Simplified exports focusing on PRP neural orchestration with Archon integration
+ * LangGraph-only orchestration surface (no legacy orchestrator exports)
  */
 
+export { createOrchestrationBus } from './events/orchestration-bus.js';
 export type {
 	OrchestrationBus,
 	OrchestrationEventEnvelope,
 	OrchestrationEventHandler,
-	OrchestrationPublishOptions,
+	OrchestrationPublishOptions
 } from './events/orchestration-bus.js';
-export { createOrchestrationBus } from './events/orchestration-bus.js';
+export {
+	ORCHESTRATION_EVENT_SCHEMAS,
+	OrchestrationEventTypes
+} from './events/orchestration-events.js';
 export type {
 	AgentAssignedEvent,
 	AgentFreedEvent,
@@ -22,25 +26,10 @@ export type {
 	TaskCompletedEvent,
 	TaskCreatedEvent,
 	TaskFailedEvent,
-	TaskStartedEvent,
-} from './events/orchestration-events.js';
-export {
-	ORCHESTRATION_EVENT_SCHEMAS,
-	OrchestrationEventTypes,
+	TaskStartedEvent
 } from './events/orchestration-events.js';
 
-export type {
-	ArchonTaskManagerConfig,
-	OrchestrationTask,
-	TaskManagerEvents,
-} from './integrations/archon-task-manager.js';
-// Archon Task Manager Integration
-export {
-	ArchonTaskManager,
-	createArchonTaskManager,
-	createOrchestrationArchonIntegration,
-	OrchestrationArchonIntegration,
-} from './integrations/archon-task-manager.js';
+// Legacy integrations removed (LangGraph-only)
 // Core types and interfaces
 // Enum types
 export type {
@@ -71,7 +60,7 @@ export type {
 	QdrantConfig,
 	StrategicDecision,
 	SynchronizationPoint,
-	Task,
+	Task
 } from './types.js';
 // Enums
 export {
@@ -79,7 +68,7 @@ export {
 	CoordinationStrategy,
 	DecisionStrategy,
 	OrchestrationStrategy,
-	Schemas,
+	Schemas
 } from './types.js';
 
 // Utility defaults
@@ -92,48 +81,19 @@ export const OrchestrationDefaults = {
 	confidenceThreshold: 0.7,
 };
 
-export type {
-	AssignTaskInput,
-	AssignTaskResult,
-	CreateTaskInput,
-	CreateTaskResult,
-	GetProcessStatusInput,
-	GetProcessStatusResult,
-	PlanWorkflowInput,
-	PlanWorkflowResult,
-	RecordProcessSignalInput,
-	RecordProcessSignalResult,
-	ReviewWorkflowInput,
-	ReviewWorkflowResult,
-	StartWorkflowInput,
-	StartWorkflowResult,
-	StreamProcessEventsInput,
-	StreamProcessEventsResult,
-	ToolContract,
-	ToolErrorResponse,
-	UpdateTaskStatusInput,
-	UpdateTaskStatusResult,
-} from './mcp/tools.js';
+export type { ToolContract, ToolErrorResponse } from './mcp/tools.js';
 // MCP tool contracts
 export {
 	createToolErrorResponse,
 	orchestrationToolContracts,
-	processMonitoringTools,
-	ToolErrorCode,
-	ToolValidationError,
-	taskManagementTools,
-	toolErrorResponseSchema,
-	workflowOrchestrationTools,
+	processMonitoringTools, taskManagementTools, ToolErrorCode, toolErrorResponseSchema, ToolValidationError, workflowOrchestrationTools
 } from './mcp/tools.js';
 
 // Version info
 export const version = '1.0.0';
 export const name = '@cortex-os/orchestration';
 
-export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
-
-// MLX agent integration
-export { MLXAgent } from './integrations/mlx-agent.js';
+// LangGraph-only: MLX agent integration removed from public surface
 // LangGraph foundation (Phase 2)
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 // MCP tool exports
@@ -141,7 +101,6 @@ export {
 	orchestrationMcpTools,
 	processMonitoringTool,
 	taskManagementTool,
-	workflowOrchestrationTool,
+	workflowOrchestrationTool
 } from './mcp/tools.js';
-// PRP Neural Orchestration Engine
-export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';
+// LangGraph-only: legacy engines are no longer exported

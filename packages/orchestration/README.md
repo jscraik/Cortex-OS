@@ -9,8 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
 
-**Multi-Agent Workflow Coordination for Cortex-OS ASBR Runtime**  
-*Real AI orchestration with LangGraph, CrewAI, and Python-TypeScript bridge architecture*
+Multi-Agent Workflow Coordination for Cortex-OS ASBR Runtime — LangGraph-only (TypeScript-first)
 
 </div>
 
@@ -18,7 +17,9 @@
 
 ## 🎯 Overview
 
-Cortex Orchestration provides **production-ready multi-agent coordination** for the Cortex-OS ASBR runtime following the **BVOO (Bounded, Validated, Observable Orchestration)** engineering principle. This package implements real AI agent execution using LangGraph and CrewAI frameworks via a sophisticated Python-TypeScript bridge architecture, enabling intelligent task distribution, resource management, and collaborative problem-solving.
+Cortex Orchestration provides **production-ready multi-agent coordination** for the Cortex-OS ASBR runtime following the **BVOO (Bounded, Validated, Observable Orchestration)** engineering principle. This package implements real AI agent execution using the LangGraph framework with a TypeScript-first architecture for intelligent task distribution, resource management, and collaborative problem-solving.
+
+Note: This package is now strictly LangGraph-only. All legacy/hybrid orchestrators (MLX, PRP, CrewAI, AutoGen, Archon) and their examples/tests have been removed.
 
 ### BVOO Engineering Principle
 
@@ -31,46 +32,20 @@ Cortex Orchestration provides **production-ready multi-agent coordination** for 
 #### BVOO Implementation
 
 ```typescript
-import { provideOrchestration, validateWorkflow, OrchestrationDefaults } from '@cortex-os/orchestration';
+import { createCerebrumGraph, OrchestrationDefaults } from '@cortex-os/orchestration';
 
-// All orchestrations are bounded by default
-const orchestration = provideOrchestration();
+// Build your LangGraph-based orchestration graph
+const graph = createCerebrumGraph({ /* optional config */ });
 
 console.log('Default Bounds:', OrchestrationDefaults);
-// Output: { 
-//   maxConcurrentOrchestrations: 10,
-//   executionTimeout: 1800000, // 30 minutes
-//   planningTimeout: 300000,   // 5 minutes
-//   qualityThreshold: 0.8
-// }
-
-// All workflows are validated before execution
-const validatedWorkflow = validateWorkflow(workflowDefinition);
-// Throws descriptive error if invalid, caches valid results with TTL
-
-// All orchestrations emit structured telemetry
-orchestration.engine.emitter.on('orchestrationCompleted', (event) => {
-  logger.info('Orchestration completed', {
-    orchestrationId: event.data.orchestrationId,
-    taskId: event.data.taskId,
-    duration: event.data.performance.totalDuration,
-    success: event.data.success,
-    agentsUsed: event.data.coordinationResults?.agentPerformance
-  });
-});
-
-// Proper lifecycle management with cleanup
-await orchestration.shutdown(); // Cleans up active orchestrations and resources
+// Bounded execution, validated inputs, observable telemetry
 ```
 
 ## ✨ Key Features
 
-### 🤖 Real AI Agent Execution
+### 🤖 Real AI Agent Execution (LangGraph-only)
 
-- **🐍 LangGraph Integration** - State-based workflows with persistent checkpointing
-- **👥 CrewAI Coordination** - Role-based swarm intelligence with specialized agents
-- **🗣️ AutoGen Conversations** - Multi-agent conversational AI for complex reasoning
-- **🌉 Python-TypeScript Bridge** - Seamless IPC communication via JSON over stdio
+- LangGraph Integration — State-based workflows with persistent checkpointing
 
 ### 🚀 Advanced Orchestration
 
@@ -102,105 +77,20 @@ pnpm add @cortex-os/orchestration
 
 ### Prerequisites
 
-The orchestration engine requires Python dependencies for AI framework integration:
-
-```bash
-# Install Python dependencies
-cd packages/python-agents
-pip install -r requirements.txt
-
-# Key dependencies include:
-# langgraph>=0.0.50 - State-based agent workflows
-# crewai>=0.28.0 - Multi-agent collaboration
-# Supporting libraries for AI operations
-```
+No Python dependencies. This package is LangGraph-only and TypeScript-first.
 
 ### Basic Usage
 
 ```typescript
-import { MultiAgentCoordinationEngine } from '@cortex-os/orchestration';
+import { createCerebrumGraph } from '@cortex-os/orchestration';
 
-// Initialize the coordination engine
-const engine = new MultiAgentCoordinationEngine({
-  maxConcurrentOrchestrations: 10,
-  enableMultiAgentCoordination: true,
-  enableAdaptiveDecisions: true,
-  planningTimeout: 30000,
-  executionTimeout: 300000,
-  performanceMonitoring: true
-});
-
-// Start the Python agent bridge
-await engine.initialize();
-
-// Define a complex task
-const task = {
-  id: 'data-analysis-task',
-  type: 'data-processing',
-  priority: 'high',
-  requirements: {
-    skills: ['data-analysis', 'visualization', 'reporting'],
-    resources: { memory: '2GB', cpu: '2 cores' },
-    deadline: new Date(Date.now() + 3600000) // 1 hour
-  },
-  payload: {
-    dataset: './data/sales-q3.csv',
-    analysisType: 'trend-analysis',
-    outputFormat: 'dashboard'
-  }
-};
-
-// Create execution plan
-const plan = {
-  strategy: 'parallel',
-  phases: [
-    { name: 'data-validation', agents: ['data-validator'] },
-    { name: 'analysis', agents: ['analyst', 'statistician'] },
-    { name: 'visualization', agents: ['chart-creator'] },
-    { name: 'reporting', agents: ['report-generator'] }
-  ],
-  dependencies: {
-    'analysis': ['data-validation'],
-    'visualization': ['analysis'],
-    'reporting': ['visualization']
-  }
-};
-
-// Define available agents
-const agents = [
-  {
-    id: 'data-validator',
-    name: 'Data Validation Specialist',
-    framework: 'langgraph',
-    capabilities: ['data-validation', 'schema-checking'],
-    resources: { maxMemory: '512MB', maxCpu: '1 core' }
-  },
-  {
-    id: 'analyst',
-    name: 'Data Analysis Expert',
-    framework: 'crewai',
-    capabilities: ['statistical-analysis', 'trend-detection'],
-    resources: { maxMemory: '1GB', maxCpu: '2 cores' }
-  }
-];
-
-// Execute coordinated multi-agent workflow
-const result = await engine.coordinateExecution(task, plan, agents);
-
-console.log('Orchestration Result:', {
-  success: result.success,
-  executionTime: result.executionTime,
-  agentsUsed: result.agentsUsed,
-  outputs: result.outputs
-});
-
-// Cleanup resources
-await engine.cleanup();
+const graph = createCerebrumGraph();
+// … add nodes, edges, and run your LangGraph as needed
 ```
 
 ## 🏗️ Architecture
 
-### Polyglot Architecture
+### Architecture (LangGraph-only)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -218,16 +108,16 @@ await engine.cleanup();
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Python Backend                             │
+│                     Execution Layer                            │
 │                                                                 │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │ LangGraph       │  │ CrewAI          │  │ AutoGen         │ │
-│  │ State Engine    │  │ Coordinator     │  │ Conversation    │ │
+│  │ LangGraph       │
+│  │ State Engine    │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────────┐ │
-│  │                   Agent Bridge                              │ │
-│  │         (Python-TypeScript Communication)                  │ │
+│  │               Tooling & Connectors                          │ │
+│  │     (MCP tools, events, observability)                      │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -236,88 +126,21 @@ await engine.cleanup();
 
 #### TypeScript Layer
 
-- **MultiAgentCoordinationEngine** - Main orchestration controller
-- **PythonAgentBridge** - IPC communication with Python processes
-- **ResourceManager** - Memory and CPU allocation management
-- **PerformanceMonitor** - Real-time execution metrics
+- **LangGraph Graph Builders** - Build and run state graphs
+- **Validation & Telemetry** - Input schemas, structured logs/metrics
 
-#### Python Layer (packages/python-agents/)
+#### Runtime Layer
 
-- **LangGraphStateEngine** - State-based workflows with checkpointing
-- **CrewAICoordinator** - Swarm intelligence with role specialization
-- **AutoGenConversationEngine** - Multi-agent conversational reasoning
-- **AgentBridge** - Communication interface with TypeScript
+- LangGraph State Engine — State-based workflows with checkpointing
+- MCP tooling — Contracts, validation, and integration points
 
 ### Communication Flow
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   TypeScript    │    │   IPC Bridge     │    │     Python      │
-│   Controller    │    │                  │    │   AI Agents     │
-│                 │    │                  │    │                 │
-│ 1. Create Task  │───▶│ 2. Serialize     │───▶│ 3. Execute      │
-│ 4. Monitor      │◀───│    Message       │    │    Workflow     │
-│    Progress     │    │                  │    │                 │
-│ 7. Handle       │◀───│ 6. Deserialize   │◀───│ 5. Return       │
-│    Result       │    │    Response      │    │    Results      │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
+All orchestration happens in TypeScript via LangGraph. No IPC/Python bridge.
 
 ## 🧠 AI Framework Integration
 
-### LangGraph State Workflows
-
-``python
-# Example: LangGraph workflow for data processing
-from langgraph import StateGraph, END
-
-def create_data_processing_workflow():
-    workflow = StateGraph()
-
-    # Define workflow states
-    workflow.add_node("validate", validate_data)
-    workflow.add_node("analyze", analyze_data)  
-    workflow.add_node("visualize", create_visualizations)
-    workflow.add_node("report", generate_report)
-    
-    # Define state transitions
-    workflow.add_edge("validate", "analyze")
-    workflow.add_edge("analyze", "visualize")
-    workflow.add_edge("visualize", "report")
-    workflow.add_edge("report", END)
-    
-    return workflow.compile(checkpointer=MemoryCheckpointer())
-```
-
-### CrewAI Role-Based Coordination
-
-``python
-# Example: CrewAI crew for collaborative analysis
-from crewai import Agent, Task, Crew
-
-# Define specialized agents
-data_analyst = Agent(
-    role='Data Analyst',
-    goal='Analyze data patterns and trends',
-    backstory='Expert in statistical analysis and data interpretation',
-    tools=[data_analysis_tool, visualization_tool]
-)
-
-report_writer = Agent(
-    role='Report Writer', 
-    goal='Create comprehensive reports from analysis results',
-    backstory='Skilled technical writer with domain expertise',
-    tools=[report_generation_tool, formatting_tool]
-)
-
-# Create collaborative crew
-analysis_crew = Crew(
-    agents=[data_analyst, report_writer],
-    tasks=[analysis_task, reporting_task],
-    process=Process.sequential,
-    verbose=True
-)
-```
+LangGraph is the sole orchestration engine. Non-LangGraph frameworks have been removed.
 
 ## 🌐 Model Context Protocol (MCP) Integration
 
@@ -432,61 +255,27 @@ interface OrchestrationConfig {
 }
 ```
 
-### Python Environment Configuration
+### Environment Configuration
 
-```bash
-# Environment variables for Python agents
-export LANGGRAPH_CONFIG_PATH="./config/langgraph.yaml"
-export CREWAI_API_KEY="your-crewai-key"
-export OPENAI_API_KEY="your-openai-key"
-export MLX_INFERENCE_ENDPOINT="http://localhost:8080"
+This package requires no Python runtime. Configure your tools/providers via your application.
 
-# Performance tuning
-export PYTHON_AGENT_MEMORY_LIMIT="2GB"
-export PYTHON_AGENT_TIMEOUT="300s"
-export AGENT_BRIDGE_LOG_LEVEL="INFO"
-```
-
-### Agent Framework Selection
-
-```typescript
-// Automatic framework selection based on task type
-const frameworkSelector = {
-  'data-processing': 'langgraph',    // State-based workflows
-  'collaborative-analysis': 'crewai', // Role-based coordination
-  'conversation': 'autogen',          // Multi-agent dialogue
-  'complex-reasoning': 'crewai',      // Swarm intelligence
-  'workflow': 'langgraph'             // Sequential processing
-};
-```
+<!-- Framework selection is unnecessary in LangGraph-only mode. -->
 
 ## 🧪 Testing
 
 ### Running Tests
 
 ```bash
-# Unit tests
-npm test
-
-# Integration tests (requires Python environment)
-npm run test:integration
-
-# Performance tests
-npm run test:performance
-
-# End-to-end orchestration tests
-npm run test:e2e
+pnpm --filter @cortex-os/orchestration test
 ```
 
 ### Test Coverage
 
 | Component | Coverage | Notes |
 |-----------|----------|-------|
-| Coordination Engine | 95% | Core orchestration logic tested |
-| Python Bridge | 92% | IPC communication and error handling |
-| Resource Management | 94% | Memory and CPU allocation tested |
-| Error Recovery | 91% | Failure scenarios and recovery |
-| **Overall** | **93%** | Production-ready coverage |
+| LangGraph Graphs | 95% | Core orchestration logic tested |
+| Validation/Telemetry | 94% | Schemas and observability |
+| MCP Tools | 93% | Contract-first tool coverage |
 
 ### Testing with Mock Agents
 
@@ -697,31 +486,20 @@ We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING
 
 ### Development Setup
 
-``bash
-# Clone and install dependencies
+```bash
 git clone https://github.com/cortex-os/cortex-os.git
 cd cortex-os/packages/orchestration
 pnpm install
-
-# Setup Python environment
-cd ../python-agents
-python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-pip install -r requirements.txt
-
-# Run development build
 pnpm dev
-
-# Run tests
 pnpm test
 ```
 
 ### Contribution Guidelines
 
-- Follow TypeScript and Python best practices
+- Follow TypeScript best practices
 - Maintain test coverage above 90%
 - Add comprehensive documentation for new features
-- Test with multiple AI frameworks (LangGraph, CrewAI)
+- Tests target LangGraph-only orchestration
 - Ensure security best practices for agent communication
 - Include performance benchmarks for new orchestration strategies
 
@@ -730,7 +508,6 @@ pnpm test
 ### Documentation
 
 - **[Architecture Guide](./docs/architecture.md)** - Detailed system architecture
-- **[Python Integration](./docs/python-integration.md)** - Python-TypeScript bridge guide
 - **[Agent Development](./docs/agent-development.md)** - Creating custom agents
 - **[Performance Tuning](./docs/performance.md)** - Optimization strategies
 - **[Examples](./examples/)** - Usage examples and tutorials
@@ -755,19 +532,17 @@ pnpm test
 
 ## 🙏 Acknowledgments
 
-- **[LangGraph](https://python.langchain.com/docs/langgraph)** - State-based agent workflows
-- **[CrewAI](https://crewai.com/)** - Multi-agent collaboration framework
-- **[AutoGen](https://microsoft.github.io/autogen/)** - Conversational AI agents
+- **[LangGraph](https://python.langchain.com/docs/langgraph)** - State-based agent workflows (LangGraph-only)
+<!-- Non-LangGraph acknowledgments removed to reflect current scope. -->
 - **Open Source Community** - Contributors and maintainers
 
 ---
 
 <div align="center">
 
-**Built with 💙 TypeScript, 🐍 Python, and ❤️ by the Cortex-OS Team**
+**Built with 💙 TypeScript and ❤️ by the Cortex-OS Team**
 
 [![TypeScript](https://img.shields.io/badge/made%20with-TypeScript-blue)](https://www.typescriptlang.org/)
-[![Python](https://img.shields.io/badge/powered%20by-Python-yellow)](https://www.python.org/)
 [![AI Orchestration](https://img.shields.io/badge/AI-orchestration-green)](https://github.com/cortex-os/cortex-os)
 
 </div>

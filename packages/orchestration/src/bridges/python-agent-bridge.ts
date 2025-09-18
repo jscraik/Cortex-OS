@@ -31,7 +31,10 @@ export interface AgentTaskPayload {
 	requirements: string[];
 	dependencies?: string[];
 	metadata?: Record<string, unknown>;
-	agentType?: 'langgraph' | 'crewai';
+	/**
+	 * LangGraph-only: Other frameworks removed from orchestration package scope.
+	 */
+	agentType?: 'langgraph';
 }
 
 export interface AgentTaskResult {
@@ -60,11 +63,11 @@ export interface AgentBridgeMessage {
  * Bridge for Python-TypeScript IPC communication with AI agents
  */
 export class PythonAgentBridge extends EventEmitter {
-	private logger: winston.Logger;
-	private config: PythonAgentConfig;
+	private readonly logger: winston.Logger;
+	private readonly config: PythonAgentConfig;
 	private pythonProcess: ChildProcess | null = null;
 	private isInitialized = false;
-	private pendingTasks = new Map<
+	private readonly pendingTasks = new Map<
 		string,
 		{
 			resolve: (result: AgentTaskResult) => void;
@@ -72,7 +75,7 @@ export class PythonAgentBridge extends EventEmitter {
 			timeout: NodeJS.Timeout;
 		}
 	>();
-	private pendingQueries = new Map<
+	private readonly pendingQueries = new Map<
 		string,
 		{
 			resolve: (data: unknown) => void;
@@ -172,7 +175,8 @@ export class PythonAgentBridge extends EventEmitter {
 		}
 
 		return new Promise((resolve, reject) => {
-			const queryId = `query_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+			const rand = Math.random().toString(36).slice(2, 11);
+			const queryId = `query_${Date.now()}_${rand}`;
 
 			// Set up timeout
 			const timeout = setTimeout(() => {
@@ -249,7 +253,8 @@ export class PythonAgentBridge extends EventEmitter {
 				scriptPath: this.config.bridgeScriptPath,
 			});
 
-			const pythonArgs = ['-m', this.config.bridgeModule!];
+			const bridgeModule = this.config.bridgeModule ?? 'src.agent_bridge';
+			const pythonArgs = ['-m', bridgeModule];
 
 			// Discover monorepo root (so tests run from package still resolve python paths)
 			const findRepoRoot = (): string => {

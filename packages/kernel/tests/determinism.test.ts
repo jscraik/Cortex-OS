@@ -10,12 +10,16 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createKernel } from '../src/graph-simple.js';
 import type { PRPState } from '../src/state.js';
+import { resetCounters } from '../src/utils/id.js';
 
 describe('Cortex Kernel Determinism', () => {
 	let kernel: ReturnType<typeof createKernel>;
 	let mockOrchestrator: { getNeuronCount: () => number };
 
 	beforeEach(() => {
+		// Reset ID counters for deterministic testing
+		resetCounters();
+		
 		mockOrchestrator = {
 			getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
 		};

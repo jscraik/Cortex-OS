@@ -497,24 +497,15 @@ export class AICoreCapabilities {
 export const createAICapabilities = (
 	preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
-	const env: Record<string, unknown> =
-		(globalThis as unknown as { process?: { env?: Record<string, unknown> } })
-			.process?.env ?? {};
+	const env = process.env as Record<string, unknown>;
 	const rerankerProvider = env.RERANKER_PROVIDER as
 		| 'transformers'
 		| 'local'
 		| 'mock'
 		| undefined;
 
-	// Allow mlxModel override from env (for test/dev flexibility)
-	const mlxModelEnv = env.MLX_MODEL as string | undefined;
-	const validMlxModelKey =
-		mlxModelEnv && Object.keys(AVAILABLE_MLX_MODELS).includes(mlxModelEnv)
-			? (mlxModelEnv as keyof typeof AVAILABLE_MLX_MODELS)
-			: 'QWEN_SMALL';
-
-	// Use the model value (not key) for configuration
-	const mlxModelValue = AVAILABLE_MLX_MODELS[validMlxModelKey];
+	// Default MLX model configuration
+	const mlxModelValue = AVAILABLE_MLX_MODELS.QWEN_SMALL;
 
 	const configs: Record<string, AICoreConfig> = {
 		full: {

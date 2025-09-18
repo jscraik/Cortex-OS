@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { JsonRpcRequest, JsonRpcResponse, TaskResult } from './index';
+import type { JsonRpcRequest, JsonRpcResponse, TaskResult } from './index.js';
 import {
 	A2A_ERROR_CODES,
 	A2ARpcHandler,

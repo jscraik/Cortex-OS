@@ -16,7 +16,6 @@ describe('Public API surface snapshot', () => {
           "createHistory",
           "createInitialPRPState",
           "createKernel",
-          "createKernelGraph",
           "getExecutionHistory",
           "runBuildNode",
           "runEvaluationNode",

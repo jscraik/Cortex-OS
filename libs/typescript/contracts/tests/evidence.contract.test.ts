@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 // TDD: This import will fail until evidence schema is implemented
 // Implementation target: ../src/evidence.ts exporting evidenceItemSchema & evidenceArraySchema
-import { evidenceArraySchema, evidenceItemSchema } from '../src/evidence';
+import { evidenceArraySchema, evidenceItemSchema } from '../src/evidence.js';
 
 describe('contract: evidence schema', () => {
 	it('validates a minimal evidence item with text', () => {

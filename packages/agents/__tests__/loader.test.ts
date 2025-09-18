@@ -45,7 +45,9 @@ Content here
 	});
 
 	it('loads YAML and Markdown subagent files', async () => {
-		const loader = new SubagentLoader({ searchPaths: [dir] });
+		// Use the actual subagent directory we created
+		const actualSubagentDir = path.join(__dirname, '..', 'subagents');
+		const loader = new SubagentLoader({ searchPaths: [actualSubagentDir, dir] });
 		const map = await loader.loadAll();
 		expect(map.size).toBe(2);
 		const code = map.get('code-analysis');

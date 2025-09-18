@@ -37,8 +37,8 @@ export interface WorkflowMetrics {
 
 export function gatherSpanAttributes(
 	context: EnhancedSpanContext,
-): Record<string, any> {
-	const attributes: Record<string, any> = {
+): Record<string, unknown> {
+	const attributes: Record<string, unknown> = {
 		'orchestration.version': '1.0.0',
 		'span.kind': 'internal',
 	};
@@ -108,13 +108,14 @@ export function recordSuccessMetrics(
 
 export function recordErrorMetrics(
 	name: string,
-	err: any,
+	err: unknown,
 	duration: number,
 	context: EnhancedSpanContext,
 	metrics: WorkflowMetrics,
 	span: Span,
 ): void {
-	const errorMessage = String(err?.message ?? err);
+	const errorObj = err as { message?: string; code?: string; stack?: string; constructor?: { name?: string } } | undefined;
+	const errorMessage = String(errorObj?.message ?? err);
 
 	if (name.includes('step')) {
 		metrics.stepDuration.record(duration, {
@@ -134,24 +135,24 @@ export function recordErrorMetrics(
 		});
 		metrics.coordinationFailures.add(1, {
 			phase: context.phase || 'unknown',
-			error_type: err.code || 'unknown',
+			error_type: errorObj?.code || 'unknown',
 		});
 	}
 
 	span.addEvent(`${name}.failed`, {
 		timestamp: Date.now(),
 		duration_ms: duration,
-		'error.type': err.constructor.name,
-		'error.code': err.code,
+		'error.type': errorObj?.constructor?.name ?? 'Error',
+		'error.code': errorObj?.code,
 		'error.message': errorMessage,
 	});
 
 	span.setStatus({ code: SpanStatusCode.ERROR, message: errorMessage });
 
 	span.setAttributes({
-		'error.type': err.constructor.name,
-		'error.code': err.code || 'unknown',
+		'error.type': errorObj?.constructor?.name ?? 'Error',
+		'error.code': errorObj?.code || 'unknown',
 		'error.message': errorMessage,
-		'error.stack': err.stack,
+		'error.stack': errorObj?.stack,
 	});
 }

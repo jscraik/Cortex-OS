@@ -118,4 +118,4 @@ export {
 	type ValidationReportEvent,
 } from './events/agent-toolkit-events.js';
 // MCP Integration
-export { agentToolkitMcpTools } from './mcp/tools.js';
+export { createAgentToolkitMcpTools } from './mcp/tools.js';

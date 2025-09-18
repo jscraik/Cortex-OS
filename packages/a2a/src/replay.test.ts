@@ -3,8 +3,8 @@ import {
 	type OutboxMessage,
 	OutboxMessageStatus,
 } from '../a2a-contracts/src/outbox-types';
-import { InMemoryOutboxRepository } from './in-memory-outbox-repository';
-import { replayPending } from './replay';
+import { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
+import { replayPending } from './replay.js';
 
 // Helper type representing save input without id/createdAt filled yet
 type PartialOutboxMessage = Omit<OutboxMessage, 'id' | 'createdAt'>;

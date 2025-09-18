@@ -64,11 +64,6 @@ interface EvidenceCollectionOptions {
 }
 
 export interface AIEvidenceConfig {
-	// AI Configuration
-	enableMLXGeneration?: boolean;
-	enableEmbeddingSearch?: boolean;
-	enableRAGEnhancement?: boolean;
-
 	// Evidence Enhancement Settings
 	confidenceBoost?: number; // Boost confidence for AI-generated evidence
 	aiSourcePriority?: number; // Priority for AI-generated content
@@ -76,8 +71,6 @@ export interface AIEvidenceConfig {
 
 	// Quality Controls
 	minAIConfidence?: number;
-	requireHumanValidation?: boolean;
-	enableFactChecking?: boolean;
 
 	// Model Selection
 	preferredMLXModel?: keyof typeof AVAILABLE_MLX_MODELS;
@@ -115,15 +108,10 @@ export class ASBRAIIntegration {
 
 	constructor(config: AIEvidenceConfig = {}) {
 		this.config = {
-			enableMLXGeneration: true,
-			enableEmbeddingSearch: true,
-			enableRAGEnhancement: true,
 			confidenceBoost: 0.1,
 			aiSourcePriority: 0.8,
 			maxAIContentLength: 2000,
 			minAIConfidence: 0.6,
-			requireHumanValidation: false,
-			enableFactChecking: true,
 			preferredMLXModel: 'QWEN_SMALL',
 			temperature: 0.3,
 			maxTokens: 512,
@@ -211,9 +199,7 @@ export class ASBRAIIntegration {
 			relevanceScore: number;
 		}>;
 	}> {
-		if (!this.config.enableEmbeddingSearch) {
-			return { relatedClaims: [], suggestedSources: [] };
-		}
+		// Note: Embedding search is always enabled when using AI capabilities
 
 		try {
 			// Add context sources to knowledge base (best-effort)
@@ -284,14 +270,7 @@ export class ASBRAIIntegration {
 		supportingEvidence: Evidence[];
 		contradictingEvidence: Evidence[];
 	}> {
-		if (!this.config.enableFactChecking) {
-			return {
-				factualConsistency: 1.0,
-				potentialIssues: [],
-				supportingEvidence: [],
-				contradictingEvidence: [],
-			};
-		}
+		// Note: Fact checking is always enabled when using AI capabilities
 
 		try {
 			// Use RAG to find supporting/contradicting information

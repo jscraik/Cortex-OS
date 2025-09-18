@@ -3,11 +3,8 @@ import {
 	type Envelope,
 	type TopicACL,
 } from '@cortex-os/a2a-contracts';
-import {
-	type BusOptions,
-	createBus,
-	type Transport,
-} from '@cortex-os/a2a-core/bus';
+import { type BusOptions, createBus } from '@cortex-os/a2a-core/bus';
+import type { Transport } from '@cortex-os/a2a-core/transport';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 
 import {
@@ -43,7 +40,10 @@ type OrchestrationEventPayloadMap = {
 
 export type OrchestrationEventEnvelope<
 	TType extends OrchestrationEventType = OrchestrationEventType,
-> = Envelope & { type: TType; data: OrchestrationEventPayloadMap[TType] };
+> = Omit<Envelope, 'data' | 'type'> & {
+	type: TType;
+	data: OrchestrationEventPayloadMap[TType];
+};
 
 export type OrchestrationEventHandler<
 	TType extends OrchestrationEventType = OrchestrationEventType,
@@ -111,7 +111,25 @@ function validateEnvelope(envelope: Envelope): OrchestrationEventEnvelope {
 	}
 	const schema = ORCHESTRATION_EVENT_SCHEMAS[envelope.type];
 	const data = schema.parse(envelope.data);
-	return { ...envelope, data };
+	const result: OrchestrationEventEnvelope<OrchestrationEventType> = {
+		id: envelope.id,
+		type: envelope.type as OrchestrationEventType,
+		source: envelope.source,
+		specversion: envelope.specversion,
+		datacontenttype: envelope.datacontenttype,
+		dataschema: envelope.dataschema,
+		subject: envelope.subject,
+		time: envelope.time ?? new Date().toISOString(),
+		causationId: envelope.causationId,
+		correlationId: envelope.correlationId,
+		ttlMs: envelope.ttlMs,
+		headers: envelope.headers,
+		traceparent: envelope.traceparent,
+		tracestate: envelope.tracestate,
+		baggage: envelope.baggage,
+		data,
+	};
+	return result;
 }
 
 export function createOrchestrationBus(
@@ -167,7 +185,7 @@ export function createOrchestrationBus(
 					type: handler.type,
 					handle: async (msg) => {
 						const validated = validateEnvelope(msg);
-						await handler.handle(validated as OrchestrationEventEnvelope);
+						await handler.handle(validated);
 					},
 				})),
 			);

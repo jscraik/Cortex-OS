@@ -17,14 +17,19 @@
  * - These assertions should be replaced with proper mocks and interfaces in GREEN phase
  */
 
-import { describe, expect, it, vitest } from 'vitest';
+import { beforeEach, describe, expect, it, vitest } from 'vitest';
 import { CortexKernel } from '../src/graph-simple.js';
 import { MCPAdapter } from '../src/mcp/adapter.js';
 import { BuildNode } from '../src/nodes/build.js';
 import { EvaluationNode } from '../src/nodes/evaluation.js';
 import { createInitialPRPState, type PRPState } from '../src/state.js';
+import { resetCounters } from '../src/utils/id.js';
 
 describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
+	beforeEach(() => {
+		// Reset ID counters for deterministic testing
+		resetCounters();
+	});
 	describe('[Critical] Package Exports Validation', () => {
 		it('should successfully import CortexKernel from package exports', async () => {
 			// This will FAIL due to package.json export path mismatch

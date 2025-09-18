@@ -6,18 +6,21 @@ import {
 	AgentToolkitSearchInputSchema,
 	AgentToolkitSearchResultSchema,
 } from '@cortex-os/contracts';
-import { Tool, type ToolExecutionContext } from '../domain/Tool';
-import { ShellScriptAdapter } from './ShellScriptAdapter';
+import type { SearchTool } from '../domain/ToolInterfaces.js';
+import { ShellScriptAdapter } from './ShellScriptAdapter.js';
 
-export class RipgrepTool extends Tool {
+/**
+ * Ripgrep search tool implementation
+ */
+export class RipgrepAdapter implements SearchTool {
+	readonly tool = 'ripgrep' as const;
 	readonly name = 'ripgrep_search';
-	readonly description = 'Search for patterns in code using ripgrep';
+	readonly description = 'Fast text search using ripgrep';
 	readonly operation = 'search';
 
-	private adapter: ShellScriptAdapter;
+	private readonly adapter: ShellScriptAdapter;
 
 	constructor() {
-		super();
 		this.adapter = new (class extends ShellScriptAdapter {
 			constructor() {
 				super('rg_search.sh');
@@ -25,10 +28,7 @@ export class RipgrepTool extends Tool {
 		})();
 	}
 
-	async execute(
-		input: AgentToolkitSearchInput,
-		_context?: ToolExecutionContext,
-	): Promise<AgentToolkitSearchResult> {
+	async search(input: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		const validatedInput = this.validateInput(input);
 
 		await this.adapter.validateScript();
@@ -63,23 +63,25 @@ export class RipgrepTool extends Tool {
 				path: {
 					type: 'string',
 					description: 'Path to search in (file or directory)',
-					default: '.',
 				},
 			},
-			required: ['pattern'],
+			required: ['pattern', 'path'],
 		};
 	}
 }
 
-export class SemgrepTool extends Tool {
+/**
+ * Semgrep search tool implementation
+ */
+export class SemgrepAdapter implements SearchTool {
+	readonly tool = 'semgrep' as const;
 	readonly name = 'semgrep_search';
 	readonly description = 'Search for patterns using Semgrep rules';
 	readonly operation = 'search';
 
-	private adapter: ShellScriptAdapter;
+	private readonly adapter: ShellScriptAdapter;
 
 	constructor() {
-		super();
 		this.adapter = new (class extends ShellScriptAdapter {
 			constructor() {
 				super('semgrep_search.sh');
@@ -87,10 +89,7 @@ export class SemgrepTool extends Tool {
 		})();
 	}
 
-	async execute(
-		input: AgentToolkitSearchInput,
-		_context?: ToolExecutionContext,
-	): Promise<AgentToolkitSearchResult> {
+	async search(input: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		const validatedInput = this.validateInput(input);
 
 		await this.adapter.validateScript();
@@ -119,39 +118,38 @@ export class SemgrepTool extends Tool {
 			properties: {
 				pattern: {
 					type: 'string',
-					description: 'Semgrep rule or pattern to search for',
+					description: 'Semgrep pattern or rule to search for',
 				},
 				path: {
 					type: 'string',
 					description: 'Path to search in (file or directory)',
-					default: '.',
 				},
 			},
-			required: ['pattern'],
+			required: ['pattern', 'path'],
 		};
 	}
 }
 
-export class AstGrepTool extends Tool {
+/**
+ * AST-grep search tool implementation
+ */
+export class AstGrepAdapter implements SearchTool {
+	readonly tool = 'ast-grep' as const;
 	readonly name = 'ast_grep_search';
-	readonly description = 'Search for structural patterns using ast-grep';
+	readonly description = 'Search for code patterns using AST-grep';
 	readonly operation = 'search';
 
-	private adapter: ShellScriptAdapter;
+	private readonly adapter: ShellScriptAdapter;
 
 	constructor() {
-		super();
 		this.adapter = new (class extends ShellScriptAdapter {
 			constructor() {
-				super('astgrep_search.sh');
+				super('ast_grep_search.sh');
 			}
 		})();
 	}
 
-	async execute(
-		input: AgentToolkitSearchInput,
-		_context?: ToolExecutionContext,
-	): Promise<AgentToolkitSearchResult> {
+	async search(input: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		const validatedInput = this.validateInput(input);
 
 		await this.adapter.validateScript();
@@ -185,10 +183,9 @@ export class AstGrepTool extends Tool {
 				path: {
 					type: 'string',
 					description: 'Path to search in (file or directory)',
-					default: '.',
 				},
 			},
-			required: ['pattern'],
+			required: ['pattern', 'path'],
 		};
 	}
 }

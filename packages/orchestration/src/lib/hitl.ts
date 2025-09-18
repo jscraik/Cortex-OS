@@ -22,13 +22,13 @@ async function appendJsonl(file: string, obj: unknown) {
 	await fs.appendFile(file, `${JSON.stringify(obj)}\n`, 'utf8');
 }
 
-async function readJsonl(file: string): Promise<unknown[]> {
+async function readJsonl(file: string): Promise<Array<Record<string, unknown>>> {
 	try {
 		const text = await fs.readFile(file, 'utf8');
 		return text
 			.split(/\n+/)
 			.filter(Boolean)
-			.map((l) => JSON.parse(l));
+			.map((l) => JSON.parse(l) as Record<string, unknown>);
 	} catch (error) {
 		if (isNodeErrorWithCode(error, 'ENOENT')) return [];
 		throw error;
@@ -57,7 +57,7 @@ export async function waitForApproval(
 		const rows = await readJsonl(STORE);
 		const decision = rows.find(
 			(r) => r.type === 'decision' && r.requestId === id,
-		);
+		) as (Record<string, unknown> & { approved?: unknown }) | undefined;
 		if (decision) return Boolean(decision.approved);
 		await new Promise((r) => setTimeout(r, 500));
 	}

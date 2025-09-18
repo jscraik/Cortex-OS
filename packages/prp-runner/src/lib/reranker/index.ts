@@ -1,7 +1,7 @@
 import { pipeline } from '@xenova/transformers';
 
 export interface RerankerConfig {
-	provider: 'transformers' | 'local' | 'mock';
+	provider: 'transformers' | 'mock';
 	model?: string;
 	batchSize?: number;
 }
@@ -24,10 +24,6 @@ export const createRerankerState = (
 			provider: 'transformers',
 			model: 'Qwen/Qwen2.5-coder-cross-encoder',
 		},
-		local: {
-			provider: 'local',
-			model: 'local-reranker-model',
-		},
 		mock: {
 			provider: 'mock',
 		},
@@ -48,8 +44,6 @@ export const rerank = async (
 	switch (state.config.provider) {
 		case 'transformers':
 			return rerankWithTransformers(query, documents, topK, state.config.model);
-		case 'local':
-			return rerankWithLocal(query, documents, topK);
 		case 'mock':
 			return rerankWithMock(query, documents, topK);
 		default:
@@ -107,11 +101,3 @@ const rerankWithTransformers = async (
 	return topK ? results.slice(0, topK) : results;
 };
 
-const rerankWithLocal = async (
-	query: string,
-	documents: string[],
-	topK?: number,
-): Promise<RerankerResult[]> => {
-	console.warn('Local reranking not implemented, falling back to mock');
-	return rerankWithMock(query, documents, topK);
-};

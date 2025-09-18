@@ -1,4 +1,5 @@
 import { context, metrics, SpanStatusCode, trace } from '@opentelemetry/api';
+import type { Attributes, AttributeValue } from '@opentelemetry/api';
 import type { EnhancedSpanContext, WorkflowMetrics } from '../lib/telemetry.js';
 import {
 	gatherSpanAttributes,
@@ -11,8 +12,29 @@ export type { EnhancedSpanContext } from '../lib/telemetry.js';
 export const tracer = trace.getTracer('@cortex-os/orchestration');
 export const meter = metrics.getMeter('@cortex-os/orchestration');
 
+type CounterLike = { add: (value: number, attributes: Record<string, string>) => void };
+type GaugeLike = { record: (value: number, attributes: Record<string, string>) => void };
+
+interface ExtendedWorkflowMetrics extends WorkflowMetrics {
+	retryAttempts: CounterLike;
+	circuitBreakerTrips: CounterLike;
+	activeWorkflows: CounterLike; // UpDown semantics but API is add()
+	activeAgents: CounterLike;    // UpDown semantics but API is add()
+	resourceUtilization: GaugeLike;
+}
+
+function toAttributes(input: Record<string, unknown>): Attributes {
+	const out: Record<string, AttributeValue> = {};
+	for (const [k, v] of Object.entries(input)) {
+		if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+			out[k] = v;
+		}
+	}
+	return out;
+}
+
 // Create comprehensive metrics
-export const workflowMetrics: WorkflowMetrics & Record<string, any> = {
+export const workflowMetrics: ExtendedWorkflowMetrics = {
 	// Duration histograms
 	stepDuration: meter.createHistogram('workflow_step_duration_ms', {
 		description: 'Duration of workflow step execution in milliseconds',
@@ -62,15 +84,15 @@ export async function withSpan<T>(
 	attrs?: Record<string, unknown>,
 ): Promise<T> {
 	const span = tracer.startSpan(name, undefined, context.active());
-	if (attrs) span.setAttributes(attrs as any);
+	if (attrs) span.setAttributes(toAttributes(attrs));
 	try {
 		const res = await fn();
 		span.setStatus({ code: SpanStatusCode.OK });
 		return res;
-	} catch (err: any) {
+	} catch (err: unknown) {
 		span.setStatus({
 			code: SpanStatusCode.ERROR,
-			message: String(err?.message ?? err),
+			message: String((err as { message?: string } | undefined)?.message ?? err),
 		});
 		throw err;
 	} finally {
@@ -85,7 +107,7 @@ export async function withEnhancedSpan<T>(
 ): Promise<T> {
 	const span = tracer.startSpan(name);
 	const startTime = Date.now();
-	span.setAttributes(gatherSpanAttributes(context));
+	span.setAttributes(toAttributes(gatherSpanAttributes(context)));
 
 	// Add custom events for important milestones
 	span.addEvent(`${name}.started`, {
@@ -98,7 +120,7 @@ export async function withEnhancedSpan<T>(
 		const duration = Date.now() - startTime;
 		recordSuccessMetrics(name, duration, context, workflowMetrics, span);
 		return result;
-	} catch (err: any) {
+	} catch (err: unknown) {
 		const duration = Date.now() - startTime;
 		recordErrorMetrics(name, err, duration, context, workflowMetrics, span);
 		throw err;

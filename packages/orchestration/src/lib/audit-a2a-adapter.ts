@@ -1,18 +1,17 @@
-// Keep import minimal to avoid heavy deps; mirror signature from a2a bus
+import type { CloudEvent } from '../integrations/cloudevents.js';
+import { type auditEvent as auditEventType, setAuditPublisher } from './audit';
+
+// Minimal event wrapper used by the A2A adapter
 export type Event<T = unknown> = { type: string; payload: T };
 
-export type PublishFn<T = unknown> = (evt: Event<T>) => void;
+export type PublishFn = (evt: Event<ReturnType<typeof auditEventType>>) => void;
 
-import { setAuditPublisher } from './audit';
-
-export function makeA2APublisher<TPayload>(publish: PublishFn<TPayload>) {
-	return async (evt: TPayload) => {
+export function makeA2APublisher(publish: PublishFn) {
+	return async (evt: CloudEvent<{ args: unknown; traceId: string }>) => {
 		publish({ type: 'audit.event', payload: evt });
 	};
 }
 
-export function configureAuditPublisherWithBus<TPayload>(
-	publish: PublishFn<TPayload>,
-) {
+export function configureAuditPublisherWithBus(publish: PublishFn) {
 	setAuditPublisher(makeA2APublisher(publish));
 }

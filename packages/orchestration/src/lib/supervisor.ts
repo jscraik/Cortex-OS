@@ -1,6 +1,6 @@
 import { enforce, loadGrant } from '@cortex-os/policy';
-import { withSpan } from '../observability/otel';
-import { auditEvent, record } from './audit';
+import { withSpan } from '../observability/otel.js';
+import { auditEvent, record } from './audit.js';
 import {
 	type Checkpoint,
 	loadLatestCheckpoint,
@@ -36,25 +36,25 @@ export interface SupervisorOptions {
 	handlers?: Partial<Record<Node, NodeFn>>;
 }
 
-type NodeFn = (state: any, ctx: RunContext) => Promise<any>;
+type NodeFn = (state: unknown, ctx: RunContext) => Promise<unknown>;
 
 // Placeholder functions - to be implemented by integrators or replaced in DI
-async function planFn(state: any, _ctx: RunContext) {
+async function planFn(state: unknown, _ctx: RunContext) {
 	return state;
 }
-async function gatherFn(state: any, _ctx: RunContext) {
+async function gatherFn(state: unknown, _ctx: RunContext) {
 	return state;
 }
-async function criticFn(state: any, _ctx: RunContext) {
+async function criticFn(state: unknown, _ctx: RunContext) {
 	return state;
 }
-async function buildArtifactProposal(_state: any) {
+async function buildArtifactProposal(_state: unknown): Promise<{ path: string; content: string }> {
 	return { path: '/tmp/test', content: 'test' };
 }
-async function commitArtifact(_proposal: any) {
+async function commitArtifact(_proposal: { path: string; content: string }): Promise<unknown> {
 	return {};
 }
-async function verifyFn(state: any, _ctx: RunContext) {
+async function verifyFn(state: unknown, _ctx: RunContext) {
 	return state;
 }
 
@@ -69,16 +69,9 @@ const nodeFns: Record<Node, NodeFn> = {
 			if (!ok) throw new Error('Approval denied');
 		}
 		enforce(await loadGrant('fs.write'), 'write', {
-			path: (proposal as any).path,
+			path: proposal.path,
 		});
-		record(
-			auditEvent(
-				'fs',
-				'write',
-				{ runId: ctx.runId },
-				{ path: (proposal as any).path },
-			),
-		);
+		record(auditEvent('fs', 'write', { runId: ctx.runId }, { path: proposal.path }));
 		const next = await commitArtifact(proposal);
 		return next;
 	},
@@ -104,14 +97,14 @@ const MAX_BACKOFF_MS = 30000;
 
 async function withRetry(
 	_node: Node,
-	fn: () => Promise<any>,
+	fn: () => Promise<unknown>,
 	policy?: RetryPolicy,
 ) {
 	const rp = policy ?? { maxRetries: 0, backoffMs: 0, jitter: true };
 	let attempt = 0;
 	// First attempt + retries
 	// attempt 0: initial, then 1..maxRetries for retries
-	for (;;) {
+	for (; ;) {
 		try {
 			return await fn();
 		} catch (err) {
@@ -136,7 +129,7 @@ function withDeadline<T>(
 	return new Promise<T>((resolve, reject) => {
 		let to: NodeJS.Timeout | undefined;
 		const onAbort = () => {
-			clearTimeout(to as any);
+			if (to) clearTimeout(to);
 			reject(new Error('Operation aborted'));
 		};
 		if (signal) {
@@ -158,7 +151,7 @@ function withDeadline<T>(
 			(e) => {
 				if (to) clearTimeout(to);
 				if (signal) signal.removeEventListener('abort', onAbort);
-				reject(e);
+				reject(e instanceof Error ? e : new Error(String(e)));
 			},
 		);
 	});
@@ -169,7 +162,7 @@ export interface RunOptions extends SupervisorOptions {
 }
 
 export async function runSupervisor(
-	initialState: any,
+	initialState: unknown,
 	ctx: RunContext,
 	opts: RunOptions = {},
 ) {

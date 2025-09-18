@@ -28,12 +28,13 @@ export class CloudEvent<T = unknown> implements CloudEventInit<T> {
 }
 
 export function isValidCloudEvent(evt: unknown): evt is CloudEvent {
+	if (!evt || typeof evt !== 'object') return false;
+	const anyEvt = evt as Record<string, unknown>;
 	return (
-		!!evt &&
-		typeof evt.id === 'string' &&
-		typeof evt.source === 'string' &&
-		typeof evt.type === 'string' &&
-		typeof evt.time === 'string' &&
-		typeof evt.datacontenttype === 'string'
+		typeof anyEvt.id === 'string' &&
+		typeof anyEvt.source === 'string' &&
+		typeof anyEvt.type === 'string' &&
+		typeof anyEvt.time === 'string' &&
+		typeof anyEvt.datacontenttype === 'string'
 	);
 }

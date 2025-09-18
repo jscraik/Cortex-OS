@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diagnosticsResultSchema } from '../src/diagnostics';
+import { diagnosticsResultSchema } from '../src/diagnostics.js';
 
 describe('contract: diagnosticsResultSchema', () => {
 	it('validates a minimal ok result', () => {

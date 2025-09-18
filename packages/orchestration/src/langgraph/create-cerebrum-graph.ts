@@ -1,12 +1,15 @@
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { trace } from '@opentelemetry/api';
-import { loadModelRegistry, type ModelRef } from '../config/model-catalog.js';
 import { createOrchestrationBus } from '../events/orchestration-bus.js';
 import { OrchestrationEventTypes } from '../events/orchestration-events.js';
-import {
-	evaluatePersonaCompliance,
-	loadPersona,
-} from '../persona/persona-loader.js';
+import { selectFrontierModel, selectMLXModel, selectOllamaModel } from '../lib/model-selection.js';
+import { evaluatePersonaCompliance, loadPersona } from '../persona/persona-loader.js';
+
+type ModelRef = {
+	provider: 'mlx' | 'ollama' | 'openai' | 'anthropic' | 'unknown';
+	model: string;
+	fallbackReason?: string;
+};
 
 const CerebrumAnnotation = Annotation.Root({
 	input: Annotation<string>({ reducer: (_x, y) => y }),
@@ -49,28 +52,64 @@ export function createCerebrumGraph() {
 				return { violations: [] as string[] };
 			});
 		})
-		// Model selection uses registry + optional task routing
+		// Model selection: MLX → Ollama → Frontier APIs
 		.addNode('selectModel', async (state: typeof CerebrumAnnotation.State) => {
 			const tracer = trace.getTracer('orchestration');
 			return await tracer.startActiveSpan('selectModel', async (span) => {
-				const registry = await loadModelRegistry();
-				const task = state.task;
-				let selected: ModelRef | undefined;
-				if (task) {
-					const options = registry.resolveTask(task);
-					selected = options[0];
-					span.setAttribute('model.selection.task', task);
+				const task = state.task ?? 'chat';
+
+				// 1. Try MLX first (Apple Silicon optimized)
+				let selected: ModelRef;
+				try {
+					// Check if MLX is available and has suitable model
+					const mlxModel = await selectMLXModel(task);
+					if (mlxModel) {
+						selected = { provider: 'mlx', model: mlxModel };
+						span.setAttribute('model.selection.strategy', 'mlx-primary');
+					} else {
+						throw new Error('No suitable MLX model available');
+					}
+				} catch {
+					// 2. Fallback to Ollama (local models)
+					try {
+						const ollamaModel = await selectOllamaModel(task);
+						if (ollamaModel) {
+							selected = {
+								provider: 'ollama',
+								model: ollamaModel,
+								fallbackReason: 'mlx-unavailable',
+							};
+							span.setAttribute('model.selection.strategy', 'ollama-fallback');
+						} else {
+							throw new Error('No suitable Ollama model available');
+						}
+					} catch {
+						// 3. Final fallback to Frontier model APIs
+						const frontierModel = selectFrontierModel(task);
+						selected = {
+							provider: frontierModel.provider as 'openai' | 'anthropic',
+							model: frontierModel.model,
+							fallbackReason: 'local-models-unavailable',
+						};
+						span.setAttribute('model.selection.strategy', 'frontier-fallback');
+					}
 				}
-				selected ??= registry.getDefault('chat');
+
+				span.setAttribute('model.selection.task', task);
 				span.setAttribute('model.selection.provider', selected.provider);
 				span.setAttribute('model.selection.model', selected.model);
+				if (selected.fallbackReason) {
+					span.setAttribute('model.selection.fallback_reason', selected.fallbackReason);
+				}
+
 				await bus.publish(OrchestrationEventTypes.DecisionMade, {
 					decisionId: 'model.selection',
 					outcome: 'model.selected',
 					metadata: {
 						provider: selected.provider,
 						model: selected.model,
-						task: task ?? 'chat',
+						task,
+						fallbackReason: selected.fallbackReason,
 					},
 				});
 				return { selectedModel: selected };

@@ -75,7 +75,8 @@ export const AgentToolkitValidationResultSchema =
 			.literal('eslint')
 			.or(z.literal('ruff'))
 			.or(z.literal('cargo'))
-			.or(z.literal('pytest')),
+			.or(z.literal('pytest'))
+			.or(z.literal('validator')),
 		op: z.literal('validate'),
 		inputs: AgentToolkitValidationInputSchema,
 		results: z.array(AgentToolkitValidationIssueSchema),

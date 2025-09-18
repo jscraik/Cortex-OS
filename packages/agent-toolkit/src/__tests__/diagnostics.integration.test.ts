@@ -28,7 +28,7 @@ describe('runDiagnostics integration', () => {
 			`#!/usr/bin/env bash\n echo '${mockJson}'`,
 		);
 		const result = await runDiagnostics({ scriptPath: script });
-		expect(result.summary.overall).toBe('ok');
+		expect(result.summary?.overall).toBe('ok');
 		const prom = generatePrometheusMetrics(result);
 		expect(prom).toContain('diagnostics_overall_status 0');
 		expect(prom).toContain('diagnostics_health_latency_ms 5');

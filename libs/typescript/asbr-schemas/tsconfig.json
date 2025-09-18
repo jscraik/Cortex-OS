@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "vitest.config.ts"
+  ],
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true
+  }
+}

@@ -1,58 +1,130 @@
 import { z } from 'zod';
 import { container } from './boot';
 import { wireA2A } from './boot/a2a';
+import { createRuntimeHttpServer } from './http/runtime-server';
+import type { TaskRepository } from './persistence/task-repository';
+import type { ProfileRepository } from './persistence/profile-repository';
+import type { ArtifactRepository } from './persistence/artifact-repository';
+import type { EvidenceRepository } from './persistence/evidence-repository';
+import { createEventManager, type EventManager } from './events';
+import { createMcpHttpServer } from './mcp/server';
 import { TOKENS } from './tokens';
 
-// Lightweight service shapes to avoid any
+export interface RuntimeHandle {
+	httpUrl: string;
+	mcpUrl: string;
+	stop: () => Promise<void>;
+	events: EventManager;
+}
 
-export async function startRuntime() {
-	container.get(TOKENS.Memories);
-	container.get(TOKENS.Orchestration);
-	const mcp = container.get(TOKENS.MCPGateway);
+export async function startRuntime(): Promise<RuntimeHandle> {
+	const memories = container.get(TOKENS.Memories);
+	const orchestration = container.get(TOKENS.Orchestration);
+	const mcpGateway = container.get(TOKENS.MCPGateway);
+	const taskRepository = container.get<TaskRepository>(TOKENS.TaskRepository);
+	const profileRepository = container.get<ProfileRepository>(TOKENS.ProfileRepository);
+	const artifactRepository = container.get<ArtifactRepository>(TOKENS.ArtifactRepository);
+	const evidenceRepository = container.get<EvidenceRepository>(TOKENS.EvidenceRepository);
 
-	// Wire A2A bus
-	const { publish } = wireA2A();
+	void memories;
+	void orchestration;
 
-	// Validate environment configuration
+	const { publish } = (() => {
+		const wiring = wireA2A();
+		return {
+			publish: wiring.publish,
+		};
+	})();
+
 	const envSchema = z.object({
+		CORTEX_HTTP_PORT: z.coerce
+			.number()
+			.int()
+			.min(0)
+			.max(65535)
+			.default(7439),
+		CORTEX_HTTP_HOST: z.string().default('127.0.0.1'),
 		CORTEX_MCP_MANAGER_PORT: z.coerce
 			.number()
 			.int()
-			.min(1)
+			.min(0)
 			.max(65535)
 			.default(3000),
+		CORTEX_MCP_MANAGER_HOST: z.string().default('127.0.0.1'),
 		CORTEX_MCP_PUBLIC_URL: z.string().url().optional(),
 		CORTEX_PRIVACY_MODE: z.enum(['true', 'false']).optional().default('false'),
 	});
+
 	const {
-		CORTEX_MCP_MANAGER_PORT: port,
+		CORTEX_HTTP_PORT: httpPort,
+		CORTEX_HTTP_HOST: httpHost,
+		CORTEX_MCP_MANAGER_PORT: mcpPort,
+		CORTEX_MCP_MANAGER_HOST: mcpHost,
 		CORTEX_MCP_PUBLIC_URL,
 		CORTEX_PRIVACY_MODE: privacyMode,
 	} = envSchema.parse(process.env);
 
-	// Publish the public URL via A2A for other services to consume
+	const httpServer = createRuntimeHttpServer({
+		tasks: taskRepository,
+		profiles: profileRepository,
+		artifacts: artifactRepository,
+		evidence: evidenceRepository,
+	});
+	const eventManager = createEventManager({ httpServer });
+	const { port: boundHttpPort } = await httpServer.listen(httpPort, httpHost);
+	const httpUrl = `http://${httpHost}:${boundHttpPort}`;
+
+	const mcpServer = createMcpHttpServer(mcpGateway);
+	const { port: boundMcpPort } = await mcpServer.listen(mcpPort, mcpHost);
+	const mcpUrl = `http://${mcpHost}:${boundMcpPort}`;
+
 	if (CORTEX_MCP_PUBLIC_URL) {
-		await publish('mcp.public-url', { url: CORTEX_MCP_PUBLIC_URL, port });
+		await publish('mcp.public-url', {
+			url: CORTEX_MCP_PUBLIC_URL,
+			port: boundMcpPort,
+		});
 	}
 
-	// Log privacy mode status (use warn for visibility, avoid log/info in prod)
 	if (privacyMode === 'true') {
 		console.warn('🔒 Cortex-OS Privacy Mode: ENABLED');
 		console.warn('Only local MLX models will be used for all operations.');
 	}
 
-	// Start MCP gateway server
-	const server = await mcp.listen(port);
-	console.log(`🚀 Cortex-OS MCP Gateway listening on port ${port}`);
+	await eventManager.emitEvent({
+		type: 'runtime.started',
+		data: {
+			httpUrl,
+			mcpUrl,
+			startedAt: new Date().toISOString(),
+		},
+	});
 
-	// Graceful shutdown handling
+	const stop = async () => {
+		await Promise.all([httpServer.close(), mcpServer.close()]);
+	};
+
 	const shutdown = async (signal: string) => {
 		console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
-		await server.close();
-		console.log('✅ Server closed');
+		await stop();
+		console.log('✅ Servers closed');
 		process.exit(0);
 	};
 
-	process.on('SIGTERM', () => shutdown('SIGTERM'));
-	process.on('SIGINT', () => shutdown('SIGINT'));
+	const onSignal = (signal: NodeJS.Signals) => {
+		void shutdown(signal);
+	};
+
+	process.once('SIGTERM', onSignal);
+	process.once('SIGINT', onSignal);
+
+	return {
+		httpUrl,
+		mcpUrl,
+		events: eventManager,
+		stop: async () => {
+			process.removeListener('SIGTERM', onSignal);
+			process.removeListener('SIGINT', onSignal);
+			await stop();
+		},
+	};
 }

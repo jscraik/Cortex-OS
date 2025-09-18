@@ -102,7 +102,7 @@ export interface Agent {
 	role: AgentRole;
 	capabilities: string[];
 	status: 'available' | 'busy' | 'offline';
-	metadata: Record<string, any>;
+	metadata: Record<string, unknown>;
 	lastSeen: Date;
 }
 
@@ -174,6 +174,15 @@ export interface ReActState {
 	}>;
 }
 
+// Minimal ReAct step shape used within ReActState
+export interface ReActStep {
+	id: string;
+	name?: string;
+	input?: unknown;
+	output?: unknown;
+	error?: string;
+}
+
 export interface ReActConfig {
 	maxSteps: number;
 	maxThinkingTime: number;
@@ -232,7 +241,7 @@ export interface CoordinationMessage {
 	from: string;
 	to: string | string[];
 	type: 'proposal' | 'vote' | 'decision' | 'status' | 'resource_request';
-	payload: any;
+	payload: unknown;
 	timestamp: Date;
 	priority: number;
 }
@@ -342,21 +351,21 @@ export interface DatabaseConfig {
 
 export interface OrchestrationEvent {
 	type:
-		| 'task_created'
-		| 'task_started'
-		| 'task_completed'
-		| 'task_failed'
-		| 'agent_assigned'
-		| 'agent_freed'
-		| 'plan_created'
-		| 'plan_updated'
-		| 'coordination_started'
-		| 'decision_made'
-		| 'resource_allocated';
+	| 'task_created'
+	| 'task_started'
+	| 'task_completed'
+	| 'task_failed'
+	| 'agent_assigned'
+	| 'agent_freed'
+	| 'plan_created'
+	| 'plan_updated'
+	| 'coordination_started'
+	| 'decision_made'
+	| 'resource_allocated';
 	taskId?: string;
 	agentId?: string;
 	planId?: string;
-	data: any;
+	data: unknown;
 	timestamp: Date;
 	source: string;
 }
@@ -395,7 +404,7 @@ export interface LangChainConfig {
 
 export interface LangChainResult {
 	success: boolean;
-	result?: any;
+	result?: unknown;
 	error?: string;
 	reasoning?: string;
 	toolsUsed?: string[];
@@ -440,7 +449,7 @@ export interface MessageProtocol {
 	toAgent: string;
 	type: 'peer-to-peer' | 'supervisor-subordinate' | 'broadcast';
 	status: 'active' | 'inactive' | 'error';
-	messageQueue: any[];
+	messageQueue: unknown[];
 	lastActivity: Date;
 }
 
@@ -481,7 +490,7 @@ export interface AgentCoordination {
 		dependencies: string[];
 		startTime: Date | null;
 		endTime: Date | null;
-		results: any;
+		results: unknown;
 	}>;
 	communicationChannels: MessageProtocol[];
 	synchronizationPoints: SynchronizationPoint[];
@@ -495,9 +504,9 @@ export interface CoordinationState {
 	activeAgents: Set<string>;
 	completedPhases: Set<string>;
 	failedPhases: Set<string>;
-	pendingCommunications: any[];
-	resourceLocks: Map<string, any>;
-	conflictLog: any[];
+	pendingCommunications: unknown[];
+	resourceLocks: Map<string, unknown>;
+	conflictLog: unknown[];
 }
 
 export interface PhaseExecutionData {
@@ -508,21 +517,21 @@ export interface PhaseExecutionData {
 	dependencies: string[];
 	startTime: Date | null;
 	endTime: Date | null;
-	results: any;
+	results: unknown;
 }
 
 export interface CoordinationResult {
 	coordinationId: string;
 	success: boolean;
 	results: Record<string, unknown>;
-	agentPerformance: Record<string, any>;
+	agentPerformance: Record<string, unknown>;
 	communicationStats: {
 		messagesSent: number;
 		messagesReceived: number;
 		errors: number;
 	};
-	synchronizationEvents: any[];
-	resourceUtilization: Record<string, any>;
+	synchronizationEvents: unknown[];
+	resourceUtilization: Record<string, unknown>;
 	executionTime: number;
 	completedPhases: string[];
 	errors: string[];
@@ -609,14 +618,14 @@ export interface OrchestrationState {
 	id: string;
 	taskId: string;
 	status:
-		| 'initializing'
-		| 'planning'
-		| 'deciding'
-		| 'executing'
-		| 'validating'
-		| 'completed'
-		| 'failed'
-		| 'cancelled';
+	| 'initializing'
+	| 'planning'
+	| 'deciding'
+	| 'executing'
+	| 'validating'
+	| 'completed'
+	| 'failed'
+	| 'cancelled';
 	strategy: OrchestrationStrategy;
 	planningContext: PlanningContext;
 	currentPhase: string;

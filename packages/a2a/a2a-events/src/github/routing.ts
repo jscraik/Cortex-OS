@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { A2AEventEnvelope } from './envelope';
+import type { A2AEventEnvelope } from './envelope.js';
 
 // Routing Rule Schema
 export const RoutingRuleSchema = z.object({

@@ -38,7 +38,7 @@ describe('Agent Toolkit Contracts', () => {
 		const result = AgentToolkitSearchResultSchema.parse(validSearchResult);
 		expect(result.tool).toBe('ripgrep');
 		expect(result.results).toHaveLength(1);
-		expect(result.results[0].file).toBe('test.ts');
+		expect(result.results?.[0]?.file).toBe('test.ts');
 	});
 
 	it('should validate codemod input schema', () => {

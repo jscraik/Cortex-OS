@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCerebrumGraph } from '../src/index.js';
+import { createCerebrumGraph } from '../src/langgraph/create-cerebrum-graph.js';
 
 // Negative test: override persona path to a minimal YAML missing a11y/security
 

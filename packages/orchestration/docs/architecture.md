@@ -7,11 +7,11 @@ The system consists of modular layers:
 - Supports adaptive, parallel, and strategic decisions
 
 ## Python Bridges
-- JSON over stdio bridge to LangGraph and CrewAI agents
+- JSON over stdio bridge to LangGraph agents
 - Checkpoint history for replay and diagnostics
 
 ## Providers
-- MLX and Ollama adapters for model execution
+<!-- LangGraph-only: non-LangGraph model adapters removed -->
 - Extensible provider interface for new frameworks
 
 ## Observability

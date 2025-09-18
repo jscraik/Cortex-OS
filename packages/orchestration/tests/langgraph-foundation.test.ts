@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCerebrumGraph } from '../src/index.js';
+import { createCerebrumGraph } from '../src/langgraph/create-cerebrum-graph.js';
 
 describe('LangGraph foundation', () => {
 	it('creates a graph that echoes input', async () => {

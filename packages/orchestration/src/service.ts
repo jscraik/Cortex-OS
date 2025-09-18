@@ -1,7 +1,5 @@
-import type { Neuron } from '@cortex-os/prp-runner';
 import type { Logger } from 'winston';
-import type { PRPEngine } from './prp-integration.js';
-import { cleanup, createEngine, orchestrateTask } from './prp-integration.js';
+import { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 import type {
 	Agent,
 	OrchestrationConfig,
@@ -10,32 +8,38 @@ import type {
 } from './types.js';
 
 export interface OrchestrationFacade {
-	engine: PRPEngine;
+	engine: { kind: 'langgraph' };
 	run: (
 		task: Task,
 		agents: Agent[],
 		context?: Partial<PlanningContext>,
-		neurons?: Neuron[],
+		neurons?: unknown[],
 	) => Promise<unknown>;
 	shutdown: () => Promise<void>;
 }
 
 export function provideOrchestration(
-	config: Partial<OrchestrationConfig> = {},
-	logger?: Logger,
+	_config: Partial<OrchestrationConfig> = {},
+	_logger?: Logger,
 ): OrchestrationFacade {
-	const engine: PRPEngine = createEngine(config, logger);
+	const engine = { kind: 'langgraph' as const };
+	const graph = createCerebrumGraph();
 
 	return {
 		engine,
-		run: (
+		run: async (
 			task: Task,
-			agents: Agent[],
-			context: Partial<PlanningContext> = {},
-			neurons: Neuron[] = [],
-		) => orchestrateTask(engine, task, agents, context, neurons),
+			_agents: Agent[],
+			_context: Partial<PlanningContext> = {},
+			_neurons: unknown[] = [],
+		) => {
+			// Minimal mapping from Task -> graph input for now
+			const input = task.title || task.description || 'run';
+			const result = await graph.invoke({ input, task: 'default' });
+			return result;
+		},
 		shutdown: async () => {
-			await cleanup(engine);
+			// Noop for now (no persistent resources yet)
 		},
 	};
 }

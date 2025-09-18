@@ -14,7 +14,7 @@
     "pretest": "pnpm build",
     "dev": "tsc --watch",
     "build": "echo \"No build step required for this package\"",
-    "lint": "eslint src --ext .ts --no-ignore",
+    "lint": "eslint src --ext .ts",
     "test": "node ../../scripts/vitest-safe.mjs run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:coverage": "vitest --coverage",
@@ -26,9 +26,7 @@
     "@cortex-os/policy": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "zod": "^3.23.8",
-    "@cortex-os/agents": "workspace:*",
     "@cortex-os/memories": "workspace:*",
-    "@cortex-os/prp-runner": "workspace:*",
     "@cortex-os/observability": "workspace:*",
     "@langchain/community": "^0.3.49",
     "@langchain/core": "^0.3.30",
@@ -44,7 +42,8 @@
     "winston": "^3.14.2",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-contracts": "workspace:*",
-    "@cortex-os/a2a-transport": "workspace:*"
+    "@cortex-os/a2a-transport": "workspace:*",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

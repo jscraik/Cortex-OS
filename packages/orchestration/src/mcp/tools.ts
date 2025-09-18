@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { ZodError, type ZodIssue, z } from 'zod';
+import { z, ZodError, type ZodIssue } from 'zod';
 import type { EnhancedSpanContext } from '../observability/otel.js';
 import {
 	recordAgentActivation,
@@ -42,11 +42,7 @@ type MCPToolDefinition = {
 
 class OrchestrationToolError extends Error {
 	constructor(
-		public readonly code:
-			| 'validation_error'
-			| 'conflict'
-			| 'internal_error'
-			| 'security_error',
+		public readonly code: 'validation_error' | 'conflict' | 'internal_error' | 'security_error',
 		message: string,
 		public readonly details: string[] = [],
 	) {
@@ -56,6 +52,7 @@ class OrchestrationToolError extends Error {
 }
 
 // Matches ASCII control characters only (NUL..US and DEL)
+// Build via RegExp constructor to avoid embedding raw control characters
 const CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
 const MAX_METADATA_DEPTH = 4;
 const MAX_METADATA_ENTRIES = 64;
@@ -63,9 +60,7 @@ const MAX_ARRAY_LENGTH = 64;
 const MAX_STRING_LENGTH = 4096;
 
 function mapZodIssues(issues: ZodIssue[]): string[] {
-	return issues.map(
-		(issue) => `${issue.path.join('.') || issue.code}: ${issue.message}`,
-	);
+	return issues.map((issue) => `${issue.path.join('.') || issue.code}: ${issue.message}`);
 }
 
 function createCorrelationId(): string {
@@ -81,18 +76,14 @@ function sanitizeString(
 	const withoutControl = value.replace(CONTROL_CHARS, '');
 	const normalized = withoutControl.replace(/\s+/g, ' ').trim();
 	if (!normalized || normalized.length < min) {
-		throw new OrchestrationToolError(
-			'validation_error',
-			`${field} cannot be empty`,
-			[`${field} must contain at least ${min} characters`],
-		);
+		throw new OrchestrationToolError('validation_error', `${field} cannot be empty`, [
+			`${field} must contain at least ${min} characters`,
+		]);
 	}
 	if (normalized.length > max) {
-		throw new OrchestrationToolError(
-			'validation_error',
-			`${field} exceeds maximum length`,
-			[`${field} must not exceed ${max} characters`],
-		);
+		throw new OrchestrationToolError('validation_error', `${field} exceeds maximum length`, [
+			`${field} must not exceed ${max} characters`,
+		]);
 	}
 	return normalized;
 }
@@ -102,63 +93,47 @@ function ensurePlainObject(
 	context: string,
 ): asserts value is Record<string, unknown> {
 	if (typeof value !== 'object' || value === null) {
-		throw new OrchestrationToolError(
-			'validation_error',
+		throw new OrchestrationToolError('validation_error', `${context} must be an object`, [
 			`${context} must be an object`,
-			[`${context} must be an object`],
-		);
+		]);
 	}
 	const proto = Reflect.getPrototypeOf(value);
 	if (proto !== Object.prototype && proto !== null) {
-		throw new OrchestrationToolError(
-			'security_error',
-			`${context} has an unsafe prototype`,
-			[`${context} must not override Object prototype`],
-		);
+		throw new OrchestrationToolError('security_error', `${context} has an unsafe prototype`, [
+			`${context} must not override Object prototype`,
+		]);
 	}
 }
 
-function sanitizeMetadataValue(
-	value: unknown,
-	context: string,
-	depth: number,
-): unknown {
+function sanitizeMetadataValue(value: unknown, context: string, depth: number): unknown {
 	if (depth > MAX_METADATA_DEPTH) {
-		throw new OrchestrationToolError(
-			'validation_error',
-			`${context} exceeds maximum depth`,
-			[`${context} exceeds maximum metadata depth of ${MAX_METADATA_DEPTH}`],
-		);
+		throw new OrchestrationToolError('validation_error', `${context} exceeds maximum depth`, [
+			`${context} exceeds maximum metadata depth of ${MAX_METADATA_DEPTH}`,
+		]);
 	}
 	if (value === null || value === undefined) return value;
 	if (typeof value === 'string') {
 		const sanitized = value.replace(/\s+/g, ' ').trim();
 		if (sanitized.length > MAX_STRING_LENGTH) {
-			throw new OrchestrationToolError(
-				'validation_error',
-				`${context} exceeds allowed length`,
-				[`${context} exceeds maximum metadata length of ${MAX_STRING_LENGTH}`],
-			);
+			throw new OrchestrationToolError('validation_error', `${context} exceeds allowed length`, [
+				`${context} exceeds maximum metadata length of ${MAX_STRING_LENGTH}`,
+			]);
 		}
 		return sanitized;
 	}
 	if (typeof value === 'number' || typeof value === 'boolean') {
 		if (typeof value === 'number' && !Number.isFinite(value)) {
-			throw new OrchestrationToolError(
-				'validation_error',
-				`${context} must be a finite number`,
-				[`${context} must be finite`],
-			);
+			throw new OrchestrationToolError('validation_error', `${context} must be a finite number`, [
+				`${context} must be finite`,
+			]);
 		}
 		return value;
 	}
 	if (Array.isArray(value)) {
 		if (value.length > MAX_ARRAY_LENGTH) {
-			throw new OrchestrationToolError(
-				'validation_error',
-				`${context} array too large`,
-				[`${context} arrays cannot exceed ${MAX_ARRAY_LENGTH} items`],
-			);
+			throw new OrchestrationToolError('validation_error', `${context} array too large`, [
+				`${context} arrays cannot exceed ${MAX_ARRAY_LENGTH} items`,
+			]);
 		}
 		return value.map((entry, index) =>
 			sanitizeMetadataValue(entry, `${context}[${index}]`, depth + 1),
@@ -167,16 +142,17 @@ function sanitizeMetadataValue(
 	ensurePlainObject(value, context);
 	const entries = Object.entries(value);
 	if (entries.length > MAX_METADATA_ENTRIES) {
-		throw new OrchestrationToolError(
-			'validation_error',
-			`${context} has too many entries`,
-			[`${context} cannot exceed ${MAX_METADATA_ENTRIES} entries`],
-		);
+		throw new OrchestrationToolError('validation_error', `${context} has too many entries`, [
+			`${context} cannot exceed ${MAX_METADATA_ENTRIES} entries`,
+		]);
 	}
 	const sanitized: Record<string, unknown> = {};
 	for (const [key, entry] of entries) {
-		sanitized[sanitizeString(key, `${context} key`, { min: 1, max: 120 })] =
-			sanitizeMetadataValue(entry, `${context}.${key}`, depth + 1);
+		sanitized[sanitizeString(key, `${context} key`, { min: 1, max: 120 })] = sanitizeMetadataValue(
+			entry,
+			`${context}.${key}`,
+			depth + 1,
+		);
 	}
 	return sanitized;
 }
@@ -198,8 +174,8 @@ function stableStringify(value: unknown): string {
 		return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
 	}
 	if (typeof value === 'object') {
-		const entries = Object.entries(value as Record<string, unknown>).sort(
-			([a], [b]) => a.localeCompare(b),
+		const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+			a.localeCompare(b),
 		);
 		return `{${entries
 			.map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
@@ -307,12 +283,7 @@ async function executeTool<TInput>(options: {
 			);
 		}
 		const message = error instanceof Error ? error.message : 'Unknown error';
-		return createErrorResponse(
-			tool,
-			{ code: 'internal_error', message },
-			correlationId,
-			timestamp,
-		);
+		return createErrorResponse(tool, { code: 'internal_error', message }, correlationId, timestamp);
 	}
 }
 
@@ -348,36 +319,25 @@ const workflowInputSchema = z.object({
 	metadata: z.record(z.unknown()).optional(),
 });
 
-function sanitizeWorkflowStep(
-	step: z.infer<typeof workflowStepSchema>,
-	index: number,
-) {
+function sanitizeWorkflowStep(step: z.infer<typeof workflowStepSchema>, index: number) {
 	const id = sanitizeString(step.id, `steps[${index}].id`, { min: 1, max: 64 });
 	const name = sanitizeString(step.name, `steps[${index}].name`, {
 		min: 1,
 		max: 160,
 	});
-	const description = sanitizeString(
-		step.description,
-		`steps[${index}].description`,
-		{
-			min: 1,
-			max: 1024,
-		},
-	);
+	const description = sanitizeString(step.description, `steps[${index}].description`, {
+		min: 1,
+		max: 1024,
+	});
 	const agent = sanitizeString(step.agent, `steps[${index}].agent`, {
 		min: 1,
 		max: 160,
 	});
 	const normalizedStatus = step.status ? step.status.toLowerCase() : 'pending';
 	if (!STEP_STATUSES.has(normalizedStatus)) {
-		throw new OrchestrationToolError(
-			'validation_error',
-			`Invalid status for step ${id}`,
-			[
-				`steps[${index}].status must be one of ${Array.from(STEP_STATUSES).join(', ')}`,
-			],
-		);
+		throw new OrchestrationToolError('validation_error', `Invalid status for step ${id}`, [
+			`steps[${index}].status must be one of ${Array.from(STEP_STATUSES).join(', ')}`,
+		]);
 	}
 	const estimatedDurationMs = step.estimatedDurationMs;
 	return {
@@ -390,10 +350,7 @@ function sanitizeWorkflowStep(
 	};
 }
 
-function sanitizeAgent(
-	agent: z.infer<typeof agentInputSchema>,
-	index: number,
-): Agent {
+function sanitizeAgent(agent: z.infer<typeof agentInputSchema>, index: number): Agent {
 	const id = sanitizeString(agent.id, `agents[${index}].id`, {
 		min: 1,
 		max: 128,
@@ -404,26 +361,19 @@ function sanitizeAgent(
 	});
 	const normalizedStatus = (agent.status ?? 'available').toLowerCase();
 	if (!['available', 'busy', 'offline'].includes(normalizedStatus)) {
-		throw new OrchestrationToolError(
-			'validation_error',
-			`Invalid status for agent ${id}`,
-			[`agents[${index}].status must be available, busy, or offline`],
-		);
+		throw new OrchestrationToolError('validation_error', `Invalid status for agent ${id}`, [
+			`agents[${index}].status must be available, busy, or offline`,
+		]);
 	}
 	const capabilities = agent.capabilities
 		? agent.capabilities.map((capability, capIndex) =>
-				sanitizeString(
-					capability,
-					`agents[${index}].capabilities[${capIndex}]`,
-					{
-						min: 1,
-						max: 120,
-					},
-				),
-			)
+			sanitizeString(capability, `agents[${index}].capabilities[${capIndex}]`, {
+				min: 1,
+				max: 120,
+			}),
+		)
 		: [];
-	const metadata =
-		sanitizeOptionalRecord(agent.metadata, `agents[${index}].metadata`) ?? {};
+	const metadata = sanitizeOptionalRecord(agent.metadata, `agents[${index}].metadata`) ?? {};
 	return {
 		id,
 		name,
@@ -437,8 +387,7 @@ function sanitizeAgent(
 
 export const workflowOrchestrationTool: MCPToolDefinition = {
 	name: 'orchestration.workflow.execute',
-	description:
-		'Validate and summarize a multi-agent workflow orchestration request.',
+	description: 'Validate and summarize a multi-agent workflow orchestration request.',
 	inputSchema: workflowInputSchema,
 	handler: async (params: unknown) =>
 		executeTool({
@@ -446,27 +395,18 @@ export const workflowOrchestrationTool: MCPToolDefinition = {
 			schema: workflowInputSchema,
 			params,
 			logic: async (input) => {
-				const workflowName = sanitizeString(
-					input.workflowName,
-					'workflowName',
-					{
-						min: 1,
-						max: 180,
-					},
-				);
+				const workflowName = sanitizeString(input.workflowName, 'workflowName', {
+					min: 1,
+					max: 180,
+				});
 				const goal = sanitizeString(input.goal, 'goal', { min: 1, max: 4096 });
 				const workflowId = input.workflowId
 					? sanitizeString(input.workflowId, 'workflowId', { min: 3, max: 128 })
 					: `workflow-${randomUUID()}`;
 				const context = sanitizeOptionalRecord(input.context, 'context') ?? {};
-				const metadata =
-					sanitizeOptionalRecord(input.metadata, 'metadata') ?? {};
-				const sanitizedSteps = input.steps.map((step, index) =>
-					sanitizeWorkflowStep(step, index),
-				);
-				const agents = input.agents.map((agent, index) =>
-					sanitizeAgent(agent, index),
-				);
+				const metadata = sanitizeOptionalRecord(input.metadata, 'metadata') ?? {};
+				const sanitizedSteps = input.steps.map((step, index) => sanitizeWorkflowStep(step, index));
+				const agents = input.agents.map((agent, index) => sanitizeAgent(agent, index));
 				const strategy = input.strategy ?? OrchestrationStrategy.ADAPTIVE;
 				const priority = input.priority ?? 5;
 				const startedAtIso = new Date().toISOString();
@@ -478,9 +418,7 @@ export const workflowOrchestrationTool: MCPToolDefinition = {
 
 				let success = false;
 				try {
-					const pendingSteps = sanitizedSteps.filter(
-						(step) => step.status === 'pending',
-					).length;
+					const pendingSteps = sanitizedSteps.filter((step) => step.status === 'pending').length;
 					const completedSteps = sanitizedSteps.filter(
 						(step) => step.status === 'completed',
 					).length;
@@ -507,13 +445,8 @@ export const workflowOrchestrationTool: MCPToolDefinition = {
 						actualDuration: undefined,
 					};
 					const planningContext: Partial<PlanningContext> = {
-						...getDefaultOrchestrationPlanningContext(
-							strategy,
-							totalDurationMs,
-							agents,
-						),
+						...getDefaultOrchestrationPlanningContext(strategy, totalDurationMs, agents),
 						task,
-						context,
 					};
 					const cacheKey = stableStringify({
 						workflowId,
@@ -558,9 +491,7 @@ export const workflowOrchestrationTool: MCPToolDefinition = {
 									totalSteps: sanitizedSteps.length,
 									pendingSteps,
 									completedSteps,
-									assignedAgents: Array.from(
-										new Set(sanitizedSteps.map((step) => step.agent)),
-									),
+									assignedAgents: Array.from(new Set(sanitizedSteps.map((step) => step.agent))),
 									estimatedDurationMs: totalDurationMs || null,
 								},
 								steps: sanitizedSteps,
@@ -603,9 +534,7 @@ const taskSchema = z.object({
 	title: z.string().min(1).max(160),
 	description: z.string().max(2048).optional(),
 	priority: z.enum(['low', 'medium', 'high']).default('medium'),
-	status: z
-		.enum(['pending', 'in_progress', 'completed', 'failed', 'cancelled'])
-		.optional(),
+	status: z.enum(['pending', 'in_progress', 'completed', 'failed', 'cancelled']).optional(),
 	assignee: z.string().min(1).max(160).optional(),
 	tags: z.array(z.string()).max(32).optional(),
 	metadata: z.record(z.unknown()).optional(),
@@ -613,9 +542,7 @@ const taskSchema = z.object({
 });
 
 const taskManagementInputSchema = z.object({
-	action: z
-		.enum(['create', 'update', 'progress', 'complete', 'fail', 'cancel'])
-		.default('create'),
+	action: z.enum(['create', 'update', 'progress', 'complete', 'fail', 'cancel']).default('create'),
 	task: taskSchema,
 	audit: z
 		.object({
@@ -625,10 +552,7 @@ const taskManagementInputSchema = z.object({
 		.optional(),
 });
 
-const STATUS_BY_ACTION: Record<
-	z.infer<typeof taskManagementInputSchema>['action'],
-	string
-> = {
+const STATUS_BY_ACTION: Record<z.infer<typeof taskManagementInputSchema>['action'], string> = {
 	create: 'pending',
 	update: 'in_progress',
 	progress: 'in_progress',
@@ -656,36 +580,30 @@ export const taskManagementTool: MCPToolDefinition = {
 					: `task-${randomUUID()}`;
 				const assignee = input.task.assignee
 					? sanitizeString(input.task.assignee, 'task.assignee', {
-							min: 1,
-							max: 160,
-						})
+						min: 1,
+						max: 160,
+					})
 					: undefined;
-				const metadata = sanitizeOptionalRecord(
-					input.task.metadata,
-					'task.metadata',
-				);
+				const metadata = sanitizeOptionalRecord(input.task.metadata, 'task.metadata');
 				const tags = input.task.tags?.map((tag, index) =>
 					sanitizeString(tag, `task.tags[${index}]`, { min: 1, max: 64 }),
 				);
 				const audit = input.audit
 					? {
-							actor: sanitizeString(input.audit.actor, 'audit.actor', {
+						actor: sanitizeString(input.audit.actor, 'audit.actor', {
+							min: 1,
+							max: 160,
+						}),
+						reason: input.audit.reason
+							? sanitizeString(input.audit.reason, 'audit.reason', {
 								min: 1,
-								max: 160,
-							}),
-							reason: input.audit.reason
-								? sanitizeString(input.audit.reason, 'audit.reason', {
-										min: 1,
-										max: 512,
-									})
-								: undefined,
-						}
+								max: 512,
+							})
+							: undefined,
+					}
 					: undefined;
-				const baseStatus = STATUS_BY_ACTION[input.action];
-				const status =
-					input.action === 'update'
-						? (input.task.status ?? baseStatus)
-						: baseStatus;
+				const baseStatus = STATUS_BY_ACTION[input.action as keyof typeof STATUS_BY_ACTION];
+				const status = input.action === 'update' ? (input.task.status ?? baseStatus) : baseStatus;
 				const spanContext: EnhancedSpanContext = {
 					workflowName: title,
 					stepKind: 'task-management',
@@ -693,25 +611,24 @@ export const taskManagementTool: MCPToolDefinition = {
 				};
 				const progress = input.task.progress
 					? (() => {
-							const current = input.task.progress?.current;
-							const total = input.task.progress?.total;
-							if (current > total) {
-								throw new OrchestrationToolError(
-									'validation_error',
-									'Progress current cannot exceed total',
-									['task.progress.current cannot exceed task.progress.total'],
-								);
-							}
-							const percentage = Math.round((current / total) * 100);
-							const message = input.task.progress?.message
-								? sanitizeString(
-										input.task.progress?.message,
-										'task.progress.message',
-										{ min: 1, max: 512 },
-									)
-								: undefined;
-							return { current, total, percentage, message };
-						})()
+						const current = input.task.progress?.current;
+						const total = input.task.progress?.total;
+						if (current > total) {
+							throw new OrchestrationToolError(
+								'validation_error',
+								'Progress current cannot exceed total',
+								['task.progress.current cannot exceed task.progress.total'],
+							);
+						}
+						const percentage = Math.round((current / total) * 100);
+						const message = input.task.progress?.message
+							? sanitizeString(input.task.progress?.message, 'task.progress.message', {
+								min: 1,
+								max: 512,
+							})
+							: undefined;
+						return { current, total, percentage, message };
+					})()
 					: undefined;
 				return withEnhancedSpan(
 					'mcp.tool.orchestration.task.manage',
@@ -737,9 +654,7 @@ export const taskManagementTool: MCPToolDefinition = {
 const processSchema = z.object({
 	pid: z.number().int().positive(),
 	name: z.string().min(1).max(160),
-	status: z
-		.enum(['running', 'sleeping', 'stopped', 'zombie', 'waiting'])
-		.optional(),
+	status: z.enum(['running', 'sleeping', 'stopped', 'zombie', 'waiting']).optional(),
 	cpu: z.number().min(0).max(100),
 	memoryMb: z.number().min(0),
 	startedAt: z.string().datetime().optional(),
@@ -772,40 +687,32 @@ export const processMonitoringTool: MCPToolDefinition = {
 			logic: async (input) => {
 				const workflowName = input.workflowName
 					? sanitizeString(input.workflowName, 'workflowName', {
-							min: 1,
-							max: 180,
-						})
+						min: 1,
+						max: 180,
+					})
 					: undefined;
 				const workflowId = input.workflowId
 					? sanitizeString(input.workflowId, 'workflowId', { min: 3, max: 128 })
 					: undefined;
-				const thresholds = input.thresholds ?? { cpu: 85, memoryMb: 1024 };
+				const thresholds = (input.thresholds ?? { cpu: 85, memoryMb: 1024 }) as {
+					cpu: number;
+					memoryMb: number;
+				};
 				const processes = input.processes.map((proc, index) => {
 					const name = sanitizeString(proc.name, `processes[${index}].name`, {
 						min: 1,
 						max: 160,
 					});
 					const status = (proc.status ?? RUNNING_STATUS).toLowerCase();
-					if (
-						!['running', 'sleeping', 'stopped', 'zombie', 'waiting'].includes(
-							status,
-						)
-					) {
+					if (!['running', 'sleeping', 'stopped', 'zombie', 'waiting'].includes(status)) {
 						throw new OrchestrationToolError(
 							'validation_error',
 							`Invalid status for process ${name}`,
-							[
-								`processes[${index}].status must be running, sleeping, stopped, waiting, or zombie`,
-							],
+							[`processes[${index}].status must be running, sleeping, stopped, waiting, or zombie`],
 						);
 					}
-					const startedAt = proc.startedAt
-						? new Date(proc.startedAt).toISOString()
-						: undefined;
-					const metadata = sanitizeOptionalRecord(
-						proc.metadata,
-						`processes[${index}].metadata`,
-					);
+					const startedAt = proc.startedAt ? new Date(proc.startedAt).toISOString() : undefined;
+					const metadata = sanitizeOptionalRecord(proc.metadata, `processes[${index}].metadata`);
 					return {
 						pid: proc.pid,
 						name,
@@ -836,16 +743,8 @@ export const processMonitoringTool: MCPToolDefinition = {
 							memorySum += proc.memoryMb;
 							const cpuRatio = proc.cpu / 100;
 							const memoryRatio = proc.memoryMb / thresholds.memoryMb;
-							updateResourceUtilization(
-								'cpu',
-								Number(cpuRatio.toFixed(4)),
-								proc.name,
-							);
-							updateResourceUtilization(
-								'memory',
-								Number(memoryRatio.toFixed(4)),
-								proc.name,
-							);
+							updateResourceUtilization('cpu', Number(cpuRatio.toFixed(4)), proc.name);
+							updateResourceUtilization('memory', Number(memoryRatio.toFixed(4)), proc.name);
 							if (proc.cpu > thresholds.cpu) {
 								highCpu += 1;
 								alerts.push(
@@ -900,7 +799,7 @@ export const orchestrationMcpTools = [
 ];
 export {
 	__resetOrchestrationMcpState,
-	configureOrchestrationMcp,
+	configureOrchestrationMcp
 } from './core-adapter.js';
 
 // MCP Tool Contract Definitions for Orchestration Package
@@ -935,12 +834,7 @@ const PlanWorkflowInputSchema = z.object({
 				summary: z.string().min(1).max(1024),
 				requiredCapabilities: z.array(z.string().min(1).max(120)).max(64),
 				dependencies: z.array(z.string().min(1).max(128)).max(32),
-				estimatedDurationMinutes: z
-					.number()
-					.int()
-					.positive()
-					.max(1440)
-					.optional(),
+				estimatedDurationMinutes: z.number().int().positive().max(1440).optional(),
 			}),
 		)
 		.min(1)
@@ -965,12 +859,7 @@ const PlanWorkflowResultSchema = z.object({
 							title: z.string().min(1).max(160),
 							status: z.nativeEnum(TaskStatus),
 							requiredCapabilities: z.array(z.string().min(1).max(120)).max(64),
-							estimatedDurationMinutes: z
-								.number()
-								.int()
-								.positive()
-								.max(1440)
-								.optional(),
+							estimatedDurationMinutes: z.number().int().positive().max(1440).optional(),
 						}),
 					)
 					.min(1),
@@ -1092,15 +981,11 @@ function createToolContract(
 		},
 		errors: {
 			[ToolErrorCode.TASK_NOT_FOUND]: 'The specified task was not found',
-			[ToolErrorCode.WORKFLOW_NOT_FOUND]:
-				'The specified workflow was not found',
+			[ToolErrorCode.WORKFLOW_NOT_FOUND]: 'The specified workflow was not found',
 			[ToolErrorCode.INVALID_INPUT]: 'The input provided is invalid',
-			[ToolErrorCode.PERMISSION_DENIED]:
-				'Permission denied to perform this operation',
-			[ToolErrorCode.RATE_LIMITED]:
-				'Rate limit exceeded, please try again later',
-			[ToolErrorCode.INTERNAL_ERROR]:
-				'An internal error occurred while processing the request',
+			[ToolErrorCode.PERMISSION_DENIED]: 'Permission denied to perform this operation',
+			[ToolErrorCode.RATE_LIMITED]: 'Rate limit exceeded, please try again later',
+			[ToolErrorCode.INTERNAL_ERROR]: 'An internal error occurred while processing the request',
 		},
 	};
 }

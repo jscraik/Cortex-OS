@@ -25,15 +25,6 @@ interface Neuron {
 	): Promise<NeuronResult>;
 }
 
-// Local execution wiring types retained for potential future expansion
-// but Neuron.execute uses PRPState directly for type safety.
-interface ExecutionState {
-	[key: string]: unknown;
-}
-interface ExecutionContext {
-	input: unknown;
-	workingDirectory?: unknown;
-}
 
 interface NeuronResult {
 	output: unknown;
@@ -53,9 +44,7 @@ interface ExecutionMetrics {
 	commandsExecuted: number;
 }
 
-/**
- * MCP Tool interface for kernel integration
- */
+
 export interface MCPTool<Params = Record<string, unknown>, Result = unknown> {
 	name: string;
 	description: string;
@@ -63,9 +52,6 @@ export interface MCPTool<Params = Record<string, unknown>, Result = unknown> {
 	execute(params: Params, context: MCPContext): Promise<Result>;
 }
 
-/**
- * MCP Context for tool execution
- */
 export interface MCPContext {
 	prpState: PRPState;
 	workingDirectory: string;
@@ -144,6 +130,7 @@ export class MCPAdapter {
 		};
 	}> {
 		const tool = this.tools.get(toolName);
+
 		if (!tool) {
 			throw new Error(`MCP tool not found: ${toolName}`);
 		}

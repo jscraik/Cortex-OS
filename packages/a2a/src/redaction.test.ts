@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createRedactor } from './redaction';
+import { createRedactor } from './redaction.js';
 
 describe('Redaction', () => {
 	it('redacts configured fields', () => {

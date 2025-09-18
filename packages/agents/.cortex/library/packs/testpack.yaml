@@ -1,0 +1,5 @@
+task: Test Task
+tone: Direct
+request: Do it
+deliberation: reasoning_effort=low
+output: Plain

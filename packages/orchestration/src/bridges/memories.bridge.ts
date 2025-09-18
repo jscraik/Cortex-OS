@@ -1,5 +1,5 @@
 import type { Memory, MemoryService } from '@cortex-os/memories';
-import { uuid } from '@cortex-os/utils';
+import { randomUUID } from 'node:crypto';
 
 export type MemoriesBridge = {
 	checkpoint: (
@@ -10,7 +10,7 @@ export type MemoriesBridge = {
 
 export const createMemoriesBridge = (mem: MemoryService): MemoriesBridge => ({
 	checkpoint: async (runId, data) => {
-		const id = `wf:${runId}:${uuid()}`;
+		const id = `wf:${runId}:${randomUUID()}`;
 		const entry: Memory = {
 			id,
 			kind: 'artifact',

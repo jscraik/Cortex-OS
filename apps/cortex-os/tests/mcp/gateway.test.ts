@@ -36,7 +36,8 @@ describe('MCP Gateway', () => {
 		if (!triggered) expect(lastOkCpu).toBeDefined();
 	});
 	it('validates input and returns validation error object', async () => {
-		const result: unknown = await gw.callTool('system.restart_service', {
+		const local = createTestMcpContainer({ allowMutations: true }).mcp;
+		const result: unknown = await local.callTool('system.restart_service', {
 			service: '',
 			timeoutMs: 5,
 		});

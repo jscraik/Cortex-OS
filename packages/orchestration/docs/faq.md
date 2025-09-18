@@ -1,7 +1,7 @@
 # FAQ
 
 ## Why do I need Python?
-Python hosts LangGraph and CrewAI agents accessed via the bridge.
+Python hosts LangGraph agents accessed via the bridge.
 
 ## How do I disable HITL?
 Unset `CORTEX_HITL_STORE` or ignore approval prompts.

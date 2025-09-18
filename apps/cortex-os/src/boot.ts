@@ -4,6 +4,10 @@ import {
 	provideMCP,
 	provideMemories,
 	provideOrchestration,
+	provideProfileRepository,
+	provideTaskRepository,
+	provideArtifactRepository,
+	provideEvidenceRepository,
 	tracer,
 } from './services';
 import { TOKENS } from './tokens';
@@ -17,6 +21,10 @@ export function createContainer(): Container {
 	container.bind(TOKENS.Memories).toConstantValue(provideMemories());
 	container.bind(TOKENS.Orchestration).toConstantValue(provideOrchestration());
 	container.bind(TOKENS.MCPGateway).toConstantValue(provideMCP());
+	container.bind(TOKENS.TaskRepository).toConstantValue(provideTaskRepository());
+	container.bind(TOKENS.ProfileRepository).toConstantValue(provideProfileRepository());
+	container.bind(TOKENS.ArtifactRepository).toConstantValue(provideArtifactRepository());
+	container.bind(TOKENS.EvidenceRepository).toConstantValue(provideEvidenceRepository());
 
 	validateContainer(container);
 	return container;
@@ -29,6 +37,10 @@ function validateContainer(container: Container): void {
 			TOKENS.Memories,
 			TOKENS.Orchestration,
 			TOKENS.MCPGateway,
+			TOKENS.TaskRepository,
+			TOKENS.ProfileRepository,
+			TOKENS.ArtifactRepository,
+			TOKENS.EvidenceRepository,
 		];
 		for (const token of requiredTokens) {
 			if (!container.isBound(token))

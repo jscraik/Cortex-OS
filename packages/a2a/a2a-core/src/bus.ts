@@ -5,11 +5,9 @@ import {
 	injectTraceContext,
 } from '../../a2a-contracts/src/trace-context.js';
 import { busMetrics } from './metrics.js';
-import type { SchemaRegistry } from './schema-registry';
-import { getCurrentTraceContext } from './trace-context-manager';
-import type { Transport } from './transport';
-
-export type { Transport } from './transport';
+import type { SchemaRegistry } from './schema-registry.js';
+import { getCurrentTraceContext } from './trace-context-manager.js';
+import type { Transport } from './transport.js';
 
 export type Handler = {
 	type: string;
@@ -73,7 +71,7 @@ export function createBus(
 		if (!schemaRegistry) return;
 		const result = schemaRegistry.validate(msg.type, msg.data);
 		if (!result.valid) {
-			const errs = (result.errors || []).map((e) => {
+			const errs = (result.errors || []).map((e: unknown) => {
 				if (typeof e === 'object' && e && 'message' in e) {
 					return String((e as { message: unknown }).message);
 				}
@@ -117,7 +115,7 @@ export function createBus(
 			assertSubscribeAllowed(h.type);
 		}
 		const map = new Map(handlers.map((h) => [h.type, h.handle] as const));
-		return transport.subscribe([...map.keys()], async (m) => {
+		return transport.subscribe([...map.keys()], async (m: Envelope) => {
 			try {
 				validate(m);
 				// Idempotency check (drop duplicates silently)

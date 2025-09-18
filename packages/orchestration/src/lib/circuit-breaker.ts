@@ -59,8 +59,11 @@ export class CircuitBreaker extends EventEmitter {
 		this.updateState();
 
 		if (this.state === 'open') {
-			const error = new Error(`Circuit breaker '${this.name}' is open`);
-			(error as any).code = 'CIRCUIT_BREAKER_OPEN';
+			type CodedError = Error & { code?: string };
+			const error: CodedError = new Error(
+				`Circuit breaker '${this.name}' is open`,
+			) as Error & { code?: string };
+			error.code = 'CIRCUIT_BREAKER_OPEN';
 			this.emit('rejected', { name: this.name, error });
 			throw error;
 		}
@@ -69,10 +72,11 @@ export class CircuitBreaker extends EventEmitter {
 			this.state === 'half-open' &&
 			this.halfOpenCalls >= this.options.halfOpenMaxCalls
 		) {
-			const error = new Error(
+			type CodedError = Error & { code?: string };
+			const error: CodedError = new Error(
 				`Circuit breaker '${this.name}' half-open call limit exceeded`,
-			);
-			(error as any).code = 'CIRCUIT_BREAKER_HALF_OPEN_LIMIT';
+			) as Error & { code?: string };
+			error.code = 'CIRCUIT_BREAKER_HALF_OPEN_LIMIT';
 			this.emit('rejected', { name: this.name, error });
 			throw error;
 		}
@@ -120,7 +124,7 @@ export class CircuitBreaker extends EventEmitter {
 	/**
 	 * Handle failed execution
 	 */
-	private onFailure(error: any): void {
+	private onFailure(error: unknown): void {
 		this.failures++;
 		this.lastFailureTime = Date.now();
 		this.resetWindowIfNeeded();
@@ -276,7 +280,7 @@ export class CircuitBreaker extends EventEmitter {
  * Circuit Breaker Manager for managing multiple circuit breakers
  */
 export class CircuitBreakerManager extends EventEmitter {
-	private circuitBreakers = new Map<string, CircuitBreaker>();
+	private readonly circuitBreakers = new Map<string, CircuitBreaker>();
 
 	/**
 	 * Get or create a circuit breaker for the given name
@@ -305,7 +309,12 @@ export class CircuitBreakerManager extends EventEmitter {
 			this.circuitBreakers.set(name, circuitBreaker);
 		}
 
-		return this.circuitBreakers.get(name)!;
+		const cb = this.circuitBreakers.get(name);
+		if (!cb) {
+			// Should not happen as we set it above, but satisfy strict rules
+			throw new Error(`Circuit breaker '${name}' not found after creation`);
+		}
+		return cb;
 	}
 
 	/**

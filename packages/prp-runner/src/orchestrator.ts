@@ -9,6 +9,7 @@ export type PRPPhase = 'strategy' | 'build' | 'evaluation';
 import { createExecutionContext } from './lib/create-execution-context.js';
 import { executeNeuron } from './lib/execute-neuron.js';
 import { LLMBridge, type LLMConfig } from './llm-bridge.js';
+import { ConcurrentExecutor } from './lib/concurrent-executor.js';
 
 export interface Blueprint {
 	title: string;
@@ -102,24 +103,52 @@ async function executeCycle(
 		throw new Error('LLM configuration required for LLM-powered neurons');
 	}
 	const context = createExecutionContext(llmBridge);
-	const outputs: Record<string, unknown> = {};
 	const cycleId = `prp-${Date.now()}`;
-	for (const neuron of neurons.values()) {
-		const state: ExecutionState = {
-			id: cycleId,
-			phase: neuron.phase,
-			blueprint,
-			outputs,
-		};
-		const result = await executeNeuron(neuron, state, context);
-		outputs[neuron.id] = result;
-	}
+
+	// Use concurrent executor for safe parallel execution
+	const executor = new ConcurrentExecutor(4); // Limit to 4 concurrent neurons
+
+	// Prepare neurons for concurrent execution
+	const executableNeurons = Array.from(neurons.values()).map(neuron => ({
+		id: neuron.id,
+		execute: async () => {
+			const state: ExecutionState = {
+				id: cycleId,
+				phase: neuron.phase,
+				blueprint,
+				outputs: {}, // Start with empty outputs for each neuron
+			};
+			return await executeNeuron(neuron, state, context);
+		}
+	}));
+
+	// Execute all neurons concurrently
+	const results = await executor.executeConcurrently(executableNeurons);
+
+	// Collect outputs safely
+	const outputs: Record<string, unknown> = {};
+	let hasFailures = false;
+
+	results.forEach((result, neuronId) => {
+		if (result.success) {
+			outputs[neuronId] = result.result;
+		} else {
+			console.error(`Neuron ${neuronId} failed:`, result.error);
+			hasFailures = true;
+			// Store error information
+			outputs[neuronId] = {
+				error: result.error?.message,
+				failed: true
+			};
+		}
+	});
+
 	return {
 		id: cycleId,
 		phase: 'strategy',
 		blueprint,
 		outputs,
-		status: 'completed',
+		status: hasFailures ? 'failed' : 'completed',
 	};
 }
 

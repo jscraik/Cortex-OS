@@ -26,8 +26,9 @@ export class ESLintAdapter implements ValidationTool {
 		inputs: AgentToolkitValidationInput,
 	): Promise<AgentToolkitValidationResult> {
 		try {
+			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
 			const { stdout } = await execAsync(
-				`"${this.scriptPath}" ${inputs.files.map((f) => `"${f}"`).join(' ')}`,
+				`"${this.scriptPath}" ${filesArgs}`,
 			);
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 
@@ -66,8 +67,9 @@ export class RuffAdapter implements ValidationTool {
 		inputs: AgentToolkitValidationInput,
 	): Promise<AgentToolkitValidationResult> {
 		try {
+			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
 			const { stdout } = await execAsync(
-				`"${this.scriptPath}" ${inputs.files.map((f) => `"${f}"`).join(' ')}`,
+				`"${this.scriptPath}" ${filesArgs}`,
 			);
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 
@@ -147,9 +149,10 @@ export class MultiValidatorAdapter implements ValidationTool {
 		const tempFile = `/tmp/agent-toolkit-files-${Date.now()}.txt`;
 
 		try {
-			await writeFile(tempFile, inputs.files.join('\n'));
+			await writeFile(tempFile, (inputs.files || []).join('\n'));
 			const { stdout } = await execAsync(`"${this.scriptPath}" "${tempFile}"`);
-			const _result = JSON.parse(stdout) as {
+			// Parse result for potential future use
+			JSON.parse(stdout) as {
 				tool: string;
 				op: string;
 				results: unknown[];
@@ -157,7 +160,7 @@ export class MultiValidatorAdapter implements ValidationTool {
 
 			// Transform multi-validator result to our schema
 			return {
-				tool: 'validator' as any, // Will be validated by the calling code
+				tool: 'validator',
 				op: 'validate',
 				inputs,
 				results: [], // Multi-validator returns different format
@@ -165,7 +168,7 @@ export class MultiValidatorAdapter implements ValidationTool {
 			};
 		} catch (error) {
 			return {
-				tool: 'validator' as any,
+				tool: 'validator',
 				op: 'validate',
 				inputs,
 				results: [],

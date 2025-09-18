@@ -31,7 +31,19 @@ export interface AgentMessage {
 	metadata?: Record<string, unknown>;
 }
 
-import type { Tool, ToolSchema } from './mocks/voltagent-core.js';
+// Basic tool types for agents
+export interface Tool<T = Record<string, unknown>> {
+	name: string;
+	description: string;
+	schema: T;
+	execute: (input: Record<string, unknown>) => Promise<unknown>;
+}
+
+export interface ToolSchema {
+	type: string;
+	properties: Record<string, unknown>;
+	required?: string[];
+}
 
 /**
  * Tool registry interface for registering and managing tools

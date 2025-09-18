@@ -6,7 +6,6 @@
  * @status TDD-DRIVEN
  */
 
-import { MemorySaver, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
 import { fixedTimestamp } from './lib/determinism.js';
 import {
@@ -98,53 +97,29 @@ export class CortexKernel {
 	 * Build LangGraph app using existing nodes with history hooks
 	 */
 	private buildLangGraphApp(): LangGraphApp {
-		// Create a graph. Keep generics minimal to satisfy local linting.
-		const graph = new StateGraph() as unknown as {
-			addNode: (
-				name: string,
-				fn: (state: PRPState, config?: LangGraphConfig) => Promise<PRPState>,
-			) => void;
-			setEntryPoint: (name: string) => void;
-			addEdge: (from: string, to: string) => void;
-			compile: (opts: { checkpointer: MemorySaver }) => LangGraphApp;
+		// For now, create a simple execution wrapper that mimics LangGraph behavior
+		return {
+			invoke: async (input: PRPState, config?: LangGraphConfig): Promise<PRPState> => {
+				const runId = config?.configurable?.runId || input.metadata.runId || input.runId;
+				
+				// Execute strategy phase
+				let state = await runStrategyNode(input);
+				state.phase = 'strategy';
+				this.addToHistory(runId, state);
+				
+				// Execute build phase
+				state = await runBuildNode(state);
+				state.phase = 'build';
+				this.addToHistory(runId, state);
+				
+				// Execute evaluation phase
+				state = await runEvaluationNode(state);
+				state.phase = 'evaluation';
+				this.addToHistory(runId, state);
+				
+				return state;
+			}
 		};
-
-		graph.addNode(
-			'strategy',
-			async (state: PRPState, config?: LangGraphConfig) => {
-				const runId = config?.configurable?.runId || state.metadata.runId;
-				const next = await runStrategyNode(state);
-				this.addToHistory(runId, { ...next, phase: 'strategy' });
-				return next;
-			},
-		);
-
-		graph.addNode(
-			'build',
-			async (state: PRPState, config?: LangGraphConfig) => {
-				const runId = config?.configurable?.runId || state.metadata.runId;
-				const next = await runBuildNode(state);
-				this.addToHistory(runId, { ...next, phase: 'build' });
-				return next;
-			},
-		);
-
-		graph.addNode(
-			'evaluation',
-			async (state: PRPState, config?: LangGraphConfig) => {
-				const runId = config?.configurable?.runId || state.metadata.runId;
-				const next = await runEvaluationNode(state);
-				this.addToHistory(runId, { ...next, phase: 'evaluation' });
-				return next;
-			},
-		);
-
-		graph.setEntryPoint('strategy');
-		graph.addEdge('strategy', 'build');
-		graph.addEdge('build', 'evaluation');
-
-		const checkpointer = new MemorySaver();
-		return graph.compile({ checkpointer });
 	}
 
 	/**

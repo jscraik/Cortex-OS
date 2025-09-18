@@ -1,8 +1,9 @@
 /**
- * Archon Task Manager Integration for Orchestration Package
+ * Archon Task Manager Integration (Removed)
  *
- * Provides async task coordination with Archon's task management system,
- * enabling long-running workflows to be tracked and managed externally.
+ * Stubbed to enforce LangGraph-only orchestration. This file remains to avoid
+ * breaking imports in legacy tests or external consumers, but it performs no
+ * real Archon integration and does not import external packages.
  */
 
 // Minimal event bus contract (publish only) to avoid reach-through dependency on full bus internals
@@ -15,13 +16,14 @@ export interface EventBus {
 	}): Promise<void>;
 }
 
-import type {
-	AgentMCPClient,
-	ArchonIntegrationConfig,
-	Priority,
-	TaskStatus,
-} from '@cortex-os/agents';
-import { createAgentMCPClient } from '@cortex-os/agents';
+// Local minimal types to avoid external dependency on '@cortex-os/agents'
+export type Priority = 'low' | 'medium' | 'high';
+export type TaskStatus = 'open' | 'in_progress' | 'completed' | 'cancelled' | 'blocked';
+
+export interface ArchonIntegrationConfig {
+	endpoint?: string;
+	apiKey?: string;
+}
 
 export interface ArchonTaskManagerConfig extends ArchonIntegrationConfig {
 	enableTaskTracking?: boolean;
@@ -77,7 +79,7 @@ export interface TaskManagerEvents {
  * Archon-integrated task manager for orchestration workflows
  */
 export class ArchonTaskManager {
-	private readonly mcpClient: AgentMCPClient;
+	// No-op client – Archon removed
 	private readonly tasks = new Map<string, OrchestrationTask>();
 	private readonly config: ArchonTaskManagerConfig;
 	private readonly eventBus?: EventBus;
@@ -86,7 +88,7 @@ export class ArchonTaskManager {
 	constructor(config: ArchonTaskManagerConfig, eventBus?: EventBus) {
 		this.config = config;
 		this.eventBus = eventBus;
-		this.mcpClient = createAgentMCPClient(config);
+	// Archon removed – no external client created
 
 		// Set up periodic task updates
 		if (config.enableProgressUpdates) {
@@ -98,8 +100,7 @@ export class ArchonTaskManager {
 	 * Initialize the task manager and MCP connection
 	 */
 	async initialize(): Promise<void> {
-		await this.mcpClient.initialize();
-		console.warn('[Archon Task Manager] Initialized with MCP connection');
+		console.warn('[Archon Task Manager] Stub initialize (Archon removed)');
 	}
 
 	/**
@@ -130,35 +131,7 @@ export class ArchonTaskManager {
 		this.tasks.set(task.id, task);
 
 		// Sync to Archon if enabled
-		if (this.config.enableTaskTracking && options.syncToArchon !== false) {
-			try {
-				const archonResult = await this.mcpClient.createTask(
-					title,
-					description,
-					{
-						priority: options.priority,
-						tags: ['cortex-orchestration', task.type],
-					},
-				);
-
-				task.archonTaskId = archonResult.taskId;
-				this.tasks.set(task.id, task);
-
-				await this.emitEvent('archon.sync.success', {
-					taskId: task.id,
-					archonTaskId: archonResult.taskId,
-				});
-			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error);
-				console.error(
-					`[Archon Task Manager] Failed to sync task to Archon: ${errorMsg}`,
-				);
-				await this.emitEvent('archon.sync.failed', {
-					taskId: task.id,
-					error: errorMsg,
-				});
-			}
-		}
+		// Archon sync removed (no-op)
 
 		await this.emitEvent('task.created', { task });
 		return task;
@@ -193,24 +166,7 @@ export class ArchonTaskManager {
 		this.tasks.set(taskId, task);
 
 		// Sync to Archon if enabled and task has Archon ID
-		if (
-			this.config.enableTaskTracking &&
-			task.archonTaskId &&
-			options.syncToArchon !== false
-		) {
-			try {
-				await this.mcpClient.updateTaskStatus(
-					task.archonTaskId,
-					status,
-					options.message,
-				);
-			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error);
-				console.error(
-					`[Archon Task Manager] Failed to update Archon task: ${errorMsg}`,
-				);
-			}
-		}
+		// Archon sync removed (no-op)
 
 		await this.emitEvent('task.updated', { task, previousStatus });
 
@@ -356,8 +312,7 @@ export class ArchonTaskManager {
 		if (this.updateInterval) {
 			clearInterval(this.updateInterval);
 		}
-		await this.mcpClient.disconnect();
-		console.warn('[Archon Task Manager] Shutdown complete');
+	console.warn('[Archon Task Manager] Stub shutdown complete (Archon removed)');
 	}
 
 	private generateTaskId(): string {

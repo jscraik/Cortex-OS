@@ -27,6 +27,17 @@ if [ -z "$STAGED_FILES" ]; then
   exit 0
 fi
 
+# Early check: prevent compiled files from being committed to source directories
+log_info "Checking for compiled files in source directories..."
+COMPILED_IN_SRC=$(echo "$STAGED_FILES" | grep -E '(/src/.*\.(d\.ts|js|js\.map)$|/src/.*\.d\.ts\.map$)' || true)
+if [ -n "$COMPILED_IN_SRC" ]; then
+  log_error "Compiled files detected in source directories:"
+  echo "$COMPILED_IN_SRC"
+  log_error "These build artifacts belong in dist/ directories, not src/"
+  log_error "Remove them from src/ and ensure proper build configuration"
+  exit 1
+fi
+
 JS_TS_CHANGED=$(filter_files_by_extension "$STAGED_FILES" '\.(js|jsx|ts|tsx)$')
 PY_CHANGED=$(filter_files_by_extension "$STAGED_FILES" '\.py$')
 RUST_CHANGED=$(filter_files_by_extension "$STAGED_FILES" '\.rs$')

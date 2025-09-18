@@ -1,15 +1,35 @@
-import { randomUUID } from 'node:crypto';
+import { nanoid } from 'nanoid';
 
-let counter = 0;
+// Map to track counters per prefix for deterministic mode
+const counters = new Map<string, number>();
 
-export function resetIdCounter(): void {
-	counter = 0;
+function getNextCounter(prefix: string): number {
+	const current = counters.get(prefix) || 0;
+	const next = current + 1;
+	counters.set(prefix, next);
+	return next;
 }
 
-export function generateId(prefix: string, deterministic = false): string {
+/**
+ * Generate a unique ID with optional deterministic mode
+ */
+export function generateId(
+	prefix: string,
+	deterministic = false,
+): string {
 	if (deterministic) {
-		counter += 1;
-		return `${prefix}-${String(counter).padStart(6, '0')}`;
+		// Use a fixed counter for deterministic generation
+		const counter = getNextCounter(prefix);
+		return `${prefix}-${counter.toString().padStart(6, '0')}`;
 	}
-	return `${prefix}-${randomUUID()}`;
+
+	// Use nanoid for non-deterministic mode
+	return `${prefix}-${nanoid(8)}`;
+}
+
+/**
+ * Reset counters for deterministic testing
+ */
+export function resetCounters(): void {
+	counters.clear();
 }

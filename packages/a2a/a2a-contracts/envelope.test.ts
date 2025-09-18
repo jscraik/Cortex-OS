@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
-import { Envelope } from './src/envelope';
+import { Envelope } from './src/envelope.js';
 
 describe('Envelope source URI validation', () => {
 	it('accepts valid source URI', () => {

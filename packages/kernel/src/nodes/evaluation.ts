@@ -89,12 +89,20 @@ export class EvaluationNode {
 		return {
 			...state,
 			evidence: [...state.evidence, ...evidence],
-			validationResults: {
-				...state.validationResults,
-				evaluation: {
-					passed: blockers.length === 0 && majors.length <= 3,
-					blockers,
-					majors,
+			// Note: validationResults removed - using gates system instead
+			gates: {
+				...state.gates,
+				G5: {
+					id: 'G5',
+					name: 'TDD Validation Gate',
+					status: blockers.length === 0 ? 'passed' : 'failed',
+					requiresHumanApproval: false,
+					automatedChecks: [{
+						name: 'TDD Cycle Check',
+						status: blockers.length === 0 ? 'pass' : 'fail',
+						output: `Found ${blockers.length} blockers, ${majors.length} majors`,
+					}],
+					artifacts: [],
 					evidence: evidence.map((e) => e.id),
 					timestamp: currentTimestamp(
 						state.metadata.deterministic ?? false,
@@ -115,10 +123,8 @@ export class EvaluationNode {
 
 		const hasTests = tddEvidence.length > 0;
 		const hasCoverage = Boolean(
-			state.outputs?.testCoverage ||
-				state.validationResults?.build?.evidence?.some((id) =>
-					state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
-				),
+			state.exports?.testCoverage ||
+			state.evidence.some(e => e.content.includes('coverage')),
 		);
 
 		return {
@@ -131,6 +137,8 @@ export class EvaluationNode {
 			},
 		};
 	}
+
+	// Mock implementation - will use state parameter in real implementation
 
 	private async validateCodeReview(
 		_state: PRPState,
@@ -170,6 +178,8 @@ export class EvaluationNode {
 		};
 	}
 
+	// Mock implementation - will use state parameter in real implementation
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	private async validateQualityBudgets(_state: PRPState): Promise<{
 		accessibility: { passed: boolean; score: number };
 		performance: { passed: boolean; score: number };
@@ -198,24 +208,21 @@ export class EvaluationNode {
 	}
 
 	checkPreCerebrumConditions(state: PRPState): boolean {
-		return Object.values(state.validationResults || {}).every(
-			(result) => result?.passed && result?.blockers.length === 0,
+		// Check gates instead of legacy validationResults
+		return Object.values(state.gates).every(
+			(gate) => gate.status === 'passed',
 		);
 	}
 
 	private async preCerebrumValidation(
 		state: PRPState,
 	): Promise<ReadinessResult<PreCerebrumDetails>> {
-		// Final validation before Cerebrum decision
-		const hasAllPhases = !!(
-			state.validationResults?.strategy &&
-			state.validationResults?.build &&
-			state.validationResults?.evaluation
-		);
+		// Final validation before Cerebrum decision - use gates instead of validationResults
+		const hasAllPhases = !!(state.gates['G0'] && state.gates['G2'] && state.gates['G5']);
 
-		const allPhasesPassedOrAcceptable = Object.values(
-			state.validationResults || {},
-		).every((result) => result?.passed && result?.blockers.length === 0);
+		const allPhasesPassedOrAcceptable = Object.values(state.gates).every(
+			(gate) => gate.status === 'passed' || gate.status === 'skipped',
+		);
 
 		return {
 			readyForCerebrum: hasAllPhases && allPhasesPassedOrAcceptable,

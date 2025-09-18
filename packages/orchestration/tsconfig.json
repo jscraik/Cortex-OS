@@ -1,13 +1,46 @@
 {
 	"extends": "../../tsconfig.json",
 	"include": [
-		"src",
-		"tests",
-		"__tests__"
+		"src/**/*"
+	],
+	"exclude": [
+		"examples/**",
+		"src/lib/outbox/**",
+		"tests/**",
+		"__tests__/**"
 	],
 	"compilerOptions": {
 		"outDir": "dist",
 		"declaration": true,
-		"composite": true
+		"composite": true,
+		"skipLibCheck": true,
+		"noEmitOnError": false,
+		"baseUrl": "../../",
+		"paths": {
+			"@cortex-os/a2a-core": [
+				"packages/a2a/a2a-core/dist/index.d.ts"
+			],
+			"@cortex-os/a2a-core/*": [
+				"packages/a2a/a2a-core/dist/*"
+			],
+			"@cortex-os/a2a-contracts": [
+				"packages/a2a/a2a-contracts/dist/index.d.ts"
+			],
+			"@cortex-os/a2a-contracts/*": [
+				"packages/a2a/a2a-contracts/dist/*"
+			],
+			"@cortex-os/a2a-transport": [
+				"packages/a2a/a2a-transport/dist/index.d.ts"
+			],
+			"@cortex-os/a2a-transport/*": [
+				"packages/a2a/a2a-transport/dist/*"
+			],
+			"@cortex-os/memories": [
+				"packages/memories/dist/index.d.ts"
+			],
+			"@cortex-os/memories/*": [
+				"packages/memories/dist/*"
+			]
+		}
 	}
 }

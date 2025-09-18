@@ -74,10 +74,10 @@
 				"libs/typescript/types/src/*"
 			],
 			"@cortex-os/contracts": [
-				"libs/typescript/contracts/src/index.ts"
+				"libs/typescript/contracts/dist/index.d.ts"
 			],
 			"@cortex-os/contracts/*": [
-				"libs/typescript/contracts/src/*"
+				"libs/typescript/contracts/dist/*"
 			],
 			"@cortex-os/telemetry": [
 				"libs/typescript/telemetry/src"

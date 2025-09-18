@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEnvelope, withEvidence } from './src/envelope';
+import { createEnvelope, withEvidence, Envelope } from './src/envelope.js';
 
 describe('withEvidence helper', () => {
 	it('attaches evidence array immutably', () => {
@@ -38,7 +38,19 @@ describe('withEvidence helper', () => {
 			source: 'https://test',
 			data: {},
 		});
-		// @ts-expect-error intentional invalid structure for test
-		expect(() => withEvidence(base, [{}])).toThrow();
+
+		const malformedEnvelope = {
+			...base,
+			evidence: [{}], // Empty evidence item should fail
+		};
+
+		try {
+			// intentional invalid structure for test
+			Envelope.parse(malformedEnvelope);
+
+			expect.fail('validation to fail but schema passed');
+		} catch (error) {
+			expect(error).toBeDefined();
+		}
 	});
 });

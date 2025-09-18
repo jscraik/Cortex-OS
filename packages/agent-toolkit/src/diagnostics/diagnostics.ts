@@ -81,11 +81,13 @@ export async function runDiagnostics(
 				throw new Error(`Invalid diagnostics JSON: ${(e as Error).message}`);
 			}
 
-			if (parsed.health.latencyMs != null) {
+			if (parsed.health?.latencyMs != null) {
 				diagLatency.record(parsed.health.latencyMs);
 				span.setAttribute('health.latency_ms', parsed.health.latencyMs);
 			}
-			span.setAttribute('summary.overall', parsed.summary.overall);
+			if (parsed.summary?.overall) {
+				span.setAttribute('summary.overall', parsed.summary.overall);
+			}
 			span.end();
 			return parsed;
 		} catch (err) {
@@ -104,9 +106,11 @@ export function generatePrometheusMetrics(result: DiagnosticsResult): string {
 	);
 	lines.push('# TYPE diagnostics_overall_status gauge');
 	const map: Record<string, number> = { ok: 0, degraded: 1, failed: 2 };
-	lines.push(`diagnostics_overall_status ${map[result.summary.overall]}`);
+	if (result.summary?.overall) {
+		lines.push(`diagnostics_overall_status ${map[result.summary.overall]}`);
+	}
 
-	if (result.health.latencyMs != null) {
+	if (result.health?.latencyMs != null) {
 		lines.push(
 			'# HELP diagnostics_health_latency_ms Health probe latency in ms',
 		);
@@ -122,15 +126,21 @@ export function generatePrometheusMetrics(result: DiagnosticsResult): string {
 		'# HELP diagnostics_component_status Component status (0=ok/freed,1=degraded,2=error)',
 	);
 	lines.push('# TYPE diagnostics_component_status gauge');
-	lines.push(
-		`diagnostics_component_status{component="port_guard"} ${statusValue(result.port_guard.status)}`,
-	);
-	lines.push(
-		`diagnostics_component_status{component="health"} ${statusValue(result.health.status)}`,
-	);
-	lines.push(
-		`diagnostics_component_status{component="tunnel"} ${statusValue(result.tunnel.status)}`,
-	);
+	if (result.port_guard?.status) {
+		lines.push(
+			`diagnostics_component_status{component="port_guard"} ${statusValue(result.port_guard.status)}`,
+		);
+	}
+	if (result.health?.status) {
+		lines.push(
+			`diagnostics_component_status{component="health"} ${statusValue(result.health.status)}`,
+		);
+	}
+	if (result.tunnel?.status) {
+		lines.push(
+			`diagnostics_component_status{component="tunnel"} ${statusValue(result.tunnel.status)}`,
+		);
+	}
 	return `${lines.join('\n')}\n`;
 }
 

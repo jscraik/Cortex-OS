@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { ErrorEventSchema } from './error';
-import { IssueEventSchema } from './issue';
-import { PullRequestEventSchema } from './pull-request';
-import { RepositoryEventSchema } from './repository';
-import { WorkflowEventSchema } from './workflow';
+import { ErrorEventSchema } from './error.js';
+import { IssueEventSchema } from './issue.js';
+import { PullRequestEventSchema } from './pull-request.js';
+import { RepositoryEventSchema } from './repository.js';
+import { WorkflowEventSchema } from './workflow.js';
 
 // GitHub Event Union Type
 export const GitHubEventDataSchema = z.discriminatedUnion('event_type', [

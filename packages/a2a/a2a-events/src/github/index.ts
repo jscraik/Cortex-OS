@@ -15,26 +15,26 @@ import {
 	type A2AEventEnvelope,
 	createA2AEventEnvelope,
 	type GitHubEventData,
-} from './envelope';
-import { type ErrorEvent, isErrorEvent, validateErrorEvent } from './error';
+} from './envelope.js';
+import { type ErrorEvent, isErrorEvent, validateErrorEvent } from './error.js';
 
-import { type IssueEvent, isIssueEvent, validateIssueEvent } from './issue';
+import { type IssueEvent, isIssueEvent, validateIssueEvent } from './issue.js';
 import {
 	isPullRequestEvent,
 	type PullRequestEvent,
 	validatePullRequestEvent,
-} from './pull-request';
+} from './pull-request.js';
 // Type Guards and Validators
 import {
 	isRepositoryEvent,
 	type RepositoryEvent,
 	validateRepositoryEvent,
-} from './repository';
+} from './repository.js';
 import {
 	isWorkflowEvent,
 	validateWorkflowEvent,
 	type WorkflowEvent,
-} from './workflow';
+} from './workflow.js';
 
 // Union type for all GitHub events
 export type GitHubEvent =

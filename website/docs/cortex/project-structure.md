@@ -13,12 +13,12 @@ This document serves as the authoritative reference for the Cortex-OS project st
 cortex-os-clean/
 ├── .cortex/                          # Governance hub (single source of truth)
 ├── apps/                             # Applications and services
-│   ├── cortex-cli/                   # Command-line interface for Cortex-OS
+│   ├── cortex-code/                   # Command-line interface for Cortex-OS
 │   ├── cortex-marketplace/           # Frontend for the MCP Marketplace
 │   ├── cortex-marketplace-api/       # API for the MCP Marketplace
 │   ├── cortex-os/                    # ASBR Runtime (main application)
 │   ├── cortex-py/                    # Python-based services and agents
-│   └── cortex-web/                   # Web-based UI components
+│   └── cortex-webui/                   # Web-based UI components
 ├── packages/                         # Shared libraries and services
 │   ├── a2a/                          # Agent-to-Agent communication bus
 │   ├── agents/                       # Core agent implementations

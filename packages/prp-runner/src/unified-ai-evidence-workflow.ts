@@ -335,38 +335,33 @@ export class UnifiedAIEvidenceWorkflow {
 
 	/**
 	 * Phase 3: Process evidence with AI enhancement
+	 * Note: Enhancement is currently disabled until ASBRAIIntegration implements enhanceEvidence
 	 */
 	private async processEvidence(
 		evidence: RawEvidenceItem[],
 		_context: EvidenceTaskContext,
 	): Promise<EnhancedEvidenceItem[]> {
 		if (!this.config.enhancementEnabled) {
-			return evidence;
+			return evidence.map(item => ({
+				...item,
+				enhancement: {
+					originalContent: item.content,
+					enhancedContent: item.content,
+					improvements: ['Enhancement disabled'],
+				},
+			}));
 		}
 
-		const enhanced = await Promise.all(
-			evidence.map(async (item) => {
-				try {
-					// Note: enhanceEvidence method doesn't exist in ASBRAIIntegration
-					// Keeping original content for now - enhancement can be added later
-					return {
-						...item,
-						enhancement: {
-							originalContent: item.content,
-							enhancedContent: item.content,
-							improvements: ['No enhancement available'],
-						},
-						content: item.content,
-					};
-				} catch (error) {
-					// Log error and return original item if enhancement fails
-					console.warn('Evidence enhancement failed:', error);
-					return item;
-				}
-			}),
-		);
-
-		return enhanced;
+		// TODO: Implement enhanceEvidence in ASBRAIIntegration when ready
+		console.warn('Evidence enhancement is not yet implemented');
+		return evidence.map(item => ({
+			...item,
+			enhancement: {
+				originalContent: item.content,
+				enhancedContent: item.content,
+				improvements: ['Enhancement not available'],
+			},
+		}));
 	}
 
 	/**

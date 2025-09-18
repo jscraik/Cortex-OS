@@ -1,0 +1,32 @@
+{
+    "name": "@cortex-os/agui-sse-server",
+    "version": "0.1.0",
+    "description": "Server-Sent Events server for AGUI (Agent GUI) real-time updates",
+    "type": "module",
+    "main": "server.ts",
+    "scripts": {
+        "start": "node --loader tsx server.ts",
+        "dev": "node --loader tsx --watch server.ts",
+        "build": "tsc",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "@cortex-os/agui": "workspace:*",
+        "@cortex-os/a2a-core": "workspace:*",
+        "@cortex-os/a2a-transport": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "tsx": "^4.0.0",
+        "typescript": "^5.0.0",
+        "vitest": "^1.0.0"
+    },
+    "keywords": [
+        "agui",
+        "sse",
+        "server-sent-events",
+        "cortex-os"
+    ],
+    "author": "Cortex-OS Team",
+    "license": "MIT"
+}

@@ -13,8 +13,8 @@ interface CloudEventSchema {
 	required: string[];
 }
 
-const ajv = new Ajv({ allErrors: true, strict: false });
-addFormats(ajv);
+const ajv = new Ajv.default({ allErrors: true, strict: false });
+addFormats.default(ajv);
 
 describe('CloudEvents Schema Validation', () => {
 	const schemasDir = path.join(__dirname, '../../../../contracts/cloudevents');

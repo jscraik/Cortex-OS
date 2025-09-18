@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Pre-commit hook to prevent compiled files from being committed to source directories
+# This helps prevent the .d.ts discovery issues we encountered
+
+echo "🔍 Checking for compiled files in source directories..."
+
+# Check for .d.ts, .js, or .js.map files in src directories
+COMPILED_IN_SRC=$(git diff --cached --name-only | grep -E '(/src/.*\.(d\.ts|js|js\.map)$|/src/.*\.d\.ts\.map$)' || true)
+
+if [ -n "$COMPILED_IN_SRC" ]; then
+  echo "❌ ERROR: Compiled files detected in source directories!"
+  echo "The following files should not be committed to src/ directories:"
+  echo "$COMPILED_IN_SRC"
+  echo ""
+  echo "These files are likely build artifacts that belong in dist/ directories."
+  echo "To fix this:"
+  echo "1. Remove these files from src/ directories"
+  echo "2. Ensure your build outputs to dist/ directories only"
+  echo "3. Add appropriate .gitignore entries to prevent future issues"
+  echo ""
+  echo "If you need to override this check (not recommended):"
+  echo "  git commit --no-verify"
+  exit 1
+fi
+
+# Check for common build artifacts in package src directories
+BUILD_ARTIFACTS=$(git diff --cached --name-only | grep -E '(libs|packages)/.*/src/.*\.(js|d\.ts|js\.map|d\.ts\.map)$' | grep -v '\.test\.' | grep -v '\.spec\.' || true)
+
+if [ -n "$BUILD_ARTIFACTS" ]; then
+  echo "⚠️  WARNING: Potential build artifacts detected:"
+  echo "$BUILD_ARTIFACTS"
+  echo ""
+  echo "Please verify these are source files and not compiled output."
+fi
+
+echo "✅ No compiled files found in source directories"
+exit 0

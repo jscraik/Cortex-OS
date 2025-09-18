@@ -1,25 +1,52 @@
-// Wire real MemoryService using @cortex-os/memories with env-driven store factory
-import type { MemoryService as PkgMemoryService } from '@cortex-os/memories';
-import {
-	createEmbedderFromEnv,
-	createMemoryService,
-	createPolicyAwareStoreFromEnv,
-} from '@cortex-os/memories';
 import { trace } from '@opentelemetry/api';
-import { createMcpGateway } from './mcp/gateway';
-import type { CortexOsToolName } from './mcp/tools';
+import { createMcpGateway, type McpGateway } from './mcp/gateway';
+import { TaskRepository } from './persistence/task-repository';
+import { ProfileRepository } from './persistence/profile-repository';
+import { ArtifactRepository } from './persistence/artifact-repository';
+import { EvidenceRepository } from './persistence/evidence-repository';
 
-export type MemoryService = PkgMemoryService;
+export interface MemoryRecord {
+	id: string;
+	[key: string]: unknown;
+}
+
+export interface MemoryService {
+	save(record: MemoryRecord): Promise<MemoryRecord>;
+	get(id: string): Promise<MemoryRecord | undefined>;
+}
 
 export function provideMemories(): MemoryService {
-	const store = createPolicyAwareStoreFromEnv();
-	const embedder = createEmbedderFromEnv();
-	return createMemoryService(store, embedder);
+	const store = new Map<string, MemoryRecord>();
+	return {
+		async save(record) {
+			store.set(record.id, record);
+			return record;
+		},
+		async get(id) {
+			return store.get(id);
+		},
+	};
 }
 
 export function provideOrchestration() {
 	// Placeholder orchestration surface – extend with real orchestrator wiring.
 	return { config: {} };
+}
+
+export function provideTaskRepository(): TaskRepository {
+	return new TaskRepository();
+}
+
+export function provideProfileRepository(): ProfileRepository {
+	return new ProfileRepository();
+}
+
+export function provideArtifactRepository(): ArtifactRepository {
+	return new ArtifactRepository();
+}
+
+export function provideEvidenceRepository(): EvidenceRepository {
+	return new EvidenceRepository();
 }
 
 export function provideMCP(opts?: {
@@ -28,8 +55,8 @@ export function provideMCP(opts?: {
 		type: string;
 		payload: Record<string, unknown>;
 	}) => void;
-}) {
-	const gateway = createMcpGateway({
+}): McpGateway {
+	return createMcpGateway({
 		memories: provideMemories(),
 		orchestration: provideOrchestration(),
 		config: { runtime: {} },
@@ -44,12 +71,6 @@ export function provideMCP(opts?: {
 			},
 		},
 	});
-	return {
-		listTools: () => gateway.listTools(),
-		callTool: (tool: CortexOsToolName, input: unknown) =>
-			gateway.callTool(tool, input),
-		async close() {},
-	};
 }
 
 // Real tracer (no-op if no SDK registered in runtime)

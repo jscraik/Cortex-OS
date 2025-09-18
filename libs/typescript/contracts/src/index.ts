@@ -71,19 +71,21 @@ export const SimlabCommandSchema = z.object({
 });
 export type SimlabCommand = z.infer<typeof SimlabCommandSchema>;
 
+
+// Event schemas for comprehensive MCP/A2A integration
 export * from './a2a-mcp.js';
 export * from './agent-events.js';
 export * from './agent-toolkit.js';
 export * from './diagnostics.js';
 export * from './evidence.js';
 export * from './gateway-events.js';
-// New event schemas for comprehensive MCP/A2A integration
 export * from './kernel-events.js';
 export * from './mcp-events.js';
 export * from './memory-events.js';
 export * from './model-gateway-events.js';
 export * from './observability-events.js';
 export * from './rag-events.js';
+export * from './sandbox-audit-events.js';
 export * from './security-events.js';
 export * from './webui-tools.js';
 

@@ -2,4 +2,4 @@
 
 - Use `pnpm test:perf` (if available) to run benchmarks.
 - Monitor CPU and memory via built-in metrics.
-- Cache models in `MLX_CACHE_DIR` to reduce startup latency.
+Use provider-native caches (e.g., Ollama) to reduce startup latency.

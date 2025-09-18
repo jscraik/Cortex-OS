@@ -1,6 +1,20 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import yaml from 'yaml';
-import { resolveConfigPath } from '../config/model-catalog.js';
+
+// Minimal path resolver to locate files relative to repo roots without model-catalog dependency
+function resolveConfigPath(relOrAbs: string): string {
+	if (path.isAbsolute(relOrAbs) && existsSync(relOrAbs)) return relOrAbs;
+	const candidates = [
+		path.resolve(process.cwd(), relOrAbs),
+		path.resolve(process.cwd(), '..', '..', relOrAbs),
+		path.resolve(process.cwd(), '..', '..', '..', relOrAbs),
+	];
+	for (const p of candidates) {
+		if (existsSync(p)) return p;
+	}
+	return relOrAbs;
+}
 
 export interface PersonaPolicy {
 	id: string;
@@ -87,12 +101,17 @@ export function evaluatePersonaCompliance(persona: Persona): PersonaCompliance {
 	const texts = (persona.policies ?? [])
 		.map((p) => p.description ?? '')
 		.filter(Boolean);
-	const categories = texts
+	const textCategories = texts
 		.map((t) => t.split(':')[0]?.trim().toLowerCase())
 		.filter((c) => c && c.length > 0);
+	const policyCategories = (persona.policies ?? [])
+		.map((p) => p.category?.toLowerCase())
+		.filter((c) => c && c.length > 0);
+
+	const allCategories = [...textCategories, ...policyCategories];
 	const hasA11yCategory =
-		categories.includes('a11y') || categories.includes('accessibility');
-	const hasSecurityCategory = categories.includes('security');
+		allCategories.includes('a11y') || allCategories.includes('accessibility');
+	const hasSecurityCategory = allCategories.includes('security');
 	const hasWcagRule = texts.some((t) => /wcag\s*2\.2\s*aa/i.test(t));
 	const hasSecurityStandards = texts.some(
 		(t) => /owasp\s*asvs/i.test(t) || /llm\s*top-?10/i.test(t),

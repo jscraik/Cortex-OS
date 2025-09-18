@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+// import { aguiMcpTools, type AGUITool } from '@cortex-os/agui'; // TODO: Fix module resolution
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
 	CallToolRequestSchema,
@@ -24,6 +22,9 @@ import {
 	ToolSchema,
 	UnsubscribeRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -48,10 +49,7 @@ const AddSchema = z.object({
 });
 
 const LongRunningOperationSchema = z.object({
-	duration: z
-		.number()
-		.default(10)
-		.describe('Duration of the operation in seconds'),
+	duration: z.number().default(10).describe('Duration of the operation in seconds'),
 	steps: z.number().default(5).describe('Number of steps in the operation'),
 });
 
@@ -59,10 +57,7 @@ const PrintEnvSchema = z.object({});
 
 const SampleLLMSchema = z.object({
 	prompt: z.string().describe('The prompt to send to the LLM'),
-	maxTokens: z
-		.number()
-		.default(100)
-		.describe('Maximum number of tokens to generate'),
+	maxTokens: z.number().default(100).describe('Maximum number of tokens to generate'),
 });
 
 const GetTinyImageSchema = z.object({});
@@ -71,29 +66,17 @@ const AnnotatedMessageSchema = z.object({
 	messageType: z
 		.enum(['error', 'success', 'debug'])
 		.describe('Type of message to demonstrate different annotation patterns'),
-	includeImage: z
-		.boolean()
-		.default(false)
-		.describe('Whether to include an example image'),
+	includeImage: z.boolean().default(false).describe('Whether to include an example image'),
 });
 
 const GetResourceReferenceSchema = z.object({
-	resourceId: z
-		.number()
-		.min(1)
-		.max(100)
-		.describe('ID of the resource to reference (1-100)'),
+	resourceId: z.number().min(1).max(100).describe('ID of the resource to reference (1-100)'),
 });
 
 const ElicitationSchema = z.object({});
 
 const GetResourceLinksSchema = z.object({
-	count: z
-		.number()
-		.min(1)
-		.max(10)
-		.default(3)
-		.describe('Number of resource links to return (1-10)'),
+	count: z.number().min(1).max(10).default(3).describe('Number of resource links to return (1-10)'),
 });
 
 const ListRootsSchema = z.object({});
@@ -123,6 +106,11 @@ enum ToolName {
 	GET_RESOURCE_LINKS = 'getResourceLinks',
 	STRUCTURED_CONTENT = 'structuredContent',
 	LIST_ROOTS = 'listRoots',
+	// AGUI tools
+	CREATE_UI_COMPONENT = 'create_ui_component',
+	RENDER_VIEW = 'render_view',
+	HANDLE_USER_INTERACTION = 'handle_user_interaction',
+	UPDATE_COMPONENT = 'update_component',
 }
 
 enum PromptName {
@@ -205,18 +193,13 @@ export const createServer = () => {
 					method: 'notifications/message',
 					params: messages[Math.floor(Math.random() * messages.length)],
 				};
-				if (!isMessageIgnored(message.params.level as LoggingLevel))
-					server.notification(message);
+				if (!isMessageIgnored(message.params.level as LoggingLevel)) server.notification(message);
 			}, 20000);
 		}
 	};
 
 	// Helper method to request sampling from client
-	const requestSampling = async (
-		context: string,
-		uri: string,
-		maxTokens: number = 100,
-	) => {
+	const requestSampling = async (context: string, uri: string, maxTokens: number = 100) => {
 		const request: CreateMessageRequest = {
 			method: 'sampling/createMessage',
 			params: {
@@ -239,7 +222,7 @@ export const createServer = () => {
 		return await server.request(request, CreateMessageResultSchema);
 	};
 
-	const requestElicitation = async (message: string, requestedSchema: any) => {
+	const requestElicitation = async (message: string, requestedSchema: Record<string, unknown>) => {
 		const request = {
 			method: 'elicitation/create',
 			params: {
@@ -472,8 +455,7 @@ export const createServer = () => {
 			},
 			{
 				name: ToolName.LONG_RUNNING_OPERATION,
-				description:
-					'Demonstrates a long running operation with progress updates',
+				description: 'Demonstrates a long running operation with progress updates',
 				inputSchema: zodToJsonSchema(LongRunningOperationSchema) as ToolInput,
 			},
 			{
@@ -494,34 +476,37 @@ export const createServer = () => {
 			},
 			{
 				name: ToolName.ANNOTATED_MESSAGE,
-				description:
-					'Demonstrates how annotations can be used to provide metadata about content',
+				description: 'Demonstrates how annotations can be used to provide metadata about content',
 				inputSchema: zodToJsonSchema(AnnotatedMessageSchema) as ToolInput,
 			},
 			{
 				name: ToolName.GET_RESOURCE_REFERENCE,
-				description:
-					'Returns a resource reference that can be used by MCP clients',
+				description: 'Returns a resource reference that can be used by MCP clients',
 				inputSchema: zodToJsonSchema(GetResourceReferenceSchema) as ToolInput,
 			},
 			{
 				name: ToolName.GET_RESOURCE_LINKS,
-				description:
-					'Returns multiple resource links that reference different types of resources',
+				description: 'Returns multiple resource links that reference different types of resources',
 				inputSchema: zodToJsonSchema(GetResourceLinksSchema) as ToolInput,
 			},
 			{
 				name: ToolName.STRUCTURED_CONTENT,
 				description:
 					'Returns structured content along with an output schema for client data validation',
-				inputSchema: zodToJsonSchema(
-					StructuredContentSchema.input,
-				) as ToolInput,
-				outputSchema: zodToJsonSchema(
-					StructuredContentSchema.output,
-				) as ToolOutput,
+				inputSchema: zodToJsonSchema(StructuredContentSchema.input) as ToolInput,
+				outputSchema: zodToJsonSchema(StructuredContentSchema.output) as ToolOutput,
 			},
 		];
+
+		// Add AGUI tools
+		for (const aguiTool of aguiMcpTools) {
+			tools.push({
+				name: aguiTool.name,
+				description: aguiTool.description,
+				inputSchema: zodToJsonSchema(aguiTool.inputSchema) as ToolInput,
+			});
+		}
+
 		if (clientCapabilities?.roots)
 			tools.push({
 				name: ToolName.LIST_ROOTS,
@@ -570,9 +555,7 @@ export const createServer = () => {
 			const progressToken = request.params._meta?.progressToken;
 
 			for (let i = 1; i < steps + 1; i++) {
-				await new Promise((resolve) =>
-					setTimeout(resolve, stepDuration * 1000),
-				);
+				await new Promise((resolve) => setTimeout(resolve, stepDuration * 1000));
 
 				if (progressToken !== undefined) {
 					await server.notification({
@@ -611,15 +594,9 @@ export const createServer = () => {
 			const validatedArgs = SampleLLMSchema.parse(args);
 			const { prompt, maxTokens } = validatedArgs;
 
-			const result = await requestSampling(
-				prompt,
-				ToolName.SAMPLE_LLM,
-				maxTokens,
-			);
+			const result = await requestSampling(prompt, ToolName.SAMPLE_LLM, maxTokens);
 			return {
-				content: [
-					{ type: 'text', text: `LLM sampling result: ${result.content.text}` },
-				],
+				content: [{ type: 'text', text: `LLM sampling result: ${result.content.text}` }],
 			};
 		}
 
@@ -727,26 +704,23 @@ export const createServer = () => {
 		if (name === ToolName.ELICITATION) {
 			ElicitationSchema.parse(args);
 
-			const elicitationResult = await requestElicitation(
-				'What are your favorite things?',
-				{
-					type: 'object',
-					properties: {
-						color: { type: 'string', description: 'Favorite color' },
-						number: {
-							type: 'integer',
-							description: 'Favorite number',
-							minimum: 1,
-							maximum: 100,
-						},
-						pets: {
-							type: 'string',
-							enum: ['cats', 'dogs', 'birds', 'fish', 'reptiles'],
-							description: 'Favorite pets',
-						},
+			const elicitationResult = await requestElicitation('What are your favorite things?', {
+				type: 'object',
+				properties: {
+					color: { type: 'string', description: 'Favorite color' },
+					number: {
+						type: 'integer',
+						description: 'Favorite number',
+						minimum: 1,
+						maximum: 100,
+					},
+					pets: {
+						type: 'string',
+						enum: ['cats', 'dogs', 'birds', 'fish', 'reptiles'],
+						description: 'Favorite pets',
 					},
 				},
-			);
+			});
 
 			// Handle different response actions
 			const content = [];
@@ -802,11 +776,8 @@ export const createServer = () => {
 					type: 'resource_link',
 					uri: resource.uri,
 					name: resource.name,
-					description: `Resource ${i + 1}: ${
-						resource.mimeType === 'text/plain'
-							? 'plaintext resource'
-							: 'binary blob resource'
-					}`,
+					description: `Resource ${i + 1}: ${resource.mimeType === 'text/plain' ? 'plaintext resource' : 'binary blob resource'
+						}`,
 					mimeType: resource.mimeType,
 				});
 			}
@@ -886,6 +857,69 @@ export const createServer = () => {
 			};
 		}
 
+		// AGUI tool handlers
+		if (name === ToolName.CREATE_UI_COMPONENT) {
+			const aguiTool = aguiMcpTools.find((tool: AGUITool) => tool.name === 'create_ui_component');
+			if (aguiTool) {
+				const validatedArgs = aguiTool.inputSchema.parse(args);
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `Created UI component: ${JSON.stringify(validatedArgs, null, 2)}`,
+						},
+					],
+				};
+			}
+		}
+
+		if (name === ToolName.RENDER_VIEW) {
+			const aguiTool = aguiMcpTools.find((tool: AGUITool) => tool.name === 'render_view');
+			if (aguiTool) {
+				const validatedArgs = aguiTool.inputSchema.parse(args);
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `Rendered view: ${JSON.stringify(validatedArgs, null, 2)}`,
+						},
+					],
+				};
+			}
+		}
+
+		if (name === ToolName.HANDLE_USER_INTERACTION) {
+			const aguiTool = aguiMcpTools.find(
+				(tool: AGUITool) => tool.name === 'handle_user_interaction',
+			);
+			if (aguiTool) {
+				const validatedArgs = aguiTool.inputSchema.parse(args);
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `Handled user interaction: ${JSON.stringify(validatedArgs, null, 2)}`,
+						},
+					],
+				};
+			}
+		}
+
+		if (name === ToolName.UPDATE_COMPONENT) {
+			const aguiTool = aguiMcpTools.find((tool: AGUITool) => tool.name === 'update_component');
+			if (aguiTool) {
+				const validatedArgs = aguiTool.inputSchema.parse(args);
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `Updated component: ${JSON.stringify(validatedArgs, null, 2)}`,
+						},
+					],
+				};
+			}
+		}
+
 		throw new Error(`Unknown tool: ${name}`);
 	});
 
@@ -897,21 +931,16 @@ export const createServer = () => {
 			if (!resourceId) return { completion: { values: [] } };
 
 			// Filter resource IDs that start with the input value
-			const values = EXAMPLE_COMPLETIONS.resourceId.filter((id) =>
-				id.startsWith(argument.value),
-			);
+			const values = EXAMPLE_COMPLETIONS.resourceId.filter((id) => id.startsWith(argument.value));
 			return { completion: { values, hasMore: false, total: values.length } };
 		}
 
 		if (ref.type === 'ref/prompt') {
 			// Handle completion for prompt arguments
-			const completions =
-				EXAMPLE_COMPLETIONS[argument.name as keyof typeof EXAMPLE_COMPLETIONS];
+			const completions = EXAMPLE_COMPLETIONS[argument.name as keyof typeof EXAMPLE_COMPLETIONS];
 			if (!completions) return { completion: { values: [] } };
 
-			const values = completions.filter((value) =>
-				value.startsWith(argument.value),
-			);
+			const values = completions.filter((value) => value.startsWith(argument.value));
 			return { completion: { values, hasMore: false, total: values.length } };
 		}
 
@@ -936,37 +965,34 @@ export const createServer = () => {
 	});
 
 	// Roots protocol handlers
-	server.setNotificationHandler(
-		RootsListChangedNotificationSchema,
-		async () => {
-			try {
-				// Request the updated roots list from the client
-				const response = await server.listRoots();
-				if (response && 'roots' in response) {
-					currentRoots = response.roots;
+	server.setNotificationHandler(RootsListChangedNotificationSchema, async () => {
+		try {
+			// Request the updated roots list from the client
+			const response = await server.listRoots();
+			if (response && 'roots' in response) {
+				currentRoots = response.roots;
 
-					// Log the roots update for demonstration
-					await server.notification({
-						method: 'notifications/message',
-						params: {
-							level: 'info',
-							logger: 'everything-server',
-							data: `Roots updated: ${currentRoots.length} root(s) received from client`,
-						},
-					});
-				}
-			} catch (error) {
+				// Log the roots update for demonstration
 				await server.notification({
 					method: 'notifications/message',
 					params: {
-						level: 'error',
+						level: 'info',
 						logger: 'everything-server',
-						data: `Failed to request roots from client: ${error instanceof Error ? error.message : String(error)}`,
+						data: `Roots updated: ${currentRoots.length} root(s) received from client`,
 					},
 				});
 			}
-		},
-	);
+		} catch (error) {
+			await server.notification({
+				method: 'notifications/message',
+				params: {
+					level: 'error',
+					logger: 'everything-server',
+					data: `Failed to request roots from client: ${error instanceof Error ? error.message : String(error)}`,
+				},
+			});
+		}
+	});
 
 	// Handle post-initialization setup for roots
 	server.oninitialized = async () => {

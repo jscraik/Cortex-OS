@@ -7,41 +7,39 @@
  */
 
 // A2A Events for inter-package communication
+export {
+	GraphStateChangedEventSchema,
+	NodeExecutionCompletedEventSchema,
+	NodeExecutionFailedEventSchema,
+	NodeExecutionStartedEventSchema, createKernelEvent
+} from './events/kernel-events.js';
 export type {
 	GraphStateChangedEvent,
 	NodeExecutionCompletedEvent,
 	NodeExecutionFailedEvent,
-	NodeExecutionStartedEvent,
+	NodeExecutionStartedEvent
 } from './events/kernel-events.js';
-export {
-	createKernelEvent,
-	GraphStateChangedEventSchema,
-	NodeExecutionCompletedEventSchema,
-	NodeExecutionFailedEventSchema,
-	NodeExecutionStartedEventSchema,
-} from './events/kernel-events.js';
-// Core kernel exports
-export { CortexKernel, createKernel } from './graph-simple.js';
-// LangGraph adoption seam (Phase 1: skeleton graph)
-export { createKernelGraph } from './langgraph/graph.js';
+// Core kernel exports - REMOVED broken graph-simple integration
+// export { CortexKernel, createKernel } from './graph-simple.js';
 // History helper
 export {
 	addToHistory,
 	createHistory,
-	getExecutionHistory,
+	getExecutionHistory
 } from './lib/history.js';
 export type { MCPContext, MCPTool } from './mcp/adapter.js';
 // MCP integration
-export { createDefaultMCPTools, MCPAdapter } from './mcp/adapter.js';
+export { MCPAdapter, createDefaultMCPTools } from './mcp/adapter.js';
 // Workflow nodes
 export {
 	BuildNode,
-	EvaluationNode,
-	runBuildNode,
+	EvaluationNode, StrategyNode, runBuildNode,
 	runEvaluationNode,
-	runStrategyNode,
-	StrategyNode,
+	runStrategyNode
 } from './nodes/index.js';
+export {
+	PRPStateSchema, createInitialPRPState, validateStateTransition
+} from './state.js';
 export type {
 	CerebrumDecision,
 	EnforcementProfile,
@@ -49,22 +47,18 @@ export type {
 	GateResult,
 	HumanApproval,
 	PRPState,
-	ValidationGate,
-} from './state.js';
-export {
-	createInitialPRPState,
-	PRPStateSchema,
-	validateStateTransition,
+	ValidationGate
 } from './state.js';
 export type {
 	BehaviorExtension,
 	ExtensionContext,
-	ExtensionResult,
+	ExtensionResult
 } from './teaching/behavior-extension.js';
 // Teaching layer
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
+export { ExampleCaptureSystem } from './teaching/example-capture.js';
 export type {
 	CapturedExample,
-	TeachingPattern,
+	TeachingPattern
 } from './teaching/example-capture.js';
-export { ExampleCaptureSystem } from './teaching/example-capture.js';
+

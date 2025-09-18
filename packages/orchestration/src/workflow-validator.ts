@@ -43,7 +43,7 @@ export class LoggerMetricsEmitter implements ValidationMetricsEmitter {
 			format: winston.format.json(),
 			transports: [new winston.transports.Console()],
 		}),
-	) {}
+	) { }
 
 	incrementCounter(
 		metric: string,
@@ -193,9 +193,7 @@ let cacheAccesses = 0;
 // Maximum workflow depth to prevent stack overflow
 const MAX_WORKFLOW_DEPTH = 1000;
 
-// Cache cleanup interval (10 minutes)
-const CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000;
-let cacheCleanupTimer: NodeJS.Timeout | null = null;
+// Cache cleanup can be configured by integrators if needed
 
 interface ValidationResult {
 	workflow: Workflow;
@@ -233,19 +231,7 @@ function createWorkflowHash(workflow: Workflow): string {
 /**
  * Initialize cache cleanup if not already started
  */
-function _initializeCacheCleanup(): void {
-	if (cacheCleanupTimer) return;
-
-	cacheCleanupTimer = setInterval(() => {
-		// Clear cache periodically to prevent memory leaks
-		validationCacheImpl.clear();
-	}, CACHE_CLEANUP_INTERVAL);
-
-	// Don't keep the process alive
-	if (cacheCleanupTimer.unref) {
-		cacheCleanupTimer.unref();
-	}
-}
+// Cache cleanup registration intentionally deferred to integrators if needed
 
 function topologicalSort(wf: Workflow, nodes: Set<string>): string[] {
 	const inDegree = new Map<string, number>();
@@ -334,7 +320,7 @@ export function validateWorkflow(
 			const now = Date.now();
 
 			// Check soft TTL (10 minutes) - mark stale but still usable
-			const _softTtl = 10 * 60 * 1000; // 10 minutes
+			// soft TTL currently unused in cache-hit path but kept for clarity
 			const isStale = cached.softExpiry && now > cached.softExpiry;
 
 			if (cached.valid && cached.result) {
@@ -380,6 +366,7 @@ export function validateWorkflow(
 			result,
 			timestamp: now,
 			softExpiry: now + softTtl,
+			lastAccess: now,
 		});
 		metricsEmitter.incrementCounter('validation.cache.sets', {
 			cache_key: cacheKey,
@@ -393,6 +380,7 @@ export function validateWorkflow(
 			valid: false,
 			error: error as Error,
 			timestamp: now,
+			lastAccess: now,
 		});
 		throw error;
 	}

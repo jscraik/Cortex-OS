@@ -51,7 +51,7 @@ export const createSearchTool = (): SimpleMcpTool => ({
 	handler: async (input: Record<string, unknown>) => {
 		const searchInput = input as AgentToolkitSearchInput;
 		const toolkit = createAgentToolkit();
-		const result = await toolkit.search(searchInput.pattern, searchInput.path);
+		const result = await toolkit.search(searchInput.pattern as string, searchInput.path as string);
 
 		return {
 			content: [
@@ -82,12 +82,10 @@ export const createMultiSearchTool = (): SimpleMcpTool => ({
 	handler: async (input: Record<string, unknown>) => {
 		const searchInput = input as AgentToolkitSearchInput;
 		const toolkit = createAgentToolkit();
-		const result = await toolkit.multiSearch(
-			searchInput.pattern,
-			searchInput.path,
-		);
-
-		return {
+	const result = await toolkit.multiSearch(
+		searchInput.pattern as string,
+		searchInput.path as string,
+	);		return {
 			content: [
 				{
 					type: 'text' as const,
