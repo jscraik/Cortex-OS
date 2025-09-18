@@ -15,6 +15,13 @@ export interface AgentConfig {
 	mcpEndpoint?: string;
 	streamingMode?: 'updates' | 'values';
 	eventBus?: EventEmitter;
+	// Additional missing properties
+	maxTokens?: number;
+	temperature?: number;
+	timeout?: number;
+	retryAttempts?: number;
+	securityLevel?: 'low' | 'medium' | 'high';
+	enableLogging?: boolean;
 }
 
 export interface MemoryConfig {

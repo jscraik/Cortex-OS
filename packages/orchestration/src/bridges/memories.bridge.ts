@@ -8,10 +8,24 @@ export type MemoriesBridge = {
 export const createMemoriesBridge = (mem: MemoryService): MemoriesBridge => ({
 	checkpoint: async (runId, data) => {
 		const id = `wf:${runId}:${randomUUID()}`;
+		const seen = new WeakSet<object>();
+		const safeString = (() => {
+			try {
+				return JSON.stringify(data, (_, value) => {
+					if (typeof value === 'object' && value !== null) {
+						if (seen.has(value as object)) return '[Circular]';
+						seen.add(value as object);
+					}
+					return value;
+				});
+			} catch {
+				return String(data);
+			}
+		})();
 		const entry: Memory = {
 			id,
 			kind: 'artifact',
-			text: JSON.stringify(data),
+			text: safeString,
 			tags: ['orchestrator', 'checkpoint'],
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),

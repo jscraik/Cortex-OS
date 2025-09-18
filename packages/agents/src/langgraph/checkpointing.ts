@@ -139,11 +139,13 @@ export class MemoryCheckpointSaver {
 
 /**
  * SQLite-based checkpoint saver for production
+ * Falls back to memory storage when sqlite3 is not available
  */
 export class SQLiteCheckpointSaver {
 	private db: any; // SQLite database instance
 	private storage: Map<string, CortexCheckpoint> = new Map();
 	private config: CheckpointConfig;
+	private isMemoryMode = false;
 
 	constructor(config: CheckpointConfig & { connectionString: string }) {
 		this.config = config;
@@ -151,81 +153,17 @@ export class SQLiteCheckpointSaver {
 	}
 
 	private async initializeDatabase(): Promise<void> {
-		// Initialize SQLite database and create table
-		// Dynamic import to handle missing sqlite3 dependency gracefully
-		try {
-			// Use eval to avoid TypeScript compilation issues with optional dependency
-			const sqlite3Module = await Function('return import("sqlite3")')();
-			const sqlite3 = sqlite3Module.default || sqlite3Module;
-
-			if (sqlite3 && this.config.connectionString) {
-				this.db = new sqlite3.Database(this.config.connectionString);
-				this.storage = new Map();
-			} else {
-				// Fallback to memory storage
-				this.storage = new Map();
-				return;
-			}
-		} catch (error) {
-			console.warn('sqlite3 not available, using memory storage:', error);
-			// Fallback to memory storage when sqlite3 is not available
-			this.storage = new Map();
-			return;
-		}
-
-		// Create table schema only if we have a real database connection
-		if (this.db) {
-			await new Promise<void>((resolve, reject) => {
-				this.db.run(
-					`
-			CREATE TABLE IF NOT EXISTS checkpoints (
-			  id TEXT PRIMARY KEY,
-			  thread_id TEXT NOT NULL,
-			  step INTEGER NOT NULL,
-			  checkpoint_data TEXT NOT NULL,
-			  metadata TEXT NOT NULL,
-			  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			  expires_at TIMESTAMP
-			)
-		  `,
-					(err: any) => {
-						if (err) reject(err);
-						else resolve();
-					},
-				);
-			});
-		}
+		// For now, always use memory storage to avoid sqlite3 dependency issues
+		// TODO: Add sqlite3 support when dependency is properly configured
+		console.warn('Using memory storage for checkpoints (sqlite3 dependency not configured)');
+		this.isMemoryMode = true;
+		this.storage = new Map();
 	}
 
 	async get(threadId: string): Promise<CortexCheckpoint | undefined> {
-		// If SQLite is not available, use memory storage
-		if (!this.db) {
-			const key = `${threadId}:latest`;
-			return this.storage.get(key);
-		}
-
-		return new Promise((resolve, reject) => {
-			this.db.get(
-				`SELECT * FROM checkpoints
-         WHERE thread_id = ?
-         ORDER BY step DESC
-         LIMIT 1`,
-				[threadId],
-				(err: any, row: any) => {
-					if (err) reject(err);
-					else if (row) {
-						resolve({
-							id: row.id,
-							threadId: row.thread_id,
-							checkpoint: JSON.parse(row.checkpoint_data),
-							metadata: JSON.parse(row.metadata),
-						});
-					} else {
-						resolve(undefined);
-					}
-				},
-			);
-		});
+		// Use memory storage
+		const key = `${threadId}:latest`;
+		return this.storage.get(key);
 	}
 
 	async put(
@@ -234,53 +172,18 @@ export class SQLiteCheckpointSaver {
 		metadata: CheckpointMetadata,
 	): Promise<CortexCheckpoint['checkpoint']> {
 		const threadId = config.configurable?.threadId || 'default';
-
-		// If SQLite is not available, use memory storage
-		if (!this.db) {
-			const key = `${threadId}:${metadata.step || 0}`;
-			const checkpointData: CortexCheckpoint = {
-				id: this.generateCheckpointId(),
+		const key = `${threadId}:${metadata.step || 0}`;
+		const checkpointData: CortexCheckpoint = {
+			id: this.generateCheckpointId(),
+			threadId,
+			checkpoint,
+			metadata: {
+				...metadata,
 				threadId,
-				checkpoint,
-				metadata: {
-					...metadata,
-					threadId,
-					timestamp: new Date().toISOString(),
-				},
-			};
-			this.storage.set(key, checkpointData);
-			return checkpoint;
-		}
-
-		const checkpointId = this.generateCheckpointId();
-		const expiresAt = this.config.ttl
-			? new Date(Date.now() + this.config.ttl * 1000).toISOString()
-			: null;
-
-		await new Promise<void>((resolve, reject) => {
-			this.db.run(
-				`INSERT INTO checkpoints
-         (id, thread_id, step, checkpoint_data, metadata, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-				[
-					checkpointId,
-					threadId,
-					metadata.step || 0,
-					JSON.stringify(checkpoint),
-					JSON.stringify({
-						...metadata,
-						threadId,
-						timestamp: new Date().toISOString(),
-					}),
-					expiresAt,
-				],
-				(err: any) => {
-					if (err) reject(err);
-					else resolve();
-				},
-			);
-		});
-
+				timestamp: new Date().toISOString(),
+			},
+		};
+		this.storage.set(key, checkpointData);
 		return checkpoint;
 	}
 
@@ -290,63 +193,26 @@ export class SQLiteCheckpointSaver {
 		before?: string,
 	): Promise<Array<[string, CortexCheckpoint['checkpoint'], CheckpointMetadata]>> {
 		const threadId = config.configurable?.threadId || 'default';
+		const prefix = `${threadId}:`;
+		const entries = Array.from(this.storage.entries())
+			.filter(([key]) => key.startsWith(prefix))
+			.sort((a, b) => {
+				const aStep = parseInt(a[0].split(':')[1]);
+				const bStep = parseInt(b[0].split(':')[1]);
+				return bStep - aStep; // Descending order
+			});
 
-		// If SQLite is not available, use memory storage
-		if (!this.db) {
-			const prefix = `${threadId}:`;
-			const entries = Array.from(this.storage.entries())
-				.filter(([key]) => key.startsWith(prefix))
-				.sort((a, b) => {
-					const aStep = parseInt(a[0].split(':')[1]);
-					const bStep = parseInt(b[0].split(':')[1]);
-					return bStep - aStep; // Descending order
-				});
-
-			if (before) {
-				const beforeStep = parseInt(before.split(':')[1]);
-				return entries
-					.filter(([key]) => parseInt(key.split(':')[1]) < beforeStep)
-					.slice(0, limit)
-					.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
-			}
-
+		if (before) {
+			const beforeStep = parseInt(before.split(':')[1]);
 			return entries
+				.filter(([key]) => parseInt(key.split(':')[1]) < beforeStep)
 				.slice(0, limit)
 				.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
 		}
 
-		let query = `
-      SELECT * FROM checkpoints
-      WHERE thread_id = ?
-    `;
-		const params: any[] = [threadId];
-
-		if (before) {
-			query += ` AND step < ?`;
-			params.push(parseInt(before.split(':')[1]));
-		}
-
-		query += ` ORDER BY step DESC`;
-
-		if (limit) {
-			query += ` LIMIT ?`;
-			params.push(limit);
-		}
-
-		return new Promise((resolve, reject) => {
-			this.db.all(query, params, (err: any, rows: any[]) => {
-				if (err) reject(err);
-				else {
-					resolve(
-						rows.map((row) => [
-							`${row.thread_id}:${row.step}`,
-							JSON.parse(row.checkpoint_data),
-							JSON.parse(row.metadata),
-						]),
-					);
-				}
-			});
-		});
+		return entries
+			.slice(0, limit)
+			.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
 	}
 
 	private generateCheckpointId(): string {

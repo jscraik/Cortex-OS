@@ -78,3 +78,4 @@ report/
 UPSTREAM_REF
 pnpm-lock.yaml.bak
 .venv311/
+.memory/logs/*.jsonl

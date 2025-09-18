@@ -8,6 +8,19 @@
 import { MLXFirstOrchestrator } from '../src/coordinator/mlx-first-coordinator.js';
 import { MLXFirstModelProvider } from '../src/providers/mlx-first-provider.js';
 
+interface Subtask {
+	description: string;
+	recommendedAgent: string;
+	estimatedComplexity: number;
+	dependencies: string[];
+}
+
+interface TaskDecomposition {
+	subtasks: Subtask[];
+	parallelizable: unknown[];
+	criticalPath: string[];
+}
+
 async function demonstrateMLXIntegration() {
 	console.log('🚀 MLX-First Integration Demo Starting...\n');
 
@@ -103,7 +116,7 @@ function processUser(user: any) {
 	console.log(`   Task: ${complexTask}`);
 	console.log(`   Decomposed into ${decomposition.subtasks.length} subtasks:`);
 
-	decomposition.subtasks.forEach((subtask, i) => {
+	decomposition.subtasks.forEach((subtask: Subtask, i: number) => {
 		console.log(`     ${i + 1}. ${subtask.description}`);
 		console.log(`        → Assigned to: ${subtask.recommendedAgent}`);
 		console.log(`        → Complexity: ${subtask.estimatedComplexity}/10`);

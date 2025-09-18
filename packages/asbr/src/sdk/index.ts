@@ -18,9 +18,8 @@ import type {
 	Profile,
 	Task,
 	TaskInput,
-	TaskRef,
-	UnsubscribeFunction,
-} from '../types/index.js';
+} from '@cortex-os/asbr-schemas';
+import type { TaskRef, UnsubscribeFunction } from '../types/index.js';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -233,8 +232,7 @@ export class ASBRClient {
 		if (eventTypes) params.set('events', eventTypes.join(','));
 
 		const url = `${this.baseUrl}/v1/events?${params}`;
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		const eventSource = new EventSource(url, this.token ? { headers: { Authorization: `Bearer ${this.token}` } } : undefined);
+		const eventSource = new EventSource(url);
 
 		eventSource.onmessage = (event) => {
 			try {

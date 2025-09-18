@@ -26,9 +26,15 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./sdk": "./dist/sdk.js",
-    "./api": "./dist/api.js",
-    "./types": "./dist/types.d.ts"
+    "./sdk": {
+      "types": "./dist/sdk/index.d.ts",
+      "default": "./dist/sdk/index.js"
+    },
+    "./api": null,
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    }
   },
   "files": [
     "dist",
@@ -53,6 +59,7 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/asbr-schemas": "workspace:*",
     "diff": "^8.0.2",
     "express": "^5.1.0",
     "fast-xml-parser": "^5.2.5",

@@ -34,6 +34,7 @@ class TestFastMCPServerIntegration:
         """Test that server module can be imported."""
         try:
             from cortex_fastmcp_server_v2 import create_server
+
             server = create_server()
             assert server is not None
         except ImportError as e:
@@ -47,15 +48,13 @@ class TestFastMCPServerIntegration:
         assert "search" in server_instructions.lower()
         assert "cortex-os" in server_instructions.lower()
 
-    def test_fastmcp_cli_inspect_works(self, project_root: Path, server_path: Path) -> None:
+    def test_fastmcp_cli_inspect_works(
+        self, project_root: Path, server_path: Path
+    ) -> None:
         """Test that FastMCP CLI can inspect the server."""
         cmd = ["fastmcp", "inspect", str(server_path)]
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=str(project_root),
-            timeout=30
+            cmd, capture_output=True, text=True, cwd=str(project_root), timeout=30
         )
 
         if result.returncode != 0:
@@ -80,12 +79,14 @@ class TestFastMCPServerIntegration:
     def test_main_function_exists(self) -> None:
         """Test that main function is defined."""
         from cortex_fastmcp_server_v2 import main
+
         assert callable(main)
 
     def test_global_mcp_instance_exists(self) -> None:
         """Test that global MCP instance exists for CLI."""
         import cortex_fastmcp_server_v2
-        assert hasattr(cortex_fastmcp_server_v2, 'mcp')
+
+        assert hasattr(cortex_fastmcp_server_v2, "mcp")
         assert cortex_fastmcp_server_v2.mcp is not None
 
 
@@ -101,6 +102,7 @@ class TestServerEnvironmentHandling:
 
         # Import main to check defaults would be used
         from cortex_fastmcp_server_v2 import main
+
         # Just test that it doesn't crash on import
         assert callable(main)
 
@@ -112,6 +114,7 @@ class TestServerEnvironmentHandling:
 
         # Import main - should use custom values
         from cortex_fastmcp_server_v2 import main
+
         assert callable(main)
 
 

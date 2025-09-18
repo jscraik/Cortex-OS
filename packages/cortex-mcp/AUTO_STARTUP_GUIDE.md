@@ -18,16 +18,16 @@ The MCP server with TDD Coach plugin can be configured to run automatically usin
 
 The server configuration is located at:
 
-```bash
-/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/config/server.json
+The server is started via the startup script and uses the `cortex-mcp` package as the working directory:
+
+```text
+/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp
 ```
 
-Key settings:
+Canonical runtime settings:
 
 - Host: `127.0.0.1`
-- Port: `3000`
-- Plugin directory: `plugins`
-- Auto-reload: `true`
+- Port: `3024` (canonical)
 
 ### 2. Launchd Configuration
 
@@ -39,7 +39,7 @@ The launchd configuration file is located at:
 
 This file defines:
 
-- Service label: `com.brainwav.mcp-server`
+- Service label: `com.cortexos.mcp.server`
 - Program to run: `/Users/jamiecraik/.Cortex-OS/scripts/start-mcp-server.sh`
 - Working directory: `/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp`
 - Auto-start on load: `true`
@@ -58,7 +58,7 @@ This script:
 
 1. Changes to the MCP directory
 2. Starts the MCP server with the correct configuration
-3. Makes the server available at `http://127.0.0.1:3000`
+3. Makes the server available at `http://127.0.0.1:3024`
 4. Provides access via Cloudflare tunnel at `https://cortex-mcp.brainwav.io`
 
 ## Installation
@@ -78,7 +78,7 @@ sudo chmod 644 /Library/LaunchDaemons/com.brainwav.mcp-server.plist
 Load the service to start it immediately and enable auto-start on boot:
 
 ```bash
-sudo launchctl load /Library/LaunchDaemons/com.brainwav.mcp-server.plist
+sudo launchctl load /Library/LaunchDaemons/com.cortexos.mcp.server.plist
 ```
 
 ### 3. Verify the Service
@@ -86,13 +86,37 @@ sudo launchctl load /Library/LaunchDaemons/com.brainwav.mcp-server.plist
 Check if the service is running:
 
 ```bash
-sudo launchctl list | grep brainwav
+sudo launchctl list | grep cortexos
 ```
 
 You should see output similar to:
 
 ```bash
--   0   com.brainwav.mcp-server
+-   0   com.cortexos.mcp.server
+
+### User LaunchAgent (no sudo)
+
+For per-user startup on login, install the user LaunchAgent:
+
+```bash
+mkdir -p ~/Library/LaunchAgents
+cp /Users/jamiecraik/.Cortex-OS/infra/mcp/com.cortexos.mcp.server.plist ~/Library/LaunchAgents/
+launchctl unload ~/Library/LaunchAgents/com.cortexos.mcp.server.plist 2>/dev/null || true
+launchctl load ~/Library/LaunchAgents/com.cortexos.mcp.server.plist
+```
+
+### Optional: Periodic Health Probe
+
+Install a small LaunchAgent that runs a health probe every 2 minutes:
+
+```bash
+cp /Users/jamiecraik/.Cortex-OS/infra/mcp/com.cortexos.mcp.server.health.plist ~/Library/LaunchAgents/
+launchctl unload ~/Library/LaunchAgents/com.cortexos.mcp.server.health.plist 2>/dev/null || true
+launchctl load ~/Library/LaunchAgents/com.cortexos.mcp.server.health.plist
+```
+
+Health probe log: `/Users/jamiecraik/.Cortex-OS/logs/mcp-health-probe.log`
+
 ```
 
 ## Usage
@@ -137,7 +161,7 @@ sudo launchctl unload /Library/LaunchDaemons/com.brainwav.mcp-server.plist
 Check if the server is running:
 
 ```bash
-curl -f http://127.0.0.1:3000/health
+curl -f http://127.0.0.1:3024/health
 ```
 
 You should receive a JSON response indicating the server is healthy.
@@ -177,7 +201,7 @@ tail -f /Users/jamiecraik/.Cortex-OS/logs/mcp-server-error.log
 
 Once running, the MCP server will be available at:
 
-- Local access: `http://127.0.0.1:3000`
+- Local access: `http://127.0.0.1:3024`
 - Cloudflare tunnel: `https://cortex-mcp.brainwav.io`
 
 The TDD Coach plugin will automatically expose the following tools:

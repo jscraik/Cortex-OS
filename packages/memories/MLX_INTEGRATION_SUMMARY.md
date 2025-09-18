@@ -1,263 +1,96 @@
-# MLX-First Integration Summary
+# LangGraph Orchestration (MLX‑first) — Integration Summary
 
 ## 🎯 Objective Achieved
 
-Successfully integrated your available MLX and Ollama models with intelligent orchestration and agent coordination, prioritizing MLX models with Ollama fallbacks as requested.
+The orchestration stack has been consolidated to be LangGraph‑only. Model selection is MLX → Ollama → Frontier (OpenAI/Anthropic) and the persona is loaded from `cerebrum.yaml`.
 
-## 📦 Created Components
+## 📦 Core Components (current)
 
-### 1. Model Strategy Configuration (`/config/model-strategy.ts`)
+1. Cerebrum LangGraph
+- File: `packages/orchestration/src/langgraph/create-cerebrum-graph.ts`
+- Role: Builds the LangGraph graph and wires tools/nodes. It consumes persona configuration and the selected chat/embedding model.
 
-- **Purpose**: Central configuration mapping tasks to optimal models
-- **Features**:
-  - 7 task categories with performance-optimized model assignments
-  - MLX-first priority with Ollama fallbacks
-  - Performance characteristics (latency, memory, accuracy)
-  - Usage scenarios and optimization rules
+1. Model Selection Utility
+- File: `packages/orchestration/src/lib/model-selection.ts`
+- Role: Performs real health checks and chooses the first available provider in order: MLX (localhost:8765) → Ollama (localhost:11434) → Frontier API (if env configured). Returns strongly‑typed client bindings for the graph to use.
 
-**Key Model Assignments:**
+1. Persona Loader
+- File: `packages/orchestration/src/persona/persona-loader.ts`
+- Role: Loads `.cortex/library/personas/cerebrum.yaml` and validates shape. The graph enforces a persona guard to ensure required fields are present before execution.
 
-- Quick Reasoning: Qwen2.5-0.5B → phi4-mini-reasoning (fallback)
-- Code Intelligence: Qwen3-Coder-30B → qwen3-coder:30b (fallback)
-- Embeddings: Qwen3-Embedding-4B
-- Reranking: Qwen3-Reranker-4B
-- Complex Reasoning: Mixtral-8x7B-Instruct → deepseek-coder:6.7b (fallback)
+1. Contracts & Config (supporting)
+- Files: `packages/orchestration/src/config/model-catalog.ts`, `packages/orchestration/src/config/schemas.ts`
+- Role: Central registry/types for supported models and configuration schemas used by the selection and graph wiring.
 
-### 2. MLX-First Provider (`/packages/orchestration/src/providers/mlx-first-provider.ts`)
+All legacy/hybrid orchestrators, providers, routers, and demos have been removed. Public exports are LangGraph‑only.
 
-- **Purpose**: Unified interface for MLX and Ollama model services
-- **Features**:
-  - Automatic health checking (30-second intervals)
-  - Intelligent failover from MLX to Ollama
-  - Task-aware model selection
-  - Standardized response format
-  - Error handling and recovery
+## ⚙️ How Model Selection Works
 
-**Capabilities:**
+Order of preference at graph initialization:
+- MLX service reachable at `http://localhost:8765` (primary)
+- Ollama service reachable at `http://localhost:11434` (fallback)
+- Frontier API (e.g., OpenAI, Anthropic) if corresponding env vars are present
 
-```typescript
-generate(task: TaskType, request: GenerationRequest) // Text generation
-embed(request: EmbeddingRequest) // Vector embeddings
-rerank(query: string, documents: string[]) // Document reranking
+Health checks are real network probes. If a tier is unavailable, the selector transparently falls back to the next one. Failures surface as explicit, typed errors with context when no providers are reachable.
+
+## 🧠 Persona Configuration
+
+- Source: `.cortex/library/personas/cerebrum.yaml`
+- Validation: Loaded via the persona loader and verified against a schema. The LangGraph construction will refuse to start without a valid persona.
+
+## � Services & Environment
+
+- MLX (primary): `http://localhost:8765`
+- Ollama (fallback): `http://localhost:11434`
+- Frontier APIs (optional): provide the appropriate environment variables, for example:
+  - `OPENAI_API_KEY` for OpenAI
+  - `ANTHROPIC_API_KEY` for Anthropic
+
+Start local services when using local tiers:
+
+```bash
+# Start MLX (example model shown)
+mlx_lm.server --model /Volumes/ExternalSSD/huggingface_cache/models--mlx-community--Qwen2.5-0.5B-Instruct
+
+# Start Ollama
+ollama serve
 ```
 
-### 3. Intelligent A2A Router (`/packages/a2a/src/intelligent-router.ts`)
+## 🚀 Quick Start
 
-- **Purpose**: Semantic message routing for agent-to-agent communication
-- **Features**:
-  - Embedding-based agent compatibility scoring
-  - MLX reasoning for routing decisions
-  - Context-aware message batching
-  - Priority-based message handling
+1) Ensure MLX and/or Ollama are running, or export your frontier API key(s).
+2) Use the orchestration package’s public API to create the Cerebrum graph and invoke it. The graph will use the selected provider and the `cerebrum.yaml` persona automatically.
+3) Run validation gates during development:
 
-**Routing Intelligence:**
+```bash
+# Dry-run previews (affected-only)
+pnpm -w op:build:dry
 
-- Uses Qwen3-Embedding-4B for semantic similarity
-- Employs Qwen2.5 reasoning for routing decisions
-- Batches related messages automatically
-- Scores agent compatibility (0-1 scale)
-
-### 4. MLX-First Orchestrator (`/packages/orchestration/src/coordinator/mlx-first-coordinator.ts`)
-
-- **Purpose**: High-level task coordination using your models
-- **Features**:
-  - Complex task decomposition using Mixtral-8x7B
-  - Multi-modal task coordination
-  - Code-aware orchestration with Qwen3-Coder
-  - Safety validation with LlamaGuard integration
-  - Intelligent agent selection
-
-**Orchestration Capabilities:**
-
-```typescript
-decomposeTask(); // Break complex tasks into subtasks
-coordinateMultiModalTask(); // Handle UI/visual tasks
-orchestrateCodeTask(); // Code-specific planning
-selectOptimalAgent(); // Choose best agent for task
-validateTaskSafety(); // Safety and compliance checking
+# Execute affected lint / typecheck / test / build
+pnpm -w op:build
 ```
 
-### 5. Comprehensive Tests (`/packages/orchestration/tests/mlx-first-integration.test.ts`)
+Notes:
+- The integration test for model selection is parameterized to work in MLX‑only, Ollama‑only, or Frontier‑only environments.
+- Public API is LangGraph‑only; no provider or coordinator classes need to be imported directly.
 
-- **Purpose**: Validate entire integration pipeline
-- **Coverage**:
-  - Model provider functionality
-  - Orchestrator capabilities
-  - Error handling and fallbacks
-  - Integration scenarios
+## 📈 Behavior & Guarantees
 
-### 6. Live Demo (`/packages/orchestration/examples/mlx-integration-demo.ts`)
+- Deterministic provider order: MLX → Ollama → Frontier
+- Real service probes with clear, actionable error messages
+- Persona guard at graph build time
+- Strong typing across selection and graph wiring (no `any` shortcuts)
 
-- **Purpose**: Demonstrate complete integration in action
-- **Examples**:
-  - Quick reasoning with fallbacks
-  - Code intelligence analysis
-  - Embedding generation
-  - Task orchestration
-  - Agent selection
-  - Safety validation
-  - Multi-modal coordination
+## 🛡️ Reliability
 
-## 🚀 Integration Architecture
+- Graceful tiered fallback between providers
+- Timeouts and health checks avoid long hangs
+- Strict schema validation for persona/config
 
-```
-User Request
-     ↓
-MLX-First Orchestrator
-     ↓
-Task Decomposition (Mixtral-8x7B)
-     ↓
-Agent Selection (Qwen2.5-0.5B)
-     ↓
-A2A Intelligent Router
-     ↓
-Semantic Routing (Qwen3-Embedding)
-     ↓
-Agent Execution
-     ↓
-Results Aggregation
-```
+## 🗑️ What Was Removed (legacy)
 
-## 🔧 Model Integration Details
+- Provider, router, and coordinator implementations unrelated to LangGraph
+- A2A “intelligent router” integration examples
+- Demo files and tests referencing the removed classes
 
-### Available Models Integrated:
-
-**MLX Models (Primary):**
-
-- Qwen3-Embedding: 0.6B, 4B, 8B variants
-- Qwen3-Reranker-4B
-- Qwen3-Coder-30B (code intelligence)
-- Mixtral-8x7B-Instruct (complex reasoning)
-- Qwen2.5-0.5B-Instruct (quick decisions)
-- LlamaGuard-7b (safety validation)
-
-**Ollama Models (Fallback):**
-
-- qwen3-coder:30b
-- phi4-mini-reasoning:latest
-- deepseek-coder:6.7b
-- gemma3n:e4b
-
-### Service Integration:
-
-- **MLX Service**: localhost:8765 (primary)
-- **Ollama Service**: localhost:11434 (fallback)
-- **Health Checking**: Automatic with 30s intervals
-- **Failover**: Seamless MLX → Ollama transition
-
-## 🎭 Usage Examples
-
-### Basic Generation:
-
-```typescript
-const provider = new MLXFirstModelProvider();
-const result = await provider.generate('quickReasoning', {
-  task: 'decision_making',
-  prompt: 'Should we prioritize performance or reliability?',
-  maxTokens: 100,
-});
-```
-
-### Task Orchestration:
-
-```typescript
-const orchestrator = new MLXFirstOrchestrator();
-const decomposition = await orchestrator.decomposeTask('Build a secure chat application', [
-  'frontend-expert',
-  'backend-specialist',
-  'security-engineer',
-]);
-```
-
-### Intelligent Routing:
-
-```typescript
-const router = new IntelligentA2ARouter();
-const decision = await router.makeRoutingDecision(message, availableAgents);
-```
-
-## 📈 Performance Optimization
-
-### Task-Model Matching:
-
-- **Quick decisions**: Qwen2.5-0.5B (ultra-fast)
-- **Code analysis**: Qwen3-Coder-30B (specialized)
-- **Complex reasoning**: Mixtral-8x7B (expert-level)
-- **Embeddings**: Qwen3-Embedding-4B (semantic understanding)
-
-### Optimization Rules:
-
-- **Low latency**: Use smaller, faster models
-- **High accuracy**: Use larger, specialized models
-- **Memory constrained**: Prefer efficient models
-- **Batch processing**: Group similar requests
-
-## 🛡️ Safety & Reliability
-
-### Error Handling:
-
-- Graceful MLX → Ollama failover
-- Service health monitoring
-- Request timeout handling
-- Fallback response generation
-
-### Safety Features:
-
-- LlamaGuard integration for content safety
-- Task validation before execution
-- Compliance checking
-- Risk assessment
-
-## 🚀 Next Steps
-
-### Immediate Actions:
-
-1. **Start Services**:
-
-   ```bash
-   # Start MLX service
-   mlx_lm.server --model /Volumes/ExternalSSD/huggingface_cache/models--mlx-community--Qwen2.5-0.5B-Instruct
-
-   # Start Ollama service
-   ollama serve
-   ```
-
-2. **Run Demo**:
-
-   ```bash
-   cd packages/orchestration
-   npx tsx examples/mlx-integration-demo.ts
-   ```
-
-3. **Integration Testing**:
-   ```bash
-   npm test # Run comprehensive tests
-   ```
-
-### Integration with Your System:
-
-1. **A2A Bus Integration**:
-   - Import IntelligentA2ARouter into your A2A package
-   - Replace basic routing with semantic routing
-
-2. **Agent Enhancement**:
-   - Use MLXFirstOrchestrator for agent coordination
-   - Leverage model-specific capabilities per agent type
-
-3. **Service Mounting**:
-   - Add MLXFirstModelProvider to your ASBR dependency injection
-   - Configure service endpoints in your config
-
-## 🎉 Benefits Achieved
-
-✅ **MLX-first architecture** with automatic Ollama fallbacks  
-✅ **Intelligent task decomposition** using Mixtral expert reasoning  
-✅ **Semantic agent routing** with embedding-based compatibility  
-✅ **Code-aware orchestration** using specialized Qwen3-Coder  
-✅ **Multi-modal coordination** for UI/visual tasks  
-✅ **Safety validation** with LlamaGuard integration  
-✅ **Performance optimization** through task-model matching  
-✅ **Comprehensive testing** and error handling  
-✅ **Live demonstration** with practical examples
-
-Your agents and orchestration packages are now significantly enhanced with intelligent model usage, providing optimal performance through MLX-first architecture while maintaining reliability through Ollama fallbacks!
+This package now exposes a single, clear orchestration path: LangGraph with MLX‑first model selection, optional fallbacks, and a validated Cerebrum persona.

@@ -1,3 +1,33 @@
+#!/bin/bash
+
+# Simple health probe for cortex-mcp; appends status to log
+set -euo pipefail
+
+HEALTH_URL="${MCP_HEALTH_URL:-http://127.0.0.1:3024/health}"
+LOG_FILE="/Users/jamiecraik/.Cortex-OS/logs/mcp-health-probe.log"
+
+mkdir -p "$(dirname "$LOG_FILE")"
+
+TS="$(date -Is)"
+STATUS="unknown"
+LATENCY="-1"
+
+if command -v curl >/dev/null 2>&1; then
+  START=$(date +%s%3N 2>/dev/null || date +%s)
+  if RESP=$(curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null); then
+    END=$(date +%s%3N 2>/dev/null || date +%s)
+    STATUS="ok"
+    LATENCY=$((END-START))
+    echo "$TS status=$STATUS latency_ms=$LATENCY resp=$(echo "$RESP" | tr -d '\n' | head -c 200)" >> "$LOG_FILE"
+    exit 0
+  else
+    echo "$TS status=error error=curl_failed" >> "$LOG_FILE"
+    exit 3
+  fi
+else
+  echo "$TS status=skipped reason=no_curl" >> "$LOG_FILE"
+  exit 0
+fi
 #!/usr/bin/env bash
 set -euo pipefail
 

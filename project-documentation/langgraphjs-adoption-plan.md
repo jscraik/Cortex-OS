@@ -49,8 +49,8 @@ Next focus:
 
 1. **Graph Factory**
    - Tests: snapshot of nodes/edges built by `createCerebrumGraph()` fails until implemented.
-    - Implementation: build LangGraphJS graph skeleton aligned with the architecture diagram
-       (Master loop, h2a queue, ToolEngine) using primitives imported from the git-sourced `langgraph` package.
+   - Implementation: build LangGraphJS graph skeleton aligned with the architecture diagram
+     (Master loop, h2a queue, ToolEngine) using primitives imported from the git-sourced `langgraph` package.
 2. **Persona Integration**
    - Tests: persona rules from `cerebrum.yaml` enforced via middleware; fail until guard nodes exist.
    - Implementation: load YAML, create guard nodes (WCAG, security) wrapping relevant graph transitions.

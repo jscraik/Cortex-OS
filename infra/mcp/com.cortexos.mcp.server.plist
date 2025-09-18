@@ -4,27 +4,27 @@
 <dict>
     <key>Label</key>
     <string>com.cortexos.mcp.server</string>
-    
+
     <key>ProgramArguments</key>
     <array>
         <string>/Users/jamiecraik/.Cortex-OS/scripts/start-mcp-server.sh</string>
     </array>
-    
+
     <key>WorkingDirectory</key>
     <string>/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp</string>
-    
+
     <key>RunAtLoad</key>
     <true/>
-    
+
     <key>KeepAlive</key>
     <true/>
-    
+
     <key>StandardOutPath</key>
-    <string>/Users/jamiecraik/.Cortex-OS/logs/mcp-server.log</string>
-    
+    <string>/Users/jamiecraik/Library/Logs/com.cortexos.mcp.server.out.log</string>
+
     <key>StandardErrorPath</key>
-    <string>/Users/jamiecraik/.Cortex-OS/logs/mcp-server-error.log</string>
-    
+    <string>/Users/jamiecraik/Library/Logs/com.cortexos.mcp.server.err.log</string>
+
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>

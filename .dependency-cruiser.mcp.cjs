@@ -11,14 +11,14 @@ module.exports = {
 		{
 			name: 'forbid-mcp-to-bridge',
 			severity: 'error',
-			from: { path: '^packages/mcp/' },
+			from: { path: '^packages/cortex-mcp/' },
 			to: { path: '^packages/mcp-bridge/' },
 		},
 		{
 			name: 'forbid-bridge-to-mcp',
 			severity: 'error',
 			from: { path: '^packages/mcp-bridge/' },
-			to: { path: '^packages/mcp/' },
+			to: { path: '^packages/cortex-mcp/' },
 		},
 
 		// Registry should not depend on mcp (but mcp may depend on registry)
@@ -26,7 +26,7 @@ module.exports = {
 			name: 'forbid-registry-to-mcp',
 			severity: 'error',
 			from: { path: '^packages/mcp-registry/' },
-			to: { path: '^packages/mcp/' },
+			to: { path: '^packages/cortex-mcp/' },
 		},
 	],
 	options: { tsConfig: { fileName: 'tsconfig.json' } },

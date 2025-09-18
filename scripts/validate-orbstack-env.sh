@@ -146,7 +146,6 @@ validate_docker_configs() {
         "apps/cortex-py/Dockerfile"
         "packages/model-gateway/Dockerfile"
         "packages/agents/Dockerfile"
-        "packages/mcp/Dockerfile"
     )
 
     local optional_dockerfile_locations=(

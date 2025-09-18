@@ -95,13 +95,28 @@ export interface AgentConfig {
 	capabilities: string[];
 	modelProvider: string;
 	model?: string;
-	tools?: ToolConfig[];
-	memoryConfig?: MemoryConfig;
+	// Additional missing properties for enhanced functionality
+	maxTokens?: number;
+	temperature?: number;
+	timeout?: number;
+	retryAttempts?: number;
+	securityLevel?: 'low' | 'medium' | 'high';
+	enableLogging?: boolean;
+	streamingMode?: 'updates' | 'values';
 	toolConfig?: ToolConfig;
+	memoryConfig?: MemoryConfig;
 	systemPrompt?: string;
 	mcpEndpoint?: string;
-	streamingMode?: 'updates' | 'values';
-	eventBus?: EventEmitter;
+}
+
+// Additional missing interfaces for agents
+export interface ToolConfig {
+	enableA2A: boolean;
+	enableMCP: boolean;
+	enableSystemTools: boolean;
+	customTools?: string[];
+	timeout?: number;
+	retryAttempts?: number;
 }
 
 export interface MemoryConfig {
@@ -109,14 +124,10 @@ export interface MemoryConfig {
 	contextualMemorySize: number;
 	episodicMemorySize: number;
 	retentionPolicy: 'lru' | 'ttl' | 'importance';
+	persistenceEnabled?: boolean;
+	compressionEnabled?: boolean;
 }
 
-export interface ToolConfig {
-	enableA2A: boolean;
-	enableMCP: boolean;
-	enableSystemTools: boolean;
-	customTools?: string[];
-}
 
 export interface AgentMetrics {
 	messagesProcessed: number;

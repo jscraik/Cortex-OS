@@ -8,11 +8,11 @@ export type {
 	OrchestrationBus,
 	OrchestrationEventEnvelope,
 	OrchestrationEventHandler,
-	OrchestrationPublishOptions,
+	OrchestrationPublishOptions
 } from './events/orchestration-bus.js';
 export {
 	ORCHESTRATION_EVENT_SCHEMAS,
-	OrchestrationEventTypes,
+	OrchestrationEventTypes
 } from './events/orchestration-events.js';
 export type {
 	AgentAssignedEvent,
@@ -26,49 +26,32 @@ export type {
 	TaskCompletedEvent,
 	TaskCreatedEvent,
 	TaskFailedEvent,
-	TaskStartedEvent,
+	TaskStartedEvent
 } from './events/orchestration-events.js';
 
 // Legacy integrations removed (LangGraph-only)
 // Core types and interfaces
 // Enum types
 export type {
-	AdaptiveConfig,
 	AdaptiveDecision,
 	Agent,
 	AgentCapability,
-	CoordinationResult,
-	DatabaseConfig,
 	DecisionContext,
 	ExecutionPlan,
-	LangChainConfig,
-	LangChainResult,
-	LangChainTool,
-	LearningPattern,
-	MessageProtocol,
-	MultiAgentConfig,
-	MultiAgentState,
-	Neo4jConfig,
 	OrchestrationConfig,
 	OrchestrationEvent,
 	OrchestrationResult,
 	OrchestrationState,
-	OrchestrationStatistics,
 	PerformanceMetrics,
 	PlanningContext,
-	PlanningResult,
-	QdrantConfig,
 	StrategicDecision,
-	SynchronizationPoint,
-	Task,
+	Task
 } from './types.js';
 // Enums
 export {
 	AgentRole,
-	CoordinationStrategy,
-	DecisionStrategy,
 	OrchestrationStrategy,
-	Schemas,
+	Schemas
 } from './types.js';
 
 // Utility defaults
@@ -84,14 +67,10 @@ export const OrchestrationDefaults = {
 export type { ToolContract, ToolErrorResponse } from './mcp/tools.js';
 // MCP tool contracts
 export {
-	createToolErrorResponse,
-	orchestrationToolContracts,
-	processMonitoringTools,
-	taskManagementTools,
 	ToolErrorCode,
+	ToolValidationError, createToolErrorResponse,
 	toolErrorResponseSchema,
-	ToolValidationError,
-	workflowOrchestrationTools,
+
 } from './mcp/tools.js';
 
 // Version info
@@ -106,6 +85,6 @@ export {
 	orchestrationMcpTools,
 	processMonitoringTool,
 	taskManagementTool,
-	workflowOrchestrationTool,
+	workflowOrchestrationTool
 } from './mcp/tools.js';
 // LangGraph-only: legacy engines are no longer exported

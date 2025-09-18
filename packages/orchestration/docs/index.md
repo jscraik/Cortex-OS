@@ -1,9 +1,9 @@
 # Cortex Orchestration Documentation
 
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/orchestration)](https://www.npmjs.com/package/@cortex-os/orchestration)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](#)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](https://github.com/jamiescottcraik/Cortex-OS)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview

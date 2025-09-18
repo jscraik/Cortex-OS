@@ -64,35 +64,35 @@ sed -i '' '1i\
 
 echo "Added validation reminder to neo4j.ts"
 
-# 5. Add sandboxing comment to executor.py
-echo "Adding comments to indicate where sandboxing is needed in executor.py..."
+"# 5. Add sandboxing comment to executor.py"
+echo "Adding comments to indicate where sandboxing is needed in executor.py (legacy path guarded)..."
 
-# Backup the original file
-cp packages/mcp/src/python/src/executor.py security_backups/executor.py.backup
-
-# Add a comment to indicate where sandboxing is needed
-sed -i '' '1i\
+if [ -f packages/mcp/src/python/src/executor.py ]; then
+	cp packages/mcp/src/python/src/executor.py security_backups/executor.py.backup
+	sed -i '' '1i\
 
 # TODO: Implement sandboxing for code execution
 # SECURITY ISSUE: Direct execution of user-controlled code without sandboxing
 ' packages/mcp/src/python/src/executor.py
+	echo "Added sandboxing reminder to executor.py"
+else
+	echo "(skip) packages/mcp/src/python/src/executor.py not found"
+fi
 
-echo "Added sandboxing reminder to executor.py"
+"# 6. Add validation comment to mcp_server.py"
+echo "Adding comments to indicate where input validation is needed in mcp_server.py (legacy path guarded)..."
 
-# 6. Add validation comment to mcp_server.py
-echo "Adding comments to indicate where input validation is needed in mcp_server.py..."
-
-# Backup the original file
-cp packages/mcp/src/tools/docker/mcp_server.py security_backups/mcp_server.py.backup
-
-# Add a comment to indicate where validation is needed
-sed -i '' '1i\
+if [ -f packages/mcp/src/tools/docker/mcp_server.py ]; then
+	cp packages/mcp/src/tools/docker/mcp_server.py security_backups/mcp_server.py.backup
+	sed -i '' '1i\
 
 # TODO: Add input validation for command execution
 # SECURITY ISSUE: Direct execution of user-controlled commands without validation
 ' packages/mcp/src/tools/docker/mcp_server.py
-
-echo "Added validation reminder to mcp_server.py"
+	echo "Added validation reminder to mcp_server.py"
+else
+	echo "(skip) packages/mcp/src/tools/docker/mcp_server.py not found"
+fi
 
 echo "Security issue rectification script completed."
 echo "Please review the changes and implement proper validation/sanitization as outlined in SECURITY_RECTIFICATION_PLAN.md"

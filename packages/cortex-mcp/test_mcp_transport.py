@@ -26,7 +26,7 @@ def test_server_inspect() -> bool:
 
     project_root = get_project_root()
     server_path = project_root / "packages/cortex-mcp/cortex_fastmcp_server_v2.py"
-    
+
     if not server_path.exists():
         print(f"❌ Server file not found: {server_path}")
         return False
@@ -37,10 +37,8 @@ def test_server_inspect() -> bool:
         "inspect",
         str(server_path),
     ]
-    
-    result = subprocess.run(
-        cmd, capture_output=True, text=True, cwd=str(project_root)
-    )
+
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(project_root))
 
     if result.returncode == 0:
         print("✅ Server inspection successful")
@@ -78,7 +76,7 @@ def test_server_capabilities() -> bool:
 
     project_root = get_project_root()
     server_path = project_root / "packages/cortex-mcp/cortex_fastmcp_server_v2.py"
-    
+
     cmd = [
         "fastmcp",
         "inspect",
@@ -87,9 +85,7 @@ def test_server_capabilities() -> bool:
         "mcp",
     ]
 
-    result = subprocess.run(
-        cmd, capture_output=True, text=True, cwd=str(project_root)
-    )
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(project_root))
 
     if result.returncode == 0:
         try:

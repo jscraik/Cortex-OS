@@ -1,5 +1,5 @@
-import { context, metrics, SpanStatusCode, trace } from '@opentelemetry/api';
 import type { Attributes, AttributeValue } from '@opentelemetry/api';
+import { context, metrics, SpanStatusCode, trace } from '@opentelemetry/api';
 import type { EnhancedSpanContext, WorkflowMetrics } from '../lib/telemetry.js';
 import {
 	gatherSpanAttributes,
@@ -100,11 +100,11 @@ export async function withSpan<T>(
 export async function withEnhancedSpan<T>(
 	name: string,
 	fn: () => Promise<T>,
-	context: EnhancedSpanContext = {},
+	spanCtx: EnhancedSpanContext = {},
 ): Promise<T> {
 	const span = tracer.startSpan(name);
 	const startTime = Date.now();
-	span.setAttributes(toAttributes(gatherSpanAttributes(context)));
+	span.setAttributes(toAttributes(gatherSpanAttributes(spanCtx)));
 
 	// Add custom events for important milestones
 	span.addEvent(`${name}.started`, {
@@ -115,11 +115,11 @@ export async function withEnhancedSpan<T>(
 	try {
 		const result = await fn();
 		const duration = Date.now() - startTime;
-		recordSuccessMetrics(name, duration, context, workflowMetrics, span);
+		recordSuccessMetrics(name, duration, spanCtx, workflowMetrics, span);
 		return result;
 	} catch (err: unknown) {
 		const duration = Date.now() - startTime;
-		recordErrorMetrics(name, err, duration, context, workflowMetrics, span);
+		recordErrorMetrics(name, err, duration, spanCtx, workflowMetrics, span);
 		throw err;
 	} finally {
 		span.end();

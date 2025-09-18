@@ -162,7 +162,7 @@ export const responseSynthesisNode = async (state: CortexState): Promise<Partial
 
 	return {
 		currentStep: 'memory_update',
-		messages: [...state.messages, new AIMessage({ content: [{ type: 'text', text: responseContent }] })],
+		messages: [...state.messages, new AIMessage({ content: responseContent })],
 	};
 };
 
