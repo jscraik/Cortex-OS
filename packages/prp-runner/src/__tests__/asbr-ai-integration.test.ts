@@ -61,8 +61,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 					{
 						type: 'file' as const,
 						path: '/src/auth.ts',
-						content:
-							'export function authenticate(user: User) { return true; }',
+						content: 'export function authenticate(user: User) { return true; }',
 					},
 				],
 			};
@@ -93,9 +92,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 			];
 
 			// Mock embedding search to fail
-			mockAICapabilities.addKnowledge.mockRejectedValue(
-				new Error('Embedding model not available'),
-			);
+			mockAICapabilities.addKnowledge.mockRejectedValue(new Error('Embedding model not available'));
 			mockAICapabilities.searchKnowledge.mockResolvedValue([]);
 
 			const result = await asbrAI.searchRelatedEvidence(claim, contextSources);
@@ -204,12 +201,8 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 
 			// Aggressive should use all features
 			expect(aggressiveConfig.enableFactChecking).toBe(true);
-			expect(aggressiveConfig.confidenceBoost).toBeGreaterThan(
-				balancedConfig.confidenceBoost,
-			);
-			expect(aggressiveConfig.minAIConfidence).toBeLessThan(
-				conservativeConfig.minAIConfidence,
-			);
+			expect(aggressiveConfig.confidenceBoost).toBeGreaterThan(balancedConfig.confidenceBoost);
+			expect(aggressiveConfig.minAIConfidence).toBeLessThan(conservativeConfig.minAIConfidence);
 		});
 
 		it('should fail - deterministic evidence collection', async () => {
@@ -248,13 +241,9 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 			const result2 = await asbrAI.collectEnhancedEvidence(context);
 
 			// Should produce identical results for determinism
-			expect(result1.aiEnhancedEvidence.confidence).toBe(
-				result2.aiEnhancedEvidence.confidence,
-			);
+			expect(result1.aiEnhancedEvidence.confidence).toBe(result2.aiEnhancedEvidence.confidence);
 			expect(result1.insights).toEqual(result2.insights);
-			expect(result1.aiMetadata.modelsUsed).toEqual(
-				result2.aiMetadata.modelsUsed,
-			);
+			expect(result1.aiMetadata.modelsUsed).toEqual(result2.aiMetadata.modelsUsed);
 		});
 
 		it('should fail - error handling and graceful degradation', async () => {
@@ -266,15 +255,9 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 			};
 
 			// Mock all AI capabilities to fail
-			mockAICapabilities.generate.mockRejectedValue(
-				new Error('MLX model unavailable'),
-			);
-			mockAICapabilities.searchKnowledge.mockRejectedValue(
-				new Error('Embedding service down'),
-			);
-			mockAICapabilities.ragQuery.mockRejectedValue(
-				new Error('RAG pipeline failed'),
-			);
+			mockAICapabilities.generate.mockRejectedValue(new Error('MLX model unavailable'));
+			mockAICapabilities.searchKnowledge.mockRejectedValue(new Error('Embedding service down'));
+			mockAICapabilities.ragQuery.mockRejectedValue(new Error('RAG pipeline failed'));
 
 			// Should gracefully handle all failures and still return valid evidence
 			const result = await asbrAI.collectEnhancedEvidence(context);
@@ -339,16 +322,12 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 
 			// Mock AI responses with delays to simulate real processing
 			mockAICapabilities.generate.mockImplementation(async (prompt: string) => {
-				await new Promise((resolve) =>
-					setTimeout(resolve, Math.random() * 100),
-				);
+				await new Promise((resolve) => setTimeout(resolve, Math.random() * 100));
 				return `AI analysis for: ${prompt.substring(0, 50)}...`;
 			});
 
 			// Process all contexts concurrently
-			const promises = contexts.map((context) =>
-				asbrAI.collectEnhancedEvidence(context),
-			);
+			const promises = contexts.map((context) => asbrAI.collectEnhancedEvidence(context));
 			const results = await Promise.all(promises);
 
 			// All results should be valid and unique
@@ -359,9 +338,8 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 			});
 
 			// Should not have race conditions in cache
-			const cacheSize = (
-				asbrAI as unknown as { processingCache: Map<string, unknown> }
-			).processingCache.size;
+			const cacheSize = (asbrAI as unknown as { processingCache: Map<string, unknown> })
+				.processingCache.size;
 			expect(cacheSize).toBe(5);
 		});
 
@@ -458,9 +436,6 @@ describe('📋 ASBR AI Integration TDD Checklist', () => {
 		};
 
 		// Fail this test to remind us of TDD compliance
-		expect(
-			Object.values(tddChecklist).filter((status) => status.includes('❌'))
-				.length,
-		).toBe(0);
+		expect(Object.values(tddChecklist).filter((status) => status.includes('❌')).length).toBe(0);
 	});
 });

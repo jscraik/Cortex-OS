@@ -101,11 +101,7 @@ export class ApiService {
 		}
 
 		const metadata = this.createMetadata(request);
-		const cacheKey = this.createCacheKey(
-			route,
-			sanitizedPayload,
-			sanitizedHeaders,
-		);
+		const cacheKey = this.createCacheKey(route, sanitizedPayload, sanitizedHeaders);
 		if (route.cacheTtlSeconds) {
 			const cached = this.cache.get(cacheKey);
 			if (cached) {
@@ -126,11 +122,9 @@ export class ApiService {
 		const handlerKey = this.getHandlerKey(route);
 		const handler = this.handlers[handlerKey];
 		if (!handler) {
-			throw new ApiServiceError(
-				`No handler registered for ${handlerKey}`,
-				'E_HANDLER_NOT_FOUND',
-				{ route: route.id },
-			);
+			throw new ApiServiceError(`No handler registered for ${handlerKey}`, 'E_HANDLER_NOT_FOUND', {
+				route: route.id,
+			});
 		}
 
 		let handlerResult: ApiHandlerResult;
@@ -160,11 +154,9 @@ export class ApiService {
 				error: (error as Error).message,
 				handler: handlerKey,
 			});
-			throw new ApiServiceError(
-				'Internal API handler failure',
-				'E_HANDLER_FAILURE',
-				{ handler: handlerKey },
-			);
+			throw new ApiServiceError('Internal API handler failure', 'E_HANDLER_FAILURE', {
+				handler: handlerKey,
+			});
 		}
 
 		const gatewayResponse: GatewayResponse = {
@@ -200,10 +192,7 @@ export class ApiService {
 		return gatewayResponse;
 	}
 
-	private resolveRoute(
-		request: GatewayRequest,
-		headers: Record<string, string>,
-	): RouteResolution {
+	private resolveRoute(request: GatewayRequest, headers: Record<string, string>): RouteResolution {
 		try {
 			if (request.operationId) {
 				return this.router.resolveById(request.operationId);
@@ -248,19 +237,14 @@ export class ApiService {
 }
 
 export function createDefaultApiService(
-	dependencies: Partial<ApiServiceDependencies> &
-		Pick<ApiServiceDependencies, 'handlers'>,
+	dependencies: Partial<ApiServiceDependencies> & Pick<ApiServiceDependencies, 'handlers'>,
 ): ApiService {
 	const router = dependencies.router ?? new RequestRouter();
 	const logger = dependencies.logger ?? new StructuredLogger();
 	return new ApiService({
 		router,
-		security:
-			dependencies.security ??
-			new SecurityGuard({ acceptedApiKeys: ['local-api-key'] }),
-		rateLimiter:
-			dependencies.rateLimiter ??
-			new RateLimiter({ windowMs: 60_000, maxRequests: 30 }),
+		security: dependencies.security ?? new SecurityGuard({ acceptedApiKeys: ['local-api-key'] }),
+		rateLimiter: dependencies.rateLimiter ?? new RateLimiter({ windowMs: 60_000, maxRequests: 30 }),
 		cache: dependencies.cache ?? new ResponseCache<GatewayResponse>(30),
 		logger,
 		metrics: dependencies.metrics ?? new MetricsCollector(),

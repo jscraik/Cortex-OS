@@ -128,10 +128,7 @@ function checkRateLimit(tool: string) {
 	}
 	state.count += 1;
 	if (state.count > RATE_LIMIT) {
-		throw new WebuiToolError(
-			'rate_limited',
-			`Rate limit exceeded for tool ${tool}`,
-		);
+		throw new WebuiToolError('rate_limited', `Rate limit exceeded for tool ${tool}`);
 	}
 }
 
@@ -153,10 +150,7 @@ async function executeTool(
 			return services.panel.open(input);
 		}
 		case 'update_component_state': {
-			const input = validateWebuiToolInput<UpdateComponentStateInput>(
-				tool,
-				args,
-			);
+			const input = validateWebuiToolInput<UpdateComponentStateInput>(tool, args);
 			return services.componentState.update(input);
 		}
 		case 'navigate': {
@@ -218,11 +212,7 @@ export async function mcpExecuteHandler(req: Request, res: Response) {
 				code: toolErr.code,
 				details: toolErr.details,
 			});
-			const errorResponse = createWebuiErrorResponse(
-				tool || 'unknown',
-				toolErr,
-				correlationId,
-			);
+			const errorResponse = createWebuiErrorResponse(tool || 'unknown', toolErr, correlationId);
 			res
 				.status(toolErr.code === 'rate_limited' ? 429 : 400)
 				.json(JSON.parse(errorResponse.content[0].text));
@@ -234,11 +224,7 @@ export async function mcpExecuteHandler(req: Request, res: Response) {
 			correlationId,
 			error: genericMessage,
 		});
-		const errorResponse = createWebuiErrorResponse(
-			tool || 'unknown',
-			error,
-			correlationId,
-		);
+		const errorResponse = createWebuiErrorResponse(tool || 'unknown', error, correlationId);
 		res.status(500).json(JSON.parse(errorResponse.content[0].text));
 	}
 }

@@ -87,11 +87,7 @@ export class TimeoutError extends Error {
 	}
 }
 
-function withTimeout<T>(
-	promise: Promise<T>,
-	ms: number | undefined,
-	label: string,
-): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms: number | undefined, label: string): Promise<T> {
 	if (!ms || ms <= 0) return promise;
 	return new Promise<T>((resolve, reject) => {
 		const timer = setTimeout(() => {
@@ -148,9 +144,7 @@ class CircuitBreaker {
 		private readonly service: string,
 	) {}
 
-	private emit(
-		event: 'circuit.opened' | 'circuit.half_open' | 'circuit.closed',
-	) {
+	private emit(event: 'circuit.opened' | 'circuit.half_open' | 'circuit.closed') {
 		const base = {
 			service: this.service,
 			failures: this.failures,
@@ -158,20 +152,14 @@ class CircuitBreaker {
 			time: new Date().toISOString(),
 		};
 		if (event === 'circuit.opened')
-			this.emitter.emit(
-				'circuit.opened',
-				CircuitOpenedEventSchema.parse({ type: event, ...base }),
-			);
+			this.emitter.emit('circuit.opened', CircuitOpenedEventSchema.parse({ type: event, ...base }));
 		else if (event === 'circuit.half_open')
 			this.emitter.emit(
 				'circuit.half_open',
 				CircuitHalfOpenEventSchema.parse({ type: event, ...base }),
 			);
 		else
-			this.emitter.emit(
-				'circuit.closed',
-				CircuitClosedEventSchema.parse({ type: event, ...base }),
-			);
+			this.emitter.emit('circuit.closed', CircuitClosedEventSchema.parse({ type: event, ...base }));
 	}
 
 	async execute<T>(fn: () => Promise<T>): Promise<T> {
@@ -273,9 +261,7 @@ export class StdioHttpBridge extends EventEmitter {
 		return executeFn();
 	}
 
-	private async sendHttpRequest(
-		request: JsonRpcRequest,
-	): Promise<JsonRpcResponse> {
+	private async sendHttpRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
 		const retryOptions = this.options.retryOptions || {
 			maxRetries: 0,
 			retryDelay: 1000,
@@ -334,11 +320,7 @@ export class StdioHttpBridge extends EventEmitter {
 					const status = res.statusCode ?? 0;
 					if (status >= 400) {
 						const snippet = data.slice(0, 256);
-						reject(
-							new Error(
-								`HTTP ${status}: ${snippet}${data.length > 256 ? '…' : ''}`,
-							),
-						);
+						reject(new Error(`HTTP ${status}: ${snippet}${data.length > 256 ? '…' : ''}`));
 						return;
 					}
 
@@ -347,9 +329,7 @@ export class StdioHttpBridge extends EventEmitter {
 						const validated = JsonRpcResponseSchema.parse(response);
 						resolve(validated);
 					} catch (error) {
-						reject(
-							new Error(`Invalid response JSON: ${(error as Error).message}`),
-						);
+						reject(new Error(`Invalid response JSON: ${(error as Error).message}`));
 					}
 				});
 			});
@@ -362,11 +342,7 @@ export class StdioHttpBridge extends EventEmitter {
 
 	async connect(): Promise<void> {
 		if (this.options.transport === 'sse') {
-			return withTimeout(
-				this.connectSSE(),
-				this.options.requestTimeoutMs,
-				'SSE connection',
-			);
+			return withTimeout(this.connectSSE(), this.options.requestTimeoutMs, 'SSE connection');
 		}
 	}
 

@@ -49,9 +49,7 @@ export const WebhookReceivedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type IntegrationConnectedEvent = z.infer<
-	typeof IntegrationConnectedEventSchema
->;
+export type IntegrationConnectedEvent = z.infer<typeof IntegrationConnectedEventSchema>;
 export type DataSyncEvent = z.infer<typeof DataSyncEventSchema>;
 export type ApiCallEvent = z.infer<typeof ApiCallEventSchema>;
 export type WebhookReceivedEvent = z.infer<typeof WebhookReceivedEventSchema>;

@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	demonstrateManualValidation,
-	runSchemaRegistryExample,
-} from '../schema-registry-example';
+import { demonstrateManualValidation, runSchemaRegistryExample } from '../schema-registry-example';
 
 // Mock the logger
 const mockLogger = {
@@ -26,40 +23,24 @@ describe('schema-registry-example', () => {
 			await runSchemaRegistryExample();
 
 			// Verify that logger was called for key messages
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'=== Event Schema Registry Example ===',
-			);
+			expect(mockLogger.info).toHaveBeenCalledWith('=== Event Schema Registry Example ===');
 			expect(mockLogger.info).toHaveBeenCalledWith('📋 Registering schemas...');
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'✅ Schemas registered successfully',
-			);
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'🔍 Demonstrating Schema Validation...',
-			);
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'✅ Publishing valid user event...',
-			);
+			expect(mockLogger.info).toHaveBeenCalledWith('✅ Schemas registered successfully');
+			expect(mockLogger.info).toHaveBeenCalledWith('🔍 Demonstrating Schema Validation...');
+			expect(mockLogger.info).toHaveBeenCalledWith('✅ Publishing valid user event...');
 			expect(mockLogger.info).toHaveBeenCalledWith(
 				'❌ Attempting to publish invalid user event...',
 			);
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'📊 Schema Registry Features...',
-			);
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'🔄 Schema Compatibility Check...',
-			);
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'=== Schema Registry Example Complete ===',
-			);
+			expect(mockLogger.info).toHaveBeenCalledWith('📊 Schema Registry Features...');
+			expect(mockLogger.info).toHaveBeenCalledWith('🔄 Schema Compatibility Check...');
+			expect(mockLogger.info).toHaveBeenCalledWith('=== Schema Registry Example Complete ===');
 		});
 
 		it('should handle validation errors gracefully', async () => {
 			await runSchemaRegistryExample();
 
 			// Should log validation error without throwing
-			expect(mockLogger.warn).toHaveBeenCalledWith(
-				expect.stringContaining('Validation Error:'),
-			);
+			expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining('Validation Error:'));
 		});
 	});
 
@@ -67,14 +48,10 @@ describe('schema-registry-example', () => {
 		it('should demonstrate manual validation and log results', async () => {
 			await demonstrateManualValidation();
 
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'=== Manual Schema Validation Example ===',
-			);
+			expect(mockLogger.info).toHaveBeenCalledWith('=== Manual Schema Validation Example ===');
 			expect(mockLogger.info).toHaveBeenCalledWith('Validating valid order:');
 			expect(mockLogger.info).toHaveBeenCalledWith('Validating invalid order:');
-			expect(mockLogger.info).toHaveBeenCalledWith(
-				'=== Manual Validation Example Complete ===',
-			);
+			expect(mockLogger.info).toHaveBeenCalledWith('=== Manual Validation Example Complete ===');
 		});
 	});
 });

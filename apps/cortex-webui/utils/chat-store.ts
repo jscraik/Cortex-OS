@@ -20,12 +20,10 @@ declare global {
 }
 
 const store: Map<string, ChatSession> =
-	(globalThis as { __cortexChatStore?: Map<string, ChatSession> })
-		.__cortexChatStore || new Map<string, ChatSession>();
+	(globalThis as { __cortexChatStore?: Map<string, ChatSession> }).__cortexChatStore ||
+	new Map<string, ChatSession>();
 
-(
-	globalThis as { __cortexChatStore?: Map<string, ChatSession> }
-).__cortexChatStore = store;
+(globalThis as { __cortexChatStore?: Map<string, ChatSession> }).__cortexChatStore = store;
 
 export function getOrCreateSession(id: string): ChatSession {
 	let s = store.get(id);
@@ -60,8 +58,7 @@ export function useChatStore(sessionId: string) {
 	const session = getOrCreateSession(sessionId);
 	return {
 		messages: session.messages,
-		addMessage: (msg: Omit<ChatMessage, 'createdAt'>) =>
-			addMessage(sessionId, msg),
+		addMessage: (msg: Omit<ChatMessage, 'createdAt'>) => addMessage(sessionId, msg),
 		updateMessage: (messageId: string, patch: Partial<ChatMessage>) => {
 			const s = getOrCreateSession(sessionId);
 			const idx = s.messages.findIndex((m) => m.id === messageId);

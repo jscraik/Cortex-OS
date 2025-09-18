@@ -23,9 +23,7 @@ import {
 
 export function useA2AConnection(token?: string) {
 	const [connected, setConnected] = useState(false);
-	const [connectionStats, setConnectionStats] = useState(
-		a2aWebSocketManager.getConnectionStats(),
-	);
+	const [connectionStats, setConnectionStats] = useState(a2aWebSocketManager.getConnectionStats());
 
 	useEffect(() => {
 		if (!token) return;
@@ -34,21 +32,15 @@ export function useA2AConnection(token?: string) {
 		a2aWebSocketManager.connect(token);
 
 		// Subscribe to connection events
-		const unsubscribeConnected = a2aWebSocketManager.onWebSocketEvent(
-			'connected',
-			() => {
-				setConnected(true);
-				setConnectionStats(a2aWebSocketManager.getConnectionStats());
-			},
-		);
+		const unsubscribeConnected = a2aWebSocketManager.onWebSocketEvent('connected', () => {
+			setConnected(true);
+			setConnectionStats(a2aWebSocketManager.getConnectionStats());
+		});
 
-		const unsubscribeDisconnected = a2aWebSocketManager.onWebSocketEvent(
-			'disconnected',
-			() => {
-				setConnected(false);
-				setConnectionStats(a2aWebSocketManager.getConnectionStats());
-			},
-		);
+		const unsubscribeDisconnected = a2aWebSocketManager.onWebSocketEvent('disconnected', () => {
+			setConnected(false);
+			setConnectionStats(a2aWebSocketManager.getConnectionStats());
+		});
 
 		// Initial state
 		setConnected(a2aWebSocketManager.isConnected());
@@ -79,14 +71,9 @@ export function useA2AConnection(token?: string) {
 // Generic A2A Event Hook
 // ================================
 
-export function useA2AEvent<T = any>(
-	eventType: string,
-	enabled: boolean = true,
-) {
+export function useA2AEvent<T = any>(eventType: string, enabled: boolean = true) {
 	const [events, setEvents] = useState<(A2AEvent & { data: T })[]>([]);
-	const [latestEvent, setLatestEvent] = useState<
-		(A2AEvent & { data: T }) | null
-	>(null);
+	const [latestEvent, setLatestEvent] = useState<(A2AEvent & { data: T }) | null>(null);
 
 	const handleEvent = useCallback((event: A2AEvent & { data: T }) => {
 		setLatestEvent(event);
@@ -96,10 +83,7 @@ export function useA2AEvent<T = any>(
 	useEffect(() => {
 		if (!enabled) return;
 
-		const unsubscribe = a2aWebSocketManager.onA2AEvent<T>(
-			eventType,
-			handleEvent,
-		);
+		const unsubscribe = a2aWebSocketManager.onA2AEvent<T>(eventType, handleEvent);
 
 		return unsubscribe;
 	}, [eventType, enabled, handleEvent]);
@@ -122,10 +106,7 @@ export function useA2AEvent<T = any>(
 // ================================
 
 export function useMLXThermalEvents(enabled: boolean = true) {
-	const { events, latestEvent, clearEvents } = useA2AEvent<MLXThermalEvent>(
-		'mlx.thermal',
-		enabled,
-	);
+	const { events, latestEvent, clearEvents } = useA2AEvent<MLXThermalEvent>('mlx.thermal', enabled);
 
 	const criticalEvents = events.filter((e) => e.severity === 'critical');
 	const warningEvents = events.filter((e) => e.severity === 'warning');
@@ -142,10 +123,7 @@ export function useMLXThermalEvents(enabled: boolean = true) {
 }
 
 export function useMLXModelEvents(enabled: boolean = true) {
-	const { events, latestEvent, clearEvents } = useA2AEvent<MLXModelEvent>(
-		'mlx.model',
-		enabled,
-	);
+	const { events, latestEvent, clearEvents } = useA2AEvent<MLXModelEvent>('mlx.model', enabled);
 
 	const loadedModels = events.filter((e) => e.data.eventType === 'loaded');
 	const failedModels = events.filter((e) => e.data.eventType === 'error');
@@ -173,10 +151,7 @@ export function useMLXEmbeddingEvents(enabled: boolean = true) {
 		(sum, e) => sum + e.data.processingTime,
 		0,
 	);
-	const totalTextsProcessed = successfulEmbeddings.reduce(
-		(sum, e) => sum + e.data.textCount,
-		0,
-	);
+	const totalTextsProcessed = successfulEmbeddings.reduce((sum, e) => sum + e.data.textCount, 0);
 
 	return {
 		events,
@@ -186,8 +161,7 @@ export function useMLXEmbeddingEvents(enabled: boolean = true) {
 		clearEvents,
 		totalProcessingTime,
 		totalTextsProcessed,
-		averageProcessingTime:
-			totalTextsProcessed > 0 ? totalProcessingTime / totalTextsProcessed : 0,
+		averageProcessingTime: totalTextsProcessed > 0 ? totalProcessingTime / totalTextsProcessed : 0,
 	};
 }
 
@@ -197,12 +171,8 @@ export function useWebUIUserEvents(enabled: boolean = true) {
 		enabled,
 	);
 
-	const connections = events.filter(
-		(e) => e.data.eventType === 'user_connected',
-	);
-	const disconnections = events.filter(
-		(e) => e.data.eventType === 'user_disconnected',
-	);
+	const connections = events.filter((e) => e.data.eventType === 'user_connected');
+	const disconnections = events.filter((e) => e.data.eventType === 'user_disconnected');
 	const messages = events.filter((e) => e.data.eventType === 'user_message');
 
 	return {
@@ -222,15 +192,9 @@ export function useWebUISystemEvents(enabled: boolean = true) {
 		enabled,
 	);
 
-	const errors = events.filter(
-		(e) => e.data.eventType === 'error_notification',
-	);
-	const statusUpdates = events.filter(
-		(e) => e.data.eventType === 'system_status',
-	);
-	const modelUpdates = events.filter(
-		(e) => e.data.eventType === 'model_update',
-	);
+	const errors = events.filter((e) => e.data.eventType === 'error_notification');
+	const statusUpdates = events.filter((e) => e.data.eventType === 'system_status');
+	const modelUpdates = events.filter((e) => e.data.eventType === 'model_update');
 
 	return {
 		events,
@@ -251,9 +215,7 @@ export function useWebUIAgentEvents(enabled: boolean = true) {
 	);
 
 	const responses = events.filter((e) => e.data.eventType === 'agent_response');
-	const thinkingEvents = events.filter(
-		(e) => e.data.eventType === 'agent_thinking',
-	);
+	const thinkingEvents = events.filter((e) => e.data.eventType === 'agent_thinking');
 	const errors = events.filter((e) => e.data.eventType === 'agent_error');
 
 	return {
@@ -315,16 +277,13 @@ export function useA2AEventHistory() {
 // ================================
 
 export function useA2AEventPublisher() {
-	const publishUserEvent = useCallback(
-		(data: Omit<WebUIUserEvent, 'sessionId' | 'timestamp'>) => {
-			a2aWebSocketManager.publishUserEvent({
-				...data,
-				sessionId: a2aWebSocketManager.getSessionId(),
-				timestamp: new Date().toISOString(),
-			});
-		},
-		[],
-	);
+	const publishUserEvent = useCallback((data: Omit<WebUIUserEvent, 'sessionId' | 'timestamp'>) => {
+		a2aWebSocketManager.publishUserEvent({
+			...data,
+			sessionId: a2aWebSocketManager.getSessionId(),
+			timestamp: new Date().toISOString(),
+		});
+	}, []);
 
 	const publishSystemEvent = useCallback(
 		(data: Omit<WebUISystemEvent, 'sessionId' | 'timestamp'>) => {
@@ -425,9 +384,7 @@ export function useA2APerformanceMonitor() {
 			const uptime = Date.now() - startTime;
 			const eventRate = eventCount / (uptime / 1000);
 			const averageLatency =
-				latencies.length > 0
-					? latencies.reduce((sum, l) => sum + l, 0) / latencies.length
-					: 0;
+				latencies.length > 0 ? latencies.reduce((sum, l) => sum + l, 0) / latencies.length : 0;
 
 			setMetrics({
 				eventRate,

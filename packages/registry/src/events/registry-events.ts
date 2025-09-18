@@ -47,13 +47,9 @@ export const RegistryQueryEventSchema = z.object({
 });
 
 // Export event type definitions
-export type ComponentRegisteredEvent = z.infer<
-	typeof ComponentRegisteredEventSchema
->;
+export type ComponentRegisteredEvent = z.infer<typeof ComponentRegisteredEventSchema>;
 export type ComponentUpdatedEvent = z.infer<typeof ComponentUpdatedEventSchema>;
-export type DependencyResolvedEvent = z.infer<
-	typeof DependencyResolvedEventSchema
->;
+export type DependencyResolvedEvent = z.infer<typeof DependencyResolvedEventSchema>;
 export type RegistryQueryEvent = z.infer<typeof RegistryQueryEventSchema>;
 
 // Helper function to create registry events

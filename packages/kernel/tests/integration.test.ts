@@ -138,11 +138,8 @@ describe('Cortex Kernel Integration', () => {
 
 	describe('Behavior Extensions', () => {
 		it('should capture incremental state updates', async () => {
-			const {
-				ExampleCaptureSystem,
-				BehaviorExtensionManager,
-				createInitialPRPState,
-			} = await import('../src/index.js');
+			const { ExampleCaptureSystem, BehaviorExtensionManager, createInitialPRPState } =
+				await import('../src/index.js');
 
 			const captureSystem = new ExampleCaptureSystem();
 			const manager = new BehaviorExtensionManager(captureSystem);
@@ -205,22 +202,14 @@ describe('Cortex Kernel Integration', () => {
 
 			const examples = captureSystem.getExamples();
 			expect(examples).toHaveLength(2);
-			expect(
-				examples[0].context.inputState.metadata?.validationAdjustments,
-			).toBeUndefined();
-			expect(
-				examples[0].outcome.resultingState.metadata.validationAdjustments,
-			).toEqual({
+			expect(examples[0].context.inputState.metadata?.validationAdjustments).toBeUndefined();
+			expect(examples[0].outcome.resultingState.metadata.validationAdjustments).toEqual({
 				step: 'one',
 			});
-			expect(
-				examples[1].context.inputState.metadata.validationAdjustments,
-			).toEqual({
+			expect(examples[1].context.inputState.metadata.validationAdjustments).toEqual({
 				step: 'one',
 			});
-			expect(
-				examples[1].outcome.resultingState.metadata.gateModifications,
-			).toEqual({
+			expect(examples[1].outcome.resultingState.metadata.gateModifications).toEqual({
 				step: 'two',
 			});
 		});

@@ -22,11 +22,7 @@ export class ContextManager {
 	private readonly summaryThreshold: number;
 	private readonly maxMessagesBeforeSummary: number;
 
-	constructor(
-		maxTokens = 4000,
-		summaryThreshold = 3000,
-		maxMessagesBeforeSummary = 20,
-	) {
+	constructor(maxTokens = 4000, summaryThreshold = 3000, maxMessagesBeforeSummary = 20) {
 		this.maxTokens = maxTokens;
 		this.summaryThreshold = summaryThreshold;
 		this.maxMessagesBeforeSummary = maxMessagesBeforeSummary;
@@ -54,10 +50,7 @@ export class ContextManager {
 	 */
 	needsSummarization(messages: any[]): boolean {
 		const tokenCount = this.calculateTokenCount(messages);
-		return (
-			tokenCount > this.summaryThreshold ||
-			messages.length > this.maxMessagesBeforeSummary
-		);
+		return tokenCount > this.summaryThreshold || messages.length > this.maxMessagesBeforeSummary;
 	}
 
 	/**
@@ -70,11 +63,7 @@ export class ContextManager {
 
 		// Simple extractive summary - in a real implementation, this could use an AI model
 		const keyTopics = this.extractKeyTopics(messages);
-		const summary = this.generateSummary(
-			userMessages,
-			assistantMessages,
-			keyTopics,
-		);
+		const summary = this.generateSummary(userMessages, assistantMessages, keyTopics);
 
 		return {
 			summary,
@@ -198,10 +187,7 @@ export class ContextManager {
 	): string {
 		const userQuestions = userMessages
 			.slice(0, 3)
-			.map(
-				(m) =>
-					m.content?.substring(0, 100) + (m.content?.length > 100 ? '...' : ''),
-			);
+			.map((m) => m.content?.substring(0, 100) + (m.content?.length > 100 ? '...' : ''));
 
 		return (
 			`Conversation covered: ${keyTopics.join(', ')}. ` +
@@ -281,10 +267,7 @@ export class ContextManager {
 
 		for (const message of scoredMessages) {
 			const messageTokens = this.estimateTokens(message.content || '');
-			if (
-				tokens + messageTokens <=
-				target - this.calculateTokenCount(mustKeep)
-			) {
+			if (tokens + messageTokens <= target - this.calculateTokenCount(mustKeep)) {
 				result.push(message);
 				tokens += messageTokens;
 			}

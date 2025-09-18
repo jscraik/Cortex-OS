@@ -5,14 +5,7 @@
  * and integration with the underlying fs-store.
  */
 
-import {
-	beforeEach,
-	describe,
-	expect,
-	it,
-	type MockedFunction,
-	vi,
-} from 'vitest';
+import { beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 import * as fsStore from '../src/fs-store.js';
 import {
 	MAX_SERVERS_LIST_LIMIT,
@@ -520,18 +513,10 @@ describe('MCP Registry Tools', () => {
 		});
 
 		it('should have descriptions', () => {
-			expect(registryListTool.description).toContain(
-				'List registered MCP servers',
-			);
-			expect(registryRegisterTool.description).toContain(
-				'Register a new MCP server',
-			);
-			expect(registryUnregisterTool.description).toContain(
-				'Unregister an MCP server',
-			);
-			expect(registryGetTool.description).toContain(
-				'Get details of a specific',
-			);
+			expect(registryListTool.description).toContain('List registered MCP servers');
+			expect(registryRegisterTool.description).toContain('Register a new MCP server');
+			expect(registryUnregisterTool.description).toContain('Unregister an MCP server');
+			expect(registryGetTool.description).toContain('Get details of a specific');
 			expect(registryStatsTool.description).toContain('statistics');
 		});
 

@@ -1,9 +1,6 @@
 import '@cortex-os/telemetry';
 import { trace } from '@opentelemetry/api';
-import {
-	InMemorySpanExporter,
-	SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 
 export const spanExporter = new InMemorySpanExporter();
 

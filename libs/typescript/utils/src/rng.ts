@@ -10,9 +10,7 @@ export const secureUUID = (): string => randomUUID();
  */
 export function secureRandomInt(max: number): number {
 	if (!Number.isSafeInteger(max) || max <= 0) {
-		throw new Error(
-			`secureRandomInt: max must be positive safe integer, got ${max}`,
-		);
+		throw new Error(`secureRandomInt: max must be positive safe integer, got ${max}`);
 	}
 	// Use 32-bit unsigned integers
 	const range = 0xffffffff; // 2^32 - 1
@@ -33,9 +31,7 @@ export function secureRandomString(
 	alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
 ): string {
 	if (!Number.isSafeInteger(length) || length < 0) {
-		throw new Error(
-			`secureRandomString: length must be >= 0 safe integer, got ${length}`,
-		);
+		throw new Error(`secureRandomString: length must be >= 0 safe integer, got ${length}`);
 	}
 	if (length === 0) return '';
 	const chars = alphabet;
@@ -94,8 +90,7 @@ export function secureUniform(): number {
  * Uses xorshift32 algorithm (NOT cryptographically secure) for test determinism.
  */
 export function createSeededRNG(seed: number): () => number {
-	if (!Number.isInteger(seed))
-		throw new Error('createSeededRNG: seed must be integer');
+	if (!Number.isInteger(seed)) throw new Error('createSeededRNG: seed must be integer');
 	// Ensure non-zero seed
 	let state = seed >>> 0 || 0x1a2b3c4d;
 	return () => {
@@ -132,11 +127,7 @@ export function backoffDelay(
 	const exp = baseMs * multiplier ** attempt;
 	const capped = options?.maxMs ? Math.min(exp, options.maxMs) : exp;
 	if (options?.jitterPercent) {
-		return jitterDelay(
-			capped,
-			options.jitterPercent,
-			options.rng ?? secureUniform,
-		);
+		return jitterDelay(capped, options.jitterPercent, options.rng ?? secureUniform);
 	}
 	return capped;
 }

@@ -8,18 +8,17 @@
 // Re-export event creators
 export * from './event-creators.js';
 export {
-    createAguiAiRecommendationEvent,
-    createAguiComponentRenderedEvent,
-    createAguiEvent,
-    createAguiStateChangedEvent,
-    createAguiUserInteractionEvent
+	createAguiAiRecommendationEvent,
+	createAguiComponentRenderedEvent,
+	createAguiEvent,
+	createAguiStateChangedEvent,
+	createAguiUserInteractionEvent,
 } from './event-creators.js';
 // Re-export all event schemas and types
 export * from './events.js';
 // Convenient re-exports for common use cases
 export {
-    AGUI_EVENT_TYPES,
-    type AguiEvent,
-    type AguiEventType
+	AGUI_EVENT_TYPES,
+	type AguiEvent,
+	type AguiEventType,
 } from './events.js';
-

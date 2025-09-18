@@ -2,12 +2,8 @@
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
-export async function apiFetch<T>(
-	path: string,
-	options: RequestInit = {},
-): Promise<T> {
-	const token =
-		typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+	const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 	const res = await fetch(`${API_BASE}${path}`, {
 		...options,
 		headers: {

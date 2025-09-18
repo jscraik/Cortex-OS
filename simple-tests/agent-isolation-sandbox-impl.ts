@@ -69,14 +69,8 @@ function emit(state: InternalState, evt: AuditEvent) {
 	state.options.onAuditEvent?.(evt);
 	// Inline threshold check so fast-completing user code still records threshold event synchronously.
 	const { maxViolations } = state.options;
-	if (
-		maxViolations &&
-		!state.thresholdEmitted &&
-		state.violations.length === maxViolations
-	) {
-		const already = state.violations.some(
-			(v) => v.code === ViolationCode.ThresholdExceeded,
-		);
+	if (maxViolations && !state.thresholdEmitted && state.violations.length === maxViolations) {
+		const already = state.violations.some((v) => v.code === ViolationCode.ThresholdExceeded);
 		if (!already) {
 			state.thresholdEmitted = true;
 			const thresholdEvent = makeAuditEvent({
@@ -92,19 +86,14 @@ function emit(state: InternalState, evt: AuditEvent) {
 }
 
 // Central helper to ensure consistent prefix + shape for synthetic (main-thread) audit events.
-function makeAuditEvent(
-	partial: Omit<AuditEvent, 'type'> & { type: string },
-): AuditEvent {
+function makeAuditEvent(partial: Omit<AuditEvent, 'type'> & { type: string }): AuditEvent {
 	const ensuredType = partial.type.startsWith('sandbox.')
 		? partial.type
 		: `sandbox.${partial.type}`;
 	return { ...partial, type: ensuredType };
 }
 
-function emitSynthetic(
-	state: InternalState,
-	partial: Omit<AuditEvent, 'type'> & { type: string },
-) {
+function emitSynthetic(state: InternalState, partial: Omit<AuditEvent, 'type'> & { type: string }) {
 	emit(state, makeAuditEvent(partial));
 }
 
@@ -125,9 +114,7 @@ function emitSerializationError(
 	emitSynthetic(state, {
 		type: 'sandbox.serialize.error',
 		severity: 'medium',
-		message: context?.error
-			? 'Serialization or closure capture error'
-			: 'Value not serializable',
+		message: context?.error ? 'Serialization or closure capture error' : 'Value not serializable',
 		meta: context,
 		code: ViolationCode.SerializeError,
 	});
@@ -244,9 +231,7 @@ async function executeInWorker<T>(
 			finished = true;
 			runError = new Error(msg.error);
 			if (/is not defined/.test(msg.error)) {
-				const exists = state.violations.some(
-					(v) => v.type === 'sandbox.serialize.error',
-				);
+				const exists = state.violations.some((v) => v.type === 'sandbox.serialize.error');
 				if (!exists) {
 					emitSerializationError(state, { originalFnSource, error: msg.error });
 				}
@@ -277,16 +262,10 @@ async function executeInWorker<T>(
 			break;
 		}
 		// early abort if maxViolations reached
-		if (
-			options.maxViolations &&
-			state.violations.length >= options.maxViolations &&
-			!runError
-		) {
+		if (options.maxViolations && state.violations.length >= options.maxViolations && !runError) {
 			worker.terminate();
 			// Threshold event may have already been emitted synchronously in emit(); avoid duplication.
-			const hasThreshold = state.violations.some(
-				(v) => v.code === ViolationCode.ThresholdExceeded,
-			);
+			const hasThreshold = state.violations.some((v) => v.code === ViolationCode.ThresholdExceeded);
 			if (!hasThreshold) {
 				emitThresholdExceeded(state, options.maxViolations);
 			}

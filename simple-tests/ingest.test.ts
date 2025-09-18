@@ -8,8 +8,6 @@ describe('ingest validation', () => {
 	});
 
 	it('throws on invalid input', () => {
-		expect(() => ingest({ source: '', text: '' })).toThrow(
-			/Invalid ingest input/,
-		);
+		expect(() => ingest({ source: '', text: '' })).toThrow(/Invalid ingest input/);
 	});
 });

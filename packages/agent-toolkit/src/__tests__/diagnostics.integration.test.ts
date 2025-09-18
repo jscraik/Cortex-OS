@@ -2,10 +2,7 @@ import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import {
-	generatePrometheusMetrics,
-	runDiagnostics,
-} from '../diagnostics/diagnostics';
+import { generatePrometheusMetrics, runDiagnostics } from '../diagnostics/diagnostics';
 
 function createMockDiagScript(content: string): string {
 	const dir = mkdtempSync(join(tmpdir(), 'diag-test-'));
@@ -24,9 +21,7 @@ describe('runDiagnostics integration', () => {
 			tunnel: { status: 'ok' },
 			summary: { overall: 'ok' },
 		});
-		const script = createMockDiagScript(
-			`#!/usr/bin/env bash\n echo '${mockJson}'`,
-		);
+		const script = createMockDiagScript(`#!/usr/bin/env bash\n echo '${mockJson}'`);
 		const result = await runDiagnostics({ scriptPath: script });
 		expect(result.summary?.overall).toBe('ok');
 		const prom = generatePrometheusMetrics(result);
@@ -35,9 +30,7 @@ describe('runDiagnostics integration', () => {
 	});
 
 	it('fails on malformed JSON', async () => {
-		const script = createMockDiagScript(
-			"#!/usr/bin/env bash\n echo '{bad json}'",
-		);
+		const script = createMockDiagScript("#!/usr/bin/env bash\n echo '{bad json}'");
 		await expect(runDiagnostics({ scriptPath: script })).rejects.toThrow();
 	});
 });

@@ -1,10 +1,6 @@
 import { Ollama } from 'ollama';
 import { z } from 'zod';
-import {
-	AVAILABLE_MLX_MODELS,
-	createMLXAdapter,
-	type MLXAdapter,
-} from './mlx-adapter.js';
+import { AVAILABLE_MLX_MODELS, createMLXAdapter, type MLXAdapter } from './mlx-adapter.js';
 
 interface OllamaAdapter {
 	generate(options: {
@@ -50,8 +46,7 @@ function normalizeConfig(config: LLMConfig): LLMConfig {
 		normalized.mlxModel = undefined;
 		normalized.knifePath = undefined;
 	} else {
-		if (!normalized.mlxModel)
-			throw new Error('MLX model is required for MLX provider');
+		if (!normalized.mlxModel) throw new Error('MLX model is required for MLX provider');
 		// Convert string to enum key if needed
 		if (typeof normalized.mlxModel === 'string') {
 			if (Object.keys(AVAILABLE_MLX_MODELS).includes(normalized.mlxModel)) {
@@ -181,9 +176,7 @@ export async function generate(
 	if (state.config.provider === 'mlx') {
 		return generateWithMLX(state, prompt, options);
 	}
-	throw new Error(
-		`Generation not implemented for provider: ${state.config.provider}`,
-	);
+	throw new Error(`Generation not implemented for provider: ${state.config.provider}`);
 }
 
 async function generateWithMLX(
@@ -204,9 +197,7 @@ async function generateWithMLX(
 }
 
 // Type guard for shutdown method on MLXAdapter
-function hasShutdown(
-	adapter: unknown,
-): adapter is { shutdown: () => Promise<void> } {
+function hasShutdown(adapter: unknown): adapter is { shutdown: () => Promise<void> } {
 	return (
 		typeof adapter === 'object' &&
 		adapter !== null &&

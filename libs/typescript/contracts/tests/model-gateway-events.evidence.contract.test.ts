@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { evidenceItemSchema } from '../src/evidence.js';
-import {
-	ModelErrorEventSchema,
-	ModelResponseEventSchema,
-} from '../src/model-gateway-events.js';
+import { ModelErrorEventSchema, ModelResponseEventSchema } from '../src/model-gateway-events.js';
 
 // NOTE: Test added first (TDD) – will fail until schemas extended with optional evidence array
 

@@ -28,20 +28,16 @@ describe('API A2A Integration', () => {
 	describe('Bus Lifecycle', () => {
 		it('should start and stop successfully', async () => {
 			await apiBus.start();
-			expect(
-				logger.history.some((entry) =>
-					entry.message.includes('started successfully'),
-				),
-			).toBe(true);
+			expect(logger.history.some((entry) => entry.message.includes('started successfully'))).toBe(
+				true,
+			);
 
 			// Verify real A2A bus is accessible
 			expect(apiBus.getA2ABus()).toBeDefined();
 			expect(apiBus.isA2ABusReady()).toBe(true);
 
 			await apiBus.stop();
-			expect(
-				logger.history.some((entry) => entry.message.includes('stopped')),
-			).toBe(true);
+			expect(logger.history.some((entry) => entry.message.includes('stopped'))).toBe(true);
 		});
 	});
 
@@ -187,12 +183,7 @@ describe('API A2A Integration', () => {
 		});
 
 		it('should handle webhook processing success and failure', async () => {
-			const webhook = createWebhookEvent(
-				'stripe',
-				'payment.succeeded',
-				{ amount: 1000 },
-				{},
-			);
+			const webhook = createWebhookEvent('stripe', 'payment.succeeded', { amount: 1000 }, {});
 
 			// Test successful processing
 			await apiBus.publishWebhookProcessed(webhook, { processed: true });
@@ -390,12 +381,10 @@ describe('API A2A Integration', () => {
 
 	describe('Error Handling', () => {
 		it('should handle job operations on non-existent jobs', async () => {
-			await expect(apiBus.startJob('non-existent')).rejects.toThrow(
+			await expect(apiBus.startJob('non-existent')).rejects.toThrow('Job non-existent not found');
+			await expect(apiBus.updateJobProgress('non-existent', 50)).rejects.toThrow(
 				'Job non-existent not found',
 			);
-			await expect(
-				apiBus.updateJobProgress('non-existent', 50),
-			).rejects.toThrow('Job non-existent not found');
 			await expect(apiBus.completeJob('non-existent', {})).rejects.toThrow(
 				'Job non-existent not found',
 			);
@@ -416,9 +405,7 @@ describe('API A2A Integration', () => {
 
 			expect(
 				logger.history.some(
-					(entry) =>
-						entry.level === 'error' &&
-						entry.message.includes('Error in event handler'),
+					(entry) => entry.level === 'error' && entry.message.includes('Error in event handler'),
 				),
 			).toBe(true);
 		});

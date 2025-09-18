@@ -144,15 +144,11 @@ const Node: React.FC<NodeProps> = ({ node, onSelect }) => {
 				<span className="ml-2 text-sm font-medium truncate">{node.title}</span>
 			</div>
 			{node.description && (
-				<p className="mt-1 text-xs text-gray-600 line-clamp-2">
-					{node.description}
-				</p>
+				<p className="mt-1 text-xs text-gray-600 line-clamp-2">{node.description}</p>
 			)}
 			<div className="mt-2 flex justify-between text-xs text-gray-500">
 				<span>{node.type}</span>
-				{node.timestamp && (
-					<span>{new Date(node.timestamp).toLocaleDateString()}</span>
-				)}
+				{node.timestamp && <span>{new Date(node.timestamp).toLocaleDateString()}</span>}
 			</div>
 		</button>
 	);

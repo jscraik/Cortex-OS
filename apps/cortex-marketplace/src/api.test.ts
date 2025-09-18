@@ -286,9 +286,7 @@ describe('Marketplace API Server', () => {
 
 			// Some requests should succeed, some may be rate limited
 			const successCount = responses.filter((r) => r.statusCode === 200).length;
-			const rateLimitedCount = responses.filter(
-				(r) => r.statusCode === 429,
-			).length;
+			const rateLimitedCount = responses.filter((r) => r.statusCode === 429).length;
 
 			expect(successCount + rateLimitedCount).toBe(10);
 		});

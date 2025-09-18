@@ -27,10 +27,7 @@ class ReleaseArtifactsPresentCheck implements AutomatedCheck {
 		];
 		const missing = needed.filter((a) => !have.includes(a));
 		return {
-			status: (missing.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
+			status: (missing.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
 			output:
 				missing.length === 0
 					? 'All release artifacts present'
@@ -53,9 +50,7 @@ export class G7ReleaseGate extends BaseGate {
 		timeoutMs: 24 * 60 * 60 * 1000,
 	};
 
-	readonly automatedChecks: AutomatedCheck[] = [
-		new ReleaseArtifactsPresentCheck(),
-	];
+	readonly automatedChecks: AutomatedCheck[] = [new ReleaseArtifactsPresentCheck()];
 
 	protected async executeGateLogic(context: GateContext) {
 		const artifacts: string[] = ['release-notes.md'];

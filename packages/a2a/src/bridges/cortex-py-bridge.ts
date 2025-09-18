@@ -69,7 +69,8 @@ export function createCortexPyBridge(config: CortexPyBridgeConfig = {}): CortexP
 
 				if (!transport) {
 					throw new Error('Failed to create transport');
-				}				const busOptions = {
+				}
+				const busOptions = {
 					enableIdempotency: strictValidation,
 					autoCorrelation: enableTracing,
 				};

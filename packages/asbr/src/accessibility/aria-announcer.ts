@@ -6,12 +6,7 @@
 import type { Event, EventType, Profile } from '../types/index.js';
 
 export type AriaLivePriority = 'polite' | 'assertive';
-export type AnnouncementType =
-	| 'status'
-	| 'progress'
-	| 'error'
-	| 'success'
-	| 'info';
+export type AnnouncementType = 'status' | 'progress' | 'error' | 'success' | 'info';
 
 export interface AnnouncementOptions {
 	priority?: AriaLivePriority;
@@ -60,21 +55,14 @@ export class AriaAnnouncer {
 	 * Create ARIA live hint for an event
 	 */
 	createAriaLiveHint(event: Event, options: AnnouncementOptions = {}): string {
-		const profile = options.profileId
-			? this.getProfile(options.profileId)
-			: null;
+		const profile = options.profileId ? this.getProfile(options.profileId) : null;
 		const verbosity = profile?.verbosity || 'standard';
 
 		// Get base message from event
 		let message = event.ariaLiveHint || this.generateDefaultHint(event);
 
 		// Adjust message based on profile and verbosity
-		message = this.adjustMessageForProfile(
-			message,
-			event,
-			profile || null,
-			verbosity,
-		);
+		message = this.adjustMessageForProfile(message, event, profile || null, verbosity);
 
 		// Add contextual information if needed
 		if (verbosity === 'verbose' && event.step) {
@@ -87,12 +75,7 @@ export class AriaAnnouncer {
 	/**
 	 * Generate announcement for task progress
 	 */
-	announceProgress(
-		taskId: string,
-		step: string,
-		progress: number,
-		profileId?: string,
-	): string {
+	announceProgress(taskId: string, step: string, progress: number, profileId?: string): string {
 		const profile = profileId ? this.getProfile(profileId) : null;
 
 		if (profile && !profile.announceProgress) {
@@ -180,14 +163,11 @@ export class AriaAnnouncer {
 		context: 'task-list' | 'task-details' | 'evidence' | 'general',
 	): string {
 		const instructions: Record<string, string> = {
-			'task-list':
-				'Use Tab to navigate between tasks, Enter to select, Space to toggle actions',
+			'task-list': 'Use Tab to navigate between tasks, Enter to select, Space to toggle actions',
 			'task-details':
 				'Use Tab to navigate sections, Arrow keys for details, Enter to activate buttons',
-			evidence:
-				'Use Tab to navigate evidence items, Enter to view details, Escape to close',
-			general:
-				'Use Tab to navigate, Enter to activate, Escape to cancel, Arrow keys for lists',
+			evidence: 'Use Tab to navigate evidence items, Enter to view details, Escape to close',
+			general: 'Use Tab to navigate, Enter to activate, Escape to cancel, Arrow keys for lists',
 		};
 
 		return instructions[context] || instructions.general;
@@ -197,12 +177,7 @@ export class AriaAnnouncer {
 	 * Generate landmark announcements
 	 */
 	announceLandmark(
-		landmark:
-			| 'main'
-			| 'navigation'
-			| 'banner'
-			| 'contentinfo'
-			| 'complementary',
+		landmark: 'main' | 'navigation' | 'banner' | 'contentinfo' | 'complementary',
 		content?: string,
 	): string {
 		const landmarkNames = {
@@ -262,9 +237,7 @@ export class AriaAnnouncer {
 	 */
 	clearQueue(profileId?: string): void {
 		if (profileId) {
-			this.announcementQueue = this.announcementQueue.filter(
-				(a) => a.profileId !== profileId,
-			);
+			this.announcementQueue = this.announcementQueue.filter((a) => a.profileId !== profileId);
 		} else {
 			this.announcementQueue = [];
 		}
@@ -305,9 +278,7 @@ export class AriaAnnouncer {
 
 			case 'verbose': {
 				// Add helpful context
-				const taskInfo = event.taskId
-					? ` for task ${event.taskId.substring(0, 8)}`
-					: '';
+				const taskInfo = event.taskId ? ` for task ${event.taskId.substring(0, 8)}` : '';
 				return `${message}${taskInfo}. ${this.getVerboseContext(event)}`;
 			}
 
@@ -318,8 +289,7 @@ export class AriaAnnouncer {
 
 	private getVerboseContext(event: Event): string {
 		const contextMessages: Record<EventType, string> = {
-			PlanStarted:
-				'The system is analyzing requirements and creating an execution plan',
+			PlanStarted: 'The system is analyzing requirements and creating an execution plan',
 			StepCompleted: 'Moving to the next step in the process',
 			AwaitingApproval: 'User confirmation is required to proceed',
 			Canceled: 'All related activities have been stopped',
@@ -351,9 +321,7 @@ export function createDefaultAccessibilityProfile(): AccessibilityProfile {
 /**
  * Create accessibility profile from user preferences
  */
-export function createAccessibilityProfileFromProfile(
-	profile: Profile,
-): AccessibilityProfile {
+export function createAccessibilityProfileFromProfile(profile: Profile): AccessibilityProfile {
 	return {
 		screenReader: profile.a11y.screenReader || false,
 		reducedMotion: profile.a11y.reducedMotion || false,

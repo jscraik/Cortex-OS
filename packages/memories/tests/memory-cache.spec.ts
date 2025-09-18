@@ -2,8 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { MemoryCacheManager } from '../src/core/in-memory-cache';
 
 // Helper to advance time for TTL tests
-const advanceTime = (ms: number) =>
-	new Promise((resolve) => setTimeout(resolve, ms));
+const advanceTime = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe('MemoryCacheManager', () => {
 	let cache: MemoryCacheManager;

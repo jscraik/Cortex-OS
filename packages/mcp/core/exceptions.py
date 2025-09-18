@@ -1,4 +1,9 @@
-"""Exception classes for MCP implementation."""
+"""DEPRECATION NOTICE
+This module is part of the legacy `packages/mcp` folder, which is deprecated.
+Please use the MCP Python package under `packages/cortex-mcp` going forward.
+
+Exception classes for MCP implementation.
+"""
 
 from typing import Any
 

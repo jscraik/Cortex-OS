@@ -36,17 +36,9 @@ export {
 
 // Convenience factory function
 import { DefaultToolRegistry } from './app/ToolRegistry.js';
-import {
-	CodeQualityUseCase,
-	CodeSearchUseCase,
-	ToolExecutorUseCase,
-} from './app/UseCases.js';
+import { CodeQualityUseCase, CodeSearchUseCase, ToolExecutorUseCase } from './app/UseCases.js';
 import { CombyAdapter } from './infra/CodemodAdapters.js';
-import {
-	AstGrepAdapter,
-	RipgrepAdapter,
-	SemgrepAdapter,
-} from './infra/SearchAdapters.js';
+import { AstGrepAdapter, RipgrepAdapter, SemgrepAdapter } from './infra/SearchAdapters.js';
 import {
 	CargoAdapter,
 	ESLintAdapter,
@@ -72,10 +64,7 @@ export function createAgentToolkit(toolsPath?: string) {
 	registry.registerValidationTool('eslint', new ESLintAdapter(toolsPath));
 	registry.registerValidationTool('ruff', new RuffAdapter(toolsPath));
 	registry.registerValidationTool('cargo', new CargoAdapter(toolsPath));
-	registry.registerValidationTool(
-		'multi-validator',
-		new MultiValidatorAdapter(toolsPath),
-	);
+	registry.registerValidationTool('multi-validator', new MultiValidatorAdapter(toolsPath));
 
 	const executor = new ToolExecutorUseCase(registry);
 
@@ -83,16 +72,13 @@ export function createAgentToolkit(toolsPath?: string) {
 		executor,
 		registry,
 		// Convenience methods
-		search: (pattern: string, path: string) =>
-			executor.execute('ripgrep', { pattern, path }),
+		search: (pattern: string, path: string) => executor.execute('ripgrep', { pattern, path }),
 		multiSearch: (pattern: string, path: string) =>
 			new CodeSearchUseCase(executor).multiSearch(pattern, path),
 		codemod: (find: string, replace: string, path: string) =>
 			executor.execute('comby', { find, replace, path }),
-		validate: (files: string[]) =>
-			executor.execute('multi-validator', { files }),
-		validateProject: (files: string[]) =>
-			new CodeQualityUseCase(executor).validateProject(files),
+		validate: (files: string[]) => executor.execute('multi-validator', { files }),
+		validateProject: (files: string[]) => new CodeQualityUseCase(executor).validateProject(files),
 	};
 }
 

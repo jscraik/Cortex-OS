@@ -1,4 +1,9 @@
-"""JWT-based authentication system for MCP integration with Cortex-OS."""
+"""DEPRECATION NOTICE
+This module is part of the legacy `packages/mcp` folder, which is deprecated.
+Please use the MCP Python package under `packages/cortex-mcp` going forward.
+
+JWT-based authentication system for MCP integration with Cortex-OS.
+"""
 
 import logging
 import os

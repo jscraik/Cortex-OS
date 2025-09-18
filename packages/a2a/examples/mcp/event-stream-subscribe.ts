@@ -5,10 +5,7 @@ async function main() {
 	const tool = tools.find((t) => t.name === 'a2a_event_stream_subscribe');
 	if (!tool) throw new Error('Tool not found');
 	const res = await tool.handler({ includeCurrent: true });
-	console.log(
-		'[event-stream-subscribe] snapshot:',
-		res.raw || res.content[0].text,
-	);
+	console.log('[event-stream-subscribe] snapshot:', res.raw || res.content[0].text);
 }
 
 main().catch((err) => {

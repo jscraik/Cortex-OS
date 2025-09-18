@@ -15,9 +15,7 @@ const About: React.FC = () => {
 						</div>
 					</div>
 					<div className="ml-4">
-						<h3 className="text-lg font-medium text-gray-900">
-							brAInwav Cortex
-						</h3>
+						<h3 className="text-lg font-medium text-gray-900">brAInwav Cortex</h3>
 						<p className="text-gray-500">Version 1.0.0</p>
 					</div>
 				</div>
@@ -25,10 +23,9 @@ const About: React.FC = () => {
 				<div className="mt-6">
 					<h4 className="text-md font-medium text-gray-900">About</h4>
 					<p className="mt-2 text-gray-600">
-						brAInwav Cortex is an advanced AI interface that enables seamless
-						interaction with multiple AI models. Built with accessibility and
-						performance in mind, it provides a powerful yet intuitive platform
-						for AI-assisted workflows.
+						brAInwav Cortex is an advanced AI interface that enables seamless interaction with
+						multiple AI models. Built with accessibility and performance in mind, it provides a
+						powerful yet intuitive platform for AI-assisted workflows.
 					</p>
 				</div>
 

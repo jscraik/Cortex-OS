@@ -24,16 +24,12 @@ function parseIngestPolicy(data: unknown): IngestPolicy {
 		return { allow_mime: [] };
 	}
 	return {
-		allow_mime: allow.filter(
-			(value): value is string => typeof value === 'string',
-		),
+		allow_mime: allow.filter((value): value is string => typeof value === 'string'),
 	};
 }
 
 function readPolicy(): IngestPolicy {
-	const loaded = yaml.load(
-		fs.readFileSync('configs/ingest.policy.yaml', 'utf8'),
-	);
+	const loaded = yaml.load(fs.readFileSync('configs/ingest.policy.yaml', 'utf8'));
 	return parseIngestPolicy(loaded);
 }
 
@@ -49,10 +45,7 @@ export function assertAllowedMime(mime: string) {
 function isPrivateIp(ip: string): boolean {
 	// IPv4
 	const oct = ip.split('.').map((x) => Number(x));
-	if (
-		oct.length === 4 &&
-		oct.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)
-	) {
+	if (oct.length === 4 && oct.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)) {
 		if (oct[0] === 10) return true; // 10.0.0.0/8
 		if (oct[0] === 127) return true; // loopback
 		if (oct[0] === 169 && oct[1] === 254) return true; // link-local
@@ -111,9 +104,7 @@ export async function parseUpload(file: Buffer, mime: string) {
 export async function dispatch(job: Job) {
 	assertAllowedMime(job.mime);
 	if (job.url) return crawl(job.url);
-	const buf =
-		job.file ??
-		(job.filePath ? fs.readFileSync(path.resolve(job.filePath)) : undefined);
+	const buf = job.file ?? (job.filePath ? fs.readFileSync(path.resolve(job.filePath)) : undefined);
 	if (buf) return parseUpload(buf, job.mime);
 	throw new Error('No input provided');
 }

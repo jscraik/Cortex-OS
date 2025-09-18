@@ -140,9 +140,9 @@ describe('StdioHttpBridge', () => {
 			await bridge.forward({ id: '2', method: 'test', params: {} });
 
 			// Third request should be rate limited
-			await expect(
-				bridge.forward({ id: '3', method: 'test', params: {} }),
-			).rejects.toThrow('Rate limit exceeded');
+			await expect(bridge.forward({ id: '3', method: 'test', params: {} })).rejects.toThrow(
+				'Rate limit exceeded',
+			);
 		});
 
 		it('handles connection errors gracefully', async () => {
@@ -151,9 +151,7 @@ describe('StdioHttpBridge', () => {
 				enableRateLimiting: false,
 			});
 
-			await expect(
-				bridge.forward({ id: '1', method: 'test', params: {} }),
-			).rejects.toThrow();
+			await expect(bridge.forward({ id: '1', method: 'test', params: {} })).rejects.toThrow();
 		});
 
 		it('supports bidirectional communication', async () => {
@@ -268,17 +266,13 @@ describe('StdioHttpBridge', () => {
 			});
 
 			// Trigger circuit breaker
-			await expect(
-				bridge.forward({ id: '1', method: 'test', params: {} }),
-			).rejects.toThrow();
-			await expect(
-				bridge.forward({ id: '2', method: 'test', params: {} }),
-			).rejects.toThrow();
+			await expect(bridge.forward({ id: '1', method: 'test', params: {} })).rejects.toThrow();
+			await expect(bridge.forward({ id: '2', method: 'test', params: {} })).rejects.toThrow();
 
 			// Circuit should be open now
-			await expect(
-				bridge.forward({ id: '3', method: 'test', params: {} }),
-			).rejects.toThrow('Circuit breaker is open');
+			await expect(bridge.forward({ id: '3', method: 'test', params: {} })).rejects.toThrow(
+				'Circuit breaker is open',
+			);
 
 			failingServer.close();
 		});

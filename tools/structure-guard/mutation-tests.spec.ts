@@ -10,9 +10,7 @@ describe('glob matcher mutation tests', () => {
 
 		it('matches exact file names', () => {
 			expect(micromatch.isMatch('package.json', 'package.json')).toBe(true);
-			expect(micromatch.isMatch('package-lock.json', 'package.json')).toBe(
-				false,
-			);
+			expect(micromatch.isMatch('package-lock.json', 'package.json')).toBe(false);
 		});
 
 		it('matches directory patterns', () => {
@@ -29,16 +27,9 @@ describe('glob matcher mutation tests', () => {
 		});
 
 		it('handles multiple negations', () => {
-			const patterns = [
-				'**/*',
-				'!**/node_modules/**',
-				'!**/dist/**',
-				'!**/*.secret',
-			];
+			const patterns = ['**/*', '!**/node_modules/**', '!**/dist/**', '!**/*.secret'];
 			expect(micromatch.isMatch('src/main.js', patterns)).toBe(true);
-			expect(micromatch.isMatch('node_modules/pkg/index.js', patterns)).toBe(
-				false,
-			);
+			expect(micromatch.isMatch('node_modules/pkg/index.js', patterns)).toBe(false);
 			expect(micromatch.isMatch('dist/bundle.js', patterns)).toBe(false);
 			expect(micromatch.isMatch('config.secret', patterns)).toBe(false);
 		});
@@ -65,18 +56,10 @@ describe('glob matcher mutation tests', () => {
 
 		it('handles nested braces', () => {
 			const patterns = ['packages/{memories,rag,simlab}/**/*'];
-			expect(
-				micromatch.isMatch('packages/memories/src/index.ts', patterns),
-			).toBe(true);
-			expect(micromatch.isMatch('packages/rag/src/index.ts', patterns)).toBe(
-				true,
-			);
-			expect(micromatch.isMatch('packages/simlab/src/index.ts', patterns)).toBe(
-				true,
-			);
-			expect(micromatch.isMatch('packages/other/src/index.ts', patterns)).toBe(
-				false,
-			);
+			expect(micromatch.isMatch('packages/memories/src/index.ts', patterns)).toBe(true);
+			expect(micromatch.isMatch('packages/rag/src/index.ts', patterns)).toBe(true);
+			expect(micromatch.isMatch('packages/simlab/src/index.ts', patterns)).toBe(true);
+			expect(micromatch.isMatch('packages/other/src/index.ts', patterns)).toBe(false);
 		});
 
 		it('handles extended glob patterns', () => {
@@ -99,26 +82,20 @@ describe('glob matcher mutation tests', () => {
 					dot: true,
 				}),
 			).toBe(true);
-			expect(micromatch.isMatch('.git/config', '.git/**', { dot: true })).toBe(
-				true,
-			);
+			expect(micromatch.isMatch('.git/config', '.git/**', { dot: true })).toBe(true);
 		});
 	});
 
 	describe('path separator handling', () => {
 		it('handles unix path separators', () => {
 			expect(micromatch.isMatch('src/utils/helper.ts', 'src/**')).toBe(true);
-			expect(micromatch.isMatch('src/utils/helper.ts', 'src/utils/*.ts')).toBe(
-				true,
-			);
+			expect(micromatch.isMatch('src/utils/helper.ts', 'src/utils/*.ts')).toBe(true);
 		});
 
 		it('handles windows path separators', () => {
 			// micromatch normalizes path separators, so this should work
 			expect(micromatch.isMatch('src\\utils\\helper.ts', 'src/**')).toBe(true);
-			expect(
-				micromatch.isMatch('src\\utils\\helper.ts', 'src/utils/*.ts'),
-			).toBe(true);
+			expect(micromatch.isMatch('src\\utils\\helper.ts', 'src/utils/*.ts')).toBe(true);
 		});
 	});
 
@@ -165,12 +142,9 @@ describe('glob matcher mutation tests', () => {
 		});
 
 		it('handles complex patterns efficiently', () => {
-			const complexPattern =
-				'**/*.{js,jsx,ts,tsx,json,html,css,scss,sass,md,mdx,yml,yaml}';
+			const complexPattern = '**/*.{js,jsx,ts,tsx,json,html,css,scss,sass,md,mdx,yml,yaml}';
 			const start = Date.now();
-			expect(
-				micromatch.isMatch('src/components/Button/Button.tsx', complexPattern),
-			).toBe(true);
+			expect(micromatch.isMatch('src/components/Button/Button.tsx', complexPattern)).toBe(true);
 			const end = Date.now();
 			// Should complete in reasonable time (less than 50ms)
 			expect(end - start).toBeLessThan(50);

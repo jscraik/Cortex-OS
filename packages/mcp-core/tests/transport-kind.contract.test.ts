@@ -3,13 +3,7 @@ import { TransportKindSchema } from '../src/contracts.js';
 
 describe('TransportKind contract', () => {
 	it('accepts declared transport kinds', () => {
-		for (const kind of [
-			'stdio',
-			'http',
-			'sse',
-			'ws',
-			'streamableHttp',
-		] as const) {
+		for (const kind of ['stdio', 'http', 'sse', 'ws', 'streamableHttp'] as const) {
 			expect(TransportKindSchema.parse(kind)).toBe(kind);
 		}
 	});

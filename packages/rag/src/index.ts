@@ -1,18 +1,11 @@
 import { z } from 'zod';
 import { Qwen3Presets } from './embed/qwen3.js';
 import { AgentConfigSchema, RAGQuerySchema } from './lib/contracts-shim.js';
-import {
-	createJsonOutput,
-	createStdOutput,
-	StructuredError,
-} from './lib/shims.js';
+import { createJsonOutput, createStdOutput, StructuredError } from './lib/shims.js';
 
 export { PyEmbedder } from './embed/python-client.js';
 
-import {
-	createMultiModelGenerator,
-	ModelPresets,
-} from './generation/multi-model.js';
+import { createMultiModelGenerator, ModelPresets } from './generation/multi-model.js';
 import { memoryStore } from './store/memory.js';
 
 export type {

@@ -33,12 +33,7 @@ export type EventType =
 
 // Accessibility types
 export type AriaLivePriority = 'polite' | 'assertive';
-export type AnnouncementType =
-	| 'status'
-	| 'progress'
-	| 'error'
-	| 'success'
-	| 'info';
+export type AnnouncementType = 'status' | 'progress' | 'error' | 'success' | 'info';
 
 // Evidence Pointer Schema
 export const EvidencePointerSchema = z.object({
@@ -112,15 +107,7 @@ export type ArtifactRef = z.infer<typeof ArtifactRefSchema>;
 // Task Schema
 export const TaskSchema = z.object({
 	id: z.string().uuid(),
-	status: z.enum([
-		'queued',
-		'planning',
-		'running',
-		'paused',
-		'canceled',
-		'succeeded',
-		'failed',
-	]),
+	status: z.enum(['queued', 'planning', 'running', 'paused', 'canceled', 'succeeded', 'failed']),
 	currentStep: z.string().optional(),
 	artifacts: z.array(ArtifactRefSchema),
 	evidenceIds: z.array(z.string().uuid()),
@@ -265,9 +252,7 @@ export type Config = z.infer<typeof ConfigSchema>;
 
 export const VersionPinsSchema = z.record(
 	z.string(),
-	z
-		.string()
-		.regex(/^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/),
+	z.string().regex(/^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/),
 );
 
 export type VersionPins = z.infer<typeof VersionPinsSchema>;

@@ -15,10 +15,7 @@ describe('withFallback', () => {
 		const provider1 = createProvider('primary', async () => {
 			throw new Error('Primary failed');
 		});
-		const provider2 = createProvider(
-			'fallback',
-			async () => 'fallback-success',
-		);
+		const provider2 = createProvider('fallback', async () => 'fallback-success');
 
 		const result = await withFallback([provider1, provider2]);
 
@@ -101,10 +98,7 @@ describe('withFallback', () => {
 
 		await withFallback([provider1, provider2]);
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			'Provider primary failed:',
-			'Primary failed',
-		);
+		expect(consoleSpy).toHaveBeenCalledWith('Provider primary failed:', 'Primary failed');
 
 		consoleSpy.mockRestore();
 	});

@@ -22,17 +22,11 @@ export declare function recordOperation(
 /**
  * Update provider health score
  */
-export declare function updateProviderHealth(
-	provider: string,
-	health: number,
-): void;
+export declare function updateProviderHealth(provider: string, health: number): void;
 /**
  * Update VRAM usage
  */
-export declare function updateVRAMUsage(
-	provider: string,
-	usageRatio: number,
-): void;
+export declare function updateVRAMUsage(provider: string, usageRatio: number): void;
 /**
  * Calculate error budget from metrics (simplified)
  */

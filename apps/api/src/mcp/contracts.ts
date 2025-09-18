@@ -20,18 +20,12 @@ export const apiGatewayContract: ToolContracts = {
 		requestId: 'request-id',
 		auditId: 'audit-id',
 	},
-	errors: [
-		'E_API_ROUTE_NOT_FOUND',
-		'E_API_SECURITY',
-		'E_API_RATE_LIMIT',
-		'E_API_HANDLER',
-	],
+	errors: ['E_API_ROUTE_NOT_FOUND', 'E_API_SECURITY', 'E_API_RATE_LIMIT', 'E_API_HANDLER'],
 };
 
 export const requestRoutingContract: ToolContracts = {
 	name: 'api-request-routing',
-	description:
-		'Resolves REST method/path combinations to documented API routes and schemas.',
+	description: 'Resolves REST method/path combinations to documented API routes and schemas.',
 	inputExample: { method: 'GET', path: '/users' },
 	outputExample: {
 		route: {

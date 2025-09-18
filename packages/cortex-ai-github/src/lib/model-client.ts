@@ -49,17 +49,13 @@ export const sendModelRequest = async (
 	);
 
 	if (!response.ok) {
-		throw new Error(
-			`GitHub Models API error: ${response.status} ${response.statusText}`,
-		);
+		throw new Error(`GitHub Models API error: ${response.status} ${response.statusText}`);
 	}
 
 	return response;
 };
 
-export const parseModelResponse = (
-	completion: ModelCompletionResponse,
-): ModelResponse => {
+export const parseModelResponse = (completion: ModelCompletionResponse): ModelResponse => {
 	return {
 		content: completion.choices[0]?.message?.content ?? '',
 		tokensUsed: completion.usage.total_tokens,

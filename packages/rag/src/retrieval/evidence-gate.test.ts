@@ -196,9 +196,7 @@ describe('EvidenceGate', () => {
 				],
 			});
 
-			expect(highConfidence.confidence).toBeGreaterThan(
-				lowConfidence.confidence!,
-			);
+			expect(highConfidence.confidence).toBeGreaterThan(lowConfidence.confidence!);
 			expect(highConfidence.confidence).toBeGreaterThan(0.5);
 		});
 

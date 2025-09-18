@@ -37,9 +37,7 @@ export class SqliteSchemaRepository implements SchemaRepository {
       `);
 		} catch (error) {
 			console.error('Failed to initialize SQLite database:', error);
-			throw new Error(
-				'Database initialization failed. Please ensure better-sqlite3 is installed.',
-			);
+			throw new Error('Database initialization failed. Please ensure better-sqlite3 is installed.');
 		}
 	}
 
@@ -50,12 +48,7 @@ export class SqliteSchemaRepository implements SchemaRepository {
         VALUES (?, ?, ?, ?)
       `);
 
-			stmt.run(
-				schema.id,
-				schema.name,
-				schema.version,
-				JSON.stringify(schema.schema),
-			);
+			stmt.run(schema.id, schema.name, schema.version, JSON.stringify(schema.schema));
 		} catch (error) {
 			console.error('Failed to save schema:', error);
 			throw new Error(`Failed to save schema: ${error}`);
@@ -64,9 +57,7 @@ export class SqliteSchemaRepository implements SchemaRepository {
 
 	async findByName(name: string): Promise<Schema[]> {
 		try {
-			const stmt = this.db.prepare(
-				'SELECT * FROM schemas WHERE name = ? ORDER BY version DESC',
-			);
+			const stmt = this.db.prepare('SELECT * FROM schemas WHERE name = ? ORDER BY version DESC');
 			const rows = stmt.all(name);
 
 			return rows.map((row: any) => ({
@@ -81,14 +72,9 @@ export class SqliteSchemaRepository implements SchemaRepository {
 		}
 	}
 
-	async findByNameAndVersion(
-		name: string,
-		version: string,
-	): Promise<Schema | null> {
+	async findByNameAndVersion(name: string, version: string): Promise<Schema | null> {
 		try {
-			const stmt = this.db.prepare(
-				'SELECT * FROM schemas WHERE name = ? AND version = ?',
-			);
+			const stmt = this.db.prepare('SELECT * FROM schemas WHERE name = ? AND version = ?');
 			const row = stmt.get(name, version);
 
 			if (!row) {
@@ -109,9 +95,7 @@ export class SqliteSchemaRepository implements SchemaRepository {
 
 	async findAll(): Promise<Schema[]> {
 		try {
-			const stmt = this.db.prepare(
-				'SELECT * FROM schemas ORDER BY name, version DESC',
-			);
+			const stmt = this.db.prepare('SELECT * FROM schemas ORDER BY name, version DESC');
 			const rows = stmt.all();
 
 			return rows.map((row: any) => ({
@@ -126,14 +110,9 @@ export class SqliteSchemaRepository implements SchemaRepository {
 		}
 	}
 
-	async deleteByNameAndVersion(
-		name: string,
-		version: string,
-	): Promise<boolean> {
+	async deleteByNameAndVersion(name: string, version: string): Promise<boolean> {
 		try {
-			const stmt = this.db.prepare(
-				'DELETE FROM schemas WHERE name = ? AND version = ?',
-			);
+			const stmt = this.db.prepare('DELETE FROM schemas WHERE name = ? AND version = ?');
 			const result = stmt.run(name, version);
 
 			return result.changes > 0;

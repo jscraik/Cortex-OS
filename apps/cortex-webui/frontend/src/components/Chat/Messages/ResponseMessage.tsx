@@ -63,10 +63,7 @@ const ResponseMessage: React.FC<ResponseMessageProps> = ({
 						rows={3}
 					/>
 					<div className="flex justify-end space-x-2 mt-2">
-						<button
-							onClick={handleCancel}
-							className="px-3 py-1 text-sm border rounded"
-						>
+						<button onClick={handleCancel} className="px-3 py-1 text-sm border rounded">
 							Cancel
 						</button>
 						<button
@@ -88,17 +85,11 @@ const ResponseMessage: React.FC<ResponseMessageProps> = ({
 					/>
 
 					<div className="flex justify-end mt-1 space-x-2">
-						<button
-							onClick={handleEdit}
-							className="text-xs text-gray-500 hover:text-gray-700"
-						>
+						<button onClick={handleEdit} className="text-xs text-gray-500 hover:text-gray-700">
 							Edit
 						</button>
 						{onDelete && (
-							<button
-								onClick={onDelete}
-								className="text-xs text-red-500 hover:text-red-700"
-							>
+							<button onClick={onDelete} className="text-xs text-red-500 hover:text-red-700">
 								Delete
 							</button>
 						)}
@@ -110,11 +101,7 @@ const ResponseMessage: React.FC<ResponseMessageProps> = ({
 				<FollowUps followUps={message.followUps} />
 			)}
 
-			<RegenerateMenu
-				onRegenerate={onRegenerate}
-				onBranch={onBranch}
-				onEdit={handleEdit}
-			/>
+			<RegenerateMenu onRegenerate={onRegenerate} onBranch={onBranch} onEdit={handleEdit} />
 		</div>
 	);
 };

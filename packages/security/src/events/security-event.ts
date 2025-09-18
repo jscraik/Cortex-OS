@@ -36,28 +36,15 @@ export class SecurityEventEmitter {
 				dataschema: options.schemaId,
 			});
 
-			const valid = await this.deps.registry.validate(
-				options.schemaId,
-				eventData,
-			);
+			const valid = await this.deps.registry.validate(options.schemaId, eventData);
 			if (!valid) {
-				logWithSpan(
-					'error',
-					'Contract validation failed',
-					{ schemaId: options.schemaId },
-					span,
-				);
+				logWithSpan('error', 'Contract validation failed', { schemaId: options.schemaId }, span);
 				throw new Error('Contract validation failed');
 			}
 
 			await this.deps.policyRouter.enforce(envelope);
 
-			logWithSpan(
-				'info',
-				'Security event emitted',
-				{ type: envelope.type },
-				span,
-			);
+			logWithSpan('info', 'Security event emitted', { type: envelope.type }, span);
 			return envelope;
 		});
 	}

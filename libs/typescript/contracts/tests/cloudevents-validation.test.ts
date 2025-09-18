@@ -18,9 +18,7 @@ addFormats.default(ajv);
 
 describe('CloudEvents Schema Validation', () => {
 	const schemasDir = path.join(__dirname, '../../../../contracts/cloudevents');
-	const schemaFiles = fs
-		.readdirSync(schemasDir)
-		.filter((file) => file.endsWith('.json'));
+	const schemaFiles = fs.readdirSync(schemasDir).filter((file) => file.endsWith('.json'));
 
 	schemaFiles.forEach((schemaFile) => {
 		describe(`${schemaFile}`, () => {
@@ -151,21 +149,12 @@ describe('CloudEvents Schema Validation', () => {
 
 	describe('Cross-schema consistency', () => {
 		const commonRequired = ['id', 'type', 'source', 'specversion'];
-		const commonProperties = [
-			'id',
-			'type',
-			'source',
-			'specversion',
-			'time',
-			'data',
-		];
+		const commonProperties = ['id', 'type', 'source', 'specversion', 'time', 'data'];
 
 		it('should have consistent CloudEvents structure across all schemas', () => {
 			for (const schemaFile of schemaFiles) {
 				const schemaPath = path.join(schemasDir, schemaFile);
-				const schema = JSON.parse(
-					fs.readFileSync(schemaPath, 'utf-8'),
-				) as CloudEventSchema;
+				const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf-8')) as CloudEventSchema;
 
 				for (const prop of commonRequired) {
 					expect(schema.required).toContain(prop);

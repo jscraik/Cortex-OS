@@ -10,12 +10,7 @@ interface NotificationToastProps {
 	onClose: (id: string) => void;
 }
 
-const NotificationToast: React.FC<NotificationToastProps> = ({
-	id,
-	type,
-	message,
-	onClose,
-}) => {
+const NotificationToast: React.FC<NotificationToastProps> = ({ id, type, message, onClose }) => {
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			onClose(id);

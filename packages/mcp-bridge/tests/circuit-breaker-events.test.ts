@@ -42,12 +42,8 @@ describe('Circuit breaker observability events', () => {
 		bridge.on('circuit.closed', (e) => closed.push(e));
 
 		// Cause two failures -> open
-		await expect(
-			bridge.forward({ id: '1', method: 'm', params: {} }),
-		).rejects.toThrow();
-		await expect(
-			bridge.forward({ id: '2', method: 'm', params: {} }),
-		).rejects.toThrow();
+		await expect(bridge.forward({ id: '1', method: 'm', params: {} })).rejects.toThrow();
+		await expect(bridge.forward({ id: '2', method: 'm', params: {} })).rejects.toThrow();
 		expect(opened).toHaveLength(1);
 		CircuitOpenedEventSchema.parse(opened[0]);
 

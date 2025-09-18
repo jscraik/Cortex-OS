@@ -16,8 +16,6 @@ describe('policy rate limiting', () => {
 		};
 		await enforce(grant, 'embeddings');
 		await enforce(grant, 'embeddings');
-		await expect(enforce(grant, 'embeddings')).rejects.toThrow(
-			/Rate limit exceeded/,
-		);
+		await expect(enforce(grant, 'embeddings')).rejects.toThrow(/Rate limit exceeded/);
 	});
 });

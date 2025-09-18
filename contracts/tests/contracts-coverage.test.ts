@@ -90,11 +90,8 @@ describe('contracts: schema coverage', () => {
 	const testContentCache: Record<string, string> = {};
 	const hasReference = (schema: SchemaRef): boolean => {
 		return testFiles.some((tf) => {
-			if (!testContentCache[tf])
-				testContentCache[tf] = readFileSync(tf, 'utf8');
-			return new RegExp(`\\b${schema.exportName}\\b`).test(
-				testContentCache[tf],
-			);
+			if (!testContentCache[tf]) testContentCache[tf] = readFileSync(tf, 'utf8');
+			return new RegExp(`\\b${schema.exportName}\\b`).test(testContentCache[tf]);
 		});
 	};
 

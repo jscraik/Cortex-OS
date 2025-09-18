@@ -76,9 +76,7 @@ const CliConfigSchema = z.object({
 			name: z.string(),
 			enabled: z.boolean().default(true),
 			aliases: z.array(z.string()).default([]),
-			options: z
-				.record(z.string(), z.unknown())
-				.default({} as Record<string, unknown>),
+			options: z.record(z.string(), z.unknown()).default({} as Record<string, unknown>),
 		}),
 	),
 	telemetry: z.object({
@@ -179,8 +177,7 @@ export class ConfigValidator implements Tool {
 
 			result.performance = {
 				validationTime: Math.round((endTime - startTime) * 100) / 100,
-				memoryUsage:
-					Math.round(((endMemory - startMemory) / 1024 / 1024) * 100) / 100, // MB
+				memoryUsage: Math.round(((endMemory - startMemory) / 1024 / 1024) * 100) / 100, // MB
 			};
 
 			return result;
@@ -214,10 +211,7 @@ export class ConfigValidator implements Tool {
 		if (input.configType === 'custom' && input.customSchema) {
 			// For custom schemas, we'd need to construct them from the provided definition
 			// This is a simplified implementation
-			if (
-				typeof input.customSchema === 'object' &&
-				input.customSchema !== null
-			) {
+			if (typeof input.customSchema === 'object' && input.customSchema !== null) {
 				return z.object({}).passthrough(); // Allow any object for now
 			}
 			throw new Error('Invalid custom schema provided');
@@ -267,18 +261,12 @@ export class ConfigValidator implements Tool {
 
 				// Generate warnings for potential issues
 				if (input.options.reportWarnings) {
-					result.warnings = await this.generateWarnings(
-						input.configType,
-						parseResult.data,
-					);
+					result.warnings = await this.generateWarnings(input.configType, parseResult.data);
 				}
 
 				// Validate dependencies if requested
 				if (input.options.validateDependencies) {
-					const depWarnings = await this.validateDependencies(
-						input.configType,
-						parseResult.data,
-					);
+					const depWarnings = await this.validateDependencies(input.configType, parseResult.data);
 					result.warnings.push(...depWarnings);
 				}
 			} else {
@@ -356,15 +344,11 @@ export class ConfigValidator implements Tool {
 			const cortexConfig = config as any;
 
 			// Check for deprecated settings
-			if (
-				cortexConfig.mode === 'simple' &&
-				cortexConfig.development?.verboseLogging
-			) {
+			if (cortexConfig.mode === 'simple' && cortexConfig.development?.verboseLogging) {
 				warnings.push({
 					path: 'development.verboseLogging',
 					message: 'Verbose logging is typically disabled in simple mode',
-					suggestion:
-						'Consider setting verboseLogging to false for simple mode',
+					suggestion: 'Consider setting verboseLogging to false for simple mode',
 				});
 			}
 
@@ -428,8 +412,7 @@ export class ConfigValidator implements Tool {
 				warnings.push({
 					path: 'servers.timeout',
 					message: 'Very short timeout values detected',
-					suggestion:
-						'Consider increasing timeout values for better reliability',
+					suggestion: 'Consider increasing timeout values for better reliability',
 				});
 			}
 		}

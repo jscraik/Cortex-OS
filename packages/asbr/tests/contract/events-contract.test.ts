@@ -2,11 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { createTask } from '../../src/lib/create-task.js';
 import { emitPlanStarted } from '../../src/lib/emit-plan-started.js';
-import {
-	type Event,
-	EventSchema,
-	type TaskInput,
-} from '../../src/types/index.js';
+import { type Event, EventSchema, type TaskInput } from '../../src/types/index.js';
 
 /** Build a minimal valid event */
 function baseEvent(type: Event['type'], extra: Partial<Event> = {}): Event {
@@ -32,10 +28,7 @@ describe('ASBR Event Contract', () => {
 
 	it('validates each event type round-trip via schema', () => {
 		for (const t of allTypes) {
-			const evt = baseEvent(
-				t,
-				t === 'StepCompleted' ? { step: 'initialize' } : {},
-			);
+			const evt = baseEvent(t, t === 'StepCompleted' ? { step: 'initialize' } : {});
 			const parsed = EventSchema.parse(evt);
 			expect(parsed.type).toBe(t);
 			expect(parsed).toMatchObject(evt);

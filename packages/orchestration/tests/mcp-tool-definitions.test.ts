@@ -11,9 +11,7 @@ import {
 import { AgentRole, OrchestrationStrategy, TaskStatus } from '../src/types.js';
 
 describe('orchestration MCP tool contracts', () => {
-	const planTool = workflowOrchestrationTools.find(
-		(tool) => tool.name === 'workflow.plan',
-	);
+	const planTool = workflowOrchestrationTools.find((tool) => tool.name === 'workflow.plan');
 	const updateTaskStatusTool = taskManagementTools.find(
 		(tool) => tool.name === 'task.update_status',
 	);
@@ -105,9 +103,7 @@ describe('orchestration MCP tool contracts', () => {
 			}),
 		).toThrow(ToolValidationError);
 
-		expect(Object.keys(updateTaskStatusTool?.errors)).toContain(
-			ToolErrorCode.TASK_NOT_FOUND,
-		);
+		expect(Object.keys(updateTaskStatusTool?.errors)).toContain(ToolErrorCode.TASK_NOT_FOUND);
 	});
 
 	it('provides process monitoring validation and error codes', () => {
@@ -126,9 +122,7 @@ describe('orchestration MCP tool contracts', () => {
 			}),
 		).toThrow(ToolValidationError);
 
-		expect(Object.keys(getProcessStatusTool?.errors)).toContain(
-			ToolErrorCode.WORKFLOW_NOT_FOUND,
-		);
+		expect(Object.keys(getProcessStatusTool?.errors)).toContain(ToolErrorCode.WORKFLOW_NOT_FOUND);
 	});
 
 	it('exports documented process result schema', () => {
@@ -162,20 +156,14 @@ describe('orchestration MCP tool contracts', () => {
 			],
 		};
 
-		expect(() =>
-			getProcessStatusTool?.resultSchema.parse(sample),
-		).not.toThrow();
+		expect(() => getProcessStatusTool?.resultSchema.parse(sample)).not.toThrow();
 	});
 
 	it('formats tool error responses consistently', () => {
-		const response = createToolErrorResponse(
-			ToolErrorCode.TASK_NOT_FOUND,
-			'Task missing',
-			{
-				details: ['taskId=task-404'],
-				retryable: false,
-			},
-		);
+		const response = createToolErrorResponse(ToolErrorCode.TASK_NOT_FOUND, 'Task missing', {
+			details: ['taskId=task-404'],
+			retryable: false,
+		});
 
 		const parsed = toolErrorResponseSchema.safeParse(response);
 		expect(parsed.success).toBe(true);

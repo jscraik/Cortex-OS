@@ -22,9 +22,9 @@ const defaultMapping: Record<Node, { provider: Provider; model: string }> = {
 
 function loadMapping(): Record<Node, { provider: Provider; model: string }> {
 	try {
-		const overrides = JSON.parse(
-			process.env.MODEL_ROUTER_MAPPING || '{}',
-		) as Partial<Record<Node, { provider: Provider; model: string }>>;
+		const overrides = JSON.parse(process.env.MODEL_ROUTER_MAPPING || '{}') as Partial<
+			Record<Node, { provider: Provider; model: string }>
+		>;
 		return { ...defaultMapping, ...overrides };
 	} catch {
 		return { ...defaultMapping };

@@ -9,9 +9,7 @@ import {
 	securityThreatDetectionTool,
 } from './tools.js';
 
-type ToolResponse = Awaited<
-	ReturnType<typeof securityAccessControlTool.handler>
->;
+type ToolResponse = Awaited<ReturnType<typeof securityAccessControlTool.handler>>;
 
 function parsePayload(result: ToolResponse): unknown {
 	const first = result.content[0];
@@ -51,9 +49,7 @@ describe('securityAccessControlTool', () => {
 		expect(payload).toMatchObject({
 			allowed: true,
 			effect: 'allow',
-			reasons: expect.arrayContaining([
-				expect.stringContaining('security-admin'),
-			]),
+			reasons: expect.arrayContaining([expect.stringContaining('security-admin')]),
 		});
 	});
 
@@ -266,9 +262,7 @@ describe('securityThreatDetectionTool', () => {
 		expect(consoleSpy).toHaveBeenCalled();
 		const payload = parsePayload(response) as Record<string, unknown>;
 		expect(payload).toMatchObject({
-			suspiciousEvents: expect.arrayContaining([
-				expect.objectContaining({ id: 'evt-11' }),
-			]),
+			suspiciousEvents: expect.arrayContaining([expect.objectContaining({ id: 'evt-11' })]),
 		});
 	});
 });

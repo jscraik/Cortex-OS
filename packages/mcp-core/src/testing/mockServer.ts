@@ -1,10 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import {
-	createServer,
-	type IncomingMessage,
-	type ServerResponse,
-} from 'node:http';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 import { createEnhancedClient, type EnhancedClient } from '../client.js';
@@ -124,10 +120,7 @@ export class MockMCPServer {
 		this.closed = true;
 	}
 
-	private async handleRequest(
-		req: IncomingMessage,
-		res: ServerResponse,
-	): Promise<void> {
+	private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
 		try {
 			if (this.closed) {
 				res.statusCode = 503;
@@ -155,8 +148,7 @@ export class MockMCPServer {
 				return;
 			}
 
-			const toolName =
-				typeof payload.name === 'string' ? payload.name : undefined;
+			const toolName = typeof payload.name === 'string' ? payload.name : undefined;
 			const args = payload.arguments ?? {};
 
 			if (toolName === 'ping') {
@@ -178,9 +170,7 @@ export class MockMCPServer {
 			if (!handler) {
 				res.statusCode = 404;
 				res.setHeader('Content-Type', 'application/json');
-				res.end(
-					JSON.stringify({ error: `Tool ${toolName} is not registered` }),
-				);
+				res.end(JSON.stringify({ error: `Tool ${toolName} is not registered` }));
 				return;
 			}
 
@@ -216,9 +206,7 @@ export class MockMCPServer {
 	}
 }
 
-export async function createMockMCPServer(
-	options?: MockServerOptions,
-): Promise<MockMCPServer> {
+export async function createMockMCPServer(options?: MockServerOptions): Promise<MockMCPServer> {
 	return await MockMCPServer.create(options);
 }
 
@@ -306,10 +294,7 @@ export function assertToolCall(
 	return matching;
 }
 
-export function assertTextContent(
-	result: unknown,
-	expectedSubstring: string,
-): void {
+export function assertTextContent(result: unknown, expectedSubstring: string): void {
 	const maybeContent = (result as { content?: unknown }).content;
 	const blocks = Array.isArray(maybeContent) ? maybeContent : [];
 	const text = blocks

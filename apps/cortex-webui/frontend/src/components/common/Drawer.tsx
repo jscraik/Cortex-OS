@@ -52,10 +52,7 @@ const Drawer: React.FC<DrawerProps> = ({
 
 	return (
 		<div className="fixed inset-0 z-50 overflow-hidden">
-			<div
-				className="absolute inset-0 bg-black bg-opacity-50"
-				onClick={handleClickOutside}
-			/>
+			<div className="absolute inset-0 bg-black bg-opacity-50" onClick={handleClickOutside} />
 
 			<div
 				ref={drawerRef}
@@ -68,10 +65,7 @@ const Drawer: React.FC<DrawerProps> = ({
 			>
 				{title && (
 					<div className="p-4 border-b flex justify-between items-center">
-						<h3
-							id="drawer-title"
-							className="text-lg font-semibold text-gray-900"
-						>
+						<h3 id="drawer-title" className="text-lg font-semibold text-gray-900">
 							{title}
 						</h3>
 						<button

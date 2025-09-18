@@ -11,9 +11,7 @@ import { z } from 'zod';
 // codes: validation_error | security_error | internal_error | rate_limited.
 
 // Common primitives
-const ULIDSchema = z
-	.string()
-	.regex(/^[0-9A-HJKMNP-TV-Z]{26}$/i, 'Invalid ULID');
+const ULIDSchema = z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/i, 'Invalid ULID');
 const ISODateTime = () => z.string().datetime({ offset: true });
 
 // 1. UI Management Tools -------------------------------------------------
@@ -219,13 +217,9 @@ export class WebuiToolError extends Error {
 	}
 }
 
-export function validateWebuiToolInput<T = unknown>(
-	tool: string,
-	input: unknown,
-): T {
+export function validateWebuiToolInput<T = unknown>(tool: string, input: unknown): T {
 	const def = webuiMcpTools.find((t) => t.name === tool);
-	if (!def)
-		throw new WebuiToolError('unknown_tool', `Unknown webui MCP tool: ${tool}`);
+	if (!def) throw new WebuiToolError('unknown_tool', `Unknown webui MCP tool: ${tool}`);
 	try {
 		const parsed = def.inputSchema.parse(input);
 		// Additional manual validations not expressible directly in schema
@@ -233,10 +227,7 @@ export function validateWebuiToolInput<T = unknown>(
 			const parsedObj = parsed as { fields?: Record<string, unknown> };
 			const fields = parsedObj.fields;
 			if (!fields || Object.keys(fields).length === 0) {
-				throw new WebuiToolError(
-					'validation_error',
-					'fields must include at least one key',
-				);
+				throw new WebuiToolError('validation_error', 'fields must include at least one key');
 			}
 		}
 		return parsed as T;
@@ -252,11 +243,7 @@ export function validateWebuiToolInput<T = unknown>(
 	}
 }
 
-export function createWebuiErrorResponse(
-	tool: string,
-	err: unknown,
-	correlationId?: string,
-) {
+export function createWebuiErrorResponse(tool: string, err: unknown, correlationId?: string) {
 	const base = {
 		tool,
 		correlationId,
@@ -301,9 +288,7 @@ export function createWebuiErrorResponse(
 }
 
 export type OpenPanelInput = z.infer<typeof OpenPanelInputSchema>;
-export type UpdateComponentStateInput = z.infer<
-	typeof UpdateComponentStateInputSchema
->;
+export type UpdateComponentStateInput = z.infer<typeof UpdateComponentStateInputSchema>;
 export type NavigateInput = z.infer<typeof NavigateInputSchema>;
 export type SimulateClickInput = z.infer<typeof SimulateClickInputSchema>;
 export type SubmitFormInput = z.infer<typeof SubmitFormInputSchema>;

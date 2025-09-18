@@ -42,20 +42,14 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 			{codeBlocks.length > 0 && (
 				<div className="mt-2">
 					{codeBlocks.map((block, index) => (
-						<CodeBlock
-							key={index}
-							code={block.code}
-							language={block.language}
-						/>
+						<CodeBlock key={index} code={block.code} language={block.language} />
 					))}
 				</div>
 			)}
 
 			{executions.length > 0 && <CodeExecutions executions={executions} />}
 
-			{webSearchResults.length > 0 && (
-				<WebSearchResults results={webSearchResults} />
-			)}
+			{webSearchResults.length > 0 && <WebSearchResults results={webSearchResults} />}
 		</div>
 	);
 };

@@ -25,16 +25,12 @@ const SYSTEM_PROMPTS: Record<AITaskType, string> = {
 		'You are a security-focused code reviewer. Analyze for OWASP Top 10 vulnerabilities and code quality issues.',
 	security_scan:
 		'You are a security analyst. Focus on finding injection vulnerabilities, authentication bypasses, and cryptographic failures.',
-	pr_analysis:
-		'You are a PR reviewer. Assess impact, breaking changes, and deployment risks.',
-	documentation:
-		'You are a technical writer. Generate comprehensive documentation.',
+	pr_analysis: 'You are a PR reviewer. Assess impact, breaking changes, and deployment risks.',
+	documentation: 'You are a technical writer. Generate comprehensive documentation.',
 	issue_triage: 'You are an issue triager. Categorize and prioritize issues.',
 	workflow_optimize: 'You are a DevOps expert. Optimize CI/CD workflows.',
-	repo_health:
-		'You are a repository analyst. Assess overall health and technical debt.',
-	auto_fix:
-		'You are a code improvement specialist. Generate safe, targeted fixes.',
+	repo_health: 'You are a repository analyst. Assess overall health and technical debt.',
+	auto_fix: 'You are a code improvement specialist. Generate safe, targeted fixes.',
 };
 
 // Input sanitization for MLX security

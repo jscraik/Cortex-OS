@@ -23,11 +23,7 @@ export interface Reranker {
 	 * @param topK Number of top documents to return
 	 * @returns Reranked documents with relevance scores
 	 */
-	rerank(
-		query: string,
-		documents: RerankDocument[],
-		topK?: number,
-	): Promise<RerankDocument[]>;
+	rerank(query: string, documents: RerankDocument[], topK?: number): Promise<RerankDocument[]>;
 }
 
 /**
@@ -75,8 +71,7 @@ export class Qwen3Reranker implements Reranker {
 		this.batchSize = options.batchSize || 32;
 
 		this.cacheDir =
-			options.cacheDir ||
-			join(process.env.HF_HOME || tmpdir(), 'qwen3-reranker-cache');
+			options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-reranker-cache');
 		this.pythonPath = options.pythonPath || 'python3';
 		this.timeoutMs = options.timeoutMs ?? 30000;
 	}
@@ -117,10 +112,7 @@ export class Qwen3Reranker implements Reranker {
 	/**
 	 * Score a batch of documents against the query
 	 */
-	private scoreBatch(
-		query: string,
-		documents: RerankDocument[],
-	): Promise<number[]> {
+	private scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
 		return new Promise((resolve, reject) => {
 			const pythonScript = this.getPythonScript();
 			const child = spawn(this.pythonPath, ['-c', pythonScript], {
@@ -151,9 +143,7 @@ export class Qwen3Reranker implements Reranker {
 			child.on('close', (code) => {
 				clearTimeout(timer);
 				if (code !== 0) {
-					reject(
-						new Error(`Qwen3 reranker failed with code ${code}: ${stderr}`),
-					);
+					reject(new Error(`Qwen3 reranker failed with code ${code}: ${stderr}`));
 					return;
 				}
 
@@ -202,10 +192,7 @@ export class Qwen3Reranker implements Reranker {
 	/**
 	 * Create batches from documents array
 	 */
-	private createBatches(
-		documents: RerankDocument[],
-		batchSize: number,
-	): RerankDocument[][] {
+	private createBatches(documents: RerankDocument[], batchSize: number): RerankDocument[][] {
 		const batches: RerankDocument[][] = [];
 		for (let i = 0; i < documents.length; i += batchSize) {
 			batches.push(documents.slice(i, i + batchSize));
@@ -224,9 +211,7 @@ export class Qwen3Reranker implements Reranker {
 /**
  * Factory function for easy Qwen3 reranker creation
  */
-export function createQwen3Reranker(
-	options?: Qwen3RerankOptions,
-): Qwen3Reranker {
+export function createQwen3Reranker(options?: Qwen3RerankOptions): Qwen3Reranker {
 	return new Qwen3Reranker(options);
 }
 

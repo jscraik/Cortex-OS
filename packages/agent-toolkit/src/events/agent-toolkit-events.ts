@@ -46,9 +46,7 @@ export const ValidationReportEventSchema = z.object({
 });
 
 // Export event type definitions
-export type ToolExecutionStartedEvent = z.infer<
-	typeof ToolExecutionStartedEventSchema
->;
+export type ToolExecutionStartedEvent = z.infer<typeof ToolExecutionStartedEventSchema>;
 export type SearchResultsEvent = z.infer<typeof SearchResultsEventSchema>;
 export type CodeModificationEvent = z.infer<typeof CodeModificationEventSchema>;
 export type ValidationReportEvent = z.infer<typeof ValidationReportEventSchema>;

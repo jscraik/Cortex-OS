@@ -63,10 +63,7 @@ describe('Telemetry integration', () => {
 
 		await dlq.handleFailed(envelope, new Error('network failure'), 0);
 
-		expect(telemetry.withSpan).toHaveBeenCalledWith(
-			'dlq.handleFailed',
-			expect.any(Function),
-		);
+		expect(telemetry.withSpan).toHaveBeenCalledWith('dlq.handleFailed', expect.any(Function));
 		expect(telemetry.logWithSpan).toHaveBeenCalled();
 		const span = (telemetry.logWithSpan as any).mock.calls[0][3];
 		expect(span).toBeDefined();
@@ -86,10 +83,7 @@ describe('Telemetry integration', () => {
 
 		await orchestrator.execute(initialContext);
 
-		expect(telemetry.withSpan).toHaveBeenCalledWith(
-			'saga.step.step1',
-			expect.any(Function),
-		);
+		expect(telemetry.withSpan).toHaveBeenCalledWith('saga.step.step1', expect.any(Function));
 		expect(telemetry.logWithSpan).toHaveBeenCalled();
 		const span = (telemetry.logWithSpan as any).mock.calls[0][3];
 		expect(span).toBeDefined();

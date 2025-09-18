@@ -57,14 +57,10 @@ export const SimulationCompletedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type SimulationStartedEvent = z.infer<
-	typeof SimulationStartedEventSchema
->;
+export type SimulationStartedEvent = z.infer<typeof SimulationStartedEventSchema>;
 export type AgentCreatedEvent = z.infer<typeof AgentCreatedEventSchema>;
 export type ExperimentResultEvent = z.infer<typeof ExperimentResultEventSchema>;
-export type SimulationCompletedEvent = z.infer<
-	typeof SimulationCompletedEventSchema
->;
+export type SimulationCompletedEvent = z.infer<typeof SimulationCompletedEventSchema>;
 
 // Helper function to create SimLab events
 export const createSimLabEvent = {

@@ -4,20 +4,12 @@ import { ZodArray, ZodObject, type ZodTypeAny } from 'zod';
  * Recursively remove fields marked with description 'redact' in the given Zod schema.
  * Returns a new object with sensitive fields omitted.
  */
-export function redact<T extends ZodTypeAny>(
-	schema: T,
-	data: unknown,
-): unknown {
+export function redact<T extends ZodTypeAny>(schema: T, data: unknown): unknown {
 	return _redact(schema, data);
 }
 
 function _redact(schema: ZodTypeAny, value: unknown): unknown {
-	if (
-		schema instanceof ZodObject &&
-		value &&
-		typeof value === 'object' &&
-		!Array.isArray(value)
-	) {
+	if (schema instanceof ZodObject && value && typeof value === 'object' && !Array.isArray(value)) {
 		const result: Record<string, unknown> = {};
 		const shape = schema.shape;
 		const valueObj = value as Record<string, unknown>;

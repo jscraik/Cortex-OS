@@ -5,8 +5,7 @@
 import path from 'node:path';
 
 const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || '/models';
-const modelPath = (...segments: string[]) =>
-	path.join(MLX_CACHE_DIR, ...segments);
+const modelPath = (...segments: string[]) => path.join(MLX_CACHE_DIR, ...segments);
 
 export interface ModelConfig {
 	primary: {
@@ -37,10 +36,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
 		primary: {
 			provider: 'mlx',
 			model: 'qwen2.5-0.5b-instruct',
-			path: modelPath(
-				'hub',
-				'models--mlx-community--Qwen2.5-0.5B-Instruct-4bit',
-			),
+			path: modelPath('hub', 'models--mlx-community--Qwen2.5-0.5B-Instruct-4bit'),
 			capabilities: ['reasoning', 'planning', 'fast_response'],
 		},
 		fallback: {
@@ -57,10 +53,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
 		primary: {
 			provider: 'mlx',
 			model: 'qwen3-coder-30b',
-			path: modelPath(
-				'hub',
-				'models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit',
-			),
+			path: modelPath('hub', 'models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit'),
 			capabilities: ['code_generation', 'analysis', 'refactoring'],
 		},
 		fallback: {
@@ -77,10 +70,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
 		primary: {
 			provider: 'mlx',
 			model: 'qwen2.5-vl-3b',
-			path: modelPath(
-				'hub',
-				'models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit',
-			),
+			path: modelPath('hub', 'models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit'),
 			capabilities: ['vision', 'text', 'ui_understanding'],
 		},
 		fallback: {
@@ -101,15 +91,8 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
 		primary: {
 			provider: 'mlx',
 			model: 'mixtral-8x7b',
-			path: modelPath(
-				'hub',
-				'models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx',
-			),
-			capabilities: [
-				'expert_reasoning',
-				'task_decomposition',
-				'parallel_thinking',
-			],
+			path: modelPath('hub', 'models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx'),
+			capabilities: ['expert_reasoning', 'task_decomposition', 'parallel_thinking'],
 		},
 		fallback: {
 			provider: 'ollama',
@@ -125,10 +108,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
 		primary: {
 			provider: 'mlx',
 			model: 'phi3-mini',
-			path: modelPath(
-				'hub',
-				'models--mlx-community--Phi-3-mini-4k-instruct-4bit',
-			),
+			path: modelPath('hub', 'models--mlx-community--Phi-3-mini-4k-instruct-4bit'),
 			capabilities: ['conversation', 'general_knowledge', 'efficient'],
 		},
 		fallback: {
@@ -205,12 +185,7 @@ export const OPTIMIZATION_RULES = {
 	memoryEfficient: ['quickReasoning', 'generalChat', 'embeddings'],
 
 	// Use MLX for high-accuracy tasks where local processing is preferred
-	highAccuracy: [
-		'codeIntelligence',
-		'complexReasoning',
-		'multiModal',
-		'reranking',
-	],
+	highAccuracy: ['codeIntelligence', 'complexReasoning', 'multiModal', 'reranking'],
 
 	// Fallback to Ollama for heavy compute or when MLX models fail
 	fallbackScenarios: [

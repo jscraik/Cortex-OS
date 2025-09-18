@@ -45,9 +45,7 @@ const ValidateGraphInputSchema = z.object({
 
 const OptimizeGraphInputSchema = z.object({
 	graphId: z.string(),
-	optimizationType: z
-		.enum(['performance', 'memory', 'cost'])
-		.default('performance'),
+	optimizationType: z.enum(['performance', 'memory', 'cost']).default('performance'),
 });
 
 // MVP MCP Tool Definitions

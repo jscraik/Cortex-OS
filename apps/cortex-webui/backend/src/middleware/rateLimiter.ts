@@ -56,9 +56,7 @@ const rateLimitHandler = (req: Request, res: Response): void => {
 		error: 'Too Many Requests',
 		message: 'Rate limit exceeded. Please try again later.',
 		retryAfter: Math.round(
-			req.rateLimit?.resetTime
-				? (req.rateLimit.resetTime.getTime() - Date.now()) / 1000
-				: 60,
+			req.rateLimit?.resetTime ? (req.rateLimit.resetTime.getTime() - Date.now()) / 1000 : 60,
 		),
 	});
 };

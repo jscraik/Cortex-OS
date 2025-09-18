@@ -35,10 +35,7 @@ interface A2AEventDashboardProps {
 	className?: string;
 }
 
-export const A2AEventDashboard: React.FC<A2AEventDashboardProps> = ({
-	token,
-	className = '',
-}) => {
+export const A2AEventDashboard: React.FC<A2AEventDashboardProps> = ({ token, className = '' }) => {
 	const [activeTab, setActiveTab] = useState('overview');
 	const { connected, connectionStats } = useA2AConnection(token);
 	const { notifications, unreadCount, markAllAsRead } = useA2ANotifications();
@@ -59,14 +56,10 @@ export const A2AEventDashboard: React.FC<A2AEventDashboardProps> = ({
 			<div className="border-b border-gray-200 p-4">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center space-x-3">
-						<h2 className="text-xl font-semibold text-gray-900">
-							A2A Event Dashboard
-						</h2>
+						<h2 className="text-xl font-semibold text-gray-900">A2A Event Dashboard</h2>
 						<div
 							className={`px-2 py-1 rounded-full text-xs font-medium ${
-								connected
-									? 'bg-green-100 text-green-800'
-									: 'bg-red-100 text-red-800'
+								connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
 							}`}
 						>
 							{connected ? 'Connected' : 'Disconnected'}
@@ -141,28 +134,18 @@ const OverviewTab: React.FC<{
 			{/* Connection Status */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<div className="bg-gray-50 rounded-lg p-4">
-					<h3 className="text-sm font-medium text-gray-500 mb-2">
-						Connection Status
-					</h3>
-					<div
-						className={`text-lg font-semibold ${
-							connected ? 'text-green-600' : 'text-red-600'
-						}`}
-					>
+					<h3 className="text-sm font-medium text-gray-500 mb-2">Connection Status</h3>
+					<div className={`text-lg font-semibold ${connected ? 'text-green-600' : 'text-red-600'}`}>
 						{connected ? 'Connected' : 'Disconnected'}
 					</div>
 					<p className="text-xs text-gray-500 mt-1">
 						Session:{' '}
-						{connectionStats.sessionId
-							? `${connectionStats.sessionId.substring(0, 8)}...`
-							: 'N/A'}
+						{connectionStats.sessionId ? `${connectionStats.sessionId.substring(0, 8)}...` : 'N/A'}
 					</p>
 				</div>
 
 				<div className="bg-gray-50 rounded-lg p-4">
-					<h3 className="text-sm font-medium text-gray-500 mb-2">
-						Event Types
-					</h3>
+					<h3 className="text-sm font-medium text-gray-500 mb-2">Event Types</h3>
 					<div className="text-lg font-semibold text-blue-600">
 						{connectionStats.eventTypes ? connectionStats.eventTypes.length : 0}
 					</div>
@@ -170,9 +153,7 @@ const OverviewTab: React.FC<{
 				</div>
 
 				<div className="bg-gray-50 rounded-lg p-4">
-					<h3 className="text-sm font-medium text-gray-500 mb-2">
-						Total Events
-					</h3>
+					<h3 className="text-sm font-medium text-gray-500 mb-2">Total Events</h3>
 					<div className="text-lg font-semibold text-purple-600">
 						{connectionStats.eventCount ?? 0}
 					</div>
@@ -183,9 +164,7 @@ const OverviewTab: React.FC<{
 			{/* Recent Notifications */}
 			{notifications.length > 0 && (
 				<div>
-					<h3 className="text-lg font-medium text-gray-900 mb-3">
-						Recent Notifications
-					</h3>
+					<h3 className="text-lg font-medium text-gray-900 mb-3">Recent Notifications</h3>
 					<div className="space-y-2">
 						{notifications.slice(0, 5).map((notification) => (
 							<div
@@ -198,9 +177,7 @@ const OverviewTab: React.FC<{
 							>
 								<div className="flex justify-between">
 									<div>
-										<p className="text-sm font-medium text-gray-900">
-											{notification.type}
-										</p>
+										<p className="text-sm font-medium text-gray-900">{notification.type}</p>
 										<p className="text-xs text-gray-500">
 											{new Date(notification.timestamp).toLocaleTimeString()}
 										</p>
@@ -240,9 +217,7 @@ const MLXEventsTab: React.FC = () => {
 				<h3 className="text-lg font-medium text-gray-900 mb-3">
 					Thermal Events
 					{thermalEvents.hasCritical && (
-						<span className="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
-							Critical
-						</span>
+						<span className="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Critical</span>
 					)}
 				</h3>
 
@@ -330,28 +305,21 @@ const MLXEventsTab: React.FC = () => {
 
 			{/* Embedding Events */}
 			<div>
-				<h3 className="text-lg font-medium text-gray-900 mb-3">
-					Embedding Events
-				</h3>
+				<h3 className="text-lg font-medium text-gray-900 mb-3">Embedding Events</h3>
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 					<div className="bg-blue-50 rounded-lg p-4">
-						<h4 className="text-sm font-medium text-blue-800 mb-1">
-							Total Processed
-						</h4>
+						<h4 className="text-sm font-medium text-blue-800 mb-1">Total Processed</h4>
 						<div className="text-lg font-semibold text-blue-600">
 							{embeddingEvents.totalTextsProcessed}
 						</div>
 					</div>
 					<div className="bg-green-50 rounded-lg p-4">
-						<h4 className="text-sm font-medium text-green-800 mb-1">
-							Success Rate
-						</h4>
+						<h4 className="text-sm font-medium text-green-800 mb-1">Success Rate</h4>
 						<div className="text-lg font-semibold text-green-600">
 							{embeddingEvents.events.length > 0
 								? Math.round(
-										(embeddingEvents.successfulEmbeddings.length /
-											embeddingEvents.events.length) *
+										(embeddingEvents.successfulEmbeddings.length / embeddingEvents.events.length) *
 											100,
 									)
 								: 0}
@@ -359,9 +327,7 @@ const MLXEventsTab: React.FC = () => {
 						</div>
 					</div>
 					<div className="bg-purple-50 rounded-lg p-4">
-						<h4 className="text-sm font-medium text-purple-800 mb-1">
-							Avg Time
-						</h4>
+						<h4 className="text-sm font-medium text-purple-800 mb-1">Avg Time</h4>
 						<div className="text-lg font-semibold text-purple-600">
 							{embeddingEvents.averageProcessingTime.toFixed(2)}s
 						</div>
@@ -403,9 +369,7 @@ const SystemEventsTab: React.FC = () => {
 								<div>
 									<span className="font-medium">{event.data.eventType}</span>
 									{event.data.status && (
-										<span className="ml-2 text-sm text-gray-600">
-											Status: {event.data.status}
-										</span>
+										<span className="ml-2 text-sm text-gray-600">Status: {event.data.status}</span>
 									)}
 									{event.data.error && (
 										<span className="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
@@ -443,10 +407,7 @@ const EventHistoryTab: React.FC = () => {
 			{/* Controls */}
 			<div className="flex justify-between items-center">
 				<div className="flex items-center space-x-3">
-					<label
-						htmlFor="event-type-filter"
-						className="text-sm font-medium text-gray-700"
-					>
+					<label htmlFor="event-type-filter" className="text-sm font-medium text-gray-700">
 						Filter by type:
 					</label>
 					<select
@@ -487,12 +448,8 @@ const EventHistoryTab: React.FC = () => {
 									<div className="flex justify-between items-start">
 										<div className="flex-1">
 											<div className="flex items-center space-x-2">
-												<span className="font-medium text-sm">
-													{event.type}
-												</span>
-												<span className="text-xs text-gray-500">
-													from {event.source}
-												</span>
+												<span className="font-medium text-sm">{event.type}</span>
+												<span className="text-xs text-gray-500">from {event.source}</span>
 												{event.severity && (
 													<span
 														className={`px-2 py-1 rounded text-xs ${

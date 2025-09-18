@@ -19,7 +19,7 @@ interface ExtendedWorkflowMetrics extends WorkflowMetrics {
 	retryAttempts: CounterLike;
 	circuitBreakerTrips: CounterLike;
 	activeWorkflows: CounterLike; // UpDown semantics but API is add()
-	activeAgents: CounterLike;    // UpDown semantics but API is add()
+	activeAgents: CounterLike; // UpDown semantics but API is add()
 	resourceUtilization: GaugeLike;
 }
 
@@ -40,12 +40,9 @@ export const workflowMetrics: ExtendedWorkflowMetrics = {
 		description: 'Duration of workflow step execution in milliseconds',
 	}),
 
-	coordinationDuration: meter.createHistogram(
-		'agent_coordination_duration_ms',
-		{
-			description: 'Duration of multi-agent coordination in milliseconds',
-		},
-	),
+	coordinationDuration: meter.createHistogram('agent_coordination_duration_ms', {
+		description: 'Duration of multi-agent coordination in milliseconds',
+	}),
 
 	// Counters
 	retryAttempts: meter.createCounter('workflow_retry_attempts_total', {
@@ -178,10 +175,7 @@ export function updateResourceUtilization(
 /**
  * Track workflow lifecycle
  */
-export function recordWorkflowStart(
-	_workflowId: string,
-	workflowName: string,
-): void {
+export function recordWorkflowStart(_workflowId: string, workflowName: string): void {
 	workflowMetrics.activeWorkflows.add(1, {
 		workflow_name: workflowName,
 	});
@@ -200,10 +194,7 @@ export function recordWorkflowEnd(
 /**
  * Track agent lifecycle
  */
-export function recordAgentActivation(
-	agentId: string,
-	capabilities: string[],
-): void {
+export function recordAgentActivation(agentId: string, capabilities: string[]): void {
 	workflowMetrics.activeAgents.add(1, {
 		agent_id: agentId,
 		capabilities: capabilities.join(','),

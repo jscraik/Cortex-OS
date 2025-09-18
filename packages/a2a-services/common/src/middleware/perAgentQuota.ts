@@ -24,11 +24,7 @@ export function createPerAgentQuota({
 		storePromise ??= createQuotaStore();
 		return storePromise;
 	}
-	return async function perAgentQuota(
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	) {
+	return async function perAgentQuota(req: Request, res: Response, next: NextFunction) {
 		const store = await getStore();
 		const agentId = identifyAgent(req) || 'anonymous';
 		const result = await store.incrPerKey(agentId, windowMs, perAgentLimit, {

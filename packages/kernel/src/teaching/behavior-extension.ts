@@ -6,10 +6,7 @@
  */
 
 import type { PRPState } from '../state.js';
-import type {
-	ExampleCaptureSystem,
-	TeachingPattern,
-} from './example-capture.js';
+import type { ExampleCaptureSystem, TeachingPattern } from './example-capture.js';
 
 /**
  * Behavior extension that can modify kernel behavior
@@ -19,10 +16,7 @@ export interface BehaviorExtension {
 	name: string;
 	description: string;
 	trigger: (state: PRPState) => boolean;
-	modify: (
-		state: PRPState,
-		context: ExtensionContext,
-	) => Promise<ExtensionResult>;
+	modify: (state: PRPState, context: ExtensionContext) => Promise<ExtensionResult>;
 	confidence: number;
 	basedOnPatterns: string[]; // Pattern IDs
 }
@@ -117,12 +111,7 @@ export class BehaviorExtensionManager {
 					appliedExtensions.push({ extension, result });
 
 					// Capture this extension application with the state before modifications
-					this.captureExtensionApplication(
-						extension,
-						currentState,
-						updatedState,
-						result,
-					);
+					this.captureExtensionApplication(extension, currentState, updatedState, result);
 
 					modifiedState = updatedState;
 				}
@@ -176,9 +165,7 @@ export class BehaviorExtensionManager {
 
 		// Simple confidence adjustment
 		const adjustment = outcome.success ? 0.05 : -0.1;
-		const userAdjustment = outcome.userSatisfaction
-			? (outcome.userSatisfaction - 0.5) * 0.1
-			: 0;
+		const userAdjustment = outcome.userSatisfaction ? (outcome.userSatisfaction - 0.5) * 0.1 : 0;
 
 		extension.confidence = Math.max(
 			0.1,
@@ -200,9 +187,7 @@ export class BehaviorExtensionManager {
 			trigger: (state) => state.phase === 'strategy' || state.phase === 'build',
 			modify: async (state, _context) => {
 				const projectComplexity = this.assessProjectComplexity(state.blueprint);
-				const historicalSuccess = this.getHistoricalSuccessRate(
-					state.blueprint,
-				);
+				const historicalSuccess = this.getHistoricalSuccessRate(state.blueprint);
 
 				if (projectComplexity === 'simple' && historicalSuccess > 0.8) {
 					return {
@@ -210,8 +195,7 @@ export class BehaviorExtensionManager {
 						changes: [
 							{
 								type: 'validation_adjustment',
-								description:
-									'Relaxed validation for simple, successful project pattern',
+								description: 'Relaxed validation for simple, successful project pattern',
 								impact: 'low',
 								parameters: {
 									maxMajorsAllowed: 5, // Increased from 3
@@ -256,8 +240,7 @@ export class BehaviorExtensionManager {
 								},
 							},
 						],
-						reasoning:
-							'Documentation projects do not require compilation validation',
+						reasoning: 'Documentation projects do not require compilation validation',
 					};
 				}
 
@@ -314,10 +297,7 @@ export class BehaviorExtensionManager {
 	/**
 	 * Apply pattern trigger evaluation
 	 */
-	private evaluatePatternTrigger(
-		pattern: TeachingPattern,
-		state: PRPState,
-	): boolean {
+	private evaluatePatternTrigger(pattern: TeachingPattern, state: PRPState): boolean {
 		const conditions = pattern.trigger.conditions;
 
 		// Simple condition matching - in real implementation would be more sophisticated
@@ -369,20 +349,14 @@ export class BehaviorExtensionManager {
 	/**
 	 * Apply modifications to state
 	 */
-	private applyModifications(
-		state: PRPState,
-		result: ExtensionResult,
-	): PRPState {
+	private applyModifications(state: PRPState, result: ExtensionResult): PRPState {
 		let modifiedState = { ...state };
 
 		for (const change of result.changes) {
 			switch (change.type) {
 				case 'validation_adjustment':
 					// Modify validation thresholds
-					modifiedState = this.adjustValidation(
-						modifiedState,
-						change.parameters,
-					);
+					modifiedState = this.adjustValidation(modifiedState, change.parameters);
 					break;
 				case 'gate_modification':
 					// Modify gate behavior
@@ -401,10 +375,7 @@ export class BehaviorExtensionManager {
 	/**
 	 * Helper methods for state modification
 	 */
-	private adjustValidation(
-		state: PRPState,
-		parameters: Record<string, unknown>,
-	): PRPState {
+	private adjustValidation(state: PRPState, parameters: Record<string, unknown>): PRPState {
 		// Implementation would adjust validation thresholds
 		return {
 			...state,
@@ -415,10 +386,7 @@ export class BehaviorExtensionManager {
 		};
 	}
 
-	private modifyGates(
-		state: PRPState,
-		parameters: Record<string, unknown>,
-	): PRPState {
+	private modifyGates(state: PRPState, parameters: Record<string, unknown>): PRPState {
 		return {
 			...state,
 			metadata: {
@@ -428,10 +396,7 @@ export class BehaviorExtensionManager {
 		};
 	}
 
-	private alterWorkflow(
-		state: PRPState,
-		parameters: Record<string, unknown>,
-	): PRPState {
+	private alterWorkflow(state: PRPState, parameters: Record<string, unknown>): PRPState {
 		return {
 			...state,
 			metadata: {
@@ -484,16 +449,10 @@ export class BehaviorExtensionManager {
 	} {
 		const needs: string[] = [];
 
-		if (
-			state.phase === 'strategy' &&
-			!state.evidence.some((e) => e.type === 'analysis')
-		) {
+		if (state.phase === 'strategy' && !state.evidence.some((e) => e.type === 'analysis')) {
 			needs.push('architecture-analysis');
 		}
-		if (
-			state.phase === 'build' &&
-			!state.evidence.some((e) => e.type === 'test')
-		) {
+		if (state.phase === 'build' && !state.evidence.some((e) => e.type === 'test')) {
 			needs.push('test-execution');
 		}
 

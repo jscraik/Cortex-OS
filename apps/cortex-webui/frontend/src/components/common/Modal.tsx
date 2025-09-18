@@ -61,10 +61,7 @@ const Modal: React.FC<ModalProps> = ({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-			<div
-				className="fixed inset-0 bg-black bg-opacity-50"
-				onClick={handleClickOutside}
-			/>
+			<div className="fixed inset-0 bg-black bg-opacity-50" onClick={handleClickOutside} />
 
 			<div
 				ref={modalRef}
@@ -75,10 +72,7 @@ const Modal: React.FC<ModalProps> = ({
 			>
 				{title && (
 					<div className="p-4 border-b flex justify-between items-center">
-						<h3
-							id="modal-title"
-							className="text-lg font-semibold text-gray-900"
-						>
+						<h3 id="modal-title" className="text-lg font-semibold text-gray-900">
 							{title}
 						</h3>
 						<button

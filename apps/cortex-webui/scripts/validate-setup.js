@@ -126,11 +126,7 @@ k8sFiles.forEach((file) => {
 
 // Check Docker configuration
 console.log('\n🐳 Checking Docker configuration...');
-const dockerFiles = [
-	'Dockerfile.backend',
-	'Dockerfile.frontend',
-	'docker-compose.yml',
-];
+const dockerFiles = ['Dockerfile.backend', 'Dockerfile.frontend', 'docker-compose.yml'];
 dockerFiles.forEach((file) => {
 	if (fs.existsSync(file)) {
 		console.log(`  ✅ ${file}`);
@@ -142,9 +138,7 @@ dockerFiles.forEach((file) => {
 
 // Summary
 console.log('\n📊 Validation Summary:');
-console.log(
-	`✅ Checks passed: ${requiredFiles.length + dockerFiles.length - errors.length}`,
-);
+console.log(`✅ Checks passed: ${requiredFiles.length + dockerFiles.length - errors.length}`);
 console.log(`⚠️  Warnings: ${warnings.length}`);
 console.log(`❌ Errors: ${errors.length}`);
 

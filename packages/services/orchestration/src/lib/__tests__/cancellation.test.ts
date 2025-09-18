@@ -54,9 +54,7 @@ describe('cancellation system', () => {
 
 		it('can be created from an existing signal', () => {
 			const parentController = new AbortController();
-			const controller = CancellationController.fromSignal(
-				parentController.signal,
-			);
+			const controller = CancellationController.fromSignal(parentController.signal);
 
 			expect(controller.isCancelled).toBe(false);
 
@@ -70,9 +68,7 @@ describe('cancellation system', () => {
 			const parentController = new AbortController();
 			parentController.abort();
 
-			const controller = CancellationController.fromSignal(
-				parentController.signal,
-			);
+			const controller = CancellationController.fromSignal(parentController.signal);
 
 			expect(controller.isCancelled).toBe(true);
 			expect(controller.reason).toBe('Parent signal aborted');

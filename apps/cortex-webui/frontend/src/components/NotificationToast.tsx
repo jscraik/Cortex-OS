@@ -15,10 +15,7 @@ interface NotificationToastProps {
 	onDismiss: (id: string) => void;
 }
 
-const NotificationToast: React.FC<NotificationToastProps> = ({
-	notification,
-	onDismiss,
-}) => {
+const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onDismiss }) => {
 	const [isVisible, setIsVisible] = useState(true);
 	const [isLeaving, setIsLeaving] = useState(false);
 

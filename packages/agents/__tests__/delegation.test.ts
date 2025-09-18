@@ -51,8 +51,7 @@ describe('Delegation routing and execution', () => {
 			register: <T extends ToolSchema>(t: Tool<T>) =>
 				agent.regRegister(t as unknown as Tool<ToolSchema>),
 			unregister: (id: string) => agent.regUnregister(id),
-			get: <T extends ToolSchema>(id: string) =>
-				agent.regGet(id) as Tool<T> | null,
+			get: <T extends ToolSchema>(id: string) => agent.regGet(id) as Tool<T> | null,
 			list: <T extends ToolSchema>() => agent.regList() as unknown as Tool<T>[],
 			has: (id: string) => agent.regHas(id),
 		};
@@ -100,10 +99,7 @@ describe('Delegation routing and execution', () => {
 			},
 		});
 
-		const results = await agent.delegateToSubagents(
-			'please do some code',
-			true,
-		);
+		const results = await agent.delegateToSubagents('please do some code', true);
 		expect(results.length).toBeGreaterThan(0);
 		expect(results[0].to).toBe('code');
 	});
@@ -128,27 +124,20 @@ describe('Delegation routing and execution', () => {
 			list: async () => mockList,
 		};
 
-		const router = new DelegationRouter(
-			mockRegistry as unknown as ISubagentRegistry,
-			{
-				maxFanout: 2,
-				confidenceThreshold: 0.8,
-				rules: [
-					{ pattern: /fanout/, targets: ['a', 'b', 'c'], confidence: 0.95 },
-					{ pattern: /low/, targets: ['a'], confidence: 0.3 },
-				],
-				enableParallel: true,
-			},
-		);
+		const router = new DelegationRouter(mockRegistry as unknown as ISubagentRegistry, {
+			maxFanout: 2,
+			confidenceThreshold: 0.8,
+			rules: [
+				{ pattern: /fanout/, targets: ['a', 'b', 'c'], confidence: 0.95 },
+				{ pattern: /low/, targets: ['a'], confidence: 0.3 },
+			],
+			enableParallel: true,
+		});
 
 		const r1 = await router.route('please fanout this');
 		expect(r1.shouldDelegate).toBe(true);
 		expect(r1.strategy).toBe('fanout');
-		const reqs1 = await router.createDelegations(
-			'please fanout this',
-			r1.strategy,
-			r1.candidates,
-		);
+		const reqs1 = await router.createDelegations('please fanout this', r1.strategy, r1.candidates);
 		expect(reqs1.length).toBe(2);
 
 		const r2 = await router.route('low');

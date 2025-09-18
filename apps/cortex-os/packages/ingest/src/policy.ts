@@ -33,9 +33,7 @@ export function parseIngestPolicy(data: unknown): IngestPolicy {
 		return toIngestPolicy([]);
 	}
 
-	const filtered = allowMime.filter(
-		(value): value is string => typeof value === 'string',
-	);
+	const filtered = allowMime.filter((value): value is string => typeof value === 'string');
 	return toIngestPolicy(filtered);
 }
 
@@ -50,9 +48,7 @@ const defaultReadFile = (filePath: string, encoding?: BufferEncoding) => {
 
 const defaultLoader = (input: string) => yaml.load(input);
 
-export function loadIngestPolicy(
-	options: LoadIngestPolicyOptions = {},
-): IngestPolicy {
+export function loadIngestPolicy(options: LoadIngestPolicyOptions = {}): IngestPolicy {
 	const {
 		policyPath = DEFAULT_POLICY_PATH,
 		readFile = defaultReadFile,

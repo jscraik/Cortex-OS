@@ -1,9 +1,4 @@
-import type {
-	ExecutionContext,
-	ExecutionState,
-	Neuron,
-	NeuronResult,
-} from '../orchestrator.js';
+import type { ExecutionContext, ExecutionState, Neuron, NeuronResult } from '../orchestrator.js';
 
 export async function executeNeuron(
 	neuron: Neuron,

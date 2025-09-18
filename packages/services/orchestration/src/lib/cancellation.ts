@@ -98,10 +98,7 @@ export class CancellationController {
 	}
 
 	/** Create a cancellation controller with timeout */
-	static withTimeout(
-		timeoutMs: number,
-		reason?: string,
-	): CancellationController {
+	static withTimeout(timeoutMs: number, reason?: string): CancellationController {
 		return new CancellationController({
 			timeoutMs,
 			reason: reason || `Timeout after ${timeoutMs}ms`,
@@ -142,9 +139,7 @@ export class CancellationError extends Error {
 }
 
 /** Utility to check if an error is a cancellation */
-export function isCancellationError(
-	error: unknown,
-): error is CancellationError {
+export function isCancellationError(error: unknown): error is CancellationError {
 	return (
 		error instanceof CancellationError ||
 		(error instanceof Error && error.message.includes('Aborted'))

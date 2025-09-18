@@ -37,9 +37,7 @@ export interface SemanticSearchResult {
 export const createMLXService = (config: MLXConfig) => {
 	if (!config.enabled) return null;
 
-	const runGenerateEmbedding = async (
-		text: string,
-	): Promise<EmbeddingResult> => {
+	const runGenerateEmbedding = async (text: string): Promise<EmbeddingResult> => {
 		const modelSize = config.embeddingModel.replace('qwen3-', '').toUpperCase();
 		const script = `
 import json, sys
@@ -84,10 +82,7 @@ except Exception as e:
 				}
 				const serverText = `${validated.name} ${validated.description} ${validated.tags?.join(' ') || ''}`;
 				const serverEmbedding = await runGenerateEmbedding(serverText);
-				const similarity = cosineSimilarity(
-					queryEmbedding.embedding,
-					serverEmbedding.embedding,
-				);
+				const similarity = cosineSimilarity(queryEmbedding.embedding, serverEmbedding.embedding);
 				const relevanceScore = calculateRelevanceScore(similarity, validated);
 				return { server: validated, similarity, relevanceScore };
 			}),
@@ -125,15 +120,9 @@ except Exception as e:
     print(json.dumps({"error": str(e)}), file=sys.stderr)
     sys.exit(1)
 `;
-		const docs = servers.map(
-			(s) => `${s.name} ${s.description} ${s.tags?.join(' ') || ''}`,
-		);
+		const docs = servers.map((s) => `${s.name} ${s.description} ${s.tags?.join(' ') || ''}`);
 		const payload = JSON.stringify({ query, docs });
-		const result = await executeMLXScriptWithInput(
-			script,
-			config.pythonPath,
-			payload,
-		);
+		const result = await executeMLXScriptWithInput(script, config.pythonPath, payload);
 		const scores = JSON.parse(result).scores as number[];
 		return servers
 			.map((server, i) => ({
@@ -195,18 +184,13 @@ print(f"CONFIDENCE:{confidence:.3f}")
 	};
 };
 
-async function executeMLXScript(
-	script: string,
-	pythonPath: string,
-): Promise<string> {
+async function executeMLXScript(script: string, pythonPath: string): Promise<string> {
 	const tmpDir = os.tmpdir();
 	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
 	await writeFile(scriptPath, script);
 	// Use the centralized Python spawner so env merging and PYTHONPATH handling are consistent
 	// @ts-expect-error Dynamic import for Python execution utilities
-	const { spawnPythonProcess } = await import(
-		'../../../../libs/python/exec.js'
-	);
+	const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
 	try {
 		return await new Promise((resolve, reject) => {
 			const child: ChildProcess = spawnPythonProcess([scriptPath], {
@@ -221,9 +205,7 @@ async function executeMLXScript(
 				error += d.toString();
 			});
 			child.on('close', (code) =>
-				code === 0
-					? resolve(output)
-					: reject(new Error(`Script failed: ${error}`)),
+				code === 0 ? resolve(output) : reject(new Error(`Script failed: ${error}`)),
 			);
 			const to = setTimeout(() => {
 				try {
@@ -250,9 +232,7 @@ async function executeMLXScriptWithInput(
 	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
 	await writeFile(scriptPath, script);
 	// @ts-expect-error Dynamic import for Python execution utilities
-	const { spawnPythonProcess } = await import(
-		'../../../../libs/python/exec.js'
-	);
+	const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
 	try {
 		return await new Promise((resolve, reject) => {
 			const child: ChildProcess = spawnPythonProcess([scriptPath], {
@@ -267,9 +247,7 @@ async function executeMLXScriptWithInput(
 				error += d.toString();
 			});
 			child.on('close', (code) =>
-				code === 0
-					? resolve(output)
-					: reject(new Error(`Script failed: ${error}`)),
+				code === 0 ? resolve(output) : reject(new Error(`Script failed: ${error}`)),
 			);
 			if (child.stdin) {
 				child.stdin.write(input);
@@ -304,9 +282,7 @@ function parseSafetyResult(output: string): SafetyResult {
 	const confidenceMatch = confidenceRe.exec(output);
 	return {
 		safe: safeMatch ? safeMatch[1] === 'true' : true,
-		categories: categoriesMatch
-			? categoriesMatch[1].split(',').filter(Boolean)
-			: [],
+		categories: categoriesMatch ? categoriesMatch[1].split(',').filter(Boolean) : [],
 		confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
 	};
 }
@@ -324,10 +300,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 	return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function calculateRelevanceScore(
-	similarity: number,
-	server: ServerManifest,
-): number {
+function calculateRelevanceScore(similarity: number, server: ServerManifest): number {
 	let score = similarity * 0.6;
 	if (server.featured) score += 0.2;
 	if (server.publisher?.verified) score += 0.1;

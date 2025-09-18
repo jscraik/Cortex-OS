@@ -58,10 +58,7 @@ function hashToken(token: string): string {
 	return createHash('sha256').update(token).digest('hex');
 }
 
-export async function generateToken(
-	scopes: string[],
-	ttlHours = 24,
-): Promise<GeneratedToken> {
+export async function generateToken(scopes: string[], ttlHours = 24): Promise<GeneratedToken> {
 	const tokenBytes = randomBytes(32);
 	const token = tokenBytes.toString('base64url');
 	const tokenHash = hashToken(token);
@@ -144,10 +141,7 @@ export function isLoopbackAddress(ip: string): boolean {
 	if (!ip) return false;
 	const clean = ip.replace(/^::ffff:/, '');
 	return (
-		clean === '127.0.0.1' ||
-		clean.startsWith('127.') ||
-		clean === '::1' ||
-		clean === 'localhost'
+		clean === '127.0.0.1' || clean.startsWith('127.') || clean === '::1' || clean === 'localhost'
 	);
 }
 
@@ -174,7 +168,9 @@ export async function authenticateRequest({
 	const info = await validateToken(token);
 	await updateTokenUsage(info.id);
 
-	const missing = requiredScopes.filter((scope) => !info.scopes.includes(scope) && !info.scopes.includes('*'));
+	const missing = requiredScopes.filter(
+		(scope) => !info.scopes.includes(scope) && !info.scopes.includes('*'),
+	);
 	if (missing.length > 0) {
 		throw new AuthHttpError(403, 'AUTHORIZATION_ERROR', 'Insufficient privileges', {
 			required: requiredScopes,

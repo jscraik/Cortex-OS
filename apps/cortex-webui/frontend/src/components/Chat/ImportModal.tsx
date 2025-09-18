@@ -23,11 +23,7 @@ interface ImportModalProps {
 	readonly onImport: (file: File) => void;
 }
 
-const ImportModal: React.FC<ImportModalProps> = ({
-	isOpen,
-	onClose,
-	onImport,
-}) => {
+const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImport }) => {
 	const [file, setFile] = useState<File | null>(null);
 	const [isDragOver, setIsDragOver] = useState(false);
 	const [importOptions, setImportOptions] = useState<ImportOptions>({
@@ -86,26 +82,26 @@ const ImportModal: React.FC<ImportModalProps> = ({
 			if (
 				typeof window !== 'undefined' &&
 				'addNotification' in window &&
-				typeof (
-					window as { addNotification?: (type: string, msg: string) => void }
-				).addNotification === 'function'
+				typeof (window as { addNotification?: (type: string, msg: string) => void })
+					.addNotification === 'function'
 			) {
-				(
-					window as { addNotification: (type: string, msg: string) => void }
-				).addNotification('success', 'Import completed successfully!');
+				(window as { addNotification: (type: string, msg: string) => void }).addNotification(
+					'success',
+					'Import completed successfully!',
+				);
 			}
 		} catch (_error) {
 			console.debug('[ImportModal] import failed', _error);
 			if (
 				typeof window !== 'undefined' &&
 				'addNotification' in window &&
-				typeof (
-					window as { addNotification?: (type: string, msg: string) => void }
-				).addNotification === 'function'
+				typeof (window as { addNotification?: (type: string, msg: string) => void })
+					.addNotification === 'function'
 			) {
-				(
-					window as { addNotification: (type: string, msg: string) => void }
-				).addNotification('error', 'Import failed. Please try again.');
+				(window as { addNotification: (type: string, msg: string) => void }).addNotification(
+					'error',
+					'Import failed. Please try again.',
+				);
 			}
 		} finally {
 			setIsImporting(false);
@@ -141,9 +137,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
 			<div className="p-6">
 				<div className="space-y-6">
 					<div>
-						<h3 className="text-lg font-medium text-gray-900 dark:text-white">
-							Import Chat Data
-						</h3>
+						<h3 className="text-lg font-medium text-gray-900 dark:text-white">Import Chat Data</h3>
 						<p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
 							Import chats, conversations, or other data from external sources.
 						</p>
@@ -206,10 +200,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
 									</label>
 									<p className="pl-1">or drag and drop</p>
 								</div>
-								<p
-									id={uploadHintId}
-									className="text-xs text-gray-500 dark:text-gray-400"
-								>
+								<p id={uploadHintId} className="text-xs text-gray-500 dark:text-gray-400">
 									JSON, CSV, TXT, or Markdown up to 10MB
 								</p>
 							</div>

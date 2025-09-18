@@ -29,15 +29,9 @@ describe('ModelRouter - Frontier integration', () => {
 			}),
 			generateEmbeddings: vi
 				.fn()
-				.mockResolvedValue([
-					{ embedding: [1, 2, 3], model: 'frontier-embedding' },
-				]),
-			generateChat: vi
-				.fn()
-				.mockResolvedValue({ content: 'hi', model: 'frontier-chat' }),
-			rerank: vi
-				.fn()
-				.mockResolvedValue({ scores: [1, 0], model: 'frontier-rerank' }),
+				.mockResolvedValue([{ embedding: [1, 2, 3], model: 'frontier-embedding' }]),
+			generateChat: vi.fn().mockResolvedValue({ content: 'hi', model: 'frontier-chat' }),
+			rerank: vi.fn().mockResolvedValue({ scores: [1, 0], model: 'frontier-rerank' }),
 		} as unknown as FrontierAdapter;
 
 		router = new ModelRouter(mlx, ollama, frontier);

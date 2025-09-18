@@ -1,10 +1,7 @@
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import { describe, expect, it } from 'vitest';
 import { createTddCoachBus } from '../src/a2a.js';
-import {
-	createTddCoachEvent,
-	TDD_COACH_EVENT_SOURCE,
-} from '../src/events/tdd-coach-events.js';
+import { createTddCoachEvent, TDD_COACH_EVENT_SOURCE } from '../src/events/tdd-coach-events.js';
 
 describe('TDD Coach A2A bus integration', () => {
 	it('publishes TDD cycle events with schema validation', async () => {
@@ -34,10 +31,7 @@ describe('TDD Coach A2A bus integration', () => {
 
 		expect(seen).toHaveLength(1);
 		expect(seen[0]).toMatchObject(payload);
-		const validation = schemaRegistry.validate(
-			'tdd_coach.test.written',
-			seen[0],
-		);
+		const validation = schemaRegistry.validate('tdd_coach.test.written', seen[0]);
 		expect(validation.valid).toBe(true);
 	});
 

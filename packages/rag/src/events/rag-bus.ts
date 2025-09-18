@@ -3,11 +3,7 @@ import { createEnvelope } from '@cortex-os/a2a-contracts';
 import type { BusOptions, Transport } from '@cortex-os/a2a-core';
 import { createBus } from '@cortex-os/a2a-core';
 import { inproc } from '@cortex-os/a2a-transport';
-import {
-	RAGEventSchemas,
-	type RAGEventType,
-	RAGEventTypes,
-} from './rag-events';
+import { RAGEventSchemas, type RAGEventType, RAGEventTypes } from './rag-events';
 
 // Type definitions for payload mapping
 export type RagEventPayloadMap = {
@@ -47,11 +43,10 @@ export type RagEventPayloadMap = {
 	};
 };
 
-export type RagEventEnvelope<TType extends RAGEventType = RAGEventType> =
-	Envelope & {
-		type: TType;
-		data: RagEventPayloadMap[TType];
-	};
+export type RagEventEnvelope<TType extends RAGEventType = RAGEventType> = Envelope & {
+	type: TType;
+	data: RagEventPayloadMap[TType];
+};
 
 export type RagEventHandler<TType extends RAGEventType = RAGEventType> = {
 	type: TType;
@@ -92,10 +87,7 @@ const DEFAULT_SOURCE = 'urn:cortex:rag';
 
 const DEFAULT_TOPIC_ACL: TopicACL = Object.freeze(
 	Object.fromEntries(
-		Object.values(RAGEventTypes).map((type) => [
-			type,
-			{ publish: true, subscribe: true },
-		]),
+		Object.values(RAGEventTypes).map((type) => [type, { publish: true, subscribe: true }]),
 	),
 ) as TopicACL;
 
@@ -122,9 +114,7 @@ function validateEnvelope(envelope: Envelope): RagEventEnvelope {
 	if (!isRagEventType(envelope.type)) {
 		throw new Error(`Unsupported RAG event type: ${envelope.type}`);
 	}
-	const schema = (RAGEventSchemas as Record<string, import('zod').ZodTypeAny>)[
-		envelope.type
-	];
+	const schema = (RAGEventSchemas as Record<string, import('zod').ZodTypeAny>)[envelope.type];
 	const data = schema.parse(envelope.data);
 	return { ...envelope, type: envelope.type as RAGEventType, data };
 }
@@ -134,13 +124,7 @@ export function createRagBus(options: RagBusOptions = {}): RagBus {
 	const source = options.source ?? DEFAULT_SOURCE;
 	const acl = cloneAcl(options.acl ?? DEFAULT_TOPIC_ACL);
 
-	const bus = createBus(
-		transport,
-		validateEnvelope,
-		undefined,
-		acl,
-		options.busOptions,
-	);
+	const bus = createBus(transport, validateEnvelope, undefined, acl, options.busOptions);
 
 	return {
 		async publish<TType extends RAGEventType>(

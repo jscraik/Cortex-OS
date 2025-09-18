@@ -46,8 +46,7 @@ export const errorHandler = (
 	if (error.name === 'SqliteError') {
 		res.status(500).json({
 			error: 'Database error',
-			details:
-				process.env.NODE_ENV === 'development' ? error.message : undefined,
+			details: process.env.NODE_ENV === 'development' ? error.message : undefined,
 		});
 		return;
 	}

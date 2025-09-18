@@ -40,9 +40,7 @@ try {
 
 	(fs as any).writeFileSync = (...args: any[]) => {
 		if (args && args.length > 0 && isBlocked(args[0])) {
-			throw new Error(
-				`Blocked writing image file during tests: ${String(args[0])}`,
-			);
+			throw new Error(`Blocked writing image file during tests: ${String(args[0])}`);
 		}
 		return origWriteFileSync(...args);
 	};
@@ -54,17 +52,13 @@ try {
 				const cb = args?.[args.length - 1];
 				if (typeof cb === 'function') {
 					const err = Object.assign(
-						new Error(
-							`Blocked writing image file during tests: ${String(target)}`,
-						),
+						new Error(`Blocked writing image file during tests: ${String(target)}`),
 						{ code: 'EACCES' },
 					) as NodeJS.ErrnoException;
 					(cb as (e: NodeJS.ErrnoException | null) => void)(err);
 					return;
 				}
-				throw new Error(
-					`Blocked writing image file during tests: ${String(target)}`,
-				);
+				throw new Error(`Blocked writing image file during tests: ${String(target)}`);
 			}
 		} catch {
 			// swallow callback errors to mimic fs.writeFile behaviour in tests

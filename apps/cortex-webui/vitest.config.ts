@@ -8,10 +8,7 @@ const FRONTEND_SRC = resolve(ROOT, 'frontend', 'src');
 export default defineConfig({
 	root: ROOT,
 	test: {
-		include: [
-			'**/__tests__/**/*.{test,spec}.{ts,tsx}',
-			'**/__tests__/**/*.a11y.test.{ts,tsx}',
-		],
+		include: ['**/__tests__/**/*.{test,spec}.{ts,tsx}', '**/__tests__/**/*.a11y.test.{ts,tsx}'],
 		environment: 'jsdom',
 		setupFiles: ['./__tests__/setup.ts'],
 		globals: true,

@@ -15,10 +15,7 @@ const NotificationsContainer: React.FC = () => {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 
 	// Function to add a new notification
-	const addNotification = (
-		type: 'success' | 'error' | 'warning' | 'info',
-		message: string,
-	) => {
+	const addNotification = (type: 'success' | 'error' | 'warning' | 'info', message: string) => {
 		const id = Math.random().toString(36).substr(2, 9);
 		const newNotification: Notification = {
 			id,
@@ -32,9 +29,7 @@ const NotificationsContainer: React.FC = () => {
 
 	// Function to remove a notification
 	const removeNotification = (id: string) => {
-		setNotifications((prev) =>
-			prev.filter((notification) => notification.id !== id),
-		);
+		setNotifications((prev) => prev.filter((notification) => notification.id !== id));
 	};
 
 	// Expose addNotification to global scope for easy access

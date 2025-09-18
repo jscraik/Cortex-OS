@@ -16,10 +16,7 @@ interface ArtifactsProps {
 	onArtifactSelect?: (artifact: Artifact) => void;
 }
 
-const Artifacts: React.FC<ArtifactsProps> = ({
-	artifacts,
-	onArtifactSelect,
-}) => {
+const Artifacts: React.FC<ArtifactsProps> = ({ artifacts, onArtifactSelect }) => {
 	if (artifacts.length === 0) return null;
 
 	const getTypeIcon = (type: string) => {
@@ -101,10 +98,7 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 
 	return (
 		<div className="artifacts">
-			<Collapsible
-				title={`Artifacts (${artifacts.length})`}
-				defaultOpen={false}
-			>
+			<Collapsible title={`Artifacts (${artifacts.length})`} defaultOpen={false}>
 				<div className="space-y-2">
 					{artifacts.map((artifact) => (
 						<button
@@ -119,12 +113,8 @@ const Artifacts: React.FC<ArtifactsProps> = ({
 						>
 							<div className="flex-shrink-0">{getTypeIcon(artifact.type)}</div>
 							<div className="ml-3 flex-1 min-w-0">
-								<p className="text-sm font-medium text-gray-900 truncate">
-									{artifact.name}
-								</p>
-								<p className="text-xs text-gray-500">
-									{artifact.timestamp.toLocaleDateString()}
-								</p>
+								<p className="text-sm font-medium text-gray-900 truncate">{artifact.name}</p>
+								<p className="text-xs text-gray-500">{artifact.timestamp.toLocaleDateString()}</p>
 							</div>
 						</button>
 					))}

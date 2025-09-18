@@ -3,10 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
 import client from 'prom-client';
 import { z } from 'zod';
-import {
-	type AdvancedPolicyRouter,
-	createAdvancedPolicyRouter,
-} from './advanced-policy-router.js';
+import { type AdvancedPolicyRouter, createAdvancedPolicyRouter } from './advanced-policy-router.js';
 import { auditEvent, record } from './audit.js';
 import { createModelRouter, type IModelRouter } from './model-router.js';
 import { enforce, loadGrant } from './policy.js';
@@ -95,10 +92,7 @@ export function createServer(
 		} catch (error) {
 			return reply.status(500).send({
 				success: false,
-				error:
-					error instanceof Error
-						? error.message
-						: 'Failed to reinitialize router',
+				error: error instanceof Error ? error.message : 'Failed to reinitialize router',
 			});
 		}
 	});
@@ -164,8 +158,7 @@ export function createServer(
 			reqCounter.inc({ route: 'embeddings', status: '403' });
 			endTimer();
 			return reply.status(403).send({
-				error:
-					error instanceof Error ? error.message : 'Policy enforcement failed',
+				error: error instanceof Error ? error.message : 'Policy enforcement failed',
 			});
 		}
 
@@ -204,9 +197,7 @@ export function createServer(
 				modelUsed = result.model;
 			}
 
-			const evidence = buildEvidence(
-				body.texts.slice(0, 3).map((t) => ({ text: t })),
-			);
+			const evidence = buildEvidence(body.texts.slice(0, 3).map((t) => ({ text: t })));
 			const resBody = {
 				vectors,
 				dimensions: vectors[0]?.length || 0,
@@ -221,8 +212,7 @@ export function createServer(
 			reqCounter.inc({ route: 'embeddings', status: '500' });
 			endTimer();
 			return reply.status(500).send({
-				error:
-					error instanceof Error ? error.message : 'Unknown embedding error',
+				error: error instanceof Error ? error.message : 'Unknown embedding error',
 			});
 		}
 	});
@@ -254,8 +244,7 @@ export function createServer(
 			reqCounter.inc({ route: 'rerank', status: '403' });
 			endTimer();
 			return reply.status(403).send({
-				error:
-					error instanceof Error ? error.message : 'Policy enforcement failed',
+				error: error instanceof Error ? error.message : 'Policy enforcement failed',
 			});
 		}
 
@@ -305,8 +294,7 @@ export function createServer(
 			reqCounter.inc({ route: 'rerank', status: '500' });
 			endTimer();
 			return reply.status(500).send({
-				error:
-					error instanceof Error ? error.message : 'Unknown reranking error',
+				error: error instanceof Error ? error.message : 'Unknown reranking error',
 			});
 		}
 	});
@@ -338,8 +326,7 @@ export function createServer(
 			reqCounter.inc({ route: 'chat', status: '403' });
 			endTimer();
 			return reply.status(403).send({
-				error:
-					error instanceof Error ? error.message : 'Policy enforcement failed',
+				error: error instanceof Error ? error.message : 'Policy enforcement failed',
 			});
 		}
 
@@ -376,9 +363,7 @@ export function createServer(
 				content: result.content,
 				modelUsed: result.model,
 				evidence: buildEvidence(
-					[lastUser?.content && { text: lastUser.content }].filter(
-						Boolean,
-					) as any,
+					[lastUser?.content && { text: lastUser.content }].filter(Boolean) as any,
 				),
 			};
 			reqCounter.inc({ route: 'chat', status: '200' });
@@ -397,9 +382,7 @@ export function createServer(
 	return app;
 }
 
-export async function start(
-	port = Number(process.env.MODEL_GATEWAY_PORT || 8081),
-) {
+export async function start(port = Number(process.env.MODEL_GATEWAY_PORT || 8081)) {
 	const modelRouter = createModelRouter();
 	const policyRouter = createAdvancedPolicyRouter(
 		process.env.POLICY_CONFIG_PATH || './policy-config.json',
@@ -412,13 +395,9 @@ export async function start(
 
 		// Log privacy mode status
 		if (modelRouter.isPrivacyModeEnabled()) {
-			console.warn(
-				'🔒 Privacy mode is ENABLED. Only local MLX models will be used.',
-			);
+			console.warn('🔒 Privacy mode is ENABLED. Only local MLX models will be used.');
 		} else {
-			console.warn(
-				'🔓 Privacy mode is DISABLED. All available providers will be used.',
-			);
+			console.warn('🔓 Privacy mode is DISABLED. All available providers will be used.');
 		}
 	} catch (error) {
 		console.error('Failed to initialize ModelRouter:', error);
@@ -443,9 +422,7 @@ export async function start(
 
 	// Log privacy mode status after startup
 	if (modelRouter.isPrivacyModeEnabled()) {
-		app.log.info(
-			'🔒 Privacy mode is ACTIVE. Only local MLX models will be used.',
-		);
+		app.log.info('🔒 Privacy mode is ACTIVE. Only local MLX models will be used.');
 	}
 
 	return app;

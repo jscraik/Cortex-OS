@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-	createEnvelope,
-	type Envelope,
-} from '../a2a-contracts/src/envelope.js';
+import { createEnvelope, type Envelope } from '../a2a-contracts/src/envelope.js';
 import type { OutboxRepository } from '../a2a-contracts/src/outbox-types';
 import { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
 import { createA2AOutboxIntegration } from './outbox-integration.js';

@@ -29,11 +29,7 @@ export class TimeoutError extends Error {
 	}
 }
 
-function withTimeout<T>(
-	p: Promise<T>,
-	ms: number | undefined,
-	label: string,
-): Promise<T> {
+function withTimeout<T>(p: Promise<T>, ms: number | undefined, label: string): Promise<T> {
 	if (!ms || ms <= 0) return p;
 	return new Promise<T>((resolve, reject) => {
 		const timer = setTimeout(
@@ -128,8 +124,7 @@ export async function createEnhancedClient(
 			};
 		}
 		case 'ws': {
-			if (!server.endpoint)
-				throw new Error('endpoint required for ws transport');
+			if (!server.endpoint) throw new Error('endpoint required for ws transport');
 			const WS = getWebSocket();
 			const socket = new WS(server.endpoint);
 			let open = false;
@@ -265,11 +260,7 @@ export async function createEnhancedClient(
 				if (!pending.length) return; // graceful exit, nothing pending
 				queueMicrotask(() => {
 					while (pending.length)
-						pending
-							.shift()
-							?.reject(
-								new Error('child exited before responding to all requests'),
-							);
+						pending.shift()?.reject(new Error('child exited before responding to all requests'));
 				});
 			});
 

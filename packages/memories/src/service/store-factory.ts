@@ -58,10 +58,8 @@ export function createPolicyStoreFromEnv(
 		.map((s) => s.trim())
 		.filter(Boolean);
 	const regex = process.env.MEMORIES_ENCRYPTION_REGEX || '';
-	const encryptVectors =
-		(process.env.MEMORIES_ENCRYPT_VECTORS || 'false').toLowerCase() === 'true';
-	const encryptTags =
-		(process.env.MEMORIES_ENCRYPT_TAGS || 'false').toLowerCase() === 'true';
+	const encryptVectors = (process.env.MEMORIES_ENCRYPT_VECTORS || 'false').toLowerCase() === 'true';
+	const encryptTags = (process.env.MEMORIES_ENCRYPT_TAGS || 'false').toLowerCase() === 'true';
 
 	const selector = buildNamespaceSelector({
 		namespaces,
@@ -82,12 +80,8 @@ export type LayeredEnvOptions = {
 
 // Build layered store from env: MEMORIES_SHORT_STORE, MEMORIES_LONG_STORE
 // Kinds: memory | sqlite | prisma | local
-export function createLayeredStoreFromEnv(
-	opts?: LayeredEnvOptions,
-): MemoryStore {
-	const shortKind = (
-		process.env.MEMORIES_SHORT_STORE || 'memory'
-	).toLowerCase();
+export function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): MemoryStore {
+	const shortKind = (process.env.MEMORIES_SHORT_STORE || 'memory').toLowerCase();
 	const longKind =
 		(
 			process.env.MEMORIES_LONG_STORE ||
@@ -120,10 +114,7 @@ export function createLayeredStoreFromEnv(
 						__MEMORIES_PRISMA_CLIENT__?: { memory?: unknown };
 					}
 				).__MEMORIES_PRISMA_CLIENT__;
-			if (
-				!prismaUnknown ||
-				!(prismaUnknown as Record<string, unknown>).memory
-			) {
+			if (!prismaUnknown || !(prismaUnknown as Record<string, unknown>).memory) {
 				throw new Error('Prisma client not provided for layered store.');
 			}
 			// Cast to PrismaLike to ensure required shape
@@ -139,9 +130,7 @@ export function createLayeredStoreFromEnv(
 }
 
 // Build policy-aware layered store using both layered and encryption env
-export function createPolicyAwareStoreFromEnv(
-	opts?: LayeredEnvOptions,
-): MemoryStore {
+export function createPolicyAwareStoreFromEnv(opts?: LayeredEnvOptions): MemoryStore {
 	const layered = createLayeredStoreFromEnv(opts);
 	return createPolicyStoreFromEnv(layered, layered);
 }

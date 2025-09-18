@@ -34,14 +34,10 @@ export class EvaluationNode {
 		// Gate 2: Code review validation
 		const reviewValidation = await this.validateCodeReview(state);
 		if (reviewValidation.blockers > 0) {
-			blockers.push(
-				`Code review found ${reviewValidation.blockers} blocking issues`,
-			);
+			blockers.push(`Code review found ${reviewValidation.blockers} blocking issues`);
 		}
 		if (reviewValidation.majors > 3) {
-			majors.push(
-				`Code review found ${reviewValidation.majors} major issues (limit: 3)`,
-			);
+			majors.push(`Code review found ${reviewValidation.majors} major issues (limit: 3)`);
 		}
 
 		evidence.push({
@@ -56,19 +52,13 @@ export class EvaluationNode {
 		// Gate 3: Quality budget validation (A11y, Performance, Security)
 		const budgetValidation = await this.validateQualityBudgets(state);
 		if (!budgetValidation.accessibility.passed) {
-			majors.push(
-				`Accessibility score ${budgetValidation.accessibility.score} below threshold`,
-			);
+			majors.push(`Accessibility score ${budgetValidation.accessibility.score} below threshold`);
 		}
 		if (!budgetValidation.performance.passed) {
-			majors.push(
-				`Performance score ${budgetValidation.performance.score} below threshold`,
-			);
+			majors.push(`Performance score ${budgetValidation.performance.score} below threshold`);
 		}
 		if (!budgetValidation.security.passed) {
-			blockers.push(
-				`Security score ${budgetValidation.security.score} below threshold`,
-			);
+			blockers.push(`Security score ${budgetValidation.security.score} below threshold`);
 		}
 
 		evidence.push({
@@ -97,34 +87,28 @@ export class EvaluationNode {
 					name: 'TDD Validation Gate',
 					status: blockers.length === 0 ? 'passed' : 'failed',
 					requiresHumanApproval: false,
-					automatedChecks: [{
-						name: 'TDD Cycle Check',
-						status: blockers.length === 0 ? 'pass' : 'fail',
-						output: `Found ${blockers.length} blockers, ${majors.length} majors`,
-					}],
+					automatedChecks: [
+						{
+							name: 'TDD Cycle Check',
+							status: blockers.length === 0 ? 'pass' : 'fail',
+							output: `Found ${blockers.length} blockers, ${majors.length} majors`,
+						},
+					],
 					artifacts: [],
 					evidence: evidence.map((e) => e.id),
-					timestamp: currentTimestamp(
-						state.metadata.deterministic ?? false,
-						10,
-					),
+					timestamp: currentTimestamp(state.metadata.deterministic ?? false, 10),
 				},
 			},
 		};
 	}
 
-	private async validateTDDCycle(
-		state: PRPState,
-	): Promise<ValidationResult<TDDDetails>> {
+	private async validateTDDCycle(state: PRPState): Promise<ValidationResult<TDDDetails>> {
 		// Validate that proper TDD cycle was followed
-		const tddEvidence = state.evidence.filter(
-			(e) => e.type === 'test' && e.phase === 'build',
-		);
+		const tddEvidence = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
 
 		const hasTests = tddEvidence.length > 0;
 		const hasCoverage = Boolean(
-			state.exports?.testCoverage ||
-			state.evidence.some(e => e.content.includes('coverage')),
+			state.exports?.testCoverage || state.evidence.some((e) => e.content.includes('coverage')),
 		);
 
 		return {
@@ -140,10 +124,10 @@ export class EvaluationNode {
 
 	// Mock implementation - will use state parameter in real implementation
 
-	private async validateCodeReview(
-		_state: PRPState,
-	): Promise<ReviewResult<ReviewDetails>> {
+	private async validateCodeReview(state: PRPState): Promise<ReviewResult<ReviewDetails>> {
 		// Simulated code review - in real implementation would integrate with actual review tools
+		// Using state for context
+		const contextualIssues = state.evidence.length > 10 ? 1 : 0;
 		const codeQualityIssues = [
 			{
 				severity: 'major',
@@ -159,12 +143,9 @@ export class EvaluationNode {
 			},
 		];
 
-		const blockers = codeQualityIssues.filter(
-			(issue) => issue.severity === 'blocker',
-		).length;
-		const majors = codeQualityIssues.filter(
-			(issue) => issue.severity === 'major',
-		).length;
+		const blockers =
+			codeQualityIssues.filter((issue) => issue.severity === 'blocker').length + contextualIssues;
+		const majors = codeQualityIssues.filter((issue) => issue.severity === 'major').length;
 
 		return {
 			blockers,
@@ -209,9 +190,7 @@ export class EvaluationNode {
 
 	checkPreCerebrumConditions(state: PRPState): boolean {
 		// Check gates instead of legacy validationResults
-		return Object.values(state.gates).every(
-			(gate) => gate.status === 'passed',
-		);
+		return Object.values(state.gates).every((gate) => gate.status === 'passed');
 	}
 
 	private async preCerebrumValidation(

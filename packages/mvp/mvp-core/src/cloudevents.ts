@@ -20,9 +20,7 @@ export interface CloudEventInit<T = unknown> {
 	datacontenttype?: string;
 }
 
-export const createCloudEvent = <T>(
-	init: CloudEventInit<T>,
-): CloudEvent<T> => ({
+export const createCloudEvent = <T>(init: CloudEventInit<T>): CloudEvent<T> => ({
 	specversion: '1.0',
 	id: init.id ?? randomUUID(),
 	source: init.source,

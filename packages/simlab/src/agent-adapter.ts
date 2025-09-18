@@ -4,11 +4,7 @@
  */
 
 // Import PRP runner from package boundary (avoid deep relative imports)
-import {
-	type Blueprint,
-	createPRPOrchestrator,
-	type Neuron,
-} from '@cortex-os/prp-runner';
+import { type Blueprint, createPRPOrchestrator, type Neuron } from '@cortex-os/prp-runner';
 import { agentRequestSchema } from './schemas.js';
 import type { SimScenario, SimTurn } from './types.js';
 
@@ -35,9 +31,7 @@ export interface PRPExecutor {
  * default for tests.
  */
 export class AgentAdapter {
-	constructor(
-		private readonly executor: PRPExecutor = new BasicPRPExecutor(),
-	) {}
+	constructor(private readonly executor: PRPExecutor = new BasicPRPExecutor()) {}
 
 	async execute(request: AgentRequest): Promise<AgentResponse> {
 		const parsed = agentRequestSchema.parse(request);
@@ -45,9 +39,7 @@ export class AgentAdapter {
 			const result = await this.executor.executePRP(parsed);
 			return {
 				content: result.content,
-				completed:
-					result.completed ??
-					this.isGoalAchieved(result.content, parsed.scenario),
+				completed: result.completed ?? this.isGoalAchieved(result.content, parsed.scenario),
 				metadata: {
 					...result.metadata,
 					prpVersion: '1.0.0',
@@ -62,8 +54,7 @@ export class AgentAdapter {
 				completed: false,
 				metadata: {
 					error: true,
-					errorMessage:
-						error instanceof Error ? error.message : 'Unknown error',
+					errorMessage: error instanceof Error ? error.message : 'Unknown error',
 				},
 			};
 		}
@@ -95,13 +86,10 @@ class BasicPRPExecutor implements PRPExecutor {
 		const lowerMsg = userMessage.toLowerCase();
 
 		// Avoid repeating identical agent responses
-		const lastAgentTurn = [...conversationHistory]
-			.reverse()
-			.find((t) => t.role === 'agent');
+		const lastAgentTurn = [...conversationHistory].reverse().find((t) => t.role === 'agent');
 		if (lastAgentTurn && lastAgentTurn.content.toLowerCase() === lowerMsg) {
 			return {
-				content:
-					"It looks like we've already covered that. Is there anything else you need?",
+				content: "It looks like we've already covered that. Is there anything else you need?",
 			};
 		}
 
@@ -119,8 +107,7 @@ class BasicPRPExecutor implements PRPExecutor {
 			case 'info':
 				if (/[?]/.test(userMessage)) {
 					return {
-						content:
-							"Here's the information you requested: [placeholder details].",
+						content: "Here's the information you requested: [placeholder details].",
 					};
 				}
 				return {

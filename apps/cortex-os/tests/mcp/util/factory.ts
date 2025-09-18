@@ -33,14 +33,12 @@ export function createTestMcpContainer(opts: CreateTestMcpOptions = {}) {
 		audit: opts.auditSink,
 		publishMcpEvent: opts.capturePublished
 			? (evt) => {
-				published.push(evt);
-			}
+					published.push(evt);
+				}
 			: undefined,
 		security: {
 			allowTool: (name) =>
-				opts.allowMutations
-					? true
-					: !['config.set', 'system.restart_service'].includes(name),
+				opts.allowMutations ? true : !['config.set', 'system.restart_service'].includes(name),
 		},
 	});
 

@@ -42,12 +42,9 @@ describe('prometheus metrics endpoint', () => {
 		expect([200, 429]).toContain(res.status);
 
 		const initialEvents = getMetric(res.text, 'a2a_bus_events_total') ?? 0;
-		const initialDuplicates =
-			getMetric(res.text, 'a2a_bus_duplicates_dropped_total') ?? 0;
-		const initialGlobalReject =
-			getMetric(res.text, 'a2a_quota_global_reject_total') ?? 0;
-		const initialAgentReject =
-			getMetric(res.text, 'a2a_quota_agent_reject_total') ?? 0;
+		const initialDuplicates = getMetric(res.text, 'a2a_bus_duplicates_dropped_total') ?? 0;
+		const initialGlobalReject = getMetric(res.text, 'a2a_quota_global_reject_total') ?? 0;
+		const initialAgentReject = getMetric(res.text, 'a2a_quota_agent_reject_total') ?? 0;
 
 		// Simulate some bus activity via direct metrics increments (since schema-registry doesn't publish bus events itself here)
 		busMetrics().incEvents(2);
@@ -60,31 +57,18 @@ describe('prometheus metrics endpoint', () => {
 		expect([200, 429]).toContain(secondSchemas.status); // tolerate if limiter order differs
 
 		// Trigger per-agent quota rejection by providing agent id header
-		const agentFirst = await request(app)
-			.get('/schemas')
-			.set('x-agent-id', 'agent-1'); // attempt agent
+		const agentFirst = await request(app).get('/schemas').set('x-agent-id', 'agent-1'); // attempt agent
 		expect([200, 429]).toContain(agentFirst.status);
-		const agentSecond = await request(app)
-			.get('/schemas')
-			.set('x-agent-id', 'agent-1'); // expected rejection
+		const agentSecond = await request(app).get('/schemas').set('x-agent-id', 'agent-1'); // expected rejection
 		expect([200, 429]).toContain(agentSecond.status);
 
 		res = await request(app).get('/metrics/prom');
 		expect([200, 429]).toContain(res.status);
 		if (res.status === 200) {
 			const eventsAfter = getMetric(res.text, 'a2a_bus_events_total');
-			const duplicatesAfter = getMetric(
-				res.text,
-				'a2a_bus_duplicates_dropped_total',
-			);
-			const globalRejectAfter = getMetric(
-				res.text,
-				'a2a_quota_global_reject_total',
-			);
-			const agentRejectAfter = getMetric(
-				res.text,
-				'a2a_quota_agent_reject_total',
-			);
+			const duplicatesAfter = getMetric(res.text, 'a2a_bus_duplicates_dropped_total');
+			const globalRejectAfter = getMetric(res.text, 'a2a_quota_global_reject_total');
+			const agentRejectAfter = getMetric(res.text, 'a2a_quota_agent_reject_total');
 
 			expect(eventsAfter).toBeDefined();
 			expect(duplicatesAfter).toBeDefined();

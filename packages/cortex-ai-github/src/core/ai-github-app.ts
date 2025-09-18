@@ -197,11 +197,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 		const startTime = Date.now();
 
 		try {
-			this.emit(
-				'task:started',
-				taskId,
-				taskParams.model ?? this.config.defaultModel,
-			);
+			this.emit('task:started', taskId, taskParams.model ?? this.config.defaultModel);
 
 			const messages = this.buildTaskMessages(taskParams);
 			const model = taskParams.model ?? this.config.defaultModel;
@@ -236,11 +232,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 				error: error instanceof Error ? error.message : String(error),
 			};
 
-			this.emit(
-				'task:failed',
-				taskId,
-				error instanceof Error ? error : new Error(String(error)),
-			);
+			this.emit('task:failed', taskId, error instanceof Error ? error : new Error(String(error)));
 			this.emit('task:completed', failureResult);
 		} finally {
 			this.activeRequests.delete(taskId);
@@ -279,9 +271,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 		if (!response.ok) {
 			// Update rate limit info from headers
 			this.updateRateLimitInfo(response.headers);
-			throw new Error(
-				`GitHub Models API error: ${response.status} ${response.statusText}`,
-			);
+			throw new Error(`GitHub Models API error: ${response.status} ${response.statusText}`);
 		}
 
 		this.updateRateLimitInfo(response.headers);
@@ -303,10 +293,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 			},
 		];
 
-		const contextMessage = this.buildContextMessage(
-			params.githubContext,
-			params.taskType,
-		);
+		const contextMessage = this.buildContextMessage(params.githubContext, params.taskType);
 		baseMessages.push(contextMessage);
 
 		if (params.instructions) {
@@ -323,10 +310,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 		return SYSTEM_PROMPTS[taskType] || SYSTEM_PROMPTS.code_review;
 	}
 
-	private buildPrSection(
-		pr: GitHubContext['pr'],
-		includePatch: boolean,
-	): string {
+	private buildPrSection(pr: GitHubContext['pr'], includePatch: boolean): string {
 		if (!pr) return 'Pull Request: Not available\n';
 		let section = `Pull Request #${pr.number}: ${pr.title}\n`;
 		section += `Description: ${pr.body || 'No description'}\n`;
@@ -362,16 +346,10 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 		}\nAuthor: ${commit.author || 'Unknown'}\n\n`;
 	}
 
-	private buildContextMessage(
-		context: GitHubContext,
-		taskType: AITaskType,
-	): ModelMessage {
+	private buildContextMessage(context: GitHubContext, taskType: AITaskType): ModelMessage {
 		let content = `Repository: ${context.owner}/${context.repo}\n\n`;
 
-		if (
-			context.pr &&
-			['code_review', 'pr_analysis', 'security_scan'].includes(taskType)
-		) {
+		if (context.pr && ['code_review', 'pr_analysis', 'security_scan'].includes(taskType)) {
 			content += this.buildPrSection(context.pr, taskType === 'code_review');
 		}
 
@@ -389,10 +367,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 		};
 	}
 
-	private parseTaskResult(
-		_taskType: AITaskType,
-		content: string,
-	): AITaskResult['result'] {
+	private parseTaskResult(_taskType: AITaskType, content: string): AITaskResult['result'] {
 		const lines = content
 			.split('\n')
 			.map((line) => line.trim())
@@ -446,11 +421,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 			this.rateLimitInfo.resetAt = new Date(parseInt(resetTime, 10) * 1000);
 		}
 
-		this.emit(
-			'rate_limit',
-			this.rateLimitInfo.remaining,
-			this.rateLimitInfo.resetAt,
-		);
+		this.emit('rate_limit', this.rateLimitInfo.remaining, this.rateLimitInfo.resetAt);
 	}
 
 	// Public getters for monitoring

@@ -4,12 +4,8 @@ import { z } from 'zod';
 const CreateReviewInputSchema = z.object({
 	repositoryUrl: z.string().url(),
 	pullRequestId: z.string().optional(),
-	scope: z
-		.enum(['full', 'incremental', 'security-only'])
-		.default('incremental'),
-	reviewers: z
-		.array(z.enum(['ai', 'security', 'performance', 'architecture']))
-		.optional(),
+	scope: z.enum(['full', 'incremental', 'security-only']).default('incremental'),
+	reviewers: z.array(z.enum(['ai', 'security', 'performance', 'architecture'])).optional(),
 });
 
 const GetReviewStatusInputSchema = z.object({
@@ -28,9 +24,7 @@ const SubmitFeedbackInputSchema = z.object({
 });
 
 const ListReviewsInputSchema = z.object({
-	status: z
-		.enum(['pending', 'in-progress', 'completed', 'cancelled'])
-		.optional(),
+	status: z.enum(['pending', 'in-progress', 'completed', 'cancelled']).optional(),
 	reviewer: z.string().optional(),
 	limit: z.number().int().positive().max(100).default(20),
 });

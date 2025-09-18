@@ -28,10 +28,7 @@ export class RedisRateLimiter {
 	async connect(): Promise<void> {
 		if (this.isConnected) return;
 
-		const redisUrl =
-			this.options.redisUrl ||
-			process.env.REDIS_URL ||
-			'redis://localhost:6379';
+		const redisUrl = this.options.redisUrl || process.env.REDIS_URL || 'redis://localhost:6379';
 		this.client = createClient({ url: redisUrl });
 
 		this.client.on('error', (err: any) => {
@@ -54,11 +51,7 @@ export class RedisRateLimiter {
 		}
 	}
 
-	async rateLimiter(
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> {
+	async rateLimiter(req: Request, res: Response, next: NextFunction): Promise<void> {
 		if (!this.isConnected || !this.client) {
 			// Fallback to in-memory rate limiter if Redis is not available
 			this.fallbackRateLimiter(req, res, next);
@@ -131,11 +124,7 @@ end
 	// In-memory fallback implementation
 	private requestMap = new Map<string, RequestRecord>();
 
-	private fallbackRateLimiter(
-		req: Request,
-		res: Response,
-		next: NextFunction,
-	): void {
+	private fallbackRateLimiter(req: Request, res: Response, next: NextFunction): void {
 		const limit = this.options.limit || 5;
 		const windowMs = this.options.windowMs || 60_000;
 
@@ -161,9 +150,7 @@ end
 
 		record.count += 1;
 		if (record.count > limit) {
-			const retryAfter = Math.ceil(
-				(record.startTime + windowMs - currentTime) / 1000,
-			);
+			const retryAfter = Math.ceil((record.startTime + windowMs - currentTime) / 1000);
 			res.setHeader('Retry-After', retryAfter);
 			res.status(429).send('Too Many Requests');
 		} else {
@@ -177,10 +164,7 @@ export function createRedisRateLimiter(options: RedisRateLimiterOptions = {}) {
 
 	// Attempt to connect to Redis
 	limiter.connect().catch((error) => {
-		console.warn(
-			'Failed to connect to Redis for rate limiting, falling back to in-memory:',
-			error,
-		);
+		console.warn('Failed to connect to Redis for rate limiting, falling back to in-memory:', error);
 	});
 
 	return limiter.rateLimiter.bind(limiter);

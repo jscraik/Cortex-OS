@@ -8,14 +8,8 @@
  * @maintainer @jamiescottcraik
  */
 
-import {
-	type AICoreCapabilities,
-	createAICapabilities,
-} from './ai-capabilities.js';
-import {
-	type ASBRAIIntegration,
-	createASBRAIIntegration,
-} from './asbr-ai-integration.js';
+import { type AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
+import { type ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 
 /**
  * MCP Tool Definition for ASBR AI Capabilities
@@ -101,9 +95,7 @@ export class ASBRAIMcpServer {
 		try {
 			await this.initialize();
 		} catch (error) {
-			console.warn(
-				`⚠️ ASBR AI MCP Server initialized in degraded test mode: ${error}`,
-			);
+			console.warn(`⚠️ ASBR AI MCP Server initialized in degraded test mode: ${error}`);
 			this.isInitialized = true;
 		}
 	}
@@ -146,8 +138,7 @@ export class ASBRAIMcpServer {
 			},
 			{
 				name: 'ai_search_knowledge',
-				description:
-					'Search through the knowledge base using semantic similarity',
+				description: 'Search through the knowledge base using semantic similarity',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -234,8 +225,7 @@ export class ASBRAIMcpServer {
 			},
 			{
 				name: 'ai_get_embedding',
-				description:
-					'Generate embeddings for a given text using Qwen3-Embedding model',
+				description: 'Generate embeddings for a given text using Qwen3-Embedding model',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -249,8 +239,7 @@ export class ASBRAIMcpServer {
 			},
 			{
 				name: 'asbr_collect_enhanced_evidence',
-				description:
-					'Collect and enhance evidence using AI analysis for ASBR integration',
+				description: 'Collect and enhance evidence using AI analysis for ASBR integration',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -310,8 +299,7 @@ export class ASBRAIMcpServer {
 			},
 			{
 				name: 'ai_get_capabilities',
-				description:
-					'Get information about available AI capabilities and system status',
+				description: 'Get information about available AI capabilities and system status',
 				inputSchema: {
 					type: 'object',
 					properties: {},
@@ -438,10 +426,7 @@ export class ASBRAIMcpServer {
 	}
 
 	private async handleAddKnowledge(args: any): Promise<MCPToolCallResponse> {
-		const ids = await this.aiCapabilities.addKnowledge(
-			args.documents,
-			args.metadata,
-		);
+		const ids = await this.aiCapabilities.addKnowledge(args.documents, args.metadata);
 
 		return {
 			content: [
@@ -487,13 +472,8 @@ export class ASBRAIMcpServer {
 		};
 	}
 
-	private async handleCalculateSimilarity(
-		args: any,
-	): Promise<MCPToolCallResponse> {
-		const similarity = await this.aiCapabilities.calculateSimilarity(
-			args.text1,
-			args.text2,
-		);
+	private async handleCalculateSimilarity(args: any): Promise<MCPToolCallResponse> {
+		const similarity = await this.aiCapabilities.calculateSimilarity(args.text1, args.text2);
 
 		return {
 			content: [
@@ -543,9 +523,7 @@ export class ASBRAIMcpServer {
 		};
 	}
 
-	private async handleCollectEnhancedEvidence(
-		args: any,
-	): Promise<MCPToolCallResponse> {
+	private async handleCollectEnhancedEvidence(args: any): Promise<MCPToolCallResponse> {
 		const context = {
 			taskId: args.taskId,
 			claim: args.claim,
@@ -556,10 +534,7 @@ export class ASBRAIMcpServer {
 			includeContent: args.includeContent,
 		};
 
-		const result = await this.asbrIntegration.collectEnhancedEvidence(
-			context,
-			options,
-		);
+		const result = await this.asbrIntegration.collectEnhancedEvidence(context, options);
 
 		return {
 			content: [
@@ -584,9 +559,7 @@ export class ASBRAIMcpServer {
 		};
 	}
 
-	private async handleFactCheckEvidence(
-		args: any,
-	): Promise<MCPToolCallResponse> {
+	private async handleFactCheckEvidence(args: any): Promise<MCPToolCallResponse> {
 		const evidence = {
 			id: args.evidenceId,
 			taskId: args.taskId,
@@ -622,9 +595,7 @@ export class ASBRAIMcpServer {
 		};
 	}
 
-	private async handleGetCapabilities(
-		_args: any,
-	): Promise<MCPToolCallResponse> {
+	private async handleGetCapabilities(_args: any): Promise<MCPToolCallResponse> {
 		try {
 			const capabilities = await this.aiCapabilities.getCapabilities();
 
@@ -677,9 +648,7 @@ export class ASBRAIMcpServer {
 		}
 	}
 
-	private async handleGetKnowledgeStats(
-		_args: any,
-	): Promise<MCPToolCallResponse> {
+	private async handleGetKnowledgeStats(_args: any): Promise<MCPToolCallResponse> {
 		const stats = this.aiCapabilities.getKnowledgeStats();
 
 		return {

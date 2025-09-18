@@ -1,7 +1,4 @@
-import type {
-	AgentToolkitSearchInput,
-	AgentToolkitSearchResult,
-} from '@cortex-os/contracts';
+import type { AgentToolkitSearchInput, AgentToolkitSearchResult } from '@cortex-os/contracts';
 import {
 	AgentToolkitSearchInputSchema,
 	AgentToolkitSearchResultSchema,
@@ -94,10 +91,7 @@ export class SemgrepAdapter implements SearchTool {
 
 		await this.adapter.validateScript();
 
-		const result = await this.adapter.executeScript([
-			validatedInput.pattern,
-			validatedInput.path,
-		]);
+		const result = await this.adapter.executeScript([validatedInput.pattern, validatedInput.path]);
 
 		const enrichedResult = {
 			...(result as object),
@@ -154,10 +148,7 @@ export class AstGrepAdapter implements SearchTool {
 
 		await this.adapter.validateScript();
 
-		const result = await this.adapter.executeScript([
-			validatedInput.pattern,
-			validatedInput.path,
-		]);
+		const result = await this.adapter.executeScript([validatedInput.pattern, validatedInput.path]);
 
 		const enrichedResult = {
 			...(result as object),

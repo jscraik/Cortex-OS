@@ -51,16 +51,11 @@ export function parseInsightsResponse(answer: string) {
 function extractSection(response: string, sectionName: string): string {
 	const sectionPattern = new RegExp(`${sectionName}[:\\s]*\\n([^#]+)`, 'gi');
 	const match = response.match(sectionPattern);
-	return match
-		? match[0].replace(new RegExp(`${sectionName}[:\\s]*\\n`, 'gi'), '').trim()
-		: '';
+	return match ? match[0].replace(new RegExp(`${sectionName}[:\\s]*\\n`, 'gi'), '').trim() : '';
 }
 
 function extractList(response: string, listName: string): string[] {
-	const listPattern = new RegExp(
-		`${listName}[:\\s]*\\n((?:[-*•\\d.]\\s*[^\\n]+\\n?)+)`,
-		'gi',
-	);
+	const listPattern = new RegExp(`${listName}[:\\s]*\\n((?:[-*•\\d.]\\s*[^\\n]+\\n?)+)`, 'gi');
 	const match = response.match(listPattern);
 	if (!match) return [];
 	return match[0]
@@ -97,6 +92,5 @@ export function generateFallbackInsights(
 	};
 }
 
-export const isEmptyAnswer = (answer: string) =>
-	!answer || answer.trim() === '';
+export const isEmptyAnswer = (answer: string) => !answer || answer.trim() === '';
 export const isInvalidSummary = (summary: string) => summary.length < 10;

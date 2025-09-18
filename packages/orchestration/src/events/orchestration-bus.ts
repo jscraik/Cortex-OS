@@ -1,8 +1,4 @@
-import {
-	createEnvelope,
-	type Envelope,
-	type TopicACL,
-} from '@cortex-os/a2a-contracts';
+import { createEnvelope, type Envelope, type TopicACL } from '@cortex-os/a2a-contracts';
 import { type BusOptions, createBus } from '@cortex-os/a2a-core/bus';
 import type { Transport } from '@cortex-os/a2a-core/transport';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
@@ -94,14 +90,10 @@ const DEFAULT_TOPIC_ACL: TopicACL = Object.freeze(
 ) as TopicACL;
 
 function cloneAcl(acl: TopicACL): TopicACL {
-	return Object.fromEntries(
-		Object.entries(acl).map(([topic, rule]) => [topic, { ...rule }]),
-	);
+	return Object.fromEntries(Object.entries(acl).map(([topic, rule]) => [topic, { ...rule }]));
 }
 
-function isOrchestrationEventType(
-	type: string,
-): type is OrchestrationEventType {
+function isOrchestrationEventType(type: string): type is OrchestrationEventType {
 	return type in ORCHESTRATION_EVENT_SCHEMAS;
 }
 
@@ -132,20 +124,12 @@ function validateEnvelope(envelope: Envelope): OrchestrationEventEnvelope {
 	return result;
 }
 
-export function createOrchestrationBus(
-	options: OrchestrationBusOptions = {},
-): OrchestrationBus {
+export function createOrchestrationBus(options: OrchestrationBusOptions = {}): OrchestrationBus {
 	const transport = options.transport ?? inproc();
 	const source = options.source ?? DEFAULT_SOURCE;
 	const acl = cloneAcl(options.acl ?? DEFAULT_TOPIC_ACL);
 
-	const bus = createBus(
-		transport,
-		validateEnvelope,
-		undefined,
-		acl,
-		options.busOptions,
-	);
+	const bus = createBus(transport, validateEnvelope, undefined, acl, options.busOptions);
 
 	return {
 		async publish<TType extends OrchestrationEventType>(

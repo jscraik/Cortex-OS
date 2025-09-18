@@ -138,10 +138,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 
 					try {
 						// Execute step with retry logic
-						currentContext = await this.executeStepWithRetry(
-							step,
-							currentContext,
-						);
+						currentContext = await this.executeStepWithRetry(step, currentContext);
 
 						// Mark step as executed
 						sagaContext.executedSteps.push(step.id);
@@ -165,8 +162,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 							span,
 						);
 					} catch (error) {
-						const err =
-							error instanceof Error ? error : new Error(String(error));
+						const err = error instanceof Error ? error : new Error(String(error));
 
 						logWithSpan(
 							'error',
@@ -192,11 +188,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 						}
 
 						// Perform compensation in reverse order
-						currentContext = await this.compensate(
-							sagaContext,
-							currentContext,
-							err,
-						);
+						currentContext = await this.compensate(sagaContext, currentContext, err);
 						compensationPerformed = true;
 
 						throw err;
@@ -241,10 +233,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 	/**
 	 * Execute a single step with retry logic
 	 */
-	private async executeStepWithRetry(
-		step: SagaStep<TCtx>,
-		context: TCtx,
-	): Promise<TCtx> {
+	private async executeStepWithRetry(step: SagaStep<TCtx>, context: TCtx): Promise<TCtx> {
 		const retryPolicy = step.retryPolicy || { maxRetries: 0, backoffMs: 1000 };
 		let lastError: Error | null = null;
 
@@ -289,10 +278,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 					});
 
 					if (step.compensate) {
-						currentContext = await step.compensate(
-							currentContext,
-							originalError,
-						);
+						currentContext = await step.compensate(currentContext, originalError);
 					}
 
 					logWithSpan(
@@ -353,9 +339,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 		}
 	}
 
-	private async resumeCompensation(
-		sagaContext: SagaContext,
-	): Promise<SagaResult<TCtx>> {
+	private async resumeCompensation(sagaContext: SagaContext): Promise<SagaResult<TCtx>> {
 		if (!this.contextStore) {
 			throw new Error('Context store required for saga resumption');
 		}
@@ -391,10 +375,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 							: new Error('Unknown error during saga execution');
 
 						if (step.compensate) {
-							currentContext = await step.compensate(
-								currentContext,
-								originalError,
-							);
+							currentContext = await step.compensate(currentContext, originalError);
 						}
 
 						logWithSpan(
@@ -459,9 +440,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 		}
 	}
 
-	private async resumeExecution(
-		sagaContext: SagaContext,
-	): Promise<SagaResult<TCtx>> {
+	private async resumeExecution(sagaContext: SagaContext): Promise<SagaResult<TCtx>> {
 		if (!this.contextStore) {
 			throw new Error('Context store required for saga resumption');
 		}
@@ -492,10 +471,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 
 					try {
 						// Execute step with retry logic
-						currentContext = await this.executeStepWithRetry(
-							step,
-							currentContext,
-						);
+						currentContext = await this.executeStepWithRetry(step, currentContext);
 
 						// Mark step as executed
 						sagaContext.executedSteps.push(step.id);
@@ -517,8 +493,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 							span,
 						);
 					} catch (error) {
-						const err =
-							error instanceof Error ? error : new Error(String(error));
+						const err = error instanceof Error ? error : new Error(String(error));
 
 						logWithSpan(
 							'error',
@@ -542,11 +517,7 @@ export class SagaOrchestrator<TCtx = unknown> {
 						await store.update(sagaContext.sagaId, sagaContext);
 
 						// Perform compensation in reverse order
-						currentContext = await this.compensate(
-							sagaContext,
-							currentContext,
-							err,
-						);
+						currentContext = await this.compensate(sagaContext, currentContext, err);
 
 						throw err;
 					}

@@ -199,8 +199,7 @@ export class AgentHealthMonitor extends EventEmitter {
 		// Update response time (moving average)
 		metrics.responseTime = result.responseTime;
 		metrics.averageResponseTime =
-			(metrics.averageResponseTime * (metrics.totalRequests - 1) +
-				result.responseTime) /
+			(metrics.averageResponseTime * (metrics.totalRequests - 1) + result.responseTime) /
 			metrics.totalRequests;
 
 		if (result.success) {
@@ -211,8 +210,7 @@ export class AgentHealthMonitor extends EventEmitter {
 		}
 
 		// Recalculate rates
-		metrics.successRate =
-			(metrics.totalRequests - metrics.totalFailures) / metrics.totalRequests;
+		metrics.successRate = (metrics.totalRequests - metrics.totalFailures) / metrics.totalRequests;
 		metrics.errorRate = metrics.totalFailures / metrics.totalRequests;
 
 		// Update health status
@@ -349,28 +347,20 @@ export class AgentHealthMonitor extends EventEmitter {
 
 		// Check response time
 		if (metrics.responseTime > status.thresholds.maxResponseTime) {
-			const penalty = Math.min(
-				30,
-				(metrics.responseTime / status.thresholds.maxResponseTime) * 10,
-			);
+			const penalty = Math.min(30, (metrics.responseTime / status.thresholds.maxResponseTime) * 10);
 			score -= penalty;
 			issues.push(`High response time: ${metrics.responseTime}ms`);
 		}
 
 		// Check success rate
 		if (metrics.successRate < status.thresholds.minSuccessRate) {
-			const penalty =
-				(status.thresholds.minSuccessRate - metrics.successRate) * 100;
+			const penalty = (status.thresholds.minSuccessRate - metrics.successRate) * 100;
 			score -= penalty;
-			issues.push(
-				`Low success rate: ${(metrics.successRate * 100).toFixed(1)}%`,
-			);
+			issues.push(`Low success rate: ${(metrics.successRate * 100).toFixed(1)}%`);
 		}
 
 		// Check consecutive failures
-		if (
-			metrics.consecutiveFailures >= status.thresholds.maxConsecutiveFailures
-		) {
+		if (metrics.consecutiveFailures >= status.thresholds.maxConsecutiveFailures) {
 			score -= 20;
 			issues.push(`${metrics.consecutiveFailures} consecutive failures`);
 		}
@@ -420,10 +410,7 @@ export class AgentHealthMonitor extends EventEmitter {
 					metrics,
 					timestamp: now,
 				});
-			} else if (
-				previousStatus === 'unhealthy' ||
-				previousStatus === 'offline'
-			) {
+			} else if (previousStatus === 'unhealthy' || previousStatus === 'offline') {
 				this.emit('agentRecovered', {
 					agentId,
 					previousStatus,

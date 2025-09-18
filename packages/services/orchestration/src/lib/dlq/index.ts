@@ -30,21 +30,14 @@ export type DeadLetterMessage = z.infer<typeof DeadLetterMessageSchema>;
 // DLQ repository interface
 export interface DeadLetterRepository {
 	save(message: DeadLetterMessage): Promise<void>;
-	findByAggregate(
-		aggregateType: string,
-		aggregateId: string,
-	): Promise<DeadLetterMessage[]>;
+	findByAggregate(aggregateType: string, aggregateId: string): Promise<DeadLetterMessage[]>;
 	findByEventType(eventType: string): Promise<DeadLetterMessage[]>;
-	findByFailureReason(
-		reason: DeadLetterMessage['failureReason'],
-	): Promise<DeadLetterMessage[]>;
+	findByFailureReason(reason: DeadLetterMessage['failureReason']): Promise<DeadLetterMessage[]>;
 	findAll(limit?: number, offset?: number): Promise<DeadLetterMessage[]>;
 	getById(id: string): Promise<DeadLetterMessage | null>;
 	delete(id: string): Promise<void>;
 	count(): Promise<number>;
-	countByFailureReason(
-		reason: DeadLetterMessage['failureReason'],
-	): Promise<number>;
+	countByFailureReason(reason: DeadLetterMessage['failureReason']): Promise<number>;
 }
 
 // DLQ service configuration
@@ -123,9 +116,7 @@ export class DeadLetterService {
 		return this.repository.findByAggregate(aggregateType, aggregateId);
 	}
 
-	async getMessagesByEventType(
-		eventType: string,
-	): Promise<DeadLetterMessage[]> {
+	async getMessagesByEventType(eventType: string): Promise<DeadLetterMessage[]> {
 		return this.repository.findByEventType(eventType);
 	}
 
@@ -148,22 +139,13 @@ export class DeadLetterService {
 		byFailureReason: Record<DeadLetterMessage['failureReason'], number>;
 	}> {
 		const total = await this.repository.count();
-		const byFailureReason: Record<DeadLetterMessage['failureReason'], number> =
-			{
-				max_retries_exceeded: await this.repository.countByFailureReason(
-					'max_retries_exceeded',
-				),
-				message_expired:
-					await this.repository.countByFailureReason('message_expired'),
-				invalid_message_format: await this.repository.countByFailureReason(
-					'invalid_message_format',
-				),
-				processing_error:
-					await this.repository.countByFailureReason('processing_error'),
-				infrastructure_failure: await this.repository.countByFailureReason(
-					'infrastructure_failure',
-				),
-			};
+		const byFailureReason: Record<DeadLetterMessage['failureReason'], number> = {
+			max_retries_exceeded: await this.repository.countByFailureReason('max_retries_exceeded'),
+			message_expired: await this.repository.countByFailureReason('message_expired'),
+			invalid_message_format: await this.repository.countByFailureReason('invalid_message_format'),
+			processing_error: await this.repository.countByFailureReason('processing_error'),
+			infrastructure_failure: await this.repository.countByFailureReason('infrastructure_failure'),
+		};
 
 		return { total, byFailureReason };
 	}
@@ -236,11 +218,9 @@ export class DeadLetterProcessor {
 
 		for (const message of messages) {
 			if (
-				(!filter.aggregateType ||
-					message.aggregateType === filter.aggregateType) &&
+				(!filter.aggregateType || message.aggregateType === filter.aggregateType) &&
 				(!filter.eventType || message.eventType === filter.eventType) &&
-				(!filter.failureReason ||
-					message.failureReason === filter.failureReason)
+				(!filter.failureReason || message.failureReason === filter.failureReason)
 			) {
 				const success = await this.reprocessMessage(message.id, reprocessor);
 				if (success) {

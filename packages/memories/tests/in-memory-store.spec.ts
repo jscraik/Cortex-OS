@@ -17,9 +17,9 @@ describe('InMemoryStore edge cases', () => {
 			provenance: { source: 'user' },
 		};
 		await store.upsert(m);
-		await expect(
-			store.searchByVector({ vector: [1], topK: 1 }),
-		).rejects.toThrow('Vectors must have the same length');
+		await expect(store.searchByVector({ vector: [1], topK: 1 })).rejects.toThrow(
+			'Vectors must have the same length',
+		);
 	});
 
 	it('ignores invalid TTL values', async () => {
@@ -36,9 +36,7 @@ describe('InMemoryStore edge cases', () => {
 			provenance: { source: 'user' },
 		};
 		await store.upsert(m);
-		const purged = await store.purgeExpired(
-			new Date(Date.now() + 1000).toISOString(),
-		);
+		const purged = await store.purgeExpired(new Date(Date.now() + 1000).toISOString());
 		expect(purged).toBe(0);
 	});
 });

@@ -24,9 +24,9 @@ describe('ToolRegistry', () => {
 
 		registry.register(tool);
 
-		await expect(
-			registry.execute('test', { message: 'hello world' }),
-		).resolves.toEqual({ echoed: 'hello world' });
+		await expect(registry.execute('test', { message: 'hello world' })).resolves.toEqual({
+			echoed: 'hello world',
+		});
 	});
 
 	it('throws when registering duplicate tool names', () => {
@@ -48,9 +48,7 @@ describe('ToolRegistry', () => {
 	it('throws when executing an unknown tool', async () => {
 		const registry = new ToolRegistry();
 
-		await expect(registry.execute('missing', {})).rejects.toBeInstanceOf(
-			ToolNotFoundError,
-		);
+		await expect(registry.execute('missing', {})).rejects.toBeInstanceOf(ToolNotFoundError);
 	});
 
 	it('validates input using the tool schema', async () => {
@@ -65,9 +63,9 @@ describe('ToolRegistry', () => {
 		};
 		registry.register(tool);
 
-		await expect(
-			registry.execute('validate', { message: 'x' }),
-		).rejects.toBeInstanceOf(ToolValidationError);
+		await expect(registry.execute('validate', { message: 'x' })).rejects.toBeInstanceOf(
+			ToolValidationError,
+		);
 	});
 
 	it('wraps unexpected errors in ToolExecutionError', async () => {
@@ -82,9 +80,9 @@ describe('ToolRegistry', () => {
 		};
 		registry.register(tool);
 
-		await expect(
-			registry.execute('boom', { message: 'test' }),
-		).rejects.toBeInstanceOf(ToolExecutionError);
+		await expect(registry.execute('boom', { message: 'test' })).rejects.toBeInstanceOf(
+			ToolExecutionError,
+		);
 	});
 
 	it('propagates explicit McpToolError errors without wrapping', async () => {
@@ -100,9 +98,7 @@ describe('ToolRegistry', () => {
 		};
 		registry.register(tool);
 
-		await expect(registry.execute('fail', { message: 'test' })).rejects.toBe(
-			error,
-		);
+		await expect(registry.execute('fail', { message: 'test' })).rejects.toBe(error);
 	});
 
 	it('lists registered tools', () => {

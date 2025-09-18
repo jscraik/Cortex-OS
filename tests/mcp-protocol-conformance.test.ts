@@ -49,11 +49,7 @@ describe('Transport Integration', () => {
 
 		await new Promise<void>((resolve) => server.listen(0, resolve));
 		const address = server.address();
-		if (
-			!address ||
-			typeof address === 'string' ||
-			typeof (address as any).port !== 'number'
-		) {
+		if (!address || typeof address === 'string' || typeof (address as any).port !== 'number') {
 			throw new Error('Server address is not AddressInfo with port');
 		}
 		const port = (address as import('net').AddressInfo).port;

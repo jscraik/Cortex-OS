@@ -39,10 +39,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 		enableQuota = envFlag('SCHEMA_SVC_GLOBAL_QUOTA', true),
 		enablePerAgentQuota = envFlag('SCHEMA_SVC_PER_AGENT_QUOTA', true),
 		aclConfig,
-		redactionPaths = envList('SCHEMA_SVC_REDACT_PATHS', [
-			'schema.secret',
-			'schema.credentials',
-		]),
+		redactionPaths = envList('SCHEMA_SVC_REDACT_PATHS', ['schema.secret', 'schema.credentials']),
 	} = opts;
 	const app = express();
 	app.use(express.json());
@@ -59,9 +56,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 	const perAgentWindow = envNumber('PER_AGENT_WINDOW_MS', quotaWindow);
 
 	// Keep references for metrics
-	const smoother = enableSmoothing
-		? createBurstSmoother({ ratePerSec, burst })
-		: undefined;
+	const smoother = enableSmoothing ? createBurstSmoother({ ratePerSec, burst }) : undefined;
 	if (smoother) app.use(smoother);
 	const rateLimiter = createRateLimiter({ limit: rlLimit, windowMs: rlWindow });
 	app.use(rateLimiter);
@@ -101,9 +96,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 				? acl.canPublish(pseudoTopic, role)
 				: acl.canSubscribe(pseudoTopic, role);
 		if (!decision.allowed) {
-			return res
-				.status(403)
-				.json({ error: 'Forbidden', reason: decision.reason });
+			return res.status(403).json({ error: 'Forbidden', reason: decision.reason });
 		}
 		return next();
 	});
@@ -117,9 +110,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 		if (!isValidVersion(schema.version)) {
 			return res.status(400).send('Invalid version');
 		}
-		const exists = schemas.some(
-			(s) => s.name === schema.name && s.version === schema.version,
-		);
+		const exists = schemas.some((s) => s.name === schema.name && s.version === schema.version);
 		if (exists) {
 			return res.status(409).send('Schema already exists');
 		}
@@ -136,9 +127,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 
 	app.get('/schemas/:name', (req, res) => {
 		const { name } = req.params;
-		const namedSchemas = schemas
-			.filter((s) => s.name === name)
-			.map((s) => redactor.redact(s));
+		const namedSchemas = schemas.filter((s) => s.name === name).map((s) => redactor.redact(s));
 		res.json(namedSchemas);
 	});
 
@@ -148,18 +137,14 @@ export function createService(opts: RegistryServiceOptions = {}) {
 		if (candidates.length === 0) {
 			return res.status(404).send('Schema not found');
 		}
-		const sorted = candidates
-			.slice()
-			.sort((a, b) => compareVersions(a.version, b.version));
+		const sorted = candidates.slice().sort((a, b) => compareVersions(a.version, b.version));
 		const latest = redactor.redact(sorted[0]);
 		res.json(latest);
 	});
 
 	app.get('/schemas/:name/:version', (req, res) => {
 		const { name, version } = req.params;
-		const schema = schemas.find(
-			(s) => s.name === name && s.version === version,
-		);
+		const schema = schemas.find((s) => s.name === name && s.version === version);
 		if (schema) {
 			res.json(redactor.redact(schema));
 		} else {

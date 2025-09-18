@@ -25,10 +25,7 @@ function checkJson(pathLike: string) {
 }
 
 const root = resolve(__dirname, '..', '..');
-const mlxPath = resolve(
-	root,
-	process.env.MLX_MODEL_CONFIG_PATH ?? 'config/mlx-models.json',
-);
+const mlxPath = resolve(root, process.env.MLX_MODEL_CONFIG_PATH ?? 'config/mlx-models.json');
 const ollamaPath = resolve(
 	root,
 	process.env.OLLAMA_MODEL_CONFIG_PATH ?? 'config/ollama-models.json',

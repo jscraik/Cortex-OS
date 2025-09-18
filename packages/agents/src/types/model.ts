@@ -8,10 +8,7 @@ export interface GenerateOptions {
 	topP?: number;
 	stop?: string[];
 	tools?: any[];
-	toolChoice?:
-		| 'auto'
-		| 'none'
-		| { type: 'function'; function: { name: string } };
+	toolChoice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
 }
 
 export interface GenerateResult {
@@ -34,10 +31,7 @@ export interface GenerateResult {
 
 export interface ModelProvider {
 	name: string;
-	generate: (
-		prompt: string,
-		options?: GenerateOptions,
-	) => Promise<GenerateResult>;
+	generate: (prompt: string, options?: GenerateOptions) => Promise<GenerateResult>;
 	isAvailable?: () => Promise<boolean>;
 	shutdown?: () => Promise<void>;
 }

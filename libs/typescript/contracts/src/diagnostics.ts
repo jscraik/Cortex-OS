@@ -5,10 +5,7 @@ export const diagnosticCheckStatusSchema = z.object({
 	status: z
 		.enum(['ok', 'freed', 'error', 'degraded'])
 		.describe('Outcome status for this diagnostic component.'),
-	details: z
-		.string()
-		.optional()
-		.describe('Human readable context for this check.'),
+	details: z.string().optional().describe('Human readable context for this check.'),
 	latencyMs: z
 		.number()
 		.int()
@@ -26,9 +23,7 @@ export const diagnosticsResultSchema = z.object({
 	}),
 	tunnel: diagnosticCheckStatusSchema,
 	summary: z.object({
-		overall: z
-			.enum(['ok', 'degraded', 'failed'])
-			.describe('Aggregate outcome across all checks.'),
+		overall: z.enum(['ok', 'degraded', 'failed']).describe('Aggregate outcome across all checks.'),
 	}),
 });
 

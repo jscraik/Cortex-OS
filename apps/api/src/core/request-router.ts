@@ -70,9 +70,7 @@ export class RequestRouter {
 	private readonly routes: Map<string, RouteResolution>;
 
 	constructor(resolutions: RouteResolution[] = Object.values(routeShapes)) {
-		this.routes = new Map(
-			resolutions.map((resolution) => [resolution.route.id, resolution]),
-		);
+		this.routes = new Map(resolutions.map((resolution) => [resolution.route.id, resolution]));
 	}
 
 	resolveById(operationId: string): RouteResolution {
@@ -85,10 +83,7 @@ export class RequestRouter {
 
 	resolve(method: HttpMethod, path: string): RouteResolution {
 		for (const resolution of this.routes.values()) {
-			if (
-				resolution.route.method === method &&
-				resolution.route.path === path
-			) {
+			if (resolution.route.method === method && resolution.route.path === path) {
 				return resolution;
 			}
 		}

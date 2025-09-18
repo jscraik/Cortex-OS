@@ -52,9 +52,7 @@ async function main() {
 	// Optional docs ingestion if toggle is enabled
 	const cfg = getDocsSemsearchConfig();
 	if (cfg.enabled) {
-		console.log(
-			chalk.cyan('\n📖 Docs semantic search is enabled. Ingesting docs…'),
-		);
+		console.log(chalk.cyan('\n📖 Docs semantic search is enabled. Ingesting docs…'));
 		const docsRoot = path.resolve(process.cwd(), cfg.dir);
 		const files = await glob(cfg.glob, {
 			cwd: docsRoot,
@@ -84,9 +82,7 @@ async function main() {
 					arguments: { documents: contents, metadata },
 				},
 			});
-			console.log(
-				chalk.green(`Ingested ${contents.length} docs for semantic search.`),
-			);
+			console.log(chalk.green(`Ingested ${contents.length} docs for semantic search.`));
 		} else {
 			console.log(chalk.yellow('No docs found to ingest.'));
 		}

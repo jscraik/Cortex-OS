@@ -115,9 +115,7 @@ async function validateFiles(coach: TDDCoach, files: string[]) {
 
 	if (response.coaching.suggestedActions.length > 0) {
 		console.log('Suggested Actions:');
-		response.coaching.suggestedActions.forEach((action: string) =>
-			console.log(`  - ${action}`),
-		);
+		response.coaching.suggestedActions.forEach((action: string) => console.log(`  - ${action}`));
 	}
 
 	// Exit with error code if validation failed

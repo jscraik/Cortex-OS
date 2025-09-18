@@ -17,20 +17,11 @@ export const GitHubEventDataSchema = z.discriminatedUnion('event_type', [
 export type GitHubEventData = z.infer<typeof GitHubEventDataSchema>;
 
 // A2A Event Envelope Priority
-export const EventPrioritySchema = z.enum([
-	'low',
-	'normal',
-	'high',
-	'critical',
-]);
+export const EventPrioritySchema = z.enum(['low', 'normal', 'high', 'critical']);
 export type EventPriority = z.infer<typeof EventPrioritySchema>;
 
 // A2A Event Envelope Delivery Mode
-export const DeliveryModeSchema = z.enum([
-	'fire_and_forget',
-	'at_least_once',
-	'exactly_once',
-]);
+export const DeliveryModeSchema = z.enum(['fire_and_forget', 'at_least_once', 'exactly_once']);
 export type DeliveryMode = z.infer<typeof DeliveryModeSchema>;
 
 // A2A Event Envelope Retry Policy
@@ -157,8 +148,7 @@ export function createA2AEventEnvelope(
 ): A2AEventEnvelope {
 	const now = new Date();
 	const envelopeId = crypto.randomUUID();
-	const correlationId =
-		options?.correlation?.correlation_id ?? crypto.randomUUID();
+	const correlationId = options?.correlation?.correlation_id ?? crypto.randomUUID();
 
 	// Determine topic from event type and action
 	const topic = getEventTopic(event);
@@ -275,9 +265,7 @@ export function getEnvelopeAge(envelope: A2AEventEnvelope): number {
 	return now.getTime() - created.getTime();
 }
 
-export function getEnvelopeTimeToExpiry(
-	envelope: A2AEventEnvelope,
-): number | null {
+export function getEnvelopeTimeToExpiry(envelope: A2AEventEnvelope): number | null {
 	if (!envelope.expires_at) return null;
 	const expires = new Date(envelope.expires_at);
 	const now = new Date();
@@ -291,14 +279,12 @@ export function shouldRetryEnvelope(envelope: A2AEventEnvelope): boolean {
 	return (
 		state.attempt_count < envelope.retry_policy.max_attempts &&
 		!isExpiredEnvelope(envelope) &&
-		(envelope.delivery_mode === 'at_least_once' ||
-			envelope.delivery_mode === 'exactly_once')
+		(envelope.delivery_mode === 'at_least_once' || envelope.delivery_mode === 'exactly_once')
 	);
 }
 
 export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
-	const { processing_state: processingState, retry_policy: retryPolicy } =
-		envelope;
+	const { processing_state: processingState, retry_policy: retryPolicy } = envelope;
 	const {
 		initial_delay_ms: initialDelayMs,
 		max_delay_ms: maxDelayMs,
@@ -311,8 +297,7 @@ export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 	}
 
 	// Calculate exponential backoff
-	let delay =
-		initialDelayMs * backoffMultiplier ** processingState.attempt_count;
+	let delay = initialDelayMs * backoffMultiplier ** processingState.attempt_count;
 	delay = Math.min(delay, maxDelayMs);
 
 	// Add jitter if enabled
@@ -329,8 +314,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return (
 		value !== null &&
 		typeof value === 'object' &&
-		(Object.getPrototypeOf(value) === Object.prototype ||
-			Object.getPrototypeOf(value) === null)
+		(Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
 	);
 }
 
@@ -384,10 +368,7 @@ export function addEnvelopeMetadata(
 	return clone;
 }
 
-export function addEnvelopeTag(
-	envelope: A2AEventEnvelope,
-	tag: string,
-): A2AEventEnvelope {
+export function addEnvelopeTag(envelope: A2AEventEnvelope, tag: string): A2AEventEnvelope {
 	const clone = cloneEnvelope(envelope);
 	if (!clone.metadata.tags.includes(tag)) {
 		clone.metadata.tags.push(tag);
@@ -408,14 +389,8 @@ export interface EnvelopeFilter {
 	maxAge?: number;
 }
 
-export function matchesFilter(
-	envelope: A2AEventEnvelope,
-	filter: EnvelopeFilter,
-): boolean {
-	if (
-		filter.eventType &&
-		!filter.eventType.includes(envelope.event.event_type)
-	) {
+export function matchesFilter(envelope: A2AEventEnvelope, filter: EnvelopeFilter): boolean {
+	if (filter.eventType && !filter.eventType.includes(envelope.event.event_type)) {
 		return false;
 	}
 
@@ -450,9 +425,7 @@ export function matchesFilter(
 	}
 
 	if (filter.tags && filter.tags.length > 0) {
-		const hasAllTags = filter.tags.every((tag) =>
-			envelope.metadata.tags.includes(tag),
-		);
+		const hasAllTags = filter.tags.every((tag) => envelope.metadata.tags.includes(tag));
 		if (!hasAllTags) {
 			return false;
 		}
@@ -494,9 +467,7 @@ export function filterEnvelopes(
 	return envelopes.filter((envelope) => matchesFilter(envelope, filter));
 }
 
-export function sortEnvelopesByPriority(
-	envelopes: A2AEventEnvelope[],
-): A2AEventEnvelope[] {
+export function sortEnvelopesByPriority(envelopes: A2AEventEnvelope[]): A2AEventEnvelope[] {
 	const priorityOrder: Record<EventPriority, number> = {
 		critical: 4,
 		high: 3,

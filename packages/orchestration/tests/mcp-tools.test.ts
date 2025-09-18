@@ -1,13 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/observability/otel.js', async (importOriginal) => {
-	const actual =
-		await importOriginal<typeof import('../src/observability/otel.js')>();
+	const actual = await importOriginal<typeof import('../src/observability/otel.js')>();
 	return {
 		...actual,
-		withEnhancedSpan: vi.fn(async (_name: string, fn: () => Promise<unknown>) =>
-			fn(),
-		),
+		withEnhancedSpan: vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn()),
 		recordWorkflowStart: vi.fn(),
 		recordWorkflowEnd: vi.fn(),
 		recordAgentActivation: vi.fn(),
@@ -22,8 +19,7 @@ const executeWorkflowThroughCoreMock = vi.fn(async () => ({
 }));
 
 vi.mock('../src/mcp/core-adapter.js', async (importOriginal) => {
-	const actual =
-		await importOriginal<typeof import('../src/mcp/core-adapter.js')>();
+	const actual = await importOriginal<typeof import('../src/mcp/core-adapter.js')>();
 	return {
 		...actual,
 		executeWorkflowThroughCore: executeWorkflowThroughCoreMock,
@@ -94,10 +90,7 @@ describe('workflow orchestration handler', () => {
 		expect(payload.data.steps[0].id).toBe('step-1');
 		expect(payload.data.steps[0].status).toBe('pending');
 		expect(payload.data.steps[1].status).toBe('completed');
-		expect(payload.data.summary.assignedAgents).toEqual([
-			'planner-agent',
-			'validator-agent',
-		]);
+		expect(payload.data.summary.assignedAgents).toEqual(['planner-agent', 'validator-agent']);
 		expect(payload.data.context).toEqual({ priority: 'high' });
 		expect(payload.data.agents[0]).toEqual(
 			expect.objectContaining({
@@ -111,15 +104,8 @@ describe('workflow orchestration handler', () => {
 			success: true,
 		});
 
-		expect(otel.recordWorkflowStart).toHaveBeenCalledWith(
-			expect.any(String),
-			'Demo Flow',
-		);
-		expect(otel.recordWorkflowEnd).toHaveBeenCalledWith(
-			expect.any(String),
-			'Demo Flow',
-			true,
-		);
+		expect(otel.recordWorkflowStart).toHaveBeenCalledWith(expect.any(String), 'Demo Flow');
+		expect(otel.recordWorkflowEnd).toHaveBeenCalledWith(expect.any(String), 'Demo Flow', true);
 	});
 
 	it('returns structured validation errors', async () => {

@@ -60,9 +60,7 @@ describe('Security Scanner', () => {
 
 			for (const _owner of invalidOwners) {
 				await expect(
-					mockRunSemgrepScan.mockRejectedValue(
-						new Error('Invalid repository parameters'),
-					),
+					mockRunSemgrepScan.mockRejectedValue(new Error('Invalid repository parameters')),
 				).rejects.toThrow('Invalid repository parameters');
 			}
 		});
@@ -78,9 +76,7 @@ describe('Security Scanner', () => {
 
 			for (const _repo of invalidRepos) {
 				await expect(
-					mockRunSemgrepScan.mockRejectedValue(
-						new Error('Invalid repository parameters'),
-					),
+					mockRunSemgrepScan.mockRejectedValue(new Error('Invalid repository parameters')),
 				).rejects.toThrow('Invalid repository parameters');
 			}
 		});
@@ -96,9 +92,7 @@ describe('Security Scanner', () => {
 
 			for (const _sha of invalidShas) {
 				await expect(
-					mockRunSemgrepScan.mockRejectedValue(
-						new Error('Invalid repository parameters'),
-					),
+					mockRunSemgrepScan.mockRejectedValue(new Error('Invalid repository parameters')),
 				).rejects.toThrow('Invalid repository parameters');
 			}
 		});
@@ -169,9 +163,7 @@ describe('Security Scanner', () => {
 
 	describe('Result Processing', () => {
 		it('should map semgrep severity correctly', () => {
-			const mapSemgrepSeverity = (
-				severity: string,
-			): 'HIGH' | 'MEDIUM' | 'LOW' => {
+			const mapSemgrepSeverity = (severity: string): 'HIGH' | 'MEDIUM' | 'LOW' => {
 				switch (severity.toUpperCase()) {
 					case 'ERROR':
 						return 'HIGH';
@@ -207,10 +199,7 @@ describe('Security Scanner', () => {
 				return (
 					output.results?.map((result) => ({
 						ruleId: result.check_id,
-						message:
-							result.extra?.message ||
-							result.message ||
-							'Security issue detected',
+						message: result.extra?.message || result.message || 'Security issue detected',
 						severity:
 							result.extra?.severity === 'ERROR'
 								? 'HIGH'
@@ -296,9 +285,7 @@ describe('Security Scanner', () => {
 			expect(lowCount).toBe(1);
 
 			const title = `🚨 Security issues found (${criticalCount} critical, ${mediumCount} medium, ${lowCount} low)`;
-			expect(title).toBe(
-				'🚨 Security issues found (2 critical, 1 medium, 1 low)',
-			);
+			expect(title).toBe('🚨 Security issues found (2 critical, 1 medium, 1 low)');
 		});
 	});
 
@@ -319,11 +306,7 @@ describe('Security Scanner', () => {
 		});
 
 		it('should recognize @semgrep help commands', () => {
-			const testCases = [
-				'@semgrep help',
-				'@semgrep commands',
-				'@semgrep what can you do',
-			];
+			const testCases = ['@semgrep help', '@semgrep commands', '@semgrep what can you do'];
 
 			const helpRegex = /@semgrep\s+(help|commands)/i;
 
@@ -348,13 +331,11 @@ describe('Security Scanner', () => {
 
 	describe('Error Handling', () => {
 		it('should handle git clone failures gracefully', async () => {
-			mockCloneRepository.mockRejectedValue(
-				new Error('Clone failed: repository not found'),
-			);
+			mockCloneRepository.mockRejectedValue(new Error('Clone failed: repository not found'));
 
-			await expect(
-				mockCloneRepository('owner', 'nonexistent-repo', 'abc123'),
-			).rejects.toThrow('Clone failed: repository not found');
+			await expect(mockCloneRepository('owner', 'nonexistent-repo', 'abc123')).rejects.toThrow(
+				'Clone failed: repository not found',
+			);
 		});
 
 		it('should handle semgrep execution failures gracefully', async () => {
@@ -362,9 +343,9 @@ describe('Security Scanner', () => {
 				new Error('Semgrep failed with code 2: Permission denied'),
 			);
 
-			await expect(
-				mockRunSemgrepAnalysis('/usr/bin/semgrep', '/tmp/test'),
-			).rejects.toThrow('Semgrep failed with code 2: Permission denied');
+			await expect(mockRunSemgrepAnalysis('/usr/bin/semgrep', '/tmp/test')).rejects.toThrow(
+				'Semgrep failed with code 2: Permission denied',
+			);
 		});
 
 		it('should handle temporary directory cleanup failures', async () => {
@@ -417,9 +398,7 @@ describe('Security Scanner', () => {
 		it('should handle complete scan workflow', async () => {
 			// Mock the entire workflow
 			mockCloneRepository.mockResolvedValue('/tmp/test-scan-dir');
-			mockRunSemgrepAnalysis.mockResolvedValue(
-				JSON.stringify(mockSemgrepOutput),
-			);
+			mockRunSemgrepAnalysis.mockResolvedValue(JSON.stringify(mockSemgrepOutput));
 
 			const _results = await mockRunSemgrepScan(
 				'test-owner',
@@ -432,10 +411,7 @@ describe('Security Scanner', () => {
 				'test-repo',
 				'1234567890123456789012345678901234567890',
 			);
-			expect(mockRunSemgrepAnalysis).toHaveBeenCalledWith(
-				'/usr/bin/semgrep',
-				'/tmp/test-scan-dir',
-			);
+			expect(mockRunSemgrepAnalysis).toHaveBeenCalledWith('/usr/bin/semgrep', '/tmp/test-scan-dir');
 		});
 	});
 });

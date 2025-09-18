@@ -35,9 +35,7 @@ export class McpConnection {
 			type: 'notification',
 			method: 'capabilities',
 			params: {
-				tools: this.tools
-					.list()
-					.map((t) => ({ name: t.name, description: t.description })),
+				tools: this.tools.list().map((t) => ({ name: t.name, description: t.description })),
 			},
 		});
 

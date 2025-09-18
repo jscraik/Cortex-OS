@@ -87,8 +87,7 @@ export function build(config: AppConfig): FastifyInstance {
 			error: {
 				code: error.code || 'INTERNAL_ERROR',
 				message: error.message || 'An unexpected error occurred',
-				details:
-					process.env.NODE_ENV === 'development' ? error.stack : undefined,
+				details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
 			},
 		});
 	});

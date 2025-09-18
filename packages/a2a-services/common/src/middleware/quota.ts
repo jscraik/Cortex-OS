@@ -9,20 +9,13 @@ export interface QuotaOptions {
 	windowMs?: number;
 }
 
-export function createQuota({
-	globalLimit,
-	windowMs = 60 * 60 * 1000,
-}: QuotaOptions) {
+export function createQuota({ globalLimit, windowMs = 60 * 60 * 1000 }: QuotaOptions) {
 	let storePromise: Promise<QuotaStore> | undefined;
 	function getStore() {
 		storePromise ??= createQuotaStore();
 		return storePromise;
 	}
-	return async function quota(
-		_req: Request,
-		res: Response,
-		next: NextFunction,
-	) {
+	return async function quota(_req: Request, res: Response, next: NextFunction) {
 		const store = await getStore();
 		const result = await store.incrGlobal(windowMs, globalLimit);
 		if (result === 'limit') {

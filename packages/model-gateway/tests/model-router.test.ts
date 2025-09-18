@@ -28,10 +28,7 @@ describe('ModelRouter', () => {
 		it('should initialize with available models', async () => {
 			(mockMLXAdapter.isAvailable as Mock).mockResolvedValue(true);
 			(mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-			(mockOllamaAdapter.listModels as Mock).mockResolvedValue([
-				'llama2',
-				'llama3',
-			]);
+			(mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2', 'llama3']);
 
 			await modelRouter.initialize();
 
@@ -65,9 +62,7 @@ describe('ModelRouter', () => {
 				embedding: [0.1, 0.2, 0.3],
 				model: 'qwen3-embedding-4b-mlx',
 			};
-			(mockMLXAdapter.generateEmbedding as Mock).mockResolvedValue(
-				mockEmbedding,
-			);
+			(mockMLXAdapter.generateEmbedding as Mock).mockResolvedValue(mockEmbedding);
 
 			const result = await modelRouter.generateEmbedding({ text: 'test text' });
 
@@ -76,13 +71,9 @@ describe('ModelRouter', () => {
 		});
 
 		it('should fallback to Ollama when MLX fails', async () => {
-			(mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(
-				new Error('MLX failed'),
-			);
+			(mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(new Error('MLX failed'));
 			const mockEmbedding = { embedding: [0.4, 0.5, 0.6] };
-			(mockOllamaAdapter.generateEmbedding as Mock).mockResolvedValue(
-				mockEmbedding,
-			);
+			(mockOllamaAdapter.generateEmbedding as Mock).mockResolvedValue(mockEmbedding);
 
 			const result = await modelRouter.generateEmbedding({ text: 'test text' });
 
@@ -91,26 +82,17 @@ describe('ModelRouter', () => {
 		});
 
 		it('should throw error when all local models fail', async () => {
-			(mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(
-				new Error('MLX failed'),
-			);
-			(mockOllamaAdapter.generateEmbedding as Mock).mockRejectedValue(
-				new Error('Ollama failed'),
-			);
+			(mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(new Error('MLX failed'));
+			(mockOllamaAdapter.generateEmbedding as Mock).mockRejectedValue(new Error('Ollama failed'));
 
-			await expect(
-				modelRouter.generateEmbedding({ text: 'test text' }),
-			).rejects.toThrow('All embedding models failed');
+			await expect(modelRouter.generateEmbedding({ text: 'test text' })).rejects.toThrow(
+				'All embedding models failed',
+			);
 		});
 
 		it('should handle batch embeddings', async () => {
-			const mockEmbeddings = [
-				{ embedding: [0.1, 0.2] },
-				{ embedding: [0.3, 0.4] },
-			];
-			(mockMLXAdapter.generateEmbeddings as Mock).mockResolvedValue(
-				mockEmbeddings,
-			);
+			const mockEmbeddings = [{ embedding: [0.1, 0.2] }, { embedding: [0.3, 0.4] }];
+			(mockMLXAdapter.generateEmbeddings as Mock).mockResolvedValue(mockEmbeddings);
 
 			const result = await modelRouter.generateEmbeddings({
 				texts: ['text1', 'text2'],
@@ -146,9 +128,7 @@ describe('ModelRouter', () => {
 		});
 
 		it('should throw error when Ollama fails', async () => {
-			(mockOllamaAdapter.generateChat as Mock).mockRejectedValue(
-				new Error('Ollama failed'),
-			);
+			(mockOllamaAdapter.generateChat as Mock).mockRejectedValue(new Error('Ollama failed'));
 
 			await expect(
 				modelRouter.generateChat({
@@ -158,9 +138,7 @@ describe('ModelRouter', () => {
 		});
 
 		it('should throw error when all chat models fail', async () => {
-			(mockOllamaAdapter.generateChat as Mock).mockRejectedValue(
-				new Error('Ollama failed'),
-			);
+			(mockOllamaAdapter.generateChat as Mock).mockRejectedValue(new Error('Ollama failed'));
 
 			await expect(
 				modelRouter.generateChat({
@@ -194,9 +172,7 @@ describe('ModelRouter', () => {
 				embedding: [0.1, 0.2, 0.3],
 				model: 'qwen3-embedding-8b-mlx',
 			};
-			(mockMLXAdapter.generateEmbedding as Mock).mockResolvedValue(
-				mockEmbedding,
-			);
+			(mockMLXAdapter.generateEmbedding as Mock).mockResolvedValue(mockEmbedding);
 
 			const result = await modelRouter.generateEmbedding({
 				text: 'test',
@@ -215,9 +191,9 @@ describe('ModelRouter', () => {
 
 			await modelRouter.initialize();
 
-			await expect(
-				modelRouter.generateEmbedding({ text: 'test' }),
-			).rejects.toThrow('No embedding models available');
+			await expect(modelRouter.generateEmbedding({ text: 'test' })).rejects.toThrow(
+				'No embedding models available',
+			);
 		});
 
 		it('should provide detailed error information', async () => {
@@ -228,13 +204,11 @@ describe('ModelRouter', () => {
 			await modelRouter.initialize();
 
 			const detailedError = new Error('MLX connection timeout');
-			(mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(
-				detailedError,
-			);
+			(mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(detailedError);
 
-			await expect(
-				modelRouter.generateEmbedding({ text: 'test' }),
-			).rejects.toThrow('All embedding models failed');
+			await expect(modelRouter.generateEmbedding({ text: 'test' })).rejects.toThrow(
+				'All embedding models failed',
+			);
 		});
 	});
 

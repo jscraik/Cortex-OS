@@ -64,10 +64,7 @@ class EgressPolicyValidatorImpl implements EgressPolicyValidator {
 		// Check allowlist domains
 		const urlObj = new URL(url);
 		for (const domain of this.policy.allowlist.domains) {
-			if (
-				urlObj.hostname === domain ||
-				urlObj.hostname.endsWith(`.${domain}`)
-			) {
+			if (urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`)) {
 				return true;
 			}
 		}

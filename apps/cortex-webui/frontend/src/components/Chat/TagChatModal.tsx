@@ -52,10 +52,7 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 
 	const generateId = () => {
 		try {
-			return (
-				globalThis.crypto?.randomUUID() ??
-				Math.random().toString(36).slice(2, 11)
-			);
+			return globalThis.crypto?.randomUUID() ?? Math.random().toString(36).slice(2, 11);
 		} catch {
 			return Math.random().toString(36).slice(2, 11);
 		}
@@ -93,9 +90,7 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 			<div className="p-6">
 				<div className="space-y-6">
 					<div>
-						<h3 className="text-lg font-medium text-gray-900 dark:text-white">
-							Tag "{chatTitle}"
-						</h3>
+						<h3 className="text-lg font-medium text-gray-900 dark:text-white">Tag "{chatTitle}"</h3>
 						<p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
 							Add or remove tags to organize your chats.
 						</p>
@@ -176,10 +171,7 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 							>
 								Current Tags
 							</h4>
-							<ul
-								className="flex flex-wrap gap-2"
-								aria-label="List of current tags"
-							>
+							<ul className="flex flex-wrap gap-2" aria-label="List of current tags">
 								{tags.map((tag) => (
 									<li key={tag.id} className="flex items-center">
 										<div

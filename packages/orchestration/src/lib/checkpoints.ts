@@ -2,17 +2,9 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-export type NodeName =
-	| 'plan'
-	| 'gather'
-	| 'critic'
-	| 'synthesize'
-	| 'verify'
-	| 'done';
+export type NodeName = 'plan' | 'gather' | 'critic' | 'synthesize' | 'verify' | 'done';
 
-const isErrnoException = (
-	error: unknown,
-): error is NodeJS.ErrnoException & { code: string } =>
+const isErrnoException = (error: unknown): error is NodeJS.ErrnoException & { code: string } =>
 	typeof error === 'object' &&
 	error !== null &&
 	'code' in error &&
@@ -27,8 +19,7 @@ export interface Checkpoint<TState = unknown> {
 	idempotencyKey?: string;
 }
 
-export interface CheckpointWithIntegrity<TState = unknown>
-	extends Checkpoint<TState> {
+export interface CheckpointWithIntegrity<TState = unknown> extends Checkpoint<TState> {
 	checksum: string;
 	version: string;
 	size: number;
@@ -69,8 +60,7 @@ function validateCheckpointIntegrity<TState = unknown>(
 
 function getDir(): string {
 	const base =
-		process.env.CORTEX_CHECKPOINT_DIR ||
-		path.join(process.cwd(), 'data', 'events', 'checkpoints');
+		process.env.CORTEX_CHECKPOINT_DIR || path.join(process.cwd(), 'data', 'events', 'checkpoints');
 	return base;
 }
 
@@ -83,9 +73,7 @@ function fileFor(runId: string): string {
 	return path.join(dir, `${runId}.jsonl`);
 }
 
-export async function saveCheckpoint<TState = unknown>(
-	cp: Checkpoint<TState>,
-): Promise<void> {
+export async function saveCheckpoint<TState = unknown>(cp: Checkpoint<TState>): Promise<void> {
 	const dir = getDir();
 	await ensureDir(dir);
 
@@ -121,9 +109,7 @@ export async function saveCheckpointWithIntegrity<TState = unknown>(
 
 	// Validate before saving
 	if (!validateCheckpointIntegrity(checkpointWithIntegrity)) {
-		throw new Error(
-			`Checkpoint integrity validation failed for runId: ${cp.runId}`,
-		);
+		throw new Error(`Checkpoint integrity validation failed for runId: ${cp.runId}`);
 	}
 
 	const line = `${JSON.stringify(checkpointWithIntegrity)}\n`;
@@ -147,8 +133,7 @@ export async function loadCheckpointHistory<TState = unknown>(
 
 				// Check if this is a checkpoint with integrity validation
 				if (parsed.checksum && parsed.version) {
-					const checkpointWithIntegrity =
-						parsed as CheckpointWithIntegrity<TState>;
+					const checkpointWithIntegrity = parsed as CheckpointWithIntegrity<TState>;
 
 					// Validate integrity
 					if (!validateCheckpointIntegrity(checkpointWithIntegrity)) {
@@ -174,9 +159,7 @@ export async function loadCheckpointHistory<TState = unknown>(
 					checkpoints.push(parsed);
 				}
 			} catch {
-				console.warn(
-					`Failed to parse checkpoint line for runId: ${runId}: ${line}`,
-				);
+				console.warn(`Failed to parse checkpoint line for runId: ${runId}: ${line}`);
 				// Continue processing other checkpoints
 			}
 		}
@@ -206,8 +189,7 @@ export async function loadCheckpointHistoryWithIntegrity<TState = unknown>(
 
 				// Only return checkpoints with integrity validation
 				if (parsed.checksum && parsed.version) {
-					const checkpointWithIntegrity =
-						parsed as CheckpointWithIntegrity<TState>;
+					const checkpointWithIntegrity = parsed as CheckpointWithIntegrity<TState>;
 
 					if (validateCheckpointIntegrity(checkpointWithIntegrity)) {
 						checkpoints.push(checkpointWithIntegrity);
@@ -218,9 +200,7 @@ export async function loadCheckpointHistoryWithIntegrity<TState = unknown>(
 					}
 				}
 			} catch {
-				console.warn(
-					`Failed to parse checkpoint line for runId: ${runId}: ${line}`,
-				);
+				console.warn(`Failed to parse checkpoint line for runId: ${runId}: ${line}`);
 			}
 		}
 
@@ -253,10 +233,7 @@ export async function loadLatestCheckpointWithIntegrity<TState = unknown>(
 /**
  * Cleanup old checkpoints for a given runId
  */
-export async function cleanupOldCheckpoints(
-	runId: string,
-	keepCount: number = 10,
-): Promise<void> {
+export async function cleanupOldCheckpoints(runId: string, keepCount: number = 10): Promise<void> {
 	try {
 		const history = await loadCheckpointHistoryWithIntegrity(runId);
 
@@ -277,10 +254,7 @@ export async function cleanupOldCheckpoints(
 			`Cleaned up old checkpoints for runId: ${runId}, kept: ${toKeep.length}, removed: ${history.length - toKeep.length}`,
 		);
 	} catch (error) {
-		console.warn(
-			`Failed to cleanup old checkpoints for runId: ${runId}:`,
-			error,
-		);
+		console.warn(`Failed to cleanup old checkpoints for runId: ${runId}:`, error);
 	}
 }
 

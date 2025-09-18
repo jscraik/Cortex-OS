@@ -4,9 +4,7 @@ import { z } from 'zod';
 const MCPToolRestrictionSchema = z.object({
 	maxCalls: z.number().min(1).optional(),
 	rateLimitPerHour: z.number().min(1).optional(),
-	requiredScopes: z
-		.array(z.string().regex(/^[a-z0-9_:]+$/, 'Invalid scope format'))
-		.optional(),
+	requiredScopes: z.array(z.string().regex(/^[a-z0-9_:]+$/, 'Invalid scope format')).optional(),
 });
 
 const MCPToolSchema = z.object({
@@ -47,10 +45,7 @@ export type MCPToolCategory = z.infer<typeof MCPToolCategorySchema>;
 
 export interface MCPToolValidator {
 	validateSchema(policy: unknown): MCPToolPolicy;
-	isToolAllowed(
-		toolName: string,
-		context?: { scopes?: string[]; callCount?: number },
-	): boolean;
+	isToolAllowed(toolName: string, context?: { scopes?: string[]; callCount?: number }): boolean;
 	loadPolicy(policy: MCPToolPolicy): void;
 	getViolationReason(
 		toolName: string,
@@ -70,10 +65,7 @@ class MCPToolValidatorImpl implements MCPToolValidator {
 		this.policy = policy;
 	}
 
-	isToolAllowed(
-		toolName: string,
-		context?: { scopes?: string[]; callCount?: number },
-	): boolean {
+	isToolAllowed(toolName: string, context?: { scopes?: string[]; callCount?: number }): boolean {
 		if (!this.policy) {
 			throw new Error('No MCP tool policy loaded');
 		}
@@ -111,8 +103,8 @@ class MCPToolValidatorImpl implements MCPToolValidator {
 				allowedTool.restrictions.requiredScopes.length > 0
 			) {
 				const userScopes = context?.scopes || [];
-				const hasAllScopes = allowedTool.restrictions.requiredScopes.every(
-					(requiredScope) => userScopes.includes(requiredScope),
+				const hasAllScopes = allowedTool.restrictions.requiredScopes.every((requiredScope) =>
+					userScopes.includes(requiredScope),
 				);
 				if (!hasAllScopes) {
 					return false;
@@ -120,10 +112,7 @@ class MCPToolValidatorImpl implements MCPToolValidator {
 			}
 
 			// Check call limits
-			if (
-				allowedTool.restrictions.maxCalls !== undefined &&
-				context?.callCount !== undefined
-			) {
+			if (allowedTool.restrictions.maxCalls !== undefined && context?.callCount !== undefined) {
 				if (context.callCount > allowedTool.restrictions.maxCalls) {
 					return false;
 				}
@@ -159,9 +148,7 @@ class MCPToolValidatorImpl implements MCPToolValidator {
 		const allowedTool = this.findAllowedTool(toolName);
 
 		if (!allowedTool) {
-			return this.policy.defaultAction === 'deny'
-				? `Tool '${toolName}' is not in allowlist`
-				: null;
+			return this.policy.defaultAction === 'deny' ? `Tool '${toolName}' is not in allowlist` : null;
 		}
 
 		// Check restriction violations
@@ -198,9 +185,7 @@ class MCPToolValidatorImpl implements MCPToolValidator {
 		if (!this.policy) return null;
 
 		// Check direct tools in allowlist
-		const directTool = this.policy.allowlist.tools.find(
-			(tool) => tool.name === toolName,
-		);
+		const directTool = this.policy.allowlist.tools.find((tool) => tool.name === toolName);
 		if (directTool) return directTool;
 
 		// Check tools in categories

@@ -6,11 +6,7 @@
 
 import { ToolRegistry } from '@cortex-os/mcp-core';
 import { describe, expect, it } from 'vitest';
-import {
-	registryListTool,
-	registryMcpTools,
-	registryRegisterTool,
-} from '../src/mcp/tools.js';
+import { registryListTool, registryMcpTools, registryRegisterTool } from '../src/mcp/tools.js';
 
 describe('MCP Core Integration', () => {
 	it('should register all registry tools with MCP Core ToolRegistry', () => {

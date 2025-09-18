@@ -214,8 +214,7 @@ describe('Security Suite - Integration Tests', () => {
 
 			if (retrievedCommand) {
 				const parsedCommand = JSON.parse(retrievedCommand.command);
-				const result =
-					await SecureCommandExecutor.executeCommand(parsedCommand);
+				const result = await SecureCommandExecutor.executeCommand(parsedCommand);
 
 				expect(result).toHaveProperty('exitCode');
 			}
@@ -285,8 +284,7 @@ describe('Security Suite - Integration Tests', () => {
 
 			// Database operation with large dataset
 			const largeInsertQuery =
-				'INSERT INTO test_table (data) VALUES ' +
-				largeDataSet.map(() => '(?)').join(', ');
+				'INSERT INTO test_table (data) VALUES ' + largeDataSet.map(() => '(?)').join(', ');
 
 			expect(() => {
 				secureDb.secureRun(largeInsertQuery, ...largeDataSet);
@@ -368,16 +366,12 @@ describe('Security Suite - Integration Tests', () => {
 			};
 
 			await expect(secureNeo4j.upsertNode(userNode)).resolves.not.toThrow();
-			await expect(
-				SecureCommandExecutor.executeCommand(['echo', 'test']),
-			).resolves.not.toThrow();
+			await expect(SecureCommandExecutor.executeCommand(['echo', 'test'])).resolves.not.toThrow();
 		});
 
 		test('should maintain security even during partial system failures', async () => {
 			// Simulate Neo4j failure
-			mockSession.run.mockRejectedValueOnce(
-				new Error('Neo4j connection failed'),
-			);
+			mockSession.run.mockRejectedValueOnce(new Error('Neo4j connection failed'));
 
 			// Attempt Neo4j operation
 			await expect(async () => {
@@ -434,11 +428,7 @@ describe('Security Suite - Integration Tests', () => {
 			const startTime = new Date().toISOString();
 
 			// Database operation
-			secureDb.secureRun(
-				'INSERT INTO users (id, name) VALUES (?, ?)',
-				'user_123',
-				'John Doe',
-			);
+			secureDb.secureRun('INSERT INTO users (id, name) VALUES (?, ?)', 'user_123', 'John Doe');
 
 			// Neo4j operation
 			await secureNeo4j.upsertNode({
@@ -522,13 +512,9 @@ describe('Security Suite - Integration Tests', () => {
 			const promises = [];
 
 			for (let i = 0; i < 10; i++) {
-				promises.push(
-					secureDb.secureRun('SELECT * FROM users WHERE id = ?', `user_${i}`),
-				);
+				promises.push(secureDb.secureRun('SELECT * FROM users WHERE id = ?', `user_${i}`));
 				promises.push(secureNeo4j.neighborhood(`user_${i}`, 1));
-				promises.push(
-					SecureCommandExecutor.executeCommand(['echo', `test_${i}`]),
-				);
+				promises.push(SecureCommandExecutor.executeCommand(['echo', `test_${i}`]));
 			}
 
 			// All operations should complete successfully

@@ -31,12 +31,10 @@ export class Qwen3Embedder implements Embedder {
 	constructor(options: Qwen3EmbedOptions = {}) {
 		this.modelSize = options.modelSize || '4B';
 		this.modelPath = path.resolve(
-			options.modelPath ||
-				path.join(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`),
+			options.modelPath || path.join(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`),
 		);
 		this.cacheDir =
-			options.cacheDir ||
-			join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
+			options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
 		this.maxTokens = options.maxTokens || 512;
 		this.batchSize = options.batchSize || 32;
 		this.useGPU = options.useGPU ?? false;
@@ -59,12 +57,7 @@ export class Qwen3Embedder implements Embedder {
 
 	private async embedWithModel(texts: string[]): Promise<number[][]> {
 		return new Promise((resolve, reject) => {
-			const script = buildQwen3EmbedScript(
-				this.modelPath,
-				texts,
-				this.maxTokens,
-				this.useGPU,
-			);
+			const script = buildQwen3EmbedScript(this.modelPath, texts, this.maxTokens, this.useGPU);
 			const python = spawn('python3', ['-c', script], {
 				stdio: ['pipe', 'pipe', 'pipe'],
 				env: {
@@ -118,9 +111,7 @@ export class Qwen3Embedder implements Embedder {
 /**
  * Factory function for easy Qwen3 embedder creation
  */
-export function createQwen3Embedder(
-	options?: Qwen3EmbedOptions,
-): Qwen3Embedder {
+export function createQwen3Embedder(options?: Qwen3EmbedOptions): Qwen3Embedder {
 	return new Qwen3Embedder(options);
 }
 

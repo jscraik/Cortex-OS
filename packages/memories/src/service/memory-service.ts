@@ -14,11 +14,7 @@ export type MemoryService = {
 		topK?: number;
 		tags?: string[];
 	}) => Promise<Memory[]>;
-	list: (opts?: {
-		limit?: number;
-		tags?: string[];
-		text?: string;
-	}) => Promise<Memory[]>;
+	list: (opts?: { limit?: number; tags?: string[]; text?: string }) => Promise<Memory[]>;
 	purge: (nowISO?: string) => Promise<number>;
 	approve?: (id: string) => Promise<void>;
 	discard?: (id: string) => Promise<void>;
@@ -27,10 +23,7 @@ export type MemoryService = {
 	testEmbedders?: () => Promise<Array<{ name: string; available: boolean }>>;
 };
 
-export const createMemoryService = (
-	store: MemoryStore,
-	embedder: Embedder,
-): MemoryService => {
+export const createMemoryService = (store: MemoryStore, embedder: Embedder): MemoryService => {
 	if (!embedder) throw new Error('embedder:missing');
 
 	// Pending queue for consent workflow (bounded)
@@ -131,12 +124,7 @@ export const createMemoryService = (
 				}
 
 				if (typeof q.text === 'string') {
-					return performTextSearch(
-						{ ...q, text: q.text },
-						topK,
-						embedder,
-						store,
-					);
+					return performTextSearch({ ...q, text: q.text }, topK, embedder, store);
 				}
 
 				return [];
@@ -166,9 +154,7 @@ export const createMemoryService = (
 		listPending: async () => Array.from(pending.values()),
 		testEmbedders: async () => {
 			const maybeComposite = embedder as unknown as {
-				testEmbedders?: () => Promise<
-					Array<{ name: string; available: boolean }>
-				>;
+				testEmbedders?: () => Promise<Array<{ name: string; available: boolean }>>;
 			};
 			if (typeof maybeComposite.testEmbedders === 'function') {
 				return maybeComposite.testEmbedders();

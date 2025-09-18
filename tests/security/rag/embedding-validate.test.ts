@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	getSingleDim,
-	validateEmbedding,
-} from '../../apps/cortex-os/brain/rag/src/vectorStore';
+import { getSingleDim, validateEmbedding } from '../../apps/cortex-os/brain/rag/src/vectorStore';
 
 describe('Embedding validation', () => {
 	const dim = getSingleDim();

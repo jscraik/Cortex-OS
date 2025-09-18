@@ -7,7 +7,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage: mcp-tunnel-rotate.sh \
-  --new-config packages/mcp/infrastructure/cloudflare/tunnel.rotate.config.yml \
+  --new-config packages/cortex-mcp/infrastructure/cloudflare/tunnel.rotate.config.yml \
   [--old-name cortex-mcp] \
   [--new-name cortex-mcp-green] \
   [--hostname cortex-mcp.brainwav.io] \

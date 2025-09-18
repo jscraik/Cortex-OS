@@ -11,13 +11,14 @@ export {
 	GraphStateChangedEventSchema,
 	NodeExecutionCompletedEventSchema,
 	NodeExecutionFailedEventSchema,
-	NodeExecutionStartedEventSchema, createKernelEvent
+	NodeExecutionStartedEventSchema,
+	createKernelEvent,
 } from './events/kernel-events.js';
 export type {
 	GraphStateChangedEvent,
 	NodeExecutionCompletedEvent,
 	NodeExecutionFailedEvent,
-	NodeExecutionStartedEvent
+	NodeExecutionStartedEvent,
 } from './events/kernel-events.js';
 // Core kernel exports - REMOVED broken graph-simple integration
 // export { CortexKernel, createKernel } from './graph-simple.js';
@@ -25,7 +26,7 @@ export type {
 export {
 	addToHistory,
 	createHistory,
-	getExecutionHistory
+	getExecutionHistory,
 } from './lib/history.js';
 export type { MCPContext, MCPTool } from './mcp/adapter.js';
 // MCP integration
@@ -33,12 +34,16 @@ export { MCPAdapter, createDefaultMCPTools } from './mcp/adapter.js';
 // Workflow nodes
 export {
 	BuildNode,
-	EvaluationNode, StrategyNode, runBuildNode,
+	EvaluationNode,
+	StrategyNode,
+	runBuildNode,
 	runEvaluationNode,
-	runStrategyNode
+	runStrategyNode,
 } from './nodes/index.js';
 export {
-	PRPStateSchema, createInitialPRPState, validateStateTransition
+	PRPStateSchema,
+	createInitialPRPState,
+	validateStateTransition,
 } from './state.js';
 export type {
 	CerebrumDecision,
@@ -47,18 +52,17 @@ export type {
 	GateResult,
 	HumanApproval,
 	PRPState,
-	ValidationGate
+	ValidationGate,
 } from './state.js';
 export type {
 	BehaviorExtension,
 	ExtensionContext,
-	ExtensionResult
+	ExtensionResult,
 } from './teaching/behavior-extension.js';
 // Teaching layer
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
 export type {
 	CapturedExample,
-	TeachingPattern
+	TeachingPattern,
 } from './teaching/example-capture.js';
-

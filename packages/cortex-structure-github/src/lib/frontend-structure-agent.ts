@@ -83,30 +83,22 @@ export async function analyzeFrontendStructure(
 ): Promise<FrontendAnalysisResult> {
 	const detectedFramework = await detectFramework(repoPath);
 	const finalConfig: FrontendStructureConfig = {
-		framework: (
-			['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const
-		).includes(config.framework as any)
+		framework: (['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const).includes(
+			config.framework as any,
+		)
 			? (config.framework as any)
-			: (
-						[
-							'react',
-							'vue',
-							'angular',
-							'next',
-							'nuxt',
-							'svelte',
-							'auto',
-						] as const
-					).includes(detectedFramework as any)
+			: (['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const).includes(
+						detectedFramework as any,
+					)
 				? (detectedFramework as any)
 				: 'auto',
 		componentConvention: config.componentConvention || 'PascalCase',
 		fileExtensions:
 			config.fileExtensions ||
 			getDefaultExtensions(
-				(
-					['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const
-				).includes(detectedFramework as any)
+				(['react', 'vue', 'angular', 'next', 'nuxt', 'svelte', 'auto'] as const).includes(
+					detectedFramework as any,
+				)
 					? (detectedFramework as any)
 					: 'auto',
 			),
@@ -133,9 +125,7 @@ export async function analyzeFrontendStructure(
 	const score = calculateFrontendScore(violations);
 
 	// Generate recommendations
-	recommendations.push(
-		...generateFrontendRecommendations(violations, finalConfig),
-	);
+	recommendations.push(...generateFrontendRecommendations(violations, finalConfig));
 
 	return {
 		framework: detectedFramework,
@@ -153,9 +143,7 @@ async function detectFramework(repoPath: string): Promise<string> {
 	try {
 		const packageJsonPath = path.join(repoPath, 'package.json');
 		const packageJson = JSON.parse(
-			await import('node:fs').then((fs) =>
-				fs.promises.readFile(packageJsonPath, 'utf-8'),
-			),
+			await import('node:fs').then((fs) => fs.promises.readFile(packageJsonPath, 'utf-8')),
 		);
 
 		const dependencies = {
@@ -193,10 +181,7 @@ function getDefaultExtensions(framework: string): string[] {
 	}
 }
 
-async function analyzeComponents(
-	_repoPath: string,
-	_config: FrontendStructureConfig,
-) {
+async function analyzeComponents(_repoPath: string, _config: FrontendStructureConfig) {
 	const violations: FrontendViolation[] = [];
 	const summary = {
 		totalComponents: 0,
@@ -214,10 +199,7 @@ async function analyzeComponents(
 	return { violations, summary };
 }
 
-async function analyzeHooks(
-	_repoPath: string,
-	config: FrontendStructureConfig,
-) {
+async function analyzeHooks(_repoPath: string, config: FrontendStructureConfig) {
 	const violations: FrontendViolation[] = [];
 	const summary = {
 		customHooks: 0,
@@ -234,10 +216,7 @@ async function analyzeHooks(
 	return { violations, summary };
 }
 
-async function analyzeRouting(
-	_repoPath: string,
-	config: FrontendStructureConfig,
-) {
+async function analyzeRouting(_repoPath: string, config: FrontendStructureConfig) {
 	const violations: FrontendViolation[] = [];
 	const summary = {
 		routeFiles: [] as string[],
@@ -292,9 +271,7 @@ function generateFrontendRecommendations(
 	const recommendations: string[] = [];
 
 	const errorCount = violations.filter((v) => v.severity === 'error').length;
-	const warningCount = violations.filter(
-		(v) => v.severity === 'warning',
-	).length;
+	const warningCount = violations.filter((v) => v.severity === 'warning').length;
 
 	if (errorCount > 0) {
 		recommendations.push(`Fix ${errorCount} critical structure errors`);
@@ -306,9 +283,7 @@ function generateFrontendRecommendations(
 
 	const autoFixableCount = violations.filter((v) => v.autoFixable).length;
 	if (autoFixableCount > 0) {
-		recommendations.push(
-			`${autoFixableCount} issues can be auto-fixed with @insula frontend fix`,
-		);
+		recommendations.push(`${autoFixableCount} issues can be auto-fixed with @insula frontend fix`);
 	}
 
 	return recommendations;
@@ -334,10 +309,7 @@ export async function fixFrontendStructure(
 	return { fixed: fixedCount, failed };
 }
 
-async function applyFrontendFix(
-	_repoPath: string,
-	violation: FrontendViolation,
-): Promise<void> {
+async function applyFrontendFix(_repoPath: string, violation: FrontendViolation): Promise<void> {
 	// Implementation would apply specific fixes based on violation type
 	switch (violation.type) {
 		case 'component':

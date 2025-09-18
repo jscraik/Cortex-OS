@@ -91,10 +91,7 @@ export class PythonAgentBridge extends EventEmitter {
 			pythonPath: config.pythonPath || 'python3',
 			bridgeScriptPath:
 				config.bridgeScriptPath ||
-				path.resolve(
-					process.cwd(),
-					'packages/python-agents/src/agent_bridge.py',
-				),
+				path.resolve(process.cwd(), 'packages/python-agents/src/agent_bridge.py'),
 			bridgeModule: config.bridgeModule || 'src.agent_bridge',
 			timeout: config.timeout || 30000,
 			maxRetries: config.maxRetries || 3,
@@ -102,10 +99,7 @@ export class PythonAgentBridge extends EventEmitter {
 
 		this.logger = winston.createLogger({
 			level: 'info',
-			format: winston.format.combine(
-				winston.format.timestamp(),
-				winston.format.json(),
-			),
+			format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
 			transports: [
 				new winston.transports.Console(),
 				new winston.transports.File({ filename: 'python-agent-bridge.log' }),
@@ -164,9 +158,7 @@ export class PythonAgentBridge extends EventEmitter {
 	 * Query agent status and capabilities
 	 */
 	async queryAgents(queryType: 'status'): Promise<Record<string, unknown>>;
-	async queryAgents(
-		queryType: 'capabilities',
-	): Promise<Record<string, string[]>>;
+	async queryAgents(queryType: 'capabilities'): Promise<Record<string, string[]>>;
 	async queryAgents(
 		queryType: 'status' | 'capabilities',
 	): Promise<Record<string, unknown> | Record<string, string[]>> {
@@ -274,9 +266,7 @@ export class PythonAgentBridge extends EventEmitter {
 			};
 
 			const repoRoot = findRepoRoot();
-			const pythonPathParts = [
-				path.resolve(repoRoot, 'packages/python-agents'),
-			];
+			const pythonPathParts = [path.resolve(repoRoot, 'packages/python-agents')];
 			const existingPyPath = process.env.PYTHONPATH || '';
 			if (existingPyPath) pythonPathParts.push(existingPyPath);
 			const modulePath = pythonPathParts.join(path.delimiter);
@@ -303,9 +293,7 @@ export class PythonAgentBridge extends EventEmitter {
 			this.pythonProcess.on('exit', (code, signal) => {
 				if (!this.isInitialized) {
 					reject(
-						new Error(
-							`Python agent process exited during startup: code=${code}, signal=${signal}`,
-						),
+						new Error(`Python agent process exited during startup: code=${code}, signal=${signal}`),
 					);
 				}
 			});
@@ -379,10 +367,7 @@ export class PythonAgentBridge extends EventEmitter {
 		}
 	}
 
-	private handleTaskResult(payload: {
-		coordinationId?: string;
-		result?: AgentTaskResult;
-	}): void {
+	private handleTaskResult(payload: { coordinationId?: string; result?: AgentTaskResult }): void {
 		this.logger.info('Handling task result', { payload });
 		const { coordinationId, result } = payload;
 
@@ -403,10 +388,7 @@ export class PythonAgentBridge extends EventEmitter {
 		}
 	}
 
-	private handleTaskError(payload: {
-		coordinationId?: string;
-		error?: string;
-	}): void {
+	private handleTaskError(payload: { coordinationId?: string; error?: string }): void {
 		const coordinationId = payload.coordinationId;
 		const error = payload.error ?? 'Unknown error from Python agent';
 
@@ -428,10 +410,7 @@ export class PythonAgentBridge extends EventEmitter {
 		}
 	}
 
-	private handleQueryResponse(payload: {
-		queryId?: string;
-		data?: unknown;
-	}): void {
+	private handleQueryResponse(payload: { queryId?: string; data?: unknown }): void {
 		const queryId = payload.queryId;
 		const data = payload.data;
 

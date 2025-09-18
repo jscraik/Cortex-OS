@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-	McpRouteNotFoundError,
-	McpValidationError,
-} from '../src/mcp/errors.js';
+import { McpRouteNotFoundError, McpValidationError } from '../src/mcp/errors.js';
 import type { RoutingToolInput } from '../src/mcp/schemas.js';
 import { createTestEnvironment } from './test-utils.js';
 
@@ -51,9 +48,9 @@ describe('ApiRequestRoutingTool', () => {
 		const env = createTestEnvironment();
 		const input: RoutingToolInput = { method: 'GET', path: '/missing' };
 
-		await expect(
-			env.routingTool.execute(input, env.context),
-		).rejects.toBeInstanceOf(McpRouteNotFoundError);
+		await expect(env.routingTool.execute(input, env.context)).rejects.toBeInstanceOf(
+			McpRouteNotFoundError,
+		);
 		expect(env.metrics.get('mcp.tools.api-routing.failure')).toBe(1);
 	});
 });

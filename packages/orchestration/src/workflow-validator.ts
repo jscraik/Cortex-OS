@@ -17,10 +17,7 @@ export type WorkflowMetadata = NonNullable<Workflow['metadata']>;
  * Metrics emitter abstraction for telemetry integration
  */
 export interface ValidationMetricsEmitter {
-	incrementCounter(
-		metric: string,
-		tags?: Record<string, string | number | boolean>,
-	): void;
+	incrementCounter(metric: string, tags?: Record<string, string | number | boolean>): void;
 	recordTiming(
 		metric: string,
 		value: number,
@@ -43,12 +40,9 @@ export class LoggerMetricsEmitter implements ValidationMetricsEmitter {
 			format: winston.format.json(),
 			transports: [new winston.transports.Console()],
 		}),
-	) { }
+	) {}
 
-	incrementCounter(
-		metric: string,
-		tags?: Record<string, string | number | boolean>,
-	): void {
+	incrementCounter(metric: string, tags?: Record<string, string | number | boolean>): void {
 		this.logger.info(`counter.${metric}`, { ...tags, value: 1 });
 	}
 
@@ -93,11 +87,7 @@ interface ValidationCacheOptions {
 	maxSize?: number;
 	ttlMs?: number; // hard TTL after which entry is evicted
 	cleanupIntervalMs?: number;
-	onEvict?: (
-		key: string,
-		entry: CacheEntry,
-		reason: 'ttl' | 'lru' | 'manual',
-	) => void;
+	onEvict?: (key: string, entry: CacheEntry, reason: 'ttl' | 'lru' | 'manual') => void;
 }
 
 interface ValidationCacheApi {
@@ -108,9 +98,7 @@ interface ValidationCacheApi {
 	size(): number;
 }
 
-function createDefaultCache(
-	opts: ValidationCacheOptions = {},
-): ValidationCacheApi {
+function createDefaultCache(opts: ValidationCacheOptions = {}): ValidationCacheApi {
 	const maxSize = opts.maxSize ?? 1000;
 	const ttlMs = opts.ttlMs ?? 30 * 60 * 1000; // 30 minutes
 	const storage = new Map<string, CacheEntry>();
@@ -215,13 +203,17 @@ function createWorkflowHash(workflow: Workflow): string {
 		entry: workflow.entry,
 		steps: Object.keys(workflow.steps).sort(),
 		connections: Object.fromEntries(
-			Object.entries(workflow.steps).map(([id, step]: [string, any]) => [
-				id,
-				{
-					next: step.next,
-					branches: step.branches?.map((b: any) => b.to).sort(),
-				},
-			]),
+			Object.entries(workflow.steps).map(([id, step]) => {
+				const next = step.next;
+				const branches = (step.branches ?? []).map((b) => b.to).sort();
+				return [
+					id,
+					{
+						next,
+						branches,
+					},
+				] as const;
+			}),
 		),
 	});
 
@@ -300,10 +292,7 @@ function topologicalSort(wf: Workflow, nodes: Set<string>): string[] {
 /**
  * Validate a workflow definition and ensure it forms a DAG with performance optimizations.
  */
-export function validateWorkflow(
-	input: unknown,
-	logger?: Logger,
-): ValidationResult {
+export function validateWorkflow(input: unknown, logger?: Logger): ValidationResult {
 	// Parse and validate schema first
 	const wf = workflowZ.parse(input);
 
@@ -389,10 +378,7 @@ export function validateWorkflow(
 /**
  * Optimized workflow structure validation
  */
-function validateWorkflowStructure(
-	wf: Workflow,
-	logger?: Logger,
-): ValidationResult {
+function validateWorkflowStructure(wf: Workflow, logger?: Logger): ValidationResult {
 	const visited = new Set<string>();
 	const stack = new Set<string>();
 	const unreachableSteps = new Set(Object.keys(wf.steps));
@@ -410,28 +396,20 @@ function validateWorkflowStructure(
 	// Pre-validate all next/branch references
 	for (const [stepId, step] of Object.entries(wf.steps)) {
 		if (step.next && !stepIds.has(step.next)) {
-			throw new Error(
-				`Step '${stepId}' references non-existent next step: ${step.next}`,
-			);
+			throw new Error(`Step '${stepId}' references non-existent next step: ${step.next}`);
 		}
 
 		if (step.branches) {
 			for (const branch of step.branches) {
 				if (!stepIds.has(branch.to)) {
-					throw new Error(
-						`Step '${stepId}' references non-existent branch target: ${branch.to}`,
-					);
+					throw new Error(`Step '${stepId}' references non-existent branch target: ${branch.to}`);
 				}
 			}
 		}
 	}
 
 	// Optimized DFS with path tracking and early termination
-	const visit = (
-		stepId: string,
-		depth: number = 0,
-		path: string[] = [],
-	): void => {
+	const visit = (stepId: string, depth: number = 0, path: string[] = []): void => {
 		// Prevent infinite recursion
 		if (depth > MAX_WORKFLOW_DEPTH) {
 			throw new Error(
@@ -623,9 +601,7 @@ export function validateWorkflows(inputs: unknown[]): Array<{
 }
 
 // Public factory + test hook
-export function createValidationCache(
-	opts?: ValidationCacheOptions,
-): ValidationCacheApi {
+export function createValidationCache(opts?: ValidationCacheOptions): ValidationCacheApi {
 	return createDefaultCache(opts);
 }
 

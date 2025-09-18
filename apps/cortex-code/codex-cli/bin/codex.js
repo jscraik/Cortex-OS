@@ -86,10 +86,7 @@ async function resolveRgDir() {
 function getUpdatedPath(newDirs) {
 	const pathSep = process.platform === 'win32' ? ';' : ':';
 	const existingPath = process.env.PATH || '';
-	const updatedPath = [
-		...newDirs,
-		...existingPath.split(pathSep).filter(Boolean),
-	].join(pathSep);
+	const updatedPath = [...newDirs, ...existingPath.split(pathSep).filter(Boolean)].join(pathSep);
 	return updatedPath;
 }
 

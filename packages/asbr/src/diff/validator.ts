@@ -61,8 +61,7 @@ export class DiffValidator {
 		const oldDigest = this.normalizer.normalize(originalOldContent).hash;
 		const newDigest = this.normalizer.normalize(originalNewContent).hash;
 
-		const digestsMatch =
-			diffResult.oldDigest === oldDigest && diffResult.newDigest === newDigest;
+		const digestsMatch = diffResult.oldDigest === oldDigest && diffResult.newDigest === newDigest;
 
 		if (!digestsMatch) {
 			errors.push('Digest mismatch detected');
@@ -84,14 +83,10 @@ export class DiffValidator {
 
 		// Check for potential issues
 		if (diffResult.metadata.skipped) {
-			warnings.push(
-				`Content normalization skipped (size: ${diffResult.metadata.oldSize} bytes)`,
-			);
+			warnings.push(`Content normalization skipped (size: ${diffResult.metadata.oldSize} bytes)`);
 		}
 
-		if (
-			diffResult.metadata.oldSize > this.config.determinism.max_normalize_bytes
-		) {
+		if (diffResult.metadata.oldSize > this.config.determinism.max_normalize_bytes) {
 			warnings.push('Content exceeds normalization limit');
 		}
 
@@ -122,9 +117,7 @@ export class DiffValidator {
 
 		// Check for duplicate paths
 		const paths = fileDiffs.map((f) => f.path);
-		const duplicates = paths.filter(
-			(path, index) => paths.indexOf(path) !== index,
-		);
+		const duplicates = paths.filter((path, index) => paths.indexOf(path) !== index);
 		if (duplicates.length > 0) {
 			errors.push(`Duplicate file paths: ${duplicates.join(', ')}`);
 		}
@@ -148,13 +141,8 @@ export class DiffValidator {
 			}
 
 			// Check operation consistency
-			if (
-				fileDiff.operation === 'rename' &&
-				(!fileDiff.oldPath || !fileDiff.newPath)
-			) {
-				fileErrors.push(
-					`Rename operation missing old/new paths for ${fileDiff.path}`,
-				);
+			if (fileDiff.operation === 'rename' && (!fileDiff.oldPath || !fileDiff.newPath)) {
+				fileErrors.push(`Rename operation missing old/new paths for ${fileDiff.path}`);
 			}
 
 			if (fileErrors.length > 0) {
@@ -355,16 +343,13 @@ export class DiffValidator {
 
 	private areDigestsReproducible(fileDiffs: FileDiff[]): boolean {
 		// In a real implementation, this would test multiple generations
-		return fileDiffs.every(
-			(fileDiff) => fileDiff.diff.oldDigest && fileDiff.diff.newDigest,
-		);
+		return fileDiffs.every((fileDiff) => fileDiff.diff.oldDigest && fileDiff.diff.newDigest);
 	}
 
 	private validateAllDigests(fileDiffs: FileDiff[]): boolean {
 		return fileDiffs.every(
 			(fileDiff) =>
-				this.isValidSHA256(fileDiff.diff.oldDigest) &&
-				this.isValidSHA256(fileDiff.diff.newDigest),
+				this.isValidSHA256(fileDiff.diff.oldDigest) && this.isValidSHA256(fileDiff.diff.newDigest),
 		);
 	}
 
@@ -410,8 +395,6 @@ export class DiffValidator {
 /**
  * Factory function to create validator from config
  */
-export async function createDiffValidator(
-	config: Config,
-): Promise<DiffValidator> {
+export async function createDiffValidator(config: Config): Promise<DiffValidator> {
 	return new DiffValidator(config);
 }

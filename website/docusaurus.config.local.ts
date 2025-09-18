@@ -42,15 +42,13 @@ const config: Config = {
 					sidebarPath: './sidebars.ts',
 					// Please change this to your repo.
 					// Remove this to remove the "edit this page" links.
-					editUrl:
-						'https://github.com/jamiescottcraik/Cortex-OS/tree/main/website/',
+					editUrl: 'https://github.com/jamiescottcraik/Cortex-OS/tree/main/website/',
 				},
 				blog: {
 					showReadingTime: true,
 					// Please change this to your repo.
 					// Remove this to remove the "edit this page" links.
-					editUrl:
-						'https://github.com/jamiescottcraik/Cortex-OS/tree/main/website/',
+					editUrl: 'https://github.com/jamiescottcraik/Cortex-OS/tree/main/website/',
 				},
 				theme: {
 					customCss: './src/css/custom.css',
@@ -131,14 +129,7 @@ const config: Config = {
 		prism: {
 			theme: prismThemes.github,
 			darkTheme: prismThemes.dracula,
-			additionalLanguages: [
-				'bash',
-				'json',
-				'yaml',
-				'typescript',
-				'python',
-				'rust',
-			],
+			additionalLanguages: ['bash', 'json', 'yaml', 'typescript', 'python', 'rust'],
 		},
 	} satisfies Preset.ThemeConfig,
 };

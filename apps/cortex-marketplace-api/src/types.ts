@@ -76,14 +76,7 @@ export const ServerManifestSchema = z.object({
 	// Repository and docs
 	repository: z.string().url().optional(),
 	homepage: z.string().url().optional(),
-	license: z.enum([
-		'MIT',
-		'Apache-2.0',
-		'GPL-3.0',
-		'BSD-3-Clause',
-		'ISC',
-		'Proprietary',
-	]),
+	license: z.enum(['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause', 'ISC', 'Proprietary']),
 
 	// Categorization
 	category: z.enum([

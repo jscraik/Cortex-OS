@@ -23,9 +23,7 @@ describe('Validation Logic Fixes', () => {
 
 		// Should properly fail when schema is missing
 		expect(result.validationResults.build?.passed).toBe(false);
-		expect(result.validationResults.build?.blockers).toContain(
-			'API schema validation failed',
-		);
+		expect(result.validationResults.build?.blockers).toContain('API schema validation failed');
 	});
 
 	it('should require ALL phases to pass for cerebrum promotion', async () => {

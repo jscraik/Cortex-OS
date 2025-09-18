@@ -9,9 +9,7 @@ describe('SecureCommandExecutor', () => {
 	});
 
 	it('rejects disallowed command', async () => {
-		await expect(
-			SecureCommandExecutor.executeCommand(['rm', '-rf', '/']),
-		).rejects.toThrow();
+		await expect(SecureCommandExecutor.executeCommand(['rm', '-rf', '/'])).rejects.toThrow();
 	});
 
 	it('allows configuration of limits', () => {
@@ -19,8 +17,6 @@ describe('SecureCommandExecutor', () => {
 			maxConcurrentProcesses: 5,
 			defaultTimeout: 1000,
 		});
-		expect(SecureCommandExecutor.getProcessStats().maxConcurrentProcesses).toBe(
-			5,
-		);
+		expect(SecureCommandExecutor.getProcessStats().maxConcurrentProcesses).toBe(5);
 	});
 });

@@ -6,10 +6,7 @@ import addFormats from 'ajv-formats';
 import cors from 'cors';
 import express, { type Application } from 'express';
 import helmet from 'helmet';
-import {
-	collectDefaultMetrics,
-	Registry as MetricsRegistry,
-} from 'prom-client';
+import { collectDefaultMetrics, Registry as MetricsRegistry } from 'prom-client';
 import { z } from 'zod';
 import { logger } from './logger.js';
 
@@ -44,12 +41,8 @@ function computeHash(content: string): string {
 
 function parseFileName(file: string): { id: string; version: string } | null {
 	// Match: name@MAJOR.MINOR.PATCH.json, where each version part is a non-negative integer with no leading zeros (except zero)
-	const match = file.match(
-		/^(.+)@(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.json$/,
-	);
-	return match
-		? { id: match[1], version: `${match[2]}.${match[3]}.${match[4]}` }
-		: null;
+	const match = file.match(/^(.+)@(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.json$/);
+	return match ? { id: match[1], version: `${match[2]}.${match[3]}.${match[4]}` } : null;
 }
 
 function compareVersions(a: string, b: string): number {
@@ -73,8 +66,7 @@ export class SchemaRegistry {
 
 	constructor(options: SchemaRegistryOptions = {}) {
 		this.port = options.port ?? 3001;
-		this.contractsPath =
-			options.contractsPath ?? path.join(process.cwd(), 'contracts');
+		this.contractsPath = options.contractsPath ?? path.join(process.cwd(), 'contracts');
 		this.app = express();
 		this.ajv = new Ajv({ strict: true });
 		addFormats(this.ajv);
@@ -177,8 +169,7 @@ export class SchemaRegistry {
 
 		this.app.get('/schemas/:schemaId', async (req, res) => {
 			const { schemaId } = req.params;
-			const version =
-				typeof req.query.version === 'string' ? req.query.version : undefined;
+			const version = typeof req.query.version === 'string' ? req.query.version : undefined;
 			const result = await this.getSchemaById(schemaId, version);
 			if (!result) {
 				return res.status(404).json({ error: 'Schema not found', schemaId });
@@ -194,8 +185,7 @@ export class SchemaRegistry {
 
 		this.app.post('/validate/:schemaId', async (req, res) => {
 			const { schemaId } = req.params;
-			const version =
-				typeof req.query.version === 'string' ? req.query.version : undefined;
+			const version = typeof req.query.version === 'string' ? req.query.version : undefined;
 			const eventData: unknown = req.body;
 			if (
 				eventData === undefined ||
@@ -232,12 +222,10 @@ export class SchemaRegistry {
 			});
 		});
 
-		this.app.use(
-			(err: unknown, _req: express.Request, res: express.Response) => {
-				logger.error({ err }, 'Unhandled error');
-				res.status(500).json({ error: 'Internal Server Error' });
-			},
-		);
+		this.app.use((err: unknown, _req: express.Request, res: express.Response) => {
+			logger.error({ err }, 'Unhandled error');
+			res.status(500).json({ error: 'Internal Server Error' });
+		});
 	}
 
 	private async getAvailableSchemas(): Promise<SchemaMeta[]> {
@@ -260,11 +248,7 @@ export class SchemaRegistry {
 	): Promise<{ schema: SchemaDocument; version: string; hash: string } | null> {
 		const categories = await fs.readdir(this.contractsPath).catch(() => []);
 		for (const category of categories) {
-			const result = await this.searchSchemaInCategory(
-				category,
-				schemaId,
-				version,
-			);
+			const result = await this.searchSchemaInCategory(category, schemaId, version);
 			if (result) return result;
 		}
 		return null;
@@ -282,9 +266,7 @@ export class SchemaRegistry {
 		const matchingFiles = files
 			.map((file) => {
 				const parsed = parseFileName(file);
-				return parsed && parsed.id === schemaId
-					? { file, version: parsed.version }
-					: null;
+				return parsed && parsed.id === schemaId ? { file, version: parsed.version } : null;
 			})
 			.filter((item): item is { file: string; version: string } => !!item);
 
@@ -295,8 +277,7 @@ export class SchemaRegistry {
 			const schemaPath = path.join(categoryPath, match.file);
 			const content = await fs.readFile(schemaPath, 'utf-8');
 			const schemaData: unknown = JSON.parse(content);
-			if (!isValidSchemaDocument(schemaData) || schemaData.$id !== schemaId)
-				return null;
+			if (!isValidSchemaDocument(schemaData) || schemaData.$id !== schemaId) return null;
 			const hash = computeHash(content);
 			return { schema: schemaData, version: version, hash };
 		} else {
@@ -307,8 +288,7 @@ export class SchemaRegistry {
 			const schemaPath = path.join(categoryPath, latest.file);
 			const content = await fs.readFile(schemaPath, 'utf-8');
 			const schemaData: unknown = JSON.parse(content);
-			if (!isValidSchemaDocument(schemaData) || schemaData.$id !== schemaId)
-				return null;
+			if (!isValidSchemaDocument(schemaData) || schemaData.$id !== schemaId) return null;
 			const hash = computeHash(content);
 			return { schema: schemaData, version: latest.version, hash };
 		}
@@ -348,11 +328,7 @@ export class SchemaRegistry {
 		return schemas;
 	}
 
-	private validateEvent(
-		cacheKey: string,
-		eventData: unknown,
-		schema: SchemaDocument,
-	): boolean {
+	private validateEvent(cacheKey: string, eventData: unknown, schema: SchemaDocument): boolean {
 		let validate = this.validatorCache.get(cacheKey);
 		if (!validate) {
 			try {

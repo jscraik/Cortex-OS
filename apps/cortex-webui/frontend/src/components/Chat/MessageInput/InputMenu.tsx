@@ -105,9 +105,7 @@ const InputMenu: React.FC = () => {
 										<div className="shrink-0">
 											<Switch
 												checked={tool.enabled}
-												onChange={(checked: boolean) =>
-													toggleTool(toolId, checked)
-												}
+												onChange={(checked: boolean) => toggleTool(toolId, checked)}
 											/>
 										</div>
 									</button>
@@ -133,11 +131,7 @@ const InputMenu: React.FC = () => {
 								aria-hidden="true"
 							>
 								<title>Toggle tool list length</title>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									d="m19.5 8.25-7.5 7.5-7.5-7.5"
-								/>
+								<path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
 							</svg>
 						</button>
 					)}

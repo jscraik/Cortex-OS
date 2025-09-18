@@ -98,10 +98,7 @@ export class EmbeddingAdapter {
 		const assigned: string[] = [];
 		for (let i = 0; i < documents.length; i++) {
 			const id = ids?.[i] || `doc-${++this.idCounter}`;
-			const embedding = embedDeterministic(
-				documents[i],
-				this.config.dimensions,
-			);
+			const embedding = embedDeterministic(documents[i], this.config.dimensions);
 			this.documents.set(id, {
 				text: documents[i],
 				metadata: metadata?.[i],
@@ -116,9 +113,7 @@ export class EmbeddingAdapter {
 	/**
 	 * Perform similarity search over stored documents (cosine similarity on unit vectors).
 	 */
-	async similaritySearch(
-		options: SimilaritySearchOptions,
-	): Promise<SimilaritySearchResult[]> {
+	async similaritySearch(options: SimilaritySearchOptions): Promise<SimilaritySearchResult[]> {
 		const { text, topK = 5, threshold = 0 } = options;
 		if (this.documents.size === 0) return [];
 		const queryVec = embedDeterministic(text, this.config.dimensions);
@@ -166,22 +161,14 @@ export interface RerankResult {
 }
 
 export interface RerankerAdapter {
-	rerank(
-		query: string,
-		documents: string[],
-		topK: number,
-	): Promise<RerankResult[]>;
+	rerank(query: string, documents: string[], topK: number): Promise<RerankResult[]>;
 	shutdown?(): Promise<void> | void;
 }
 
 class SimpleLexicalReranker implements RerankerAdapter {
 	// No constructor needed (stateless)
 
-	async rerank(
-		query: string,
-		documents: string[],
-		topK: number,
-	): Promise<RerankResult[]> {
+	async rerank(query: string, documents: string[], topK: number): Promise<RerankResult[]> {
 		const qTokens = new Set(query.toLowerCase().split(/\W+/).filter(Boolean));
 		const scored = documents.map((doc, idx) => {
 			const dTokens = new Set(doc.toLowerCase().split(/\W+/).filter(Boolean));

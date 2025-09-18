@@ -16,8 +16,6 @@ describe('executeStrategyNode', () => {
 	it('uses deterministic timestamp when requested', async () => {
 		const state = { validationResults: {} };
 		const result = await executeStrategyNode(state, { deterministic: true });
-		expect(result.validationResults.strategy.timestamp).toBe(
-			fixedTimestamp('strategy-validation'),
-		);
+		expect(result.validationResults.strategy.timestamp).toBe(fixedTimestamp('strategy-validation'));
 	});
 });

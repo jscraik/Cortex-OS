@@ -7,18 +7,12 @@ import { type TraceContext, type ULID } from '../index.js';
 /**
  * Initialize OTEL tracing and metrics
  */
-export declare function initializeObservability(
-	serviceName: string,
-	version?: string,
-): NodeSDK;
+export declare function initializeObservability(serviceName: string, version?: string): NodeSDK;
 export declare const initializeTracing: typeof initializeObservability;
 /**
  * Start console viewer for traces and metrics
  */
-export declare function startConsoleViewer(
-	serviceName: string,
-	version?: string,
-): NodeSDK;
+export declare function startConsoleViewer(serviceName: string, version?: string): NodeSDK;
 /**
  * Create a new span with ULID context
  */

@@ -20,9 +20,7 @@ describe('ASBR AI MCP HTTP server', () => {
 	it('starts without dynamic import', async () => {
 		vi.useFakeTimers();
 		const integration = new ASBRAIMcpIntegration();
-		const autoRegister = vi
-			.spyOn(integration, 'autoRegister')
-			.mockResolvedValue();
+		const autoRegister = vi.spyOn(integration, 'autoRegister').mockResolvedValue();
 
 		await integration.startHTTPServer(1234);
 		vi.runAllTimers();
@@ -30,11 +28,7 @@ describe('ASBR AI MCP HTTP server', () => {
 		expect(express).toHaveBeenCalled();
 		const app = (express as any).mock.results[0].value;
 		expect(app.use).toHaveBeenCalled();
-		expect(app.listen).toHaveBeenCalledWith(
-			1234,
-			'127.0.0.1',
-			expect.any(Function),
-		);
+		expect(app.listen).toHaveBeenCalledWith(1234, '127.0.0.1', expect.any(Function));
 		expect(autoRegister).toHaveBeenCalled();
 
 		await integration.stop();

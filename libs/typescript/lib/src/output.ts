@@ -16,10 +16,7 @@ export function createStdOutput(text: string): string {
 	return `[${ts}] ${text}`;
 }
 
-export function createJsonOutput<T>(
-	payload: T,
-	extras?: Record<string, unknown>,
-) {
+export function createJsonOutput<T>(payload: T, extras?: Record<string, unknown>) {
 	return JSON.stringify(
 		{
 			...withTimestamp(payload),
@@ -30,13 +27,7 @@ export function createJsonOutput<T>(
 	);
 }
 
-export function formatError(
-	err: unknown,
-	code: keyof typeof errorCodes = 'UNKNOWN_ERROR',
-) {
-	const se =
-		err instanceof StructuredError
-			? err
-			: new StructuredError(code, String(err));
+export function formatError(err: unknown, code: keyof typeof errorCodes = 'UNKNOWN_ERROR') {
+	const se = err instanceof StructuredError ? err : new StructuredError(code, String(err));
 	return createJsonOutput({ error: se.toJSON() });
 }

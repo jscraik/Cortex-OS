@@ -26,9 +26,7 @@ async function basicIntegrationExample() {
 
 	// 2. Initialize the kernel
 	const kernel = new CortexKernel(mockOrchestrator);
-	console.log(
-		`✅ Kernel initialized with ${kernel.getNeuronCount()} neurons\n`,
-	);
+	console.log(`✅ Kernel initialized with ${kernel.getNeuronCount()} neurons\n`);
 
 	// 3. Define a sample project blueprint
 	const blueprint = {
@@ -81,9 +79,7 @@ async function basicIntegrationExample() {
 		const validation = result.validationResults[phase];
 		if (validation) {
 			const status = validation.passed ? '✅ PASSED' : '❌ FAILED';
-			console.log(
-				`   ${phase.charAt(0).toUpperCase() + phase.slice(1)}: ${status}`,
-			);
+			console.log(`   ${phase.charAt(0).toUpperCase() + phase.slice(1)}: ${status}`);
 			if (validation.blockers.length > 0) {
 				console.log(`     Blockers: ${validation.blockers.join(', ')}`);
 			}
@@ -138,32 +134,23 @@ async function determinismDemo() {
 		runId: 'NORMALIZED',
 		metadata: { ...state.metadata, startTime: 'NORM', endTime: 'NORM' },
 		validationResults: Object.fromEntries(
-			Object.entries(state.validationResults).map(
-				([key, value]: [string, any]) => [
-					key,
-					value ? { ...value, timestamp: 'NORM' } : value,
-				],
-			),
+			Object.entries(state.validationResults).map(([key, value]: [string, any]) => [
+				key,
+				value ? { ...value, timestamp: 'NORM' } : value,
+			]),
 		),
-		cerebrum: state.cerebrum
-			? { ...state.cerebrum, timestamp: 'NORM' }
-			: state.cerebrum,
+		cerebrum: state.cerebrum ? { ...state.cerebrum, timestamp: 'NORM' } : state.cerebrum,
 	});
 
 	const normalized1 = normalize(run1);
 	const normalized2 = normalize(run2);
 
-	const isIdentical =
-		JSON.stringify(normalized1) === JSON.stringify(normalized2);
+	const isIdentical = JSON.stringify(normalized1) === JSON.stringify(normalized2);
 
-	console.log(
-		`✅ Structural determinism: ${isIdentical ? 'VERIFIED' : 'FAILED'}`,
-	);
+	console.log(`✅ Structural determinism: ${isIdentical ? 'VERIFIED' : 'FAILED'}`);
 	console.log(`   Run 1 final phase: ${run1.phase}`);
 	console.log(`   Run 2 final phase: ${run2.phase}`);
-	console.log(
-		`   Both completed: ${run1.phase === 'completed' && run2.phase === 'completed'}`,
-	);
+	console.log(`   Both completed: ${run1.phase === 'completed' && run2.phase === 'completed'}`);
 
 	return { run1, run2, isIdentical };
 }

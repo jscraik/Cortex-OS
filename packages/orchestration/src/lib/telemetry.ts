@@ -35,9 +35,7 @@ export interface WorkflowMetrics {
 	coordinationFailures: Counter;
 }
 
-export function gatherSpanAttributes(
-	context: EnhancedSpanContext,
-): Record<string, unknown> {
+export function gatherSpanAttributes(context: EnhancedSpanContext): Record<string, unknown> {
 	const attributes: Record<string, unknown> = {
 		'orchestration.version': '1.0.0',
 		'span.kind': 'internal',
@@ -45,23 +43,19 @@ export function gatherSpanAttributes(
 
 	if (context.workflowId) attributes['workflow.id'] = context.workflowId;
 	if (context.workflowName) attributes['workflow.name'] = context.workflowName;
-	if (context.workflowVersion)
-		attributes['workflow.version'] = context.workflowVersion;
+	if (context.workflowVersion) attributes['workflow.version'] = context.workflowVersion;
 	if (context.stepId) attributes['workflow.step.id'] = context.stepId;
 	if (context.stepKind) attributes['workflow.step.kind'] = context.stepKind;
 	if (context.agentId) attributes['agent.id'] = context.agentId;
-	if (context.attempt !== undefined)
-		attributes['execution.attempt'] = context.attempt;
-	if (context.coordinationId)
-		attributes['coordination.id'] = context.coordinationId;
+	if (context.attempt !== undefined) attributes['execution.attempt'] = context.attempt;
+	if (context.coordinationId) attributes['coordination.id'] = context.coordinationId;
 	if (context.phase) attributes['coordination.phase'] = context.phase;
 
 	if (context.resourceUsage) {
 		if (context.resourceUsage.memoryBytes !== undefined)
 			attributes['resource.memory.bytes'] = context.resourceUsage.memoryBytes;
 		if (context.resourceUsage.cpuUtilization !== undefined)
-			attributes['resource.cpu.utilization'] =
-				context.resourceUsage.cpuUtilization;
+			attributes['resource.cpu.utilization'] = context.resourceUsage.cpuUtilization;
 	}
 
 	if (context.retryPolicy) {
@@ -114,7 +108,9 @@ export function recordErrorMetrics(
 	metrics: WorkflowMetrics,
 	span: Span,
 ): void {
-	const errorObj = err as { message?: string; code?: string; stack?: string; constructor?: { name?: string } } | undefined;
+	const errorObj = err as
+		| { message?: string; code?: string; stack?: string; constructor?: { name?: string } }
+		| undefined;
 	const errorMessage = String(errorObj?.message ?? err);
 
 	if (name.includes('step')) {

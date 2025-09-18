@@ -75,10 +75,7 @@ export class MarketplaceRegistry {
 			}
 		} catch (error) {
 			// eslint-disable-next-line no-console
-			console.warn(
-				'Failed to load from cache, fetching fresh registry:',
-				error,
-			);
+			console.warn('Failed to load from cache, fetching fresh registry:', error);
 			await this.fetchRegistry();
 		}
 
@@ -92,9 +89,7 @@ export class MarketplaceRegistry {
 		try {
 			// Security: Validate URL to prevent SSRF attacks
 			if (!validateRegistryUrl(this.registryUrl)) {
-				throw new Error(
-					`Invalid registry URL rejected for security: ${this.registryUrl}`,
-				);
+				throw new Error(`Invalid registry URL rejected for security: ${this.registryUrl}`);
 			}
 
 			const response = await fetch(this.registryUrl, {
@@ -103,9 +98,7 @@ export class MarketplaceRegistry {
 				signal: AbortSignal.timeout(30000),
 			});
 			if (!response.ok) {
-				throw new Error(
-					`Failed to fetch registry: ${response.status} ${response.statusText}`,
-				);
+				throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
 			}
 
 			const data: unknown = await response.json();
@@ -152,9 +145,7 @@ export class MarketplaceRegistry {
 	/**
 	 * Search servers with filters
 	 */
-	async searchServers(
-		request: SearchRequest,
-	): Promise<ApiResponse<ServerManifest[]>> {
+	async searchServers(request: SearchRequest): Promise<ApiResponse<ServerManifest[]>> {
 		if (!this.registry) {
 			return {
 				success: false,
@@ -175,9 +166,7 @@ export class MarketplaceRegistry {
 
 		// Category filter
 		if (request.category) {
-			results = results.filter(
-				(server) => server.category === request.category,
-			);
+			results = results.filter((server) => server.category === request.category);
 		}
 
 		// Capabilities filter
@@ -189,9 +178,7 @@ export class MarketplaceRegistry {
 
 		// Verified filter
 		if (request.verified !== undefined) {
-			results = results.filter(
-				(server) => server.publisher.verified === request.verified,
-			);
+			results = results.filter((server) => server.publisher.verified === request.verified);
 		}
 
 		// Sort by featured first, then by downloads
@@ -203,10 +190,7 @@ export class MarketplaceRegistry {
 
 		// Pagination
 		const total = results.length;
-		const paginatedResults = results.slice(
-			request.offset,
-			request.offset + request.limit,
-		);
+		const paginatedResults = results.slice(request.offset, request.offset + request.limit);
 
 		return {
 			success: true,
@@ -234,9 +218,7 @@ export class MarketplaceRegistry {
 	getServersByCategory(category: string): ServerManifest[] {
 		if (!this.registry) return [];
 
-		return this.registry.servers.filter(
-			(server) => server.category === category,
-		);
+		return this.registry.servers.filter((server) => server.category === category);
 	}
 
 	/**
@@ -265,9 +247,7 @@ export class MarketplaceRegistry {
 
 		return {
 			valid: false,
-			errors: result.error.errors.map(
-				(err) => `${err.path.join('.')}: ${err.message}`,
-			),
+			errors: result.error.errors.map((err) => `${err.path.join('.')}: ${err.message}`),
 		};
 	}
 
@@ -281,26 +261,17 @@ export class MarketplaceRegistry {
 			totalServers: this.registry.serverCount,
 			categories: Object.keys(this.registry.categories).length,
 			featuredServers: this.registry.featured.length,
-			verifiedPublishers: this.registry.servers.filter(
-				(s) => s.publisher.verified,
-			).length,
+			verifiedPublishers: this.registry.servers.filter((s) => s.publisher.verified).length,
 			lastUpdated: this.lastUpdate?.toISOString(),
 			capabilities: {
 				tools: this.registry.servers.filter((s) => s.capabilities.tools).length,
-				resources: this.registry.servers.filter((s) => s.capabilities.resources)
-					.length,
-				prompts: this.registry.servers.filter((s) => s.capabilities.prompts)
-					.length,
+				resources: this.registry.servers.filter((s) => s.capabilities.resources).length,
+				prompts: this.registry.servers.filter((s) => s.capabilities.prompts).length,
 			},
 			riskLevels: {
-				low: this.registry.servers.filter((s) => s.security.riskLevel === 'low')
-					.length,
-				medium: this.registry.servers.filter(
-					(s) => s.security.riskLevel === 'medium',
-				).length,
-				high: this.registry.servers.filter(
-					(s) => s.security.riskLevel === 'high',
-				).length,
+				low: this.registry.servers.filter((s) => s.security.riskLevel === 'low').length,
+				medium: this.registry.servers.filter((s) => s.security.riskLevel === 'medium').length,
+				high: this.registry.servers.filter((s) => s.security.riskLevel === 'high').length,
 			},
 		};
 

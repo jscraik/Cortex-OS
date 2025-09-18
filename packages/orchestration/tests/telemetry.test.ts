@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-	withEnhancedSpan,
-	workflowMetrics,
-} from '../src/observability/otel.js';
+import { withEnhancedSpan, workflowMetrics } from '../src/observability/otel.js';
 
 afterEach(() => {
 	vi.restoreAllMocks();

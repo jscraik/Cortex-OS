@@ -72,10 +72,7 @@ export class FrontendValidator implements GateValidator {
 			const projectRoot = getProjectRoot();
 			const isWebApp = this.detectWebApp(projectRoot);
 
-			const lighthouseAudit = await this.auditWithLighthouse(
-				projectRoot,
-				isWebApp,
-			);
+			const lighthouseAudit = await this.auditWithLighthouse(projectRoot, isWebApp);
 			const axeAudit = await this.auditWithAxe(projectRoot, isWebApp);
 
 			let lighthouseResults = lighthouseAudit.results;
@@ -96,9 +93,7 @@ export class FrontendValidator implements GateValidator {
 				};
 			}
 
-			const axeSeverity = this.calculateAxeSeverity(
-				axeResults.violations.length,
-			);
+			const axeSeverity = this.calculateAxeSeverity(axeResults.violations.length);
 
 			return {
 				lighthouse: lighthouseResults.score,
@@ -111,9 +106,7 @@ export class FrontendValidator implements GateValidator {
 						severity: axeSeverity,
 					},
 					tools: {
-						lighthouse: lighthouseAudit.hasLighthouse
-							? 'available'
-							: 'simulated',
+						lighthouse: lighthouseAudit.hasLighthouse ? 'available' : 'simulated',
 						axe: axeAudit.hasAxeCore ? 'available' : 'simulated',
 					},
 					isWebApp,
@@ -125,10 +118,7 @@ export class FrontendValidator implements GateValidator {
 				lighthouse: 85,
 				axe: 90,
 				details: {
-					error:
-						error instanceof Error
-							? error.message
-							: 'Frontend validation error',
+					error: error instanceof Error ? error.message : 'Frontend validation error',
 					lighthouse: {
 						performance: 85,
 						accessibility: 90,
@@ -138,9 +128,7 @@ export class FrontendValidator implements GateValidator {
 					},
 					axe: {
 						violations: 1,
-						details: [
-							{ impact: 'moderate', description: 'Validation error occurred' },
-						],
+						details: [{ impact: 'moderate', description: 'Validation error occurred' }],
 						severity: 'minor',
 					},
 				},
@@ -201,15 +189,9 @@ export class FrontendValidator implements GateValidator {
 						4,
 				),
 				details: {
-					performance: Math.round(
-						(categories.performance?.score || 0.94) * 100,
-					),
-					accessibility: Math.round(
-						(categories.accessibility?.score || 0.96) * 100,
-					),
-					bestPractices: Math.round(
-						(categories['best-practices']?.score || 0.92) * 100,
-					),
+					performance: Math.round((categories.performance?.score || 0.94) * 100),
+					accessibility: Math.round((categories.accessibility?.score || 0.96) * 100),
+					bestPractices: Math.round((categories['best-practices']?.score || 0.92) * 100),
 					seo: Math.round((categories.seo?.score || 0.98) * 100),
 					url: envUrl,
 					timestamp: new Date().toISOString(),
@@ -220,9 +202,7 @@ export class FrontendValidator implements GateValidator {
 		} catch (lighthouseError) {
 			console.warn(
 				'Lighthouse audit failed or not available:',
-				lighthouseError instanceof Error
-					? lighthouseError.message
-					: lighthouseError,
+				lighthouseError instanceof Error ? lighthouseError.message : lighthouseError,
 			);
 			return { hasLighthouse: false, results: resultsDefault };
 		}
@@ -251,14 +231,11 @@ export class FrontendValidator implements GateValidator {
 
 			if (hasAxeCore) {
 				try {
-					const { stdout } = await execAsync(
-						'npm test -- --testNamePattern="axe|accessibility"',
-						{
-							cwd: projectRoot,
-							timeout: 30000,
-							maxBuffer: 1024 * 1024,
-						},
-					).catch(() => ({ stdout: '' }));
+					const { stdout } = await execAsync('npm test -- --testNamePattern="axe|accessibility"', {
+						cwd: projectRoot,
+						timeout: 30000,
+						maxBuffer: 1024 * 1024,
+					}).catch(() => ({ stdout: '' }));
 
 					const violations = (stdout.match(/violations/gi) || []).length;
 					const axeScore = Math.max(0, 100 - violations * 10);
@@ -272,8 +249,7 @@ export class FrontendValidator implements GateValidator {
 									? [
 											{
 												impact: 'moderate',
-												description:
-													'Accessibility violations detected in tests',
+												description: 'Accessibility violations detected in tests',
 												occurrences: violations,
 											},
 										]

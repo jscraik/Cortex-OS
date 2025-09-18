@@ -150,9 +150,7 @@ export class LiveProgressUpdater {
 
 			// Auto-start next step if current step completed successfully
 			if (status === 'completed' && stepNumber < progressState.steps.length) {
-				const nextStep = progressState.steps.find(
-					(s) => s.step === stepNumber + 1,
-				);
+				const nextStep = progressState.steps.find((s) => s.step === stepNumber + 1);
 				if (nextStep) {
 					nextStep.status = 'running';
 					nextStep.startTime = new Date();
@@ -205,9 +203,7 @@ export class LiveProgressUpdater {
 		this.activeProgress.delete(taskId);
 	}
 
-	private async updateProgressComment(
-		progressState: ProgressState,
-	): Promise<void> {
+	private async updateProgressComment(progressState: ProgressState): Promise<void> {
 		try {
 			const updatedComment = this.generateProgressComment(progressState);
 
@@ -261,14 +257,10 @@ export class LiveProgressUpdater {
 			const stepEmoji = this.getStepEmoji(step.status);
 			let duration = '';
 			if (step.startTime && step.endTime) {
-				const seconds = Math.round(
-					(step.endTime.getTime() - step.startTime.getTime()) / 1000,
-				);
+				const seconds = Math.round((step.endTime.getTime() - step.startTime.getTime()) / 1000);
 				duration = ` (${seconds}s)`;
 			} else if (step.startTime && step.status === 'running') {
-				const seconds = Math.round(
-					(Date.now() - step.startTime.getTime()) / 1000,
-				);
+				const seconds = Math.round((Date.now() - step.startTime.getTime()) / 1000);
 				duration = ` (${seconds}s)`;
 			}
 

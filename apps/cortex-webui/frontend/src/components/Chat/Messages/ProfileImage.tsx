@@ -7,10 +7,7 @@ interface ProfileImageProps {
 	isUser?: boolean;
 }
 
-const ProfileImage: React.FC<ProfileImageProps> = ({
-	name,
-	isUser = false,
-}) => {
+const ProfileImage: React.FC<ProfileImageProps> = ({ name, isUser = false }) => {
 	const getInitials = (name: string) => {
 		return name
 			.split(' ')

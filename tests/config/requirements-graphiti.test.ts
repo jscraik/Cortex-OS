@@ -11,19 +11,8 @@ describe('graphiti requirements', () => {
 		expect(venv.status).toBe(0);
 
 		const pip = join(dir, 'bin', 'pip');
-		const reqFile = join(
-			process.cwd(),
-			'config',
-			'requirements',
-			'requirements-graphiti.txt',
-		);
-		const res = spawnSync(pip, [
-			'install',
-			'--quiet',
-			'--dry-run',
-			'-r',
-			reqFile,
-		]);
+		const reqFile = join(process.cwd(), 'config', 'requirements', 'requirements-graphiti.txt');
+		const res = spawnSync(pip, ['install', '--quiet', '--dry-run', '-r', reqFile]);
 		rmSync(dir, { recursive: true, force: true });
 		expect(res.status).toBe(0);
 	});

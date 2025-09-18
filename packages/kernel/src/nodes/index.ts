@@ -15,10 +15,7 @@ export { BuildNode, EvaluationNode, StrategyNode };
 /**
  * Convenience wrapper to run the build phase
  */
-export async function runBuildNode(
-	state: PRPState,
-	node = new BuildNode(),
-): Promise<PRPState> {
+export async function runBuildNode(state: PRPState, node = new BuildNode()): Promise<PRPState> {
 	const validated = PRPStateSchema.parse(state);
 	return node.execute(validated);
 }

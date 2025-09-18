@@ -55,10 +55,7 @@ export class BackendValidator implements GateValidator {
 				};
 			}
 
-			const compilationResult = await this.runCompilation(
-				projectRoot,
-				projectStructure,
-			);
+			const compilationResult = await this.runCompilation(projectRoot, projectStructure);
 			const testResult = await this.runTests(projectRoot, projectStructure);
 
 			const passed = compilationResult.passed && testResult.passed;
@@ -94,12 +91,8 @@ export class BackendValidator implements GateValidator {
 	}
 
 	private analyzeProjectStructure(projectRoot: string) {
-		const hasPackageJson = fileExists(
-			createFilePath(projectRoot, 'package.json'),
-		);
-		const hasPyprojectToml = fileExists(
-			createFilePath(projectRoot, 'pyproject.toml'),
-		);
+		const hasPackageJson = fileExists(createFilePath(projectRoot, 'package.json'));
+		const hasPyprojectToml = fileExists(createFilePath(projectRoot, 'pyproject.toml'));
 
 		// More accurate backend detection
 		let hasNodeBackend = false;
@@ -107,9 +100,7 @@ export class BackendValidator implements GateValidator {
 
 		if (hasPackageJson) {
 			try {
-				const packageJson = readJsonFile(
-					createFilePath(projectRoot, 'package.json'),
-				);
+				const packageJson = readJsonFile(createFilePath(projectRoot, 'package.json'));
 				// Check for backend-specific dependencies and scripts
 				const deps = {
 					...packageJson.dependencies,
@@ -180,9 +171,7 @@ export class BackendValidator implements GateValidator {
 
 	private async runCompilation(
 		projectRoot: string,
-		structure: ReturnType<
-			typeof BackendValidator.prototype.analyzeProjectStructure
-		>,
+		structure: ReturnType<typeof BackendValidator.prototype.analyzeProjectStructure>,
 	): Promise<CompilationResult> {
 		let compilationResult: CompilationResult = {
 			passed: true,
@@ -201,13 +190,9 @@ export class BackendValidator implements GateValidator {
 		return compilationResult;
 	}
 
-	private async runNodeCompilation(
-		projectRoot: string,
-	): Promise<CompilationResult> {
+	private async runNodeCompilation(projectRoot: string): Promise<CompilationResult> {
 		try {
-			const packageJson = readJsonFile(
-				createFilePath(projectRoot, 'package.json'),
-			);
+			const packageJson = readJsonFile(createFilePath(projectRoot, 'package.json'));
 
 			if (packageJson.scripts?.build) {
 				const startTime = Date.now();
@@ -229,10 +214,7 @@ export class BackendValidator implements GateValidator {
 						passed: false,
 						command: 'pnpm run build',
 						stdout: truncateString(buildError.stdout || '', 500),
-						stderr: truncateString(
-							buildError.stderr || buildError.message,
-							500,
-						),
+						stderr: truncateString(buildError.stderr || buildError.message, 500),
 						duration: Date.now() - startTime,
 					};
 				}
@@ -244,9 +226,7 @@ export class BackendValidator implements GateValidator {
 		return { passed: true, command: '', stdout: '', stderr: '', duration: 0 };
 	}
 
-	private async runPythonCompilation(
-		projectRoot: string,
-	): Promise<CompilationResult> {
+	private async runPythonCompilation(projectRoot: string): Promise<CompilationResult> {
 		try {
 			await execAsync('which mypy', { timeout: 2000 });
 			const startTime = Date.now();
@@ -299,9 +279,7 @@ export class BackendValidator implements GateValidator {
 
 	private async runTests(
 		projectRoot: string,
-		structure: ReturnType<
-			typeof BackendValidator.prototype.analyzeProjectStructure
-		>,
+		structure: ReturnType<typeof BackendValidator.prototype.analyzeProjectStructure>,
 	): Promise<TestResult> {
 		if (structure.type === 'node') {
 			return this.runNodeTests(projectRoot);
@@ -312,9 +290,7 @@ export class BackendValidator implements GateValidator {
 
 	private async runNodeTests(projectRoot: string): Promise<TestResult> {
 		try {
-			const packageJson = readJsonFile(
-				createFilePath(projectRoot, 'package.json'),
-			);
+			const packageJson = readJsonFile(createFilePath(projectRoot, 'package.json'));
 
 			if (packageJson.scripts?.test) {
 				try {

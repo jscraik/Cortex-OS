@@ -8,10 +8,7 @@ import { describe, expect, it } from 'vitest';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const schemaPath = path.join(
-	__dirname,
-	'../tools/schema/cyclonedx-1.5.schema.json',
-);
+const schemaPath = path.join(__dirname, '../tools/schema/cyclonedx-1.5.schema.json');
 const samplePath = path.join(__dirname, 'fixtures/cyclonedx-sample.json');
 const spdxPath = path.join(__dirname, '../tools/schema/spdx.schema.json');
 const jsfPath = path.join(__dirname, '../tools/schema/jsf-0.82.schema.json');

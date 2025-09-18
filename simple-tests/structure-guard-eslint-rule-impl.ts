@@ -46,10 +46,7 @@ interface RuleOptions {
 /**
  * Determines if an import path represents a cross-feature import
  */
-function isCrossFeatureImport(
-	importPath: string,
-	currentFile: string,
-): boolean {
+function isCrossFeatureImport(importPath: string, currentFile: string): boolean {
 	// Skip external packages and relative imports within same directory tree
 	if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
 		return false;
@@ -64,10 +61,7 @@ function isCrossFeatureImport(
 	}
 
 	// Cross-feature if different feature boundaries
-	return (
-		currentFeature !== importFeature &&
-		isFeatureBoundaryViolation(currentFile, importPath)
-	);
+	return currentFeature !== importFeature && isFeatureBoundaryViolation(currentFile, importPath);
 }
 
 /**
@@ -92,10 +86,7 @@ function extractFeatureFromPath(filePath: string): string | null {
 /**
  * Extracts target feature from import path relative to current file
  */
-function extractFeatureFromImportPath(
-	importPath: string,
-	currentFile: string,
-): string | null {
+function extractFeatureFromImportPath(importPath: string, currentFile: string): string | null {
 	// Handle relative imports that cross feature boundaries
 	if (importPath.includes('../')) {
 		// Count directory levels and check if crossing feature boundary
@@ -121,15 +112,9 @@ function extractFeatureFromImportPath(
 /**
  * Checks if import violates feature boundaries
  */
-function isFeatureBoundaryViolation(
-	_currentFile: string,
-	importPath: string,
-): boolean {
+function isFeatureBoundaryViolation(_currentFile: string, importPath: string): boolean {
 	// Allow imports from parent directories that aren't feature directories
-	if (
-		importPath.includes('../../shared/') ||
-		importPath.includes('../../../utils/')
-	) {
+	if (importPath.includes('../../shared/') || importPath.includes('../../../utils/')) {
 		return false;
 	}
 
@@ -140,10 +125,7 @@ function isFeatureBoundaryViolation(
 /**
  * Checks if import matches banned patterns
  */
-function matchesBannedPattern(
-	importPath: string,
-	bannedPatterns: string[],
-): string | null {
+function matchesBannedPattern(importPath: string, bannedPatterns: string[]): string | null {
 	for (const pattern of bannedPatterns) {
 		try {
 			if (new RegExp(pattern).test(importPath)) {
@@ -159,10 +141,7 @@ function matchesBannedPattern(
 /**
  * Checks if import is allowed via configuration
  */
-function isAllowedImport(
-	importPath: string,
-	allowedPatterns: string[],
-): boolean {
+function isAllowedImport(importPath: string, allowedPatterns: string[]): boolean {
 	return allowedPatterns.some((pattern) => {
 		try {
 			return new RegExp(pattern).test(importPath);
@@ -177,16 +156,14 @@ export function createStructureGuardRule(): ESLintRule {
 		meta: {
 			type: 'problem',
 			docs: {
-				description:
-					'Enforces monorepo structure by preventing forbidden cross-feature imports',
+				description: 'Enforces monorepo structure by preventing forbidden cross-feature imports',
 				category: 'Architectural Integrity',
 			},
 			fixable: false,
 			messages: {
 				forbiddenImport:
 					'Cross-feature imports are not allowed: "{{source}}". Use A2A events or MCP tools instead.',
-				bannedPattern:
-					'Import matches banned pattern "{{pattern}}": "{{source}}"',
+				bannedPattern: 'Import matches banned pattern "{{pattern}}": "{{source}}"',
 			},
 			schema: [
 				{
@@ -252,10 +229,7 @@ export function createStructureGuardRule(): ESLintRule {
 					}
 
 					// Check for banned patterns
-					const matchedPattern = matchesBannedPattern(
-						importPath,
-						bannedPatterns,
-					);
+					const matchedPattern = matchesBannedPattern(importPath, bannedPatterns);
 					if (matchedPattern) {
 						context.report({
 							node,

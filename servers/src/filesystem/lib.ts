@@ -85,10 +85,7 @@ export async function validatePath(requestedPath: string): Promise<string> {
 	const normalizedRequested = normalizePath(absolute);
 
 	// Security: Check if path is within allowed directories before any file operations
-	const isAllowed = isPathWithinAllowedDirectories(
-		normalizedRequested,
-		allowedDirectories,
-	);
+	const isAllowed = isPathWithinAllowedDirectories(normalizedRequested, allowedDirectories);
 	if (!isAllowed) {
 		throw new Error(
 			`Access denied - path outside allowed directories: ${absolute} not in ${allowedDirectories.join(', ')}`,
@@ -114,9 +111,7 @@ export async function validatePath(requestedPath: string): Promise<string> {
 			try {
 				const realParentPath = await fs.realpath(parentDir);
 				const normalizedParent = normalizePath(realParentPath);
-				if (
-					!isPathWithinAllowedDirectories(normalizedParent, allowedDirectories)
-				) {
+				if (!isPathWithinAllowedDirectories(normalizedParent, allowedDirectories)) {
 					throw new Error(
 						`Access denied - parent directory outside allowed directories: ${realParentPath} not in ${allowedDirectories.join(', ')}`,
 					);
@@ -151,10 +146,7 @@ export async function readFileContent(
 	return await fs.readFile(filePath, encoding as BufferEncoding);
 }
 
-export async function writeFileContent(
-	filePath: string,
-	content: string,
-): Promise<void> {
+export async function writeFileContent(filePath: string, content: string): Promise<void> {
 	try {
 		// Security: 'wx' flag ensures exclusive creation - fails if file/symlink exists,
 		// preventing writes through pre-existing symlinks
@@ -232,11 +224,7 @@ export async function applyFileEdits(
 					const newIndent = line.match(/^\s*/)?.[0] || '';
 					if (oldIndent && newIndent) {
 						const relativeIndent = newIndent.length - oldIndent.length;
-						return (
-							originalIndent +
-							' '.repeat(Math.max(0, relativeIndent)) +
-							line.trimStart()
-						);
+						return originalIndent + ' '.repeat(Math.max(0, relativeIndent)) + line.trimStart();
 					}
 					return line;
 				});
@@ -285,10 +273,7 @@ export async function applyFileEdits(
 }
 
 // Memory-efficient implementation to get the last N lines of a file
-export async function tailFile(
-	filePath: string,
-	numLines: number,
-): Promise<string> {
+export async function tailFile(filePath: string, numLines: number): Promise<string> {
 	const CHUNK_SIZE = 1024; // Read 1KB at a time
 	const stats = await fs.stat(filePath);
 	const fileSize = stats.size;
@@ -327,11 +312,7 @@ export async function tailFile(
 			}
 
 			// Add lines to our result (up to the number we need)
-			for (
-				let i = chunkLines.length - 1;
-				i >= 0 && linesFound < numLines;
-				i--
-			) {
+			for (let i = chunkLines.length - 1; i >= 0 && linesFound < numLines; i--) {
 				lines.unshift(chunkLines[i]);
 				linesFound++;
 			}
@@ -344,10 +325,7 @@ export async function tailFile(
 }
 
 // New function to get the first N lines of a file
-export async function headFile(
-	filePath: string,
-	numLines: number,
-): Promise<string> {
+export async function headFile(filePath: string, numLines: number): Promise<string> {
 	const fileHandle = await fs.open(filePath, 'r');
 	try {
 		const lines: string[] = [];

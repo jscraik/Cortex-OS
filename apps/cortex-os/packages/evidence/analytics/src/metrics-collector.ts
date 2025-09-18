@@ -89,8 +89,7 @@ export class MetricsCollector extends EventEmitter {
 	// Storage for collected metrics
 	private readonly agentMetricsBuffer: Map<string, AgentMetrics[]> = new Map();
 	private readonly orchestrationMetricsBuffer: OrchestrationMetrics[] = [];
-	private readonly performanceHistory: Map<string, TimeSeriesData[]> =
-		new Map();
+	private readonly performanceHistory: Map<string, TimeSeriesData[]> = new Map();
 	private readonly resourceUtilizationHistory: ResourceUtilization[] = [];
 
 	// Collection statistics
@@ -187,15 +186,10 @@ export class MetricsCollector extends EventEmitter {
 			const resourceMetrics = await this.collectResourceUtilization();
 
 			// Store collected metrics
-			this.storeCollectedMetrics(
-				agentMetrics,
-				orchestrationMetrics,
-				resourceMetrics,
-			);
+			this.storeCollectedMetrics(agentMetrics, orchestrationMetrics, resourceMetrics);
 
 			// Update collection statistics
-			this.metricsCollected +=
-				agentMetrics.length + orchestrationMetrics.length;
+			this.metricsCollected += agentMetrics.length + orchestrationMetrics.length;
 			this.lastCollectionTime = new Date();
 
 			const collectionTime = Date.now() - startTime;
@@ -262,9 +256,7 @@ export class MetricsCollector extends EventEmitter {
 	/**
 	 * Collect LangGraph-specific agent metrics
 	 */
-	private async collectLangGraphMetrics(
-		timestamp: Date,
-	): Promise<AgentMetrics[]> {
+	private async collectLangGraphMetrics(timestamp: Date): Promise<AgentMetrics[]> {
 		const metrics: AgentMetrics[] = [];
 
 		try {
@@ -278,10 +270,7 @@ export class MetricsCollector extends EventEmitter {
 
 			for (const agentInfo of langGraphAgents) {
 				try {
-					const agentMetrics = await this.collectLangGraphAgentMetrics(
-						agentInfo,
-						timestamp,
-					);
+					const agentMetrics = await this.collectLangGraphAgentMetrics(agentInfo, timestamp);
 					if (agentMetrics) {
 						metrics.push(agentMetrics);
 					}
@@ -331,12 +320,9 @@ export class MetricsCollector extends EventEmitter {
 			const potentialAgents = await this.scanForLangGraphProcesses();
 			agents.push(...potentialAgents);
 		} catch (error) {
-			this.logger.debug(
-				'LangGraph runtime not available for direct integration',
-				{
-					error: error.message,
-				},
-			);
+			this.logger.debug('LangGraph runtime not available for direct integration', {
+				error: error.message,
+			});
 		}
 
 		return agents;
@@ -393,8 +379,7 @@ export class MetricsCollector extends EventEmitter {
 				executionTime = state?.execution_time || 0;
 				taskCount = state?.task_count || 0;
 				errorCount = state?.error_count || 0;
-				successRate =
-					taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
+				successRate = taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
 			} else if (agentInfo.telemetryEndpoint) {
 				// Security: Validate telemetry endpoint to prevent SSRF
 				if (!validateTelemetryEndpoint(agentInfo.telemetryEndpoint)) {
@@ -464,10 +449,7 @@ export class MetricsCollector extends EventEmitter {
 
 			for (const agentInfo of crewAIAgents) {
 				try {
-					const agentMetrics = await this.collectCrewAIAgentMetrics(
-						agentInfo,
-						timestamp,
-					);
+					const agentMetrics = await this.collectCrewAIAgentMetrics(agentInfo, timestamp);
 					if (agentMetrics) {
 						metrics.push(agentMetrics);
 					}
@@ -570,8 +552,7 @@ export class MetricsCollector extends EventEmitter {
 				executionTime = agentData?.execution_time || 0;
 				taskCount = agentData?.completed_tasks || 0;
 				errorCount = agentData?.failed_tasks || 0;
-				successRate =
-					taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
+				successRate = taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
 			} else if (agentInfo.monitoringEndpoint) {
 				// Security: Validate monitoring endpoint to prevent SSRF
 				if (!validateTelemetryEndpoint(agentInfo.monitoringEndpoint)) {
@@ -629,9 +610,7 @@ export class MetricsCollector extends EventEmitter {
 	/**
 	 * Collect AutoGen-specific agent metrics
 	 */
-	private async collectAutoGenMetrics(
-		timestamp: Date,
-	): Promise<AgentMetrics[]> {
+	private async collectAutoGenMetrics(timestamp: Date): Promise<AgentMetrics[]> {
 		const metrics: AgentMetrics[] = [];
 
 		try {
@@ -646,10 +625,7 @@ export class MetricsCollector extends EventEmitter {
 
 			for (const agentInfo of autoGenAgents) {
 				try {
-					const agentMetrics = await this.collectAutoGenAgentMetrics(
-						agentInfo,
-						timestamp,
-					);
+					const agentMetrics = await this.collectAutoGenAgentMetrics(agentInfo, timestamp);
 					if (agentMetrics) {
 						metrics.push(agentMetrics);
 					}
@@ -692,12 +668,9 @@ export class MetricsCollector extends EventEmitter {
 			const potentialAgents = await this.scanForAutoGenProcesses();
 			return potentialAgents;
 		} catch (error) {
-			this.logger.debug(
-				'AutoGen runtime not available for direct integration',
-				{
-					error: error.message,
-				},
-			);
+			this.logger.debug('AutoGen runtime not available for direct integration', {
+				error: error.message,
+			});
 			return [];
 		}
 	}
@@ -749,15 +722,12 @@ export class MetricsCollector extends EventEmitter {
 
 			if (agentInfo.groupChatInstance) {
 				// Direct AutoGen integration
-				const agentStats = agentInfo.groupChatInstance.get_agent_stats?.(
-					agentInfo.id,
-				);
+				const agentStats = agentInfo.groupChatInstance.get_agent_stats?.(agentInfo.id);
 
 				executionTime = agentStats?.total_conversation_time || 0;
 				taskCount = agentStats?.messages_sent || 0;
 				errorCount = agentStats?.failed_responses || 0;
-				successRate =
-					taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
+				successRate = taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
 			} else if (agentInfo.conversationEndpoint) {
 				// Security: Validate conversation endpoint to prevent SSRF
 				if (!validateTelemetryEndpoint(agentInfo.conversationEndpoint)) {
@@ -815,9 +785,7 @@ export class MetricsCollector extends EventEmitter {
 	/**
 	 * Collect metrics from custom agents
 	 */
-	private async collectCustomAgentMetrics(
-		_timestamp: Date,
-	): Promise<AgentMetrics[]> {
+	private async collectCustomAgentMetrics(_timestamp: Date): Promise<AgentMetrics[]> {
 		// Handle custom agent implementations
 		return [];
 	}
@@ -854,8 +822,7 @@ export class MetricsCollector extends EventEmitter {
 					failedTasks: orch.failedTasks,
 					averageExecutionTime: orch.avgExecutionTime,
 					totalResourceUtilization: await this.getSystemResourceUtilization(),
-					workflowEfficiency:
-						orch.completedTasks / (orch.completedTasks + orch.failedTasks),
+					workflowEfficiency: orch.completedTasks / (orch.completedTasks + orch.failedTasks),
 					coordinationOverhead: 0.15, // 15% overhead for coordination
 				});
 			}
@@ -911,9 +878,7 @@ export class MetricsCollector extends EventEmitter {
 	/**
 	 * Get resource usage for a specific agent
 	 */
-	private async getAgentResourceUsage(
-		_agentId: string,
-	): Promise<AgentMetrics['resourceUsage']> {
+	private async getAgentResourceUsage(_agentId: string): Promise<AgentMetrics['resourceUsage']> {
 		// Mock implementation - replace with actual agent resource monitoring
 		return {
 			memory: Math.random() * 512, // MB
@@ -954,19 +919,13 @@ export class MetricsCollector extends EventEmitter {
 
 		// Store orchestration metrics
 		this.orchestrationMetricsBuffer.push(...orchestrationMetrics);
-		if (
-			this.orchestrationMetricsBuffer.length >
-			this.config.collection.batchSize * 2
-		) {
+		if (this.orchestrationMetricsBuffer.length > this.config.collection.batchSize * 2) {
 			this.orchestrationMetricsBuffer.shift();
 		}
 
 		// Store resource utilization
 		this.resourceUtilizationHistory.push(resourceMetrics);
-		if (
-			this.resourceUtilizationHistory.length >
-			this.config.collection.batchSize * 2
-		) {
+		if (this.resourceUtilizationHistory.length > this.config.collection.batchSize * 2) {
 			this.resourceUtilizationHistory.shift();
 		}
 
@@ -985,14 +944,11 @@ export class MetricsCollector extends EventEmitter {
 
 		// Calculate aggregate performance metrics
 		const avgExecutionTime =
-			agentMetrics.reduce((sum, m) => sum + m.executionTime, 0) /
-			agentMetrics.length;
+			agentMetrics.reduce((sum, m) => sum + m.executionTime, 0) / agentMetrics.length;
 		const avgThroughput =
-			agentMetrics.reduce((sum, m) => sum + m.throughput, 0) /
-			agentMetrics.length;
+			agentMetrics.reduce((sum, m) => sum + m.throughput, 0) / agentMetrics.length;
 		const avgSuccessRate =
-			agentMetrics.reduce((sum, m) => sum + m.successRate, 0) /
-			agentMetrics.length;
+			agentMetrics.reduce((sum, m) => sum + m.successRate, 0) / agentMetrics.length;
 
 		// Store time series data
 		this.addToTimeSeries('executionTime', timestamp, avgExecutionTime);
@@ -1008,11 +964,7 @@ export class MetricsCollector extends EventEmitter {
 	/**
 	 * Add data point to time series
 	 */
-	private addToTimeSeries(
-		series: string,
-		timestamp: Date,
-		value: number,
-	): void {
+	private addToTimeSeries(series: string, timestamp: Date, value: number): void {
 		const seriesData = this.performanceHistory.get(series);
 		if (!seriesData) {
 			const arr: TimeSeriesData[] = [{ timestamp, value }];
@@ -1044,8 +996,7 @@ export class MetricsCollector extends EventEmitter {
 			executionTimes: this.performanceHistory.get('executionTime') || [],
 			throughput: this.performanceHistory.get('throughput') || [],
 			errorRates: this.performanceHistory.get('errorRate') || [],
-			resourceUtilization:
-				this.performanceHistory.get('resourceUtilization') || [],
+			resourceUtilization: this.performanceHistory.get('resourceUtilization') || [],
 			agentDistribution: this.calculateAgentDistribution(),
 		};
 	}

@@ -7,16 +7,10 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	type AICoreCapabilities,
-	createAICapabilities,
-} from '../ai-capabilities.js';
+import { type AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
 import { createASBRAIIntegration } from '../asbr-ai-integration.js';
 import { createNeuronRegistry } from '../neurons/index.js';
-import {
-	createPRPOrchestrator,
-	type PRPOrchestrator,
-} from '../orchestrator.js';
+import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 // Mock orchestration types to avoid external dependencies
 interface OrchestrationTask {
@@ -103,18 +97,9 @@ vi.mock('../orchestrator.js', () => ({
 vi.mock('../neurons/index.js', () => ({
 	createNeuronRegistry: vi.fn().mockReturnValue(
 		new Map([
-			[
-				'strategy-neuron',
-				{ id: 'strategy-neuron', phase: 'strategy', type: 'ai-enhanced' },
-			],
-			[
-				'build-neuron',
-				{ id: 'build-neuron', phase: 'build', type: 'ai-enhanced' },
-			],
-			[
-				'evaluation-neuron',
-				{ id: 'evaluation-neuron', phase: 'evaluation', type: 'ai-enhanced' },
-			],
+			['strategy-neuron', { id: 'strategy-neuron', phase: 'strategy', type: 'ai-enhanced' }],
+			['build-neuron', { id: 'build-neuron', phase: 'build', type: 'ai-enhanced' }],
+			['evaluation-neuron', { id: 'evaluation-neuron', phase: 'evaluation', type: 'ai-enhanced' }],
 		]),
 	),
 }));
@@ -122,9 +107,7 @@ vi.mock('../neurons/index.js', () => ({
 // Mock AI capabilities
 vi.mock('../ai-capabilities.js', () => ({
 	createAICapabilities: vi.fn(() => ({
-		generate: vi
-			.fn()
-			.mockResolvedValue('AI generated task analysis and strategy'),
+		generate: vi.fn().mockResolvedValue('AI generated task analysis and strategy'),
 		searchKnowledge: vi.fn().mockResolvedValue([
 			{ text: 'Relevant knowledge for task execution', similarity: 0.9 },
 			{ text: 'Historical execution patterns', similarity: 0.8 },
@@ -185,11 +168,7 @@ class AIEnhancedOrchestrationEngine {
 			);
 
 			// Phase 3: AI-Generated Execution Plan
-			const executionPlan = await this.generateAIExecutionPlan(
-				task,
-				selectedAgents,
-				taskAnalysis,
-			);
+			const executionPlan = await this.generateAIExecutionPlan(task, selectedAgents, taskAnalysis);
 
 			// Phase 4: PRP Neural Orchestration
 			const prpResult = await this.prpOrchestrator.executePRPCycle({
@@ -350,8 +329,7 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
 		const analysis = await this.aiCapabilities.generate(
 			`Analyze execution results and provide quality assessment: ${resultSummary}`,
 			{
-				systemPrompt:
-					'Analyze task execution results and provide efficiency and quality metrics.',
+				systemPrompt: 'Analyze task execution results and provide efficiency and quality metrics.',
 				temperature: 0.1,
 				maxTokens: 512,
 			},
@@ -360,25 +338,18 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
 		return {
 			analysis,
 			efficiency: prpResult.phase === 'completed' ? 0.95 : 0.4,
-			qualityScore: this.calculateQualityFromValidation(
-				prpResult.validationResults,
-			),
+			qualityScore: this.calculateQualityFromValidation(prpResult.validationResults),
 			qualityMetrics: {
 				completeness: prpResult.phase === 'completed' ? 1.0 : 0.5,
 				accuracy: this.calculateAccuracyFromEvidence(prpResult),
-				reliability: this.calculateReliabilityFromCerebrum(
-					prpResult.metadata.cerebrum,
-				),
+				reliability: this.calculateReliabilityFromCerebrum(prpResult.metadata.cerebrum),
 			},
 		};
 	}
 
 	// Helper methods
-	private assessTaskComplexity(
-		task: OrchestrationTask,
-	): 'low' | 'medium' | 'high' {
-		const factors =
-			task.requiredCapabilities.length + (task.description?.length || 0) / 100;
+	private assessTaskComplexity(task: OrchestrationTask): 'low' | 'medium' | 'high' {
+		const factors = task.requiredCapabilities.length + (task.description?.length || 0) / 100;
 		if (factors < 3) return 'low';
 		if (factors < 6) return 'medium';
 		return 'high';
@@ -401,9 +372,7 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
 
 	private calculateQualityFromValidation(validationResults: any): number {
 		const phases = Object.keys(validationResults);
-		const passedPhases = phases.filter(
-			(phase) => validationResults[phase].passed,
-		).length;
+		const passedPhases = phases.filter((phase) => validationResults[phase].passed).length;
 		return passedPhases / Math.max(phases.length, 1);
 	}
 
@@ -448,8 +417,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		testTask = {
 			id: 'task-123',
 			title: 'Implement user authentication system',
-			description:
-				'Create secure login system with JWT tokens and password hashing',
+			description: 'Create secure login system with JWT tokens and password hashing',
 			requiredCapabilities: ['code-generation', 'security-analysis', 'testing'],
 			priority: 'high',
 		};
@@ -492,10 +460,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		});
 
 		it('should orchestrate tasks with AI enhancement', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 
 			expect(result.success).toBe(true);
 			expect(result.orchestrationId).toBeTruthy();
@@ -506,10 +471,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		});
 
 		it('should provide AI-generated strategic insights', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 			const aiEnhancements = result.executionResults.aiEnhancements as any;
 
 			expect(aiEnhancements).toHaveProperty('strategicInsights');
@@ -520,32 +482,21 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		});
 
 		it('should select optimal agents using AI similarity matching', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
-			const selectedAgents = result.executionResults
-				.selectedAgents as OrchestrationAgent[];
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
+			const selectedAgents = result.executionResults.selectedAgents as OrchestrationAgent[];
 
 			// Should select available agents with relevant capabilities
 			expect(Array.isArray(selectedAgents)).toBe(true);
 			expect(selectedAgents.length).toBeGreaterThan(0);
-			expect(
-				selectedAgents.every((agent) => agent.status === 'available'),
-			).toBe(true);
+			expect(selectedAgents.every((agent) => agent.status === 'available')).toBe(true);
 
 			// Should not include busy agents
-			const busyAgentSelected = selectedAgents.some(
-				(agent) => agent.id === 'agent-3',
-			);
+			const busyAgentSelected = selectedAgents.some((agent) => agent.id === 'agent-3');
 			expect(busyAgentSelected).toBe(false);
 		});
 
 		it('should integrate with PRP neural orchestration', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 			const prpResult = result.executionResults.prpResult as any;
 
 			expect(prpResult).toBeTruthy();
@@ -562,10 +513,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 				new Error('AI service unavailable'),
 			);
 
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 
 			expect(result.success).toBe(false);
 			expect(result.errors.length).toBeGreaterThan(0);
@@ -575,10 +523,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 
 	describe('🧠 AI-Enhanced Decision Making', () => {
 		it('should perform comprehensive task analysis using RAG', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 			const taskAnalysis = result.executionResults.taskAnalysis as any;
 
 			expect(taskAnalysis).toHaveProperty('complexity');
@@ -590,10 +535,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		});
 
 		it('should generate optimized execution plans with AI', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 			const executionPlan = result.plan as any;
 
 			expect(executionPlan).toHaveProperty('generatedPlan');
@@ -601,16 +543,11 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 			expect(executionPlan).toHaveProperty('agentAssignments');
 			expect(executionPlan).toHaveProperty('optimizations');
 			expect(Array.isArray(executionPlan.optimizations)).toBe(true);
-			expect(executionPlan.optimizations).toContain(
-				'AI-optimized agent selection',
-			);
+			expect(executionPlan.optimizations).toContain('AI-optimized agent selection');
 		});
 
 		it('should provide AI-powered result analysis', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 			const resultAnalysis = result.executionResults.resultAnalysis as any;
 
 			expect(resultAnalysis).toHaveProperty('analysis');
@@ -629,10 +566,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 					'Very complex task with multiple interdependent components requiring extensive coordination and specialized expertise across multiple domains',
 			};
 
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				complexTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(complexTask, testAgents);
 			const taskAnalysis = result.executionResults.taskAnalysis as any;
 
 			expect(taskAnalysis.complexity).toBe('high');
@@ -656,10 +590,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		});
 
 		it('should ensure performance metrics meet thresholds', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 
 			// Performance thresholds
 			expect(result.performance.totalDuration).toBeGreaterThan(0);
@@ -672,10 +603,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		});
 
 		it('should validate orchestration result structure', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 
 			// Required properties
 			expect(result).toHaveProperty('orchestrationId');
@@ -694,10 +622,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 		});
 
 		it('should integrate all AI enhancement features', async () => {
-			const result = await orchestrationEngine.orchestrateTaskWithAI(
-				testTask,
-				testAgents,
-			);
+			const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 			const aiEnhancements = result.executionResults.aiEnhancements as any;
 
 			// Verify all AI enhancements are present
@@ -733,11 +658,7 @@ describe('📋 Orchestration-AI Integration Compliance Checklist', () => {
 		console.log('✅ Orchestration-AI Integration Compliance: PASSED');
 		console.log('   - AI Capabilities: Integrated with full feature set');
 		console.log('   - ASBR Evidence: Integrated with balanced configuration');
-		console.log(
-			'   - PRP Orchestration: Neural framework integration complete',
-		);
-		console.log(
-			'   - Enhancement Features: Strategic analysis, optimal selection, AI planning',
-		);
+		console.log('   - PRP Orchestration: Neural framework integration complete');
+		console.log('   - Enhancement Features: Strategic analysis, optimal selection, AI planning');
 	});
 });

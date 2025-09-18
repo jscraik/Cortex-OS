@@ -70,9 +70,7 @@ let sqliteAvailable = true;
 			provenance: { source: 'user' },
 		};
 		await store.upsert(m);
-		const purged = await store.purgeExpired(
-			new Date(Date.now() + 2000).toISOString(),
-		);
+		const purged = await store.purgeExpired(new Date(Date.now() + 2000).toISOString());
 		expect(purged).toBe(1);
 		await store.upsert({ ...m, id: 'del', ttl: undefined });
 		await store.delete('del');

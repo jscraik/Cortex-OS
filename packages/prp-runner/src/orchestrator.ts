@@ -45,10 +45,7 @@ export interface Neuron {
 	dependencies: string[];
 	tools: string[];
 	requiresLLM?: boolean;
-	execute(
-		state: ExecutionState,
-		context: ExecutionContext,
-	): Promise<NeuronResult>;
+	execute(state: ExecutionState, context: ExecutionContext): Promise<NeuronResult>;
 }
 
 export interface NeuronResult {
@@ -109,7 +106,7 @@ async function executeCycle(
 	const executor = new ConcurrentExecutor(4); // Limit to 4 concurrent neurons
 
 	// Prepare neurons for concurrent execution
-	const executableNeurons = Array.from(neurons.values()).map(neuron => ({
+	const executableNeurons = Array.from(neurons.values()).map((neuron) => ({
 		id: neuron.id,
 		execute: async () => {
 			const state: ExecutionState = {
@@ -119,7 +116,7 @@ async function executeCycle(
 				outputs: {}, // Start with empty outputs for each neuron
 			};
 			return await executeNeuron(neuron, state, context);
-		}
+		},
 	}));
 
 	// Execute all neurons concurrently
@@ -138,7 +135,7 @@ async function executeCycle(
 			// Store error information
 			outputs[neuronId] = {
 				error: result.error?.message,
-				failed: true
+				failed: true,
 			};
 		}
 	});
@@ -171,12 +168,10 @@ export function createPRPOrchestrator(): PRPOrchestrator {
 		},
 		getLLMConfig: () => llmConfig,
 		createLLMBridge: () => {
-			if (!llmBridge)
-				throw new Error('LLM must be configured before creating bridge');
+			if (!llmBridge) throw new Error('LLM must be configured before creating bridge');
 			return llmBridge;
 		},
-		executePRPCycle: (blueprint) =>
-			executeCycle(neurons, llmConfig, llmBridge, blueprint),
+		executePRPCycle: (blueprint) => executeCycle(neurons, llmConfig, llmBridge, blueprint),
 		generateProductRequirementsPrompt: async (blueprint: Blueprint) => {
 			// Basic validation similar to tests' expectations
 			if (

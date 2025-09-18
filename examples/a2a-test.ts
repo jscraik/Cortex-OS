@@ -38,11 +38,7 @@ async function runTest() {
 			messageReceived = true;
 
 			// Verify message content
-			if (
-				message.data &&
-				typeof message.data === 'object' &&
-				'text' in message.data
-			) {
+			if (message.data && typeof message.data === 'object' && 'text' in message.data) {
 				const data = message.data as { text: string };
 				if (data.text === 'Hello from A2A!') {
 					console.log('✅ Message content verified');

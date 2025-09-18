@@ -16,9 +16,7 @@ const GenerateTestInputSchema = z.object({
 
 const RefactorTestInputSchema = z.object({
 	testFile: z.string(),
-	improvements: z.array(
-		z.enum(['readability', 'performance', 'maintainability', 'coverage']),
-	),
+	improvements: z.array(z.enum(['readability', 'performance', 'maintainability', 'coverage'])),
 	preserveExisting: z.boolean().default(true),
 });
 
@@ -31,9 +29,7 @@ const ValidateTDDFlowInputSchema = z.object({
 const CoachRecommendationInputSchema = z.object({
 	codebase: z.string(),
 	testStrategy: z.enum(['tdd', 'bdd', 'mixed']).optional(),
-	experience: z
-		.enum(['beginner', 'intermediate', 'advanced'])
-		.default('intermediate'),
+	experience: z.enum(['beginner', 'intermediate', 'advanced']).default('intermediate'),
 });
 
 // TDD Coach MCP Tool Definitions
@@ -72,12 +68,8 @@ export const tddCoachMcpTools: TDDCoachTool[] = [
 ];
 
 // Export types for external use
-export type AnalyzeTestCoverageInput = z.infer<
-	typeof AnalyzeTestCoverageInputSchema
->;
+export type AnalyzeTestCoverageInput = z.infer<typeof AnalyzeTestCoverageInputSchema>;
 export type GenerateTestInput = z.infer<typeof GenerateTestInputSchema>;
 export type RefactorTestInput = z.infer<typeof RefactorTestInputSchema>;
 export type ValidateTDDFlowInput = z.infer<typeof ValidateTDDFlowInputSchema>;
-export type CoachRecommendationInput = z.infer<
-	typeof CoachRecommendationInputSchema
->;
+export type CoachRecommendationInput = z.infer<typeof CoachRecommendationInputSchema>;

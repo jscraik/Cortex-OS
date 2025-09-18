@@ -1,11 +1,7 @@
 import { decayEnabled, decayFactor, getHalfLifeMs } from '../core/decay.js';
 import { isExpired } from '../core/ttl.js';
 import type { Memory, MemoryId } from '../domain/types.js';
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from '../ports/MemoryStore.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 // Attempt dynamic loading of native modules so the package can be imported even
 // when SQLite bindings are unavailable (e.g., in environments without native
@@ -79,9 +75,7 @@ export class SQLiteStore implements MemoryStore {
 
 		// Create indexes
 		this.db.exec('CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)');
-		this.db.exec(
-			'CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)',
-		);
+		this.db.exec('CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)');
 	}
 
 	async upsert(m: Memory, _namespace = 'default'): Promise<Memory> {
@@ -105,26 +99,17 @@ export class SQLiteStore implements MemoryStore {
 			m.policy ? JSON.stringify(m.policy) : null,
 			m.embeddingModel || null,
 		);
-		const row = this.db
-			.prepare('SELECT rowid FROM memories WHERE id = ?')
-			.get(m.id);
+		const row = this.db.prepare('SELECT rowid FROM memories WHERE id = ?').get(m.id);
 		const rowidVal = (row as Record<string, unknown> | undefined)?.rowid;
-		if (
-			rowidVal !== undefined &&
-			(typeof rowidVal === 'number' || typeof rowidVal === 'bigint')
-		) {
+		if (rowidVal !== undefined && (typeof rowidVal === 'number' || typeof rowidVal === 'bigint')) {
 			if (m.vector) {
 				const padded = padVector(m.vector, this.dim);
 				const buffer = Buffer.from(new Float32Array(padded).buffer);
 				this.db
-					.prepare(
-						'INSERT OR REPLACE INTO memory_embeddings(rowid, embedding) VALUES (?, ?)',
-					)
+					.prepare('INSERT OR REPLACE INTO memory_embeddings(rowid, embedding) VALUES (?, ?)')
 					.run(BigInt(rowidVal), buffer);
 			} else {
-				this.db
-					.prepare('DELETE FROM memory_embeddings WHERE rowid = ?')
-					.run(BigInt(rowidVal));
+				this.db.prepare('DELETE FROM memory_embeddings WHERE rowid = ?').run(BigInt(rowidVal));
 			}
 		}
 
@@ -143,17 +128,10 @@ export class SQLiteStore implements MemoryStore {
 
 	async delete(id: MemoryId, _namespace = 'default'): Promise<void> {
 		_use(_namespace);
-		const row = this.db
-			.prepare('SELECT rowid FROM memories WHERE id = ?')
-			.get(id);
+		const row = this.db.prepare('SELECT rowid FROM memories WHERE id = ?').get(id);
 		const rowidVal = (row as Record<string, unknown> | undefined)?.rowid;
-		if (
-			rowidVal !== undefined &&
-			(typeof rowidVal === 'number' || typeof rowidVal === 'bigint')
-		) {
-			this.db
-				.prepare('DELETE FROM memory_embeddings WHERE rowid = ?')
-				.run(BigInt(rowidVal));
+		if (rowidVal !== undefined && (typeof rowidVal === 'number' || typeof rowidVal === 'bigint')) {
+			this.db.prepare('DELETE FROM memory_embeddings WHERE rowid = ?').run(BigInt(rowidVal));
 		}
 		this.db.prepare('DELETE FROM memories WHERE id = ?').run(id);
 	}
@@ -190,8 +168,7 @@ export class SQLiteStore implements MemoryStore {
 		let candidates = rows.map((row) => this.rowToMemory(row));
 
 		// Optional rerank stage using Model Gateway if query text is present
-		const rerankEnabled =
-			(process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
+		const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
 		const queryText = q.text?.trim();
 
 		if (rerankEnabled && queryText && candidates.length > 1) {
@@ -236,10 +213,7 @@ export class SQLiteStore implements MemoryStore {
 		return candidates.slice(0, q.topK);
 	}
 
-	async searchByVector(
-		q: VectorQuery,
-		_namespace = 'default',
-	): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, _namespace = 'default'): Promise<Memory[]> {
 		_use(_namespace);
 		const padded = padVector(q.vector, this.dim);
 		const initialLimit = Math.max(q.topK * 10, q.topK);
@@ -254,9 +228,7 @@ export class SQLiteStore implements MemoryStore {
 
 		if (q.filterTags && q.filterTags.length > 0) {
 			const tagSet = new Set(q.filterTags);
-			candidates = candidates.filter((memory) =>
-				memory.tags.some((tag) => tagSet.has(tag)),
-			);
+			candidates = candidates.filter((memory) => memory.tags.some((tag) => tagSet.has(tag)));
 		}
 
 		let results = candidates.slice(0, q.topK);
@@ -270,15 +242,11 @@ export class SQLiteStore implements MemoryStore {
 				.slice(0, q.topK);
 		}
 
-		const rerankEnabled =
-			(process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
+		const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
 		if (rerankEnabled && q.queryText && candidates.length > 1) {
 			try {
 				const start = Date.now();
-				const reranked = await this.rerankWithModelGateway(
-					q.queryText,
-					candidates,
-				);
+				const reranked = await this.rerankWithModelGateway(q.queryText, candidates);
 				const latency = Date.now() - start;
 				await this.writeOutboxEvent({
 					type: 'rerank.completed',
@@ -314,10 +282,7 @@ export class SQLiteStore implements MemoryStore {
 	}
 
 	// Second-stage reranking via Model Gateway (/rerank) with Qwen3 MLX primary
-	private async rerankWithModelGateway(
-		query: string,
-		docs: Memory[],
-	): Promise<Memory[]> {
+	private async rerankWithModelGateway(query: string, docs: Memory[]): Promise<Memory[]> {
 		const gatewayUrl = process.env.MODEL_GATEWAY_URL || 'http://localhost:8081';
 		const endpoint = `${gatewayUrl.replace(/\/$/, '')}/rerank`;
 		const documents = docs.map((d) => d.text || '');
@@ -348,12 +313,9 @@ export class SQLiteStore implements MemoryStore {
 		return scored.map((s) => s.mem);
 	}
 
-	private async writeOutboxEvent(
-		event: Record<string, unknown>,
-	): Promise<void> {
+	private async writeOutboxEvent(event: Record<string, unknown>): Promise<void> {
 		try {
-			const file =
-				process.env.MEMORIES_OUTBOX_FILE || 'logs/memories-outbox.jsonl';
+			const file = process.env.MEMORIES_OUTBOX_FILE || 'logs/memories-outbox.jsonl';
 			// Lazy import to avoid ESM top-level overhead
 			const fs = await import('node:fs/promises');
 			await fs.mkdir(file.split('/').slice(0, -1).join('/'), {
@@ -371,9 +333,7 @@ export class SQLiteStore implements MemoryStore {
 		_use(_namespace);
 		let purgedCount = 0;
 
-		const stmt = this.db.prepare(
-			'SELECT rowid, * FROM memories WHERE ttl IS NOT NULL',
-		);
+		const stmt = this.db.prepare('SELECT rowid, * FROM memories WHERE ttl IS NOT NULL');
 		const rows = stmt.all();
 
 		const expiredIds: string[] = [];
@@ -389,14 +349,10 @@ export class SQLiteStore implements MemoryStore {
 
 		if (expiredIds.length > 0) {
 			const placeholders = expiredIds.map(() => '?').join(',');
-			this.db
-				.prepare(`DELETE FROM memories WHERE id IN (${placeholders})`)
-				.run(...expiredIds);
+			this.db.prepare(`DELETE FROM memories WHERE id IN (${placeholders})`).run(...expiredIds);
 			const rowPlaceholders = expiredRowids.map(() => '?').join(',');
 			this.db
-				.prepare(
-					`DELETE FROM memory_embeddings WHERE rowid IN (${rowPlaceholders})`,
-				)
+				.prepare(`DELETE FROM memory_embeddings WHERE rowid IN (${rowPlaceholders})`)
 				.run(...expiredRowids);
 			purgedCount = expiredIds.length;
 		}
@@ -420,12 +376,7 @@ export class SQLiteStore implements MemoryStore {
 		const id = typeof r.id === 'string' ? r.id : '';
 		const kind = ((): Memory['kind'] => {
 			const k = r.kind;
-			return k === 'note' ||
-				k === 'event' ||
-				k === 'artifact' ||
-				k === 'embedding'
-				? k
-				: 'note';
+			return k === 'note' || k === 'event' || k === 'artifact' || k === 'embedding' ? k : 'note';
 		})();
 
 		const text = typeof r.text === 'string' ? r.text : undefined;
@@ -438,12 +389,9 @@ export class SQLiteStore implements MemoryStore {
 			return Array.isArray(arr) ? arr.filter(isString) : [];
 		})();
 		const ttl = typeof r.ttl === 'string' ? r.ttl : undefined;
-		const createdAt =
-			typeof r.createdAt === 'string' ? r.createdAt : new Date().toISOString();
-		const updatedAt =
-			typeof r.updatedAt === 'string' ? r.updatedAt : new Date().toISOString();
-		const provenanceObj =
-			parseJSON<Partial<Memory['provenance']>>(r.provenance) ?? {};
+		const createdAt = typeof r.createdAt === 'string' ? r.createdAt : new Date().toISOString();
+		const updatedAt = typeof r.updatedAt === 'string' ? r.updatedAt : new Date().toISOString();
+		const provenanceObj = parseJSON<Partial<Memory['provenance']>>(r.provenance) ?? {};
 		const provenance: Memory['provenance'] = {
 			source: provenanceObj.source ?? 'system',
 			actor: provenanceObj.actor,
@@ -451,8 +399,7 @@ export class SQLiteStore implements MemoryStore {
 			hash: provenanceObj.hash,
 		};
 		const policy = parseJSON<Memory['policy']>(r.policy);
-		const embeddingModel =
-			typeof r.embeddingModel === 'string' ? r.embeddingModel : undefined;
+		const embeddingModel = typeof r.embeddingModel === 'string' ? r.embeddingModel : undefined;
 
 		return {
 			id,

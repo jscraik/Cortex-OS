@@ -29,9 +29,7 @@ export const ChatStreamEventSchema = z.discriminatedUnion('evt', [
 	ChatStreamDoneSchema,
 ]);
 
-export function makeStartEvent(
-	input: Omit<ChatStreamStart, 'ts' | 'evt'>,
-): ChatStreamStart {
+export function makeStartEvent(input: Omit<ChatStreamStart, 'ts' | 'evt'>): ChatStreamStart {
 	const evt: ChatStreamStart = {
 		ts: new Date().toISOString(),
 		evt: 'chat.stream.start',
@@ -40,9 +38,7 @@ export function makeStartEvent(
 	return ChatStreamStartSchema.parse(evt);
 }
 
-export function makeDoneEvent(
-	input: Omit<ChatStreamDone, 'ts' | 'evt'>,
-): ChatStreamDone {
+export function makeDoneEvent(input: Omit<ChatStreamDone, 'ts' | 'evt'>): ChatStreamDone {
 	const evt: ChatStreamDone = {
 		ts: new Date().toISOString(),
 		evt: 'chat.stream.done',

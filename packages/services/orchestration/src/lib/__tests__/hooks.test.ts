@@ -169,15 +169,11 @@ describe('HookManager', () => {
 			const errorHook = vi.fn(() => {
 				throw new Error('Hook error');
 			});
-			const consoleWarnSpy = vi
-				.spyOn(console, 'warn')
-				.mockImplementation(() => {});
+			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			hookManager.addPreStepHook(stepId, errorHook);
 
-			await expect(
-				hookManager.executePreStepHooks(context),
-			).resolves.not.toThrow();
+			await expect(hookManager.executePreStepHooks(context)).resolves.not.toThrow();
 			expect(consoleWarnSpy).toHaveBeenCalled();
 
 			consoleWarnSpy.mockRestore();
@@ -190,9 +186,7 @@ describe('HookManager', () => {
 				throw new Error('Hook error');
 			});
 			const successHook = vi.fn();
-			const consoleWarnSpy = vi
-				.spyOn(console, 'warn')
-				.mockImplementation(() => {});
+			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			hookManager.addPreStepHook(stepId, errorHook);
 			hookManager.addPreStepHook(stepId, successHook);

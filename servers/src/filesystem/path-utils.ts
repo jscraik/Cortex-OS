@@ -40,10 +40,7 @@ export function normalizePath(p: string): string {
 	p = p.trim().replace(/^["']|["']$/g, '');
 
 	// Check if this is a Unix path (starts with / but not a Windows or WSL path)
-	const isUnixPath =
-		p.startsWith('/') &&
-		!p.match(/^\/mnt\/[a-z]\//i) &&
-		!p.match(/^\/[a-zA-Z]\//);
+	const isUnixPath = p.startsWith('/') && !p.match(/^\/mnt\/[a-z]\//i) && !p.match(/^\/[a-zA-Z]\//);
 
 	if (isUnixPath) {
 		// For Unix paths, just normalize without converting to Windows format

@@ -92,18 +92,12 @@ const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose }) => {
 	const categories = Array.from(new Set(shortcuts.map((s) => s.category)));
 
 	return (
-		<Modal
-			isOpen={isOpen}
-			onClose={onClose}
-			title="Keyboard Shortcuts"
-			size="lg"
-		>
+		<Modal isOpen={isOpen} onClose={onClose} title="Keyboard Shortcuts" size="lg">
 			<div className="p-6">
 				<div className="space-y-6">
 					<div>
 						<p className="text-sm text-gray-500 dark:text-gray-400">
-							Quick reference for keyboard shortcuts available in the
-							application.
+							Quick reference for keyboard shortcuts available in the application.
 						</p>
 					</div>
 
@@ -119,10 +113,7 @@ const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose }) => {
 											{shortcuts
 												.filter((s) => s.category === category)
 												.map((shortcut, index) => (
-													<tr
-														key={index}
-														className="hover:bg-gray-50 dark:hover:bg-gray-750"
-													>
+													<tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-750">
 														<td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
 															{shortcut.description}
 														</td>

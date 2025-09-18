@@ -19,15 +19,7 @@ export const UiComponentRenderedEventSchema = z.object({
 export const UserInteractionEventSchema = z.object({
 	interactionId: z.string(),
 	componentId: z.string(),
-	action: z.enum([
-		'click',
-		'hover',
-		'focus',
-		'input',
-		'submit',
-		'drag',
-		'scroll',
-	]),
+	action: z.enum(['click', 'hover', 'focus', 'input', 'submit', 'drag', 'scroll']),
 	value: z.any().optional(),
 	coordinates: z
 		.object({
@@ -62,9 +54,7 @@ export const UiStateChangedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type UiComponentRenderedEvent = z.infer<
-	typeof UiComponentRenderedEventSchema
->;
+export type UiComponentRenderedEvent = z.infer<typeof UiComponentRenderedEventSchema>;
 export type UserInteractionEvent = z.infer<typeof UserInteractionEventSchema>;
 export type AiRecommendationEvent = z.infer<typeof AiRecommendationEventSchema>;
 export type UiStateChangedEvent = z.infer<typeof UiStateChangedEventSchema>;

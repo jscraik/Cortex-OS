@@ -3,16 +3,11 @@ import type { SuiteOutcome } from '../types';
 
 export interface Router {
 	initialize(): Promise<void>;
-	generateEmbedding(request: {
-		text: string;
-	}): Promise<{ embedding: number[] }>;
+	generateEmbedding(request: { text: string }): Promise<{ embedding: number[] }>;
 	generateChat(request: {
 		messages: { role: string; content: string }[];
 	}): Promise<{ content: string }>;
-	rerank(request: {
-		query: string;
-		documents: string[];
-	}): Promise<{ scores: number[] }>;
+	rerank(request: { query: string; documents: string[] }): Promise<{ scores: number[] }>;
 	hasAvailableModels(capability: 'embedding' | 'chat' | 'reranking'): boolean;
 }
 
@@ -95,6 +90,5 @@ export async function runRouterSuite(
 export const routerSuite = {
 	name: 'router',
 	optionsSchema: RouterOptions,
-	run: (name: string, opts: RouterOptions, router: Router) =>
-		runRouterSuite(name, opts, router),
+	run: (name: string, opts: RouterOptions, router: Router) => runRouterSuite(name, opts, router),
 };

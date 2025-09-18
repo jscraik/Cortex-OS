@@ -34,8 +34,7 @@ for (const policyFile of policyFiles) {
 		const filename = policyFile.split('/').pop();
 
 		// Get the schema filename, using mapping if needed
-		const schemaFilename =
-			schemaMapping[filename] || filename.replace('.json', '.schema.json');
+		const schemaFilename = schemaMapping[filename] || filename.replace('.json', '.schema.json');
 		const schemaPath = join(__dirname, '..', 'schemas', schemaFilename);
 
 		// Check if schema exists

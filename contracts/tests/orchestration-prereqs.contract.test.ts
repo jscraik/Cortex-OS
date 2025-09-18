@@ -7,10 +7,7 @@ import { resolve } from 'node:path';
  */
 describe('orchestration prerequisites', () => {
 	const root = resolve(__dirname, '..', '..');
-	const mlxPath = resolve(
-		root,
-		process.env.MLX_MODEL_CONFIG_PATH ?? 'config/mlx-models.json',
-	);
+	const mlxPath = resolve(root, process.env.MLX_MODEL_CONFIG_PATH ?? 'config/mlx-models.json');
 	const ollamaPath = resolve(
 		root,
 		process.env.OLLAMA_MODEL_CONFIG_PATH ?? 'config/ollama-models.json',
@@ -21,10 +18,9 @@ describe('orchestration prerequisites', () => {
 		if (!existsSync(mlxPath)) missing.push(mlxPath);
 		if (!existsSync(ollamaPath)) missing.push(ollamaPath);
 
-		expect(
-			missing,
-			`Missing required model catalog file(s):\n${missing.join('\n')}`,
-		).toHaveLength(0);
+		expect(missing, `Missing required model catalog file(s):\n${missing.join('\n')}`).toHaveLength(
+			0,
+		);
 
 		// Validate JSON parse-ability (schema added later in Phase 1)
 		expect(() => JSON.parse(readFileSync(mlxPath, 'utf8'))).not.toThrow();
@@ -36,11 +32,7 @@ describe('orchestration prerequisites', () => {
 		const frontier = process.env.FRONTIER_API_KEY;
 		const ollama = process.env.OLLAMA_BASE_URL;
 		// Accessing them should not throw; optionally log shape for developer context
-		expect(
-			typeof frontier === 'string' || typeof frontier === 'undefined',
-		).toBe(true);
-		expect(typeof ollama === 'string' || typeof ollama === 'undefined').toBe(
-			true,
-		);
+		expect(typeof frontier === 'string' || typeof frontier === 'undefined').toBe(true);
+		expect(typeof ollama === 'string' || typeof ollama === 'undefined').toBe(true);
 	});
 });

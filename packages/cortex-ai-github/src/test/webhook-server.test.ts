@@ -100,15 +100,9 @@ describe('CortexWebhookServer', () => {
 	describe('Signature Verification', () => {
 		it('should accept valid signatures', () => {
 			const payload = Buffer.from('{"test": true}');
-			const validSignature = createValidSignature(
-				payload.toString(),
-				testSecret,
-			);
+			const validSignature = createValidSignature(payload.toString(), testSecret);
 
-			const result = (server as any).verifyWebhookSignature(
-				payload,
-				validSignature,
-			);
+			const result = (server as any).verifyWebhookSignature(payload, validSignature);
 			expect(result).toBe(true);
 		});
 
@@ -116,10 +110,7 @@ describe('CortexWebhookServer', () => {
 			const payload = Buffer.from('{"test": true}');
 			const invalidSignature = 'sha256=invalid.js';
 
-			const result = (server as any).verifyWebhookSignature(
-				payload,
-				invalidSignature,
-			);
+			const result = (server as any).verifyWebhookSignature(payload, invalidSignature);
 			expect(result).toBe(false);
 		});
 
@@ -127,10 +118,7 @@ describe('CortexWebhookServer', () => {
 			const payload = Buffer.from('{"test": true}');
 			const malformedSignature = 'invalid-format.js';
 
-			const result = (server as any).verifyWebhookSignature(
-				payload,
-				malformedSignature,
-			);
+			const result = (server as any).verifyWebhookSignature(payload, malformedSignature);
 			expect(result).toBe(false);
 		});
 
@@ -202,9 +190,7 @@ describe('CortexWebhookServer', () => {
 		});
 
 		it('should extract instructions from commands', async () => {
-			const payload = createPRCommentPayload(
-				'@cortex fix security issues in auth module',
-			);
+			const payload = createPRCommentPayload('@cortex fix security issues in auth module');
 
 			await (server as any).handleCommentCreated(payload);
 
@@ -236,8 +222,7 @@ describe('CortexWebhookServer', () => {
 
 		it('should trigger security scan for security-related PRs', async () => {
 			const securityPayload = createPREventPayload('opened');
-			securityPayload.pull_request.title =
-				'Fix authentication vulnerability.js';
+			securityPayload.pull_request.title = 'Fix authentication vulnerability.js';
 
 			await (server as any).handlePullRequestEvent(securityPayload);
 
@@ -396,25 +381,19 @@ describe('CortexWebhookServer', () => {
 
 	describe('Error Handling', () => {
 		it('should handle AI app errors gracefully', async () => {
-			vi.spyOn(mockAiApp, 'queueTask').mockRejectedValue(
-				new Error('AI service unavailable'),
-			);
+			vi.spyOn(mockAiApp, 'queueTask').mockRejectedValue(new Error('AI service unavailable'));
 
 			const payload = createPRCommentPayload('@cortex review');
 
 			// Should not throw
-			await expect(
-				(server as any).handleCommentCreated(payload),
-			).resolves.toBeUndefined();
+			await expect((server as any).handleCommentCreated(payload)).resolves.toBeUndefined();
 		});
 
 		it('should handle malformed payloads gracefully', async () => {
 			const malformedPayload = { invalid: 'payload' };
 
 			// Should not throw
-			await expect(
-				(server as any).handleCommentCreated(malformedPayload),
-			).resolves.toBeUndefined();
+			await expect((server as any).handleCommentCreated(malformedPayload)).resolves.toBeUndefined();
 		});
 	});
 

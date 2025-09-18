@@ -38,9 +38,7 @@ export class CompositeEmbedder implements Embedder {
 				lastError = err;
 			}
 		}
-		throw lastError instanceof Error
-			? lastError
-			: new Error('All embedders failed');
+		throw lastError instanceof Error ? lastError : new Error('All embedders failed');
 	}
 
 	getCurrentEmbedder(): Embedder {

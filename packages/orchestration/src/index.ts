@@ -8,11 +8,11 @@ export type {
 	OrchestrationBus,
 	OrchestrationEventEnvelope,
 	OrchestrationEventHandler,
-	OrchestrationPublishOptions
+	OrchestrationPublishOptions,
 } from './events/orchestration-bus.js';
 export {
 	ORCHESTRATION_EVENT_SCHEMAS,
-	OrchestrationEventTypes
+	OrchestrationEventTypes,
 } from './events/orchestration-events.js';
 export type {
 	AgentAssignedEvent,
@@ -26,7 +26,7 @@ export type {
 	TaskCompletedEvent,
 	TaskCreatedEvent,
 	TaskFailedEvent,
-	TaskStartedEvent
+	TaskStartedEvent,
 } from './events/orchestration-events.js';
 
 // Legacy integrations removed (LangGraph-only)
@@ -60,7 +60,7 @@ export type {
 	QdrantConfig,
 	StrategicDecision,
 	SynchronizationPoint,
-	Task
+	Task,
 } from './types.js';
 // Enums
 export {
@@ -68,7 +68,7 @@ export {
 	CoordinationStrategy,
 	DecisionStrategy,
 	OrchestrationStrategy,
-	Schemas
+	Schemas,
 } from './types.js';
 
 // Utility defaults
@@ -86,7 +86,12 @@ export type { ToolContract, ToolErrorResponse } from './mcp/tools.js';
 export {
 	createToolErrorResponse,
 	orchestrationToolContracts,
-	processMonitoringTools, taskManagementTools, ToolErrorCode, toolErrorResponseSchema, ToolValidationError, workflowOrchestrationTools
+	processMonitoringTools,
+	taskManagementTools,
+	ToolErrorCode,
+	toolErrorResponseSchema,
+	ToolValidationError,
+	workflowOrchestrationTools,
 } from './mcp/tools.js';
 
 // Version info
@@ -101,6 +106,6 @@ export {
 	orchestrationMcpTools,
 	processMonitoringTool,
 	taskManagementTool,
-	workflowOrchestrationTool
+	workflowOrchestrationTool,
 } from './mcp/tools.js';
 // LangGraph-only: legacy engines are no longer exported

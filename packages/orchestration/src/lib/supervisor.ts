@@ -1,20 +1,10 @@
 import { enforce, loadGrant } from '@cortex-os/policy';
 import { withSpan } from '../observability/otel.js';
 import { auditEvent, record } from './audit.js';
-import {
-	type Checkpoint,
-	loadLatestCheckpoint,
-	saveCheckpoint,
-} from './checkpoints';
+import { type Checkpoint, loadLatestCheckpoint, saveCheckpoint } from './checkpoints';
 import { requiresApproval, waitForApproval } from './hitl';
 
-export type Node =
-	| 'plan'
-	| 'gather'
-	| 'critic'
-	| 'synthesize'
-	| 'verify'
-	| 'done';
+export type Node = 'plan' | 'gather' | 'critic' | 'synthesize' | 'verify' | 'done';
 
 export interface RetryPolicy {
 	maxRetries: number;
@@ -95,16 +85,12 @@ function sleep(ms: number) {
 // Maximum backoff time to prevent infinite delays (30 seconds)
 const MAX_BACKOFF_MS = 30000;
 
-async function withRetry(
-	_node: Node,
-	fn: () => Promise<unknown>,
-	policy?: RetryPolicy,
-) {
+async function withRetry(_node: Node, fn: () => Promise<unknown>, policy?: RetryPolicy) {
 	const rp = policy ?? { maxRetries: 0, backoffMs: 0, jitter: true };
 	let attempt = 0;
 	// First attempt + retries
 	// attempt 0: initial, then 1..maxRetries for retries
-	for (; ;) {
+	for (;;) {
 		try {
 			return await fn();
 		} catch (err) {
@@ -161,11 +147,7 @@ export interface RunOptions extends SupervisorOptions {
 	startAt?: Node;
 }
 
-export async function runSupervisor(
-	initialState: unknown,
-	ctx: RunContext,
-	opts: RunOptions = {},
-) {
+export async function runSupervisor(initialState: unknown, ctx: RunContext, opts: RunOptions = {}) {
 	// Idempotency: if a latest checkpoint exists at or after startAt, resume from it
 	const latest = await loadLatestCheckpoint(ctx.runId);
 	let node: Node = opts.startAt ?? 'plan';
@@ -188,11 +170,7 @@ export async function runSupervisor(
 			async () => {
 				const exec = () => fn(state, ctx);
 				const execWithRetry = () => withRetry(node, exec, retry);
-				const result = await withDeadline(
-					execWithRetry(),
-					limits?.deadlineMs,
-					ctx.signal,
-				);
+				const result = await withDeadline(execWithRetry(), limits?.deadlineMs, ctx.signal);
 				// checkpoint after each successful node
 				const cp: Checkpoint = {
 					runId: ctx.runId,

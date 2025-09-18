@@ -9,9 +9,7 @@ export interface CertificateSet {
 	key: string;
 }
 
-export async function loadCertificates(
-	config: MTLSConfig,
-): Promise<CertificateSet> {
+export async function loadCertificates(config: MTLSConfig): Promise<CertificateSet> {
 	const [ca, cert, key] = await Promise.all([
 		fs.readFile(config.caCertificate, 'utf8'),
 		fs.readFile(config.clientCertificate, 'utf8'),
@@ -59,8 +57,7 @@ export function createClientSocket(
 		});
 
 		socket.on('error', (error) => {
-			const errorMessage =
-				error instanceof Error ? error.message : 'Unknown error';
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 			logWithSpan('error', 'mTLS connection failed', {
 				error: errorMessage,
 				host,

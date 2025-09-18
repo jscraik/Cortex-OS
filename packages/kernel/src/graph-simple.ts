@@ -8,16 +8,8 @@
 
 import { z } from 'zod';
 import { fixedTimestamp } from './lib/determinism.js';
-import {
-	runBuildNode,
-	runEvaluationNode,
-	runStrategyNode,
-} from './nodes/index.js';
-import {
-	createInitialPRPState,
-	type PRPState,
-	validateStateTransition,
-} from './state.js';
+import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';
+import { createInitialPRPState, type PRPState, validateStateTransition } from './state.js';
 import { generateId } from './utils/id.js';
 
 // Minimal types to avoid any
@@ -101,34 +93,31 @@ export class CortexKernel {
 		return {
 			invoke: async (input: PRPState, config?: LangGraphConfig): Promise<PRPState> => {
 				const runId = config?.configurable?.runId || input.metadata.runId || input.runId;
-				
+
 				// Execute strategy phase
 				let state = await runStrategyNode(input);
 				state.phase = 'strategy';
 				this.addToHistory(runId, state);
-				
+
 				// Execute build phase
 				state = await runBuildNode(state);
 				state.phase = 'build';
 				this.addToHistory(runId, state);
-				
+
 				// Execute evaluation phase
 				state = await runEvaluationNode(state);
 				state.phase = 'evaluation';
 				this.addToHistory(runId, state);
-				
+
 				return state;
-			}
+			},
 		};
 	}
 
 	/**
 	 * Run a complete PRP workflow
 	 */
-	async runPRPWorkflow(
-		blueprint: Blueprint,
-		options: RunOptions = {},
-	): Promise<PRPState> {
+	async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
 		// Validate inputs with Zod schema as recommended in coding guidelines
 		const validatedOptions = RunOptionsSchema.parse(options);
 
@@ -152,17 +141,13 @@ export class CortexKernel {
 				phase: 'completed',
 				metadata: {
 					...finalState.metadata,
-					endTime: deterministic
-						? fixedTimestamp('workflow-end')
-						: new Date().toISOString(),
+					endTime: deterministic ? fixedTimestamp('workflow-end') : new Date().toISOString(),
 				},
 			};
 
 			this.addToHistory(runId, completed);
 
-			return validateStateTransition(finalState, completed)
-				? completed
-				: finalState;
+			return validateStateTransition(finalState, completed) ? completed : finalState;
 		} catch (error) {
 			const errorState: PRPState = {
 				...state,
@@ -170,9 +155,7 @@ export class CortexKernel {
 				metadata: {
 					...state.metadata,
 					error: error instanceof Error ? error.message : 'Unknown error',
-					endTime: deterministic
-						? fixedTimestamp('workflow-error')
-						: new Date().toISOString(),
+					endTime: deterministic ? fixedTimestamp('workflow-error') : new Date().toISOString(),
 				},
 			};
 			this.addToHistory(runId, errorState);

@@ -23,8 +23,7 @@ export async function generateEmbedding(
 
 	const timer = new Promise<string>((_, reject) =>
 		setTimeout(
-			() =>
-				reject(new Error(`Embedding process timed out after ${timeoutMs}ms`)),
+			() => reject(new Error(`Embedding process timed out after ${timeoutMs}ms`)),
 			timeoutMs,
 		),
 	);

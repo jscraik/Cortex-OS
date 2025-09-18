@@ -1,9 +1,4 @@
-import {
-	dcg,
-	ndcgAtK,
-	precisionAtK,
-	recallAtK,
-} from '@cortex-os/rag/eval/metrics';
+import { dcg, ndcgAtK, precisionAtK, recallAtK } from '@cortex-os/rag/eval/metrics';
 import { describe, expect, it } from 'vitest';
 
 describe('RAG metrics', () => {

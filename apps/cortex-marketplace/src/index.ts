@@ -27,22 +27,14 @@ async function loadConfig(): Promise<ServerConfig> {
 		port: parseInt(process.env.PORT || '3000', 10),
 		host: process.env.HOST || '0.0.0.0',
 		registries: {
-			official:
-				process.env.OFFICIAL_REGISTRY ||
-				'https://registry.cortex-os.dev/v1/registry.json',
-			community:
-				process.env.COMMUNITY_REGISTRY ||
-				'https://community.mcp.dev/v1/registry.json',
+			official: process.env.OFFICIAL_REGISTRY || 'https://registry.cortex-os.dev/v1/registry.json',
+			community: process.env.COMMUNITY_REGISTRY || 'https://community.mcp.dev/v1/registry.json',
 		},
-		cacheDir:
-			process.env.CACHE_DIR ||
-			path.join(os.tmpdir(), 'cortex-marketplace-cache'),
+		cacheDir: process.env.CACHE_DIR || path.join(os.tmpdir(), 'cortex-marketplace-cache'),
 		cacheTtl: parseInt(process.env.CACHE_TTL || '300000', 10),
 		logLevel: ((): LoggerLevel => {
 			const lvl = (process.env.LOG_LEVEL || 'info').toLowerCase();
-			return ['debug', 'info', 'warn', 'error'].includes(lvl)
-				? (lvl as LoggerLevel)
-				: 'info';
+			return ['debug', 'info', 'warn', 'error'].includes(lvl) ? (lvl as LoggerLevel) : 'info';
 		})(),
 	};
 
@@ -63,10 +55,7 @@ async function loadConfig(): Promise<ServerConfig> {
 		}
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : String(e);
-		logger.warn(
-			{ err: msg },
-			'Using default configuration (config file not found or invalid)',
-		);
+		logger.warn({ err: msg }, 'Using default configuration (config file not found or invalid)');
 	}
 
 	return config;
@@ -77,18 +66,9 @@ async function start(): Promise<void> {
 	try {
 		const config = await loadConfig();
 		logger.info('Starting Cortex MCP Marketplace API...');
-		logger.info(
-			{ port: config.port, host: config.host },
-			'Server configuration',
-		);
-		logger.info(
-			{ cacheDir: config.cacheDir, cacheTtl: config.cacheTtl },
-			'Cache settings',
-		);
-		logger.info(
-			{ registries: Object.keys(config.registries) },
-			'Configured registries',
-		);
+		logger.info({ port: config.port, host: config.host }, 'Server configuration');
+		logger.info({ cacheDir: config.cacheDir, cacheTtl: config.cacheTtl }, 'Cache settings');
+		logger.info({ registries: Object.keys(config.registries) }, 'Configured registries');
 
 		server = build({
 			logger: config.logLevel !== 'error',
@@ -127,9 +107,7 @@ async function start(): Promise<void> {
 
 		await server.listen({ port: config.port, host: config.host });
 		logger.info('🚀 Marketplace API server started successfully!');
-		logger.info(
-			`📖 API Documentation: http://${config.host}:${config.port}/documentation`,
-		);
+		logger.info(`📖 API Documentation: http://${config.host}:${config.port}/documentation`);
 		logger.info(`🏥 Health Check: http://${config.host}:${config.port}/health`);
 	} catch (error) {
 		logger.error({ err: error }, 'Failed to start server');

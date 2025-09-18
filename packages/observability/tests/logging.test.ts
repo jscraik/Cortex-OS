@@ -5,17 +5,10 @@ import { generateRunId } from '../src/ulids.js';
 describe('logging', () => {
 	it('redacts sensitive fields in extra data', () => {
 		const runId = generateRunId();
-		const entry = createLogEntry(
-			'component',
-			'info',
-			'message',
-			runId,
-			undefined,
-			{
-				password: 'secret',
-				nested: { token: 'abc', safe: 'ok' },
-			},
-		);
+		const entry = createLogEntry('component', 'info', 'message', runId, undefined, {
+			password: 'secret',
+			nested: { token: 'abc', safe: 'ok' },
+		});
 
 		expect(entry.extra?.password).toBe('[REDACTED]');
 		const nested = entry.extra?.nested as { token: string; safe: string };

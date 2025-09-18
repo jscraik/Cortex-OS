@@ -28,12 +28,7 @@ async function parseArgs() {
 }
 
 function extractTS(content: string, fileName: string) {
-	const source = ts.createSourceFile(
-		fileName,
-		content,
-		ts.ScriptTarget.Latest,
-		true,
-	);
+	const source = ts.createSourceFile(fileName, content, ts.ScriptTarget.Latest, true);
 	const imports: string[] = [];
 	const functions: string[] = [];
 	const classes: string[] = [];

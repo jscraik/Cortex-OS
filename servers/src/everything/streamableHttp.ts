@@ -58,9 +58,7 @@ app.post('/mcp', async (req: Request, res: Response) => {
 			server.onclose = () => {
 				const sid = transport.sessionId;
 				if (sid && transports.has(sid)) {
-					console.error(
-						`Transport closed for session ${sid}, removing from transports map`,
-					);
+					console.error(`Transport closed for session ${sid}, removing from transports map`);
 					transports.delete(sid);
 					cleanup().catch((err) => {
 						console.error('Error during cleanup:', err);
@@ -138,9 +136,7 @@ app.delete('/mcp', async (req: Request, res: Response) => {
 		return;
 	}
 
-	console.error(
-		`Received session termination request for session ${sessionId}`,
-	);
+	console.error(`Received session termination request for session ${sessionId}`);
 
 	try {
 		const transport = transports.get(sessionId);

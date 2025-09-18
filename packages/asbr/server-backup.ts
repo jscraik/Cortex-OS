@@ -68,10 +68,7 @@ class ASBRServerClass {
 	private tasks = new Map<string, Task>();
 	private profiles = new Map<string, Profile>();
 	private artifacts = new Map<string, ArtifactRef>();
-	private idempotencyCache = new Map<
-		string,
-		{ taskId: string; expiry: number }
-	>();
+	private idempotencyCache = new Map<string, { taskId: string; expiry: number }>();
 
 	private responseCache = new Map<string, { data: unknown; expiry: number }>();
 	private cacheCleanupInterval?: NodeJS.Timeout;
@@ -122,30 +119,24 @@ class ASBRServerClass {
 
 		// Catch malformed JSON from body parser and return a 400 with structured body
 		// body-parser sets err.type === 'entity.parse.failed' for JSON parse errors
-		this.app.use(
-			(err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-				const errorObj = err as { type?: string; message?: string };
-				if (
-					errorObj &&
-					(errorObj.type === 'entity.parse.failed' ||
-						err instanceof SyntaxError)
-				) {
-					// Expose a clear error body expected by tests
-					return res.status(400).json({
-						error: errorObj.message || 'Malformed JSON',
-						code: 'INVALID_JSON',
-					});
-				}
-				// Handle oversized payloads from body-parser
-				if (errorObj && errorObj.type === 'entity.too.large') {
-					return res.status(413).json({
-						error: errorObj.message || 'Payload too large',
-						code: 'PAYLOAD_TOO_LARGE',
-					});
-				}
-				return _next(err);
-			},
-		);
+		this.app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+			const errorObj = err as { type?: string; message?: string };
+			if (errorObj && (errorObj.type === 'entity.parse.failed' || err instanceof SyntaxError)) {
+				// Expose a clear error body expected by tests
+				return res.status(400).json({
+					error: errorObj.message || 'Malformed JSON',
+					code: 'INVALID_JSON',
+				});
+			}
+			// Handle oversized payloads from body-parser
+			if (errorObj && errorObj.type === 'entity.too.large') {
+				return res.status(413).json({
+					error: errorObj.message || 'Payload too large',
+					code: 'PAYLOAD_TOO_LARGE',
+				});
+			}
+			return _next(err);
+		});
 
 		// Authentication middleware (applies to /v1 routes)
 		this.app.use('/v1', (req, res, next) => {
@@ -160,45 +151,17 @@ class ASBRServerClass {
 		});
 
 		// Task endpoints
-		this.app.post(
-			'/v1/tasks',
-			requireScopes('tasks:create'),
-			this.createTask.bind(this),
-		);
-		this.app.get(
-			'/v1/tasks/:id',
-			requireScopes('tasks:read'),
-			this.getTask.bind(this),
-		);
-		this.app.post(
-			'/v1/tasks/:id/cancel',
-			requireScopes('tasks:write'),
-			this.cancelTask.bind(this),
-		);
-		this.app.post(
-			'/v1/tasks/:id/resume',
-			requireScopes('tasks:write'),
-			this.resumeTask.bind(this),
-		);
+		this.app.post('/v1/tasks', requireScopes('tasks:create'), this.createTask.bind(this));
+		this.app.get('/v1/tasks/:id', requireScopes('tasks:read'), this.getTask.bind(this));
+		this.app.post('/v1/tasks/:id/cancel', requireScopes('tasks:write'), this.cancelTask.bind(this));
+		this.app.post('/v1/tasks/:id/resume', requireScopes('tasks:write'), this.resumeTask.bind(this));
 
 		// Event endpoints
-		this.app.get(
-			'/v1/events',
-			requireScopes('events:read'),
-			this.getEvents.bind(this),
-		);
+		this.app.get('/v1/events', requireScopes('events:read'), this.getEvents.bind(this));
 
 		// Profile endpoints
-		this.app.post(
-			'/v1/profiles',
-			requireScopes('profiles:write'),
-			this.createProfile.bind(this),
-		);
-		this.app.get(
-			'/v1/profiles/:id',
-			requireScopes('profiles:read'),
-			this.getProfile.bind(this),
-		);
+		this.app.post('/v1/profiles', requireScopes('profiles:write'), this.createProfile.bind(this));
+		this.app.get('/v1/profiles/:id', requireScopes('profiles:read'), this.getProfile.bind(this));
 		this.app.put(
 			'/v1/profiles/:id',
 			requireScopes('profiles:write'),
@@ -206,23 +169,11 @@ class ASBRServerClass {
 		);
 
 		// Artifact endpoints
-		this.app.get(
-			'/v1/artifacts',
-			requireScopes('artifacts:read'),
-			this.listArtifacts.bind(this),
-		);
-		this.app.get(
-			'/v1/artifacts/:id',
-			requireScopes('artifacts:read'),
-			this.getArtifact.bind(this),
-		);
+		this.app.get('/v1/artifacts', requireScopes('artifacts:read'), this.listArtifacts.bind(this));
+		this.app.get('/v1/artifacts/:id', requireScopes('artifacts:read'), this.getArtifact.bind(this));
 
 		// Service map
-		this.app.get(
-			'/v1/service-map',
-			requireScopes('system:read'),
-			this.getServiceMap.bind(this),
-		);
+		this.app.get('/v1/service-map', requireScopes('system:read'), this.getServiceMap.bind(this));
 
 		// Connector endpoints
 		this.app.get(
@@ -233,29 +184,27 @@ class ASBRServerClass {
 
 		// Error handling must be registered after routes so thrown errors in handlers
 		// are propagated here and converted to structured JSON responses.
-		this.app.use(
-			(error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-				logError('API Error', { error });
+		this.app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+			logError('API Error', { error });
 
-				if (error instanceof ValidationError) {
-					res.status(error.statusCode).json({
-						error: error.message,
-						code: error.code,
-						details: error.details,
-					});
-				} else if (error instanceof NotFoundError) {
-					res.status(404).json({
-						error: error.message,
-						code: error.code,
-					});
-				} else {
-					res.status(500).json({
-						error: 'Internal server error',
-						code: 'INTERNAL_ERROR',
-					});
-				}
-			},
-		);
+			if (error instanceof ValidationError) {
+				res.status(error.statusCode).json({
+					error: error.message,
+					code: error.code,
+					details: error.details,
+				});
+			} else if (error instanceof NotFoundError) {
+				res.status(404).json({
+					error: error.message,
+					code: error.code,
+				});
+			} else {
+				res.status(500).json({
+					error: 'Internal server error',
+					code: 'INTERNAL_ERROR',
+				});
+			}
+		});
 	}
 
 	private setupCacheCleanup(): void {
@@ -380,9 +329,7 @@ class ASBRServerClass {
 		}, 10000);
 
 		// Send existing events for the task
-		const events = taskId
-			? this.events.get(taskId) || []
-			: Array.from(this.events.values()).flat();
+		const events = taskId ? this.events.get(taskId) || [] : Array.from(this.events.values()).flat();
 		events.forEach((event) => {
 			res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
 		});
@@ -435,8 +382,7 @@ class ASBRServerClass {
 			id: uuidv4(),
 		});
 		if (!validationResult.success) {
-			const issues = (validationResult.error as unknown as { issues?: unknown })
-				.issues;
+			const issues = (validationResult.error as unknown as { issues?: unknown }).issues;
 			throw new ValidationError('Invalid profile', {
 				errors: issues,
 			});
@@ -472,8 +418,7 @@ class ASBRServerClass {
 			id,
 		});
 		if (!validationResult.success) {
-			const issues = (validationResult.error as unknown as { issues?: unknown })
-				.issues;
+			const issues = (validationResult.error as unknown as { issues?: unknown }).issues;
 			throw new ValidationError('Invalid profile', {
 				errors: issues,
 			});
@@ -551,12 +496,9 @@ class ASBRServerClass {
 	}
 
 	private async getServiceMap(_req: Request, res: Response): Promise<void> {
-		const stack: any[] = ((this.app as unknown as any).router?.stack ??
-			[]) as any[];
+		const stack: any[] = ((this.app as unknown as any).router?.stack ?? []) as any[];
 		const routes = stack
-			.filter(
-				(layer: any) => layer.route && typeof layer.route.path === 'string',
-			)
+			.filter((layer: any) => layer.route && typeof layer.route.path === 'string')
 			.filter((layer: any) => layer.route.path.startsWith('/v1'))
 			.map((layer: any) => ({
 				path: layer.route.path,
@@ -571,10 +513,7 @@ class ASBRServerClass {
 		res.json(serviceMap);
 	}
 
-	private async getConnectorServiceMap(
-		_req: Request,
-		res: Response,
-	): Promise<void> {
+	private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
 		res.json({});
 	}
 
@@ -601,9 +540,7 @@ class ASBRServerClass {
 				const manager = await getEventManager();
 				manager.attachIO(this.io);
 
-				logInfo(
-					`ASBR API server listening on http://${this.host}:${this.port}`,
-				);
+				logInfo(`ASBR API server listening on http://${this.host}:${this.port}`);
 				resolve();
 			});
 		});

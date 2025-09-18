@@ -120,11 +120,7 @@ export class ContextualCoach {
 		context: { currentPhase: string },
 		skillLevel: TDDSkillLevel,
 	): CoachingAction {
-		const guidance = this.getPhaseSpecificGuidance(
-			violation,
-			context.currentPhase,
-			skillLevel,
-		);
+		const guidance = this.getPhaseSpecificGuidance(violation, context.currentPhase, skillLevel);
 
 		return {
 			type: 'guide',
@@ -140,18 +136,13 @@ export class ContextualCoach {
 		_context: { currentPhase: string; previousViolations: string[] },
 		_skillLevel: TDDSkillLevel,
 	): CoachingAction {
-		const patternMatch = this.detectViolationPattern(
-			_context.previousViolations,
-		);
+		const patternMatch = this.detectViolationPattern(_context.previousViolations);
 
 		return {
 			type: 'warn',
 			message: `⚠️ TDD Violation: ${violation}`,
 			detailedExplanation: this.getViolationExplanation(violation, _skillLevel),
-			suggestedNextSteps: this.getCorrectiveSteps(
-				violation,
-				_context.currentPhase,
-			),
+			suggestedNextSteps: this.getCorrectiveSteps(violation, _context.currentPhase),
 			escalationRequired: patternMatch.isRepeating,
 		};
 	}
@@ -191,10 +182,7 @@ export class ContextualCoach {
 		return {
 			type: 'suggest',
 			message: `Consider TDD best practices: ${violation}`,
-			suggestedNextSteps: [
-				'Review TDD fundamentals',
-				'Start with a failing test',
-			],
+			suggestedNextSteps: ['Review TDD fundamentals', 'Start with a failing test'],
 		};
 	}
 
@@ -221,8 +209,7 @@ export class ContextualCoach {
 				resource: undefined as string | undefined,
 			},
 			GREEN: {
-				message:
-					'In the GREEN phase, implement the minimum code to make tests pass',
+				message: 'In the GREEN phase, implement the minimum code to make tests pass',
 				explanation:
 					'The GREEN phase is about making tests pass with the simplest implementation possible. Resist the urge to over-engineer.',
 				steps: [
@@ -234,8 +221,7 @@ export class ContextualCoach {
 				resource: undefined as string | undefined,
 			},
 			REFACTOR: {
-				message:
-					'In the REFACTOR phase, improve code structure while keeping tests green',
+				message: 'In the REFACTOR phase, improve code structure while keeping tests green',
 				explanation:
 					'The REFACTOR phase is about improving code quality without changing behavior. Tests should remain green throughout.',
 				steps: [
@@ -248,22 +234,17 @@ export class ContextualCoach {
 			},
 		};
 
-		const guidance =
-			baseGuidance[phase as keyof typeof baseGuidance] || baseGuidance.RED;
+		const guidance = baseGuidance[phase as keyof typeof baseGuidance] || baseGuidance.RED;
 
 		// Adjust for skill level
 		if (skillLevel === TDDSkillLevel.BEGINNER) {
-			guidance.resource =
-				'https://martinfowler.com/articles/practical-test-pyramid.html';
+			guidance.resource = 'https://martinfowler.com/articles/practical-test-pyramid.html';
 		}
 
 		return guidance;
 	}
 
-	private getViolationExplanation(
-		violation: string,
-		skillLevel: TDDSkillLevel,
-	): string {
+	private getViolationExplanation(violation: string, skillLevel: TDDSkillLevel): string {
 		const explanations: Record<string, string> = {
 			implementation_before_test:
 				'Writing implementation before tests skips the RED phase, which is crucial for defining requirements.',
@@ -275,9 +256,7 @@ export class ContextualCoach {
 				'Refactoring with failing tests is dangerous and violates the safety net that TDD provides.',
 		};
 
-		const explanation =
-			explanations[violation] ||
-			"This action doesn't align with TDD principles.";
+		const explanation = explanations[violation] || "This action doesn't align with TDD principles.";
 
 		if (skillLevel === TDDSkillLevel.BEGINNER) {
 			return `${explanation} As you're learning TDD, strict adherence to the cycle helps build good habits.`;
@@ -305,12 +284,7 @@ export class ContextualCoach {
 			],
 		};
 
-		return (
-			steps[violation] || [
-				'Return to proper TDD cycle',
-				'Start with a failing test',
-			]
-		);
+		return steps[violation] || ['Return to proper TDD cycle', 'Start with a failing test'];
 	}
 
 	private detectViolationPattern(previousViolations: string[]): {
@@ -368,8 +342,7 @@ export class ContextualCoach {
 	// Skill progression tracking
 	updateSkillAssessment(developerId: string, session: CoachingSession): void {
 		const metrics = session.progressMetrics;
-		let newSkillLevel =
-			this.skillProfiles.get(developerId) || TDDSkillLevel.BEGINNER;
+		let newSkillLevel = this.skillProfiles.get(developerId) || TDDSkillLevel.BEGINNER;
 
 		// Promote based on consistent good practices
 		if (

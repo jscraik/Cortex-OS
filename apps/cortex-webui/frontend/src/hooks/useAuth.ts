@@ -72,8 +72,7 @@ const useAuth = (): UseAuthReturn => {
 			storage.setItem('authToken', token);
 			storage.setJSON('user', user);
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Registration failed';
+			const errorMessage = err instanceof Error ? err.message : 'Registration failed';
 			setError(errorMessage);
 			throw err;
 		} finally {

@@ -15,30 +15,22 @@ import type {
 
 export interface MCPAdapter {
 	isAvailable(): Promise<boolean>;
-	generateEmbedding(
-		request: EmbeddingRequest,
-	): Promise<{ embedding: number[]; model: string }>;
+	generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string }>;
 	generateEmbeddings(
 		request: EmbeddingBatchRequest,
 	): Promise<{ embeddings: number[][]; model: string }>;
-	generateChat(
-		request: ChatRequest,
-	): Promise<{ content: string; model: string }>;
+	generateChat(request: ChatRequest): Promise<{ content: string; model: string }>;
 	rerank(request: RerankRequest): Promise<{ scores: number[]; model: string }>;
 }
 
 function getServerInfo(): ServerInfo | null {
-	const transport = (
-		process.env.MCP_TRANSPORT || ''
-	).trim() as ServerInfo['transport'];
+	const transport = (process.env.MCP_TRANSPORT || '').trim() as ServerInfo['transport'];
 	const name = process.env.MCP_NAME || 'model-gateway-mcp';
 	if (!transport) return null;
 	if (transport === 'stdio') {
 		const command = process.env.MCP_COMMAND;
 		if (!command) return null;
-		const args = process.env.MCP_ARGS
-			? JSON.parse(process.env.MCP_ARGS)
-			: undefined;
+		const args = process.env.MCP_ARGS ? JSON.parse(process.env.MCP_ARGS) : undefined;
 		return { name, transport, command, args } as ServerInfo;
 	}
 	if (transport === 'sse' || transport === 'streamableHttp') {

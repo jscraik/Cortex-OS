@@ -26,12 +26,8 @@ const levelMap = {
 	[LogLevel.ERROR]: 'error',
 } as const;
 
-export function createLogger(
-	moduleName: string,
-	config: LoggerConfig = {},
-): Logger {
-	const defaultLevel =
-		process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
+export function createLogger(moduleName: string, config: LoggerConfig = {}): Logger {
+	const defaultLevel = process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
 	const level = config.level ?? defaultLevel;
 
 	const base = { module: moduleName };

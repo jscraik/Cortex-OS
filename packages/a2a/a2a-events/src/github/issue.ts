@@ -64,9 +64,7 @@ export const IssueSchema = z.object({
 		'FIRST_TIMER',
 		'NONE',
 	]),
-	active_lock_reason: z
-		.enum(['resolved', 'off-topic', 'too heated', 'spam'])
-		.nullable(),
+	active_lock_reason: z.enum(['resolved', 'off-topic', 'too heated', 'spam']).nullable(),
 	closed_by: GitHubUserSchema.nullable(),
 	html_url: z.string().url(),
 	url: z.string().url(),
@@ -215,9 +213,7 @@ export function isIssueOpen(issue: Issue): boolean {
 	return issue.state === 'open';
 }
 
-export function getIssuePriority(
-	issue: Issue,
-): 'low' | 'medium' | 'high' | 'critical' | 'unknown' {
+export function getIssuePriority(issue: Issue): 'low' | 'medium' | 'high' | 'critical' | 'unknown' {
 	const labels = issue.labels.map((l) => l.name.toLowerCase());
 
 	if (labels.some((l) => l.includes('critical') || l.includes('p0'))) {
@@ -238,17 +234,11 @@ export function getIssueType(
 ): 'bug' | 'feature' | 'enhancement' | 'question' | 'documentation' | 'other' {
 	const labels = issue.labels.map((l) => l.name.toLowerCase());
 
-	if (
-		labels.some(
-			(l) => l.includes('bug') || l.includes('error') || l.includes('fix'),
-		)
-	) {
+	if (labels.some((l) => l.includes('bug') || l.includes('error') || l.includes('fix'))) {
 		return 'bug';
 	} else if (labels.some((l) => l.includes('feature') || l.includes('new'))) {
 		return 'feature';
-	} else if (
-		labels.some((l) => l.includes('enhancement') || l.includes('improve'))
-	) {
+	} else if (labels.some((l) => l.includes('enhancement') || l.includes('improve'))) {
 		return 'enhancement';
 	} else if (labels.some((l) => l.includes('question') || l.includes('help'))) {
 		return 'question';
@@ -260,9 +250,7 @@ export function getIssueType(
 }
 
 export function hasIssueLabel(issue: Issue, labelName: string): boolean {
-	return issue.labels.some(
-		(label) => label.name.toLowerCase() === labelName.toLowerCase(),
-	);
+	return issue.labels.some((label) => label.name.toLowerCase() === labelName.toLowerCase());
 }
 
 export function getIssueAssigneeLogins(issue: Issue): string[] {

@@ -32,9 +32,7 @@ describe('BuildNode documentation validation', () => {
 		const result = await node.execute(state);
 		const buildResult = result.validationResults.build!;
 		expect(buildResult.passed).toBe(false);
-		expect(buildResult.blockers).toContain(
-			'Backend compilation or tests failed',
-		);
+		expect(buildResult.blockers).toContain('Backend compilation or tests failed');
 		expect(buildResult.majors).toContain(
 			'Documentation incomplete - missing API docs or usage notes',
 		);
@@ -47,9 +45,7 @@ describe('BuildNode documentation validation', () => {
 		const result = await node.execute(state);
 		const buildResult = result.validationResults.build!;
 		expect(buildResult.passed).toBe(false);
-		expect(buildResult.blockers).toContain(
-			'Backend compilation or tests failed',
-		);
+		expect(buildResult.blockers).toContain('Backend compilation or tests failed');
 		expect(buildResult.majors).not.toContain(
 			'Documentation incomplete - missing API docs or usage notes',
 		);

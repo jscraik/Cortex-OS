@@ -21,17 +21,13 @@ export const AgentToolkitSearchMatchSchema = z.object({
 	column: z.number().optional(),
 });
 
-export const AgentToolkitSearchResultSchema =
-	AgentToolkitBaseResultSchema.extend({
-		tool: z
-			.literal('ripgrep')
-			.or(z.literal('semgrep'))
-			.or(z.literal('ast-grep')),
-		op: z.literal('search'),
-		inputs: AgentToolkitSearchInputSchema,
-		results: z.array(AgentToolkitSearchMatchSchema),
-		error: z.string().optional(),
-	});
+export const AgentToolkitSearchResultSchema = AgentToolkitBaseResultSchema.extend({
+	tool: z.literal('ripgrep').or(z.literal('semgrep')).or(z.literal('ast-grep')),
+	op: z.literal('search'),
+	inputs: AgentToolkitSearchInputSchema,
+	results: z.array(AgentToolkitSearchMatchSchema),
+	error: z.string().optional(),
+});
 
 // Code modification schemas
 export const AgentToolkitCodemodInputSchema = z.object({
@@ -46,14 +42,13 @@ export const AgentToolkitCodemodChangeSchema = z.object({
 	preview: z.string().optional(),
 });
 
-export const AgentToolkitCodemodResultSchema =
-	AgentToolkitBaseResultSchema.extend({
-		tool: z.literal('comby'),
-		op: z.literal('rewrite'),
-		inputs: AgentToolkitCodemodInputSchema,
-		results: z.array(AgentToolkitCodemodChangeSchema),
-		error: z.string().optional(),
-	});
+export const AgentToolkitCodemodResultSchema = AgentToolkitBaseResultSchema.extend({
+	tool: z.literal('comby'),
+	op: z.literal('rewrite'),
+	inputs: AgentToolkitCodemodInputSchema,
+	results: z.array(AgentToolkitCodemodChangeSchema),
+	error: z.string().optional(),
+});
 
 // Validation schemas
 export const AgentToolkitValidationInputSchema = z.object({
@@ -69,24 +64,23 @@ export const AgentToolkitValidationIssueSchema = z.object({
 	rule: z.string().optional(),
 });
 
-export const AgentToolkitValidationResultSchema =
-	AgentToolkitBaseResultSchema.extend({
-		tool: z
-			.literal('eslint')
-			.or(z.literal('ruff'))
-			.or(z.literal('cargo'))
-			.or(z.literal('pytest'))
-			.or(z.literal('validator')),
-		op: z.literal('validate'),
-		inputs: AgentToolkitValidationInputSchema,
-		results: z.array(AgentToolkitValidationIssueSchema),
-		summary: z.object({
-			total: z.number(),
-			errors: z.number(),
-			warnings: z.number(),
-		}),
-		error: z.string().optional(),
-	});
+export const AgentToolkitValidationResultSchema = AgentToolkitBaseResultSchema.extend({
+	tool: z
+		.literal('eslint')
+		.or(z.literal('ruff'))
+		.or(z.literal('cargo'))
+		.or(z.literal('pytest'))
+		.or(z.literal('validator')),
+	op: z.literal('validate'),
+	inputs: AgentToolkitValidationInputSchema,
+	results: z.array(AgentToolkitValidationIssueSchema),
+	summary: z.object({
+		total: z.number(),
+		errors: z.number(),
+		warnings: z.number(),
+	}),
+	error: z.string().optional(),
+});
 
 // Events for A2A communication
 export const AgentToolkitExecutionStartedEventSchema = z.object({
@@ -136,35 +130,17 @@ export const AgentToolkitResultSchema = z.union([
 ]);
 
 // Type exports
-export type AgentToolkitSearchInput = z.infer<
-	typeof AgentToolkitSearchInputSchema
->;
-export type AgentToolkitSearchMatch = z.infer<
-	typeof AgentToolkitSearchMatchSchema
->;
-export type AgentToolkitSearchResult = z.infer<
-	typeof AgentToolkitSearchResultSchema
->;
+export type AgentToolkitSearchInput = z.infer<typeof AgentToolkitSearchInputSchema>;
+export type AgentToolkitSearchMatch = z.infer<typeof AgentToolkitSearchMatchSchema>;
+export type AgentToolkitSearchResult = z.infer<typeof AgentToolkitSearchResultSchema>;
 
-export type AgentToolkitCodemodInput = z.infer<
-	typeof AgentToolkitCodemodInputSchema
->;
-export type AgentToolkitCodemodChange = z.infer<
-	typeof AgentToolkitCodemodChangeSchema
->;
-export type AgentToolkitCodemodResult = z.infer<
-	typeof AgentToolkitCodemodResultSchema
->;
+export type AgentToolkitCodemodInput = z.infer<typeof AgentToolkitCodemodInputSchema>;
+export type AgentToolkitCodemodChange = z.infer<typeof AgentToolkitCodemodChangeSchema>;
+export type AgentToolkitCodemodResult = z.infer<typeof AgentToolkitCodemodResultSchema>;
 
-export type AgentToolkitValidationInput = z.infer<
-	typeof AgentToolkitValidationInputSchema
->;
-export type AgentToolkitValidationIssue = z.infer<
-	typeof AgentToolkitValidationIssueSchema
->;
-export type AgentToolkitValidationResult = z.infer<
-	typeof AgentToolkitValidationResultSchema
->;
+export type AgentToolkitValidationInput = z.infer<typeof AgentToolkitValidationInputSchema>;
+export type AgentToolkitValidationIssue = z.infer<typeof AgentToolkitValidationIssueSchema>;
+export type AgentToolkitValidationResult = z.infer<typeof AgentToolkitValidationResultSchema>;
 
 export type AgentToolkitExecutionStartedEvent = z.infer<
 	typeof AgentToolkitExecutionStartedEventSchema

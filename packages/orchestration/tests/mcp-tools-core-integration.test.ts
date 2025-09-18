@@ -23,13 +23,10 @@ vi.mock('../src/service.js', () => ({
 }));
 
 vi.mock('../src/observability/otel.js', async (importOriginal) => {
-	const actual =
-		await importOriginal<typeof import('../src/observability/otel.js')>();
+	const actual = await importOriginal<typeof import('../src/observability/otel.js')>();
 	return {
 		...actual,
-		withEnhancedSpan: vi.fn(async (_name: string, fn: () => Promise<unknown>) =>
-			fn(),
-		),
+		withEnhancedSpan: vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn()),
 		recordWorkflowStart: vi.fn(),
 		recordWorkflowEnd: vi.fn(),
 		recordAgentActivation: vi.fn(),
@@ -89,9 +86,7 @@ describe('orchestration MCP tools integration with core service', () => {
 
 		const payload = JSON.parse(response.content[0].text);
 		expect(payload.success).toBe(true);
-		expect(payload.data.result).toEqual(
-			expect.objectContaining({ orchestrationId: 'orch-123' }),
-		);
+		expect(payload.data.result).toEqual(expect.objectContaining({ orchestrationId: 'orch-123' }));
 	});
 
 	it('reuses cached orchestration result for identical sanitized requests', async () => {
@@ -127,12 +122,8 @@ describe('orchestration MCP tools integration with core service', () => {
 				}),
 		);
 
-		const first = workflowTool.handler(
-			buildWorkflowInput({ workflowId: 'wf-a' }),
-		);
-		const second = await workflowTool.handler(
-			buildWorkflowInput({ workflowId: 'wf-b' }),
-		);
+		const first = workflowTool.handler(buildWorkflowInput({ workflowId: 'wf-a' }));
+		const second = await workflowTool.handler(buildWorkflowInput({ workflowId: 'wf-b' }));
 
 		expect(second.isError).toBe(true);
 		const payload = JSON.parse(second.content[0].text);

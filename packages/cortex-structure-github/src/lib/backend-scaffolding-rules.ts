@@ -792,9 +792,7 @@ export function toKebabCase(str: string): string {
 		.replace(/^-/, '');
 }
 
-export function generateBackendVariables(
-	modelName: string,
-): Record<string, string> {
+export function generateBackendVariables(modelName: string): Record<string, string> {
 	const pascalCase = toPascalCase(modelName);
 	const camelCase = toCamelCase(modelName);
 	const snakeCase = toSnakeCase(modelName);
@@ -846,10 +844,7 @@ export function generateBackendVariables(
 }
 
 // Get templates by framework and language
-export function getBackendTemplates(
-	framework?: string,
-	language?: string,
-): BackendTemplate[] {
+export function getBackendTemplates(framework?: string, language?: string): BackendTemplate[] {
 	const allTemplates = [
 		...EXPRESS_TEMPLATES,
 		...FASTAPI_TEMPLATES,

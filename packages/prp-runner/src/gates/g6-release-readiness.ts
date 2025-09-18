@@ -3,12 +3,7 @@
  * @description G6: Release Readiness - ensure all prior gates passed and artifacts present
  */
 
-import {
-	type AutomatedCheck,
-	BaseGate,
-	type GateContext,
-	type HumanApprovalSpec,
-} from './base.js';
+import { type AutomatedCheck, BaseGate, type GateContext, type HumanApprovalSpec } from './base.js';
 
 class AllPriorGatesPassedCheck implements AutomatedCheck {
 	name = 'all-prior-gates-passed';
@@ -17,14 +12,10 @@ class AllPriorGatesPassedCheck implements AutomatedCheck {
 	async execute(context: GateContext) {
 		const required = ['G0', 'G1', 'G2', 'G3', 'G4', 'G5'] as const;
 		const missing = required.filter(
-			(id) =>
-				!context.state.gates[id] || context.state.gates[id].status !== 'passed',
+			(id) => !context.state.gates[id] || context.state.gates[id].status !== 'passed',
 		);
 		return {
-			status: (missing.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
+			status: (missing.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
 			output:
 				missing.length === 0
 					? 'All prior gates passed'

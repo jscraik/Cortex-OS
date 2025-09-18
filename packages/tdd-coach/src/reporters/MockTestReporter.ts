@@ -42,9 +42,7 @@ export class MockTestReporter extends BaseTestReporter {
 		return new Map(this.mockResults);
 	}
 
-	async startWatching(
-		callback: (results: Map<string, TestResult[]>) => void,
-	): Promise<void> {
+	async startWatching(callback: (results: Map<string, TestResult[]>) => void): Promise<void> {
 		this.watchCallback = callback;
 		// Simulate initial watch callback
 		setTimeout(() => {

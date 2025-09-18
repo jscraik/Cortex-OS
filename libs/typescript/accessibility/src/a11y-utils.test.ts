@@ -157,12 +157,8 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 				// Colors that pass AA but fail AAA
 				const mediumContrastColor = '#767676'; // ~4.5:1 with white
 
-				expect(A11yUtils.meetsAaContrast(mediumContrastColor, '#FFFFFF')).toBe(
-					true,
-				);
-				expect(A11yUtils.meetsAaaContrast(mediumContrastColor, '#FFFFFF')).toBe(
-					false,
-				);
+				expect(A11yUtils.meetsAaContrast(mediumContrastColor, '#FFFFFF')).toBe(true);
+				expect(A11yUtils.meetsAaaContrast(mediumContrastColor, '#FFFFFF')).toBe(false);
 			});
 		});
 
@@ -170,10 +166,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			// Testing private method through public interface
 			it('should correctly convert basic hex colors', () => {
 				// We can infer RGB conversion is working if contrast ratios are correct
-				const whiteBlackRatio = A11yUtils.getContrastRatio(
-					'#FFFFFF',
-					'#000000',
-				);
+				const whiteBlackRatio = A11yUtils.getContrastRatio('#FFFFFF', '#000000');
 				const redGreenRatio = A11yUtils.getContrastRatio('#FF0000', '#00FF00');
 
 				expect(whiteBlackRatio).toBeCloseTo(21.0, 1);
@@ -227,24 +220,17 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			});
 
 			it('should handle special characters', () => {
-				const result = A11yUtils.generateSrText(
-					'Submit & Save',
-					'Contact form submission',
-				);
+				const result = A11yUtils.generateSrText('Submit & Save', 'Contact form submission');
 				expect(result).toBe('Submit & Save (Contact form submission)');
 			});
 
 			it('should handle unicode characters', () => {
-				const result = A11yUtils.generateSrText(
-					'Close ✕',
-					'Close modal dialog',
-				);
+				const result = A11yUtils.generateSrText('Close ✕', 'Close modal dialog');
 				expect(result).toBe('Close ✕ (Close modal dialog)');
 			});
 
 			it('should handle long text content', () => {
-				const longText =
-					'This is a very long piece of text that might be used for screen readers';
+				const longText = 'This is a very long piece of text that might be used for screen readers';
 				const context = 'Detailed description for accessibility';
 				const result = A11yUtils.generateSrText(longText, context);
 				expect(result).toBe(`${longText} (${context})`);
@@ -260,11 +246,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			});
 
 			it('should include context when provided', () => {
-				const result = A11yUtils.generateAriaLabel(
-					'button',
-					'Submit',
-					'Contact form',
-				);
+				const result = A11yUtils.generateAriaLabel('button', 'Submit', 'Contact form');
 				expect(result).toBe('Submit button Contact form');
 			});
 
@@ -305,17 +287,11 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			it('should handle empty or undefined values', () => {
 				expect(A11yUtils.generateAriaLabel('', 'Submit')).toBe('Submit ');
 				expect(A11yUtils.generateAriaLabel('button', '')).toBe(' button');
-				expect(A11yUtils.generateAriaLabel('button', 'Submit', '')).toBe(
-					'Submit button ',
-				);
+				expect(A11yUtils.generateAriaLabel('button', 'Submit', '')).toBe('Submit button ');
 			});
 
 			it('should preserve case and formatting', () => {
-				const result = A11yUtils.generateAriaLabel(
-					'Button',
-					'SUBMIT',
-					'Contact Form',
-				);
+				const result = A11yUtils.generateAriaLabel('Button', 'SUBMIT', 'Contact Form');
 				expect(result).toBe('SUBMIT Button Contact Form');
 			});
 		});
@@ -339,10 +315,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			}
 
 			mockOnSelect = vi.fn();
-			keyboardHandler = A11yUtils.createKeyboardNavHandler(
-				mockItems,
-				mockOnSelect,
-			);
+			keyboardHandler = A11yUtils.createKeyboardNavHandler(mockItems, mockOnSelect);
 		});
 
 		afterEach(() => {
@@ -440,10 +413,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 
 			it('should handle single item list', () => {
 				const singleItem = [mockItems[0]];
-				const singleHandler = A11yUtils.createKeyboardNavHandler(
-					singleItem,
-					mockOnSelect,
-				);
+				const singleHandler = A11yUtils.createKeyboardNavHandler(singleItem, mockOnSelect);
 
 				const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
 				const upEvent = new KeyboardEvent('keydown', { key: 'ArrowUp' });
@@ -456,10 +426,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			});
 
 			it('should handle empty item list gracefully', () => {
-				const emptyHandler = A11yUtils.createKeyboardNavHandler(
-					[],
-					mockOnSelect,
-				);
+				const emptyHandler = A11yUtils.createKeyboardNavHandler([], mockOnSelect);
 				const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
 
 				expect(() => {
@@ -519,23 +486,14 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			// 1. Validate color scheme
 			const primaryColor = '#1E40AF';
 			const backgroundColor = '#FFFFFF';
-			expect(A11yUtils.meetsAaContrast(primaryColor, backgroundColor)).toBe(
-				true,
-			);
+			expect(A11yUtils.meetsAaContrast(primaryColor, backgroundColor)).toBe(true);
 
 			// 2. Generate ARIA labels
-			const buttonLabel = A11yUtils.generateAriaLabel(
-				'button',
-				'Submit',
-				'contact form',
-			);
+			const buttonLabel = A11yUtils.generateAriaLabel('button', 'Submit', 'contact form');
 			expect(buttonLabel).toBe('Submit button contact form');
 
 			// 3. Create screen reader text
-			const srText = A11yUtils.generateSrText(
-				'✓ Saved',
-				'Form successfully submitted',
-			);
+			const srText = A11yUtils.generateSrText('✓ Saved', 'Form successfully submitted');
 			expect(srText).toBe('✓ Saved (Form successfully submitted)');
 
 			// 4. Set up keyboard navigation
@@ -566,24 +524,14 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 			// Validate all color combinations meet AA standards
 			Object.entries(formColors).forEach(([key, color]) => {
 				if (key !== 'background') {
-					expect(A11yUtils.meetsAaContrast(color, formColors.background)).toBe(
-						true,
-					);
+					expect(A11yUtils.meetsAaContrast(color, formColors.background)).toBe(true);
 				}
 			});
 
 			// Generate appropriate ARIA labels
 			const labels = {
-				email: A11yUtils.generateAriaLabel(
-					'textbox',
-					'Enter',
-					'your email address',
-				),
-				password: A11yUtils.generateAriaLabel(
-					'textbox',
-					'Enter',
-					'your password',
-				),
+				email: A11yUtils.generateAriaLabel('textbox', 'Enter', 'your email address'),
+				password: A11yUtils.generateAriaLabel('textbox', 'Enter', 'your password'),
 				submit: A11yUtils.generateAriaLabel('button', 'Submit', 'login form'),
 			};
 
@@ -593,22 +541,12 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 
 			// Generate screen reader feedback
 			const feedback = {
-				error: A11yUtils.generateSrText(
-					'Invalid email',
-					'Please enter a valid email address',
-				),
-				success: A11yUtils.generateSrText(
-					'Login successful',
-					'Redirecting to dashboard',
-				),
+				error: A11yUtils.generateSrText('Invalid email', 'Please enter a valid email address'),
+				success: A11yUtils.generateSrText('Login successful', 'Redirecting to dashboard'),
 			};
 
-			expect(feedback.error).toBe(
-				'Invalid email (Please enter a valid email address)',
-			);
-			expect(feedback.success).toBe(
-				'Login successful (Redirecting to dashboard)',
-			);
+			expect(feedback.error).toBe('Invalid email (Please enter a valid email address)');
+			expect(feedback.success).toBe('Login successful (Redirecting to dashboard)');
 		});
 
 		it('should handle responsive design accessibility', () => {
@@ -678,10 +616,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 				return element;
 			});
 
-			const handler = A11yUtils.createKeyboardNavHandler(
-				largeItemList,
-				vi.fn(),
-			);
+			const handler = A11yUtils.createKeyboardNavHandler(largeItemList, vi.fn());
 
 			const startTime = Date.now();
 
@@ -745,9 +680,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 
 		it('should handle null/undefined inputs for text functions', () => {
 			expect(A11yUtils.generateSrText(null as unknown)).toBe(null as unknown);
-			expect(A11yUtils.generateSrText(undefined as unknown)).toBe(
-				undefined as unknown,
-			);
+			expect(A11yUtils.generateSrText(undefined as unknown)).toBe(undefined as unknown);
 
 			expect(() => {
 				A11yUtils.generateAriaLabel(null as unknown, 'action');

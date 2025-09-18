@@ -179,9 +179,7 @@ describe('MCP Marketplace Integration Tests', () => {
 			expect(categoryResponse.statusCode).toBe(200);
 			const categoryResult = JSON.parse(categoryResponse.body);
 			expect(categoryResult.success).toBe(true);
-			expect(
-				categoryResult.data.every((s: unknown) => s.category === 'development'),
-			).toBe(true);
+			expect(categoryResult.data.every((s: unknown) => s.category === 'development')).toBe(true);
 
 			// Search by risk level
 			const riskResponse = await app.inject({
@@ -191,9 +189,7 @@ describe('MCP Marketplace Integration Tests', () => {
 			expect(riskResponse.statusCode).toBe(200);
 			const riskResult = JSON.parse(riskResponse.body);
 			expect(riskResult.success).toBe(true);
-			expect(
-				riskResult.data.every((s: unknown) => s.security.riskLevel === 'low'),
-			).toBe(true);
+			expect(riskResult.data.every((s: unknown) => s.security.riskLevel === 'low')).toBe(true);
 
 			// Search featured only
 			const featuredResponse = await app.inject({
@@ -204,9 +200,7 @@ describe('MCP Marketplace Integration Tests', () => {
 			const featuredResult = JSON.parse(featuredResponse.body);
 			expect(featuredResult.success).toBe(true);
 			expect(
-				featuredResult.data.every(
-					(s: unknown) => (s as { featured?: boolean }).featured === true,
-				),
+				featuredResult.data.every((s: unknown) => (s as { featured?: boolean }).featured === true),
 			).toBe(true);
 
 			// Sort by downloads
@@ -273,9 +267,7 @@ describe('MCP Marketplace Integration Tests', () => {
 			expect(topRatedResponse.statusCode).toBe(200);
 			const topRated = JSON.parse(topRatedResponse.body);
 			expect(topRated.success).toBe(true);
-			expect(topRated.data[0].rating).toBeGreaterThanOrEqual(
-				topRated.data[1]?.rating || 0,
-			);
+			expect(topRated.data[0].rating).toBeGreaterThanOrEqual(topRated.data[1]?.rating || 0);
 		});
 
 		it('should handle registry management operations', async () => {
@@ -326,9 +318,7 @@ describe('MCP Marketplace Integration Tests', () => {
 
 				if (client === 'cline') {
 					expect(install.data.command).toBe('');
-					expect(install.data.instructions).toBe(
-						'Install via Cline MCP settings',
-					);
+					expect(install.data.instructions).toBe('Install via Cline MCP settings');
 				}
 			}
 
@@ -483,9 +473,7 @@ describe('MCP Marketplace Integration Tests', () => {
 
 			// Second request should be faster (cached)
 			// Note: This is a heuristic test and may be flaky
-			console.log(
-				`First request: ${duration1}ms, Second request: ${duration2}ms`,
-			);
+			console.log(`First request: ${duration1}ms, Second request: ${duration2}ms`);
 		});
 
 		it('should refresh cache on demand', async () => {

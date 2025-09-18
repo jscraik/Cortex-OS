@@ -37,10 +37,7 @@ export function buildWorkloadIdentity(
 ): WorkloadIdentity {
 	const workloadPath = extractWorkloadPath(workloadResponse.spiffe_id);
 	if (!workloadPath) {
-		throw new SPIFFEError(
-			'Invalid SPIFFE ID format',
-			workloadResponse.spiffe_id,
-		);
+		throw new SPIFFEError('Invalid SPIFFE ID format', workloadResponse.spiffe_id);
 	}
 
 	return {
@@ -83,10 +80,8 @@ export class SpiffeClient {
 	private readonly baseUrl: string;
 	private readonly timeout = 10000;
 	private readonly config: TrustDomainConfig;
-	private readonly certificateCache: Map<
-		string,
-		{ bundle: CertificateBundle; expiresAt: number }
-	> = new Map();
+	private readonly certificateCache: Map<string, { bundle: CertificateBundle; expiresAt: number }> =
+		new Map();
 	private readonly certificateTtl: number;
 	// TLS cert material retained for potential future https.Agent usage (not bound now)
 
@@ -101,10 +96,7 @@ export class SpiffeClient {
 	/**
 	 * Perform a fetch request with timeout support
 	 */
-	private async fetchWithTimeout(
-		path: string,
-		init?: RequestInit,
-	): Promise<Response> {
+	private async fetchWithTimeout(path: string, init?: RequestInit): Promise<Response> {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 		try {
@@ -132,11 +124,7 @@ export class SpiffeClient {
 	/**
 	 * Perform fetch with retry and exponential backoff
 	 */
-	private async fetchWithRetry(
-		path: string,
-		init?: RequestInit,
-		retries = 3,
-	): Promise<Response> {
+	private async fetchWithRetry(path: string, init?: RequestInit, retries = 3): Promise<Response> {
 		let attempt = 0;
 		let delay = 500;
 
@@ -202,8 +190,7 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch workload identity',
 					{
-						error:
-							error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
+						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						trustDomain: this.config.name,
 					},
 					span,
@@ -245,9 +232,7 @@ export class SpiffeClient {
 					method: 'GET',
 				});
 				if (!response.ok) {
-					throw new Error(
-						`Failed to fetch SVID: HTTP ${response.status} ${response.statusText}`,
-					);
+					throw new Error(`Failed to fetch SVID: HTTP ${response.status} ${response.statusText}`);
 				}
 				const data = await response.json();
 				const svidResponse = z
@@ -296,8 +281,7 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch SVID certificates',
 					{
-						error:
-							error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
+						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						spiffeId: spiffeId || 'default',
 					},
 					span,
@@ -373,9 +357,7 @@ export class SpiffeClient {
 					})
 					.parse(data);
 
-				const certificates = splitPEMCertificates(
-					trustBundleResponse.trust_bundle,
-				);
+				const certificates = splitPEMCertificates(trustBundleResponse.trust_bundle);
 
 				logWithSpan(
 					'info',
@@ -393,8 +375,7 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch trust bundle',
 					{
-						error:
-							error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
+						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						trustDomain: this.config.name,
 					},
 					span,

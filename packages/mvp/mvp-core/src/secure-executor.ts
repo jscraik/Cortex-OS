@@ -50,12 +50,10 @@ export class SecureCommandExecutor {
 			SecureCommandExecutor.DEFAULT_TIMEOUT = result.data.defaultTimeout;
 		}
 		if (result.data.defaultMemoryLimit !== undefined) {
-			SecureCommandExecutor.DEFAULT_MEMORY_LIMIT =
-				result.data.defaultMemoryLimit;
+			SecureCommandExecutor.DEFAULT_MEMORY_LIMIT = result.data.defaultMemoryLimit;
 		}
 		if (result.data.maxConcurrentProcesses !== undefined) {
-			SecureCommandExecutor.MAX_CONCURRENT_PROCESSES =
-				result.data.maxConcurrentProcesses;
+			SecureCommandExecutor.MAX_CONCURRENT_PROCESSES = result.data.maxConcurrentProcesses;
 		}
 	}
 
@@ -69,8 +67,7 @@ export class SecureCommandExecutor {
 	): Promise<{ stdout: string; stderr: string; exitCode: number }> {
 		// Check concurrent process limit
 		if (
-			SecureCommandExecutor.concurrentProcesses >=
-			SecureCommandExecutor.MAX_CONCURRENT_PROCESSES
+			SecureCommandExecutor.concurrentProcesses >= SecureCommandExecutor.MAX_CONCURRENT_PROCESSES
 		) {
 			throw new Error(
 				`Maximum concurrent processes (${SecureCommandExecutor.MAX_CONCURRENT_PROCESSES}) reached`,
@@ -117,10 +114,7 @@ export class SecureCommandExecutor {
 
 			child.stdout?.on('data', (data) => {
 				// Limit stdout size
-				if (
-					stdout.length + data.length >
-					SecureCommandExecutor.DEFAULT_MEMORY_LIMIT
-				) {
+				if (stdout.length + data.length > SecureCommandExecutor.DEFAULT_MEMORY_LIMIT) {
 					child.kill('SIGTERM');
 					throw new Error('Output exceeded memory limit');
 				}
@@ -129,10 +123,7 @@ export class SecureCommandExecutor {
 
 			child.stderr?.on('data', (data) => {
 				// Limit stderr size
-				if (
-					stderr.length + data.length >
-					SecureCommandExecutor.DEFAULT_MEMORY_LIMIT
-				) {
+				if (stderr.length + data.length > SecureCommandExecutor.DEFAULT_MEMORY_LIMIT) {
 					child.kill('SIGTERM');
 					throw new Error('Error output exceeded memory limit');
 				}

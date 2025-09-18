@@ -27,10 +27,7 @@ describe('Agent Toolkit Integration', () => {
 		it('should list registered tools', () => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
-			registry.registerValidationTool(
-				'multi-validator',
-				new MultiValidatorAdapter(),
-			);
+			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
 
 			const tools = registry.listTools();
 			expect(tools.search).toContain('ripgrep');
@@ -43,10 +40,7 @@ describe('Agent Toolkit Integration', () => {
 		beforeEach(() => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
-			registry.registerValidationTool(
-				'multi-validator',
-				new MultiValidatorAdapter(),
-			);
+			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
 		});
 
 		it('should check tool availability', async () => {
@@ -72,10 +66,7 @@ describe('Agent Toolkit Integration', () => {
 
 		it('should throw error for invalid input type', async () => {
 			await expect(
-				executor.execute('ripgrep', { invalid: 'input' } as Record<
-					string,
-					unknown
-				>),
+				executor.execute('ripgrep', { invalid: 'input' } as Record<string, unknown>),
 			).rejects.toThrow("Unknown input type for tool 'ripgrep'");
 		});
 	});
@@ -134,9 +125,7 @@ describe('Agent Toolkit Integration', () => {
 			const files = ['test.ts', 'script.js', 'main.py', 'lib.rs'];
 
 			// Test file categorization logic
-			expect(files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/))).toHaveLength(
-				2,
-			);
+			expect(files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/))).toHaveLength(2);
 			expect(files.filter((f) => f.match(/\.py$/))).toHaveLength(1);
 			expect(files.filter((f) => f.match(/\.rs$/))).toHaveLength(1);
 		});

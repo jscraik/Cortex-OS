@@ -63,9 +63,7 @@ describe('rag MCP tool error handling', () => {
 	});
 
 	it('wraps upstream errors with diagnostic metadata', async () => {
-		ragHandlerMock.handleRAG.mockRejectedValueOnce(
-			new Error('upstream failed'),
-		);
+		ragHandlerMock.handleRAG.mockRejectedValueOnce(new Error('upstream failed'));
 
 		const response = await ragQueryTool.handler({
 			query: 'tell me about cortex os',

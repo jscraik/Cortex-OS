@@ -2,9 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { PRPState } from '../../state.js';
 
-export async function validateBackend(
-	state: PRPState,
-): Promise<{ passed: boolean; details: any }> {
+export async function validateBackend(state: PRPState): Promise<{ passed: boolean; details: any }> {
 	const hasBackendReq = state.blueprint.requirements?.some(
 		(req) =>
 			req.toLowerCase().includes('api') ||
@@ -29,9 +27,7 @@ export async function validateAPISchema(
 	state: PRPState,
 ): Promise<{ passed: boolean; details: any }> {
 	const hasAPI = state.blueprint.requirements?.some(
-		(req) =>
-			req.toLowerCase().includes('api') ||
-			req.toLowerCase().includes('endpoint'),
+		(req) => req.toLowerCase().includes('api') || req.toLowerCase().includes('endpoint'),
 	);
 	if (!hasAPI) {
 		return {

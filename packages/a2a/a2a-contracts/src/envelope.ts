@@ -26,57 +26,21 @@ export const Envelope = z
 		specversion: z.literal('1.0').describe('CloudEvents specification version'),
 
 		// CloudEvents 1.0 Optional Attributes
-		datacontenttype: z
-			.string()
-			.optional()
-			.describe('Content type of the data payload'),
-		dataschema: z
-			.string()
-			.url()
-			.optional()
-			.describe('Schema URI for the data payload'),
+		datacontenttype: z.string().optional().describe('Content type of the data payload'),
+		dataschema: z.string().url().optional().describe('Schema URI for the data payload'),
 		subject: z.string().optional().describe('Subject of the event'),
-		time: z
-			.string()
-			.datetime()
-			.optional()
-			.describe('Timestamp of when the event occurred'),
+		time: z.string().datetime().optional().describe('Timestamp of when the event occurred'),
 
 		// ASBR-specific extensions
-		causationId: z
-			.string()
-			.uuid()
-			.optional()
-			.describe('ID of the event that caused this event'),
-		correlationId: z
-			.string()
-			.uuid()
-			.optional()
-			.describe('Correlation ID for related events'),
-		ttlMs: z
-			.number()
-			.int()
-			.positive()
-			.default(60000)
-			.describe('Time-to-live in milliseconds'),
-		headers: z
-			.record(z.string())
-			.default({})
-			.describe('Additional headers/metadata'),
+		causationId: z.string().uuid().optional().describe('ID of the event that caused this event'),
+		correlationId: z.string().uuid().optional().describe('Correlation ID for related events'),
+		ttlMs: z.number().int().positive().default(60000).describe('Time-to-live in milliseconds'),
+		headers: z.record(z.string()).default({}).describe('Additional headers/metadata'),
 
 		// W3C Trace Context headers for distributed tracing
-		traceparent: z
-			.string()
-			.optional()
-			.describe('W3C Trace Context traceparent header'),
-		tracestate: z
-			.string()
-			.optional()
-			.describe('W3C Trace Context tracestate header'),
-		baggage: z
-			.string()
-			.optional()
-			.describe('W3C Baggage header for trace context propagation'),
+		traceparent: z.string().optional().describe('W3C Trace Context traceparent header'),
+		tracestate: z.string().optional().describe('W3C Trace Context tracestate header'),
+		baggage: z.string().optional().describe('W3C Baggage header for trace context propagation'),
 
 		// Event payload
 		data: z.unknown().optional().describe('Event payload data'),

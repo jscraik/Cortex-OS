@@ -1,10 +1,6 @@
 import type { Memory, MemoryId } from '../domain/types.js';
 import type { EncryptionService } from '../ports/Encryption.js';
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from '../ports/MemoryStore.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 // Fields we encrypt at-rest: text (string) and provenance (object serialized)
 function isEncrypted(value: unknown): value is string {
@@ -50,10 +46,7 @@ export class EncryptedStore implements MemoryStore {
 			out.vector = await encryptText(this.crypto, JSON.stringify(m.vector));
 		}
 		if (this.opts.encryptTags && m.tags) {
-			out.tags = (await encryptText(
-				this.crypto,
-				JSON.stringify(m.tags),
-			)) as unknown as string[];
+			out.tags = (await encryptText(this.crypto, JSON.stringify(m.tags))) as unknown as string[];
 		}
 		return out as Memory;
 	}

@@ -69,11 +69,7 @@ export class TaskRepository {
 		return this.writeRecord(id, next, expected);
 	}
 
-	async replace(
-		id: string,
-		task: TaskRecord,
-		opts: SaveOptions = {},
-	): Promise<TaskEntry> {
+	async replace(id: string, task: TaskRecord, opts: SaveOptions = {}): Promise<TaskEntry> {
 		this.assertId(id, 'replace');
 		if (task.id !== id) {
 			throw new Error('TaskRepository.replace requires matching id');

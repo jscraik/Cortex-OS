@@ -65,13 +65,8 @@ export class CircuitBreaker extends EventEmitter {
 			throw error;
 		}
 
-		if (
-			this.state === 'half-open' &&
-			this.halfOpenCalls >= this.options.halfOpenMaxCalls
-		) {
-			const error = new Error(
-				`Circuit breaker '${this.name}' half-open call limit exceeded`,
-			);
+		if (this.state === 'half-open' && this.halfOpenCalls >= this.options.halfOpenMaxCalls) {
+			const error = new Error(`Circuit breaker '${this.name}' half-open call limit exceeded`);
 			(error as any).code = 'CIRCUIT_BREAKER_HALF_OPEN_LIMIT';
 			this.emit('rejected', { name: this.name, error });
 			throw error;
@@ -281,10 +276,7 @@ export class CircuitBreakerManager extends EventEmitter {
 	/**
 	 * Get or create a circuit breaker for the given name
 	 */
-	getCircuitBreaker(
-		name: string,
-		options?: Partial<CircuitBreakerOptions>,
-	): CircuitBreaker {
+	getCircuitBreaker(name: string, options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
 		if (!this.circuitBreakers.has(name)) {
 			const circuitBreaker = new CircuitBreaker(name, {
 				failureThreshold: 5,
@@ -295,9 +287,7 @@ export class CircuitBreakerManager extends EventEmitter {
 			});
 
 			// Forward all events from individual circuit breakers
-			circuitBreaker.on('stateChanged', (event) =>
-				this.emit('stateChanged', event),
-			);
+			circuitBreaker.on('stateChanged', (event) => this.emit('stateChanged', event));
 			circuitBreaker.on('success', (event) => this.emit('success', event));
 			circuitBreaker.on('failure', (event) => this.emit('failure', event));
 			circuitBreaker.on('rejected', (event) => this.emit('rejected', event));

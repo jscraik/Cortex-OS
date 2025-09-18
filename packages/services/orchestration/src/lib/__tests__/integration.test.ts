@@ -78,9 +78,7 @@ describe('integration tests', () => {
 			compensation,
 		};
 
-		await expect(
-			run(workflow, { workflowId: 'test-workflow' }),
-		).rejects.toThrow('Step 2 failed');
+		await expect(run(workflow, { workflowId: 'test-workflow' })).rejects.toThrow('Step 2 failed');
 
 		expect(executed).toEqual(['step1', 'step2']);
 		expect(compensated).toEqual(['step2-compensated', 'step1-compensated']);
@@ -113,9 +111,7 @@ describe('integration tests', () => {
 			compensation,
 		};
 
-		await expect(
-			run(workflow, { workflowId: 'test-workflow' }),
-		).rejects.toThrow('Step 2 failed');
+		await expect(run(workflow, { workflowId: 'test-workflow' })).rejects.toThrow('Step 2 failed');
 
 		expect(executed).toEqual(['step1', 'step2']);
 		expect(compensated).toEqual(['step2-compensated', 'step1-compensated']); // step2 compensation failed but step1 still runs
@@ -213,8 +209,7 @@ describe('integration tests', () => {
 			});
 			hooks.addWorkflowCancelledHook(async (ctx) => {
 				hookEvents.push('workflow-cancelled');
-				cancellationResult = ctx.metadata
-					?.cancellationResult as CancellationResult;
+				cancellationResult = ctx.metadata?.cancellationResult as CancellationResult;
 			});
 
 			const compensation = new CompensationManager();

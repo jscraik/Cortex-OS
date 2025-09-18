@@ -31,10 +31,7 @@ export interface CitationBundle {
 
 export interface Store {
 	upsert(chunks: Chunk[]): Promise<void>;
-	query(
-		embedding: number[],
-		k?: number,
-	): Promise<Array<Chunk & { score?: number }>>;
+	query(embedding: number[], k?: number): Promise<Array<Chunk & { score?: number }>>;
 }
 
 export interface Pipeline {

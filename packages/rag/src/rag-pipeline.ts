@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import {
-	CitationBundler,
-	type EnhancedCitationBundle,
-} from './lib/citation-bundler.js';
+import { CitationBundler, type EnhancedCitationBundle } from './lib/citation-bundler.js';
 import type { Chunk, Embedder, Store } from './lib/index.js';
 import { ingestText as ingestTextHelper } from './pipeline/ingest.js';
 import {
@@ -47,9 +44,7 @@ export class RAGPipeline {
 		const schema = z.object({
 			embedder: z.custom<Embedder>(
 				(e): e is Embedder =>
-					typeof e === 'object' &&
-					e !== null &&
-					typeof (e as any).embed === 'function',
+					typeof e === 'object' && e !== null && typeof (e as any).embed === 'function',
 			),
 			store: z.custom<Store>(
 				(s): s is Store =>
@@ -124,10 +119,7 @@ export class RAGPipeline {
 		return bundler.bundleWithClaims(routed, claims);
 	}
 
-	async retrieveWithDeduplication(
-		query: string,
-		topK = 5,
-	): Promise<EnhancedCitationBundle> {
+	async retrieveWithDeduplication(query: string, topK = 5): Promise<EnhancedCitationBundle> {
 		const [emb] = await this.E.embed([query]);
 		const chunks = await this.S.query(emb, topK);
 		const routed = routeByFreshness(chunks, this.freshnessOptions);

@@ -23,8 +23,7 @@ export class EvidenceGate {
 			minimumScore: options.minimumScore ?? 0.3,
 			minimumCitations: options.minimumCitations ?? 1,
 			noEvidenceResponse:
-				options.noEvidenceResponse ??
-				'No supporting evidence found in knowledge base.',
+				options.noEvidenceResponse ?? 'No supporting evidence found in knowledge base.',
 			evidenceThreshold: options.evidenceThreshold ?? 0.5,
 		};
 	}
@@ -73,8 +72,7 @@ export class EvidenceGate {
 				(cc) => !cc.noEvidence && cc.citations.length > 0,
 			);
 
-			const evidenceRatio =
-				claimsWithEvidence.length / evidence.claimCitations.length;
+			const evidenceRatio = claimsWithEvidence.length / evidence.claimCitations.length;
 
 			if (evidenceRatio < this.options.evidenceThreshold) {
 				return {
@@ -89,8 +87,7 @@ export class EvidenceGate {
 
 		// Calculate overall confidence
 		const avgScore =
-			validCitations.reduce((sum, c) => sum + (c.score ?? 0), 0) /
-			validCitations.length;
+			validCitations.reduce((sum, c) => sum + (c.score ?? 0), 0) / validCitations.length;
 		const scoreNormalized = Math.min(avgScore / 1.0, 1); // assuming max score is 1
 		const citationCount = Math.min(validCitations.length / 5, 1); // normalize to 5 citations
 		const confidence = (scoreNormalized + citationCount) / 2;

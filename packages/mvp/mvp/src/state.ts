@@ -25,14 +25,7 @@ export const generateDeterministicHash = (data: any): string => {
  */
 export const EvidenceSchema = z.object({
 	id: z.string(),
-	type: z.enum([
-		'file',
-		'command',
-		'test',
-		'analysis',
-		'validation',
-		'llm-generation',
-	]),
+	type: z.enum(['file', 'command', 'test', 'analysis', 'validation', 'llm-generation']),
 	source: z.string(),
 	content: z.string(),
 	timestamp: z.string(),
@@ -125,10 +118,7 @@ export type CerebrumDecision = z.infer<typeof CerebrumDecisionSchema>;
 /**
  * State transition validation
  */
-export const validateStateTransition = (
-	fromState: PRPState,
-	toState: PRPState,
-): boolean => {
+export const validateStateTransition = (fromState: PRPState, toState: PRPState): boolean => {
 	const fromPhase = fromState.phase;
 	const toPhase = toState.phase;
 	const validTransitions: Record<PRPState['phase'], PRPState['phase'][]> = {
@@ -157,20 +147,12 @@ export const createInitialPRPState = (
 		};
 	} = {},
 ): PRPState => {
-	const now = options.deterministic
-		? '2025-01-01T00:00:00.000Z'
-		: new Date().toISOString();
+	const now = options.deterministic ? '2025-01-01T00:00:00.000Z' : new Date().toISOString();
 
-	const hash = options.deterministic
-		? generateDeterministicHash(blueprint)
-		: '';
-	const id =
-		options.id ??
-		(options.deterministic ? `prp-${hash}` : `prp-${randomUUID()}`);
+	const hash = options.deterministic ? generateDeterministicHash(blueprint) : '';
+	const id = options.id ?? (options.deterministic ? `prp-${hash}` : `prp-${randomUUID()}`);
 
-	const runId =
-		options.runId ??
-		(options.deterministic ? `run-${hash}` : `run-${randomUUID()}`);
+	const runId = options.runId ?? (options.deterministic ? `run-${hash}` : `run-${randomUUID()}`);
 
 	return {
 		id,

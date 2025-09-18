@@ -17,9 +17,7 @@ export const RoutingRuleSchema = z.object({
 		actor_patterns: z.array(z.string()).optional(),
 		labels: z.record(z.string()).optional(),
 		tags: z.array(z.string()).optional(),
-		priority_levels: z
-			.array(z.enum(['low', 'normal', 'high', 'critical']))
-			.optional(),
+		priority_levels: z.array(z.enum(['low', 'normal', 'high', 'critical'])).optional(),
 		time_window: z
 			.object({
 				start_hour: z.number().int().min(0).max(23),
@@ -102,9 +100,7 @@ export const RoutingConfigurationSchema = z.object({
 	rules: z.array(RoutingRuleSchema),
 
 	global_settings: z.object({
-		default_priority: z
-			.enum(['low', 'normal', 'high', 'critical'])
-			.default('normal'),
+		default_priority: z.enum(['low', 'normal', 'high', 'critical']).default('normal'),
 		default_delivery_mode: z
 			.enum(['fire_and_forget', 'at_least_once', 'exactly_once'])
 			.default('at_least_once'),
@@ -131,14 +127,7 @@ export const RoutingConfigurationSchema = z.object({
 
 	service_registry: z.record(
 		z.object({
-			type: z.enum([
-				'http',
-				'grpc',
-				'websocket',
-				'message_queue',
-				'database',
-				'file',
-			]),
+			type: z.enum(['http', 'grpc', 'websocket', 'message_queue', 'database', 'file']),
 			connection: z.record(z.string()),
 			health_check: z
 				.object({
@@ -236,9 +225,7 @@ export class GitHubEventRouter {
 		for (const route of routes) {
 			for (const destination of route.destinations) {
 				if (!this.config.service_registry[destination.service]) {
-					errors.push(
-						`Service '${destination.service}' not found in service registry`,
-					);
+					errors.push(`Service '${destination.service}' not found in service registry`);
 				}
 			}
 		}
@@ -257,16 +244,10 @@ export class GitHubEventRouter {
 		}));
 	}
 
-	private compileConditions(
-		conditions: RoutingRule['conditions'],
-	): CompiledConditions {
+	private compileConditions(conditions: RoutingRule['conditions']): CompiledConditions {
 		return {
-			eventTypeRegex: conditions.event_types
-				? new RegExp(conditions.event_types.join('|'))
-				: null,
-			actionRegex: conditions.actions
-				? new RegExp(conditions.actions.join('|'))
-				: null,
+			eventTypeRegex: conditions.event_types ? new RegExp(conditions.event_types.join('|')) : null,
+			actionRegex: conditions.actions ? new RegExp(conditions.actions.join('|')) : null,
 			repositoryPatterns: conditions.repository_patterns?.map(
 				(pattern) => new RegExp(this.globToRegex(pattern)),
 			),
@@ -280,17 +261,12 @@ export class GitHubEventRouter {
 		};
 	}
 
-	private evaluateRule(
-		envelope: A2AEventEnvelope,
-		rule: CompiledRule,
-	): string[] {
+	private evaluateRule(envelope: A2AEventEnvelope, rule: CompiledRule): string[] {
 		const matched: string[] = [];
 
 		// Check event type
 		if (rule.compiledConditions.eventTypeRegex) {
-			if (
-				rule.compiledConditions.eventTypeRegex.test(envelope.event.event_type)
-			) {
+			if (rule.compiledConditions.eventTypeRegex.test(envelope.event.event_type)) {
 				matched.push('event_type');
 			}
 		}
@@ -336,9 +312,7 @@ export class GitHubEventRouter {
 		// Check labels
 		if (rule.compiledConditions.labels) {
 			let allLabelsMatch = true;
-			for (const [key, value] of Object.entries(
-				rule.compiledConditions.labels,
-			)) {
+			for (const [key, value] of Object.entries(rule.compiledConditions.labels)) {
 				if (envelope.metadata.labels[key] !== value) {
 					allLabelsMatch = false;
 					break;
@@ -368,12 +342,7 @@ export class GitHubEventRouter {
 
 		// Check time window
 		if (rule.compiledConditions.timeWindow) {
-			if (
-				this.isInTimeWindow(
-					envelope.created_at,
-					rule.compiledConditions.timeWindow,
-				)
-			) {
+			if (this.isInTimeWindow(envelope.created_at, rule.compiledConditions.timeWindow)) {
 				matched.push('time_window');
 			}
 		}
@@ -381,8 +350,7 @@ export class GitHubEventRouter {
 		// Rule matches if it has no conditions OR if any conditions matched
 		const hasConditions = Object.values(rule.conditions).some(
 			(condition) =>
-				condition !== undefined &&
-				(Array.isArray(condition) ? condition.length > 0 : true),
+				condition !== undefined && (Array.isArray(condition) ? condition.length > 0 : true),
 		);
 
 		return !hasConditions || matched.length > 0 ? matched : [];
@@ -651,14 +619,10 @@ export function createRoutingRule(
 	};
 }
 
-export function validateRoutingConfiguration(
-	config: unknown,
-): RoutingConfiguration {
+export function validateRoutingConfiguration(config: unknown): RoutingConfiguration {
 	return RoutingConfigurationSchema.parse(config);
 }
 
-export function isValidRoutingConfiguration(
-	config: unknown,
-): config is RoutingConfiguration {
+export function isValidRoutingConfiguration(config: unknown): config is RoutingConfiguration {
 	return RoutingConfigurationSchema.safeParse(config).success;
 }

@@ -19,9 +19,7 @@ const CreateIntegrationInputSchema = z.object({
 
 const TestIntegrationInputSchema = z.object({
 	integrationId: z.string(),
-	testType: z
-		.enum(['connectivity', 'authentication', 'full'])
-		.default('connectivity'),
+	testType: z.enum(['connectivity', 'authentication', 'full']).default('connectivity'),
 });
 
 const ExecuteIntegrationInputSchema = z.object({
@@ -39,9 +37,7 @@ const ListIntegrationsInputSchema = z.object({
 
 const MonitorIntegrationInputSchema = z.object({
 	integrationId: z.string(),
-	metrics: z
-		.array(z.enum(['latency', 'success-rate', 'error-count']))
-		.optional(),
+	metrics: z.array(z.enum(['latency', 'success-rate', 'error-count'])).optional(),
 	timeRange: z
 		.object({
 			start: z.string().datetime().optional(),
@@ -86,14 +82,8 @@ export const integrationsMcpTools: IntegrationsTool[] = [
 ];
 
 // Export types for external use
-export type CreateIntegrationInput = z.infer<
-	typeof CreateIntegrationInputSchema
->;
+export type CreateIntegrationInput = z.infer<typeof CreateIntegrationInputSchema>;
 export type TestIntegrationInput = z.infer<typeof TestIntegrationInputSchema>;
-export type ExecuteIntegrationInput = z.infer<
-	typeof ExecuteIntegrationInputSchema
->;
+export type ExecuteIntegrationInput = z.infer<typeof ExecuteIntegrationInputSchema>;
 export type ListIntegrationsInput = z.infer<typeof ListIntegrationsInputSchema>;
-export type MonitorIntegrationInput = z.infer<
-	typeof MonitorIntegrationInputSchema
->;
+export type MonitorIntegrationInput = z.infer<typeof MonitorIntegrationInputSchema>;

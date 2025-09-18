@@ -34,10 +34,7 @@ const sdk = new NodeSDK({
 try {
 	sdk.start();
 } catch (err) {
-	console.error(
-		'Telemetry start error',
-		err instanceof Error ? err.message : err,
-	);
+	console.error('Telemetry start error', err instanceof Error ? err.message : err);
 }
 
 // Export configured instances
@@ -96,8 +93,7 @@ export function withSpan<T>(
 				span.setStatus({ code: SpanStatusCode.OK });
 				resolve(result);
 			} catch (error) {
-				const errObj =
-					error instanceof Error ? error : new Error(String(error));
+				const errObj = error instanceof Error ? error : new Error(String(error));
 				span.recordException(errObj);
 				span.setStatus({
 					code: SpanStatusCode.ERROR,
@@ -110,14 +106,9 @@ export function withSpan<T>(
 		};
 
 		if (options?.parentContext) {
-			tracer.startActiveSpan(
-				name,
-				spanOptions,
-				options.parentContext,
-				(span) => {
-					void run(span);
-				},
-			);
+			tracer.startActiveSpan(name, spanOptions, options.parentContext, (span) => {
+				void run(span);
+			});
 		} else {
 			tracer.startActiveSpan(name, spanOptions, (span) => {
 				void run(span);
@@ -134,19 +125,13 @@ export function createChildSpan(
 	parentContext?: Context,
 	attributes?: SpanAttributes,
 ): Span {
-	return tracer.startSpan(
-		name,
-		{ attributes: attributes ?? {} },
-		parentContext,
-	);
+	return tracer.startSpan(name, { attributes: attributes ?? {} }, parentContext);
 }
 
 /**
  * Extract span context from headers (for distributed tracing)
  */
-export function extractSpanContext(
-	headers: Record<string, string>,
-): SpanContext | undefined {
+export function extractSpanContext(headers: Record<string, string>): SpanContext | undefined {
 	const traceParent = headers.traceparent;
 	const traceState = headers.tracestate;
 
@@ -163,8 +148,7 @@ export function extractSpanContext(
 	return {
 		traceId,
 		spanId,
-		traceFlags:
-			flags & TraceFlags.SAMPLED ? TraceFlags.SAMPLED : TraceFlags.NONE,
+		traceFlags: flags & TraceFlags.SAMPLED ? TraceFlags.SAMPLED : TraceFlags.NONE,
 		isRemote: true,
 		traceState: traceState ? createTraceState(traceState) : undefined,
 	};
@@ -173,10 +157,7 @@ export function extractSpanContext(
 /**
  * Inject span context into headers (for distributed tracing)
  */
-export function injectSpanContext(
-	span: Span,
-	headers: Record<string, string>,
-): void {
+export function injectSpanContext(span: Span, headers: Record<string, string>): void {
 	const spanContext = span.spanContext();
 	const traceParent = `00-${spanContext.traceId}-${spanContext.spanId}-${spanContext.traceFlags.toString(16).padStart(2, '0')}`;
 	headers.traceparent = traceParent;
@@ -189,22 +170,14 @@ export function injectSpanContext(
 /**
  * Create a counter metric
  */
-export function createCounter(
-	name: string,
-	description?: string,
-	unit?: string,
-) {
+export function createCounter(name: string, description?: string, unit?: string) {
 	return meter.createCounter(name, { description, unit });
 }
 
 /**
  * Create a histogram metric
  */
-export function createHistogram(
-	name: string,
-	description?: string,
-	unit?: string,
-) {
+export function createHistogram(name: string, description?: string, unit?: string) {
 	return meter.createHistogram(name, { description, unit });
 }
 
@@ -254,9 +227,7 @@ export function logWithSpan(
  * Gracefully flush and shutdown the OpenTelemetry SDK.
  * Ensures metrics are exported before process exit. Idempotent & safe.
  */
-export async function shutdownTelemetry(options?: {
-	timeoutMs?: number;
-}): Promise<void> {
+export async function shutdownTelemetry(options?: { timeoutMs?: number }): Promise<void> {
 	const timeoutMs = options?.timeoutMs ?? 5000;
 	// If sdk already shut down, this should resolve quickly.
 	let timedOut = false;
@@ -270,10 +241,7 @@ export async function shutdownTelemetry(options?: {
 			console.info('[telemetry] shutdown complete');
 		}
 	} catch (error) {
-		console.error(
-			'[telemetry] shutdown error',
-			error instanceof Error ? error.message : error,
-		);
+		console.error('[telemetry] shutdown error', error instanceof Error ? error.message : error);
 	} finally {
 		clearTimeout(timer);
 	}

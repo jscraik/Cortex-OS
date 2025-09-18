@@ -20,16 +20,11 @@ export interface GuardContext {
 }
 
 async function getModeFromConfig(): Promise<PermissionMode> {
-	const cfgMode = (await configManager.getValue('permissions.mode')) as
-		| PermissionMode
-		| undefined;
+	const cfgMode = (await configManager.getValue('permissions.mode')) as PermissionMode | undefined;
 	const env = String(
-		(globalThis as { process?: NodeJS.Process }).process?.env
-			?.CORTEX_PERMISSION_MODE || '',
+		(globalThis as { process?: NodeJS.Process }).process?.env?.CORTEX_PERMISSION_MODE || '',
 	).toLowerCase();
-	const envMode = (['plan', 'ask', 'auto'] as const).includes(
-		env as PermissionMode,
-	)
+	const envMode = (['plan', 'ask', 'auto'] as const).includes(env as PermissionMode)
 		? (env as PermissionMode)
 		: undefined;
 	return envMode || cfgMode || 'ask';

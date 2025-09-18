@@ -42,10 +42,7 @@ async function generateReport() {
 		// If parsing fails or results empty, skip
 		if (batch && batch.scenarios.length > 0) {
 			const batchId = basename(file).replace(/\.(json|jsonl)$/i, '');
-			const computed = reporter.createBatchResult(
-				batchId,
-				batch.scenarios as any,
-			);
+			const computed = reporter.createBatchResult(batchId, batch.scenarios as any);
 			batchResults.push(computed);
 		}
 	}
@@ -91,14 +88,10 @@ function parseBatchFromFile(absPath: string): { scenarios: any[] } | null {
 		// JSON: either a batch object or array of scenarios
 		const parsed = JSON.parse(txt);
 		if (Array.isArray(parsed)) return { scenarios: parsed };
-		if (parsed && Array.isArray(parsed.scenarios))
-			return { scenarios: parsed.scenarios };
+		if (parsed && Array.isArray(parsed.scenarios)) return { scenarios: parsed.scenarios };
 		return null;
 	} catch (e) {
-		console.warn(
-			`⚠️  Failed to parse ${absPath}:`,
-			e instanceof Error ? e.message : e,
-		);
+		console.warn(`⚠️  Failed to parse ${absPath}:`, e instanceof Error ? e.message : e);
 		return null;
 	}
 }

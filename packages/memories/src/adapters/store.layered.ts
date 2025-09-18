@@ -1,9 +1,5 @@
 import type { Memory, MemoryId } from '../domain/types.js';
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from '../ports/MemoryStore.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 export type LayeredOptions = {
 	defaultScope?: 'session' | 'user' | 'org';
@@ -21,11 +17,7 @@ export class LayeredMemoryStore implements MemoryStore {
 	private readonly longTerm: MemoryStore;
 	private readonly defaultScope: 'session' | 'user' | 'org';
 
-	constructor(
-		shortTerm: MemoryStore,
-		longTerm: MemoryStore,
-		opts?: LayeredOptions,
-	) {
+	constructor(shortTerm: MemoryStore, longTerm: MemoryStore, opts?: LayeredOptions) {
 		this.shortTerm = shortTerm;
 		this.longTerm = longTerm;
 		this.defaultScope = opts?.defaultScope ?? 'user';

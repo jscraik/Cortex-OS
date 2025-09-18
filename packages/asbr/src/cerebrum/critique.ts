@@ -26,10 +26,7 @@ export class CritiqueEngine {
 	/**
 	 * Analyze input for quality issues
 	 */
-	async analyze(
-		input: string,
-		_options?: CritiqueOptions,
-	): Promise<CritiqueResult> {
+	async analyze(input: string, _options?: CritiqueOptions): Promise<CritiqueResult> {
 		// In a real implementation, this would use an LLM to analyze the input
 		// For now, we'll provide a basic heuristic analysis
 

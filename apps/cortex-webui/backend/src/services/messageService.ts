@@ -49,8 +49,8 @@ export class MessageService {
 
 	static deleteMessagesByConversationId(conversationId: string): void {
 		const db = getDatabase();
-		db.prepare(
-			`DELETE FROM ${MessageModel.tableName} WHERE conversation_id = ?`,
-		).run(conversationId);
+		db.prepare(`DELETE FROM ${MessageModel.tableName} WHERE conversation_id = ?`).run(
+			conversationId,
+		);
 	}
 }

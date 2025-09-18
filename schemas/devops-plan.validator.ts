@@ -5,11 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import Ajv, {
-	type ErrorObject,
-	type JSONSchemaType,
-	type ValidateFunction,
-} from 'ajv';
+import Ajv, { type ErrorObject, type JSONSchemaType, type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import type {
 	DevOpsPlan,
@@ -96,8 +92,7 @@ export class DevOpsPlanValidator {
 		const result = this.validate(plan);
 		if (!result.valid) {
 			const errorMessages =
-				result.errors?.map((e) => `${e.path}: ${e.message}`).join('; ') ||
-				'Validation failed';
+				result.errors?.map((e) => `${e.path}: ${e.message}`).join('; ') || 'Validation failed';
 			throw new Error(`DevOps plan validation failed: ${errorMessages}`);
 		}
 	}
@@ -121,14 +116,10 @@ export class DevOpsPlanValidator {
 		const warnings: ValidationWarning[] = [];
 
 		// Check for production environment without approval requirements
-		if (
-			this.hasProductionEnvironment(plan) &&
-			!this.hasApprovalRequired(plan)
-		) {
+		if (this.hasProductionEnvironment(plan) && !this.hasApprovalRequired(plan)) {
 			warnings.push({
 				path: 'security.approvals',
-				message:
-					'Production environments should require approvals for security',
+				message: 'Production environments should require approvals for security',
 				suggestion: 'Consider adding security.approvals.required: true',
 			});
 		}
@@ -161,15 +152,11 @@ export class DevOpsPlanValidator {
 		}
 
 		// Check for canary deployment without analysis
-		if (
-			plan.deploymentStrategy.type === 'canary' &&
-			!plan.deploymentStrategy.canary?.analysis
-		) {
+		if (plan.deploymentStrategy.type === 'canary' && !plan.deploymentStrategy.canary?.analysis) {
 			warnings.push({
 				path: 'deploymentStrategy.canary.analysis',
 				message: 'Canary deployment without analysis configuration',
-				suggestion:
-					'Add analysis templates to monitor canary deployment health',
+				suggestion: 'Add analysis templates to monitor canary deployment health',
 			});
 		}
 
@@ -222,9 +209,7 @@ export class DevOpsPlanValidator {
 	 * Check if plan has production environment
 	 */
 	private hasProductionEnvironment(plan: DevOpsPlan): boolean {
-		return Object.values(plan.environments).some(
-			(env) => env.type === 'production',
-		);
+		return Object.values(plan.environments).some((env) => env.type === 'production');
 	}
 
 	/**
@@ -257,19 +242,14 @@ export class DevOpsPlanValidator {
 /**
  * Factory function to create a validator instance
  */
-export function createDevOpsPlanValidator(
-	config?: ValidationConfig,
-): DevOpsPlanValidator {
+export function createDevOpsPlanValidator(config?: ValidationConfig): DevOpsPlanValidator {
 	return new DevOpsPlanValidator(config);
 }
 
 /**
  * Quick validation function for simple use cases
  */
-export function validateDevOpsPlan(
-	plan: unknown,
-	config?: ValidationConfig,
-): ValidationResult {
+export function validateDevOpsPlan(plan: unknown, config?: ValidationConfig): ValidationResult {
 	const validator = createDevOpsPlanValidator(config);
 	return validator.validate(plan);
 }
@@ -278,11 +258,7 @@ export function validateDevOpsPlan(
  * Validation decorator for methods
  */
 export function ValidateDevOpsPlan(config?: ValidationConfig) {
-	return (
-		_target: any,
-		_propertyName: string,
-		descriptor: PropertyDescriptor,
-	) => {
+	return (_target: any, _propertyName: string, descriptor: PropertyDescriptor) => {
 		const method = descriptor.value;
 
 		descriptor.value = function (...args: any[]) {

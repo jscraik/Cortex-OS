@@ -122,11 +122,7 @@ describe('routeByFreshness', () => {
 			const result = routeByFreshness(identical, { epsilon: 0.1 });
 
 			// Should maintain original order (stable sort)
-			expect(result.map((c) => c.id)).toEqual([
-				'chunk-a',
-				'chunk-b',
-				'chunk-c',
-			]);
+			expect(result.map((c) => c.id)).toEqual(['chunk-a', 'chunk-b', 'chunk-c']);
 		});
 	});
 
@@ -148,8 +144,7 @@ describe('routeByFreshness', () => {
 				.filter(({ chunk }) => (chunk as any).isFresh)
 				.map(({ index }) => index);
 
-			const avgFreshIndex =
-				freshIndices.reduce((a, b) => a + b, 0) / freshIndices.length;
+			const avgFreshIndex = freshIndices.reduce((a, b) => a + b, 0) / freshIndices.length;
 			expect(avgFreshIndex).toBeLessThan(result.length / 2);
 		});
 	});

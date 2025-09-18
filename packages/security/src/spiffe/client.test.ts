@@ -72,8 +72,6 @@ describe('SpiffeClient', () => {
 			bundle,
 			expiresAt: Date.now() - 1000,
 		});
-		expect(
-			client.getCachedCertificate('spiffe://example.org/foo'),
-		).toBeUndefined();
+		expect(client.getCachedCertificate('spiffe://example.org/foo')).toBeUndefined();
 	});
 });

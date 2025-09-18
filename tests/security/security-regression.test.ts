@@ -133,15 +133,12 @@ describe('Security Regression Tests', () => {
 			}).not.toThrow();
 
 			// Verify the malicious input is properly escaped/parameterized
-			expect(mockDatabase.prepare).toHaveBeenCalledWith(
-				'SELECT * FROM users WHERE id = ?',
-			);
+			expect(mockDatabase.prepare).toHaveBeenCalledWith('SELECT * FROM users WHERE id = ?');
 		});
 
 		test('should prevent CVE-2023-YYYYY: Cypher Injection in Graph Operations', async () => {
 			// Previously identified vulnerability: Direct string interpolation in Cypher queries
-			const maliciousNodeId =
-				"123'; DELETE n; CREATE (m {compromised: 'true'});";
+			const maliciousNodeId = "123'; DELETE n; CREATE (m {compromised: 'true'});";
 
 			// This should be prevented by input validation
 			await expect(async () => {
@@ -164,10 +161,7 @@ describe('Security Regression Tests', () => {
 			const maliciousFilePath = '../../../../etc/passwd';
 
 			// This should be prevented by path validation
-			const result = await SecureCommandExecutor.validateParameter(
-				maliciousFilePath,
-				'filePath',
-			);
+			const result = await SecureCommandExecutor.validateParameter(maliciousFilePath, 'filePath');
 			expect(result.isValid).toBe(false);
 			expect(result.reason).toContain('Invalid characters');
 		});
@@ -330,12 +324,9 @@ describe('Security Regression Tests', () => {
 
 			unicodeEncodedInputs.forEach(async (encodedInput) => {
 				// Decode input before validation (real implementation would do this)
-				const decodedInput = encodedInput.replace(
-					/\\u([\d\w]{4})/gi,
-					(_match, grp) => {
-						return String.fromCharCode(parseInt(grp, 16));
-					},
-				);
+				const decodedInput = encodedInput.replace(/\\u([\d\w]{4})/gi, (_match, grp) => {
+					return String.fromCharCode(parseInt(grp, 16));
+				});
 
 				// Validate the decoded input
 				const result = secureDb.validateInput(decodedInput, 'id');
@@ -355,10 +346,7 @@ describe('Security Regression Tests', () => {
 
 			caseVariations.forEach(async (variation) => {
 				const result = await SecureCommandExecutor.validateCommand(variation);
-				if (
-					variation[0].toLowerCase() === 'echo' ||
-					variation[0].toLowerCase() === 'docker'
-				) {
+				if (variation[0].toLowerCase() === 'echo' || variation[0].toLowerCase() === 'docker') {
 					expect(result.success).toBe(true); // Should be allowed for whitelisted commands
 				} else {
 					expect(result.success).toBe(false); // Should be rejected for non-whitelisted commands
@@ -402,14 +390,12 @@ describe('Security Regression Tests', () => {
 				// Decode base64 before sanitization (real implementation would do this conditionally)
 				try {
 					const decodedScript = atob(base64Script);
-					const sanitizedOutput =
-						SecureCommandExecutor.sanitizeOutput(decodedScript);
+					const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(decodedScript);
 					expect(sanitizedOutput).not.toContain('<script>');
 					expect(sanitizedOutput).not.toContain('alert');
 				} catch (_error) {
 					// If decoding fails, treat as regular string
-					const sanitizedOutput =
-						SecureCommandExecutor.sanitizeOutput(base64Script);
+					const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(base64Script);
 					expect(sanitizedOutput).toBeDefined();
 				}
 			});

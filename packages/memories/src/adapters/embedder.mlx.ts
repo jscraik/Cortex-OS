@@ -88,9 +88,7 @@ export class MLXEmbedder implements Embedder {
 		});
 
 		if (!response.ok) {
-			throw new Error(
-				`MLX service error: ${response.status} ${response.statusText}`,
-			);
+			throw new Error(`MLX service error: ${response.status} ${response.statusText}`);
 		}
 
 		const data = await response.json();
@@ -117,38 +115,27 @@ export class MLXEmbedder implements Embedder {
 				opts: Record<string, unknown>,
 			) => Promise<unknown>;
 		};
-		const mod = (await import(
-			'../../../../libs/python/exec.js'
-		)) as unknown as PyExec;
+		const mod = (await import('../../../../libs/python/exec.js')) as unknown as PyExec;
 		const { runPython } = mod;
 
 		const run = () =>
-			runPython(
-				pythonScriptPath,
-				[this.modelConfig.path, JSON.stringify(texts)],
-				{
-					envOverrides: {
-						MLX_MODELS_DIR:
-							process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR,
-					},
-					python: process.env.PYTHON_EXEC || 'python3',
-					setModulePath: process.env.PYTHONPATH || undefined,
-				} as unknown as Record<string, unknown>,
-			);
+			runPython(pythonScriptPath, [this.modelConfig.path, JSON.stringify(texts)], {
+				envOverrides: {
+					MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR,
+				},
+				python: process.env.PYTHON_EXEC || 'python3',
+				setModulePath: process.env.PYTHONPATH || undefined,
+			} as unknown as Record<string, unknown>);
 
 		const timer = new Promise<never>((_, reject) =>
-			setTimeout(
-				() => reject(new Error('MLX embedding timeout after 30000ms')),
-				30000,
-			),
+			setTimeout(() => reject(new Error('MLX embedding timeout after 30000ms')), 30000),
 		);
 
 		const out = await Promise.race([run(), timer]);
 		try {
 			const result = JSON.parse(String(out || '{}'));
 			if (result.error) throw new Error(String(result.error));
-			if (!Array.isArray(result.embeddings))
-				throw new Error('Invalid embeddings format from MLX');
+			if (!Array.isArray(result.embeddings)) throw new Error('Invalid embeddings format from MLX');
 			return result.embeddings as number[][];
 		} catch (err) {
 			throw new Error(`Failed to parse MLX response: ${err}`);

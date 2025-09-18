@@ -125,8 +125,7 @@ export default [
 				'warn',
 				{
 					selector: 'ExportDefaultDeclaration',
-					message:
-						'Use named exports only (default exports are discouraged in source).',
+					message: 'Use named exports only (default exports are discouraged in source).',
 				},
 			],
 			'no-console': ['warn', { allow: ['warn', 'error'] }],

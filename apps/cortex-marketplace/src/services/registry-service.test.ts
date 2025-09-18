@@ -27,9 +27,7 @@ describe('RegistryService', () => {
 		await new Promise<void>((resolve) => server.listen(0, resolve));
 		const port = (server.address() as AddressInfo).port;
 
-		const baseDir = mkdtempSync(
-			path.join(os.tmpdir(), 'registry-timeout-test-'),
-		);
+		const baseDir = mkdtempSync(path.join(os.tmpdir(), 'registry-timeout-test-'));
 		const service = new RegistryService({
 			registries: { test: `http://127.0.0.1:${port}/` },
 			cacheDir: baseDir,
@@ -44,9 +42,7 @@ describe('RegistryService', () => {
 	});
 
 	it('removes cache file from disk', async () => {
-		const baseDir = mkdtempSync(
-			path.join(os.tmpdir(), 'registry-remove-test-'),
-		);
+		const baseDir = mkdtempSync(path.join(os.tmpdir(), 'registry-remove-test-'));
 		const service = new RegistryService({
 			registries: {},
 			cacheDir: baseDir,
@@ -54,10 +50,7 @@ describe('RegistryService', () => {
 		});
 
 		const cachePath = path.join(baseDir, 'registry-test.json');
-		writeFileSync(
-			cachePath,
-			JSON.stringify({ data: {}, timestamp: Date.now() }),
-		);
+		writeFileSync(cachePath, JSON.stringify({ data: {}, timestamp: Date.now() }));
 
 		await (service as unknown).removeFromDisk('test');
 		expect(existsSync(cachePath)).toBe(false);

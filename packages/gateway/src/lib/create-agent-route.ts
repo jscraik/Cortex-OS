@@ -47,10 +47,7 @@ export function createAgentRoute<T extends ZodTypeAny>(
 		}
 
 		const out = await handler(parsed.data);
-		reply.header(
-			'content-type',
-			parsed.data.json ? 'application/json' : 'text/plain',
-		);
+		reply.header('content-type', parsed.data.json ? 'application/json' : 'text/plain');
 		return out;
 	});
 }

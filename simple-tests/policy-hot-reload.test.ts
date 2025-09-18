@@ -36,10 +36,7 @@ describe('PolicyHotReloader', () => {
 		// Create temp policy file for testing
 		tempPolicyPath = path.join(process.cwd(), 'tmp', 'test-policy.json');
 		await fs.mkdir(path.dirname(tempPolicyPath), { recursive: true });
-		await fs.writeFile(
-			tempPolicyPath,
-			JSON.stringify(mockInitialPolicy, null, 2),
-		);
+		await fs.writeFile(tempPolicyPath, JSON.stringify(mockInitialPolicy, null, 2));
 	});
 
 	afterEach(async () => {
@@ -63,18 +60,12 @@ describe('PolicyHotReloader', () => {
 			expect(reloader.getCurrentPolicy()).toEqual(mockInitialPolicy);
 
 			// Update the policy file on disk
-			await fs.writeFile(
-				tempPolicyPath,
-				JSON.stringify(mockUpdatedPolicy, null, 2),
-			);
+			await fs.writeFile(tempPolicyPath, JSON.stringify(mockUpdatedPolicy, null, 2));
 
 			// Wait for file watcher to detect changes and reload
 			await waitFor(() => {
 				const current = reloader.getCurrentPolicy();
-				return (
-					current.version === '1.1.0' &&
-					current.allowedPaths.includes('lib/**/*')
-				);
+				return current.version === '1.1.0' && current.allowedPaths.includes('lib/**/*');
 			}, 2000);
 
 			// Verify policy was reloaded with new values
@@ -97,10 +88,7 @@ describe('PolicyHotReloader', () => {
 			await reloader.startWatching();
 
 			// Update policy file
-			await fs.writeFile(
-				tempPolicyPath,
-				JSON.stringify(mockUpdatedPolicy, null, 2),
-			);
+			await fs.writeFile(tempPolicyPath, JSON.stringify(mockUpdatedPolicy, null, 2));
 
 			// Wait for reload event
 			await waitFor(() => onPolicyReloaded.mock.calls.length > 0, 2000);
@@ -120,10 +108,7 @@ describe('PolicyHotReloader', () => {
 
 			// Write invalid policy (missing required fields)
 			const invalidPolicy = { version: '1.0.0' }; // Missing required allowedPaths
-			await fs.writeFile(
-				tempPolicyPath,
-				JSON.stringify(invalidPolicy, null, 2),
-			);
+			await fs.writeFile(tempPolicyPath, JSON.stringify(invalidPolicy, null, 2));
 
 			// Wait for validation error
 			await waitFor(() => onValidationError.mock.calls.length > 0, 2000);
@@ -176,10 +161,7 @@ describe('PolicyHotReloader', () => {
 			expect(onFileDeleted).toHaveBeenCalled();
 
 			// Recreate file with updated policy
-			await fs.writeFile(
-				tempPolicyPath,
-				JSON.stringify(mockUpdatedPolicy, null, 2),
-			);
+			await fs.writeFile(tempPolicyPath, JSON.stringify(mockUpdatedPolicy, null, 2));
 
 			// Wait for reload event
 			await waitFor(() => onPolicyReloaded.mock.calls.length > 0, 2000);

@@ -18,15 +18,11 @@ import { createA2AMcpTools } from '../../src/mcp/tools.js';
 
 async function main() {
 	const tools = createA2AMcpTools();
-	const queueTool = tools.find((t) => t.name === 'a2a_queue_message') as
+	const queueTool = tools.find((t) => t.name === 'a2a_queue_message') as A2AMcpTool | undefined;
+	const subscribeTool = tools.find((t) => t.name === 'a2a_event_stream_subscribe') as
 		| A2AMcpTool
 		| undefined;
-	const subscribeTool = tools.find(
-		(t) => t.name === 'a2a_event_stream_subscribe',
-	) as A2AMcpTool | undefined;
-	const outboxTool = tools.find((t) => t.name === 'a2a_outbox_sync') as
-		| A2AMcpTool
-		| undefined;
+	const outboxTool = tools.find((t) => t.name === 'a2a_outbox_sync') as A2AMcpTool | undefined;
 
 	if (!queueTool || !subscribeTool || !outboxTool) {
 		throw new Error('Required tools not found');

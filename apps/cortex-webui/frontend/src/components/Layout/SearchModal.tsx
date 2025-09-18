@@ -71,11 +71,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 
 	const renderEmptyState = () => {
 		if (query) {
-			return (
-				<div className="p-8 text-center text-gray-500">
-					No results found for "{query}"
-				</div>
-			);
+			return <div className="p-8 text-center text-gray-500">No results found for "{query}"</div>;
 		} else {
 			return (
 				<div className="p-8 text-center text-gray-500">
@@ -112,9 +108,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 				type: 'document' as const,
 				lastModified: new Date(Date.now() - 172800000),
 			},
-		].filter((result) =>
-			result.title.toLowerCase().includes(query.toLowerCase()),
-		);
+		].filter((result) => result.title.toLowerCase().includes(query.toLowerCase()));
 
 		setResults(mockResults);
 		setSelectedIndex(0);
@@ -232,13 +226,10 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 											{renderResultIcon(result.type)}
 										</div>
 										<div className="ml-3">
-											<div className="text-sm font-medium text-gray-900">
-												{result.title}
-											</div>
+											<div className="text-sm font-medium text-gray-900">{result.title}</div>
 											<div className="text-xs text-gray-500">
-												{result.type.charAt(0).toUpperCase() +
-													result.type.slice(1)}{' '}
-												• {result.lastModified.toLocaleDateString()}
+												{result.type.charAt(0).toUpperCase() + result.type.slice(1)} •{' '}
+												{result.lastModified.toLocaleDateString()}
 											</div>
 										</div>
 									</div>
@@ -253,8 +244,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 				<div className="p-3 border-t text-xs text-gray-500 flex justify-between">
 					<div>
 						<kbd className="px-2 py-1 bg-gray-100 rounded">↑</kbd>
-						<kbd className="px-2 py-1 bg-gray-100 rounded ml-1">↓</kbd> to
-						navigate
+						<kbd className="px-2 py-1 bg-gray-100 rounded ml-1">↓</kbd> to navigate
 					</div>
 					<div>
 						<kbd className="px-2 py-1 bg-gray-100 rounded">Enter</kbd> to select

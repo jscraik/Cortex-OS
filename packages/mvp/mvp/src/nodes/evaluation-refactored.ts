@@ -41,14 +41,10 @@ export class EvaluationNode {
 		// Gate 2: Code review validation
 		const reviewValidation = await validateCodeReview(state);
 		if (reviewValidation.blockers > 0) {
-			blockers.push(
-				`Code review found ${reviewValidation.blockers} blocking issues`,
-			);
+			blockers.push(`Code review found ${reviewValidation.blockers} blocking issues`);
 		}
 		if (reviewValidation.majors > 3) {
-			majors.push(
-				`Code review found ${reviewValidation.majors} major issues (limit: 3)`,
-			);
+			majors.push(`Code review found ${reviewValidation.majors} major issues (limit: 3)`);
 		}
 
 		evidence.push({
@@ -98,8 +94,7 @@ export class EvaluationNode {
 		});
 
 		// Determine final decision
-		const shouldShip =
-			blockers.length === 0 && consensus.recommendation === 'ship';
+		const shouldShip = blockers.length === 0 && consensus.recommendation === 'ship';
 		const decision = shouldShip ? 'ship' : 'recycle';
 
 		return {
@@ -115,8 +110,7 @@ export class EvaluationNode {
 						blockers: blockers.length,
 						majors: majors.length,
 						tddPassed: tddValidation.passed,
-						reviewPassed:
-							reviewValidation.blockers === 0 && reviewValidation.majors <= 3,
+						reviewPassed: reviewValidation.blockers === 0 && reviewValidation.majors <= 3,
 						qualityPassed: qualityValidation.overall,
 						consensus: consensus.recommendation,
 						timestamp: new Date().toISOString(),
@@ -142,8 +136,7 @@ const evaluateCerebrumConsensus = async (
 
 	// Calculate confidence score
 	const tddScore = tdd.passed ? 30 : 0;
-	const reviewScore =
-		review.blockers === 0 ? (review.majors <= 3 ? 30 : 15) : 0;
+	const reviewScore = review.blockers === 0 ? (review.majors <= 3 ? 30 : 15) : 0;
 	const qualityScore = quality.overall ? 40 : getPartialQualityScore(quality);
 
 	const totalScore = tddScore + reviewScore + qualityScore;

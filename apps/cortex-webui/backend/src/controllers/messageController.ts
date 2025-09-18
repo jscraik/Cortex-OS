@@ -27,8 +27,7 @@ export class MessageController {
 			const { conversationId } = conversationIdSchema.parse(req.params);
 
 			// Verify conversation exists and belongs to user
-			const conversation =
-				ConversationService.getConversationById(conversationId);
+			const conversation = ConversationService.getConversationById(conversationId);
 			if (!conversation) {
 				throw new HttpError(404, 'Conversation not found');
 			}
@@ -37,14 +36,11 @@ export class MessageController {
 				throw new HttpError(403, 'Forbidden');
 			}
 
-			const messages =
-				MessageService.getMessagesByConversationId(conversationId);
+			const messages = MessageService.getMessagesByConversationId(conversationId);
 			res.json(messages);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
 			} else if (error instanceof HttpError) {
 				res.status(error.statusCode).json({ error: error.message });
 			} else {
@@ -63,8 +59,7 @@ export class MessageController {
 			const { content, role } = createMessageSchema.parse(req.body);
 
 			// Verify conversation exists and belongs to user
-			const conversation =
-				ConversationService.getConversationById(conversationId);
+			const conversation = ConversationService.getConversationById(conversationId);
 			if (!conversation) {
 				throw new HttpError(404, 'Conversation not found');
 			}
@@ -73,17 +68,11 @@ export class MessageController {
 				throw new HttpError(403, 'Forbidden');
 			}
 
-			const message = MessageService.createMessage(
-				conversationId,
-				role,
-				content,
-			);
+			const message = MessageService.createMessage(conversationId, role, content);
 			res.status(201).json(message);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
 			} else if (error instanceof HttpError) {
 				res.status(error.statusCode).json({ error: error.message });
 			} else {

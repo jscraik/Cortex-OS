@@ -6,10 +6,7 @@ import {
 	OutboxMessageStatus,
 	type OutboxRepository,
 } from '../a2a-contracts/src/outbox-types.js';
-import {
-	DeadLetterQueue,
-	InMemoryDeadLetterStore,
-} from '../a2a-core/src/dlq.js';
+import { DeadLetterQueue, InMemoryDeadLetterStore } from '../a2a-core/src/dlq.js';
 import {
 	createReliableOutboxProcessor,
 	EnhancedOutbox,
@@ -90,11 +87,7 @@ export function createA2AOutboxIntegration(
 
 	// Create outbox components
 	const publisher = new ReliableOutboxPublisher(transport, mergedConfig);
-	const processor = createReliableOutboxProcessor(
-		repository,
-		publisher,
-		mergedConfig,
-	);
+	const processor = createReliableOutboxProcessor(repository, publisher, mergedConfig);
 	const outbox = new EnhancedOutbox(repository, publisher, processor);
 
 	// Create DLQ components
@@ -104,9 +97,7 @@ export function createA2AOutboxIntegration(
 	/**
 	 * Convert Envelope to OutboxMessage
 	 */
-	function envelopeToOutboxMessage(
-		envelope: Envelope,
-	): Omit<OutboxMessage, 'id' | 'createdAt'> {
+	function envelopeToOutboxMessage(envelope: Envelope): Omit<OutboxMessage, 'id' | 'createdAt'> {
 		return {
 			aggregateType: 'a2a-message',
 			aggregateId: envelope.id,
@@ -123,9 +114,7 @@ export function createA2AOutboxIntegration(
 			traceparent: envelope.traceparent,
 			tracestate: envelope.tracestate,
 			baggage: envelope.baggage,
-			idempotencyKey: envelope.headers?.['idempotency-key'] as
-				| string
-				| undefined,
+			idempotencyKey: envelope.headers?.['idempotency-key'] as string | undefined,
 			status: OutboxMessageStatus.PENDING,
 			retryCount: 0,
 			maxRetries: 3,
@@ -175,10 +164,7 @@ export function createA2AOutboxIntegration(
 				await processor.processPending();
 			} catch (error) {
 				// If outbox fails, fallback to direct publish
-				console.warn(
-					'Outbox batch failed, falling back to direct publish',
-					error,
-				);
+				console.warn('Outbox batch failed, falling back to direct publish', error);
 				await Promise.all(envelopes.map((env) => transport.publish(env)));
 			}
 		});

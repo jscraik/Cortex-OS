@@ -74,8 +74,6 @@ export function estimateTokenCount(text: string): number {
  */
 export function validateArrayResponse(data: unknown, context: string): void {
 	if (!Array.isArray(data) || data.length === 0) {
-		throw new Error(
-			`Invalid ${context}: expected non-empty array, got ${typeof data}`,
-		);
+		throw new Error(`Invalid ${context}: expected non-empty array, got ${typeof data}`);
 	}
 }

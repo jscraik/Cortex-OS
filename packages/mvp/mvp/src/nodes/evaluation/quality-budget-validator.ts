@@ -31,9 +31,7 @@ const QUALITY_THRESHOLDS = {
 /**
  * Validates quality budgets (A11y, Performance, Security)
  */
-export const validateQualityBudgets = async (
-	_state: PRPState,
-): Promise<QualityBudgetResult> => {
+export const validateQualityBudgets = async (_state: PRPState): Promise<QualityBudgetResult> => {
 	const accessibility = await measureAccessibilityScore();
 	const performance = await measurePerformanceScore();
 	const security = await measureSecurityScore();
@@ -249,16 +247,10 @@ const analyzeBundleSize = async () => {
 /**
  * Calculates performance score from bundle analysis
  */
-const calculatePerformanceScore = (bundle: {
-	size: number;
-	gzipSize: number;
-}): number => {
+const calculatePerformanceScore = (bundle: { size: number; gzipSize: number }): number => {
 	// Simple heuristic: penalize large bundles
 	const MB = 1024 * 1024;
-	const sizeScore = Math.max(
-		0,
-		100 - Math.floor(bundle.gzipSize / (0.5 * MB)) * 10,
-	);
+	const sizeScore = Math.max(0, 100 - Math.floor(bundle.gzipSize / (0.5 * MB)) * 10);
 	return Math.min(100, sizeScore);
 };
 

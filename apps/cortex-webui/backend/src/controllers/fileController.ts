@@ -17,8 +17,7 @@ const upload = multer({
 			file.mimetype === 'text/plain' ||
 			file.mimetype === 'application/pdf' ||
 			file.mimetype === 'application/msword' ||
-			file.mimetype ===
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+			file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
 			file.mimetype === 'application/json'
 		) {
 			cb(null, true);
@@ -30,10 +29,7 @@ const upload = multer({
 
 export const uploadMiddleware: RequestHandler = upload.single('file');
 
-export async function uploadFileHandler(
-	req: AuthRequest,
-	res: Response,
-): Promise<void> {
+export async function uploadFileHandler(req: AuthRequest, res: Response): Promise<void> {
 	try {
 		if (!req.user) throw new HttpError(401, 'Unauthorized');
 		if (!req.file) throw new HttpError(400, 'No file uploaded');
@@ -42,10 +38,7 @@ export async function uploadFileHandler(
 	} catch (error) {
 		if (error instanceof HttpError) {
 			res.status(error.statusCode).json({ error: error.message });
-		} else if (
-			error instanceof Error &&
-			error.message === 'Unsupported file type'
-		) {
+		} else if (error instanceof Error && error.message === 'Unsupported file type') {
 			res.status(400).json({ error: 'Unsupported file type' });
 		} else {
 			res.status(500).json({ error: 'Internal server error' });
@@ -53,10 +46,7 @@ export async function uploadFileHandler(
 	}
 }
 
-export async function deleteFileHandler(
-	req: AuthRequest,
-	res: Response,
-): Promise<void> {
+export async function deleteFileHandler(req: AuthRequest, res: Response): Promise<void> {
 	try {
 		if (!req.user) throw new HttpError(401, 'Unauthorized');
 		const { id } = req.params;

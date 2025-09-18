@@ -8,10 +8,8 @@ function isValidTraceparent(tp: string): boolean {
 	const [ver, traceId, spanId, flags] = parts;
 	const hex = /^[0-9a-f]+$/;
 	if (ver !== '00') return false;
-	if (traceId.length !== 32 || !hex.test(traceId) || /^0+$/.test(traceId))
-		return false;
-	if (spanId.length !== 16 || !hex.test(spanId) || /^0+$/.test(spanId))
-		return false;
+	if (traceId.length !== 32 || !hex.test(traceId) || /^0+$/.test(traceId)) return false;
+	if (spanId.length !== 16 || !hex.test(spanId) || /^0+$/.test(spanId)) return false;
 	if (flags.length !== 2 || !hex.test(flags)) return false;
 	return true;
 }
@@ -20,9 +18,7 @@ function normalizeTraceparent(v?: string): string {
 	if (!v || !isValidTraceparent(v)) {
 		// Generate minimal valid
 		const rand = (n: number) =>
-			Array.from({ length: n }, () =>
-				Math.floor(Math.random() * 16).toString(16),
-			).join('');
+			Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 		return `00-${rand(32)}-${rand(16)}-01`;
 	}
 	return v;

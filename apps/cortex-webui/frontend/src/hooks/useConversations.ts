@@ -12,18 +12,14 @@ interface UseConversationsReturn {
 	error: string | null;
 	createConversation: (title: string) => Promise<Conversation | null>;
 	selectConversation: (id: string) => Promise<void>;
-	updateConversation: (
-		id: string,
-		updates: Partial<Conversation>,
-	) => Promise<void>;
+	updateConversation: (id: string, updates: Partial<Conversation>) => Promise<void>;
 	deleteConversation: (id: string) => Promise<void>;
 	setActiveConversation: (conversation: Conversation | null) => void;
 }
 
 const useConversations = (): UseConversationsReturn => {
 	const [conversations, setConversations] = useState<Conversation[]>([]);
-	const [activeConversation, setActiveConversation] =
-		useState<Conversation | null>(null);
+	const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
@@ -38,8 +34,7 @@ const useConversations = (): UseConversationsReturn => {
 			const data = await conversationAPI.getAll();
 			setConversations(data);
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Failed to load conversations';
+			const errorMessage = err instanceof Error ? err.message : 'Failed to load conversations';
 			setError(errorMessage);
 			console.error('Error loading conversations:', err);
 		} finally {
@@ -55,8 +50,7 @@ const useConversations = (): UseConversationsReturn => {
 			const data = await messageAPI.getByConversationId(conversationId);
 			setMessages(data);
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Failed to load messages';
+			const errorMessage = err instanceof Error ? err.message : 'Failed to load messages';
 			setError(errorMessage);
 			console.error('Error loading messages:', err);
 		} finally {
@@ -78,9 +72,7 @@ const useConversations = (): UseConversationsReturn => {
 		}
 	}, [activeConversation, loadMessages]);
 
-	const createConversation = async (
-		title: string,
-	): Promise<Conversation | null> => {
+	const createConversation = async (title: string): Promise<Conversation | null> => {
 		setLoading(true);
 		setError(null);
 
@@ -91,8 +83,7 @@ const useConversations = (): UseConversationsReturn => {
 			setMessages([]);
 			return newConversation;
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Failed to create conversation';
+			const errorMessage = err instanceof Error ? err.message : 'Failed to create conversation';
 			setError(errorMessage);
 			console.error('Error creating conversation:', err);
 			return null;
@@ -110,8 +101,7 @@ const useConversations = (): UseConversationsReturn => {
 			const conversation = local ?? (await conversationAPI.getById(id));
 			setActiveConversation(conversation);
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Failed to select conversation';
+			const errorMessage = err instanceof Error ? err.message : 'Failed to select conversation';
 			setError(errorMessage);
 			console.error('Error selecting conversation:', err);
 		} finally {
@@ -119,25 +109,19 @@ const useConversations = (): UseConversationsReturn => {
 		}
 	};
 
-	const updateConversation = async (
-		id: string,
-		updates: Partial<Conversation>,
-	) => {
+	const updateConversation = async (id: string, updates: Partial<Conversation>) => {
 		setLoading(true);
 		setError(null);
 
 		try {
 			const updatedConversation = await conversationAPI.update(id, updates);
-			setConversations((prev) =>
-				prev.map((conv) => (conv.id === id ? updatedConversation : conv)),
-			);
+			setConversations((prev) => prev.map((conv) => (conv.id === id ? updatedConversation : conv)));
 
 			if (activeConversation && activeConversation.id === id) {
 				setActiveConversation(updatedConversation);
 			}
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Failed to update conversation';
+			const errorMessage = err instanceof Error ? err.message : 'Failed to update conversation';
 			setError(errorMessage);
 			console.error('Error updating conversation:', err);
 		} finally {
@@ -158,8 +142,7 @@ const useConversations = (): UseConversationsReturn => {
 				setMessages([]);
 			}
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Failed to delete conversation';
+			const errorMessage = err instanceof Error ? err.message : 'Failed to delete conversation';
 			setError(errorMessage);
 			console.error('Error deleting conversation:', err);
 		} finally {

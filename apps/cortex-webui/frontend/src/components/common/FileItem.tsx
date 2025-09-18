@@ -15,12 +15,7 @@ interface FileItemProps {
 	showActions?: boolean;
 }
 
-const FileItem: React.FC<FileItemProps> = ({
-	file,
-	onRemove,
-	onDownload,
-	showActions = true,
-}) => {
+const FileItem: React.FC<FileItemProps> = ({ file, onRemove, onDownload, showActions = true }) => {
 	const formatFileSize = (bytes: number): string => {
 		if (bytes === 0) return '0 Bytes';
 		const k = 1024;
@@ -101,9 +96,7 @@ const FileItem: React.FC<FileItemProps> = ({
 		<div className="flex items-center p-2 border rounded hover:bg-gray-50">
 			<div className="flex-shrink-0">{getFileIcon(file.type)}</div>
 			<div className="ml-3 flex-1 min-w-0">
-				<p className="text-sm font-medium text-gray-900 truncate">
-					{file.name}
-				</p>
+				<p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
 				<p className="text-xs text-gray-500">
 					{formatFileSize(file.size)} • {file.lastModified.toLocaleDateString()}
 				</p>

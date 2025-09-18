@@ -6,11 +6,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import type { NextFunction, Request, Response } from 'express';
-import {
-	AuthenticationError,
-	AuthorizationError,
-	ValidationError,
-} from '../types/index.js';
+import { AuthenticationError, AuthorizationError, ValidationError } from '../types/index.js';
 import { getConfigPath, pathExists } from '../xdg/index.js';
 
 export interface TokenInfo {
@@ -50,17 +46,10 @@ export function isTestLikeEnvironment(): boolean {
 }
 
 export function createAuthMiddleware() {
-	return async (
-		req: AuthenticatedRequest,
-		res: Response,
-		next: NextFunction,
-	) => {
+	return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
 		// Global test environment optimization: bypass intensive validation ONLY if a bearer token header is present
 		// This preserves 401 responses for missing auth in tests while still avoiding per-request IO / hashing cost.
-		if (
-			isTestLikeEnvironment() &&
-			req.headers.authorization?.startsWith('Bearer ')
-		) {
+		if (isTestLikeEnvironment() && req.headers.authorization?.startsWith('Bearer ')) {
 			req.auth ??= { tokenId: 'test-env', scopes: ['*'] };
 			return next();
 		}
@@ -97,13 +86,8 @@ export function createAuthMiddleware() {
 
 			next();
 		} catch (error) {
-			if (
-				error instanceof AuthenticationError ||
-				error instanceof AuthorizationError
-			) {
-				res
-					.status(error.statusCode)
-					.json({ error: error.message, code: error.code });
+			if (error instanceof AuthenticationError || error instanceof AuthorizationError) {
+				res.status(error.statusCode).json({ error: error.message, code: error.code });
 			} else {
 				res.status(500).json({
 					error: 'Authentication failed',

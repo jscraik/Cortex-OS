@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-	createEmbedderFromEnv,
-	resolveEmbedderKindFromEnv,
-} from '../src/index.js';
+import { createEmbedderFromEnv, resolveEmbedderKindFromEnv } from '../src/index.js';
 
 const ENV0 = { ...process.env };
 

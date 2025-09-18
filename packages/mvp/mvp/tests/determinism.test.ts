@@ -37,9 +37,7 @@ describe('Cortex Kernel Determinism', () => {
 			});
 
 			// Results should be structurally identical (excluding timestamps and run IDs)
-			expect(normalizeForComparison(run1)).toEqual(
-				normalizeForComparison(run2),
-			);
+			expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
 		});
 
 		it('should maintain consistent state transitions', async () => {

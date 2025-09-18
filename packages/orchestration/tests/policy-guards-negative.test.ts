@@ -21,9 +21,7 @@ describe('Policy guard enforcement (negative)', () => {
 		writeFileSync(fp, BAD_YAML, 'utf8');
 		process.env.CORTEX_PERSONA_PATH = fp;
 		const graph = createCerebrumGraph();
-		await expect(graph.invoke({ input: 'x' })).rejects.toThrow(
-			/Policy guard failed/,
-		);
+		await expect(graph.invoke({ input: 'x' })).rejects.toThrow(/Policy guard failed/);
 		delete process.env.CORTEX_PERSONA_PATH;
 	});
 });

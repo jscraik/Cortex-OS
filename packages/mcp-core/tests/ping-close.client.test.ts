@@ -43,16 +43,11 @@ describe('EnhancedClient ping & graceful close', () => {
 			name: 's',
 			transport: 'stdio',
 			command: process.execPath,
-			args: [
-				'-e',
-				'process.stdin.on("data", d => { /* never respond to simulate pending */ })',
-			],
+			args: ['-e', 'process.stdin.on("data", d => { /* never respond to simulate pending */ })'],
 		});
 		const pending = client.callTool({ name: 'never' });
 		await client.close();
 		await expect(pending).rejects.toThrow('Client is closed');
-		await expect(client.callTool({ name: 'later' })).rejects.toThrow(
-			'Client is closed',
-		);
+		await expect(client.callTool({ name: 'later' })).rejects.toThrow('Client is closed');
 	});
 });

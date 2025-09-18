@@ -7,12 +7,7 @@
  */
 
 import { promises as fs } from 'node:fs';
-import type {
-	Evidence,
-	GateResult,
-	HumanApproval,
-	PRPState,
-} from '@cortex-os/kernel';
+import type { Evidence, GateResult, HumanApproval, PRPState } from '@cortex-os/kernel';
 
 export interface PRPDocument {
 	id: string;
@@ -186,14 +181,10 @@ function generateInterfacesAndContracts(_state: PRPState): string {
 }
 
 function generateTestPlan(state: PRPState): string {
-	const testEvidence = state.evidence.filter(
-		(e: Evidence) => e.type === 'test',
-	);
+	const testEvidence = state.evidence.filter((e: Evidence) => e.type === 'test');
 	const testContent =
 		testEvidence.length > 0
-			? testEvidence
-					.map((e: Evidence) => `- ${e.source}: ${e.content.slice(0, 100)}...`)
-					.join('\n')
+			? testEvidence.map((e: Evidence) => `- ${e.source}: ${e.content.slice(0, 100)}...`).join('\n')
 			: '- Unit tests for core logic\n- Integration tests for API endpoints\n- End-to-end tests for user workflows';
 
 	return `## 6. Test Plan
@@ -245,10 +236,7 @@ Review JSON will be generated upon completion of verification gates.`;
 	}
 
 	const findingsText = reviewJson.findings
-		.map(
-			(finding) =>
-				`- **${finding.id}** (${finding.severity}): ${finding.recommendation}`,
-		)
+		.map((finding) => `- **${finding.id}** (${finding.severity}): ${finding.recommendation}`)
 		.join('\n');
 
 	return `## 8. Reviewer Summary
@@ -301,10 +289,7 @@ No approvals recorded yet.`;
 			};
 			const gateName = gateNames[approval.gateId] || approval.gateId;
 			const date = new Date(approval.timestamp).toISOString().split('T')[0];
-			const time = new Date(approval.timestamp)
-				.toISOString()
-				.split('T')[1]
-				.split('.')[0];
+			const time = new Date(approval.timestamp).toISOString().split('T')[1].split('.')[0];
 
 			return `- **${gateName}** — ${approval.decision} by ${approval.actor} @ ${date}T${time}Z (SHA: ${approval.commitSha.slice(0, 7)})`;
 		})
@@ -319,14 +304,9 @@ ${approvals.map((a: HumanApproval) => `- ${a.gateId}: ${a.rationale}`).join('\n'
 }
 
 function generateReleaseNotes(state: PRPState): string {
-	const version =
-		(state.metadata as { version?: string } | undefined)?.version || '0.1.0';
-	const highlights = (state.outputs.highlights as string[]) || [
-		'Initial implementation',
-	];
-	const breakingChanges = (state.outputs.breakingChanges as string[]) || [
-		'None',
-	];
+	const version = (state.metadata as { version?: string } | undefined)?.version || '0.1.0';
+	const highlights = (state.outputs.highlights as string[]) || ['Initial implementation'];
+	const breakingChanges = (state.outputs.breakingChanges as string[]) || ['None'];
 
 	return `## 10. Release Notes
 
@@ -383,10 +363,7 @@ ${followUpText}
 /**
  * Write prp.md file to filesystem
  */
-export async function writePRPDocument(
-	prpContent: string,
-	outputPath: string,
-): Promise<void> {
+export async function writePRPDocument(prpContent: string, outputPath: string): Promise<void> {
 	await fs.writeFile(outputPath, prpContent, 'utf-8');
 }
 
@@ -400,9 +377,7 @@ export function generateReviewJSON(state: PRPState): ReviewJSON {
 	// Analyze gate results to determine scores
 	for (const gate of Object.values(state.gates)) {
 		const category = getGateCategory(gate.id);
-		const failedChecks = gate.automatedChecks.filter(
-			(c) => c.status === 'fail',
-		);
+		const failedChecks = gate.automatedChecks.filter((c) => c.status === 'fail');
 
 		if (failedChecks.length === 0) {
 			scores[category] = 'green';

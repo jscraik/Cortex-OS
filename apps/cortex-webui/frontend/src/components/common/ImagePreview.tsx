@@ -9,12 +9,7 @@ interface ImagePreviewProps {
 	onClose?: () => void;
 }
 
-const ImagePreview: React.FC<ImagePreviewProps> = ({
-	show,
-	src,
-	alt = '',
-	onClose,
-}) => {
+const ImagePreview: React.FC<ImagePreviewProps> = ({ show, src, alt = '', onClose }) => {
 	const sceneElementRef = useRef<HTMLImageElement>(null);
 
 	useEffect(() => {
@@ -58,17 +53,13 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 	const safeFetch = (url: string) => {
 		// Validate URL against allowlist to prevent SSRF
 		if (!isAllowedRemoteHostname(url)) {
-			throw new Error(
-				`Requests to ${url} are not allowed for security reasons`,
-			);
+			throw new Error(`Requests to ${url} are not allowed for security reasons`);
 		}
 		return fetch(url);
 	};
 
 	const buildFileName = (mimeType: string) =>
-		alt
-			? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}`
-			: 'download.png';
+		alt ? `${alt.replace(/\./g, '')}.${mimeType.split('/')[1]}` : 'download.png';
 
 	const triggerDownload = (blob: Blob) => {
 		const mimeType = blob.type || 'image/png';
@@ -101,11 +92,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 	const handleDownload = async () => {
 		if (src.startsWith('data:image/')) return downloadDataImage();
 		if (src.startsWith('blob:')) return downloadViaFetch();
-		if (
-			src.startsWith('/') ||
-			src.startsWith('http://') ||
-			src.startsWith('https://')
-		) {
+		if (src.startsWith('/') || src.startsWith('http://') || src.startsWith('https://')) {
 			if (
 				(src.startsWith('http://') || src.startsWith('https://')) &&
 				!isAllowedRemoteHostname(src)

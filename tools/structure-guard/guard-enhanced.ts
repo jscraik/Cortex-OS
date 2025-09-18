@@ -59,12 +59,7 @@ const policySchema = z.object({
 });
 
 // Load and parse policy
-const policyPath = path.join(
-	process.cwd(),
-	'tools',
-	'structure-guard',
-	'policy.json',
-);
+const policyPath = path.join(process.cwd(), 'tools', 'structure-guard', 'policy.json');
 const policy = policySchema.parse(JSON.parse(readFileSync(policyPath, 'utf8')));
 
 // Build ignore patterns from policy.excludePatterns
@@ -73,9 +68,7 @@ const excludeGlobs = (policy.excludePatterns || []).map((p: string) =>
 );
 
 function validateDeniedFiles(files: string[]): string[] {
-	return files.filter((f) =>
-		micromatch.isMatch(f, policy.deniedGlobs, { dot: true }),
-	);
+	return files.filter((f) => micromatch.isMatch(f, policy.deniedGlobs, { dot: true }));
 }
 
 function validateAllowedFiles(files: string[]): string[] {
@@ -91,9 +84,7 @@ function validateAllowedFiles(files: string[]): string[] {
 function validateProtectedFiles(files: string[]): string[] {
 	const missing: string[] = [];
 	for (const pattern of policy.protectedFiles) {
-		const matches = files.some((f) =>
-			micromatch.isMatch(f, pattern, { dot: true }),
-		);
+		const matches = files.some((f) => micromatch.isMatch(f, pattern, { dot: true }));
 		if (!matches) {
 			missing.push(pattern);
 		}
@@ -115,14 +106,10 @@ function validatePackageStructure(
 			? pkgDir.slice('packages/'.length).replace(/\/$/, '')
 			: pkgDir.replace(/\/$/, '');
 		// Compute child package directories under this pkgDir (excluding itself)
-		const childPkgDirs = pkgDirs.filter(
-			(d) => d !== pkgDir && d.startsWith(pkgDir),
-		);
+		const childPkgDirs = pkgDirs.filter((d) => d !== pkgDir && d.startsWith(pkgDir));
 		// Filter files that belong to this package, excluding files that are inside nested child packages
 		const pkgFiles = files.filter(
-			(f) =>
-				f.startsWith(pkgDir) &&
-				!childPkgDirs.some((child) => f.startsWith(child)),
+			(f) => f.startsWith(pkgDir) && !childPkgDirs.some((child) => f.startsWith(child)),
 		);
 		const pkgErrors: string[] = [];
 
@@ -158,9 +145,7 @@ function validatePackageStructure(
 				}
 			}
 			if (!hasOne) {
-				pkgErrors.push(
-					`Must have one of: ${tsPatterns.requireOneOf.join(', ')}`,
-				);
+				pkgErrors.push(`Must have one of: ${tsPatterns.requireOneOf.join(', ')}`);
 			}
 
 			// Check allowed files
@@ -168,9 +153,7 @@ function validatePackageStructure(
 				// Remove package directory from path for matching
 				const relativePath = f.replace(pkgDir, '');
 				// Handle root-level files in package differently
-				const pathToMatch = relativePath.startsWith('/')
-					? relativePath.slice(1)
-					: relativePath;
+				const pathToMatch = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
 				if (pathToMatch === '') return false; // Skip the package directory itself
 				return !micromatch.isMatch(pathToMatch, tsPatterns.allowed, {
 					dot: true,
@@ -205,9 +188,7 @@ function validatePackageStructure(
 				}
 			}
 			if (!hasOne) {
-				pkgErrors.push(
-					`Must have one of: ${pyPatterns.requireOneOf.join(', ')}`,
-				);
+				pkgErrors.push(`Must have one of: ${pyPatterns.requireOneOf.join(', ')}`);
 			}
 
 			// Check allowed files
@@ -215,9 +196,7 @@ function validatePackageStructure(
 				// Remove package directory from path for matching
 				const relativePath = f.replace(pkgDir, '');
 				// Handle root-level files in package differently
-				const pathToMatch = relativePath.startsWith('/')
-					? relativePath.slice(1)
-					: relativePath;
+				const pathToMatch = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
 				if (pathToMatch === '') return false; // Skip the package directory itself
 				return !micromatch.isMatch(pathToMatch, pyPatterns.allowed, {
 					dot: true,
@@ -241,17 +220,13 @@ function validateRootEntries(files: string[]): string[] {
 	const rootEntries = files
 		.map((f) => f.split(path.sep).join(path.posix.sep))
 		.filter((f) => !f.includes('/'));
-	const disallowed = rootEntries.filter(
-		(f) => !policy.allowedRootEntries.includes(f),
-	);
+	const disallowed = rootEntries.filter((f) => !policy.allowedRootEntries.includes(f));
 	return disallowed;
 }
 
 // Add import validation function
 // eslint-disable-next-line sonarjs/cognitive-complexity
-async function validateImports(
-	files: string[],
-): Promise<{ file: string; errors: string[] }[]> {
+async function validateImports(files: string[]): Promise<{ file: string; errors: string[] }[]> {
 	const importErrors: { file: string; errors: string[] }[] = [];
 
 	// Get all TypeScript files
@@ -263,12 +238,10 @@ async function validateImports(
 			const content = readFileSync(file, 'utf8');
 
 			// Extract import statements
-			const importRegex =
-				/import\s+.*?from\s+['"](.*?)['"]|import\s+['"](.*?)['"]/g;
+			const importRegex = /import\s+.*?from\s+['"](.*?)['"]|import\s+['"](.*?)['"]/g;
 			const matches = Array.from(content.matchAll(importRegex));
 			for (const match of matches) {
-				const importPath =
-					(match[1] as string | undefined) ?? (match[2] as string | undefined);
+				const importPath = (match[1] as string | undefined) ?? (match[2] as string | undefined);
 
 				if (importPath) {
 					// Check banned patterns (regex or glob via micromatch)
@@ -278,15 +251,11 @@ async function validateImports(
 							regex.test(importPath) ||
 							micromatch.isMatch(importPath, bannedPattern, { dot: true })
 						) {
-							const fileErrors =
-								importErrors.find((e) => e.file === file)?.errors || [];
+							const fileErrors = importErrors.find((e) => e.file === file)?.errors || [];
 							if (!importErrors.find((e) => e.file === file)) {
 								importErrors.push({
 									file,
-									errors: [
-										...fileErrors,
-										`Banned import pattern: ${importPath}`,
-									],
+									errors: [...fileErrors, `Banned import pattern: ${importPath}`],
 								});
 							} else {
 								importErrors
@@ -297,10 +266,7 @@ async function validateImports(
 					}
 
 					// Check for cross-package imports that aren't allowed
-					if (
-						file.startsWith('packages/') &&
-						importPath.startsWith('@cortex-os/')
-					) {
+					if (file.startsWith('packages/') && importPath.startsWith('@cortex-os/')) {
 						const currentPackage = file.split('/')[1];
 						const importedPackage = importPath.split('/')[1];
 
@@ -308,27 +274,20 @@ async function validateImports(
 						if (currentPackage !== importedPackage) {
 							// Check if the import is in the allowed list
 							const importScope = importPath.split('/').slice(0, 2).join('/');
-							const allowed = policy.importRules.allowedCrossPkgImports.some(
-								(pattern) =>
-									micromatch.isMatch(importScope, pattern, { dot: true }),
+							const allowed = policy.importRules.allowedCrossPkgImports.some((pattern) =>
+								micromatch.isMatch(importScope, pattern, { dot: true }),
 							);
 							if (!allowed) {
-								const fileErrors =
-									importErrors.find((e) => e.file === file)?.errors || [];
+								const fileErrors = importErrors.find((e) => e.file === file)?.errors || [];
 								if (!importErrors.find((e) => e.file === file)) {
 									importErrors.push({
 										file,
-										errors: [
-											...fileErrors,
-											`Cross-package import not allowed: ${importPath}`,
-										],
+										errors: [...fileErrors, `Cross-package import not allowed: ${importPath}`],
 									});
 								} else {
 									importErrors
 										.find((e) => e.file === file)
-										?.errors.push(
-											`Cross-package import not allowed: ${importPath}`,
-										);
+										?.errors.push(`Cross-package import not allowed: ${importPath}`);
 								}
 							}
 						}
@@ -337,9 +296,7 @@ async function validateImports(
 			}
 		} catch (error) {
 			// Skip files that can't be read
-			console.warn(
-				`Could not read file ${file} for import validation: ${error}`,
-			);
+			console.warn(`Could not read file ${file} for import validation: ${error}`);
 		}
 	}
 
@@ -409,10 +366,7 @@ async function main() {
 	// Run validations on filtered files
 	const disallowedFiles = validateAllowedFiles(filteredFiles);
 	const missingProtected = validateProtectedFiles(filteredFiles);
-	const packageStructureErrors = validatePackageStructure(
-		filteredFiles,
-		packageDirs,
-	);
+	const packageStructureErrors = validatePackageStructure(filteredFiles, packageDirs);
 	const disallowedRootEntries = validateRootEntries(filteredFiles);
 	// Run import validation
 	const importErrors = await validateImports(filteredFiles);
@@ -436,9 +390,7 @@ async function main() {
 		for (const f of missingProtected) {
 			console.error(`  - ${f}`);
 		}
-		console.error(
-			"\nAuto-fix: Restore required files or adjust 'protectedFiles' in policy.json",
-		);
+		console.error("\nAuto-fix: Restore required files or adjust 'protectedFiles' in policy.json");
 		exitCode = Math.max(exitCode, 3);
 	}
 

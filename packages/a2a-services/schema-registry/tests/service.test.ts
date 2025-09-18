@@ -9,16 +9,11 @@ function validateTestUrl(url: string): void {
 	const parsed = new URL(url);
 	// Only allow localhost for tests
 	if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
-		throw new Error(
-			`Test fetch blocked: hostname ${parsed.hostname} not allowed`,
-		);
+		throw new Error(`Test fetch blocked: hostname ${parsed.hostname} not allowed`);
 	}
 }
 
-function safeFetchForTests(
-	url: string,
-	options?: RequestInit,
-): Promise<Response> {
+function safeFetchForTests(url: string, options?: RequestInit): Promise<Response> {
 	validateTestUrl(url);
 	return fetch(url, options);
 }
@@ -70,9 +65,7 @@ describe('Schema Registry Service', () => {
 			dataschema: 'http://example.com/schemas/test-schema/1.0.0',
 		});
 
-		expect(envelope.dataschema).toBe(
-			'http://example.com/schemas/test-schema/1.0.0',
-		);
+		expect(envelope.dataschema).toBe('http://example.com/schemas/test-schema/1.0.0');
 	});
 
 	it('rejects invalid schemas', async () => {

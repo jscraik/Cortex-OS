@@ -15,10 +15,8 @@ describe('generateFlamegraph', () => {
 		});
 		mockedSpawn.mockReturnValue({ on });
 		await generateFlamegraph('app.js', 'out');
-		expect(mockedSpawn).toHaveBeenCalledWith(
-			'npx',
-			['0x', '--output', 'out', 'app.js'],
-			{ stdio: 'inherit' },
-		);
+		expect(mockedSpawn).toHaveBeenCalledWith('npx', ['0x', '--output', 'out', 'app.js'], {
+			stdio: 'inherit',
+		});
 	});
 });

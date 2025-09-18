@@ -10,9 +10,7 @@ function validateTestUrl(url: string): void {
 	const parsed = new URL(url);
 	// Only allow localhost for tests
 	if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
-		throw new Error(
-			`Test request blocked: hostname ${parsed.hostname} not allowed`,
-		);
+		throw new Error(`Test request blocked: hostname ${parsed.hostname} not allowed`);
 	}
 }
 
@@ -96,14 +94,10 @@ describe('Outbox Service', () => {
 		}
 
 		const res = await safeAxios.get(`http://localhost:3002/poison-messages`);
-		const poisonMessages = Array.isArray(res.data)
-			? res.data.filter(isPoisonMessage)
-			: [];
+		const poisonMessages = Array.isArray(res.data) ? res.data.filter(isPoisonMessage) : [];
 
 		expect(sentEnvelope).toBeDefined();
-		const poisonedMessage = poisonMessages.find(
-			(message) => message.id === sentEnvelope?.id,
-		);
+		const poisonedMessage = poisonMessages.find((message) => message.id === sentEnvelope?.id);
 		expect(poisonedMessage).toBeDefined();
 		expect(poisonedMessage?.status).toBe('poisoned');
 	}, 30000); // Increased timeout for poison queue test

@@ -6,11 +6,7 @@
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from '../app.js';
-import {
-	GetServerInputSchema,
-	SearchServersInputSchema,
-	validateInput,
-} from './tools.js';
+import { GetServerInputSchema, SearchServersInputSchema, validateInput } from './tools.js';
 
 describe('MCP Integration Tests', () => {
 	let app: FastifyInstance;

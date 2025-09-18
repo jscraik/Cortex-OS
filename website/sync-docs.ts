@@ -127,14 +127,11 @@ const REFERENCE_LINK_MAP: Record<string, string> = {
 const normalizeReferenceLinks = (md: string): string => {
 	const pattern =
 		/(\]\()(?:\/|\.\/|\.\.\/)*(CONTRIBUTING\.md|CODE_OF_CONDUCT\.md|COMMERCIAL-LICENSE\.md|CHANGELOG\.md|CHANGES\.md|SECURITY\.md|AGENTS\.md|POLICY\.md|POLICY-TERMS\.md)(#[^)]+)?\)/g;
-	return md.replace(
-		pattern,
-		(_full, prefix: string, file: string, hash: string = '') => {
-			const slug = REFERENCE_LINK_MAP[file];
-			if (!slug) return _full;
-			return `${prefix}/docs/references/${slug}${hash}`;
-		},
-	);
+	return md.replace(pattern, (_full, prefix: string, file: string, hash: string = '') => {
+		const slug = REFERENCE_LINK_MAP[file];
+		if (!slug) return _full;
+		return `${prefix}/docs/references/${slug}${hash}`;
+	});
 };
 // Improved MDX sanitization - comprehensive approach
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -166,9 +163,7 @@ const sanitizeMdxContentWithReport = (
 			const lines = content.split(/\r?\n/);
 			if (lines.length > 2) {
 				const first = lines[0];
-				const openMatch = /^(`{3,5})(?:\s*(markdown|md|mdx)\b)?\s*$/.exec(
-					first.toLowerCase(),
-				);
+				const openMatch = /^(`{3,5})(?:\s*(markdown|md|mdx)\b)?\s*$/.exec(first.toLowerCase());
 				if (openMatch) {
 					// Find last fence line scanning from bottom (ignore trailing blanks)
 					let endIdx = -1;
@@ -184,8 +179,7 @@ const sanitizeMdxContentWithReport = (
 					if (endIdx > 0) {
 						const innerLines = lines.slice(1, endIdx);
 						const inner = innerLines.join('\n');
-						const looksLikeDoc =
-							inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
+						const looksLikeDoc = inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
 						if (looksLikeDoc) {
 							content = `${inner.replace(/^[\r\n]+/, '')}\n`;
 						}
@@ -198,35 +192,23 @@ const sanitizeMdxContentWithReport = (
 		// This produces an MDX parse error because the frontmatter/header become literal code.
 		// We conservatively unwrap only when the inner block looks like real doc content (frontmatter or heading present).
 		// Mismatched variant: opening ````markdown ... closing ``` (quad -> triple) – unwrap too.
-		content = content.replace(
-			/^````(?:markdown|md|mdx)?\n([\s\S]*?)\n```\s*$/i,
-			(_m, inner) => {
-				const looksLikeDoc =
-					inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
-				if (looksLikeDoc) return inner.replace(/^[\r\n]+/, '');
-				return _m;
-			},
-		);
+		content = content.replace(/^````(?:markdown|md|mdx)?\n([\s\S]*?)\n```\s*$/i, (_m, inner) => {
+			const looksLikeDoc = inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
+			if (looksLikeDoc) return inner.replace(/^[\r\n]+/, '');
+			return _m;
+		});
 		// Quad-backtick variant unwrap
-		content = content.replace(
-			/^````(?:markdown|md|mdx)?\n([\s\S]*?)\n````\s*$/i,
-			(_m, inner) => {
-				const looksLikeDoc =
-					inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
-				if (looksLikeDoc) return inner.replace(/^[\r\n]+/, '');
-				return _m;
-			},
-		);
+		content = content.replace(/^````(?:markdown|md|mdx)?\n([\s\S]*?)\n````\s*$/i, (_m, inner) => {
+			const looksLikeDoc = inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
+			if (looksLikeDoc) return inner.replace(/^[\r\n]+/, '');
+			return _m;
+		});
 		// Triple-backtick variant unwrap
-		content = content.replace(
-			/^```(?:markdown|md|mdx)?\n([\s\S]*?)\n```\s*$/i,
-			(_m, inner) => {
-				const looksLikeDoc =
-					inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
-				if (looksLikeDoc) return inner.replace(/^[\r\n]+/, '');
-				return _m;
-			},
-		);
+		content = content.replace(/^```(?:markdown|md|mdx)?\n([\s\S]*?)\n```\s*$/i, (_m, inner) => {
+			const looksLikeDoc = inner.startsWith('---\n') || /(^|\n)#\s/.test(inner);
+			if (looksLikeDoc) return inner.replace(/^[\r\n]+/, '');
+			return _m;
+		});
 		// Trailing orphan super-fence cleanup (safe, no heavy regex):
 		// If the document ends with a blank line followed by a solitary ``` or ```` we remove it.
 		{
@@ -266,11 +248,7 @@ const sanitizeMdxContentWithReport = (
 			if (lines.length < 3) return block;
 			const fence = lines[0];
 			const lang = fence.replace(/```/, '').trim();
-			const code = lines
-				.slice(1, -1)
-				.join('\n')
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;');
+			const code = lines.slice(1, -1).join('\n').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 			return `\`\`\`${lang || ''}\n${code}\n\`\`\``;
 		});
 
@@ -291,13 +269,10 @@ const sanitizeMdxContentWithReport = (
 		//  - Skip if inside existing code span (quick negative lookbehind for backtick within same line segment)
 		//  - Limit inner generic body size to avoid catastrophic matches
 		//  - Do not double wrap tokens already containing our sentinel (already processed above)
-		out = out.replace(
-			/(?<!`)(\b[A-Z][A-Za-z0-9_$.]{0,40}<[^\n<>]{1,80}>)(?!`)/g,
-			(m) => {
-				if (m.includes(GENERIC_SENTINEL_OPEN)) return m; // already processed
-				return `\`${m.replace(/</g, GENERIC_SENTINEL_OPEN).replace(/>/g, GENERIC_SENTINEL_CLOSE)}\``;
-			},
-		);
+		out = out.replace(/(?<!`)(\b[A-Z][A-Za-z0-9_$.]{0,40}<[^\n<>]{1,80}>)(?!`)/g, (m) => {
+			if (m.includes(GENERIC_SENTINEL_OPEN)) return m; // already processed
+			return `\`${m.replace(/</g, GENERIC_SENTINEL_OPEN).replace(/>/g, GENERIC_SENTINEL_CLOSE)}\``;
+		});
 
 		// Multi-line generics (e.g., Promise<\n  Record<string, Array<Item>>\n>) that span newlines cause MDX JSX parsing issues.
 		// Strategy:
@@ -316,55 +291,50 @@ const sanitizeMdxContentWithReport = (
 				segments.push({ type: 'code', value: m[0] });
 				lastIndex = fenceRe.lastIndex;
 			}
-			if (lastIndex < out.length)
-				segments.push({ type: 'text', value: out.slice(lastIndex) });
+			if (lastIndex < out.length) segments.push({ type: 'text', value: out.slice(lastIndex) });
 			const multilineGenericRe =
 				/(?<!`)(\b(?:Promise|Record|Array|Map|Set|[A-Z][A-Za-z0-9_$]{2,})<([\s\S]{1,400}?)>)(?!`)/g;
 			for (const seg of segments) {
 				if (seg.type === 'code') continue;
-				seg.value = seg.value.replace(
-					multilineGenericRe,
-					(full, whole, inner) => {
-						if (!/\n/.test(inner)) return full; // not multi-line
-						if (full.includes(GENERIC_SENTINEL_OPEN)) return full; // already processed earlier
-						// Heuristic guard: require at most 12 angle brackets to avoid runaway for extremely nested constructs
-						const angleCount = (inner.match(/[<>]/g) || []).length;
-						if (angleCount > 24) return full;
-						// Collapse whitespace including newlines
-						let collapsed = (whole as string).replace(/\s+/g, ' ').trim();
-						// Remove space right after '<' and before '>' with linear scan
-						{
-							let rebuilt = '';
-							let i = 0;
-							while (i < collapsed.length) {
-								const ch = collapsed[i];
-								if (ch === '<' && collapsed[i + 1] === ' ') {
-									// skip extra space after '<'
-									rebuilt += '<';
-									i += 2;
-									continue;
-								}
-								if (ch === ' ' && collapsed[i + 1] === '>') {
-									// skip space before '>'
-									i++;
-									continue;
-								}
-								rebuilt += ch;
-								i++;
+				seg.value = seg.value.replace(multilineGenericRe, (full, whole, inner) => {
+					if (!/\n/.test(inner)) return full; // not multi-line
+					if (full.includes(GENERIC_SENTINEL_OPEN)) return full; // already processed earlier
+					// Heuristic guard: require at most 12 angle brackets to avoid runaway for extremely nested constructs
+					const angleCount = (inner.match(/[<>]/g) || []).length;
+					if (angleCount > 24) return full;
+					// Collapse whitespace including newlines
+					let collapsed = (whole as string).replace(/\s+/g, ' ').trim();
+					// Remove space right after '<' and before '>' with linear scan
+					{
+						let rebuilt = '';
+						let i = 0;
+						while (i < collapsed.length) {
+							const ch = collapsed[i];
+							if (ch === '<' && collapsed[i + 1] === ' ') {
+								// skip extra space after '<'
+								rebuilt += '<';
+								i += 2;
+								continue;
 							}
-							collapsed = rebuilt;
+							if (ch === ' ' && collapsed[i + 1] === '>') {
+								// skip space before '>'
+								i++;
+								continue;
+							}
+							rebuilt += ch;
+							i++;
 						}
-						// Re-verify looks like a generic after collapsing (simple heuristic: must contain '<' then later '>')
-						const firstLt = collapsed.indexOf('<');
-						const lastGt = collapsed.lastIndexOf('>');
-						if (firstLt === -1 || lastGt === -1 || lastGt <= firstLt + 1)
-							return full;
-						collapsed = collapsed
-							.replace(/</g, GENERIC_SENTINEL_OPEN)
-							.replace(/>/g, GENERIC_SENTINEL_CLOSE);
-						return `\`${collapsed}\``;
-					},
-				);
+						collapsed = rebuilt;
+					}
+					// Re-verify looks like a generic after collapsing (simple heuristic: must contain '<' then later '>')
+					const firstLt = collapsed.indexOf('<');
+					const lastGt = collapsed.lastIndexOf('>');
+					if (firstLt === -1 || lastGt === -1 || lastGt <= firstLt + 1) return full;
+					collapsed = collapsed
+						.replace(/</g, GENERIC_SENTINEL_OPEN)
+						.replace(/>/g, GENERIC_SENTINEL_CLOSE);
+					return `\`${collapsed}\``;
+				});
 			}
 			out = segments.map((s) => s.value).join('');
 		}
@@ -438,9 +408,7 @@ const sanitizeMdxContentWithReport = (
 		out = out.replace(
 			/^(?![#>-])([^`\n]{1,80}?)\(([^\n`]{0,80})\):\s*(Promise__GENO__[^`]+?__GENC__)(\s*)$/gm,
 			(_m, fnName, args, promisePart, trail) => {
-				const core = `${fnName}(${args}): ${promisePart}`
-					.replace(/\s+/g, ' ')
-					.trim();
+				const core = `${fnName}(${args}): ${promisePart}`.replace(/\s+/g, ' ').trim();
 				return `\`${core}\`${trail}`;
 			},
 		);
@@ -459,10 +427,7 @@ const sanitizeMdxContentWithReport = (
 		out = out.replace(/`[^`]{1,160}`/g, (segment) => {
 			if (segment.includes(GENERIC_SENTINEL_OPEN)) return segment; // skip protected generics
 			if (!/[<>=]/.test(segment)) return segment; // quick filter
-			return segment
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;')
-				.replace(/=/g, '&#61;');
+			return segment.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/=/g, '&#61;');
 		});
 
 		// Table line processing (escape generics & pipes inside cells)
@@ -502,10 +467,7 @@ const sanitizeMdxContentWithReport = (
 			const par = s.indexOf(')', close + 2);
 			return par === -1 ? -1 : par + 1;
 		};
-		const emptyLinkInfo = (
-			s: string,
-			start: number,
-		): { end: number; label: string } | null => {
+		const emptyLinkInfo = (s: string, start: number): { end: number; label: string } | null => {
 			const close = s.indexOf(']', start + 1);
 			if (close === -1 || s[close + 1] !== '(') return null;
 			const par = s.indexOf(')', close + 2);
@@ -547,10 +509,8 @@ const sanitizeMdxContentWithReport = (
 		//  - <GenericType<T,U>> (already sentinel protected inside code spans, but stray ones need escaping)
 		//  - <Type[Something]> patterns (seen in api docs)
 		//  - attribute-like fragments <foo=bar> which should be backticked
-		const isSimpleIdentifier = (s: string): boolean =>
-			/^[A-Z][\w.$-]{0,80}$/.test(s);
-		const isBracketed = (s: string): boolean =>
-			/^[A-Z][\w.$-]*\[[^\n\]]{1,40}\]$/.test(s);
+		const isSimpleIdentifier = (s: string): boolean => /^[A-Z][\w.$-]{0,80}$/.test(s);
+		const isBracketed = (s: string): boolean => /^[A-Z][\w.$-]*\[[^\n\]]{1,40}\]$/.test(s);
 		const isAttrLike = (s: string): boolean => /^[a-z][a-z0-9-]*=/.test(s);
 		// Allowlist of safe html tags we permit raw (and matching closers) so MDX doesn't choke on mismatched escapes
 		const SAFE_HTML = new Set([
@@ -578,16 +538,14 @@ const sanitizeMdxContentWithReport = (
 		const isBareToken = (s: string): boolean => /^[A-Za-z0-9_$.,-]+$/.test(s);
 		const needsEscape = (inside: string): boolean => {
 			if (!inside) return false;
-			if (inside.includes('<') || inside.includes('>') || inside.includes(' '))
-				return false;
+			if (inside.includes('<') || inside.includes('>') || inside.includes(' ')) return false;
 			if (inside.startsWith('/')) {
 				const tag = inside.slice(1).toLowerCase();
 				if (SAFE_HTML.has(tag)) return false; // allow closing safe tags
 				return true;
 			}
 			if (inside.startsWith('!')) return true;
-			if (SAFE_HTML.has(inside.toLowerCase()) && /^[a-z]+$/.test(inside))
-				return false; // allow raw safe open tag
+			if (SAFE_HTML.has(inside.toLowerCase()) && /^[a-z]+$/.test(inside)) return false; // allow raw safe open tag
 			return (
 				isSimpleIdentifier(inside) ||
 				isBracketed(inside) ||
@@ -603,31 +561,19 @@ const sanitizeMdxContentWithReport = (
 			needsEscape(inner) ? escapeSegment(inner) : m,
 		);
 		// Self-closing pseudo-JSX tokens like <Widget/> or <Widget /> should also be escaped.
-		out = out.replace(
-			/<([A-Z][A-Za-z0-9_$-]{0,60})\s*\/>/g,
-			(_m, name) => `&lt;${name}/&gt;`,
-		);
+		out = out.replace(/<([A-Z][A-Za-z0-9_$-]{0,60})\s*\/>/g, (_m, name) => `&lt;${name}/&gt;`);
 		// Lazy line guard: lines that begin with a capitalized tag-like pattern with attributes (<Widget prop="x">) often break MDX if not true JSX.
 		out = out
 			.split('\n')
 			.map((line) => {
 				if (
-					/^<([A-Z][A-Za-z0-9_$-]{0,60})(\s+[a-zA-Z_:][A-Za-z0-9_:.-]*=)/.test(
-						line,
-					) &&
+					/^<([A-Z][A-Za-z0-9_$-]{0,60})(\s+[a-zA-Z_:][A-Za-z0-9_:.-]*=)/.test(line) &&
 					!line.trimEnd().endsWith('>')
 				) {
 					// If line starts with something that looks like an opening tag with attributes but isn't closed on this line, escape the starting '<...'
-					return line.replace(
-						/^<([A-Z][A-Za-z0-9_$-]{0,60})/,
-						(_m, nm) => `&lt;${nm}`,
-					);
+					return line.replace(/^<([A-Z][A-Za-z0-9_$-]{0,60})/, (_m, nm) => `&lt;${nm}`);
 				}
-				if (
-					/^<([A-Z][A-Za-z0-9_$-]{0,60})(\s+[a-zA-Z_:][A-Za-z0-9_:.-]*=)[^>]*>\s*$/.test(
-						line,
-					)
-				) {
+				if (/^<([A-Z][A-Za-z0-9_$-]{0,60})(\s+[a-zA-Z_:][A-Za-z0-9_:.-]*=)[^>]*>\s*$/.test(line)) {
 					// Fully closed single-line pseudo component: escape entire tag
 					return line.replace(
 						/^<([A-Z][A-Za-z0-9_$-]{0,60})([^>]*)>\s*$/,
@@ -698,10 +644,7 @@ const sanitizeMdxContentWithReport = (
 		);
 		// And ensure trailing double fence converted
 		// Support optional indentation in closing fence (0-3 spaces)
-		out = out.replace(
-			/\n( {0,3})``(\n|$)/g,
-			(_m, indent, tail) => `\n${indent}\`\`\`${tail}`,
-		);
+		out = out.replace(/\n( {0,3})``(\n|$)/g, (_m, indent, tail) => `\n${indent}\`\`\`${tail}`);
 		// Defensive line-based pass: upgrade any remaining orphan double-fence blocks (including indented) missed by regex due to interference
 		{
 			const lines = out.split('\n');
@@ -778,8 +721,7 @@ const sanitizeMdxContentWithReport = (
 			const lines = out.split('\n');
 			const searchWindow = Math.min(lines.length, 30);
 			const delimIdx: number[] = [];
-			for (let i = 0; i < searchWindow; i++)
-				if (lines[i].trim() === '---') delimIdx.push(i);
+			for (let i = 0; i < searchWindow; i++) if (lines[i].trim() === '---') delimIdx.push(i);
 			if (delimIdx.length > 2) {
 				const second = delimIdx[1];
 				// Remove any additional delimiter lines between second delimiter and first heading
@@ -806,8 +748,7 @@ const sanitizeMdxContentWithReport = (
 					lines[i] = `${lead}&lt;${tagMatch[1]}&gt;${tagMatch[2]}`;
 					continue;
 				}
-				const genMatch =
-					/^([A-Z][A-Za-z0-9_$-]{0,40})<([^<>\n]{1,60})>(.*)$/.exec(rest);
+				const genMatch = /^([A-Z][A-Za-z0-9_$-]{0,40})<([^<>\n]{1,60})>(.*)$/.exec(rest);
 				if (genMatch) {
 					const [, ident, inner, tail] = genMatch;
 					if (!/`/.test(rest)) {
@@ -823,10 +764,7 @@ const sanitizeMdxContentWithReport = (
 			const lines = out.split('\n');
 			for (let i = 0; i < lines.length; i++) {
 				const line = lines[i];
-				if (
-					/^<([A-Z][A-Za-z0-9_$-]{0,60})(\s|$)/.test(line) &&
-					!line.includes('&lt;')
-				) {
+				if (/^<([A-Z][A-Za-z0-9_$-]{0,60})(\s|$)/.test(line) && !line.includes('&lt;')) {
 					let closed = false;
 					let end = i;
 					for (let j = i + 1; j < Math.min(lines.length, i + 8); j++) {
@@ -902,8 +840,7 @@ const sanitizeMdxContentWithReport = (
 						}
 						if (!codeLike && codeLikeRe.test(lines[j])) codeLike = true;
 						// Stop if we hit an empty line followed by a heading to avoid eating narrative text
-						if (/^\s*$/.test(lines[j]) && /^\s*#/.test(lines[j + 1] || ''))
-							break;
+						if (/^\s*$/.test(lines[j]) && /^\s*#/.test(lines[j + 1] || '')) break;
 					}
 					if (!foundInterveningOpen && foundNextClose !== -1 && codeLike) {
 						// Remove this early closing fence line
@@ -960,11 +897,7 @@ const sanitizeMdxContentWithReport = (
 							if (mermaidContentRe.test(ln)) mermaidLikeCount++;
 							else break; // stop at first non-mermaid content line
 						}
-						if (
-							!hardStop &&
-							mermaidLikeCount > 0 &&
-							mermaidLikeCount >= Math.min(3, total)
-						) {
+						if (!hardStop && mermaidLikeCount > 0 && mermaidLikeCount >= Math.min(3, total)) {
 							// Remove closing fence to extend block
 							lines[i] = ''; // keep line indices stable
 							// Do not reset openMermaid so that later final closing fence will still close
@@ -1033,22 +966,16 @@ const sanitizeMdxContentWithReport = (
 		report.genericsEscaped = genericMatches.filter(
 			(m) =>
 				!sanitizedContent.includes(m) &&
-				sanitizedContent.includes(
-					m.replace(/</g, '&lt;').replace(/>/g, '&gt;'),
-				),
+				sanitizedContent.includes(m.replace(/</g, '&lt;').replace(/>/g, '&gt;')),
 		).length;
 
 		report.pseudoJsxEscaped = jsxMatches.filter(
 			(m) =>
 				!sanitizedContent.includes(m) &&
-				sanitizedContent.includes(
-					m.replace(/</g, '&lt;').replace(/>/g, '&gt;'),
-				),
+				sanitizedContent.includes(m.replace(/</g, '&lt;').replace(/>/g, '&gt;')),
 		).length;
 
-		report.fencesRepaired = fenceMatches.filter(
-			(m) => !sanitizedContent.includes(m),
-		).length;
+		report.fencesRepaired = fenceMatches.filter((m) => !sanitizedContent.includes(m)).length;
 
 		report.totalChanges =
 			report.fencesRepaired +
@@ -1099,8 +1026,7 @@ const shouldSkipBaseFile = (params: {
 }): boolean => {
 	const { entryName, dirBase, existingTargetFiles } = params;
 	// Skip if file is the directory base (dirName.md) and index.md exists (primary landing page)
-	if (entryName === `${dirBase}.md` && existingTargetFiles.includes('index.md'))
-		return true;
+	if (entryName === `${dirBase}.md` && existingTargetFiles.includes('index.md')) return true;
 	// Additional skip rule: if a file name equals the directory name (case-insensitive) but we already have index.md.
 	// Some packages generate both security.md and index.md referencing the same conceptual landing page.
 	if (existingTargetFiles.includes('index.md')) {
@@ -1118,8 +1044,7 @@ const decideSlugOverride = (opts: {
 }): string | undefined => {
 	const { fileName, dirBase, fileNames } = opts;
 	// When README and <dirBase>.md both exist we keep README as root route and skip base file.
-	if (fileName === `${dirBase}.md` && fileNames.includes('README.md'))
-		return '__SKIP__';
+	if (fileName === `${dirBase}.md` && fileNames.includes('README.md')) return '__SKIP__';
 	return undefined;
 };
 
@@ -1134,9 +1059,7 @@ const ensureReferenceStubs = async (): Promise<number> => {
 			.then(() => true)
 			.catch(() => false);
 		if (!exists) {
-			const title = slug
-				.replace(/-/g, ' ')
-				.replace(/\b\w/g, (c) => c.toUpperCase());
+			const title = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 			const stub = `---\ntitle: ${title}\nsidebar_label: ${title}\n---\n\n> Reference placeholder for ${title}.\n`;
 			await fs.writeFile(file, stub);
 			created++;
@@ -1166,10 +1089,7 @@ const processMarkdownFile = async (
 			if (fmEnd !== -1) {
 				const fmBlock = content.slice(0, fmEnd + 3);
 				if (!/\nslug: /.test(fmBlock)) {
-					const injected = fmBlock.replace(
-						/---\n$/,
-						`slug: ${options.slugOverride}\n---\n`,
-					);
+					const injected = fmBlock.replace(/---\n$/, `slug: ${options.slugOverride}\n---\n`);
 					content = injected + content.slice(fmEnd + 3);
 				}
 			}
@@ -1245,9 +1165,7 @@ const handleDocEntry = async (params: {
 			fileNames,
 		});
 		if (decision === '__SKIP__') {
-			log(
-				`Skipping ${entryName} (collision with README.md – rename recommended).`,
-			);
+			log(`Skipping ${entryName} (collision with README.md – rename recommended).`);
 			return false;
 		}
 	}
@@ -1266,14 +1184,10 @@ const handleDocEntry = async (params: {
 		const stalePath = join(targetDir, entryName);
 		try {
 			await fs.unlink(stalePath);
-			log(
-				`Removed stale base file ${entryName} (index.md present – avoiding duplicate route).`,
-			);
+			log(`Removed stale base file ${entryName} (index.md present – avoiding duplicate route).`);
 		} catch {
 			// ignore if it doesn't exist or cannot be removed
-			log(
-				`Skipping ${entryName} (index.md present – avoiding duplicate route).`,
-			);
+			log(`Skipping ${entryName} (index.md present – avoiding duplicate route).`);
 		}
 		// Skip copying new content
 		return false;
@@ -1309,9 +1223,7 @@ const syncPackageDocs = async (
 	try {
 		await ensureDir(targetDir);
 		// Capture existing target files BEFORE copying (e.g., manually curated index.md hubs)
-		const existingTargetFiles = await fs
-			.readdir(targetDir)
-			.catch(() => [] as string[]);
+		const existingTargetFiles = await fs.readdir(targetDir).catch(() => [] as string[]);
 		const prep = await (async () => {
 			const entries = await fs.readdir(sourceDocsDir, { withFileTypes: true });
 			const fileNames = entries.filter((e) => e.isFile()).map((e) => e.name);
@@ -1364,11 +1276,7 @@ const generateSidebarConfig = async (): Promise<object> => {
 	interface SidebarCategory {
 		type: 'category';
 		label: string;
-		items: (
-			| string
-			| SidebarCategory
-			| { type: 'category'; label: string; items: string[] }
-		)[];
+		items: (string | SidebarCategory | { type: 'category'; label: string; items: string[] })[];
 		collapsed?: boolean;
 	}
 
@@ -1405,11 +1313,7 @@ const generateSidebarConfig = async (): Promise<object> => {
 			{
 				type: 'category',
 				label: 'Agents',
-				items: [
-					'agents/overview',
-					'agents/contracts-validation',
-					'agents/memory-state',
-				],
+				items: ['agents/overview', 'agents/contracts-validation', 'agents/memory-state'],
 			},
 		],
 	};
@@ -1437,9 +1341,7 @@ const generateSidebarConfig = async (): Promise<object> => {
 	}
 
 	// Add applications dynamically
-	for (const [packageName, displayName] of Object.entries(
-		DOCS_STRUCTURE.apps,
-	)) {
+	for (const [packageName, displayName] of Object.entries(DOCS_STRUCTURE.apps)) {
 		const docsPath = join(DOCS_DIR, 'apps', packageName);
 		try {
 			const files = await fs.readdir(docsPath);
@@ -1467,9 +1369,7 @@ const generateSidebarConfig = async (): Promise<object> => {
 	}
 
 	// Add packages dynamically
-	for (const [packageName, displayName] of Object.entries(
-		DOCS_STRUCTURE.packages,
-	)) {
+	for (const [packageName, displayName] of Object.entries(DOCS_STRUCTURE.packages)) {
 		const docsPath = join(DOCS_DIR, 'packages', packageName);
 		try {
 			const files = await fs.readdir(docsPath);
@@ -1529,12 +1429,7 @@ const syncCortexDocs = async (
 			if (!mdxRe.test(entry.name)) continue;
 			const sourcePath = join(cortexSourcePath, entry.name);
 			const targetPath = join(cortexTargetPath, entry.name);
-			await processMarkdownFile(
-				sourcePath,
-				targetPath,
-				entry.name,
-				displayName,
-			);
+			await processMarkdownFile(sourcePath, targetPath, entry.name, displayName);
 			fileCount++;
 		}
 		return { success: true, packageName: 'cortex-platform', fileCount };
@@ -1567,17 +1462,12 @@ const summarizeResults = async (
 		(acc, r) => {
 			if (!r.sanitizationReport) return acc;
 			return {
-				fencesRepaired:
-					acc.fencesRepaired + r.sanitizationReport.fencesRepaired,
-				genericsEscaped:
-					acc.genericsEscaped + r.sanitizationReport.genericsEscaped,
-				pseudoJsxEscaped:
-					acc.pseudoJsxEscaped + r.sanitizationReport.pseudoJsxEscaped,
-				htmlTagsEscaped:
-					acc.htmlTagsEscaped + r.sanitizationReport.htmlTagsEscaped,
+				fencesRepaired: acc.fencesRepaired + r.sanitizationReport.fencesRepaired,
+				genericsEscaped: acc.genericsEscaped + r.sanitizationReport.genericsEscaped,
+				pseudoJsxEscaped: acc.pseudoJsxEscaped + r.sanitizationReport.pseudoJsxEscaped,
+				htmlTagsEscaped: acc.htmlTagsEscaped + r.sanitizationReport.htmlTagsEscaped,
 				spuriousFencesRepaired:
-					acc.spuriousFencesRepaired +
-					r.sanitizationReport.spuriousFencesRepaired,
+					acc.spuriousFencesRepaired + r.sanitizationReport.spuriousFencesRepaired,
 				totalChanges: acc.totalChanges + r.sanitizationReport.totalChanges,
 			};
 		},
@@ -1592,25 +1482,17 @@ const summarizeResults = async (
 	);
 
 	if (options.dryRun) {
-		info(
-			`🔍 DRY-RUN: Would sync ${successful.length} packages/apps (${totalFiles} files)`,
-		);
+		info(`🔍 DRY-RUN: Would sync ${successful.length} packages/apps (${totalFiles} files)`);
 		if (totalSanitizationReport.totalChanges > 0) {
-			info(
-				`🧹 Sanitization would apply ${totalSanitizationReport.totalChanges} fixes:`,
-			);
+			info(`🧹 Sanitization would apply ${totalSanitizationReport.totalChanges} fixes:`);
 			if (totalSanitizationReport.fencesRepaired > 0)
 				info(`  • ${totalSanitizationReport.fencesRepaired} fence repairs`);
 			if (totalSanitizationReport.spuriousFencesRepaired > 0)
-				info(
-					`  • ${totalSanitizationReport.spuriousFencesRepaired} spurious fence repairs`,
-				);
+				info(`  • ${totalSanitizationReport.spuriousFencesRepaired} spurious fence repairs`);
 			if (totalSanitizationReport.genericsEscaped > 0)
 				info(`  • ${totalSanitizationReport.genericsEscaped} generic escapes`);
 			if (totalSanitizationReport.pseudoJsxEscaped > 0)
-				info(
-					`  • ${totalSanitizationReport.pseudoJsxEscaped} pseudo-JSX escapes`,
-				);
+				info(`  • ${totalSanitizationReport.pseudoJsxEscaped} pseudo-JSX escapes`);
 			if (totalSanitizationReport.htmlTagsEscaped > 0)
 				info(`  • ${totalSanitizationReport.htmlTagsEscaped} HTML tag escapes`);
 		}
@@ -1619,16 +1501,12 @@ const summarizeResults = async (
 	} else {
 		info(`✅ Synced ${successful.length} packages/apps (${totalFiles} files)`);
 		if (totalSanitizationReport.totalChanges > 0) {
-			info(
-				`🧹 Applied ${totalSanitizationReport.totalChanges} sanitization fixes`,
-			);
+			info(`🧹 Applied ${totalSanitizationReport.totalChanges} sanitization fixes`);
 		}
 		info('📝 Updated sidebars.ts');
 		info(`🧩 Reference stubs ensured (created ${stubCount})`);
 	}
-	info(
-		options.dryRun ? '🔍 Dry-run complete!' : '🎉 Documentation sync complete!',
-	);
+	info(options.dryRun ? '🔍 Dry-run complete!' : '🎉 Documentation sync complete!');
 };
 
 const syncCategory = async (
@@ -1642,12 +1520,7 @@ const syncCategory = async (
 			const cortexResult = await syncCortexDocs(displayName, options);
 			results.push(cortexResult);
 		} else {
-			const result = await syncPackageDocs(
-				category,
-				packageName,
-				displayName,
-				options,
-			);
+			const result = await syncPackageDocs(category, packageName, displayName, options);
 			results.push(result);
 			if (!result.success && !result.error?.includes('No docs found')) {
 				console.warn(`⚠️  ${result.error}`);
@@ -1656,9 +1529,7 @@ const syncCategory = async (
 	}
 };
 
-const syncAllDocs = async (
-	options: SyncOptions = { dryRun: false },
-): Promise<void> => {
+const syncAllDocs = async (options: SyncOptions = { dryRun: false }): Promise<void> => {
 	info('🚀 Starting Cortex-OS documentation sync...');
 	if (!options.dryRun) {
 		await Promise.all([
@@ -1693,9 +1564,7 @@ const parseArgs = (): SyncOptions => {
 if (import.meta.url === `file://${__filename}`) {
 	const options = parseArgs();
 	if (options.dryRun) {
-		info(
-			'🔍 Running in dry-run mode (--check): will report would-be changes without writing',
-		);
+		info('🔍 Running in dry-run mode (--check): will report would-be changes without writing');
 	}
 	syncAllDocs(options).catch((error) => {
 		console.error('❌ Sync failed:', error);

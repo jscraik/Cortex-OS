@@ -170,10 +170,7 @@ export function wrapUnknownError(error: unknown): AgentError {
 			return new RateLimitError(error.message);
 		}
 
-		if (
-			error.message.includes('validation') ||
-			error.message.includes('invalid')
-		) {
+		if (error.message.includes('validation') || error.message.includes('invalid')) {
 			return new ValidationError(error.message);
 		}
 

@@ -34,11 +34,7 @@ interface MemoryTool {
 }
 class MemoryToolError extends Error {
 	constructor(
-		public code:
-			| 'validation_error'
-			| 'security_error'
-			| 'not_found'
-			| 'internal_error',
+		public code: 'validation_error' | 'security_error' | 'not_found' | 'internal_error',
 		message: string,
 		public details: string[] = [],
 	) {
@@ -87,11 +83,9 @@ function ensurePlainObject(
 	context: string,
 ): asserts value is Record<string, unknown> {
 	if (!isRecord(value)) {
-		throw new MemoryToolError(
-			'validation_error',
+		throw new MemoryToolError('validation_error', `${context} must be an object`, [
 			`${context} must be an object`,
-			[`${context} must be an object`],
-		);
+		]);
 	}
 	const proto = Reflect.getPrototypeOf(value);
 	if (proto !== Object.prototype && proto !== null) {
@@ -99,9 +93,7 @@ function ensurePlainObject(
 			context === 'metadata'
 				? 'Unsafe metadata prototype detected'
 				: `Unsafe prototype detected for ${context}`;
-		throw new MemoryToolError('security_error', message, [
-			`${context} has unsafe prototype`,
-		]);
+		throw new MemoryToolError('security_error', message, [`${context} has unsafe prototype`]);
 	}
 }
 
@@ -110,19 +102,14 @@ function createCorrelationId(): string {
 }
 
 function mapZodIssues(issues: ZodIssue[]): string[] {
-	return issues.map(
-		(issue) => `${issue.path.join('.') || issue.code}: ${issue.message}`,
-	);
+	return issues.map((issue) => `${issue.path.join('.') || issue.code}: ${issue.message}`);
 }
 
 function toContractIssues(issues: ZodIssue[]): ContractErrorDetail {
 	return { issues };
 }
 
-function createContractInvoker(
-	canonicalName: string,
-	schema: ZodType,
-): ToolContractInvoker {
+function createContractInvoker(canonicalName: string, schema: ZodType): ToolContractInvoker {
 	return async (input: unknown): Promise<ToolContractResult> => {
 		try {
 			schema.parse(input);
@@ -164,19 +151,15 @@ function createContractInvoker(
 function sanitizeText(text: string, field: 'text' | 'update_text'): string {
 	const normalized = text.trim();
 	if (!normalized) {
-		throw new MemoryToolError(
-			'validation_error',
-			'Text content cannot be empty',
-			[`${field === 'text' ? 'Text' : 'Updated text'} cannot be empty`],
-		);
+		throw new MemoryToolError('validation_error', 'Text content cannot be empty', [
+			`${field === 'text' ? 'Text' : 'Updated text'} cannot be empty`,
+		]);
 	}
 	if (normalized.length > MAX_MEMORY_TEXT_LENGTH) {
 		throw new MemoryToolError(
 			'validation_error',
 			`Text exceeds maximum length of ${MAX_MEMORY_TEXT_LENGTH} characters`,
-			[
-				`Text length ${normalized.length} exceeds limit of ${MAX_MEMORY_TEXT_LENGTH}`,
-			],
+			[`Text length ${normalized.length} exceeds limit of ${MAX_MEMORY_TEXT_LENGTH}`],
 		);
 	}
 	return normalized;
@@ -190,11 +173,9 @@ function sanitizeTags(tags: string[] = []): string[] {
 		const tag = raw.trim();
 		if (!tag) continue;
 		if (tag.length > 64) {
-			throw new MemoryToolError(
-				'validation_error',
-				'Tag exceeds maximum length of 64 characters',
-				[`Tag "${tag.slice(0, 80)}" exceeds maximum length`],
-			);
+			throw new MemoryToolError('validation_error', 'Tag exceeds maximum length of 64 characters', [
+				`Tag "${tag.slice(0, 80)}" exceeds maximum length`,
+			]);
 		}
 		if (seen.has(tag)) continue;
 		if (unique.length >= MAX_MEMORY_TAGS) {
@@ -229,9 +210,7 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
 			throw new MemoryToolError(
 				'validation_error',
 				'Metadata string value exceeds allowed length',
-				[
-					`Metadata string length ${value.length} exceeds limit of ${MAX_METADATA_STRING_LENGTH}`,
-				],
+				[`Metadata string length ${value.length} exceeds limit of ${MAX_METADATA_STRING_LENGTH}`],
 			);
 		}
 		return value;
@@ -239,11 +218,9 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
 
 	if (typeof value === 'number') {
 		if (!Number.isFinite(value)) {
-			throw new MemoryToolError(
-				'validation_error',
+			throw new MemoryToolError('validation_error', 'Metadata numbers must be finite', [
 				'Metadata numbers must be finite',
-				['Metadata numbers must be finite'],
-			);
+			]);
 		}
 		return value;
 	}
@@ -257,9 +234,7 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
 			throw new MemoryToolError(
 				'validation_error',
 				`Metadata arrays cannot exceed ${MAX_METADATA_ARRAY_LENGTH} items`,
-				[
-					`Metadata array length ${value.length} exceeds limit of ${MAX_METADATA_ARRAY_LENGTH}`,
-				],
+				[`Metadata array length ${value.length} exceeds limit of ${MAX_METADATA_ARRAY_LENGTH}`],
 			);
 		}
 		return value.map((item) => sanitizeMetadataValue(item, depth + 1));
@@ -283,17 +258,12 @@ function ensureMetadataSize(metadata: Record<string, unknown>): void {
 		throw new MemoryToolError(
 			'validation_error',
 			`Metadata payload exceeds ${MAX_METADATA_SIZE_BYTES} bytes`,
-			[
-				`Metadata size ${bytes} bytes exceeds limit of ${MAX_METADATA_SIZE_BYTES}`,
-			],
+			[`Metadata size ${bytes} bytes exceeds limit of ${MAX_METADATA_SIZE_BYTES}`],
 		);
 	}
 }
 
-function sanitizeMetadata(
-	metadata: Record<string, unknown>,
-	depth = 0,
-): Record<string, unknown> {
+function sanitizeMetadata(metadata: Record<string, unknown>, depth = 0): Record<string, unknown> {
 	if (depth > MAX_METADATA_DEPTH) {
 		throw new MemoryToolError(
 			'validation_error',
@@ -304,11 +274,9 @@ function sanitizeMetadata(
 
 	const proto = Reflect.getPrototypeOf(metadata);
 	if (proto !== Object.prototype && proto !== null) {
-		throw new MemoryToolError(
-			'security_error',
-			'Unsafe metadata prototype detected',
-			['Metadata prototype must not override Object.prototype'],
-		);
+		throw new MemoryToolError('security_error', 'Unsafe metadata prototype detected', [
+			'Metadata prototype must not override Object.prototype',
+		]);
 	}
 
 	const entries = Object.entries(metadata);
@@ -316,9 +284,7 @@ function sanitizeMetadata(
 		throw new MemoryToolError(
 			'validation_error',
 			`Metadata contains too many keys (max ${MAX_METADATA_ENTRIES})`,
-			[
-				`Metadata key count ${entries.length} exceeds limit of ${MAX_METADATA_ENTRIES}`,
-			],
+			[`Metadata key count ${entries.length} exceeds limit of ${MAX_METADATA_ENTRIES}`],
 		);
 	}
 
@@ -327,18 +293,14 @@ function sanitizeMetadata(
 	for (const [rawKey, value] of entries) {
 		const key = rawKey.trim();
 		if (!key) {
-			throw new MemoryToolError(
-				'validation_error',
+			throw new MemoryToolError('validation_error', 'Metadata keys cannot be empty', [
 				'Metadata keys cannot be empty',
-				['Metadata keys cannot be empty'],
-			);
+			]);
 		}
 		if (UNSAFE_METADATA_KEYS.has(key) || key.startsWith('__')) {
-			throw new MemoryToolError(
-				'security_error',
-				`Unsafe metadata key "${key}" detected`,
-				[`Metadata key "${key}" is not allowed`],
-			);
+			throw new MemoryToolError('security_error', `Unsafe metadata key "${key}" detected`, [
+				`Metadata key "${key}" is not allowed`,
+			]);
 		}
 		sanitized[key] = sanitizeMetadataValue(value, depth + 1);
 	}
@@ -496,13 +458,7 @@ export const memoryStoreToolSchema = z.object({
 
 export const memorySearchToolSchema = z.object({
 	query: z.string().min(1).describe('Query to search for similar memories'),
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.max(100)
-		.default(10)
-		.describe('Maximum number of results'),
+	limit: z.number().int().positive().max(100).default(10).describe('Maximum number of results'),
 	kind: memoryKindSchema.optional().describe('Filter by memory type'),
 	tags: z.array(z.string()).optional().describe('Filter by tags'),
 });
@@ -521,10 +477,7 @@ export const memoryDeleteToolSchema = z
 	.strict();
 
 export const memoryStatsToolSchema = z.object({
-	includeDetails: z
-		.boolean()
-		.default(false)
-		.describe('Include detailed statistics'),
+	includeDetails: z.boolean().default(false).describe('Include detailed statistics'),
 });
 
 export const memoryGetToolSchema = z
@@ -574,17 +527,13 @@ export const memoryStoreTool: MemoryTool = {
 			({ kind, text, tags, metadata }: MemoryStoreHandlerInput, rawParams) => {
 				const rawRecord = isRecord(rawParams) ? rawParams : null;
 				const rawMetadata =
-					rawRecord && Object.hasOwn(rawRecord, 'metadata')
-						? rawRecord.metadata
-						: undefined;
+					rawRecord && Object.hasOwn(rawRecord, 'metadata') ? rawRecord.metadata : undefined;
 				if (rawMetadata !== undefined && rawMetadata !== null) {
 					ensurePlainObject(rawMetadata, 'metadata');
 				}
 				const normalizedText = sanitizeText(text, 'text');
 				const sanitizedTags = sanitizeTags(tags);
-				const sanitizedMetadata = metadata
-					? sanitizeMetadata(metadata)
-					: undefined;
+				const sanitizedMetadata = metadata ? sanitizeMetadata(metadata) : undefined;
 
 				const memoryItem = {
 					id: `mem-${Date.now()}`,
@@ -603,9 +552,7 @@ export const memoryStoreTool: MemoryTool = {
 					kind: memoryItem.kind,
 					tags: sanitizedTags,
 					textLength: normalizedText.length,
-					metadataKeys: sanitizedMetadata
-						? Object.keys(sanitizedMetadata).length
-						: 0,
+					metadataKeys: sanitizedMetadata ? Object.keys(sanitizedMetadata).length : 0,
 					redactedPreview: redactPII(normalizedText).slice(0, 256),
 				};
 			},
@@ -633,10 +580,7 @@ export const memorySearchTool: MemoryTool = {
 						kind: kind || 'note',
 						text: `Sample memory result for query: ${query}`,
 						score: 0.9,
-						tags:
-							sanitizedTags && sanitizedTags.length > 0
-								? sanitizedTags
-								: ['example'],
+						tags: sanitizedTags && sanitizedTags.length > 0 ? sanitizedTags : ['example'],
 						createdAt: new Date().toISOString(),
 					},
 				];
@@ -666,11 +610,7 @@ export const memoryUpdateTool: MemoryTool = {
 			memoryUpdateToolSchema,
 			params,
 			({ id, text, tags, metadata }: MemoryUpdateHandlerInput, rawParams) => {
-				if (
-					text === undefined &&
-					tags === undefined &&
-					metadata === undefined
-				) {
+				if (text === undefined && tags === undefined && metadata === undefined) {
 					throw new MemoryToolError(
 						'validation_error',
 						'At least one of text, tags, or metadata must be provided for update',
@@ -680,19 +620,14 @@ export const memoryUpdateTool: MemoryTool = {
 
 				const rawRecord = isRecord(rawParams) ? rawParams : null;
 				const rawMetadata =
-					rawRecord && Object.hasOwn(rawRecord, 'metadata')
-						? rawRecord.metadata
-						: undefined;
+					rawRecord && Object.hasOwn(rawRecord, 'metadata') ? rawRecord.metadata : undefined;
 				if (rawMetadata !== undefined && rawMetadata !== null) {
 					ensurePlainObject(rawMetadata, 'metadata');
 				}
 
-				const sanitizedText =
-					text !== undefined ? sanitizeText(text, 'update_text') : undefined;
-				const sanitizedTags =
-					tags !== undefined ? sanitizeTags(tags) : undefined;
-				const sanitizedMetadata =
-					metadata !== undefined ? sanitizeMetadata(metadata) : undefined;
+				const sanitizedText = text !== undefined ? sanitizeText(text, 'update_text') : undefined;
+				const sanitizedTags = tags !== undefined ? sanitizeTags(tags) : undefined;
+				const sanitizedMetadata = metadata !== undefined ? sanitizeMetadata(metadata) : undefined;
 
 				return {
 					id,

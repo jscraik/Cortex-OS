@@ -15,10 +15,7 @@ interface ValidationInput {
 // Simple MCP tool types for future integration
 export interface JsonSchema {
 	type: string;
-	properties?: Record<
-		string,
-		JsonSchema | { type: string; description?: string }
-	>;
+	properties?: Record<string, JsonSchema | { type: string; description?: string }>;
 	required?: string[];
 	items?: JsonSchema;
 	description?: string;
@@ -82,10 +79,11 @@ export const createMultiSearchTool = (): SimpleMcpTool => ({
 	handler: async (input: Record<string, unknown>) => {
 		const searchInput = input as AgentToolkitSearchInput;
 		const toolkit = createAgentToolkit();
-	const result = await toolkit.multiSearch(
-		searchInput.pattern as string,
-		searchInput.path as string,
-	);		return {
+		const result = await toolkit.multiSearch(
+			searchInput.pattern as string,
+			searchInput.path as string,
+		);
+		return {
 			content: [
 				{
 					type: 'text' as const,
@@ -170,10 +168,5 @@ export const createValidationTool = (): SimpleMcpTool => ({
  * Factory function to create all agent toolkit MCP tools
  */
 export function createAgentToolkitMcpTools(): SimpleMcpTool[] {
-	return [
-		createSearchTool(),
-		createMultiSearchTool(),
-		createCodemodTool(),
-		createValidationTool(),
-	];
+	return [createSearchTool(), createMultiSearchTool(), createCodemodTool(), createValidationTool()];
 }

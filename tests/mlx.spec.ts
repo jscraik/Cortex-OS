@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-const mockEmbedding = (text: string): number[] => [
-	text.charCodeAt(0) % 10,
-	text.length,
-];
+const mockEmbedding = (text: string): number[] => [text.charCodeAt(0) % 10, text.length];
 
 vi.mock('@frost-beta/clip', () => {
 	class MockClip {
@@ -37,17 +34,13 @@ describe('mlx helpers', () => {
 	});
 
 	it('embed rejects invalid input', async () => {
-		await expect(embed([] as unknown as string[])).rejects.toThrow(
-			/Invalid embed input/,
-		);
+		await expect(embed([] as unknown as string[])).rejects.toThrow(/Invalid embed input/);
 		await expect(embed(['', 'valid'])).rejects.toThrow(/Invalid embed input/);
 	});
 
 	it('rerank rejects invalid input', async () => {
 		await expect(rerank('', ['doc'])).rejects.toThrow(/Invalid rerank input/);
 		await expect(rerank('query', [])).rejects.toThrow(/Invalid rerank input/);
-		await expect(rerank('query', ['doc', '' as any])).rejects.toThrow(
-			/Invalid rerank input/,
-		);
+		await expect(rerank('query', ['doc', '' as any])).rejects.toThrow(/Invalid rerank input/);
 	});
 });

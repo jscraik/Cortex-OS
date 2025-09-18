@@ -10,12 +10,7 @@ interface OverlayProps {
 	children: React.ReactNode;
 }
 
-const Overlay: React.FC<OverlayProps> = ({
-	show,
-	content = '',
-	opacity = 1,
-	children,
-}) => {
+const Overlay: React.FC<OverlayProps> = ({ show, content = '', opacity = 1, children }) => {
 	if (!show) {
 		return <>{children}</>;
 	}
@@ -38,9 +33,7 @@ const Overlay: React.FC<OverlayProps> = ({
 					</div>
 
 					{content !== '' && (
-						<div className="text-center text-gray-100 text-xs font-medium z-50">
-							{content}
-						</div>
+						<div className="text-center text-gray-100 text-xs font-medium z-50">{content}</div>
 					)}
 				</div>
 			</div>

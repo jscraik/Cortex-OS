@@ -16,18 +16,14 @@ function luhnCheck(card: string): boolean {
 
 export function redactPII(text: string): string {
 	// Replace email addresses with placeholder
-	let result = text.replace(
-		/\b[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}\b/g,
-		'[REDACTED]',
-	);
+	let result = text.replace(/\b[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}\b/g, '[REDACTED]');
 
 	// Replace credit card numbers using Luhn check
 	const ccPattern = /\b(?:\d[ -]?){13,19}\b/g;
 	result = result.replace(ccPattern, (m) => (luhnCheck(m) ? '[REDACTED]' : m));
 
 	// Replace international phone numbers; require at least 7 digits to avoid false positives
-	const phonePattern =
-		/(?<!\d)(\+\d{1,3}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?){2,4}\d{3,4}(?!\d)/g;
+	const phonePattern = /(?<!\d)(\+\d{1,3}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?){2,4}\d{3,4}(?!\d)/g;
 	result = result.replace(phonePattern, (_m, cc) => {
 		if (_m.replace(/[^\d]/g, '').length < 7) return _m;
 		return cc ? `${cc}[REDACTED]` : '[REDACTED]';

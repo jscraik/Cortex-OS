@@ -9,9 +9,7 @@ describe('BuildNode API schema validation', () => {
 	});
 
 	it('records evidence when schema is missing', async () => {
-		const accessSpy = vi
-			.spyOn(fs.promises, 'access')
-			.mockRejectedValue(new Error('not found'));
+		const accessSpy = vi.spyOn(fs.promises, 'access').mockRejectedValue(new Error('not found'));
 
 		const blueprint = {
 			title: 'API Test',
@@ -28,9 +26,7 @@ describe('BuildNode API schema validation', () => {
 		const blockers = result.validationResults.build?.blockers || [];
 		expect(blockers).toContain('API schema validation failed');
 
-		const apiEvidence = result.evidence.find(
-			(e) => e.source === 'api_schema_validation',
-		);
+		const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
 		expect(apiEvidence).toBeDefined();
 
 		const content = JSON.parse(apiEvidence?.content);

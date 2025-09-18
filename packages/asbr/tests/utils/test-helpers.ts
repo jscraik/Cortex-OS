@@ -27,9 +27,7 @@ export class PerformanceTimer {
 /**
  * Create a valid test task input
  */
-export function createTestTaskInput(
-	overrides: Partial<TaskInput> = {},
-): TaskInput {
+export function createTestTaskInput(overrides: Partial<TaskInput> = {}): TaskInput {
 	return {
 		title: 'Test Task',
 		brief: 'A test task for automated testing',
@@ -43,9 +41,7 @@ export function createTestTaskInput(
 /**
  * Create a valid test profile
  */
-export function createTestProfile(
-	overrides: Partial<Profile> = {},
-): Omit<Profile, 'id'> {
+export function createTestProfile(overrides: Partial<Profile> = {}): Omit<Profile, 'id'> {
 	return {
 		skill: 'intermediate',
 		tools: ['filesystem', 'web_search'],
@@ -100,8 +96,7 @@ export async function retry<T>(
  */
 export class TestDataGenerator {
 	static generateString(length: number): string {
-		const chars =
-			'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 		return Array.from({ length }, () =>
 			chars.charAt(Math.floor(Math.random() * chars.length)),
 		).join('');
@@ -153,11 +148,7 @@ export class AccessibilityAssertions {
 			const role = element.getAttribute('role');
 
 			// Interactive elements should be keyboard accessible
-			if (
-				role === 'button' ||
-				role === 'link' ||
-				element.tagName === 'BUTTON'
-			) {
+			if (role === 'button' || role === 'link' || element.tagName === 'BUTTON') {
 				expect(tabIndex).not.toBe('-1');
 			}
 		}
@@ -240,9 +231,7 @@ export class TestEnvironment {
 
 	static getTestPort(basePort: number): number {
 		// Use different ports for parallel test runs
-		const offset = process.env.VITEST_POOL_ID
-			? parseInt(process.env.VITEST_POOL_ID, 10) * 100
-			: 0;
+		const offset = process.env.VITEST_POOL_ID ? parseInt(process.env.VITEST_POOL_ID, 10) * 100 : 0;
 		return basePort + offset;
 	}
 }

@@ -99,9 +99,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 						<div className="flex items-center justify-between">
 							<div>
 								<div className="font-medium">Auto-save Chats</div>
-								<div className="text-xs text-gray-500 mt-0.5">
-									Automatically save chat progress
-								</div>
+								<div className="text-xs text-gray-500 mt-0.5">Automatically save chat progress</div>
 							</div>
 							<button
 								type="button"
@@ -119,10 +117,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 						</div>
 
 						<div>
-							<label
-								htmlFor="recent-chat-count"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="recent-chat-count" className="block text-sm font-medium mb-1">
 								Recent Chats Count: {recentChatCount}
 							</label>
 							<input
@@ -131,9 +126,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								min="1"
 								max="20"
 								value={recentChatCount}
-								onChange={(e) =>
-									setRecentChatCount(parseInt(e.target.value, 10))
-								}
+								onChange={(e) => setRecentChatCount(parseInt(e.target.value, 10))}
 								className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
 							/>
 							<div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -144,10 +137,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 						</div>
 
 						<div>
-							<label
-								htmlFor="chat-history-limit"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="chat-history-limit" className="block text-sm font-medium mb-1">
 								Chat History Limit: {chatHistoryLimit} days
 							</label>
 							<input
@@ -156,9 +146,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								min="1"
 								max="365"
 								value={chatHistoryLimit}
-								onChange={(e) =>
-									setChatHistoryLimit(parseInt(e.target.value, 10))
-								}
+								onChange={(e) => setChatHistoryLimit(parseInt(e.target.value, 10))}
 								className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
 							/>
 							<div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -175,10 +163,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor="chat-direction"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="chat-direction" className="block text-sm font-medium mb-1">
 								Chat Direction
 							</label>
 							<select
@@ -193,10 +178,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 						</div>
 
 						<div>
-							<label
-								htmlFor="chat-spacing"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="chat-spacing" className="block text-sm font-medium mb-1">
 								Chat Spacing
 							</label>
 							<select
@@ -214,17 +196,13 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 						<div className="flex items-center justify-between">
 							<div>
 								<div className="font-medium">Show Code by Default</div>
-								<div className="text-xs text-gray-500 mt-0.5">
-									Expand code blocks automatically
-								</div>
+								<div className="text-xs text-gray-500 mt-0.5">Expand code blocks automatically</div>
 							</div>
 							<button
 								type="button"
 								onClick={() => setShowCodeByDefault(!showCodeByDefault)}
 								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-									showCodeByDefault
-										? 'bg-blue-600'
-										: 'bg-gray-300 dark:bg-gray-600'
+									showCodeByDefault ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 								}`}
 							>
 								<span
@@ -252,9 +230,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 								type="button"
 								onClick={() => setContinuousChat(!continuousChat)}
 								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-									continuousChat
-										? 'bg-blue-600'
-										: 'bg-gray-300 dark:bg-gray-600'
+									continuousChat ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 								}`}
 							>
 								<span
@@ -266,10 +242,7 @@ const ChatsSettings: React.FC<ChatsSettingsProps> = ({ saveSettings }) => {
 						</div>
 
 						<div>
-							<label
-								htmlFor="export-format"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="export-format" className="block text-sm font-medium mb-1">
 								Default Export Format
 							</label>
 							<select

@@ -22,9 +22,7 @@ async function load() {
 export const isMatch: IsMatch = (str, patterns, options) => {
 	if (cached) return cached.isMatch(str, patterns, options);
 	// Not yet loaded: this introduces an async boundary; throw instructional error.
-	throw new Error(
-		'micromatch not yet loaded - call preloadMicromatch() early in lifecycle',
-	);
+	throw new Error('micromatch not yet loaded - call preloadMicromatch() early in lifecycle');
 };
 
 export async function preloadMicromatch() {

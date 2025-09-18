@@ -3,9 +3,7 @@ import { describe, expect, it } from 'vitest';
 describe('tools API route', () => {
 	it('returns events for session', async () => {
 		const { addToolEvent } = await import('../backend/src/utils/tool-store');
-		const { getChatTools } = await import(
-			'../backend/src/controllers/toolController'
-		);
+		const { getChatTools } = await import('../backend/src/controllers/toolController');
 
 		const sid = 's-tools';
 		addToolEvent(sid, { name: 'demo/tool', status: 'start', args: { a: 1 } });

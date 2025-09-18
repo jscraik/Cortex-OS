@@ -78,8 +78,6 @@ export const simlabMcpTools: SimlabTool[] = [
 // Export types for external use
 export type CreateScenarioInput = z.infer<typeof CreateScenarioInputSchema>;
 export type RunSimulationInput = z.infer<typeof RunSimulationInputSchema>;
-export type GetSimulationResultsInput = z.infer<
-	typeof GetSimulationResultsInputSchema
->;
+export type GetSimulationResultsInput = z.infer<typeof GetSimulationResultsInputSchema>;
 export type ListScenariosInput = z.infer<typeof ListScenariosInputSchema>;
 export type InjectFailureInput = z.infer<typeof InjectFailureInputSchema>;

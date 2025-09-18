@@ -5,15 +5,9 @@ import addFormats from 'ajv-formats';
 const agentCoordinationRequestedSchema = await import(
 	'../cloudevents/agent-coordination-requested.json'
 );
-const agentTaskCompletedSchema = await import(
-	'../cloudevents/agent-task-completed.json'
-);
-const agentTaskFailedSchema = await import(
-	'../cloudevents/agent-task-failed.json'
-);
-const agentTaskRequestedSchema = await import(
-	'../cloudevents/agent-task-requested.json'
-);
+const agentTaskCompletedSchema = await import('../cloudevents/agent-task-completed.json');
+const agentTaskFailedSchema = await import('../cloudevents/agent-task-failed.json');
+const agentTaskRequestedSchema = await import('../cloudevents/agent-task-requested.json');
 
 // Test data
 const validAgentTaskRequested = {

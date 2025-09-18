@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	SandboxAuditEventSchema,
-	ViolationCodeEnum,
-} from '../src/sandbox-audit-events.js';
+import { SandboxAuditEventSchema, ViolationCodeEnum } from '../src/sandbox-audit-events.js';
 
 describe('contract: sandbox audit events', () => {
 	it('validates a full audit event with code + meta', () => {

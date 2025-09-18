@@ -95,8 +95,7 @@ export default [
 				},
 				{
 					selector: "NewExpression[callee.name='Function']",
-					message:
-						'Function constructor is equivalent to eval() and should not be used',
+					message: 'Function constructor is equivalent to eval() and should not be used',
 				},
 			],
 
@@ -137,12 +136,7 @@ export default [
 	},
 	{
 		// Config files - allow necessary patterns
-		files: [
-			'**/*.config.js',
-			'**/*.config.ts',
-			'**/vite.config.*',
-			'**/vitest.config.*',
-		],
+		files: ['**/*.config.js', '**/*.config.ts', '**/vite.config.*', '**/vitest.config.*'],
 		rules: {
 			'no-process-env': 'off',
 			'@typescript-eslint/no-explicit-any': 'off',

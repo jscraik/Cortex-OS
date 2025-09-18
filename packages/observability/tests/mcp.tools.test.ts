@@ -79,9 +79,7 @@ describe('observability MCP tools validation', () => {
 		})();
 
 		expect(error.code).toBe('validation_error');
-		expect(error.details).toEqual(
-			expect.arrayContaining([expect.stringContaining('traceId')]),
-		);
+		expect(error.details).toEqual(expect.arrayContaining([expect.stringContaining('traceId')]));
 		expect(loggerSpies.warn).toHaveBeenCalledWith(
 			expect.objectContaining({ tool: 'create_trace' }),
 			'create_trace validation failed',
@@ -145,15 +143,9 @@ describe('observability MCP tools validation', () => {
 	});
 
 	it('creates structured error responses and logs validation issues', () => {
-		const err = new ObservabilityToolError('validation_error', 'bad input', [
-			'traceId: required',
-		]);
+		const err = new ObservabilityToolError('validation_error', 'bad input', ['traceId: required']);
 
-		const response = createObservabilityErrorResponse(
-			'get_metrics',
-			err,
-			'corr-test',
-		);
+		const response = createObservabilityErrorResponse('get_metrics', err, 'corr-test');
 
 		expect(response.isError).toBe(true);
 		expect(response.metadata).toMatchObject({

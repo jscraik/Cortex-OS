@@ -1,10 +1,7 @@
 import { exec } from 'node:child_process';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
-import type {
-	AgentToolkitCodemodInput,
-	AgentToolkitCodemodResult,
-} from '@cortex-os/contracts';
+import type { AgentToolkitCodemodInput, AgentToolkitCodemodResult } from '@cortex-os/contracts';
 import type { CodemodTool } from '../domain/ToolInterfaces.js';
 
 const execAsync = promisify(exec);
@@ -15,15 +12,11 @@ const execAsync = promisify(exec);
 export class CombyAdapter implements CodemodTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'comby_rewrite.sh');
 	}
 
-	async rewrite(
-		inputs: AgentToolkitCodemodInput,
-	): Promise<AgentToolkitCodemodResult> {
+	async rewrite(inputs: AgentToolkitCodemodInput): Promise<AgentToolkitCodemodResult> {
 		try {
 			const { stdout } = await execAsync(
 				`"${this.scriptPath}" "${inputs.find}" "${inputs.replace}" "${inputs.path}"`,

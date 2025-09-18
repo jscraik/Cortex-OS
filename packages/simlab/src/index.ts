@@ -54,9 +54,7 @@ export async function handleSimlab(input: unknown): Promise<string> {
 	);
 	let scenarioCount = 0;
 	try {
-		scenarioCount = readdirSync(scenarioDir).filter((f) =>
-			f.endsWith('.json'),
-		).length;
+		scenarioCount = readdirSync(scenarioDir).filter((f) => f.endsWith('.json')).length;
 	} catch {
 		scenarioCount = 0;
 	}

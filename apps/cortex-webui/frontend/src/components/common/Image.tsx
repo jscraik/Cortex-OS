@@ -41,12 +41,7 @@ const Image: React.FC<ImageProps> = ({
 					aria-label="Show image preview"
 					type="button"
 				>
-					<img
-						src={imageUrl}
-						alt={alt}
-						className={imageClassName}
-						draggable="false"
-					/>
+					<img src={imageUrl} alt={alt} className={imageClassName} draggable="false" />
 				</button>
 
 				{dismissible && (

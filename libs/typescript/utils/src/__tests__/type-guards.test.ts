@@ -74,9 +74,7 @@ describe('Type Guards', () => {
 			expect(isProposalShape({})).toBe(true);
 			expect(isProposalShape({ dataClass: 'sensitive' })).toBe(true);
 			expect(isProposalShape({ path: '/some/path' })).toBe(true);
-			expect(isProposalShape({ dataClass: 'public', path: '/path' })).toBe(
-				true,
-			);
+			expect(isProposalShape({ dataClass: 'public', path: '/path' })).toBe(true);
 		});
 
 		it('should return false for invalid dataClass types', () => {
@@ -179,11 +177,7 @@ describe('Type Guards', () => {
 
 		it('should handle complex objects', () => {
 			const proposal = { dataClass: 'sensitive', path: '/test' };
-			const result = safeValidate(
-				proposal,
-				isProposalShape,
-				'Invalid proposal',
-			);
+			const result = safeValidate(proposal, isProposalShape, 'Invalid proposal');
 			expect(result.success).toBe(true);
 		});
 

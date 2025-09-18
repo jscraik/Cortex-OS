@@ -36,9 +36,7 @@ const OnBoarding: React.FC<OnBoardingProps> = ({ onComplete }) => {
 
 	const handleModelToggle = (modelId: string) => {
 		setSelectedModels((prev) =>
-			prev.includes(modelId)
-				? prev.filter((id) => id !== modelId)
-				: [...prev, modelId],
+			prev.includes(modelId) ? prev.filter((id) => id !== modelId) : [...prev, modelId],
 		);
 	};
 
@@ -81,24 +79,19 @@ const OnBoarding: React.FC<OnBoardingProps> = ({ onComplete }) => {
 								/>
 							</svg>
 						</div>
-						<h3 className="mt-4 text-lg font-medium text-gray-900">
-							Welcome to brAInwav Cortex
-						</h3>
+						<h3 className="mt-4 text-lg font-medium text-gray-900">Welcome to brAInwav Cortex</h3>
 						<p className="mt-2 text-sm text-gray-500">
-							Get started with our AI-powered chat interface. We'll guide you
-							through the basics in just a few steps.
+							Get started with our AI-powered chat interface. We'll guide you through the basics in
+							just a few steps.
 						</p>
 					</div>
 				);
 			case 2:
 				return (
 					<div>
-						<h3 className="text-lg font-medium text-gray-900">
-							Select Your Models
-						</h3>
+						<h3 className="text-lg font-medium text-gray-900">Select Your Models</h3>
 						<p className="mt-1 text-sm text-gray-500">
-							Choose which AI models you'd like to use. You can always change
-							this later.
+							Choose which AI models you'd like to use. You can always change this later.
 						</p>
 						<div className="mt-4 space-y-3">
 							{models.map((model) => (
@@ -125,12 +118,8 @@ const OnBoarding: React.FC<OnBoardingProps> = ({ onComplete }) => {
 										className="mt-1 h-4 w-4 text-blue-600 rounded"
 									/>
 									<div className="ml-3">
-										<div className="text-sm font-medium text-gray-900">
-											{model.name}
-										</div>
-										<div className="text-xs text-gray-500">
-											{model.description}
-										</div>
+										<div className="text-sm font-medium text-gray-900">{model.name}</div>
+										<div className="text-xs text-gray-500">{model.description}</div>
 									</div>
 								</button>
 							))}
@@ -158,12 +147,10 @@ const OnBoarding: React.FC<OnBoardingProps> = ({ onComplete }) => {
 								/>
 							</svg>
 						</div>
-						<h3 className="mt-4 text-lg font-medium text-gray-900">
-							You're All Set!
-						</h3>
+						<h3 className="mt-4 text-lg font-medium text-gray-900">You're All Set!</h3>
 						<p className="mt-2 text-sm text-gray-500">
-							You're ready to start using brAInwav Cortex. Here are some quick
-							tips to get you started:
+							You're ready to start using brAInwav Cortex. Here are some quick tips to get you
+							started:
 						</p>
 						<ul className="mt-4 text-left text-sm text-gray-500 space-y-2">
 							<li className="flex items-start">
@@ -182,11 +169,8 @@ const OnBoarding: React.FC<OnBoardingProps> = ({ onComplete }) => {
 									/>
 								</svg>
 								<span>
-									Use{' '}
-									<kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">
-										⌘ + K
-									</kbd>{' '}
-									to search anything
+									Use <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">⌘ + K</kbd> to search
+									anything
 								</span>
 							</li>
 							<li className="flex items-start">
@@ -243,9 +227,7 @@ const OnBoarding: React.FC<OnBoardingProps> = ({ onComplete }) => {
 						onClick={handlePrevious}
 						disabled={step === 1}
 						className={`px-4 py-2 text-sm rounded ${
-							step === 1
-								? 'text-gray-400 cursor-not-allowed'
-								: 'text-gray-700 hover:bg-gray-50'
+							step === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'
 						}`}
 						type="button"
 					>

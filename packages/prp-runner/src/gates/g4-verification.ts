@@ -14,8 +14,7 @@ import {
 
 class QualityBudgetsSatisfiedCheck implements AutomatedCheck {
 	name = 'quality-budgets-satisfied';
-	description =
-		'Simulate verification pass if budgets are configured (no real execution here)';
+	description = 'Simulate verification pass if budgets are configured (no real execution here)';
 
 	async execute(context: GateContext) {
 		const b = context.enforcementProfile.budgets;
@@ -38,9 +37,7 @@ class QualityBudgetsSatisfiedCheck implements AutomatedCheck {
 		];
 		return {
 			status: (ok ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
-			output: ok
-				? 'Quality budgets satisfied (simulated)'
-				: 'Budgets incomplete',
+			output: ok ? 'Quality budgets satisfied (simulated)' : 'Budgets incomplete',
 			duration: 50,
 			evidence,
 		};
@@ -50,8 +47,7 @@ class QualityBudgetsSatisfiedCheck implements AutomatedCheck {
 export class G4VerificationGate extends BaseGate {
 	readonly id = 'G4' as const;
 	readonly name = 'Verification';
-	readonly purpose =
-		'Verify that implemented solution meets the planned quality budgets (stubbed)';
+	readonly purpose = 'Verify that implemented solution meets the planned quality budgets (stubbed)';
 	readonly requiresHumanApproval = true;
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
@@ -61,9 +57,7 @@ export class G4VerificationGate extends BaseGate {
 		timeoutMs: 24 * 60 * 60 * 1000,
 	};
 
-	readonly automatedChecks: AutomatedCheck[] = [
-		new QualityBudgetsSatisfiedCheck(),
-	];
+	readonly automatedChecks: AutomatedCheck[] = [new QualityBudgetsSatisfiedCheck()];
 
 	protected async executeGateLogic(context: GateContext) {
 		const artifacts: string[] = ['verification-report.md'];

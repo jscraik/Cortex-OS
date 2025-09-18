@@ -76,9 +76,7 @@ export const prpRunnerMcpTools: PRPRunnerTool[] = [
 ];
 
 // Export types for external use
-export type CreatePRPWorkflowInput = z.infer<
-	typeof CreatePRPWorkflowInputSchema
->;
+export type CreatePRPWorkflowInput = z.infer<typeof CreatePRPWorkflowInputSchema>;
 export type GetPRPStatusInput = z.infer<typeof GetPRPStatusInputSchema>;
 export type RunPRPStepInput = z.infer<typeof RunPRPStepInputSchema>;
 export type ListPRPWorkflowsInput = z.infer<typeof ListPRPWorkflowsInputSchema>;

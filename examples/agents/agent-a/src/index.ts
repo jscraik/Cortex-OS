@@ -176,9 +176,7 @@ export class AgentA extends EventEmitter {
 		this.emit('handlerRegistered', taskType);
 	}
 
-	async processTask(
-		task: AgentTaskRequested,
-	): Promise<AgentTaskCompleted | AgentTaskFailed> {
+	async processTask(task: AgentTaskRequested): Promise<AgentTaskCompleted | AgentTaskFailed> {
 		const startTime = Date.now();
 		const handler = this.registry.getHandler(task.data.taskType);
 
@@ -221,8 +219,7 @@ export class AgentA extends EventEmitter {
 			return completed;
 		} catch (error) {
 			const executionTime = Date.now() - startTime;
-			const errorMessage =
-				error instanceof Error ? error.message : String(error);
+			const errorMessage = error instanceof Error ? error.message : String(error);
 
 			const failed: AgentTaskFailed = {
 				id: crypto.randomUUID(),

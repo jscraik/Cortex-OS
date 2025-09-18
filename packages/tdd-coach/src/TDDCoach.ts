@@ -81,12 +81,7 @@ export class TDDCoach {
 		// Initialize test configuration
 		const testConfig: TestRunConfiguration = {
 			workspaceRoot: options.workspaceRoot,
-			testPatterns: [
-				'**/*.test.*',
-				'**/*.spec.*',
-				'**/test_*.py',
-				'**/*_test.go',
-			],
+			testPatterns: ['**/*.test.*', '**/*.spec.*', '**/test_*.py', '**/*_test.go'],
 			timeout: 30000,
 			coverage: false,
 			parallel: true,
@@ -119,9 +114,7 @@ export class TDDCoach {
 	/**
 	 * Main validation method - validates proposed changes against TDD principles
 	 */
-	async validateChange(
-		request: TDDValidationRequest,
-	): Promise<TDDValidationResponse> {
+	async validateChange(request: TDDValidationRequest): Promise<TDDValidationResponse> {
 		try {
 			// Run tests to get current state
 			const testResults = await this.runRelevantTests(request.proposedChanges);
@@ -144,17 +137,13 @@ export class TDDCoach {
 			});
 
 			// Generate coaching guidance
-			const coachingAction = this.coach.generateCoachingAction(
-				validation.reason,
-				{
-					developerId: 'anonymous', // Could be extracted from git
-					currentPhase: this.currentState.current,
-					previousViolations: [], // Would be tracked in real implementation
-					timeInPhase:
-						Date.now() - new Date(this.currentState.timestamp).getTime(),
-					recentSuccess: this.currentState.passingTests.length > 0,
-				},
-			);
+			const coachingAction = this.coach.generateCoachingAction(validation.reason, {
+				developerId: 'anonymous', // Could be extracted from git
+				currentPhase: this.currentState.current,
+				previousViolations: [], // Would be tracked in real implementation
+				timeInPhase: Date.now() - new Date(this.currentState.timestamp).getTime(),
+				recentSuccess: this.currentState.passingTests.length > 0,
+			});
 
 			return {
 				allowed: validation.approved,
@@ -184,12 +173,8 @@ export class TDDCoach {
 				state: this.currentState,
 				coaching: {
 					level: InterventionLevel.WARNING,
-					message:
-						'TDD validation temporarily unavailable - proceeding with caution',
-					suggestedActions: [
-						'Run tests manually',
-						'Verify TDD cycle before committing',
-					],
+					message: 'TDD validation temporarily unavailable - proceeding with caution',
+					suggestedActions: ['Run tests manually', 'Verify TDD cycle before committing'],
 				},
 				metadata: {
 					sessionId: this.sessionId,
@@ -209,10 +194,7 @@ export class TDDCoach {
 		lastUpdate: string;
 		coaching: string;
 	}> {
-		const allTests = [
-			...this.currentState.passingTests,
-			...this.currentState.failingTests,
-		];
+		const allTests = [...this.currentState.passingTests, ...this.currentState.failingTests];
 
 		return {
 			state: this.currentState.current,
@@ -349,9 +331,7 @@ export class TDDCoach {
 		};
 	}
 
-	private inferDevelopmentPhase(
-		request: TDDValidationRequest,
-	): DevelopmentPhase {
+	private inferDevelopmentPhase(request: TDDValidationRequest): DevelopmentPhase {
 		// Simple heuristics to infer development phase
 		const hasNewTests = request.proposedChanges.files.some(
 			(f) => this.isTestFile(f.path) && f.status === 'added',

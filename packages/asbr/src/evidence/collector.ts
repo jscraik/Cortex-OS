@@ -6,11 +6,7 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { v4 as uuidv4 } from 'uuid';
-import type {
-	Evidence,
-	EvidencePointer,
-	EvidenceRisk,
-} from '../types/index.js';
+import type { Evidence, EvidencePointer, EvidenceRisk } from '../types/index.js';
 import { EvidenceSchema, ValidationError } from '../types/index.js';
 import { pathExists } from '../xdg/index.js';
 
@@ -89,10 +85,7 @@ export class EvidenceCollector {
 	/**
 	 * Link evidence to existing claims
 	 */
-	async linkEvidence(
-		evidenceId: string,
-		relatedEvidenceIds: string[],
-	): Promise<void> {
+	async linkEvidence(evidenceId: string, relatedEvidenceIds: string[]): Promise<void> {
 		const evidence = this.evidenceMap.get(evidenceId);
 		if (!evidence) {
 			throw new ValidationError(`Evidence ${evidenceId} not found`);
@@ -193,9 +186,7 @@ export class EvidenceCollector {
 
 		if (query.claim) {
 			const searchTerm = query.claim.toLowerCase();
-			results = results.filter((e) =>
-				e.claim.toLowerCase().includes(searchTerm),
-			);
+			results = results.filter((e) => e.claim.toLowerCase().includes(searchTerm));
 		}
 
 		if (query.source) {
@@ -252,8 +243,7 @@ export class EvidenceCollector {
 
 		return {
 			totalEvidence: evidence.length,
-			averageConfidence:
-				evidence.length > 0 ? totalConfidence / evidence.length : 0,
+			averageConfidence: evidence.length > 0 ? totalConfidence / evidence.length : 0,
 			riskDistribution,
 			sourceDistribution,
 			missingEvidence: missing,
@@ -336,10 +326,7 @@ export class EvidenceCollector {
 		return pointer;
 	}
 
-	private calculateConfidence(
-		pointers: EvidencePointer[],
-		claim: string,
-	): number {
+	private calculateConfidence(pointers: EvidencePointer[], claim: string): number {
 		// Simplified confidence calculation
 		// In a real implementation, this would use ML/statistical models
 
@@ -363,11 +350,7 @@ export class EvidenceCollector {
 		return Math.max(0, Math.min(1, baseConfidence));
 	}
 
-	private assessRisk(
-		pointers: EvidencePointer[],
-		confidence: number,
-		claim: string,
-	): EvidenceRisk {
+	private assessRisk(pointers: EvidencePointer[], confidence: number, claim: string): EvidenceRisk {
 		// Risk assessment based on confidence and claim content
 
 		if (confidence < 0.3) {
@@ -394,9 +377,7 @@ export class EvidenceCollector {
 			'cost',
 		];
 
-		const hasRiskKeywords = riskKeywords.some((keyword) =>
-			claim.toLowerCase().includes(keyword),
-		);
+		const hasRiskKeywords = riskKeywords.some((keyword) => claim.toLowerCase().includes(keyword));
 
 		if (hasRiskKeywords) {
 			return confidence > 0.6 ? 'medium' : 'high';

@@ -20,8 +20,7 @@ import {
  */
 class ArchitecturePolicyPresenceCheck implements AutomatedCheck {
 	name = 'architecture-policy-presence';
-	description =
-		'Ensure enforcement profile defines architecture boundaries and conventions';
+	description = 'Ensure enforcement profile defines architecture boundaries and conventions';
 
 	async execute(context: GateContext) {
 		const issues: string[] = [];
@@ -54,10 +53,7 @@ class ArchitecturePolicyPresenceCheck implements AutomatedCheck {
 		];
 
 		return {
-			status: (issues.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
+			status: (issues.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
 			output:
 				issues.length === 0
 					? 'Architecture policy basics present'
@@ -96,10 +92,7 @@ class GovernanceRequiredChecksCheck implements AutomatedCheck {
 		];
 
 		return {
-			status: (missing.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
+			status: (missing.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
 			output:
 				missing.length === 0
 					? 'Required checks configured'
@@ -137,14 +130,8 @@ class RepoLayoutHintsCheck implements AutomatedCheck {
 		];
 
 		return {
-			status: (issues.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
-			output:
-				issues.length === 0
-					? 'Repo layout hints present'
-					: `Issues: ${issues.join(', ')}`,
+			status: (issues.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
+			output: issues.length === 0 ? 'Repo layout hints present' : `Issues: ${issues.join(', ')}`,
 			duration: 40,
 			evidence,
 		};
@@ -159,14 +146,12 @@ class RepoLayoutHintsCheck implements AutomatedCheck {
 export class G1ArchitectureGate extends BaseGate {
 	readonly id = 'G1' as const;
 	readonly name = 'Architecture & Specification';
-	readonly purpose =
-		'Validate architecture against policy and capture architect approval';
+	readonly purpose = 'Validate architecture against policy and capture architect approval';
 	readonly requiresHumanApproval = true;
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'architect',
-		description:
-			'Architect must approve the proposed architecture and constraints',
+		description: 'Architect must approve the proposed architecture and constraints',
 		requiredDecision: 'approved',
 		timeoutMs: 24 * 60 * 60 * 1000, // 24 hours
 	};

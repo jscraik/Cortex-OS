@@ -25,10 +25,7 @@ export class Teacher {
 	/**
 	 * Generate teaching materials from content
 	 */
-	async instruct(
-		content: string,
-		options?: TeachingOptions,
-	): Promise<TeachingSession> {
+	async instruct(content: string, options?: TeachingOptions): Promise<TeachingSession> {
 		// In a real implementation, this would use an LLM to generate teaching materials
 		// For now, we'll create a basic structured output
 
@@ -64,9 +61,7 @@ export class Teacher {
 	/**
 	 * Generate a curriculum from multiple teaching sessions
 	 */
-	async createCurriculum(
-		sessions: TeachingSession[],
-	): Promise<TeachingSession> {
+	async createCurriculum(sessions: TeachingSession[]): Promise<TeachingSession> {
 		const combinedContent = sessions
 			.map((session) => `## ${session.title}\n\n${session.content}`)
 			.join('\n\n');
@@ -98,9 +93,7 @@ export class Teacher {
 
 		// Extract potential tags from content
 		const keywordMatches = content.match(/\b([a-zA-Z]{4,})\b/g) || [];
-		const uniqueKeywords = Array.from(
-			new Set(keywordMatches.map((k) => k.toLowerCase())),
-		);
+		const uniqueKeywords = Array.from(new Set(keywordMatches.map((k) => k.toLowerCase())));
 		tags.push(...uniqueKeywords.slice(0, 5));
 
 		return tags;

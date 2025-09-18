@@ -26,9 +26,7 @@ export class ConversationController {
 				throw new HttpError(401, 'Unauthorized');
 			}
 
-			const conversations = ConversationService.getConversationsByUserId(
-				req.user.userId,
-			);
+			const conversations = ConversationService.getConversationsByUserId(req.user.userId);
 			res.json(conversations);
 		} catch (_error) {
 			res.status(500).json({ error: 'Internal server error' });
@@ -56,9 +54,7 @@ export class ConversationController {
 			res.json(conversation);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
 			} else if (error instanceof HttpError) {
 				res.status(error.statusCode).json({ error: error.message });
 			} else {
@@ -74,16 +70,11 @@ export class ConversationController {
 			}
 
 			const { title } = createConversationSchema.parse(req.body);
-			const conversation = ConversationService.createConversation(
-				req.user.userId,
-				title,
-			);
+			const conversation = ConversationService.createConversation(req.user.userId, title);
 			res.status(201).json(conversation);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
 			} else {
 				res.status(500).json({ error: 'Internal server error' });
 			}
@@ -109,16 +100,11 @@ export class ConversationController {
 				throw new HttpError(403, 'Forbidden');
 			}
 
-			const updatedConversation = ConversationService.updateConversation(
-				id,
-				updates,
-			);
+			const updatedConversation = ConversationService.updateConversation(id, updates);
 			res.json(updatedConversation);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
 			} else if (error instanceof HttpError) {
 				res.status(error.statusCode).json({ error: error.message });
 			} else {
@@ -149,9 +135,7 @@ export class ConversationController {
 			res.json({ message: 'Conversation deleted successfully' });
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
 			} else if (error instanceof HttpError) {
 				res.status(error.statusCode).json({ error: error.message });
 			} else {

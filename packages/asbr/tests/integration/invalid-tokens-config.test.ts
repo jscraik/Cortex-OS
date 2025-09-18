@@ -35,8 +35,6 @@ describe('server initialization', () => {
 		await initializeXDG();
 		await writeFile(tokensPath, '{ invalid json', 'utf-8');
 
-		await expect(initializeASBR({ autoStart: false })).rejects.toBeInstanceOf(
-			ValidationError,
-		);
+		await expect(initializeASBR({ autoStart: false })).rejects.toBeInstanceOf(ValidationError);
 	});
 });

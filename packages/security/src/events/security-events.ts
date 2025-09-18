@@ -55,12 +55,8 @@ export const SecurityAuditEventSchema = z.object({
 
 // Export event type definitions
 export type SecurityAccessEvent = z.infer<typeof SecurityAccessEventSchema>;
-export type SecurityPolicyViolationEvent = z.infer<
-	typeof SecurityPolicyViolationEventSchema
->;
-export type SecurityThreatDetectionEvent = z.infer<
-	typeof SecurityThreatDetectionEventSchema
->;
+export type SecurityPolicyViolationEvent = z.infer<typeof SecurityPolicyViolationEventSchema>;
+export type SecurityThreatDetectionEvent = z.infer<typeof SecurityThreatDetectionEventSchema>;
 export type SecurityAuditEvent = z.infer<typeof SecurityAuditEventSchema>;
 
 // Helper object to create security events

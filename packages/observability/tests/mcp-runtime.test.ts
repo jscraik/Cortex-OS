@@ -223,17 +223,12 @@ describe('observability MCP runtime', () => {
 		expect(dashboard.traces.total).toBe(2);
 		expect(dashboard.traces.errors).toBe(1);
 		expect(dashboard.logs.byLevel.error).toBe(1);
-		const latencySummary = dashboard.metrics.find(
-			(metric) => metric.name === 'latency_ms',
-		);
+		const latencySummary = dashboard.metrics.find((metric) => metric.name === 'latency_ms');
 		expect(latencySummary?.avg).toBeCloseTo((120 + 340) / 2);
 		expect(dashboard.alerts[0]?.triggered).toBe(true);
-		const sanitizedLogs = dashboard.logs.latest.map(
-			(entry) => entry.metadata ?? {},
-		);
+		const sanitizedLogs = dashboard.logs.latest.map((entry) => entry.metadata ?? {});
 		const redactedToken = sanitizedLogs.some(
-			(metadata) =>
-				(metadata as Record<string, unknown>)?.token === '[REDACTED]',
+			(metadata) => (metadata as Record<string, unknown>)?.token === '[REDACTED]',
 		);
 		expect(redactedToken).toBe(true);
 	});

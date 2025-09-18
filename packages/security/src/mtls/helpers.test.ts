@@ -17,10 +17,7 @@ describe('loadCertificates', () => {
 
 	it('reads certificate files', async () => {
 		const mock = readFile as unknown as ReturnType<typeof vi.fn>;
-		mock
-			.mockResolvedValueOnce('ca')
-			.mockResolvedValueOnce('cert')
-			.mockResolvedValueOnce('key');
+		mock.mockResolvedValueOnce('ca').mockResolvedValueOnce('cert').mockResolvedValueOnce('key');
 		const config: MTLSConfig = {
 			caCertificate: 'ca.pem',
 			clientCertificate: 'client.pem',
@@ -48,8 +45,7 @@ describe('createClientSocket', () => {
 
 	it('resolves on secure connection', async () => {
 		const socket = new EventEmitter() as unknown as tls.TLSSocket;
-		(socket as unknown as tls.TLSSocket & { authorized: boolean }).authorized =
-			true;
+		(socket as unknown as tls.TLSSocket & { authorized: boolean }).authorized = true;
 		const connect = tls.connect as unknown as ReturnType<typeof vi.fn>;
 		connect.mockReturnValue(socket);
 		const promise = createClientSocket('host', 443, config, certs);

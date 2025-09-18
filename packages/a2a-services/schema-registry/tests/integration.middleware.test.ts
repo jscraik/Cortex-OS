@@ -43,10 +43,7 @@ describe('Schema Registry Middleware Integration', () => {
 				schema: { secret: 'top', visible: 'keep' },
 			})
 			.expect(201);
-		const res = await request(app)
-			.get('/schemas/Foo/latest')
-			.set('x-role', 'reader')
-			.expect(200);
+		const res = await request(app).get('/schemas/Foo/latest').set('x-role', 'reader').expect(200);
 		expect(res.body.schema.secret).toBe('***');
 		expect(res.body.schema.visible).toBe('keep');
 	});
@@ -66,8 +63,7 @@ describe('Schema Registry Middleware Integration', () => {
 				.get('/schemas')
 				.set('x-role', 'reader')
 				.expect((r: request.Response) => {
-					if (![200, 403, 429].includes(r.status))
-						throw new Error(`Unexpected status ${r.status}`);
+					if (![200, 403, 429].includes(r.status)) throw new Error(`Unexpected status ${r.status}`);
 				});
 
 		const results: number[] = [];

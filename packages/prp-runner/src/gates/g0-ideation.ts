@@ -20,8 +20,7 @@ import {
  */
 class BlueprintValidationCheck implements AutomatedCheck {
 	name = 'blueprint-validation';
-	description =
-		'Validate blueprint contains title, description, and requirements';
+	description = 'Validate blueprint contains title, description, and requirements';
 
 	async execute(context: GateContext): Promise<{
 		status: 'pass' | 'fail' | 'skip';
@@ -161,9 +160,7 @@ class PolicyQuickCheck implements AutomatedCheck {
 		return {
 			status: issues.length === 0 ? 'pass' : ('fail' as const),
 			output:
-				issues.length === 0
-					? 'Policy quick-check passed'
-					: `Policy issues: ${issues.join(', ')}`,
+				issues.length === 0 ? 'Policy quick-check passed' : `Policy issues: ${issues.join(', ')}`,
 			duration: 100,
 			evidence,
 		};

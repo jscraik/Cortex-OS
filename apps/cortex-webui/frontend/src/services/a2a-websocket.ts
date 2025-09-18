@@ -95,10 +95,8 @@ export type WebSocketEventListener = (data?: unknown) => void;
 
 export class A2AWebSocketManager {
 	private socket: WebSocket | null = null;
-	private readonly eventListeners: Map<string, Set<A2AEventListener>> =
-		new Map();
-	private readonly wsListeners: Map<string, Set<WebSocketEventListener>> =
-		new Map();
+	private readonly eventListeners: Map<string, Set<A2AEventListener>> = new Map();
+	private readonly wsListeners: Map<string, Set<WebSocketEventListener>> = new Map();
 	private reconnectAttempts = 0;
 	private readonly maxReconnectAttempts = 5;
 	private readonly reconnectDelay = 1000;
@@ -338,10 +336,7 @@ export class A2AWebSocketManager {
 	// ================================
 
 	// A2A event subscription
-	onA2AEvent<T = any>(
-		eventType: string,
-		callback: A2AEventListener<T>,
-	): () => void {
+	onA2AEvent<T = any>(eventType: string, callback: A2AEventListener<T>): () => void {
 		if (!this.eventListeners.has(eventType)) {
 			this.eventListeners.set(eventType, new Set());
 		}
@@ -361,10 +356,7 @@ export class A2AWebSocketManager {
 	}
 
 	// WebSocket connection event subscription
-	onWebSocketEvent(
-		event: string,
-		callback: WebSocketEventListener,
-	): () => void {
+	onWebSocketEvent(event: string, callback: WebSocketEventListener): () => void {
 		if (!this.wsListeners.has(event)) {
 			this.wsListeners.set(event, new Set());
 		}
@@ -430,10 +422,7 @@ export class A2AWebSocketManager {
 
 		// Keep history size manageable
 		if (this.eventHistory.length > this.maxHistorySize) {
-			this.eventHistory.splice(
-				0,
-				this.eventHistory.length - this.maxHistorySize,
-			);
+			this.eventHistory.splice(0, this.eventHistory.length - this.maxHistorySize);
 		}
 	}
 
@@ -480,9 +469,7 @@ export class A2AWebSocketManager {
 		eventCount: number;
 		eventTypes: string[];
 	} {
-		const eventTypes = Array.from(
-			new Set(this.eventHistory.map((e) => e.type)),
-		);
+		const eventTypes = Array.from(new Set(this.eventHistory.map((e) => e.type)));
 		return {
 			connected: this.isConnected(),
 			sessionId: this.sessionId,

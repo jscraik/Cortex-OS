@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-import type {
-	Notification,
-	NotificationStore,
-} from '../utils/notification-store';
+import type { Notification, NotificationStore } from '../utils/notification-store';
 import notificationStore from '../utils/notification-store';
 import NotificationToast from './NotificationToast';
 

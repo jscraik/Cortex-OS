@@ -190,10 +190,7 @@ export class EvidenceStorage {
 			}
 
 			// Sort by creation date (newest first)
-			results.sort(
-				(a, b) =>
-					new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-			);
+			results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
 			const total = results.length;
 			const offset = query.offset || 0;
@@ -285,20 +282,14 @@ export class EvidenceStorage {
 
 					for (const file of files) {
 						const filepath = join(dateDirPath, file);
-						const stats = await import('node:fs/promises').then((fs) =>
-							fs.stat(filepath),
-						);
+						const stats = await import('node:fs/promises').then((fs) => fs.stat(filepath));
 						freedBytes += stats.size;
 
 						// Create deletion receipt before removing
 						const evidenceId = file.replace('.json', '');
 						const evidence = await this.loadEvidenceFile(filepath);
 
-						await this.createDeletionReceipt(
-							evidenceId,
-							evidence,
-							'retention_policy',
-						);
+						await this.createDeletionReceipt(evidenceId, evidence, 'retention_policy');
 
 						await rm(filepath);
 						deletedCount++;
@@ -359,17 +350,14 @@ export class EvidenceStorage {
 					if (!file.endsWith('.json')) continue;
 
 					const filepath = join(dateDirPath, file);
-					const stats = await import('node:fs/promises').then((fs) =>
-						fs.stat(filepath),
-					);
+					const stats = await import('node:fs/promises').then((fs) => fs.stat(filepath));
 					sizeBytes += stats.size;
 					totalEvidence++;
 
 					// Load evidence to get source info
 					try {
 						const evidence = await this.loadEvidenceFile(filepath);
-						sourceBreakdown[evidence.source] =
-							(sourceBreakdown[evidence.source] || 0) + 1;
+						sourceBreakdown[evidence.source] = (sourceBreakdown[evidence.source] || 0) + 1;
 					} catch {
 						// Skip corrupted files
 					}
@@ -428,19 +416,13 @@ export class EvidenceStorage {
 		return JSON.parse(content);
 	}
 
-	private filterDateDirs(
-		dateDirs: string[],
-		dateRange?: { start: string; end: string },
-	): string[] {
+	private filterDateDirs(dateDirs: string[], dateRange?: { start: string; end: string }): string[] {
 		if (!dateRange) {
 			return dateDirs;
 		}
 
 		return dateDirs.filter((dateDir) => {
-			return (
-				dateDir >= dateRange.start.split('T')[0] &&
-				dateDir <= dateRange.end.split('T')[0]
-			);
+			return dateDir >= dateRange.start.split('T')[0] && dateDir <= dateRange.end.split('T')[0];
 		});
 	}
 
@@ -454,16 +436,10 @@ export class EvidenceStorage {
 		}
 
 		if (query.confidence) {
-			if (
-				query.confidence.min !== undefined &&
-				evidence.confidence < query.confidence.min
-			) {
+			if (query.confidence.min !== undefined && evidence.confidence < query.confidence.min) {
 				return false;
 			}
-			if (
-				query.confidence.max !== undefined &&
-				evidence.confidence > query.confidence.max
-			) {
+			if (query.confidence.max !== undefined && evidence.confidence > query.confidence.max) {
 				return false;
 			}
 		}
@@ -486,23 +462,12 @@ export class EvidenceStorage {
 		const receiptDir = getDataPath('evidence', 'receipts');
 		await mkdir(receiptDir, { recursive: true });
 
-		const receiptPath = join(
-			receiptDir,
-			`delete_${evidenceId}_${Date.now()}.json`,
-		);
+		const receiptPath = join(receiptDir, `delete_${evidenceId}_${Date.now()}.json`);
 		await writeFile(receiptPath, JSON.stringify(receipt, null, 2), 'utf-8');
 	}
 
 	private convertToCSV(evidence: Evidence[]): string {
-		const headers = [
-			'id',
-			'source',
-			'claim',
-			'confidence',
-			'risk',
-			'createdAt',
-			'pointerCount',
-		];
+		const headers = ['id', 'source', 'claim', 'confidence', 'risk', 'createdAt', 'pointerCount'];
 		const rows = evidence.map((e) => [
 			e.id,
 			e.source,
@@ -525,10 +490,7 @@ export class EvidenceStorage {
 		const key = this.getEncryptionKey();
 		const iv = randomBytes(12);
 		const cipher = createCipheriv('aes-256-gcm', key, iv);
-		const encrypted = Buffer.concat([
-			cipher.update(content, 'utf8'),
-			cipher.final(),
-		]);
+		const encrypted = Buffer.concat([cipher.update(content, 'utf8'), cipher.final()]);
 		const tag = cipher.getAuthTag();
 		return Buffer.concat([iv, tag, encrypted]).toString('base64');
 	}
@@ -541,10 +503,7 @@ export class EvidenceStorage {
 		const key = this.getEncryptionKey();
 		const decipher = createDecipheriv('aes-256-gcm', key, iv);
 		decipher.setAuthTag(tag);
-		const decrypted = Buffer.concat([
-			decipher.update(encrypted),
-			decipher.final(),
-		]);
+		const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 		return decrypted.toString('utf8');
 	}
 

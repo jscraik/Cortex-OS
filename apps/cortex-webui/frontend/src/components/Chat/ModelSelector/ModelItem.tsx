@@ -65,10 +65,7 @@ function ModelItem({
 	function renderOwnershipIcon(): ReactNode {
 		if (item.model?.direct) {
 			return (
-				<span
-					className="translate-y-[1px] inline-flex items-center"
-					aria-hidden="true"
-				>
+				<span className="translate-y-[1px] inline-flex items-center" aria-hidden="true">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 16 16"
@@ -87,10 +84,7 @@ function ModelItem({
 		}
 		if (item.model.connection_type === 'external') {
 			return (
-				<span
-					className="translate-y-[1px] inline-flex items-center"
-					aria-hidden="true"
-				>
+				<span className="translate-y-[1px] inline-flex items-center" aria-hidden="true">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 16 16"
@@ -118,9 +112,7 @@ function ModelItem({
 	const copyLinkHandler = async (): Promise<void> => {
 		const baseUrl = window.location.origin;
 		const modelId = item.model.id ?? item.value;
-		const res = await copyToClipboard(
-			`${baseUrl}/?model=${encodeURIComponent(modelId)}`,
-		);
+		const res = await copyToClipboard(`${baseUrl}/?model=${encodeURIComponent(modelId)}`);
 		if (res) {
 			// eslint-disable-next-line no-console
 			console.log('Copied link to clipboard');
@@ -178,10 +170,7 @@ function ModelItem({
 
 				{/* Tags icon */}
 				{(item.model?.tags?.length ?? 0) > 0 && (
-					<span
-						className="translate-y-[1px] inline-flex items-center"
-						title="Has tags"
-					>
+					<span className="translate-y-[1px] inline-flex items-center" title="Has tags">
 						<Tag aria-hidden="true" />
 					</span>
 				)}
@@ -199,10 +188,7 @@ function ModelItem({
 				{item.model?.direct &&
 					item.model.ollama?.expires_at &&
 					new Date(item.model.ollama.expires_at * 1000) > new Date() && (
-						<div
-							className="flex items-center translate-y-[0.5px] px-0.5"
-							aria-hidden="true"
-						>
+						<div className="flex items-center translate-y-[0.5px] px-0.5" aria-hidden="true">
 							<span className="relative flex size-2">
 								<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
 								<span className="relative inline-flex rounded-full size-2 bg-green-500" />

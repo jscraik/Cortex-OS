@@ -2,10 +2,7 @@
 
 import type { Conversation } from '@shared/types';
 import { v4 as uuidv4 } from 'uuid';
-import {
-	ConversationModel,
-	type ConversationRecord,
-} from '../models/conversation';
+import { ConversationModel, type ConversationRecord } from '../models/conversation';
 import { getDatabase } from '../utils/database';
 
 export class ConversationService {
@@ -59,10 +56,7 @@ export class ConversationService {
 		return ConversationModel.fromRecord(conversationRecord);
 	}
 
-	static updateConversation(
-		id: string,
-		updates: Partial<Conversation>,
-	): Conversation | null {
+	static updateConversation(id: string, updates: Partial<Conversation>): Conversation | null {
 		const db = getDatabase();
 
 		// Build update query
@@ -96,8 +90,6 @@ export class ConversationService {
 		db.prepare(`DELETE FROM messages WHERE conversation_id = ?`).run(id);
 
 		// Delete conversation
-		db.prepare(`DELETE FROM ${ConversationModel.tableName} WHERE id = ?`).run(
-			id,
-		);
+		db.prepare(`DELETE FROM ${ConversationModel.tableName} WHERE id = ?`).run(id);
 	}
 }

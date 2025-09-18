@@ -13,9 +13,7 @@ describe('createEnhancedClient', () => {
 			req.on('end', () => {
 				const payload = JSON.parse(body);
 				res.setHeader('Content-Type', 'application/json');
-				res.end(
-					JSON.stringify({ echo: payload.name, args: payload.arguments }),
-				);
+				res.end(JSON.stringify({ echo: payload.name, args: payload.arguments }));
 			});
 		});
 		await new Promise((resolve) => server.listen(0, resolve));
@@ -109,9 +107,9 @@ describe('createEnhancedClient', () => {
 			endpoint: `http://127.0.0.1:${port}`,
 		});
 
-		await expect(
-			client.callTool({ name: 'tool', arguments: { a: 1 } }),
-		).rejects.toThrow('HTTP 500');
+		await expect(client.callTool({ name: 'tool', arguments: { a: 1 } })).rejects.toThrow(
+			'HTTP 500',
+		);
 
 		await client.close();
 		server.close();

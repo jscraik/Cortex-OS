@@ -9,11 +9,9 @@ describe('RASp middleware', () => {
 	});
 	afterEach(() => {
 		try {
-			if (fs.existsSync(eventsDir))
-				fs.rmSync(eventsDir, { recursive: true, force: true });
+			if (fs.existsSync(eventsDir)) fs.rmSync(eventsDir, { recursive: true, force: true });
 			const tmpDir = path.join(__dirname, '..', 'tmp-events');
-			if (fs.existsSync(tmpDir))
-				fs.rmSync(tmpDir, { recursive: true, force: true });
+			if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true });
 		} catch {
 			// ignore cleanup errors
 		}

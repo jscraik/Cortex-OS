@@ -67,10 +67,7 @@ export interface GenerateResult {
 
 export interface ModelProvider {
 	name: string;
-	generate: (
-		prompt: string,
-		options?: GenerateOptions,
-	) => Promise<GenerateResult>;
+	generate: (prompt: string, options?: GenerateOptions) => Promise<GenerateResult>;
 	isAvailable?: () => Promise<boolean>;
 	shutdown?: () => Promise<void>;
 }

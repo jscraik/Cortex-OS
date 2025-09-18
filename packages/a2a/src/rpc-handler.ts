@@ -27,8 +27,7 @@ class StructuredError extends Error {
 	}
 }
 
-const createJsonOutput = (data: unknown): string =>
-	JSON.stringify(data, null, 2);
+const createJsonOutput = (data: unknown): string => JSON.stringify(data, null, 2);
 
 export interface RpcHandler {
 	handle(request: JsonRpcRequest): Promise<JsonRpcResponse>;
@@ -71,30 +70,21 @@ export class A2ARpcHandler implements RpcHandler {
 			case 'tasks/list': {
 				// Utility method for debugging
 				const status =
-					request.params &&
-					typeof request.params === 'object' &&
-					'status' in request.params
+					request.params && typeof request.params === 'object' && 'status' in request.params
 						? (request.params.status as any)
 						: undefined;
 				return this.taskManager.listTasks(status);
 			}
 
 			default:
-				throw new StructuredError(
-					'METHOD_NOT_FOUND',
-					`Method '${request.method}' not found`,
-					{
-						method: request.method,
-						code: A2A_ERROR_CODES.METHOD_NOT_FOUND,
-					},
-				);
+				throw new StructuredError('METHOD_NOT_FOUND', `Method '${request.method}' not found`, {
+					method: request.method,
+					code: A2A_ERROR_CODES.METHOD_NOT_FOUND,
+				});
 		}
 	}
 
-	private createErrorResponse(
-		id: JsonRpcRequest['id'],
-		error: unknown,
-	): JsonRpcResponse {
+	private createErrorResponse(id: JsonRpcRequest['id'], error: unknown): JsonRpcResponse {
 		if (error instanceof z.ZodError) {
 			return {
 				jsonrpc: '2.0',
@@ -192,8 +182,6 @@ export async function handleA2A(input: unknown): Promise<string> {
 }
 
 // Factory function
-export const createA2ARpcHandler = (
-	taskManager?: TaskManager,
-): A2ARpcHandler => {
+export const createA2ARpcHandler = (taskManager?: TaskManager): A2ARpcHandler => {
 	return new A2ARpcHandler(taskManager || new TaskManager());
 };

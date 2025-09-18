@@ -20,9 +20,7 @@ describe('BuildNode API schema validation', () => {
 		};
 		const node = new BuildNode();
 		const result = await node.execute(state);
-		expect(result.validationResults.build?.blockers).toContain(
-			'API schema validation failed',
-		);
+		expect(result.validationResults.build?.blockers).toContain('API schema validation failed');
 	});
 
 	it('passes when valid API schema provided', async () => {
@@ -46,10 +44,9 @@ describe('BuildNode API schema validation', () => {
 		// Should pass validation when valid schema is provided
 		// Note: Other validation criteria might still cause this to fail, but not the API schema check
 		// We're specifically testing that the API schema validation passes
-		const hasAPISchemaFailure =
-			result.validationResults.build?.blockers?.includes(
-				'API schema validation failed',
-			);
+		const hasAPISchemaFailure = result.validationResults.build?.blockers?.includes(
+			'API schema validation failed',
+		);
 		expect(hasAPISchemaFailure).toBe(false);
 	});
 

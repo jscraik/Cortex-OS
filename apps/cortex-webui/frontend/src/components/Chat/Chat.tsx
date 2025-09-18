@@ -121,10 +121,7 @@ const Chat = () => {
 
 			{/* Messages list */}
 			<div className="flex-1 overflow-y-auto p-4">
-				<MessageList
-					messages={messages as ChatMessage[]}
-					streaming={streaming}
-				/>
+				<MessageList messages={messages as ChatMessage[]} streaming={streaming} />
 			</div>
 
 			{/* Streaming controls */}
@@ -146,10 +143,7 @@ const Chat = () => {
 			</div>
 
 			{/* Settings modal */}
-			<SettingsModal
-				isOpen={isSettingsOpen}
-				onClose={() => setIsSettingsOpen(false)}
-			/>
+			<SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 		</div>
 	);
 };

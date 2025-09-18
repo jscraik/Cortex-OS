@@ -148,10 +148,7 @@ export class AutoFixEngine {
 		}
 	}
 
-	private async moveFile(
-		source: string,
-		target: string,
-	): Promise<AutoFixResult> {
+	private async moveFile(source: string, target: string): Promise<AutoFixResult> {
 		try {
 			// Ensure target directory exists
 			await fs.ensureDir(path.dirname(target));
@@ -176,10 +173,7 @@ export class AutoFixEngine {
 		}
 	}
 
-	private async renameFile(
-		source: string,
-		target: string,
-	): Promise<AutoFixResult> {
+	private async renameFile(source: string, target: string): Promise<AutoFixResult> {
 		try {
 			await fs.rename(source, target);
 
@@ -221,10 +215,7 @@ export class AutoFixEngine {
 		}
 	}
 
-	private async createFile(
-		filePath: string,
-		content: string,
-	): Promise<AutoFixResult> {
+	private async createFile(filePath: string, content: string): Promise<AutoFixResult> {
 		try {
 			await fs.ensureDir(path.dirname(filePath));
 			await fs.writeFile(filePath, content);
@@ -252,13 +243,7 @@ export class AutoFixEngine {
 		if (fs.existsSync(target)) return false; // Don't overwrite existing files
 
 		// Check if it's a critical file
-		const criticalFiles = [
-			'package.json',
-			'tsconfig.json',
-			'README.md',
-			'.gitignore',
-			'LICENSE',
-		];
+		const criticalFiles = ['package.json', 'tsconfig.json', 'README.md', '.gitignore', 'LICENSE'];
 
 		const fileName = path.basename(source);
 		return !criticalFiles.includes(fileName);

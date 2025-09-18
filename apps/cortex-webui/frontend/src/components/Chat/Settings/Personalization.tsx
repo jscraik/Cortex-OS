@@ -8,9 +8,7 @@ interface PersonalizationSettingsProps {
 	saveSettings: (settings: any) => void;
 }
 
-const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
-	saveSettings,
-}) => {
+const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({ saveSettings }) => {
 	const settings = useSettingsStore();
 	const [loaded, setLoaded] = useState(false);
 
@@ -28,22 +26,16 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 
 	useEffect(() => {
 		if (settings) {
-			setCustomInstructions(
-				settings?.personalization?.customInstructions ?? '',
-			);
+			setCustomInstructions(settings?.personalization?.customInstructions ?? '');
 			setPersona(settings?.personalization?.persona ?? 'default');
 			setResponseStyle(settings?.personalization?.responseStyle ?? 'concise');
 			setCreativityLevel(settings?.personalization?.creativityLevel ?? 50);
 			setDetailLevel(settings?.personalization?.detailLevel ?? 50);
 			setTonePreference(settings?.personalization?.tonePreference ?? 'neutral');
-			setCommunicationStyle(
-				settings?.personalization?.communicationStyle ?? 'professional',
-			);
+			setCommunicationStyle(settings?.personalization?.communicationStyle ?? 'professional');
 			setPreferredTopics(settings?.personalization?.preferredTopics ?? []);
 			setBlockedTopics(settings?.personalization?.blockedTopics ?? []);
-			setEnablePersonalization(
-				settings?.personalization?.enablePersonalization ?? true,
-			);
+			setEnablePersonalization(settings?.personalization?.enablePersonalization ?? true);
 			setLoaded(true);
 		}
 	}, [settings]);
@@ -90,10 +82,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 	}
 
 	return (
-		<div
-			id="tab-personalization"
-			className="flex flex-col h-full justify-between text-sm"
-		>
+		<div id="tab-personalization" className="flex flex-col h-full justify-between text-sm">
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
 				<div>
 					<div className="text-base font-medium mb-3">AI Personalization</div>
@@ -110,9 +99,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 								type="button"
 								onClick={() => setEnablePersonalization(!enablePersonalization)}
 								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-									enablePersonalization
-										? 'bg-blue-600'
-										: 'bg-gray-300 dark:bg-gray-600'
+									enablePersonalization ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 								}`}
 							>
 								<span
@@ -124,10 +111,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 						</div>
 
 						<div>
-							<label
-								htmlFor="custom-instructions"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="custom-instructions" className="block text-sm font-medium mb-1">
 								Custom Instructions
 							</label>
 							<textarea
@@ -141,10 +125,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 						</div>
 
 						<div>
-							<label
-								htmlFor="persona"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="persona" className="block text-sm font-medium mb-1">
 								Persona
 							</label>
 							<select
@@ -169,10 +150,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor="response-style"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="response-style" className="block text-sm font-medium mb-1">
 								Response Style
 							</label>
 							<select
@@ -189,10 +167,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 						</div>
 
 						<div>
-							<label
-								htmlFor="creativity-level"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="creativity-level" className="block text-sm font-medium mb-1">
 								Creativity Level: {creativityLevel}%
 							</label>
 							<input
@@ -201,9 +176,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 								min="0"
 								max="100"
 								value={creativityLevel}
-								onChange={(e) =>
-									setCreativityLevel(parseInt(e.target.value, 10))
-								}
+								onChange={(e) => setCreativityLevel(parseInt(e.target.value, 10))}
 								className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
 							/>
 							<div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -214,10 +187,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 						</div>
 
 						<div>
-							<label
-								htmlFor="detail-level"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="detail-level" className="block text-sm font-medium mb-1">
 								Detail Level: {detailLevel}%
 							</label>
 							<input
@@ -237,10 +207,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 						</div>
 
 						<div>
-							<label
-								htmlFor="tone-preference"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="tone-preference" className="block text-sm font-medium mb-1">
 								Tone Preference
 							</label>
 							<select
@@ -258,10 +225,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 						</div>
 
 						<div>
-							<label
-								htmlFor="communication-style"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="communication-style" className="block text-sm font-medium mb-1">
 								Communication Style
 							</label>
 							<select
@@ -285,9 +249,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 
 					<div className="space-y-4">
 						<div>
-							<label className="block text-sm font-medium mb-1">
-								Preferred Topics
-							</label>
+							<label className="block text-sm font-medium mb-1">Preferred Topics</label>
 							<div className="flex flex-wrap gap-2 mb-2">
 								{preferredTopics.map((topic, index) => (
 									<div
@@ -327,8 +289,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 								<button
 									type="button"
 									onClick={(e) => {
-										const input = e.currentTarget
-											.previousElementSibling as HTMLInputElement;
+										const input = e.currentTarget.previousElementSibling as HTMLInputElement;
 										addPreferredTopic(input.value);
 										input.value = '';
 									}}
@@ -340,9 +301,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium mb-1">
-								Blocked Topics
-							</label>
+							<label className="block text-sm font-medium mb-1">Blocked Topics</label>
 							<div className="flex flex-wrap gap-2 mb-2">
 								{blockedTopics.map((topic, index) => (
 									<div
@@ -382,8 +341,7 @@ const PersonalizationSettings: React.FC<PersonalizationSettingsProps> = ({
 								<button
 									type="button"
 									onClick={(e) => {
-										const input = e.currentTarget
-											.previousElementSibling as HTMLInputElement;
+										const input = e.currentTarget.previousElementSibling as HTMLInputElement;
 										addBlockedTopic(input.value);
 										input.value = '';
 									}}

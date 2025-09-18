@@ -150,10 +150,7 @@ export class ApiBusIntegration {
 	private readonly source = 'cortex.api';
 	private readonly logger: StructuredLogger;
 	private readonly activeJobs = new Map<string, AsyncJobEvent>();
-	private readonly webhookHandlers = new Map<
-		string,
-		(event: WebhookEvent) => Promise<void>
-	>();
+	private readonly webhookHandlers = new Map<string, (event: WebhookEvent) => Promise<void>>();
 	private readonly eventHandlers = new Map<string, EventHandler[]>();
 	private readonly events: A2AEnvelope[] = [];
 	private readonly a2aBus: ReturnType<typeof createApiBus>;
@@ -178,26 +175,24 @@ export class ApiBusIntegration {
 			this.logger.info('Starting API A2A bus integration');
 
 			// Bind event handlers to the real A2A bus
-			const handlerMappings = Object.entries(this.eventHandlers).map(
-				([eventType, handlers]) => ({
-					type: eventType,
-					handle: async (envelope: A2AEnvelope) => {
-						// Store for history tracking
-						this.events.push(envelope);
+			const handlerMappings = Object.entries(this.eventHandlers).map(([eventType, handlers]) => ({
+				type: eventType,
+				handle: async (envelope: A2AEnvelope) => {
+					// Store for history tracking
+					this.events.push(envelope);
 
-						// Execute all handlers
-						for (const handler of handlers) {
-							try {
-								await handler(envelope);
-							} catch (error) {
-								this.logger.error(`Error in event handler for ${eventType}`, {
-									error,
-								});
-							}
+					// Execute all handlers
+					for (const handler of handlers) {
+						try {
+							await handler(envelope);
+						} catch (error) {
+							this.logger.error(`Error in event handler for ${eventType}`, {
+								error,
+							});
 						}
-					},
-				}),
-			);
+					}
+				},
+			}));
 
 			if (handlerMappings.length > 0) {
 				await this.a2aBus.bus.bind(handlerMappings);
@@ -382,10 +377,7 @@ export class ApiBusIntegration {
 		});
 	}
 
-	async publishWebhookProcessed(
-		webhook: WebhookEvent,
-		result: unknown,
-	): Promise<void> {
+	async publishWebhookProcessed(webhook: WebhookEvent, result: unknown): Promise<void> {
 		const data = { ...webhook, result };
 		await this.publishEvent(ApiEventTypes.WEBHOOK_PROCESSED, data);
 		this.logger.info('Published webhook processed event', {
@@ -393,10 +385,7 @@ export class ApiBusIntegration {
 		});
 	}
 
-	async publishWebhookFailed(
-		webhook: WebhookEvent,
-		error: string,
-	): Promise<void> {
+	async publishWebhookFailed(webhook: WebhookEvent, error: string): Promise<void> {
 		const data = { ...webhook, error };
 		await this.publishEvent(ApiEventTypes.WEBHOOK_FAILED, data);
 		this.logger.error('Published webhook failed event', {
@@ -405,10 +394,7 @@ export class ApiBusIntegration {
 		});
 	}
 
-	registerWebhookHandler(
-		source: string,
-		handler: (event: WebhookEvent) => Promise<void>,
-	): void {
+	registerWebhookHandler(source: string, handler: (event: WebhookEvent) => Promise<void>): void {
 		this.webhookHandlers.set(source, handler);
 		this.logger.info('Registered webhook handler', { source });
 	}
@@ -417,10 +403,7 @@ export class ApiBusIntegration {
 	// Async Job Coordination Events
 	// ================================
 
-	async createJob(
-		type: string,
-		metadata: Record<string, unknown>,
-	): Promise<string> {
+	async createJob(type: string, metadata: Record<string, unknown>): Promise<string> {
 		const jobId = randomUUID();
 		const job: AsyncJobEvent = {
 			jobId,
@@ -689,9 +672,7 @@ export class ApiBusIntegration {
 // Factory Function
 // ================================
 
-export function createApiBusIntegration(
-	logger: StructuredLogger,
-): ApiBusIntegration {
+export function createApiBusIntegration(logger: StructuredLogger): ApiBusIntegration {
 	return new ApiBusIntegration(logger);
 }
 
@@ -736,10 +717,7 @@ export class JobManager {
 	}
 
 	async startJob(options: JobOptions): Promise<string> {
-		const jobId = await this.apiBus.createJob(
-			options.type,
-			options.metadata || {},
-		);
+		const jobId = await this.apiBus.createJob(options.type, options.metadata || {});
 		await this.apiBus.startJob(jobId, options.estimatedDuration);
 		return jobId;
 	}

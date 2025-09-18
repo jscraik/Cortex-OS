@@ -25,8 +25,7 @@ export interface RetrievalPolicy {
 	overrides?: Record<
 		string,
 		{
-			processing?: Partial<{ maxPages: number | null }> &
-				Record<string, unknown>;
+			processing?: Partial<{ maxPages: number | null }> & Record<string, unknown>;
 		}
 	>;
 	security?: {
@@ -42,10 +41,7 @@ export interface LoadedPolicy {
 
 export async function loadRetrievalPolicy(
 	configPath = resolvePath(process.cwd(), 'config/retrieval.policy.json'),
-	schemaPath = resolvePath(
-		process.cwd(),
-		'schemas/retrieval.policy.schema.json',
-	),
+	schemaPath = resolvePath(process.cwd(), 'schemas/retrieval.policy.schema.json'),
 ): Promise<LoadedPolicy> {
 	const [configRaw, schemaRaw] = await Promise.all([
 		readFile(configPath, 'utf8'),
@@ -56,9 +52,7 @@ export async function loadRetrievalPolicy(
 	const schemaUnknown: unknown = JSON.parse(schemaRaw);
 
 	const ajv = new Ajv2020({ allErrors: true, strict: false });
-	const validate = ajv.compile<RetrievalPolicy>(
-		schemaUnknown as Record<string, unknown>,
-	);
+	const validate = ajv.compile<RetrievalPolicy>(schemaUnknown as Record<string, unknown>);
 	const valid = validate(policyUnknown);
 	if (!valid) {
 		const msg = ajv.errorsText(validate.errors, { separator: '\n' });
@@ -111,9 +105,7 @@ export async function planAndDispatch(
 	return dispatcher.dispatch(file, decision);
 }
 
-export function createDispatcherFromPolicy(
-	policy?: RetrievalPolicy,
-): ProcessingDispatcher {
+export function createDispatcherFromPolicy(policy?: RetrievalPolicy): ProcessingDispatcher {
 	if (policy?.dispatcher) {
 		const { timeout, maxChunkSize, enableParallel } = policy.dispatcher;
 		return new ProcessingDispatcher({

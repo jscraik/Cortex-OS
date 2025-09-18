@@ -290,12 +290,8 @@ describe('Structure Guard ESLint Rule', () => {
 	describe('CLI integration', () => {
 		it('should be compatible with just verify command', () => {
 			// This test documents the integration point for the agent toolkit
-			expect(noForbiddenImportsRule.meta.docs?.description).toContain(
-				'structure',
-			);
-			expect(noForbiddenImportsRule.meta.docs?.category).toBe(
-				'Architectural Integrity',
-			);
+			expect(noForbiddenImportsRule.meta.docs?.description).toContain('structure');
+			expect(noForbiddenImportsRule.meta.docs?.category).toBe('Architectural Integrity');
 		});
 	});
 });

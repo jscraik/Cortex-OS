@@ -84,9 +84,7 @@ export function createLogEntry(
 /**
  * Redact sensitive data from object
  */
-function redactSensitiveData(
-	obj: Record<string, unknown>,
-): Record<string, unknown> {
+function redactSensitiveData(obj: Record<string, unknown>): Record<string, unknown> {
 	const result = { ...obj };
 
 	for (const key of Object.keys(result)) {

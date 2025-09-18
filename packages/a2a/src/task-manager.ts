@@ -198,14 +198,10 @@ export class TaskManager extends EventEmitter {
 	async getTask(params: TaskGetParams): Promise<TaskResult> {
 		const task = await this.store.get(params.id);
 		if (!task) {
-			throw new StructuredError(
-				'TASK_NOT_FOUND',
-				`Task ${params.id} not found`,
-				{
-					taskId: params.id,
-					code: A2A_ERROR_CODES.TASK_NOT_FOUND,
-				},
-			);
+			throw new StructuredError('TASK_NOT_FOUND', `Task ${params.id} not found`, {
+				taskId: params.id,
+				code: A2A_ERROR_CODES.TASK_NOT_FOUND,
+			});
 		}
 
 		return {
@@ -223,14 +219,10 @@ export class TaskManager extends EventEmitter {
 	async cancelTask(params: TaskCancelParams): Promise<void> {
 		const task = await this.store.get(params.id);
 		if (!task) {
-			throw new StructuredError(
-				'TASK_NOT_FOUND',
-				`Task ${params.id} not found`,
-				{
-					taskId: params.id,
-					code: A2A_ERROR_CODES.TASK_NOT_FOUND,
-				},
-			);
+			throw new StructuredError('TASK_NOT_FOUND', `Task ${params.id} not found`, {
+				taskId: params.id,
+				code: A2A_ERROR_CODES.TASK_NOT_FOUND,
+			});
 		}
 
 		if (task.status === 'completed' || task.status === 'failed') {
@@ -263,9 +255,7 @@ export class TaskManager extends EventEmitter {
 		return new Promise((_, reject) => {
 			setTimeout(() => {
 				reject(
-					new TaskTimeoutError(
-						`Task ${taskId} timed out after ${this.config.taskTimeoutMs}ms`,
-					),
+					new TaskTimeoutError(`Task ${taskId} timed out after ${this.config.taskTimeoutMs}ms`),
 				);
 			}, this.config.taskTimeoutMs);
 		});
@@ -293,9 +283,7 @@ export const createTaskManager = (options?: {
 		maxConcurrentTasks: 10,
 	};
 
-	const config = options?.config
-		? { ...defaultConfig, ...options.config }
-		: defaultConfig;
+	const config = options?.config ? { ...defaultConfig, ...options.config } : defaultConfig;
 
 	return new TaskManager(options?.store, options?.processor, config);
 };

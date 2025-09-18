@@ -4,25 +4,17 @@ import { redactPII } from '../src/privacy/redact.js';
 describe('Enhanced privacy redaction', () => {
 	it('redacts various types of PII from text', () => {
 		// Test email redaction (existing functionality)
-		expect(redactPII('Contact me at test@example.com')).toBe(
-			'Contact me at [REDACTED]',
-		);
+		expect(redactPII('Contact me at test@example.com')).toBe('Contact me at [REDACTED]');
 
 		// Test phone number redaction (new functionality)
 		expect(redactPII('Call me at 555-123-4567')).toBe('Call me at [REDACTED]');
 
-		expect(redactPII('My number is (555) 123-4567')).toBe(
-			'My number is [REDACTED]',
-		);
+		expect(redactPII('My number is (555) 123-4567')).toBe('My number is [REDACTED]');
 
-		expect(redactPII('Reach out at +1-555-123-4567')).toBe(
-			'Reach out at +1-[REDACTED]',
-		);
+		expect(redactPII('Reach out at +1-555-123-4567')).toBe('Reach out at +1-[REDACTED]');
 
 		// Test credit card redaction (new functionality)
-		expect(redactPII('My card is 4111-1111-1111-1111')).toBe(
-			'My card is [REDACTED]',
-		);
+		expect(redactPII('My card is 4111-1111-1111-1111')).toBe('My card is [REDACTED]');
 
 		expect(redactPII('Card: 4111111111111111')).toBe('Card: [REDACTED]');
 

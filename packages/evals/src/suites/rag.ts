@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-	type GoldenDataset,
-	GoldenDatasetSchema,
-	type SuiteOutcome,
-} from '../types';
+import { type GoldenDataset, GoldenDatasetSchema, type SuiteOutcome } from '../types';
 
 export interface Embedder {
 	embed(texts: string[]): Promise<number[][]>;
@@ -12,11 +8,7 @@ export interface Embedder {
 export interface RagDeps {
 	createEmbedder(): Promise<Embedder>;
 	createMemoryStore(): unknown;
-	prepareStore(
-		dataset: GoldenDataset,
-		embedder: Embedder,
-		store: unknown,
-	): Promise<void>;
+	prepareStore(dataset: GoldenDataset, embedder: Embedder, store: unknown): Promise<void>;
 	runRetrievalEval(
 		dataset: GoldenDataset,
 		embedder: Embedder,
@@ -65,9 +57,7 @@ export async function runRagSuite(
 	};
 
 	const pass =
-		summary.ndcg >= th.ndcg &&
-		summary.recall >= th.recall &&
-		summary.precision >= th.precision;
+		summary.ndcg >= th.ndcg && summary.recall >= th.recall && summary.precision >= th.precision;
 
 	return {
 		name,
@@ -87,6 +77,5 @@ export async function runRagSuite(
 export const ragSuite = {
 	name: 'rag',
 	optionsSchema: RagOptions,
-	run: (name: string, opts: RagOptions, deps: RagDeps) =>
-		runRagSuite(name, opts, deps),
+	run: (name: string, opts: RagOptions, deps: RagDeps) => runRagSuite(name, opts, deps),
 };

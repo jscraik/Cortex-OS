@@ -13,14 +13,8 @@ export type Message = {
 
 export interface MLXAdapterApi {
 	isAvailable(): Promise<boolean>;
-	generateEmbedding(request: {
-		text: string;
-		model?: string;
-	}): Promise<Embedding>;
-	generateEmbeddings(request: {
-		texts: string[];
-		model?: string;
-	}): Promise<Embedding[]>;
+	generateEmbedding(request: { text: string; model?: string }): Promise<Embedding>;
+	generateEmbeddings(request: { texts: string[]; model?: string }): Promise<Embedding[]>;
 	generateChat(request: {
 		messages: Message[];
 		model?: string;

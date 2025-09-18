@@ -17,10 +17,7 @@ const MLX_MODEL_KEY = 'QWEN_SMALL' as const;
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 // ...existing code...
-import {
-	createPRPOrchestrator,
-	type PRPOrchestrator,
-} from '../orchestrator.js';
+import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 describe('LLM Integration - TDD Implementation', () => {
 	let orchestrator: PRPOrchestrator;
@@ -158,10 +155,7 @@ describe('LLM Integration - TDD Implementation', () => {
 			const blueprint = {
 				title: 'AI Assistant',
 				description: 'Build an AI assistant',
-				requirements: [
-					'Natural language processing',
-					'User-friendly interface',
-				],
+				requirements: ['Natural language processing', 'User-friendly interface'],
 			};
 
 			const result = await orchestrator.executePRPCycle(blueprint);
@@ -259,10 +253,7 @@ function createLLMNeuron(
 	dependencies: string[];
 	tools: string[];
 	requiresLLM: boolean;
-	execute: (
-		state: LLMNeuronState,
-		context: LLMNeuronContext,
-	) => Promise<LLMNeuronResult>;
+	execute: (state: LLMNeuronState, context: LLMNeuronContext) => Promise<LLMNeuronResult>;
 } {
 	return {
 		id,

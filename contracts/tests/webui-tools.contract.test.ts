@@ -32,15 +32,13 @@ describe('webui MCP tool contracts', () => {
 	});
 
 	it('rejects unknown tool', () => {
-		expect(() => validateWebuiToolInput('nope', {})).toThrowError(
-			WebuiToolError,
-		);
+		expect(() => validateWebuiToolInput('nope', {})).toThrowError(WebuiToolError);
 	});
 
 	it('enforces submit_form fields non-empty', () => {
-		expect(() =>
-			validateWebuiToolInput('submit_form', { formId: 'f1', fields: {} }),
-		).toThrowError(WebuiToolError);
+		expect(() => validateWebuiToolInput('submit_form', { formId: 'f1', fields: {} })).toThrowError(
+			WebuiToolError,
+		);
 	});
 
 	it('validates render_chart series structure', () => {

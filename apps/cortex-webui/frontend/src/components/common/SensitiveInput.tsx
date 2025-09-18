@@ -40,11 +40,7 @@ const SensitiveInput: React.FC<SensitiveInputProps> = ({
 					type="button"
 					className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600"
 					onClick={() => setIsRevealed(!isRevealed)}
-					aria-label={
-						isRevealed
-							? 'Hide sensitive information'
-							: 'Reveal sensitive information'
-					}
+					aria-label={isRevealed ? 'Hide sensitive information' : 'Reveal sensitive information'}
 				>
 					{isRevealed ? (
 						<svg

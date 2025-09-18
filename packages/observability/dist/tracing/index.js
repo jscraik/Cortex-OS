@@ -7,16 +7,10 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
-import {
-	ConsoleMetricExporter,
-	PeriodicExportingMetricReader,
-} from '@opentelemetry/sdk-metrics';
+import { ConsoleMetricExporter, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
-import {
-	ATTR_SERVICE_NAME,
-	ATTR_SERVICE_VERSION,
-} from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { generateRunId } from '../index.js';
 
 const tracer = trace.getTracer('@cortex-os/observability');
@@ -102,9 +96,7 @@ export async function withSpan(name, fn, options) {
 					code: SpanStatusCode.ERROR,
 					message: error instanceof Error ? error.message : String(error),
 				});
-				span.recordException(
-					error instanceof Error ? error : new Error(String(error)),
-				);
+				span.recordException(error instanceof Error ? error : new Error(String(error)));
 				throw error;
 			} finally {
 				span.end();

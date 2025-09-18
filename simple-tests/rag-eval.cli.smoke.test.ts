@@ -6,20 +6,15 @@ import { describe, expect, it, vi } from 'vitest';
 describe.skip('rag eval CLI smoke', async () => {
 	it('runs and produces JSON with metrics', async () => {
 		const mod = await import('../apps/cortex-cli/src/commands/rag/eval');
-		const dataset = path.resolve(
-			__dirname,
-			'./fixtures/golden.rag.dataset.json',
-		);
+		const dataset = path.resolve(__dirname, './fixtures/golden.rag.dataset.json');
 
 		// Build a tiny runner that calls the action with our params by reusing the exported command.
 		const cmd = mod.ragEval;
 		let buffer = '';
-		const spy = vi
-			.spyOn(process.stdout, 'write')
-			.mockImplementation((chunk: unknown) => {
-				buffer += String(chunk);
-				return true as unknown as boolean;
-			});
+		const spy = vi.spyOn(process.stdout, 'write').mockImplementation((chunk: unknown) => {
+			buffer += String(chunk);
+			return true as unknown as boolean;
+		});
 		await cmd.parseAsync(['eval', '--dataset', dataset, '--json']);
 		spy.mockRestore();
 

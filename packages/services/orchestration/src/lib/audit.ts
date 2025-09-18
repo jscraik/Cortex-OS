@@ -18,9 +18,7 @@ export function auditEvent(
 }
 let memoryBuffer: any[] | null = null;
 let memoryBufferLimit = 1000;
-let externalPublisher:
-	| ((evt: ReturnType<typeof auditEvent>) => Promise<void> | void)
-	| null = null;
+let externalPublisher: ((evt: ReturnType<typeof auditEvent>) => Promise<void> | void) | null = null;
 
 export function enableMemoryAuditBuffer(limit = 1000) {
 	memoryBuffer = [];
@@ -37,10 +35,7 @@ export function setAuditPublisher(
 }
 
 function getAuditLogPath() {
-	return (
-		process.env.CORTEX_AUDIT_LOG ||
-		path.join(process.cwd(), 'report', 'audit.log')
-	);
+	return process.env.CORTEX_AUDIT_LOG || path.join(process.cwd(), 'report', 'audit.log');
 }
 
 export async function record(evt: ReturnType<typeof auditEvent>) {
@@ -68,10 +63,7 @@ export async function record(evt: ReturnType<typeof auditEvent>) {
 		await fs.appendFile(file, `${JSON.stringify(evt)}\n`, 'utf8');
 	} catch (e) {
 		// Fallback to console if file write fails
-		console.warn(
-			'Audit file logging failed; falling back to console:',
-			(e as any)?.message,
-		);
+		console.warn('Audit file logging failed; falling back to console:', (e as any)?.message);
 		console.log('Audit event:', evt);
 	}
 	// Publish externally if configured (e.g., A2A bus, OTLP bridge)

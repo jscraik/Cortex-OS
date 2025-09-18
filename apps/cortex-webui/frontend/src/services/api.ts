@@ -38,10 +38,7 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
 // Auth APIs
 export const authAPI = {
-	login: async (
-		email: string,
-		password: string,
-	): Promise<{ user: User; token: string }> => {
+	login: async (email: string, password: string): Promise<{ user: User; token: string }> => {
 		return apiCall('/auth/login', {
 			method: 'POST',
 			body: JSON.stringify({ email, password }),
@@ -83,10 +80,7 @@ export const conversationAPI = {
 		});
 	},
 
-	update: async (
-		id: string,
-		updates: Partial<Conversation>,
-	): Promise<Conversation> => {
+	update: async (id: string, updates: Partial<Conversation>): Promise<Conversation> => {
 		return apiCall(`/conversations/${id}`, {
 			method: 'PUT',
 			body: JSON.stringify(updates),

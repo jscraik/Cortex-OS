@@ -16,11 +16,7 @@ export function ttlToMs(ttl: string): number | null {
 /**
  * Determine if a memory is expired given its creation time and TTL.
  */
-export function isExpired(
-	createdAtISO: string,
-	ttl: string,
-	nowISO: string,
-): boolean {
+export function isExpired(createdAtISO: string, ttl: string, nowISO: string): boolean {
 	const ttlMs = ttlToMs(ttl);
 	if (ttlMs === null) return false;
 	const created = new Date(createdAtISO).getTime();

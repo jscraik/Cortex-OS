@@ -52,10 +52,7 @@ describe('CitationBundler', () => {
 	describe('per-claim citations', () => {
 		it('should attach citations to specific claims when provided', () => {
 			const bundler = new CitationBundler();
-			const claims = [
-				'Greenhouse gases cause climate change',
-				'CO2 levels are rising',
-			];
+			const claims = ['Greenhouse gases cause climate change', 'CO2 levels are rising'];
 
 			const result = bundler.bundleWithClaims(mockChunks, claims);
 
@@ -64,9 +61,7 @@ describe('CitationBundler', () => {
 			if (result.claimCitations) {
 				expect(result.claimCitations[0]).toMatchObject({
 					claim: 'Greenhouse gases cause climate change',
-					citations: expect.arrayContaining([
-						expect.objectContaining({ id: 'chunk-1' }),
-					]),
+					citations: expect.arrayContaining([expect.objectContaining({ id: 'chunk-1' })]),
 				});
 			}
 		});

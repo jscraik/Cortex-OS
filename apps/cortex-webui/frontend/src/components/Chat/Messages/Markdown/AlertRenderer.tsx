@@ -154,12 +154,8 @@ const AlertRenderer: React.FC<AlertRendererProps> = ({
 	onSourceClick,
 }) => {
 	return (
-		<div
-			className={`border-l-4 pl-2.5 ${alertStyles[alert.type].border} my-0.5`}
-		>
-			<div
-				className={`${alertStyles[alert.type].text} items-center flex gap-1 py-1.5`}
-			>
+		<div className={`border-l-4 pl-2.5 ${alertStyles[alert.type].border} my-0.5`}>
+			<div className={`${alertStyles[alert.type].text} items-center flex gap-1 py-1.5`}>
 				{alertStyles[alert.type].icon}
 				<span className="font-medium">{alert.type}</span>
 			</div>

@@ -49,15 +49,9 @@ export const AgentCoordinationCompletedSchema = z.object({
 	}),
 });
 
-export type AgentCoordinationRequested = z.infer<
-	typeof AgentCoordinationRequestedSchema
->;
-export type AgentCoordinationProgress = z.infer<
-	typeof AgentCoordinationProgressSchema
->;
-export type AgentCoordinationCompleted = z.infer<
-	typeof AgentCoordinationCompletedSchema
->;
+export type AgentCoordinationRequested = z.infer<typeof AgentCoordinationRequestedSchema>;
+export type AgentCoordinationProgress = z.infer<typeof AgentCoordinationProgressSchema>;
+export type AgentCoordinationCompleted = z.infer<typeof AgentCoordinationCompletedSchema>;
 
 // Workflow step definition
 export interface WorkflowStep {
@@ -97,10 +91,7 @@ interface WorkflowExecution {
 export interface CoordinationHandler {
 	canHandle(workflowType: string): boolean;
 	createWorkflow(payload: Record<string, unknown>): WorkflowDefinition;
-	processResult(
-		stepId: string,
-		result: Record<string, unknown>,
-	): Record<string, unknown>;
+	processResult(stepId: string, result: Record<string, unknown>): Record<string, unknown>;
 }
 
 // Example coordination handlers
@@ -150,10 +141,7 @@ export class DocumentProcessingWorkflow implements CoordinationHandler {
 		};
 	}
 
-	processResult(
-		stepId: string,
-		result: Record<string, unknown>,
-	): Record<string, unknown> {
+	processResult(stepId: string, result: Record<string, unknown>): Record<string, unknown> {
 		// Process and transform results based on step
 		switch (stepId) {
 			case 'extract':
@@ -197,10 +185,7 @@ export class AgentB extends EventEmitter {
 		this.emit('stopped', this.agentId);
 	}
 
-	registerCoordinationHandler(
-		workflowType: string,
-		handler: CoordinationHandler,
-	): void {
+	registerCoordinationHandler(workflowType: string, handler: CoordinationHandler): void {
 		this.handlers.set(workflowType, handler);
 		this.emit('handlerRegistered', workflowType);
 	}
@@ -213,9 +198,7 @@ export class AgentB extends EventEmitter {
 		const handler = this.handlers.get(request.data.workflowType);
 
 		if (!handler) {
-			throw new Error(
-				`No handler found for workflow type: ${request.data.workflowType}`,
-			);
+			throw new Error(`No handler found for workflow type: ${request.data.workflowType}`);
 		}
 
 		// Create workflow definition
@@ -266,8 +249,7 @@ export class AgentB extends EventEmitter {
 				data: {
 					coordinationId: execution.id,
 					result: Object.fromEntries(execution.results),
-					executionTime:
-						execution.endTime.getTime() - execution.startTime.getTime(),
+					executionTime: execution.endTime.getTime() - execution.startTime.getTime(),
 					participants: execution.definition.steps.map((s) => s.agent),
 				},
 			};
@@ -297,10 +279,7 @@ export class AgentB extends EventEmitter {
 		return executableSteps;
 	}
 
-	private async executeStep(
-		execution: WorkflowExecution,
-		step: WorkflowStep,
-	): Promise<void> {
+	private async executeStep(execution: WorkflowExecution, step: WorkflowStep): Promise<void> {
 		execution.currentStep = step.id;
 
 		// Emit progress event
@@ -312,9 +291,7 @@ export class AgentB extends EventEmitter {
 			time: new Date().toISOString(),
 			data: {
 				coordinationId: execution.id,
-				progress:
-					(execution.completedSteps.size / execution.definition.steps.length) *
-					100,
+				progress: (execution.completedSteps.size / execution.definition.steps.length) * 100,
 				currentStep: step.name,
 				message: `Executing step: ${step.name}`,
 			},
@@ -331,9 +308,7 @@ export class AgentB extends EventEmitter {
 			const handler = this.handlers.get(
 				execution.definition.name.toLowerCase().replace(/\s+/g, '.'),
 			);
-			const processedResult = handler
-				? handler.processResult(step.id, result)
-				: result;
+			const processedResult = handler ? handler.processResult(step.id, result) : result;
 
 			// Store the result
 			execution.results.set(step.id, processedResult);
@@ -341,17 +316,12 @@ export class AgentB extends EventEmitter {
 
 			this.emit('stepCompleted', step.id, processedResult);
 		} catch (error) {
-			execution.errors.set(
-				step.id,
-				error instanceof Error ? error.message : String(error),
-			);
+			execution.errors.set(step.id, error instanceof Error ? error.message : String(error));
 			throw error;
 		}
 	}
 
-	private async simulateStepExecution(
-		step: WorkflowStep,
-	): Promise<Record<string, unknown>> {
+	private async simulateStepExecution(step: WorkflowStep): Promise<Record<string, unknown>> {
 		// Simulate execution time based on step
 		const executionTime = step.timeout || 1000;
 		await new Promise((resolve) => setTimeout(resolve, executionTime / 10)); // Faster for demo

@@ -46,13 +46,11 @@ export function createWorker(opts: WorkerOptions) {
 			const file = opts.queue.shift();
 			if (!file) break;
 			const text = await fs.readFile(file, 'utf8');
-			const chunks: Chunk[] = byChars(text, opts.chunkSize, opts.overlap).map(
-				(t, i) => ({
-					id: `${path.basename(file)}#${i}`,
-					text: t,
-					source: file,
-				}),
-			);
+			const chunks: Chunk[] = byChars(text, opts.chunkSize, opts.overlap).map((t, i) => ({
+				id: `${path.basename(file)}#${i}`,
+				text: t,
+				source: file,
+			}));
 			await opts.pipeline.ingest(chunks);
 		}
 	};

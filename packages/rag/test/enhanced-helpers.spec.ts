@@ -1,11 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-	type Document,
-	embedQuery,
-	generateAnswer,
-	rerankDocs,
-	retrieveDocs,
-} from '../src/lib';
+import { type Document, embedQuery, generateAnswer, rerankDocs, retrieveDocs } from '../src/lib';
 
 describe('enhanced pipeline helpers', () => {
 	it('embeds query', async () => {
@@ -35,9 +29,7 @@ describe('enhanced pipeline helpers', () => {
 			{ id: '2', content: 'b' },
 		];
 		const result = await rerankDocs(reranker, 'q', docs, 1);
-		expect(result).toEqual([
-			{ id: '2', content: 'b', metadata: undefined, similarity: 0.9 },
-		]);
+		expect(result).toEqual([{ id: '2', content: 'b', metadata: undefined, similarity: 0.9 }]);
 	});
 
 	it('generates answer with context', async () => {

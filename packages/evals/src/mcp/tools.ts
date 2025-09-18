@@ -45,9 +45,7 @@ const GetEvalResultsInputSchema = z.object({
 const CompareModelsInputSchema = z.object({
 	models: z.array(z.string()).min(2),
 	suiteId: z.string(),
-	metrics: z
-		.array(z.enum(['accuracy', 'latency', 'cost', 'safety']))
-		.optional(),
+	metrics: z.array(z.enum(['accuracy', 'latency', 'cost', 'safety'])).optional(),
 });
 
 const ValidateOutputInputSchema = z.object({

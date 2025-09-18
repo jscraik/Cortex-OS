@@ -1,9 +1,5 @@
 import type { Memory } from '../domain/types.js';
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from '../ports/MemoryStore.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 type LocalMemoryOptions = {
 	baseUrl?: string; // e.g., http://localhost:3002/api/v1
@@ -89,8 +85,7 @@ export class LocalMemoryStore implements MemoryStore {
 			'http://localhost:3010/api/v1'
 		).replace(/\/$/, '');
 		this.apiKey = opts.apiKey ?? process.env.LOCAL_MEMORY_API_KEY;
-		this.defaultNs =
-			opts.defaultNamespace ?? process.env.LOCAL_MEMORY_NAMESPACE ?? undefined;
+		this.defaultNs = opts.defaultNamespace ?? process.env.LOCAL_MEMORY_NAMESPACE ?? undefined;
 		this.timeoutMs = opts.timeoutMs ?? 10_000;
 	}
 
@@ -101,17 +96,13 @@ export class LocalMemoryStore implements MemoryStore {
 		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
 		try {
 			// Use PUT to upsert by id when available
-			const res = await fetch(
-				`${this.baseUrl}/memories/${encodeURIComponent(m.id)}`,
-				{
-					method: 'PUT',
-					headers: toHeaders(this.apiKey),
-					body: JSON.stringify(doc),
-					signal: ctrl.signal,
-				},
-			);
-			if (!res.ok)
-				throw new Error(`local-memory: upsert failed: ${res.status}`);
+			const res = await fetch(`${this.baseUrl}/memories/${encodeURIComponent(m.id)}`, {
+				method: 'PUT',
+				headers: toHeaders(this.apiKey),
+				body: JSON.stringify(doc),
+				signal: ctrl.signal,
+			});
+			if (!res.ok) throw new Error(`local-memory: upsert failed: ${res.status}`);
 			const raw: unknown = await res.json().catch(() => ({}));
 			const parsed = (raw ?? {}) as LocalDocEnvelope;
 			return fromLocalDoc(parsed.data ?? parsed) ?? m;
@@ -167,16 +158,14 @@ export class LocalMemoryStore implements MemoryStore {
 			const url = new URL(`${this.baseUrl}/memories/search`);
 			url.searchParams.set('text', q.text);
 			url.searchParams.set('topK', String(q.topK));
-			if (q.filterTags?.length)
-				url.searchParams.set('tags', q.filterTags.join(','));
+			if (q.filterTags?.length) url.searchParams.set('tags', q.filterTags.join(','));
 			if (namespace ?? this.defaultNs)
 				url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
 			const res = await fetch(url, {
 				headers: toHeaders(this.apiKey),
 				signal: ctrl.signal,
 			});
-			if (!res.ok)
-				throw new Error(`local-memory: searchByText failed: ${res.status}`);
+			if (!res.ok) throw new Error(`local-memory: searchByText failed: ${res.status}`);
 			const raw: unknown = await res.json().catch(() => ({}));
 			const parsed = (raw ?? {}) as LocalDocEnvelope | LocalDocEnvelope[];
 			let list: LocalDocEnvelope[] = [];

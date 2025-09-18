@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	toolErrorSchema,
-	toolRequestSchema,
-	toolResponseSchema,
-} from '../src/tool-schemas.js';
+import { toolErrorSchema, toolRequestSchema, toolResponseSchema } from '../src/tool-schemas.js';
 import {
 	validateToolErrorResponse,
 	validateToolRequest,
@@ -12,9 +8,7 @@ import {
 
 describe('tool request schema', () => {
 	it('exposes JSON Schema metadata', () => {
-		expect(toolRequestSchema.$schema).toBe(
-			'https://json-schema.org/draft/2020-12/schema',
-		);
+		expect(toolRequestSchema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
 		expect(toolRequestSchema.$id).toContain('tool-request');
 	});
 
@@ -43,17 +37,13 @@ describe('tool request schema', () => {
 
 		const result = validateToolRequest(payload);
 		expect(result.success).toBe(false);
-		expect(result.errors?.some((msg) => msg.includes('params.name'))).toBe(
-			true,
-		);
+		expect(result.errors?.some((msg) => msg.includes('params.name'))).toBe(true);
 	});
 });
 
 describe('tool response schema', () => {
 	it('exposes JSON Schema metadata', () => {
-		expect(toolResponseSchema.$schema).toBe(
-			'https://json-schema.org/draft/2020-12/schema',
-		);
+		expect(toolResponseSchema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
 		expect(toolResponseSchema.$id).toContain('tool-response');
 	});
 
@@ -96,9 +86,7 @@ describe('tool response schema', () => {
 
 describe('tool error schema', () => {
 	it('exposes JSON Schema metadata', () => {
-		expect(toolErrorSchema.$schema).toBe(
-			'https://json-schema.org/draft/2020-12/schema',
-		);
+		expect(toolErrorSchema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
 		expect(toolErrorSchema.$id).toContain('tool-error');
 	});
 

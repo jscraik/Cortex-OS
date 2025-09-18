@@ -1,10 +1,6 @@
 'use client';
 // Helper to compute new languages array
-function toggleLanguage(
-	existing: string[] | undefined,
-	lang: string,
-	add: boolean,
-): string[] {
+function toggleLanguage(existing: string[] | undefined, lang: string, add: boolean): string[] {
 	const base = Array.isArray(existing) ? existing : [];
 	if (add) {
 		return base.includes(lang) ? base : [...base, lang];
@@ -38,10 +34,7 @@ interface ToolsSettingsProps {
 }
 
 const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
-	const settings = useSettingsStore() as unknown as { tools?: Tool[] } & Record<
-		string,
-		unknown
-	>;
+	const settings = useSettingsStore() as unknown as { tools?: Tool[] } & Record<string, unknown>;
 	const [loaded, setLoaded] = useState(false);
 
 	// Generate unique ID for tab
@@ -101,30 +94,19 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 
 	const toggleTool = (toolId: string) => {
 		setTools(
-			tools.map((tool) =>
-				tool.id === toolId ? { ...tool, enabled: !tool.enabled } : tool,
-			),
+			tools.map((tool) => (tool.id === toolId ? { ...tool, enabled: !tool.enabled } : tool)),
 		);
 	};
 
-	const updateToolConfig = (
-		toolId: string,
-		config: Record<string, unknown>,
-	) => {
-		setTools(
-			tools.map((tool) => (tool.id === toolId ? { ...tool, config } : tool)),
-		);
+	const updateToolConfig = (toolId: string, config: Record<string, unknown>) => {
+		setTools(tools.map((tool) => (tool.id === toolId ? { ...tool, config } : tool)));
 	};
 
 	// Helper renderer to avoid deep nesting inside JSX
 	const renderLanguageCheckboxes = (tool: Tool) => {
 		return ['python', 'javascript', 'bash'].map((lang) => {
-			const checked =
-				Array.isArray(tool.config?.languages) &&
-				tool.config.languages.includes(lang);
-			const existing = Array.isArray(tool.config?.languages)
-				? tool.config.languages
-				: [];
+			const checked = Array.isArray(tool.config?.languages) && tool.config.languages.includes(lang);
+			const existing = Array.isArray(tool.config?.languages) ? tool.config.languages : [];
 			const onToggle = (isChecked: boolean) => {
 				updateToolConfig(tool.id, {
 					...tool.config,
@@ -155,8 +137,8 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 				<div>
 					<div className="text-base font-medium mb-3">Available Tools</div>
 					<div className="text-xs text-gray-500 mb-4">
-						Enable or disable tools that can be used with AI models. Configure
-						each tool according to your needs.
+						Enable or disable tools that can be used with AI models. Configure each tool according
+						to your needs.
 					</div>
 
 					<div className="space-y-4">
@@ -168,17 +150,13 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 								<div className="flex items-start justify-between">
 									<div className="flex-1">
 										<div className="font-medium">{tool.name}</div>
-										<div className="text-xs text-gray-500 mt-1">
-											{tool.description}
-										</div>
+										<div className="text-xs text-gray-500 mt-1">{tool.description}</div>
 									</div>
 									<button
 										type="button"
 										onClick={() => toggleTool(tool.id)}
 										className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-											tool.enabled
-												? 'bg-blue-600'
-												: 'bg-gray-300 dark:bg-gray-600'
+											tool.enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 										}`}
 									>
 										<span
@@ -193,11 +171,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 									<div className="mt-3 flex space-x-2">
 										<button
 											type="button"
-											onClick={() =>
-												setShowToolConfig(
-													showToolConfig === tool.id ? null : tool.id,
-												)
-											}
+											onClick={() => setShowToolConfig(showToolConfig === tool.id ? null : tool.id)}
 											className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
 										>
 											{showToolConfig === tool.id ? 'Hide' : 'Configure'}
@@ -245,10 +219,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 														const inputId = `${tool.id}-results-limit`;
 														return (
 															<>
-																<label
-																	htmlFor={inputId}
-																	className="block text-xs font-medium mb-1"
-																>
+																<label htmlFor={inputId} className="block text-xs font-medium mb-1">
 																	Results Limit
 																</label>
 																<input
@@ -260,10 +231,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 																	onChange={(e) =>
 																		updateToolConfig(tool.id, {
 																			...tool.config,
-																			resultsLimit: parseInt(
-																				e.target.value,
-																				10,
-																			),
+																			resultsLimit: parseInt(e.target.value, 10),
 																		})
 																	}
 																	className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -279,9 +247,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 											<div className="space-y-3">
 												<div>
 													<fieldset className="flex flex-wrap gap-2">
-														<legend className="sr-only">
-															Supported Languages
-														</legend>
+														<legend className="sr-only">Supported Languages</legend>
 														{renderLanguageCheckboxes(tool)}
 													</fieldset>
 												</div>
@@ -324,10 +290,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 														const modelId = `${tool.id}-model`;
 														return (
 															<>
-																<label
-																	htmlFor={modelId}
-																	className="block text-xs font-medium mb-1"
-																>
+																<label htmlFor={modelId} className="block text-xs font-medium mb-1">
 																	Default Model
 																</label>
 																<select
@@ -343,9 +306,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 																>
 																	<option value="dall-e-3">DALL-E 3</option>
 																	<option value="dall-e-2">DALL-E 2</option>
-																	<option value="stable-diffusion">
-																		Stable Diffusion
-																	</option>
+																	<option value="stable-diffusion">Stable Diffusion</option>
 																</select>
 															</>
 														);
@@ -356,10 +317,7 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 														const sizeId = `${tool.id}-size`;
 														return (
 															<>
-																<label
-																	htmlFor={sizeId}
-																	className="block text-xs font-medium mb-1"
-																>
+																<label htmlFor={sizeId} className="block text-xs font-medium mb-1">
 																	Image Size
 																</label>
 																<select
@@ -384,14 +342,9 @@ const ToolsSettings: React.FC<ToolsSettingsProps> = ({ saveSettings }) => {
 											</div>
 										)}
 
-										{![
-											'web-search',
-											'code-interpreter',
-											'image-generator',
-										].includes(tool.id) && (
+										{!['web-search', 'code-interpreter', 'image-generator'].includes(tool.id) && (
 											<div className="text-xs text-gray-500">
-												No specific configuration options available for this
-												tool.
+												No specific configuration options available for this tool.
 											</div>
 										)}
 									</div>

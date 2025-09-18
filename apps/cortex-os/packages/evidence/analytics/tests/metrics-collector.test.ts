@@ -140,9 +140,7 @@ describe('MetricsCollector', () => {
 			const { agentMetrics } = metricsCollectedSpy.mock.calls[0][0];
 
 			// Should have metrics from LangGraph, CrewAI, and AutoGen
-			const frameworks = new Set(
-				agentMetrics.map((m: AgentMetrics) => m.framework),
-			);
+			const frameworks = new Set(agentMetrics.map((m: AgentMetrics) => m.framework));
 			expect(frameworks.has('LangGraph')).toBe(true);
 			expect(frameworks.has('CrewAI')).toBe(true);
 			expect(frameworks.has('AutoGen')).toBe(true);

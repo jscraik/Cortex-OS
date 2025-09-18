@@ -26,9 +26,7 @@ interface TestRunResult {
 /**
  * Validates TDD cycle completion (Red → Green)
  */
-export const validateTDDCycle = async (
-	state: PRPState,
-): Promise<TDDValidationResult> => {
+export const validateTDDCycle = async (state: PRPState): Promise<TDDValidationResult> => {
 	const testFiles = await findTestFiles();
 	const testRunResult = await runTestsWithCoverage();
 	const redGreenEvidence = await checkRedGreenEvidence(state);
@@ -94,8 +92,7 @@ const runTestsWithCoverage = async (): Promise<TestRunResult> => {
 
 	try {
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-		const testScript =
-			packageJson.scripts?.test || packageJson.scripts?.['test:coverage'];
+		const testScript = packageJson.scripts?.test || packageJson.scripts?.['test:coverage'];
 
 		if (!testScript) {
 			return { success: false, output: 'No test script found in package.json' };
@@ -118,8 +115,7 @@ const runTestsWithCoverage = async (): Promise<TestRunResult> => {
 	} catch (error) {
 		return {
 			success: false,
-			output:
-				error instanceof Error ? error.message : 'Unknown test execution error',
+			output: error instanceof Error ? error.message : 'Unknown test execution error',
 		};
 	}
 };
@@ -160,9 +156,7 @@ const checkRedGreenEvidence = async (state: PRPState): Promise<boolean> => {
 	} catch {
 		// If git is not available or fails, check state for test evidence
 		return state.evidence.some(
-			(e) =>
-				e.type === 'test' &&
-				(e.content.includes('red') || e.content.includes('green')),
+			(e) => e.type === 'test' && (e.content.includes('red') || e.content.includes('green')),
 		);
 	}
 };

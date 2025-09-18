@@ -205,17 +205,17 @@ export class BuildNode {
 			axe,
 			details: hasFrontend
 				? {
-					lighthouse: {
-						performance: 94,
-						accessibility: 96,
-						bestPractices: 92,
-						seo: 98,
-					},
-					axe: {
-						violations: 2,
-						severity: 'minor',
-					},
-				}
+						lighthouse: {
+							performance: 94,
+							accessibility: 96,
+							bestPractices: 92,
+							seo: 98,
+						},
+						axe: {
+							violations: 2,
+							severity: 'minor',
+						},
+					}
 				: { reason: 'frontend requirements missing' },
 		};
 	}

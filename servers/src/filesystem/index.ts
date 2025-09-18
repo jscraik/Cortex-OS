@@ -34,9 +34,7 @@ import { getValidRootDirectories } from './roots-utils.js';
 // Command line argument parsing
 const args = process.argv.slice(2);
 if (args.length === 0) {
-	console.error(
-		'Usage: mcp-server-filesystem [allowed-directory] [additional-directories...]',
-	);
+	console.error('Usage: mcp-server-filesystem [allowed-directory] [additional-directories...]');
 	console.error('Note: Allowed directories can be provided via:');
 	console.error('  1. Command-line arguments (shown above)');
 	console.error('  2. MCP roots protocol (if client supports it)');
@@ -85,14 +83,8 @@ setAllowedDirectories(allowedDirectories);
 // Schema definitions
 const ReadTextFileArgsSchema = z.object({
 	path: z.string(),
-	tail: z
-		.number()
-		.optional()
-		.describe('If provided, returns only the last N lines of the file'),
-	head: z
-		.number()
-		.optional()
-		.describe('If provided, returns only the first N lines of the file'),
+	tail: z.number().optional().describe('If provided, returns only the last N lines of the file'),
+	head: z.number().optional().describe('If provided, returns only the first N lines of the file'),
 });
 
 const ReadMediaFileArgsSchema = z.object({
@@ -121,10 +113,7 @@ const EditOperation = z.object({
 const EditFileArgsSchema = z.object({
 	path: z.string(),
 	edits: z.array(EditOperation),
-	dryRun: z
-		.boolean()
-		.default(false)
-		.describe('Preview changes using git-style diff format'),
+	dryRun: z.boolean().default(false).describe('Preview changes using git-style diff format'),
 });
 
 const CreateDirectoryArgsSchema = z.object({
@@ -278,9 +267,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 					'Results clearly distinguish between files and directories with [FILE] and [DIR] ' +
 					'prefixes. This tool is useful for understanding directory structure and ' +
 					'finding specific files within a directory. Only works within allowed directories.',
-				inputSchema: zodToJsonSchema(
-					ListDirectoryWithSizesArgsSchema,
-				) as ToolInput,
+				inputSchema: zodToJsonSchema(ListDirectoryWithSizesArgsSchema) as ToolInput,
 			},
 			{
 				name: 'directory_tree',
@@ -345,16 +332,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'read_text_file': {
 				const parsed = ReadTextFileArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for read_text_file: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for read_text_file: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
 
 				if (parsed.data.head && parsed.data.tail) {
-					throw new Error(
-						'Cannot specify both head and tail parameters simultaneously',
-					);
+					throw new Error('Cannot specify both head and tail parameters simultaneously');
 				}
 
 				if (parsed.data.tail) {
@@ -381,9 +364,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'read_media_file': {
 				const parsed = ReadMediaFileArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for read_media_file: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for read_media_file: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
 				const extension = path.extname(validPath).toLowerCase();
@@ -415,9 +396,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'read_multiple_files': {
 				const parsed = ReadMultipleFilesArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for read_multiple_files: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for read_multiple_files: ${parsed.error}`);
 				}
 				const results = await Promise.all(
 					parsed.data.paths.map(async (filePath: string) => {
@@ -426,8 +405,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 							const content = await readFileContent(validPath);
 							return `${filePath}:\n${content}\n`;
 						} catch (error) {
-							const errorMessage =
-								error instanceof Error ? error.message : String(error);
+							const errorMessage = error instanceof Error ? error.message : String(error);
 							return `${filePath}: Error - ${errorMessage}`;
 						}
 					}),
@@ -445,9 +423,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 				const validPath = await validatePath(parsed.data.path);
 				await writeFileContent(validPath, parsed.data.content);
 				return {
-					content: [
-						{ type: 'text', text: `Successfully wrote to ${parsed.data.path}` },
-					],
+					content: [{ type: 'text', text: `Successfully wrote to ${parsed.data.path}` }],
 				};
 			}
 
@@ -457,11 +433,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 					throw new Error(`Invalid arguments for edit_file: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
-				const result = await applyFileEdits(
-					validPath,
-					parsed.data.edits,
-					parsed.data.dryRun,
-				);
+				const result = await applyFileEdits(validPath, parsed.data.edits, parsed.data.dryRun);
 				return {
 					content: [{ type: 'text', text: result }],
 				};
@@ -470,9 +442,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'create_directory': {
 				const parsed = CreateDirectoryArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for create_directory: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for create_directory: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
 				await fs.mkdir(validPath, { recursive: true });
@@ -489,17 +459,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'list_directory': {
 				const parsed = ListDirectoryArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for list_directory: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for list_directory: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
 				const entries = await fs.readdir(validPath, { withFileTypes: true });
 				const formatted = entries
-					.map(
-						(entry) =>
-							`${entry.isDirectory() ? '[DIR]' : '[FILE]'} ${entry.name}`,
-					)
+					.map((entry) => `${entry.isDirectory() ? '[DIR]' : '[FILE]'} ${entry.name}`)
 					.join('\n');
 				return {
 					content: [{ type: 'text', text: formatted }],
@@ -509,9 +474,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'list_directory_with_sizes': {
 				const parsed = ListDirectoryWithSizesArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for list_directory_with_sizes: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for list_directory_with_sizes: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
 				const entries = await fs.readdir(validPath, { withFileTypes: true });
@@ -583,9 +546,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'directory_tree': {
 				const parsed = DirectoryTreeArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for directory_tree: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for directory_tree: ${parsed.error}`);
 				}
 
 				interface TreeEntry {
@@ -604,10 +565,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 					const result: TreeEntry[] = [];
 
 					for (const entry of entries) {
-						const relativePath = path.relative(
-							rootPath,
-							path.join(currentPath, entry.name),
-						);
+						const relativePath = path.relative(rootPath, path.join(currentPath, entry.name));
 						const shouldExclude = excludePatterns.some((pattern) => {
 							if (pattern.includes('*')) {
 								return minimatch(relativePath, pattern, { dot: true });
@@ -670,9 +628,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'search_files': {
 				const parsed = SearchFilesArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for search_files: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for search_files: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
 				const results = await searchFilesWithValidation(
@@ -685,8 +641,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 					content: [
 						{
 							type: 'text',
-							text:
-								results.length > 0 ? results.join('\n') : 'No matches found',
+							text: results.length > 0 ? results.join('\n') : 'No matches found',
 						},
 					],
 				};
@@ -695,9 +650,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'get_file_info': {
 				const parsed = GetFileInfoArgsSchema.safeParse(args);
 				if (!parsed.success) {
-					throw new Error(
-						`Invalid arguments for get_file_info: ${parsed.error}`,
-					);
+					throw new Error(`Invalid arguments for get_file_info: ${parsed.error}`);
 				}
 				const validPath = await validatePath(parsed.data.path);
 				const info = await getFileStats(validPath);

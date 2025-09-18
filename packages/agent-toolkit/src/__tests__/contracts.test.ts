@@ -58,8 +58,7 @@ describe('Agent Toolkit Contracts', () => {
 			files: ['test1.ts', 'test2.js', 'test3.py'],
 		};
 
-		const result =
-			AgentToolkitValidationInputSchema.parse(validValidationInput);
+		const result = AgentToolkitValidationInputSchema.parse(validValidationInput);
 		expect(result.files).toHaveLength(3);
 		expect(result.files).toContain('test1.ts');
 	});
@@ -78,9 +77,7 @@ describe('Agent Toolkit Contracts', () => {
 			files: [], // Empty files array should be invalid
 		};
 
-		expect(() =>
-			AgentToolkitValidationInputSchema.parse(invalidInput),
-		).toThrow();
+		expect(() => AgentToolkitValidationInputSchema.parse(invalidInput)).toThrow();
 	});
 
 	it('should validate tool result with error', () => {
@@ -135,8 +132,7 @@ describe('Agent Toolkit Contracts', () => {
 			files: ['test1.ts', 'test2.js', 'test3.py'],
 		};
 
-		const result =
-			AgentToolkitValidationInputSchema.parse(validValidationInput);
+		const result = AgentToolkitValidationInputSchema.parse(validValidationInput);
 		expect(result).toEqual(validValidationInput);
 	});
 
@@ -154,9 +150,7 @@ describe('Agent Toolkit Contracts', () => {
 			files: [], // Empty files array should be invalid
 		};
 
-		expect(() =>
-			AgentToolkitValidationInputSchema.parse(invalidInput),
-		).toThrow();
+		expect(() => AgentToolkitValidationInputSchema.parse(invalidInput)).toThrow();
 	});
 
 	it('should validate tool result with error', () => {

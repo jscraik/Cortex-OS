@@ -19,10 +19,8 @@ module.exports = {
 			env: {
 				NODE_ENV: 'development',
 				PORT: 3003,
-				GITHUB_TOKEN:
-					process.env.STRUCTURE_GITHUB_TOKEN || 'your_github_token_here',
-				WEBHOOK_SECRET:
-					process.env.STRUCTURE_WEBHOOK_SECRET || 'your_webhook_secret_here',
+				GITHUB_TOKEN: process.env.STRUCTURE_GITHUB_TOKEN || 'your_github_token_here',
+				WEBHOOK_SECRET: process.env.STRUCTURE_WEBHOOK_SECRET || 'your_webhook_secret_here',
 				STRUCTURE_APP_ID: process.env.STRUCTURE_APP_ID || '',
 				STRUCTURE_PRIVATE_KEY: process.env.STRUCTURE_PRIVATE_KEY || '',
 				AUTO_FIX_ENABLED: 'false',

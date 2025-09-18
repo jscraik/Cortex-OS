@@ -38,18 +38,10 @@ export const GraphStateChangedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type NodeExecutionStartedEvent = z.infer<
-	typeof NodeExecutionStartedEventSchema
->;
-export type NodeExecutionCompletedEvent = z.infer<
-	typeof NodeExecutionCompletedEventSchema
->;
-export type NodeExecutionFailedEvent = z.infer<
-	typeof NodeExecutionFailedEventSchema
->;
-export type GraphStateChangedEvent = z.infer<
-	typeof GraphStateChangedEventSchema
->;
+export type NodeExecutionStartedEvent = z.infer<typeof NodeExecutionStartedEventSchema>;
+export type NodeExecutionCompletedEvent = z.infer<typeof NodeExecutionCompletedEventSchema>;
+export type NodeExecutionFailedEvent = z.infer<typeof NodeExecutionFailedEventSchema>;
+export type GraphStateChangedEvent = z.infer<typeof GraphStateChangedEventSchema>;
 
 // Helper function to create kernel events
 export const createKernelEvent = {

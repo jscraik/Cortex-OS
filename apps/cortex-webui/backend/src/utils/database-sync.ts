@@ -15,10 +15,7 @@ class Database {
 	private db: sqlite3.Database;
 
 	constructor(dbPath: string) {
-		this.db = new sqlite3.Database(
-			dbPath,
-			sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
-		);
+		this.db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE);
 
 		// Create tables synchronously
 		this.db.exec(

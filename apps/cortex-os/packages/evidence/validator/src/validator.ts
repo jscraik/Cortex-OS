@@ -65,9 +65,7 @@ export class EvidenceValidator {
 
 		// Validate range
 		if (finding.start > finding.end) {
-			errors.push(
-				'Invalid range: start position cannot be greater than end position',
-			);
+			errors.push('Invalid range: start position cannot be greater than end position');
 		}
 
 		// Check file existence
@@ -83,9 +81,7 @@ export class EvidenceValidator {
 				// Validate range against content
 				if (finding.end > content.length) {
 					if (this.config.allowRangeExceeding) {
-						warnings.push(
-							'Range exceeds file content but is allowed by configuration',
-						);
+						warnings.push('Range exceeds file content but is allowed by configuration');
 						rangeValid = true;
 					} else {
 						errors.push('Range exceeds file content length');
@@ -97,9 +93,7 @@ export class EvidenceValidator {
 					// Extract text and validate hash
 					if (this.config.requireHashValidation && rangeValid) {
 						const extractedText = content.slice(finding.start, finding.end);
-						actualHash = createHash('sha256')
-							.update(extractedText)
-							.digest('hex');
+						actualHash = createHash('sha256').update(extractedText).digest('hex');
 
 						if (actualHash === finding.hash) {
 							hashValid = true;

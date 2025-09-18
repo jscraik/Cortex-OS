@@ -57,9 +57,7 @@ export class CitationBundler {
 		};
 	}
 
-	bundleWithDeduplication(
-		chunks: Array<Chunk & { score?: number }>,
-	): EnhancedCitationBundle {
+	bundleWithDeduplication(chunks: Array<Chunk & { score?: number }>): EnhancedCitationBundle {
 		const basicBundle = this.bundle(chunks);
 
 		// Group citations by source for deduplication
@@ -89,8 +87,6 @@ export class CitationBundler {
 		const claimWords = claim.toLowerCase().split(/\s+/);
 		const citationText = citation.text.toLowerCase();
 
-		return claimWords.some(
-			(word) => word.length > 3 && citationText.includes(word),
-		);
+		return claimWords.some((word) => word.length > 3 && citationText.includes(word));
 	}
 }

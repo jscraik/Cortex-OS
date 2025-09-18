@@ -3,8 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 const STORE =
-	process.env.CORTEX_HITL_STORE ||
-	path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
+	process.env.CORTEX_HITL_STORE || path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
 
 async function appendJsonl(file: string, obj: unknown) {
 	await fs.mkdir(path.dirname(file), { recursive: true });

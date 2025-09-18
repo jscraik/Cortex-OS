@@ -9,10 +9,7 @@ export interface McpTool<TInput = unknown, TResult = unknown> {
 	readonly name: string;
 	readonly description: string;
 	readonly inputSchema: z.ZodType<TInput>;
-	execute(
-		input: TInput,
-		context?: ToolExecutionContext,
-	): Promise<TResult> | TResult;
+	execute(input: TInput, context?: ToolExecutionContext): Promise<TResult> | TResult;
 }
 
 export interface McpToolErrorOptions {
@@ -52,11 +49,7 @@ export class ToolNotFoundError extends McpToolError {
 export class ToolValidationError extends McpToolError {
 	readonly issues: z.ZodIssue[];
 
-	constructor(
-		message: string,
-		issues: z.ZodIssue[],
-		options: McpToolErrorOptions = {},
-	) {
+	constructor(message: string, issues: z.ZodIssue[], options: McpToolErrorOptions = {}) {
 		super(message, {
 			...options,
 			code: options.code ?? 'E_TOOL_VALIDATION',
@@ -77,9 +70,7 @@ export class ToolRegistry {
 
 	register<TInput, TResult>(tool: McpTool<TInput, TResult>): void {
 		if (this.tools.has(tool.name)) {
-			throw new ToolRegistrationError(
-				`Tool with name "${tool.name}" already registered.`,
-			);
+			throw new ToolRegistrationError(`Tool with name "${tool.name}" already registered.`);
 		}
 		this.tools.set(tool.name, tool as McpTool<unknown, unknown>);
 	}
@@ -111,12 +102,9 @@ export class ToolRegistry {
 		}
 
 		if (context?.signal?.aborted) {
-			throw new ToolExecutionError(
-				`Execution for tool "${name}" was aborted.`,
-				{
-					code: 'E_TOOL_ABORTED',
-				},
-			);
+			throw new ToolExecutionError(`Execution for tool "${name}" was aborted.`, {
+				code: 'E_TOOL_ABORTED',
+			});
 		}
 
 		const parsed = tool.inputSchema.safeParse(input);

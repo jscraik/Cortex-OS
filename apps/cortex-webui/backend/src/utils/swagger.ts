@@ -8,8 +8,7 @@ const swaggerDefinition: SwaggerDefinition = {
 	info: {
 		title: 'Cortex WebUI API',
 		version: '1.0.0',
-		description:
-			'A modern web interface API for AI models with real-time chat capabilities',
+		description: 'A modern web interface API for AI models with real-time chat capabilities',
 		license: {
 			name: 'Apache 2.0',
 			url: 'https://www.apache.org/licenses/LICENSE-2.0.html',

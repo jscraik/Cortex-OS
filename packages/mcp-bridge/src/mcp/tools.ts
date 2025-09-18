@@ -59,17 +59,14 @@ export const createBridgeTool: BridgeMcpTool<
 	z.infer<typeof BridgeResultSchema>
 > = {
 	name: 'mcp_bridge_create',
-	description:
-		'Create and start a new MCP bridge between stdio and HTTP/SSE endpoints',
+	description: 'Create and start a new MCP bridge between stdio and HTTP/SSE endpoints',
 	inputSchema: CreateBridgeInputSchema,
 	handler: async (input: unknown) => {
 		try {
 			const validatedInput = CreateBridgeInputSchema.parse(input);
 
 			// Create bridge instance
-			const bridge = new StdioHttpBridge(
-				validatedInput as StdioHttpBridgeOptions,
-			);
+			const bridge = new StdioHttpBridge(validatedInput as StdioHttpBridgeOptions);
 
 			// Start the bridge
 			await bridge.start();

@@ -115,9 +115,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 				expect(authResult.authorized).toBe(true);
 			}
 
-			expect(mockOwaspGuard.authorizeToolCall).toHaveBeenCalledTimes(
-				testOperations.length,
-			);
+			expect(mockOwaspGuard.authorizeToolCall).toHaveBeenCalledTimes(testOperations.length);
 		});
 	});
 
@@ -152,10 +150,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 				return text
 					.replace(/sk-[a-zA-Z0-9]{10,}/g, '[REDACTED_API_KEY]')
 					.replace(/ghp_[a-zA-Z0-9]{15,}/g, '[REDACTED_API_KEY]')
-					.replace(
-						/(password|pwd|pass)['":\s=]+([^\s\n\r'";]{6,})/gi,
-						'$1: [REDACTED_PASSWORD]',
-					)
+					.replace(/(password|pwd|pass)['":\s=]+([^\s\n\r'";]{6,})/gi, '$1: [REDACTED_PASSWORD]')
 					.replace(/eyJ[A-Za-z0-9\-_]{20,}/g, '[REDACTED_TOKEN]');
 			});
 
@@ -169,11 +164,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 		});
 
 		it('should validate against LLM07: Insecure Plugin Design', async () => {
-			const restrictedOperations = [
-				'system_execute_command',
-				'file_delete',
-				'database_modify',
-			];
+			const restrictedOperations = ['system_execute_command', 'file_delete', 'database_modify'];
 
 			// Test with insufficient permissions
 			const limitedContext = {
@@ -217,9 +208,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 				validationStrategy: 'local-only' as const,
 			};
 
-			mockEnhancedSecurityGuard.validateMcpCommand.mockResolvedValue(
-				enhancedValidation,
-			);
+			mockEnhancedSecurityGuard.validateMcpCommand.mockResolvedValue(enhancedValidation);
 
 			const result = await mockEnhancedSecurityGuard.validateMcpCommand(
 				testCommand,
@@ -232,8 +221,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 		});
 
 		it('should handle ML security enhancement gracefully', async () => {
-			const securityStatus =
-				await mockEnhancedSecurityGuard.getSecurityStatus();
+			const securityStatus = await mockEnhancedSecurityGuard.getSecurityStatus();
 
 			expect(securityStatus.localSecurity).toBe(true);
 			expect(typeof securityStatus.pythonBridge).toBe('boolean');
@@ -250,12 +238,9 @@ describe('🔒 AI Policy Compliance Tests', () => {
 				mlEnhanced: false,
 			};
 
-			mockEnhancedSecurityGuard.sanitizeContent.mockResolvedValue(
-				sanitizationResult,
-			);
+			mockEnhancedSecurityGuard.sanitizeContent.mockResolvedValue(sanitizationResult);
 
-			const result =
-				await mockEnhancedSecurityGuard.sanitizeContent(testContent);
+			const result = await mockEnhancedSecurityGuard.sanitizeContent(testContent);
 
 			expect(result.sanitized).not.toContain('john@example.com');
 			expect(result.sanitized).not.toContain('sk-test123');
@@ -343,9 +328,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 			expect(validationResult.threatLevel).toBe('low');
 
 			// Test content sanitization
-			const sanitizedQuery = await mockOwaspGuard.sanitizeOutput(
-				evidenceRequest.query,
-			);
+			const sanitizedQuery = await mockOwaspGuard.sanitizeOutput(evidenceRequest.query);
 			expect(typeof sanitizedQuery).toBe('string');
 		});
 	});
@@ -408,15 +391,9 @@ describe('🔒 AI Policy Compliance Tests', () => {
 				},
 			};
 
-			expect(complianceReport.owaspLlmCompliance.LLM01_PromptInjection).toBe(
-				'COMPLIANT',
-			);
-			expect(
-				complianceReport.owaspLlmCompliance.LLM06_SensitiveInfoDisclosure,
-			).toBe('COMPLIANT');
-			expect(
-				complianceReport.owaspLlmCompliance.LLM07_InsecurePluginDesign,
-			).toBe('COMPLIANT');
+			expect(complianceReport.owaspLlmCompliance.LLM01_PromptInjection).toBe('COMPLIANT');
+			expect(complianceReport.owaspLlmCompliance.LLM06_SensitiveInfoDisclosure).toBe('COMPLIANT');
+			expect(complianceReport.owaspLlmCompliance.LLM07_InsecurePluginDesign).toBe('COMPLIANT');
 			expect(complianceReport.securityGuards.localValidation).toBe(true);
 			expect(complianceReport.policyEnforcement.accessControl).toBe('ACTIVE');
 

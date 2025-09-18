@@ -10,10 +10,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import {
-	type StructureGuardPolicy,
-	validatePolicy,
-} from './policy-schema-impl.js';
+import { type StructureGuardPolicy, validatePolicy } from './policy-schema-impl.js';
 
 describe('Structure Guard Policy Schema', () => {
 	describe('Policy Validation', () => {
@@ -112,12 +109,8 @@ describe('Structure Guard Policy Schema', () => {
 				expect(error).toBeInstanceOf(z.ZodError);
 				const zodError = error as z.ZodError;
 				expect(zodError.issues).toHaveLength(2);
-				expect(
-					zodError.issues.some((issue) => issue.path.includes('version')),
-				).toBe(true);
-				expect(
-					zodError.issues.some((issue) => issue.path.includes('allowedPaths')),
-				).toBe(true);
+				expect(zodError.issues.some((issue) => issue.path.includes('version'))).toBe(true);
+				expect(zodError.issues.some((issue) => issue.path.includes('allowedPaths'))).toBe(true);
 			}
 		});
 	});
@@ -135,9 +128,7 @@ describe('Structure Guard Policy Schema', () => {
 
 			// This test documents version evolution capability
 			// Implementation should handle version-specific validation
-			expect(() =>
-				validatePolicy(v2Policy, { version: '2.0.0' }),
-			).not.toThrow();
+			expect(() => validatePolicy(v2Policy, { version: '2.0.0' })).not.toThrow();
 		});
 
 		it('should warn about deprecated fields in older versions', () => {

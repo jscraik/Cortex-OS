@@ -1,11 +1,6 @@
 import type { Logger } from 'winston';
 import { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
-import type {
-	Agent,
-	OrchestrationConfig,
-	PlanningContext,
-	Task,
-} from './types.js';
+import type { Agent, OrchestrationConfig, PlanningContext, Task } from './types.js';
 
 export interface OrchestrationFacade {
 	engine: { kind: 'langgraph' };

@@ -74,9 +74,7 @@ export class UniversalTestReporter {
 		return reporter.runTests([filePath]);
 	}
 
-	async startWatching(
-		callback: (results: Map<string, TestResult[]>) => void,
-	): Promise<void> {
+	async startWatching(callback: (results: Map<string, TestResult[]>) => void): Promise<void> {
 		for (const [name, reporter] of this.reporters) {
 			if (reporter.watchTests) {
 				try {

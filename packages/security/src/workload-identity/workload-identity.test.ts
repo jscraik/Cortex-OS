@@ -20,9 +20,7 @@ describe('WorkloadIdentityManager', () => {
 
 	it('throws on invalid SPIFFE ID', async () => {
 		const manager = new WorkloadIdentityManager();
-		await expect(manager.attestWorkload('invalid')).rejects.toThrow(
-			'Invalid SPIFFE ID',
-		);
+		await expect(manager.attestWorkload('invalid')).rejects.toThrow('Invalid SPIFFE ID');
 	});
 });
 

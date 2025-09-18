@@ -68,9 +68,9 @@ describe('ApiGatewayTool', () => {
 			apiKey: 'invalid-key',
 		};
 
-		await expect(
-			env.gatewayTool.execute(input, env.context),
-		).rejects.toBeInstanceOf(McpSecurityError);
+		await expect(env.gatewayTool.execute(input, env.context)).rejects.toBeInstanceOf(
+			McpSecurityError,
+		);
 	});
 
 	it('enforces rate limits per API key', async () => {
@@ -85,9 +85,9 @@ describe('ApiGatewayTool', () => {
 		await env.gatewayTool.execute(input, env.context);
 		await env.gatewayTool.execute(input, env.context);
 
-		await expect(
-			env.gatewayTool.execute(input, env.context),
-		).rejects.toBeInstanceOf(McpRateLimitError);
+		await expect(env.gatewayTool.execute(input, env.context)).rejects.toBeInstanceOf(
+			McpRateLimitError,
+		);
 	});
 
 	it('maps missing routes to descriptive errors', async () => {
@@ -99,8 +99,8 @@ describe('ApiGatewayTool', () => {
 			apiKey: 'valid-key',
 		};
 
-		await expect(
-			env.gatewayTool.execute(input, env.context),
-		).rejects.toBeInstanceOf(McpRouteNotFoundError);
+		await expect(env.gatewayTool.execute(input, env.context)).rejects.toBeInstanceOf(
+			McpRouteNotFoundError,
+		);
 	});
 });

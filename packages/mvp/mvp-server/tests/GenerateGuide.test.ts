@@ -4,10 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-	GenerateGuide,
-	type GenerateGuideArgs,
-} from '../src/tools/GenerateGuide.js';
+import { GenerateGuide, type GenerateGuideArgs } from '../src/tools/GenerateGuide.js';
 
 describe('GenerateGuide Tool', () => {
 	let tool: GenerateGuide;
@@ -19,9 +16,7 @@ describe('GenerateGuide Tool', () => {
 	describe('Basic Tool Properties', () => {
 		it('should have correct name and description', () => {
 			expect(tool.name).toBe('generate_guide');
-			expect(tool.description).toContain(
-				'Generate comprehensive documentation guides',
-			);
+			expect(tool.description).toContain('Generate comprehensive documentation guides');
 		});
 	});
 
@@ -68,12 +63,7 @@ describe('GenerateGuide Tool', () => {
 			const args: GenerateGuideArgs = {
 				topic: 'Machine Learning',
 				type: 'tutorial',
-				sections: [
-					'introduction',
-					'data-preparation',
-					'model-training',
-					'evaluation',
-				],
+				sections: ['introduction', 'data-preparation', 'model-training', 'evaluation'],
 				include_examples: true,
 				include_code_samples: true,
 			};
@@ -96,9 +86,7 @@ describe('GenerateGuide Tool', () => {
 
 			const result = await tool.run(args);
 
-			expect(result.title).toBe(
-				'Database Connection Issues Troubleshooting Guide',
-			);
+			expect(result.title).toBe('Database Connection Issues Troubleshooting Guide');
 			expect(result.metadata.audience).toBe('admin');
 
 			// Should contain troubleshooting-specific content
@@ -290,13 +278,9 @@ describe('GenerateGuide Tool', () => {
 
 			const result = await tool.run(args);
 
-			expect(result.metadata.prerequisites).toContain(
-				'Basic understanding of REST APIs',
-			);
+			expect(result.metadata.prerequisites).toContain('Basic understanding of REST APIs');
 			expect(result.metadata.prerequisites).toContain('Programming experience');
-			expect(result.metadata.prerequisites).toContain(
-				'Software development experience',
-			);
+			expect(result.metadata.prerequisites).toContain('Software development experience');
 		});
 	});
 
@@ -306,9 +290,7 @@ describe('GenerateGuide Tool', () => {
 				topic: '',
 			};
 
-			await expect(tool.run(args)).rejects.toThrow(
-				'Topic is required and cannot be empty',
-			);
+			await expect(tool.run(args)).rejects.toThrow('Topic is required and cannot be empty');
 		});
 
 		it('should throw error for invalid type', async () => {

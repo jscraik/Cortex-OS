@@ -34,10 +34,7 @@ function parseArgs(): Options {
 	const maxStr = get('--max', '3000') ?? '3000';
 	const maxFiles = Number.parseInt(maxStr, 10);
 	const ignoreCsv =
-		get(
-			'--ignore',
-			'node_modules,.git,.pnpm,dist,build,.next,coverage,apps/api/.venv',
-		) ?? '';
+		get('--ignore', 'node_modules,.git,.pnpm,dist,build,.next,coverage,apps/api/.venv') ?? '';
 	const ignore = ignoreCsv
 		.split(',')
 		.map((s) => s.trim())
@@ -46,11 +43,7 @@ function parseArgs(): Options {
 	return { root, maxFiles, ignore };
 }
 
-async function walkFiles(
-	root: string,
-	ignore: string[],
-	maxFiles: number,
-): Promise<string[]> {
+async function walkFiles(root: string, ignore: string[], maxFiles: number): Promise<string[]> {
 	const files: string[] = [];
 
 	const isIgnored = (rel: string) => {
@@ -101,9 +94,7 @@ function printReport(
 	lines.push(`Root: ${root}`);
 	lines.push(`Files scanned: ${fileCount}`);
 	lines.push(`Score: ${score}/100`);
-	lines.push(
-		`Violations: ${summary.violationsCount} (auto-fixable: ${summary.autoFixableCount})`,
-	);
+	lines.push(`Violations: ${summary.violationsCount} (auto-fixable: ${summary.autoFixableCount})`);
 	if (Object.keys(byType).length) {
 		lines.push(``);
 		lines.push(`By type:`);

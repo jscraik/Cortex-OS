@@ -10,12 +10,7 @@ interface CodeExecutionProps {
 	onError: (error: string) => void;
 }
 
-const CodeExecution: React.FC<CodeExecutionProps> = ({
-	code,
-	language,
-	onResult,
-	onError,
-}) => {
+const CodeExecution: React.FC<CodeExecutionProps> = ({ code, language, onResult, onError }) => {
 	const [isExecuting, setIsExecuting] = useState(false);
 	const [result, setResult] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -53,8 +48,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
 			setResult(executionResult);
 			onResult(executionResult);
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Unknown error occurred';
+			const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
 			setError(errorMessage);
 			onError(errorMessage);
 		} finally {
@@ -81,9 +75,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
 
 			{(result || error) && (
 				<div className="border-t border-gray-300 p-2">
-					<div className="text-xs font-semibold mb-1">
-						{error ? 'Error:' : 'Output:'}
-					</div>
+					<div className="text-xs font-semibold mb-1">{error ? 'Error:' : 'Output:'}</div>
 					<pre
 						className={`p-2 rounded text-sm ${error ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800'}`}
 					>

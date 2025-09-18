@@ -74,13 +74,9 @@ const SERVER_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
 
 function validateServerName(name: string): void {
 	if (!SERVER_NAME_PATTERN.test(name)) {
-		throw new RegistryToolError(
-			'validation_error',
-			'Invalid server name format',
-			[
-				'Server name must start with alphanumeric and contain only letters, numbers, dots, underscores, and hyphens',
-			],
-		);
+		throw new RegistryToolError('validation_error', 'Invalid server name format', [
+			'Server name must start with alphanumeric and contain only letters, numbers, dots, underscores, and hyphens',
+		]);
 	}
 }
 
@@ -177,9 +173,7 @@ async function executeTool<T>(
 						{
 							error: 'internal_error',
 							message: 'An unexpected error occurred',
-							details: [
-								error instanceof Error ? error.message : 'Unknown error',
-							],
+							details: [error instanceof Error ? error.message : 'Unknown error'],
 						},
 						null,
 						2,
@@ -196,10 +190,7 @@ async function executeTool<T>(
 	}
 }
 
-function createContractInvoker(
-	toolName: string,
-	schema: ZodType,
-): ToolContractInvoker {
+function createContractInvoker(toolName: string, schema: ZodType): ToolContractInvoker {
 	return async (input: unknown): Promise<ToolContractResult> => {
 		try {
 			const parsed = schema.parse(input);
@@ -257,20 +248,13 @@ export const registryListToolSchema = z.object({
 		.max(MAX_SERVERS_LIST_LIMIT)
 		.default(50)
 		.describe('Maximum number of servers to return'),
-	includeInactive: z
-		.boolean()
-		.default(false)
-		.describe('Include servers marked as inactive'),
+	includeInactive: z.boolean().default(false).describe('Include servers marked as inactive'),
 });
 
 export const registryRegisterToolSchema = z.object({
 	server: z
 		.object({
-			name: z
-				.string()
-				.min(1)
-				.max(MAX_SERVER_NAME_LENGTH)
-				.describe('Unique server name'),
+			name: z.string().min(1).max(MAX_SERVER_NAME_LENGTH).describe('Unique server name'),
 			transport: z
 				.enum(['stdio', 'sse', 'http', 'ws', 'streamableHttp'])
 				.describe('Transport type'),
@@ -278,22 +262,10 @@ export const registryRegisterToolSchema = z.object({
 				.string()
 				.optional()
 				.describe('Command to execute the server (for stdio transport)'),
-			args: z
-				.array(z.string())
-				.optional()
-				.describe('Command arguments (for stdio transport)'),
-			env: z
-				.record(z.string())
-				.optional()
-				.describe('Environment variables (for stdio transport)'),
-			endpoint: z
-				.string()
-				.optional()
-				.describe('Endpoint URL (for http/ws transport)'),
-			headers: z
-				.record(z.string())
-				.optional()
-				.describe('HTTP headers (for http transport)'),
+			args: z.array(z.string()).optional().describe('Command arguments (for stdio transport)'),
+			env: z.record(z.string()).optional().describe('Environment variables (for stdio transport)'),
+			endpoint: z.string().optional().describe('Endpoint URL (for http/ws transport)'),
+			headers: z.record(z.string()).optional().describe('HTTP headers (for http transport)'),
 		})
 		.describe('Server configuration to register'),
 	overwrite: z
@@ -303,34 +275,17 @@ export const registryRegisterToolSchema = z.object({
 });
 
 export const registryUnregisterToolSchema = z.object({
-	name: z
-		.string()
-		.min(1)
-		.max(MAX_SERVER_NAME_LENGTH)
-		.describe('Name of server to unregister'),
-	force: z
-		.boolean()
-		.default(false)
-		.describe('Force removal even if server is active'),
+	name: z.string().min(1).max(MAX_SERVER_NAME_LENGTH).describe('Name of server to unregister'),
+	force: z.boolean().default(false).describe('Force removal even if server is active'),
 });
 
 export const registryGetToolSchema = z.object({
-	name: z
-		.string()
-		.min(1)
-		.max(MAX_SERVER_NAME_LENGTH)
-		.describe('Name of server to retrieve'),
-	includeStatus: z
-		.boolean()
-		.default(false)
-		.describe('Include server status information'),
+	name: z.string().min(1).max(MAX_SERVER_NAME_LENGTH).describe('Name of server to retrieve'),
+	includeStatus: z.boolean().default(false).describe('Include server status information'),
 });
 
 export const registryStatsToolSchema = z.object({
-	includeDetails: z
-		.boolean()
-		.default(false)
-		.describe('Include detailed registry statistics'),
+	includeDetails: z.boolean().default(false).describe('Include detailed registry statistics'),
 });
 
 // Tool implementations
@@ -358,9 +313,7 @@ export const registryListTool: RegistryTool = {
 				}
 
 				if (transport) {
-					filtered = filtered.filter(
-						(server) => server.transport === transport,
-					);
+					filtered = filtered.filter((server) => server.transport === transport);
 				}
 
 				if (tags && tags.length > 0) {
@@ -400,10 +353,7 @@ export const registryRegisterTool: RegistryTool = {
 	aliases: ['mcp_registry_register', 'register_server'],
 	description: 'Register a new MCP server in the registry',
 	inputSchema: registryRegisterToolSchema,
-	invoke: createContractInvoker(
-		'registry.register',
-		registryRegisterToolSchema,
-	),
+	invoke: createContractInvoker('registry.register', registryRegisterToolSchema),
 	handler: async (params: unknown) =>
 		executeTool(
 			'registry.register',
@@ -414,9 +364,7 @@ export const registryRegisterTool: RegistryTool = {
 
 				// Check if server already exists
 				const existingServers = await readAll();
-				const existingServer = existingServers.find(
-					(s) => s.name === server.name,
-				);
+				const existingServer = existingServers.find((s) => s.name === server.name);
 
 				if (existingServer && !overwrite) {
 					throw new RegistryToolError(
@@ -452,35 +400,25 @@ export const registryUnregisterTool: RegistryTool = {
 	aliases: ['mcp_registry_unregister', 'unregister_server'],
 	description: 'Unregister an MCP server from the registry',
 	inputSchema: registryUnregisterToolSchema,
-	invoke: createContractInvoker(
-		'registry.unregister',
-		registryUnregisterToolSchema,
-	),
+	invoke: createContractInvoker('registry.unregister', registryUnregisterToolSchema),
 	handler: async (params: unknown) =>
-		executeTool(
-			'registry.unregister',
-			registryUnregisterToolSchema,
-			params,
-			async ({ name }) => {
-				validateServerName(name);
+		executeTool('registry.unregister', registryUnregisterToolSchema, params, async ({ name }) => {
+			validateServerName(name);
 
-				const removed = await remove(name);
+			const removed = await remove(name);
 
-				if (!removed) {
-					throw new RegistryToolError(
-						'not_found',
-						`Server with name "${name}" not found`,
-						['Verify the server name and try again'],
-					);
-				}
+			if (!removed) {
+				throw new RegistryToolError('not_found', `Server with name "${name}" not found`, [
+					'Verify the server name and try again',
+				]);
+			}
 
-				return {
-					name,
-					status: 'removed',
-					message: `Server "${name}" successfully unregistered`,
-				};
-			},
-		),
+			return {
+				name,
+				status: 'removed',
+				message: `Server "${name}" successfully unregistered`,
+			};
+		}),
 };
 
 export const registryGetTool: RegistryTool = {
@@ -501,11 +439,9 @@ export const registryGetTool: RegistryTool = {
 				const server = servers.find((s) => s.name === name);
 
 				if (!server) {
-					throw new RegistryToolError(
-						'not_found',
-						`Server with name "${name}" not found`,
-						['Verify the server name and try again'],
-					);
+					throw new RegistryToolError('not_found', `Server with name "${name}" not found`, [
+						'Verify the server name and try again',
+					]);
 				}
 
 				return {
@@ -550,8 +486,7 @@ export const registryStatsTool: RegistryTool = {
 
 				for (const server of servers) {
 					const transportKind = server.transport;
-					transportCounts[transportKind] =
-						(transportCounts[transportKind] || 0) + 1;
+					transportCounts[transportKind] = (transportCounts[transportKind] || 0) + 1;
 
 					if (!serversByType[transportKind]) {
 						serversByType[transportKind] = [];
@@ -567,8 +502,7 @@ export const registryStatsTool: RegistryTool = {
 						details: {
 							serversByTransport: serversByType,
 							averageServersPerTransport:
-								servers.length /
-								Math.max(Object.keys(transportCounts).length, 1),
+								servers.length / Math.max(Object.keys(transportCounts).length, 1),
 							registryHealth: 'healthy',
 						},
 					}),

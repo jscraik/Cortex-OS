@@ -15,11 +15,7 @@ interface MemoryQueryProps {
 	onError: (error: string) => void;
 }
 
-const MemoryQuery: React.FC<MemoryQueryProps> = ({
-	query,
-	onResults,
-	onError,
-}) => {
+const MemoryQuery: React.FC<MemoryQueryProps> = ({ query, onResults, onError }) => {
 	const [isSearching, setIsSearching] = useState(false);
 	const [results, setResults] = useState<MemoryItem[]>([]);
 	const [error, setError] = useState<string | null>(null);
@@ -62,8 +58,7 @@ const MemoryQuery: React.FC<MemoryQueryProps> = ({
 			setResults(mockResults);
 			onResults(mockResults);
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Unknown error occurred';
+			const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
 			setError(errorMessage);
 			onError(errorMessage);
 		} finally {
@@ -116,14 +111,9 @@ const MemoryQuery: React.FC<MemoryQueryProps> = ({
 					<div className="text-xs font-semibold mb-2">Relevant Memories:</div>
 					<ul className="space-y-2">
 						{results.map((result) => (
-							<li
-								key={result.id}
-								className="border-b border-gray-200 pb-2 last:border-b-0"
-							>
+							<li key={result.id} className="border-b border-gray-200 pb-2 last:border-b-0">
 								<div className="flex justify-between">
-									<span className="text-xs text-gray-500">
-										{formatTimeAgo(result.timestamp)}
-									</span>
+									<span className="text-xs text-gray-500">{formatTimeAgo(result.timestamp)}</span>
 									<span className="text-xs text-purple-600">
 										{(result.relevance * 100).toFixed(0)}% relevant
 									</span>
@@ -136,9 +126,7 @@ const MemoryQuery: React.FC<MemoryQueryProps> = ({
 			)}
 
 			{!isSearching && results.length === 0 && !error && (
-				<div className="p-2 text-gray-500 text-sm">
-					No relevant memories found.
-				</div>
+				<div className="p-2 text-gray-500 text-sm">No relevant memories found.</div>
 			)}
 		</div>
 	);

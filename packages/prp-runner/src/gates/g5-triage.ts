@@ -3,17 +3,11 @@
  * @description G5: Triage - ensure no red findings; maintainers sign-off
  */
 
-import {
-	type AutomatedCheck,
-	BaseGate,
-	type GateContext,
-	type HumanApprovalSpec,
-} from './base.js';
+import { type AutomatedCheck, BaseGate, type GateContext, type HumanApprovalSpec } from './base.js';
 
 class NoRedFindingsCheck implements AutomatedCheck {
 	name = 'no-red-findings';
-	description =
-		"Ensure no 'red' category scores exist (based on previous review JSON categories)";
+	description = "Ensure no 'red' category scores exist (based on previous review JSON categories)";
 
 	async execute(_context: GateContext) {
 		// Without persisted review JSON categories, assume pass for now

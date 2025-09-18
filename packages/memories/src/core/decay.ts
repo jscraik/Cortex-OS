@@ -2,11 +2,7 @@
  * Exponential decay factor in [0,1] based on age and half-life.
  * factor = exp(-ln(2) * ageMs / halfLifeMs)
  */
-export function decayFactor(
-	createdAtISO: string,
-	nowISO: string,
-	halfLifeMs: number,
-): number {
+export function decayFactor(createdAtISO: string, nowISO: string, halfLifeMs: number): number {
 	const created = new Date(createdAtISO).getTime();
 	const now = new Date(nowISO).getTime();
 	const age = Math.max(0, now - created);
@@ -16,9 +12,7 @@ export function decayFactor(
 }
 
 export function decayEnabled(): boolean {
-	return (
-		(process.env.MEMORIES_DECAY_ENABLED || 'false').toLowerCase() === 'true'
-	);
+	return (process.env.MEMORIES_DECAY_ENABLED || 'false').toLowerCase() === 'true';
 }
 
 export function getHalfLifeMs(): number {

@@ -14,9 +14,7 @@ describe('EchoTool integration', () => {
 		if (req.method !== 'POST') {
 			res.statusCode = 405;
 			res.setHeader('Content-Type', 'application/json');
-			res.end(
-				JSON.stringify({ ok: false, error: { message: 'Method not allowed' } }),
-			);
+			res.end(JSON.stringify({ ok: false, error: { message: 'Method not allowed' } }));
 			return;
 		}
 

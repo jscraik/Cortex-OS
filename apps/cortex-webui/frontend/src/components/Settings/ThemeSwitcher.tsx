@@ -5,10 +5,7 @@ interface ThemeSwitcherProps {
 	onThemeChange: (theme: 'light' | 'dark') => void;
 }
 
-const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
-	theme,
-	onThemeChange,
-}) => {
+const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ theme, onThemeChange }) => {
 	return (
 		<div className="flex items-center justify-between">
 			<span className="text-sm font-medium text-gray-700">Dark Mode</span>

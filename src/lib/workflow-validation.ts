@@ -53,15 +53,13 @@ function createWorkflowHash(workflow: Workflow): string {
 		entry: workflow.entry,
 		steps: Object.keys(workflow.steps).sort(),
 		connections: Object.fromEntries(
-			Object.entries(workflow.steps).map(
-				([id, step]: [string, WorkflowStep]) => [
-					id,
-					{
-						next: step.next,
-						branches: step.branches?.map((b) => b.to).sort(),
-					},
-				],
-			),
+			Object.entries(workflow.steps).map(([id, step]: [string, WorkflowStep]) => [
+				id,
+				{
+					next: step.next,
+					branches: step.branches?.map((b) => b.to).sort(),
+				},
+			]),
 		),
 	});
 	return createHash('sha256').update(structureData, 'utf8').digest('hex');
@@ -79,21 +77,14 @@ function validateReferences(wf: Workflow, stepIds: Set<string>): void {
 	if (!stepIds.has(wf.entry)) {
 		throw new Error(`Entry step '${wf.entry}' does not exist`);
 	}
-	for (const [id, step] of Object.entries(wf.steps) as [
-		string,
-		WorkflowStep,
-	][]) {
+	for (const [id, step] of Object.entries(wf.steps) as [string, WorkflowStep][]) {
 		if (step.next && !stepIds.has(step.next)) {
-			throw new Error(
-				`Step '${id}' references non-existent next step: ${step.next}`,
-			);
+			throw new Error(`Step '${id}' references non-existent next step: ${step.next}`);
 		}
 		if (step.branches) {
 			for (const b of step.branches) {
 				if (!stepIds.has(b.to)) {
-					throw new Error(
-						`Step '${id}' has branch to non-existent step: ${b.to}`,
-					);
+					throw new Error(`Step '${id}' has branch to non-existent step: ${b.to}`);
 				}
 			}
 		}
@@ -141,14 +132,9 @@ export function traverseWorkflow(wf: Workflow): TraversalResult {
 	return { visited, maxDepth, cycleDetected };
 }
 
-export function aggregateStats(
-	wf: Workflow,
-	traversal: TraversalResult,
-): WorkflowStats {
+export function aggregateStats(wf: Workflow, traversal: TraversalResult): WorkflowStats {
 	const totalSteps = Object.keys(wf.steps).length;
-	const unreachableSteps = Object.keys(wf.steps).filter(
-		(s) => !traversal.visited.has(s),
-	);
+	const unreachableSteps = Object.keys(wf.steps).filter((s) => !traversal.visited.has(s));
 	return {
 		totalSteps,
 		unreachableSteps,

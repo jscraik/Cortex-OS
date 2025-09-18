@@ -31,12 +31,7 @@ const TaskTypeSchema = z.enum([
 	'DEBUGGING',
 ]);
 
-const SecurityLevelSchema = z.enum([
-	'MINIMAL',
-	'STANDARD',
-	'STRICT',
-	'COMPLIANCE',
-]);
+const SecurityLevelSchema = z.enum(['MINIMAL', 'STANDARD', 'STRICT', 'COMPLIANCE']);
 
 const ModelBackendSchema = z.enum(['MLX', 'OLLAMA', 'LLAMA_CPP']);
 
@@ -80,9 +75,7 @@ const SecurityContextSchema = z.object({
 	content_sensitivity: z
 		.enum(['public', 'internal', 'confidential', 'restricted'])
 		.default('public'),
-	data_classification: z
-		.enum(['general', 'personal', 'sensitive', 'critical'])
-		.default('general'),
+	data_classification: z.enum(['general', 'personal', 'sensitive', 'critical']).default('general'),
 	gdpr_applicable: z.boolean().default(false),
 	hipaa_applicable: z.boolean().default(false),
 	sox_applicable: z.boolean().default(false),
@@ -219,10 +212,7 @@ export class MLOptimizationBridge extends EventEmitter {
 			pythonPath: config.pythonPath || 'python3',
 			scriptPath:
 				config.scriptPath ||
-				path.join(
-					__dirname,
-					'../../../apps/cortex-py/src/mlx/bridge_server.py',
-				),
+				path.join(__dirname, '../../../apps/cortex-py/src/mlx/bridge_server.py'),
 			timeout: config.timeout || 30000,
 			retryAttempts: config.retryAttempts || 3,
 			cacheEnabled: config.cacheEnabled ?? true,
@@ -394,10 +384,7 @@ export class MLOptimizationBridge extends EventEmitter {
 	/**
 	 * Force model switch
 	 */
-	async forceModelSwitch(
-		modelName: string,
-		reason = 'user_request',
-	): Promise<boolean> {
+	async forceModelSwitch(modelName: string, reason = 'user_request'): Promise<boolean> {
 		const result = await this.callPythonMethod('force_model_switch', {
 			model_name: modelName,
 			reason,
@@ -505,14 +492,10 @@ export class MLOptimizationBridge extends EventEmitter {
 				return;
 			}
 
-			this.pythonProcess = spawn(
-				this.config.pythonPath,
-				[this.config.scriptPath],
-				{
-					stdio: ['pipe', 'pipe', 'pipe'],
-					env: { ...process.env, PYTHONUNBUFFERED: '1' },
-				},
-			);
+			this.pythonProcess = spawn(this.config.pythonPath, [this.config.scriptPath], {
+				stdio: ['pipe', 'pipe', 'pipe'],
+				env: { ...process.env, PYTHONUNBUFFERED: '1' },
+			});
 
 			let stdoutBuffer = '';
 			let _stderrBuffer = '';
@@ -536,10 +519,7 @@ export class MLOptimizationBridge extends EventEmitter {
 			});
 
 			this.pythonProcess.on('exit', (code, signal) => {
-				this.log(
-					'warn',
-					`Python process exited with code ${code}, signal ${signal}`,
-				);
+				this.log('warn', `Python process exited with code ${code}, signal ${signal}`);
 				this.pythonProcess = null;
 				this.isInitialized = false;
 				this.emit('processExit', { code, signal });
@@ -595,9 +575,7 @@ export class MLOptimizationBridge extends EventEmitter {
 		};
 		if (m.type === 'response') {
 			// Find pending request and resolve it
-			const requestIndex = this.requestQueue.findIndex(
-				(req) => req.id === m.id,
-			);
+			const requestIndex = this.requestQueue.findIndex((req) => req.id === m.id);
 			if (requestIndex >= 0) {
 				const request = this.requestQueue[requestIndex];
 				this.requestQueue.splice(requestIndex, 1);
@@ -658,9 +636,7 @@ export class MLOptimizationBridge extends EventEmitter {
 
 			// Set timeout
 			const timeoutHandle = setTimeout(() => {
-				const requestIndex = this.requestQueue.findIndex(
-					(req) => req.id === requestId,
-				);
+				const requestIndex = this.requestQueue.findIndex((req) => req.id === requestId);
 				if (requestIndex >= 0) {
 					this.requestQueue.splice(requestIndex, 1);
 					this.updateMetrics(false, timeout);
@@ -693,8 +669,7 @@ export class MLOptimizationBridge extends EventEmitter {
 
 		// Update average latency (exponential moving average)
 		const alpha = 0.1;
-		this.metrics.averageLatencyMs =
-			alpha * latencyMs + (1 - alpha) * this.metrics.averageLatencyMs;
+		this.metrics.averageLatencyMs = alpha * latencyMs + (1 - alpha) * this.metrics.averageLatencyMs;
 
 		this.metrics.lastProcessTime = Date.now();
 
@@ -741,10 +716,7 @@ export class MLOptimizationBridge extends EventEmitter {
 		}
 
 		if (keysToDelete.length > 0) {
-			this.log(
-				'debug',
-				`Cleaned up ${keysToDelete.length} expired cache entries`,
-			);
+			this.log('debug', `Cleaned up ${keysToDelete.length} expired cache entries`);
 		}
 	}
 

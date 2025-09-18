@@ -81,21 +81,9 @@ const CategoryNameSchema = z
 	.min(1)
 	.max(64);
 
-const ClientTypeSchema = z.enum([
-	'claude',
-	'cline',
-	'cursor',
-	'continue',
-	'devin',
-	'windsurf',
-]);
+const ClientTypeSchema = z.enum(['claude', 'cline', 'cursor', 'continue', 'devin', 'windsurf']);
 
-const SearchSortBySchema = z.enum([
-	'relevance',
-	'downloads',
-	'rating',
-	'updated',
-]);
+const SearchSortBySchema = z.enum(['relevance', 'downloads', 'rating', 'updated']);
 const SortOrderSchema = z.enum(['asc', 'desc']);
 const RiskLevelSchema = z.enum(['low', 'medium', 'high']);
 const CapabilitySchema = z.enum(['tools', 'resources', 'prompts']);
@@ -104,22 +92,12 @@ const CapabilitySchema = z.enum(['tools', 'resources', 'prompts']);
 const SearchServersInputSchema = z.object({
 	query: z.string().optional().describe('Search query string'),
 	category: CategoryNameSchema.optional().describe('Filter by category'),
-	riskLevel: RiskLevelSchema.optional().describe(
-		'Filter by security risk level',
-	),
+	riskLevel: RiskLevelSchema.optional().describe('Filter by security risk level'),
 	featured: z.boolean().optional().describe('Filter to only featured servers'),
 	publisher: z.string().optional().describe('Filter by publisher name'),
-	minRating: z
-		.number()
-		.min(0)
-		.max(5)
-		.optional()
-		.describe('Minimum rating filter'),
+	minRating: z.number().min(0).max(5).optional().describe('Minimum rating filter'),
 	tags: z.array(z.string()).optional().describe('Filter by tags'),
-	capabilities: z
-		.array(CapabilitySchema)
-		.optional()
-		.describe('Filter by capabilities'),
+	capabilities: z.array(CapabilitySchema).optional().describe('Filter by capabilities'),
 	limit: z
 		.number()
 		.min(1)
@@ -136,12 +114,8 @@ const GetServerInputSchema = z.object({
 });
 
 const GetInstallInstructionsInputSchema = z.object({
-	serverId: ServerIdSchema.describe(
-		'The server ID for installation instructions',
-	),
-	client: ClientTypeSchema.optional().describe(
-		'Target client for installation instructions',
-	),
+	serverId: ServerIdSchema.describe('The server ID for installation instructions'),
+	client: ClientTypeSchema.optional().describe('Target client for installation instructions'),
 });
 
 const GetCategoryServersInputSchema = z.object({
@@ -162,37 +136,18 @@ const GetTrendingInputSchema = z.object({
 		.enum(['day', 'week', 'month'])
 		.default('week')
 		.describe('Time period for trending analysis'),
-	limit: z
-		.number()
-		.min(1)
-		.max(MAX_STATS_LIMIT)
-		.default(10)
-		.describe('Maximum results to return'),
+	limit: z.number().min(1).max(MAX_STATS_LIMIT).default(10).describe('Maximum results to return'),
 });
 
 const GetPopularInputSchema = z.object({
 	category: CategoryNameSchema.optional().describe('Filter by category'),
-	limit: z
-		.number()
-		.min(1)
-		.max(MAX_STATS_LIMIT)
-		.default(10)
-		.describe('Maximum results to return'),
+	limit: z.number().min(1).max(MAX_STATS_LIMIT).default(10).describe('Maximum results to return'),
 });
 
 const GetTopRatedInputSchema = z.object({
 	category: CategoryNameSchema.optional().describe('Filter by category'),
-	minDownloads: z
-		.number()
-		.min(0)
-		.default(100)
-		.describe('Minimum download count filter'),
-	limit: z
-		.number()
-		.min(1)
-		.max(MAX_STATS_LIMIT)
-		.default(10)
-		.describe('Maximum results to return'),
+	minDownloads: z.number().min(0).default(100).describe('Minimum download count filter'),
+	limit: z.number().min(1).max(MAX_STATS_LIMIT).default(10).describe('Maximum results to return'),
 });
 
 // Helper functions
@@ -276,20 +231,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(SearchServersInputSchema, params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.search_servers', error);
 				}
 				return createErrorResponse(
 					'marketplace.search_servers',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -306,20 +255,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetServerInputSchema, params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_server', error);
 				}
 				return createErrorResponse(
 					'marketplace.get_server',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -336,23 +279,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetInstallInstructionsInputSchema, params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
-					return createErrorResponse(
-						'marketplace.get_install_instructions',
-						error,
-					);
+					return createErrorResponse('marketplace.get_install_instructions', error);
 				}
 				return createErrorResponse(
 					'marketplace.get_install_instructions',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -360,8 +294,7 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 	{
 		name: 'marketplace.list_categories',
 		aliases: ['categories', 'get_categories'],
-		description:
-			'Get all available server categories with their descriptions and server counts.',
+		description: 'Get all available server categories with their descriptions and server counts.',
 		inputSchema: z.object({}), // No input parameters required
 		handler: async (params: unknown): Promise<MarketplaceToolResponse> => {
 			try {
@@ -369,20 +302,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(z.object({}), params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.list_categories', error);
 				}
 				return createErrorResponse(
 					'marketplace.list_categories',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -390,8 +317,7 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 	{
 		name: 'marketplace.get_category_servers',
 		aliases: ['category_servers'],
-		description:
-			'Get all servers in a specific category with sorting and pagination options.',
+		description: 'Get all servers in a specific category with sorting and pagination options.',
 		inputSchema: GetCategoryServersInputSchema,
 		handler: async (params: unknown): Promise<MarketplaceToolResponse> => {
 			try {
@@ -399,20 +325,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetCategoryServersInputSchema, params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_category_servers', error);
 				}
 				return createErrorResponse(
 					'marketplace.get_category_servers',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -429,20 +349,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(z.object({}), params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_stats', error);
 				}
 				return createErrorResponse(
 					'marketplace.get_stats',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -459,20 +373,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetTrendingInputSchema, params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_trending', error);
 				}
 				return createErrorResponse(
 					'marketplace.get_trending',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -489,20 +397,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetPopularInputSchema, params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_popular', error);
 				}
 				return createErrorResponse(
 					'marketplace.get_popular',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -519,20 +421,14 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetTopRatedInputSchema, params);
 
 				// TODO: This will be wired to MarketplaceMcpService in next step
-				throw new MarketplaceToolError(
-					'internal_error',
-					'MCP service integration required',
-				);
+				throw new MarketplaceToolError('internal_error', 'MCP service integration required');
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_top_rated', error);
 				}
 				return createErrorResponse(
 					'marketplace.get_top_rated',
-					new MarketplaceToolError(
-						'internal_error',
-						'Unexpected error occurred',
-					),
+					new MarketplaceToolError('internal_error', 'Unexpected error occurred'),
 				);
 			}
 		},
@@ -572,12 +468,7 @@ export async function executeMarketplaceMcpTool(
 }
 
 // Export types and classes for use in service implementations
-export type {
-	MarketplaceTool,
-	MarketplaceToolResponse,
-	ToolContractInvoker,
-	ToolContractResult,
-};
+export type { MarketplaceTool, MarketplaceToolResponse, ToolContractInvoker, ToolContractResult };
 
 export { MarketplaceToolError };
 

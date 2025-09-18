@@ -7,11 +7,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-	AI_PRESETS,
-	type AICoreCapabilities,
-	createAICapabilities,
-} from '../ai-capabilities.js';
+import { AI_PRESETS, type AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
 import { AVAILABLE_MLX_MODELS } from '../mlx-adapter.js';
 
 describe('🧠 AI Core Capabilities Integration Tests', () => {
@@ -62,8 +58,7 @@ describe('🧠 AI Core Capabilities Integration Tests', () => {
 
 		it('should generate text with system prompt', async () => {
 			const prompt = 'Count to 3';
-			const systemPrompt =
-				'You are a helpful assistant that provides concise answers.';
+			const systemPrompt = 'You are a helpful assistant that provides concise answers.';
 
 			const result = await aiCore.generate(prompt, {
 				systemPrompt,
@@ -221,9 +216,7 @@ describe('🧠 AI Core Capabilities Integration Tests', () => {
 
 			// Should prioritize programming-related content
 			const topSource = result.sources[0];
-			expect(topSource.text.toLowerCase()).toMatch(
-				/python|javascript|programming/,
-			);
+			expect(topSource.text.toLowerCase()).toMatch(/python|javascript|programming/);
 		}, 30000);
 	});
 
@@ -348,9 +341,9 @@ describe('🧠 AI Core Capabilities Integration Tests', () => {
 
 		it('should fail fast when embedding adapter is missing', async () => {
 			const llmOnly = createAICapabilities(AI_PRESETS.LLM_ONLY);
-			await expect(
-				llmOnly.ragQuery({ query: 'test without embeddings' }),
-			).rejects.toThrow('Embedding adapter not configured for RAG');
+			await expect(llmOnly.ragQuery({ query: 'test without embeddings' })).rejects.toThrow(
+				'Embedding adapter not configured for RAG',
+			);
 		}, 15000);
 	});
 

@@ -15,11 +15,7 @@ export async function loadGrant(id: string): Promise<Grant> {
 	// read from .cortex/policy/tools/*.json, validate by schema
 	const fs = await import('node:fs');
 	const pathMod = await import('node:path');
-	const filePath = pathMod.join(
-		process.cwd(),
-		'.cortex/policy/tools',
-		`${id}.json`,
-	);
+	const filePath = pathMod.join(process.cwd(), '.cortex/policy/tools', `${id}.json`);
 	const content = fs.readFileSync(filePath, 'utf-8');
 	return Grant.parse(JSON.parse(content));
 }
@@ -27,11 +23,7 @@ export async function loadGrant(id: string): Promise<Grant> {
 // naive in-memory rate limiter per process
 const rateMap = new Map<string, number[]>();
 
-export function enforce(
-	grant: Grant,
-	action: string,
-	args: Record<string, unknown>,
-) {
+export function enforce(grant: Grant, action: string, args: Record<string, unknown>) {
 	if (!grant.actions.includes(action)) throw new Error('action not allowed');
 
 	// fsScope check for path args
@@ -56,8 +48,7 @@ export function enforce(
 	const now = Date.now();
 	const windowMs = 60_000;
 	const arr = (rateMap.get(key) ?? []).filter((t) => now - t < windowMs);
-	if (arr.length >= grant.rate.perMinute)
-		throw new Error('rate limit exceeded');
+	if (arr.length >= grant.rate.perMinute) throw new Error('rate limit exceeded');
 	arr.push(now);
 	rateMap.set(key, arr);
 	return true;

@@ -69,11 +69,7 @@ describe('runRagSuite', () => {
 
 	it('ragSuite.run delegates to runRagSuite', async () => {
 		const deps = baseDeps();
-		const res = await ragSuite.run(
-			'rag',
-			RagOptions.parse({ dataset, k: 1 }),
-			deps,
-		);
+		const res = await ragSuite.run('rag', RagOptions.parse({ dataset, k: 1 }), deps);
 		expect(res.pass).toBe(true);
 	});
 });

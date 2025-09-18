@@ -1,0 +1,22 @@
+# Cloudflare Tunnel rotation config (green) for cortex-mcp
+# Intended for blue/green rotation alongside the existing (blue) tunnel
+# Usage:
+#  - Create a distinct tunnel (cloudflared tunnel create cortex-mcp-green)
+#  - Set env vars: TUNNEL_UUID (new/green) and CLOUDFLARED_CREDENTIALS_FILE (path to new tunnel creds)
+#  - Run rotation script with:
+#      scripts/cloudflare/mcp-tunnel-rotate.sh \
+#        --new-config packages/cortex-mcp/infrastructure/cloudflare/tunnel.rotate.config.yml \
+#        --old-name cortex-mcp \
+#        --new-name cortex-mcp-green \
+#        --hostname cortex-mcp.brainwav.io \
+#        --health-path /health \
+#        --grace 20
+
+tunnel: ${TUNNEL_UUID}
+credentials-file: ${CLOUDFLARED_CREDENTIALS_FILE}
+
+ingress:
+  # Public hostname for cortex-mcp via Cloudflare Tunnel (green)
+  - hostname: cortex-mcp.brainwav.io
+    service: http://localhost:3024
+  - service: http_status:404

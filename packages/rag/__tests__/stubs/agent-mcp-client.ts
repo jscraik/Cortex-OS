@@ -68,9 +68,7 @@ function takeResponse(method: MethodName): MockResponse {
 		return defaultResponse(method);
 	}
 	if (entry.method !== method) {
-		throw new Error(
-			`Expected response for ${method} but received ${entry.method}`,
-		);
+		throw new Error(`Expected response for ${method} but received ${entry.method}`);
 	}
 	return entry;
 }
@@ -125,11 +123,7 @@ export class AgentMCPClient {
 		}
 	}
 
-	async callTool(
-		name: string,
-		args: Record<string, unknown>,
-		timeout?: number,
-	) {
+	async callTool(name: string, args: Record<string, unknown>, timeout?: number) {
 		this.ensureConnected();
 		mockCallLog.push({
 			method: 'mcp_call_tool',
@@ -154,11 +148,7 @@ export class AgentMCPClient {
 		return (response.value as KnowledgeSearchResult[]) ?? [];
 	}
 
-	async createTask(
-		title: string,
-		description: string,
-		options: Record<string, unknown> = {},
-	) {
+	async createTask(title: string, description: string, options: Record<string, unknown> = {}) {
 		this.ensureConnected();
 		mockCallLog.push({
 			method: 'mcp_create_task',
@@ -192,9 +182,7 @@ export class AgentMCPClient {
 		});
 		const response = takeResponse('mcp_upload_document');
 		if (response.error) throw response.error;
-		const payload =
-			(response.value as { documentId?: string; id?: string; url?: string }) ??
-			{};
+		const payload = (response.value as { documentId?: string; id?: string; url?: string }) ?? {};
 		const documentId = payload.documentId ?? payload.id ?? 'doc-mock';
 		const url = payload.url ?? `mock://${documentId}`;
 		return { documentId, url };

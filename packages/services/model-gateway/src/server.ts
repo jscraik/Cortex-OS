@@ -40,8 +40,7 @@ export function createServer(router = new ModelRouter()) {
 						texts: body.texts,
 						model: body.model,
 					});
-		const vectors =
-			'embedding' in result ? [result.embedding] : result.embeddings;
+		const vectors = 'embedding' in result ? [result.embedding] : result.embeddings;
 		return reply.send({ vectors, modelUsed: result.model });
 	});
 

@@ -47,9 +47,7 @@ export const rerank = async (
 		case 'mock':
 			return rerankWithMock(query, documents, topK);
 		default:
-			throw new Error(
-				`Reranking not implemented for provider: ${state.config.provider}`,
-			);
+			throw new Error(`Reranking not implemented for provider: ${state.config.provider}`);
 	}
 };
 
@@ -63,9 +61,7 @@ const rerankWithMock = async (
 		const docLower = doc.toLowerCase();
 		const queryWords = new Set(queryLower.split(/\s+/));
 		const docWords = new Set(docLower.split(/\s+/));
-		const intersection = new Set(
-			[...queryWords].filter((w) => docWords.has(w)),
-		);
+		const intersection = new Set([...queryWords].filter((w) => docWords.has(w)));
 		const overlap = intersection.size;
 		const union = new Set([...queryWords, ...docWords]).size;
 		const jaccardSimilarity = union === 0 ? 0 : overlap / union;
@@ -100,4 +96,3 @@ const rerankWithTransformers = async (
 	results.sort((a, b) => b.score - a.score);
 	return topK ? results.slice(0, topK) : results;
 };
-

@@ -12,9 +12,7 @@ import {
 const isRecord = (value: unknown): value is Record<PropertyKey, unknown> =>
 	typeof value === 'object' && value !== null;
 
-const isRecordArray = (
-	value: unknown,
-): value is Array<Record<PropertyKey, unknown>> =>
+const isRecordArray = (value: unknown): value is Array<Record<PropertyKey, unknown>> =>
 	Array.isArray(value) && value.every(isRecord);
 
 const expectIssueForPath = (details: unknown, expectedPath: string[]) => {
@@ -60,10 +58,7 @@ describe('Memory MCP tool definitions', () => {
 	});
 
 	it('returns INVALID_INPUT error with details for malformed payloads', async () => {
-		const response = await memoryStoreTool.invoke(
-			{ text: 42 } as unknown,
-			baseContext,
-		);
+		const response = await memoryStoreTool.invoke({ text: 42 } as unknown, baseContext);
 
 		if (response.type !== 'error') {
 			throw new Error('Expected error response');
@@ -97,10 +92,7 @@ describe('Memory MCP tool definitions', () => {
 	});
 
 	it('validates search filters and limits', async () => {
-		const response = await memorySearchTool.invoke(
-			{ query: 'hello', limit: 200 },
-			baseContext,
-		);
+		const response = await memorySearchTool.invoke({ query: 'hello', limit: 200 }, baseContext);
 		if (response.type !== 'error') {
 			throw new Error('Expected error response');
 		}
@@ -109,10 +101,7 @@ describe('Memory MCP tool definitions', () => {
 	});
 
 	it('list tool requires namespace when cursor is provided', async () => {
-		const response = await memoryListTool.invoke(
-			{ cursor: 'abc123' },
-			baseContext,
-		);
+		const response = await memoryListTool.invoke({ cursor: 'abc123' }, baseContext);
 		if (response.type !== 'error') {
 			throw new Error('Expected error response');
 		}

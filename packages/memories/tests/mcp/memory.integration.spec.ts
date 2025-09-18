@@ -31,8 +31,7 @@ type FailureEnvelope = {
 	};
 };
 
-const RESPONSE_PARSE_ERROR =
-	'MCP tool response must include a text content payload';
+const RESPONSE_PARSE_ERROR = 'MCP tool response must include a text content payload';
 
 import {
 	assertNumber,
@@ -45,18 +44,12 @@ import {
 function parseEnvelope(result: unknown): SuccessEnvelope | FailureEnvelope {
 	const response = assertRecord(result, 'MCP tool response must be an object');
 	const metadata = assertRecord(response.metadata, 'MCP tool metadata missing');
-	const tool = assertString(
-		metadata.tool,
-		'MCP tool metadata requires a tool name',
-	);
+	const tool = assertString(metadata.tool, 'MCP tool metadata requires a tool name');
 	const correlationId = assertString(
 		metadata.correlationId,
 		'MCP tool metadata requires correlationId',
 	);
-	const timestamp = assertString(
-		metadata.timestamp,
-		'MCP tool metadata requires timestamp',
-	);
+	const timestamp = assertString(metadata.timestamp, 'MCP tool metadata requires timestamp');
 
 	const blocks = Array.isArray(response.content) ? response.content : [];
 	if (blocks.length === 0) {
@@ -76,15 +69,10 @@ function parseEnvelope(result: unknown): SuccessEnvelope | FailureEnvelope {
 	try {
 		parsedPayload = JSON.parse(text);
 	} catch (error) {
-		throw new Error(
-			`Unable to parse MCP tool response payload: ${(error as Error).message}`,
-		);
+		throw new Error(`Unable to parse MCP tool response payload: ${(error as Error).message}`);
 	}
 
-	const payload = assertRecord(
-		parsedPayload,
-		'MCP tool payload must be a JSON object',
-	);
+	const payload = assertRecord(parsedPayload, 'MCP tool payload must be a JSON object');
 	const payloadSuccess = payload.success;
 	if (typeof payloadSuccess !== 'boolean') {
 		throw new Error('MCP tool payload must include a boolean success flag');
@@ -110,9 +98,7 @@ function parseEnvelope(result: unknown): SuccessEnvelope | FailureEnvelope {
 
 	if (payloadSuccess) {
 		if (isErrorResponse) {
-			throw new Error(
-				'MCP tool response marked as error despite success payload',
-			);
+			throw new Error('MCP tool response marked as error despite success payload');
 		}
 		const data = assertRecord(
 			payload.data,
@@ -128,29 +114,18 @@ function parseEnvelope(result: unknown): SuccessEnvelope | FailureEnvelope {
 	}
 
 	if (!isErrorResponse) {
-		throw new Error(
-			'MCP tool response missing isError flag for failure payload',
-		);
+		throw new Error('MCP tool response missing isError flag for failure payload');
 	}
 
 	const errorRecord = assertRecord(
 		payload.error,
 		'MCP tool payload must include error details when unsuccessful',
 	);
-	const code = assertString(
-		errorRecord.code,
-		'MCP tool error payload must include code',
-	);
-	const message = assertString(
-		errorRecord.message,
-		'MCP tool error payload must include message',
-	);
+	const code = assertString(errorRecord.code, 'MCP tool error payload must include code');
+	const message = assertString(errorRecord.message, 'MCP tool error payload must include message');
 	const details =
 		'details' in errorRecord && errorRecord.details !== undefined
-			? assertStringArray(
-					errorRecord.details,
-					'MCP tool error details must be string[]',
-				)
+			? assertStringArray(errorRecord.details, 'MCP tool error details must be string[]')
 			: [];
 
 	return {
@@ -184,20 +159,14 @@ describe('memories MCP integration', () => {
 	beforeAll(async () => {
 		fixture = await setupMockServer();
 		for (const tool of memoryMcpTools) {
-			fixture.server.registerTool(
-				tool.name,
-				async (args): Promise<MemoryToolResponse> => {
-					return tool.handler(args);
-				},
-			);
+			fixture.server.registerTool(tool.name, async (args): Promise<MemoryToolResponse> => {
+				return tool.handler(args);
+			});
 			if (Array.isArray(tool.aliases)) {
 				for (const alias of tool.aliases) {
-					fixture.server.registerTool(
-						alias,
-						async (args): Promise<MemoryToolResponse> => {
-							return tool.handler(args);
-						},
-					);
+					fixture.server.registerTool(alias, async (args): Promise<MemoryToolResponse> => {
+						return tool.handler(args);
+					});
 				}
 			}
 		}
@@ -259,9 +228,7 @@ describe('memories MCP integration', () => {
 			),
 		).toBe(MAX_MEMORY_TEXT_LENGTH);
 		// Timestamp should reflect recent execution, ensuring observability for latency tracking.
-		expect(new Date(envelope.timestamp).getTime()).toBeGreaterThan(
-			Date.now() - 2_000,
-		);
+		expect(new Date(envelope.timestamp).getTime()).toBeGreaterThan(Date.now() - 2_000);
 	});
 
 	it('surfaces validation errors for invalid memories.search requests', async () => {
@@ -273,9 +240,7 @@ describe('memories MCP integration', () => {
 		const envelope = expectFailure(response);
 		expect(envelope.tool).toBe('memories.search');
 		expect(envelope.error.code).toBe('validation_error');
-		expect(
-			envelope.error.details.some((detail) => detail.includes('limit')),
-		).toBe(true);
+		expect(envelope.error.details.some((detail) => detail.includes('limit'))).toBe(true);
 
 		assertToolCall(fixture.server, 'memories.search', 1);
 	});

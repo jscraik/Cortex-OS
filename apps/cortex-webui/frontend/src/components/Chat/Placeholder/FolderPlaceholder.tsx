@@ -6,9 +6,7 @@ interface FolderPlaceholderProps {
 	onImportChat: () => void;
 }
 
-const FolderPlaceholder: React.FC<FolderPlaceholderProps> = ({
-	onImportChat,
-}) => {
+const FolderPlaceholder: React.FC<FolderPlaceholderProps> = ({ onImportChat }) => {
 	return (
 		<div className="folder-placeholder text-center p-8">
 			<div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100">
@@ -28,9 +26,7 @@ const FolderPlaceholder: React.FC<FolderPlaceholderProps> = ({
 				</svg>
 			</div>
 
-			<h3 className="mt-4 text-lg font-medium text-gray-900">
-				No chats selected
-			</h3>
+			<h3 className="mt-4 text-lg font-medium text-gray-900">No chats selected</h3>
 			<p className="mt-2 text-gray-500">
 				Select a chat from the sidebar or create a new one to get started.
 			</p>

@@ -49,12 +49,8 @@ const sampleDocuments: Document[] = [
 	},
 ];
 const modelDir = path.resolve(process.cwd(), 'models');
-const embedPath =
-	process.env.QWEN_EMBED_MODEL_PATH ||
-	path.join(modelDir, 'Qwen3-Embedding-4B');
-const rerankPath =
-	process.env.QWEN_RERANKER_MODEL_PATH ||
-	path.join(modelDir, 'Qwen3-Reranker-4B');
+const embedPath = process.env.QWEN_EMBED_MODEL_PATH || path.join(modelDir, 'Qwen3-Embedding-4B');
+const rerankPath = process.env.QWEN_RERANKER_MODEL_PATH || path.join(modelDir, 'Qwen3-Reranker-4B');
 
 // Validate that model files exist in the directories, or warn if missing.
 for (const p of [embedPath, rerankPath]) {
@@ -63,9 +59,7 @@ for (const p of [embedPath, rerankPath]) {
 	try {
 		stat = fs.statSync(p);
 	} catch {
-		console.warn(
-			`[WARN] Path "${p}" does not exist. Model files may be missing.`,
-		);
+		console.warn(`[WARN] Path "${p}" does not exist. Model files may be missing.`);
 		continue;
 	}
 	if (stat.isDirectory()) {
@@ -99,9 +93,7 @@ async function demonstrateMLXFirstRAG() {
 		const modelPriority = pipeline.getModelPriority();
 		modelPriority.forEach((model, index) => {
 			const priorityType = model.backend === 'mlx' ? '🔥 MLX' : '🛡️  Ollama';
-			console.log(
-				`  ${index + 1}. ${priorityType} - ${model.model} (priority: ${model.priority})`,
-			);
+			console.log(`  ${index + 1}. ${priorityType} - ${model.model} (priority: ${model.priority})`);
 		});
 
 		// Test queries
@@ -154,12 +146,8 @@ async function demonstrateConfigurationOptions() {
 		const priority = pipeline.getModelPriority();
 
 		console.log(`  🎯 Models: ${priority.length} total`);
-		console.log(
-			`  🔥 MLX models: ${priority.filter((m) => m.backend === 'mlx').length}`,
-		);
-		console.log(
-			`  🛡️  Ollama fallbacks: ${priority.filter((m) => m.backend === 'ollama').length}`,
-		);
+		console.log(`  🔥 MLX models: ${priority.filter((m) => m.backend === 'mlx').length}`);
+		console.log(`  🛡️  Ollama fallbacks: ${priority.filter((m) => m.backend === 'ollama').length}`);
 		console.log(
 			`  🏆 Primary: ${priority[0]?.model.split('/').pop() || priority[0]?.model} (${priority[0]?.backend})`,
 		);
@@ -174,9 +162,7 @@ async function demonstrateCustomConfiguration() {
 		embeddingModelSize: '4B', // Balanced performance
 		generationModels: [
 			{
-				model:
-					process.env.MLX_QWEN_CODER_PATH ||
-					'mlx-community/qwen2.5-coder-32b-instruct-q4',
+				model: process.env.MLX_QWEN_CODER_PATH || 'mlx-community/qwen2.5-coder-32b-instruct-q4',
 				backend: 'mlx',
 				name: 'Qwen2.5 Coder 32B',
 				priority: 10,

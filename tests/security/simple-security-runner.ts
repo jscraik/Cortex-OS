@@ -100,9 +100,7 @@ async function runSecurityTests() {
 		// Test 3: Verify package.json has security test scripts
 		logInfo('Test 3: Verifying package.json has security test scripts');
 		try {
-			const packageJson = JSON.parse(
-				execSync('cat ../../package.json', { encoding: 'utf-8' }),
-			);
+			const packageJson = JSON.parse(execSync('cat ../../package.json', { encoding: 'utf-8' }));
 
 			const requiredScripts = [
 				'test:security:unit',

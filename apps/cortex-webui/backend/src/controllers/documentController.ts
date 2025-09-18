@@ -38,14 +38,9 @@ export const documentUploadMiddleware = multer({
 			'.gif',
 			'.webp',
 		];
-		const extension = file.originalname
-			.toLowerCase()
-			.substring(file.originalname.lastIndexOf('.'));
+		const extension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
 
-		if (
-			allowedMimes.includes(file.mimetype) ||
-			allowedExtensions.includes(extension)
-		) {
+		if (allowedMimes.includes(file.mimetype) || allowedExtensions.includes(extension)) {
 			cb(null, true);
 		} else {
 			cb(null, false);
@@ -87,16 +82,10 @@ export async function parseDocument(req: Request, res: Response) {
 		return res.json(result);
 	} catch (error) {
 		logger.error('document:parse_failed', { error });
-		const errorMessage =
-			error instanceof Error ? error.message : 'Unknown error';
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 		const status =
-			errorMessage.includes('Invalid PDF') ||
-			errorMessage.includes('Unsupported')
-				? 400
-				: 500;
-		return res
-			.status(status)
-			.json({ error: 'Document parsing failed', message: errorMessage });
+			errorMessage.includes('Invalid PDF') || errorMessage.includes('Unsupported') ? 400 : 500;
+		return res.status(status).json({ error: 'Document parsing failed', message: errorMessage });
 	}
 }
 
@@ -114,10 +103,7 @@ export async function getSupportedTypes(_req: Request, res: Response) {
 /**
  * Parse PDF document
  */
-async function parsePDF(
-	buffer: Buffer,
-	fileName: string,
-): Promise<DocumentParseResult> {
+async function parsePDF(buffer: Buffer, fileName: string): Promise<DocumentParseResult> {
 	try {
 		const data = await pdf(buffer);
 
@@ -132,15 +118,11 @@ async function parsePDF(
 			CreationDate?: string;
 			ModDate?: string;
 		}
-		const info: PdfDocumentInfo | undefined = (
-			data as { info?: PdfDocumentInfo }
-		).info;
+		const info: PdfDocumentInfo | undefined = (data as { info?: PdfDocumentInfo }).info;
 
 		// Check page limit
 		if (data.numpages > MAX_PAGES) {
-			throw new Error(
-				`PDF has ${data.numpages} pages, maximum allowed is ${MAX_PAGES}`,
-			);
+			throw new Error(`PDF has ${data.numpages} pages, maximum allowed is ${MAX_PAGES}`);
 		}
 
 		let text = data.text || '';
@@ -148,9 +130,7 @@ async function parsePDF(
 		// Truncate if too long
 		const originalLength = text.length;
 		if (text.length > MAX_TEXT_LENGTH) {
-			text =
-				text.slice(0, MAX_TEXT_LENGTH) +
-				'\n\n[Content truncated due to length]';
+			text = text.slice(0, MAX_TEXT_LENGTH) + '\n\n[Content truncated due to length]';
 		}
 
 		return {
@@ -167,9 +147,7 @@ async function parsePDF(
 				subject: info?.Subject,
 				creator: info?.Creator,
 				producer: info?.Producer,
-				creationDate: info?.CreationDate
-					? new Date(info.CreationDate)
-					: undefined,
+				creationDate: info?.CreationDate ? new Date(info.CreationDate) : undefined,
 				modDate: info?.ModDate ? new Date(info.ModDate) : undefined,
 			},
 		};
@@ -183,24 +161,18 @@ async function parsePDF(
 /**
  * Parse text file (TXT, MD, Markdown)
  */
-async function parseTextFile(
-	buffer: Buffer,
-	fileName: string,
-): Promise<DocumentParseResult> {
+async function parseTextFile(buffer: Buffer, fileName: string): Promise<DocumentParseResult> {
 	try {
 		let text = buffer.toString('utf-8');
 		const originalLength = text.length;
 
 		// Truncate if too long
 		if (text.length > MAX_TEXT_LENGTH) {
-			text =
-				text.slice(0, MAX_TEXT_LENGTH) +
-				'\n\n[Content truncated due to length]';
+			text = text.slice(0, MAX_TEXT_LENGTH) + '\n\n[Content truncated due to length]';
 		}
 
 		const fileType =
-			fileName.toLowerCase().endsWith('.md') ||
-			fileName.toLowerCase().endsWith('.markdown')
+			fileName.toLowerCase().endsWith('.md') || fileName.toLowerCase().endsWith('.markdown')
 				? 'markdown'
 				: 'text';
 
@@ -226,10 +198,7 @@ async function parseTextFile(
 /**
  * Parse image file (for vision models)
  */
-async function parseImageFile(
-	buffer: Buffer,
-	fileName: string,
-): Promise<DocumentParseResult> {
+async function parseImageFile(buffer: Buffer, fileName: string): Promise<DocumentParseResult> {
 	try {
 		// Convert to base64 for vision models
 		const base64 = buffer.toString('base64');

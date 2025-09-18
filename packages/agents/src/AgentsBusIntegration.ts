@@ -42,9 +42,7 @@ export class AgentsBusIntegration {
 		});
 
 		this.bus.onTaskStarted((data) => {
-			console.log(
-				`[AgentsBusIntegration] Task started: ${data.taskId} for agent ${data.agentId}`,
-			);
+			console.log(`[AgentsBusIntegration] Task started: ${data.taskId} for agent ${data.agentId}`);
 		});
 
 		this.bus.onTaskCompleted((data) => {
@@ -54,9 +52,7 @@ export class AgentsBusIntegration {
 		});
 
 		this.bus.onCommunication((data) => {
-			console.log(
-				`[AgentsBusIntegration] Communication: ${data.fromAgent} -> ${data.toAgent}`,
-			);
+			console.log(`[AgentsBusIntegration] Communication: ${data.fromAgent} -> ${data.toAgent}`);
 		});
 	}
 
@@ -163,8 +159,6 @@ export class AgentsBusIntegration {
 /**
  * Create agents bus integration instance
  */
-export function createAgentsBusIntegration(
-	config: AgentsBusConfig = {},
-): AgentsBusIntegration {
+export function createAgentsBusIntegration(config: AgentsBusConfig = {}): AgentsBusIntegration {
 	return new AgentsBusIntegration(config);
 }

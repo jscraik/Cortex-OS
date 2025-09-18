@@ -79,9 +79,7 @@ export const SpiffeWorkloadResponseSchema = z.object({
 		.optional(),
 });
 
-export type SpiffeWorkloadResponse = z.infer<
-	typeof SpiffeWorkloadResponseSchema
->;
+export type SpiffeWorkloadResponse = z.infer<typeof SpiffeWorkloadResponseSchema>;
 
 // Security Event Types
 export enum SecurityEventType {
@@ -145,33 +143,21 @@ export class SecurityError extends Error {
 }
 
 export class SPIFFEError extends SecurityError {
-	constructor(
-		message: string,
-		spiffeId?: SpiffeId,
-		details?: Record<string, unknown>,
-	) {
+	constructor(message: string, spiffeId?: SpiffeId, details?: Record<string, unknown>) {
 		super(message, 'SPIFFE_ERROR', spiffeId, details);
 		this.name = 'SPIFFEError';
 	}
 }
 
 export class MTLSError extends SecurityError {
-	constructor(
-		message: string,
-		spiffeId?: SpiffeId,
-		details?: Record<string, unknown>,
-	) {
+	constructor(message: string, spiffeId?: SpiffeId, details?: Record<string, unknown>) {
 		super(message, 'MTLS_ERROR', spiffeId, details);
 		this.name = 'MTLSError';
 	}
 }
 
 export class WorkloadIdentityError extends SecurityError {
-	constructor(
-		message: string,
-		spiffeId?: SpiffeId,
-		details?: Record<string, unknown>,
-	) {
+	constructor(message: string, spiffeId?: SpiffeId, details?: Record<string, unknown>) {
 		super(message, 'WORKLOAD_IDENTITY_ERROR', spiffeId, details);
 		this.name = 'WorkloadIdentityError';
 	}

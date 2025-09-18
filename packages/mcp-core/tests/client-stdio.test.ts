@@ -16,11 +16,7 @@ describe('createEnhancedClient stdio buffering', () => {
 			client.callTool({ name: 'c' }),
 		]);
 		const echoes = results
-			.map((r) =>
-				typeof r === 'object' && r && 'echo' in r
-					? (r as { echo: string }).echo
-					: '',
-			)
+			.map((r) => (typeof r === 'object' && r && 'echo' in r ? (r as { echo: string }).echo : ''))
 			.sort();
 		expect(echoes).toEqual(['a', 'b', 'c']);
 		await client.close();

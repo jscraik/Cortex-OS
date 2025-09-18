@@ -241,8 +241,6 @@ describe('JSON-RPC 2.0 Compliance Tests', () => {
 		};
 		const methodNotFoundResponse = await handleA2A(methodNotFoundRequest);
 		const parsedMethodNotFound = JSON.parse(methodNotFoundResponse);
-		expect(parsedMethodNotFound.error.code).toBe(
-			A2A_ERROR_CODES.METHOD_NOT_FOUND,
-		);
+		expect(parsedMethodNotFound.error.code).toBe(A2A_ERROR_CODES.METHOD_NOT_FOUND);
 	});
 });

@@ -137,16 +137,14 @@ describe('sanitizeMdxContent', () => {
 	});
 
 	it('removes trailing solitary super-fence after content', () => {
-		const input =
-			'---\n' + 'title: Demo\n' + '---\n\n# Heading\n\nText body.\n\n````';
+		const input = '---\n' + 'title: Demo\n' + '---\n\n# Heading\n\nText body.\n\n````';
 		const out = sanitizeMdxContent(input);
 		expect(out).not.toMatch(/````\s*$/);
 		expect(out).toMatch(/Text body\./);
 	});
 
 	it('unwraps mismatched quad-open / triple-close super-fence', () => {
-		const raw =
-			'````markdown\n---\ntitle: Mismatch\n---\n\n# Head\n\nBody\n```';
+		const raw = '````markdown\n---\ntitle: Mismatch\n---\n\n# Head\n\nBody\n```';
 		const cleaned = sanitizeMdxContent(raw);
 		expect(cleaned.startsWith('---')).toBe(true);
 		expect(cleaned).not.toMatch(/^````/);
@@ -188,9 +186,7 @@ describe('sanitizeMdxContent', () => {
 	it('wraps list-leading generic token (Enhancement B)', () => {
 		const input = '* Promise<ResultType> result';
 		const out = sanitizeMdxContent(input);
-		expect(
-			/Promise`&lt;ResultType&gt;` result|Promise<ResultType>/.test(out),
-		).toBe(true);
+		expect(/Promise`&lt;ResultType&gt;` result|Promise<ResultType>/.test(out)).toBe(true);
 	});
 
 	it('escapes multi-line pseudo-JSX continuation (Enhancement C)', () => {
@@ -216,9 +212,7 @@ describe('sanitizeMdxContent', () => {
 	it('auto-closes orphan opening fence before structural boundary (closing fence at EOF)', () => {
 		const input = '``js\nconsole.log(1);\n\nNext section';
 		const out = sanitizeMdxContent(input);
-		expect(out.trimEnd()).toMatch(
-			/```js\nconsole\.log\(1\);\n\nNext section\n```$/,
-		);
+		expect(out.trimEnd()).toMatch(/```js\nconsole\.log\(1\);\n\nNext section\n```$/);
 	});
 
 	it('auto-closes orphan fence at EOF', () => {
@@ -233,14 +227,11 @@ describe('sanitizeMdxContent', () => {
 		// Expect the first premature closing fence removed so block becomes continuous
 		expect(out).not.toMatch(/const a = 1;\n```\nconst b = 2;/); // original split pattern
 		// Should produce a single fenced block containing both lines (allow optional blank line)
-		expect(/```ts\nconst a = 1;\n(?:\n)?const b = 2;\n```/.test(out)).toBe(
-			true,
-		);
+		expect(/```ts\nconst a = 1;\n(?:\n)?const b = 2;\n```/.test(out)).toBe(true);
 	});
 
 	it('repairs spurious early closing fence in mermaid sequence', () => {
-		const input =
-			'```mermaid\nsequenceDiagram\nA->>B: Hi\n```\nB-->>A: Bye\n```';
+		const input = '```mermaid\nsequenceDiagram\nA->>B: Hi\n```\nB-->>A: Bye\n```';
 		const out = sanitizeMdxContent(input);
 		expect(out).toMatch(/```mermaid\nsequenceDiagram/);
 		// Arrows may be escaped or not depending on earlier pass; accept either form
@@ -262,9 +253,7 @@ describe('normalizeReferenceLinks', () => {
 
 describe('hasSlugCollision', () => {
 	it('detects collision when README and base file exist', () => {
-		expect(hasSlugCollision(['README.md', 'security.md'], 'security')).toBe(
-			true,
-		);
+		expect(hasSlugCollision(['README.md', 'security.md'], 'security')).toBe(true);
 	});
 	it('no collision when base file missing', () => {
 		expect(hasSlugCollision(['README.md', 'index.md'], 'security')).toBe(false);
@@ -273,8 +262,7 @@ describe('hasSlugCollision', () => {
 
 describe('sanitizeMdxContent – unwrap whole-document super fence', () => {
 	it('removes leading ````markdown and trailing ```` that wrap entire doc', () => {
-		const raw =
-			'````markdown\n---\ntitle: Demo\n---\n\n# Heading\n\nSome text.\n\n````\n';
+		const raw = '````markdown\n---\ntitle: Demo\n---\n\n# Heading\n\nSome text.\n\n````\n';
 		const cleaned = sanitizeMdxContent(raw);
 		expect(cleaned.startsWith('---')).toBe(true);
 		expect(cleaned).not.toMatch(/````/);

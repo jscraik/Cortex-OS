@@ -68,11 +68,7 @@ describe('WCAG 2.2 AA Compliance Tests', () => {
 		});
 
 		it('should announce progress updates accessibly', () => {
-			const announcement = ariaAnnouncer.announceProgress(
-				'test-task-id',
-				'Processing data',
-				0.75,
-			);
+			const announcement = ariaAnnouncer.announceProgress('test-task-id', 'Processing data', 0.75);
 
 			expect(announcement).toBeDefined();
 			expect(announcement).toContain('75%');
@@ -177,8 +173,7 @@ describe('WCAG 2.2 AA Compliance Tests', () => {
 		it('should announce navigation state changes', () => {
 			keyboardManager.activateContext('test-context');
 
-			const announcement =
-				keyboardManager.announceNavigationState('test-context');
+			const announcement = keyboardManager.announceNavigationState('test-context');
 
 			expect(announcement).toBeDefined();
 			expect(announcement).toContain('1 of');
@@ -187,10 +182,8 @@ describe('WCAG 2.2 AA Compliance Tests', () => {
 
 	describe('Focus Management (WCAG 2.4.3, 2.4.7)', () => {
 		it('should create keyboard instructions for different contexts', () => {
-			const taskListInstructions =
-				ariaAnnouncer.createKeyboardInstructions('task-list');
-			const taskDetailsInstructions =
-				ariaAnnouncer.createKeyboardInstructions('task-details');
+			const taskListInstructions = ariaAnnouncer.createKeyboardInstructions('task-list');
+			const taskDetailsInstructions = ariaAnnouncer.createKeyboardInstructions('task-details');
 
 			expect(taskListInstructions).toBeDefined();
 			expect(taskDetailsInstructions).toBeDefined();
@@ -229,10 +222,7 @@ describe('WCAG 2.2 AA Compliance Tests', () => {
 		});
 
 		it('should announce landmark navigation', () => {
-			const mainLandmark = ariaAnnouncer.announceLandmark(
-				'main',
-				'Task management interface',
-			);
+			const mainLandmark = ariaAnnouncer.announceLandmark('main', 'Task management interface');
 			const navLandmark = ariaAnnouncer.announceLandmark('navigation');
 
 			expect(mainLandmark).toContain('main content area');
@@ -371,9 +361,7 @@ describe('WCAG 2.2 AA Compliance Tests', () => {
 			const queued = ariaAnnouncer.getQueuedAnnouncements();
 
 			// Error should be marked as assertive priority
-			const errorAnnouncement = queued.find((a) =>
-				a.message.includes('Critical error'),
-			);
+			const errorAnnouncement = queued.find((a) => a.message.includes('Critical error'));
 			expect(errorAnnouncement?.priority).toBe('assertive');
 		});
 	});

@@ -1,19 +1,14 @@
 import type { IModelRouter as ModelRouter } from './model-router';
 
-export function embeddingsHandler(
-	router: ModelRouter,
-	body: { model?: string; texts: string[] },
-) {
+export function embeddingsHandler(router: ModelRouter, body: { model?: string; texts: string[] }) {
 	const { texts, model } = body;
 
 	if (texts.length === 1) {
-		return router
-			.generateEmbedding({ text: texts[0], model })
-			.then((result) => ({
-				vectors: [result.embedding],
-				dimensions: result.embedding.length,
-				modelUsed: result.model,
-			}));
+		return router.generateEmbedding({ text: texts[0], model }).then((result) => ({
+			vectors: [result.embedding],
+			dimensions: result.embedding.length,
+			modelUsed: result.model,
+		}));
 	}
 
 	return router.generateEmbeddings({ texts, model }).then((result) => ({

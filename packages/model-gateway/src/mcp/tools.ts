@@ -67,8 +67,6 @@ export const modelGatewayMcpTools: ModelGatewayTool[] = [
 
 // Export types for external use
 export type RouteRequestInput = z.infer<typeof RouteRequestInputSchema>;
-export type GetAvailableModelsInput = z.infer<
-	typeof GetAvailableModelsInputSchema
->;
+export type GetAvailableModelsInput = z.infer<typeof GetAvailableModelsInputSchema>;
 export type ValidateRequestInput = z.infer<typeof ValidateRequestInputSchema>;
 export type GetModelInfoInput = z.infer<typeof GetModelInfoInputSchema>;

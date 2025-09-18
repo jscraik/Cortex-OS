@@ -4,11 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { runProcess } from '../lib/run-process.js';
 import type { ChatMessage, GenerationConfig, Generator } from './index.js';
 
-const packageRoot = path.resolve(
-	path.dirname(fileURLToPath(import.meta.url)),
-	'..',
-	'..',
-);
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Model specification for generation backends
@@ -62,11 +58,7 @@ export class MultiModelGenerator implements Generator {
 	 */
 	async generate(prompt: string, config?: Partial<GenerationConfig>) {
 		const finalConfig = { ...this.defaultConfig, ...config };
-		const result = await this.generateWithModel(
-			this.model,
-			prompt,
-			finalConfig,
-		);
+		const result = await this.generateWithModel(this.model, prompt, finalConfig);
 		return {
 			content: result,
 			provider: this.model.backend,
@@ -88,14 +80,10 @@ export class MultiModelGenerator implements Generator {
 			content: result,
 			provider: this.model.backend,
 			usage: {
-				promptTokens: Math.floor(
-					messages.reduce((sum, m) => sum + m.content.length, 0) / 4,
-				),
+				promptTokens: Math.floor(messages.reduce((sum, m) => sum + m.content.length, 0) / 4),
 				completionTokens: Math.floor(result.length / 4),
 				totalTokens: Math.floor(
-					(messages.reduce((sum, m) => sum + m.content.length, 0) +
-						result.length) /
-						4,
+					(messages.reduce((sum, m) => sum + m.content.length, 0) + result.length) / 4,
 				),
 			},
 		};
@@ -163,9 +151,7 @@ export class MultiModelGenerator implements Generator {
 			});
 
 			if (!response.ok) {
-				throw new Error(
-					`Ollama API error: ${response.status} ${response.statusText}`,
-				);
+				throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
 			}
 
 			const result = await response.json();
@@ -203,9 +189,7 @@ export class MultiModelGenerator implements Generator {
 			});
 
 			if (!response.ok) {
-				throw new Error(
-					`Ollama API error: ${response.status} ${response.statusText}`,
-				);
+				throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
 			}
 
 			const result = await response.json();
@@ -305,12 +289,7 @@ export const ModelPresets = {
 		backend: 'ollama' as const,
 		name: 'Qwen3 Coder 30B',
 		description: 'Specialized for coding and programming tasks',
-		useCases: [
-			'code generation',
-			'debugging',
-			'code explanation',
-			'refactoring',
-		],
+		useCases: ['code generation', 'debugging', 'code explanation', 'refactoring'],
 	},
 
 	/** Reasoning and analysis */

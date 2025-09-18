@@ -42,12 +42,7 @@ export class Judge {
 		const scores = this.calculateScores(scenario, turns);
 		const failures = this.identifyFailures(scenario, turns, scores);
 		const passed = this.determineOverallPass(scores, failures);
-		const judgeNotes = this.generateJudgeNotes(
-			scenario,
-			turns,
-			scores,
-			failures,
-		);
+		const judgeNotes = this.generateJudgeNotes(scenario, turns, scores, failures);
 
 		return Promise.resolve({
 			scenarioId: scenario.id,
@@ -79,10 +74,7 @@ export class Judge {
 	/**
 	 * Evaluate how well the conversation achieved the stated goal
 	 */
-	private evaluateGoalAchievement(
-		scenario: SimScenario,
-		turns: SimTurn[],
-	): number {
+	private evaluateGoalAchievement(scenario: SimScenario, turns: SimTurn[]): number {
 		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 		const successCriteria = scenario.success_criteria || [];
 
@@ -109,10 +101,7 @@ export class Judge {
 	/**
 	 * Evaluate adherence to Standard Operating Procedures
 	 */
-	private evaluateSOPAdherence(
-		scenario: SimScenario,
-		turns: SimTurn[],
-	): number {
+	private evaluateSOPAdherence(scenario: SimScenario, turns: SimTurn[]): number {
 		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 		const sopRefs = scenario.sop_refs || [];
 
@@ -152,10 +141,7 @@ export class Judge {
 	/**
 	 * Evaluate brand consistency in responses
 	 */
-	private evaluateBrandConsistency(
-		_scenario: SimScenario,
-		turns: SimTurn[],
-	): number {
+	private evaluateBrandConsistency(_scenario: SimScenario, turns: SimTurn[]): number {
 		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 
 		let brandScore = 1.0;
@@ -185,10 +171,7 @@ export class Judge {
 	/**
 	 * Evaluate factual accuracy of information provided
 	 */
-	private evaluateFactualAccuracy(
-		_scenario: SimScenario,
-		turns: SimTurn[],
-	): number {
+	private evaluateFactualAccuracy(_scenario: SimScenario, turns: SimTurn[]): number {
 		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 
 		// For initial implementation, assume factual accuracy unless obvious errors
@@ -214,11 +197,7 @@ export class Judge {
 	/**
 	 * Identify specific failures in the conversation
 	 */
-	private identifyFailures(
-		_scenario: SimScenario,
-		turns: SimTurn[],
-		scores: SimScores,
-	): string[] {
+	private identifyFailures(_scenario: SimScenario, turns: SimTurn[], scores: SimScores): string[] {
 		const failures: string[] = [];
 
 		if (scores.goal < 0.7) {
@@ -324,12 +303,7 @@ export class Judge {
 	}
 
 	private showsAppropriateEmpathy(content: string): boolean {
-		const indicators = [
-			/sorry/i,
-			/understand/i,
-			/apologiz(?:e|ing)/i,
-			/appreciate/i,
-		];
+		const indicators = [/sorry/i, /understand/i, /apologiz(?:e|ing)/i, /appreciate/i];
 		return indicators.some((r) => r.test(content));
 	}
 
@@ -338,10 +312,7 @@ export class Judge {
 		return indicators.some((r) => r.test(content));
 	}
 
-	private contradictsEarlierStatements(
-		content: string,
-		agentTurns: SimTurn[],
-	): boolean {
+	private contradictsEarlierStatements(content: string, agentTurns: SimTurn[]): boolean {
 		const lower = content.toLowerCase();
 		for (const turn of agentTurns) {
 			const prev = turn.content.toLowerCase();

@@ -142,9 +142,7 @@ export async function loadMCPAllowlist(): Promise<MCPAllowlistEntry[]> {
 		// Basic validation - could be enhanced with Zod schema
 		for (const entry of rawData) {
 			if (!entry.name || !entry.version) {
-				throw new ValidationError(
-					'MCP allowlist entries must have name and version',
-				);
+				throw new ValidationError('MCP allowlist entries must have name and version');
 			}
 		}
 
@@ -166,9 +164,7 @@ export async function loadMCPAllowlist(): Promise<MCPAllowlistEntry[]> {
 /**
  * Save MCP allowlist to mcp-allowlist.yaml
  */
-export async function saveMCPAllowlist(
-	allowlist: MCPAllowlistEntry[],
-): Promise<void> {
+export async function saveMCPAllowlist(allowlist: MCPAllowlistEntry[]): Promise<void> {
 	const allowlistPath = getConfigPath('mcp-allowlist.yaml');
 	const yamlContent = yamlDump(allowlist, {
 		indent: 2,
@@ -238,9 +234,7 @@ export async function loadSecurityPolicies(): Promise<SecurityPolicy[]> {
 	try {
 		const { readdir } = await import('node:fs/promises');
 		const files = await readdir(policiesDir);
-		const yamlFiles = files.filter(
-			(f) => f.endsWith('.yaml') || f.endsWith('.yml'),
-		);
+		const yamlFiles = files.filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
 
 		const policies: SecurityPolicy[] = [];
 
@@ -274,13 +268,12 @@ export async function loadSecurityPolicies(): Promise<SecurityPolicy[]> {
  * Get merged configuration with all settings
  */
 export async function getFullConfig() {
-	const [config, mcpAllowlist, versionPins, securityPolicies] =
-		await Promise.all([
-			loadConfig(),
-			loadMCPAllowlist(),
-			loadVersionPins(),
-			loadSecurityPolicies(),
-		]);
+	const [config, mcpAllowlist, versionPins, securityPolicies] = await Promise.all([
+		loadConfig(),
+		loadMCPAllowlist(),
+		loadVersionPins(),
+		loadSecurityPolicies(),
+	]);
 
 	return {
 		config,

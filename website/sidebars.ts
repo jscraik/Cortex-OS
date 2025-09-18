@@ -1067,11 +1067,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: 'category',
 			label: 'Agents',
-			items: [
-				'agents/overview',
-				'agents/contracts-validation',
-				'agents/memory-state',
-			],
+			items: ['agents/overview', 'agents/contracts-validation', 'agents/memory-state'],
 		},
 	],
 };

@@ -14,26 +14,14 @@ vi.mock('./policy', () => ({
 
 class MockModelRouter {
 	// Single-text path used by server when texts.length === 1
-	async generateEmbedding({
-		text: _text,
-		model,
-	}: {
-		text: string;
-		model?: string;
-	}) {
+	async generateEmbedding({ text: _text, model }: { text: string; model?: string }) {
 		return {
 			embedding: [0.1, 0.2],
 			model: model || 'mock-model',
 		};
 	}
 	// Batch path when multiple texts are provided
-	async generateEmbeddings({
-		texts,
-		model,
-	}: {
-		texts: string[];
-		model?: string;
-	}) {
+	async generateEmbeddings({ texts, model }: { texts: string[]; model?: string }) {
 		return {
 			embeddings: texts.map(() => [0.1, 0.2]),
 			model: model || 'mock-model',
@@ -43,9 +31,7 @@ class MockModelRouter {
 
 describe('embeddings endpoint', () => {
 	it('returns embeddings array with evidence', async () => {
-		const server = createServer(
-			new MockModelRouter() as unknown as IModelRouter,
-		);
+		const server = createServer(new MockModelRouter() as unknown as IModelRouter);
 		const res = await server.inject({
 			method: 'POST',
 			url: '/embeddings',

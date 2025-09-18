@@ -1,12 +1,6 @@
 import { z } from 'zod';
 
-export const httpMethodSchema = z.enum([
-	'GET',
-	'POST',
-	'PUT',
-	'PATCH',
-	'DELETE',
-]);
+export const httpMethodSchema = z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']);
 
 export const metadataSchema = z.record(z.string(), z.unknown()).optional();
 
@@ -83,9 +77,7 @@ export const responseHandlingResultSchema = z.object({
 });
 
 export type ResponseHandlingInput = z.infer<typeof responseHandlingInputSchema>;
-export type ResponseHandlingResult = z.infer<
-	typeof responseHandlingResultSchema
->;
+export type ResponseHandlingResult = z.infer<typeof responseHandlingResultSchema>;
 
 export const errorResponseSchema = z.object({
 	code: z.string(),

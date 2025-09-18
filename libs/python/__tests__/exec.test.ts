@@ -19,12 +19,10 @@ describe('spawnPythonProcess env merging and PYTHONPATH behavior', () => {
 	let spawnMock: unknown;
 
 	beforeEach(async () => {
-		spawnMock = vi
-			.spyOn(child_process, 'spawn')
-			.mockImplementation((..._args: unknown[]) => {
-				// capture call and return fake proc
-				return fakeProc as unknown;
-			});
+		spawnMock = vi.spyOn(child_process, 'spawn').mockImplementation((..._args: unknown[]) => {
+			// capture call and return fake proc
+			return fakeProc as unknown;
+		});
 
 		// Clear env for deterministic tests
 		delete process.env.PYTHONPATH;

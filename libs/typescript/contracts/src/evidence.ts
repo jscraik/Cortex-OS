@@ -13,11 +13,7 @@ export const evidenceItemSchema = z
 			.default('document')
 			.describe('Source classification'),
 		text: z.string().min(1).optional().describe('Inline snippet content'),
-		uri: z
-			.string()
-			.url()
-			.optional()
-			.describe('Canonical resolvable source URI'),
+		uri: z.string().url().optional().describe('Canonical resolvable source URI'),
 		startOffset: z
 			.number()
 			.int()
@@ -39,19 +35,13 @@ export const evidenceItemSchema = z
 		metadata: z
 			.record(z.unknown())
 			.optional()
-			.describe(
-				'Arbitrary structured metadata (validated by downstream contracts)',
-			),
+			.describe('Arbitrary structured metadata (validated by downstream contracts)'),
 		hash: z
 			.string()
 			.length(64)
 			.optional()
 			.describe('Content hash (e.g., sha256 hex) for integrity'),
-		timestamp: z
-			.string()
-			.datetime()
-			.optional()
-			.describe('Timestamp when evidence was captured'),
+		timestamp: z.string().datetime().optional().describe('Timestamp when evidence was captured'),
 	})
 	.superRefine((val, ctx) => {
 		if (!val.text && !val.uri) {

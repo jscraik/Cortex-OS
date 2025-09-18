@@ -50,9 +50,7 @@ export const MetricTrackedEventSchema = z.object({
 // Export event type definitions
 export type FeatureActivatedEvent = z.infer<typeof FeatureActivatedEventSchema>;
 export type UserActionEvent = z.infer<typeof UserActionEventSchema>;
-export type FeedbackSubmittedEvent = z.infer<
-	typeof FeedbackSubmittedEventSchema
->;
+export type FeedbackSubmittedEvent = z.infer<typeof FeedbackSubmittedEventSchema>;
 export type MetricTrackedEvent = z.infer<typeof MetricTrackedEventSchema>;
 
 // Helper function to create MVP events

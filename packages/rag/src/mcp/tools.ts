@@ -74,9 +74,7 @@ function toTextPayload(payload: unknown): string {
 }
 
 function mapZodIssues(issues: ZodIssue[]): string[] {
-	return issues.map(
-		(issue) => `${issue.path.join('.') || issue.code}: ${issue.message}`,
-	);
+	return issues.map((issue) => `${issue.path.join('.') || issue.code}: ${issue.message}`);
 }
 
 function normalizeError(error: unknown): NormalizedError {
@@ -137,11 +135,7 @@ function createErrorResponse(
 	};
 }
 
-function respondWithError(
-	tool: string,
-	correlationId: string,
-	error: unknown,
-): RAGToolResponse {
+function respondWithError(tool: string, correlationId: string, error: unknown): RAGToolResponse {
 	const normalized = normalizeError(error);
 	const logPayload = {
 		correlationId,
@@ -149,10 +143,7 @@ function respondWithError(
 		error: normalized,
 	};
 
-	if (
-		normalized.code === 'validation_error' ||
-		normalized.code === 'security_error'
-	) {
+	if (normalized.code === 'validation_error' || normalized.code === 'security_error') {
 		logger.warn(logPayload, `${tool} validation failed`);
 	} else {
 		logger.error(logPayload, `${tool} failed`);
@@ -186,9 +177,7 @@ function createSuccessResponse(
 function sanitizeQuery(raw: string): string {
 	const query = raw.trim();
 	if (!query) {
-		throw new RAGToolError('validation_error', 'Query cannot be empty', [
-			'Query cannot be empty',
-		]);
+		throw new RAGToolError('validation_error', 'Query cannot be empty', ['Query cannot be empty']);
 	}
 	if (query.length > MAX_QUERY_LENGTH) {
 		throw new RAGToolError(
@@ -211,9 +200,7 @@ function sanitizeContent(raw: string): string {
 		throw new RAGToolError(
 			'validation_error',
 			`Content exceeds maximum length of ${MAX_INGEST_CONTENT_LENGTH} characters`,
-			[
-				`Content length ${content.length} exceeds limit of ${MAX_INGEST_CONTENT_LENGTH}`,
-			],
+			[`Content length ${content.length} exceeds limit of ${MAX_INGEST_CONTENT_LENGTH}`],
 		);
 	}
 	return content;
@@ -242,25 +229,19 @@ function ensurePlainObject(
 	context: string,
 ): asserts value is Record<string, unknown> {
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-		throw new RAGToolError(
-			'validation_error',
+		throw new RAGToolError('validation_error', `${context} must be a plain object`, [
 			`${context} must be a plain object`,
-			[`${context} must be a plain object`],
-		);
+		]);
 	}
 	const proto = Reflect.getPrototypeOf(value);
 	if (proto !== Object.prototype) {
-		throw new RAGToolError(
-			'security_error',
+		throw new RAGToolError('security_error', `${context} has unsafe prototype`, [
 			`${context} has unsafe prototype`,
-			[`${context} has unsafe prototype`],
-		);
+		]);
 	}
 }
 
-function sanitizeMetadata(
-	metadata?: Record<string, unknown>,
-): Record<string, unknown> | undefined {
+function sanitizeMetadata(metadata?: Record<string, unknown>): Record<string, unknown> | undefined {
 	if (metadata === undefined) {
 		return undefined;
 	}
@@ -274,9 +255,7 @@ function sanitizeMetadata(
 		throw new RAGToolError(
 			'validation_error',
 			`Metadata exceeds maximum size of ${MAX_METADATA_SIZE_BYTES} bytes`,
-			[
-				`Metadata size ${byteSize} bytes exceeds limit of ${MAX_METADATA_SIZE_BYTES}`,
-			],
+			[`Metadata size ${byteSize} bytes exceeds limit of ${MAX_METADATA_SIZE_BYTES}`],
 		);
 	}
 
@@ -329,11 +308,9 @@ function sanitizeMetadataObject(
 	const sanitized: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(object)) {
 		if (UNSAFE_METADATA_KEYS.has(key)) {
-			throw new RAGToolError(
-				'security_error',
+			throw new RAGToolError('security_error', `Unsafe metadata key "${key}" is not allowed`, [
 				`Unsafe metadata key "${key}" is not allowed`,
-				[`Unsafe metadata key "${key}" is not allowed`],
-			);
+			]);
 		}
 		sanitized[key] = sanitizeMetadataValue(value, depth + 1);
 	}
@@ -356,24 +333,18 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
 
 	if (typeof value === 'string') {
 		if (value.length > MAX_METADATA_STRING_LENGTH) {
-			throw new RAGToolError(
-				'validation_error',
-				'Metadata string value exceeds allowed length',
-				[
-					`Metadata string length ${value.length} exceeds limit of ${MAX_METADATA_STRING_LENGTH}`,
-				],
-			);
+			throw new RAGToolError('validation_error', 'Metadata string value exceeds allowed length', [
+				`Metadata string length ${value.length} exceeds limit of ${MAX_METADATA_STRING_LENGTH}`,
+			]);
 		}
 		return value;
 	}
 
 	if (typeof value === 'number') {
 		if (!Number.isFinite(value)) {
-			throw new RAGToolError(
-				'validation_error',
+			throw new RAGToolError('validation_error', 'Metadata numbers must be finite', [
 				'Metadata numbers must be finite',
-				['Metadata numbers must be finite'],
-			);
+			]);
 		}
 		return value;
 	}
@@ -387,9 +358,7 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
 			throw new RAGToolError(
 				'validation_error',
 				`Metadata arrays cannot exceed ${MAX_METADATA_ARRAY_LENGTH} items`,
-				[
-					`Metadata array length ${value.length} exceeds limit of ${MAX_METADATA_ARRAY_LENGTH}`,
-				],
+				[`Metadata array length ${value.length} exceeds limit of ${MAX_METADATA_ARRAY_LENGTH}`],
 			);
 		}
 		return value.map((item) => sanitizeMetadataValue(item, depth + 1));
@@ -401,26 +370,14 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
 	}
 	// Removed unused type MCPResponse
 
-	throw new RAGToolError(
-		'validation_error',
+	throw new RAGToolError('validation_error', `Unsupported metadata value type: ${typeof value}`, [
 		`Unsupported metadata value type: ${typeof value}`,
-		[`Unsupported metadata value type: ${typeof value}`],
-	);
+	]);
 }
 
 export const ragQueryToolSchema = z.object({
-	query: z
-		.string()
-		.min(1)
-		.max(MAX_QUERY_LENGTH)
-		.describe('The query text to search for'),
-	topK: z
-		.number()
-		.int()
-		.positive()
-		.max(100)
-		.default(5)
-		.describe('Number of results to return'),
+	query: z.string().min(1).max(MAX_QUERY_LENGTH).describe('The query text to search for'),
+	topK: z.number().int().positive().max(100).default(5).describe('Number of results to return'),
 	maxTokens: z
 		.number()
 		.int()
@@ -438,19 +395,13 @@ export const ragQueryToolSchema = z.object({
 });
 
 export const ragIngestToolSchema = z.object({
-	content: z
-		.string()
-		.min(1)
-		.describe('Content to ingest into RAG knowledge base'),
+	content: z.string().min(1).describe('Content to ingest into RAG knowledge base'),
 	source: z.string().optional().describe('Source identifier for the content'),
 	metadata: z.record(z.unknown()).optional().describe('Additional metadata'),
 });
 
 export const ragStatusToolSchema = z.object({
-	includeStats: z
-		.boolean()
-		.default(false)
-		.describe('Include detailed statistics'),
+	includeStats: z.boolean().default(false).describe('Include detailed statistics'),
 });
 
 export const ragQueryTool: RAGTool = {
@@ -460,12 +411,7 @@ export const ragQueryTool: RAGTool = {
 	handler: async (params: unknown) => {
 		const correlationId = createCorrelationId();
 		try {
-			const {
-				query: rawQuery,
-				topK,
-				maxTokens,
-				timeoutMs,
-			} = ragQueryToolSchema.parse(params);
+			const { query: rawQuery, topK, maxTokens, timeoutMs } = ragQueryToolSchema.parse(params);
 
 			const query = sanitizeQuery(rawQuery);
 
@@ -513,11 +459,9 @@ export const ragIngestTool: RAGTool = {
 		try {
 			const metadataCandidate = extractMetadataCandidate(params);
 			if (hasUnsafePrototype(metadataCandidate)) {
-				throw new RAGToolError(
-					'security_error',
-					'Unsafe metadata prototype detected',
-					['metadata has unsafe prototype'],
-				);
+				throw new RAGToolError('security_error', 'Unsafe metadata prototype detected', [
+					'metadata has unsafe prototype',
+				]);
 			}
 
 			const {
@@ -599,8 +543,4 @@ export const ragStatusTool: RAGTool = {
 	},
 };
 
-export const ragMcpTools: RAGTool[] = [
-	ragQueryTool,
-	ragIngestTool,
-	ragStatusTool,
-];
+export const ragMcpTools: RAGTool[] = [ragQueryTool, ragIngestTool, ragStatusTool];

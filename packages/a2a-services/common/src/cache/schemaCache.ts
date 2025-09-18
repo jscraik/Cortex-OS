@@ -63,10 +63,7 @@ export function createSchemaCache<V = unknown>({
 		metrics.size = store.size;
 	}
 
-	async function get<T extends V>(
-		key: string,
-		loader: () => Promise<T> | T,
-	): Promise<T> {
+	async function get<T extends V>(key: string, loader: () => Promise<T> | T): Promise<T> {
 		const existing = store.get(key);
 		const nowTs = now();
 		if (existing && existing.expiresAt > nowTs) {

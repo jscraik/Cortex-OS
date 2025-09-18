@@ -39,12 +39,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 				<main className="flex-1 overflow-y-auto p-4">
 					<div className="max-w-4xl mx-auto">
 						<div className="bg-white rounded-lg shadow p-6">
-							<h2 className="text-xl font-semibold mb-4">
-								Welcome to Cortex WebUI
-							</h2>
+							<h2 className="text-xl font-semibold mb-4">Welcome to Cortex WebUI</h2>
 							<p className="text-gray-600 mb-6">
-								Start a new conversation or select an existing one from the
-								sidebar.
+								Start a new conversation or select an existing one from the sidebar.
 							</p>
 							<button
 								onClick={onCreateConversation}

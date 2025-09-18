@@ -21,17 +21,12 @@ export enum OutboxMessageStatus {
  */
 export const OutboxMessageSchema = z.object({
 	id: z.string().uuid(),
-	aggregateType: z
-		.string()
-		.min(1)
-		.describe('Type of aggregate (e.g., "user", "order")'),
+	aggregateType: z.string().min(1).describe('Type of aggregate (e.g., "user", "order")'),
 	aggregateId: z.string().min(1).describe('ID of the aggregate'),
 	eventType: z.string().min(1).describe('Event type to be published'),
 	payload: z.unknown().describe('Event payload data'),
 	metadata: z.record(z.unknown()).optional().describe('Additional metadata'),
-	status: z
-		.nativeEnum(OutboxMessageStatus)
-		.default(OutboxMessageStatus.PENDING),
+	status: z.nativeEnum(OutboxMessageStatus).default(OutboxMessageStatus.PENDING),
 	createdAt: z.date().default(() => new Date()),
 	processedAt: z.date().optional(),
 	publishedAt: z.date().optional(),
@@ -39,20 +34,9 @@ export const OutboxMessageSchema = z.object({
 	maxRetries: z.number().int().min(0).default(3),
 	lastError: z.string().optional(),
 	nextRetryAt: z.date().optional(),
-	idempotencyKey: z
-		.string()
-		.optional()
-		.describe('Idempotency key to prevent duplicates'),
-	correlationId: z
-		.string()
-		.uuid()
-		.optional()
-		.describe('Correlation ID for related messages'),
-	causationId: z
-		.string()
-		.uuid()
-		.optional()
-		.describe('ID of the event that caused this message'),
+	idempotencyKey: z.string().optional().describe('Idempotency key to prevent duplicates'),
+	correlationId: z.string().uuid().optional().describe('Correlation ID for related messages'),
+	causationId: z.string().uuid().optional().describe('ID of the event that caused this message'),
 	// W3C Trace Context for distributed tracing
 	traceparent: z.string().optional(),
 	tracestate: z.string().optional(),
@@ -104,24 +88,17 @@ export interface OutboxRepository {
 	/**
 	 * Save a new outbox message
 	 */
-	save(
-		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
-	): Promise<OutboxMessage>;
+	save(message: Omit<OutboxMessage, 'id' | 'createdAt'>): Promise<OutboxMessage>;
 
 	/**
 	 * Save multiple outbox messages in a transaction
 	 */
-	saveBatch(
-		messages: Array<Omit<OutboxMessage, 'id' | 'createdAt'>>,
-	): Promise<OutboxMessage[]>;
+	saveBatch(messages: Array<Omit<OutboxMessage, 'id' | 'createdAt'>>): Promise<OutboxMessage[]>;
 
 	/**
 	 * Find messages by status
 	 */
-	findByStatus(
-		status: OutboxMessageStatus,
-		limit?: number,
-	): Promise<OutboxMessage[]>;
+	findByStatus(status: OutboxMessageStatus, limit?: number): Promise<OutboxMessage[]>;
 
 	/**
 	 * Find messages ready for retry
@@ -131,19 +108,12 @@ export interface OutboxRepository {
 	/**
 	 * Find messages by aggregate
 	 */
-	findByAggregate(
-		aggregateType: string,
-		aggregateId: string,
-	): Promise<OutboxMessage[]>;
+	findByAggregate(aggregateType: string, aggregateId: string): Promise<OutboxMessage[]>;
 
 	/**
 	 * Update message status
 	 */
-	updateStatus(
-		id: string,
-		status: OutboxMessageStatus,
-		error?: string,
-	): Promise<void>;
+	updateStatus(id: string, status: OutboxMessageStatus, error?: string): Promise<void>;
 
 	/**
 	 * Mark message as processed

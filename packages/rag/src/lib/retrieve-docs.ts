@@ -21,10 +21,7 @@ export async function retrieveDocs(
 				const [embedding] = await embedder.embed([doc.content]);
 				docWithEmbedding = { ...doc, embedding };
 			}
-			const similarity = cosineSimilarity(
-				queryEmbedding,
-				docWithEmbedding.embedding!,
-			);
+			const similarity = cosineSimilarity(queryEmbedding, docWithEmbedding.embedding!);
 			return { ...docWithEmbedding, similarity };
 		}),
 	);

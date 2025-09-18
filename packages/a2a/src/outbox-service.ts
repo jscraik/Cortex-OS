@@ -35,11 +35,7 @@ export interface DlqStatsMetrics {
 	// Potential extensions: oldestAgeMs, byErrorCode histogram, recent sample, etc.
 }
 
-export type OutboxSyncAction =
-	| 'processPending'
-	| 'processRetries'
-	| 'cleanup'
-	| 'dlqStats';
+export type OutboxSyncAction = 'processPending' | 'processRetries' | 'cleanup' | 'dlqStats';
 
 export interface OutboxService {
 	/**

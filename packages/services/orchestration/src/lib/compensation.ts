@@ -26,9 +26,7 @@ export interface CompensationRegistry {
 
 	// Global compensation hooks
 	onCompensationStart: ((ctx: CompensationContext) => Promise<void> | void)[];
-	onCompensationComplete: ((
-		ctx: CompensationContext,
-	) => Promise<void> | void)[];
+	onCompensationComplete: ((ctx: CompensationContext) => Promise<void> | void)[];
 	onCompensationError: ((ctx: CompensationContext) => Promise<void> | void)[];
 }
 
@@ -55,21 +53,15 @@ export class CompensationManager {
 	}
 
 	// Register compensation hooks
-	addCompensationStartHook(
-		hook: (ctx: CompensationContext) => Promise<void> | void,
-	): void {
+	addCompensationStartHook(hook: (ctx: CompensationContext) => Promise<void> | void): void {
 		this.registry.onCompensationStart.push(hook);
 	}
 
-	addCompensationCompleteHook(
-		hook: (ctx: CompensationContext) => Promise<void> | void,
-	): void {
+	addCompensationCompleteHook(hook: (ctx: CompensationContext) => Promise<void> | void): void {
 		this.registry.onCompensationComplete.push(hook);
 	}
 
-	addCompensationErrorHook(
-		hook: (ctx: CompensationContext) => Promise<void> | void,
-	): void {
+	addCompensationErrorHook(hook: (ctx: CompensationContext) => Promise<void> | void): void {
 		this.registry.onCompensationError.push(hook);
 	}
 
@@ -88,11 +80,7 @@ export class CompensationManager {
 
 	// Execute compensations in reverse order (LIFO)
 	async compensate(
-		context: {
-			workflowId?: string;
-			signal?: AbortSignal;
-			error?: unknown;
-		} = {},
+		context: { workflowId?: string; signal?: AbortSignal; error?: unknown } = {},
 	): Promise<CompensationResult> {
 		const compensationErrors: CompensationError[] = [];
 		const compensatedSteps: string[] = [];
@@ -116,19 +104,13 @@ export class CompensationManager {
 
 			try {
 				// Execute compensation start hooks
-				await this.executeHooks(
-					this.registry.onCompensationStart,
-					compensationContext,
-				);
+				await this.executeHooks(this.registry.onCompensationStart, compensationContext);
 
 				// Execute the compensation
 				await action.compensationFn(compensationContext);
 
 				// Execute compensation complete hooks
-				await this.executeHooks(
-					this.registry.onCompensationComplete,
-					compensationContext,
-				);
+				await this.executeHooks(this.registry.onCompensationComplete, compensationContext);
 
 				compensatedSteps.push(action.stepId);
 			} catch (compensationError) {
@@ -146,10 +128,7 @@ export class CompensationManager {
 						error: compensationError,
 					});
 				} catch (hookError) {
-					console.error(
-						`Compensation error hook failed for step ${action.stepId}:`,
-						hookError,
-					);
+					console.error(`Compensation error hook failed for step ${action.stepId}:`, hookError);
 				}
 			}
 		}
@@ -248,11 +227,7 @@ export class SagaManager {
 
 	// Start compensation process
 	async startCompensation(
-		context: {
-			workflowId?: string;
-			signal?: AbortSignal;
-			error?: unknown;
-		} = {},
+		context: { workflowId?: string; signal?: AbortSignal; error?: unknown } = {},
 	): Promise<CompensationResult> {
 		if (this.isCompensating) {
 			throw new Error('Compensation already in progress');
@@ -288,13 +263,10 @@ export class SagaManager {
 // Common compensation patterns
 export const compensationPatterns = {
 	// Database transaction rollback
-	databaseRollback:
-		(transactionId: string) => async (ctx: CompensationContext) => {
-			console.warn(
-				`Rolling back database transaction: ${transactionId} for step: ${ctx.stepId}`,
-			);
-			// Implementation would call actual database rollback
-		},
+	databaseRollback: (transactionId: string) => async (ctx: CompensationContext) => {
+		console.warn(`Rolling back database transaction: ${transactionId} for step: ${ctx.stepId}`);
+		// Implementation would call actual database rollback
+	},
 
 	// File system cleanup
 	cleanupFiles: (filePaths: string[]) => async (ctx: CompensationContext) => {
@@ -303,26 +275,20 @@ export const compensationPatterns = {
 	},
 
 	// API call reversal
-	reverseApiCall:
-		(revertFn: () => Promise<void>) => async (ctx: CompensationContext) => {
-			console.warn(`Reversing API call for step: ${ctx.stepId}`);
-			await revertFn();
-		},
+	reverseApiCall: (revertFn: () => Promise<void>) => async (ctx: CompensationContext) => {
+		console.warn(`Reversing API call for step: ${ctx.stepId}`);
+		await revertFn();
+	},
 
 	// Resource deallocation
-	deallocateResource:
-		(resourceId: string) => async (ctx: CompensationContext) => {
-			console.warn(
-				`Deallocating resource: ${resourceId} for step: ${ctx.stepId}`,
-			);
-			// Implementation would free/release resources
-		},
+	deallocateResource: (resourceId: string) => async (ctx: CompensationContext) => {
+		console.warn(`Deallocating resource: ${resourceId} for step: ${ctx.stepId}`);
+		// Implementation would free/release resources
+	},
 
 	// Message queue cleanup
 	purgeMessages: (queueName: string) => async (ctx: CompensationContext) => {
-		console.warn(
-			`Purging messages from queue: ${queueName} for step: ${ctx.stepId}`,
-		);
+		console.warn(`Purging messages from queue: ${queueName} for step: ${ctx.stepId}`);
 		// Implementation would clean up message queues
 	},
 };

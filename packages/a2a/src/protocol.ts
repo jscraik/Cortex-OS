@@ -8,13 +8,7 @@ import { z } from 'zod';
 // A2A Protocol Core Schemas
 export const TaskIdSchema = z.string().min(1);
 
-export const TaskStatusSchema = z.enum([
-	'pending',
-	'running',
-	'completed',
-	'failed',
-	'cancelled',
-]);
+export const TaskStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'cancelled']);
 
 export const TaskSendParamsSchema = z.object({
 	id: TaskIdSchema.optional(),
@@ -129,5 +123,4 @@ export const A2A_ERROR_CODES = {
 	TASK_CANCELLED: -32002,
 } as const;
 
-export type A2AErrorCode =
-	(typeof A2A_ERROR_CODES)[keyof typeof A2A_ERROR_CODES];
+export type A2AErrorCode = (typeof A2A_ERROR_CODES)[keyof typeof A2A_ERROR_CODES];

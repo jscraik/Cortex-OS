@@ -42,8 +42,7 @@ export function isProposalShape(value: unknown): value is ProposalShape {
 		return false;
 	}
 
-	const hasValidDataClass =
-		!('dataClass' in value) || typeof value.dataClass === 'string';
+	const hasValidDataClass = !('dataClass' in value) || typeof value.dataClass === 'string';
 
 	const hasValidPath = !('path' in value) || typeof value.path === 'string';
 

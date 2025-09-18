@@ -77,10 +77,7 @@ class AuditEventValidatorImpl implements AuditEventValidator {
 		};
 	}
 
-	redactSensitiveData(
-		event: AuditEvent,
-		sensitiveFields: string[],
-	): AuditEvent {
+	redactSensitiveData(event: AuditEvent, sensitiveFields: string[]): AuditEvent {
 		const redactedEvent = JSON.parse(JSON.stringify(event)); // Deep clone
 		const redactedFieldsList = [...(event.redacted || [])];
 
@@ -88,10 +85,7 @@ class AuditEventValidatorImpl implements AuditEventValidator {
 			let found = false;
 
 			// Try redacting in event.details first
-			if (
-				redactedEvent.details &&
-				this.redactField(redactedEvent.details, fieldPath)
-			) {
+			if (redactedEvent.details && this.redactField(redactedEvent.details, fieldPath)) {
 				found = true;
 			}
 
@@ -141,21 +135,13 @@ class AuditEventValidatorImpl implements AuditEventValidator {
 		return event.severity === 'high' || event.severity === 'critical';
 	}
 
-	private redactField(
-		obj: Record<string, unknown>,
-		fieldPath: string,
-	): boolean {
+	private redactField(obj: Record<string, unknown>, fieldPath: string): boolean {
 		const parts = fieldPath.split('.');
 		let current: unknown = obj;
 
 		// Navigate to the parent of the field to redact
 		for (let i = 0; i < parts.length - 1; i++) {
-			if (
-				current &&
-				typeof current === 'object' &&
-				current !== null &&
-				parts[i] in current
-			) {
+			if (current && typeof current === 'object' && current !== null && parts[i] in current) {
 				current = (current as Record<string, unknown>)[parts[i]];
 			} else {
 				return false; // Field path doesn't exist
@@ -163,12 +149,7 @@ class AuditEventValidatorImpl implements AuditEventValidator {
 		}
 
 		const finalKey = parts[parts.length - 1];
-		if (
-			current &&
-			typeof current === 'object' &&
-			current !== null &&
-			finalKey in current
-		) {
+		if (current && typeof current === 'object' && current !== null && finalKey in current) {
 			(current as Record<string, unknown>)[finalKey] = '[REDACTED]';
 			return true;
 		}

@@ -14,14 +14,8 @@ import type {
 	AgentSkill,
 } from '@cortex-os/a2a-contracts/agents';
 import { TransportProtocol } from '@cortex-os/a2a-contracts/agents';
-import {
-	type AICoreCapabilities,
-	createAICapabilities,
-} from './ai-capabilities.js';
-import {
-	type ASBRAIIntegration,
-	createASBRAIIntegration,
-} from './asbr-ai-integration.js';
+import { type AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
+import { type ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 
 /**
  * A2A AI Agent - Exposes AI capabilities as agent skills for multi-agent coordination
@@ -174,8 +168,7 @@ export class A2AAIAgent {
 			{
 				name: 'ai_calculate_similarity',
 				description: 'Calculate semantic similarity between texts',
-				longDescription:
-					'Compute cosine similarity between two text inputs using embeddings',
+				longDescription: 'Compute cosine similarity between two text inputs using embeddings',
 				parameters: {
 					type: 'object',
 					properties: {
@@ -378,10 +371,7 @@ export class A2AAIAgent {
 	}
 
 	private async handleCalculateSimilarity(params: any): Promise<any> {
-		const similarity = await this.aiCapabilities.calculateSimilarity(
-			params.text1,
-			params.text2,
-		);
+		const similarity = await this.aiCapabilities.calculateSimilarity(params.text1, params.text2);
 
 		return {
 			similarity: similarity || 0,
@@ -403,10 +393,7 @@ export class A2AAIAgent {
 			sources: params.sources,
 		};
 
-		const result = await this.asbrIntegration.collectEnhancedEvidence(
-			context,
-			{},
-		);
+		const result = await this.asbrIntegration.collectEnhancedEvidence(context, {});
 
 		return {
 			enhanced_evidence: result.aiEnhancedEvidence,

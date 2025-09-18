@@ -23,12 +23,7 @@ interface MessageProps {
 	onDelete?: () => void;
 }
 
-const Message: React.FC<MessageProps> = ({
-	message,
-	isUser,
-	onEdit,
-	onDelete,
-}) => {
+const Message: React.FC<MessageProps> = ({ message, isUser, onEdit, onDelete }) => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editContent, setEditContent] = useState(message.content);
 
@@ -53,17 +48,13 @@ const Message: React.FC<MessageProps> = ({
 		// Check if this is a web search result
 		if (content.startsWith('[WEB_SEARCH:') && content.endsWith(']')) {
 			const query = content.slice(12, -1);
-			return (
-				<WebSearch query={query} onResults={() => {}} onError={() => {}} />
-			);
+			return <WebSearch query={query} onResults={() => {}} onError={() => {}} />;
 		}
 
 		// Check if this is a memory query result
 		if (content.startsWith('[MEMORY_QUERY:') && content.endsWith(']')) {
 			const query = content.slice(14, -1);
-			return (
-				<MemoryQuery query={query} onResults={() => {}} onError={() => {}} />
-			);
+			return <MemoryQuery query={query} onResults={() => {}} onError={() => {}} />;
 		}
 
 		// Split content by code blocks
@@ -75,10 +66,8 @@ const Message: React.FC<MessageProps> = ({
 				// This is a code block
 				const codeContent = part.slice(3, -3).trim();
 				const lines = codeContent.split('\n');
-				const language =
-					lines[0] && !lines[0].includes(' ') ? lines[0] : 'text';
-				const code =
-					language !== 'text' ? lines.slice(1).join('\n') : codeContent;
+				const language = lines[0] && !lines[0].includes(' ') ? lines[0] : 'text';
+				const code = language !== 'text' ? lines.slice(1).join('\n') : codeContent;
 
 				// Check if this is an executable code block
 				const isExecutable = ['javascript', 'python', 'bash', 'shell'].includes(

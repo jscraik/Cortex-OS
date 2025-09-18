@@ -9,9 +9,7 @@ describe('Simple Test', () => {
 	it('should create signature', () => {
 		const payload = 'test';
 		const secret = 'secret';
-		const signature = createHmac('sha256', secret)
-			.update(payload)
-			.digest('hex');
+		const signature = createHmac('sha256', secret).update(payload).digest('hex');
 		expect(signature).toBeDefined();
 		expect(typeof signature).toBe('string');
 	});

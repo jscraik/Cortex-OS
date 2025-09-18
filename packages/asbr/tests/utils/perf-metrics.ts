@@ -2,16 +2,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Env flags
-const ENABLED =
-	process.env.PERF_METRICS === '1' || process.env.PERF_METRICS === 'true';
-const ENFORCE =
-	process.env.PERF_ENFORCE === '1' || process.env.PERF_ENFORCE === 'true';
+const ENABLED = process.env.PERF_METRICS === '1' || process.env.PERF_METRICS === 'true';
+const ENFORCE = process.env.PERF_ENFORCE === '1' || process.env.PERF_ENFORCE === 'true';
 const BASELINE_PATH =
-	process.env.PERF_BASELINE ||
-	join(process.cwd(), 'tests', 'performance-baseline.json');
+	process.env.PERF_BASELINE || join(process.cwd(), 'tests', 'performance-baseline.json');
 const OUTPUT_PATH =
-	process.env.PERF_OUTPUT ||
-	join(process.cwd(), 'tests', 'performance-current.json');
+	process.env.PERF_OUTPUT || join(process.cwd(), 'tests', 'performance-current.json');
 const MAX_DELTA_PCT = Number(process.env.PERF_BUDGET_PCT || '20'); // % allowed regression
 
 export interface MetricSample {
@@ -49,10 +45,7 @@ export function recordMetric(name: string, value: number) {
 function percentile(arr: number[], p: number): number {
 	if (arr.length === 0) return 0;
 	const sorted = [...arr].sort((a, b) => a - b);
-	const idx = Math.min(
-		sorted.length - 1,
-		Math.floor((p / 100) * sorted.length),
-	);
+	const idx = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length));
 	return sorted[idx];
 }
 
@@ -127,10 +120,7 @@ export function finalizeMetrics() {
 }
 
 // Optional convenience wrapper to time an async function
-export async function measure<T>(
-	name: string,
-	fn: () => Promise<T>,
-): Promise<T> {
+export async function measure<T>(name: string, fn: () => Promise<T>): Promise<T> {
 	const start = performance.now();
 	try {
 		return await fn();

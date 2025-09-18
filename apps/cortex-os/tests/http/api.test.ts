@@ -57,16 +57,24 @@ describe('HTTP API', () => {
 		const createRes = await fetch(`${baseUrl}/v1/tasks`, {
 			method: 'POST',
 			headers: JSON_HEADERS,
-			body: JSON.stringify({ task: { id: 'task-http-1', status: 'pending', details: { note: 'test' } } }),
+			body: JSON.stringify({
+				task: { id: 'task-http-1', status: 'pending', details: { note: 'test' } },
+			}),
 		});
 		expect(createRes.status).toBe(201);
 		const created = (await createRes.json()) as { task: Record<string, unknown>; digest: string };
-		expect(created.task).toEqual({ id: 'task-http-1', status: 'pending', details: { note: 'test' } });
+		expect(created.task).toEqual({
+			id: 'task-http-1',
+			status: 'pending',
+			details: { note: 'test' },
+		});
 		expect(created.digest).toMatch(/^[a-f0-9]{64}$/);
 
 		const listRes = await fetch(`${baseUrl}/v1/tasks`);
 		expect(listRes.status).toBe(200);
-		const listJson = (await listRes.json()) as { tasks: { record: Record<string, unknown>; digest: string }[] };
+		const listJson = (await listRes.json()) as {
+			tasks: { record: Record<string, unknown>; digest: string }[];
+		};
 		expect(listJson.tasks).toHaveLength(1);
 		expect(listJson.tasks[0]?.record).toEqual(created.task);
 
@@ -83,7 +91,11 @@ describe('HTTP API', () => {
 		});
 		expect(updateRes.status).toBe(200);
 		const updated = (await updateRes.json()) as { task: Record<string, unknown>; digest: string };
-		expect(updated.task).toEqual({ id: 'task-http-1', status: 'completed', details: { note: 'test' } });
+		expect(updated.task).toEqual({
+			id: 'task-http-1',
+			status: 'completed',
+			details: { note: 'test' },
+		});
 		expect(updated.digest).not.toBe(created.digest);
 
 		const conflictRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, {
@@ -106,11 +118,17 @@ describe('HTTP API', () => {
 		const createRes = await fetch(`${baseUrl}/v1/profiles`, {
 			method: 'POST',
 			headers: JSON_HEADERS,
-			body: JSON.stringify({ profile: { id: 'profile-http-1', label: 'Primary', scopes: ['tasks:read'] } }),
+			body: JSON.stringify({
+				profile: { id: 'profile-http-1', label: 'Primary', scopes: ['tasks:read'] },
+			}),
 		});
 		const created = await createRes.json();
 		expect(createRes.status).toBe(201);
-		expect(created.profile).toEqual({ id: 'profile-http-1', label: 'Primary', scopes: ['tasks:read'] });
+		expect(created.profile).toEqual({
+			id: 'profile-http-1',
+			label: 'Primary',
+			scopes: ['tasks:read'],
+		});
 
 		const updateRes = await fetch(`${baseUrl}/v1/profiles/profile-http-1`, {
 			method: 'PUT',

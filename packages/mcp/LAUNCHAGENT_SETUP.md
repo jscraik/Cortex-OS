@@ -1,4 +1,9 @@
-# macOS LaunchAgent Setup for Cortex-OS MCP Server
+# DEPRECATION NOTICE
+
+This document lives under the legacy `packages/mcp` folder, which is deprecated.
+Please use the MCP Python package and docs under `packages/cortex-mcp` going forward.
+
+## macOS LaunchAgent Setup for Cortex-OS MCP Server
 
 ## Overview
 

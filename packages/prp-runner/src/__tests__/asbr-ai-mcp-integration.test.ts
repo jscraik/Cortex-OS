@@ -210,26 +210,19 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
 					};
 				}
 
-				if (
-					name === 'ai_calculate_similarity' &&
-					(this as any).aiCapabilities
-				) {
+				if (name === 'ai_calculate_similarity' && (this as any).aiCapabilities) {
 					const sim = await (this as any).aiCapabilities.calculateSimilarity(
 						req.params.arguments?.text1,
 						req.params.arguments?.text2,
 					);
 					return {
 						isError: false,
-						content: [
-							{ type: 'text', text: JSON.stringify({ similarity: sim }) },
-						],
+						content: [{ type: 'text', text: JSON.stringify({ similarity: sim }) }],
 					};
 				}
 
 				if (name === 'ai_get_embedding' && (this as any).aiCapabilities) {
-					const emb = await (this as any).aiCapabilities.getEmbedding(
-						req.params.arguments?.text,
-					);
+					const emb = await (this as any).aiCapabilities.getEmbedding(req.params.arguments?.text);
 					return {
 						isError: false,
 						content: [
@@ -244,13 +237,11 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
 					};
 				}
 
-				if (
-					name === 'asbr_collect_enhanced_evidence' &&
-					(this as any).asbrIntegration
-				) {
-					const res = await (
-						this as any
-					).asbrIntegration.collectEnhancedEvidence(req.params.arguments, {});
+				if (name === 'asbr_collect_enhanced_evidence' && (this as any).asbrIntegration) {
+					const res = await (this as any).asbrIntegration.collectEnhancedEvidence(
+						req.params.arguments,
+						{},
+					);
 					return {
 						isError: false,
 						content: [
@@ -266,13 +257,8 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
 					};
 				}
 
-				if (
-					name === 'asbr_fact_check_evidence' &&
-					(this as any).asbrIntegration
-				) {
-					const res = await (this as any).asbrIntegration.factCheckEvidence(
-						req.params.arguments,
-					);
+				if (name === 'asbr_fact_check_evidence' && (this as any).asbrIntegration) {
+					const res = await (this as any).asbrIntegration.factCheckEvidence(req.params.arguments);
 					return {
 						isError: false,
 						content: [
@@ -371,26 +357,20 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 
 		it('should throw when capabilities fail to load', async () => {
 			// Mock failed initialization
-			const mockGetCapabilities = vi
-				.fn()
-				.mockRejectedValue(new Error('AI service unavailable'));
+			const mockGetCapabilities = vi.fn().mockRejectedValue(new Error('AI service unavailable'));
 
 			(mcpServer as any).aiCapabilities = {
 				getCapabilities: mockGetCapabilities,
 			};
 
-			await expect(mcpIntegration.autoRegister()).rejects.toThrow(
-				'AI service unavailable',
-			);
+			await expect(mcpIntegration.autoRegister()).rejects.toThrow('AI service unavailable');
 
 			// After failed autoRegister the integration remains unregistered
 			await expect(mcpIntegration.isHealthy()).resolves.toBe(false);
 		});
 
 		it('should allow degraded initialization via test helper', async () => {
-			const mockGetCapabilities = vi
-				.fn()
-				.mockRejectedValue(new Error('AI service unavailable'));
+			const mockGetCapabilities = vi.fn().mockRejectedValue(new Error('AI service unavailable'));
 
 			(mcpServer as any).aiCapabilities = {
 				getCapabilities: mockGetCapabilities,
@@ -479,9 +459,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 				addKnowledge: vi.fn().mockResolvedValue(['doc1', 'doc2']),
 				searchKnowledge: vi
 					.fn()
-					.mockResolvedValue([
-						{ text: 'Related document', similarity: 0.85, metadata: {} },
-					]),
+					.mockResolvedValue([{ text: 'Related document', similarity: 0.85, metadata: {} }]),
 				ragQuery: vi.fn().mockResolvedValue({
 					answer: 'RAG response',
 					sources: [{ text: 'Source text', similarity: 0.9 }],
@@ -658,9 +636,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 
 		it('should handle tool errors gracefully', async () => {
 			// Mock an error in the AI capabilities
-			(mcpServer as any).aiCapabilities.generate.mockRejectedValue(
-				new Error('AI service error'),
-			);
+			(mcpServer as any).aiCapabilities.generate.mockRejectedValue(new Error('AI service error'));
 
 			const request = {
 				method: 'tools/call' as const,
@@ -717,15 +693,11 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 				})
 				.mockResolvedValueOnce({
 					isError: false,
-					content: [
-						{ type: 'text', text: JSON.stringify({ generated: 'text' }) },
-					],
+					content: [{ type: 'text', text: JSON.stringify({ generated: 'text' }) }],
 				})
 				.mockResolvedValueOnce({
 					isError: false,
-					content: [
-						{ type: 'text', text: JSON.stringify({ similarity: 0.8 }) },
-					],
+					content: [{ type: 'text', text: JSON.stringify({ similarity: 0.8 }) }],
 				});
 
 			mcpServer.callTool = mockCallTool;
@@ -782,9 +754,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 				addKnowledge: vi.fn().mockResolvedValue(['doc1', 'doc2']),
 				searchKnowledge: vi
 					.fn()
-					.mockResolvedValue([
-						{ text: 'Related document', similarity: 0.85, metadata: {} },
-					]),
+					.mockResolvedValue([{ text: 'Related document', similarity: 0.85, metadata: {} }]),
 				ragQuery: vi.fn().mockResolvedValue({
 					answer: 'RAG response',
 					sources: [{ text: 'Source text', similarity: 0.9 }],
@@ -871,9 +841,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 
 		it('should handle health check failures', async () => {
 			// Mock health check failure
-			mcpServer.getHealth = vi
-				.fn()
-				.mockRejectedValue(new Error('Health check failed'));
+			mcpServer.getHealth = vi.fn().mockRejectedValue(new Error('Health check failed'));
 			await mcpIntegration.autoRegister();
 
 			const isHealthy = await mcpIntegration.isHealthy();
@@ -896,9 +864,7 @@ describe('📋 MCP Integration TDD Checklist', () => {
 		};
 
 		// All items should be checked
-		const uncheckedItems = Object.values(mcpChecklist).filter(
-			(status) => !status.includes('✅'),
-		);
+		const uncheckedItems = Object.values(mcpChecklist).filter((status) => !status.includes('✅'));
 
 		expect(uncheckedItems.length).toBe(0);
 	});

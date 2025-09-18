@@ -213,9 +213,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 };
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
-	typeof value === 'object' && value !== null
-		? (value as Record<string, unknown>)
-		: null;
+	typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
 
 const toMessage = (value: unknown): string => {
 	if (typeof value === 'string') {
@@ -274,11 +272,7 @@ export function classifyError(error: unknown): ErrorClassification {
 		return ERROR_CLASSIFICATIONS[ErrorType.AUTHORIZATION_ERROR];
 	}
 
-	if (
-		message.includes('resource') ||
-		message.includes('memory') ||
-		message.includes('disk')
-	) {
+	if (message.includes('resource') || message.includes('memory') || message.includes('disk')) {
 		return ERROR_CLASSIFICATIONS[ErrorType.RESOURCE_EXHAUSTED];
 	}
 
@@ -323,15 +317,11 @@ export function calculateRetryDelay(
 			break;
 
 		case RetryStrategy.EXPONENTIAL:
-			delay =
-				classification.baseDelayMs *
-				classification.backoffMultiplier ** (attempt - 1);
+			delay = classification.baseDelayMs * classification.backoffMultiplier ** (attempt - 1);
 			break;
 
 		case RetryStrategy.EXPONENTIAL_WITH_JITTER:
-			delay =
-				classification.baseDelayMs *
-				classification.backoffMultiplier ** (attempt - 1);
+			delay = classification.baseDelayMs * classification.backoffMultiplier ** (attempt - 1);
 			if (classification.jitter) {
 				const jitterAmount = delay * 0.1; // 10% jitter
 				delay += Math.random() * jitterAmount * 2 - jitterAmount;
@@ -349,9 +339,7 @@ export function calculateRetryDelay(
 /**
  * Check if an error should trigger a circuit breaker
  */
-export function shouldTriggerCircuitBreaker(
-	classification: ErrorClassification,
-): boolean {
+export function shouldTriggerCircuitBreaker(classification: ErrorClassification): boolean {
 	return classification.circuitBreakerEnabled;
 }
 
@@ -380,9 +368,7 @@ export interface EnhancedRetryPolicy {
 /**
  * Create retry policy from error classification
  */
-export function createRetryPolicy(
-	classification: ErrorClassification,
-): EnhancedRetryPolicy {
+export function createRetryPolicy(classification: ErrorClassification): EnhancedRetryPolicy {
 	return {
 		maxRetries: classification.maxRetries,
 		baseDelayMs: classification.baseDelayMs,

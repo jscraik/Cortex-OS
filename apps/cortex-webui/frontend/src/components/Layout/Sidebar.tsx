@@ -11,12 +11,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = (props) => {
-	const {
-		conversations = [],
-		activeConversationId = null,
-		onCreateConversation,
-		onLogout,
-	} = props;
+	const { conversations = [], activeConversationId = null, onCreateConversation, onLogout } = props;
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const navItems = [
 		{ name: 'Chat', href: '/mvp/chat' },
@@ -88,9 +83,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
 									}`}
 									tabIndex={0}
 								>
-									<div className="font-medium truncate">
-										{conversation.title || 'Untitled'}
-									</div>
+									<div className="font-medium truncate">{conversation.title || 'Untitled'}</div>
 									<div className="text-xs text-gray-500">
 										{new Date(conversation.updatedAt).toLocaleDateString()}
 									</div>
@@ -141,10 +134,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
 					</div>
 				</div>
 			</div>
-			<SearchModal
-				isOpen={isSearchOpen}
-				onClose={() => setIsSearchOpen(false)}
-			/>
+			<SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 		</>
 	);
 };

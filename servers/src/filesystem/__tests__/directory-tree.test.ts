@@ -21,10 +21,7 @@ async function buildTreeForTesting(
 	const result: TreeEntry[] = [];
 
 	for (const entry of entries) {
-		const relativePath = path.relative(
-			rootPath,
-			path.join(currentPath, entry.name),
-		);
+		const relativePath = path.relative(rootPath, path.join(currentPath, entry.name));
 		const shouldExclude = excludePatterns.some((pattern) => {
 			if (pattern.includes('*')) {
 				return minimatch(relativePath, pattern, { dot: true });
@@ -46,11 +43,7 @@ async function buildTreeForTesting(
 
 		if (entry.isDirectory()) {
 			const subPath = path.join(currentPath, entry.name);
-			entryData.children = await buildTreeForTesting(
-				subPath,
-				rootPath,
-				excludePatterns,
-			);
+			entryData.children = await buildTreeForTesting(subPath, rootPath, excludePatterns);
 		}
 
 		result.push(entryData);
@@ -76,15 +69,9 @@ describe('buildTree exclude patterns', () => {
 		// Create test files
 		await fs.writeFile(path.join(testDir, '.env'), 'SECRET=value');
 		await fs.writeFile(path.join(testDir, '.env.local'), 'LOCAL_SECRET=value');
-		await fs.writeFile(
-			path.join(testDir, 'src', 'index.js'),
-			'console.log("hello");',
-		);
+		await fs.writeFile(path.join(testDir, 'src', 'index.js'), 'console.log("hello");');
 		await fs.writeFile(path.join(testDir, 'package.json'), '{}');
-		await fs.writeFile(
-			path.join(testDir, 'node_modules', 'module.js'),
-			'module.exports = {};',
-		);
+		await fs.writeFile(path.join(testDir, 'node_modules', 'module.js'), 'module.exports = {};');
 		await fs.writeFile(
 			path.join(testDir, 'nested', 'node_modules', 'deep.js'),
 			'module.exports = {};',
@@ -146,11 +133,7 @@ describe('buildTree exclude patterns', () => {
 	});
 
 	it('should work with multiple exclude patterns', async () => {
-		const tree = await buildTreeForTesting(testDir, testDir, [
-			'node_modules',
-			'.env',
-			'.git',
-		]);
+		const tree = await buildTreeForTesting(testDir, testDir, ['node_modules', '.env', '.git']);
 		const entryNames = tree.map((entry) => entry.name);
 
 		expect(entryNames).not.toContain('node_modules');

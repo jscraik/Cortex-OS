@@ -18,10 +18,7 @@ import type { Chunk, Embedder, Store } from '../lib/types.js';
 // Lightweight store contract accepted for enhancement
 export interface MinimalStore {
 	upsert(chunks: Chunk[]): Promise<void>;
-	query(
-		embedding: number[],
-		k?: number,
-	): Promise<Array<Chunk & { score?: number }>>;
+	query(embedding: number[], k?: number): Promise<Array<Chunk & { score?: number }>>;
 	// Optional embeddings API some downstream integrations expect
 	embeddings?: number[][]; // non-breaking optional surface
 }
@@ -212,23 +209,13 @@ export class ArchonEnhancedStore implements Store {
 		}
 
 		// Query Archon knowledge base if enabled
-		if (
-			this.config.enableRemoteRetrieval &&
-			options.useArchonKnowledge !== false
-		) {
+		if (this.config.enableRemoteRetrieval && options.useArchonKnowledge !== false) {
 			try {
-				const remoteResults = await this.queryArchonKnowledgeBase(
-					vector,
-					options,
-				);
+				const remoteResults = await this.queryArchonKnowledgeBase(vector, options);
 
 				if (options.hybridSearch && results.length > 0) {
 					// Combine and reweight results
-					const combinedResults = this.combineResults(
-						results,
-						remoteResults,
-						options,
-					);
+					const combinedResults = this.combineResults(results, remoteResults, options);
 					return combinedResults;
 				} else {
 					results.push(...remoteResults);
@@ -247,10 +234,7 @@ export class ArchonEnhancedStore implements Store {
 	}
 
 	// Store interface query (embedding: number[], k?: number) -> returns Chunk[]
-	async query(
-		embedding: number[],
-		k?: number,
-	): Promise<(Chunk & { score?: number })[]> {
+	async query(embedding: number[], k?: number): Promise<(Chunk & { score?: number })[]> {
 		const queryResults = await this.extendedQuery(embedding, { k });
 		// Map back to Chunk-esque structure (text may live in metadata.text)
 		return queryResults.map((r) => ({
@@ -285,16 +269,11 @@ export class ArchonEnhancedStore implements Store {
 		// Convert vector to a search query (this would be more sophisticated in practice)
 		const searchQuery = await this.vectorToQuery(vector);
 
-		const archonResults = await this.mcpClient.searchKnowledgeBase(
-			searchQuery,
-			{
-				limit: options.topK || this.config.remoteSearchLimit || 10,
-				// Narrow cast filters to a generic record without weakening global type safety
-				filters: options.archonFilters as unknown as
-					| Record<string, unknown>
-					| undefined,
-			},
-		);
+		const archonResults = await this.mcpClient.searchKnowledgeBase(searchQuery, {
+			limit: options.topK || this.config.remoteSearchLimit || 10,
+			// Narrow cast filters to a generic record without weakening global type safety
+			filters: options.archonFilters as unknown as Record<string, unknown> | undefined,
+		});
 
 		return archonResults.map((result: KnowledgeSearchResult) => ({
 			id: result.id,
@@ -351,10 +330,7 @@ export class ArchonEnhancedStore implements Store {
 					status: 'failed',
 					error: errorMsg,
 				});
-				console.error(
-					`[Archon RAG] Failed to sync document ${item.id}:`,
-					error,
-				);
+				console.error(`[Archon RAG] Failed to sync document ${item.id}:`, error);
 			}
 		}
 
@@ -385,9 +361,7 @@ export class ArchonEnhancedStore implements Store {
 		}));
 
 		// Combine and sort by weighted score
-		const combined = [...weightedLocal, ...weightedRemote].sort(
-			(a, b) => b.score - a.score,
-		);
+		const combined = [...weightedLocal, ...weightedRemote].sort((a, b) => b.score - a.score);
 
 		// Deduplicate based on content similarity if needed
 		const deduped = this.deduplicateResults(combined);
@@ -503,10 +477,7 @@ export class ArchonDocumentIngestionManager {
 						);
 					}
 				} catch (error) {
-					console.error(
-						`[Archon RAG] Batch processing failed for batch ${i}:`,
-						error,
-					);
+					console.error(`[Archon RAG] Batch processing failed for batch ${i}:`, error);
 					// Continue with next batch
 				}
 			}
@@ -552,10 +523,7 @@ export class ArchonDocumentIngestionManager {
 					},
 				});
 			} catch (error) {
-				console.error(
-					`[Archon RAG] Failed to upload document ${doc.filename}:`,
-					error,
-				);
+				console.error(`[Archon RAG] Failed to upload document ${doc.filename}:`, error);
 				// Continue with other documents
 			}
 		}

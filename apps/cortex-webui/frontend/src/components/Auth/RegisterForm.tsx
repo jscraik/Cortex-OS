@@ -7,11 +7,7 @@ interface RegisterFormProps {
 	error: string | null;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({
-	onRegister,
-	loading,
-	error,
-}) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, loading, error }) => {
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -29,10 +25,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
 			<div>
-				<label
-					htmlFor="name"
-					className="block text-sm font-medium text-gray-700"
-				>
+				<label htmlFor="name" className="block text-sm font-medium text-gray-700">
 					Name
 				</label>
 				<input
@@ -45,10 +38,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 				/>
 			</div>
 			<div>
-				<label
-					htmlFor="email"
-					className="block text-sm font-medium text-gray-700"
-				>
+				<label htmlFor="email" className="block text-sm font-medium text-gray-700">
 					Email
 				</label>
 				<input
@@ -61,10 +51,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 				/>
 			</div>
 			<div>
-				<label
-					htmlFor="password"
-					className="block text-sm font-medium text-gray-700"
-				>
+				<label htmlFor="password" className="block text-sm font-medium text-gray-700">
 					Password
 				</label>
 				<input
@@ -77,10 +64,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 				/>
 			</div>
 			<div>
-				<label
-					htmlFor="confirmPassword"
-					className="block text-sm font-medium text-gray-700"
-				>
+				<label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
 					Confirm Password
 				</label>
 				<input

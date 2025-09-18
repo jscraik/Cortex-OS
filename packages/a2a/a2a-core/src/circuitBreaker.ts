@@ -1,6 +1,4 @@
-type Fn<TArgs extends unknown[], TReturn> = (
-	...args: TArgs
-) => Promise<TReturn>;
+type Fn<TArgs extends unknown[], TReturn> = (...args: TArgs) => Promise<TReturn>;
 
 export interface CircuitBreakerOptions {
 	timeout?: number; // ms

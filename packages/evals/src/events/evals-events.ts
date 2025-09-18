@@ -9,13 +9,7 @@ export const EVALS_EVENT_SOURCE = 'urn:cortex:evals';
 // Evaluation Started Event
 export const EvaluationStartedEventSchema = z.object({
 	evaluationId: z.string(),
-	evaluationType: z.enum([
-		'unit',
-		'integration',
-		'performance',
-		'security',
-		'manual',
-	]),
+	evaluationType: z.enum(['unit', 'integration', 'performance', 'security', 'manual']),
 	targetComponent: z.string(),
 	criteria: z.array(z.string()),
 	startedAt: z.string(),
@@ -56,14 +50,10 @@ export const EvaluationCompletedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type EvaluationStartedEvent = z.infer<
-	typeof EvaluationStartedEventSchema
->;
+export type EvaluationStartedEvent = z.infer<typeof EvaluationStartedEventSchema>;
 export type TestCaseExecutedEvent = z.infer<typeof TestCaseExecutedEventSchema>;
 export type BenchmarkResultEvent = z.infer<typeof BenchmarkResultEventSchema>;
-export type EvaluationCompletedEvent = z.infer<
-	typeof EvaluationCompletedEventSchema
->;
+export type EvaluationCompletedEvent = z.infer<typeof EvaluationCompletedEventSchema>;
 
 // Helper function to create evaluation events
 export const createEvalsEvent = {

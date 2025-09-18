@@ -29,9 +29,7 @@ const TagInput: React.FC<TagInputProps> = ({ label = '', onAdd }) => {
 	return (
 		<div className="flex items-center">
 			{label && !newTag && (
-				<span className="text-xs text-gray-500 dark:text-gray-400">
-					{label}
-				</span>
+				<span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
 			)}
 			<input
 				type="text"

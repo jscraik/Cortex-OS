@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 """
+DEPRECATION NOTICE
+This file is part of the legacy `packages/mcp` folder, which is deprecated.
+Authoritative MCP Python package and Cloudflare configs now live under:
+    - packages/cortex-mcp
+    - packages/cortex-mcp/infrastructure/cloudflare/
+
+Use the server, docs, and configs in `packages/cortex-mcp` going forward.
+
 Cortex-OS FastMCP Server v2.0
 Compatible with FastMCP 2.0 and ChatGPT MCP integration
 """

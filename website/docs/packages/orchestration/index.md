@@ -3,29 +3,31 @@ title: Index
 sidebar_label: Index
 ---
 
-# Cortex Orchestration Documentation
+## Cortex Orchestration
 
-[](https://www.npmjs.com/package/@cortex-os/orchestration)
-[](#)
-[](#)
-[](#)
-[](https://opensource.org/licenses/MIT)
+[NPM Package](https://www.npmjs.com/package/@cortex-os/orchestration) · [MIT License](https://opensource.org/licenses/MIT)
 
 ## Overview
-Cortex Orchestration coordinates multi-agent workflows for Cortex-OS using LangGraph and CrewAI with a Python-TypeScript bridge.
+
+Cortex Orchestration coordinates multi-agent workflows for Cortex-OS using LangGraph (LangGraphJS).
+This package is LangGraph-only; legacy/hybrid orchestrators (CrewAI, AutoGen, PRP, Archon) have been
+removed.
 
 ### Current Features
-- Stateful LangGraph and CrewAI execution
-- Python↔TypeScript stdio bridge
+
+- Stateful LangGraph execution
+- Optional adapters: MLX (local service), Ollama (local models), Frontier (OpenAI/Anthropic)
 - Intelligent agent routing and error recovery
 - CLI utilities for human-in-the-loop and checkpoint replay
 
 ### Planned Features
+
 - Stream processing and distributed orchestration
 - Adaptive agent learning and analytics
 - Pluggable framework extensions
 
 ## Documentation
+
 - [Introduction](./introduction.md)
 - [Getting Started](./getting-started.md)
 - [Configuration](./configuration.md)

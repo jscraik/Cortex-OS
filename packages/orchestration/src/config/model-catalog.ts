@@ -64,9 +64,7 @@ export class ModelRegistry {
 }
 
 export async function loadModelRegistry(): Promise<ModelRegistry> {
-	const mlxPath = resolveConfigPath(
-		process.env.MLX_MODEL_CONFIG_PATH ?? 'config/mlx-models.json',
-	);
+	const mlxPath = resolveConfigPath(process.env.MLX_MODEL_CONFIG_PATH ?? 'config/mlx-models.json');
 	const ollamaPath = resolveConfigPath(
 		process.env.OLLAMA_MODEL_CONFIG_PATH ?? 'config/ollama-models.json',
 	);

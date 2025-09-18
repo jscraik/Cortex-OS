@@ -60,9 +60,7 @@ determinism:
 		'utf-8',
 	);
 	// Optional: empty allowlist and policies
-	await writeFile(join(configDir, 'mcp-allowlist.yaml'), '[]\n', 'utf-8').catch(
-		() => {},
-	);
+	await writeFile(join(configDir, 'mcp-allowlist.yaml'), '[]\n', 'utf-8').catch(() => {});
 
 	// Keep test output tidy: rely on existing logger levels; avoid overriding console to satisfy lint rules
 });
@@ -72,8 +70,6 @@ afterAll(async () => {
 	vi.restoreAllMocks();
 	if (__ASBR_TEST_TMP__) {
 		// Recursively remove the temp dir
-		await rm(__ASBR_TEST_TMP__, { recursive: true, force: true }).catch(
-			() => {},
-		);
+		await rm(__ASBR_TEST_TMP__, { recursive: true, force: true }).catch(() => {});
 	}
 });

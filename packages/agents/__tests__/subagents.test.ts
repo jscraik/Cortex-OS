@@ -5,14 +5,7 @@
 import { promises as fsp } from 'node:fs';
 import * as path from 'node:path';
 import type { Tool, ToolSchema } from '@voltagent/core';
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	test,
-} from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { CortexAgent } from '../src/CortexAgent';
 import { createSubagentSystem } from '../src/subagents';
 import { SubagentLoader } from '../src/subagents/loader';
@@ -135,10 +128,7 @@ subagent:
   name: ""  # Empty name should fail validation
 `;
 
-			await fsp.writeFile(
-				path.join(tempDir, 'invalid.subagent.yml'),
-				invalidContent,
-			);
+			await fsp.writeFile(path.join(tempDir, 'invalid.subagent.yml'), invalidContent);
 
 			await expect(loader.loadAll()).rejects.toThrow();
 		});
@@ -256,14 +246,10 @@ subagent:
 		});
 
 		test('should route test-related messages to test-generation', async () => {
-			const result = await router.route(
-				'Generate unit tests for this function',
-			);
+			const result = await router.route('Generate unit tests for this function');
 
 			expect(result.shouldDelegate).toBe(true);
-			expect(
-				result.candidates.some((c) => c.subagent === 'test-generation'),
-			).toBe(true);
+			expect(result.candidates.some((c) => c.subagent === 'test-generation')).toBe(true);
 		});
 
 		test('should not delegate below confidence threshold', async () => {
@@ -303,10 +289,7 @@ subagent:
   model: "test-model"
 `;
 
-			await fsp.writeFile(
-				path.join(tempDir, 'integration-test.subagent.yml'),
-				yamlContent,
-			);
+			await fsp.writeFile(path.join(tempDir, 'integration-test.subagent.yml'), yamlContent);
 
 			const system = await createSubagentSystem({
 				toolRegistry,

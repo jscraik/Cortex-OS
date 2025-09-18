@@ -36,13 +36,7 @@ export default defineConfig({
 			},
 		},
 		// Ensure built artifacts never get swept into discovery
-		exclude: [
-			'**/node_modules/**',
-			'**/dist/**',
-			'**/build/**',
-			'**/.next/**',
-			'tests/**',
-		],
+		exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', 'tests/**'],
 		// Quality gates: enforce coverage thresholds across all projects
 		coverage: {
 			provider: 'v8',

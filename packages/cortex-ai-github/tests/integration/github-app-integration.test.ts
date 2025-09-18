@@ -63,8 +63,7 @@ describe('GitHub App Integration Tests', () => {
 					},
 					created_at: '2025-09-01T10:00:00Z',
 					updated_at: '2025-09-01T10:00:00Z',
-					html_url:
-						'https://github.com/user/test-repo/issues/1#issuecomment-11111',
+					html_url: 'https://github.com/user/test-repo/issues/1#issuecomment-11111',
 					author_association: 'OWNER',
 				},
 				sender: {
@@ -220,8 +219,7 @@ describe('GitHub App Integration Tests', () => {
 					},
 					created_at: '2025-09-01T10:00:00Z',
 					updated_at: '2025-09-01T10:00:00Z',
-					html_url:
-						'https://github.com/user/test-repo/issues/1#issuecomment-11111',
+					html_url: 'https://github.com/user/test-repo/issues/1#issuecomment-11111',
 					author_association: 'OWNER',
 				},
 				sender: {

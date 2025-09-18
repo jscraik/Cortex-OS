@@ -107,7 +107,7 @@ Current breakdown:
 5. **Evidence repository** – record storage/query filters under `data/evidence/...`, restart verification). ✅
 6. **Runtime integration** – bind repositories via DI, expose through runtime handle, update tests to use real persistence. ✅
 7. **Optimistic locking** – digest comparison surfaced on artifact/evidence repositories with conflict tests. ✅
-8. **Cleanup** – remove in-memory maps from `packages/asbr` and document new persistence behaviour. 🔄
+8. **Cleanup** – remove in-memory maps from `packages/asbr` and document new persistence behaviour. ✅
 
 Dependencies:
 
@@ -124,14 +124,16 @@ Output: Local-first durable task/evidence management.
 
 Suggested sub-track:
 
-1. Move contract tests + update harness to hit the new runtime.
-2. Implement HTTP server (Express/Fastify) adapters for `/v1/tasks`, `/v1/profiles`, `/v1/artifacts`, `/v1/service-map`, `/health` backed by the persistent repositories and auth middleware.
-3. Add rate-limiting + trace propagation tests.
-4. Remove the legacy Express server under `packages/asbr` once parity is confirmed.
+Status:
+
+- ✅ Contract tests now target the live runtime (see `apps/cortex-os/tests/http/api.test.ts`).
+- ✅ `/v1/tasks`, `/v1/profiles`, `/v1/artifacts`, `/v1/evidence`, `/health`, and SSE streams handled by the runtime HTTP server with optimistic locking.
+- ✅ Rate-limiting + trace propagation tests.
+- ✅ Remove the legacy Express server under `packages/asbr` once parity is confirmed.
 
 Dependencies:
 
-- Align documentation `apps/cortex-os/docs/api.md` to new endpoints.
+- Align documentation `apps/cortex-os/docs/api.md` (and related deployment docs) to the new endpoints and locking semantics.
 
 Output: Production-ready API for second brain.
 
@@ -141,10 +143,12 @@ Output: Production-ready API for second brain.
 
 **Goal**: `@cortex-os/asbr` SDK consumes new runtime.
 
-1. Update SDK to use node-compatible SSE client; fix helpers (e.g., `createTaskInput` ensures scopes).
-2. Tests running against live runtime: `createTask`, `subscribe`, `listArtifacts`, `upsertProfile`.
-3. Publish SDK type definitions from shared schemas.
-4. Remove legacy SDK entrypoints pointing at old server.
+Status:
+
+- 🔄 Update SDK to use node-compatible SSE client; fix helpers (e.g., `createTaskInput` ensures scopes).
+- 🔄 Tests running against live runtime: `createTask`, `subscribe`, `listArtifacts`, `upsertProfile`.
+- 🔄 Publish SDK type definitions from shared schemas.
+- 🔄 Remove legacy SDK entrypoints pointing at old server.
 
 Dependencies:
 

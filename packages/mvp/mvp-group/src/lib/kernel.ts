@@ -7,10 +7,7 @@
 
 // Import from proper package boundaries instead of relative paths
 import type { PRPState } from '@cortex-os/kernel';
-import {
-	createInitialPRPState,
-	validateStateTransition,
-} from '@cortex-os/kernel';
+import { createInitialPRPState, validateStateTransition } from '@cortex-os/kernel';
 // Temporarily comment out observability imports to fix build
 // import { recordMetric, startSpan } from '@cortex-os/observability';
 import { executeBuildNode } from './build-node.js';
@@ -23,11 +20,7 @@ interface PRPOrchestrator {
 }
 
 // Temporary stub functions for observability
-function recordMetric(
-	name: string,
-	value: number,
-	labels?: Record<string, string>,
-) {
+function recordMetric(name: string, value: number, labels?: Record<string, string>) {
 	// Stub implementation
 	console.debug(`Metric: ${name}=${value}`, labels);
 }
@@ -68,8 +61,7 @@ export const runPRPWorkflow = async (
 	try {
 		const deterministic = options.deterministic || false;
 		const runId =
-			options.runId ||
-			(deterministic ? `prp-deterministic-${Date.now()}` : `prp-${Date.now()}`);
+			options.runId || (deterministic ? `prp-deterministic-${Date.now()}` : `prp-${Date.now()}`);
 
 		const initialState = createInitialPRPState(blueprint, {
 			runId,
@@ -78,11 +70,7 @@ export const runPRPWorkflow = async (
 		});
 
 		// Execute strategy phase
-		const strategyState = await executeStrategyPhase(
-			orchestrator,
-			initialState,
-			deterministic,
-		);
+		const strategyState = await executeStrategyPhase(orchestrator, initialState, deterministic);
 
 		// Check if we should proceed or recycle
 		if (strategyState.phase === 'recycled') {
@@ -90,22 +78,14 @@ export const runPRPWorkflow = async (
 		}
 
 		// Execute build phase
-		const buildState = await executeBuildPhase(
-			orchestrator,
-			strategyState,
-			deterministic,
-		);
+		const buildState = await executeBuildPhase(orchestrator, strategyState, deterministic);
 
 		if (buildState.phase === 'recycled') {
 			return buildState;
 		}
 
 		// Execute evaluation phase
-		const evaluationState = await executeEvaluationPhase(
-			orchestrator,
-			buildState,
-			deterministic,
-		);
+		const evaluationState = await executeEvaluationPhase(orchestrator, buildState, deterministic);
 
 		// Record metrics
 		const duration = Date.now() - startTime;
@@ -162,9 +142,7 @@ const executeStrategyPhase = async (
 				blockers: [],
 				majors: [],
 				evidence: [],
-				timestamp: deterministic
-					? '2025-08-21T00:00:01.000Z'
-					: new Date().toISOString(),
+				timestamp: deterministic ? '2025-08-21T00:00:01.000Z' : new Date().toISOString(),
 			};
 		}
 
@@ -175,9 +153,7 @@ const executeStrategyPhase = async (
 		};
 
 		strategySpan.setStatus('OK');
-		return validateStateTransition(resultState, buildState)
-			? buildState
-			: resultState;
+		return validateStateTransition(resultState, buildState) ? buildState : resultState;
 	} catch (error) {
 		strategySpan.setStatus('ERROR');
 		strategySpan.setAttribute(
@@ -220,9 +196,7 @@ const executeBuildPhase = async (
 				blockers: [],
 				majors: [],
 				evidence: [],
-				timestamp: deterministic
-					? '2025-08-21T00:00:02.000Z'
-					: new Date().toISOString(),
+				timestamp: deterministic ? '2025-08-21T00:00:02.000Z' : new Date().toISOString(),
 			};
 		}
 
@@ -233,9 +207,7 @@ const executeBuildPhase = async (
 		};
 
 		buildSpan.setStatus('OK');
-		return validateStateTransition(resultState, evaluationState)
-			? evaluationState
-			: resultState;
+		return validateStateTransition(resultState, evaluationState) ? evaluationState : resultState;
 	} catch (error) {
 		buildSpan.setStatus('ERROR');
 		buildSpan.setAttribute(
@@ -278,9 +250,7 @@ const executeEvaluationPhase = async (
 				blockers: [],
 				majors: [],
 				evidence: [],
-				timestamp: deterministic
-					? '2025-08-21T00:00:03.000Z'
-					: new Date().toISOString(),
+				timestamp: deterministic ? '2025-08-21T00:00:03.000Z' : new Date().toISOString(),
 			};
 		}
 
@@ -289,9 +259,7 @@ const executeEvaluationPhase = async (
 			decision: 'promote',
 			reasoning: 'All validation gates passed successfully',
 			confidence: 0.95,
-			timestamp: deterministic
-				? '2025-08-21T00:00:04.000Z'
-				: new Date().toISOString(),
+			timestamp: deterministic ? '2025-08-21T00:00:04.000Z' : new Date().toISOString(),
 		};
 
 		// Complete the workflow
@@ -300,16 +268,12 @@ const executeEvaluationPhase = async (
 			phase: 'completed',
 			metadata: {
 				...resultState.metadata,
-				endTime: deterministic
-					? '2025-08-21T00:00:05.000Z'
-					: new Date().toISOString(),
+				endTime: deterministic ? '2025-08-21T00:00:05.000Z' : new Date().toISOString(),
 			},
 		};
 
 		evaluationSpan.setStatus('OK');
-		return validateStateTransition(resultState, completedState)
-			? completedState
-			: resultState;
+		return validateStateTransition(resultState, completedState) ? completedState : resultState;
 	} catch (error) {
 		evaluationSpan.setStatus('ERROR');
 		evaluationSpan.setAttribute(

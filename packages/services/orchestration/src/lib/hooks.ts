@@ -220,10 +220,7 @@ export class HookManager {
 				await hook(ctx);
 			} catch (error) {
 				// Log hook errors but don't fail the workflow
-				console.warn(
-					`Workflow hook execution failed for workflow ${ctx.workflowId}:`,
-					error,
-				);
+				console.warn(`Workflow hook execution failed for workflow ${ctx.workflowId}:`, error);
 			}
 		}
 	}

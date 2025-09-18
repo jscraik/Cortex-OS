@@ -45,10 +45,7 @@ export class Simulator {
 	/**
 	 * Run simulation on a plan
 	 */
-	async run(
-		plan: Plan,
-		_options?: SimulationOptions,
-	): Promise<SimulationResult> {
+	async run(plan: Plan, _options?: SimulationOptions): Promise<SimulationResult> {
 		const startTime = Date.now();
 		const failures: SimulationResult['failures'] = [];
 		let gatesPassed = 0;
@@ -83,9 +80,7 @@ export class Simulator {
 			durationMs,
 			failures,
 			warnings: this.generateWarnings(plan),
-			recommendation: success
-				? 'Plan is ready for execution'
-				: 'Plan requires modifications',
+			recommendation: success ? 'Plan is ready for execution' : 'Plan requires modifications',
 		};
 	}
 
@@ -108,8 +103,7 @@ export class Simulator {
 		this.gates.push({
 			id: 'safety-check',
 			name: 'Safety Check',
-			description:
-				'Validates that the plan does not contain dangerous operations',
+			description: 'Validates that the plan does not contain dangerous operations',
 			check: async (plan: Plan) => {
 				const dangerousKeywords = ['delete', 'rm -rf', 'format', 'wipe'];
 				const planText = JSON.stringify(plan).toLowerCase();

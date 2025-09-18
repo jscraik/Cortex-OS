@@ -13,14 +13,7 @@ describe('DAG utilities', () => {
 		} as const;
 
 		const order = topoSort(edges);
-		expect(order).toEqual([
-			'plan',
-			'gather',
-			'critic',
-			'synthesize',
-			'verify',
-			'done',
-		]);
+		expect(order).toEqual(['plan', 'gather', 'critic', 'synthesize', 'verify', 'done']);
 	});
 
 	it('supports branching and converging', () => {

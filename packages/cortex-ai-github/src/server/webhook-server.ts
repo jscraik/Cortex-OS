@@ -9,17 +9,10 @@ import express from 'express';
 import { z } from 'zod';
 import type { CortexAiGitHubApp } from '../core/ai-github-app.js';
 import type { CommentTrigger, GitHubContext } from '../types/github-models.js';
-import type {
-	GitHubWebhookPayload,
-	ProgressiveStatus,
-} from '../types/webhook-types.js';
+import type { GitHubWebhookPayload, ProgressiveStatus } from '../types/webhook-types.js';
 
 interface WebhookEvents {
-	'comment:trigger': [
-		trigger: CommentTrigger,
-		context: GitHubContext,
-		user: string,
-	];
+	'comment:trigger': [trigger: CommentTrigger, context: GitHubContext, user: string];
 	'webhook:verified': [event: string, delivery: string];
 	'webhook:invalid': [reason: string, headers: Record<string, string>];
 }
@@ -147,9 +140,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 						'Missing required headers',
 						req.headers as Record<string, string>,
 					);
-					return res
-						.status(400)
-						.json({ error: 'Missing required webhook headers' });
+					return res.status(400).json({ error: 'Missing required webhook headers' });
 				}
 
 				if (!this.verifyWebhookSignature(req.body, signature)) {
@@ -243,20 +234,14 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				.digest('hex');
 
 			const expected = `sha256=${expectedSignature}`;
-			return crypto.timingSafeEqual(
-				Buffer.from(signature),
-				Buffer.from(expected),
-			);
+			return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
 		} catch (error) {
 			console.error('Signature verification error', { error });
 			return false;
 		}
 	}
 
-	private async handleWebhookEvent(
-		event: string,
-		payload: GitHubWebhookPayload,
-	): Promise<void> {
+	private async handleWebhookEvent(event: string, payload: GitHubWebhookPayload): Promise<void> {
 		switch (event) {
 			case 'issue_comment':
 				if (payload.action === 'created') {
@@ -287,9 +272,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		}
 	}
 
-	private async handleCommentCreated(
-		payload: GitHubWebhookPayload,
-	): Promise<void> {
+	private async handleCommentCreated(payload: GitHubWebhookPayload): Promise<void> {
 		if (!payload.comment) {
 			console.warn('handleCommentCreated called without comment in payload');
 			return;
@@ -341,16 +324,12 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		}
 	}
 
-	private async handleReviewCommentCreated(
-		payload: GitHubWebhookPayload,
-	): Promise<void> {
+	private async handleReviewCommentCreated(payload: GitHubWebhookPayload): Promise<void> {
 		// Similar to handleCommentCreated but for PR review comments
 		await this.handleCommentCreated(payload);
 	}
 
-	private async handlePullRequestEvent(
-		payload: GitHubWebhookPayload,
-	): Promise<void> {
+	private async handlePullRequestEvent(payload: GitHubWebhookPayload): Promise<void> {
 		// Auto-trigger analysis for new/updated PRs
 		const context = this.buildGitHubContext(payload);
 
@@ -382,11 +361,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				});
 			}
 
-			if (
-				labels.some(
-					(label) => label.includes('docs') || label.includes('documentation'),
-				)
-			) {
+			if (labels.some((label) => label.includes('docs') || label.includes('documentation'))) {
 				await this.aiApp.queueTask({
 					taskType: 'documentation',
 					githubContext: context,
@@ -396,9 +371,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		}
 	}
 
-	private async handleIssueOpened(
-		payload: GitHubWebhookPayload,
-	): Promise<void> {
+	private async handleIssueOpened(payload: GitHubWebhookPayload): Promise<void> {
 		// Auto-triage for new issues
 		if (!payload.issue) {
 			console.warn('handleIssueOpened called without issue in payload');
@@ -474,10 +447,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		return context;
 	}
 
-	private extractInstructions(
-		comment: string,
-		pattern: RegExp,
-	): string | undefined {
+	private extractInstructions(comment: string, pattern: RegExp): string | undefined {
 		const match = pattern.exec(comment);
 		if (match?.[1]) {
 			return match[1].trim();
@@ -499,15 +469,11 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		return new Promise((resolve, reject) => {
 			try {
 				this.server = this.app.listen(port, () => {
-					console.log(
-						`Cortex AI GitHub webhook server running on port ${port}`,
-					);
+					console.log(`Cortex AI GitHub webhook server running on port ${port}`);
 					resolve();
 				});
 
-				this.server.on('error', (error) =>
-					reject(new Error(`Server error: ${error.message}`)),
-				);
+				this.server.on('error', (error) => reject(new Error(`Server error: ${error.message}`)));
 			} catch (error) {
 				reject(error);
 			}
@@ -530,10 +496,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 	/**
 	 * Add emoji reaction to a comment to show the bot is processing
 	 */
-	private async addReaction(
-		payload: GitHubWebhookPayload,
-		reaction: string,
-	): Promise<void> {
+	private async addReaction(payload: GitHubWebhookPayload, reaction: string): Promise<void> {
 		try {
 			const { Octokit } = await import('@octokit/rest');
 			const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });

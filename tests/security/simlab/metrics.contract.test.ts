@@ -13,11 +13,7 @@ it('summarize returns contract fields', async () => {
 		agent: { id: 'a', kind: 'rule' },
 		env: { id: 'e', kind: 'local-counter' },
 	} as any;
-	const run = await runScenario(
-		scenario,
-		counterEnv({ start: 0, target: 2 }),
-		greedyToTarget(),
-	);
+	const run = await runScenario(scenario, counterEnv({ start: 0, target: 2 }), greedyToTarget());
 	const summary = summarize(run);
 	expect(summary).toStrictEqual({
 		steps: run.transitions.length,

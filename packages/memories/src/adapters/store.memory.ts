@@ -1,11 +1,7 @@
 import { decayEnabled, decayFactor, getHalfLifeMs } from '../core/decay.js';
 import { isExpired } from '../core/ttl.js';
 import type { Memory, MemoryId } from '../domain/types.js';
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from '../ports/MemoryStore.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -66,11 +62,7 @@ export class InMemoryStore implements MemoryStore {
 
 	async searchByVector(q: VectorQuery, namespace = 'default') {
 		let itemsWithScores = [...this.ns(namespace).values()]
-			.filter(
-				(x) =>
-					x.vector &&
-					(!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))),
-			)
+			.filter((x) => x.vector && (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))))
 			.map((x) => ({
 				memory: x,
 				score: cosineSimilarity(q.vector, x.vector!),

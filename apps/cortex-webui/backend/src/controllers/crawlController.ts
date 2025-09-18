@@ -2,13 +2,8 @@ import type { Request, Response } from 'express';
 
 export async function postCrawl(req: Request, res: Response) {
 	try {
-		if (
-			process.env.ENABLE_CRAWLER !== '1' &&
-			process.env.ENABLE_CRAWLER !== 'true'
-		) {
-			res
-				.status(501)
-				.json({ error: 'Crawler disabled. Set ENABLE_CRAWLER=1 to enable.' });
+		if (process.env.ENABLE_CRAWLER !== '1' && process.env.ENABLE_CRAWLER !== 'true') {
+			res.status(501).json({ error: 'Crawler disabled. Set ENABLE_CRAWLER=1 to enable.' });
 			return;
 		}
 

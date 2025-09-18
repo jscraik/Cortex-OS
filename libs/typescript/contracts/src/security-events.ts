@@ -110,30 +110,14 @@ export const securityPolicyViolationSchema = z.object({
 });
 
 // Type Exports
-export type SecurityScanCompletedEvent = z.infer<
-	typeof securityScanCompletedSchema
->;
-export type SecurityThreatDetectedEvent = z.infer<
-	typeof securityThreatDetectedSchema
->;
-export type SecurityCertificateExpiringEvent = z.infer<
-	typeof securityCertificateExpiringSchema
->;
-export type SecurityCertificateValidatedEvent = z.infer<
-	typeof securityCertificateValidatedSchema
->;
-export type SecurityAccessGrantedEvent = z.infer<
-	typeof securityAccessGrantedSchema
->;
-export type SecurityAccessDeniedEvent = z.infer<
-	typeof securityAccessDeniedSchema
->;
-export type SecurityAuditCompletedEvent = z.infer<
-	typeof securityAuditCompletedSchema
->;
-export type SecurityPolicyViolationEvent = z.infer<
-	typeof securityPolicyViolationSchema
->;
+export type SecurityScanCompletedEvent = z.infer<typeof securityScanCompletedSchema>;
+export type SecurityThreatDetectedEvent = z.infer<typeof securityThreatDetectedSchema>;
+export type SecurityCertificateExpiringEvent = z.infer<typeof securityCertificateExpiringSchema>;
+export type SecurityCertificateValidatedEvent = z.infer<typeof securityCertificateValidatedSchema>;
+export type SecurityAccessGrantedEvent = z.infer<typeof securityAccessGrantedSchema>;
+export type SecurityAccessDeniedEvent = z.infer<typeof securityAccessDeniedSchema>;
+export type SecurityAuditCompletedEvent = z.infer<typeof securityAuditCompletedSchema>;
+export type SecurityPolicyViolationEvent = z.infer<typeof securityPolicyViolationSchema>;
 
 // Event Schema Registry
 export const SecurityEventSchemas = {

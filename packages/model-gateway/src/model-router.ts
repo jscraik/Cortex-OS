@@ -3,16 +3,10 @@
  */
 
 import { z } from 'zod';
-import {
-	FrontierAdapter,
-	type FrontierAdapterApi,
-} from './adapters/frontier-adapter.js';
+import { FrontierAdapter, type FrontierAdapterApi } from './adapters/frontier-adapter.js';
 import type { MCPAdapter } from './adapters/mcp-adapter.js';
 import { MLXAdapter, type MLXAdapterApi } from './adapters/mlx-adapter.js';
-import {
-	OllamaAdapter,
-	type OllamaAdapterApi,
-} from './adapters/ollama-adapter.js';
+import { OllamaAdapter, type OllamaAdapterApi } from './adapters/ollama-adapter.js';
 import type { Message } from './adapters/types.js';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking';
@@ -59,9 +53,7 @@ export type RerankRequest = z.infer<typeof RerankRequestSchema>;
 /** Interface exported for other modules/tests that consume the router */
 export interface IModelRouter {
 	initialize(): Promise<void>;
-	generateEmbedding(
-		request: EmbeddingRequest,
-	): Promise<{ embedding: number[]; model: string }>;
+	generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string }>;
 	generateEmbeddings(
 		request: z.infer<typeof EmbeddingBatchRequestSchema>,
 	): Promise<{ embeddings: number[][]; model: string }>;
@@ -86,8 +78,7 @@ export class ModelRouter implements IModelRouter {
 	private readonly frontierAdapter: FrontierAdapterApi;
 	private mcpAdapter: MCPAdapter | null = null;
 	private mcpLoaded = false;
-	private readonly availableModels: Map<ModelCapability, ModelConfig[]> =
-		new Map();
+	private readonly availableModels: Map<ModelCapability, ModelConfig[]> = new Map();
 	// Add privacy mode flag
 	private privacyModeEnabled: boolean = false;
 
@@ -114,29 +105,15 @@ export class ModelRouter implements IModelRouter {
 
 		this.availableModels.set(
 			'embedding',
-			this.buildEmbeddingModels(
-				mlxAvailable,
-				ollamaAvailable,
-				mcpAvailable,
-				frontierAvailable,
-			),
+			this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable),
 		);
 		this.availableModels.set(
 			'chat',
-			await this.buildChatModels(
-				ollamaAvailable,
-				mcpAvailable,
-				frontierAvailable,
-			),
+			await this.buildChatModels(ollamaAvailable, mcpAvailable, frontierAvailable),
 		);
 		this.availableModels.set(
 			'reranking',
-			this.buildRerankingModels(
-				mlxAvailable,
-				ollamaAvailable,
-				mcpAvailable,
-				frontierAvailable,
-			),
+			this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable),
 		);
 	}
 
@@ -170,18 +147,14 @@ export class ModelRouter implements IModelRouter {
 					provider: 'mlx',
 					capabilities: ['embedding'],
 					priority: 100,
-					fallback: this.privacyModeEnabled
-						? []
-						: ['qwen3-embedding-8b-mlx', ...ollamaFallback],
+					fallback: this.privacyModeEnabled ? [] : ['qwen3-embedding-8b-mlx', ...ollamaFallback],
 				},
 				{
 					name: 'qwen3-embedding-8b-mlx',
 					provider: 'mlx',
 					capabilities: ['embedding'],
 					priority: 90,
-					fallback: this.privacyModeEnabled
-						? []
-						: ['qwen3-embedding-4b-mlx', ...ollamaFallback],
+					fallback: this.privacyModeEnabled ? [] : ['qwen3-embedding-4b-mlx', ...ollamaFallback],
 				},
 			);
 		}
@@ -206,12 +179,7 @@ export class ModelRouter implements IModelRouter {
 					fallback: [],
 				});
 			}
-			if (
-				!mlxAvailable &&
-				!ollamaAvailable &&
-				!mcpAvailable &&
-				frontierAvailable
-			) {
+			if (!mlxAvailable && !ollamaAvailable && !mcpAvailable && frontierAvailable) {
 				embeddingModels.push({
 					name: 'frontier-embedding',
 					provider: 'frontier',
@@ -231,9 +199,7 @@ export class ModelRouter implements IModelRouter {
 	): Promise<ModelConfig[]> {
 		const chatModels: ModelConfig[] = [];
 		if (ollamaAvailable) {
-			const ollamaModels = await this.ollamaAdapter
-				.listModels()
-				.catch(() => []);
+			const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
 			const desiredChat = [
 				{ name: 'gpt-oss:20b', priority: 100, fallback: [] as string[] },
 				{ name: 'qwen3-coder:30b', priority: 95, fallback: [] as string[] },
@@ -255,14 +221,9 @@ export class ModelRouter implements IModelRouter {
 			}
 
 			for (const m of desiredChat) {
-				if (
-					ollamaModels.some(
-						(name) => name === m.name || name.startsWith(m.name),
-					)
-				) {
+				if (ollamaModels.some((name) => name === m.name || name.startsWith(m.name))) {
 					// Only add MCP fallback if privacy mode is disabled
-					if (mcpAvailable && !this.privacyModeEnabled)
-						m.fallback = ['mcp-chat'];
+					if (mcpAvailable && !this.privacyModeEnabled) m.fallback = ['mcp-chat'];
 					chatModels.push({
 						name: m.name,
 						provider: 'ollama',
@@ -271,9 +232,7 @@ export class ModelRouter implements IModelRouter {
 						fallback: m.fallback,
 					});
 				} else {
-					console.warn(
-						`[model-router] Ollama model ${m.name} not installed; skipping`,
-					);
+					console.warn(`[model-router] Ollama model ${m.name} not installed; skipping`);
 				}
 			}
 		}
@@ -315,11 +274,7 @@ export class ModelRouter implements IModelRouter {
 				provider: 'mlx',
 				capabilities: ['reranking'],
 				priority: 100,
-				fallback: this.privacyModeEnabled
-					? []
-					: ollamaAvailable
-						? ['nomic-embed-text']
-						: [],
+				fallback: this.privacyModeEnabled ? [] : ollamaAvailable ? ['nomic-embed-text'] : [],
 			});
 		}
 
@@ -343,12 +298,7 @@ export class ModelRouter implements IModelRouter {
 					fallback: [],
 				});
 			}
-			if (
-				!mlxAvailable &&
-				!ollamaAvailable &&
-				!mcpAvailable &&
-				frontierAvailable
-			) {
+			if (!mlxAvailable && !ollamaAvailable && !mcpAvailable && frontierAvailable) {
 				rerankingModels.push({
 					name: 'frontier-rerank',
 					provider: 'frontier',
@@ -361,10 +311,7 @@ export class ModelRouter implements IModelRouter {
 		return rerankingModels;
 	}
 
-	private selectModel(
-		capability: ModelCapability,
-		requestedModel?: string,
-	): ModelConfig | null {
+	private selectModel(capability: ModelCapability, requestedModel?: string): ModelConfig | null {
 		const models = this.availableModels.get(capability);
 		if (!models || models.length === 0) return null;
 		if (requestedModel) {
@@ -400,9 +347,7 @@ export class ModelRouter implements IModelRouter {
 		const model = this.selectModel('embedding', request.model);
 		if (!model) throw new Error('No embedding models available');
 
-		const tryModel = async (
-			m: ModelConfig,
-		): Promise<{ embedding: number[]; model: string }> => {
+		const tryModel = async (m: ModelConfig): Promise<{ embedding: number[]; model: string }> => {
 			if (m.provider === 'mlx') {
 				const response = await this.mlxAdapter.generateEmbedding({
 					text: request.text,
@@ -410,16 +355,10 @@ export class ModelRouter implements IModelRouter {
 				});
 				return { embedding: response.embedding, model: m.name };
 			} else if (m.provider === 'ollama') {
-				const response = await this.ollamaAdapter.generateEmbedding(
-					request.text,
-					m.name,
-				);
+				const response = await this.ollamaAdapter.generateEmbedding(request.text, m.name);
 				return { embedding: response.embedding, model: m.name };
 			} else if (m.provider === 'frontier') {
-				const response = await this.frontierAdapter.generateEmbedding(
-					request.text,
-					m.name,
-				);
+				const response = await this.frontierAdapter.generateEmbedding(request.text, m.name);
 				return { embedding: response.embedding, model: m.name };
 			} else {
 				if (!this.mcpAdapter) throw new Error('MCP adapter not loaded');
@@ -431,10 +370,7 @@ export class ModelRouter implements IModelRouter {
 		try {
 			return await tryModel(model);
 		} catch (error) {
-			console.warn(
-				`Primary embedding model ${model.name} failed, attempting fallback:`,
-				error,
-			);
+			console.warn(`Primary embedding model ${model.name} failed, attempting fallback:`, error);
 			for (const fallbackName of model.fallback || []) {
 				const fallbackModel = this.availableModels
 					.get('embedding')
@@ -443,10 +379,7 @@ export class ModelRouter implements IModelRouter {
 				try {
 					return await tryModel(fallbackModel);
 				} catch (fallbackError) {
-					console.warn(
-						`Fallback embedding model ${fallbackName} also failed:`,
-						fallbackError,
-					);
+					console.warn(`Fallback embedding model ${fallbackName} also failed:`, fallbackError);
 				}
 			}
 			throw new Error(
@@ -463,26 +396,15 @@ export class ModelRouter implements IModelRouter {
 		const model = this.selectModel('embedding', request.model);
 		if (!model) throw new Error('No embedding models available');
 
-		const tryModel = async (
-			m: ModelConfig,
-		): Promise<{ embeddings: number[][]; model: string }> => {
+		const tryModel = async (m: ModelConfig): Promise<{ embeddings: number[][]; model: string }> => {
 			if (m.provider === 'mlx') {
-				const responses = await this.mlxAdapter.generateEmbeddings(
-					request.texts,
-					m.name,
-				);
+				const responses = await this.mlxAdapter.generateEmbeddings(request.texts, m.name);
 				return { embeddings: responses.map((r) => r.embedding), model: m.name };
 			} else if (m.provider === 'ollama') {
-				const responses = await this.ollamaAdapter.generateEmbeddings(
-					request.texts,
-					m.name,
-				);
+				const responses = await this.ollamaAdapter.generateEmbeddings(request.texts, m.name);
 				return { embeddings: responses.map((r) => r.embedding), model: m.name };
 			} else if (m.provider === 'frontier') {
-				const responses = await this.frontierAdapter.generateEmbeddings(
-					request.texts,
-					m.name,
-				);
+				const responses = await this.frontierAdapter.generateEmbeddings(request.texts, m.name);
 				return { embeddings: responses.map((r) => r.embedding), model: m.name };
 			} else {
 				if (!this.mcpAdapter) throw new Error('MCP adapter not loaded');
@@ -520,15 +442,11 @@ export class ModelRouter implements IModelRouter {
 		}
 	}
 
-	async generateChat(
-		request: ChatRequest,
-	): Promise<{ content: string; model: string }> {
+	async generateChat(request: ChatRequest): Promise<{ content: string; model: string }> {
 		const model = this.selectModel('chat', request.model);
 		if (!model) throw new Error('No chat models available');
 
-		const tryModel = async (
-			m: ModelConfig,
-		): Promise<{ content: string; model: string }> => {
+		const tryModel = async (m: ModelConfig): Promise<{ content: string; model: string }> => {
 			if (m.provider === 'ollama') {
 				const response = await this.ollamaAdapter.generateChat({
 					messages: request.messages as unknown as Message[],
@@ -559,10 +477,7 @@ export class ModelRouter implements IModelRouter {
 		try {
 			return await tryModel(model);
 		} catch (error) {
-			console.warn(
-				`Primary chat model ${model.name} failed, attempting fallback:`,
-				error,
-			);
+			console.warn(`Primary chat model ${model.name} failed, attempting fallback:`, error);
 			for (const fallbackName of model.fallback || []) {
 				const fallbackModel = this.availableModels
 					.get('chat')
@@ -571,10 +486,7 @@ export class ModelRouter implements IModelRouter {
 				try {
 					return await tryModel(fallbackModel);
 				} catch (fallbackError) {
-					console.warn(
-						`Fallback chat model ${fallbackName} also failed:`,
-						fallbackError,
-					);
+					console.warn(`Fallback chat model ${fallbackName} also failed:`, fallbackError);
 				}
 			}
 			throw new Error(
@@ -595,22 +507,14 @@ export class ModelRouter implements IModelRouter {
 			m: ModelConfig,
 		): Promise<{ documents: string[]; scores: number[]; model: string }> => {
 			if (m.provider === 'mlx') {
-				const response = await this.mlxAdapter.rerank(
-					request.query,
-					request.documents,
-					m.name,
-				);
+				const response = await this.mlxAdapter.rerank(request.query, request.documents, m.name);
 				return {
 					documents: request.documents,
 					scores: response.scores,
 					model: m.name,
 				};
 			} else if (m.provider === 'ollama') {
-				const response = await this.ollamaAdapter.rerank(
-					request.query,
-					request.documents,
-					m.name,
-				);
+				const response = await this.ollamaAdapter.rerank(request.query, request.documents, m.name);
 				return {
 					documents: request.documents,
 					scores: response.scores,
@@ -628,11 +532,7 @@ export class ModelRouter implements IModelRouter {
 					model: m.name,
 				};
 			} else {
-				const response = await this.ollamaAdapter.rerank(
-					request.query,
-					request.documents,
-					m.name,
-				);
+				const response = await this.ollamaAdapter.rerank(request.query, request.documents, m.name);
 				return {
 					documents: request.documents,
 					scores: response.scores,
@@ -644,10 +544,7 @@ export class ModelRouter implements IModelRouter {
 		try {
 			return await tryModel(model);
 		} catch (error) {
-			console.warn(
-				`Primary reranking model ${model.name} failed, attempting fallback:`,
-				error,
-			);
+			console.warn(`Primary reranking model ${model.name} failed, attempting fallback:`, error);
 			for (const fallbackName of model.fallback || []) {
 				const fallbackModel = this.availableModels
 					.get('reranking')
@@ -656,10 +553,7 @@ export class ModelRouter implements IModelRouter {
 				try {
 					return await tryModel(fallbackModel);
 				} catch (fallbackError) {
-					console.warn(
-						`Fallback reranking model ${fallbackName} also failed:`,
-						fallbackError,
-					);
+					console.warn(`Fallback reranking model ${fallbackName} also failed:`, fallbackError);
 				}
 			}
 			throw new Error(

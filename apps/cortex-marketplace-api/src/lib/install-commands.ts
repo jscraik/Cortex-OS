@@ -12,10 +12,7 @@ export function generateCommands(server: ServerManifest): InstallCommand[] {
 	return commands;
 }
 
-export function generateCommand(
-	server: ServerManifest,
-	client: ClientType,
-): InstallCommand | null {
+export function generateCommand(server: ServerManifest, client: ClientType): InstallCommand | null {
 	switch (client) {
 		case 'claude':
 			return generateClaudeCommand(server);
@@ -88,10 +85,7 @@ function generateJsonCommand(server: ServerManifest): InstallCommand {
 	};
 }
 
-export function generateInstructions(
-	server: ServerManifest,
-	client: ClientType,
-): string {
+export function generateInstructions(server: ServerManifest, client: ClientType): string {
 	const command = generateCommand(server, client);
 	if (!command) {
 		return `Installation not available for ${client}`;

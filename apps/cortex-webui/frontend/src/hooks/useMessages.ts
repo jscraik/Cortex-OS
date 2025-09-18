@@ -25,9 +25,7 @@ const useMessages = (): UseMessagesReturn => {
 	}, []);
 
 	const updateMessage = useCallback((id: string, updates: Partial<Message>) => {
-		setMessages((prev) =>
-			prev.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)),
-		);
+		setMessages((prev) => prev.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)));
 	}, []);
 
 	const clearMessages = useCallback(() => {
@@ -71,9 +69,7 @@ const useMessages = (): UseMessagesReturn => {
 			// Open SSE stream to receive assistant response tokens
 			setStreaming(true);
 			eventSourceRef.current?.close();
-			eventSourceRef.current = new EventSource(
-				`${API_BASE_URL}/chat/${conversationId}/stream`,
-			);
+			eventSourceRef.current = new EventSource(`${API_BASE_URL}/chat/${conversationId}/stream`);
 
 			eventSourceRef.current.onmessage = (ev: MessageEvent) => {
 				try {
@@ -84,8 +80,7 @@ const useMessages = (): UseMessagesReturn => {
 					if (payload.type === 'token') {
 						updateMessage(assistantMessage.id, {
 							content:
-								(messages.find((m) => m.id === assistantMessage.id)?.content ||
-									'') + payload.data,
+								(messages.find((m) => m.id === assistantMessage.id)?.content || '') + payload.data,
 						});
 					} else if (payload.type === 'done') {
 						updateMessage(assistantMessage.id, {
@@ -113,8 +108,7 @@ const useMessages = (): UseMessagesReturn => {
 			};
 		} catch (err) {
 			setStreaming(false);
-			const errorMessage =
-				err instanceof Error ? err.message : 'Failed to send message';
+			const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
 			setError(errorMessage);
 			console.error('Error sending message:', err);
 		}

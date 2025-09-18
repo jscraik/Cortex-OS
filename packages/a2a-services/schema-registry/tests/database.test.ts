@@ -32,10 +32,7 @@ describe('SqliteSchemaRepository', () => {
 		await repository.save(testSchema);
 
 		// Retrieve the schema
-		const retrieved = await repository.findByNameAndVersion(
-			'test-schema',
-			'1.0.0',
-		);
+		const retrieved = await repository.findByNameAndVersion('test-schema', '1.0.0');
 
 		expect(retrieved).not.toBeNull();
 		expect(retrieved?.id).toBe(testSchema.id);
@@ -85,10 +82,7 @@ describe('SqliteSchemaRepository', () => {
 		await repository.save(updatedSchema);
 
 		// Retrieve the updated schema
-		const retrieved = await repository.findByNameAndVersion(
-			'test-schema',
-			'1.0.0',
-		);
+		const retrieved = await repository.findByNameAndVersion('test-schema', '1.0.0');
 
 		expect(retrieved).not.toBeNull();
 		expect(retrieved?.schema).toEqual({ type: 'string' });
@@ -99,27 +93,18 @@ describe('SqliteSchemaRepository', () => {
 		await repository.save(testSchema);
 
 		// Delete the schema
-		const deleted = await repository.deleteByNameAndVersion(
-			'test-schema',
-			'1.0.0',
-		);
+		const deleted = await repository.deleteByNameAndVersion('test-schema', '1.0.0');
 
 		expect(deleted).toBe(true);
 
 		// Try to retrieve the deleted schema
-		const retrieved = await repository.findByNameAndVersion(
-			'test-schema',
-			'1.0.0',
-		);
+		const retrieved = await repository.findByNameAndVersion('test-schema', '1.0.0');
 
 		expect(retrieved).toBeNull();
 	});
 
 	it('should return false when deleting a non-existent schema', async () => {
-		const deleted = await repository.deleteByNameAndVersion(
-			'non-existent',
-			'1.0.0',
-		);
+		const deleted = await repository.deleteByNameAndVersion('non-existent', '1.0.0');
 		expect(deleted).toBe(false);
 	});
 });

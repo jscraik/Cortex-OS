@@ -196,15 +196,11 @@ await (async () => {
 
 	// Check each protected file pattern
 	for (const pattern of policy.protectedFiles) {
-		const matches = files.some((f) =>
-			micromatch.isMatch(f, pattern, { dot: true }),
-		);
+		const matches = files.some((f) => micromatch.isMatch(f, pattern, { dot: true }));
 		console.log(`Pattern "${pattern}": ${matches ? 'FOUND' : 'MISSING'}`);
 		if (!matches) {
 			// Show what files exist that might match
-			const similar = files.filter((f) =>
-				f.includes(pattern.split('/')[1] || ''),
-			);
+			const similar = files.filter((f) => f.includes(pattern.split('/')[1] || ''));
 			if (similar.length > 0) {
 				console.log(`  Similar files: ${similar.slice(0, 5).join(', ')}`);
 			}
@@ -230,10 +226,7 @@ await (async () => {
 	];
 	const misplacedEnforcedRootFiles = files.filter((f) => {
 		// Should only exist at root, not in subfolders
-		return (
-			f.startsWith('config/') &&
-			rootOnlyEnforcedFiles.includes(f.replace('config/', ''))
-		);
+		return f.startsWith('config/') && rootOnlyEnforcedFiles.includes(f.replace('config/', ''));
 	});
 	if (misplacedEnforcedRootFiles.length) {
 		console.error(
@@ -243,30 +236,22 @@ await (async () => {
 		process.exitCode = 5;
 	}
 
-	const denied = files.filter((f) =>
-		micromatch.isMatch(f, policy.deniedGlobs, { dot: true }),
-	);
+	const denied = files.filter((f) => micromatch.isMatch(f, policy.deniedGlobs, { dot: true }));
 	if (denied.length) {
 		console.error(`Denied paths:
     ${denied.join('\n')}`);
-		console.error(
-			"Auto-fix: remove or relocate these files, or update 'deniedGlobs'.",
-		);
+		console.error("Auto-fix: remove or relocate these files, or update 'deniedGlobs'.");
 		process.exitCode = 4;
 	}
 
-	const bad = files.filter(
-		(f) => !micromatch.isMatch(f, policy.allowedGlobs, { dot: true }),
-	);
+	const bad = files.filter((f) => !micromatch.isMatch(f, policy.allowedGlobs, { dot: true }));
 	if (bad.length) {
 		console.error(`Disallowed paths:
     ${bad.slice(0, 20).join('\n')}`);
 		if (bad.length > 20) {
 			console.error(`... and ${bad.length - 20} more`);
 		}
-		console.error(
-			"Auto-fix: move files to allowed locations or extend 'allowedGlobs'.",
-		);
+		console.error("Auto-fix: move files to allowed locations or extend 'allowedGlobs'.");
 		process.exitCode = 2;
 	}
 
@@ -276,9 +261,7 @@ await (async () => {
 	if (missing.length) {
 		console.error(`Missing protected paths:
     ${missing.join('\n')}`);
-		console.error(
-			"Auto-fix: restore required files or adjust 'protectedFiles'.",
-		);
+		console.error("Auto-fix: restore required files or adjust 'protectedFiles'.");
 		process.exitCode = 3;
 	}
 })();

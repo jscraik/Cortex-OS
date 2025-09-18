@@ -19,8 +19,7 @@ const requestSchema = z.object({
 });
 
 export function createEmbed(deps: EmbedDeps) {
-	const { modelStrategy, mlxEmbed, ollamaSemantic, isHealthy, markUnhealthy } =
-		deps;
+	const { modelStrategy, mlxEmbed, ollamaSemantic, isHealthy, markUnhealthy } = deps;
 	return async function embed(request: unknown) {
 		const cfg = modelStrategy.embeddings;
 		const parsed = requestSchema.parse(request);

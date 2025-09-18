@@ -53,11 +53,7 @@ async function loadMarkdownFiles(
 	const patterns = ['**/*.md', '**/*.mdx', 'README.md'];
 	const ignore = ['**/node_modules/**', '**/.git/**', '**/dist/**'];
 	const files = (
-		await Promise.all(
-			patterns.map((p) =>
-				glob(p, { cwd: absoluteRoot, absolute: true, ignore }),
-			),
-		)
+		await Promise.all(patterns.map((p) => glob(p, { cwd: absoluteRoot, absolute: true, ignore })))
 	).flat();
 
 	const uniques = Array.from(new Set(files));
@@ -87,11 +83,7 @@ async function main() {
 
 	const docs = await loadMarkdownFiles(dir);
 	if (docs.length === 0) {
-		console.log(
-			chalk.yellow(
-				'No markdown files found. Try --dir ./docs or another path.',
-			),
-		);
+		console.log(chalk.yellow('No markdown files found. Try --dir ./docs or another path.'));
 		process.exit(0);
 	}
 
@@ -103,11 +95,7 @@ async function main() {
 	);
 
 	const stats = adapter.getStats();
-	console.log(
-		chalk.green(
-			`Indexed ${stats.totalDocuments} documents (dims=${stats.dimensions}).`,
-		),
-	);
+	console.log(chalk.green(`Indexed ${stats.totalDocuments} documents (dims=${stats.dimensions}).`));
 
 	console.log(chalk.cyan(`\n🔎 Query:`), chalk.white(`"${query}"`));
 	const results = await adapter.similaritySearch({ text: query, topK });

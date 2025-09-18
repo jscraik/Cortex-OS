@@ -19,9 +19,7 @@ describe('createEnhancedClient requestTimeoutMs', () => {
 			endpoint: `http://localhost:${port}`,
 			requestTimeoutMs: 40,
 		});
-		await expect(client.callTool({ name: 'x' })).rejects.toBeInstanceOf(
-			TimeoutError,
-		);
+		await expect(client.callTool({ name: 'x' })).rejects.toBeInstanceOf(TimeoutError);
 		await client.close();
 		server.close();
 	});
@@ -34,9 +32,7 @@ describe('createEnhancedClient requestTimeoutMs', () => {
 			args: ['-e', `setTimeout(()=>{ /* never respond */ }, 200)`],
 			requestTimeoutMs: 30,
 		});
-		await expect(client.callTool({ name: 'noreply' })).rejects.toBeInstanceOf(
-			TimeoutError,
-		);
+		await expect(client.callTool({ name: 'noreply' })).rejects.toBeInstanceOf(TimeoutError);
 		await client.close();
 	});
 });

@@ -9,10 +9,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { z } from 'zod';
 import { generateScanComment } from '../lib/comment-formatter.js';
-import {
-	runSemgrepScan,
-	type SecurityScanResult,
-} from '../lib/semgrep-scanner.js';
+import { runSemgrepScan, type SecurityScanResult } from '../lib/semgrep-scanner.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -58,15 +55,7 @@ type CommentPayload =
 	| EmitterWebhookEvent<'issue_comment.created'>['payload']
 	| EmitterWebhookEvent<'pull_request_review_comment.created'>['payload'];
 
-type ReactionContent =
-	| '+1'
-	| '-1'
-	| 'confused'
-	| 'heart'
-	| 'hooray'
-	| 'laugh'
-	| 'rocket'
-	| 'eyes';
+type ReactionContent = '+1' | '-1' | 'confused' | 'heart' | 'hooray' | 'laugh' | 'rocket' | 'eyes';
 // Create GitHub check run (use REST API namespace)
 async function createCheckRun(
 	owner: string,
@@ -136,18 +125,9 @@ webhooks.on(
 		const ownerLogin = repository.owner?.login;
 		if (!ownerLogin) return;
 
-		const results = await runSemgrepScan(
-			ownerLogin,
-			repository.name,
-			pull_request.head.sha,
-		);
+		const results = await runSemgrepScan(ownerLogin, repository.name, pull_request.head.sha);
 
-		await createCheckRun(
-			ownerLogin,
-			repository.name,
-			pull_request.head.sha,
-			results,
-		);
+		await createCheckRun(ownerLogin, repository.name, pull_request.head.sha, results);
 	},
 );
 
@@ -161,18 +141,9 @@ webhooks.on(
 		const ownerLogin = repository.owner?.login;
 		if (!ownerLogin) return;
 
-		const results = await runSemgrepScan(
-			ownerLogin,
-			repository.name,
-			pull_request.head.sha,
-		);
+		const results = await runSemgrepScan(ownerLogin, repository.name, pull_request.head.sha);
 
-		await createCheckRun(
-			ownerLogin,
-			repository.name,
-			pull_request.head.sha,
-			results,
-		);
+		await createCheckRun(ownerLogin, repository.name, pull_request.head.sha, results);
 	},
 );
 
@@ -191,11 +162,7 @@ webhooks.on('push', async ({ payload }: EmitterWebhookEvent<'push'>) => {
 	const ownerLogin = repository.owner?.login;
 	if (!ownerLogin) return;
 
-	const results = await runSemgrepScan(
-		ownerLogin,
-		repository.name,
-		head_commit.id,
-	);
+	const results = await runSemgrepScan(ownerLogin, repository.name, head_commit.id);
 
 	await createCheckRun(ownerLogin, repository.name, head_commit.id, results);
 });
@@ -205,14 +172,11 @@ webhooks.on(
 	'issue_comment.created',
 	async ({ payload }: EmitterWebhookEvent<'issue_comment.created'>) => {
 		try {
-			if (!payload.comment || !payload.repository || !payload.comment.user)
-				return;
+			if (!payload.comment || !payload.repository || !payload.comment.user) return;
 			const comment = payload.comment.body || '';
 			const user = payload.comment.user.login || 'unknown';
 
-			console.warn(
-				`💬 Comment received from ${user}: ${comment.substring(0, 100)}...`,
-			);
+			console.warn(`💬 Comment received from ${user}: ${comment.substring(0, 100)}...`);
 
 			// Check for @semgrep commands
 			if (comment.includes('@semgrep')) {
@@ -249,18 +213,13 @@ webhooks.on(
 // Handle pull request review comment events
 webhooks.on(
 	'pull_request_review_comment.created',
-	async ({
-		payload,
-	}: EmitterWebhookEvent<'pull_request_review_comment.created'>) => {
+	async ({ payload }: EmitterWebhookEvent<'pull_request_review_comment.created'>) => {
 		try {
-			if (!payload.comment || !payload.repository || !payload.comment.user)
-				return;
+			if (!payload.comment || !payload.repository || !payload.comment.user) return;
 			const comment = payload.comment.body || '';
 			const user = payload.comment.user.login || 'unknown';
 
-			console.warn(
-				`💬 Review comment received from ${user}: ${comment.substring(0, 100)}...`,
-			);
+			console.warn(`💬 Review comment received from ${user}: ${comment.substring(0, 100)}...`);
 
 			// Check for @semgrep commands in review comments
 			if (comment.includes('@semgrep')) {
@@ -293,11 +252,7 @@ async function handleScanCommand(
 		// Progressive status: Step 2 - Working
 		await updateProgressiveStatus(payload, 'working');
 
-		const results = await runSemgrepScan(
-			scanContext.owner,
-			scanContext.repo,
-			prData.data.head.sha,
-		);
+		const results = await runSemgrepScan(scanContext.owner, scanContext.repo, prData.data.head.sha);
 
 		await postScanResults(scanContext, results, prData.data.head.sha);
 
@@ -353,11 +308,7 @@ function resolvePRNumber(payload: CommentPayload): number | undefined {
 	return undefined;
 }
 
-async function fetchPRData(context: {
-	owner: string;
-	repo: string;
-	prNumber: number;
-}) {
+async function fetchPRData(context: { owner: string; repo: string; prNumber: number }) {
 	return octokit.rest.pulls.get({
 		owner: context.owner,
 		repo: context.repo,
@@ -370,12 +321,7 @@ async function postScanResults(
 	results: SecurityScanResult[],
 	sha: string,
 ): Promise<void> {
-	const responseComment = generateScanComment(
-		results,
-		context.owner,
-		context.repo,
-		sha,
-	);
+	const responseComment = generateScanComment(results, context.owner, context.repo, sha);
 
 	await octokit.rest.issues.createComment({
 		owner: context.owner,
@@ -385,10 +331,7 @@ async function postScanResults(
 	});
 }
 
-async function addReaction(
-	payload: CommentPayload,
-	reaction: ReactionContent,
-): Promise<void> {
+async function addReaction(payload: CommentPayload, reaction: ReactionContent): Promise<void> {
 	try {
 		const owner = payload.repository.owner.login;
 		const repo = payload.repository.name;
@@ -473,11 +416,7 @@ app.post('/webhook', async (req, res) => {
 	const signature = req.headers['x-hub-signature-256'] as string | undefined;
 	const id = req.headers['x-github-delivery'] as string | undefined;
 	const name = req.headers['x-github-event'] as string | undefined;
-	const rawBody = req.body as
-		| Buffer
-		| string
-		| Record<string, unknown>
-		| undefined;
+	const rawBody = req.body as Buffer | string | Record<string, unknown> | undefined;
 	let payload: string;
 	if (Buffer.isBuffer(rawBody)) {
 		payload = rawBody.toString('utf8');
@@ -507,9 +446,7 @@ app.post('/scan', express.json(), async (req, res) => {
 	const { owner, repo, sha } = req.body;
 
 	if (!owner || !repo || !sha) {
-		return res
-			.status(400)
-			.json({ error: 'Missing required parameters: owner, repo, sha' });
+		return res.status(400).json({ error: 'Missing required parameters: owner, repo, sha' });
 	}
 
 	try {

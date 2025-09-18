@@ -211,9 +211,7 @@ export class StructureValidator {
 		rule: StructureRule,
 		violations: StructureViolation[],
 	): void {
-		const isInAllowedPath = rule.allowedPaths.some((p) =>
-			minimatch(filePath, p),
-		);
+		const isInAllowedPath = rule.allowedPaths.some((p) => minimatch(filePath, p));
 		if (isInAllowedPath) return;
 		violations.push({
 			type: 'misplaced_file',
@@ -232,9 +230,7 @@ export class StructureValidator {
 		violations: StructureViolation[],
 	): void {
 		if (!rule.disallowedPaths) return;
-		const isInDisallowedPath = rule.disallowedPaths.some((p) =>
-			minimatch(filePath, p),
-		);
+		const isInDisallowedPath = rule.disallowedPaths.some((p) => minimatch(filePath, p));
 		if (!isInDisallowedPath) return;
 		violations.push({
 			type: 'misplaced_file',
@@ -283,10 +279,7 @@ export class StructureValidator {
 		});
 	}
 
-	private suggestCorrectPath(
-		filePath: string,
-		rule: StructureRule,
-	): string | undefined {
+	private suggestCorrectPath(filePath: string, rule: StructureRule): string | undefined {
 		const fileName = filePath.split('/').pop() || '';
 
 		// Simple heuristics for path suggestions
@@ -329,12 +322,9 @@ export class StructureValidator {
 		}
 
 		// Calculate score (100 - penalty for violations)
-		const errorPenalty =
-			allViolations.filter((v) => v.severity === 'error').length * 10;
-		const warningPenalty =
-			allViolations.filter((v) => v.severity === 'warning').length * 5;
-		const infoPenalty =
-			allViolations.filter((v) => v.severity === 'info').length * 1;
+		const errorPenalty = allViolations.filter((v) => v.severity === 'error').length * 10;
+		const warningPenalty = allViolations.filter((v) => v.severity === 'warning').length * 5;
+		const infoPenalty = allViolations.filter((v) => v.severity === 'info').length * 1;
 
 		const totalPenalty = errorPenalty + warningPenalty + infoPenalty;
 		const score = Math.max(0, 100 - totalPenalty);

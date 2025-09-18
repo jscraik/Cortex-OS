@@ -47,18 +47,13 @@ export class SimplePRPGraph {
 	/**
 	 * Run a complete PRP workflow
 	 */
-	async runPRPWorkflow(
-		blueprint: Blueprint,
-		options: RunOptions = {},
-	): Promise<PRPState> {
+	async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
 		const workflowSpan = startSpan('prp.workflow');
 		const startTime = Date.now();
 		const deterministic = options.deterministic || false;
 		const runId =
 			options.runId ||
-			(deterministic
-				? `prp-deterministic-${generateDeterministicHash(blueprint)}`
-				: nanoid());
+			(deterministic ? `prp-deterministic-${generateDeterministicHash(blueprint)}` : nanoid());
 
 		const state: PRPState = createInitialPRPState(blueprint, {
 			runId,
@@ -72,10 +67,7 @@ export class SimplePRPGraph {
 			this.addToHistory(runId, state);
 
 			// Execute strategy phase
-			const strategyState = await this.executeStrategyPhase(
-				state,
-				deterministic,
-			);
+			const strategyState = await this.executeStrategyPhase(state, deterministic);
 			this.addToHistory(runId, strategyState);
 
 			// Check if we should proceed or recycle
@@ -84,10 +76,7 @@ export class SimplePRPGraph {
 			}
 
 			// Execute build phase
-			const buildState = await this.executeBuildPhase(
-				strategyState,
-				deterministic,
-			);
+			const buildState = await this.executeBuildPhase(strategyState, deterministic);
 			this.addToHistory(runId, buildState);
 
 			if (buildState.phase === 'recycled') {
@@ -95,10 +84,7 @@ export class SimplePRPGraph {
 			}
 
 			// Execute evaluation phase
-			const evaluationState = await this.executeEvaluationPhase(
-				buildState,
-				deterministic,
-			);
+			const evaluationState = await this.executeEvaluationPhase(buildState, deterministic);
 			this.addToHistory(runId, evaluationState);
 
 			// Record metrics
@@ -134,10 +120,7 @@ export class SimplePRPGraph {
 	/**
 	 * Execute strategy phase
 	 */
-	private async executeStrategyPhase(
-		state: PRPState,
-		deterministic = false,
-	): Promise<PRPState> {
+	private async executeStrategyPhase(state: PRPState, deterministic = false): Promise<PRPState> {
 		const strategySpan = startSpan('prp.strategy');
 
 		try {
@@ -162,9 +145,7 @@ export class SimplePRPGraph {
 				blockers: [],
 				majors: [],
 				evidence: [],
-				timestamp: deterministic
-					? '2025-08-21T00:00:01.000Z'
-					: new Date().toISOString(),
+				timestamp: deterministic ? '2025-08-21T00:00:01.000Z' : new Date().toISOString(),
 			};
 
 			// Transition to build
@@ -174,9 +155,7 @@ export class SimplePRPGraph {
 			};
 
 			strategySpan.setStatus('OK');
-			return validateStateTransition(newState, buildState)
-				? buildState
-				: newState;
+			return validateStateTransition(newState, buildState) ? buildState : newState;
 		} catch (error) {
 			strategySpan.setStatus('ERROR');
 			strategySpan.setAttribute(
@@ -192,10 +171,7 @@ export class SimplePRPGraph {
 	/**
 	 * Execute build phase
 	 */
-	private async executeBuildPhase(
-		state: PRPState,
-		deterministic = false,
-	): Promise<PRPState> {
+	private async executeBuildPhase(state: PRPState, deterministic = false): Promise<PRPState> {
 		const buildSpan = startSpan('prp.build');
 
 		try {
@@ -217,9 +193,7 @@ export class SimplePRPGraph {
 				blockers: [],
 				majors: [],
 				evidence: [],
-				timestamp: deterministic
-					? '2025-08-21T00:00:02.000Z'
-					: new Date().toISOString(),
+				timestamp: deterministic ? '2025-08-21T00:00:02.000Z' : new Date().toISOString(),
 			};
 
 			// Transition to evaluation
@@ -229,9 +203,7 @@ export class SimplePRPGraph {
 			};
 
 			buildSpan.setStatus('OK');
-			return validateStateTransition(newState, evaluationState)
-				? evaluationState
-				: newState;
+			return validateStateTransition(newState, evaluationState) ? evaluationState : newState;
 		} catch (error) {
 			buildSpan.setStatus('ERROR');
 			buildSpan.setAttribute(
@@ -247,10 +219,7 @@ export class SimplePRPGraph {
 	/**
 	 * Execute evaluation phase
 	 */
-	private async executeEvaluationPhase(
-		state: PRPState,
-		deterministic = false,
-	): Promise<PRPState> {
+	private async executeEvaluationPhase(state: PRPState, deterministic = false): Promise<PRPState> {
 		const evaluationSpan = startSpan('prp.evaluation');
 
 		try {
@@ -272,9 +241,7 @@ export class SimplePRPGraph {
 				blockers: [],
 				majors: [],
 				evidence: [],
-				timestamp: deterministic
-					? '2025-08-21T00:00:03.000Z'
-					: new Date().toISOString(),
+				timestamp: deterministic ? '2025-08-21T00:00:03.000Z' : new Date().toISOString(),
 			};
 
 			// Final cerebrum decision
@@ -282,9 +249,7 @@ export class SimplePRPGraph {
 				decision: 'promote',
 				reasoning: 'All validation gates passed successfully',
 				confidence: 0.95,
-				timestamp: deterministic
-					? '2025-08-21T00:00:04.000Z'
-					: new Date().toISOString(),
+				timestamp: deterministic ? '2025-08-21T00:00:04.000Z' : new Date().toISOString(),
 			};
 
 			// Complete the workflow
@@ -293,16 +258,12 @@ export class SimplePRPGraph {
 				phase: 'completed',
 				metadata: {
 					...newState.metadata,
-					endTime: deterministic
-						? '2025-08-21T00:00:05.000Z'
-						: new Date().toISOString(),
+					endTime: deterministic ? '2025-08-21T00:00:05.000Z' : new Date().toISOString(),
 				},
 			};
 
 			evaluationSpan.setStatus('OK');
-			return validateStateTransition(newState, completedState)
-				? completedState
-				: newState;
+			return validateStateTransition(newState, completedState) ? completedState : newState;
 		} catch (error) {
 			evaluationSpan.setStatus('ERROR');
 			evaluationSpan.setAttribute(
@@ -334,10 +295,7 @@ export class SimplePRPGraph {
 	/**
 	 * Simulate work delay for determinism testing
 	 */
-	private async simulateWork(
-		ms: number,
-		options?: { deterministic?: boolean },
-	): Promise<void> {
+	private async simulateWork(ms: number, options?: { deterministic?: boolean }): Promise<void> {
 		if (options?.deterministic) {
 			return Promise.resolve(); // Skip timing in deterministic mode
 		}

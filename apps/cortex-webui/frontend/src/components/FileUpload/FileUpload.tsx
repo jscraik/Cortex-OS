@@ -9,11 +9,7 @@ interface FileUploadProps {
 	onRemoveFile: (id: string) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({
-	onFileUpload,
-	uploadedFiles,
-	onRemoveFile,
-}) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, uploadedFiles, onRemoveFile }) => {
 	const [dragActive, setDragActive] = useState(false);
 
 	const handleFiles = (files: FileList) => {
@@ -60,13 +56,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 				onDragLeave={handleDrag}
 				onDrop={handleDrop}
 			>
-				<input
-					type="file"
-					id="file-upload"
-					className="hidden"
-					onChange={handleChange}
-					multiple
-				/>
+				<input type="file" id="file-upload" className="hidden" onChange={handleChange} multiple />
 				<label htmlFor="file-upload" className="cursor-pointer">
 					<div className="flex flex-col items-center justify-center">
 						<svg
@@ -84,8 +74,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 							/>
 						</svg>
 						<p className="mt-2 text-sm text-gray-600">
-							<span className="font-medium text-blue-600">Click to upload</span>{' '}
-							or drag and drop
+							<span className="font-medium text-blue-600">Click to upload</span> or drag and drop
 						</p>
 						<p className="text-xs text-gray-500">PDF, DOC, TXT up to 10MB</p>
 					</div>
@@ -96,11 +85,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 				<div className="space-y-2">
 					<h3 className="text-sm font-medium">Uploaded Files</h3>
 					{uploadedFiles.map((file) => (
-						<FilePreview
-							key={file.id}
-							file={file}
-							onRemove={() => onRemoveFile(file.id)}
-						/>
+						<FilePreview key={file.id} file={file} onRemove={() => onRemoveFile(file.id)} />
 					))}
 				</div>
 			)}

@@ -57,8 +57,7 @@ const WebSearch: React.FC<WebSearchProps> = ({ query, onResults, onError }) => {
 			setResults(mockResults);
 			onResults(mockResults);
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Unknown error occurred';
+			const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
 			setError(errorMessage);
 			onError(errorMessage);
 		} finally {
@@ -98,10 +97,7 @@ const WebSearch: React.FC<WebSearchProps> = ({ query, onResults, onError }) => {
 					<div className="text-xs font-semibold mb-2">Search Results:</div>
 					<ul className="space-y-2">
 						{results.map((result, index) => (
-							<li
-								key={index}
-								className="border-b border-gray-200 pb-2 last:border-b-0"
-							>
+							<li key={index} className="border-b border-gray-200 pb-2 last:border-b-0">
 								<a
 									href={result.url}
 									target="_blank"

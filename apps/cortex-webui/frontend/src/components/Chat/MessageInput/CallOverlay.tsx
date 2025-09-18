@@ -13,11 +13,7 @@ interface CallOverlayProps {
 	};
 }
 
-export const FallbackProfileImage = ({
-	profileImageUrl,
-}: {
-	profileImageUrl: string;
-}) => (
+export const FallbackProfileImage = ({ profileImageUrl }: { profileImageUrl: string }) => (
 	<img
 		src={profileImageUrl}
 		alt="Profile"
@@ -76,26 +72,14 @@ const CallOverlay: React.FC<CallOverlayProps> = ({ model }) => {
 						<title>Loading spinner</title>
 						<style>{`.spinner_qM83 {animation: spinner_8HQG 1.05s infinite;} .spinner_oXPr {animation-delay: 0.1s;} .spinner_ZTLf {animation-delay: 0.2s;} @keyframes spinner_8HQG {0%,57.14% {animation-timing-function: cubic-bezier(0.33,0.66,0.66,1);transform: translate(0);}28.57% {animation-timing-function: cubic-bezier(0.33,0,0.66,0.33);transform: translateY(-6px);}100% {transform: translate(0);}}`}</style>
 						<circle className="spinner_qM83" cx="4" cy="12" r="3" />
-						<circle
-							className="spinner_qM83 spinner_oXPr"
-							cx="12"
-							cy="12"
-							r="3"
-						/>
-						<circle
-							className="spinner_qM83 spinner_ZTLf"
-							cx="20"
-							cy="12"
-							r="3"
-						/>
+						<circle className="spinner_qM83 spinner_oXPr" cx="12" cy="12" r="3" />
+						<circle className="spinner_qM83 spinner_ZTLf" cx="20" cy="12" r="3" />
 					</svg>
 				);
 			} else {
 				content = (
 					<FallbackProfileImage
-						profileImageUrl={
-							model?.info?.meta?.profile_image_url ?? '/static/favicon.png'
-						}
+						profileImageUrl={model?.info?.meta?.profile_image_url ?? '/static/favicon.png'}
 					/>
 				);
 			}

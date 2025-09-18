@@ -80,9 +80,7 @@ describe('Agent Isolation Sandbox TDD', () => {
 			virtualFiles,
 		});
 
-		const result = await sandbox.run((api) =>
-			api.readFile('/allowed/config.json'),
-		);
+		const result = await sandbox.run((api) => api.readFile('/allowed/config.json'));
 
 		expect(result.success).toBe(true);
 		expect(result.returnValue).toContain('ok');
@@ -100,16 +98,12 @@ describe('Agent Isolation Sandbox TDD', () => {
 			virtualFiles,
 		});
 
-		const result = await sandbox.run((api) =>
-			api.readFile('/blocked/secret.env'),
-		);
+		const result = await sandbox.run((api) => api.readFile('/blocked/secret.env'));
 
 		expect(result.success).toBe(false);
 		expect(result.error?.message).toMatch(/access denied/i);
 		expect(auditEvents.some((a) => a.type === 'sandbox.fs.denied')).toBe(true);
-		expect(result.violations.some((v) => v.type === 'sandbox.fs.denied')).toBe(
-			true,
-		);
+		expect(result.violations.some((v) => v.type === 'sandbox.fs.denied')).toBe(true);
 	});
 
 	it('should allow network requests to allowlisted domains and block others', async () => {
@@ -179,9 +173,7 @@ describe('Agent Isolation Sandbox TDD', () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(auditEvents.some((a) => a.type === 'sandbox.dynamic-code')).toBe(
-			true,
-		);
+		expect(auditEvents.some((a) => a.type === 'sandbox.dynamic-code')).toBe(true);
 	});
 
 	it('should soft-fail when memory soft limit callback triggers', async () => {
@@ -205,9 +197,7 @@ describe('Agent Isolation Sandbox TDD', () => {
 
 		expect(result.success).toBe(false);
 		expect(result.error?.message).toMatch(/memory limit/i);
-		expect(auditEvents.some((a) => a.type === 'sandbox.memory.softlimit')).toBe(
-			true,
-		);
+		expect(auditEvents.some((a) => a.type === 'sandbox.memory.softlimit')).toBe(true);
 	});
 
 	it('should aggregate violations in sandbox result', async () => {
@@ -316,9 +306,7 @@ describe('Agent Isolation Sandbox TDD', () => {
 		expect(codes).toContain('FS_DENIED');
 		expect(codes).toContain('VIOLATION_THRESHOLD');
 		// Ensure threshold event present
-		expect(
-			result.violations.some((v) => v.type === 'sandbox.violation.threshold'),
-		).toBe(true);
+		expect(result.violations.some((v) => v.type === 'sandbox.violation.threshold')).toBe(true);
 	});
 
 	it('should deny path traversal attempts and audit', async () => {
@@ -346,12 +334,8 @@ describe('Agent Isolation Sandbox TDD', () => {
 			return 'traversal';
 		});
 
-		expect(auditEvents.some((a) => a.type === 'sandbox.fs.traversal')).toBe(
-			true,
-		);
-		expect(
-			result.violations.some((v) => v.type === 'sandbox.fs.traversal'),
-		).toBe(true);
+		expect(auditEvents.some((a) => a.type === 'sandbox.fs.traversal')).toBe(true);
+		expect(result.violations.some((v) => v.type === 'sandbox.fs.traversal')).toBe(true);
 	});
 
 	it('should audit serialization errors when return value cannot be cloned', async () => {
@@ -370,9 +354,7 @@ describe('Agent Isolation Sandbox TDD', () => {
 		const result = await sandbox.run(() => cyclic);
 
 		expect(result.success).toBe(false);
-		expect(auditEvents.some((a) => a.type === 'sandbox.serialize.error')).toBe(
-			true,
-		);
+		expect(auditEvents.some((a) => a.type === 'sandbox.serialize.error')).toBe(true);
 	});
 
 	it('should prevent reuse after dispose', async () => {
@@ -412,8 +394,7 @@ describe('Agent Isolation Sandbox TDD', () => {
 			} catch (e) {
 				memErr = e;
 			}
-			if (!netErr || !memErr)
-				throw new Error('Expected both network and memory errors');
+			if (!netErr || !memErr) throw new Error('Expected both network and memory errors');
 			return 'multi-violations';
 		});
 		const types = result.violations.map((v) => v.type);

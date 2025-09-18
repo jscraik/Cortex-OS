@@ -7,10 +7,7 @@ interface VoiceRecordingProps {
 	onCancel: () => void;
 }
 
-const VoiceRecording: React.FC<VoiceRecordingProps> = ({
-	onRecordingComplete,
-	onCancel,
-}) => {
+const VoiceRecording: React.FC<VoiceRecordingProps> = ({ onRecordingComplete, onCancel }) => {
 	const [isRecording, setIsRecording] = useState(false);
 	const [recordingTime, setRecordingTime] = useState(0);
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -108,8 +105,7 @@ const VoiceRecording: React.FC<VoiceRecordingProps> = ({
 					</div>
 
 					<div className="text-2xl font-mono">
-						{Math.floor(recordingTime / 60)}:
-						{(recordingTime % 60).toString().padStart(2, '0')}
+						{Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
 					</div>
 
 					<div className="mt-2 text-sm text-gray-500">

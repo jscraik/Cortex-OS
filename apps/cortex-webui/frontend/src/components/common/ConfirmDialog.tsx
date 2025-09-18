@@ -44,10 +44,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 				</div>
 
 				<div className="p-4 border-t flex justify-end space-x-2">
-					<button
-						onClick={onClose}
-						className="px-4 py-2 text-sm border rounded hover:bg-gray-50"
-					>
+					<button onClick={onClose} className="px-4 py-2 text-sm border rounded hover:bg-gray-50">
 						{cancelText}
 					</button>
 					<button

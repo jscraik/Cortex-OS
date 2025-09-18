@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	createTraceContext,
-	type TraceContext,
-} from '../../a2a-contracts/src/trace-context.js';
+import { createTraceContext, type TraceContext } from '../../a2a-contracts/src/trace-context.js';
 import {
 	ensureTraceContext,
 	getCurrentTraceContext,

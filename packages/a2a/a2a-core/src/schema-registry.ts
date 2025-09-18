@@ -39,9 +39,7 @@ export class SchemaRegistry {
 	/**
 	 * Register a new schema
 	 */
-	register(
-		schema: Omit<RegisteredSchema, 'id' | 'createdAt' | 'updatedAt'>,
-	): string {
+	register(schema: Omit<RegisteredSchema, 'id' | 'createdAt' | 'updatedAt'>): string {
 		const id = this.generateSchemaId(schema.eventType, schema.version);
 		const now = new Date();
 
@@ -105,10 +103,7 @@ export class SchemaRegistry {
 	/**
 	 * Get schema by event type and version
 	 */
-	getSchemaByVersion(
-		eventType: string,
-		version: string,
-	): RegisteredSchema | undefined {
+	getSchemaByVersion(eventType: string, version: string): RegisteredSchema | undefined {
 		const id = this.generateSchemaId(eventType, version);
 		return this.getSchema(id);
 	}
@@ -116,11 +111,7 @@ export class SchemaRegistry {
 	/**
 	 * Validate data against schema
 	 */
-	validate(
-		eventType: string,
-		data: unknown,
-		version?: string,
-	): ValidationResult {
+	validate(eventType: string, data: unknown, version?: string): ValidationResult {
 		const startTime = Date.now();
 
 		try {
@@ -198,9 +189,7 @@ export class SchemaRegistry {
 		}
 
 		if (options.tags && options.tags.length > 0) {
-			results = results.filter((s) =>
-				options.tags?.some((tag) => s.tags?.includes(tag)),
-			);
+			results = results.filter((s) => options.tags?.some((tag) => s.tags?.includes(tag)));
 		}
 
 		if (options.author) {
@@ -244,10 +233,7 @@ export class SchemaRegistry {
 	/**
 	 * Check schema compatibility for evolution
 	 */
-	checkCompatibility(
-		eventType: string,
-		newSchema: z.ZodSchema,
-	): SchemaEvolutionResult {
+	checkCompatibility(eventType: string, newSchema: z.ZodSchema): SchemaEvolutionResult {
 		const latestSchema = this.getLatestSchema(eventType);
 		if (!latestSchema) {
 			return { compatible: true };
@@ -266,9 +252,7 @@ export class SchemaRegistry {
 			const newResult = newSchema.safeParse(testData);
 
 			if (!newResult.success) {
-				issues.push(
-					'New schema rejects data that was valid in previous version',
-				);
+				issues.push('New schema rejects data that was valid in previous version');
 				recommendations.push(
 					'Consider making the new schema more permissive or providing migration guidance',
 				);
@@ -334,9 +318,7 @@ export class SchemaRegistry {
 	}
 
 	private getSchemasByType(eventType: string): RegisteredSchema[] {
-		return Array.from(this.schemas.values()).filter(
-			(s) => s.eventType === eventType,
-		);
+		return Array.from(this.schemas.values()).filter((s) => s.eventType === eventType);
 	}
 
 	private compareVersions(version1: string, version2: string): number {
@@ -379,13 +361,10 @@ export class SchemaRegistry {
 	private updateStats(eventType: string): void {
 		this.stats.totalSchemas = this.schemas.size;
 
-		const eventTypes = new Set(
-			Array.from(this.schemas.values()).map((s) => s.eventType),
-		);
+		const eventTypes = new Set(Array.from(this.schemas.values()).map((s) => s.eventType));
 		this.stats.uniqueEventTypes = eventTypes.size;
 
-		this.stats.schemasPerType[eventType] =
-			(this.stats.schemasPerType[eventType] || 0) + 1;
+		this.stats.schemasPerType[eventType] = (this.stats.schemasPerType[eventType] || 0) + 1;
 	}
 
 	private invalidateCache(schemaId: string): void {

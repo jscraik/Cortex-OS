@@ -4,9 +4,7 @@ import { runSmoke } from './smoke-shared.js';
 
 async function main() {
 	console.log('🔥 Running SimLab smoke tests...');
-	const seed = process.env.SIMLAB_SEED
-		? parseInt(process.env.SIMLAB_SEED, 10)
-		: 12345;
+	const seed = process.env.SIMLAB_SEED ? parseInt(process.env.SIMLAB_SEED, 10) : 12345;
 	try {
 		await runSmoke({
 			scenarioFile: 'sim/scenarios/critical.json',

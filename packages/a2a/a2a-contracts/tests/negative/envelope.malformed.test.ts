@@ -31,9 +31,7 @@ describe('Envelope malformed contract rejection', () => {
 		} catch (e) {
 			expect(e).toBeInstanceOf(ZodError);
 			const ze = e as ZodError;
-			expect(
-				ze.errors.some((err) => err.message.includes('Invalid literal value')),
-			).toBe(true);
+			expect(ze.errors.some((err) => err.message.includes('Invalid literal value'))).toBe(true);
 		}
 	});
 

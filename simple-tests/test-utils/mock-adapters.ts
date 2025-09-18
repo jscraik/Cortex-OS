@@ -14,26 +14,18 @@ export class MockMLXAdapter implements MLXAdapterInterface {
 		return true;
 	}
 
-	async generateEmbedding(request: {
-		text: string;
-		model?: string;
-	}): Promise<Embedding> {
+	async generateEmbedding(request: { text: string; model?: string }): Promise<Embedding> {
 		return {
 			embedding: new Array(1536).fill(0).map((_, i) => Math.sin(i * 0.1)),
 			model: request.model || 'qwen3-embedding-4b-mlx',
 		} as Embedding;
 	}
 
-	async generateEmbeddings(request: {
-		texts: string[];
-		model?: string;
-	}): Promise<Embedding[]> {
+	async generateEmbeddings(request: { texts: string[]; model?: string }): Promise<Embedding[]> {
 		return request.texts.map(
 			(_, index) =>
 				({
-					embedding: new Array(1536)
-						.fill(0)
-						.map((_, i) => Math.sin((i + index) * 0.1)),
+					embedding: new Array(1536).fill(0).map((_, i) => Math.sin((i + index) * 0.1)),
 					model: request.model || 'qwen3-embedding-4b-mlx',
 				}) as Embedding,
 		);
@@ -64,16 +56,11 @@ export class MockOllamaAdapter implements OllamaAdapterInterface {
 		} as Embedding;
 	}
 
-	async generateEmbeddings(
-		texts: string[],
-		model?: string,
-	): Promise<Embedding[]> {
+	async generateEmbeddings(texts: string[], model?: string): Promise<Embedding[]> {
 		return texts.map(
 			(_, index) =>
 				({
-					embedding: new Array(1536)
-						.fill(0)
-						.map((_, i) => Math.cos((i + index) * 0.1)),
+					embedding: new Array(1536).fill(0).map((_, i) => Math.cos((i + index) * 0.1)),
 					model: model || 'nomic-embed-text',
 				}) as Embedding,
 		);
@@ -112,17 +99,11 @@ export class UnavailableMLXAdapter implements MLXAdapterInterface {
 		return false;
 	}
 
-	async generateEmbedding(_request: {
-		text: string;
-		model?: string;
-	}): Promise<Embedding> {
+	async generateEmbedding(_request: { text: string; model?: string }): Promise<Embedding> {
 		throw new Error('MLX adapter is not available');
 	}
 
-	async generateEmbeddings(_request: {
-		texts: string[];
-		model?: string;
-	}): Promise<Embedding[]> {
+	async generateEmbeddings(_request: { texts: string[]; model?: string }): Promise<Embedding[]> {
 		throw new Error('MLX adapter is not available');
 	}
 

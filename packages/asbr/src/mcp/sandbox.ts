@@ -9,11 +9,7 @@ import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import pidusage from 'pidusage';
 import { loadMCPAllowlist, loadSecurityPolicies } from '../core/config.js';
-import type {
-	MCPAllowlistEntry,
-	SecurityPolicy,
-	SecurityRule,
-} from '../types/index.js';
+import type { MCPAllowlistEntry, SecurityPolicy, SecurityRule } from '../types/index.js';
 import { AuthorizationError, ValidationError } from '../types/index.js';
 import { getCachePath, getTempPath } from '../xdg/index.js';
 
@@ -142,9 +138,7 @@ export class MCPSandbox {
 		}
 	}
 
-	private async validateSecurityPolicies(
-		context: SandboxContext,
-	): Promise<void> {
+	private async validateSecurityPolicies(context: SandboxContext): Promise<void> {
 		for (const policy of this.policies.filter((p) => p.enabled)) {
 			for (const rule of policy.rules) {
 				await this.validateRule(rule, context);
@@ -152,21 +146,12 @@ export class MCPSandbox {
 		}
 	}
 
-	private async validateRule(
-		rule: SecurityRule,
-		context: SandboxContext,
-	): Promise<void> {
+	private async validateRule(rule: SecurityRule, context: SandboxContext): Promise<void> {
 		switch (rule.type) {
 			case 'shell_deny':
 				// Deny shell execution
-				if (
-					context.args.some(
-						(arg) => typeof arg === 'string' && arg.includes('shell'),
-					)
-				) {
-					throw new AuthorizationError(
-						'Shell execution denied by security policy',
-					);
+				if (context.args.some((arg) => typeof arg === 'string' && arg.includes('shell'))) {
+					throw new AuthorizationError('Shell execution denied by security policy');
 				}
 				break;
 
@@ -178,9 +163,7 @@ export class MCPSandbox {
 				// Restrict file access to allowed paths
 				if (rule.allowlist) {
 					const workingDir = context.workingDir;
-					const isAllowed = rule.allowlist.some((path) =>
-						workingDir.startsWith(path),
-					);
+					const isAllowed = rule.allowlist.some((path) => workingDir.startsWith(path));
 					if (!isAllowed) {
 						throw new AuthorizationError(`File access denied to ${workingDir}`);
 					}
@@ -230,16 +213,10 @@ export class MCPSandbox {
 		return new Promise((resolve, reject) => {
 			const cgexecPath = '/usr/bin/cgexec';
 			const useCgroup = existsSync(cgexecPath);
-			const baseCmd =
-				context.toolName === 'node' ? process.execPath : context.toolName;
+			const baseCmd = context.toolName === 'node' ? process.execPath : context.toolName;
 			const command = useCgroup ? cgexecPath : baseCmd;
 			const args = useCgroup
-				? [
-						'-g',
-						'cpu,memory:cortex-sandbox',
-						baseCmd,
-						...(context.args as string[]),
-					]
+				? ['-g', 'cpu,memory:cortex-sandbox', baseCmd, ...(context.args as string[])]
 				: (context.args as string[]);
 
 			const child = spawn(command, args, {
@@ -283,17 +260,13 @@ export class MCPSandbox {
 				if (code === 0) {
 					resolve(stdout.trim());
 				} else {
-					reject(
-						new Error(stderr.trim() || `Process exited with code ${code}`),
-					);
+					reject(new Error(stderr.trim() || `Process exited with code ${code}`));
 				}
 			});
 		});
 	}
 
-	private async getResourceUsage(
-		processId: string,
-	): Promise<{ memory: number; cpu: number }> {
+	private async getResourceUsage(processId: string): Promise<{ memory: number; cpu: number }> {
 		try {
 			const stats = await pidusage(parseInt(processId, 10));
 			return {
@@ -305,9 +278,7 @@ export class MCPSandbox {
 		}
 	}
 
-	private getSafeEnvironmentVariables(
-		env: Record<string, string>,
-	): Record<string, string> {
+	private getSafeEnvironmentVariables(env: Record<string, string>): Record<string, string> {
 		// Only allow safe environment variables
 		const safeKeys = ['LANG', 'LC_ALL', 'TZ'];
 		const safeEnv: Record<string, string> = {};

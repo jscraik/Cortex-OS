@@ -58,15 +58,11 @@ export class SqliteOutboxRepository implements OutboxRepository {
 			`);
 		} catch (error) {
 			console.error('Failed to initialize SQLite database:', error);
-			throw new Error(
-				'Database initialization failed. Please ensure better-sqlite3 is installed.',
-			);
+			throw new Error('Database initialization failed. Please ensure better-sqlite3 is installed.');
 		}
 	}
 
-	async save(
-		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
-	): Promise<OutboxMessage> {
+	async save(message: Omit<OutboxMessage, 'id' | 'createdAt'>): Promise<OutboxMessage> {
 		const id = uuidv4();
 		const createdAt = new Date();
 
@@ -138,13 +134,9 @@ export class SqliteOutboxRepository implements OutboxRepository {
 		}
 	}
 
-	async findByStatus(
-		status: OutboxMessageStatus,
-		limit?: number,
-	): Promise<OutboxMessage[]> {
+	async findByStatus(status: OutboxMessageStatus, limit?: number): Promise<OutboxMessage[]> {
 		try {
-			let query =
-				'SELECT * FROM outbox_messages WHERE status = ? ORDER BY created_at ASC';
+			let query = 'SELECT * FROM outbox_messages WHERE status = ? ORDER BY created_at ASC';
 			const params: any[] = [status];
 
 			if (limit) {
@@ -186,16 +178,11 @@ export class SqliteOutboxRepository implements OutboxRepository {
 			return rows.map(this.mapRowToMessage);
 		} catch (error) {
 			console.error('Failed to find outbox messages ready for retry:', error);
-			throw new Error(
-				`Failed to find outbox messages ready for retry: ${error}`,
-			);
+			throw new Error(`Failed to find outbox messages ready for retry: ${error}`);
 		}
 	}
 
-	async findByAggregate(
-		aggregateType: string,
-		aggregateId: string,
-	): Promise<OutboxMessage[]> {
+	async findByAggregate(aggregateType: string, aggregateId: string): Promise<OutboxMessage[]> {
 		try {
 			const stmt = this.db.prepare(`
 				SELECT * FROM outbox_messages 
@@ -211,11 +198,7 @@ export class SqliteOutboxRepository implements OutboxRepository {
 		}
 	}
 
-	async updateStatus(
-		id: string,
-		status: OutboxMessageStatus,
-		error?: string,
-	): Promise<void> {
+	async updateStatus(id: string, status: OutboxMessageStatus, error?: string): Promise<void> {
 		try {
 			const stmt = this.db.prepare(`
 				UPDATE outbox_messages 
@@ -279,9 +262,7 @@ export class SqliteOutboxRepository implements OutboxRepository {
 			stmt.run(retryCount, error, OutboxMessageStatus.FAILED, nextRetryAt, id);
 		} catch (error) {
 			console.error('Failed to increment outbox message retry count:', error);
-			throw new Error(
-				`Failed to increment outbox message retry count: ${error}`,
-			);
+			throw new Error(`Failed to increment outbox message retry count: ${error}`);
 		}
 	}
 
@@ -293,20 +274,10 @@ export class SqliteOutboxRepository implements OutboxRepository {
 				SET status = ?, last_error = ?, processed_at = ?
 				WHERE id = ?
 			`);
-			stmt.run(
-				OutboxMessageStatus.DEAD_LETTER,
-				error,
-				processedAt.getTime(),
-				id,
-			);
+			stmt.run(OutboxMessageStatus.DEAD_LETTER, error, processedAt.getTime(), id);
 		} catch (error) {
-			console.error(
-				'Failed to move outbox message to dead letter queue:',
-				error,
-			);
-			throw new Error(
-				`Failed to move outbox message to dead letter queue: ${error}`,
-			);
+			console.error('Failed to move outbox message to dead letter queue:', error);
+			throw new Error(`Failed to move outbox message to dead letter queue: ${error}`);
 		}
 	}
 

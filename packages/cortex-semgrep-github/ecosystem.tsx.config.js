@@ -10,10 +10,8 @@ module.exports = {
 			env: {
 				NODE_ENV: 'development',
 				PORT: 3002,
-				GITHUB_TOKEN:
-					process.env.SEMGREP_GITHUB_TOKEN || 'your_github_token_here',
-				WEBHOOK_SECRET:
-					process.env.SEMGREP_WEBHOOK_SECRET || 'your_webhook_secret_here',
+				GITHUB_TOKEN: process.env.SEMGREP_GITHUB_TOKEN || 'your_github_token_here',
+				WEBHOOK_SECRET: process.env.SEMGREP_WEBHOOK_SECRET || 'your_webhook_secret_here',
 				SEMGREP_APP_ID: process.env.SEMGREP_APP_ID || '',
 				SEMGREP_PRIVATE_KEY: process.env.SEMGREP_PRIVATE_KEY || '',
 			},

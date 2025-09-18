@@ -51,10 +51,7 @@ export interface SecurityPolicy {
 export class OWASPLLMGuard {
 	private policy: SecurityPolicy;
 	private registry?: MCPToolRegistry;
-	private requestCounts = new Map<
-		string,
-		{ minute: number; hour: number; lastReset: number }
-	>();
+	private requestCounts = new Map<string, { minute: number; hour: number; lastReset: number }>();
 	private auditLog: Array<{
 		timestamp: string;
 		event: string;
@@ -115,10 +112,7 @@ export class OWASPLLMGuard {
 	/**
 	 * Scan output for security issues
 	 */
-	async scanOutput(
-		output: string,
-		_context?: string,
-	): Promise<SecurityScanResult> {
+	async scanOutput(output: string, _context?: string): Promise<SecurityScanResult> {
 		const threats: DetectedThreat[] = [];
 
 		// LLM02: Insecure Output Handling
@@ -198,10 +192,7 @@ export class OWASPLLMGuard {
 	 * Validate MCP tool execution
 	 */
 
-	async validateMCPTool(
-		toolName: string,
-		args: unknown[],
-	): Promise<SecurityScanResult> {
+	async validateMCPTool(toolName: string, args: unknown[]): Promise<SecurityScanResult> {
 		const threats: DetectedThreat[] = [];
 
 		// LLM07: Insecure Plugin Design
@@ -211,9 +202,7 @@ export class OWASPLLMGuard {
 		}
 
 		// LLM05: Supply Chain Vulnerabilities
-		if (
-			this.policy.enabledControls.includes('LLM05_SupplyChainVulnerabilities')
-		) {
+		if (this.policy.enabledControls.includes('LLM05_SupplyChainVulnerabilities')) {
 			const supplyChainThreats = this.detectSupplyChainRisks(toolName);
 			threats.push(...supplyChainThreats);
 		}
@@ -233,9 +222,7 @@ export class OWASPLLMGuard {
 	/**
 	 * Get security audit log
 	 */
-	getAuditLog(
-		limit: number = 100,
-	): Array<{ timestamp: string; event: string; details: unknown }> {
+	getAuditLog(limit: number = 100): Array<{ timestamp: string; event: string; details: unknown }> {
 		return this.auditLog.slice(-limit);
 	}
 
@@ -316,8 +303,7 @@ export class OWASPLLMGuard {
 					severity: 'high',
 					description: `Potential ${type} detected in input`,
 					evidence: pattern.source,
-					mitigation:
-						'Remove sensitive data and use secure credential management',
+					mitigation: 'Remove sensitive data and use secure credential management',
 				});
 			}
 		}
@@ -345,8 +331,7 @@ export class OWASPLLMGuard {
 				threats.push({
 					type: 'LLM08_ExcessiveAgency',
 					severity: 'high',
-					description:
-						'Request involves potentially dangerous system operations',
+					description: 'Request involves potentially dangerous system operations',
 					evidence: pattern.source,
 					mitigation: 'Require explicit approval for system-level operations',
 				});
@@ -356,10 +341,7 @@ export class OWASPLLMGuard {
 		return threats;
 	}
 
-	private detectInsecureOutput(
-		output: string,
-		_context?: string,
-	): DetectedThreat[] {
+	private detectInsecureOutput(output: string, _context?: string): DetectedThreat[] {
 		const threats: DetectedThreat[] = [];
 
 		// Check for script injection in output
@@ -415,20 +397,11 @@ export class OWASPLLMGuard {
 		return threats;
 	}
 
-	private detectInsecurePluginUsage(
-		toolName: string,
-		args: unknown[],
-	): DetectedThreat[] {
+	private detectInsecurePluginUsage(toolName: string, args: unknown[]): DetectedThreat[] {
 		const threats: DetectedThreat[] = [];
 
 		// Check for dangerous tool combinations
-		const dangerousTools = [
-			'shell',
-			'exec',
-			'eval',
-			'file_delete',
-			'system_modify',
-		];
+		const dangerousTools = ['shell', 'exec', 'eval', 'file_delete', 'system_modify'];
 
 		if (dangerousTools.includes(toolName.toLowerCase())) {
 			threats.push({
@@ -462,9 +435,7 @@ export class OWASPLLMGuard {
 			return threats;
 		}
 
-		const isTrusted = this.registry
-			.getAvailableTools()
-			.some((t) => t.name === toolName);
+		const isTrusted = this.registry.getAvailableTools().some((t) => t.name === toolName);
 
 		if (!isTrusted) {
 			threats.push({

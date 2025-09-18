@@ -97,9 +97,7 @@ const Tooltip: React.FC<TooltipProps> = ({
 				>
 					<div className="relative">
 						{content}
-						<div
-							className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${arrowClass}`}
-						/>
+						<div className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${arrowClass}`} />
 					</div>
 				</div>
 			)}

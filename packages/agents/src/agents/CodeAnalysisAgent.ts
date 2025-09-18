@@ -11,9 +11,7 @@ import { z } from 'zod';
 export const CodeAnalysisRequestSchema = z.object({
 	code: z.string().min(1),
 	language: z.string().optional(),
-	analysisType: z
-		.enum(['quality', 'security', 'performance', 'style'])
-		.default('quality'),
+	analysisType: z.enum(['quality', 'security', 'performance', 'style']).default('quality'),
 	strictness: z.enum(['low', 'medium', 'high']).default('medium'),
 });
 
@@ -58,10 +56,7 @@ export const createCodeAnalysisAgent = () => {
 			const line = lines[i];
 
 			// Function length check
-			if (
-				line.includes('function') ||
-				(line.includes('const ') && line.includes('=>'))
-			) {
+			if (line.includes('function') || (line.includes('const ') && line.includes('=>'))) {
 				const functionLines = countFunctionLines(lines, i);
 				if (functionLines > 40) {
 					issues.push({
@@ -75,11 +70,7 @@ export const createCodeAnalysisAgent = () => {
 			}
 
 			// Complexity indicators
-			if (
-				line.includes('if') ||
-				line.includes('for') ||
-				line.includes('while')
-			) {
+			if (line.includes('if') || line.includes('for') || line.includes('while')) {
 				complexity++;
 			}
 		}
@@ -181,10 +172,7 @@ export const createCodeAnalysisAgent = () => {
 		/**
 		 * MCP tool integration point
 		 */
-		async executeMCPTool(
-			toolName: string,
-			parameters: unknown,
-		): Promise<unknown> {
+		async executeMCPTool(toolName: string, parameters: unknown): Promise<unknown> {
 			if (toolName === 'analyze_code') {
 				return this.analyze(parameters as CodeAnalysisRequest);
 			}

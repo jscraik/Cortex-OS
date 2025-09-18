@@ -63,9 +63,7 @@ describe('Evidence Validator', () => {
 			const result = await validator.validateFinding(finding);
 
 			expect(result.isValid).toBe(false);
-			expect(result.errors).toContain(
-				'File does not exist: non-existent-file.ts',
-			);
+			expect(result.errors).toContain('File does not exist: non-existent-file.ts');
 			expect(result.metadata.fileExists).toBe(false);
 		});
 
@@ -122,18 +120,8 @@ describe('Evidence Validator', () => {
 	describe('Batch Validation', () => {
 		it('should validate multiple findings', async () => {
 			// Let's use the validator's own generateFinding method to create findings with correct hashes
-			const sampleFinding = await validator.generateFinding(
-				'sample.ts',
-				0,
-				26,
-				'Export statement',
-			);
-			const readmeFinding = await validator.generateFinding(
-				'readme.md',
-				0,
-				14,
-				'Heading',
-			);
+			const sampleFinding = await validator.generateFinding('sample.ts', 0, 26, 'Export statement');
+			const readmeFinding = await validator.generateFinding('readme.md', 0, 14, 'Heading');
 
 			const findings: Finding[] = [sampleFinding, readmeFinding];
 
@@ -207,9 +195,7 @@ describe('Evidence Validator', () => {
 
 			const result = await permissiveValidator.validateFinding(finding);
 
-			expect(result.warnings).toContain(
-				'File does not exist but is allowed by configuration',
-			);
+			expect(result.warnings).toContain('File does not exist but is allowed by configuration');
 		});
 	});
 });

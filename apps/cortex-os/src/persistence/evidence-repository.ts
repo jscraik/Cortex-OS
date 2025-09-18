@@ -37,10 +37,7 @@ interface SaveOptions {
 }
 
 export class EvidenceRepository {
-	async save(
-		input: SaveEvidenceInput,
-		opts: SaveOptions = {},
-	): Promise<EvidenceEntry> {
+	async save(input: SaveEvidenceInput, opts: SaveOptions = {}): Promise<EvidenceEntry> {
 		const id = input.id ?? randomUUID();
 		const path = this.recordPath(id);
 		await ensureDataDir(...EVIDENCE_NAMESPACE);
@@ -83,18 +80,12 @@ export class EvidenceRepository {
 		for (const entry of entries) {
 			if (!entry.isFile() || !entry.name.endsWith(EVIDENCE_EXTENSION)) continue;
 			const id = entry.name.slice(0, -EVIDENCE_EXTENSION.length);
-			const located = await readJsonFileWithDigest<EvidenceRecord>(
-				this.recordPath(id),
-			);
+			const located = await readJsonFileWithDigest<EvidenceRecord>(this.recordPath(id));
 			if (!located) continue;
 
 			if (filter.taskId && located.value.taskId !== filter.taskId) continue;
 			if (filter.type && located.value.type !== filter.type) continue;
-			if (
-				filter.tag &&
-				(!located.value.tags || !located.value.tags.includes(filter.tag))
-			)
-				continue;
+			if (filter.tag && (!located.value.tags || !located.value.tags.includes(filter.tag))) continue;
 
 			results.push({ record: located.value, digest: located.digest });
 		}

@@ -1,10 +1,4 @@
-import {
-	mkdirSync,
-	mkdtempSync,
-	realpathSync,
-	rmSync,
-	writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -54,9 +48,7 @@ describe('getValidRootDirectories', () => {
 			const subDir = join(testDir1, 'subdir');
 			mkdirSync(subDir);
 
-			const roots = [
-				{ uri: `file://${testDir1}/./subdir/../subdir`, name: 'Complex Path' },
-			];
+			const roots = [{ uri: `file://${testDir1}/./subdir/../subdir`, name: 'Complex Path' }];
 
 			const result = await getValidRootDirectories(roots);
 

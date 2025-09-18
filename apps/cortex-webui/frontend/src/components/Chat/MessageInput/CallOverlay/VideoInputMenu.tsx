@@ -9,21 +9,14 @@ interface VideoInputMenuProps {
 	children: React.ReactNode;
 }
 
-const VideoInputMenu: React.FC<VideoInputMenuProps> = ({
-	devices,
-	onChange,
-	children,
-}) => {
+const VideoInputMenu: React.FC<VideoInputMenuProps> = ({ devices, onChange, children }) => {
 	const [show, setShow] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	// Handle click outside to close dropdown
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
 				setShow(false);
 			}
 		};

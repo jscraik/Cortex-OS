@@ -54,11 +54,7 @@ const ModelItemMenu: React.FC<ModelItemMenuProps> = ({
 	return (
 		<>
 			{children}
-			<div
-				ref={menuRef}
-				className="fixed inset-0 z-50"
-				onClick={() => setShow(false)}
-			>
+			<div ref={menuRef} className="fixed inset-0 z-50" onClick={() => setShow(false)}>
 				<div
 					className="absolute w-full max-w-[180px] text-sm rounded-xl px-1 py-1.5 z-[9999999] bg-white dark:bg-gray-850 dark:text-white shadow-lg border border-gray-300/30 dark:border-gray-700/40"
 					style={{

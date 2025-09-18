@@ -13,14 +13,8 @@ function safeSpawn(executable, args, options) {
 	if (!executable || typeof executable !== 'string') {
 		throw new Error('Invalid executable path');
 	}
-	if (
-		executable.includes(';') ||
-		executable.includes('|') ||
-		executable.includes('&')
-	) {
-		throw new Error(
-			'Executable path contains potentially dangerous characters',
-		);
+	if (executable.includes(';') || executable.includes('|') || executable.includes('&')) {
+		throw new Error('Executable path contains potentially dangerous characters');
 	}
 	// nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
 	// This is safe because we validate the executable parameter above
@@ -104,9 +98,7 @@ export function runPython(scriptPath, args = [], options = {}) {
 			if (code === 0) resolve(stdout.trim());
 			else reject(new Error(`Python exited ${code}: ${stderr}`));
 		});
-		proc.on('error', (err) =>
-			reject(err instanceof Error ? err : new Error(String(err))),
-		);
+		proc.on('error', (err) => reject(err instanceof Error ? err : new Error(String(err))));
 	});
 }
 export default { resolvePython, runPython };

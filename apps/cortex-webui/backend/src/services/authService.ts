@@ -45,10 +45,9 @@ export const AuthService = {
 		password: string,
 	): Promise<{ user: User; token: string }> {
 		// Check if user already exists
-		const existingUser = (await dbGet(
-			`SELECT * FROM ${UserModel.tableName} WHERE email = ?`,
-			[email],
-		)) as UserRecord | undefined;
+		const existingUser = (await dbGet(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`, [
+			email,
+		])) as UserRecord | undefined;
 		if (existingUser) {
 			throw new Error('User with this email already exists');
 		}
@@ -89,15 +88,11 @@ export const AuthService = {
 		return { user: userWithoutPassword, token };
 	},
 
-	async login(
-		email: string,
-		password: string,
-	): Promise<{ user: User; token: string } | null> {
+	async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
 		// Find user
-		const userRecord = (await dbGet(
-			`SELECT * FROM ${UserModel.tableName} WHERE email = ?`,
-			[email],
-		)) as UserRecord | undefined;
+		const userRecord = (await dbGet(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`, [
+			email,
+		])) as UserRecord | undefined;
 		if (!userRecord) {
 			return null;
 		}

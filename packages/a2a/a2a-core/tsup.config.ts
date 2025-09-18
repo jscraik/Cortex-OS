@@ -21,10 +21,5 @@ export default defineConfig({
 	clean: true,
 	treeshake: true,
 	// Exclude tests and fixtures
-	ignoreWatch: [
-		'**/*.test.ts',
-		'tests/**/*',
-		'test/**/*',
-		'src/**/__tests__/**',
-	],
+	ignoreWatch: ['**/*.test.ts', 'tests/**/*', 'test/**/*', 'src/**/__tests__/**'],
 });

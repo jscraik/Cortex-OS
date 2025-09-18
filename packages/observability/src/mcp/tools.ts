@@ -119,8 +119,7 @@ export const observabilityMcpTools: ObservabilityTool[] = [
 	},
 	{
 		name: 'generate_dashboard',
-		description:
-			'Generate observability dashboards with metrics, logs, and traces',
+		description: 'Generate observability dashboards with metrics, logs, and traces',
 		inputSchema: GenerateDashboardInputSchema,
 	},
 ];
@@ -135,6 +134,4 @@ export type QueryTracesInput = z.infer<typeof QueryTracesInputSchema>;
 export type GetMetricsInput = z.infer<typeof GetMetricsInputSchema>;
 export type SearchLogsInput = z.infer<typeof SearchLogsInputSchema>;
 export type EvaluateAlertInput = z.infer<typeof EvaluateAlertInputSchema>;
-export type GenerateDashboardInput = z.infer<
-	typeof GenerateDashboardInputSchema
->;
+export type GenerateDashboardInput = z.infer<typeof GenerateDashboardInputSchema>;

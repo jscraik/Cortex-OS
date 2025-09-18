@@ -110,10 +110,7 @@ describe('RAG MCP integration', () => {
 		warnSpy.mockRestore();
 
 		expect(results).toHaveLength(2);
-		expect(methods(mockCallLog)).toEqual([
-			'mcp_initialize',
-			'mcp_search_knowledge_base',
-		]);
+		expect(methods(mockCallLog)).toEqual(['mcp_initialize', 'mcp_search_knowledge_base']);
 		expect(mockCallLog[1].params).toMatchObject({
 			query: expect.any(String),
 			options: expect.objectContaining({ limit: 2 }),
@@ -154,9 +151,7 @@ describe('RAG MCP integration', () => {
 		errorSpy.mockRestore();
 
 		expect(results.map((r) => r.id)).toEqual(['local-only']);
-		const remoteCalls = mockCallLog.filter(
-			(entry) => entry.method === 'mcp_search_knowledge_base',
-		);
+		const remoteCalls = mockCallLog.filter((entry) => entry.method === 'mcp_search_knowledge_base');
 		expect(remoteCalls).toHaveLength(1);
 	});
 

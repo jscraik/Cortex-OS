@@ -30,9 +30,7 @@ type PartialAdvancedSettings = Partial<AdvancedSettingsShape> & {
 // =========================
 // Helpers
 // =========================
-function extractAdvancedSettings(
-	adv: PartialAdvancedSettings | undefined,
-): AdvancedSettingsShape {
+function extractAdvancedSettings(adv: PartialAdvancedSettings | undefined): AdvancedSettingsShape {
 	return {
 		enableCommunitySharing: adv?.enableCommunitySharing ?? false,
 		hideSuggestedPrompts: adv?.hideSuggestedPrompts ?? false,
@@ -56,11 +54,7 @@ interface SettingsSwitchProps {
 	ariaLabel: string;
 }
 
-function SettingsSwitch({
-	checked,
-	onToggle,
-	ariaLabel,
-}: Readonly<SettingsSwitchProps>) {
+function SettingsSwitch({ checked, onToggle, ariaLabel }: Readonly<SettingsSwitchProps>) {
 	return (
 		<button
 			type="button"
@@ -89,24 +83,14 @@ interface ToggleRowProps {
 	ariaLabel?: string;
 }
 
-function ToggleRow({
-	label,
-	description,
-	checked,
-	onToggle,
-	ariaLabel,
-}: Readonly<ToggleRowProps>) {
+function ToggleRow({ label, description, checked, onToggle, ariaLabel }: Readonly<ToggleRowProps>) {
 	return (
 		<div className="flex items-center justify-between">
 			<div>
 				<div className="font-medium">{label}</div>
 				<div className="text-xs text-gray-500 mt-0.5">{description}</div>
 			</div>
-			<SettingsSwitch
-				checked={checked}
-				onToggle={onToggle}
-				ariaLabel={ariaLabel ?? label}
-			/>
+			<SettingsSwitch checked={checked} onToggle={onToggle} ariaLabel={ariaLabel ?? label} />
 		</div>
 	);
 }
@@ -133,10 +117,7 @@ interface BasicToggleSectionProps {
 	onToggle: (key: keyof Omit<AdvancedSettingsShape, 'featureFlags'>) => void;
 }
 
-function CommunitySharingSection({
-	settings,
-	onToggle,
-}: Readonly<BasicToggleSectionProps>) {
+function CommunitySharingSection({ settings, onToggle }: Readonly<BasicToggleSectionProps>) {
 	return (
 		<Section title="Community Sharing">
 			<ToggleRow
@@ -150,10 +131,7 @@ function CommunitySharingSection({
 	);
 }
 
-function InterfaceSection({
-	settings,
-	onToggle,
-}: Readonly<BasicToggleSectionProps>) {
+function InterfaceSection({ settings, onToggle }: Readonly<BasicToggleSectionProps>) {
 	return (
 		<Section title="Interface">
 			<ToggleRow
@@ -166,10 +144,7 @@ function InterfaceSection({
 	);
 }
 
-function PlaygroundSection({
-	settings,
-	onToggle,
-}: Readonly<BasicToggleSectionProps>) {
+function PlaygroundSection({ settings, onToggle }: Readonly<BasicToggleSectionProps>) {
 	return (
 		<Section title="Playground">
 			<ToggleRow
@@ -182,10 +157,7 @@ function PlaygroundSection({
 	);
 }
 
-function ChatsSection({
-	settings,
-	onToggle,
-}: Readonly<BasicToggleSectionProps>) {
+function ChatsSection({ settings, onToggle }: Readonly<BasicToggleSectionProps>) {
 	return (
 		<Section title="Chats">
 			<ToggleRow
@@ -230,10 +202,7 @@ const featureFlagMetadata: Array<{
 	},
 ];
 
-function FeatureFlagsSection({
-	flags,
-	onToggleFlag,
-}: Readonly<FeatureFlagsSectionProps>) {
+function FeatureFlagsSection({ flags, onToggleFlag }: Readonly<FeatureFlagsSectionProps>) {
 	return (
 		<Section title="Feature Flags">
 			<div className="space-y-3">
@@ -254,9 +223,7 @@ function FeatureFlagsSection({
 // =========================
 // Container Component
 // =========================
-function AdvancedSettings({
-	saveSettings,
-}: Readonly<AdvancedSettingsProps>): React.ReactElement {
+function AdvancedSettings({ saveSettings }: Readonly<AdvancedSettingsProps>): React.ReactElement {
 	const settings = useSettingsStore();
 	const [loaded, setLoaded] = useState(false);
 	const [advancedState, setAdvancedState] = useState<AdvancedSettingsShape>({
@@ -277,18 +244,14 @@ function AdvancedSettings({
 		setLoaded(true);
 	}, [settings]);
 
-	const toggleFeatureFlag = (
-		flag: keyof AdvancedSettingsShape['featureFlags'],
-	) => {
+	const toggleFeatureFlag = (flag: keyof AdvancedSettingsShape['featureFlags']) => {
 		setAdvancedState((prev) => ({
 			...prev,
 			featureFlags: { ...prev.featureFlags, [flag]: !prev.featureFlags[flag] },
 		}));
 	};
 
-	const handleToggle = (
-		key: keyof Omit<AdvancedSettingsShape, 'featureFlags'>,
-	) => {
+	const handleToggle = (key: keyof Omit<AdvancedSettingsShape, 'featureFlags'>) => {
 		setAdvancedState((prev) => ({ ...prev, [key]: !prev[key] }));
 	};
 
@@ -309,17 +272,11 @@ function AdvancedSettings({
 			aria-label="Advanced Settings"
 		>
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-4">
-				<CommunitySharingSection
-					settings={advancedState}
-					onToggle={handleToggle}
-				/>
+				<CommunitySharingSection settings={advancedState} onToggle={handleToggle} />
 				<InterfaceSection settings={advancedState} onToggle={handleToggle} />
 				<PlaygroundSection settings={advancedState} onToggle={handleToggle} />
 				<ChatsSection settings={advancedState} onToggle={handleToggle} />
-				<FeatureFlagsSection
-					flags={advancedState.featureFlags}
-					onToggleFlag={toggleFeatureFlag}
-				/>
+				<FeatureFlagsSection flags={advancedState.featureFlags} onToggleFlag={toggleFeatureFlag} />
 			</div>
 			<div className="mt-4 flex justify-end">
 				<button

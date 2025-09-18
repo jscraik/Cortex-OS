@@ -68,9 +68,10 @@ describe('authenticateRequest', () => {
 
 	test('rejects missing Authorization header', async () => {
 		await initializeAuth();
-		await expect(
-			authenticateRequest({ clientIp: '127.0.0.1' }),
-		).rejects.toMatchObject({ statusCode: 401, code: 'AUTHENTICATION_ERROR' });
+		await expect(authenticateRequest({ clientIp: '127.0.0.1' })).rejects.toMatchObject({
+			statusCode: 401,
+			code: 'AUTHENTICATION_ERROR',
+		});
 	});
 
 	test('accepts valid token and enforces scopes', async () => {

@@ -2,10 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 
 import { ensureDataDir, getDataPath } from '../platform/xdg';
-import {
-	readJsonFile,
-	writeJsonFile,
-} from './json-store';
+import { readJsonFile, writeJsonFile } from './json-store';
 import { OptimisticLockError } from './errors';
 
 const ARTIFACT_NAMESPACE = ['artifacts'];
@@ -130,10 +127,7 @@ export class ArtifactRepository {
 			if (!located) continue;
 
 			if (filter.taskId && located.metadata.taskId !== filter.taskId) continue;
-			if (
-				filter.tag &&
-				(!located.metadata.tags || !located.metadata.tags.includes(filter.tag))
-			)
+			if (filter.tag && (!located.metadata.tags || !located.metadata.tags.includes(filter.tag)))
 				continue;
 			if (filter.filename && located.metadata.filename !== filter.filename) continue;
 

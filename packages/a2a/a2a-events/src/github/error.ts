@@ -7,12 +7,7 @@ import {
 } from './repository';
 
 // Error Severity Levels
-export const ErrorSeveritySchema = z.enum([
-	'low',
-	'medium',
-	'high',
-	'critical',
-]);
+export const ErrorSeveritySchema = z.enum(['low', 'medium', 'high', 'critical']);
 export type ErrorSeverity = z.infer<typeof ErrorSeveritySchema>;
 
 // Error Categories
@@ -149,9 +144,7 @@ export function isRateLimitError(error: GitHubError): boolean {
 }
 
 export function isAuthenticationError(error: GitHubError): boolean {
-	return (
-		error.category === 'authentication' || error.category === 'authorization'
-	);
+	return error.category === 'authentication' || error.category === 'authorization';
 }
 
 export function isNetworkError(error: GitHubError): boolean {
@@ -207,10 +200,7 @@ export function createRateLimitError(
 	};
 }
 
-export function createNetworkError(
-	message: string,
-	context: Partial<ErrorContext>,
-): GitHubError {
+export function createNetworkError(message: string, context: Partial<ErrorContext>): GitHubError {
 	return {
 		id: crypto.randomUUID(),
 		message,
@@ -363,17 +353,11 @@ export function analyzeErrors(errors: GitHubError[]): ErrorAnalysis {
 }
 
 // Recovery Helpers
-export function shouldRetryError(
-	error: GitHubError,
-	maxRetries: number = 3,
-): boolean {
+export function shouldRetryError(error: GitHubError, maxRetries: number = 3): boolean {
 	return error.is_retryable && error.context.retry_count < maxRetries;
 }
 
-export function calculateRetryDelay(
-	error: GitHubError,
-	baseDelayMs: number = 1000,
-): number {
+export function calculateRetryDelay(error: GitHubError, baseDelayMs: number = 1000): number {
 	if (error.category === 'rate_limit' && error.context.rate_limit_reset) {
 		const resetTime = new Date(error.context.rate_limit_reset);
 		const now = new Date();

@@ -18,24 +18,14 @@ describe('protected globs', () => {
 	});
 
 	it('matches recursive dir globs', () => {
-		expect(
-			micromatch.isMatch('tools/structure-guard/policy.json', patterns),
-		).toBe(true);
-		expect(
-			micromatch.isMatch('tools/structure-guard/nested/file.ts', patterns),
-		).toBe(true);
-		expect(micromatch.isMatch('tools/scripts/generate-sbom.ts', patterns)).toBe(
-			false,
-		);
+		expect(micromatch.isMatch('tools/structure-guard/policy.json', patterns)).toBe(true);
+		expect(micromatch.isMatch('tools/structure-guard/nested/file.ts', patterns)).toBe(true);
+		expect(micromatch.isMatch('tools/scripts/generate-sbom.ts', patterns)).toBe(false);
 	});
 
 	it('matches leaf globs', () => {
-		expect(
-			micromatch.isMatch('docs/architecture/decisions/001-adr.md', patterns),
-		).toBe(true);
-		expect(
-			micromatch.isMatch('docs/architecture/decisions/deep/002.md', patterns),
-		).toBe(false);
+		expect(micromatch.isMatch('docs/architecture/decisions/001-adr.md', patterns)).toBe(true);
+		expect(micromatch.isMatch('docs/architecture/decisions/deep/002.md', patterns)).toBe(false);
 	});
 
 	it('matches dotfiles', () => {
@@ -58,15 +48,9 @@ const policy = policySchema.parse(
 
 describe('path policy', () => {
 	it('allows and denies paths', () => {
-		expect(micromatch.isMatch('apps/demo/index.ts', policy.allowedGlobs)).toBe(
-			true,
-		);
-		expect(micromatch.isMatch('unknown/file.ts', policy.allowedGlobs)).toBe(
-			false,
-		);
-		expect(micromatch.isMatch('secrets/cred.secret', policy.deniedGlobs)).toBe(
-			true,
-		);
+		expect(micromatch.isMatch('apps/demo/index.ts', policy.allowedGlobs)).toBe(true);
+		expect(micromatch.isMatch('unknown/file.ts', policy.allowedGlobs)).toBe(false);
+		expect(micromatch.isMatch('secrets/cred.secret', policy.deniedGlobs)).toBe(true);
 	});
 
 	it('handles negated patterns', () => {
@@ -78,12 +62,9 @@ describe('path policy', () => {
 
 describe('globby ignores', () => {
 	it('skips node_modules and dist', async () => {
-		const files = await globby(
-			['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'],
-			{
-				dot: true,
-			},
-		);
+		const files = await globby(['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'], {
+			dot: true,
+		});
 		expect(files.some((f) => f.includes('node_modules'))).toBe(false);
 	});
 });

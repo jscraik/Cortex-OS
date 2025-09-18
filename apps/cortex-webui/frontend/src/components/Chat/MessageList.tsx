@@ -12,12 +12,7 @@ interface MessageListProps {
 
 const MessageList: React.FC<MessageListProps> = ({ messages, streaming }) => {
 	return (
-		<div
-			className="space-y-4"
-			role="log"
-			aria-live="polite"
-			aria-relevant="additions"
-		>
+		<div className="space-y-4" role="log" aria-live="polite" aria-relevant="additions">
 			{messages.map((message) => (
 				<MessageItem key={message.id} message={message} />
 			))}

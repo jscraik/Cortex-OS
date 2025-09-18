@@ -8,9 +8,7 @@ interface MarkdownInlineTokensProps {
 	content: string;
 }
 
-const MarkdownInlineTokens: React.FC<MarkdownInlineTokensProps> = ({
-	content,
-}) => {
+const MarkdownInlineTokens: React.FC<MarkdownInlineTokensProps> = ({ content }) => {
 	// Split content by inline code spans
 	const tokens = content.split(/(`[^`]*`)/g);
 

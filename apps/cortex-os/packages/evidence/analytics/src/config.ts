@@ -53,9 +53,7 @@ export const defaultAnalyticsConfig: AnalyticsConfig = {
 /**
  * Create analytics configuration with overrides
  */
-export function createAnalyticsConfig(
-	overrides: Partial<AnalyticsConfig> = {},
-): AnalyticsConfig {
+export function createAnalyticsConfig(overrides: Partial<AnalyticsConfig> = {}): AnalyticsConfig {
 	return {
 		collection: {
 			...defaultAnalyticsConfig.collection,

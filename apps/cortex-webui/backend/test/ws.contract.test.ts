@@ -14,10 +14,7 @@ const echoMsgSchema = z.object({
 	payload: z.string(),
 });
 
-const wsMessageSchema = z.discriminatedUnion('type', [
-	welcomeMsgSchema,
-	echoMsgSchema,
-]);
+const wsMessageSchema = z.discriminatedUnion('type', [welcomeMsgSchema, echoMsgSchema]);
 
 type WsMessage = z.infer<typeof wsMessageSchema>;
 
@@ -37,10 +34,7 @@ describe('contract: WebSocket welcome + echo', () => {
 
 		const events: WsMessage[] = [];
 		const received = new Promise<void>((resolve, reject) => {
-			const timeout = setTimeout(
-				() => reject(new Error('Timeout waiting for echo')),
-				4000,
-			);
+			const timeout = setTimeout(() => reject(new Error('Timeout waiting for echo')), 4000);
 
 			ws.on('message', (raw) => {
 				try {
@@ -80,10 +74,7 @@ describe('contract: WebSocket welcome + echo', () => {
 		const ws = new WebSocket(getWsUrl(testServer));
 
 		const connectionPromise = new Promise<void>((resolve, reject) => {
-			const timeout = setTimeout(
-				() => reject(new Error('Connection timeout')),
-				2000,
-			);
+			const timeout = setTimeout(() => reject(new Error('Connection timeout')), 2000);
 			ws.on('open', () => {
 				clearTimeout(timeout);
 				resolve();

@@ -48,11 +48,7 @@ export const darkTheme: ThemeColors = {
 
 export const getStoredTheme = (): Theme => {
 	const storedTheme = storage.getItem('theme');
-	if (
-		storedTheme === 'dark' ||
-		storedTheme === 'light' ||
-		storedTheme === 'system'
-	) {
+	if (storedTheme === 'dark' || storedTheme === 'light' || storedTheme === 'system') {
 		return storedTheme;
 	}
 	return 'system';
@@ -176,10 +172,7 @@ export const removeFocusRing = (element: HTMLElement): void => {
 };
 
 // Color contrast utilities
-export const meetsContrastRequirement = (
-	foreground: string,
-	background: string,
-): boolean => {
+export const meetsContrastRequirement = (foreground: string, background: string): boolean => {
 	// This is a simplified check - in production, you'd want a proper contrast ratio calculation
 	const fg = parseInt(foreground.replace('#', ''), 16);
 	const bg = parseInt(background.replace('#', ''), 16);

@@ -45,10 +45,7 @@ export class ASBRClient {
 	/**
 	 * Create a new task with optional idempotency key
 	 */
-	async createTask(
-		input: TaskInput,
-		opts?: { idempotencyKey?: string },
-	): Promise<TaskRef> {
+	async createTask(input: TaskInput, opts?: { idempotencyKey?: string }): Promise<TaskRef> {
 		const request: CreateTaskRequest = {
 			input,
 			idempotencyKey: opts?.idempotencyKey,
@@ -129,9 +126,7 @@ export class ASBRClient {
 	/**
 	 * Create or update a user profile
 	 */
-	async upsertProfile(
-		profile: Omit<Profile, 'id'> | Profile,
-	): Promise<Profile> {
+	async upsertProfile(profile: Omit<Profile, 'id'> | Profile): Promise<Profile> {
 		const method = 'id' in profile ? 'PUT' : 'POST';
 		const url = 'id' in profile ? `/v1/profiles/${profile.id}` : '/v1/profiles';
 
@@ -335,10 +330,7 @@ class TaskRefImpl implements TaskRef {
 /**
  * Create a default ASBR client instance
  */
-export function createASBRClient(options?: {
-	baseUrl?: string;
-	token?: string;
-}): ASBRClient {
+export function createASBRClient(options?: { baseUrl?: string; token?: string }): ASBRClient {
 	return new ASBRClient(options);
 }
 

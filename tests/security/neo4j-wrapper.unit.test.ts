@@ -8,15 +8,7 @@
 
 import { SecureNeo4j } from '@cortex-os/utils';
 import neo4j, { type Driver, type Session } from 'neo4j-driver';
-import {
-	afterEach,
-	beforeEach,
-	describe,
-	expect,
-	type MockedFunction,
-	test,
-	vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, type MockedFunction, test, vi } from 'vitest';
 
 // Mock neo4j-driver
 vi.mock('neo4j-driver', () => {
@@ -73,9 +65,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 		} as unknown as Driver;
 
 		// Mock the neo4j driver creation
-		(neo4j.driver as MockedFunction<typeof neo4j.driver>).mockReturnValue(
-			mockDriver,
-		);
+		(neo4j.driver as MockedFunction<typeof neo4j.driver>).mockReturnValue(mockDriver);
 
 		secureNeo4j = new SecureNeo4j('bolt://localhost:7687', 'neo4j', 'password');
 	});
@@ -133,12 +123,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 		});
 
 		test('should validate valid relationship types', () => {
-			const validTypes = [
-				'OWNS',
-				'BELONGS_TO',
-				'CONNECTS_WITH',
-				'_PRIVATE_REL',
-			];
+			const validTypes = ['OWNS', 'BELONGS_TO', 'CONNECTS_WITH', '_PRIVATE_REL'];
 			validTypes.forEach((type) => {
 				const result = secureNeo4j.validateInput(type, 'type');
 				expect(result.success).toBe(true);
@@ -237,12 +222,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 
 	describe('Property Validation Tests', () => {
 		test('should validate valid property keys', () => {
-			const validKeys = [
-				'name',
-				'email_address',
-				'created_at',
-				'_private_field',
-			];
+			const validKeys = ['name', 'email_address', 'created_at', '_private_field'];
 			validKeys.forEach((key) => {
 				const result = secureNeo4j.validateInput(key, 'propertyKey');
 				expect(result.success).toBe(true);
@@ -346,9 +326,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 			const validDepths = [1, 2, 3, 4, 5];
 
 			for (const depth of validDepths) {
-				await expect(
-					secureNeo4j.neighborhood(nodeId, depth),
-				).resolves.not.toThrow();
+				await expect(secureNeo4j.neighborhood(nodeId, depth)).resolves.not.toThrow();
 			}
 		});
 
@@ -410,9 +388,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 		test('should handle query timeouts', async () => {
 			// This would test actual timeout handling if implemented
 			// For now, we're testing that queries complete successfully
-			await expect(
-				secureNeo4j.neighborhood('user_123', 2),
-			).resolves.not.toThrow();
+			await expect(secureNeo4j.neighborhood('user_123', 2)).resolves.not.toThrow();
 		});
 	});
 
@@ -424,9 +400,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 				props: {},
 			};
 
-			await expect(
-				secureNeo4j.upsertNode(nodeWithEmptyProps),
-			).resolves.not.toThrow();
+			await expect(secureNeo4j.upsertNode(nodeWithEmptyProps)).resolves.not.toThrow();
 		});
 
 		test('should handle null property values', async () => {
@@ -436,9 +410,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 				props: { name: null, email: undefined },
 			};
 
-			await expect(
-				secureNeo4j.upsertNode(nodeWithNullProps),
-			).resolves.not.toThrow();
+			await expect(secureNeo4j.upsertNode(nodeWithNullProps)).resolves.not.toThrow();
 		});
 
 		test('should handle special characters in property values', async () => {
@@ -452,9 +424,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 				},
 			};
 
-			await expect(
-				secureNeo4j.upsertNode(nodeWithSpecialChars),
-			).resolves.not.toThrow();
+			await expect(secureNeo4j.upsertNode(nodeWithSpecialChars)).resolves.not.toThrow();
 		});
 
 		test('should handle deeply nested objects', async () => {

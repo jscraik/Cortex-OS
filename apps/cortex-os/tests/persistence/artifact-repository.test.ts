@@ -135,8 +135,6 @@ describe('ArtifactRepository', () => {
 
 		expect(restored?.metadata.id).toBe(artifact.id);
 		expect(restored?.metadata.taskId).toBe('task-777');
-		expect(Buffer.compare(restored?.binary ?? Buffer.alloc(0), Buffer.from('persisted'))).toBe(
-			0,
-		);
+		expect(Buffer.compare(restored?.binary ?? Buffer.alloc(0), Buffer.from('persisted'))).toBe(0);
 	});
 });

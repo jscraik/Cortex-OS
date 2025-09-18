@@ -22,10 +22,7 @@ const REQUIRED_KEYS: string[] = [
 ];
 
 describe('contract: structure-guard policy schema', () => {
-	const policyPath = path.resolve(
-		__dirname,
-		'../../../tools/structure-guard/policy.json',
-	);
+	const policyPath = path.resolve(__dirname, '../../../tools/structure-guard/policy.json');
 	const policyJson = JSON.parse(fs.readFileSync(policyPath, 'utf8'));
 
 	it('parses current policy.json with validatePolicy (version aware)', () => {

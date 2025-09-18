@@ -1,10 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
-import {
-	type CortexOsToolName,
-	cortexOsMcpTools,
-	getToolDefinition,
-} from './tools';
+import { type CortexOsToolName, cortexOsMcpTools, getToolDefinition } from './tools';
 
 // Basic rate limiter per tool (token bucket style simplified)
 interface RateState {
@@ -40,10 +36,7 @@ export interface GatewayDeps {
 	config?: { runtime: Record<string, unknown> };
 	audit?: (event: Record<string, unknown>) => void;
 	security?: { allowTool?: (name: string) => boolean };
-	publishMcpEvent?: (evt: {
-		type: string;
-		payload: Record<string, unknown>;
-	}) => void; // optional A2A bus publisher
+	publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void; // optional A2A bus publisher
 }
 
 export class McpGateway {
@@ -81,22 +74,15 @@ export class McpGateway {
 		if (!def) return this.error('not_found', `Unknown tool: ${name}`);
 
 		// Security check
-		if (
-			def.secure &&
-			this.deps.security &&
-			!this.deps.security.allowTool?.(name)
-		) {
+		if (def.secure && this.deps.security && !this.deps.security.allowTool?.(name)) {
 			return this.error('forbidden', `Access denied for tool: ${name}`);
 		}
 
 		// Rate limiting
-		if (!this.consumeRate(name))
-			return this.error('rate_limited', 'Rate limit exceeded');
+		if (!this.consumeRate(name)) return this.error('rate_limited', 'Rate limit exceeded');
 
 		// Cache check (key = tool + JSON input) only for tools with cacheTtlMs and no side effects
-		const cacheKey = def.cacheTtlMs
-			? `${name}:${JSON.stringify(input)}`
-			: undefined;
+		const cacheKey = def.cacheTtlMs ? `${name}:${JSON.stringify(input)}` : undefined;
 		if (cacheKey) {
 			const entry = cache[cacheKey];
 			if (entry && entry.expires > Date.now()) return entry.value;
@@ -120,17 +106,12 @@ export class McpGateway {
 		}
 	}
 
-	private async dispatch(
-		name: CortexOsToolName,
-		input: unknown,
-	): Promise<unknown> {
+	private async dispatch(name: CortexOsToolName, input: unknown): Promise<unknown> {
 		switch (name) {
 			case 'system.status':
 				return this.handleSystemStatus();
 			case 'system.restart_service':
-				return this.handleRestartService(
-					input as { service: string; mode: 'graceful' | 'force' },
-				);
+				return this.handleRestartService(input as { service: string; mode: 'graceful' | 'force' });
 			case 'system.resources':
 				return this.handleSystemResources();
 			case 'orchestration.run_workflow':
@@ -150,9 +131,7 @@ export class McpGateway {
 			case 'config.set':
 				return this.handleConfigSet(input as { key: string; value: unknown });
 			case 'config.list':
-				return this.handleConfigList(
-					input as { prefix?: string; limit: number },
-				);
+				return this.handleConfigList(input as { prefix?: string; limit: number });
 			default:
 				throw new Error(`Unhandled tool ${name}`);
 		}
@@ -170,17 +149,10 @@ export class McpGateway {
 		this.audit(name, 'error', performance.now() - started, {
 			error: err instanceof Error ? err.message : String(err),
 		});
-		return this.error(
-			'internal_error',
-			err instanceof Error ? err.message : 'Unknown error',
-		);
+		return this.error('internal_error', err instanceof Error ? err.message : 'Unknown error');
 	}
 
-	private error(
-		code: string,
-		message: string,
-		details?: Record<string, unknown>,
-	) {
+	private error(code: string, message: string, details?: Record<string, unknown>) {
 		const base: {
 			error: {
 				code: string;
@@ -194,12 +166,7 @@ export class McpGateway {
 		return base;
 	}
 
-	private audit(
-		tool: string,
-		outcome: string,
-		durationMs: number,
-		meta?: Record<string, unknown>,
-	) {
+	private audit(tool: string, outcome: string, durationMs: number, meta?: Record<string, unknown>) {
 		const event = {
 			tool,
 			outcome,
@@ -250,10 +217,7 @@ export class McpGateway {
 		return { services, resources, uptimeSec, version };
 	}
 
-	private async handleRestartService(input: {
-		service: string;
-		mode: 'graceful' | 'force';
-	}) {
+	private async handleRestartService(input: { service: string; mode: 'graceful' | 'force' }) {
 		// Fake restart simulation
 		const start = performance.now();
 		const previousStatus = 'running';
@@ -332,9 +296,7 @@ export class McpGateway {
 
 	private async handleConfigGet(input: { key: string }) {
 		const runtimeHas = this.deps.config?.runtime[input.key] !== undefined;
-		const runtimeVal = runtimeHas
-			? this.deps.config?.runtime[input.key]
-			: undefined;
+		const runtimeVal = runtimeHas ? this.deps.config?.runtime[input.key] : undefined;
 		const envVal = process.env[input.key];
 		const value = runtimeHas ? runtimeVal : (envVal ?? null);
 		let source: 'runtime' | 'env' | 'default' = 'default';

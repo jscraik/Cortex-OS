@@ -4,9 +4,7 @@
 export function isDocsSemsearchEnabled(
 	env: Record<string, string | undefined> = process.env,
 ): boolean {
-	return (
-		env.CORTEX_DOCS_SEMSEARCH === '1' || env.CORTEX_DOCS_SEMSEARCH === 'true'
-	);
+	return env.CORTEX_DOCS_SEMSEARCH === '1' || env.CORTEX_DOCS_SEMSEARCH === 'true';
 }
 
 export type DocsIngestConfig = {

@@ -83,9 +83,7 @@ export type RagQueryExecutedEvent = z.infer<typeof ragQueryExecutedSchema>;
 export type RagQueryCompletedEvent = z.infer<typeof ragQueryCompletedSchema>;
 export type RagIngestStartedEvent = z.infer<typeof ragIngestStartedSchema>;
 export type RagIngestCompletedEvent = z.infer<typeof ragIngestCompletedSchema>;
-export type RagEmbeddingGeneratedEvent = z.infer<
-	typeof ragEmbeddingGeneratedSchema
->;
+export type RagEmbeddingGeneratedEvent = z.infer<typeof ragEmbeddingGeneratedSchema>;
 export type RagIndexUpdatedEvent = z.infer<typeof ragIndexUpdatedSchema>;
 
 // Event Schema Registry

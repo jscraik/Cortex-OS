@@ -88,9 +88,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 			);
 		}
 	} else if (token.text?.includes('<iframe')) {
-		const match = token.text.match(
-			/<iframe\s+[^>]*src="([^"]+)"[^>]*><\/iframe>/,
-		);
+		const match = token.text.match(/<iframe\s+[^>]*src="([^"]+)"[^>]*><\/iframe>/);
 		const iframeSrc = match?.[1];
 
 		if (iframeSrc) {
@@ -117,9 +115,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 			return <div dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }} />;
 		}
 	} else if (token.text?.includes('<status')) {
-		const match = token.text.match(
-			/<status title="([^"]+)" done="(true|false)" ?\/?>/,
-		);
+		const match = token.text.match(/<status title="([^"]+)" done="(true|false)" ?\/?>/);
 		const statusTitle = match?.[1];
 		const statusDone = match && match[2] === 'true';
 
@@ -145,9 +141,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 				'allow-scripts',
 				'allow-downloads',
 				...(settings?.iframeSandboxAllowForms ? ['allow-forms'] : []),
-				...(settings?.iframeSandboxAllowSameOrigin
-					? ['allow-same-origin']
-					: []),
+				...(settings?.iframeSandboxAllowSameOrigin ? ['allow-same-origin'] : []),
 			].join(' ');
 
 			return (

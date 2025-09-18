@@ -73,12 +73,8 @@ export const githubMcpTools: GitHubTool[] = [
 ];
 
 // Export types for external use
-export type CreatePullRequestInput = z.infer<
-	typeof CreatePullRequestInputSchema
->;
-export type GetRepositoryInfoInput = z.infer<
-	typeof GetRepositoryInfoInputSchema
->;
+export type CreatePullRequestInput = z.infer<typeof CreatePullRequestInputSchema>;
+export type GetRepositoryInfoInput = z.infer<typeof GetRepositoryInfoInputSchema>;
 export type ListIssuesInput = z.infer<typeof ListIssuesInputSchema>;
 export type CreateBranchInput = z.infer<typeof CreateBranchInputSchema>;
 export type RunActionInput = z.infer<typeof RunActionInputSchema>;

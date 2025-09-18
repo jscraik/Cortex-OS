@@ -123,21 +123,15 @@ describe('Lib Functions', () => {
 
 		describe('normalizeLineEndings', () => {
 			it('converts CRLF to LF', () => {
-				expect(normalizeLineEndings('line1\r\nline2\r\nline3')).toBe(
-					'line1\nline2\nline3',
-				);
+				expect(normalizeLineEndings('line1\r\nline2\r\nline3')).toBe('line1\nline2\nline3');
 			});
 
 			it('leaves LF unchanged', () => {
-				expect(normalizeLineEndings('line1\nline2\nline3')).toBe(
-					'line1\nline2\nline3',
-				);
+				expect(normalizeLineEndings('line1\nline2\nline3')).toBe('line1\nline2\nline3');
 			});
 
 			it('handles mixed line endings', () => {
-				expect(normalizeLineEndings('line1\r\nline2\nline3\r\n')).toBe(
-					'line1\nline2\nline3\n',
-				);
+				expect(normalizeLineEndings('line1\r\nline2\nline3\r\n')).toBe('line1\nline2\nline3\n');
 			});
 
 			it('handles empty string', () => {
@@ -174,24 +168,17 @@ describe('Lib Functions', () => {
 				expect(
 					diff
 						.split('\n')
-						.filter(
-							(line: string) =>
-								line.startsWith('+++') || line.startsWith('---'),
-						),
+						.filter((line: string) => line.startsWith('+++') || line.startsWith('---')),
 				).toHaveLength(2);
 				expect(
 					diff
 						.split('\n')
-						.filter(
-							(line: string) => line.startsWith('+') && !line.startsWith('+++'),
-						),
+						.filter((line: string) => line.startsWith('+') && !line.startsWith('+++')),
 				).toHaveLength(0);
 				expect(
 					diff
 						.split('\n')
-						.filter(
-							(line: string) => line.startsWith('-') && !line.startsWith('---'),
-						),
+						.filter((line: string) => line.startsWith('-') && !line.startsWith('---')),
 				).toHaveLength(0);
 			});
 
@@ -219,30 +206,22 @@ describe('Lib Functions', () => {
 		describe('validatePath', () => {
 			// Use Windows-compatible paths for testing
 			const _allowedDirs =
-				process.platform === 'win32'
-					? ['C:\\Users\\test', 'C:\\temp']
-					: ['/home/user', '/tmp'];
+				process.platform === 'win32' ? ['C:\\Users\\test', 'C:\\temp'] : ['/home/user', '/tmp'];
 
 			beforeEach(() => {
-				mockFs.realpath.mockImplementation(async (path: any) =>
-					path.toString(),
-				);
+				mockFs.realpath.mockImplementation(async (path: any) => path.toString());
 			});
 
 			it('validates allowed paths', async () => {
 				const testPath =
-					process.platform === 'win32'
-						? 'C:\\Users\\test\\file.txt'
-						: '/home/user/file.txt';
+					process.platform === 'win32' ? 'C:\\Users\\test\\file.txt' : '/home/user/file.txt';
 				const result = await validatePath(testPath);
 				expect(result).toBe(testPath);
 			});
 
 			it('rejects disallowed paths', async () => {
 				const testPath =
-					process.platform === 'win32'
-						? 'C:\\Windows\\System32\\file.txt'
-						: '/etc/passwd';
+					process.platform === 'win32' ? 'C:\\Windows\\System32\\file.txt' : '/etc/passwd';
 				await expect(validatePath(testPath)).rejects.toThrow(
 					'Access denied - path outside allowed directories',
 				);
@@ -250,19 +229,14 @@ describe('Lib Functions', () => {
 
 			it('handles non-existent files by checking parent directory', async () => {
 				const newFilePath =
-					process.platform === 'win32'
-						? 'C:\\Users\\test\\newfile.txt'
-						: '/home/user/newfile.txt';
-				const parentPath =
-					process.platform === 'win32' ? 'C:\\Users\\test' : '/home/user';
+					process.platform === 'win32' ? 'C:\\Users\\test\\newfile.txt' : '/home/user/newfile.txt';
+				const parentPath = process.platform === 'win32' ? 'C:\\Users\\test' : '/home/user';
 
 				// Create an error with the ENOENT code that the implementation checks for
 				const enoentError = new Error('ENOENT') as NodeJS.ErrnoException;
 				enoentError.code = 'ENOENT';
 
-				mockFs.realpath
-					.mockRejectedValueOnce(enoentError)
-					.mockResolvedValueOnce(parentPath);
+				mockFs.realpath.mockRejectedValueOnce(enoentError).mockResolvedValueOnce(parentPath);
 
 				const result = await validatePath(newFilePath);
 				expect(result).toBe(path.resolve(newFilePath));
@@ -280,13 +254,9 @@ describe('Lib Functions', () => {
 				const enoentError2 = new Error('ENOENT') as NodeJS.ErrnoException;
 				enoentError2.code = 'ENOENT';
 
-				mockFs.realpath
-					.mockRejectedValueOnce(enoentError1)
-					.mockRejectedValueOnce(enoentError2);
+				mockFs.realpath.mockRejectedValueOnce(enoentError1).mockRejectedValueOnce(enoentError2);
 
-				await expect(validatePath(newFilePath)).rejects.toThrow(
-					'Parent directory does not exist',
-				);
+				await expect(validatePath(newFilePath)).rejects.toThrow('Parent directory does not exist');
 			});
 		});
 	});
@@ -366,14 +336,10 @@ describe('Lib Functions', () => {
 
 				await writeFileContent('/test/file.txt', 'new content');
 
-				expect(mockFs.writeFile).toHaveBeenCalledWith(
-					'/test/file.txt',
-					'new content',
-					{
-						encoding: 'utf-8',
-						flag: 'wx',
-					},
-				);
+				expect(mockFs.writeFile).toHaveBeenCalledWith('/test/file.txt', 'new content', {
+					encoding: 'utf-8',
+					flag: 'wx',
+				});
 			});
 		});
 	});
@@ -381,23 +347,17 @@ describe('Lib Functions', () => {
 	describe('Search & Filtering Functions', () => {
 		describe('searchFilesWithValidation', () => {
 			beforeEach(() => {
-				mockFs.realpath.mockImplementation(async (path: any) =>
-					path.toString(),
-				);
+				mockFs.realpath.mockImplementation(async (path: any) => path.toString());
 			});
 
 			function setupMockEntries(entries) {
 				mockFs.readdir.mockResolvedValueOnce(entries as any);
 			}
 			function setupMockRealpath() {
-				mockFs.realpath.mockImplementation(async (inputPath: any) =>
-					inputPath.toString(),
-				);
+				mockFs.realpath.mockImplementation(async (inputPath: any) => inputPath.toString());
 			}
 			function getTestDir() {
-				return process.platform === 'win32'
-					? 'C:\\allowed\\dir'
-					: '/allowed/dir';
+				return process.platform === 'win32' ? 'C:\\allowed\\dir' : '/allowed/dir';
 			}
 			function getAllowedDirs() {
 				return process.platform === 'win32' ? ['C:\\allowed'] : ['/allowed'];
@@ -409,16 +369,11 @@ describe('Lib Functions', () => {
 					{ name: 'node_modules', isDirectory: () => true },
 				]);
 				setupMockRealpath();
-				const result = await searchFilesWithValidation(
-					getTestDir(),
-					'*test*',
-					getAllowedDirs(),
-					{ excludePatterns: ['*.log', 'node_modules'] },
-				);
+				const result = await searchFilesWithValidation(getTestDir(), '*test*', getAllowedDirs(), {
+					excludePatterns: ['*.log', 'node_modules'],
+				});
 				const expectedResult =
-					process.platform === 'win32'
-						? 'C:\\allowed\\dir\\test.txt'
-						: '/allowed/dir/test.txt';
+					process.platform === 'win32' ? 'C:\\allowed\\dir\\test.txt' : '/allowed/dir/test.txt';
 				expect(result).toEqual([expectedResult]);
 			});
 
@@ -438,23 +393,14 @@ describe('Lib Functions', () => {
 					return path.toString();
 				});
 
-				const testDir =
-					process.platform === 'win32' ? 'C:\\allowed\\dir' : '/allowed/dir';
-				const allowedDirs =
-					process.platform === 'win32' ? ['C:\\allowed'] : ['/allowed'];
+				const testDir = process.platform === 'win32' ? 'C:\\allowed\\dir' : '/allowed/dir';
+				const allowedDirs = process.platform === 'win32' ? ['C:\\allowed'] : ['/allowed'];
 
-				const result = await searchFilesWithValidation(
-					testDir,
-					'*test*',
-					allowedDirs,
-					{},
-				);
+				const result = await searchFilesWithValidation(testDir, '*test*', allowedDirs, {});
 
 				// Should only return the valid file, skipping the invalid one
 				const expectedResult =
-					process.platform === 'win32'
-						? 'C:\\allowed\\dir\\test.txt'
-						: '/allowed/dir/test.txt';
+					process.platform === 'win32' ? 'C:\\allowed\\dir\\test.txt' : '/allowed/dir/test.txt';
 				expect(result).toEqual([expectedResult]);
 			});
 
@@ -467,26 +413,16 @@ describe('Lib Functions', () => {
 
 				mockFs.readdir.mockResolvedValueOnce(mockEntries as any);
 
-				const testDir =
-					process.platform === 'win32' ? 'C:\\allowed\\dir' : '/allowed/dir';
-				const allowedDirs =
-					process.platform === 'win32' ? ['C:\\allowed'] : ['/allowed'];
+				const testDir = process.platform === 'win32' ? 'C:\\allowed\\dir' : '/allowed/dir';
+				const allowedDirs = process.platform === 'win32' ? ['C:\\allowed'] : ['/allowed'];
 
-				const result = await searchFilesWithValidation(
-					testDir,
-					'*test*',
-					allowedDirs,
-					{
-						excludePatterns: ['*.backup'],
-					},
-				);
+				const result = await searchFilesWithValidation(testDir, '*test*', allowedDirs, {
+					excludePatterns: ['*.backup'],
+				});
 
 				const expectedResults =
 					process.platform === 'win32'
-						? [
-								'C:\\allowed\\dir\\test.txt',
-								'C:\\allowed\\dir\\important_test.js',
-							]
+						? ['C:\\allowed\\dir\\test.txt', 'C:\\allowed\\dir\\important_test.js']
 						: ['/allowed/dir/test.txt', '/allowed/dir/important_test.js'];
 				expect(result).toEqual(expectedResults);
 			});
@@ -573,9 +509,9 @@ describe('Lib Functions', () => {
 			it('throws error for non-matching edits', async () => {
 				const edits = [{ oldText: 'nonexistent line', newText: 'replacement' }];
 
-				await expect(
-					applyFileEdits('/test/file.txt', edits, false),
-				).rejects.toThrow('Could not find exact match for edit');
+				await expect(applyFileEdits('/test/file.txt', edits, false)).rejects.toThrow(
+					'Could not find exact match for edit',
+				);
 			});
 
 			it('handles complex multi-line edits with indentation', async () => {
@@ -586,8 +522,7 @@ describe('Lib Functions', () => {
 				const edits = [
 					{
 						oldText: '  console.log("hello");\n  return true;',
-						newText:
-							'  console.log("world");\n  console.log("test");\n  return false;',
+						newText: '  console.log("world");\n  console.log("test");\n  return false;',
 					},
 				];
 
@@ -607,9 +542,7 @@ describe('Lib Functions', () => {
 			});
 
 			it('handles edits with different indentation patterns', async () => {
-				mockFs.readFile.mockResolvedValue(
-					'    if (condition) {\n        doSomething();\n    }',
-				);
+				mockFs.readFile.mockResolvedValue('    if (condition) {\n        doSomething();\n    }');
 
 				const edits = [
 					{

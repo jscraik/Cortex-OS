@@ -7,10 +7,7 @@ import {
 	createWebhookEvent,
 } from '../src/core/a2a-integration.js';
 import { StructuredLogger } from '../src/core/observability.js';
-import type {
-	ApiOperationMetadata,
-	GatewayRequest,
-} from '../src/core/types.js';
+import type { ApiOperationMetadata, GatewayRequest } from '../src/core/types.js';
 
 describe('API A2A Real Bus Integration', () => {
 	let logger: StructuredLogger;
@@ -34,11 +31,9 @@ describe('API A2A Real Bus Integration', () => {
 			expect(a2aBus.schemaRegistry).toBeDefined();
 			expect(a2aBus.transport).toBeDefined();
 
-			expect(
-				logger.history.some((entry) =>
-					entry.message.includes('started successfully'),
-				),
-			).toBe(true);
+			expect(logger.history.some((entry) => entry.message.includes('started successfully'))).toBe(
+				true,
+			);
 
 			await apiBus.stop();
 		});
@@ -86,9 +81,7 @@ describe('API A2A Real Bus Integration', () => {
 
 			// Verify logging shows real bus usage
 			expect(
-				logger.history.some((entry) =>
-					entry.message.includes('Published A2A event via real bus'),
-				),
+				logger.history.some((entry) => entry.message.includes('Published A2A event via real bus')),
 			).toBe(true);
 		});
 

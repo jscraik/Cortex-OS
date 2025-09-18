@@ -22,15 +22,16 @@ export interface RuntimeHttpDependencies {
 }
 
 class HttpError extends Error {
-	constructor(public status: number, message: string) {
+	constructor(
+		public status: number,
+		message: string,
+	) {
 		super(message);
 		this.name = 'HttpError';
 	}
 }
 
-export function createRuntimeHttpServer(
-	dependencies: RuntimeHttpDependencies,
-): RuntimeHttpServer {
+export function createRuntimeHttpServer(dependencies: RuntimeHttpDependencies): RuntimeHttpServer {
 	const clients = new Set<ServerResponse>();
 
 	const server = createServer((req, res) => {
@@ -227,7 +228,8 @@ async function handleProfilesRoute(
 		if (req.method === 'POST') {
 			const body = await readJsonBody(req);
 			const profile = body?.profile;
-			if (!profile || typeof profile !== 'object') throw new HttpError(400, 'profile payload required');
+			if (!profile || typeof profile !== 'object')
+				throw new HttpError(400, 'profile payload required');
 			if (!profile.id) profile.id = randomUUID();
 			const saved = await profiles.save(profile as any);
 			sendJson(res, 201, { profile: saved.record, digest: saved.digest });
@@ -303,7 +305,8 @@ async function handleArtifactsRoute(
 		if (req.method === 'POST') {
 			const body = await readJsonBody(req);
 			const artifact = body?.artifact;
-			if (!artifact || typeof artifact !== 'object') throw new HttpError(400, 'artifact payload required');
+			if (!artifact || typeof artifact !== 'object')
+				throw new HttpError(400, 'artifact payload required');
 			const base64 = artifact.base64Payload;
 			if (typeof base64 !== 'string') throw new HttpError(400, 'base64Payload required');
 			const binary = Buffer.from(base64, 'base64');
@@ -336,7 +339,8 @@ async function handleArtifactsRoute(
 		if (req.method === 'PUT') {
 			const body = await readJsonBody(req);
 			const artifact = body?.artifact;
-			if (!artifact || typeof artifact !== 'object') throw new HttpError(400, 'artifact payload required');
+			if (!artifact || typeof artifact !== 'object')
+				throw new HttpError(400, 'artifact payload required');
 			const base64 = artifact.base64Payload;
 			if (typeof base64 !== 'string') throw new HttpError(400, 'base64Payload required');
 			const binary = Buffer.from(base64, 'base64');
@@ -385,7 +389,8 @@ async function handleEvidenceRoute(
 		if (req.method === 'POST') {
 			const body = await readJsonBody(req);
 			const record = body?.evidence;
-			if (!record || typeof record !== 'object') throw new HttpError(400, 'evidence payload required');
+			if (!record || typeof record !== 'object')
+				throw new HttpError(400, 'evidence payload required');
 			const saved = await evidence.save(record as any);
 			sendJson(res, 201, { evidence: saved.record, digest: saved.digest });
 			return;
@@ -405,7 +410,8 @@ async function handleEvidenceRoute(
 		if (req.method === 'PUT') {
 			const body = await readJsonBody(req);
 			const record = body?.evidence;
-			if (!record || typeof record !== 'object') throw new HttpError(400, 'evidence payload required');
+			if (!record || typeof record !== 'object')
+				throw new HttpError(400, 'evidence payload required');
 			const saved = await evidence.save(
 				{ ...record, id },
 				{ expectedDigest: body?.expectedDigest },
@@ -428,11 +434,7 @@ function handleHealth(res: ServerResponse) {
 	sendJson(res, 200, { status: 'ok', timestamp: new Date().toISOString() });
 }
 
-function handleSse(
-	req: IncomingMessage,
-	res: ServerResponse,
-	clients: Set<ServerResponse>,
-) {
+function handleSse(req: IncomingMessage, res: ServerResponse, clients: Set<ServerResponse>) {
 	res.writeHead(200, {
 		'Content-Type': 'text/event-stream',
 		'Cache-Control': 'no-cache',

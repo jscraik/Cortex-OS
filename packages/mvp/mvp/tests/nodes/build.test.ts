@@ -18,11 +18,7 @@ describe('BuildNode', () => {
 	let mockState: PRPState;
 
 	// Helper type for exec callback used in mocks
-	type ExecCallback = (
-		error: Error | null,
-		stdout: string,
-		stderr: string,
-	) => void;
+	type ExecCallback = (error: Error | null, stdout: string, stderr: string) => void;
 
 	// Lightweight wrapper to avoid repetitive casting to any
 	function mockExec(
@@ -50,11 +46,7 @@ describe('BuildNode', () => {
 		mockState = createInitialPRPState({
 			title: 'Test Project',
 			description: 'Test project for validation',
-			requirements: [
-				'Build API endpoints',
-				'Add frontend UI',
-				'Ensure security',
-			],
+			requirements: ['Build API endpoints', 'Add frontend UI', 'Ensure security'],
 		});
 		// Reset all mocks
 		vi.clearAllMocks();
@@ -148,9 +140,7 @@ describe('BuildNode', () => {
 			const result = await buildNode.execute(mockState);
 
 			expect(result.validationResults.build?.passed).toBe(true);
-			expect(
-				result.evidence.some((e) => e.source === 'backend_validation'),
-			).toBe(true);
+			expect(result.evidence.some((e) => e.source === 'backend_validation')).toBe(true);
 		});
 
 		it('should skip backend validation when no backend requirements', async () => {
@@ -164,9 +154,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(frontendOnlyState);
 
-			const backendEvidence = result.evidence.find(
-				(e) => e.source === 'backend_validation',
-			);
+			const backendEvidence = result.evidence.find((e) => e.source === 'backend_validation');
 			const backendDetails = JSON.parse(backendEvidence?.content || '{}');
 
 			expect(backendDetails.details.type).toBe('frontend-only');
@@ -182,11 +170,7 @@ describe('BuildNode', () => {
 						fn: (
 							cmd: string,
 							_options: unknown,
-							callback?: (
-								error: Error | null,
-								stdout: string,
-								stderr: string,
-							) => void,
+							callback?: (error: Error | null, stdout: string, stderr: string) => void,
 						) => void,
 					) => void;
 				}
@@ -194,11 +178,7 @@ describe('BuildNode', () => {
 				(
 					cmd: string,
 					_options: unknown,
-					callback?: (
-						error: Error | null,
-						stdout: string,
-						stderr: string,
-					) => void,
+					callback?: (error: Error | null, stdout: string, stderr: string) => void,
 				) => {
 					if (callback) {
 						if (cmd.includes('which semgrep')) {
@@ -229,16 +209,12 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(mockState);
 
-			const securityEvidence = result.evidence.find(
-				(e) => e.source === 'security_scanner',
-			);
+			const securityEvidence = result.evidence.find((e) => e.source === 'security_scanner');
 			const securityDetails = JSON.parse(securityEvidence?.content || '{}');
 
 			expect(securityDetails.details.tools).toContain('Semgrep');
 			expect(securityDetails.details.vulnerabilities).toHaveLength(1);
-			expect(securityDetails.details.vulnerabilities[0].severity).toBe(
-				'critical',
-			);
+			expect(securityDetails.details.vulnerabilities[0].severity).toBe('critical');
 		});
 
 		it('should use ESLint security plugin when available', async () => {
@@ -256,11 +232,7 @@ describe('BuildNode', () => {
 						fn: (
 							cmd: string,
 							_options: unknown,
-							callback?: (
-								error: Error | null,
-								stdout: string,
-								stderr: string,
-							) => void,
+							callback?: (error: Error | null, stdout: string, stderr: string) => void,
 						) => void,
 					) => void;
 				}
@@ -268,11 +240,7 @@ describe('BuildNode', () => {
 				(
 					cmd: string,
 					_options: unknown,
-					callback?: (
-						error: Error | null,
-						stdout: string,
-						stderr: string,
-					) => void,
+					callback?: (error: Error | null, stdout: string, stderr: string) => void,
 				) => {
 					if (callback) {
 						if (cmd.includes('which semgrep')) {
@@ -303,9 +271,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(mockState);
 
-			const securityEvidence = result.evidence.find(
-				(e) => e.source === 'security_scanner',
-			);
+			const securityEvidence = result.evidence.find((e) => e.source === 'security_scanner');
 			const securityDetails = JSON.parse(securityEvidence?.content || '{}');
 
 			expect(securityDetails.details.tools).toContain('ESLint Security');
@@ -320,11 +286,7 @@ describe('BuildNode', () => {
 						fn: (
 							_cmd: string,
 							_options: unknown,
-							callback?: (
-								error: Error | null,
-								stdout: string,
-								stderr: string,
-							) => void,
+							callback?: (error: Error | null, stdout: string, stderr: string) => void,
 						) => void,
 					) => void;
 				}
@@ -332,11 +294,7 @@ describe('BuildNode', () => {
 				(
 					_cmd: string,
 					_options: unknown,
-					callback?: (
-						error: Error | null,
-						stdout: string,
-						stderr: string,
-					) => void,
+					callback?: (error: Error | null, stdout: string, stderr: string) => void,
 				) => {
 					if (callback) {
 						callback(new Error('tool not found'), '', '');
@@ -349,9 +307,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(mockState);
 
-			const securityEvidence = result.evidence.find(
-				(e) => e.source === 'security_scanner',
-			);
+			const securityEvidence = result.evidence.find((e) => e.source === 'security_scanner');
 			const securityDetails = JSON.parse(securityEvidence?.content || '{}');
 
 			expect(securityDetails.details.tools).toContain('Basic Checks');
@@ -360,10 +316,7 @@ describe('BuildNode', () => {
 
 	describe('frontend validation', () => {
 		beforeEach(() => {
-			mockState.blueprint.requirements = [
-				'Add React UI',
-				'Improve user interface',
-			];
+			mockState.blueprint.requirements = ['Add React UI', 'Improve user interface'];
 		});
 
 		it('should run Lighthouse when available', async () => {
@@ -413,9 +366,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(mockState);
 
-			const frontendEvidence = result.evidence.find(
-				(e) => e.source === 'frontend_validation',
-			);
+			const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
 			if (frontendEvidence) {
 				const frontendDetails = JSON.parse(frontendEvidence.content);
 				expect(frontendDetails.lighthouse).toBeGreaterThanOrEqual(85);
@@ -432,9 +383,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(mockState);
 
-			const frontendEvidence = result.evidence.find(
-				(e) => e.source === 'frontend_validation',
-			);
+			const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
 			if (frontendEvidence) {
 				const frontendDetails = JSON.parse(frontendEvidence.content);
 				expect(frontendDetails.details.projectType).toBe('react');
@@ -453,16 +402,12 @@ describe('BuildNode', () => {
 				return '';
 			});
 
-			const mockGlob = vi
-				.fn()
-				.mockResolvedValue(['src/App.tsx', 'src/Button.jsx']);
+			const mockGlob = vi.fn().mockResolvedValue(['src/App.tsx', 'src/Button.jsx']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			const result = await buildNode.execute(mockState);
 
-			const frontendEvidence = result.evidence.find(
-				(e) => e.source === 'frontend_validation',
-			);
+			const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
 			if (frontendEvidence) {
 				const frontendDetails = JSON.parse(frontendEvidence.content);
 				expect(frontendDetails.details.axe.violations).toBeGreaterThan(0);
@@ -480,9 +425,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(backendOnlyState);
 
-			const frontendEvidence = result.evidence.find(
-				(e) => e.source === 'frontend_validation',
-			);
+			const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
 			if (frontendEvidence) {
 				const frontendDetails = JSON.parse(frontendEvidence.content);
 				expect(frontendDetails.details.type).toBe('backend-only');
@@ -501,9 +444,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(apiState);
 
-			const apiEvidence = result.evidence.find(
-				(e) => e.source === 'api_schema_validation',
-			);
+			const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
 			const apiDetails = JSON.parse(apiEvidence?.content || '{}');
 
 			expect(apiDetails.passed).toBe(true);
@@ -524,9 +465,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(apiState);
 
-			const apiEvidence = result.evidence.find(
-				(e) => e.source === 'api_schema_validation',
-			);
+			const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
 			const apiDetails = JSON.parse(apiEvidence?.content || '{}');
 
 			expect(apiDetails.passed).toBe(false);
@@ -544,9 +483,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(nonApiState);
 
-			const apiEvidence = result.evidence.find(
-				(e) => e.source === 'api_schema_validation',
-			);
+			const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
 			const apiDetails = JSON.parse(apiEvidence?.content || '{}');
 
 			expect(apiDetails.passed).toBe(true);
@@ -558,9 +495,7 @@ describe('BuildNode', () => {
 		it('should validate documentation completeness', async () => {
 			const result = await buildNode.execute(mockState);
 
-			const docsEvidence = result.evidence.find(
-				(e) => e.source === 'documentation_validation',
-			);
+			const docsEvidence = result.evidence.find((e) => e.source === 'documentation_validation');
 			expect(docsEvidence).toBeDefined();
 
 			const docsDetails = JSON.parse(docsEvidence?.content || '{}');
@@ -574,18 +509,13 @@ describe('BuildNode', () => {
 				...mockState,
 				blueprint: {
 					...mockState.blueprint,
-					requirements: [
-						'Add comprehensive documentation',
-						'Include usage examples',
-					],
+					requirements: ['Add comprehensive documentation', 'Include usage examples'],
 				},
 			};
 
 			const result = await buildNode.execute(docsRequiredState);
 
-			const docsEvidence = result.evidence.find(
-				(e) => e.source === 'documentation_validation',
-			);
+			const docsEvidence = result.evidence.find((e) => e.source === 'documentation_validation');
 			const docsDetails = JSON.parse(docsEvidence?.content || '{}');
 
 			expect(docsDetails.details.examples).toBe(true);
@@ -643,9 +573,7 @@ describe('BuildNode', () => {
 
 			const result = await buildNode.execute(mockState);
 
-			expect(result.validationResults.build?.blockers.length).toBeGreaterThan(
-				0,
-			);
+			expect(result.validationResults.build?.blockers.length).toBeGreaterThan(0);
 			expect(result.validationResults.build?.passed).toBe(false);
 		});
 

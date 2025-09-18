@@ -23,19 +23,12 @@ describe('ModelRouter available models exposure (MLX)', () => {
 
 		await router.initialize();
 
-		const embeddings = router
-			.getAvailableModels('embedding')
-			.map((m) => m.name);
+		const embeddings = router.getAvailableModels('embedding').map((m) => m.name);
 		expect(embeddings).toEqual(
-			expect.arrayContaining([
-				'qwen3-embedding-4b-mlx',
-				'qwen3-embedding-8b-mlx',
-			]),
+			expect.arrayContaining(['qwen3-embedding-4b-mlx', 'qwen3-embedding-8b-mlx']),
 		);
 
 		const rerankers = router.getAvailableModels('reranking').map((m) => m.name);
-		expect(rerankers).toEqual(
-			expect.arrayContaining(['qwen3-reranker-4b-mlx']),
-		);
+		expect(rerankers).toEqual(expect.arrayContaining(['qwen3-reranker-4b-mlx']));
 	});
 });

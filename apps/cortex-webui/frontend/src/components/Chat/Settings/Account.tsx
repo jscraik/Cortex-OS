@@ -8,9 +8,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { useUserStore } from '@/stores/userStore';
 
 interface AccountSettingsProps {
-	readonly saveSettings: (settings: {
-		notifications?: { webhook_url?: string };
-	}) => void;
+	readonly saveSettings: (settings: { notifications?: { webhook_url?: string } }) => void;
 }
 
 function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
@@ -63,10 +61,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 
 	const submitHandler = async () => {
 		if (name !== user?.name) {
-			if (
-				profileImageUrl === generateInitialsImage(user?.name) ||
-				profileImageUrl === ''
-			) {
+			if (profileImageUrl === generateInitialsImage(user?.name) || profileImageUrl === '') {
 				setProfileImageUrl(generateInitialsImage(name));
 			}
 		}
@@ -122,11 +117,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 		if (!files || files.length === 0) return;
 
 		const file = files[0];
-		if (
-			!['image/gif', 'image/webp', 'image/jpeg', 'image/png'].includes(
-				file.type,
-			)
-		) {
+		if (!['image/gif', 'image/webp', 'image/jpeg', 'image/png'].includes(file.type)) {
 			toast.error('Invalid file type. Please select an image.');
 			return;
 		}
@@ -187,10 +178,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 	}
 
 	return (
-		<div
-			id={accountTabId}
-			className="flex flex-col h-full justify-between text-sm"
-		>
+		<div id={accountTabId} className="flex flex-col h-full justify-between text-sm">
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full">
 				<input
 					id={profileImageInputId}
@@ -204,9 +192,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 				<div className="space-y-1">
 					<div>
 						<div className="text-base font-medium">Your Account</div>
-						<div className="text-xs text-gray-500 mt-0.5">
-							Manage your account information.
-						</div>
+						<div className="text-xs text-gray-500 mt-0.5">Manage your account information.</div>
 					</div>
 
 					<div className="flex space-x-5 my-4">
@@ -252,10 +238,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 
 						<div className="flex-1">
 							<div className="mb-2">
-								<label
-									htmlFor={nameInputId}
-									className="block text-sm font-medium mb-1"
-								>
+								<label htmlFor={nameInputId} className="block text-sm font-medium mb-1">
 									Name
 								</label>
 								<input
@@ -268,10 +251,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 							</div>
 
 							<div>
-								<label
-									htmlFor={bioInputId}
-									className="block text-sm font-medium mb-1"
-								>
+								<label htmlFor={bioInputId} className="block text-sm font-medium mb-1">
 									Bio
 								</label>
 								<textarea
@@ -287,10 +267,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
-							<label
-								htmlFor={genderSelectId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={genderSelectId} className="block text-sm font-medium mb-1">
 								Gender
 							</label>
 							<select
@@ -307,10 +284,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 						</div>
 
 						<div>
-							<label
-								htmlFor={dateOfBirthInputId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={dateOfBirthInputId} className="block text-sm font-medium mb-1">
 								Date of Birth
 							</label>
 							<input
@@ -326,10 +300,7 @@ function AccountSettings({ saveSettings }: Readonly<AccountSettingsProps>) {
 					<div className="pt-4">
 						<div className="text-base font-medium mb-2">Notifications</div>
 						<div>
-							<label
-								htmlFor={webhookInputId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={webhookInputId} className="block text-sm font-medium mb-1">
 								Webhook URL
 							</label>
 							<input

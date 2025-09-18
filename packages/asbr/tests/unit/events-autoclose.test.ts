@@ -15,9 +15,7 @@ function getEventsHandler(app: any) {
 	const stack: any[] = app?._router?.stack ?? [];
 	for (const layer of stack) {
 		if (layer?.route?.path === '/v1/events') {
-			const boundHandler = layer.route.stack.find(
-				(entry: any) => entry.name === 'bound getEvents',
-			);
+			const boundHandler = layer.route.stack.find((entry: any) => entry.name === 'bound getEvents');
 			if (boundHandler) {
 				return boundHandler.handle;
 			}

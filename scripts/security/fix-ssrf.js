@@ -46,14 +46,7 @@ const _createSecureFetch = () => {
 };
 
 // Fix the doctor.ts file
-const doctorPath = join(
-	'apps',
-	'cortex-cli',
-	'src',
-	'commands',
-	'mcp',
-	'doctor.ts',
-);
+const doctorPath = join('apps', 'cortex-cli', 'src', 'commands', 'mcp', 'doctor.ts');
 let doctorContent = readFileSync(doctorPath, 'utf-8');
 
 // Replace insecure fetch calls with secure ones

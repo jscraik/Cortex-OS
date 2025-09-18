@@ -40,9 +40,7 @@ export function createSchemaRegistryClient(
 		networkRequests += 1;
 		const res = await fetchImpl(url);
 		if (!res.ok) {
-			throw new Error(
-				`Failed to fetch schema ${name}@${version}: ${res.status} ${res.statusText}`,
-			);
+			throw new Error(`Failed to fetch schema ${name}@${version}: ${res.status} ${res.statusText}`);
 		}
 		return (await res.json()) as Schema;
 	}
@@ -52,18 +50,14 @@ export function createSchemaRegistryClient(
 		networkRequests += 1;
 		const res = await fetchImpl(url);
 		if (!res.ok) {
-			throw new Error(
-				`Failed to fetch latest schema for ${name}: ${res.status} ${res.statusText}`,
-			);
+			throw new Error(`Failed to fetch latest schema for ${name}: ${res.status} ${res.statusText}`);
 		}
 		return (await res.json()) as Schema;
 	}
 
 	async function getSchema(name: string, version = 'latest'): Promise<Schema> {
 		const key = `${name}@${version}`;
-		return cache.get(key, () =>
-			version === 'latest' ? loadLatest(name) : load(name, version),
-		);
+		return cache.get(key, () => (version === 'latest' ? loadLatest(name) : load(name, version)));
 	}
 
 	async function getLatest(name: string): Promise<Schema> {

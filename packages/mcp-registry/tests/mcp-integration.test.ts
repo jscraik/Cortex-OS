@@ -167,12 +167,8 @@ describe('MCP Registry Tools Integration', () => {
 			http: 1,
 			sse: 1,
 		});
-		expect(statsContent.details.serversByTransport.stdio).toEqual([
-			'stdio-server',
-		]);
-		expect(statsContent.details.serversByTransport.http).toEqual([
-			'http-server',
-		]);
+		expect(statsContent.details.serversByTransport.stdio).toEqual(['stdio-server']);
+		expect(statsContent.details.serversByTransport.http).toEqual(['http-server']);
 		expect(statsContent.details.serversByTransport.sse).toEqual(['sse-server']);
 	});
 
@@ -272,9 +268,7 @@ describe('MCP Registry Tools Integration', () => {
 
 		expect(response.metadata).toBeDefined();
 		expect(response.metadata.correlationId).toMatch(/^[a-f0-9-]+$/);
-		expect(response.metadata.timestamp).toMatch(
-			/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
-		);
+		expect(response.metadata.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
 		expect(response.metadata.tool).toBe('registry.stats');
 	});
 
@@ -316,9 +310,7 @@ describe('MCP Registry Tools Integration', () => {
 
 		expect(listContent.servers).toHaveLength(3);
 
-		const serverNames = listContent.servers
-			.map((s: { name: string }) => s.name)
-			.sort();
+		const serverNames = listContent.servers.map((s: { name: string }) => s.name).sort();
 		expect(serverNames).toEqual([
 			'concurrent-server-1',
 			'concurrent-server-2',

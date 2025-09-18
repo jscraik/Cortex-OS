@@ -16,10 +16,7 @@ interface ToolIntegrationProps {
 	onToolToggle: (toolId: string, enabled: boolean) => void;
 }
 
-const ToolIntegration: React.FC<ToolIntegrationProps> = ({
-	tools,
-	onToolToggle,
-}) => {
+const ToolIntegration: React.FC<ToolIntegrationProps> = ({ tools, onToolToggle }) => {
 	const [expanded, setExpanded] = useState(false);
 
 	const toggleTool = (toolId: string, enabled: boolean) => {
@@ -50,10 +47,7 @@ const ToolIntegration: React.FC<ToolIntegrationProps> = ({
 			{expanded && (
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					{tools.map((tool) => (
-						<div
-							key={tool.id}
-							className="border rounded-lg p-3 flex items-start"
-						>
+						<div key={tool.id} className="border rounded-lg p-3 flex items-start">
 							<div className="flex-shrink-0 mr-3">
 								<div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
 							</div>

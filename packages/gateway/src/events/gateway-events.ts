@@ -45,9 +45,7 @@ export const RateLimitExceededEventSchema = z.object({
 export type RouteCreatedEvent = z.infer<typeof RouteCreatedEventSchema>;
 export type RequestReceivedEvent = z.infer<typeof RequestReceivedEventSchema>;
 export type ResponseSentEvent = z.infer<typeof ResponseSentEventSchema>;
-export type RateLimitExceededEvent = z.infer<
-	typeof RateLimitExceededEventSchema
->;
+export type RateLimitExceededEvent = z.infer<typeof RateLimitExceededEventSchema>;
 
 // Helper object to create gateway events
 export const createGatewayEvent = {

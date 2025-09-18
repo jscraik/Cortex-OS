@@ -10,12 +10,7 @@ interface FilesOverlayProps {
 	onDragLeave?: () => void;
 }
 
-const FilesOverlay: React.FC<FilesOverlayProps> = ({
-	show,
-	showSidebar,
-	onDrop,
-	onDragLeave,
-}) => {
+const FilesOverlay: React.FC<FilesOverlayProps> = ({ show, showSidebar, onDrop, onDragLeave }) => {
 	const overlayElementRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -66,9 +61,7 @@ const FilesOverlay: React.FC<FilesOverlayProps> = ({
 		<div
 			ref={overlayElementRef}
 			className={`fixed ${
-				showSidebar
-					? 'left-0 md:left-[260px] md:w-[calc(100%-260px)]'
-					: 'left-0'
+				showSidebar ? 'left-0 md:left-[260px] md:w-[calc(100%-260px)]' : 'left-0'
 			} fixed top-0 right-0 bottom-0 w-full h-full flex z-50 pointer-events-auto`}
 			id="dropzone"
 			role="region"

@@ -74,15 +74,7 @@ export const cortexSecMcpTools: CortexSecTool[] = [
 
 // Export types for external use
 export type RunSemgrepScanInput = z.infer<typeof RunSemgrepScanInputSchema>;
-export type AnalyzeVulnerabilitiesInput = z.infer<
-	typeof AnalyzeVulnerabilitiesInputSchema
->;
-export type GetSecurityPolicyInput = z.infer<
-	typeof GetSecurityPolicyInputSchema
->;
-export type ValidateComplianceInput = z.infer<
-	typeof ValidateComplianceInputSchema
->;
-export type CheckDependenciesInput = z.infer<
-	typeof CheckDependenciesInputSchema
->;
+export type AnalyzeVulnerabilitiesInput = z.infer<typeof AnalyzeVulnerabilitiesInputSchema>;
+export type GetSecurityPolicyInput = z.infer<typeof GetSecurityPolicyInputSchema>;
+export type ValidateComplianceInput = z.infer<typeof ValidateComplianceInputSchema>;
+export type CheckDependenciesInput = z.infer<typeof CheckDependenciesInputSchema>;

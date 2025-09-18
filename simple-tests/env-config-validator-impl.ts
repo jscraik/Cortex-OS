@@ -98,43 +98,23 @@ class EnvironmentValidatorImpl implements EnvironmentValidator {
 	loadFromEnv(env: Record<string, string | undefined>): EnvironmentConfig {
 		// Apply defaults when loading from environment
 		const config: EnvironmentConfig = {
-			nodeEnv:
-				(env.NODE_ENV as 'development' | 'test' | 'production') ||
-				'development',
+			nodeEnv: (env.NODE_ENV as 'development' | 'test' | 'production') || 'development',
 			port: env.PORT ? parseInt(env.PORT, 10) : 3000,
-			logLevel:
-				(env.LOG_LEVEL as 'error' | 'warn' | 'info' | 'debug') || 'info',
+			logLevel: (env.LOG_LEVEL as 'error' | 'warn' | 'info' | 'debug') || 'info',
 			// Always include security config with defaults
 			security: {
 				// Only include schema-supported properties
-				secretsEncryption: env.SECRETS_ENCRYPTION
-					? env.SECRETS_ENCRYPTION === 'true'
-					: true,
-				maxRequestSize: env.MAX_REQUEST_SIZE
-					? parseInt(env.MAX_REQUEST_SIZE, 10)
-					: 1048576,
-				allowedOrigins: env.ALLOWED_ORIGINS?.split(',') || [
-					'http://localhost:3000',
-				],
-				rateLimitEnabled: env.RATE_LIMIT_ENABLED
-					? env.RATE_LIMIT_ENABLED === 'true'
-					: true,
-				sessionTimeout: env.SESSION_TIMEOUT
-					? parseInt(env.SESSION_TIMEOUT, 10)
-					: 3600,
+				secretsEncryption: env.SECRETS_ENCRYPTION ? env.SECRETS_ENCRYPTION === 'true' : true,
+				maxRequestSize: env.MAX_REQUEST_SIZE ? parseInt(env.MAX_REQUEST_SIZE, 10) : 1048576,
+				allowedOrigins: env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+				rateLimitEnabled: env.RATE_LIMIT_ENABLED ? env.RATE_LIMIT_ENABLED === 'true' : true,
+				sessionTimeout: env.SESSION_TIMEOUT ? parseInt(env.SESSION_TIMEOUT, 10) : 3600,
 			},
 			// Always include database config with defaults
 			database: {
 				url: env.DATABASE_URL || 'sqlite://memory.db',
-				sslMode:
-					(env.DATABASE_SSL_MODE as
-						| 'disable'
-						| 'allow'
-						| 'prefer'
-						| 'require') || 'prefer',
-				poolSize: env.DATABASE_POOL_SIZE
-					? parseInt(env.DATABASE_POOL_SIZE, 10)
-					: 10,
+				sslMode: (env.DATABASE_SSL_MODE as 'disable' | 'allow' | 'prefer' | 'require') || 'prefer',
+				poolSize: env.DATABASE_POOL_SIZE ? parseInt(env.DATABASE_POOL_SIZE, 10) : 10,
 			},
 		};
 
@@ -159,10 +139,7 @@ class EnvironmentValidatorImpl implements EnvironmentValidator {
 		}
 	}
 
-	private addMcpConfig(
-		config: EnvironmentConfig,
-		env: Record<string, string | undefined>,
-	): void {
+	private addMcpConfig(config: EnvironmentConfig, env: Record<string, string | undefined>): void {
 		if (env.MCP_SERVER_URLS) {
 			config.mcp = {
 				serverUrls: env.MCP_SERVER_URLS.split(',').map((s) => s.trim()),
@@ -183,19 +160,13 @@ class EnvironmentValidatorImpl implements EnvironmentValidator {
 		return warnings;
 	}
 
-	private checkProductionLogging(
-		config: EnvironmentConfig,
-		warnings: string[],
-	): void {
+	private checkProductionLogging(config: EnvironmentConfig, warnings: string[]): void {
 		if (config.logLevel === 'debug' || config.logLevel === 'trace') {
 			warnings.push('Debug logging enabled in production');
 		}
 	}
 
-	private checkProductionSecurity(
-		config: EnvironmentConfig,
-		warnings: string[],
-	): void {
+	private checkProductionSecurity(config: EnvironmentConfig, warnings: string[]): void {
 		if (!config.security) return;
 
 		if (!config.security.secretsEncryption) {
@@ -218,11 +189,7 @@ class EnvironmentValidatorImpl implements EnvironmentValidator {
 
 	validateRequiredSecrets(env: Record<string, string | undefined>): string[] {
 		const missing: string[] = [];
-		const requiredInProduction = [
-			'DATABASE_URL',
-			'JWT_SECRET',
-			'ENCRYPTION_KEY',
-		];
+		const requiredInProduction = ['DATABASE_URL', 'JWT_SECRET', 'ENCRYPTION_KEY'];
 
 		if (env.NODE_ENV === 'production') {
 			for (const secret of requiredInProduction) {
@@ -287,10 +254,7 @@ class EnvironmentValidatorImpl implements EnvironmentValidator {
 
 		// Redact database passwords
 		if (safeConfig.database?.url) {
-			safeConfig.database.url = safeConfig.database.url.replace(
-				/:([^@:]+)@/,
-				':[REDACTED]@',
-			);
+			safeConfig.database.url = safeConfig.database.url.replace(/:([^@:]+)@/, ':[REDACTED]@');
 		}
 
 		// Redact secrets

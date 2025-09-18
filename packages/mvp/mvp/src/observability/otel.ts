@@ -30,11 +30,7 @@ export const startSpan = (name: string) => {
 	return span;
 };
 
-export const recordMetric = (
-	name: string,
-	value: number,
-	unit: string = '',
-) => {
+export const recordMetric = (name: string, value: number, unit: string = '') => {
 	metrics.push({ name, value, unit });
 };
 

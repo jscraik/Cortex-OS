@@ -21,10 +21,7 @@ import { calculateErrorBudget, recordLatency } from '../src/metrics/index.js';
 describe('metrics', () => {
 	it('clamps negative latency', () => {
 		recordLatency('test', -10);
-		expect(recordSpy).toHaveBeenCalledWith(
-			0,
-			expect.objectContaining({ operation: 'test' }),
-		);
+		expect(recordSpy).toHaveBeenCalledWith(0, expect.objectContaining({ operation: 'test' }));
 	});
 
 	it('calculates error budget', () => {

@@ -20,11 +20,7 @@ export interface CapturedExample {
 		inputState: Partial<PRPState>;
 	};
 	userAction: {
-		type:
-			| 'validation_override'
-			| 'gate_adjustment'
-			| 'neuron_guidance'
-			| 'workflow_modification';
+		type: 'validation_override' | 'gate_adjustment' | 'neuron_guidance' | 'workflow_modification';
 		description: string;
 		parameters: Record<string, unknown>;
 		timestamp: string;
@@ -53,10 +49,7 @@ export interface TeachingPattern {
 		confidence: number;
 	};
 	adaptation: {
-		type:
-			| 'gate_modification'
-			| 'workflow_adjustment'
-			| 'validation_enhancement';
+		type: 'gate_modification' | 'workflow_adjustment' | 'validation_enhancement';
 		parameters: Record<string, unknown>;
 	};
 	examples: string[]; // CapturedExample IDs that support this pattern
@@ -226,10 +219,7 @@ export class ExampleCaptureSystem {
 		}
 
 		// Suggest action based on example
-		const suggestedAction = this.adaptExampleToCurrentContext(
-			example,
-			currentState,
-		);
+		const suggestedAction = this.adaptExampleToCurrentContext(example, currentState);
 
 		return {
 			applicable: true,
@@ -255,10 +245,7 @@ export class ExampleCaptureSystem {
 				.filter((ex) => ex?.outcome.success).length;
 
 			pattern.effectiveness = successfulExamples / totalExamples;
-			pattern.trigger.confidence = Math.min(
-				0.9,
-				pattern.trigger.confidence + 0.1,
-			);
+			pattern.trigger.confidence = Math.min(0.9, pattern.trigger.confidence + 0.1);
 		} else {
 			pattern = {
 				id: patternKey,
@@ -304,10 +291,7 @@ export class ExampleCaptureSystem {
 		similarity += keywordOverlap * 0.4;
 
 		// State similarity (basic structure comparison)
-		const statesSimilar = this.compareStates(
-			context1.inputState,
-			context2.inputState,
-		);
+		const statesSimilar = this.compareStates(context1.inputState, context2.inputState);
 		similarity += statesSimilar * 0.3;
 
 		return Math.min(1.0, similarity);
@@ -348,10 +332,7 @@ export class ExampleCaptureSystem {
 	/**
 	 * Calculate keyword overlap between two sets
 	 */
-	private calculateKeywordOverlap(
-		keywords1: string[],
-		keywords2: string[],
-	): number {
+	private calculateKeywordOverlap(keywords1: string[], keywords2: string[]): number {
 		const set1 = new Set(keywords1);
 		const set2 = new Set(keywords2);
 		const intersection = new Set([...set1].filter((x) => set2.has(x)));
@@ -363,10 +344,7 @@ export class ExampleCaptureSystem {
 	/**
 	 * Compare states for similarity
 	 */
-	private compareStates(
-		state1: Partial<PRPState>,
-		state2: Partial<PRPState>,
-	): number {
+	private compareStates(state1: Partial<PRPState>, state2: Partial<PRPState>): number {
 		// Simple structural comparison
 		const keys1 = Object.keys(state1);
 		const keys2 = Object.keys(state2);
@@ -390,9 +368,7 @@ export class ExampleCaptureSystem {
 				examples = examples.filter((ex) => ex.type === filter.type);
 			}
 			if (filter.phase) {
-				examples = examples.filter(
-					(ex) => ex.context.prpPhase === filter.phase,
-				);
+				examples = examples.filter((ex) => ex.context.prpPhase === filter.phase);
 			}
 			if (filter.tags) {
 				examples = examples.filter((ex) =>

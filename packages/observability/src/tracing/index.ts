@@ -9,19 +9,10 @@ import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import type { MetricReader } from '@opentelemetry/sdk-metrics';
-import {
-	ConsoleMetricExporter,
-	PeriodicExportingMetricReader,
-} from '@opentelemetry/sdk-metrics';
+import { ConsoleMetricExporter, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import {
-	ConsoleSpanExporter,
-	type SpanExporter,
-} from '@opentelemetry/sdk-trace-base';
-import {
-	ATTR_SERVICE_NAME,
-	ATTR_SERVICE_VERSION,
-} from '@opentelemetry/semantic-conventions';
+import { ConsoleSpanExporter, type SpanExporter } from '@opentelemetry/sdk-trace-base';
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { generateRunId, type TraceContext, type ULID } from '../index.js';
 
 const tracer = trace.getTracer('@cortex-os/observability');
@@ -50,10 +41,7 @@ function createMetricReader(): MetricReader {
 /**
  * Initialize OTEL tracing and metrics
  */
-export function initializeObservability(
-	serviceName: string,
-	version: string = '1.0.0',
-): NodeSDK {
+export function initializeObservability(serviceName: string, version: string = '1.0.0'): NodeSDK {
 	const sdk = new NodeSDK({
 		resource: resourceFromAttributes({
 			[ATTR_SERVICE_NAME]: serviceName,
@@ -84,10 +72,7 @@ export const initializeTracing = initializeObservability;
 /**
  * Start console viewer for traces and metrics
  */
-export function startConsoleViewer(
-	serviceName: string,
-	version: string = '1.0.0',
-): NodeSDK {
+export function startConsoleViewer(serviceName: string, version: string = '1.0.0'): NodeSDK {
 	process.env.TRACE_EXPORTER = 'console';
 	process.env.METRIC_EXPORTER = 'console';
 	return initializeObservability(serviceName, version);
@@ -136,9 +121,7 @@ export async function withSpan<T>(
 					code: SpanStatusCode.ERROR,
 					message: error instanceof Error ? error.message : String(error),
 				});
-				span.recordException(
-					error instanceof Error ? error : new Error(String(error)),
-				);
+				span.recordException(error instanceof Error ? error : new Error(String(error)));
 				throw error;
 			} finally {
 				try {

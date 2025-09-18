@@ -6,12 +6,11 @@ declare global {
 }
 
 const store: Map<string, ChatSession> =
-	(globalThis as unknown as { __cortexChatStore?: Map<string, ChatSession> })
-		.__cortexChatStore || new Map<string, ChatSession>();
+	(globalThis as unknown as { __cortexChatStore?: Map<string, ChatSession> }).__cortexChatStore ||
+	new Map<string, ChatSession>();
 
-(
-	globalThis as unknown as { __cortexChatStore?: Map<string, ChatSession> }
-).__cortexChatStore = store;
+(globalThis as unknown as { __cortexChatStore?: Map<string, ChatSession> }).__cortexChatStore =
+	store;
 
 export function getOrCreateSession(id: string): ChatSession {
 	let s = store.get(id);

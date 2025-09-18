@@ -9,12 +9,7 @@ const SimplifiedEnvelope = z.object({
 	data: z.unknown().optional(),
 });
 
-export const OutboxMessageStatus = z.enum([
-	'pending',
-	'sent',
-	'failed',
-	'poisoned',
-]);
+export const OutboxMessageStatus = z.enum(['pending', 'sent', 'failed', 'poisoned']);
 
 export const OutboxMessage = SimplifiedEnvelope.extend({
 	status: OutboxMessageStatus,

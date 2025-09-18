@@ -31,10 +31,7 @@ class MockStore implements Store {
 		// Mock implementation
 	}
 
-	async query(
-		_embedding: number[],
-		k = 5,
-	): Promise<Array<Chunk & { score?: number }>> {
+	async query(_embedding: number[], k = 5): Promise<Array<Chunk & { score?: number }>> {
 		return this.chunks.slice(0, k);
 	}
 }
@@ -78,15 +75,9 @@ describe('RAGPipeline enhanced features', () => {
 
 	describe('per-claim citations', () => {
 		it('should attach citations to specific claims', async () => {
-			const claims = [
-				'Greenhouse gases cause climate change',
-				'Carbon dioxide levels are rising',
-			];
+			const claims = ['Greenhouse gases cause climate change', 'Carbon dioxide levels are rising'];
 
-			const result = await pipeline.retrieveWithClaims(
-				'climate science',
-				claims,
-			);
+			const result = await pipeline.retrieveWithClaims('climate science', claims);
 
 			expect(result.claimCitations).toHaveLength(2);
 			expect(result.claimCitations?.[0]).toMatchObject({
@@ -105,10 +96,7 @@ describe('RAGPipeline enhanced features', () => {
 				'The moon is made of cheese', // No supporting evidence
 			];
 
-			const result = await pipeline.retrieveWithClaims(
-				'climate science',
-				claims,
-			);
+			const result = await pipeline.retrieveWithClaims('climate science', claims);
 
 			expect(result.claimCitations?.[1]).toMatchObject({
 				claim: 'The moon is made of cheese',

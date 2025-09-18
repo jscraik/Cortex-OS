@@ -86,9 +86,7 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 		<Modal isOpen={isOpen} onClose={onClose} title="Tool Servers" size="lg">
 			<div className="space-y-6">
 				<div>
-					<h3 className="text-lg font-medium text-gray-900 mb-4">
-						Add New Tool Server
-					</h3>
+					<h3 className="text-lg font-medium text-gray-900 mb-4">Add New Tool Server</h3>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label
@@ -101,45 +99,33 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 								id={serverNameId}
 								type="text"
 								value={newServer.name}
-								onChange={(e) =>
-									setNewServer({ ...newServer, name: e.target.value })
-								}
+								onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
 								placeholder="e.g., Code Interpreter"
 								className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 							/>
 						</div>
 						<div>
-							<label
-								htmlFor={serverUrlId}
-								className="block text-sm font-medium text-gray-700 mb-1"
-							>
+							<label htmlFor={serverUrlId} className="block text-sm font-medium text-gray-700 mb-1">
 								Server URL
 							</label>
 							<input
 								id={serverUrlId}
 								type="url"
 								value={newServer.url}
-								onChange={(e) =>
-									setNewServer({ ...newServer, url: e.target.value })
-								}
+								onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
 								placeholder="https://api.example.com"
 								className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 							/>
 						</div>
 						<div className="sm:col-span-2">
-							<label
-								htmlFor={apiKeyId}
-								className="block text-sm font-medium text-gray-700 mb-1"
-							>
+							<label htmlFor={apiKeyId} className="block text-sm font-medium text-gray-700 mb-1">
 								API Key (Optional)
 							</label>
 							<input
 								id={apiKeyId}
 								type="password"
 								value={newServer.apiKey}
-								onChange={(e) =>
-									setNewServer({ ...newServer, apiKey: e.target.value })
-								}
+								onChange={(e) => setNewServer({ ...newServer, apiKey: e.target.value })}
 								placeholder="Enter API key if required"
 								className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 							/>
@@ -157,9 +143,7 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 				</div>
 
 				<div>
-					<h3 className="text-lg font-medium text-gray-900 mb-4">
-						Configured Tool Servers
-					</h3>
+					<h3 className="text-lg font-medium text-gray-900 mb-4">Configured Tool Servers</h3>
 					{toolServers.length === 0 ? (
 						<div className="text-center py-8 text-gray-500">
 							<svg
@@ -199,9 +183,7 @@ const ToolServersModal: React.FC<ToolServersModalProps> = ({
 											/>
 										</div>
 										<div className="ml-4">
-											<div className="text-sm font-medium text-gray-900">
-												{server.name}
-											</div>
+											<div className="text-sm font-medium text-gray-900">{server.name}</div>
 											<div className="text-sm text-gray-500">{server.url}</div>
 										</div>
 									</div>

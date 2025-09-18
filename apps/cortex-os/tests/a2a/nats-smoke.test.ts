@@ -8,17 +8,17 @@ suite('NATS connectivity', () => {
 	test('starts container and accepts connections', async () => {
 		let container:
 			| {
-				stop: () => Promise<void>;
-			}
+					stop: () => Promise<void>;
+			  }
 			| undefined;
 		let connection:
 			| {
-				publish: (subject: string, payload?: Uint8Array) => Promise<void>;
-				flush: () => Promise<void>;
-				drain: () => Promise<void>;
-				close: () => Promise<void>;
-				isClosed: () => boolean;
-			}
+					publish: (subject: string, payload?: Uint8Array) => Promise<void>;
+					flush: () => Promise<void>;
+					drain: () => Promise<void>;
+					close: () => Promise<void>;
+					isClosed: () => boolean;
+			  }
 			| undefined;
 		try {
 			const testcontainers = await import('@testcontainers/nats');

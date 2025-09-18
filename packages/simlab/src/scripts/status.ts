@@ -4,9 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { simScenarioSchema } from '../schemas.js';
 
-const scenarioDir = fileURLToPath(
-	new URL('../../sim/scenarios', import.meta.url),
-);
+const scenarioDir = fileURLToPath(new URL('../../sim/scenarios', import.meta.url));
 const files = readdirSync(scenarioDir).filter((f) => f.endsWith('.json'));
 
 let scenarioCount = 0;

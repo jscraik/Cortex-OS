@@ -3,9 +3,7 @@
  */
 import { z } from 'zod';
 // ULID schema
-export const ULIDSchema = z
-	.string()
-	.regex(/^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/);
+export const ULIDSchema = z.string().regex(/^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/);
 // Trace context
 export const TraceContextSchema = z.object({
 	runId: ULIDSchema,
@@ -16,14 +14,7 @@ export const TraceContextSchema = z.object({
 // Metric labels
 export const MetricLabelsSchema = z.record(z.string(), z.string());
 // Log levels
-export const LogLevelSchema = z.enum([
-	'trace',
-	'debug',
-	'info',
-	'warn',
-	'error',
-	'fatal',
-]);
+export const LogLevelSchema = z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']);
 // Structured log entry
 export const LogEntrySchema = z.object({
 	runId: ULIDSchema,

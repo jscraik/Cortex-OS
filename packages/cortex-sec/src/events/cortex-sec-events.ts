@@ -46,18 +46,10 @@ export const SecurityPolicyUpdatedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type SecurityScanStartedEvent = z.infer<
-	typeof SecurityScanStartedEventSchema
->;
-export type VulnerabilityFoundEvent = z.infer<
-	typeof VulnerabilityFoundEventSchema
->;
-export type ComplianceViolationEvent = z.infer<
-	typeof ComplianceViolationEventSchema
->;
-export type SecurityPolicyUpdatedEvent = z.infer<
-	typeof SecurityPolicyUpdatedEventSchema
->;
+export type SecurityScanStartedEvent = z.infer<typeof SecurityScanStartedEventSchema>;
+export type VulnerabilityFoundEvent = z.infer<typeof VulnerabilityFoundEventSchema>;
+export type ComplianceViolationEvent = z.infer<typeof ComplianceViolationEventSchema>;
+export type SecurityPolicyUpdatedEvent = z.infer<typeof SecurityPolicyUpdatedEventSchema>;
 
 // Helper function to create security events
 export const createCortexSecEvent = {

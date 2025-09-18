@@ -27,14 +27,9 @@ export const createValidationResult = (
 /**
  * Check if a requirement matches certain keywords
  */
-export const hasRequirement = (
-	requirements: string[],
-	keywords: string[],
-): boolean => {
+export const hasRequirement = (requirements: string[], keywords: string[]): boolean => {
 	return requirements.some((req) =>
-		keywords.some((keyword) =>
-			req.toLowerCase().includes(keyword.toLowerCase()),
-		),
+		keywords.some((keyword) => req.toLowerCase().includes(keyword.toLowerCase())),
 	);
 };
 

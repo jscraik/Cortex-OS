@@ -15,10 +15,7 @@ const config = {
 
 describe('processPendingMessages', () => {
 	it('processes messages and dead-letters failures', async () => {
-		const messages = [
-			{ id: '1', retryCount: 0 } as unknown,
-			{ id: '2', retryCount: 2 } as any,
-		];
+		const messages = [{ id: '1', retryCount: 0 } as unknown, { id: '2', retryCount: 2 } as any];
 		const repo = {
 			findByStatus: vi.fn().mockResolvedValue(messages),
 			updateStatus: vi.fn().mockResolvedValue(undefined),
@@ -38,19 +35,11 @@ describe('processPendingMessages', () => {
 				await repo.incrementRetry(msg.id, err);
 			});
 
-		const result = await processPendingMessages(
-			repo,
-			config,
-			processMessage,
-			handleError,
-		);
+		const result = await processPendingMessages(repo, config, processMessage, handleError);
 
 		expect(repo.updateStatus).toHaveBeenCalledTimes(2);
 		expect(repo.markProcessed).toHaveBeenCalledTimes(1);
-		expect(repo.moveToDeadLetter).toHaveBeenCalledWith(
-			'2',
-			'Max retries exceeded',
-		);
+		expect(repo.moveToDeadLetter).toHaveBeenCalledWith('2', 'Max retries exceeded');
 		expect(repo.incrementRetry).toHaveBeenCalledWith('2', 'boom');
 		expect(result).toMatchObject({
 			processed: 2,
@@ -64,10 +53,7 @@ describe('processPendingMessages', () => {
 
 describe('processRetryMessages', () => {
 	it('processes retryable messages', async () => {
-		const messages = [
-			{ id: '1', retryCount: 0 } as unknown,
-			{ id: '2', retryCount: 1 } as any,
-		];
+		const messages = [{ id: '1', retryCount: 0 } as unknown, { id: '2', retryCount: 1 } as any];
 		const repo = {
 			findReadyForRetry: vi.fn().mockResolvedValue(messages),
 			markProcessed: vi.fn().mockResolvedValue(undefined),
@@ -85,12 +71,7 @@ describe('processRetryMessages', () => {
 				await repo.incrementRetry(msg.id, err);
 			});
 
-		const result = await processRetryMessages(
-			repo,
-			config,
-			processMessage,
-			handleError,
-		);
+		const result = await processRetryMessages(repo, config, processMessage, handleError);
 
 		expect(repo.markProcessed).toHaveBeenCalledTimes(1);
 		expect(repo.incrementRetry).toHaveBeenCalledWith('2', 'boom');

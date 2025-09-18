@@ -86,9 +86,7 @@ export class PolicyHotReloader extends EventEmitter {
 			// fs.watch can fail on some network FS – log & continue with watchFile only
 			this.emit(
 				'policyError',
-				new Error(
-					`fs.watch unavailable: ${err instanceof Error ? err.message : String(err)}`,
-				),
+				new Error(`fs.watch unavailable: ${err instanceof Error ? err.message : String(err)}`),
 			);
 		}
 
@@ -127,9 +125,7 @@ export class PolicyHotReloader extends EventEmitter {
 	/**
 	 * Load policy from file with validation
 	 */
-	private async loadPolicyFromFile(
-		opts: { initial?: boolean } = {},
-	): Promise<void> {
+	private async loadPolicyFromFile(opts: { initial?: boolean } = {}): Promise<void> {
 		try {
 			const fileContent = await fsp.readFile(this.policyFilePath, 'utf-8');
 			let parsedPolicy: any;
@@ -237,9 +233,7 @@ export class PolicyHotReloader extends EventEmitter {
 			// Surface underlying error once for observability
 			this.emit(
 				'policyError',
-				new Error(
-					`Polling read failed: ${e instanceof Error ? e.message : String(e)}`,
-				),
+				new Error(`Polling read failed: ${e instanceof Error ? e.message : String(e)}`),
 			);
 		}
 	}

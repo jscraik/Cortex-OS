@@ -9,11 +9,7 @@ interface RegenerateMenuProps {
 	onEdit?: () => void;
 }
 
-const RegenerateMenu: React.FC<RegenerateMenuProps> = ({
-	onRegenerate,
-	onBranch,
-	onEdit,
-}) => {
+const RegenerateMenu: React.FC<RegenerateMenuProps> = ({ onRegenerate, onBranch, onEdit }) => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (

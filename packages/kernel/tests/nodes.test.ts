@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEvidence } from '../src/lib/phase-utils.js';
-import {
-	runBuildNode,
-	runEvaluationNode,
-	runStrategyNode,
-} from '../src/nodes/index.js';
+import { runBuildNode, runEvaluationNode, runStrategyNode } from '../src/nodes/index.js';
 import { createInitialPRPState } from '../src/state.js';
 
 describe('PRP nodes', () => {
@@ -20,9 +16,7 @@ describe('PRP nodes', () => {
 		expect(state.validationResults.strategy?.passed).toBe(true);
 
 		state = await runBuildNode(state);
-		state.evidence.push(
-			createEvidence(state, 'extra', 'test', 'extra', {}, 'build'),
-		);
+		state.evidence.push(createEvidence(state, 'extra', 'test', 'extra', {}, 'build'));
 		expect(state.validationResults.build?.passed).toBe(true);
 
 		state = await runEvaluationNode(state);

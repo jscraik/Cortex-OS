@@ -24,9 +24,7 @@ const WebSearchResults: React.FC<WebSearchResultsProps> = ({ results }) => {
 	return (
 		<div className="web-search-results mt-2 border-t border-gray-200 pt-2">
 			<div className="flex items-center justify-between">
-				<h4 className="text-xs font-medium text-gray-700">
-					Web Search Results
-				</h4>
+				<h4 className="text-xs font-medium text-gray-700">Web Search Results</h4>
 				{results.length > 3 && (
 					<button
 						onClick={() => setExpanded(!expanded)}

@@ -33,17 +33,13 @@ const SearchQuerySchema = z.object({
 		.optional(),
 	capabilities: z
 		.string()
-		.transform(
-			(str) => str.split(',') as Array<'tools' | 'resources' | 'prompts'>,
-		)
+		.transform((str) => str.split(',') as Array<'tools' | 'resources' | 'prompts'>)
 		.optional(),
 
 	limit: z.coerce.number().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
 
 	offset: z.coerce.number().min(0).default(0),
-	sortBy: z
-		.enum(['relevance', 'downloads', 'rating', 'updated'])
-		.default('relevance'),
+	sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
 	sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
@@ -87,8 +83,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 						tags: { type: 'string', description: 'Comma-separated tags' },
 						capabilities: {
 							type: 'string',
-							description:
-								'Comma-separated capabilities (tools,resources,prompts)',
+							description: 'Comma-separated capabilities (tools,resources,prompts)',
 						},
 
 						limit: {
@@ -272,8 +267,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 			schema: {
 				tags: ['servers'],
 				summary: 'Get installation instructions',
-				description:
-					'Get client-specific installation instructions for a server',
+				description: 'Get client-specific installation instructions for a server',
 				params: {
 					type: 'object',
 					properties: {
@@ -289,14 +283,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					properties: {
 						client: {
 							type: 'string',
-							enum: [
-								'claude',
-								'cline',
-								'cursor',
-								'continue',
-								'devin',
-								'windsurf',
-							],
+							enum: ['claude', 'cline', 'cursor', 'continue', 'devin', 'windsurf'],
 							description: 'Target client for installation instructions',
 						},
 					},
@@ -361,8 +348,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 
 			switch (client) {
 				case 'claude': {
-					command =
-						typeof installData.claude === 'string' ? installData.claude : '';
+					command = typeof installData.claude === 'string' ? installData.claude : '';
 					instructions = command
 						? `Run this command in Claude Desktop: ${command}`
 						: 'Install via Claude settings';
@@ -370,24 +356,19 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					break;
 				}
 				case 'cline': {
-					command =
-						typeof installData.cline === 'string' ? installData.cline : '';
+					command = typeof installData.cline === 'string' ? installData.cline : '';
 					instructions = command
 						? `Run this command in Cline: ${command}`
 						: 'Install via Cline MCP settings';
 					break;
 				}
 				case 'cursor': {
-					command =
-						typeof installData.cursor === 'string' ? installData.cursor : '';
+					command = typeof installData.cursor === 'string' ? installData.cursor : '';
 					instructions = command || 'Add to Cursor MCP configuration';
 					break;
 				}
 				case 'continue': {
-					command =
-						typeof installData.continue === 'string'
-							? installData.continue
-							: '';
+					command = typeof installData.continue === 'string' ? installData.continue : '';
 					instructions = command || 'Configure in Continue settings';
 					break;
 				}
@@ -396,9 +377,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					return {
 						success: true,
 						data: {
-							available: Object.keys(installData).filter(
-								(key) => key !== 'json',
-							),
+							available: Object.keys(installData).filter((key) => key !== 'json'),
 							claude: installData.claude,
 							cline: installData.cline,
 							cursor: installData.cursor,

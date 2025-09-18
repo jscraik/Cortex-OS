@@ -17,12 +17,9 @@ type SchemaValidator<T> = ValidateFunction<T>;
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 
-const toolRequestValidator: SchemaValidator<ToolRequest> =
-	ajv.compile(toolRequestSchema);
-const toolResponseValidator: SchemaValidator<ToolResponse> =
-	ajv.compile(toolResponseSchema);
-const toolErrorValidator: SchemaValidator<ToolErrorResponse> =
-	ajv.compile(toolErrorSchema);
+const toolRequestValidator: SchemaValidator<ToolRequest> = ajv.compile(toolRequestSchema);
+const toolResponseValidator: SchemaValidator<ToolResponse> = ajv.compile(toolResponseSchema);
+const toolErrorValidator: SchemaValidator<ToolErrorResponse> = ajv.compile(toolErrorSchema);
 
 function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
 	if (!errors?.length) {
@@ -31,11 +28,7 @@ function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
 
 	return errors.map((error) => {
 		const path = error.instancePath
-			? error.instancePath
-					.replace(/^\//, '')
-					.split('/')
-					.filter(Boolean)
-					.join('.')
+			? error.instancePath.replace(/^\//, '').split('/').filter(Boolean).join('.')
 			: '';
 
 		if (error.keyword === 'required' && 'missingProperty' in error.params) {
@@ -50,30 +43,21 @@ function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
 	});
 }
 
-function validateWith<T>(
-	validator: SchemaValidator<T>,
-	payload: unknown,
-): ValidationResult<T> {
+function validateWith<T>(validator: SchemaValidator<T>, payload: unknown): ValidationResult<T> {
 	if (validator(payload)) {
 		return { success: true, data: payload };
 	}
 	return { success: false, errors: formatErrors(validator.errors) };
 }
 
-export function validateToolRequest(
-	payload: unknown,
-): ValidationResult<ToolRequest> {
+export function validateToolRequest(payload: unknown): ValidationResult<ToolRequest> {
 	return validateWith(toolRequestValidator, payload);
 }
 
-export function validateToolResponse(
-	payload: unknown,
-): ValidationResult<ToolResponse> {
+export function validateToolResponse(payload: unknown): ValidationResult<ToolResponse> {
 	return validateWith(toolResponseValidator, payload);
 }
 
-export function validateToolErrorResponse(
-	payload: unknown,
-): ValidationResult<ToolErrorResponse> {
+export function validateToolErrorResponse(payload: unknown): ValidationResult<ToolErrorResponse> {
 	return validateWith(toolErrorValidator, payload);
 }

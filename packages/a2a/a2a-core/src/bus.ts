@@ -1,9 +1,6 @@
 import { Envelope } from '../../a2a-contracts/src/envelope.js';
 import type { TopicACL } from '../../a2a-contracts/src/topic-acl.js';
-import {
-	createTraceContext,
-	injectTraceContext,
-} from '../../a2a-contracts/src/trace-context.js';
+import { createTraceContext, injectTraceContext } from '../../a2a-contracts/src/trace-context.js';
 import { busMetrics } from './metrics.js';
 import type { SchemaRegistry } from './schema-registry.js';
 import { getCurrentTraceContext } from './trace-context-manager.js';
@@ -45,10 +42,7 @@ export function createBus(
 	}
 	function markSeen(id: string) {
 		if (!enableIdempotency) return;
-		const expiry =
-			idempotencyTtlMs > 0
-				? Date.now() + idempotencyTtlMs
-				: Number.MAX_SAFE_INTEGER;
+		const expiry = idempotencyTtlMs > 0 ? Date.now() + idempotencyTtlMs : Number.MAX_SAFE_INTEGER;
 		seen.set(id, expiry);
 	}
 	function hasSeen(id: string): boolean {
@@ -136,10 +130,7 @@ export function createBus(
 					if (m.id) markSeen(m.id);
 				}
 			} catch (error) {
-				console.error(
-					`[A2A Bus] Error handling message type ${m.type}:`,
-					error,
-				);
+				console.error(`[A2A Bus] Error handling message type ${m.type}:`, error);
 			}
 		});
 	};

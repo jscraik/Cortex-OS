@@ -78,8 +78,7 @@ function computeBranchSkips(
 	const preds = buildPredecessors(graph);
 
 	// seed queue with unchosen direct targets
-	for (const t of allTargets)
-		if (!chosenTargets.has(t)) seedSkip(t, toSkip, queue);
+	for (const t of allTargets) if (!chosenTargets.has(t)) seedSkip(t, toSkip, queue);
 
 	while (queue.length) {
 		const u = queue.shift();
@@ -116,16 +115,7 @@ function enqueueChildrenIfAllPredsSkipped(args: {
 	toSkip: Set<string>;
 	queue: string[];
 }): void {
-	const {
-		graph,
-		preds,
-		node: u,
-		branchNode,
-		allTargets,
-		chosenTargets,
-		toSkip,
-		queue,
-	} = args;
+	const { graph, preds, node: u, branchNode, allTargets, chosenTargets, toSkip, queue } = args;
 	for (const v of graph[u] ?? []) {
 		if (
 			shouldSkipChild({
@@ -230,31 +220,13 @@ async function handleBranch(
 	workflowId?: string,
 ): Promise<void> {
 	const pred = await branch.predicate({ signal });
-	const chosenTargets = new Set<string>(
-		pred ? branch.trueTargets : branch.falseTargets,
-	);
-	const allTargets = new Set<string>([
-		...branch.trueTargets,
-		...branch.falseTargets,
-	]);
-	const toSkip = computeBranchSkips(
-		workflow.graph,
-		node,
-		chosenTargets,
-		allTargets,
-	);
+	const chosenTargets = new Set<string>(pred ? branch.trueTargets : branch.falseTargets);
+	const allTargets = new Set<string>([...branch.trueTargets, ...branch.falseTargets]);
+	const toSkip = computeBranchSkips(workflow.graph, node, chosenTargets, allTargets);
 	for (const s of toSkip) skipped.add(s);
 	const fn = workflow.steps[node];
 	if (fn) {
-		await executeStepWithRetry(
-			node,
-			fn,
-			undefined,
-			signal,
-			executed,
-			workflow.hooks,
-			workflowId,
-		);
+		await executeStepWithRetry(node, fn, undefined, signal, executed, workflow.hooks, workflowId);
 	}
 }
 
@@ -274,10 +246,7 @@ async function handleLoop<T>(
 	}
 }
 
-export async function run(
-	workflow: Workflow,
-	opts: RunOptions = {},
-): Promise<string[]> {
+export async function run(workflow: Workflow, opts: RunOptions = {}): Promise<string[]> {
 	validateDAG(workflow.graph);
 	const order = topoSort(workflow.graph);
 	const executed: string[] = [];
@@ -323,15 +292,7 @@ export async function run(
 				if (workflow.compensation) {
 					workflow.compensation.trackExecution(node, { type: 'branch' });
 				}
-				await handleBranch(
-					workflow,
-					node,
-					branch,
-					signal,
-					skipped,
-					executed,
-					opts.workflowId,
-				);
+				await handleBranch(workflow, node, branch, signal, skipped, executed, opts.workflowId);
 				continue;
 			}
 
@@ -341,14 +302,7 @@ export async function run(
 				if (workflow.compensation) {
 					workflow.compensation.trackExecution(node, { type: 'loop' });
 				}
-				await handleLoop(
-					node,
-					loop,
-					signal,
-					executed,
-					workflow.hooks,
-					opts.workflowId,
-				);
+				await handleLoop(node, loop, signal, executed, workflow.hooks, opts.workflowId);
 				continue;
 			}
 
@@ -408,9 +362,7 @@ export async function run(
 						console.error('Compensation failed:', compError.error);
 						if (isCancelled) {
 							cancellationController.addCleanupError(
-								new Error(
-									`Compensation failed for ${compError.stepId}: ${compError.error}`,
-								),
+								new Error(`Compensation failed for ${compError.stepId}: ${compError.error}`),
 							);
 						}
 					}

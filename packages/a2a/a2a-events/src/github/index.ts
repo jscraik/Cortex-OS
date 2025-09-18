@@ -11,11 +11,7 @@ export * from './repository';
 export * from './routing';
 export * from './workflow';
 
-import {
-	type A2AEventEnvelope,
-	createA2AEventEnvelope,
-	type GitHubEventData,
-} from './envelope.js';
+import { type A2AEventEnvelope, createA2AEventEnvelope, type GitHubEventData } from './envelope.js';
 import { type ErrorEvent, isErrorEvent, validateErrorEvent } from './error.js';
 
 import { type IssueEvent, isIssueEvent, validateIssueEvent } from './issue.js';
@@ -25,16 +21,8 @@ import {
 	validatePullRequestEvent,
 } from './pull-request.js';
 // Type Guards and Validators
-import {
-	isRepositoryEvent,
-	type RepositoryEvent,
-	validateRepositoryEvent,
-} from './repository.js';
-import {
-	isWorkflowEvent,
-	validateWorkflowEvent,
-	type WorkflowEvent,
-} from './workflow.js';
+import { isRepositoryEvent, type RepositoryEvent, validateRepositoryEvent } from './repository.js';
+import { isWorkflowEvent, validateWorkflowEvent, type WorkflowEvent } from './workflow.js';
 
 // Union type for all GitHub events
 export type GitHubEvent =
@@ -80,9 +68,7 @@ export function validateGitHubEvent(data: unknown): GitHubEvent {
 		return validateErrorEvent(data);
 	}
 
-	throw new Error(
-		'Invalid GitHub event data: does not match any known event schema',
-	);
+	throw new Error('Invalid GitHub event data: does not match any known event schema');
 }
 
 // Event type detection
@@ -170,8 +156,7 @@ export function analyzeGitHubEvents(events: GitHubEvent[]): GitHubEventStats {
 
 	for (const event of events) {
 		// Count by type
-		stats.eventsByType[event.event_type] =
-			(stats.eventsByType[event.event_type] || 0) + 1;
+		stats.eventsByType[event.event_type] = (stats.eventsByType[event.event_type] || 0) + 1;
 
 		// Count by action (if present)
 		if (hasAction(event)) {
@@ -208,12 +193,9 @@ export function analyzeGitHubEvents(events: GitHubEvent[]): GitHubEventStats {
 	// Calculate derived stats
 	stats.uniqueRepositories = repositories.size;
 	stats.uniqueActors = actors.size;
-	stats.timeSpan.durationHours =
-		(latestTime.getTime() - earliestTime.getTime()) / (1000 * 60 * 60);
+	stats.timeSpan.durationHours = (latestTime.getTime() - earliestTime.getTime()) / (1000 * 60 * 60);
 	stats.averageEventsPerHour =
-		stats.timeSpan.durationHours > 0
-			? stats.totalEvents / stats.timeSpan.durationHours
-			: 0;
+		stats.timeSpan.durationHours > 0 ? stats.totalEvents / stats.timeSpan.durationHours : 0;
 
 	// Top repositories
 	stats.topRepositories = Array.from(repoCount.entries())
@@ -348,10 +330,7 @@ function groupEvents(
 				key = event.event_type;
 				break;
 			case 'repository':
-				key =
-					'repository' in event && event.repository
-						? event.repository.full_name
-						: 'unknown';
+				key = 'repository' in event && event.repository ? event.repository.full_name : 'unknown';
 				break;
 			case 'actor':
 				key = 'actor' in event && event.actor ? event.actor.login : 'unknown';
@@ -388,10 +367,7 @@ export async function processEventStream(
 		try {
 			if (isRepositoryEvent(eventData) && processor.onRepositoryEvent) {
 				await processor.onRepositoryEvent(eventData);
-			} else if (
-				isPullRequestEvent(eventData) &&
-				processor.onPullRequestEvent
-			) {
+			} else if (isPullRequestEvent(eventData) && processor.onPullRequestEvent) {
 				await processor.onPullRequestEvent(eventData);
 			} else if (isIssueEvent(eventData) && processor.onIssueEvent) {
 				await processor.onIssueEvent(eventData);

@@ -8,11 +8,7 @@ interface SettingsPageProps {
 	onToggleSidebar: () => void;
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({
-	theme,
-	onThemeChange,
-	onToggleSidebar,
-}) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ theme, onThemeChange, onToggleSidebar }) => {
 	return (
 		<div className="flex h-screen bg-gray-100">
 			{/* Main Content */}

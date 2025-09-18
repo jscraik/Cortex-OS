@@ -12,10 +12,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-	createPRPOrchestrator,
-	type PRPOrchestrator,
-} from '../orchestrator.js';
+import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 describe('PRPOrchestrator - TDD Implementation', () => {
 	let orchestrator: PRPOrchestrator;
@@ -77,8 +74,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 				requirements: ['collect SME feedback'],
 			};
 
-			const prompt =
-				await orchestrator.generateProductRequirementsPrompt(blueprint);
+			const prompt = await orchestrator.generateProductRequirementsPrompt(blueprint);
 			expect(prompt).toContain('Product Requirements for');
 			expect(prompt).toContain('strategy-neuron');
 		});
@@ -87,9 +83,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 			const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
 			orchestrator.registerNeuron(mockNeuron);
 
-			await expect(
-				orchestrator.generateProductRequirementsPrompt({} as any),
-			).rejects.toThrow();
+			await expect(orchestrator.generateProductRequirementsPrompt({} as any)).rejects.toThrow();
 		});
 	});
 
@@ -166,10 +160,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 });
 
 // Helper function to create mock neurons for testing
-function createMockNeuron(
-	id: string,
-	phase: 'strategy' | 'build' | 'evaluation',
-) {
+function createMockNeuron(id: string, phase: 'strategy' | 'build' | 'evaluation') {
 	return {
 		id,
 		role: `test-${phase}`,

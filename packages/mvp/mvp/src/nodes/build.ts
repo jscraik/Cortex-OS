@@ -37,47 +37,22 @@ export class BuildNode {
 		if (!backendValidation.passed) {
 			blockers.push('Backend compilation or tests failed');
 		}
-		evidence.push(
-			this.createEvidence(
-				'backend',
-				'test',
-				'backend_validation',
-				backendValidation,
-			),
-		);
+		evidence.push(this.createEvidence('backend', 'test', 'backend_validation', backendValidation));
 
 		const apiValidation = await this.apiSchemaValidator.validate(state);
 		if (!apiValidation.passed) {
 			blockers.push('API schema validation failed');
 		}
-		evidence.push(
-			this.createEvidence(
-				'api',
-				'analysis',
-				'api_schema_validation',
-				apiValidation,
-			),
-		);
+		evidence.push(this.createEvidence('api', 'analysis', 'api_schema_validation', apiValidation));
 
 		const securityScan = await this.securityScanner.runSecurityScan(state);
 		if (securityScan.blockers > 0) {
-			blockers.push(
-				`Security scan found ${securityScan.blockers} critical issues`,
-			);
+			blockers.push(`Security scan found ${securityScan.blockers} critical issues`);
 		}
 		if (securityScan.majors > 3) {
-			majors.push(
-				`Security scan found ${securityScan.majors} major issues (limit: 3)`,
-			);
+			majors.push(`Security scan found ${securityScan.majors} major issues (limit: 3)`);
 		}
-		evidence.push(
-			this.createEvidence(
-				'security',
-				'analysis',
-				'security_scanner',
-				securityScan,
-			),
-		);
+		evidence.push(this.createEvidence('security', 'analysis', 'security_scanner', securityScan));
 
 		const frontendValidation = await this.frontendValidator.validate(state);
 		if (!frontendValidation.passed) {
@@ -91,12 +66,7 @@ export class BuildNode {
 			}
 		}
 		evidence.push(
-			this.createEvidence(
-				'frontend',
-				'analysis',
-				'frontend_validation',
-				frontendValidation,
-			),
+			this.createEvidence('frontend', 'analysis', 'frontend_validation', frontendValidation),
 		);
 
 		const docsValidation = await this.documentationValidator.validate(state);

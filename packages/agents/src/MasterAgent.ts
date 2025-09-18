@@ -6,11 +6,7 @@
  */
 
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import {
-	Annotation,
-	MessagesAnnotation,
-	StateGraph,
-} from '@langchain/langgraph';
+import { Annotation, MessagesAnnotation, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
 
 // Extended state annotation for agent coordination
@@ -31,12 +27,7 @@ export const SubAgentConfigSchema = z.object({
 	capabilities: z.array(z.string()),
 	model_targets: z.array(z.string()).default(['glm-4.5-mlx']),
 	tools: z.array(z.string()).default([]),
-	specialization: z.enum([
-		'code-analysis',
-		'test-generation',
-		'documentation',
-		'security',
-	]),
+	specialization: z.enum(['code-analysis', 'test-generation', 'documentation', 'security']),
 });
 
 export type SubAgentConfig = z.infer<typeof SubAgentConfigSchema>;
@@ -60,9 +51,7 @@ export const createMasterAgentGraph = (config: {
 	/**
 	 * Intelligence & Scheduler - Route to appropriate sub-agent
 	 */
-	const intelligenceScheduler = async (
-		state: AgentState,
-	): Promise<Partial<AgentState>> => {
+	const intelligenceScheduler = async (state: AgentState): Promise<Partial<AgentState>> => {
 		const lastMessage = state.messages[state.messages.length - 1];
 		const content = lastMessage?.content || '';
 
@@ -94,8 +83,7 @@ export const createMasterAgentGraph = (config: {
 		try {
 			// Simulate MCP tool execution
 			const result = await executeMCPTool(`agent.${currentAgent}`, {
-				message:
-					typeof content === 'string' ? content : JSON.stringify(content),
+				message: typeof content === 'string' ? content : JSON.stringify(content),
 				context: state.taskType,
 			});
 

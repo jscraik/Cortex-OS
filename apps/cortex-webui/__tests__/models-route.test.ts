@@ -23,9 +23,7 @@ vi.mock('node:fs', async (importOriginal) => {
 
 describe('models route', () => {
 	it('returns models list with default and minimal shape', async () => {
-		const { getUiModels } = await import(
-			'../backend/src/controllers/uiModelsController'
-		);
+		const { getUiModels } = await import('../backend/src/controllers/uiModelsController');
 
 		// Create mock request and response objects
 		const req = {};
@@ -51,9 +49,7 @@ describe('models route', () => {
 		}
 
 		// default should be present and exist in the set when config provides it
-		expect(typeof body.default === 'string' || body.default === null).toBe(
-			true,
-		);
+		expect(typeof body.default === 'string' || body.default === null).toBe(true);
 		if (body.default) {
 			const ids = new Set(body.models.map((m: any) => m.id));
 			expect(ids.has(body.default)).toBe(true);

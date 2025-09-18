@@ -12,8 +12,7 @@ export class PyEmbedder {
 			});
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const json = (await res.json()) as { embeddings: number[][] };
-			if (!json || !Array.isArray(json.embeddings))
-				throw new Error('Invalid embed response');
+			if (!json || !Array.isArray(json.embeddings)) throw new Error('Invalid embed response');
 			return json.embeddings;
 		} catch (err) {
 			throw new Error(`Python embedder failed: ${err}`);

@@ -16,8 +16,7 @@ import { z } from 'zod';
 import { createAgentRoute } from './lib/create-agent-route.js';
 
 function getMCPServerInfo(): ServerInfo | null {
-	const transport = (process.env.MCP_TRANSPORT ||
-		'') as ServerInfo['transport'];
+	const transport = (process.env.MCP_TRANSPORT || '') as ServerInfo['transport'];
 	const name = process.env.MCP_NAME || 'gateway-mcp';
 	if (!transport) return null;
 	if (transport === 'stdio') {

@@ -3,10 +3,7 @@
  * @description Documentation completeness validation
  */
 
-import type {
-	GateValidator,
-	ValidationResult,
-} from '../lib/validation-types.js';
+import type { GateValidator, ValidationResult } from '../lib/validation-types.js';
 import type { PRPState } from '../state.js';
 
 export class DocumentationValidator implements GateValidator {

@@ -9,11 +9,7 @@ export interface WebhookValidationResult {
 }
 
 // Cross-platform HMAC implementation
-const createHmac = async (
-	algorithm: string,
-	key: string,
-	data: Uint8Array,
-): Promise<string> => {
+const createHmac = async (algorithm: string, key: string, data: Uint8Array): Promise<string> => {
 	if (typeof crypto !== 'undefined' && crypto.subtle) {
 		// Cloudflare Workers / Web Crypto API
 		const keyBuffer = new TextEncoder().encode(key);
@@ -74,11 +70,7 @@ export const validateWebhookSignature = async (
 export const validateWebhookHeaders = (
 	headers: Record<string, string | undefined>,
 ): WebhookValidationResult => {
-	const required = [
-		'x-github-event',
-		'x-github-delivery',
-		'x-hub-signature-256',
-	];
+	const required = ['x-github-event', 'x-github-delivery', 'x-hub-signature-256'];
 	const missing = required.filter((header) => !headers[header]);
 
 	if (missing.length > 0) {

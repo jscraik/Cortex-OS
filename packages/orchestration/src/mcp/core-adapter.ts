@@ -2,12 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { auditEvent, record } from '../lib/audit.js';
 import { type OrchestrationFacade, provideOrchestration } from '../service.js';
-import type {
-	Agent,
-	OrchestrationStrategy,
-	PlanningContext,
-	Task,
-} from '../types.js';
+import type { Agent, OrchestrationStrategy, PlanningContext, Task } from '../types.js';
 
 export interface WorkflowExecutionPayload {
 	cacheKey: string;
@@ -117,21 +112,9 @@ function resetRateWindow(now: number) {
 	}
 }
 
-async function recordAuditSafely(
-	tool: string,
-	action: string,
-	workflowId: string,
-	data: unknown,
-) {
+async function recordAuditSafely(tool: string, action: string, workflowId: string, data: unknown) {
 	try {
-		await record(
-			auditEvent(
-				tool,
-				action,
-				{ runId: workflowId, traceId: randomUUID() },
-				data,
-			),
-		);
+		await record(auditEvent(tool, action, { runId: workflowId, traceId: randomUUID() }, data));
 	} catch {
 		// swallow audit failures to avoid blocking orchestration execution
 	}
@@ -143,9 +126,7 @@ export async function executeWorkflowThroughCore(
 	const now = Date.now();
 	resetRateWindow(now);
 	if (activeExecutions >= config.rateLimit.maxConcurrent) {
-		throw new RateLimitError(
-			Math.max(config.rateLimit.windowMs - (now - rateWindowStart), 1),
-		);
+		throw new RateLimitError(Math.max(config.rateLimit.windowMs - (now - rateWindowStart), 1));
 	}
 	const cached = getFromCache(payload.cacheKey, now);
 	if (cached) {
@@ -154,46 +135,27 @@ export async function executeWorkflowThroughCore(
 
 	activeExecutions += 1;
 	try {
-		await recordAuditSafely(
-			'orchestration.workflow',
-			'started',
-			payload.workflowId,
-			{ taskId: payload.task.id },
-		);
+		await recordAuditSafely('orchestration.workflow', 'started', payload.workflowId, {
+			taskId: payload.task.id,
+		});
 
 		const orchestrator = getFacade();
 		const result = await withTransaction(async () =>
-			orchestrator.run(
-				payload.task,
-				payload.agents,
-				payload.planningContext,
-				[],
-			),
+			orchestrator.run(payload.task, payload.agents, payload.planningContext, []),
 		);
 
 		setCache(payload.cacheKey, result, now);
 
-		await recordAuditSafely(
-			'orchestration.workflow',
-			'completed',
-			payload.workflowId,
-			{
-				success: Boolean((result as { success?: boolean }).success ?? true),
-				orchestrationId: (result as { orchestrationId?: string })
-					.orchestrationId,
-			},
-		);
+		await recordAuditSafely('orchestration.workflow', 'completed', payload.workflowId, {
+			success: Boolean((result as { success?: boolean }).success ?? true),
+			orchestrationId: (result as { orchestrationId?: string }).orchestrationId,
+		});
 
 		return { result, fromCache: false };
 	} catch (error) {
-		await recordAuditSafely(
-			'orchestration.workflow',
-			'failed',
-			payload.workflowId,
-			{
-				message: error instanceof Error ? error.message : String(error),
-			},
-		);
+		await recordAuditSafely('orchestration.workflow', 'failed', payload.workflowId, {
+			message: error instanceof Error ? error.message : String(error),
+		});
 		throw error;
 	} finally {
 		activeExecutions = Math.max(0, activeExecutions - 1);
@@ -229,10 +191,7 @@ export function __resetOrchestrationMcpState() {
 		cachedFacade = null;
 		try {
 			const shutdownResult = facade.shutdown();
-			if (
-				shutdownResult &&
-				typeof (shutdownResult as Promise<unknown>).catch === 'function'
-			) {
+			if (shutdownResult && typeof (shutdownResult as Promise<unknown>).catch === 'function') {
 				(shutdownResult as Promise<unknown>).catch(() => {});
 			}
 		} catch {

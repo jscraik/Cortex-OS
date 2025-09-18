@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { configManager } from '../src/config.js';
-import {
-	formatCurrent,
-	getCurrent,
-	listAdapters,
-	setCurrent,
-} from '../src/models.js';
+import { formatCurrent, getCurrent, listAdapters, setCurrent } from '../src/models.js';
 
 let _originalConfig: unknown;
 
@@ -45,11 +40,10 @@ describe('PermissionEngine', () => {
 	});
 
 	it('executes in auto mode', async () => {
-		const { executed, result } = await guardShell(
-			'noop',
-			() => Promise.resolve('ok'),
-			{ modeOverride: 'auto', logger: { info: () => {}, warn: () => {} } },
-		);
+		const { executed, result } = await guardShell('noop', () => Promise.resolve('ok'), {
+			modeOverride: 'auto',
+			logger: { info: () => {}, warn: () => {} },
+		});
 		expect(executed).toBe(true);
 		expect(result).toBe('ok');
 	});

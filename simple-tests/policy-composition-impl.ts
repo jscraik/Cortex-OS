@@ -25,11 +25,7 @@ export type ConflictType =
 	| 'scope-overlap'
 	| 'mutual-exclusion';
 
-export type MergeStrategy =
-	| 'union'
-	| 'intersection'
-	| 'most-restrictive'
-	| 'least-restrictive';
+export type MergeStrategy = 'union' | 'intersection' | 'most-restrictive' | 'least-restrictive';
 
 export interface Policy {
 	type: PolicyType;
@@ -164,9 +160,7 @@ const policyCompositionSchema = z.object({
 });
 
 // Core validation functions
-export function validatePolicyComposition(
-	composition: PolicyComposition,
-): CompositionResult {
+export function validatePolicyComposition(composition: PolicyComposition): CompositionResult {
 	const errors: string[] = [];
 	const warnings: string[] = [];
 
@@ -231,21 +225,15 @@ function checkMcpToolsConflicts(policies: Policy[]): PolicyConflict[] {
 		})
 		.filter((m): m is string => typeof m === 'string');
 	const unique = [...new Set(modes)];
-	if (
-		unique.length > 1 &&
-		unique.includes('allowlist') &&
-		unique.includes('denylist')
-	) {
+	if (unique.length > 1 && unique.includes('allowlist') && unique.includes('denylist')) {
 		return [
 			{
 				id: `conflict-${Date.now()}`,
 				type: 'mode-conflict',
-				description:
-					'Cannot combine allowlist and denylist modes for MCP tools',
+				description: 'Cannot combine allowlist and denylist modes for MCP tools',
 				affectedPolicies: policies.map((p) => p.name),
 				severity: 'high',
-				suggestedResolution:
-					'Choose either allowlist or denylist mode consistently',
+				suggestedResolution: 'Choose either allowlist or denylist mode consistently',
 			},
 		];
 	}
@@ -256,8 +244,7 @@ function checkResourceLimitConflicts(policies: Policy[]): PolicyConflict[] {
 	const memoryLimits = policies
 		.map((p) => {
 			const cfg = p.config as Record<string, unknown> | undefined;
-			const limitVal =
-				cfg && typeof cfg.maxMemory === 'string' ? cfg.maxMemory : undefined;
+			const limitVal = cfg && typeof cfg.maxMemory === 'string' ? cfg.maxMemory : undefined;
 			return { name: p.name, limit: limitVal };
 		})
 		.filter((l) => typeof l.limit === 'string');
@@ -283,9 +270,7 @@ interface AccessControlConfig {
 	scope?: string;
 	paths?: string[];
 }
-function extractAccessControl(
-	cfg: Record<string, unknown>,
-): AccessControlConfig {
+function extractAccessControl(cfg: Record<string, unknown>): AccessControlConfig {
 	const scope = typeof cfg.scope === 'string' ? cfg.scope : undefined;
 	const pathsRaw = cfg.paths;
 	let paths: string[] | undefined;
@@ -323,10 +308,7 @@ function checkAccessControlConflicts(policies: Policy[]): PolicyConflict[] {
 	return conflicts;
 }
 
-function checkTypeSpecificConflicts(
-	type: string,
-	policies: Policy[],
-): PolicyConflict[] {
+function checkTypeSpecificConflicts(type: string, policies: Policy[]): PolicyConflict[] {
 	if (type === 'mcp-tools') return checkMcpToolsConflicts(policies);
 	if (type === 'resource-limits') return checkResourceLimitConflicts(policies);
 	if (type === 'access-control') return checkAccessControlConflicts(policies);
@@ -401,10 +383,7 @@ export function resolvePolicyConflicts(
 }
 
 // Policy merging and combination
-export function mergePolicies(
-	policies: Policy[],
-	strategy: MergeStrategy,
-): Policy {
+export function mergePolicies(policies: Policy[], strategy: MergeStrategy): Policy {
 	if (policies.length === 0) {
 		throw new Error('Cannot merge empty policy list');
 	}
@@ -443,11 +422,7 @@ function mergeConfigs(
 	}
 }
 
-function mergeArrays(
-	target: unknown[],
-	source: unknown[],
-	strategy: MergeStrategy,
-): unknown[] {
+function mergeArrays(target: unknown[], source: unknown[], strategy: MergeStrategy): unknown[] {
 	if (strategy === 'union') {
 		return [...new Set([...target, ...source])];
 	}
@@ -463,10 +438,7 @@ function mergeStrings(
 	strategy: MergeStrategy,
 	key: string,
 ): string {
-	if (
-		strategy === 'most-restrictive' &&
-		(key.includes('Memory') || key.includes('Cpu'))
-	) {
+	if (strategy === 'most-restrictive' && (key.includes('Memory') || key.includes('Cpu'))) {
 		const targetValue = parseResourceValue(target);
 		const sourceValue = parseResourceValue(source);
 		return targetValue < sourceValue ? target : source;
@@ -487,9 +459,7 @@ function parseResourceValue(value: string): number {
 }
 
 // Validation functions
-export function validateCompositionMetadata(
-	metadata: unknown,
-): ValidationResult {
+export function validateCompositionMetadata(metadata: unknown): ValidationResult {
 	const errors: string[] = [];
 
 	try {
@@ -575,10 +545,7 @@ function buildGraph(nodes: string[], dependencyMap: Map<string, string[]>) {
 	return { inDegree, adjacency };
 }
 
-function topologicalSort(
-	nodes: string[],
-	dependencyMap: Map<string, string[]>,
-): string[] {
+function topologicalSort(nodes: string[], dependencyMap: Map<string, string[]>): string[] {
 	const { inDegree, adjacency } = buildGraph(nodes, dependencyMap);
 	const result: string[] = [];
 	const queue = nodes.filter((n) => (inDegree.get(n) || 0) === 0);
@@ -635,14 +602,9 @@ function extractAllowedImports(policy: Policy): string[] | undefined {
 	return result;
 }
 
-function evaluateScenario(
-	composition: PolicyComposition,
-	scenario: TestScenario,
-): string {
+function evaluateScenario(composition: PolicyComposition, scenario: TestScenario): string {
 	if (scenario.action !== 'import') return 'unknown';
-	const structurePolicies = composition.policies.filter(
-		(p) => p.type === 'structure-guard',
-	);
+	const structurePolicies = composition.policies.filter((p) => p.type === 'structure-guard');
 	for (const policy of structurePolicies) {
 		const allowed = extractAllowedImports(policy);
 		if (allowed?.includes(scenario.target)) return 'allowed';
@@ -650,18 +612,14 @@ function evaluateScenario(
 	return structurePolicies.length ? 'denied' : 'unknown';
 }
 
-export function generateCompositionReport(
-	composition: PolicyComposition,
-): CompositionReport {
+export function generateCompositionReport(composition: PolicyComposition): CompositionReport {
 	const conflicts = detectPolicyConflicts(composition.policies);
 	const policyTypes = [...new Set(composition.policies.map((p) => p.type))];
 
 	// Simple risk assessment
 	let riskLevel: 'low' | 'medium' | 'high' = 'low';
 	if (conflicts.length > 0) {
-		const highSeverityConflicts = conflicts.filter(
-			(c) => c.severity === 'high',
-		).length;
+		const highSeverityConflicts = conflicts.filter((c) => c.severity === 'high').length;
 		riskLevel = highSeverityConflicts > 0 ? 'high' : 'medium';
 	}
 

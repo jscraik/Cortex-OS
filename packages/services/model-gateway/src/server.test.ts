@@ -30,9 +30,7 @@ import { createServer } from './server';
 describe('server', () => {
 	it('handles embeddings', async () => {
 		const router = {
-			generateEmbedding: vi
-				.fn()
-				.mockResolvedValue({ embedding: [1, 2], model: 'm' }),
+			generateEmbedding: vi.fn().mockResolvedValue({ embedding: [1, 2], model: 'm' }),
 			generateEmbeddings: vi.fn(),
 			rerank: vi.fn(),
 			generateChat: vi.fn(),

@@ -43,12 +43,7 @@ export class MTLSClient {
 				});
 
 				const certs = await loadCertificates(this.config);
-				this.tlsSocket = await createClientSocket(
-					host,
-					port,
-					this.config,
-					certs,
-				);
+				this.tlsSocket = await createClientSocket(host, port, this.config, certs);
 			} catch (error) {
 				logWithSpan('error', 'Failed to establish mTLS connection', {
 					error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
@@ -181,10 +176,7 @@ export class MTLSServer {
 	private readonly connectionHandler?: (socket: tls.TLSSocket) => void;
 	private server?: tls.Server;
 
-	constructor(
-		config: MTLSConfig,
-		connectionHandler?: (socket: tls.TLSSocket) => void,
-	) {
+	constructor(config: MTLSConfig, connectionHandler?: (socket: tls.TLSSocket) => void) {
 		try {
 			this.config = MTLSConfigSchema.parse(config);
 			this.connectionHandler = connectionHandler;
@@ -233,8 +225,7 @@ export class MTLSServer {
 					});
 
 					this.server.on('error', (error) => {
-						const errorMessage =
-							error instanceof Error ? error.message : 'Unknown error';
+						const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 						logWithSpan('error', 'mTLS server error', {
 							error: errorMessage,
 							host,
@@ -282,8 +273,7 @@ export class MTLSServer {
 		this.connectionHandler?.(socket);
 
 		socket.on('error', (error) => {
-			const errorMessage =
-				error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE;
+			const errorMessage = error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE;
 			logWithSpan('error', 'Secure connection error', {
 				error: errorMessage,
 				remoteAddress: socket.remoteAddress ?? '',

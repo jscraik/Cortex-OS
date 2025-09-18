@@ -47,10 +47,7 @@ const Selector: React.FC<SelectorProps> = ({
 	// Close dropdown when clicking outside
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				selectorRef.current &&
-				!selectorRef.current.contains(event.target as Node)
-			) {
+			if (selectorRef.current && !selectorRef.current.contains(event.target as Node)) {
 				setIsOpen(false);
 			}
 		};
@@ -82,9 +79,7 @@ const Selector: React.FC<SelectorProps> = ({
 				aria-label={placeholder}
 				onClick={() => setIsOpen(!isOpen)}
 			>
-				<span className="truncate">
-					{selectedItem ? selectedItem.label : placeholder}
-				</span>
+				<span className="truncate">{selectedItem ? selectedItem.label : placeholder}</span>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 20 20"

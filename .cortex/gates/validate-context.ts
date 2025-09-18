@@ -68,18 +68,13 @@ async function validateContextLibrary() {
 		return false;
 	}
 
-	const contextFiles = await globby([
-		`${contextDir}/**/*.md`,
-		`${contextDir}/**/*.txt`,
-	]);
+	const contextFiles = await globby([`${contextDir}/**/*.md`, `${contextDir}/**/*.txt`]);
 	const relativeContextFiles = contextFiles.map((f) =>
 		f.replace(contextDir, '').replace(/^\//, ''),
 	);
 
 	// Validate each registered context source
-	for (const [filename, metadata] of Object.entries(
-		contextLibrary.contextSources,
-	)) {
+	for (const [filename, metadata] of Object.entries(contextLibrary.contextSources)) {
 		const fullPath = resolve(contextDir, filename);
 
 		if (!existsSync(fullPath)) {
@@ -93,23 +88,17 @@ async function validateContextLibrary() {
 
 			// Basic content validation
 			if (content.length < 100) {
-				console.error(
-					`❌ Context file too short: ${filename} (${content.length} chars)`,
-				);
+				console.error(`❌ Context file too short: ${filename} (${content.length} chars)`);
 				failed = true;
 				continue;
 			}
 
 			// Check for required sections
 			if (!content.includes('CODE SNIPPETS') && !content.includes('CODE:')) {
-				console.warn(
-					`⚠️  Context file may be missing code examples: ${filename}`,
-				);
+				console.warn(`⚠️  Context file may be missing code examples: ${filename}`);
 			}
 
-			console.log(
-				`✅ ${filename} - ${metadata.type} (${content.length} chars)`,
-			);
+			console.log(`✅ ${filename} - ${metadata.type} (${content.length} chars)`);
 		} catch (error) {
 			console.error(`❌ Failed to read context file ${filename}: ${error}`);
 			failed = true;
@@ -117,14 +106,7 @@ async function validateContextLibrary() {
 	}
 
 	// Validate agent requirements
-	const agentTypes = [
-		'assistant',
-		'developer',
-		'reviewer',
-		'planner',
-		'architect',
-		'security',
-	];
+	const agentTypes = ['assistant', 'developer', 'reviewer', 'planner', 'architect', 'security'];
 	for (const [agentType, requiredFiles] of Object.entries(
 		contextLibrary.integrationRules.requiredForAgents,
 	)) {
@@ -136,9 +118,7 @@ async function validateContextLibrary() {
 
 		for (const filename of requiredFiles) {
 			if (!contextLibrary.contextSources[filename]) {
-				console.error(
-					`❌ Required context file not defined for ${agentType}: ${filename}`,
-				);
+				console.error(`❌ Required context file not defined for ${agentType}: ${filename}`);
 				failed = true;
 			}
 		}
@@ -146,9 +126,7 @@ async function validateContextLibrary() {
 
 	// Validate MCP servers
 	if (contextLibrary.mcpServers) {
-		for (const [serverName, config] of Object.entries(
-			contextLibrary.mcpServers,
-		)) {
+		for (const [serverName, config] of Object.entries(contextLibrary.mcpServers)) {
 			// Validate repository URL format
 			if (!config.repository.startsWith('https://github.com/')) {
 				console.error(
@@ -177,9 +155,7 @@ async function validateContextLibrary() {
 			];
 			for (const agentType of config.agentRelevance) {
 				if (!validAgentTypes.includes(agentType)) {
-					console.error(
-						`❌ Invalid agent type in MCP server ${serverName}: ${agentType}`,
-					);
+					console.error(`❌ Invalid agent type in MCP server ${serverName}: ${agentType}`);
 					failed = true;
 				}
 			}
@@ -192,9 +168,7 @@ async function validateContextLibrary() {
 
 	// Auto-discover new context files not registered in policy
 	const definedFiles = Object.keys(contextLibrary.contextSources);
-	const discoveredOnly = relativeContextFiles.filter(
-		(f) => !definedFiles.includes(f),
-	);
+	const discoveredOnly = relativeContextFiles.filter((f) => !definedFiles.includes(f));
 
 	const autoEntries: Record<string, ContextMetadata> = {};
 	for (const filename of discoveredOnly) {
@@ -215,24 +189,16 @@ async function validateContextLibrary() {
 
 			// Basic content validation for discovered files
 			if (content.length < 100) {
-				console.warn(
-					`⚠️  Discovered file seems very short: ${filename} (${content.length} chars)`,
-				);
+				console.warn(`⚠️  Discovered file seems very short: ${filename} (${content.length} chars)`);
 			}
 			if (!content.includes('```') && !content.includes('CODE:')) {
-				console.warn(
-					`⚠️  Discovered file may be missing code examples: ${filename}`,
-				);
+				console.warn(`⚠️  Discovered file may be missing code examples: ${filename}`);
 			}
 
 			autoEntries[filename] = inferred;
-			console.log(
-				`🆕 ${filename} - discovered (no policy entry) (${content.length} chars)`,
-			);
+			console.log(`🆕 ${filename} - discovered (no policy entry) (${content.length} chars)`);
 		} catch (error) {
-			console.warn(
-				`⚠️  Skipping unreadable discovered file ${filename}: ${error}`,
-			);
+			console.warn(`⚠️  Skipping unreadable discovered file ${filename}: ${error}`);
 		}
 	}
 

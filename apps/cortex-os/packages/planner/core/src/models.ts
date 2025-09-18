@@ -47,12 +47,8 @@ export async function listAdapters(): Promise<AdapterInfo[]> {
 }
 
 export async function getCurrent(): Promise<CurrentModel> {
-	const adapter = (await configManager.getValue('models.current.adapter')) as
-		| AdapterId
-		| undefined;
-	const model = (await configManager.getValue('models.current.model')) as
-		| string
-		| undefined;
+	const adapter = (await configManager.getValue('models.current.adapter')) as AdapterId | undefined;
+	const model = (await configManager.getValue('models.current.model')) as string | undefined;
 	if (adapter && model) return { adapter, model };
 
 	// Initialize default if missing
@@ -61,17 +57,11 @@ export async function getCurrent(): Promise<CurrentModel> {
 	return def;
 }
 
-export async function setCurrent(
-	adapter: AdapterId,
-	model?: string,
-): Promise<CurrentModel> {
+export async function setCurrent(adapter: AdapterId, model?: string): Promise<CurrentModel> {
 	const adapters = await listAdapters();
 	const info = adapters.find((a) => a.id === adapter);
 	if (!info) throw new Error(`Unknown adapter: ${adapter}`);
-	const nextModel =
-		model && info.models.includes(model)
-			? model
-			: (info.models[0] ?? 'default');
+	const nextModel = model && info.models.includes(model) ? model : (info.models[0] ?? 'default');
 	await configManager.set('models.current.adapter', adapter);
 	await configManager.set('models.current.model', nextModel);
 	return { adapter, model: nextModel };

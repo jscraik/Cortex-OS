@@ -61,9 +61,7 @@ export function isPathWithinAllowedDirectories(
 
 		// Verify allowed directory is absolute after normalization
 		if (!path.isAbsolute(normalizedDir)) {
-			throw new Error(
-				'Allowed directories must be absolute paths after normalization',
-			);
+			throw new Error('Allowed directories must be absolute paths after normalization');
 		}
 
 		// Check if normalizedPath is within normalizedDir
@@ -84,8 +82,7 @@ export function isPathWithinAllowedDirectories(
 			const dirDrive = normalizedDir.charAt(0).toLowerCase();
 			const pathDrive = normalizedPath.charAt(0).toLowerCase();
 			return (
-				pathDrive === dirDrive &&
-				normalizedPath.startsWith(normalizedDir.replace(/\\?$/, '\\'))
+				pathDrive === dirDrive && normalizedPath.startsWith(normalizedDir.replace(/\\?$/, '\\'))
 			);
 		}
 

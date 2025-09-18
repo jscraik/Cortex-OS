@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-	createRagBus,
-	RAGEventTypes,
-	type RagEventEnvelope,
-} from '../src/events/rag-bus.js';
+import { createRagBus, RAGEventTypes, type RagEventEnvelope } from '../src/events/rag-bus.js';
 
 describe('RAG A2A bus', () => {
 	it('delivers query events to subscribers', async () => {

@@ -12,10 +12,7 @@ import * as net from 'node:net';
 /**
  * Check if a port is available for use
  */
-export async function isPortAvailable(
-	port: number,
-	host = 'localhost',
-): Promise<boolean> {
+export async function isPortAvailable(port: number, host = 'localhost'): Promise<boolean> {
 	return new Promise((resolve) => {
 		const server = net.createServer();
 
@@ -45,18 +42,13 @@ export async function findAvailablePort(
 		}
 	}
 
-	throw new Error(
-		`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`,
-	);
+	throw new Error(`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`);
 }
 
 /**
  * Get an available port or use default if available
  */
-export async function getPort(
-	preferredPort?: number,
-	host = 'localhost',
-): Promise<number> {
+export async function getPort(preferredPort?: number, host = 'localhost'): Promise<number> {
 	if (preferredPort && (await isPortAvailable(preferredPort, host))) {
 		return preferredPort;
 	}

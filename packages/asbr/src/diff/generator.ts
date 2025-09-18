@@ -65,19 +65,10 @@ export class DiffGenerator {
 		);
 
 		// Use normalized content for diff generation if available
-		const oldForDiff = oldNormalized.skipped
-			? oldContent
-			: oldNormalized.content;
-		const newForDiff = newNormalized.skipped
-			? newContent
-			: newNormalized.content;
+		const oldForDiff = oldNormalized.skipped ? oldContent : oldNormalized.content;
+		const newForDiff = newNormalized.skipped ? newContent : newNormalized.content;
 
-		const diff = this.createUnifiedDiff(
-			oldForDiff,
-			newForDiff,
-			filename || 'file',
-			options,
-		);
+		const diff = this.createUnifiedDiff(oldForDiff, newForDiff, filename || 'file', options);
 
 		const stats = this.calculateStats(diff);
 
@@ -116,20 +107,10 @@ export class DiffGenerator {
 
 			switch (operation) {
 				case 'add':
-					diff = this.generateDiff(
-						'',
-						file.newContent || '',
-						file.path,
-						options,
-					);
+					diff = this.generateDiff('', file.newContent || '', file.path, options);
 					break;
 				case 'delete':
-					diff = this.generateDiff(
-						file.oldContent || '',
-						'',
-						file.path,
-						options,
-					);
+					diff = this.generateDiff(file.oldContent || '', '', file.path, options);
 					break;
 				case 'modify':
 				case 'rename':
@@ -257,8 +238,6 @@ export class DiffGenerator {
 /**
  * Factory function to create diff generator from config
  */
-export async function createDiffGenerator(
-	config: Config,
-): Promise<DiffGenerator> {
+export async function createDiffGenerator(config: Config): Promise<DiffGenerator> {
 	return new DiffGenerator(config);
 }

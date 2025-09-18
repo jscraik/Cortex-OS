@@ -21,10 +21,7 @@ export class PytestReporter extends BaseTestReporter {
 			return this.createMockPytestResults(filePaths);
 		}
 
-		const args = [
-			'--json-report',
-			'--json-report-file=/tmp/pytest-report.json',
-		];
+		const args = ['--json-report', '--json-report-file=/tmp/pytest-report.json'];
 
 		if (filePaths && filePaths.length > 0) {
 			args.push(...filePaths);
@@ -64,18 +61,11 @@ export class PytestReporter extends BaseTestReporter {
 						id: test.nodeid,
 						name: test.test || test.nodeid.split('::').pop() || 'unknown',
 						status:
-							test.outcome === 'passed'
-								? 'pass'
-								: test.outcome === 'failed'
-									? 'fail'
-									: 'skip',
+							test.outcome === 'passed' ? 'pass' : test.outcome === 'failed' ? 'fail' : 'skip',
 						duration: test.duration || 0,
 						file: test.file || 'unknown',
 						line: test.lineno,
-						error:
-							test.call?.longrepr ||
-							test.setup?.longrepr ||
-							test.teardown?.longrepr,
+						error: test.call?.longrepr || test.setup?.longrepr || test.teardown?.longrepr,
 						stack: test.call?.traceback?.join('\n') || undefined,
 					});
 				}
@@ -109,9 +99,7 @@ export class RustTestReporter extends BaseTestReporter {
 	detectsTestFiles(filePath: string): boolean {
 		return (
 			filePath.endsWith('.rs') &&
-			(filePath.includes('test') ||
-				filePath.includes('lib.rs') ||
-				filePath.includes('main.rs'))
+			(filePath.includes('test') || filePath.includes('lib.rs') || filePath.includes('main.rs'))
 		);
 	}
 
@@ -285,9 +273,7 @@ export class GoTestReporter extends BaseTestReporter {
 		if (filePaths && filePaths.length > 0) {
 			// Go uses package paths, not file paths
 			const packages = [
-				...new Set(
-					filePaths.map((path) => path.replace(/\/[^/]*_test\.go$/, '') || '.'),
-				),
+				...new Set(filePaths.map((path) => path.replace(/\/[^/]*_test\.go$/, '') || '.')),
 			];
 			args.push(...packages);
 		} else {

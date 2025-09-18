@@ -71,11 +71,7 @@ export interface InteractionPattern {
  */
 export interface OptimizationRecommendation {
 	id: string;
-	type:
-		| 'resource-allocation'
-		| 'workflow-restructure'
-		| 'agent-scaling'
-		| 'bottleneck-resolution';
+	type: 'resource-allocation' | 'workflow-restructure' | 'agent-scaling' | 'bottleneck-resolution';
 	priority: 'low' | 'medium' | 'high' | 'critical';
 	title: string;
 	description: string;
@@ -181,11 +177,7 @@ export interface AgentPerformance {
 export interface WorkflowBottleneck {
 	id: string;
 	location: string;
-	type:
-		| 'agent-overload'
-		| 'communication-lag'
-		| 'resource-contention'
-		| 'dependency-wait';
+	type: 'agent-overload' | 'communication-lag' | 'resource-contention' | 'dependency-wait';
 	severity: 'low' | 'medium' | 'high' | 'critical';
 	impactScope: string[];
 	averageDelay: number;

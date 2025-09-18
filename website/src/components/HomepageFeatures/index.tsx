@@ -14,8 +14,8 @@ const FeatureList: FeatureItem[] = [
 		Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
 		description: (
 			<>
-				Cortex-OS orchestrates multiple AI models and modalities seamlessly,
-				providing a unified interface for complex AI workflows.
+				Cortex-OS orchestrates multiple AI models and modalities seamlessly, providing a unified
+				interface for complex AI workflows.
 			</>
 		),
 	},
@@ -24,8 +24,8 @@ const FeatureList: FeatureItem[] = [
 		Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
 		description: (
 			<>
-				Built with security-first principles, including comprehensive audit
-				trails, secure memory management, and compliance frameworks.
+				Built with security-first principles, including comprehensive audit trails, secure memory
+				management, and compliance frameworks.
 			</>
 		),
 	},
@@ -34,8 +34,8 @@ const FeatureList: FeatureItem[] = [
 		Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
 		description: (
 			<>
-				Leverages autonomous agents for intelligent task orchestration, with
-				built-in memory systems and event-driven communication.
+				Leverages autonomous agents for intelligent task orchestration, with built-in memory systems
+				and event-driven communication.
 			</>
 		),
 	},

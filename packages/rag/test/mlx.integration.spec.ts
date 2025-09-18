@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	generateEmbedding,
-	rerankDocuments,
-} from '../../../src/lib/mlx/index.ts';
+import { generateEmbedding, rerankDocuments } from '../../../src/lib/mlx/index.ts';
 
 describe('MLX end-to-end flow', () => {
 	it('embeds and reranks documents', async () => {

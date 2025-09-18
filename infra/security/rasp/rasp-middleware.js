@@ -5,16 +5,11 @@ import { fileURLToPath } from 'node:url';
 
 export function raspMiddleware(opts = {}) {
 	const __dirname = path.dirname(fileURLToPath(import.meta.url));
-	const eventsDirectory =
-		opts.eventsDir || path.join(__dirname, '..', 'events');
-	if (!fs.existsSync(eventsDirectory))
-		fs.mkdirSync(eventsDirectory, { recursive: true });
+	const eventsDirectory = opts.eventsDir || path.join(__dirname, '..', 'events');
+	if (!fs.existsSync(eventsDirectory)) fs.mkdirSync(eventsDirectory, { recursive: true });
 
 	const failClosed = opts.failClosed ?? process.env.RASP_FAIL_CLOSED === 'true';
-	const threshold = parseInt(
-		String(opts.threshold ?? process.env.RASP_BLOCK_THRESHOLD ?? '5'),
-		10,
-	);
+	const threshold = parseInt(String(opts.threshold ?? process.env.RASP_BLOCK_THRESHOLD ?? '5'), 10);
 	const counters = new Map();
 
 	function emitEvent(event) {

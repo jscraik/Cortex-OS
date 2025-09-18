@@ -16,20 +16,14 @@ const execAsync = promisify(exec);
 export class ESLintAdapter implements ValidationTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'eslint_verify.sh');
 	}
 
-	async validate(
-		inputs: AgentToolkitValidationInput,
-	): Promise<AgentToolkitValidationResult> {
+	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
-			const { stdout } = await execAsync(
-				`"${this.scriptPath}" ${filesArgs}`,
-			);
+			const { stdout } = await execAsync(`"${this.scriptPath}" ${filesArgs}`);
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 
 			// Validate the result matches our schema
@@ -57,20 +51,14 @@ export class ESLintAdapter implements ValidationTool {
 export class RuffAdapter implements ValidationTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'ruff_verify.sh');
 	}
 
-	async validate(
-		inputs: AgentToolkitValidationInput,
-	): Promise<AgentToolkitValidationResult> {
+	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
-			const { stdout } = await execAsync(
-				`"${this.scriptPath}" ${filesArgs}`,
-			);
+			const { stdout } = await execAsync(`"${this.scriptPath}" ${filesArgs}`);
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 
 			// Validate the result matches our schema
@@ -98,15 +86,11 @@ export class RuffAdapter implements ValidationTool {
 export class CargoAdapter implements ValidationTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'cargo_verify.sh');
 	}
 
-	async validate(
-		inputs: AgentToolkitValidationInput,
-	): Promise<AgentToolkitValidationResult> {
+	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const { stdout } = await execAsync(`"${this.scriptPath}"`);
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
@@ -136,15 +120,11 @@ export class CargoAdapter implements ValidationTool {
 export class MultiValidatorAdapter implements ValidationTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'run_validators.sh');
 	}
 
-	async validate(
-		inputs: AgentToolkitValidationInput,
-	): Promise<AgentToolkitValidationResult> {
+	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		// Create temporary file list
 		const tempFile = `/tmp/agent-toolkit-files-${Date.now()}.txt`;
 

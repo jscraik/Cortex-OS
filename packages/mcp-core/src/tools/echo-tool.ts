@@ -22,19 +22,14 @@ export class EchoTool implements McpTool<EchoToolInput, EchoToolResult> {
 		'Echoes the provided message with optional transformations for connectivity testing.';
 	readonly inputSchema = EchoToolInputSchema;
 
-	async execute(
-		input: EchoToolInput,
-		context?: ToolExecutionContext,
-	): Promise<EchoToolResult> {
+	async execute(input: EchoToolInput, context?: ToolExecutionContext): Promise<EchoToolResult> {
 		if (context?.signal?.aborted) {
 			throw new ToolExecutionError('Echo tool execution aborted.', {
 				code: 'E_TOOL_ABORTED',
 			});
 		}
 
-		const responseMessage = input.uppercase
-			? input.message.toUpperCase()
-			: input.message;
+		const responseMessage = input.uppercase ? input.message.toUpperCase() : input.message;
 
 		return {
 			message: responseMessage,

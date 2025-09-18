@@ -26,9 +26,7 @@ describe('Policy Composition Validation TDD', () => {
 
 	describe('Basic Policy Composition', () => {
 		it('should validate compatible policies without conflicts', async () => {
-			const { validatePolicyComposition } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validatePolicyComposition } = await import('./policy-composition-impl.js');
 
 			const composition: PolicyComposition = {
 				id: 'comp-001',
@@ -67,9 +65,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should detect conflicting policies', async () => {
-			const { validatePolicyComposition } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validatePolicyComposition } = await import('./policy-composition-impl.js');
 
 			const composition: PolicyComposition = {
 				id: 'comp-002',
@@ -102,15 +98,11 @@ describe('Policy Composition Validation TDD', () => {
 			expect(result.isValid).toBe(false);
 			expect(result.conflicts).toHaveLength(1);
 			expect(result.conflicts[0].type).toBe('mode-conflict');
-			expect(result.conflicts[0].description).toContain(
-				'allowlist and denylist',
-			);
+			expect(result.conflicts[0].description).toContain('allowlist and denylist');
 		});
 
 		it('should validate empty composition', async () => {
-			const { validatePolicyComposition } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validatePolicyComposition } = await import('./policy-composition-impl.js');
 
 			const composition: PolicyComposition = {
 				id: 'comp-empty',
@@ -130,9 +122,7 @@ describe('Policy Composition Validation TDD', () => {
 
 	describe('Policy Hierarchy Management', () => {
 		it('should create valid policy hierarchy', async () => {
-			const { createPolicyHierarchy } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { createPolicyHierarchy } = await import('./policy-composition-impl.js');
 
 			const policies = [
 				{
@@ -156,9 +146,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should resolve policy conflicts using hierarchy', async () => {
-			const { resolvePolicyConflicts } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { resolvePolicyConflicts } = await import('./policy-composition-impl.js');
 
 			const conflicts: PolicyConflict[] = [
 				{
@@ -186,9 +174,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should handle unresolvable conflicts', async () => {
-			const { resolvePolicyConflicts } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { resolvePolicyConflicts } = await import('./policy-composition-impl.js');
 
 			const conflicts: PolicyConflict[] = [
 				{
@@ -214,9 +200,7 @@ describe('Policy Composition Validation TDD', () => {
 
 	describe('Policy Conflict Detection', () => {
 		it('should detect permission conflicts', async () => {
-			const { detectPolicyConflicts } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { detectPolicyConflicts } = await import('./policy-composition-impl.js');
 
 			const policies: Policy[] = [
 				{
@@ -234,16 +218,11 @@ describe('Policy Composition Validation TDD', () => {
 			const conflicts = detectPolicyConflicts(policies);
 			expect(conflicts).toHaveLength(1);
 			expect(conflicts[0].type).toBe('resource-conflict');
-			expect(conflicts[0].affectedPolicies).toEqual([
-				'Memory Limit A',
-				'Memory Limit B',
-			]);
+			expect(conflicts[0].affectedPolicies).toEqual(['Memory Limit A', 'Memory Limit B']);
 		});
 
 		it('should detect scope overlaps', async () => {
-			const { detectPolicyConflicts } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { detectPolicyConflicts } = await import('./policy-composition-impl.js');
 
 			const policies: Policy[] = [
 				{
@@ -272,9 +251,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should ignore compatible policy combinations', async () => {
-			const { detectPolicyConflicts } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { detectPolicyConflicts } = await import('./policy-composition-impl.js');
 
 			const policies: Policy[] = [
 				{
@@ -371,9 +348,7 @@ describe('Policy Composition Validation TDD', () => {
 
 	describe('Composition Validation Rules', () => {
 		it('should validate composition metadata', async () => {
-			const { validateCompositionMetadata } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validateCompositionMetadata } = await import('./policy-composition-impl.js');
 
 			const validMetadata = {
 				version: '1.2.0',
@@ -390,9 +365,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should reject invalid metadata', async () => {
-			const { validateCompositionMetadata } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validateCompositionMetadata } = await import('./policy-composition-impl.js');
 
 			const invalidMetadata = {
 				version: 'invalid-version',
@@ -407,9 +380,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should validate policy dependencies', async () => {
-			const { validatePolicyDependencies } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validatePolicyDependencies } = await import('./policy-composition-impl.js');
 
 			const policies = [
 				{
@@ -426,16 +397,11 @@ describe('Policy Composition Validation TDD', () => {
 
 			const result = validatePolicyDependencies(policies);
 			expect(result.isValid).toBe(true);
-			expect(result.dependencyOrder).toEqual([
-				'Secret Manager',
-				'Security Logging',
-			]);
+			expect(result.dependencyOrder).toEqual(['Secret Manager', 'Security Logging']);
 		});
 
 		it('should detect circular dependencies', async () => {
-			const { validatePolicyDependencies } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validatePolicyDependencies } = await import('./policy-composition-impl.js');
 
 			const policies = [
 				{
@@ -458,9 +424,7 @@ describe('Policy Composition Validation TDD', () => {
 
 	describe('Composition Testing and Validation', () => {
 		it('should test policy composition against scenarios', async () => {
-			const { testPolicyComposition } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { testPolicyComposition } = await import('./policy-composition-impl.js');
 
 			const composition: PolicyComposition = {
 				id: 'comp-test',
@@ -500,9 +464,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should generate composition report', async () => {
-			const { generateCompositionReport } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { generateCompositionReport } = await import('./policy-composition-impl.js');
 
 			const composition: PolicyComposition = {
 				id: 'comp-report',
@@ -529,9 +491,7 @@ describe('Policy Composition Validation TDD', () => {
 		});
 
 		it('should validate composition against security standards', async () => {
-			const { validateSecurityStandards } = await import(
-				'./policy-composition-impl.js'
-			);
+			const { validateSecurityStandards } = await import('./policy-composition-impl.js');
 
 			const composition: PolicyComposition = {
 				id: 'comp-standards',

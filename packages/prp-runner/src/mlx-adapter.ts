@@ -57,9 +57,7 @@ export class MLXAdapter {
 		if (this.config.knifePath && existsSync(this.config.knifePath)) return true;
 		// Best-effort PATH lookup by spawning 'which' synchronously via shell (cheap & safe in tests)
 		try {
-			const resolved = process.env.PATH?.split(':').some((p) =>
-				existsSync(`${p}/mlx-knife`),
-			);
+			const resolved = process.env.PATH?.split(':').some((p) => existsSync(`${p}/mlx-knife`));
 			return Boolean(resolved);
 		} catch {
 			return false;
@@ -131,16 +129,12 @@ export class MLXAdapter {
 	 */
 	async generate(options: MLXGenerateOptions): Promise<string> {
 		if (!this.isRuntimeAvailable()) {
-			throw new Error(
-				`MLX runtime unavailable: cannot generate with ${this.config.modelName}`,
-			);
+			throw new Error(`MLX runtime unavailable: cannot generate with ${this.config.modelName}`);
 		}
 		const { prompt, maxTokens = 512, temperature = 0.7 } = options;
 
 		// Get the actual model name that mlx-knife recognizes
-		const actualModelName = await this.getActualModelName(
-			this.config.modelName,
-		);
+		const actualModelName = await this.getActualModelName(this.config.modelName);
 		if (!actualModelName) {
 			throw new Error(`MLX model not available: ${this.config.modelName}`);
 		}
@@ -263,9 +257,7 @@ export class MLXAdapter {
 	private parseModelList(output: string): MLXModelInfo[] {
 		const lines = output
 			.split('\n')
-			.filter(
-				(line) => line.trim() && !line.includes('⚠️') && !line.includes('NAME'),
-			);
+			.filter((line) => line.trim() && !line.includes('⚠️') && !line.includes('NAME'));
 
 		return lines
 			.map((line) => {
@@ -362,9 +354,7 @@ export class MLXAdapter {
 	/**
 	 * Get the actual model name that mlx-knife recognizes
 	 */
-	private async getActualModelName(
-		configuredName: string,
-	): Promise<string | null> {
+	private async getActualModelName(configuredName: string): Promise<string | null> {
 		try {
 			const models = await this.listModels();
 			const normalizedTarget = this.normalizeModelName(configuredName);
@@ -380,9 +370,7 @@ export class MLXAdapter {
 
 			// Find partial match
 			const partialMatch = models.find(
-				(model) =>
-					model.name.includes(normalizedTarget) ||
-					normalizedTarget.includes(model.name),
+				(model) => model.name.includes(normalizedTarget) || normalizedTarget.includes(model.name),
 			);
 
 			return partialMatch?.name || null;

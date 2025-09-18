@@ -20,20 +20,11 @@ vi.mock('@/utils/api-client', () => ({
 }));
 
 vi.mock('@/utils/sse', () => ({
-	openSSE: vi
-		.fn()
-		.mockImplementation((_url: string, _options: unknown, callbacks: any) => {
-			setTimeout(
-				() =>
-					callbacks.onMessage(JSON.stringify({ type: 'token', data: 'Hello' })),
-				50,
-			);
-			setTimeout(
-				() => callbacks.onMessage(JSON.stringify({ type: 'done' })),
-				100,
-			);
-			return vi.fn();
-		}),
+	openSSE: vi.fn().mockImplementation((_url: string, _options: unknown, callbacks: any) => {
+		setTimeout(() => callbacks.onMessage(JSON.stringify({ type: 'token', data: 'Hello' })), 50);
+		setTimeout(() => callbacks.onMessage(JSON.stringify({ type: 'done' })), 100);
+		return vi.fn();
+	}),
 }));
 
 import Chat from '@/components/Chat/Chat';
@@ -48,8 +39,7 @@ describe('Chat Component', () => {
 			(global as any).crypto = {};
 		}
 		if (!(global as any).crypto.randomUUID) {
-			(global as any).crypto.randomUUID = () =>
-				'00000000-0000-4000-8000-000000000000';
+			(global as any).crypto.randomUUID = () => '00000000-0000-4000-8000-000000000000';
 		}
 	});
 

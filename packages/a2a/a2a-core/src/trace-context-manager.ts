@@ -1,8 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import {
-	createTraceContext,
-	type TraceContext,
-} from '../../a2a-contracts/src/trace-context.js';
+import { createTraceContext, type TraceContext } from '../../a2a-contracts/src/trace-context.js';
 
 /**
  * AsyncLocalStorage-based trace context manager for Node.js

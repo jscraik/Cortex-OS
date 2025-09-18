@@ -11,10 +11,7 @@ describe('fuzz runner', () => {
 	});
 
 	it('writes results and returns statuses on success', async () => {
-		const scope = nock('http://localhost:3000')
-			.post('/api/test')
-			.times(3)
-			.reply(200, { ok: true });
+		const scope = nock('http://localhost:3000').post('/api/test').times(3).reply(200, { ok: true });
 
 		const results = await runFuzz({
 			target: 'http://localhost:3000/api/test',

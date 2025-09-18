@@ -54,17 +54,14 @@ module.exports = {
 				chromeFlags: '--no-sandbox --disable-dev-shm-usage --headless',
 				// Allow self-signed certificates for development
 				extraHeaders:
-					process.env.NODE_ENV === 'development'
-						? '{"Accept-Encoding": "gzip"}'
-						: undefined,
+					process.env.NODE_ENV === 'development' ? '{"Accept-Encoding": "gzip"}' : undefined,
 			},
 
 			// Start server command - only if available and not already running
 			...(startCommand && !process.env.LIGHTHOUSE_NO_START_SERVER
 				? {
 						startServerCommand: startCommand,
-						startServerReadyPattern:
-							'ready on|listening on|server started|Started server',
+						startServerReadyPattern: 'ready on|listening on|server started|Started server',
 						startServerReadyTimeout: 60000,
 					}
 				: {}),
@@ -86,15 +83,13 @@ module.exports = {
 				'metrics:first-contentful-paint': [
 					'warn',
 					{
-						maxNumericValue:
-							process.env.NODE_ENV === 'production' ? 2000 : 3000,
+						maxNumericValue: process.env.NODE_ENV === 'production' ? 2000 : 3000,
 					},
 				],
 				'metrics:largest-contentful-paint': [
 					'error',
 					{
-						maxNumericValue:
-							process.env.NODE_ENV === 'production' ? 2500 : 4000,
+						maxNumericValue: process.env.NODE_ENV === 'production' ? 2500 : 4000,
 					},
 				],
 				'metrics:first-input-delay': ['error', { maxNumericValue: 100 }],
@@ -104,14 +99,10 @@ module.exports = {
 				'resource-summary:script:size': [
 					'error',
 					{
-						maxNumericValue:
-							process.env.NODE_ENV === 'production' ? 500000 : 800000,
+						maxNumericValue: process.env.NODE_ENV === 'production' ? 500000 : 800000,
 					},
 				],
-				'resource-summary:stylesheet:size': [
-					'warn',
-					{ maxNumericValue: 150000 },
-				],
+				'resource-summary:stylesheet:size': ['warn', { maxNumericValue: 150000 }],
 
 				// Lighthouse audits - conditional based on environment
 				'audits:server-response-time': [
@@ -126,9 +117,7 @@ module.exports = {
 		upload: {
 			// Upload results only in CI or if explicitly enabled
 			target:
-				process.env.CI || process.env.LIGHTHOUSE_UPLOAD
-					? 'temporary-public-storage'
-					: undefined,
+				process.env.CI || process.env.LIGHTHOUSE_UPLOAD ? 'temporary-public-storage' : undefined,
 		},
 	},
 };

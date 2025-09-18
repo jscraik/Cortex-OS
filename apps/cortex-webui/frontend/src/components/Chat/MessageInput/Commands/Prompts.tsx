@@ -1,12 +1,6 @@
 'use client';
 
-import {
-	forwardRef,
-	useEffect,
-	useImperativeHandle,
-	useRef,
-	useState,
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface PromptItem {
 	command: string;
@@ -106,9 +100,7 @@ const Prompts = forwardRef(({ command, onSelect }: PromptsProps, ref) => {
 			setSelectedPromptIdx((prev) => Math.max(0, prev - 1));
 		},
 		selectDown: () => {
-			setSelectedPromptIdx((prev) =>
-				Math.min(prev + 1, filteredPrompts.length - 1),
-			);
+			setSelectedPromptIdx((prev) => Math.min(prev + 1, filteredPrompts.length - 1));
 		},
 	}));
 
@@ -147,9 +139,7 @@ const Prompts = forwardRef(({ command, onSelect }: PromptsProps, ref) => {
 								<div className="font-medium text-black dark:text-gray-100">
 									{promptItem.command}
 								</div>
-								<div className="text-xs text-gray-600 dark:text-gray-100">
-									{promptItem.title}
-								</div>
+								<div className="text-xs text-gray-600 dark:text-gray-100">{promptItem.title}</div>
 							</button>
 						))}
 					</div>
@@ -172,8 +162,8 @@ const Prompts = forwardRef(({ command, onSelect }: PromptsProps, ref) => {
 							</svg>
 						</div>
 						<div className="line-clamp-1">
-							Tip: Update multiple variable slots consecutively by pressing the
-							tab key in the chat input after each replacement.
+							Tip: Update multiple variable slots consecutively by pressing the tab key in the chat
+							input after each replacement.
 						</div>
 					</div>
 				</div>

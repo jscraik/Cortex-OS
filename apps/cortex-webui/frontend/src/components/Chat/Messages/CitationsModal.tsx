@@ -10,11 +10,7 @@ interface CitationsModalProps {
 	citations: any[];
 }
 
-const CitationsModal: React.FC<CitationsModalProps> = ({
-	isOpen,
-	onClose,
-	citations,
-}) => {
+const CitationsModal: React.FC<CitationsModalProps> = ({ isOpen, onClose, citations }) => {
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} title="Sources" size="lg">
 			<div className="citations-modal">

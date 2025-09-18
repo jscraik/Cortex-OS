@@ -13,9 +13,7 @@ export const ViolationCodeEnum = z.enum([
 ]);
 
 export const SandboxAuditEventSchema = z.object({
-	type: z
-		.string()
-		.regex(/^sandbox\./, 'sandbox event types must start with sandbox.'),
+	type: z.string().regex(/^sandbox\./, 'sandbox event types must start with sandbox.'),
 	severity: z.enum(['low', 'medium', 'high']),
 	message: z.string(),
 	meta: z.record(z.unknown()).optional(),

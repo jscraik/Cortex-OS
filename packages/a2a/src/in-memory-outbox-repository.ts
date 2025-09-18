@@ -16,9 +16,7 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 	private readonly messages: Map<string, OutboxMessage> = new Map();
 	private readonly idempotencyKeys: Set<string> = new Set();
 
-	async save(
-		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
-	): Promise<OutboxMessage> {
+	async save(message: Omit<OutboxMessage, 'id' | 'createdAt'>): Promise<OutboxMessage> {
 		const id = uuidv4();
 		const createdAt = new Date();
 
@@ -52,10 +50,7 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 		return Promise.resolve(savedMessages);
 	}
 
-	async findByStatus(
-		status: OutboxMessageStatus,
-		limit?: number,
-	): Promise<OutboxMessage[]> {
+	async findByStatus(status: OutboxMessageStatus, limit?: number): Promise<OutboxMessage[]> {
 		const messages = Array.from(this.messages.values())
 			.filter((msg) => msg.status === status)
 			.slice(0, limit);
@@ -77,23 +72,15 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 		return Promise.resolve(messages);
 	}
 
-	async findByAggregate(
-		aggregateType: string,
-		aggregateId: string,
-	): Promise<OutboxMessage[]> {
+	async findByAggregate(aggregateType: string, aggregateId: string): Promise<OutboxMessage[]> {
 		const messages = Array.from(this.messages.values()).filter(
-			(msg) =>
-				msg.aggregateType === aggregateType && msg.aggregateId === aggregateId,
+			(msg) => msg.aggregateType === aggregateType && msg.aggregateId === aggregateId,
 		);
 
 		return Promise.resolve(messages);
 	}
 
-	updateStatus(
-		id: string,
-		status: OutboxMessageStatus,
-		error?: string,
-	): Promise<void> {
+	updateStatus(id: string, status: OutboxMessageStatus, error?: string): Promise<void> {
 		const message = this.messages.get(id);
 		if (message) {
 			message.status = status;

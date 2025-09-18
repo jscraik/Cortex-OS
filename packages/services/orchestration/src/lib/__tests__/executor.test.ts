@@ -205,8 +205,6 @@ describe('executor', () => {
 
 		const ctrl = new AbortController();
 		ctrl.abort();
-		await expect(run(wf, { signal: ctrl.signal })).rejects.toThrow(
-			/Workflow cancelled/,
-		);
+		await expect(run(wf, { signal: ctrl.signal })).rejects.toThrow(/Workflow cancelled/);
 	});
 });

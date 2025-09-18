@@ -37,10 +37,7 @@ describe('Seed Server Configurations', () => {
 				const result = ServerManifestSchema.safeParse(server);
 
 				if (!result.success) {
-					console.error(
-						`Validation failed for ${server.id}:`,
-						result.error.errors,
-					);
+					console.error(`Validation failed for ${server.id}:`, result.error.errors);
 				}
 
 				expect(result.success).toBe(true);
@@ -58,8 +55,7 @@ describe('Seed Server Configurations', () => {
 			for (const server of seedServers) {
 				if (server.version) {
 					// Semantic version regex
-					const semverPattern =
-						/^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/;
+					const semverPattern = /^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/;
 					expect(server.version).toMatch(semverPattern);
 				}
 			}
@@ -70,9 +66,7 @@ describe('Seed Server Configurations', () => {
 		let filesystemServer: ServerManifest;
 
 		beforeAll(() => {
-			filesystemServer = seedServers.find(
-				(s) => s.id === 'filesystem',
-			) as ServerManifest;
+			filesystemServer = seedServers.find((s) => s.id === 'filesystem') as ServerManifest;
 		});
 
 		it('should have filesystem server configuration', () => {
@@ -91,9 +85,7 @@ describe('Seed Server Configurations', () => {
 		});
 
 		it('should include file-related permissions', () => {
-			const filePermissions = filesystemServer.permissions.filter((p) =>
-				p.startsWith('files:'),
-			);
+			const filePermissions = filesystemServer.permissions.filter((p) => p.startsWith('files:'));
 			expect(filePermissions.length).toBeGreaterThan(0);
 			expect(filesystemServer.permissions).toContain('files:read');
 		});
@@ -108,9 +100,7 @@ describe('Seed Server Configurations', () => {
 		});
 
 		it('should have proper install commands', () => {
-			expect(filesystemServer.install.claude).toContain(
-				'claude mcp add filesystem',
-			);
+			expect(filesystemServer.install.claude).toContain('claude mcp add filesystem');
 			expect(filesystemServer.install.json).toBeDefined();
 			expect(filesystemServer.install.json.mcpServers.filesystem).toBeDefined();
 		});
@@ -130,9 +120,7 @@ describe('Seed Server Configurations', () => {
 		let githubServer: ServerManifest;
 
 		beforeAll(() => {
-			githubServer = seedServers.find(
-				(s) => s.id === 'github',
-			) as ServerManifest;
+			githubServer = seedServers.find((s) => s.id === 'github') as ServerManifest;
 		});
 
 		it('should have github server configuration', () => {
@@ -163,17 +151,13 @@ describe('Seed Server Configurations', () => {
 		it('should have OAuth2 configuration for HTTP transport', () => {
 			expect(githubServer.transport.streamableHttp?.auth).toBeDefined();
 			expect(githubServer.transport.streamableHttp?.auth?.type).toBe('oauth2');
-			expect(
-				githubServer.transport.streamableHttp?.auth?.clientId,
-			).toBeTruthy();
+			expect(githubServer.transport.streamableHttp?.auth?.clientId).toBeTruthy();
 			expect(githubServer.transport.streamableHttp?.auth?.scopes).toBeDefined();
 		});
 
 		it('should require GitHub token for stdio transport', () => {
 			expect(githubServer.transport.stdio?.env).toBeDefined();
-			expect(
-				githubServer.transport.stdio?.env?.GITHUB_PERSONAL_ACCESS_TOKEN,
-			).toBeTruthy();
+			expect(githubServer.transport.stdio?.env?.GITHUB_PERSONAL_ACCESS_TOKEN).toBeTruthy();
 		});
 
 		it('should have higher download count', () => {
@@ -204,17 +188,14 @@ describe('Seed Server Configurations', () => {
 				if (server.security.riskLevel === 'high') {
 					// High risk servers should have explicit dangerous permissions
 					const dangerousPermissions = server.permissions.filter(
-						(p) =>
-							p.includes('exec') || p.includes('admin') || p.includes('system'),
+						(p) => p.includes('exec') || p.includes('admin') || p.includes('system'),
 					);
 					expect(dangerousPermissions.length).toBeGreaterThan(0);
 				}
 
 				if (server.security.riskLevel === 'low') {
 					// Low risk servers should not have system execution permissions
-					const systemPermissions = server.permissions.filter((p) =>
-						p.includes('system:exec'),
-					);
+					const systemPermissions = server.permissions.filter((p) => p.includes('system:exec'));
 					expect(systemPermissions.length).toBe(0);
 				}
 			}
@@ -239,9 +220,7 @@ describe('Seed Server Configurations', () => {
 
 					// Should use npx for official servers
 					if (server.publisher.verified) {
-						expect(['npx', 'node', 'python', 'python3']).toContain(
-							server.transport.stdio.command,
-						);
+						expect(['npx', 'node', 'python', 'python3']).toContain(server.transport.stdio.command);
 					}
 				}
 			}
@@ -335,9 +314,7 @@ describe('Seed Server Configurations', () => {
 		it('should have valid update timestamps', () => {
 			for (const server of seedServers) {
 				const updateDate = new Date(server.updatedAt);
-				expect(updateDate.getTime()).toBeGreaterThan(
-					new Date('2024-01-01').getTime(),
-				);
+				expect(updateDate.getTime()).toBeGreaterThan(new Date('2024-01-01').getTime());
 				expect(updateDate.getTime()).toBeLessThan(Date.now() + 86400000); // Not future
 			}
 		});

@@ -21,10 +21,7 @@ interface AgentResourceManager {
 	setLimits(limits: ResourceLimits): void;
 	getCurrentUsage(): ResourceUsage;
 	checkResourceCompliance(): ResourceComplianceReport;
-	enforceTimeLimit<T>(
-		operation: () => Promise<T>,
-		timeoutMs?: number,
-	): Promise<T>;
+	enforceTimeLimit<T>(operation: () => Promise<T>, timeoutMs?: number): Promise<T>;
 	trackMemoryUsage<T>(operation: () => T): T;
 	validateResourceRequest(requestedResources: Partial<ResourceLimits>): boolean;
 }
@@ -80,9 +77,7 @@ describe('Agent Resource Constraints', () => {
 				maxNetworkRequests: -5, // Invalid: negative requests
 			};
 
-			expect(() => resourceManager.setLimits(invalidLimits)).toThrow(
-				'Invalid resource limits',
-			);
+			expect(() => resourceManager.setLimits(invalidLimits)).toThrow('Invalid resource limits');
 		});
 
 		it('should provide reasonable defaults when not configured', () => {
@@ -154,9 +149,7 @@ describe('Agent Resource Constraints', () => {
 			const operationPromise = resourceManager.enforceTimeLimit(slowOperation);
 			vi.advanceTimersByTime(1500); // Advance past the timeout limit
 
-			await expect(operationPromise).rejects.toThrow(
-				'Execution time limit exceeded',
-			);
+			await expect(operationPromise).rejects.toThrow('Execution time limit exceeded');
 		});
 
 		it('should allow operations within time limits', async () => {
@@ -200,9 +193,7 @@ describe('Agent Resource Constraints', () => {
 			const operationPromise = resourceManager.enforceTimeLimit(operation, 500);
 			vi.advanceTimersByTime(600); // Advance past the custom timeout
 
-			await expect(operationPromise).rejects.toThrow(
-				'Execution time limit exceeded',
-			);
+			await expect(operationPromise).rejects.toThrow('Execution time limit exceeded');
 		});
 	});
 
@@ -253,9 +244,7 @@ describe('Agent Resource Constraints', () => {
 			expect(report.compliant).toBe(false);
 			expect(report.violations).toHaveLength(5); // All limits exceeded
 
-			const memoryViolation = report.violations.find(
-				(v) => v.type === 'memory',
-			);
+			const memoryViolation = report.violations.find((v) => v.type === 'memory');
 			expect(memoryViolation).toBeDefined();
 			expect(memoryViolation?.current).toBe(150);
 			expect(memoryViolation?.limit).toBe(100);
@@ -283,9 +272,7 @@ describe('Agent Resource Constraints', () => {
 			const report = resourceManager.checkResourceCompliance();
 			expect(report.compliant).toBe(false);
 
-			const memoryViolation = report.violations.find(
-				(v) => v.type === 'memory',
-			);
+			const memoryViolation = report.violations.find((v) => v.type === 'memory');
 			const cpuViolation = report.violations.find((v) => v.type === 'cpu');
 
 			expect(memoryViolation?.severity).toBe('critical');
@@ -308,9 +295,7 @@ describe('Agent Resource Constraints', () => {
 				maxExecutionTimeMs: 15000,
 			};
 
-			expect(resourceManager.validateResourceRequest(reasonableRequest)).toBe(
-				true,
-			);
+			expect(resourceManager.validateResourceRequest(reasonableRequest)).toBe(true);
 		});
 
 		it('should reject excessive resource requests', () => {
@@ -327,9 +312,7 @@ describe('Agent Resource Constraints', () => {
 				maxCpuPercent: 90, // Exceeds configured limit
 			};
 
-			expect(resourceManager.validateResourceRequest(excessiveRequest)).toBe(
-				false,
-			);
+			expect(resourceManager.validateResourceRequest(excessiveRequest)).toBe(false);
 		});
 
 		it('should handle partial resource requests', () => {
@@ -345,9 +328,7 @@ describe('Agent Resource Constraints', () => {
 				maxMemoryMB: 512, // Only requesting memory limit
 			};
 
-			expect(resourceManager.validateResourceRequest(partialRequest)).toBe(
-				true,
-			);
+			expect(resourceManager.validateResourceRequest(partialRequest)).toBe(true);
 		});
 	});
 
@@ -373,8 +354,7 @@ describe('Agent Resource Constraints', () => {
 			};
 
 			// Start the operation and advance fake timers
-			const operationPromise =
-				resourceManager.enforceTimeLimit(complexOperation);
+			const operationPromise = resourceManager.enforceTimeLimit(complexOperation);
 			vi.advanceTimersByTime(1500); // Advance past operation time
 			const result = await operationPromise;
 			expect(result).toBe(100000);
@@ -403,12 +383,8 @@ describe('Agent Resource Constraints', () => {
 
 			const report = resourceManager.checkResourceCompliance();
 			expect(report.compliant).toBe(true); // Still within limits
-			expect(report.recommendations).toContain(
-				'Memory usage is approaching limit (85% used)',
-			);
-			expect(report.recommendations).toContain(
-				'Consider optimizing memory allocation patterns',
-			);
+			expect(report.recommendations).toContain('Memory usage is approaching limit (85% used)');
+			expect(report.recommendations).toContain('Consider optimizing memory allocation patterns');
 		});
 	});
 });

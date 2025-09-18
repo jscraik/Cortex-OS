@@ -31,12 +31,9 @@ const ChatControls: React.FC<ChatControlsProps> = ({
 }) => {
 	const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
 	const [isTagModalOpen, setIsTagModalOpen] = useState<boolean>(false);
-	const [isToolServersModalOpen, setIsToolServersModalOpen] =
-		useState<boolean>(false);
-	const [isSettingsModalOpen, setIsSettingsModalOpen] =
-		useState<boolean>(false);
-	const [isShortcutsModalOpen, setIsShortcutsModalOpen] =
-		useState<boolean>(false);
+	const [isToolServersModalOpen, setIsToolServersModalOpen] = useState<boolean>(false);
+	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
+	const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState<boolean>(false);
 	const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
 	const [chatTags, setChatTags] = useState<Tag[]>([]);
 	const notifications: NotificationStoreApi = notificationStore;
@@ -223,10 +220,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
 				servers={[]}
 				onSave={(servers) => console.log('Saved tool servers:', servers)}
 			/>
-			<SettingsModal
-				isOpen={isSettingsModalOpen}
-				onClose={() => setIsSettingsModalOpen(false)}
-			/>
+			<SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
 			<ShortcutsModal
 				isOpen={isShortcutsModalOpen}
 				onClose={() => setIsShortcutsModalOpen(false)}

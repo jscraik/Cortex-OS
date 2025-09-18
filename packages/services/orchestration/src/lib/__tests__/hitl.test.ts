@@ -29,8 +29,7 @@ vi.mock('@cortex-os/utils', () => ({
 			if (!val || typeof val !== 'object') return false;
 			const obj = val as any;
 			// Accept objects with optional string fields dataClass/path
-			if (obj.dataClass !== undefined && typeof obj.dataClass !== 'string')
-				return false;
+			if (obj.dataClass !== undefined && typeof obj.dataClass !== 'string') return false;
 			if (obj.path !== undefined && typeof obj.path !== 'string') return false;
 			return true;
 		},

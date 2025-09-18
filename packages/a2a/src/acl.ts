@@ -30,24 +30,17 @@ export class TopicAcl {
 		this.defaultPublish = cfg.defaultPublish ?? false;
 		this.defaultSubscribe = cfg.defaultSubscribe ?? false;
 	}
-	private evaluate(
-		topic: string,
-		intent: 'publish' | 'subscribe',
-		role?: string,
-	): AclDecision {
+	private evaluate(topic: string, intent: 'publish' | 'subscribe', role?: string): AclDecision {
 		for (const rule of this.rules) {
 			if (matchRule(topic, rule.topic)) {
-				const allowedFlag =
-					intent === 'publish' ? rule.publish : rule.subscribe;
-				if (!allowedFlag)
-					return { allowed: false, reason: 'Denied by rule', rule };
+				const allowedFlag = intent === 'publish' ? rule.publish : rule.subscribe;
+				if (!allowedFlag) return { allowed: false, reason: 'Denied by rule', rule };
 				if (rule.roles && role && !rule.roles.includes(role))
 					return { allowed: false, reason: 'Role not permitted', rule };
 				return { allowed: true, rule };
 			}
 		}
-		const def =
-			intent === 'publish' ? this.defaultPublish : this.defaultSubscribe;
+		const def = intent === 'publish' ? this.defaultPublish : this.defaultSubscribe;
 		return { allowed: def, reason: def ? undefined : 'No matching rule' };
 	}
 	canPublish(topic: string, role?: string) {

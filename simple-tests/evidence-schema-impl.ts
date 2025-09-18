@@ -7,19 +7,8 @@ import { z } from 'zod';
 
 // Type definitions
 export type EvidenceLevel = 'high' | 'medium' | 'low' | 'speculation';
-export type CitationType =
-	| 'documentation'
-	| 'academic'
-	| 'changelog'
-	| 'code'
-	| 'news'
-	| 'blog';
-export type AttachmentType =
-	| 'code_snippet'
-	| 'image'
-	| 'document'
-	| 'video'
-	| 'audio';
+export type CitationType = 'documentation' | 'academic' | 'changelog' | 'code' | 'news' | 'blog';
+export type AttachmentType = 'code_snippet' | 'image' | 'document' | 'video' | 'audio';
 
 export interface Citation {
 	id: string;
@@ -97,13 +86,7 @@ const citationTypeSchema = z.enum([
 	'news',
 	'blog',
 ]);
-const attachmentTypeSchema = z.enum([
-	'code_snippet',
-	'image',
-	'document',
-	'video',
-	'audio',
-]);
+const attachmentTypeSchema = z.enum(['code_snippet', 'image', 'document', 'video', 'audio']);
 
 const citationSchema = z.object({
 	id: z.string(),
@@ -123,12 +106,7 @@ const attachmentSchema = z.object({
 	name: z.string(),
 	mimeType: z.string(),
 	size: z.number().positive(),
-	checksum: z
-		.string()
-		.regex(
-			/^[a-z0-9]+:[a-f0-9]+$/,
-			'Checksum must be in format algorithm:hash',
-		),
+	checksum: z.string().regex(/^[a-z0-9]+:[a-f0-9]+$/, 'Checksum must be in format algorithm:hash'),
 	url: z.string().url().optional(),
 });
 
@@ -164,15 +142,11 @@ export function validateEvidenceEvent(event: unknown): ValidationResult {
 
 	// Perform a narrow type check before property access
 	const candidate =
-		typeof event === 'object' && event !== null
-			? (event as Partial<EvidenceEvent>)
-			: {};
+		typeof event === 'object' && event !== null ? (event as Partial<EvidenceEvent>) : {};
 
-	if (!candidate.specversion)
-		errors.push('Missing required CloudEvents field: specversion');
+	if (!candidate.specversion) errors.push('Missing required CloudEvents field: specversion');
 	if (!candidate.type) errors.push('Missing required CloudEvents field: type');
-	if (!candidate.source)
-		errors.push('Missing required CloudEvents field: source');
+	if (!candidate.source) errors.push('Missing required CloudEvents field: source');
 	if (!candidate.id) errors.push('Missing required CloudEvents field: id');
 	if (!candidate.time) errors.push('Missing required CloudEvents field: time');
 
@@ -218,9 +192,7 @@ export function validateEvidenceLevel(level: string): boolean {
 	return ['high', 'medium', 'low', 'speculation'].includes(level);
 }
 
-export function validateAttachment(
-	attachment: EvidenceAttachment,
-): ValidationResult {
+export function validateAttachment(attachment: EvidenceAttachment): ValidationResult {
 	const errors: string[] = [];
 
 	try {
@@ -286,9 +258,7 @@ export function createCitationBundle(citations: Citation[]): CitationBundle {
 	const deduplicatedCitations = Array.from(sourceMap.values());
 
 	// Sort by confidence (descending)
-	deduplicatedCitations.sort(
-		(a, b) => (b.confidence ?? 0.5) - (a.confidence ?? 0.5),
-	);
+	deduplicatedCitations.sort((a, b) => (b.confidence ?? 0.5) - (a.confidence ?? 0.5));
 
 	return {
 		citations: deduplicatedCitations,
@@ -299,9 +269,7 @@ export function createCitationBundle(citations: Citation[]): CitationBundle {
 }
 
 // Freshness calculation
-export function calculateEvidenceFreshness(
-	timestamp: Date | undefined,
-): FreshnessResult {
+export function calculateEvidenceFreshness(timestamp: Date | undefined): FreshnessResult {
 	if (!timestamp) {
 		return {
 			score: 0,
@@ -344,9 +312,7 @@ export interface CloudEventSerialized {
 	data: string;
 }
 
-export function serializeEvidenceEvent(
-	event: EvidenceEvent,
-): CloudEventSerialized {
+export function serializeEvidenceEvent(event: EvidenceEvent): CloudEventSerialized {
 	return {
 		specversion: event.specversion,
 		type: event.type,

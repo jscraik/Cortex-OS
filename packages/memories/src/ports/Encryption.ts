@@ -19,10 +19,7 @@ export class InMemoryAesGcm implements EncryptionService {
 		const { randomBytes, createCipheriv } = await import('node:crypto');
 		const iv = randomBytes(12);
 		const cipher = createCipheriv(this.alg, this.key, iv);
-		const enc = Buffer.concat([
-			cipher.update(plaintext, 'utf8'),
-			cipher.final(),
-		]);
+		const enc = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
 		const tag = cipher.getAuthTag();
 		return Buffer.concat([iv, tag, enc]).toString('base64');
 	}

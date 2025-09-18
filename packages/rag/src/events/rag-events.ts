@@ -63,9 +63,7 @@ export type RAGEventType = (typeof RAGEventTypes)[keyof typeof RAGEventTypes];
 export type RAGQueryEvent = z.infer<typeof ragQueryEventSchema>;
 export type RAGQueryResultEvent = z.infer<typeof ragQueryResultEventSchema>;
 export type RAGIngestEvent = z.infer<typeof ragIngestEventSchema>;
-export type RAGIngestCompleteEvent = z.infer<
-	typeof ragIngestCompleteEventSchema
->;
+export type RAGIngestCompleteEvent = z.infer<typeof ragIngestCompleteEventSchema>;
 
 // Event creation helpers
 export function createRAGQueryEvent(data: RAGQueryEvent): Envelope {
@@ -92,9 +90,7 @@ export function createRAGIngestEvent(data: RAGIngestEvent): Envelope {
 	});
 }
 
-export function createRAGIngestCompleteEvent(
-	data: RAGIngestCompleteEvent,
-): Envelope {
+export function createRAGIngestCompleteEvent(data: RAGIngestCompleteEvent): Envelope {
 	return createEnvelope({
 		type: RAGEventTypes.IngestCompleted,
 		source: 'urn:cortex:rag',

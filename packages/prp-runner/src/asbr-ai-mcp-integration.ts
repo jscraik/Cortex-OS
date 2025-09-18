@@ -49,10 +49,7 @@ export class ASBRAIMcpIntegration {
 					console.warn('⚠️ ASBR AI MCP server health check returned unhealthy');
 				}
 			} catch (healthErr) {
-				console.warn(
-					'⚠️ ASBR AI MCP server health check failed (non-fatal):',
-					healthErr,
-				);
+				console.warn('⚠️ ASBR AI MCP server health check failed (non-fatal):', healthErr);
 			}
 
 			// Attempt to fetch AI capabilities to ensure AI service is reachable.
@@ -60,17 +57,13 @@ export class ASBRAIMcpIntegration {
 			try {
 				if (
 					(this.mcpServer as any).aiCapabilities &&
-					typeof (this.mcpServer as any).aiCapabilities.getCapabilities ===
-						'function'
+					typeof (this.mcpServer as any).aiCapabilities.getCapabilities === 'function'
 				) {
 					// Direct call to injected aiCapabilities (test spy will be executed)
-					const caps = await (
-						this.mcpServer as any
-					).aiCapabilities.getCapabilities();
+					const caps = await (this.mcpServer as any).aiCapabilities.getCapabilities();
 					// Augment with server_type for consistency
 					if (caps && typeof caps === 'object') {
-						(caps as any).server_type =
-							(caps as any).server_type || 'ASBR-AI-MCP-Server';
+						(caps as any).server_type = (caps as any).server_type || 'ASBR-AI-MCP-Server';
 					}
 					// Only mark as registered after capabilities loaded successfully
 					this.isRegistered = true;
@@ -80,9 +73,7 @@ export class ASBRAIMcpIntegration {
 						params: { name: 'ai_get_capabilities', arguments: {} },
 					});
 					if (capResp.isError)
-						throw new Error(
-							capResp.content[0]?.text || 'AI service unavailable',
-						);
+						throw new Error(capResp.content[0]?.text || 'AI service unavailable');
 					// parse and ensure server_type exists
 					try {
 						const parsed = JSON.parse(capResp.content[0]?.text || '{}');
@@ -95,10 +86,7 @@ export class ASBRAIMcpIntegration {
 					}
 				}
 			} catch (capsErr) {
-				console.error(
-					'❌ Error loading AI capabilities during auto-register:',
-					capsErr,
-				);
+				console.error('❌ Error loading AI capabilities during auto-register:', capsErr);
 				// Per tests, capability load failures should propagate as errors
 				throw capsErr;
 			}
@@ -194,9 +182,7 @@ export class ASBRAIMcpIntegration {
 
 		await new Promise<void>((resolve) => {
 			this.httpServer = app.listen(port, '127.0.0.1', () => {
-				console.log(
-					`🚀 ASBR AI MCP server running on http://127.0.0.1:${port}`,
-				);
+				console.log(`🚀 ASBR AI MCP server running on http://127.0.0.1:${port}`);
 				console.log(`   - Tools list: GET /mcp/tools/list`);
 				console.log(`   - Tool call: POST /mcp/tools/call`);
 				console.log(`   - Capabilities: GET /mcp/capabilities`);
@@ -352,10 +338,7 @@ export const ASBR_AI_MCP_TOOLS = {
 /**
  * Helper function to call ASBR AI MCP tools
  */
-export async function callASBRAITool(
-	toolName: string,
-	args: Record<string, any>,
-): Promise<any> {
+export async function callASBRAITool(toolName: string, args: Record<string, any>): Promise<any> {
 	try {
 		const response = await asbrAIMcpIntegration.getMcpServer().callTool({
 			method: 'tools/call',

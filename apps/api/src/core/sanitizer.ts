@@ -7,9 +7,7 @@ export function sanitizePayload<T>(payload: T): T {
 	}
 
 	if (typeof payload === 'string') {
-		return payload
-			.replace(scriptTagPattern, '')
-			.replace(controlCharPattern, '') as T;
+		return payload.replace(scriptTagPattern, '').replace(controlCharPattern, '') as T;
 	}
 
 	if (Array.isArray(payload)) {
@@ -17,9 +15,10 @@ export function sanitizePayload<T>(payload: T): T {
 	}
 
 	if (typeof payload === 'object') {
-		const entries = Object.entries(payload as Record<string, unknown>).map(
-			([key, value]) => [key, sanitizePayload(value)],
-		);
+		const entries = Object.entries(payload as Record<string, unknown>).map(([key, value]) => [
+			key,
+			sanitizePayload(value),
+		]);
 		return Object.fromEntries(entries) as T;
 	}
 

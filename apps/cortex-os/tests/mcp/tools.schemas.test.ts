@@ -12,9 +12,7 @@ describe('MCP Tool Schemas', () => {
 		expect(parsed.include).toContain('services');
 	});
 	it('rejects invalid restart_service timeout', () => {
-		expect(() =>
-			RestartServiceInputSchema.parse({ service: 'x', timeoutMs: 0 }),
-		).toThrow();
+		expect(() => RestartServiceInputSchema.parse({ service: 'x', timeoutMs: 0 })).toThrow();
 	});
 	it('accepts run_workflow async default', () => {
 		const parsed = RunWorkflowInputSchema.parse({ workflow: 'wf' });

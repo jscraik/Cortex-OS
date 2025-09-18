@@ -228,8 +228,6 @@ export class ContentNormalizer {
 /**
  * Factory function to create normalizer from config
  */
-export async function createNormalizer(
-	config: Config,
-): Promise<ContentNormalizer> {
+export async function createNormalizer(config: Config): Promise<ContentNormalizer> {
 	return new ContentNormalizer(config);
 }

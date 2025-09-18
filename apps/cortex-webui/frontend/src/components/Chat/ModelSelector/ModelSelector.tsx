@@ -71,20 +71,13 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 	};
 
 	// Separate pinned and unpinned models
-	const pinnedModelList = models.filter((model) =>
-		pinnedModels.includes(model.id),
-	);
-	const unpinnedModelList = models.filter(
-		(model) => !pinnedModels.includes(model.id),
-	);
+	const pinnedModelList = models.filter((model) => pinnedModels.includes(model.id));
+	const unpinnedModelList = models.filter((model) => !pinnedModels.includes(model.id));
 
 	return (
 		<div className="flex flex-col w-full items-start">
 			{selectedModelIds.map((selectedModelId, index) => (
-				<div
-					key={`${selectedModelId || 'empty'}-${index}`}
-					className="flex w-full max-w-fit mb-2"
-				>
+				<div key={`${selectedModelId || 'empty'}-${index}`} className="flex w-full max-w-fit mb-2">
 					<div className="overflow-hidden w-full">
 						<div className="max-w-full mr-1">
 							<div className="relative">
@@ -126,9 +119,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 												: 'text-gray-400 hover:text-gray-600'
 										}`}
 										aria-label={
-											pinnedModels.includes(selectedModelId)
-												? 'Unpin model'
-												: 'Pin model'
+											pinnedModels.includes(selectedModelId) ? 'Unpin model' : 'Pin model'
 										}
 									>
 										<svg
@@ -173,11 +164,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 									className="size-3.5"
 								>
 									<title>Add model</title>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M12 6v12m6-6H6"
-									/>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
 								</svg>
 							</button>
 							<button
@@ -219,11 +206,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 									className="size-3"
 								>
 									<title>Remove model</title>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M19.5 12h-15"
-									/>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
 								</svg>
 							</button>
 						</div>

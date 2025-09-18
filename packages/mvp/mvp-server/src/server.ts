@@ -25,8 +25,7 @@ export function buildServer() {
 		const expectedBuf = Buffer.from(expected);
 
 		const valid =
-			providedBuf.length === expectedBuf.length &&
-			timingSafeEqual(providedBuf, expectedBuf);
+			providedBuf.length === expectedBuf.length && timingSafeEqual(providedBuf, expectedBuf);
 
 		if (!valid) {
 			reply.code(401).send({ error: 'Unauthorized' });

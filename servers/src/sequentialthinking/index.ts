@@ -234,8 +234,7 @@ You should:
 			},
 			totalThoughts: {
 				type: 'integer',
-				description:
-					'Estimated total thoughts needed (numeric value, e.g., 5, 10)',
+				description: 'Estimated total thoughts needed (numeric value, e.g., 5, 10)',
 				minimum: 1,
 			},
 			isRevision: {
@@ -261,12 +260,7 @@ You should:
 				description: 'If more thoughts are needed',
 			},
 		},
-		required: [
-			'thought',
-			'nextThoughtNeeded',
-			'thoughtNumber',
-			'totalThoughts',
-		],
+		required: ['thought', 'nextThoughtNeeded', 'thoughtNumber', 'totalThoughts'],
 	},
 };
 

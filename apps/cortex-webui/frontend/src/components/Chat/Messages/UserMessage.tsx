@@ -9,11 +9,7 @@ interface UserMessageProps {
 	onDelete?: () => void;
 }
 
-const UserMessage: React.FC<UserMessageProps> = ({
-	message,
-	onEdit,
-	onDelete,
-}) => {
+const UserMessage: React.FC<UserMessageProps> = ({ message, onEdit, onDelete }) => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editContent, setEditContent] = useState(message.content);
 
@@ -56,10 +52,7 @@ const UserMessage: React.FC<UserMessageProps> = ({
 						rows={3}
 					/>
 					<div className="flex justify-end space-x-2 mt-2">
-						<button
-							onClick={handleCancel}
-							className="px-3 py-1 text-sm border rounded"
-						>
+						<button onClick={handleCancel} className="px-3 py-1 text-sm border rounded">
 							Cancel
 						</button>
 						<button
@@ -74,17 +67,11 @@ const UserMessage: React.FC<UserMessageProps> = ({
 				<div className="rounded px-2 py-1 bg-blue-100 whitespace-pre-wrap">
 					{message.content}
 					<div className="flex justify-end mt-1 space-x-2">
-						<button
-							onClick={handleEdit}
-							className="text-xs text-gray-700 hover:text-gray-900"
-						>
+						<button onClick={handleEdit} className="text-xs text-gray-700 hover:text-gray-900">
 							Edit
 						</button>
 						{onDelete && (
-							<button
-								onClick={onDelete}
-								className="text-xs text-red-600 hover:text-red-800"
-							>
+							<button onClick={onDelete} className="text-xs text-red-600 hover:text-red-800">
 								Delete
 							</button>
 						)}

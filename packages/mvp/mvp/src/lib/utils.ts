@@ -7,9 +7,7 @@ import { promisify } from 'node:util';
 
 // Simple implementation of generateId
 function generateId(prefix: string, randomize: boolean): string {
-	const randomPart = randomize
-		? Math.random().toString(36).substring(2, 10)
-		: '';
+	const randomPart = randomize ? Math.random().toString(36).substring(2, 10) : '';
 	return `${prefix}${randomPart}`;
 }
 export const execAsync = promisify(exec);

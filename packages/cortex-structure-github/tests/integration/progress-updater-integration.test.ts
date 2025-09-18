@@ -32,9 +32,7 @@ describe('Progress Updater Integration Tests', () => {
 			for (let i = 0; i < 150; i++) {
 				taskPromises.push(
 					progressUpdater
-						.startProgress(mockPayload, 'test-task', 'user', [
-							{ title: `Task ${i}` },
-						])
+						.startProgress(mockPayload, 'test-task', 'user', [{ title: `Task ${i}` }])
 						.catch(() => {}), // Ignore GitHub API errors in tests
 				);
 			}
@@ -60,9 +58,7 @@ describe('Progress Updater Integration Tests', () => {
 
 			// Create a task
 			const _taskId = await progressUpdater
-				.startProgress(mockPayload, 'test-task', 'user', [
-					{ title: 'Test task' },
-				])
+				.startProgress(mockPayload, 'test-task', 'user', [{ title: 'Test task' }])
 				.catch(() => 'fallback-task-id');
 
 			// Advance time by more than STALE_TASK_TIMEOUT (30 minutes)
@@ -132,12 +128,7 @@ describe('Progress Updater Integration Tests', () => {
 				.catch(() => 'fallback-task-id');
 
 			// Update first step
-			await progressUpdater.updateStep(
-				taskId,
-				1,
-				'completed',
-				'Step completed successfully',
-			);
+			await progressUpdater.updateStep(taskId, 1, 'completed', 'Step completed successfully');
 
 			const progress = progressUpdater.getProgress(taskId);
 			if (progress) {
@@ -153,9 +144,7 @@ describe('Progress Updater Integration Tests', () => {
 			};
 
 			const taskId = await progressUpdater
-				.startProgress(mockPayload, 'test-task', 'testuser', [
-					{ title: 'Step 1' },
-				])
+				.startProgress(mockPayload, 'test-task', 'testuser', [{ title: 'Step 1' }])
 				.catch(() => 'fallback-task-id');
 
 			await progressUpdater.completeTask(taskId, 'Task completed successfully');
@@ -174,9 +163,7 @@ describe('Progress Updater Integration Tests', () => {
 			};
 
 			const taskId = await progressUpdater
-				.startProgress(mockPayload, 'test-task', 'testuser', [
-					{ title: 'Step 1' },
-				])
+				.startProgress(mockPayload, 'test-task', 'testuser', [{ title: 'Step 1' }])
 				.catch(() => 'fallback-task-id');
 
 			await progressUpdater.errorTask(taskId, 'Task failed');
@@ -223,12 +210,8 @@ describe('Progress Updater Integration Tests', () => {
 			const mockOctokit = {
 				rest: {
 					issues: {
-						createComment: vi
-							.fn()
-							.mockRejectedValue(new Error('GitHub API Error')),
-						updateComment: vi
-							.fn()
-							.mockRejectedValue(new Error('GitHub API Error')),
+						createComment: vi.fn().mockRejectedValue(new Error('GitHub API Error')),
+						updateComment: vi.fn().mockRejectedValue(new Error('GitHub API Error')),
 					},
 				},
 			};
@@ -243,16 +226,12 @@ describe('Progress Updater Integration Tests', () => {
 
 			// Should not throw even when GitHub API fails
 			await expect(() =>
-				progressUpdater.startProgress(mockPayload, 'test-task', 'user', [
-					{ title: 'Test' },
-				]),
+				progressUpdater.startProgress(mockPayload, 'test-task', 'user', [{ title: 'Test' }]),
 			).not.toThrow();
 		});
 
 		it('handles invalid task IDs gracefully', () => {
-			expect(() =>
-				progressUpdater.getProgress('invalid-task-id'),
-			).not.toThrow();
+			expect(() => progressUpdater.getProgress('invalid-task-id')).not.toThrow();
 			expect(progressUpdater.getProgress('invalid-task-id')).toBeUndefined();
 		});
 	});

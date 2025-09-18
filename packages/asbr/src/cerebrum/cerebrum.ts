@@ -39,9 +39,7 @@ export class Cerebrum {
 
 		const plan: Plan = {
 			id: this.generateId(),
-			title:
-				context.intent.substring(0, 50) +
-				(context.intent.length > 50 ? '...' : ''),
+			title: context.intent.substring(0, 50) + (context.intent.length > 50 ? '...' : ''),
 			description: context.intent,
 			steps: [],
 			status: 'planning',

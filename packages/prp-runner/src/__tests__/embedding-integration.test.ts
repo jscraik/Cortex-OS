@@ -41,9 +41,7 @@ describe('🔍 Embedding and Reranking Integration Tests', () => {
 
 		it('adds and retrieves documents', async () => {
 			const texts = ['Test document'];
-			const { state, ids } = await addDocuments(embeddingState, texts, [
-				{ source: 'test' },
-			]);
+			const { state, ids } = await addDocuments(embeddingState, texts, [{ source: 'test' }]);
 			embeddingState = state;
 			const doc = getDocument(embeddingState, ids[0]);
 			expect(doc?.text).toBe('Test document');
@@ -52,10 +50,7 @@ describe('🔍 Embedding and Reranking Integration Tests', () => {
 		it('removes documents from store', async () => {
 			const { state, ids } = await addDocuments(embeddingState, ['Remove me']);
 			embeddingState = state;
-			const { state: removedState, removed } = removeDocument(
-				embeddingState,
-				ids[0],
-			);
+			const { state: removedState, removed } = removeDocument(embeddingState, ids[0]);
 			embeddingState = removedState;
 			expect(removed).toBe(true);
 			expect(getDocument(embeddingState, ids[0])).toBeUndefined();
@@ -74,9 +69,7 @@ describe('🔍 Embedding and Reranking Integration Tests', () => {
 				topK: 2,
 			});
 			expect(results.length).toBe(2);
-			expect(results[0].similarity).toBeGreaterThanOrEqual(
-				results[1].similarity,
-			);
+			expect(results[0].similarity).toBeGreaterThanOrEqual(results[1].similarity);
 		});
 	});
 

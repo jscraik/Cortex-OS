@@ -45,10 +45,7 @@ const InputVariablesModal: React.FC<InputVariablesModalProps> = ({
 					<div className="space-y-4">
 						{Object.keys(variables).map((key) => (
 							<div key={key}>
-								<label
-									htmlFor={key}
-									className="block text-sm font-medium text-gray-700 mb-1"
-								>
+								<label htmlFor={key} className="block text-sm font-medium text-gray-700 mb-1">
 									{key}
 								</label>
 								<input
@@ -59,9 +56,7 @@ const InputVariablesModal: React.FC<InputVariablesModalProps> = ({
 									className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 									placeholder={variables[key] || `Enter value for ${key}`}
 								/>
-								{variables[key] && (
-									<p className="mt-1 text-sm text-gray-500">{variables[key]}</p>
-								)}
+								{variables[key] && <p className="mt-1 text-sm text-gray-500">{variables[key]}</p>}
 							</div>
 						))}
 					</div>

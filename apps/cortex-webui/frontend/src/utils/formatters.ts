@@ -51,7 +51,5 @@ export const capitalizeFirstLetter = (string: string): string => {
 };
 
 export const camelToTitleCase = (string: string): string => {
-	return string
-		.replace(/([A-Z])/g, ' $1')
-		.replace(/^./, (str) => str.toUpperCase());
+	return string.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
 };

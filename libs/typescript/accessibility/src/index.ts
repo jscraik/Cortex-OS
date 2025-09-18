@@ -45,11 +45,7 @@ export class A11yUtils {
 	}
 
 	// Calculate relative luminance
-	private static getRelativeLuminance(rgb: {
-		r: number;
-		g: number;
-		b: number;
-	}): number {
+	private static getRelativeLuminance(rgb: { r: number; g: number; b: number }): number {
 		// Convert RGB to sRGB
 		const sRgb = {
 			r: rgb.r / 255,
@@ -58,12 +54,9 @@ export class A11yUtils {
 		};
 
 		// Apply gamma correction
-		const r =
-			sRgb.r <= 0.03928 ? sRgb.r / 12.92 : ((sRgb.r + 0.055) / 1.055) ** 2.4;
-		const g =
-			sRgb.g <= 0.03928 ? sRgb.g / 12.92 : ((sRgb.g + 0.055) / 1.055) ** 2.4;
-		const b =
-			sRgb.b <= 0.03928 ? sRgb.b / 12.92 : ((sRgb.b + 0.055) / 1.055) ** 2.4;
+		const r = sRgb.r <= 0.03928 ? sRgb.r / 12.92 : ((sRgb.r + 0.055) / 1.055) ** 2.4;
+		const g = sRgb.g <= 0.03928 ? sRgb.g / 12.92 : ((sRgb.g + 0.055) / 1.055) ** 2.4;
+		const b = sRgb.b <= 0.03928 ? sRgb.b / 12.92 : ((sRgb.b + 0.055) / 1.055) ** 2.4;
 
 		// Calculate luminance
 		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -111,11 +104,7 @@ export class A11yUtils {
 	}
 
 	// Generate ARIA labels for interactive elements
-	static generateAriaLabel(
-		elementType: string,
-		action: string,
-		context?: string,
-	): string {
+	static generateAriaLabel(elementType: string, action: string, context?: string): string {
 		const baseLabel = `${action} ${elementType}`;
 		return context ? `${baseLabel} ${context}` : baseLabel;
 	}
@@ -124,26 +113,14 @@ export class A11yUtils {
 // Example usage
 function example() {
 	// Check color contrast
-	console.log(
-		'Contrast ratio (black/white):',
-		A11yUtils.getContrastRatio('#000000', '#FFFFFF'),
-	);
-	console.log(
-		'Meets AA contrast:',
-		A11yUtils.meetsAaContrast('#000000', '#FFFFFF'),
-	);
+	console.log('Contrast ratio (black/white):', A11yUtils.getContrastRatio('#000000', '#FFFFFF'));
+	console.log('Meets AA contrast:', A11yUtils.meetsAaContrast('#000000', '#FFFFFF'));
 
 	// Generate screen reader text
-	console.log(
-		'Screen reader text:',
-		A11yUtils.generateSrText('Close', 'Close dialog'),
-	);
+	console.log('Screen reader text:', A11yUtils.generateSrText('Close', 'Close dialog'));
 
 	// Generate ARIA label
-	console.log(
-		'ARIA label:',
-		A11yUtils.generateAriaLabel('button', 'Submit', 'Contact form'),
-	);
+	console.log('ARIA label:', A11yUtils.generateAriaLabel('button', 'Submit', 'Contact form'));
 }
 
 // Run example if this file is executed directly

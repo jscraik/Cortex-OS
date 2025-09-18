@@ -3,19 +3,8 @@
  * Tests systematic improvements to error handling
  */
 
-import {
-	createEnvelope,
-	type Envelope,
-} from '@cortex-os/a2a-contracts/envelope';
-import {
-	afterEach,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	type Mock,
-	vi,
-} from 'vitest';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 let stdio: typeof import('../stdio').stdio;
 
@@ -138,9 +127,7 @@ describe('Stdio Transport', () => {
 			mockSpawn.mockReturnValue(mockChild);
 			stdio('test-command');
 			// Simulate data event
-			const dataHandler = mockChild.stdout.on.mock.calls.find(
-				([event]) => event === 'data',
-			)?.[1];
+			const dataHandler = mockChild.stdout.on.mock.calls.find(([event]) => event === 'data')?.[1];
 			if (dataHandler) {
 				// Simulate receiving valid JSON
 				dataHandler(Buffer.from('{"type":"test","data":"valid"}\n'));
@@ -162,9 +149,7 @@ describe('Stdio Transport', () => {
 			mockSpawn.mockReturnValue(mockChild);
 			stdio('test-command');
 			// Get the data handler
-			const dataHandler = mockChild.stdout.on.mock.calls.find(
-				([event]) => event === 'data',
-			)?.[1];
+			const dataHandler = mockChild.stdout.on.mock.calls.find(([event]) => event === 'data')?.[1];
 			if (dataHandler) {
 				// Simulate receiving invalid JSON
 				dataHandler(Buffer.from('invalid-json\n'));
@@ -191,9 +176,7 @@ describe('Stdio Transport', () => {
 			};
 			mockSpawn.mockReturnValue(mockChild);
 			stdio('test-command');
-			const dataHandler = mockChild.stdout.on.mock.calls.find(
-				([event]) => event === 'data',
-			)?.[1];
+			const dataHandler = mockChild.stdout.on.mock.calls.find(([event]) => event === 'data')?.[1];
 			if (dataHandler) {
 				// Simulate empty lines and whitespace
 				dataHandler(Buffer.from('\n\n  \n\t\n'));
@@ -276,9 +259,7 @@ describe('Stdio Transport', () => {
 			};
 			mockSpawn.mockReturnValue(mockChild);
 			stdio('test-command');
-			const dataHandler = mockChild.stdout.on.mock.calls.find(
-				([event]) => event === 'data',
-			)?.[1];
+			const dataHandler = mockChild.stdout.on.mock.calls.find(([event]) => event === 'data')?.[1];
 			if (dataHandler) {
 				// Simulate non-Buffer data (edge case)
 				expect(() => dataHandler('string-data')).not.toThrow();

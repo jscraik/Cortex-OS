@@ -17,11 +17,7 @@ export interface Handler {
 }
 
 export interface A2AWiring {
-	publish: (
-		type: string,
-		payload: Record<string, unknown>,
-		source?: string,
-	) => Promise<void>;
+	publish: (type: string, payload: Record<string, unknown>, source?: string) => Promise<void>;
 	on: (type: string, handler: Handler['handle']) => void;
 	emit: (envelope: Envelope) => void;
 }

@@ -34,12 +34,7 @@ interface FileItemModalProps {
 	onClose?: () => void;
 }
 
-const FileItemModal: React.FC<FileItemModalProps> = ({
-	item,
-	show,
-	edit = false,
-	onClose,
-}) => {
+const FileItemModal: React.FC<FileItemModalProps> = ({ item, show, edit = false, onClose }) => {
 	const [enableFullContent, setEnableFullContent] = useState(false);
 	const [loading, _setLoading] = useState(false);
 	const [_selectedTab, _setSelectedTab] = useState('');
@@ -64,8 +59,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 	};
 
 	const isPDF =
-		item?.meta?.content_type === 'application/pdf' ||
-		item?.name?.toLowerCase().endsWith('.pdf');
+		item?.meta?.content_type === 'application/pdf' || item?.name?.toLowerCase().endsWith('.pdf');
 
 	const _isAudio =
 		(item?.meta?.content_type ?? '').startsWith('audio/') ||
@@ -77,10 +71,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 
 	const handleOpenFile = () => {
 		if (!isPDF && item?.url) {
-			window.open(
-				item.type === 'file' ? `${item.url}/content` : `${item.url}`,
-				'_blank',
-			);
+			window.open(item.type === 'file' ? `${item.url}/content` : `${item.url}`, '_blank');
 		}
 	};
 
@@ -91,10 +82,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 					<div className="flex items-start justify-between">
 						<div>
 							<div className="font-medium text-lg dark:text-gray-100">
-								<button
-									onClick={handleOpenFile}
-									className="hover:underline line-clamp-1 text-left"
-								>
+								<button onClick={handleOpenFile} className="hover:underline line-clamp-1 text-left">
 									{item?.name ?? 'File'}
 								</button>
 							</div>
@@ -143,9 +131,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 
 								{item.size && (
 									<>
-										<div className="capitalize shrink-0">
-											{formatFileSize(item.size)}
-										</div>
+										<div className="capitalize shrink-0">{formatFileSize(item.size)}</div>
 										<div>•</div>
 									</>
 								)}
@@ -153,8 +139,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 								{item?.file?.data?.content && (
 									<>
 										<div className="capitalize shrink-0">
-											{getLineCount(item?.file?.data?.content ?? '')} extracted
-											lines
+											{getLineCount(item?.file?.data?.content ?? '')} extracted lines
 										</div>
 
 										<div className="flex items-center gap-1 shrink-0">
@@ -163,9 +148,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 									</>
 								)}
 
-								{item?.knowledge && (
-									<div className="capitalize shrink-0">Knowledge Base</div>
-								)}
+								{item?.knowledge && <div className="capitalize shrink-0">Knowledge Base</div>}
 							</div>
 
 							{edit && (
@@ -178,9 +161,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 										}
 									>
 										<div className="flex items-center gap-1.5 text-xs">
-											{enableFullContent
-												? 'Using Entire Document'
-												: 'Using Focused Retrieval'}
+											{enableFullContent ? 'Using Entire Document' : 'Using Focused Retrieval'}
 											<Switch
 												state={enableFullContent}
 												onChange={(state) => {
@@ -225,9 +206,7 @@ const FileItemModal: React.FC<FileItemModalProps> = ({
 
 							{item?.type === 'file' && item?.file?.data?.content && (
 								<div className="mt-4">
-									<div className="text-sm whitespace-pre-wrap">
-										{item.file.data.content}
-									</div>
+									<div className="text-sm whitespace-pre-wrap">{item.file.data.content}</div>
 								</div>
 							)}
 						</>

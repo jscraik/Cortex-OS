@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 // Lightweight import; relies on build including Node types via root tsconfig
-import {
-	generatePrometheusMetrics,
-	runDiagnostics,
-} from '../diagnostics/diagnostics.js';
+import { generatePrometheusMetrics, runDiagnostics } from '../diagnostics/diagnostics.js';
 
 // Fallback typing if ambient node types not resolved in some partial builds
 // Provide a minimal process typing fallback if not present (should be overridden by node types)

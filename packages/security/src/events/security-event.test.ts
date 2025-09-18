@@ -24,10 +24,10 @@ describe('SecurityEventEmitter', () => {
 		});
 
 		expect(event.type).toBe('security.test');
-		expect(registry.validate).toHaveBeenCalledWith(
-			'https://cortex.test/schemas/security/test',
-			{ foo: 'bar', evidence: ['proof'] },
-		);
+		expect(registry.validate).toHaveBeenCalledWith('https://cortex.test/schemas/security/test', {
+			foo: 'bar',
+			evidence: ['proof'],
+		});
 		expect(policyRouter.enforce).toHaveBeenCalled();
 		expect(event.data).toEqual({ foo: 'bar', evidence: ['proof'] });
 	});

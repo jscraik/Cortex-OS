@@ -95,13 +95,9 @@ export type AgentAssignedEvent = z.infer<typeof agentAssignedEventSchema>;
 export type AgentFreedEvent = z.infer<typeof agentFreedEventSchema>;
 export type PlanCreatedEvent = z.infer<typeof planCreatedEventSchema>;
 export type PlanUpdatedEvent = z.infer<typeof planUpdatedEventSchema>;
-export type CoordinationStartedEvent = z.infer<
-	typeof coordinationStartedEventSchema
->;
+export type CoordinationStartedEvent = z.infer<typeof coordinationStartedEventSchema>;
 export type DecisionMadeEvent = z.infer<typeof decisionMadeEventSchema>;
-export type ResourceAllocatedEvent = z.infer<
-	typeof resourceAllocatedEventSchema
->;
+export type ResourceAllocatedEvent = z.infer<typeof resourceAllocatedEventSchema>;
 
 export const ORCHESTRATION_EVENT_SCHEMAS = {
 	[OrchestrationEventTypes.TaskCreated]: taskCreatedEventSchema,

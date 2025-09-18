@@ -13,9 +13,7 @@ export interface GenerateOptions {
 	model: string;
 }
 
-export type GenerateFn = (
-	opts: GenerateOptions,
-) => Promise<{ content: string; model: string }>;
+export type GenerateFn = (opts: GenerateOptions) => Promise<{ content: string; model: string }>;
 
 export interface GenerateDeps {
 	modelStrategy: ModelStrategy;
@@ -34,13 +32,7 @@ const requestSchema = z.object({
 });
 
 export function createGenerate(deps: GenerateDeps) {
-	const {
-		modelStrategy,
-		mlxGenerate,
-		ollamaGenerate,
-		isHealthy,
-		markUnhealthy,
-	} = deps;
+	const { modelStrategy, mlxGenerate, ollamaGenerate, isHealthy, markUnhealthy } = deps;
 	return async function generate(task: string, request: unknown) {
 		const cfg = modelStrategy[task];
 		if (!cfg) throw new Error(`Unknown task: ${task}`);

@@ -51,10 +51,7 @@ export function provideEvidenceRepository(): EvidenceRepository {
 
 export function provideMCP(opts?: {
 	audit?: (e: Record<string, unknown>) => void;
-	publishMcpEvent?: (evt: {
-		type: string;
-		payload: Record<string, unknown>;
-	}) => void;
+	publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;
 }): McpGateway {
 	return createMcpGateway({
 		memories: provideMemories(),
@@ -77,10 +74,7 @@ export function provideMCP(opts?: {
 export const tracer = trace.getTracer('cortex-os');
 
 export function configureAuditPublisherWithBus(
-	publishMcp?: (evt: {
-		type: string;
-		payload: Record<string, unknown>;
-	}) => void,
+	publishMcp?: (evt: { type: string; payload: Record<string, unknown> }) => void,
 ) {
 	if (!publishMcp) return { publishMcpEvent: undefined };
 	return { publishMcpEvent: publishMcp };

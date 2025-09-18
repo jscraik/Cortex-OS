@@ -67,9 +67,7 @@ const SearchRequestSchema = z.object({
 	capabilities: z.array(z.enum(['tools', 'resources', 'prompts'])).optional(),
 	limit: z.number().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
 	offset: z.number().min(0).default(0),
-	sortBy: z
-		.enum(['relevance', 'downloads', 'rating', 'updated'])
-		.default('relevance'),
+	sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
 	sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
@@ -79,10 +77,7 @@ const SearchRequestSchema = z.object({
  */
 export class MarketplaceService {
 	private registryService: RegistryService;
-	private searchCache = new Map<
-		string,
-		{ result: SearchResult; timestamp: number }
-	>();
+	private searchCache = new Map<string, { result: SearchResult; timestamp: number }>();
 	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 	constructor(registryService: RegistryService) {
@@ -120,14 +115,11 @@ export class MarketplaceService {
 						server.name.toLowerCase().includes(query) ||
 						server.description.toLowerCase().includes(query) ||
 						server.id.toLowerCase().includes(query) ||
-						server.tags?.some((tag: string) =>
-							tag.toLowerCase().includes(query),
-						);
+						server.tags?.some((tag: string) => tag.toLowerCase().includes(query));
 
 					if (matchesQuery) {
 						if (server.category) {
-							facets.categories[server.category] =
-								(facets.categories[server.category] || 0) + 1;
+							facets.categories[server.category] = (facets.categories[server.category] || 0) + 1;
 						}
 						if (server.security?.riskLevel) {
 							const risk = server.security.riskLevel;
@@ -158,10 +150,7 @@ export class MarketplaceService {
 		const sortedServers = this.sortResults(uniqueServers, request);
 
 		const total = sortedServers.length;
-		const paginatedServers = sortedServers.slice(
-			request.offset,
-			request.offset + request.limit,
-		);
+		const paginatedServers = sortedServers.slice(request.offset, request.offset + request.limit);
 
 		const result: SearchResult = {
 			servers: paginatedServers,
@@ -191,10 +180,7 @@ export class MarketplaceService {
 	async getStats(): Promise<MarketplaceStats> {
 		const allServers = await this.getAllServers();
 
-		const totalDownloads = allServers.reduce(
-			(sum, server) => sum + (server.downloads || 0),
-			0,
-		);
+		const totalDownloads = allServers.reduce((sum, server) => sum + (server.downloads || 0), 0);
 		const publishers = new Set(allServers.map((s) => s.publisher?.name)).size;
 		const featuredCount = allServers.filter((s) => s.featured).length;
 
@@ -206,8 +192,7 @@ export class MarketplaceService {
 		for (const server of allServers) {
 			// Category breakdown
 			if (server.category) {
-				categoryBreakdown[server.category] =
-					(categoryBreakdown[server.category] || 0) + 1;
+				categoryBreakdown[server.category] = (categoryBreakdown[server.category] || 0) + 1;
 			}
 
 			// Risk level breakdown
@@ -249,10 +234,7 @@ export class MarketplaceService {
 		Record<string, { name: string; count: number; description?: string }>
 	> {
 		const allServers = await this.getAllServers();
-		const categories: Record<
-			string,
-			{ name: string; count: number; description?: string }
-		> = {};
+		const categories: Record<string, { name: string; count: number; description?: string }> = {};
 
 		for (const server of allServers) {
 			if (server.category) {
@@ -297,10 +279,7 @@ export class MarketplaceService {
 		});
 	}
 
-	private passesFilters(
-		server: ServerManifest,
-		request: SearchRequest,
-	): boolean {
+	private passesFilters(server: ServerManifest, request: SearchRequest): boolean {
 		if (request.q) {
 			const query = request.q.toLowerCase();
 			const matches =
@@ -321,18 +300,13 @@ export class MarketplaceService {
 			return false;
 		}
 
-		if (
-			request.featured !== undefined &&
-			Boolean(server.featured) !== request.featured
-		) {
+		if (request.featured !== undefined && Boolean(server.featured) !== request.featured) {
 			return false;
 		}
 
 		if (
 			request.publisher &&
-			!server.publisher?.name
-				.toLowerCase()
-				.includes(request.publisher.toLowerCase())
+			!server.publisher?.name.toLowerCase().includes(request.publisher.toLowerCase())
 		) {
 			return false;
 		}
@@ -359,9 +333,7 @@ export class MarketplaceService {
 		}
 
 		if (request.capabilities && request.capabilities.length > 0) {
-			if (
-				!request.capabilities.every((cap) => server.capabilities[cap] === true)
-			) {
+			if (!request.capabilities.every((cap) => server.capabilities[cap] === true)) {
 				return false;
 			}
 		}
@@ -372,10 +344,7 @@ export class MarketplaceService {
 	/**
 	 * Sort search results
 	 */
-	private sortResults(
-		servers: ServerManifest[],
-		request: SearchRequest,
-	): ServerManifest[] {
+	private sortResults(servers: ServerManifest[], request: SearchRequest): ServerManifest[] {
 		const { sortBy, sortOrder } = request;
 
 		return servers.sort((a, b) => {
@@ -397,13 +366,9 @@ export class MarketplaceService {
 				default: {
 					// Relevance scoring: featured > downloads > rating
 					const aScore =
-						(a.featured ? 1000 : 0) +
-						(a.downloads || 0) * 0.001 +
-						(a.rating || 0) * 100;
+						(a.featured ? 1000 : 0) + (a.downloads || 0) * 0.001 + (a.rating || 0) * 100;
 					const bScore =
-						(b.featured ? 1000 : 0) +
-						(b.downloads || 0) * 0.001 +
-						(b.rating || 0) * 100;
+						(b.featured ? 1000 : 0) + (b.downloads || 0) * 0.001 + (b.rating || 0) * 100;
 					comparison = aScore - bScore;
 					break;
 				}

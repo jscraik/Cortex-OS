@@ -8,19 +8,14 @@ import * as orchestration from '../src/index.js';
 describe('@cortex-os/orchestration public API', () => {
 	it('exposes critical symbols', () => {
 		const keys = Object.keys(orchestration);
-		for (const k of [
-			'version',
-			'name',
-			'OrchestrationDefaults',
-			'orchestrationMcpTools',
-		]) {
+		for (const k of ['version', 'name', 'OrchestrationDefaults', 'orchestrationMcpTools']) {
 			expect(keys).toContain(k);
 		}
 	});
 
 	it('matches the expected export keys (snapshot baseline)', () => {
 		const keys = Object.keys(orchestration).sort();
-    expect(keys).toMatchInlineSnapshot(`
+		expect(keys).toMatchInlineSnapshot(`
         [
           "AgentRole",
           "CoordinationStrategy",

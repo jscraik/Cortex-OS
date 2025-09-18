@@ -10,9 +10,7 @@ describe('MultiModelGenerator', () => {
 		const gen = new MultiModelGenerator({
 			model: { model: 'test-model', backend: 'mlx' },
 		});
-		const spy = vi
-			.spyOn(gen as any, 'generateWithModel')
-			.mockResolvedValue('ok');
+		const spy = vi.spyOn(gen as any, 'generateWithModel').mockResolvedValue('ok');
 		const res = await gen.generate('prompt');
 		expect(res.content).toBe('ok');
 		expect(spy).toHaveBeenCalledTimes(1);

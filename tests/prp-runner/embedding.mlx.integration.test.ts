@@ -8,13 +8,8 @@ import {
 } from '../../packages/prp-runner/src/lib/embedding/index.js';
 
 const HF_CACHE =
-	process.env.HF_CACHE_PATH ||
-	path.resolve(process.env.HOME || '', '.cache', 'huggingface');
-const MODEL_PATH = path.join(
-	HF_CACHE,
-	'hub',
-	'models--Qwen--Qwen3-Embedding-0.6B',
-);
+	process.env.HF_CACHE_PATH || path.resolve(process.env.HOME || '', '.cache', 'huggingface');
+const MODEL_PATH = path.join(HF_CACHE, 'hub', 'models--Qwen--Qwen3-Embedding-0.6B');
 
 const hasModel = fs.existsSync(MODEL_PATH);
 const pythonDeps = spawnSync('python', ['-c', 'import sentence_transformers'], {

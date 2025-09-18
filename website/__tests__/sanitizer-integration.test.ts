@@ -24,10 +24,7 @@ describe('Sanitizer Integration Tests', () => {
 			pseudoJsxEscaped: (originalContent.match(/<Fragment>/g) || []).length,
 		};
 
-		const totalExpectedChanges = Object.values(changes).reduce(
-			(a, b) => a + b,
-			0,
-		);
+		const totalExpectedChanges = Object.values(changes).reduce((a, b) => a + b, 0);
 		expect(totalExpectedChanges).toBeGreaterThan(0);
 
 		// Verify specific patterns are processed
@@ -38,8 +35,7 @@ describe('Sanitizer Integration Tests', () => {
 	});
 
 	it('should handle content that needs escaping', () => {
-		const messyContent =
-			'Some Promise<string> types and <Fragment> components.';
+		const messyContent = 'Some Promise<string> types and <Fragment> components.';
 		const firstPass = sanitizeMdxContent(messyContent);
 
 		// Verify basic sanitization happens

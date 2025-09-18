@@ -4,9 +4,7 @@ interface ChatPlaceholderProps {
 	onStartNewChat: () => void;
 }
 
-const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
-	onStartNewChat,
-}) => {
+const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({ onStartNewChat }) => {
 	const features = [
 		{
 			title: 'Multi-Model Support',
@@ -115,12 +113,10 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 					</svg>
 				</div>
 
-				<h1 className="mt-4 text-2xl font-bold text-gray-900">
-					Welcome to brAInwav Cortex
-				</h1>
+				<h1 className="mt-4 text-2xl font-bold text-gray-900">Welcome to brAInwav Cortex</h1>
 				<p className="mt-2 text-gray-600">
-					Start a new conversation or explore the powerful features of our
-					AI-powered chat interface.
+					Start a new conversation or explore the powerful features of our AI-powered chat
+					interface.
 				</p>
 
 				<div className="mt-8">
@@ -147,23 +143,14 @@ const ChatPlaceholder: React.FC<ChatPlaceholderProps> = ({
 				</div>
 
 				<div className="mt-12">
-					<h2 className="text-lg font-medium text-gray-900">
-						Powerful Features
-					</h2>
+					<h2 className="text-lg font-medium text-gray-900">Powerful Features</h2>
 					<div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
 						{features.map((feature) => (
-							<div
-								key={feature.title}
-								className="flex items-start p-4 bg-white rounded-lg shadow"
-							>
+							<div key={feature.title} className="flex items-start p-4 bg-white rounded-lg shadow">
 								<div className="flex-shrink-0">{feature.icon}</div>
 								<div className="ml-4">
-									<h3 className="text-sm font-medium text-gray-900">
-										{feature.title}
-									</h3>
-									<p className="mt-1 text-sm text-gray-500">
-										{feature.description}
-									</p>
+									<h3 className="text-sm font-medium text-gray-900">{feature.title}</h3>
+									<p className="mt-1 text-sm text-gray-500">{feature.description}</p>
 								</div>
 							</div>
 						))}

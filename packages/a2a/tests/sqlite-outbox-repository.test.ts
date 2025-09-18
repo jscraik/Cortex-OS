@@ -57,9 +57,7 @@ describe('SqliteOutboxRepository', () => {
 		expect(savedMessages).toHaveLength(3);
 
 		// Retrieve all pending messages
-		const pendingMessages = await repository.findByStatus(
-			OutboxMessageStatus.PENDING,
-		);
+		const pendingMessages = await repository.findByStatus(OutboxMessageStatus.PENDING);
 
 		expect(pendingMessages).toHaveLength(3);
 		expect(pendingMessages.map((m) => m.aggregateId)).toContain('1');
@@ -96,15 +94,10 @@ describe('SqliteOutboxRepository', () => {
 		const savedMessage = await repository.save(mockMessage);
 
 		// Update status
-		await repository.updateStatus(
-			savedMessage.id,
-			OutboxMessageStatus.PROCESSING,
-		);
+		await repository.updateStatus(savedMessage.id, OutboxMessageStatus.PROCESSING);
 
 		// Retrieve the message
-		const messages = await repository.findByStatus(
-			OutboxMessageStatus.PROCESSING,
-		);
+		const messages = await repository.findByStatus(OutboxMessageStatus.PROCESSING);
 
 		expect(messages).toHaveLength(1);
 		expect(messages[0].id).toBe(savedMessage.id);
@@ -120,9 +113,7 @@ describe('SqliteOutboxRepository', () => {
 		await repository.markProcessed(savedMessage.id, publishedAt);
 
 		// Retrieve the message
-		const messages = await repository.findByStatus(
-			OutboxMessageStatus.PUBLISHED,
-		);
+		const messages = await repository.findByStatus(OutboxMessageStatus.PUBLISHED);
 
 		expect(messages).toHaveLength(1);
 		expect(messages[0].id).toBe(savedMessage.id);
@@ -157,9 +148,7 @@ describe('SqliteOutboxRepository', () => {
 		await repository.moveToDeadLetter(savedMessage.id, error);
 
 		// Retrieve the message
-		const messages = await repository.findByStatus(
-			OutboxMessageStatus.DEAD_LETTER,
-		);
+		const messages = await repository.findByStatus(OutboxMessageStatus.DEAD_LETTER);
 
 		expect(messages).toHaveLength(1);
 		expect(messages[0].id).toBe(savedMessage.id);
@@ -202,9 +191,7 @@ describe('SqliteOutboxRepository', () => {
 		expect(deletedCount).toBe(1);
 
 		// Check that only the newer message remains
-		const remainingMessages = await repository.findByStatus(
-			OutboxMessageStatus.PUBLISHED,
-		);
+		const remainingMessages = await repository.findByStatus(OutboxMessageStatus.PUBLISHED);
 		expect(remainingMessages).toHaveLength(1);
 		expect(remainingMessages[0].id).toBe(message2.id);
 	});
@@ -226,9 +213,7 @@ describe('SqliteOutboxRepository', () => {
 		// Set message2's next retry time to the past
 		const db = (repository as any).db;
 		const pastTime = Date.now() - 1000;
-		const stmt = db.prepare(
-			'UPDATE outbox_messages SET next_retry_at = ? WHERE id = ?',
-		);
+		const stmt = db.prepare('UPDATE outbox_messages SET next_retry_at = ? WHERE id = ?');
 		stmt.run(pastTime, message2.id);
 
 		// Increment retry for message2

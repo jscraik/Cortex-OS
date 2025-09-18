@@ -27,9 +27,7 @@ function fail(msg: string) {
 async function main() {
 	// Ensure AGENTS.md authority line present (delegates to existing tooling)
 	const agents = readFileSync('AGENTS.md', 'utf8');
-	if (
-		!agents.includes('AGENTS.md is authoritative for structure and behavior')
-	) {
+	if (!agents.includes('AGENTS.md is authoritative for structure and behavior')) {
 		fail('AGENTS.md missing authority declaration');
 	}
 
@@ -58,17 +56,13 @@ async function main() {
 	}
 
 	if (violations.length) {
-		console.error(
-			'❌ Cross-domain internal import(s) detected (src/ or dist/):',
-		);
+		console.error('❌ Cross-domain internal import(s) detected (src/ or dist/):');
 		for (const v of violations) {
 			console.error(` - ${v}`);
 		}
 		process.exitCode = 1;
 	} else {
-		console.log(
-			'✅ Structure OK for MCP packages (no internal cross-domain imports)',
-		);
+		console.log('✅ Structure OK for MCP packages (no internal cross-domain imports)');
 	}
 }
 

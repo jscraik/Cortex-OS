@@ -118,10 +118,7 @@ export class UserSimulator {
 	/**
 	 * Determine if conversation should end
 	 */
-	private shouldEndConversation(
-		agentResponse: string,
-		turnCount: number,
-	): boolean {
+	private shouldEndConversation(agentResponse: string, turnCount: number): boolean {
 		const completionIndicators = [
 			/is there anything else/i,
 			/glad i could help/i,
@@ -130,8 +127,7 @@ export class UserSimulator {
 			/happy to assist further/i,
 		];
 
-		const maxTurnsBias =
-			this.config.timeout && this.config.timeout < 15000 ? 10 : 20;
+		const maxTurnsBias = this.config.timeout && this.config.timeout < 15000 ? 10 : 20;
 		if (turnCount > maxTurnsBias) {
 			return true;
 		}
@@ -211,15 +207,10 @@ export class UserSimulator {
 	/**
 	 * Select random response (deterministic if seeded)
 	 */
-	private selectRandomResponse(
-		responses: string[],
-		style: PersonaStyle,
-	): string {
+	private selectRandomResponse(responses: string[], style: PersonaStyle): string {
 		let options = responses;
 		if (style.formality === 'casual') {
-			options = responses.map((r) =>
-				r.replace(/Thank you/gi, 'Thanks').replace(/Hello/gi, 'Hey'),
-			);
+			options = responses.map((r) => r.replace(/Thank you/gi, 'Thanks').replace(/Hello/gi, 'Hey'));
 		} else if (style.formality === 'technical') {
 			options = responses.map((r) => `Technical: ${r}`);
 		}

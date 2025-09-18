@@ -105,8 +105,7 @@ export class AICoreCapabilities {
 			// If it's already a key, keep it
 			if (keys.includes(config.llm.mlxModel)) {
 				// Type assertion: safe because of check above
-				config.llm.mlxModel = config.llm
-					.mlxModel as keyof typeof AVAILABLE_MLX_MODELS;
+				config.llm.mlxModel = config.llm.mlxModel as keyof typeof AVAILABLE_MLX_MODELS;
 			}
 			// If it's a value, find the corresponding key
 			else {
@@ -114,8 +113,7 @@ export class AICoreCapabilities {
 					([, value]) => value === config.llm.mlxModel,
 				);
 				if (keyEntry) {
-					config.llm.mlxModel =
-						keyEntry[0] as keyof typeof AVAILABLE_MLX_MODELS;
+					config.llm.mlxModel = keyEntry[0] as keyof typeof AVAILABLE_MLX_MODELS;
 				} else {
 					throw new Error(`Invalid mlxModel: ${config.llm.mlxModel}`);
 				}
@@ -134,33 +132,24 @@ export class AICoreCapabilities {
 			provider: this.config.llm.provider,
 			endpoint: this.config.llm.endpoint || '',
 			model: this.config.llm.model,
-			mlxModel: this.config.llm.mlxModel as
-				| keyof typeof AVAILABLE_MLX_MODELS
-				| undefined,
+			mlxModel: this.config.llm.mlxModel as keyof typeof AVAILABLE_MLX_MODELS | undefined,
 		});
 
 		// Initialize Embedding Adapter
 		if (this.config.embedding) {
-			this.embeddingAdapter = createEmbeddingAdapter(
-				this.config.embedding.provider,
-			);
+			this.embeddingAdapter = createEmbeddingAdapter(this.config.embedding.provider);
 		}
 
 		// Initialize Reranker Adapter
 		if (this.config.reranker) {
-			this.rerankerAdapter = createRerankerAdapter(
-				this.config.reranker.provider,
-			);
+			this.rerankerAdapter = createRerankerAdapter(this.config.reranker.provider);
 		}
 	}
 
 	/**
 	 * Generate text using configured LLM
 	 */
-	async generate(
-		prompt: string,
-		options: GenerationOptions = {},
-	): Promise<string> {
+	async generate(prompt: string, options: GenerationOptions = {}): Promise<string> {
 		const systemPrompt = options.systemPrompt;
 		const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
 
@@ -182,11 +171,7 @@ export class AICoreCapabilities {
 			throw new Error('Embedding adapter not configured for knowledge storage');
 		}
 
-		const documentIds = await this.embeddingAdapter.addDocuments(
-			documents,
-			metadata,
-			ids,
-		);
+		const documentIds = await this.embeddingAdapter.addDocuments(documents, metadata, ids);
 
 		// Store additional metadata in local knowledge base
 		documents.forEach((doc, index) => {
@@ -204,11 +189,7 @@ export class AICoreCapabilities {
 	/**
 	 * Perform semantic search in knowledge base
 	 */
-	async searchKnowledge(
-		query: string,
-		topK: number = 5,
-		threshold: number = 0.3,
-	) {
+	async searchKnowledge(query: string, topK: number = 5, threshold: number = 0.3) {
 		if (!this.embeddingAdapter) {
 			throw new Error('Embedding adapter not configured for knowledge search');
 		}
@@ -241,9 +222,7 @@ export class AICoreCapabilities {
 		// Step 2: Rerank if reranker is available
 		let finalSources = searchResults;
 		if (this.rerankerAdapter && searchResults.length > 0) {
-			const documentsToRerank = searchResults.map(
-				(r: { text: string }) => r.text,
-			);
+			const documentsToRerank = searchResults.map((r: { text: string }) => r.text);
 			const rerankedResults = await this.rerankerAdapter.rerank(
 				query,
 				documentsToRerank,
@@ -251,26 +230,18 @@ export class AICoreCapabilities {
 			);
 
 			// Map reranked results back to search results
-			finalSources = rerankedResults.map(
-				(rr: { originalIndex: number; score: number }) => {
-					const original = searchResults[rr.originalIndex];
-					return {
-						...original,
-						similarity: rr.score, // Update with reranker score
-					};
-				},
-			);
+			finalSources = rerankedResults.map((rr: { originalIndex: number; score: number }) => {
+				const original = searchResults[rr.originalIndex];
+				return {
+					...original,
+					similarity: rr.score, // Update with reranker score
+				};
+			});
 		}
 
 		// Step 3: Construct context prompt
-		const contextTexts = finalSources.map(
-			(source: { text: string }) => source.text,
-		);
-		const contextPrompt = this.buildRAGPrompt(
-			query,
-			contextTexts,
-			systemPrompt,
-		);
+		const contextTexts = finalSources.map((source: { text: string }) => source.text);
+		const contextPrompt = this.buildRAGPrompt(query, contextTexts, systemPrompt);
 
 		// Step 4: Generate answer using LLM
 		const answer = await this.generate(contextPrompt, {
@@ -282,11 +253,7 @@ export class AICoreCapabilities {
 		return {
 			answer,
 			sources: finalSources.map(
-				(source: {
-					text: string;
-					similarity: number;
-					metadata?: Record<string, unknown>;
-				}) => ({
+				(source: { text: string; similarity: number; metadata?: Record<string, unknown> }) => ({
 					text: source.text,
 					similarity: source.similarity,
 					metadata: source.metadata,
@@ -312,18 +279,12 @@ export class AICoreCapabilities {
 	/**
 	 * Calculate semantic similarity between two texts
 	 */
-	async calculateSimilarity(
-		text1: string,
-		text2: string,
-	): Promise<number | null> {
+	async calculateSimilarity(text1: string, text2: string): Promise<number | null> {
 		if (!this.embeddingAdapter) {
 			return null;
 		}
 
-		const embeddings = await this.embeddingAdapter.generateEmbeddings([
-			text1,
-			text2,
-		]);
+		const embeddings = await this.embeddingAdapter.generateEmbeddings([text1, text2]);
 		const [emb1, emb2] = embeddings;
 
 		// Cosine similarity
@@ -385,10 +346,7 @@ export class AICoreCapabilities {
 		this.knowledgeBase.clear();
 
 		// Clear embedding adapter's vector store if available
-		if (
-			this.embeddingAdapter &&
-			typeof this.embeddingAdapter.clearDocuments === 'function'
-		) {
+		if (this.embeddingAdapter && typeof this.embeddingAdapter.clearDocuments === 'function') {
 			await this.embeddingAdapter.clearDocuments();
 		}
 	}
@@ -400,18 +358,12 @@ export class AICoreCapabilities {
 		// Clear knowledge base
 		await this.clearKnowledge();
 		// Cleanup embedding adapter resources
-		if (
-			this.embeddingAdapter &&
-			typeof this.embeddingAdapter.shutdown === 'function'
-		) {
+		if (this.embeddingAdapter && typeof this.embeddingAdapter.shutdown === 'function') {
 			await this.embeddingAdapter.shutdown();
 		}
 
 		// Cleanup reranker adapter resources
-		if (
-			this.rerankerAdapter &&
-			typeof this.rerankerAdapter.shutdown === 'function'
-		) {
+		if (this.rerankerAdapter && typeof this.rerankerAdapter.shutdown === 'function') {
 			await this.rerankerAdapter.shutdown();
 		}
 
@@ -437,11 +389,7 @@ export class AICoreCapabilities {
 	/**
 	 * Build RAG prompt with context
 	 */
-	private buildRAGPrompt(
-		query: string,
-		context: string[],
-		systemPrompt?: string,
-	): string {
+	private buildRAGPrompt(query: string, context: string[], systemPrompt?: string): string {
 		let contextSection = '';
 		if (context.length > 0) {
 			const contextLines = context.map((c, i) => `${i + 1}. ${c}`).join('\n\n');
@@ -461,8 +409,7 @@ export class AICoreCapabilities {
 	private calculateConfidence(sources: Array<{ similarity: number }>): number {
 		if (sources.length === 0) return 0;
 
-		const avgSimilarity =
-			sources.reduce((sum, s) => sum + s.similarity, 0) / sources.length;
+		const avgSimilarity = sources.reduce((sum, s) => sum + s.similarity, 0) / sources.length;
 		const topSimilarity = sources[0]?.similarity || 0;
 
 		// Combine average and top similarity with some weighting
@@ -498,11 +445,7 @@ export const createAICapabilities = (
 	preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
 	const env = process.env as Record<string, unknown>;
-	const rerankerProvider = env.RERANKER_PROVIDER as
-		| 'transformers'
-		| 'local'
-		| 'mock'
-		| undefined;
+	const rerankerProvider = env.RERANKER_PROVIDER as 'transformers' | 'local' | 'mock' | undefined;
 
 	// Default MLX model configuration
 	const mlxModelValue = AVAILABLE_MLX_MODELS.QWEN_SMALL;
@@ -555,8 +498,7 @@ export const createAICapabilities = (
 	if (rerankerProvider) {
 		const reranker = { provider: rerankerProvider } as AICoreConfig['reranker'];
 		if (configs.full.embedding) configs.full.reranker = reranker;
-		if (configs['rag-focused'].embedding)
-			configs['rag-focused'].reranker = reranker;
+		if (configs['rag-focused'].embedding) configs['rag-focused'].reranker = reranker;
 	}
 
 	return new AICoreCapabilities(configs[preset]);

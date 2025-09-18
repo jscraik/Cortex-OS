@@ -10,16 +10,11 @@ import { encodingForModel, type TiktokenModel } from 'js-tiktoken';
  * heuristic (1 token per 4 characters) if the model encoding cannot be
  * loaded.
  */
-export function estimateTokenCount(
-	text: string,
-	model = 'gpt-3.5-turbo',
-): number {
+export function estimateTokenCount(text: string, model = 'gpt-3.5-turbo'): number {
 	try {
 		// Cast to TiktokenModel with fallback to supported models
 		const tikTokenModel = (
-			['gpt-3.5-turbo', 'gpt-4', 'text-davinci-003'].includes(model)
-				? model
-				: 'gpt-3.5-turbo'
+			['gpt-3.5-turbo', 'gpt-4', 'text-davinci-003'].includes(model) ? model : 'gpt-3.5-turbo'
 		) as TiktokenModel;
 		const enc = encodingForModel(tikTokenModel);
 		const tokens = enc.encode(text);

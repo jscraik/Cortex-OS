@@ -54,54 +54,30 @@ async function getSymlinkSupport(): Promise<boolean> {
 describe('Path Validation', () => {
 	it('allows exact directory match', () => {
 		const allowed = ['/home/user/project'];
-		expect(isPathWithinAllowedDirectories('/home/user/project', allowed)).toBe(
-			true,
-		);
+		expect(isPathWithinAllowedDirectories('/home/user/project', allowed)).toBe(true);
 	});
 
 	it('allows subdirectories', () => {
 		const allowed = ['/home/user/project'];
+		expect(isPathWithinAllowedDirectories('/home/user/project/src', allowed)).toBe(true);
+		expect(isPathWithinAllowedDirectories('/home/user/project/src/index.js', allowed)).toBe(true);
 		expect(
-			isPathWithinAllowedDirectories('/home/user/project/src', allowed),
-		).toBe(true);
-		expect(
-			isPathWithinAllowedDirectories(
-				'/home/user/project/src/index.js',
-				allowed,
-			),
-		).toBe(true);
-		expect(
-			isPathWithinAllowedDirectories(
-				'/home/user/project/deeply/nested/file.txt',
-				allowed,
-			),
+			isPathWithinAllowedDirectories('/home/user/project/deeply/nested/file.txt', allowed),
 		).toBe(true);
 	});
 
 	it('blocks similar directory names (prefix vulnerability)', () => {
 		const allowed = ['/home/user/project'];
-		expect(isPathWithinAllowedDirectories('/home/user/project2', allowed)).toBe(
-			false,
-		);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/project_backup', allowed),
-		).toBe(false);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/project-old', allowed),
-		).toBe(false);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/projectile', allowed),
-		).toBe(false);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/project.bak', allowed),
-		).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/project2', allowed)).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/project_backup', allowed)).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/project-old', allowed)).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/projectile', allowed)).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/project.bak', allowed)).toBe(false);
 	});
 
 	it('blocks paths outside allowed directories', () => {
 		const allowed = ['/home/user/project'];
-		expect(isPathWithinAllowedDirectories('/home/user/other', allowed)).toBe(
-			false,
-		);
+		expect(isPathWithinAllowedDirectories('/home/user/other', allowed)).toBe(false);
 		expect(isPathWithinAllowedDirectories('/etc/passwd', allowed)).toBe(false);
 		expect(isPathWithinAllowedDirectories('/home/user', allowed)).toBe(false);
 		expect(isPathWithinAllowedDirectories('/', allowed)).toBe(false);
@@ -109,21 +85,11 @@ describe('Path Validation', () => {
 
 	it('handles multiple allowed directories', () => {
 		const allowed = ['/home/user/project1', '/home/user/project2'];
-		expect(
-			isPathWithinAllowedDirectories('/home/user/project1/src', allowed),
-		).toBe(true);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/project2/src', allowed),
-		).toBe(true);
-		expect(isPathWithinAllowedDirectories('/home/user/project3', allowed)).toBe(
-			false,
-		);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/project1_backup', allowed),
-		).toBe(false);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/project2-old', allowed),
-		).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/project1/src', allowed)).toBe(true);
+		expect(isPathWithinAllowedDirectories('/home/user/project2/src', allowed)).toBe(true);
+		expect(isPathWithinAllowedDirectories('/home/user/project3', allowed)).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/project1_backup', allowed)).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/project2-old', allowed)).toBe(false);
 	});
 
 	it('blocks parent and sibling directories', () => {
@@ -134,32 +100,19 @@ describe('Path Validation', () => {
 		expect(isPathWithinAllowedDirectories('/', allowed)).toBe(false);
 
 		// Sibling with common prefix
-		expect(
-			isPathWithinAllowedDirectories('/test/allowed_sibling', allowed),
-		).toBe(false);
-		expect(isPathWithinAllowedDirectories('/test/allowed2', allowed)).toBe(
-			false,
-		);
+		expect(isPathWithinAllowedDirectories('/test/allowed_sibling', allowed)).toBe(false);
+		expect(isPathWithinAllowedDirectories('/test/allowed2', allowed)).toBe(false);
 	});
 
 	it('handles paths with special characters', () => {
 		const allowed = ['/home/user/my-project (v2)'];
 
-		expect(
-			isPathWithinAllowedDirectories('/home/user/my-project (v2)', allowed),
-		).toBe(true);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/my-project (v2)/src', allowed),
-		).toBe(true);
-		expect(
-			isPathWithinAllowedDirectories(
-				'/home/user/my-project (v2)_backup',
-				allowed,
-			),
-		).toBe(false);
-		expect(
-			isPathWithinAllowedDirectories('/home/user/my-project', allowed),
-		).toBe(false);
+		expect(isPathWithinAllowedDirectories('/home/user/my-project (v2)', allowed)).toBe(true);
+		expect(isPathWithinAllowedDirectories('/home/user/my-project (v2)/src', allowed)).toBe(true);
+		expect(isPathWithinAllowedDirectories('/home/user/my-project (v2)_backup', allowed)).toBe(
+			false,
+		);
+		expect(isPathWithinAllowedDirectories('/home/user/my-project', allowed)).toBe(false);
 	});
 
 	describe('Input validation', () => {
@@ -167,53 +120,33 @@ describe('Path Validation', () => {
 			const allowed = ['/home/user/project'];
 
 			expect(isPathWithinAllowedDirectories('', allowed)).toBe(false);
-			expect(isPathWithinAllowedDirectories('/home/user/project', [])).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories('/home/user/project', [])).toBe(false);
 		});
 
 		it('handles trailing separators correctly', () => {
 			const allowed = ['/home/user/project'];
 
 			// Path with trailing separator should still match
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/', allowed)).toBe(true);
 
 			// Allowed directory with trailing separator
 			const allowedWithSep = ['/home/user/project/'];
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project', allowedWithSep),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/', allowedWithSep),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project', allowedWithSep)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/', allowedWithSep)).toBe(true);
 
 			// Should still block similar names with or without trailing separators
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project2', allowedWithSep),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project2', allowed),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project2/', allowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project2', allowedWithSep)).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project2', allowed)).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project2/', allowed)).toBe(false);
 		});
 
 		it('skips empty directory entries in allowed list', () => {
 			const allowed = ['', '/home/user/project', ''];
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/src', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/src', allowed)).toBe(true);
 
 			// Should still validate properly with empty entries
-			expect(isPathWithinAllowedDirectories('/home/user/other', allowed)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories('/home/user/other', allowed)).toBe(false);
 		});
 
 		it('handles Windows paths with trailing separators', () => {
@@ -221,26 +154,15 @@ describe('Path Validation', () => {
 				const allowed = ['C:\\Users\\project'];
 
 				// Path with trailing separator
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users\\project\\', allowed),
-				).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project\\', allowed)).toBe(true);
 
 				// Allowed with trailing separator
 				const allowedWithSep = ['C:\\Users\\project\\'];
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users\\project', allowedWithSep),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories(
-						'C:\\Users\\project\\',
-						allowedWithSep,
-					),
-				).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project', allowedWithSep)).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project\\', allowedWithSep)).toBe(true);
 
 				// Should still block similar names
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users\\project2\\', allowed),
-				).toBe(false);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project2\\', allowed)).toBe(false);
 			}
 		});
 	});
@@ -250,16 +172,12 @@ describe('Path Validation', () => {
 			const allowed = [process.cwd()];
 
 			// Relative paths get normalized to absolute paths based on cwd
-			expect(isPathWithinAllowedDirectories('relative/path', allowed)).toBe(
-				true,
-			);
+			expect(isPathWithinAllowedDirectories('relative/path', allowed)).toBe(true);
 			expect(isPathWithinAllowedDirectories('./file', allowed)).toBe(true);
 
 			// Parent directory references that escape allowed directory
 			const parentAllowed = ['/home/user/project'];
-			expect(isPathWithinAllowedDirectories('../parent', parentAllowed)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories('../parent', parentAllowed)).toBe(false);
 		});
 
 		it('returns false for relative paths in allowed directories', () => {
@@ -267,15 +185,10 @@ describe('Path Validation', () => {
 
 			// Relative paths in allowed dirs are normalized to absolute based on cwd
 			// The normalized 'relative/path' won't match our test path
-			expect(
-				isPathWithinAllowedDirectories(
-					'/some/other/absolute/path/file',
-					badAllowed,
-				),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/absolute/path/file', badAllowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/some/other/absolute/path/file', badAllowed)).toBe(
+				true,
+			);
+			expect(isPathWithinAllowedDirectories('/absolute/path/file', badAllowed)).toBe(false);
 		});
 
 		it('handles null and undefined inputs gracefully', () => {
@@ -283,13 +196,9 @@ describe('Path Validation', () => {
 
 			// Should return false, not crash
 			expect(isPathWithinAllowedDirectories(null as any, allowed)).toBe(false);
-			expect(isPathWithinAllowedDirectories(undefined as any, allowed)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories(undefined as any, allowed)).toBe(false);
 			expect(isPathWithinAllowedDirectories('/path', null as any)).toBe(false);
-			expect(isPathWithinAllowedDirectories('/path', undefined as any)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories('/path', undefined as any)).toBe(false);
 		});
 	});
 
@@ -297,12 +206,8 @@ describe('Path Validation', () => {
 		it('handles unicode characters in paths', () => {
 			const allowed = ['/home/user/café'];
 
-			expect(isPathWithinAllowedDirectories('/home/user/café', allowed)).toBe(
-				true,
-			);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/café/file', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/café', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/café/file', allowed)).toBe(true);
 
 			// Different unicode representation won't match (not normalized)
 			const decomposed = '/home/user/cafe\u0301'; // e + combining accent
@@ -312,20 +217,12 @@ describe('Path Validation', () => {
 		it('handles paths with spaces correctly', () => {
 			const allowed = ['/home/user/my project'];
 
-			expect(
-				isPathWithinAllowedDirectories('/home/user/my project', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/my project/file', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/my project', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/my project/file', allowed)).toBe(true);
 
 			// Partial matches should fail
-			expect(isPathWithinAllowedDirectories('/home/user/my', allowed)).toBe(
-				false,
-			);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/my proj', allowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/my', allowed)).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/my proj', allowed)).toBe(false);
 		});
 	});
 
@@ -334,20 +231,12 @@ describe('Path Validation', () => {
 			const allowed = ['/home', '/home/user', '/home/user/project'];
 
 			// All paths under /home are allowed
-			expect(isPathWithinAllowedDirectories('/home/anything', allowed)).toBe(
-				true,
-			);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/anything', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/anything', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/anything', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/anything', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/anything', allowed)).toBe(true);
 
 			// First match wins (most permissive)
-			expect(
-				isPathWithinAllowedDirectories('/home/other/deep/path', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/other/deep/path', allowed)).toBe(true);
 		});
 
 		it('handles root directory as allowed', () => {
@@ -357,9 +246,7 @@ describe('Path Validation', () => {
 			expect(isPathWithinAllowedDirectories('/', allowed)).toBe(true);
 			expect(isPathWithinAllowedDirectories('/any/path', allowed)).toBe(true);
 			expect(isPathWithinAllowedDirectories('/etc/passwd', allowed)).toBe(true);
-			expect(isPathWithinAllowedDirectories('/home/user/secret', allowed)).toBe(
-				true,
-			);
+			expect(isPathWithinAllowedDirectories('/home/user/secret', allowed)).toBe(true);
 
 			// But only on the same filesystem root
 			if (path.sep === '\\') {
@@ -372,33 +259,19 @@ describe('Path Validation', () => {
 		it('handles Windows-style paths on Windows', () => {
 			if (path.sep === '\\') {
 				const allowed = ['C:\\Users\\project'];
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users\\project', allowed),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users\\project\\src', allowed),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users\\project2', allowed),
-				).toBe(false);
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users\\project_backup', allowed),
-				).toBe(false);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project', allowed)).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project\\src', allowed)).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project2', allowed)).toBe(false);
+				expect(isPathWithinAllowedDirectories('C:\\Users\\project_backup', allowed)).toBe(false);
 			}
 		});
 
 		it('handles Unix-style paths on Unix', () => {
 			if (path.sep === '/') {
 				const allowed = ['/home/user/project'];
-				expect(
-					isPathWithinAllowedDirectories('/home/user/project', allowed),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories('/home/user/project/src', allowed),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories('/home/user/project2', allowed),
-				).toBe(false);
+				expect(isPathWithinAllowedDirectories('/home/user/project', allowed)).toBe(true);
+				expect(isPathWithinAllowedDirectories('/home/user/project/src', allowed)).toBe(true);
+				expect(isPathWithinAllowedDirectories('/home/user/project2', allowed)).toBe(false);
 			}
 		});
 	});
@@ -409,44 +282,22 @@ describe('Path Validation', () => {
 
 			// Basic traversal attempts
 			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/../../../etc/passwd',
-					allowed,
-				),
+				isPathWithinAllowedDirectories('/home/user/project/../../../etc/passwd', allowed),
 			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/../../other',
-					allowed,
-				),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/../project2',
-					allowed,
-				),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project/../../other', allowed)).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project/../project2', allowed)).toBe(false);
 
 			// Mixed traversal with valid segments
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/src/../../project2',
-					allowed,
-				),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/./../../other',
-					allowed,
-				),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project/src/../../project2', allowed)).toBe(
+				false,
+			);
+			expect(isPathWithinAllowedDirectories('/home/user/project/./../../other', allowed)).toBe(
+				false,
+			);
 
 			// Multiple traversal sequences
 			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/../project/../../../etc',
-					allowed,
-				),
+				isPathWithinAllowedDirectories('/home/user/project/../project/../../../etc', allowed),
 			).toBe(false);
 		});
 
@@ -454,37 +305,23 @@ describe('Path Validation', () => {
 			const allowed = ['/home/user/project/../safe'];
 
 			// The allowed directory itself should be normalized and safe
-			expect(
-				isPathWithinAllowedDirectories('/home/user/safe/file', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/file', allowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/safe/file', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/file', allowed)).toBe(false);
 		});
 
 		it('handles complex traversal patterns', () => {
 			const allowed = ['/home/user/project'];
 
 			// Double dots in filenames (not traversal) - these normalize to paths within allowed dir
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/..test', allowed),
-			).toBe(true); // Not traversal
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/test..', allowed),
-			).toBe(true); // Not traversal
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/te..st', allowed),
-			).toBe(true); // Not traversal
+			expect(isPathWithinAllowedDirectories('/home/user/project/..test', allowed)).toBe(true); // Not traversal
+			expect(isPathWithinAllowedDirectories('/home/user/project/test..', allowed)).toBe(true); // Not traversal
+			expect(isPathWithinAllowedDirectories('/home/user/project/te..st', allowed)).toBe(true); // Not traversal
 
 			// Actual traversal
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/../test', allowed),
-			).toBe(false); // Is traversal - goes to /home/user/test
+			expect(isPathWithinAllowedDirectories('/home/user/project/../test', allowed)).toBe(false); // Is traversal - goes to /home/user/test
 
 			// Edge case: /home/user/project/.. normalizes to /home/user (parent dir)
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/..', allowed),
-			).toBe(false); // Goes to parent
+			expect(isPathWithinAllowedDirectories('/home/user/project/..', allowed)).toBe(false); // Goes to parent
 		});
 	});
 
@@ -492,35 +329,21 @@ describe('Path Validation', () => {
 		it('rejects paths with null bytes', () => {
 			const allowed = ['/home/user/project'];
 
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project\x00/etc/passwd',
-					allowed,
-				),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/test\x00.txt',
-					allowed,
-				),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories('\x00/home/user/project', allowed),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/\x00', allowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project\x00/etc/passwd', allowed)).toBe(
+				false,
+			);
+			expect(isPathWithinAllowedDirectories('/home/user/project/test\x00.txt', allowed)).toBe(
+				false,
+			);
+			expect(isPathWithinAllowedDirectories('\x00/home/user/project', allowed)).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project/\x00', allowed)).toBe(false);
 		});
 
 		it('rejects allowed directories with null bytes', () => {
 			const allowed = ['/home/user/project\x00'];
 
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project', allowed),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/file', allowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project', allowed)).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project/file', allowed)).toBe(false);
 		});
 	});
 
@@ -529,50 +352,25 @@ describe('Path Validation', () => {
 			const allowed = ['/home/user/project'];
 
 			// Percent is a valid filename character
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/report_50%.pdf',
-					allowed,
-				),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/Q1_25%_growth',
-					allowed,
-				),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/%41', allowed),
-			).toBe(true); // File named %41
+			expect(isPathWithinAllowedDirectories('/home/user/project/report_50%.pdf', allowed)).toBe(
+				true,
+			);
+			expect(isPathWithinAllowedDirectories('/home/user/project/Q1_25%_growth', allowed)).toBe(
+				true,
+			);
+			expect(isPathWithinAllowedDirectories('/home/user/project/%41', allowed)).toBe(true); // File named %41
 
 			// URL encoding is NOT decoded by path.normalize, so these are just odd filenames
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/%2e%2e', allowed),
-			).toBe(true); // File named "%2e%2e"
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project/file%20name',
-					allowed,
-				),
-			).toBe(true); // File with %20 in name
+			expect(isPathWithinAllowedDirectories('/home/user/project/%2e%2e', allowed)).toBe(true); // File named "%2e%2e"
+			expect(isPathWithinAllowedDirectories('/home/user/project/file%20name', allowed)).toBe(true); // File with %20 in name
 		});
 
 		it('handles percent signs in allowed directories', () => {
 			const allowed = ['/home/user/project%20files'];
 
 			// This is a directory literally named "project%20files"
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project%20files/test',
-					allowed,
-				),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project files/test',
-					allowed,
-				),
-			).toBe(false); // Different dir
+			expect(isPathWithinAllowedDirectories('/home/user/project%20files/test', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project files/test', allowed)).toBe(false); // Different dir
 		});
 	});
 
@@ -581,39 +379,20 @@ describe('Path Validation', () => {
 			const allowed = ['/home/user/project'];
 
 			// Trailing slashes
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project//', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project///', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project//', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project///', allowed)).toBe(true);
 
 			// Current directory references
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/./src', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/./project/src', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/./src', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/./project/src', allowed)).toBe(true);
 
 			// Multiple slashes
-			expect(
-				isPathWithinAllowedDirectories(
-					'/home/user/project//src//file',
-					allowed,
-				),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home//user//project//src', allowed),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project//src//file', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home//user//project//src', allowed)).toBe(true);
 
 			// Should still block outside paths
-			expect(
-				isPathWithinAllowedDirectories('/home/user//project2', allowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user//project2', allowed)).toBe(false);
 		});
 
 		it('handles mixed separators correctly', () => {
@@ -621,15 +400,9 @@ describe('Path Validation', () => {
 				const allowed = ['C:\\Users\\project'];
 
 				// Mixed separators should be normalized
-				expect(
-					isPathWithinAllowedDirectories('C:/Users/project', allowed),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories('C:\\Users/project\\src', allowed),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories('C:/Users\\project/src', allowed),
-				).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:/Users/project', allowed)).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:\\Users/project\\src', allowed)).toBe(true);
+				expect(isPathWithinAllowedDirectories('C:/Users\\project/src', allowed)).toBe(true);
 			}
 		});
 	});
@@ -642,17 +415,11 @@ describe('Path Validation', () => {
 			expect(isPathWithinAllowedDirectories({} as any, allowed)).toBe(false);
 			expect(isPathWithinAllowedDirectories([] as any, allowed)).toBe(false);
 			expect(isPathWithinAllowedDirectories(null as any, allowed)).toBe(false);
-			expect(isPathWithinAllowedDirectories(undefined as any, allowed)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories(undefined as any, allowed)).toBe(false);
 
 			// Non-string in allowed directories
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project', [123 as any]),
-			).toBe(false);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project', [{} as any]),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project', [123 as any])).toBe(false);
+			expect(isPathWithinAllowedDirectories('/home/user/project', [{} as any])).toBe(false);
 		});
 
 		it('handles very long paths', () => {
@@ -660,21 +427,15 @@ describe('Path Validation', () => {
 
 			// Create a very long path that's still valid
 			const longSubPath = `${'a/'.repeat(1000)}file.txt`;
-			expect(
-				isPathWithinAllowedDirectories(
-					`/home/user/project/${longSubPath}`,
-					allowed,
-				),
-			).toBe(true);
+			expect(isPathWithinAllowedDirectories(`/home/user/project/${longSubPath}`, allowed)).toBe(
+				true,
+			);
 
 			// Very long path that escapes
 			const escapePath = `${'a/'.repeat(1000) + '../'.repeat(1001)}etc/passwd`;
-			expect(
-				isPathWithinAllowedDirectories(
-					`/home/user/project/${escapePath}`,
-					allowed,
-				),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories(`/home/user/project/${escapePath}`, allowed)).toBe(
+				false,
+			);
 		});
 	});
 
@@ -684,51 +445,30 @@ describe('Path Validation', () => {
 			const allowed = ['/home/user/../user/project'];
 
 			// Should normalize to /home/user/project and work correctly
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/file', allowed),
-			).toBe(true);
-			expect(isPathWithinAllowedDirectories('/home/user/other', allowed)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories('/home/user/project/file', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/other', allowed)).toBe(false);
 		});
 
 		it('handles symbolic dots in filenames', () => {
 			const allowed = ['/home/user/project'];
 
 			// Single and double dots as actual filenames (not traversal)
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/.', allowed),
-			).toBe(true);
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/..', allowed),
-			).toBe(false); // This normalizes to parent
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/...', allowed),
-			).toBe(true); // Three dots is a valid filename
-			expect(
-				isPathWithinAllowedDirectories('/home/user/project/....', allowed),
-			).toBe(true); // Four dots is a valid filename
+			expect(isPathWithinAllowedDirectories('/home/user/project/.', allowed)).toBe(true);
+			expect(isPathWithinAllowedDirectories('/home/user/project/..', allowed)).toBe(false); // This normalizes to parent
+			expect(isPathWithinAllowedDirectories('/home/user/project/...', allowed)).toBe(true); // Three dots is a valid filename
+			expect(isPathWithinAllowedDirectories('/home/user/project/....', allowed)).toBe(true); // Four dots is a valid filename
 		});
 
 		it('handles UNC paths on Windows', () => {
 			if (path.sep === '\\') {
 				const allowed = ['\\\\server\\share\\project'];
 
-				expect(
-					isPathWithinAllowedDirectories('\\\\server\\share\\project', allowed),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories(
-						'\\\\server\\share\\project\\file',
-						allowed,
-					),
-				).toBe(true);
-				expect(
-					isPathWithinAllowedDirectories('\\\\server\\share\\other', allowed),
-				).toBe(false);
-				expect(
-					isPathWithinAllowedDirectories('\\\\other\\share\\project', allowed),
-				).toBe(false);
+				expect(isPathWithinAllowedDirectories('\\\\server\\share\\project', allowed)).toBe(true);
+				expect(isPathWithinAllowedDirectories('\\\\server\\share\\project\\file', allowed)).toBe(
+					true,
+				);
+				expect(isPathWithinAllowedDirectories('\\\\server\\share\\other', allowed)).toBe(false);
+				expect(isPathWithinAllowedDirectories('\\\\other\\share\\project', allowed)).toBe(false);
 			}
 		});
 	});
@@ -799,20 +539,14 @@ describe('Path Validation', () => {
 				await fs.symlink(targetFile, symlinkPath);
 
 				// The symlink path itself passes validation (looks like it's in allowed dir)
-				expect(isPathWithinAllowedDirectories(symlinkPath, [allowedDir])).toBe(
-					true,
-				);
+				expect(isPathWithinAllowedDirectories(symlinkPath, [allowedDir])).toBe(true);
 
 				// But the resolved path should fail validation
 				const resolvedPath = await fs.realpath(symlinkPath);
-				expect(isPathWithinAllowedDirectories(resolvedPath, [allowedDir])).toBe(
-					false,
-				);
+				expect(isPathWithinAllowedDirectories(resolvedPath, [allowedDir])).toBe(false);
 
 				// Verify the resolved path goes to the forbidden location (normalize both paths for macOS temp dirs)
-				expect(await fs.realpath(resolvedPath)).toBe(
-					await fs.realpath(targetFile),
-				);
+				expect(await fs.realpath(resolvedPath)).toBe(await fs.realpath(targetFile));
 			} catch (error) {
 				// Skip if no symlink permissions on the system
 				if ((error as NodeJS.ErrnoException).code !== 'EPERM') {
@@ -842,23 +576,17 @@ describe('Path Validation', () => {
 				// Test 1: File access through original symlink path should pass validation with resolved allowed dir
 				const fileViaSymlink = path.join(symlinkDir, 'file.txt');
 				const resolvedFile = await fs.realpath(fileViaSymlink);
-				expect(
-					isPathWithinAllowedDirectories(resolvedFile, [resolvedAllowedDir]),
-				).toBe(true);
+				expect(isPathWithinAllowedDirectories(resolvedFile, [resolvedAllowedDir])).toBe(true);
 
 				// Test 2: File access through resolved path should also pass validation
 				const fileViaResolved = path.join(resolvedTargetDir, 'file.txt');
-				expect(
-					isPathWithinAllowedDirectories(fileViaResolved, [resolvedAllowedDir]),
-				).toBe(true);
+				expect(isPathWithinAllowedDirectories(fileViaResolved, [resolvedAllowedDir])).toBe(true);
 
 				// Test 3: Demonstrate inconsistent behavior with unresolved allowed directories
 				// If allowed dirs were not resolved (storing symlink paths instead):
 				const unresolvedAllowedDirs = [symlinkDir];
 				// This validation would incorrectly fail for the same content:
-				expect(
-					isPathWithinAllowedDirectories(resolvedFile, unresolvedAllowedDirs),
-				).toBe(false);
+				expect(isPathWithinAllowedDirectories(resolvedFile, unresolvedAllowedDirs)).toBe(false);
 			} catch (error) {
 				// Skip if no symlink permissions on the system
 				if ((error as NodeJS.ErrnoException).code !== 'EPERM') {
@@ -883,18 +611,12 @@ describe('Path Validation', () => {
 				await fs.symlink(link2, allowedFile);
 
 				// The allowed file path passes basic validation
-				expect(isPathWithinAllowedDirectories(allowedFile, [allowedDir])).toBe(
-					true,
-				);
+				expect(isPathWithinAllowedDirectories(allowedFile, [allowedDir])).toBe(true);
 
 				// But complete resolution reveals the forbidden target
 				const fullyResolvedPath = await fs.realpath(allowedFile);
-				expect(
-					isPathWithinAllowedDirectories(fullyResolvedPath, [allowedDir]),
-				).toBe(false);
-				expect(await fs.realpath(fullyResolvedPath)).toBe(
-					await fs.realpath(actualTarget),
-				);
+				expect(isPathWithinAllowedDirectories(fullyResolvedPath, [allowedDir])).toBe(false);
+				expect(await fs.realpath(fullyResolvedPath)).toBe(await fs.realpath(actualTarget));
 			} catch (error) {
 				// Skip if no symlink permissions on the system
 				if ((error as NodeJS.ErrnoException).code !== 'EPERM') {
@@ -940,9 +662,7 @@ describe('Path Validation', () => {
 		it('demonstrates symlink race condition allows writing outside allowed directories', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping symlink race condition test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping symlink race condition test - symlinks not supported');
 				return;
 			}
 
@@ -964,9 +684,7 @@ describe('Path Validation', () => {
 		it('shows timing differences between validation approaches', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping timing validation test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping timing validation test - symlinks not supported');
 				return;
 			}
 
@@ -987,9 +705,7 @@ describe('Path Validation', () => {
 		it('validates directory creation timing', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping directory creation timing test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping directory creation timing test - symlinks not supported');
 				return;
 			}
 
@@ -1009,9 +725,7 @@ describe('Path Validation', () => {
 		it('demonstrates exclusive file creation behavior', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping exclusive file creation test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping exclusive file creation test - symlinks not supported');
 				return;
 			}
 
@@ -1029,9 +743,7 @@ describe('Path Validation', () => {
 		it('should use resolved parent paths for non-existent files', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping resolved parent paths test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping resolved parent paths test - symlinks not supported');
 				return;
 			}
 
@@ -1046,17 +758,10 @@ describe('Path Validation', () => {
 
 			const parentDir = path.dirname(fileThroughSymlink);
 			const resolvedParent = await fs.realpath(parentDir);
-			expect(isPathWithinAllowedDirectories(resolvedParent, allowed)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories(resolvedParent, allowed)).toBe(false);
 
-			const expectedSafePath = path.join(
-				resolvedParent,
-				path.basename(fileThroughSymlink),
-			);
-			expect(isPathWithinAllowedDirectories(expectedSafePath, allowed)).toBe(
-				false,
-			);
+			const expectedSafePath = path.join(resolvedParent, path.basename(fileThroughSymlink));
+			expect(isPathWithinAllowedDirectories(expectedSafePath, allowed)).toBe(false);
 		});
 
 		it('demonstrates parent directory symlink traversal', async () => {
@@ -1090,9 +795,7 @@ describe('Path Validation', () => {
 		it('should prevent race condition between validatePath and file operation', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping race condition prevention test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping race condition prevention test - symlinks not supported');
 				return;
 			}
 
@@ -1129,9 +832,7 @@ describe('Path Validation', () => {
 			// The symlink exists but write was blocked
 			const actualWritePath = await fs.realpath(racePath);
 			expect(actualWritePath).toBe(await fs.realpath(targetFile));
-			expect(isPathWithinAllowedDirectories(actualWritePath, allowed)).toBe(
-				false,
-			);
+			expect(isPathWithinAllowedDirectories(actualWritePath, allowed)).toBe(false);
 		});
 
 		it('should allow overwrites to legitimate files within allowed directories', async () => {
@@ -1190,9 +891,7 @@ describe('Path Validation', () => {
 		it('should prevent overwriting files through symlinks pointing outside allowed directories', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping symlink overwrite prevention test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping symlink overwrite prevention test - symlinks not supported');
 				return;
 			}
 
@@ -1256,17 +955,13 @@ describe('Path Validation', () => {
 
 			// This shows the vulnerability - we read forbidden content
 			expect(content).toBe('SECRET CONTENT');
-			expect(
-				isPathWithinAllowedDirectories(await fs.realpath(legitFile), allowed),
-			).toBe(false);
+			expect(isPathWithinAllowedDirectories(await fs.realpath(legitFile), allowed)).toBe(false);
 		});
 
 		it('verifies rename does not follow symlinks', async () => {
 			const symlinkSupported = await getSymlinkSupport();
 			if (!symlinkSupported) {
-				console.log(
-					'   ⏭️  Skipping rename symlink test - symlinks not supported',
-				);
+				console.log('   ⏭️  Skipping rename symlink test - symlinks not supported');
 				return;
 			}
 
@@ -1292,8 +987,7 @@ describe('Path Validation', () => {
 				.lstat(targetSymlink)
 				.then(() => true)
 				.catch(() => false);
-			const isSymlink =
-				symlinkExists && (await fs.lstat(targetSymlink)).isSymbolicLink();
+			const isSymlink = symlinkExists && (await fs.lstat(targetSymlink)).isSymbolicLink();
 			const targetContent = await fs.readFile(targetSymlink, 'utf-8');
 			const forbiddenContent = await fs.readFile(forbiddenTarget, 'utf-8');
 

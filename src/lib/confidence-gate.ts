@@ -1,7 +1,4 @@
-export function gateByConfidence(
-	confidence: number,
-	threshold: number,
-): 'ok' | 'needs escalation' {
+export function gateByConfidence(confidence: number, threshold: number): 'ok' | 'needs escalation' {
 	if (
 		typeof confidence !== 'number' ||
 		typeof threshold !== 'number' ||

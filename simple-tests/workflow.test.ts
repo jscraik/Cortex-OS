@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	analyzeContext,
-	collectRawEvidence,
-	validateEvidence,
-} from '../src/lib/workflow';
+import { analyzeContext, collectRawEvidence, validateEvidence } from '../src/lib/workflow';
 
 describe('workflow phases', () => {
 	it('analyzeContext extracts unique lowercase words and count', () => {

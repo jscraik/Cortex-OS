@@ -20,17 +20,13 @@ describe.skip('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 		it('should successfully import SimplePRPGraph from package exports', async () => {
 			// This will FAIL due to package.json export path mismatch
 			try {
-				const { SimplePRPGraph: ExportedGraph } = await import(
-					'@cortex-os/kernel'
-				);
+				const { SimplePRPGraph: ExportedGraph } = await import('@cortex-os/kernel');
 				expect(ExportedGraph).toBeDefined();
 				expect(typeof ExportedGraph).toBe('function');
 			} catch (error) {
 				// Expected failure: export paths don't match build structure
 				expect(error).toBeDefined();
-				throw new Error(
-					'[CRITICAL] Package exports broken - imports will fail in production',
-				);
+				throw new Error('[CRITICAL] Package exports broken - imports will fail in production');
 			}
 		});
 	});
@@ -72,9 +68,7 @@ describe.skip('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 				// This assertion will expose the interface mismatch
 				expect(mockOrchestrator).toHaveProperty('executeNeuron'); // May not exist
 			} catch (_error) {
-				throw new Error(
-					'[CRITICAL] Interface compatibility broken with prp-runner',
-				);
+				throw new Error('[CRITICAL] Interface compatibility broken with prp-runner');
 			}
 		});
 	});
@@ -221,19 +215,10 @@ describe.skip('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
 
 			try {
 				// This will trigger Math.random() usage - should be removed
-				const { ExampleCaptureSystem } = await import(
-					'../src/teaching/example-capture.js'
-				);
+				const { ExampleCaptureSystem } = await import('../src/teaching/example-capture.js');
 				const system = new ExampleCaptureSystem();
 
-				system.captureExample(
-					'pattern',
-					{},
-					'user-action',
-					'outcome',
-					{},
-					true,
-				);
+				system.captureExample('pattern', {}, 'user-action', 'outcome', {}, true);
 
 				// This should FAIL - Math.random() should not be used
 				expect(randomCalled).toBe(false);

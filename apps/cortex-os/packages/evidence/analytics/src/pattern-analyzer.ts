@@ -135,12 +135,7 @@ export class PatternAnalyzer extends EventEmitter {
 			const newAnomalies = await this.detectAnomalies();
 
 			// Update stored data
-			this.updateStoredPatterns(
-				newPatterns,
-				newDependencies,
-				newBottlenecks,
-				newAnomalies,
-			);
+			this.updateStoredPatterns(newPatterns, newDependencies, newBottlenecks, newAnomalies);
 
 			// Update statistics
 			this.patternsDetected += newPatterns.length;
@@ -192,12 +187,7 @@ export class PatternAnalyzer extends EventEmitter {
 	/**
 	 * Record agent interaction for pattern detection
 	 */
-	recordInteraction(
-		sourceAgent: string,
-		targetAgent: string,
-		type: string,
-		latency: number,
-	): void {
+	recordInteraction(sourceAgent: string, targetAgent: string, type: string, latency: number): void {
 		if (!this.interactionHistory.has(sourceAgent)) {
 			this.interactionHistory.set(sourceAgent, []);
 		}
@@ -233,8 +223,7 @@ export class PatternAnalyzer extends EventEmitter {
 			// Analyze interaction frequencies and patterns
 			for (const [sourceAgent, interactions] of this.interactionHistory) {
 				const recentInteractions = interactions.filter(
-					(interaction) =>
-						currentTime - interaction.timestamp.getTime() < timeWindow,
+					(interaction) => currentTime - interaction.timestamp.getTime() < timeWindow,
 				);
 
 				if (recentInteractions.length < 3) continue; // Need minimum interactions
@@ -277,10 +266,7 @@ export class PatternAnalyzer extends EventEmitter {
 			type: string;
 			latency: number;
 		}>,
-	): Map<
-		string,
-		Array<{ timestamp: Date; target: string; type: string; latency: number }>
-	> {
+	): Map<string, Array<{ timestamp: Date; target: string; type: string; latency: number }>> {
 		const groups = new Map();
 
 		for (const interaction of interactions) {
@@ -312,19 +298,14 @@ export class PatternAnalyzer extends EventEmitter {
 			// Calculate pattern metrics
 			const frequency = interactions.length;
 			const latencies = interactions.map((i) => i.latency);
-			const averageLatency =
-				latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
+			const averageLatency = latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
 			const types = [...new Set(interactions.map((i) => i.type))];
 
 			// Determine pattern type
 			const patternType = this.determinePatternType(interactions);
 
 			// Calculate criticality based on frequency and dependencies
-			const criticality = this.calculateCriticality(
-				frequency,
-				averageLatency,
-				types,
-			);
+			const criticality = this.calculateCriticality(frequency, averageLatency, types);
 
 			return {
 				id: `pattern-${sourceAgent}-${targetAgent}-${Date.now()}`,
@@ -334,10 +315,7 @@ export class PatternAnalyzer extends EventEmitter {
 				averageLatency,
 				successRate: this.calculateSuccessRate(interactions),
 				communicationVolume: frequency,
-				dependencies: await this.getPatternDependencies(
-					sourceAgent,
-					targetAgent,
-				),
+				dependencies: await this.getPatternDependencies(sourceAgent, targetAgent),
 				criticality,
 				detectedAt: new Date(),
 			};
@@ -371,15 +349,11 @@ export class PatternAnalyzer extends EventEmitter {
 			intervals.push(timestamps[i] - timestamps[i - 1]);
 		}
 
-		const avgInterval =
-			intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+		const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
 		const intervalVariance = this.calculateVariance(intervals);
 
 		// Determine pattern based on characteristics
-		if (
-			types.every((type) => type === 'request') &&
-			intervalVariance < avgInterval * 0.2
-		) {
+		if (types.every((type) => type === 'request') && intervalVariance < avgInterval * 0.2) {
 			return 'request-response';
 		} else if (types.includes('broadcast')) {
 			return 'broadcast';
@@ -433,11 +407,7 @@ export class PatternAnalyzer extends EventEmitter {
 		else if (averageLatency > 500) score += 1;
 
 		// Critical operation types
-		if (
-			types.some((type) =>
-				['coordination', 'decision', 'critical'].includes(type),
-			)
-		) {
+		if (types.some((type) => ['coordination', 'decision', 'critical'].includes(type))) {
 			score += 2;
 		}
 
@@ -459,9 +429,7 @@ export class PatternAnalyzer extends EventEmitter {
 	): number {
 		// In a real implementation, this would track actual success/failure
 		// For now, estimate based on latency patterns
-		const highLatencyCount = interactions.filter(
-			(i) => i.latency > 2000,
-		).length;
+		const highLatencyCount = interactions.filter((i) => i.latency > 2000).length;
 		return Math.max(0.5, 1 - highLatencyCount / interactions.length);
 	}
 
@@ -480,9 +448,7 @@ export class PatternAnalyzer extends EventEmitter {
 			if (agent === sourceAgent) continue;
 
 			const hasPrerequisiteInteraction = interactions.some(
-				(interaction) =>
-					interaction.target === sourceAgent ||
-					interaction.target === targetAgent,
+				(interaction) => interaction.target === sourceAgent || interaction.target === targetAgent,
 			);
 
 			if (hasPrerequisiteInteraction) {
@@ -544,8 +510,7 @@ export class PatternAnalyzer extends EventEmitter {
 					participants: [sourceAgent, ...Array.from(recentTargets)],
 					frequency: recentInteractions.length,
 					averageLatency:
-						recentInteractions.reduce((sum, i) => sum + i.latency, 0) /
-						recentInteractions.length,
+						recentInteractions.reduce((sum, i) => sum + i.latency, 0) / recentInteractions.length,
 					successRate: 0.95, // Estimate
 					communicationVolume: recentInteractions.length,
 					dependencies: [],
@@ -586,9 +551,7 @@ export class PatternAnalyzer extends EventEmitter {
 		return activationMap;
 	}
 
-	private findCascades(
-		activationMap: Map<string, Set<string>>,
-	): InteractionPattern[] {
+	private findCascades(activationMap: Map<string, Set<string>>): InteractionPattern[] {
 		const patterns: InteractionPattern[] = [];
 		for (const [agentA, targetsA] of activationMap) {
 			for (const agentB of targetsA) {
@@ -701,10 +664,7 @@ export class PatternAnalyzer extends EventEmitter {
 
 		// Normalize by total interactions
 		for (let i = 0; i < agents.length; i++) {
-			const totalInteractions = matrix[i].reduce(
-				(sum, count) => sum + count,
-				0,
-			);
+			const totalInteractions = matrix[i].reduce((sum, count) => sum + count, 0);
 			if (totalInteractions > 0) {
 				for (let j = 0; j < agents.length; j++) {
 					matrix[i][j] /= totalInteractions;
@@ -725,15 +685,12 @@ export class PatternAnalyzer extends EventEmitter {
 	): Promise<CrossAgentDependency | null> {
 		try {
 			const sourceInteractions = this.interactionHistory.get(sourceAgent) || [];
-			const targetInteractions = sourceInteractions.filter(
-				(i) => i.target === targetAgent,
-			);
+			const targetInteractions = sourceInteractions.filter((i) => i.target === targetAgent);
 
 			if (targetInteractions.length === 0) return null;
 
 			const avgLatency =
-				targetInteractions.reduce((sum, i) => sum + i.latency, 0) /
-				targetInteractions.length;
+				targetInteractions.reduce((sum, i) => sum + i.latency, 0) / targetInteractions.length;
 			const frequency = targetInteractions.length;
 
 			// Extract criticality and failure impact to variables for clarity
@@ -813,15 +770,11 @@ export class PatternAnalyzer extends EventEmitter {
 	): number {
 		// Estimate reliability based on latency consistency
 		const latencies = interactions.map((i) => i.latency);
-		const avgLatency =
-			latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
+		const avgLatency = latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
 		const variance = this.calculateVariance(latencies);
 
 		// Lower variance indicates higher reliability
-		const stabilityScore = Math.max(
-			0,
-			1 - variance / (avgLatency * avgLatency),
-		);
+		const stabilityScore = Math.max(0, 1 - variance / (avgLatency * avgLatency));
 
 		// Factor in successful completion rate (estimated)
 		const timeoutCount = latencies.filter((l) => l > 5000).length;
@@ -871,8 +824,7 @@ export class PatternAnalyzer extends EventEmitter {
 			if (recentInteractions.length > 20) {
 				// High load threshold
 				const avgLatency =
-					recentInteractions.reduce((sum, i) => sum + i.latency, 0) /
-					recentInteractions.length;
+					recentInteractions.reduce((sum, i) => sum + i.latency, 0) / recentInteractions.length;
 
 				if (avgLatency > 1000) {
 					// High latency threshold
@@ -903,9 +855,7 @@ export class PatternAnalyzer extends EventEmitter {
 	/**
 	 * Identify communication lag bottlenecks
 	 */
-	private async identifyCommunicationBottlenecks(): Promise<
-		WorkflowBottleneck[]
-	> {
+	private async identifyCommunicationBottlenecks(): Promise<WorkflowBottleneck[]> {
 		// Implementation for communication bottleneck detection
 		return [];
 	}
@@ -961,8 +911,7 @@ export class PatternAnalyzer extends EventEmitter {
 			if (recentInteractions.length < 10) continue;
 
 			const latencies = recentInteractions.map((i) => i.latency);
-			const avgLatency =
-				latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
+			const avgLatency = latencies.reduce((sum, l) => sum + l, 0) / latencies.length;
 			const stdDev = Math.sqrt(this.calculateVariance(latencies));
 
 			// Detect spikes (values > mean + 2*stddev)
@@ -1022,9 +971,7 @@ export class PatternAnalyzer extends EventEmitter {
 		// Add new dependencies (avoid duplicates)
 		for (const dep of newDependencies) {
 			const exists = this.dependencies.some(
-				(d) =>
-					d.sourceAgent === dep.sourceAgent &&
-					d.targetAgent === dep.targetAgent,
+				(d) => d.sourceAgent === dep.sourceAgent && d.targetAgent === dep.targetAgent,
 			);
 			if (!exists) {
 				this.dependencies.push(dep);
@@ -1051,9 +998,7 @@ export class PatternAnalyzer extends EventEmitter {
 		const maxAnomalies = 100;
 
 		if (this.detectedPatterns.length > maxPatterns) {
-			this.detectedPatterns.sort(
-				(a, b) => b.detectedAt.getTime() - a.detectedAt.getTime(),
-			);
+			this.detectedPatterns.sort((a, b) => b.detectedAt.getTime() - a.detectedAt.getTime());
 			this.detectedPatterns.splice(maxPatterns);
 		}
 
@@ -1062,16 +1007,12 @@ export class PatternAnalyzer extends EventEmitter {
 		}
 
 		if (this.bottlenecks.length > maxBottlenecks) {
-			this.bottlenecks.sort(
-				(a, b) => b.detectedAt.getTime() - a.detectedAt.getTime(),
-			);
+			this.bottlenecks.sort((a, b) => b.detectedAt.getTime() - a.detectedAt.getTime());
 			this.bottlenecks.splice(maxBottlenecks);
 		}
 
 		if (this.anomalies.length > maxAnomalies) {
-			this.anomalies.sort(
-				(a, b) => b.detectedAt.getTime() - a.detectedAt.getTime(),
-			);
+			this.anomalies.sort((a, b) => b.detectedAt.getTime() - a.detectedAt.getTime());
 			this.anomalies.splice(maxAnomalies);
 		}
 	}

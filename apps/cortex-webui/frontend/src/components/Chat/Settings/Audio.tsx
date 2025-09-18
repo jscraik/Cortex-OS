@@ -32,15 +32,9 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 	const [audioDevice, setAudioDevice] = useState('');
 	const [inputDevice, setInputDevice] = useState('');
 
-	const [availableVoices, setAvailableVoices] = useState<
-		SpeechSynthesisVoice[]
-	>([]);
-	const [availableAudioDevices, setAvailableAudioDevices] = useState<
-		MediaDeviceInfo[]
-	>([]);
-	const [availableInputDevices, setAvailableInputDevices] = useState<
-		MediaDeviceInfo[]
-	>([]);
+	const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+	const [availableAudioDevices, setAvailableAudioDevices] = useState<MediaDeviceInfo[]>([]);
+	const [availableInputDevices, setAvailableInputDevices] = useState<MediaDeviceInfo[]>([]);
 
 	const voicesLoaded = useRef(false);
 
@@ -85,12 +79,8 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 			navigator.mediaDevices
 				.enumerateDevices()
 				.then((devices) => {
-					const audioOutputDevices = devices.filter(
-						(device) => device.kind === 'audiooutput',
-					);
-					const audioInputDevices = devices.filter(
-						(device) => device.kind === 'audioinput',
-					);
+					const audioOutputDevices = devices.filter((device) => device.kind === 'audiooutput');
+					const audioInputDevices = devices.filter((device) => device.kind === 'audioinput');
 
 					setAvailableAudioDevices(audioOutputDevices);
 					setAvailableInputDevices(audioInputDevices);
@@ -143,10 +133,7 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 	}
 
 	return (
-		<div
-			id={tabAudioId}
-			className="flex flex-col h-full justify-between text-sm"
-		>
+		<div id={tabAudioId} className="flex flex-col h-full justify-between text-sm">
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
 				<div>
 					<div className="text-base font-medium mb-3">Text-to-Speech (TTS)</div>
@@ -177,10 +164,7 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 						{ttsEnabled && (
 							<>
 								<div>
-									<label
-										htmlFor={ttsEngineId}
-										className="block text-sm font-medium mb-1"
-									>
+									<label htmlFor={ttsEngineId} className="block text-sm font-medium mb-1">
 										TTS Engine
 									</label>
 									<select
@@ -196,10 +180,7 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 								</div>
 
 								<div>
-									<label
-										htmlFor={ttsVoiceId}
-										className="block text-sm font-medium mb-1"
-									>
+									<label htmlFor={ttsVoiceId} className="block text-sm font-medium mb-1">
 										Voice
 									</label>
 									<select
@@ -218,10 +199,7 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 								</div>
 
 								<div>
-									<label
-										htmlFor={ttsSpeedId}
-										className="block text-sm font-medium mb-1"
-									>
+									<label htmlFor={ttsSpeedId} className="block text-sm font-medium mb-1">
 										Speed: {ttsSpeed.toFixed(1)}
 									</label>
 									<input
@@ -283,10 +261,7 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 						{sttEnabled && (
 							<div>
-								<label
-									htmlFor={sttEngineId}
-									className="block text-sm font-medium mb-1"
-								>
+								<label htmlFor={sttEngineId} className="block text-sm font-medium mb-1">
 									STT Engine
 								</label>
 								<select
@@ -309,10 +284,7 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor={audioOutputId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={audioOutputId} className="block text-sm font-medium mb-1">
 								Audio Output Device
 							</label>
 							<select
@@ -324,18 +296,14 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 								<option value="">System Default</option>
 								{availableAudioDevices.map((device) => (
 									<option key={device.deviceId} value={device.deviceId}>
-										{device.label ||
-											`Audio Output ${device.deviceId.substring(0, 8)}`}
+										{device.label || `Audio Output ${device.deviceId.substring(0, 8)}`}
 									</option>
 								))}
 							</select>
 						</div>
 
 						<div>
-							<label
-								htmlFor={audioInputId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={audioInputId} className="block text-sm font-medium mb-1">
 								Audio Input Device
 							</label>
 							<select
@@ -347,18 +315,14 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 								<option value="">System Default</option>
 								{availableInputDevices.map((device) => (
 									<option key={device.deviceId} value={device.deviceId}>
-										{device.label ||
-											`Audio Input ${device.deviceId.substring(0, 8)}`}
+										{device.label || `Audio Input ${device.deviceId.substring(0, 8)}`}
 									</option>
 								))}
 							</select>
 						</div>
 
 						<div>
-							<label
-								htmlFor={audioVolumeId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={audioVolumeId} className="block text-sm font-medium mb-1">
 								Volume: {audioVolume}%
 							</label>
 							<input

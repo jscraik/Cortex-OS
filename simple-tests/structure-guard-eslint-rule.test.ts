@@ -102,16 +102,12 @@ describe('Structure Guard ESLint Rule', () => {
 	describe('Error reporting', () => {
 		it('should provide clear error messages', () => {
 			const rule = createStructureGuardRule();
-			expect(rule.meta.messages.forbiddenImport).toContain(
-				'Cross-feature imports are not allowed',
-			);
+			expect(rule.meta.messages.forbiddenImport).toContain('Cross-feature imports are not allowed');
 		});
 
 		it('should suggest alternatives in error messages', () => {
 			const rule = createStructureGuardRule();
-			expect(rule.meta.messages.forbiddenImport).toContain(
-				'A2A events or MCP tools',
-			);
+			expect(rule.meta.messages.forbiddenImport).toContain('A2A events or MCP tools');
 		});
 	});
 });

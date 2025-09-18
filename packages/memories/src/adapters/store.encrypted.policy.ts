@@ -1,10 +1,6 @@
 import type { Memory, MemoryId } from '../domain/types.js';
 import type { EncryptionService } from '../ports/Encryption.js';
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from '../ports/MemoryStore.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 import { type EncryptedOptions, EncryptedStore } from './store.encrypted.js';
 
 export type EncryptionSelector = (namespace: string, m?: Memory) => boolean;
@@ -47,15 +43,11 @@ export class PolicyEncryptedStore implements MemoryStore {
 	async searchByText(q: TextQuery, namespace = 'default'): Promise<Memory[]> {
 		return this.select(namespace).searchByText(q, namespace);
 	}
-	async searchByVector(
-		q: VectorQuery,
-		namespace = 'default',
-	): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<Memory[]> {
 		return this.select(namespace).searchByVector(q, namespace);
 	}
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
-		if (namespace)
-			return this.select(namespace).purgeExpired(nowISO, namespace);
+		if (namespace) return this.select(namespace).purgeExpired(nowISO, namespace);
 		// If no namespace provided, just delegate to base
 		return this.base.purgeExpired(nowISO);
 	}

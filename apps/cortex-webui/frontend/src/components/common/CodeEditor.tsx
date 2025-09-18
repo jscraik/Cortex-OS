@@ -37,10 +37,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 		if (e.key === 'Tab') {
 			e.preventDefault();
 			const { selectionStart, selectionEnd } = e.currentTarget;
-			const newValue =
-				value.substring(0, selectionStart) +
-				'  ' +
-				value.substring(selectionEnd);
+			const newValue = value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
 			onChange(newValue);
 
 			// Move cursor position
@@ -139,9 +136,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 					onBlur={() => setIsFocused(false)}
 					readOnly={readOnly}
 					className={`absolute inset-0 w-full h-full p-4 m-0 resize-none focus:outline-none ${
-						readOnly
-							? 'bg-gray-50 text-gray-700 cursor-default'
-							: 'bg-white text-gray-900'
+						readOnly ? 'bg-gray-50 text-gray-700 cursor-default' : 'bg-white text-gray-900'
 					} ${getLanguageClass()}`}
 					style={{ caretColor: 'black' }}
 				/>

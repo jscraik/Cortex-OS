@@ -140,11 +140,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 		if (!this.policyFilePath) return;
 
 		try {
-			fs.writeFileSync(
-				this.policyFilePath,
-				JSON.stringify(this.policies, null, 2),
-				'utf-8',
-			);
+			fs.writeFileSync(this.policyFilePath, JSON.stringify(this.policies, null, 2), 'utf-8');
 			console.warn('[policy-router] Policy saved to file');
 		} catch (error) {
 			console.error('[policy-router] Failed to save policy to file:', error);
@@ -180,12 +176,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 
 		// Apply advanced routing rules if any
 		if (policy.rules.routing && body) {
-			await this.applyRoutingRules(
-				service,
-				operation,
-				body,
-				policy.rules.routing,
-			);
+			await this.applyRoutingRules(service, operation, body, policy.rules.routing);
 		}
 
 		return true;
@@ -276,9 +267,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 	): Promise<void> {
 		// This is a simplified implementation
 		// In a real system, this would evaluate conditions and apply transformations
-		console.warn(
-			`[policy-router] Applying routing rules for ${service}:${operation}`,
-		);
+		console.warn(`[policy-router] Applying routing rules for ${service}:${operation}`);
 
 		for (const rule of rules) {
 			try {
@@ -291,10 +280,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 					// In a real implementation, this would actually route the request
 				}
 			} catch (error) {
-				console.warn(
-					`[policy-router] Failed to evaluate rule condition: ${rule.condition}`,
-					error,
-				);
+				console.warn(`[policy-router] Failed to evaluate rule condition: ${rule.condition}`, error);
 			}
 		}
 	}
@@ -323,11 +309,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 			}
 			return false;
 		} catch (error) {
-			console.warn(
-				'[policy-router] Failed to evaluate condition:',
-				condition,
-				error,
-			);
+			console.warn('[policy-router] Failed to evaluate condition:', condition, error);
 			return false;
 		}
 	}
@@ -342,8 +324,6 @@ export class AdvancedPolicyRouter extends EventEmitter {
 }
 
 // Factory function to create policy router
-export function createAdvancedPolicyRouter(
-	policyFilePath?: string,
-): AdvancedPolicyRouter {
+export function createAdvancedPolicyRouter(policyFilePath?: string): AdvancedPolicyRouter {
 	return new AdvancedPolicyRouter(policyFilePath);
 }

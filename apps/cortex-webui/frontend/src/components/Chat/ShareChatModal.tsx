@@ -4,11 +4,7 @@ import type React from 'react';
 import { useId, useState } from 'react';
 import Modal from '@/components/common/Modal';
 
-type PermissionKey =
-	| 'allowEdit'
-	| 'allowCopy'
-	| 'allowDownload'
-	| 'requireLogin';
+type PermissionKey = 'allowEdit' | 'allowCopy' | 'allowDownload' | 'requireLogin';
 interface ShareSettings {
 	allowEdit: boolean;
 	allowCopy: boolean;
@@ -57,9 +53,7 @@ const PermissionsSection: React.FC<PermissionsSectionProps> = ({
 	return (
 		<div className="space-y-6">
 			<div>
-				<h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">
-					Permissions
-				</h4>
+				<h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">Permissions</h4>
 				<div className="space-y-3">
 					{permissionOptions.map(({ key, label, desc }) => (
 						<div className="flex items-center justify-between" key={key}>
@@ -67,9 +61,7 @@ const PermissionsSection: React.FC<PermissionsSectionProps> = ({
 								<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
 									{label}
 								</span>
-								<p className="text-xs text-gray-500 dark:text-gray-400">
-									{desc}
-								</p>
+								<p className="text-xs text-gray-500 dark:text-gray-400">{desc}</p>
 							</div>
 							<button
 								type="button"
@@ -99,9 +91,7 @@ const PermissionsSection: React.FC<PermissionsSectionProps> = ({
 				<select
 					id={expirationSelectId}
 					value={shareSettings.expiration}
-					onChange={(e) =>
-						setShareSettings({ ...shareSettings, expiration: e.target.value })
-					}
+					onChange={(e) => setShareSettings({ ...shareSettings, expiration: e.target.value })}
 					className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 				>
 					<option value="never">Never</option>

@@ -73,13 +73,15 @@ vi.mock('../mlx-adapter.js', async () => {
 		private availableModels: string[];
 		constructor(config: Record<string, unknown> | undefined) {
 			this.modelName = String(
-				(config as Record<string, unknown>)?.modelName ||
-					'Qwen2.5-0.5B-Instruct-4bit',
+				(config as Record<string, unknown>)?.modelName || 'Qwen2.5-0.5B-Instruct-4bit',
 			); // valid, no change
 			// include both canonical names and short tokens to improve matching
-			this.availableModels = (
-				Object.values(AVAILABLE_MLX_MODELS) as string[]
-			).concat(['qwen', 'phi', 'qwen2.5', 'phi-3']);
+			this.availableModels = (Object.values(AVAILABLE_MLX_MODELS) as string[]).concat([
+				'qwen',
+				'phi',
+				'qwen2.5',
+				'phi-3',
+			]);
 		}
 
 		async checkHealth() {
@@ -169,10 +171,7 @@ vi.mock('../mlx-adapter.js', async () => {
 		PHI_MINI: 'Phi-3-mini-4k-instruct-4bit',
 	} as const;
 
-	const createMLXAdapter = (
-		model: string | undefined,
-		_opts?: Record<string, unknown>,
-	) =>
+	const createMLXAdapter = (model: string | undefined, _opts?: Record<string, unknown>) =>
 		new MockMLXAdapter({ modelName: model ?? AVAILABLE_MLX_MODELS.QWEN_SMALL });
 
 	return {
@@ -208,13 +207,8 @@ vi.mock('../embedding-adapter.js', () => {
 			const inputs = Array.isArray(input) ? input : [input];
 			// Produce normalized unit vectors so cosine similarity behaves predictably
 			return inputs.map((t) => {
-				const seed = Array.from(String(t)).reduce(
-					(s, ch) => s + ch.charCodeAt(0),
-					0,
-				);
-				const raw = new Array(this.dims)
-					.fill(0)
-					.map((_, i) => ((seed + i) % 100) / 100);
+				const seed = Array.from(String(t)).reduce((s, ch) => s + ch.charCodeAt(0), 0);
+				const raw = new Array(this.dims).fill(0).map((_, i) => ((seed + i) % 100) / 100);
 				// normalize to unit length
 				const norm = Math.sqrt(raw.reduce((s, v) => s + v * v, 0)) || 1;
 				return raw.map((v) => v / norm);
@@ -222,11 +216,7 @@ vi.mock('../embedding-adapter.js', () => {
 		}
 
 		// Accept same signature as production adapter: addDocuments(documents: string[], metadata?, ids?)
-		async addDocuments(
-			documents: string[],
-			metadata?: Record<string, unknown>[],
-			ids?: string[],
-		) {
+		async addDocuments(documents: string[], metadata?: Record<string, unknown>[], ids?: string[]) {
 			const assignedIds: string[] = [];
 			for (let i = 0; i < documents.length; i++) {
 				const text = documents[i];
@@ -251,12 +241,7 @@ vi.mock('../embedding-adapter.js', () => {
 					'Machine learning overview: supervised and unsupervised learning',
 					'History: The Eiffel Tower is located in Paris and was built in 1889',
 				],
-				[
-					{ source: 'seed' },
-					{ source: 'seed' },
-					{ source: 'seed' },
-					{ source: 'seed' },
-				],
+				[{ source: 'seed' }, { source: 'seed' }, { source: 'seed' }, { source: 'seed' }],
 			);
 		}
 
@@ -278,12 +263,8 @@ vi.mock('../embedding-adapter.js', () => {
 				// increase base similarity scale so semantically-related docs surface reliably in tests
 				score = score * 0.6;
 				// Keyword overlap and domain-signal boost
-				const qwords = new Set(
-					String(text).toLowerCase().split(/\W+/).filter(Boolean),
-				);
-				const dwords = new Set(
-					String(d.text).toLowerCase().split(/\W+/).filter(Boolean),
-				);
+				const qwords = new Set(String(text).toLowerCase().split(/\W+/).filter(Boolean));
+				const dwords = new Set(String(d.text).toLowerCase().split(/\W+/).filter(Boolean));
 				let overlap = 0;
 				for (const w of Array.from(qwords)) {
 					if (dwords.has(w)) overlap++;
@@ -291,8 +272,7 @@ vi.mock('../embedding-adapter.js', () => {
 				// normalize overlap by average word count
 				const avgWords = (qwords.size + dwords.size) / 2 || 1;
 				// stronger boost when overlap exists
-				let overlapBoost =
-					qwords.size > 0 && overlap > 0 ? (overlap / avgWords) * 1.5 : 0;
+				let overlapBoost = qwords.size > 0 && overlap > 0 ? (overlap / avgWords) * 1.5 : 0;
 				// Additional explicit domain heuristic: if query contains programming keywords,
 				// heavily favor docs mentioning 'python', 'javascript', 'programming', 'code', etc.
 				const programmingKeywords = [
@@ -307,9 +287,7 @@ vi.mock('../embedding-adapter.js', () => {
 					'promises',
 				];
 				const qLower = String(text).toLowerCase();
-				const queryHasProgramming = programmingKeywords.some((k) =>
-					qLower.includes(k),
-				);
+				const queryHasProgramming = programmingKeywords.some((k) => qLower.includes(k));
 				if (queryHasProgramming) {
 					for (const pk of programmingKeywords) {
 						if (dwords.has(pk)) {
@@ -346,8 +324,7 @@ vi.mock('../embedding-adapter.js', () => {
 		}
 	}
 
-	const createEmbeddingAdapter = (_provider: string) =>
-		new MockEmbeddingAdapter();
+	const createEmbeddingAdapter = (_provider: string) => new MockEmbeddingAdapter();
 
 	// Export EmbeddingAdapter symbol expected by some tests
 	return {

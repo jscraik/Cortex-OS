@@ -37,14 +37,7 @@ export function createLogger(component, level = 'info') {
 /**
  * Log with ULID and trace context
  */
-export function logWithContext(
-	logger,
-	level,
-	message,
-	runId,
-	traceContext,
-	extra,
-) {
+export function logWithContext(logger, level, message, runId, traceContext, extra) {
 	logger[level](
 		{
 			runId,
@@ -57,14 +50,7 @@ export function logWithContext(
 /**
  * Create structured log entry
  */
-export function createLogEntry(
-	component,
-	level,
-	message,
-	runId,
-	traceContext,
-	extra,
-) {
+export function createLogEntry(component, level, message, runId, traceContext, extra) {
 	return {
 		runId,
 		level,

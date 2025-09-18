@@ -19,10 +19,6 @@ it('ingests and queries (skips if embedder down)', async () => {
 	const E = new PyEmbedder(endpoint);
 	const S = memoryStore();
 	await ingestText('mem://demo', 'Paris is the capital of France.', E, S);
-	const hits = await query(
-		{ q: 'What is the capital of France?', topK: 1 } as any,
-		E,
-		S,
-	);
+	const hits = await query({ q: 'What is the capital of France?', topK: 1 } as any, E, S);
 	expect(hits[0].text.toLowerCase()).toContain('paris');
 });

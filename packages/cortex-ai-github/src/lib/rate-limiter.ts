@@ -21,9 +21,7 @@ export const checkRateLimit = (
 	const windowStart = now - windowMs;
 
 	// Get and filter old requests
-	const userRequests = (requestStore.get(key) || []).filter(
-		(timestamp) => timestamp > windowStart,
-	);
+	const userRequests = (requestStore.get(key) || []).filter((timestamp) => timestamp > windowStart);
 
 	const remaining = Math.max(0, maxRequests - userRequests.length);
 	const allowed = remaining > 0;
@@ -37,9 +35,7 @@ export const checkRateLimit = (
 		allowed,
 		remaining,
 		resetTime: windowStart + windowMs,
-		retryAfter: allowed
-			? undefined
-			: Math.ceil((windowStart + windowMs - now) / 1000),
+		retryAfter: allowed ? undefined : Math.ceil((windowStart + windowMs - now) / 1000),
 	};
 };
 

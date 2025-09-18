@@ -2,13 +2,7 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-export type NodeName =
-	| 'plan'
-	| 'gather'
-	| 'critic'
-	| 'synthesize'
-	| 'verify'
-	| 'done';
+export type NodeName = 'plan' | 'gather' | 'critic' | 'synthesize' | 'verify' | 'done';
 
 export interface Checkpoint<TState = any> {
 	runId: string;
@@ -19,8 +13,7 @@ export interface Checkpoint<TState = any> {
 	idempotencyKey?: string;
 }
 
-export interface CheckpointWithIntegrity<TState = any>
-	extends Checkpoint<TState> {
+export interface CheckpointWithIntegrity<TState = any> extends Checkpoint<TState> {
 	checksum: string;
 	version: string;
 	size: number;
@@ -61,8 +54,7 @@ function validateCheckpointIntegrity<TState = any>(
 
 function getDir(): string {
 	const base =
-		process.env.CORTEX_CHECKPOINT_DIR ||
-		path.join(process.cwd(), 'data', 'events', 'checkpoints');
+		process.env.CORTEX_CHECKPOINT_DIR || path.join(process.cwd(), 'data', 'events', 'checkpoints');
 	return base;
 }
 
@@ -75,9 +67,7 @@ function fileFor(runId: string): string {
 	return path.join(dir, `${runId}.jsonl`);
 }
 
-export async function saveCheckpoint<TState = any>(
-	cp: Checkpoint<TState>,
-): Promise<void> {
+export async function saveCheckpoint<TState = any>(cp: Checkpoint<TState>): Promise<void> {
 	const dir = getDir();
 	await ensureDir(dir);
 
@@ -113,9 +103,7 @@ export async function saveCheckpointWithIntegrity<TState = any>(
 
 	// Validate before saving
 	if (!validateCheckpointIntegrity(checkpointWithIntegrity)) {
-		throw new Error(
-			`Checkpoint integrity validation failed for runId: ${cp.runId}`,
-		);
+		throw new Error(`Checkpoint integrity validation failed for runId: ${cp.runId}`);
 	}
 
 	const line = `${JSON.stringify(checkpointWithIntegrity)}\n`;
@@ -139,8 +127,7 @@ export async function loadCheckpointHistory<TState = any>(
 
 				// Check if this is a checkpoint with integrity validation
 				if (parsed.checksum && parsed.version) {
-					const checkpointWithIntegrity =
-						parsed as CheckpointWithIntegrity<TState>;
+					const checkpointWithIntegrity = parsed as CheckpointWithIntegrity<TState>;
 
 					// Validate integrity
 					if (!validateCheckpointIntegrity(checkpointWithIntegrity)) {
@@ -152,15 +139,14 @@ export async function loadCheckpointHistory<TState = any>(
 					}
 
 					// Extract the base checkpoint (remove integrity fields)
-					const { checksum, version, size, ...checkpoint } =
-						checkpointWithIntegrity;
+					const { checksum, version, size, ...checkpoint } = checkpointWithIntegrity;
 					checkpoints.push(checkpoint);
 				} else {
 					// Legacy checkpoint without integrity validation
-					console.warn(
-						'Loading legacy checkpoint without integrity validation',
-						{ runId, node: parsed.node },
-					);
+					console.warn('Loading legacy checkpoint without integrity validation', {
+						runId,
+						node: parsed.node,
+					});
 					checkpoints.push(parsed);
 				}
 			} catch (parseError) {
@@ -197,8 +183,7 @@ export async function loadCheckpointHistoryWithIntegrity<TState = any>(
 
 				// Only return checkpoints with integrity validation
 				if (parsed.checksum && parsed.version) {
-					const checkpointWithIntegrity =
-						parsed as CheckpointWithIntegrity<TState>;
+					const checkpointWithIntegrity = parsed as CheckpointWithIntegrity<TState>;
 
 					if (validateCheckpointIntegrity(checkpointWithIntegrity)) {
 						checkpoints.push(checkpointWithIntegrity);
@@ -246,10 +231,7 @@ export async function loadLatestCheckpointWithIntegrity<TState = any>(
 /**
  * Cleanup old checkpoints for a given runId
  */
-export async function cleanupOldCheckpoints(
-	runId: string,
-	keepCount: number = 10,
-): Promise<void> {
+export async function cleanupOldCheckpoints(runId: string, keepCount: number = 10): Promise<void> {
 	try {
 		const history = await loadCheckpointHistoryWithIntegrity(runId);
 

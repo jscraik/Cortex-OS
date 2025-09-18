@@ -8,12 +8,7 @@
 
 // Minimal event bus contract (publish only) to avoid reach-through dependency on full bus internals
 export interface EventBus {
-	publish(msg: {
-		type: string;
-		source: string;
-		data: unknown;
-		timestamp: string;
-	}): Promise<void>;
+	publish(msg: { type: string; source: string; data: unknown; timestamp: string }): Promise<void>;
 }
 
 // Local minimal types to avoid external dependency on '@cortex-os/agents'
@@ -88,7 +83,7 @@ export class ArchonTaskManager {
 	constructor(config: ArchonTaskManagerConfig, eventBus?: EventBus) {
 		this.config = config;
 		this.eventBus = eventBus;
-	// Archon removed – no external client created
+		// Archon removed – no external client created
 
 		// Set up periodic task updates
 		if (config.enableProgressUpdates) {
@@ -182,10 +177,7 @@ export class ArchonTaskManager {
 	/**
 	 * Update task progress
 	 */
-	async updateTaskProgress(
-		taskId: string,
-		progress: OrchestrationTask['progress'],
-	): Promise<void> {
+	async updateTaskProgress(taskId: string, progress: OrchestrationTask['progress']): Promise<void> {
 		const task = this.tasks.get(taskId);
 		if (!task) {
 			console.error(`[Archon Task Manager] Task not found: ${taskId}`);
@@ -227,9 +219,7 @@ export class ArchonTaskManager {
 	): Promise<void> {
 		const task = this.tasks.get(taskId);
 		if (!task?.workflow) {
-			console.error(
-				`[Archon Task Manager] Task or workflow not found: ${taskId}`,
-			);
+			console.error(`[Archon Task Manager] Task or workflow not found: ${taskId}`);
 			return;
 		}
 
@@ -312,7 +302,7 @@ export class ArchonTaskManager {
 		if (this.updateInterval) {
 			clearInterval(this.updateInterval);
 		}
-	console.warn('[Archon Task Manager] Stub shutdown complete (Archon removed)');
+		console.warn('[Archon Task Manager] Stub shutdown complete (Archon removed)');
 	}
 
 	private generateTaskId(): string {
@@ -344,10 +334,7 @@ export class ArchonTaskManager {
 					});
 				}
 			} catch (error) {
-				console.error(
-					`[Archon Task Manager] Failed to sync progress for task ${task.id}:`,
-					error,
-				);
+				console.error(`[Archon Task Manager] Failed to sync progress for task ${task.id}:`, error);
 			}
 		}
 	}
@@ -364,8 +351,7 @@ export class ArchonTaskManager {
 		const progress = {
 			current: completedSteps,
 			total: totalSteps,
-			percentage:
-				totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0,
+			percentage: totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0,
 			message:
 				failedSteps > 0
 					? `${completedSteps}/${totalSteps} completed, ${failedSteps} failed`
@@ -397,10 +383,7 @@ export class ArchonTaskManager {
 					timestamp: new Date().toISOString(),
 				});
 			} catch (error) {
-				console.error(
-					`[Archon Task Manager] Failed to emit event ${eventType}:`,
-					error,
-				);
+				console.error(`[Archon Task Manager] Failed to emit event ${eventType}:`, error);
 			}
 		}
 	}
@@ -434,11 +417,7 @@ export class OrchestrationArchonIntegration {
 		workflowDescription: string,
 		executor: (
 			taskId: string,
-			updateProgress: (
-				current: number,
-				total: number,
-				message?: string,
-			) => Promise<void>,
+			updateProgress: (current: number, total: number, message?: string) => Promise<void>,
 		) => Promise<T>,
 		options: {
 			priority?: Priority;
@@ -446,26 +425,18 @@ export class OrchestrationArchonIntegration {
 		} = {},
 	): Promise<{ result: T; task: OrchestrationTask }> {
 		// Create task
-		const task = await this.taskManager.createTask(
-			workflowName,
-			workflowDescription,
-			{
-				type: 'workflow',
-				priority: options.priority,
-				metadata: options.metadata,
-			},
-		);
+		const task = await this.taskManager.createTask(workflowName, workflowDescription, {
+			type: 'workflow',
+			priority: options.priority,
+			metadata: options.metadata,
+		});
 
 		try {
 			// Update to in-progress
 			await this.taskManager.updateTaskStatus(task.id, 'in_progress');
 
 			// Progress update function
-			const updateProgress = async (
-				current: number,
-				total: number,
-				message?: string,
-			) => {
+			const updateProgress = async (current: number, total: number, message?: string) => {
 				await this.taskManager.updateTaskProgress(task.id, {
 					current,
 					total,

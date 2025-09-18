@@ -8,9 +8,7 @@ export async function getAPIKey(): Promise<string | null> {
 	return null;
 }
 
-export async function updateUserProfile(
-	_data: Record<string, unknown>,
-): Promise<any> {
+export async function updateUserProfile(_data: Record<string, unknown>): Promise<any> {
 	// Test stub: echo back a minimal user object
 	return { id: 'user-1', name: _data.name ?? 'Test User' };
 }

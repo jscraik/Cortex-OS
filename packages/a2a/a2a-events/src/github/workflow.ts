@@ -29,15 +29,7 @@ export const WorkflowStepSchema = z.object({
 	name: z.string(),
 	status: z.enum(['queued', 'in_progress', 'completed']),
 	conclusion: z
-		.enum([
-			'success',
-			'failure',
-			'neutral',
-			'cancelled',
-			'timed_out',
-			'action_required',
-			'skipped',
-		])
+		.enum(['success', 'failure', 'neutral', 'cancelled', 'timed_out', 'action_required', 'skipped'])
 		.nullable(),
 	number: z.number(),
 	started_at: z.string().datetime().nullable(),
@@ -60,15 +52,7 @@ export const WorkflowJobSchema = z.object({
 	html_url: z.string().url(),
 	status: z.enum(['queued', 'in_progress', 'completed']),
 	conclusion: z
-		.enum([
-			'success',
-			'failure',
-			'neutral',
-			'cancelled',
-			'timed_out',
-			'action_required',
-			'skipped',
-		])
+		.enum(['success', 'failure', 'neutral', 'cancelled', 'timed_out', 'action_required', 'skipped'])
 		.nullable(),
 	created_at: z.string().datetime(),
 	started_at: z.string().datetime().nullable(),
@@ -106,15 +90,7 @@ export const WorkflowRunSchema = z.object({
 	event: z.string(),
 	status: z.enum(['queued', 'in_progress', 'completed']),
 	conclusion: z
-		.enum([
-			'success',
-			'failure',
-			'neutral',
-			'cancelled',
-			'timed_out',
-			'action_required',
-			'stale',
-		])
+		.enum(['success', 'failure', 'neutral', 'cancelled', 'timed_out', 'action_required', 'stale'])
 		.nullable(),
 	workflow_id: z.number(),
 	check_suite_id: z.number(),
@@ -326,16 +302,12 @@ export interface WorkflowRunAnalysis {
 	failureReasons: string[];
 }
 
-export function analyzeWorkflowRun(
-	run: WorkflowRun,
-	jobs?: WorkflowJob[],
-): WorkflowRunAnalysis {
+export function analyzeWorkflowRun(run: WorkflowRun, jobs?: WorkflowJob[]): WorkflowRunAnalysis {
 	const analysis: WorkflowRunAnalysis = {
 		totalJobs: jobs?.length ?? 0,
 		successfulJobs: jobs?.filter((j) => j.conclusion === 'success').length ?? 0,
 		failedJobs: jobs?.filter((j) => j.conclusion === 'failure').length ?? 0,
-		cancelledJobs:
-			jobs?.filter((j) => j.conclusion === 'cancelled').length ?? 0,
+		cancelledJobs: jobs?.filter((j) => j.conclusion === 'cancelled').length ?? 0,
 		duration: getWorkflowDurationInSeconds(run),
 		successRate: 0,
 		failureReasons: [],

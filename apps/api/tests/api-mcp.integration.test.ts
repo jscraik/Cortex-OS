@@ -18,10 +18,7 @@ describe('API MCP integration flow', () => {
 			headers: { 'x-correlation-id': 'cid-123' },
 		};
 
-		const gatewayResult = await env.gatewayTool.execute(
-			gatewayInput,
-			env.context,
-		);
+		const gatewayResult = await env.gatewayTool.execute(gatewayInput, env.context);
 
 		expect(gatewayResult.statusCode).toBe(201);
 		expect(gatewayResult.body).toMatchObject({
@@ -63,9 +60,9 @@ describe('API MCP integration flow', () => {
 			apiKey: 'valid-key',
 		};
 
-		await expect(
-			env.gatewayTool.execute(gatewayInput, env.context),
-		).rejects.toBeInstanceOf(McpRouteNotFoundError);
+		await expect(env.gatewayTool.execute(gatewayInput, env.context)).rejects.toBeInstanceOf(
+			McpRouteNotFoundError,
+		);
 		const warnLog = env.logger.history.find((entry) => entry.level === 'warn');
 		expect(warnLog).toBeDefined();
 	});

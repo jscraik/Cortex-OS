@@ -51,9 +51,7 @@ describe('SchemaRegistry', () => {
 			hash: expect.any(String),
 		});
 
-		const getRes = await request(app)
-			.get('/schemas/runtime-test?version=1.0.0')
-			.expect(200);
+		const getRes = await request(app).get('/schemas/runtime-test?version=1.0.0').expect(200);
 
 		expect(getRes.body).toMatchObject({
 			schemaId: 'runtime-test',

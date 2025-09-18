@@ -131,17 +131,10 @@ export class OutboxProcessor extends EventEmitter {
 		this.emit('messageProcessed', message.id);
 	}
 
-	private async handleMessageError(
-		message: OutboxMessage,
-		error: unknown,
-	): Promise<void> {
+	private async handleMessageError(message: OutboxMessage, error: unknown): Promise<void> {
 		const newRetryCount = message.retryCount + 1;
 		const errorMessage =
-			error instanceof Error
-				? error.message
-				: typeof error === 'string'
-					? error
-					: 'Unknown error';
+			error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error';
 
 		if (newRetryCount >= this.config.maxRetries) {
 			// Mark as failed

@@ -97,8 +97,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 			if (result.metadata?.pageCount) {
 				processedContent += `*Pages: ${result.metadata.pageCount}*\n\n`;
 			}
-			processedContent +=
-				result.text || '[Document processed but no text extracted]';
+			processedContent += result.text || '[Document processed but no text extracted]';
 
 			return processedContent;
 		} catch (error) {
@@ -127,9 +126,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 					file.type.startsWith('image/'),
 			);
 
-			const regularFiles = droppedFiles.filter(
-				(file) => !documentFiles.includes(file),
-			);
+			const regularFiles = droppedFiles.filter((file) => !documentFiles.includes(file));
 
 			// Add regular files to attachments
 			if (regularFiles.length > 0) {
@@ -143,8 +140,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				for (const file of documentFiles) {
 					const processedContent = await processDocument(file);
 					if (processedContent) {
-						combinedContent +=
-							(combinedContent ? '\n\n' : '') + processedContent;
+						combinedContent += (combinedContent ? '\n\n' : '') + processedContent;
 					}
 				}
 
@@ -204,10 +200,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 	// Add message to history when sent
 	const addToHistory = useCallback((message: string) => {
 		setMessageHistory((prev) => {
-			const newHistory = [
-				message,
-				...prev.filter((msg) => msg !== message),
-			].slice(0, 10); // Keep last 10
+			const newHistory = [message, ...prev.filter((msg) => msg !== message)].slice(0, 10); // Keep last 10
 			return newHistory;
 		});
 		setHistoryIndex(-1);
@@ -227,8 +220,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 			setTimeout(() => {
 				const textarea = textareaRef.current;
 				if (textarea) {
-					textarea.selectionStart = textarea.selectionEnd =
-						textarea.value.length;
+					textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
 				}
 			}, 0);
 		}
@@ -239,10 +231,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 			if (messageHistory.length === 0) return;
 
 			if (direction === 'up') {
-				const newIndex =
-					historyIndex < messageHistory.length - 1
-						? historyIndex + 1
-						: historyIndex;
+				const newIndex = historyIndex < messageHistory.length - 1 ? historyIndex + 1 : historyIndex;
 				setHistoryIndex(newIndex);
 				setInput(messageHistory[newIndex] || '');
 			} else {
@@ -275,10 +264,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
 		// Check for input variables
 		const variables = extractInputVariables(input);
-		if (
-			Object.keys(variables).length > 0 &&
-			Object.keys(inputVariableValues).length === 0
-		) {
+		if (Object.keys(variables).length > 0 && Object.keys(inputVariableValues).length === 0) {
 			setInputVariables(variables);
 			setShowInputVariablesModal(true);
 			return;
@@ -375,9 +361,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 					file.type.startsWith('image/'),
 			);
 
-			const regularFiles = newFiles.filter(
-				(file) => !documentFiles.includes(file),
-			);
+			const regularFiles = newFiles.filter((file) => !documentFiles.includes(file));
 
 			// Add regular files to attachments
 			if (regularFiles.length > 0) {
@@ -391,8 +375,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				for (const file of documentFiles) {
 					const processedContent = await processDocument(file);
 					if (processedContent) {
-						combinedContent +=
-							(combinedContent ? '\n\n' : '') + processedContent;
+						combinedContent += (combinedContent ? '\n\n' : '') + processedContent;
 					}
 				}
 
@@ -447,10 +430,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 		// Submit the message with replaced variables
 		let finalInput = input;
 		Object.keys(values).forEach((key) => {
-			finalInput = finalInput.replace(
-				new RegExp(`\\{\\{${key}\\}\\}`, 'g'),
-				values[key],
-			);
+			finalInput = finalInput.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), values[key]);
 		});
 
 		if (finalInput.trim() && !disabled) {
@@ -513,9 +493,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				onDragOver={handleDragOver}
 				onDrop={handleDrop}
 				className={`flex flex-col gap-2 p-4 border-t ${
-					isDragOver
-						? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600'
-						: ''
+					isDragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' : ''
 				}`}
 			>
 				{/* Character count indicator */}
@@ -536,9 +514,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 								key={`${file.name}-${index}`}
 								className="flex items-center gap-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-2 shadow-sm"
 							>
-								<div className="text-gray-500 dark:text-gray-400">
-									{getFileIcon(file)}
-								</div>
+								<div className="text-gray-500 dark:text-gray-400">{getFileIcon(file)}</div>
 								<div className="flex-1 min-w-0">
 									<div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
 										{file.name}
@@ -549,11 +525,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 								</div>
 								{fileProcessing.includes(file.name) ? (
 									<div className="animate-spin h-4 w-4 text-blue-500">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-										>
+										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 											<circle
 												cx="12"
 												cy="12"
@@ -599,11 +571,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				{fileProcessing.length > 0 && (
 					<div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
 						<div className="animate-spin h-4 w-4 text-blue-500">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								fill="none"
-								viewBox="0 0 24 24"
-							>
+							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 								<circle
 									cx="12"
 									cy="12"
@@ -688,9 +656,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={toggleWebSearch}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							webSearchEnabled
-								? 'bg-blue-100 dark:bg-blue-900 border-blue-500'
-								: ''
+							webSearchEnabled ? 'bg-blue-100 dark:bg-blue-900 border-blue-500' : ''
 						}`}
 						aria-label="Web search"
 					>
@@ -715,9 +681,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={toggleImageGeneration}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							imageGenerationEnabled
-								? 'bg-blue-100 dark:bg-blue-900 border-blue-500'
-								: ''
+							imageGenerationEnabled ? 'bg-blue-100 dark:bg-blue-900 border-blue-500' : ''
 						}`}
 						aria-label="Image generation"
 					>
@@ -742,9 +706,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={toggleCodeInterpreter}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							codeInterpreterEnabled
-								? 'bg-blue-100 dark:bg-blue-900 border-blue-500'
-								: ''
+							codeInterpreterEnabled ? 'bg-blue-100 dark:bg-blue-900 border-blue-500' : ''
 						}`}
 						aria-label="Code interpreter"
 					>
@@ -769,9 +731,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={() => setShowVoiceRecording(true)}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							isRecording
-								? 'bg-red-100 dark:bg-red-900 border-red-500 animate-pulse'
-								: ''
+							isRecording ? 'bg-red-100 dark:bg-red-900 border-red-500 animate-pulse' : ''
 						}`}
 						aria-label="Voice recording"
 					>
@@ -835,27 +795,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				{/* Keyboard shortcuts help */}
 				<div className="text-xs text-gray-500 dark:text-gray-400 space-x-4">
 					<span>
-						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
-							Ctrl+L
-						</kbd>{' '}
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Ctrl+L</kbd>{' '}
 						Clear
 					</span>
 					<span>
-						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
-							Ctrl+R
-						</kbd>{' '}
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Ctrl+R</kbd>{' '}
 						Recall last
 					</span>
 					<span>
-						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
-							↑↓
-						</kbd>{' '}
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">↑↓</kbd>{' '}
 						History
 					</span>
 					<span>
-						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
-							Esc
-						</kbd>{' '}
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd>{' '}
 						Unfocus
 					</span>
 				</div>

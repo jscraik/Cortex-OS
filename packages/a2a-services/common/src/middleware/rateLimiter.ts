@@ -17,10 +17,7 @@ export interface RateLimiterOptions {
 	windowMs?: number;
 }
 
-export function createRateLimiter({
-	limit = 5,
-	windowMs = 60_000,
-}: RateLimiterOptions = {}) {
+export function createRateLimiter({ limit = 5, windowMs = 60_000 }: RateLimiterOptions = {}) {
 	const requestMap = new Map<string, RequestRecord>();
 
 	return function rateLimiter(req: Request, res: Response, next: NextFunction) {
@@ -45,9 +42,7 @@ export function createRateLimiter({
 
 		record.count += 1;
 		if (record.count > limit) {
-			const retryAfter = Math.ceil(
-				(record.startTime + windowMs - currentTime) / 1000,
-			);
+			const retryAfter = Math.ceil((record.startTime + windowMs - currentTime) / 1000);
 			res.setHeader('Retry-After', retryAfter);
 			res.status(429).send('Too Many Requests');
 		} else {

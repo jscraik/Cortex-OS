@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryStore } from '../src/adapters/store.memory.js';
 import type { Memory } from '../src/domain/types.js';
-import {
-	buildNamespaceSelector,
-	createPolicyAwareStore,
-} from '../src/service/store-factory.js';
+import { buildNamespaceSelector, createPolicyAwareStore } from '../src/service/store-factory.js';
 
 describe('Store Factory', () => {
 	it('buildNamespaceSelector supports map and regex', () => {
@@ -60,10 +57,7 @@ describe('Store Factory', () => {
 		expect(got?.tags).toEqual(['x']);
 
 		// Public namespace should be unencrypted and routed by scope
-		await store.upsert(
-			{ ...m, id: 'fac-2', policy: { scope: 'user' } },
-			'public',
-		);
+		await store.upsert({ ...m, id: 'fac-2', policy: { scope: 'user' } }, 'public');
 		const raw2 = await long.get('fac-2', 'public');
 		expect(raw2?.text).toBe('top secret');
 		expect(raw2?.vector).toEqual([0.1, 0.2]);

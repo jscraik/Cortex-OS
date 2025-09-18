@@ -28,18 +28,12 @@ export interface ReviewIssue {
 /**
  * Validates code review results
  */
-export const validateCodeReview = async (
-	_state: PRPState,
-): Promise<CodeReviewResult> => {
+export const validateCodeReview = async (_state: PRPState): Promise<CodeReviewResult> => {
 	const staticAnalysisIssues = await runStaticAnalysis();
 	const securityIssues = await runSecurityScan();
 	const qualityIssues = await runQualityChecks();
 
-	const allIssues = [
-		...staticAnalysisIssues,
-		...securityIssues,
-		...qualityIssues,
-	];
+	const allIssues = [...staticAnalysisIssues, ...securityIssues, ...qualityIssues];
 
 	const counts = countIssuesBySeverity(allIssues);
 	const passed = counts.blockers === 0 && counts.majors <= 3;
@@ -285,9 +279,7 @@ const findLargeFunctions = async (): Promise<
 /**
  * Finds TODO/FIXME comments
  */
-const findTodoComments = async (): Promise<
-	Array<{ text: string; file: string; line: number }>
-> => {
+const findTodoComments = async (): Promise<Array<{ text: string; file: string; line: number }>> => {
 	try {
 		const { exec } = await import('node:child_process');
 		const { promisify } = await import('node:util');

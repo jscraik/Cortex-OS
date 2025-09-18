@@ -19,7 +19,7 @@ describe('Cortex Kernel Determinism', () => {
 	beforeEach(() => {
 		// Reset ID counters for deterministic testing
 		resetCounters();
-		
+
 		mockOrchestrator = {
 			getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
 		};
@@ -44,14 +44,10 @@ describe('Cortex Kernel Determinism', () => {
 			});
 
 			// Evidence timestamps should be stable across runs
-			expect(run1.evidence.map((e) => e.timestamp)).toEqual(
-				run2.evidence.map((e) => e.timestamp),
-			);
+			expect(run1.evidence.map((e) => e.timestamp)).toEqual(run2.evidence.map((e) => e.timestamp));
 
 			// Results should be structurally identical (excluding timestamps and run IDs)
-			expect(normalizeForComparison(run1)).toEqual(
-				normalizeForComparison(run2),
-			);
+			expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
 		});
 
 		it('should maintain consistent state transitions', async () => {

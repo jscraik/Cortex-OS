@@ -8,10 +8,7 @@ import type { ChatResponse, Message } from './types.js';
 export interface OllamaAdapterApi {
 	isAvailable(model?: string): Promise<boolean>;
 	listModels(): Promise<string[]>;
-	generateEmbedding(
-		text: string,
-		model?: string,
-	): Promise<{ embedding: number[]; model: string }>;
+	generateEmbedding(text: string, model?: string): Promise<{ embedding: number[]; model: string }>;
 	generateEmbeddings(
 		texts: string[],
 		model?: string,
@@ -58,10 +55,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 	};
 
 	const fallbackEmbedding = (text: string): number[] => {
-		const hash = Array.from(text).reduce(
-			(h, c) => (h * 31 + c.charCodeAt(0)) >>> 0,
-			0,
-		);
+		const hash = Array.from(text).reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0);
 		return new Array(8).fill(0).map((_, i) => ((hash >> (i % 8)) & 0xff) / 255);
 	};
 
@@ -70,8 +64,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		return docs.map((d) => {
 			const dl = d.toLowerCase();
 			let s = 0;
-			for (const token of q.split(/\s+/))
-				if (token && dl.includes(token)) s += 1;
+			for (const token of q.split(/\s+/)) if (token && dl.includes(token)) s += 1;
 			return s / Math.max(1, q.split(/\s+/).length);
 		});
 	};
@@ -79,9 +72,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 	return {
 		async isAvailable(model?: string): Promise<boolean> {
 			try {
-				const data = await fetchJson<{ models: { name: string }[] }>(
-					'/api/tags',
-				);
+				const data = await fetchJson<{ models: { name: string }[] }>('/api/tags');
 				return model ? data.models.some((m) => m.name === model) : true;
 			} catch {
 				return forcedAvailable;
@@ -89,9 +80,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		},
 		async listModels(): Promise<string[]> {
 			try {
-				const data = await fetchJson<{ models: { name: string }[] }>(
-					'/api/tags',
-				);
+				const data = await fetchJson<{ models: { name: string }[] }>('/api/tags');
 				return data.models.map((m) => m.name);
 			} catch {
 				return forcedAvailable ? [defaultModel, 'llama2'] : [];
@@ -100,10 +89,10 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		async generateEmbedding(text: string, model?: string) {
 			const usedModel = model || defaultModel;
 			try {
-				const data = await fetchJson<{ embedding: number[] }>(
-					'/api/embeddings',
-					{ model: usedModel, prompt: text },
-				);
+				const data = await fetchJson<{ embedding: number[] }>('/api/embeddings', {
+					model: usedModel,
+					prompt: text,
+				});
 				return { embedding: data.embedding, model: usedModel };
 			} catch {
 				return { embedding: fallbackEmbedding(text), model: usedModel };
@@ -111,9 +100,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		},
 		async generateEmbeddings(texts: string[], model?: string) {
 			const usedModel = model || defaultModel;
-			return Promise.all(
-				texts.map((t) => this.generateEmbedding(t, usedModel)),
-			);
+			return Promise.all(texts.map((t) => this.generateEmbedding(t, usedModel)));
 		},
 		async generateChat(
 			req:
@@ -128,8 +115,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 			options?: { temperature?: number; max_tokens?: number },
 		) {
 			const messages = Array.isArray(req) ? req : req.messages;
-			const usedModel =
-				(Array.isArray(req) ? model : req.model) || model || 'llama2';
+			const usedModel = (Array.isArray(req) ? model : req.model) || model || 'llama2';
 			try {
 				const data = await fetchJson<{
 					message?: { content: string };
@@ -146,9 +132,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 				};
 			} catch {
 				const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-				const content = lastUser
-					? `echo(${lastUser.content.slice(0, 64)})`
-					: 'ok';
+				const content = lastUser ? `echo(${lastUser.content.slice(0, 64)})` : 'ok';
 				return { content, model: usedModel };
 			}
 		},
@@ -160,10 +144,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 				}>('/api/rerank', { model: usedModel, query, documents });
 				const scores = new Array(documents.length).fill(0);
 				for (const item of data.results) {
-					if (
-						typeof item.index === 'number' &&
-						typeof item.score === 'number'
-					) {
+					if (typeof item.index === 'number' && typeof item.score === 'number') {
 						scores[item.index] = item.score;
 					}
 				}
@@ -185,10 +166,7 @@ export class OllamaAdapter implements OllamaAdapterApi {
 	listModels(): Promise<string[]> {
 		return this.impl.listModels();
 	}
-	generateEmbedding(
-		text: string,
-		model?: string,
-	): Promise<{ embedding: number[]; model: string }> {
+	generateEmbedding(text: string, model?: string): Promise<{ embedding: number[]; model: string }> {
 		return this.impl.generateEmbedding(text, model);
 	}
 	generateEmbeddings(

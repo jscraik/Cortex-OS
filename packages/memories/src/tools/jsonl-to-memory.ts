@@ -37,10 +37,7 @@ async function main() {
 		crlfDelay: Infinity,
 	});
 
-	const service = createMemoryService(
-		new InMemoryStore(),
-		createEmbedderFromEnv(),
-	);
+	const service = createMemoryService(new InMemoryStore(), createEmbedderFromEnv());
 	const memories: Memory[] = [];
 
 	for await (const line of rl) {

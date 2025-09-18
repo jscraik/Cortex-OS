@@ -25,10 +25,7 @@ const Source: React.FC<SourceProps> = ({ id, token, onClick }) => {
 	}, [token.text]);
 
 	const getDomain = (url: string): string => {
-		const domain = url
-			.replace('http://', '')
-			.replace('https://', '')
-			.split(/[/?#]/)[0];
+		const domain = url.replace('http://', '').replace('https://', '').split(/[/?#]/)[0];
 		return domain;
 	};
 

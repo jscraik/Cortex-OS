@@ -22,9 +22,7 @@ export interface SafeFetchOptions {
 /**
  * Default safe fetch configuration
  */
-const DEFAULT_OPTIONS: Required<
-	Omit<SafeFetchOptions, 'allowedHosts' | 'fetchOptions'>
-> = {
+const DEFAULT_OPTIONS: Required<Omit<SafeFetchOptions, 'allowedHosts' | 'fetchOptions'>> = {
 	allowedProtocols: ['https:'],
 	allowLocalhost: false,
 	timeout: 30000,
@@ -35,17 +33,12 @@ const DEFAULT_OPTIONS: Required<
  */
 export function validateUrl(
 	url: string,
-	options: Pick<
-		SafeFetchOptions,
-		'allowedProtocols' | 'allowedHosts' | 'allowLocalhost'
-	> = {},
+	options: Pick<SafeFetchOptions, 'allowedProtocols' | 'allowedHosts' | 'allowLocalhost'> = {},
 ): { valid: boolean; reason?: string } {
 	try {
 		const parsedUrl = new URL(url);
-		const protocols =
-			options.allowedProtocols ?? DEFAULT_OPTIONS.allowedProtocols;
-		const allowLocalhost =
-			options.allowLocalhost ?? DEFAULT_OPTIONS.allowLocalhost;
+		const protocols = options.allowedProtocols ?? DEFAULT_OPTIONS.allowedProtocols;
+		const allowLocalhost = options.allowLocalhost ?? DEFAULT_OPTIONS.allowLocalhost;
 
 		// Protocol validation
 		if (!protocols.includes(parsedUrl.protocol)) {
@@ -61,8 +54,7 @@ export function validateUrl(
 			['localhost', '127.0.0.1', '::1'].includes(hostname) ||
 			hostname.startsWith('192.168.') ||
 			hostname.startsWith('10.') ||
-			(hostname.startsWith('172.') &&
-				/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname));
+			(hostname.startsWith('172.') && /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname));
 
 		if (isLocalhost && !allowLocalhost) {
 			return {
@@ -98,10 +90,7 @@ export function validateUrl(
  * @returns Promise<Response>
  * @throws Error if URL validation fails or request times out
  */
-export async function safeFetch(
-	url: string,
-	options: SafeFetchOptions = {},
-): Promise<Response> {
+export async function safeFetch(url: string, options: SafeFetchOptions = {}): Promise<Response> {
 	const validation = validateUrl(url, options);
 	if (!validation.valid) {
 		throw new Error(`Safe fetch blocked: ${validation.reason}`);
@@ -144,8 +133,7 @@ export function createSafeFetch(defaultOptions: SafeFetchOptions) {
 			...defaultOptions,
 			...options,
 			allowedHosts: options.allowedHosts ?? defaultOptions.allowedHosts,
-			allowedProtocols:
-				options.allowedProtocols ?? defaultOptions.allowedProtocols,
+			allowedProtocols: options.allowedProtocols ?? defaultOptions.allowedProtocols,
 			fetchOptions: { ...defaultOptions.fetchOptions, ...options.fetchOptions },
 		};
 		return safeFetch(url, mergedOptions);

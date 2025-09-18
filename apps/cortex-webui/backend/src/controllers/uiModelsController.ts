@@ -11,13 +11,7 @@ export async function getUiModels(_req: Request, res: Response) {
 	try {
 		const candidates = [
 			path.join(process.cwd(), 'config', 'mlx-models.json'),
-			path.join(
-				process.cwd(),
-				'apps',
-				'cortex-webui',
-				'config',
-				'mlx-models.json',
-			),
+			path.join(process.cwd(), 'apps', 'cortex-webui', 'config', 'mlx-models.json'),
 		];
 		let cfg: ModelsConfig = { chat_models: {}, default_models: { chat: null } };
 		for (const p of candidates) {
@@ -42,8 +36,7 @@ export async function getUiModels(_req: Request, res: Response) {
 		});
 
 		const def: string | null =
-			typeof cfg?.default_models?.chat === 'string' &&
-			cfg.default_models.chat?.trim()
+			typeof cfg?.default_models?.chat === 'string' && cfg.default_models.chat?.trim()
 				? cfg.default_models.chat
 				: null;
 

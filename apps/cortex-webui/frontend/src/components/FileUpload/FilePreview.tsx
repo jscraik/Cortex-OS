@@ -61,12 +61,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, onRemove }) => {
 			<div className="flex items-center space-x-2">
 				{getFileIcon(file.type)}
 				<div>
-					<div className="text-sm font-medium truncate max-w-xs">
-						{file.name}
-					</div>
-					<div className="text-xs text-gray-500">
-						{(file.size / 1024 / 1024).toFixed(2)} MB
-					</div>
+					<div className="text-sm font-medium truncate max-w-xs">{file.name}</div>
+					<div className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
 				</div>
 			</div>
 			<button

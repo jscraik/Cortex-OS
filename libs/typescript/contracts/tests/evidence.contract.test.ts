@@ -36,12 +36,8 @@ describe('contract: evidence schema', () => {
 			endOffset: 3,
 		});
 		expect(good.endOffset).toBe(3);
-		expect(() =>
-			evidenceItemSchema.parse({ text: 'x', startOffset: 5 }),
-		).toThrow();
-		expect(() =>
-			evidenceItemSchema.parse({ text: 'x', startOffset: 5, endOffset: 4 }),
-		).toThrow();
+		expect(() => evidenceItemSchema.parse({ text: 'x', startOffset: 5 })).toThrow();
+		expect(() => evidenceItemSchema.parse({ text: 'x', startOffset: 5, endOffset: 4 })).toThrow();
 	});
 
 	it('round-trips inside a synthetic CloudEvent-like envelope', () => {

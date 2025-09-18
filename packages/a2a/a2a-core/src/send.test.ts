@@ -21,10 +21,7 @@ describe('send', () => {
 				data?: unknown,
 				config?: unknown,
 			) => Promise<{ status: number; data?: unknown }>;
-			get: (
-				url: string,
-				config?: unknown,
-			) => Promise<{ status: number; data?: unknown }>;
+			get: (url: string, config?: unknown) => Promise<{ status: number; data?: unknown }>;
 		};
 		axios.post.mockResolvedValue({});
 
@@ -54,10 +51,7 @@ describe('send', () => {
 				data?: unknown,
 				config?: unknown,
 			) => Promise<{ status: number; data?: unknown }>;
-			get: (
-				url: string,
-				config?: unknown,
-			) => Promise<{ status: number; data?: unknown }>;
+			get: (url: string, config?: unknown) => Promise<{ status: number; data?: unknown }>;
 		};
 		axios.post.mockRejectedValue(new Error('network error'));
 

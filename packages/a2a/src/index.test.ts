@@ -20,10 +20,7 @@ describe('A2A Protocol Implementation', () => {
 	let rpcHandler: A2ARpcHandler;
 
 	beforeEach(() => {
-		taskManager = new TaskManager(
-			new InMemoryTaskStore(),
-			new EchoTaskProcessor(),
-		);
+		taskManager = new TaskManager(new InMemoryTaskStore(), new EchoTaskProcessor());
 		rpcHandler = new A2ARpcHandler(taskManager);
 	});
 
@@ -310,9 +307,7 @@ describe('A2A Protocol Implementation', () => {
 			const handler = new A2ARpcHandler(taskManager);
 
 			// Mock the task manager to throw an unexpected error
-			vi.spyOn(taskManager, 'sendTask').mockRejectedValue(
-				new Error('Unexpected error'),
-			);
+			vi.spyOn(taskManager, 'sendTask').mockRejectedValue(new Error('Unexpected error'));
 
 			const request: JsonRpcRequest = {
 				jsonrpc: '2.0',
@@ -329,9 +324,7 @@ describe('A2A Protocol Implementation', () => {
 			const response = await handler.handle(request);
 
 			expect(response.error?.code).toBe(A2A_ERROR_CODES.INTERNAL_ERROR);
-			expect(response.error?.message).toMatch(
-				/Task .* failed|Unexpected error/,
-			);
+			expect(response.error?.message).toMatch(/Task .* failed|Unexpected error/);
 		});
 	});
 

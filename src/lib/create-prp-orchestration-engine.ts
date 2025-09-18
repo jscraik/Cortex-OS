@@ -11,8 +11,6 @@ const configSchema = z
 	})
 	.passthrough();
 
-export function createPRPOrchestrationEngine(
-	config: Partial<OrchestrationConfig> = {},
-) {
+export function createPRPOrchestrationEngine(config: Partial<OrchestrationConfig> = {}) {
 	return createEngine(configSchema.parse(config));
 }

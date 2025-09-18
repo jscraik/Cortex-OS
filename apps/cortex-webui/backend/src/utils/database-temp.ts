@@ -52,10 +52,7 @@ export const closeDatabase = (): void => {
 };
 
 // Helper functions to promisify sqlite3 operations
-export const dbGet = (
-	sql: string,
-	params: unknown[] = [],
-): Promise<unknown> => {
+export const dbGet = (sql: string, params: unknown[] = []): Promise<unknown> => {
 	const database = getDatabase();
 	return new Promise((resolve, reject) => {
 		database.get(sql, params, (err, row) => {

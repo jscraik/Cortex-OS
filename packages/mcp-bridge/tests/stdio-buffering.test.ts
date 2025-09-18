@@ -53,9 +53,7 @@ describe('StdioHttpBridge stdin buffering', () => {
 			httpEndpoint: `http://127.0.0.1:${port}`,
 		});
 		try {
-			await expect(bridge.forward({ id: 1, method: 'x' })).rejects.toThrow(
-				/HTTP 404/,
-			);
+			await expect(bridge.forward({ id: 1, method: 'x' })).rejects.toThrow(/HTTP 404/);
 		} finally {
 			await bridge.close();
 			server.close();

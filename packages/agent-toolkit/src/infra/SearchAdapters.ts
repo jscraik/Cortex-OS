@@ -1,10 +1,7 @@
 import { exec } from 'node:child_process';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
-import type {
-	AgentToolkitSearchInput,
-	AgentToolkitSearchResult,
-} from '@cortex-os/contracts';
+import type { AgentToolkitSearchInput, AgentToolkitSearchResult } from '@cortex-os/contracts';
 import type { SearchTool } from '../domain/ToolInterfaces.js';
 
 const execAsync = promisify(exec);
@@ -15,15 +12,11 @@ const execAsync = promisify(exec);
 export class RipgrepAdapter implements SearchTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'rg_search.sh');
 	}
 
-	async search(
-		inputs: AgentToolkitSearchInput,
-	): Promise<AgentToolkitSearchResult> {
+	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
 			const { stdout } = await execAsync(
 				`"${this.scriptPath}" "${inputs.pattern}" "${inputs.path}"`,
@@ -54,15 +47,11 @@ export class RipgrepAdapter implements SearchTool {
 export class SemgrepAdapter implements SearchTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'semgrep_search.sh');
 	}
 
-	async search(
-		inputs: AgentToolkitSearchInput,
-	): Promise<AgentToolkitSearchResult> {
+	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
 			const { stdout } = await execAsync(
 				`"${this.scriptPath}" "${inputs.pattern}" "${inputs.path}"`,
@@ -93,15 +82,11 @@ export class SemgrepAdapter implements SearchTool {
 export class AstGrepAdapter implements SearchTool {
 	private readonly scriptPath: string;
 
-	constructor(
-		toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools'),
-	) {
+	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
 		this.scriptPath = resolve(toolsPath, 'astgrep_search.sh');
 	}
 
-	async search(
-		inputs: AgentToolkitSearchInput,
-	): Promise<AgentToolkitSearchResult> {
+	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
 			const { stdout } = await execAsync(
 				`"${this.scriptPath}" "${inputs.pattern}" "${inputs.path}"`,

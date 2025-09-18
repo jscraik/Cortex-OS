@@ -17,7 +17,7 @@ describe('runtime bootstrap (integration)', () => {
 		process.env.CORTEX_HTTP_PORT = '0';
 		process.env.CORTEX_MCP_MANAGER_PORT = '0';
 
-	runtime = (await startRuntime()) as unknown as RunningRuntime;
+		runtime = (await startRuntime()) as unknown as RunningRuntime;
 	});
 
 	afterAll(async () => {

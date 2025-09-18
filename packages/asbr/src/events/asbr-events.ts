@@ -52,12 +52,8 @@ export const FeedbackSubmittedEventSchema = z.object({
 // Export event type definitions
 export type ReviewCreatedEvent = z.infer<typeof ReviewCreatedEventSchema>;
 export type ReviewCompletedEvent = z.infer<typeof ReviewCompletedEventSchema>;
-export type SecurityScanExecutedEvent = z.infer<
-	typeof SecurityScanExecutedEventSchema
->;
-export type FeedbackSubmittedEvent = z.infer<
-	typeof FeedbackSubmittedEventSchema
->;
+export type SecurityScanExecutedEvent = z.infer<typeof SecurityScanExecutedEventSchema>;
+export type FeedbackSubmittedEvent = z.infer<typeof FeedbackSubmittedEventSchema>;
 
 // Helper function to create ASBR events
 export const createASBREvent = {

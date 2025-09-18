@@ -2,8 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 const STORE =
-	process.env.CORTEX_HITL_STORE ||
-	path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
+	process.env.CORTEX_HITL_STORE || path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
 
 type ProposalLike = {
 	dataClass?: unknown;
@@ -51,13 +50,12 @@ export async function waitForApproval(
 	};
 	await appendJsonl(STORE, request);
 
-	const deadline =
-		Date.now() + (Number(process.env.CORTEX_HITL_TIMEOUT_MS) || 5 * 60_000);
+	const deadline = Date.now() + (Number(process.env.CORTEX_HITL_TIMEOUT_MS) || 5 * 60_000);
 	while (Date.now() < deadline) {
 		const rows = await readJsonl(STORE);
-		const decision = rows.find(
-			(r) => r.type === 'decision' && r.requestId === id,
-		) as (Record<string, unknown> & { approved?: unknown }) | undefined;
+		const decision = rows.find((r) => r.type === 'decision' && r.requestId === id) as
+			| (Record<string, unknown> & { approved?: unknown })
+			| undefined;
 		if (decision) return Boolean(decision.approved);
 		await new Promise((r) => setTimeout(r, 500));
 	}

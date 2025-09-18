@@ -31,11 +31,7 @@ async function parseRootUri(rootUri: string): Promise<string | null> {
  * @param reason - Specific reason for failure
  * @returns Formatted error message
  */
-function formatDirectoryError(
-	dir: string,
-	error?: unknown,
-	reason?: string,
-): string {
+function formatDirectoryError(dir: string, error?: unknown, reason?: string): string {
 	if (reason) {
 		return `Skipping ${reason}: ${dir}`;
 	}
@@ -53,20 +49,14 @@ function formatDirectoryError(
  * @param requestedRoots - Array of root specifications with URI and optional name
  * @returns Promise resolving to array of validated directory paths
  */
-export async function getValidRootDirectories(
-	requestedRoots: readonly Root[],
-): Promise<string[]> {
+export async function getValidRootDirectories(requestedRoots: readonly Root[]): Promise<string[]> {
 	const validatedDirectories: string[] = [];
 
 	for (const requestedRoot of requestedRoots) {
 		const resolvedPath = await parseRootUri(requestedRoot.uri);
 		if (!resolvedPath) {
 			console.error(
-				formatDirectoryError(
-					requestedRoot.uri,
-					undefined,
-					'invalid path or inaccessible',
-				),
+				formatDirectoryError(requestedRoot.uri, undefined, 'invalid path or inaccessible'),
 			);
 			continue;
 		}
@@ -76,9 +66,7 @@ export async function getValidRootDirectories(
 			if (stats.isDirectory()) {
 				validatedDirectories.push(resolvedPath);
 			} else {
-				console.error(
-					formatDirectoryError(resolvedPath, undefined, 'non-directory root'),
-				);
+				console.error(formatDirectoryError(resolvedPath, undefined, 'non-directory root'));
 			}
 		} catch (error) {
 			console.error(formatDirectoryError(resolvedPath, error));

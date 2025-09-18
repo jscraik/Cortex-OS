@@ -20,9 +20,7 @@ vi.mock('../backend/src/services/chatGateway', () => ({
 describe('SSE stream route contract', () => {
 	it('emits token(s) then done', async () => {
 		// Import the actual controller function
-		const { streamChatSSE } = await import(
-			'../backend/src/controllers/chatController'
-		);
+		const { streamChatSSE } = await import('../backend/src/controllers/chatController');
 
 		// Create mock request and response objects
 		const req = {
@@ -39,24 +37,14 @@ describe('SSE stream route contract', () => {
 		await streamChatSSE(req as any, res as any);
 
 		// Check that the response methods were called
-		expect(res.setHeader).toHaveBeenCalledWith(
-			'Content-Type',
-			'text/event-stream; charset=utf-8',
-		);
-		expect(res.setHeader).toHaveBeenCalledWith(
-			'Cache-Control',
-			'no-cache, no-transform',
-		);
+		expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream; charset=utf-8');
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-cache, no-transform');
 		expect(res.setHeader).toHaveBeenCalledWith('Connection', 'keep-alive');
 
 		// Check that write was called with token and done events
 		const writeCalls = res.write.mock.calls;
-		const tokenCall = writeCalls.find((call) =>
-			call[0].includes('"type":"token"'),
-		);
-		const doneCall = writeCalls.find((call) =>
-			call[0].includes('"type":"done"'),
-		);
+		const tokenCall = writeCalls.find((call) => call[0].includes('"type":"token"'));
+		const doneCall = writeCalls.find((call) => call[0].includes('"type":"done"'));
 
 		expect(tokenCall).toBeDefined();
 		expect(doneCall).toBeDefined();

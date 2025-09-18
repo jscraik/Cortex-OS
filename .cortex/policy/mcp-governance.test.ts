@@ -85,10 +85,7 @@ describe('MCP Governance Policy', () => {
 			const result = GovernancePolicySchema.safeParse(policy);
 
 			if (!result.success) {
-				console.error(
-					'Governance policy validation failed:',
-					result.error.errors,
-				);
+				console.error('Governance policy validation failed:', result.error.errors);
 			}
 
 			expect(result.success).toBe(true);
@@ -117,15 +114,9 @@ describe('MCP Governance Policy', () => {
 		});
 
 		it('should have trusted publishers list', () => {
-			expect(policy.security.signatures.trustedPublishers).toBeInstanceOf(
-				Array,
-			);
-			expect(policy.security.signatures.trustedPublishers).toContain(
-				'ModelContextProtocol',
-			);
-			expect(policy.security.signatures.trustedPublishers).toContain(
-				'Anthropic',
-			);
+			expect(policy.security.signatures.trustedPublishers).toBeInstanceOf(Array);
+			expect(policy.security.signatures.trustedPublishers).toContain('ModelContextProtocol');
+			expect(policy.security.signatures.trustedPublishers).toContain('Anthropic');
 		});
 
 		it('should define dangerous permissions', () => {
@@ -182,12 +173,8 @@ describe('MCP Governance Policy', () => {
 			expect(policy.installation.networkAccess.blocked).toBeInstanceOf(Array);
 
 			// Should allow common development services
-			expect(policy.installation.networkAccess.allowed).toContain(
-				'https://api.github.com',
-			);
-			expect(policy.installation.networkAccess.allowed).toContain(
-				'https://registry.npmjs.org',
-			);
+			expect(policy.installation.networkAccess.allowed).toContain('https://api.github.com');
+			expect(policy.installation.networkAccess.allowed).toContain('https://registry.npmjs.org');
 
 			// Should block dangerous protocols
 			expect(policy.installation.networkAccess.blocked).toContain('file://');
@@ -197,9 +184,7 @@ describe('MCP Governance Policy', () => {
 
 	describe('Audit Configuration', () => {
 		it('should have proper logging configuration', () => {
-			expect(['debug', 'info', 'warn', 'error']).toContain(
-				policy.audit.logging.level,
-			);
+			expect(['debug', 'info', 'warn', 'error']).toContain(policy.audit.logging.level);
 			expect(policy.audit.logging.destinations).toBeInstanceOf(Array);
 		});
 
@@ -252,12 +237,8 @@ describe('MCP Governance Policy', () => {
 				publisher: { name: 'Unknown Publisher', verified: false },
 			};
 
-			expect(policy.security.signatures.trustedPublishers).toContain(
-				'ModelContextProtocol',
-			);
-			expect(policy.security.signatures.trustedPublishers).not.toContain(
-				'Unknown Publisher',
-			);
+			expect(policy.security.signatures.trustedPublishers).toContain('ModelContextProtocol');
+			expect(policy.security.signatures.trustedPublishers).not.toContain('Unknown Publisher');
 		});
 	});
 
@@ -293,12 +274,8 @@ describe('MCP Governance Policy', () => {
 			expect(intersection.length).toBe(0);
 
 			// HTTPS should be preferred over HTTP
-			const httpsAllowed = allowed.filter((url) =>
-				url.startsWith('https://'),
-			).length;
-			const httpAllowed = allowed.filter((url) =>
-				url.startsWith('http://'),
-			).length;
+			const httpsAllowed = allowed.filter((url) => url.startsWith('https://')).length;
+			const httpAllowed = allowed.filter((url) => url.startsWith('http://')).length;
 			expect(httpsAllowed).toBeGreaterThanOrEqual(httpAllowed);
 		});
 	});

@@ -107,19 +107,14 @@ async function main() {
 		throw new Error(`Score weights must sum to 1 (got ${weightTotal})`);
 	}
 
-	const overall = Number(
-		scores.reduce((s, x) => s + x.score * x.weight, 0).toFixed(2),
-	);
+	const overall = Number(scores.reduce((s, x) => s + x.score * x.weight, 0).toFixed(2));
 	const report: Report = {
 		timestamp: new Date().toISOString(),
 		overall,
 		scores,
 		findings,
 	};
-	writeFileSync(
-		'.artifacts/review.report.json',
-		JSON.stringify(report, null, 2),
-	);
+	writeFileSync('.artifacts/review.report.json', JSON.stringify(report, null, 2));
 	// eslint-disable-next-line no-console
 	console.log(
 		JSON.stringify(

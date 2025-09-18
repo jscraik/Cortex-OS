@@ -42,10 +42,7 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Execute an MCP tool by name
 	 */
-	async executeTool(
-		toolName: string,
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	async executeTool(toolName: string, params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			// Find the tool (supporting aliases)
 			const tool = listMarketplaceMcpTools().find(
@@ -55,10 +52,7 @@ export class MarketplaceMcpIntegration {
 			if (!tool) {
 				return createErrorResponse(
 					toolName,
-					new MarketplaceToolError(
-						'validation_error',
-						`Unknown tool: ${toolName}`,
-					),
+					new MarketplaceToolError('validation_error', `Unknown tool: ${toolName}`),
 				);
 			}
 
@@ -107,25 +101,17 @@ export class MarketplaceMcpIntegration {
 	 */
 	private wireToolHandlers() {
 		// Search servers
-		const searchTool = marketplaceMcpTools.find(
-			(t) => t.name === 'marketplace.search_servers',
-		);
+		const searchTool = marketplaceMcpTools.find((t) => t.name === 'marketplace.search_servers');
 		if (searchTool) {
-			searchTool.handler = async (
-				params: unknown,
-			): Promise<MarketplaceToolResponse> => {
+			searchTool.handler = async (params: unknown): Promise<MarketplaceToolResponse> => {
 				return this.handleSearchServers(params);
 			};
 		}
 
 		// Get server
-		const getServerTool = marketplaceMcpTools.find(
-			(t) => t.name === 'marketplace.get_server',
-		);
+		const getServerTool = marketplaceMcpTools.find((t) => t.name === 'marketplace.get_server');
 		if (getServerTool) {
-			getServerTool.handler = async (
-				params: unknown,
-			): Promise<MarketplaceToolResponse> => {
+			getServerTool.handler = async (params: unknown): Promise<MarketplaceToolResponse> => {
 				return this.handleGetServer(params);
 			};
 		}
@@ -135,9 +121,7 @@ export class MarketplaceMcpIntegration {
 			(t) => t.name === 'marketplace.get_install_instructions',
 		);
 		if (getInstallTool) {
-			getInstallTool.handler = async (
-				params: unknown,
-			): Promise<MarketplaceToolResponse> => {
+			getInstallTool.handler = async (params: unknown): Promise<MarketplaceToolResponse> => {
 				return this.handleGetInstallInstructions(params);
 			};
 		}
@@ -147,10 +131,9 @@ export class MarketplaceMcpIntegration {
 			(t) => t.name === 'marketplace.list_categories',
 		);
 		if (listCategoriesTool) {
-			listCategoriesTool.handler =
-				async (): Promise<MarketplaceToolResponse> => {
-					return this.handleListCategories();
-				};
+			listCategoriesTool.handler = async (): Promise<MarketplaceToolResponse> => {
+				return this.handleListCategories();
+			};
 		}
 
 		// Get category servers
@@ -166,9 +149,7 @@ export class MarketplaceMcpIntegration {
 		}
 
 		// Get stats
-		const getStatsTool = marketplaceMcpTools.find(
-			(t) => t.name === 'marketplace.get_stats',
-		);
+		const getStatsTool = marketplaceMcpTools.find((t) => t.name === 'marketplace.get_stats');
 		if (getStatsTool) {
 			getStatsTool.handler = async (): Promise<MarketplaceToolResponse> => {
 				return this.handleGetStats();
@@ -176,37 +157,25 @@ export class MarketplaceMcpIntegration {
 		}
 
 		// Get trending
-		const getTrendingTool = marketplaceMcpTools.find(
-			(t) => t.name === 'marketplace.get_trending',
-		);
+		const getTrendingTool = marketplaceMcpTools.find((t) => t.name === 'marketplace.get_trending');
 		if (getTrendingTool) {
-			getTrendingTool.handler = async (
-				params: unknown,
-			): Promise<MarketplaceToolResponse> => {
+			getTrendingTool.handler = async (params: unknown): Promise<MarketplaceToolResponse> => {
 				return this.handleGetTrending(params);
 			};
 		}
 
 		// Get popular
-		const getPopularTool = marketplaceMcpTools.find(
-			(t) => t.name === 'marketplace.get_popular',
-		);
+		const getPopularTool = marketplaceMcpTools.find((t) => t.name === 'marketplace.get_popular');
 		if (getPopularTool) {
-			getPopularTool.handler = async (
-				params: unknown,
-			): Promise<MarketplaceToolResponse> => {
+			getPopularTool.handler = async (params: unknown): Promise<MarketplaceToolResponse> => {
 				return this.handleGetPopular(params);
 			};
 		}
 
 		// Get top rated
-		const getTopRatedTool = marketplaceMcpTools.find(
-			(t) => t.name === 'marketplace.get_top_rated',
-		);
+		const getTopRatedTool = marketplaceMcpTools.find((t) => t.name === 'marketplace.get_top_rated');
 		if (getTopRatedTool) {
-			getTopRatedTool.handler = async (
-				params: unknown,
-			): Promise<MarketplaceToolResponse> => {
+			getTopRatedTool.handler = async (params: unknown): Promise<MarketplaceToolResponse> => {
 				return this.handleGetTopRated(params);
 			};
 		}
@@ -215,9 +184,7 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Handle search servers tool
 	 */
-	private async handleSearchServers(
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	private async handleSearchServers(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			const input = params as {
 				query?: string;
@@ -289,14 +256,10 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Handle get server tool
 	 */
-	private async handleGetServer(
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	private async handleGetServer(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			// Validate input against the same schema used in the tool contract
-			const { validateInput, GetServerInputSchema } = await import(
-				'./tools.js'
-			);
+			const { validateInput, GetServerInputSchema } = await import('./tools.js');
 
 			try {
 				validateInput(GetServerInputSchema, params);
@@ -305,18 +268,14 @@ export class MarketplaceMcpIntegration {
 					'marketplace.get_server',
 					new MarketplaceToolError(
 						'validation_error',
-						validationError instanceof Error
-							? validationError.message
-							: 'Invalid input parameters',
+						validationError instanceof Error ? validationError.message : 'Invalid input parameters',
 					),
 				);
 			}
 
 			const input = params as { serverId: string };
 
-			const server = await this.deps.marketplaceService.getServer(
-				input.serverId,
-			);
+			const server = await this.deps.marketplaceService.getServer(input.serverId);
 
 			if (!server) {
 				return createErrorResponse(
@@ -347,15 +306,11 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Handle get install instructions tool
 	 */
-	private async handleGetInstallInstructions(
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	private async handleGetInstallInstructions(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			const input = params as { serverId: string; client?: string };
 
-			const server = await this.deps.marketplaceService.getServer(
-				input.serverId,
-			);
+			const server = await this.deps.marketplaceService.getServer(input.serverId);
 
 			if (!server) {
 				return createErrorResponse(
@@ -386,8 +341,7 @@ export class MarketplaceMcpIntegration {
 							? `Run this command in Claude Desktop: ${command}`
 							: 'Install via Claude settings';
 						const jsonConfig = installData.json;
-						config =
-							jsonConfig && typeof jsonConfig === 'object' ? jsonConfig : {};
+						config = jsonConfig && typeof jsonConfig === 'object' ? jsonConfig : {};
 						break;
 					}
 					case 'cline': {
@@ -406,18 +360,14 @@ export class MarketplaceMcpIntegration {
 					}
 					case 'continue': {
 						const continueCommand = installData.continue;
-						command =
-							typeof continueCommand === 'string' ? continueCommand : '';
+						command = typeof continueCommand === 'string' ? continueCommand : '';
 						instructions = command || 'Configure in Continue settings';
 						break;
 					}
 					default:
 						return createErrorResponse(
 							'marketplace.get_install_instructions',
-							new MarketplaceToolError(
-								'validation_error',
-								`Unsupported client: ${input.client}`,
-							),
+							new MarketplaceToolError('validation_error', `Unsupported client: ${input.client}`),
 						);
 				}
 
@@ -453,9 +403,7 @@ export class MarketplaceMcpIntegration {
 				'marketplace.get_install_instructions',
 				new MarketplaceToolError(
 					'internal_error',
-					error instanceof Error
-						? error.message
-						: 'Install instructions retrieval failed',
+					error instanceof Error ? error.message : 'Install instructions retrieval failed',
 				),
 			);
 		}
@@ -477,9 +425,7 @@ export class MarketplaceMcpIntegration {
 				'marketplace.list_categories',
 				new MarketplaceToolError(
 					'internal_error',
-					error instanceof Error
-						? error.message
-						: 'Categories retrieval failed',
+					error instanceof Error ? error.message : 'Categories retrieval failed',
 				),
 			);
 		}
@@ -488,9 +434,7 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Handle get category servers tool
 	 */
-	private async handleGetCategoryServers(
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	private async handleGetCategoryServers(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			const input = params as {
 				category: string;
@@ -543,9 +487,7 @@ export class MarketplaceMcpIntegration {
 				'marketplace.get_category_servers',
 				new MarketplaceToolError(
 					'internal_error',
-					error instanceof Error
-						? error.message
-						: 'Category servers retrieval failed',
+					error instanceof Error ? error.message : 'Category servers retrieval failed',
 				),
 			);
 		}
@@ -576,9 +518,7 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Handle get trending tool
 	 */
-	private async handleGetTrending(
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	private async handleGetTrending(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			const input = params as {
 				period?: 'day' | 'week' | 'month';
@@ -611,9 +551,7 @@ export class MarketplaceMcpIntegration {
 				'marketplace.get_trending',
 				new MarketplaceToolError(
 					'internal_error',
-					error instanceof Error
-						? error.message
-						: 'Trending servers retrieval failed',
+					error instanceof Error ? error.message : 'Trending servers retrieval failed',
 				),
 			);
 		}
@@ -622,9 +560,7 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Handle get popular tool
 	 */
-	private async handleGetPopular(
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	private async handleGetPopular(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			const input = params as { category?: string; limit?: number };
 
@@ -653,9 +589,7 @@ export class MarketplaceMcpIntegration {
 				'marketplace.get_popular',
 				new MarketplaceToolError(
 					'internal_error',
-					error instanceof Error
-						? error.message
-						: 'Popular servers retrieval failed',
+					error instanceof Error ? error.message : 'Popular servers retrieval failed',
 				),
 			);
 		}
@@ -664,9 +598,7 @@ export class MarketplaceMcpIntegration {
 	/**
 	 * Handle get top rated tool
 	 */
-	private async handleGetTopRated(
-		params: unknown,
-	): Promise<MarketplaceToolResponse> {
+	private async handleGetTopRated(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			const input = params as {
 				category?: string;
@@ -714,9 +646,7 @@ export class MarketplaceMcpIntegration {
 				'marketplace.get_top_rated',
 				new MarketplaceToolError(
 					'internal_error',
-					error instanceof Error
-						? error.message
-						: 'Top rated servers retrieval failed',
+					error instanceof Error ? error.message : 'Top rated servers retrieval failed',
 				),
 			);
 		}

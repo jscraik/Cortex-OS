@@ -62,9 +62,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({
 	};
 
 	return (
-		<div
-			className={`border border-gray-300 dark:border-gray-600 rounded-lg ${className}`}
-		>
+		<div className={`border border-gray-300 dark:border-gray-600 rounded-lg ${className}`}>
 			<div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
 				<button
 					type="button"
@@ -217,9 +215,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({
 				}}
 			>
 				{value === '' && (
-					<div className="text-gray-400 dark:text-gray-500 pointer-events-none">
-						{placeholder}
-					</div>
+					<div className="text-gray-400 dark:text-gray-500 pointer-events-none">{placeholder}</div>
 				)}
 			</div>
 		</div>

@@ -10,10 +10,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	type AnalyticsEngine,
-	createAnalyticsEngine,
-} from '../src/analytics-engine.js';
+import { type AnalyticsEngine, createAnalyticsEngine } from '../src/analytics-engine.js';
 import type { AnalyticsConfig } from '../src/types.js';
 
 describe('AnalyticsEngine', () => {

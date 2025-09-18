@@ -351,10 +351,7 @@ export class {{UtilName}} {
 ];
 
 // Template replacement utility
-export function processTemplate(
-	template: string,
-	variables: Record<string, string>,
-): string {
+export function processTemplate(template: string, variables: Record<string, string>): string {
 	let processed = template;
 
 	for (const [key, value] of Object.entries(variables)) {
@@ -383,9 +380,7 @@ export function toKebabCase(str: string): string {
 		.replace(/^-/, '');
 }
 
-export function generateTemplateVariables(
-	componentName: string,
-): Record<string, string> {
+export function generateTemplateVariables(componentName: string): Record<string, string> {
 	return {
 		ComponentName: toPascalCase(componentName),
 		componentName: toCamelCase(componentName),
@@ -405,8 +400,6 @@ export function getTemplatesByFramework(framework: string): ScaffoldTemplate[] {
 	];
 
 	return allTemplates.filter(
-		(template) =>
-			template.framework.includes(framework) ||
-			template.framework.includes('all'),
+		(template) => template.framework.includes(framework) || template.framework.includes('all'),
 	);
 }

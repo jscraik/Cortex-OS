@@ -19,10 +19,7 @@ describe('SimReporter', () => {
 		const reporter = new SimReporter();
 		const r1 = makeResult('a', true);
 		const r2 = makeResult('b', false, ['missing_evidence']);
-		const batch: SimBatchResult = reporter.createBatchResult('batch-1', [
-			r1,
-			r2,
-		]);
+		const batch: SimBatchResult = reporter.createBatchResult('batch-1', [r1, r2]);
 		expect(batch.summary.totalScenarios).toBe(2);
 		expect(batch.summary.passed).toBe(1);
 		expect(batch.summary.failed).toBe(1);

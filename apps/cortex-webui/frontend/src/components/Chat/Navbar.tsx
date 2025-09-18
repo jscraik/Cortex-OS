@@ -8,12 +8,7 @@ interface NavbarProps {
 	onNewChat: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({
-	chatId,
-	chatTitle,
-	onClearChat,
-	onNewChat,
-}) => {
+const Navbar: React.FC<NavbarProps> = ({ chatId, chatTitle, onClearChat, onNewChat }) => {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 
 	return (
@@ -45,10 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({
 						aria-expanded={isMenuOpen}
 						type="button"
 					>
-						<span
-							aria-hidden="true"
-							className="inline-flex h-5 w-5 items-center justify-center"
-						>
+						<span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								className="h-5 w-5"

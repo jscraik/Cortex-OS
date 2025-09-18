@@ -269,9 +269,7 @@ function testCommand(testCase) {
 	console.log(`   ${description}`);
 
 	if (!success) {
-		console.log(
-			`   Expected: ${expectedMatch ? `${type}:${action}` : 'no match'}`,
-		);
+		console.log(`   Expected: ${expectedMatch ? `${type}:${action}` : 'no match'}`);
 		console.log(`   Actual: ${result}`);
 	}
 
@@ -315,16 +313,12 @@ if (passed === total) {
 console.log('\n📝 Example Usage:');
 console.log('');
 console.log('Frontend Analysis:');
-console.log(
-	'  @insula frontend analyze  # Analyze React/Vue/Angular structure',
-);
+console.log('  @insula frontend analyze  # Analyze React/Vue/Angular structure');
 console.log('  @insula frontend fix       # Auto-fix frontend issues');
 console.log('  @insula frontend scaffold  # Generate component templates');
 console.log('');
 console.log('Backend Analysis:');
-console.log(
-	'  @insula backend analyze    # Analyze Node.js/Python/Go structure',
-);
+console.log('  @insula backend analyze    # Analyze Node.js/Python/Go structure');
 console.log('  @insula backend fix        # Auto-fix backend issues');
 console.log('  @insula backend scaffold   # Generate API/service templates');
 console.log('');

@@ -28,10 +28,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null;
 }
 
-function assertRecord(
-	value: unknown,
-	message: string,
-): Record<string, unknown> {
+function assertRecord(value: unknown, message: string): Record<string, unknown> {
 	if (!isRecord(value)) {
 		throw new Error(message);
 	}
@@ -63,9 +60,7 @@ function parsePayload(response: ToolResponse): ToolPayload {
 		try {
 			raw = JSON.parse(first.text);
 		} catch (err) {
-			throw new Error(
-				`Tool payload could not be parsed as JSON: ${(err as Error).message}`,
-			);
+			throw new Error(`Tool payload could not be parsed as JSON: ${(err as Error).message}`);
 		}
 	}
 	const base = assertRecord(raw, 'Tool payload must be a JSON object');
@@ -73,16 +68,10 @@ function parsePayload(response: ToolResponse): ToolPayload {
 	if (typeof successValue !== 'boolean') {
 		throw new Error('Tool payload success flag must be boolean');
 	}
-	const correlationId = assertString(
-		base.correlationId,
-		'Tool payload correlationId missing',
-	);
+	const correlationId = assertString(base.correlationId, 'Tool payload correlationId missing');
 
 	if (successValue) {
-		const data = assertRecord(
-			base.data,
-			'Tool payload data missing for successful response',
-		);
+		const data = assertRecord(base.data, 'Tool payload data missing for successful response');
 		return {
 			success: true,
 			correlationId,
@@ -90,18 +79,9 @@ function parsePayload(response: ToolResponse): ToolPayload {
 		};
 	}
 
-	const errorRecord = assertRecord(
-		base.error,
-		'Tool payload error missing for failure response',
-	);
-	const code = assertString(
-		errorRecord.code,
-		'Tool payload error code missing',
-	);
-	const message = assertString(
-		errorRecord.message,
-		'Tool payload error message missing',
-	);
+	const errorRecord = assertRecord(base.error, 'Tool payload error missing for failure response');
+	const code = assertString(errorRecord.code, 'Tool payload error code missing');
+	const message = assertString(errorRecord.message, 'Tool payload error message missing');
 	const details = assertStringArray(
 		errorRecord.details,
 		'Tool payload error details must be string[]',
@@ -114,18 +94,14 @@ function parsePayload(response: ToolResponse): ToolPayload {
 	};
 }
 
-function expectFailure(
-	payload: ToolPayload,
-): Extract<ToolPayload, { success: false }> {
+function expectFailure(payload: ToolPayload): Extract<ToolPayload, { success: false }> {
 	if (payload.success) {
 		throw new Error('Expected tool payload to be a failure');
 	}
 	return payload;
 }
 
-function expectSuccess(
-	payload: ToolPayload,
-): Extract<ToolPayload, { success: true }> {
+function expectSuccess(payload: ToolPayload): Extract<ToolPayload, { success: true }> {
 	if (!payload.success) {
 		throw new Error('Expected tool payload to be successful');
 	}
@@ -161,8 +137,7 @@ describe('memories MCP tools validation and error handling', () => {
 		expect(
 			payload.error.details.some(
 				(detail) =>
-					detail.toLowerCase().includes('text') &&
-					detail.toLowerCase().includes('length'),
+					detail.toLowerCase().includes('text') && detail.toLowerCase().includes('length'),
 			),
 		).toBe(true);
 		expect(payload.correlationId).toBe(response.metadata?.correlationId);
@@ -227,10 +202,8 @@ describe('memories MCP tools validation and error handling', () => {
 		expect(response.isError).toBe(true);
 		const payload = expectFailure(parsePayload(response));
 		expect(payload.error.code).toBe('validation_error');
-		expect(
-			payload.error.details.some((detail) =>
-				detail.toLowerCase().includes('limit'),
-			),
-		).toBe(true);
+		expect(payload.error.details.some((detail) => detail.toLowerCase().includes('limit'))).toBe(
+			true,
+		);
 	});
 });

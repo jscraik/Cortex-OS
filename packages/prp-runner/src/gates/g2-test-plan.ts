@@ -14,12 +14,10 @@ import {
 
 class CoverageTargetsCheck implements AutomatedCheck {
 	name = 'coverage-targets';
-	description =
-		'Validate coverage targets (lines/branches) are defined and > 0';
+	description = 'Validate coverage targets (lines/branches) are defined and > 0';
 
 	async execute(context: GateContext) {
-		const { coverageLines, coverageBranches } =
-			context.enforcementProfile.budgets;
+		const { coverageLines, coverageBranches } = context.enforcementProfile.budgets;
 		const issues: string[] = [];
 		if (!(coverageLines > 0)) issues.push('coverageLines must be > 0');
 		if (!(coverageBranches > 0)) issues.push('coverageBranches must be > 0');
@@ -37,14 +35,8 @@ class CoverageTargetsCheck implements AutomatedCheck {
 		];
 
 		return {
-			status: (issues.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
-			output:
-				issues.length === 0
-					? 'Coverage targets present'
-					: `Issues: ${issues.join(', ')}`,
+			status: (issues.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
+			output: issues.length === 0 ? 'Coverage targets present' : `Issues: ${issues.join(', ')}`,
 			duration: 40,
 			evidence,
 		};
@@ -53,12 +45,10 @@ class CoverageTargetsCheck implements AutomatedCheck {
 
 class PerfAndA11yBudgetCheck implements AutomatedCheck {
 	name = 'perf-a11y-budgets';
-	description =
-		'Validate performance (LCP/TBT) and accessibility budgets present';
+	description = 'Validate performance (LCP/TBT) and accessibility budgets present';
 
 	async execute(context: GateContext) {
-		const { performanceLCP, performanceTBT, a11yScore } =
-			context.enforcementProfile.budgets;
+		const { performanceLCP, performanceTBT, a11yScore } = context.enforcementProfile.budgets;
 		const issues: string[] = [];
 		if (!(performanceLCP > 0)) issues.push('performanceLCP must be > 0');
 		if (!(performanceTBT > 0)) issues.push('performanceTBT must be > 0');
@@ -82,10 +72,7 @@ class PerfAndA11yBudgetCheck implements AutomatedCheck {
 		];
 
 		return {
-			status: (issues.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
+			status: (issues.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
 			output:
 				issues.length === 0
 					? 'Performance and accessibility budgets present'
@@ -98,14 +85,10 @@ class PerfAndA11yBudgetCheck implements AutomatedCheck {
 
 class TestCategoriesPlanCheck implements AutomatedCheck {
 	name = 'test-categories-plan';
-	description =
-		'Ensure test categories (unit, integration, e2e, a11y, security) are planned';
+	description = 'Ensure test categories (unit, integration, e2e, a11y, security) are planned';
 
 	async execute(context: GateContext) {
-		const meta = (context.state.blueprint.metadata || {}) as Record<
-			string,
-			unknown
-		>;
+		const meta = (context.state.blueprint.metadata || {}) as Record<string, unknown>;
 		const categories = (meta.testCategories as string[]) || [
 			'unit',
 			'integration',
@@ -113,13 +96,7 @@ class TestCategoriesPlanCheck implements AutomatedCheck {
 			'a11y',
 			'security',
 		];
-		const required = new Set([
-			'unit',
-			'integration',
-			'e2e',
-			'a11y',
-			'security',
-		]);
+		const required = new Set(['unit', 'integration', 'e2e', 'a11y', 'security']);
 		const missing = Array.from(required).filter((c) => !categories.includes(c));
 
 		const evidence: Evidence[] = [
@@ -135,10 +112,7 @@ class TestCategoriesPlanCheck implements AutomatedCheck {
 		];
 
 		return {
-			status: (missing.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
+			status: (missing.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
 			output:
 				missing.length === 0
 					? 'All required test categories planned'

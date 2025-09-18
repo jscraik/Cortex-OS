@@ -10,10 +10,7 @@ import {
 	WorkloadIdentityError,
 	WorkloadIdentitySchema,
 } from '../types.js';
-import {
-	extractTrustDomain,
-	extractWorkloadPath,
-} from '../utils/security-utils.js';
+import { extractTrustDomain, extractWorkloadPath } from '../utils/security-utils.js';
 
 /**
  * Workload Identity Manager
@@ -49,9 +46,7 @@ export class WorkloadIdentityManager {
 				const trustDomain = extractTrustDomain(spiffeId);
 				const workloadPath = extractWorkloadPath(spiffeId);
 				if (!trustDomain || !workloadPath) {
-					throw new WorkloadIdentityError(
-						`Invalid SPIFFE ID format: ${spiffeId}`,
-					);
+					throw new WorkloadIdentityError(`Invalid SPIFFE ID format: ${spiffeId}`);
 				}
 
 				// Create workload identity
@@ -136,10 +131,7 @@ export class WorkloadIdentityManager {
 	/**
 	 * Validate workload identity selectors
 	 */
-	validateSelectors(
-		spiffeId: SpiffeId,
-		requiredSelectors: Record<string, string>,
-	): boolean {
+	validateSelectors(spiffeId: SpiffeId, requiredSelectors: Record<string, string>): boolean {
 		const identity = this.identities.get(spiffeId);
 		if (!identity) {
 			return false;
@@ -214,10 +206,7 @@ export class WorkloadIdentityAttestor {
 				});
 
 				if (!this.apiClient) {
-					throw new WorkloadIdentityError(
-						'Workload API client not configured',
-						spiffeId,
-					);
+					throw new WorkloadIdentityError('Workload API client not configured', spiffeId);
 				}
 
 				return await this.apiClient.attestWorkload(spiffeId);
@@ -239,9 +228,7 @@ export class WorkloadIdentityAttestor {
 	/**
 	 * Batch attest multiple workloads
 	 */
-	async batchAttest(
-		spiffeIds: SpiffeId[],
-	): Promise<Map<SpiffeId, WorkloadIdentity>> {
+	async batchAttest(spiffeIds: SpiffeId[]): Promise<Map<SpiffeId, WorkloadIdentity>> {
 		return withSpan('workload-attestor.batch-attest', async () => {
 			const results = new Map<SpiffeId, WorkloadIdentity>();
 

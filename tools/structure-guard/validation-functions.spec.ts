@@ -30,20 +30,8 @@ vi.mock('node:fs', () => ({
 				version: '2.0.0',
 				allowedPaths: {
 					apps: ['cortex-os'],
-					'apps/cortex-os/packages': [
-						'agents',
-						'mvp',
-						'mvp-core',
-						'mvp-server',
-					],
-					packages: [
-						'a2a',
-						'mcp',
-						'memories',
-						'orchestration',
-						'simlab',
-						'rag',
-					],
+					'apps/cortex-os/packages': ['agents', 'mvp', 'mvp-core', 'mvp-server'],
+					packages: ['a2a', 'mcp', 'memories', 'orchestration', 'simlab', 'rag'],
 					services: ['ml-inference', 'data-pipeline'],
 					'libs/typescript': [
 						'accessibility',
@@ -172,13 +160,7 @@ vi.mock('node:fs', () => ({
 				},
 				testRequirements: {
 					minCoverage: 80,
-					requiredTestDirs: [
-						'tests',
-						'test',
-						'__tests__',
-						'src/**/*.spec.ts',
-						'src/**/*.test.ts',
-					],
+					requiredTestDirs: ['tests', 'test', '__tests__', 'src/**/*.spec.ts', 'src/**/*.test.ts'],
 					excludeFromCoverage: ['*.config.*', '*.setup.*', '*.mock.*'],
 				},
 			});
@@ -212,9 +194,7 @@ describe('structure guard validation functions', () => {
 	});
 
 	it('should validate denied files correctly', async () => {
-		const policy = JSON.parse(
-			readFileSync('tools/structure-guard/policy.json', 'utf8'),
-		);
+		const policy = JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'));
 
 		// Mock the policy in the validation functions
 		const originalReadFileSync = readFileSync;
@@ -230,9 +210,7 @@ describe('structure guard validation functions', () => {
 	});
 
 	it('should validate allowed files correctly', async () => {
-		const policy = JSON.parse(
-			readFileSync('tools/structure-guard/policy.json', 'utf8'),
-		);
+		const policy = JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'));
 
 		// Mock the policy in the validation functions
 		const originalReadFileSync = readFileSync;
@@ -248,9 +226,7 @@ describe('structure guard validation functions', () => {
 	});
 
 	it('should validate protected files correctly', async () => {
-		const policy = JSON.parse(
-			readFileSync('tools/structure-guard/policy.json', 'utf8'),
-		);
+		const policy = JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'));
 
 		// Mock the policy in the validation functions
 		const originalReadFileSync = readFileSync;
@@ -267,9 +243,7 @@ describe('structure guard validation functions', () => {
 	});
 
 	it('should validate package structure correctly', async () => {
-		const policy = JSON.parse(
-			readFileSync('tools/structure-guard/policy.json', 'utf8'),
-		);
+		const policy = JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'));
 
 		// Mock the policy in the validation functions
 		const originalReadFileSync = readFileSync;
@@ -289,9 +263,7 @@ describe('structure guard validation functions', () => {
 	});
 
 	it('should validate root entries correctly', async () => {
-		const policy = JSON.parse(
-			readFileSync('tools/structure-guard/policy.json', 'utf8'),
-		);
+		const policy = JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'));
 
 		// Mock the policy in the validation functions
 		const originalReadFileSync = readFileSync;

@@ -14,9 +14,7 @@ export interface MemoryStore<T = unknown> {
 	load(serialized: string): void;
 }
 
-export function createInMemoryStore<T = unknown>(
-	limits: MemoryLimits,
-): MemoryStore<T> {
+export function createInMemoryStore<T = unknown>(limits: MemoryLimits): MemoryStore<T> {
 	const state = new Map<string, T>();
 	let totalBytes = 0;
 
@@ -59,8 +57,7 @@ export function createInMemoryStore<T = unknown>(
 			state.clear();
 			totalBytes = 0;
 		},
-		serialize: () =>
-			JSON.stringify({ limits, entries: Array.from(state.entries()) }),
+		serialize: () => JSON.stringify({ limits, entries: Array.from(state.entries()) }),
 		load: (serialized) => {
 			const obj = JSON.parse(serialized) as { entries: [string, T][] };
 			state.clear();

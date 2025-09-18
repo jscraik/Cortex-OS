@@ -23,14 +23,8 @@ const MultiResponseMessages: React.FC<MultiResponseMessagesProps> = ({
 					key={message.id}
 					message={message}
 					isUser={message.role === 'user'}
-					onEdit={
-						onEditMessage
-							? (content) => onEditMessage(message.id, content)
-							: undefined
-					}
-					onDelete={
-						onDeleteMessage ? () => onDeleteMessage(message.id) : undefined
-					}
+					onEdit={onEditMessage ? (content) => onEditMessage(message.id, content) : undefined}
+					onDelete={onDeleteMessage ? () => onDeleteMessage(message.id) : undefined}
 				/>
 			))}
 		</div>

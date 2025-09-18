@@ -7,15 +7,11 @@ const schema = z.object({
 	text: z.string().min(1),
 	embedder: z.custom<Embedder>(
 		(e): e is Embedder =>
-			typeof e === 'object' &&
-			e !== null &&
-			typeof (e as any).embed === 'function',
+			typeof e === 'object' && e !== null && typeof (e as any).embed === 'function',
 	),
 	store: z.custom<Store>(
 		(s): s is Store =>
-			typeof s === 'object' &&
-			s !== null &&
-			typeof (s as any).upsert === 'function',
+			typeof s === 'object' && s !== null && typeof (s as any).upsert === 'function',
 	),
 	chunkSize: z.number().int().positive().default(300),
 	overlap: z.number().int().nonnegative().default(0),
@@ -24,8 +20,7 @@ const schema = z.object({
 export type IngestTextParams = z.input<typeof schema>;
 
 export async function ingestText(params: IngestTextParams): Promise<void> {
-	const { source, text, embedder, store, chunkSize, overlap } =
-		schema.parse(params);
+	const { source, text, embedder, store, chunkSize, overlap } = schema.parse(params);
 	const parts = byChars(text, chunkSize, overlap);
 	const now = Date.now();
 	const chunks: Chunk[] = parts.map((p, i) => ({

@@ -28,9 +28,7 @@ winston.addColors(colors);
 const consoleFormat = winston.format.combine(
 	winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
 	winston.format.colorize({ all: true }),
-	winston.format.printf(
-		(info) => `${info.timestamp} ${info.level}: ${info.message}`,
-	),
+	winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`),
 );
 
 // Custom format for file output
@@ -82,11 +80,7 @@ export const morganStream = {
 };
 
 // Helper functions for structured logging
-export const logWithContext = (
-	level: string,
-	message: string,
-	meta: object = {},
-) => {
+export const logWithContext = (level: string, message: string, meta: object = {}) => {
 	logger.log(level, message, {
 		timestamp: new Date().toISOString(),
 		service: 'cortex-webui-backend',
@@ -107,11 +101,7 @@ export const logError = (error: Error, context: object = {}) => {
 	});
 };
 
-export const logAuth = (
-	action: string,
-	userId?: string,
-	details: object = {},
-) => {
+export const logAuth = (action: string, userId?: string, details: object = {}) => {
 	logWithContext('info', `Auth: ${action}`, {
 		category: 'authentication',
 		userId,
@@ -120,11 +110,7 @@ export const logAuth = (
 	});
 };
 
-export const logChat = (
-	action: string,
-	userId: string,
-	details: object = {},
-) => {
+export const logChat = (action: string, userId: string, details: object = {}) => {
 	logWithContext('info', `Chat: ${action}`, {
 		category: 'chat',
 		userId,
@@ -158,11 +144,7 @@ export const logSecurity = (event: string, details: object = {}) => {
 	});
 };
 
-export const logPerformance = (
-	operation: string,
-	duration: number,
-	details: object = {},
-) => {
+export const logPerformance = (operation: string, duration: number, details: object = {}) => {
 	logWithContext('info', `Performance: ${operation} took ${duration}ms`, {
 		category: 'performance',
 		operation,

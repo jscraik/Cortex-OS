@@ -123,14 +123,8 @@ const Messages: React.FC<MessagesProps> = ({
 							key={message.id}
 							message={ensureCreatedAt(message)}
 							isUser={message.role === 'user'}
-							onEdit={
-								onEditMessage
-									? (content) => onEditMessage(message.id, content)
-									: undefined
-							}
-							onDelete={
-								onDeleteMessage ? () => onDeleteMessage(message.id) : undefined
-							}
+							onEdit={onEditMessage ? (content) => onEditMessage(message.id, content) : undefined}
+							onDelete={onDeleteMessage ? () => onDeleteMessage(message.id) : undefined}
 						/>
 					))
 				)}

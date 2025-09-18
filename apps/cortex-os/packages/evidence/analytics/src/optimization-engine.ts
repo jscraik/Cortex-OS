@@ -71,8 +71,7 @@ export class OptimizationEngine extends EventEmitter {
 	 */
 	private initializeOptimization(): void {
 		this.logger.info('Initializing optimization engine', {
-			optimizationRecommendations:
-				this.config.analysis.optimizationRecommendations,
+			optimizationRecommendations: this.config.analysis.optimizationRecommendations,
 			predictiveModeling: this.config.analysis.predictiveModeling,
 		});
 
@@ -225,9 +224,7 @@ export class OptimizationEngine extends EventEmitter {
 	/**
 	 * Generate optimization recommendations
 	 */
-	async generateOptimizationRecommendations(): Promise<
-		OptimizationRecommendation[]
-	> {
+	async generateOptimizationRecommendations(): Promise<OptimizationRecommendation[]> {
 		try {
 			const startTime = Date.now();
 			const newRecommendations: OptimizationRecommendation[] = [];
@@ -238,8 +235,7 @@ export class OptimizationEngine extends EventEmitter {
 				return [];
 			}
 
-			const latestData =
-				this.performanceHistory[this.performanceHistory.length - 1];
+			const latestData = this.performanceHistory[this.performanceHistory.length - 1];
 
 			// Generate different types of recommendations
 			const resourceRecommendations =
@@ -250,8 +246,7 @@ export class OptimizationEngine extends EventEmitter {
 				await this.generateWorkflowOptimizationRecommendations(latestData);
 			newRecommendations.push(...workflowRecommendations);
 
-			const scalingRecommendations =
-				await this.generateScalingRecommendations(latestData);
+			const scalingRecommendations = await this.generateScalingRecommendations(latestData);
 			newRecommendations.push(...scalingRecommendations);
 
 			const bottleneckRecommendations =
@@ -393,12 +388,9 @@ export class OptimizationEngine extends EventEmitter {
 				});
 			}
 		} catch (error) {
-			this.logger.error(
-				'Error generating resource optimization recommendations',
-				{
-					error: error.message,
-				},
-			);
+			this.logger.error('Error generating resource optimization recommendations', {
+				error: error.message,
+			});
 		}
 
 		return recommendations;
@@ -447,8 +439,7 @@ export class OptimizationEngine extends EventEmitter {
 			}
 
 			// Analyze parallel execution opportunities
-			const parallelizationOpportunities =
-				this.identifyParallelizationOpportunities(data.patterns);
+			const parallelizationOpportunities = this.identifyParallelizationOpportunities(data.patterns);
 
 			if (parallelizationOpportunities.length > 0) {
 				recommendations.push({
@@ -479,12 +470,9 @@ export class OptimizationEngine extends EventEmitter {
 				});
 			}
 		} catch (error) {
-			this.logger.error(
-				'Error generating workflow optimization recommendations',
-				{
-					error: error.message,
-				},
-			);
+			this.logger.error('Error generating workflow optimization recommendations', {
+				error: error.message,
+			});
 		}
 
 		return recommendations;
@@ -512,8 +500,7 @@ export class OptimizationEngine extends EventEmitter {
 						description: scalingPrediction.description,
 						expectedImpact: {
 							performanceGain: scalingPrediction.expectedImprovement,
-							resourceSavings:
-								scalingPrediction.direction === 'down' ? 20 : -10,
+							resourceSavings: scalingPrediction.direction === 'down' ? 20 : -10,
 							reliabilityImprovement: 25,
 						},
 						implementation: {
@@ -586,16 +573,13 @@ export class OptimizationEngine extends EventEmitter {
 						recommendation = this.createAgentOverloadRecommendation(bottleneck);
 						break;
 					case 'communication-lag':
-						recommendation =
-							this.createCommunicationLagRecommendation(bottleneck);
+						recommendation = this.createCommunicationLagRecommendation(bottleneck);
 						break;
 					case 'resource-contention':
-						recommendation =
-							this.createResourceContentionRecommendation(bottleneck);
+						recommendation = this.createResourceContentionRecommendation(bottleneck);
 						break;
 					case 'dependency-wait':
-						recommendation =
-							this.createDependencyWaitRecommendation(bottleneck);
+						recommendation = this.createDependencyWaitRecommendation(bottleneck);
 						break;
 				}
 
@@ -604,12 +588,9 @@ export class OptimizationEngine extends EventEmitter {
 				}
 			}
 		} catch (error) {
-			this.logger.error(
-				'Error generating bottleneck resolution recommendations',
-				{
-					error: error.message,
-				},
-			);
+			this.logger.error('Error generating bottleneck resolution recommendations', {
+				error: error.message,
+			});
 		}
 
 		return recommendations;
@@ -754,9 +735,7 @@ export class OptimizationEngine extends EventEmitter {
 	/**
 	 * Predict scaling needs using ML model with actual model inference
 	 */
-	private async predictScalingNeeds(
-		data: (typeof this.performanceHistory)[0],
-	): Promise<{
+	private async predictScalingNeeds(data: (typeof this.performanceHistory)[0]): Promise<{
 		shouldScale: boolean;
 		direction: 'up' | 'down';
 		urgency: 'low' | 'medium' | 'high' | 'critical';
@@ -783,40 +762,31 @@ export class OptimizationEngine extends EventEmitter {
 				error: error.message,
 			});
 			// Fallback to conservative rule-based prediction
-			return this.ruleBasedScalingPrediction(
-				this.extractScalingFeatures(data),
-				data,
-			);
+			return this.ruleBasedScalingPrediction(this.extractScalingFeatures(data), data);
 		}
 	}
 
 	/**
 	 * Extract features for scaling prediction model
 	 */
-	private extractScalingFeatures(
-		data: (typeof this.performanceHistory)[0],
-	): number[] {
+	private extractScalingFeatures(data: (typeof this.performanceHistory)[0]): number[] {
 		const metrics = data.metrics;
 		if (metrics.length === 0) {
 			return [0, 0, 0, 0, 0, 0, 0, 0]; // Default neutral features
 		}
 
 		// Extract 8 key features for scaling decision
-		const avgCpuLoad =
-			metrics.reduce((sum, m) => sum + m.resourceUsage.cpu, 0) / metrics.length;
+		const avgCpuLoad = metrics.reduce((sum, m) => sum + m.resourceUsage.cpu, 0) / metrics.length;
 		const avgMemoryLoad =
-			metrics.reduce((sum, m) => sum + m.resourceUsage.memory, 0) /
-			metrics.length;
-		const avgThroughput =
-			metrics.reduce((sum, m) => sum + m.throughput, 0) / metrics.length;
+			metrics.reduce((sum, m) => sum + m.resourceUsage.memory, 0) / metrics.length;
+		const avgThroughput = metrics.reduce((sum, m) => sum + m.throughput, 0) / metrics.length;
 		const errorRate =
 			metrics.reduce((sum, m) => sum + m.errorCount, 0) /
 			Math.max(
 				1,
 				metrics.reduce((sum, m) => sum + m.taskCount, 0),
 			);
-		const avgResponseTime =
-			metrics.reduce((sum, m) => sum + m.responseTime, 0) / metrics.length;
+		const avgResponseTime = metrics.reduce((sum, m) => sum + m.responseTime, 0) / metrics.length;
 		const activeAgentCount = metrics.filter((m) => m.availability > 0.8).length;
 
 		// Historical trend features (last 5 data points)
@@ -827,8 +797,7 @@ export class OptimizationEngine extends EventEmitter {
 						recentHistory.map(
 							(h) =>
 								h.metrics.reduce(
-									(sum, m) =>
-										sum + (m.resourceUsage.cpu + m.resourceUsage.memory) / 2,
+									(sum, m) => sum + (m.resourceUsage.cpu + m.resourceUsage.memory) / 2,
 									0,
 								) / h.metrics.length,
 						),
@@ -839,9 +808,7 @@ export class OptimizationEngine extends EventEmitter {
 			recentHistory.length > 1
 				? this.calculateTrend(
 						recentHistory.map(
-							(h) =>
-								h.metrics.reduce((sum, m) => sum + m.throughput, 0) /
-								h.metrics.length,
+							(h) => h.metrics.reduce((sum, m) => sum + m.throughput, 0) / h.metrics.length,
 						),
 					)
 				: 0;
@@ -896,19 +863,11 @@ export class OptimizationEngine extends EventEmitter {
 			const weights = this.getOrInitializeModelWeights();
 
 			// Forward pass through simple 2-layer network
-			const hidden = featureMatrix
-				.mmul(weights.inputToHidden)
-				.add(weights.hiddenBias);
-			const hiddenActivated = hidden.apply((value: number) =>
-				Math.max(0, value),
-			); // ReLU activation
+			const hidden = featureMatrix.mmul(weights.inputToHidden).add(weights.hiddenBias);
+			const hiddenActivated = hidden.apply((value: number) => Math.max(0, value)); // ReLU activation
 
-			const output = hiddenActivated
-				.mmul(weights.hiddenToOutput)
-				.add(weights.outputBias);
-			const activated = output.apply(
-				(value: number) => 1 / (1 + Math.exp(-value)),
-			); // Sigmoid activation
+			const output = hiddenActivated.mmul(weights.hiddenToOutput).add(weights.outputBias);
+			const activated = output.apply((value: number) => 1 / (1 + Math.exp(-value))); // Sigmoid activation
 
 			const result = activated.to1DArray();
 
@@ -990,9 +949,7 @@ export class OptimizationEngine extends EventEmitter {
 					'Adjust scaling thresholds based on results',
 				],
 				affectedAgents: data.metrics
-					.filter(
-						(m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 > 0.8,
-					)
+					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 > 0.8)
 					.map((m) => m.agentId),
 				confidence: prediction.confidence,
 			};
@@ -1010,9 +967,7 @@ export class OptimizationEngine extends EventEmitter {
 					'Adjust scaling thresholds',
 				],
 				affectedAgents: data.metrics
-					.filter(
-						(m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 < 0.3,
-					)
+					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 < 0.3)
 					.map((m) => m.agentId),
 				confidence: prediction.confidence,
 			};
@@ -1063,9 +1018,7 @@ export class OptimizationEngine extends EventEmitter {
 					'Adjust scaling parameters',
 				],
 				affectedAgents: data.metrics
-					.filter(
-						(m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 > 0.8,
-					)
+					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 > 0.8)
 					.map((m) => m.agentId),
 				confidence: 0.75,
 			};
@@ -1083,9 +1036,7 @@ export class OptimizationEngine extends EventEmitter {
 					'Adjust scaling thresholds',
 				],
 				affectedAgents: data.metrics
-					.filter(
-						(m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 < 0.2,
-					)
+					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 < 0.2)
 					.map((m) => m.agentId),
 				confidence: 0.65,
 			};
@@ -1106,9 +1057,7 @@ export class OptimizationEngine extends EventEmitter {
 	/**
 	 * Analyze resource utilization patterns
 	 */
-	private analyzeResourceUtilization(
-		data: (typeof this.performanceHistory)[0],
-	): {
+	private analyzeResourceUtilization(data: (typeof this.performanceHistory)[0]): {
 		cpu: { average: number; peak: number };
 		memory: { average: number; peak: number };
 		gpu?: { average: number; peak: number };
@@ -1123,20 +1072,17 @@ export class OptimizationEngine extends EventEmitter {
 
 		return {
 			cpu: {
-				average:
-					cpuUsages.reduce((sum, cpu) => sum + cpu, 0) / cpuUsages.length,
+				average: cpuUsages.reduce((sum, cpu) => sum + cpu, 0) / cpuUsages.length,
 				peak: Math.max(...cpuUsages),
 			},
 			memory: {
-				average:
-					memoryUsages.reduce((sum, mem) => sum + mem, 0) / memoryUsages.length,
+				average: memoryUsages.reduce((sum, mem) => sum + mem, 0) / memoryUsages.length,
 				peak: Math.max(...memoryUsages),
 			},
 			gpu:
 				gpuUsages.length > 0
 					? {
-							average:
-								gpuUsages.reduce((sum, gpu) => sum + gpu, 0) / gpuUsages.length,
+							average: gpuUsages.reduce((sum, gpu) => sum + gpu, 0) / gpuUsages.length,
 							peak: Math.max(...gpuUsages),
 						}
 					: undefined,
@@ -1147,18 +1093,14 @@ export class OptimizationEngine extends EventEmitter {
 	 * Get high CPU usage agents
 	 */
 	private getHighCpuAgents(metrics: AgentMetrics[]): string[] {
-		return metrics
-			.filter((m) => m.resourceUsage.cpu > 80)
-			.map((m) => m.agentId);
+		return metrics.filter((m) => m.resourceUsage.cpu > 80).map((m) => m.agentId);
 	}
 
 	/**
 	 * Get high memory usage agents
 	 */
 	private getHighMemoryAgents(metrics: AgentMetrics[]): string[] {
-		return metrics
-			.filter((m) => m.resourceUsage.memory > 85)
-			.map((m) => m.agentId);
+		return metrics.filter((m) => m.resourceUsage.memory > 85).map((m) => m.agentId);
 	}
 
 	/**
@@ -1173,9 +1115,7 @@ export class OptimizationEngine extends EventEmitter {
 	/**
 	 * Calculate workflow efficiency
 	 */
-	private calculateWorkflowEfficiency(
-		data: (typeof this.performanceHistory)[0],
-	): number {
+	private calculateWorkflowEfficiency(data: (typeof this.performanceHistory)[0]): number {
 		const metrics = data.metrics;
 		const orchestrationMetrics = data.orchestrationMetrics;
 
@@ -1183,32 +1123,24 @@ export class OptimizationEngine extends EventEmitter {
 			return 0.5; // Default neutral efficiency
 		}
 
-		const avgSuccessRate =
-			metrics.reduce((sum, m) => sum + m.successRate, 0) / metrics.length;
-		const avgThroughput =
-			metrics.reduce((sum, m) => sum + m.throughput, 0) / metrics.length;
+		const avgSuccessRate = metrics.reduce((sum, m) => sum + m.successRate, 0) / metrics.length;
+		const avgThroughput = metrics.reduce((sum, m) => sum + m.throughput, 0) / metrics.length;
 		const avgWorkflowEfficiency =
 			orchestrationMetrics.reduce((sum, m) => sum + m.workflowEfficiency, 0) /
 			orchestrationMetrics.length;
 
 		// Weighted combination of efficiency metrics
 		return (
-			avgSuccessRate * 0.4 +
-			Math.min(avgThroughput / 10, 1) * 0.3 +
-			avgWorkflowEfficiency * 0.3
+			avgSuccessRate * 0.4 + Math.min(avgThroughput / 10, 1) * 0.3 + avgWorkflowEfficiency * 0.3
 		);
 	}
 
 	/**
 	 * Identify parallelization opportunities
 	 */
-	private identifyParallelizationOpportunities(
-		patterns: InteractionPattern[],
-	): string[] {
+	private identifyParallelizationOpportunities(patterns: InteractionPattern[]): string[] {
 		// Look for sequential patterns that could be parallelized
-		const sequentialPatterns = patterns.filter(
-			(p) => p.patternType === 'cascade',
-		);
+		const sequentialPatterns = patterns.filter((p) => p.patternType === 'cascade');
 		return sequentialPatterns.flatMap((p) => p.participants);
 	}
 
@@ -1223,21 +1155,14 @@ export class OptimizationEngine extends EventEmitter {
 			return { severity: 0, overloadedAgents: [] };
 		}
 
-		const loads = metrics.map(
-			(m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 2,
-		);
+		const loads = metrics.map((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 2);
 		const avgLoad = loads.reduce((sum, load) => sum + load, 0) / loads.length;
-		const loadVariance =
-			loads.reduce((sum, load) => sum + (load - avgLoad) ** 2, 0) /
-			loads.length;
+		const loadVariance = loads.reduce((sum, load) => sum + (load - avgLoad) ** 2, 0) / loads.length;
 
 		// High variance indicates poor load distribution
 		const severity = Math.min(1, loadVariance / (avgLoad * avgLoad));
 		const overloadedAgents = metrics
-			.filter(
-				(m) =>
-					(m.resourceUsage.cpu + m.resourceUsage.memory) / 2 > avgLoad * 1.5,
-			)
+			.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 2 > avgLoad * 1.5)
 			.map((m) => m.agentId);
 
 		return { severity, overloadedAgents };
@@ -1291,9 +1216,7 @@ export class OptimizationEngine extends EventEmitter {
 		const maxRecommendations = 500;
 
 		if (this.recommendations.length > maxRecommendations) {
-			this.recommendations.sort(
-				(a, b) => b.generatedAt.getTime() - a.generatedAt.getTime(),
-			);
+			this.recommendations.sort((a, b) => b.generatedAt.getTime() - a.generatedAt.getTime());
 			this.recommendations.splice(maxRecommendations);
 		}
 	}
@@ -1321,9 +1244,7 @@ export class OptimizationEngine extends EventEmitter {
 			filtered = filtered.filter((r) => r.priority === priority);
 		}
 
-		return filtered.sort(
-			(a, b) => b.generatedAt.getTime() - a.generatedAt.getTime(),
-		);
+		return filtered.sort((a, b) => b.generatedAt.getTime() - a.generatedAt.getTime());
 	}
 
 	/**

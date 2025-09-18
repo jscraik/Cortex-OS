@@ -81,10 +81,7 @@ export async function runPRPWorkflow(
 	options: RunOptions,
 	approvalProvider?: HumanApprovalProvider,
 ): Promise<{ state: PRPState; prpPath: string; markdown: string }> {
-	const enforcementProfile = await loadInitialMd(
-		options.projectRoot,
-		options.initialMdPath,
-	);
+	const enforcementProfile = await loadInitialMd(options.projectRoot, options.initialMdPath);
 
 	// Initialize state
 	const state: PRPState = {
@@ -100,6 +97,7 @@ export async function runPRPWorkflow(
 		enforcementProfile,
 		gates: {},
 		approvals: [],
+		exports: {},
 		outputs: {},
 		evidence: [],
 		validationResults: {},

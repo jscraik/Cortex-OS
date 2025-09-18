@@ -6,8 +6,7 @@ export type ToolEvent = {
 	createdAt: string;
 };
 
-const toolStore: Map<string, ToolEvent[]> =
-	(globalThis as unknown).__cortexToolStore || new Map();
+const toolStore: Map<string, ToolEvent[]> = (globalThis as unknown).__cortexToolStore || new Map();
 (globalThis as unknown).__cortexToolStore = toolStore;
 
 export function getToolEvents(sessionId: string): ToolEvent[] {
@@ -20,9 +19,7 @@ export function addToolEvent(
 ) {
 	const list = toolStore.get(sessionId) || [];
 	const createdAt = new Date().toISOString();
-	const id =
-		event.id ||
-		(globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+	const id = event.id || (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 	const redactedArgs = event.args ? redactArgs(event.args) : undefined;
 	const e: ToolEvent = {
 		id,
@@ -38,30 +35,18 @@ export function addToolEvent(
 
 // Basic redaction: mask values with sensitive-looking keys and common secret patterns
 export function redactArgs<T extends Record<string, unknown>>(args: T): T {
-	const SENSITIVE_KEYS = [
-		'key',
-		'token',
-		'secret',
-		'password',
-		'authorization',
-		'apikey',
-	];
+	const SENSITIVE_KEYS = ['key', 'token', 'secret', 'password', 'authorization', 'apikey'];
 	const EMAIL_REGEX = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
 	const BEARER_REGEX = /bearer\s+[a-z0-9-_.]+/i;
 
-	const isSensitiveKey = (k: string) =>
-		SENSITIVE_KEYS.some((s) => k.toLowerCase().includes(s));
+	const isSensitiveKey = (k: string) => SENSITIVE_KEYS.some((s) => k.toLowerCase().includes(s));
 	const sanitizeString = (s: string) => {
 		let out = s;
 		if (EMAIL_REGEX.test(out)) out = out.replace(EMAIL_REGEX, '[EMAIL]');
-		if (BEARER_REGEX.test(out))
-			out = out.replace(BEARER_REGEX, 'Bearer [REDACTED]');
+		if (BEARER_REGEX.test(out)) out = out.replace(BEARER_REGEX, 'Bearer [REDACTED]');
 		return out;
 	};
-	const sanitize = (
-		val: unknown,
-		visited: WeakSet<Record<string, unknown>>,
-	): unknown => {
+	const sanitize = (val: unknown, visited: WeakSet<Record<string, unknown>>): unknown => {
 		if (typeof val === 'string') return sanitizeString(val);
 		if (Array.isArray(val)) return val.map((item) => sanitize(item, visited));
 		if (val && typeof val === 'object') {

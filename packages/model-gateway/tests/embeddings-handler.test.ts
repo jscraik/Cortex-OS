@@ -5,9 +5,7 @@ import type { ModelRouter } from '../src/model-router';
 describe('embeddingsHandler', () => {
 	test('returns vectors for single text', async () => {
 		const router: Partial<ModelRouter> = {
-			generateEmbedding: vi
-				.fn()
-				.mockResolvedValue({ embedding: [1, 2], model: 'm' }),
+			generateEmbedding: vi.fn().mockResolvedValue({ embedding: [1, 2], model: 'm' }),
 			generateEmbeddings: vi.fn(),
 		};
 		const result = await embeddingsHandler(router as ModelRouter, {

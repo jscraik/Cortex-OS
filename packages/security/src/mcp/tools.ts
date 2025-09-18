@@ -7,12 +7,7 @@
  * correlation metadata for downstream observability.
  */
 
-import {
-	createCipheriv,
-	createDecipheriv,
-	createHash,
-	randomBytes,
-} from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 
 import { ZodError, type ZodIssue, type ZodSchema, z } from 'zod';
@@ -32,10 +27,7 @@ type ToolExecutionContext = {
 	tool: string;
 };
 
-export type SecurityToolErrorCode =
-	| 'validation_error'
-	| 'security_error'
-	| 'internal_error';
+export type SecurityToolErrorCode = 'validation_error' | 'security_error' | 'internal_error';
 
 export class SecurityToolError extends Error {
 	constructor(
@@ -180,12 +172,7 @@ function buildHandler<TSchema extends ZodSchema>(
 			return createSuccessResponse(toolName, payload, startedAt, correlationId);
 		} catch (unknownError: unknown) {
 			const normalized = normalizeError(unknownError);
-			return createErrorResponse(
-				toolName,
-				normalized,
-				startedAt,
-				correlationId,
-			);
+			return createErrorResponse(toolName, normalized, startedAt, correlationId);
 		}
 	};
 }
@@ -197,9 +184,7 @@ function buildHandler<TSchema extends ZodSchema>(
 const securitySubjectSchema = z.object({
 	id: z.string().min(1, 'subject.id is required'),
 	roles: z.array(z.string().min(1)).default([]),
-	attributes: z
-		.record(z.union([z.string(), z.number(), z.boolean()]).or(z.null()))
-		.optional(),
+	attributes: z.record(z.union([z.string(), z.number(), z.boolean()]).or(z.null())).optional(),
 	clearance: z.enum(['low', 'moderate', 'high', 'top-secret']).optional(),
 });
 
@@ -208,9 +193,7 @@ const securityResourceSchema = z.object({
 	type: z.string().min(1, 'resource.type is required'),
 	ownerId: z.string().optional(),
 	labels: z.array(z.string().min(1)).max(64).optional(),
-	sensitivity: z
-		.enum(['public', 'internal', 'confidential', 'restricted'])
-		.default('internal'),
+	sensitivity: z.enum(['public', 'internal', 'confidential', 'restricted']).default('internal'),
 });
 
 const accessControlContextSchema = z
@@ -237,9 +220,7 @@ interface AccessControlDecision {
 	score: number;
 }
 
-function evaluateAccessControl(
-	input: z.infer<typeof securityAccessControlToolSchema>,
-): {
+function evaluateAccessControl(input: z.infer<typeof securityAccessControlToolSchema>): {
 	allowed: boolean;
 	effect: 'allow' | 'deny';
 	reasons: string[];
@@ -253,20 +234,13 @@ function evaluateAccessControl(
 		'compliance-officer',
 	]);
 	const readOnlyRoles = new Set(['auditor', 'security-analyst']);
-	const sensitiveActions = new Set([
-		'delete',
-		'rotate-keys',
-		'disable',
-		'escalate-privileges',
-	]);
+	const sensitiveActions = new Set(['delete', 'rotate-keys', 'disable', 'escalate-privileges']);
 
 	const reasons: string[] = [];
 	let allowed = false;
 	let decisionScore = 10;
 
-	const matchedPrivilegedRole = input.subject.roles.find((role) =>
-		privilegedRoles.has(role),
-	);
+	const matchedPrivilegedRole = input.subject.roles.find((role) => privilegedRoles.has(role));
 	if (matchedPrivilegedRole) {
 		allowed = true;
 		reasons.push(`Subject has privileged role ${matchedPrivilegedRole}`);
@@ -277,9 +251,7 @@ function evaluateAccessControl(
 		!allowed &&
 		input.resource.ownerId &&
 		input.resource.ownerId === input.subject.id &&
-		(input.action === 'read' ||
-			input.action === 'update' ||
-			input.action === 'write')
+		(input.action === 'read' || input.action === 'update' || input.action === 'write')
 	) {
 		allowed = true;
 		reasons.push('Subject is the resource owner');
@@ -334,35 +306,27 @@ function evaluateAccessControl(
 		checks: {
 			productionGuard: highRiskEnvironment,
 			resourceSensitivity: input.resource.sensitivity === 'restricted',
-			privilegedRole: input.subject.roles.some((role) =>
-				privilegedRoles.has(role),
-			),
+			privilegedRole: input.subject.roles.some((role) => privilegedRoles.has(role)),
 		},
 	};
 }
 
-export const securityAccessControlTool: SecurityTool<
-	typeof securityAccessControlToolSchema
-> = {
+export const securityAccessControlTool: SecurityTool<typeof securityAccessControlToolSchema> = {
 	name: 'security_access_control',
-	description:
-		'Evaluate access control decisions for Cortex security resources',
+	description: 'Evaluate access control decisions for Cortex security resources',
 	inputSchema: securityAccessControlToolSchema,
 	handler: buildHandler(
 		'security_access_control',
 		securityAccessControlToolSchema,
 		async (input, context) => {
 			const result = evaluateAccessControl(input);
-			console.debug(
-				`[security][${context.tool}] access evaluation (${context.correlationId})`,
-				{
-					subject: input.subject.id,
-					resource: input.resource.id,
-					action: input.action,
-					allowed: result.allowed,
-					riskScore: result.riskScore,
-				},
-			);
+			console.debug(`[security][${context.tool}] access evaluation (${context.correlationId})`, {
+				subject: input.subject.id,
+				resource: input.resource.id,
+				action: input.action,
+				allowed: result.allowed,
+				riskScore: result.riskScore,
+			});
 
 			return {
 				allowed: result.allowed,
@@ -418,17 +382,14 @@ function analyseJsonPolicy(policy: string): NormalizedPolicyAnalysis {
 	try {
 		parsed = JSON.parse(policy);
 	} catch (error) {
-		const message =
-			error instanceof Error ? error.message : 'Invalid JSON policy payload';
+		const message = error instanceof Error ? error.message : 'Invalid JSON policy payload';
 		throw new SecurityToolError('validation_error', message, [message]);
 	}
 
 	if (typeof parsed !== 'object' || parsed === null) {
-		throw new SecurityToolError(
-			'validation_error',
-			'Policy must be a JSON object',
-			['Policy root must be an object'],
-		);
+		throw new SecurityToolError('validation_error', 'Policy must be a JSON object', [
+			'Policy root must be an object',
+		]);
 	}
 
 	const issues: string[] = [];
@@ -445,16 +406,10 @@ function analyseJsonPolicy(policy: string): NormalizedPolicyAnalysis {
 			continue;
 		}
 		const data = rule as Record<string, unknown>;
-		if (
-			data.effect === 'allow' &&
-			data.condition &&
-			typeof data.condition === 'object'
-		) {
+		if (data.effect === 'allow' && data.condition && typeof data.condition === 'object') {
 			const condition = data.condition as Record<string, unknown>;
 			if (condition.action === '*') {
-				issues.push(
-					`Rule ${String(data.id ?? '<unnamed>')} allows wildcard action`,
-				);
+				issues.push(`Rule ${String(data.id ?? '<unnamed>')} allows wildcard action`);
 			}
 		}
 	}
@@ -469,76 +424,61 @@ function analyseJsonPolicy(policy: string): NormalizedPolicyAnalysis {
 	};
 }
 
-export const securityPolicyValidationTool: SecurityTool<
-	typeof securityPolicyValidationToolSchema
-> = {
-	name: 'security_policy_validation',
-	description:
-		'Validate Cortex security policy definitions for unsafe patterns',
-	inputSchema: securityPolicyValidationToolSchema,
-	handler: buildHandler(
-		'security_policy_validation',
-		securityPolicyValidationToolSchema,
-		async (input, context) => {
-			let analysis: NormalizedPolicyAnalysis;
-			switch (input.format) {
-				case 'json':
-					analysis = analyseJsonPolicy(input.policy);
-					break;
-				case 'rego':
-					if (/allow\s*=\s*true/.test(input.policy)) {
+export const securityPolicyValidationTool: SecurityTool<typeof securityPolicyValidationToolSchema> =
+	{
+		name: 'security_policy_validation',
+		description: 'Validate Cortex security policy definitions for unsafe patterns',
+		inputSchema: securityPolicyValidationToolSchema,
+		handler: buildHandler(
+			'security_policy_validation',
+			securityPolicyValidationToolSchema,
+			async (input, context) => {
+				let analysis: NormalizedPolicyAnalysis;
+				switch (input.format) {
+					case 'json':
+						analysis = analyseJsonPolicy(input.policy);
+						break;
+					case 'rego':
+						if (/allow\s*=\s*true/.test(input.policy)) {
+							analysis = {
+								valid: false,
+								issues: ['Rego policy contains unconditional allow statement'],
+								policyHash: createHash('sha256').update(input.policy).digest('hex'),
+							};
+						} else {
+							analysis = {
+								valid: true,
+								issues: [],
+								policyHash: createHash('sha256').update(input.policy).digest('hex'),
+							};
+						}
+						break;
+					case 'cedar':
 						analysis = {
-							valid: false,
-							issues: ['Rego policy contains unconditional allow statement'],
-							policyHash: createHash('sha256')
-								.update(input.policy)
-								.digest('hex'),
+							valid: !/permit\s+\(principal,\s+action,\s+resource\)/.test(input.policy),
+							issues: /permit\s+\(principal,\s+action,\s+resource\)/.test(input.policy)
+								? ['Cedar policy appears to permit all principals, actions, and resources']
+								: [],
+							policyHash: createHash('sha256').update(input.policy).digest('hex'),
 						};
-					} else {
-						analysis = {
-							valid: true,
-							issues: [],
-							policyHash: createHash('sha256')
-								.update(input.policy)
-								.digest('hex'),
-						};
-					}
-					break;
-				case 'cedar':
-					analysis = {
-						valid: !/permit\s+\(principal,\s+action,\s+resource\)/.test(
-							input.policy,
-						),
-						issues: /permit\s+\(principal,\s+action,\s+resource\)/.test(
-							input.policy,
-						)
-							? [
-									'Cedar policy appears to permit all principals, actions, and resources',
-								]
-							: [],
-						policyHash: createHash('sha256').update(input.policy).digest('hex'),
-					};
-					break;
-			}
+						break;
+				}
 
-			console.debug(
-				`[security][${context.tool}] policy validation (${context.correlationId})`,
-				{
+				console.debug(`[security][${context.tool}] policy validation (${context.correlationId})`, {
 					format: input.format,
 					valid: analysis.valid,
 					issues: analysis.issues,
-				},
-			);
+				});
 
-			return {
-				valid: analysis.valid,
-				issues: analysis.issues,
-				policyHash: analysis.policyHash,
-				metadata: input.metadata,
-			};
-		},
-	),
-};
+				return {
+					valid: analysis.valid,
+					issues: analysis.issues,
+					policyHash: analysis.policyHash,
+					metadata: input.metadata,
+				};
+			},
+		),
+	};
 
 // ---------------------------------------------------------------------------
 // Audit tool
@@ -567,9 +507,7 @@ export const securityAuditToolSchema = z.object({
 	events: z.array(auditEventSchema).optional(),
 	filters: z
 		.object({
-			severity: z
-				.array(z.enum(['low', 'medium', 'high', 'critical']))
-				.optional(),
+			severity: z.array(z.enum(['low', 'medium', 'high', 'critical'])).optional(),
 			actions: z.array(z.string()).optional(),
 		})
 		.optional(),
@@ -605,52 +543,39 @@ export const securityAuditTool: SecurityTool<typeof securityAuditToolSchema> = {
 	name: 'security_audit',
 	description: 'Audit security events and produce evidence summaries',
 	inputSchema: securityAuditToolSchema,
-	handler: buildHandler(
-		'security_audit',
-		securityAuditToolSchema,
-		async (input, context) => {
-			const events = (input.events ?? []).filter((event) => {
-				if (
-					input.filters?.severity &&
-					!input.filters.severity.includes(event.severity)
-				) {
-					return false;
-				}
-				if (
-					input.filters?.actions &&
-					!input.filters.actions.includes(event.action)
-				) {
-					return false;
-				}
-				if (input.timeRange) {
-					const timestamp = Date.parse(event.timestamp);
-					const start = Date.parse(input.timeRange.start);
-					const end = Date.parse(input.timeRange.end);
-					return timestamp >= start && timestamp <= end;
-				}
-				return true;
-			});
+	handler: buildHandler('security_audit', securityAuditToolSchema, async (input, context) => {
+		const events = (input.events ?? []).filter((event) => {
+			if (input.filters?.severity && !input.filters.severity.includes(event.severity)) {
+				return false;
+			}
+			if (input.filters?.actions && !input.filters.actions.includes(event.action)) {
+				return false;
+			}
+			if (input.timeRange) {
+				const timestamp = Date.parse(event.timestamp);
+				const start = Date.parse(input.timeRange.start);
+				const end = Date.parse(input.timeRange.end);
+				return timestamp >= start && timestamp <= end;
+			}
+			return true;
+		});
 
-			const summary = summariseAuditEvents(events);
-			console.debug(
-				`[security][${context.tool}] audit summary (${context.correlationId})`,
-				{
-					resourceId: input.resourceId,
-					totalEvents: summary.summary.totalEvents,
-					highSeverity: summary.summary.highSeverity,
-				},
-			);
+		const summary = summariseAuditEvents(events);
+		console.debug(`[security][${context.tool}] audit summary (${context.correlationId})`, {
+			resourceId: input.resourceId,
+			totalEvents: summary.summary.totalEvents,
+			highSeverity: summary.summary.highSeverity,
+		});
 
-			return {
-				resourceId: input.resourceId,
-				auditType: input.auditType,
-				filters: input.filters,
-				summary: summary.summary,
-				deniedEvents: input.includeEvidence ? summary.deniedEvents : undefined,
-				timeRange: input.timeRange,
-			};
-		},
-	),
+		return {
+			resourceId: input.resourceId,
+			auditType: input.auditType,
+			filters: input.filters,
+			summary: summary.summary,
+			deniedEvents: input.includeEvidence ? summary.deniedEvents : undefined,
+			timeRange: input.timeRange,
+		};
+	}),
 };
 
 // ---------------------------------------------------------------------------
@@ -670,9 +595,7 @@ function deriveEncryptionKey(secret: string): Buffer {
 	return createHash('sha256').update(secret).digest();
 }
 
-function performEncryption(
-	input: z.infer<typeof securityEncryptionToolSchema>,
-): {
+function performEncryption(input: z.infer<typeof securityEncryptionToolSchema>): {
 	operation: 'encrypt';
 	algorithm: string;
 	output: string;
@@ -682,10 +605,7 @@ function performEncryption(
 	const iv = randomBytes(12);
 	const key = deriveEncryptionKey(input.secret);
 	const cipher = createCipheriv('aes-256-gcm', key, iv);
-	const encrypted = Buffer.concat([
-		cipher.update(Buffer.from(input.data, 'utf8')),
-		cipher.final(),
-	]);
+	const encrypted = Buffer.concat([cipher.update(Buffer.from(input.data, 'utf8')), cipher.final()]);
 	const authTag = cipher.getAuthTag();
 
 	return {
@@ -697,9 +617,11 @@ function performEncryption(
 	};
 }
 
-function performDecryption(
-	input: z.infer<typeof securityEncryptionToolSchema>,
-): { operation: 'decrypt'; algorithm: string; output: string } {
+function performDecryption(input: z.infer<typeof securityEncryptionToolSchema>): {
+	operation: 'decrypt';
+	algorithm: string;
+	output: string;
+} {
 	if (!input.iv || !input.authTag) {
 		throw new SecurityToolError(
 			'validation_error',
@@ -709,11 +631,7 @@ function performDecryption(
 	}
 
 	const key = deriveEncryptionKey(input.secret);
-	const decipher = createDecipheriv(
-		'aes-256-gcm',
-		key,
-		Buffer.from(input.iv, 'base64'),
-	);
+	const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(input.iv, 'base64'));
 	decipher.setAuthTag(Buffer.from(input.authTag, 'base64'));
 
 	const decrypted = Buffer.concat([
@@ -728,9 +646,7 @@ function performDecryption(
 	};
 }
 
-export const securityEncryptionTool: SecurityTool<
-	typeof securityEncryptionToolSchema
-> = {
+export const securityEncryptionTool: SecurityTool<typeof securityEncryptionToolSchema> = {
 	name: 'security_encryption',
 	description: 'Encrypt and decrypt payloads using Cortex security primitives',
 	inputSchema: securityEncryptionToolSchema,
@@ -739,13 +655,10 @@ export const securityEncryptionTool: SecurityTool<
 		securityEncryptionToolSchema,
 		async (input, context) => {
 			const payload =
-				input.operation === 'encrypt'
-					? performEncryption(input)
-					: performDecryption(input);
-			console.debug(
-				`[security][${context.tool}] ${input.operation} (${context.correlationId})`,
-				{ algorithm: input.algorithm },
-			);
+				input.operation === 'encrypt' ? performEncryption(input) : performDecryption(input);
+			console.debug(`[security][${context.tool}] ${input.operation} (${context.correlationId})`, {
+				algorithm: input.algorithm,
+			});
 			return payload;
 		},
 	),
@@ -808,9 +721,7 @@ function scoreThreatEvent(event: z.infer<typeof threatEventSchema>): number {
 	return Math.min(score, 100);
 }
 
-export const securityThreatDetectionTool: SecurityTool<
-	typeof securityThreatDetectionToolSchema
-> = {
+export const securityThreatDetectionTool: SecurityTool<typeof securityThreatDetectionToolSchema> = {
 	name: 'security_threat_detection',
 	description: 'Detect potential security threats from telemetry events',
 	inputSchema: securityThreatDetectionToolSchema,
@@ -845,8 +756,7 @@ export const securityThreatDetectionTool: SecurityTool<
 				thresholds: input.thresholds,
 				aggregate: {
 					max: Math.max(...scores.map((item) => item.score)),
-					mean:
-						scores.reduce((acc, item) => acc + item.score, 0) / scores.length,
+					mean: scores.reduce((acc, item) => acc + item.score, 0) / scores.length,
 				},
 			};
 		},

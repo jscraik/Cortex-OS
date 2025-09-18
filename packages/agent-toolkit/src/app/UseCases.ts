@@ -21,10 +21,7 @@ export class ToolExecutorUseCase implements ToolExecutor {
 		private readonly events?: ToolExecutionEvents,
 	) {}
 
-	async execute(
-		toolName: string,
-		inputs: AgentToolkitInput,
-	): Promise<AgentToolkitResult> {
+	async execute(toolName: string, inputs: AgentToolkitInput): Promise<AgentToolkitResult> {
 		const context: ToolExecutionContext = {
 			toolId: `${toolName}-${Date.now()}`,
 			requestedBy: 'agent-toolkit',
@@ -84,21 +81,15 @@ export class ToolExecutorUseCase implements ToolExecutor {
 		return [...tools.search, ...tools.codemod, ...tools.validation];
 	}
 
-	private isSearchInput(
-		inputs: AgentToolkitInput,
-	): inputs is AgentToolkitSearchInput {
+	private isSearchInput(inputs: AgentToolkitInput): inputs is AgentToolkitSearchInput {
 		return 'pattern' in inputs && 'path' in inputs;
 	}
 
-	private isCodemodInput(
-		inputs: AgentToolkitInput,
-	): inputs is AgentToolkitCodemodInput {
+	private isCodemodInput(inputs: AgentToolkitInput): inputs is AgentToolkitCodemodInput {
 		return 'find' in inputs && 'replace' in inputs && 'path' in inputs;
 	}
 
-	private isValidationInput(
-		inputs: AgentToolkitInput,
-	): inputs is AgentToolkitValidationInput {
+	private isValidationInput(inputs: AgentToolkitInput): inputs is AgentToolkitValidationInput {
 		return 'files' in inputs && Array.isArray(inputs.files);
 	}
 }
@@ -167,10 +158,7 @@ export class CodeSearchUseCase {
 	/**
 	 * Smart search: tries multiple tools and returns the first successful result
 	 */
-	async smartSearch(
-		pattern: string,
-		path: string,
-	): Promise<AgentToolkitResult> {
+	async smartSearch(pattern: string, path: string): Promise<AgentToolkitResult> {
 		const searchInput: AgentToolkitSearchInput = { pattern, path };
 		const tools = ['ripgrep', 'semgrep', 'ast-grep'];
 
@@ -252,10 +240,7 @@ export class CodeQualityUseCase {
 
 		if (rsFiles.length > 0) {
 			try {
-				const result = await this.toolExecutor.execute(
-					'cargo',
-					validationInput,
-				);
+				const result = await this.toolExecutor.execute('cargo', validationInput);
 				results.cargo = result;
 				toolsRun.push('cargo');
 				totalIssues += result.results?.length || 0;

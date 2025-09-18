@@ -18,18 +18,13 @@ type SuiteDeps = {
 	router: Router;
 };
 
-export async function runGate(
-	config: unknown,
-	deps: SuiteDeps,
-): Promise<GateResult> {
+export async function runGate(config: unknown, deps: SuiteDeps): Promise<GateResult> {
 	const startedAt = new Date().toISOString();
 	const cfg = GateConfigSchema.parse(config);
 
 	const outcomes: SuiteOutcome[] = [];
 	for (const s of cfg.suites.filter((x) => x.enabled)) {
-		const suite = (suiteRegistry as Record<string, SuiteDef<unknown, unknown>>)[
-			s.name
-		];
+		const suite = (suiteRegistry as Record<string, SuiteDef<unknown, unknown>>)[s.name];
 		if (!suite) throw new Error(`Unknown suite: ${s.name}`);
 		const rawOptions: Record<string, unknown> = {
 			...s.options,

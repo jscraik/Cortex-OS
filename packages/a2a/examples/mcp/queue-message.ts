@@ -6,9 +6,7 @@ async function main() {
 	if (!tool) throw new Error('Tool not found');
 	const res = await tool.handler({
 		message: { role: 'user', parts: [{ text: 'Ping from example script' }] },
-		context: [
-			{ role: 'system', parts: [{ text: 'You are a demo processor' }] },
-		],
+		context: [{ role: 'system', parts: [{ text: 'You are a demo processor' }] }],
 	});
 	console.log('[queue-message] raw:', res.raw || res.content[0].text);
 }

@@ -72,11 +72,7 @@ export const aguiMcpTools: AGUITool[] = [
 ];
 
 // Export types for external use
-export type CreateUIComponentInput = z.infer<
-	typeof CreateUIComponentInputSchema
->;
+export type CreateUIComponentInput = z.infer<typeof CreateUIComponentInputSchema>;
 export type RenderViewInput = z.infer<typeof RenderViewInputSchema>;
-export type HandleUserInteractionInput = z.infer<
-	typeof HandleUserInteractionInputSchema
->;
+export type HandleUserInteractionInput = z.infer<typeof HandleUserInteractionInputSchema>;
 export type UpdateComponentInput = z.infer<typeof UpdateComponentInputSchema>;

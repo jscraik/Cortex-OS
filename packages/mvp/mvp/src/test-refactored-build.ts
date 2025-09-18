@@ -48,14 +48,10 @@ async function testRefactoredBuild() {
 		console.log('✅ BuildNode execution completed');
 		console.log(`⏱️  Duration: ${duration}ms`);
 		console.log(`📊 Evidence items: ${result.evidence.length}`);
-		console.log(
-			`🎯 Build passed: ${result.validationResults.build?.passed || false}`,
-		);
+		console.log(`🎯 Build passed: ${result.validationResults.build?.passed || false}`);
 
 		if (result.validationResults.build?.blockers?.length) {
-			console.log(
-				`🚫 Blockers: ${result.validationResults.build.blockers.length}`,
-			);
+			console.log(`🚫 Blockers: ${result.validationResults.build.blockers.length}`);
 			for (let i = 0; i < result.validationResults.build.blockers.length; i++) {
 				const b = result.validationResults.build.blockers[i];
 				console.log(`   ${i + 1}. ${b}`);
@@ -63,9 +59,7 @@ async function testRefactoredBuild() {
 		}
 
 		if (result.validationResults.build?.majors?.length) {
-			console.log(
-				`⚠️  Major issues: ${result.validationResults.build.majors.length}`,
-			);
+			console.log(`⚠️  Major issues: ${result.validationResults.build.majors.length}`);
 			for (let i = 0; i < result.validationResults.build.majors.length; i++) {
 				const m = result.validationResults.build.majors[i];
 				console.log(`   ${i + 1}. ${m}`);
@@ -94,9 +88,7 @@ async function testRefactoredBuild() {
 			console.log(`⚠️  Missing validators: ${missingValidators.join(', ')}`);
 		}
 
-		console.log(
-			'🎉 Refactoring verification PASSED - All critical bugs fixed!',
-		);
+		console.log('🎉 Refactoring verification PASSED - All critical bugs fixed!');
 	} catch (error) {
 		console.error('❌ BuildNode execution failed:', error);
 		console.log('💥 Refactoring verification FAILED');

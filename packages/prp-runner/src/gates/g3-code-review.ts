@@ -17,12 +17,9 @@ class LintAndTypesConfiguredCheck implements AutomatedCheck {
 	description = 'Ensure lint and type-check are included in required checks';
 
 	async execute(context: GateContext) {
-		const required = new Set(
-			context.enforcementProfile.governance.requiredChecks || [],
-		);
+		const required = new Set(context.enforcementProfile.governance.requiredChecks || []);
 		const missing: string[] = [];
-		for (const check of ['lint', 'type-check'])
-			if (!required.has(check)) missing.push(check);
+		for (const check of ['lint', 'type-check']) if (!required.has(check)) missing.push(check);
 
 		const evidence: Evidence[] = [
 			{
@@ -37,14 +34,9 @@ class LintAndTypesConfiguredCheck implements AutomatedCheck {
 		];
 
 		return {
-			status: (missing.length === 0 ? 'pass' : 'fail') as
-				| 'pass'
-				| 'fail'
-				| 'skip',
+			status: (missing.length === 0 ? 'pass' : 'fail') as 'pass' | 'fail' | 'skip',
 			output:
-				missing.length === 0
-					? 'Lint and type-check configured'
-					: `Missing: ${missing.join(', ')}`,
+				missing.length === 0 ? 'Lint and type-check configured' : `Missing: ${missing.join(', ')}`,
 			duration: 30,
 			evidence,
 		};
@@ -56,8 +48,7 @@ class CodeownersPresentCheck implements AutomatedCheck {
 	description = 'Ensure CODEOWNERS mapping is present in enforcement profile';
 
 	async execute(context: GateContext) {
-		const mapping =
-			context.enforcementProfile.governance.codeownersMapping || {};
+		const mapping = context.enforcementProfile.governance.codeownersMapping || {};
 		const ok = Object.keys(mapping).length > 0;
 
 		const evidence: Evidence[] = [
@@ -84,8 +75,7 @@ class CodeownersPresentCheck implements AutomatedCheck {
 export class G3CodeReviewGate extends BaseGate {
 	readonly id = 'G3' as const;
 	readonly name = 'Code Review';
-	readonly purpose =
-		'Ensure code quality gates configured and codeowners present';
+	readonly purpose = 'Ensure code quality gates configured and codeowners present';
 	readonly requiresHumanApproval = true;
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {

@@ -18,17 +18,13 @@ const CodeExecutions: React.FC<CodeExecutionsProps> = ({ executions }) => {
 
 	return (
 		<div className="code-executions mt-2">
-			<h4 className="text-xs font-medium text-gray-700 mb-1">
-				Code Executions
-			</h4>
+			<h4 className="text-xs font-medium text-gray-700 mb-1">Code Executions</h4>
 			<div className="space-y-2">
 				{executions.map((execution, index) => {
 					const safe: SafeExecution = {
 						code: typeof execution.code === 'string' ? execution.code : '',
-						language:
-							typeof execution.language === 'string' ? execution.language : '',
-						error:
-							typeof execution.error === 'string' ? execution.error : undefined,
+						language: typeof execution.language === 'string' ? execution.language : '',
+						error: typeof execution.error === 'string' ? execution.error : undefined,
 					};
 					return (
 						<CodeExecution

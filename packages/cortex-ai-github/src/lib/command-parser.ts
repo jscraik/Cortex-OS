@@ -45,8 +45,7 @@ export const parseGitHubComment = (
 export const listAvailableCommands = (triggers: CommentTrigger[]): string => {
 	return triggers
 		.map(
-			(trigger) =>
-				`- \`@cortex ${trigger.taskType.replace('_', ' ')}\` - ${trigger.description}`,
+			(trigger) => `- \`@cortex ${trigger.taskType.replace('_', ' ')}\` - ${trigger.description}`,
 		)
 		.join('\n');
 };
@@ -56,8 +55,7 @@ export const validateUserPermissions = (
 	userPermissions: string[],
 ): boolean => {
 	return command.trigger.requiredPermissions.every(
-		(perm) =>
-			userPermissions.includes(perm) || userPermissions.includes('admin'),
+		(perm) => userPermissions.includes(perm) || userPermissions.includes('admin'),
 	);
 };
 

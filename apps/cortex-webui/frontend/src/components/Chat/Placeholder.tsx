@@ -9,10 +9,7 @@ interface PlaceholderProps {
 	onImportChat: () => void;
 }
 
-const Placeholder: React.FC<PlaceholderProps> = ({
-	onCreateNewChat,
-	onImportChat,
-}) => {
+const Placeholder: React.FC<PlaceholderProps> = ({ onCreateNewChat, onImportChat }) => {
 	return (
 		<div className="placeholder flex h-full">
 			<div className="w-1/3 border-r">

@@ -34,19 +34,15 @@ function assertContext(
 	context: ApiToolExecutionContext | undefined,
 ): asserts context is ApiToolExecutionContext {
 	if (!context) {
-		throw new ToolExecutionError(
-			'API MCP tools require an ApiToolExecutionContext.',
-			{ code: 'E_API_CONTEXT' },
-		);
+		throw new ToolExecutionError('API MCP tools require an ApiToolExecutionContext.', {
+			code: 'E_API_CONTEXT',
+		});
 	}
 }
 
-export class ApiGatewayTool
-	implements McpTool<GatewayToolInput, GatewayToolResult>
-{
+export class ApiGatewayTool implements McpTool<GatewayToolInput, GatewayToolResult> {
 	readonly name = 'api-gateway';
-	readonly description =
-		'Executes API gateway operations via the Cortex-OS service layer.';
+	readonly description = 'Executes API gateway operations via the Cortex-OS service layer.';
 	readonly inputSchema = gatewayRequestSchema;
 
 	async execute(
@@ -86,21 +82,15 @@ export class ApiGatewayTool
 	private parseInput(input: GatewayToolInput): GatewayToolInput {
 		const parsed = gatewayRequestSchema.safeParse(input);
 		if (!parsed.success) {
-			throw new McpValidationError(
-				'Invalid payload for api-gateway tool.',
-				parsed.error.issues,
-			);
+			throw new McpValidationError('Invalid payload for api-gateway tool.', parsed.error.issues);
 		}
 		return parsed.data;
 	}
 }
 
-export class ApiRequestRoutingTool
-	implements McpTool<RoutingToolInput, RoutingToolResult>
-{
+export class ApiRequestRoutingTool implements McpTool<RoutingToolInput, RoutingToolResult> {
 	readonly name = 'api-request-routing';
-	readonly description =
-		'Resolves HTTP requests to their registered API routes and schemas.';
+	readonly description = 'Resolves HTTP requests to their registered API routes and schemas.';
 	readonly inputSchema = routingRequestSchema;
 
 	async execute(
@@ -110,10 +100,7 @@ export class ApiRequestRoutingTool
 		assertContext(context);
 		const parsed = routingRequestSchema.safeParse(input);
 		if (!parsed.success) {
-			throw new McpValidationError(
-				'Invalid routing request payload.',
-				parsed.error.issues,
-			);
+			throw new McpValidationError('Invalid routing request payload.', parsed.error.issues);
 		}
 
 		try {
@@ -133,8 +120,7 @@ export class ApiResponseHandlingTool
 	implements McpTool<ResponseHandlingInput, ResponseHandlingResult>
 {
 	readonly name = 'api-response-handler';
-	readonly description =
-		'Normalizes API responses and extracts MCP-ready metadata.';
+	readonly description = 'Normalizes API responses and extracts MCP-ready metadata.';
 	readonly inputSchema = responseHandlingInputSchema;
 
 	async execute(
@@ -144,10 +130,7 @@ export class ApiResponseHandlingTool
 		assertContext(context);
 		const parsed = responseHandlingInputSchema.safeParse(input);
 		if (!parsed.success) {
-			throw new McpValidationError(
-				'Invalid response payload.',
-				parsed.error.issues,
-			);
+			throw new McpValidationError('Invalid response payload.', parsed.error.issues);
 		}
 
 		const route = context.router.resolveById(parsed.data.routeId);

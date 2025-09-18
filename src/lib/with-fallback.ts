@@ -19,7 +19,5 @@ export async function withFallback<M, R>(
 			onError?.(fb, err);
 		}
 	}
-	throw lastError instanceof Error
-		? lastError
-		: new Error('All fallbacks failed');
+	throw lastError instanceof Error ? lastError : new Error('All fallbacks failed');
 }

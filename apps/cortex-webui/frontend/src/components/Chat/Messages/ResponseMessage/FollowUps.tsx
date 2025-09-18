@@ -16,9 +16,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ followUps }) => {
 
 	return (
 		<div className="follow-ups mt-2">
-			<h4 className="text-xs font-medium text-gray-700 mb-1">
-				Related Questions
-			</h4>
+			<h4 className="text-xs font-medium text-gray-700 mb-1">Related Questions</h4>
 			<div className="flex flex-wrap gap-2">
 				{followUps.map((followUp) => (
 					<button

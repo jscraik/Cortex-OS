@@ -1,7 +1,4 @@
-import {
-	createEnvelope,
-	type Envelope,
-} from '../../a2a-contracts/src/envelope.js';
+import { createEnvelope, type Envelope } from '../../a2a-contracts/src/envelope.js';
 import {
 	type OutboxConfig,
 	type OutboxMessage,
@@ -92,10 +89,7 @@ async function processBatch(
 			await repo.markProcessed(message.id, new Date());
 		} else {
 			failed++;
-			const error =
-				result.reason instanceof Error
-					? result.reason.message
-					: 'Unknown error';
+			const error = result.reason instanceof Error ? result.reason.message : 'Unknown error';
 			await handleError(message, error);
 		}
 	}
@@ -111,10 +105,7 @@ export async function processPendingMessages(
 	handleError: (msg: OutboxMessage, error: string) => Promise<void>,
 ): Promise<OutboxProcessingResult> {
 	const start = Date.now();
-	const messages = await repo.findByStatus(
-		OutboxMessageStatus.PENDING,
-		config.batchSize,
-	);
+	const messages = await repo.findByStatus(OutboxMessageStatus.PENDING, config.batchSize);
 	if (messages.length === 0) {
 		return {
 			processed: 0,
@@ -126,17 +117,10 @@ export async function processPendingMessages(
 	}
 
 	await Promise.all(
-		messages.map((msg) =>
-			repo.updateStatus(msg.id, OutboxMessageStatus.PROCESSING),
-		),
+		messages.map((msg) => repo.updateStatus(msg.id, OutboxMessageStatus.PROCESSING)),
 	);
 
-	const { successful, failed } = await processBatch(
-		messages,
-		repo,
-		processMessage,
-		handleError,
-	);
+	const { successful, failed } = await processBatch(messages, repo, processMessage, handleError);
 
 	let deadLettered = 0;
 	for (const message of messages) {
@@ -174,12 +158,7 @@ export async function processRetryMessages(
 		};
 	}
 
-	const { successful, failed } = await processBatch(
-		messages,
-		repo,
-		processMessage,
-		handleError,
-	);
+	const { successful, failed } = await processBatch(messages, repo, processMessage, handleError);
 
 	return {
 		processed: messages.length,
@@ -203,13 +182,9 @@ export function createReliableOutboxProcessor(
 
 	const processMessage = async (message: OutboxMessage): Promise<void> => {
 		if (config.enableIdempotency && message.idempotencyKey) {
-			const exists = await repository.existsByIdempotencyKey(
-				message.idempotencyKey,
-			);
+			const exists = await repository.existsByIdempotencyKey(message.idempotencyKey);
 			if (exists) {
-				console.warn(
-					`Skipping duplicate message with idempotency key: ${message.idempotencyKey}`,
-				);
+				console.warn(`Skipping duplicate message with idempotency key: ${message.idempotencyKey}`);
 				return;
 			}
 		}
@@ -217,10 +192,7 @@ export function createReliableOutboxProcessor(
 		await publisher.publish(message);
 	};
 
-	const handleProcessingError = async (
-		message: OutboxMessage,
-		error: string,
-	): Promise<void> => {
+	const handleProcessingError = async (message: OutboxMessage, error: string): Promise<void> => {
 		if (message.retryCount >= config.maxRetries) {
 			await repository.moveToDeadLetter(message.id, error);
 		} else {
@@ -229,20 +201,10 @@ export function createReliableOutboxProcessor(
 	};
 
 	const processPending = () =>
-		processPendingMessages(
-			repository,
-			config,
-			processMessage,
-			handleProcessingError,
-		);
+		processPendingMessages(repository, config, processMessage, handleProcessingError);
 
 	const processRetries = () =>
-		processRetryMessages(
-			repository,
-			config,
-			processMessage,
-			handleProcessingError,
-		);
+		processRetryMessages(repository, config, processMessage, handleProcessingError);
 
 	const start = async (): Promise<void> => {
 		if (isRunning) return;
@@ -287,12 +249,9 @@ export class EnhancedOutbox {
 	/**
 	 * Add message to outbox within a database transaction
 	 */
-	async addToOutbox(
-		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
-	): Promise<OutboxMessage> {
+	async addToOutbox(message: Omit<OutboxMessage, 'id' | 'createdAt'>): Promise<OutboxMessage> {
 		// Generate idempotency key if not provided
-		const idempotencyKey =
-			message.idempotencyKey || this.generateIdempotencyKey(message);
+		const idempotencyKey = message.idempotencyKey || this.generateIdempotencyKey(message);
 
 		const outboxMessage: Omit<OutboxMessage, 'id' | 'createdAt'> = {
 			...message,
@@ -314,8 +273,7 @@ export class EnhancedOutbox {
 	): Promise<OutboxMessage[]> {
 		const outboxMessages = messages.map((message) => ({
 			...message,
-			idempotencyKey:
-				message.idempotencyKey || this.generateIdempotencyKey(message),
+			idempotencyKey: message.idempotencyKey || this.generateIdempotencyKey(message),
 			status: OutboxMessageStatus.PENDING,
 			retryCount: 0,
 			maxRetries: 3,
@@ -362,9 +320,7 @@ export class EnhancedOutbox {
 		return await this.repository.cleanup(cutoffDate);
 	}
 
-	private generateIdempotencyKey(
-		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
-	): string {
+	private generateIdempotencyKey(message: Omit<OutboxMessage, 'id' | 'createdAt'>): string {
 		// Generate deterministic idempotency key based on aggregate and event
 		const components = [
 			message.aggregateType,

@@ -35,13 +35,7 @@ export interface Plan {
 	title: string;
 	description: string;
 	steps: PlanStep[];
-	status:
-		| 'planning'
-		| 'simulating'
-		| 'approved'
-		| 'executing'
-		| 'completed'
-		| 'failed';
+	status: 'planning' | 'simulating' | 'approved' | 'executing' | 'completed' | 'failed';
 	createdAt: string;
 	updatedAt: string;
 	simulationResult?: any;

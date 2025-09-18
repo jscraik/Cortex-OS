@@ -4,12 +4,7 @@
  * @author Cortex-OS Team
  */
 
-import type {
-	SimBatchResult,
-	SimReport,
-	SimResult,
-	SimScores,
-} from './types.js';
+import type { SimBatchResult, SimReport, SimResult, SimScores } from './types.js';
 
 /**
  * Generates reports and summaries from simulation results
@@ -105,9 +100,7 @@ export class SimReporter {
 
 		// Count critical failures (P0)
 		const criticalFailures = allScenarios.filter(
-			(s) =>
-				s.failures.includes('missing_evidence') ||
-				s.failures.includes('sop_violation'),
+			(s) => s.failures.includes('missing_evidence') || s.failures.includes('sop_violation'),
 		).length;
 
 		// Calculate trends (simplified - compare latest vs previous batch)
@@ -123,9 +116,7 @@ export class SimReporter {
 	/**
 	 * Calculate trend metrics comparing recent performance
 	 */
-	private calculateTrends(
-		batchResults: SimBatchResult[],
-	): Record<string, number> {
+	private calculateTrends(batchResults: SimBatchResult[]): Record<string, number> {
 		if (batchResults.length < 2) {
 			return {};
 		}
@@ -135,13 +126,10 @@ export class SimReporter {
 
 		return {
 			passRateTrend: latest.summary.passRate - previous.summary.passRate,
-			goalTrend:
-				latest.summary.avgScores.goal - previous.summary.avgScores.goal,
+			goalTrend: latest.summary.avgScores.goal - previous.summary.avgScores.goal,
 			sopTrend: latest.summary.avgScores.sop - previous.summary.avgScores.sop,
-			brandTrend:
-				latest.summary.avgScores.brand - previous.summary.avgScores.brand,
-			factualTrend:
-				latest.summary.avgScores.factual - previous.summary.avgScores.factual,
+			brandTrend: latest.summary.avgScores.brand - previous.summary.avgScores.brand,
+			factualTrend: latest.summary.avgScores.factual - previous.summary.avgScores.factual,
 		};
 	}
 
@@ -174,9 +162,7 @@ export class SimReporter {
 			lines.push('', '=== Trends ===');
 			Object.entries(overall.trends).forEach(([key, value]) => {
 				const direction = value > 0 ? '↑' : value < 0 ? '↓' : '→';
-				lines.push(
-					`${key}: ${direction} ${(Math.abs(value) * 100).toFixed(1)}%`,
-				);
+				lines.push(`${key}: ${direction} ${(Math.abs(value) * 100).toFixed(1)}%`);
 			});
 		}
 

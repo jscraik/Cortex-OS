@@ -135,9 +135,7 @@ export class VitestReporter extends BaseTestReporter {
 
 		try {
 			// Vitest JSON output can be multiple objects, one per line
-			const lines = output
-				.split('\n')
-				.filter((line) => line.trim() && line.startsWith('{'));
+			const lines = output.split('\n').filter((line) => line.trim() && line.startsWith('{'));
 
 			for (const line of lines) {
 				try {

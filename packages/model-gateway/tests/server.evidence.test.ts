@@ -16,22 +16,12 @@ const mockRouter = () => {
 			embeddings: texts.map(() => [0.1, 0.2]),
 			model: 'mock-embed',
 		}),
-		rerank: async ({
-			query,
-			documents,
-		}: {
-			query: string;
-			documents: string[];
-		}) => ({
+		rerank: async ({ query, documents }: { query: string; documents: string[] }) => ({
 			documents,
 			scores: documents.map((_d, i) => 1 - i * 0.1),
 			model: 'mock-rerank',
 		}),
-		generateChat: async ({
-			messages,
-		}: {
-			messages: Array<{ role: string; content: string }>;
-		}) => ({
+		generateChat: async ({ messages }: { messages: Array<{ role: string; content: string }> }) => ({
 			content: `Echo: ${messages[messages.length - 1].content}`,
 			model: 'mock-chat',
 		}),

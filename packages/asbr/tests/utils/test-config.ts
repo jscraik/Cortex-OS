@@ -64,12 +64,7 @@ export async function ensureTestASBRConfig(): Promise<EnsureTestConfigResult> {
 
 	// If user already set XDG vars and config exists, reuse.
 	if (process.env.XDG_CONFIG_HOME) {
-		const existing = join(
-			process.env.XDG_CONFIG_HOME,
-			'cortex',
-			'asbr',
-			'config.yaml',
-		);
+		const existing = join(process.env.XDG_CONFIG_HOME, 'cortex', 'asbr', 'config.yaml');
 		if (existsSync(existing)) {
 			__ASBR_CONFIG_READY__ = true;
 			return { baseDir: process.env.XDG_CONFIG_HOME, configPath: existing };

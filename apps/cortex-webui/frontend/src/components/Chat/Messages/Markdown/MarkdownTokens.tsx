@@ -18,10 +18,8 @@ const MarkdownTokens: React.FC<MarkdownTokensProps> = ({ content }) => {
 					// This is a code block
 					const codeContent = token.slice(3, -3).trim();
 					const lines = codeContent.split('\n');
-					const language =
-						lines[0] && !lines[0].includes(' ') ? lines[0] : 'text';
-					const code =
-						language !== 'text' ? lines.slice(1).join('\n') : codeContent;
+					const language = lines[0] && !lines[0].includes(' ') ? lines[0] : 'text';
+					const code = language !== 'text' ? lines.slice(1).join('\n') : codeContent;
 
 					return (
 						<div key={index} className="my-2">

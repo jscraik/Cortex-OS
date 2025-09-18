@@ -186,18 +186,9 @@ export interface ObservabilityToolRuntime {
 }
 
 const DEFAULT_MAX_RESULTS = 100;
-const LOG_LEVELS: LogLevel[] = [
-	'trace',
-	'debug',
-	'info',
-	'warn',
-	'error',
-	'fatal',
-];
+const LOG_LEVELS: LogLevel[] = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
 
-function cloneDataset(
-	dataset: Partial<ObservabilityDataset> | undefined,
-): ObservabilityDataset {
+function cloneDataset(dataset: Partial<ObservabilityDataset> | undefined): ObservabilityDataset {
 	return {
 		traces: (dataset?.traces ?? []).map((trace) => ({
 			...trace,
@@ -268,10 +259,7 @@ function sanitizeLogs(records: LogRecord[]): LogSearchResultItem[] {
 	}));
 }
 
-function metadataContains(
-	metadata: Record<string, unknown> | undefined,
-	query: string,
-): boolean {
+function metadataContains(metadata: Record<string, unknown> | undefined, query: string): boolean {
 	if (!metadata) return false;
 	for (const value of Object.values(metadata)) {
 		if (typeof value === 'string' && value.toLowerCase().includes(query)) {
@@ -289,10 +277,7 @@ function metadataContains(
 	return false;
 }
 
-function aggregate(
-	values: number[],
-	mode: AggregationMode | undefined,
-): number | null {
+function aggregate(values: number[], mode: AggregationMode | undefined): number | null {
 	if (values.length === 0 || !mode) {
 		return mode ? 0 : null;
 	}
@@ -375,20 +360,13 @@ function quickselect(arr: number[], k: number): number {
 function percentile(values: number[], percentileValue: number): number {
 	if (values.length === 0) return 0;
 	const n = values.length;
-	const index = Math.min(
-		n - 1,
-		Math.max(0, Math.ceil((percentileValue / 100) * n) - 1),
-	);
+	const index = Math.min(n - 1, Math.max(0, Math.ceil((percentileValue / 100) * n) - 1));
 	// Make a copy to avoid mutating the original array
 	const arrCopy = [...values];
 	return quickselect(arrCopy, index);
 }
 
-function compareThreshold(
-	value: number,
-	threshold: number,
-	comparison: AlertComparison,
-): boolean {
+function compareThreshold(value: number, threshold: number, comparison: AlertComparison): boolean {
 	switch (comparison) {
 		case '>':
 			return value > threshold;
@@ -443,11 +421,10 @@ interface RuleEvaluationContext {
 	overrideAggregation?: AggregationMode;
 }
 
-function evaluateRule({
-	rule,
-	metrics,
-	overrideAggregation,
-}: RuleEvaluationContext): { triggered: boolean; value: number | null } {
+function evaluateRule({ rule, metrics, overrideAggregation }: RuleEvaluationContext): {
+	triggered: boolean;
+	value: number | null;
+} {
 	const relevant = metrics.filter((metric) => metric.name === rule.metric);
 	const values = relevant.map((metric) => metric.value);
 	const aggregationMode = overrideAggregation ?? rule.evaluation ?? 'avg';
@@ -478,17 +455,13 @@ export function createObservabilityToolRuntime(
 					if (start !== undefined && (traceStart ?? 0) < start) return false;
 					if (end !== undefined && (traceStart ?? 0) > end) return false;
 					if (parsed.service && trace.service !== parsed.service) return false;
-					if (parsed.operation && trace.operation !== parsed.operation)
-						return false;
+					if (parsed.operation && trace.operation !== parsed.operation) return false;
 					if (parsed.status && trace.status !== parsed.status) {
 						return false;
 					}
 					return matchesTags(trace.tags, parsed.tags);
 				})
-				.sort(
-					(a, b) =>
-						(parseTime(b.startTime) ?? 0) - (parseTime(a.startTime) ?? 0),
-				);
+				.sort((a, b) => (parseTime(b.startTime) ?? 0) - (parseTime(a.startTime) ?? 0));
 
 			const limit = clampLimit(parsed.limit, maxResults);
 			const results = filtered.slice(0, limit);
@@ -515,15 +488,10 @@ export function createObservabilityToolRuntime(
 					}
 					if (parsed.runId && log.runId !== parsed.runId) return false;
 					if (parsed.traceId && log.traceId !== parsed.traceId) return false;
-					if (
-						parsed.traceContext &&
-						log.traceContext?.traceId !== parsed.traceContext.traceId
-					) {
+					if (parsed.traceContext && log.traceContext?.traceId !== parsed.traceContext.traceId) {
 						return false;
 					}
-					if (
-						!matchesTags(log.metadata as Record<string, string>, parsed.tags)
-					) {
+					if (!matchesTags(log.metadata as Record<string, string>, parsed.tags)) {
 						return false;
 					}
 					if (parsed.query && !filterLogsByQuery(log, parsed.query)) {
@@ -531,10 +499,7 @@ export function createObservabilityToolRuntime(
 					}
 					return true;
 				})
-				.sort(
-					(a, b) =>
-						(parseTime(b.timestamp) ?? 0) - (parseTime(a.timestamp) ?? 0),
-				);
+				.sort((a, b) => (parseTime(b.timestamp) ?? 0) - (parseTime(a.timestamp) ?? 0));
 
 			const limit = clampLimit(parsed.limit, maxResults);
 			const sanitized = sanitizeLogs(filtered);
@@ -559,10 +524,7 @@ export function createObservabilityToolRuntime(
 					if (parsed.name && metric.name !== parsed.name) return false;
 					return filterByLabels(metric.labels, parsed.labels);
 				})
-				.sort(
-					(a, b) =>
-						(parseTime(b.timestamp) ?? 0) - (parseTime(a.timestamp) ?? 0),
-				);
+				.sort((a, b) => (parseTime(b.timestamp) ?? 0) - (parseTime(a.timestamp) ?? 0));
 
 			const byName = new Map<string, MetricRecord[]>();
 			for (const metric of filtered) {
@@ -611,9 +573,7 @@ export function createObservabilityToolRuntime(
 
 		async evaluateAlert(input) {
 			const parsed = EvaluateAlertInputSchema.parse(input);
-			const rule = dataset.alerts.find(
-				(candidate) => candidate.id === parsed.alertId,
-			);
+			const rule = dataset.alerts.find((candidate) => candidate.id === parsed.alertId);
 			if (!rule) {
 				throw new Error(`Alert rule not found: ${parsed.alertId}`);
 			}
@@ -623,9 +583,7 @@ export function createObservabilityToolRuntime(
 				parsed.metricWindow?.startTime,
 				parsed.metricWindow?.endTime,
 			);
-			const metricsForName = dataset.metrics.filter(
-				(metric) => metric.name === metricName,
-			);
+			const metricsForName = dataset.metrics.filter((metric) => metric.name === metricName);
 			const latestTimestamp = metricsForName.reduce((latest, metric) => {
 				const timestamp = parseTime(metric.timestamp);
 				if (timestamp === undefined) {
@@ -641,10 +599,7 @@ export function createObservabilityToolRuntime(
 						: undefined;
 			const metrics = metricsForName.filter((metric) => {
 				const timestamp = parseTime(metric.timestamp) ?? 0;
-				if (
-					computedWindowStart !== undefined &&
-					timestamp < computedWindowStart
-				) {
+				if (computedWindowStart !== undefined && timestamp < computedWindowStart) {
 					return false;
 				}
 				if (end !== undefined && timestamp > end) {
@@ -725,12 +680,9 @@ export function createObservabilityToolRuntime(
 
 			const traceDurations = traces.map((trace) => trace.durationMs);
 			const totalTraces = traces.length;
-			const errorCount = traces.filter(
-				(trace) => trace.status === 'error',
-			).length;
+			const errorCount = traces.filter((trace) => trace.status === 'error').length;
 			const avgDuration = totalTraces
-				? traceDurations.reduce((total, value) => total + value, 0) /
-					totalTraces
+				? traceDurations.reduce((total, value) => total + value, 0) / totalTraces
 				: 0;
 			const p95 = percentile(traceDurations, 95);
 			const slowest = traces.reduce<TraceRecord | null>((slow, trace) => {
@@ -749,10 +701,7 @@ export function createObservabilityToolRuntime(
 				logCounts[log.level] = (logCounts[log.level] ?? 0) + 1;
 			}
 
-			const sanitizedLogs = sanitizeLogs(logs).slice(
-				0,
-				clampLimit(parsed.limit, maxResults),
-			);
+			const sanitizedLogs = sanitizeLogs(logs).slice(0, clampLimit(parsed.limit, maxResults));
 
 			const metricsByName = new Map<string, MetricRecord[]>();
 			for (const metric of metrics) {
@@ -764,32 +713,26 @@ export function createObservabilityToolRuntime(
 				}
 			}
 
-			const metricSummaries = Array.from(metricsByName.entries()).map(
-				([name, records]) => {
-					const values = records.map((record) => record.value);
-					const sum = values.reduce((total, value) => total + value, 0);
-					const avg = values.length ? sum / values.length : 0;
-					const max = values.length ? Math.max(...values) : 0;
-					const min = values.length ? Math.min(...values) : 0;
-					const latestRecord = records.reduce<MetricRecord | null>(
-						(latest, record) => {
-							if (!latest) return record;
-							return (parseTime(record.timestamp) ?? 0) >=
-								(parseTime(latest.timestamp) ?? 0)
-								? record
-								: latest;
-						},
-						null,
-					);
-					return {
-						name,
-						avg,
-						max,
-						min,
-						latest: latestRecord?.value ?? null,
-					};
-				},
-			);
+			const metricSummaries = Array.from(metricsByName.entries()).map(([name, records]) => {
+				const values = records.map((record) => record.value);
+				const sum = values.reduce((total, value) => total + value, 0);
+				const avg = values.length ? sum / values.length : 0;
+				const max = values.length ? Math.max(...values) : 0;
+				const min = values.length ? Math.min(...values) : 0;
+				const latestRecord = records.reduce<MetricRecord | null>((latest, record) => {
+					if (!latest) return record;
+					return (parseTime(record.timestamp) ?? 0) >= (parseTime(latest.timestamp) ?? 0)
+						? record
+						: latest;
+				}, null);
+				return {
+					name,
+					avg,
+					max,
+					min,
+					latest: latestRecord?.value ?? null,
+				};
+			});
 
 			const alerts = dataset.alerts.map((rule) => {
 				const evaluation = evaluateRule({
@@ -847,22 +790,16 @@ export function createObservabilityToolRuntime(
 }
 
 export type ObservabilityToolHandler = (input: unknown) => Promise<unknown>;
-export type ObservabilityToolHandlers = Record<
-	string,
-	ObservabilityToolHandler
->;
+export type ObservabilityToolHandlers = Record<string, ObservabilityToolHandler>;
 
 export function createObservabilityToolHandlers(
 	runtime: ObservabilityToolRuntime,
 ): ObservabilityToolHandlers {
 	return {
-		query_traces: async (input) =>
-			runtime.queryTraces(input as QueryTracesInput),
+		query_traces: async (input) => runtime.queryTraces(input as QueryTracesInput),
 		search_logs: async (input) => runtime.searchLogs(input as SearchLogsInput),
 		get_metrics: async (input) => runtime.getMetrics(input as GetMetricsInput),
-		evaluate_alert: async (input) =>
-			runtime.evaluateAlert(input as EvaluateAlertInput),
-		generate_dashboard: async (input) =>
-			runtime.generateDashboard(input as GenerateDashboardInput),
+		evaluate_alert: async (input) => runtime.evaluateAlert(input as EvaluateAlertInput),
+		generate_dashboard: async (input) => runtime.generateDashboard(input as GenerateDashboardInput),
 	};
 }

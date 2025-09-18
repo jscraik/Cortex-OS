@@ -7,9 +7,7 @@ describe('createEmbed', () => {
 	};
 	const baseDeps = {
 		modelStrategy: strategy,
-		mlxEmbed: vi
-			.fn()
-			.mockResolvedValue({ embeddings: [[0.1]], model: 'm1', dimensions: 1 }),
+		mlxEmbed: vi.fn().mockResolvedValue({ embeddings: [[0.1]], model: 'm1', dimensions: 1 }),
 		ollamaSemantic: vi.fn().mockResolvedValue([[0.2]]),
 		markUnhealthy: vi.fn(),
 	};

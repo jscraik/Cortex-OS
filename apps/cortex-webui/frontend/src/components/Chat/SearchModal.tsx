@@ -19,11 +19,7 @@ interface SearchModalProps {
 	onResultSelect: (result: SearchResult) => void;
 }
 
-const SearchModal: React.FC<SearchModalProps> = ({
-	isOpen,
-	onClose,
-	onResultSelect,
-}) => {
+const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onResultSelect }) => {
 	const [query, setQuery] = useState('');
 	const [results, setResults] = useState<SearchResult[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
@@ -244,8 +240,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
 												</div>
 												<div className="mt-1">
 													<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-														{result.type.charAt(0).toUpperCase() +
-															result.type.slice(1)}
+														{result.type.charAt(0).toUpperCase() + result.type.slice(1)}
 													</span>
 												</div>
 											</div>

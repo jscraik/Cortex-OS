@@ -12,10 +12,7 @@ import { z } from 'zod';
 // Simplified semver version validation (to avoid regex complexity)
 const semverSchema = z
 	.string()
-	.regex(
-		/^\d+\.\d+\.\d+/,
-		'Version must be valid semver format (major.minor.patch)',
-	);
+	.regex(/^\d+\.\d+\.\d+/, 'Version must be valid semver format (major.minor.patch)');
 
 // File pattern validation schemas
 const filePatternSchema = z.object({
@@ -59,8 +56,7 @@ const importRulesSchema = z
 			return true;
 		},
 		{
-			message:
-				'Import rules cannot have conflicting banned and allowed patterns',
+			message: 'Import rules cannot have conflicting banned and allowed patterns',
 		},
 	);
 
@@ -149,28 +145,19 @@ export interface ValidationResult {
 /**
  * Helper function to add validation warnings
  */
-function addWarnings(
-	policy: unknown,
-	options: ValidationOptions,
-	warnings: string[],
-): void {
+function addWarnings(policy: unknown, options: ValidationOptions, warnings: string[]): void {
 	const policyRecord = policy as Record<string, unknown>;
 
 	if (options.allowDeprecated && policyRecord.deprecatedField) {
-		warnings.push(
-			'deprecatedField is deprecated and will be removed in future versions',
-		);
+		warnings.push('deprecatedField is deprecated and will be removed in future versions');
 	}
 
 	if (
 		options.strict &&
 		(!policyRecord.deniedGlobs ||
-			(Array.isArray(policyRecord.deniedGlobs) &&
-				policyRecord.deniedGlobs.length === 0))
+			(Array.isArray(policyRecord.deniedGlobs) && policyRecord.deniedGlobs.length === 0))
 	) {
-		warnings.push(
-			'Consider adding security denies for sensitive file types (.env, .key, etc.)',
-		);
+		warnings.push('Consider adding security denies for sensitive file types (.env, .key, etc.)');
 	}
 
 	if (options.checkPerformance) {
@@ -182,9 +169,7 @@ function addWarnings(
 			globs?.includes('**/node_modules/**/*') ||
 			(maxFiles && maxFiles > 1000)
 		) {
-			warnings.push(
-				'performance: Configuration may impact scanning performance',
-			);
+			warnings.push('performance: Configuration may impact scanning performance');
 		}
 	}
 }
@@ -192,16 +177,11 @@ function addWarnings(
 /**
  * Validates a structure guard policy against the schema
  */
-export function validatePolicy(
-	policy: unknown,
-	options: ValidationOptions = {},
-): ValidationResult {
+export function validatePolicy(policy: unknown, options: ValidationOptions = {}): ValidationResult {
 	const warnings: string[] = [];
 
 	try {
-		const schema = options.version?.startsWith('2.')
-			? extendedPolicySchema
-			: basePolicySchema;
+		const schema = options.version?.startsWith('2.') ? extendedPolicySchema : basePolicySchema;
 
 		const validatedPolicy = schema.parse(policy);
 		addWarnings(policy, options, warnings);
@@ -227,10 +207,7 @@ export function validatePolicy(
 /**
  * Loads and validates a policy from a file path
  */
-export function loadPolicy(
-	filePath: string,
-	options: ValidationOptions = {},
-): ValidationResult {
+export function loadPolicy(filePath: string, options: ValidationOptions = {}): ValidationResult {
 	try {
 		import('node:fs').then((fs) => {
 			const policyData = JSON.parse(fs.readFileSync(filePath, 'utf8'));

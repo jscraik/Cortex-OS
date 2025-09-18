@@ -7,9 +7,7 @@ const ORIGINAL_ENV = { ...process.env };
 describe('store-from-env', () => {
 	beforeEach(() => {
 		process.env = { ...ORIGINAL_ENV };
-		if (
-			'__MEMORIES_PRISMA_CLIENT__' in (globalThis as Record<string, unknown>)
-		) {
+		if ('__MEMORIES_PRISMA_CLIENT__' in (globalThis as Record<string, unknown>)) {
 			delete (globalThis as Record<string, unknown>).__MEMORIES_PRISMA_CLIENT__;
 		}
 	});

@@ -29,10 +29,7 @@ async function resolveBinary(binName: 'git' | 'semgrep'): Promise<string> {
 	throw new Error(`Required binary not found in safe paths: ${binName}`);
 }
 
-async function runSemgrepAnalysis(
-	semgrepBin: string,
-	targetDir: string,
-): Promise<string> {
+async function runSemgrepAnalysis(semgrepBin: string, targetDir: string): Promise<string> {
 	const rulesets = ['auto', 'security-audit', 'owasp-top-ten'];
 
 	return new Promise((resolve, reject) => {
@@ -80,11 +77,7 @@ async function runSemgrepAnalysis(
 	});
 }
 
-async function cloneRepository(
-	owner: string,
-	repo: string,
-	sha: string,
-): Promise<string> {
+async function cloneRepository(owner: string, repo: string, sha: string): Promise<string> {
 	const ownerPattern = /^[a-zA-Z0-9_.-]{1,39}$/;
 	const repoPattern = /^[a-zA-Z0-9_.-]{1,100}$/;
 	const shaPattern = /^[a-fA-F0-9]{40}$/;
@@ -212,10 +205,7 @@ export async function runSemgrepScan(
 						end?: { line: number };
 					}) => ({
 						ruleId: result.check_id,
-						message:
-							result.extra?.message ||
-							result.message ||
-							'Security issue detected',
+						message: result.extra?.message || result.message || 'Security issue detected',
 						severity: mapSemgrepSeverity(result.extra?.severity || 'INFO'),
 						file: result.path.replace(`${tempDir}/`, ''),
 						startLine: result.start?.line,

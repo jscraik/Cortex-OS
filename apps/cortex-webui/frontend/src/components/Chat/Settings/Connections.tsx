@@ -53,9 +53,7 @@ const ConnectionsSettings: React.FC<{
 			setMistralApiKey(settings?.connections?.mistralApiKey ?? '');
 			setGroqApiKey(settings?.connections?.groqApiKey ?? '');
 			setOpenRouterApiKey(settings?.connections?.openRouterApiKey ?? '');
-			setCustomOpenaiEndpoint(
-				settings?.connections?.customOpenaiEndpoint ?? '',
-			);
+			setCustomOpenaiEndpoint(settings?.connections?.customOpenaiEndpoint ?? '');
 			setCustomOpenaiApiKey(settings?.connections?.customOpenaiApiKey ?? '');
 			setLoaded(true);
 		}
@@ -86,24 +84,18 @@ const ConnectionsSettings: React.FC<{
 	}
 
 	return (
-		<div
-			id={rootDivId}
-			className="flex flex-col h-full justify-between text-sm"
-		>
+		<div id={rootDivId} className="flex flex-col h-full justify-between text-sm">
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
 				<div>
 					<div className="text-base font-medium mb-3">API Keys</div>
 					<div className="text-xs text-gray-500 mb-4">
-						Add your API keys to connect to different AI services. Your keys are
-						stored locally and never sent to any server.
+						Add your API keys to connect to different AI services. Your keys are stored locally and
+						never sent to any server.
 					</div>
 
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor={openaiApiKeyId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={openaiApiKeyId} className="block text-sm font-medium mb-1">
 								OpenAI API Key
 							</label>
 							<div className="flex space-x-2">
@@ -126,10 +118,7 @@ const ConnectionsSettings: React.FC<{
 						</div>
 
 						<div>
-							<label
-								htmlFor={anthropicApiKeyId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={anthropicApiKeyId} className="block text-sm font-medium mb-1">
 								Anthropic API Key
 							</label>
 							<div className="flex space-x-2">
@@ -152,10 +141,7 @@ const ConnectionsSettings: React.FC<{
 						</div>
 
 						<div>
-							<label
-								htmlFor={googleApiKeyId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={googleApiKeyId} className="block text-sm font-medium mb-1">
 								Google API Key
 							</label>
 							<div className="flex space-x-2">
@@ -178,10 +164,7 @@ const ConnectionsSettings: React.FC<{
 						</div>
 
 						<div>
-							<label
-								htmlFor={mistralApiKeyId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={mistralApiKeyId} className="block text-sm font-medium mb-1">
 								Mistral API Key
 							</label>
 							<div className="flex space-x-2">
@@ -204,10 +187,7 @@ const ConnectionsSettings: React.FC<{
 						</div>
 
 						<div>
-							<label
-								htmlFor={groqApiKeyId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={groqApiKeyId} className="block text-sm font-medium mb-1">
 								Groq API Key
 							</label>
 							<div className="flex space-x-2">
@@ -230,10 +210,7 @@ const ConnectionsSettings: React.FC<{
 						</div>
 
 						<div>
-							<label
-								htmlFor={openRouterApiKeyId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={openRouterApiKeyId} className="block text-sm font-medium mb-1">
 								OpenRouter API Key
 							</label>
 							<div className="flex space-x-2">
@@ -262,10 +239,7 @@ const ConnectionsSettings: React.FC<{
 
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor={customOpenaiEndpointId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={customOpenaiEndpointId} className="block text-sm font-medium mb-1">
 								Custom OpenAI Endpoint
 							</label>
 							<input
@@ -279,10 +253,7 @@ const ConnectionsSettings: React.FC<{
 						</div>
 
 						<div>
-							<label
-								htmlFor={customOpenaiApiKeyId}
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor={customOpenaiApiKeyId} className="block text-sm font-medium mb-1">
 								Custom OpenAI API Key
 							</label>
 							<input

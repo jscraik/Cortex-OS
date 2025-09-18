@@ -1,10 +1,7 @@
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import { describe, expect, it } from 'vitest';
 import { createSimlabBus } from '../src/a2a.js';
-import {
-	createSimLabEvent,
-	SIMLAB_EVENT_SOURCE,
-} from '../src/events/simlab-events.js';
+import { createSimLabEvent, SIMLAB_EVENT_SOURCE } from '../src/events/simlab-events.js';
 
 const baseSimulation = {
 	simulationId: 'sim-001',
@@ -34,10 +31,7 @@ describe('SimLab A2A bus integration', () => {
 
 		expect(received).toHaveLength(1);
 		expect(received[0]).toMatchObject(baseSimulation);
-		const validation = schemaRegistry.validate(
-			'simlab.simulation.started',
-			received[0],
-		);
+		const validation = schemaRegistry.validate('simlab.simulation.started', received[0]);
 		expect(validation.valid).toBe(true);
 	});
 

@@ -2,12 +2,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import underPressure from '@fastify/under-pressure';
-import type {
-	FastifyInstance,
-	FastifyPluginAsync,
-	FastifyReply,
-	FastifyRequest,
-} from 'fastify';
+import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 export async function securityPlugin(app: FastifyInstance) {
 	await app.register(helmet as unknown as FastifyPluginAsync);

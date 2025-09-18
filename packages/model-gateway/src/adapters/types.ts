@@ -15,14 +15,8 @@ export interface MLXAdapterInterface {
 	isAvailable(): Promise<boolean>;
 
 	// Canonical object-style APIs
-	generateEmbedding(request: {
-		text: string;
-		model?: string;
-	}): Promise<Embedding>;
-	generateEmbeddings(request: {
-		texts: string[];
-		model?: string;
-	}): Promise<Embedding[]>;
+	generateEmbedding(request: { text: string; model?: string }): Promise<Embedding>;
+	generateEmbeddings(request: { texts: string[]; model?: string }): Promise<Embedding[]>;
 	generateChat(request: {
 		messages: Message[];
 		model?: string;
@@ -31,14 +25,8 @@ export interface MLXAdapterInterface {
 	}): Promise<ChatResponse>;
 
 	// Implementations that prefer positional calls may provide these helpers
-	generateEmbeddingPositional?(
-		text: string,
-		model?: string,
-	): Promise<Embedding>;
-	generateEmbeddingsPositional?(
-		texts: string[],
-		model?: string,
-	): Promise<Embedding[]>;
+	generateEmbeddingPositional?(text: string, model?: string): Promise<Embedding>;
+	generateEmbeddingsPositional?(texts: string[], model?: string): Promise<Embedding[]>;
 	generateChatPositional?(
 		messages: Message[],
 		model?: string,

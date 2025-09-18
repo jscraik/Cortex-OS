@@ -71,11 +71,7 @@ export interface MCPContext {
 
 export interface PRPOrchestrator {
 	getNeuronCount(): number;
-	executeNeuron?(
-		neuronId: string,
-		state: PRPState,
-		context: unknown,
-	): Promise<unknown>;
+	executeNeuron?(neuronId: string, state: PRPState, context: unknown): Promise<unknown>;
 }
 
 export class MCPAdapter {
@@ -143,10 +139,7 @@ export class MCPAdapter {
 		return { result, evidence };
 	}
 
-	createNeuronFromTool(
-		tool: MCPTool,
-		phase: 'strategy' | 'build' | 'evaluation',
-	): Neuron {
+	createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Neuron {
 		return {
 			id: `mcp-${tool.name}`,
 			role: `mcp-tool-${tool.name}`,
@@ -154,19 +147,12 @@ export class MCPAdapter {
 			dependencies: [],
 			tools: [tool.name],
 			requiresLLM: false,
-			execute: async (
-				state: PRPState,
-				context: { workingDirectory?: string },
-			) => {
+			execute: async (state: PRPState, context: { workingDirectory?: string }) => {
 				this.createContext(state, {
 					workingDirectory: context.workingDirectory,
 				});
 				const params = this.extractToolParams(state.blueprint, tool);
-				const execution = await this.executeTool(
-					tool.name,
-					params,
-					state.runId,
-				);
+				const execution = await this.executeTool(tool.name, params, state.runId);
 				return {
 					output: {
 						toolName: tool.name,
@@ -258,9 +244,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 			const fullPath = pathMod.resolve(wd, params.path);
 			const relative = pathMod.relative(wd, fullPath);
 			if (relative.startsWith('..') || pathMod.isAbsolute(relative)) {
-				throw new Error(
-					`Access denied: ${params.path} is outside working directory`,
-				);
+				throw new Error(`Access denied: ${params.path} is outside working directory`);
 			}
 			await fs.promises.access(fullPath, fs.constants.R_OK);
 			const encoding = (params.encoding || 'utf8') as BufferEncoding;
@@ -296,16 +280,13 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 			try {
 				const eslintMod = await import('eslint');
 				const { ESLint } = eslintMod;
-				const cwd =
-					(params.cwd as string) || context.workingDirectory || process.cwd();
+				const cwd = (params.cwd as string) || context.workingDirectory || process.cwd();
 				const eslint = new ESLint({
 					cwd,
 					overrideConfigFile: params.configPath,
 				});
 				const targets: string[] =
-					Array.isArray(params.files) && params.files.length > 0
-						? params.files
-						: ['.'];
+					Array.isArray(params.files) && params.files.length > 0 ? params.files : ['.'];
 				const results = await eslint.lintFiles(targets);
 				const formatter = await eslint.loadFormatter('stylish');
 				const textReport = await formatter.format(results);
@@ -369,13 +350,11 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 			}>,
 			context: MCPContext,
 		) => {
-			if (!context.securityPolicy.allowExecution)
-				throw new Error('Code execution not allowed');
+			if (!context.securityPolicy.allowExecution) throw new Error('Code execution not allowed');
 			const { exec } = await import('node:child_process');
 			const { promisify } = await import('node:util');
 			const execAsync = promisify(exec);
-			const cwd =
-				(params.cwd as string) || context.workingDirectory || process.cwd();
+			const cwd = (params.cwd as string) || context.workingDirectory || process.cwd();
 			const coverage = params.coverage !== false;
 			const framework = (params.framework || 'auto') as string;
 			const escapeStr = (s: string) => s.replaceAll('"', '\\"');
@@ -385,9 +364,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				try {
 					await execAsync('pnpm vitest --version', { cwd, timeout: 5000 });
 					const cov = coverage ? '--coverage' : '';
-					const target = params.testPath
-						? ` ${escapeStr(params.testPath)}`
-						: '';
+					const target = params.testPath ? ` ${escapeStr(params.testPath)}` : '';
 					cmd = `pnpm vitest run --reporter=json ${cov}${target}`.trim();
 				} catch {
 					// Silently ignore: absence of Vitest is non-fatal, we'll try Jest next
@@ -397,9 +374,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				try {
 					await execAsync('pnpm jest --version', { cwd, timeout: 5000 });
 					const cov = coverage ? '--coverage' : '';
-					const target = params.testPath
-						? ` ${escapeStr(params.testPath)}`
-						: '';
+					const target = params.testPath ? ` ${escapeStr(params.testPath)}` : '';
 					cmd = `pnpm jest --runInBand --reporters=json ${cov}${target}`.trim();
 				} catch {
 					// Silently ignore: Jest unavailable is non-fatal
@@ -429,20 +404,11 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				try {
 					const fs = await import('node:fs');
 					const pathMod = await import('node:path');
-					const covPath = pathMod.join(
-						cwd,
-						'coverage',
-						'coverage-summary.json',
-					);
+					const covPath = pathMod.join(cwd, 'coverage', 'coverage-summary.json');
 					if (fs.existsSync(covPath)) {
 						const cov = JSON.parse(await fs.promises.readFile(covPath, 'utf8'));
 						const totals = cov.total || {};
-						const keys = [
-							'statements',
-							'branches',
-							'functions',
-							'lines',
-						] as const;
+						const keys = ['statements', 'branches', 'functions', 'lines'] as const;
 						const vals = keys
 							.map((k) => totals[k]?.pct)
 							.filter((v): v is number => typeof v === 'number');
@@ -457,19 +423,11 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				let passed = 0,
 					failed = 0,
 					total = 0;
-				if (
-					isTestSummary(summary) &&
-					typeof summary.numPassedTests === 'number'
-				) {
+				if (isTestSummary(summary) && typeof summary.numPassedTests === 'number') {
 					passed = summary.numPassedTests;
-					failed =
-						typeof summary.numFailedTests === 'number'
-							? summary.numFailedTests
-							: 0;
+					failed = typeof summary.numFailedTests === 'number' ? summary.numFailedTests : 0;
 					total =
-						typeof summary.numTotalTests === 'number'
-							? summary.numTotalTests
-							: passed + failed;
+						typeof summary.numTotalTests === 'number' ? summary.numTotalTests : passed + failed;
 				}
 				return {
 					command: cmd,

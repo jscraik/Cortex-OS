@@ -3,9 +3,7 @@ import { readFileSync } from 'node:fs';
 import fg from 'fast-glob';
 
 const md = readFileSync('AGENTS.md', 'utf8');
-const policy = JSON.parse(
-	readFileSync('.cortex/policy/agents.mandates.json', 'utf8'),
-);
+const policy = JSON.parse(readFileSync('.cortex/policy/agents.mandates.json', 'utf8'));
 
 if (!md.startsWith(policy.requiredHeader)) {
 	console.error('AGENTS.md: missing required header');

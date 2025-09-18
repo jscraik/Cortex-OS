@@ -4,21 +4,12 @@
  * @author Cortex-OS Team
  */
 
-import {
-	AgentAdapter,
-	type AgentResponse,
-	type PRPExecutor,
-} from './agent-adapter.js';
+import { AgentAdapter, type AgentResponse, type PRPExecutor } from './agent-adapter.js';
 import type { FailureInjector } from './failure-injector.js';
 import { Judge } from './judge.js';
 import { SimReporter } from './report.js';
 import { simScenarioSchema } from './schemas.js';
-import type {
-	SimBatchResult,
-	SimResult,
-	SimScenario,
-	SimTurn,
-} from './types.js';
+import type { SimBatchResult, SimResult, SimScenario, SimTurn } from './types.js';
 import { UserSimulator } from './user-sim.js';
 
 export interface SimRunnerConfig {
@@ -71,8 +62,7 @@ export class SimRunner {
 
 		try {
 			// Initialize conversation with user simulation
-			const initialMessage =
-				await this.userSim.generateInitialMessage(parsedScenario);
+			const initialMessage = await this.userSim.generateInitialMessage(parsedScenario);
 
 			const turns: SimTurn[] = [
 				{
@@ -181,10 +171,7 @@ export class SimRunner {
 		return this.reporter.createBatchResult(batchId, results);
 	}
 
-	private shouldEndConversation(
-		agentResponse: AgentResponse,
-		scenario: SimScenario,
-	): boolean {
+	private shouldEndConversation(agentResponse: AgentResponse, scenario: SimScenario): boolean {
 		// Check if agent indicated completion
 		if (agentResponse.completed) {
 			return true;

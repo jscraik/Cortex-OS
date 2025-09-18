@@ -7,8 +7,7 @@ import {
 async function main() {
 	process.env.MEMORIES_EMBEDDER = process.env.MEMORIES_EMBEDDER || 'mlx';
 	process.env.MEMORIES_LONG_STORE = process.env.MEMORIES_LONG_STORE || 'sqlite';
-	process.env.MEMORIES_SQLITE_PATH =
-		process.env.MEMORIES_SQLITE_PATH || './data/memories.db';
+	process.env.MEMORIES_SQLITE_PATH = process.env.MEMORIES_SQLITE_PATH || './data/memories.db';
 	// Prefer MLX_EMBED_BASE_URL; fallback to MLX_SERVICE_URL
 	if (!process.env.MLX_EMBED_BASE_URL && !process.env.MLX_SERVICE_URL) {
 		process.env.MLX_EMBED_BASE_URL = 'http://127.0.0.1:8000';
@@ -36,9 +35,7 @@ async function main() {
 
 	console.log(
 		'Top results:',
-		results
-			.map((r) => ({ id: r.id, score: r.score, text: r.text }))
-			.slice(0, 3),
+		results.map((r) => ({ id: r.id, score: r.score, text: r.text })).slice(0, 3),
 	);
 }
 

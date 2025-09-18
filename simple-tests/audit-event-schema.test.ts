@@ -236,10 +236,7 @@ describe('Audit Event Schema Validation', () => {
 				},
 			};
 
-			const redactedEvent = validator.redactSensitiveData(event, [
-				'password',
-				'apiKey',
-			]);
+			const redactedEvent = validator.redactSensitiveData(event, ['password', 'apiKey']);
 
 			expect(redactedEvent.details?.password).toBe('[REDACTED]');
 			expect(redactedEvent.details?.apiKey).toBe('[REDACTED]');
@@ -277,15 +274,9 @@ describe('Audit Event Schema Validation', () => {
 				},
 			};
 
-			const redactedEvent = validator.redactSensitiveData(event, [
-				'user.email',
-				'user.ssn',
-			]);
+			const redactedEvent = validator.redactSensitiveData(event, ['user.email', 'user.ssn']);
 
-			const userDetails = redactedEvent.details?.user as Record<
-				string,
-				unknown
-			>;
+			const userDetails = redactedEvent.details?.user as Record<string, unknown>;
 			expect(userDetails?.email).toBe('[REDACTED]');
 			expect(userDetails?.ssn).toBe('[REDACTED]');
 			expect(userDetails?.id).toBe('user-123'); // Should not be redacted

@@ -230,9 +230,7 @@ class LogRedactorImpl implements LogRedactor {
 		};
 
 		// Create redacting versions
-		const createRedactingMethod = (
-			originalMethod: (...args: unknown[]) => void,
-		) => {
+		const createRedactingMethod = (originalMethod: (...args: unknown[]) => void) => {
 			return (...args: unknown[]) => {
 				const redactedArgs = args.map((arg) => {
 					if (typeof arg === 'string') {
@@ -247,14 +245,10 @@ class LogRedactorImpl implements LogRedactor {
 
 		// Replace console methods
 		globalThis.console.log = createRedactingMethod(this.originalConsole.log!);
-		globalThis.console.error = createRedactingMethod(
-			this.originalConsole.error!,
-		);
+		globalThis.console.error = createRedactingMethod(this.originalConsole.error!);
 		globalThis.console.warn = createRedactingMethod(this.originalConsole.warn!);
 		globalThis.console.info = createRedactingMethod(this.originalConsole.info!);
-		globalThis.console.debug = createRedactingMethod(
-			this.originalConsole.debug!,
-		);
+		globalThis.console.debug = createRedactingMethod(this.originalConsole.debug!);
 
 		this.isAttached = true;
 	}
@@ -263,16 +257,11 @@ class LogRedactorImpl implements LogRedactor {
 		if (!this.isAttached) return;
 
 		// Restore original methods
-		if (this.originalConsole.log)
-			globalThis.console.log = this.originalConsole.log;
-		if (this.originalConsole.error)
-			globalThis.console.error = this.originalConsole.error;
-		if (this.originalConsole.warn)
-			globalThis.console.warn = this.originalConsole.warn;
-		if (this.originalConsole.info)
-			globalThis.console.info = this.originalConsole.info;
-		if (this.originalConsole.debug)
-			globalThis.console.debug = this.originalConsole.debug;
+		if (this.originalConsole.log) globalThis.console.log = this.originalConsole.log;
+		if (this.originalConsole.error) globalThis.console.error = this.originalConsole.error;
+		if (this.originalConsole.warn) globalThis.console.warn = this.originalConsole.warn;
+		if (this.originalConsole.info) globalThis.console.info = this.originalConsole.info;
+		if (this.originalConsole.debug) globalThis.console.debug = this.originalConsole.debug;
 
 		this.isAttached = false;
 	}

@@ -19,7 +19,9 @@ export interface EventManagerOptions {
 }
 
 export interface EventManager {
-	emitEvent(event: Omit<RuntimeEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): Promise<void>;
+	emitEvent(
+		event: Omit<RuntimeEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: string },
+	): Promise<void>;
 	getRecentEvents(): RuntimeEvent[];
 }
 
@@ -44,7 +46,9 @@ export function createEventManager({
 		await appendFile(path, `${JSON.stringify(event)}\n`, 'utf-8');
 	}
 
-	async function emitEvent(event: Omit<RuntimeEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: string }) {
+	async function emitEvent(
+		event: Omit<RuntimeEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: string },
+	) {
 		const fullEvent: RuntimeEvent = {
 			id: event.id ?? randomUUID(),
 			type: event.type,

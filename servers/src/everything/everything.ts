@@ -1,30 +1,31 @@
-// import { aguiMcpTools, type AGUITool } from '@cortex-os/agui'; // TODO: Fix module resolution
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type {
+	ClientCapabilities,
+	CreateMessageRequest,
+	LoggingLevel,
+	Resource,
+	Root,
+	Tool,
+} from '@modelcontextprotocol/sdk/types.js';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+// Separate value imports (schemas/constants) from type-only imports for lint clarity
 import {
 	CallToolRequestSchema,
-	type ClientCapabilities,
 	CompleteRequestSchema,
-	type CreateMessageRequest,
 	CreateMessageResultSchema,
 	GetPromptRequestSchema,
 	ListPromptsRequestSchema,
 	ListResourcesRequestSchema,
 	ListResourceTemplatesRequestSchema,
 	ListToolsRequestSchema,
-	type LoggingLevel,
 	ReadResourceRequestSchema,
-	type Resource,
-	type Root,
 	RootsListChangedNotificationSchema,
 	SetLevelRequestSchema,
 	SubscribeRequestSchema,
-	type Tool,
-	ToolSchema,
 	UnsubscribeRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -32,11 +33,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const instructions = readFileSync(join(__dirname, 'instructions.md'), 'utf-8');
 
-const ToolInputSchema = ToolSchema.shape.inputSchema;
-type ToolInput = z.infer<typeof ToolInputSchema>;
+// Derive types for tool schemas without importing the runtime ToolSchema symbol
+type MCP_ToolSchema = typeof import('@modelcontextprotocol/sdk/types.js').ToolSchema;
+type ToolInput = z.infer<MCP_ToolSchema['shape']['inputSchema']>;
+type ToolOutput = z.infer<MCP_ToolSchema['shape']['outputSchema']>;
 
-const ToolOutputSchema = ToolSchema.shape.outputSchema;
-type ToolOutput = z.infer<typeof ToolOutputSchema>;
+// Note: AGUI integration removed to reduce dead code and lint noise
 
 /* Input schemas for tools implemented in this server */
 const EchoSchema = z.object({
@@ -93,6 +95,10 @@ const StructuredContentSchema = {
 	}),
 };
 
+type ToolCallContentItem = { type: string; [key: string]: unknown };
+type ToolCallResponse = { content: ToolCallContentItem[]; structuredContent?: unknown };
+type RequestMeta = { params: { _meta?: { progressToken?: string | number } } };
+type ToolHandler = (args: unknown, request: RequestMeta) => Promise<ToolCallResponse>;
 enum ToolName {
 	ECHO = 'echo',
 	ADD = 'add',
@@ -176,26 +182,23 @@ export const createServer = () => {
 
 	// Function to start notification intervals when a client connects
 	const startNotificationIntervals = () => {
-		if (!subsUpdateInterval) {
-			subsUpdateInterval = setInterval(() => {
-				for (const uri of subscriptions) {
-					server.notification({
-						method: 'notifications/resources/updated',
-						params: { uri },
-					});
-				}
-			}, 10000);
-		}
+		// prefer nullish coalescing assignment to satisfy lint
+		subsUpdateInterval ??= setInterval(() => {
+			for (const uri of subscriptions) {
+				server.notification({
+					method: 'notifications/resources/updated',
+					params: { uri },
+				});
+			}
+		}, 10000);
 
-		if (!logsUpdateInterval) {
-			logsUpdateInterval = setInterval(() => {
-				const message = {
-					method: 'notifications/message',
-					params: messages[Math.floor(Math.random() * messages.length)],
-				};
-				if (!isMessageIgnored(message.params.level as LoggingLevel)) server.notification(message);
-			}, 20000);
-		}
+		logsUpdateInterval ??= setInterval(() => {
+			const message = {
+				method: 'notifications/message',
+				params: messages[Math.floor(Math.random() * messages.length)],
+			};
+			if (!isMessageIgnored(message.params.level as LoggingLevel)) server.notification(message);
+		}, 20000);
 	};
 
 	// Helper method to request sampling from client
@@ -499,13 +502,7 @@ export const createServer = () => {
 		];
 
 		// Add AGUI tools
-		for (const aguiTool of aguiMcpTools) {
-			tools.push({
-				name: aguiTool.name,
-				description: aguiTool.description,
-				inputSchema: zodToJsonSchema(aguiTool.inputSchema) as ToolInput,
-			});
-		}
+		// (none)
 
 		if (clientCapabilities?.roots)
 			tools.push({
@@ -525,50 +522,38 @@ export const createServer = () => {
 		return { tools };
 	});
 
-	server.setRequestHandler(CallToolRequestSchema, async (request) => {
-		const { name, arguments: args } = request.params;
-
-		if (name === ToolName.ECHO) {
+	// Tool handlers map to reduce cognitive complexity
+	const toolHandlers: Partial<Record<ToolName, ToolHandler>> = {
+		[ToolName.ECHO]: async (args) => {
 			const validatedArgs = EchoSchema.parse(args);
-			return {
-				content: [{ type: 'text', text: `Echo: ${validatedArgs.message}` }],
-			};
-		}
-
-		if (name === ToolName.ADD) {
+			return { content: [{ type: 'text', text: `Echo: ${validatedArgs.message}` }] };
+		},
+		[ToolName.ADD]: async (args) => {
 			const validatedArgs = AddSchema.parse(args);
 			const sum = validatedArgs.a + validatedArgs.b;
 			return {
 				content: [
-					{
-						type: 'text',
-						text: `The sum of ${validatedArgs.a} and ${validatedArgs.b} is ${sum}.`,
-					},
+					{ type: 'text', text: `The sum of ${validatedArgs.a} and ${validatedArgs.b} is ${sum}.` },
 				],
 			};
-		}
-
-		if (name === ToolName.LONG_RUNNING_OPERATION) {
+		},
+		[ToolName.LONG_RUNNING_OPERATION]: async (
+			args: unknown,
+			request: RequestMeta,
+		): Promise<ToolCallResponse> => {
 			const validatedArgs = LongRunningOperationSchema.parse(args);
 			const { duration, steps } = validatedArgs;
 			const stepDuration = duration / steps;
 			const progressToken = request.params._meta?.progressToken;
-
 			for (let i = 1; i < steps + 1; i++) {
 				await new Promise((resolve) => setTimeout(resolve, stepDuration * 1000));
-
 				if (progressToken !== undefined) {
 					await server.notification({
 						method: 'notifications/progress',
-						params: {
-							progress: i,
-							total: steps,
-							progressToken,
-						},
+						params: { progress: i, total: steps, progressToken },
 					});
 				}
 			}
-
 			return {
 				content: [
 					{
@@ -577,143 +562,78 @@ export const createServer = () => {
 					},
 				],
 			};
-		}
-
-		if (name === ToolName.PRINT_ENV) {
-			return {
-				content: [
-					{
-						type: 'text',
-						text: JSON.stringify(process.env, null, 2),
-					},
-				],
-			};
-		}
-
-		if (name === ToolName.SAMPLE_LLM) {
-			const validatedArgs = SampleLLMSchema.parse(args);
-			const { prompt, maxTokens } = validatedArgs;
-
+		},
+		[ToolName.PRINT_ENV]: async () => ({
+			content: [{ type: 'text', text: JSON.stringify(process.env, null, 2) }],
+		}),
+		[ToolName.SAMPLE_LLM]: async (args) => {
+			const { prompt, maxTokens } = SampleLLMSchema.parse(args);
 			const result = await requestSampling(prompt, ToolName.SAMPLE_LLM, maxTokens);
-			return {
-				content: [{ type: 'text', text: `LLM sampling result: ${result.content.text}` }],
-			};
-		}
-
-		if (name === ToolName.GET_TINY_IMAGE) {
+			return { content: [{ type: 'text', text: `LLM sampling result: ${result.content.text}` }] };
+		},
+		[ToolName.GET_TINY_IMAGE]: async (args) => {
 			GetTinyImageSchema.parse(args);
 			return {
 				content: [
-					{
-						type: 'text',
-						text: 'This is a tiny image:',
-					},
-					{
-						type: 'image',
-						data: MCP_TINY_IMAGE,
-						mimeType: 'image/png',
-					},
-					{
-						type: 'text',
-						text: 'The image above is the MCP tiny image.',
-					},
+					{ type: 'text', text: 'This is a tiny image:' },
+					{ type: 'image', data: MCP_TINY_IMAGE, mimeType: 'image/png' },
+					{ type: 'text', text: 'The image above is the MCP tiny image.' },
 				],
 			};
-		}
-
-		if (name === ToolName.ANNOTATED_MESSAGE) {
+		},
+		[ToolName.ANNOTATED_MESSAGE]: async (args): Promise<ToolCallResponse> => {
 			const { messageType, includeImage } = AnnotatedMessageSchema.parse(args);
-
-			const content = [];
-
-			// Main message with different priorities/audiences based on type
+			const content: ToolCallContentItem[] = [];
 			if (messageType === 'error') {
 				content.push({
 					type: 'text',
 					text: 'Error: Operation failed',
-					annotations: {
-						priority: 1.0, // Errors are highest priority
-						audience: ['user', 'assistant'], // Both need to know about errors
-					},
+					annotations: { priority: 1.0, audience: ['user', 'assistant'] },
 				});
 			} else if (messageType === 'success') {
 				content.push({
 					type: 'text',
 					text: 'Operation completed successfully',
-					annotations: {
-						priority: 0.7, // Success messages are important but not critical
-						audience: ['user'], // Success mainly for user consumption
-					},
+					annotations: { priority: 0.7, audience: ['user'] },
 				});
 			} else if (messageType === 'debug') {
 				content.push({
 					type: 'text',
 					text: 'Debug: Cache hit ratio 0.95, latency 150ms',
-					annotations: {
-						priority: 0.3, // Debug info is low priority
-						audience: ['assistant'], // Technical details for assistant
-					},
+					annotations: { priority: 0.3, audience: ['assistant'] },
 				});
 			}
-
-			// Optional image with its own annotations
 			if (includeImage) {
 				content.push({
 					type: 'image',
 					data: MCP_TINY_IMAGE,
 					mimeType: 'image/png',
-					annotations: {
-						priority: 0.5,
-						audience: ['user'], // Images primarily for user visualization
-					},
+					annotations: { priority: 0.5, audience: ['user'] },
 				});
 			}
-
 			return { content };
-		}
-
-		if (name === ToolName.GET_RESOURCE_REFERENCE) {
-			const validatedArgs = GetResourceReferenceSchema.parse(args);
-			const resourceId = validatedArgs.resourceId;
-
+		},
+		[ToolName.GET_RESOURCE_REFERENCE]: async (args) => {
+			const { resourceId } = GetResourceReferenceSchema.parse(args);
 			const resourceIndex = resourceId - 1;
-			if (resourceIndex < 0 || resourceIndex >= ALL_RESOURCES.length) {
+			if (resourceIndex < 0 || resourceIndex >= ALL_RESOURCES.length)
 				throw new Error(`Resource with ID ${resourceId} does not exist`);
-			}
-
 			const resource = ALL_RESOURCES[resourceIndex];
-
 			return {
 				content: [
-					{
-						type: 'text',
-						text: `Returning resource reference for Resource ${resourceId}:`,
-					},
-					{
-						type: 'resource',
-						resource: resource,
-					},
-					{
-						type: 'text',
-						text: `You can access this resource using the URI: ${resource.uri}`,
-					},
+					{ type: 'text', text: `Returning resource reference for Resource ${resourceId}:` },
+					{ type: 'resource', resource },
+					{ type: 'text', text: `You can access this resource using the URI: ${resource.uri}` },
 				],
 			};
-		}
-
-		if (name === ToolName.ELICITATION) {
+		},
+		[ToolName.ELICITATION]: async (args): Promise<ToolCallResponse> => {
 			ElicitationSchema.parse(args);
-
 			const elicitationResult = await requestElicitation('What are your favorite things?', {
 				type: 'object',
 				properties: {
 					color: { type: 'string', description: 'Favorite color' },
-					number: {
-						type: 'integer',
-						description: 'Favorite number',
-						minimum: 1,
-						maximum: 100,
-					},
+					number: { type: 'integer', description: 'Favorite number', minimum: 1, maximum: 100 },
 					pets: {
 						type: 'string',
 						enum: ['cats', 'dogs', 'birds', 'fish', 'reptiles'],
@@ -721,54 +641,33 @@ export const createServer = () => {
 					},
 				},
 			});
-
-			// Handle different response actions
-			const content = [];
-
+			const content: ToolCallContentItem[] = [];
 			if (elicitationResult.action === 'accept' && elicitationResult.content) {
-				content.push({
-					type: 'text',
-					text: `✅ User provided their favorite things!`,
-				});
-
-				// Only access elicitationResult.content when action is accept
+				content.push({ type: 'text', text: `✅ User provided their favorite things!` });
 				const { color, number, pets } = elicitationResult.content;
 				content.push({
 					type: 'text',
 					text: `Their favorites are:\n- Color: ${color || 'not specified'}\n- Number: ${number || 'not specified'}\n- Pets: ${pets || 'not specified'}`,
 				});
 			} else if (elicitationResult.action === 'decline') {
-				content.push({
-					type: 'text',
-					text: `❌ User declined to provide their favorite things.`,
-				});
+				content.push({ type: 'text', text: `❌ User declined to provide their favorite things.` });
 			} else if (elicitationResult.action === 'cancel') {
-				content.push({
-					type: 'text',
-					text: `⚠️ User cancelled the elicitation dialog.`,
-				});
+				content.push({ type: 'text', text: `⚠️ User cancelled the elicitation dialog.` });
 			}
-
-			// Include raw result for debugging
 			content.push({
 				type: 'text',
 				text: `\nRaw result: ${JSON.stringify(elicitationResult, null, 2)}`,
 			});
-
 			return { content };
-		}
-
-		if (name === ToolName.GET_RESOURCE_LINKS) {
+		},
+		[ToolName.GET_RESOURCE_LINKS]: async (args) => {
 			const { count } = GetResourceLinksSchema.parse(args);
-			const content = [];
-
-			// Add intro text
-			content.push({
-				type: 'text',
-				text: `Here are ${count} resource links to resources available in this server (see full output in tool response if your client does not support resource_link yet):`,
-			});
-
-			// Return resource links to actual resources from ALL_RESOURCES
+			const content: ToolCallContentItem[] = [
+				{
+					type: 'text',
+					text: `Here are ${count} resource links to resources available in this server (see full output in tool response if your client does not support resource_link yet):`,
+				},
+			];
 			const actualCount = Math.min(count, ALL_RESOURCES.length);
 			for (let i = 0; i < actualCount; i++) {
 				const resource = ALL_RESOURCES[i];
@@ -776,150 +675,63 @@ export const createServer = () => {
 					type: 'resource_link',
 					uri: resource.uri,
 					name: resource.name,
-					description: `Resource ${i + 1}: ${resource.mimeType === 'text/plain' ? 'plaintext resource' : 'binary blob resource'
-						}`,
+					description: `Resource ${i + 1}: ${resource.mimeType === 'text/plain' ? 'plaintext resource' : 'binary blob resource'}`,
 					mimeType: resource.mimeType,
 				});
 			}
-
 			return { content };
-		}
-
-		if (name === ToolName.STRUCTURED_CONTENT) {
-			// The same response is returned for every input.
+		},
+		[ToolName.STRUCTURED_CONTENT]: async (args) => {
 			StructuredContentSchema.input.parse(args);
-
-			const weather = {
-				temperature: 22.5,
-				conditions: 'Partly cloudy',
-				humidity: 65,
-			};
-
-			const backwardCompatiblecontent = {
-				type: 'text',
-				text: JSON.stringify(weather),
-			};
-
+			const weather = { temperature: 22.5, conditions: 'Partly cloudy', humidity: 65 };
 			return {
-				content: [backwardCompatiblecontent],
+				content: [{ type: 'text', text: JSON.stringify(weather) }],
 				structuredContent: weather,
 			};
-		}
-
-		if (name === ToolName.LIST_ROOTS) {
+		},
+		[ToolName.LIST_ROOTS]: async (args) => {
 			ListRootsSchema.parse(args);
-
 			if (!clientSupportsRoots) {
 				return {
 					content: [
 						{
 							type: 'text',
-							text:
-								'The MCP client does not support the roots protocol.\n\n' +
-								"This means the server cannot access information about the client's workspace directories or file system roots.",
+							text: "The MCP client does not support the roots protocol.\n\nThis means the server cannot access information about the client's workspace directories or file system roots.",
 						},
 					],
 				};
 			}
-
 			if (currentRoots.length === 0) {
 				return {
 					content: [
 						{
 							type: 'text',
-							text:
-								'The client supports roots but no roots are currently configured.\n\n' +
-								'This could mean:\n' +
-								"1. The client hasn't provided any roots yet\n" +
-								'2. The client provided an empty roots list\n' +
-								'3. The roots configuration is still being loaded',
+							text: "The client supports roots but no roots are currently configured.\n\nThis could mean:\n1. The client hasn't provided any roots yet\n2. The client provided an empty roots list\n3. The roots configuration is still being loaded",
 						},
 					],
 				};
 			}
-
 			const rootsList = currentRoots
-				.map((root, index) => {
-					return `${index + 1}. ${root.name || 'Unnamed Root'}\n   URI: ${root.uri}`;
-				})
+				.map(
+					(root: Root, index: number) =>
+						`${index + 1}. ${root.name || 'Unnamed Root'}\n   URI: ${root.uri}`,
+				)
 				.join('\n\n');
-
 			return {
 				content: [
 					{
 						type: 'text',
-						text:
-							`Current MCP Roots (${currentRoots.length} total):\n\n${rootsList}\n\n` +
-							"Note: This server demonstrates the roots protocol capability but doesn't actually access files. " +
-							'The roots are provided by the MCP client and can be used by servers that need file system access.',
+						text: `Current MCP Roots (${currentRoots.length} total):\n\n${rootsList}\n\nNote: This server demonstrates the roots protocol capability but doesn't actually access files. The roots are provided by the MCP client and can be used by servers that need file system access.`,
 					},
 				],
 			};
-		}
+		},
+	};
 
-		// AGUI tool handlers
-		if (name === ToolName.CREATE_UI_COMPONENT) {
-			const aguiTool = aguiMcpTools.find((tool: AGUITool) => tool.name === 'create_ui_component');
-			if (aguiTool) {
-				const validatedArgs = aguiTool.inputSchema.parse(args);
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `Created UI component: ${JSON.stringify(validatedArgs, null, 2)}`,
-						},
-					],
-				};
-			}
-		}
-
-		if (name === ToolName.RENDER_VIEW) {
-			const aguiTool = aguiMcpTools.find((tool: AGUITool) => tool.name === 'render_view');
-			if (aguiTool) {
-				const validatedArgs = aguiTool.inputSchema.parse(args);
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `Rendered view: ${JSON.stringify(validatedArgs, null, 2)}`,
-						},
-					],
-				};
-			}
-		}
-
-		if (name === ToolName.HANDLE_USER_INTERACTION) {
-			const aguiTool = aguiMcpTools.find(
-				(tool: AGUITool) => tool.name === 'handle_user_interaction',
-			);
-			if (aguiTool) {
-				const validatedArgs = aguiTool.inputSchema.parse(args);
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `Handled user interaction: ${JSON.stringify(validatedArgs, null, 2)}`,
-						},
-					],
-				};
-			}
-		}
-
-		if (name === ToolName.UPDATE_COMPONENT) {
-			const aguiTool = aguiMcpTools.find((tool: AGUITool) => tool.name === 'update_component');
-			if (aguiTool) {
-				const validatedArgs = aguiTool.inputSchema.parse(args);
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `Updated component: ${JSON.stringify(validatedArgs, null, 2)}`,
-						},
-					],
-				};
-			}
-		}
-
+	server.setRequestHandler(CallToolRequestSchema, async (request) => {
+		const { name, arguments: args } = request.params;
+		const handler = toolHandlers[name as ToolName];
+		if (handler) return await handler(args, request as RequestMeta);
 		throw new Error(`Unknown tool: ${name}`);
 	});
 
@@ -995,54 +807,56 @@ export const createServer = () => {
 	});
 
 	// Handle post-initialization setup for roots
-	server.oninitialized = async () => {
-		clientCapabilities = server.getClientCapabilities();
+	server.oninitialized = () => {
+		void (async () => {
+			clientCapabilities = server.getClientCapabilities();
 
-		if (clientCapabilities?.roots) {
-			clientSupportsRoots = true;
-			try {
-				const response = await server.listRoots();
-				if (response && 'roots' in response) {
-					currentRoots = response.roots;
+			if (clientCapabilities?.roots) {
+				clientSupportsRoots = true;
+				try {
+					const response = await server.listRoots();
+					if (response && 'roots' in response) {
+						currentRoots = response.roots;
 
+						await server.notification({
+							method: 'notifications/message',
+							params: {
+								level: 'info',
+								logger: 'everything-server',
+								data: `Initial roots received: ${currentRoots.length} root(s) from client`,
+							},
+						});
+					} else {
+						await server.notification({
+							method: 'notifications/message',
+							params: {
+								level: 'warning',
+								logger: 'everything-server',
+								data: 'Client returned no roots set',
+							},
+						});
+					}
+				} catch (error) {
 					await server.notification({
 						method: 'notifications/message',
 						params: {
-							level: 'info',
+							level: 'error',
 							logger: 'everything-server',
-							data: `Initial roots received: ${currentRoots.length} root(s) from client`,
-						},
-					});
-				} else {
-					await server.notification({
-						method: 'notifications/message',
-						params: {
-							level: 'warning',
-							logger: 'everything-server',
-							data: 'Client returned no roots set',
+							data: `Failed to request initial roots from client: ${error instanceof Error ? error.message : String(error)}`,
 						},
 					});
 				}
-			} catch (error) {
+			} else {
 				await server.notification({
 					method: 'notifications/message',
 					params: {
-						level: 'error',
+						level: 'info',
 						logger: 'everything-server',
-						data: `Failed to request initial roots from client: ${error instanceof Error ? error.message : String(error)}`,
+						data: 'Client does not support MCP roots protocol',
 					},
 				});
 			}
-		} else {
-			await server.notification({
-				method: 'notifications/message',
-				params: {
-					level: 'info',
-					logger: 'everything-server',
-					data: 'Client does not support MCP roots protocol',
-				},
-			});
-		}
+		})();
 	};
 
 	const cleanup = async () => {

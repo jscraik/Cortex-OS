@@ -90,9 +90,7 @@ app.post('/tools/call', async (req: Request, res: Response) => {
 						type: 'validation_error',
 						message: 'Invalid arguments',
 						details:
-							validationError instanceof Error
-								? validationError.message
-								: 'Validation failed',
+							validationError instanceof Error ? validationError.message : 'Validation failed',
 					},
 				});
 			}
@@ -208,26 +206,19 @@ app.post('/tools/call', async (req: Request, res: Response) => {
 		res.status(500).json({
 			error: {
 				type: 'tool_execution_error',
-				message:
-					error instanceof Error
-						? error.message
-						: 'Unknown error during tool execution',
+				message: error instanceof Error ? error.message : 'Unknown error during tool execution',
 			},
 		});
 	}
 });
 
 // Start server
-const PORT = process.env.TDD_COACH_MCP_PORT
-	? parseInt(process.env.TDD_COACH_MCP_PORT, 10)
-	: 8007;
+const PORT = process.env.TDD_COACH_MCP_PORT ? parseInt(process.env.TDD_COACH_MCP_PORT, 10) : 8007;
 app.listen(PORT, '0.0.0.0', () => {
 	console.log(`TDD Coach MCP Server listening on http://0.0.0.0:${PORT}`);
 	console.log(`Health check: http://0.0.0.0:${PORT}/health`);
 	console.log(`Tools list: http://0.0.0.0:${PORT}/tools/list`);
-	console.log(
-		`Access via Cloudflare tunnel at: https://tddcoach-mcp.brainwav.io`,
-	);
+	console.log(`Access via Cloudflare tunnel at: https://tddcoach-mcp.brainwav.io`);
 });
 
 export default app;

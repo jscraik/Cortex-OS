@@ -20,9 +20,9 @@ beforeEach(() => {
 
 describe('securePrepare', () => {
 	it('throws on _raw parameter', () => {
-		expect(() =>
-			wrapper.securePrepare('SELECT ? as x', [{ _raw: 'DROP TABLE users' }]),
-		).toThrow('Raw SQL injection detected');
+		expect(() => wrapper.securePrepare('SELECT ? as x', [{ _raw: 'DROP TABLE users' }])).toThrow(
+			'Raw SQL injection detected',
+		);
 	});
 
 	it('rejects invalid string parameter', () => {
@@ -42,23 +42,21 @@ describe('securePrepare', () => {
 describe('secureRun', () => {
 	it('executes valid query', () => {
 		wrapper.secureRun('INSERT INTO t VALUES (?)', 'ok');
-		expect(mockDatabase.prepare).toHaveBeenCalledWith(
-			'INSERT INTO t VALUES (?)',
-		);
+		expect(mockDatabase.prepare).toHaveBeenCalledWith('INSERT INTO t VALUES (?)');
 		expect(mockStatement.run).toHaveBeenCalledWith('ok');
 	});
 
 	it('rejects _raw object parameter', () => {
-		expect(() =>
-			wrapper.secureRun('INSERT INTO t VALUES (?)', { _raw: '1' } as any),
-		).toThrow('Raw SQL injection detected');
+		expect(() => wrapper.secureRun('INSERT INTO t VALUES (?)', { _raw: '1' } as any)).toThrow(
+			'Raw SQL injection detected',
+		);
 	});
 
 	it('rejects invalid string parameter', () => {
 		const invalid = 'a'.repeat(1001);
-		expect(() =>
-			wrapper.secureRun('INSERT INTO t VALUES (?)', invalid),
-		).toThrow('Invalid string parameter');
+		expect(() => wrapper.secureRun('INSERT INTO t VALUES (?)', invalid)).toThrow(
+			'Invalid string parameter',
+		);
 	});
 });
 
@@ -70,16 +68,14 @@ describe('secureGet', () => {
 	});
 
 	it('rejects _raw object parameter', () => {
-		expect(() =>
-			wrapper.secureGet('SELECT ? as x', { _raw: '1' } as any),
-		).toThrow('Raw SQL injection detected');
+		expect(() => wrapper.secureGet('SELECT ? as x', { _raw: '1' } as any)).toThrow(
+			'Raw SQL injection detected',
+		);
 	});
 
 	it('rejects invalid string parameter', () => {
 		const invalid = 'a'.repeat(1001);
-		expect(() => wrapper.secureGet('SELECT ? as x', invalid)).toThrow(
-			'Invalid string parameter',
-		);
+		expect(() => wrapper.secureGet('SELECT ? as x', invalid)).toThrow('Invalid string parameter');
 	});
 });
 
@@ -91,15 +87,13 @@ describe('secureAll', () => {
 	});
 
 	it('rejects _raw object parameter', () => {
-		expect(() =>
-			wrapper.secureAll('SELECT ? as x', { _raw: '1' } as any),
-		).toThrow('Raw SQL injection detected');
+		expect(() => wrapper.secureAll('SELECT ? as x', { _raw: '1' } as any)).toThrow(
+			'Raw SQL injection detected',
+		);
 	});
 
 	it('rejects invalid string parameter', () => {
 		const invalid = 'a'.repeat(1001);
-		expect(() => wrapper.secureAll('SELECT ? as x', invalid)).toThrow(
-			'Invalid string parameter',
-		);
+		expect(() => wrapper.secureAll('SELECT ? as x', invalid)).toThrow('Invalid string parameter');
 	});
 });

@@ -51,8 +51,7 @@ export async function withFallback<T>(
 	}
 
 	const message =
-		errorMessage ||
-		`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`;
+		errorMessage || `All providers failed. Last error: ${lastError?.message || 'Unknown error'}`;
 
 	throw new Error(message);
 }
@@ -60,9 +59,6 @@ export async function withFallback<T>(
 /**
  * Creates a fallback provider from a function
  */
-export function createProvider<T>(
-	name: string,
-	execute: () => Promise<T>,
-): FallbackProvider<T> {
+export function createProvider<T>(name: string, execute: () => Promise<T>): FallbackProvider<T> {
 	return { name, execute };
 }

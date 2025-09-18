@@ -20,10 +20,7 @@ export async function consolidateShortToLong(
 	do {
 		movedInPass = 0;
 		const now = Date.now();
-		const candidates = await shortTerm.searchByText(
-			{ text: '', topK: batchSize },
-			ns,
-		);
+		const candidates = await shortTerm.searchByText({ text: '', topK: batchSize }, ns);
 		if (candidates.length === 0) break;
 		for (const m of candidates) {
 			const age = now - new Date(m.createdAt).getTime();
@@ -31,10 +28,7 @@ export async function consolidateShortToLong(
 			const eligibleByScope = m.policy?.scope === 'session';
 			const eligibleByFilter = opts.filter ? opts.filter(m) : true;
 			if (eligibleByScope && eligibleByAge && eligibleByFilter) {
-				await longTerm.upsert(
-					{ ...m, policy: { ...m.policy, scope: 'user' } },
-					ns,
-				);
+				await longTerm.upsert({ ...m, policy: { ...m.policy, scope: 'user' } }, ns);
 				await shortTerm.delete(m.id, ns);
 				promoted++;
 				movedInPass++;

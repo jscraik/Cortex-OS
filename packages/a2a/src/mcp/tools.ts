@@ -50,10 +50,7 @@ interface SpanOptions {
 	name: string;
 	attrs?: Record<string, unknown>;
 }
-async function withSpan<T>(
-	opts: SpanOptions,
-	fn: () => Promise<T>,
-): Promise<T> {
+async function withSpan<T>(opts: SpanOptions, fn: () => Promise<T>): Promise<T> {
 	const enabled = process.env.A2A_MCP_SPANS === '1';
 	const start = enabled ? performance.now() : 0;
 	try {
@@ -86,10 +83,7 @@ async function withSpan<T>(
 // withSpan signature stable and introduce an adapter during migration.
 
 // 1. Queue Message Tool ----------------------------------------------------
-export const a2aQueueMessageTool: A2AMcpTool<
-	A2AQueueMessageInput,
-	A2AQueueMessageResult
-> = {
+export const a2aQueueMessageTool: A2AMcpTool<A2AQueueMessageInput, A2AQueueMessageResult> = {
 	name: 'a2a_queue_message',
 	description:
 		'Queue (send) an A2A task/message and return its initial result if completed rapidly.',
@@ -245,9 +239,7 @@ export const a2aEventStreamSubscribeTool: A2AMcpTool<
 						id: t.id,
 						status: t.status,
 						timestamp: t.updatedAt.toISOString(),
-						error: t.error
-							? { code: t.error.code, message: t.error.message }
-							: undefined,
+						error: t.error ? { code: t.error.code, message: t.error.message } : undefined,
 					}))
 				: [];
 
@@ -339,9 +331,7 @@ function createA2AOutboxSyncTool(deps: {
 					}
 				};
 
-				const fallbackDynamic = (
-					p: A2AOutboxSyncInput,
-				): Record<string, unknown> => {
+				const fallbackDynamic = (p: A2AOutboxSyncInput): Record<string, unknown> => {
 					switch (p.action) {
 						case 'processPending':
 						case 'processRetries':
@@ -422,11 +412,7 @@ export function createA2AMcpTools(
 	const outboxTool = createA2AOutboxSyncTool({
 		outboxService: opts.outboxService,
 	});
-	return [
-		a2aQueueMessageTool,
-		a2aEventStreamSubscribeTool,
-		outboxTool,
-	] as const;
+	return [a2aQueueMessageTool, a2aEventStreamSubscribeTool, outboxTool] as const;
 }
 
 // Export factory for targeted usage

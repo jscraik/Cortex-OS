@@ -22,9 +22,7 @@ const MessageBranch: React.FC<MessageBranchProps> = ({
 	onSelectBranch,
 }) => {
 	return (
-		<div
-			className={`relative ${isActive ? '' : 'opacity-70 hover:opacity-100'}`}
-		>
+		<div className={`relative ${isActive ? '' : 'opacity-70 hover:opacity-100'}`}>
 			{messages.map((message, index) => (
 				<div key={message.id} className="relative">
 					{index > 0 && (
@@ -49,16 +47,8 @@ const MessageBranch: React.FC<MessageBranchProps> = ({
 							<Message
 								message={message}
 								isUser={message.role === 'user'}
-								onEdit={
-									onEditMessage
-										? (content) => onEditMessage(message.id, content)
-										: undefined
-								}
-								onDelete={
-									onDeleteMessage
-										? () => onDeleteMessage(message.id)
-										: undefined
-								}
+								onEdit={onEditMessage ? (content) => onEditMessage(message.id, content) : undefined}
+								onDelete={onDeleteMessage ? () => onDeleteMessage(message.id) : undefined}
 							/>
 						</div>
 					</div>

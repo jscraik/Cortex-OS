@@ -13,10 +13,7 @@ function getNextCounter(prefix: string): number {
 /**
  * Generate a unique ID with optional deterministic mode
  */
-export function generateId(
-	prefix: string,
-	deterministic = false,
-): string {
+export function generateId(prefix: string, deterministic = false): string {
 	if (deterministic) {
 		// Use a fixed counter for deterministic generation
 		const counter = getNextCounter(prefix);

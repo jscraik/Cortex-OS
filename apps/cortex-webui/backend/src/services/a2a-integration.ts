@@ -245,9 +245,7 @@ export class WebUIBusIntegration {
 	/**
 	 * Handle MLX critical thermal events
 	 */
-	private async handleMLXThermalCriticalEvent(
-		envelope: Envelope,
-	): Promise<void> {
+	private async handleMLXThermalCriticalEvent(envelope: Envelope): Promise<void> {
 		const thermalData = envelope.data as MLXThermalData;
 
 		if (this.wsManager) {
@@ -335,9 +333,7 @@ export class WebUIBusIntegration {
 	/**
 	 * Handle MLX batch embedding events
 	 */
-	private async handleMLXEmbeddingBatchEvent(
-		envelope: Envelope,
-	): Promise<void> {
+	private async handleMLXEmbeddingBatchEvent(envelope: Envelope): Promise<void> {
 		await this.handleMLXEmbeddingEvent(envelope); // Same handling for now
 	}
 
@@ -402,8 +398,6 @@ export class WebUIBusIntegration {
 	}
 }
 
-export function createWebUIBusIntegration(
-	wsManager?: WebSocketManager,
-): WebUIBusIntegration {
+export function createWebUIBusIntegration(wsManager?: WebSocketManager): WebUIBusIntegration {
 	return new WebUIBusIntegration(wsManager);
 }

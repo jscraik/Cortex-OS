@@ -90,10 +90,7 @@ export class ContextAnalyzer {
 		const packageManager = await this.detectPackageManager(repoPath);
 
 		// Detect framework
-		const framework = this.detectJavaScriptFramework(
-			dependencies,
-			devDependencies,
-		);
+		const framework = this.detectJavaScriptFramework(dependencies, devDependencies);
 
 		// Detect TypeScript
 		const hasTypeScript =
@@ -112,18 +109,10 @@ export class ContextAnalyzer {
 		]);
 
 		// Determine project type
-		const projectType = this.determineProjectType(
-			dependencies,
-			devDependencies,
-			framework,
-		);
+		const projectType = this.determineProjectType(dependencies, devDependencies, framework);
 
 		// Detect build tool
-		const buildTool = this.detectBuildTool(
-			dependencies,
-			devDependencies,
-			packageJson.scripts,
-		);
+		const buildTool = this.detectBuildTool(dependencies, devDependencies, packageJson.scripts);
 
 		return {
 			framework,
@@ -143,11 +132,7 @@ export class ContextAnalyzer {
 		_pyprojectPath: string,
 	): Promise<RepositoryContext> {
 		// Basic Python project analysis
-		const hasTests = await this.detectTests(repoPath, [
-			'tests',
-			'test',
-			'spec',
-		]);
+		const hasTests = await this.detectTests(repoPath, ['tests', 'test', 'spec']);
 
 		return {
 			framework: 'python',
@@ -179,10 +164,7 @@ export class ContextAnalyzer {
 		};
 	}
 
-	private async analyzeGoProject(
-		repoPath: string,
-		_goModPath: string,
-	): Promise<RepositoryContext> {
+	private async analyzeGoProject(repoPath: string, _goModPath: string): Promise<RepositoryContext> {
 		const hasTests = await this.detectTests(repoPath, ['tests']);
 
 		return {
@@ -198,19 +180,14 @@ export class ContextAnalyzer {
 	}
 
 	private async detectPackageManager(repoPath: string): Promise<string> {
-		if (await fs.pathExists(path.join(repoPath, 'pnpm-lock.yaml')))
-			return 'pnpm';
+		if (await fs.pathExists(path.join(repoPath, 'pnpm-lock.yaml'))) return 'pnpm';
 		if (await fs.pathExists(path.join(repoPath, 'yarn.lock'))) return 'yarn';
-		if (await fs.pathExists(path.join(repoPath, 'package-lock.json')))
-			return 'npm';
+		if (await fs.pathExists(path.join(repoPath, 'package-lock.json'))) return 'npm';
 		if (await fs.pathExists(path.join(repoPath, 'bun.lockb'))) return 'bun';
 		return 'npm'; // default
 	}
 
-	private detectJavaScriptFramework(
-		dependencies: string[],
-		devDependencies: string[],
-	): string {
+	private detectJavaScriptFramework(dependencies: string[], devDependencies: string[]): string {
 		const allDeps = [...dependencies, ...devDependencies];
 
 		// React ecosystem
@@ -245,10 +222,7 @@ export class ContextAnalyzer {
 		return 'vanilla';
 	}
 
-	private async detectTests(
-		repoPath: string,
-		testDirs: string[],
-	): Promise<boolean> {
+	private async detectTests(repoPath: string, testDirs: string[]): Promise<boolean> {
 		for (const testDir of testDirs) {
 			const testPath = path.join(repoPath, testDir);
 			if (await fs.pathExists(testPath)) {
@@ -263,9 +237,7 @@ export class ContextAnalyzer {
 			return files.some(
 				(file) =>
 					typeof file === 'string' &&
-					(file.includes('.test.') ||
-						file.includes('.spec.') ||
-						file.includes('__tests__')),
+					(file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__')),
 			);
 		}
 
@@ -293,15 +265,7 @@ export class ContextAnalyzer {
 		const hasFrontend = frontendFrameworks.includes(framework);
 
 		// Backend frameworks/tools
-		const backendDeps = [
-			'express',
-			'fastify',
-			'koa',
-			'nestjs',
-			'prisma',
-			'sequelize',
-			'mongoose',
-		];
+		const backendDeps = ['express', 'fastify', 'koa', 'nestjs', 'prisma', 'sequelize', 'mongoose'];
 		const hasBackend = backendDeps.some((dep) => allDeps.includes(dep));
 
 		// Library indicators
@@ -325,18 +289,12 @@ export class ContextAnalyzer {
 	): string | undefined {
 		const allDeps = [...dependencies, ...devDependencies];
 
-		if (allDeps.includes('vite') || scripts.dev?.includes('vite'))
-			return 'vite';
-		if (allDeps.includes('webpack') || scripts.build?.includes('webpack'))
-			return 'webpack';
-		if (allDeps.includes('rollup') || scripts.build?.includes('rollup'))
-			return 'rollup';
-		if (allDeps.includes('parcel') || scripts.build?.includes('parcel'))
-			return 'parcel';
-		if (allDeps.includes('esbuild') || scripts.build?.includes('esbuild'))
-			return 'esbuild';
-		if (allDeps.includes('turbo') || scripts.build?.includes('turbo'))
-			return 'turbo';
+		if (allDeps.includes('vite') || scripts.dev?.includes('vite')) return 'vite';
+		if (allDeps.includes('webpack') || scripts.build?.includes('webpack')) return 'webpack';
+		if (allDeps.includes('rollup') || scripts.build?.includes('rollup')) return 'rollup';
+		if (allDeps.includes('parcel') || scripts.build?.includes('parcel')) return 'parcel';
+		if (allDeps.includes('esbuild') || scripts.build?.includes('esbuild')) return 'esbuild';
+		if (allDeps.includes('turbo') || scripts.build?.includes('turbo')) return 'turbo';
 
 		return undefined;
 	}
@@ -367,8 +325,7 @@ export class ContextAnalyzer {
 				body: payload.pull_request.body || '',
 				base: payload.pull_request.base.ref,
 				head: payload.pull_request.head.ref,
-				labels:
-					payload.pull_request.labels?.map((label: any) => label.name) || [],
+				labels: payload.pull_request.labels?.map((label: any) => label.name) || [],
 			};
 		}
 
@@ -406,17 +363,11 @@ export class ContextAnalyzer {
 		response += `💡 **Smart Suggestions:**\n`;
 
 		if (commandType === 'analyze') {
-			response += this.generateAnalysisContextSuggestions(
-				repository,
-				targetArea,
-			);
+			response += this.generateAnalysisContextSuggestions(repository, targetArea);
 		} else if (commandType === 'fix') {
 			response += this.generateFixContextSuggestions(repository, targetArea);
 		} else if (commandType === 'scaffold') {
-			response += this.generateScaffoldContextSuggestions(
-				repository,
-				targetArea,
-			);
+			response += this.generateScaffoldContextSuggestions(repository, targetArea);
 		}
 
 		return response;
@@ -471,10 +422,7 @@ export class ContextAnalyzer {
 		return suggestions || '- Standard analysis patterns will be applied\n';
 	}
 
-	private generateFixContextSuggestions(
-		repository: RepositoryContext,
-		targetArea: string,
-	): string {
+	private generateFixContextSuggestions(repository: RepositoryContext, targetArea: string): string {
 		let suggestions = '';
 
 		if (repository.projectType === 'frontend' || targetArea === 'frontend') {

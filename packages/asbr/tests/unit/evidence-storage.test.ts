@@ -58,10 +58,7 @@ describe('EvidenceStorage', () => {
 		expect(loaded).toEqual(evidence);
 
 		const dateStr = evidence.createdAt.split('T')[0];
-		const filePath = join(
-			getDataPath('evidence', dateStr),
-			`${evidence.id}.json`,
-		);
+		const filePath = join(getDataPath('evidence', dateStr), `${evidence.id}.json`);
 		const raw = await readFile(filePath, 'utf-8');
 		expect(() => JSON.parse(raw)).toThrow();
 	});

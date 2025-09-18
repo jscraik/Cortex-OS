@@ -14,15 +14,7 @@ describe('memory guard', () => {
 		let logs = '';
 		const guard = spawn(
 			process.execPath,
-			[
-				'scripts/memory-guard.mjs',
-				'--pid',
-				String(hog.pid),
-				'--max',
-				'30',
-				'--interval',
-				'100',
-			],
+			['scripts/memory-guard.mjs', '--pid', String(hog.pid), '--max', '30', '--interval', '100'],
 			{
 				cwd: resolve(__dirname, '..'),
 			},
@@ -34,9 +26,7 @@ describe('memory guard', () => {
 		const exit = await new Promise<{
 			code: number | null;
 			signal: NodeJS.Signals | null;
-		}>((resolve) =>
-			hog.on('exit', (code, signal) => resolve({ code, signal })),
-		);
+		}>((resolve) => hog.on('exit', (code, signal) => resolve({ code, signal })));
 
 		guard.kill('SIGINT');
 

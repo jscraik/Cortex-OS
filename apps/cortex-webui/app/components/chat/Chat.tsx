@@ -44,14 +44,8 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		memoryQuery: false,
 	});
 
-	const {
-		messages,
-		addMessage,
-		updateMessage,
-		deleteMessage,
-		editMessage,
-		clearMessages,
-	} = useChatStore(sessionId);
+	const { messages, addMessage, updateMessage, deleteMessage, editMessage, clearMessages } =
+		useChatStore(sessionId);
 
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const eventSourceRef = useRef<EventSource | null>(null);
@@ -72,9 +66,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				setModels(mapped);
 				if (mapped.length > 0) {
 					const initial =
-						data.default && mapped.find((m) => m.id === data.default)
-							? data.default
-							: mapped[0].id;
+						data.default && mapped.find((m) => m.id === data.default) ? data.default : mapped[0].id;
 					setSelectedModelIds([initial]);
 				}
 			} catch (error: unknown) {
@@ -139,10 +131,9 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			});
 
 			// 2) Start SSE stream for assistant response
-			const es = new EventSource(
-				`/api/chat/${encodeURIComponent(sessionId)}/stream`,
-				{ withCredentials: false },
-			);
+			const es = new EventSource(`/api/chat/${encodeURIComponent(sessionId)}/stream`, {
+				withCredentials: false,
+			});
 			eventSourceRef.current = es;
 
 			let accumulated = '';

@@ -16,20 +16,13 @@ describe('task helper utilities', () => {
 
 	it('validates task input', () => {
 		expect(validateTaskInput(baseInput)).toEqual(baseInput);
-		expect(() => validateTaskInput({ ...baseInput, scopes: [] })).toThrow(
-			ValidationError,
-		);
+		expect(() => validateTaskInput({ ...baseInput, scopes: [] })).toThrow(ValidationError);
 	});
 
 	it('handles idempotency resolution', () => {
 		const tasks = new Map<string, Task>();
 		const cache = new Map<string, { taskId: string; expiry: number }>();
-		const { key, existingTask } = resolveIdempotency(
-			baseInput,
-			undefined,
-			cache,
-			tasks,
-		);
+		const { key, existingTask } = resolveIdempotency(baseInput, undefined, cache, tasks);
 		expect(existingTask).toBeUndefined();
 		expect(key).toBeTypeOf('string');
 

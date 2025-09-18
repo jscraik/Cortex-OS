@@ -3,12 +3,7 @@
  * Implements WCAG 2.2 AA keyboard accessibility requirements
  */
 
-import {
-	handleArrow,
-	handleEscape,
-	handleHomeEnd,
-	handleTab,
-} from './lib/key-handlers.js';
+import { handleArrow, handleEscape, handleHomeEnd, handleTab } from './lib/key-handlers.js';
 
 export interface KeyboardHandlerOptions {
 	trapFocus?: boolean;
@@ -47,10 +42,7 @@ export class KeyboardNavigationManager {
 	/**
 	 * Register a navigation context
 	 */
-	registerContext(
-		contextId: string,
-		context: Omit<NavigationContext, 'currentIndex'>,
-	): void {
+	registerContext(contextId: string, context: Omit<NavigationContext, 'currentIndex'>): void {
 		this.contexts.set(contextId, {
 			...context,
 			currentIndex: 0,
@@ -119,9 +111,7 @@ export class KeyboardNavigationManager {
 			case 'previous':
 				newIndex = context.currentIndex - 1;
 				if (newIndex < 0) {
-					newIndex = context.wrap
-						? focusableElements.length - 1
-						: context.currentIndex;
+					newIndex = context.wrap ? focusableElements.length - 1 : context.currentIndex;
 				}
 				break;
 
@@ -149,9 +139,7 @@ export class KeyboardNavigationManager {
 	/**
 	 * Handle arrow key navigation
 	 */
-	handleArrowKey(
-		key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
-	): boolean {
+	handleArrowKey(key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'): boolean {
 		if (!this.activeContext) {
 			return false;
 		}
@@ -295,10 +283,7 @@ export class KeyboardNavigationManager {
 			}
 
 			// Set position in set
-			htmlElement.setAttribute(
-				'aria-setsize',
-				context.elements.length.toString(),
-			);
+			htmlElement.setAttribute('aria-setsize', context.elements.length.toString());
 			htmlElement.setAttribute('aria-posinset', (index + 1).toString());
 
 			// Set disabled state
@@ -384,9 +369,7 @@ export class KeyboardNavigationManager {
 		this.removeFocusTrap(contextId);
 	}
 
-	private handleGridNavigation(
-		key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
-	): boolean {
+	private handleGridNavigation(key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'): boolean {
 		// Simplified grid navigation - in a real implementation,
 		// this would handle 2D grid movement based on element positions
 		switch (key) {
@@ -425,9 +408,7 @@ export function createFocusableElement(
 		element,
 		role: options.role || element.getAttribute('role') || undefined,
 		disabled: options.disabled || element.hasAttribute('disabled'),
-		ariaLabel:
-			options.ariaLabel || element.getAttribute('aria-label') || undefined,
-		tabIndex:
-			options.tabIndex || parseInt(element.getAttribute('tabindex') || '0', 10),
+		ariaLabel: options.ariaLabel || element.getAttribute('aria-label') || undefined,
+		tabIndex: options.tabIndex || parseInt(element.getAttribute('tabindex') || '0', 10),
 	};
 }

@@ -34,10 +34,9 @@ afterAll(async () => {
 
 describe('runtime event stream', () => {
 	test('broadcasts emitted events over SSE', async () => {
-		const response = await fetch(
-			`${runtime.httpUrl}/v1/events?stream=sse`,
-			{ headers: { Accept: 'text/event-stream' } },
-		);
+		const response = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
+			headers: { Accept: 'text/event-stream' },
+		});
 		expect(response.status).toBe(200);
 		const reader = response.body?.getReader();
 		if (!reader) throw new Error('missing reader');

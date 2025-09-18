@@ -17,8 +17,7 @@ describe('WebSocket transport', () => {
 			});
 		});
 		const address = wss.address();
-		if (typeof address === 'string' || address == null)
-			throw new Error('unexpected address');
+		if (typeof address === 'string' || address == null) throw new Error('unexpected address');
 		const port = address.port;
 		const client = await createEnhancedClient({
 			name: 'ws-demo',

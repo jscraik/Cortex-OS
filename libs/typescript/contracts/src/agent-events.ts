@@ -7,12 +7,7 @@ import { z } from 'zod';
 // Agent Started Event
 export const AgentStartedEventSchema = z.object({
 	agentId: z.string(),
-	type: z.enum([
-		'security',
-		'documentation',
-		'test-generation',
-		'code-analysis',
-	]),
+	type: z.enum(['security', 'documentation', 'test-generation', 'code-analysis']),
 	task: z.string(),
 	startedAt: z.string(),
 });
@@ -20,12 +15,7 @@ export const AgentStartedEventSchema = z.object({
 // Agent Completed Event
 export const AgentCompletedEventSchema = z.object({
 	agentId: z.string(),
-	type: z.enum([
-		'security',
-		'documentation',
-		'test-generation',
-		'code-analysis',
-	]),
+	type: z.enum(['security', 'documentation', 'test-generation', 'code-analysis']),
 	result: z.record(z.unknown()),
 	duration: z.number().positive(),
 	completedAt: z.string(),
@@ -34,12 +24,7 @@ export const AgentCompletedEventSchema = z.object({
 // Agent Failed Event
 export const AgentFailedEventSchema = z.object({
 	agentId: z.string(),
-	type: z.enum([
-		'security',
-		'documentation',
-		'test-generation',
-		'code-analysis',
-	]),
+	type: z.enum(['security', 'documentation', 'test-generation', 'code-analysis']),
 	error: z.string(),
 	failedAt: z.string(),
 });
@@ -56,9 +41,7 @@ export const MCPServerConnectedEventSchema = z.object({
 export type AgentStartedEvent = z.infer<typeof AgentStartedEventSchema>;
 export type AgentCompletedEvent = z.infer<typeof AgentCompletedEventSchema>;
 export type AgentFailedEvent = z.infer<typeof AgentFailedEventSchema>;
-export type MCPServerConnectedEvent = z.infer<
-	typeof MCPServerConnectedEventSchema
->;
+export type MCPServerConnectedEvent = z.infer<typeof MCPServerConnectedEventSchema>;
 
 // Helper function to create agent events
 export const createAgentEvent = {

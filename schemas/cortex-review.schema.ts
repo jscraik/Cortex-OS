@@ -15,20 +15,10 @@ export const Evidence = z.object({
 export const Finding = z.object({
 	id: z.string(),
 	severity: z.enum(['blocker', 'major', 'minor', 'nit']),
-	category: z.enum([
-		'a11y',
-		'tests',
-		'security',
-		'perf',
-		'style',
-		'docs',
-		'tdd',
-	]),
+	category: z.enum(['a11y', 'tests', 'security', 'perf', 'style', 'docs', 'tdd']),
 	message: z.string(),
 	evidence: z.array(Evidence).min(1),
-	neuron_responsible: z
-		.enum(['planner', 'fixer', 'runner', 'reviewer'])
-		.optional(),
+	neuron_responsible: z.enum(['planner', 'fixer', 'runner', 'reviewer']).optional(),
 	remediation_steps: z.array(z.string()).optional(),
 });
 

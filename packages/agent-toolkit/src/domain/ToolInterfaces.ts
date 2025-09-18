@@ -25,9 +25,7 @@ export interface CodemodTool {
  * Validation tool interface for code quality checks
  */
 export interface ValidationTool {
-	validate(
-		inputs: AgentToolkitValidationInput,
-	): Promise<AgentToolkitValidationResult>;
+	validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult>;
 }
 
 /**

@@ -64,14 +64,10 @@ class MemoryCLI {
 			const qdrantOk = await qdrantProvider.verifyConnectivity();
 
 			console.log(`📊 Neo4j: ${neo4jOk ? '✅ Connected' : '❌ Not connected'}`);
-			console.log(
-				`🔍 Qdrant: ${qdrantOk ? '✅ Connected' : '❌ Not connected'}`,
-			);
+			console.log(`🔍 Qdrant: ${qdrantOk ? '✅ Connected' : '❌ Not connected'}`);
 
 			if (!neo4jOk && !qdrantOk) {
-				console.log(
-					'⚠️  No databases connected. Run `docker-compose up` to start services.',
-				);
+				console.log('⚠️  No databases connected. Run `docker-compose up` to start services.');
 			}
 		} catch (error) {
 			console.error('❌ Failed to initialize:', error);
@@ -134,9 +130,7 @@ class MemoryCLI {
 				console.log(
 					`\n${index + 1}. [${memory.metadata.type}] ${memory.metadata.source || 'unknown'}`,
 				);
-				console.log(
-					`   Confidence: ${((memory.metadata.confidence || 1) * 100).toFixed(1)}%`,
-				);
+				console.log(`   Confidence: ${((memory.metadata.confidence || 1) * 100).toFixed(1)}%`);
 				console.log(`   Timestamp: ${memory.metadata.timestamp}`);
 				if (memory.metadata.tags && memory.metadata.tags.length > 0) {
 					console.log(`   Tags: ${memory.metadata.tags.join(', ')}`);
@@ -164,9 +158,7 @@ class MemoryCLI {
 			const stats = await this.memoryService.getMemoryStats();
 
 			console.log(`\n📝 Total Memories: ${stats.totalMemories}`);
-			console.log(
-				`📈 Average Confidence: ${(stats.avgConfidence * 100).toFixed(1)}%`,
-			);
+			console.log(`📈 Average Confidence: ${(stats.avgConfidence * 100).toFixed(1)}%`);
 			console.log(`🆕 Recent Memories (7 days): ${stats.recentMemories}`);
 
 			console.log('\n📋 Memories by Type:');
@@ -184,11 +176,9 @@ class MemoryCLI {
 
 				if (Object.keys(graphStats.relationshipTypeCounts).length > 0) {
 					console.log('   Relationship Types:');
-					Object.entries(graphStats.relationshipTypeCounts).forEach(
-						([type, count]) => {
-							console.log(`     ${type}: ${count}`);
-						},
-					);
+					Object.entries(graphStats.relationshipTypeCounts).forEach(([type, count]) => {
+						console.log(`     ${type}: ${count}`);
+					});
 				}
 			}
 

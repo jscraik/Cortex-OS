@@ -42,9 +42,9 @@ describe('StdioHttpBridge requestTimeoutMs', () => {
 			requestTimeoutMs: 50,
 			retryOptions: { maxRetries: 0, retryDelay: 1 },
 		});
-		await expect(
-			bridge.forward({ id: '1', method: 'm', params: {} }),
-		).rejects.toBeInstanceOf(TimeoutError);
+		await expect(bridge.forward({ id: '1', method: 'm', params: {} })).rejects.toBeInstanceOf(
+			TimeoutError,
+		);
 		await bridge.close();
 		server.close();
 	});

@@ -39,9 +39,7 @@ export class TDDStateMachine {
 					// Can transition to GREEN when:
 					// 1. All tests are now passing
 					// 2. The change is minimal and targeted
-					const allTestsPass = ctx.testResults.every(
-						(test) => test.status === 'pass',
-					);
+					const allTestsPass = ctx.testResults.every((test) => test.status === 'pass');
 					const changeIsMinimal = this.validateMinimalChange(
 						ctx.proposedChange,
 						ctx.currentState.failingTests,
@@ -49,12 +47,8 @@ export class TDDStateMachine {
 					return allTestsPass && changeIsMinimal;
 				},
 				action: async (_ctx) => {
-					await this.unlockImplementationFiles(
-						_ctx.proposedChange.files.map((f) => f.path),
-					);
-					this.logTransition(
-						'RED → GREEN: Tests passing with minimal implementation',
-					);
+					await this.unlockImplementationFiles(_ctx.proposedChange.files.map((f) => f.path));
+					this.logTransition('RED → GREEN: Tests passing with minimal implementation');
 				},
 			},
 			{
@@ -64,17 +58,13 @@ export class TDDStateMachine {
 					// Can transition to REFACTOR when:
 					// 1. All tests still pass
 					// 2. No new functionality being added
-					const allTestsPass = ctx.testResults.every(
-						(test) => test.status === 'pass',
-					);
+					const allTestsPass = ctx.testResults.every((test) => test.status === 'pass');
 					const noNewFunctionality = this.isRefactorOnly(ctx.proposedChange);
 					return allTestsPass && noNewFunctionality;
 				},
 				action: async (_ctx) => {
 					await this.enableRefactorMode();
-					this.logTransition(
-						'GREEN → REFACTOR: Safe to improve code structure',
-					);
+					this.logTransition('GREEN → REFACTOR: Safe to improve code structure');
 				},
 			},
 			{
@@ -85,9 +75,7 @@ export class TDDStateMachine {
 					// 1. New test is added
 					// 2. New functionality is being implemented
 					const newTestAdded = this.detectNewTest(ctx.proposedChange);
-					const newFunctionality = this.detectNewFunctionality(
-						ctx.proposedChange,
-					);
+					const newFunctionality = this.detectNewFunctionality(ctx.proposedChange);
 					return newTestAdded || newFunctionality;
 				},
 				action: async (_ctx) => {
@@ -100,33 +88,23 @@ export class TDDStateMachine {
 				to: TDDState.RED,
 				condition: (ctx) => {
 					// Move to RED when developer writes a failing test
-					const hasFailingTest = ctx.testResults.some(
-						(test) => test.status === 'fail',
-					);
-					const isTestFile = ctx.proposedChange.files.some((f) =>
-						this.isTestFile(f.path),
-					);
+					const hasFailingTest = ctx.testResults.some((test) => test.status === 'fail');
+					const isTestFile = ctx.proposedChange.files.some((f) => this.isTestFile(f.path));
 					return hasFailingTest && isTestFile;
 				},
 				action: async (_ctx) => {
 					await this.initiateTDDCycle();
-					this.logTransition(
-						'UNCLEAR → RED: TDD cycle initiated with failing test',
-					);
+					this.logTransition('UNCLEAR → RED: TDD cycle initiated with failing test');
 				},
 			},
 		];
 	}
 
-	async validateTransition(
-		context: TDDValidationContext,
-	): Promise<ValidationResult> {
+	async validateTransition(context: TDDValidationContext): Promise<ValidationResult> {
 		const currentState = this.stateData.current;
 
 		// Find applicable transitions
-		const possibleTransitions = this.transitions.filter(
-			(t) => t.from === currentState,
-		);
+		const possibleTransitions = this.transitions.filter((t) => t.from === currentState);
 
 		for (const transition of possibleTransitions) {
 			if (transition.condition(context)) {
@@ -146,9 +124,7 @@ export class TDDStateMachine {
 		return this.generateCoachingGuidance(context);
 	}
 
-	private generateCoachingGuidance(
-		context: TDDValidationContext,
-	): ValidationResult {
+	private generateCoachingGuidance(context: TDDValidationContext): ValidationResult {
 		const currentState = this.stateData.current;
 
 		switch (currentState) {
@@ -168,15 +144,11 @@ export class TDDStateMachine {
 		}
 	}
 
-	private validateRedPhaseChange(
-		context: TDDValidationContext,
-	): ValidationResult {
+	private validateRedPhaseChange(context: TDDValidationContext): ValidationResult {
 		const { proposedChange } = context;
 
 		// RED phase: Only test files should be modified
-		const nonTestFiles = proposedChange.files.filter(
-			(file) => !this.isTestFile(file.path),
-		);
+		const nonTestFiles = proposedChange.files.filter((file) => !this.isTestFile(file.path));
 
 		if (nonTestFiles.length > 0) {
 			return {
@@ -188,15 +160,12 @@ export class TDDStateMachine {
 		}
 
 		// Validate that new tests actually fail
-		const hasFailingTests = context.testResults.some(
-			(test) => test.status === 'fail',
-		);
+		const hasFailingTests = context.testResults.some((test) => test.status === 'fail');
 		if (!hasFailingTests) {
 			return {
 				approved: false,
 				reason: 'RED phase: Tests must fail before implementation',
-				suggestion:
-					'Write a test that fails for the feature you want to implement',
+				suggestion: 'Write a test that fails for the feature you want to implement',
 			};
 		}
 
@@ -206,9 +175,7 @@ export class TDDStateMachine {
 		};
 	}
 
-	private validateGreenPhaseChange(
-		context: TDDValidationContext,
-	): ValidationResult {
+	private validateGreenPhaseChange(context: TDDValidationContext): ValidationResult {
 		const { proposedChange, testResults } = context;
 
 		// GREEN phase: Implementation changes must be minimal and targeted
@@ -238,9 +205,7 @@ export class TDDStateMachine {
 		};
 	}
 
-	private validateRefactorChange(
-		context: TDDValidationContext,
-	): ValidationResult {
+	private validateRefactorChange(context: TDDValidationContext): ValidationResult {
 		const { proposedChange, testResults } = context;
 
 		// REFACTOR phase: All tests must remain green
@@ -268,22 +233,16 @@ export class TDDStateMachine {
 		};
 	}
 
-	private validateUnclearPhaseChange(
-		_context: TDDValidationContext,
-	): ValidationResult {
+	private validateUnclearPhaseChange(_context: TDDValidationContext): ValidationResult {
 		return {
 			approved: false,
 			reason: 'TDD state unclear - please start with a failing test',
-			suggestion:
-				'Write a test that fails for the feature you want to implement',
+			suggestion: 'Write a test that fails for the feature you want to implement',
 		};
 	}
 
 	// Helper methods
-	private validateMinimalChange(
-		change: ChangeSet,
-		_failingTests: TestResult[],
-	): boolean {
+	private validateMinimalChange(change: ChangeSet, _failingTests: TestResult[]): boolean {
 		// Implementation: Check if change is minimal relative to failing tests
 		// This would analyze code coverage and change scope
 		return change.totalChanges < 50; // Simplified for now
@@ -304,9 +263,7 @@ export class TDDStateMachine {
 	}
 
 	private detectNewFunctionality(change: ChangeSet): boolean {
-		return change.files.some(
-			(f) => !this.isTestFile(f.path) && f.linesAdded > 0,
-		);
+		return change.files.some((f) => !this.isTestFile(f.path) && f.linesAdded > 0);
 	}
 
 	private isTestFile(path: string): boolean {
@@ -329,11 +286,8 @@ export class TDDStateMachine {
 		if (change.totalChanges > 100) {
 			return {
 				isMinimal: false,
-				suggestion:
-					'Break this into smaller changes - make one test pass at a time',
-				excessLines: change.files
-					.filter((f) => f.linesAdded > 20)
-					.map((f) => f.path),
+				suggestion: 'Break this into smaller changes - make one test pass at a time',
+				excessLines: change.files.filter((f) => f.linesAdded > 20).map((f) => f.path),
 			};
 		}
 
@@ -351,9 +305,7 @@ export class TDDStateMachine {
 
 	async enableRefactorMode(): Promise<void> {
 		// Implementation: Enable broader file access for refactoring
-		console.log(
-			'Enabling refactor mode - all files unlocked for structural changes',
-		);
+		console.log('Enabling refactor mode - all files unlocked for structural changes');
 	}
 
 	async lockImplementationFiles(): Promise<void> {

@@ -1,10 +1,6 @@
 export type LogMeta = Record<string, unknown>;
 
-function log(
-	level: 'info' | 'warn' | 'error',
-	message: string,
-	meta?: LogMeta,
-): void {
+function log(level: 'info' | 'warn' | 'error', message: string, meta?: LogMeta): void {
 	const entry = {
 		level,
 		timestamp: new Date().toISOString(),

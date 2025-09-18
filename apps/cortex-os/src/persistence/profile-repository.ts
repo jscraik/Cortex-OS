@@ -75,11 +75,7 @@ export class ProfileRepository {
 		return this.writeRecord(id, next, expected);
 	}
 
-	async replace(
-		id: string,
-		profile: ProfileRecord,
-		opts: SaveOptions = {},
-	): Promise<ProfileEntry> {
+	async replace(id: string, profile: ProfileRecord, opts: SaveOptions = {}): Promise<ProfileEntry> {
 		this.assertId(id, 'replace');
 		if (profile.id !== id) {
 			throw new Error('ProfileRepository.replace requires matching id');

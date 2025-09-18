@@ -9,11 +9,7 @@ describe('Consolidation', () => {
 		const long = new InMemoryStore();
 		const now = Date.now();
 
-		const mk = (
-			id: string,
-			ageMs: number,
-			scope: 'session' | 'user',
-		): Memory => ({
+		const mk = (id: string, ageMs: number, scope: 'session' | 'user'): Memory => ({
 			id,
 			kind: 'note',
 			text: `m ${id}`,

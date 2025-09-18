@@ -7,10 +7,7 @@ export default defineConfig({
 
 	test: {
 		environment: 'node',
-		include: [
-			'simple-tests/**/*.test.ts',
-			'libs/typescript/contracts/tests/**/*.contract.test.ts',
-		],
+		include: ['simple-tests/**/*.test.ts', 'libs/typescript/contracts/tests/**/*.contract.test.ts'],
 		globals: true,
 		name: 'simple-tests',
 		coverage: {

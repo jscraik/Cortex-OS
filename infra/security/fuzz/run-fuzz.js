@@ -14,9 +14,7 @@ export async function runFuzz({
 	const results = [];
 	for (let i = 0; i < iterations; i++) {
 		try {
-			const payload = payloadGenerator
-				? payloadGenerator(i)
-				: fc.sample(fc.jsonObject(), 1)[0];
+			const payload = payloadGenerator ? payloadGenerator(i) : fc.sample(fc.jsonObject(), 1)[0];
 			const res = await axios.post(target, payload, { timeout: 5000 });
 			results.push({ i, status: res.status });
 		} catch (err) {

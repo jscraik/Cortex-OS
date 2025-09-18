@@ -15,9 +15,7 @@ export type { SecurityError };
 export function generateNonce(length = 32): string {
 	const array = new Uint8Array(length);
 	crypto.getRandomValues(array);
-	return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
-		'',
-	);
+	return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -62,9 +60,7 @@ export function isCertificateExpired(certPem: string): boolean {
 /**
  * Sanitize selectors for logging
  */
-export function sanitizeSelectors(
-	selectors: Record<string, string>,
-): Record<string, string> {
+export function sanitizeSelectors(selectors: Record<string, string>): Record<string, string> {
 	const sanitized: Record<string, string> = {};
 
 	for (const [key, value] of Object.entries(selectors)) {

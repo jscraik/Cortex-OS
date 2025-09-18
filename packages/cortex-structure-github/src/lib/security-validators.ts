@@ -50,11 +50,7 @@ export const validateGitHubUrl = (url: string): ValidationResult => {
 	}
 
 	// Directory traversal protection
-	if (
-		url.includes('..') ||
-		url.includes('//github.com/') ||
-		url.includes('%2e%2e')
-	) {
+	if (url.includes('..') || url.includes('//github.com/') || url.includes('%2e%2e')) {
 		return { valid: false, error: 'Potential directory traversal detected' };
 	}
 

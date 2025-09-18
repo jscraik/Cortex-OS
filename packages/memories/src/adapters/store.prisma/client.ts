@@ -3,11 +3,7 @@
 import { decayEnabled, decayFactor, getHalfLifeMs } from '../../core/decay.js';
 import { isExpired } from '../../core/ttl.js';
 import type { Memory } from '../../domain/types.js';
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from '../../ports/MemoryStore.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -27,17 +23,11 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export type PrismaMemoryModel = {
-	upsert(args: {
-		where: { id: string };
-		create: Memory;
-		update: Memory;
-	}): Promise<PrismaRow>;
+	upsert(args: { where: { id: string }; create: Memory; update: Memory }): Promise<PrismaRow>;
 	findUnique(args: { where: { id: string } }): Promise<PrismaRow | null>;
 	delete(args: { where: { id: string } }): Promise<unknown>;
 	findMany(args: unknown): Promise<PrismaRow[]>;
-	deleteMany(args: {
-		where: { id: { in: string[] } };
-	}): Promise<{ count: number }>;
+	deleteMany(args: { where: { id: { in: string[] } } }): Promise<{ count: number }>;
 };
 
 export type PrismaLike = {
@@ -78,9 +68,7 @@ export class PrismaStore implements MemoryStore {
 			where: {
 				AND: [
 					q.text ? { text: { contains: q.text, mode: 'insensitive' } } : {},
-					q.filterTags && q.filterTags.length > 0
-						? { tags: { hasEvery: q.filterTags } }
-						: {},
+					q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {},
 				],
 			},
 			take: q.topK * 10,
@@ -98,18 +86,13 @@ export class PrismaStore implements MemoryStore {
 		return items.slice(0, q.topK);
 	}
 
-	async searchByVector(
-		q: VectorQuery,
-		_namespace = 'default',
-	): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, _namespace = 'default'): Promise<Memory[]> {
 		_use(_namespace);
 		// Fetch candidates with vectors and matching tags
 		const candidateRows = await this.prisma.memory.findMany({
 			where: {
 				vector: { not: undefined },
-				...(q.filterTags && q.filterTags.length > 0
-					? { tags: { hasEvery: q.filterTags } }
-					: {}),
+				...(q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {}),
 			},
 			orderBy: { updatedAt: 'desc' },
 			take: q.topK * 10, // Fetch more candidates for similarity matching
@@ -118,9 +101,7 @@ export class PrismaStore implements MemoryStore {
 		// Convert to domain objects and filter out those without vectors
 		const candidates = candidateRows
 			.map(prismaToDomain)
-			.filter((memory): memory is Memory & { vector: number[] } =>
-				Array.isArray(memory.vector),
-			);
+			.filter((memory): memory is Memory & { vector: number[] } => Array.isArray(memory.vector));
 
 		// Perform similarity matching in memory
 		let scoredCandidates = candidates.map((memory) => ({
@@ -188,9 +169,7 @@ type PrismaRow = {
 const ALLOWED_KINDS = ['note', 'event', 'artifact', 'embedding'] as const;
 type AllowedKind = (typeof ALLOWED_KINDS)[number];
 function isAllowedKind(v: unknown): v is AllowedKind {
-	return (
-		typeof v === 'string' && (ALLOWED_KINDS as readonly string[]).includes(v)
-	);
+	return typeof v === 'string' && (ALLOWED_KINDS as readonly string[]).includes(v);
 }
 
 function prismaToDomain(row: PrismaRow): Memory {

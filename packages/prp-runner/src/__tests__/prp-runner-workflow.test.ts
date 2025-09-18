@@ -13,8 +13,7 @@ describe('PRP Runner workflow (G0→G1)', () => {
 		const { state, prpPath, markdown } = await runPRPWorkflow(
 			{
 				title: 'Search performance uplift',
-				description:
-					'Improve search endpoint latency and accessibility to WCAG 2.2 AA',
+				description: 'Improve search endpoint latency and accessibility to WCAG 2.2 AA',
 				requirements: ['LCP <= 2500ms', 'TBT <= 300ms', 'A11y score >= 95%'],
 			},
 			{

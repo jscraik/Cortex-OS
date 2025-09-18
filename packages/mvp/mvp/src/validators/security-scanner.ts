@@ -11,10 +11,7 @@ import {
 	getRelativePath,
 	readJsonFile,
 } from '../lib/utils.js';
-import type {
-	SecurityScanResult,
-	SecurityVulnerability,
-} from '../lib/validation-types.js';
+import type { SecurityScanResult, SecurityVulnerability } from '../lib/validation-types.js';
 import type { PRPState } from '../state.js';
 
 export class SecurityScanner {
@@ -37,14 +34,9 @@ export class SecurityScanner {
 				this.runBanditScan(projectRoot),
 			];
 
-			const timeoutPromise = new Promise<SecurityVulnerability[]>(
-				(_, reject) => {
-					setTimeout(
-						() => reject(new Error('Security scan timeout')),
-						this.SCAN_TIMEOUT,
-					);
-				},
-			);
+			const timeoutPromise = new Promise<SecurityVulnerability[]>((_, reject) => {
+				setTimeout(() => reject(new Error('Security scan timeout')), this.SCAN_TIMEOUT);
+			});
 
 			const results = await Promise.allSettled(
 				scanPromises.map((p) => Promise.race([p, timeoutPromise])),
@@ -80,12 +72,8 @@ export class SecurityScanner {
 			) {
 				const basicFindings = await this.runBasicSecurityChecks(projectRoot);
 				scanResults.vulnerabilities.push(...basicFindings);
-				scanResults.majors += basicFindings.filter(
-					(f) => f.severity === 'medium',
-				).length;
-				scanResults.blockers += basicFindings.filter(
-					(f) => f.severity === 'high',
-				).length;
+				scanResults.majors += basicFindings.filter((f) => f.severity === 'medium').length;
+				scanResults.blockers += basicFindings.filter((f) => f.severity === 'high').length;
 			}
 
 			const tools = this.identifyActiveTools(scanResults.vulnerabilities);
@@ -98,20 +86,11 @@ export class SecurityScanner {
 					vulnerabilities: scanResults.vulnerabilities,
 					summary: {
 						total: scanResults.vulnerabilities.length,
-						critical: scanResults.vulnerabilities.filter(
-							(v) => v.severity === 'critical',
-						).length,
-						high: scanResults.vulnerabilities.filter(
-							(v) => v.severity === 'high',
-						).length,
-						medium: scanResults.vulnerabilities.filter(
-							(v) => v.severity === 'medium',
-						).length,
-						low: scanResults.vulnerabilities.filter((v) => v.severity === 'low')
-							.length,
-						info: scanResults.vulnerabilities.filter(
-							(v) => v.severity === 'info',
-						).length,
+						critical: scanResults.vulnerabilities.filter((v) => v.severity === 'critical').length,
+						high: scanResults.vulnerabilities.filter((v) => v.severity === 'high').length,
+						medium: scanResults.vulnerabilities.filter((v) => v.severity === 'medium').length,
+						low: scanResults.vulnerabilities.filter((v) => v.severity === 'low').length,
+						info: scanResults.vulnerabilities.filter((v) => v.severity === 'info').length,
 					},
 				},
 			};
@@ -121,10 +100,7 @@ export class SecurityScanner {
 				majors: 1,
 				details: {
 					tools: ['Error'],
-					error:
-						error instanceof Error
-							? error.message
-							: 'Unknown security scan error',
+					error: error instanceof Error ? error.message : 'Unknown security scan error',
 					vulnerabilities: [
 						{
 							tool: 'system',
@@ -148,9 +124,7 @@ export class SecurityScanner {
 		}
 	}
 
-	private async runSemgrepScan(
-		projectRoot: string,
-	): Promise<SecurityVulnerability[]> {
+	private async runSemgrepScan(projectRoot: string): Promise<SecurityVulnerability[]> {
 		try {
 			await execAsync('which semgrep', { timeout: 2000 });
 
@@ -172,16 +146,13 @@ export class SecurityScanner {
 					const findings = results.results || [];
 
 					return findings.map((finding: any) => {
-						const severity = this.mapSemgrepSeverity(
-							finding.extra?.severity || 'INFO',
-						);
+						const severity = this.mapSemgrepSeverity(finding.extra?.severity || 'INFO');
 						return {
 							tool: 'semgrep',
 							severity,
 							type: finding.check_id?.split('.').pop() || 'unknown',
 							ruleId: finding.check_id,
-							message:
-								finding.extra?.message || 'Security vulnerability detected',
+							message: finding.extra?.message || 'Security vulnerability detected',
 							file: getRelativePath(projectRoot, finding.path || ''),
 							line: finding.start?.line || 0,
 							column: finding.start?.col || 0,
@@ -220,27 +191,20 @@ export class SecurityScanner {
 		return [];
 	}
 
-	private async runESLintSecurityScan(
-		projectRoot: string,
-	): Promise<SecurityVulnerability[]> {
+	private async runESLintSecurityScan(projectRoot: string): Promise<SecurityVulnerability[]> {
 		try {
 			if (fileExists(createFilePath(projectRoot, 'package.json'))) {
-				const packageJson = readJsonFile(
-					createFilePath(projectRoot, 'package.json'),
-				);
+				const packageJson = readJsonFile(createFilePath(projectRoot, 'package.json'));
 				const hasSecurityPlugin =
 					packageJson.dependencies?.['eslint-plugin-security'] ||
 					packageJson.devDependencies?.['eslint-plugin-security'];
 
 				if (hasSecurityPlugin) {
-					const { stdout } = await execAsync(
-						'npx eslint --format json --ext .js,.ts,.jsx,.tsx .',
-						{
-							cwd: projectRoot,
-							timeout: this.TOOL_TIMEOUT,
-							maxBuffer: 1024 * 1024,
-						},
-					).catch(() => ({ stdout: '[]' }));
+					const { stdout } = await execAsync('npx eslint --format json --ext .js,.ts,.jsx,.tsx .', {
+						cwd: projectRoot,
+						timeout: this.TOOL_TIMEOUT,
+						maxBuffer: 1024 * 1024,
+					}).catch(() => ({ stdout: '[]' }));
 
 					const eslintResults = JSON.parse(stdout || '[]');
 					return (eslintResults || []).flatMap((result: any) =>
@@ -274,9 +238,7 @@ export class SecurityScanner {
 		return [];
 	}
 
-	private async runBanditScan(
-		projectRoot: string,
-	): Promise<SecurityVulnerability[]> {
+	private async runBanditScan(projectRoot: string): Promise<SecurityVulnerability[]> {
 		try {
 			if (
 				fileExists(createFilePath(projectRoot, 'pyproject.toml')) ||
@@ -318,20 +280,12 @@ export class SecurityScanner {
 		return [];
 	}
 
-	private async runBasicSecurityChecks(
-		projectRoot: string,
-	): Promise<SecurityVulnerability[]> {
+	private async runBasicSecurityChecks(projectRoot: string): Promise<SecurityVulnerability[]> {
 		const findings: SecurityVulnerability[] = [];
 
 		try {
 			const glob = await import('glob');
-			const patterns = [
-				'**/*.js',
-				'**/*.ts',
-				'**/*.py',
-				'**/*.jsx',
-				'**/*.tsx',
-			];
+			const patterns = ['**/*.js', '**/*.ts', '**/*.py', '**/*.jsx', '**/*.tsx'];
 
 			for (const pattern of patterns) {
 				const files = await glob.glob(pattern, {
@@ -340,10 +294,7 @@ export class SecurityScanner {
 				});
 
 				for (const file of files.slice(0, 50)) {
-					const fileFindings = await this.checkFileForSecurityIssues(
-						projectRoot,
-						file,
-					);
+					const fileFindings = await this.checkFileForSecurityIssues(projectRoot, file);
 					findings.push(...fileFindings);
 				}
 			}
@@ -378,11 +329,7 @@ export class SecurityScanner {
 
 			lines.forEach((line, index) => {
 				secretPatterns.forEach((pattern) => {
-					if (
-						pattern.test(line) &&
-						!line.includes('process.env') &&
-						!line.includes('config')
-					) {
+					if (pattern.test(line) && !line.includes('process.env') && !line.includes('config')) {
 						findings.push({
 							tool: 'basic-check',
 							severity: 'high',
@@ -412,18 +359,12 @@ export class SecurityScanner {
 
 			return findings;
 		} catch (error) {
-			console.debug(
-				'Basic security check: failed to read file',
-				relativePath,
-				error,
-			);
+			console.debug('Basic security check: failed to read file', relativePath, error);
 			return [];
 		}
 	}
 
-	private mapSemgrepSeverity(
-		severity: string,
-	): SecurityVulnerability['severity'] {
+	private mapSemgrepSeverity(severity: string): SecurityVulnerability['severity'] {
 		switch (severity.toUpperCase()) {
 			case 'ERROR':
 			case 'CRITICAL':
@@ -441,9 +382,7 @@ export class SecurityScanner {
 		}
 	}
 
-	private mapBanditSeverity(
-		severity: string,
-	): SecurityVulnerability['severity'] {
+	private mapBanditSeverity(severity: string): SecurityVulnerability['severity'] {
 		switch (severity.toUpperCase()) {
 			case 'HIGH':
 				return 'high';
@@ -456,15 +395,11 @@ export class SecurityScanner {
 		}
 	}
 
-	private hasOnlyInfoMessages(
-		vulnerabilities: SecurityVulnerability[],
-	): boolean {
+	private hasOnlyInfoMessages(vulnerabilities: SecurityVulnerability[]): boolean {
 		return vulnerabilities.every((v) => v.severity === 'info');
 	}
 
-	private identifyActiveTools(
-		vulnerabilities: SecurityVulnerability[],
-	): string[] {
+	private identifyActiveTools(vulnerabilities: SecurityVulnerability[]): string[] {
 		const toolsUsed = new Set(vulnerabilities.map((v) => v.tool));
 		const tools = [];
 

@@ -19,12 +19,8 @@ interface Neuron {
 	dependencies: string[];
 	tools: string[];
 	requiresLLM?: boolean;
-	execute(
-		state: PRPState,
-		context: { workingDirectory?: string },
-	): Promise<NeuronResult>;
+	execute(state: PRPState, context: { workingDirectory?: string }): Promise<NeuronResult>;
 }
-
 
 interface NeuronResult {
 	output: unknown;
@@ -43,7 +39,6 @@ interface ExecutionMetrics {
 	filesModified: number;
 	commandsExecuted: number;
 }
-
 
 export interface MCPTool<Params = Record<string, unknown>, Result = unknown> {
 	name: string;
@@ -165,10 +160,7 @@ export class MCPAdapter {
 	/**
 	 * Convert MCP tools to kernel-compatible neurons
 	 */
-	createNeuronFromTool(
-		tool: MCPTool,
-		phase: 'strategy' | 'build' | 'evaluation',
-	): Neuron {
+	createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Neuron {
 		return {
 			id: `mcp-${tool.name}`,
 			role: `mcp-tool-${tool.name}`,
@@ -177,10 +169,7 @@ export class MCPAdapter {
 			tools: [tool.name],
 			requiresLLM: false,
 
-			execute: async (
-				state: PRPState,
-				context: { workingDirectory?: string },
-			) => {
+			execute: async (state: PRPState, context: { workingDirectory?: string }) => {
 				// Create context for tool execution (side effect: stores in this.contexts)
 				this.createContext(state, {
 					workingDirectory: context.workingDirectory,
@@ -188,11 +177,7 @@ export class MCPAdapter {
 
 				// Extract parameters from blueprint for tool execution
 				const params = this.extractToolParams(state.blueprint, tool);
-				const execution = await this.executeTool(
-					tool.name,
-					params,
-					state.runId,
-				);
+				const execution = await this.executeTool(tool.name, params, state.runId);
 
 				const metrics: ExecutionMetrics = {
 					startTime: new Date().toISOString(),
@@ -305,9 +290,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				throw new Error('Code execution not allowed');
 			}
 			const { file } = z.object({ file: z.string() }).parse(params);
-			const abs = path.isAbsolute(file)
-				? file
-				: path.join(context.workingDirectory, file);
+			const abs = path.isAbsolute(file) ? file : path.join(context.workingDirectory, file);
 			const { stdout } = await runCommand(`npx eslint "${abs}" -f json`, {
 				cwd: context.workingDirectory,
 			});

@@ -22,9 +22,7 @@ export async function runSmoke(opts: RunSmokeOptions): Promise<RunSmokeResult> {
 	const {
 		scenarioFile,
 		count = 5,
-		seed = process.env.SIMLAB_SEED
-			? parseInt(process.env.SIMLAB_SEED, 10)
-			: 12345,
+		seed = process.env.SIMLAB_SEED ? parseInt(process.env.SIMLAB_SEED, 10) : 12345,
 		maxTurns = 8,
 		timeout = 30_000,
 		gatePassRate = 0.8,
@@ -62,9 +60,9 @@ export async function runSmoke(opts: RunSmokeOptions): Promise<RunSmokeResult> {
 	// Gate check
 	if (passRate < gatePassRate) {
 		throw new Error(
-			`GATE FAILURE: Pass rate ${(passRate * 100).toFixed(1)}% below ${(
-				gatePassRate * 100
-			).toFixed(1)}% threshold`,
+			`GATE FAILURE: Pass rate ${(passRate * 100).toFixed(1)}% below ${(gatePassRate * 100).toFixed(
+				1,
+			)}% threshold`,
 		);
 	}
 

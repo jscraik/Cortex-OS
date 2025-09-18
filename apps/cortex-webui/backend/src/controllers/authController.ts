@@ -30,9 +30,7 @@ export class AuthController {
 			res.json(result);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
 			} else if (error instanceof HttpError) {
 				res.status(error.statusCode).json({ error: error.message });
 			} else {
@@ -50,13 +48,8 @@ export class AuthController {
 		} catch (error) {
 			console.error('Registration error:', error);
 			if (error instanceof z.ZodError) {
-				res
-					.status(400)
-					.json({ error: 'Validation failed', details: error.errors });
-			} else if (
-				error instanceof Error &&
-				error.message.includes('already exists')
-			) {
+				res.status(400).json({ error: 'Validation failed', details: error.errors });
+			} else if (error instanceof Error && error.message.includes('already exists')) {
 				res.status(409).json({ error: error.message });
 			} else {
 				res.status(500).json({

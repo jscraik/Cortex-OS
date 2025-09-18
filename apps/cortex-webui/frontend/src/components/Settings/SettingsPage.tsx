@@ -9,10 +9,7 @@ interface SettingsPageProps {
 	onThemeChange: (theme: 'light' | 'dark') => void;
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({
-	theme,
-	onThemeChange,
-}) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ theme, onThemeChange }) => {
 	const [apiKey, setApiKey] = useState('');
 	const [model, setModel] = useState('gpt-4');
 	const modelId = useId();
@@ -57,10 +54,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 					<h2 className="text-lg font-medium mb-4">Model Settings</h2>
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor={modelId}
-								className="block text-sm font-medium text-gray-700"
-							>
+							<label htmlFor={modelId} className="block text-sm font-medium text-gray-700">
 								Default Model
 							</label>
 							<select
@@ -82,10 +76,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 					<h2 className="text-lg font-medium mb-4">API Configuration</h2>
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor={apiKeyId}
-								className="block text-sm font-medium text-gray-700"
-							>
+							<label htmlFor={apiKeyId} className="block text-sm font-medium text-gray-700">
 								API Key
 							</label>
 							<input
@@ -97,28 +88,20 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 								placeholder="Enter your API key"
 							/>
 							<p className="mt-1 text-sm text-gray-500">
-								Your API key is stored locally and never sent to any server
-								except the AI provider.
+								Your API key is stored locally and never sent to any server except the AI provider.
 							</p>
 						</div>
 					</div>
 				</div>
 
 				<div className="flex justify-end">
-					<button
-						type="submit"
-						className="bg-blue-500 text-white rounded px-4 py-2"
-					>
+					<button type="submit" className="bg-blue-500 text-white rounded px-4 py-2">
 						Save Settings
 					</button>
 				</div>
 
 				{status && (
-					<output
-						id={statusId}
-						className="text-sm text-gray-600"
-						aria-live="polite"
-					>
+					<output id={statusId} className="text-sm text-gray-600" aria-live="polite">
 						{status}
 					</output>
 				)}

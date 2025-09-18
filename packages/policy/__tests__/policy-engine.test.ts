@@ -11,19 +11,13 @@ describe('policy engine', () => {
 		});
 
 		// allowed path
-		expect(() =>
-			enforce(grant, 'read', { path: `${process.cwd()}/README.md` }),
-		).not.toThrow();
+		expect(() => enforce(grant, 'read', { path: `${process.cwd()}/README.md` })).not.toThrow();
 
 		// disallowed action
-		expect(() =>
-			enforce(grant, 'write', { path: `${process.cwd()}/README.md` }),
-		).toThrow();
+		expect(() => enforce(grant, 'write', { path: `${process.cwd()}/README.md` })).toThrow();
 
 		// disallowed path when scoped
-		expect(() =>
-			enforce(grant, 'read', { path: `${process.cwd()}/outside.txt` }),
-		).toThrow();
+		expect(() => enforce(grant, 'read', { path: `${process.cwd()}/outside.txt` })).toThrow();
 	});
 
 	it('enforces simple rate limit', () => {

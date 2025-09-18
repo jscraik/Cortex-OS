@@ -25,8 +25,7 @@ export function createService() {
 
 	app.get('/messages/:id', (req, res) => {
 		const { id } = req.params;
-		const message =
-			outbox.find((m) => m.id === id) || poisonQueue.find((m) => m.id === id);
+		const message = outbox.find((m) => m.id === id) || poisonQueue.find((m) => m.id === id);
 		if (message) {
 			res.json(message);
 		} else {
@@ -96,8 +95,7 @@ export function createTestService() {
 
 	app.get('/messages/:id', (req, res) => {
 		const { id } = req.params;
-		const message =
-			outbox.find((m) => m.id === id) || poisonQueue.find((m) => m.id === id);
+		const message = outbox.find((m) => m.id === id) || poisonQueue.find((m) => m.id === id);
 		if (message) {
 			res.json(message);
 		} else {
@@ -125,8 +123,7 @@ export function createTestService() {
 
 			// Deterministic failure for tests when simulateFailure flag is present on the enqueue URL
 			const simulateFailureFlag =
-				message._simulateFailure === true ||
-				req.query.simulateFailure === 'true';
+				message._simulateFailure === true || req.query.simulateFailure === 'true';
 			// Deterministic failure behavior for tests
 			const shouldFail = simulateFailureFlag;
 

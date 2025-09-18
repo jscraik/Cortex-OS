@@ -66,9 +66,7 @@ export function createBurstSmoother({
 	}
 
 	const middleware = ((req: Request, res: Response, next: NextFunction) => {
-		const key = keyHeader
-			? String(req.headers[keyHeader.toLowerCase()] || 'global')
-			: 'global';
+		const key = keyHeader ? String(req.headers[keyHeader.toLowerCase()] || 'global') : 'global';
 		if (acquire(key)) return next();
 		res.status(429).json({ error: 'Rate smoothed: insufficient tokens' });
 	}) as BurstSmootherMiddleware;

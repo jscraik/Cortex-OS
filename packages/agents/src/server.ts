@@ -65,16 +65,10 @@ const startAgentSystem = async () => {
 	// Notify A2A bus about agent creation
 	for (const agent of subAgents) {
 		const agentId = randomUUID();
-		await busIntegration.notifyAgentCreated(
-			agentId,
-			agent.specialization,
-			agent.capabilities,
-		);
+		await busIntegration.notifyAgentCreated(agentId, agent.specialization, agent.capabilities);
 	}
 
-	console.log(
-		`✅ Master agent initialized with ${subAgents.length} sub-agents:`,
-	);
+	console.log(`✅ Master agent initialized with ${subAgents.length} sub-agents:`);
 	for (const agent of subAgents) {
 		console.log(`   📋 ${agent.name} - ${agent.description}`);
 	}

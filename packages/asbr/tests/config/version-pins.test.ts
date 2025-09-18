@@ -12,11 +12,7 @@ describe('loadVersionPins', () => {
 		try {
 			const configDir = join(tmp, 'cortex', 'asbr');
 			await mkdir(configDir, { recursive: true });
-			await writeFile(
-				join(configDir, 'version-pins.yaml'),
-				'foo: 1.0\n',
-				'utf-8',
-			);
+			await writeFile(join(configDir, 'version-pins.yaml'), 'foo: 1.0\n', 'utf-8');
 			await expect(loadVersionPins()).rejects.toBeInstanceOf(ValidationError);
 		} finally {
 			if (original !== undefined) {

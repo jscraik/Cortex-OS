@@ -8,10 +8,7 @@ interface KatexRendererProps {
 	displayMode?: boolean;
 }
 
-const KatexRenderer: React.FC<KatexRendererProps> = ({
-	content,
-	displayMode = false,
-}) => {
+const KatexRenderer: React.FC<KatexRendererProps> = ({ content, displayMode = false }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -21,13 +18,10 @@ const KatexRenderer: React.FC<KatexRendererProps> = ({
 				import('katex')
 					.then((katex) => {
 						if (containerRef.current) {
-							containerRef.current.innerHTML = katex.default.renderToString(
-								content,
-								{
-									displayMode,
-									throwOnError: false,
-								},
-							);
+							containerRef.current.innerHTML = katex.default.renderToString(content, {
+								displayMode,
+								throwOnError: false,
+							});
 						}
 					})
 					.catch((error) => {

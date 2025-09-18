@@ -6,10 +6,7 @@ console.error('Starting SSE server...');
 
 const app = express();
 
-const transports: Map<string, SSEServerTransport> = new Map<
-	string,
-	SSEServerTransport
->();
+const transports: Map<string, SSEServerTransport> = new Map<string, SSEServerTransport>();
 
 app.get('/sse', async (req, res) => {
 	let transport: SSEServerTransport;

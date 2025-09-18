@@ -101,7 +101,7 @@ scripts/start-mcp-server.sh
 ./scripts/memory-manager-mcp.sh --gentle
 
 # 4. Launch Cloudflare tunnel (foreground)
-cloudflared tunnel --config packages/mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
+cloudflared tunnel --config packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
 
 # 5. Health probe via tunnel hostname
 scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
@@ -143,8 +143,8 @@ When adding new cross-boundary events, follow the Contract Versioning Rules in t
 | Port (forbidden) | Historical blocked port | `3004` (guarded) |
 | Startup Script | Launch & guard checks | `scripts/start-mcp-server.sh` |
 | CI Guard | Block reintroduction of 3004 | `scripts/ci/guard_port_3004.sh` |
-| Tunnel Config | Canonical Cloudflare config | `packages/mcp/infrastructure/cloudflare/tunnel.config.yml` |
-| Tunnel Rotate Config | Blue/Green template | `packages/mcp/infrastructure/cloudflare/tunnel.rotate.config.yml` |
+| Tunnel Config | Canonical Cloudflare config | `packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml` |
+| Tunnel Rotate Config | Blue/Green template | `packages/cortex-mcp/infrastructure/cloudflare/tunnel.rotate.config.yml` |
 | Rotation Script | Zero-downtime tunnel swap | `scripts/cloudflare/mcp-tunnel-rotate.sh` |
 | Tunnel Health Script | Endpoint health probe | `scripts/cloudflare/mcp-tunnel-health.sh` |
 | Memory Manager | Constrained memory helper | `./scripts/memory-manager-mcp.sh` |
@@ -187,12 +187,12 @@ pnpm ci:governance:extended
 
 ### Cloudflare Tunnel
 
-Canonical config: `packages/mcp/infrastructure/cloudflare/tunnel.config.yml`
+Canonical config: `packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml`
 
 Deploy example:
 
 ```bash
-cloudflared tunnel --config packages/mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
+cloudflared tunnel --config packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
 ```
 
 ### Zero-Downtime Tunnel Rotation
@@ -205,13 +205,13 @@ Blue/Green rotation keeps the hostname serving while updating tunnel identity.
    cloudflared tunnel create cortex-mcp-green
    ```
 
-2. Populate `packages/mcp/infrastructure/cloudflare/tunnel.rotate.config.yml` with the new tunnel UUID or token.
+2. Populate `packages/cortex-mcp/infrastructure/cloudflare/tunnel.rotate.config.yml` with the new tunnel UUID or token.
 
 3. Rotate:
 
    ```bash
    scripts/cloudflare/mcp-tunnel-rotate.sh \
-     --new-config packages/mcp/infrastructure/cloudflare/tunnel.rotate.config.yml \
+   --new-config packages/cortex-mcp/infrastructure/cloudflare/tunnel.rotate.config.yml \
      --old-name cortex-mcp \
      --new-name cortex-mcp-green \
      --hostname cortex-mcp.brainwav.io \

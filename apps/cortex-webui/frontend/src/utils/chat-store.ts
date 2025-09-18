@@ -58,9 +58,7 @@ class ChatStoreImpl {
 	updateMessage(id: string, patch: Partial<ChatMessage>) {
 		this.state = {
 			...this.state,
-			messages: this.state.messages.map((m) =>
-				m.id === id ? { ...m, ...patch } : m,
-			),
+			messages: this.state.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)),
 		};
 		this.emit();
 	}
@@ -106,11 +104,9 @@ export function useChatStore(sessionId: string): UseChatStoreApi {
 	return {
 		messages: state.messages,
 		addMessage: (msg: ChatMessage) => store.addMessage(msg),
-		updateMessage: (id: string, patch: Partial<ChatMessage>) =>
-			store.updateMessage(id, patch),
+		updateMessage: (id: string, patch: Partial<ChatMessage>) => store.updateMessage(id, patch),
 		deleteMessage: (id: string) => store.deleteMessage(id),
-		editMessage: (id: string, content: string) =>
-			store.editMessage(id, content),
+		editMessage: (id: string, content: string) => store.editMessage(id, content),
 		clearMessages: () => store.clearMessages(),
 	} as const;
 }

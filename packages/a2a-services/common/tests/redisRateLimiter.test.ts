@@ -1,18 +1,12 @@
 import type { Request, Response } from 'express';
 import { describe, expect, it } from 'vitest';
-import {
-	createRedisRateLimiter,
-	RedisRateLimiter,
-} from '../src/middleware/redisRateLimiter';
+import { createRedisRateLimiter, RedisRateLimiter } from '../src/middleware/redisRateLimiter';
 
 // Test constants to avoid hardcoded IPs
 const _TEST_IP = '203.0.113.1'; // RFC 5737 test IP range
 const _TEST_FORWARDED_IP = '203.0.113.2'; // RFC 5737 test IP range
 
-function _mockRequest(
-	ip = '127.0.0.1',
-	headers: Record<string, string> = {},
-): Request {
+function _mockRequest(ip = '127.0.0.1', headers: Record<string, string> = {}): Request {
 	return { ip, headers } as Request;
 }
 

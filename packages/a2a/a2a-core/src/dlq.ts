@@ -78,12 +78,8 @@ export interface DeadLetterStore {
 	requeue: (ids: string[]) => Promise<void>;
 	remove: (ids: string[]) => Promise<void>;
 	findByCorrelationId: (correlationId: string) => Promise<DeadLetterEnvelope[]>;
-	findByQuarantineLevel: (
-		level: QuarantineLevel,
-	) => Promise<DeadLetterEnvelope[]>;
-	findByErrorCategory: (
-		category: ErrorCategory,
-	) => Promise<DeadLetterEnvelope[]>;
+	findByQuarantineLevel: (level: QuarantineLevel) => Promise<DeadLetterEnvelope[]>;
+	findByErrorCategory: (category: ErrorCategory) => Promise<DeadLetterEnvelope[]>;
 	findExpiredQuarantine: (currentTime: Date) => Promise<DeadLetterEnvelope[]>;
 	getStats: () => Promise<{
 		total: number;
@@ -93,10 +89,7 @@ export interface DeadLetterStore {
 		byErrorCategory: Record<ErrorCategory, number>;
 		circuitBreakerStates: Record<string, CircuitBreakerState>;
 	}>;
-	updateCircuitBreaker: (
-		messageType: string,
-		state: CircuitBreakerState,
-	) => Promise<void>;
+	updateCircuitBreaker: (messageType: string, state: CircuitBreakerState) => Promise<void>;
 }
 
 export interface RetryPolicy {
@@ -159,11 +152,7 @@ export function classifyError(error: Error): ErrorClassification {
 	}
 
 	// Validation errors
-	if (
-		message.includes('validation') ||
-		message.includes('invalid') ||
-		message.includes('schema')
-	) {
+	if (message.includes('validation') || message.includes('invalid') || message.includes('schema')) {
 		return {
 			category: ErrorCategory.VALIDATION,
 			severity: 'HIGH',
@@ -237,9 +226,7 @@ export class DeadLetterQueue {
 	/**
 	 * Check circuit breaker state for a message type
 	 */
-	private async checkCircuitBreaker(
-		messageType: string,
-	): Promise<CircuitBreakerState> {
+	private async checkCircuitBreaker(messageType: string): Promise<CircuitBreakerState> {
 		const state = this.circuitBreakers.get(messageType);
 		if (!state) {
 			return {
@@ -263,10 +250,7 @@ export class DeadLetterQueue {
 	/**
 	 * Update circuit breaker state
 	 */
-	private async updateCircuitBreaker(
-		messageType: string,
-		isFailure: boolean,
-	): Promise<void> {
+	private async updateCircuitBreaker(messageType: string, isFailure: boolean): Promise<void> {
 		let state = this.circuitBreakers.get(messageType);
 		const now = Date.now();
 
@@ -286,8 +270,7 @@ export class DeadLetterQueue {
 
 			if (state.failureCount >= this.quarantinePolicy.circuitBreakerThreshold) {
 				state.state = 'OPEN';
-				state.nextAttemptTime =
-					now + this.quarantinePolicy.quarantineDurationMs;
+				state.nextAttemptTime = now + this.quarantinePolicy.quarantineDurationMs;
 			}
 		} else {
 			// Success - reset circuit breaker
@@ -332,10 +315,7 @@ export class DeadLetterQueue {
 			}
 
 			// Determine if we should retry
-			if (
-				retryCount < this.retryPolicy.maxRetries &&
-				classification.recoverable
-			) {
+			if (retryCount < this.retryPolicy.maxRetries && classification.recoverable) {
 				// Update circuit breaker on failure
 				await this.updateCircuitBreaker(envelope.type, true);
 
@@ -376,9 +356,7 @@ export class DeadLetterQueue {
 				],
 				quarantineLevel: classification.quarantineLevel,
 				nextRetryAt: classification.recoverable
-					? new Date(
-							Date.now() + this.quarantinePolicy.quarantineDurationMs,
-						).toISOString()
+					? new Date(Date.now() + this.quarantinePolicy.quarantineDurationMs).toISOString()
 					: undefined,
 				circuitBreakerState: circuitState,
 				metadata: {
@@ -388,9 +366,7 @@ export class DeadLetterQueue {
 							? parseInt(envelope.headers['processing-time'], 10)
 							: 0) + processingTime,
 					lastProcessorId: processorId,
-					relatedMessageIds: envelope.correlationId
-						? [envelope.correlationId]
-						: [],
+					relatedMessageIds: envelope.correlationId ? [envelope.correlationId] : [],
 				},
 			};
 
@@ -490,9 +466,7 @@ export class DeadLetterQueue {
 			await this.store.requeue(ids);
 
 			// Reset circuit breakers for recovered messages
-			const foundLists = await Promise.all(
-				ids.map((id) => this.store.findByCorrelationId(id)),
-			);
+			const foundLists = await Promise.all(ids.map((id) => this.store.findByCorrelationId(id)));
 			const messageTypes = new Set<string>();
 
 			for (const list of foundLists) {
@@ -556,9 +530,7 @@ export class DeadLetterQueue {
 	/**
 	 * Get messages by quarantine level
 	 */
-	async getMessagesByQuarantineLevel(
-		level: QuarantineLevel,
-	): Promise<DeadLetterEnvelope[]> {
+	async getMessagesByQuarantineLevel(level: QuarantineLevel): Promise<DeadLetterEnvelope[]> {
 		return withSpan('dlq.getMessagesByQuarantineLevel', async (span) => {
 			span.setAttributes({
 				'quarantine.level': level,
@@ -571,9 +543,7 @@ export class DeadLetterQueue {
 	/**
 	 * Get messages by error category
 	 */
-	async getMessagesByErrorCategory(
-		category: ErrorCategory,
-	): Promise<DeadLetterEnvelope[]> {
+	async getMessagesByErrorCategory(category: ErrorCategory): Promise<DeadLetterEnvelope[]> {
 		return withSpan('dlq.getMessagesByErrorCategory', async (span) => {
 			span.setAttributes({
 				'error.category': category,
@@ -586,10 +556,7 @@ export class DeadLetterQueue {
 	/**
 	 * Force circuit breaker state change (for manual intervention)
 	 */
-	async forceCircuitBreakerState(
-		messageType: string,
-		state: 'CLOSED' | 'OPEN',
-	): Promise<void> {
+	async forceCircuitBreakerState(messageType: string, state: 'CLOSED' | 'OPEN'): Promise<void> {
 		return withSpan('dlq.forceCircuitBreakerState', async (span) => {
 			span.setAttributes({
 				'message.type': messageType,
@@ -597,14 +564,11 @@ export class DeadLetterQueue {
 			});
 
 			const circuitState: CircuitBreakerState = {
-				failureCount:
-					state === 'OPEN' ? this.quarantinePolicy.circuitBreakerThreshold : 0,
+				failureCount: state === 'OPEN' ? this.quarantinePolicy.circuitBreakerThreshold : 0,
 				lastFailureTime: state === 'OPEN' ? Date.now() : 0,
 				state,
 				nextAttemptTime:
-					state === 'OPEN'
-						? Date.now() + this.quarantinePolicy.quarantineDurationMs
-						: 0,
+					state === 'OPEN' ? Date.now() + this.quarantinePolicy.quarantineDurationMs : 0,
 			};
 
 			this.circuitBreakers.set(messageType, circuitState);
@@ -625,9 +589,7 @@ export class DeadLetterQueue {
 	/**
 	 * Get circuit breaker status for all message types
 	 */
-	async getCircuitBreakerStatus(): Promise<
-		Record<string, CircuitBreakerState>
-	> {
+	async getCircuitBreakerStatus(): Promise<Record<string, CircuitBreakerState>> {
 		return withSpan('dlq.getCircuitBreakerStatus', async (span) => {
 			const status: Record<string, CircuitBreakerState> = {};
 
@@ -693,43 +655,26 @@ export class InMemoryDeadLetterStore implements DeadLetterStore {
 		this.removeMany(ids);
 	}
 
-	async findByCorrelationId(
-		correlationId: string,
-	): Promise<DeadLetterEnvelope[]> {
-		return Array.from(this.messages.values()).filter(
-			(msg) => msg.correlationId === correlationId,
-		);
+	async findByCorrelationId(correlationId: string): Promise<DeadLetterEnvelope[]> {
+		return Array.from(this.messages.values()).filter((msg) => msg.correlationId === correlationId);
 	}
 
-	async findByQuarantineLevel(
-		level: QuarantineLevel,
-	): Promise<DeadLetterEnvelope[]> {
-		return Array.from(this.messages.values()).filter(
-			(msg) => msg.quarantineLevel === level,
-		);
+	async findByQuarantineLevel(level: QuarantineLevel): Promise<DeadLetterEnvelope[]> {
+		return Array.from(this.messages.values()).filter((msg) => msg.quarantineLevel === level);
 	}
 
-	async findByErrorCategory(
-		category: ErrorCategory,
-	): Promise<DeadLetterEnvelope[]> {
-		return Array.from(this.messages.values()).filter(
-			(msg) => msg.error.category === category,
-		);
+	async findByErrorCategory(category: ErrorCategory): Promise<DeadLetterEnvelope[]> {
+		return Array.from(this.messages.values()).filter((msg) => msg.error.category === category);
 	}
 
-	async findExpiredQuarantine(
-		currentTime: Date,
-	): Promise<DeadLetterEnvelope[]> {
+	async findExpiredQuarantine(currentTime: Date): Promise<DeadLetterEnvelope[]> {
 		const now = currentTime.getTime();
 		return Array.from(this.messages.values()).filter(
 			(msg) => msg.nextRetryAt && new Date(msg.nextRetryAt).getTime() <= now,
 		);
 	}
 
-	async updateCircuitBreaker(
-		messageType: string,
-		state: CircuitBreakerState,
-	): Promise<void> {
+	async updateCircuitBreaker(messageType: string, state: CircuitBreakerState): Promise<void> {
 		this.circuitBreakers.set(messageType, state);
 	}
 

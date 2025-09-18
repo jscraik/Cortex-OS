@@ -4,11 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-	createEmbeddingState,
-	generateEmbeddings,
-	getStats,
-} from '../lib/embedding/index.js';
+import { createEmbeddingState, generateEmbeddings, getStats } from '../lib/embedding/index.js';
 
 describe.skip('🔥 Real Qwen Embedding Tests', () => {
 	let embeddingState: ReturnType<typeof createEmbeddingState>;

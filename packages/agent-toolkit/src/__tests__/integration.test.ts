@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DefaultToolRegistry } from '../app/ToolRegistry.js';
-import {
-	CodeQualityUseCase,
-	CodeSearchUseCase,
-	ToolExecutorUseCase,
-} from '../app/UseCases.js';
+import { CodeQualityUseCase, CodeSearchUseCase, ToolExecutorUseCase } from '../app/UseCases.js';
 import { createAgentToolkit } from '../index.js';
 import { CombyAdapter } from '../infra/CodemodAdapters.js';
 import { RipgrepAdapter } from '../infra/SearchAdapters.js';
@@ -31,10 +27,7 @@ describe('Agent Toolkit Integration', () => {
 		it('should list registered tools', () => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
-			registry.registerValidationTool(
-				'multi-validator',
-				new MultiValidatorAdapter(),
-			);
+			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
 
 			const tools = registry.listTools();
 			expect(tools.search).toContain('ripgrep');
@@ -47,10 +40,7 @@ describe('Agent Toolkit Integration', () => {
 		beforeEach(() => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
-			registry.registerValidationTool(
-				'multi-validator',
-				new MultiValidatorAdapter(),
-			);
+			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
 		});
 
 		it('should check tool availability', async () => {
@@ -76,10 +66,7 @@ describe('Agent Toolkit Integration', () => {
 
 		it('should throw error for invalid input type', async () => {
 			await expect(
-				executor.execute('ripgrep', { invalid: 'input' } as Record<
-					string,
-					unknown
-				>),
+				executor.execute('ripgrep', { invalid: 'input' } as Record<string, unknown>),
 			).rejects.toThrow("Unknown input type for tool 'ripgrep'");
 		});
 	});
@@ -137,10 +124,7 @@ describe('Agent Toolkit Integration', () => {
 		let _codeQuality: CodeQualityUseCase;
 
 		beforeEach(() => {
-			registry.registerValidationTool(
-				'multi-validator',
-				new MultiValidatorAdapter(),
-			);
+			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
 			_codeQuality = new CodeQualityUseCase(executor);
 		});
 
@@ -149,9 +133,7 @@ describe('Agent Toolkit Integration', () => {
 
 			// This will likely fail in test environment due to shell script dependencies
 			// but we can test the file categorization logic by mocking
-			expect(files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/))).toHaveLength(
-				2,
-			);
+			expect(files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/))).toHaveLength(2);
 			expect(files.filter((f) => f.match(/\.py$/))).toHaveLength(1);
 			expect(files.filter((f) => f.match(/\.rs$/))).toHaveLength(1);
 		});

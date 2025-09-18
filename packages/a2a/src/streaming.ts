@@ -15,12 +15,9 @@ export function createTaskEventStream(taskManager: TaskManager): Readable {
 		stream.push(`data: ${JSON.stringify(data)}\n\n`);
 	};
 
-	const onCompleted = (result: TaskResult) =>
-		writeEvent('taskCompleted', result);
-	const onCancelled = (payload: { id: string }) =>
-		writeEvent('taskCancelled', payload);
-	const onFailed = (payload: { id: string; error: unknown }) =>
-		writeEvent('taskFailed', payload);
+	const onCompleted = (result: TaskResult) => writeEvent('taskCompleted', result);
+	const onCancelled = (payload: { id: string }) => writeEvent('taskCancelled', payload);
+	const onFailed = (payload: { id: string; error: unknown }) => writeEvent('taskFailed', payload);
 
 	taskManager.on('taskCompleted', onCompleted);
 	taskManager.on('taskCancelled', onCancelled);

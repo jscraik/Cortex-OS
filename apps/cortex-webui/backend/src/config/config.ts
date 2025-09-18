@@ -4,9 +4,7 @@ const envSchema = z.object({
 	PORT: z.coerce.number().default(3001),
 	NODE_ENV: z.string().default('development'),
 	FRONTEND_URL: z.string().default('http://localhost:3000'),
-	ALLOWED_ORIGINS: z
-		.string()
-		.default('http://localhost:3000,http://localhost:3001'),
+	ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
 
 	JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
 	DATABASE_PATH: z.string().min(1, 'DATABASE_PATH is required'),
@@ -40,9 +38,7 @@ export const getCorsOptions = () => {
 			origin: string | undefined,
 			callback: (err: Error | null, allow?: boolean) => void,
 		) => {
-			const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) =>
-				o.trim(),
-			);
+			const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
 			if (!origin) return callback(null, true);
 			if (allowedOrigins.includes(origin)) {
 				callback(null, true);
@@ -53,12 +49,7 @@ export const getCorsOptions = () => {
 		credentials: true,
 		optionsSuccessStatus: 200,
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-		allowedHeaders: [
-			'Content-Type',
-			'Authorization',
-			'X-API-Key',
-			'X-Requested-With',
-		],
+		allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Requested-With'],
 	};
 };
 

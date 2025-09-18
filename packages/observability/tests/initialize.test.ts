@@ -53,15 +53,11 @@ vi.mock('@opentelemetry/exporter-metrics-otlp-http', () => ({
 import { initializeObservability } from '../src/tracing/index.js';
 
 const { ConsoleSpanExporter } = await import('@opentelemetry/sdk-trace-base');
-const { OTLPTraceExporter } = await import(
-	'@opentelemetry/exporter-trace-otlp-http'
-);
+const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');
 const { ConsoleMetricExporter, PeriodicExportingMetricReader } = await import(
 	'@opentelemetry/sdk-metrics'
 );
-const { OTLPMetricExporter } = await import(
-	'@opentelemetry/exporter-metrics-otlp-http'
-);
+const { OTLPMetricExporter } = await import('@opentelemetry/exporter-metrics-otlp-http');
 
 describe('initializeObservability', () => {
 	beforeEach(() => {

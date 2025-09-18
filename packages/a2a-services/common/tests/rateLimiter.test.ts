@@ -6,10 +6,7 @@ import { createRateLimiter } from '../src/middleware/rateLimiter';
 const _TEST_IP = '203.0.113.1'; // RFC 5737 test IP range
 const TEST_FORWARDED_IP = '203.0.113.2'; // RFC 5737 test IP range
 
-function mockRequest(
-	ip = '127.0.0.1',
-	headers: Record<string, string> = {},
-): Request {
+function mockRequest(ip = '127.0.0.1', headers: Record<string, string> = {}): Request {
 	return { ip, headers } as Request;
 }
 

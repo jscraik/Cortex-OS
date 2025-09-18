@@ -23,14 +23,8 @@ export interface GenerationResponse {
 }
 
 export interface Generator {
-	generate(
-		prompt: string,
-		config?: Partial<GenerationConfig>,
-	): Promise<GenerationResponse>;
-	chat(
-		messages: ChatMessage[],
-		config?: Partial<GenerationConfig>,
-	): Promise<GenerationResponse>;
+	generate(prompt: string, config?: Partial<GenerationConfig>): Promise<GenerationResponse>;
+	chat(messages: ChatMessage[], config?: Partial<GenerationConfig>): Promise<GenerationResponse>;
 	close?(): Promise<void>;
 }
 

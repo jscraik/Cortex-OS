@@ -10,11 +10,7 @@ export function idealBinaryAtK(totalRelevant: number, k: number): number[] {
 	return Array.from({ length: k }, (_, i) => (i < ones ? 1 : 0));
 }
 
-export function ndcgAtK(
-	binaryRelevances: number[],
-	k: number,
-	totalRelevant: number,
-): number {
+export function ndcgAtK(binaryRelevances: number[], k: number, totalRelevant: number): number {
 	const atK = binaryRelevances.slice(0, k);
 	const ideal = idealBinaryAtK(totalRelevant, k);
 	const denom = dcg(ideal);
@@ -29,11 +25,7 @@ export function precisionAtK(binaryRelevances: number[], k: number): number {
 	return hits / k;
 }
 
-export function recallAtK(
-	binaryRelevances: number[],
-	k: number,
-	totalRelevant: number,
-): number {
+export function recallAtK(binaryRelevances: number[], k: number, totalRelevant: number): number {
 	if (totalRelevant <= 0) return 0;
 	const atK = binaryRelevances.slice(0, k);
 	const hits = atK.reduce((s, r) => s + (r > 0 ? 1 : 0), 0);

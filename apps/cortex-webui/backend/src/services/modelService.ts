@@ -14,9 +14,7 @@ export class ModelService {
 		return null;
 	}
 
-	static createModel(
-		model: Omit<Model, 'id' | 'createdAt' | 'updatedAt'>,
-	): Model {
+	static createModel(model: Omit<Model, 'id' | 'createdAt' | 'updatedAt'>): Model {
 		const now = new Date().toISOString();
 		return {
 			id: `model_${Date.now()}`,

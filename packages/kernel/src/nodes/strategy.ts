@@ -89,16 +89,12 @@ export class StrategyNode {
 			details: {
 				owaspLevel: hasSecurityReq ? 'L1' : 'none',
 				mitreAtlas: hasSecurityReq,
-				securityRequirements: requirements.filter((req) =>
-					req.toLowerCase().includes('security'),
-				),
+				securityRequirements: requirements.filter((req) => req.toLowerCase().includes('security')),
 			},
 		};
 	}
 
-	private async validateUXAccessibility(
-		state: PRPState,
-	): Promise<ValidationResult<UXDetails>> {
+	private async validateUXAccessibility(state: PRPState): Promise<ValidationResult<UXDetails>> {
 		// WCAG 2.2 AA compliance check
 		const hasUXReq = state.blueprint.requirements?.some(
 			(req) =>
@@ -132,18 +128,14 @@ export class StrategyNode {
 			title.includes('architecture') ||
 			description.includes('system') ||
 			requirements.some((r) =>
-				['architecture', 'system design'].some((k) =>
-					r.toLowerCase().includes(k),
-				),
+				['architecture', 'system design'].some((k) => r.toLowerCase().includes(k)),
 			);
 
 		return {
 			passed: hasArch,
 			details: {
 				architectureElements: requirements.filter((req) =>
-					['architecture', 'system', 'design'].some((k) =>
-						req.toLowerCase().includes(k),
-					),
+					['architecture', 'system', 'design'].some((k) => req.toLowerCase().includes(k)),
 				),
 			},
 		};

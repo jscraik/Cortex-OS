@@ -28,12 +28,9 @@ describe('mcp testing utilities', () => {
 
 	it('provides reusable fixture helpers', async () => {
 		const fixture = await setupMockServer();
-		fixture.server.registerTool(
-			'add',
-			async (args: { a?: number; b?: number }) => ({
-				structuredContent: { sum: (args?.a ?? 0) + (args?.b ?? 0) },
-			}),
-		);
+		fixture.server.registerTool('add', async (args: { a?: number; b?: number }) => ({
+			structuredContent: { sum: (args?.a ?? 0) + (args?.b ?? 0) },
+		}));
 
 		const result = await fixture.client.callTool('add', { a: 4, b: 2 });
 		expect(result).toEqual({ structuredContent: { sum: 6 } });

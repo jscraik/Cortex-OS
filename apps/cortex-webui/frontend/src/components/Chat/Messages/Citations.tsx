@@ -15,10 +15,7 @@ interface CitationsProps {
 	onCitationClick?: (citation: Citation) => void;
 }
 
-const Citations: React.FC<CitationsProps> = ({
-	citations,
-	onCitationClick: _onCitationClick,
-}) => {
+const Citations: React.FC<CitationsProps> = ({ citations, onCitationClick: _onCitationClick }) => {
 	const [expandedCitation, setExpandedCitation] = useState<string | null>(null);
 
 	const toggleCitation = (id: string) => {
@@ -40,9 +37,7 @@ const Citations: React.FC<CitationsProps> = ({
 
 	return (
 		<div className="mt-3">
-			<div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-				Sources:
-			</div>
+			<div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Sources:</div>
 			<div className="space-y-2">
 				{citations.map((citation, index) => (
 					<div
@@ -72,8 +67,7 @@ const Citations: React.FC<CitationsProps> = ({
 								className={`size-5 text-gray-400 transition-transform duration-200 ${expandedCitation === citation.id ? 'rotate-180' : ''}`}
 							>
 								<title>
-									{expandedCitation === citation.id ? 'Collapse' : 'Expand'}{' '}
-									citation details
+									{expandedCitation === citation.id ? 'Collapse' : 'Expand'} citation details
 								</title>
 								<path
 									fillRule="evenodd"

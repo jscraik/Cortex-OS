@@ -1,9 +1,7 @@
 import type { LLMBridge } from '../llm-bridge.js';
 import type { ExecutionContext } from '../orchestrator.js';
 
-export function createExecutionContext(
-	llmBridge?: LLMBridge,
-): ExecutionContext {
+export function createExecutionContext(llmBridge?: LLMBridge): ExecutionContext {
 	return {
 		workingDirectory: process.cwd(),
 		projectRoot: process.cwd(),

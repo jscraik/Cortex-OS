@@ -4,8 +4,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SubagentLoader } from '../src/subagents/loader';
 
-const tmp = async () =>
-	await fsp.mkdtemp(path.join(os.tmpdir(), 'cortex-subagents-'));
+const tmp = async () => await fsp.mkdtemp(path.join(os.tmpdir(), 'cortex-subagents-'));
 
 describe('SubagentLoader', () => {
 	let dir: string;
@@ -32,11 +31,7 @@ max_recursion: 1
 Content here
 `;
 
-		await fsp.writeFile(
-			path.join(dir, 'code-analysis.subagent.yaml'),
-			yaml,
-			'utf8',
-		);
+		await fsp.writeFile(path.join(dir, 'code-analysis.subagent.yaml'), yaml, 'utf8');
 		await fsp.writeFile(path.join(dir, 'docs.subagent.md'), md, 'utf8');
 	});
 

@@ -70,11 +70,7 @@ export const generateEmbeddings = async (
 
 	switch (state.config.provider) {
 		case 'sentence-transformers':
-			return generateWithSentenceTransformers(
-				state.pythonPath,
-				state.config,
-				textArray,
-			);
+			return generateWithSentenceTransformers(state.pythonPath, state.config, textArray);
 		case 'local':
 			return generateWithLocal(state.pythonPath, textArray);
 		case 'mock':
@@ -139,10 +135,8 @@ export const similaritySearch = async (
 	return query.topK ? results.slice(0, query.topK) : results;
 };
 
-export const getDocument = (
-	state: EmbeddingState,
-	id: string,
-): EmbeddingVector | undefined => state.vectorStore.get(id);
+export const getDocument = (state: EmbeddingState, id: string): EmbeddingVector | undefined =>
+	state.vectorStore.get(id);
 
 export const removeDocument = (
 	state: EmbeddingState,
@@ -171,10 +165,7 @@ const validateConfig = (config: EmbeddingConfig): void => {
 	}
 };
 
-const generateWithMock = async (
-	config: EmbeddingConfig,
-	texts: string[],
-): Promise<number[][]> => {
+const generateWithMock = async (config: EmbeddingConfig, texts: string[]): Promise<number[][]> => {
 	const dims = config.dimensions || 1024;
 	// Deterministic pseudo-random vector per text based on SHA256
 	return texts.map((t) => {
@@ -215,16 +206,11 @@ texts = json.loads(sys.argv[1])
 embeddings = model.encode(texts).tolist()
 print(json.dumps(embeddings))
 `;
-	const result = await executePythonScript(pythonPath, pythonScript, [
-		JSON.stringify(texts),
-	]);
+	const result = await executePythonScript(pythonPath, pythonScript, [JSON.stringify(texts)]);
 	return JSON.parse(result);
 };
 
-const generateWithLocal = async (
-	pythonPath: string,
-	texts: string[],
-): Promise<number[][]> => {
+const generateWithLocal = async (pythonPath: string, texts: string[]): Promise<number[][]> => {
 	const pythonScript = `
 import json
 import sys
@@ -262,9 +248,7 @@ except Exception as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 `;
-	const result = await executePythonScript(pythonPath, pythonScript, [
-		JSON.stringify(texts),
-	]);
+	const result = await executePythonScript(pythonPath, pythonScript, [JSON.stringify(texts)]);
 	return JSON.parse(result);
 };
 
@@ -300,11 +284,7 @@ const matchesFilter = (
 };
 
 const generateId = (text: string): string => {
-	return crypto
-		.createHash('sha256')
-		.update(text)
-		.digest('hex')
-		.substring(0, 16);
+	return crypto.createHash('sha256').update(text).digest('hex').substring(0, 16);
 };
 
 const executePythonScript = async (

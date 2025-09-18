@@ -54,12 +54,7 @@ export class AnalyticsEngine extends EventEmitter {
 		// Metrics collector events
 		this.metricsCollector.on('metricsCollected', (data) => {
 			// Forward to pattern analyzer
-			this.patternAnalyzer.addHistoricalData(
-				data.agentMetrics,
-				data.orchestrationMetrics,
-				[],
-				[],
-			);
+			this.patternAnalyzer.addHistoricalData(data.agentMetrics, data.orchestrationMetrics, [], []);
 
 			// Forward to optimization engine
 			this.optimizationEngine.addHistoricalData(
@@ -76,12 +71,7 @@ export class AnalyticsEngine extends EventEmitter {
 		// Pattern analyzer events
 		this.patternAnalyzer.on('patternsAnalyzed', (data) => {
 			// Forward patterns to optimization engine
-			this.optimizationEngine.addHistoricalData(
-				[],
-				[],
-				data.patterns,
-				data.bottlenecks,
-			);
+			this.optimizationEngine.addHistoricalData([], [], data.patterns, data.bottlenecks);
 
 			// Emit analysis event
 			this.emit('patternsAnalyzed', data);
@@ -171,18 +161,8 @@ export class AnalyticsEngine extends EventEmitter {
 	/**
 	 * Record agent interaction for pattern analysis
 	 */
-	recordInteraction(
-		sourceAgent: string,
-		targetAgent: string,
-		type: string,
-		latency: number,
-	): void {
-		this.patternAnalyzer.recordInteraction(
-			sourceAgent,
-			targetAgent,
-			type,
-			latency,
-		);
+	recordInteraction(sourceAgent: string, targetAgent: string, type: string, latency: number): void {
+		this.patternAnalyzer.recordInteraction(sourceAgent, targetAgent, type, latency);
 	}
 
 	/**
@@ -204,9 +184,7 @@ export class AnalyticsEngine extends EventEmitter {
 			performanceMetrics: this.metricsCollector.getCurrentPerformanceMetrics(),
 			interactionGraph: [], // Would be generated from patterns
 			alerts: [], // Would be generated based on thresholds
-			recommendations: this.optimizationEngine
-				.getRecommendations()
-				.slice(0, 10),
+			recommendations: this.optimizationEngine.getRecommendations().slice(0, 10),
 		};
 	}
 
@@ -259,9 +237,7 @@ export class AnalyticsEngine extends EventEmitter {
 /**
  * Create a new analytics engine with configuration
  */
-export function createAnalyticsEngine(
-	config?: Partial<AnalyticsConfig>,
-): AnalyticsEngine {
+export function createAnalyticsEngine(config?: Partial<AnalyticsConfig>): AnalyticsEngine {
 	return new AnalyticsEngine(config);
 }
 

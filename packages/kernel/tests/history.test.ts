@@ -4,11 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import {
-	addToHistory,
-	createHistory,
-	getExecutionHistory,
-} from '../src/lib/history.js';
+import { addToHistory, createHistory, getExecutionHistory } from '../src/lib/history.js';
 import { createInitialPRPState } from '../src/state.js';
 
 describe('Execution History Helper', () => {

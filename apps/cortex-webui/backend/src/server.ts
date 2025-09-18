@@ -33,11 +33,7 @@ import { getApprovals, postApproval } from './controllers/approvalsController';
 
 // Import controllers
 import { AuthController } from './controllers/authController';
-import {
-	getChatSession,
-	postChatMessage,
-	streamChatSSE,
-} from './controllers/chatController';
+import { getChatSession, postChatMessage, streamChatSSE } from './controllers/chatController';
 import { getContextMap } from './controllers/contextMapController';
 import { ConversationController } from './controllers/conversationController';
 import { postCrawl } from './controllers/crawlController';
@@ -145,17 +141,8 @@ export const createApp = (): Express => {
 	app.get(`${API_BASE_PATH}/approvals`, getApprovals);
 	app.post(`${API_BASE_PATH}/approvals`, postApproval);
 
-	app.post(
-		`${API_BASE_PATH}/files/upload`,
-		authenticateToken,
-		uploadMiddleware,
-		uploadFileHandler,
-	);
-	app.delete(
-		`${API_BASE_PATH}/files/:id`,
-		authenticateToken,
-		deleteFileHandler,
-	);
+	app.post(`${API_BASE_PATH}/files/upload`, authenticateToken, uploadMiddleware, uploadFileHandler);
+	app.delete(`${API_BASE_PATH}/files/:id`, authenticateToken, deleteFileHandler);
 
 	app.post(
 		`${API_BASE_PATH}/documents/parse`,

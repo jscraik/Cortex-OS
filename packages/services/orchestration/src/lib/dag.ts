@@ -40,13 +40,10 @@ export function topoSort(graph: Graph): string[] {
 		for (const v of outs) nodes.add(v);
 	}
 	for (const n of nodes) indegree[n] = 0;
-	for (const [, outs] of Object.entries(graph))
-		for (const v of outs) indegree[v]++;
+	for (const [, outs] of Object.entries(graph)) for (const v of outs) indegree[v]++;
 
 	// queue of nodes with zero indegree
-	const queue: string[] = [
-		...Object.keys(indegree).filter((n) => indegree[n] === 0),
-	];
+	const queue: string[] = [...Object.keys(indegree).filter((n) => indegree[n] === 0)];
 	const order: string[] = [];
 	let i = 0;
 	while (i < queue.length) {

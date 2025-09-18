@@ -1,9 +1,6 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import {
-	type DiagnosticsResult,
-	diagnosticsResultSchema,
-} from '@cortex-os/contracts';
+import { type DiagnosticsResult, diagnosticsResultSchema } from '@cortex-os/contracts';
 import { metrics, trace } from '@opentelemetry/api';
 
 const tracer = trace.getTracer('agent-toolkit-diagnostics');
@@ -27,9 +24,7 @@ export interface RunDiagnosticsOptions {
 	env?: NodeJS.ProcessEnv;
 }
 
-export async function runDiagnostics(
-	opts: RunDiagnosticsOptions = {},
-): Promise<DiagnosticsResult> {
+export async function runDiagnostics(opts: RunDiagnosticsOptions = {}): Promise<DiagnosticsResult> {
 	const {
 		scriptPath = 'scripts/mcp/mcp_diagnose.sh',
 		cwd = process.cwd(),
@@ -62,13 +57,9 @@ export async function runDiagnostics(
 			if (proc.exitCode !== 0 && !stdout.trim()) {
 				diagRunFailures.add(1);
 				span.recordException(
-					new Error(
-						`diagnostics script failed: code=${proc.exitCode} stderr=${stderr}`,
-					),
+					new Error(`diagnostics script failed: code=${proc.exitCode} stderr=${stderr}`),
 				);
-				throw new Error(
-					`Diagnostics script failed (code=${proc.exitCode}). Stderr: ${stderr}`,
-				);
+				throw new Error(`Diagnostics script failed (code=${proc.exitCode}). Stderr: ${stderr}`);
 			}
 
 			let parsed: DiagnosticsResult;
@@ -111,9 +102,7 @@ export function generatePrometheusMetrics(result: DiagnosticsResult): string {
 	}
 
 	if (result.health?.latencyMs != null) {
-		lines.push(
-			'# HELP diagnostics_health_latency_ms Health probe latency in ms',
-		);
+		lines.push('# HELP diagnostics_health_latency_ms Health probe latency in ms');
 		lines.push('# TYPE diagnostics_health_latency_ms gauge');
 		lines.push(`diagnostics_health_latency_ms ${result.health.latencyMs}`);
 	}
@@ -162,9 +151,7 @@ export function generateHomebrewFormula(opts: HomebrewFormulaOptions): string {
 		desc = 'Cortex-OS MCP & Agent Toolkit',
 		license = 'MIT',
 	} = opts;
-	const url =
-		urlTemplate ??
-		`https://github.com/${repo}/archive/refs/tags/v${version}.tar.gz`;
+	const url = urlTemplate ?? `https://github.com/${repo}/archive/refs/tags/v${version}.tar.gz`;
 	const className = 'CortexOsAgentToolkit';
 	return `class ${className} < Formula\n  desc "${desc}"\n  homepage "https://github.com/${repo}"\n  url "${url}"\n  sha256 "${sha256}"\n  license "${license}"\n\n  depends_on "node" => :build\n  depends_on "python@3.11"\n\n  def install\n    system "npm", "install", "-g", "pnpm" unless which("pnpm")\n    system "pnpm", "install"\n    system "pnpm", "build"\n    libexec.install Dir["*" ]\n    (bin/"cortex-mcp-diagnose").write <<~EOS\n      #!/bin/bash\n      cd #{libexec} && node -e 'import("./packages/agent-toolkit/dist/index.js").then(async m=>{const r=await m.runDiagnostics().catch(e=>{console.error(e);process.exit(1)});console.log(JSON.stringify(r,null,2));})'\n    EOS\n    chmod 0555, bin/"cortex-mcp-diagnose"\n  end\n\n  test do\n    system "#{bin}/cortex-mcp-diagnose" rescue nil\n  end\nend\n`;
 }

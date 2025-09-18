@@ -3,11 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, expect, test } from 'vitest';
 
-import {
-	ensureDataDir,
-	getDataHome,
-	getDataPath,
-} from '../../src/platform/xdg';
+import { ensureDataDir, getDataHome, getDataPath } from '../../src/platform/xdg';
 
 const originalTmp = process.env.CORTEX_OS_TMP;
 let tempRoot: string | undefined;

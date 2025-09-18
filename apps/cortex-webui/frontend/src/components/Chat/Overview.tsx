@@ -41,17 +41,13 @@ const Overview: React.FC<OverviewProps> = ({ chats, onChatSelect }) => {
 							>
 								<div className="flex justify-between items-start">
 									<div>
-										<h3 className="font-medium text-gray-900">
-											{chat.title || 'Untitled Chat'}
-										</h3>
+										<h3 className="font-medium text-gray-900">{chat.title || 'Untitled Chat'}</h3>
 										<p className="text-sm text-gray-500 mt-1 line-clamp-2">
 											{chat.lastMessage || 'No messages yet'}
 										</p>
 									</div>
 									<div className="text-xs text-gray-400">
-										{chat.timestamp
-											? new Date(chat.timestamp).toLocaleDateString()
-											: 'Just now'}
+										{chat.timestamp ? new Date(chat.timestamp).toLocaleDateString() : 'Just now'}
 									</div>
 								</div>
 								{chat.tags && chat.tags.length > 0 && (

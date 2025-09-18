@@ -16,10 +16,7 @@ async function main() {
 	process.on('SIGINT', close);
 	process.on('SIGTERM', close);
 	await app.listen({ host: http.host, port: http.port });
-	app.log.info(
-		{ event: 'listen', host: http.host, port: http.port },
-		'mvp-server up',
-	);
+	app.log.info({ event: 'listen', host: http.host, port: http.port }, 'mvp-server up');
 }
 main().catch((e) => {
 	console.error(e);

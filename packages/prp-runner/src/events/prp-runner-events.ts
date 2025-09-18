@@ -50,14 +50,10 @@ export const PrProcessingCompletedEventSchema = z.object({
 });
 
 // Export event type definitions
-export type PrProcessingStartedEvent = z.infer<
-	typeof PrProcessingStartedEventSchema
->;
+export type PrProcessingStartedEvent = z.infer<typeof PrProcessingStartedEventSchema>;
 export type TaskExecutedEvent = z.infer<typeof TaskExecutedEventSchema>;
 export type ReviewGeneratedEvent = z.infer<typeof ReviewGeneratedEventSchema>;
-export type PrProcessingCompletedEvent = z.infer<
-	typeof PrProcessingCompletedEventSchema
->;
+export type PrProcessingCompletedEvent = z.infer<typeof PrProcessingCompletedEventSchema>;
 
 // Helper function to create PRP Runner events
 export const createPrpRunnerEvent = {

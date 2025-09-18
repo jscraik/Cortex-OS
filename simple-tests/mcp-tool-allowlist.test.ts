@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	createMCPToolValidator,
-	type MCPToolPolicy,
-} from './mcp-tool-validator-impl';
+import { createMCPToolValidator, type MCPToolPolicy } from './mcp-tool-validator-impl';
 
 describe('MCP Tool Allowlist Validation', () => {
 	describe('Schema validation', () => {
@@ -137,9 +134,7 @@ describe('MCP Tool Allowlist Validation', () => {
 			validator.loadPolicy(policy);
 
 			expect(validator.isToolAllowed('unknown_tool')).toBe(false);
-			expect(validator.getViolationReason('unknown_tool')).toContain(
-				'not in allowlist',
-			);
+			expect(validator.getViolationReason('unknown_tool')).toContain('not in allowlist');
 		});
 
 		it('should allow tools explicitly in allowlist', () => {
@@ -179,12 +174,8 @@ describe('MCP Tool Allowlist Validation', () => {
 			validator.loadPolicy(policy);
 
 			// Without required scopes
-			expect(
-				validator.isToolAllowed('secure_tool', { scopes: ['user:read'] }),
-			).toBe(false);
-			expect(validator.getViolationReason('secure_tool')).toContain(
-				'missing required scopes',
-			);
+			expect(validator.isToolAllowed('secure_tool', { scopes: ['user:read'] })).toBe(false);
+			expect(validator.getViolationReason('secure_tool')).toContain('missing required scopes');
 
 			// With required scopes
 			expect(
@@ -215,17 +206,11 @@ describe('MCP Tool Allowlist Validation', () => {
 			validator.loadPolicy(policy);
 
 			// Within limits
-			expect(
-				validator.isToolAllowed('rate_limited_tool', { callCount: 3 }),
-			).toBe(true);
+			expect(validator.isToolAllowed('rate_limited_tool', { callCount: 3 })).toBe(true);
 
 			// Over limits
-			expect(
-				validator.isToolAllowed('rate_limited_tool', { callCount: 6 }),
-			).toBe(false);
-			expect(validator.getViolationReason('rate_limited_tool')).toContain(
-				'exceeded call limit',
-			);
+			expect(validator.isToolAllowed('rate_limited_tool', { callCount: 6 })).toBe(false);
+			expect(validator.getViolationReason('rate_limited_tool')).toContain('exceeded call limit');
 		});
 
 		it('should respect denylist patterns', () => {
@@ -303,9 +288,7 @@ describe('MCP Tool Allowlist Validation', () => {
 			validator.loadPolicy(policy);
 
 			// Test scope violation
-			expect(
-				validator.isToolAllowed('restricted_tool', { scopes: ['user:read'] }),
-			).toBe(false);
+			expect(validator.isToolAllowed('restricted_tool', { scopes: ['user:read'] })).toBe(false);
 			const scopeReason = validator.getViolationReason('restricted_tool');
 			expect(scopeReason).toContain('missing required scopes');
 			expect(scopeReason).toContain('admin:read');

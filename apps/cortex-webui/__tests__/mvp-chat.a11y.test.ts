@@ -92,16 +92,12 @@ describe('MVP Chat a11y (static smoke)', () => {
 		// JSDOM supports .focus but it doesn't necessarily change document.activeElement—this assertion keeps it defensive
 		try {
 			(composer as HTMLElement).focus();
-			expect(
-				document.activeElement === composer || document.activeElement === null,
-			).toBeTruthy();
+			expect(document.activeElement === composer || document.activeElement === null).toBeTruthy();
 		} catch {
 			// if focus isn't supported in this environment, at minimum assert it has the expected tabindex or is a native control
 			const tag = composer?.tagName?.toLowerCase();
 			expect(
-				tag === 'textarea' ||
-					tag === 'input' ||
-					composer?.getAttribute('tabindex') !== null,
+				tag === 'textarea' || tag === 'input' || composer?.getAttribute('tabindex') !== null,
 			).toBeTruthy();
 		}
 	});
@@ -127,24 +123,12 @@ describe('MVP Chat a11y (static smoke)', () => {
 		streamLi.appendChild(roleDiv);
 		streamLi.appendChild(contentDiv);
 
-		const ul =
-			liveContainer.querySelector('ul') || document.createElement('ul');
+		const ul = liveContainer.querySelector('ul') || document.createElement('ul');
 		ul.appendChild(streamLi);
 		if (!liveContainer.querySelector('ul')) liveContainer.appendChild(ul);
 
 		// simulate token-by-token arrival
-		const tokens = [
-			'Hello',
-			', ',
-			'this',
-			' ',
-			'is',
-			' ',
-			'a',
-			' ',
-			'stream',
-			'.',
-		];
+		const tokens = ['Hello', ', ', 'this', ' ', 'is', ' ', 'a', ' ', 'stream', '.'];
 		let assembled = '';
 
 		// toggle busy state

@@ -45,9 +45,7 @@ class NotificationStore {
 	}
 
 	removeNotification(id: string) {
-		this.notifications = this.notifications.filter(
-			(notification) => notification.id !== id,
-		);
+		this.notifications = this.notifications.filter((notification) => notification.id !== id);
 		this.notify();
 	}
 

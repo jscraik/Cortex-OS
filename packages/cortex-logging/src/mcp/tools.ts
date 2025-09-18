@@ -3,9 +3,7 @@ import { z } from 'zod';
 // Cortex Logging MCP Tool Schemas
 const CreateLoggerInputSchema = z.object({
 	name: z.string(),
-	level: z
-		.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
-		.default('info'),
+	level: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 	format: z.enum(['json', 'pretty', 'simple']).default('json'),
 	outputs: z.array(z.enum(['console', 'file', 'network'])).default(['console']),
 });
@@ -19,9 +17,7 @@ const LogMessageInputSchema = z.object({
 });
 
 const QueryLogsInputSchema = z.object({
-	level: z
-		.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
-		.optional(),
+	level: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).optional(),
 	timeRange: z
 		.object({
 			start: z.string().datetime().optional(),
@@ -35,9 +31,7 @@ const QueryLogsInputSchema = z.object({
 const ConfigureLoggerInputSchema = z.object({
 	logger: z.string(),
 	config: z.object({
-		level: z
-			.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
-			.optional(),
+		level: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).optional(),
 		format: z.enum(['json', 'pretty', 'simple']).optional(),
 		outputs: z.array(z.enum(['console', 'file', 'network'])).optional(),
 	}),

@@ -19,7 +19,4 @@ patterns.forEach((pattern) => {
 	console.log(`Pattern "${pattern}": ${isMatch ? 'MATCH' : 'NO MATCH'}`);
 });
 
-console.log(
-	'\nOverall match result:',
-	micromatch.isMatch(testPath, patterns, { dot: true }),
-);
+console.log('\nOverall match result:', micromatch.isMatch(testPath, patterns, { dot: true }));

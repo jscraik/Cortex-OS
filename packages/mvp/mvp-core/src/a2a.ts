@@ -1,9 +1,7 @@
 import type { CloudEvent } from './cloudevents.js';
 import type { InMemoryOutbox } from './outbox.js';
 
-export type EventHandler<T = unknown> = (
-	event: CloudEvent<T>,
-) => Promise<void> | void;
+export type EventHandler<T = unknown> = (event: CloudEvent<T>) => Promise<void> | void;
 
 /**
  * Minimal A2A router dispatching CloudEvents by type.

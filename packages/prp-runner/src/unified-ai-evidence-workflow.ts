@@ -172,9 +172,7 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Execute the complete unified evidence collection workflow
 	 */
-	async collectEvidence(
-		context: EvidenceTaskContext,
-	): Promise<UnifiedEvidenceResult> {
+	async collectEvidence(context: EvidenceTaskContext): Promise<UnifiedEvidenceResult> {
 		const startTime = Date.now();
 
 		try {
@@ -185,22 +183,13 @@ export class UnifiedAIEvidenceWorkflow {
 			const rawEvidence = await this.collectRawEvidence(context, plan);
 
 			// Phase 3: AI-Enhanced Processing
-			const processedEvidence = await this.processEvidence(
-				rawEvidence,
-				context,
-			);
+			const processedEvidence = await this.processEvidence(rawEvidence, context);
 
 			// Phase 4: Semantic Search & Retrieval
-			const enrichedEvidence = await this.enrichWithSemanticSearch(
-				processedEvidence,
-				context,
-			);
+			const enrichedEvidence = await this.enrichWithSemanticSearch(processedEvidence, context);
 
 			// Phase 5: Fact Checking & Validation
-			const validatedEvidence = await this.validateEvidence(
-				enrichedEvidence,
-				context,
-			);
+			const validatedEvidence = await this.validateEvidence(enrichedEvidence, context);
 
 			// Phase 6: Security & Policy Compliance
 			const complianceResult = await this.ensureCompliance(validatedEvidence);
@@ -215,8 +204,7 @@ export class UnifiedAIEvidenceWorkflow {
 				summary: {
 					totalItems: validatedEvidence.length,
 					enhancedItems: validatedEvidence.filter((e) => e.enhancement).length,
-					factCheckedItems: validatedEvidence.filter((e) => e.factCheckResult)
-						.length,
+					factCheckedItems: validatedEvidence.filter((e) => e.factCheckResult).length,
 					averageRelevance:
 						validatedEvidence.reduce((sum, e) => sum + e.relevanceScore, 0) /
 						validatedEvidence.length,
@@ -243,9 +231,7 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Phase 1: Analyze context and create collection plan
 	 */
-	private async analyzeContext(
-		context: EvidenceTaskContext,
-	): Promise<EvidencePlan> {
+	private async analyzeContext(context: EvidenceTaskContext): Promise<EvidencePlan> {
 		return {
 			searchQueries: this.generateSearchQueries(context),
 			evidenceTypes: ['documentation', 'code', 'requirements', 'decisions'],
@@ -269,16 +255,11 @@ export class UnifiedAIEvidenceWorkflow {
 				const result = await this.asbrIntegration.collectEnhancedEvidence(
 					{ taskId: context.taskId, claim: query, sources: [] },
 					{
-						maxResults: Math.floor(
-							this.config.maxEvidenceItems / plan.searchQueries.length,
-						),
+						maxResults: Math.floor(this.config.maxEvidenceItems / plan.searchQueries.length),
 					},
 				);
 
-				const determineSource = (
-					enhancedSource: unknown,
-					originalSource: unknown,
-				): string => {
+				const determineSource = (enhancedSource: unknown, originalSource: unknown): string => {
 					if (typeof enhancedSource === 'string') return enhancedSource;
 					if (typeof originalSource === 'string') return originalSource;
 					return 'asbr-integration';
@@ -311,9 +292,7 @@ export class UnifiedAIEvidenceWorkflow {
 							id: `evidence-${context.taskId}-${evidence.length + index + 1}`,
 							content: additional.content || 'No content',
 							source:
-								typeof additional.source === 'string'
-									? additional.source
-									: 'asbr-integration',
+								typeof additional.source === 'string' ? additional.source : 'asbr-integration',
 							relevanceScore: 0.7, // Slightly lower score for additional evidence
 							metadata: {
 								query,
@@ -342,7 +321,7 @@ export class UnifiedAIEvidenceWorkflow {
 		_context: EvidenceTaskContext,
 	): Promise<EnhancedEvidenceItem[]> {
 		if (!this.config.enhancementEnabled) {
-			return evidence.map(item => ({
+			return evidence.map((item) => ({
 				...item,
 				enhancement: {
 					originalContent: item.content,
@@ -354,7 +333,7 @@ export class UnifiedAIEvidenceWorkflow {
 
 		// TODO: Implement enhanceEvidence in ASBRAIIntegration when ready
 		console.warn('Evidence enhancement is not yet implemented');
-		return evidence.map(item => ({
+		return evidence.map((item) => ({
 			...item,
 			enhancement: {
 				originalContent: item.content,
@@ -445,19 +424,15 @@ export class UnifiedAIEvidenceWorkflow {
 						tags: [],
 						relatedEvidenceIds: [],
 					};
-					const factCheckResult =
-						await this.asbrIntegration.factCheckEvidence(evidence);
+					const factCheckResult = await this.asbrIntegration.factCheckEvidence(evidence);
 
 					return {
 						...item,
 						factCheckResult: {
 							verified: factCheckResult.factualConsistency > 0.7, // Consider verified if consistency > 0.7
 							confidence: factCheckResult.factualConsistency,
-							supportingEvidence: factCheckResult.supportingEvidence.map(
-								(evidence) =>
-									typeof evidence === 'string'
-										? evidence
-										: evidence.content || evidence.id,
+							supportingEvidence: factCheckResult.supportingEvidence.map((evidence) =>
+								typeof evidence === 'string' ? evidence : evidence.content || evidence.id,
 							),
 						},
 					};
@@ -493,10 +468,7 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Phase 7: Generate insights from collected evidence
 	 */
-	private async generateInsights(
-		evidence: EnhancedEvidenceItem[],
-		context: EvidenceTaskContext,
-	) {
+	private async generateInsights(evidence: EnhancedEvidenceItem[], context: EvidenceTaskContext) {
 		try {
 			const evidenceObjects = evidence.map((e) => ({
 				id: e.id,
@@ -509,17 +481,14 @@ export class UnifiedAIEvidenceWorkflow {
 				tags: [],
 				relatedEvidenceIds: [],
 			}));
-			const insightsResult =
-				await this.asbrIntegration.generateEvidenceInsights(
-					evidenceObjects,
-					context.description,
-				);
+			const insightsResult = await this.asbrIntegration.generateEvidenceInsights(
+				evidenceObjects,
+				context.description,
+			);
 
 			return {
 				keyFindings: insightsResult.keyFindings,
-				gaps: insightsResult.riskAssessment.specificRisks.map(
-					(risk) => risk.description,
-				),
+				gaps: insightsResult.riskAssessment.specificRisks.map((risk) => risk.description),
 				recommendations: insightsResult.recommendations,
 				confidence: insightsResult.confidenceMetrics.averageConfidence,
 			};
@@ -566,9 +535,7 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Helper: Assess task complexity for planning
 	 */
-	private assessComplexity(
-		context: EvidenceTaskContext,
-	): 'low' | 'medium' | 'high' {
+	private assessComplexity(context: EvidenceTaskContext): 'low' | 'medium' | 'high' {
 		const indicators = [
 			context.requirements?.length || 0,
 			Object.keys(context.constraints || {}).length,
@@ -594,8 +561,7 @@ export class UnifiedAIEvidenceWorkflow {
 				aiCapabilities: this.aiCapabilities ? 'connected' : 'disconnected',
 			},
 			configuration: {
-				modelsConfigured:
-					!!this.config.llmModel && !!this.config.embeddingModel,
+				modelsConfigured: !!this.config.llmModel && !!this.config.embeddingModel,
 				securityEnabled: this.config.enablePolicyCompliance,
 				enhancementEnabled: this.config.enhancementEnabled,
 				factCheckingEnabled: this.config.factCheckingEnabled,

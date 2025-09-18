@@ -143,9 +143,7 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
 		});
 
 		it('should handle rapid successive requests', async () => {
-			const promises = Array.from({ length: 100 }, () =>
-				request.get('/health').expect(200),
-			);
+			const promises = Array.from({ length: 100 }, () => request.get('/health').expect(200));
 
 			const results = await Promise.allSettled(promises);
 			const successful = results.filter((r) => r.status === 'fulfilled').length;
@@ -199,12 +197,10 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
 			interface ConnectorInfo {
 				scopes?: unknown;
 			}
-			Object.values(response.body as Record<string, ConnectorInfo>).forEach(
-				(connector) => {
-					expect(connector).toHaveProperty('scopes');
-					expect(Array.isArray(connector.scopes)).toBe(true);
-				},
-			);
+			Object.values(response.body as Record<string, ConnectorInfo>).forEach((connector) => {
+				expect(connector).toHaveProperty('scopes');
+				expect(Array.isArray(connector.scopes)).toBe(true);
+			});
 		});
 	});
 

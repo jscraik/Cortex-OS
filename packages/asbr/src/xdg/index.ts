@@ -82,11 +82,7 @@ export function getDataPath(
 /**
  * Get path for artifacts with date/UUID organization
  */
-export function getArtifactPath(
-	date: string,
-	uuid: string,
-	filename?: string,
-): string {
+export function getArtifactPath(date: string, uuid: string, filename?: string): string {
 	const paths = getXDGPaths();
 	const artifactDir = join(paths.data, 'artifacts', date, uuid);
 	return filename ? join(artifactDir, filename) : artifactDir;
@@ -144,9 +140,7 @@ export function getTempPath(prefix: string = 'tmp'): string {
 /**
  * Clean up temporary files older than specified age
  */
-export async function cleanupTempFiles(
-	maxAgeMs: number = 24 * 60 * 60 * 1000,
-): Promise<void> {
+export async function cleanupTempFiles(maxAgeMs: number = 24 * 60 * 60 * 1000): Promise<void> {
 	const tmpDir = getCachePath('tmp');
 
 	if (!(await pathExists(tmpDir))) {

@@ -74,11 +74,7 @@ describe('a2a mcp tools runtime smoke', () => {
 	it('exposes expected tool names', () => {
 		const names = tools.map((t) => t.name).sort();
 		expect(names).toEqual(
-			[
-				'a2a_event_stream_subscribe',
-				'a2a_outbox_sync',
-				'a2a_queue_message',
-			].sort(),
+			['a2a_event_stream_subscribe', 'a2a_outbox_sync', 'a2a_queue_message'].sort(),
 		);
 	});
 

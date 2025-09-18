@@ -3,9 +3,7 @@ import type { PRPState } from '../../state.js';
 export async function validateTDDCycle(
 	state: PRPState,
 ): Promise<{ passed: boolean; details: any }> {
-	const tddEvidence = state.evidence.filter(
-		(e) => e.type === 'test' && e.phase === 'build',
-	);
+	const tddEvidence = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
 	const hasTests = tddEvidence.length > 0;
 	const hasCoverage = Boolean(
 		state.outputs?.testCoverage ||
@@ -41,12 +39,8 @@ export async function validateCodeReview(
 			file: 'src/utils.ts',
 		},
 	];
-	const blockers = codeQualityIssues.filter(
-		(issue) => issue.severity === 'blocker',
-	).length;
-	const majors = codeQualityIssues.filter(
-		(issue) => issue.severity === 'major',
-	).length;
+	const blockers = codeQualityIssues.filter((issue) => issue.severity === 'blocker').length;
+	const majors = codeQualityIssues.filter((issue) => issue.severity === 'major').length;
 	return {
 		blockers,
 		majors,
@@ -91,16 +85,11 @@ export async function preCerebrumValidation(
 		state.validationResults?.build &&
 		state.validationResults?.evaluation
 	);
-	const allPhasesPassedOrAcceptable = Object.values(
-		state.validationResults || {},
-	).every(
-		(result) =>
-			result?.passed ||
-			(result?.blockers.length === 0 && result?.majors.length === 0),
+	const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {}).every(
+		(result) => result?.passed || (result?.blockers.length === 0 && result?.majors.length === 0),
 	);
 	const sufficientEvidence = state.evidence.length >= 5;
-	const readyForCerebrum =
-		hasAllPhases && allPhasesPassedOrAcceptable && sufficientEvidence;
+	const readyForCerebrum = hasAllPhases && allPhasesPassedOrAcceptable && sufficientEvidence;
 	return {
 		readyForCerebrum,
 		details: {

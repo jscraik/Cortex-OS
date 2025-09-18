@@ -21,10 +21,7 @@ export interface AgentResourceManager {
 	setLimits(limits: ResourceLimits): void;
 	getCurrentUsage(): ResourceUsage;
 	checkResourceCompliance(): ResourceComplianceReport;
-	enforceTimeLimit<T>(
-		operation: () => Promise<T>,
-		timeoutMs?: number,
-	): Promise<T>;
+	enforceTimeLimit<T>(operation: () => Promise<T>, timeoutMs?: number): Promise<T>;
 	trackMemoryUsage<T>(operation: () => T): T;
 	validateResourceRequest(requestedResources: Partial<ResourceLimits>): boolean;
 }
@@ -63,11 +60,9 @@ export class AgentResourceManagerImpl implements AgentResourceManager {
 		// Validate limits
 		if (limits.maxMemoryMB < 0) throw new Error('Invalid resource limits');
 		if (limits.maxCpuPercent > 100) throw new Error('Invalid resource limits');
-		if (limits.maxExecutionTimeMs <= 0)
-			throw new Error('Invalid resource limits');
+		if (limits.maxExecutionTimeMs <= 0) throw new Error('Invalid resource limits');
 		if (limits.maxFileSystemMB < 0) throw new Error('Invalid resource limits');
-		if (limits.maxNetworkRequests < 0)
-			throw new Error('Invalid resource limits');
+		if (limits.maxNetworkRequests < 0) throw new Error('Invalid resource limits');
 
 		this.limits = { ...limits };
 	}
@@ -90,12 +85,8 @@ export class AgentResourceManagerImpl implements AgentResourceManager {
 				severity: 'critical',
 			});
 		} else if (usage.memoryMB > this.limits.maxMemoryMB * 0.8) {
-			const usagePercent = Math.round(
-				(usage.memoryMB / this.limits.maxMemoryMB) * 100,
-			);
-			recommendations.push(
-				`Memory usage is approaching limit (${usagePercent}% used)`,
-			);
+			const usagePercent = Math.round((usage.memoryMB / this.limits.maxMemoryMB) * 100);
+			recommendations.push(`Memory usage is approaching limit (${usagePercent}% used)`);
 			recommendations.push('Consider optimizing memory allocation patterns');
 		}
 
@@ -105,10 +96,7 @@ export class AgentResourceManagerImpl implements AgentResourceManager {
 				type: 'cpu',
 				current: usage.cpuPercent,
 				limit: this.limits.maxCpuPercent,
-				severity:
-					usage.cpuPercent > this.limits.maxCpuPercent * 1.1
-						? 'critical'
-						: 'warning',
+				severity: usage.cpuPercent > this.limits.maxCpuPercent * 1.1 ? 'critical' : 'warning',
 			});
 		} else if (usage.cpuPercent >= this.limits.maxCpuPercent * 0.9) {
 			// Generate warning for high CPU usage (>90% of limit)
@@ -157,10 +145,7 @@ export class AgentResourceManagerImpl implements AgentResourceManager {
 		};
 	}
 
-	async enforceTimeLimit<T>(
-		operation: () => Promise<T>,
-		timeoutMs?: number,
-	): Promise<T> {
+	async enforceTimeLimit<T>(operation: () => Promise<T>, timeoutMs?: number): Promise<T> {
 		const timeout = timeoutMs || this.limits.maxExecutionTimeMs;
 		const startTime = Date.now();
 
@@ -212,9 +197,7 @@ export class AgentResourceManagerImpl implements AgentResourceManager {
 		}
 	}
 
-	validateResourceRequest(
-		requestedResources: Partial<ResourceLimits>,
-	): boolean {
+	validateResourceRequest(requestedResources: Partial<ResourceLimits>): boolean {
 		if (
 			requestedResources.maxMemoryMB &&
 			requestedResources.maxMemoryMB > this.limits.maxMemoryMB

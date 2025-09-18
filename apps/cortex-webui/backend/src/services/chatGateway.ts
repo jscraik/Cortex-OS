@@ -23,17 +23,12 @@ export async function streamChat(
 ): Promise<{ text: string; usage?: Usage }> {
 	const provider = (env.MODEL_API_PROVIDER || '').toLowerCase();
 	if (provider !== 'openai' && provider !== 'compatible') {
-		throw new Error(
-			'MODEL_API_PROVIDER must be set to "openai" or "compatible"',
-		);
+		throw new Error('MODEL_API_PROVIDER must be set to "openai" or "compatible"');
 	}
 	return await streamOpenAI(params, onToken);
 }
 
-async function streamOpenAI(
-	params: StreamParams,
-	onToken: (t: string) => void,
-) {
+async function streamOpenAI(params: StreamParams, onToken: (t: string) => void) {
 	const base = env.MODEL_API_BASE || 'http://localhost:11434';
 	const apiKey = env.MODEL_API_KEY; // optional for local providers
 

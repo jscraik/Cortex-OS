@@ -55,9 +55,7 @@ export const LogArchivedEventSchema = z.object({
 // Export event type definitions
 export type LogEntryCreatedEvent = z.infer<typeof LogEntryCreatedEventSchema>;
 export type LogStreamStartedEvent = z.infer<typeof LogStreamStartedEventSchema>;
-export type ErrorPatternDetectedEvent = z.infer<
-	typeof ErrorPatternDetectedEventSchema
->;
+export type ErrorPatternDetectedEvent = z.infer<typeof ErrorPatternDetectedEventSchema>;
 export type LogArchivedEvent = z.infer<typeof LogArchivedEventSchema>;
 
 // Helper function to create cortex-logging events

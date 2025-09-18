@@ -8,10 +8,7 @@ import type { ChatResponse, Message } from './types.js';
 export interface OllamaAdapterApi {
 	isAvailable(model?: string): Promise<boolean>;
 	listModels(): Promise<string[]>;
-	generateEmbedding(
-		text: string,
-		model?: string,
-	): Promise<{ embedding: number[]; model: string }>;
+	generateEmbedding(text: string, model?: string): Promise<{ embedding: number[]; model: string }>;
 	generateEmbeddings(
 		texts: string[],
 		model?: string,
@@ -58,20 +55,13 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		async generateEmbedding(text: string, model?: string) {
 			const usedModel = model || defaultModel;
 			// Return a tiny deterministic vector for smoke tests; real impl would call Ollama
-			const hash = Array.from(text).reduce(
-				(h, c) => (h * 31 + c.charCodeAt(0)) >>> 0,
-				0,
-			);
-			const vec = new Array(8)
-				.fill(0)
-				.map((_, i) => ((hash >> (i % 8)) & 0xff) / 255);
+			const hash = Array.from(text).reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0);
+			const vec = new Array(8).fill(0).map((_, i) => ((hash >> (i % 8)) & 0xff) / 255);
 			return { embedding: vec, model: usedModel };
 		},
 		async generateEmbeddings(texts: string[], model?: string) {
 			const usedModel = model || defaultModel;
-			return Promise.all(
-				texts.map((t) => this.generateEmbedding(t, usedModel)),
-			);
+			return Promise.all(texts.map((t) => this.generateEmbedding(t, usedModel)));
 		},
 		async generateChat(
 			req:
@@ -86,12 +76,9 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 			_options?: { temperature?: number; max_tokens?: number },
 		) {
 			const messages = Array.isArray(req) ? req : req.messages;
-			const usedModel =
-				(Array.isArray(req) ? model : req.model) || model || 'llama2';
+			const usedModel = (Array.isArray(req) ? model : req.model) || model || 'llama2';
 			const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-			const content = lastUser
-				? `echo(${lastUser.content.slice(0, 64)})`
-				: 'ok';
+			const content = lastUser ? `echo(${lastUser.content.slice(0, 64)})` : 'ok';
 			return { content, model: usedModel };
 		},
 		async rerank(query: string, documents: string[], model?: string) {
@@ -100,8 +87,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 			const scores = documents.map((d) => {
 				const dl = d.toLowerCase();
 				let s = 0;
-				for (const token of q.split(/\s+/))
-					if (token && dl.includes(token)) s += 1;
+				for (const token of q.split(/\s+/)) if (token && dl.includes(token)) s += 1;
 				return s / Math.max(1, q.split(/\s+/).length);
 			});
 			return { scores, model: model || defaultModel };
@@ -119,10 +105,7 @@ export class OllamaAdapter implements OllamaAdapterApi {
 	listModels(): Promise<string[]> {
 		return this.impl.listModels();
 	}
-	generateEmbedding(
-		text: string,
-		model?: string,
-	): Promise<{ embedding: number[]; model: string }> {
+	generateEmbedding(text: string, model?: string): Promise<{ embedding: number[]; model: string }> {
 		return this.impl.generateEmbedding(text, model);
 	}
 	generateEmbeddings(
@@ -159,11 +142,7 @@ export class OllamaAdapter implements OllamaAdapterApi {
 				...options,
 			};
 		}
-		return this.impl.generateChat(
-			formattedRequest,
-			formattedRequest.model,
-			options,
-		);
+		return this.impl.generateChat(formattedRequest, formattedRequest.model, options);
 	}
 	rerank(
 		query: string,
@@ -171,9 +150,7 @@ export class OllamaAdapter implements OllamaAdapterApi {
 		model?: string,
 	): Promise<{ scores: number[]; model: string }> {
 		if (!this.impl.rerank) {
-			return Promise.reject(
-				new Error('rerank method is not implemented in OllamaAdapterApi'),
-			);
+			return Promise.reject(new Error('rerank method is not implemented in OllamaAdapterApi'));
 		}
 		return this.impl.rerank(query, documents, model);
 	}

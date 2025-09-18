@@ -30,10 +30,7 @@ describe('DeadLetterQueue telemetry', () => {
 		);
 
 		expect(result).toBe('retry');
-		expect(withSpan).toHaveBeenCalledWith(
-			'dlq.handleFailed',
-			expect.any(Function),
-		);
+		expect(withSpan).toHaveBeenCalledWith('dlq.handleFailed', expect.any(Function));
 		expect(logWithSpan).toHaveBeenCalledWith(
 			'info',
 			'Retrying message',
@@ -57,10 +54,7 @@ describe('SagaOrchestrator telemetry', () => {
 		const result = await orchestrator.execute({ count: 0 });
 
 		expect(result.success).toBe(false);
-		expect(withSpan).toHaveBeenCalledWith(
-			'saga.step.step1',
-			expect.any(Function),
-		);
+		expect(withSpan).toHaveBeenCalledWith('saga.step.step1', expect.any(Function));
 		expect(logWithSpan).toHaveBeenCalledWith(
 			'error',
 			'Saga step failed',

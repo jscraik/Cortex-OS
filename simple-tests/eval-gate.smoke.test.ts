@@ -9,12 +9,10 @@ describe.skip('eval gate CLI smoke', async () => {
 		const cfg = path.resolve(__dirname, '../.cortex/eval.config.json');
 
 		let buffer = '';
-		const spy = vi
-			.spyOn(process.stdout, 'write')
-			.mockImplementation((chunk: unknown) => {
-				buffer += String(chunk);
-				return true as unknown as boolean;
-			});
+		const spy = vi.spyOn(process.stdout, 'write').mockImplementation((chunk: unknown) => {
+			buffer += String(chunk);
+			return true as unknown as boolean;
+		});
 		await cmd.parseAsync(['gate', '--config', cfg, '--json']);
 		spy.mockRestore();
 

@@ -55,11 +55,7 @@ export class SecureNeo4j {
 	}
 
 	// Secure node upsert with validation
-	async upsertNode(node: {
-		id: string;
-		label: string;
-		props: Record<string, unknown>;
-	}) {
+	async upsertNode(node: { id: string; label: string; props: Record<string, unknown> }) {
 		// Validate inputs
 		const idValidation = validateNeo4jInput.nodeId(node.id);
 		const labelValidation = validateNeo4jInput.label(node.label);
@@ -79,13 +75,10 @@ export class SecureNeo4j {
 		try {
 			// Use parameterized query to prevent injection
 			// SECURITY FIX: Use validated label directly
-			await session.run(
-				`MERGE (n:${labelValidation.data} {id: $id}) SET n += $props`,
-				{
-					id: idValidation.data,
-					props: node.props,
-				},
-			);
+			await session.run(`MERGE (n:${labelValidation.data} {id: $id}) SET n += $props`, {
+				id: idValidation.data,
+				props: node.props,
+			});
 		} finally {
 			this.returnSession(session);
 		}
@@ -225,9 +218,7 @@ export class SecureNeo4j {
 
 				// Prevent dangerous patterns in strings
 				if (/[;'"`<>(){}]/.test(value)) {
-					throw new Error(
-						`Invalid characters in property value for key: ${key}`,
-					);
+					throw new Error(`Invalid characters in property value for key: ${key}`);
 				}
 			} else if (typeof value === 'object' && value !== null) {
 				// Recursively validate nested objects using type guard

@@ -49,12 +49,7 @@ export const RefactoringOpportunityEventSchema = z.object({
 	cycleId: z.string(),
 	opportunityId: z.string(),
 	file: z.string(),
-	type: z.enum([
-		'extract_method',
-		'eliminate_duplication',
-		'improve_naming',
-		'simplify_logic',
-	]),
+	type: z.enum(['extract_method', 'eliminate_duplication', 'improve_naming', 'simplify_logic']),
 	description: z.string(),
 	priority: z.enum(['low', 'medium', 'high']),
 	detectedAt: z.string(),
@@ -63,12 +58,8 @@ export const RefactoringOpportunityEventSchema = z.object({
 // Export event type definitions
 export type TddCycleStartedEvent = z.infer<typeof TddCycleStartedEventSchema>;
 export type TestWrittenEvent = z.infer<typeof TestWrittenEventSchema>;
-export type ImplementationSuggestedEvent = z.infer<
-	typeof ImplementationSuggestedEventSchema
->;
-export type RefactoringOpportunityEvent = z.infer<
-	typeof RefactoringOpportunityEventSchema
->;
+export type ImplementationSuggestedEvent = z.infer<typeof ImplementationSuggestedEventSchema>;
+export type RefactoringOpportunityEvent = z.infer<typeof RefactoringOpportunityEventSchema>;
 
 // Helper function to create TDD Coach events
 export const createTddCoachEvent = {

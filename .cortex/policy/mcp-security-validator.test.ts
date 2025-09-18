@@ -26,11 +26,7 @@ describe('McpSecurityValidator', () => {
 				},
 				permissions: {
 					dangerous: ['system:exec', 'system:admin', 'files:write:root'],
-					requireConfirmation: [
-						'files:write',
-						'system:exec',
-						'network:external',
-					],
+					requireConfirmation: ['files:write', 'system:exec', 'network:external'],
 				},
 			},
 			marketplace: {
@@ -66,9 +62,7 @@ describe('McpSecurityValidator', () => {
 
 			const result = await validator.validateServer(server);
 			expect(result.valid).toBe(false);
-			expect(result.errors).toContain(
-				"Risk level 'high' not allowed by policy",
-			);
+			expect(result.errors).toContain("Risk level 'high' not allowed by policy");
 		});
 
 		it('should require approval for high-risk servers', async () => {
@@ -85,9 +79,7 @@ describe('McpSecurityValidator', () => {
 
 			const result = await validator.validateServer(server);
 			expect(result.requiresApproval).toBe(true);
-			expect(result.warnings).toContain(
-				"Server requires approval due to 'high' risk level",
-			);
+			expect(result.warnings).toContain("Server requires approval due to 'high' risk level");
 		});
 
 		it('should error on missing risk level', async () => {
@@ -96,9 +88,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.errors).toContain(
-				'Server missing security risk level declaration',
-			);
+			expect(result.errors).toContain('Server missing security risk level declaration');
 		});
 	});
 
@@ -109,9 +99,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(
-				result.warnings.some((w) => w.includes('dangerous permissions')),
-			).toBe(true);
+			expect(result.warnings.some((w) => w.includes('dangerous permissions'))).toBe(true);
 		});
 
 		it('should require confirmation for sensitive permissions', async () => {
@@ -121,9 +109,7 @@ describe('McpSecurityValidator', () => {
 
 			const result = await validator.validateServer(server);
 			expect(result.requiresConfirmation).toBe(true);
-			expect(
-				result.warnings.some((w) => w.includes('requires confirmation')),
-			).toBe(true);
+			expect(result.warnings.some((w) => w.includes('requires confirmation'))).toBe(true);
 		});
 
 		it('should reject dangerous permissions on low-risk servers', async () => {
@@ -133,9 +119,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.errors).toContain(
-				'Low-risk server cannot have dangerous permissions',
-			);
+			expect(result.errors).toContain('Low-risk server cannot have dangerous permissions');
 		});
 
 		it('should warn when high-risk server lacks dangerous permissions', async () => {
@@ -189,9 +173,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.warnings.some((w) => w.includes('not trusted'))).toBe(
-				false,
-			);
+			expect(result.warnings.some((w) => w.includes('not trusted'))).toBe(false);
 		});
 
 		it('should warn about untrusted publishers', async () => {
@@ -204,9 +186,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(
-				result.warnings.some((w) => w.includes('not trusted or verified')),
-			).toBe(true);
+			expect(result.warnings.some((w) => w.includes('not trusted or verified'))).toBe(true);
 		});
 
 		it('should warn about unverified trusted publishers', async () => {
@@ -219,9 +199,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(
-				result.warnings.some((w) => w.includes('not marked as verified')),
-			).toBe(true);
+			expect(result.warnings.some((w) => w.includes('not marked as verified'))).toBe(true);
 		});
 
 		it('should validate featured server publishers', async () => {
@@ -259,9 +237,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.errors).toContain(
-				'Server missing required Sigstore attestation',
-			);
+			expect(result.errors).toContain('Server missing required Sigstore attestation');
 		});
 
 		it('should warn about missing SBOM', async () => {
@@ -274,9 +250,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.warnings).toContain(
-				'Server missing Software Bill of Materials (SBOM)',
-			);
+			expect(result.warnings).toContain('Server missing Software Bill of Materials (SBOM)');
 		});
 
 		it('should validate sigstore URL format', async () => {
@@ -288,9 +262,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.warnings.some((w) => w.includes('may be invalid'))).toBe(
-				true,
-			);
+			expect(result.warnings.some((w) => w.includes('may be invalid'))).toBe(true);
 		});
 
 		it('should skip signature validation when not required', async () => {
@@ -316,9 +288,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.warnings.some((w) => w.includes('below minimum'))).toBe(
-				true,
-			);
+			expect(result.warnings.some((w) => w.includes('below minimum'))).toBe(true);
 		});
 
 		it('should validate featured server ratings', async () => {
@@ -329,9 +299,7 @@ describe('McpSecurityValidator', () => {
 
 			const result = await validator.validateServer(server);
 			expect(
-				result.warnings.some((w) =>
-					w.includes('Featured servers should have ratings >= 4.0'),
-				),
+				result.warnings.some((w) => w.includes('Featured servers should have ratings >= 4.0')),
 			).toBe(true);
 		});
 
@@ -353,9 +321,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(result.warnings).toContain(
-				'Prerelease versions not allowed by policy',
-			);
+			expect(result.warnings).toContain('Prerelease versions not allowed by policy');
 		});
 
 		it('should allow prerelease when enabled', async () => {
@@ -379,9 +345,7 @@ describe('McpSecurityValidator', () => {
 			});
 
 			const result = await validator.validateServer(server);
-			expect(
-				result.warnings.some((w) => w.includes('may not be supported')),
-			).toBe(true);
+			expect(result.warnings.some((w) => w.includes('may not be supported'))).toBe(true);
 		});
 	});
 
@@ -468,9 +432,7 @@ describe('McpSecurityValidator', () => {
 /**
  * Helper function to create mock server manifests
  */
-function createMockServer(
-	overrides: Partial<ServerManifest> = {},
-): ServerManifest {
+function createMockServer(overrides: Partial<ServerManifest> = {}): ServerManifest {
 	return {
 		id: 'test-server',
 		name: 'Test Server',

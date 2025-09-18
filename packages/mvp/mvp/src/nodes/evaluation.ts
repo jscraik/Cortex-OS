@@ -38,14 +38,10 @@ export class EvaluationNode {
 		// Gate 2: Code review validation
 		const reviewValidation = await this.validateCodeReview(state);
 		if (reviewValidation.blockers > 0) {
-			blockers.push(
-				`Code review found ${reviewValidation.blockers} blocking issues`,
-			);
+			blockers.push(`Code review found ${reviewValidation.blockers} blocking issues`);
 		}
 		if (reviewValidation.majors > 3) {
-			majors.push(
-				`Code review found ${reviewValidation.majors} major issues (limit: 3)`,
-			);
+			majors.push(`Code review found ${reviewValidation.majors} major issues (limit: 3)`);
 		}
 
 		evidence.push({
@@ -60,19 +56,13 @@ export class EvaluationNode {
 		// Gate 3: Quality budget validation (A11y, Performance, Security)
 		const budgetValidation = await this.validateQualityBudgets(state);
 		if (!budgetValidation.accessibility.passed) {
-			majors.push(
-				`Accessibility score ${budgetValidation.accessibility.score} below threshold`,
-			);
+			majors.push(`Accessibility score ${budgetValidation.accessibility.score} below threshold`);
 		}
 		if (!budgetValidation.performance.passed) {
-			majors.push(
-				`Performance score ${budgetValidation.performance.score} below threshold`,
-			);
+			majors.push(`Performance score ${budgetValidation.performance.score} below threshold`);
 		}
 		if (!budgetValidation.security.passed) {
-			blockers.push(
-				`Security score ${budgetValidation.security.score} below threshold`,
-			);
+			blockers.push(`Security score ${budgetValidation.security.score} below threshold`);
 		}
 
 		evidence.push({
@@ -106,9 +96,7 @@ export class EvaluationNode {
 		};
 	}
 
-	private async validateTDDCycle(
-		_state: PRPState,
-	): Promise<{ passed: boolean; details: any }> {
+	private async validateTDDCycle(_state: PRPState): Promise<{ passed: boolean; details: any }> {
 		try {
 			const { exec } = await import('node:child_process');
 			const { promisify } = await import('node:util');
@@ -179,19 +167,11 @@ export class EvaluationNode {
 							// Parse test results
 							const passedMatch = testOutput.match(/(\d+)\s+passed/i);
 							const failedMatch = testOutput.match(/(\d+)\s+failed/i);
-							const coverageMatch = testOutput.match(
-								/All files\s*\|\s*([\d.]+)/,
-							);
+							const coverageMatch = testOutput.match(/All files\s*\|\s*([\d.]+)/);
 
-							testResults.passed = passedMatch
-								? parseInt(passedMatch[1], 10) > 0
-								: false;
-							testResults.failed = failedMatch
-								? parseInt(failedMatch[1], 10) > 0
-								: false;
-							testResults.coverage = coverageMatch
-								? parseFloat(coverageMatch[1])
-								: 0;
+							testResults.passed = passedMatch ? parseInt(passedMatch[1], 10) > 0 : false;
+							testResults.failed = failedMatch ? parseInt(failedMatch[1], 10) > 0 : false;
+							testResults.coverage = coverageMatch ? parseFloat(coverageMatch[1]) : 0;
 
 							// Check for TDD evidence in test output
 							testResults.hasRedGreenEvidence =
@@ -216,14 +196,11 @@ export class EvaluationNode {
 				try {
 					await execAsync('which pytest', { timeout: 2000 });
 
-					const { stdout, stderr } = await execAsync(
-						'pytest --cov=. --cov-report=term-missing',
-						{
-							cwd: projectRoot,
-							timeout: 120000,
-							maxBuffer: 2 * 1024 * 1024,
-						},
-					);
+					const { stdout, stderr } = await execAsync('pytest --cov=. --cov-report=term-missing', {
+						cwd: projectRoot,
+						timeout: 120000,
+						maxBuffer: 2 * 1024 * 1024,
+					});
 
 					const testOutput = stdout + stderr;
 
@@ -233,12 +210,8 @@ export class EvaluationNode {
 					const coverageMatch = testOutput.match(/TOTAL\s+\d+\s+\d+\s+(\d+)%/);
 
 					if (passedMatch || failedMatch || coverageMatch) {
-						testResults.passed = passedMatch
-							? parseInt(passedMatch[1], 10) > 0
-							: false;
-						testResults.failed = failedMatch
-							? parseInt(failedMatch[1], 10) > 0
-							: false;
+						testResults.passed = passedMatch ? parseInt(passedMatch[1], 10) > 0 : false;
+						testResults.failed = failedMatch ? parseInt(failedMatch[1], 10) > 0 : false;
 						testResults.coverage = Math.max(
 							testResults.coverage,
 							coverageMatch ? parseInt(coverageMatch[1], 10) : 0,
@@ -258,31 +231,20 @@ export class EvaluationNode {
 				path.join(projectRoot, 'htmlcov', 'index.html'),
 			];
 
-			const hasCoverageReport = coverageFiles.some((file) =>
-				fs.existsSync(file),
-			);
+			const hasCoverageReport = coverageFiles.some((file) => fs.existsSync(file));
 
 			// Try to read coverage summary if available
-			const coverageSummaryPath = path.join(
-				projectRoot,
-				'coverage',
-				'coverage-summary.json',
-			);
+			const coverageSummaryPath = path.join(projectRoot, 'coverage', 'coverage-summary.json');
 			if (fs.existsSync(coverageSummaryPath)) {
 				try {
-					const coverageData = JSON.parse(
-						fs.readFileSync(coverageSummaryPath, 'utf8'),
-					);
+					const coverageData = JSON.parse(fs.readFileSync(coverageSummaryPath, 'utf8'));
 					const total = coverageData.total;
 					if (total) {
 						const avgCoverage =
 							['statements', 'branches', 'functions', 'lines']
 								.map((key) => total[key]?.pct || 0)
 								.reduce((a, b) => a + b, 0) / 4;
-						testResults.coverage = Math.max(
-							testResults.coverage,
-							Math.round(avgCoverage),
-						);
+						testResults.coverage = Math.max(testResults.coverage, Math.round(avgCoverage));
 					}
 				} catch {
 					// Coverage summary parsing failed
@@ -311,12 +273,10 @@ export class EvaluationNode {
 			// Validate TDD cycle completeness
 			const hasTests = testResults.testCount > 0;
 			const hasGoodCoverage = testResults.coverage >= 80;
-			const hasTestEvidence =
-				testResults.hasRedGreenEvidence || hasGitTddEvidence;
+			const hasTestEvidence = testResults.hasRedGreenEvidence || hasGitTddEvidence;
 			const testsPassing = testResults.passed && !testResults.failed;
 
-			const tddPassed =
-				hasTests && hasGoodCoverage && hasTestEvidence && testsPassing;
+			const tddPassed = hasTests && hasGoodCoverage && hasTestEvidence && testsPassing;
 
 			return {
 				passed: tddPassed,
@@ -343,8 +303,7 @@ export class EvaluationNode {
 			return {
 				passed: false,
 				details: {
-					error:
-						error instanceof Error ? error.message : 'TDD validation error',
+					error: error instanceof Error ? error.message : 'TDD validation error',
 					testCount: 0,
 					coverage: 0,
 					redGreenCycle: false,
@@ -373,14 +332,11 @@ export class EvaluationNode {
 				if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
 					await execAsync('which eslint', { timeout: 2000 });
 
-					const { stdout } = await execAsync(
-						'npx eslint --format json . || true',
-						{
-							cwd: projectRoot,
-							timeout: 60000,
-							maxBuffer: 2 * 1024 * 1024,
-						},
-					);
+					const { stdout } = await execAsync('npx eslint --format json . || true', {
+						cwd: projectRoot,
+						timeout: 60000,
+						maxBuffer: 2 * 1024 * 1024,
+					});
 
 					if (stdout.trim()) {
 						const eslintResults = JSON.parse(stdout);
@@ -457,9 +413,7 @@ export class EvaluationNode {
 						);
 						if (packageJson.devDependencies?.['eslint-plugin-sonarjs']) {
 							// SonarJS results would be included in ESLint output above
-							const sonarIssues = allIssues.filter((issue) =>
-								issue.type?.includes('sonarjs'),
-							);
+							const sonarIssues = allIssues.filter((issue) => issue.type?.includes('sonarjs'));
 							if (sonarIssues.length > 0 && !tools.includes('SonarJS')) {
 								tools.push('SonarJS');
 							}
@@ -514,10 +468,7 @@ export class EvaluationNode {
 			);
 
 			// Calculate maintainability index (simplified)
-			const maintainabilityIndex = Math.max(
-				0,
-				100 - blockers * 15 - majors * 8 - minors * 2,
-			);
+			const maintainabilityIndex = Math.max(0, 100 - blockers * 15 - majors * 8 - minors * 2);
 
 			return {
 				blockers,
@@ -543,10 +494,7 @@ export class EvaluationNode {
 				blockers: 0,
 				majors: 1,
 				details: {
-					error:
-						error instanceof Error
-							? error.message
-							: 'Code review validation error',
+					error: error instanceof Error ? error.message : 'Code review validation error',
 					totalIssues: 1,
 					issues: [
 						{
@@ -599,8 +547,7 @@ export class EvaluationNode {
 		if (ruleId.includes('complexity')) return 'complexity';
 		if (ruleId.includes('security')) return 'security';
 		if (ruleId.includes('performance')) return 'performance';
-		if (ruleId.includes('accessibility') || ruleId.includes('a11y'))
-			return 'accessibility';
+		if (ruleId.includes('accessibility') || ruleId.includes('a11y')) return 'accessibility';
 		if (ruleId.includes('import')) return 'imports';
 		return 'style';
 	}
@@ -625,13 +572,7 @@ export class EvaluationNode {
 			for (const pattern of patterns) {
 				const files = await glob.glob(pattern, {
 					cwd: projectRoot,
-					ignore: [
-						'node_modules/**',
-						'.git/**',
-						'dist/**',
-						'build/**',
-						'__pycache__/**',
-					],
+					ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**', '__pycache__/**'],
 				});
 
 				for (const file of files.slice(0, 20)) {
@@ -723,14 +664,11 @@ export class EvaluationNode {
 					const lines = content.split('\n');
 
 					lines.forEach((line, index) => {
-						const todoMatch = line.match(
-							/(TODO|FIXME|HACK|XXX|BUG)[:,\s](.+)/i,
-						);
+						const todoMatch = line.match(/(TODO|FIXME|HACK|XXX|BUG)[:,\s](.+)/i);
 						if (todoMatch) {
 							issues.push({
 								tool: 'todo-scanner',
-								severity:
-									todoMatch[1].toUpperCase() === 'FIXME' ? 'warning' : 'info',
+								severity: todoMatch[1].toUpperCase() === 'FIXME' ? 'warning' : 'info',
 								type: 'todo-comment',
 								message: `${todoMatch[1]}: ${todoMatch[2].trim()}`,
 								file,
@@ -764,9 +702,7 @@ export class EvaluationNode {
 		const categories = this.categorizeIssues(issues);
 
 		if (categories.complexity > 5) {
-			recommendations.push(
-				'Consider refactoring complex functions to improve maintainability',
-			);
+			recommendations.push('Consider refactoring complex functions to improve maintainability');
 		}
 
 		if (categories.security > 0) {
@@ -774,21 +710,15 @@ export class EvaluationNode {
 		}
 
 		if (categories.performance > 3) {
-			recommendations.push(
-				'Review performance-related issues to optimize application speed',
-			);
+			recommendations.push('Review performance-related issues to optimize application speed');
 		}
 
 		if (categories.accessibility > 2) {
-			recommendations.push(
-				'Fix accessibility issues to ensure inclusive design',
-			);
+			recommendations.push('Fix accessibility issues to ensure inclusive design');
 		}
 
 		if (categories.maintenance > 10) {
-			recommendations.push(
-				'Address TODO/FIXME comments to reduce technical debt',
-			);
+			recommendations.push('Address TODO/FIXME comments to reduce technical debt');
 		}
 
 		return recommendations.slice(0, 5); // Limit to top 5 recommendations
@@ -808,9 +738,7 @@ export class EvaluationNode {
 
 			// Extract real scores from build evidence if available
 			if (buildValidation?.evidence) {
-				const buildEvidence = state.evidence.filter((e) =>
-					buildValidation.evidence.includes(e.id),
-				);
+				const buildEvidence = state.evidence.filter((e) => buildValidation.evidence.includes(e.id));
 
 				for (const evidence of buildEvidence) {
 					try {
@@ -819,10 +747,7 @@ export class EvaluationNode {
 						// Extract frontend validation scores
 						if (evidence.source === 'frontend_validation' && content.details) {
 							if (content.lighthouse !== undefined) {
-								performanceScore = Math.max(
-									performanceScore,
-									content.lighthouse,
-								);
+								performanceScore = Math.max(performanceScore, content.lighthouse);
 							}
 							if (content.axe !== undefined) {
 								accessibilityScore = Math.max(accessibilityScore, content.axe);
@@ -836,10 +761,7 @@ export class EvaluationNode {
 								// Calculate security score based on vulnerability counts
 								const { critical, high, medium } = securityDetails.summary;
 								const maxDeduction = critical * 25 + high * 15 + medium * 5;
-								securityScore = Math.max(
-									0,
-									Math.min(securityScore, 100 - maxDeduction),
-								);
+								securityScore = Math.max(0, Math.min(securityScore, 100 - maxDeduction));
 							}
 						}
 
@@ -870,14 +792,8 @@ export class EvaluationNode {
 				state,
 				accessibilityScore,
 			);
-			const performanceDetails = await this.getPerformanceBudgetDetails(
-				state,
-				performanceScore,
-			);
-			const securityDetails = await this.getSecurityBudgetDetails(
-				state,
-				securityScore,
-			);
+			const performanceDetails = await this.getPerformanceBudgetDetails(state, performanceScore);
+			const securityDetails = await this.getSecurityBudgetDetails(state, securityScore);
 
 			return {
 				accessibility: {
@@ -887,8 +803,7 @@ export class EvaluationNode {
 						threshold: thresholds.accessibility,
 						...accessibilityDetails,
 						budget: 'WCAG 2.2 AA compliance (90%+)',
-						recommendations:
-							this.getAccessibilityRecommendations(accessibilityScore),
+						recommendations: this.getAccessibilityRecommendations(accessibilityScore),
 					},
 				},
 				performance: {
@@ -898,8 +813,7 @@ export class EvaluationNode {
 						threshold: thresholds.performance,
 						...performanceDetails,
 						budget: 'Core Web Vitals compliance (85%+)',
-						recommendations:
-							this.getPerformanceRecommendations(performanceScore),
+						recommendations: this.getPerformanceRecommendations(performanceScore),
 					},
 				},
 				security: {
@@ -920,10 +834,7 @@ export class EvaluationNode {
 					passed: false,
 					score: 75,
 					details: {
-						error:
-							error instanceof Error
-								? error.message
-								: 'Quality budget validation error',
+						error: error instanceof Error ? error.message : 'Quality budget validation error',
 						budget: 'WCAG 2.2 AA compliance (90%+)',
 						threshold: 90,
 					},
@@ -932,10 +843,7 @@ export class EvaluationNode {
 					passed: false,
 					score: 75,
 					details: {
-						error:
-							error instanceof Error
-								? error.message
-								: 'Performance budget validation error',
+						error: error instanceof Error ? error.message : 'Performance budget validation error',
 						budget: 'Core Web Vitals compliance (85%+)',
 						threshold: 85,
 					},
@@ -944,10 +852,7 @@ export class EvaluationNode {
 					passed: false,
 					score: 75,
 					details: {
-						error:
-							error instanceof Error
-								? error.message
-								: 'Security budget validation error',
+						error: error instanceof Error ? error.message : 'Security budget validation error',
 						budget: 'Security baseline (80%+)',
 						threshold: 80,
 					},
@@ -956,19 +861,9 @@ export class EvaluationNode {
 		}
 	}
 
-	private async getAccessibilityBudgetDetails(
-		_state: PRPState,
-		score: number,
-	): Promise<any> {
+	private async getAccessibilityBudgetDetails(_state: PRPState, score: number): Promise<any> {
 		return {
-			wcagLevel:
-				score >= 95
-					? 'AAA'
-					: score >= 90
-						? 'AA'
-						: score >= 75
-							? 'A'
-							: 'Non-compliant',
+			wcagLevel: score >= 95 ? 'AAA' : score >= 90 ? 'AA' : score >= 75 ? 'A' : 'Non-compliant',
 			keyMetrics: {
 				colorContrast: score >= 90,
 				keyboardNavigation: score >= 85,
@@ -980,10 +875,7 @@ export class EvaluationNode {
 		};
 	}
 
-	private async getPerformanceBudgetDetails(
-		_state: PRPState,
-		score: number,
-	): Promise<any> {
+	private async getPerformanceBudgetDetails(_state: PRPState, score: number): Promise<any> {
 		return {
 			coreWebVitals: {
 				lcp: score >= 90 ? 'good' : score >= 75 ? 'needs-improvement' : 'poor', // Largest Contentful Paint
@@ -1005,18 +897,9 @@ export class EvaluationNode {
 		};
 	}
 
-	private async getSecurityBudgetDetails(
-		_state: PRPState,
-		score: number,
-	): Promise<any> {
+	private async getSecurityBudgetDetails(_state: PRPState, score: number): Promise<any> {
 		const riskLevel =
-			score >= 90
-				? 'low'
-				: score >= 75
-					? 'medium'
-					: score >= 60
-						? 'high'
-						: 'critical';
+			score >= 90 ? 'low' : score >= 75 ? 'medium' : score >= 60 ? 'high' : 'critical';
 
 		return {
 			riskLevel,
@@ -1046,15 +929,9 @@ export class EvaluationNode {
 		const recommendations: string[] = [];
 
 		if (score < 90) {
-			recommendations.push(
-				'Improve color contrast ratios to meet WCAG AA standards',
-			);
-			recommendations.push(
-				'Add proper ARIA labels and landmarks for screen readers',
-			);
-			recommendations.push(
-				'Ensure all interactive elements are keyboard accessible',
-			);
+			recommendations.push('Improve color contrast ratios to meet WCAG AA standards');
+			recommendations.push('Add proper ARIA labels and landmarks for screen readers');
+			recommendations.push('Ensure all interactive elements are keyboard accessible');
 		}
 
 		if (score < 80) {
@@ -1064,12 +941,8 @@ export class EvaluationNode {
 		}
 
 		if (score < 70) {
-			recommendations.push(
-				'Address critical accessibility violations immediately',
-			);
-			recommendations.push(
-				'Consider hiring accessibility specialist for audit',
-			);
+			recommendations.push('Address critical accessibility violations immediately');
+			recommendations.push('Consider hiring accessibility specialist for audit');
 		}
 
 		return recommendations.slice(0, 5);
@@ -1092,9 +965,7 @@ export class EvaluationNode {
 
 		if (score < 65) {
 			recommendations.push('Review third-party scripts and dependencies');
-			recommendations.push(
-				'Consider server-side rendering or static generation',
-			);
+			recommendations.push('Consider server-side rendering or static generation');
 		}
 
 		return recommendations.slice(0, 5);
@@ -1104,30 +975,20 @@ export class EvaluationNode {
 		const recommendations: string[] = [];
 
 		if (score < 80) {
-			recommendations.push(
-				'Address all critical and high severity vulnerabilities',
-			);
+			recommendations.push('Address all critical and high severity vulnerabilities');
 			recommendations.push('Implement input validation and output encoding');
 			recommendations.push('Enable security headers (CSP, HSTS, etc.)');
 		}
 
 		if (score < 70) {
-			recommendations.push(
-				'Review authentication and authorization mechanisms',
-			);
-			recommendations.push(
-				'Implement proper error handling without information disclosure',
-			);
+			recommendations.push('Review authentication and authorization mechanisms');
+			recommendations.push('Implement proper error handling without information disclosure');
 			recommendations.push('Enable dependency vulnerability scanning in CI/CD');
 		}
 
 		if (score < 60) {
-			recommendations.push(
-				'Conduct thorough security review before deployment',
-			);
-			recommendations.push(
-				'Consider penetration testing by security professionals',
-			);
+			recommendations.push('Conduct thorough security review before deployment');
+			recommendations.push('Consider penetration testing by security professionals');
 		}
 
 		return recommendations.slice(0, 5);
@@ -1139,8 +1000,7 @@ export class EvaluationNode {
 		// Final validation before Cerebrum decision
 		const strategyPassed = state.validationResults?.strategy?.passed ?? false;
 		const buildPassed = state.validationResults?.build?.passed ?? false;
-		const evaluationPassed =
-			state.validationResults?.evaluation?.passed ?? false;
+		const evaluationPassed = state.validationResults?.evaluation?.passed ?? false;
 
 		// Use && instead of || to require ALL phases to pass
 		const allPhasesPassed = strategyPassed && buildPassed && evaluationPassed;

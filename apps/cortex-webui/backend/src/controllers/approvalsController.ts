@@ -3,8 +3,7 @@ import path from 'node:path';
 import type { Request, Response } from 'express';
 
 const STORE =
-	process.env.CORTEX_HITL_STORE ||
-	path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
+	process.env.CORTEX_HITL_STORE || path.join(process.cwd(), 'data', 'events', 'hitl.jsonl');
 
 type HitlRow =
 	| { kind: 'request'; id: string; node?: string; proposal?: unknown }
@@ -32,9 +31,7 @@ async function readAll(): Promise<HitlRow[]> {
 export async function getApprovals(_req: Request, res: Response) {
 	const rows = await readAll();
 	const pending = rows.filter(
-		(r) =>
-			r.kind === 'request' &&
-			!rows.find((d) => d.kind === 'decision' && d.requestId === r.id),
+		(r) => r.kind === 'request' && !rows.find((d) => d.kind === 'decision' && d.requestId === r.id),
 	);
 	res.json(pending);
 }
@@ -47,8 +44,7 @@ export async function postApproval(req: Request, res: Response) {
 		approved?: boolean;
 	};
 	const requestId = body.requestId ?? body.id;
-	const decision =
-		body.decision ?? (body.approved === true ? 'approve' : 'reject');
+	const decision = body.decision ?? (body.approved === true ? 'approve' : 'reject');
 	const row: HitlRow = {
 		kind: 'decision',
 		id: crypto.randomUUID(),

@@ -40,9 +40,7 @@ describe('document ingestion tool', () => {
 
 	it('rejects payloads that fail schema validation', async () => {
 		const { ragIngestTool } = await import('../src/mcp/tools');
-		await expect(ragIngestTool.handler({ content: '' })).rejects.toThrow(
-			/at least 1 character/i,
-		);
+		await expect(ragIngestTool.handler({ content: '' })).rejects.toThrow(/at least 1 character/i);
 	});
 });
 
@@ -110,9 +108,7 @@ describe('document retrieval tool', () => {
 	});
 
 	it('scores documents, fills missing embeddings, and respects topK', async () => {
-		const embedMock = vi.fn(async (texts: string[]) =>
-			texts.map(() => [0.5, 0.5]),
-		);
+		const embedMock = vi.fn(async (texts: string[]) => texts.map(() => [0.5, 0.5]));
 		const embedder = { embed: embedMock } as const;
 		const { retrieveDocs } = await import('../src/lib/retrieve-docs');
 
@@ -128,9 +124,7 @@ describe('document retrieval tool', () => {
 		expect(embedMock).toHaveBeenCalledWith(['Biodiversity field notes']);
 		expect(result).toHaveLength(2);
 		expect(result[0]?.id).toBe('1');
-		expect(result[0]?.similarity).toBeGreaterThanOrEqual(
-			result[1]?.similarity ?? 0,
-		);
+		expect(result[0]?.similarity).toBeGreaterThanOrEqual(result[1]?.similarity ?? 0);
 		expect(result[1]?.embedding).toEqual([0.5, 0.5]);
 	});
 });
@@ -154,12 +148,7 @@ describe('document reranking tool', () => {
 			{ id: 'c', content: 'Doc C content', metadata: { source: 'gamma' } },
 		];
 
-		const result = await rerankDocs(
-			reranker as any,
-			'renewable energy',
-			documents,
-			2,
-		);
+		const result = await rerankDocs(reranker as any, 'renewable energy', documents, 2);
 
 		expect(rerankMock).toHaveBeenCalledWith(
 			'renewable energy',
@@ -203,10 +192,7 @@ describe('citation bundler tool', () => {
 
 		expect(result.citations).toHaveLength(3);
 		expect(result.sourceGroups).toBeDefined();
-		expect(result.sourceGroups?.['doc-A']?.map((c) => c.id)).toEqual([
-			'1',
-			'2',
-		]);
+		expect(result.sourceGroups?.['doc-A']?.map((c) => c.id)).toEqual(['1', '2']);
 		expect(result.sourceGroups?.['doc-A']?.[0]?.score ?? 0).toBeGreaterThan(
 			result.sourceGroups?.['doc-A']?.[1]?.score ?? 0,
 		);

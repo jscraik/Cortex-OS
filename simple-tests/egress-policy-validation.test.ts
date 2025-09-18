@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	createEgressPolicyValidator,
-	type EgressPolicy,
-} from './egress-policy-validator-impl';
+import { createEgressPolicyValidator, type EgressPolicy } from './egress-policy-validator-impl';
 
 describe('Egress Policy Validation', () => {
 	describe('Schema validation', () => {
@@ -141,18 +138,8 @@ describe('Egress Policy Validation', () => {
 			const validator = createEgressPolicyValidator();
 			validator.loadPolicy(policy);
 
-			expect(
-				validator.isAllowed(
-					'https://api.openai.com/v1/chat/completions',
-					'POST',
-				),
-			).toBe(true);
-			expect(
-				validator.isAllowed(
-					'https://api.openai.com/v1/chat/completions',
-					'GET',
-				),
-			).toBe(false);
+			expect(validator.isAllowed('https://api.openai.com/v1/chat/completions', 'POST')).toBe(true);
+			expect(validator.isAllowed('https://api.openai.com/v1/chat/completions', 'GET')).toBe(false);
 		});
 
 		it('should apply custom rules over default allowlist', () => {
@@ -176,9 +163,7 @@ describe('Egress Policy Validation', () => {
 			validator.loadPolicy(policy);
 
 			expect(validator.isAllowed('https://api.github.com/user')).toBe(true);
-			expect(validator.isAllowed('https://api.github.com/admin/users')).toBe(
-				false,
-			);
+			expect(validator.isAllowed('https://api.github.com/admin/users')).toBe(false);
 		});
 	});
 

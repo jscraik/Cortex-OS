@@ -24,11 +24,8 @@ async function main() {
 	const webhookSecret = required('WEBHOOK_SECRET', process.env.WEBHOOK_SECRET);
 
 	const port = Number(process.env.PORT ?? '3001');
-	const baseUrl =
-		process.env.GITHUB_MODELS_BASE_URL ||
-		'https://models.inference.ai.azure.com';
-	const defaultModel = (process.env.GITHUB_DEFAULT_MODEL ||
-		'claude-3-5-sonnet') as GitHubModel;
+	const baseUrl = process.env.GITHUB_MODELS_BASE_URL || 'https://models.inference.ai.azure.com';
+	const defaultModel = (process.env.GITHUB_DEFAULT_MODEL || 'claude-3-5-sonnet') as GitHubModel;
 	const maxTokens = Number(process.env.GITHUB_MAX_TOKENS ?? '4096');
 	const temperature = Number(process.env.GITHUB_TEMPERATURE ?? '0.3');
 

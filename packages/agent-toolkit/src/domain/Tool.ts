@@ -1,7 +1,4 @@
-import type {
-	AgentToolkitInput,
-	AgentToolkitResult,
-} from '@cortex-os/contracts';
+import type { AgentToolkitInput, AgentToolkitResult } from '@cortex-os/contracts';
 
 /**
  * Abstract base class for all agent toolkit tools

@@ -50,9 +50,7 @@ describe('MVP Fixes Verification', () => {
 			const blockers = result.validationResults.build?.blockers || [];
 			expect(blockers).toContain('API schema validation failed');
 
-			const apiEvidence = result.evidence.find(
-				(e: any) => e.source === 'api_schema_validation',
-			);
+			const apiEvidence = result.evidence.find((e: any) => e.source === 'api_schema_validation');
 			expect(apiEvidence).toBeDefined();
 		});
 	});
@@ -71,9 +69,7 @@ describe('MVP Fixes Verification', () => {
 				},
 			};
 
-			const result = await (evaluationNode as any).preCerebrumValidation(
-				mockState,
-			);
+			const result = await (evaluationNode as any).preCerebrumValidation(mockState);
 
 			// Should be false when any phase fails
 			expect(result.readyForCerebrum).toBe(false);

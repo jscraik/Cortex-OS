@@ -118,10 +118,7 @@ export class McpSecurityValidator {
 	/**
 	 * Validate server risk level against policy
 	 */
-	private validateRiskLevel(
-		server: ServerManifest,
-		result: ValidationResult,
-	): void {
+	private validateRiskLevel(server: ServerManifest, result: ValidationResult): void {
 		const riskLevel = server.security?.riskLevel;
 
 		if (!riskLevel) {
@@ -136,23 +133,17 @@ export class McpSecurityValidator {
 
 		if (this.policy.security.riskLevels.requireApproval.includes(riskLevel)) {
 			result.requiresApproval = true;
-			result.warnings.push(
-				`Server requires approval due to '${riskLevel}' risk level`,
-			);
+			result.warnings.push(`Server requires approval due to '${riskLevel}' risk level`);
 		}
 	}
 
 	/**
 	 * Validate server permissions against policy
 	 */
-	private validatePermissions(
-		server: ServerManifest,
-		result: ValidationResult,
-	): void {
+	private validatePermissions(server: ServerManifest, result: ValidationResult): void {
 		const permissions = server.permissions || [];
 		const dangerous = this.policy.security.permissions.dangerous;
-		const requireConfirmation =
-			this.policy.security.permissions.requireConfirmation;
+		const requireConfirmation = this.policy.security.permissions.requireConfirmation;
 
 		// Check for dangerous permissions
 		const hasDangerous = permissions.some((perm) =>
@@ -164,16 +155,12 @@ export class McpSecurityValidator {
 				dangerous.some((dangerousPerm) => perm.includes(dangerousPerm)),
 			);
 
-			result.warnings.push(
-				`Server requests dangerous permissions: ${dangerousPerms.join(', ')}`,
-			);
+			result.warnings.push(`Server requests dangerous permissions: ${dangerousPerms.join(', ')}`);
 		}
 
 		// High risk servers should have dangerous permissions
 		if (server.security?.riskLevel === 'high' && !hasDangerous) {
-			result.warnings.push(
-				'High-risk server should declare dangerous permissions explicitly',
-			);
+			result.warnings.push('High-risk server should declare dangerous permissions explicitly');
 		}
 
 		// Check for confirmation-required permissions
@@ -200,10 +187,7 @@ export class McpSecurityValidator {
 	/**
 	 * Validate publisher trust status
 	 */
-	private validatePublisher(
-		server: ServerManifest,
-		result: ValidationResult,
-	): void {
+	private validatePublisher(server: ServerManifest, result: ValidationResult): void {
 		const publisher = server.publisher;
 
 		if (!publisher) {
@@ -211,29 +195,20 @@ export class McpSecurityValidator {
 			return;
 		}
 
-		const isTrusted =
-			this.policy.security.signatures.trustedPublishers.includes(
-				publisher.name,
-			);
+		const isTrusted = this.policy.security.signatures.trustedPublishers.includes(publisher.name);
 		const isVerified = publisher.verified === true;
 
 		if (!isTrusted && !isVerified) {
-			result.warnings.push(
-				`Publisher '${publisher.name}' is not trusted or verified`,
-			);
+			result.warnings.push(`Publisher '${publisher.name}' is not trusted or verified`);
 		}
 
 		if (isTrusted && !isVerified) {
-			result.warnings.push(
-				`Trusted publisher '${publisher.name}' is not marked as verified`,
-			);
+			result.warnings.push(`Trusted publisher '${publisher.name}' is not marked as verified`);
 		}
 
 		// Featured servers should be from trusted publishers
 		if (server.featured && !isTrusted) {
-			result.warnings.push(
-				'Featured servers should be from trusted publishers',
-			);
+			result.warnings.push('Featured servers should be from trusted publishers');
 		}
 	}
 
@@ -258,19 +233,14 @@ export class McpSecurityValidator {
 			result.warnings.push('Server missing Software Bill of Materials (SBOM)');
 		}
 
-		if (
-			this.policy.security.signatures.sigstoreValidation &&
-			security?.sigstore
-		) {
+		if (this.policy.security.signatures.sigstoreValidation && security?.sigstore) {
 			try {
 				const url = new URL(security.sigstore);
 				if (url.protocol !== 'https:') {
 					result.errors.push('Sigstore attestation must use HTTPS');
 				}
 				if (!url.pathname.endsWith('.json')) {
-					result.warnings.push(
-						'Sigstore attestation should reference a JSON bundle',
-					);
+					result.warnings.push('Sigstore attestation should reference a JSON bundle');
 				}
 			} catch {
 				result.warnings.push('Sigstore attestation URL may be invalid');
@@ -281,16 +251,11 @@ export class McpSecurityValidator {
 	/**
 	 * Validate server rating against minimum requirements
 	 */
-	private validateRating(
-		server: ServerManifest,
-		result: ValidationResult,
-	): void {
+	private validateRating(server: ServerManifest, result: ValidationResult): void {
 		const minRating = this.policy.marketplace.validation.minRating;
 
 		if (server.rating && server.rating < minRating) {
-			result.warnings.push(
-				`Server rating ${server.rating} below minimum ${minRating}`,
-			);
+			result.warnings.push(`Server rating ${server.rating} below minimum ${minRating}`);
 		}
 
 		// Featured servers should have high ratings
@@ -302,10 +267,7 @@ export class McpSecurityValidator {
 	/**
 	 * Validate server version against policy
 	 */
-	private validateVersion(
-		server: ServerManifest,
-		result: ValidationResult,
-	): void {
+	private validateVersion(server: ServerManifest, result: ValidationResult): void {
 		if (!this.policy.marketplace.validation.allowPrerelease && server.version) {
 			const isPrerelease = server.version.includes('-');
 
@@ -342,9 +304,7 @@ export class McpSecurityValidator {
 	 */
 	requiresApproval(server: ServerManifest): boolean {
 		const riskLevel = server.security?.riskLevel;
-		return riskLevel
-			? this.policy.security.riskLevels.requireApproval.includes(riskLevel)
-			: false;
+		return riskLevel ? this.policy.security.riskLevels.requireApproval.includes(riskLevel) : false;
 	}
 
 	/**

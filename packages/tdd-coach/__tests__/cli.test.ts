@@ -39,9 +39,7 @@ describe('TDD Coach CLI', () => {
 	});
 });
 
-function runCLI(
-	args: string[],
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+function runCLI(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
 	return new Promise((resolve, reject) => {
 		const cliProcess = spawn('node', [cliPath, ...args], {
 			cwd: process.cwd(),

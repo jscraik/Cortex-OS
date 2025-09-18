@@ -44,9 +44,7 @@ describe('Qwen3Embedder', () => {
 		const promise = embedder.embed(['x']);
 		proc.stderr.emit('data', 'fail');
 		proc.emit('close', 1);
-		await expect(promise).rejects.toThrow(
-			'Python embedding process failed: fail',
-		);
+		await expect(promise).rejects.toThrow('Python embedding process failed: fail');
 	});
 
 	it('propagates timeout errors', async () => {

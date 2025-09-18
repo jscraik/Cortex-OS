@@ -246,9 +246,7 @@ export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 			const { toolName } = request.params as { toolName: string };
 
 			const tools = mcpIntegration.listTools();
-			const tool = tools.find(
-				(t) => t.name === toolName || t.aliases?.includes(toolName),
-			);
+			const tool = tools.find((t) => t.name === toolName || t.aliases?.includes(toolName));
 
 			if (!tool) {
 				return reply.status(404).send({

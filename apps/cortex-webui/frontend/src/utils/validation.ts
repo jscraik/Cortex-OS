@@ -5,9 +5,7 @@ export const validateEmail = (email: string): boolean => {
 	return re.test(email);
 };
 
-export const validatePassword = (
-	password: string,
-): { isValid: boolean; message: string } => {
+export const validatePassword = (password: string): { isValid: boolean; message: string } => {
 	if (password.length < 8) {
 		return {
 			isValid: false,
@@ -39,9 +37,7 @@ export const validatePassword = (
 	return { isValid: true, message: '' };
 };
 
-export const validateFileName = (
-	fileName: string,
-): { isValid: boolean; message: string } => {
+export const validateFileName = (fileName: string): { isValid: boolean; message: string } => {
 	if (!fileName) {
 		return { isValid: false, message: 'File name is required' };
 	}

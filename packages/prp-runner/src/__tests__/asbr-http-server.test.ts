@@ -5,9 +5,7 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
 	ASBRAIMcpServer: class {
 		listTools = vi.fn().mockResolvedValue({ tools: [] });
 		callTool = vi.fn();
-		getHealth = vi
-			.fn()
-			.mockResolvedValue({ status: 'healthy', tools: 0, features: [] });
+		getHealth = vi.fn().mockResolvedValue({ status: 'healthy', tools: 0, features: [] });
 	},
 }));
 

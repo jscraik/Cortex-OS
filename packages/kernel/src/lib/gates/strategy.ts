@@ -30,9 +30,7 @@ export async function validateSecurityBaseline(
 		details: {
 			owaspLevel: hasSecurityReq ? 'L1' : 'none',
 			mitreAtlas: hasSecurityReq,
-			securityRequirements: requirements.filter((req) =>
-				req.toLowerCase().includes('security'),
-			),
+			securityRequirements: requirements.filter((req) => req.toLowerCase().includes('security')),
 		},
 	};
 }
@@ -51,9 +49,7 @@ export async function validateUXAccessibility(
 		passed: hasUXReq,
 		details: {
 			wcagLevel: hasUXReq ? 'AA' : 'none',
-			accessibilityFeatures: hasUXReq
-				? ['keyboard-navigation', 'screen-reader']
-				: [],
+			accessibilityFeatures: hasUXReq ? ['keyboard-navigation', 'screen-reader'] : [],
 		},
 	};
 }
@@ -69,15 +65,12 @@ export async function validateArchitecture(
 		description.includes('component') ||
 		state.blueprint.requirements?.some(
 			(req) =>
-				req.toLowerCase().includes('architecture') ||
-				req.toLowerCase().includes('system design'),
+				req.toLowerCase().includes('architecture') || req.toLowerCase().includes('system design'),
 		);
 	return {
 		passed: hasArchitecture,
 		details: {
-			architectureElements: hasArchitecture
-				? ['system-design', 'components']
-				: [],
+			architectureElements: hasArchitecture ? ['system-design', 'components'] : [],
 		},
 	};
 }

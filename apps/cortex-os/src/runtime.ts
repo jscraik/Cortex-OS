@@ -37,19 +37,9 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 	})();
 
 	const envSchema = z.object({
-		CORTEX_HTTP_PORT: z.coerce
-			.number()
-			.int()
-			.min(0)
-			.max(65535)
-			.default(7439),
+		CORTEX_HTTP_PORT: z.coerce.number().int().min(0).max(65535).default(7439),
 		CORTEX_HTTP_HOST: z.string().default('127.0.0.1'),
-		CORTEX_MCP_MANAGER_PORT: z.coerce
-			.number()
-			.int()
-			.min(0)
-			.max(65535)
-			.default(3000),
+		CORTEX_MCP_MANAGER_PORT: z.coerce.number().int().min(0).max(65535).default(3000),
 		CORTEX_MCP_MANAGER_HOST: z.string().default('127.0.0.1'),
 		CORTEX_MCP_PUBLIC_URL: z.string().url().optional(),
 		CORTEX_PRIVACY_MODE: z.enum(['true', 'false']).optional().default('false'),

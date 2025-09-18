@@ -13,10 +13,7 @@ import { EvidenceValidator } from './validator';
  * Validate findings from JSON file as per specification
  */
 
-export async function validateFindings(
-	repositoryRoot: string,
-	inputFile: string,
-): Promise<void> {
+export async function validateFindings(repositoryRoot: string, inputFile: string): Promise<void> {
 	try {
 		// Load findings from JSON file
 		const findingsData = await readFile(inputFile, 'utf-8');
@@ -84,9 +81,7 @@ export async function validateFindings(
 			for (const err of errors) console.error(`  ${err}`);
 			process.exit(1);
 		} else {
-			console.log(
-				`Successfully validated ${validatedFindings.length} findings`,
-			);
+			console.log(`Successfully validated ${validatedFindings.length} findings`);
 
 			// Generate collection summary
 			const collection = await validator.validateCollection(validatedFindings);
@@ -119,10 +114,7 @@ export async function main(): Promise<void> {
 }
 
 // Run CLI if this file is executed directly
-if (
-	process.argv[1] &&
-	fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
-) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
 	main().catch((error) => {
 		console.error(error);
 		process.exit(1);

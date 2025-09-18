@@ -34,17 +34,13 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 		it('should successfully import CortexKernel from package exports', async () => {
 			// This will FAIL due to package.json export path mismatch
 			try {
-				const { CortexKernel: ExportedKernel } = await import(
-					'@cortex-os/kernel'
-				);
+				const { CortexKernel: ExportedKernel } = await import('@cortex-os/kernel');
 				expect(ExportedKernel).toBeDefined();
 				expect(typeof ExportedKernel).toBe('function');
 			} catch (error) {
 				// Expected failure: export paths don't match build structure
 				expect(error).toBeDefined();
-				throw new Error(
-					'[CRITICAL] Package exports broken - imports will fail in production',
-				);
+				throw new Error('[CRITICAL] Package exports broken - imports will fail in production');
 			}
 		});
 	});
@@ -234,19 +230,10 @@ describe('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
 
 			try {
 				// This will trigger Math.random() usage - should be removed
-				const { ExampleCaptureSystem } = await import(
-					'../src/teaching/example-capture.js'
-				);
+				const { ExampleCaptureSystem } = await import('../src/teaching/example-capture.js');
 				const system = new ExampleCaptureSystem();
 
-				system.captureExample(
-					'pattern',
-					{},
-					'user-action',
-					'outcome',
-					{},
-					true,
-				);
+				system.captureExample('pattern', {}, 'user-action', 'outcome', {}, true);
 
 				// This should FAIL - Math.random() should not be used
 				expect(randomCalled).toBe(false);
@@ -263,10 +250,7 @@ describe('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
 			const originalSetTimeout = global.setTimeout;
 			let timeoutCalled = false;
 
-			global.setTimeout = ((
-				callback: (...args: unknown[]) => void,
-				delay?: number,
-			) => {
+			global.setTimeout = ((callback: (...args: unknown[]) => void, delay?: number) => {
 				timeoutCalled = true;
 				return originalSetTimeout(callback, delay);
 			}) as any; // TODO: Replace with proper setTimeout mock using vi.fn() or similar

@@ -1,19 +1,12 @@
 import { LocalMemoryStore } from '../adapters/store.localmemory.js';
-import {
-	type PrismaLike,
-	PrismaStore,
-} from '../adapters/store.prisma/client.js';
+import { type PrismaLike, PrismaStore } from '../adapters/store.prisma/client.js';
 import { SQLiteStore } from '../adapters/store.sqlite.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
 
 export type StoreKind = 'local' | 'sqlite' | 'prisma' | 'memory';
 
 export function resolveStoreKindFromEnv(): StoreKind {
-	const raw = (
-		process.env.MEMORIES_ADAPTER ||
-		process.env.MEMORY_STORE ||
-		''
-	).toLowerCase();
+	const raw = (process.env.MEMORIES_ADAPTER || process.env.MEMORY_STORE || '').toLowerCase();
 	if (raw === 'local') return 'local';
 	if (raw === 'sqlite') return 'sqlite';
 	if (raw === 'prisma') return 'prisma';
@@ -32,9 +25,7 @@ export function resolveStoreKindFromEnv(): StoreKind {
  * - `LOCAL_MEMORY_BASE_URL`, `LOCAL_MEMORY_API_KEY`, `LOCAL_MEMORY_NAMESPACE`
  * - `MEMORIES_SQLITE_PATH` (default: `./data/memories.db`), `MEMORIES_VECTOR_DIM` (default: 1536)
  */
-export async function createStoreFromEnv(opts?: {
-	prismaClient?: unknown;
-}): Promise<MemoryStore> {
+export async function createStoreFromEnv(opts?: { prismaClient?: unknown }): Promise<MemoryStore> {
 	const kind = resolveStoreKindFromEnv();
 	switch (kind) {
 		case 'local': {
@@ -56,10 +47,7 @@ export async function createStoreFromEnv(opts?: {
 				opts?.prismaClient ??
 				(globalThis as unknown as { __MEMORIES_PRISMA_CLIENT__?: unknown })
 					.__MEMORIES_PRISMA_CLIENT__;
-			if (
-				!prismaUnknown ||
-				!(prismaUnknown as Record<string, unknown>).memory
-			) {
+			if (!prismaUnknown || !(prismaUnknown as Record<string, unknown>).memory) {
 				throw new Error(
 					'Prisma client not provided. Set global __MEMORIES_PRISMA_CLIENT__ or use SQLite/Local.',
 				);

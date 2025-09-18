@@ -1,12 +1,6 @@
 'use client';
 
-import {
-	forwardRef,
-	useEffect,
-	useImperativeHandle,
-	useRef,
-	useState,
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface ModelItem {
 	id: string;
@@ -87,12 +81,8 @@ const Models = forwardRef(({ command, onSelect }: ModelsProps, ref) => {
 			? mockModels.filter(
 					(model) =>
 						!model?.info?.meta?.hidden &&
-						(model.value
-							.toLowerCase()
-							.includes(command.slice(1).toLowerCase()) ||
-							model.name
-								.toLowerCase()
-								.includes(command.slice(1).toLowerCase()) ||
+						(model.value.toLowerCase().includes(command.slice(1).toLowerCase()) ||
+							model.name.toLowerCase().includes(command.slice(1).toLowerCase()) ||
 							(model?.info?.meta?.tags?.map((tag) => tag.name).join(' ') || '')
 								.toLowerCase()
 								.includes(command.slice(1).toLowerCase())),
@@ -189,10 +179,7 @@ const Models = forwardRef(({ command, onSelect }: ModelsProps, ref) => {
 							>
 								<div className="flex font-medium text-black dark:text-gray-100 line-clamp-1">
 									<img
-										src={
-											model?.info?.meta?.profile_image_url ||
-											'/static/favicon.png'
-										}
+										src={model?.info?.meta?.profile_image_url || '/static/favicon.png'}
 										alt={model?.name || model.id}
 										className="rounded-full size-6 items-center mr-2"
 									/>

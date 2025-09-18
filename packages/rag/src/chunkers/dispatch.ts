@@ -1,8 +1,4 @@
-import {
-	type ProcessingConfig,
-	ProcessingStrategy,
-	type StrategyDecision,
-} from '../policy/mime';
+import { type ProcessingConfig, ProcessingStrategy, type StrategyDecision } from '../policy/mime';
 
 export interface ProcessingFile {
 	path: string;
@@ -40,17 +36,11 @@ export interface DispatcherConfig {
 }
 
 export interface Chunker {
-	chunk(
-		file: ProcessingFile,
-		config: ProcessingConfig,
-	): Promise<DocumentChunk[]>;
+	chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]>;
 }
 
 class TextChunker implements Chunker {
-	chunk(
-		file: ProcessingFile,
-		config: ProcessingConfig,
-	): Promise<DocumentChunk[]> {
+	chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]> {
 		const content = file.content.toString('utf-8');
 
 		switch (config.chunker) {
@@ -65,10 +55,7 @@ class TextChunker implements Chunker {
 		}
 	}
 
-	private chunkPlainText(
-		content: string,
-		file: ProcessingFile,
-	): DocumentChunk[] {
+	private chunkPlainText(content: string, file: ProcessingFile): DocumentChunk[] {
 		const chunkSize = 1024;
 		const chunks: DocumentChunk[] = [];
 
@@ -83,10 +70,7 @@ class TextChunker implements Chunker {
 		return chunks;
 	}
 
-	private chunkMarkdown(
-		content: string,
-		file: ProcessingFile,
-	): DocumentChunk[] {
+	private chunkMarkdown(content: string, file: ProcessingFile): DocumentChunk[] {
 		const sections = content.split(/^#{1,6}\s/m);
 		const chunks: DocumentChunk[] = [];
 
@@ -141,10 +125,7 @@ class TextChunker implements Chunker {
 		return chunks;
 	}
 
-	private chunkStructured(
-		content: string,
-		file: ProcessingFile,
-	): DocumentChunk[] {
+	private chunkStructured(content: string, file: ProcessingFile): DocumentChunk[] {
 		if (file.mimeType === 'application/json') {
 			try {
 				const data: unknown = JSON.parse(content);
@@ -184,10 +165,7 @@ class TextChunker implements Chunker {
 }
 
 class PdfChunker implements Chunker {
-	chunk(
-		file: ProcessingFile,
-		config: ProcessingConfig,
-	): Promise<DocumentChunk[]> {
+	chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]> {
 		const simulatedPages = Math.min(5, config.maxPages || 100);
 		const chunks: DocumentChunk[] = [];
 		for (let page = 1; page <= simulatedPages; page++) {
@@ -202,10 +180,7 @@ class PdfChunker implements Chunker {
 }
 
 class OcrChunker implements Chunker {
-	async chunk(
-		file: ProcessingFile,
-		config: ProcessingConfig,
-	): Promise<DocumentChunk[]> {
+	async chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]> {
 		const maxPages = Math.min(config.maxPages || 10, 10);
 		const chunks: DocumentChunk[] = [];
 		const processingDelay = Math.min(file.size / 1024, 1000);
@@ -227,10 +202,7 @@ class OcrChunker implements Chunker {
 }
 
 class UnstructuredChunker implements Chunker {
-	chunk(
-		file: ProcessingFile,
-		config: ProcessingConfig,
-	): Promise<DocumentChunk[]> {
+	chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]> {
 		const maxPages = Math.min(config.maxPages || 50, 50);
 		const chunks: DocumentChunk[] = [];
 		const elementTypes = ['heading', 'paragraph', 'list', 'table'];
@@ -272,10 +244,7 @@ export class ProcessingDispatcher {
 		};
 	}
 
-	async dispatch(
-		file: ProcessingFile,
-		strategy: StrategyDecision,
-	): Promise<DispatchResult> {
+	async dispatch(file: ProcessingFile, strategy: StrategyDecision): Promise<DispatchResult> {
 		const startTime = performance.now();
 		try {
 			if (strategy.strategy === ProcessingStrategy.REJECT) {
@@ -315,8 +284,7 @@ export class ProcessingDispatcher {
 				strategy: strategy.strategy,
 				processingTimeMs: performance.now() - startTime,
 				metadata: {
-					errorDetails:
-						_error instanceof Error ? _error.message : 'Unknown error',
+					errorDetails: _error instanceof Error ? _error.message : 'Unknown error',
 					attemptedChunker: strategy.processing?.chunker || 'unknown',
 				},
 			};
@@ -331,11 +299,7 @@ export class ProcessingDispatcher {
 		if (!processing) {
 			throw new Error('Missing processing configuration');
 		}
-		const processingPromise = this.routeToChunker(
-			file,
-			strategy.strategy,
-			processing,
-		);
+		const processingPromise = this.routeToChunker(file, strategy.strategy, processing);
 		let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 		const timeoutPromise = new Promise<never>((_, reject) => {
 			timeoutHandle = setTimeout(

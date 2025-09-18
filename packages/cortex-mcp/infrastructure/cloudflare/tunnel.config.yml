@@ -1,0 +1,16 @@
+# Cloudflare Tunnel config for cortex-mcp
+# Usage:
+#  - Ensure you have created a tunnel and have credentials (cloudflared tunnel create cortex-mcp)
+#  - Set env vars before running: TUNNEL_UUID and CLOUDFLARED_CREDENTIALS_FILE
+#  - Map a DNS hostname to this tunnel (cloudflared tunnel route dns cortex-mcp cortex-mcp.yourdomain.com)
+#  - Start: cloudflared tunnel --config ./packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
+
+tunnel: ${TUNNEL_UUID}
+credentials-file: ${CLOUDFLARED_CREDENTIALS_FILE}
+
+ingress:
+  # Public hostname for cortex-mcp via Cloudflare Tunnel
+  - hostname: cortex-mcp.brainwav.io
+    # MCP Python server listens on port 3024
+    service: http://localhost:3024
+  - service: http_status:404

@@ -35,20 +35,15 @@ try {
 	} else if (err instanceof SyntaxError) {
 		console.error(`Malformed JSON in security report file: ${file}`);
 	} else {
-		console.error(
-			`Error reading security report file: ${file}\n${err.message}`,
-		);
+		console.error(`Error reading security report file: ${file}\n${err.message}`);
 	}
 	process.exit(2);
 }
 
 const counts = { HIGH: 0, MEDIUM: 0, LOW: 0 };
-for (const f of json.findings ?? [])
-	counts[f.severity] = (counts[f.severity] || 0) + 1;
+for (const f of json.findings ?? []) counts[f.severity] = (counts[f.severity] || 0) + 1;
 
-const fail =
-	counts.HIGH > thresholdsParsed.high ||
-	counts.MEDIUM > thresholdsParsed.medium;
+const fail = counts.HIGH > thresholdsParsed.high || counts.MEDIUM > thresholdsParsed.medium;
 
 if (fail) {
 	console.error('Policy failed:', counts);

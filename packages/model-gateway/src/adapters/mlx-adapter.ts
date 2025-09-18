@@ -30,10 +30,7 @@ interface RerankModelConfig extends MLXModelConfigBase {
 interface ChatModelConfig extends MLXModelConfigBase {
 	type: 'chat';
 }
-type MLXModelConfig =
-	| EmbeddingModelConfig
-	| RerankModelConfig
-	| ChatModelConfig;
+type MLXModelConfig = EmbeddingModelConfig | RerankModelConfig | ChatModelConfig;
 
 // Chat message types (avoid inline union types in signatures)
 type ChatRole = 'system' | 'user' | 'assistant';
@@ -44,8 +41,7 @@ const HUGGINGFACE_CACHE =
 	process.env.HF_HOME ||
 	process.env.TRANSFORMERS_CACHE ||
 	path.join(os.homedir(), '.cache', 'huggingface');
-const MLX_CACHE_DIR =
-	process.env.MLX_CACHE_DIR || path.join(os.homedir(), '.cache', 'mlx');
+const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || path.join(os.homedir(), '.cache', 'mlx');
 const MODEL_BASE_PATH = process.env.MLX_MODEL_BASE_PATH || HUGGINGFACE_CACHE;
 
 // MLX model configurations with configurable paths
@@ -203,24 +199,15 @@ export type MLXChatRequest = z.infer<typeof MLXChatRequestSchema>;
 export type MLXChatResponse = z.infer<typeof MLXChatResponseSchema>;
 
 export interface MLXAdapterApi {
-	generateEmbedding(
-		request: MLXEmbeddingRequest,
-	): Promise<MLXEmbeddingResponse>;
-	generateEmbeddings(
-		texts: string[],
-		model?: string,
-	): Promise<MLXEmbeddingResponse[]>;
+	generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse>;
+	generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]>;
 	generateChat(request: {
 		messages: ChatMessage[];
 		model?: string;
 		max_tokens?: number;
 		temperature?: number;
 	}): Promise<{ content: string; model: string }>;
-	rerank(
-		query: string,
-		documents: string[],
-		model?: string,
-	): Promise<{ scores: number[] }>;
+	rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }>;
 	isAvailable(): Promise<boolean>;
 }
 
@@ -228,8 +215,7 @@ export interface MLXAdapterApi {
  * Factory to create an MLX adapter
  */
 export function createMLXAdapter(): MLXAdapterApi {
-	const pythonPath =
-		process.env.PYTHON_PATH || process.env.PYTHON_EXEC || 'python3';
+	const pythonPath = process.env.PYTHON_PATH || process.env.PYTHON_EXEC || 'python3';
 	const embeddingScriptPath = path.resolve(
 		path.dirname(new URL(import.meta.url).pathname),
 		'../../../../apps/cortex-py/src/mlx/embedding_generator.py',
@@ -238,10 +224,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		path.dirname(new URL(import.meta.url).pathname),
 		'../../../../apps/cortex-py/src/mlx/mlx_unified.py',
 	);
-	const executePythonScript = (
-		args: string[],
-		useUnified = false,
-	): Promise<string> => {
+	const executePythonScript = (args: string[], useUnified = false): Promise<string> => {
 		// Return mock responses in test environment
 		if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
 			return Promise.resolve(generateMockResponse(args, useUnified));
@@ -259,10 +242,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		});
 	};
 
-	const generateMockResponse = (
-		args: string[],
-		useUnified: boolean,
-	): string => {
+	const generateMockResponse = (args: string[], useUnified: boolean): string => {
 		// Check for actual test command (not just "test" as input text)
 		if (args.length === 2 && args[0] === 'test' && args[1] === '--json-only') {
 			return JSON.stringify({ status: 'ok' });
@@ -296,9 +276,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		}
 	};
 
-	const generateEmbedding = async (
-		request: MLXEmbeddingRequest,
-	): Promise<MLXEmbeddingResponse> => {
+	const generateEmbedding = async (request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> => {
 		const modelName = request.model || 'qwen3-embedding-4b-mlx';
 		const modelConfig = MLX_MODELS[modelName];
 		if (!modelConfig) {
@@ -309,12 +287,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		}
 
 		try {
-			const result = await executePythonScript([
-				request.text,
-				'--model',
-				modelName,
-				'--json-only',
-			]);
+			const result = await executePythonScript([request.text, '--model', modelName, '--json-only']);
 
 			const data = JSON.parse(result);
 
@@ -342,12 +315,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		const modelName = model || 'qwen3-embedding-4b-mlx';
 
 		try {
-			const result = await executePythonScript([
-				...texts,
-				'--model',
-				modelName,
-				'--json-only',
-			]);
+			const result = await executePythonScript([...texts, '--model', modelName, '--json-only']);
 
 			const data = JSON.parse(result);
 
@@ -359,10 +327,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 			if (!modelConfig || modelConfig.type !== 'embedding') {
 				throw new Error(`Model ${modelName} is not an embedding model`);
 			}
-			const totalTokens = texts.reduce(
-				(sum, text) => sum + estimateTokenCount(text),
-				0,
-			);
+			const totalTokens = texts.reduce((sum, text) => sum + estimateTokenCount(text), 0);
 
 			return data.map((embedding: number[], _index: number) =>
 				MLXEmbeddingResponseSchema.parse({
@@ -408,10 +373,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 			) {
 				const tmp: number[] = new Array(documents.length).fill(0);
 				for (const item of data.scores) {
-					if (
-						typeof item.index === 'number' &&
-						typeof item.score === 'number'
-					) {
+					if (typeof item.index === 'number' && typeof item.score === 'number') {
 						tmp[item.index] = item.score;
 					}
 				}
@@ -443,9 +405,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		}
 
 		try {
-			const prompt = request.messages
-				.map((msg) => `${msg.role}: ${msg.content}`)
-				.join('\n');
+			const prompt = request.messages.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
 
 			const args = [
 				prompt,
@@ -497,15 +457,10 @@ export function createMLXAdapter(): MLXAdapterApi {
 export class MLXAdapter implements MLXAdapterApi {
 	private readonly impl = createMLXAdapter();
 
-	generateEmbedding(
-		request: MLXEmbeddingRequest,
-	): Promise<MLXEmbeddingResponse> {
+	generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> {
 		return this.impl.generateEmbedding(request);
 	}
-	generateEmbeddings(
-		texts: string[],
-		model?: string,
-	): Promise<MLXEmbeddingResponse[]> {
+	generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]> {
 		return this.impl.generateEmbeddings(texts, model);
 	}
 	generateChat(request: {
@@ -516,11 +471,7 @@ export class MLXAdapter implements MLXAdapterApi {
 	}): Promise<{ content: string; model: string }> {
 		return this.impl.generateChat(request);
 	}
-	rerank(
-		query: string,
-		documents: string[],
-		model?: string,
-	): Promise<{ scores: number[] }> {
+	rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }> {
 		return this.impl.rerank(query, documents, model);
 	}
 	isAvailable(): Promise<boolean> {

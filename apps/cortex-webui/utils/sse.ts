@@ -30,10 +30,7 @@ export function openSSE(
 	let es: EventSource | null = null;
 	let attempt = 0;
 
-	const token =
-		typeof window !== 'undefined'
-			? localStorage.getItem('access_token')
-			: undefined;
+	const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : undefined;
 	const qs = new URLSearchParams();
 	for (const [k, v] of Object.entries(params)) {
 		if (v !== undefined) qs.set(k, String(v));

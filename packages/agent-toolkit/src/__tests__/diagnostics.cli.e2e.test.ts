@@ -9,11 +9,9 @@ function createMockDiagScript(json: unknown): string {
 	const dir = mkdtempSync(join(tmpdir(), 'diag-cli-'));
 	const path = join(dir, 'mcp_diagnose.sh');
 	const payload = JSON.stringify(json).replace(/'/g, "'\\''");
-	writeFileSync(
-		path,
-		`#!/usr/bin/env bash\n# mock diagnostics script\n echo '${payload}'`,
-		{ mode: 0o755 },
-	);
+	writeFileSync(path, `#!/usr/bin/env bash\n# mock diagnostics script\n echo '${payload}'`, {
+		mode: 0o755,
+	});
 	chmodSync(path, 0o755);
 	return path;
 }
@@ -33,10 +31,7 @@ beforeAll(() => {
 });
 
 describe('diagnostics CLI e2e', () => {
-	const cli = join(
-		process.cwd(),
-		'packages/agent-toolkit/dist/cli/diagnostics.js',
-	);
+	const cli = join(process.cwd(), 'packages/agent-toolkit/dist/cli/diagnostics.js');
 
 	it('emits JSON by default', () => {
 		const out = execFileSync('node', [cli], {

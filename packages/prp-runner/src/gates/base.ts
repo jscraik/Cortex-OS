@@ -7,12 +7,7 @@
  */
 
 // Canonical types are provided by @cortex-os/kernel. Import as type-only to avoid runtime cycles.
-import type {
-	EnforcementProfile,
-	Evidence,
-	GateResult,
-	PRPState,
-} from '@cortex-os/kernel';
+import type { EnforcementProfile, Evidence, GateResult, PRPState } from '@cortex-os/kernel';
 
 // Re-export the types for convenience
 export type { EnforcementProfile, Evidence, GateResult, PRPState };
@@ -85,24 +80,16 @@ export abstract class BaseGate {
 
 			// Determine if human approval is required
 			const needsApproval =
-				this.requiresHumanApproval &&
-				this.shouldRequestApproval(automatedResults);
+				this.requiresHumanApproval && this.shouldRequestApproval(automatedResults);
 
 			// Execute gate-specific logic
-			const gateSpecificResult = await this.executeGateLogic(
-				context,
-				automatedResults,
-			);
+			const gateSpecificResult = await this.executeGateLogic(context, automatedResults);
 			artifacts.push(...gateSpecificResult.artifacts);
 			evidence.push(...gateSpecificResult.evidence);
 
 			// Determine overall status
 			const hasFailures = automatedResults.some((r) => r.status === 'fail');
-			const status = hasFailures
-				? 'failed'
-				: needsApproval
-					? 'pending'
-					: 'passed';
+			const status = hasFailures ? 'failed' : needsApproval ? 'pending' : 'passed';
 
 			return {
 				id: this.id,
@@ -177,8 +164,7 @@ export abstract class BaseGate {
 		// Default: request approval if any checks failed or if always required
 		return (
 			this.requiresHumanApproval &&
-			(automatedResults.some((r) => r.status === 'fail') ||
-				automatedResults.length === 0)
+			(automatedResults.some((r) => r.status === 'fail') || automatedResults.length === 0)
 		);
 	}
 

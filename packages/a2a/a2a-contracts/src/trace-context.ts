@@ -128,10 +128,7 @@ export function extractTraceContext(envelope: {
 /**
  * Inject trace context into envelope headers
  */
-export function injectTraceContext(
-	envelope: Record<string, unknown>,
-	context: TraceContext,
-): void {
+export function injectTraceContext(envelope: Record<string, unknown>, context: TraceContext): void {
 	envelope.traceparent = createTraceParent(context);
 	if (context.traceState) {
 		envelope.tracestate = context.traceState;
@@ -170,10 +167,7 @@ export function isSampled(context: TraceContext): boolean {
 /**
  * Set sampling decision for trace context
  */
-export function setSampling(
-	context: TraceContext,
-	sampled: boolean,
-): TraceContext {
+export function setSampling(context: TraceContext, sampled: boolean): TraceContext {
 	return {
 		...context,
 		traceFlags: sampled ? context.traceFlags | 1 : context.traceFlags & ~1,
@@ -183,11 +177,7 @@ export function setSampling(
 /**
  * Add vendor-specific data to trace state
  */
-export function addTraceState(
-	context: TraceContext,
-	vendor: string,
-	value: string,
-): TraceContext {
+export function addTraceState(context: TraceContext, vendor: string, value: string): TraceContext {
 	const existingState = context.traceState ? `${context.traceState},` : '';
 	return {
 		...context,
@@ -198,10 +188,7 @@ export function addTraceState(
 /**
  * Get vendor-specific data from trace state
  */
-export function getTraceState(
-	context: TraceContext,
-	vendor: string,
-): string | null {
+export function getTraceState(context: TraceContext, vendor: string): string | null {
 	if (!context.traceState) {
 		return null;
 	}
@@ -220,11 +207,7 @@ export function getTraceState(
 /**
  * Add baggage item to trace context
  */
-export function addBaggage(
-	context: TraceContext,
-	key: string,
-	value: string,
-): TraceContext {
+export function addBaggage(context: TraceContext, key: string, value: string): TraceContext {
 	const existingBaggage = context.baggage ? `${context.baggage},` : '';
 	return {
 		...context,

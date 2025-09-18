@@ -47,13 +47,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 		if (
 			typeof window !== 'undefined' &&
 			'addNotification' in window &&
-			typeof (
-				window as { addNotification?: (type: string, msg: string) => void }
-			).addNotification === 'function'
+			typeof (window as { addNotification?: (type: string, msg: string) => void })
+				.addNotification === 'function'
 		) {
-			(
-				window as { addNotification: (type: string, msg: string) => void }
-			).addNotification('success', 'Settings saved successfully!');
+			(window as { addNotification: (type: string, msg: string) => void }).addNotification(
+				'success',
+				'Settings saved successfully!',
+			);
 		}
 	};
 

@@ -41,10 +41,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 		enableQuota = envFlag('SCHEMA_SVC_GLOBAL_QUOTA', true),
 		enablePerAgentQuota = envFlag('SCHEMA_SVC_PER_AGENT_QUOTA', true),
 		aclConfig,
-		redactionPaths = envList('SCHEMA_SVC_REDACT_PATHS', [
-			'schema.secret',
-			'schema.credentials',
-		]),
+		redactionPaths = envList('SCHEMA_SVC_REDACT_PATHS', ['schema.secret', 'schema.credentials']),
 		databasePath = process.env.SCHEMA_REGISTRY_DB_PATH || ':memory:',
 	} = opts;
 
@@ -63,9 +60,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 	const perAgentWindow = envNumber('PER_AGENT_WINDOW_MS', quotaWindow);
 
 	// Keep references for metrics
-	const smoother = enableSmoothing
-		? createBurstSmoother({ ratePerSec, burst })
-		: undefined;
+	const smoother = enableSmoothing ? createBurstSmoother({ ratePerSec, burst }) : undefined;
 	if (smoother) app.use(smoother);
 	const rateLimiter = createRateLimiter({ limit: rlLimit, windowMs: rlWindow });
 	app.use(rateLimiter);
@@ -94,10 +89,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 		schemaRepository = new SqliteSchemaRepository(databasePath);
 		console.log(`Schema registry initialized with database: ${databasePath}`);
 	} catch (error) {
-		console.error(
-			'Failed to initialize database, falling back to in-memory storage:',
-			error,
-		);
+		console.error('Failed to initialize database, falling back to in-memory storage:', error);
 		// Fallback to in-memory storage
 		const inMemorySchemas: Schema[] = [];
 		schemaRepository = {
@@ -112,26 +104,16 @@ export function createService(opts: RegistryServiceOptions = {}) {
 			async findByName(name: string): Promise<Schema[]> {
 				return inMemorySchemas.filter((s) => s.name === name);
 			},
-			async findByNameAndVersion(
-				name: string,
-				version: string,
-			): Promise<Schema | null> {
-				const schema = inMemorySchemas.find(
-					(s) => s.name === name && s.version === version,
-				);
+			async findByNameAndVersion(name: string, version: string): Promise<Schema | null> {
+				const schema = inMemorySchemas.find((s) => s.name === name && s.version === version);
 				return schema || null;
 			},
 			async findAll(): Promise<Schema[]> {
 				return [...inMemorySchemas];
 			},
-			async deleteByNameAndVersion(
-				name: string,
-				version: string,
-			): Promise<boolean> {
+			async deleteByNameAndVersion(name: string, version: string): Promise<boolean> {
 				const _initialLength = inMemorySchemas.length;
-				const index = inMemorySchemas.findIndex(
-					(s) => s.name === name && s.version === version,
-				);
+				const index = inMemorySchemas.findIndex((s) => s.name === name && s.version === version);
 				if (index !== -1) {
 					inMemorySchemas.splice(index, 1);
 					return true;
@@ -153,9 +135,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 				? acl.canPublish(pseudoTopic, role)
 				: acl.canSubscribe(pseudoTopic, role);
 		if (!decision.allowed) {
-			return res
-				.status(403)
-				.json({ error: 'Forbidden', reason: decision.reason });
+			return res.status(403).json({ error: 'Forbidden', reason: decision.reason });
 		}
 		return next();
 	});
@@ -172,10 +152,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 
 		try {
 			// Check if schema already exists
-			const existing = await schemaRepository.findByNameAndVersion(
-				schema.name,
-				schema.version,
-			);
+			const existing = await schemaRepository.findByNameAndVersion(schema.name, schema.version);
 			if (existing) {
 				return res.status(409).send('Schema already exists');
 			}
@@ -221,9 +198,7 @@ export function createService(opts: RegistryServiceOptions = {}) {
 			if (candidates.length === 0) {
 				return res.status(404).send('Schema not found');
 			}
-			const sorted = candidates
-				.slice()
-				.sort((a, b) => compareVersions(a.version, b.version));
+			const sorted = candidates.slice().sort((a, b) => compareVersions(a.version, b.version));
 			const latest = redactor.redact(sorted[0]);
 			res.json(latest);
 		} catch (error) {

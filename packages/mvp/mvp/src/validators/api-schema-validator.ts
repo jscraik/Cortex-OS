@@ -3,18 +3,13 @@
  * @description API schema validation using OpenAPI standards
  */
 
-import type {
-	GateValidator,
-	ValidationResult,
-} from '../lib/validation-types.js';
+import type { GateValidator, ValidationResult } from '../lib/validation-types.js';
 import type { PRPState } from '../state.js';
 
 export class ApiSchemaValidator implements GateValidator {
 	async validate(state: PRPState): Promise<ValidationResult> {
 		const hasAPI = state.blueprint.requirements?.some(
-			(req) =>
-				req.toLowerCase().includes('api') ||
-				req.toLowerCase().includes('endpoint'),
+			(req) => req.toLowerCase().includes('api') || req.toLowerCase().includes('endpoint'),
 		);
 
 		if (!hasAPI) {

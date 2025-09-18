@@ -2,10 +2,7 @@ import type { Memory, MemoryService } from '@cortex-os/memories';
 import { randomUUID } from 'node:crypto';
 
 export type MemoriesBridge = {
-	checkpoint: (
-		runId: string,
-		data: unknown,
-	) => Promise<Awaited<ReturnType<MemoryService['save']>>>;
+	checkpoint: (runId: string, data: unknown) => Promise<Awaited<ReturnType<MemoryService['save']>>>;
 };
 
 export const createMemoriesBridge = (mem: MemoryService): MemoriesBridge => ({

@@ -5,9 +5,7 @@ import { MemoryService } from '../MemoryService.js';
 (async () => {
 	const embedder = {
 		embed: async (t: string[]) =>
-			t.map(() =>
-				new Array(Number(process.env.VECTOR_SIZE || '1536')).fill(0.001),
-			),
+			t.map(() => new Array(Number(process.env.VECTOR_SIZE || '1536')).fill(0.001)),
 	};
 	const svc = await MemoryService.fromEnv(embedder);
 	await svc.upsertKGNode({

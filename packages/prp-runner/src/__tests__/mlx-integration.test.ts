@@ -18,11 +18,7 @@ import {
 	type LLMState,
 	listMLXModels,
 } from '../llm-bridge.js';
-import {
-	AVAILABLE_MLX_MODELS,
-	createMLXAdapter,
-	MLXAdapter,
-} from '../mlx-adapter.js';
+import { AVAILABLE_MLX_MODELS, createMLXAdapter, MLXAdapter } from '../mlx-adapter.js';
 
 describe('🔬 MLX Integration Tests', () => {
 	let mlxAdapter: MLXAdapter;
@@ -70,13 +66,10 @@ describe('🔬 MLX Integration Tests', () => {
 		}, 10000);
 
 		it('should check model availability', async () => {
-			const available = await mlxAdapter.isModelAvailable(
-				AVAILABLE_MLX_MODELS.QWEN_SMALL,
-			);
+			const available = await mlxAdapter.isModelAvailable(AVAILABLE_MLX_MODELS.QWEN_SMALL);
 			expect(available).toBe(true);
 
-			const notAvailable =
-				await mlxAdapter.isModelAvailable('nonexistent-model');
+			const notAvailable = await mlxAdapter.isModelAvailable('nonexistent-model');
 			expect(notAvailable).toBe(false);
 		}, 15000);
 
@@ -247,10 +240,7 @@ describe('🔬 MLX Integration Tests', () => {
 
 describe('🚀 MLX Model Variants', () => {
 	// Test different models if available
-	const testModels = [
-		AVAILABLE_MLX_MODELS.QWEN_SMALL,
-		AVAILABLE_MLX_MODELS.PHI_MINI,
-	];
+	const testModels = [AVAILABLE_MLX_MODELS.QWEN_SMALL, AVAILABLE_MLX_MODELS.PHI_MINI];
 
 	testModels.forEach((modelName) => {
 		describe(`Model: ${modelName}`, () => {

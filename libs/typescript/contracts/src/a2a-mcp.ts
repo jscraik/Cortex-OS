@@ -24,11 +24,7 @@ export const A2AQueueMessageInputSchema = z.object({
 	message: z
 		.object({
 			role: z.enum(['user', 'assistant', 'system']).describe('Actor role'),
-			parts: z
-				.array(A2AMessagePartSchema)
-				.min(1)
-				.max(32)
-				.describe('Ordered message parts'),
+			parts: z.array(A2AMessagePartSchema).min(1).max(32).describe('Ordered message parts'),
 		})
 		.describe('Primary message payload'),
 	context: z
@@ -74,9 +70,7 @@ export type A2AQueueMessageResult = z.infer<typeof A2AQueueMessageResultSchema>;
 // Event stream subscription (initial handshake)
 export const A2AEventStreamSubscribeInputSchema = z.object({
 	events: z
-		.array(
-			z.enum(['taskCompleted', 'taskFailed', 'taskCancelled', 'taskRunning']),
-		)
+		.array(z.enum(['taskCompleted', 'taskFailed', 'taskCancelled', 'taskRunning']))
 		.default(['taskCompleted', 'taskFailed'])
 		.optional(),
 	since: z
@@ -90,9 +84,7 @@ export const A2AEventStreamSubscribeInputSchema = z.object({
 		.optional()
 		.describe('Include a snapshot of current tasks.'),
 });
-export type A2AEventStreamSubscribeInput = z.infer<
-	typeof A2AEventStreamSubscribeInputSchema
->;
+export type A2AEventStreamSubscribeInput = z.infer<typeof A2AEventStreamSubscribeInputSchema>;
 
 export const A2AEventStreamEventSchema = z.object({
 	type: z.enum(['taskCompleted', 'taskFailed', 'taskCancelled', 'taskRunning']),
@@ -106,13 +98,9 @@ export type A2AEventStreamEvent = z.infer<typeof A2AEventStreamEventSchema>;
 export const A2AEventStreamSubscribeResultSchema = z.object({
 	subscriptionId: z.string().uuid(),
 	events: z.array(A2AEventStreamEventSchema).optional(),
-	note: z
-		.string()
-		.describe('Informational note about streaming mechanism / limits.'),
+	note: z.string().describe('Informational note about streaming mechanism / limits.'),
 });
-export type A2AEventStreamSubscribeResult = z.infer<
-	typeof A2AEventStreamSubscribeResultSchema
->;
+export type A2AEventStreamSubscribeResult = z.infer<typeof A2AEventStreamSubscribeResultSchema>;
 
 // Outbox/data synchronization operations
 export const A2AOutboxSyncInputSchema = z.object({

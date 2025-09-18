@@ -49,9 +49,7 @@ export const WorkflowEventSchema = z.object({
 	runId: z.string(),
 	name: z.string(),
 	status: z.enum(['queued', 'in_progress', 'completed']),
-	conclusion: z
-		.enum(['success', 'failure', 'cancelled', 'skipped', 'neutral'])
-		.optional(),
+	conclusion: z.enum(['success', 'failure', 'cancelled', 'skipped', 'neutral']).optional(),
 	branch: z.string(),
 	commit: z.string(),
 	triggeredBy: z.string(),
@@ -59,9 +57,7 @@ export const WorkflowEventSchema = z.object({
 });
 
 // Export event type definitions
-export type RepositoryConnectedEvent = z.infer<
-	typeof RepositoryConnectedEventSchema
->;
+export type RepositoryConnectedEvent = z.infer<typeof RepositoryConnectedEventSchema>;
 export type PullRequestEvent = z.infer<typeof PullRequestEventSchema>;
 export type IssueEvent = z.infer<typeof IssueEventSchema>;
 export type WorkflowEvent = z.infer<typeof WorkflowEventSchema>;

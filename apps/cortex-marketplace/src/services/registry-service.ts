@@ -85,10 +85,7 @@ export class RegistryService {
 
 		// Check disk cache
 		const diskCached = await this.loadFromDisk(name);
-		if (
-			diskCached &&
-			Date.now() - diskCached.timestamp < this.config.cacheTtl
-		) {
+		if (diskCached && Date.now() - diskCached.timestamp < this.config.cacheTtl) {
 			this.cache.set(name, diskCached);
 			return diskCached.data;
 		}
@@ -167,10 +164,7 @@ export class RegistryService {
 		}
 
 		const controller = new AbortController();
-		const timeout = setTimeout(
-			() => controller.abort(),
-			this.config.fetchTimeout ?? 10000,
-		);
+		const timeout = setTimeout(() => controller.abort(), this.config.fetchTimeout ?? 10000);
 
 		try {
 			const response = await fetch(url, {
@@ -182,9 +176,7 @@ export class RegistryService {
 			});
 
 			if (!response.ok) {
-				throw new Error(
-					`Failed to fetch registry: ${response.status} ${response.statusText}`,
-				);
+				throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
 			}
 
 			const data = await response.json();

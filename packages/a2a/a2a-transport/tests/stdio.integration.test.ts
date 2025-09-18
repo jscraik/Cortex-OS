@@ -1,10 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import {
-	createEnvelope,
-	type Envelope,
-} from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { describe, expect, it } from 'vitest';
 import { stdio } from '../src/stdio.js';
 

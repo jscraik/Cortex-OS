@@ -6,15 +6,7 @@
 import * as path from 'node:path';
 
 export interface BackendStructureConfig {
-	framework:
-		| 'express'
-		| 'fastapi'
-		| 'django'
-		| 'flask'
-		| 'gin'
-		| 'fiber'
-		| 'axum'
-		| 'auto';
+	framework: 'express' | 'fastapi' | 'django' | 'flask' | 'gin' | 'fiber' | 'axum' | 'auto';
 	architecture: 'mvc' | 'clean' | 'hexagonal' | 'layered' | 'auto';
 	language: 'typescript' | 'javascript' | 'python' | 'go' | 'rust' | 'auto';
 	enforceLayerSeparation: boolean;
@@ -128,62 +120,34 @@ export async function analyzeBackendStructure(
 ): Promise<BackendAnalysisResult> {
 	const detectedLanguage = await detectLanguage(repoPath);
 	const detectedFramework = await detectFramework(repoPath, detectedLanguage);
-	const detectedArchitecture = await detectArchitecture(
-		repoPath,
-		detectedFramework,
-	);
+	const detectedArchitecture = await detectArchitecture(repoPath, detectedFramework);
 
 	const finalConfig: BackendStructureConfig = {
 		framework: (
-			[
-				'express',
-				'fastapi',
-				'gin',
-				'django',
-				'flask',
-				'fiber',
-				'axum',
-				'auto',
-			] as const
+			['express', 'fastapi', 'gin', 'django', 'flask', 'fiber', 'axum', 'auto'] as const
 		).includes(config.framework as any)
 			? (config.framework as any)
 			: (
-						[
-							'express',
-							'fastapi',
-							'gin',
-							'django',
-							'flask',
-							'fiber',
-							'axum',
-							'auto',
-						] as const
+						['express', 'fastapi', 'gin', 'django', 'flask', 'fiber', 'axum', 'auto'] as const
 					).includes(detectedFramework as any)
 				? (detectedFramework as any)
 				: 'auto',
-		architecture: (
-			['mvc', 'clean', 'hexagonal', 'layered', 'auto'] as const
-		).includes(config.architecture as any)
+		architecture: (['mvc', 'clean', 'hexagonal', 'layered', 'auto'] as const).includes(
+			config.architecture as any,
+		)
 			? (config.architecture as any)
 			: (['mvc', 'clean', 'hexagonal', 'layered', 'auto'] as const).includes(
 						detectedArchitecture as any,
 					)
 				? (detectedArchitecture as any)
 				: 'auto',
-		language: (
-			['typescript', 'javascript', 'python', 'go', 'rust', 'auto'] as const
-		).includes(config.language as any)
+		language: (['typescript', 'javascript', 'python', 'go', 'rust', 'auto'] as const).includes(
+			config.language as any,
+		)
 			? (config.language as any)
-			: (
-						[
-							'typescript',
-							'javascript',
-							'python',
-							'go',
-							'rust',
-							'auto',
-						] as const
-					).includes(detectedLanguage as any)
+			: (['typescript', 'javascript', 'python', 'go', 'rust', 'auto'] as const).includes(
+						detectedLanguage as any,
+					)
 				? (detectedLanguage as any)
 				: 'auto',
 		enforceLayerSeparation: config.enforceLayerSeparation ?? true,
@@ -210,9 +174,7 @@ export async function analyzeBackendStructure(
 	const score = calculateBackendScore(violations);
 
 	// Generate recommendations
-	recommendations.push(
-		...generateBackendRecommendations(violations, finalConfig),
-	);
+	recommendations.push(...generateBackendRecommendations(violations, finalConfig));
 
 	return {
 		language: detectedLanguage,
@@ -247,12 +209,7 @@ async function detectLanguage(repoPath: string): Promise<string> {
 		}
 
 		// Check for Python files
-		const pythonFiles = [
-			'requirements.txt',
-			'pyproject.toml',
-			'setup.py',
-			'Pipfile',
-		];
+		const pythonFiles = ['requirements.txt', 'pyproject.toml', 'setup.py', 'Pipfile'];
 		for (const file of pythonFiles) {
 			const exists = await import('node:fs').then((fs) =>
 				fs.promises
@@ -287,19 +244,14 @@ async function detectLanguage(repoPath: string): Promise<string> {
 	}
 }
 
-async function detectFramework(
-	repoPath: string,
-	language: string,
-): Promise<string> {
+async function detectFramework(repoPath: string, language: string): Promise<string> {
 	try {
 		switch (language) {
 			case 'typescript':
 			case 'javascript': {
 				const packageJsonPath = path.join(repoPath, 'package.json');
 				const packageJson = JSON.parse(
-					await import('node:fs').then((fs) =>
-						fs.promises.readFile(packageJsonPath, 'utf-8'),
-					),
+					await import('node:fs').then((fs) => fs.promises.readFile(packageJsonPath, 'utf-8')),
 				);
 				const deps = {
 					...packageJson.dependencies,
@@ -315,9 +267,7 @@ async function detectFramework(
 
 			case 'python': {
 				const requirements = await import('node:fs').then((fs) =>
-					fs.promises
-						.readFile(path.join(repoPath, 'requirements.txt'), 'utf-8')
-						.catch(() => ''),
+					fs.promises.readFile(path.join(repoPath, 'requirements.txt'), 'utf-8').catch(() => ''),
 				);
 
 				if (requirements.includes('fastapi')) return 'fastapi';
@@ -328,9 +278,7 @@ async function detectFramework(
 
 			case 'go': {
 				const goMod = await import('node:fs').then((fs) =>
-					fs.promises
-						.readFile(path.join(repoPath, 'go.mod'), 'utf-8')
-						.catch(() => ''),
+					fs.promises.readFile(path.join(repoPath, 'go.mod'), 'utf-8').catch(() => ''),
 				);
 
 				if (goMod.includes('github.com/gin-gonic/gin')) return 'gin';
@@ -341,9 +289,7 @@ async function detectFramework(
 
 			case 'rust': {
 				const cargoToml = await import('node:fs').then((fs) =>
-					fs.promises
-						.readFile(path.join(repoPath, 'Cargo.toml'), 'utf-8')
-						.catch(() => ''),
+					fs.promises.readFile(path.join(repoPath, 'Cargo.toml'), 'utf-8').catch(() => ''),
 				);
 
 				if (cargoToml.includes('axum')) return 'axum';
@@ -360,33 +306,22 @@ async function detectFramework(
 	}
 }
 
-async function detectArchitecture(
-	repoPath: string,
-	_framework: string,
-): Promise<string> {
+async function detectArchitecture(repoPath: string, _framework: string): Promise<string> {
 	// Check directory structure to infer architecture pattern
 	const directories = await import('node:fs').then((fs) =>
 		fs.promises
 			.readdir(repoPath, { withFileTypes: true })
-			.then((entries) =>
-				entries.filter((e) => e.isDirectory()).map((e) => e.name),
-			)
+			.then((entries) => entries.filter((e) => e.isDirectory()).map((e) => e.name))
 			.catch(() => []),
 	);
 
-	const hasControllers = directories.some(
-		(d) => d.includes('controller') || d.includes('handler'),
-	);
+	const hasControllers = directories.some((d) => d.includes('controller') || d.includes('handler'));
 	const hasServices = directories.some((d) => d.includes('service'));
-	const hasModels = directories.some(
-		(d) => d.includes('model') || d.includes('entity'),
-	);
+	const hasModels = directories.some((d) => d.includes('model') || d.includes('entity'));
 
 	if (hasControllers && hasServices && hasModels) {
 		const hasDomain = directories.some((d) => d.includes('domain'));
-		const hasInfra = directories.some(
-			(d) => d.includes('infra') || d.includes('infrastructure'),
-		);
+		const hasInfra = directories.some((d) => d.includes('infra') || d.includes('infrastructure'));
 
 		if (hasDomain && hasInfra) return 'clean';
 		return 'layered';
@@ -395,10 +330,7 @@ async function detectArchitecture(
 	return 'mvc'; // default
 }
 
-async function analyzeBackendLayers(
-	_repoPath: string,
-	_config: BackendStructureConfig,
-) {
+async function analyzeBackendLayers(_repoPath: string, _config: BackendStructureConfig) {
 	const violations: BackendViolation[] = [];
 	const summary = {
 		controllers: {
@@ -447,10 +379,7 @@ async function analyzeBackendLayers(
 	return { violations, summary };
 }
 
-async function analyzeBackendSecurity(
-	_repoPath: string,
-	_config: BackendStructureConfig,
-) {
+async function analyzeBackendSecurity(_repoPath: string, _config: BackendStructureConfig) {
 	const violations: BackendViolation[] = [];
 	const summary = {
 		missingValidation: [] as string[],
@@ -468,10 +397,7 @@ async function analyzeBackendSecurity(
 	return { violations, summary };
 }
 
-async function analyzeTestCoverage(
-	_repoPath: string,
-	config: BackendStructureConfig,
-) {
+async function analyzeTestCoverage(_repoPath: string, config: BackendStructureConfig) {
 	const violations: BackendViolation[] = [];
 	const summary = {
 		tested: [] as string[],
@@ -522,9 +448,7 @@ function generateBackendRecommendations(
 		recommendations.push('Improve layer separation and dependency direction');
 	}
 
-	const securityViolations = violations.filter((v) =>
-		v.message.includes('security'),
-	);
+	const securityViolations = violations.filter((v) => v.message.includes('security'));
 	if (securityViolations.length > 0) {
 		recommendations.push('Address security vulnerabilities in backend code');
 	}
@@ -536,9 +460,7 @@ function generateBackendRecommendations(
 
 	const autoFixableCount = violations.filter((v) => v.autoFixable).length;
 	if (autoFixableCount > 0) {
-		recommendations.push(
-			`${autoFixableCount} issues can be auto-fixed with @insula backend fix`,
-		);
+		recommendations.push(`${autoFixableCount} issues can be auto-fixed with @insula backend fix`);
 	}
 
 	return recommendations;
@@ -564,10 +486,7 @@ export async function fixBackendStructure(
 	return { fixed: fixedCount, failed };
 }
 
-async function applyBackendFix(
-	_repoPath: string,
-	violation: BackendViolation,
-): Promise<void> {
+async function applyBackendFix(_repoPath: string, violation: BackendViolation): Promise<void> {
 	// Implementation would apply specific fixes based on violation type
 	switch (violation.type) {
 		case 'controller':

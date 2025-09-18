@@ -30,13 +30,9 @@ describe('QuotaStore (InMemory)', () => {
 		expect(await store.incrPerKey('b', windowMs, perLimit, global)).toBe('ok'); // b:1 g:2
 		expect(await store.incrPerKey('a', windowMs, perLimit, global)).toBe('ok'); // a:2 g:3
 		// global hit
-		expect(await store.incrPerKey('c', windowMs, perLimit, global)).toBe(
-			'global',
-		);
+		expect(await store.incrPerKey('c', windowMs, perLimit, global)).toBe('global');
 		// per-key hit
-		expect(
-			await store.incrPerKey('a', windowMs, perLimit, { windowMs, limit: 100 }),
-		).toBe('limit');
+		expect(await store.incrPerKey('a', windowMs, perLimit, { windowMs, limit: 100 })).toBe('limit');
 	});
 });
 

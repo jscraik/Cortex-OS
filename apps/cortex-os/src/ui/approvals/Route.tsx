@@ -12,8 +12,7 @@ export default function Approvals() {
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === '?')
-				alert('Shortcuts: Enter accept, Esc reject, g next, G prev');
+			if (e.key === '?') alert('Shortcuts: Enter accept, Esc reject, g next, G prev');
 			if (e.key === 'Enter') approve();
 			if (e.key === 'Escape') reject();
 			// navigation keys intentionally disabled until selection state is reintroduced
@@ -40,11 +39,7 @@ export default function Approvals() {
 					<li key={it.id}>
 						<h3>{it.node} proposal</h3>
 						<pre>{JSON.stringify(it.proposal, null, 2)}</pre>
-						<button
-							type="button"
-							onClick={approve}
-							aria-label="Approve proposal"
-						>
+						<button type="button" onClick={approve} aria-label="Approve proposal">
 							Approve
 						</button>
 						<button type="button" onClick={reject} aria-label="Reject proposal">

@@ -4,11 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Chunk, Embedder } from '../src/index';
 import { type Pipeline, RAGPipeline } from '../src/index';
-import {
-	createWorker,
-	resolveFileList,
-	runWorkers,
-} from '../src/lib/batch-ingest';
+import { createWorker, resolveFileList, runWorkers } from '../src/lib/batch-ingest';
 import { ingestFiles } from '../src/pipeline/batch-ingest';
 import { memoryStore } from '../src/store/memory';
 

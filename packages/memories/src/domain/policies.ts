@@ -1,9 +1,6 @@
 import type { Memory } from './types.js';
 
-export function isExpired(
-	m: Memory,
-	nowISO = new Date().toISOString(),
-): boolean {
+export function isExpired(m: Memory, nowISO = new Date().toISOString()): boolean {
 	if (!m.ttl) return false;
 	try {
 		const now = new Date(nowISO).getTime();

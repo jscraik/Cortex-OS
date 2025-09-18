@@ -7,13 +7,7 @@ import * as path from 'node:path';
  * outside of reading/writing `cortex-config.json`.
  */
 
-export type JsonValue =
-	| string
-	| number
-	| boolean
-	| null
-	| JsonObject
-	| JsonValue[];
+export type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 export interface JsonObject {
 	[key: string]: JsonValue;
 }
@@ -30,10 +24,7 @@ function getRepoRoot(): string {
 	return dir;
 }
 
-function deepGet<T = JsonValue>(
-	obj: JsonObject,
-	keyPath: string,
-): T | undefined {
+function deepGet<T = JsonValue>(obj: JsonObject, keyPath: string): T | undefined {
 	if (!keyPath) return obj as unknown as T;
 	return keyPath
 		.split('.')
@@ -43,11 +34,7 @@ function deepGet<T = JsonValue>(
 		) as T | undefined;
 }
 
-function deepSet(
-	obj: JsonObject,
-	keyPath: string,
-	value: JsonValue,
-): JsonObject {
+function deepSet(obj: JsonObject, keyPath: string, value: JsonValue): JsonObject {
 	const parts = keyPath.split('.');
 	let cur: JsonObject = obj;
 	for (let i = 0; i < parts.length - 1; i++) {
@@ -84,11 +71,7 @@ export class ConfigManager {
 			}
 			return json;
 		} catch (err: unknown) {
-			if (
-				typeof err === 'object' &&
-				err !== null &&
-				(err as { code?: string }).code === 'ENOENT'
-			) {
+			if (typeof err === 'object' && err !== null && (err as { code?: string }).code === 'ENOENT') {
 				// Initialize with defaults
 				const defaults: JsonObject = {};
 				await this.saveFile(defaults);

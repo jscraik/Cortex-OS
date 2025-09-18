@@ -38,10 +38,7 @@ export interface EventStreamOptions {
 export interface EventManager extends EventEmitter {
 	attachIO(io: IOServer): void;
 	emitEvent(event: Event): Promise<void>;
-	subscribe(
-		options: EventStreamOptions,
-		callback: (event: Event) => void,
-	): string;
+	subscribe(options: EventStreamOptions, callback: (event: Event) => void): string;
 	unsubscribe(subscriptionId: string): void;
 	getEvents(options: EventStreamOptions): Event[];
 	createSSEStream(res: Response, options: EventStreamOptions): string;
@@ -81,21 +78,11 @@ class EventManagerClass extends EventEmitter {
 		this.io = io;
 		io.on(
 			'connection',
-			(
-				socket: Socket<
-					DefaultEventsMap,
-					DefaultEventsMap,
-					DefaultEventsMap,
-					SocketData
-				>,
-			) => {
+			(socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, SocketData>) => {
 				socket.on(
 					'subscribe',
 					(
-						{
-							taskId,
-							eventTypes,
-						}: { taskId?: string; eventTypes?: EventType[] },
+						{ taskId, eventTypes }: { taskId?: string; eventTypes?: EventType[] },
 						ack?: (res: unknown) => void,
 					) => {
 						const subId = this.subscribe({ taskId, eventTypes }, (event) => {
@@ -109,10 +96,7 @@ class EventManagerClass extends EventEmitter {
 
 				socket.on(
 					'unsubscribe',
-					(
-						{ taskId }: { taskId?: string } = {},
-						ack?: (res: unknown) => void,
-					) => {
+					({ taskId }: { taskId?: string } = {}, ack?: (res: unknown) => void) => {
 						const subId = socket.data.subscriptionId;
 						if (subId) {
 							this.unsubscribe(subId);
@@ -170,10 +154,7 @@ class EventManagerClass extends EventEmitter {
 	/**
 	 * Subscribe to events with SSE or WebSocket transport
 	 */
-	subscribe(
-		options: EventStreamOptions,
-		callback: (event: Event) => void,
-	): string {
+	subscribe(options: EventStreamOptions, callback: (event: Event) => void): string {
 		const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substring(2)}`;
 
 		const subscription: EventSubscription = {
@@ -319,10 +300,7 @@ class EventManagerClass extends EventEmitter {
 		}
 	}
 
-	private shouldNotifySubscription(
-		subscription: EventSubscription,
-		event: Event,
-	): boolean {
+	private shouldNotifySubscription(subscription: EventSubscription, event: Event): boolean {
 		// Check task filter
 		if (subscription.taskId && subscription.taskId !== event.taskId) {
 			return false;
@@ -371,9 +349,7 @@ class EventManagerClass extends EventEmitter {
 		events = events.filter((e) => subscription.eventTypes.includes(e.type));
 
 		if (subscription.lastEventId) {
-			const lastIndex = events.findIndex(
-				(e) => e.id === subscription.lastEventId,
-			);
+			const lastIndex = events.findIndex((e) => e.id === subscription.lastEventId);
 			if (lastIndex >= 0) {
 				events = events.slice(lastIndex + 1);
 			}

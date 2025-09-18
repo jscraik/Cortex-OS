@@ -11,15 +11,7 @@ export enum ProcessingStrategy {
 }
 
 export interface ProcessingConfig {
-	chunker:
-		| 'text'
-		| 'markdown'
-		| 'code'
-		| 'structured'
-		| 'pdf'
-		| 'ocr'
-		| 'unstructured'
-		| null;
+	chunker: 'text' | 'markdown' | 'code' | 'structured' | 'pdf' | 'ocr' | 'unstructured' | null;
 	requiresOCR: boolean;
 	requiresUnstructured: boolean;
 	maxPages: number | null;
@@ -55,10 +47,7 @@ export class MimePolicyEngine {
 	private readonly strategyCache = new Map<string, StrategyDecision>();
 
 	// MIME type mappings to processing strategies
-	private readonly mimeStrategies = new Map<
-		string,
-		Omit<StrategyDecision, 'reason'>
-	>([
+	private readonly mimeStrategies = new Map<string, Omit<StrategyDecision, 'reason'>>([
 		// Native text processing
 		[
 			'text/plain',
@@ -411,19 +400,14 @@ export class MimePolicyEngine {
 	/**
 	 * Determine processing strategy for a given MIME type and file characteristics
 	 */
-	parseStrategy(
-		mimeType: string,
-		heuristics?: FileHeuristics,
-	): StrategyDecision {
+	parseStrategy(mimeType: string, heuristics?: FileHeuristics): StrategyDecision {
 		// Input validation
 		if (!mimeType || typeof mimeType !== 'string') {
 			return this.createRejectionDecision('Invalid MIME type format');
 		}
 
 		if (mimeType.length > 200) {
-			return this.createRejectionDecision(
-				'Invalid MIME type format (too long)',
-			);
+			return this.createRejectionDecision('Invalid MIME type format (too long)');
 		}
 
 		// Normalize MIME type (remove parameters)
@@ -439,11 +423,7 @@ export class MimePolicyEngine {
 		let decision = this.computeStrategy(normalizedMime, heuristics);
 
 		// Apply configuration overrides
-		decision = this.applyConfigurationRules(
-			decision,
-			normalizedMime,
-			heuristics,
-		);
+		decision = this.applyConfigurationRules(decision, normalizedMime, heuristics);
 
 		// Cache the decision
 		this.strategyCache.set(cacheKey, decision);
@@ -451,10 +431,7 @@ export class MimePolicyEngine {
 		return decision;
 	}
 
-	private computeStrategy(
-		mimeType: string,
-		heuristics?: FileHeuristics,
-	): StrategyDecision {
+	private computeStrategy(mimeType: string, heuristics?: FileHeuristics): StrategyDecision {
 		// Check for exact MIME type match
 		const exactMatch = this.mimeStrategies.get(mimeType);
 		if (exactMatch) {
@@ -494,9 +471,7 @@ export class MimePolicyEngine {
 		return mimeType.split(';')[0].trim().toLowerCase();
 	}
 
-	private findPatternMatch(
-		mimeType: string,
-	): Omit<StrategyDecision, 'reason'> | null {
+	private findPatternMatch(mimeType: string): Omit<StrategyDecision, 'reason'> | null {
 		const [type, subtype] = mimeType.split('/');
 		if (!type || !subtype) return null;
 
@@ -546,9 +521,7 @@ export class MimePolicyEngine {
 			};
 		}
 
-		return this.createRejectionDecision(
-			`Unknown or unsupported MIME type: ${mimeType}`,
-		);
+		return this.createRejectionDecision(`Unknown or unsupported MIME type: ${mimeType}`);
 	}
 
 	private applyConfigurationRules(
@@ -564,10 +537,7 @@ export class MimePolicyEngine {
 		}
 
 		// Security restrictions
-		if (
-			!this.config.allowExecutables &&
-			mimeType === 'application/x-executable'
-		) {
+		if (!this.config.allowExecutables && mimeType === 'application/x-executable') {
 			return this.createRejectionDecision('Executable files are not allowed');
 		}
 
@@ -603,10 +573,7 @@ export class MimePolicyEngine {
 	private applyPageLimits(decision: StrategyDecision): StrategyDecision {
 		if (!decision.processing) return decision;
 		const proc = { ...decision.processing };
-		if (
-			proc.chunker === 'ocr' &&
-			(proc.maxPages ?? 0) > this.config.ocrMaxPages
-		) {
+		if (proc.chunker === 'ocr' && (proc.maxPages ?? 0) > this.config.ocrMaxPages) {
 			proc.maxPages = this.config.ocrMaxPages;
 		}
 		if (
@@ -618,10 +585,7 @@ export class MimePolicyEngine {
 		return { ...decision, processing: proc };
 	}
 
-	private getReasonForStrategy(
-		strategy: ProcessingStrategy,
-		mimeType: string,
-	): string {
+	private getReasonForStrategy(strategy: ProcessingStrategy, mimeType: string): string {
 		switch (strategy) {
 			case ProcessingStrategy.NATIVE_TEXT:
 				return `Text-friendly format: ${mimeType}`;

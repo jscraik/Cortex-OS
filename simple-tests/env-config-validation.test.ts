@@ -246,10 +246,7 @@ describe('Environment Configuration Validation', () => {
 			]);
 			expect(config.database?.poolSize).toBe(15);
 			expect(config.memory?.adapter).toBe('sqlite');
-			expect(config.mcp?.serverUrls).toEqual([
-				'http://localhost:3001',
-				'http://localhost:3002',
-			]);
+			expect(config.mcp?.serverUrls).toEqual(['http://localhost:3001', 'http://localhost:3002']);
 		});
 
 		it('should apply default values for missing environment variables', () => {
@@ -332,9 +329,7 @@ describe('Environment Configuration Validation', () => {
 			};
 
 			const validator = createEnvironmentValidator();
-			const missingSecrets = validator.validateRequiredSecrets(
-				mockEnvWithoutSecrets,
-			);
+			const missingSecrets = validator.validateRequiredSecrets(mockEnvWithoutSecrets);
 
 			expect(missingSecrets).toContain('DATABASE_URL');
 			expect(missingSecrets).toContain('JWT_SECRET');
@@ -372,10 +367,7 @@ describe('Environment Configuration Validation', () => {
 			};
 
 			const validator = createEnvironmentValidator();
-			const merged = validator.mergeConfigurations(
-				defaultConfig,
-				overrideConfig,
-			);
+			const merged = validator.mergeConfigurations(defaultConfig, overrideConfig);
 
 			expect(merged.nodeEnv).toBe('development'); // from default
 			expect(merged.port).toBe(4000); // overridden

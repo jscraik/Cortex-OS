@@ -2,13 +2,7 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import {
-	Navigate,
-	Route,
-	BrowserRouter as Router,
-	Routes,
-	useNavigate,
-} from 'react-router-dom';
+import { Navigate, Route, BrowserRouter as Router, Routes, useNavigate } from 'react-router-dom';
 import useAuth from './hooks/useAuth';
 import useConversations from './hooks/useConversations';
 import useMessages from './hooks/useMessages';
@@ -17,18 +11,12 @@ import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SettingsPage from './pages/SettingsPage';
-import {
-	applyMotionPreferences,
-	applyTheme,
-	getEffectiveTheme,
-} from './utils/theme';
+import { applyMotionPreferences, applyTheme, getEffectiveTheme } from './utils/theme';
 
 const AppContent: React.FC = () => {
 	const navigate = useNavigate();
 	// Removed unused theme state
-	const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(
-		'light',
-	);
+	const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');
 	const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
 	const auth = useAuth();
@@ -63,11 +51,7 @@ const AppContent: React.FC = () => {
 		}
 	};
 
-	const handleRegister = async (
-		name: string,
-		email: string,
-		password: string,
-	) => {
+	const handleRegister = async (name: string, email: string, password: string) => {
 		try {
 			await auth.register(name, email, password);
 		} catch (error) {
@@ -82,8 +66,7 @@ const AppContent: React.FC = () => {
 	};
 
 	const handleCreateConversation = async () => {
-		const newConversation =
-			await conversations.createConversation('New Conversation');
+		const newConversation = await conversations.createConversation('New Conversation');
 		if (newConversation) {
 			navigate(`/chat/${newConversation.id}`);
 		}
@@ -99,22 +82,12 @@ const AppContent: React.FC = () => {
 			<Routes>
 				<Route
 					path="/login"
-					element={
-						<LoginPage
-							onLogin={handleLogin}
-							loading={auth.loading}
-							error={auth.error}
-						/>
-					}
+					element={<LoginPage onLogin={handleLogin} loading={auth.loading} error={auth.error} />}
 				/>
 				<Route
 					path="/register"
 					element={
-						<RegisterPage
-							onRegister={handleRegister}
-							loading={auth.loading}
-							error={auth.error}
-						/>
+						<RegisterPage onRegister={handleRegister} loading={auth.loading} error={auth.error} />
 					}
 				/>
 				<Route
@@ -123,9 +96,7 @@ const AppContent: React.FC = () => {
 						auth.isAuthenticated ? (
 							<Dashboard
 								conversations={conversations.conversations}
-								activeConversationId={
-									conversations.activeConversation?.id ?? ''
-								}
+								activeConversationId={conversations.activeConversation?.id ?? ''}
 								onSelectConversation={handleSelectConversation}
 								onCreateConversation={handleCreateConversation}
 								onLogout={auth.logout}
@@ -144,9 +115,7 @@ const AppContent: React.FC = () => {
 								conversation={conversations.activeConversation}
 								messages={messages.messages}
 								conversations={conversations.conversations}
-								activeConversationId={
-									conversations.activeConversation?.id ?? ''
-								}
+								activeConversationId={conversations.activeConversation?.id ?? ''}
 								onSendMessage={handleSendMessage}
 								onSelectConversation={handleSelectConversation}
 								onCreateConversation={handleCreateConversation}
@@ -176,9 +145,7 @@ const AppContent: React.FC = () => {
 				/>
 				<Route
 					path="/"
-					element={
-						<Navigate to={auth.isAuthenticated ? '/dashboard' : '/login'} />
-					}
+					element={<Navigate to={auth.isAuthenticated ? '/dashboard' : '/login'} />}
 				/>
 			</Routes>
 		</div>

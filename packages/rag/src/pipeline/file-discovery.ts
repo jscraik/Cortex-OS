@@ -17,8 +17,7 @@ export const filterPathsSchema = baseSchema.extend({
 export type FilterPathsOptions = z.infer<typeof filterPathsSchema>;
 
 export function filterPaths(options: FilterPathsOptions): string[] {
-	const { paths, include, exclude, includePriority, cwd } =
-		filterPathsSchema.parse(options);
+	const { paths, include, exclude, includePriority, cwd } = filterPathsSchema.parse(options);
 	return paths.filter((p) => {
 		const rel = cwd ? path.relative(cwd, p) : p;
 		const isIncluded = micromatch.isMatch(rel, include);
@@ -37,11 +36,8 @@ export const discoverFilesSchema = baseSchema.extend({
 
 export type DiscoverFilesOptions = z.infer<typeof discoverFilesSchema>;
 
-export async function discoverFiles(
-	options: DiscoverFilesOptions,
-): Promise<string[]> {
-	const { root, include, exclude, includePriority } =
-		discoverFilesSchema.parse(options);
+export async function discoverFiles(options: DiscoverFilesOptions): Promise<string[]> {
+	const { root, include, exclude, includePriority } = discoverFilesSchema.parse(options);
 	const entries = await fg(['**/*'], { cwd: root, dot: true, onlyFiles: true });
 	const abs = entries.map((p: string) => path.resolve(root, p));
 	return filterPaths({

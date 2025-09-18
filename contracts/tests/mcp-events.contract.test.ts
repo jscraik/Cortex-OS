@@ -25,9 +25,7 @@ describe('MCP Telemetry Event Schemas', () => {
 				name: 'tool:x',
 				timestamp: Date.now(),
 			};
-			expect(() =>
-				McpToolCallBeginSchema.parse(invalid as Record<string, unknown>),
-			).toThrow();
+			expect(() => McpToolCallBeginSchema.parse(invalid as Record<string, unknown>)).toThrow();
 		});
 	});
 
@@ -60,9 +58,7 @@ describe('MCP Telemetry Event Schemas', () => {
 				durationMs: -1,
 				success: true,
 			};
-			expect(() =>
-				McpToolCallEndSchema.parse(invalid as Record<string, unknown>),
-			).toThrow();
+			expect(() => McpToolCallEndSchema.parse(invalid as Record<string, unknown>)).toThrow();
 		});
 	});
 });

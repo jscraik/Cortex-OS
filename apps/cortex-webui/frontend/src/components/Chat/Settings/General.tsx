@@ -62,10 +62,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 	}
 
 	return (
-		<div
-			id="tab-general"
-			className="flex flex-col h-full justify-between text-sm"
-		>
+		<div id="tab-general" className="flex flex-col h-full justify-between text-sm">
 			<div className="overflow-y-scroll max-h-[28rem] lg:max-h-full space-y-6">
 				<div>
 					<div className="text-base font-medium mb-3">Appearance</div>
@@ -88,10 +85,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 						</div>
 
 						<div>
-							<label
-								htmlFor="language"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="language" className="block text-sm font-medium mb-1">
 								Language
 							</label>
 							<select
@@ -110,10 +104,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 						</div>
 
 						<div>
-							<label
-								htmlFor="font-size"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="font-size" className="block text-sm font-medium mb-1">
 								Font Size
 							</label>
 							<select
@@ -146,9 +137,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 								type="button"
 								onClick={() => setAutoScrollOutput(!autoScrollOutput)}
 								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-									autoScrollOutput
-										? 'bg-blue-600'
-										: 'bg-gray-300 dark:bg-gray-600'
+									autoScrollOutput ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 								}`}
 							>
 								<span
@@ -162,9 +151,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 						<div className="flex items-center justify-between">
 							<div>
 								<div className="font-medium">Enter to Submit</div>
-								<div className="text-xs text-gray-500 mt-0.5">
-									Press Enter to send messages
-								</div>
+								<div className="text-xs text-gray-500 mt-0.5">Press Enter to send messages</div>
 							</div>
 							<button
 								type="button"
@@ -193,9 +180,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 									type="button"
 									onClick={() => setDoubleEnterToSubmit(!doubleEnterToSubmit)}
 									className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-										doubleEnterToSubmit
-											? 'bg-blue-600'
-											: 'bg-gray-300 dark:bg-gray-600'
+										doubleEnterToSubmit ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 									}`}
 								>
 									<span
@@ -218,9 +203,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 								type="button"
 								onClick={() => setShowUsernameInChat(!showUsernameInChat)}
 								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-									showUsernameInChat
-										? 'bg-blue-600'
-										: 'bg-gray-300 dark:bg-gray-600'
+									showUsernameInChat ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 								}`}
 							>
 								<span
@@ -242,9 +225,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 								type="button"
 								onClick={() => setShowModelNameInChat(!showModelNameInChat)}
 								className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-									showModelNameInChat
-										? 'bg-blue-600'
-										: 'bg-gray-300 dark:bg-gray-600'
+									showModelNameInChat ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
 								}`}
 							>
 								<span
@@ -262,10 +243,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 
 					<div className="space-y-4">
 						<div>
-							<label
-								htmlFor="default-model"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="default-model" className="block text-sm font-medium mb-1">
 								Default Model
 							</label>
 							<input
@@ -279,10 +257,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ saveSettings }) => {
 						</div>
 
 						<div>
-							<label
-								htmlFor="default-prompt"
-								className="block text-sm font-medium mb-1"
-							>
+							<label htmlFor="default-prompt" className="block text-sm font-medium mb-1">
 								Default Prompt
 							</label>
 							<textarea

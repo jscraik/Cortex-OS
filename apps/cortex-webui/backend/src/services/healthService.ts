@@ -127,9 +127,7 @@ export class HealthService {
 	private async checkFileSystem(): Promise<HealthCheck> {
 		try {
 			const uploadDir = process.env.UPLOAD_DIR || './uploads';
-			const dataDir = path.dirname(
-				process.env.DATABASE_PATH || './data/cortex.db',
-			);
+			const dataDir = path.dirname(process.env.DATABASE_PATH || './data/cortex.db');
 
 			// Check if directories exist and are writable
 			await fs.access(uploadDir, fs.constants.W_OK);
@@ -207,9 +205,7 @@ export class HealthService {
 
 	private async checkDiskSpace(): Promise<HealthCheck> {
 		try {
-			const dataDir = path.dirname(
-				process.env.DATABASE_PATH || './data/cortex.db',
-			);
+			const dataDir = path.dirname(process.env.DATABASE_PATH || './data/cortex.db');
 			const stats = await fs.stat(dataDir);
 
 			// This is a simplified check - in production you'd want to check actual disk usage
@@ -244,9 +240,7 @@ export class HealthService {
 		try {
 			const requiredEnvVars = ['JWT_SECRET', 'MODEL_API_KEY', 'NODE_ENV'];
 
-			const missingVars = requiredEnvVars.filter(
-				(varName) => !process.env[varName],
-			);
+			const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 			if (missingVars.length > 0) {
 				return {

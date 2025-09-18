@@ -25,9 +25,7 @@ const WebSearchResults: React.FC<WebSearchResultsProps> = ({ results }) => {
 	return (
 		<div className="web-search-results mt-2 border-t border-gray-200 pt-2">
 			<div className="flex items-center justify-between">
-				<h4 className="text-xs font-medium text-gray-700">
-					Web Search Results
-				</h4>
+				<h4 className="text-xs font-medium text-gray-700">Web Search Results</h4>
 				{results.length > 3 && (
 					<button
 						onClick={() => setExpanded(!expanded)}
@@ -48,19 +46,13 @@ const WebSearchResults: React.FC<WebSearchResultsProps> = ({ results }) => {
 					>
 						<div className="flex items-start">
 							{result.favicon && (
-								<img
-									src={result.favicon}
-									alt=""
-									className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0"
-								/>
+								<img src={result.favicon} alt="" className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0" />
 							)}
 							<div>
 								<div className="text-sm font-medium text-blue-600 hover:underline">
 									{result.title}
 								</div>
-								<div className="text-xs text-gray-600 mt-1">
-									{result.snippet}
-								</div>
+								<div className="text-xs text-gray-600 mt-1">{result.snippet}</div>
 								<div className="text-xs text-gray-500 mt-1">{result.url}</div>
 							</div>
 						</div>

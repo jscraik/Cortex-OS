@@ -87,18 +87,12 @@ export const memoryStorageOptimizedSchema = z.object({
 
 // Type Exports
 export type MemoryItemStoredEvent = z.infer<typeof memoryItemStoredSchema>;
-export type MemoryItemRetrievedEvent = z.infer<
-	typeof memoryItemRetrievedSchema
->;
+export type MemoryItemRetrievedEvent = z.infer<typeof memoryItemRetrievedSchema>;
 export type MemoryItemUpdatedEvent = z.infer<typeof memoryItemUpdatedSchema>;
 export type MemoryItemDeletedEvent = z.infer<typeof memoryItemDeletedSchema>;
-export type MemoryQueryExecutedEvent = z.infer<
-	typeof memoryQueryExecutedSchema
->;
+export type MemoryQueryExecutedEvent = z.infer<typeof memoryQueryExecutedSchema>;
 export type MemoryCacheEvictedEvent = z.infer<typeof memoryCacheEvictedSchema>;
-export type MemoryStorageOptimizedEvent = z.infer<
-	typeof memoryStorageOptimizedSchema
->;
+export type MemoryStorageOptimizedEvent = z.infer<typeof memoryStorageOptimizedSchema>;
 
 // Event Schema Registry
 export const MemoryEventSchemas = {

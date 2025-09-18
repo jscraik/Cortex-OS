@@ -206,28 +206,19 @@ export interface Alert {
 
 export interface Rollback {
 	strategy: 'automatic' | 'manual' | 'conditional';
-	triggers?: Array<
-		| 'health-check-failure'
-		| 'error-rate-threshold'
-		| 'manual-trigger'
-		| 'timeout'
-	>;
+	triggers?: Array<'health-check-failure' | 'error-rate-threshold' | 'manual-trigger' | 'timeout'>;
 	timeout?: number;
 }
 
 export interface Security {
-	scanners?: Array<
-		'sast' | 'dast' | 'dependency-scan' | 'container-scan' | 'iac-scan'
-	>;
+	scanners?: Array<'sast' | 'dast' | 'dependency-scan' | 'container-scan' | 'iac-scan'>;
 	approvals?: {
 		required: boolean;
 		approvers?: string[];
 		environments?: string[];
 	};
 	compliance?: {
-		frameworks?: Array<
-			'SOC2' | 'ISO27001' | 'PCI-DSS' | 'GDPR' | 'HIPAA' | 'FedRAMP'
-		>;
+		frameworks?: Array<'SOC2' | 'ISO27001' | 'PCI-DSS' | 'GDPR' | 'HIPAA' | 'FedRAMP'>;
 		auditLog?: boolean;
 	};
 }

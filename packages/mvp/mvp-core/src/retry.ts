@@ -4,10 +4,7 @@ export type RetryPolicy = {
 	jitter?: boolean;
 };
 
-export async function retry<T>(
-	fn: () => Promise<T>,
-	policy: RetryPolicy,
-): Promise<T> {
+export async function retry<T>(fn: () => Promise<T>, policy: RetryPolicy): Promise<T> {
 	let attempt = 0;
 	let lastErr: any;
 	while (attempt <= policy.maxRetries) {
@@ -16,9 +13,7 @@ export async function retry<T>(
 		} catch (e) {
 			lastErr = e;
 			if (attempt++ === policy.maxRetries) break;
-			const j = policy.jitter
-				? Math.floor(Math.random() * policy.backoffMs)
-				: 0;
+			const j = policy.jitter ? Math.floor(Math.random() * policy.backoffMs) : 0;
 			await new Promise((r) => setTimeout(r, policy.backoffMs + j));
 		}
 	}

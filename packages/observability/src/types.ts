@@ -5,9 +5,7 @@
 import { z } from 'zod';
 
 // ULID schema
-export const ULIDSchema = z
-	.string()
-	.regex(/^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/);
+export const ULIDSchema = z.string().regex(/^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/);
 export type ULID = z.infer<typeof ULIDSchema>;
 
 // Trace context
@@ -24,14 +22,7 @@ export const MetricLabelsSchema = z.record(z.string(), z.string());
 export type MetricLabels = z.infer<typeof MetricLabelsSchema>;
 
 // Log levels
-export const LogLevelSchema = z.enum([
-	'trace',
-	'debug',
-	'info',
-	'warn',
-	'error',
-	'fatal',
-]);
+export const LogLevelSchema = z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']);
 export type LogLevel = z.infer<typeof LogLevelSchema>;
 
 // Structured log entry

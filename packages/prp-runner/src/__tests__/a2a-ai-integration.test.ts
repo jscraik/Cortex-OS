@@ -13,12 +13,7 @@ vi.mock('@cortex-os/a2a', () => ({
 }));
 
 import { TransportProtocol } from '@cortex-os/a2a-contracts/agents';
-import {
-	A2A_AI_SKILLS,
-	A2AAIAgent,
-	a2aAIAgent,
-	createA2AAIAgent,
-} from '../a2a-ai-agent.js';
+import { A2A_AI_SKILLS, A2AAIAgent, a2aAIAgent, createA2AAIAgent } from '../a2a-ai-agent.js';
 
 // Mock A2A types since package might not be available in test environment
 const mockA2AMessage = {
@@ -144,12 +139,8 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
 			expect(A2A_AI_SKILLS.AI_GENERATE_TEXT).toBe('ai_generate_text');
 			expect(A2A_AI_SKILLS.AI_SEARCH_KNOWLEDGE).toBe('ai_search_knowledge');
 			expect(A2A_AI_SKILLS.AI_RAG_QUERY).toBe('ai_rag_query');
-			expect(A2A_AI_SKILLS.AI_CALCULATE_SIMILARITY).toBe(
-				'ai_calculate_similarity',
-			);
-			expect(A2A_AI_SKILLS.ASBR_COLLECT_ENHANCED_EVIDENCE).toBe(
-				'asbr_collect_enhanced_evidence',
-			);
+			expect(A2A_AI_SKILLS.AI_CALCULATE_SIMILARITY).toBe('ai_calculate_similarity');
+			expect(A2A_AI_SKILLS.ASBR_COLLECT_ENHANCED_EVIDENCE).toBe('asbr_collect_enhanced_evidence');
 			expect(A2A_AI_SKILLS.GET_CAPABILITIES).toBe('get_capabilities');
 		});
 	});
@@ -241,9 +232,7 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
 				params: {
 					taskId: 'task_123',
 					claim: 'Test evidence claim',
-					sources: [
-						{ type: 'file', path: '/test/file.txt', content: 'Test content' },
-					],
+					sources: [{ type: 'file', path: '/test/file.txt', content: 'Test content' }],
 				},
 			};
 
@@ -367,9 +356,7 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
 			expect(agentCard.agent.provider?.url).toMatch(/^https?:\/\/.+/);
 
 			// Valid interface configuration
-			expect(['http', 'https', 'ws', 'wss']).toContain(
-				agentCard.interface.transport,
-			);
+			expect(['http', 'https', 'ws', 'wss']).toContain(agentCard.interface.transport);
 			expect(agentCard.interface.uri).toMatch(/^https?:\/\/.+/);
 
 			// At least one skill defined
@@ -430,15 +417,9 @@ describe('📋 A2A Protocol Compatibility Checklist', () => {
 		expect(typeof agent.getStatus).toBe('function');
 
 		console.log('✅ A2A Protocol Compatibility: PASSED');
-		console.log(
-			`   - Agent: ${agentCard.agent.name} v${agentCard.agent.version}`,
-		);
-		console.log(
-			`   - Skills: ${agentCard.skills.length} AI capabilities exposed`,
-		);
-		console.log(
-			`   - Transport: ${agentCard.interface.transport.toUpperCase()}`,
-		);
+		console.log(`   - Agent: ${agentCard.agent.name} v${agentCard.agent.version}`);
+		console.log(`   - Skills: ${agentCard.skills.length} AI capabilities exposed`);
+		console.log(`   - Transport: ${agentCard.interface.transport.toUpperCase()}`);
 		console.log(`   - Endpoint: ${agentCard.interface.uri}`);
 	});
 });

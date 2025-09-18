@@ -21,15 +21,9 @@ interface ValvesProps {
 	className?: string;
 }
 
-const Valves: React.FC<ValvesProps> = ({
-	valves,
-	onChange,
-	className = '',
-}) => {
+const Valves: React.FC<ValvesProps> = ({ valves, onChange, className = '' }) => {
 	const handleValveChange = (id: string, value: any) => {
-		const updatedValves = valves.map((valve) =>
-			valve.id === id ? { ...valve, value } : valve,
-		);
+		const updatedValves = valves.map((valve) => (valve.id === id ? { ...valve, value } : valve));
 		onChange(updatedValves);
 	};
 
@@ -44,56 +38,42 @@ const Valves: React.FC<ValvesProps> = ({
 							onChange={(e) => handleValveChange(valve.id, e.target.checked)}
 							className="h-4 w-4 text-blue-600 rounded"
 						/>
-						<span className="ml-2 text-sm text-gray-700">
-							{valve.description}
-						</span>
+						<span className="ml-2 text-sm text-gray-700">{valve.description}</span>
 					</div>
 				);
 			case 'number':
 				return (
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							{valve.name}
-						</label>
+						<label className="block text-sm font-medium text-gray-700 mb-1">{valve.name}</label>
 						<input
 							type="number"
 							value={valve.value}
-							onChange={(e) =>
-								handleValveChange(valve.id, parseFloat(e.target.value))
-							}
+							onChange={(e) => handleValveChange(valve.id, parseFloat(e.target.value))}
 							min={valve.min}
 							max={valve.max}
 							step={valve.step}
 							className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						/>
-						{valve.description && (
-							<p className="mt-1 text-xs text-gray-500">{valve.description}</p>
-						)}
+						{valve.description && <p className="mt-1 text-xs text-gray-500">{valve.description}</p>}
 					</div>
 				);
 			case 'string':
 				return (
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							{valve.name}
-						</label>
+						<label className="block text-sm font-medium text-gray-700 mb-1">{valve.name}</label>
 						<input
 							type="text"
 							value={valve.value}
 							onChange={(e) => handleValveChange(valve.id, e.target.value)}
 							className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						/>
-						{valve.description && (
-							<p className="mt-1 text-xs text-gray-500">{valve.description}</p>
-						)}
+						{valve.description && <p className="mt-1 text-xs text-gray-500">{valve.description}</p>}
 					</div>
 				);
 			case 'select':
 				return (
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							{valve.name}
-						</label>
+						<label className="block text-sm font-medium text-gray-700 mb-1">{valve.name}</label>
 						<select
 							value={valve.value}
 							onChange={(e) => handleValveChange(valve.id, e.target.value)}
@@ -105,9 +85,7 @@ const Valves: React.FC<ValvesProps> = ({
 								</option>
 							))}
 						</select>
-						{valve.description && (
-							<p className="mt-1 text-xs text-gray-500">{valve.description}</p>
-						)}
+						{valve.description && <p className="mt-1 text-xs text-gray-500">{valve.description}</p>}
 					</div>
 				);
 			default:

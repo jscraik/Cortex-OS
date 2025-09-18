@@ -51,9 +51,7 @@ export class NotificationStore {
 	}
 
 	removeNotification(id: string) {
-		this.notifications = this.notifications.filter(
-			(notification) => notification.id !== id,
-		);
+		this.notifications = this.notifications.filter((notification) => notification.id !== id);
 		this.notify();
 	}
 
@@ -65,9 +63,7 @@ export class NotificationStore {
 
 const notificationStore: NotificationStoreApi = new NotificationStore();
 
-export function addNotification(
-	notification: Omit<Notification, 'id'>,
-): string {
+export function addNotification(notification: Omit<Notification, 'id'>): string {
 	return notificationStore.addNotification(notification);
 }
 

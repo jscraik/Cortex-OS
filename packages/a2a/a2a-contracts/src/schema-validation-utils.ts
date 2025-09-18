@@ -79,13 +79,7 @@ export const CommonSchemas = {
 			}),
 		),
 		total: z.number().positive(),
-		status: z.enum([
-			'pending',
-			'confirmed',
-			'shipped',
-			'delivered',
-			'cancelled',
-		]),
+		status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
 		createdAt: z.string().datetime(),
 		updatedAt: z.string().datetime().optional(),
 	}),
@@ -97,13 +91,7 @@ export const CommonSchemas = {
 		amount: z.number().positive(),
 		currency: z.string().length(3).toUpperCase(),
 		method: z.enum(['credit_card', 'debit_card', 'paypal', 'bank_transfer']),
-		status: z.enum([
-			'pending',
-			'processing',
-			'completed',
-			'failed',
-			'refunded',
-		]),
+		status: z.enum(['pending', 'processing', 'completed', 'failed', 'refunded']),
 		transactionId: z.string().optional(),
 		processedAt: z.string().datetime().optional(),
 	}),
@@ -114,13 +102,7 @@ export const CommonSchemas = {
 		orderId: z.string().uuid(),
 		carrier: z.string().min(1),
 		trackingNumber: z.string().min(1),
-		status: z.enum([
-			'preparing',
-			'shipped',
-			'in_transit',
-			'delivered',
-			'returned',
-		]),
+		status: z.enum(['preparing', 'shipped', 'in_transit', 'delivered', 'returned']),
 		shippedAt: z.string().datetime().optional(),
 		deliveredAt: z.string().datetime().optional(),
 		estimatedDelivery: z.string().datetime().optional(),
@@ -258,9 +240,7 @@ export function isBackwardCompatible(
 		const newResult = newSchema.safeParse(data);
 
 		if (oldResult.success && !newResult.success) {
-			issues.push(
-				`Data ${JSON.stringify(data)} is valid in old schema but invalid in new schema`,
-			);
+			issues.push(`Data ${JSON.stringify(data)} is valid in old schema but invalid in new schema`);
 		}
 	}
 
@@ -276,10 +256,7 @@ export function isBackwardCompatible(
 /**
  * Generate schema documentation
  */
-export function generateSchemaDocs(
-	schema: z.ZodSchema,
-	eventType: string,
-): string {
+export function generateSchemaDocs(schema: z.ZodSchema, eventType: string): string {
 	let shape: string[] = [];
 	let isObject = false;
 
@@ -345,57 +322,47 @@ export function createMigrationGuide(
  */
 export const PredefinedSchemas = {
 	// User events
-	userCreated: createVersionedSchema(
-		'user.created.v1',
-		'1.0.0',
-		EventPatterns.userCreated,
-		{
-			description: 'User account created',
-			examples: [
-				{
-					type: 'user.created.v1',
-					data: {
-						id: '123e4567-e89b-12d3-a456-426614174000',
-						email: 'user@example.com',
-						firstName: 'John',
-						lastName: 'Doe',
-						createdAt: '2023-01-01T00:00:00Z',
-					},
+	userCreated: createVersionedSchema('user.created.v1', '1.0.0', EventPatterns.userCreated, {
+		description: 'User account created',
+		examples: [
+			{
+				type: 'user.created.v1',
+				data: {
+					id: '123e4567-e89b-12d3-a456-426614174000',
+					email: 'user@example.com',
+					firstName: 'John',
+					lastName: 'Doe',
+					createdAt: '2023-01-01T00:00:00Z',
 				},
-			],
-			tags: ['user', 'creation'],
-		},
-	),
+			},
+		],
+		tags: ['user', 'creation'],
+	}),
 
 	// Order events
-	orderCreated: createVersionedSchema(
-		'order.created.v1',
-		'1.0.0',
-		EventPatterns.orderCreated,
-		{
-			description: 'New order placed',
-			examples: [
-				{
-					type: 'order.created.v1',
-					data: {
-						id: '123e4567-e89b-12d3-a456-426614174001',
-						userId: '123e4567-e89b-12d3-a456-426614174000',
-						items: [
-							{
-								productId: '123e4567-e89b-12d3-a456-426614174002',
-								quantity: 2,
-								price: 29.99,
-							},
-						],
-						total: 59.98,
-						status: 'pending',
-						createdAt: '2023-01-01T00:00:00Z',
-					},
+	orderCreated: createVersionedSchema('order.created.v1', '1.0.0', EventPatterns.orderCreated, {
+		description: 'New order placed',
+		examples: [
+			{
+				type: 'order.created.v1',
+				data: {
+					id: '123e4567-e89b-12d3-a456-426614174001',
+					userId: '123e4567-e89b-12d3-a456-426614174000',
+					items: [
+						{
+							productId: '123e4567-e89b-12d3-a456-426614174002',
+							quantity: 2,
+							price: 29.99,
+						},
+					],
+					total: 59.98,
+					status: 'pending',
+					createdAt: '2023-01-01T00:00:00Z',
 				},
-			],
-			tags: ['order', 'creation', 'ecommerce'],
-		},
-	),
+			},
+		],
+		tags: ['order', 'creation', 'ecommerce'],
+	}),
 
 	// Payment events
 	paymentProcessed: createVersionedSchema(

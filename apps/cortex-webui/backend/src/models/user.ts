@@ -16,10 +16,7 @@ export const UserModel = {
     )
   ` as const,
 
-	toRecord(user: UserWithPassword): Omit<
-		UserRecord,
-		'created_at' | 'updated_at'
-	> & {
+	toRecord(user: UserWithPassword): Omit<UserRecord, 'created_at' | 'updated_at'> & {
 		created_at: string;
 		updated_at: string;
 	} {

@@ -5,10 +5,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { StructureRule } from '../core/structure-validator';
-import {
-	CORTEX_STRUCTURE_RULES,
-	StructureValidator,
-} from '../core/structure-validator';
+import { CORTEX_STRUCTURE_RULES, StructureValidator } from '../core/structure-validator';
 
 describe('StructureValidator', () => {
 	let validator: StructureValidator;
@@ -28,9 +25,7 @@ describe('StructureValidator', () => {
 
 				validPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const appViolations = violations.filter(
-						(v) => v.rule === 'applications-placement',
-					);
+					const appViolations = violations.filter((v) => v.rule === 'applications-placement');
 					expect(appViolations).toHaveLength(0);
 				});
 			});
@@ -44,9 +39,7 @@ describe('StructureValidator', () => {
 
 				invalidPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const appViolations = violations.filter(
-						(v) => v.rule === 'applications-placement',
-					);
+					const appViolations = violations.filter((v) => v.rule === 'applications-placement');
 					expect(appViolations.length).toBeGreaterThan(0);
 				});
 			});
@@ -62,9 +55,7 @@ describe('StructureValidator', () => {
 
 				validPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const packageViolations = violations.filter(
-						(v) => v.rule === 'packages-placement',
-					);
+					const packageViolations = violations.filter((v) => v.rule === 'packages-placement');
 					expect(packageViolations).toHaveLength(0);
 				});
 			});
@@ -78,9 +69,7 @@ describe('StructureValidator', () => {
 
 				invalidPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const packageViolations = violations.filter(
-						(v) => v.rule === 'packages-placement',
-					);
+					const packageViolations = violations.filter((v) => v.rule === 'packages-placement');
 					expect(packageViolations.length).toBeGreaterThan(0);
 				});
 			});
@@ -98,12 +87,8 @@ describe('StructureValidator', () => {
 
 				validPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const tsViolations = violations.filter(
-						(v) => v.rule === 'typescript-organization',
-					);
-					expect(
-						tsViolations.filter((v) => v.type === 'misplaced_file'),
-					).toHaveLength(0);
+					const tsViolations = violations.filter((v) => v.rule === 'typescript-organization');
+					expect(tsViolations.filter((v) => v.type === 'misplaced_file')).toHaveLength(0);
 				});
 			});
 
@@ -112,9 +97,7 @@ describe('StructureValidator', () => {
 
 				invalidPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const tsViolations = violations.filter(
-						(v) => v.rule === 'typescript-organization',
-					);
+					const tsViolations = violations.filter((v) => v.rule === 'typescript-organization');
 					expect(tsViolations.length).toBeGreaterThan(0);
 				});
 			});
@@ -136,17 +119,13 @@ describe('StructureValidator', () => {
 
 				validNames.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const namingViolations = violations.filter(
-						(v) => v.type === 'naming_violation',
-					);
+					const namingViolations = violations.filter((v) => v.type === 'naming_violation');
 					expect(namingViolations).toHaveLength(0);
 				});
 
 				invalidNames.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const namingViolations = violations.filter(
-						(v) => v.type === 'naming_violation',
-					);
+					const namingViolations = violations.filter((v) => v.type === 'naming_violation');
 					expect(namingViolations.length).toBeGreaterThan(0);
 				});
 			});
@@ -164,12 +143,8 @@ describe('StructureValidator', () => {
 
 				validPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const docViolations = violations.filter(
-						(v) => v.rule === 'documentation-organization',
-					);
-					expect(
-						docViolations.filter((v) => v.type === 'misplaced_file'),
-					).toHaveLength(0);
+					const docViolations = violations.filter((v) => v.rule === 'documentation-organization');
+					expect(docViolations.filter((v) => v.type === 'misplaced_file')).toHaveLength(0);
 				});
 			});
 		});
@@ -185,12 +160,8 @@ describe('StructureValidator', () => {
 
 				validPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const testViolations = violations.filter(
-						(v) => v.rule === 'test-files-placement',
-					);
-					expect(
-						testViolations.filter((v) => v.type === 'misplaced_file'),
-					).toHaveLength(0);
+					const testViolations = violations.filter((v) => v.rule === 'test-files-placement');
+					expect(testViolations.filter((v) => v.type === 'misplaced_file')).toHaveLength(0);
 				});
 			});
 		});
@@ -204,9 +175,7 @@ describe('StructureValidator', () => {
 
 				deepPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const nestingViolations = violations.filter(
-						(v) => v.rule === 'prevent-deep-nesting',
-					);
+					const nestingViolations = violations.filter((v) => v.rule === 'prevent-deep-nesting');
 					expect(nestingViolations.length).toBeGreaterThan(0);
 				});
 			});
@@ -220,9 +189,7 @@ describe('StructureValidator', () => {
 
 				reasonablePaths.forEach((path) => {
 					const violations = validator.validateFile(path);
-					const nestingViolations = violations.filter(
-						(v) => v.rule === 'prevent-deep-nesting',
-					);
+					const nestingViolations = violations.filter((v) => v.rule === 'prevent-deep-nesting');
 					expect(nestingViolations).toHaveLength(0);
 				});
 			});
@@ -232,9 +199,7 @@ describe('StructureValidator', () => {
 	describe('Path Suggestions', () => {
 		it('should suggest correct paths for misplaced applications', () => {
 			const violations = validator.validateFile('src/my-app.ts');
-			const appViolations = violations.filter(
-				(v) => v.rule === 'applications-placement',
-			);
+			const appViolations = violations.filter((v) => v.rule === 'applications-placement');
 
 			if (appViolations.length > 0) {
 				expect(appViolations[0].suggestedPath).toBe('apps/my-app.ts');
@@ -243,22 +208,16 @@ describe('StructureValidator', () => {
 
 		it('should suggest correct paths for misplaced packages', () => {
 			const violations = validator.validateFile('src/feature-auth.ts');
-			const packageViolations = violations.filter(
-				(v) => v.rule === 'packages-placement',
-			);
+			const packageViolations = violations.filter((v) => v.rule === 'packages-placement');
 
 			if (packageViolations.length > 0) {
-				expect(packageViolations[0].suggestedPath).toBe(
-					'packages/feature-auth.ts',
-				);
+				expect(packageViolations[0].suggestedPath).toBe('packages/feature-auth.ts');
 			}
 		});
 
 		it('should suggest correct paths for misplaced TypeScript files', () => {
 			const violations = validator.validateFile('utils.ts');
-			const tsViolations = violations.filter(
-				(v) => v.rule === 'typescript-organization',
-			);
+			const tsViolations = violations.filter((v) => v.rule === 'typescript-organization');
 
 			if (tsViolations.length > 0) {
 				expect(tsViolations[0].suggestedPath).toBe('src/utils.ts');
@@ -267,9 +226,7 @@ describe('StructureValidator', () => {
 
 		it('should suggest test directory for test files', () => {
 			const violations = validator.validateFile('auth.test.ts');
-			const testViolations = violations.filter(
-				(v) => v.rule === 'typescript-organization',
-			);
+			const testViolations = violations.filter((v) => v.rule === 'typescript-organization');
 
 			if (testViolations.length > 0) {
 				expect(testViolations[0].suggestedPath).toBe('tests/auth.test.ts');
@@ -321,12 +278,8 @@ describe('StructureValidator', () => {
 
 			const result = validator.analyzeRepository(files);
 
-			const autoFixableViolations = result.violations.filter(
-				(v) => v.autoFixable,
-			);
-			expect(result.summary.autoFixableCount).toBe(
-				autoFixableViolations.length,
-			);
+			const autoFixableViolations = result.violations.filter((v) => v.autoFixable);
+			expect(result.summary.autoFixableCount).toBe(autoFixableViolations.length);
 			expect(result.summary.autoFixableCount).toBeGreaterThan(0);
 		});
 	});
@@ -385,9 +338,7 @@ describe('StructureValidator', () => {
 
 			expect(Array.isArray(violations)).toBe(true);
 			// Should definitely flag deep nesting
-			const nestingViolations = violations.filter(
-				(v) => v.rule === 'prevent-deep-nesting',
-			);
+			const nestingViolations = violations.filter((v) => v.rule === 'prevent-deep-nesting');
 			expect(nestingViolations.length).toBeGreaterThan(0);
 		});
 
@@ -407,10 +358,7 @@ describe('StructureValidator', () => {
 
 	describe('Performance', () => {
 		it('should handle large file lists efficiently', () => {
-			const largeFileList = Array.from(
-				{ length: 10000 },
-				(_, i) => `apps/app${i}/src/file${i}.ts`,
-			);
+			const largeFileList = Array.from({ length: 10000 }, (_, i) => `apps/app${i}/src/file${i}.ts`);
 
 			const startTime = Date.now();
 			const result = validator.analyzeRepository(largeFileList);

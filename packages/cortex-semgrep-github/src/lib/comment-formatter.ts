@@ -13,36 +13,25 @@ export interface ScanSummary {
 	low: number;
 }
 
-export const summarizeResults = (
-	results: SecurityScanResult[],
-): ScanSummary => {
+export const summarizeResults = (results: SecurityScanResult[]): ScanSummary => {
 	return {
 		total: results.length,
-		critical: results.filter(
-			(r) => r.severity === 'HIGH' && r.ruleId.includes('critical'),
-		).length,
+		critical: results.filter((r) => r.severity === 'HIGH' && r.ruleId.includes('critical')).length,
 		high: results.filter((r) => r.severity === 'HIGH').length,
 		medium: results.filter((r) => r.severity === 'MEDIUM').length,
 		low: results.filter((r) => r.severity === 'LOW').length,
 	};
 };
 
-export const formatScanSection = (
-	title: string,
-	items: SecurityScanResult[],
-): string => {
+export const formatScanSection = (title: string, items: SecurityScanResult[]): string => {
 	if (items.length === 0) return '';
 
 	const section = items
 		.slice(0, 5) // Limit to first 5 items
-		.map(
-			(item) =>
-				`- **${item.ruleId}**: ${item.message} (${item.file}:${item.startLine})`,
-		)
+		.map((item) => `- **${item.ruleId}**: ${item.message} (${item.file}:${item.startLine})`)
 		.join('\n');
 
-	const remaining =
-		items.length > 5 ? `\n_... and ${items.length - 5} more_` : '';
+	const remaining = items.length > 5 ? `\n_... and ${items.length - 5} more_` : '';
 
 	return `### ${title}\n${section}${remaining}\n`;
 };
@@ -65,12 +54,8 @@ Repository: ${owner}/${repo} (${sha.substring(0, 7)})
 Great job maintaining secure code! 🎉`;
 	}
 
-	const critical = results.filter(
-		(r) => r.severity === 'HIGH' && r.ruleId.includes('critical'),
-	);
-	const high = results.filter(
-		(r) => r.severity === 'HIGH' && !r.ruleId.includes('critical'),
-	);
+	const critical = results.filter((r) => r.severity === 'HIGH' && r.ruleId.includes('critical'));
+	const high = results.filter((r) => r.severity === 'HIGH' && !r.ruleId.includes('critical'));
 	const medium = results.filter((r) => r.severity === 'MEDIUM');
 	const low = results.filter((r) => r.severity === 'LOW');
 

@@ -6,12 +6,9 @@ async function main() {
 	// Node via cyclonedx bom (installed as @cyclonedx/bom exposes CLI 'cyclonedx-bom' if needed).
 	// Here we call library through npx to keep script simple.
 	try {
-		const nodeBom = execSync(
-			'npx -y @cyclonedx/cyclonedx-npm --output-format json',
-			{
-				encoding: 'utf8',
-			},
-		);
+		const nodeBom = execSync('npx -y @cyclonedx/cyclonedx-npm --output-format json', {
+			encoding: 'utf8',
+		});
 		writeFileSync('sbom-node.json', nodeBom);
 	} catch {
 		console.warn(

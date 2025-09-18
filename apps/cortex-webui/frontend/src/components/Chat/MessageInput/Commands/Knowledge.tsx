@@ -76,9 +76,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 			? mockKnowledge.filter(
 					(item) =>
 						item.name.toLowerCase().includes(command.slice(1).toLowerCase()) ||
-						item.description
-							.toLowerCase()
-							.includes(command.slice(1).toLowerCase()),
+						item.description.toLowerCase().includes(command.slice(1).toLowerCase()),
 				)
 			: mockKnowledge;
 
@@ -174,8 +172,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 
 	const urlCommand = command.substring(1);
 	const isYoutube =
-		urlCommand.startsWith('https://www.youtube.com') ||
-		urlCommand.startsWith('https://youtu.be');
+		urlCommand.startsWith('https://www.youtube.com') || urlCommand.startsWith('https://youtu.be');
 	const isHttp = !isYoutube && urlCommand.startsWith('http');
 
 	if (filteredItems.length === 0 && !command.substring(1).startsWith('http')) {
@@ -238,9 +235,7 @@ const Knowledge = forwardRef(({ command, onSelect }: KnowledgeProps, ref) => {
 								<div className="font-medium text-black dark:text-gray-100 line-clamp-1">
 									{urlCommand}
 								</div>
-								<div className="text-xs text-gray-600 line-clamp-1">
-									Youtube
-								</div>
+								<div className="text-xs text-gray-600 line-clamp-1">Youtube</div>
 							</button>
 						)}
 						{isHttp && (

@@ -26,13 +26,7 @@ test('openapi.json is generated and includes expected structure', () => {
 
 	// Schemas we define in the generator
 	const schemas = doc.components?.schemas ?? {};
-	for (const s of [
-		'AgentConfig',
-		'MCPBody',
-		'A2ABody',
-		'RAGBody',
-		'SimlabBody',
-	]) {
+	for (const s of ['AgentConfig', 'MCPBody', 'A2ABody', 'RAGBody', 'SimlabBody']) {
 		expect(Object.keys(schemas)).toContain(s);
 	}
 });
