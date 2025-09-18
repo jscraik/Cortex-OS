@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-const base = process.env.STAGING_BASE_URL || "http://localhost:3333";
+const base = process.env.STAGING_BASE_URL || 'http://localhost:3333';
 
 const cases = [
-	{ path: "/mcp", body: { bad: "input" } }, // invalid payload
-	{ path: "/a2a", body: { config: { seed: -1 }, message: {} } }, // invalid seed
+	{ path: '/mcp', body: { bad: 'input' } }, // invalid payload
+	{ path: '/a2a', body: { config: { seed: -1 }, message: {} } }, // invalid seed
 	{
-		path: "/rag",
+		path: '/rag',
 		body: {
 			config: {
 				seed: 1,
@@ -13,7 +13,7 @@ const cases = [
 				timeoutMs: 1,
 				memory: { maxItems: 1, maxBytes: 1 },
 			},
-			query: { query: "" },
+			query: { query: '' },
 			json: true,
 		},
 	}, // invalid query
@@ -25,8 +25,8 @@ async function main() {
 		const url = `${base}${c.path}`;
 		try {
 			const res = await fetch(url, {
-				method: "POST",
-				headers: { "content-type": "application/json" },
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify(c.body),
 			});
 			// Expect non-200 or structured error JSON

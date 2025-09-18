@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { z } from "zod";
+import { createHash } from 'node:crypto';
+import { z } from 'zod';
 
 export interface WorkflowStep {
 	id: string;
@@ -12,7 +12,7 @@ export interface WorkflowStep {
 const stepZ = z.object({
 	id: z.string(),
 	name: z.string(),
-	kind: z.enum(["agent", "http", "delay", "branch", "map"]),
+	kind: z.enum(['agent', 'http', 'delay', 'branch', 'map']),
 	next: z.string().optional(),
 	branches: z.array(z.object({ when: z.string(), to: z.string() })).optional(),
 });
@@ -64,7 +64,7 @@ function createWorkflowHash(workflow: Workflow): string {
 			),
 		),
 	});
-	return createHash("sha256").update(structureData, "utf8").digest("hex");
+	return createHash('sha256').update(structureData, 'utf8').digest('hex');
 }
 
 function initializeCacheCleanup(): void {

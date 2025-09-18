@@ -3,11 +3,11 @@
  * @description Core types for MCP marketplace following official SDK patterns
  */
 
-import { z } from "zod";
-import { NAME_MAX_LENGTH } from "./constants.js";
+import { z } from 'zod';
+import { NAME_MAX_LENGTH } from './constants.js';
 
 // MCP Protocol version support
-export const MCP_VERSION = "2025-06-18";
+export const MCP_VERSION = '2025-06-18';
 export const SUPPORTED_VERSIONS = [MCP_VERSION];
 
 /**
@@ -18,13 +18,13 @@ export const TransportConfigSchema = z.object({
 		url: z
 			.string()
 			.url()
-			.refine((url) => url.startsWith("https://"), {
-				message: "Remote MCP servers must use HTTPS",
+			.refine((url) => url.startsWith('https://'), {
+				message: 'Remote MCP servers must use HTTPS',
 			}),
 		headers: z.record(z.string()).optional(),
 		auth: z
 			.object({
-				type: z.enum(["none", "bearer", "oauth2"]),
+				type: z.enum(['none', 'bearer', 'oauth2']),
 				clientId: z.string().optional(),
 				scopes: z.array(z.string()).optional(),
 			})
@@ -77,26 +77,26 @@ export const ServerManifestSchema = z.object({
 	repository: z.string().url().optional(),
 	homepage: z.string().url().optional(),
 	license: z.enum([
-		"MIT",
-		"Apache-2.0",
-		"GPL-3.0",
-		"BSD-3-Clause",
-		"ISC",
-		"Proprietary",
+		'MIT',
+		'Apache-2.0',
+		'GPL-3.0',
+		'BSD-3-Clause',
+		'ISC',
+		'Proprietary',
 	]),
 
 	// Categorization
 	category: z.enum([
-		"development",
-		"productivity",
-		"data",
-		"communication",
-		"finance",
-		"media",
-		"security",
-		"ai-ml",
-		"integration",
-		"utility",
+		'development',
+		'productivity',
+		'data',
+		'communication',
+		'finance',
+		'media',
+		'security',
+		'ai-ml',
+		'integration',
+		'utility',
 	]),
 	tags: z.array(z.string()).max(10).optional(),
 
@@ -112,7 +112,7 @@ export const ServerManifestSchema = z.object({
 	// Security
 	permissions: z.array(z.string()),
 	security: z.object({
-		riskLevel: z.enum(["low", "medium", "high"]).default("medium"),
+		riskLevel: z.enum(['low', 'medium', 'high']).default('medium'),
 		sigstore: z.string().url().optional(),
 		sbom: z.string().url().optional(),
 	}),
@@ -147,7 +147,7 @@ export const RegistryIndexSchema = z.object({
 	featured: z.array(z.string()),
 	signing: z.object({
 		publicKey: z.string(),
-		algorithm: z.enum(["Ed25519"]).default("Ed25519"),
+		algorithm: z.enum(['Ed25519']).default('Ed25519'),
 	}),
 });
 
@@ -159,7 +159,7 @@ export type RegistryIndex = z.infer<typeof RegistryIndexSchema>;
 export const SearchRequestSchema = z.object({
 	q: z.string().optional(),
 	category: z.string().optional(),
-	capabilities: z.array(z.enum(["tools", "resources", "prompts"])).optional(),
+	capabilities: z.array(z.enum(['tools', 'resources', 'prompts'])).optional(),
 	verified: z.boolean().optional(),
 	limit: z.number().int().min(1).max(50).default(20),
 	offset: z.number().int().min(0).default(0),
@@ -170,7 +170,7 @@ export type SearchRequest = z.infer<typeof SearchRequestSchema>;
 /**
  * Installation command generation
  */
-export type ClientType = "claude" | "json";
+export type ClientType = 'claude' | 'json';
 
 export interface InstallCommand {
 	client: ClientType;
@@ -201,7 +201,7 @@ export interface ApiResponse<T = unknown> {
  */
 export interface ServerHealth {
 	serverId: string;
-	status: "online" | "offline" | "degraded";
+	status: 'online' | 'offline' | 'degraded';
 	lastCheck: string;
 	responseTime?: number;
 	capabilities?: Capabilities;

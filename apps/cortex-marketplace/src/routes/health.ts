@@ -3,24 +3,24 @@
  * @description Health check endpoints
  */
 
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from 'fastify';
 
 export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
 	// Basic health check
 	fastify.get(
-		"/health",
+		'/health',
 		{
 			schema: {
-				tags: ["health"],
-				summary: "Health check",
-				description: "Basic health check endpoint",
+				tags: ['health'],
+				summary: 'Health check',
+				description: 'Basic health check endpoint',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							status: { type: "string" },
-							timestamp: { type: "string" },
-							uptime: { type: "number" },
+							status: { type: 'string' },
+							timestamp: { type: 'string' },
+							uptime: { type: 'number' },
 						},
 					},
 				},
@@ -28,7 +28,7 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
 		},
 		async (_request, _reply) => {
 			return {
-				status: "healthy",
+				status: 'healthy',
 				timestamp: new Date().toISOString(),
 				uptime: process.uptime(),
 			};
@@ -37,21 +37,21 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Detailed health check
 	fastify.get(
-		"/health/detailed",
+		'/health/detailed',
 		{
 			schema: {
-				tags: ["health"],
-				summary: "Detailed health check",
-				description: "Detailed health check with system information",
+				tags: ['health'],
+				summary: 'Detailed health check',
+				description: 'Detailed health check with system information',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							status: { type: "string" },
-							timestamp: { type: "string" },
-							uptime: { type: "number" },
-							memory: { type: "object" },
-							registries: { type: "object" },
+							status: { type: 'string' },
+							timestamp: { type: 'string' },
+							uptime: { type: 'number' },
+							memory: { type: 'object' },
+							registries: { type: 'object' },
 						},
 					},
 				},
@@ -75,7 +75,7 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
 			);
 
 			return {
-				status: "healthy",
+				status: 'healthy',
 				timestamp: new Date().toISOString(),
 				uptime: process.uptime(),
 				memory: {
@@ -91,25 +91,25 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Readiness check
 	fastify.get(
-		"/ready",
+		'/ready',
 		{
 			schema: {
-				tags: ["health"],
-				summary: "Readiness check",
-				description: "Check if service is ready to accept requests",
+				tags: ['health'],
+				summary: 'Readiness check',
+				description: 'Check if service is ready to accept requests',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							ready: { type: "boolean" },
-							checks: { type: "object" },
+							ready: { type: 'boolean' },
+							checks: { type: 'object' },
 						},
 					},
 					503: {
-						type: "object",
+						type: 'object',
 						properties: {
-							ready: { type: "boolean" },
-							checks: { type: "object" },
+							ready: { type: 'boolean' },
+							checks: { type: 'object' },
 						},
 					},
 				},

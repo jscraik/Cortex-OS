@@ -9,9 +9,9 @@ import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
 import type { IToolRegistry } from '../types';
 import {
+	createTool,
 	type Tool,
 	type ToolSchema,
-	createTool,
 } from './mocks/voltagent-core.js';
 import { type ISubagentDelegator, SubagentRunner } from './runner';
 import type { SubagentConfig, SubagentTool } from './types';

@@ -1,28 +1,28 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export interface ModelStrategy {
 	[task: string]: { primary: { model: string }; fallback: { model: string } };
 }
 
 export interface GenerateOptions {
-        prompt: string;
-        context?: string;
-        maxTokens?: number;
-        temperature?: number;
-        stream?: boolean;
-        model: string;
+	prompt: string;
+	context?: string;
+	maxTokens?: number;
+	temperature?: number;
+	stream?: boolean;
+	model: string;
 }
 
 export type GenerateFn = (
-        opts: GenerateOptions,
+	opts: GenerateOptions,
 ) => Promise<{ content: string; model: string }>;
 
 export interface GenerateDeps {
-        modelStrategy: ModelStrategy;
-        mlxGenerate: GenerateFn;
-        ollamaGenerate: GenerateFn;
-        isHealthy: (provider: string, model: string) => boolean;
-        markUnhealthy: (provider: string, model: string) => void;
+	modelStrategy: ModelStrategy;
+	mlxGenerate: GenerateFn;
+	ollamaGenerate: GenerateFn;
+	isHealthy: (provider: string, model: string) => boolean;
+	markUnhealthy: (provider: string, model: string) => void;
 }
 
 const requestSchema = z.object({
@@ -46,23 +46,23 @@ export function createGenerate(deps: GenerateDeps) {
 		if (!cfg) throw new Error(`Unknown task: ${task}`);
 		const start = Date.now();
 		const parsed = requestSchema.parse(request);
-		if (isHealthy("mlx", cfg.primary.model)) {
+		if (isHealthy('mlx', cfg.primary.model)) {
 			try {
 				const res = await mlxGenerate({ model: cfg.primary.model, ...parsed });
 				return {
 					...res,
-					provider: "mlx",
+					provider: 'mlx',
 					latency: Date.now() - start,
 					model: cfg.primary.model,
 				};
 			} catch {
-				markUnhealthy("mlx", cfg.primary.model);
+				markUnhealthy('mlx', cfg.primary.model);
 			}
 		}
 		const res = await ollamaGenerate({ model: cfg.fallback.model, ...parsed });
 		return {
 			...res,
-			provider: "ollama",
+			provider: 'ollama',
 			latency: Date.now() - start,
 			model: cfg.fallback.model,
 		};

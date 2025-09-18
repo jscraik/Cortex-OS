@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
 	loadModelRegistry,
-	ModelRegistry,
 	resolveConfigPath,
 } from '../src/config/model-catalog.js';
 

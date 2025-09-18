@@ -1,3 +1,4 @@
+import { enforce, loadGrant } from '@cortex-os/policy';
 import { withSpan } from '../observability/otel';
 import { auditEvent, record } from './audit';
 import {
@@ -6,7 +7,6 @@ import {
 	saveCheckpoint,
 } from './checkpoints';
 import { requiresApproval, waitForApproval } from './hitl';
-import { enforce, loadGrant } from '@cortex-os/policy';
 
 export type Node =
 	| 'plan'

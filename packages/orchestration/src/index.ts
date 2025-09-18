@@ -134,6 +134,8 @@ export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
 
 // MLX agent integration
 export { MLXAgent } from './integrations/mlx-agent.js';
+// LangGraph foundation (Phase 2)
+export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 // MCP tool exports
 export {
 	orchestrationMcpTools,
@@ -143,6 +145,3 @@ export {
 } from './mcp/tools.js';
 // PRP Neural Orchestration Engine
 export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';
-
-// LangGraph foundation (Phase 2)
-export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';

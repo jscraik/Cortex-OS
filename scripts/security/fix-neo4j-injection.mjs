@@ -3,14 +3,14 @@
 // Script to automatically fix Neo4j injection vulnerabilities
 // This script updates neo4j.ts to use secure Neo4j operations
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-console.log("Automatically fixing Neo4j injection vulnerabilities...");
+console.log('Automatically fixing Neo4j injection vulnerabilities...');
 
 // Read the neo4j.ts file
-const neo4jPath = join("packages", "memories", "src", "adapters", "neo4j.ts");
-let content = readFileSync(neo4jPath, "utf-8");
+const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
+let content = readFileSync(neo4jPath, 'utf-8');
 
 // Replace the Neo4j class with SecureNeo4j
 content = content.replace(
@@ -104,8 +104,8 @@ export { Neo4j };`,
 writeFileSync(neo4jPath, content);
 
 console.log(
-	"✅ Neo4j injection vulnerabilities have been marked for fixing in neo4j.ts",
+	'✅ Neo4j injection vulnerabilities have been marked for fixing in neo4j.ts',
 );
 console.log(
-	"⚠️  Please review the TODO comments and implement proper input validation using SecureNeo4j",
+	'⚠️  Please review the TODO comments and implement proper input validation using SecureNeo4j',
 );

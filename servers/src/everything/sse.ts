@@ -1,8 +1,8 @@
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import express from "express";
-import { createServer } from "./everything.js";
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import express from 'express';
+import { createServer } from './everything.js';
 
-console.error("Starting SSE server...");
+console.error('Starting SSE server...');
 
 const app = express();
 
@@ -11,7 +11,7 @@ const transports: Map<string, SSEServerTransport> = new Map<
 	SSEServerTransport
 >();
 
-app.get("/sse", async (req, res) => {
+app.get('/sse', async (req, res) => {
 	let transport: SSEServerTransport;
 	const { server, cleanup, startNotificationIntervals } = createServer();
 
@@ -24,30 +24,30 @@ app.get("/sse", async (req, res) => {
 		);
 	} else {
 		// Create and store transport for new session
-		transport = new SSEServerTransport("/message", res);
+		transport = new SSEServerTransport('/message', res);
 		transports.set(transport.sessionId, transport);
 
 		// Connect server to transport
 		await server.connect(transport);
-		console.error("Client Connected: ", transport.sessionId);
+		console.error('Client Connected: ', transport.sessionId);
 
 		// Start notification intervals after client connects
 		startNotificationIntervals();
 
 		// Handle close of connection
 		server.onclose = async () => {
-			console.error("Client Disconnected: ", transport.sessionId);
+			console.error('Client Disconnected: ', transport.sessionId);
 			transports.delete(transport.sessionId);
 			await cleanup();
 		};
 	}
 });
 
-app.post("/message", async (req, res) => {
+app.post('/message', async (req, res) => {
 	const sessionId = req?.query?.sessionId as string;
 	const transport = transports.get(sessionId);
 	if (transport) {
-		console.error("Client Message from", sessionId);
+		console.error('Client Message from', sessionId);
 		await transport.handlePostMessage(req, res);
 	} else {
 		console.error(`No transport found for sessionId ${sessionId}`);

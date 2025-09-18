@@ -114,10 +114,12 @@ export const a2aQueueMessageTool: A2AMcpTool<
 				if (!params.message) {
 					return {
 						isError: true,
-						content: [{
-							type: 'text',
-							text: JSON.stringify({ error: 'Message is required' })
-						}]
+						content: [
+							{
+								type: 'text',
+								text: JSON.stringify({ error: 'Message is required' }),
+							},
+						],
 					};
 				}
 
@@ -125,10 +127,14 @@ export const a2aQueueMessageTool: A2AMcpTool<
 				if (!params.message.role || !params.message.parts) {
 					return {
 						isError: true,
-						content: [{
-							type: 'text',
-							text: JSON.stringify({ error: 'Message must have role and parts' })
-						}]
+						content: [
+							{
+								type: 'text',
+								text: JSON.stringify({
+									error: 'Message must have role and parts',
+								}),
+							},
+						],
 					};
 				}
 
@@ -138,10 +144,14 @@ export const a2aQueueMessageTool: A2AMcpTool<
 						if (!ctx.role || !ctx.parts) {
 							return {
 								isError: true,
-								content: [{
-									type: 'text',
-									text: JSON.stringify({ error: 'Context items must have role and parts' })
-								}]
+								content: [
+									{
+										type: 'text',
+										text: JSON.stringify({
+											error: 'Context items must have role and parts',
+										}),
+									},
+								],
 							};
 						}
 					}
@@ -149,8 +159,16 @@ export const a2aQueueMessageTool: A2AMcpTool<
 
 				const resultRaw = await taskManager.sendTask({
 					id: params.id,
-					message: params.message as { role: 'user' | 'assistant' | 'system'; parts: { text?: string; data?: unknown }[] },
-					context: params.context as { role: 'user' | 'assistant' | 'system'; parts: { text?: string; data?: unknown }[] }[] | undefined,
+					message: params.message as {
+						role: 'user' | 'assistant' | 'system';
+						parts: { text?: string; data?: unknown }[];
+					},
+					context: params.context as
+						| {
+								role: 'user' | 'assistant' | 'system';
+								parts: { text?: string; data?: unknown }[];
+						  }[]
+						| undefined,
 				});
 				let payload: A2AQueueMessageResult;
 				try {

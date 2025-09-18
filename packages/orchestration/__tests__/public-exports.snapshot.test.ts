@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import * as orchestration from '../src/index.js';
 
 /**
@@ -6,16 +6,21 @@ import * as orchestration from '../src/index.js';
  * as we refactor internals towards LangGraph.
  */
 describe('@cortex-os/orchestration public API', () => {
-  it('exposes critical symbols', () => {
-    const keys = Object.keys(orchestration);
-    for (const k of ['version', 'name', 'OrchestrationDefaults', 'orchestrationMcpTools']) {
-      expect(keys).toContain(k);
-    }
-  });
+	it('exposes critical symbols', () => {
+		const keys = Object.keys(orchestration);
+		for (const k of [
+			'version',
+			'name',
+			'OrchestrationDefaults',
+			'orchestrationMcpTools',
+		]) {
+			expect(keys).toContain(k);
+		}
+	});
 
-  it('matches the expected export keys (snapshot baseline)', () => {
-    const keys = Object.keys(orchestration).sort();
-    expect(keys).toMatchInlineSnapshot(`
+	it('matches the expected export keys (snapshot baseline)', () => {
+		const keys = Object.keys(orchestration).sort();
+		expect(keys).toMatchInlineSnapshot(`
       [
         "ArchonTaskManager",
         "AgentRole",
@@ -51,5 +56,5 @@ describe('@cortex-os/orchestration public API', () => {
         "workflowOrchestrationTools",
       ]
     `);
-  });
+	});
 });

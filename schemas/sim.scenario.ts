@@ -9,12 +9,12 @@ export interface SimPersona {
 	/** Communication tone (e.g., "formal", "casual", "frustrated") */
 	tone: string;
 	/** Technical fluency level */
-	tech_fluency: "low" | "med" | "high";
+	tech_fluency: 'low' | 'med' | 'high';
 	/** Additional persona attributes */
 	attributes?: {
 		role?: string;
 		experience_level?: string;
-		urgency?: "low" | "medium" | "high";
+		urgency?: 'low' | 'medium' | 'high';
 		preferred_communication?: string;
 	};
 }
@@ -41,7 +41,7 @@ export interface SimScenario {
 	/** Number of variations to run (for statistical confidence) */
 	variants?: number;
 	/** Expected difficulty level */
-	difficulty?: "basic" | "intermediate" | "advanced";
+	difficulty?: 'basic' | 'intermediate' | 'advanced';
 	/** Scenario category/tags */
 	category?: string;
 	tags?: string[];

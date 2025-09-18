@@ -2,9 +2,9 @@
  * Tests for the subagent system
  */
 
-import type { Tool, ToolSchema } from '@voltagent/core';
 import { promises as fsp } from 'node:fs';
 import * as path from 'node:path';
+import type { Tool, ToolSchema } from '@voltagent/core';
 import {
 	afterAll,
 	beforeAll,

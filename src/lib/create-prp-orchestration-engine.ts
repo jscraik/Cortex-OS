@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { createEngine } from "@cortex-os/orchestration";
-import type { OrchestrationConfig } from "@cortex-os/orchestration";
+import type { OrchestrationConfig } from '@cortex-os/orchestration';
+import { createEngine } from '@cortex-os/orchestration';
+import { z } from 'zod';
 
 const configSchema = z
 	.object({
@@ -12,7 +12,7 @@ const configSchema = z
 	.passthrough();
 
 export function createPRPOrchestrationEngine(
-        config: Partial<OrchestrationConfig> = {},
+	config: Partial<OrchestrationConfig> = {},
 ) {
-        return createEngine(configSchema.parse(config));
+	return createEngine(configSchema.parse(config));
 }

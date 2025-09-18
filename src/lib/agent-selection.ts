@@ -4,7 +4,7 @@ export interface AgentInfo {
 	currentLoad: number;
 }
 
-export type Urgency = "low" | "medium" | "high" | "critical";
+export type Urgency = 'low' | 'medium' | 'high' | 'critical';
 
 export interface AgentSelectionResult {
 	agentId: string;
@@ -15,14 +15,14 @@ export interface AgentSelectionResult {
 export function buildAgentPrompt(
 	taskDescription: string,
 	availableAgents: AgentInfo[],
-	urgency: Urgency = "medium",
+	urgency: Urgency = 'medium',
 ): string {
 	const agentInfo = availableAgents
 		.map(
 			(a) =>
-				`${a.id}: capabilities=[${a.capabilities.join(", ")}], load=${a.currentLoad}%`,
+				`${a.id}: capabilities=[${a.capabilities.join(', ')}], load=${a.currentLoad}%`,
 		)
-		.join("\n");
+		.join('\n');
 
 	return `Select the best agent for this task:
 
@@ -47,7 +47,7 @@ export function parseAgentSelection(
 ): AgentSelectionResult {
 	// Helper to escape regex special characters in agent IDs
 	function escapeRegExp(string: string): string {
-		return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	}
 	const agentMention = agents.find((a) => {
 		const regex = new RegExp(`\\b${escapeRegExp(a.id)}\\b`);
@@ -55,7 +55,7 @@ export function parseAgentSelection(
 	});
 
 	return {
-		agentId: agentMention?.id ?? agents[0]?.id ?? "default",
+		agentId: agentMention?.id ?? agents[0]?.id ?? 'default',
 		reasoning: content.trim(),
 		confidence: 0.7,
 	};

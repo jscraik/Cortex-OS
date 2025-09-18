@@ -8,7 +8,7 @@ export function estimateTokenCount(text: string): number {
 
 export function cosineSimilarity(a: number[], b: number[]): number {
 	if (a.length !== b.length) {
-		throw new Error("Vectors must have the same length");
+		throw new Error('Vectors must have the same length');
 	}
 	let dotProduct = 0;
 	let normA = 0;

@@ -3,21 +3,21 @@
  * @fileoverview Comprehensive validation system for DevOps planning configurations
  */
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import Ajv, {
 	type ErrorObject,
 	type JSONSchemaType,
 	type ValidateFunction,
-} from "ajv";
-import addFormats from "ajv-formats";
+} from 'ajv';
+import addFormats from 'ajv-formats';
 import type {
 	DevOpsPlan,
 	ValidationConfig,
 	ValidationError,
 	ValidationResult,
 	ValidationWarning,
-} from "./devops-plan.types.js";
+} from './devops-plan.types.js';
 
 /**
  * DevOps Plan Validator class with comprehensive validation capabilities
@@ -51,12 +51,12 @@ export class DevOpsPlanValidator {
 	 */
 	private loadSchema(): void {
 		try {
-			const schemaPath = resolve(process.cwd(), "devops.plan.schema.json");
-			const schemaContent = readFileSync(schemaPath, "utf-8");
+			const schemaPath = resolve(process.cwd(), 'devops.plan.schema.json');
+			const schemaContent = readFileSync(schemaPath, 'utf-8');
 			this.schema = JSON.parse(schemaContent) as JSONSchemaType<DevOpsPlan>;
 		} catch (error) {
 			throw new Error(
-				`Failed to load DevOps plan schema: ${error instanceof Error ? error.message : "Unknown error"}`,
+				`Failed to load DevOps plan schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			);
 		}
 	}
@@ -96,8 +96,8 @@ export class DevOpsPlanValidator {
 		const result = this.validate(plan);
 		if (!result.valid) {
 			const errorMessages =
-				result.errors?.map((e) => `${e.path}: ${e.message}`).join("; ") ||
-				"Validation failed";
+				result.errors?.map((e) => `${e.path}: ${e.message}`).join('; ') ||
+				'Validation failed';
 			throw new Error(`DevOps plan validation failed: ${errorMessages}`);
 		}
 	}
@@ -110,7 +110,7 @@ export class DevOpsPlanValidator {
 			path: error.instancePath || error.schemaPath,
 			message: this.getHumanReadableError(error),
 			code: error.keyword,
-			severity: this.getErrorSeverity(error.keyword) as "error" | "warning",
+			severity: this.getErrorSeverity(error.keyword) as 'error' | 'warning',
 		}));
 	}
 
@@ -126,50 +126,50 @@ export class DevOpsPlanValidator {
 			!this.hasApprovalRequired(plan)
 		) {
 			warnings.push({
-				path: "security.approvals",
+				path: 'security.approvals',
 				message:
-					"Production environments should require approvals for security",
-				suggestion: "Consider adding security.approvals.required: true",
+					'Production environments should require approvals for security',
+				suggestion: 'Consider adding security.approvals.required: true',
 			});
 		}
 
 		// Check for missing health checks in production
 		if (this.hasProductionEnvironment(plan) && !this.hasHealthChecks(plan)) {
 			warnings.push({
-				path: "monitoring.healthChecks",
-				message: "Production environments should include health checks",
-				suggestion: "Add health checks to monitor service availability",
+				path: 'monitoring.healthChecks',
+				message: 'Production environments should include health checks',
+				suggestion: 'Add health checks to monitor service availability',
 			});
 		}
 
 		// Check for missing rollback strategy
 		if (!plan.rollback) {
 			warnings.push({
-				path: "rollback",
-				message: "No rollback strategy defined",
-				suggestion: "Consider adding a rollback strategy for safer deployments",
+				path: 'rollback',
+				message: 'No rollback strategy defined',
+				suggestion: 'Consider adding a rollback strategy for safer deployments',
 			});
 		}
 
 		// Check for missing security scanning
 		if (!plan.security?.scanners?.length) {
 			warnings.push({
-				path: "security.scanners",
-				message: "No security scanners configured",
-				suggestion: "Add security scanners like sast, dast, or dependency-scan",
+				path: 'security.scanners',
+				message: 'No security scanners configured',
+				suggestion: 'Add security scanners like sast, dast, or dependency-scan',
 			});
 		}
 
 		// Check for canary deployment without analysis
 		if (
-			plan.deploymentStrategy.type === "canary" &&
+			plan.deploymentStrategy.type === 'canary' &&
 			!plan.deploymentStrategy.canary?.analysis
 		) {
 			warnings.push({
-				path: "deploymentStrategy.canary.analysis",
-				message: "Canary deployment without analysis configuration",
+				path: 'deploymentStrategy.canary.analysis',
+				message: 'Canary deployment without analysis configuration',
 				suggestion:
-					"Add analysis templates to monitor canary deployment health",
+					'Add analysis templates to monitor canary deployment health',
 			});
 		}
 
@@ -181,41 +181,41 @@ export class DevOpsPlanValidator {
 	 */
 	private getHumanReadableError(error: ErrorObject): string {
 		switch (error.keyword) {
-			case "required":
+			case 'required':
 				return `Missing required property: ${error.params?.missingProperty}`;
-			case "type":
+			case 'type':
 				return `Expected ${error.params?.type} but received ${typeof error.data}`;
-			case "format":
+			case 'format':
 				return `Invalid ${error.params?.format} format`;
-			case "pattern":
+			case 'pattern':
 				return `Value does not match required pattern: ${error.params?.pattern}`;
-			case "enum":
-				return `Value must be one of: ${error.params?.allowedValues?.join(", ")}`;
-			case "minimum":
+			case 'enum':
+				return `Value must be one of: ${error.params?.allowedValues?.join(', ')}`;
+			case 'minimum':
 				return `Value must be >= ${error.params?.limit}`;
-			case "maximum":
+			case 'maximum':
 				return `Value must be <= ${error.params?.limit}`;
-			case "minLength":
+			case 'minLength':
 				return `String must have at least ${error.params?.limit} characters`;
-			case "maxLength":
+			case 'maxLength':
 				return `String must have at most ${error.params?.limit} characters`;
-			case "minItems":
+			case 'minItems':
 				return `Array must have at least ${error.params?.limit} items`;
-			case "uniqueItems":
-				return "Array items must be unique";
-			case "additionalProperties":
+			case 'uniqueItems':
+				return 'Array items must be unique';
+			case 'additionalProperties':
 				return `Unknown property: ${error.params?.additionalProperty}`;
 			default:
-				return error.message || "Validation error";
+				return error.message || 'Validation error';
 		}
 	}
 
 	/**
 	 * Determine error severity based on keyword
 	 */
-	private getErrorSeverity(keyword: string): "error" | "warning" {
-		const warningKeywords = ["format", "additionalProperties"];
-		return warningKeywords.includes(keyword) ? "warning" : "error";
+	private getErrorSeverity(keyword: string): 'error' | 'warning' {
+		const warningKeywords = ['format', 'additionalProperties'];
+		return warningKeywords.includes(keyword) ? 'warning' : 'error';
 	}
 
 	/**
@@ -223,7 +223,7 @@ export class DevOpsPlanValidator {
 	 */
 	private hasProductionEnvironment(plan: DevOpsPlan): boolean {
 		return Object.values(plan.environments).some(
-			(env) => env.type === "production",
+			(env) => env.type === 'production',
 		);
 	}
 

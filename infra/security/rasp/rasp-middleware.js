@@ -1,18 +1,18 @@
 // Minimal RASP middleware for Express to detect auth failures and emit security events.
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export function raspMiddleware(opts = {}) {
 	const __dirname = path.dirname(fileURLToPath(import.meta.url));
 	const eventsDirectory =
-		opts.eventsDir || path.join(__dirname, "..", "events");
+		opts.eventsDir || path.join(__dirname, '..', 'events');
 	if (!fs.existsSync(eventsDirectory))
 		fs.mkdirSync(eventsDirectory, { recursive: true });
 
-	const failClosed = opts.failClosed ?? process.env.RASP_FAIL_CLOSED === "true";
+	const failClosed = opts.failClosed ?? process.env.RASP_FAIL_CLOSED === 'true';
 	const threshold = parseInt(
-		String(opts.threshold ?? process.env.RASP_BLOCK_THRESHOLD ?? "5"),
+		String(opts.threshold ?? process.env.RASP_BLOCK_THRESHOLD ?? '5'),
 		10,
 	);
 	const counters = new Map();
@@ -29,11 +29,11 @@ export function raspMiddleware(opts = {}) {
 	async function middleware(req, res, next) {
 		// example: capture failed auth attempts (assumes upstream sets req.authFailed)
 		if (req.authFailed) {
-			const ip = req.ip || req.connection?.remoteAddress || "unknown";
+			const ip = req.ip || req.connection?.remoteAddress || 'unknown';
 			const c = (counters.get(ip) || 0) + 1;
 			counters.set(ip, c);
 			const event = {
-				type: "auth_failure",
+				type: 'auth_failure',
 				ip,
 				path: req.path,
 				count: c,
@@ -43,18 +43,18 @@ export function raspMiddleware(opts = {}) {
 			if (c >= threshold && failClosed) {
 				// Quarantine: respond 403 and do not call next
 				emitEvent({
-					type: "quarantine",
+					type: 'quarantine',
 					ip,
 					ts: Date.now(),
-					reason: "threshold_exceeded",
+					reason: 'threshold_exceeded',
 				});
-				return res.status(403).json({ error: "quarantined" });
+				return res.status(403).json({ error: 'quarantined' });
 			}
 		}
 
 		// capture TLS errors if surfaced
 		if (req.tlsError) {
-			emitEvent({ type: "tls_error", details: req.tlsError, ts: Date.now() });
+			emitEvent({ type: 'tls_error', details: req.tlsError, ts: Date.now() });
 		}
 
 		return next();

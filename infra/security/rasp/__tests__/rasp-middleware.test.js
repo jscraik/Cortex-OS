@@ -1,9 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
-import { raspMiddleware } from "../rasp-middleware.js";
+import fs from 'node:fs';
+import path from 'node:path';
+import { raspMiddleware } from '../rasp-middleware.js';
 
-describe("RASp middleware", () => {
-	const eventsDir = path.join(__dirname, "..", "test-events");
+describe('RASp middleware', () => {
+	const eventsDir = path.join(__dirname, '..', 'test-events');
 	beforeEach(() => {
 		if (!fs.existsSync(eventsDir)) fs.mkdirSync(eventsDir, { recursive: true });
 	});
@@ -11,7 +11,7 @@ describe("RASp middleware", () => {
 		try {
 			if (fs.existsSync(eventsDir))
 				fs.rmSync(eventsDir, { recursive: true, force: true });
-			const tmpDir = path.join(__dirname, "..", "tmp-events");
+			const tmpDir = path.join(__dirname, '..', 'tmp-events');
 			if (fs.existsSync(tmpDir))
 				fs.rmSync(tmpDir, { recursive: true, force: true });
 		} catch {
@@ -19,11 +19,11 @@ describe("RASp middleware", () => {
 		}
 	});
 
-	it("emits auth failure events and quarantines when threshold exceeded", async () => {
+	it('emits auth failure events and quarantines when threshold exceeded', async () => {
 		const mw = raspMiddleware({ eventsDir, threshold: 2, failClosed: true });
-		const req = { ip: "1.2.3.4", authFailed: true, path: "/a" };
+		const req = { ip: '1.2.3.4', authFailed: true, path: '/a' };
 		const res = { status: (s) => ({ json: (b) => ({ status: s, body: b }) }) };
-		const next = () => { };
+		const next = () => {};
 
 		await mw(req, res, next);
 		const out2 = await mw(req, res, next);
@@ -32,14 +32,14 @@ describe("RASp middleware", () => {
 		expect(out2.status).toBe(403);
 	});
 
-	it("quarantines when threshold exceeded in fail-closed mode", async () => {
-		const tmpDir = path.join(__dirname, "..", "tmp-events");
+	it('quarantines when threshold exceeded in fail-closed mode', async () => {
+		const tmpDir = path.join(__dirname, '..', 'tmp-events');
 		const mw = raspMiddleware({
 			eventsDir: tmpDir,
 			failClosed: true,
 			threshold: 1,
 		});
-		const req = { authFailed: true, ip: "5.6.7.8", path: "/b" };
+		const req = { authFailed: true, ip: '5.6.7.8', path: '/b' };
 		const res = {
 			status(code) {
 				this._code = code;
@@ -50,10 +50,10 @@ describe("RASp middleware", () => {
 				return this;
 			},
 		};
-		await mw(req, res, () => { });
+		await mw(req, res, () => {});
 		const files = fs.existsSync(tmpDir) ? fs.readdirSync(tmpDir) : [];
 		expect(res._code).toBe(403);
-		expect(res._body).toEqual({ error: "quarantined" });
+		expect(res._body).toEqual({ error: 'quarantined' });
 		expect(files.length).toBeGreaterThanOrEqual(2); // auth_failure + quarantine
 	});
 });

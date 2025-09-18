@@ -5,7 +5,7 @@
  */
 
 export interface SimTurn {
-	role: "user" | "agent" | "tool";
+	role: 'user' | 'agent' | 'tool';
 	content: string;
 	timestamp?: string;
 	metadata?: Record<string, unknown>;

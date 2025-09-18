@@ -2,17 +2,17 @@
 
 // Comprehensive fix script for targeted injection vulnerabilities
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 console.log(
-	"Applying comprehensive fixes for targeted injection vulnerabilities...",
+	'Applying comprehensive fixes for targeted injection vulnerabilities...',
 );
 
 // 1. Fix Cypher injection in neo4j.ts
-console.log("Fixing Cypher injection in neo4j.ts...");
-const neo4jPath = join("packages", "memories", "src", "adapters", "neo4j.ts");
-let neo4jContent = readFileSync(neo4jPath, "utf-8");
+console.log('Fixing Cypher injection in neo4j.ts...');
+const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
+let neo4jContent = readFileSync(neo4jPath, 'utf-8');
 
 // Replace the insecure upsertNode method
 neo4jContent = neo4jContent.replace(
@@ -39,7 +39,7 @@ neo4jContent = neo4jContent.replace(
 );
 
 // Add validation methods
-if (!neo4jContent.includes("validateLabel")) {
+if (!neo4jContent.includes('validateLabel')) {
 	neo4jContent = neo4jContent.replace(
 		/function assertLabelOrType\(s: string\) \{\n\s+\/\/ Safe subset of Cypher identifiers\n\s+if \(!isValidNeo4jIdentifier\(s\)\) throw new Error\(`neo4j:invalid_identifier:\${s}`\);\n\s+return s;\n\}/,
 		`function assertLabelOrType(s: string) {
@@ -82,24 +82,24 @@ private validateRelationshipType(type: string): string {
 }
 
 writeFileSync(neo4jPath, neo4jContent);
-console.log("✅ Fixed Cypher injection in neo4j.ts");
+console.log('✅ Fixed Cypher injection in neo4j.ts');
 
 // 2. Fix command injection in mcp_server.py
-console.log("Fixing command injection in mcp_server.py...");
+console.log('Fixing command injection in mcp_server.py...');
 const mcpServerPath = join(
-	"packages",
-	"mcp",
-	"src",
-	"tools",
-	"docker",
-	"mcp_server.py",
+	'packages',
+	'mcp',
+	'src',
+	'tools',
+	'docker',
+	'mcp_server.py',
 );
-let mcpServerContent = readFileSync(mcpServerPath, "utf-8");
+let mcpServerContent = readFileSync(mcpServerPath, 'utf-8');
 
 // Add input validation function
-if (!mcpServerContent.includes("def validate_docker_command")) {
+if (!mcpServerContent.includes('def validate_docker_command')) {
 	mcpServerContent = mcpServerContent.replace(
-		"def run_docker_command(command):",
+		'def run_docker_command(command):',
 		`def validate_docker_command(command):
     """Validate docker command to prevent injection."""
     if not isinstance(command, list):
@@ -143,20 +143,20 @@ mcpServerContent = mcpServerContent.replace(
 );
 
 writeFileSync(mcpServerPath, mcpServerContent);
-console.log("✅ Fixed command injection in mcp_server.py");
+console.log('✅ Fixed command injection in mcp_server.py');
 
 // 3. Fix code injection in start-command.ts
-console.log("Fixing code injection in start-command.ts...");
+console.log('Fixing code injection in start-command.ts...');
 const startCommandPath = join(
-	"apps",
-	"cortex-os",
-	"packages",
-	"agents",
-	"src",
-	"legacy-instructions",
-	"start-command.ts",
+	'apps',
+	'cortex-os',
+	'packages',
+	'agents',
+	'src',
+	'legacy-instructions',
+	'start-command.ts',
 );
-let startCommandContent = readFileSync(startCommandPath, "utf-8");
+let startCommandContent = readFileSync(startCommandPath, 'utf-8');
 
 // Replace the insecure exec call
 startCommandContent = startCommandContent.replace(
@@ -170,6 +170,6 @@ startCommandContent = startCommandContent.replace(
 );
 
 writeFileSync(startCommandPath, startCommandContent);
-console.log("✅ Fixed code injection in start-command.ts");
+console.log('✅ Fixed code injection in start-command.ts');
 
-console.log("✅ All targeted injection vulnerabilities have been fixed!");
+console.log('✅ All targeted injection vulnerabilities have been fixed!');

@@ -108,7 +108,9 @@ interface ValidationCacheApi {
 	size(): number;
 }
 
-function createDefaultCache(opts: ValidationCacheOptions = {}): ValidationCacheApi {
+function createDefaultCache(
+	opts: ValidationCacheOptions = {},
+): ValidationCacheApi {
 	const maxSize = opts.maxSize ?? 1000;
 	const ttlMs = opts.ttlMs ?? 30 * 60 * 1000; // 30 minutes
 	const storage = new Map<string, CacheEntry>();
@@ -312,7 +314,10 @@ function topologicalSort(wf: Workflow, nodes: Set<string>): string[] {
 /**
  * Validate a workflow definition and ensure it forms a DAG with performance optimizations.
  */
-export function validateWorkflow(input: unknown, logger?: Logger): ValidationResult {
+export function validateWorkflow(
+	input: unknown,
+	logger?: Logger,
+): ValidationResult {
 	// Parse and validate schema first
 	const wf = workflowZ.parse(input);
 
@@ -326,28 +331,28 @@ export function validateWorkflow(input: unknown, logger?: Logger): ValidationRes
 		if (!cached) {
 			// Evicted due to TTL between has/get
 		} else {
-		const now = Date.now();
+			const now = Date.now();
 
-		// Check soft TTL (10 minutes) - mark stale but still usable
-		const _softTtl = 10 * 60 * 1000; // 10 minutes
-		const isStale = cached.softExpiry && now > cached.softExpiry;
+			// Check soft TTL (10 minutes) - mark stale but still usable
+			const _softTtl = 10 * 60 * 1000; // 10 minutes
+			const isStale = cached.softExpiry && now > cached.softExpiry;
 
-		if (cached.valid && cached.result) {
+			if (cached.valid && cached.result) {
 				cacheHits++;
-			if (isStale) {
-				metricsEmitter.incrementCounter('validation.cache.stale_hits', {
-					cache_key: cacheKey,
-				});
-				// Return stale result but could trigger background refresh later
+				if (isStale) {
+					metricsEmitter.incrementCounter('validation.cache.stale_hits', {
+						cache_key: cacheKey,
+					});
+					// Return stale result but could trigger background refresh later
+				} else {
+					metricsEmitter.incrementCounter('validation.cache.hits', {
+						cache_key: cacheKey,
+					});
+				}
+				return cached.result;
 			} else {
-				metricsEmitter.incrementCounter('validation.cache.hits', {
-					cache_key: cacheKey,
-				});
+				throw cached.error;
 			}
-			return cached.result;
-		} else {
-			throw cached.error;
-		}
 		}
 	}
 
@@ -357,8 +362,8 @@ export function validateWorkflow(input: unknown, logger?: Logger): ValidationRes
 	});
 	const startTime = Date.now();
 
-		try {
-			const result = validateWorkflowStructure(wf, logger);
+	try {
+		const result = validateWorkflowStructure(wf, logger);
 
 		// Record timing metrics
 		const latency = Date.now() - startTime;
@@ -396,7 +401,10 @@ export function validateWorkflow(input: unknown, logger?: Logger): ValidationRes
 /**
  * Optimized workflow structure validation
  */
-function validateWorkflowStructure(wf: Workflow, logger?: Logger): ValidationResult {
+function validateWorkflowStructure(
+	wf: Workflow,
+	logger?: Logger,
+): ValidationResult {
 	const visited = new Set<string>();
 	const stack = new Set<string>();
 	const unreachableSteps = new Set(Object.keys(wf.steps));

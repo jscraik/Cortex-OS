@@ -1,10 +1,10 @@
-import { EventEmitter } from "node:events";
-import { z } from "zod";
+import { EventEmitter } from 'node:events';
+import { z } from 'zod';
 
 // Agent coordination schemas
 export const AgentCoordinationRequestedSchema = z.object({
 	id: z.string().uuid(),
-	type: z.literal("agent.coordination.requested"),
+	type: z.literal('agent.coordination.requested'),
 	source: z.string(),
 	subject: z.string(),
 	time: z.string().datetime(),
@@ -14,14 +14,14 @@ export const AgentCoordinationRequestedSchema = z.object({
 		participants: z.array(z.string()), // agent IDs
 		payload: z.record(z.unknown()),
 		deadline: z.string().datetime().optional(),
-		priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+		priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
 		metadata: z.record(z.unknown()).optional(),
 	}),
 });
 
 export const AgentCoordinationProgressSchema = z.object({
 	id: z.string().uuid(),
-	type: z.literal("agent.coordination.progress"),
+	type: z.literal('agent.coordination.progress'),
 	source: z.string(),
 	subject: z.string(),
 	time: z.string().datetime(),
@@ -36,7 +36,7 @@ export const AgentCoordinationProgressSchema = z.object({
 
 export const AgentCoordinationCompletedSchema = z.object({
 	id: z.string().uuid(),
-	type: z.literal("agent.coordination.completed"),
+	type: z.literal('agent.coordination.completed'),
 	source: z.string(),
 	subject: z.string(),
 	time: z.string().datetime(),
@@ -84,7 +84,7 @@ export interface WorkflowDefinition {
 interface WorkflowExecution {
 	id: string;
 	definition: WorkflowDefinition;
-	status: "pending" | "running" | "completed" | "failed";
+	status: 'pending' | 'running' | 'completed' | 'failed';
 	startTime: Date;
 	endTime?: Date;
 	currentStep?: string;
@@ -106,43 +106,43 @@ export interface CoordinationHandler {
 // Example coordination handlers
 export class DocumentProcessingWorkflow implements CoordinationHandler {
 	canHandle(workflowType: string): boolean {
-		return workflowType === "document.process";
+		return workflowType === 'document.process';
 	}
 
 	createWorkflow(payload: Record<string, unknown>): WorkflowDefinition {
 		return {
 			id: crypto.randomUUID(),
-			name: "Document Processing Workflow",
-			description: "Process a document through multiple analysis stages",
+			name: 'Document Processing Workflow',
+			description: 'Process a document through multiple analysis stages',
 			steps: [
 				{
-					id: "extract",
-					name: "Extract Content",
-					description: "Extract text and metadata from document",
-					agent: "agent-a",
-					taskType: "data.process",
+					id: 'extract',
+					name: 'Extract Content',
+					description: 'Extract text and metadata from document',
+					agent: 'agent-a',
+					taskType: 'data.process',
 					payload: { document: payload.document },
 					dependencies: [],
 					timeout: 30000,
 				},
 				{
-					id: "analyze",
-					name: "Analyze Content",
-					description: "Perform content analysis",
-					agent: "agent-a",
-					taskType: "data.analyze",
+					id: 'analyze',
+					name: 'Analyze Content',
+					description: 'Perform content analysis',
+					agent: 'agent-a',
+					taskType: 'data.analyze',
 					payload: {}, // Will be populated with extract results
-					dependencies: ["extract"],
+					dependencies: ['extract'],
 					timeout: 60000,
 				},
 				{
-					id: "summarize",
-					name: "Generate Summary",
-					description: "Create executive summary",
-					agent: "agent-b",
-					taskType: "content.summarize",
+					id: 'summarize',
+					name: 'Generate Summary',
+					description: 'Create executive summary',
+					agent: 'agent-b',
+					taskType: 'content.summarize',
 					payload: {}, // Will be populated with analyze results
-					dependencies: ["analyze"],
+					dependencies: ['analyze'],
 					timeout: 45000,
 				},
 			],
@@ -156,17 +156,17 @@ export class DocumentProcessingWorkflow implements CoordinationHandler {
 	): Record<string, unknown> {
 		// Process and transform results based on step
 		switch (stepId) {
-			case "extract":
+			case 'extract':
 				return {
 					extractedContent: result.result,
 					metadata: result.metadata,
 				};
-			case "analyze":
+			case 'analyze':
 				return {
 					analysis: result.result,
 					insights: result.insights,
 				};
-			case "summarize":
+			case 'summarize':
 				return {
 					summary: result.result,
 					keyPoints: result.keyPoints,
@@ -182,19 +182,19 @@ export class AgentB extends EventEmitter {
 	private handlers = new Map<string, CoordinationHandler>();
 	private executions = new Map<string, WorkflowExecution>();
 
-	constructor(private agentId: string = "agent-b") {
+	constructor(private agentId: string = 'agent-b') {
 		super();
 
 		// Register default coordination handlers
-		this.handlers.set("document.process", new DocumentProcessingWorkflow());
+		this.handlers.set('document.process', new DocumentProcessingWorkflow());
 	}
 
 	start(): void {
-		this.emit("started", this.agentId);
+		this.emit('started', this.agentId);
 	}
 
 	stop(): void {
-		this.emit("stopped", this.agentId);
+		this.emit('stopped', this.agentId);
 	}
 
 	registerCoordinationHandler(
@@ -202,7 +202,7 @@ export class AgentB extends EventEmitter {
 		handler: CoordinationHandler,
 	): void {
 		this.handlers.set(workflowType, handler);
-		this.emit("handlerRegistered", workflowType);
+		this.emit('handlerRegistered', workflowType);
 	}
 
 	getSupportedWorkflowTypes(): string[] {
@@ -225,7 +225,7 @@ export class AgentB extends EventEmitter {
 		const execution: WorkflowExecution = {
 			id: request.data.coordinationId,
 			definition: workflow,
-			status: "pending",
+			status: 'pending',
 			startTime: new Date(),
 			completedSteps: new Set(),
 			results: new Map(),
@@ -237,12 +237,12 @@ export class AgentB extends EventEmitter {
 		// Start execution
 		await this.executeWorkflow(execution);
 
-		this.emit("coordinationStarted", execution.id);
+		this.emit('coordinationStarted', execution.id);
 	}
 
 	private async executeWorkflow(execution: WorkflowExecution): Promise<void> {
-		execution.status = "running";
-		this.emit("workflowStarted", execution.id);
+		execution.status = 'running';
+		this.emit('workflowStarted', execution.id);
 
 		try {
 			// Execute steps in topological order
@@ -253,13 +253,13 @@ export class AgentB extends EventEmitter {
 			}
 
 			// Mark as completed
-			execution.status = "completed";
+			execution.status = 'completed';
 			execution.endTime = new Date();
 
 			// Emit completion event
 			const completed: AgentCoordinationCompleted = {
 				id: crypto.randomUUID(),
-				type: "agent.coordination.completed",
+				type: 'agent.coordination.completed',
 				source: this.agentId,
 				subject: execution.definition.name,
 				time: new Date().toISOString(),
@@ -272,11 +272,11 @@ export class AgentB extends EventEmitter {
 				},
 			};
 
-			this.emit("coordinationCompleted", completed);
+			this.emit('coordinationCompleted', completed);
 		} catch (error) {
-			execution.status = "failed";
+			execution.status = 'failed';
 			execution.endTime = new Date();
-			this.emit("coordinationFailed", execution.id, error);
+			this.emit('coordinationFailed', execution.id, error);
 		}
 	}
 
@@ -306,7 +306,7 @@ export class AgentB extends EventEmitter {
 		// Emit progress event
 		const progress: AgentCoordinationProgress = {
 			id: crypto.randomUUID(),
-			type: "agent.coordination.progress",
+			type: 'agent.coordination.progress',
 			source: this.agentId,
 			subject: execution.definition.name,
 			time: new Date().toISOString(),
@@ -320,7 +320,7 @@ export class AgentB extends EventEmitter {
 			},
 		};
 
-		this.emit("coordinationProgress", progress);
+		this.emit('coordinationProgress', progress);
 
 		try {
 			// In a real implementation, this would send the task to the appropriate agent
@@ -329,7 +329,7 @@ export class AgentB extends EventEmitter {
 
 			// Process the result
 			const handler = this.handlers.get(
-				execution.definition.name.toLowerCase().replace(/\s+/g, "."),
+				execution.definition.name.toLowerCase().replace(/\s+/g, '.'),
 			);
 			const processedResult = handler
 				? handler.processResult(step.id, result)
@@ -339,7 +339,7 @@ export class AgentB extends EventEmitter {
 			execution.results.set(step.id, processedResult);
 			execution.completedSteps.add(step.id);
 
-			this.emit("stepCompleted", step.id, processedResult);
+			this.emit('stepCompleted', step.id, processedResult);
 		} catch (error) {
 			execution.errors.set(
 				step.id,
@@ -372,13 +372,13 @@ export class AgentB extends EventEmitter {
 	createCoordinationRequest(
 		workflowType: string,
 		payload: Record<string, unknown>,
-		participants: string[] = ["agent-a", "agent-b"],
-		priority: AgentCoordinationRequested["data"]["priority"] = "medium",
+		participants: string[] = ['agent-a', 'agent-b'],
+		priority: AgentCoordinationRequested['data']['priority'] = 'medium',
 	): AgentCoordinationRequested {
 		return {
 			id: crypto.randomUUID(),
-			type: "agent.coordination.requested",
-			source: "external",
+			type: 'agent.coordination.requested',
+			source: 'external',
 			subject: `${this.agentId}:coordination`,
 			time: new Date().toISOString(),
 			data: {

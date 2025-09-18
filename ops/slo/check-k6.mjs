@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import YAML from "yaml";
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import YAML from 'yaml';
 
 function loadJson(p) {
-	return JSON.parse(readFileSync(resolve(p), "utf8"));
+	return JSON.parse(readFileSync(resolve(p), 'utf8'));
 }
 function loadYaml(p) {
-	return YAML.parse(readFileSync(resolve(p), "utf8"));
+	return YAML.parse(readFileSync(resolve(p), 'utf8'));
 }
 
 function getMetric(summary, name) {
@@ -18,8 +18,8 @@ function getMetric(summary, name) {
 
 function checkSLO(summary, sloCfg) {
 	// We cannot map per-route from k6 here; use global http_req metrics
-	const p95 = getMetric(summary, "http_req_duration").values["p(95)"];
-	const failRate = getMetric(summary, "http_req_failed").values.rate;
+	const p95 = getMetric(summary, 'http_req_duration').values['p(95)'];
+	const failRate = getMetric(summary, 'http_req_failed').values.rate;
 	const limitP95 = Number(process.env.P95_MS || sloCfg?.mcp?.p95_ms || 400);
 	const limitFail = Number(
 		process.env.ERROR_RATE_MAX || sloCfg?.mcp?.error_rate || 0.01,
@@ -28,9 +28,9 @@ function checkSLO(summary, sloCfg) {
 	return { ok, p95, failRate, limitP95, limitFail };
 }
 
-function checkBudget(summary, budgetCfg, profile = "quick") {
-	const req = getMetric(summary, "http_reqs");
-	const dur = getMetric(summary, "http_req_duration");
+function checkBudget(summary, budgetCfg, profile = 'quick') {
+	const req = getMetric(summary, 'http_reqs');
+	const dur = getMetric(summary, 'http_req_duration');
 	const totalReq = req.values.count;
 	const avg = dur.values.avg;
 	const totalMs = avg * totalReq;
@@ -44,11 +44,11 @@ function checkBudget(summary, budgetCfg, profile = "quick") {
 }
 
 function main() {
-	const file = process.argv[2] || "k6-summary.json";
-	const profile = process.env.PROFILE || "quick";
+	const file = process.argv[2] || 'k6-summary.json';
+	const profile = process.env.PROFILE || 'quick';
 	const summary = loadJson(file);
-	const slo = loadYaml(".slo.yml")?.slo;
-	const budget = loadYaml(".budget.yml")?.budgets;
+	const slo = loadYaml('.slo.yml')?.slo;
+	const budget = loadYaml('.budget.yml')?.budgets;
 	const sloRes = checkSLO(summary, slo);
 	const budRes = checkBudget(summary, budget, profile);
 	console.log(JSON.stringify({ slo: sloRes, budget: budRes }, null, 2));

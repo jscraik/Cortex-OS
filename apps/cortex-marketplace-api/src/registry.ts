@@ -2,29 +2,30 @@
  * @file MCP Marketplace Registry
  * @description Registry management for MCP marketplace servers
  */
-import { sha256 } from "@noble/hashes/sha256";
-import { bytesToHex } from "@noble/hashes/utils";
-import Fuse from "fuse.js";
-import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import * as path from "node:path";
+
+import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import * as path from 'node:path';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '@noble/hashes/utils';
+import Fuse from 'fuse.js';
 import type {
 	ApiResponse,
 	RegistryIndex,
 	SearchRequest,
 	ServerHealth,
 	ServerManifest,
-} from "./types.js";
-import { RegistryIndexSchema, ServerManifestSchema } from "./types.js";
+} from './types.js';
+import { RegistryIndexSchema, ServerManifestSchema } from './types.js';
 
 // Security: Allowlisted domains for marketplace registries
 const ALLOWED_REGISTRY_DOMAINS = [
-	"registry.cortex-os.dev",
-	"marketplace.cortex-os.com",
-	"api.cortex-os.com",
-	"localhost",
-	"127.0.0.1",
-	"::1",
+	'registry.cortex-os.dev',
+	'marketplace.cortex-os.com',
+	'api.cortex-os.com',
+	'localhost',
+	'127.0.0.1',
+	'::1',
 	// Add trusted registry domains here
 ];
 
@@ -36,7 +37,7 @@ export function validateRegistryUrl(url: string): boolean {
 		const parsedUrl = new URL(url);
 
 		// Only allow HTTP/HTTPS protocols
-		if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+		if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
 			return false;
 		}
 
@@ -55,9 +56,9 @@ export class MarketplaceRegistry {
 	private lastUpdate: Date | null = null;
 
 	constructor(
-		private registryUrl: string = "https://registry.cortex-os.dev/v1/registry.json",
-		private cacheDir: string = "./.cortex/registry/cache",
-	) { }
+		private registryUrl: string = 'https://registry.cortex-os.dev/v1/registry.json',
+		private cacheDir: string = './.cortex/registry/cache',
+	) {}
 
 	/**
 	 * Initialize the registry by loading from cache or fetching
@@ -75,7 +76,7 @@ export class MarketplaceRegistry {
 		} catch (error) {
 			// eslint-disable-next-line no-console
 			console.warn(
-				"Failed to load from cache, fetching fresh registry:",
+				'Failed to load from cache, fetching fresh registry:',
 				error,
 			);
 			await this.fetchRegistry();
@@ -127,7 +128,7 @@ export class MarketplaceRegistry {
 			);
 		} catch (error) {
 			// eslint-disable-next-line no-console
-			console.error("Failed to fetch registry:", error);
+			console.error('Failed to fetch registry:', error);
 			throw error;
 		}
 	}
@@ -158,8 +159,8 @@ export class MarketplaceRegistry {
 			return {
 				success: false,
 				error: {
-					code: "REGISTRY_NOT_LOADED",
-					message: "Registry not initialized",
+					code: 'REGISTRY_NOT_LOADED',
+					message: 'Registry not initialized',
 				},
 			};
 		}
@@ -265,7 +266,7 @@ export class MarketplaceRegistry {
 		return {
 			valid: false,
 			errors: result.error.errors.map(
-				(err) => `${err.path.join(".")}: ${err.message}`,
+				(err) => `${err.path.join('.')}: ${err.message}`,
 			),
 		};
 	}
@@ -292,13 +293,13 @@ export class MarketplaceRegistry {
 					.length,
 			},
 			riskLevels: {
-				low: this.registry.servers.filter((s) => s.security.riskLevel === "low")
+				low: this.registry.servers.filter((s) => s.security.riskLevel === 'low')
 					.length,
 				medium: this.registry.servers.filter(
-					(s) => s.security.riskLevel === "medium",
+					(s) => s.security.riskLevel === 'medium',
 				).length,
 				high: this.registry.servers.filter(
-					(s) => s.security.riskLevel === "high",
+					(s) => s.security.riskLevel === 'high',
 				).length,
 			},
 		};
@@ -316,21 +317,21 @@ export class MarketplaceRegistry {
 	}
 
 	private get cacheFile(): string {
-		return path.join(this.cacheDir, "registry.json");
+		return path.join(this.cacheDir, 'registry.json');
 	}
 
 	private get metaFile(): string {
-		return path.join(this.cacheDir, "meta.json");
+		return path.join(this.cacheDir, 'meta.json');
 	}
 
 	private async loadFromCache(): Promise<void> {
 		if (!existsSync(this.cacheFile) || !existsSync(this.metaFile)) {
-			throw new Error("Cache files not found");
+			throw new Error('Cache files not found');
 		}
 
 		const [registryData, metaData] = await Promise.all([
-			readFile(this.cacheFile, "utf-8"),
-			readFile(this.metaFile, "utf-8"),
+			readFile(this.cacheFile, 'utf-8'),
+			readFile(this.metaFile, 'utf-8'),
 		]);
 
 		const registry: unknown = JSON.parse(registryData);
@@ -338,7 +339,7 @@ export class MarketplaceRegistry {
 
 		const result = RegistryIndexSchema.safeParse(registry);
 		if (!result.success) {
-			throw new Error("Invalid cached registry format");
+			throw new Error('Invalid cached registry format');
 		}
 
 		this.registry = result.data;
@@ -373,10 +374,10 @@ export class MarketplaceRegistry {
 
 		this.searchIndex = new Fuse(this.registry.servers, {
 			keys: [
-				{ name: "name", weight: 0.4 },
-				{ name: "description", weight: 0.3 },
-				{ name: "tags", weight: 0.2 },
-				{ name: "publisher.name", weight: 0.1 },
+				{ name: 'name', weight: 0.4 },
+				{ name: 'description', weight: 0.3 },
+				{ name: 'tags', weight: 0.2 },
+				{ name: 'publisher.name', weight: 0.1 },
 			],
 			threshold: 0.4,
 			includeScore: true,
@@ -384,7 +385,7 @@ export class MarketplaceRegistry {
 	}
 
 	private getRegistryChecksum(): string {
-		if (!this.registry) return "";
+		if (!this.registry) return '';
 
 		const content = JSON.stringify(this.registry);
 		const hash = sha256(content);

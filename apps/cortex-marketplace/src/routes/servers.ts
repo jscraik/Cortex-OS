@@ -3,9 +3,9 @@
  * @description API routes for MCP server operations
  */
 
-import type { FastifyInstance } from "fastify";
-import { z } from "zod";
-import { DEFAULT_LIMIT, MAX_LIMIT } from "../constants.js";
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
 
 // Local enriched shape used by marketplace (non-breaking superset of base registry manifest)
 type MarketplaceServer = import('@cortex-os/mcp-registry').ServerManifest & {
@@ -23,18 +23,18 @@ type MarketplaceServer = import('@cortex-os/mcp-registry').ServerManifest & {
 const SearchQuerySchema = z.object({
 	q: z.string().optional(),
 	category: z.string().optional(),
-	riskLevel: z.enum(["low", "medium", "high"]).optional(),
+	riskLevel: z.enum(['low', 'medium', 'high']).optional(),
 	featured: z.coerce.boolean().optional(),
 	publisher: z.string().optional(),
 	minRating: z.coerce.number().min(0).max(5).optional(),
 	tags: z
 		.string()
-		.transform((str) => str.split(","))
+		.transform((str) => str.split(','))
 		.optional(),
 	capabilities: z
 		.string()
 		.transform(
-			(str) => str.split(",") as Array<"tools" | "resources" | "prompts">,
+			(str) => str.split(',') as Array<'tools' | 'resources' | 'prompts'>,
 		)
 		.optional(),
 
@@ -42,96 +42,96 @@ const SearchQuerySchema = z.object({
 
 	offset: z.coerce.number().min(0).default(0),
 	sortBy: z
-		.enum(["relevance", "downloads", "rating", "updated"])
-		.default("relevance"),
-	sortOrder: z.enum(["asc", "desc"]).default("desc"),
+		.enum(['relevance', 'downloads', 'rating', 'updated'])
+		.default('relevance'),
+	sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 const ServerIdSchema = z
 	.string()
-	.regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/, "Invalid server ID format");
+	.regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/, 'Invalid server ID format');
 
 export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 	// Server search
 	fastify.get(
-		"/servers/search",
+		'/servers/search',
 		{
 			schema: {
-				tags: ["servers"],
-				summary: "Search MCP servers",
-				description: "Search and filter MCP servers",
+				tags: ['servers'],
+				summary: 'Search MCP servers',
+				description: 'Search and filter MCP servers',
 				querystring: {
-					type: "object",
+					type: 'object',
 					properties: {
-						q: { type: "string", description: "Search query" },
-						category: { type: "string", description: "Filter by category" },
+						q: { type: 'string', description: 'Search query' },
+						category: { type: 'string', description: 'Filter by category' },
 						riskLevel: {
-							type: "string",
-							enum: ["low", "medium", "high"],
-							description: "Filter by risk level",
+							type: 'string',
+							enum: ['low', 'medium', 'high'],
+							description: 'Filter by risk level',
 						},
 						featured: {
-							type: "boolean",
-							description: "Filter featured servers",
+							type: 'boolean',
+							description: 'Filter featured servers',
 						},
 						publisher: {
-							type: "string",
-							description: "Filter by publisher name",
+							type: 'string',
+							description: 'Filter by publisher name',
 						},
 						minRating: {
-							type: "number",
+							type: 'number',
 							minimum: 0,
 							maximum: 5,
-							description: "Minimum rating",
+							description: 'Minimum rating',
 						},
-						tags: { type: "string", description: "Comma-separated tags" },
+						tags: { type: 'string', description: 'Comma-separated tags' },
 						capabilities: {
-							type: "string",
+							type: 'string',
 							description:
-								"Comma-separated capabilities (tools,resources,prompts)",
+								'Comma-separated capabilities (tools,resources,prompts)',
 						},
 
 						limit: {
-							type: "integer",
+							type: 'integer',
 							minimum: 1,
 							maximum: MAX_LIMIT,
 							default: DEFAULT_LIMIT,
 						},
 
-						offset: { type: "integer", minimum: 0, default: 0 },
+						offset: { type: 'integer', minimum: 0, default: 0 },
 						sortBy: {
-							type: "string",
-							enum: ["relevance", "downloads", "rating", "updated"],
-							default: "relevance",
+							type: 'string',
+							enum: ['relevance', 'downloads', 'rating', 'updated'],
+							default: 'relevance',
 						},
 						sortOrder: {
-							type: "string",
-							enum: ["asc", "desc"],
-							default: "desc",
+							type: 'string',
+							enum: ['asc', 'desc'],
+							default: 'desc',
 						},
 					},
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "array",
-								items: { $ref: "ServerManifest#" },
+								type: 'array',
+								items: { $ref: 'ServerManifest#' },
 							},
 							meta: {
-								type: "object",
+								type: 'object',
 								properties: {
-									total: { type: "integer" },
-									offset: { type: "integer" },
-									limit: { type: "integer" },
+									total: { type: 'integer' },
+									offset: { type: 'integer' },
+									limit: { type: 'integer' },
 									facets: {
-										type: "object",
+										type: 'object',
 										properties: {
-											categories: { type: "object" },
-											riskLevels: { type: "object" },
-											publishers: { type: "object" },
+											categories: { type: 'object' },
+											riskLevels: { type: 'object' },
+											publishers: { type: 'object' },
 										},
 									},
 								},
@@ -139,10 +139,10 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 						},
 					},
 					400: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
-							error: { type: "object" },
+							success: { type: 'boolean' },
+							error: { type: 'object' },
 						},
 					},
 				},
@@ -168,8 +168,8 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					return (reply as any).status(400).send({
 						success: false,
 						error: {
-							code: "INVALID_REQUEST",
-							message: "Invalid search parameters",
+							code: 'INVALID_REQUEST',
+							message: 'Invalid search parameters',
 							details: error.errors,
 						},
 					});
@@ -181,46 +181,49 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get server by ID
 	fastify.get(
-		"/servers/:id",
+		'/servers/:id',
 		{
 			schema: {
-				tags: ["servers"],
-				summary: "Get server details",
-				description: "Get detailed information about a specific MCP server",
+				tags: ['servers'],
+				summary: 'Get server details',
+				description: 'Get detailed information about a specific MCP server',
 				params: {
-					type: "object",
+					type: 'object',
 					properties: {
 						id: {
-							type: "string",
-							pattern: "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$",
+							type: 'string',
+							pattern: '^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$',
 						},
 					},
-					required: ["id"],
+					required: ['id'],
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
-							data: { $ref: "ServerManifest#" },
+							success: { type: 'boolean' },
+							data: { $ref: 'ServerManifest#' },
 						},
 					},
 					404: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							error: {
-								type: "object",
+								type: 'object',
 								properties: {
-									code: { type: "string" },
-									message: { type: "string" },
+									code: { type: 'string' },
+									message: { type: 'string' },
 								},
 							},
 						},
 					},
 					400: {
-						type: "object",
-						properties: { success: { type: "boolean" }, error: { type: "object" } },
+						type: 'object',
+						properties: {
+							success: { type: 'boolean' },
+							error: { type: 'object' },
+						},
 					},
 				},
 			},
@@ -236,7 +239,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					return (reply as any).status(404).send({
 						success: false,
 						error: {
-							code: "SERVER_NOT_FOUND",
+							code: 'SERVER_NOT_FOUND',
 							message: `Server '${id}' not found`,
 						},
 					});
@@ -251,8 +254,8 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					return (reply as any).status(400).send({
 						success: false,
 						error: {
-							code: "INVALID_REQUEST",
-							message: "Invalid server ID format",
+							code: 'INVALID_REQUEST',
+							message: 'Invalid server ID format',
 							details: error.errors,
 						},
 					});
@@ -264,58 +267,70 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get server installation instructions
 	fastify.get(
-		"/servers/:id/install",
+		'/servers/:id/install',
 		{
 			schema: {
-				tags: ["servers"],
-				summary: "Get installation instructions",
+				tags: ['servers'],
+				summary: 'Get installation instructions',
 				description:
-					"Get client-specific installation instructions for a server",
+					'Get client-specific installation instructions for a server',
 				params: {
-					type: "object",
+					type: 'object',
 					properties: {
 						id: {
-							type: "string",
-							pattern: "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$",
+							type: 'string',
+							pattern: '^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$',
 						},
 					},
-					required: ["id"],
+					required: ['id'],
 				},
 				querystring: {
-					type: "object",
+					type: 'object',
 					properties: {
 						client: {
-							type: "string",
+							type: 'string',
 							enum: [
-								"claude",
-								"cline",
-								"cursor",
-								"continue",
-								"devin",
-								"windsurf",
+								'claude',
+								'cline',
+								'cursor',
+								'continue',
+								'devin',
+								'windsurf',
 							],
-							description: "Target client for installation instructions",
+							description: 'Target client for installation instructions',
 						},
 					},
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "object",
+								type: 'object',
 								properties: {
-									client: { type: "string" },
-									command: { type: "string" },
-									instructions: { type: "string" },
-									config: { type: "object" },
+									client: { type: 'string' },
+									command: { type: 'string' },
+									instructions: { type: 'string' },
+									config: { type: 'object' },
 								},
 							},
 						},
 					},
-					404: { type: "object", properties: { success: { type: "boolean" }, error: { type: "object" } } },
-					400: { type: "object", properties: { success: { type: "boolean" }, error: { type: "object" } } },
+					404: {
+						type: 'object',
+						properties: {
+							success: { type: 'boolean' },
+							error: { type: 'object' },
+						},
+					},
+					400: {
+						type: 'object',
+						properties: {
+							success: { type: 'boolean' },
+							error: { type: 'object' },
+						},
+					},
 				},
 			},
 		},
@@ -324,13 +339,15 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 			const { client } = request.query as { client?: string };
 
 			const validatedId = ServerIdSchema.parse(id);
-			const server = await fastify.marketplaceService.getServer(validatedId) as MarketplaceServer | null;
+			const server = (await fastify.marketplaceService.getServer(
+				validatedId,
+			)) as MarketplaceServer | null;
 
 			if (!server) {
 				return (reply as any).status(404).send({
 					success: false,
 					error: {
-						code: "SERVER_NOT_FOUND",
+						code: 'SERVER_NOT_FOUND',
 						message: `Server '${id}' not found`,
 					},
 				});
@@ -338,34 +355,40 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 
 			// Generate client-specific installation instructions
 			const installData = server.install ?? {};
-			let instructions = "";
-			let command = "";
+			let instructions = '';
+			let command = '';
 			let config = {};
 
 			switch (client) {
-				case "claude": {
-					command = typeof installData.claude === 'string' ? installData.claude : "";
+				case 'claude': {
+					command =
+						typeof installData.claude === 'string' ? installData.claude : '';
 					instructions = command
 						? `Run this command in Claude Desktop: ${command}`
-						: "Install via Claude settings";
+						: 'Install via Claude settings';
 					config = (installData.json as Record<string, unknown>) || {};
 					break;
 				}
-				case "cline": {
-					command = typeof installData.cline === 'string' ? installData.cline : "";
+				case 'cline': {
+					command =
+						typeof installData.cline === 'string' ? installData.cline : '';
 					instructions = command
 						? `Run this command in Cline: ${command}`
-						: "Install via Cline MCP settings";
+						: 'Install via Cline MCP settings';
 					break;
 				}
-				case "cursor": {
-					command = typeof installData.cursor === 'string' ? installData.cursor : "";
-					instructions = command || "Add to Cursor MCP configuration";
+				case 'cursor': {
+					command =
+						typeof installData.cursor === 'string' ? installData.cursor : '';
+					instructions = command || 'Add to Cursor MCP configuration';
 					break;
 				}
-				case "continue": {
-					command = typeof installData.continue === 'string' ? installData.continue : "";
-					instructions = command || "Configure in Continue settings";
+				case 'continue': {
+					command =
+						typeof installData.continue === 'string'
+							? installData.continue
+							: '';
+					instructions = command || 'Configure in Continue settings';
 					break;
 				}
 				default:
@@ -373,7 +396,9 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					return {
 						success: true,
 						data: {
-							available: Object.keys(installData).filter((key) => key !== "json"),
+							available: Object.keys(installData).filter(
+								(key) => key !== 'json',
+							),
 							claude: installData.claude,
 							cline: installData.cline,
 							cursor: installData.cursor,
@@ -386,7 +411,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 			return {
 				success: true,
 				data: {
-					client: client || "generic",
+					client: client || 'generic',
 					command,
 					instructions,
 					config,

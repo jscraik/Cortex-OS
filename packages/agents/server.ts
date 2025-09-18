@@ -2,9 +2,9 @@ import { AgentRegistry, EventBus } from '@voltagent/core';
 import { createPinoLogger } from '@voltagent/logger';
 import { honoServer } from '@voltagent/server-hono';
 import { CortexAgent } from './src';
+import { createOutboxMonitor, wireOutbox } from './src/events/outbox.js';
 import { createAuthMiddleware } from './src/middleware/auth.js';
 import { createInMemoryStore } from './src/store/memory-store.js';
-import { wireOutbox, createOutboxMonitor, DEFAULT_OUTBOX_OPTIONS } from './src/events/outbox.js';
 
 const logger = createPinoLogger({ name: 'CortexAgentServer' });
 
@@ -46,9 +46,12 @@ try {
 	await wireOutbox(
 		eventBus,
 		memoryStore,
-		(eventType, event) => ({
+		(eventType, _event) => ({
 			// Extended TTL for important events
-			ttl: eventType.includes('error') || eventType.includes('security') ? 'PT72H' : 'PT24H',
+			ttl:
+				eventType.includes('error') || eventType.includes('security')
+					? 'PT72H'
+					: 'PT24H',
 			// Enhanced PII redaction for security events
 			redactPII: eventType.includes('security') || eventType.includes('auth'),
 			// Namespace by event category
@@ -70,7 +73,6 @@ try {
 		],
 	);
 	logger.info('Event outbox wired successfully');
-
 } catch (error) {
 	logger.error('Failed to initialize CortexAgent:', error);
 	process.exit(1);
@@ -121,11 +123,14 @@ server.app.get('/health', async (c) => {
 			},
 		});
 	} catch (error) {
-		return c.json({
-			status: 'unhealthy',
-			timestamp: new Date().toISOString(),
-			error: error instanceof Error ? error.message : 'Unknown error',
-		}, 500);
+		return c.json(
+			{
+				status: 'unhealthy',
+				timestamp: new Date().toISOString(),
+				error: error instanceof Error ? error.message : 'Unknown error',
+			},
+			500,
+		);
 	}
 });
 
@@ -148,10 +153,13 @@ server.app.get('/metrics', async (c) => {
 		};
 		return c.json(metrics);
 	} catch (error) {
-		return c.json({
-			error: 'Failed to get metrics',
-			detail: error instanceof Error ? error.message : 'Unknown error',
-		}, 500);
+		return c.json(
+			{
+				error: 'Failed to get metrics',
+				detail: error instanceof Error ? error.message : 'Unknown error',
+			},
+			500,
+		);
 	}
 });
 
@@ -163,7 +171,7 @@ server.app.get('/outbox/stats', async (c) => {
 
 		return c.json({
 			stats,
-			recentEvents: recentEvents.map(e => ({
+			recentEvents: recentEvents.map((e) => ({
 				id: e.id,
 				type: e.metadata?.eventType,
 				timestamp: e.createdAt,
@@ -172,10 +180,13 @@ server.app.get('/outbox/stats', async (c) => {
 			})),
 		});
 	} catch (error) {
-		return c.json({
-			error: 'Failed to get outbox stats',
-			detail: error instanceof Error ? error.message : 'Unknown error',
-		}, 500);
+		return c.json(
+			{
+				error: 'Failed to get outbox stats',
+				detail: error instanceof Error ? error.message : 'Unknown error',
+			},
+			500,
+		);
 	}
 });
 
@@ -191,7 +202,7 @@ server.app.get('/outbox/events', async (c) => {
 		const events = await memoryStore.searchByText(query, namespace);
 
 		return c.json({
-			events: events.map(e => ({
+			events: events.map((e) => ({
 				id: e.id,
 				type: e.metadata?.eventType,
 				timestamp: e.createdAt,
@@ -204,10 +215,13 @@ server.app.get('/outbox/events', async (c) => {
 			total: events.length,
 		});
 	} catch (error) {
-		return c.json({
-			error: 'Failed to query events',
-			detail: error instanceof Error ? error.message : 'Unknown error',
-		}, 500);
+		return c.json(
+			{
+				error: 'Failed to query events',
+				detail: error instanceof Error ? error.message : 'Unknown error',
+			},
+			500,
+		);
 	}
 });
 

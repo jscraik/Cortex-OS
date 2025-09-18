@@ -5,7 +5,6 @@
  * In production, this should be replaced with a proper database.
  */
 
-import { randomUUID } from 'node:crypto';
 import { createPinoLogger } from '@voltagent/logger';
 import type { Memory, MemoryStore } from '../types.js';
 

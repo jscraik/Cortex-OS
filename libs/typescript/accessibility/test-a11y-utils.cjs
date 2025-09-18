@@ -1,12 +1,12 @@
 // Accessibility Utilities Test
 // This script tests the accessibility utilities functionality
 
-console.log("🧪 Accessibility Utilities Test");
-console.log("==============================");
+console.log('🧪 Accessibility Utilities Test');
+console.log('==============================');
 
 // Simple implementation of key a11y functions for testing
 function hexToRgb(hex) {
-	hex = hex.replace(/^#/, "");
+	hex = hex.replace(/^#/, '');
 	const bigint = parseInt(hex, 16);
 	return {
 		r: (bigint >> 16) & 255,
@@ -56,13 +56,13 @@ function meetsAaaContrast(foreground, background) {
 }
 
 // Test cases
-console.log("\n1. Testing color contrast ratios...");
+console.log('\n1. Testing color contrast ratios...');
 
 const testCases = [
-	{ fg: "#000000", bg: "#FFFFFF", name: "Black on White" },
-	{ fg: "#FFFFFF", bg: "#000000", name: "White on Black" },
-	{ fg: "#767676", bg: "#FFFFFF", name: "Medium Gray on White" },
-	{ fg: "#0000FF", bg: "#FFFF00", name: "Blue on Yellow" },
+	{ fg: '#000000', bg: '#FFFFFF', name: 'Black on White' },
+	{ fg: '#FFFFFF', bg: '#000000', name: 'White on Black' },
+	{ fg: '#767676', bg: '#FFFFFF', name: 'Medium Gray on White' },
+	{ fg: '#0000FF', bg: '#FFFF00', name: 'Blue on Yellow' },
 ];
 
 for (const testCase of testCases) {
@@ -72,34 +72,34 @@ for (const testCase of testCases) {
 
 	console.log(`  ${testCase.name}:`);
 	console.log(`    Contrast ratio: ${ratio.toFixed(2)}:1`);
-	console.log(`    Meets AA: ${aa ? "✅ PASS" : "❌ FAIL"}`);
-	console.log(`    Meets AAA: ${aaa ? "✅ PASS" : "❌ FAIL"}`);
+	console.log(`    Meets AA: ${aa ? '✅ PASS' : '❌ FAIL'}`);
+	console.log(`    Meets AAA: ${aaa ? '✅ PASS' : '❌ FAIL'}`);
 }
 
-console.log("\n2. Testing screen reader text generation...");
+console.log('\n2. Testing screen reader text generation...');
 
 function generateSrText(text, context) {
 	return context ? `${text} (${context})` : text;
 }
 
 const srTestCases = [
-	{ text: "Close", context: "Close dialog" },
-	{ text: "Submit", context: "Contact form" },
-	{ text: "Search", context: null },
+	{ text: 'Close', context: 'Close dialog' },
+	{ text: 'Submit', context: 'Contact form' },
+	{ text: 'Search', context: null },
 ];
 
 for (const testCase of srTestCases) {
 	const result = generateSrText(testCase.text, testCase.context);
 	console.log(
-		`  "${testCase.text}" with context "${testCase.context || "null"}": "${result}"`,
+		`  "${testCase.text}" with context "${testCase.context || 'null'}": "${result}"`,
 	);
 }
 
-console.log("\n🎉 Accessibility Utilities Test Complete");
+console.log('\n🎉 Accessibility Utilities Test Complete');
 console.log(
-	"  All tests passed! The accessibility utilities correctly implement:",
+	'  All tests passed! The accessibility utilities correctly implement:',
 );
-console.log("  - Color contrast ratio calculation");
-console.log("  - WCAG 2.2 AA compliance checking");
-console.log("  - WCAG 2.2 AAA compliance checking");
-console.log("  - Screen reader text generation");
+console.log('  - Color contrast ratio calculation');
+console.log('  - WCAG 2.2 AA compliance checking');
+console.log('  - WCAG 2.2 AAA compliance checking');
+console.log('  - Screen reader text generation');

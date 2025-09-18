@@ -8,7 +8,6 @@
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
-import { generateId } from '../lib/utils.js';
 import type { Tool } from './mocks/voltagent-core.js';
 
 const logger = createPinoLogger({ name: 'LangGraphIntegration' });

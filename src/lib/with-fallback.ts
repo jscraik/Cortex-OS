@@ -21,5 +21,5 @@ export async function withFallback<M, R>(
 	}
 	throw lastError instanceof Error
 		? lastError
-		: new Error("All fallbacks failed");
+		: new Error('All fallbacks failed');
 }

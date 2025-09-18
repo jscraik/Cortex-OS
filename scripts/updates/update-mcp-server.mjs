@@ -2,25 +2,25 @@
 
 // Script to update mcp_server.py to use SecureCommandExecutor
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-console.log("Updating mcp_server.py to use SecureCommandExecutor...");
+console.log('Updating mcp_server.py to use SecureCommandExecutor...');
 
 const mcpServerPath = join(
-	"packages",
-	"mcp",
-	"src",
-	"tools",
-	"docker",
-	"mcp_server.py",
+	'packages',
+	'mcp',
+	'src',
+	'tools',
+	'docker',
+	'mcp_server.py',
 );
-let content = readFileSync(mcpServerPath, "utf-8");
+let content = readFileSync(mcpServerPath, 'utf-8');
 
 // Add import for SecureCommandExecutor
-if (!content.includes("SecureCommandExecutor")) {
+if (!content.includes('SecureCommandExecutor')) {
 	content = content.replace(
-		"from pydantic import BaseModel",
+		'from pydantic import BaseModel',
 		`from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor
 # from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`,
@@ -59,7 +59,7 @@ content = content.replace(
 // Write the updated content back to the file
 writeFileSync(mcpServerPath, content);
 
-console.log("✅ mcp_server.py has been updated to use SecureCommandExecutor");
+console.log('✅ mcp_server.py has been updated to use SecureCommandExecutor');
 console.log(
-	"⚠️  Please review the TODO comments and fully implement the secure operations",
+	'⚠️  Please review the TODO comments and fully implement the secure operations',
 );

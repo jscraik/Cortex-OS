@@ -1,26 +1,26 @@
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import http from "node:http";
-import type { AddressInfo } from "node:net";
-import os from "node:os";
-import path from "node:path";
-import { setTimeout as delay } from "node:timers/promises";
-import { describe, expect, it } from "vitest";
-import { RegistryService } from "./registry-service.js";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
+import os from 'node:os';
+import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
+import { describe, expect, it } from 'vitest';
+import { RegistryService } from './registry-service.js';
 
-describe("RegistryService", () => {
-        it("creates cache directory asynchronously", async () => {
-                const baseDir = mkdtempSync(path.join(os.tmpdir(), "registry-test-"));
-                const cacheDir = path.join(baseDir, "cache");
+describe('RegistryService', () => {
+	it('creates cache directory asynchronously', async () => {
+		const baseDir = mkdtempSync(path.join(os.tmpdir(), 'registry-test-'));
+		const cacheDir = path.join(baseDir, 'cache');
 
-                new RegistryService({ registries: {}, cacheDir, cacheTtl: 1000 });
-                await delay(10);
+		new RegistryService({ registries: {}, cacheDir, cacheTtl: 1000 });
+		await delay(10);
 
-                expect(existsSync(cacheDir)).toBe(true);
+		expect(existsSync(cacheDir)).toBe(true);
 
-                rmSync(baseDir, { recursive: true, force: true });
-        });
+		rmSync(baseDir, { recursive: true, force: true });
+	});
 
-	it("aborts fetch when request exceeds timeout", async () => {
+	it('aborts fetch when request exceeds timeout', async () => {
 		const server = http.createServer(() => {
 			// Intentionally never respond
 		});
@@ -28,7 +28,7 @@ describe("RegistryService", () => {
 		const port = (server.address() as AddressInfo).port;
 
 		const baseDir = mkdtempSync(
-			path.join(os.tmpdir(), "registry-timeout-test-"),
+			path.join(os.tmpdir(), 'registry-timeout-test-'),
 		);
 		const service = new RegistryService({
 			registries: { test: `http://127.0.0.1:${port}/` },
@@ -37,15 +37,15 @@ describe("RegistryService", () => {
 			fetchTimeout: 100,
 		});
 
-		await expect(service.getRegistry("test")).rejects.toThrow();
+		await expect(service.getRegistry('test')).rejects.toThrow();
 
 		server.close();
 		rmSync(baseDir, { recursive: true, force: true });
 	});
 
-	it("removes cache file from disk", async () => {
+	it('removes cache file from disk', async () => {
 		const baseDir = mkdtempSync(
-			path.join(os.tmpdir(), "registry-remove-test-"),
+			path.join(os.tmpdir(), 'registry-remove-test-'),
 		);
 		const service = new RegistryService({
 			registries: {},
@@ -53,13 +53,13 @@ describe("RegistryService", () => {
 			cacheTtl: 1000,
 		});
 
-		const cachePath = path.join(baseDir, "registry-test.json");
+		const cachePath = path.join(baseDir, 'registry-test.json');
 		writeFileSync(
 			cachePath,
 			JSON.stringify({ data: {}, timestamp: Date.now() }),
 		);
 
-		await (service as unknown).removeFromDisk("test");
+		await (service as unknown).removeFromDisk('test');
 		expect(existsSync(cachePath)).toBe(false);
 
 		rmSync(baseDir, { recursive: true, force: true });

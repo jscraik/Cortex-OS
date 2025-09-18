@@ -1,21 +1,21 @@
-import path from "node:path";
-import { defineConfig } from "vitest/config";
+import path from 'node:path';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	test: {
-		environment: "node",
-		include: ["**/__tests__/**/*.test.js"],
+		environment: 'node',
+		include: ['**/__tests__/**/*.test.js'],
 		globals: true,
 		isolate: true,
 		sequence: { concurrent: false },
 		testTimeout: 10000,
 		coverage: {
-			include: ["rasp/**"],
+			include: ['rasp/**'],
 		},
 	},
 	resolve: {
 		alias: {
-			"@security": path.resolve(__dirname),
+			'@security': path.resolve(__dirname),
 		},
 	},
 });

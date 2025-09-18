@@ -15,22 +15,28 @@ const ragDir = resolve(repoRoot, 'packages/rag');
 const verifier = resolve(ragDir, 'scripts/verify-coverage.mjs');
 
 function run(cmd, args, opts = {}) {
-  const res = spawnSync(cmd, args, { stdio: 'inherit', env: process.env, ...opts });
-  if (res.status !== 0) {
-    const joined = [cmd, ...args].join(' ');
-    console.error(`[precheck-rag-coverage] Command failed (${res.status}): ${joined}`);
-    process.exit(res.status || 1);
-  }
+	const res = spawnSync(cmd, args, {
+		stdio: 'inherit',
+		env: process.env,
+		...opts,
+	});
+	if (res.status !== 0) {
+		const joined = [cmd, ...args].join(' ');
+		console.error(
+			`[precheck-rag-coverage] Command failed (${res.status}): ${joined}`,
+		);
+		process.exit(res.status || 1);
+	}
 }
 
 if (!existsSync(ragDir)) {
-  console.error(`[precheck-rag-coverage] Missing directory: ${ragDir}`);
-  process.exit(1);
+	console.error(`[precheck-rag-coverage] Missing directory: ${ragDir}`);
+	process.exit(1);
 }
 if (!existsSync(verifier)) {
-  console.error(`[precheck-rag-coverage] Missing verifier script: ${verifier}`);
-  console.error('Run bootstrap and ensure RAG package scripts are present.');
-  process.exit(1);
+	console.error(`[precheck-rag-coverage] Missing verifier script: ${verifier}`);
+	console.error('Run bootstrap and ensure RAG package scripts are present.');
+	process.exit(1);
 }
 
 console.log('[precheck-rag-coverage] Running RAG package coverage...');
@@ -41,12 +47,13 @@ const dryRun = process.env.RAG_COVERAGE_DRY_RUN === '1';
 
 console.log('[precheck-rag-coverage] Verifying coverage thresholds...');
 if (autoRaise && dryRun) {
-  run('pnpm', ['-C', 'packages/rag', 'verify:coverage:dry']);
+	run('pnpm', ['-C', 'packages/rag', 'verify:coverage:dry']);
 } else if (autoRaise) {
-  run('pnpm', ['-C', 'packages/rag', 'verify:coverage:auto']);
+	run('pnpm', ['-C', 'packages/rag', 'verify:coverage:auto']);
 } else {
-  run('pnpm', ['-C', 'packages/rag', 'verify:coverage']);
+	run('pnpm', ['-C', 'packages/rag', 'verify:coverage']);
 }
 
-console.log('[precheck-rag-coverage] RAG coverage precheck completed successfully.');
-
+console.log(
+	'[precheck-rag-coverage] RAG coverage precheck completed successfully.',
+);

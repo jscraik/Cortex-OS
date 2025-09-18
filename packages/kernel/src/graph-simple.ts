@@ -6,16 +6,20 @@
  * @status TDD-DRIVEN
  */
 
+import { MemorySaver, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
 import { fixedTimestamp } from './lib/determinism.js';
+import {
+	runBuildNode,
+	runEvaluationNode,
+	runStrategyNode,
+} from './nodes/index.js';
 import {
 	createInitialPRPState,
 	type PRPState,
 	validateStateTransition,
 } from './state.js';
 import { generateId } from './utils/id.js';
-import { runStrategyNode, runBuildNode, runEvaluationNode } from './nodes/index.js';
-import { MemorySaver, StateGraph } from '@langchain/langgraph';
 
 // Minimal types to avoid any
 interface LangGraphConfig {
@@ -94,35 +98,46 @@ export class CortexKernel {
 	 * Build LangGraph app using existing nodes with history hooks
 	 */
 	private buildLangGraphApp(): LangGraphApp {
-		const self = this;
 		// Create a graph. Keep generics minimal to satisfy local linting.
 		const graph = new StateGraph() as unknown as {
-		  addNode: (name: string, fn: (state: PRPState, config?: LangGraphConfig) => Promise<PRPState>) => void;
-		  setEntryPoint: (name: string) => void;
-		  addEdge: (from: string, to: string) => void;
-		  compile: (opts: { checkpointer: MemorySaver }) => LangGraphApp;
+			addNode: (
+				name: string,
+				fn: (state: PRPState, config?: LangGraphConfig) => Promise<PRPState>,
+			) => void;
+			setEntryPoint: (name: string) => void;
+			addEdge: (from: string, to: string) => void;
+			compile: (opts: { checkpointer: MemorySaver }) => LangGraphApp;
 		};
 
-		graph.addNode('strategy', async (state: PRPState, config?: LangGraphConfig) => {
-			const runId = config?.configurable?.runId || state.metadata.runId;
-			const next = await runStrategyNode(state);
-			self.addToHistory(runId, { ...next, phase: 'strategy' });
-			return next;
-		});
+		graph.addNode(
+			'strategy',
+			async (state: PRPState, config?: LangGraphConfig) => {
+				const runId = config?.configurable?.runId || state.metadata.runId;
+				const next = await runStrategyNode(state);
+				this.addToHistory(runId, { ...next, phase: 'strategy' });
+				return next;
+			},
+		);
 
-		graph.addNode('build', async (state: PRPState, config?: LangGraphConfig) => {
-			const runId = config?.configurable?.runId || state.metadata.runId;
-			const next = await runBuildNode(state);
-			self.addToHistory(runId, { ...next, phase: 'build' });
-			return next;
-		});
+		graph.addNode(
+			'build',
+			async (state: PRPState, config?: LangGraphConfig) => {
+				const runId = config?.configurable?.runId || state.metadata.runId;
+				const next = await runBuildNode(state);
+				this.addToHistory(runId, { ...next, phase: 'build' });
+				return next;
+			},
+		);
 
-		graph.addNode('evaluation', async (state: PRPState, config?: LangGraphConfig) => {
-			const runId = config?.configurable?.runId || state.metadata.runId;
-			const next = await runEvaluationNode(state);
-			self.addToHistory(runId, { ...next, phase: 'evaluation' });
-			return next;
-		});
+		graph.addNode(
+			'evaluation',
+			async (state: PRPState, config?: LangGraphConfig) => {
+				const runId = config?.configurable?.runId || state.metadata.runId;
+				const next = await runEvaluationNode(state);
+				this.addToHistory(runId, { ...next, phase: 'evaluation' });
+				return next;
+			},
+		);
 
 		graph.setEntryPoint('strategy');
 		graph.addEdge('strategy', 'build');
@@ -196,5 +211,4 @@ export class CortexKernel {
 	getExecutionHistory(runId: string): PRPState[] {
 		return this.executionHistory.get(runId) || [];
 	}
-
 }

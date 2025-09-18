@@ -9,26 +9,26 @@
  * @param intervalMs How often to check the condition
  */
 export async function waitFor(
-  condition: () => boolean | Promise<boolean>,
-  timeoutMs: number = 5000,
-  intervalMs: number = 50
+	condition: () => boolean | Promise<boolean>,
+	timeoutMs: number = 5000,
+	intervalMs: number = 50,
 ): Promise<void> {
-  const start = Date.now();
-  
-  while (Date.now() - start < timeoutMs) {
-    const result = await condition();
-    if (result) {
-      return;
-    }
-    await sleep(intervalMs);
-  }
-  
-  throw new Error(`Condition not met within ${timeoutMs}ms`);
+	const start = Date.now();
+
+	while (Date.now() - start < timeoutMs) {
+		const result = await condition();
+		if (result) {
+			return;
+		}
+		await sleep(intervalMs);
+	}
+
+	throw new Error(`Condition not met within ${timeoutMs}ms`);
 }
 
 /**
  * Sleep for specified milliseconds
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }

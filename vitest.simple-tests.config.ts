@@ -1,21 +1,21 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	test: {
-		include: ["simple-tests/**/*.{test,spec}.ts"],
+		include: ['simple-tests/**/*.{test,spec}.ts'],
 		exclude: [
-			"**/node_modules/**",
-			"**/dist/**",
-			"**/cypress/**",
-			"**/.{idea,git,cache,output,temp}/**",
+			'**/node_modules/**',
+			'**/dist/**',
+			'**/cypress/**',
+			'**/.{idea,git,cache,output,temp}/**',
 		],
-		environment: "node",
+		environment: 'node',
 		globals: false,
 		typecheck: {
 			enabled: false,
 		},
 	},
 	resolve: {
-		extensions: [".ts", ".js", ".mts", ".cts", ".json"],
+		extensions: ['.ts', '.js', '.mts', '.cts', '.json'],
 	},
 });

@@ -29,9 +29,9 @@ export interface PlanMetadata {
 
 export interface Environment {
 	name: string;
-	type: "development" | "staging" | "production" | "test" | "qa" | "demo";
+	type: 'development' | 'staging' | 'production' | 'test' | 'qa' | 'demo';
 	region?: string;
-	provider?: "aws" | "azure" | "gcp" | "kubernetes" | "docker" | "bare-metal";
+	provider?: 'aws' | 'azure' | 'gcp' | 'kubernetes' | 'docker' | 'bare-metal';
 	configuration?: Record<string, string | number | boolean>;
 	secrets?: string[];
 	resources?: {
@@ -55,14 +55,14 @@ export interface Stage {
 export interface Step {
 	name: string;
 	type:
-		| "build"
-		| "test"
-		| "deploy"
-		| "validate"
-		| "security-scan"
-		| "approval"
-		| "notification"
-		| "script";
+		| 'build'
+		| 'test'
+		| 'deploy'
+		| 'validate'
+		| 'security-scan'
+		| 'approval'
+		| 'notification'
+		| 'script';
 	command?: string;
 	script?: string;
 	image?: string;
@@ -73,7 +73,7 @@ export interface Step {
 }
 
 export interface DeploymentStrategy {
-	type: "rolling" | "blue-green" | "canary" | "recreate" | "a-b-testing";
+	type: 'rolling' | 'blue-green' | 'canary' | 'recreate' | 'a-b-testing';
 	rollingUpdate?: RollingUpdateStrategy;
 	blueGreen?: BlueGreenStrategy;
 	canary?: CanaryStrategy;
@@ -96,7 +96,7 @@ export interface CanaryStrategy {
 	steps: CanaryStep[];
 	analysis?: AnalysisTemplate;
 	trafficSplitting?: {
-		method?: "header" | "cookie" | "weight";
+		method?: 'header' | 'cookie' | 'weight';
 		headerName?: string;
 		headerValue?: string;
 	};
@@ -138,7 +138,7 @@ export interface Dependencies {
 
 export interface ServiceDependency {
 	name: string;
-	type: "database" | "cache" | "queue" | "storage" | "api" | "monitoring";
+	type: 'database' | 'cache' | 'queue' | 'storage' | 'api' | 'monitoring';
 	version?: string;
 	endpoint?: string;
 	required?: boolean;
@@ -147,7 +147,7 @@ export interface ServiceDependency {
 
 export interface InfrastructureDependency {
 	name: string;
-	type: "cluster" | "network" | "load-balancer" | "cdn" | "dns" | "certificate";
+	type: 'cluster' | 'network' | 'load-balancer' | 'cdn' | 'dns' | 'certificate';
 	provider?: string;
 	region?: string;
 	required?: boolean;
@@ -156,17 +156,17 @@ export interface InfrastructureDependency {
 export interface Notifications {
 	channels?: NotificationChannel[];
 	events?: Array<
-		| "deployment-start"
-		| "deployment-success"
-		| "deployment-failure"
-		| "rollback-start"
-		| "rollback-complete"
-		| "health-check-failure"
+		| 'deployment-start'
+		| 'deployment-success'
+		| 'deployment-failure'
+		| 'rollback-start'
+		| 'rollback-complete'
+		| 'health-check-failure'
 	>;
 }
 
 export interface NotificationChannel {
-	type: "slack" | "email" | "webhook" | "teams" | "discord";
+	type: 'slack' | 'email' | 'webhook' | 'teams' | 'discord';
 	target: string;
 	events?: string[];
 }
@@ -178,7 +178,7 @@ export interface Monitoring {
 }
 
 export interface HealthCheck {
-	type: "http" | "tcp" | "grpc" | "exec";
+	type: 'http' | 'tcp' | 'grpc' | 'exec';
 	endpoint: string;
 	interval?: string;
 	timeout?: string;
@@ -189,8 +189,8 @@ export interface HealthCheck {
 
 export interface Metric {
 	name: string;
-	type: "counter" | "gauge" | "histogram" | "summary";
-	source: "prometheus" | "datadog" | "newrelic" | "cloudwatch" | "custom";
+	type: 'counter' | 'gauge' | 'histogram' | 'summary';
+	source: 'prometheus' | 'datadog' | 'newrelic' | 'cloudwatch' | 'custom';
 	query?: string;
 	labels?: Record<string, string>;
 }
@@ -198,26 +198,26 @@ export interface Metric {
 export interface Alert {
 	name: string;
 	condition: string;
-	severity: "critical" | "warning" | "info";
+	severity: 'critical' | 'warning' | 'info';
 	threshold?: number;
 	duration?: string;
 	channels?: string[];
 }
 
 export interface Rollback {
-	strategy: "automatic" | "manual" | "conditional";
+	strategy: 'automatic' | 'manual' | 'conditional';
 	triggers?: Array<
-		| "health-check-failure"
-		| "error-rate-threshold"
-		| "manual-trigger"
-		| "timeout"
+		| 'health-check-failure'
+		| 'error-rate-threshold'
+		| 'manual-trigger'
+		| 'timeout'
 	>;
 	timeout?: number;
 }
 
 export interface Security {
 	scanners?: Array<
-		"sast" | "dast" | "dependency-scan" | "container-scan" | "iac-scan"
+		'sast' | 'dast' | 'dependency-scan' | 'container-scan' | 'iac-scan'
 	>;
 	approvals?: {
 		required: boolean;
@@ -226,7 +226,7 @@ export interface Security {
 	};
 	compliance?: {
 		frameworks?: Array<
-			"SOC2" | "ISO27001" | "PCI-DSS" | "GDPR" | "HIPAA" | "FedRAMP"
+			'SOC2' | 'ISO27001' | 'PCI-DSS' | 'GDPR' | 'HIPAA' | 'FedRAMP'
 		>;
 		auditLog?: boolean;
 	};
@@ -245,7 +245,7 @@ export interface ValidationError {
 	path: string;
 	message: string;
 	code: string;
-	severity: "error" | "warning";
+	severity: 'error' | 'warning';
 }
 
 export interface ValidationWarning {
@@ -260,7 +260,7 @@ export interface ValidationWarning {
 export interface ValidationConfig {
 	strict?: boolean;
 	allowUnknownFormats?: boolean;
-	removeAdditional?: boolean | "all" | "failing";
+	removeAdditional?: boolean | 'all' | 'failing';
 	useDefaults?: boolean;
-	coerceTypes?: boolean | "array";
+	coerceTypes?: boolean | 'array';
 }

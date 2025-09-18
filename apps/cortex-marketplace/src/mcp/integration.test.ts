@@ -3,10 +3,14 @@
  * @description Integration tests for MCP tools in cortex-marketplace
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { build } from '../app.js';
-import { validateInput, SearchServersInputSchema, GetServerInputSchema } from './tools.js';
 import type { FastifyInstance } from 'fastify';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { build } from '../app.js';
+import {
+	GetServerInputSchema,
+	SearchServersInputSchema,
+	validateInput,
+} from './tools.js';
 
 describe('MCP Integration Tests', () => {
 	let app: FastifyInstance;
@@ -59,7 +63,9 @@ describe('MCP Integration Tests', () => {
 			});
 
 			const data = JSON.parse(response.body);
-			const searchTool = data.tools.find((tool: { name: string }) => tool.name === 'marketplace.search_servers');
+			const searchTool = data.tools.find(
+				(tool: { name: string }) => tool.name === 'marketplace.search_servers',
+			);
 
 			expect(searchTool).toMatchObject({
 				name: 'marketplace.search_servers',
@@ -274,7 +280,6 @@ describe('MCP Tool Contract Validation', () => {
 	});
 
 	it('should validate get_server input schema', () => {
-
 		// Valid input
 		expect(() =>
 			validateInput(GetServerInputSchema, {

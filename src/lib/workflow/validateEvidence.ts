@@ -1,11 +1,11 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const evidenceSchema = z.object({
 	evidence: z.array(
 		z
 			.string()
 			.transform((s) => s.trim())
-			.refine((s) => s.length > 0, "Empty string"),
+			.refine((s) => s.length > 0, 'Empty string'),
 	),
 });
 

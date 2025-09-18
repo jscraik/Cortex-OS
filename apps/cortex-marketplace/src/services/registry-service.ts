@@ -3,11 +3,11 @@
  * @description Handles registry management and caching
  */
 
-import { constants as fsConstants } from "node:fs";
-import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { constants as fsConstants } from 'node:fs';
+import { access, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 // import type { RegistryIndex } from "../../packages/mcp-registry/dist/types";
-import type { RegistryIndex } from "../../packages/mcp-registry/dist/types";
+import type { RegistryIndex } from '../../packages/mcp-registry/dist/types';
 
 export interface RegistryConfig {
 	registries: Record<string, string>;
@@ -34,7 +34,7 @@ export class RegistryService {
 
 	constructor(config: RegistryConfig) {
 		this.config = config;
-                void this.ensureCacheDir();
+		void this.ensureCacheDir();
 	}
 
 	/**
@@ -59,7 +59,7 @@ export class RegistryService {
 					info.serverCount = data.serverCount;
 				}
 			} catch (error) {
-				console.warn("Registry health check failed", { name, error });
+				console.warn('Registry health check failed', { name, error });
 			}
 
 			registries.push(info);
@@ -106,7 +106,7 @@ export class RegistryService {
 		} catch (error) {
 			// If fetch fails, return stale cache if available
 			if (diskCached) {
-				console.warn("Using stale cache for registry due to fetch error", {
+				console.warn('Using stale cache for registry due to fetch error', {
 					name,
 					error,
 				});
@@ -131,7 +131,7 @@ export class RegistryService {
 		} catch (error) {
 			return {
 				healthy: false,
-				error: error instanceof Error ? error.message : "Unknown error",
+				error: error instanceof Error ? error.message : 'Unknown error',
 			};
 		}
 	}
@@ -159,71 +159,71 @@ export class RegistryService {
 	/**
 	 * Fetch registry data from URL
 	 */
-        private async fetchRegistry(url: string): Promise<RegistryIndex> {
-                if (url.startsWith("file://")) {
-                        const fileUrl = new URL(url);
-                        const content = await readFile(fileUrl, "utf-8");
-                        return JSON.parse(content) as RegistryIndex;
-                }
+	private async fetchRegistry(url: string): Promise<RegistryIndex> {
+		if (url.startsWith('file://')) {
+			const fileUrl = new URL(url);
+			const content = await readFile(fileUrl, 'utf-8');
+			return JSON.parse(content) as RegistryIndex;
+		}
 
-                const controller = new AbortController();
-                const timeout = setTimeout(
-                        () => controller.abort(),
-                        this.config.fetchTimeout ?? 10000,
-                );
+		const controller = new AbortController();
+		const timeout = setTimeout(
+			() => controller.abort(),
+			this.config.fetchTimeout ?? 10000,
+		);
 
-                try {
-                        const response = await fetch(url, {
-                                headers: {
-                                        "User-Agent": "Cortex-OS-Marketplace/1.0",
-                                        Accept: "application/json",
-                                },
-                                signal: controller.signal,
-                        });
+		try {
+			const response = await fetch(url, {
+				headers: {
+					'User-Agent': 'Cortex-OS-Marketplace/1.0',
+					Accept: 'application/json',
+				},
+				signal: controller.signal,
+			});
 
-                        if (!response.ok) {
-                                throw new Error(
-                                        `Failed to fetch registry: ${response.status} ${response.statusText}`,
-                                );
-                        }
+			if (!response.ok) {
+				throw new Error(
+					`Failed to fetch registry: ${response.status} ${response.statusText}`,
+				);
+			}
 
-                        const data = await response.json();
+			const data = await response.json();
 
-                        if (!data || typeof data !== "object") {
-                                throw new Error("Invalid registry data: not an object");
-                        }
+			if (!data || typeof data !== 'object') {
+				throw new Error('Invalid registry data: not an object');
+			}
 
-                        if (!Array.isArray(data.servers)) {
-                                throw new Error("Invalid registry data: servers must be an array");
-                        }
+			if (!Array.isArray(data.servers)) {
+				throw new Error('Invalid registry data: servers must be an array');
+			}
 
-                        return data as RegistryIndex;
-                } finally {
-                        clearTimeout(timeout);
-                }
-        }
+			return data as RegistryIndex;
+		} finally {
+			clearTimeout(timeout);
+		}
+	}
 
 	/**
 	 * Load registry data from disk cache
 	 */
-        private async loadFromDisk(
-                name: string,
-        ): Promise<{ data: RegistryIndex; timestamp: number } | null> {
-                const cachePath = this.getCachePath(name);
+	private async loadFromDisk(
+		name: string,
+	): Promise<{ data: RegistryIndex; timestamp: number } | null> {
+		const cachePath = this.getCachePath(name);
 
-                try {
-                        await access(cachePath, fsConstants.F_OK);
-                } catch {
-                        return null;
-                }
+		try {
+			await access(cachePath, fsConstants.F_OK);
+		} catch {
+			return null;
+		}
 
-                try {
-                        const content = await readFile(cachePath, "utf-8");
-                        const cached = JSON.parse(content);
+		try {
+			const content = await readFile(cachePath, 'utf-8');
+			const cached = JSON.parse(content);
 
-                        if (!cached.data || !cached.timestamp) {
-                                return null;
-                        }
+			if (!cached.data || !cached.timestamp) {
+				return null;
+			}
 
 			return cached;
 		} catch (error) {
@@ -244,7 +244,7 @@ export class RegistryService {
 		try {
 			await writeFile(cachePath, JSON.stringify(cacheEntry, null, 2));
 		} catch (error) {
-			console.warn("Failed to save disk cache", { name, error });
+			console.warn('Failed to save disk cache', { name, error });
 		}
 	}
 
@@ -275,7 +275,7 @@ export class RegistryService {
 		try {
 			await mkdir(this.config.cacheDir, { recursive: true });
 		} catch (error) {
-			console.warn("Failed to create cache directory:", error);
+			console.warn('Failed to create cache directory:', error);
 		}
 	}
 }

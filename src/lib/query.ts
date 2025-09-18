@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const queryInputSchema = z.object({
-	query: z.string().min(1, "query is required"),
+	query: z.string().min(1, 'query is required'),
 	topK: z.number().int().positive().max(100).default(5),
 });
 

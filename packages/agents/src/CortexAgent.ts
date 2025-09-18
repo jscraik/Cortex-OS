@@ -8,7 +8,7 @@ import {
 } from './errors';
 import { Agent, type Tool, type ToolSchema } from './mocks/voltagent-core.js';
 // Import subagent system
-import { type SubagentSystemConfig, createSubagentSystem } from './subagents';
+import { createSubagentSystem, type SubagentSystemConfig } from './subagents';
 import {
 	DelegationRouter,
 	type RouterConfig,

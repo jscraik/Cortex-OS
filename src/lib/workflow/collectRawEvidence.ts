@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const sourcesSchema = z.object({
 	sources: z.array(z.string()),

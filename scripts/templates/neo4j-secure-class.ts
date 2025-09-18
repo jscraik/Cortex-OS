@@ -4,7 +4,7 @@ export class Neo4j implements INeo4j {
 
 	constructor(uri: string, user: string, pass: string) {
 		this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), {
-			userAgent: "cortex-os/0.1",
+			userAgent: 'cortex-os/0.1',
 		});
 
 		this.secureNeo4j = new SecureNeo4j(uri, user, pass);
@@ -23,7 +23,7 @@ export class Neo4j implements INeo4j {
 				props: node.props,
 			});
 		} catch (error) {
-			console.error("Error upserting node:", error);
+			console.error('Error upserting node:', error);
 			throw error;
 		}
 	}
@@ -37,7 +37,7 @@ export class Neo4j implements INeo4j {
 				props: rel.props,
 			});
 		} catch (error) {
-			console.error("Error upserting relationship:", error);
+			console.error('Error upserting relationship:', error);
 			throw error;
 		}
 	}
@@ -46,7 +46,7 @@ export class Neo4j implements INeo4j {
 		try {
 			return await this.secureNeo4j.neighborhood(nodeId, depth);
 		} catch (error) {
-			console.error("Error querying neighborhood:", error);
+			console.error('Error querying neighborhood:', error);
 			throw error;
 		}
 	}

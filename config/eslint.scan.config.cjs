@@ -4,25 +4,25 @@
 module.exports = [
 	{
 		files: [
-			"scripts/**/*.{js,mjs,ts,tsx}",
-			"packages/*/src/**/*.{js,ts,tsx}",
-			"apps/*/src/**/*.{js,ts,tsx}",
+			'scripts/**/*.{js,mjs,ts,tsx}',
+			'packages/*/src/**/*.{js,ts,tsx}',
+			'apps/*/src/**/*.{js,ts,tsx}',
 		],
 		languageOptions: {
-			parser: require.resolve("@typescript-eslint/parser"),
+			parser: require.resolve('@typescript-eslint/parser'),
 			parserOptions: {
 				ecmaVersion: 2020,
-				sourceType: "module",
+				sourceType: 'module',
 				ecmaFeatures: { jsx: true },
 			},
 		},
 		plugins: {
 			// require the plugin modules directly so resolution uses workspace node_modules
-			sonarjs: require("eslint-plugin-sonarjs"),
-			"@typescript-eslint": require("@typescript-eslint/eslint-plugin"),
+			sonarjs: require('eslint-plugin-sonarjs'),
+			'@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
 		},
 		rules: {
-			"sonarjs/cognitive-complexity": ["error", 15],
+			'sonarjs/cognitive-complexity': ['error', 15],
 		},
 	},
 ];
@@ -32,25 +32,25 @@ module.exports = [
 module.exports = [
 	{
 		files: [
-			"scripts/**/*.{js,mjs,ts,tsx}",
-			"packages/*/src/**/*.{js,ts,tsx}",
-			"apps/*/src/**/*.{js,ts,tsx}",
+			'scripts/**/*.{js,mjs,ts,tsx}',
+			'packages/*/src/**/*.{js,ts,tsx}',
+			'apps/*/src/**/*.{js,ts,tsx}',
 		],
 		languageOptions: {
-			parser: require.resolve("@typescript-eslint/parser"),
+			parser: require.resolve('@typescript-eslint/parser'),
 			parserOptions: {
 				ecmaVersion: 2020,
-				sourceType: "module",
+				sourceType: 'module',
 				ecmaFeatures: { jsx: true },
 			},
 		},
 		plugins: {
 			// require the plugin modules directly so resolution uses workspace node_modules
-			sonarjs: require("eslint-plugin-sonarjs"),
-			"@typescript-eslint": require("@typescript-eslint/eslint-plugin"),
+			sonarjs: require('eslint-plugin-sonarjs'),
+			'@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
 		},
 		rules: {
-			"sonarjs/cognitive-complexity": ["error", 15],
+			'sonarjs/cognitive-complexity': ['error', 15],
 		},
 	},
 ];

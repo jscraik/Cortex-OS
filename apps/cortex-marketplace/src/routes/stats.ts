@@ -3,39 +3,39 @@
  * @description API routes for marketplace statistics
  */
 
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from 'fastify';
 
 export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 	// Get marketplace statistics
 	fastify.get(
-		"/stats",
+		'/stats',
 		{
 			schema: {
-				tags: ["stats"],
-				summary: "Get marketplace stats",
-				description: "Get overall marketplace statistics and metrics",
+				tags: ['stats'],
+				summary: 'Get marketplace stats',
+				description: 'Get overall marketplace statistics and metrics',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "object",
+								type: 'object',
 								properties: {
-									totalServers: { type: "integer" },
-									totalDownloads: { type: "integer" },
-									totalPublishers: { type: "integer" },
-									featuredCount: { type: "integer" },
+									totalServers: { type: 'integer' },
+									totalDownloads: { type: 'integer' },
+									totalPublishers: { type: 'integer' },
+									featuredCount: { type: 'integer' },
 									categoryBreakdown: {
-										type: "object",
-										additionalProperties: { type: "integer" },
+										type: 'object',
+										additionalProperties: { type: 'integer' },
 									},
 									riskLevelBreakdown: {
-										type: "object",
-										additionalProperties: { type: "integer" },
+										type: 'object',
+										additionalProperties: { type: 'integer' },
 									},
-									averageRating: { type: "number" },
-									recentlyUpdated: { type: "integer" },
+									averageRating: { type: 'number' },
+									recentlyUpdated: { type: 'integer' },
 								},
 							},
 						},
@@ -55,37 +55,37 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get trending servers
 	fastify.get(
-		"/stats/trending",
+		'/stats/trending',
 		{
 			schema: {
-				tags: ["stats"],
-				summary: "Get trending servers",
-				description: "Get servers with recent download spikes or updates",
+				tags: ['stats'],
+				summary: 'Get trending servers',
+				description: 'Get servers with recent download spikes or updates',
 				querystring: {
-					type: "object",
+					type: 'object',
 					properties: {
 						period: {
-							type: "string",
-							enum: ["day", "week", "month"],
-							default: "week",
+							type: 'string',
+							enum: ['day', 'week', 'month'],
+							default: 'week',
 						},
-						limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+						limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 },
 					},
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "array",
-								items: { $ref: "ServerManifest#" },
+								type: 'array',
+								items: { $ref: 'ServerManifest#' },
 							},
 							meta: {
-								type: "object",
+								type: 'object',
 								properties: {
-									period: { type: "string" },
-									limit: { type: "integer" },
+									period: { type: 'string' },
+									limit: { type: 'integer' },
 								},
 							},
 						},
@@ -99,8 +99,8 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 			// For now, return recently updated servers as trending
 			// In a real implementation, this would track download velocity
 			const searchRequest = {
-				sortBy: "updated" as const,
-				sortOrder: "desc" as const,
+				sortBy: 'updated' as const,
+				sortOrder: 'desc' as const,
 				limit: query.limit || 10,
 				offset: 0,
 			};
@@ -111,7 +111,7 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 				success: true,
 				data: result.servers,
 				meta: {
-					period: query.period || "week",
+					period: query.period || 'week',
 					limit: query.limit || 10,
 				},
 			};
@@ -120,33 +120,33 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get popular servers
 	fastify.get(
-		"/stats/popular",
+		'/stats/popular',
 		{
 			schema: {
-				tags: ["stats"],
-				summary: "Get popular servers",
-				description: "Get most downloaded servers",
+				tags: ['stats'],
+				summary: 'Get popular servers',
+				description: 'Get most downloaded servers',
 				querystring: {
-					type: "object",
+					type: 'object',
 					properties: {
-						category: { type: "string", description: "Filter by category" },
-						limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+						category: { type: 'string', description: 'Filter by category' },
+						limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 },
 					},
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "array",
-								items: { $ref: "ServerManifest#" },
+								type: 'array',
+								items: { $ref: 'ServerManifest#' },
 							},
 							meta: {
-								type: "object",
+								type: 'object',
 								properties: {
-									category: { type: "string" },
-									limit: { type: "integer" },
+									category: { type: 'string' },
+									limit: { type: 'integer' },
 								},
 							},
 						},
@@ -159,8 +159,8 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 
 			const searchRequest = {
 				category: query.category,
-				sortBy: "downloads" as const,
-				sortOrder: "desc" as const,
+				sortBy: 'downloads' as const,
+				sortOrder: 'desc' as const,
 				limit: query.limit || 10,
 				offset: 0,
 			};
@@ -180,40 +180,40 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get top rated servers
 	fastify.get(
-		"/stats/top-rated",
+		'/stats/top-rated',
 		{
 			schema: {
-				tags: ["stats"],
-				summary: "Get top rated servers",
-				description: "Get highest rated servers",
+				tags: ['stats'],
+				summary: 'Get top rated servers',
+				description: 'Get highest rated servers',
 				querystring: {
-					type: "object",
+					type: 'object',
 					properties: {
-						category: { type: "string", description: "Filter by category" },
+						category: { type: 'string', description: 'Filter by category' },
 						minDownloads: {
-							type: "integer",
+							type: 'integer',
 							minimum: 0,
-							description: "Minimum download count",
+							description: 'Minimum download count',
 							default: 100,
 						},
-						limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+						limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 },
 					},
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "array",
-								items: { $ref: "ServerManifest#" },
+								type: 'array',
+								items: { $ref: 'ServerManifest#' },
 							},
 							meta: {
-								type: "object",
+								type: 'object',
 								properties: {
-									category: { type: "string" },
-									minDownloads: { type: "integer" },
-									limit: { type: "integer" },
+									category: { type: 'string' },
+									minDownloads: { type: 'integer' },
+									limit: { type: 'integer' },
 								},
 							},
 						},
@@ -230,8 +230,8 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 
 			const searchRequest = {
 				category: query.category,
-				sortBy: "rating" as const,
-				sortOrder: "desc" as const,
+				sortBy: 'rating' as const,
+				sortOrder: 'desc' as const,
 				limit: 100, // Get more results to filter by download count
 				offset: 0,
 			};

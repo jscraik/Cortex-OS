@@ -4,13 +4,13 @@
  */
 
 export function createKernelGraph() {
-  return {
-    nodes: [],
-    edges: [],
-    metadata: {
-      version: 0,
-      engine: 'langgraphjs-skeleton',
-      status: 'placeholder',
-    },
-  };
+	return {
+		nodes: [],
+		edges: [],
+		metadata: {
+			version: 0,
+			engine: 'langgraphjs-skeleton',
+			status: 'placeholder',
+		},
+	};
 }

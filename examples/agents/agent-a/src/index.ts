@@ -1,10 +1,10 @@
-import { EventEmitter } from "node:events";
-import { z } from "zod";
+import { EventEmitter } from 'node:events';
+import { z } from 'zod';
 
 // Agent Task schemas following CloudEvents format
 export const AgentTaskRequestedSchema = z.object({
 	id: z.string().uuid(),
-	type: z.literal("agent.task.requested"),
+	type: z.literal('agent.task.requested'),
 	source: z.string(),
 	subject: z.string(),
 	time: z.string().datetime(),
@@ -12,7 +12,7 @@ export const AgentTaskRequestedSchema = z.object({
 		taskId: z.string().uuid(),
 		taskType: z.string(),
 		payload: z.record(z.unknown()),
-		priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+		priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
 		timeout: z.number().optional(), // in milliseconds
 		metadata: z.record(z.unknown()).optional(),
 	}),
@@ -20,7 +20,7 @@ export const AgentTaskRequestedSchema = z.object({
 
 export const AgentTaskCompletedSchema = z.object({
 	id: z.string().uuid(),
-	type: z.literal("agent.task.completed"),
+	type: z.literal('agent.task.completed'),
 	source: z.string(),
 	subject: z.string(),
 	time: z.string().datetime(),
@@ -34,7 +34,7 @@ export const AgentTaskCompletedSchema = z.object({
 
 export const AgentTaskFailedSchema = z.object({
 	id: z.string().uuid(),
-	type: z.literal("agent.task.failed"),
+	type: z.literal('agent.task.failed'),
 	source: z.string(),
 	subject: z.string(),
 	time: z.string().datetime(),
@@ -82,7 +82,7 @@ export class TaskRegistry {
 // Example task handlers
 export class DataProcessingHandler implements TaskHandler {
 	canHandle(taskType: string): boolean {
-		return taskType === "data.process";
+		return taskType === 'data.process';
 	}
 
 	async execute(task: AgentTaskRequested): Promise<Record<string, unknown>> {
@@ -106,7 +106,7 @@ export class DataProcessingHandler implements TaskHandler {
 
 export class AnalysisHandler implements TaskHandler {
 	canHandle(taskType: string): boolean {
-		return taskType === "data.analyze";
+		return taskType === 'data.analyze';
 	}
 
 	async execute(task: AgentTaskRequested): Promise<Record<string, unknown>> {
@@ -118,18 +118,18 @@ export class AnalysisHandler implements TaskHandler {
 		return {
 			analyzed: true,
 			insights: [
-				"Pattern detected in data",
-				"Anomaly found at position 42",
-				"Recommendation: increase monitoring",
+				'Pattern detected in data',
+				'Anomaly found at position 42',
+				'Recommendation: increase monitoring',
 			],
 			confidence: 0.85,
 			processedAt: new Date().toISOString(),
 			result: {
 				...payload,
 				analysis: {
-					patterns: ["pattern1", "pattern2"],
-					anomalies: ["anomaly1"],
-					recommendations: ["recommendation1"],
+					patterns: ['pattern1', 'pattern2'],
+					anomalies: ['anomaly1'],
+					recommendations: ['recommendation1'],
 				},
 			},
 		};
@@ -141,12 +141,12 @@ export class AgentA extends EventEmitter {
 	private registry = new TaskRegistry();
 	private isRunning = false;
 
-	constructor(private agentId: string = "agent-a") {
+	constructor(private agentId: string = 'agent-a') {
 		super();
 
 		// Register default handlers
-		this.registry.register("data.process", new DataProcessingHandler());
-		this.registry.register("data.analyze", new AnalysisHandler());
+		this.registry.register('data.process', new DataProcessingHandler());
+		this.registry.register('data.analyze', new AnalysisHandler());
 	}
 
 	start(): void {
@@ -155,7 +155,7 @@ export class AgentA extends EventEmitter {
 		}
 
 		this.isRunning = true;
-		this.emit("started", this.agentId);
+		this.emit('started', this.agentId);
 	}
 
 	stop(): void {
@@ -164,7 +164,7 @@ export class AgentA extends EventEmitter {
 		}
 
 		this.isRunning = false;
-		this.emit("stopped", this.agentId);
+		this.emit('stopped', this.agentId);
 	}
 
 	getSupportedTaskTypes(): string[] {
@@ -173,7 +173,7 @@ export class AgentA extends EventEmitter {
 
 	registerTaskHandler(taskType: string, handler: TaskHandler): void {
 		this.registry.register(taskType, handler);
-		this.emit("handlerRegistered", taskType);
+		this.emit('handlerRegistered', taskType);
 	}
 
 	async processTask(
@@ -186,14 +186,14 @@ export class AgentA extends EventEmitter {
 			const executionTime = Date.now() - startTime;
 			return {
 				id: crypto.randomUUID(),
-				type: "agent.task.failed",
+				type: 'agent.task.failed',
 				source: this.agentId,
 				subject: task.subject,
 				time: new Date().toISOString(),
 				data: {
 					taskId: task.data.taskId,
 					error: `No handler found for task type: ${task.data.taskType}`,
-					errorCode: "HANDLER_NOT_FOUND",
+					errorCode: 'HANDLER_NOT_FOUND',
 					executionTime,
 					retryable: false,
 				},
@@ -206,7 +206,7 @@ export class AgentA extends EventEmitter {
 
 			const completed: AgentTaskCompleted = {
 				id: crypto.randomUUID(),
-				type: "agent.task.completed",
+				type: 'agent.task.completed',
 				source: this.agentId,
 				subject: task.subject,
 				time: new Date().toISOString(),
@@ -217,7 +217,7 @@ export class AgentA extends EventEmitter {
 				},
 			};
 
-			this.emit("taskCompleted", completed);
+			this.emit('taskCompleted', completed);
 			return completed;
 		} catch (error) {
 			const executionTime = Date.now() - startTime;
@@ -226,20 +226,20 @@ export class AgentA extends EventEmitter {
 
 			const failed: AgentTaskFailed = {
 				id: crypto.randomUUID(),
-				type: "agent.task.failed",
+				type: 'agent.task.failed',
 				source: this.agentId,
 				subject: task.subject,
 				time: new Date().toISOString(),
 				data: {
 					taskId: task.data.taskId,
 					error: errorMessage,
-					errorCode: "EXECUTION_ERROR",
+					errorCode: 'EXECUTION_ERROR',
 					executionTime,
 					retryable: true,
 				},
 			};
 
-			this.emit("taskFailed", failed);
+			this.emit('taskFailed', failed);
 			return failed;
 		}
 	}
@@ -248,13 +248,13 @@ export class AgentA extends EventEmitter {
 	createTaskRequest(
 		taskType: string,
 		payload: Record<string, unknown>,
-		priority: AgentTaskRequested["data"]["priority"] = "medium",
+		priority: AgentTaskRequested['data']['priority'] = 'medium',
 		timeout?: number,
 	): AgentTaskRequested {
 		return {
 			id: crypto.randomUUID(),
-			type: "agent.task.requested",
-			source: "external",
+			type: 'agent.task.requested',
+			source: 'external',
 			subject: `${this.agentId}:${taskType}`,
 			time: new Date().toISOString(),
 			data: {

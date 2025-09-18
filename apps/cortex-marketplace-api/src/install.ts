@@ -2,4 +2,4 @@ export {
 	generateCommand,
 	generateCommands,
 	generateInstructions,
-} from "./lib/install-commands.js";
+} from './lib/install-commands.js';

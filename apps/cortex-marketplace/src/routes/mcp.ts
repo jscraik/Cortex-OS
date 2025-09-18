@@ -3,8 +3,8 @@
  * @description API routes for MCP tool integration
  */
 
-import type { FastifyInstance } from "fastify";
-import { createMarketplaceMcpIntegration } from "../mcp/integration.js";
+import type { FastifyInstance } from 'fastify';
+import { createMarketplaceMcpIntegration } from '../mcp/integration.js';
 
 export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 	// Initialize MCP integration
@@ -15,32 +15,32 @@ export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// List available MCP tools
 	fastify.get(
-		"/mcp/tools",
+		'/mcp/tools',
 		{
 			schema: {
-				tags: ["mcp"],
-				summary: "List MCP tools",
-				description: "Get all available MCP tools for the marketplace",
+				tags: ['mcp'],
+				summary: 'List MCP tools',
+				description: 'Get all available MCP tools for the marketplace',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							tools: {
-								type: "array",
+								type: 'array',
 								items: {
-									type: "object",
+									type: 'object',
 									properties: {
-										name: { type: "string" },
-										description: { type: "string" },
+										name: { type: 'string' },
+										description: { type: 'string' },
 										aliases: {
-											type: "array",
-											items: { type: "string" },
+											type: 'array',
+											items: { type: 'string' },
 										},
 									},
 								},
 							},
-							count: { type: "integer" },
+							count: { type: 'integer' },
 						},
 					},
 				},
@@ -59,84 +59,84 @@ export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Execute MCP tool
 	fastify.post(
-		"/mcp/execute",
+		'/mcp/execute',
 		{
 			schema: {
-				tags: ["mcp"],
-				summary: "Execute MCP tool",
-				description: "Execute a specific MCP tool with parameters",
+				tags: ['mcp'],
+				summary: 'Execute MCP tool',
+				description: 'Execute a specific MCP tool with parameters',
 				body: {
-					type: "object",
+					type: 'object',
 					properties: {
 						tool: {
-							type: "string",
-							description: "Tool name or alias to execute",
+							type: 'string',
+							description: 'Tool name or alias to execute',
 						},
 						params: {
-							type: "object",
-							description: "Tool-specific parameters",
+							type: 'object',
+							description: 'Tool-specific parameters',
 						},
 						correlationId: {
-							type: "string",
-							description: "Optional correlation ID for tracking",
+							type: 'string',
+							description: 'Optional correlation ID for tracking',
 						},
 					},
-					required: ["tool"],
+					required: ['tool'],
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
 							content: {
-								type: "array",
+								type: 'array',
 								items: {
-									type: "object",
+									type: 'object',
 									properties: {
-										type: { type: "string" },
-										text: { type: "string" },
+										type: { type: 'string' },
+										text: { type: 'string' },
 									},
 								},
 							},
 							metadata: {
-								type: "object",
+								type: 'object',
 								properties: {
-									correlationId: { type: "string" },
-									timestamp: { type: "string" },
-									tool: { type: "string" },
+									correlationId: { type: 'string' },
+									timestamp: { type: 'string' },
+									tool: { type: 'string' },
 								},
 							},
-							isError: { type: "boolean" },
+							isError: { type: 'boolean' },
 						},
 					},
 					400: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							error: {
-								type: "object",
+								type: 'object',
 								properties: {
-									code: { type: "string" },
-									message: { type: "string" },
+									code: { type: 'string' },
+									message: { type: 'string' },
 									details: {
-										type: "array",
-										items: { type: "string" },
+										type: 'array',
+										items: { type: 'string' },
 									},
 								},
 							},
 						},
 					},
 					500: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							error: {
-								type: "object",
+								type: 'object',
 								properties: {
-									code: { type: "string" },
-									message: { type: "string" },
+									code: { type: 'string' },
+									message: { type: 'string' },
 									details: {
-										type: "array",
-										items: { type: "string" },
+										type: 'array',
+										items: { type: 'string' },
 									},
 								},
 							},
@@ -147,16 +147,17 @@ export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 		},
 		async (request, reply) => {
 			try {
-			const { tool, params = {} } = request.body as {
-				tool: string;
-				params?: unknown;
-				correlationId?: string;
-			};				if (!tool || typeof tool !== "string") {
+				const { tool, params = {} } = request.body as {
+					tool: string;
+					params?: unknown;
+					correlationId?: string;
+				};
+				if (!tool || typeof tool !== 'string') {
 					return reply.status(400).send({
 						success: false,
 						error: {
-							code: "INVALID_REQUEST",
-							message: "Tool name is required and must be a string",
+							code: 'INVALID_REQUEST',
+							message: 'Tool name is required and must be a string',
 						},
 					});
 				}
@@ -176,15 +177,15 @@ export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 
 				return result;
 			} catch (error) {
-				fastify.log.error(error, "MCP tool execution failed");
+				fastify.log.error(error, 'MCP tool execution failed');
 
 				return reply.status(500).send({
 					success: false,
 					error: {
-						code: "INTERNAL_ERROR",
-						message: "Tool execution failed",
+						code: 'INTERNAL_ERROR',
+						message: 'Tool execution failed',
 						details:
-							process.env.NODE_ENV === "development" && error instanceof Error
+							process.env.NODE_ENV === 'development' && error instanceof Error
 								? [error.message]
 								: [],
 					},
@@ -195,45 +196,45 @@ export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get MCP tool schema
 	fastify.get(
-		"/mcp/tools/:toolName/schema",
+		'/mcp/tools/:toolName/schema',
 		{
 			schema: {
-				tags: ["mcp"],
-				summary: "Get tool schema",
-				description: "Get the input schema for a specific MCP tool",
+				tags: ['mcp'],
+				summary: 'Get tool schema',
+				description: 'Get the input schema for a specific MCP tool',
 				params: {
-					type: "object",
+					type: 'object',
 					properties: {
-						toolName: { type: "string" },
+						toolName: { type: 'string' },
 					},
-					required: ["toolName"],
+					required: ['toolName'],
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
-							tool: { type: "string" },
-							schema: { 
-								type: "object",
+							success: { type: 'boolean' },
+							tool: { type: 'string' },
+							schema: {
+								type: 'object',
 								additionalProperties: true,
 								properties: {
-									description: { type: "string" },
-									aliases: { type: "array", items: { type: "string" } },
-									inputSchema: { type: "object", additionalProperties: true },
+									description: { type: 'string' },
+									aliases: { type: 'array', items: { type: 'string' } },
+									inputSchema: { type: 'object', additionalProperties: true },
 								},
 							},
 						},
 					},
 					404: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							error: {
-								type: "object",
+								type: 'object',
 								properties: {
-									code: { type: "string" },
-									message: { type: "string" },
+									code: { type: 'string' },
+									message: { type: 'string' },
 								},
 							},
 						},
@@ -245,15 +246,15 @@ export async function mcpRoutes(fastify: FastifyInstance): Promise<void> {
 			const { toolName } = request.params as { toolName: string };
 
 			const tools = mcpIntegration.listTools();
-			const tool = tools.find((t) => 
-				t.name === toolName || t.aliases?.includes(toolName)
+			const tool = tools.find(
+				(t) => t.name === toolName || t.aliases?.includes(toolName),
 			);
 
 			if (!tool) {
 				return reply.status(404).send({
 					success: false,
 					error: {
-						code: "TOOL_NOT_FOUND",
+						code: 'TOOL_NOT_FOUND',
 						message: `Tool '${toolName}' not found`,
 					},
 				});

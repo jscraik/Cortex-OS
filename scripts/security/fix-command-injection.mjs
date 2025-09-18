@@ -3,21 +3,21 @@
 // Script to automatically fix command injection vulnerabilities
 // This script updates executor.py and mcp_server.py to use secure command execution
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-console.log("Automatically fixing command injection vulnerabilities...");
+console.log('Automatically fixing command injection vulnerabilities...');
 
 // Fix executor.py
 const executorPath = join(
-	"packages",
-	"mcp",
-	"src",
-	"python",
-	"src",
-	"executor.py",
+	'packages',
+	'mcp',
+	'src',
+	'python',
+	'src',
+	'executor.py',
 );
-let executorContent = readFileSync(executorPath, "utf-8");
+let executorContent = readFileSync(executorPath, 'utf-8');
 
 // Add a comment about security improvements
 executorContent = executorContent.replace(
@@ -31,7 +31,7 @@ executorContent = executorContent.replace(
 
 // Add timeout validation and resource limits
 executorContent = executorContent.replace(
-	"DEFAULT_TIMEOUT = 3  # seconds",
+	'DEFAULT_TIMEOUT = 3  # seconds',
 	`DEFAULT_TIMEOUT = 3  # seconds
 MAX_TIMEOUT = 10  # Maximum allowed timeout
 MAX_CODE_LENGTH = 10000  # Maximum code length in characters`,
@@ -39,7 +39,7 @@ MAX_CODE_LENGTH = 10000  # Maximum code length in characters`,
 
 // Add input validation to the run_code function
 executorContent = executorContent.replace(
-	"def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:",
+	'def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:',
 	`def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:
     """Run \`code\` in a subprocess, return (exit_code, stdout, stderr).
 
@@ -63,23 +63,23 @@ executorContent = executorContent.replace(
 writeFileSync(executorPath, executorContent);
 
 console.log(
-	"✅ Command injection vulnerabilities have been marked for fixing in executor.py",
+	'✅ Command injection vulnerabilities have been marked for fixing in executor.py',
 );
 
 // Fix mcp_server.py
 const mcpServerPath = join(
-	"packages",
-	"mcp",
-	"src",
-	"tools",
-	"docker",
-	"mcp_server.py",
+	'packages',
+	'mcp',
+	'src',
+	'tools',
+	'docker',
+	'mcp_server.py',
 );
-let mcpServerContent = readFileSync(mcpServerPath, "utf-8");
+let mcpServerContent = readFileSync(mcpServerPath, 'utf-8');
 
 // Add import for SecureCommandExecutor
 mcpServerContent = mcpServerContent.replace(
-	"from pydantic import BaseModel",
+	'from pydantic import BaseModel',
 	`from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
 # from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`,
@@ -156,8 +156,8 @@ mcpServerContent = mcpServerContent.replace(
 writeFileSync(mcpServerPath, mcpServerContent);
 
 console.log(
-	"✅ Command injection vulnerabilities have been marked for fixing in mcp_server.py",
+	'✅ Command injection vulnerabilities have been marked for fixing in mcp_server.py',
 );
 console.log(
-	"⚠️  Please review the TODO comments and implement proper input validation",
+	'⚠️  Please review the TODO comments and implement proper input validation',
 );

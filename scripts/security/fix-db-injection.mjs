@@ -3,25 +3,25 @@
 // Script to automatically fix database injection vulnerabilities
 // This script updates DatabaseManager.ts to use secure database operations
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-console.log("Automatically fixing database injection vulnerabilities...");
+console.log('Automatically fixing database injection vulnerabilities...');
 
 // Read the DatabaseManager.ts file
 const databaseManagerPath = join(
-	"apps",
-	"cortex-os",
-	"packages",
-	"agents",
-	"src",
-	"legacy-instructions",
-	"DatabaseManager.ts",
+	'apps',
+	'cortex-os',
+	'packages',
+	'agents',
+	'src',
+	'legacy-instructions',
+	'DatabaseManager.ts',
 );
-let content = readFileSync(databaseManagerPath, "utf-8");
+let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Add import for SecureDatabaseWrapper at the top of the file
-if (!content.includes("SecureDatabaseWrapper")) {
+if (!content.includes('SecureDatabaseWrapper')) {
 	content = content.replace(
 		"import { KGDoc } from '@cortex-os/rag/rag-contracts/src';",
 		`import { KGDoc } from '@cortex-os/rag/rag-contracts/src';
@@ -144,8 +144,8 @@ for (const { pattern, replacement } of insecurePatterns) {
 writeFileSync(databaseManagerPath, content);
 
 console.log(
-	"✅ Database injection vulnerabilities have been marked for fixing in DatabaseManager.ts",
+	'✅ Database injection vulnerabilities have been marked for fixing in DatabaseManager.ts',
 );
 console.log(
-	"⚠️  Please review the TODO comments and implement proper input validation",
+	'⚠️  Please review the TODO comments and implement proper input validation',
 );

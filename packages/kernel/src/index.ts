@@ -22,6 +22,8 @@ export {
 } from './events/kernel-events.js';
 // Core kernel exports
 export { CortexKernel, createKernel } from './graph-simple.js';
+// LangGraph adoption seam (Phase 1: skeleton graph)
+export { createKernelGraph } from './langgraph/graph.js';
 // History helper
 export {
 	addToHistory,
@@ -31,7 +33,6 @@ export {
 export type { MCPContext, MCPTool } from './mcp/adapter.js';
 // MCP integration
 export { createDefaultMCPTools, MCPAdapter } from './mcp/adapter.js';
-
 // Workflow nodes
 export {
 	BuildNode,
@@ -67,6 +68,3 @@ export type {
 	TeachingPattern,
 } from './teaching/example-capture.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
-
-// LangGraph adoption seam (Phase 1: skeleton graph)
-export { createKernelGraph } from './langgraph/graph.js';

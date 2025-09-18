@@ -7,61 +7,61 @@
  * @version 1.0.0
  */
 
-import { execSync } from "node:child_process";
-import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { execSync } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 // Colors for console output
 const colors = {
-	reset: "\x1b[0m",
-	bright: "\x1b[1m",
+	reset: '\x1b[0m',
+	bright: '\x1b[1m',
 	fg: {
-		red: "\x1b[31m",
-		green: "\x1b[32m",
-		yellow: "\x1b[33m",
-		blue: "\x1b[34m",
-		magenta: "\x1b[35m",
-		cyan: "\x1b[36m",
+		red: '\x1b[31m',
+		green: '\x1b[32m',
+		yellow: '\x1b[33m',
+		blue: '\x1b[34m',
+		magenta: '\x1b[35m',
+		cyan: '\x1b[36m',
 	},
 };
 
 // Test categories
 const testCategories = [
 	{
-		name: "Static Analysis",
-		description: "Semgrep security scanning",
+		name: 'Static Analysis',
+		description: 'Semgrep security scanning',
 		command:
-			"npx semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR .",
+			'npx semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR .',
 		required: true,
 	},
 	{
-		name: "Unit Tests",
-		description: "Security unit tests",
-		command: "npm run test:security:unit",
+		name: 'Unit Tests',
+		description: 'Security unit tests',
+		command: 'npm run test:security:unit',
 		required: true,
 	},
 	{
-		name: "Integration Tests",
-		description: "Security integration tests",
-		command: "npm run test:security:integration",
+		name: 'Integration Tests',
+		description: 'Security integration tests',
+		command: 'npm run test:security:integration',
 		required: true,
 	},
 	{
-		name: "Regression Tests",
-		description: "Security regression tests",
-		command: "npm run test:security:regression",
+		name: 'Regression Tests',
+		description: 'Security regression tests',
+		command: 'npm run test:security:regression',
 		required: true,
 	},
 	{
-		name: "Dependency Audit",
-		description: "NPM dependency security audit",
-		command: "npm audit --audit-level=high",
+		name: 'Dependency Audit',
+		description: 'NPM dependency security audit',
+		command: 'npm audit --audit-level=high',
 		required: false,
 	},
 	{
-		name: "Type Checking",
-		description: "TypeScript type checking",
-		command: "npx tsc --noEmit --project tsconfig.json",
+		name: 'Type Checking',
+		description: 'TypeScript type checking',
+		command: 'npx tsc --noEmit --project tsconfig.json',
 		required: false,
 	},
 ];
@@ -97,10 +97,10 @@ async function runTest(category) {
 
 	const startTime = Date.now();
 	let success = false;
-	let errorMessage = "";
+	let errorMessage = '';
 
 	try {
-		execSync(category.command, { stdio: "inherit" });
+		execSync(category.command, { stdio: 'inherit' });
 		success = true;
 		logSuccess(`✅ ${category.name} tests passed`);
 	} catch (error) {
@@ -131,7 +131,7 @@ async function runTest(category) {
 
 // Function to generate a security report
 async function generateSecurityReport() {
-	logHeader("\n📊 Generating Security Report");
+	logHeader('\n📊 Generating Security Report');
 
 	const totalTests = testResults.length;
 	const passedTests = testResults.filter((r) => r.success).length;
@@ -142,9 +142,9 @@ async function generateSecurityReport() {
 		(r) => !r.success && !r.required,
 	).length;
 
-	const overallStatus = failedTests > 0 ? "FAIL" : "PASS";
+	const overallStatus = failedTests > 0 ? 'FAIL' : 'PASS';
 	const _overallColor =
-		overallStatus === "PASS" ? colors.fg.green : colors.fg.red;
+		overallStatus === 'PASS' ? colors.fg.green : colors.fg.red;
 
 	const reportContent = `
 # 🛡️ Security Test Report
@@ -163,10 +163,10 @@ ${testResults
 	.map(
 		(result) =>
 			`| ${result.category} | ${result.description} | ${
-				result.success ? "✅ PASS" : result.required ? "❌ FAIL" : "⚠️  WARN"
+				result.success ? '✅ PASS' : result.required ? '❌ FAIL' : '⚠️  WARN'
 			} | ${result.duration} |`,
 	)
-	.join("\n")}
+	.join('\n')}
 
 ## Detailed Results
 
@@ -175,12 +175,12 @@ ${testResults
 		(result) =>
 			`### ${result.category}
 - **Description:** ${result.description}
-- **Status:** ${result.success ? "✅ PASS" : result.required ? "❌ FAIL" : "⚠️  WARN"}
+- **Status:** ${result.success ? '✅ PASS' : result.required ? '❌ FAIL' : '⚠️  WARN'}
 - **Duration:** ${result.duration} ms
-${!result.success && result.errorMessage ? `- **Error:** ${result.errorMessage}` : ""}
+${!result.success && result.errorMessage ? `- **Error:** ${result.errorMessage}` : ''}
 `,
 	)
-	.join("\n")}
+	.join('\n')}
 
 ## Security Metrics
 
@@ -193,19 +193,19 @@ ${!result.success && result.errorMessage ? `- **Error:** ${result.errorMessage}`
 
 ${
 	failedTests > 0
-		? "❌ Critical security issues must be addressed before deployment"
-		: "✅ No critical security issues found"
+		? '❌ Critical security issues must be addressed before deployment'
+		: '✅ No critical security issues found'
 }
 
 ${
 	warningTests > 0
-		? "⚠️  Address warning issues to improve security posture"
-		: "✅ All security tests passed with no warnings"
+		? '⚠️  Address warning issues to improve security posture'
+		: '✅ All security tests passed with no warnings'
 }
 `;
 
 	// Write report to file
-	const reportPath = join(process.cwd(), "security-report.md");
+	const reportPath = join(process.cwd(), 'security-report.md');
 	await writeFile(reportPath, reportContent);
 
 	logSuccess(`✅ Security report generated at ${reportPath}`);
@@ -221,9 +221,9 @@ ${
 
 // Function to display summary
 function displaySummary(_results) {
-	logHeader("\n📋 Security Test Summary");
+	logHeader('\n📋 Security Test Summary');
 
-	console.log("");
+	console.log('');
 	testResults.forEach((result) => {
 		const statusIcon = result.success
 			? `${colors.fg.green}✅${colors.reset}`
@@ -234,7 +234,7 @@ function displaySummary(_results) {
 		console.log(`${statusIcon} ${result.category} (${result.duration}ms)`);
 	});
 
-	console.log("");
+	console.log('');
 	const totalTests = testResults.length;
 	const passedTests = testResults.filter((r) => r.success).length;
 	const failedTests = testResults.filter(
@@ -247,13 +247,13 @@ function displaySummary(_results) {
 		logError(`❌ ${failedTests} critical security tests failed`);
 		process.exit(1);
 	} else {
-		logSuccess("✅ All critical security tests passed");
+		logSuccess('✅ All critical security tests passed');
 	}
 }
 
 // Main function
 async function main() {
-	logHeader("🚀 Starting Security Tests");
+	logHeader('🚀 Starting Security Tests');
 
 	try {
 		// Run all tests

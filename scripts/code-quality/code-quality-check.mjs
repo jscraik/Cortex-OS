@@ -10,28 +10,28 @@
  * maintain strict TDD and software engineering principles.
  */
 
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
 const repoRoot = process.cwd();
 const ignoreDirs = new Set([
-	"node_modules",
-	".git",
-	"dist",
-	"build",
-	"coverage",
-	".cortex",
+	'node_modules',
+	'.git',
+	'dist',
+	'build',
+	'coverage',
+	'.cortex',
 	// Common Python virtualenvs and caches
-	".venv",
-	"venv",
-	"env",
-	".mypy_cache",
-	".pytest_cache",
-	"__pycache__",
+	'.venv',
+	'venv',
+	'env',
+	'.mypy_cache',
+	'.pytest_cache',
+	'__pycache__',
 	// Python site-packages in nested app folders
-	"site-packages",
+	'site-packages',
 	// Generated artifacts
-	"out",
+	'out',
 ]);
 
 function walk(dir) {
@@ -61,11 +61,11 @@ function walk(dir) {
 
 function analyseFile(filePath) {
 	const ext = path.extname(filePath);
-	const content = fs.readFileSync(filePath, "utf8");
+	const content = fs.readFileSync(filePath, 'utf8');
 	const lines = content.split(/\r?\n/);
 	const recommendations = [];
 	// Detect long functions (>40 lines)
-	if (ext === ".py") {
+	if (ext === '.py') {
 		let inFunc = false;
 		let funcStart = 0;
 		let indentLevel = null;
@@ -82,11 +82,11 @@ function analyseFile(filePath) {
 				// function ends when indent less than or equal to starting indent and not the same line
 				if (
 					i > funcStart &&
-					(currentIndent <= indentLevel || line.trim() === "")
+					(currentIndent <= indentLevel || line.trim() === '')
 				) {
 					const length = i - funcStart;
 					if (length > 40) {
-						const name = funcMatch ? funcMatch[1] : "<anonymous>";
+						const name = funcMatch ? funcMatch[1] : '<anonymous>';
 						recommendations.push(
 							`Function ${name} in ${filePath} has ${length} lines; consider splitting it.`,
 						);
@@ -110,16 +110,16 @@ function analyseFile(filePath) {
 				if (match) {
 					inFunc = true;
 					funcStart = i;
-					funcName = match[1] || match[2] || match[3] || "<anonymous>";
+					funcName = match[1] || match[2] || match[3] || '<anonymous>';
 					// reset brace count based on first { encountered later
 				}
 			}
 			if (inFunc) {
 				for (const char of line) {
-					if (char === "{") braceCount++;
-					if (char === "}") braceCount--;
+					if (char === '{') braceCount++;
+					if (char === '}') braceCount--;
 				}
-				if (braceCount === 0 && line.includes("}")) {
+				if (braceCount === 0 && line.includes('}')) {
 					const length = i - funcStart + 1;
 					if (length > 40) {
 						recommendations.push(
@@ -140,7 +140,7 @@ function analyseFile(filePath) {
 	const jsConstRegex = /const\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
 	const jsLetRegex = /let\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
 	// Note: matchAll used below; no single-match variable needed
-	if (ext === ".py") {
+	if (ext === '.py') {
 		for (const m of content.matchAll(pythonFuncRegex)) {
 			const name = m[1];
 			if (!name) continue;
@@ -171,7 +171,7 @@ function analyseFile(filePath) {
 	}
 	if (badNames.length > 0) {
 		recommendations.push(
-			`Inconsistent naming in ${filePath}: ${badNames.join(", ")}.`,
+			`Inconsistent naming in ${filePath}: ${badNames.join(', ')}.`,
 		);
 	}
 	return recommendations;
@@ -187,8 +187,8 @@ function main() {
 	// Compute score
 	let score = 10;
 	// Each category of issue counts as –2
-	if (allRecommendations.some((r) => r.includes("has"))) score -= 2;
-	if (allRecommendations.some((r) => r.includes("Inconsistent naming")))
+	if (allRecommendations.some((r) => r.includes('has'))) score -= 2;
+	if (allRecommendations.some((r) => r.includes('Inconsistent naming')))
 		score -= 2;
 	if (score < 0) score = 0;
 	const output = {

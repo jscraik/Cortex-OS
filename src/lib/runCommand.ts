@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn } from 'node:child_process';
 
 export interface RunCommandOptions {
 	timeoutMs?: number;
@@ -9,28 +9,28 @@ export async function runCommand(
 	args: string[] = [],
 	{ timeoutMs = 30_000 }: RunCommandOptions = {},
 ): Promise<{ stdout: string; stderr: string; code: number }> {
-	const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+	const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
 	const execPromise = new Promise<{
 		stdout: string;
 		stderr: string;
 		code: number;
 	}>((resolve, reject) => {
-		let stdout = "";
-		let stderr = "";
+		let stdout = '';
+		let stderr = '';
 
-		child.stdout?.on("data", (d) => {
+		child.stdout?.on('data', (d) => {
 			stdout += d.toString();
 		});
-		child.stderr?.on("data", (d) => {
+		child.stderr?.on('data', (d) => {
 			stderr += d.toString();
 		});
 
-		child.on("error", (err) => {
+		child.on('error', (err) => {
 			reject(err);
 		});
 
-		child.on("close", (code) => {
+		child.on('close', (code) => {
 			resolve({ stdout, stderr, code: code ?? 0 });
 		});
 	});
@@ -42,7 +42,7 @@ export async function runCommand(
 			const graceTimer = setTimeout(() => {
 				// If the process is still running, send SIGKILL
 				if (!child.killed) {
-					child.kill("SIGKILL");
+					child.kill('SIGKILL');
 				}
 				reject(
 					new Error(
@@ -51,7 +51,7 @@ export async function runCommand(
 				);
 			}, GRACE_PERIOD_MS);
 			// If the process exits during the grace period, clear the grace timer
-			child.once("exit", () => clearTimeout(graceTimer));
+			child.once('exit', () => clearTimeout(graceTimer));
 		}, timeoutMs);
 		execPromise.finally(() => clearTimeout(timer));
 	});

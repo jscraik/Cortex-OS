@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Core output schema for Cortex-OS neurons
 export const CoreOutputSchema = z.object({

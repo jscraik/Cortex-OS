@@ -3,34 +3,34 @@
  * @description API routes for server categories
  */
 
-import type { FastifyInstance } from "fastify";
-import { DEFAULT_LIMIT, MAX_LIMIT } from "../constants.js";
+import type { FastifyInstance } from 'fastify';
+import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
 
 export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
 	// Get all categories
 	fastify.get(
-		"/categories",
+		'/categories',
 		{
 			schema: {
-				tags: ["categories"],
-				summary: "List categories",
-				description: "Get all server categories with counts and descriptions",
+				tags: ['categories'],
+				summary: 'List categories',
+				description: 'Get all server categories with counts and descriptions',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "object",
+								type: 'object',
 								properties: {
 									categories: {
-										type: "object",
+										type: 'object',
 										additionalProperties: {
-											type: "object",
+											type: 'object',
 											properties: {
-												name: { type: "string" },
-												count: { type: "integer" },
-												description: { type: "string" },
+												name: { type: 'string' },
+												count: { type: 'integer' },
+												description: { type: 'string' },
 											},
 										},
 									},
@@ -56,58 +56,58 @@ export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get servers by category
 	fastify.get(
-		"/categories/:category/servers",
+		'/categories/:category/servers',
 		{
 			schema: {
-				tags: ["categories"],
-				summary: "Get servers by category",
-				description: "Get all servers in a specific category",
+				tags: ['categories'],
+				summary: 'Get servers by category',
+				description: 'Get all servers in a specific category',
 				params: {
-					type: "object",
+					type: 'object',
 					properties: {
-						category: { type: "string" },
+						category: { type: 'string' },
 					},
-					required: ["category"],
+					required: ['category'],
 				},
 				querystring: {
-					type: "object",
+					type: 'object',
 					properties: {
 						limit: {
-							type: "integer",
+							type: 'integer',
 							minimum: 1,
 							maximum: MAX_LIMIT,
 							default: DEFAULT_LIMIT,
 						},
 
-						offset: { type: "integer", minimum: 0, default: 0 },
+						offset: { type: 'integer', minimum: 0, default: 0 },
 						sortBy: {
-							type: "string",
-							enum: ["relevance", "downloads", "rating", "updated"],
-							default: "relevance",
+							type: 'string',
+							enum: ['relevance', 'downloads', 'rating', 'updated'],
+							default: 'relevance',
 						},
 						sortOrder: {
-							type: "string",
-							enum: ["asc", "desc"],
-							default: "desc",
+							type: 'string',
+							enum: ['asc', 'desc'],
+							default: 'desc',
 						},
 					},
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "array",
-								items: { $ref: "ServerManifest#" },
+								type: 'array',
+								items: { $ref: 'ServerManifest#' },
 							},
 							meta: {
-								type: "object",
+								type: 'object',
 								properties: {
-									total: { type: "integer" },
-									offset: { type: "integer" },
-									limit: { type: "integer" },
-									category: { type: "string" },
+									total: { type: 'integer' },
+									offset: { type: 'integer' },
+									limit: { type: 'integer' },
+									category: { type: 'string' },
 								},
 							},
 						},
@@ -121,13 +121,18 @@ export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
 			const queryObj = _request.query as Record<string, unknown>;
 
 			const sortBy = queryObj.sortBy as string;
-			const validSortBy = ["relevance", "downloads", "rating", "updated"].includes(sortBy)
-				? sortBy as "relevance" | "downloads" | "rating" | "updated"
-				: "relevance";
+			const validSortBy = [
+				'relevance',
+				'downloads',
+				'rating',
+				'updated',
+			].includes(sortBy)
+				? (sortBy as 'relevance' | 'downloads' | 'rating' | 'updated')
+				: 'relevance';
 			const sortOrder = queryObj.sortOrder as string;
-			const validSortOrder = ["asc", "desc"].includes(sortOrder)
-				? sortOrder as "asc" | "desc"
-				: "desc";
+			const validSortOrder = ['asc', 'desc'].includes(sortOrder)
+				? (sortOrder as 'asc' | 'desc')
+				: 'desc';
 
 			const searchRequest = {
 				category,

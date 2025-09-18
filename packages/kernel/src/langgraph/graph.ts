@@ -10,9 +10,9 @@
 // In Phase 1 step 2, we will wire real state + checkpointing using the official API.
 
 export interface KernelGraphSkeleton {
-  nodes: Array<{ id: string; type?: string }>;
-  edges: Array<{ from: string; to: string; condition?: string }>;
-  metadata?: Record<string, unknown>;
+	nodes: Array<{ id: string; type?: string }>;
+	edges: Array<{ from: string; to: string; condition?: string }>;
+	metadata?: Record<string, unknown>;
 }
 
 /**
@@ -20,13 +20,13 @@ export interface KernelGraphSkeleton {
  * provides a stable seam for incremental LangGraph adoption.
  */
 export function createKernelGraph(): KernelGraphSkeleton {
-  return {
-    nodes: [],
-    edges: [],
-    metadata: {
-      version: 0,
-      engine: 'langgraphjs-skeleton',
-      status: 'placeholder',
-    },
-  };
+	return {
+		nodes: [],
+		edges: [],
+		metadata: {
+			version: 0,
+			engine: 'langgraphjs-skeleton',
+			status: 'placeholder',
+		},
+	};
 }

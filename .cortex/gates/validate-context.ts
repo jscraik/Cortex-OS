@@ -1,8 +1,8 @@
 #!/usr/bin/env -S node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { globby } from "globby";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { globby } from 'globby';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -42,11 +42,11 @@ interface ContextLibrary {
 }
 
 async function validateContextLibrary() {
-	console.log("🔍 Validating context library...");
+	console.log('🔍 Validating context library...');
 	let failed = false;
 
 	// Load context library policy
-	const policyPath = resolve(__dirname, "../policy/context-library.json");
+	const policyPath = resolve(__dirname, '../policy/context-library.json');
 	if (!existsSync(policyPath)) {
 		console.error(`❌ Context library policy not found: ${policyPath}`);
 		return false;
@@ -54,15 +54,15 @@ async function validateContextLibrary() {
 
 	let contextLibrary: ContextLibrary;
 	try {
-		const policyContent = readFileSync(policyPath, "utf-8");
+		const policyContent = readFileSync(policyPath, 'utf-8');
 		contextLibrary = JSON.parse(policyContent);
 	} catch (error) {
-		console.error("❌ Failed to parse context library policy:", error);
+		console.error('❌ Failed to parse context library policy:', error);
 		return false;
 	}
 
 	// Get context directory and files
-	const contextDir = resolve(__dirname, "../context/");
+	const contextDir = resolve(__dirname, '../context/');
 	if (!existsSync(contextDir)) {
 		console.error(`❌ Context directory not found: ${contextDir}`);
 		return false;
@@ -73,7 +73,7 @@ async function validateContextLibrary() {
 		`${contextDir}/**/*.txt`,
 	]);
 	const relativeContextFiles = contextFiles.map((f) =>
-		f.replace(contextDir, "").replace(/^\//, ""),
+		f.replace(contextDir, '').replace(/^\//, ''),
 	);
 
 	// Validate each registered context source
@@ -89,7 +89,7 @@ async function validateContextLibrary() {
 		}
 
 		try {
-			const content = readFileSync(fullPath, "utf-8");
+			const content = readFileSync(fullPath, 'utf-8');
 
 			// Basic content validation
 			if (content.length < 100) {
@@ -101,7 +101,7 @@ async function validateContextLibrary() {
 			}
 
 			// Check for required sections
-			if (!content.includes("CODE SNIPPETS") && !content.includes("CODE:")) {
+			if (!content.includes('CODE SNIPPETS') && !content.includes('CODE:')) {
 				console.warn(
 					`⚠️  Context file may be missing code examples: ${filename}`,
 				);
@@ -118,12 +118,12 @@ async function validateContextLibrary() {
 
 	// Validate agent requirements
 	const agentTypes = [
-		"assistant",
-		"developer",
-		"reviewer",
-		"planner",
-		"architect",
-		"security",
+		'assistant',
+		'developer',
+		'reviewer',
+		'planner',
+		'architect',
+		'security',
 	];
 	for (const [agentType, requiredFiles] of Object.entries(
 		contextLibrary.integrationRules.requiredForAgents,
@@ -150,7 +150,7 @@ async function validateContextLibrary() {
 			contextLibrary.mcpServers,
 		)) {
 			// Validate repository URL format
-			if (!config.repository.startsWith("https://github.com/")) {
+			if (!config.repository.startsWith('https://github.com/')) {
 				console.error(
 					`❌ Invalid repository URL for MCP server ${serverName}: ${config.repository}`,
 				);
@@ -158,7 +158,7 @@ async function validateContextLibrary() {
 			}
 
 			// Validate security level
-			const validSecurityLevels = ["low", "medium", "high"];
+			const validSecurityLevels = ['low', 'medium', 'high'];
 			if (!validSecurityLevels.includes(config.security.riskLevel)) {
 				console.error(
 					`❌ Invalid security risk level for MCP server ${serverName}: ${config.security.riskLevel}`,
@@ -168,12 +168,12 @@ async function validateContextLibrary() {
 
 			// Validate agent relevance
 			const validAgentTypes = [
-				"assistant",
-				"developer",
-				"reviewer",
-				"planner",
-				"architect",
-				"security",
+				'assistant',
+				'developer',
+				'reviewer',
+				'planner',
+				'architect',
+				'security',
 			];
 			for (const agentType of config.agentRelevance) {
 				if (!validAgentTypes.includes(agentType)) {
@@ -200,17 +200,17 @@ async function validateContextLibrary() {
 	for (const filename of discoveredOnly) {
 		const fullPath = resolve(contextDir, filename);
 		try {
-			const content = readFileSync(fullPath, "utf-8");
+			const content = readFileSync(fullPath, 'utf-8');
 			const firstHeaderMatch = content.match(/^#\s+(.+)$/m);
 			const title = firstHeaderMatch ? firstHeaderMatch[1].trim() : filename;
 			const description = `Auto-discovered context: ${title}`;
 
 			// Minimal sensible defaults; can be refined later
 			const inferred: ContextMetadata = {
-				type: "reference",
+				type: 'reference',
 				description,
 				technologies: [],
-				agentRelevance: ["assistant"],
+				agentRelevance: ['assistant'],
 			};
 
 			// Basic content validation for discovered files
@@ -219,7 +219,7 @@ async function validateContextLibrary() {
 					`⚠️  Discovered file seems very short: ${filename} (${content.length} chars)`,
 				);
 			}
-			if (!content.includes("```") && !content.includes("CODE:")) {
+			if (!content.includes('```') && !content.includes('CODE:')) {
 				console.warn(
 					`⚠️  Discovered file may be missing code examples: ${filename}`,
 				);
@@ -238,7 +238,7 @@ async function validateContextLibrary() {
 
 	// Emit merged registry artifact for runtime consumption
 	try {
-		const outDir = resolve(__dirname, "../out");
+		const outDir = resolve(__dirname, '../out');
 		mkdirSync(outDir, { recursive: true });
 		const merged = {
 			...contextLibrary,
@@ -249,19 +249,19 @@ async function validateContextLibrary() {
 				totalOnDisk: relativeContextFiles.length,
 			},
 		};
-		const outPath = join(outDir, "context-registry.json");
-		writeFileSync(outPath, JSON.stringify(merged, null, 2), "utf-8");
+		const outPath = join(outDir, 'context-registry.json');
+		writeFileSync(outPath, JSON.stringify(merged, null, 2), 'utf-8');
 		console.log(`📝 Wrote merged context registry: ${outPath}`);
 	} catch (e) {
 		console.warn(`⚠️  Failed to write merged registry: ${e}`);
 	}
 
 	if (failed) {
-		console.error("❌ Context library validation failed");
+		console.error('❌ Context library validation failed');
 		return false;
 	}
 
-	console.log("✅ Context library validation passed");
+	console.log('✅ Context library validation passed');
 
 	const mcpServerCount = contextLibrary.mcpServers
 		? Object.keys(contextLibrary.mcpServers).length
@@ -279,6 +279,6 @@ validateContextLibrary()
 		process.exit(success ? 0 : 1);
 	})
 	.catch((error) => {
-		console.error("❌ Validation error:", error);
+		console.error('❌ Validation error:', error);
 		process.exit(1);
 	});

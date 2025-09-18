@@ -3,32 +3,32 @@
  * @description API routes for registry management
  */
 
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from 'fastify';
 
 export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 	// List all registries
 	fastify.get(
-		"/registries",
+		'/registries',
 		{
 			schema: {
-				tags: ["registries"],
-				summary: "List registries",
-				description: "Get list of all configured registries with their status",
+				tags: ['registries'],
+				summary: 'List registries',
+				description: 'Get list of all configured registries with their status',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "array",
+								type: 'array',
 								items: {
-									type: "object",
+									type: 'object',
 									properties: {
-										name: { type: "string" },
-										url: { type: "string" },
-										healthy: { type: "boolean" },
-										lastUpdated: { type: "string" },
-										serverCount: { type: "integer" },
+										name: { type: 'string' },
+										url: { type: 'string' },
+										healthy: { type: 'boolean' },
+										lastUpdated: { type: 'string' },
+										serverCount: { type: 'integer' },
 									},
 								},
 							},
@@ -50,43 +50,43 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Get registry status
 	fastify.get(
-		"/registries/:name/status",
+		'/registries/:name/status',
 		{
 			schema: {
-				tags: ["registries"],
-				summary: "Get registry status",
-				description: "Get health status and metadata for a specific registry",
+				tags: ['registries'],
+				summary: 'Get registry status',
+				description: 'Get health status and metadata for a specific registry',
 				params: {
-					type: "object",
+					type: 'object',
 					properties: {
-						name: { type: "string" },
+						name: { type: 'string' },
 					},
-					required: ["name"],
+					required: ['name'],
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							data: {
-								type: "object",
+								type: 'object',
 								properties: {
-									healthy: { type: "boolean" },
-									lastUpdated: { type: "string" },
-									error: { type: "string" },
+									healthy: { type: 'boolean' },
+									lastUpdated: { type: 'string' },
+									error: { type: 'string' },
 								},
 							},
 						},
 					},
 					404: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
+							success: { type: 'boolean' },
 							error: {
-								type: "object",
+								type: 'object',
 								properties: {
-									code: { type: "string" },
-									message: { type: "string" },
+									code: { type: 'string' },
+									message: { type: 'string' },
 								},
 							},
 						},
@@ -105,11 +105,11 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 					data: status,
 				};
 			} catch (error) {
-				if (error instanceof Error && error.message.includes("not found")) {
+				if (error instanceof Error && error.message.includes('not found')) {
 					return _reply.status(404).send({
 						success: false,
 						error: {
-							code: "REGISTRY_NOT_FOUND",
+							code: 'REGISTRY_NOT_FOUND',
 							message: `Registry '${name}' not found`,
 						},
 					});
@@ -121,32 +121,32 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Refresh registry cache
 	fastify.post(
-		"/registries/:name/refresh",
+		'/registries/:name/refresh',
 		{
 			schema: {
-				tags: ["registries"],
-				summary: "Refresh registry",
-				description: "Force refresh of registry data, clearing cache",
+				tags: ['registries'],
+				summary: 'Refresh registry',
+				description: 'Force refresh of registry data, clearing cache',
 				params: {
-					type: "object",
+					type: 'object',
 					properties: {
-						name: { type: "string" },
+						name: { type: 'string' },
 					},
-					required: ["name"],
+					required: ['name'],
 				},
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
-							message: { type: "string" },
+							success: { type: 'boolean' },
+							message: { type: 'string' },
 						},
 					},
 					404: {
-						type: "object",
+						type: 'object',
 						properties: {
-							error: { type: "string" },
-							code: { type: "string" },
+							error: { type: 'string' },
+							code: { type: 'string' },
 						},
 					},
 				},
@@ -163,11 +163,11 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 					message: `Registry '${name}' refreshed successfully`,
 				};
 			} catch (error) {
-				if (error instanceof Error && error.message.includes("not found")) {
+				if (error instanceof Error && error.message.includes('not found')) {
 					return _reply.status(404).send({
 						success: false,
 						error: {
-							code: "REGISTRY_NOT_FOUND",
+							code: 'REGISTRY_NOT_FOUND',
 							message: `Registry '${name}' not found`,
 						},
 					});
@@ -179,32 +179,32 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 
 	// Refresh all registries
 	fastify.post(
-		"/registries/refresh",
+		'/registries/refresh',
 		{
 			schema: {
-				tags: ["registries"],
-				summary: "Refresh all registries",
-				description: "Force refresh of all registry data, clearing all caches",
+				tags: ['registries'],
+				summary: 'Refresh all registries',
+				description: 'Force refresh of all registry data, clearing all caches',
 				response: {
 					200: {
-						type: "object",
+						type: 'object',
 						properties: {
-							success: { type: "boolean" },
-							message: { type: "string" },
+							success: { type: 'boolean' },
+							message: { type: 'string' },
 							results: {
-								type: "object",
+								type: 'object',
 								properties: {
-									refreshed: { type: "array", items: { type: "string" } },
-									failed: { type: "array", items: { type: "string" } },
+									refreshed: { type: 'array', items: { type: 'string' } },
+									failed: { type: 'array', items: { type: 'string' } },
 								},
 							},
 						},
 					},
 					500: {
-						type: "object",
+						type: 'object',
 						properties: {
-							error: { type: "string" },
-							code: { type: "string" },
+							error: { type: 'string' },
+							code: { type: 'string' },
 						},
 					},
 				},
@@ -219,7 +219,9 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 					message: `Refreshed all ${registries.length} registries`,
 				};
 			} catch (error) {
-				fastify.log.error(`Failed to refresh registries: ${error instanceof Error ? error.message : String(error)}`);
+				fastify.log.error(
+					`Failed to refresh registries: ${error instanceof Error ? error.message : String(error)}`,
+				);
 				return _reply.status(500).send({
 					error: 'Failed to refresh registries',
 					code: 'REFRESH_FAILED',

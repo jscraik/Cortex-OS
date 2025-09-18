@@ -8,19 +8,19 @@
  * @security OWASP Top 10 & MITRE ATLAS compliance
  */
 
-import { execSync } from "node:child_process";
+import { execSync } from 'node:child_process';
 
 // Colors for console output
 const colors = {
-	reset: "\x1b[0m",
-	bright: "\x1b[1m",
+	reset: '\x1b[0m',
+	bright: '\x1b[1m',
 	fg: {
-		red: "\x1b[31m",
-		green: "\x1b[32m",
-		yellow: "\x1b[33m",
-		blue: "\x1b[34m",
-		magenta: "\x1b[35m",
-		cyan: "\x1b[36m",
+		red: '\x1b[31m',
+		green: '\x1b[32m',
+		yellow: '\x1b[33m',
+		blue: '\x1b[34m',
+		magenta: '\x1b[35m',
+		cyan: '\x1b[36m',
 	},
 };
 
@@ -85,7 +85,7 @@ function _runCommand(description, command, expectedExitCode = 0) {
 	logInfo(`Running command: ${description}`);
 
 	try {
-		const output = execSync(command, { encoding: "utf-8", stdio: "pipe" });
+		const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe' });
 		logSuccess(`✅ Command succeeded: ${description}`);
 		return output;
 	} catch (error) {
@@ -93,7 +93,7 @@ function _runCommand(description, command, expectedExitCode = 0) {
 			logSuccess(
 				`✅ Command succeeded with expected exit code ${expectedExitCode}: ${description}`,
 			);
-			return error.stdout || "";
+			return error.stdout || '';
 		} else {
 			validationResults.failedTests++;
 			validationResults.errors.push(`${description}: ${error.message}`);
@@ -105,14 +105,14 @@ function _runCommand(description, command, expectedExitCode = 0) {
 
 // Validation tests
 async function runValidation() {
-	logHeader("🚀 Starting Security Improvements Validation");
+	logHeader('🚀 Starting Security Improvements Validation');
 
 	try {
 		// 1. Check that all security wrapper files exist
-		runTest("SecureDatabaseWrapper file exists", () => {
+		runTest('SecureDatabaseWrapper file exists', () => {
 			try {
-				execSync("test -f apps/cortex-os/packages/mvp-core/src/secure-db.ts", {
-					stdio: "ignore",
+				execSync('test -f apps/cortex-os/packages/mvp-core/src/secure-db.ts', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -120,10 +120,10 @@ async function runValidation() {
 			}
 		});
 
-		runTest("SecureNeo4j file exists", () => {
+		runTest('SecureNeo4j file exists', () => {
 			try {
-				execSync("test -f libs/typescript/utils/src/secure-neo4j.ts", {
-					stdio: "ignore",
+				execSync('test -f libs/typescript/utils/src/secure-neo4j.ts', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -131,12 +131,12 @@ async function runValidation() {
 			}
 		});
 
-		runTest("SecureCommandExecutor file exists", () => {
+		runTest('SecureCommandExecutor file exists', () => {
 			try {
 				execSync(
-					"test -f apps/cortex-os/packages/mvp-core/src/secure-executor.ts",
+					'test -f apps/cortex-os/packages/mvp-core/src/secure-executor.ts',
 					{
-						stdio: "ignore",
+						stdio: 'ignore',
 					},
 				);
 				return true;
@@ -145,10 +145,10 @@ async function runValidation() {
 			}
 		});
 
-		runTest("Validation utilities file exists", () => {
+		runTest('Validation utilities file exists', () => {
 			try {
-				execSync("test -f apps/cortex-os/packages/mvp-core/src/validation.ts", {
-					stdio: "ignore",
+				execSync('test -f apps/cortex-os/packages/mvp-core/src/validation.ts', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -157,10 +157,10 @@ async function runValidation() {
 		});
 
 		// 2. Check that all security test files exist
-		runTest("Database wrapper unit tests exist", () => {
+		runTest('Database wrapper unit tests exist', () => {
 			try {
-				execSync("test -f tests/security/database-wrapper.unit.test.ts", {
-					stdio: "ignore",
+				execSync('test -f tests/security/database-wrapper.unit.test.ts', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -168,10 +168,10 @@ async function runValidation() {
 			}
 		});
 
-		runTest("Neo4j wrapper unit tests exist", () => {
+		runTest('Neo4j wrapper unit tests exist', () => {
 			try {
-				execSync("test -f tests/security/neo4j-wrapper.unit.test.ts", {
-					stdio: "ignore",
+				execSync('test -f tests/security/neo4j-wrapper.unit.test.ts', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -179,10 +179,10 @@ async function runValidation() {
 			}
 		});
 
-		runTest("Command executor unit tests exist", () => {
+		runTest('Command executor unit tests exist', () => {
 			try {
-				execSync("test -f tests/security/command-executor.unit.test.ts", {
-					stdio: "ignore",
+				execSync('test -f tests/security/command-executor.unit.test.ts', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -190,10 +190,10 @@ async function runValidation() {
 			}
 		});
 
-		runTest("Security suite integration tests exist", () => {
+		runTest('Security suite integration tests exist', () => {
 			try {
-				execSync("test -f tests/security/security-suite.integration.test.ts", {
-					stdio: "ignore",
+				execSync('test -f tests/security/security-suite.integration.test.ts', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -202,37 +202,37 @@ async function runValidation() {
 		});
 
 		// 3. Run Semgrep security scan with precise rules
-		runTest("Semgrep security scan with precise rules", () => {
+		runTest('Semgrep security scan with precise rules', () => {
 			try {
 				const output = execSync(
-					"semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR . 2>/dev/null",
+					'semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR . 2>/dev/null',
 					{
-						encoding: "utf-8",
-						stdio: "pipe",
+						encoding: 'utf-8',
+						stdio: 'pipe',
 					},
 				);
 
 				// Check if there are any findings
-				if (output.includes("Code Findings")) {
-					return "Security scan found issues that need review";
+				if (output.includes('Code Findings')) {
+					return 'Security scan found issues that need review';
 				}
 
 				return true;
 			} catch (error) {
 				// Semgrep returns exit code 1 when findings are found
 				if (error.status === 1) {
-					return "Security scan found issues that need review";
+					return 'Security scan found issues that need review';
 				}
 				throw error;
 			}
 		});
 
 		// 4. Run TypeScript compilation to check for syntax errors
-		runTest("TypeScript compilation succeeds", () => {
+		runTest('TypeScript compilation succeeds', () => {
 			try {
-				execSync("npx tsc --noEmit --project tsconfig.json", {
-					encoding: "utf-8",
-					stdio: "pipe",
+				execSync('npx tsc --noEmit --project tsconfig.json', {
+					encoding: 'utf-8',
+					stdio: 'pipe',
 				});
 				return true;
 			} catch (error) {
@@ -241,18 +241,18 @@ async function runValidation() {
 		});
 
 		// 5. Check for security-related TODO comments
-		runTest("No security-related TODO comments in security wrappers", () => {
+		runTest('No security-related TODO comments in security wrappers', () => {
 			try {
 				const output = execSync(
 					'grep -r -i "TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null || true',
 					{
-						encoding: "utf-8",
-						stdio: "pipe",
+						encoding: 'utf-8',
+						stdio: 'pipe',
 					},
 				);
 
-				if (output.trim() !== "") {
-					return "Security-related TODO/FIXME comments found in security wrapper files";
+				if (output.trim() !== '') {
+					return 'Security-related TODO/FIXME comments found in security wrapper files';
 				}
 
 				return true;
@@ -262,17 +262,17 @@ async function runValidation() {
 		});
 
 		// 6. Check for injection patterns in security wrappers
-		runTest("No direct injection patterns in security wrappers", () => {
+		runTest('No direct injection patterns in security wrappers', () => {
 			try {
 				// Check for dangerous patterns that should be prevented by our security wrappers
 				const dangerousPatterns = [
-					"exec\\(",
-					"spawn\\(",
-					"subprocess\\.run\\(",
-					"os\\.system\\(",
-					"eval\\(",
-					"exec\\(",
-					"new Function\\(",
+					'exec\\(',
+					'spawn\\(',
+					'subprocess\\.run\\(',
+					'os\\.system\\(',
+					'eval\\(',
+					'exec\\(',
+					'new Function\\(',
 				];
 
 				for (const pattern of dangerousPatterns) {
@@ -280,23 +280,23 @@ async function runValidation() {
 						execSync(
 							`grep -r "${pattern}" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null`,
 							{
-								stdio: "pipe",
+								stdio: 'pipe',
 							},
 						);
 						// If we find a match, check if it's properly secured
 						const output = execSync(
 							`grep -r -A 5 -B 5 "${pattern}" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null`,
 							{
-								encoding: "utf-8",
-								stdio: "pipe",
+								encoding: 'utf-8',
+								stdio: 'pipe',
 							},
 						);
 
 						// Check if the pattern is properly secured
 						if (
-							!output.includes("SECURITY FIX") &&
-							!output.includes("validate") &&
-							!output.includes("sanitize")
+							!output.includes('SECURITY FIX') &&
+							!output.includes('validate') &&
+							!output.includes('sanitize')
 						) {
 							return `Direct injection pattern found without proper security validation: ${pattern}`;
 						}
@@ -310,19 +310,19 @@ async function runValidation() {
 		});
 
 		// 7. Check for proper error handling in security wrappers
-		runTest("Proper error handling in security wrappers", () => {
+		runTest('Proper error handling in security wrappers', () => {
 			try {
 				// Check for try/catch blocks in security wrappers
 				const output = execSync(
 					'grep -r "try.*catch\\|catch.*{" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null || true',
 					{
-						encoding: "utf-8",
-						stdio: "pipe",
+						encoding: 'utf-8',
+						stdio: 'pipe',
 					},
 				);
 
-				if (output.trim() === "") {
-					return "No error handling found in security wrappers";
+				if (output.trim() === '') {
+					return 'No error handling found in security wrappers';
 				}
 
 				return true;
@@ -332,19 +332,19 @@ async function runValidation() {
 		});
 
 		// 8. Check for input validation in security wrappers
-		runTest("Input validation in security wrappers", () => {
+		runTest('Input validation in security wrappers', () => {
 			try {
 				// Check for validation functions in security wrappers
 				const output = execSync(
 					'grep -r "validate\\|sanitize" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null || true',
 					{
-						encoding: "utf-8",
-						stdio: "pipe",
+						encoding: 'utf-8',
+						stdio: 'pipe',
 					},
 				);
 
-				if (output.trim() === "") {
-					return "No input validation found in security wrappers";
+				if (output.trim() === '') {
+					return 'No input validation found in security wrappers';
 				}
 
 				return true;
@@ -354,19 +354,19 @@ async function runValidation() {
 		});
 
 		// 9. Check for resource limits in security wrappers
-		runTest("Resource limits in security wrappers", () => {
+		runTest('Resource limits in security wrappers', () => {
 			try {
 				// Check for timeout and resource limit configurations
 				const output = execSync(
 					'grep -r "timeout\\|limit\\|MAX_" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null || true',
 					{
-						encoding: "utf-8",
-						stdio: "pipe",
+						encoding: 'utf-8',
+						stdio: 'pipe',
 					},
 				);
 
-				if (output.trim() === "") {
-					return "No resource limits found in security wrappers";
+				if (output.trim() === '') {
+					return 'No resource limits found in security wrappers';
 				}
 
 				return true;
@@ -376,19 +376,19 @@ async function runValidation() {
 		});
 
 		// 10. Check for proper parameterization in security wrappers
-		runTest("Proper parameterization in security wrappers", () => {
+		runTest('Proper parameterization in security wrappers', () => {
 			try {
 				// Check for parameterized queries in security wrappers
 				const output = execSync(
 					'grep -r "\\?\\|\\$" apps/cortex-os/packages/mvp-core/src/secure-db.ts libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null || true',
 					{
-						encoding: "utf-8",
-						stdio: "pipe",
+						encoding: 'utf-8',
+						stdio: 'pipe',
 					},
 				);
 
-				if (output.trim() === "") {
-					return "No parameterization found in database security wrappers";
+				if (output.trim() === '') {
+					return 'No parameterization found in database security wrappers';
 				}
 
 				return true;
@@ -398,11 +398,11 @@ async function runValidation() {
 		});
 
 		// 11. Run security unit tests
-		runTest("Security unit tests pass", () => {
+		runTest('Security unit tests pass', () => {
 			try {
-				execSync("npm run test:security:unit", {
-					encoding: "utf-8",
-					stdio: "pipe",
+				execSync('npm run test:security:unit', {
+					encoding: 'utf-8',
+					stdio: 'pipe',
 				});
 				return true;
 			} catch (error) {
@@ -411,11 +411,11 @@ async function runValidation() {
 		});
 
 		// 12. Run security integration tests
-		runTest("Security integration tests pass", () => {
+		runTest('Security integration tests pass', () => {
 			try {
-				execSync("npm run test:security:integration", {
-					encoding: "utf-8",
-					stdio: "pipe",
+				execSync('npm run test:security:integration', {
+					encoding: 'utf-8',
+					stdio: 'pipe',
 				});
 				return true;
 			} catch (error) {
@@ -424,18 +424,18 @@ async function runValidation() {
 		});
 
 		// 13. Check for security documentation
-		runTest("Security documentation exists", () => {
+		runTest('Security documentation exists', () => {
 			try {
-				execSync("test -f docs/security/SECURITY_IMPLEMENTATION_PLAN.md", {
-					stdio: "ignore",
+				execSync('test -f docs/security/SECURITY_IMPLEMENTATION_PLAN.md', {
+					stdio: 'ignore',
 				});
-				execSync("test -f docs/security/SECURITY_IMPROVEMENTS_SUMMARY.md", {
-					stdio: "ignore",
+				execSync('test -f docs/security/SECURITY_IMPROVEMENTS_SUMMARY.md', {
+					stdio: 'ignore',
 				});
 				execSync(
-					"test -f docs/security/FINAL_SECURITY_IMPLEMENTATION_SUMMARY.md",
+					'test -f docs/security/FINAL_SECURITY_IMPLEMENTATION_SUMMARY.md',
 					{
-						stdio: "ignore",
+						stdio: 'ignore',
 					},
 				);
 				return true;
@@ -445,11 +445,11 @@ async function runValidation() {
 		});
 
 		// 14. Check for security scripts
-		runTest("Security scripts exist", () => {
+		runTest('Security scripts exist', () => {
 			try {
-				execSync("test -f scripts/fix-security-issues.sh", { stdio: "ignore" });
-				execSync("test -f scripts/validate-security-improvements.mjs", {
-					stdio: "ignore",
+				execSync('test -f scripts/fix-security-issues.sh', { stdio: 'ignore' });
+				execSync('test -f scripts/validate-security-improvements.mjs', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -458,10 +458,10 @@ async function runValidation() {
 		});
 
 		// 15. Check for CI/CD security integration
-		runTest("CI/CD security integration exists", () => {
+		runTest('CI/CD security integration exists', () => {
 			try {
-				execSync("test -f .github/workflows/security-testing.yml", {
-					stdio: "ignore",
+				execSync('test -f .github/workflows/security-testing.yml', {
+					stdio: 'ignore',
 				});
 				return true;
 			} catch (_error) {
@@ -475,8 +475,8 @@ async function runValidation() {
 	}
 
 	// Display final results
-	logHeader("\n📊 Validation Results Summary");
-	console.log("");
+	logHeader('\n📊 Validation Results Summary');
+	console.log('');
 	console.log(`Total tests: ${validationResults.totalTests}`);
 	console.log(
 		`${colors.fg.green}Passed tests: ${validationResults.passedTests}${colors.reset}`,
@@ -489,14 +489,14 @@ async function runValidation() {
 	);
 
 	if (validationResults.errors.length > 0) {
-		logHeader("\n❌ Errors Found:");
+		logHeader('\n❌ Errors Found:');
 		validationResults.errors.forEach((error) => {
 			logError(error);
 		});
 	}
 
 	if (validationResults.warningsList.length > 0) {
-		logHeader("\n⚠️  Warnings:");
+		logHeader('\n⚠️  Warnings:');
 		validationResults.warningsList.forEach((warning) => {
 			logWarning(warning);
 		});
@@ -504,18 +504,18 @@ async function runValidation() {
 
 	// Overall status
 	if (validationResults.failedTests === 0) {
-		logHeader("\n🎉 All security validation tests passed!");
+		logHeader('\n🎉 All security validation tests passed!');
 		console.log(
-			"✅ Security improvements have been successfully implemented and validated.",
+			'✅ Security improvements have been successfully implemented and validated.',
 		);
-		console.log("✅ All critical vulnerabilities have been addressed.");
-		console.log("✅ Security infrastructure is properly configured.");
+		console.log('✅ All critical vulnerabilities have been addressed.');
+		console.log('✅ Security infrastructure is properly configured.');
 		return true;
 	} else {
-		logHeader("\n💥 Security validation failed!");
-		console.log("❌ Some security validation tests failed.");
+		logHeader('\n💥 Security validation failed!');
+		console.log('❌ Some security validation tests failed.');
 		console.log(
-			"❌ Please review the errors and address them before proceeding.",
+			'❌ Please review the errors and address them before proceeding.',
 		);
 		return false;
 	}

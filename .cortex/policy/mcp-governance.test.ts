@@ -3,20 +3,20 @@
  * @description TDD tests for governance policy validation
  */
 
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import type { ServerManifest } from "@cortex-os/mcp-registry";
-import { beforeEach, describe, expect, it } from "vitest";
-import { z } from "zod";
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import type { ServerManifest } from '@cortex-os/mcp-registry';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
-const GOVERNANCE_POLICY_PATH = path.join(__dirname, "mcp-governance.json");
+const GOVERNANCE_POLICY_PATH = path.join(__dirname, 'mcp-governance.json');
 
 // Governance policy schema
 const GovernancePolicySchema = z.object({
 	security: z.object({
 		riskLevels: z.object({
-			allowed: z.array(z.enum(["low", "medium", "high"])),
-			requireApproval: z.array(z.enum(["medium", "high"])),
+			allowed: z.array(z.enum(['low', 'medium', 'high'])),
+			requireApproval: z.array(z.enum(['medium', 'high'])),
 		}),
 		signatures: z.object({
 			required: z.boolean(),
@@ -59,7 +59,7 @@ const GovernancePolicySchema = z.object({
 	}),
 	audit: z.object({
 		logging: z.object({
-			level: z.enum(["debug", "info", "warn", "error"]),
+			level: z.enum(['debug', 'info', 'warn', 'error']),
 			destinations: z.array(z.string()),
 		}),
 		monitoring: z.object({
@@ -72,21 +72,21 @@ const GovernancePolicySchema = z.object({
 
 type GovernancePolicy = z.infer<typeof GovernancePolicySchema>;
 
-describe("MCP Governance Policy", () => {
+describe('MCP Governance Policy', () => {
 	let policy: GovernancePolicy;
 
 	beforeEach(async () => {
-		const content = await readFile(GOVERNANCE_POLICY_PATH, "utf-8");
+		const content = await readFile(GOVERNANCE_POLICY_PATH, 'utf-8');
 		policy = JSON.parse(content);
 	});
 
-	describe("Schema Validation", () => {
-		it("should validate against governance policy schema", () => {
+	describe('Schema Validation', () => {
+		it('should validate against governance policy schema', () => {
 			const result = GovernancePolicySchema.safeParse(policy);
 
 			if (!result.success) {
 				console.error(
-					"Governance policy validation failed:",
+					'Governance policy validation failed:',
 					result.error.errors,
 				);
 			}
@@ -94,146 +94,146 @@ describe("MCP Governance Policy", () => {
 			expect(result.success).toBe(true);
 		});
 
-		it("should have all required sections", () => {
-			expect(policy).toHaveProperty("security");
-			expect(policy).toHaveProperty("marketplace");
-			expect(policy).toHaveProperty("installation");
-			expect(policy).toHaveProperty("audit");
+		it('should have all required sections', () => {
+			expect(policy).toHaveProperty('security');
+			expect(policy).toHaveProperty('marketplace');
+			expect(policy).toHaveProperty('installation');
+			expect(policy).toHaveProperty('audit');
 		});
 	});
 
-	describe("Security Policies", () => {
-		it("should define valid risk levels", () => {
+	describe('Security Policies', () => {
+		it('should define valid risk levels', () => {
 			expect(policy.security.riskLevels.allowed).toBeInstanceOf(Array);
 			expect(
 				policy.security.riskLevels.allowed.every((level) =>
-					["low", "medium", "high"].includes(level),
+					['low', 'medium', 'high'].includes(level),
 				),
 			).toBe(true);
 		});
 
-		it("should require approval for high-risk servers", () => {
-			expect(policy.security.riskLevels.requireApproval).toContain("high");
+		it('should require approval for high-risk servers', () => {
+			expect(policy.security.riskLevels.requireApproval).toContain('high');
 		});
 
-		it("should have trusted publishers list", () => {
+		it('should have trusted publishers list', () => {
 			expect(policy.security.signatures.trustedPublishers).toBeInstanceOf(
 				Array,
 			);
 			expect(policy.security.signatures.trustedPublishers).toContain(
-				"ModelContextProtocol",
+				'ModelContextProtocol',
 			);
 			expect(policy.security.signatures.trustedPublishers).toContain(
-				"Anthropic",
+				'Anthropic',
 			);
 		});
 
-		it("should define dangerous permissions", () => {
+		it('should define dangerous permissions', () => {
 			const dangerousPerms = policy.security.permissions.dangerous;
-			expect(dangerousPerms).toContain("system:exec");
-			expect(dangerousPerms).toContain("system:admin");
-			expect(dangerousPerms).toContain("files:write:root");
+			expect(dangerousPerms).toContain('system:exec');
+			expect(dangerousPerms).toContain('system:admin');
+			expect(dangerousPerms).toContain('files:write:root');
 		});
 
-		it("should require signature validation by default", () => {
+		it('should require signature validation by default', () => {
 			expect(policy.security.signatures.required).toBe(true);
 			expect(policy.security.signatures.sigstoreValidation).toBe(true);
 		});
 	});
 
-	describe("Marketplace Configuration", () => {
-		it("should have valid registry URLs", () => {
+	describe('Marketplace Configuration', () => {
+		it('should have valid registry URLs', () => {
 			expect(policy.marketplace.registries.official).toMatch(/^https:\/\//);
 			expect(policy.marketplace.registries.community).toMatch(/^https:\/\//);
 		});
 
-		it("should have reasonable cache settings", () => {
+		it('should have reasonable cache settings', () => {
 			expect(policy.marketplace.caching.ttl).toBeGreaterThan(0);
 			expect(policy.marketplace.caching.maxSize).toBeGreaterThan(0);
 			// 5 minutes default TTL
 			expect(policy.marketplace.caching.ttl).toBe(300000);
 		});
 
-		it("should enforce strict validation by default", () => {
+		it('should enforce strict validation by default', () => {
 			expect(policy.marketplace.validation.strictMode).toBe(true);
 			expect(policy.marketplace.validation.allowPrerelease).toBe(false);
 		});
 
-		it("should have minimum rating requirement", () => {
+		it('should have minimum rating requirement', () => {
 			expect(policy.marketplace.validation.minRating).toBeGreaterThan(0);
 			expect(policy.marketplace.validation.minRating).toBeLessThanOrEqual(5);
 		});
 	});
 
-	describe("Installation Security", () => {
-		it("should enable sandboxing by default", () => {
+	describe('Installation Security', () => {
+		it('should enable sandboxing by default', () => {
 			expect(policy.installation.sandboxed).toBe(true);
 			expect(policy.installation.isolatedEnvironments).toBe(true);
 		});
 
-		it("should define resource limits", () => {
-			expect(policy.installation.resourceLimits).toHaveProperty("memory");
-			expect(policy.installation.resourceLimits).toHaveProperty("cpu");
-			expect(policy.installation.resourceLimits).toHaveProperty("diskSpace");
+		it('should define resource limits', () => {
+			expect(policy.installation.resourceLimits).toHaveProperty('memory');
+			expect(policy.installation.resourceLimits).toHaveProperty('cpu');
+			expect(policy.installation.resourceLimits).toHaveProperty('diskSpace');
 		});
 
-		it("should control network access", () => {
+		it('should control network access', () => {
 			expect(policy.installation.networkAccess.allowed).toBeInstanceOf(Array);
 			expect(policy.installation.networkAccess.blocked).toBeInstanceOf(Array);
 
 			// Should allow common development services
 			expect(policy.installation.networkAccess.allowed).toContain(
-				"https://api.github.com",
+				'https://api.github.com',
 			);
 			expect(policy.installation.networkAccess.allowed).toContain(
-				"https://registry.npmjs.org",
+				'https://registry.npmjs.org',
 			);
 
 			// Should block dangerous protocols
-			expect(policy.installation.networkAccess.blocked).toContain("file://");
-			expect(policy.installation.networkAccess.blocked).toContain("ftp://");
+			expect(policy.installation.networkAccess.blocked).toContain('file://');
+			expect(policy.installation.networkAccess.blocked).toContain('ftp://');
 		});
 	});
 
-	describe("Audit Configuration", () => {
-		it("should have proper logging configuration", () => {
-			expect(["debug", "info", "warn", "error"]).toContain(
+	describe('Audit Configuration', () => {
+		it('should have proper logging configuration', () => {
+			expect(['debug', 'info', 'warn', 'error']).toContain(
 				policy.audit.logging.level,
 			);
 			expect(policy.audit.logging.destinations).toBeInstanceOf(Array);
 		});
 
-		it("should enable security monitoring", () => {
+		it('should enable security monitoring', () => {
 			expect(policy.audit.monitoring.healthChecks).toBe(true);
 			expect(policy.audit.monitoring.performanceMetrics).toBe(true);
 			expect(policy.audit.monitoring.securityEvents).toBe(true);
 		});
 	});
 
-	describe("Policy Enforcement", () => {
-		it("should validate server against risk level policy", () => {
+	describe('Policy Enforcement', () => {
+		it('should validate server against risk level policy', () => {
 			const testServerHighRisk: Partial<ServerManifest> = {
-				security: { riskLevel: "high" },
-				permissions: ["system:exec", "files:write:root"],
+				security: { riskLevel: 'high' },
+				permissions: ['system:exec', 'files:write:root'],
 			};
 
 			const _testServerLowRisk: Partial<ServerManifest> = {
-				security: { riskLevel: "low" },
-				permissions: ["network:https", "data:read"],
+				security: { riskLevel: 'low' },
+				permissions: ['network:https', 'data:read'],
 			};
 
 			// High risk should require approval if configured
-			if (policy.security.riskLevels.requireApproval.includes("high")) {
-				expect(testServerHighRisk.security?.riskLevel).toBe("high");
+			if (policy.security.riskLevels.requireApproval.includes('high')) {
+				expect(testServerHighRisk.security?.riskLevel).toBe('high');
 			}
 
 			// Low risk should be in allowed list
-			expect(policy.security.riskLevels.allowed).toContain("low");
+			expect(policy.security.riskLevels.allowed).toContain('low');
 		});
 
-		it("should validate dangerous permissions", () => {
+		it('should validate dangerous permissions', () => {
 			const dangerousServer = {
-				permissions: ["system:exec", "system:admin"],
+				permissions: ['system:exec', 'system:admin'],
 			};
 
 			const safeDangerous = dangerousServer.permissions.filter((perm) =>
@@ -243,26 +243,26 @@ describe("MCP Governance Policy", () => {
 			expect(safeDangerous.length).toBeGreaterThan(0);
 		});
 
-		it("should validate trusted publishers", () => {
+		it('should validate trusted publishers', () => {
 			const _trustedServer = {
-				publisher: { name: "ModelContextProtocol", verified: true },
+				publisher: { name: 'ModelContextProtocol', verified: true },
 			};
 
 			const _untrustedServer = {
-				publisher: { name: "Unknown Publisher", verified: false },
+				publisher: { name: 'Unknown Publisher', verified: false },
 			};
 
 			expect(policy.security.signatures.trustedPublishers).toContain(
-				"ModelContextProtocol",
+				'ModelContextProtocol',
 			);
 			expect(policy.security.signatures.trustedPublishers).not.toContain(
-				"Unknown Publisher",
+				'Unknown Publisher',
 			);
 		});
 	});
 
-	describe("Configuration Consistency", () => {
-		it("should have consistent security settings", () => {
+	describe('Configuration Consistency', () => {
+		it('should have consistent security settings', () => {
 			// If signatures are required, sigstore validation should be enabled
 			if (policy.security.signatures.required) {
 				expect(policy.security.signatures.sigstoreValidation).toBe(true);
@@ -274,7 +274,7 @@ describe("MCP Governance Policy", () => {
 			}
 		});
 
-		it("should have reasonable resource limits", () => {
+		it('should have reasonable resource limits', () => {
 			const { memory, cpu, diskSpace } = policy.installation.resourceLimits;
 
 			// Should have numeric values with units
@@ -283,7 +283,7 @@ describe("MCP Governance Policy", () => {
 			expect(diskSpace).toMatch(/^\d+[KMGT]?B$/);
 		});
 
-		it("should have proper network restrictions", () => {
+		it('should have proper network restrictions', () => {
 			const { allowed, blocked } = policy.installation.networkAccess;
 
 			// Should not have conflicting entries
@@ -294,10 +294,10 @@ describe("MCP Governance Policy", () => {
 
 			// HTTPS should be preferred over HTTP
 			const httpsAllowed = allowed.filter((url) =>
-				url.startsWith("https://"),
+				url.startsWith('https://'),
 			).length;
 			const httpAllowed = allowed.filter((url) =>
-				url.startsWith("http://"),
+				url.startsWith('http://'),
 			).length;
 			expect(httpsAllowed).toBeGreaterThanOrEqual(httpAllowed);
 		});

@@ -6,12 +6,12 @@
 
 import { createPinoLogger } from '@voltagent/logger';
 import {
+	createLangGraphWorkflow,
 	type WorkflowInput,
 	type WorkflowOutput,
 	WorkflowTemplates,
-	createLangGraphWorkflow,
 } from '../workflows/langgraph-integration.js';
-import { Agent, type Tool, type ToolSchema } from './mocks/voltagent-core.js';
+import type { Tool } from './mocks/voltagent-core.js';
 import type { ISubagent } from './types.js';
 
 const logger = createPinoLogger({ name: 'LangGraphSubagent' });
@@ -45,7 +45,7 @@ export class LangGraphSubagent implements ISubagent {
 	/**
 	 * Execute a workflow task
 	 */
-	async execute(input: any, context?: any): Promise<any> {
+	async execute(input: any, _context?: any): Promise<any> {
 		const workflowId = generateId();
 
 		try {

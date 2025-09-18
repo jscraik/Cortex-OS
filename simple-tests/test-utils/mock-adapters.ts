@@ -4,7 +4,7 @@ import type {
 	Message,
 	MLXAdapterInterface,
 	OllamaAdapterInterface,
-} from "../../packages/model-gateway/src/adapters/types";
+} from '../../packages/model-gateway/src/adapters/types';
 
 // Types are imported from the shared adapters `types.ts` above; no direct adapter-specific types needed here
 
@@ -20,7 +20,7 @@ export class MockMLXAdapter implements MLXAdapterInterface {
 	}): Promise<Embedding> {
 		return {
 			embedding: new Array(1536).fill(0).map((_, i) => Math.sin(i * 0.1)),
-			model: request.model || "qwen3-embedding-4b-mlx",
+			model: request.model || 'qwen3-embedding-4b-mlx',
 		} as Embedding;
 	}
 
@@ -34,7 +34,7 @@ export class MockMLXAdapter implements MLXAdapterInterface {
 					embedding: new Array(1536)
 						.fill(0)
 						.map((_, i) => Math.sin((i + index) * 0.1)),
-					model: request.model || "qwen3-embedding-4b-mlx",
+					model: request.model || 'qwen3-embedding-4b-mlx',
 				}) as Embedding,
 		);
 	}
@@ -47,7 +47,7 @@ export class MockMLXAdapter implements MLXAdapterInterface {
 	}): Promise<ChatResponse> {
 		return {
 			content: `Mock MLX response to: ${request.messages[request.messages.length - 1]?.content}`,
-			model: request.model || "qwen3-chat-mlx",
+			model: request.model || 'qwen3-chat-mlx',
 		} as ChatResponse;
 	}
 }
@@ -60,7 +60,7 @@ export class MockOllamaAdapter implements OllamaAdapterInterface {
 	async generateEmbedding(_text: string, model?: string): Promise<Embedding> {
 		return {
 			embedding: new Array(1536).fill(0).map((_, i) => Math.cos(i * 0.1)),
-			model: model || "nomic-embed-text",
+			model: model || 'nomic-embed-text',
 		} as Embedding;
 	}
 
@@ -74,7 +74,7 @@ export class MockOllamaAdapter implements OllamaAdapterInterface {
 					embedding: new Array(1536)
 						.fill(0)
 						.map((_, i) => Math.cos((i + index) * 0.1)),
-					model: model || "nomic-embed-text",
+					model: model || 'nomic-embed-text',
 				}) as Embedding,
 		);
 	}
@@ -86,7 +86,7 @@ export class MockOllamaAdapter implements OllamaAdapterInterface {
 	): Promise<ChatResponse> {
 		return {
 			content: `Mock Ollama response to: ${messages[messages.length - 1]?.content}`,
-			model: model || "llama3.2",
+			model: model || 'llama3.2',
 		} as ChatResponse;
 	}
 
@@ -98,12 +98,12 @@ export class MockOllamaAdapter implements OllamaAdapterInterface {
 		const scores = documents.map(() => Math.random() * 0.5 + 0.5);
 		return {
 			scores,
-			model: model || "rerank-model",
+			model: model || 'rerank-model',
 		};
 	}
 
 	async listModels(): Promise<string[]> {
-		return ["llama2", "llama3", "codellama", "llama3.2"];
+		return ['llama2', 'llama3', 'codellama', 'llama3.2'];
 	}
 }
 
@@ -116,14 +116,14 @@ export class UnavailableMLXAdapter implements MLXAdapterInterface {
 		text: string;
 		model?: string;
 	}): Promise<Embedding> {
-		throw new Error("MLX adapter is not available");
+		throw new Error('MLX adapter is not available');
 	}
 
 	async generateEmbeddings(_request: {
 		texts: string[];
 		model?: string;
 	}): Promise<Embedding[]> {
-		throw new Error("MLX adapter is not available");
+		throw new Error('MLX adapter is not available');
 	}
 
 	async generateChat(_request: {
@@ -132,6 +132,6 @@ export class UnavailableMLXAdapter implements MLXAdapterInterface {
 		max_tokens?: number;
 		temperature?: number;
 	}): Promise<ChatResponse> {
-		throw new Error("MLX adapter is not available");
+		throw new Error('MLX adapter is not available');
 	}
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import fs from "node:fs";
-import path from "node:path";
-import yaml from "js-yaml";
+import fs from 'node:fs';
+import path from 'node:path';
+import yaml from 'js-yaml';
 
-const pkgsDir = path.resolve(process.cwd(), "packages");
+const pkgsDir = path.resolve(process.cwd(), 'packages');
 const packages = fs
 	.readdirSync(pkgsDir)
 	.filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
@@ -20,7 +20,7 @@ const defaultChecklist = {
 
 for (const pkg of packages) {
 	const pkgPath = path.join(pkgsDir, pkg);
-	const filePath = path.join(pkgPath, "readiness.yml");
+	const filePath = path.join(pkgPath, 'readiness.yml');
 	if (fs.existsSync(filePath)) continue;
 	const doc = {
 		package: pkg,

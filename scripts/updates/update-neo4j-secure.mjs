@@ -2,16 +2,16 @@
 
 // Script to update neo4j.ts to use SecureNeo4j
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-console.log("Updating neo4j.ts to use SecureNeo4j...");
+console.log('Updating neo4j.ts to use SecureNeo4j...');
 
-const neo4jPath = join("packages", "memories", "src", "adapters", "neo4j.ts");
-let content = readFileSync(neo4jPath, "utf-8");
+const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
+let content = readFileSync(neo4jPath, 'utf-8');
 
 // Add import for SecureNeo4j
-if (!content.includes("SecureNeo4j")) {
+if (!content.includes('SecureNeo4j')) {
 	content = content.replace(
 		"import neo4j, { Driver } from 'neo4j-driver';",
 		"import neo4j, { Driver } from 'neo4j-driver';\nimport { SecureNeo4j } from '@cortex-os/utils';",
@@ -79,4 +79,4 @@ content = content.replace(
 // Write the updated content back to the file
 writeFileSync(neo4jPath, content);
 
-console.log("✅ neo4j.ts updated to use SecureNeo4j");
+console.log('✅ neo4j.ts updated to use SecureNeo4j');

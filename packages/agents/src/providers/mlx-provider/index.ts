@@ -16,9 +16,9 @@ import { executeMLXGeneration } from './gateway-client.js';
 import { checkMemoryStatus, checkThermalStatus } from './thermal-monitor.js';
 import {
 	DEFAULT_CONFIG,
+	type MemoryStatus,
 	type MLXProviderConfig,
 	type MLXState,
-	type MemoryStatus,
 	type ThermalStatus,
 } from './types.js';
 

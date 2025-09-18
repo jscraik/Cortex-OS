@@ -3,16 +3,16 @@
  * @description Runtime security validation for MCP servers against governance policies
  */
 
-import { readFile } from "node:fs/promises";
-import type { ServerManifest } from "@cortex-os/mcp-registry";
-import { z } from "zod";
+import { readFile } from 'node:fs/promises';
+import type { ServerManifest } from '@cortex-os/mcp-registry';
+import { z } from 'zod';
 
 // Policy schema from governance
 const GovernancePolicySchema = z.object({
 	security: z.object({
 		riskLevels: z.object({
-			allowed: z.array(z.enum(["low", "medium", "high"])),
-			requireApproval: z.array(z.enum(["medium", "high"])),
+			allowed: z.array(z.enum(['low', 'medium', 'high'])),
+			requireApproval: z.array(z.enum(['medium', 'high'])),
 		}),
 		signatures: z.object({
 			required: z.boolean(),
@@ -45,7 +45,7 @@ export interface ValidationResult {
 
 export interface SecurityContext {
 	policy: GovernancePolicy;
-	enforcementLevel: "strict" | "warn" | "permissive";
+	enforcementLevel: 'strict' | 'warn' | 'permissive';
 }
 
 /**
@@ -54,7 +54,7 @@ export interface SecurityContext {
  */
 export class McpSecurityValidator {
 	private policy: GovernancePolicy;
-	private enforcementLevel: "strict" | "warn" | "permissive";
+	private enforcementLevel: 'strict' | 'warn' | 'permissive';
 
 	constructor(context: SecurityContext) {
 		this.policy = context.policy;
@@ -66,9 +66,9 @@ export class McpSecurityValidator {
 	 */
 	static async fromPolicyFile(
 		policyPath: string,
-		enforcementLevel: "strict" | "warn" | "permissive" = "strict",
+		enforcementLevel: 'strict' | 'warn' | 'permissive' = 'strict',
 	): Promise<McpSecurityValidator> {
-		const content = await readFile(policyPath, "utf-8");
+		const content = await readFile(policyPath, 'utf-8');
 		const policy = GovernancePolicySchema.parse(JSON.parse(content));
 
 		return new McpSecurityValidator({
@@ -110,7 +110,7 @@ export class McpSecurityValidator {
 		// Final validation state
 		result.valid =
 			result.errors.length === 0 &&
-			(this.enforcementLevel !== "strict" || result.warnings.length === 0);
+			(this.enforcementLevel !== 'strict' || result.warnings.length === 0);
 
 		return result;
 	}
@@ -125,7 +125,7 @@ export class McpSecurityValidator {
 		const riskLevel = server.security?.riskLevel;
 
 		if (!riskLevel) {
-			result.errors.push("Server missing security risk level declaration");
+			result.errors.push('Server missing security risk level declaration');
 			return;
 		}
 
@@ -165,14 +165,14 @@ export class McpSecurityValidator {
 			);
 
 			result.warnings.push(
-				`Server requests dangerous permissions: ${dangerousPerms.join(", ")}`,
+				`Server requests dangerous permissions: ${dangerousPerms.join(', ')}`,
 			);
 		}
 
 		// High risk servers should have dangerous permissions
-		if (server.security?.riskLevel === "high" && !hasDangerous) {
+		if (server.security?.riskLevel === 'high' && !hasDangerous) {
 			result.warnings.push(
-				"High-risk server should declare dangerous permissions explicitly",
+				'High-risk server should declare dangerous permissions explicitly',
 			);
 		}
 
@@ -187,13 +187,13 @@ export class McpSecurityValidator {
 				requireConfirmation.some((confirmPerm) => perm.includes(confirmPerm)),
 			);
 			result.warnings.push(
-				`Server requires confirmation for permissions: ${confirmPerms.join(", ")}`,
+				`Server requires confirmation for permissions: ${confirmPerms.join(', ')}`,
 			);
 		}
 
 		// Validate permission consistency with risk level
-		if (server.security?.riskLevel === "low" && hasDangerous) {
-			result.errors.push("Low-risk server cannot have dangerous permissions");
+		if (server.security?.riskLevel === 'low' && hasDangerous) {
+			result.errors.push('Low-risk server cannot have dangerous permissions');
 		}
 	}
 
@@ -207,7 +207,7 @@ export class McpSecurityValidator {
 		const publisher = server.publisher;
 
 		if (!publisher) {
-			result.errors.push("Server missing publisher information");
+			result.errors.push('Server missing publisher information');
 			return;
 		}
 
@@ -232,7 +232,7 @@ export class McpSecurityValidator {
 		// Featured servers should be from trusted publishers
 		if (server.featured && !isTrusted) {
 			result.warnings.push(
-				"Featured servers should be from trusted publishers",
+				'Featured servers should be from trusted publishers',
 			);
 		}
 	}
@@ -251,11 +251,11 @@ export class McpSecurityValidator {
 		const security = server.security;
 
 		if (!security?.sigstore) {
-			result.errors.push("Server missing required Sigstore attestation");
+			result.errors.push('Server missing required Sigstore attestation');
 		}
 
 		if (!security?.sbom) {
-			result.warnings.push("Server missing Software Bill of Materials (SBOM)");
+			result.warnings.push('Server missing Software Bill of Materials (SBOM)');
 		}
 
 		if (
@@ -264,16 +264,16 @@ export class McpSecurityValidator {
 		) {
 			try {
 				const url = new URL(security.sigstore);
-				if (url.protocol !== "https:") {
-					result.errors.push("Sigstore attestation must use HTTPS");
+				if (url.protocol !== 'https:') {
+					result.errors.push('Sigstore attestation must use HTTPS');
 				}
-				if (!url.pathname.endsWith(".json")) {
+				if (!url.pathname.endsWith('.json')) {
 					result.warnings.push(
-						"Sigstore attestation should reference a JSON bundle",
+						'Sigstore attestation should reference a JSON bundle',
 					);
 				}
 			} catch {
-				result.warnings.push("Sigstore attestation URL may be invalid");
+				result.warnings.push('Sigstore attestation URL may be invalid');
 			}
 		}
 	}
@@ -295,7 +295,7 @@ export class McpSecurityValidator {
 
 		// Featured servers should have high ratings
 		if (server.featured && server.rating && server.rating < 4.0) {
-			result.warnings.push("Featured servers should have ratings >= 4.0");
+			result.warnings.push('Featured servers should have ratings >= 4.0');
 		}
 	}
 
@@ -307,16 +307,16 @@ export class McpSecurityValidator {
 		result: ValidationResult,
 	): void {
 		if (!this.policy.marketplace.validation.allowPrerelease && server.version) {
-			const isPrerelease = server.version.includes("-");
+			const isPrerelease = server.version.includes('-');
 
 			if (isPrerelease) {
-				result.warnings.push("Prerelease versions not allowed by policy");
+				result.warnings.push('Prerelease versions not allowed by policy');
 			}
 		}
 
 		// Validate MCP version compatibility
 		const mcpVersion = server.mcpVersion;
-		const supportedVersions = ["2025-06-18", "2025-03-26"];
+		const supportedVersions = ['2025-06-18', '2025-03-26'];
 
 		if (mcpVersion && !supportedVersions.includes(mcpVersion)) {
 			result.warnings.push(`MCP version '${mcpVersion}' may not be supported`);
@@ -326,14 +326,14 @@ export class McpSecurityValidator {
 	/**
 	 * Get enforcement level
 	 */
-	getEnforcementLevel(): "strict" | "warn" | "permissive" {
+	getEnforcementLevel(): 'strict' | 'warn' | 'permissive' {
 		return this.enforcementLevel;
 	}
 
 	/**
 	 * Set enforcement level
 	 */
-	setEnforcementLevel(level: "strict" | "warn" | "permissive"): void {
+	setEnforcementLevel(level: 'strict' | 'warn' | 'permissive'): void {
 		this.enforcementLevel = level;
 	}
 

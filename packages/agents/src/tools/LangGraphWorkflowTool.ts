@@ -6,11 +6,11 @@
 
 import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
-import { Tool, type ToolSchema } from '../mocks/voltagent-core.js';
+import { Tool } from '../mocks/voltagent-core.js';
 import type { IToolRegistry } from '../types.js';
 import {
-	WorkflowTemplates,
 	createLangGraphWorkflow,
+	WorkflowTemplates,
 } from '../workflows/langgraph-integration.js';
 
 const logger = createPinoLogger({ name: 'LangGraphWorkflowTool' });

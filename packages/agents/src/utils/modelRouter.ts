@@ -4,12 +4,12 @@ import {
 	createCapabilityRouter,
 } from '../providers/capability-router.js';
 import {
-	type FallbackChainConfig,
 	createFallbackChain,
+	type FallbackChainConfig,
 } from '../providers/fallback-chain.js';
 import {
-	type MLXProviderConfig,
 	createMLXProvider,
+	type MLXProviderConfig,
 } from '../providers/mlx-provider/index.js';
 import { createOllamaProvider } from '../providers/ollama-provider.js';
 import { createOpenAIProvider } from '../providers/openai-provider.js';

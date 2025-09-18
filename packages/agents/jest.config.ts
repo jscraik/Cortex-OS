@@ -10,18 +10,13 @@ const config: Config = {
 		},
 	},
 	testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-	collectCoverageFrom: [
-		'src/**/*.ts',
-		'!src/**/*.d.ts',
-	],
+	collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'lcov', 'html'],
 	moduleNameMapper: {
 		'^(\\.{1,2}/.*)\\.js$': '$1',
 	},
-	transformIgnorePatterns: [
-		'node_modules/(?!(@voltagent)/)',
-	],
+	transformIgnorePatterns: ['node_modules/(?!(@voltagent)/)'],
 };
 
 export default config;

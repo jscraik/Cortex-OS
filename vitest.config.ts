@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig } from 'vitest/config';
 
 // Root Vitest config: only orchestrates projects. Avoid sweeping up non-Vitest
 // suites (e.g., apps using Jest) and vendor/external code.
@@ -19,7 +19,7 @@ export default defineConfig({
 		// Memory leak prevention - aggressive timeouts
 		teardownTimeout: 5000,
 		// Use forks pool to avoid tinypool thread conflicts in CI/Node 22
-		pool: "forks",
+		pool: 'forks',
 		poolOptions: {
 			forks: {
 				// CRITICAL: single fork with strict memory limits
@@ -27,36 +27,36 @@ export default defineConfig({
 				maxForks: 1,
 				minForks: 1,
 				execArgv: [
-					"--max-old-space-size=1536", // Reduced from 2048 to prevent system freeze
-					"--heapsnapshot-near-heap-limit=1", // More aggressive heap monitoring
-					"--expose-gc",
-					"--max-semi-space-size=64", // Limit young generation space
-					"--optimize-for-size", // Optimize for memory usage over speed
+					'--max-old-space-size=1536', // Reduced from 2048 to prevent system freeze
+					'--heapsnapshot-near-heap-limit=1', // More aggressive heap monitoring
+					'--expose-gc',
+					'--max-semi-space-size=64', // Limit young generation space
+					'--optimize-for-size', // Optimize for memory usage over speed
 				],
 			},
 		},
 		// Ensure built artifacts never get swept into discovery
 		exclude: [
-			"**/node_modules/**",
-			"**/dist/**",
-			"**/build/**",
-			"**/.next/**",
-			"tests/**",
+			'**/node_modules/**',
+			'**/dist/**',
+			'**/build/**',
+			'**/.next/**',
+			'tests/**',
 		],
 		// Quality gates: enforce coverage thresholds across all projects
 		coverage: {
-			provider: "v8",
-			reporter: ["text-summary", "json-summary", "lcov", "html"],
-			include: ["apps/**/src/**", "packages/**/src/**"],
+			provider: 'v8',
+			reporter: ['text-summary', 'json-summary', 'lcov', 'html'],
+			include: ['apps/**/src/**', 'packages/**/src/**'],
 			exclude: [
-				"external/**",
-				"vendor/**",
-				"**/*.test.*",
-				"**/*.spec.*",
-				"**/node_modules/**",
-				"**/dist/**",
-				"**/build/**",
-				"**/*.config.*",
+				'external/**',
+				'vendor/**',
+				'**/*.test.*',
+				'**/*.spec.*',
+				'**/node_modules/**',
+				'**/dist/**',
+				'**/build/**',
+				'**/*.config.*',
 			],
 			thresholds: {
 				global: {
@@ -77,18 +77,18 @@ export default defineConfig({
 			// This is a placeholder to satisfy the defineConfig function
 			// Test execution is handled by project-specific configurations
 		},
-		projects: ["vitest.basic.config.ts"],
-		setupFiles: ["tests/setup/vitest.setup.ts"],
+		projects: ['vitest.basic.config.ts'],
+		setupFiles: ['tests/setup/vitest.setup.ts'],
 		// Quality gates enforcement
 		passWithNoTests: false,
 		outputFile: {
-			junit: "junit.xml",
-			json: "test-results.json",
+			junit: 'junit.xml',
+			json: 'test-results.json',
 		},
 		env: {
-			COVERAGE_THRESHOLD_GLOBAL: "90",
-			COVERAGE_THRESHOLD_LINES: "95",
-			NODE_ENV: "test",
+			COVERAGE_THRESHOLD_GLOBAL: '90',
+			COVERAGE_THRESHOLD_LINES: '95',
+			NODE_ENV: 'test',
 		},
 	},
 });

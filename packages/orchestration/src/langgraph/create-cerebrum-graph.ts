@@ -1,12 +1,12 @@
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { trace } from '@opentelemetry/api';
 import { loadModelRegistry, type ModelRef } from '../config/model-catalog.js';
+import { createOrchestrationBus } from '../events/orchestration-bus.js';
+import { OrchestrationEventTypes } from '../events/orchestration-events.js';
 import {
 	evaluatePersonaCompliance,
 	loadPersona,
 } from '../persona/persona-loader.js';
-import { createOrchestrationBus } from '../events/orchestration-bus.js';
-import { OrchestrationEventTypes } from '../events/orchestration-events.js';
 
 const CerebrumAnnotation = Annotation.Root({
 	input: Annotation<string>({ reducer: (_x, y) => y }),
@@ -67,7 +67,11 @@ export function createCerebrumGraph() {
 				await bus.publish(OrchestrationEventTypes.DecisionMade, {
 					decisionId: 'model.selection',
 					outcome: 'model.selected',
-					metadata: { provider: selected.provider, model: selected.model, task: task ?? 'chat' },
+					metadata: {
+						provider: selected.provider,
+						model: selected.model,
+						task: task ?? 'chat',
+					},
 				});
 				return { selectedModel: selected };
 			});

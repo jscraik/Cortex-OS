@@ -1,21 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-describe("Fallback System Tests", () => {
-	it("should demonstrate fallback patterns", () => {
+describe('Fallback System Tests', () => {
+	it('should demonstrate fallback patterns', () => {
 		// Basic fallback pattern test
 		const primaryValue = undefined;
-		const fallbackValue = "fallback";
+		const fallbackValue = 'fallback';
 		const result = primaryValue ?? fallbackValue;
 
-		expect(result).toBe("fallback");
+		expect(result).toBe('fallback');
 	});
 
-	it("should handle provider fallback scenarios", async () => {
+	it('should handle provider fallback scenarios', async () => {
 		// Mock provider that fails
 		const primaryProvider = {
 			isAvailable: async () => false,
 			process: async () => {
-				throw new Error("Primary unavailable");
+				throw new Error('Primary unavailable');
 			},
 		};
 
@@ -28,21 +28,21 @@ describe("Fallback System Tests", () => {
 		// Fallback logic
 		let result: string;
 		if (await primaryProvider.isAvailable()) {
-			result = await primaryProvider.process("test input");
+			result = await primaryProvider.process('test input');
 		} else if (await fallbackProvider.isAvailable()) {
-			result = await fallbackProvider.process("test input");
+			result = await fallbackProvider.process('test input');
 		} else {
-			throw new Error("No providers available");
+			throw new Error('No providers available');
 		}
 
-		expect(result).toBe("Processed by fallback: test input");
+		expect(result).toBe('Processed by fallback: test input');
 	});
 
-	it("should handle nested fallback chains", async () => {
+	it('should handle nested fallback chains', async () => {
 		const providers = [
-			{ name: "primary", available: false },
-			{ name: "secondary", available: false },
-			{ name: "tertiary", available: true },
+			{ name: 'primary', available: false },
+			{ name: 'secondary', available: false },
+			{ name: 'tertiary', available: true },
 		];
 
 		let selectedProvider: string | null = null;
@@ -54,6 +54,6 @@ describe("Fallback System Tests", () => {
 			}
 		}
 
-		expect(selectedProvider).toBe("tertiary");
+		expect(selectedProvider).toBe('tertiary');
 	});
 });

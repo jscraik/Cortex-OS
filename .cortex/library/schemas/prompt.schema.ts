@@ -1,18 +1,18 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { z } from "zod";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { z } from 'zod';
 
 export const BlockKeys = [
-	"task_context",
-	"tone_context",
-	"background",
-	"rules",
-	"examples",
-	"conversation_history",
-	"immediate_request",
-	"deliberation",
-	"output_format",
-	"prefill",
+	'task_context',
+	'tone_context',
+	'background',
+	'rules',
+	'examples',
+	'conversation_history',
+	'immediate_request',
+	'deliberation',
+	'output_format',
+	'prefill',
 ] as const;
 
 const BlockKeyEnum = z.enum(BlockKeys);
@@ -20,9 +20,9 @@ const BlockKeyEnum = z.enum(BlockKeys);
 const validateSchemaPath = (p: string): boolean => {
 	const full = path.resolve(process.cwd(), p);
 	if (!fs.existsSync(full)) return false;
-	if (p.endsWith(".schema.json")) {
+	if (p.endsWith('.schema.json')) {
 		try {
-			JSON.parse(fs.readFileSync(full, "utf-8"));
+			JSON.parse(fs.readFileSync(full, 'utf-8'));
 		} catch {
 			return false;
 		}
@@ -47,7 +47,7 @@ export const BlocksSchema = z.array(
 		})
 		.refine(
 			(o) => Object.keys(o).length === 1,
-			"Each blocks[] entry must have exactly one known key",
+			'Each blocks[] entry must have exactly one known key',
 		),
 );
 
@@ -68,19 +68,19 @@ const _schemaPath = z
 			if (!fs.existsSync(fullPath)) {
 				return false;
 			}
-			if (p.endsWith(".schema.json")) {
+			if (p.endsWith('.schema.json')) {
 				try {
-					JSON.parse(fs.readFileSync(fullPath, "utf8"));
+					JSON.parse(fs.readFileSync(fullPath, 'utf8'));
 				} catch {
 					return false;
 				}
 				return true;
 			}
-			return p.endsWith(".ts");
+			return p.endsWith('.ts');
 		},
 		{
 			message:
-				"schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json, and must be within the project directory",
+				'schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json, and must be within the project directory',
 		},
 	);
 
@@ -98,19 +98,19 @@ export const PromptMetaSchema = z.object({
 		.string()
 		.min(1)
 		.regex(/\.(schema\.json|ts)$/, {
-			message: "inputs_schema must reference a .schema.json or .ts file",
+			message: 'inputs_schema must reference a .schema.json or .ts file',
 		})
 		.refine((p) => validateSchemaPath(p), {
-			message: "inputs_schema file must exist and be valid",
+			message: 'inputs_schema file must exist and be valid',
 		}),
 	outputs_schema: z
 		.string()
 		.min(1)
 		.regex(/\.(schema\.json|ts)$/, {
-			message: "outputs_schema must reference a .schema.json or .ts file",
+			message: 'outputs_schema must reference a .schema.json or .ts file',
 		})
 		.refine((p) => validateSchemaPath(p), {
-			message: "outputs_schema file must exist and be valid",
+			message: 'outputs_schema file must exist and be valid',
 		}),
 });
 

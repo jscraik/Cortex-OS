@@ -131,7 +131,9 @@ describe('rag MCP tool error handling', () => {
 	it('returns validation error for invalid status input', async () => {
 		// This test verifies runtime validation of input parameters
 		const invalidInput = { includeStats: 'yes' };
-		const response = await ragStatusTool.handler(invalidInput as Parameters<typeof ragStatusTool.handler>[0]);
+		const response = await ragStatusTool.handler(
+			invalidInput as Parameters<typeof ragStatusTool.handler>[0],
+		);
 
 		expect(response.isError).toBe(true);
 		expect(response.metadata.tool).toBe('rag_status');

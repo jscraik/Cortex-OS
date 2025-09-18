@@ -51,10 +51,10 @@ export {
 export type {
 	EvaluateAlertInput,
 	GenerateDashboardInput,
-	SearchLogsInput,
 	GetMetricsInput,
 	ObservabilityTool,
 	QueryTracesInput,
+	SearchLogsInput,
 } from './mcp/tools.js';
 export { observabilityMcpTools } from './mcp/tools.js';
 export * from './metrics/index.js';

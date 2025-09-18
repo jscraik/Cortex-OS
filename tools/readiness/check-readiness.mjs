@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-import fs from "node:fs";
-import path from "node:path";
-import Ajv from "ajv";
-import yaml from "js-yaml";
+import fs from 'node:fs';
+import path from 'node:path';
+import Ajv from 'ajv';
+import yaml from 'js-yaml';
 
 function loadJsonSummary(pkgPath) {
-	const covPath = path.join(pkgPath, "coverage", "coverage-summary.json");
+	const covPath = path.join(pkgPath, 'coverage', 'coverage-summary.json');
 	if (!fs.existsSync(covPath)) return null;
 	try {
-		const data = JSON.parse(fs.readFileSync(covPath, "utf-8"));
+		const data = JSON.parse(fs.readFileSync(covPath, 'utf-8'));
 		const total = data.total || data; // vitest coverage summary
 		return {
 			statements: total.statements?.pct ?? 0,
@@ -22,34 +22,34 @@ function loadJsonSummary(pkgPath) {
 }
 
 const schema = JSON.parse(
-        fs.readFileSync(new URL("./readiness.schema.json", import.meta.url), "utf-8"),
+	fs.readFileSync(new URL('./readiness.schema.json', import.meta.url), 'utf-8'),
 );
 const ajv = new Ajv({ allErrors: true });
 const validate = ajv.compile(schema);
 
-const pkgsDir = path.resolve(process.cwd(), "packages");
+const pkgsDir = path.resolve(process.cwd(), 'packages');
 const packages = fs
-        .readdirSync(pkgsDir)
-        .filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
+	.readdirSync(pkgsDir)
+	.filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
 let failed = false;
 
 for (const pkg of packages) {
 	const pkgPath = path.join(pkgsDir, pkg);
-        const readinessPath = path.join(pkgPath, "readiness.yml");
-        if (!fs.existsSync(readinessPath)) {
-                console.error(`[fail] Missing readiness.yml for ${pkg}`);
-                failed = true;
-                continue;
-        }
-        const doc = yaml.load(fs.readFileSync(readinessPath, "utf-8")) || {};
-        const valid = validate(doc);
-        if (!valid) {
-                console.error(
-                        `[fail] ${pkg} readiness.yml invalid: ${ajv.errorsText(validate.errors)}`,
-                );
-                failed = true;
-                continue;
-        }
+	const readinessPath = path.join(pkgPath, 'readiness.yml');
+	if (!fs.existsSync(readinessPath)) {
+		console.error(`[fail] Missing readiness.yml for ${pkg}`);
+		failed = true;
+		continue;
+	}
+	const doc = yaml.load(fs.readFileSync(readinessPath, 'utf-8')) || {};
+	const valid = validate(doc);
+	if (!valid) {
+		console.error(
+			`[fail] ${pkg} readiness.yml invalid: ${ajv.errorsText(validate.errors)}`,
+		);
+		failed = true;
+		continue;
+	}
 	const thresholds = doc.thresholds || {
 		statements: 95,
 		branches: 95,
@@ -60,10 +60,10 @@ for (const pkg of packages) {
 		doc.coverage || { statements: 0, branches: 0, functions: 0, lines: 0 };
 
 	const checks = [
-		["statements", coverage.statements, thresholds.statements],
-		["branches", coverage.branches, thresholds.branches],
-		["functions", coverage.functions, thresholds.functions],
-		["lines", coverage.lines, thresholds.lines],
+		['statements', coverage.statements, thresholds.statements],
+		['branches', coverage.branches, thresholds.branches],
+		['functions', coverage.functions, thresholds.functions],
+		['lines', coverage.lines, thresholds.lines],
 	];
 
 	for (const [name, actual, min] of checks) {
@@ -78,9 +78,9 @@ for (const pkg of packages) {
 
 if (failed) {
 	console.error(
-		"Readiness check failed. Raise coverage or adjust thresholds intentionally.",
+		'Readiness check failed. Raise coverage or adjust thresholds intentionally.',
 	);
 	process.exit(1);
 } else {
-	console.log("All packages meet readiness thresholds.");
+	console.log('All packages meet readiness thresholds.');
 }

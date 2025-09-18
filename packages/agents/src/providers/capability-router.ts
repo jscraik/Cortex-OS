@@ -11,7 +11,6 @@ import type {
 	GenerateResult,
 	ModelProvider,
 } from '../lib/types.js';
-import { sleep } from '../lib/utils.js';
 
 const logger = createPinoLogger({ name: 'CapabilityRouter' });
 
@@ -407,7 +406,7 @@ export class CapabilityRouter {
 	private async handleFallback(
 		prompt: string,
 		options: GenerateOptions,
-		capabilities: Partial<ProviderCapabilities>,
+		_capabilities: Partial<ProviderCapabilities>,
 		failedProvider: string,
 		error: any,
 	): Promise<GenerateResult> {

@@ -5,8 +5,8 @@
  * This version includes proper imports and can be used as a standalone TypeScript file.
  */
 
-import { SecureNeo4j } from "@cortex-os/utils/secure-neo4j";
-import neo4j, { type Driver } from "neo4j-driver";
+import { SecureNeo4j } from '@cortex-os/utils/secure-neo4j';
+import neo4j, { type Driver } from 'neo4j-driver';
 
 interface KGNode {
 	id: string;
@@ -39,7 +39,7 @@ export class Neo4j implements INeo4j {
 
 	constructor(uri: string, user: string, pass: string) {
 		this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), {
-			userAgent: "cortex-os/0.1",
+			userAgent: 'cortex-os/0.1',
 		});
 		this.secureNeo4j = new SecureNeo4j(uri, user, pass);
 	}
@@ -57,7 +57,7 @@ export class Neo4j implements INeo4j {
 				props: node.props,
 			});
 		} catch (error) {
-			console.error("Error upserting node:", error);
+			console.error('Error upserting node:', error);
 			throw error;
 		}
 	}
@@ -71,7 +71,7 @@ export class Neo4j implements INeo4j {
 				props: rel.props,
 			});
 		} catch (error) {
-			console.error("Error upserting relationship:", error);
+			console.error('Error upserting relationship:', error);
 			throw error;
 		}
 	}
@@ -80,7 +80,7 @@ export class Neo4j implements INeo4j {
 		try {
 			return await this.secureNeo4j.neighborhood(nodeId, depth);
 		} catch (error) {
-			console.error("Error getting neighborhood:", error);
+			console.error('Error getting neighborhood:', error);
 			throw error;
 		}
 	}

@@ -1,6 +1,6 @@
-import fs from "node:fs";
-import readline from "node:readline";
-import { z } from "zod";
+import fs from 'node:fs';
+import readline from 'node:readline';
+import { z } from 'zod';
 
 const eventSchema = z.object({
 	id: z.string(),
@@ -32,17 +32,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 	const [inputPath, outputPath] = process.argv.slice(2);
 	if (!inputPath || !outputPath) {
 		console.error(
-			"Usage: node scripts/sanitize-events.mjs <input.jsonl> <output.jsonl>",
+			'Usage: node scripts/sanitize-events.mjs <input.jsonl> <output.jsonl>',
 		);
 		process.exit(1);
 	}
 
-	const input = fs.createReadStream(inputPath, "utf8");
-	const output = fs.createWriteStream(outputPath, { encoding: "utf8" });
+	const input = fs.createReadStream(inputPath, 'utf8');
+	const output = fs.createWriteStream(outputPath, { encoding: 'utf8' });
 	const rl = readline.createInterface({ input, crlfDelay: Infinity });
 
 	let lineNumber = 0;
-	rl.on("line", (line) => {
+	rl.on('line', (line) => {
 		lineNumber++;
 		if (!line.trim()) return;
 		try {
@@ -59,7 +59,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 		}
 	});
 
-	rl.on("close", () => {
+	rl.on('close', () => {
 		output.end();
 	});
 }

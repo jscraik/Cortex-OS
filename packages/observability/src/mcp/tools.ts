@@ -135,4 +135,6 @@ export type QueryTracesInput = z.infer<typeof QueryTracesInputSchema>;
 export type GetMetricsInput = z.infer<typeof GetMetricsInputSchema>;
 export type SearchLogsInput = z.infer<typeof SearchLogsInputSchema>;
 export type EvaluateAlertInput = z.infer<typeof EvaluateAlertInputSchema>;
-export type GenerateDashboardInput = z.infer<typeof GenerateDashboardInputSchema>;
+export type GenerateDashboardInput = z.infer<
+	typeof GenerateDashboardInputSchema
+>;

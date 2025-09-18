@@ -1,4 +1,4 @@
-import path from "node:path";
+import path from 'node:path';
 
 /**
  * Checks if an absolute path is within any of the allowed directories.
@@ -13,7 +13,7 @@ export function isPathWithinAllowedDirectories(
 	allowedDirectories: string[],
 ): boolean {
 	// Type validation
-	if (typeof absolutePath !== "string" || !Array.isArray(allowedDirectories)) {
+	if (typeof absolutePath !== 'string' || !Array.isArray(allowedDirectories)) {
 		return false;
 	}
 
@@ -23,7 +23,7 @@ export function isPathWithinAllowedDirectories(
 	}
 
 	// Reject null bytes (forbidden in paths)
-	if (absolutePath.includes("\x00")) {
+	if (absolutePath.includes('\x00')) {
 		return false;
 	}
 
@@ -37,17 +37,17 @@ export function isPathWithinAllowedDirectories(
 
 	// Verify it's absolute after normalization
 	if (!path.isAbsolute(normalizedPath)) {
-		throw new Error("Path must be absolute after normalization");
+		throw new Error('Path must be absolute after normalization');
 	}
 
 	// Check against each allowed directory
 	return allowedDirectories.some((dir) => {
-		if (typeof dir !== "string" || !dir) {
+		if (typeof dir !== 'string' || !dir) {
 			return false;
 		}
 
 		// Reject null bytes in allowed dirs
-		if (dir.includes("\x00")) {
+		if (dir.includes('\x00')) {
 			return false;
 		}
 
@@ -62,7 +62,7 @@ export function isPathWithinAllowedDirectories(
 		// Verify allowed directory is absolute after normalization
 		if (!path.isAbsolute(normalizedDir)) {
 			throw new Error(
-				"Allowed directories must be absolute paths after normalization",
+				'Allowed directories must be absolute paths after normalization',
 			);
 		}
 
@@ -79,13 +79,13 @@ export function isPathWithinAllowedDirectories(
 		}
 
 		// On Windows, also check for drive root (e.g., "C:\")
-		if (path.sep === "\\" && normalizedDir.match(/^[A-Za-z]:\\?$/)) {
+		if (path.sep === '\\' && normalizedDir.match(/^[A-Za-z]:\\?$/)) {
 			// Ensure both paths are on the same drive
 			const dirDrive = normalizedDir.charAt(0).toLowerCase();
 			const pathDrive = normalizedPath.charAt(0).toLowerCase();
 			return (
 				pathDrive === dirDrive &&
-				normalizedPath.startsWith(normalizedDir.replace(/\\?$/, "\\"))
+				normalizedPath.startsWith(normalizedDir.replace(/\\?$/, '\\'))
 			);
 		}
 

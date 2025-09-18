@@ -1,30 +1,30 @@
-import { describe, expect, it } from "vitest";
-import { evaluateResponses } from "../tools/scripts/evaluate-llm-responses";
+import { describe, expect, it } from 'vitest';
+import { evaluateResponses } from '../tools/scripts/evaluate-llm-responses';
 
 const dataset = [
 	{
-		prompt: "Is the sky blue?",
-		expected: "yes",
-		response: "yes",
+		prompt: 'Is the sky blue?',
+		expected: 'yes',
+		response: 'yes',
 		latency_ms: 120,
 	},
 	{
-		prompt: "Are cats mammals?",
-		expected: "yes",
-		response: "yes",
+		prompt: 'Are cats mammals?',
+		expected: 'yes',
+		response: 'yes',
 		latency_ms: 150,
 	},
-	{ prompt: "Is 2+2=5?", expected: "no", response: "no", latency_ms: 110 },
+	{ prompt: 'Is 2+2=5?', expected: 'no', response: 'no', latency_ms: 110 },
 	{
-		prompt: "Is Earth flat?",
-		expected: "no",
-		response: "yes",
+		prompt: 'Is Earth flat?',
+		expected: 'no',
+		response: 'yes',
 		latency_ms: 200,
 	},
 ];
 
-describe("evaluateResponses", () => {
-	it("computes metrics and pass status", () => {
+describe('evaluateResponses', () => {
+	it('computes metrics and pass status', () => {
 		const result = evaluateResponses({ dataset });
 		expect(result).toMatchObject({
 			accuracy: 0.75,

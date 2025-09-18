@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import * as prpRunner from '../src/index.js';
 
 describe('@cortex-os/prp-runner public API', () => {
-  it('matches the expected export keys (snapshot baseline)', () => {
-    const keys = Object.keys(prpRunner).sort();
-    expect(keys).toMatchInlineSnapshot(`
+	it('matches the expected export keys (snapshot baseline)', () => {
+		const keys = Object.keys(prpRunner).sort();
+		expect(keys).toMatchInlineSnapshot(`
       [
         "BaseGate",
         "G0IdeationGate",
@@ -28,5 +28,5 @@ describe('@cortex-os/prp-runner public API', () => {
         "writePRPDocument",
       ]
     `);
-  });
+	});
 });

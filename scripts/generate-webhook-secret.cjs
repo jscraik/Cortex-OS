@@ -7,39 +7,39 @@
  * It can be used to create secrets for AI, Semgrep, and Structure Guard apps.
  */
 
-const crypto = require("node:crypto");
-const fs = require("node:fs");
-const path = require("node:path");
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const APPS = {
 	ai: {
-		name: "Cortex AI GitHub App",
-		envVar: "WEBHOOK_SECRET",
-		description: "AI-powered code analysis and suggestions",
+		name: 'Cortex AI GitHub App',
+		envVar: 'WEBHOOK_SECRET',
+		description: 'AI-powered code analysis and suggestions',
 	},
 	semgrep: {
-		name: "Cortex Semgrep GitHub App",
-		envVar: "SEMGREP_WEBHOOK_SECRET",
-		description: "Static security analysis with Semgrep",
+		name: 'Cortex Semgrep GitHub App',
+		envVar: 'SEMGREP_WEBHOOK_SECRET',
+		description: 'Static security analysis with Semgrep',
 	},
 	structure: {
-		name: "Cortex Structure Guard GitHub App",
-		envVar: "WEBHOOK_SECRET",
-		description: "Repository structure validation and organization",
+		name: 'Cortex Structure Guard GitHub App',
+		envVar: 'WEBHOOK_SECRET',
+		description: 'Repository structure validation and organization',
 	},
 	insula: {
-		name: "Insula GitHub App",
-		envVar: "INSULA_WEBHOOK_SECRET",
-		description: "Advanced repository management and automation",
+		name: 'Insula GitHub App',
+		envVar: 'INSULA_WEBHOOK_SECRET',
+		description: 'Advanced repository management and automation',
 	},
 };
 
 function generateSecureSecret(length = 64) {
-	return crypto.randomBytes(length).toString("hex");
+	return crypto.randomBytes(length).toString('hex');
 }
 
 function generateBase64Secret(length = 32) {
-	return crypto.randomBytes(length).toString("base64");
+	return crypto.randomBytes(length).toString('base64');
 }
 
 function printUsage() {
@@ -76,11 +76,11 @@ function saveToEnvFile(appName, secret) {
 
 	const packagePath = path.join(
 		__dirname,
-		"..",
-		"packages",
+		'..',
+		'packages',
 		`cortex-${appName}-github`,
 	);
-	const envPath = path.join(packagePath, ".env");
+	const envPath = path.join(packagePath, '.env');
 
 	if (!fs.existsSync(packagePath)) {
 		console.log(`⚠️  Package directory not found: ${packagePath}`);
@@ -88,9 +88,9 @@ function saveToEnvFile(appName, secret) {
 	}
 
 	try {
-		let envContent = "";
+		let envContent = '';
 		if (fs.existsSync(envPath)) {
-			envContent = fs.readFileSync(envPath, "utf8");
+			envContent = fs.readFileSync(envPath, 'utf8');
 		}
 
 		const envVar = app.envVar;
@@ -99,13 +99,13 @@ function saveToEnvFile(appName, secret) {
 		if (envContent.includes(`${envVar}=`)) {
 			// Replace existing line
 			envContent = envContent.replace(
-				new RegExp(`^${envVar}=.*$`, "m"),
+				new RegExp(`^${envVar}=.*$`, 'm'),
 				newLine,
 			);
 		} else {
 			// Add new line
-			if (envContent && !envContent.endsWith("\n")) {
-				envContent += "\n";
+			if (envContent && !envContent.endsWith('\n')) {
+				envContent += '\n';
 			}
 			envContent += `${newLine}\n`;
 		}
@@ -134,7 +134,7 @@ function generateForApp(appName, options = {}) {
 	console.log(`\n🔑 ${app.name}`);
 	console.log(`Description: ${app.description}`);
 	console.log(`Environment Variable: ${app.envVar}`);
-	console.log(`Secret (${options.base64 ? "base64" : "hex"}): ${secret}`);
+	console.log(`Secret (${options.base64 ? 'base64' : 'hex'}): ${secret}`);
 
 	if (options.export) {
 		console.log(`Export command: export ${app.envVar}="${secret}"`);
@@ -167,25 +167,25 @@ function parseArguments(args) {
 		const arg = args[i];
 
 		switch (arg) {
-			case "--length":
-			case "-l":
+			case '--length':
+			case '-l':
 				options.length = parseInt(args[i + 1], 10) || 64;
 				skipNext = true;
 				break;
-			case "--base64":
-			case "-b":
+			case '--base64':
+			case '-b':
 				options.base64 = true;
 				break;
-			case "--save":
-			case "-s":
+			case '--save':
+			case '-s':
 				options.save = true;
 				break;
-			case "--export":
-			case "-e":
+			case '--export':
+			case '-e':
 				options.export = true;
 				break;
 			default:
-				if (!arg.startsWith("-") && !appName) {
+				if (!arg.startsWith('-') && !appName) {
 					appName = arg;
 				}
 				break;
@@ -202,7 +202,7 @@ function generateAllSecrets(options) {
 	}
 
 	if (options.export) {
-		console.log("\n📋 Export all commands:");
+		console.log('\n📋 Export all commands:');
 		for (const [name, secret] of Object.entries(secrets)) {
 			if (secret) {
 				console.log(`export ${APPS[name].envVar}="${secret}"`);
@@ -212,23 +212,23 @@ function generateAllSecrets(options) {
 }
 
 function printSecurityTips() {
-	console.log("\n💡 Security Tips:");
+	console.log('\n💡 Security Tips:');
 	console.log(
-		"- Keep webhook secrets secure and never commit them to version control",
+		'- Keep webhook secrets secure and never commit them to version control',
 	);
 	console.log(
-		"- Use different secrets for each environment (dev, staging, prod)",
+		'- Use different secrets for each environment (dev, staging, prod)',
 	);
-	console.log("- Rotate secrets periodically for better security");
+	console.log('- Rotate secrets periodically for better security');
 	console.log(
-		"- Ensure the same secret is used in both your app and GitHub webhook settings",
+		'- Ensure the same secret is used in both your app and GitHub webhook settings',
 	);
 }
 
 function main() {
 	const args = process.argv.slice(2);
 
-	if (args.includes("--help") || args.includes("-h") || args.length === 0) {
+	if (args.includes('--help') || args.includes('-h') || args.length === 0) {
 		printUsage();
 		return;
 	}
@@ -236,14 +236,14 @@ function main() {
 	const { options, appName } = parseArguments(args);
 
 	if (!appName) {
-		console.error("❌ Please specify an app name");
+		console.error('❌ Please specify an app name');
 		printUsage();
 		return;
 	}
 
-	console.log("🔐 GitHub App Webhook Secret Generator\n");
+	console.log('🔐 GitHub App Webhook Secret Generator\n');
 
-	if (appName === "all") {
+	if (appName === 'all') {
 		generateAllSecrets(options);
 	} else {
 		generateForApp(appName, options);

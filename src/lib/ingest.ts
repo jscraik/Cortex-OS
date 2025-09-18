@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const ingestInputSchema = z.object({
-	source: z.string().min(1, "source is required"),
-	text: z.string().min(1, "text is required"),
+	source: z.string().min(1, 'source is required'),
+	text: z.string().min(1, 'text is required'),
 });
 
 export type IngestInput = z.infer<typeof ingestInputSchema>;
