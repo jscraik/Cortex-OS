@@ -43,5 +43,7 @@
     "**/*.test.ts",
     "**/*.spec.ts"
   ],
-  "references": []
+  "references": [
+    { "path": "../../libs/typescript/asbr-schemas" }
+  ]
 }
