@@ -1,0 +1,126 @@
+--- Critical Fixes for Cortex Kernel Package ---
+
+1. Fix package.json exports to match actual build structure:
+
+--- a/package.json
++++ b/package.json
+@@ -8,7 +8,7 @@
+   "exports": {
+     ".": "./dist/index.js",
+-    "./graph": "./dist/graph.js",
++    "./graph": "./dist/graph-simple.js",
+     "./state": "./dist/state.js",
+     "./nodes": "./dist/nodes/index.js",
+     "./mcp": "./dist/mcp/adapter.js"
+
+2. Fix deterministic ID generation in state.ts:
+
+--- a/src/state.ts
++++ b/src/state.ts
+@@ -141,8 +141,8 @@ export const createInitialPRPState = (
+ ): PRPState => {
+   const now = new Date().toISOString();
+-  const id = options.id ?? `prp-${Date.now()}`;
+-  const runId = options.runId ?? `run-${Date.now()}`;
++  const id = options.id ?? `prp-${crypto.randomUUID()}`;
++  const runId = options.runId ?? `run-${crypto.randomUUID()}`;
+
+   return {
+
+3. Remove non-deterministic timing in graph-simple.ts:
+
+--- a/src/graph-simple.ts
++++ b/src/graph-simple.ts
+@@ -227,7 +227,10 @@ export class CortexKernel {
+   /**
+    * Simulate work delay for determinism testing
+    */
+-  private async simulateWork(ms: number): Promise<void> {
+-    return new Promise(resolve => setTimeout(resolve, ms));
++  private async simulateWork(ms: number, options?: { deterministic?: boolean }): Promise<void> {
++    if (options?.deterministic) {
++      return Promise.resolve(); // Skip timing in deterministic mode
++    }
++    return new Promise(resolve => setTimeout(resolve, ms));
+   }
+
+4. Fix orchestrator interface alignment:
+
+--- a/src/graph-simple.ts
++++ b/src/graph-simple.ts
+@@ -8,11 +8,7 @@
+
+ import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
+ import { nanoid } from 'nanoid';
+-
+-// Simple type definitions for orchestrator integration
+-interface PRPOrchestrator {
+-  getNeuronCount(): number;
+-  executeNeuron?(id: string, input: any): Promise<any>;
+-}
++import type { PRPOrchestrator } from '@cortex-os/prp-runner';
+
+5. Fix API validation logic in build.ts:
+
+--- a/src/nodes/build.ts
++++ b/src/nodes/build.ts
+@@ -122,7 +122,7 @@ export class BuildNode {
+     );
+
+     return {
+-      passed: hasAPI ? true : true, // Skip if no API
++      passed: hasAPI ? this.validateAPISchemaFile() : true, // Skip if no API
+       details: {
+         schemaFormat: hasAPI ? 'OpenAPI 3.0' : 'N/A',
+         validation: hasAPI ? 'passed' : 'skipped',
+
+6. Fix pre-cerebrum validation logic in evaluation.ts:
+
+--- a/src/nodes/evaluation.ts
++++ b/src/nodes/evaluation.ts
+@@ -189,7 +189,7 @@ export class EvaluationNode {
+     );
+
+-    const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {})
+-      .every(result => result?.passed || (result?.blockers.length === 0));
++    const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {})
++      .every(result => result?.passed && (result?.blockers.length === 0));
+
+7. Fix MCP neuron type safety:
+
+--- a/src/mcp/adapter.ts
++++ b/src/mcp/adapter.ts
+@@ -6,6 +6,7 @@
+  */
+
+ import { PRPState } from '../state.js';
++import type { Neuron } from '@cortex-os/prp-runner';
+
+@@ -121,7 +122,7 @@ export class MCPAdapter {
+   /**
+    * Convert MCP tools to kernel-compatible neurons
+    */
+-  createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation') {
++  createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Neuron {
+     return {
+       id: `mcp-${tool.name}`,
+       role: `mcp-tool-${tool.name}`,
+
+8. Use nanoid for evidence IDs in strategy.ts:
+
+--- a/src/nodes/strategy.ts
++++ b/src/nodes/strategy.ts
+@@ -7,6 +7,7 @@
+  */
+
+ import { PRPState, Evidence } from '../state.js';
++import { nanoid } from 'nanoid';
+
+@@ -26,7 +27,7 @@ export class StrategyNode {
+     }
+
+     evidence.push({
+-      id: `strategy-blueprint-${Date.now()}`,
++      id: `strategy-blueprint-${nanoid()}`,
+       type: 'validation',
+       source: 'strategy_node',

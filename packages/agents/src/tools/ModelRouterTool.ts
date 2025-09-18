@@ -1,5 +1,5 @@
-import { createTool } from '@voltagent/core';
 import { z } from 'zod';
+import { createTool } from './mocks/voltagent-core.js';
 
 export const createModelRouterTool = (_modelRouter: any) =>
 	createTool({

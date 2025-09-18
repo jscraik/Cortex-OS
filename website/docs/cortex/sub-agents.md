@@ -21,7 +21,7 @@ Subagents are pre-configured, single-purpose assistants. Each subagent:
 - Includes a **system prompt** and **policy** that guide behavior and routing
 - Emits **CloudEvents** and captures **provenance** for audits
 
-Cerebrum delegates to subagents when a task matches their expertise, or you can invoke them explicitly from **cortex-code** (`codex`) or the Web UI.
+Cerebrum delegates to subagents when a task matches their expertise, or you can invoke them explicitly from **cortex-cli** or the Web UI.
 
 ---
 
@@ -40,9 +40,9 @@ Cerebrum delegates to subagents when a task matches their expertise, or you can 
 ### 1) Open the subagents manager
 
 ```bash
-codex agents          # TUI manager
+cortex agents         # TUI manager
 # or
-codex agents new      # guided creation
+cortex agents new     # guided creation
 ```
 
 ### 2) Choose scope
@@ -55,7 +55,7 @@ codex agents new      # guided creation
 - Describe purpose and when to use it
 - Select tools (or inherit)
 - Set **policies** (privacy, cost ceiling, target latency)
-- Edit the system prompt (`codex agents edit <name>`)
+- Edit the system prompt (`cortex agents edit &lt;name&gt;`)
 
 ### 4) Save and use
 
@@ -63,7 +63,7 @@ codex agents new      # guided creation
 - Or invoke explicitly:
 
 ```bash
-codex use code-reviewer --on HEAD~1..HEAD
+cortex use code-reviewer --on HEAD~1..HEAD
 ```
 
 ---
@@ -129,6 +129,7 @@ Behavior:
 | `policies.target_latency_ms` | - | Hint for router |
 | `policies.evidence_required` | - | Require proofs and citations |
 | `routing.capability` | ✔ | e.g., `chat-completion`, `text-embedding`, `rerank` |
+| `routing.fallbacks` | - | Ordered provider fallbacks |
 | `context.*` | - | Context window and include lists |
 
 ---
@@ -140,7 +141,7 @@ Subagents can use any MCP tools registered in **packages/mcp-registry** plus bui
 - Omit `tools` to **inherit** all allowed tools for the thread
 - Specify tools to **restrict** access
 
-Tip: `codex agents edit <name>` provides an interactive tool picker from the MCP registry.
+Tip: `cortex agents edit &lt;name&gt;` provides an interactive tool picker from the MCP registry.
 
 ---
 
@@ -149,11 +150,11 @@ Tip: `codex agents edit <name>` provides an interactive tool picker from the MCP
 ### CLI (recommended)
 
 ```bash
-codex agents                 # list, status, precedence
-codex agents new             # create interactive
-codex agents edit <name>     # edit prompt, tools, policies
-codex agents rm <name>       # delete
-codex agents doctor          # validate schemas and tool bindings
+cortex agents                 # list, status, precedence
+cortex agents new             # create interactive
+cortex agents edit &lt;name&gt;     # edit prompt, tools, policies
+cortex agents rm &lt;name&gt;       # delete
+cortex agents doctor          # validate schemas and tool bindings
 ```
 
 ### Direct file management
@@ -177,9 +178,9 @@ Cerebrum matches task intent to `description` and `routing.capability`, checks `
 ### Explicit invocation
 
 ```bash
-codex use test-runner --on "packages/**"
-codex use code-reviewer --on HEAD~1..HEAD
-codex use debugger --arg "stack=..."
+cortex use test-runner --on "packages/**"
+cortex use code-reviewer --on HEAD~1..HEAD
+cortex use debugger --arg "stack=..."
 ```
 
 ---
@@ -194,7 +195,7 @@ name: debugger
 description: Debugging specialist for errors, test failures, and unexpected behavior. Use proactively on failures.
 tools: fs.read, shell.run, grep, git.diff
 policies: { privacy: true, target_latency_ms: 800, evidence_required: true }
-codex use code-reviewer --on HEAD~1..HEAD
+routing: { capability: chat-completion, fallbacks: [ollama, frontier] }
 context: { window: session }
 ---
 
@@ -260,14 +261,14 @@ Cerebrum selects subagents by `description`, `capability`, tool availability, po
 
 - Separate contexts reduce main-thread bloat
 - First-use latency may increase while the subagent acquires needed context
-codex use code-reviewer --on HEAD~1..HEAD
+- Set `target_latency_ms` and `privacy` to guide provider selection
 
 ---
 
 ## Wireframe (flow)
 
 ```text
-User → cortex-code / Web / API
+User → cortex-cli / Web / API
       │
       ▼
 Cerebrum (intent match, policy check)

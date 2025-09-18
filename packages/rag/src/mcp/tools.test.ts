@@ -14,10 +14,10 @@ const loggerMocks = vi.hoisted(() => {
 	};
 });
 
-import type { handleRAG as HandleRAGType } from '../index.js';
+import type { handleRAG } from '../index.js';
 
 const ragHandlerMock = vi.hoisted(() => ({
-	handleRAG: vi.fn<HandleRAGType>(),
+	handleRAG: vi.fn<typeof handleRAG>(),
 }));
 
 vi.mock('@cortex-os/observability', () => ({
@@ -129,10 +129,9 @@ describe('rag MCP tool error handling', () => {
 	});
 
 	it('returns validation error for invalid status input', async () => {
-		const response = await ragStatusTool.handler({
-			// @ts-expect-error intentional invalid type for validation test
-			includeStats: 'yes',
-		});
+		// This test verifies runtime validation of input parameters
+		const invalidInput = { includeStats: 'yes' };
+		const response = await ragStatusTool.handler(invalidInput as Parameters<typeof ragStatusTool.handler>[0]);
 
 		expect(response.isError).toBe(true);
 		expect(response.metadata.tool).toBe('rag_status');

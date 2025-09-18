@@ -1,95 +1,47 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
 	"formatter": {
-		"enabled": true,
-		"includes": [
-			"apps/**/*.{ts,tsx,js,jsx}",
-			"packages/**/*.{ts,tsx,js,jsx}",
-			"libs/typescript/**/*.{ts,tsx,js,jsx}",
-			"contracts/**/*.{ts,tsx,js,jsx}",
-			"tools/**/*.{ts,tsx,js,jsx}",
-			"tests/**/*.{ts,tsx,js,jsx}",
-			"!apps/cortex-code/**",
-			"!apps/cortex-marketplace/**",
-			"!apps/cortex-marketplace-api/**",
-			"!apps/cortex-codex/**",
-			"!apps/cortex-cli/**"
-		]
+		"enabled": true
 	},
 	"linter": {
 		"enabled": true,
-		"rules": { "recommended": true },
-		"includes": [
-			"apps/**/*.{ts,tsx,js,jsx}",
-			"packages/**/*.{ts,tsx,js,jsx}",
-			"libs/typescript/**/*.{ts,tsx,js,jsx}",
-			"contracts/**/*.{ts,tsx,js,jsx}",
-			"tools/**/*.{ts,tsx,js,jsx}",
-			"tests/**/*.{ts,tsx,js,jsx}",
-			"!apps/cortex-code/**",
-			"!apps/cortex-marketplace/**",
-			"!apps/cortex-marketplace-api/**",
-			"!apps/cortex-codex/**",
-			"!apps/cortex-cli/**"
-		]
+		"rules": {
+			"recommended": true
+		}
 	},
-	"javascript": { "formatter": { "quoteStyle": "single" } },
-	"json": { "formatter": { "enabled": false }, "linter": { "enabled": false } },
-	"css": { "formatter": { "enabled": false }, "linter": { "enabled": false } },
-	"graphql": { "formatter": { "enabled": false }, "linter": { "enabled": false } },
-	"html": { "formatter": { "enabled": false } },
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single"
+		}
+	},
+	"json": {
+		"formatter": {
+			"enabled": false
+		},
+		"linter": {
+			"enabled": false
+		}
+	},
+	"css": {
+		"formatter": {
+			"enabled": false
+		},
+		"linter": {
+			"enabled": false
+		}
+	},
+	"graphql": {
+		"formatter": {
+			"enabled": false
+		},
+		"linter": {
+			"enabled": false
+		}
+	},
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
 		"useIgnoreFile": true,
 		"defaultBranch": "main"
-	},
-	"files": {
-		"includes": [
-			"apps/**",
-			"packages/**",
-			"libs/typescript/**",
-			"contracts/**",
-			"tools/**",
-			"tests/**",
-			"!node_modules",
-			"!**/node_modules",
-			"!.venv",
-			"!dist",
-			"!**/dist",
-			"!build",
-			"!**/build",
-			"!coverage",
-			"!**/coverage",
-			"!reports",
-			"!logs",
-			"!.nx",
-			"!**/.nx",
-			"!.turbo",
-			"!**/.turbo",
-			"!.next",
-			"!**/.next",
-			"!**/.git",
-			"!**/.cache",
-			"!**/__pycache__",
-			"!**/.pytest_cache",
-			"!apps/cortex-code",
-			"!apps/cortex-marketplace",
-			"!apps/cortex-marketplace-api",
-			"!apps/cortex-codex",
-			"!apps/cortex-cli"
-		],
-		"ignoreUnknown": true,
-		"experimentalScannerIgnores": [
-			"node_modules",
-			"dist",
-			"build",
-			".next",
-			".turbo",
-			".nx",
-			".cache",
-			"__pycache__",
-			".pytest_cache"
-		]
 	}
 }

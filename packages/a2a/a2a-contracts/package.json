@@ -29,6 +29,22 @@
     "./agents": {
       "import": "./dist/agents.js",
       "types": "./dist/agents.d.ts"
+    },
+    "./schema-registry-types": {
+      "import": "./dist/schema-registry-types.js",
+      "types": "./dist/schema-registry-types.d.ts"
+    },
+    "./topic-acl": {
+      "import": "./dist/topic-acl.js",
+      "types": "./dist/topic-acl.d.ts"
+    },
+    "./outbox-types": {
+      "import": "./dist/outbox-types.js",
+      "types": "./dist/outbox-types.d.ts"
+    },
+    "./schema-validation-utils": {
+      "import": "./dist/schema-validation-utils.js",
+      "types": "./dist/schema-validation-utils.d.ts"
     }
   },
   "scripts": {

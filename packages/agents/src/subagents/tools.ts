@@ -5,10 +5,14 @@
  * exposing them as `agent.{name}` tools in the main agent.
  */
 
-import { createTool, type Tool, type ToolSchema } from '@voltagent/core';
 import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
 import type { IToolRegistry } from '../types';
+import {
+	type Tool,
+	type ToolSchema,
+	createTool,
+} from './mocks/voltagent-core.js';
 import { type ISubagentDelegator, SubagentRunner } from './runner';
 import type { SubagentConfig, SubagentTool } from './types';
 
@@ -21,7 +25,7 @@ export class SubagentToolFactory {
 
 	constructor(
 		private readonly toolRegistry: IToolRegistry,
-		private readonly globalTools: any[],
+		private readonly globalTools: Tool<ToolSchema>[],
 	) {}
 
 	/**
@@ -190,7 +194,7 @@ export class SubagentToolFactory {
 		config: SubagentConfig,
 	): Tool<ToolSchema>[] {
 		return tools.filter((tool) => {
-			const toolName = tool.name || (tool as any).id;
+			const toolName = tool.name || (tool as unknown as { id?: string }).id;
 
 			// Check blocked tools
 			if (config.blocked_tools?.length) {

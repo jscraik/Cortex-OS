@@ -26,7 +26,7 @@ This document summarizes the research conducted on the VoltAgent framework for b
 
 ### Recommended Directory Structure
 
-```
+```markdown
 src/
 ├── index.ts                 # Main entry point
 ├── tools/                   # Tool definitions

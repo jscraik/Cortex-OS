@@ -71,6 +71,13 @@ export class BehaviorExtensionManager {
 	}
 
 	/**
+	 * Clear all registered extensions (used by tests)
+	 */
+	clearExtensions(): void {
+		this.extensions.clear();
+	}
+
+	/**
 	 * Apply behavior extensions to current state
 	 */
 	async applyExtensions(

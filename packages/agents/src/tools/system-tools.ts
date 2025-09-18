@@ -1,6 +1,6 @@
-import { createTool } from '@voltagent/core';
 import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
+import { createTool } from './mocks/voltagent-core.js';
 
 const logger = createPinoLogger({ name: 'SystemTools' });
 
@@ -54,7 +54,7 @@ export const executeCommandTool = createTool({
 				timestamp: new Date().toISOString(),
 			};
 
-			logger.info(`Command executed successfully`);
+			logger.info('Command executed successfully');
 			return result;
 		} catch (error) {
 			logger.error('Command execution failed:', error as Error);
@@ -184,7 +184,6 @@ export const readFileTool = createTool({
 });
 
 // Aliases for backwards compatibility
-export const componentHealthTool = systemHealthTool;
 
 // Tool for listing agents
 export const listAgentsTool = createTool({

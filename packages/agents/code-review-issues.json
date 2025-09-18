@@ -1,0 +1,146 @@
+[
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/CortexAgent.ts",
+    "lines": "207-233",
+    "severity": "medium",
+    "category": "type-safety",
+    "description": "Security tool execution uses type assertion without validation",
+    "evidence": "Line 211: const inputCheck = await securityTool.execute(...) - Tool type not validated before execution",
+    "fix": "Add proper type validation: if (securityTool && 'execute' in securityTool && typeof securityTool.execute === 'function')"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/CortexAgent.ts",
+    "lines": "243-258",
+    "severity": "medium",
+    "category": "error-handling",
+    "description": "Generic error catching without specific error types",
+    "evidence": "Lines 250-258: catch (error) block treats all errors the same, losing error context",
+    "fix": "Add specific error type handling: catch (error) { if (error instanceof NetworkError) { /* handle network */ } else if (error instanceof AuthenticationError) { /* handle auth */ } else { /* generic fallback */ }"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/CortexAgent.ts",
+    "lines": "337-340",
+    "severity": "low",
+    "category": "dead-code",
+    "description": "Unimplemented method with TODO comment",
+    "evidence": "Lines 338-340: setDelegator method accepts parameter but does nothing",
+    "fix": "Remove unimplemented method or add proper implementation"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/server.ts",
+    "lines": "14-25",
+    "severity": "high",
+    "category": "security",
+    "description": "Missing error handling for agent initialization",
+    "evidence": "Lines 14-25: Agent created and registered without try-catch, could crash server on startup",
+    "fix": "Wrap agent creation in try-catch block with proper error handling and graceful shutdown"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/server.ts",
+    "lines": "36-41",
+    "severity": "medium",
+    "category": "security",
+    "description": "Auth middleware created but not used consistently",
+    "evidence": "Lines 36-41: Auth created but only applied to /metrics endpoint, not to sensitive endpoints",
+    "fix": "Apply auth middleware to all sensitive endpoints or remove if not needed"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/utils/modelRouter.ts",
+    "lines": "74-81",
+    "severity": "medium",
+    "category": "type-safety",
+    "description": "Use of 'any' type and suppressed error variable",
+    "evidence": "Line 74: let ollamaConfig: any = null; Line 79: (_error) - error caught but ignored",
+    "fix": "Define proper type for ollamaConfig and handle error appropriately"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/utils/modelRouter.ts",
+    "lines": "455-495",
+    "severity": "medium",
+    "category": "type-safety",
+    "description": "Function accepts 'any[]' for tools parameter",
+    "evidence": "Line 457: tools: any[] - Should use proper Tool type",
+    "fix": "Replace 'any[]' with proper Tool[] type from @voltagent/core"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/utils/modelRouter.ts",
+    "lines": "597-613",
+    "severity": "low",
+    "category": "logic-error",
+    "description": "Input requirement analysis uses basic regex patterns",
+    "evidence": "Lines 599-612: Simple regex checks may not accurately determine model requirements",
+    "fix": "Implement more sophisticated requirement analysis or use ML-based classification"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/middleware/auth.ts",
+    "lines": "48-85",
+    "severity": "medium",
+    "category": "performance",
+    "description": "In-memory rate limiting without cleanup mechanism",
+    "evidence": "Lines 48-85: rateLimitStore grows indefinitely, potential memory leak",
+    "fix": "Add cleanup mechanism for expired rate limit entries"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/middleware/auth.ts",
+    "lines": "63-67",
+    "severity": "low",
+    "category": "security",
+    "description": "IP header spoofing vulnerability",
+    "evidence": "Line 63: Direct use of x-forwarded-for header without validation",
+    "fix": "Validate and sanitize IP headers, consider using proper proxy detection"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/monitoring/metrics.ts",
+    "lines": "24-46",
+    "severity": "low",
+    "category": "performance",
+    "description": "In-memory metrics storage without bounds",
+    "evidence": "Lines 24-45: metricsStore can grow indefinitely",
+    "fix": "Add metrics retention policies and cleanup mechanisms"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/monitoring/metrics.ts",
+    "lines": "137-163",
+    "severity": "medium",
+    "category": "type-safety",
+    "description": "Middleware uses 'any' type for context",
+    "evidence": "Line 138: function monitoring(c: any, next: any)",
+    "fix": "Define proper Context and Next types"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/Dockerfile",
+    "lines": "31-34",
+    "severity": "low",
+    "category": "security",
+    "description": "Missing non-root user setup in base image",
+    "evidence": "Lines 31-34: User created but not used in base image",
+    "fix": "Ensure non-root user is used consistently across all stages"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/tools/system-tools.ts",
+    "lines": "67-68",
+    "severity": "low",
+    "category": "backward-compatibility",
+    "description": "Unnecessary backward compatibility alias",
+    "evidence": "Line 68: export const componentHealthTool = systemHealthTool;",
+    "fix": "Remove alias and update all references"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/tools/mcp-tools.ts",
+    "lines": "65-66",
+    "severity": "low",
+    "category": "backward-compatibility",
+    "description": "Unnecessary backward compatibility alias",
+    "evidence": "Line 66: export const callMCPToolTool = callMCPTool;",
+    "fix": "Remove alias and update all references"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/utils/modelRouter.ts",
+    "lines": 78,
+    "severity": "low",
+    "category": "backward-compatibility",
+    "description": "Comment indicates missing fallback implementation",
+    "evidence": "Line 78: ollamaConfig = null; // Will use fallback models",
+    "fix": "Implement proper fallback model loading or remove comment"
+  }
+]

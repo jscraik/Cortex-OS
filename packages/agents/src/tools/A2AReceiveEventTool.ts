@@ -1,6 +1,6 @@
-import { createTool } from '@voltagent/core';
 import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
+import { createTool } from './mocks/voltagent-core.js';
 
 const logger = createPinoLogger({ name: 'A2AReceiveEventTool' });
 

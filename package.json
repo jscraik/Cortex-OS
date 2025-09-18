@@ -214,7 +214,7 @@
     "nx:test:core": "pnpm -s nx run-many -t test --projects=@cortex-os/utils,@cortex-os/types,@cortex-os/contracts --parallel=2",
     "nx:test:a2a": "pnpm -s nx run-many -t test --projects=@cortex-os/a2a-core,@cortex-os/a2a-common,@cortex-os/a2a-contracts,@cortex-os/a2a-transport,@cortex-os/a2a-handlers,@cortex-os/a2a-schema-registry,@cortex-os/a2a-observability,a2a --parallel=2",
     "nx:test:mcp": "pnpm -s nx run-many -t test --projects=@cortex-os/registry --parallel=2",
-    "nx:test:services": "pnpm -s nx run-many -t test --projects=@cortex-os/telemetry,@cortex-os/model-gateway,@cortex-os/observability,@cortex-os/orchestration,@cortex-os/gateway,@cortex-os/registry,@cortex-os/memories --parallel=2",
+    "nx:test:services": "pnpm -s nx run-many -t test --projects=@cortex-os/policy,@cortex-os/telemetry,@cortex-os/model-gateway,@cortex-os/observability,@cortex-os/orchestration,@cortex-os/gateway,@cortex-os/registry,@cortex-os/memories --parallel=2",
     "nx:test:features": "pnpm -s nx run-many -t test --projects=@cortex-os/mvp-core,@cortex-os/mvp-server,@cortex-os/prp-runner,@cortex-os/agents,@cortex-os/kernel,@cortex-os/simlab,@cortex-os/evals,@cortex-os/rag,asbr,mvp --parallel=2",
     "nx:test:each": "pnpm -s nx show projects --with-target=test --noInteractive | xargs -n 1 -P 3 -I {} pnpm -s nx test {}",
     "nx:test:all:chunked": "pnpm nx:test:core && pnpm nx:test:a2a && pnpm nx:test:mcp && pnpm nx:test:services && pnpm nx:test:features",
@@ -277,6 +277,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
     "@frost-beta/clip": "^1.3.1",
+    "@langchain/core": "^0.3.30",
     "@measured/puck": "^0.20.2",
     "@nx/linter": "^19.8.4",
     "@rollup/plugin-typescript": "^12.1.4",

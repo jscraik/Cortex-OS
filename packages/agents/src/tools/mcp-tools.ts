@@ -1,6 +1,6 @@
-import { createTool } from '@voltagent/core';
 import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
+import { createTool } from './mocks/voltagent-core.js';
 
 const logger = createPinoLogger({ name: 'MCPTools' });
 
@@ -119,6 +119,3 @@ export const callMCPTool = createTool({
 		}
 	},
 });
-
-// Aliases for backwards compatibility
-export const callMCPToolTool = callMCPTool;

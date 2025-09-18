@@ -29,7 +29,7 @@ function registerMemorySchema(
 	examples: unknown[],
 ) {
 	registry.register({
-		eventType,
+		eventType: eventType as string,
 		version: '1.0.0',
 		schema,
 		description,

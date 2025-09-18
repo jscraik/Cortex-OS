@@ -29,4 +29,6 @@ export {
 // Teaching layer
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
+// LangGraph adoption seam (Phase 1)
+export { createKernelGraph } from './langgraph/graph.js';
 //# sourceMappingURL=index.js.map

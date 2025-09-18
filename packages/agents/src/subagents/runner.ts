@@ -127,7 +127,7 @@ export class SubagentRunner implements ISubagentRunner {
 
 			// Execute the agent
 			const result = await agent.generateText(context.input, {
-				maxTokens: context.config.max_tokens,
+				maxOutputTokens: context.config.max_tokens,
 			});
 
 			const duration = Date.now() - startTime;

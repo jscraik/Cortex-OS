@@ -55,7 +55,8 @@ class OrchestrationToolError extends Error {
 	}
 }
 
-const CONTROL_CHARS = /[\\u0000-\\u001F\\u007F]/g;
+// Matches ASCII control characters only (NUL..US and DEL)
+const CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
 const MAX_METADATA_DEPTH = 4;
 const MAX_METADATA_ENTRIES = 64;
 const MAX_ARRAY_LENGTH = 64;
@@ -76,7 +77,9 @@ function sanitizeString(
 	field: string,
 	{ min, max }: { min: number; max: number },
 ): string {
-	const normalized = value.replace(/\s+/g, ' ').trim();
+	// Remove control characters first, then normalize whitespace
+	const withoutControl = value.replace(CONTROL_CHARS, '');
+	const normalized = withoutControl.replace(/\s+/g, ' ').trim();
 	if (!normalized || normalized.length < min) {
 		throw new OrchestrationToolError(
 			'validation_error',
@@ -91,18 +94,6 @@ function sanitizeString(
 			[`${field} must not exceed ${max} characters`],
 		);
 	}
-	if (CONTROL_CHARS.test(normalized)) {
-		CONTROL_CHARS.lastIndex = 0;
-		throw new OrchestrationToolError(
-			'validation_error',
-			`${field} contains control characters`,
-			[
-				'Remove control characters from input',
-				`${field} contains control characters`,
-			],
-		);
-	}
-	CONTROL_CHARS.lastIndex = 0;
 	return normalized;
 }
 

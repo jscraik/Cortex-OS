@@ -1,0 +1,31 @@
+{
+    "name": "@cortex-os/policy",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "pretest": "pnpm build",
+        "dev": "tsc --watch",
+        "build": "echo \"No build step required for this package\"",
+        "lint": "eslint src --ext .ts --no-ignore",
+        "test": "node ../../scripts/vitest-safe.mjs run",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test:safe": "node ../../scripts/vitest-safe.mjs run"
+    },
+    "dependencies": {
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.1",
+        "eslint": "^9.33.0",
+        "typescript": "^5.7.2",
+        "vitest": "^3.2.4"
+    }
+}

@@ -31,32 +31,24 @@ export interface AgentMessage {
 	metadata?: Record<string, unknown>;
 }
 
+import type { Tool, ToolSchema } from './mocks/voltagent-core.js';
+
 /**
  * Tool registry interface for registering and managing tools
  */
 export interface IToolRegistry {
-	/**
-	 * Register a new tool
-	 */
-	register(tool: unknown): void;
+	/** Register a new tool */
+	register<T extends ToolSchema>(tool: Tool<T>): void;
 
-	/**
-	 * Unregister a tool by ID
-	 */
+	/** Unregister a tool by ID */
 	unregister(toolId: string): boolean;
 
-	/**
-	 * Get a tool by ID
-	 */
-	get(toolId: string): unknown;
+	/** Get a tool by ID */
+	get<T extends ToolSchema>(toolId: string): Tool<T> | null;
 
-	/**
-	 * List all registered tools
-	 */
-	list(): unknown[];
+	/** List all registered tools */
+	list<T extends ToolSchema>(): Tool<T>[];
 
-	/**
-	 * Check if a tool is registered
-	 */
+	/** Check if a tool is registered */
 	has(toolId: string): boolean;
 }

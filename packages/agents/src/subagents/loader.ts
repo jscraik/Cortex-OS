@@ -129,9 +129,8 @@ export class SubagentLoader {
 
 		if (ext === '.md') {
 			return this.parseMarkdownFile(content, filePath);
-		} else {
-			return this.parseYamlFile(content, filePath);
 		}
+		return this.parseYamlFile(content, filePath);
 	}
 
 	/**

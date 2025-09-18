@@ -1,4 +1,20 @@
 import { createPinoLogger } from '@voltagent/logger';
+import {
+	type CapabilityRouterConfig,
+	createCapabilityRouter,
+} from '../providers/capability-router.js';
+import {
+	type FallbackChainConfig,
+	createFallbackChain,
+} from '../providers/fallback-chain.js';
+import {
+	type MLXProviderConfig,
+	createMLXProvider,
+} from '../providers/mlx-provider/index.js';
+import { createOllamaProvider } from '../providers/ollama-provider.js';
+import { createOpenAIProvider } from '../providers/openai-provider.js';
+import type { ModelProvider } from '../types/model.js';
+import type { Tool } from './mocks/voltagent-core.js';
 
 const logger = createPinoLogger({ name: 'ModelRouter' });
 
@@ -65,15 +81,103 @@ export interface ModelCapability {
 	priority: number; // 1-10, higher is preferred
 }
 
+interface OllamaConfig {
+	baseUrl?: string;
+	models?: string[];
+}
+
 export function createModelRouter(config?: ModelRouterConfig) {
 	// Load Ollama configuration synchronously
-	let ollamaConfig: any = null;
+	let ollamaConfig: OllamaConfig | null = null;
 	try {
 		// For now, we'll use a simplified approach without async loading
 		// In a real implementation, this would be pre-loaded or cached
 		ollamaConfig = null; // Will use fallback models
-	} catch (_error) {
-		logger.warn('Failed to load Ollama config, using fallback models');
+	} catch (error) {
+		logger.warn('Failed to load Ollama config, using fallback models:', error);
+	}
+
+	// Create provider instances
+	const providers: ModelProvider[] = [];
+
+	// Add OpenAI providers
+	if (config?.apiProviders?.openai) {
+		providers.push(
+			createOpenAIProvider({
+				apiKey: config.apiProviders.openai.apiKey,
+				baseURL: config.apiProviders.openai.baseURL,
+				model: 'gpt-4',
+			}),
+			createOpenAIProvider({
+				apiKey: config.apiProviders.openai.apiKey,
+				baseURL: config.apiProviders.openai.baseURL,
+				model: 'gpt-4o-mini',
+			}),
+		);
+	}
+
+	// Add MLX provider if enabled (macOS only)
+	if (config?.enableMLX) {
+		try {
+			const mlxConfig: MLXProviderConfig = {
+				modelPath:
+					process.env.MLX_MODEL_PATH ||
+					'~/.cache/huggingface/hub/models--mlx-community--Llama-3.2-3B-Instruct-4bit',
+				enableThermalMonitoring: true,
+				thermalThreshold: 80,
+				memoryThreshold: 0.8,
+				maxConcurrency: 2,
+			};
+			providers.push(createMLXProvider(mlxConfig));
+			logger.info('MLX provider enabled with thermal monitoring');
+		} catch (error) {
+			logger.warn('Failed to initialize MLX provider:', error);
+		}
+	}
+
+	// Add Ollama providers
+	if (config?.ollamaBaseUrl) {
+		providers.push(
+			createOllamaProvider({
+				baseUrl: config?.ollamaBaseUrl,
+				model: 'deepseek-coder',
+			}),
+		);
+	}
+
+	// Create fallback chain if we have providers
+	let fallbackProvider: ModelProvider | null = null;
+	if (providers.length > 0) {
+		const fallbackConfig: FallbackChainConfig = {
+			providers,
+			healthCheckInterval: 30000,
+			circuitBreakerThreshold: 3,
+			circuitBreakerTimeout: 60000,
+			retryAttempts: 2,
+			retryDelay: 1000,
+		};
+		fallbackProvider = createFallbackChain(fallbackConfig);
+		logger.info(`Created fallback chain with ${providers.length} providers`);
+	}
+
+	// Create capability router for advanced routing
+	let capabilityRouter: ReturnType<typeof createCapabilityRouter> | null = null;
+	if (providers.length > 0) {
+		const capabilityConfig: CapabilityRouterConfig = {
+			providers,
+			fallbackChain: providers.map((p) => p.name),
+			thermalThrottling: {
+				enabled: config?.enableMLX || false,
+				maxTemp: 85,
+				checkInterval: 30000,
+			},
+			costLimits: {
+				daily: 10, // $10 daily limit
+				monthly: 300, // $300 monthly limit
+			},
+		};
+		capabilityRouter = createCapabilityRouter(capabilityConfig);
+		logger.info('Created capability router with advanced features');
 	}
 
 	// Define available models
@@ -376,11 +480,63 @@ export function createModelRouter(config?: ModelRouterConfig) {
 
 	return {
 		/**
+		 * Generate text using the capability router with intelligent provider selection
+		 */
+		async generateText(
+			prompt: string,
+			options?: {
+				model?: string;
+				temperature?: number;
+				maxTokens?: number;
+				capabilities?: {
+					supportsVision?: boolean;
+					supportsStreaming?: boolean;
+					supportsTools?: boolean;
+					maxTokens?: number;
+					contextWindow?: number;
+				};
+			},
+		): Promise<string> {
+			// Use capability router if available for advanced routing
+			if (capabilityRouter) {
+				try {
+					const result = await capabilityRouter.generate(
+						prompt,
+						{
+							maxTokens: options?.maxTokens,
+							temperature: options?.temperature,
+						},
+						options?.capabilities || {},
+					);
+					return result.content;
+				} catch (error) {
+					logger.error('Capability router generation failed:', error);
+					// Fall back to basic fallback chain
+				}
+			}
+
+			// Fallback to basic fallback chain
+			if (fallbackProvider) {
+				try {
+					const result = await fallbackProvider.generate(prompt, {
+						maxTokens: options?.maxTokens,
+						temperature: options?.temperature,
+					});
+					return result.content;
+				} catch (error) {
+					logger.error('Fallback provider generation failed:', error);
+					throw error;
+				}
+			}
+			throw new Error('No providers available for generation');
+		},
+
+		/**
 		 * Select the best model for a given task
 		 */
 		async selectModel(
 			input: string,
-			tools: any[],
+			tools: Tool[],
 			preferredModel?: string,
 		): Promise<string> {
 			// If model is explicitly requested, use it if available
@@ -435,6 +591,45 @@ export function createModelRouter(config?: ModelRouterConfig) {
 		 */
 		getAvailableModels(): ModelCapability[] {
 			return [...models];
+		},
+
+		/**
+		 * Get advanced routing statistics and metrics
+		 */
+		getRoutingStats() {
+			if (!capabilityRouter) {
+				return {
+					fallbackOnly: true,
+					providerCount: providers.length,
+				};
+			}
+
+			return {
+				capabilityRouter: true,
+				usageStats: capabilityRouter.getUsageStats(),
+				thermalStatus: capabilityRouter.getThermalStatus(),
+				costInfo: capabilityRouter.getCostInfo(),
+				providerCount: providers.length,
+			};
+		},
+
+		/**
+		 * Get detailed provider health information
+		 */
+		async getProviderHealth(): Promise<Record<string, any>> {
+			const health: Record<string, any> = {};
+
+			for (const model of models) {
+				const check = await this.checkHealth(model.name);
+				health[model.name] = {
+					...check,
+					capabilities: model.capabilities,
+					cost: model.cost,
+					priority: model.priority,
+				};
+			}
+
+			return health;
 		},
 
 		/**

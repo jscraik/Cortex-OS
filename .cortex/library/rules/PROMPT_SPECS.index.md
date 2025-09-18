@@ -17,4 +17,4 @@ policy
 
 - All 10 files must exist.
 - Each must contain: `purpose`, `principles`, `examples`, `ci_policy`.
-- Neurons must reference this index by ID `prompt.constitution.v0.1`.
+- Agents must reference this index by ID `prompt.constitution.v0.1`.

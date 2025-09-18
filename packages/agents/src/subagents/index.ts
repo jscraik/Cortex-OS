@@ -5,9 +5,11 @@
  * specialized agents on disk and materializing them as tools in the main agent.
  */
 
+import type * as fs from 'node:fs';
 import { createPinoLogger } from '@voltagent/logger';
 import type { IToolRegistry } from '../types';
 import { SubagentLoader } from './loader';
+import type { Tool, ToolSchema } from './mocks/voltagent-core.js';
 import { SubagentRegistry } from './registry';
 import { SubagentToolFactory } from './tools';
 
@@ -17,7 +19,7 @@ export interface SubagentSystemConfig {
 	/** Tool registry for registering subagent tools */
 	toolRegistry: IToolRegistry;
 	/** Global tools available to subagents */
-	globalTools: any[];
+	globalTools: Tool<ToolSchema>[];
 	/** Loader configuration */
 	loader?: {
 		searchPaths?: string[];
@@ -34,12 +36,12 @@ export interface SubagentSystemConfig {
  * Main subagent system class
  */
 export class SubagentSystem {
-	private loader: SubagentLoader;
-	private toolFactory: SubagentToolFactory;
-	private registry: SubagentRegistry;
-	private watcher?: any;
+	private readonly loader: SubagentLoader;
+	private readonly toolFactory: SubagentToolFactory;
+	private readonly registry: SubagentRegistry;
+	private watcher?: fs.FSWatcher;
 
-	constructor(private config: SubagentSystemConfig) {
+	constructor(private readonly config: SubagentSystemConfig) {
 		// Initialize loader
 		this.loader = new SubagentLoader(config.loader);
 

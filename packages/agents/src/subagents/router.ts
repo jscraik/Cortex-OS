@@ -77,7 +77,7 @@ export class DelegationRouter {
 		message: string,
 		context?: {
 			userId?: string;
-			preferences?: Record<string, any>;
+			preferences?: Record<string, unknown>;
 			complexity?: number;
 		},
 	): Promise<{
@@ -126,7 +126,7 @@ export class DelegationRouter {
 		message: string,
 		strategy: 'single' | 'fanout' | 'none',
 		candidates: Array<{ subagent: string; confidence: number; reason: string }>,
-		context?: any,
+		context?: Record<string, unknown>,
 	): Promise<DelegationRequest[]> {
 		if (strategy === 'none') {
 			return [];
@@ -173,7 +173,7 @@ export class DelegationRouter {
 	 */
 	private async findCandidates(
 		message: string,
-		context?: any,
+		context?: Record<string, unknown>,
 	): Promise<Array<{ subagent: string; confidence: number; reason: string }>> {
 		const candidates: Array<{
 			subagent: string;
@@ -225,7 +225,7 @@ export class DelegationRouter {
 	private evaluateRule(
 		rule: RoutingRule,
 		message: string,
-		_context?: any,
+		_context?: Record<string, unknown>,
 	): { matches: boolean; confidence: number; reason: string } {
 		let matches = false;
 		let confidence = 0.5;

@@ -68,12 +68,6 @@ export class CortexKernel {
 		return newState;
 	}
 	/**
-	 * Expose orchestrator neuron count
-	 */
-	getNeuronCount() {
-		return this.orchestrator.getNeuronCount();
-	}
-	/**
 	 * Run a complete PRP workflow
 	 */
 	async runPRPWorkflow(blueprint, options = {}) {

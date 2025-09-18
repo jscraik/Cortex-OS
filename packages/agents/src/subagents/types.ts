@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import type { Tool, ToolSchema } from './mocks/voltagent-core.js';
 
 /**
  * Core subagent configuration schema
@@ -65,7 +66,7 @@ export interface SubagentContext {
 	/** User message that triggered execution */
 	input: string;
 	/** Available tools (filtered by allow/block lists) */
-	tools: any[];
+	tools: Tool<ToolSchema>[];
 	/** Execution metadata */
 	metadata: {
 		startTime: number;
@@ -73,6 +74,13 @@ export interface SubagentContext {
 		recursionDepth: number;
 		delegated: boolean;
 	};
+}
+
+interface ToolCall {
+	id: string;
+	name: string;
+	parameters: Record<string, unknown>;
+	result?: unknown;
 }
 
 /**
@@ -84,7 +92,7 @@ export interface SubagentResult {
 	/** Agent response/output */
 	output?: string;
 	/** Any tool calls made during execution */
-	toolCalls?: any[];
+	toolCalls?: ToolCall[];
 	/** Execution metrics */
 	metrics: {
 		duration: number;
@@ -105,6 +113,11 @@ export interface ISubagentRunner {
 	healthCheck(): Promise<boolean>;
 	/** Get subagent capabilities */
 	getCapabilities(): Promise<string[]>;
+}
+
+interface ToolExecuteParams {
+	message: string;
+	context?: string;
 }
 
 /**
@@ -133,7 +146,7 @@ export interface SubagentTool {
 		required: string[];
 	};
 	/** Tool execution function */
-	execute: (params: any) => Promise<any>;
+	execute: (params: ToolExecuteParams) => Promise<SubagentResult>;
 }
 
 /**
@@ -205,7 +218,7 @@ export interface YamlSubagentFile {
 
 export interface MarkdownSubagentFile {
 	// Front matter contains the configuration
-	[key: string]: any;
+	[key: string]: unknown;
 	// Content below front matter is additional documentation
 	content?: string;
 }

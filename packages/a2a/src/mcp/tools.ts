@@ -110,10 +110,47 @@ export const a2aQueueMessageTool: A2AMcpTool<
 				};
 			}
 			try {
+				// Validate required parameters
+				if (!params.message) {
+					return {
+						isError: true,
+						content: [{
+							type: 'text',
+							text: JSON.stringify({ error: 'Message is required' })
+						}]
+					};
+				}
+
+				// Ensure message has required fields
+				if (!params.message.role || !params.message.parts) {
+					return {
+						isError: true,
+						content: [{
+							type: 'text',
+							text: JSON.stringify({ error: 'Message must have role and parts' })
+						}]
+					};
+				}
+
+				// Validate context if provided
+				if (params.context) {
+					for (const ctx of params.context) {
+						if (!ctx.role || !ctx.parts) {
+							return {
+								isError: true,
+								content: [{
+									type: 'text',
+									text: JSON.stringify({ error: 'Context items must have role and parts' })
+								}]
+							};
+						}
+					}
+				}
+
 				const resultRaw = await taskManager.sendTask({
 					id: params.id,
-					message: params.message,
-					context: params.context,
+					message: params.message as { role: 'user' | 'assistant' | 'system'; parts: { text?: string; data?: unknown }[] },
+					context: params.context as { role: 'user' | 'assistant' | 'system'; parts: { text?: string; data?: unknown }[] }[] | undefined,
 				});
 				let payload: A2AQueueMessageResult;
 				try {

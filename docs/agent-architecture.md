@@ -118,7 +118,7 @@ Fallback: if MLX load fails → mapped Ollama model.
 packages/model-gateway/src/server.ts
 
 import Fastify from "fastify";
-import { enforce } from "../../orchestration/src/lib/policy-engine";
+import { enforce } from "@cortex-os/policy";
 import { record } from "../../orchestration/src/lib/audit";
 
 const app = Fastify({ logger: false });

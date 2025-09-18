@@ -660,15 +660,14 @@ export function createObservabilityToolRuntime(
 			});
 
 			if (evaluation.triggered && options.onEvent) {
-				options.onEvent(
-					createObservabilityEvent.alertTriggered({
-						alertId: rule.id,
-						rule: `${metricName} ${rule.comparison} ${rule.threshold}`,
-						severity: rule.severity,
-						message: rule.message,
-						triggeredAt: new Date().toISOString(),
-					}),
-				);
+				const alertEvent = createObservabilityEvent.alertTriggered({
+					alertId: rule.id,
+					rule: `${metricName} ${rule.comparison} ${rule.threshold}`,
+					severity: rule.severity,
+					message: rule.message,
+					triggeredAt: new Date().toISOString(),
+				});
+				options.onEvent(alertEvent.data);
 			}
 
 			return {
@@ -731,7 +730,7 @@ export function createObservabilityToolRuntime(
 			).length;
 			const avgDuration = totalTraces
 				? traceDurations.reduce((total, value) => total + value, 0) /
-					totalTraces
+				totalTraces
 				: 0;
 			const p95 = percentile(traceDurations, 95);
 			const slowest = traces.reduce<TraceRecord | null>((slow, trace) => {

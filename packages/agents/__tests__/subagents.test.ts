@@ -2,32 +2,43 @@
  * Tests for the subagent system
  */
 
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import type { Tool, ToolSchema } from '@voltagent/core';
+import { promises as fsp } from 'node:fs';
+import * as path from 'node:path';
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	test,
+} from 'vitest';
 import { CortexAgent } from '../src/CortexAgent';
 import { createSubagentSystem } from '../src/subagents';
 import { SubagentLoader } from '../src/subagents/loader';
 import { SubagentRegistry } from '../src/subagents/registry';
 import { DelegationRouter } from '../src/subagents/router';
 import { SubagentToolFactory } from '../src/subagents/tools';
+import type { IToolRegistry } from '../src/types';
 
 // Mock IToolRegistry for testing
-class MockToolRegistry {
-	private tools = new Map();
+class MockToolRegistry implements IToolRegistry {
+	private tools = new Map<string, Tool<ToolSchema>>();
 
-	register(tool: any): void {
-		this.tools.set(tool.id, tool);
+	register(tool: Tool<ToolSchema>): void {
+		const id = (tool as unknown as { id?: string }).id ?? tool.name;
+		this.tools.set(id, tool);
 	}
 
 	unregister(toolId: string): boolean {
 		return this.tools.delete(toolId);
 	}
 
-	get(toolId: string): any | null {
+	get(toolId: string): Tool<ToolSchema> | null {
 		return this.tools.get(toolId) || null;
 	}
 
-	list(): any[] {
+	list(): Tool<ToolSchema>[] {
 		return Array.from(this.tools.values());
 	}
 
@@ -43,14 +54,14 @@ describe('Subagent System', () => {
 	beforeAll(async () => {
 		// Create temporary directory for test subagents
 		tempDir = path.join(__dirname, '..', 'tmp', 'test-subagents');
-		await fs.mkdir(tempDir, { recursive: true });
+		await fsp.mkdir(tempDir, { recursive: true });
 
 		toolRegistry = new MockToolRegistry();
 	});
 
 	afterAll(async () => {
 		// Clean up temporary directory
-		await fs.rm(tempDir, { recursive: true, force: true });
+		await fsp.rm(tempDir, { recursive: true, force: true });
 	});
 
 	describe('SubagentLoader', () => {
@@ -76,12 +87,13 @@ subagent:
   model_provider: "mlx"
 `;
 
-			await fs.writeFile(path.join(tempDir, 'test.subagent.yml'), yamlContent);
+			await fsp.writeFile(path.join(tempDir, 'test.subagent.yml'), yamlContent);
 
 			const subagents = await loader.loadAll();
 			expect(subagents.has('test-agent')).toBe(true);
-
-			const config = subagents.get('test-agent')!;
+			const config = subagents.get('test-agent');
+			expect(config).toBeDefined();
+			if (!config) return;
 			expect(config.name).toBe('test-agent');
 			expect(config.description).toBe('Test subagent');
 			expect(config.model).toBe('test-model');
@@ -104,12 +116,13 @@ model_provider: "ollama"
 This is a test subagent in markdown format.
 `;
 
-			await fs.writeFile(path.join(tempDir, 'test-md.subagent.md'), mdContent);
+			await fsp.writeFile(path.join(tempDir, 'test-md.subagent.md'), mdContent);
 
 			const subagents = await loader.loadAll();
 			expect(subagents.has('test-md-agent')).toBe(true);
-
-			const config = subagents.get('test-md-agent')!;
+			const config = subagents.get('test-md-agent');
+			expect(config).toBeDefined();
+			if (!config) return;
 			expect(config.name).toBe('test-md-agent');
 			expect(config.description).toBe('Test markdown subagent');
 			expect(config.model_provider).toBe('ollama');
@@ -122,7 +135,7 @@ subagent:
   name: ""  # Empty name should fail validation
 `;
 
-			await fs.writeFile(
+			await fsp.writeFile(
 				path.join(tempDir, 'invalid.subagent.yml'),
 				invalidContent,
 			);
@@ -208,7 +221,15 @@ subagent:
 
 	describe('DelegationRouter', () => {
 		let router: DelegationRouter;
-		let mockRegistry: any;
+		let mockRegistry: {
+			list: () => Promise<
+				Array<{
+					name: string;
+					allowed_tools?: string[];
+					blocked_tools?: string[];
+				}>
+			>;
+		};
 
 		beforeEach(() => {
 			mockRegistry = {
@@ -282,7 +303,7 @@ subagent:
   model: "test-model"
 `;
 
-			await fs.writeFile(
+			await fsp.writeFile(
 				path.join(tempDir, 'integration-test.subagent.yml'),
 				yamlContent,
 			);

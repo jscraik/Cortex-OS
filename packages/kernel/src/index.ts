@@ -67,3 +67,6 @@ export type {
 	TeachingPattern,
 } from './teaching/example-capture.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
+
+// LangGraph adoption seam (Phase 1: skeleton graph)
+export { createKernelGraph } from './langgraph/graph.js';

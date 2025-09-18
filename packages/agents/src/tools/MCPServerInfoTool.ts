@@ -1,7 +1,7 @@
-import { createTool } from '@voltagent/core';
 import { createPinoLogger } from '@voltagent/logger';
 import { z } from 'zod';
 import { MCPClient } from '../utils/mcpClient';
+import { createTool } from './mocks/voltagent-core.js';
 
 const logger = createPinoLogger({ name: 'MCPServerInfoTool' });
 

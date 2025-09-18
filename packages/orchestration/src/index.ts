@@ -143,3 +143,6 @@ export {
 } from './mcp/tools.js';
 // PRP Neural Orchestration Engine
 export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';
+
+// LangGraph foundation (Phase 2)
+export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';

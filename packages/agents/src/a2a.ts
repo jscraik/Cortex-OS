@@ -13,12 +13,29 @@ export interface TopicACL {
 	};
 }
 
-export type BusOptions = {};
+export interface BusOptions {
+	bufferSize?: number;
+	timeout?: number;
+	retryAttempts?: number;
+	[key: string]: unknown;
+}
 
-export type Transport = {};
+export interface Transport {
+	send?: (message: unknown) => Promise<void>;
+	receive?: () => Promise<unknown>;
+	disconnect?: () => Promise<void>;
+	[key: string]: unknown;
+}
+
+export interface SchemaConfig {
+	name: string;
+	version: string;
+	schema: unknown;
+	compatibility?: string;
+}
 
 export interface SchemaRegistry {
-	register: (config: any) => void;
+	register: (config: SchemaConfig) => void;
 }
 
 export function createAgentsSchemaRegistry(): SchemaRegistry {

@@ -59,13 +59,16 @@ describe('CitationBundler', () => {
 
 			const result = bundler.bundleWithClaims(mockChunks, claims);
 
+			expect(result.claimCitations).toBeDefined();
 			expect(result.claimCitations).toHaveLength(2);
-			expect(result.claimCitations[0]).toMatchObject({
-				claim: 'Greenhouse gases cause climate change',
-				citations: expect.arrayContaining([
-					expect.objectContaining({ id: 'chunk-1' }),
-				]),
-			});
+			if (result.claimCitations) {
+				expect(result.claimCitations[0]).toMatchObject({
+					claim: 'Greenhouse gases cause climate change',
+					citations: expect.arrayContaining([
+						expect.objectContaining({ id: 'chunk-1' }),
+					]),
+				});
+			}
 		});
 
 		it('should mark claims without supporting evidence', () => {
@@ -77,12 +80,15 @@ describe('CitationBundler', () => {
 
 			const result = bundler.bundleWithClaims(mockChunks, claims);
 
+			expect(result.claimCitations).toBeDefined();
 			expect(result.claimCitations).toHaveLength(2);
-			expect(result.claimCitations[1]).toMatchObject({
-				claim: 'Solar panels are made of cheese',
-				citations: [],
-				noEvidence: true,
-			});
+			if (result.claimCitations) {
+				expect(result.claimCitations[1]).toMatchObject({
+					claim: 'Solar panels are made of cheese',
+					citations: [],
+					noEvidence: true,
+				});
+			}
 		});
 	});
 
@@ -102,8 +108,11 @@ describe('CitationBundler', () => {
 			const result = bundler.bundleWithDeduplication(duplicateChunks);
 
 			// Should group citations by source
-			expect(result.sourceGroups).toHaveProperty('climate-doc-1');
-			expect(result.sourceGroups['climate-doc-1']).toHaveLength(2);
+			expect(result.sourceGroups).toBeDefined();
+			if (result.sourceGroups) {
+				expect(result.sourceGroups).toHaveProperty('climate-doc-1');
+				expect(result.sourceGroups['climate-doc-1']).toHaveLength(2);
+			}
 		});
 
 		it('should maintain deterministic ordering', () => {

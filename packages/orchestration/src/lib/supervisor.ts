@@ -6,7 +6,7 @@ import {
 	saveCheckpoint,
 } from './checkpoints';
 import { requiresApproval, waitForApproval } from './hitl';
-import { enforce, loadGrant } from './policy-engine';
+import { enforce, loadGrant } from '@cortex-os/policy';
 
 export type Node =
 	| 'plan'

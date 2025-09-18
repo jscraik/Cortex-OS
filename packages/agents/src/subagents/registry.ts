@@ -148,7 +148,12 @@ export class SubagentRegistry
 		// Add new subagents
 		for (const name of toAdd) {
 			try {
-				await this.register(loaded.get(name)!);
+				const config = loaded.get(name);
+				if (config) {
+					await this.register(config);
+				} else {
+					logger.warn(`Config not found for subagent: ${name}`);
+				}
 			} catch (error) {
 				logger.error(`Failed to register subagent ${name}:`, error as Error);
 			}
@@ -172,7 +177,7 @@ export class SubagentRegistry
 		};
 
 		for (const config of this.subagents.values()) {
-			stats.byScope[config.scope]++;
+			stats.byScope[config.scope as keyof typeof stats.byScope]++;
 			const provider = config.model_provider || 'default';
 			stats.byProvider[provider] = (stats.byProvider[provider] || 0) + 1;
 		}

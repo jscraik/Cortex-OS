@@ -23,6 +23,7 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/policy": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "zod": "^3.23.8",
     "@cortex-os/agents": "workspace:*",
@@ -38,6 +39,8 @@
     "langchain": "^0.3.30",
     "neo4j-driver": "^5.25.0",
     "uuid": "^10.0.0",
+    "@langchain/langgraph": "^0.4.9",
+    "yaml": "^2.8.1",
     "winston": "^3.14.2",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-contracts": "workspace:*",

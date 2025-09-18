@@ -49,12 +49,12 @@ export {
 } from './mcp/runtime.js';
 // MCP Tools for external AI agent integration
 export type {
-	AlertQueryInput,
-	DashboardRequestInput,
-	LogSearchInput,
-	MetricRetrievalInput,
+	EvaluateAlertInput,
+	GenerateDashboardInput,
+	SearchLogsInput,
+	GetMetricsInput,
 	ObservabilityTool,
-	TraceQueryInput,
+	QueryTracesInput,
 } from './mcp/tools.js';
 export { observabilityMcpTools } from './mcp/tools.js';
 export * from './metrics/index.js';

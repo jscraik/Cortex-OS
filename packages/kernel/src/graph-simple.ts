@@ -14,6 +14,16 @@ import {
 	validateStateTransition,
 } from './state.js';
 import { generateId } from './utils/id.js';
+import { runStrategyNode, runBuildNode, runEvaluationNode } from './nodes/index.js';
+import { MemorySaver, StateGraph } from '@langchain/langgraph';
+
+// Minimal types to avoid any
+interface LangGraphConfig {
+	configurable?: { runId?: string; deterministic?: boolean };
+}
+interface LangGraphApp {
+	invoke(input: PRPState, config?: LangGraphConfig): Promise<PRPState>;
+}
 
 /**
  * Minimal interface to break circular dependency
@@ -55,9 +65,16 @@ interface RunOptions {
 export class CortexKernel {
 	private readonly orchestrator: PRPOrchestrator;
 	private readonly executionHistory: Map<string, PRPState[]> = new Map();
+	private readonly app: LangGraphApp; // LangGraph compiled app
 
 	constructor(orchestrator: PRPOrchestrator) {
 		this.orchestrator = orchestrator;
+		this.app = this.buildLangGraphApp();
+	}
+
+	// Expose orchestrator for direct access (preferred over wrapper methods)
+	getOrchestrator(): PRPOrchestrator {
+		return this.orchestrator;
 	}
 
 	/**
@@ -74,39 +91,45 @@ export class CortexKernel {
 	}
 
 	/**
-	 * Execute build phase
+	 * Build LangGraph app using existing nodes with history hooks
 	 */
-	private async executeBuildPhase(
-		state: PRPState,
-		deterministic = false,
-	): Promise<PRPState> {
-		const newState: PRPState = {
-			...state,
-			phase: 'build',
-			metadata: {
-				...state.metadata,
-				currentNeuron: 'build-neuron',
-			},
+	private buildLangGraphApp(): LangGraphApp {
+		const self = this;
+		// Create a graph. Keep generics minimal to satisfy local linting.
+		const graph = new StateGraph() as unknown as {
+		  addNode: (name: string, fn: (state: PRPState, config?: LangGraphConfig) => Promise<PRPState>) => void;
+		  setEntryPoint: (name: string) => void;
+		  addEdge: (from: string, to: string) => void;
+		  compile: (opts: { checkpointer: MemorySaver }) => LangGraphApp;
 		};
 
-		newState.validationResults.build = {
-			passed: true,
-			blockers: [],
-			majors: [],
-			evidence: [],
-			timestamp: deterministic
-				? fixedTimestamp('build-validation')
-				: new Date().toISOString(),
-		};
+		graph.addNode('strategy', async (state: PRPState, config?: LangGraphConfig) => {
+			const runId = config?.configurable?.runId || state.metadata.runId;
+			const next = await runStrategyNode(state);
+			self.addToHistory(runId, { ...next, phase: 'strategy' });
+			return next;
+		});
 
-		return newState;
-	}
+		graph.addNode('build', async (state: PRPState, config?: LangGraphConfig) => {
+			const runId = config?.configurable?.runId || state.metadata.runId;
+			const next = await runBuildNode(state);
+			self.addToHistory(runId, { ...next, phase: 'build' });
+			return next;
+		});
 
-	/**
-	 * Expose orchestrator neuron count
-	 */
-	getNeuronCount(): number {
-		return this.orchestrator.getNeuronCount();
+		graph.addNode('evaluation', async (state: PRPState, config?: LangGraphConfig) => {
+			const runId = config?.configurable?.runId || state.metadata.runId;
+			const next = await runEvaluationNode(state);
+			self.addToHistory(runId, { ...next, phase: 'evaluation' });
+			return next;
+		});
+
+		graph.setEntryPoint('strategy');
+		graph.addEdge('strategy', 'build');
+		graph.addEdge('build', 'evaluation');
+
+		const checkpointer = new MemorySaver();
+		return graph.compile({ checkpointer });
 	}
 
 	/**
@@ -128,38 +151,28 @@ export class CortexKernel {
 		this.addToHistory(runId, state);
 
 		try {
-			// Execute strategy phase
-			const strategyState = await this.executeStrategyPhase(
-				state,
-				deterministic,
-			);
-			this.addToHistory(runId, strategyState);
+			// Invoke LangGraph app to run the full workflow
+			const finalState: PRPState = await this.app.invoke(state, {
+				configurable: { runId, deterministic },
+			});
 
-			// Check if we should proceed or recycle
-			if (strategyState.phase === 'recycled') {
-				return strategyState;
-			}
+			// Mark completion metadata deterministically if requested
+			const completed: PRPState = {
+				...finalState,
+				phase: 'completed',
+				metadata: {
+					...finalState.metadata,
+					endTime: deterministic
+						? fixedTimestamp('workflow-end')
+						: new Date().toISOString(),
+				},
+			};
 
-			// Execute build phase
-			const buildState = await this.executeBuildPhase(
-				strategyState,
-				deterministic,
-			);
-			this.addToHistory(runId, buildState);
+			this.addToHistory(runId, completed);
 
-			if (buildState.phase === 'recycled') {
-				return buildState;
-			}
-
-			// Execute evaluation phase
-			const evaluationState = await this.executeEvaluationPhase(
-				buildState,
-				deterministic,
-			);
-			this.addToHistory(runId, evaluationState);
-
-			// Final state
-			return evaluationState;
+			return validateStateTransition(finalState, completed)
+				? completed
+				: finalState;
 		} catch (error) {
 			const errorState: PRPState = {
 				...state,
@@ -178,93 +191,10 @@ export class CortexKernel {
 	}
 
 	/**
-	 * Execute strategy phase
-	 */
-	private async executeStrategyPhase(
-		state: PRPState,
-		deterministic = false,
-	): Promise<PRPState> {
-		const newState: PRPState = {
-			...state,
-			phase: 'strategy',
-			metadata: {
-				...state.metadata,
-				currentNeuron: 'strategy-neuron',
-			},
-		};
-
-		// Add strategy validation results
-		newState.validationResults.strategy = {
-			passed: true,
-			blockers: [],
-			majors: [],
-			evidence: [],
-			timestamp: deterministic
-				? fixedTimestamp('strategy-validation')
-				: new Date().toISOString(),
-		};
-
-		return newState;
-	}
-
-	/**
 	 * Get execution history for a run
 	 */
 	getExecutionHistory(runId: string): PRPState[] {
 		return this.executionHistory.get(runId) || [];
 	}
 
-	/**
-	 * Execute evaluation phase
-	 */
-	private async executeEvaluationPhase(
-		state: PRPState,
-		deterministic = false,
-	): Promise<PRPState> {
-		const newState: PRPState = {
-			...state,
-			phase: 'evaluation',
-			metadata: {
-				...state.metadata,
-				currentNeuron: 'evaluation-neuron',
-			},
-		};
-
-		// Add evaluation validation results
-		newState.validationResults.evaluation = {
-			passed: true,
-			blockers: [],
-			majors: [],
-			evidence: [],
-			timestamp: deterministic
-				? fixedTimestamp('evaluation-validation')
-				: new Date().toISOString(),
-		};
-
-		// Final cerebrum decision
-		newState.cerebrum = {
-			decision: 'promote',
-			reasoning: 'All validation gates passed successfully',
-			confidence: 0.95,
-			timestamp: deterministic
-				? fixedTimestamp('cerebrum-decision')
-				: new Date().toISOString(),
-		};
-
-		// Complete the workflow
-		const completedState: PRPState = {
-			...newState,
-			phase: 'completed',
-			metadata: {
-				...newState.metadata,
-				endTime: deterministic
-					? fixedTimestamp('workflow-end')
-					: new Date().toISOString(),
-			},
-		};
-
-		return validateStateTransition(newState, completedState)
-			? completedState
-			: newState;
-	}
 }

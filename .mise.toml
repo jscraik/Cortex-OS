@@ -1,12 +1,12 @@
 [env]
-MISE_NODE_VERSION = "22.9.0"
+MISE_NODE_VERSION = "22.12.0"
 MISE_PNPM_VERSION = "10.3.0"
 MISE_BUN_VERSION = "1.2.2"
 MISE_PYTHON_VERSION = "3.12.6"
 MISE_RUST_VERSION = "1.80.1"
 
 [tools]
-node = "lts"
+node = "22.12.0"
 pnpm = "10.3.0"
 bun = "1.2.2"
 python = "3.12.6"
