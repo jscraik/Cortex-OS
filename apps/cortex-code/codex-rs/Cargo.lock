@@ -317,17 +317,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-trait"
-version = "0.1.89"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.104",
-]
-
-[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -637,7 +626,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
- "chrono",
  "clap",
  "clap_complete",
  "codex-arg0",
@@ -651,12 +639,12 @@ dependencies = [
  "codex-protocol-ts",
  "codex-tui",
  "predicates",
+ "pretty_assertions",
  "serde_json",
  "tempfile",
  "tokio",
  "tracing",
  "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]
@@ -682,6 +670,7 @@ dependencies = [
  "bytes",
  "chrono",
  "codex-apply-patch",
+ "codex-file-search",
  "codex-mcp-client",
  "codex-protocol",
  "core_test_support",
@@ -749,6 +738,8 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "uuid",
+ "walkdir",
  "wiremock",
 ]
 
@@ -838,7 +829,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
- "async-trait",
  "base64",
  "codex-arg0",
  "codex-common",
@@ -854,7 +844,6 @@ dependencies = [
  "serde_json",
  "shlex",
  "tempfile",
- "thiserror 1.0.69",
  "tokio",
  "toml",
  "tracing",
@@ -932,6 +921,7 @@ dependencies = [
  "color-eyre",
  "crossterm",
  "diffy",
+ "dirs",
  "image",
  "insta",
  "itertools 0.14.0",
@@ -939,6 +929,7 @@ dependencies = [
  "libc",
  "mcp-types",
  "once_cell",
+ "owo-colors",
  "path-clean",
  "pathdiff",
  "pretty_assertions",
@@ -2733,7 +2724,6 @@ version = "0.0.0"
 dependencies = [
  "serde",
  "serde_json",
- "tokio",
  "ts-rs",
 ]
 
@@ -3937,18 +3927,28 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.219"
+version = "1.0.224"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
+checksum = "6aaeb1e94f53b16384af593c71e20b095e958dab1d26939c1b70645c5cfbcc0b"
+dependencies = [
+ "serde_core",
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_core"
+version = "1.0.224"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32f39390fa6346e24defbcdd3d9544ba8a19985d0af74df8501fbfe9a64341ab"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.219"
+version = "1.0.224"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
+checksum = "87ff78ab5e8561c9a675bfc1785cb07ae721f0ee53329a595cefd8c04c2ac4e0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3968,15 +3968,16 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.143"
+version = "1.0.145"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d401abef1d108fbd9cbaebc3e46611f4b1021f714a0597a71f41ee463f5f4a5a"
+checksum = "402a6f66d8c709116cf22f558eab210f5a50187f702eb4d7e5ef38d9a7f1c79c"
 dependencies = [
  "indexmap 2.10.0",
  "itoa",
  "memchr",
  "ryu",
  "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -5292,9 +5293,9 @@ dependencies = [
 
 [[package]]
 name = "wildmatch"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68ce1ab1f8c62655ebe1350f589c61e505cf94d385bc6a12899442d9081e71fd"
+checksum = "39b7d07a236abaef6607536ccfaf19b396dbe3f5110ddb73d39f4562902ed382"
 
 [[package]]
 name = "winapi"

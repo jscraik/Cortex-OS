@@ -423,32 +423,41 @@ impl CodexMessageProcessor {
         // Determine whether auth is required based on the active model provider.
         // If a custom provider is configured with `requires_openai_auth == false`,
         // then no auth step is required; otherwise, default to requiring auth.
-        let requires_openai_auth = Some(self.config.model_provider.requires_openai_auth);
+        let requires_openai_auth = self.config.model_provider.requires_openai_auth;
 
-        let response = match self.auth_manager.auth() {
-            Some(auth) => {
-                let (reported_auth_method, token_opt) = match auth.get_token().await {
-                    Ok(token) if !token.is_empty() => {
-                        let tok = if include_token { Some(token) } else { None };
-                        (Some(auth.mode), tok)
-                    }
-                    Ok(_) => (None, None),
-                    Err(err) => {
-                        tracing::warn!("failed to get token for auth status: {err}");
-                        (None, None)
-                    }
-                };
-                codex_protocol::mcp_protocol::GetAuthStatusResponse {
-                    auth_method: reported_auth_method,
-                    auth_token: token_opt,
-                    requires_openai_auth,
-                }
-            }
-            None => codex_protocol::mcp_protocol::GetAuthStatusResponse {
+        let response = if !requires_openai_auth {
+            codex_protocol::mcp_protocol::GetAuthStatusResponse {
                 auth_method: None,
                 auth_token: None,
-                requires_openai_auth,
-            },
+                requires_openai_auth: Some(false),
+            }
+        } else {
+            match self.auth_manager.auth() {
+                Some(auth) => {
+                    let auth_mode = auth.mode;
+                    let (reported_auth_method, token_opt) = match auth.get_token().await {
+                        Ok(token) if !token.is_empty() => {
+                            let tok = if include_token { Some(token) } else { None };
+                            (Some(auth_mode), tok)
+                        }
+                        Ok(_) => (None, None),
+                        Err(err) => {
+                            tracing::warn!("failed to get token for auth status: {err}");
+                            (None, None)
+                        }
+                    };
+                    codex_protocol::mcp_protocol::GetAuthStatusResponse {
+                        auth_method: reported_auth_method,
+                        auth_token: token_opt,
+                        requires_openai_auth: Some(true),
+                    }
+                }
+                None => codex_protocol::mcp_protocol::GetAuthStatusResponse {
+                    auth_method: None,
+                    auth_token: None,
+                    requires_openai_auth: Some(true),
+                },
+            }
         };
 
         self.outgoing.send_response(request_id, response).await;
@@ -805,7 +814,7 @@ impl CodexMessageProcessor {
             return;
         };
 
-        let required_suffix = format!("{}.jsonl", conversation_id.0);
+        let required_suffix = format!("{conversation_id}.jsonl");
         let Some(file_name) = canonical_rollout_path.file_name().map(OsStr::to_owned) else {
             let error = JSONRPCErrorError {
                 code: INVALID_REQUEST_ERROR_CODE,
@@ -1248,6 +1257,7 @@ fn derive_config_from_params(
     } = params;
     let overrides = ConfigOverrides {
         model,
+        review_model: None,
         config_profile: profile,
         cwd: cwd.map(PathBuf::from),
         approval_policy,
@@ -1404,13 +1414,13 @@ mod tests {
     #[test]
     fn extract_conversation_summary_prefers_plain_user_messages() {
         let conversation_id =
-            ConversationId(Uuid::parse_str("3f941c35-29b3-493b-b0a4-e25800d9aeb0").unwrap());
+            ConversationId::from_string("3f941c35-29b3-493b-b0a4-e25800d9aeb0").unwrap();
         let timestamp = Some("2025-09-05T16:53:11.850Z".to_string());
         let path = PathBuf::from("rollout.jsonl");
 
         let head = vec![
             json!({
-                "id": conversation_id.0,
+                "id": conversation_id.to_string(),
                 "timestamp": timestamp,
                 "cwd": "/",
                 "originator": "codex",
