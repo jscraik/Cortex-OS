@@ -74,8 +74,8 @@ export class ASBRClient {
 	}
 
 	/**
-	 * Subscribe to events for a specific task or all tasks
-	 */
+		* Subscribe to events for a specific task or all tasks
+		*/
 	subscribe(
 		taskId: string | undefined,
 		eventTypes: EventType[],
@@ -233,7 +233,8 @@ export class ASBRClient {
 		if (eventTypes) params.set('events', eventTypes.join(','));
 
 		const url = `${this.baseUrl}/v1/events?${params}`;
-		const eventSource = new EventSource(url);
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		const eventSource = new EventSource(url, this.token ? { headers: { Authorization: `Bearer ${this.token}` } } : undefined);
 
 		eventSource.onmessage = (event) => {
 			try {
@@ -342,11 +343,15 @@ export function createTaskInput(
 	brief: string,
 	options: Partial<Omit<TaskInput, 'title' | 'brief' | 'schema'>> = {},
 ): TaskInput {
+	const inputs = options.inputs ? [...options.inputs] : [];
+	const scopesSource = options.scopes ?? ['tasks:create'];
+	const scopes = [...new Set(scopesSource)];
+
 	return {
 		title,
 		brief,
-		inputs: options.inputs || [],
-		scopes: options.scopes || [],
+		inputs,
+		scopes,
 		deadlines: options.deadlines,
 		a11yProfileId: options.a11yProfileId,
 		preferences: options.preferences,

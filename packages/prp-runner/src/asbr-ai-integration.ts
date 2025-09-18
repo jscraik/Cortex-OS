@@ -409,7 +409,7 @@ export class ASBRAIIntegration {
 			taskId: context.taskId,
 			claim: context.claim,
 			confidence: baseConfidence,
-			riskLevel: this.assessInitialRisk(context),
+			riskLevel: await this.assessInitialRisk(context),
 			source: {
 				type: 'traditional-collection',
 				id: `collection-${evidenceId}`,
@@ -620,7 +620,7 @@ export class ASBRAIIntegration {
 		// Risk assessment based on claim sensitivity and source reliability
 		const sensitiveKeywords = [
 			'security',
-			'vulnerability', 
+			'vulnerability',
 			'breach',
 			'confidential',
 			'critical',
@@ -717,7 +717,7 @@ export class ASBRAIIntegration {
 
 	private async generateSourceSuggestions(
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		_claim: string, 
+		_claim: string,
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		_contextSources: string[]
 	) {
@@ -741,11 +741,11 @@ export class ASBRAIIntegration {
 		enhancedEvidence: Evidence,
 		context: EvidenceContext,
 	): Promise<{
-			semanticSimilarity?: number;
-			factualConsistency?: number;
-			sourceCredibility?: number;
-			relevanceScore?: number;
-		}> {
+		semanticSimilarity?: number;
+		factualConsistency?: number;
+		sourceCredibility?: number;
+		relevanceScore?: number;
+	}> {
 		return {
 			relevanceScore: enhancedEvidence.confidence,
 			sourceCredibility: this.assessSourceReliability(enhancedEvidence.source),

@@ -2,6 +2,8 @@
  * Core type definitions for the agents package
  */
 
+import { EventEmitter } from 'events';
+
 export interface Memory {
 	id: string;
 	kind: 'note' | 'event' | 'artifact' | 'embedding';
@@ -92,9 +94,14 @@ export interface AgentConfig {
 	type: string;
 	capabilities: string[];
 	modelProvider: string;
+	model?: string;
+	tools?: ToolConfig[];
 	memoryConfig?: MemoryConfig;
 	toolConfig?: ToolConfig;
 	systemPrompt?: string;
+	mcpEndpoint?: string;
+	streamingMode?: 'updates' | 'values';
+	eventBus?: EventEmitter;
 }
 
 export interface MemoryConfig {

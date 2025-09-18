@@ -5,8 +5,9 @@
  * state management, and tool coordination. This replaces the simplified implementation.
  */
 
-import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, MessagesAnnotation, StateGraph, START, END } from '@langchain/langgraph';
+import { EventEmitter } from 'events';
 import { z } from 'zod';
 import type { AgentConfig } from './lib/types';
 import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent';
@@ -19,6 +20,8 @@ export const CortexStateAnnotation = Annotation.Root({
 	tools: Annotation<Array<{ name: string; description: string }>>(),
 	securityCheck: Annotation<{ passed: boolean; risk: string } | undefined>(),
 	memory: Annotation<Array<{ content: string; timestamp: string }>>(),
+	result: Annotation<unknown>(),
+	error: Annotation<string | undefined>(),
 });
 
 export type CortexState = typeof CortexStateAnnotation.State;
@@ -36,12 +39,13 @@ export type ToolConfig = z.infer<typeof ToolConfigSchema>;
 /**
  * CortexAgent with full LangGraphJS implementation
  */
-export class CortexAgent {
+export class CortexAgent extends EventEmitter {
 	private graph: ReturnType<typeof createAgentGraph>;
-	private masterAgentGraph: MasterAgentGraph;
+	public masterAgentGraph: MasterAgentGraph;
 	private config: AgentConfig;
 
 	constructor(config: AgentConfig) {
+		super();
 		this.config = config;
 
 		// Initialize master agent graph for sub-agent coordination
@@ -70,9 +74,11 @@ export class CortexAgent {
 			messages: [new HumanMessage({ content: input })],
 			currentStep: 'input_processing',
 			context: options?.context || {},
-			tools: options?.tools?.map((t) => ({ name: t.name, description: t.description })) || [],
+			tools: options?.tools?.map((t: any) => ({ name: t.name || t, description: t.description || '' })) || [],
 			securityCheck: undefined,
 			memory: [],
+			result: undefined,
+			error: undefined,
 		};
 
 		if (options?.stream) {
@@ -86,16 +92,34 @@ export class CortexAgent {
 	 * Execute with streaming support
 	 */
 	private async streamExecution(initialState: CortexState): Promise<CortexState> {
-		const stream = this.graph.stream(initialState, {
-			streamMode: 'updates',
+		const streamResult = this.graph.stream(initialState, {
+			streamMode: this.config.streamingMode || 'updates',
 		});
 
 		let finalState = initialState;
 
-		for await (const update of stream) {
-			finalState = { ...finalState, ...update };
-			// Emit events for real-time updates
-			this.emit('update', finalState);
+		// Handle different types of stream results
+		if (Symbol.asyncIterator in streamResult) {
+			// It's an async iterator
+			for await (const chunk of streamResult as AsyncIterable<any>) {
+				// Handle different streaming modes
+				if (this.config.streamingMode === 'values') {
+					finalState = chunk;
+				} else {
+					// updates mode - merge with current state
+					finalState = { ...finalState, ...chunk };
+				}
+				// Emit events for real-time updates
+				this.emit('update', finalState);
+				// Also emit progress events
+				this.emit('progress', {
+					step: finalState.currentStep,
+					timestamp: new Date().toISOString(),
+				});
+			}
+		} else {
+			// Handle as a readable stream or other format
+			console.warn('Stream result is not iterable:', streamResult);
 		}
 
 		return finalState;
@@ -114,14 +138,14 @@ export class CortexAgent {
 		return {
 			status: 'healthy',
 			model: this.config.model || 'glm-4.5-mlx',
-			tools: this.config.tools?.map((t) => t.name) || [],
+			tools: this.config.tools?.map((t: any) => t.name) || [],
 			subagents: Array.from(this.masterAgentGraph.agentRegistry.values()).map((agent) => ({
 				name: agent.name,
 				status: 'ready',
 			})),
 			graphState: {
 				currentStep: 'idle',
-				tools: this.config.tools?.map((t) => ({ name: t.name, description: t.description })) || [],
+				tools: this.config.tools?.map((t) => ({ name: (t as any).name || t, description: (t as any).description || '' })) || [],
 			},
 		};
 	}
@@ -166,15 +190,6 @@ export class CortexAgent {
 		];
 	}
 
-	/**
-	 * Emit events for streaming
-	 */
-	private emit(event: string, data: unknown): void {
-		// Emit to A2A bus or other event system
-		if (this.config.eventBus) {
-			this.config.eventBus.emit(event, data);
-		}
-	}
 }
 
 /**
@@ -223,11 +238,11 @@ function createAgentGraph(agent: CortexAgent) {
 		}
 
 		// Route to master agent for sub-agent coordination
-		const masterResult = await agent.masterAgentGraph.coordinate(
-			typeof state.messages[state.messages.length - 1]?.content === 'string'
-				? state.messages[state.messages.length - 1].content
-				: JSON.stringify(state.messages[state.messages.length - 1]?.content),
-		);
+		const lastMessage = state.messages[state.messages.length - 1];
+		const content = typeof lastMessage?.content === 'string'
+			? lastMessage.content
+			: JSON.stringify(lastMessage?.content || '');
+		const masterResult = await agent.masterAgentGraph.coordinate(content);
 
 		return {
 			currentStep: 'response_generation',
@@ -267,6 +282,8 @@ function createAgentGraph(agent: CortexAgent) {
 		return {
 			currentStep: END,
 			memory: [...(state.memory || []), memoryEntry],
+			result: undefined,
+			error: undefined,
 		};
 	};
 
@@ -282,6 +299,7 @@ function createAgentGraph(agent: CortexAgent) {
 			currentStep: END,
 			messages: [...state.messages, errorResponse],
 			error: state.error,
+			result: undefined,
 		};
 	};
 

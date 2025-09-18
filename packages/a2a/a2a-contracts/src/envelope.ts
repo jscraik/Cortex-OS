@@ -1,4 +1,4 @@
-import { type EvidenceArray, evidenceArraySchema } from '@cortex-os/contracts';
+import { type EvidenceArray, evidenceArraySchema } from '@cortex-os/contracts/dist/src/index.js';
 import { z } from 'zod';
 
 // CloudEvents 1.0 compliant envelope extending ASBR requirements

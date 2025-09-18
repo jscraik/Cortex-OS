@@ -24,8 +24,14 @@ export class MLXModelAdapter {
 	private pythonAvailable: boolean = false;
 	private mlxInstalled: boolean = false;
 
-	constructor(config: MLXModelConfig = {}) {
-		this.config = MLXModelConfigSchema.parse(config);
+	constructor(config: Partial<MLXModelConfig> = {}) {
+		this.config = MLXModelConfigSchema.parse({
+			temperature: 0.7,
+			maxTokens: 4096,
+			topP: 0.9,
+			timeout: 30000,
+			...config,
+		});
 		this.checkAvailability();
 	}
 
@@ -178,17 +184,17 @@ export class MLXModelAdapter {
 	/**
 	 * Get availability status
 	 */
-	getStatus(): {
+	async getStatus(): Promise<{
 		available: boolean;
 		python: boolean;
 		mlx: boolean;
 		knife: boolean;
-	} {
+	}> {
 		return {
 			available: this.isAvailable,
 			python: this.pythonAvailable,
 			mlx: this.mlxInstalled,
-			knife: this.isKnifeAvailable(),
+			knife: await this.isKnifeAvailable(),
 		};
 	}
 

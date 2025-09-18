@@ -65,7 +65,7 @@ Agent-toolkit follows Cortex-OS principles:
 <details><summary><strong>3. Core Patterns & Package Rules</strong></summary>
 
 - Cross-feature: publish CloudEvents via bus (`packages/a2a`).
-- External API/tool: extend MCP (`packages/mcp`).
+- External API/tool: extend MCP (`packages/cortex-mcp`).
 - Memory/state: use `packages/memories` service interface.
 - Orchestration: events + handlers in `packages/orchestration`.
 

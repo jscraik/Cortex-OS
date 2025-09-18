@@ -8,7 +8,7 @@ All MCP packages have been successfully configured and tested. The critical Redi
 
 ## 📦 **Package Architecture Overview**
 
-### **Python Package: `packages/mcp`**
+### **Python Package: `packages/cortex-mcp`**
 
 - **Role**: MCP server implementation and runtime
 - **Technologies**: FastAPI, uvicorn, Celery, Redis, comprehensive test suite  
@@ -87,7 +87,7 @@ npm install -g pnpm
 
 ```bash
 # Navigate to Python package
-cd packages/mcp
+cd packages/cortex-mcp
 
 # Create Python virtual environment
 python3.13 -m venv .venv-mcp313
@@ -158,7 +158,7 @@ redis-cli ping  # Should return PONG
 #### **Run Integration Tests**
 
 ```bash
-cd packages/mcp
+cd packages/cortex-mcp
 source .venv-mcp313/bin/activate
 
 # Core functionality tests
@@ -345,11 +345,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python deps
-COPY packages/mcp/pyproject.toml .
+COPY packages/cortex-mcp/pyproject.toml .
 RUN pip install -e .
 
 # Copy application
-COPY packages/mcp/ .
+COPY packages/cortex-mcp/ .
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -383,7 +383,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - MCP_ENABLE_CELERY=false
     volumes:
-      - ./packages/mcp:/app
+  - ./packages/cortex-mcp:/app
       
 volumes:
   redis_data:

@@ -33,11 +33,11 @@ cd "$ROOT_DIR"
 
 # Start the FastMCP server (ChatGPT-compatible with HTTP transport)
 if command -v uv >/dev/null 2>&1; then
-  exec uv run python packages/mcp/cortex_fastmcp_server_v2.py
+  exec uv run python packages/cortex-mcp/cortex_fastmcp_server_v2.py
 elif command -v python3 >/dev/null 2>&1; then
-  exec python3 packages/mcp/cortex_fastmcp_server_v2.py
+  exec python3 packages/cortex-mcp/cortex_fastmcp_server_v2.py
 elif command -v python >/dev/null 2>&1; then
-  exec python packages/mcp/cortex_fastmcp_server_v2.py
+  exec python packages/cortex-mcp/cortex_fastmcp_server_v2.py
 else
   echo "[mcp] No Python runtime found (need uv or python3/python)." >&2
   exit 127

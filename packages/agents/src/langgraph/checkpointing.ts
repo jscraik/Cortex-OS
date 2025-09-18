@@ -7,6 +7,7 @@
 // Note: LangGraphJS checkpointing API may have changed
 // Using simplified implementation for now
 import { type CortexState } from '../CortexAgentLangGraph';
+import type { RunnableConfig } from '@langchain/core/runnables';
 
 // Checkpoint configuration interface
 export interface CheckpointConfig {
@@ -141,6 +142,7 @@ export class MemoryCheckpointSaver {
  */
 export class SQLiteCheckpointSaver {
 	private db: any; // SQLite database instance
+	private storage: Map<string, CortexCheckpoint> = new Map();
 	private config: CheckpointConfig;
 
 	constructor(config: CheckpointConfig & { connectionString: string }) {
@@ -150,28 +152,49 @@ export class SQLiteCheckpointSaver {
 
 	private async initializeDatabase(): Promise<void> {
 		// Initialize SQLite database and create table
-		const sqlite3 = await import('sqlite3');
-		this.db = new sqlite3.Database(this.config.connectionString);
+		// Dynamic import to handle missing sqlite3 dependency gracefully
+		try {
+			// Use eval to avoid TypeScript compilation issues with optional dependency
+			const sqlite3Module = await Function('return import("sqlite3")')();
+			const sqlite3 = sqlite3Module.default || sqlite3Module;
+			
+			if (sqlite3 && this.config.connectionString) {
+				this.db = new sqlite3.Database(this.config.connectionString);
+				this.storage = new Map();
+			} else {
+				// Fallback to memory storage
+				this.storage = new Map();
+				return;
+			}
+		} catch (error) {
+			console.warn('sqlite3 not available, using memory storage:', error);
+			// Fallback to memory storage when sqlite3 is not available
+			this.storage = new Map();
+			return;
+		}
 
-		await new Promise<void>((resolve, reject) => {
-			this.db.run(
-				`
-        CREATE TABLE IF NOT EXISTS checkpoints (
-          id TEXT PRIMARY KEY,
-          thread_id TEXT NOT NULL,
-          step INTEGER NOT NULL,
-          checkpoint_data TEXT NOT NULL,
-          metadata TEXT NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          expires_at TIMESTAMP
-        )
-      `,
-				(err: any) => {
-					if (err) reject(err);
-					else resolve();
-				},
-			);
-		});
+		// Create table schema only if we have a real database connection
+		if (this.db) {
+			await new Promise<void>((resolve, reject) => {
+				this.db.run(
+					`
+			CREATE TABLE IF NOT EXISTS checkpoints (
+			  id TEXT PRIMARY KEY,
+			  thread_id TEXT NOT NULL,
+			  step INTEGER NOT NULL,
+			  checkpoint_data TEXT NOT NULL,
+			  metadata TEXT NOT NULL,
+			  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			  expires_at TIMESTAMP
+			)
+		  `,
+					(err: any) => {
+						if (err) reject(err);
+						else resolve();
+					},
+				);
+			});
+		}
 	}
 
 	async get(threadId: string): Promise<CortexCheckpoint | undefined> {
@@ -297,7 +320,7 @@ export class CheckpointManager {
 	/**
 	 * Create checkpoint saver based on configuration
 	 */
-	private createCheckpointSaver(config: CheckpointConfig): BaseCheckpointSaver {
+	private createCheckpointSaver(config: CheckpointConfig): any {
 		switch (config.storage) {
 			case 'memory':
 				return new MemoryCheckpointSaver(config);
@@ -345,11 +368,11 @@ export class CheckpointManager {
 	 */
 	async resumeFromCheckpoint(
 		threadId: string,
-		checkpointId?: string,
+		_checkpointId?: string,
 	): Promise<{ state: CortexState; metadata: CheckpointMetadata } | undefined> {
-		const config = { configurable: { threadId } };
+		// const config = { configurable: { threadId } };
 
-		if (checkpointId) {
+		if (_checkpointId) {
 			// Specific checkpoint resume
 			// Implementation depends on storage backend
 		}
@@ -373,7 +396,7 @@ export class CheckpointManager {
 		const config = { configurable: { threadId } };
 		const checkpoints = await this.saver.list(config, limit);
 
-		return checkpoints.map(([key, checkpoint, metadata]) => ({
+		return checkpoints.map(([_key, checkpoint, metadata]: [any, any, any]) => ({
 			step: metadata.step,
 			timestamp: metadata.timestamp,
 			state: checkpoint.channel_values,

@@ -83,10 +83,10 @@
 				"libs/typescript/telemetry/src"
 			],
 			"@cortex-os/mcp": [
-				"packages/mcp/src/index.ts"
+				"packages/mcp-core/dist/index.d.ts"
 			],
 			"@cortex-os/mcp/*": [
-				"packages/mcp/src/*"
+				"packages/mcp-core/dist/*"
 			],
 			"@cortex-os/mcp-core": [
 				"packages/mcp-core/dist/index.d.ts"

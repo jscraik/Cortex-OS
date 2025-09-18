@@ -67,7 +67,6 @@ export const ollamaCatalogSchema = z.object({
 			retry_delay_ms: z.number().int().nonnegative().optional(),
 		})
 		.optional(),
-	fallback_chains: z.record(z.array(z.string())).optional(),
 	performance_tiers: z
 		.record(
 			z.object({

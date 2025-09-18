@@ -4,9 +4,9 @@
  * Implements real-time streaming of agent execution with event emission
  */
 
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { StateGraph, type RunnableConfig } from '@langchain/langgraph';
-import { type CortexState } from '../CortexAgentLangGraph';
+import type { CortexState } from '../CortexAgentLangGraph';
+import type { RunnableConfig } from '@langchain/core/runnables';
+import { StateGraph } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
 
 // Streaming event types
@@ -114,7 +114,13 @@ export class StreamingManager extends EventEmitter {
 		config: RunnableConfig & { threadId: string },
 	): Promise<CortexState> {
 		if (!this.config.enabled) {
-			return graph.invoke(initialState, config);
+			// Check if invoke method exists
+			if (typeof (graph as any).invoke === 'function') {
+				return (graph as any).invoke(initialState, config);
+			}
+			// Fallback to compiled graph
+			const compiledGraph = graph.compile();
+			return compiledGraph.invoke(initialState, config);
 		}
 
 		const threadId = config.threadId;
@@ -129,9 +135,44 @@ export class StreamingManager extends EventEmitter {
 		});
 
 		// Create stream
-		const stream = graph.stream(initialState, {
-			...config,
-		});
+		let stream;
+		try {
+			// Try to use stream method if available
+			if (typeof (graph as any).stream === 'function') {
+				stream = (graph as any).stream(initialState, {
+					...config,
+				});
+			} else {
+				// Fallback to compiled graph
+				const compiledGraph = graph.compile();
+				if (typeof (compiledGraph as any).stream === 'function') {
+					stream = (compiledGraph as any).stream(initialState, {
+						...config,
+					});
+				} else {
+					// Stream not available, use invoke instead
+					const result = await compiledGraph.invoke(initialState, config);
+					this.emitEvent({
+						type: 'finish',
+						timestamp: new Date().toISOString(),
+						threadId,
+						data: { result },
+					});
+					return result;
+				}
+			}
+		} catch (error) {
+			console.warn('Streaming not available, falling back to invoke:', error);
+			const compiledGraph = graph.compile();
+			const result = await compiledGraph.invoke(initialState, config);
+			this.emitEvent({
+				type: 'finish',
+				timestamp: new Date().toISOString(),
+				threadId,
+				data: { result },
+			});
+			return result;
+		}
 
 		try {
 			for await (const chunk of stream) {
@@ -248,7 +289,7 @@ export class StreamingManager extends EventEmitter {
 
 				// Emit tokens (simplified - in production, use actual token streaming)
 				const tokens = content.split(' ');
-				tokens.forEach((token, index) => {
+				tokens.forEach((token: string, index: number) => {
 					setTimeout(() => {
 						this.emitEvent({
 							type: 'token',
@@ -268,12 +309,14 @@ export class StreamingManager extends EventEmitter {
 	/**
 	 * Emit streaming event with buffering
 	 */
-	private emitEvent(event: AgentStreamingEvent): void {
+	private async emitEvent(event: AgentStreamingEvent): Promise<void> {
 		// Apply transformations
 		let transformedEvent = event;
 		for (const transformer of this.transformers) {
 			if (!transformer.filter || transformer.filter(event)) {
-				transformedEvent = transformer.transform(event);
+				const result = transformer.transform(event);
+				// Handle both sync and async transforms
+				transformedEvent = result instanceof Promise ? await result : result;
 			}
 		}
 

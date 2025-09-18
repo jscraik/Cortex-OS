@@ -34,7 +34,7 @@ export const securityValidationNode = async (
 	config?: RunnableConfig,
 ): Promise<Partial<CortexState>> => {
 	const lastMessage = state.messages[state.messages.length - 1];
-	const content = lastMessage?.content || '';
+	const content = typeof lastMessage?.content === 'string' ? lastMessage.content : '';
 
 	// Security checks
 	const securityChecks = {
@@ -51,7 +51,6 @@ export const securityValidationNode = async (
 		securityCheck: {
 			passed: securityPassed,
 			risk: securityPassed ? 'low' : 'high',
-			details: securityChecks,
 		},
 		...(securityPassed ? {} : { error: 'Security validation failed' }),
 	};
@@ -65,7 +64,7 @@ export const intelligenceAnalysisNode = async (
 	state: CortexState,
 ): Promise<Partial<CortexState>> => {
 	const lastMessage = state.messages[state.messages.length - 1];
-	const content = lastMessage?.content || '';
+	const content = typeof lastMessage?.content === 'string' ? lastMessage.content : '';
 
 	// Intent analysis
 	const intent = analyzeIntent(content);
@@ -99,7 +98,7 @@ export const toolExecutionNode = async (state: CortexState): Promise<Partial<Cor
 
 	// Execute tools in parallel
 	const toolResults = await Promise.allSettled(
-		selectedTools.map(async (toolName: string) => {
+		(selectedTools as string[]).map(async (toolName: string) => {
 			return executeTool(toolName, {
 				input,
 				context: state.context,
@@ -109,8 +108,8 @@ export const toolExecutionNode = async (state: CortexState): Promise<Partial<Cor
 	);
 
 	// Process results
-	const results = toolResults.map((result, index) => {
-		const toolName = selectedTools[index];
+	const results = toolResults.map((result: any, index: number) => {
+		const toolName = (selectedTools as string[])[index];
 		if (result.status === 'fulfilled') {
 			return {
 				tool: toolName,
@@ -156,14 +155,14 @@ export const responseSynthesisNode = async (state: CortexState): Promise<Partial
 
 	// Synthesize response
 	const responseContent = await synthesizeResponse({
-		input: lastHumanMessage?.content || '',
-		toolResults,
+		input: typeof lastHumanMessage?.content === 'string' ? lastHumanMessage.content : '',
+		toolResults: toolResults as any[],
 		context: state.context || {},
 	});
 
 	return {
 		currentStep: 'memory_update',
-		messages: [...state.messages, new AIMessage({ content: responseContent })],
+		messages: [...state.messages, new AIMessage({ content: [{ type: 'text', text: responseContent }] })],
 	};
 };
 
@@ -173,13 +172,16 @@ export const responseSynthesisNode = async (state: CortexState): Promise<Partial
  */
 export const memoryUpdateNode = async (state: CortexState): Promise<Partial<CortexState>> => {
 	const interaction = {
-		id: generateInteractionId(),
+		content: JSON.stringify({
+			id: generateInteractionId(),
+			timestamp: new Date().toISOString(),
+			input: state.messages[0]?.content,
+			output: state.messages[state.messages.length - 1]?.content,
+			toolsUsed: state.context?.selectedTools || [],
+			context: state.context,
+			security: state.securityCheck,
+		}),
 		timestamp: new Date().toISOString(),
-		input: state.messages[0]?.content,
-		output: state.messages[state.messages.length - 1]?.content,
-		toolsUsed: state.context?.selectedTools || [],
-		context: state.context,
-		security: state.securityCheck,
 	};
 
 	// Store in memory system
@@ -187,7 +189,7 @@ export const memoryUpdateNode = async (state: CortexState): Promise<Partial<Cort
 
 	return {
 		currentStep: 'completion',
-		memory: [...(state.memory || []), interaction],
+		memory: [...(state.memory || []), { content: JSON.stringify(interaction), timestamp: new Date().toISOString() }],
 	};
 };
 
@@ -263,7 +265,7 @@ function detectMaliciousContent(content: string): { passed: boolean; threats: st
 	};
 }
 
-async function checkRateLimit(userId?: string): Promise<{ passed: boolean; remaining: number }> {
+async function checkRateLimit(_userId?: string): Promise<{ passed: boolean; remaining: number }> {
 	// Implement rate limiting logic
 	return {
 		passed: true,
@@ -312,7 +314,7 @@ function analyzeIntent(content: string): {
 	};
 }
 
-function determineCapabilities(intent: any, content: string): string[] {
+function determineCapabilities(intent: any, _content: string): string[] {
 	const capabilityMap: Record<string, string[]> = {
 		code_analysis: ['code-parser', 'linter', 'security-scanner'],
 		test_generation: ['test-generator', 'coverage-analyzer'],
@@ -351,7 +353,7 @@ async function synthesizeResponse(params: {
 	toolResults: any[];
 	context: any;
 }): Promise<string> {
-	const { input, toolResults, context } = params;
+	const { input, toolResults } = params;
 
 	// Build response based on tool results
 	let response = `I've processed your request: "${input}"\n\n`;

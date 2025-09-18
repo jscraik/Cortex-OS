@@ -9,6 +9,6 @@ Changes in this migration:
 
 Next steps:
 
-- Update any local scripts or bookmarks pointing to `packages/mcp/infrastructure/cloudflare/tunnel.config.yml` to the new location at `packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml`.
+- Update any local scripts or bookmarks pointing to `packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml` to the new location at `packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml`.
 
 If you think you still need something from here, please open an issue and reference this README.

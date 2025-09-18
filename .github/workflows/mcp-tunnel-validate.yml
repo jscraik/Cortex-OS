@@ -6,13 +6,11 @@ on:
       - 'config/cloudflared/**'
       - 'scripts/mcp/validate_cloudflare_tunnel.sh'
       - '.github/workflows/mcp-tunnel-validate.yml'
-      - 'packages/mcp/**'
   pull_request:
     paths:
       - 'config/cloudflared/**'
       - 'scripts/mcp/validate_cloudflare_tunnel.sh'
       - '.github/workflows/mcp-tunnel-validate.yml'
-      - 'packages/mcp/**'
 
 jobs:
   validate-tunnel:
@@ -30,6 +28,6 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - name: Install deps (minimal)
-        run: pnpm install --frozen-lockfile --filter ./packages/mcp...
+        run: pnpm install --frozen-lockfile
       - name: Validate tunnel config
         run: pnpm ci:mcp:tunnel-validate

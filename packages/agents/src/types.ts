@@ -1,12 +1,20 @@
 // Basic type definitions for Cortex-OS agents
 
+import { EventEmitter } from 'events';
+
 export interface AgentConfig {
 	name: string;
 	type: string;
 	capabilities: string[];
 	modelProvider: string;
+	model?: string;
+	tools?: ToolConfig[];
 	memoryConfig?: MemoryConfig;
 	toolConfig?: ToolConfig;
+	systemPrompt?: string;
+	mcpEndpoint?: string;
+	streamingMode?: 'updates' | 'values';
+	eventBus?: EventEmitter;
 }
 
 export interface MemoryConfig {
@@ -25,8 +33,8 @@ export interface ToolConfig {
 
 export interface AgentMessage {
 	id: string;
-	type: string;
-	content: unknown;
+	type: string | 'user' | 'assistant' | 'system';
+	content: string | Record<string, unknown>;
 	timestamp: string;
 	metadata?: Record<string, unknown>;
 }

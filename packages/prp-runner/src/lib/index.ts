@@ -1,42 +1,36 @@
 // Core components
-export {
-	ModelSelector,
-	type ModelConfig,
-	type ModelProvider,
-	type ModelCapability,
-} from './model-selector.js';
-export { MLXModelAdapter, type MLXModelConfig } from './mlx-model-adapter.js';
+
 export {
 	ConcurrentExecutor,
 	type ExecuteOptions,
-	type ExecutionResult,
+	type ExecutionResult
 } from './concurrent-executor.js';
-
 // Error handling
 export {
-	ErrorBoundary,
-	globalErrorBoundary,
-	ErrorType,
 	CategorizedError,
-	ValidationError,
-	ResourceError,
-	NetworkError,
-	TimeoutError,
+	ErrorBoundary,
+	ErrorType, NetworkError,
 	PermissionError,
+	ResourceError,
+	TimeoutError,
+	ValidationError, globalErrorBoundary
 } from './error-boundary.js';
-
 // LangGraph workflows
 export {
 	LangGraphWorkflow,
 	type WorkflowState,
-	type WorkflowStateSchema,
+	type WorkflowStateSchema
 } from './langgraph-workflow.js';
+export { MLXModelAdapter, type MLXModelConfig } from './mlx-model-adapter.js';
+export {
+	ModelSelector, type ModelCapability,
+	type ModelConfig,
+	type ModelProvider
+} from './model-selector.js';
 export {
 	PRPLangGraphWorkflow,
 	type PRPWorkflowState,
-	type PRPWorkflowStateSchema,
+	type PRPWorkflowStateSchema
 } from './prp-langgraph-workflow.js';
 
-// Utilities
-export { createModelSelector } from './model-selector.js';
-export { createMLXAdapter } from './mlx-model-adapter.js';
+// Note: ModelSelector and MLXModelAdapter are classes that should be instantiated directly

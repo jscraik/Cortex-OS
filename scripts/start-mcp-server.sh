@@ -12,7 +12,7 @@ exec 2>&1
 echo "[$(date)] Starting MCP Server startup script..."
 
 # Define paths
-MCP_DIR="/Users/jamiecraik/.Cortex-OS/packages/mcp"
+MCP_DIR="/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp"
 PYTHON_PATH="/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python"
 LOG_DIR="/Users/jamiecraik/.Cortex-OS/logs"
 
@@ -62,8 +62,8 @@ echo "[$(date)] Server will be available at http://0.0.0.0:3024"
 echo "[$(date)] Local access: http://127.0.0.1:3024"
 echo "[$(date)] Access via Cloudflare tunnel at: https://cortex-mcp.brainwav.io"
 
-# Self-check guard: refuse startup if legacy port 3004 reintroduced
-if grep -En '3004' "$MCP_DIR/run_server.py" >/dev/null; then
+# Self-check guard: refuse startup if legacy port 3004 reintroduced (suppress if file missing)
+if grep -En '3004' "$MCP_DIR/run_server.py" >/dev/null 2>&1; then
     echo "[$(date)] ERROR: Detected forbidden legacy port 3004 in run_server.py. Aborting startup." >&2
     grep -En '3004' "$MCP_DIR/run_server.py" | head -5 >&2
     exit 1
@@ -85,6 +85,6 @@ echo "[$(date)] UVICORN_LOG_LEVEL=$UVICORN_LOG_LEVEL"
 echo "[$(date)] PYTHONUNBUFFERED=$PYTHONUNBUFFERED"
 echo "[$(date)] PWD=$(pwd)"
 
-# Run the server directly with proper error handling
-echo "[$(date)] Executing: $PYTHON_PATH run_server.py"
-exec "$PYTHON_PATH" run_server.py
+# Run the FastMCP server directly with proper error handling
+echo "[$(date)] Executing: $PYTHON_PATH cortex_fastmcp_server_v2.py"
+exec "$PYTHON_PATH" cortex_fastmcp_server_v2.py

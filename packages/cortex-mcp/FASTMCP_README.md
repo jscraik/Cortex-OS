@@ -21,10 +21,10 @@ This is the FastMCP 2.0 implementation of the Cortex-OS MCP server, compatible w
 
 ```bash
 # Start the server with default settings (port 3024)
-./packages/mcp/start-mcp-server.sh
+./scripts/start-mcp-server.sh
 
 # Or with custom port
-PORT=8000 ./packages/mcp/start-mcp-server.sh
+PORT=8000 ./scripts/start-mcp-server.sh
 ```
 
 ### Option 2: Direct Python Execution
@@ -34,10 +34,10 @@ PORT=8000 ./packages/mcp/start-mcp-server.sh
 cd /path/to/Cortex-OS
 
 # Using the virtual environment (recommended)
-PORT=3024 ./.venv/bin/python packages/mcp/cortex_fastmcp_server_v2.py
+PORT=3024 ./.venv/bin/python packages/cortex-mcp/cortex_fastmcp_server_v2.py
 
 # Or using system Python
-PORT=3024 python3 packages/mcp/cortex_fastmcp_server_v2.py
+PORT=3024 python3 packages/cortex-mcp/cortex_fastmcp_server_v2.py
 ```
 
 ### Option 3: Using the Legacy Run Script
@@ -122,7 +122,7 @@ All legacy implementations have been removed.
 
 To modify the server:
 
-1. Edit `packages/mcp/cortex_fastmcp_server_v2.py`
+1. Edit `packages/cortex-mcp/cortex_fastmcp_server_v2.py`
 2. Add new tools using the `@mcp.tool` decorator
 3. Follow FastMCP 2.0 patterns from <https://gofastmcp.com>
 

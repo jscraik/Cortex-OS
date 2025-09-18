@@ -5,8 +5,8 @@ echo "[mcp-install] Cortex-OS MCP / Agent Toolkit Installer"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LAUNCH_AGENTS="$HOME/Library/LaunchAgents"
-PLIST_SRC="packages/mcp/com.cortexos.mcp.server.plist"
-HEALTH_PLIST_SRC="packages/mcp/com.cortexos.mcp.server.health.plist"
+PLIST_SRC="infra/mcp/com.brainwav.mcp-server.plist"
+HEALTH_PLIST_SRC="infra/mcp/com.cortexos.mcp.server.health.plist"
 
 if [[ ! -f "$ROOT_DIR/$PLIST_SRC" ]]; then
   echo "[error] Missing primary LaunchAgent plist: $PLIST_SRC" >&2

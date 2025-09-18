@@ -24,7 +24,7 @@ class TestFastMCPServerIntegration:
     @pytest.fixture
     def server_path(self, project_root: Path) -> Path:
         """Get server file path."""
-        return project_root / "packages/mcp/cortex_fastmcp_server_v2.py"
+        return project_root / "packages/cortex-mcp/cortex_fastmcp_server_v2.py"
 
     def test_server_file_exists(self, server_path: Path) -> None:
         """Test that server file exists."""

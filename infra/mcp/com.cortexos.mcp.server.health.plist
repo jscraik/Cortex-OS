@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Health probe LaunchAgent for Cortex-OS MCP server
+  Moved from legacy packages/mcp to infra/mcp
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.cortexos.mcp.server.health</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>cd $HOME/.Cortex-OS && ./scripts/mcp/health_probe.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>120</integer>
+  <key>StandardOutPath</key>
+  <string>${HOME}/Library/Logs/com.cortexos.mcp.server.health.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>${HOME}/Library/Logs/com.cortexos.mcp.server.health.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PORT</key><string>3024</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+</dict>
+</plist>

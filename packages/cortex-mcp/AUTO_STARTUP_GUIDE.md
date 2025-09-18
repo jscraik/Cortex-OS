@@ -19,7 +19,7 @@ The MCP server with TDD Coach plugin can be configured to run automatically usin
 The server configuration is located at:
 
 ```bash
-/Users/jamiecraik/.Cortex-OS/packages/mcp/config/server.json
+/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/config/server.json
 ```
 
 Key settings:
@@ -41,7 +41,7 @@ This file defines:
 
 - Service label: `com.brainwav.mcp-server`
 - Program to run: `/Users/jamiecraik/.Cortex-OS/scripts/start-mcp-server.sh`
-- Working directory: `/Users/jamiecraik/.Cortex-OS/packages/mcp`
+- Working directory: `/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp`
 - Auto-start on load: `true`
 - Keep alive: `true`
 - Log files: `/Users/jamiecraik/.Cortex-OS/logs/mcp-server.log`

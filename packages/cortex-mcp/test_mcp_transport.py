@@ -25,7 +25,7 @@ def test_server_inspect() -> bool:
     print("🔍 Testing server inspection...")
 
     project_root = get_project_root()
-    server_path = project_root / "packages/mcp/cortex_fastmcp_server_v2.py"
+    server_path = project_root / "packages/cortex-mcp/cortex_fastmcp_server_v2.py"
     
     if not server_path.exists():
         print(f"❌ Server file not found: {server_path}")
@@ -77,7 +77,7 @@ def test_server_capabilities() -> bool:
     print("\n🛠️  Testing server capabilities...")
 
     project_root = get_project_root()
-    server_path = project_root / "packages/mcp/cortex_fastmcp_server_v2.py"
+    server_path = project_root / "packages/cortex-mcp/cortex_fastmcp_server_v2.py"
     
     cmd = [
         "fastmcp",
@@ -113,11 +113,11 @@ def show_transport_commands():
     print("=" * 50)
 
     commands = {
-        "STDIO": "fastmcp run packages/mcp/cortex_fastmcp_server_v2.py --transport stdio",
-        "HTTP": "fastmcp run packages/mcp/cortex_fastmcp_server_v2.py --transport http --port 3024",
-        "SSE": "fastmcp run packages/mcp/cortex_fastmcp_server_v2.py --transport sse --port 3024",
-        "Inspector": "fastmcp dev packages/mcp/cortex_fastmcp_server_v2.py",
-        "Inspect": "fastmcp inspect packages/mcp/cortex_fastmcp_server_v2.py --format mcp",
+        "STDIO": "fastmcp run packages/cortex-mcp/cortex_fastmcp_server_v2.py --transport stdio",
+        "HTTP": "fastmcp run packages/cortex-mcp/cortex_fastmcp_server_v2.py --transport http --port 3024",
+        "SSE": "fastmcp run packages/cortex-mcp/cortex_fastmcp_server_v2.py --transport sse --port 3024",
+        "Inspector": "fastmcp dev packages/cortex-mcp/cortex_fastmcp_server_v2.py",
+        "Inspect": "fastmcp inspect packages/cortex-mcp/cortex_fastmcp_server_v2.py --format mcp",
     }
 
     for transport, command in commands.items():

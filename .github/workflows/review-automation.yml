@@ -63,7 +63,7 @@ jobs:
               }
 
               // MCP changes
-              if (path.includes('packages/mcp')) {
+              if (path.includes('packages/cortex-mcp')) {
                 teamReviewers.add('integrations-team');
               }
             }

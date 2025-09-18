@@ -12,6 +12,7 @@ export default tseslint.config(
 			'**/build/**',
 			'**/.turbo/**',
 			'**/out/**',
+			'**/*.d.ts',
 		],
 	},
 	js.configs.recommended,

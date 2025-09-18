@@ -1,152 +1,155 @@
 import { Semaphore } from 'semaphore-promise';
 
 export interface ExecuteOptions {
-	timeout?: number;
-	retries?: number;
-	priority?: number;
+  timeout?: number;
+  retries?: number;
+  priority?: number;
 }
 
 export interface ExecutionResult<T = unknown> {
-	success: boolean;
-	result?: T;
-	error?: Error;
-	neuronId: string;
-	executionTime: number;
+  success: boolean;
+  result?: T;
+  error?: Error;
+  neuronId: string;
+  executionTime: number;
 }
 
 /**
  * Concurrent executor with proper synchronization and error handling
  */
 export class ConcurrentExecutor {
-	private semaphore: Semaphore;
-	private results = new Map<string, ExecutionResult>();
-	private executing = new Set<string>();
+  private semaphore: Semaphore;
+  private results = new Map<string, ExecutionResult>();
+  private executing = new Set<string>();
 
-	constructor(maxConcurrency: number = 4) {
-		this.semaphore = new Semaphore(maxConcurrency);
-	}
+  constructor(maxConcurrency: number = 4) {
+    this.semaphore = new Semaphore(maxConcurrency);
+  }
 
-	/**
-	 * Execute multiple neurons concurrently with proper synchronization
-	 */
-	async executeConcurrently<T = unknown>(
-		neurons: Array<{
-			id: string;
-			execute: () => Promise<T>;
-		}>,
-		options: ExecuteOptions = {},
-	): Promise<Map<string, ExecutionResult<T>>> {
-		const promises = neurons.map(async ({ id, execute }) => {
-			// Acquire semaphore to limit concurrency
-			const release = await this.semaphore.acquire();
+  /**
+   * Execute multiple neurons concurrently with proper synchronization
+   */
+  async executeConcurrently<T = unknown>(
+    neurons: Array<{
+      id: string;
+      execute: () => Promise<T>;
+    }>,
+    options: ExecuteOptions = {},
+  ): Promise<Map<string, ExecutionResult<T>>> {
+    const promises = neurons.map(async (neuron) => {
+      const { id, execute } = neuron;
 
-			try {
-				// Mark as executing
-				this.executing.add(id);
-				const startTime = Date.now();
+      // Acquire semaphore
+      const release = await this.semaphore.acquire();
+      let startTime = Date.now(); // Declare startTime in the proper scope
 
-				// Execute with timeout
-				const result = await this.executeWithTimeout(execute(), options.timeout || 30000);
+      try {
+        // Mark as executing
+        this.executing.add(id);
+        startTime = Date.now();
 
-				const executionTime = Date.now() - startTime;
+        // Execute with timeout
+        const result = await this.executeWithTimeout(execute(), options.timeout || 30000);
 
-				// Store successful result
-				const executionResult: ExecutionResult<T> = {
-					success: true,
-					result,
-					neuronId: id,
-					executionTime,
-				};
+        const executionTime = Date.now() - startTime;
 
-				this.results.set(id, executionResult);
-				return executionResult;
-			} catch (error) {
-				// Handle execution errors
-				const executionResult: ExecutionResult<T> = {
-					success: false,
-					error: error instanceof Error ? error : new Error(String(error)),
-					neuronId: id,
-					executionTime: Date.now() - startTime,
-				};
+        // Store successful result
+        const executionResult: ExecutionResult<T> = {
+          success: true,
+          result,
+          neuronId: id,
+          executionTime,
+        };
 
-				this.results.set(id, executionResult);
-				return executionResult;
-			} finally {
-				// Release semaphore and cleanup
-				this.executing.delete(id);
-				release();
-			}
-		});
+        this.results.set(id, executionResult);
+        return executionResult;
+      } catch (error) {
+        // Handle execution errors
+        const executionResult: ExecutionResult<T> = {
+          success: false,
+          error: error instanceof Error ? error : new Error(String(error)),
+          neuronId: id,
+          executionTime: Date.now() - startTime,
+        };
 
-		// Wait for all executions to complete
-		const allResults = await Promise.all(promises);
+        this.results.set(id, executionResult);
+        return executionResult;
+      } finally {
+        // Release semaphore and cleanup
+        this.executing.delete(id);
+        release();
+      }
+    });
 
-		// Convert to Map for easier access
-		const resultMap = new Map<string, ExecutionResult<T>>();
-		allResults.forEach((result) => {
-			resultMap.set(result.neuronId, result);
-		});
+    // Wait for all executions to complete
+    const allResults = await Promise.all(promises);
 
-		return resultMap;
-	}
+    // Convert to Map for easier access
+    const resultMap = new Map<string, ExecutionResult<T>>();
+    allResults.forEach((result) => {
+      resultMap.set(result.neuronId, result);
+    });
 
-	/**
-	 * Execute with timeout and retry logic
-	 */
-	private async executeWithTimeout<T>(
-		promise: Promise<T>,
-		timeoutMs: number,
-		retries: number = 2,
-	): Promise<T> {
-		let lastError: Error;
+    return resultMap;
+  }
 
-		for (let attempt = 1; attempt <= retries; attempt++) {
-			try {
-				// Create timeout promise
-				const timeoutPromise = new Promise<never>((_, reject) => {
-					setTimeout(() => reject(new Error(`Execution timeout after ${timeoutMs}ms`)), timeoutMs);
-				});
+  /**
+   * Execute with timeout and retry logic
+   */
+  private async executeWithTimeout<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    retries: number = 2,
+  ): Promise<T> {
+    let lastError: Error;
 
-				// Race between execution and timeout
-				return await Promise.race([promise, timeoutPromise]);
-			} catch (error) {
-				lastError = error instanceof Error ? error : new Error(String(error));
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Create timeout promise
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error(`Execution timeout after ${timeoutMs}ms`)), timeoutMs);
+        });
 
-				// If not the last attempt, wait before retrying
-				if (attempt < retries) {
-					await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-				}
-			}
-		}
+        // Race between execution and timeout
+        return await Promise.race([promise, timeoutPromise]);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
 
-		throw lastError!;
-	}
+        // If not the last attempt, wait before retrying
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+    }
 
-	/**
-	 * Get execution results
-	 */
-	getResults(): Map<string, ExecutionResult> {
-		return new Map(this.results);
-	}
+    throw lastError!;
+  }
 
-	/**
-	 * Clear results
-	 */
-	clearResults(): void {
-		this.results.clear();
-	}
+  /**
+   * Get execution results
+   */
+  getResults(): Map<string, ExecutionResult> {
+    return new Map(this.results);
+  }
 
-	/**
-	 * Get currently executing neuron IDs
-	 */
-	getExecutingNeurons(): Set<string> {
-		return new Set(this.executing);
-	}
+  /**
+   * Clear results
+   */
+  clearResults(): void {
+    this.results.clear();
+  }
 
-	/**
-	 * Check if a neuron is currently executing
-	 */
-	isExecuting(neuronId: string): boolean {
-		return this.executing.has(neuronId);
-	}
+  /**
+   * Get currently executing neuron IDs
+   */
+  getExecutingNeurons(): Set<string> {
+    return new Set(this.executing);
+  }
+
+  /**
+   * Check if a neuron is currently executing
+   */
+  isExecuting(neuronId: string): boolean {
+    return this.executing.has(neuronId);
+  }
 }

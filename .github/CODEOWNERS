@@ -4,7 +4,6 @@
   /infra/ @cortex-os/devops
   /.github/workflows/ @cortex-os/devops @cortex-os/security
   /packages/a2a/ @cortex-os/events-team
-  /packages/mcp/ @cortex-os/integrations-team
   /packages/memories/ @cortex-os/state-team
   /packages/orchestration/ @cortex-os/workflow-team
   /packages/rag/ @cortex-os/ai-team
