@@ -1,14 +1,22 @@
 {
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"baseUrl": "./src",
-		"paths": {
-			"@cortex-os/mcp-registry": ["../../packages/mcp-registry/dist"],
-			"@cortex-os/mcp": []
-		}
-	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@cortex-os/mcp-registry": [
+        "../../packages/mcp-registry/dist"
+      ],
+      "@cortex-os/mcp": []
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts"
+  ]
 }
