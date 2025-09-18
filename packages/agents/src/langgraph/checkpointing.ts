@@ -6,8 +6,8 @@
 
 // Note: LangGraphJS checkpointing API may have changed
 // Using simplified implementation for now
-import { type CortexState } from '../CortexAgentLangGraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
+import type { CortexState } from '../CortexAgentLangGraph';
 
 // Checkpoint configuration interface
 export interface CheckpointConfig {
@@ -157,7 +157,7 @@ export class SQLiteCheckpointSaver {
 			// Use eval to avoid TypeScript compilation issues with optional dependency
 			const sqlite3Module = await Function('return import("sqlite3")')();
 			const sqlite3 = sqlite3Module.default || sqlite3Module;
-			
+
 			if (sqlite3 && this.config.connectionString) {
 				this.db = new sqlite3.Database(this.config.connectionString);
 				this.storage = new Map();
@@ -198,6 +198,12 @@ export class SQLiteCheckpointSaver {
 	}
 
 	async get(threadId: string): Promise<CortexCheckpoint | undefined> {
+		// If SQLite is not available, use memory storage
+		if (!this.db) {
+			const key = `${threadId}:latest`;
+			return this.storage.get(key);
+		}
+
 		return new Promise((resolve, reject) => {
 			this.db.get(
 				`SELECT * FROM checkpoints
@@ -228,6 +234,24 @@ export class SQLiteCheckpointSaver {
 		metadata: CheckpointMetadata,
 	): Promise<CortexCheckpoint['checkpoint']> {
 		const threadId = config.configurable?.threadId || 'default';
+
+		// If SQLite is not available, use memory storage
+		if (!this.db) {
+			const key = `${threadId}:${metadata.step || 0}`;
+			const checkpointData: CortexCheckpoint = {
+				id: this.generateCheckpointId(),
+				threadId,
+				checkpoint,
+				metadata: {
+					...metadata,
+					threadId,
+					timestamp: new Date().toISOString(),
+				},
+			};
+			this.storage.set(key, checkpointData);
+			return checkpoint;
+		}
+
 		const checkpointId = this.generateCheckpointId();
 		const expiresAt = this.config.ttl
 			? new Date(Date.now() + this.config.ttl * 1000).toISOString()
@@ -266,6 +290,31 @@ export class SQLiteCheckpointSaver {
 		before?: string,
 	): Promise<Array<[string, CortexCheckpoint['checkpoint'], CheckpointMetadata]>> {
 		const threadId = config.configurable?.threadId || 'default';
+
+		// If SQLite is not available, use memory storage
+		if (!this.db) {
+			const prefix = `${threadId}:`;
+			const entries = Array.from(this.storage.entries())
+				.filter(([key]) => key.startsWith(prefix))
+				.sort((a, b) => {
+					const aStep = parseInt(a[0].split(':')[1]);
+					const bStep = parseInt(b[0].split(':')[1]);
+					return bStep - aStep; // Descending order
+				});
+
+			if (before) {
+				const beforeStep = parseInt(before.split(':')[1]);
+				return entries
+					.filter(([key]) => parseInt(key.split(':')[1]) < beforeStep)
+					.slice(0, limit)
+					.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
+			}
+
+			return entries
+				.slice(0, limit)
+				.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
+		}
+
 		let query = `
       SELECT * FROM checkpoints
       WHERE thread_id = ?
