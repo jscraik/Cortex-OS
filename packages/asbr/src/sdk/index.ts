@@ -10,8 +10,8 @@ import type {
 	CreateProfileResponse,
 	CreateTaskRequest,
 	CreateTaskResponse,
-	Event,
-	EventType,
+	Event as AsbrEvent,
+	EventType as AsbrEventType,
 	GetTaskResponse,
 	ListArtifactsQuery,
 	ListArtifactsResponse,
@@ -20,6 +20,7 @@ import type {
 	TaskInput,
 } from '@cortex-os/asbr-schemas';
 import type { TaskRef, UnsubscribeFunction } from '../types/index.js';
+import { NodeEventSource } from './event-source.node.js';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -29,7 +30,8 @@ import type { TaskRef, UnsubscribeFunction } from '../types/index.js';
 export class ASBRClient {
 	private baseUrl: string;
 	private token?: string;
-	private eventSubscriptions = new Map<string, Set<(event: Event) => void>>();
+	private eventSubscriptions = new Map<string, Set<(event: AsbrEvent) => void>>();
+	private eventStreams = new Map<string, NodeEventSource>();
 
 	constructor(
 		options: {
@@ -77,8 +79,8 @@ export class ASBRClient {
 		*/
 	subscribe(
 		taskId: string | undefined,
-		eventTypes: EventType[],
-		callback: (event: Event) => void,
+		eventTypes: AsbrEventType[],
+		callback: (event: AsbrEvent) => void,
 	): UnsubscribeFunction {
 		const subscriptionKey = taskId || '__all__';
 
@@ -91,14 +93,14 @@ export class ASBRClient {
 
 		// Set up SSE connection if this is the first subscription
 		if (callbacks.size === 1) {
-			this.setupEventStream(taskId, eventTypes);
+			this.setupEventStream(subscriptionKey, taskId, eventTypes);
 		}
 
 		return () => {
 			callbacks.delete(callback);
 			if (callbacks.size === 0) {
 				this.eventSubscriptions.delete(subscriptionKey);
-				this.closeEventStream(taskId);
+				this.closeEventStream(subscriptionKey);
 			}
 		};
 	}
@@ -225,18 +227,22 @@ export class ASBRClient {
 		return response;
 	}
 
-	private setupEventStream(taskId?: string, eventTypes?: EventType[]): void {
+	private setupEventStream(subscriptionKey: string, taskId?: string, eventTypes?: AsbrEventType[]): void {
 		const params = new URLSearchParams();
 		params.set('stream', 'sse');
 		if (taskId) params.set('taskId', taskId);
 		if (eventTypes) params.set('events', eventTypes.join(','));
 
 		const url = `${this.baseUrl}/v1/events?${params}`;
-		const eventSource = new EventSource(url);
+		const eventSource = new NodeEventSource(url, {
+			headers: this.token ? { Authorization: `Bearer ${this.token}` } : undefined,
+		});
+
+		this.eventStreams.set(subscriptionKey, eventSource);
 
 		eventSource.onmessage = (event) => {
 			try {
-				const data: Event = JSON.parse(event.data);
+				const data: AsbrEvent = JSON.parse(event.data);
 				this.dispatchEvent(data);
 			} catch (error) {
 				// Prefer structured logger when available
@@ -245,18 +251,31 @@ export class ASBRClient {
 			}
 		};
 
+		// Simple reconnect with backoff up to 30s
+		let retryMs = 1000;
 		eventSource.onerror = (error) => {
 			console.error('Event stream error:', error);
-			// Implement reconnection logic here
+			eventSource.close();
+			this.eventStreams.delete(subscriptionKey);
+			setTimeout(() => {
+				// Only reconnect if there are still subscribers
+				if (this.eventSubscriptions.has(subscriptionKey)) {
+					this.setupEventStream(subscriptionKey, taskId, eventTypes);
+				}
+			}, retryMs);
+			retryMs = Math.min(retryMs * 2, 30000);
 		};
 	}
 
-	private closeEventStream(_taskId?: string): void {
-		// Implementation would close the specific event stream
-		// This is a simplified version
+	private closeEventStream(subscriptionKey: string): void {
+		const es = this.eventStreams.get(subscriptionKey);
+		if (es) {
+			es.close();
+			this.eventStreams.delete(subscriptionKey);
+		}
 	}
 
-	private dispatchEvent(event: Event): void {
+	private dispatchEvent(event: AsbrEvent): void {
 		// Dispatch to specific task subscribers
 		const taskCallbacks = this.eventSubscriptions.get(event.taskId);
 		if (taskCallbacks) {
@@ -375,7 +394,7 @@ export function createIdempotencyKey(input: TaskInput): string {
 // Export types for consumers
 export type {
 	ArtifactRef,
-	Event,
+	Event as AsbrEvent,
 	Profile,
 	Task,
 	TaskInput,
