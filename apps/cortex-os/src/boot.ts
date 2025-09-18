@@ -1,13 +1,13 @@
 import { SpanStatusCode } from '@opentelemetry/api';
 import { Container } from 'inversify';
 import {
+	provideArtifactRepository,
+	provideEvidenceRepository,
 	provideMCP,
 	provideMemories,
 	provideOrchestration,
 	provideProfileRepository,
 	provideTaskRepository,
-	provideArtifactRepository,
-	provideEvidenceRepository,
 	tracer,
 } from './services';
 import { TOKENS } from './tokens';

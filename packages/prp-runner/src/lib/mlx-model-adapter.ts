@@ -1,5 +1,5 @@
-import { execa } from 'execa';
 import { existsSync } from 'node:fs';
+import { execa } from 'execa';
 import { z } from 'zod';
 import type { ModelConfig } from './model-selector.js';
 

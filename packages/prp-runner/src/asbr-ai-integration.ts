@@ -618,13 +618,7 @@ export class ASBRAIIntegration {
 		context: EvidenceContext,
 	): Promise<'low' | 'medium' | 'high' | 'critical'> {
 		// Risk assessment based on claim sensitivity and source reliability
-		const sensitiveKeywords = [
-			'security',
-			'vulnerability',
-			'breach',
-			'confidential',
-			'critical',
-		];
+		const sensitiveKeywords = ['security', 'vulnerability', 'breach', 'confidential', 'critical'];
 
 		const hasSensitiveContent = sensitiveKeywords.some((keyword) =>
 			context.claim.toLowerCase().includes(keyword),
@@ -719,7 +713,7 @@ export class ASBRAIIntegration {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		_claim: string,
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		_contextSources: string[]
+		_contextSources: string[],
 	) {
 		// Generate suggestions for additional sources
 		return [

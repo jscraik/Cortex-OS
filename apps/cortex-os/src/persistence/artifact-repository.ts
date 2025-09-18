@@ -2,8 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 
 import { ensureDataDir, getDataPath } from '../platform/xdg';
-import { readJsonFile, writeJsonFile } from './json-store';
 import { OptimisticLockError } from './errors';
+import { readJsonFile, writeJsonFile } from './json-store';
 
 const ARTIFACT_NAMESPACE = ['artifacts'];
 const INDEX_NAMESPACE = [...ARTIFACT_NAMESPACE, 'index'];

@@ -1,16 +1,16 @@
-import { beforeEach, afterEach, describe, expect, test } from 'vitest';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { ensureConfigDir, getConfigPath } from '../../src/platform/xdg';
 import {
-	initializeAuth,
-	validateToken,
+	AuthHttpError,
+	authenticateRequest,
 	cleanupExpiredTokens,
 	generateToken,
-	authenticateRequest,
-	AuthHttpError,
+	initializeAuth,
+	validateToken,
 } from '../../src/security/auth';
-import { ensureConfigDir, getConfigPath } from '../../src/platform/xdg';
 
 let tempDir: string;
 

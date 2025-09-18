@@ -1,3 +1,3 @@
 # Introduction
 
-Cortex Orchestration delivers coordinated multi-agent execution for Cortex-OS. It solves the challenge of managing diverse AI frameworks by bridging TypeScript services with Python-based agents, enabling reliable, scalable workflows.
+Cortex Orchestration delivers LangGraph-based workflow execution for Cortex-OS. It provides a single, persona-driven graph with MLX → Ollama → Frontier model selection, enabling reliable AI workflows.

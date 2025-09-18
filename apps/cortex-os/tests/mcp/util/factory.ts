@@ -1,8 +1,8 @@
 import { Container } from 'inversify';
 import { createMcpGateway } from '../../../src/mcp/gateway';
 import type { CortexOsToolName } from '../../../src/mcp/tools';
-import { TOKENS } from '../../../src/tokens';
 import { provideMemories, provideOrchestration } from '../../../src/services';
+import { TOKENS } from '../../../src/tokens';
 
 export interface TestMcpFacade {
 	listTools(): { name: CortexOsToolName; description: string }[];

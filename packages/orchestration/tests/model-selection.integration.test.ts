@@ -10,9 +10,9 @@ import {
 function hasFrontierEnv(): boolean {
 	return Boolean(
 		process.env.OPENAI_API_KEY ||
-		process.env.ANTHROPIC_API_KEY ||
-		process.env.FRONTIER_PROVIDER ||
-		process.env.FRONTIER_MODEL,
+			process.env.ANTHROPIC_API_KEY ||
+			process.env.FRONTIER_PROVIDER ||
+			process.env.FRONTIER_MODEL,
 	);
 }
 

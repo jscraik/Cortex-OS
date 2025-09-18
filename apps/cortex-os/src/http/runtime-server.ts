@@ -1,11 +1,11 @@
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { URL } from 'node:url';
-import type { TaskRepository } from '../persistence/task-repository';
-import type { ProfileRepository } from '../persistence/profile-repository';
 import type { ArtifactRepository } from '../persistence/artifact-repository';
-import type { EvidenceRepository } from '../persistence/evidence-repository';
 import { OptimisticLockError } from '../persistence/errors';
+import type { EvidenceRepository } from '../persistence/evidence-repository';
+import type { ProfileRepository } from '../persistence/profile-repository';
+import type { TaskRepository } from '../persistence/task-repository';
 
 export interface RuntimeHttpServer {
 	listen(port: number, host?: string): Promise<{ port: number }>;

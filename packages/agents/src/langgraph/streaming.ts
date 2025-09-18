@@ -4,10 +4,10 @@
  * Implements real-time streaming of agent execution with event emission
  */
 
-import type { CortexState } from '../CortexAgentLangGraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { StateGraph } from '@langchain/langgraph';
+import type { StateGraph } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
+import type { CortexState } from '../CortexAgentLangGraph';
 
 // Streaming event types
 export interface StreamingEvent {

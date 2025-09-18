@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ModelSelector, type ModelConfig } from '../../lib/model-selector.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ASBRAIIntegration } from '../../asbr-ai-integration.js';
+import { type ModelConfig, ModelSelector } from '../../lib/model-selector.js';
 
 // Mock ASBRAIIntegration
 vi.mock('../../asbr-ai-integration.js');

@@ -7,7 +7,7 @@
 import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { z } from 'zod';
-import { type CortexState } from '../CortexAgentLangGraph';
+import type { CortexState } from '../CortexAgentLangGraph';
 
 // Input validation schemas
 export const NodeInputSchema = z.object({
@@ -189,7 +189,10 @@ export const memoryUpdateNode = async (state: CortexState): Promise<Partial<Cort
 
 	return {
 		currentStep: 'completion',
-		memory: [...(state.memory || []), { content: JSON.stringify(interaction), timestamp: new Date().toISOString() }],
+		memory: [
+			...(state.memory || []),
+			{ content: JSON.stringify(interaction), timestamp: new Date().toISOString() },
+		],
 	};
 };
 

@@ -6,7 +6,7 @@
  */
 
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { Annotation, MessagesAnnotation, StateGraph, START, END } from '@langchain/langgraph';
+import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
 import { z } from 'zod';
 import type { AgentConfig } from './lib/types';
@@ -74,7 +74,11 @@ export class CortexAgent extends EventEmitter {
 			messages: [new HumanMessage({ content: input })],
 			currentStep: 'input_processing',
 			context: options?.context || {},
-			tools: options?.tools?.map((t: any) => ({ name: t.name || t, description: t.description || '' })) || [],
+			tools:
+				options?.tools?.map((t: any) => ({
+					name: t.name || t,
+					description: t.description || '',
+				})) || [],
 			securityCheck: undefined,
 			memory: [],
 			result: undefined,
@@ -145,7 +149,11 @@ export class CortexAgent extends EventEmitter {
 			})),
 			graphState: {
 				currentStep: 'idle',
-				tools: this.config.tools?.map((t) => ({ name: (t as any).name || t, description: (t as any).description || '' })) || [],
+				tools:
+					this.config.tools?.map((t) => ({
+						name: (t as any).name || t,
+						description: (t as any).description || '',
+					})) || [],
 			},
 		};
 	}
@@ -189,7 +197,6 @@ export class CortexAgent extends EventEmitter {
 			},
 		];
 	}
-
 }
 
 /**
@@ -239,9 +246,10 @@ function createAgentGraph(agent: CortexAgent) {
 
 		// Route to master agent for sub-agent coordination
 		const lastMessage = state.messages[state.messages.length - 1];
-		const content = typeof lastMessage?.content === 'string'
-			? lastMessage.content
-			: JSON.stringify(lastMessage?.content || '');
+		const content =
+			typeof lastMessage?.content === 'string'
+				? lastMessage.content
+				: JSON.stringify(lastMessage?.content || '');
 		const masterResult = await agent.masterAgentGraph.coordinate(content);
 
 		return {

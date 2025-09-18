@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
-import { getConfigPath, ensureConfigDir, pathExists } from '../platform/xdg';
+import { ensureConfigDir, getConfigPath, pathExists } from '../platform/xdg';
 
 export interface TokenInfo {
 	id: string;

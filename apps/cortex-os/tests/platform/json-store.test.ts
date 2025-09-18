@@ -2,9 +2,8 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, expect, test } from 'vitest';
-
-import { ensureDataDir, getDataPath } from '../../src/platform/xdg';
 import { readJsonFile, writeJsonFile } from '../../src/platform/json-store';
+import { ensureDataDir, getDataPath } from '../../src/platform/xdg';
 
 const originalTmp = process.env.CORTEX_OS_TMP;
 let tempRoot: string | undefined;

@@ -6,10 +6,10 @@ export type PRPPhase = 'strategy' | 'build' | 'evaluation';
  * Functional PRP orchestrator using closure state.
  */
 
+import { ConcurrentExecutor } from './lib/concurrent-executor.js';
 import { createExecutionContext } from './lib/create-execution-context.js';
 import { executeNeuron } from './lib/execute-neuron.js';
 import { LLMBridge, type LLMConfig } from './llm-bridge.js';
-import { ConcurrentExecutor } from './lib/concurrent-executor.js';
 
 export interface Blueprint {
 	title: string;

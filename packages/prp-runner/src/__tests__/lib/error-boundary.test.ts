@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-	ErrorBoundary,
-	globalErrorBoundary,
-	ErrorType,
 	CategorizedError,
-	ValidationError,
-	ResourceError,
+	ErrorBoundary,
+	ErrorType,
+	globalErrorBoundary,
 	NetworkError,
-	TimeoutError,
 	PermissionError,
+	ResourceError,
+	TimeoutError,
+	ValidationError,
 } from '../../lib/error-boundary.js';
 
 describe('ErrorBoundary', () => {

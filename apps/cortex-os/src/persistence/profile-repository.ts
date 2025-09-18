@@ -1,8 +1,8 @@
 import { readdir, rm } from 'node:fs/promises';
 
 import { ensureDataDir, getDataPath } from '../platform/xdg';
-import { readJsonFileWithDigest, writeJsonFile as writeJsonFileToPath } from './json-store';
 import { OptimisticLockError } from './errors';
+import { readJsonFileWithDigest, writeJsonFile as writeJsonFileToPath } from './json-store';
 
 const PROFILE_DIR = ['profiles'];
 const PROFILE_FILE_EXTENSION = '.json';

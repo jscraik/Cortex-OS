@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
-Cortex Orchestration coordinates multi-agent workflows for Cortex-OS using LangGraph with a Python–TypeScript bridge. This package is LangGraph-only; non-LangGraph frameworks have been removed.
+Cortex Orchestration provides LangGraph-based workflow execution for Cortex-OS. This package is LangGraph-only; other orchestration frameworks have been removed.
 
 ### Current Features
 - Stateful LangGraph execution

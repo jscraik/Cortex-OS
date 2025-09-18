@@ -6,12 +6,12 @@
 import { createHash } from 'node:crypto';
 import type {
 	ArtifactRef,
+	Event as AsbrEvent,
+	EventType as AsbrEventType,
 	CreateProfileRequest,
 	CreateProfileResponse,
 	CreateTaskRequest,
 	CreateTaskResponse,
-	Event as AsbrEvent,
-	EventType as AsbrEventType,
 	GetTaskResponse,
 	ListArtifactsQuery,
 	ListArtifactsResponse,
@@ -75,8 +75,8 @@ export class ASBRClient {
 	}
 
 	/**
-		* Subscribe to events for a specific task or all tasks
-		*/
+	 * Subscribe to events for a specific task or all tasks
+	 */
 	subscribe(
 		taskId: string | undefined,
 		eventTypes: AsbrEventType[],
@@ -227,7 +227,11 @@ export class ASBRClient {
 		return response;
 	}
 
-	private setupEventStream(subscriptionKey: string, taskId?: string, eventTypes?: AsbrEventType[]): void {
+	private setupEventStream(
+		subscriptionKey: string,
+		taskId?: string,
+		eventTypes?: AsbrEventType[],
+	): void {
 		const params = new URLSearchParams();
 		params.set('stream', 'sse');
 		if (taskId) params.set('taskId', taskId);

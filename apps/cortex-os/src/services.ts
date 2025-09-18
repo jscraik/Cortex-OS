@@ -1,9 +1,9 @@
 import { trace } from '@opentelemetry/api';
 import { createMcpGateway, type McpGateway } from './mcp/gateway';
-import { TaskRepository } from './persistence/task-repository';
-import { ProfileRepository } from './persistence/profile-repository';
 import { ArtifactRepository } from './persistence/artifact-repository';
 import { EvidenceRepository } from './persistence/evidence-repository';
+import { ProfileRepository } from './persistence/profile-repository';
+import { TaskRepository } from './persistence/task-repository';
 
 export interface MemoryRecord {
 	id: string;

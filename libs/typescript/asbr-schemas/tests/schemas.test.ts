@@ -6,8 +6,8 @@ import {
 	ProfileSchema,
 	TaskInputSchema,
 	TaskSchema,
-	VersionPinsSchema,
 	ValidationError,
+	VersionPinsSchema,
 } from '../src/index.js';
 
 describe('ASBR schema exports', () => {

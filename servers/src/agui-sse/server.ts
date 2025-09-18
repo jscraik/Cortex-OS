@@ -1,9 +1,9 @@
+import { EventEmitter } from 'node:events';
+import { createServer } from 'node:http';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { createAGUIAdapter } from '@cortex-os/agui';
 import { createAguiEvent } from '@cortex-os/contracts';
-import { EventEmitter } from 'node:events';
-import { createServer } from 'node:http';
 
 const AGUI_PORT = Number.parseInt(process.env.AGUI_PORT || '3023', 10);
 

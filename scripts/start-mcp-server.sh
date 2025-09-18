@@ -87,4 +87,4 @@ echo "[$(date)] PWD=$(pwd)"
 
 # Run the FastMCP server directly with proper error handling
 echo "[$(date)] Executing: $PYTHON_PATH cortex_fastmcp_server_v2.py"
-exec "$PYTHON_PATH" cortex_fastmcp_server_v2.py
+exec "$PYTHON_PATH" cortex_fastmcp_server_production.py

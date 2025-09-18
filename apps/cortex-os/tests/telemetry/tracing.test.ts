@@ -1,12 +1,12 @@
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { trace, SpanStatusCode } from '@opentelemetry/api';
-import { withRuntimeSpan } from '../../src/telemetry/tracing';
-import { createRuntimeHttpServer } from '../../src/http/runtime-server';
 import { createEventManager } from '../../src/events';
-import { TaskRepository } from '../../src/persistence/task-repository';
-import { ProfileRepository } from '../../src/persistence/profile-repository';
+import { createRuntimeHttpServer } from '../../src/http/runtime-server';
 import { ArtifactRepository } from '../../src/persistence/artifact-repository';
 import { EvidenceRepository } from '../../src/persistence/evidence-repository';
+import { ProfileRepository } from '../../src/persistence/profile-repository';
+import { TaskRepository } from '../../src/persistence/task-repository';
+import { withRuntimeSpan } from '../../src/telemetry/tracing';
 
 function createMockSpan() {
 	return {

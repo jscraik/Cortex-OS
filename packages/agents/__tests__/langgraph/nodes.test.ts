@@ -2,16 +2,16 @@
  * Tests for LangGraphJS nodes
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-	securityValidationNode,
-	intelligenceAnalysisNode,
-	toolExecutionNode,
-	responseSynthesisNode,
-	memoryUpdateNode,
-	errorHandlingNode,
-} from '../../src/langgraph/nodes';
 import { HumanMessage } from '@langchain/core/messages';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	errorHandlingNode,
+	intelligenceAnalysisNode,
+	memoryUpdateNode,
+	responseSynthesisNode,
+	securityValidationNode,
+	toolExecutionNode,
+} from '../../src/langgraph/nodes';
 
 describe('LangGraphJS Nodes', () => {
 	const baseState = {

@@ -4,10 +4,10 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { createRuntimeHttpServer } from '../../src/http/runtime-server';
-import { TaskRepository } from '../../src/persistence/task-repository';
-import { ProfileRepository } from '../../src/persistence/profile-repository';
 import { ArtifactRepository } from '../../src/persistence/artifact-repository';
 import { EvidenceRepository } from '../../src/persistence/evidence-repository';
+import { ProfileRepository } from '../../src/persistence/profile-repository';
+import { TaskRepository } from '../../src/persistence/task-repository';
 
 interface ApiServerContext {
 	server: ReturnType<typeof createRuntimeHttpServer>;

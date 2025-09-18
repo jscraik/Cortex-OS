@@ -4,7 +4,6 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { JsonRpcRequest, JsonRpcResponse, TaskResult } from './index.js';
 import {
 	A2A_ERROR_CODES,
 	A2ARpcHandler,
@@ -14,6 +13,7 @@ import {
 	InMemoryTaskStore,
 	TaskManager,
 } from './index';
+import type { JsonRpcRequest, JsonRpcResponse, TaskResult } from './index.js';
 
 describe('A2A Protocol Implementation', () => {
 	let taskManager: TaskManager;

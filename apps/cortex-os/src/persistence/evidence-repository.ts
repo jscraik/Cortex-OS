@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { readdir, rm } from 'node:fs/promises';
 
 import { ensureDataDir, getDataPath } from '../platform/xdg';
-import { readJsonFileWithDigest, writeJsonFile } from './json-store';
 import { OptimisticLockError } from './errors';
+import { readJsonFileWithDigest, writeJsonFile } from './json-store';
 
 const EVIDENCE_NAMESPACE = ['evidence'];
 const EVIDENCE_EXTENSION = '.json';

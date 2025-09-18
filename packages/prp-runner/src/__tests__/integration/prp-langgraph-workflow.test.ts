@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PRPLangGraphWorkflow } from '../../lib/prp-langgraph-workflow.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ASBRAIIntegration } from '../../asbr-ai-integration.js';
 import { ModelSelector } from '../../lib/model-selector.js';
+import { PRPLangGraphWorkflow } from '../../lib/prp-langgraph-workflow.js';
 
 // Mock dependencies
 vi.mock('../../asbr-ai-integration.js');

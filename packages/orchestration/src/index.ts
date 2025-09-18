@@ -3,17 +3,13 @@
  * LangGraph-only orchestration surface (no legacy orchestrator exports)
  */
 
-export { createOrchestrationBus } from './events/orchestration-bus.js';
 export type {
 	OrchestrationBus,
 	OrchestrationEventEnvelope,
 	OrchestrationEventHandler,
-	OrchestrationPublishOptions
+	OrchestrationPublishOptions,
 } from './events/orchestration-bus.js';
-export {
-	ORCHESTRATION_EVENT_SCHEMAS,
-	OrchestrationEventTypes
-} from './events/orchestration-events.js';
+export { createOrchestrationBus } from './events/orchestration-bus.js';
 export type {
 	AgentAssignedEvent,
 	AgentFreedEvent,
@@ -26,7 +22,11 @@ export type {
 	TaskCompletedEvent,
 	TaskCreatedEvent,
 	TaskFailedEvent,
-	TaskStartedEvent
+	TaskStartedEvent,
+} from './events/orchestration-events.js';
+export {
+	ORCHESTRATION_EVENT_SCHEMAS,
+	OrchestrationEventTypes,
 } from './events/orchestration-events.js';
 
 // Legacy integrations removed (LangGraph-only)
@@ -45,13 +45,13 @@ export type {
 	PerformanceMetrics,
 	PlanningContext,
 	StrategicDecision,
-	Task
+	Task,
 } from './types.js';
 // Enums
 export {
 	AgentRole,
 	OrchestrationStrategy,
-	Schemas
+	Schemas,
 } from './types.js';
 
 // Utility defaults
@@ -67,10 +67,10 @@ export const OrchestrationDefaults = {
 export type { ToolContract, ToolErrorResponse } from './mcp/tools.js';
 // MCP tool contracts
 export {
+	createToolErrorResponse,
 	ToolErrorCode,
-	ToolValidationError, createToolErrorResponse,
+	ToolValidationError,
 	toolErrorResponseSchema,
-
 } from './mcp/tools.js';
 
 // Version info
@@ -85,6 +85,6 @@ export {
 	orchestrationMcpTools,
 	processMonitoringTool,
 	taskManagementTool,
-	workflowOrchestrationTool
+	workflowOrchestrationTool,
 } from './mcp/tools.js';
 // LangGraph-only: legacy engines are no longer exported

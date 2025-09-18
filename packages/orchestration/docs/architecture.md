@@ -2,8 +2,9 @@
 
 The system consists of modular layers:
 
-## Coordination Engine
-- Plans and executes multi-agent workflows
+## LangGraph Engine
+- Single persona-driven graph execution
+- MLX → Ollama → Frontier model selection
 - Supports adaptive, parallel, and strategic decisions
 
 ## Python Bridges

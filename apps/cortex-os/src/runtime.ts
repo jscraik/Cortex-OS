@@ -1,13 +1,13 @@
 import { z } from 'zod';
 import { container } from './boot';
 import { wireA2A } from './boot/a2a';
+import { createEventManager, type EventManager } from './events';
 import { createRuntimeHttpServer } from './http/runtime-server';
-import type { TaskRepository } from './persistence/task-repository';
-import type { ProfileRepository } from './persistence/profile-repository';
+import { createMcpHttpServer } from './mcp/server';
 import type { ArtifactRepository } from './persistence/artifact-repository';
 import type { EvidenceRepository } from './persistence/evidence-repository';
-import { createEventManager, type EventManager } from './events';
-import { createMcpHttpServer } from './mcp/server';
+import type { ProfileRepository } from './persistence/profile-repository';
+import type { TaskRepository } from './persistence/task-repository';
 import { TOKENS } from './tokens';
 
 export interface RuntimeHandle {

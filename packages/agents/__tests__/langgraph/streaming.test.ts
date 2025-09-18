@@ -2,13 +2,13 @@
  * Tests for LangGraphJS streaming functionality
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { HumanMessage } from '@langchain/core/messages';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	StreamingManager,
 	StreamingTransformers,
 	streamingUtils,
 } from '../../src/langgraph/streaming';
-import { HumanMessage } from '@langchain/core/messages';
 
 describe('Streaming Manager', () => {
 	let streamingManager: StreamingManager;

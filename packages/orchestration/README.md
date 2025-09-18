@@ -317,11 +317,11 @@ describe('Orchestration Engine', () => {
 
 | Metric | Typical Value | Notes |
 |--------|---------------|-------|
-| Agent Startup Time | <2 seconds | Python process initialization |
-| Task Coordination | <500ms | TypeScript orchestration overhead |
-| IPC Latency | <10ms | Bridge communication latency |
-| Memory Usage | 50-200MB | Per agent process |
-| Concurrent Orchestrations | 10+ | Configurable based on resources |
+| Graph Initialization | <1 second | LangGraph setup |
+| Model Selection | <200ms | MLX/Ollama/Frontier probe |
+| Persona Loading | <50ms | cerebrum.yaml validation |
+| Graph Execution | <2s | Depends on model response |
+| Concurrent Graphs | 5+ | Configurable based on resources |
 
 ### Monitoring Integration
 

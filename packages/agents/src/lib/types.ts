@@ -128,7 +128,6 @@ export interface MemoryConfig {
 	compressionEnabled?: boolean;
 }
 
-
 export interface AgentMetrics {
 	messagesProcessed: number;
 	totalTokensUsed: number;

@@ -6,13 +6,13 @@
  * @status TDD-DRIVEN
  */
 
+import { randomUUID } from 'node:crypto';
 import type {
 	A2AMessage,
 	AgentCapabilities,
 	AgentCard,
 	AgentSkill,
 } from '@cortex-os/a2a-contracts';
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 // Define TransportProtocol enum locally

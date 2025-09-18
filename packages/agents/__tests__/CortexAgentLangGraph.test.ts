@@ -2,12 +2,12 @@
  * Tests for LangGraphJS-based CortexAgent implementation
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CortexAgent } from '../src/CortexAgentLangGraph';
-import { createMasterAgentGraph } from '../src/MasterAgent';
 import { MemoryCheckpointSaver } from '../src/langgraph/checkpointing';
 import { StreamingManager } from '../src/langgraph/streaming';
+import { createMasterAgentGraph } from '../src/MasterAgent';
 
 describe('CortexAgent with LangGraphJS', () => {
 	let agent: CortexAgent;
@@ -67,7 +67,7 @@ describe('CortexAgent with LangGraphJS', () => {
 			const result = await agent.execute('Analyze this code');
 
 			const steps = [];
-			let currentState = result;
+			const currentState = result;
 
 			// Track workflow progression
 			while (currentState && currentState.currentStep !== 'completion') {

@@ -5,11 +5,11 @@
  * @status active
  */
 
-import { createLogger } from '@cortex-os/observability';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope.js';
 import { createBus } from '@cortex-os/a2a-core/bus.js';
 import type { Transport } from '@cortex-os/a2a-core/transport.js';
 import { stdio } from '@cortex-os/a2a-transport/stdio.js';
+import { createLogger } from '@cortex-os/observability';
 
 const logger = createLogger('cortex-py-bridge');
 

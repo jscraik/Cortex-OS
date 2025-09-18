@@ -1,5 +1,5 @@
-import { createAGUIClient } from '@ag-ui/core';
 import type { EventEmitter } from 'node:events';
+import { createAGUIClient } from '@ag-ui/core';
 
 export function createAGUIAdapter(emitter: EventEmitter) {
 	const agui = createAGUIClient({ transport: 'sse' });

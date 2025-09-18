@@ -1,9 +1,5 @@
+import type { Event, Task, TaskStatus } from '@cortex-os/asbr-schemas';
 import { z } from 'zod';
-import type {
-	Event,
-	Task,
-	TaskStatus,
-} from '@cortex-os/asbr-schemas';
 
 export * from '@cortex-os/asbr-schemas';
 

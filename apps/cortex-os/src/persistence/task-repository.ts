@@ -1,8 +1,8 @@
 import { readdir, rm } from 'node:fs/promises';
 
 import { ensureDataDir, getDataPath } from '../platform/xdg';
-import { readJsonFileWithDigest, writeJsonFile as writeJsonFileToPath } from './json-store';
 import { OptimisticLockError } from './errors';
+import { readJsonFileWithDigest, writeJsonFile as writeJsonFileToPath } from './json-store';
 
 const TASK_DIR = ['tasks'];
 const TASK_FILE_EXTENSION = '.json';

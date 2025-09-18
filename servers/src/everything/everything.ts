@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type {
 	ClientCapabilities,
@@ -7,9 +10,6 @@ import type {
 	Root,
 	Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 // Separate value imports (schemas/constants) from type-only imports for lint clarity
 import {
 	CallToolRequestSchema,

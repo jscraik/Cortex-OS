@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { appendFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { ensureStateDir, getStatePath } from '../platform/xdg';
 import type { RuntimeHttpServer } from '../http/runtime-server';
+import { ensureStateDir, getStatePath } from '../platform/xdg';
 import { withRuntimeSpan } from '../telemetry/tracing';
 
 export interface RuntimeEvent {

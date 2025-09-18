@@ -3,34 +3,37 @@
 export {
 	ConcurrentExecutor,
 	type ExecuteOptions,
-	type ExecutionResult
+	type ExecutionResult,
 } from './concurrent-executor.js';
 // Error handling
 export {
 	CategorizedError,
 	ErrorBoundary,
-	ErrorType, NetworkError,
+	ErrorType,
+	globalErrorBoundary,
+	NetworkError,
 	PermissionError,
 	ResourceError,
 	TimeoutError,
-	ValidationError, globalErrorBoundary
+	ValidationError,
 } from './error-boundary.js';
 // LangGraph workflows
 export {
 	LangGraphWorkflow,
 	type WorkflowState,
-	type WorkflowStateSchema
+	type WorkflowStateSchema,
 } from './langgraph-workflow.js';
 export { MLXModelAdapter, type MLXModelConfig } from './mlx-model-adapter.js';
 export {
-	ModelSelector, type ModelCapability,
+	type ModelCapability,
 	type ModelConfig,
-	type ModelProvider
+	type ModelProvider,
+	ModelSelector,
 } from './model-selector.js';
 export {
 	PRPLangGraphWorkflow,
 	type PRPWorkflowState,
-	type PRPWorkflowStateSchema
+	type PRPWorkflowStateSchema,
 } from './prp-langgraph-workflow.js';
 
 // Note: ModelSelector and MLXModelAdapter are classes that should be instantiated directly

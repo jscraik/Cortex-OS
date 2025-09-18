@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEnvelope, withEvidence, Envelope } from './src/envelope.js';
+import { createEnvelope, Envelope, withEvidence } from './src/envelope.js';
 
 describe('withEvidence helper', () => {
 	it('attaches evidence array immutably', () => {

@@ -1,9 +1,9 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { startRuntime } from '../../src/runtime';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { getStatePath } from '../../src/platform/xdg';
+import { startRuntime } from '../../src/runtime';
 
 interface RuntimeHandle {
 	httpUrl: string;
