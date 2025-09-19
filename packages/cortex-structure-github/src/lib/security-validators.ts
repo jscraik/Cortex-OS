@@ -49,8 +49,9 @@ export const validateGitHubUrl = (url: string): ValidationResult => {
 		return { valid: false, error: 'Invalid repository path format' };
 	}
 
-	// Directory traversal protection
-	if (url.includes('..') || url.includes('//github.com/') || url.includes('%2e%2e')) {
+	// Directory traversal protection (check only the path portion)
+	const pathLower = parsed.pathname.toLowerCase();
+	if (pathLower.includes('..') || pathLower.includes('%2e%2e') || pathLower.includes('//')) {
 		return { valid: false, error: 'Potential directory traversal detected' };
 	}
 

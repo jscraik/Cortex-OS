@@ -143,7 +143,7 @@ async function handleApiRequest(
 async function handleTasksRoute(
 	req: IncomingMessage,
 	res: ServerResponse,
-	url: URL,
+	_url: URL,
 	segments: string[],
 	tasks: TaskRepository,
 ): Promise<void> {
@@ -214,7 +214,7 @@ async function handleTasksRoute(
 async function handleProfilesRoute(
 	req: IncomingMessage,
 	res: ServerResponse,
-	url: URL,
+	_url: URL,
 	segments: string[],
 	profiles: ProfileRepository,
 ): Promise<void> {
@@ -459,7 +459,7 @@ async function readJsonBody(req: IncomingMessage): Promise<any> {
 	if (!body) return {};
 	try {
 		return JSON.parse(body);
-	} catch (error) {
+	} catch (_error) {
 		throw new HttpError(400, 'Invalid JSON body');
 	}
 }

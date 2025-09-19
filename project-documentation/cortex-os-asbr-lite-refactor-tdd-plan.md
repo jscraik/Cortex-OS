@@ -147,8 +147,8 @@ Status:
 
 - ✅ Update SDK to use node-compatible SSE client; fix helpers (e.g., `createTaskInput` ensures scopes).
 - ✅ Tests running against live runtime: `createTask`, `subscribe`, `listArtifacts`, `upsertProfile`.
-- 🔄 Publish SDK type definitions from shared schemas.
-- 🔄 Remove legacy SDK entrypoints pointing at old server.
+- ✅ Publish SDK type definitions from shared schemas.
+- ✅ Remove legacy SDK entrypoints pointing at old server.
 
 Dependencies:
 

@@ -731,9 +731,9 @@ export class ASBRAIIntegration {
 	}
 
 	private async calculateInsights(
-		baseEvidence: Evidence,
+		_baseEvidence: Evidence,
 		enhancedEvidence: Evidence,
-		context: EvidenceContext,
+		_context: EvidenceContext,
 	): Promise<{
 		semanticSimilarity?: number;
 		factualConsistency?: number;

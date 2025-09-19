@@ -5,9 +5,9 @@
  * state management, and tool coordination. This replaces the simplified implementation.
  */
 
+import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
-import { EventEmitter } from 'events';
 import { z } from 'zod';
 import type { AgentConfig } from './lib/types';
 import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent';

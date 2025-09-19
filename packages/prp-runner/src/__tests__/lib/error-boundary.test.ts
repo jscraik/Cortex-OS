@@ -3,7 +3,6 @@ import {
 	CategorizedError,
 	ErrorBoundary,
 	ErrorType,
-	globalErrorBoundary,
 	NetworkError,
 	PermissionError,
 	ResourceError,

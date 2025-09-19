@@ -382,7 +382,7 @@ export class RealMCPBridge {
 
 	private async executeDockerTool(
 		toolName: string,
-		parameters: any,
+		_parameters: any,
 		config: ExternalSystemConfig,
 	): Promise<{ success: boolean; output: any; error?: string }> {
 		try {

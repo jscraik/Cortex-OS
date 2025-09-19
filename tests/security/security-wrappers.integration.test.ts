@@ -322,8 +322,7 @@ describe('Security Wrappers - Integration Tests', () => {
 			const largeDataSet = Array(1000).fill('test_data');
 
 			// Database operation with large dataset
-			const largeInsertQuery =
-				'INSERT INTO test_table (data) VALUES ' + largeDataSet.map(() => '(?)').join(', ');
+			const largeInsertQuery = `INSERT INTO test_table (data) VALUES ${largeDataSet.map(() => '(?)').join(', ')}`;
 
 			expect(() => {
 				secureDb.secureRun(largeInsertQuery, ...largeDataSet);

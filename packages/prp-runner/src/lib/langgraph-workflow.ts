@@ -91,7 +91,7 @@ export class LangGraphWorkflow {
 	/**
 	 * Start node - Initialize workflow state
 	 */
-	private async startNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+	private async startNode(_state: WorkflowState): Promise<Partial<WorkflowState>> {
 		console.log('Starting workflow execution');
 		return {
 			phase: 'planning',
@@ -221,7 +221,7 @@ export class LangGraphWorkflow {
 	/**
 	 * Complete node - Finalize workflow
 	 */
-	private async completeNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+	private async completeNode(_state: WorkflowState): Promise<Partial<WorkflowState>> {
 		console.log('Workflow completed successfully');
 		return {
 			phase: 'completion',
@@ -259,7 +259,7 @@ export class LangGraphWorkflow {
 	/**
 	 * Execute the specific task (to be implemented by subclasses)
 	 */
-	private async executeTask(state: WorkflowState): Promise<any> {
+	private async executeTask(_state: WorkflowState): Promise<any> {
 		// This is a placeholder - actual implementation depends on specific workflow
 		throw new Error('executeTask must be implemented by subclass');
 	}

@@ -123,12 +123,46 @@ describe('Complete Workflows', () => {
 			const taskId = taskResponse.body.task.id;
 
 			// Test SSE endpoint (simplified for test environment)
-			const sseResponse = await request
-				.get(`/v1/events?stream=sse&taskId=${taskId}`)
-				.set('Authorization', `Bearer ${authToken}`)
-				.set('Accept', 'text/event-stream');
-
-			expect(sseResponse.status).toBe(200);
+			await new Promise<void>((resolve, reject) => {
+				let settled = false;
+				const sseReq = request
+					.get(`/v1/events?stream=sse&taskId=${taskId}`)
+					.set('Authorization', `Bearer ${authToken}`)
+					.set('Accept', 'text/event-stream')
+					.buffer(false)
+					.on('response', (res) => {
+						try {
+							expect(res.statusCode).toBe(200);
+							settled = true;
+							sseReq.abort();
+							resolve();
+						} catch (error) {
+							settled = true;
+							reject(error);
+						}
+					})
+					.end((err, res) => {
+						if (settled) return;
+						if (err) {
+							if ((err as NodeJS.ErrnoException).code === 'ECONNRESET') {
+								settled = true;
+								resolve();
+								return;
+							}
+							settled = true;
+							reject(err);
+							return;
+						}
+						try {
+							expect(res?.status).toBe(200);
+							settled = true;
+							resolve();
+						} catch (error) {
+							settled = true;
+							reject(error);
+						}
+					});
+			});
 		});
 	});
 

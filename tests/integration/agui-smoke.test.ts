@@ -6,11 +6,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 // Note: These imports may not resolve until packages are built
 // This test serves as a smoke test for the integration
 describe('AGUI Integration Smoke Test', () => {
-	let bus: ReturnType<typeof createBus>;
+	let _bus: ReturnType<typeof createBus>;
 	let emitter: EventEmitter;
 
 	beforeAll(() => {
-		bus = createBus(inproc());
+		_bus = createBus(inproc());
 		emitter = new EventEmitter();
 	});
 

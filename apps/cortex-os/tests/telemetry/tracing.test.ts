@@ -24,7 +24,7 @@ afterEach(() => {
 describe('telemetry tracing', () => {
 	test('withRuntimeSpan records spans with attributes and closes span', async () => {
 		const span = createMockSpan();
-		const startActiveSpan = vi.fn((name: string, fn: (span: typeof span) => unknown) => {
+		const startActiveSpan = vi.fn((_name: string, fn: (span: typeof span) => unknown) => {
 			return fn(span);
 		});
 		vi.spyOn(trace, 'getTracer').mockReturnValue({
@@ -43,7 +43,7 @@ describe('telemetry tracing', () => {
 
 	test('event manager emits telemetry span with event attributes', async () => {
 		const span = createMockSpan();
-		const startActiveSpan = vi.fn((name: string, fn: (span: typeof span) => unknown) => {
+		const startActiveSpan = vi.fn((_name: string, fn: (span: typeof span) => unknown) => {
 			return fn(span);
 		});
 		vi.spyOn(trace, 'getTracer').mockReturnValue({

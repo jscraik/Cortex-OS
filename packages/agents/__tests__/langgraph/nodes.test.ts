@@ -3,7 +3,7 @@
  */
 
 import { HumanMessage } from '@langchain/core/messages';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
 	errorHandlingNode,
 	intelligenceAnalysisNode,

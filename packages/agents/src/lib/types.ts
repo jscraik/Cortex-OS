@@ -2,8 +2,6 @@
  * Core type definitions for the agents package
  */
 
-import { EventEmitter } from 'events';
-
 export interface Memory {
 	id: string;
 	kind: 'note' | 'event' | 'artifact' | 'embedding';

@@ -1,6 +1,6 @@
 // Basic type definitions for Cortex-OS agents
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'node:events';
 
 export interface AgentConfig {
 	name: string;

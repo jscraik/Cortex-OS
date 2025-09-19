@@ -257,7 +257,7 @@ describe('CortexAgent with LangGraphJS', () => {
 
 			// Simulate token generation
 			const content = 'Hello world';
-			const chunk = {
+			const _chunk = {
 				messages: [new AIMessage(content)],
 			};
 

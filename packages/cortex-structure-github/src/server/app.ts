@@ -212,7 +212,7 @@ app.post('/webhook', async (req, res) => {
 
 		// Convert body to raw string for signature verification
 		const rawBody = req.body as Buffer | string | Record<string, unknown> | undefined;
-		const payload = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : pckage;
+		const payload = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody ?? '');
 
 		await webhooks.verifyAndReceive({
 			id: id || '',
@@ -1349,11 +1349,13 @@ async function updateProgressiveStatus(
 	}
 }
 
-// Start server
-const port = parseInt(env.PORT, 10);
-app.listen(port, () => {
-	console.log(`🚀 Cortex Structure Guard GitHub App running on port ${port}`);
-	console.log(`📊 Monitoring repository structure with ${CORTEX_STRUCTURE_RULES.length} rules`);
-	console.log(`🔧 Auto-fix: ${env.AUTO_FIX_ENABLED === 'true' ? 'Enabled' : 'Disabled'}`);
-	console.log(`🧪 Dry run: ${env.DRY_RUN === 'true' ? 'Enabled' : 'Disabled'}`);
-});
+// Start server (avoid binding during tests)
+if (process.env.NODE_ENV !== 'test') {
+	const port = parseInt(env.PORT, 10);
+	app.listen(port, () => {
+		console.log(`🚀 Cortex Structure Guard GitHub App running on port ${port}`);
+		console.log(`📊 Monitoring repository structure with ${CORTEX_STRUCTURE_RULES.length} rules`);
+		console.log(`🔧 Auto-fix: ${env.AUTO_FIX_ENABLED === 'true' ? 'Enabled' : 'Disabled'}`);
+		console.log(`🧪 Dry run: ${env.DRY_RUN === 'true' ? 'Enabled' : 'Disabled'}`);
+	});
+}

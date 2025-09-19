@@ -65,7 +65,6 @@ export type PRPWorkflowState = z.infer<typeof PRPWorkflowStateSchema>;
  */
 export class PRPLangGraphWorkflow {
 	private graph: any; // Compiled LangGraph
-	private aiIntegration: ASBRAIIntegration;
 	private modelSelector: ModelSelector;
 	private errorBoundary = new ErrorBoundary();
 

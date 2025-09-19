@@ -104,15 +104,15 @@ export class MemoryCheckpointSaver {
 		const entries = Array.from(this.checkpoints.entries())
 			.filter(([key]) => key.startsWith(prefix))
 			.sort((a, b) => {
-				const aStep = parseInt(a[0].split(':')[1]);
-				const bStep = parseInt(b[0].split(':')[1]);
+				const aStep = parseInt(a[0].split(':')[1], 10);
+				const bStep = parseInt(b[0].split(':')[1], 10);
 				return bStep - aStep; // Descending order
 			});
 
 		if (before) {
-			const beforeStep = parseInt(before.split(':')[1]);
+			const beforeStep = parseInt(before.split(':')[1], 10);
 			return entries
-				.filter(([key]) => parseInt(key.split(':')[1]) < beforeStep)
+				.filter(([key]) => parseInt(key.split(':')[1], 10) < beforeStep)
 				.slice(0, limit)
 				.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
 		}
@@ -142,10 +142,7 @@ export class MemoryCheckpointSaver {
  * Falls back to memory storage when sqlite3 is not available
  */
 export class SQLiteCheckpointSaver {
-	private db: any; // SQLite database instance
 	private storage: Map<string, CortexCheckpoint> = new Map();
-	private config: CheckpointConfig;
-	private isMemoryMode = false;
 
 	constructor(config: CheckpointConfig & { connectionString: string }) {
 		this.config = config;
@@ -197,15 +194,15 @@ export class SQLiteCheckpointSaver {
 		const entries = Array.from(this.storage.entries())
 			.filter(([key]) => key.startsWith(prefix))
 			.sort((a, b) => {
-				const aStep = parseInt(a[0].split(':')[1]);
-				const bStep = parseInt(b[0].split(':')[1]);
+				const aStep = parseInt(a[0].split(':')[1], 10);
+				const bStep = parseInt(b[0].split(':')[1], 10);
 				return bStep - aStep; // Descending order
 			});
 
 		if (before) {
-			const beforeStep = parseInt(before.split(':')[1]);
+			const beforeStep = parseInt(before.split(':')[1], 10);
 			return entries
-				.filter(([key]) => parseInt(key.split(':')[1]) < beforeStep)
+				.filter(([key]) => parseInt(key.split(':')[1], 10) < beforeStep)
 				.slice(0, limit)
 				.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
 		}
@@ -348,7 +345,7 @@ export const checkpointUtils = {
 			storage: (process.env.CHECKPOINT_STORAGE as any) || 'memory',
 			connectionString: process.env.CHECKPOINT_DB_URL,
 			tableName: process.env.CHECKPOINT_TABLE_NAME,
-			ttl: process.env.CHECKPOINT_TTL ? parseInt(process.env.CHECKPOINT_TTL) : undefined,
+			ttl: process.env.CHECKPOINT_TTL ? parseInt(process.env.CHECKPOINT_TTL, 10) : undefined,
 			compression: process.env.CHECKPOINT_COMPRESSION === 'true',
 		};
 	},

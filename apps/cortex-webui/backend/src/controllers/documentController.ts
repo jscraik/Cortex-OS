@@ -130,7 +130,7 @@ async function parsePDF(buffer: Buffer, fileName: string): Promise<DocumentParse
 		// Truncate if too long
 		const originalLength = text.length;
 		if (text.length > MAX_TEXT_LENGTH) {
-			text = text.slice(0, MAX_TEXT_LENGTH) + '\n\n[Content truncated due to length]';
+			text = `${text.slice(0, MAX_TEXT_LENGTH)}\n\n[Content truncated due to length]`;
 		}
 
 		return {
@@ -168,7 +168,7 @@ async function parseTextFile(buffer: Buffer, fileName: string): Promise<Document
 
 		// Truncate if too long
 		if (text.length > MAX_TEXT_LENGTH) {
-			text = text.slice(0, MAX_TEXT_LENGTH) + '\n\n[Content truncated due to length]';
+			text = `${text.slice(0, MAX_TEXT_LENGTH)}\n\n[Content truncated due to length]`;
 		}
 
 		const fileType =

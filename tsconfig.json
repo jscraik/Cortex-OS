@@ -65,10 +65,10 @@
 				"libs/typescript/utils/dist/index.d.ts"
 			],
 			"@cortex-os/asbr-schemas": [
-				"libs/typescript/asbr-schemas/src/index.ts"
+				"libs/typescript/asbr-schemas/dist/index.d.ts"
 			],
 			"@cortex-os/asbr-schemas/*": [
-				"libs/typescript/asbr-schemas/src/*"
+				"libs/typescript/asbr-schemas/dist/*"
 			],
 			"@cortex-os/utils/*": [
 				"libs/typescript/utils/dist/*"

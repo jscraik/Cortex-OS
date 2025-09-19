@@ -4,9 +4,9 @@
  * Implements real-time streaming of agent execution with event emission
  */
 
+import { EventEmitter } from 'node:events';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type { StateGraph } from '@langchain/langgraph';
-import { EventEmitter } from 'events';
 import type { CortexState } from '../CortexAgentLangGraph';
 
 // Streaming event types
@@ -281,7 +281,7 @@ export class StreamingManager extends EventEmitter {
 	private emitTokenEvents(chunk: any, threadId: string): void {
 		if (chunk.messages) {
 			const lastMessage = chunk.messages[chunk.messages.length - 1];
-			if (lastMessage && lastMessage.content) {
+			if (lastMessage?.content) {
 				const content =
 					typeof lastMessage.content === 'string'
 						? lastMessage.content
@@ -296,7 +296,7 @@ export class StreamingManager extends EventEmitter {
 							timestamp: new Date().toISOString(),
 							threadId,
 							data: {
-								token: token + ' ',
+								token: `${token} `,
 								cumulativeTokens: index + 1,
 							},
 						});
@@ -490,10 +490,10 @@ export const streamingUtils = {
 			includeIntermediate: process.env.STREAMING_INTERMEDIATE !== 'false',
 			includeMetadata: process.env.STREAMING_METADATA !== 'false',
 			bufferSize: process.env.STREAMING_BUFFER_SIZE
-				? parseInt(process.env.STREAMING_BUFFER_SIZE)
+				? parseInt(process.env.STREAMING_BUFFER_SIZE, 10)
 				: undefined,
 			flushInterval: process.env.STREAMING_FLUSH_INTERVAL
-				? parseInt(process.env.STREAMING_FLUSH_INTERVAL)
+				? parseInt(process.env.STREAMING_FLUSH_INTERVAL, 10)
 				: undefined,
 		};
 	},

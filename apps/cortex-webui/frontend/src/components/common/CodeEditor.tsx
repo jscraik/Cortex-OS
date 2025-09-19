@@ -37,7 +37,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 		if (e.key === 'Tab') {
 			e.preventDefault();
 			const { selectionStart, selectionEnd } = e.currentTarget;
-			const newValue = value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
+			const newValue = `${value.substring(0, selectionStart)}  ${value.substring(selectionEnd)}`;
 			onChange(newValue);
 
 			// Move cursor position

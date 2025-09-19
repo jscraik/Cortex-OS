@@ -370,10 +370,10 @@ describe('Streaming Utilities', () => {
 
 			const aggregated = streamingUtils.aggregateEvents(events);
 
-			expect(aggregated.byType['node_start']).toBe(3);
-			expect(aggregated.byType['node_finish']).toBe(1);
-			expect(aggregated.byThread['thread1']).toBe(3);
-			expect(aggregated.byThread['thread2']).toBe(1);
+			expect(aggregated.byType.node_start).toBe(3);
+			expect(aggregated.byType.node_finish).toBe(1);
+			expect(aggregated.byThread.thread1).toBe(3);
+			expect(aggregated.byThread.thread2).toBe(1);
 			expect(aggregated.duration).toBe(3000); // 3 seconds
 		});
 	});

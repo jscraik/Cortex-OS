@@ -6,7 +6,6 @@
  */
 
 import { z } from 'zod';
-import type { AgentConfig, ToolConfig } from '../lib/types';
 
 // === Core Types ===
 

@@ -250,7 +250,9 @@ class ASBRServerClass {
 		this.app.post('/v1/tasks/:id/resume', requireScopes('tasks:write'), this.resumeTask.bind(this));
 
 		// Event endpoints
-		this.app.get('/v1/events', requireScopes('events:read'), this.getEvents.bind(this));
+		const getEventsHandler = this.getEvents.bind(this);
+		this.app.locals.asbrGetEventsHandler = getEventsHandler;
+		this.app.get('/v1/events', requireScopes('events:read'), getEventsHandler);
 
 		// Profile endpoints
 		this.app.post('/v1/profiles', requireScopes('profiles:write'), this.createProfile.bind(this));

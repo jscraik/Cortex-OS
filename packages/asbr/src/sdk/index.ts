@@ -18,9 +18,10 @@ import type {
 	Profile,
 	Task,
 	TaskInput,
+	TaskRef,
+	UnsubscribeFunction,
 } from '@cortex-os/asbr-schemas';
-import type { TaskRef, UnsubscribeFunction } from '../types/index.js';
-import { NodeEventSource } from './event-source.node.js';
+import { NodeEventSource } from '@cortex-os/utils';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -305,7 +306,7 @@ class TaskRefImpl implements TaskRef {
 	public readonly id: string;
 	public readonly status: Task['status'];
 	private client: ASBRClient;
-	private eventListeners = new Set<(event: Event) => void>();
+	private readonly eventListeners = new Set<(event: AsbrEvent) => void>();
 
 	constructor(task: Task, client: ASBRClient) {
 		this.id = task.id;
@@ -313,7 +314,7 @@ class TaskRefImpl implements TaskRef {
 		this.client = client;
 	}
 
-	subscribe(callback: (event: Event) => void): UnsubscribeFunction {
+	subscribe(callback: (event: AsbrEvent) => void): UnsubscribeFunction {
 		this.eventListeners.add(callback);
 
 		const unsubscribe = this.client.subscribe(

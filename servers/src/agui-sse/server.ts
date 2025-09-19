@@ -2,7 +2,6 @@ import { EventEmitter } from 'node:events';
 import { createServer } from 'node:http';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
-import { createAGUIAdapter } from '@cortex-os/agui';
 import { createAguiEvent } from '@cortex-os/contracts';
 
 const AGUI_PORT = Number.parseInt(process.env.AGUI_PORT || '3023', 10);
@@ -17,7 +16,6 @@ export class AGUISSEServer {
 	private server: import('node:http').Server;
 	private bus = createBus(inproc());
 	private emitter = new EventEmitter();
-	private aguiAdapter = createAGUIAdapter(this.emitter);
 	private connections = new Map<string, SSEConnection>();
 	private pingInterval?: NodeJS.Timeout;
 

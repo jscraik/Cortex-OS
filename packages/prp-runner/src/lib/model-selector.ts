@@ -139,7 +139,6 @@ export const TASK_MODEL_MAPPING: Record<string, string[]> = {
 
 export class ModelSelector {
 	private models: ModelConfig[];
-	private aiIntegration: ASBRAIIntegration;
 	private thermalManagementEnabled: boolean = true;
 	private mlxAvailable: boolean = false;
 	private ollamaAvailable: boolean = false;
@@ -184,7 +183,7 @@ export class ModelSelector {
 		// If specific model requested and available, use it
 		if (preferredModel) {
 			const model = this.models.find((m) => m.id === preferredModel);
-			if (model && model.enabled) {
+			if (model?.enabled) {
 				return model;
 			}
 		}

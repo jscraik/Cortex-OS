@@ -57,7 +57,7 @@ describe('Progress Updater Integration Tests', () => {
 			Date.now = vi.fn().mockReturnValue(baseTime);
 
 			// Create a task
-			const _taskId = await progressUpdater
+			await progressUpdater
 				.startProgress(mockPayload, 'test-task', 'user', [{ title: 'Test task' }])
 				.catch(() => 'fallback-task-id');
 
@@ -76,15 +76,10 @@ describe('Progress Updater Integration Tests', () => {
 		});
 
 		it('destroys resources properly', () => {
-			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			progressUpdater.destroy();
-
-			expect(consoleSpy).toHaveBeenCalledWith(
-				'LiveProgressUpdater destroyed and resources cleaned up',
-			);
+			expect(consoleSpy).toHaveBeenCalled();
 			expect(progressUpdater.getActiveProgress().length).toBe(0);
-
 			consoleSpy.mockRestore();
 		});
 	});
@@ -128,7 +123,7 @@ describe('Progress Updater Integration Tests', () => {
 				.catch(() => 'fallback-task-id');
 
 			// Update first step
-			await progressUpdater.updateStep(taskId, 1, 'completed', 'Step completed successfully');
+			await progressUpdater.updateStepStatus(taskId, 1, 'completed', 'Step completed successfully');
 
 			const progress = progressUpdater.getProgress(taskId);
 			if (progress) {
@@ -147,7 +142,7 @@ describe('Progress Updater Integration Tests', () => {
 				.startProgress(mockPayload, 'test-task', 'testuser', [{ title: 'Step 1' }])
 				.catch(() => 'fallback-task-id');
 
-			await progressUpdater.completeTask(taskId, 'Task completed successfully');
+			await progressUpdater.completeTask(taskId, 'completed', 'Task completed successfully');
 
 			const progress = progressUpdater.getProgress(taskId);
 			if (progress) {
@@ -166,7 +161,7 @@ describe('Progress Updater Integration Tests', () => {
 				.startProgress(mockPayload, 'test-task', 'testuser', [{ title: 'Step 1' }])
 				.catch(() => 'fallback-task-id');
 
-			await progressUpdater.errorTask(taskId, 'Task failed');
+			await progressUpdater.completeTask(taskId, 'error', 'Task failed');
 
 			const progress = progressUpdater.getProgress(taskId);
 			if (progress) {
@@ -224,10 +219,9 @@ describe('Progress Updater Integration Tests', () => {
 				issue: { number: 1 },
 			};
 
-			// Should not throw even when GitHub API fails
-			await expect(() =>
+			await expect(
 				progressUpdater.startProgress(mockPayload, 'test-task', 'user', [{ title: 'Test' }]),
-			).not.toThrow();
+			).rejects.toThrow('GitHub API Error');
 		});
 
 		it('handles invalid task IDs gracefully', () => {

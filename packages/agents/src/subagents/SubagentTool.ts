@@ -6,13 +6,7 @@
  */
 
 import { z } from 'zod';
-import {
-	type Subagent,
-	type SubagentConfig,
-	type SubagentRunInput,
-	type SubagentRunResult,
-	SubagentRunResultSchema,
-} from '../nO/contracts';
+import type { Subagent, SubagentConfig, SubagentRunInput } from '../nO/contracts';
 
 // Tool interface compatible with existing ToolEngine
 export interface Tool {

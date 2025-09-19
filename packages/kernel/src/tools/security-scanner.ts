@@ -165,8 +165,6 @@ export class SecurityScanner {
 			case 'WARNING':
 			case 'MEDIUM':
 				return 'medium';
-			case 'INFO':
-			case 'LOW':
 			default:
 				return 'low';
 		}
@@ -243,8 +241,6 @@ export class SecurityScanner {
 				return 'high';
 			case 'warning':
 				return 'medium';
-			case 'note':
-			case 'info':
 			default:
 				return 'low';
 		}

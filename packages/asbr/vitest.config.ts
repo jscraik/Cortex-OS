@@ -29,6 +29,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': resolve(__dirname, 'src'),
+			'@cortex-os/utils': resolve(__dirname, '../../libs/typescript/utils/src'),
 			// During tests, route winston to a tiny mock to avoid heavy deps
 			winston: resolve(__dirname, 'tests/mocks/winston.mock.ts'),
 			// Stub boxen to avoid requiring the heavy dependency in tests

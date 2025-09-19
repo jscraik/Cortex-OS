@@ -1,5 +1,5 @@
 // @vitest-environment node
-import type { Request, Response } from 'express';
+import type { Request, RequestHandler, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../src/lib/logger.js', () => {
@@ -11,13 +11,24 @@ vi.mock('../../src/lib/logger.js', () => {
 import { createASBRServer } from '../../src/api/server.js';
 import { logError } from '../../src/lib/logger.js';
 
-function getEventsHandler(app: any) {
+function getEventsHandler(app: any): RequestHandler {
+	const fromLocals = app?.locals?.asbrGetEventsHandler;
+	if (typeof fromLocals === 'function') {
+		return fromLocals;
+	}
+
 	const stack: any[] = app?._router?.stack ?? [];
 	for (const layer of stack) {
 		if (layer?.route?.path === '/v1/events') {
-			const boundHandler = layer.route.stack.find((entry: any) => entry.name === 'bound getEvents');
-			if (boundHandler) {
-				return boundHandler.handle;
+			const stackEntries = layer.route.stack.slice().reverse();
+			const handlerEntry =
+				stackEntries.find(
+					(entry: any) =>
+						typeof entry?.handle === 'function' && entry.handle.name?.includes?.('getEvents'),
+				) ?? stackEntries.find((entry: any) => typeof entry?.handle === 'function');
+
+			if (typeof handlerEntry?.handle === 'function') {
+				return handlerEntry.handle;
 			}
 		}
 	}

@@ -48,7 +48,9 @@ export const CORTEX_STRUCTURE_RULES: StructureRule[] = [
 	{
 		name: 'applications-placement',
 		description: 'Applications should be placed in apps/ directory',
-		pattern: '**/*{app,application,cli,tui,webui,api}*',
+		// Match any path segment that looks like an app name and allow nested files after it
+		// Examples matched: "my-app/", "cli-tool/", "webui/" and deeper content
+		pattern: '**/*{app,application,cli,tui,webui,api}*/**/*',
 		allowedPaths: ['apps/**/*'],
 		disallowedPaths: ['packages/**/*', 'libs/**/*'],
 		autoFix: true,
@@ -58,7 +60,8 @@ export const CORTEX_STRUCTURE_RULES: StructureRule[] = [
 	{
 		name: 'packages-placement',
 		description: 'Feature packages should be in packages/ directory',
-		pattern: '**/*{package,feature,module}*',
+		// Match any path segment that indicates a package/module and allow nested files
+		pattern: '**/*{package,feature,module}*/**/*',
 		allowedPaths: ['packages/**/*'],
 		disallowedPaths: ['apps/**/*', 'libs/**/*'],
 		autoFix: true,

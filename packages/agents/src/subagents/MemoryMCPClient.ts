@@ -39,7 +39,7 @@ const MemoryGetSchema = z.object({
 });
 
 // MCP Response schemas
-const MCPResponseSchema = z.object({
+const _MCPResponseSchema = z.object({
 	content: z.array(
 		z.object({
 			type: z.literal('text'),

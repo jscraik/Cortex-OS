@@ -197,7 +197,7 @@ export class EvaluationNode {
 		state: PRPState,
 	): Promise<ReadinessResult<PreCerebrumDetails>> {
 		// Final validation before Cerebrum decision - use gates instead of validationResults
-		const hasAllPhases = !!(state.gates['G0'] && state.gates['G2'] && state.gates['G5']);
+		const hasAllPhases = !!(state.gates.G0 && state.gates.G2 && state.gates.G5);
 
 		const allPhasesPassedOrAcceptable = Object.values(state.gates).every(
 			(gate) => gate.status === 'passed' || gate.status === 'skipped',
