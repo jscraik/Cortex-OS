@@ -90,6 +90,22 @@ export {
 export { TemplateMemoryStore, type TemplateStoreConfig } from './adapters/store.template.js';
 export { VersionedMemoryStore } from './adapters/store.versioned.js';
 export {
+  IntelligentMemoryStore,
+  type IntelligentConfig,
+  type SummaryRequest,
+  type SummaryResult,
+  type ConsolidationResult,
+  type KeyPoint,
+  type IntelligentQuery,
+  type IntelligentSearchResult,
+  type SynthesisRequest,
+  type SynthesisResult,
+  type TimelineEvent,
+  type Timeline,
+  type InsightsRequest,
+  type InsightsResult
+} from './adapters/store.intelligent.js';
+export {
 	createStoreFromEnv,
 	resolveStoreKindFromEnv
 } from './config/store-from-env.js';

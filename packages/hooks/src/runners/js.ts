@@ -25,7 +25,7 @@ export async function runJS(
 }
 
 function minimalConsole() {
-  const noop = (..._args: unknown[]) => void 0;
+  const noop = () => undefined;
   return { log: noop, warn: noop, error: noop };
 }
 
