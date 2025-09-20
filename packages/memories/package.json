@@ -21,7 +21,13 @@
     "db:migrate": "prisma migrate deploy --schema=./prisma/schema.prisma",
     "test:coverage": "vitest --coverage",
     "jsonl:import": "tsx src/tools/jsonl-to-memory.ts",
-    "test:safe": "node ../../scripts/vitest-safe.mjs run"
+    "test:safe": "node ../../scripts/vitest-safe.mjs run",
+    "migration": "tsx src/tools/migration-cli.ts",
+    "migration:status": "tsx src/tools/migration-cli.ts status",
+    "migration:up": "tsx src/tools/migration-cli.ts migrate",
+    "migration:rollback": "tsx src/tools/migration-cli.ts rollback",
+    "migration:history": "tsx src/tools/migration-cli.ts history",
+    "migration:validate": "tsx src/tools/migration-cli.ts validate"
   },
   "dependencies": {
     "@cortex-os/a2a": "workspace:*",
@@ -31,7 +37,8 @@
     "@opentelemetry/api": "^1.9.0",
     "zod": "^3.23.8",
     "better-sqlite3": "^12.2.0",
-    "sqlite-vec": "^0.1.7-alpha.2"
+    "sqlite-vec": "^0.1.7-alpha.2",
+    "commander": "^12.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

@@ -22,6 +22,8 @@ export const FileSystemOperationSchema = z.object({
   permissions: z.string().optional(),
 });
 
+export type FileSystemOperationInput = z.infer<typeof FileSystemOperationSchema>;
+
 /**
  * Process management schema
  */
@@ -35,6 +37,8 @@ export const ProcessManagementSchema = z.object({
   graceful: z.boolean().default(true),
   securityPolicy: z.enum(['unrestricted', 'restricted', 'strict']).default('restricted'),
 });
+
+export type ProcessManagementInput = z.infer<typeof ProcessManagementSchema>;
 
 /**
  * Network operation schema
@@ -58,6 +62,8 @@ export const NetworkOperationSchema = z.object({
   }).optional(),
 });
 
+export type NetworkOperationInput = z.infer<typeof NetworkOperationSchema>;
+
 /**
  * Tool chain schema
  */
@@ -76,6 +82,8 @@ export const ToolChainSchema = z.object({
   failFast: z.boolean().default(true),
 });
 
+export type ToolChainInput = z.infer<typeof ToolChainSchema>;
+
 /**
  * Resource management schema
  */
@@ -89,6 +97,8 @@ export const ResourceManagementSchema = z.object({
   processId: z.number().optional(),
   priority: z.enum(['low', 'medium', 'high']).default('medium'),
 });
+
+export type ResourceManagementInput = z.infer<typeof ResourceManagementSchema>;
 
 /**
  * Execution Tool Layer - Direct execution capabilities
@@ -178,7 +188,7 @@ export class ExecutionToolLayer extends ToolLayer {
   /**
    * Invoke execution tool with metrics tracking
    */
-  async invoke(toolId: string, input: any): Promise<any> {
+  async invoke(toolId: string, input: unknown): Promise<unknown> {
     const startTime = Date.now();
 
     try {
@@ -187,13 +197,23 @@ export class ExecutionToolLayer extends ToolLayer {
       this.updateExecutionMetrics(toolId, executionTime);
 
       // Emit tool-executed event (only if not already emitted by base class)
-      const auditEvent = {
+      const auditEventBase: Record<string, unknown> = {
         toolId,
         layerType: 'execution',
-        ...input,
         timestamp: new Date(),
         userId: 'system',
-        success: (result as any)?.success !== false,
+      };
+
+      // Determine success flag safely
+      let successFlag = true;
+      if (typeof result === 'object' && result !== null && 'success' in (result as Record<string, unknown>)) {
+        const s = (result as Record<string, unknown>).success;
+        successFlag = s !== false;
+      }
+
+      const auditEvent = {
+        ...auditEventBase,
+        success: successFlag,
       };
       this.emit('execution-audit', auditEvent);
 
@@ -215,12 +235,15 @@ export class ExecutionToolLayer extends ToolLayer {
   /**
    * File system operation execution
    */
-  private async executeFileSystemOperation(input: any): Promise<any> {
+  private async executeFileSystemOperation(input: unknown): Promise<Record<string, unknown>> {
     const parsed = FileSystemOperationSchema.safeParse(input);
     if (!parsed.success) {
+      const op = (typeof input === 'object' && input !== null && 'operation' in (input as Record<string, unknown>))
+        ? (input as Record<string, unknown>).operation
+        : undefined;
       return {
         success: false,
-        error: `Invalid operation: ${input?.operation ?? 'unknown'}`,
+        error: `Invalid operation: ${op ?? 'unknown'}`,
         errorCode: 'INVALID_OPERATION',
         errorCategory: 'file-system',
         recoverable: false,
@@ -245,7 +268,7 @@ export class ExecutionToolLayer extends ToolLayer {
       };
     }
 
-    const result: any = {
+    const result: Record<string, unknown> = {
       success: true,
       operation: validated.operation,
       path: validated.path,
@@ -254,28 +277,45 @@ export class ExecutionToolLayer extends ToolLayer {
 
     switch (validated.operation) {
       case 'read':
-        result.content = `Mock content for ${validated.path}`;
-        result.metadata.encoding = validated.encoding;
-        result.metadata.size = result.content.length;
+        result['content'] = `Mock content for ${validated.path}`;
+        result['metadata'] = {
+          ...(result['metadata'] as Record<string, unknown>),
+          encoding: validated.encoding,
+          size: result['content'] ? String(result['content']).length : 0,
+        };
         break;
 
       case 'write':
-        result.metadata.bytesWritten = validated.content?.length || 0;
-        result.metadata.overwrite = validated.options?.overwrite || false;
+        result['metadata'] = {
+          ...(result['metadata'] as Record<string, unknown>),
+          bytesWritten: typeof validated.content === 'string' ? validated.content.length : 0,
+          overwrite: typeof (validated.options as Record<string, unknown> | undefined)?.overwrite === 'boolean'
+            ? (validated.options as Record<string, unknown>).overwrite as boolean
+            : false,
+        };
         break;
 
       case 'list':
-        result.items = ['file1.txt', 'file2.txt', 'subdir/'];
-        result.metadata.totalItems = result.items.length;
+        result['items'] = ['file1.txt', 'file2.txt', 'subdir/'];
+        result['metadata'] = {
+          ...(result['metadata'] as Record<string, unknown>),
+          totalItems: (result['items'] as unknown[]).length,
+        };
         break;
 
       case 'chmod':
-        result.metadata.oldPermissions = '644';
-        result.metadata.newPermissions = validated.permissions;
+        result['metadata'] = {
+          ...(result['metadata'] as Record<string, unknown>),
+          oldPermissions: '644',
+          newPermissions: validated.permissions,
+        };
         break;
 
       default:
-        result.metadata.operation = validated.operation;
+        result['metadata'] = {
+          ...(result['metadata'] as Record<string, unknown>),
+          operation: validated.operation,
+        };
     }
 
     return result;
@@ -284,7 +324,7 @@ export class ExecutionToolLayer extends ToolLayer {
   /**
    * Process management execution
    */
-  private async executeProcessManagement(input: any): Promise<any> {
+  private async executeProcessManagement(input: unknown): Promise<Record<string, unknown>> {
     const validated = ProcessManagementSchema.parse(input);
 
     // Security validation
@@ -293,7 +333,10 @@ export class ExecutionToolLayer extends ToolLayer {
     }
 
     // Handle timeout scenarios
-    if (input.options?.timeout && input.options.timeout < 1000 && validated.command === 'sleep') {
+    const timeoutOpt = (validated.options && typeof validated.options === 'object' && 'timeout' in (validated.options as Record<string, unknown>))
+      ? (validated.options as Record<string, unknown>)['timeout']
+      : undefined;
+    if (typeof timeoutOpt === 'number' && timeoutOpt < 1000 && validated.command === 'sleep') {
       return {
         success: false,
         error: 'Process execution timeout',
@@ -302,18 +345,18 @@ export class ExecutionToolLayer extends ToolLayer {
       };
     }
 
-    const result: any = {
+    const result: Record<string, unknown> = {
       success: true,
       action: validated.action,
     };
 
     switch (validated.action) {
       case 'execute':
-        result.exitCode = 0;
-        result.stdout = `${validated.command} ${validated.args.join(' ')}`.trim();
-        result.stderr = '';
-        result.executionTime = 100 + Math.random() * 200;
-        result.securityChecks = {
+        result['exitCode'] = 0;
+        result['stdout'] = `${validated.command} ${validated.args.join(' ')}`.trim();
+        result['stderr'] = '';
+        result['executionTime'] = 100 + Math.random() * 200;
+        result['securityChecks'] = {
           commandWhitelisted: true,
           argumentsValidated: true,
           pathAccessAllowed: true,
@@ -321,7 +364,7 @@ export class ExecutionToolLayer extends ToolLayer {
         break;
 
       case 'monitor':
-        result.processInfo = {
+        result['processInfo'] = {
           pid: validated.processId,
           status: 'running',
           cpu: Math.random() * 100,
@@ -330,14 +373,14 @@ export class ExecutionToolLayer extends ToolLayer {
         break;
 
       case 'start':
-        result.processId = Math.floor(Math.random() * 10000) + 1000;
-        result.status = 'running';
+  result['processId'] = Math.floor(Math.random() * 10000) + 1000;
+  result['status'] = 'running';
         break;
 
       case 'terminate':
-        result.processId = validated.processId;
-        result.signal = validated.signal || 'SIGTERM';
-        result.terminated = true;
+    result['processId'] = validated.processId;
+    result['signal'] = validated.signal || 'SIGTERM';
+    result['terminated'] = true;
         break;
     }
 
@@ -347,7 +390,7 @@ export class ExecutionToolLayer extends ToolLayer {
   /**
    * Network operation execution
    */
-  private async executeNetworkOperation(input: any): Promise<any> {
+  private async executeNetworkOperation(input: unknown): Promise<Record<string, unknown>> {
     const validated = NetworkOperationSchema.parse(input);
 
     // Security validation
@@ -355,7 +398,7 @@ export class ExecutionToolLayer extends ToolLayer {
       throw new Error('Network operation denied: invalid URL scheme');
     }
 
-    const result: any = {
+    const result: Record<string, unknown> = {
       success: true,
       type: validated.type,
     };
@@ -368,22 +411,23 @@ export class ExecutionToolLayer extends ToolLayer {
 
     switch (validated.type) {
       case 'http':
-        result.statusCode = 200;
-        result.responseTime = 50 + Math.random() * 200;
-        result.data = { message: 'Success', timestamp: new Date() };
-        result.retryAttempts = retryAttempts;
-        result.totalTime = result.responseTime + (retryAttempts * 1000);
+  result['statusCode'] = 200;
+  const responseTime = 50 + Math.random() * 200;
+  result['responseTime'] = responseTime;
+  result['data'] = { message: 'Success', timestamp: new Date() };
+  result['retryAttempts'] = retryAttempts;
+  result['totalTime'] = responseTime + (retryAttempts * 1000);
         break;
 
       case 'ping':
-        result.packetsTransmitted = validated.count || 1;
-        result.averageTime = 10 + Math.random() * 50;
-        result.packetLoss = Math.random() * 10;
+  result['packetsTransmitted'] = validated.count || 1;
+  result['averageTime'] = 10 + Math.random() * 50;
+  result['packetLoss'] = Math.random() * 10;
         break;
 
       case 'dns':
-        result.hostname = validated.hostname;
-        result.records = ['192.168.1.1', '192.168.1.2'];
+  result['hostname'] = validated.hostname;
+  result['records'] = ['192.168.1.1', '192.168.1.2'];
         break;
     }
 
@@ -393,13 +437,15 @@ export class ExecutionToolLayer extends ToolLayer {
   /**
    * Tool chain execution
    */
-  private async executeToolChain(input: any): Promise<any> {
+  private async executeToolChain(input: unknown): Promise<Record<string, unknown>> {
     // Handle both direct chain object and nested { chain: ... } format
-    const chainData = input.chain || input;
+    const chainData = (typeof input === 'object' && input !== null && 'chain' in (input as Record<string, unknown>))
+      ? (input as Record<string, unknown>)['chain']
+      : input;
     const validated = ToolChainSchema.parse(chainData);
     const chain = validated;
 
-    const result: any = {
+    const result: Record<string, unknown> = {
       success: true,
       chainId: chain.id,
       stepsExecuted: 0,
@@ -411,8 +457,8 @@ export class ExecutionToolLayer extends ToolLayer {
     };
 
     // Execute steps based on dependencies
-    const executedSteps = new Set<string>();
-    const stepResults = new Map<string, any>();
+  const executedSteps = new Set<string>();
+  const stepResults = new Map<string, unknown>();
 
     // Simple sequential execution for demo
     for (const step of chain.steps) {
@@ -422,43 +468,49 @@ export class ExecutionToolLayer extends ToolLayer {
           throw new Error('Simulated step failure');
         }
 
-        const stepResult = {
+        const stepResult: Record<string, unknown> = {
           success: true,
           executionTime: 100 + Math.random() * 200,
           output: `Result from ${step.tool}`,
         };
 
         stepResults.set(step.id, stepResult);
-        result.steps[step.id] = stepResult;
-        result.executionOrder.push(step.id);
-        result.stepsExecuted++;
-        result.stepsSuccessful++;
+        const stepsObj = result['steps'] as Record<string, unknown>;
+        stepsObj[step.id] = stepResult;
+        const execOrder = result['executionOrder'] as string[];
+        execOrder.push(step.id);
+        result['stepsExecuted'] = (result['stepsExecuted'] as number) + 1;
+        result['stepsSuccessful'] = (result['stepsSuccessful'] as number) + 1;
         executedSteps.add(step.id);
       } catch {
-        result.stepsExecuted++;
-        if (input.enableRollback) {
-          result.rollbackExecuted = true;
-          result.rollbackSteps.push(step.id);
+        result['stepsExecuted'] = (result['stepsExecuted'] as number) + 1;
+        if (chain.enableRollback) {
+          result['rollbackExecuted'] = true;
+          const rb = result['rollbackSteps'] as string[];
+          rb.push(step.id);
         }
-        if (input.failFast) {
-          result.success = false;
+        if (chain.failFast) {
+          result['success'] = false;
           break;
         }
       }
     }
 
     // Calculate parallel execution metrics
-    if (input.parallelExecution) {
-      result.parallelSteps = Math.min(chain.steps.length, input.maxConcurrency || 3);
-      result.totalExecutionTime = Math.max(...Object.values(result.steps).map((s: any) => s.executionTime));
+    if (chain.parallelExecution) {
+      result['parallelSteps'] = Math.min(chain.steps.length, chain.maxConcurrency || 3);
+      const steps = result['steps'] as Record<string, { executionTime?: number }>;
+      const times = Object.values(steps).map((s) => (typeof s.executionTime === 'number' ? s.executionTime : 0));
+      result['totalExecutionTime'] = Math.max(...times);
     }
 
     // Handle resource optimization
-    if (input.resourceOptimization) {
-      result.resourceOptimization = {
+    if (typeof input === 'object' && input !== null && 'resourceOptimization' in (input as Record<string, unknown>)) {
+      const maxConc = (input as Record<string, unknown>)['maxConcurrency'];
+      result['resourceOptimization'] = {
         enabled: true,
-        maxConcurrency: input.maxConcurrency || 3,
-        peakMemoryUsage: Math.random() * 100 + 50, // Mock value
+        maxConcurrency: typeof maxConc === 'number' ? maxConc : 3,
+        peakMemoryUsage: Math.random() * 100 + 50,
       };
     }
 
@@ -468,17 +520,17 @@ export class ExecutionToolLayer extends ToolLayer {
   /**
    * Resource management execution
    */
-  private async executeResourceManagement(input: any): Promise<any> {
+  private async executeResourceManagement(input: unknown): Promise<Record<string, unknown>> {
     const validated = ResourceManagementSchema.parse(input);
 
-    const result: any = {
+    const result: Record<string, unknown> = {
       success: true,
       action: validated.action,
     };
 
     switch (validated.action) {
       case 'monitor':
-        result.resources = {
+        result['resources'] = {
           cpu: {
             usage: Math.random() * 100,
             cores: 4,
@@ -501,8 +553,8 @@ export class ExecutionToolLayer extends ToolLayer {
         break;
 
       case 'allocate':
-        result.resourceId = `res-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        result.allocated = {
+        result['resourceId'] = `res-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        result['allocated'] = {
           type: validated.resourceType,
           amount: validated.amount,
           priority: validated.priority,
@@ -510,13 +562,13 @@ export class ExecutionToolLayer extends ToolLayer {
         break;
 
       case 'deallocate':
-        result.resourceId = validated.resourceId;
-        result.deallocated = true;
+  result['resourceId'] = validated.resourceId;
+  result['deallocated'] = true;
         break;
 
       case 'enforce-limits':
-        result.processId = validated.processId;
-        result.limitsApplied = {
+        result['processId'] = validated.processId;
+        result['limitsApplied'] = {
           memory: validated.limits?.maxMemory || '512MB',
           cpu: validated.limits?.maxCpu || '50%',
           diskIo: validated.limits?.maxDiskIo || '100MB/s',
@@ -530,20 +582,23 @@ export class ExecutionToolLayer extends ToolLayer {
   /**
    * Input validation methods
    */
-  private validateFileSystemInput(input: any): boolean {
+  private validateFileSystemInput(input: unknown): boolean {
     try {
       FileSystemOperationSchema.parse(input);
       return true;
     } catch {
       // For invalid operations, throw specific error
-      if (input.operation && !['read', 'write', 'list', 'delete', 'chmod', 'mkdir', 'copy', 'move'].includes(input.operation)) {
-        throw new Error(`Invalid operation: ${input.operation}`);
+      if (typeof input === 'object' && input !== null && 'operation' in (input as Record<string, unknown>)) {
+        const op = (input as Record<string, unknown>).operation;
+        if (typeof op === 'string' && !['read', 'write', 'list', 'delete', 'chmod', 'mkdir', 'copy', 'move'].includes(op)) {
+          throw new Error(`Invalid operation: ${op}`);
+        }
       }
       return false;
     }
   }
 
-  private validateProcessInput(input: any): boolean {
+  private validateProcessInput(input: unknown): boolean {
     try {
       ProcessManagementSchema.parse(input);
       return true;
@@ -552,7 +607,7 @@ export class ExecutionToolLayer extends ToolLayer {
     }
   }
 
-  private validateNetworkInput(input: any): boolean {
+  private validateNetworkInput(input: unknown): boolean {
     try {
       NetworkOperationSchema.parse(input);
       return true;
@@ -561,10 +616,12 @@ export class ExecutionToolLayer extends ToolLayer {
     }
   }
 
-  private validateToolChainInput(input: any): boolean {
+  private validateToolChainInput(input: unknown): boolean {
     try {
       // Handle both direct chain object and nested { chain: ... } format
-      const chainData = input.chain || input;
+      const chainData = (typeof input === 'object' && input !== null && 'chain' in (input as Record<string, unknown>))
+        ? (input as Record<string, unknown>)['chain']
+        : input;
       ToolChainSchema.parse(chainData);
       return true;
     } catch {
@@ -572,7 +629,7 @@ export class ExecutionToolLayer extends ToolLayer {
     }
   }
 
-  private validateResourceInput(input: any): boolean {
+  private validateResourceInput(input: unknown): boolean {
     try {
       ResourceManagementSchema.parse(input);
       return true;

@@ -371,7 +371,7 @@ export class SchemaRegistry {
 		this.schemaCache.delete(schemaId);
 	}
 
-	private generateTestData(_schema: z.ZodSchema): unknown {
+	private generateTestData(): unknown {
 		// Simple test data generation for compatibility checking
 		// In production, this would be more sophisticated
 		return {};

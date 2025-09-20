@@ -88,6 +88,24 @@ export {
 	OpenTelemetryObservabilityProvider
 } from './observability/provider.js';
 export * from './observability/types.js';
+
+// Migration and versioning system
+export {
+	DefaultMigrationManager,
+	type MigrationManager,
+	type Migration,
+	type MigrationResult,
+	type RollbackResult,
+	type ValidationResult,
+	type SchemaVersion,
+	type SchemaChange,
+	type MigrationHistory,
+	type MetadataStore
+} from './service/migration-service.js';
+export { VersionedMemoryStore } from './adapters/store.versioned.js';
+export { InMemoryMetadataStore } from './adapters/metadata.in-memory.js';
+export { allMigrations } from './migrations/predefined-migrations.js';
+export * from './domain/migration.js';
 export * from './ports/Embedder.js';
 export * from './ports/MemoryStore.js';
 export * from './service/embedder-factory.js';
