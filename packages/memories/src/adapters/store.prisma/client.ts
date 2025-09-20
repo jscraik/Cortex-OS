@@ -86,7 +86,7 @@ export class PrismaStore implements MemoryStore {
 		return items.slice(0, q.topK ?? 10);
 	}
 
-	async searchByVector(q: VectorQuery, _namespace = 'default'): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, _namespace = 'default'): Promise<(Memory & { score: number })[]> {
 		_use(_namespace);
 		// Fetch candidates with vectors and matching tags
 		const candidateRows = await this.prisma.memory.findMany({
@@ -119,7 +119,7 @@ export class PrismaStore implements MemoryStore {
 		}
 		const topK = q.topK ?? q.limit ?? 10;
 		scoredCandidates.sort((a, b) => b.score - a.score);
-		return scoredCandidates.slice(0, topK).map((item) => item.memory);
+		return scoredCandidates.slice(0, topK).map((item) => ({ ...item.memory, score: item.score }));
 	}
 
 	async purgeExpired(nowISO: string, _namespace?: string): Promise<number> {

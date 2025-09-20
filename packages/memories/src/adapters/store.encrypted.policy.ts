@@ -43,7 +43,7 @@ export class PolicyEncryptedStore implements MemoryStore {
 	async searchByText(q: TextQuery, namespace = 'default'): Promise<Memory[]> {
 		return this.select(namespace).searchByText(q, namespace);
 	}
-	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
 		return this.select(namespace).searchByVector(q, namespace);
 	}
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {

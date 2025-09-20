@@ -1,0 +1,59 @@
+# Prometheus Configuration for nO Master Agent Loop Monitoring
+# Co-authored-by: brAInwav Development Team
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'nO-orchestration'
+    environment: 'production'
+    company: 'brAInwav'
+
+rule_files:
+  - "alert_rules.yml"
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # nO Orchestration System
+  - job_name: 'no-orchestration'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 5s
+    metrics_path: /metrics
+    scheme: http
+    
+  # nO Health Checks
+  - job_name: 'no-health'
+    static_configs:
+      - targets: ['localhost:8080']
+    scrape_interval: 10s
+    metrics_path: /health/metrics
+    scheme: http
+    
+  # System metrics (Node Exporter)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 15s
+    
+  # Application metrics
+  - job_name: 'no-application'
+    static_configs:
+      - targets: ['localhost:3000']
+    scrape_interval: 10s
+    metrics_path: /api/metrics
+    scheme: http
+    
+  # Agent pool metrics
+  - job_name: 'no-agents'
+    static_configs:
+      - targets: ['localhost:3001']
+    scrape_interval: 10s
+    metrics_path: /agents/metrics
+    scheme: http

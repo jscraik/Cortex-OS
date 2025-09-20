@@ -184,14 +184,15 @@ export class LocalMemoryStore implements MemoryStore {
 		}
 	}
 
-	async searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]> {
 		// Local Memory’s REST API primarily exposes semantic search by text; when vector
 		// search is unavailable, fall back to a text rerank if queryText provided.
 		if (q.queryText) {
-			return this.searchByText(
+			const memories = await this.searchByText(
 				{ text: q.queryText, topK: q.topK, filterTags: q.filterTags },
 				namespace,
 			);
+			return memories.map((m) => ({ ...m, score: 1.0 }));
 		}
 		return [];
 	}

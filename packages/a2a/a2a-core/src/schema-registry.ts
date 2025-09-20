@@ -248,7 +248,7 @@ export class SchemaRegistry {
 		try {
 			// This is a simplified compatibility check
 			// Real implementation would analyze schema differences
-			const testData = this.generateTestData(latestSchema.schema);
+			const testData = this.generateTestData();
 			const newResult = newSchema.safeParse(testData);
 
 			if (!newResult.success) {

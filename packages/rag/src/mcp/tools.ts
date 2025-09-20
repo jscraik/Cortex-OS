@@ -402,6 +402,7 @@ export const ragIngestToolSchema = z.object({
 
 export const ragStatusToolSchema = z.object({
 	includeStats: z.boolean().default(false).describe('Include detailed statistics'),
+	includeHealth: z.boolean().default(false).describe('Include component health summary'),
 });
 
 export const ragQueryTool: RAGTool = {
@@ -505,7 +506,7 @@ export const ragStatusTool: RAGTool = {
 	handler: async (params: unknown) => {
 		const correlationId = createCorrelationId();
 		try {
-			const { includeStats } = ragStatusToolSchema.parse(params);
+			const { includeStats, includeHealth } = ragStatusToolSchema.parse(params);
 
 			logger.debug(
 				{
@@ -516,7 +517,7 @@ export const ragStatusTool: RAGTool = {
 				'rag_status executing',
 			);
 
-			const status = {
+			const status: Record<string, unknown> = {
 				status: 'active',
 				timestamp: new Date().toISOString(),
 				...(includeStats && {
@@ -528,6 +529,13 @@ export const ragStatusTool: RAGTool = {
 					},
 				}),
 			};
+
+			if (includeHealth) {
+				// Lazy import to keep baseline fast and tree-shake friendly
+				const { getDefaultRAGHealth } = await import('../lib/health.js');
+				const health = await getDefaultRAGHealth();
+				status.health = health;
+			}
 
 			return createSuccessResponse('rag_status', correlationId, {
 				success: true,

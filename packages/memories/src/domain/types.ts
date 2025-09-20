@@ -39,3 +39,28 @@ export interface CacheManager {
 	clear(): Promise<void>;
 	size(): Promise<number>;
 }
+
+export interface MemoryTemplate {
+	id: string;
+	name: string;
+	description?: string;
+	version: string;
+	extends?: string;
+	schema: Record<string, any>;
+	defaults?: Record<string, any>;
+	metadata?: Record<string, any>;
+	validation?: {
+		strict?: boolean;
+		custom?: (data: any) => boolean | Promise<boolean>;
+	};
+	migration?: {
+		from: string;
+		transform: (data: any) => any;
+	};
+}
+
+export interface SecureContext {
+	role: string;
+	subject: string;
+	attributes?: Record<string, any>;
+}

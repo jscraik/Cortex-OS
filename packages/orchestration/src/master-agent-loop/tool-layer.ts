@@ -92,6 +92,9 @@ export class ToolLayer extends EventEmitter {
   private readonly tracer = trace.getTracer('nO-tool-layer');
   private readonly layerType: ToolLayerType;
   private readonly capabilities: readonly string[];
+  // Hooks
+  private static hooks: { init: () => Promise<void>; run: (event: string, ctx: Record<string, unknown>) => Promise<Array<{ action: string; [k: string]: unknown }>> } | null = null;
+  private static hooksReady = false;
 
   // Tool management
   private readonly registeredTools = new Map<string, ToolDefinition>();
@@ -100,7 +103,7 @@ export class ToolLayer extends EventEmitter {
 
   // Layer state
   private isShutdown = false;
-  private layerHealth: LayerHealth;
+  private readonly layerHealth: LayerHealth;
   private totalExecutions = 0;
   private totalErrors = 0;
 
@@ -257,19 +260,60 @@ export class ToolLayer extends EventEmitter {
           ...context,
         };
 
+        // Initialize hooks lazily
+        if (!ToolLayer.hooksReady) {
+          const HOOKS_MODULE: string = '@cortex-os/hooks';
+          const mod = await import(HOOKS_MODULE);
+          ToolLayer.hooks = new mod.CortexHooks();
+          await (ToolLayer.hooks as { init: () => Promise<void> }).init();
+          ToolLayer.hooksReady = true;
+        }
+        const hooksInstance = ToolLayer.hooks as { run: (event: string, ctx: Record<string, unknown>) => Promise<Array<{ action: string; [k: string]: unknown }>> };
+
+        // PreToolUse hooks: allow/deny/mutate
+        let effectiveInput: unknown = input;
+  const preResults = await hooksInstance.run('PreToolUse', {
+          event: 'PreToolUse',
+          tool: { name: toolId, input: effectiveInput },
+          cwd: process.cwd(),
+          user: executionContext.userId ?? 'system',
+          tags: ['orchestration', this.layerType],
+        });
+        for (const r of preResults) {
+          if (r.action === 'deny') {
+            throw new Error(`Hook denied tool '${toolId}': ${r.reason}`);
+          }
+          if (r.action === 'allow' && typeof r.input !== 'undefined') {
+            effectiveInput = r.input as unknown;
+          }
+        }
+
         // Track active execution
         this.activeExecutions.add(executionId);
 
         // Input validation
-        if (!tool.validate(input)) {
+        if (!tool.validate(effectiveInput)) {
           throw new Error('Tool input validation failed');
         }
 
         // Generate input hash for audit purposes
-        const inputHash = this.generateInputHash(input as Record<string, unknown>);
+        const inputHash = this.generateInputHash(effectiveInput as Record<string, unknown>);
 
         // Execute the tool
-        const result = await tool.execute(input, executionContext);
+        const result = await tool.execute(effectiveInput, executionContext);
+
+        // PostToolUse hooks (best-effort, non-blocking)
+        try {
+          await hooksInstance.run('PostToolUse', {
+            event: 'PostToolUse',
+            tool: { name: toolId, input: effectiveInput },
+            cwd: process.cwd(),
+            user: executionContext.userId ?? 'system',
+            tags: ['orchestration', this.layerType],
+          });
+        } catch {
+          // ignore hook errors post-exec
+        }
 
         // Update metrics
         this.updateToolMetrics(toolId, true, Date.now() - startTime);
@@ -386,7 +430,10 @@ export class ToolLayer extends EventEmitter {
    * Generate input hash for audit purposes
    */
   private generateInputHash(input: Record<string, unknown>): string {
-    const inputString = JSON.stringify(input, Object.keys(input).sort());
+    const inputString = JSON.stringify(
+      input,
+      Object.keys(input).sort((a, b) => a.localeCompare(b)),
+    );
     // Simple hash function - in production, use a proper cryptographic hash
     let hash = 0;
     for (let i = 0; i < inputString.length; i++) {

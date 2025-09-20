@@ -7,6 +7,7 @@ import baseConfig from '../../eslint.config.js';
 // - Explicitly disable type-aware parsing for tests/examples to avoid TS project service errors
 const typeAwareSrc = {
     files: ['src/**/*.{ts,tsx}', 'scripts/**/*.{ts,tsx}'],
+    ignores: ['src/integrations/archon-mcp.ts'],
     languageOptions: {
         parserOptions: {
             projectService: true,

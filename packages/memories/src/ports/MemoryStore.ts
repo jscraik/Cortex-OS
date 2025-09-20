@@ -35,6 +35,6 @@ export interface MemoryStore {
 	get(id: string, namespace?: string): Promise<Memory | null>;
 	delete(id: string, namespace?: string): Promise<void>;
 	searchByText(q: TextQuery, namespace?: string): Promise<Memory[]>;
-	searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]>;
+	searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]>;
 	purgeExpired(nowISO: string, namespace?: string): Promise<number>;
 }

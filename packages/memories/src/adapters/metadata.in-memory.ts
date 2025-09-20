@@ -1,4 +1,5 @@
-import type { MetadataStore, MigrationHistory } from '../service/migration-service.js';
+import type { MigrationHistory } from '../domain/migration.js';
+import type { MetadataStore } from '../service/migration-service.js';
 
 export class InMemoryMetadataStore implements MetadataStore {
 	private readonly data = new Map<string, string>();
@@ -17,8 +18,8 @@ export class InMemoryMetadataStore implements MetadataStore {
 	}
 
 	async getMigrationHistory(): Promise<MigrationHistory[]> {
-		return [...this.history].sort((a, b) =>
-			new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+		return [...this.history].sort(
+			(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
 		);
 	}
 

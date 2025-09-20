@@ -7,6 +7,7 @@ import {
 	type RemoteRAGConfig,
 } from '../src/integrations/remote-mcp.js';
 import {
+	createAgentMCPClient as createStubAgentClient,
 	enqueueMockError,
 	enqueueMockResponse,
 	mockCallLog,
@@ -19,10 +20,15 @@ type MethodLog = typeof mockCallLog;
 describe('RAG MCP integration', () => {
 	beforeEach(() => {
 		resetMockAgentState();
+		// Ensure Remote MCP integration uses the test stub rather than real HTTP client
+		(globalThis as unknown as { __createAgentMCPClient__?: unknown }).__createAgentMCPClient__ =
+			createStubAgentClient;
 	});
 
 	afterEach(() => {
 		vi.restoreAllMocks();
+		delete (globalThis as unknown as { __createAgentMCPClient__?: unknown })
+			.__createAgentMCPClient__;
 	});
 
 	it('calls rag embedding tool through MCP client', async () => {
@@ -106,7 +112,7 @@ describe('RAG MCP integration', () => {
 		const results = await store.query([0.1, 0.2, 0.3], {
 			hybridSearch: true,
 			topK: 2,
-		} as any);
+		} as { hybridSearch: boolean; topK: number });
 		warnSpy.mockRestore();
 
 		expect(results).toHaveLength(2);
@@ -146,7 +152,7 @@ describe('RAG MCP integration', () => {
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 		await store.initialize();
-		const results = await store.query([0.9, 0.1, 0.4], {} as any);
+		const results = await store.query([0.9, 0.1, 0.4], { k: 5 });
 		warnSpy.mockRestore();
 		errorSpy.mockRestore();
 

@@ -1,5 +1,6 @@
 import { Qwen3Embedder } from './embed/qwen3';
 import { type ModelSpec, MultiModelGenerator } from './generation/multi-model';
+import { validateConfig, enhancedRAGConfigSchema } from './lib/config-validation.js';
 import { embedQuery } from './lib/embed-query';
 import { generateAnswer } from './lib/generate-answer';
 import { rerankDocs } from './lib/rerank-docs';
@@ -18,6 +19,13 @@ export interface EnhancedRAGConfig {
 }
 
 export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
+	// Validate configuration
+	try {
+		validateConfig(enhancedRAGConfigSchema, config, 'EnhancedRAG');
+	} catch (error) {
+		throw new Error(`EnhancedRAG configuration validation failed: ${(error as Error).message}`);
+	}
+
 	const finalConfig = {
 		embeddingModelSize: '4B',
 		topK: 10,

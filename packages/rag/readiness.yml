@@ -8,7 +8,7 @@ checklist:
   tdd: true
   contracts: false
   a11y: false
-  security: false
+  security: true
   docs: true
   architecture: true
   reliability: true

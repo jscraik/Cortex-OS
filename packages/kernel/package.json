@@ -49,9 +49,7 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.30",
-    "@langchain/langgraph": "^0.4.9",
-    "nanoid": "^5.0.4",
+    "@cortex-os/hooks": "workspace:*",
     "zod": "^3.22.4"
   },
   "devDependencies": {

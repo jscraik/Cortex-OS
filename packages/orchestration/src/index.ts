@@ -3,6 +3,23 @@
  * LangGraph-only orchestration surface (no legacy orchestrator exports)
  */
 
+export type {
+	AgentConfiguration,
+	AgentNetwork,
+	AgentPool,
+	AgentSchedule,
+	AgentState, ExecutionResult,
+	// Core Contracts
+	IntelligenceScheduler,
+	MasterAgentLoop, ExecutionFeedback as NoExecutionFeedback,
+	ExecutionPlan as NoExecutionPlan,
+	// Schema Types (aliased to avoid conflicts)
+	ExecutionRequest as NoExecutionRequest, ExecutionStatus as NoExecutionStatus, StrategyAdjustment,
+	ToolCapability,
+	ToolLayer,
+	ToolManifest,
+	ToolResult
+} from './contracts/no-architecture-contracts.js';
 // nO Architecture Contracts
 export {
 	AgentConfigurationSchema,
@@ -22,23 +39,6 @@ export {
 	ToolLayerSchema,
 	ToolManifestSchema,
 	ToolResultSchema
-} from './contracts/no-architecture-contracts.js';
-export type {
-	AgentConfiguration,
-	AgentNetwork,
-	AgentPool,
-	AgentSchedule,
-	AgentState, ExecutionResult,
-	// Core Contracts
-	IntelligenceScheduler,
-	MasterAgentLoop, ExecutionFeedback as NoExecutionFeedback,
-	ExecutionPlan as NoExecutionPlan,
-	// Schema Types (aliased to avoid conflicts)
-	ExecutionRequest as NoExecutionRequest, ExecutionStatus as NoExecutionStatus, StrategyAdjustment,
-	ToolCapability,
-	ToolLayer,
-	ToolManifest,
-	ToolResult
 } from './contracts/no-architecture-contracts.js';
 export { createOrchestrationBus } from './events/orchestration-bus.js';
 export type {
@@ -69,24 +69,6 @@ export type {
 	TaskStartedEvent,
 	ToolLayerInvokedEvent
 } from './events/orchestration-events.js';
-
-// nO Telemetry & Observability Contracts
-export {
-	NO_METRIC_NAMES,
-	NO_SPAN_OPERATIONS,
-	// Constants
-	NO_TELEMETRY_EVENT_TYPES,
-	NoAuditTrailSchema,
-	NoMetricContractsSchema,
-	NoSpanDefinitionsSchema,
-	// Telemetry Schemas
-	NoTelemetrySchema, createNoAuditEntry,
-	// Utility Functions
-	createNoTelemetryEvent, validateNoAuditEntry,
-	validateNoMetricContract,
-	validateNoSpanDefinition,
-	validateNoTelemetryEvent
-} from './observability/no-telemetry-contracts.js';
 export type {
 	NoAuditAction,
 	NoAuditActor,
@@ -105,8 +87,24 @@ export type {
 	NoTelemetryEvent,
 	NoTelemetryPayload
 } from './observability/no-telemetry-contracts.js';
+// nO Telemetry & Observability Contracts
+export {
+	NO_METRIC_NAMES,
+	NO_SPAN_OPERATIONS,
+	// Constants
+	NO_TELEMETRY_EVENT_TYPES,
+	NoAuditTrailSchema,
+	NoMetricContractsSchema,
+	NoSpanDefinitionsSchema,
+	// Telemetry Schemas
+	NoTelemetrySchema, createNoAuditEntry,
+	// Utility Functions
+	createNoTelemetryEvent, validateNoAuditEntry,
+	validateNoMetricContract,
+	validateNoSpanDefinition,
+	validateNoTelemetryEvent
+} from './observability/no-telemetry-contracts.js';
 
-// Legacy integrations removed (LangGraph-only)
 // Core types and interfaces
 // Enum types
 export type {
@@ -152,7 +150,6 @@ export {
 export const version = '1.0.0';
 export const name = '@cortex-os/orchestration';
 
-// LangGraph-only: MLX agent integration removed from public surface
 // LangGraph foundation (Phase 2)
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 // MCP tool exports
@@ -162,4 +159,3 @@ export {
 	taskManagementTool,
 	workflowOrchestrationTool
 } from './mcp/tools.js';
-// LangGraph-only: legacy engines are no longer exported

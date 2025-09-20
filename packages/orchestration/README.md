@@ -290,7 +290,7 @@ This package requires no Python runtime. Configure your tools/providers via your
 
 ### Running Tests
 
-```bash
+``bash
 pnpm --filter @cortex-os/orchestration test
 ```
 
@@ -398,7 +398,7 @@ engine.on('orchestration.failed', (event) => {
 | **LLM08: Excessive Agency** | Capability boundaries | Agents restricted to defined capabilities |
 | **LLM10: Model Theft** | Process isolation | Agents run in isolated Python processes |
 
-```typescript
+``typescript
 // Security configuration example
 const secureConfig = {
   agentProcessLimits: {

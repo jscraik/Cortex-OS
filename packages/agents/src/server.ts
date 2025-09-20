@@ -51,6 +51,17 @@ const subAgents: SubAgentConfig[] = [
 const startAgentSystem = async () => {
 	console.log('🚀 Starting brAInwav Cortex-OS Agent System...');
 
+	// Initialize global hooks singleton (watcher + telemetry) once per process
+	try {
+		const hooksMod: unknown = await import('@cortex-os/hooks');
+		if (hooksMod && typeof hooksMod === 'object' && 'initHooksSingleton' in hooksMod) {
+			const init = (hooksMod as { initHooksSingleton?: () => Promise<unknown> }).initHooksSingleton;
+			if (typeof init === 'function') await init();
+		}
+	} catch {
+		// ignore hooks init failures
+	}
+
 	// Initialize A2A Bus Integration
 	const busIntegration = createAgentsBusIntegration();
 	await busIntegration.initialize();

@@ -115,13 +115,13 @@ export class RestApiMemoryStore implements MemoryStore {
 		return response.memories;
 	}
 
-	async searchByVector(query: VectorQuery, namespace = this.namespace): Promise<Memory[]> {
+	async searchByVector(query: VectorQuery, namespace = this.namespace): Promise<(Memory & { score: number })[]> {
 		const response = await this.adapter.searchMemories({
 			query,
 			namespace,
 		});
 
-		return response.memories;
+		return response.memories.map((m) => ({ ...m, score: 1.0 }));
 	}
 
 	async purgeExpired(nowISO: string, namespace = this.namespace): Promise<number> {

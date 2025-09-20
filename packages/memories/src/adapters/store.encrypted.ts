@@ -98,9 +98,10 @@ export class EncryptedStore implements MemoryStore {
 		return Promise.all(res.map((m) => this.toDecrypted(m)));
 	}
 
-	async searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]> {
 		const res = await this.inner.searchByVector(q, namespace);
-		return Promise.all(res.map((m) => this.toDecrypted(m)));
+		const decrypted = await Promise.all(res.map((m) => this.toDecrypted(m)));
+		return decrypted.map((m, i) => ({ ...m, score: res[i].score }));
 	}
 
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {

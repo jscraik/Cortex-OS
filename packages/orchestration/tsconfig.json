@@ -14,12 +14,19 @@
 	],
 	"compilerOptions": {
 		"outDir": "dist",
+		"rootDir": "../../",
 		"declaration": true,
 		"composite": true,
 		"skipLibCheck": true,
 		"noEmitOnError": false,
 		"baseUrl": "../../",
 		"paths": {
+			"@cortex-os/hooks": [
+				"packages/hooks/dist/index.d.ts"
+			],
+			"@cortex-os/*": [
+				"packages/*/dist/index.d.ts"
+			],
 			"@cortex-os/contracts": [
 				"libs/typescript/contracts/dist/src/index.d.ts"
 			],
@@ -54,5 +61,10 @@
 				"packages/memories/dist/*"
 			]
 		}
-	}
+	},
+	"references": [
+		{
+			"path": "../../packages/hooks"
+		}
+	]
 }

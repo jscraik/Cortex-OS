@@ -1108,3 +1108,658 @@ describe('Production Readiness', () => {
 ---
 
 This TDD implementation plan provides a comprehensive, engineering-principled approach to upgrading the orchestration package to the nO (Master Agent Loop) architecture. Each phase builds incrementally on the previous work while maintaining strict quality standards and observability throughout the development process.
+
+---
+
+## 🔍 Advanced Testing Strategies
+
+### Property-Based Testing for Complex Algorithms
+
+```typescript
+// Fast-check property testing for scheduler algorithms
+describe('Scheduler Property Tests', () => {
+  it('should maintain resource constraints under all inputs', () => {
+    fc.assert(fc.property(
+      fc.array(fc.record({
+        agentId: fc.string(),
+        resourceRequirement: fc.integer(1, 100),
+        priority: fc.integer(1, 10)
+      })),
+      (tasks) => {
+        const scheduler = new IntelligenceScheduler({ maxResources: 500 });
+        const plan = scheduler.planExecution({ tasks });
+        
+        // Property: total allocated resources never exceed limit
+        const totalResources = plan.allocations.reduce(
+          (sum, alloc) => sum + alloc.resources, 0
+        );
+        return totalResources <= 500;
+      }
+    ));
+  });
+
+  it('should preserve task dependencies in all schedules', () => {
+    fc.assert(fc.property(
+      fc.array(fc.record({
+        id: fc.string(),
+        dependencies: fc.array(fc.string()),
+        duration: fc.integer(1, 1000)
+      })),
+      (tasks) => {
+        const scheduler = new IntelligenceScheduler();
+        const plan = scheduler.planExecution({ tasks });
+        
+        // Property: dependencies always scheduled before dependents
+        return plan.schedule.every(scheduledTask => 
+          scheduledTask.dependencies.every(depId => 
+            plan.schedule.find(dep => dep.id === depId)?.startTime < scheduledTask.startTime
+          )
+        );
+      }
+    ));
+  });
+});
+```
+
+### Chaos Engineering for Resilience Testing
+
+```typescript
+describe('Chaos Engineering Tests', () => {
+  it('should maintain system stability under random failures', async () => {
+    const chaosConfig = {
+      agentFailureRate: 0.1,
+      networkPartitionProbability: 0.05,
+      toolTimeoutRate: 0.15,
+      memoryPressureLevel: 0.8
+    };
+    
+    const chaosEngine = new ChaosEngine(chaosConfig);
+    const nOSystem = new NoMasterAgentLoop();
+    
+    // Run system under chaos for extended period
+    chaosEngine.start();
+    const results = await runExtendedWorkload(nOSystem, { duration: '10m' });
+    chaosEngine.stop();
+    
+    // System should maintain > 95% success rate under chaos
+    expect(results.successRate).toBeGreaterThan(0.95);
+    expect(results.dataCorruption).toBeFalsy();
+    expect(results.systemRecoveryTime).toBeLessThan(30000); // 30s
+  });
+});
+```
+
+### Contract Testing for Distributed Components
+
+```typescript
+describe('Agent Communication Contracts', () => {
+  it('should maintain backward compatibility across versions', async () => {
+    const contractTests = [
+      {
+        version: 'v1.0',
+        schema: AgentMessageV1Schema,
+        examples: agentMessageV1Examples
+      },
+      {
+        version: 'v1.1', 
+        schema: AgentMessageV1_1Schema,
+        examples: agentMessageV1_1Examples
+      }
+    ];
+    
+    for (const test of contractTests) {
+      const network = new AgentNetwork({ version: test.version });
+      
+      for (const example of test.examples) {
+        // Contract: all historical message formats must be supported
+        await expect(network.sendMessage('sender', 'receiver', example))
+          .resolves.not.toThrow();
+      }
+    }
+  });
+});
+```
+
+---
+
+## 🚨 Error Handling & Recovery Patterns
+
+### Hierarchical Error Recovery
+
+```typescript
+interface ErrorRecoveryStrategy {
+  level: 'agent' | 'scheduler' | 'system';
+  canHandle(error: SystemError): boolean;
+  recover(error: SystemError, context: RecoveryContext): Promise<RecoveryResult>;
+}
+
+class HierarchicalErrorHandler {
+  private strategies: ErrorRecoveryStrategy[] = [
+    new AgentLevelRecovery(),
+    new SchedulerLevelRecovery(),
+    new SystemLevelRecovery(),
+    new FallbackRecovery()
+  ];
+  
+  async handleError(error: SystemError, context: RecoveryContext): Promise<RecoveryResult> {
+    for (const strategy of this.strategies) {
+      if (strategy.canHandle(error)) {
+        try {
+          const result = await strategy.recover(error, context);
+          if (result.success) {
+            await this.auditRecovery(error, strategy, result);
+            return result;
+          }
+        } catch (recoveryError) {
+          await this.logRecoveryFailure(error, strategy, recoveryError);
+          // Continue to next strategy
+        }
+      }
+    }
+    
+    // All recovery strategies failed
+    throw new UnrecoverableError('All recovery strategies exhausted', error);
+  }
+}
+```
+
+### Circuit Breaker Pattern for External Dependencies
+
+```typescript
+class AdaptiveCircuitBreaker {
+  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
+  private failureCount = 0;
+  private lastFailureTime = 0;
+  private successCount = 0;
+  
+  constructor(
+    private readonly config: {
+      failureThreshold: number;
+      recoveryTimeout: number;
+      successThreshold: number;
+      adaptiveThreshold: boolean;
+    }
+  ) {}
+  
+  async execute<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.state === 'OPEN') {
+      if (Date.now() - this.lastFailureTime < this.config.recoveryTimeout) {
+        throw new CircuitBreakerOpenError('Circuit breaker is OPEN');
+      }
+      this.state = 'HALF_OPEN';
+      this.successCount = 0;
+    }
+    
+    try {
+      const result = await operation();
+      this.onSuccess();
+      return result;
+    } catch (error) {
+      this.onFailure();
+      throw error;
+    }
+  }
+  
+  private onSuccess(): void {
+    this.failureCount = 0;
+    
+    if (this.state === 'HALF_OPEN') {
+      this.successCount++;
+      if (this.successCount >= this.config.successThreshold) {
+        this.state = 'CLOSED';
+      }
+    }
+  }
+  
+  private onFailure(): void {
+    this.failureCount++;
+    this.lastFailureTime = Date.now();
+    
+    const threshold = this.config.adaptiveThreshold 
+      ? this.calculateAdaptiveThreshold()
+      : this.config.failureThreshold;
+      
+    if (this.failureCount >= threshold) {
+      this.state = 'OPEN';
+    }
+  }
+  
+  private calculateAdaptiveThreshold(): number {
+    // Implement adaptive threshold based on historical performance
+    // Lower threshold during high-load periods, higher during normal operation
+    const baseThreshold = this.config.failureThreshold;
+    const systemLoad = this.getCurrentSystemLoad();
+    
+    return Math.max(1, Math.floor(baseThreshold * (2 - systemLoad)));
+  }
+}
+```
+
+### Saga Pattern for Distributed Transactions
+
+```typescript
+interface SagaStep {
+  execute(context: SagaContext): Promise<StepResult>;
+  compensate(context: SagaContext): Promise<CompensationResult>;
+}
+
+class DistributedWorkflowSaga {
+  private steps: SagaStep[] = [];
+  private executedSteps: SagaStep[] = [];
+  
+  addStep(step: SagaStep): this {
+    this.steps.push(step);
+    return this;
+  }
+  
+  async execute(context: SagaContext): Promise<SagaResult> {
+    try {
+      for (const step of this.steps) {
+        const result = await step.execute(context);
+        
+        if (!result.success) {
+          await this.compensate(context);
+          return { success: false, error: result.error };
+        }
+        
+        this.executedSteps.push(step);
+        context = { ...context, ...result.context };
+      }
+      
+      return { success: true, context };
+    } catch (error) {
+      await this.compensate(context);
+      throw error;
+    }
+  }
+  
+  private async compensate(context: SagaContext): Promise<void> {
+    // Compensate in reverse order
+    for (const step of this.executedSteps.reverse()) {
+      try {
+        await step.compensate(context);
+      } catch (compensationError) {
+        // Log compensation failure but continue with remaining compensations
+        this.logCompensationFailure(step, compensationError);
+      }
+    }
+  }
+}
+```
+
+---
+
+## 📊 Advanced Monitoring & Observability
+
+### Custom Metrics for nO Operations
+
+```typescript
+class NoMetricsCollector {
+  private prometheus = new PrometheusRegistry();
+  
+  // Scheduler metrics
+  private readonly schedulingLatency = new Histogram({
+    name: 'no_scheduling_latency_seconds',
+    help: 'Time taken to create execution plans',
+    labelNames: ['complexity', 'agent_count', 'strategy'],
+    buckets: [0.001, 0.01, 0.1, 1, 5, 10]
+  });
+  
+  private readonly agentUtilization = new Gauge({
+    name: 'no_agent_utilization_ratio',
+    help: 'Current agent utilization ratio',
+    labelNames: ['agent_id', 'capability_type']
+  });
+  
+  private readonly toolLayerInvocations = new Counter({
+    name: 'no_tool_layer_invocations_total',
+    help: 'Total tool layer invocations',
+    labelNames: ['layer', 'tool_name', 'success']
+  });
+  
+  private readonly coordinationEfficiency = new Histogram({
+    name: 'no_coordination_efficiency_ratio',
+    help: 'Efficiency of agent coordination (successful_ops / total_ops)',
+    labelNames: ['coordination_type', 'agent_count'],
+    buckets: [0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0]
+  });
+  
+  recordSchedulingLatency(duration: number, labels: SchedulingLabels): void {
+    this.schedulingLatency
+      .labels(labels.complexity, labels.agentCount.toString(), labels.strategy)
+      .observe(duration);
+  }
+  
+  updateAgentUtilization(agentId: string, utilizationRatio: number, capability: string): void {
+    this.agentUtilization
+      .labels(agentId, capability)
+      .set(utilizationRatio);
+  }
+  
+  recordToolInvocation(layer: string, toolName: string, success: boolean): void {
+    this.toolLayerInvocations
+      .labels(layer, toolName, success.toString())
+      .inc();
+  }
+  
+  recordCoordinationEfficiency(ratio: number, type: string, agentCount: number): void {
+    this.coordinationEfficiency
+      .labels(type, agentCount.toString())
+      .observe(ratio);
+  }
+}
+```
+
+### Distributed Tracing with Context Propagation
+
+```typescript
+class NoTracingInstrumentation {
+  private tracer: Tracer;
+  
+  constructor() {
+    this.tracer = trace.getTracer('no-orchestration', '1.0.0');
+  }
+  
+  async instrumentScheduling<T>(
+    operation: () => Promise<T>,
+    context: SchedulingContext
+  ): Promise<T> {
+    return this.tracer.startActiveSpan('no.scheduling.execute', {
+      attributes: {
+        'no.scheduler.complexity': context.complexity,
+        'no.scheduler.agent_count': context.agentCount,
+        'no.scheduler.strategy': context.strategy,
+        'no.scheduler.resource_limit': context.resourceLimit
+      }
+    }, async (span) => {
+      try {
+        const result = await operation();
+        
+        span.setAttributes({
+          'no.scheduler.execution_time_ms': Date.now() - context.startTime,
+          'no.scheduler.agents_allocated': result.agentsAllocated,
+          'no.scheduler.tools_required': result.toolsRequired.length
+        });
+        
+        span.setStatus({ code: SpanStatusCode.OK });
+        return result;
+      } catch (error) {
+        span.recordException(error);
+        span.setStatus({ 
+          code: SpanStatusCode.ERROR, 
+          message: error.message 
+        });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
+  }
+  
+  async instrumentAgentCoordination<T>(
+    operation: () => Promise<T>,
+    coordinationId: string,
+    participantAgents: string[]
+  ): Promise<T> {
+    return this.tracer.startActiveSpan('no.coordination.execute', {
+      attributes: {
+        'no.coordination.id': coordinationId,
+        'no.coordination.participant_count': participantAgents.length,
+        'no.coordination.participant_ids': participantAgents.join(',')
+      }
+    }, async (span) => {
+      const baggage = propagation.createBaggage({
+        'coordination-id': coordinationId,
+        'participant-agents': participantAgents.join(',')
+      });
+      
+      return context.with(propagation.setBaggage(context.active(), baggage), async () => {
+        try {
+          const result = await operation();
+          
+          span.setAttributes({
+            'no.coordination.success_rate': result.successRate,
+            'no.coordination.messages_exchanged': result.messagesExchanged,
+            'no.coordination.consensus_achieved': result.consensusAchieved
+          });
+          
+          span.setStatus({ code: SpanStatusCode.OK });
+          return result;
+        } catch (error) {
+          span.recordException(error);
+          span.setStatus({ 
+            code: SpanStatusCode.ERROR, 
+            message: error.message 
+          });
+          throw error;
+        } finally {
+          span.end();
+        }
+      });
+    });
+  }
+}
+```
+
+### Real-time Dashboard Metrics
+
+```typescript
+interface NoDashboardMetrics {
+  // System-level metrics
+  systemHealth: {
+    overallStatus: 'healthy' | 'degraded' | 'critical';
+    componentStatuses: Record<string, ComponentStatus>;
+    lastHealthCheck: Date;
+  };
+  
+  // Scheduler metrics
+  scheduler: {
+    averagePlanningTime: number;
+    plansCreatedPerMinute: number;
+    resourceUtilization: number;
+    strategyDistribution: Record<string, number>;
+  };
+  
+  // Agent metrics
+  agents: {
+    totalAgents: number;
+    activeAgents: number;
+    averageUtilization: number;
+    failureRate: number;
+    coordinationSuccessRate: number;
+  };
+  
+  // Tool metrics
+  tools: {
+    layerUtilization: Record<ToolLayer, number>;
+    averageExecutionTime: Record<ToolLayer, number>;
+    errorRates: Record<ToolLayer, number>;
+    mostUsedTools: Array<{ name: string; count: number; layer: ToolLayer }>;
+  };
+  
+  // Network metrics
+  network: {
+    messagesThroughput: number;
+    averageLatency: number;
+    partitionStatus: boolean;
+    consensusAchievementRate: number;
+  };
+}
+
+class NoRealtimeDashboard {
+  private metricsStore: MetricsStore;
+  private websocketServer: WebSocketServer;
+  
+  async broadcastMetrics(): Promise<void> {
+    const metrics = await this.collectCurrentMetrics();
+    const dashboardUpdate = {
+      timestamp: new Date(),
+      metrics,
+      alerts: await this.getActiveAlerts()
+    };
+    
+    this.websocketServer.broadcast('dashboard-update', dashboardUpdate);
+  }
+  
+  private async collectCurrentMetrics(): Promise<NoDashboardMetrics> {
+    return {
+      systemHealth: await this.collectSystemHealth(),
+      scheduler: await this.collectSchedulerMetrics(),
+      agents: await this.collectAgentMetrics(),
+      tools: await this.collectToolMetrics(),
+      network: await this.collectNetworkMetrics()
+    };
+  }
+}
+```
+
+---
+
+## 🔐 Security Hardening Specifications
+
+### Zero-Trust Architecture for Agent Communication
+
+```typescript
+class ZeroTrustAgentSecurity {
+  private certificateAuthority: CertificateAuthority;
+  private policyEngine: PolicyEngine;
+  private auditLogger: SecurityAuditLogger;
+  
+  async authenticateAgent(agentId: string, certificate: X509Certificate): Promise<AuthResult> {
+    // Verify certificate chain
+    const certValid = await this.certificateAuthority.verifyCertificate(certificate);
+    if (!certValid) {
+      await this.auditLogger.logAuthenticationFailure(agentId, 'INVALID_CERTIFICATE');
+      throw new AuthenticationError('Invalid agent certificate');
+    }
+    
+    // Check certificate revocation
+    const revoked = await this.certificateAuthority.isCertificateRevoked(certificate);
+    if (revoked) {
+      await this.auditLogger.logAuthenticationFailure(agentId, 'REVOKED_CERTIFICATE');
+      throw new AuthenticationError('Agent certificate has been revoked');
+    }
+    
+    // Validate agent authorization policies
+    const authorized = await this.policyEngine.evaluateAgentAuthorization(agentId, certificate);
+    if (!authorized) {
+      await this.auditLogger.logAuthorizationFailure(agentId, 'POLICY_VIOLATION');
+      throw new AuthorizationError('Agent not authorized for requested operations');
+    }
+    
+    await this.auditLogger.logSuccessfulAuthentication(agentId);
+    return { 
+      success: true, 
+      agentId, 
+      capabilities: certificate.extensions.capabilities,
+      sessionToken: await this.generateSessionToken(agentId)
+    };
+  }
+  
+  async authorizeOperation(
+    agentId: string, 
+    operation: AgentOperation, 
+    context: SecurityContext
+  ): Promise<AuthorizationResult> {
+    const policy = await this.policyEngine.getOperationPolicy(operation.type);
+    
+    const authResult = await this.policyEngine.evaluate({
+      agent: { id: agentId, ...context.agentMetadata },
+      operation,
+      context: {
+        timeOfDay: new Date(),
+        systemLoad: context.systemLoad,
+        riskLevel: await this.calculateRiskLevel(agentId, operation)
+      }
+    }, policy);
+    
+    await this.auditLogger.logAuthorizationAttempt(agentId, operation, authResult);
+    
+    return authResult;
+  }
+}
+```
+
+### Input Sanitization and Validation Framework
+
+```typescript
+class NoSecurityValidation {
+  private readonly maxInputSize = 10 * 1024 * 1024; // 10MB
+  private readonly allowedMimeTypes = new Set([
+    'application/json',
+    'text/plain',
+    'application/x-yaml'
+  ]);
+  
+  async validateAndSanitizeInput(
+    input: unknown,
+    schema: ZodSchema,
+    context: ValidationContext
+  ): Promise<ValidationResult> {
+    try {
+      // Size validation
+      const inputSize = this.calculateInputSize(input);
+      if (inputSize > this.maxInputSize) {
+        throw new ValidationError(`Input size exceeds limit: ${inputSize} > ${this.maxInputSize}`);
+      }
+      
+      // Content-type validation
+      if (context.contentType && !this.allowedMimeTypes.has(context.contentType)) {
+        throw new ValidationError(`Unsupported content type: ${context.contentType}`);
+      }
+      
+      // Schema validation
+      const validated = schema.parse(input);
+      
+      // Sanitization
+      const sanitized = await this.sanitizeInput(validated, context);
+      
+      // Additional security checks
+      await this.performSecurityScans(sanitized, context);
+      
+      return { 
+        valid: true, 
+        sanitized, 
+        warnings: this.getValidationWarnings(sanitized, context)
+      };
+    } catch (error) {
+      await this.logValidationFailure(input, error, context);
+      throw error;
+    }
+  }
+  
+  private async sanitizeInput(input: any, context: ValidationContext): Promise<any> {
+    if (typeof input === 'string') {
+      // Remove potential script injections
+      let sanitized = input.replace(/<script[^>]*>.*?<\/script>/gi, '');
+      
+      // Escape HTML entities
+      sanitized = sanitized.replace(/[<>&"']/g, (char) => {
+        const entities = { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#x27;' };
+        return entities[char] || char;
+      });
+      
+      // Remove null bytes
+      sanitized = sanitized.replace(/\0/g, '');
+      
+      return sanitized;
+    }
+    
+    if (Array.isArray(input)) {
+      return Promise.all(input.map(item => this.sanitizeInput(item, context)));
+    }
+    
+    if (input && typeof input === 'object') {
+      const sanitized = {};
+      for (const [key, value] of Object.entries(input)) {
+        sanitized[key] = await this.sanitizeInput(value, context);
+      }
+      return sanitized;
+    }
+    
+    return input;
+  }
+}
+```
+
+This TDD implementation plan now provides a comprehensive, engineering-principled approach to upgrading the orchestration package to the nO (Master Agent Loop) architecture with enhanced testing strategies, error handling patterns, monitoring capabilities, and security measures. Each phase builds incrementally while maintaining strict quality standards and observability throughout the development process.

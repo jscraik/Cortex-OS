@@ -22,30 +22,75 @@ Legend:
   - Per-package coverage thresholds (>= 90%) enforced via `vitest` config in `@cortex-os/rag`.
   - Added/validated integration tests for timeouts, degraded mode, and reliability behavior.
 - Removed external Archon references from runtime paths; MCP client surface retained as a local, optional shim for remote KB use.
-- Ollama updated to v0.12.0 where containerized (Docker compose pinned); docs now recommend Homebrew as the primary install on macOS with Docker as fallback.
+- Ollama updated to v0.12.0 where containerized (Docker compose pinned); docs now recommend Homebrew as the
+  primary install on macOS with Docker as fallback.
 - Pg dependency remains optional (`optionalDependencies.pg`), pgvector store uses `@cortex-os/observability` for operation/latency metrics.
+
+- Health server and component checks:
+  - Added minimal HTTP server exposing `/live`, `/ready`, `/health` via `createHealthServer` and `HealthProvider`.
+  - New bootstrap `startRagHealthServer` wires real components + extraChecks (embedder, pgvector, reranker) and starts server.
+  - Component health-check factories added: `createEmbedderHealthCheck`, `createPgvectorHealthCheck`, `createRerankerHealthCheck` with tests.
+  - K8s probe examples documented in `health-server.ts`.
+
+- Observability expansion:
+  - Reranker latency and success/error metrics recorded in `lib/rerank-docs.ts`.
+  - Embedding batch sizes and total chunk characters recorded in `rag-pipeline.ts`.
+  - MIME policy cache hit/miss metrics recorded in `policy/mime.ts`.
+
+- Security hardening and validation:
+  - Added embedding dimension and content size validation to `RAGPipeline` with configurable defaults.
+  - Command injection protection for Python reranker executable paths via `isSafeExecutablePath`.
+  - Prototype pollution prevention in metadata sanitization (`lib/validation.ts`).
+  - Content security policy for XSS/injection protection (`lib/content-security.ts`) with comprehensive sanitization.
+  - Security config options: `allowedEmbeddingDims` (default: [384,768,1024,1536,3072]), `maxContentChars` (default: 25000).
+  - Comprehensive validation test coverage for oversized content, invalid embedding dims, and security boundaries.
+  - Content security integration tests covering ingestion, retrieval, and configuration scenarios.
+
+- Rate limiting and performance controls:
+  - Token bucket rate limiter utility (`lib/rate-limiter.ts`) with capacity/refill controls and testing.
+  - Optional rate limiting integration in `rerankDocs` with graceful fallback to original ranking.
+  - Test coverage for burst handling, token refill, and capacity capping behaviors.
+
+- Timeout configuration and backpressure handling:
+  - Comprehensive timeout configuration per component via `ComponentTimeoutConfig` (`lib/backpressure.ts`).
+  - Timeout wrapper utilities: `withTimeout` and `withAbortableTimeout` for operation cancellation.
+  - Backpressure management with semaphores, concurrent operation limits, and queue size controls.
+  - Resource monitoring for adaptive backpressure based on memory and CPU usage.
+  - Centralized reliability configuration (`lib/reliability-config.ts`) with production, development, and test presets.
+  - Integration of timeout controls into reranker operations with configurable limits.
+  - Comprehensive test coverage for semaphore behavior, timeout handling, resource monitoring, and configuration management.
+
+  Remaining priorities:
+  - Security:
+    - Add command injection tests for additional subprocess boundaries
+    - Expand strict schema validation coverage across tools and configs
+    - Implement per-workspace rate limiting middleware
+  - Observability:
+    - Add ingest throughput and latency counters
+    - Add rerank score distribution metrics
+    - Publish initial dashboard and SLO specs
 
 ## Priority 1: Production Blockers 🚨
 
 ### 1) Security Hardening
 
-**Status:** [ ] Not started  
+**Status:** [~] Substantially complete - Core validators and tests implemented  
 **Impact:** Critical - Prevents production deployment  
-**Estimated Effort:** 3-5 days
+**Estimated Effort:** 1-2 days remaining
 
-- [ ] Write failing tests for:
-  - Command injection rejection (any subprocess/model runner)
-  - Prototype pollution in metadata ingestion
-  - Embedding dimension validation and content size limits
-  - Strict schema validation for MCP/tool inputs and configs
-  - XSS/injection in stored content
-  - Rate limiting per workspace/user
-- [ ] Implement central validators:
-  - `sanitizeInput` with allowlist patterns
-  - `validateEmbeddingDim` with configurable bounds
-  - `validateContentSize` with memory limits
-  - Deep metadata sanitizer with prototype pollution protection
-  - Content security policy for stored documents
+- [x] Write failing tests for:
+  - [x] Command injection rejection (Python reranker executable paths)
+  - [x] Prototype pollution in metadata ingestion
+  - [x] Embedding dimension validation and content size limits
+  - [ ] Strict schema validation for MCP/tool inputs and configs
+  - [x] XSS/injection in stored content
+  - [x] Rate limiting (token bucket utility with tests)
+- [x] Implement central validators:
+  - [x] `isSafeExecutablePath` with allowlist patterns for Python paths
+  - [x] `validateEmbeddingDim` with configurable bounds (wired into RAGPipeline)
+  - [x] `validateContentSize` with memory limits (wired into RAGPipeline)
+  - [x] Deep metadata sanitizer with prototype pollution protection (`sanitizeMetadata`)
+  - [x] Content security policy for stored documents
 - [ ] Add security scan gate with OWASP dependency check
 - [ ] Document security best practices and threat model
 
@@ -53,38 +98,45 @@ Legend:
 
 ### 2) System Health Checks & Degraded Mode
 
-**Status:** [~] Partially complete (degraded mode exists, health checks missing)  
+**Status:** [x] Complete - Health endpoints, component checks, alerts and runbooks implemented  
 **Impact:** Critical - Required for production monitoring  
-**Estimated Effort:** 2-3 days
+**Estimated Effort:** 0 days remaining
 
-- [ ] Tests for component health:
-  - Embedder health (model loaded, responsive)
-  - Store health (connection, query latency)
-  - Reranker health (if enabled)
-  - Cache health and hit rates
-- [ ] Implement `/health` endpoint with:
-  - Component-level status
-  - Aggregated health summary
-  - Dependency checks (pgvector, models)
-  - Resource utilization (memory, CPU)
+- [x] Tests for component health:
+  - Embedder health (model loaded, responsive) — `src/server/health-checks.ts` tests
+  - Store health (connection check) — `src/server/health-checks.ts` tests; pgvector `health()` used when available
+  - Reranker health (process readiness) — `src/server/health-checks.ts` tests
+  - Cache health and hit rates — initial metrics in MIME policy
+- [x] Implement `/health` endpoint with:
+  - Component-level status via `HealthProvider.extraChecks`
+  - Aggregated health summary via `getDefaultRAGHealth`
+  - Dependency checks (pgvector, models) via factories
+  - Resource utilization (memory/uptime) in default health
 - [x] Graceful degradation code paths (retrieval returns safe empty bundles)
-- [ ] Health check integration with K8s probes
-- [ ] Alert thresholds and runbooks
+- [x] Health check integration with K8s probes (examples in `health-server.ts` docblock)
+- [x] Alert thresholds and runbooks:
+  - Production alert thresholds for memory, latency, components, resources in `src/monitoring/alert-thresholds.ts`
+  - Prometheus alert rule generation with configurable thresholds
+  - Grafana dashboard configuration with threshold visualization
+  - Comprehensive operational runbook in `docs/runbook.md` covering common failure scenarios
+  - Alert evaluation with warning/critical levels and structured alert messages
 
 **Done when:** Health endpoint returns accurate status, integrates with monitoring, and alerts configured
 
 ### 3) Complete Reliability Wiring
 
-**Status:** [~] In progress (reranker not protected)  
+**Status:** [x] Complete - Core reliability patterns, timeout configuration, and backpressure handling implemented  
 **Impact:** Critical - Unprotected failure points  
-**Estimated Effort:** 1-2 days
+**Estimated Effort:** 0 days remaining
 
 - [x] Embedder: retry + circuit breaker
 - [x] Store: retry + circuit breaker  
-- [ ] Reranker: retry + circuit breaker with fallback to base ranking
-- [ ] Tests for reranker degraded behavior
-- [ ] Timeout configuration per component
-- [ ] Backpressure handling
+- [x] Reranker: reliability metrics and fallback to base ranking in `lib/rerank-docs.ts`
+- [x] Circuit breaker + retry wrapping for reranker (existing implementation verified and tested)
+- [x] Tests for reranker degraded behavior (retry/exhaust fallback, rate limiting fallback)
+- [x] Optional rate limiting integration with graceful degradation
+- [x] Timeout configuration per component with `ComponentTimeoutConfig` and timeout wrappers
+- [x] Backpressure handling with semaphores, resource monitoring, and adaptive throttling
 
 **Done when:** All pipeline components have reliability primitives and degraded mode tests pass
 
@@ -134,18 +186,18 @@ Legend:
 
 ### 6) End-to-End Observability
 
-**Status:** [~] Partial (store metrics only)  
+**Status:** [~] Partial (store + pipeline + reranker + cache)  
 **Impact:** High - Can't debug or optimize in production  
 **Estimated Effort:** 3-4 days
 
 - [ ] Tests: metrics emitted for all operations
 - [x] Store operations: latency and operation counts
-- [ ] Pipeline metrics:
-  - Ingest throughput and latency
-  - Chunk distribution and sizes
-  - Embedding batch sizes and timing
-  - Rerank scores and latency
-  - Cache hit rates
+- [~] Pipeline metrics:
+  - Ingest throughput and latency — [ ] pending dedicated timers/counters
+  - Chunk distribution and sizes — [x] total chars recorded (`rag-pipeline.ts`)
+  - Embedding batch sizes and timing — [x] batch size recorded (`rag-pipeline.ts`)
+  - Rerank scores and latency — [x] latency recorded (`lib/rerank-docs.ts`); [ ] scores TBD
+  - Cache hit rates — [x] MIME policy hits/misses recorded (`policy/mime.ts`)
 - [ ] Trace correlation across components
 - [ ] Dashboard specifications:
   - P50/P95/P99 latencies
@@ -326,19 +378,19 @@ Legend:
 
 ### Sprint Planning Recommendations
 
-**Sprint 1 (Week 1-2): Production Blockers**
+#### Sprint 1 (Week 1-2): Production Blockers
 
 - Security hardening (highest risk)
 - Health checks
 - Complete reliability wiring
 
-**Sprint 2 (Week 3-4): Scale Enablers**
+#### Sprint 2 (Week 3-4): Scale Enablers
 
 - Vector indexing (if >10k docs expected)
 - Post-chunking
 - Complete observability
 
-**Sprint 3 (Week 5-6): Optimizations**
+#### Sprint 3 (Week 5-6): Optimizations
 
 - Embedding pool
 - Workspace scoping (if multi-tenant)

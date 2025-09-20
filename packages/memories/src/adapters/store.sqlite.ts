@@ -157,7 +157,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 		return candidates.slice(0, topK);
 	}
 
-	async searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]> {
 		const topK = q.topK ?? q.limit ?? 10;
 		let baseVec: number[] = [];
 		if (Array.isArray(q.vector)) baseVec = q.vector.slice();
@@ -172,23 +172,22 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 			sql += ' WHERE m.id LIKE ?';
 			params.push(`${namespace}:%`);
 		}
-		const rows = this.db.prepare(sql).all(...params);
-		let candidates = rows.map((r) => this.rowToMemory(r));
+		const rows = this.db.prepare(sql).all(...params) as Array<Record<string, unknown> & { distance: number }>;
+		let candidatesWithDistance = rows.map((r) => ({ memory: this.rowToMemory(r), distance: r.distance }));
 		if (q.filterTags?.length) {
 			const tagSet = new Set(q.filterTags);
-			candidates = candidates.filter((m) => m.tags.some((t) => tagSet.has(t)));
+			candidatesWithDistance = candidatesWithDistance.filter((c) => c.memory.tags.some((t) => tagSet.has(t)));
 		}
-		let results = candidates.slice(0, topK);
+		let resultsWithDistance = candidatesWithDistance.slice(0, topK);
 		if (decayEnabled()) {
 			const half = getHalfLifeMs();
 			const now = new Date().toISOString();
-			results = candidates
-				.map((m) => ({ m, s: decayFactor(m.createdAt, now, half) }))
-				.sort((a, b) => b.s - a.s)
-				.map((x) => x.m)
+			resultsWithDistance = candidatesWithDistance
+				.map((c) => ({ ...c, decayScore: decayFactor(c.memory.createdAt, now, half) }))
+				.sort((a, b) => b.decayScore - a.decayScore)
 				.slice(0, topK);
 		}
-		return results;
+		return resultsWithDistance.map((r) => ({ ...r.memory, score: 1 - r.distance }));
 	}
 
 	// Note: Rerank and outbox helpers removed to keep adapter lean and avoid unused code.

@@ -187,7 +187,7 @@ export class ToolOrchestrationError extends Error {
 	static crossLayerCommunicationFailed(
 		sourceLayer: string,
 		targetLayer: string,
-		dataFormat: string,
+		_dataFormat: string,
 		context?: Partial<ToolOrchestrationErrorContext>,
 	): ToolOrchestrationError {
 		return new ToolOrchestrationError(

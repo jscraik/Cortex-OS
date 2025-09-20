@@ -110,6 +110,14 @@ export default defineWorkspace([
 	},
 	{
 		...MEMORY_SAFE_DEFAULTS,
+		extends: 'packages/hooks/vitest.config.ts',
+	},
+	{
+		...MEMORY_SAFE_DEFAULTS,
+		extends: 'packages/commands/vitest.config.ts',
+	},
+	{
+		...MEMORY_SAFE_DEFAULTS,
 		extends: 'libs/typescript/contracts/vitest.config.ts',
 	},
 	{

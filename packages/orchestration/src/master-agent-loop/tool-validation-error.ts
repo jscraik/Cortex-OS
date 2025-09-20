@@ -149,7 +149,7 @@ export class ToolValidationError extends Error {
 	 * Create a path traversal error
 	 */
 	static pathTraversal(
-		path: string,
+		_path: string,
 		options?: { correlationId?: string; inputHash?: string },
 	): ToolValidationError {
 		return new ToolValidationError(
@@ -214,7 +214,7 @@ export class ToolValidationError extends Error {
 	 * Create an invalid URL scheme error
 	 */
 	static invalidUrlScheme(
-		url: string,
+		_url: string,
 		allowedSchemes: string[],
 		options?: { correlationId?: string; inputHash?: string },
 	): ToolValidationError {

@@ -31,6 +31,18 @@ vi.mock('../index.js', () => ({
 // Import after mocks
 import { ragIngestTool, ragQueryTool, ragStatusTool } from './tools.js';
 
+vi.mock('../lib/health.js', () => ({
+	getDefaultRAGHealth: vi.fn(async () => ({
+		ok: true,
+		checks: {
+			process: { ok: true },
+			chunkers: { ok: true },
+		},
+		timestamp: new Date().toISOString(),
+		resources: { rssBytes: 1, heapUsedBytes: 1, heapTotalBytes: 1, uptimeSeconds: 1 },
+	})),
+}));
+
 describe('rag MCP tool error handling', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -141,5 +153,15 @@ describe('rag MCP tool error handling', () => {
 		expect(payload.error.details).toEqual(
 			expect.arrayContaining([expect.stringContaining('Expected boolean')]),
 		);
+	});
+
+	it('includes health summary when requested', async () => {
+		const response = await ragStatusTool.handler({ includeStats: false, includeHealth: true });
+		expect(response.isError).toBeUndefined();
+		const payload = JSON.parse(response.content[0]?.text ?? '{}');
+		expect(payload.success).toBe(true);
+		expect(payload.status.health).toBeDefined();
+		expect(payload.status.health.ok).toBe(true);
+		expect(payload.status.health.checks.process.ok).toBe(true);
 	});
 });

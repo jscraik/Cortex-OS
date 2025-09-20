@@ -65,13 +65,13 @@ export class LayeredMemoryStore implements MemoryStore {
 		return merged.slice(0, topK);
 	}
 
-	async searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]> {
 		const topK = q.topK ?? q.limit ?? 10;
 		const [shortRes, longRes] = await Promise.all([
 			this.shortTerm.searchByVector(q, namespace),
 			this.longTerm.searchByVector(q, namespace),
 		]);
-		const merged: Memory[] = [];
+		const merged: (Memory & { score: number })[] = [];
 		const seen = new Set<string>();
 		for (const m of [...longRes, ...shortRes]) {
 			if (!seen.has(m.id)) {

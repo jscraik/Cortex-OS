@@ -40,6 +40,9 @@
 		"downlevelIteration": true,
 		"baseUrl": ".",
 		"paths": {
+			"@cortex-os/hooks": [
+				"packages/hooks/dist/index.d.ts"
+			],
 			"@cortex-os-app/*": [
 				"apps/cortex-os/src/*"
 			],

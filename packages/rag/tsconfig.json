@@ -15,9 +15,6 @@
       ],
       "micromatch": [
         "src/stubs/micromatch.ts"
-      ],
-      "@cortex-os/agents": [
-        "__tests__/stubs/agent-mcp-client.ts"
       ]
     }
   },

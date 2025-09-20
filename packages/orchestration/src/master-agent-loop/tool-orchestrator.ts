@@ -521,7 +521,7 @@ export class ToolOrchestrator extends EventEmitter {
 	 * Optimize execution plan
 	 */
 	async optimizeExecutionPlan(toolChain: ToolChain): Promise<ExecutionPlan> {
-		const _dependencyAnalysis = await this.analyzeDependencies(toolChain);
+		await this.analyzeDependencies(toolChain);
 
 		// Basic execution order from dependency analysis
 		let executionOrder = this.topologicalSort(toolChain.steps);
@@ -651,7 +651,7 @@ export class ToolOrchestrator extends EventEmitter {
 	 */
 	private async executeStep(
 		step: ToolStep,
-		stepResults: Map<string, unknown>,
+		_stepResults: Map<string, unknown>,
 		toolChain: ToolChain,
 		result: ExecutionResult,
 	): Promise<unknown> {
@@ -861,7 +861,7 @@ export class ToolOrchestrator extends EventEmitter {
 	 * Get optimization recommendations
 	 */
 	async getOptimizationRecommendations(): Promise<OptimizationRecommendation[]> {
-		const _analytics = await this.getToolAnalytics();
+		await this.getToolAnalytics();
 		const recommendations: OptimizationRecommendation[] = [];
 
 		// Analyze cache opportunities

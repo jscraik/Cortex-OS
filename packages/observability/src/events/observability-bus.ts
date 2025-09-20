@@ -132,9 +132,9 @@ export function createObservabilityBus(options: ObservabilityBusOptions = {}): O
 			const unsubscribe = await bus.bind(
 				handlers.map((handler) => ({
 					type: handler.type,
-					handle: async (msg) => {
+					handle: async (msg: Envelope) => {
 						const validated = validateEnvelope(msg);
-						await handler.handle(validated as ObservabilityEventEnvelope);
+						await handler.handle(validated);
 					},
 				})),
 			);

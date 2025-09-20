@@ -2,8 +2,11 @@ import { generateRunId, recordLatency, recordOperation } from '@cortex-os/observ
 import { z } from 'zod';
 import { CircuitBreaker } from './lib/circuit-breaker.js';
 import { CitationBundler, type EnhancedCitationBundle } from './lib/citation-bundler.js';
+import { ragPipelineConfigSchema, validateConfig } from './lib/config-validation.js';
+import { type ContentSecurityConfig, ContentSecurityPolicy } from './lib/content-security.js';
 import type { Chunk, Embedder, ReliabilityPolicy, Store } from './lib/index.js';
 import { withRetry } from './lib/retry.js';
+import { validateContentSize, validateEmbeddingDim } from './lib/validation.js';
 import { ingestText as ingestTextHelper } from './pipeline/ingest.js';
 import {
 	EvidenceGate,
@@ -30,6 +33,11 @@ export interface RAGPipelineConfig {
 	reliability?: {
 		embedder?: ReliabilityPolicy;
 		store?: ReliabilityPolicy;
+	};
+	security?: {
+		allowedEmbeddingDims?: number[]; // e.g., [384,768,1024,1536,3072]
+		maxContentChars?: number; // default 25k
+		contentSecurity?: Partial<ContentSecurityConfig>; // XSS/injection protection
 	};
 	retrieval?: {
 		hierarchical?: {
@@ -69,6 +77,9 @@ export class RAGPipeline {
 	private readonly chunkOverlap: number;
 	private readonly freshnessOptions: FreshnessOptions;
 	private readonly evidenceGate: EvidenceGate;
+	private readonly allowedEmbeddingDims: number[];
+	private readonly maxContentChars: number;
+	private readonly contentSecurity: ContentSecurityPolicy;
 	// Apply retry/breaker policies to an operation for a given edge
 	private async runWithPolicies<T>(edge: 'embedder' | 'store', op: () => Promise<T>): Promise<T> {
 		const policy = this.reliability?.[edge];
@@ -103,6 +114,14 @@ export class RAGPipeline {
 	}
 
 	constructor(config: RAGPipelineConfig) {
+		// Validate configuration with comprehensive schema first (this will catch most issues)
+		try {
+			validateConfig(ragPipelineConfigSchema, config, 'RAGPipeline');
+		} catch (error) {
+			// Re-throw with more specific context
+			throw new Error(`RAGPipeline configuration validation failed: ${(error as Error).message}`);
+		}
+
 		const schema = z.object({
 			embedder: z.custom<Embedder>(
 				(e): e is Embedder =>
@@ -168,6 +187,25 @@ export class RAGPipeline {
 				resetTimeoutMs: rb.store.breaker.resetTimeoutMs,
 			});
 		}
+		// Security defaults and config
+		const DEFAULT_DIMS = [384, 768, 1024, 1536, 3072];
+		const DEFAULT_MAX_CHARS = 25_000;
+		const sec = (config.security ?? {}) as {
+			allowedEmbeddingDims?: number[];
+			maxContentChars?: number;
+			contentSecurity?: Partial<ContentSecurityConfig>;
+		};
+		this.allowedEmbeddingDims = Array.isArray(sec.allowedEmbeddingDims)
+			? sec.allowedEmbeddingDims
+			: DEFAULT_DIMS;
+		this.maxContentChars =
+			typeof sec.maxContentChars === 'number' && sec.maxContentChars > 0
+				? sec.maxContentChars
+				: DEFAULT_MAX_CHARS;
+
+		// Initialize content security policy
+		this.contentSecurity = new ContentSecurityPolicy(sec.contentSecurity ?? {});
+
 		const h = parsed.retrieval?.hierarchical;
 		if (h?.expandContext) {
 			// Wrap store with hierarchical expansion
@@ -189,22 +227,47 @@ export class RAGPipeline {
 
 	async ingest(chunks: Chunk[]): Promise<void> {
 		const texts = chunks.map((c) => c.text);
-		const doEmbed = async () => this.E.embed(texts);
+		// Enforce content size limits pre-embed
+		for (const t of texts) validateContentSize(t, this.maxContentChars);
+
+		// Sanitize content for security before embedding and storage
+		const sanitizedChunks = chunks.map((c) => ({
+			...c,
+			text: this.contentSecurity.sanitizeText(c.text),
+			metadata: c.metadata ? this.contentSecurity.sanitizeMetadata(c.metadata) : undefined,
+		}));
+
+		const sanitizedTexts = sanitizedChunks.map((c) => c.text);
+		const doEmbed = async () => this.E.embed(sanitizedTexts);
 		const embeddings = await this.runWithPolicies('embedder', doEmbed);
-		if (embeddings.length !== chunks.length) {
+		// Observability: embedding batch size and chunk distribution (lengths)
+		recordLatency('rag.embed.batch_size', embeddings.length, { component: 'rag' });
+		const totalChars = sanitizedTexts.reduce((a, t) => a + (t?.length ?? 0), 0);
+		recordLatency('rag.chunk.total_chars', totalChars, { component: 'rag' });
+		// Validate embedding dimensions
+		if (embeddings.length > 0) {
+			for (const v of embeddings) validateEmbeddingDim(v, this.allowedEmbeddingDims);
+		}
+		if (embeddings.length !== sanitizedChunks.length) {
 			throw new Error(
-				`Embedding count (${embeddings.length}) does not match chunk count (${chunks.length})`,
+				`Embedding count (${embeddings.length}) does not match chunk count (${sanitizedChunks.length})`,
 			);
 		}
-		const toUpsert = chunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
+		const toUpsert = sanitizedChunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
 		const doUpsert = async () => this.S.upsert(toUpsert);
 		await this.runWithPolicies('store', doUpsert);
 	}
 
 	async ingestText(source: string, text: string): Promise<void> {
+		// Enforce content size limits pre-chunking
+		validateContentSize(text, this.maxContentChars);
+
+		// Sanitize content for security before processing
+		const sanitizedText = this.contentSecurity.sanitizeText(text);
+
 		await ingestTextHelper({
 			source,
-			text,
+			text: sanitizedText,
 			embedder: this.E,
 			store: this.S,
 			chunkSize: this.chunkSize,
@@ -213,15 +276,29 @@ export class RAGPipeline {
 	}
 
 	async retrieve(query: string, topK = 5): Promise<EnhancedCitationBundle> {
-		const doEmbed = async () => this.E.embed([query]);
+		validateContentSize(query, this.maxContentChars);
+
+		// Sanitize query for security
+		const sanitizedQuery = this.contentSecurity.sanitizeText(query);
+
+		const doEmbed = async () => this.E.embed([sanitizedQuery]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
+		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
-		let chunks = await this.queryMaybeHybrid(emb, query, topK);
+		let chunks = await this.queryMaybeHybrid(emb, sanitizedQuery, topK);
 		if (this.hierarchical?.expandContext) {
 			// Optionally dedupe and cap context
 			chunks = chunks.map((c) => this.applyContextPostprocessing(c));
 		}
-		const routed = routeByFreshness(chunks, this.freshnessOptions);
+
+		// Sanitize retrieved chunks for security before returning
+		const sanitizedChunks = chunks.map((c) => ({
+			...c,
+			text: this.contentSecurity.sanitizeText(c.text),
+			metadata: c.metadata ? this.contentSecurity.sanitizeMetadata(c.metadata) : undefined,
+		}));
+
+		const routed = routeByFreshness(sanitizedChunks, this.freshnessOptions);
 		const bundler = new CitationBundler();
 		return bundler.bundle(routed);
 	}
@@ -231,8 +308,10 @@ export class RAGPipeline {
 		claims: string[],
 		topK = 5,
 	): Promise<EnhancedCitationBundle> {
+		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
+		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		if (this.hierarchical?.expandContext) {
@@ -244,8 +323,10 @@ export class RAGPipeline {
 	}
 
 	async retrieveWithDeduplication(query: string, topK = 5): Promise<EnhancedCitationBundle> {
+		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
+		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		if (this.hierarchical?.expandContext) {
@@ -261,8 +342,10 @@ export class RAGPipeline {
 		topK = 5,
 		cacheThresholdMs?: number,
 	): Promise<EnhancedCitationBundle> {
+		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
+		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		if (this.hierarchical?.expandContext) {
@@ -278,8 +361,10 @@ export class RAGPipeline {
 		topK = 5,
 		freshnessThresholdMs?: number,
 	): Promise<EnhancedCitationBundle> {
+		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
+		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		if (this.hierarchical?.expandContext) {

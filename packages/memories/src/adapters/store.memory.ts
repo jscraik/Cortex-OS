@@ -3,6 +3,11 @@ import { isExpired } from '../core/ttl.js';
 import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
+// Helper function to escape regex special characters
+function escapeRegExp(string: string): string {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
 	if (a.length !== b.length) {
@@ -44,10 +49,13 @@ export class InMemoryStore implements MemoryStore {
 	}
 
 	async searchByText(q: TextQuery, namespace = 'default') {
+		const escapedSearchText = escapeRegExp(q.text.toLowerCase());
+		const searchRegex = new RegExp(`\\b${escapedSearchText}\\b`);
+
 		let items = [...this.ns(namespace).values()].filter(
 			(x) =>
 				(!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))) &&
-				(x.text?.toLowerCase().includes(q.text.toLowerCase()) ?? false),
+				(x.text?.toLowerCase().match(searchRegex) ?? false),
 		);
 		if (decayEnabled()) {
 			const now = new Date().toISOString();
@@ -80,7 +88,10 @@ export class InMemoryStore implements MemoryStore {
 		}
 		const topK = q.topK ?? 10;
 		itemsWithScores.sort((a, b) => b.score - a.score);
-		const sorted = itemsWithScores.slice(0, topK).map((item) => item.memory);
+		const sorted = itemsWithScores.slice(0, topK).map((item) => ({
+		...item.memory,
+		score: item.score
+	}));
 
 		return sorted;
 	}

@@ -1,0 +1,416 @@
+{
+    "dashboard": {
+        "id": null,
+        "title": "nO Master Agent Loop - System Overview",
+        "tags": [
+            "nO",
+            "orchestration",
+            "brAInwav",
+            "production"
+        ],
+        "style": "dark",
+        "timezone": "UTC",
+        "refresh": "5s",
+        "time": {
+            "from": "now-1h",
+            "to": "now"
+        },
+        "panels": [
+            {
+                "id": 1,
+                "title": "System Overview",
+                "type": "stat",
+                "targets": [
+                    {
+                        "expr": "no_health_status",
+                        "legendFormat": "System Health"
+                    },
+                    {
+                        "expr": "no_active_requests",
+                        "legendFormat": "Active Requests"
+                    },
+                    {
+                        "expr": "no_agents_available",
+                        "legendFormat": "Available Agents"
+                    },
+                    {
+                        "expr": "no_throughput_requests_per_second",
+                        "legendFormat": "Throughput (RPS)"
+                    }
+                ],
+                "fieldConfig": {
+                    "defaults": {
+                        "color": {
+                            "mode": "palette-classic"
+                        },
+                        "unit": "short",
+                        "thresholds": {
+                            "steps": [
+                                {
+                                    "color": "green",
+                                    "value": null
+                                },
+                                {
+                                    "color": "yellow",
+                                    "value": 50
+                                },
+                                {
+                                    "color": "red",
+                                    "value": 80
+                                }
+                            ]
+                        }
+                    }
+                },
+                "gridPos": {
+                    "h": 8,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            {
+                "id": 2,
+                "title": "Request Rate and Duration",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(no_requests_total[5m])",
+                        "legendFormat": "Request Rate ({{priority}}/{{status}})"
+                    },
+                    {
+                        "expr": "histogram_quantile(0.95, rate(no_request_duration_seconds_bucket[5m]))",
+                        "legendFormat": "95th Percentile Duration"
+                    },
+                    {
+                        "expr": "histogram_quantile(0.50, rate(no_request_duration_seconds_bucket[5m]))",
+                        "legendFormat": "Median Duration"
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "label": "Requests/sec",
+                        "min": 0
+                    },
+                    {
+                        "label": "Duration (seconds)",
+                        "min": 0
+                    }
+                ],
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8
+                }
+            },
+            {
+                "id": 3,
+                "title": "Agent Pool Status",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "no_agents_available",
+                        "legendFormat": "Available Agents ({{specialization}})"
+                    },
+                    {
+                        "expr": "no_agents_active",
+                        "legendFormat": "Active Agents ({{specialization}})"
+                    },
+                    {
+                        "expr": "no_agent_utilization_percent",
+                        "legendFormat": "Utilization %"
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "label": "Agent Count",
+                        "min": 0
+                    },
+                    {
+                        "label": "Utilization %",
+                        "min": 0,
+                        "max": 100
+                    }
+                ],
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8
+                }
+            },
+            {
+                "id": 4,
+                "title": "System Performance",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "no_cpu_utilization_percent",
+                        "legendFormat": "CPU Utilization %"
+                    },
+                    {
+                        "expr": "no_memory_utilization_percent",
+                        "legendFormat": "Memory Utilization %"
+                    },
+                    {
+                        "expr": "rate(no_system_process_cpu_seconds_total[5m]) * 100",
+                        "legendFormat": "Process CPU %"
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "label": "Percentage",
+                        "min": 0,
+                        "max": 100
+                    }
+                ],
+                "alert": {
+                    "conditions": [
+                        {
+                            "query": {
+                                "queryType": "",
+                                "refId": "A"
+                            },
+                            "reducer": {
+                                "type": "last",
+                                "params": []
+                            },
+                            "evaluator": {
+                                "params": [
+                                    80
+                                ],
+                                "type": "gt"
+                            }
+                        }
+                    ],
+                    "executionErrorState": "alerting",
+                    "noDataState": "no_data",
+                    "frequency": "10s",
+                    "handler": 1,
+                    "name": "High CPU/Memory Usage",
+                    "message": "CPU or Memory utilization is above 80%"
+                },
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 16
+                }
+            },
+            {
+                "id": 5,
+                "title": "Error Rates",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(no_errors_total[5m])",
+                        "legendFormat": "Error Rate ({{error_type}}/{{severity}})"
+                    },
+                    {
+                        "expr": "rate(no_requests_total{status=\"error\"}[5m])",
+                        "legendFormat": "Failed Requests"
+                    },
+                    {
+                        "expr": "no_circuit_breaker_state",
+                        "legendFormat": "Circuit Breaker ({{service}})"
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "label": "Errors/sec",
+                        "min": 0
+                    }
+                ],
+                "alert": {
+                    "conditions": [
+                        {
+                            "query": {
+                                "queryType": "",
+                                "refId": "A"
+                            },
+                            "reducer": {
+                                "type": "last",
+                                "params": []
+                            },
+                            "evaluator": {
+                                "params": [
+                                    0.05
+                                ],
+                                "type": "gt"
+                            }
+                        }
+                    ],
+                    "executionErrorState": "alerting",
+                    "noDataState": "no_data",
+                    "frequency": "10s",
+                    "handler": 1,
+                    "name": "High Error Rate",
+                    "message": "Error rate is above 5%"
+                },
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 16
+                }
+            },
+            {
+                "id": 6,
+                "title": "Security Events",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(no_auth_attempts_total[5m])",
+                        "legendFormat": "Auth Attempts ({{method}}/{{result}})"
+                    },
+                    {
+                        "expr": "rate(no_security_violations_total[5m])",
+                        "legendFormat": "Security Violations ({{violation_type}})"
+                    },
+                    {
+                        "expr": "rate(no_rate_limit_hits_total[5m])",
+                        "legendFormat": "Rate Limit Hits"
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "label": "Events/sec",
+                        "min": 0
+                    }
+                ],
+                "alert": {
+                    "conditions": [
+                        {
+                            "query": {
+                                "queryType": "",
+                                "refId": "B"
+                            },
+                            "reducer": {
+                                "type": "last",
+                                "params": []
+                            },
+                            "evaluator": {
+                                "params": [
+                                    0
+                                ],
+                                "type": "gt"
+                            }
+                        }
+                    ],
+                    "executionErrorState": "alerting",
+                    "noDataState": "no_data",
+                    "frequency": "10s",
+                    "handler": 1,
+                    "name": "Security Violations Detected",
+                    "message": "Security violations have been detected"
+                },
+                "gridPos": {
+                    "h": 8,
+                    "w": 24,
+                    "x": 0,
+                    "y": 24
+                }
+            },
+            {
+                "id": 7,
+                "title": "Queue and Backlog",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "no_queue_depth",
+                        "legendFormat": "Queue Depth ({{priority}})"
+                    },
+                    {
+                        "expr": "no_active_requests",
+                        "legendFormat": "Active Requests"
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "label": "Request Count",
+                        "min": 0
+                    }
+                ],
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 32
+                }
+            },
+            {
+                "id": 8,
+                "title": "Service Availability",
+                "type": "stat",
+                "targets": [
+                    {
+                        "expr": "no_service_availability_percent",
+                        "legendFormat": "{{service}} Availability"
+                    },
+                    {
+                        "expr": "up{job=\"no-orchestration\"}",
+                        "legendFormat": "Service Up"
+                    }
+                ],
+                "fieldConfig": {
+                    "defaults": {
+                        "color": {
+                            "mode": "thresholds"
+                        },
+                        "unit": "percent",
+                        "thresholds": {
+                            "steps": [
+                                {
+                                    "color": "red",
+                                    "value": null
+                                },
+                                {
+                                    "color": "yellow",
+                                    "value": 95
+                                },
+                                {
+                                    "color": "green",
+                                    "value": 99
+                                }
+                            ]
+                        }
+                    }
+                },
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 32
+                }
+            }
+        ],
+        "templating": {
+            "list": [
+                {
+                    "name": "instance",
+                    "query": "label_values(no_requests_total, instance)",
+                    "type": "query",
+                    "refresh": 1
+                },
+                {
+                    "name": "priority",
+                    "query": "label_values(no_requests_total, priority)",
+                    "type": "query",
+                    "refresh": 1
+                }
+            ]
+        },
+        "annotations": {
+            "list": [
+                {
+                    "name": "Deployments",
+                    "datasource": "prometheus",
+                    "expr": "changes(no_system_process_start_time_seconds[5m]) > 0",
+                    "titleFormat": "Deployment",
+                    "textFormat": "nO system restarted"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@cortex-os/hooks",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Cortex Hooks: deterministic lifecycle hooks for agents, orchestration, prp-runner, and kernel",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:coverage": "vitest --coverage",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "bin": {
+    "cortex-hooks": "dist/cli.js"
+  },
+  "dependencies": {
+    "@cortex-os/observability": "workspace:*",
+    "chokidar": "^3.6.0",
+    "fast-glob": "^3.3.2",
+    "js-yaml": "^4.1.0",
+    "picomatch": "^4.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "eslint": "^9.33.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jamiescottcraik/Cortex-OS.git",
+    "directory": "packages/hooks"
+  }
+}

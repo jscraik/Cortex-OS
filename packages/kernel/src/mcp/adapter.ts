@@ -135,19 +135,52 @@ export class MCPAdapter {
 			throw new Error(`MCP context not found for run: ${runId}`);
 		}
 
-		if (!context.toolsEnabled.includes(toolName)) {
+			if (!context.toolsEnabled.includes(toolName)) {
 			throw new Error(`MCP tool not enabled: ${toolName}`);
 		}
 
 		try {
-			const result = (await tool.execute(params, context)) as Result;
+				// Initialize hooks lazily via dynamic import
+				const hooksMod = await import('@cortex-os/hooks');
+				const hooks = new hooksMod.CortexHooks();
+				await hooks.init();
+
+				// PreToolUse: allow/deny/mutate
+				let effectiveParams: Params = params;
+						const pre = await hooks.run('PreToolUse', {
+					event: 'PreToolUse',
+					tool: { name: toolName, input: effectiveParams },
+					cwd: context.workingDirectory,
+							user: context.prpState.runId || 'system',
+					tags: ['kernel', 'mcp'],
+				});
+				for (const r of pre) {
+					if (r.action === 'deny') throw new Error(`Hook denied tool '${toolName}': ${r.reason}`);
+				if (r.action === 'allow' && typeof r.input !== 'undefined') effectiveParams = r.input as Params;
+				}
+
+				const result = (await tool.execute(effectiveParams, context)) as Result;
 
 			const evidence = {
 				toolName,
-				params,
+					params: effectiveParams,
 				result,
 				timestamp: new Date().toISOString(),
 			};
+
+				// PostToolUse (best-effort)
+						try {
+					await hooks.run('PostToolUse', {
+						event: 'PostToolUse',
+						tool: { name: toolName, input: effectiveParams },
+						cwd: context.workingDirectory,
+								user: context.prpState.runId || 'system',
+						tags: ['kernel', 'mcp'],
+					});
+						} catch (e) {
+							// best-effort only; log minimal warning without throwing
+						console.warn('[kernel/hooks] PostToolUse hook error:', (e as Error)?.message || e);
+						}
 
 			return { result, evidence };
 		} catch (error) {

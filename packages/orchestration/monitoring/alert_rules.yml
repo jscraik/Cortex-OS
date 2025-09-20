@@ -1,0 +1,231 @@
+# Prometheus Alert Rules for nO Master Agent Loop
+# Co-authored-by: brAInwav Development Team
+
+groups:
+  - name: nO_system_alerts
+    rules:
+      # High CPU Usage Alert
+      - alert: nO_HighCPUUsage
+        expr: no_cpu_utilization_percent > 80
+        for: 2m
+        labels:
+          severity: warning
+          component: system
+          team: brAInwav
+        annotations:
+          summary: "nO System CPU usage is high"
+          description: "CPU utilization has been above 80% for more than 2 minutes (current: {{ $value }}%)"
+          
+      # High Memory Usage Alert
+      - alert: nO_HighMemoryUsage
+        expr: no_memory_utilization_percent > 85
+        for: 2m
+        labels:
+          severity: warning
+          component: system
+          team: brAInwav
+        annotations:
+          summary: "nO System memory usage is high"
+          description: "Memory utilization has been above 85% for more than 2 minutes (current: {{ $value }}%)"
+          
+      # System Down Alert
+      - alert: nO_SystemDown
+        expr: up{job="no-orchestration"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          component: system
+          team: brAInwav
+        annotations:
+          summary: "nO System is down"
+          description: "The nO orchestration system has been down for more than 30 seconds"
+          
+      # Health Check Failed
+      - alert: nO_HealthCheckFailed
+        expr: no_health_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: health
+          team: brAInwav
+        annotations:
+          summary: "nO Health check failed"
+          description: "System health check has been failing for more than 1 minute"
+
+  - name: nO_performance_alerts
+    rules:
+      # High Request Error Rate
+      - alert: nO_HighErrorRate
+        expr: rate(no_requests_total{status="error"}[5m]) / rate(no_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          component: requests
+          team: brAInwav
+        annotations:
+          summary: "nO High request error rate"
+          description: "Request error rate is above 5% for more than 2 minutes (current: {{ $value | humanizePercentage }})"
+          
+      # Request Duration High
+      - alert: nO_HighRequestDuration
+        expr: histogram_quantile(0.95, rate(no_request_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+          team: brAInwav
+        annotations:
+          summary: "nO High request duration"
+          description: "95th percentile request duration is above 30 seconds (current: {{ $value }}s)"
+          
+      # Low Throughput
+      - alert: nO_LowThroughput
+        expr: no_throughput_requests_per_second < 1
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+          team: brAInwav
+        annotations:
+          summary: "nO Low throughput detected"
+          description: "System throughput has been below 1 request/second for more than 5 minutes"
+          
+      # Queue Depth High
+      - alert: nO_HighQueueDepth
+        expr: no_queue_depth > 100
+        for: 3m
+        labels:
+          severity: warning
+          component: queue
+          team: brAInwav
+        annotations:
+          summary: "nO High queue depth"
+          description: "Request queue depth is above 100 for more than 3 minutes (current: {{ $value }})"
+
+  - name: nO_agent_alerts
+    rules:
+      # No Available Agents
+      - alert: nO_NoAvailableAgents
+        expr: sum(no_agents_available) == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: agents
+          team: brAInwav
+        annotations:
+          summary: "nO No agents available"
+          description: "No agents are available to process requests"
+          
+      # Low Agent Availability
+      - alert: nO_LowAgentAvailability
+        expr: sum(no_agents_available) < 2
+        for: 2m
+        labels:
+          severity: warning
+          component: agents
+          team: brAInwav
+        annotations:
+          summary: "nO Low agent availability"
+          description: "Only {{ $value }} agents are available (minimum recommended: 2)"
+          
+      # High Agent Utilization
+      - alert: nO_HighAgentUtilization
+        expr: no_agent_utilization_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: agents
+          team: brAInwav
+        annotations:
+          summary: "nO High agent utilization"
+          description: "Agent utilization has been above 90% for more than 5 minutes (current: {{ $value }}%)"
+
+  - name: nO_security_alerts
+    rules:
+      # Security Violations Detected
+      - alert: nO_SecurityViolations
+        expr: rate(no_security_violations_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+          team: brAInwav
+        annotations:
+          summary: "nO Security violations detected"
+          description: "Security violations have been detected at a rate of {{ $value }}/second"
+          
+      # High Authentication Failures
+      - alert: nO_HighAuthFailures
+        expr: rate(no_auth_attempts_total{result="failure"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+          team: brAInwav
+        annotations:
+          summary: "nO High authentication failure rate"
+          description: "Authentication failures are occurring at {{ $value }}/second"
+          
+      # Rate Limiting Triggered
+      - alert: nO_RateLimitingActive
+        expr: rate(no_rate_limit_hits_total[5m]) > 1
+        for: 1m
+        labels:
+          severity: info
+          component: security
+          team: brAInwav
+        annotations:
+          summary: "nO Rate limiting is active"
+          description: "Rate limiting is being triggered at {{ $value }}/second"
+
+  - name: nO_circuit_breaker_alerts
+    rules:
+      # Circuit Breaker Open
+      - alert: nO_CircuitBreakerOpen
+        expr: no_circuit_breaker_state == 1
+        for: 30s
+        labels:
+          severity: warning
+          component: reliability
+          team: brAInwav
+        annotations:
+          summary: "nO Circuit breaker is open"
+          description: "Circuit breaker for {{ $labels.service }} is open, indicating service issues"
+          
+      # High Retry Rate
+      - alert: nO_HighRetryRate
+        expr: rate(no_retry_attempts_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          component: reliability
+          team: brAInwav
+        annotations:
+          summary: "nO High retry rate"
+          description: "High retry rate detected: {{ $value }}/second for {{ $labels.operation }}"
+
+  - name: nO_availability_alerts
+    rules:
+      # Service Availability Low
+      - alert: nO_LowServiceAvailability
+        expr: no_service_availability_percent < 99
+        for: 1m
+        labels:
+          severity: warning
+          component: availability
+          team: brAInwav
+        annotations:
+          summary: "nO Service availability is low"
+          description: "Service {{ $labels.service }} availability is {{ $value }}% (target: 99%+)"
+          
+      # Component Health Down
+      - alert: nO_ComponentHealthDown
+        expr: no_component_health == 0
+        for: 30s
+        labels:
+          severity: critical
+          component: health
+          team: brAInwav
+        annotations:
+          summary: "nO Component health check failed"
+          description: "Component {{ $labels.component }} health check is failing"
