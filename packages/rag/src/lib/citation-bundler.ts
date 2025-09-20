@@ -22,13 +22,18 @@ export class CitationBundler {
 			};
 		}
 
-		const citations = chunks.map((c) => ({
-			id: c.id,
-			source: c.source,
-			text: c.text,
-			score: c.score,
-		}));
-		const text = chunks.map((c) => c.text).join('\n');
+		const citations = chunks.map((c) => {
+			const meta = c.metadata ?? ({} as Record<string, unknown>);
+			const ctx = typeof meta.context === 'string' && meta.context.trim().length > 0 ? meta.context : undefined;
+			const mergedText = ctx ? `${ctx}\n\n${c.text}` : c.text;
+			return {
+				id: c.id,
+				source: c.source,
+				text: mergedText,
+				score: c.score,
+			};
+		});
+		const text = citations.map((c) => c.text).join('\n');
 		return { text, citations };
 	}
 

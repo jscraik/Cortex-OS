@@ -1,5 +1,5 @@
 import { trace } from '@opentelemetry/api';
-import { createMcpGateway, type McpGateway } from './mcp/gateway';
+import { createMcpGateway, type McpGateway, type MemoriesLike } from './mcp/gateway';
 import { ArtifactRepository } from './persistence/artifact-repository';
 import { EvidenceRepository } from './persistence/evidence-repository';
 import { ProfileRepository } from './persistence/profile-repository';
@@ -54,7 +54,7 @@ export function provideMCP(opts?: {
 	publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;
 }): McpGateway {
 	return createMcpGateway({
-		memories: provideMemories(),
+		memories: provideMemories() as unknown as MemoriesLike,
 		orchestration: provideOrchestration(),
 		config: { runtime: {} },
 		audit: opts?.audit,

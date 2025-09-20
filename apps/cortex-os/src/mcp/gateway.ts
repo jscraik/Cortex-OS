@@ -40,9 +40,9 @@ export interface GatewayDeps {
 }
 
 export class McpGateway {
-	private deps: GatewayDeps;
+	private readonly deps: GatewayDeps;
 	// In-memory workflow run persistence (simple ephemeral store)
-	private workflowRuns: Map<
+	private readonly workflowRuns: Map<
 		string,
 		{
 			workflow: string;
@@ -306,7 +306,7 @@ export class McpGateway {
 	}
 
 	private async handleConfigSet(input: { key: string; value: unknown }) {
-		if (!this.deps.config) this.deps.config = { runtime: {} };
+	this.deps.config ??= { runtime: {} };
 		const previous = this.deps.config.runtime[input.key];
 		this.deps.config.runtime[input.key] = input.value;
 		return { key: input.key, previous, value: input.value, scope: 'runtime' };

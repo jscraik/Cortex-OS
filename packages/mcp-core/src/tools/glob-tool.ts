@@ -1,3 +1,4 @@
+import fg from 'fast-glob';
 import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { z } from 'zod';
@@ -60,17 +61,20 @@ export class GlobTool implements McpTool<GlobToolInput, GlobToolResult> {
 			}
 
 			// Configure glob options
-			const globOptions: Parameters<typeof glob>[1] = {
+			const globOptions: fg.Options = {
 				cwd,
 				ignore: input.ignore || ['node_modules/**', '.git/**', '.DS_Store'],
-				follow: input.followSymlinks || false,
-				maxDepth: input.maxDepth,
-				nocase: !input.caseSensitive,
-				withFileTypes: true,
+				followSymbolicLinks: input.followSymlinks || false,
+				deep: input.maxDepth,
+				caseSensitiveMatch: !!input.caseSensitive,
+				dot: true,
+				onlyFiles: false,
+				stats: false,
+				absolute: true,
 			};
 
 			// Execute glob search
-			const results = await glob(input.pattern, globOptions);
+			const results = await fg(input.pattern, globOptions);
 
 			// Process results to get detailed information
 			const matches: GlobMatch[] = [];
@@ -84,10 +88,19 @@ export class GlobTool implements McpTool<GlobToolInput, GlobToolResult> {
 					});
 				}
 
-				const relativePath = result.relative();
-				const fullPath = result.fullpath();
-				const isDirectory = result.isDirectory();
-				const isFile = result.isFile();
+				// fast-glob returns string paths when absolute:true
+				const fullPath = typeof result === 'string' ? result : String(result);
+				const relativePath = fullPath.startsWith(cwd) ? fullPath.slice(cwd.length + 1) : fullPath;
+				let isDirectory = false;
+				let isFile = false;
+				try {
+					const s = await stat(fullPath);
+					isDirectory = s.isDirectory();
+					isFile = s.isFile();
+				} catch {
+					// broken link or permission issue; skip
+					continue;
+				}
 
 				// Skip directories if not requested
 				if (isDirectory && !input.includeDirectories) {

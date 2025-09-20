@@ -1,21 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { createEnvelope } from '../../a2a-contracts/src/envelope.js';
+import { createEnvelope, type Envelope } from '../../a2a-contracts/src/envelope.js';
 import { createBus } from '../src/bus.js';
+import type { Transport } from '../src/transport.js';
 
 // Simple inproc transport stub
 function createInprocTransport() {
-	const subs: { topics: string[]; handler: (m: any) => Promise<void> }[] = [];
+	const subs: { topics: string[]; handler: (m: Envelope) => Promise<void> }[] = [];
 	return {
-		publish: async (msg: any) => {
+		publish: async (msg: Envelope) => {
 			for (const s of subs) {
 				if (s.topics.includes(msg.type)) {
 					await s.handler(msg);
 				}
 			}
 		},
-		subscribe: async (topics: string[], handler: (m: any) => Promise<void>) => {
+		subscribe: async (topics: string[], handler: (m: Envelope) => Promise<void>) => {
 			subs.push({ topics, handler });
-			return { close: async () => {} };
+			return { close: async () => { } };
 		},
 	};
 }
@@ -24,7 +25,7 @@ describe('bus idempotency & correlation edge cases', () => {
 	it('drops duplicate events with same id when idempotency enabled', async () => {
 		const received: string[] = [];
 		const transport = createInprocTransport();
-		const bus = createBus(transport as any, undefined as any, undefined, {
+		const bus = createBus(transport as unknown as Transport, undefined, undefined, {
 			'evt.test': { publish: true, subscribe: true },
 		});
 
@@ -39,22 +40,22 @@ describe('bus idempotency & correlation edge cases', () => {
 
 		const env = createEnvelope({
 			type: 'evt.test',
-			source: 'test',
+			source: 'urn:cortex:test',
 			data: { n: 1 },
-			id: 'dup-1',
+			id: '22222222-2222-4222-8222-222222222222',
 		});
 		await bus.publish(env);
 		await bus.publish(env); // duplicate
 
-		expect(received).toEqual(['dup-1']);
+		expect(received).toEqual(['22222222-2222-4222-8222-222222222222']);
 	});
 
 	it('processes duplicates when idempotency disabled', async () => {
 		const received: string[] = [];
 		const transport = createInprocTransport();
 		const bus = createBus(
-			transport as any,
-			undefined as any,
+			(transport as unknown as Transport),
+			undefined,
 			undefined,
 			{ 'evt.test2': { publish: true, subscribe: true } },
 			{ enableIdempotency: false },
@@ -69,19 +70,22 @@ describe('bus idempotency & correlation edge cases', () => {
 		]);
 		const env = createEnvelope({
 			type: 'evt.test2',
-			source: 'test',
+			source: 'urn:cortex:test',
 			data: {},
-			id: 'x-1',
+			id: '33333333-3333-4333-8333-333333333333',
 		});
 		await bus.publish(env);
 		await bus.publish(env);
-		expect(received).toEqual(['x-1', 'x-1']);
+		expect(received).toEqual([
+			'33333333-3333-4333-8333-333333333333',
+			'33333333-3333-4333-8333-333333333333',
+		]);
 	});
 
 	it('auto-generates correlationId when missing', async () => {
 		let observed: { id?: string; correlationId?: string } | undefined;
 		const transport = createInprocTransport();
-		const bus = createBus(transport as any, undefined as any, undefined, {
+		const bus = createBus(transport as unknown as Transport, undefined, undefined, {
 			'evt.corr': { publish: true, subscribe: true },
 		});
 		await bus.bind([
@@ -92,7 +96,7 @@ describe('bus idempotency & correlation edge cases', () => {
 				},
 			},
 		]);
-		const env = createEnvelope({ type: 'evt.corr', source: 'test', data: {} });
+		const env = createEnvelope({ type: 'evt.corr', source: 'urn:cortex:test', data: {} });
 		await bus.publish(env);
 		expect(observed?.correlationId).toBe(observed?.id);
 	});
@@ -100,7 +104,7 @@ describe('bus idempotency & correlation edge cases', () => {
 	it('preserves provided correlationId', async () => {
 		let observed: { id?: string; correlationId?: string } | undefined;
 		const transport = createInprocTransport();
-		const bus = createBus(transport as any, undefined as any, undefined, {
+		const bus = createBus(transport as unknown as Transport, undefined, undefined, {
 			'evt.corr2': { publish: true, subscribe: true },
 		});
 		await bus.bind([
@@ -113,11 +117,11 @@ describe('bus idempotency & correlation edge cases', () => {
 		]);
 		const env = createEnvelope({
 			type: 'evt.corr2',
-			source: 'test',
+			source: 'urn:cortex:test',
 			data: {},
-			correlationId: 'fixed-corr',
+			correlationId: '11111111-1111-4111-8111-111111111111',
 		});
 		await bus.publish(env);
-		expect(observed?.correlationId).toBe('fixed-corr');
+		expect(observed?.correlationId).toBe('11111111-1111-4111-8111-111111111111');
 	});
 });

@@ -1,4 +1,7 @@
 import { type ProcessingConfig, ProcessingStrategy, type StrategyDecision } from '../policy/mime';
+import { HierarchicalChunker } from './hierarchical-chunker.js';
+import { LateChunker } from './late-chunker.js';
+import { SemanticChunker } from './semantic-chunker.js';
 
 export interface ProcessingFile {
 	path: string;
@@ -44,6 +47,18 @@ class TextChunker implements Chunker {
 		const content = file.content.toString('utf-8');
 
 		switch (config.chunker) {
+			case 'hierarchical': {
+				const h = new HierarchicalChunker();
+				return h.chunk(file, config);
+			}
+			case 'semantic': {
+				const s = new SemanticChunker();
+				return s.chunk(file, config);
+			}
+			case 'late': {
+				const l = new LateChunker();
+				return l.chunk(file, config);
+			}
 			case 'markdown':
 				return Promise.resolve(this.chunkMarkdown(content, file));
 			case 'code':
@@ -136,7 +151,8 @@ class TextChunker implements Chunker {
 						metadata: { type: 'json_document', structure: 'parsed' },
 					},
 				];
-			} catch (_err) {
+			} catch {
+				// Fallback to plain text if JSON parsing fails
 				return this.chunkPlainText(content, file);
 			}
 		}

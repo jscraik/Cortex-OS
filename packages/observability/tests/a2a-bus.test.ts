@@ -5,6 +5,7 @@ import {
 	OBSERVABILITY_EVENT_TYPES,
 	type ObservabilityEventEnvelope,
 } from '../src/events/observability-bus.js';
+import type { TraceCreatedEvent } from '../src/events/observability-events.js';
 
 describe('Observability A2A bus', () => {
 	it('routes typed events to subscribers', async () => {
@@ -20,13 +21,14 @@ describe('Observability A2A bus', () => {
 			},
 		]);
 
-		await bus.publish(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED, {
+		const payload: TraceCreatedEvent = {
 			traceId: 'trace-1',
 			operationName: 'db.query',
 			service: 'analytics',
 			startTime: new Date().toISOString(),
 			tags: { env: 'test' },
-		});
+		};
+		await bus.publish(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED, payload);
 
 		expect(received).toHaveLength(1);
 		expect(received[0].type).toBe(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED);
@@ -38,13 +40,14 @@ describe('Observability A2A bus', () => {
 	it('rejects invalid payloads', async () => {
 		const bus = createObservabilityBus();
 
+		const invalidPayload = {
+			name: 'latency',
+			value: 42,
+			type: 'gauge',
+			// Missing required timestamp should fail validation
+		} as unknown as { name: string; value: number; type: 'gauge' };
 		await expect(
-			bus.publish(OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED, {
-				name: 'latency',
-				value: 42,
-				type: 'gauge',
-				// Missing required timestamp should fail validation
-			} as any),
+			bus.publish(OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED, invalidPayload),
 		).rejects.toThrow();
 	});
 });

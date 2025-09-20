@@ -66,6 +66,7 @@ export type PRPWorkflowState = z.infer<typeof PRPWorkflowStateSchema>;
 export class PRPLangGraphWorkflow {
 	private graph: any; // Compiled LangGraph
 	private modelSelector: ModelSelector;
+	private readonly aiIntegration: ASBRAIIntegration;
 	private errorBoundary = new ErrorBoundary();
 
 	// Gate definitions
@@ -84,6 +85,14 @@ export class PRPLangGraphWorkflow {
 		this.aiIntegration = aiIntegration;
 		this.modelSelector = modelSelector;
 		this.graph = this.createPRPGraph();
+		console.log(`PRPLangGraphWorkflow initialized with AI integration: ${this.isAIIntegrationReady()}`);
+	}
+
+	/**
+	 * Check if AI integration is ready
+	 */
+	private isAIIntegrationReady(): boolean {
+		return this.aiIntegration !== undefined && this.aiIntegration !== null;
 	}
 
 	/**

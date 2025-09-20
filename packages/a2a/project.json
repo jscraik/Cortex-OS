@@ -12,7 +12,8 @@
 				"tsConfig": "packages/a2a/tsconfig.lib.json",
 				"project": "packages/a2a/package.json",
 				"entryFile": "packages/a2a/src/index.ts",
-				"external": ["rxjs/operators", "rxjs/websocket", "rxjs/ajax"]
+				"external": ["rxjs/operators", "rxjs/websocket", "rxjs/ajax"],
+				"useLegacyTypescriptPlugin": false
 			}
 		},
 		"lint": {

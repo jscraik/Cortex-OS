@@ -7,7 +7,10 @@
 		"examples/**",
 		"src/lib/outbox/**",
 		"tests/**",
-		"__tests__/**"
+		"__tests__/**",
+		"src/**/__tests__/**",
+		"src/**/tests/**",
+		"src/lib/supervisor.ts"
 	],
 	"compilerOptions": {
 		"outDir": "dist",
@@ -17,6 +20,15 @@
 		"noEmitOnError": false,
 		"baseUrl": "../../",
 		"paths": {
+			"@cortex-os/contracts": [
+				"libs/typescript/contracts/dist/src/index.d.ts"
+			],
+			"@cortex-os/contracts/*": [
+				"libs/typescript/contracts/dist/src/*"
+			],
+			"@cortex-os/policy": [
+				"packages/policy/src/index.ts"
+			],
 			"@cortex-os/a2a-core": [
 				"packages/a2a/a2a-core/dist/index.d.ts"
 			],

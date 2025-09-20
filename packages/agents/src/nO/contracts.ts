@@ -386,7 +386,7 @@ export enum ToolLayer {
 
 export const ToolCapabilitySchema = z.object({
 	name: z.string(),
-	layer: ToolLayer,
+	layer: z.nativeEnum(ToolLayer),
 	description: z.string(),
 	schema: z.any(), // Zod schema
 	requiresAuth: z.boolean().default(false),

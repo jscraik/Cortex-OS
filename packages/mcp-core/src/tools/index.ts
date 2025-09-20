@@ -20,7 +20,7 @@ export * from './web-search-tool.js';
 export * from './write-tool.js';
 
 // Tool registry utilities
-import { ToolRegistry } from '../tools.js';
+import { type McpTool, ToolRegistry } from '../tools.js';
 import { bashTool } from './bash-tool.js';
 import { echoTool } from './echo-tool.js';
 import { editTool } from './edit-tool.js';
@@ -71,7 +71,7 @@ export const toolCategories = {
 /**
  * All available MCP tools as a flat array
  */
-export const allTools = [
+export const allTools: ReadonlyArray<McpTool<any, any>> = [
 	// System tools
 	bashTool,
 	echoTool,
@@ -97,12 +97,12 @@ export const allTools = [
 	// Task management tools
 	taskTool,
 	todoWriteTool,
-] as const;
+];
 
 /**
  * Tools that require permissions (marked as "Yes" in the original request)
  */
-export const permissionRequiredTools = [
+export const permissionRequiredTools: ReadonlyArray<McpTool<any, any>> = [
 	bashTool, // Shell execution
 	writeTool, // File creation/overwriting
 	editTool, // File modification
@@ -110,12 +110,12 @@ export const permissionRequiredTools = [
 	notebookEditTool, // Notebook modification
 	webFetchTool, // HTTP requests
 	webSearchTool, // Web access
-] as const;
+];
 
 /**
  * Tools that don't require permissions (marked as "No" in the original request)
  */
-export const noPermissionTools = [
+export const noPermissionTools: ReadonlyArray<McpTool<any, any>> = [
 	readTool, // File reading
 	globTool, // Pattern matching
 	grepTool, // Content search
@@ -123,7 +123,7 @@ export const noPermissionTools = [
 	taskTool, // Sub-agent tasks
 	todoWriteTool, // Task list management
 	echoTool, // Echo utility
-] as const;
+];
 
 /**
  * Create a new tool registry with all tools registered
@@ -132,7 +132,7 @@ export function createToolRegistry(): ToolRegistry {
 	const registry = new ToolRegistry();
 
 	for (const tool of allTools) {
-		registry.register(tool);
+		registry.register(tool as McpTool<unknown, unknown>);
 	}
 
 	return registry;
@@ -145,7 +145,7 @@ export function createRestrictedToolRegistry(): ToolRegistry {
 	const registry = new ToolRegistry();
 
 	for (const tool of noPermissionTools) {
-		registry.register(tool);
+		registry.register(tool as McpTool<unknown, unknown>);
 	}
 
 	return registry;

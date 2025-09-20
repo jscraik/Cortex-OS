@@ -149,7 +149,7 @@ export class MultiEditTool implements McpTool<MultiEditInput, MultiEditToolResul
 		} catch (error) {
 			// Ensure rollback on unexpected errors
 			if (atomic && !dryRun) {
-				await this.rollbackChanges(originalContents, backupPaths);
+				await this.rollbackChanges(originalContents);
 				rollbackPerformed = true;
 			}
 

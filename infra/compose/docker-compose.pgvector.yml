@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  pgvector:
+    image: ankane/pgvector:latest
+    container_name: cortex-pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER:-cortex}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-cortexpw}
+      POSTGRES_DB: ${PG_DB:-rag}
+    ports:
+      - "${PG_PORT:-5433}:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-cortex} -d ${PG_DB:-rag}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Orbstack-friendly profiles
+    profiles:
+      - dev-full
+      - dev-min
+
+volumes:
+  pgvector_data:
+    driver: local

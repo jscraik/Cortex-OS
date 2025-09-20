@@ -17,13 +17,23 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
-        "jsx": "react-jsx"
+        "jsx": "react-jsx",
+        "baseUrl": ".",
+        "paths": {
+            "@site/*": [
+                "./*"
+            ]
+        },
+        "types": [
+            "@docusaurus/module-type-aliases",
+            "node"
+        ]
     },
     "include": [
         "src/**/*",
         "docs/**/*",
         "blog/**/*",
-        "docusaurus.config.ts",
+        "docusaurus.config.local.ts",
         "sidebars.ts"
     ]
 }

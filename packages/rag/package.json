@@ -14,7 +14,8 @@
     "verify:coverage:auto": "node ./scripts/verify-coverage.mjs --auto-raise",
     "verify:coverage:dry": "node ./scripts/verify-coverage.mjs --auto-raise --dry-run",
     "docs:verify": "./scripts/verify-docs.sh",
-    "test:safe": "node ../../scripts/vitest-safe.mjs run"
+    "test:safe": "node ../../scripts/vitest-safe.mjs run",
+    "security:scan": "pnpm -w security:scan:diff || pnpm -w security:scan"
   },
   "dependencies": {
     "@cortex-os/contracts": "workspace:*",
@@ -31,5 +32,8 @@
     "typescript": "^5.5.4",
     "vitest": "^2.1.9",
     "eslint": "^9.35.0"
+  },
+  "optionalDependencies": {
+    "pg": "^8.16.3"
   }
 }

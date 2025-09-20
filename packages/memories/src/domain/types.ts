@@ -1,4 +1,15 @@
-export type MemoryId = string;
+// Use plain string for IDs to avoid redundant aliases per lint rules
+// Note: Use plain `string` for IDs across the codebase (lint rule forbids redundant aliases)
+
+export interface MemoryPolicy {
+	read?: string[];
+	write?: string[];
+	encrypt?: boolean;
+	ttl?: number;
+	pii?: boolean;
+	scope?: 'session' | 'user' | 'org';
+	requiresConsent?: boolean;
+}
 
 export interface Memory {
 	id: string;
@@ -15,12 +26,10 @@ export interface Memory {
 		evidence?: { uri: string; range?: [number, number] }[];
 		hash?: string;
 	};
-	policy?: {
-		pii?: boolean;
-		scope?: 'session' | 'user' | 'org';
-		requiresConsent?: boolean;
-	};
+	policy?: MemoryPolicy;
 	embeddingModel?: string;
+	// Additional metadata for integration adapters (RAG, MCP, etc.)
+	metadata?: Record<string, unknown>;
 }
 
 export interface CacheManager {

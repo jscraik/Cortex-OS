@@ -3,11 +3,12 @@
  * Loopback-only HTTP server implementing the blueprint API specification
  */
 
+import { PolicyRegistry } from '@cortex-os/asbr-policy';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import express from 'express';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
-import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import express from 'express';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
@@ -18,6 +19,7 @@ import { resolveIdempotency } from '../lib/resolve-idempotency.js';
 import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
 	type ArtifactRef,
+	AuthorizationError,
 	type Event,
 	NotFoundError,
 	type Profile,
@@ -46,6 +48,7 @@ export interface ASBRServerOptions {
 		capacity?: number;
 		refillRatePerSec?: number;
 	};
+	policyRegistry?: PolicyRegistry;
 }
 
 export interface ASBRServer {
@@ -91,12 +94,14 @@ class ASBRServerClass {
 	private cacheCleanupInterval?: NodeJS.Timeout;
 	private readonly CACHE_TTL = 30000; // 30 seconds
 	private readonly IDEMPOTENCY_TTL = 5 * 60 * 1000; // 5 minutes
+	private readonly policyRegistry: PolicyRegistry;
 
 	constructor(options: ASBRServerOptions = {}) {
 		this.app = express();
 		this.port = options.port || 7439;
 		this.host = options.host || '127.0.0.1'; // Loopback only
 		this.cacheTtlSec = Math.round((options.cacheTtlMs || 30000) / 1000); // Convert ms to seconds
+		this.policyRegistry = options.policyRegistry ?? new PolicyRegistry();
 
 		// Initialize rate limiting if enabled
 		if (options.rateLimit?.enabled) {
@@ -288,6 +293,12 @@ class ASBRServerClass {
 					code: error.code,
 					details: error.details,
 				});
+			} else if (error instanceof AuthorizationError) {
+				res.status(error.statusCode).json({
+					error: error.message,
+					code: error.code,
+					details: error.details,
+				});
 			} else if (error instanceof NotFoundError) {
 				res.status(404).json({
 					error: error.message,
@@ -317,6 +328,10 @@ class ASBRServerClass {
 	private async createTask(req: Request, res: Response): Promise<void> {
 		const { input, idempotencyKey } = req.body;
 		const taskInput = validateTaskInput(input);
+		const policyDecision = this.policyRegistry.evaluate({ kind: 'task.create', input: taskInput });
+		if (!policyDecision.allowed) {
+			throw new AuthorizationError(policyDecision.reason ?? 'Task creation blocked by policy');
+		}
 		const { key, existingTask } = resolveIdempotency(
 			taskInput,
 			idempotencyKey,
@@ -463,11 +478,11 @@ class ASBRServerClass {
 					const meta =
 						error instanceof Error
 							? {
-									error: {
-										message: error.message,
-										stack: error.stack,
-									},
-								}
+								error: {
+									message: error.message,
+									stack: error.stack,
+								},
+							}
 							: { error: { message: String(error) } };
 					logError('Failed to close SSE stream gracefully', meta);
 				}

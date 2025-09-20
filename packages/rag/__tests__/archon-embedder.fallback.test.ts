@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ArchonEmbedder } from '../src/integrations/archon-mcp.js';
+import { RemoteMCPEmbedder } from '../src/integrations/remote-mcp.js';
+import type { Embedder } from '../src/lib/types.js';
 
 class FallbackEmbedder {
 	async embed(texts: string[]) {
@@ -8,15 +9,15 @@ class FallbackEmbedder {
 }
 
 // Config enabling fallback
-const config: any = {
+const config: Record<string, unknown> = {
 	fallbackToLocal: true,
 };
 
-describe('ArchonEmbedder fallback embedding', () => {
-	let embedder: ArchonEmbedder;
+describe('RemoteMCPEmbedder fallback embedding', () => {
+	let embedder: RemoteMCPEmbedder;
 	beforeAll(async () => {
 		// Force remote failure by giving no MCP server (mock call may still succeed currently)
-		embedder = new ArchonEmbedder(config, new FallbackEmbedder() as any);
+		embedder = new RemoteMCPEmbedder(config, new FallbackEmbedder() as unknown as Embedder);
 		await embedder.initialize();
 	});
 

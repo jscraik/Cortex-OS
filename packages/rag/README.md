@@ -500,6 +500,7 @@ const multiResults = await pipeline.retrieveMulti([
   combineResults: true,
   deduplicateByContent: true
 });
+
 ```
 
 ## 🧪 Testing
@@ -507,21 +508,68 @@ const multiResults = await pipeline.retrieveMulti([
 ### Running Tests
 
 ```
+
 # Unit tests
+
 npm test
 
 # Integration tests
+
 npm run test:integration
 
 # Deterministic behavior tests
+
 npm run test:deterministic
 
 # Performance benchmarks
+
 npm run test:performance
 
 # Test with coverage
+
 npm run test:coverage
+
 ```
+
+### Pgvector Integration Tests (Optional)
+
+The pgvector-backed store integration tests are disabled by default. To run them locally:
+
+1) Start a local pgvector Postgres using the provided compose file:
+
+```
+
+docker compose -f ../../infra/compose/docker-compose.pgvector.yml up -d
+
+```
+
+By default this exposes Postgres on `localhost:5433` with credentials `cortex:cortexpw` and database `rag`.
+
+2) Export the connection settings (optional) and enable the tests:
+
+```
+
+export PG_USER=cortex
+export PG_PASSWORD=cortexpw
+export PG_PORT=5433
+export PG_URL="postgres://${PG_USER}:${PG_PASSWORD}@127.0.0.1:${PG_PORT}/rag"
+export PGVECTOR_TESTS=1
+
+```
+
+3) Install the optional `pg` driver and run tests:
+
+```
+
+pnpm -w add pg -O
+pnpm -w -C packages/rag test
+
+```
+
+Notes:
+- The `pg` package is listed under `optionalDependencies`; installing it enables the pgvector tests.
+- The test suite will skip pgvector tests unless `PGVECTOR_TESTS=1` is set.
+- Data persists in the Docker volume `pgvector_data`; remove it to reset the database.
 
 ### Test Coverage
 
@@ -537,6 +585,7 @@ npm run test:coverage
 ### Deterministic Testing
 
 ```
+
 // Deterministic test patterns
 import { RAGPipeline, MemoryStore, MockEmbedder } from '@cortex-os/rag/testing';
 
@@ -564,6 +613,7 @@ describe('RAG Pipeline Deterministic Behavior', () => {
     expect(results1).toEqual(results2);
   });
 });
+
 ```
 
 ## 📊 Performance
@@ -581,6 +631,7 @@ describe('RAG Pipeline Deterministic Behavior', () => {
 ### Performance Optimization
 
 ```
+
 // Optimized pipeline configuration
 const optimizedPipeline = new RAGPipeline({
   embedder: pythonEmbedder,
@@ -612,6 +663,7 @@ pipeline.on('performance', (metrics) => {
     memoryUsage: metrics.memoryUsagePercent
   });
 });
+
 ```
 
 ## 🔧 Configuration
@@ -619,30 +671,37 @@ pipeline.on('performance', (metrics) => {
 ### Environment Variables
 
 ```
+
 # Python embedding service
-PYTHON_EMBEDDING_ENDPOINT=http://localhost:8000/embed
+
+PYTHON_EMBEDDING_ENDPOINT=<http://localhost:8000/embed>
 PYTHON_EMBEDDING_TIMEOUT=30000
 
 # Qwen3 reranker configuration
+
 QWEN3_RERANKER_MODEL_PATH=Qwen/Qwen2-0.5B-Instruct
 QWEN3_RERANKER_CACHE_DIR=./cache/qwen3-models
 QWEN3_RERANKER_PYTHON=python3
 
 # Performance tuning
+
 RAG_BATCH_SIZE=32
 RAG_CONCURRENCY=4
 RAG_CHUNK_SIZE=400
 RAG_CHUNK_OVERLAP=80
 
 # Caching
+
 RAG_ENABLE_EMBEDDING_CACHE=true
 RAG_CACHE_SIZE=1000
 RAG_MEMORY_LIMIT=2GB
+
 ```
 
 ### Pipeline Configuration
 
 ```
+
 interface RAGPipelineConfig {
   // Core components
   embedder: Embedder;
@@ -667,6 +726,7 @@ interface RAGPipelineConfig {
   rerankingEnabled?: boolean;   // Default: false
   rerankingTopK?: number;       // Default: 10
 }
+
 ```
 
 ## 🚀 Advanced Usage
@@ -674,6 +734,7 @@ interface RAGPipelineConfig {
 ### Multi-Document RAG
 
 ```
+
 // Multi-document ingestion with categorization
 const documentCategories = [
   { category: 'technical', documents: technicalDocs },
@@ -692,11 +753,13 @@ for (const category of documentCategories) {
 const technicalResults = await pipeline.retrieve('API implementation details', 5, {
   filter: { category: 'technical' }
 });
+
 ```
 
 ### Hybrid Search
 
 ```
+
 // Combine vector similarity with keyword search
 const hybridResults = await pipeline.retrieveHybrid(
   'agent communication patterns',
@@ -714,11 +777,13 @@ const multiModalResults = await pipeline.retrieveMultiModal({
   imageQuery: architectureDiagram,
   weights: { text: 0.8, image: 0.2 }
 });
+
 ```
 
 ### Custom Retrieval Strategies
 
 ```
+
 // Implement custom retrieval strategy
 class SemanticRetrievalStrategy {
   async retrieve(query: string, pipeline: RAGPipeline, options: any) {
@@ -741,6 +806,7 @@ const customPipeline = new RAGPipeline({
   store,
   retrievalStrategy: new SemanticRetrievalStrategy()
 });
+
 ```
 
 ## 🤝 Contributing
@@ -750,20 +816,26 @@ We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING
 ### Development Setup
 
 ```
+
 # Clone and install dependencies
-git clone https://github.com/cortex-os/cortex-os.git
+
+git clone <https://github.com/cortex-os/cortex-os.git>
 cd cortex-os/packages/rag
 pnpm install
 
 # Start Python embedding service (if using)
+
 pip install -r requirements.txt
 python embedding_server.py
 
 # Run development build
+
 pnpm dev
 
 # Run tests
+
 pnpm test
+
 ```
 
 ### Contribution Guidelines

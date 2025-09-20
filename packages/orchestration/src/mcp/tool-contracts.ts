@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AgentRole, OrchestrationStrategy, TaskStatus } from '../types.js';
-import { ToolErrorCode, ToolValidationError } from './tools.js';
+import { ToolErrorCode, ToolValidationError } from './tool-errors.js';
 
 // Schemas (moved from tools.ts for separation of concerns)
 export const PlanWorkflowInputSchema = z.object({

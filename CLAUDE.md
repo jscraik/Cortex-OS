@@ -3,6 +3,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Local Memory
+
+Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time.
+Store key insights including lessons learned, architectural decisions, development strategies, and project outcomes. Use semantic search
+and relationship mapping to find relevant memories across all projects and sessions. This enables persistent knowledge across development
+sessions and enhances decision-making through historical context.
+
 ## Project Overview
 
 Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** that enables AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. This is a governed monorepo with strict architectural boundaries and comprehensive quality gates.

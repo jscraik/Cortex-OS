@@ -5,7 +5,7 @@ import {
 	A2AOutboxSyncResultSchema,
 	A2AQueueMessageInputSchema,
 	A2AQueueMessageResultSchema,
-} from '@cortex-os/contracts/dist/src/index.js';
+} from '@cortex-os/contracts';
 import { describe, expect, it } from 'vitest';
 import { createA2AMcpTools } from '../src/mcp/tools.js';
 

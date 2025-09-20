@@ -4,21 +4,7 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "paths": {
-      "@cortex-os/prp-runner": [
-        "../prp-runner/dist/index.d.ts"
-      ],
-      "@cortex-os/prp-runner/*": [
-        "../prp-runner/dist/*"
-      ],
-      "@cortex-os/kernel": [
-        "../kernel/dist/index.d.ts" 
-      ],
-      "@cortex-os/kernel/*": [
-        "../kernel/dist/*"
-      ]
-    }
+    "sourceMap": true
   },
   "include": [
     "src/**/*"

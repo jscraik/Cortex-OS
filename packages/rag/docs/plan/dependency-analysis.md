@@ -4,7 +4,7 @@
 
 ### 1. HuggingFace smolagents
 
-**URL**: https://huggingface.co/docs/smolagents/en/examples/rag  
+**URL**: <https://huggingface.co/docs/smolagents/en/examples/rag>  
 **Integration Priority**: HIGH - Core agentic coordination
 
 #### Key Patterns Extracted
@@ -33,7 +33,7 @@ const executeWithPlanning = async (query: string): Promise<AgentResult> => {
 }
 ```
 
-#### Integration Points
+#### Integration Points (Retrieval Layer)
 
 - **Core**: Agent coordination in `src/agents/coordinator.ts`
 - **Tools**: Multi-tool orchestration in `src/agents/tools.ts`
@@ -43,7 +43,7 @@ const executeWithPlanning = async (query: string): Promise<AgentResult> => {
 
 ### 2. code2prompt
 
-**URL**: https://github.com/mufeedvh/code2prompt.git  
+**URL**: <https://github.com/mufeedvh/code2prompt.git>  
 **Integration Priority**: MEDIUM - Session-based processing
 
 #### Key Patterns Extracted
@@ -86,7 +86,7 @@ const processWithTemplate = async (
 
 ### 3. codemapper
 
-**URL**: https://github.com/MikeyBeez/codemapper.git  
+**URL**: <https://github.com/MikeyBeez/codemapper.git>  
 **Integration Priority**: MEDIUM - AST analysis capabilities
 
 #### Key Patterns Extracted
@@ -130,7 +130,7 @@ const calculateCouplingMetrics = (graph: DependencyGraph): CouplingMetrics => {
 
 ### 4. git-mcp / PRP-runner (User's System)
 
-**URL**: https://github.com/idosal/git-mcp.git  
+**URL**: <https://github.com/idosal/git-mcp.git>  
 **Integration Priority**: HIGH - Repository transformation
 
 #### Key Patterns Extracted
@@ -169,10 +169,10 @@ const extractCommitContext = async (repo: GitRepository): Promise<CommitContext[
 
 ---
 
-### 5. Archon (Advanced Retrieval)
+### 5. Remote MCP (Advanced Retrieval)
 
-**URL**: Archon repository analysis  
-**Integration Priority**: MEDIUM - Multi-strategy retrieval
+**URL**: Remote MCP integration analysis  
+**Integration Priority**: MEDIUM - Multi-strategy retrieval (vendor-neutral)
 
 #### Key Patterns Extracted
 
@@ -195,9 +195,7 @@ const routeQuery = async (query: string, strategies: RetrievalStrategy[]): Promi
 
 ```json
 {
-  "faiss-node": "^0.5.1",
-  "sentence-transformers": "^1.0.0",
-  "elasticsearch": "^8.5.0"
+  "sentence-transformers": "^1.0.0"
 }
 ```
 
@@ -626,4 +624,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 ```
 
-This comprehensive dependency analysis provides complete repository integration patterns, dependency specifications, and setup scripts for industrial-grade RAG enhancement implementation.
+This comprehensive dependency analysis provides complete repository integration patterns,
+dependency specifications, and setup scripts for industrial-grade RAG enhancement implementation.

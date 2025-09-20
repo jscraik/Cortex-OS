@@ -70,6 +70,12 @@
 			"@cortex-os/asbr-schemas/*": [
 				"libs/typescript/asbr-schemas/dist/*"
 			],
+			"@cortex-os/asbr-policy": [
+				"libs/typescript/asbr-policy/dist/index.d.ts"
+			],
+			"@cortex-os/asbr-policy/*": [
+				"libs/typescript/asbr-policy/dist/*"
+			],
 			"@cortex-os/utils/*": [
 				"libs/typescript/utils/dist/*"
 			],
@@ -80,10 +86,10 @@
 				"libs/typescript/types/src/*"
 			],
 			"@cortex-os/contracts": [
-				"libs/typescript/contracts/dist/index.d.ts"
+				"libs/typescript/contracts/dist/src/index.d.ts"
 			],
 			"@cortex-os/contracts/*": [
-				"libs/typescript/contracts/dist/*"
+				"libs/typescript/contracts/dist/src/*"
 			],
 			"@cortex-os/telemetry": [
 				"libs/typescript/telemetry/src"

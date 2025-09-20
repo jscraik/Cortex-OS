@@ -9,11 +9,22 @@ import { z } from 'zod';
 import type { Subagent, SubagentConfig, SubagentRunInput } from '../nO/contracts';
 
 // Tool interface compatible with existing ToolEngine
+export interface ToolResponse {
+	text: string;
+	success: boolean;
+	artifacts?: Record<string, unknown>;
+	metrics?: Record<string, unknown>;
+	traceId?: string;
+	error?: string;
+	delegatedTo?: string[];
+	count?: number;
+}
+
 export interface Tool {
 	name: string;
 	description: string;
-	schema: any; // Zod schema
-	call(args: any, ctx?: { caller?: string; depth?: number }): Promise<any>;
+	schema: z.ZodTypeAny;
+	call(args: unknown, ctx?: { caller?: string; depth?: number }): Promise<ToolResponse>;
 }
 
 /**
@@ -46,7 +57,9 @@ export function materializeSubagentTool(config: SubagentConfig, subagent: Subage
 		/**
 		 * Execute the subagent tool
 		 */
-		async call(args, ctx?: { caller?: string; depth?: number }): Promise<any> {
+	async call(args, ctx?: { caller?: string; depth?: number }): Promise<ToolResponse> {
+		// Validate and narrow args to typed shape
+		const parsed = schema.parse(args);
 			// Recursion guard: prevent subagent from calling itself
 			if (ctx?.caller === `agent.${config.name}`) {
 				return {
@@ -58,9 +71,9 @@ export function materializeSubagentTool(config: SubagentConfig, subagent: Subage
 
 			// Prepare input for subagent
 			const input: SubagentRunInput = {
-				task: args.task,
-				context: args.context,
-				budget: args.budget,
+				task: parsed.task,
+				context: parsed.context,
+				budget: parsed.budget,
 				depth: (ctx?.depth || 0) + 1,
 				caller: ctx?.caller || 'parent',
 			};
@@ -92,6 +105,16 @@ export function materializeSubagentTool(config: SubagentConfig, subagent: Subage
 /**
  * Create an auto-delegation tool that can select and run multiple subagents
  */
+type ExecutionResult = {
+	name: string;
+	success: boolean;
+	output?: string;
+	artifacts?: Record<string, unknown>;
+	metrics?: { tokensUsed?: number; executionTime?: number };
+	traceId?: string;
+	error?: string;
+} | null;
+
 export function createAutoDelegateTool(
 	subagents: Map<string, Subagent>,
 	selectSubagents?: (task: string, k: number) => Promise<SubagentConfig[]>,
@@ -113,12 +136,18 @@ export function createAutoDelegateTool(
 		description: 'Select K relevant subagents and run them in parallel; returns merged summary',
 		schema,
 
-		async call(args, ctx?: { caller?: string; depth?: number }): Promise<any> {
+	async call(args, ctx?: { caller?: string; depth?: number }): Promise<ToolResponse> {
 			try {
+				const parsed = schema.parse(args);
 				// Select relevant subagents
 				const selected =
-					(await selectSubagents?.(args.task, args.k)) ||
-					Array.from(subagents.keys()).slice(0, args.k);
+					(await selectSubagents?.(parsed.task, parsed.k)) ||
+					Array.from(subagents.keys())
+						.slice(0, parsed.k)
+						.map(key => {
+							const subagent = subagents.get(key);
+							return subagent?.config || { name: key } as SubagentConfig;
+						});
 
 				if (selected.length === 0) {
 					return {
@@ -128,22 +157,22 @@ export function createAutoDelegateTool(
 				}
 
 				// Split budget among subagents
-				const perAgentBudget = args.budget
+				const perAgentBudget = parsed.budget
 					? {
-							tokens: args.budget.tokens
-								? Math.floor((args.budget.tokens || 0) / selected.length)
-								: undefined,
-							ms: args.budget.ms ? Math.floor((args.budget.ms || 0) / selected.length) : undefined,
-						}
+						tokens: parsed.budget.tokens
+							? Math.floor((parsed.budget.tokens || 0) / selected.length)
+							: undefined,
+						ms: parsed.budget.ms ? Math.floor((parsed.budget.ms || 0) / selected.length) : undefined,
+					}
 					: undefined;
 
 				// Execute subagents in parallel
-				const promises = selected.map(async (config) => {
+				const promises = selected.map(async (config): Promise<ExecutionResult> => {
 					const subagent = subagents.get(config.name);
 					if (!subagent) return null;
 
 					const input: SubagentRunInput = {
-						task: args.task,
+						task: parsed.task,
 						context: { origin: 'autodelegate', selected },
 						budget: perAgentBudget,
 						depth: (ctx?.depth || 0) + 1,
@@ -169,7 +198,7 @@ export function createAutoDelegateTool(
 					}
 				});
 
-				const results = await Promise.all(promises);
+				const results: ExecutionResult[] = await Promise.all(promises);
 
 				// Filter out null results
 				const validResults = results.filter((r) => r !== null);
@@ -192,19 +221,24 @@ export function createAutoDelegateTool(
 				}
 
 				// Calculate aggregate metrics
-				const aggregateMetrics =
-					successful.length > 0
-						? {
-								totalTokens: successful.reduce((sum, r) => sum + (r.metrics?.tokensUsed || 0), 0),
-								totalTime: successful.reduce((sum, r) => sum + (r.metrics?.executionTime || 0), 0),
-								agentsExecuted: successful.length,
-							}
-						: undefined;
+				const aggregateMetrics = successful.length > 0
+					? successful.reduce<Record<string, number>>((acc, r) => {
+						acc.totalTokens = (acc.totalTokens || 0) + (Number(r.metrics?.tokensUsed) || 0);
+						acc.totalTime = (acc.totalTime || 0) + (Number(r.metrics?.executionTime) || 0);
+						acc.agentsExecuted = successful.length;
+						return acc;
+					}, {})
+					: undefined;
 
 				return {
 					text: output,
 					success: successful.length > 0,
-					artifacts: successful.reduce((acc, r) => ({ ...acc, ...r.artifacts }), {}),
+					artifacts: successful.reduce<Record<string, unknown>>((acc, r) => {
+						if (r.artifacts && typeof r.artifacts === 'object') {
+							for (const [k, v] of Object.entries(r.artifacts)) acc[k] = v;
+						}
+						return acc;
+					}, {}),
 					metrics: aggregateMetrics,
 					delegatedTo: selected.map((s) => s.name),
 				};
@@ -228,7 +262,7 @@ export function createListSubagentsTool(subagents: Map<string, Subagent>): Tool 
 		description: 'List all available subagents and their capabilities',
 		schema: z.object({}),
 
-		async call() {
+	async call(): Promise<ToolResponse> {
 			const agentList = Array.from(subagents.entries()).map(([name, subagent]) => ({
 				name,
 				description: subagent.config.description,
@@ -260,7 +294,7 @@ export function createSubagentHealthTool(subagents: Map<string, Subagent>): Tool
 		description: 'Get health status of a specific subagent',
 		schema,
 
-		async call(args) {
+	async call(args: z.infer<typeof schema>): Promise<ToolResponse> {
 			const subagent = subagents.get(args.agentName);
 
 			if (!subagent) {
@@ -272,7 +306,16 @@ export function createSubagentHealthTool(subagents: Map<string, Subagent>): Tool
 
 			try {
 				const health = await subagent.getHealth();
-				const metrics = subagent.getMetrics();
+				// Note: getMetrics is optional and not part of the core Subagent interface
+				const metrics = 'getMetrics' in subagent && typeof subagent.getMetrics === 'function'
+					? (subagent.getMetrics as () => Record<string, unknown>)()
+					: {
+						messagesProcessed: 0,
+						totalTokensUsed: 0,
+						averageResponseTime: 0,
+						errorRate: 0,
+						lastUpdated: new Date().toISOString(),
+					};
 
 				return {
 					text: JSON.stringify(

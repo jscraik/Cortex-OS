@@ -5,6 +5,10 @@
 The `packages/agent-toolkit` provides a **unified, contract-driven interface** for all development  
 operations. This toolkit is **REQUIRED** for maintaining monorepo uniformity and code quality.
 
+## Local Memory
+
+Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time. Store key insights including lessons learned, architectural decisions, development strategies, and project outcomes. Use semantic search and relationship mapping to find relevant memories across all projects and sessions. This enables persistent knowledge across development sessions and enhances decision-making through historical context.
+
 ### Core Integration Pattern
 
 ```typescript

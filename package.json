@@ -404,5 +404,8 @@
       "biome check --write --no-errors-on-unmatched --max-diagnostics=none",
       "ast-grep scan --config sgconfig.json --report-style rich"
     ]
+  },
+  "optionalDependencies": {
+    "pg": "^8.16.3"
   }
 }

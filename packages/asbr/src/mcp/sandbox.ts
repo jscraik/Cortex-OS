@@ -8,6 +8,7 @@ import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import pidusage from 'pidusage';
+import { PolicyRegistry } from '@cortex-os/asbr-policy';
 import { loadMCPAllowlist, loadSecurityPolicies } from '../core/config.js';
 import type { MCPAllowlistEntry, SecurityPolicy, SecurityRule } from '../types/index.js';
 import { AuthorizationError, ValidationError } from '../types/index.js';
@@ -39,6 +40,7 @@ export interface SandboxResult {
 export class MCPSandbox {
 	private allowlist: MCPAllowlistEntry[] = [];
 	private policies: SecurityPolicy[] = [];
+	private readonly policyRegistry = new PolicyRegistry();
 	private runningProcesses = new Map<string, ChildProcess>();
 	private idCounter = 0;
 
@@ -47,6 +49,8 @@ export class MCPSandbox {
 			loadMCPAllowlist(),
 			loadSecurityPolicies(),
 		]);
+
+		this.registerSecurityPolicies();
 	}
 
 	/**
@@ -94,8 +98,22 @@ export class MCPSandbox {
 				);
 			}
 
-			// Apply security policies
-			await this.validateSecurityPolicies(context);
+			// Apply security policies via registry
+			const decision = this.policyRegistry.evaluate({
+				kind: 'mcp.tool.execute',
+				payload: {
+					toolName: context.toolName,
+					version: context.version,
+					args: context.args,
+					workingDir: context.workingDir,
+					environment: context.environment,
+				},
+			});
+			if (!decision.allowed) {
+				throw new AuthorizationError(
+					decision.reason ?? 'Tool execution denied by security policy',
+				);
+			}
 
 			// Create sandboxed execution environment
 			const sandbox = await this.createSandbox(context);
@@ -138,42 +156,74 @@ export class MCPSandbox {
 		}
 	}
 
-	private async validateSecurityPolicies(context: SandboxContext): Promise<void> {
-		for (const policy of this.policies.filter((p) => p.enabled)) {
-			for (const rule of policy.rules) {
-				await this.validateRule(rule, context);
+	private registerSecurityPolicies(): void {
+		for (const policy of this.policies) {
+			this.policyRegistry.register(policy.id, {
+				id: policy.id,
+				description: policy.name,
+				evaluate: (context) => this.evaluateSecurityPolicy(policy, context),
+			});
+			if (!policy.enabled) {
+				this.policyRegistry.disable(policy.id);
 			}
 		}
 	}
 
-	private async validateRule(rule: SecurityRule, context: SandboxContext): Promise<void> {
+	private evaluateSecurityPolicy(
+		policy: SecurityPolicy,
+		context: Parameters<PolicyRegistry['evaluate']>[0],
+	): ReturnType<PolicyRegistry['evaluate']> {
+		if (context.kind !== 'mcp.tool.execute') {
+			return { allowed: true };
+		}
+
+		const execution = context.payload as SandboxContext | undefined;
+		if (!execution) {
+			return { allowed: true };
+		}
+
+		for (const rule of policy.rules) {
+			const decision = this.evaluateRule(rule, execution);
+			if (!decision.allowed) {
+				return {
+					allowed: false,
+					reason: decision.reason ?? `${policy.name} denied tool execution`,
+				};
+			}
+		}
+
+		return { allowed: true };
+	}
+
+	private evaluateRule(rule: SecurityRule, context: SandboxContext): {
+		allowed: boolean;
+		reason?: string;
+	} {
 		switch (rule.type) {
 			case 'shell_deny':
-				// Deny shell execution
 				if (context.args.some((arg) => typeof arg === 'string' && arg.includes('shell'))) {
-					throw new AuthorizationError('Shell execution denied by security policy');
+					return { allowed: false, reason: 'Shell execution denied by security policy' };
 				}
-				break;
+				return { allowed: true };
 
 			case 'egress_deny':
-				// Deny network egress (would be implemented with network policies)
-				break;
+				return { allowed: true };
 
 			case 'file_access':
-				// Restrict file access to allowed paths
 				if (rule.allowlist) {
 					const workingDir = context.workingDir;
 					const isAllowed = rule.allowlist.some((path) => workingDir.startsWith(path));
 					if (!isAllowed) {
-						throw new AuthorizationError(`File access denied to ${workingDir}`);
+						return { allowed: false, reason: `File access denied to ${workingDir}` };
 					}
 				}
-				break;
+				return { allowed: true };
 
 			case 'api_rate_limit':
-				// Implement rate limiting (would require persistent storage)
-				break;
+				return { allowed: true };
 		}
+
+		return { allowed: true };
 	}
 
 	private async createSandbox(context: SandboxContext): Promise<{

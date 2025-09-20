@@ -238,7 +238,7 @@ export class NotebookEditTool implements McpTool<NotebookEditInput, NotebookEdit
 	}
 
 	private addCell(notebook: any, operation: any): NotebookEditOperation {
-		const newCell = {
+		const newCell: any = {
 			cell_type: operation.cellType,
 			source: operation.source,
 			metadata: {},
@@ -285,9 +285,9 @@ export class NotebookEditTool implements McpTool<NotebookEditInput, NotebookEdit
 		notebook.cells[operation.index].source = operation.source;
 
 		// Clear outputs for code cells when source changes
-		if (notebook.cells[operation.index].cell_type === 'code') {
-			notebook.cells[operation.index].outputs = [];
-			notebook.cells[operation.index].execution_count = null;
+		if ((notebook.cells as any)[operation.index].cell_type === 'code') {
+			(notebook.cells as any)[operation.index].outputs = [] as any[];
+			(notebook.cells as any)[operation.index].execution_count = null;
 		}
 
 		return {
@@ -377,9 +377,9 @@ export class NotebookEditTool implements McpTool<NotebookEditInput, NotebookEdit
 			}
 
 			const cell = notebook.cells[operation.index];
-			if (cell.cell_type === 'code') {
-				cell.outputs = [];
-				cell.execution_count = null;
+			if ((cell as any).cell_type === 'code') {
+				(cell as any).outputs = [] as any[];
+				(cell as any).execution_count = null;
 			}
 
 			return {

@@ -20,7 +20,7 @@ export interface RuntimeHandle {
 export async function startRuntime(): Promise<RuntimeHandle> {
 	const memories = container.get(TOKENS.Memories);
 	const orchestration = container.get(TOKENS.Orchestration);
-	const mcpGateway = container.get(TOKENS.MCPGateway);
+	const mcpGateway = container.get(TOKENS.MCPGateway) as import('./mcp/gateway').McpGateway;
 	const taskRepository = container.get<TaskRepository>(TOKENS.TaskRepository);
 	const profileRepository = container.get<ProfileRepository>(TOKENS.ProfileRepository);
 	const artifactRepository = container.get<ArtifactRepository>(TOKENS.ArtifactRepository);

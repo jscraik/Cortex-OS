@@ -189,7 +189,6 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
 	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
 	await writeFile(scriptPath, script);
 	// Use the centralized Python spawner so env merging and PYTHONPATH handling are consistent
-	// @ts-expect-error Dynamic import for Python execution utilities
 	const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
 	try {
 		return await new Promise((resolve, reject) => {
@@ -219,7 +218,7 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
 			child.on('exit', () => clearTimeout(to));
 		});
 	} finally {
-		await unlink(scriptPath).catch(() => {});
+		await unlink(scriptPath).catch(() => { });
 	}
 }
 
@@ -231,7 +230,6 @@ async function executeMLXScriptWithInput(
 	const tmpDir = os.tmpdir();
 	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
 	await writeFile(scriptPath, script);
-	// @ts-expect-error Dynamic import for Python execution utilities
 	const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
 	try {
 		return await new Promise((resolve, reject) => {
@@ -264,7 +262,7 @@ async function executeMLXScriptWithInput(
 			child.on('exit', () => clearTimeout(to));
 		});
 	} finally {
-		await unlink(scriptPath).catch(() => {});
+		await unlink(scriptPath).catch(() => { });
 	}
 }
 

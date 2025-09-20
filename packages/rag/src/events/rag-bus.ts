@@ -3,7 +3,7 @@ import { createEnvelope } from '@cortex-os/a2a-contracts';
 import type { BusOptions, Transport } from '@cortex-os/a2a-core';
 import { createBus } from '@cortex-os/a2a-core';
 import { inproc } from '@cortex-os/a2a-transport';
-import { RAGEventSchemas, type RAGEventType, RAGEventTypes } from './rag-events';
+import { RAGEventSchemas, type RAGEventType, RAGEventTypes } from './rag-events.js';
 
 // Type definitions for payload mapping
 export type RagEventPayloadMap = {
@@ -175,4 +175,4 @@ export function createRagBus(options: RagBusOptions = {}): RagBus {
 	};
 }
 
-export type { RAGEventTypes };
+export { RAGEventTypes };

@@ -1,11 +1,11 @@
-import { withSpan } from '@cortex-os/telemetry';
-import type { Envelope } from '../a2a-contracts/src/envelope.js';
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
 	type OutboxConfig,
 	type OutboxMessage,
 	OutboxMessageStatus,
 	type OutboxRepository,
-} from '../a2a-contracts/src/outbox-types.js';
+} from '@cortex-os/a2a-contracts/outbox-types';
+import { withSpan } from '@cortex-os/telemetry';
 import { DeadLetterQueue, InMemoryDeadLetterStore } from '../a2a-core/src/dlq.js';
 import {
 	createReliableOutboxProcessor,

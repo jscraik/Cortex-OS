@@ -2,6 +2,8 @@
  * Core type definitions for the agents package
  */
 
+import { z } from 'zod';
+
 export interface Memory {
 	id: string;
 	kind: 'note' | 'event' | 'artifact' | 'embedding';
@@ -105,7 +107,54 @@ export interface AgentConfig {
 	memoryConfig?: MemoryConfig;
 	systemPrompt?: string;
 	mcpEndpoint?: string;
+	// Add tools property that was missing
+	tools?: Tool[] | string[];
 }
+
+// Missing Subagent types
+export interface SubagentConfig {
+	name: string;
+	capabilities: string[];
+	path: string;
+	description: string;
+	maxConcurrency: number;
+	timeout: number;
+	systemPrompt: string;
+	scope: "user" | "project";
+	model?: string;
+	tools?: string[];
+	maxTokens?: number;
+	temperature?: number;
+}
+
+export interface SubagentRunInput {
+	task: string;
+	context?: Record<string, unknown>;
+	config?: Partial<SubagentConfig>;
+}
+
+export interface SubagentRunResult {
+	success: boolean;
+	result?: any;
+	error?: string;
+	metrics?: AgentMetrics;
+	logs?: string[];
+}
+
+// Zod schema for SubagentRunResult
+export const SubagentRunResultSchema = z.object({
+	success: z.boolean(),
+	result: z.unknown().optional(),
+	error: z.string().optional(),
+	metrics: z.object({
+		messagesProcessed: z.number(),
+		totalTokensUsed: z.number(),
+		averageResponseTime: z.number(),
+		errorRate: z.number(),
+		lastUpdated: z.string(),
+	}).optional(),
+	logs: z.array(z.string()).optional(),
+});
 
 // Additional missing interfaces for agents
 export interface ToolConfig {
@@ -132,4 +181,12 @@ export interface AgentMetrics {
 	averageResponseTime: number;
 	errorRate: number;
 	lastUpdated: string;
+}
+
+// Interface for subagents that need metrics
+export interface Subagent {
+	name: string;
+	config: SubagentConfig;
+	run: (input: SubagentRunInput) => Promise<SubagentRunResult>;
+	getMetrics?: () => AgentMetrics;
 }

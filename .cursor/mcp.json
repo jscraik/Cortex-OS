@@ -1,0 +1,10 @@
+{
+    "servers": {
+        "local-memory": {
+            "command": "/Users/jamiecraik/.local/bin/local-memory",
+            "args": [
+                "--mcp"
+            ]
+        }
+    }
+}

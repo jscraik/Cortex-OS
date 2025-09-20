@@ -1475,7 +1475,7 @@ export const createFullRAGSystem = async (config: {
 2. **code2prompt**: Session-based codebase processing
 3. **codemapper**: AST analysis, dependency visualization
 4. **git-mcp**: Repository-to-knowledge transformation
-5. **Archon**: Multi-strategy retrieval, hybrid search
+5. **Remote MCP**: Multi-strategy retrieval, hybrid search (vendor-neutral)
 
 ### MLX Requirements
 

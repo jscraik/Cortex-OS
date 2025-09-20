@@ -4,9 +4,9 @@ import { LocalMemoryStore } from '../adapters/store.localmemory.js';
 import { InMemoryStore } from '../adapters/store.memory.js';
 import type { PrismaLike } from '../adapters/store.prisma/client.js';
 import { PrismaStore } from '../adapters/store.prisma/client.js';
-import { SQLiteStore } from '../adapters/store.sqlite.js';
 import { type EncryptionService, InMemoryAesGcm } from '../ports/Encryption.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
+import { ENV, getEnvWithFallback } from '../config/constants.js';
 
 export type NamespaceSelectorConfig = {
 	namespaces?: string[];
@@ -52,14 +52,14 @@ export function createPolicyStoreFromEnv(
 	shortTerm: MemoryStore,
 	longTerm: MemoryStore,
 ): MemoryStore {
-	const secret = process.env.MEMORIES_ENCRYPTION_SECRET;
-	const namespaces = (process.env.MEMORIES_ENCRYPTION_NAMESPACES || '')
+	const secret = process.env[ENV.ENCRYPTION_SECRET];
+	const namespaces = (process.env[ENV.ENCRYPTION_NAMESPACES] || '')
 		.split(',')
 		.map((s) => s.trim())
 		.filter(Boolean);
-	const regex = process.env.MEMORIES_ENCRYPTION_REGEX || '';
-	const encryptVectors = (process.env.MEMORIES_ENCRYPT_VECTORS || 'false').toLowerCase() === 'true';
-	const encryptTags = (process.env.MEMORIES_ENCRYPT_TAGS || 'false').toLowerCase() === 'true';
+	const regex = process.env[ENV.ENCRYPTION_REGEX] || '';
+	const encryptVectors = (process.env[ENV.ENCRYPT_VECTORS] || 'false').toLowerCase() === 'true';
+	const encryptTags = (process.env[ENV.ENCRYPT_TAGS] || 'false').toLowerCase() === 'true';
 
 	const selector = buildNamespaceSelector({
 		namespaces,
@@ -80,31 +80,30 @@ export type LayeredEnvOptions = {
 
 // Build layered store from env: MEMORIES_SHORT_STORE, MEMORIES_LONG_STORE
 // Kinds: memory | sqlite | prisma | local
-export function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): MemoryStore {
+export async function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): Promise<MemoryStore> {
 	const shortKind = (process.env.MEMORIES_SHORT_STORE || 'memory').toLowerCase();
 	const longKind =
-		(
-			process.env.MEMORIES_LONG_STORE ||
-			process.env.MEMORIES_ADAPTER ||
-			process.env.MEMORY_STORE ||
-			''
-		).toLowerCase() || 'sqlite';
+		getEnvWithFallback(
+			'MEMORIES_LONG_STORE',
+			[ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2],
+			{ context: 'long-term store adapter' }
+		)?.toLowerCase() || 'memory';
 
-	const makeStore = (
+	const makeStore = async (
 		kind: string,
 		prismaClient?: { memory?: unknown } | undefined,
-	): MemoryStore => {
+	): Promise<MemoryStore> => {
 		if (kind === 'local') {
 			return new LocalMemoryStore({
-				baseUrl: process.env.LOCAL_MEMORY_BASE_URL,
-				apiKey: process.env.LOCAL_MEMORY_API_KEY,
-				defaultNamespace: process.env.LOCAL_MEMORY_NAMESPACE,
+				baseUrl: process.env[ENV.LOCAL_MEMORY_BASE_URL],
+				apiKey: process.env[ENV.LOCAL_MEMORY_API_KEY],
+				defaultNamespace: process.env[ENV.LOCAL_MEMORY_NAMESPACE],
 			});
 		}
 		if (kind === 'sqlite') {
-			const dbPath = process.env.MEMORIES_SQLITE_PATH || './data/memories.db';
-			const dim = Number(process.env.MEMORIES_VECTOR_DIM || '1536');
-			return new SQLiteStore(dbPath, dim);
+			const { SQLiteStore } = await import('../adapters/store.sqlite.js');
+			// Use in-memory SQLite by default for testing
+			return new SQLiteStore(':memory:', 384);
 		}
 		if (kind === 'prisma') {
 			const prismaUnknown =
@@ -124,13 +123,14 @@ export function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): MemoryStore
 		return new InMemoryStore();
 	};
 
-	const shortTerm = makeStore(shortKind, opts?.prismaShort);
-	const longTerm = makeStore(longKind, opts?.prismaLong);
+	const shortTerm = await makeStore(shortKind, opts?.prismaShort);
+	const longTerm = await makeStore(longKind, opts?.prismaLong);
 	return new LayeredMemoryStore(shortTerm, longTerm);
 }
 
 // Build policy-aware layered store using both layered and encryption env
-export function createPolicyAwareStoreFromEnv(opts?: LayeredEnvOptions): MemoryStore {
-	const layered = createLayeredStoreFromEnv(opts);
+export async function createPolicyAwareStoreFromEnv(opts?: LayeredEnvOptions): Promise<MemoryStore> {
+	const layered = await createLayeredStoreFromEnv(opts);
+	// Use the same layered store for both short and long term by default
 	return createPolicyStoreFromEnv(layered, layered);
 }

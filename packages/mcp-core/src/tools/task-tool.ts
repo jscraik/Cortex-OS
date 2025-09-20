@@ -1,6 +1,15 @@
 import { z } from 'zod';
 import type { McpTool, ToolExecutionContext } from '../tools.js';
-import { ToolExecutionError } from '../tools.js';
+import { ToolExecutionError, ToolRegistry } from '../tools.js';
+import { editTool } from './edit-tool.js';
+import { globTool } from './glob-tool.js';
+import { grepTool } from './grep-tool.js';
+import { multiEditTool } from './multiedit-tool.js';
+import { notebookReadTool } from './notebook-read-tool.js';
+import { readTool } from './read-tool.js';
+import { webFetchTool } from './web-fetch-tool.js';
+import { webSearchTool } from './web-search-tool.js';
+import { writeTool } from './write-tool.js';
 
 const TaskInputSchema = z.object({
 	description: z.string().min(1, 'description is required'),
@@ -46,6 +55,24 @@ export class TaskTool implements McpTool<TaskInput, TaskResult> {
 	readonly description =
 		'Runs a sub-agent to handle complex, multi-step tasks with progress tracking.';
 	readonly inputSchema = TaskInputSchema;
+
+	private registry: ToolRegistry | null = null;
+	private getRegistry(): ToolRegistry {
+		if (this.registry) return this.registry;
+		const r = new ToolRegistry();
+		// Register a safe, production-ready set of tools
+		r.register(readTool);
+		r.register(writeTool);
+		r.register(editTool);
+		r.register(multiEditTool);
+		r.register(globTool);
+		r.register(grepTool);
+		r.register(webFetchTool);
+		r.register(webSearchTool);
+		r.register(notebookReadTool);
+		this.registry = r;
+		return r;
+	}
 
 	async execute(input: TaskInput, context?: ToolExecutionContext): Promise<TaskResult> {
 		const taskId = this.generateTaskId();
@@ -138,9 +165,7 @@ export class TaskTool implements McpTool<TaskInput, TaskResult> {
 			step.startTime = new Date().toISOString();
 
 			try {
-				// Simulate step execution - in a real implementation, this would
-				// delegate to appropriate sub-agents or tools
-				const stepResult = await this.executeStep(step, input.context);
+				const stepResult = await this.executeStep(step, context);
 
 				step.status = 'completed';
 				step.result = stepResult;
@@ -196,57 +221,53 @@ export class TaskTool implements McpTool<TaskInput, TaskResult> {
 		};
 	}
 
-	private async executeStep(step: TaskStep): Promise<unknown> {
-		// This is a placeholder implementation that simulates step execution
-		// In a real implementation, this would:
-		// 1. Parse the instruction to determine what action to take
-		// 2. Delegate to appropriate sub-agents or tools
-		// 3. Handle the result and any errors
+	private async executeStep(step: TaskStep, context?: ToolExecutionContext): Promise<unknown> {
+		// Accept JSON instruction format: { tool: string, input: unknown }
+		// If not JSON, attempt a minimal "tool: <name> | input: <json>" format.
+		const registry = this.getRegistry();
+		let toolName: string | null = null;
+		let toolInput: unknown = null;
 
-		// Simulate some processing time
-		await new Promise((resolve) => setTimeout(resolve, 100 + Math.random() * 500));
-
-		// Simulate different outcomes based on instruction content
-		const instruction = step.instruction.toLowerCase();
-
-		if (instruction.includes('fail') || instruction.includes('error')) {
-			throw new Error(`Simulated failure for instruction: ${step.instruction}`);
+		// Try strict JSON first
+		try {
+			const parsed = JSON.parse(step.instruction);
+			if (parsed && typeof parsed === 'object' && 'tool' in parsed && 'input' in parsed) {
+				toolName = String((parsed as any).tool);
+				toolInput = (parsed as any).input;
+			}
+		} catch {
+			// Fallback: try simple prefix format
+			const m = step.instruction.match(/^tool\s*:\s*(\w+)\s*\|\s*input\s*:\s*(\{[\s\S]*\})$/i);
+			if (m) {
+				toolName = m[1];
+				try {
+					toolInput = JSON.parse(m[2]);
+				} catch (e) {
+					throw new ToolExecutionError(
+						`Invalid JSON input for tool ${toolName}: ${e instanceof Error ? e.message : String(e)}`,
+						{ code: 'E_TASK_INVALID_INPUT', cause: e },
+					);
+				}
+			}
 		}
 
-		if (instruction.includes('search') || instruction.includes('find')) {
-			return {
-				type: 'search_result',
-				query: step.instruction,
-				results: [`Mock result for: ${step.instruction}`],
-				count: 1,
-			};
+		if (!toolName) {
+			throw new ToolExecutionError(
+				'Instruction must be JSON with { tool, input } or "tool: <name> | input: <json>"',
+				{ code: 'E_TASK_BAD_INSTRUCTION' },
+			);
 		}
 
-		if (instruction.includes('create') || instruction.includes('write')) {
-			return {
-				type: 'creation_result',
-				instruction: step.instruction,
-				created: true,
-				output: `Mock output for: ${step.instruction}`,
-			};
+		try {
+			const result = await registry.execute(toolName, toolInput, context);
+			return { type: 'tool_result', tool: toolName, result };
+		} catch (e) {
+			if (e instanceof ToolExecutionError) throw e;
+			throw new ToolExecutionError(
+				`Tool ${toolName} execution failed: ${e instanceof Error ? e.message : String(e)}`,
+				{ code: 'E_TASK_TOOL_FAILED', cause: e },
+			);
 		}
-
-		if (instruction.includes('analyze') || instruction.includes('check')) {
-			return {
-				type: 'analysis_result',
-				instruction: step.instruction,
-				analysis: `Mock analysis for: ${step.instruction}`,
-				score: Math.random(),
-			};
-		}
-
-		// Default result
-		return {
-			type: 'generic_result',
-			instruction: step.instruction,
-			completed: true,
-			message: `Successfully executed: ${step.instruction}`,
-		};
 	}
 
 	private generateTaskId(): string {

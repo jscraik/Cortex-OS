@@ -14,6 +14,11 @@ export default [
 			'src/lib/outbox/**',
 			'tests/**',
 			'__tests__/**',
+			// Keep ESLint aligned with tsconfig excludes (exclude all in-source tests)
+			'src/**/__tests__/**',
+			'src/**/tests/**',
+			'src/**/*.test.ts',
+			'src/lib/supervisor.ts',
 		],
 	},
 

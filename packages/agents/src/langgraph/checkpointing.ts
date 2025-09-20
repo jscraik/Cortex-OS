@@ -44,7 +44,7 @@ export interface CortexCheckpoint {
 	metadata: CheckpointMetadata;
 	pendingWrites?: Array<{
 		tid: string;
-		writes: Array<[string, any]>;
+		writes: Array<[string, unknown]>;
 	}>;
 }
 
@@ -52,8 +52,8 @@ export interface CortexCheckpoint {
  * Memory-based checkpoint saver for development
  */
 export class MemoryCheckpointSaver {
-	private checkpoints: Map<string, CortexCheckpoint> = new Map();
-	private config: CheckpointConfig;
+	private readonly checkpoints: Map<string, CortexCheckpoint> = new Map();
+	private readonly config: CheckpointConfig;
 
 	constructor(config: CheckpointConfig = { storage: 'memory' }) {
 		this.config = config;
@@ -127,7 +127,7 @@ export class MemoryCheckpointSaver {
 	}
 
 	private generateCheckpointId(): string {
-		return `ckpt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `ckpt_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 	}
 
 	private scheduleCleanup(key: string, ttl: number): void {
@@ -142,19 +142,16 @@ export class MemoryCheckpointSaver {
  * Falls back to memory storage when sqlite3 is not available
  */
 export class SQLiteCheckpointSaver {
-	private storage: Map<string, CortexCheckpoint> = new Map();
+	private readonly storage: Map<string, CortexCheckpoint> = new Map();
 
-	constructor(config: CheckpointConfig & { connectionString: string }) {
-		this.config = config;
-		this.initializeDatabase();
+	constructor(_config: CheckpointConfig & { connectionString: string }) {
+		// For now, simply log and operate in memory mode
+		console.log('SQLiteCheckpointSaver initialized (memory mode)');
 	}
-
-	private async initializeDatabase(): Promise<void> {
+	public initializeDatabase(): void {
 		// For now, always use memory storage to avoid sqlite3 dependency issues
-		// TODO: Add sqlite3 support when dependency is properly configured
+		// SQLite implementation requires 'better-sqlite3' package configuration
 		console.warn('Using memory storage for checkpoints (sqlite3 dependency not configured)');
-		this.isMemoryMode = true;
-		this.storage = new Map();
 	}
 
 	async get(threadId: string): Promise<CortexCheckpoint | undefined> {
@@ -189,7 +186,7 @@ export class SQLiteCheckpointSaver {
 		limit?: number,
 		before?: string,
 	): Promise<Array<[string, CortexCheckpoint['checkpoint'], CheckpointMetadata]>> {
-		const threadId = config.configurable?.threadId || 'default';
+	const threadId = config.configurable?.threadId || 'default';
 		const prefix = `${threadId}:`;
 		const entries = Array.from(this.storage.entries())
 			.filter(([key]) => key.startsWith(prefix))
@@ -213,7 +210,7 @@ export class SQLiteCheckpointSaver {
 	}
 
 	private generateCheckpointId(): string {
-		return `ckpt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `ckpt_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 	}
 }
 
@@ -221,8 +218,8 @@ export class SQLiteCheckpointSaver {
  * Checkpoint manager with advanced features
  */
 export class CheckpointManager {
-	private saver: any; // BaseCheckpointSaver equivalent
-	private config: CheckpointConfig;
+	private readonly saver: MemoryCheckpointSaver | SQLiteCheckpointSaver;
+	private readonly config: CheckpointConfig;
 
 	constructor(config: CheckpointConfig) {
 		this.config = config;
@@ -232,7 +229,7 @@ export class CheckpointManager {
 	/**
 	 * Create checkpoint saver based on configuration
 	 */
-	private createCheckpointSaver(config: CheckpointConfig): any {
+	private createCheckpointSaver(config: CheckpointConfig): MemoryCheckpointSaver | SQLiteCheckpointSaver {
 		switch (config.storage) {
 			case 'memory':
 				return new MemoryCheckpointSaver(config);
@@ -282,8 +279,6 @@ export class CheckpointManager {
 		threadId: string,
 		_checkpointId?: string,
 	): Promise<{ state: CortexState; metadata: CheckpointMetadata } | undefined> {
-		// const config = { configurable: { threadId } };
-
 		if (_checkpointId) {
 			// Specific checkpoint resume
 			// Implementation depends on storage backend
@@ -308,7 +303,7 @@ export class CheckpointManager {
 		const config = { configurable: { threadId } };
 		const checkpoints = await this.saver.list(config, limit);
 
-		return checkpoints.map(([_key, checkpoint, metadata]: [any, any, any]) => ({
+		return checkpoints.map(([, checkpoint, metadata]) => ({
 			step: metadata.step,
 			timestamp: metadata.timestamp,
 			state: checkpoint.channel_values,
@@ -329,7 +324,7 @@ export class CheckpointManager {
 	}
 
 	private generateCheckpointId(): string {
-		return `ckpt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `ckpt_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 	}
 }
 
@@ -342,7 +337,7 @@ export const checkpointUtils = {
 	 */
 	createConfig(): CheckpointConfig {
 		return {
-			storage: (process.env.CHECKPOINT_STORAGE as any) || 'memory',
+			storage: (process.env.CHECKPOINT_STORAGE as 'memory' | 'sqlite' | 'postgres' | 'redis') || 'memory',
 			connectionString: process.env.CHECKPOINT_DB_URL,
 			tableName: process.env.CHECKPOINT_TABLE_NAME,
 			ttl: process.env.CHECKPOINT_TTL ? parseInt(process.env.CHECKPOINT_TTL, 10) : undefined,
@@ -353,13 +348,15 @@ export const checkpointUtils = {
 	/**
 	 * Extract thread ID from request
 	 */
-	extractThreadId(request: any): string {
-		return (
-			request.headers?.['x-thread-id'] ||
-			request.query?.threadId ||
-			request.body?.threadId ||
-			`session_${Date.now()}`
-		);
+	extractThreadId(request: {
+		headers?: Record<string, string>;
+		query?: Record<string, string>;
+		body?: Record<string, string>;
+	}): string {
+		const headerId = request.headers?.['x-thread-id'];
+		const queryId = request.query?.threadId;
+		const bodyId = request.body?.threadId;
+		return headerId || queryId || bodyId || `session_${Date.now()}`;
 	},
 
 	/**
@@ -375,5 +372,5 @@ export const checkpointUtils = {
 			sessionId: base.sessionId,
 			tags: base.tags || [],
 		};
-	},
+	}
 };

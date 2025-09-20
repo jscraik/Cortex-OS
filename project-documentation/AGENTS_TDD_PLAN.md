@@ -1,14 +1,17 @@
 # Agents Package Technical Review and TDD Plan
 
 ## Technical Review Summary
+
 - Package offers multi-framework agent execution with governed memory, observability, and deterministic behavior features.
 - Utility layer imports `secureId` from an undeclared dependency, preventing test execution.
 - Automated test suite fails: missing event samples, invalid validation helpers, and missing package dependencies.
 
 ## Software Engineering Principle
+
 **Agents must remain deterministic and interface-driven, with all external dependencies explicitly declared and every public behavior backed by contract, unit, integration, and end-to-end tests executed via strict TDD.**
 
 ## TDD Implementation Plan
+
 | # | Task | Test-First Step | Implementation Step | Commit Message |
 |---|------|-----------------|---------------------|----------------|
 |1|Declare `@cortex-os/utils` dependency and secure ID generation|Add failing unit tests for `generateAgentId`/`generateTraceId` requiring `secureId`|Add dependency in `package.json` and ensure utilities delegate to workspace module|`feat(agents): add workspace utils dependency`|
@@ -21,8 +24,10 @@
 |8|Track coverage threshold|Write failing coverage test enforcing ≥90% statements|Optimize tests/implementation to meet threshold|`chore(agents): enforce coverage threshold`|
 
 ## Testing
+
 - ⚠️ `pnpm -F @cortex-os/agents test` (currently fails due to missing dependency and contract mismatches)
 
 ## Notes
+
 - Ensure each task follows TDD: write failing test, implement fix, re-run `pnpm lint` and `pnpm test` before commit.
 - Address remaining failed suites iteratively to reach operational readiness.

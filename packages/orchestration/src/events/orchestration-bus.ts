@@ -5,6 +5,7 @@ import { inproc } from '@cortex-os/a2a-transport/inproc';
 
 import {
 	type AgentAssignedEvent,
+	type AgentCoordinationStartedEvent,
 	type AgentFreedEvent,
 	type CoordinationStartedEvent,
 	type DecisionMadeEvent,
@@ -14,10 +15,12 @@ import {
 	type PlanCreatedEvent,
 	type PlanUpdatedEvent,
 	type ResourceAllocatedEvent,
+	type ScheduleAdjustedEvent,
 	type TaskCompletedEvent,
 	type TaskCreatedEvent,
 	type TaskFailedEvent,
 	type TaskStartedEvent,
+	type ToolLayerInvokedEvent,
 } from './orchestration-events.js';
 
 type OrchestrationEventPayloadMap = {
@@ -32,17 +35,21 @@ type OrchestrationEventPayloadMap = {
 	[OrchestrationEventTypes.CoordinationStarted]: CoordinationStartedEvent;
 	[OrchestrationEventTypes.DecisionMade]: DecisionMadeEvent;
 	[OrchestrationEventTypes.ResourceAllocated]: ResourceAllocatedEvent;
+	// nO Architecture Events
+	[OrchestrationEventTypes.AgentCoordinationStarted]: AgentCoordinationStartedEvent;
+	[OrchestrationEventTypes.ScheduleAdjusted]: ScheduleAdjustedEvent;
+	[OrchestrationEventTypes.ToolLayerInvoked]: ToolLayerInvokedEvent;
 };
 
 export type OrchestrationEventEnvelope<
-	TType extends OrchestrationEventType = OrchestrationEventType,
+	TType extends keyof OrchestrationEventPayloadMap = OrchestrationEventType,
 > = Omit<Envelope, 'data' | 'type'> & {
 	type: TType;
 	data: OrchestrationEventPayloadMap[TType];
 };
 
 export type OrchestrationEventHandler<
-	TType extends OrchestrationEventType = OrchestrationEventType,
+	TType extends keyof OrchestrationEventPayloadMap = OrchestrationEventType,
 > = {
 	type: TType;
 	handle: (event: OrchestrationEventEnvelope<TType>) => Promise<void> | void;
@@ -69,7 +76,7 @@ export interface OrchestrationBusOptions {
 }
 
 export interface OrchestrationBus {
-	publish<TType extends OrchestrationEventType>(
+	publish<TType extends keyof OrchestrationEventPayloadMap>(
 		type: TType,
 		payload: OrchestrationEventPayloadMap[TType],
 		options?: OrchestrationPublishOptions,
@@ -103,9 +110,9 @@ function validateEnvelope(envelope: Envelope): OrchestrationEventEnvelope {
 	}
 	const schema = ORCHESTRATION_EVENT_SCHEMAS[envelope.type];
 	const data = schema.parse(envelope.data);
-	const result: OrchestrationEventEnvelope<OrchestrationEventType> = {
+	const result: OrchestrationEventEnvelope<keyof OrchestrationEventPayloadMap> = {
 		id: envelope.id,
-		type: envelope.type as OrchestrationEventType,
+		type: envelope.type,
 		source: envelope.source,
 		specversion: envelope.specversion,
 		datacontenttype: envelope.datacontenttype,
@@ -132,7 +139,7 @@ export function createOrchestrationBus(options: OrchestrationBusOptions = {}): O
 	const bus = createBus(transport, validateEnvelope, undefined, acl, options.busOptions);
 
 	return {
-		async publish<TType extends OrchestrationEventType>(
+		async publish<TType extends keyof OrchestrationEventPayloadMap>(
 			type: TType,
 			payload: OrchestrationEventPayloadMap[TType],
 			publishOptions?: OrchestrationPublishOptions,

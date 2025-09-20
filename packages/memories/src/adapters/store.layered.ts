@@ -1,4 +1,4 @@
-import type { Memory, MemoryId } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 export type LayeredOptions = {
@@ -33,20 +33,21 @@ export class LayeredMemoryStore implements MemoryStore {
 		return store.upsert(m, namespace);
 	}
 
-	async get(id: MemoryId, namespace?: string): Promise<Memory | null> {
+	async get(id: string, namespace?: string): Promise<Memory | null> {
 		// Prefer long-term, then short-term
 		const fromLong = await this.longTerm.get(id, namespace);
 		if (fromLong) return fromLong;
 		return this.shortTerm.get(id, namespace);
 	}
 
-	async delete(id: MemoryId, namespace?: string): Promise<void> {
+	async delete(id: string, namespace?: string): Promise<void> {
 		// Delete from both to avoid dangling copies
 		await this.longTerm.delete(id, namespace);
 		await this.shortTerm.delete(id, namespace);
 	}
 
 	async searchByText(q: TextQuery, namespace?: string): Promise<Memory[]> {
+		const topK = q.topK ?? q.limit ?? 10;
 		const [shortRes, longRes] = await Promise.all([
 			this.shortTerm.searchByText(q, namespace),
 			this.longTerm.searchByText(q, namespace),
@@ -59,12 +60,13 @@ export class LayeredMemoryStore implements MemoryStore {
 				merged.push(m);
 				seen.add(m.id);
 			}
-			if (merged.length >= q.topK) break;
+			if (merged.length >= topK) break;
 		}
-		return merged.slice(0, q.topK);
+		return merged.slice(0, topK);
 	}
 
 	async searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]> {
+		const topK = q.topK ?? q.limit ?? 10;
 		const [shortRes, longRes] = await Promise.all([
 			this.shortTerm.searchByVector(q, namespace),
 			this.longTerm.searchByVector(q, namespace),
@@ -76,9 +78,9 @@ export class LayeredMemoryStore implements MemoryStore {
 				merged.push(m);
 				seen.add(m.id);
 			}
-			if (merged.length >= q.topK) break;
+			if (merged.length >= topK) break;
 		}
-		return merged.slice(0, q.topK);
+		return merged.slice(0, topK);
 	}
 
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {

@@ -60,9 +60,10 @@ export class ReadTool implements McpTool<ReadToolInput, ReadToolResult> {
 				});
 			}
 
-			if (stats.size > maxSize) {
+			const limit = input.maxSize ?? 10 * 1024 * 1024; // default 10MB
+			if (stats.size > limit) {
 				throw new ToolExecutionError(
-					`File too large: ${stats.size} bytes exceeds limit of ${input.maxSize} bytes`,
+					`File too large: ${stats.size} bytes exceeds limit of ${limit} bytes`,
 					{
 						code: 'E_FILE_TOO_LARGE',
 					},
@@ -70,7 +71,8 @@ export class ReadTool implements McpTool<ReadToolInput, ReadToolResult> {
 			}
 
 			// Read file content
-			const content = await readFile(filePath, { encoding: input.encoding as BufferEncoding });
+			const encoding: BufferEncoding = (input.encoding as BufferEncoding) ?? 'utf8';
+			const content = await readFile(filePath, { encoding });
 
 			// Determine MIME type based on extension
 			const mimeType = this.getMimeType(filePath);
@@ -79,7 +81,7 @@ export class ReadTool implements McpTool<ReadToolInput, ReadToolResult> {
 				content: content.toString(),
 				path: input.path,
 				size: stats.size,
-				encoding: input.encoding,
+				encoding,
 				mimeType,
 				lastModified: stats.mtime.toISOString(),
 				timestamp: new Date().toISOString(),

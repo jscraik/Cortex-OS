@@ -35,21 +35,22 @@ export {
 	ragQueryResultEventSchema,
 } from './events/rag-events.js';
 export type {
-	ArchonRAGConfig,
-	DocumentSyncResult,
-	MinimalStore,
-	RemoteRetrievalOptions,
-	StoreLike,
-} from './integrations/archon-mcp.js';
-// Archon MCP Integration
+	DocumentSyncResult as RemoteDocumentSyncResult,
+	MinimalStore as RemoteMinimalStore,
+	RemoteRAGConfig as RemoteMCPConfig,
+	RemoteRetrievalOptions as RemoteQueryOptions,
+	StoreLike as RemoteStoreLike,
+} from './integrations/remote-mcp.js';
+// Archon integration exports removed in favor of vendor-neutral Remote MCP
+// Remote MCP Integration (vendor-neutral)
 export {
-	ArchonDocumentIngestionManager,
-	ArchonEmbedder,
-	ArchonEnhancedStore,
-	createArchonEmbedder,
-	createArchonEnhancedStore,
-	createArchonIngestionManager,
-} from './integrations/archon-mcp.js';
+	createRemoteMCPEmbedder,
+	createRemoteMCPEnhancedStore,
+	createRemoteMCPIngestionManager,
+	RemoteMCPDocumentIngestionManager,
+	RemoteMCPEmbedder,
+	RemoteMCPEnhancedStore,
+} from './integrations/remote-mcp.js';
 export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
 export * as lib from './lib/index.js';
 // MCP Tools for external AI agent integration
@@ -61,9 +62,10 @@ export {
 	ragQueryToolSchema,
 	ragStatusTool,
 	ragStatusToolSchema,
-} from './mcp/tools';
+} from './mcp/tools.js';
 export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
 export { fileStore } from './store/file.js';
+export { HierarchicalStore } from './store/hierarchical-store.js';
 export { memoryStore } from './store/memory.js';
 
 const InputSchema = z.object({
@@ -92,7 +94,13 @@ export async function handleRAG(input: unknown): Promise<string> {
 	});
 
 	const [embedding] = await embedder.embed([query.query]);
-	const results = await store.query(embedding, query.topK);
+	const anyStore = store as unknown as {
+		queryWithText?: (e: number[], q: string, k?: number) => Promise<ReturnType<typeof store.query>>;
+	};
+	const results =
+		typeof anyStore.queryWithText === 'function'
+			? await anyStore.queryWithText(embedding, query.query, query.topK)
+			: await store.query(embedding, query.topK);
 	const context = results.map((r: { text: string }) => r.text).join('\n');
 	const prompt = context ? `${context}\n\n${query.query}` : query.query;
 	const answer = await generator.generate(prompt, {

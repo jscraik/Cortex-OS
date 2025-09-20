@@ -1,5 +1,5 @@
 /**
- * Multi-dimensional embedding utilities (Archon-inspired)
+ * Multi-dimensional embedding utilities (vendor-neutral)
  * - Supports dimensions: 384, 768, 1024, 1536, 3072
  * - Provider/model-agnostic helpers for detecting and selecting dimensions
  */

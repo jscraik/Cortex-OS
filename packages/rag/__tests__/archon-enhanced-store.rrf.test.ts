@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ArchonEnhancedStore } from '../src/integrations/archon-mcp.js';
+import { RemoteMCPEnhancedStore } from '../src/integrations/remote-mcp.js';
 import type { Chunk } from '../src/lib/types.js';
 
 const localStore = {
-	async upsert() {},
+	async upsert() { },
 	async query(_vector: number[], k = 10) {
 		const rows = [
 			{ id: 'l1', text: 'alpha', score: 0.9, metadata: { text: 'alpha' } },
@@ -14,11 +14,11 @@ const localStore = {
 	},
 };
 
-describe('ArchonEnhancedStore RRF fusion', () => {
-	let store: ArchonEnhancedStore;
+describe('RemoteMCPEnhancedStore RRF fusion', () => {
+	let store: RemoteMCPEnhancedStore;
 	beforeAll(async () => {
 		// The MCP client is stubbed via test config; remote results come from stubbed calls inside store
-		store = new ArchonEnhancedStore(
+		store = new RemoteMCPEnhancedStore(
 			localStore as unknown as {
 				upsert(chunks: Chunk[]): Promise<void>;
 				query(embedding: number[], k?: number): Promise<Array<Chunk & { score?: number }>>;

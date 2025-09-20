@@ -142,6 +142,7 @@ export class ModelSelector {
 	private thermalManagementEnabled: boolean = true;
 	private mlxAvailable: boolean = false;
 	private ollamaAvailable: boolean = false;
+	private readonly aiIntegration: ASBRAIIntegration;
 
 	constructor(aiIntegration: ASBRAIIntegration, models?: ModelConfig[]) {
 		this.aiIntegration = aiIntegration;
@@ -297,6 +298,13 @@ export class ModelSelector {
 	 */
 	setThermalManagement(enabled: boolean): void {
 		this.thermalManagementEnabled = enabled;
+	}
+
+	/**
+	 * Check if AI integration is properly configured
+	 */
+	isAIIntegrationReady(): boolean {
+		return this.aiIntegration !== undefined && this.aiIntegration !== null;
 	}
 
 	/**

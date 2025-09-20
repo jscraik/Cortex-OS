@@ -8,10 +8,12 @@ import { ArtifactRepository } from '../../src/persistence/artifact-repository';
 import { EvidenceRepository } from '../../src/persistence/evidence-repository';
 import { ProfileRepository } from '../../src/persistence/profile-repository';
 import { TaskRepository } from '../../src/persistence/task-repository';
+import { initializeAuth } from '../../src/security/auth';
 
 interface ApiServerContext {
 	server: ReturnType<typeof createRuntimeHttpServer>;
 	baseUrl: string;
+	authHeader: string;
 }
 
 const JSON_HEADERS = { 'content-type': 'application/json' } as const;
@@ -31,7 +33,9 @@ beforeEach(async () => {
 		evidence: new EvidenceRepository(),
 	});
 	const { port } = await server.listen(0, '127.0.0.1');
-	context = { server, baseUrl: `http://127.0.0.1:${port}` };
+	// Initialize auth and capture the bearer token
+	const token = await initializeAuth();
+	context = { server, baseUrl: `http://127.0.0.1:${port}`, authHeader: `Bearer ${token.token}` };
 });
 
 afterEach(async () => {
@@ -52,11 +56,11 @@ afterEach(async () => {
 
 describe('HTTP API', () => {
 	test('tasks endpoint supports CRUD with optimistic locking', async () => {
-		const { baseUrl } = ensureContext();
+		const { baseUrl, authHeader } = ensureContext();
 
 		const createRes = await fetch(`${baseUrl}/v1/tasks`, {
 			method: 'POST',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({
 				task: { id: 'task-http-1', status: 'pending', details: { note: 'test' } },
 			}),
@@ -70,7 +74,7 @@ describe('HTTP API', () => {
 		});
 		expect(created.digest).toMatch(/^[a-f0-9]{64}$/);
 
-		const listRes = await fetch(`${baseUrl}/v1/tasks`);
+		const listRes = await fetch(`${baseUrl}/v1/tasks`, { headers: { Authorization: authHeader } });
 		expect(listRes.status).toBe(200);
 		const listJson = (await listRes.json()) as {
 			tasks: { record: Record<string, unknown>; digest: string }[];
@@ -78,7 +82,7 @@ describe('HTTP API', () => {
 		expect(listJson.tasks).toHaveLength(1);
 		expect(listJson.tasks[0]?.record).toEqual(created.task);
 
-		const getRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`);
+		const getRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, { headers: { Authorization: authHeader } });
 		expect(getRes.status).toBe(200);
 		const fetched = (await getRes.json()) as { task: Record<string, unknown>; digest: string };
 		expect(fetched.task).toEqual(created.task);
@@ -86,7 +90,7 @@ describe('HTTP API', () => {
 
 		const updateRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, {
 			method: 'PUT',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({ patch: { status: 'completed' }, expectedDigest: created.digest }),
 		});
 		expect(updateRes.status).toBe(200);
@@ -100,24 +104,24 @@ describe('HTTP API', () => {
 
 		const conflictRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, {
 			method: 'PUT',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({ patch: { status: 'stale' }, expectedDigest: 'deadbeef' }),
 		});
 		expect(conflictRes.status).toBe(409);
 
-		const deleteRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, { method: 'DELETE' });
+		const deleteRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, { method: 'DELETE', headers: { Authorization: authHeader } });
 		expect(deleteRes.status).toBe(204);
 
-		const getMissingRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`);
+		const getMissingRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, { headers: { Authorization: authHeader } });
 		expect(getMissingRes.status).toBe(404);
 	});
 
 	test('profiles endpoint supports CRUD with optimistic locking', async () => {
-		const { baseUrl } = ensureContext();
+		const { baseUrl, authHeader } = ensureContext();
 
 		const createRes = await fetch(`${baseUrl}/v1/profiles`, {
 			method: 'POST',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({
 				profile: { id: 'profile-http-1', label: 'Primary', scopes: ['tasks:read'] },
 			}),
@@ -132,7 +136,7 @@ describe('HTTP API', () => {
 
 		const updateRes = await fetch(`${baseUrl}/v1/profiles/profile-http-1`, {
 			method: 'PUT',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({ patch: { label: 'Primary Updated' }, expectedDigest: created.digest }),
 		});
 		expect(updateRes.status).toBe(200);
@@ -141,27 +145,27 @@ describe('HTTP API', () => {
 
 		const conflictRes = await fetch(`${baseUrl}/v1/profiles/profile-http-1`, {
 			method: 'PUT',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({ patch: { label: 'stale' }, expectedDigest: 'deadbeef' }),
 		});
 		expect(conflictRes.status).toBe(409);
 
-		const listRes = await fetch(`${baseUrl}/v1/profiles`);
+		const listRes = await fetch(`${baseUrl}/v1/profiles`, { headers: { Authorization: authHeader } });
 		expect(listRes.status).toBe(200);
 		const listJson = await listRes.json();
 		expect(listJson.profiles).toHaveLength(1);
 
-		const deleteRes = await fetch(`${baseUrl}/v1/profiles/profile-http-1`, { method: 'DELETE' });
+		const deleteRes = await fetch(`${baseUrl}/v1/profiles/profile-http-1`, { method: 'DELETE', headers: { Authorization: authHeader } });
 		expect(deleteRes.status).toBe(204);
 	});
 
 	test('artifacts endpoint persists binary payloads with digests', async () => {
-		const { baseUrl } = ensureContext();
+		const { baseUrl, authHeader } = ensureContext();
 		const payload = Buffer.from('artifact-http');
 
 		const createRes = await fetch(`${baseUrl}/v1/artifacts`, {
 			method: 'POST',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({
 				artifact: {
 					filename: 'artifact.txt',
@@ -176,14 +180,14 @@ describe('HTTP API', () => {
 		const created = await createRes.json();
 		const artifactId = created.metadata.id as string;
 
-		const getRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`);
+		const getRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, { headers: { Authorization: authHeader } });
 		expect(getRes.status).toBe(200);
 		const fetched = await getRes.json();
 		expect(Buffer.from(fetched.base64Payload, 'base64').toString()).toBe('artifact-http');
 
 		const updateRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, {
 			method: 'PUT',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({
 				artifact: {
 					filename: 'artifact.txt',
@@ -199,20 +203,20 @@ describe('HTTP API', () => {
 		const updated = await updateRes.json();
 		expect(updated.metadata.digest).not.toBe(created.digest);
 
-		const listRes = await fetch(`${baseUrl}/v1/artifacts?taskId=task-artifact`);
+		const listRes = await fetch(`${baseUrl}/v1/artifacts?taskId=task-artifact`, { headers: { Authorization: authHeader } });
 		expect(listRes.status).toBe(200);
 		const listJson = await listRes.json();
 		expect(listJson.artifacts).toHaveLength(1);
 
-		const deleteRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, { method: 'DELETE' });
+		const deleteRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, { method: 'DELETE', headers: { Authorization: authHeader } });
 		expect(deleteRes.status).toBe(204);
 	});
 
 	test('evidence endpoint enforces optimistic locking', async () => {
-		const { baseUrl } = ensureContext();
+		const { baseUrl, authHeader } = ensureContext();
 		const createRes = await fetch(`${baseUrl}/v1/evidence`, {
 			method: 'POST',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({
 				evidence: {
 					taskId: 'task-evidence',
@@ -227,7 +231,7 @@ describe('HTTP API', () => {
 
 		const updateRes = await fetch(`${baseUrl}/v1/evidence/${created.evidence.id}`, {
 			method: 'PUT',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({
 				evidence: {
 					taskId: 'task-evidence',
@@ -244,7 +248,7 @@ describe('HTTP API', () => {
 
 		const conflictRes = await fetch(`${baseUrl}/v1/evidence/${created.evidence.id}`, {
 			method: 'PUT',
-			headers: JSON_HEADERS,
+			headers: { ...JSON_HEADERS, Authorization: authHeader },
 			body: JSON.stringify({
 				evidence: {
 					taskId: 'task-evidence',

@@ -40,6 +40,16 @@ export const validateGitHubUrl = (url: string): ValidationResult => {
 		return { valid: false, error: 'Only github.com domain is allowed' };
 	}
 
+	// Additional raw URL guards (after confirming host) to catch encoded traversal and double slashes
+	const rawLower = url.toLowerCase();
+	const hostIdx = rawLower.indexOf('github.com');
+	if (hostIdx !== -1) {
+		const afterHost = rawLower.slice(hostIdx + 'github.com'.length);
+		if (afterHost.includes('%2e%2e') || /\/\//.test(afterHost) || afterHost.includes('/../')) {
+			return { valid: false, error: 'Potential directory traversal detected' };
+		}
+	}
+
 	// Path validation with strict GitHub repository pattern
 	// Format: /owner/repo (where owner and repo follow GitHub naming rules)
 	const pathPattern =
@@ -51,7 +61,7 @@ export const validateGitHubUrl = (url: string): ValidationResult => {
 
 	// Directory traversal protection (check only the path portion)
 	const pathLower = parsed.pathname.toLowerCase();
-	if (pathLower.includes('..') || pathLower.includes('%2e%2e') || pathLower.includes('//')) {
+	if (pathLower.includes('..') || pathLower.includes('%2e%2e') || /\/\//.test(parsed.pathname)) {
 		return { valid: false, error: 'Potential directory traversal detected' };
 	}
 
@@ -183,13 +193,12 @@ export const validateUserCommand = (command: string): ValidationResult => {
 
 	// Basic command injection protection
 	const dangerousPatterns = [
-		/[;&|`$(){}[\]]/, // Shell metacharacters
-		/\$\{/, // Variable expansion
-		/`/, // Command substitution
-		/\$\(/, // Command substitution
-		/<script/i, // Script tags
-		/javascript:/i, // JavaScript URLs
-		/on\w+\s*=/i, // Event handlers
+		/[;&|`]/, // shell control
+		/\$\{/, // variable expansion
+		/\$\(/, // command substitution
+		/<script/i,
+		/javascript:/i,
+		/on\w+\s*=/i,
 	];
 
 	for (const pattern of dangerousPatterns) {
@@ -199,6 +208,26 @@ export const validateUserCommand = (command: string): ValidationResult => {
 				error: 'Potentially dangerous command patterns detected',
 			};
 		}
+	}
+
+	// Disallow execution of known dangerous binaries even without explicit separators
+	// e.g., "rm -rf /", "cat /etc/passwd", "nc host 80", "curl http://..."
+	const lowered = command.trim().toLowerCase();
+	const dangerousBinaries =
+		/^\s*(?:sudo\s+)?(rm|cat|nc|netcat|curl|wget|bash|sh|zsh|node|python|ruby|perl)\b/;
+	if (dangerousBinaries.test(lowered)) {
+		return {
+			valid: false,
+			error: 'Potentially dangerous command patterns detected',
+		};
+	}
+
+	// Sensitive file access shortcuts (explicit patterns)
+	if (/\bcat\s+\/etc\/passwd\b/.test(lowered) || /\bcat\s+\/proc\/self\/environ\b/.test(lowered)) {
+		return {
+			valid: false,
+			error: 'Potentially dangerous command patterns detected',
+		};
 	}
 
 	return { valid: true };

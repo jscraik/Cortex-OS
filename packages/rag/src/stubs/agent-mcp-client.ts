@@ -1,6 +1,6 @@
-// Locally define ArchonIntegrationConfig to avoid tight coupling with agents package
+// Locally define MCPIntegrationConfig to avoid tight coupling with agents package
 
-export type ArchonIntegrationConfig = {};
+export type MCPIntegrationConfig = Record<string, unknown>;
 
 export interface KnowledgeSearchFilters {
 	category?: string[];
@@ -42,7 +42,7 @@ interface MockCall {
 }
 
 export const mockCallLog: MockCall[] = [];
-export const mockConfigLog: ArchonIntegrationConfig[] = [];
+export const mockConfigLog: MCPIntegrationConfig[] = [];
 const responseQueue: MockResponse[] = [];
 
 export function resetMockAgentState() {
@@ -102,7 +102,7 @@ function defaultResponse(method: MethodName): MockResponse {
 
 export class AgentMCPClient {
 	private connected = false;
-	constructor(private readonly config: ArchonIntegrationConfig) {
+	constructor(private readonly config: MCPIntegrationConfig) {
 		mockConfigLog.push(config);
 	}
 
@@ -203,6 +203,6 @@ export class AgentMCPClient {
 	}
 }
 
-export function createAgentMCPClient(config: ArchonIntegrationConfig) {
+export function createAgentMCPClient(config: MCPIntegrationConfig) {
 	return new AgentMCPClient(config);
 }

@@ -456,6 +456,10 @@ export const ragIngestTool: RAGTool = {
 	inputSchema: ragIngestToolSchema,
 	handler: async (params: unknown) => {
 		const correlationId = createCorrelationId();
+		// Perform schema validation first and let errors propagate (tests expect a rejection)
+		const { content: rawContent, source: rawSource, metadata: rawMetadata } =
+			ragIngestToolSchema.parse(params);
+
 		try {
 			const metadataCandidate = extractMetadataCandidate(params);
 			if (hasUnsafePrototype(metadataCandidate)) {
@@ -463,12 +467,6 @@ export const ragIngestTool: RAGTool = {
 					'metadata has unsafe prototype',
 				]);
 			}
-
-			const {
-				content: rawContent,
-				source: rawSource,
-				metadata: rawMetadata,
-			} = ragIngestToolSchema.parse(params);
 
 			const content = sanitizeContent(rawContent);
 			const source = sanitizeSource(rawSource);
@@ -492,10 +490,8 @@ export const ragIngestTool: RAGTool = {
 				timestamp: new Date().toISOString(),
 			};
 
-			return createSuccessResponse('rag_ingest', correlationId, {
-				success: true,
-				result,
-			});
+			// Return the result payload directly (tests expect flat payload)
+			return createSuccessResponse('rag_ingest', correlationId, result);
 		} catch (error) {
 			return respondWithError('rag_ingest', correlationId, error);
 		}

@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import type { Embedder } from '../lib/index.js';
+import { sanitizeTextInputs } from '../lib/security.js';
 import { buildQwen3EmbedScript } from './qwen3-script.js';
 
 export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
@@ -41,6 +42,8 @@ export class Qwen3Embedder implements Embedder {
 	}
 
 	async embed(texts: string[]): Promise<number[][]> {
+		// Enforce input sanitization before spawning Python
+		sanitizeTextInputs(texts);
 		if (texts.length === 0) return [];
 		const results: number[][] = [];
 		for (let i = 0; i < texts.length; i += this.batchSize) {

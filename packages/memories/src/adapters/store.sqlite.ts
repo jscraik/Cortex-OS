@@ -1,11 +1,7 @@
 import { decayEnabled, decayFactor, getHalfLifeMs } from '../core/decay.js';
 import { isExpired } from '../core/ttl.js';
-import type { Memory, MemoryId } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
-
-// Attempt dynamic loading of native modules so the package can be imported even
-// when SQLite bindings are unavailable (e.g., in environments without native
-// compilation support).
 
 let DatabaseImpl: typeof import('better-sqlite3') | undefined;
 let loadVec: ((db: unknown) => unknown) | undefined;
@@ -15,14 +11,9 @@ try {
 	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	({ load: loadVec } = require('sqlite-vec'));
 } catch {
-	// Modules not available; constructor will throw if used
+	// ignore; constructor will throw if used
 }
 
-// Local helper to mark variables as used (avoids unused-param lint while keeping signature)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _use = (..._args: unknown[]): void => {};
-
-// Minimal types to avoid depending on native module types
 interface StatementLike {
 	run: (...args: unknown[]) => unknown;
 	get: (...args: unknown[]) => unknown;
@@ -40,167 +31,121 @@ function padVector(vec: number[], dim: number): number[] {
 	return vec.concat(Array(dim - vec.length).fill(0));
 }
 
+function ensureArrayVector(v: unknown): number[] | undefined {
+	if (!v) return undefined;
+	if (Array.isArray(v) && v.every((n) => typeof n === 'number')) return v;
+	return undefined;
+}
+
 export class SQLiteStore implements MemoryStore {
 	private readonly db: DatabaseLike;
 	private readonly dim: number;
 
 	constructor(path: string, dimension?: number) {
-		if (!DatabaseImpl || !loadVec) {
-			throw new Error('sqlite:unavailable');
-		}
+		if (!DatabaseImpl || !loadVec) throw new Error('sqlite:unavailable');
 		this.db = new DatabaseImpl(path) as unknown as DatabaseLike;
 		loadVec(this.db);
 		this.dim = dimension || Number(process.env.MEMORIES_VECTOR_DIM) || 1536;
 
-		// Create table if it doesn't exist
 		this.db.exec(`
-        CREATE TABLE IF NOT EXISTS memories (
-          id TEXT PRIMARY KEY,
-          kind TEXT NOT NULL,
-          text TEXT,
-          vector TEXT, -- JSON array stored as text
-          tags TEXT, -- JSON array stored as text
-          ttl TEXT,
-          createdAt TEXT,
-          updatedAt TEXT,
-          provenance TEXT, -- JSON object stored as text
-          policy TEXT, -- JSON object stored as text
-          embeddingModel TEXT
-        )
-      `);
+CREATE TABLE IF NOT EXISTS memories (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  text TEXT,
+  vector TEXT,
+  tags TEXT,
+  ttl TEXT,
+  createdAt TEXT,
+  updatedAt TEXT,
+  provenance TEXT,
+  policy TEXT,
+  embeddingModel TEXT
+)`);
 
 		this.db.exec(
 			`CREATE VIRTUAL TABLE IF NOT EXISTS memory_embeddings USING vec0(embedding float[${this.dim}])`,
 		);
-
-		// Create indexes
 		this.db.exec('CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)');
 		this.db.exec('CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)');
 	}
 
-	async upsert(m: Memory, _namespace = 'default'): Promise<Memory> {
-		_use(_namespace);
-		const stmt = this.db.prepare(`
-      INSERT OR REPLACE INTO memories
-      (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+	private key(id: string, namespace?: string): string {
+		return namespace ? `${namespace}:${id}` : id;
+	}
 
+	async upsert(m: Memory, namespace?: string): Promise<Memory> {
+		const id = this.key(m.id, namespace);
+		const vec = ensureArrayVector(m.vector);
+		const stmt = this.db.prepare(`
+INSERT OR REPLACE INTO memories
+  (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 		stmt.run(
-			m.id,
+			id,
 			m.kind,
-			m.text || null,
-			m.vector ? JSON.stringify(m.vector) : null,
-			JSON.stringify(m.tags),
-			m.ttl || null,
+			m.text ?? null,
+			vec ? JSON.stringify(vec) : null,
+			JSON.stringify(m.tags ?? []),
+			m.ttl ?? null,
 			m.createdAt,
 			m.updatedAt,
 			JSON.stringify(m.provenance),
 			m.policy ? JSON.stringify(m.policy) : null,
-			m.embeddingModel || null,
+			m.embeddingModel ?? null,
 		);
-		const row = this.db.prepare('SELECT rowid FROM memories WHERE id = ?').get(m.id);
-		const rowidVal = (row as Record<string, unknown> | undefined)?.rowid;
-		if (rowidVal !== undefined && (typeof rowidVal === 'number' || typeof rowidVal === 'bigint')) {
-			if (m.vector) {
-				const padded = padVector(m.vector, this.dim);
+		const row = this.db.prepare('SELECT rowid FROM memories WHERE id = ?').get(id) as
+			| { rowid?: number | bigint }
+			| undefined;
+		const rowid = row?.rowid;
+		if (rowid !== undefined) {
+			if (vec) {
+				const padded = padVector(vec, this.dim);
 				const buffer = Buffer.from(new Float32Array(padded).buffer);
 				this.db
 					.prepare('INSERT OR REPLACE INTO memory_embeddings(rowid, embedding) VALUES (?, ?)')
-					.run(BigInt(rowidVal), buffer);
+					.run(BigInt(rowid), buffer);
 			} else {
-				this.db.prepare('DELETE FROM memory_embeddings WHERE rowid = ?').run(BigInt(rowidVal));
+				this.db.prepare('DELETE FROM memory_embeddings WHERE rowid = ?').run(BigInt(rowid));
 			}
 		}
-
-		return m;
+		return { ...m, id };
 	}
 
-	async get(id: MemoryId, _namespace = 'default'): Promise<Memory | null> {
-		_use(_namespace);
-		const stmt = this.db.prepare('SELECT * FROM memories WHERE id = ?');
-		const row = stmt.get(id);
-
-		if (!row) return null;
-
-		return this.rowToMemory(row);
+	async get(id: string, namespace?: string): Promise<Memory | null> {
+		const key = this.key(id, namespace);
+		const row = this.db.prepare('SELECT * FROM memories WHERE id = ?').get(key);
+		return row ? this.rowToMemory(row) : null;
 	}
 
-	async delete(id: MemoryId, _namespace = 'default'): Promise<void> {
-		_use(_namespace);
-		const row = this.db.prepare('SELECT rowid FROM memories WHERE id = ?').get(id);
-		const rowidVal = (row as Record<string, unknown> | undefined)?.rowid;
-		if (rowidVal !== undefined && (typeof rowidVal === 'number' || typeof rowidVal === 'bigint')) {
-			this.db.prepare('DELETE FROM memory_embeddings WHERE rowid = ?').run(BigInt(rowidVal));
-		}
-		this.db.prepare('DELETE FROM memories WHERE id = ?').run(id);
+	async delete(id: string, namespace?: string): Promise<void> {
+		const key = this.key(id, namespace);
+		const row = this.db.prepare('SELECT rowid FROM memories WHERE id = ?').get(key) as
+			| { rowid?: number | bigint }
+			| undefined;
+		const rowid = row?.rowid;
+		if (rowid !== undefined)
+			this.db.prepare('DELETE FROM memory_embeddings WHERE rowid = ?').run(BigInt(rowid));
+		this.db.prepare('DELETE FROM memories WHERE id = ?').run(key);
 	}
 
-	async searchByText(q: TextQuery, _namespace = 'default'): Promise<Memory[]> {
-		_use(_namespace);
+	async searchByText(q: TextQuery, namespace?: string): Promise<Memory[]> {
+		const topK = q.topK ?? q.limit ?? 10;
 		let sql = 'SELECT * FROM memories WHERE text IS NOT NULL';
 		const params: (string | number)[] = [];
-
-		if (q.text) {
-			sql += ' AND LOWER(text) LIKE LOWER(?)';
-			params.push(`%${q.text}%`);
+		if (namespace) {
+			sql += ' AND id LIKE ?';
+			params.push(`${namespace}:%`);
 		}
-
-		if (q.filterTags && q.filterTags.length > 0) {
-			// For simplicity, we'll do a basic tag filter
-			// A more sophisticated implementation would parse the JSON tags
-			sql += ' AND (';
-			q.filterTags.forEach((tag, i) => {
-				if (i > 0) sql += ' OR ';
-				sql += 'tags LIKE ?';
-				params.push(`%"${tag}"%`);
-			});
-			sql += ')';
+		sql += ' AND LOWER(text) LIKE LOWER(?)';
+		params.push(`%${q.text}%`);
+		if (q.filterTags?.length) {
+			sql += ' AND (' + q.filterTags.map(() => 'tags LIKE ?').join(' OR ') + ')';
+			for (const t of q.filterTags) params.push(`%"${t}"%`);
 		}
-
-		// Fetch more candidates to allow reranking in a second stage
-		const initialLimit = Math.max(q.topK * 10, q.topK);
 		sql += ' ORDER BY updatedAt DESC LIMIT ?';
-		params.push(initialLimit);
-
-		const stmt = this.db.prepare(sql);
-		const rows = stmt.all(...params);
-		let candidates = rows.map((row) => this.rowToMemory(row));
-
-		// Optional rerank stage using Model Gateway if query text is present
-		const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
-		const queryText = q.text?.trim();
-
-		if (rerankEnabled && queryText && candidates.length > 1) {
-			try {
-				let top = await this.rerankWithModelGateway(queryText, candidates);
-				if (decayEnabled()) {
-					const half = getHalfLifeMs();
-					const now = new Date().toISOString();
-					top = top
-						.map((m, idx) => ({
-							m,
-							idx,
-							s: decayFactor(m.createdAt, now, half),
-						}))
-						.sort((a, b) => b.s - a.s || a.idx - b.idx)
-						.map((x) => x.m);
-				}
-				return top.slice(0, q.topK);
-			} catch {
-				// Fall back to original ordering on any error
-				if (decayEnabled()) {
-					const half = getHalfLifeMs();
-					const now = new Date().toISOString();
-					candidates = candidates
-						.map((m) => ({ m, s: decayFactor(m.createdAt, now, half) }))
-						.sort((a, b) => b.s - a.s)
-						.map((x) => x.m);
-				}
-				return candidates.slice(0, q.topK);
-			}
-		}
-
+		params.push(Math.max(topK * 10, topK));
+		const rows = this.db.prepare(sql).all(...params);
+		let candidates = rows.map((r) => this.rowToMemory(r));
 		if (decayEnabled()) {
 			const half = getHalfLifeMs();
 			const now = new Date().toISOString();
@@ -209,29 +154,31 @@ export class SQLiteStore implements MemoryStore {
 				.sort((a, b) => b.s - a.s)
 				.map((x) => x.m);
 		}
-
-		return candidates.slice(0, q.topK);
+		return candidates.slice(0, topK);
 	}
 
-	async searchByVector(q: VectorQuery, _namespace = 'default'): Promise<Memory[]> {
-		_use(_namespace);
-		const padded = padVector(q.vector, this.dim);
-		const initialLimit = Math.max(q.topK * 10, q.topK);
+	async searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]> {
+		const topK = q.topK ?? q.limit ?? 10;
+		let baseVec: number[] = [];
+		if (Array.isArray(q.vector)) baseVec = q.vector.slice();
+		else if (Array.isArray(q.embedding)) baseVec = q.embedding.slice();
+		const queryVec = padVector(baseVec, this.dim);
+		const initialLimit = Math.max(topK * 10, topK);
 		const knnSubquery =
 			'SELECT rowid, distance FROM memory_embeddings WHERE embedding MATCH ? ORDER BY distance LIMIT ?';
-		const rows = this.db
-			.prepare(
-				`SELECT m.*, knn.distance FROM (${knnSubquery}) knn JOIN memories m ON m.rowid = knn.rowid`,
-			)
-			.all(JSON.stringify(padded), initialLimit);
-		let candidates = rows.map((row) => this.rowToMemory(row));
-
-		if (q.filterTags && q.filterTags.length > 0) {
-			const tagSet = new Set(q.filterTags);
-			candidates = candidates.filter((memory) => memory.tags.some((tag) => tagSet.has(tag)));
+		let sql = `SELECT m.*, knn.distance FROM (${knnSubquery}) knn JOIN memories m ON m.rowid = knn.rowid`;
+		const params: unknown[] = [JSON.stringify(queryVec), initialLimit];
+		if (namespace) {
+			sql += ' WHERE m.id LIKE ?';
+			params.push(`${namespace}:%`);
 		}
-
-		let results = candidates.slice(0, q.topK);
+		const rows = this.db.prepare(sql).all(...params);
+		let candidates = rows.map((r) => this.rowToMemory(r));
+		if (q.filterTags?.length) {
+			const tagSet = new Set(q.filterTags);
+			candidates = candidates.filter((m) => m.tags.some((t) => tagSet.has(t)));
+		}
+		let results = candidates.slice(0, topK);
 		if (decayEnabled()) {
 			const half = getHalfLifeMs();
 			const now = new Date().toISOString();
@@ -239,103 +186,18 @@ export class SQLiteStore implements MemoryStore {
 				.map((m) => ({ m, s: decayFactor(m.createdAt, now, half) }))
 				.sort((a, b) => b.s - a.s)
 				.map((x) => x.m)
-				.slice(0, q.topK);
+				.slice(0, topK);
 		}
-
-		const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
-		if (rerankEnabled && q.queryText && candidates.length > 1) {
-			try {
-				const start = Date.now();
-				const reranked = await this.rerankWithModelGateway(q.queryText, candidates);
-				const latency = Date.now() - start;
-				await this.writeOutboxEvent({
-					type: 'rerank.completed',
-					data: {
-						strategy: 'vec0+mlxr',
-						totalCandidates: candidates.length,
-						returned: q.topK,
-						latencyMs: latency,
-						timestamp: new Date().toISOString(),
-					},
-				});
-				if (decayEnabled()) {
-					const half = getHalfLifeMs();
-					const now = new Date().toISOString();
-					results = reranked
-						.map((m, idx) => ({
-							m,
-							idx,
-							s: decayFactor(m.createdAt, now, half),
-						}))
-						.sort((a, b) => b.s - a.s || a.idx - b.idx)
-						.map((x) => x.m)
-						.slice(0, q.topK);
-				} else {
-					results = reranked.slice(0, q.topK);
-				}
-			} catch {
-				// keep initial results on failure
-			}
-		}
-
 		return results;
 	}
 
-	// Second-stage reranking via Model Gateway (/rerank) with Qwen3 MLX primary
-	private async rerankWithModelGateway(query: string, docs: Memory[]): Promise<Memory[]> {
-		const gatewayUrl = process.env.MODEL_GATEWAY_URL || 'http://localhost:8081';
-		const endpoint = `${gatewayUrl.replace(/\/$/, '')}/rerank`;
-		const documents = docs.map((d) => d.text || '');
-		const res = await fetch(endpoint, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ query, documents }),
-		});
-		if (!res.ok) {
-			throw new Error(`Rerank request failed: ${res.status}`);
-		}
-		const body = (await res.json()) as { scores: number[]; model: string };
-		const scored = docs.map((m, i) => ({
-			mem: m,
-			score: body.scores?.[i] ?? 0,
-			model: body.model,
-		}));
-		scored.sort((a, b) => b.score - a.score);
-		// Emit outbox event with model id
-		await this.writeOutboxEvent({
-			type: 'rerank.completed',
-			data: {
-				model: scored[0]?.model || 'unknown',
-				candidates: docs.length,
-				timestamp: new Date().toISOString(),
-			},
-		});
-		return scored.map((s) => s.mem);
-	}
+	// Note: Rerank and outbox helpers removed to keep adapter lean and avoid unused code.
 
-	private async writeOutboxEvent(event: Record<string, unknown>): Promise<void> {
-		try {
-			const file = process.env.MEMORIES_OUTBOX_FILE || 'logs/memories-outbox.jsonl';
-			// Lazy import to avoid ESM top-level overhead
-			const fs = await import('node:fs/promises');
-			await fs.mkdir(file.split('/').slice(0, -1).join('/'), {
-				recursive: true,
-			});
-			await fs.appendFile(file, `${JSON.stringify(event)}\n`, {
-				encoding: 'utf8',
-			});
-		} catch {
-			// best-effort only
-		}
-	}
-
-	async purgeExpired(nowISO: string, _namespace?: string): Promise<number> {
-		_use(_namespace);
+	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
 		let purgedCount = 0;
-
-		const stmt = this.db.prepare('SELECT rowid, * FROM memories WHERE ttl IS NOT NULL');
-		const rows = stmt.all();
-
+		const rows = this.db
+			.prepare('SELECT rowid, * FROM memories' + (namespace ? ' WHERE id LIKE ?' : ''))
+			.all(...(namespace ? [`${namespace}:%`] : []));
 		const expiredIds: string[] = [];
 		const expiredRowids: number[] = [];
 		for (const row of rows) {
@@ -346,18 +208,64 @@ export class SQLiteStore implements MemoryStore {
 				if (typeof rowidVal === 'number') expiredRowids.push(rowidVal);
 			}
 		}
-
 		if (expiredIds.length > 0) {
 			const placeholders = expiredIds.map(() => '?').join(',');
 			this.db.prepare(`DELETE FROM memories WHERE id IN (${placeholders})`).run(...expiredIds);
-			const rowPlaceholders = expiredRowids.map(() => '?').join(',');
-			this.db
-				.prepare(`DELETE FROM memory_embeddings WHERE rowid IN (${rowPlaceholders})`)
-				.run(...expiredRowids);
+			if (expiredRowids.length > 0) {
+				const rowPlaceholders = expiredRowids.map(() => '?').join(',');
+				this.db
+					.prepare(`DELETE FROM memory_embeddings WHERE rowid IN (${rowPlaceholders})`)
+					.run(...expiredRowids);
+			}
 			purgedCount = expiredIds.length;
 		}
-
 		return purgedCount;
+	}
+
+	async searchHybrid(
+		textQuery: string,
+		vectorQuery: number[],
+		options: {
+			alpha?: number;
+			limit?: number;
+			namespace?: string;
+			threshold?: number;
+			recencyBoost?: boolean;
+		} = {},
+	): Promise<Array<Memory & { score?: number }>> {
+		const alpha = options.alpha ?? 0.5;
+		const limit = options.limit ?? 10;
+		const threshold = options.threshold ?? 0.0;
+		const textResults = await this.searchByText(
+			{ text: textQuery, topK: limit },
+			options.namespace,
+		);
+		const vectorResults = await this.searchByVector(
+			{ vector: vectorQuery, topK: limit },
+			options.namespace,
+		);
+		const combined = new Map<
+			string,
+			Memory & { score?: number; textScore?: number; vectorScore?: number }
+		>();
+		for (const r of textResults)
+			combined.set(r.id, { ...r, score: (1 - alpha) * 1.0, textScore: 1.0 });
+		for (const r of vectorResults) {
+			const existing = combined.get(r.id);
+			const score = alpha * 1.0 + (existing?.score ?? 0);
+			combined.set(r.id, { ...r, score, vectorScore: 1.0, textScore: existing?.textScore });
+		}
+		let results = Array.from(combined.values()).filter((r) => (r.score ?? 0) >= threshold);
+		if (options.recencyBoost) {
+			const now = Date.now();
+			results = results.map((r) => {
+				const age = now - new Date(r.createdAt).getTime();
+				const decay = 0.5 ** (age / (24 * 60 * 60 * 1000));
+				return { ...r, score: (r.score ?? 0) * (1 + 0.5 * decay) };
+			});
+		}
+		results.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+		return results.slice(0, limit);
 	}
 
 	private rowToMemory(row: unknown): Memory {
@@ -372,13 +280,11 @@ export class SQLiteStore implements MemoryStore {
 		};
 		const isNumber = (v: unknown): v is number => typeof v === 'number';
 		const isString = (v: unknown): v is string => typeof v === 'string';
-
 		const id = typeof r.id === 'string' ? r.id : '';
-		const kind = ((): Memory['kind'] => {
+		const kind = (() => {
 			const k = r.kind;
 			return k === 'note' || k === 'event' || k === 'artifact' || k === 'embedding' ? k : 'note';
 		})();
-
 		const text = typeof r.text === 'string' ? r.text : undefined;
 		const vector = (() => {
 			const arr = parseJSON<unknown[]>(r.vector);
@@ -393,14 +299,13 @@ export class SQLiteStore implements MemoryStore {
 		const updatedAt = typeof r.updatedAt === 'string' ? r.updatedAt : new Date().toISOString();
 		const provenanceObj = parseJSON<Partial<Memory['provenance']>>(r.provenance) ?? {};
 		const provenance: Memory['provenance'] = {
-			source: provenanceObj.source ?? 'system',
+			source: (provenanceObj.source as Memory['provenance']['source']) ?? 'system',
 			actor: provenanceObj.actor,
 			evidence: provenanceObj.evidence,
 			hash: provenanceObj.hash,
 		};
 		const policy = parseJSON<Memory['policy']>(r.policy);
 		const embeddingModel = typeof r.embeddingModel === 'string' ? r.embeddingModel : undefined;
-
 		return {
 			id,
 			kind,

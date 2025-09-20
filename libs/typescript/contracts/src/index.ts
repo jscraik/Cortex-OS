@@ -83,6 +83,8 @@ export * from './mcp-events.js';
 export * from './memory-events.js';
 export * from './model-gateway-events.js';
 export * from './observability-events.js';
+// nO Intelligence Scheduler contracts (used by orchestration tests)
+export * from './orchestration-no/intelligence-scheduler.js';
 export * from './rag-events.js';
 export * from './sandbox-audit-events.js';
 export * from './security-events.js';

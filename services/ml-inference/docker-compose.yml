@@ -87,7 +87,7 @@ services:
 
   # Ollama Service for LLM inference
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.12.0
     ports:
       - "11434:11434"
     volumes:

@@ -1,6 +1,6 @@
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { OutboxRepository } from '@cortex-os/a2a-contracts/outbox-types';
 import { describe, expect, it, vi } from 'vitest';
-import { createEnvelope, type Envelope } from '../a2a-contracts/src/envelope.js';
-import type { OutboxRepository } from '../a2a-contracts/src/outbox-types';
 import { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
 import { createA2AOutboxIntegration } from './outbox-integration.js';
 

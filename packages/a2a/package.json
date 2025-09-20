@@ -24,15 +24,17 @@
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
     "@cortex-os/telemetry": "workspace:*",
+    "better-sqlite3": "^12.2.0",
+    "nats": "^2.19.1",
     "uuid": "^9.0.1",
     "zod": "^3.22.4",
-    "better-sqlite3": "^12.2.0",
     "@types/uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@testcontainers/nats": "^10.13.2",
     "@types/node": "^22.5.0",
+    "eslint": "^9.35.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.1.9",
-    "eslint": "^9.35.0"
+    "vitest": "^2.1.9"
   }
 }

@@ -4,15 +4,28 @@
  */
 
 // Local type definitions for mcp-registry (to avoid import path issues)
-interface ServerManifest {
+interface MarketplaceServerManifest {
 	id: string;
 	name: string;
 	description?: string;
 	tags?: string[];
 	transports: Record<string, unknown>;
+	// Additional properties used by marketplace service
+	downloads?: number;
+	rating?: number;
+	category?: string;
+	featured?: boolean;
+	publisher?: {
+		name: string;
+		verified?: boolean;
+	};
+	security?: {
+		riskLevel: 'low' | 'medium' | 'high';
+	};
+	updatedAt?: string;
+	capabilities?: Record<string, boolean>;
 }
 
-// import type { ServerManifest } from "../../packages/mcp-registry/dist/types";
 import { z } from 'zod';
 import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
 import type { RegistryService } from './registry-service.js';
@@ -34,7 +47,7 @@ export interface SearchRequest {
 }
 
 export interface SearchResult {
-	servers: ServerManifest[];
+	servers: MarketplaceServerManifest[];
 	total: number;
 	offset: number;
 	limit: number;
@@ -98,7 +111,7 @@ export class MarketplaceService {
 		}
 
 		const registries = await this.registryService.listRegistries();
-		const filteredServers: ServerManifest[] = [];
+		const filteredServers: MarketplaceServerManifest[] = [];
 		const facets = {
 			categories: {} as Record<string, number>,
 			riskLevels: {} as Record<string, number>,
@@ -110,29 +123,31 @@ export class MarketplaceService {
 			try {
 				const data = await this.registryService.getRegistry(registry.name);
 				for (const server of data?.servers || []) {
+					// Cast to our extended type since some properties may be undefined
+					const extendedServer = server as MarketplaceServerManifest;
 					const matchesQuery =
 						!query ||
-						server.name.toLowerCase().includes(query) ||
-						server.description.toLowerCase().includes(query) ||
-						server.id.toLowerCase().includes(query) ||
-						server.tags?.some((tag: string) => tag.toLowerCase().includes(query));
+						extendedServer.name.toLowerCase().includes(query) ||
+						(extendedServer.description && extendedServer.description.toLowerCase().includes(query)) ||
+						extendedServer.id.toLowerCase().includes(query) ||
+						extendedServer.tags?.some((tag: string) => tag.toLowerCase().includes(query));
 
 					if (matchesQuery) {
-						if (server.category) {
-							facets.categories[server.category] = (facets.categories[server.category] || 0) + 1;
+						if (extendedServer.category) {
+							facets.categories[extendedServer.category] = (facets.categories[extendedServer.category] || 0) + 1;
 						}
-						if (server.security?.riskLevel) {
-							const risk = server.security.riskLevel;
+						if (extendedServer.security?.riskLevel) {
+							const risk = extendedServer.security.riskLevel;
 							facets.riskLevels[risk] = (facets.riskLevels[risk] || 0) + 1;
 						}
-						if (server.publisher?.name) {
-							const pub = server.publisher.name;
+						if (extendedServer.publisher?.name) {
+							const pub = extendedServer.publisher.name;
 							facets.publishers[pub] = (facets.publishers[pub] || 0) + 1;
 						}
 					}
 
-					if (this.passesFilters(server, request)) {
-						filteredServers.push(server);
+					if (this.passesFilters(extendedServer, request)) {
+						filteredServers.push(extendedServer);
 					}
 				}
 			} catch (error) {
@@ -169,7 +184,7 @@ export class MarketplaceService {
 	/**
 	 * Get server by ID
 	 */
-	async getServer(id: string): Promise<ServerManifest | null> {
+	async getServer(id: string): Promise<MarketplaceServerManifest | null> {
 		const allServers = await this.getAllServers();
 		return allServers.find((server) => server.id === id) || null;
 	}
@@ -255,15 +270,15 @@ export class MarketplaceService {
 	/**
 	 * Get all servers from all registries
 	 */
-	private async getAllServers(): Promise<ServerManifest[]> {
+	private async getAllServers(): Promise<MarketplaceServerManifest[]> {
 		const registries = await this.registryService.listRegistries();
-		const allServers: ServerManifest[] = [];
+		const allServers: MarketplaceServerManifest[] = [];
 
 		for (const registry of registries) {
 			try {
 				const data = await this.registryService.getRegistry(registry.name);
 				if (data?.servers) {
-					allServers.push(...data.servers);
+					allServers.push(...(data.servers as MarketplaceServerManifest[]));
 				}
 			} catch (error) {
 				console.warn(`Failed to load registry ${registry.name}:`, error);
@@ -279,12 +294,12 @@ export class MarketplaceService {
 		});
 	}
 
-	private passesFilters(server: ServerManifest, request: SearchRequest): boolean {
+	private passesFilters(server: MarketplaceServerManifest, request: SearchRequest): boolean {
 		if (request.q) {
 			const query = request.q.toLowerCase();
 			const matches =
 				server.name.toLowerCase().includes(query) ||
-				server.description.toLowerCase().includes(query) ||
+				(server.description && server.description.toLowerCase().includes(query)) ||
 				server.id.toLowerCase().includes(query) ||
 				server.tags?.some((tag: string) => tag.toLowerCase().includes(query));
 			if (!matches) {
@@ -333,7 +348,7 @@ export class MarketplaceService {
 		}
 
 		if (request.capabilities && request.capabilities.length > 0) {
-			if (!request.capabilities.every((cap) => server.capabilities[cap] === true)) {
+			if (!server.capabilities || !request.capabilities.every((cap) => (server.capabilities as Record<string, boolean>)[cap] === true)) {
 				return false;
 			}
 		}
@@ -344,7 +359,7 @@ export class MarketplaceService {
 	/**
 	 * Sort search results
 	 */
-	private sortResults(servers: ServerManifest[], request: SearchRequest): ServerManifest[] {
+	private sortResults(servers: MarketplaceServerManifest[], request: SearchRequest): MarketplaceServerManifest[] {
 		const { sortBy, sortOrder } = request;
 
 		return servers.sort((a, b) => {

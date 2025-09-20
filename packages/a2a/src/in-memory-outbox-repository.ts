@@ -1,9 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
 import {
 	type OutboxMessage,
 	OutboxMessageStatus,
 	type OutboxRepository,
-} from '../a2a-contracts/src/outbox-types.js';
+} from '@cortex-os/a2a-contracts/outbox-types';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * In-Memory Outbox Repository Implementation

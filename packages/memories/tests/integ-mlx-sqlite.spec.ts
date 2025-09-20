@@ -25,7 +25,7 @@ describe('Memories + MLX (HTTP) integration (SQLite)', () => {
 		// @ts-expect-error override
 		global.fetch = fetchMock;
 
-		const store = createPolicyAwareStoreFromEnv();
+		const store = await createPolicyAwareStoreFromEnv();
 		const embedder = createEmbedderFromEnv();
 		const svc = createMemoryService(store, embedder);
 

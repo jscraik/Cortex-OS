@@ -65,8 +65,14 @@ export abstract class BaseSubagent extends EventEmitter {
 		metrics: { executionTime: number; tokensUsed: number },
 	): SubagentRunResult {
 		return {
-			output,
-			metrics,
+			result: output,
+			metrics: {
+				messagesProcessed: 1,
+				totalTokensUsed: metrics.tokensUsed,
+				averageResponseTime: metrics.executionTime,
+				errorRate: 0,
+				lastUpdated: new Date().toISOString(),
+			},
 			success: true,
 			error: undefined,
 		};
@@ -80,8 +86,14 @@ export abstract class BaseSubagent extends EventEmitter {
 		metrics?: { latencyMs?: number; tokensUsed?: number },
 	): SubagentRunResult {
 		return {
-			output: '',
-			metrics: metrics || { latencyMs: 0, tokensUsed: 0 },
+			result: '',
+			metrics: {
+				messagesProcessed: 0,
+				totalTokensUsed: metrics?.tokensUsed || 0,
+				averageResponseTime: metrics?.latencyMs || 0,
+				errorRate: 1,
+				lastUpdated: new Date().toISOString(),
+			},
 			success: false,
 			error,
 		};
@@ -131,12 +143,13 @@ export abstract class BaseSubagent extends EventEmitter {
 			this.isActive = false;
 
 			// Update metrics if not provided
-			if (!validatedResult.metrics) {
-				validatedResult.metrics = {
-					latencyMs: endTime - startTime,
-					tokensUsed: 0, // Should be provided by implementation
-				};
-			}
+			validatedResult.metrics ??= {
+				messagesProcessed: 1,
+				totalTokensUsed: 0, // Should be provided by implementation
+				averageResponseTime: endTime - startTime,
+				errorRate: 0,
+				lastUpdated: new Date().toISOString(),
+			};
 
 			this.emit('subagentExecutionCompleted', {
 				input,

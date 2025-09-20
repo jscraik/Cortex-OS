@@ -211,6 +211,31 @@ try {
 }
 ```
 
+## 📐 Execution Planner Contract Alignment
+
+The `ExecutionPlanner` returns a minimal plan shape aligned with the nO Intelligence Scheduler contracts exported by `@cortex-os/contracts` (module: `orchestration-no/intelligence-scheduler`).
+
+Shape:
+
+```ts
+{
+  id: string,
+  steps: Array<{ id: string; name: string; dependsOn: string[] }>,
+  metadata: { createdBy: string, ... }
+}
+```
+
+Notes:
+- Dependencies are derived from `next` and `branches` in the source workflow.
+- Defaults: `estimatedDuration`=1000ms, `agentRequirements`=[].
+- Strategy and resource fields are intentionally omitted to match the minimal contract.
+
+### Planner Algorithm & Errors
+
+- Topological sort uses Kahn’s algorithm with explicit helpers for readability (`computeInDegree`, `buildDependentsMap`, `initZeroInDegreeQueue`).
+- Cycle detection is performed via DFS prior to sorting to provide early, clear failures.
+- Error messages are normalized to include the phrase `Cycle detected` to satisfy contract tests.
+
 ### Error Handling
 
 All MCP tools emit structured error responses with the following format:

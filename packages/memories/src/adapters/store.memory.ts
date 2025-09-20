@@ -1,6 +1,6 @@
 import { decayEnabled, decayFactor, getHalfLifeMs } from '../core/decay.js';
 import { isExpired } from '../core/ttl.js';
-import type { Memory, MemoryId } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
@@ -21,7 +21,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export class InMemoryStore implements MemoryStore {
-	private data = new Map<string, Map<MemoryId, Memory>>();
+	private readonly data = new Map<string, Map<string, Memory>>();
 
 	private ns(name: string) {
 		let store = this.data.get(name);
@@ -36,10 +36,10 @@ export class InMemoryStore implements MemoryStore {
 		this.ns(namespace).set(m.id, m);
 		return m;
 	}
-	async get(id: MemoryId, namespace = 'default') {
+	async get(id: string, namespace = 'default') {
 		return this.ns(namespace).get(id) ?? null;
 	}
-	async delete(id: MemoryId, namespace = 'default') {
+	async delete(id: string, namespace = 'default') {
 		this.ns(namespace).delete(id);
 	}
 
@@ -57,16 +57,19 @@ export class InMemoryStore implements MemoryStore {
 				.sort((a, b) => b.s - a.s)
 				.map((x) => x.m);
 		}
-		return items.slice(0, q.topK);
+		const topK = q.topK ?? 10;
+		return items.slice(0, topK);
 	}
 
 	async searchByVector(q: VectorQuery, namespace = 'default') {
 		let itemsWithScores = [...this.ns(namespace).values()]
 			.filter((x) => x.vector && (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))))
-			.map((x) => ({
-				memory: x,
-				score: cosineSimilarity(q.vector, x.vector!),
-			}));
+			.map((x) => {
+				const queryVec = q.vector ?? q.embedding;
+				const targetVec = x.vector;
+				const score = queryVec && targetVec ? cosineSimilarity(queryVec, targetVec) : 0;
+				return { memory: x, score };
+			});
 		if (decayEnabled()) {
 			const now = new Date().toISOString();
 			const half = getHalfLifeMs();
@@ -75,10 +78,9 @@ export class InMemoryStore implements MemoryStore {
 				score: it.score * decayFactor(it.memory.createdAt, now, half),
 			}));
 		}
-		const sorted = itemsWithScores
-			.sort((a, b) => b.score - a.score)
-			.slice(0, q.topK)
-			.map((item) => item.memory);
+		const topK = q.topK ?? 10;
+		itemsWithScores.sort((a, b) => b.score - a.score);
+		const sorted = itemsWithScores.slice(0, topK).map((item) => item.memory);
 
 		return sorted;
 	}

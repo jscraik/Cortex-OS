@@ -2,6 +2,8 @@ import os from 'node:os';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Embedder } from '../ports/Embedder.js';
+import { EMBEDDER_ENV, getEnvWithFallback } from '../config/constants.js';
+import { ConfigurationError } from '../errors.js';
 
 const currentFilename = fileURLToPath(import.meta.url);
 const currentDirname = dirname(currentFilename);
@@ -14,7 +16,7 @@ const MLX_MODELS = {
 		name: 'Qwen3-Embedding-0.6B',
 		dimensions: 768,
 		path:
-			process.env.MLX_MODEL_QWEN3_0_6B_PATH ||
+			process.env[EMBEDDER_ENV.MLX_MODEL_QWEN3_0_6B_PATH] ||
 			path.join(DEFAULT_MLX_MODELS_DIR, 'models--Qwen--Qwen3-Embedding-0.6B'),
 		recommendedFor: ['quick_search', 'development'],
 	},
@@ -22,7 +24,7 @@ const MLX_MODELS = {
 		name: 'Qwen3-Embedding-4B',
 		dimensions: 768,
 		path:
-			process.env.MLX_MODEL_QWEN3_4B_PATH ||
+			process.env[EMBEDDER_ENV.MLX_MODEL_QWEN3_4B_PATH] ||
 			path.join(DEFAULT_MLX_MODELS_DIR, 'models--Qwen--Qwen3-Embedding-4B'),
 		recommendedFor: ['production', 'balanced_performance'],
 	},
@@ -30,7 +32,7 @@ const MLX_MODELS = {
 		name: 'Qwen3-Embedding-8B',
 		dimensions: 768,
 		path:
-			process.env.MLX_MODEL_QWEN3_8B_PATH ||
+			process.env[EMBEDDER_ENV.MLX_MODEL_QWEN3_8B_PATH] ||
 			path.join(DEFAULT_MLX_MODELS_DIR, 'models--Qwen--Qwen3-Embedding-8B'),
 		recommendedFor: ['high_accuracy', 'research'],
 	},
@@ -49,7 +51,7 @@ export class MLXEmbedder implements Embedder {
 		this.modelConfig = MLX_MODELS[this.modelName];
 
 		if (!this.modelConfig) {
-			throw new Error(`Unsupported MLX model: ${this.modelName}`);
+			throw new ConfigurationError(`Unsupported MLX model: ${this.modelName}`);
 		}
 	}
 
@@ -60,6 +62,7 @@ export class MLXEmbedder implements Embedder {
 	async embed(texts: string[]): Promise<number[][]> {
 		try {
 			// Try to use existing MLX service if available
+			// MLX_EMBED_BASE_URL is the standardized name, MLX_SERVICE_URL is legacy fallback
 			if (process.env.MLX_EMBED_BASE_URL || process.env.MLX_SERVICE_URL) {
 				return await this.embedViaService(texts);
 			}
@@ -73,8 +76,15 @@ export class MLXEmbedder implements Embedder {
 	}
 
 	private async embedViaService(texts: string[]): Promise<number[][]> {
-		const base = process.env.MLX_EMBED_BASE_URL || process.env.MLX_SERVICE_URL;
-		if (!base) throw new Error('MLX service URL not configured');
+		// Narrow response shape to avoid any
+		type EmbeddingResponse = { embeddings?: number[][]; embedding?: number[] };
+		// Use standardized MLX embed base URL with fallback handling
+		const base = getEnvWithFallback(
+			EMBEDDER_ENV.MLX_EMBED_BASE_URL,
+			[EMBEDDER_ENV.MLX_SERVICE_URL],
+			{ context: 'MLX embedding service URL' }
+		);
+		if (!base) throw new ConfigurationError('MLX service URL not configured');
 		const response = await fetch(`${base.replace(/\/$/, '')}/embed`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -88,19 +98,21 @@ export class MLXEmbedder implements Embedder {
 		});
 
 		if (!response.ok) {
-			throw new Error(`MLX service error: ${response.status} ${response.statusText}`);
+			throw new ConfigurationError(
+				`MLX service request failed: HTTP ${response.status} ${response.statusText}`,
+			);
 		}
 
-		const data = await response.json();
+		const data: EmbeddingResponse = await response.json();
 
 		// Accept either {embeddings: number[][]} or single {embedding: number[]}
-		if (Array.isArray((data as any).embeddings)) {
-			return (data as any).embeddings as number[][];
+		if (Array.isArray(data.embeddings)) {
+			return data.embeddings;
 		}
-		if (Array.isArray((data as any).embedding)) {
-			return [(data as any).embedding as number[]];
+		if (Array.isArray(data.embedding)) {
+			return [data.embedding];
 		}
-		throw new Error('Invalid response format from MLX service');
+		throw new ConfigurationError('MLX service response parsing failed: missing embeddings array');
 	}
 
 	private async embedViaPython(texts: string[]): Promise<number[][]> {
@@ -121,10 +133,14 @@ export class MLXEmbedder implements Embedder {
 		const run = () =>
 			runPython(pythonScriptPath, [this.modelConfig.path, JSON.stringify(texts)], {
 				envOverrides: {
-					MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR,
+					[EMBEDDER_ENV.MLX_MODELS_DIR]: process.env[EMBEDDER_ENV.MLX_MODELS_DIR] || DEFAULT_MLX_MODELS_DIR,
 				},
-				python: process.env.PYTHON_EXEC || 'python3',
-				setModulePath: process.env.PYTHONPATH || undefined,
+				python: getEnvWithFallback(
+					EMBEDDER_ENV.PYTHON_EXECUTABLE,
+					[EMBEDDER_ENV.PYTHON_EXEC_LEGACY, EMBEDDER_ENV.MLX_PYTHON_PATH],
+					{ context: 'Python executable path' }
+				) || 'python3',
+				setModulePath: process.env[EMBEDDER_ENV.PYTHON_MODULE_PATH] || undefined,
 			} as unknown as Record<string, unknown>);
 
 		const timer = new Promise<never>((_, reject) =>
@@ -134,11 +150,12 @@ export class MLXEmbedder implements Embedder {
 		const out = await Promise.race([run(), timer]);
 		try {
 			const result = JSON.parse(String(out || '{}'));
-			if (result.error) throw new Error(String(result.error));
-			if (!Array.isArray(result.embeddings)) throw new Error('Invalid embeddings format from MLX');
+			if (result.error) throw new ConfigurationError(`MLX Python script error: ${String(result.error)}`);
+			if (!Array.isArray(result.embeddings)) throw new ConfigurationError('MLX Python response: invalid embeddings format');
 			return result.embeddings as number[][];
 		} catch (err) {
-			throw new Error(`Failed to parse MLX response: ${err}`);
+			const msg = err instanceof Error ? err.message : String(err);
+			throw new ConfigurationError(`Failed to parse MLX Python response: ${msg}`);
 		}
 	}
 }

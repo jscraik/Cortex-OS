@@ -3,11 +3,10 @@
  * @description Handles registry management and caching
  */
 
+import type { RegistryIndex } from '@cortex-os/mcp-registry';
 import { constants as fsConstants } from 'node:fs';
 import { access, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-// import type { RegistryIndex } from "../../packages/mcp-registry/dist/types";
-import type { RegistryIndex } from '../../packages/mcp-registry/dist/types';
 
 export interface RegistryConfig {
 	registries: Record<string, string>;
@@ -56,7 +55,7 @@ export class RegistryService {
 				if (data) {
 					info.healthy = true;
 					info.lastUpdated = data.updatedAt;
-					info.serverCount = data.serverCount;
+					info.serverCount = data.servers.length;
 				}
 			} catch (error) {
 				console.warn('Registry health check failed', { name, error });

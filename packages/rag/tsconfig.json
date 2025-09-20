@@ -1,29 +1,33 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"rootDir": "src",
-		"outDir": "dist",
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
-		"verbatimModuleSyntax": true,
-		"skipLibCheck": true,
-		"baseUrl": ".",
-		"noEmit": false,
-		"paths": {
-			"fast-glob": [
-				"src/stubs/fast-glob.ts"
-			],
-			"micromatch": [
-				"src/stubs/micromatch.ts"
-			]
-		}
-	},
-	"include": [
-		"src",
-		"scripts"
-	],
-	"exclude": [
-		"dist",
-		"node_modules"
-	]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "noEmit": false,
+    "paths": {
+      "fast-glob": [
+        "src/stubs/fast-glob.ts"
+      ],
+      "micromatch": [
+        "src/stubs/micromatch.ts"
+      ],
+      "@cortex-os/agents": [
+        "__tests__/stubs/agent-mcp-client.ts"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "scripts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "src/integrations/archon-mcp.ts"
+  ]
 }

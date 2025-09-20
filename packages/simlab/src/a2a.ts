@@ -1,9 +1,7 @@
+import type { TopicACL } from '@cortex-os/a2a-contracts';
 import { SchemaCompatibility } from '@cortex-os/a2a-contracts/schema-registry-types';
-import type { TopicACL } from '@cortex-os/a2a-contracts/topic-acl';
-import { type BusOptions, createBus } from '@cortex-os/a2a-core/bus';
-import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
-import type { Transport } from '@cortex-os/a2a-core/transport';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
+import { type BusOptions, createBus, SchemaRegistry, type Transport } from '@cortex-os/a2a-core';
+import { inproc } from '@cortex-os/a2a-transport';
 import type { ZodTypeAny } from 'zod';
 import {
 	AgentCreatedEventSchema,
@@ -22,7 +20,7 @@ const DEFAULT_SIMLAB_ACL: TopicACL = {
 
 function registerSimlabSchema(
 	registry: SchemaRegistry,
-	eventType: keyof typeof DEFAULT_SIMLAB_ACL,
+	eventType: string & keyof typeof DEFAULT_SIMLAB_ACL,
 	version: string,
 	schema: ZodTypeAny,
 	description: string,

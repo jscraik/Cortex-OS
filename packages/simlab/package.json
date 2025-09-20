@@ -26,6 +26,9 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "@cortex-os/prp-runner": "workspace:*"
+    "@cortex-os/prp-runner": "workspace:*",
+    "@cortex-os/a2a-contracts": "workspace:*",
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/a2a-transport": "workspace:*"
   }
 }

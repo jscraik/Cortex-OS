@@ -5,10 +5,10 @@ import { ToolExecutionError } from '../tools.js';
 const WebSearchInputSchema = z.object({
 	query: z.string().min(1, 'query is required'),
 	maxResults: z.number().int().min(1).max(20).default(10),
-	domains: z.array(z.string()).optional(), // restrict to specific domains
-	excludeDomains: z.array(z.string()).optional(), // exclude specific domains
-	language: z.string().default('en'), // language preference
-	region: z.string().optional(), // geographic region
+	domains: z.array(z.string()).optional(),
+	excludeDomains: z.array(z.string()).optional(),
+	language: z.string().default('en'),
+	region: z.string().optional(),
 	timeRange: z.enum(['day', 'week', 'month', 'year', 'any']).default('any'),
 	safeSearch: z.boolean().default(true),
 });
@@ -36,183 +36,179 @@ export interface WebSearchToolResult {
 	timestamp: string;
 }
 
-export class WebSearchTool implements McpTool<any, WebSearchToolResult> {
+export class WebSearchTool implements McpTool<unknown, WebSearchToolResult> {
 	readonly name = 'web-search';
 	readonly description = 'Performs web searches with domain filtering and advanced search options.';
 	readonly inputSchema = WebSearchInputSchema;
+	private readonly baseUrl: string;
 
-	async execute(
-		input: WebSearchInput,
-		context?: ToolExecutionContext,
-	): Promise<WebSearchToolResult> {
+	constructor(opts?: { baseUrl?: string }) {
+		// Default to DuckDuckGo HTML endpoint; allow override for integration testing
+		this.baseUrl = opts?.baseUrl ?? 'https://duckduckgo.com/html/';
+	}
+
+	async execute(input: WebSearchInput, context?: ToolExecutionContext): Promise<WebSearchToolResult> {
 		if (context?.signal?.aborted) {
-			throw new ToolExecutionError('WebSearch tool execution aborted.', {
-				code: 'E_TOOL_ABORTED',
-			});
+			throw new ToolExecutionError('WebSearch tool execution aborted.', { code: 'E_TOOL_ABORTED' });
 		}
 
-		const startTime = Date.now();
+		const start = Date.now();
 
 		try {
-			// For this implementation, we'll simulate web search results
-			// In a real implementation, this would integrate with a search API like Bing, Google Custom Search, etc.
-			const simulatedResults = await this.simulateWebSearch(input, context);
+			const url = this.buildDDGUrl(input);
+			const html = await this.fetchHtml(url, context);
+			const parsed = this.parseResults(html, input);
 
-			const searchTime = Date.now() - startTime;
-
-			// Apply domain filtering
-			let filteredResults = simulatedResults;
+			// Apply domain filters
+			let results = parsed;
 			let filtered = false;
 
-			if (input.domains && input.domains.length > 0) {
-				filteredResults = filteredResults.filter((result) =>
-					input.domains?.some((domain) => result.domain.includes(domain)),
-				);
+			if (input.domains?.length) {
+				const domains = input.domains;
+				results = results.filter((r) => domains?.some((d) => r.domain.includes(d)) === true);
+				filtered = true;
+			}
+			if (input.excludeDomains?.length) {
+				const exclude = input.excludeDomains;
+				results = results.filter((r) => exclude?.some((d) => r.domain.includes(d)) !== true);
 				filtered = true;
 			}
 
-			if (input.excludeDomains && input.excludeDomains.length > 0) {
-				filteredResults = filteredResults.filter(
-					(result) => !input.excludeDomains?.some((domain) => result.domain.includes(domain)),
-				);
-				filtered = true;
-			}
-
-			// Limit results
-			filteredResults = filteredResults.slice(0, input.maxResults);
+			results = results.slice(0, input.maxResults);
 
 			return {
 				query: input.query,
-				results: filteredResults,
-				totalResults: filteredResults.length,
-				searchTime,
+				results,
+				totalResults: results.length,
+				searchTime: Date.now() - start,
 				language: input.language,
 				region: input.region,
 				filtered,
 				timestamp: new Date().toISOString(),
 			};
-		} catch (error) {
-			if (error instanceof ToolExecutionError) {
-				throw error;
-			}
-
-			const errorMessage = error instanceof Error ? error.message : String(error);
-
-			throw new ToolExecutionError(`Web search failed: ${errorMessage}`, {
+		} catch (err) {
+			if (err instanceof ToolExecutionError) throw err;
+			const msg = err instanceof Error ? err.message : String(err);
+			throw new ToolExecutionError(`Web search failed: ${msg} \nNote: Provider may throttle automated requests.`, {
 				code: 'E_SEARCH_FAILED',
-				cause: error,
+				cause: err,
 			});
 		}
 	}
 
-	private async simulateWebSearch(
-		input: WebSearchInput,
-		context?: ToolExecutionContext,
-	): Promise<WebSearchResult[]> {
-		// This is a placeholder implementation that generates simulated search results
-		// In a real implementation, this would call an actual search API
+	private buildDDGUrl(input: WebSearchInput): string {
+		const params = new URLSearchParams();
+		params.set('q', input.query);
+		if (input.language) params.set('kl', input.language);
+		const timeMap: Record<WebSearchInput['timeRange'], string | undefined> = {
+			day: 'd',
+			week: 'w',
+			month: 'm',
+			year: 'y',
+			any: undefined,
+		};
+		const df = timeMap[input.timeRange];
+		if (df) params.set('df', df);
+		// Safe search: 1 on, -2 off (historical convention)
+		params.set('kp', input.safeSearch ? '1' : '-2');
+		const sep = this.baseUrl.includes('?') || this.baseUrl.endsWith('/') ? '' : '/';
+		return `${this.baseUrl}${sep}?${params.toString()}`;
+	}
 
-		if (context?.signal?.aborted) {
-			throw new ToolExecutionError('WebSearch tool execution aborted.', {
-				code: 'E_TOOL_ABORTED',
+	private async fetchHtml(url: string, context?: ToolExecutionContext): Promise<string> {
+		const res = await fetch(url, {
+			headers: { 'User-Agent': 'Cortex-OS MCP WebSearch Tool/1.0' },
+			signal: context?.signal,
+		});
+		if (!res.ok) {
+			throw new ToolExecutionError(`Search provider error: ${res.status} ${res.statusText}`, {
+				code: 'E_SEARCH_PROVIDER',
 			});
 		}
+		return res.text();
+	}
 
-		// Generate simulated results based on query
-		const baseResults: WebSearchResult[] = [
-			{
-				title: `${input.query} - Official Documentation`,
-				url: `https://docs.example.com/${input.query.toLowerCase().replace(/\s+/g, '-')}`,
-				snippet: `Official documentation and guides for ${input.query}. Learn about best practices, API references, and implementation examples.`,
-				displayUrl: 'docs.example.com',
-				domain: 'docs.example.com',
-				datePublished: new Date(
-					Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				language: input.language,
-			},
-			{
-				title: `Best Practices for ${input.query} | Developer Guide`,
-				url: `https://developer.guide.com/${input.query.toLowerCase().replace(/\s+/g, '-')}-best-practices`,
-				snippet: `Comprehensive guide covering ${input.query} best practices, common pitfalls, and expert recommendations from industry professionals.`,
-				displayUrl: 'developer.guide.com',
-				domain: 'developer.guide.com',
-				datePublished: new Date(
-					Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				language: input.language,
-			},
-			{
-				title: `${input.query} Tutorial - Step by Step Guide`,
-				url: `https://tutorials.net/${input.query.toLowerCase().replace(/\s+/g, '-')}-tutorial`,
-				snippet: `Learn ${input.query} from scratch with this comprehensive tutorial. Includes practical examples and hands-on exercises.`,
-				displayUrl: 'tutorials.net',
-				domain: 'tutorials.net',
-				datePublished: new Date(
-					Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				language: input.language,
-			},
-			{
-				title: `Understanding ${input.query}: A Complete Overview`,
-				url: `https://techblog.com/understanding-${input.query.toLowerCase().replace(/\s+/g, '-')}`,
-				snippet: `Deep dive into ${input.query} concepts, architecture, and real-world applications. Perfect for both beginners and advanced users.`,
-				displayUrl: 'techblog.com',
-				domain: 'techblog.com',
-				datePublished: new Date(
-					Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				language: input.language,
-			},
-			{
-				title: `${input.query} GitHub Repository`,
-				url: `https://github.com/awesome/${input.query.toLowerCase().replace(/\s+/g, '-')}`,
-				snippet: `Open source ${input.query} implementation with examples, documentation, and community contributions. MIT licensed.`,
-				displayUrl: 'github.com',
-				domain: 'github.com',
-				datePublished: new Date(
-					Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				language: input.language,
-			},
-			{
-				title: `${input.query} Stack Overflow Questions`,
-				url: `https://stackoverflow.com/questions/tagged/${input.query.toLowerCase().replace(/\s+/g, '-')}`,
-				snippet: `Common questions and expert answers about ${input.query}. Find solutions to specific problems and implementation challenges.`,
-				displayUrl: 'stackoverflow.com',
-				domain: 'stackoverflow.com',
-				datePublished: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-				language: input.language,
-			},
-		];
+	private parseResults(html: string, input: WebSearchInput): WebSearchResult[] {
+		const results: WebSearchResult[] = [];
+		// Simple anchor extraction for result titles/links
+		const anchorRegex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi;
 
-		// Add some query-specific variations
-		const variations = [
-			`Latest ${input.query} News and Updates`,
-			`${input.query} Community Forum`,
-			`${input.query} Performance Optimization`,
-			`${input.query} Security Best Practices`,
-			`${input.query} vs Alternatives Comparison`,
-		];
+		let match: RegExpExecArray | null = anchorRegex.exec(html);
+		const anchors: Array<{ href: string; titleHtml: string; index: number }> = [];
+		while (match && anchors.length < 50) {
+			anchors.push({ href: match[1], titleHtml: match[2], index: match.index });
+			match = anchorRegex.exec(html);
+		}
 
-		for (let i = 0; i < variations.length && baseResults.length < 15; i++) {
-			baseResults.push({
-				title: variations[i],
-				url: `https://example${i + 7}.com/${input.query.toLowerCase().replace(/\s+/g, '-')}-${i}`,
-				snippet: `Learn about ${variations[i].toLowerCase()} with detailed explanations and practical examples.`,
-				displayUrl: `example${i + 7}.com`,
-				domain: `example${i + 7}.com`,
-				datePublished: new Date(
-					Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000,
-				).toISOString(),
+		for (const a of anchors) {
+			const title = this.stripTags(a.titleHtml);
+			const urlStr = this.resolveDDGRedirect(a.href);
+			const urlObj = this.safeUrl(urlStr);
+			if (!urlObj) continue;
+			const domain = urlObj.hostname;
+			const snippet = this.extractSnippetNear(html, a.index);
+
+			results.push({
+				title,
+				url: urlObj.toString(),
+				snippet,
+				displayUrl: domain,
+				domain,
 				language: input.language,
 			});
 		}
+		return results;
+	}
 
-		// Simulate network delay
-		await new Promise((resolve) => setTimeout(resolve, 200 + Math.random() * 300));
+	private extractSnippetNear(html: string, fromIndex: number): string {
+		// Find the next element with class result__snippet after the anchor
+		const clsIdx = html.indexOf('result__snippet', fromIndex);
+		if (clsIdx === -1) return '';
+		const openTagEnd = html.indexOf('>', clsIdx);
+		if (openTagEnd === -1) return '';
+		const closeIdx = html.indexOf('</a>', openTagEnd);
+		if (closeIdx === -1) return '';
+		return this.stripTags(html.slice(openTagEnd + 1, closeIdx));
+	}
 
-		return baseResults;
+	private stripTags(s: string): string {
+		return s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+	}
+
+	private resolveDDGRedirect(href: string): string {
+		try {
+			const u = new URL(href, 'https://duckduckgo.com');
+			if (u.pathname.startsWith('/l/') && u.searchParams.has('uddg')) {
+				const t = u.searchParams.get('uddg');
+				if (t) return decodeURIComponent(t);
+			}
+			return u.toString();
+		} catch {
+			return href;
+		}
+	}
+
+	private safeUrl(u: string): URL | null {
+		try {
+			const url = new URL(u);
+			if (!['http:', 'https:'].includes(url.protocol)) return null;
+			const host = url.hostname;
+			if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return null;
+
+			const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+			const ipv4Match = ipv4Regex.exec(host);
+			if (ipv4Match) {
+				const a = Number.parseInt(ipv4Match[1], 10);
+				const b = Number.parseInt(ipv4Match[2], 10);
+				if (a === 10) return null; // 10.0.0.0/8
+				if (a === 192 && b === 168) return null; // 192.168.0.0/16
+				if (a === 172 && b >= 16 && b <= 31) return null; // 172.16.0.0/12
+				if (a === 127) return null; // loopback
+			}
+			return url;
+		} catch {
+			return null;
+		}
 	}
 }
 

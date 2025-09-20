@@ -10,7 +10,7 @@ class MockEmbedder implements Embedder {
 }
 
 class MockStore implements Store {
-	private chunks: Array<Chunk & { embedding?: number[]; score?: number }> = [
+	private readonly chunks: Array<Chunk & { embedding?: number[]; score?: number }> = [
 		{
 			id: 'chunk-1',
 			text: 'Climate change is caused by greenhouse gases like carbon dioxide.',
@@ -28,7 +28,8 @@ class MockStore implements Store {
 	];
 
 	async upsert(_chunks: Chunk[]): Promise<void> {
-		// Mock implementation
+		// reference param to satisfy unused rule
+		const _ = _chunks; // eslint-disable-line @typescript-eslint/no-unused-vars
 	}
 
 	async query(_embedding: number[], k = 5): Promise<Array<Chunk & { score?: number }>> {
@@ -44,6 +45,32 @@ describe('RAGPipeline enhanced features', () => {
 			embedder: new MockEmbedder(),
 			store: new MockStore(),
 		});
+	});
+
+	it('prefers queryWithText when available for hybrid search', async () => {
+		class HybridStore extends MockStore {
+			query = vi.fn().mockResolvedValue([]);
+			queryWithText = vi.fn(async (_e: number[], q: string, k = 5) => {
+				const __e = _e; // eslint-disable-line @typescript-eslint/no-unused-vars
+				const __k = k; // eslint-disable-line @typescript-eslint/no-unused-vars
+				return [
+					{
+						id: 'kw-1',
+						text: `keyword hit for: ${q}`,
+						source: 'kw-src',
+						score: 0.99,
+					},
+				];
+			});
+		}
+
+		const pipelineHybrid = new RAGPipeline({
+			embedder: new MockEmbedder(),
+			store: new HybridStore() as unknown as Store,
+		});
+
+		const result = await pipelineHybrid.retrieve('special term');
+		expect(result.citations[0].text).toContain('keyword hit for: special term');
 	});
 
 	describe('basic retrieval with no evidence path', () => {
@@ -117,8 +144,8 @@ describe('RAGPipeline enhanced features', () => {
 
 		it('should maintain score-based ordering within groups', async () => {
 			const result = await pipeline.retrieveWithDeduplication('climate');
-
-			Object.values(result.sourceGroups!).forEach((group) => {
+			const groups = result.sourceGroups ?? {};
+			Object.values(groups).forEach((group) => {
 				for (let i = 1; i < group.length; i++) {
 					const prevScore = group[i - 1].score || 0;
 					const currScore = group[i].score || 0;

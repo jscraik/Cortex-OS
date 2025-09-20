@@ -10,12 +10,17 @@
         ]
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "a2a-contracts/src/**/*.ts",
+        "a2a-core/src/**/*.ts"
     ],
     "exclude": [
         "jest.config.ts",
         "src/**/*.spec.ts",
         "src/**/*.test.ts",
+        "a2a-core/src/**/*.spec.ts",
+        "a2a-core/src/**/*.test.ts",
+        "a2a-core/src/**/__tests__/**",
         "tests/**/*",
         "vitest.config.ts"
     ]

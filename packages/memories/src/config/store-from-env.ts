@@ -1,27 +1,35 @@
 import { LocalMemoryStore } from '../adapters/store.localmemory.js';
 import { type PrismaLike, PrismaStore } from '../adapters/store.prisma/client.js';
-import { SQLiteStore } from '../adapters/store.sqlite.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
+import { ENV, getEnvWithFallback } from './constants.js';
 
 export type StoreKind = 'local' | 'sqlite' | 'prisma' | 'memory';
 
 export function resolveStoreKindFromEnv(): StoreKind {
-	const raw = (process.env.MEMORIES_ADAPTER || process.env.MEMORY_STORE || '').toLowerCase();
+	// Use centralized helper with fallback handling
+	const raw = getEnvWithFallback(
+		ENV.STORE_ADAPTER,
+		[ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2],
+		{ context: 'store adapter selection' }
+	)?.toLowerCase() || '';
+
 	if (raw === 'local') return 'local';
 	if (raw === 'sqlite') return 'sqlite';
 	if (raw === 'prisma') return 'prisma';
 	if (raw === 'memory') return 'memory';
+
 	// If Local Memory base URL is present, prefer it
-	if (process.env.LOCAL_MEMORY_BASE_URL) return 'local';
-	// Default to sqlite for local dev if better-sqlite3 is available, otherwise local
-	return 'sqlite';
+	if (process.env[ENV.LOCAL_MEMORY_BASE_URL]) return 'local';
+
+	// Default to in-memory for tests/dev without persistence
+	return 'memory';
 }
 
 /**
  * Create a MemoryStore instance based on environment variables.
  *
  * Supported env vars:
- * - `MEMORIES_ADAPTER` | `MEMORY_STORE`: one of `local`, `sqlite`, `prisma`, `memory`
+ * - `MEMORIES_STORE_ADAPTER` (standardized) | `MEMORIES_ADAPTER` | `MEMORY_STORE` (legacy): one of `local`, `sqlite`, `prisma`, `memory`
  * - `LOCAL_MEMORY_BASE_URL`, `LOCAL_MEMORY_API_KEY`, `LOCAL_MEMORY_NAMESPACE`
  * - `MEMORIES_SQLITE_PATH` (default: `./data/memories.db`), `MEMORIES_VECTOR_DIM` (default: 1536)
  */
@@ -30,15 +38,15 @@ export async function createStoreFromEnv(opts?: { prismaClient?: unknown }): Pro
 	switch (kind) {
 		case 'local': {
 			return new LocalMemoryStore({
-				baseUrl: process.env.LOCAL_MEMORY_BASE_URL,
-				apiKey: process.env.LOCAL_MEMORY_API_KEY,
-				defaultNamespace: process.env.LOCAL_MEMORY_NAMESPACE,
+				baseUrl: process.env[ENV.LOCAL_MEMORY_BASE_URL],
+				apiKey: process.env[ENV.LOCAL_MEMORY_API_KEY],
+				defaultNamespace: process.env[ENV.LOCAL_MEMORY_NAMESPACE],
 			});
 		}
 		case 'sqlite': {
-			const dbPath = process.env.MEMORIES_SQLITE_PATH || './data/memories.db';
-			const dim = Number(process.env.MEMORIES_VECTOR_DIM || '1536');
-			return new SQLiteStore(dbPath, dim);
+			const { SQLiteStore } = await import('../adapters/store.sqlite.js');
+			// Use in-memory SQLite by default for testing
+			return new SQLiteStore(':memory:', 384);
 		}
 		case 'prisma': {
 			// Expect a prisma client instance to be provided at runtime.

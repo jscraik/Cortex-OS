@@ -14,7 +14,7 @@ This project demonstrates how to build Cortex-OS agents using the VoltAgent fram
 
 ## Project Structure
 
-```
+```bash
 src/
 ├── index.ts                 # Main entry point
 ├── tools/                   # Tool definitions
@@ -39,16 +39,19 @@ src/
 
 1. Clone the repository
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Copy environment configuration:
+
    ```bash
    cp .env.example .env
    ```
 
 4. Configure your environment variables in `.env`:
+
    ```env
    OPENAI_API_KEY=your_openai_api_key_here
    LOG_LEVEL=info
@@ -58,11 +61,13 @@ src/
 ### Running the Agent
 
 Development mode:
+
 ```bash
 npm run dev
 ```
 
 Build and run:
+
 ```bash
 npm run build
 npm start
@@ -117,6 +122,7 @@ The workflow implementation will be added once the VoltAgent workflow API is bet
 4. Export the tool from `src/tools/index.ts`
 
 Example:
+
 ```typescript
 import { Tool } from "@voltagent/core";
 import { z } from "zod";
@@ -142,6 +148,7 @@ export const myTool = new Tool({
 4. Export the workflow for use in the main application
 
 Example:
+
 ```typescript
 export const myWorkflow = createWorkflowChain("My Workflow")
   .andThen(new ToolStep({
@@ -164,7 +171,7 @@ export const myWorkflow = createWorkflowChain("My Workflow")
 ### Environment Variables
 
 - `OPENAI_API_KEY`: Your OpenAI API key
-- `OPENAI_BASE_URL`: OpenAI API base URL (default: https://api.openai.com/v1)
+- `OPENAI_BASE_URL`: OpenAI API base URL (default: <https://api.openai.com/v1>)
 - `LOG_LEVEL`: Logging level (debug, info, warn, error)
 - `PORT`: Server port (default: 3141)
 - `MEMORY_URL`: Memory storage URL

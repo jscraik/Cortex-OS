@@ -3,15 +3,58 @@
  * LangGraph-only orchestration surface (no legacy orchestrator exports)
  */
 
+// nO Architecture Contracts
+export {
+	AgentConfigurationSchema,
+	AgentNetworkSchema,
+	AgentPoolSchema,
+	AgentScheduleSchema,
+	AgentStateSchema,
+	ExecutionFeedbackSchema,
+	// Schema Exports
+	ExecutionRequestSchema,
+	ExecutionResultSchema,
+	ExecutionStatusSchema,
+	// Interface Schemas
+	IntelligenceSchedulerSchema,
+	MasterAgentLoopSchema, ExecutionPlanSchema as NoExecutionPlanSchema, StrategyAdjustmentSchema,
+	ToolCapabilitySchema,
+	ToolLayerSchema,
+	ToolManifestSchema,
+	ToolResultSchema
+} from './contracts/no-architecture-contracts.js';
+export type {
+	AgentConfiguration,
+	AgentNetwork,
+	AgentPool,
+	AgentSchedule,
+	AgentState, ExecutionResult,
+	// Core Contracts
+	IntelligenceScheduler,
+	MasterAgentLoop, ExecutionFeedback as NoExecutionFeedback,
+	ExecutionPlan as NoExecutionPlan,
+	// Schema Types (aliased to avoid conflicts)
+	ExecutionRequest as NoExecutionRequest, ExecutionStatus as NoExecutionStatus, StrategyAdjustment,
+	ToolCapability,
+	ToolLayer,
+	ToolManifest,
+	ToolResult
+} from './contracts/no-architecture-contracts.js';
+export { createOrchestrationBus } from './events/orchestration-bus.js';
 export type {
 	OrchestrationBus,
 	OrchestrationEventEnvelope,
 	OrchestrationEventHandler,
-	OrchestrationPublishOptions,
+	OrchestrationPublishOptions
 } from './events/orchestration-bus.js';
-export { createOrchestrationBus } from './events/orchestration-bus.js';
+export {
+	ORCHESTRATION_EVENT_SCHEMAS,
+	OrchestrationEventTypes
+} from './events/orchestration-events.js';
 export type {
 	AgentAssignedEvent,
+	// nO Architecture Event Types
+	AgentCoordinationStartedEvent,
 	AgentFreedEvent,
 	CoordinationStartedEvent,
 	DecisionMadeEvent,
@@ -19,15 +62,49 @@ export type {
 	PlanCreatedEvent,
 	PlanUpdatedEvent,
 	ResourceAllocatedEvent,
+	ScheduleAdjustedEvent,
 	TaskCompletedEvent,
 	TaskCreatedEvent,
 	TaskFailedEvent,
 	TaskStartedEvent,
+	ToolLayerInvokedEvent
 } from './events/orchestration-events.js';
+
+// nO Telemetry & Observability Contracts
 export {
-	ORCHESTRATION_EVENT_SCHEMAS,
-	OrchestrationEventTypes,
-} from './events/orchestration-events.js';
+	NO_METRIC_NAMES,
+	NO_SPAN_OPERATIONS,
+	// Constants
+	NO_TELEMETRY_EVENT_TYPES,
+	NoAuditTrailSchema,
+	NoMetricContractsSchema,
+	NoSpanDefinitionsSchema,
+	// Telemetry Schemas
+	NoTelemetrySchema, createNoAuditEntry,
+	// Utility Functions
+	createNoTelemetryEvent, validateNoAuditEntry,
+	validateNoMetricContract,
+	validateNoSpanDefinition,
+	validateNoTelemetryEvent
+} from './observability/no-telemetry-contracts.js';
+export type {
+	NoAuditAction,
+	NoAuditActor,
+	NoAuditCompliance,
+	NoAuditEntry,
+	NoAuditResource,
+	NoMetricAggregation,
+	NoMetricAlert,
+	NoMetricContract,
+	NoMetricDashboard,
+	NoMetricLabels,
+	NoSpanAttributes,
+	NoSpanDefinition,
+	NoSpanEvent,
+	NoTelemetryContext,
+	NoTelemetryEvent,
+	NoTelemetryPayload
+} from './observability/no-telemetry-contracts.js';
 
 // Legacy integrations removed (LangGraph-only)
 // Core types and interfaces
@@ -45,13 +122,13 @@ export type {
 	PerformanceMetrics,
 	PlanningContext,
 	StrategicDecision,
-	Task,
+	Task
 } from './types.js';
 // Enums
 export {
 	AgentRole,
 	OrchestrationStrategy,
-	Schemas,
+	Schemas
 } from './types.js';
 
 // Utility defaults
@@ -67,10 +144,8 @@ export const OrchestrationDefaults = {
 export type { ToolContract, ToolErrorResponse } from './mcp/tools.js';
 // MCP tool contracts
 export {
-	createToolErrorResponse,
 	ToolErrorCode,
-	ToolValidationError,
-	toolErrorResponseSchema,
+	ToolValidationError, createToolErrorResponse, toolErrorResponseSchema
 } from './mcp/tools.js';
 
 // Version info
@@ -85,6 +160,6 @@ export {
 	orchestrationMcpTools,
 	processMonitoringTool,
 	taskManagementTool,
-	workflowOrchestrationTool,
+	workflowOrchestrationTool
 } from './mcp/tools.js';
 // LangGraph-only: legacy engines are no longer exported

@@ -1,5 +1,6 @@
 import { createEnvelope, type Envelope, type TopicACL } from '@cortex-os/a2a-contracts';
-import { type BusOptions, createBus, type Transport } from '@cortex-os/a2a-core/bus';
+import { type BusOptions, createBus } from '@cortex-os/a2a-core/bus';
+import type { Transport } from '@cortex-os/a2a-core/transport';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 
 import {

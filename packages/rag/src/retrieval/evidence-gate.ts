@@ -106,6 +106,7 @@ export class EvidenceGate {
 	 */
 	shouldRoute(
 		evidence: EnhancedCitationBundle,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		_query: string,
 	): {
 		route: 'evidence' | 'llm' | 'no-answer';

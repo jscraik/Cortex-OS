@@ -43,10 +43,7 @@ export async function readJsonFile<T = unknown>(segments: string[]): Promise<T |
 }
 
 function isNotFoundError(error: unknown): error is NodeJS.ErrnoException {
-	return (
-		Boolean(error) &&
-		typeof error === 'object' &&
-		'code' in error &&
-		(error as NodeJS.ErrnoException).code === 'ENOENT'
-	);
+	if (!error || typeof error !== 'object') return false;
+	const err = error as Partial<NodeJS.ErrnoException>;
+	return err.code === 'ENOENT';
 }

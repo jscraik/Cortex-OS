@@ -8,7 +8,7 @@ import { minimatch } from 'minimatch';
 export interface StructureRule {
 	name: string;
 	description: string;
-	pattern: string;
+	pattern: string | RegExp;
 	allowedPaths: string[];
 	disallowedPaths?: string[];
 	maxFilesInDirectory?: number;
@@ -48,9 +48,8 @@ export const CORTEX_STRUCTURE_RULES: StructureRule[] = [
 	{
 		name: 'applications-placement',
 		description: 'Applications should be placed in apps/ directory',
-		// Match any path segment that looks like an app name and allow nested files after it
-		// Examples matched: "my-app/", "cli-tool/", "webui/" and deeper content
-		pattern: '**/*{app,application,cli,tui,webui,api}*/**/*',
+		// Match filenames or path segments containing app keywords, anywhere in path
+		pattern: /(app|application|cli|tui|web[-_]?ui|webapp|ui|api)/i,
 		allowedPaths: ['apps/**/*'],
 		disallowedPaths: ['packages/**/*', 'libs/**/*'],
 		autoFix: true,
@@ -60,8 +59,8 @@ export const CORTEX_STRUCTURE_RULES: StructureRule[] = [
 	{
 		name: 'packages-placement',
 		description: 'Feature packages should be in packages/ directory',
-		// Match any path segment that indicates a package/module and allow nested files
-		pattern: '**/*{package,feature,module}*/**/*',
+		// Match filenames or path segments indicating a package/module anywhere in path
+		pattern: /(package|feature|module)/i,
 		allowedPaths: ['packages/**/*'],
 		disallowedPaths: ['apps/**/*', 'libs/**/*'],
 		autoFix: true,
@@ -198,7 +197,11 @@ export class StructureValidator {
 		const violations: StructureViolation[] = [];
 
 		for (const rule of this.rules) {
-			if (!minimatch(filePath, rule.pattern)) continue;
+			const matchesRule =
+				typeof rule.pattern === 'string'
+					? minimatch(filePath, rule.pattern)
+					: rule.pattern.test(filePath);
+			if (!matchesRule) continue;
 
 			this.checkAllowedPaths(filePath, rule, violations);
 			this.checkDisallowedPaths(filePath, rule, violations);

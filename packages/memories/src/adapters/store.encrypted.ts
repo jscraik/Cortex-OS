@@ -1,4 +1,4 @@
-import type { Memory, MemoryId } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { EncryptionService } from '../ports/Encryption.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
@@ -30,7 +30,7 @@ export class EncryptedStore implements MemoryStore {
 		private readonly inner: MemoryStore,
 		private readonly crypto: EncryptionService,
 		private readonly opts: EncryptedOptions = {},
-	) {}
+	) { }
 
 	private async toEncrypted(m: Memory): Promise<Memory> {
 		const encText = await encryptText(this.crypto, m.text);
@@ -83,13 +83,13 @@ export class EncryptedStore implements MemoryStore {
 		return m;
 	}
 
-	async get(id: MemoryId, namespace?: string): Promise<Memory | null> {
+	async get(id: string, namespace?: string): Promise<Memory | null> {
 		const got = await this.inner.get(id, namespace);
 		if (!got) return null;
 		return this.toDecrypted(got);
 	}
 
-	async delete(id: MemoryId, namespace?: string): Promise<void> {
+	async delete(id: string, namespace?: string): Promise<void> {
 		return this.inner.delete(id, namespace);
 	}
 

@@ -12,6 +12,10 @@ export const OrchestrationEventTypes = {
 	CoordinationStarted: 'orchestration.coordination.started',
 	DecisionMade: 'orchestration.decision.made',
 	ResourceAllocated: 'orchestration.resource.allocated',
+	// nO Architecture Events
+	AgentCoordinationStarted: 'agent_coordination_started',
+	ScheduleAdjusted: 'schedule_adjusted',
+	ToolLayerInvoked: 'tool_layer_invoked',
 } as const;
 
 export type OrchestrationEventType =
@@ -87,6 +91,83 @@ export const resourceAllocatedEventSchema = z.object({
 	unit: z.string().optional(),
 });
 
+// nO Architecture Event Schemas
+export const agentCoordinationStartedEventSchema = z.object({
+	type: z.literal('agent_coordination_started'),
+	timestamp: z.string(),
+	planId: z.string(),
+	masterAgentId: z.string(),
+	coordinatedAgents: z.array(z.object({
+		agentId: z.string(),
+		specialization: z.string(),
+		assignedTasks: z.array(z.string()),
+		priority: z.number().int().min(1).max(10),
+	})),
+	coordinationStrategy: z.enum(['parallel', 'sequential', 'hierarchical']),
+	estimatedDuration: z.number().positive(),
+	metadata: z.record(z.unknown()).optional(),
+});
+
+export const scheduleAdjustedEventSchema = z.object({
+	type: z.literal('schedule_adjusted'),
+	timestamp: z.string(),
+	scheduleId: z.string(),
+	planId: z.string(),
+	adjustmentType: z.enum(['resource_reallocation', 'agent_reallocation', 'priority_adjustment', 'adaptive_optimization']),
+	previousSchedule: z.object({
+		totalAgents: z.number().int().positive(),
+		estimatedCompletion: z.string(),
+		resourceAllocation: z.object({
+			memoryMB: z.number().positive(),
+			cpuPercent: z.number().min(0).max(100),
+		}),
+	}),
+	newSchedule: z.object({
+		totalAgents: z.number().int().positive(),
+		estimatedCompletion: z.string(),
+		resourceAllocation: z.object({
+			memoryMB: z.number().positive(),
+			cpuPercent: z.number().min(0).max(100),
+		}),
+	}),
+	adjustmentReason: z.string(),
+	triggeringMetrics: z.object({
+		currentLoad: z.number().min(0).max(1),
+		averageResponseTime: z.number().positive(),
+		errorRate: z.number().min(0).max(1),
+	}),
+	expectedImprovement: z.object({
+		loadReduction: z.number().min(0).max(1),
+		responseTimeImprovement: z.number().min(0).max(1),
+		errorRateReduction: z.number().min(0).max(1),
+	}),
+});
+
+export const toolLayerInvokedEventSchema = z.object({
+	type: z.literal('tool_layer_invoked'),
+	timestamp: z.string(),
+	invocationId: z.string(),
+	agentId: z.string(),
+	toolLayer: z.enum(['intelligence', 'execution', 'coordination', 'observation']),
+	toolsInvoked: z.array(z.object({
+		toolName: z.string(),
+		parameters: z.record(z.unknown()),
+		estimatedDuration: z.number().positive(),
+	})),
+	invocationContext: z.object({
+		taskId: z.string(),
+		stepId: z.string().optional(),
+		priority: z.enum(['low', 'medium', 'high', 'critical']),
+	}),
+	parallelExecution: z.boolean().optional().default(false),
+	timeoutMs: z.number().positive().optional(),
+	securityContext: z.object({
+		permissionLevel: z.enum(['low', 'medium', 'high']),
+		allowedDomains: z.array(z.string()).optional(),
+		restrictedOperations: z.array(z.string()).optional(),
+	}).optional(),
+});
+
 export type TaskCreatedEvent = z.infer<typeof taskCreatedEventSchema>;
 export type TaskStartedEvent = z.infer<typeof taskStartedEventSchema>;
 export type TaskCompletedEvent = z.infer<typeof taskCompletedEventSchema>;
@@ -98,6 +179,11 @@ export type PlanUpdatedEvent = z.infer<typeof planUpdatedEventSchema>;
 export type CoordinationStartedEvent = z.infer<typeof coordinationStartedEventSchema>;
 export type DecisionMadeEvent = z.infer<typeof decisionMadeEventSchema>;
 export type ResourceAllocatedEvent = z.infer<typeof resourceAllocatedEventSchema>;
+
+// nO Architecture Event Types
+export type AgentCoordinationStartedEvent = z.infer<typeof agentCoordinationStartedEventSchema>;
+export type ScheduleAdjustedEvent = z.infer<typeof scheduleAdjustedEventSchema>;
+export type ToolLayerInvokedEvent = z.infer<typeof toolLayerInvokedEventSchema>;
 
 export const ORCHESTRATION_EVENT_SCHEMAS = {
 	[OrchestrationEventTypes.TaskCreated]: taskCreatedEventSchema,
@@ -111,4 +197,8 @@ export const ORCHESTRATION_EVENT_SCHEMAS = {
 	[OrchestrationEventTypes.CoordinationStarted]: coordinationStartedEventSchema,
 	[OrchestrationEventTypes.DecisionMade]: decisionMadeEventSchema,
 	[OrchestrationEventTypes.ResourceAllocated]: resourceAllocatedEventSchema,
+	// nO Architecture Event Schemas
+	[OrchestrationEventTypes.AgentCoordinationStarted]: agentCoordinationStartedEventSchema,
+	[OrchestrationEventTypes.ScheduleAdjusted]: scheduleAdjustedEventSchema,
+	[OrchestrationEventTypes.ToolLayerInvoked]: toolLayerInvokedEventSchema,
 } as const;

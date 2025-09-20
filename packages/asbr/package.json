@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "@cortex-os/asbr-schemas": "workspace:*",
+    "@cortex-os/asbr-policy": "workspace:*",
     "@cortex-os/utils": "workspace:*",
     "diff": "^8.0.2",
     "express": "^5.1.0",

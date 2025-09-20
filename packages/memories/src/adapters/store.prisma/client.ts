@@ -36,10 +36,10 @@ export type PrismaLike = {
 
 // Local helper to mark variables as used
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _use = (..._args: unknown[]): void => {};
+const _use = (..._args: unknown[]): void => { };
 
 export class PrismaStore implements MemoryStore {
-	constructor(private readonly prisma: PrismaLike) {}
+	constructor(private readonly prisma: PrismaLike) { }
 
 	async upsert(m: Memory, _namespace = 'default'): Promise<Memory> {
 		_use(_namespace);
@@ -71,7 +71,7 @@ export class PrismaStore implements MemoryStore {
 					q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {},
 				],
 			},
-			take: q.topK * 10,
+			take: (q.topK ?? 10) * 10,
 			orderBy: { updatedAt: 'desc' },
 		});
 		let items = rows.map(prismaToDomain);
@@ -83,7 +83,7 @@ export class PrismaStore implements MemoryStore {
 				.sort((a, b) => b.s - a.s)
 				.map((x) => x.m);
 		}
-		return items.slice(0, q.topK);
+		return items.slice(0, q.topK ?? 10);
 	}
 
 	async searchByVector(q: VectorQuery, _namespace = 'default'): Promise<Memory[]> {
@@ -95,7 +95,7 @@ export class PrismaStore implements MemoryStore {
 				...(q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {}),
 			},
 			orderBy: { updatedAt: 'desc' },
-			take: q.topK * 10, // Fetch more candidates for similarity matching
+			take: (q.topK ?? 10) * 10, // Fetch more candidates for similarity matching
 		});
 
 		// Convert to domain objects and filter out those without vectors
@@ -104,9 +104,10 @@ export class PrismaStore implements MemoryStore {
 			.filter((memory): memory is Memory & { vector: number[] } => Array.isArray(memory.vector));
 
 		// Perform similarity matching in memory
+		const queryVec = q.vector ?? q.embedding ?? [];
 		let scoredCandidates = candidates.map((memory) => ({
 			memory,
-			score: cosineSimilarity(q.vector, memory.vector),
+			score: cosineSimilarity(queryVec, memory.vector as number[]),
 		}));
 		if (decayEnabled()) {
 			const half = getHalfLifeMs();
@@ -116,10 +117,9 @@ export class PrismaStore implements MemoryStore {
 				score: it.score * decayFactor(it.memory.createdAt, now, half),
 			}));
 		}
-		return scoredCandidates
-			.sort((a, b) => b.score - a.score)
-			.slice(0, q.topK)
-			.map((item) => item.memory);
+		const topK = q.topK ?? q.limit ?? 10;
+		scoredCandidates.sort((a, b) => b.score - a.score);
+		return scoredCandidates.slice(0, topK).map((item) => item.memory);
 	}
 
 	async purgeExpired(nowISO: string, _namespace?: string): Promise<number> {
@@ -175,11 +175,11 @@ function isAllowedKind(v: unknown): v is AllowedKind {
 function prismaToDomain(row: PrismaRow): Memory {
 	const provenance = row.provenance
 		? {
-				source: row.provenance.source ?? 'system',
-				actor: row.provenance.actor,
-				evidence: row.provenance.evidence,
-				hash: row.provenance.hash,
-			}
+			source: row.provenance.source ?? 'system',
+			actor: row.provenance.actor,
+			evidence: row.provenance.evidence,
+			hash: row.provenance.hash,
+		}
 		: { source: 'system' as const };
 
 	return {

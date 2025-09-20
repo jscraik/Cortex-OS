@@ -154,7 +154,11 @@ function main() {
 		'--pool-options.forks.singleFork=true',
 		'--pool-options.forks.maxForks=1',
 		...vitestArgs.filter(
-			(arg) => !arg.startsWith('--pool') && !arg.startsWith('--max-workers'),
+			(arg) =>
+				!arg.startsWith('--pool') &&
+				!arg.startsWith('--max-workers') &&
+				arg !== '--interactive' &&
+				arg !== '--no-interactive',
 		),
 	];
 

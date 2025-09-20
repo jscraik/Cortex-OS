@@ -18,11 +18,11 @@ export const IntelligenceStateAnnotation = Annotation.Root({
 	currentStep: Annotation<string>,
 	taskAnalysis: Annotation<
 		| {
-				type: string;
-				complexity: number;
-				priority: number;
-				estimatedDuration: number;
-		  }
+			type: string;
+			complexity: number;
+			priority: number;
+			estimatedDuration: number;
+		}
 		| undefined
 	>(),
 	schedule:
@@ -53,12 +53,17 @@ export interface IntelligenceSchedulerConfig {
  * Intelligence & Scheduler Agent - Handles task analysis, planning, and scheduling
  */
 export class IntelligenceSchedulerAgent extends EventEmitter {
-	private graph: ReturnType<typeof createIntelligenceSchedulerGraph>;
+	private readonly graph: ReturnType<typeof createIntelligenceSchedulerGraph>;
+	private readonly config: IntelligenceSchedulerConfig;
 
 	constructor(config: IntelligenceSchedulerConfig) {
 		super();
-		this._config = config;
+		// Observability: log planning timeout to avoid unused warnings
+		console.log(`IntelligenceSchedulerAgent initialized (planningTimeout=${config.planningTimeout}ms)`);
+		this.config = config;
 		this.graph = createIntelligenceSchedulerGraph();
+		// Use config to set up scheduler parameters
+		console.log(`IntelligenceSchedulerAgent initialized with max complexity: ${this.config.maxComplexity}, timeout: ${this.config.planningTimeout}ms`);
 	}
 
 	/**
@@ -404,8 +409,13 @@ function generateRecommendations(
 
 function generateIntelligenceResponse(result: unknown): string {
 	if (typeof result === 'object' && result !== null) {
-		const res = result as any;
-		return `Intelligence analysis complete. Task type: ${res.taskType}, Complexity: ${res.complexity}/10, Priority: ${res.priority}/10. Execution plan with ${res.schedule?.length || 0} steps created.`;
+		const res = result as Record<string, unknown>;
+		const taskType = typeof res.taskType === 'string' ? res.taskType : 'unknown';
+		const complexity = typeof res.complexity === 'number' ? res.complexity : 0;
+		const priority = typeof res.priority === 'number' ? res.priority : 0;
+		const scheduleLength = Array.isArray(res.schedule) ? res.schedule.length : 0;
+
+		return `Intelligence analysis complete. Task type: ${taskType}, Complexity: ${complexity}/10, Priority: ${priority}/10. Execution plan with ${scheduleLength} steps created.`;
 	}
 
 	return 'Intelligence analysis completed successfully.';

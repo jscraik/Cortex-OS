@@ -8,6 +8,22 @@ MLX-first routing and fallback adapters for Ollama and MCP.
 - Python 3.13 with the ML stack:
   `numpy`, `mlx`, `mlx-lm`, `mlx-vlm`, `torch`, `instructor`, `openai`
 - [Ollama](https://ollama.com/) running locally **or** `OLLAMA_AVAILABLE=true`
+  - macOS (recommended):
+
+    ```bash
+    brew install ollama
+    brew services start ollama
+    ```
+
+  - Docker (fallback):
+
+    ```bash
+    docker run -d --name ollama \
+      -p 11434:11434 \
+      -v ollama_data:/root/.ollama \
+      ollama/ollama:0.12.0
+    ```
+
 - Optional MCP adapter configuration via `MCP_TRANSPORT` and related env vars
 
 ## Setup

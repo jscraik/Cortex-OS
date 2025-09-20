@@ -1,7 +1,4 @@
-import {
-	type AlertTriggeredEvent,
-	createObservabilityEvent,
-} from '../events/observability-events.js';
+import { createObservabilityEvent } from '../events/observability-events.js';
 import type { LogLevel, TraceContext, ULID } from '../types.js';
 import {
 	type AggregationMode,
@@ -171,10 +168,12 @@ export interface DashboardSummary {
 	}>;
 }
 
+type AlertTriggeredEnvelope = ReturnType<typeof createObservabilityEvent.alertTriggered>;
+
 export interface ObservabilityRuntimeOptions {
 	dataset?: Partial<ObservabilityDataset>;
 	maxResults?: number;
-	onEvent?: (event: AlertTriggeredEvent) => void;
+	onEvent?: (event: AlertTriggeredEnvelope) => void;
 }
 
 export interface ObservabilityToolRuntime {
@@ -241,15 +240,28 @@ function sanitizeMetadata(
 	metadata: Record<string, unknown> | undefined,
 ): Record<string, unknown> | undefined {
 	if (!metadata) return undefined;
-	// Example redaction: remove sensitive keys (e.g., 'password', 'token')
-	const SENSITIVE_KEYS = ['password', 'token', 'secret', 'apiKey'];
-	const sanitized: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(metadata)) {
-		if (!SENSITIVE_KEYS.includes(key)) {
-			sanitized[key] = value;
+	// Redact sensitive keys at any depth by replacing values with '[REDACTED]'
+	const SENSITIVE_KEYS = new Set(['password', 'token', 'secret', 'apiKey']);
+
+	const redact = (val: unknown): unknown => {
+		if (Array.isArray(val)) {
+			return val.map((item) => redact(item));
 		}
-	}
-	return sanitized;
+		if (val && typeof val === 'object') {
+			const out: Record<string, unknown> = {};
+			for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+				if (SENSITIVE_KEYS.has(k)) {
+					out[k] = '[REDACTED]';
+				} else {
+					out[k] = redact(v);
+				}
+			}
+			return out;
+		}
+		return val;
+	};
+
+	return redact(metadata) as Record<string, unknown>;
 }
 
 function sanitizeLogs(records: LogRecord[]): LogSearchResultItem[] {
@@ -622,7 +634,8 @@ export function createObservabilityToolRuntime(
 					message: rule.message,
 					triggeredAt: new Date().toISOString(),
 				});
-				options.onEvent(alertEvent.data);
+				// Emit full event envelope so consumers have type + data
+				options.onEvent(alertEvent);
 			}
 
 			return {

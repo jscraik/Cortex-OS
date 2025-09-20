@@ -1,6 +1,23 @@
 # @cortex-os/asbr
 
-Agentic Second-Brain Runtime (ASBR).
+⚠️ Deprecation Notice
+
+This package is deprecated in favor of the ASBR‑lite runtime mounted under `apps/cortex-os`.
+
+Migration guidance:
+
+- Preferred runtime: `apps/cortex-os` (ASBR‑lite)
+- API parity: The HTTP API and auth model are aligned in ASBR‑lite; new
+  features land there first.
+- Timeline: Deprecated as of 2025‑02. Package removal is planned after consumers
+  migrate and CI is green. No breaking removals will occur without a prior
+  deprecation window.
+- What to do: Start new work against `apps/cortex-os`. For existing code,
+  switch imports/usages to the ASBR‑lite surface and run the smart Nx gates
+  (`pnpm build:smart && pnpm test:smart`).
+
+Runtime startup will emit a one‑time deprecation warning with a pointer to
+ASBR‑lite to help guide migration.
 
 ## Build
 
@@ -35,8 +52,8 @@ Traceparent format enforcement includes contract tests for valid/invalid values.
 
 Token bucket limiter (disabled in test) attaches the following headers when active:
 
-* `X-RateLimit-Limit`
-* `X-RateLimit-Remaining`
-* `Retry-After` (only on 429)
+- `X-RateLimit-Limit`
+- `X-RateLimit-Remaining`
+- `Retry-After` (only on 429)
 
 Integration tests assert 429 behavior when capacity is exceeded.

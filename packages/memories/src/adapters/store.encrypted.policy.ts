@@ -1,4 +1,4 @@
-import type { Memory, MemoryId } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { EncryptionService } from '../ports/Encryption.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 import { type EncryptedOptions, EncryptedStore } from './store.encrypted.js';
@@ -17,7 +17,7 @@ export class PolicyEncryptedStore implements MemoryStore {
 		private readonly enc: EncryptionService,
 		private readonly shouldEncrypt: EncryptionSelector,
 		private readonly encOpts: EncryptedOptions = {},
-	) {}
+	) { }
 
 	private select(namespace: string, sample?: Memory): MemoryStore {
 		if (this.shouldEncrypt(namespace, sample)) {
@@ -34,10 +34,10 @@ export class PolicyEncryptedStore implements MemoryStore {
 	async upsert(m: Memory, namespace = 'default'): Promise<Memory> {
 		return this.select(namespace, m).upsert(m, namespace);
 	}
-	async get(id: MemoryId, namespace = 'default'): Promise<Memory | null> {
+	async get(id: string, namespace = 'default'): Promise<Memory | null> {
 		return this.select(namespace).get(id, namespace);
 	}
-	async delete(id: MemoryId, namespace = 'default'): Promise<void> {
+	async delete(id: string, namespace = 'default'): Promise<void> {
 		return this.select(namespace).delete(id, namespace);
 	}
 	async searchByText(q: TextQuery, namespace = 'default'): Promise<Memory[]> {

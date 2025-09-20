@@ -1,3 +1,4 @@
+import type pino from 'pino';
 import { describe, expect, it, vi } from 'vitest';
 import { createLogEntry, logEvidence } from '../src/logging/index.js';
 import { generateRunId } from '../src/ulids.js';
@@ -17,7 +18,7 @@ describe('logging', () => {
 	});
 
 	it('logs evidence pointers', () => {
-		const logger = { info: vi.fn() } as any;
+		const logger = { info: vi.fn() } as unknown as pino.Logger;
 		const runId = generateRunId();
 		logEvidence(logger, runId, 'screenshot', { url: 'http://example.com' });
 		expect(logger.info).toHaveBeenCalledWith(

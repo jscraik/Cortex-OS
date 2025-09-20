@@ -14,7 +14,6 @@ export default defineConfig({
 				'src/domain/policies.ts',
 				'src/tools/**',
 				'src/adapters/embedder.ollama.ts',
-				'src/adapters/store.sqlite.ts',
 				'src/adapters/embedder.mlx.ts',
 				'src/adapters/store.prisma/**',
 				'vitest.config.ts',

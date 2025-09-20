@@ -46,3 +46,19 @@ export interface Document {
 	embedding?: number[];
 	similarity?: number;
 }
+
+// Reliability primitives configuration (optional per edge)
+export interface RetryPolicy {
+	maxAttempts: number;
+	baseDelayMs?: number;
+}
+
+export interface BreakerPolicy {
+	failureThreshold: number;
+	resetTimeoutMs: number;
+}
+
+export interface ReliabilityPolicy {
+	retry?: RetryPolicy;
+	breaker?: BreakerPolicy;
+}

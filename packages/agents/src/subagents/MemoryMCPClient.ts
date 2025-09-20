@@ -4,15 +4,15 @@
  * Provides access to memory MCP tools for subagent execution
  */
 
-import type { MemoryStore } from '@cortex-os/memories';
 import { z } from 'zod';
+import type { MemoryStore } from '../lib/types.js';
 
 // MCP Tool schemas matching the memory MCP interface
 const MemoryStoreSchema = z.object({
-	kind: z.string().min(1).max(32),
-	text: z.string().min(1),
-	tags: z.array(z.string()).default([]),
-	metadata: z.record(z.unknown()).optional(),
+  kind: z.enum(['note', 'event', 'artifact', 'embedding']),
+  text: z.string().min(1),
+  tags: z.array(z.string()).default([]),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 const MemorySearchSchema = z.object({
@@ -39,24 +39,10 @@ const MemoryGetSchema = z.object({
 });
 
 // MCP Response schemas
-const _MCPResponseSchema = z.object({
-	content: z.array(
-		z.object({
-			type: z.literal('text'),
-			text: z.string(),
-		}),
-	),
-	metadata: z.object({
-		correlationId: z.string(),
-		timestamp: z.string(),
-		tool: z.string(),
-	}),
-	isError: z.boolean().optional(),
-});
 
 // Memory MCP Client for subagents
 export class MemoryMCPClient {
-	private memoryStore: MemoryStore;
+	private readonly memoryStore: MemoryStore;
 
 	constructor(memoryStore: MemoryStore) {
 		this.memoryStore = memoryStore;
@@ -65,19 +51,19 @@ export class MemoryMCPClient {
 	/**
 	 * Store a memory item
 	 */
-	async store(params: unknown): Promise<any> {
+	async store(params: unknown): Promise<Record<string, unknown>> {
 		try {
 			const input = MemoryStoreSchema.parse(params);
 
 			const memory = {
-				id: `mem-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+				id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
 				kind: input.kind,
 				text: input.text,
 				tags: input.tags,
 				metadata: input.metadata,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
-				provenance: { source: 'subagent' },
+				provenance: { source: 'agent' as const },
 			};
 
 			const result = await this.memoryStore.upsert(memory);
@@ -100,7 +86,7 @@ export class MemoryMCPClient {
 	/**
 	 * Search for memories
 	 */
-	async search(params: unknown): Promise<any> {
+	async search(params: unknown): Promise<Record<string, unknown>> {
 		try {
 			const input = MemorySearchSchema.parse(params);
 
@@ -139,7 +125,7 @@ export class MemoryMCPClient {
 	/**
 	 * Update a memory item
 	 */
-	async update(params: unknown): Promise<any> {
+	async update(params: unknown): Promise<Record<string, unknown>> {
 		try {
 			const input = MemoryUpdateSchema.parse(params);
 
@@ -178,7 +164,7 @@ export class MemoryMCPClient {
 	/**
 	 * Delete a memory item
 	 */
-	async delete(params: unknown): Promise<any> {
+	async delete(params: unknown): Promise<Record<string, unknown>> {
 		try {
 			const input = MemoryDeleteSchema.parse(params);
 
@@ -199,7 +185,7 @@ export class MemoryMCPClient {
 	/**
 	 * Get a specific memory item
 	 */
-	async get(params: unknown): Promise<any> {
+	async get(params: unknown): Promise<Record<string, unknown>> {
 		try {
 			const input = MemoryGetSchema.parse(params);
 
@@ -237,7 +223,7 @@ export class MemoryMCPClient {
 	/**
 	 * List memory items with pagination
 	 */
-	async list(params: unknown): Promise<any> {
+	async list(params: unknown): Promise<Record<string, unknown>> {
 		try {
 			const input = z
 				.object({
@@ -268,7 +254,7 @@ export class MemoryMCPClient {
 	/**
 	 * Get memory statistics
 	 */
-	async stats(params: unknown): Promise<any> {
+	async stats(params: unknown): Promise<Record<string, unknown>> {
 		try {
 			const input = z
 				.object({
@@ -307,31 +293,31 @@ export function createMemoryTools(memoryStore: MemoryStore) {
 			name: 'memories.store',
 			description: 'Store information in the memory system',
 			schema: MemoryStoreSchema,
-			call: async (args: any) => client.store(args),
+			call: async (args: unknown) => client.store(args),
 		},
 		'memories.search': {
 			name: 'memories.search',
 			description: 'Retrieve information from the memory system',
 			schema: MemorySearchSchema,
-			call: async (args: any) => client.search(args),
+			call: async (args: unknown) => client.search(args),
 		},
 		'memories.update': {
 			name: 'memories.update',
 			description: 'Update existing memory items',
 			schema: MemoryUpdateSchema,
-			call: async (args: any) => client.update(args),
+			call: async (args: unknown) => client.update(args),
 		},
 		'memories.delete': {
 			name: 'memories.delete',
 			description: 'Delete memory items',
 			schema: MemoryDeleteSchema,
-			call: async (args: any) => client.delete(args),
+			call: async (args: unknown) => client.delete(args),
 		},
 		'memories.get': {
 			name: 'memories.get',
 			description: 'Retrieve a specific memory item by identifier',
 			schema: MemoryGetSchema,
-			call: async (args: any) => client.get(args),
+			call: async (args: unknown) => client.get(args),
 		},
 		'memories.list': {
 			name: 'memories.list',
@@ -342,7 +328,7 @@ export function createMemoryTools(memoryStore: MemoryStore) {
 				cursor: z.string().min(1).optional(),
 				tags: z.array(z.string()).max(32).optional(),
 			}),
-			call: async (args: any) => client.list(args),
+			call: async (args: unknown) => client.list(args),
 		},
 		'memories.stats': {
 			name: 'memories.stats',
@@ -350,7 +336,7 @@ export function createMemoryTools(memoryStore: MemoryStore) {
 			schema: z.object({
 				includeDetails: z.boolean().default(false),
 			}),
-			call: async (args: any) => client.stats(args),
+			call: async (args: unknown) => client.stats(args),
 		},
 	};
 }

@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true
+  },
+  "include": [
+    "src",
+    "scripts",
+    "__tests__",
+    "tests",
+    "test",
+    "examples/**/*.ts",
+    "vitest.config.ts",
+    "vite.config.ts"
+  ]
+}

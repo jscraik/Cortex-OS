@@ -68,7 +68,7 @@ export class ToolExecutionError extends McpToolError {
 export class ToolRegistry {
 	private readonly tools = new Map<string, McpTool<unknown, unknown>>();
 
-	register<TInput, TResult>(tool: McpTool<TInput, TResult>): void {
+	register<TInput = unknown, TResult = unknown>(tool: McpTool<TInput, TResult>): void {
 		if (this.tools.has(tool.name)) {
 			throw new ToolRegistrationError(`Tool with name "${tool.name}" already registered.`);
 		}

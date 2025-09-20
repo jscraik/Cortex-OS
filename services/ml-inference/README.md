@@ -5,6 +5,7 @@ A production-ready machine learning inference service built with FastAPI, MLX, a
 ## Features
 
 ### 🚀 Core Capabilities
+
 - **MLX Integration**: Optimized for Apple Silicon with MLX framework
 - **Structured Outputs**: Using instructor library with Ollama API for reliable JSON responses  
 - **Security**: Input validation, rate limiting, JWT authentication, output sanitization
@@ -12,18 +13,53 @@ A production-ready machine learning inference service built with FastAPI, MLX, a
 - **Monitoring**: Prometheus metrics, health checks, performance analytics, alerting
 
 ### 📊 Model Management
+
 - **Model Registry**: Version control, metadata management, deployment tracking
 - **A/B Testing**: Traffic splitting, performance comparison, statistical validation
 - **Deployment Strategies**: Blue-green, canary, rolling, immediate deployments
 - **Model Lineage**: Version history, performance metrics, dependency tracking
 
 ### 🔧 Production Features
+
 - **Docker Support**: Multi-stage builds for dev/prod/GPU environments
 - **Kubernetes Ready**: Deployment manifests, health checks, auto-scaling
 - **Observability**: Prometheus metrics, Grafana dashboards, alert rules
 - **High Availability**: Circuit breakers, load balancing, graceful shutdowns
 
 ## Quick Start
+
+### Ollama (macOS) — Primary
+
+On macOS, install and run Ollama via Homebrew (recommended):
+
+```bash
+brew install ollama
+brew services start ollama   # runs ollama as a background service
+
+# Optionally pull at least one model (examples)
+ollama pull llama3.2
+# or a coder model
+ollama pull qwen3-coder:7b
+```
+
+Set `OLLAMA_BASE_URL` to the local server (OpenAI-compatible path for this service):
+
+```bash
+export OLLAMA_BASE_URL=http://localhost:11434/v1
+```
+
+### Docker — Fallback
+
+If you prefer containers or are not on macOS, use the official Docker image:
+
+```bash
+docker run -d --name ollama \
+  -p 11434:11434 \
+  -v ollama_data:/root/.ollama \
+  ollama/ollama:0.12.0
+```
+
+The included `docker-compose.yml` also provisions `ollama` (now pinned to `0.12.0`).
 
 ### Development Setup
 
@@ -54,10 +90,12 @@ uv sync
 ## API Endpoints
 
 ### Core Inference
+
 - `POST /generate` - Generate text with MLX engine
 - `POST /generate/structured` - Generate structured outputs via instructor
 
 ### Health & Monitoring
+
 - `GET /health` - Service health status
 - `GET /ready` - Readiness check
 - `GET /metrics` - Prometheus metrics
@@ -65,17 +103,20 @@ uv sync
 - `GET /alerts/active` - Active alerts and warnings
 
 ### Model Management
+
 - `POST /models/register` - Register new model version
 - `POST /models/{model_id}/activate` - Activate model version
 - `GET /models/{model_name}` - List model versions
 - `POST /models/{model_id}/deploy` - Deploy with strategy
 
 ### A/B Testing
+
 - `POST /ab-tests/start` - Start A/B test
 - `GET /ab-tests` - List active tests
 - `POST /ab-tests/{test_id}/stop` - Stop test
 
 ### Circuit Breaker
+
 - `GET /circuit-breaker/status` - Get circuit breaker state
 - `POST /circuit-breaker/reset` - Reset circuit breaker
 
@@ -137,6 +178,7 @@ curl -X POST http://localhost:8000/ab-tests/start \
 ## Monitoring & Observability
 
 ### Prometheus Metrics
+
 - `ml_inference_requests_total` - Total requests
 - `ml_inference_request_duration_seconds` - Request latency
 - `ml_inference_errors_total` - Error counts
@@ -145,14 +187,18 @@ curl -X POST http://localhost:8000/ab-tests/start \
 - `ml_inference_health_score` - Overall health score
 
 ### Grafana Dashboards
+
 The service includes pre-configured Grafana dashboards for:
+
 - Request metrics and latency percentiles
 - Error rates and circuit breaker status  
 - Resource utilization (CPU, memory, GPU)
 - Model performance and A/B test results
 
 ### Alerting Rules
+
 Automatic alerts for:
+
 - High error rates (>10% over 2 minutes)
 - Circuit breaker open
 - High response times (>10s 95th percentile)
@@ -163,6 +209,7 @@ Automatic alerts for:
 ## Architecture
 
 ### Service Components
+
 ```
 ┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
 │   FastAPI App   │────│ MLX Engine   │────│ Model Registry  │
@@ -177,6 +224,7 @@ Automatic alerts for:
 ```
 
 ### Data Flow
+
 1. **Request**: Authenticated via JWT, rate limited
 2. **Validation**: Input sanitized and validated
 3. **Inference**: Routed through MLX or instructor+Ollama
@@ -186,6 +234,7 @@ Automatic alerts for:
 ## Development
 
 ### Running Tests
+
 ```bash
 # Unit tests
 pytest tests/
@@ -198,6 +247,7 @@ k6 run tests/load/inference_test.js
 ```
 
 ### Code Quality
+
 ```bash
 # Format code
 ruff format src/
@@ -212,17 +262,20 @@ mypy src/
 ## Deployment Strategies
 
 ### Local Development
+
 - Uses docker-compose with hot reloading
 - Includes Ollama, Prometheus, and Grafana
 - Volume mounts for live code updates
 
 ### Production
+
 - Multi-stage Docker builds
 - Kubernetes with auto-scaling
 - Circuit breakers and health checks
 - Persistent model storage
 
 ### GPU Environments
+
 - Optimized for Apple Silicon/MLX
 - Single-worker deployment for GPU efficiency
 - Memory-optimized configurations
@@ -230,16 +283,19 @@ mypy src/
 ## Security
 
 ### Authentication
+
 - JWT token-based authentication
 - Configurable secret key rotation
 - Request-level user identification
 
 ### Input Validation
+
 - Prompt injection detection
 - Content filtering and sanitization
 - Size and rate limits
 
 ### Output Security
+
 - Response sanitization
 - Structured output validation
 - Error message scrubbing
@@ -249,6 +305,7 @@ mypy src/
 ### Common Issues
 
 **Circuit Breaker Open**
+
 ```bash
 # Check circuit breaker status
 curl http://localhost:8000/circuit-breaker/status
@@ -258,6 +315,7 @@ curl -X POST http://localhost:8000/circuit-breaker/reset
 ```
 
 **High Memory Usage**
+
 ```bash
 # Check memory metrics
 curl http://localhost:8000/performance/report
@@ -267,6 +325,7 @@ docker stats ml-inference
 ```
 
 **Model Loading Errors**
+
 ```bash
 # Check model registry
 curl http://localhost:8000/models
@@ -276,6 +335,7 @@ curl http://localhost:8000/health
 ```
 
 ### Log Analysis
+
 ```bash
 # Service logs
 docker-compose logs -f ml-inference-prod
@@ -287,16 +347,19 @@ kubectl logs -n cortex-os -l app=ml-inference -f
 ## Performance Tuning
 
 ### MLX Optimization
+
 - Use single worker for GPU workloads
 - Optimize batch sizes for memory
 - Enable model quantization if supported
 
 ### FastAPI Tuning
+
 - Adjust worker count for CPU workloads
 - Configure connection pools
 - Enable response compression
 
 ### Memory Management
+
 - Monitor model memory usage
 - Configure garbage collection
 - Use model unloading for large models
