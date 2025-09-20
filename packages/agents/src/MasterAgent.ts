@@ -8,6 +8,11 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, MessagesAnnotation, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
+import path from 'node:path';
+import fs from 'node:fs';
+// Adapters (mocked in tests)
+import { MLXAdapter } from '@cortex-os/model-gateway/dist/adapters/mlx-adapter.js';
+import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter.js';
 
 // Extended state annotation for agent coordination
 export const AgentStateAnnotation = Annotation.Root({
@@ -28,6 +33,9 @@ export const SubAgentConfigSchema = z.object({
 	model_targets: z.array(z.string()).default(['glm-4.5-mlx']),
 	tools: z.array(z.string()).default([]),
 	specialization: z.enum(['code-analysis', 'test-generation', 'documentation', 'security']),
+	// Optional per-subagent overrides used by router/model fallback
+	fallback_model: z.string().optional(),
+	fallback_tier: z.enum(['ultra_fast', 'balanced', 'high_performance']).optional(),
 });
 
 export type SubAgentConfig = z.infer<typeof SubAgentConfigSchema>;
@@ -81,11 +89,29 @@ export const createMasterAgentGraph = (config: {
 		const content = lastMessage?.content || '';
 
 		try {
-			// Simulate MCP tool execution
-			const result = await executeMCPTool(`agent.${currentAgent}`, {
-				message: typeof content === 'string' ? content : JSON.stringify(content),
-				context: state.taskType,
-			});
+			// Decide model execution path: prefer MLX if available, else Ollama by specialization-tier
+			const text = typeof content === 'string' ? content : JSON.stringify(content);
+			const sub = agentRegistry.get(currentAgent);
+			const specialization = sub?.specialization ?? state.taskType ?? 'code-analysis';
+
+			// Try MLX first
+			const mlx = new MLXAdapter();
+			let executed = false;
+			let result: unknown = undefined;
+			try {
+				if (await mlx.isAvailable()) {
+					result = await mlx.generateChat({ content: text });
+					executed = true;
+				}
+			} catch {
+				// ignore and fallback
+			}
+
+			if (!executed) {
+				const { modelTag } = selectOllamaModelBySpecializationTier(specialization);
+				const ollama = new OllamaAdapter();
+				result = await ollama.generateChat({ content: text }, modelTag);
+			}
 
 			return {
 				result,
@@ -126,7 +152,7 @@ export const createMasterAgentGraph = (config: {
 			};
 
 			const result = await this.graph.invoke(initialState);
-			return result as AgentState;
+			return result;
 		},
 	};
 };
@@ -182,46 +208,45 @@ const routeToSpecializedAgent = (
 	return bestMatch;
 };
 
-/**
- * Execute MCP tool call (≤40 lines)
- */
-const executeMCPTool = async (
-	toolName: string,
-	parameters: Record<string, unknown>,
-): Promise<unknown> => {
-	// In production, this would call actual MCP endpoint
-	// For now, simulate based on tool name
-	console.log(`Executing ${toolName} with:`, parameters);
+export type MasterAgentGraph = ReturnType<typeof createMasterAgentGraph>;
 
-	const toolResponses: Record<string, unknown> = {
-		'agent.code-analysis-agent': {
-			issues: [],
-			metrics: { complexity: 2, maintainability: 8 },
-			summary: 'Code analysis completed successfully',
-		},
-		'agent.test-generation-agent': {
-			testsGenerated: 5,
-			coverage: 85,
-			summary: 'Unit tests generated for target functions',
-		},
-		'agent.documentation-agent': {
-			sectionsUpdated: 3,
-			wordsAdded: 247,
-			summary: 'Documentation updated with current implementation',
-		},
-		'agent.security-agent': {
-			vulnerabilities: 0,
-			riskLevel: 'low',
-			summary: 'No security issues detected',
-		},
-	};
-
-	return (
-		toolResponses[toolName] || {
-			success: false,
-			error: `Unknown tool: ${toolName}`,
-		}
-	);
+// -- Helpers --
+type OllamaConfig = {
+	chat_models: Record<string, { ollama_model?: string }>;
+	performance_tiers: Record<string, { models: string[] }>;
 };
 
-export type MasterAgentGraph = ReturnType<typeof createMasterAgentGraph>;
+const loadOllamaConfig = (): OllamaConfig | null => {
+	try {
+		const cfgDir = process.env.CORTEX_CONFIG_DIR || path.resolve(process.cwd(), 'config');
+		const cfgPath = path.resolve(cfgDir, 'ollama-models.json');
+		const raw = fs.readFileSync(cfgPath, 'utf8');
+		return JSON.parse(raw) as OllamaConfig;
+	} catch {
+		return null;
+	}
+};
+
+const specializationToTier = (spec: string): 'ultra_fast' | 'balanced' | 'high_performance' => {
+	switch (spec) {
+		case 'documentation':
+			return 'balanced';
+		case 'security':
+			return 'high_performance';
+		case 'test-generation':
+		case 'code-analysis':
+		default:
+			return 'ultra_fast';
+	}
+};
+
+const selectOllamaModelBySpecializationTier = (
+	specialization: string,
+): { modelKey: string; modelTag: string } => {
+	const cfg = loadOllamaConfig();
+	const tier = specializationToTier(specialization);
+	const models = cfg?.performance_tiers?.[tier]?.models ?? [];
+	const firstKey = models[0] || 'deepseek-coder';
+	const tag = cfg?.chat_models?.[firstKey]?.ollama_model || firstKey;
+	return { modelKey: firstKey, modelTag: tag };
+};

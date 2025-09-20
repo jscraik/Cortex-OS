@@ -306,7 +306,7 @@ export class SchemaRegistry {
     invalidateCache(schemaId) {
         this.schemaCache.delete(schemaId);
     }
-    generateTestData(_schema) {
+    generateTestData() {
         // Simple test data generation for compatibility checking
         // In production, this would be more sophisticated
         return {};

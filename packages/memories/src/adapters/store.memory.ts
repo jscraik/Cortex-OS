@@ -98,4 +98,25 @@ export class InMemoryStore implements MemoryStore {
 		}
 		return purgedCount;
 	}
+
+	async list(namespace = 'default', limit?: number, offset?: number): Promise<Memory[]> {
+		const items = [...this.ns(namespace).values()];
+
+		// Apply decay if enabled
+		let result = items;
+		if (decayEnabled()) {
+			const now = new Date().toISOString();
+			const half = getHalfLifeMs();
+			result = items
+				.map((m) => ({ m, s: decayFactor(m.createdAt, now, half) }))
+				.sort((a, b) => b.s - a.s)
+				.map((x) => x.m);
+		}
+
+		// Apply offset and limit
+		const start = offset || 0;
+		const end = limit ? start + limit : undefined;
+
+		return result.slice(start, end);
+	}
 }

@@ -4,7 +4,9 @@ export default defineConfig({
 	test: {
 		environment: 'node',
 		globals: true,
-		testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+		// Only run this package's dedicated tests; exclude legacy __tests__
+		include: ['tests/**/*.test.ts', 'tests/**/*.test.js'],
+		exclude: ['**/__tests__/**'],
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json', 'html'],
