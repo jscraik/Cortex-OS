@@ -1,9 +1,9 @@
 import os from 'node:os';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Embedder } from '../ports/Embedder.js';
 import { EMBEDDER_ENV, getEnvWithFallback } from '../config/constants.js';
 import { ConfigurationError } from '../errors.js';
+import type { Embedder } from '../ports/Embedder.js';
 
 const currentFilename = fileURLToPath(import.meta.url);
 const currentDirname = dirname(currentFilename);
@@ -82,7 +82,7 @@ export class MLXEmbedder implements Embedder {
 		const base = getEnvWithFallback(
 			EMBEDDER_ENV.MLX_EMBED_BASE_URL,
 			[EMBEDDER_ENV.MLX_SERVICE_URL],
-			{ context: 'MLX embedding service URL' }
+			{ context: 'MLX embedding service URL' },
 		);
 		if (!base) throw new ConfigurationError('MLX service URL not configured');
 		const response = await fetch(`${base.replace(/\/$/, '')}/embed`, {
@@ -133,13 +133,15 @@ export class MLXEmbedder implements Embedder {
 		const run = () =>
 			runPython(pythonScriptPath, [this.modelConfig.path, JSON.stringify(texts)], {
 				envOverrides: {
-					[EMBEDDER_ENV.MLX_MODELS_DIR]: process.env[EMBEDDER_ENV.MLX_MODELS_DIR] || DEFAULT_MLX_MODELS_DIR,
+					[EMBEDDER_ENV.MLX_MODELS_DIR]:
+						process.env[EMBEDDER_ENV.MLX_MODELS_DIR] || DEFAULT_MLX_MODELS_DIR,
 				},
-				python: getEnvWithFallback(
-					EMBEDDER_ENV.PYTHON_EXECUTABLE,
-					[EMBEDDER_ENV.PYTHON_EXEC_LEGACY, EMBEDDER_ENV.MLX_PYTHON_PATH],
-					{ context: 'Python executable path' }
-				) || 'python3',
+				python:
+					getEnvWithFallback(
+						EMBEDDER_ENV.PYTHON_EXECUTABLE,
+						[EMBEDDER_ENV.PYTHON_EXEC_LEGACY, EMBEDDER_ENV.MLX_PYTHON_PATH],
+						{ context: 'Python executable path' },
+					) || 'python3',
 				setModulePath: process.env[EMBEDDER_ENV.PYTHON_MODULE_PATH] || undefined,
 			} as unknown as Record<string, unknown>);
 
@@ -150,8 +152,10 @@ export class MLXEmbedder implements Embedder {
 		const out = await Promise.race([run(), timer]);
 		try {
 			const result = JSON.parse(String(out || '{}'));
-			if (result.error) throw new ConfigurationError(`MLX Python script error: ${String(result.error)}`);
-			if (!Array.isArray(result.embeddings)) throw new ConfigurationError('MLX Python response: invalid embeddings format');
+			if (result.error)
+				throw new ConfigurationError(`MLX Python script error: ${String(result.error)}`);
+			if (!Array.isArray(result.embeddings))
+				throw new ConfigurationError('MLX Python response: invalid embeddings format');
 			return result.embeddings as number[][];
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);

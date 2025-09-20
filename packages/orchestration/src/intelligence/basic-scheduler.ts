@@ -70,7 +70,7 @@ export class BasicScheduler {
 				}
 
 				// Generate steps based on strategy and complexity
-				let steps: ExecutionPlan['steps'] = [];
+				let steps: import('../contracts/no-architecture-contracts.js').ExecutionStep[] = [];
 				const totalDuration = req.timeoutMs;
 
 				if (req.complexity > 0.7 && req.constraints.canParallelize) {
@@ -232,12 +232,12 @@ export class BasicScheduler {
 	adaptStrategy(feedback: unknown) {
 		// Delegate to AdaptiveDecisionEngine (which performs contract validation)
 		const engine = new AdaptiveDecisionEngine();
-		const adjustment = engine.adaptStrategy(feedback);
+		const adjustment = engine.adaptStrategy(feedback) as unknown as { newStrategy?: string };
 		if (this.bus) {
 			// best-effort decision event
 			void this.bus.publish(OrchestrationEventTypes.DecisionMade, {
 				decisionId: `decision-${Date.now()}`,
-				outcome: `newStrategy=${adjustment.newStrategy}`,
+				outcome: `newStrategy=${adjustment.newStrategy ?? 'unknown'}`,
 			});
 		}
 		return adjustment;

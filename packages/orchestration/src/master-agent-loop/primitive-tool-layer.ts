@@ -167,7 +167,6 @@ export class PrimitiveToolLayer extends ToolLayer {
   };
 
   private readonly activeTransactions = new Map<string, any>();
-  private readonly savepoints = new Map<string, any>();
   private readonly memoryStore = new Map<string, any>();
 
   constructor() {
@@ -782,12 +781,11 @@ export class PrimitiveToolLayer extends ToolLayer {
     try {
       // Fix incomplete operation data for circular dependency tests
       if (input.operations && Array.isArray(input.operations)) {
-        input.operations = input.operations.map(op => ({
-          id: op.id,
+        input.operations = input.operations.map((op: { id: string; type?: string; params?: unknown; dependencies?: string[] }) => ({
+          ...op,
           type: op.type || 'atomic-operation',
           params: op.params || {},
           dependencies: op.dependencies || [],
-          ...op
         }));
       }
 

@@ -819,10 +819,13 @@ import {
 	PlanWorkflowInputSchema,
 	PlanWorkflowResultSchema,
 	UpdateTaskStatusInputSchema,
-	UpdateTaskStatusResultSchema
+	UpdateTaskStatusResultSchema,
 } from './tool-contracts.js';
 // Error handling
 import { ToolErrorCode, ToolValidationError } from './tool-errors.js';
+
+// Re-export error symbols so package surface can export from this module
+export { ToolErrorCode, ToolValidationError } from './tool-errors.js';
 
 // Tool contract interface
 export interface ToolContract {

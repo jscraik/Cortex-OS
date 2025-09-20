@@ -1,6 +1,6 @@
-import type { RestApiConfig, RestApiAdapter } from './types.js';
 import { RestApiClient } from './rest-adapter.js';
 import { RestApiMemoryStore } from './store-adapter.js';
+import type { RestApiAdapter, RestApiConfig } from './types.js';
 
 /**
  * Create a REST API adapter with the given configuration
@@ -14,7 +14,7 @@ export function createRestApiAdapter(config: RestApiConfig): RestApiAdapter {
  */
 export function createRestApiMemoryStore(
   config: RestApiConfig,
-  namespace = 'default'
+  namespace = 'default',
 ): RestApiMemoryStore {
   const adapter = createRestApiAdapter(config);
   return new RestApiMemoryStore(adapter, namespace);
