@@ -92,10 +92,7 @@ export class SecurityScanner {
 		context.toolsUsed.push('SecretScanner');
 	}
 
-	private createFallbackResult(
-		error: unknown,
-		startTime: number,
-	): SecurityScanResult {
+	private createFallbackResult(error: unknown, startTime: number): SecurityScanResult {
 		return {
 			blockers: 0,
 			majors: 0,

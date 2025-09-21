@@ -54,10 +54,10 @@ export class PgVectorStore implements Store {
 		this.dim = cfg.dimension ?? 768;
 		this.hybrid = cfg.hybrid?.enabled
 			? {
-				enabled: true,
-				vectorWeight: cfg.hybrid.vectorWeight ?? 0.6,
-				language: cfg.hybrid.language ?? 'english',
-			}
+					enabled: true,
+					vectorWeight: cfg.hybrid.vectorWeight ?? 0.6,
+					language: cfg.hybrid.language ?? 'english',
+				}
 			: undefined;
 	}
 

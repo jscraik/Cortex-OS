@@ -15,10 +15,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 
 const args = process.argv.slice(2);
-const interval = parseInt(
-	args.find((a) => a.startsWith('--interval='))?.split('=')[1] || '5',
-	10,
-);
+const interval = parseInt(args.find((a) => a.startsWith('--interval='))?.split('=')[1] || '5', 10);
 const threshold = parseInt(
 	args.find((a) => a.startsWith('--threshold='))?.split('=')[1] || '100',
 	10,
@@ -65,9 +62,7 @@ const monitor = () => {
 			}
 
 			const alertFlag = delta >= threshold ? '🚨' : delta > 20 ? '⚠️' : '';
-			console.log(
-				`${pid}\t${etime}\t${rssMB}\t${deltaStr}\t${alertFlag}${command}`,
-			);
+			console.log(`${pid}\t${etime}\t${rssMB}\t${deltaStr}\t${alertFlag}${command}`);
 		}
 
 		if (alerts.length > 0) {

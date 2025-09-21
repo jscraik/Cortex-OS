@@ -1,6 +1,9 @@
 import type { IModelRouter as ModelRouter } from './model-router';
 
-export async function embeddingsHandler(router: ModelRouter, body: { model?: string; texts: string[] }) {
+export async function embeddingsHandler(
+	router: ModelRouter,
+	body: { model?: string; texts: string[] },
+) {
 	const { texts, model } = body;
 
 	if (texts.length === 1) {

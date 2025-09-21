@@ -33,10 +33,7 @@ function getPackageName(packageDir) {
 			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 			return packageJson.name || path.basename(packageDir);
 		} catch (error) {
-			console.warn(
-				`Failed to parse package.json in ${packageDir}:`,
-				error.message,
-			);
+			console.warn(`Failed to parse package.json in ${packageDir}:`, error.message);
 		}
 	}
 	return path.basename(packageDir);
@@ -79,10 +76,7 @@ function generateReadinessFiles() {
 			fs.writeFileSync(readinessPath, content, 'utf-8');
 			console.log(`[created] readiness.yml for ${pkg} (${packageName})`);
 		} catch (error) {
-			console.error(
-				`[error] Failed to create readiness.yml for ${pkg}:`,
-				error.message,
-			);
+			console.error(`[error] Failed to create readiness.yml for ${pkg}:`, error.message);
 		}
 	}
 

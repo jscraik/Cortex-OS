@@ -20,13 +20,7 @@
  *   2 safety rejection (attempted refresh outside policy)
  */
 
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	statSync,
-	writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -96,10 +90,7 @@ function fileAgeDays(path) {
 function main() {
 	const opts = parseArgs();
 	if (!existsSync(lastPath)) {
-		log(
-			'INFO',
-			'No last regression summary – run memory:regression first. No-op.',
-		);
+		log('INFO', 'No last regression summary – run memory:regression first. No-op.');
 		return;
 	}
 	const last = readJson(lastPath);
@@ -120,16 +111,11 @@ function main() {
 	}
 	const age = fileAgeDays(baselinePath);
 	const pctIncrease =
-		baseline.peakMB > 0
-			? ((lastPeak - baseline.peakMB) / baseline.peakMB) * 100
-			: 0;
+		baseline.peakMB > 0 ? ((lastPeak - baseline.peakMB) / baseline.peakMB) * 100 : 0;
 
 	if (!opts.force) {
 		if (age < opts.maxAgeDays) {
-			log(
-				'INFO',
-				`Baseline age ${age.toFixed(1)}d < maxAgeDays ${opts.maxAgeDays} – no refresh.`,
-			);
+			log('INFO', `Baseline age ${age.toFixed(1)}d < maxAgeDays ${opts.maxAgeDays} – no refresh.`);
 			return;
 		}
 		if (pctIncrease > opts.maxAllowedPct) {

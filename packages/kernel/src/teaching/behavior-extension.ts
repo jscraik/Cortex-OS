@@ -85,8 +85,12 @@ export class BehaviorExtensionManager {
 		}[];
 	}> {
 		const extensionContext = this.createExtensionContext(context);
-		let modifiedState = { ...state };
-		const appliedExtensions = await this.applySortedExtensions(state, modifiedState, extensionContext);
+		const modifiedState = { ...state };
+		const appliedExtensions = await this.applySortedExtensions(
+			state,
+			modifiedState,
+			extensionContext,
+		);
 
 		this.updateExecutionHistory(modifiedState);
 
@@ -111,10 +115,12 @@ export class BehaviorExtensionManager {
 		state: PRPState,
 		modifiedState: PRPState,
 		extensionContext: ExtensionContext,
-	): Promise<{
-		extension: BehaviorExtension;
-		result: ExtensionResult;
-	}[]> {
+	): Promise<
+		{
+			extension: BehaviorExtension;
+			result: ExtensionResult;
+		}[]
+	> {
 		const appliedExtensions: {
 			extension: BehaviorExtension;
 			result: ExtensionResult;

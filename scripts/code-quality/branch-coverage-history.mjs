@@ -18,9 +18,7 @@ const HISTORY_FILE = path.resolve('reports/branch-coverage-history.json');
 
 function readCoverage() {
 	if (!fs.existsSync(COVERAGE_SUMMARY)) {
-		throw new Error(
-			`Coverage summary not found at ${COVERAGE_SUMMARY}. Run coverage first.`,
-		);
+		throw new Error(`Coverage summary not found at ${COVERAGE_SUMMARY}. Run coverage first.`);
 	}
 	const data = JSON.parse(fs.readFileSync(COVERAGE_SUMMARY, 'utf8'));
 	const total = data.total;
@@ -86,9 +84,7 @@ function report() {
 	if (history.length >= 2) {
 		const prev = history[history.length - 2];
 		const recentDelta = last.branchesPct - prev.branchesPct;
-		console.log(
-			`Recent Delta: ${recentDelta >= 0 ? '+' : ''}${recentDelta.toFixed(2)}%`,
-		);
+		console.log(`Recent Delta: ${recentDelta >= 0 ? '+' : ''}${recentDelta.toFixed(2)}%`);
 	}
 }
 

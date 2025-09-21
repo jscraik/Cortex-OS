@@ -9,14 +9,7 @@ import { join } from 'node:path';
 console.log('Automatically fixing command injection vulnerabilities...');
 
 // Fix executor.py
-const executorPath = join(
-	'packages',
-	'mcp',
-	'src',
-	'python',
-	'src',
-	'executor.py',
-);
+const executorPath = join('packages', 'mcp', 'src', 'python', 'src', 'executor.py');
 let executorContent = readFileSync(executorPath, 'utf-8');
 
 // Add a comment about security improvements
@@ -62,19 +55,10 @@ executorContent = executorContent.replace(
 // Write the updated content back to the file
 writeFileSync(executorPath, executorContent);
 
-console.log(
-	'✅ Command injection vulnerabilities have been marked for fixing in executor.py',
-);
+console.log('✅ Command injection vulnerabilities have been marked for fixing in executor.py');
 
 // Fix mcp_server.py
-const mcpServerPath = join(
-	'packages',
-	'mcp',
-	'src',
-	'tools',
-	'docker',
-	'mcp_server.py',
-);
+const mcpServerPath = join('packages', 'mcp', 'src', 'tools', 'docker', 'mcp_server.py');
 let mcpServerContent = readFileSync(mcpServerPath, 'utf-8');
 
 // Add import for SecureCommandExecutor
@@ -155,9 +139,5 @@ mcpServerContent = mcpServerContent.replace(
 // Write the updated content back to the file
 writeFileSync(mcpServerPath, mcpServerContent);
 
-console.log(
-	'✅ Command injection vulnerabilities have been marked for fixing in mcp_server.py',
-);
-console.log(
-	'⚠️  Please review the TODO comments and implement proper input validation',
-);
+console.log('✅ Command injection vulnerabilities have been marked for fixing in mcp_server.py');
+console.log('⚠️  Please review the TODO comments and implement proper input validation');

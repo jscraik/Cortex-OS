@@ -13,8 +13,7 @@ describe('nx-smart focus filtering', () => {
 				execSync: (cmd, _opts) => {
 					if (cmd.startsWith('git rev-parse --is-inside-work-tree')) return '';
 					if (cmd.startsWith('git rev-parse HEAD')) return 'HEADSHA';
-					if (cmd.startsWith('git --no-pager diff'))
-						return 'fileA.js\nfileB.ts';
+					if (cmd.startsWith('git --no-pager diff')) return 'fileA.js\nfileB.ts';
 					if (cmd.includes('nx show projects --affected')) {
 						return JSON.stringify([
 							'pkg-a',
@@ -31,14 +30,7 @@ describe('nx-smart focus filtering', () => {
 	});
 
 	it('reduces affected set when focus matches subset', async () => {
-		process.argv = [
-			'node',
-			'nx-smart.mjs',
-			'lint',
-			'--dry-run',
-			'--focus',
-			'@cortex-os/telemetry',
-		];
+		process.argv = ['node', 'nx-smart.mjs', 'lint', '--dry-run', '--focus', '@cortex-os/telemetry'];
 		const output = [];
 		const origLog = console.log;
 		const origExit = process.exit;
@@ -59,9 +51,7 @@ describe('nx-smart focus filtering', () => {
 			console.log = origLog;
 			process.exit = origExit;
 		}
-		const summaryIdx = output.findIndex((l) =>
-			l.includes('Affected Projects Summary'),
-		);
+		const summaryIdx = output.findIndex((l) => l.includes('Affected Projects Summary'));
 		expect(summaryIdx).toBeGreaterThan(-1);
 		const affectedLine = output.find((l) => l.startsWith('Affected projects:'));
 		expect(affectedLine).toContain('@cortex-os/telemetry');
@@ -70,14 +60,7 @@ describe('nx-smart focus filtering', () => {
 	});
 
 	it('falls back to original list if no overlap', async () => {
-		process.argv = [
-			'node',
-			'nx-smart.mjs',
-			'lint',
-			'--dry-run',
-			'--focus',
-			'non-existent',
-		];
+		process.argv = ['node', 'nx-smart.mjs', 'lint', '--dry-run', '--focus', 'non-existent'];
 		const output = [];
 		const origLog = console.log;
 		const origExit = process.exit;

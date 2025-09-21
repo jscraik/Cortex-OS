@@ -8,11 +8,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Read the template file
-const templatePath = join(
-	process.cwd(),
-	'scripts',
-	'neo4j-secure-class.template',
-);
+const templatePath = join(process.cwd(), 'scripts', 'neo4j-secure-class.template');
 const template = readFileSync(templatePath, 'utf-8');
 
 console.log('✅ Successfully read Neo4j template');

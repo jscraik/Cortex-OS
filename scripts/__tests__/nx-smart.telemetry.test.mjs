@@ -12,8 +12,7 @@ describe('nx-smart telemetry optional', () => {
 				if (cmd.startsWith('git rev-parse --is-inside-work-tree')) return '';
 				if (cmd.startsWith('git rev-parse HEAD')) return 'HEADSHA';
 				if (cmd.startsWith('git --no-pager diff')) return 'a.js';
-				if (cmd.includes('nx show projects --affected'))
-					return JSON.stringify(['pkg-a']);
+				if (cmd.includes('nx show projects --affected')) return JSON.stringify(['pkg-a']);
 				return '';
 			},
 			spawnSync: () => ({ status: 0 }),
@@ -37,8 +36,6 @@ describe('nx-smart telemetry optional', () => {
 			console.log = origLog;
 			process.exit = origExit;
 		}
-		expect(logs.some((l) => l.includes('Affected Projects Summary'))).toBe(
-			true,
-		);
+		expect(logs.some((l) => l.includes('Affected Projects Summary'))).toBe(true);
 	});
 });

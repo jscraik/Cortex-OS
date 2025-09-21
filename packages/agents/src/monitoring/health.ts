@@ -41,7 +41,6 @@ export interface HealthMonitorConfig {
 
 // Health monitoring placeholder
 export class HealthMonitor {
-	constructor(_config?: HealthMonitorConfig) {}
 	async getHealth(): Promise<SystemHealth> {
 		return {
 			status: 'healthy',

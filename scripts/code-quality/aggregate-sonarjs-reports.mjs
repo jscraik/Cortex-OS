@@ -11,16 +11,11 @@ async function main() {
 	const findings = [];
 	for (const f of files) {
 		if (!f.startsWith('eslint-sonar-') || !f.endsWith('.out')) continue;
-		const content = await fs.promises.readFile(
-			path.join(reportsDir, f),
-			'utf8',
-		);
+		const content = await fs.promises.readFile(path.join(reportsDir, f), 'utf8');
 		const lines = content.split(/\r?\n/);
 		for (const line of lines) {
 			// match lines like: /abs/path/file:line:col: message [Error/sonarjs/cognitive-complexity]
-			const m = line.match(
-				/^(.*):(\d+):(\d+): .*\[Error\/sonarjs\/cognitive-complexity\]$/,
-			);
+			const m = line.match(/^(.*):(\d+):(\d+): .*\[Error\/sonarjs\/cognitive-complexity\]$/);
 			if (m) {
 				findings.push({
 					file: m[1],
@@ -49,9 +44,7 @@ async function main() {
 	// Print top 20 summary
 	console.log('\nTop cognitive-complexity findings:');
 	ranked.slice(0, 20).forEach((r, i) => {
-		console.log(
-			`${i + 1}. ${r.package} - ${r.file}:${r.line} (count=${r.count})`,
-		);
+		console.log(`${i + 1}. ${r.package} - ${r.file}:${r.line} (count=${r.count})`);
 	});
 
 	// Also write a text summary consumed by scheduled-lint workflow summary
@@ -59,10 +52,7 @@ async function main() {
 		'Top cognitive-complexity findings:',
 		...ranked
 			.slice(0, 50)
-			.map(
-				(r, i) =>
-					`${i + 1}. ${r.package} - ${r.file}:${r.line} (count=${r.count})`,
-			),
+			.map((r, i) => `${i + 1}. ${r.package} - ${r.file}:${r.line} (count=${r.count})`),
 	].join('\n');
 	const txtPath = path.join(eslintDir, 'sonarjs-aggregate.txt');
 	await fs.promises.writeFile(txtPath, txt, 'utf8');

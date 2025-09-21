@@ -74,12 +74,7 @@ function saveToEnvFile(appName, secret) {
 	const app = APPS[appName];
 	if (!app) return false;
 
-	const packagePath = path.join(
-		__dirname,
-		'..',
-		'packages',
-		`cortex-${appName}-github`,
-	);
+	const packagePath = path.join(__dirname, '..', 'packages', `cortex-${appName}-github`);
 	const envPath = path.join(packagePath, '.env');
 
 	if (!fs.existsSync(packagePath)) {
@@ -98,10 +93,7 @@ function saveToEnvFile(appName, secret) {
 
 		if (envContent.includes(`${envVar}=`)) {
 			// Replace existing line
-			envContent = envContent.replace(
-				new RegExp(`^${envVar}=.*$`, 'm'),
-				newLine,
-			);
+			envContent = envContent.replace(new RegExp(`^${envVar}=.*$`, 'm'), newLine);
 		} else {
 			// Add new line
 			if (envContent && !envContent.endsWith('\n')) {
@@ -127,9 +119,7 @@ function generateForApp(appName, options = {}) {
 	}
 
 	const length = options.length || 64;
-	const secret = options.base64
-		? generateBase64Secret(length)
-		: generateSecureSecret(length);
+	const secret = options.base64 ? generateBase64Secret(length) : generateSecureSecret(length);
 
 	console.log(`\n🔑 ${app.name}`);
 	console.log(`Description: ${app.description}`);
@@ -213,16 +203,10 @@ function generateAllSecrets(options) {
 
 function printSecurityTips() {
 	console.log('\n💡 Security Tips:');
-	console.log(
-		'- Keep webhook secrets secure and never commit them to version control',
-	);
-	console.log(
-		'- Use different secrets for each environment (dev, staging, prod)',
-	);
+	console.log('- Keep webhook secrets secure and never commit them to version control');
+	console.log('- Use different secrets for each environment (dev, staging, prod)');
 	console.log('- Rotate secrets periodically for better security');
-	console.log(
-		'- Ensure the same secret is used in both your app and GitHub webhook settings',
-	);
+	console.log('- Ensure the same secret is used in both your app and GitHub webhook settings');
 }
 
 function main() {

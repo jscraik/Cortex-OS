@@ -10,10 +10,7 @@ import { existsSync } from 'node:fs';
 console.log('🔍 Checking TypeScript template file exclusion...\n');
 
 // Check if template files exist
-const templateFiles = [
-	'scripts/neo4j-secure-class.template',
-	'scripts/neo4j-secure-standalone.ts',
-];
+const templateFiles = ['scripts/neo4j-secure-class.template', 'scripts/neo4j-secure-standalone.ts'];
 
 templateFiles.forEach((file) => {
 	if (existsSync(file)) {
@@ -38,30 +35,18 @@ try {
 			stdio: 'pipe',
 			encoding: 'utf-8',
 		});
-		console.log(
-			'⚠️  Template file was compiled (might not be excluded properly)',
-		);
+		console.log('⚠️  Template file was compiled (might not be excluded properly)');
 	} catch (error) {
 		if (error.stdout?.includes('Cannot find module')) {
 			console.log('✅ Template file excluded from compilation (as expected)');
 		} else {
-			console.log(
-				'🔍 Template compilation result:',
-				`${error.message.slice(0, 100)}...`,
-			);
+			console.log('🔍 Template compilation result:', `${error.message.slice(0, 100)}...`);
 		}
 	}
 } catch (error) {
-	console.log(
-		'🔍 TypeScript check completed:',
-		`${error.message.slice(0, 50)}...`,
-	);
+	console.log('🔍 TypeScript check completed:', `${error.message.slice(0, 50)}...`);
 }
 
 console.log('\n✅ Template system is properly configured!');
-console.log(
-	'📄 Use scripts/neo4j-secure-class.template for string replacement',
-);
-console.log(
-	'📝 See scripts/README-neo4j-templates.md for detailed usage instructions',
-);
+console.log('📄 Use scripts/neo4j-secure-class.template for string replacement');
+console.log('📝 See scripts/README-neo4j-templates.md for detailed usage instructions');

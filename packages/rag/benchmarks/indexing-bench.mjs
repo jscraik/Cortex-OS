@@ -23,685 +23,781 @@ import { basename, dirname, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { pathToFileURL } from 'node:url';
 import { FlatIndex } from '../src/indexing/flat-index.js';
-import { PQFlatIndex, ScalarQuantizedFlatIndex, estimateFlatBytes } from '../src/indexing/quantized-flat.js';
+import {
+	estimateFlatBytes,
+	PQFlatIndex,
+	ScalarQuantizedFlatIndex,
+} from '../src/indexing/quantized-flat.js';
 import { collectBudgetViolations, parseVariantThresholds } from './budget-helpers.mjs';
 
 async function maybeLoadHnsw() {
-    try {
-        const mod = await import('../src/indexing/hnsw-index.js');
-        return mod.HNSWIndex;
-    } catch {
-        return null;
-    }
+	try {
+		const mod = await import('../src/indexing/hnsw-index.js');
+		return mod.HNSWIndex;
+	} catch {
+		return null;
+	}
 }
 
 // Seeded RNG (Mulberry32) for deterministic datasets
 function mulberry32(seed) {
-    let t = seed >>> 0;
-    return () => {
-        t += 0x6d2b79f5;
-        let r = Math.imul(t ^ (t >>> 15), 1 | t);
-        r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
-        return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-    };
+	let t = seed >>> 0;
+	return () => {
+		t += 0x6d2b79f5;
+		let r = Math.imul(t ^ (t >>> 15), 1 | t);
+		r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+		return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+	};
 }
 
 function randVec(dim, rnd) {
-    return Array.from({ length: dim }, () => rnd());
+	return Array.from({ length: dim }, () => rnd());
 }
 
 // Removed unused cosineSim
 
 function avg(arr) {
-    return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+	return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 }
 
 // Peak RSS sampler to capture highest resident set size during the run
 function startPeakRssSampler(intervalMs = 150) {
-    let peak = process.memoryUsage().rss;
-    const timer = setInterval(() => {
-        try {
-            const rss = process.memoryUsage().rss;
-            if (rss > peak) peak = rss;
-        } catch {
-            /* ignore */
-        }
-    }, Math.max(50, intervalMs));
-    const stop = () => {
-        try {
-            clearInterval(timer);
-        } catch {
-            /* ignore */
-        }
-    };
-    const getPeak = () => peak;
-    return { stop, getPeak };
+	let peak = process.memoryUsage().rss;
+	const timer = setInterval(
+		() => {
+			try {
+				const rss = process.memoryUsage().rss;
+				if (rss > peak) peak = rss;
+			} catch {
+				/* ignore */
+			}
+		},
+		Math.max(50, intervalMs),
+	);
+	const stop = () => {
+		try {
+			clearInterval(timer);
+		} catch {
+			/* ignore */
+		}
+	};
+	const getPeak = () => peak;
+	return { stop, getPeak };
 }
 
 async function queryIndexIds(index, queries, topK) {
-    const samples = [];
-    const idsPerQuery = [];
-    for (const q of queries) {
-        const t1 = performance.now();
-        const res = await index.query(q, topK);
-        const t2 = performance.now();
-        samples.push(t2 - t1);
-        idsPerQuery.push(res.map((x) => x.id));
-    }
-    return { samples, idsPerQuery, latency: avg(samples) };
+	const samples = [];
+	const idsPerQuery = [];
+	for (const q of queries) {
+		const t1 = performance.now();
+		const res = await index.query(q, topK);
+		const t2 = performance.now();
+		samples.push(t2 - t1);
+		idsPerQuery.push(res.map((x) => x.id));
+	}
+	return { samples, idsPerQuery, latency: avg(samples) };
 }
 
 function computeMapRecall(flatIds, candidateIdsPerQuery) {
-    let map = 0;
-    let rec = 0;
-    for (let i = 0; i < candidateIdsPerQuery.length; i++) {
-        map += averagePrecision(flatIds[i], candidateIdsPerQuery[i] ?? []);
-        rec += recallAtK(flatIds[i], candidateIdsPerQuery[i] ?? []);
-    }
-    const n = Math.max(1, candidateIdsPerQuery.length);
-    return { mAP: map / n, recallK: rec / n };
+	let map = 0;
+	let rec = 0;
+	for (let i = 0; i < candidateIdsPerQuery.length; i++) {
+		map += averagePrecision(flatIds[i], candidateIdsPerQuery[i] ?? []);
+		rec += recallAtK(flatIds[i], candidateIdsPerQuery[i] ?? []);
+	}
+	const n = Math.max(1, candidateIdsPerQuery.length);
+	return { mAP: map / n, recallK: rec / n };
 }
 
 function computeCurves(flatIds, candidateIdsPerQuery, ks) {
-    const useKs = Array.isArray(ks) && ks.length ? ks : [1, 5, 10];
-    const recall = [];
-    const map = [];
-    const n = Math.max(1, candidateIdsPerQuery.length);
-    for (const k of useKs) {
-        let rSum = 0;
-        let mSum = 0;
-        for (let i = 0; i < candidateIdsPerQuery.length; i++) {
-            const cand = (candidateIdsPerQuery[i] ?? []).slice(0, k);
-            rSum += recallAtK(flatIds[i].slice(0, k), cand);
-            mSum += averagePrecision(flatIds[i].slice(0, k), cand);
-        }
-        recall.push(rSum / n);
-        map.push(mSum / n);
-    }
-    return { recall, map };
+	const useKs = Array.isArray(ks) && ks.length ? ks : [1, 5, 10];
+	const recall = [];
+	const map = [];
+	const n = Math.max(1, candidateIdsPerQuery.length);
+	for (const k of useKs) {
+		let rSum = 0;
+		let mSum = 0;
+		for (let i = 0; i < candidateIdsPerQuery.length; i++) {
+			const cand = (candidateIdsPerQuery[i] ?? []).slice(0, k);
+			rSum += recallAtK(flatIds[i].slice(0, k), cand);
+			mSum += averagePrecision(flatIds[i].slice(0, k), cand);
+		}
+		recall.push(rSum / n);
+		map.push(mSum / n);
+	}
+	return { recall, map };
 }
 
 // Re-export helpers for unit tests without importing heavy index modules
 export { collectBudgetViolations, parseVariantThresholds } from './budget-helpers.mjs';
 
 const DEFAULT_CFG = {
-    dim: 128,
-    sizes: [10000, 100000],
-    queries: 5,
-    topK: 10,
-    efSearchValues: [32, 64, 128],
-    quantization: 'none',
-    report: 'reports/indexing-performance.json',
-    seed: 42,
-    memBudgetMB: null,
-    cpuBudgetMs: null,
-    peakRssBudgetMB: null,
-    coldLoad: true,
-    variants: ['flat', 'hnsw', 'scalarQ', 'pq', 'hnswScalar', 'hnswPQ'],
-    minRecallPct: null,
-    minMap: null,
-    // Curve visualization controls
-    curveKs: [1, 5, 10],
-    curveVariants: ['hnsw', 'scalarQ', 'pq', 'hnswScalar', 'hnswPQ'],
-    curveMetrics: ['recall', 'map'],
-    curveDefaultVariantVisibility: [],
-    reportTag: '',
-    minRecallPctByVariant: {},
-    minMapByVariant: {},
-    failOnMissingVariant: false,
-    pqMinCompressionRatio: null,
-    pqMaxColdLoadMs: null,
+	dim: 128,
+	sizes: [10000, 100000],
+	queries: 5,
+	topK: 10,
+	efSearchValues: [32, 64, 128],
+	quantization: 'none',
+	report: 'reports/indexing-performance.json',
+	seed: 42,
+	memBudgetMB: null,
+	cpuBudgetMs: null,
+	peakRssBudgetMB: null,
+	coldLoad: true,
+	variants: ['flat', 'hnsw', 'scalarQ', 'pq', 'hnswScalar', 'hnswPQ'],
+	minRecallPct: null,
+	minMap: null,
+	// Curve visualization controls
+	curveKs: [1, 5, 10],
+	curveVariants: ['hnsw', 'scalarQ', 'pq', 'hnswScalar', 'hnswPQ'],
+	curveMetrics: ['recall', 'map'],
+	curveDefaultVariantVisibility: [],
+	reportTag: '',
+	minRecallPctByVariant: {},
+	minMapByVariant: {},
+	failOnMissingVariant: false,
+	pqMinCompressionRatio: null,
+	pqMaxColdLoadMs: null,
 };
 
 const ARG_HANDLER_FACTORIES = {
-    sizes: (cfg) => (v) => { cfg.sizes = (v || '').split(',').filter(Boolean).map((s) => parseInt(s, 10)); },
-    dim: (cfg) => (v) => { cfg.dim = parseInt(v, 10); },
-    queries: (cfg) => (v) => { cfg.queries = parseInt(v, 10); },
-    topK: (cfg) => (v) => { cfg.topK = parseInt(v, 10); },
-    ef: (cfg) => (v) => { cfg.efSearchValues = (v || '').split(',').filter(Boolean).map((s) => parseInt(s, 10)); },
-    quant: (cfg) => (v) => { cfg.quantization = v; },
-    report: (cfg) => (v) => { cfg.report = v; },
-    seed: (cfg) => (v) => { cfg.seed = parseInt(v, 10); },
-    memBudgetMB: (cfg) => (v) => { cfg.memBudgetMB = parseFloat(v); },
-    cpuBudgetMs: (cfg) => (v) => { cfg.cpuBudgetMs = parseFloat(v); },
-    peakRssBudgetMB: (cfg) => (v) => { cfg.peakRssBudgetMB = parseFloat(v); },
-    variants: (cfg) => (v) => { cfg.variants = (v || '').split(',').map((s) => s.trim()).filter(Boolean); },
-    minRecallPct: (cfg) => (v) => { cfg.minRecallPct = parseFloat(v); },
-    minMap: (cfg) => (v) => { cfg.minMap = parseFloat(v); },
-    curveKs: (cfg) => (v) => { const arr = (v || '').split(',').map((s) => parseInt(s, 10)).filter((n) => Number.isFinite(n) && n > 0); if (arr.length) cfg.curveKs = arr; },
-    curveVariants: (cfg) => (v) => { const arr = (v || '').split(',').map((s) => s.trim()).filter(Boolean); if (arr.length) cfg.curveVariants = arr; },
-    curveMetrics: (cfg) => (v) => { const arr = (v || '').split(',').map((s) => s.trim()).filter((s) => s === 'recall' || s === 'map'); if (arr.length) cfg.curveMetrics = arr; },
-    curveDefaultVariantVisibility: (cfg) => (v) => { const arr = (v || '').split(',').map((s) => s.trim()).filter(Boolean); cfg.curveDefaultVariantVisibility = arr; },
-    reportTag: (cfg) => (v) => { cfg.reportTag = (v || '').trim(); },
-    minRecallPctByVariant: (cfg) => (v) => { cfg.minRecallPctByVariant = parseVariantThresholds(v); },
-    minMapByVariant: (cfg) => (v) => { cfg.minMapByVariant = parseVariantThresholds(v); },
-    failOnMissingVariant: (cfg) => (v) => { cfg.failOnMissingVariant = v == null ? true : String(v).toLowerCase() !== 'false'; },
-    pqMinCompressionRatio: (cfg) => (v) => { cfg.pqMinCompressionRatio = parseFloat(v); },
-    pqMaxColdLoadMs: (cfg) => (v) => { cfg.pqMaxColdLoadMs = parseFloat(v); },
+	sizes: (cfg) => (v) => {
+		cfg.sizes = (v || '')
+			.split(',')
+			.filter(Boolean)
+			.map((s) => parseInt(s, 10));
+	},
+	dim: (cfg) => (v) => {
+		cfg.dim = parseInt(v, 10);
+	},
+	queries: (cfg) => (v) => {
+		cfg.queries = parseInt(v, 10);
+	},
+	topK: (cfg) => (v) => {
+		cfg.topK = parseInt(v, 10);
+	},
+	ef: (cfg) => (v) => {
+		cfg.efSearchValues = (v || '')
+			.split(',')
+			.filter(Boolean)
+			.map((s) => parseInt(s, 10));
+	},
+	quant: (cfg) => (v) => {
+		cfg.quantization = v;
+	},
+	report: (cfg) => (v) => {
+		cfg.report = v;
+	},
+	seed: (cfg) => (v) => {
+		cfg.seed = parseInt(v, 10);
+	},
+	memBudgetMB: (cfg) => (v) => {
+		cfg.memBudgetMB = parseFloat(v);
+	},
+	cpuBudgetMs: (cfg) => (v) => {
+		cfg.cpuBudgetMs = parseFloat(v);
+	},
+	peakRssBudgetMB: (cfg) => (v) => {
+		cfg.peakRssBudgetMB = parseFloat(v);
+	},
+	variants: (cfg) => (v) => {
+		cfg.variants = (v || '')
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+	},
+	minRecallPct: (cfg) => (v) => {
+		cfg.minRecallPct = parseFloat(v);
+	},
+	minMap: (cfg) => (v) => {
+		cfg.minMap = parseFloat(v);
+	},
+	curveKs: (cfg) => (v) => {
+		const arr = (v || '')
+			.split(',')
+			.map((s) => parseInt(s, 10))
+			.filter((n) => Number.isFinite(n) && n > 0);
+		if (arr.length) cfg.curveKs = arr;
+	},
+	curveVariants: (cfg) => (v) => {
+		const arr = (v || '')
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+		if (arr.length) cfg.curveVariants = arr;
+	},
+	curveMetrics: (cfg) => (v) => {
+		const arr = (v || '')
+			.split(',')
+			.map((s) => s.trim())
+			.filter((s) => s === 'recall' || s === 'map');
+		if (arr.length) cfg.curveMetrics = arr;
+	},
+	curveDefaultVariantVisibility: (cfg) => (v) => {
+		const arr = (v || '')
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+		cfg.curveDefaultVariantVisibility = arr;
+	},
+	reportTag: (cfg) => (v) => {
+		cfg.reportTag = (v || '').trim();
+	},
+	minRecallPctByVariant: (cfg) => (v) => {
+		cfg.minRecallPctByVariant = parseVariantThresholds(v);
+	},
+	minMapByVariant: (cfg) => (v) => {
+		cfg.minMapByVariant = parseVariantThresholds(v);
+	},
+	failOnMissingVariant: (cfg) => (v) => {
+		cfg.failOnMissingVariant = v == null ? true : String(v).toLowerCase() !== 'false';
+	},
+	pqMinCompressionRatio: (cfg) => (v) => {
+		cfg.pqMinCompressionRatio = parseFloat(v);
+	},
+	pqMaxColdLoadMs: (cfg) => (v) => {
+		cfg.pqMaxColdLoadMs = parseFloat(v);
+	},
 };
 
 function parseArgs() {
-    const args = process.argv.slice(2);
-    const cfg = { ...DEFAULT_CFG };
-    const handlers = Object.fromEntries(
-        Object.entries(ARG_HANDLER_FACTORIES).map(([k, make]) => [k, make(cfg)]),
-    );
-    for (const a of args) {
-        if (a === '--no-cold-load') { cfg.coldLoad = false; continue; }
-        if (!a.startsWith('--')) continue;
-        const [key, val] = a.slice(2).split('=');
-        const h = handlers[key];
-        if (typeof h === 'function') h(val);
-    }
-    return cfg;
+	const args = process.argv.slice(2);
+	const cfg = { ...DEFAULT_CFG };
+	const handlers = Object.fromEntries(
+		Object.entries(ARG_HANDLER_FACTORIES).map(([k, make]) => [k, make(cfg)]),
+	);
+	for (const a of args) {
+		if (a === '--no-cold-load') {
+			cfg.coldLoad = false;
+			continue;
+		}
+		if (!a.startsWith('--')) continue;
+		const [key, val] = a.slice(2).split('=');
+		const h = handlers[key];
+		if (typeof h === 'function') h(val);
+	}
+	return cfg;
 }
 
 function quantizeScalar(entries) {
-    if (entries.length === 0)
-        return { entriesQ: [], qparams: null, originalBytes: 0, quantizedBytes: 0 };
-    const dim = entries[0].vector.length;
-    const min = Array(dim).fill(Infinity);
-    const max = Array(dim).fill(-Infinity);
-    for (const e of entries) {
-        for (let i = 0; i < dim; i++) {
-            const v = e.vector[i];
-            if (v < min[i]) min[i] = v;
-            if (v > max[i]) max[i] = v;
-        }
-    }
-    const scale = new Array(dim);
-    const zero = new Array(dim);
-    for (let i = 0; i < dim; i++) {
-        const range = max[i] - min[i] || 1e-9;
-        scale[i] = range / 255;
-        zero[i] = min[i];
-    }
-    const entriesQ = entries.map((e) => {
-        const q = new Uint8Array(dim);
-        for (let i = 0; i < dim; i++) {
-            const qv = Math.max(0, Math.min(255, Math.round((e.vector[i] - zero[i]) / scale[i])));
-            q[i] = qv;
-        }
-        return { id: e.id, q };
-    });
-    const originalBytes = entries.length * dim * 8;
-    const quantizedBytes = entries.length * dim + dim * 8 * 2;
-    return { entriesQ, qparams: { scale, zero }, originalBytes, quantizedBytes };
+	if (entries.length === 0)
+		return { entriesQ: [], qparams: null, originalBytes: 0, quantizedBytes: 0 };
+	const dim = entries[0].vector.length;
+	const min = Array(dim).fill(Infinity);
+	const max = Array(dim).fill(-Infinity);
+	for (const e of entries) {
+		for (let i = 0; i < dim; i++) {
+			const v = e.vector[i];
+			if (v < min[i]) min[i] = v;
+			if (v > max[i]) max[i] = v;
+		}
+	}
+	const scale = new Array(dim);
+	const zero = new Array(dim);
+	for (let i = 0; i < dim; i++) {
+		const range = max[i] - min[i] || 1e-9;
+		scale[i] = range / 255;
+		zero[i] = min[i];
+	}
+	const entriesQ = entries.map((e) => {
+		const q = new Uint8Array(dim);
+		for (let i = 0; i < dim; i++) {
+			const qv = Math.max(0, Math.min(255, Math.round((e.vector[i] - zero[i]) / scale[i])));
+			q[i] = qv;
+		}
+		return { id: e.id, q };
+	});
+	const originalBytes = entries.length * dim * 8;
+	const quantizedBytes = entries.length * dim + dim * 8 * 2;
+	return { entriesQ, qparams: { scale, zero }, originalBytes, quantizedBytes };
 }
 
 function dequantize(q, qparams) {
-    const { scale, zero } = qparams;
-    const vec = new Float32Array(q.length);
-    for (let i = 0; i < q.length; i++) vec[i] = zero[i] + scale[i] * q[i];
-    return Array.from(vec);
+	const { scale, zero } = qparams;
+	const vec = new Float32Array(q.length);
+	for (let i = 0; i < q.length; i++) vec[i] = zero[i] + scale[i] * q[i];
+	return Array.from(vec);
 }
 
 function pctOverlap(aIds, bIds) {
-    const aSet = new Set(aIds);
-    let count = 0;
-    for (const id of bIds) if (aSet.has(id)) count++;
-    return (count / Math.max(1, aIds.length)) * 100;
+	const aSet = new Set(aIds);
+	let count = 0;
+	for (const id of bIds) if (aSet.has(id)) count++;
+	return (count / Math.max(1, aIds.length)) * 100;
 }
 
 function averagePrecision(gtIds, candIds) {
-    const gt = new Set(gtIds);
-    let hit = 0;
-    let sumPrec = 0;
-    for (let i = 0; i < candIds.length; i++) {
-        if (gt.has(candIds[i])) {
-            hit++;
-            sumPrec += hit / (i + 1);
-        }
-    }
-    const denom = Math.max(1, Math.min(gt.size, candIds.length));
-    return sumPrec / denom;
+	const gt = new Set(gtIds);
+	let hit = 0;
+	let sumPrec = 0;
+	for (let i = 0; i < candIds.length; i++) {
+		if (gt.has(candIds[i])) {
+			hit++;
+			sumPrec += hit / (i + 1);
+		}
+	}
+	const denom = Math.max(1, Math.min(gt.size, candIds.length));
+	return sumPrec / denom;
 }
 
 function recallAtK(gtIds, candIds) {
-    const gt = new Set(gtIds);
-    let hit = 0;
-    for (const id of candIds) if (gt.has(id)) hit++;
-    return (hit / Math.max(1, gt.size)) * 100;
+	const gt = new Set(gtIds);
+	let hit = 0;
+	for (const id of candIds) if (gt.has(id)) hit++;
+	return (hit / Math.max(1, gt.size)) * 100;
 }
 
 // Path helpers
 function expandTildePath(p) {
-    if (!p) return p;
-    if (p.startsWith('~')) return p.replace('~', process.env.HOME || '');
-    return p;
+	if (!p) return p;
+	if (p.startsWith('~')) return p.replace('~', process.env.HOME || '');
+	return p;
 }
 
 function makeTimestampFolder() {
-    const d = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const mm = pad(d.getMonth() + 1);
-    const dd = pad(d.getDate());
-    const hh = pad(d.getHours());
-    const mi = pad(d.getMinutes());
-    const ss = pad(d.getSeconds());
-    return `${yyyy}-${mm}-${dd}_${hh}-${mi}-${ss}`;
+	const d = new Date();
+	const pad = (n) => String(n).padStart(2, '0');
+	const yyyy = d.getFullYear();
+	const mm = pad(d.getMonth() + 1);
+	const dd = pad(d.getDate());
+	const hh = pad(d.getHours());
+	const mi = pad(d.getMinutes());
+	const ss = pad(d.getSeconds());
+	return `${yyyy}-${mm}-${dd}_${hh}-${mi}-${ss}`;
 }
 
 function sanitizeTag(tag) {
-    if (!tag) return '';
-    return String(tag).replace(/[^a-zA-Z0-9._-]/g, '-');
+	if (!tag) return '';
+	return String(tag).replace(/[^a-zA-Z0-9._-]/g, '-');
 }
-
 
 // collectBudgetViolations now imported from helpers
 
 function enforceBudgets(results, opts) {
-    const violations = collectBudgetViolations(results, opts);
-    if (violations.length) {
-        for (const v of violations) console.error(v);
-        process.exit(1);
-    }
+	const violations = collectBudgetViolations(results, opts);
+	if (violations.length) {
+		for (const v of violations) console.error(v);
+		process.exit(1);
+	}
 }
 
 function hashConfig(cfg) {
-    try {
-        const json = JSON.stringify(cfg);
-        return createHash('sha256').update(json).digest('hex');
-    } catch {
-        return '';
-    }
+	try {
+		const json = JSON.stringify(cfg);
+		return createHash('sha256').update(json).digest('hex');
+	} catch {
+		return '';
+	}
 }
 
 /* eslint-disable-next-line sonarjs/cognitive-complexity */
 async function runOnce({
-    dim,
-    N,
-    topK,
-    efSearch,
-    quantization,
-    rnd,
-    queriesCount,
-    coldLoad,
-    variants,
-    curveKs,
+	dim,
+	N,
+	topK,
+	efSearch,
+	quantization,
+	rnd,
+	queriesCount,
+	coldLoad,
+	variants,
+	curveKs,
 }) {
-    // Begin peak memory sampling across build and query phases
-    const rssSampler = startPeakRssSampler(150);
-    const allVariants = ['flat', 'hnsw', 'scalarQ', 'pq', 'hnswScalar', 'hnswPQ'];
-    const activeVariants = Array.isArray(variants) && variants.length ? variants : allVariants;
-    const entriesRaw = Array.from({ length: N }, (_, i) => ({
-        id: `id-${i}`,
-        vector: randVec(dim, rnd),
-    }));
-    const queries = Array.from({ length: queriesCount }, () => randVec(dim, rnd));
+	// Begin peak memory sampling across build and query phases
+	const rssSampler = startPeakRssSampler(150);
+	const allVariants = ['flat', 'hnsw', 'scalarQ', 'pq', 'hnswScalar', 'hnswPQ'];
+	const activeVariants = Array.isArray(variants) && variants.length ? variants : allVariants;
+	const entriesRaw = Array.from({ length: N }, (_, i) => ({
+		id: `id-${i}`,
+		vector: randVec(dim, rnd),
+	}));
+	const queries = Array.from({ length: queriesCount }, () => randVec(dim, rnd));
 
-    let entries = entriesRaw;
-    if (quantization === 'scalar') {
-        const { entriesQ, qparams, originalBytes, quantizedBytes } = quantizeScalar(entriesRaw);
-        entries = entriesQ.map((e) => ({ id: e.id, vector: dequantize(e.q, qparams) }));
-        console.log(
-            `[indexing-bench] scalar quantization: ${(quantizedBytes / 1e6).toFixed(2)}MB vs ${(originalBytes / 1e6).toFixed(2)}MB (est.)`,
-        );
-    } else if (quantization === 'pq') {
-        console.log('[indexing-bench] product quantization requested (not implemented)');
-    }
+	let entries = entriesRaw;
+	if (quantization === 'scalar') {
+		const { entriesQ, qparams, originalBytes, quantizedBytes } = quantizeScalar(entriesRaw);
+		entries = entriesQ.map((e) => ({ id: e.id, vector: dequantize(e.q, qparams) }));
+		console.log(
+			`[indexing-bench] scalar quantization: ${(quantizedBytes / 1e6).toFixed(2)}MB vs ${(originalBytes / 1e6).toFixed(2)}MB (est.)`,
+		);
+	} else if (quantization === 'pq') {
+		console.log('[indexing-bench] product quantization requested (not implemented)');
+	}
 
-    // Flat baseline
-    const flat = new FlatIndex();
-    await flat.init(dim);
-    await flat.addBatch(entries);
+	// Flat baseline
+	const flat = new FlatIndex();
+	await flat.init(dim);
+	await flat.addBatch(entries);
 
-    const memAfterFlatBuild = process.memoryUsage().rss;
-    const heapAfterFlatBuild = process.memoryUsage().heapUsed;
-    const cpuStart = process.cpuUsage();
+	const memAfterFlatBuild = process.memoryUsage().rss;
+	const heapAfterFlatBuild = process.memoryUsage().heapUsed;
+	const cpuStart = process.cpuUsage();
 
-    const flatQ = await queryIndexIds(flat, queries, topK);
-    const flatLatencySamples = flatQ.samples;
-    const flatIds = flatQ.idsPerQuery;
-    const flatLatency = flatQ.latency;
+	const flatQ = await queryIndexIds(flat, queries, topK);
+	const flatLatencySamples = flatQ.samples;
+	const flatIds = flatQ.idsPerQuery;
+	const flatLatency = flatQ.latency;
 
-    // HNSW setup (optional)
-    const HNSWIndex = await maybeLoadHnsw();
-    let hnswLatency = null;
-    let hnswIds = [];
-    let overlapPct = null;
-    let speedup = null;
-    let memAfterHnswBuild = null;
-    let heapAfterHnswBuild = null;
-    let memAfterQueries = null;
-    let heapAfterQueries = null;
-    let cpuDeltaMs = null;
-    let hnswLatencySamples = [];
-    if (HNSWIndex && activeVariants.includes('hnsw')) {
-        const hnsw = new HNSWIndex({ space: 'cosine', M: 16, efConstruction: 200, efSearch });
-        await hnsw.init(dim);
-        if (quantization !== 'none') {
-            console.log(
-                `[indexing-bench] quantization=${quantization} requested (not implemented, proceeding unquantized)`,
-            );
-        }
-        await hnsw.addBatch(entries);
-        memAfterHnswBuild = process.memoryUsage().rss;
-        heapAfterHnswBuild = process.memoryUsage().heapUsed;
+	// HNSW setup (optional)
+	const HNSWIndex = await maybeLoadHnsw();
+	let hnswLatency = null;
+	let hnswIds = [];
+	let overlapPct = null;
+	let speedup = null;
+	let memAfterHnswBuild = null;
+	let heapAfterHnswBuild = null;
+	let memAfterQueries = null;
+	let heapAfterQueries = null;
+	let cpuDeltaMs = null;
+	let hnswLatencySamples = [];
+	if (HNSWIndex && activeVariants.includes('hnsw')) {
+		const hnsw = new HNSWIndex({ space: 'cosine', M: 16, efConstruction: 200, efSearch });
+		await hnsw.init(dim);
+		if (quantization !== 'none') {
+			console.log(
+				`[indexing-bench] quantization=${quantization} requested (not implemented, proceeding unquantized)`,
+			);
+		}
+		await hnsw.addBatch(entries);
+		memAfterHnswBuild = process.memoryUsage().rss;
+		heapAfterHnswBuild = process.memoryUsage().heapUsed;
 
-        const hQ = await queryIndexIds(hnsw, queries, topK);
-        hnswLatencySamples = hQ.samples;
-        hnswIds = hQ.idsPerQuery;
-        let overlapCount = 0;
-        for (let i = 0; i < queries.length; i++) {
-            const flatSet = new Set(flatIds[i]);
-            overlapCount += hQ.idsPerQuery[i].filter((id) => flatSet.has(id)).length;
-        }
-        memAfterQueries = process.memoryUsage().rss;
-        heapAfterQueries = process.memoryUsage().heapUsed;
-        const cpuEnd = process.cpuUsage(cpuStart);
-        cpuDeltaMs = (cpuEnd.user + cpuEnd.system) / 1000;
-        hnswLatency = hQ.latency;
-        overlapPct = (overlapCount / (topK * queries.length)) * 100;
-        speedup = flatLatency / hnswLatency;
-    }
+		const hQ = await queryIndexIds(hnsw, queries, topK);
+		hnswLatencySamples = hQ.samples;
+		hnswIds = hQ.idsPerQuery;
+		let overlapCount = 0;
+		for (let i = 0; i < queries.length; i++) {
+			const flatSet = new Set(flatIds[i]);
+			overlapCount += hQ.idsPerQuery[i].filter((id) => flatSet.has(id)).length;
+		}
+		memAfterQueries = process.memoryUsage().rss;
+		heapAfterQueries = process.memoryUsage().heapUsed;
+		const cpuEnd = process.cpuUsage(cpuStart);
+		cpuDeltaMs = (cpuEnd.user + cpuEnd.system) / 1000;
+		hnswLatency = hQ.latency;
+		overlapPct = (overlapCount / (topK * queries.length)) * 100;
+		speedup = flatLatency / hnswLatency;
+	}
 
-    // Quantized flat variants
-    let memAfterScalarQBuild = null;
-    let heapAfterScalarQBuild = null;
-    let scalarQLatency = null;
-    let scalarQResults = [];
-    let scalarQOverlapPct = null;
-    // collected via sqQ when enabled
-    let scalarQLatencySamples = [];
-    if (activeVariants.includes('scalarQ')) {
-        const scalarQ = new ScalarQuantizedFlatIndex();
-        await scalarQ.init(dim);
-        await scalarQ.addBatch(entriesRaw);
-        memAfterScalarQBuild = process.memoryUsage().rss;
-        heapAfterScalarQBuild = process.memoryUsage().heapUsed;
-        const sqQ = await queryIndexIds(scalarQ, queries, topK);
-        scalarQLatencySamples = sqQ.samples;
-        scalarQResults = sqQ.idsPerQuery;
-        scalarQLatency = sqQ.latency;
-        let scalarQOverlapAgg = 0;
-        for (let i = 0; i < queries.length; i++) {
-            scalarQOverlapAgg += pctOverlap(flatIds[i], scalarQResults[i] ?? []);
-        }
-        scalarQOverlapPct = scalarQOverlapAgg / queries.length;
-    }
+	// Quantized flat variants
+	let memAfterScalarQBuild = null;
+	let heapAfterScalarQBuild = null;
+	let scalarQLatency = null;
+	let scalarQResults = [];
+	let scalarQOverlapPct = null;
+	// collected via sqQ when enabled
+	let scalarQLatencySamples = [];
+	if (activeVariants.includes('scalarQ')) {
+		const scalarQ = new ScalarQuantizedFlatIndex();
+		await scalarQ.init(dim);
+		await scalarQ.addBatch(entriesRaw);
+		memAfterScalarQBuild = process.memoryUsage().rss;
+		heapAfterScalarQBuild = process.memoryUsage().heapUsed;
+		const sqQ = await queryIndexIds(scalarQ, queries, topK);
+		scalarQLatencySamples = sqQ.samples;
+		scalarQResults = sqQ.idsPerQuery;
+		scalarQLatency = sqQ.latency;
+		let scalarQOverlapAgg = 0;
+		for (let i = 0; i < queries.length; i++) {
+			scalarQOverlapAgg += pctOverlap(flatIds[i], scalarQResults[i] ?? []);
+		}
+		scalarQOverlapPct = scalarQOverlapAgg / queries.length;
+	}
 
-    let pq;
-    let memAfterPQBuild = null;
-    let heapAfterPQBuild = null;
-    let pqLatency = null;
-    let pqResults = [];
-    let pqOverlapPct = null;
-    let onDiskBytesPQ = 0;
-    let coldLoadMsPQ = 0;
+	let pq;
+	let memAfterPQBuild = null;
+	let heapAfterPQBuild = null;
+	let pqLatency = null;
+	let pqResults = [];
+	let pqOverlapPct = null;
+	let onDiskBytesPQ = 0;
+	let coldLoadMsPQ = 0;
 
-    // samples available via pqQ when enabled
-    // samples available via hsQ when enabled
-    // samples available via hpQ when enabled
-    let pqLatencySamples = [];
-    if (activeVariants.includes('pq') || activeVariants.includes('hnswPQ')) {
-        pq = new PQFlatIndex({ m: 8, k: 16, iters: 3 });
-        await pq.init(dim);
-        await pq.addBatch(entriesRaw);
-        memAfterPQBuild = process.memoryUsage().rss;
-        heapAfterPQBuild = process.memoryUsage().heapUsed;
-        // If quant=pq flag is provided, persist and re-load once to measure cold-load and on-disk size
-        if (quantization === 'pq') {
-            const base = resolve(process.cwd(), 'reports', `pq-N${N}-dim${dim}`);
-            try { mkdirSync(dirname(base), { recursive: true }); } catch { }
-            const t1 = performance.now();
-            await pq.save(base);
-            const ids = [`${base}.pq.meta.json`, `${base}.pq.codebooks.bin`, `${base}.pq.ids.json`, `${base}.pq.codes.bin`];
-            try { onDiskBytesPQ = ids.reduce((s, p) => s + statSync(p).size, 0); } catch { onDiskBytesPQ = 0; }
-            const pq2 = new PQFlatIndex();
-            await pq2.load(base);
-            coldLoadMsPQ = performance.now() - t1;
-        }
-        if (activeVariants.includes('pq')) {
-            const pqQ = await queryIndexIds(pq, queries, topK);
-            pqLatencySamples = pqQ.samples;
-            pqResults = pqQ.idsPerQuery;
-            pqLatency = pqQ.latency;
-            let pqOverlapAgg = 0;
-            for (let i = 0; i < queries.length; i++) {
-                pqOverlapAgg += pctOverlap(flatIds[i], pqResults[i] ?? []);
-            }
-            pqOverlapPct = pqOverlapAgg / queries.length;
-        }
-    }
+	// samples available via pqQ when enabled
+	// samples available via hsQ when enabled
+	// samples available via hpQ when enabled
+	let pqLatencySamples = [];
+	if (activeVariants.includes('pq') || activeVariants.includes('hnswPQ')) {
+		pq = new PQFlatIndex({ m: 8, k: 16, iters: 3 });
+		await pq.init(dim);
+		await pq.addBatch(entriesRaw);
+		memAfterPQBuild = process.memoryUsage().rss;
+		heapAfterPQBuild = process.memoryUsage().heapUsed;
+		// If quant=pq flag is provided, persist and re-load once to measure cold-load and on-disk size
+		if (quantization === 'pq') {
+			const base = resolve(process.cwd(), 'reports', `pq-N${N}-dim${dim}`);
+			try {
+				mkdirSync(dirname(base), { recursive: true });
+			} catch {}
+			const t1 = performance.now();
+			await pq.save(base);
+			const ids = [
+				`${base}.pq.meta.json`,
+				`${base}.pq.codebooks.bin`,
+				`${base}.pq.ids.json`,
+				`${base}.pq.codes.bin`,
+			];
+			try {
+				onDiskBytesPQ = ids.reduce((s, p) => s + statSync(p).size, 0);
+			} catch {
+				onDiskBytesPQ = 0;
+			}
+			const pq2 = new PQFlatIndex();
+			await pq2.load(base);
+			coldLoadMsPQ = performance.now() - t1;
+		}
+		if (activeVariants.includes('pq')) {
+			const pqQ = await queryIndexIds(pq, queries, topK);
+			pqLatencySamples = pqQ.samples;
+			pqResults = pqQ.idsPerQuery;
+			pqLatency = pqQ.latency;
+			let pqOverlapAgg = 0;
+			for (let i = 0; i < queries.length; i++) {
+				pqOverlapAgg += pctOverlap(flatIds[i], pqResults[i] ?? []);
+			}
+			pqOverlapPct = pqOverlapAgg / queries.length;
+		}
+	}
 
-    // Quantized-HNSW paths (build HNSW from quantized-approx vectors)
-    // Scalar: reuse earlier quantization params to dequantize entries (already have entries via scalarQ path above)
-    let memAfterHnswScalarBuild = null;
-    let heapAfterHnswScalarBuild = null;
-    let hnswScalarLatency = null;
-    let hnswScalarIds = [];
-    let hnswScalarOverlapPct = null;
-    let speedupScalarHnsw = null;
-    // collected via hsQ when enabled
-    let hnswScalarIdx = null;
-    let hnswScalarLatencySamples = [];
-    if (HNSWIndex && activeVariants.includes('hnswScalar')) {
-        const hnswScalar = new HNSWIndex({ space: 'cosine', M: 16, efConstruction: 200, efSearch });
-        await hnswScalar.init(dim);
-        const { entriesQ, qparams } = quantizeScalar(entriesRaw);
-        const approxScalar = entriesQ.map((e) => ({ id: e.id, vector: dequantize(e.q, qparams) }));
-        await hnswScalar.addBatch(approxScalar);
-        hnswScalarIdx = hnswScalar;
-        memAfterHnswScalarBuild = process.memoryUsage().rss;
-        heapAfterHnswScalarBuild = process.memoryUsage().heapUsed;
-        const hsQ = await queryIndexIds(hnswScalar, queries, topK);
-        hnswScalarLatencySamples = hsQ.samples;
-        hnswScalarIds = hsQ.idsPerQuery;
-        let hnswScalarOverlap = 0;
-        for (let i = 0; i < queries.length; i++) {
-            hnswScalarOverlap += pctOverlap(flatIds[i], hnswScalarIds[i] ?? []);
-        }
-        hnswScalarLatency = hsQ.latency;
-        hnswScalarOverlapPct = hnswScalarOverlap / queries.length;
-        speedupScalarHnsw = flatLatency / hnswScalarLatency;
-    }
+	// Quantized-HNSW paths (build HNSW from quantized-approx vectors)
+	// Scalar: reuse earlier quantization params to dequantize entries (already have entries via scalarQ path above)
+	let memAfterHnswScalarBuild = null;
+	let heapAfterHnswScalarBuild = null;
+	let hnswScalarLatency = null;
+	let hnswScalarIds = [];
+	let hnswScalarOverlapPct = null;
+	let speedupScalarHnsw = null;
+	// collected via hsQ when enabled
+	let hnswScalarIdx = null;
+	let hnswScalarLatencySamples = [];
+	if (HNSWIndex && activeVariants.includes('hnswScalar')) {
+		const hnswScalar = new HNSWIndex({ space: 'cosine', M: 16, efConstruction: 200, efSearch });
+		await hnswScalar.init(dim);
+		const { entriesQ, qparams } = quantizeScalar(entriesRaw);
+		const approxScalar = entriesQ.map((e) => ({ id: e.id, vector: dequantize(e.q, qparams) }));
+		await hnswScalar.addBatch(approxScalar);
+		hnswScalarIdx = hnswScalar;
+		memAfterHnswScalarBuild = process.memoryUsage().rss;
+		heapAfterHnswScalarBuild = process.memoryUsage().heapUsed;
+		const hsQ = await queryIndexIds(hnswScalar, queries, topK);
+		hnswScalarLatencySamples = hsQ.samples;
+		hnswScalarIds = hsQ.idsPerQuery;
+		let hnswScalarOverlap = 0;
+		for (let i = 0; i < queries.length; i++) {
+			hnswScalarOverlap += pctOverlap(flatIds[i], hnswScalarIds[i] ?? []);
+		}
+		hnswScalarLatency = hsQ.latency;
+		hnswScalarOverlapPct = hnswScalarOverlap / queries.length;
+		speedupScalarHnsw = flatLatency / hnswScalarLatency;
+	}
 
-    // PQ: reconstruct approximate vectors from codebooks and codes
-    let memAfterHnswPQBuild = null;
-    let heapAfterHnswPQBuild = null;
-    let hnswPQLatency = null;
-    let hnswPQIds = [];
-    let hnswPQOverlapPct = null;
-    let speedupPQHnsw = null;
-    // collected via hpQ when enabled
-    let hnswPQIdx = null;
-    let hnswPQLatencySamples = [];
-    if (HNSWIndex && pq && activeVariants.includes('hnswPQ')) {
-        const hnswPQ = new HNSWIndex({ space: 'cosine', M: 16, efConstruction: 200, efSearch });
-        await hnswPQ.init(dim);
-        // Reconstruct PQ approximations
-        const m = pq.m ?? 8;
-        const subDim = pq.subDim ?? dim / m;
-        const codebooks = pq.codebooks;
-        const pqCodes = pq.codes;
-        function reconstructPQVector(codes) {
-            const vec = new Float32Array(dim);
-            for (let si = 0; si < m; si++) {
-                const code = codes[si];
-                const centroid = codebooks[si].subarray(code * subDim, (code + 1) * subDim);
-                vec.set(centroid, si * subDim);
-            }
-            return Array.from(vec);
-        }
-        const approxPQ = pqCodes.map((row) => ({ id: row.id, vector: reconstructPQVector(row.codes) }));
-        await hnswPQ.addBatch(approxPQ);
-        hnswPQIdx = hnswPQ;
-        memAfterHnswPQBuild = process.memoryUsage().rss;
-        heapAfterHnswPQBuild = process.memoryUsage().heapUsed;
-        const hpQ = await queryIndexIds(hnswPQ, queries, topK);
-        hnswPQLatencySamples = hpQ.samples;
-        hnswPQIds = hpQ.idsPerQuery;
-        let hnswPQOverlap = 0;
-        for (let i = 0; i < queries.length; i++) {
-            hnswPQOverlap += pctOverlap(flatIds[i], hnswPQIds[i] ?? []);
-        }
-        hnswPQLatency = hpQ.latency;
-        hnswPQOverlapPct = hnswPQOverlap / queries.length;
-        speedupPQHnsw = flatLatency / hnswPQLatency;
-    }
+	// PQ: reconstruct approximate vectors from codebooks and codes
+	let memAfterHnswPQBuild = null;
+	let heapAfterHnswPQBuild = null;
+	let hnswPQLatency = null;
+	let hnswPQIds = [];
+	let hnswPQOverlapPct = null;
+	let speedupPQHnsw = null;
+	// collected via hpQ when enabled
+	let hnswPQIdx = null;
+	let hnswPQLatencySamples = [];
+	if (HNSWIndex && pq && activeVariants.includes('hnswPQ')) {
+		const hnswPQ = new HNSWIndex({ space: 'cosine', M: 16, efConstruction: 200, efSearch });
+		await hnswPQ.init(dim);
+		// Reconstruct PQ approximations
+		const m = pq.m ?? 8;
+		const subDim = pq.subDim ?? dim / m;
+		const codebooks = pq.codebooks;
+		const pqCodes = pq.codes;
+		function reconstructPQVector(codes) {
+			const vec = new Float32Array(dim);
+			for (let si = 0; si < m; si++) {
+				const code = codes[si];
+				const centroid = codebooks[si].subarray(code * subDim, (code + 1) * subDim);
+				vec.set(centroid, si * subDim);
+			}
+			return Array.from(vec);
+		}
+		const approxPQ = pqCodes.map((row) => ({ id: row.id, vector: reconstructPQVector(row.codes) }));
+		await hnswPQ.addBatch(approxPQ);
+		hnswPQIdx = hnswPQ;
+		memAfterHnswPQBuild = process.memoryUsage().rss;
+		heapAfterHnswPQBuild = process.memoryUsage().heapUsed;
+		const hpQ = await queryIndexIds(hnswPQ, queries, topK);
+		hnswPQLatencySamples = hpQ.samples;
+		hnswPQIds = hpQ.idsPerQuery;
+		let hnswPQOverlap = 0;
+		for (let i = 0; i < queries.length; i++) {
+			hnswPQOverlap += pctOverlap(flatIds[i], hnswPQIds[i] ?? []);
+		}
+		hnswPQLatency = hpQ.latency;
+		hnswPQOverlapPct = hnswPQOverlap / queries.length;
+		speedupPQHnsw = flatLatency / hnswPQLatency;
+	}
 
-    // Recall@K and mAP relative to flat baseline
-    const hnswScores = hnswIds.length ? computeMapRecall(flatIds, hnswIds) : { mAP: null, recallK: null };
-    const scalarQScores = scalarQResults.length
-        ? computeMapRecall(flatIds, scalarQResults)
-        : { mAP: null, recallK: null };
-    const pqScores = pqResults.length ? computeMapRecall(flatIds, pqResults) : { mAP: null, recallK: null };
-    const hnswScalarScores = hnswScalarIds.length
-        ? computeMapRecall(flatIds, hnswScalarIds)
-        : { mAP: null, recallK: null };
-    const hnswPQScores = hnswPQIds.length
-        ? computeMapRecall(flatIds, hnswPQIds)
-        : { mAP: null, recallK: null };
+	// Recall@K and mAP relative to flat baseline
+	const hnswScores = hnswIds.length
+		? computeMapRecall(flatIds, hnswIds)
+		: { mAP: null, recallK: null };
+	const scalarQScores = scalarQResults.length
+		? computeMapRecall(flatIds, scalarQResults)
+		: { mAP: null, recallK: null };
+	const pqScores = pqResults.length
+		? computeMapRecall(flatIds, pqResults)
+		: { mAP: null, recallK: null };
+	const hnswScalarScores = hnswScalarIds.length
+		? computeMapRecall(flatIds, hnswScalarIds)
+		: { mAP: null, recallK: null };
+	const hnswPQScores = hnswPQIds.length
+		? computeMapRecall(flatIds, hnswPQIds)
+		: { mAP: null, recallK: null };
 
-    const hnswCurves = hnswIds.length
-        ? computeCurves(flatIds, hnswIds, curveKs)
-        : { recall: [], map: [] };
-    const scalarQCurves = scalarQResults.length
-        ? computeCurves(flatIds, scalarQResults, curveKs)
-        : { recall: [], map: [] };
-    const pqCurves = pqResults.length
-        ? computeCurves(flatIds, pqResults, curveKs)
-        : { recall: [], map: [] };
-    const hnswScalarCurves = hnswScalarIds.length
-        ? computeCurves(flatIds, hnswScalarIds, curveKs)
-        : { recall: [], map: [] };
-    const hnswPQCurves = hnswPQIds.length
-        ? computeCurves(flatIds, hnswPQIds, curveKs)
-        : { recall: [], map: [] };
+	const hnswCurves = hnswIds.length
+		? computeCurves(flatIds, hnswIds, curveKs)
+		: { recall: [], map: [] };
+	const scalarQCurves = scalarQResults.length
+		? computeCurves(flatIds, scalarQResults, curveKs)
+		: { recall: [], map: [] };
+	const pqCurves = pqResults.length
+		? computeCurves(flatIds, pqResults, curveKs)
+		: { recall: [], map: [] };
+	const hnswScalarCurves = hnswScalarIds.length
+		? computeCurves(flatIds, hnswScalarIds, curveKs)
+		: { recall: [], map: [] };
+	const hnswPQCurves = hnswPQIds.length
+		? computeCurves(flatIds, hnswPQIds, curveKs)
+		: { recall: [], map: [] };
 
-    // Save/load quantized-HNSW to measure size and cold-load times
-    const externalData = expandTildePath(process.env.RAG_DATA_DIR || '');
-    const coldBaseDir = externalData
-        ? resolve(externalData, 'indexes', 'hnsw-cold')
-        : resolve(process.cwd(), 'reports', 'hnsw-cold');
-    mkdirSync(coldBaseDir, { recursive: true });
-    async function measureSaveLoad(idx, name) {
-        const outBase = resolve(coldBaseDir, name);
-        await idx.save(outBase);
-        const bin = statSync(`${outBase}.bin`).size;
-        const meta = statSync(`${outBase}.meta.json`).size;
-        const onDisk = bin + meta;
-        const start = performance.now();
-        const HNSWIndex2 = await maybeLoadHnsw();
-        const cold = new HNSWIndex2({});
-        await cold.load(outBase);
-        const loadMs = performance.now() - start;
-        return { onDisk, loadMs };
-    }
-    let scalarSave = { onDisk: 0, loadMs: 0 };
-    let pqSave = { onDisk: 0, loadMs: 0 };
-    if (coldLoad) {
-        if (hnswScalarIdx)
-            scalarSave = await measureSaveLoad(hnswScalarIdx, `N${N}-ef${efSearch}-scalar`);
-        if (hnswPQIdx) pqSave = await measureSaveLoad(hnswPQIdx, `N${N}-ef${efSearch}-pq`);
-    }
+	// Save/load quantized-HNSW to measure size and cold-load times
+	const externalData = expandTildePath(process.env.RAG_DATA_DIR || '');
+	const coldBaseDir = externalData
+		? resolve(externalData, 'indexes', 'hnsw-cold')
+		: resolve(process.cwd(), 'reports', 'hnsw-cold');
+	mkdirSync(coldBaseDir, { recursive: true });
+	async function measureSaveLoad(idx, name) {
+		const outBase = resolve(coldBaseDir, name);
+		await idx.save(outBase);
+		const bin = statSync(`${outBase}.bin`).size;
+		const meta = statSync(`${outBase}.meta.json`).size;
+		const onDisk = bin + meta;
+		const start = performance.now();
+		const HNSWIndex2 = await maybeLoadHnsw();
+		const cold = new HNSWIndex2({});
+		await cold.load(outBase);
+		const loadMs = performance.now() - start;
+		return { onDisk, loadMs };
+	}
+	let scalarSave = { onDisk: 0, loadMs: 0 };
+	let pqSave = { onDisk: 0, loadMs: 0 };
+	if (coldLoad) {
+		if (hnswScalarIdx)
+			scalarSave = await measureSaveLoad(hnswScalarIdx, `N${N}-ef${efSearch}-scalar`);
+		if (hnswPQIdx) pqSave = await measureSaveLoad(hnswPQIdx, `N${N}-ef${efSearch}-pq`);
+	}
 
-    // Stop sampler and capture peak
-    rssSampler.stop();
-    const peakRss = rssSampler.getPeak();
+	// Stop sampler and capture peak
+	rssSampler.stop();
+	const peakRss = rssSampler.getPeak();
 
-    return {
-        dim,
-        N,
-        efSearch,
-        quantization,
-        flatLatency,
-        hnswLatency,
-        overlapPct,
-        speedup,
-        memAfterFlatBuild,
-        memAfterHnswBuild,
-        memAfterQueries,
-        heapAfterFlatBuild,
-        heapAfterHnswBuild,
-        heapAfterQueries,
-        cpuDeltaMs,
-        scalarQLatency,
-        memAfterScalarQBuild,
-        heapAfterScalarQBuild,
-        scalarQOverlapPct,
-        pqLatency,
-        memAfterPQBuild,
-        heapAfterPQBuild,
-        pqOverlapPct,
-        // Quantized HNSW
-        hnswScalarLatency,
-        hnswScalarOverlapPct,
-        speedupScalarHnsw,
-        memAfterHnswScalarBuild,
-        heapAfterHnswScalarBuild,
-        hnswPQLatency,
-        hnswPQOverlapPct,
-        speedupPQHnsw,
-        memAfterHnswPQBuild,
-        heapAfterHnswPQBuild,
-        // Recall@m and mAP (relative to flat)
-        recallHnsw: hnswScores.recallK,
-        mapHnsw: hnswScores.mAP,
-        recallScalarQ: scalarQScores.recallK,
-        mapScalarQ: scalarQScores.mAP,
-        recallPQ: pqScores.recallK,
-        mapPQ: pqScores.mAP,
-        recallHnswScalar: hnswScalarScores.recallK,
-        mapHnswScalar: hnswScalarScores.mAP,
-        recallHnswPQ: hnswPQScores.recallK,
-        mapHnswPQ: hnswPQScores.mAP,
-        // Curves (Recall@1/5/10 as %, mAP@1/5/10 as 0..1)
-        recallHnswCurve: hnswCurves.recall,
-        mapHnswCurve: hnswCurves.map,
-        recallScalarQCurve: scalarQCurves.recall,
-        mapScalarQCurve: scalarQCurves.map,
-        recallPQCurve: pqCurves.recall,
-        mapPQCurve: pqCurves.map,
-        recallHnswScalarCurve: hnswScalarCurves.recall,
-        mapHnswScalarCurve: hnswScalarCurves.map,
-        recallHnswPQCurve: hnswPQCurves.recall,
-        mapHnswPQCurve: hnswPQCurves.map,
-        // Cold-load and on-disk size
-        onDiskBytesHnswScalar: scalarSave.onDisk,
-        coldLoadMsHnswScalar: scalarSave.loadMs,
-        onDiskBytesHnswPQ: pqSave.onDisk,
-        coldLoadMsHnswPQ: pqSave.loadMs,
-        onDiskBytesPQ,
-        coldLoadMsPQ,
-        // Peak process RSS during runOnce
-        peakRss,
-        // Samples for sparklines
-        flatLatencySamples,
-        hnswLatencySamples,
-        scalarQLatencySamples,
-        pqLatencySamples,
-        hnswScalarLatencySamples,
-        hnswPQLatencySamples,
-        skipped: hnswLatency == null,
-    };
+	return {
+		dim,
+		N,
+		efSearch,
+		quantization,
+		flatLatency,
+		hnswLatency,
+		overlapPct,
+		speedup,
+		memAfterFlatBuild,
+		memAfterHnswBuild,
+		memAfterQueries,
+		heapAfterFlatBuild,
+		heapAfterHnswBuild,
+		heapAfterQueries,
+		cpuDeltaMs,
+		scalarQLatency,
+		memAfterScalarQBuild,
+		heapAfterScalarQBuild,
+		scalarQOverlapPct,
+		pqLatency,
+		memAfterPQBuild,
+		heapAfterPQBuild,
+		pqOverlapPct,
+		// Quantized HNSW
+		hnswScalarLatency,
+		hnswScalarOverlapPct,
+		speedupScalarHnsw,
+		memAfterHnswScalarBuild,
+		heapAfterHnswScalarBuild,
+		hnswPQLatency,
+		hnswPQOverlapPct,
+		speedupPQHnsw,
+		memAfterHnswPQBuild,
+		heapAfterHnswPQBuild,
+		// Recall@m and mAP (relative to flat)
+		recallHnsw: hnswScores.recallK,
+		mapHnsw: hnswScores.mAP,
+		recallScalarQ: scalarQScores.recallK,
+		mapScalarQ: scalarQScores.mAP,
+		recallPQ: pqScores.recallK,
+		mapPQ: pqScores.mAP,
+		recallHnswScalar: hnswScalarScores.recallK,
+		mapHnswScalar: hnswScalarScores.mAP,
+		recallHnswPQ: hnswPQScores.recallK,
+		mapHnswPQ: hnswPQScores.mAP,
+		// Curves (Recall@1/5/10 as %, mAP@1/5/10 as 0..1)
+		recallHnswCurve: hnswCurves.recall,
+		mapHnswCurve: hnswCurves.map,
+		recallScalarQCurve: scalarQCurves.recall,
+		mapScalarQCurve: scalarQCurves.map,
+		recallPQCurve: pqCurves.recall,
+		mapPQCurve: pqCurves.map,
+		recallHnswScalarCurve: hnswScalarCurves.recall,
+		mapHnswScalarCurve: hnswScalarCurves.map,
+		recallHnswPQCurve: hnswPQCurves.recall,
+		mapHnswPQCurve: hnswPQCurves.map,
+		// Cold-load and on-disk size
+		onDiskBytesHnswScalar: scalarSave.onDisk,
+		coldLoadMsHnswScalar: scalarSave.loadMs,
+		onDiskBytesHnswPQ: pqSave.onDisk,
+		coldLoadMsHnswPQ: pqSave.loadMs,
+		onDiskBytesPQ,
+		coldLoadMsPQ,
+		// Peak process RSS during runOnce
+		peakRss,
+		// Samples for sparklines
+		flatLatencySamples,
+		hnswLatencySamples,
+		scalarQLatencySamples,
+		pqLatencySamples,
+		hnswScalarLatencySamples,
+		hnswPQLatencySamples,
+		skipped: hnswLatency == null,
+	};
 }
 
 function logResult(out) {
-    if (out.skipped) {
-        console.log(
-            `[indexing-bench] N=${out.N} ef=${out.efSearch} flatLatency=${out.flatLatency.toFixed(2)}ms (HNSW skipped)`,
-        );
-        return;
-    }
-    console.log(
-        `[indexing-bench] N=${out.N} ef=${out.efSearch} flat=${out.flatLatency.toFixed(2)}ms hnsw=${out.hnswLatency.toFixed(2)}ms speedup=${out.speedup.toFixed(2)}x overlap=${out.overlapPct.toFixed(1)}% rssFlat=${(out.memAfterFlatBuild / 1e6).toFixed(1)}MB rssHNSW=${(out.memAfterHnswBuild / 1e6).toFixed(1)}MB rssAfterQ=${(out.memAfterQueries / 1e6).toFixed(1)}MB cpu=${out.cpuDeltaMs.toFixed(1)}ms qScalarLat=${out.scalarQLatency.toFixed(2)}ms qScalarOv=${out.scalarQOverlapPct.toFixed(1)}% rssQScalar=${(out.memAfterScalarQBuild / 1e6).toFixed(1)}MB qPQLat=${out.pqLatency.toFixed(2)}ms qPQOv=${out.pqOverlapPct.toFixed(1)}% rssPQ=${(out.memAfterPQBuild / 1e6).toFixed(1)}MB hnswQScalar=${out.hnswScalarLatency.toFixed(2)}ms ov=${out.hnswScalarOverlapPct.toFixed(1)}% spd=${out.speedupScalarHnsw.toFixed(2)}x rss=${(out.memAfterHnswScalarBuild / 1e6).toFixed(1)}MB hnswQPQ=${out.hnswPQLatency.toFixed(2)}ms ov=${out.hnswPQOverlapPct.toFixed(1)}% spd=${out.speedupPQHnsw.toFixed(2)}x rss=${(out.memAfterHnswPQBuild / 1e6).toFixed(1)}MB`,
-    );
+	if (out.skipped) {
+		console.log(
+			`[indexing-bench] N=${out.N} ef=${out.efSearch} flatLatency=${out.flatLatency.toFixed(2)}ms (HNSW skipped)`,
+		);
+		return;
+	}
+	console.log(
+		`[indexing-bench] N=${out.N} ef=${out.efSearch} flat=${out.flatLatency.toFixed(2)}ms hnsw=${out.hnswLatency.toFixed(2)}ms speedup=${out.speedup.toFixed(2)}x overlap=${out.overlapPct.toFixed(1)}% rssFlat=${(out.memAfterFlatBuild / 1e6).toFixed(1)}MB rssHNSW=${(out.memAfterHnswBuild / 1e6).toFixed(1)}MB rssAfterQ=${(out.memAfterQueries / 1e6).toFixed(1)}MB cpu=${out.cpuDeltaMs.toFixed(1)}ms qScalarLat=${out.scalarQLatency.toFixed(2)}ms qScalarOv=${out.scalarQOverlapPct.toFixed(1)}% rssQScalar=${(out.memAfterScalarQBuild / 1e6).toFixed(1)}MB qPQLat=${out.pqLatency.toFixed(2)}ms qPQOv=${out.pqOverlapPct.toFixed(1)}% rssPQ=${(out.memAfterPQBuild / 1e6).toFixed(1)}MB hnswQScalar=${out.hnswScalarLatency.toFixed(2)}ms ov=${out.hnswScalarOverlapPct.toFixed(1)}% spd=${out.speedupScalarHnsw.toFixed(2)}x rss=${(out.memAfterHnswScalarBuild / 1e6).toFixed(1)}MB hnswQPQ=${out.hnswPQLatency.toFixed(2)}ms ov=${out.hnswPQOverlapPct.toFixed(1)}% spd=${out.speedupPQHnsw.toFixed(2)}x rss=${(out.memAfterHnswPQBuild / 1e6).toFixed(1)}MB`,
+	);
 }
-
 
 /* eslint-disable-next-line sonarjs/cognitive-complexity */
 async function run() {
-    const cfg = parseArgs();
-    const rnd = mulberry32(cfg.seed);
-    const results = await runAllConfigs(cfg, rnd);
-    postBudgets(results, cfg);
-    const outPath = writeJsonReport(cfg, results);
+	const cfg = parseArgs();
+	const rnd = mulberry32(cfg.seed);
+	const results = await runAllConfigs(cfg, rnd);
+	postBudgets(results, cfg);
+	const outPath = writeJsonReport(cfg, results);
 
-    // Write HTML summary (inline JSON)
-    const html = `<!doctype html>
+	// Write HTML summary (inline JSON)
+	const html = `<!doctype html>
 <html><head><meta charset="utf-8"/><title>Indexing Benchmark Report</title>
 <style>body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px}th{background:#f5f5f5;text-align:left}code{background:#f7f7f7;padding:2px 4px;border-radius:3px}.spark{height:30px;width:100px}.heat{height:20px;width:100px}.badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:12px;margin-right:6px}.pass{background:#d3f9d8;color:#2b8a3e;border:1px solid #2b8a3e}.fail{background:#ffe3e3;color:#c92a2a;border:1px solid #c92a2a}.muted{background:#f1f3f5;color:#495057;border:1px solid #adb5bd}.legend{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0}.sw{display:inline-block;width:10px;height:10px;margin-right:4px;border-radius:2px;vertical-align:middle}.legend-row{display:flex;gap:16px;align-items:center;margin:6px 0}.line-sample{display:inline-block;width:26px;height:0;border-top:2px solid #333;vertical-align:middle}.line-dashed{border-top-style:dashed}</style>
 </head><body>
@@ -902,302 +998,302 @@ try {
 } catch {}
 </script>
 </body></html>`;
-    const htmlPath = resolve(dirname(outPath), 'indexing-performance.html');
-    writeFileSync(htmlPath, html);
-    console.log(`[indexing-bench] HTML report written to ${htmlPath}`);
+	const htmlPath = resolve(dirname(outPath), 'indexing-performance.html');
+	writeFileSync(htmlPath, html);
+	console.log(`[indexing-bench] HTML report written to ${htmlPath}`);
 
-    // Write CSV
-    const csvPath = resolve(dirname(outPath), 'indexing-performance.csv');
-    const header = [
-        'N',
-        'ef',
-        'flatLatency',
-        'hnswLatency',
-        'speedup',
-        'overlapPct',
-        'recallHnsw',
-        'mapHnsw',
-        'scalarQLatency',
-        'scalarQOverlapPct',
-        'recallScalarQ',
-        'mapScalarQ',
-        'pqLatency',
-        'pqOverlapPct',
-        'recallPQ',
-        'mapPQ',
-        'hnswScalarLatency',
-        'hnswScalarOverlapPct',
-        'speedupScalarHnsw',
-        'recallHnswScalar',
-        'mapHnswScalar',
-        'hnswPQLatency',
-        'hnswPQOverlapPct',
-        'speedupPQHnsw',
-        'recallHnswPQ',
-        'mapHnswPQ',
-        // dynamic curve columns appended below
-        'memAfterFlatBuild',
-        'memAfterHnswBuild',
-        'memAfterScalarQBuild',
-        'memAfterPQBuild',
-        'memAfterHnswScalarBuild',
-        'memAfterHnswPQBuild',
-        'memAfterQueries',
-        'onDiskBytesHnswScalar',
-        'coldLoadMsHnswScalar',
-        'onDiskBytesHnswPQ',
-        'coldLoadMsHnswPQ',
-        'cpuDeltaMs',
-        'peakRss',
-        'onDiskBytesPQ',
-        'coldLoadMsPQ',
-    ];
-    // Append recall@K and mAP@K columns per variant (recall for all variants first, then map)
-    const ksCols = cfg.curveKs?.length ? cfg.curveKs : [1, 5, 10];
-    const vList = ['Hnsw', 'ScalarQ', 'PQ', 'HnswScalar', 'HnswPQ'];
-    const recallCols = [];
-    const mapCols = [];
-    for (const v of vList) for (const k of ksCols) recallCols.push(`recall${v}@${k}`);
-    for (const v of vList) for (const k of ksCols) mapCols.push(`map${v}@${k}`);
-    header.splice(26, 0, ...recallCols, ...mapCols);
-    const rows = [header.join(',')];
-    for (const r of results) {
-        if (r.skipped) continue;
-        const row = [
-            r.N,
-            r.efSearch,
-            r.flatLatency,
-            r.hnswLatency,
-            r.speedup,
-            r.overlapPct,
-            r.recallHnsw || 0,
-            r.mapHnsw || 0,
-            r.scalarQLatency,
-            r.scalarQOverlapPct,
-            r.recallScalarQ || 0,
-            r.mapScalarQ || 0,
-            r.pqLatency,
-            r.pqOverlapPct,
-            r.recallPQ || 0,
-            r.mapPQ || 0,
-            r.hnswScalarLatency,
-            r.hnswScalarOverlapPct,
-            r.speedupScalarHnsw,
-            r.recallHnswScalar || 0,
-            r.mapHnswScalar || 0,
-            r.hnswPQLatency,
-            r.hnswPQOverlapPct,
-            r.speedupPQHnsw,
-            r.recallHnswPQ || 0,
-            r.mapHnswPQ || 0,
-            // dynamic curve values inserted below
-            r.memAfterFlatBuild,
-            r.memAfterHnswBuild,
-            r.memAfterScalarQBuild,
-            r.memAfterPQBuild,
-            r.memAfterHnswScalarBuild,
-            r.memAfterHnswPQBuild,
-            r.memAfterQueries,
-            r.onDiskBytesHnswScalar || 0,
-            r.coldLoadMsHnswScalar || 0,
-            r.onDiskBytesHnswPQ || 0,
-            r.coldLoadMsHnswPQ || 0,
-            r.cpuDeltaMs,
-            r.peakRss || 0,
-            r.onDiskBytesPQ || 0,
-            r.coldLoadMsPQ || 0,
-        ];
-        // Insert recall/map curves per variant at index 26
-        const insertAt = 26;
-        const recs = [];
-        const maps = [];
-        const pairs = [
-            ['Hnsw', r.recallHnswCurve || [], (r.mapHnswCurve || []).map((x) => x)],
-            ['ScalarQ', r.recallScalarQCurve || [], (r.mapScalarQCurve || []).map((x) => x)],
-            ['PQ', r.recallPQCurve || [], (r.mapPQCurve || []).map((x) => x)],
-            ['HnswScalar', r.recallHnswScalarCurve || [], (r.mapHnswScalarCurve || []).map((x) => x)],
-            ['HnswPQ', r.recallHnswPQCurve || [], (r.mapHnswPQCurve || []).map((x) => x)],
-        ];
-        for (const [, rcv, mcv] of pairs) {
-            for (const k of ksCols) recs.push(rcv[ksCols.indexOf(k)] ?? 0);
-            for (const k of ksCols) maps.push(mcv[ksCols.indexOf(k)] ?? 0);
-        }
-        row.splice(insertAt, 0, ...recs, ...maps);
-        rows.push(row.join(','));
-    }
-    writeFileSync(csvPath, rows.join('\n'));
-    console.log(`[indexing-bench] CSV report written to ${csvPath}`);
+	// Write CSV
+	const csvPath = resolve(dirname(outPath), 'indexing-performance.csv');
+	const header = [
+		'N',
+		'ef',
+		'flatLatency',
+		'hnswLatency',
+		'speedup',
+		'overlapPct',
+		'recallHnsw',
+		'mapHnsw',
+		'scalarQLatency',
+		'scalarQOverlapPct',
+		'recallScalarQ',
+		'mapScalarQ',
+		'pqLatency',
+		'pqOverlapPct',
+		'recallPQ',
+		'mapPQ',
+		'hnswScalarLatency',
+		'hnswScalarOverlapPct',
+		'speedupScalarHnsw',
+		'recallHnswScalar',
+		'mapHnswScalar',
+		'hnswPQLatency',
+		'hnswPQOverlapPct',
+		'speedupPQHnsw',
+		'recallHnswPQ',
+		'mapHnswPQ',
+		// dynamic curve columns appended below
+		'memAfterFlatBuild',
+		'memAfterHnswBuild',
+		'memAfterScalarQBuild',
+		'memAfterPQBuild',
+		'memAfterHnswScalarBuild',
+		'memAfterHnswPQBuild',
+		'memAfterQueries',
+		'onDiskBytesHnswScalar',
+		'coldLoadMsHnswScalar',
+		'onDiskBytesHnswPQ',
+		'coldLoadMsHnswPQ',
+		'cpuDeltaMs',
+		'peakRss',
+		'onDiskBytesPQ',
+		'coldLoadMsPQ',
+	];
+	// Append recall@K and mAP@K columns per variant (recall for all variants first, then map)
+	const ksCols = cfg.curveKs?.length ? cfg.curveKs : [1, 5, 10];
+	const vList = ['Hnsw', 'ScalarQ', 'PQ', 'HnswScalar', 'HnswPQ'];
+	const recallCols = [];
+	const mapCols = [];
+	for (const v of vList) for (const k of ksCols) recallCols.push(`recall${v}@${k}`);
+	for (const v of vList) for (const k of ksCols) mapCols.push(`map${v}@${k}`);
+	header.splice(26, 0, ...recallCols, ...mapCols);
+	const rows = [header.join(',')];
+	for (const r of results) {
+		if (r.skipped) continue;
+		const row = [
+			r.N,
+			r.efSearch,
+			r.flatLatency,
+			r.hnswLatency,
+			r.speedup,
+			r.overlapPct,
+			r.recallHnsw || 0,
+			r.mapHnsw || 0,
+			r.scalarQLatency,
+			r.scalarQOverlapPct,
+			r.recallScalarQ || 0,
+			r.mapScalarQ || 0,
+			r.pqLatency,
+			r.pqOverlapPct,
+			r.recallPQ || 0,
+			r.mapPQ || 0,
+			r.hnswScalarLatency,
+			r.hnswScalarOverlapPct,
+			r.speedupScalarHnsw,
+			r.recallHnswScalar || 0,
+			r.mapHnswScalar || 0,
+			r.hnswPQLatency,
+			r.hnswPQOverlapPct,
+			r.speedupPQHnsw,
+			r.recallHnswPQ || 0,
+			r.mapHnswPQ || 0,
+			// dynamic curve values inserted below
+			r.memAfterFlatBuild,
+			r.memAfterHnswBuild,
+			r.memAfterScalarQBuild,
+			r.memAfterPQBuild,
+			r.memAfterHnswScalarBuild,
+			r.memAfterHnswPQBuild,
+			r.memAfterQueries,
+			r.onDiskBytesHnswScalar || 0,
+			r.coldLoadMsHnswScalar || 0,
+			r.onDiskBytesHnswPQ || 0,
+			r.coldLoadMsHnswPQ || 0,
+			r.cpuDeltaMs,
+			r.peakRss || 0,
+			r.onDiskBytesPQ || 0,
+			r.coldLoadMsPQ || 0,
+		];
+		// Insert recall/map curves per variant at index 26
+		const insertAt = 26;
+		const recs = [];
+		const maps = [];
+		const pairs = [
+			['Hnsw', r.recallHnswCurve || [], (r.mapHnswCurve || []).map((x) => x)],
+			['ScalarQ', r.recallScalarQCurve || [], (r.mapScalarQCurve || []).map((x) => x)],
+			['PQ', r.recallPQCurve || [], (r.mapPQCurve || []).map((x) => x)],
+			['HnswScalar', r.recallHnswScalarCurve || [], (r.mapHnswScalarCurve || []).map((x) => x)],
+			['HnswPQ', r.recallHnswPQCurve || [], (r.mapHnswPQCurve || []).map((x) => x)],
+		];
+		for (const [, rcv, mcv] of pairs) {
+			for (const k of ksCols) recs.push(rcv[ksCols.indexOf(k)] ?? 0);
+			for (const k of ksCols) maps.push(mcv[ksCols.indexOf(k)] ?? 0);
+		}
+		row.splice(insertAt, 0, ...recs, ...maps);
+		rows.push(row.join(','));
+	}
+	writeFileSync(csvPath, rows.join('\n'));
+	console.log(`[indexing-bench] CSV report written to ${csvPath}`);
 
-    // Optional: replicate reports to external data and backup directories for RAG pipeline
-    const dataDirRaw = process.env.RAG_DATA_DIR;
-    const backupDirRaw = process.env.RAG_BACKUP_DIR;
-    const stamp = makeTimestampFolder();
-    const tag = sanitizeTag(cfg.reportTag || '');
-    const cfgHash = hashConfig(cfg);
-    function ensureStampedDir(dstRoot) {
-        try {
-            const base = tag
-                ? resolve(dstRoot, 'reports', tag, stamp)
-                : resolve(dstRoot, 'reports', stamp);
-            mkdirSync(base, { recursive: true });
-            return base;
-        } catch {
-            return null;
-        }
-    }
-    function copyIntoDir(base, filePath) {
-        try {
-            if (!base) return;
-            const name = basename(filePath);
-            const dest = resolve(base, name);
-            copyFileSync(filePath, dest);
-        } catch {
-            /* ignore */
-        }
-    }
-    function writeStampedReadme(base) {
-        try {
-            if (!base) return;
-            const readmePath = resolve(base, 'README.md');
-            const lines = [];
-            lines.push('# Benchmark Run');
-            lines.push('');
-            lines.push(`Timestamp: ${stamp}`);
-            if (tag) lines.push(`Tag: ${tag}`);
-            if (cfgHash) lines.push(`Config SHA-256: ${cfgHash.substring(0, 12)}...`);
-            lines.push('');
-            const flags = (process.argv.slice(2) || []).join(' ');
-            lines.push('## Command-line flags');
-            lines.push('');
-            lines.push('```');
-            lines.push(flags || '(none)');
-            lines.push('```');
-            lines.push('');
-            lines.push('## Quick links');
-            lines.push('');
-            lines.push('- [Open HTML report](./indexing-performance.html)');
-            lines.push('- [JSON report](./indexing-performance.json)');
-            lines.push('- [CSV report](./indexing-performance.csv)');
-            lines.push('');
-            lines.push('## Config snapshot');
-            lines.push('');
-            lines.push('```json');
-            lines.push(JSON.stringify(cfg, null, 2));
-            lines.push('```');
-            lines.push('');
-            writeFileSync(readmePath, lines.join('\n'));
-        } catch {
-            /* ignore */
-        }
-    }
-    if (dataDirRaw) {
-        const dataDir = expandTildePath(dataDirRaw);
-        const base = ensureStampedDir(dataDir);
-        copyIntoDir(base, outPath);
-        copyIntoDir(base, htmlPath);
-        copyIntoDir(base, csvPath);
-        writeStampedReadme(base);
-        // GitHub Actions outputs/summary for dataDir
-        try {
-            if (base && process.env.GITHUB_OUTPUT) {
-                const out = `html_path=${resolve(base, 'indexing-performance.html')}\njson_path=${resolve(base, 'indexing-performance.json')}\ncsv_path=${resolve(base, 'indexing-performance.csv')}\n`;
-                appendFileSync(process.env.GITHUB_OUTPUT, out);
-            }
-            if (base && process.env.GITHUB_STEP_SUMMARY) {
-                const link = resolve(base, 'indexing-performance.html');
-                const md = `\n### RAG Benchmark Report (Data Dir)\n\n- HTML: ${link}\n- JSON: ${resolve(base, 'indexing-performance.json')}\n- CSV: ${resolve(base, 'indexing-performance.csv')}\n`;
-                appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
-            }
-        } catch { }
-    }
-    if (backupDirRaw) {
-        const backupDir = expandTildePath(backupDirRaw);
-        const base = ensureStampedDir(backupDir);
-        copyIntoDir(base, outPath);
-        copyIntoDir(base, htmlPath);
-        copyIntoDir(base, csvPath);
-        writeStampedReadme(base);
-        // GitHub Actions outputs/summary for backupDir
-        try {
-            if (base && process.env.GITHUB_OUTPUT) {
-                const out = `backup_html_path=${resolve(base, 'indexing-performance.html')}\nbackup_json_path=${resolve(base, 'indexing-performance.json')}\nbackup_csv_path=${resolve(base, 'indexing-performance.csv')}\n`;
-                appendFileSync(process.env.GITHUB_OUTPUT, out);
-            }
-            if (base && process.env.GITHUB_STEP_SUMMARY) {
-                const link = resolve(base, 'indexing-performance.html');
-                const md = `\n### RAG Benchmark Report (Backup Dir)\n\n- HTML: ${link}\n- JSON: ${resolve(base, 'indexing-performance.json')}\n- CSV: ${resolve(base, 'indexing-performance.csv')}\n`;
-                appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
-            }
-        } catch { }
-    }
+	// Optional: replicate reports to external data and backup directories for RAG pipeline
+	const dataDirRaw = process.env.RAG_DATA_DIR;
+	const backupDirRaw = process.env.RAG_BACKUP_DIR;
+	const stamp = makeTimestampFolder();
+	const tag = sanitizeTag(cfg.reportTag || '');
+	const cfgHash = hashConfig(cfg);
+	function ensureStampedDir(dstRoot) {
+		try {
+			const base = tag
+				? resolve(dstRoot, 'reports', tag, stamp)
+				: resolve(dstRoot, 'reports', stamp);
+			mkdirSync(base, { recursive: true });
+			return base;
+		} catch {
+			return null;
+		}
+	}
+	function copyIntoDir(base, filePath) {
+		try {
+			if (!base) return;
+			const name = basename(filePath);
+			const dest = resolve(base, name);
+			copyFileSync(filePath, dest);
+		} catch {
+			/* ignore */
+		}
+	}
+	function writeStampedReadme(base) {
+		try {
+			if (!base) return;
+			const readmePath = resolve(base, 'README.md');
+			const lines = [];
+			lines.push('# Benchmark Run');
+			lines.push('');
+			lines.push(`Timestamp: ${stamp}`);
+			if (tag) lines.push(`Tag: ${tag}`);
+			if (cfgHash) lines.push(`Config SHA-256: ${cfgHash.substring(0, 12)}...`);
+			lines.push('');
+			const flags = (process.argv.slice(2) || []).join(' ');
+			lines.push('## Command-line flags');
+			lines.push('');
+			lines.push('```');
+			lines.push(flags || '(none)');
+			lines.push('```');
+			lines.push('');
+			lines.push('## Quick links');
+			lines.push('');
+			lines.push('- [Open HTML report](./indexing-performance.html)');
+			lines.push('- [JSON report](./indexing-performance.json)');
+			lines.push('- [CSV report](./indexing-performance.csv)');
+			lines.push('');
+			lines.push('## Config snapshot');
+			lines.push('');
+			lines.push('```json');
+			lines.push(JSON.stringify(cfg, null, 2));
+			lines.push('```');
+			lines.push('');
+			writeFileSync(readmePath, lines.join('\n'));
+		} catch {
+			/* ignore */
+		}
+	}
+	if (dataDirRaw) {
+		const dataDir = expandTildePath(dataDirRaw);
+		const base = ensureStampedDir(dataDir);
+		copyIntoDir(base, outPath);
+		copyIntoDir(base, htmlPath);
+		copyIntoDir(base, csvPath);
+		writeStampedReadme(base);
+		// GitHub Actions outputs/summary for dataDir
+		try {
+			if (base && process.env.GITHUB_OUTPUT) {
+				const out = `html_path=${resolve(base, 'indexing-performance.html')}\njson_path=${resolve(base, 'indexing-performance.json')}\ncsv_path=${resolve(base, 'indexing-performance.csv')}\n`;
+				appendFileSync(process.env.GITHUB_OUTPUT, out);
+			}
+			if (base && process.env.GITHUB_STEP_SUMMARY) {
+				const link = resolve(base, 'indexing-performance.html');
+				const md = `\n### RAG Benchmark Report (Data Dir)\n\n- HTML: ${link}\n- JSON: ${resolve(base, 'indexing-performance.json')}\n- CSV: ${resolve(base, 'indexing-performance.csv')}\n`;
+				appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+			}
+		} catch {}
+	}
+	if (backupDirRaw) {
+		const backupDir = expandTildePath(backupDirRaw);
+		const base = ensureStampedDir(backupDir);
+		copyIntoDir(base, outPath);
+		copyIntoDir(base, htmlPath);
+		copyIntoDir(base, csvPath);
+		writeStampedReadme(base);
+		// GitHub Actions outputs/summary for backupDir
+		try {
+			if (base && process.env.GITHUB_OUTPUT) {
+				const out = `backup_html_path=${resolve(base, 'indexing-performance.html')}\nbackup_json_path=${resolve(base, 'indexing-performance.json')}\nbackup_csv_path=${resolve(base, 'indexing-performance.csv')}\n`;
+				appendFileSync(process.env.GITHUB_OUTPUT, out);
+			}
+			if (base && process.env.GITHUB_STEP_SUMMARY) {
+				const link = resolve(base, 'indexing-performance.html');
+				const md = `\n### RAG Benchmark Report (Backup Dir)\n\n- HTML: ${link}\n- JSON: ${resolve(base, 'indexing-performance.json')}\n- CSV: ${resolve(base, 'indexing-performance.csv')}\n`;
+				appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+			}
+		} catch {}
+	}
 }
 
 // Extracted helpers to keep run() simple
 async function runAllConfigs(cfg, rnd) {
-    const results = [];
-    for (const N of cfg.sizes) {
-        for (const ef of cfg.efSearchValues) {
-            const out = await runOnce({
-                dim: cfg.dim,
-                N,
-                topK: cfg.topK,
-                efSearch: ef,
-                quantization: cfg.quantization,
-                rnd,
-                queriesCount: cfg.queries,
-                coldLoad: cfg.coldLoad,
-                variants: cfg.variants,
-                curveKs: cfg.curveKs,
-            });
-            results.push(out);
-            logResult(out);
-        }
-    }
-    return results;
+	const results = [];
+	for (const N of cfg.sizes) {
+		for (const ef of cfg.efSearchValues) {
+			const out = await runOnce({
+				dim: cfg.dim,
+				N,
+				topK: cfg.topK,
+				efSearch: ef,
+				quantization: cfg.quantization,
+				rnd,
+				queriesCount: cfg.queries,
+				coldLoad: cfg.coldLoad,
+				variants: cfg.variants,
+				curveKs: cfg.curveKs,
+			});
+			results.push(out);
+			logResult(out);
+		}
+	}
+	return results;
 }
 
 function postBudgets(results, cfg) {
-    const ran = results.filter((r) => !r.skipped);
-    if (ran.length > 0) {
-        enforceBudgets(ran, {
-            memBudgetMB: cfg.memBudgetMB,
-            cpuBudgetMs: cfg.cpuBudgetMs,
-            peakRssBudgetMB: cfg.peakRssBudgetMB,
-            minRecallPct: cfg.minRecallPct,
-            minMap: cfg.minMap,
-            perVariantRecall: cfg.minRecallPctByVariant,
-            perVariantMap: cfg.minMapByVariant,
-            failOnMissingVariant: cfg.failOnMissingVariant,
-            pqMinCompressionRatio: cfg.pqMinCompressionRatio,
-            estimateFlatBytes,
-            pqMaxColdLoadMs: cfg.pqMaxColdLoadMs,
-        });
-        console.log('[indexing-bench] Budgets met across all ran configurations');
-    } else {
-        console.log('[indexing-bench] HNSW unavailable; budgets not enforced');
-    }
+	const ran = results.filter((r) => !r.skipped);
+	if (ran.length > 0) {
+		enforceBudgets(ran, {
+			memBudgetMB: cfg.memBudgetMB,
+			cpuBudgetMs: cfg.cpuBudgetMs,
+			peakRssBudgetMB: cfg.peakRssBudgetMB,
+			minRecallPct: cfg.minRecallPct,
+			minMap: cfg.minMap,
+			perVariantRecall: cfg.minRecallPctByVariant,
+			perVariantMap: cfg.minMapByVariant,
+			failOnMissingVariant: cfg.failOnMissingVariant,
+			pqMinCompressionRatio: cfg.pqMinCompressionRatio,
+			estimateFlatBytes,
+			pqMaxColdLoadMs: cfg.pqMaxColdLoadMs,
+		});
+		console.log('[indexing-bench] Budgets met across all ran configurations');
+	} else {
+		console.log('[indexing-bench] HNSW unavailable; budgets not enforced');
+	}
 }
 
 function writeJsonReport(cfg, results) {
-    const outPath = resolve(cfg.report);
-    mkdirSync(dirname(outPath), { recursive: true });
-    writeFileSync(outPath, JSON.stringify({ config: cfg, results }, null, 2));
-    console.log(`[indexing-bench] Report written to ${outPath}`);
-    return outPath;
+	const outPath = resolve(cfg.report);
+	mkdirSync(dirname(outPath), { recursive: true });
+	writeFileSync(outPath, JSON.stringify({ config: cfg, results }, null, 2));
+	console.log(`[indexing-bench] Report written to ${outPath}`);
+	return outPath;
 }
 
 // Only run when executed directly, not when imported by tests
 const isMain = (() => {
-    try {
-        return import.meta.url === pathToFileURL(process.argv[1]).href;
-    } catch {
-        return true;
-    }
+	try {
+		return import.meta.url === pathToFileURL(process.argv[1]).href;
+	} catch {
+		return true;
+	}
 })();
 
 if (isMain) {
-    run().catch((e) => {
-        console.error(e);
-        process.exit(1);
-    });
+	run().catch((e) => {
+		console.error(e);
+		process.exit(1);
+	});
 }

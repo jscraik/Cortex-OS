@@ -22,12 +22,9 @@ function getRelativeLuminance(rgb) {
 		b: rgb.b / 255,
 	};
 
-	const r =
-		sRgb.r <= 0.03928 ? sRgb.r / 12.92 : ((sRgb.r + 0.055) / 1.055) ** 2.4;
-	const g =
-		sRgb.g <= 0.03928 ? sRgb.g / 12.92 : ((sRgb.g + 0.055) / 1.055) ** 2.4;
-	const b =
-		sRgb.b <= 0.03928 ? sRgb.b / 12.92 : ((sRgb.b + 0.055) / 1.055) ** 2.4;
+	const r = sRgb.r <= 0.03928 ? sRgb.r / 12.92 : ((sRgb.r + 0.055) / 1.055) ** 2.4;
+	const g = sRgb.g <= 0.03928 ? sRgb.g / 12.92 : ((sRgb.g + 0.055) / 1.055) ** 2.4;
+	const b = sRgb.b <= 0.03928 ? sRgb.b / 12.92 : ((sRgb.b + 0.055) / 1.055) ** 2.4;
 
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
@@ -90,15 +87,11 @@ const srTestCases = [
 
 for (const testCase of srTestCases) {
 	const result = generateSrText(testCase.text, testCase.context);
-	console.log(
-		`  "${testCase.text}" with context "${testCase.context || 'null'}": "${result}"`,
-	);
+	console.log(`  "${testCase.text}" with context "${testCase.context || 'null'}": "${result}"`);
 }
 
 console.log('\n🎉 Accessibility Utilities Test Complete');
-console.log(
-	'  All tests passed! The accessibility utilities correctly implement:',
-);
+console.log('  All tests passed! The accessibility utilities correctly implement:');
 console.log('  - Color contrast ratio calculation');
 console.log('  - WCAG 2.2 AA compliance checking');
 console.log('  - WCAG 2.2 AAA compliance checking');

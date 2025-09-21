@@ -5,9 +5,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-console.log(
-	'Applying comprehensive fixes for targeted injection vulnerabilities...',
-);
+console.log('Applying comprehensive fixes for targeted injection vulnerabilities...');
 
 // 1. Fix Cypher injection in neo4j.ts
 console.log('Fixing Cypher injection in neo4j.ts...');
@@ -86,14 +84,7 @@ console.log('✅ Fixed Cypher injection in neo4j.ts');
 
 // 2. Fix command injection in mcp_server.py
 console.log('Fixing command injection in mcp_server.py...');
-const mcpServerPath = join(
-	'packages',
-	'mcp',
-	'src',
-	'tools',
-	'docker',
-	'mcp_server.py',
-);
+const mcpServerPath = join('packages', 'mcp', 'src', 'tools', 'docker', 'mcp_server.py');
 let mcpServerContent = readFileSync(mcpServerPath, 'utf-8');
 
 // Add input validation function

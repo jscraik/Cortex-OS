@@ -81,7 +81,7 @@ export async function getAPIKey(apiKey: string): Promise<APIKey | null> {
 export function extractAPIKey(headers: Headers): string | null {
 	// Check Authorization header first
 	const authHeader = headers.get('Authorization');
-	if (authHeader && authHeader.startsWith('Bearer ')) {
+	if (authHeader?.startsWith('Bearer ')) {
 		return authHeader.substring(7);
 	}
 
@@ -109,7 +109,7 @@ export async function createAPIKey(
 	expiresAt?: string,
 ): Promise<APIKey> {
 	// Generate secure random key
-	const crypto = require('crypto');
+	const crypto = require('node:crypto');
 	const key = crypto.randomBytes(32).toString('hex');
 	const id = `key-${Date.now()}`;
 

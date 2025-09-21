@@ -18,10 +18,7 @@ function main() {
 	const agentsDoc = fs.existsSync(path.resolve(process.cwd(), 'AGENTS.md'));
 	if (!agentsDoc) fail('AGENTS.md not found');
 	// Very light sync check: verify key sections present
-	const agents = fs.readFileSync(
-		path.resolve(process.cwd(), 'AGENTS.md'),
-		'utf8',
-	);
+	const agents = fs.readFileSync(path.resolve(process.cwd(), 'AGENTS.md'), 'utf8');
 	for (const section of [
 		'## Roles',
 		'## Boundaries',
@@ -30,8 +27,7 @@ function main() {
 		'## Memory',
 		'## Governance',
 	]) {
-		if (!agents.includes(section))
-			fail(`AGENTS.md missing section: ${section}`);
+		if (!agents.includes(section)) fail(`AGENTS.md missing section: ${section}`);
 	}
 	console.log('[.cortex] Validation passed');
 }

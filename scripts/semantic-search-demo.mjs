@@ -11,8 +11,7 @@ function parseArgs(argv) {
 		const a = argv[i];
 		if (a === '--dir' || a === '-d') args.dir = argv[i + 1] ?? args.dir;
 		if (a === '--query' || a === '-q') args.query = argv[i + 1] ?? args.query;
-		if (a === '--topK' || a === '-k')
-			args.topK = Number(argv[i + 1] ?? args.topK);
+		if (a === '--topK' || a === '-k') args.topK = Number(argv[i + 1] ?? args.topK);
 	}
 	return args;
 }

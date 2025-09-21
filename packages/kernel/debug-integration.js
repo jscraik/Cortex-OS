@@ -11,7 +11,7 @@ async function debugIntegrationTest() {
 			'Security authentication',
 			'User interface design',
 			'Architecture design',
-			'Accessibility compliance'
+			'Accessibility compliance',
 		],
 	};
 

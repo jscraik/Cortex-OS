@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server';
-import { type ServerConfig, createServerConfig } from './config';
+import { createServerConfig, type ServerConfig } from './config';
 import { app } from './index';
 
 export interface HttpServerOptions {

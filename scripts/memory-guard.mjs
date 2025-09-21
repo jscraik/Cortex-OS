@@ -6,11 +6,7 @@ import { Command } from 'commander';
 const platform = os.platform();
 
 function getProcessList(pattern) {
-	const output = execSync('ps -eo pid,rss,command')
-		.toString()
-		.trim()
-		.split('\n')
-		.slice(1);
+	const output = execSync('ps -eo pid,rss,command').toString().trim().split('\n').slice(1);
 
 	return output
 		.map((line) => {
@@ -41,17 +37,10 @@ function getRssMB(pid) {
 }
 
 function log(entry) {
-	console.log(
-		JSON.stringify({ timestamp: new Date().toISOString(), platform, ...entry }),
-	);
+	console.log(JSON.stringify({ timestamp: new Date().toISOString(), platform, ...entry }));
 }
 
-export function startGuard({
-	pids = [],
-	pattern = 'node',
-	maxRssMB,
-	intervalMs,
-}) {
+export function startGuard({ pids = [], pattern = 'node', maxRssMB, intervalMs }) {
 	const warned = new Map();
 	const timer = setInterval(() => {
 		const targets =
@@ -83,17 +72,10 @@ export function startGuard({
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const program = new Command();
 	program
-		.option('--pid <pid...>', 'specific PIDs to monitor', (value) =>
-			value.map(Number),
-		)
+		.option('--pid <pid...>', 'specific PIDs to monitor', (value) => value.map(Number))
 		.option('--pattern <pattern>', 'process command pattern', 'node')
 		.option('--max <mb>', 'max RSS in MB', (value) => parseInt(value, 10), 1024)
-		.option(
-			'--interval <ms>',
-			'polling interval in ms',
-			(value) => parseInt(value, 10),
-			5000,
-		);
+		.option('--interval <ms>', 'polling interval in ms', (value) => parseInt(value, 10), 5000);
 	program.parse(process.argv);
 	const opts = program.opts();
 	startGuard({

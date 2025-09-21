@@ -759,9 +759,7 @@ export class ExecutionPlanner {
 	/**
 	 * Advanced methods called by tests - implemented for nO architecture
 	 */
-	async optimizeWorkflow(
-		workflow: WorkflowDefinition,
-	): Promise<{
+	async optimizeWorkflow(workflow: WorkflowDefinition): Promise<{
 		strategy: string;
 		optimizations: string[];
 		estimatedDuration?: number;
@@ -782,9 +780,7 @@ export class ExecutionPlanner {
 		};
 	}
 
-	async analyzeWorkflow(
-		workflow: WorkflowDefinition,
-	): Promise<{
+	async analyzeWorkflow(workflow: WorkflowDefinition): Promise<{
 		bottlenecks: Array<{ stepId: string; duration: number; impact: string }>;
 		improvements: string[];
 		criticalPath?: string[];
@@ -929,9 +925,7 @@ export class ExecutionPlanner {
 		return recoveredPlan;
 	}
 
-	async analyzeCriticalPath(
-		workflow: WorkflowDefinition,
-	): Promise<{
+	async analyzeCriticalPath(workflow: WorkflowDefinition): Promise<{
 		criticalPath: string[];
 		duration: number;
 		bottlenecks: string[];

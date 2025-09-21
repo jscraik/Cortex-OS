@@ -1,6 +1,9 @@
-import { type HealthCheckResult, MemoryHealthChecker } from './health-check.js';
-import { MemoryMetricsCollector, createPrometheusExporter } from './metrics-collector.js';
-import { type ExternalStorageManager, getExternalStorageManager } from '../adapters/external-storage.js';
+import {
+	type ExternalStorageManager,
+	getExternalStorageManager,
+} from '../adapters/external-storage.js';
+import type { HealthCheckResult, MemoryHealthChecker } from './health-check.js';
+import { createPrometheusExporter, type MemoryMetricsCollector } from './metrics-collector.js';
 
 export interface DashboardConfig {
 	port: number;
@@ -60,11 +63,11 @@ export class OperationalDashboard {
 		app.use(express.json());
 
 		// Routes
-		app.get('/', (req, res) => {
+		app.get('/', (_req, res) => {
 			res.send(this.createHtmlDashboard());
 		});
 
-		app.get('/api/dashboard', async (req, res) => {
+		app.get('/api/dashboard', async (_req, res) => {
 			try {
 				const data = await this.getDashboardData();
 				res.json(data);
@@ -78,13 +81,13 @@ export class OperationalDashboard {
 
 		app.get('/api/health', createHealthCheckMiddleware(this.healthChecker));
 
-		app.get('/api/metrics', (req, res) => {
+		app.get('/api/metrics', (_req, res) => {
 			const exporter = createPrometheusExporter(this.metricsCollector);
 			res.set('Content-Type', 'text/plain');
 			res.send(exporter.getMetrics());
 		});
 
-		app.get('/api/storage', (req, res) => {
+		app.get('/api/storage', (_req, res) => {
 			const status = this.externalStorageManager.getAllStatus();
 			const current = this.externalStorageManager.getCurrentStorage();
 			res.json({
@@ -401,7 +404,7 @@ export class OperationalDashboard {
 		}, this.config.refreshIntervalMs);
 
 		// Emit metrics events
-		this.metricsCollector.on('operation', (data) => {
+		this.metricsCollector.on('operation', (_data) => {
 			// Could push to WebSocket clients here
 		});
 
@@ -415,19 +418,19 @@ export class OperationalDashboard {
  * Create health check middleware for Express
  */
 function createHealthCheckMiddleware(healthChecker: MemoryHealthChecker) {
-	return async (req: any, res: any, next: any) => {
+	return async (req: any, res: any, _next: any) => {
 		const { query } = req;
 		const detailed = query.detailed === 'true';
 
 		try {
 			if (detailed) {
 				const result = await healthChecker.checkHealth();
-				res.status(result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503)
+				res
+					.status(result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503)
 					.json(result);
 			} else {
 				const result = await healthChecker.quickCheck();
-				res.status(result.status === 'healthy' ? 200 : 503)
-					.json(result);
+				res.status(result.status === 'healthy' ? 200 : 503).json(result);
 			}
 		} catch (error) {
 			res.status(500).json({

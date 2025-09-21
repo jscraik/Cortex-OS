@@ -70,8 +70,7 @@ module.exports = {
 			'error',
 			{
 				default: 'disallow',
-				message:
-					'Cross-domain imports are forbidden. Use @cortex-os/contracts or @cortex-os/lib.',
+				message: 'Cross-domain imports are forbidden. Use @cortex-os/contracts or @cortex-os/lib.',
 				rules: [
 					{ from: ['mcp'], allow: ['lib', 'contracts'] },
 					{ from: ['a2a'], allow: ['lib', 'contracts'] },

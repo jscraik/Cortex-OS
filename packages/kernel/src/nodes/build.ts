@@ -50,7 +50,16 @@ export class BuildNode {
 			blockers.push('Backend compilation or tests failed');
 		}
 
-		evidence.push(this.createEvidence('build-backend', 'backend_validation', backendValidation, state, 4, 'test'));
+		evidence.push(
+			this.createEvidence(
+				'build-backend',
+				'backend_validation',
+				backendValidation,
+				state,
+				4,
+				'test',
+			),
+		);
 	}
 
 	/**
@@ -73,7 +82,16 @@ export class BuildNode {
 			blockers.push('API schema validation failed');
 		}
 
-		evidence.push(this.createEvidence('build-api', 'api_schema_validation', apiValidation, state, 5, 'analysis'));
+		evidence.push(
+			this.createEvidence(
+				'build-api',
+				'api_schema_validation',
+				apiValidation,
+				state,
+				5,
+				'analysis',
+			),
+		);
 	}
 
 	/**
@@ -93,7 +111,9 @@ export class BuildNode {
 			majors.push(`Security scan found ${securityScan.majors} major issues (limit: 3)`);
 		}
 
-		evidence.push(this.createEvidence('build-security', 'security_scanner', securityScan, state, 5, 'analysis'));
+		evidence.push(
+			this.createEvidence('build-security', 'security_scanner', securityScan, state, 5, 'analysis'),
+		);
 	}
 
 	/**
@@ -114,7 +134,16 @@ export class BuildNode {
 				majors.push(`Axe accessibility score ${frontendValidation.axe} below 90%`);
 			}
 		}
-		evidence.push(this.createEvidence('build-frontend', 'frontend_validation', frontendValidation, state, 4, 'test'));
+		evidence.push(
+			this.createEvidence(
+				'build-frontend',
+				'frontend_validation',
+				frontendValidation,
+				state,
+				4,
+				'test',
+			),
+		);
 	}
 
 	/**
@@ -129,7 +158,16 @@ export class BuildNode {
 		if (!docsValidation.passed) {
 			blockers.push('Documentation incomplete - missing README.md');
 		}
-		evidence.push(this.createEvidence('build-docs', 'documentation_validation', docsValidation, state, 4, 'analysis'));
+		evidence.push(
+			this.createEvidence(
+				'build-docs',
+				'documentation_validation',
+				docsValidation,
+				state,
+				4,
+				'analysis',
+			),
+		);
 	}
 
 	/**

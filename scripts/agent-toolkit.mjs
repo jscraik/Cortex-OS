@@ -70,13 +70,10 @@ async function main() {
 			// gather changed files vs HEAD
 			const diff = await new Promise((resolve, reject) => {
 				const { exec } = require('node:child_process');
-				exec(
-					'git --no-pager diff --name-only --diff-filter=ACMRTUXB HEAD',
-					(err, stdout) => {
-						if (err) return reject(err);
-						resolve(stdout.trim().split('\n').filter(Boolean));
-					},
-				);
+				exec('git --no-pager diff --name-only --diff-filter=ACMRTUXB HEAD', (err, stdout) => {
+					if (err) return reject(err);
+					resolve(stdout.trim().split('\n').filter(Boolean));
+				});
 			});
 			const changed = diff.filter((f) => /\.(ts|tsx|js|jsx|py|rs)$/.test(f));
 			if (changed.length === 0) {

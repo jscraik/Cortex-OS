@@ -4,8 +4,8 @@
 import { Router } from 'express';
 import type { ASBRAIMcpServer } from '../../asbr-ai-mcp-server.js';
 import { createRateLimiter } from '../../security/rate-limiter.js';
-import { getRedisFromEnv } from '../infra/redis.js';
 import { checkMlxAvailability } from '../infra/mlx.js';
+import { getRedisFromEnv } from '../infra/redis.js';
 
 export function createHealthRouter(mcpServer: ASBRAIMcpServer): Router {
 	const router = Router();

@@ -6,11 +6,7 @@ import { ESLint } from 'eslint';
 
 async function runForDir(dir) {
 	const name = path.basename(dir);
-	const outPath = path.resolve(
-		process.cwd(),
-		'reports',
-		`eslint-sonar-${name}.out`,
-	);
+	const outPath = path.resolve(process.cwd(), 'reports', `eslint-sonar-${name}.out`);
 	// ensure reports directory exists
 	await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
 	try {
@@ -23,9 +19,7 @@ async function runForDir(dir) {
 			// eslint.scan.config.cjs exports an array (flat config). Prefer the first
 			// entry so overrideConfig is a plain object.
 			// Use require to ensure resolution of plugin modules inside the config.
-			scanCfg = requireCJS(
-				path.resolve(process.cwd(), 'eslint.scan.config.cjs'),
-			);
+			scanCfg = requireCJS(path.resolve(process.cwd(), 'eslint.scan.config.cjs'));
 		} catch (err) {
 			throw new Error(`Failed to load eslint.scan.config.cjs: ${err.message}`);
 		}
@@ -34,9 +28,7 @@ async function runForDir(dir) {
 		// matcher (ESLint flat config style). When using the programmatic API
 		// we pass file patterns separately to `lintFiles`, so remove any top
 		// level `files` property which is invalid in CLIOptions/overrideConfig.
-		const overrideConfig = Array.isArray(scanCfg)
-			? { ...scanCfg[0] }
-			: { ...scanCfg };
+		const overrideConfig = Array.isArray(scanCfg) ? { ...scanCfg[0] } : { ...scanCfg };
 		if (overrideConfig?.files) {
 			// eslint-disable-next-line no-param-reassign
 			delete overrideConfig.files;
@@ -65,10 +57,7 @@ async function runForDir(dir) {
 
 		// DEBUG: dump the overrideConfig to help diagnose CLIOptions validation
 		// eslint-disable-next-line no-console
-		console.log(
-			'DEBUG overrideConfig keys:',
-			Object.keys(overrideConfig || {}),
-		);
+		console.log('DEBUG overrideConfig keys:', Object.keys(overrideConfig || {}));
 
 		// Ensure we don't analyze built artifacts. Honor ignorePatterns via overrideConfig
 		overrideConfig.ignorePatterns = [
@@ -148,10 +137,7 @@ async function main() {
 	}
 
 	// write an index of reports
-	const indexPath = path.resolve(
-		process.cwd(),
-		'eslint-sonar-per-package-index.json',
-	);
+	const indexPath = path.resolve(process.cwd(), 'eslint-sonar-per-package-index.json');
 	await fs.promises.writeFile(
 		indexPath,
 		JSON.stringify(

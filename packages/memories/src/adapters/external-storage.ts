@@ -1,6 +1,6 @@
+import { EventEmitter } from 'node:events';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { EventEmitter } from 'node:events';
 
 export interface ExternalStorageConfig {
 	enabled: boolean;
@@ -107,8 +107,8 @@ export class ExternalStorageManager extends EventEmitter {
 			try {
 				const stats = fs.statfsSync(storagePath);
 				status.mounted = true;
-				status.sizeGB = stats.bsize * stats.blocks / (1024 * 1024 * 1024);
-				status.freeSpaceGB = stats.bsize * stats.bavail / (1024 * 1024 * 1024);
+				status.sizeGB = (stats.bsize * stats.blocks) / (1024 * 1024 * 1024);
+				status.freeSpaceGB = (stats.bsize * stats.bavail) / (1024 * 1024 * 1024);
 			} catch {
 				status.mounted = false;
 			}
@@ -143,7 +143,8 @@ export class ExternalStorageManager extends EventEmitter {
 			}
 
 			// Check for low space
-			if (status.available && status.freeSpaceGB < 1) { // Less than 1GB
+			if (status.available && status.freeSpaceGB < 1) {
+				// Less than 1GB
 				this.emit('storage-change', {
 					type: 'low-space',
 					path: storagePath,
@@ -296,7 +297,9 @@ let externalStorageManager: ExternalStorageManager | null = null;
 /**
  * Get or create the external storage manager instance
  */
-export function getExternalStorageManager(config?: Partial<ExternalStorageConfig>): ExternalStorageManager {
+export function getExternalStorageManager(
+	config?: Partial<ExternalStorageConfig>,
+): ExternalStorageManager {
 	if (!externalStorageManager) {
 		const finalConfig = {
 			...DEFAULT_EXTERNAL_STORAGE_CONFIG,

@@ -11,8 +11,7 @@ const metricsPath = process.argv[3];
 if (!metricsPath) fail('Usage: perf-check.mjs <baseline.json> <metrics.json>');
 
 if (!fs.existsSync(baselinePath)) fail(`Baseline not found: ${baselinePath}`);
-if (!fs.existsExists && !fs.existsSync(metricsPath))
-	fail(`Metrics not found: ${metricsPath}`);
+if (!fs.existsExists && !fs.existsSync(metricsPath)) fail(`Metrics not found: ${metricsPath}`);
 
 let baseline, metrics;
 try {
@@ -30,15 +29,12 @@ const target = metrics.target;
 if (!target) fail('Metrics missing target');
 const baseEntry = baseline.targets?.[target];
 if (!baseEntry) {
-	console.log(
-		`[perf-check] No baseline entry for target ${target}; skipping gate.`,
-	);
+	console.log(`[perf-check] No baseline entry for target ${target}; skipping gate.`);
 	process.exit(0);
 }
 
 const maxMs = baseEntry.maxMs;
-if (typeof maxMs !== 'number')
-	fail(`Baseline maxMs missing/invalid for ${target}`);
+if (typeof maxMs !== 'number') fail(`Baseline maxMs missing/invalid for ${target}`);
 const duration = metrics.durationMs;
 if (typeof duration !== 'number') fail('Metrics missing durationMs');
 
@@ -49,13 +45,9 @@ if (duration > maxMs) {
 		);
 		process.exit(0);
 	}
-	fail(
-		`Performance regression: ${target} duration ${duration}ms > baseline ${maxMs}ms`,
-	);
+	fail(`Performance regression: ${target} duration ${duration}ms > baseline ${maxMs}ms`);
 }
-console.log(
-	`[perf-check] OK: ${target} duration ${duration}ms <= ${maxMs}ms baseline.`,
-);
+console.log(`[perf-check] OK: ${target} duration ${duration}ms <= ${maxMs}ms baseline.`);
 
 // Append to performance history if enabled
 const historyFile = process.env.PERF_HISTORY_FILE || 'performance-history.json';
@@ -79,9 +71,7 @@ try {
 	const limit = parseInt(process.env.PERF_HISTORY_LIMIT || '200', 10);
 	if (history.length > limit) history = history.slice(history.length - limit);
 	fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
-	console.log(
-		`[perf-check] history appended (${history.length} entries, file=${historyFile}).`,
-	);
+	console.log(`[perf-check] history appended (${history.length} entries, file=${historyFile}).`);
 } catch (e) {
 	console.warn('[perf-check] failed to append history:', e.message);
 }

@@ -7,14 +7,7 @@ import { join } from 'node:path';
 
 console.log('Updating mcp_server.py to use SecureCommandExecutor...');
 
-const mcpServerPath = join(
-	'packages',
-	'mcp',
-	'src',
-	'tools',
-	'docker',
-	'mcp_server.py',
-);
+const mcpServerPath = join('packages', 'mcp', 'src', 'tools', 'docker', 'mcp_server.py');
 let content = readFileSync(mcpServerPath, 'utf-8');
 
 // Add import for SecureCommandExecutor
@@ -60,6 +53,4 @@ content = content.replace(
 writeFileSync(mcpServerPath, content);
 
 console.log('✅ mcp_server.py has been updated to use SecureCommandExecutor');
-console.log(
-	'⚠️  Please review the TODO comments and fully implement the secure operations',
-);
+console.log('⚠️  Please review the TODO comments and fully implement the secure operations');

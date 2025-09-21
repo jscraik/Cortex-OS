@@ -33,10 +33,8 @@ function getArgValue(flag) {
 	return args[idx + 1];
 }
 
-const baselinePath =
-	getArgValue('--baseline') || 'reports/coverage-baseline.json';
-const currentPath =
-	getArgValue('--current') || 'coverage/coverage-summary.json';
+const baselinePath = getArgValue('--baseline') || 'reports/coverage-baseline.json';
+const currentPath = getArgValue('--current') || 'coverage/coverage-summary.json';
 const tolerance = parseFloat(getArgValue('--tolerance') || '0');
 const allowIncreaseOnly = args.includes('--allow-increase-only');
 
@@ -59,8 +57,7 @@ function extractTotals(summary) {
 	// Vitest (istanbul) json-summary format has total block
 	if (!summary || typeof summary !== 'object') return undefined;
 	const total = summary.total || summary; // fallback if shape differs
-	const mapKey = (key) =>
-		typeof total[key] === 'object' ? total[key].pct : undefined;
+	const mapKey = (key) => (typeof total[key] === 'object' ? total[key].pct : undefined);
 	return {
 		lines: mapKey('lines'),
 		statements: mapKey('statements'),
@@ -78,12 +75,8 @@ if (!baseline) {
 
 const current = readJson(currentPath);
 if (!current) {
-	console.error(
-		`Current coverage summary not found or invalid: ${currentPath}`,
-	);
-	console.error(
-		'Did you run the coverage command first? e.g. pnpm test:coverage',
-	);
+	console.error(`Current coverage summary not found or invalid: ${currentPath}`);
+	console.error('Did you run the coverage command first? e.g. pnpm test:coverage');
 	process.exit(1);
 }
 
@@ -130,16 +123,12 @@ console.log('Coverage Diff Gate Report');
 console.log(JSON.stringify(report, null, 2));
 
 if (regressions.length > 0) {
-	console.error(
-		'\nFAIL: Coverage regression detected beyond allowed tolerance.',
-	);
+	console.error('\nFAIL: Coverage regression detected beyond allowed tolerance.');
 	process.exit(1);
 }
 
 if (allowIncreaseOnly && improvements.length === 0) {
-	console.error(
-		'\nFAIL: --allow-increase-only specified but no improvements detected.',
-	);
+	console.error('\nFAIL: --allow-increase-only specified but no improvements detected.');
 	process.exit(1);
 }
 

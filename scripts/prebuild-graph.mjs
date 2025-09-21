@@ -119,10 +119,7 @@ function memoryHygieneCheck() {
 			}
 		}
 		if (warnings > 0) {
-			log(
-				'ERROR',
-				'Memory hygiene violation detected. Run: pnpm memory:clean:gentle',
-			);
+			log('ERROR', 'Memory hygiene violation detected. Run: pnpm memory:clean:gentle');
 			return false;
 		}
 		return true;
@@ -145,15 +142,11 @@ function computeAffected(target, focus, dryRun) {
 		}).trim();
 		projects = out ? out.split(/\s+/).filter(Boolean) : [];
 	} catch (err) {
-		log(
-			'WARN',
-			`print-affected failed (${err.message}); falling back to listing all with target`,
-		);
+		log('WARN', `print-affected failed (${err.message}); falling back to listing all with target`);
 		try {
-			const fallback = execSync(
-				`npx nx show projects --with-target=${target} --noInteractive`,
-				{ encoding: 'utf8' },
-			);
+			const fallback = execSync(`npx nx show projects --with-target=${target} --noInteractive`, {
+				encoding: 'utf8',
+			});
 			projects = fallback.split(/\n/).filter(Boolean);
 		} catch (e2) {
 			log('ERROR', `Unable to determine projects: ${e2.message}`);
@@ -175,8 +168,7 @@ function computeAffected(target, focus, dryRun) {
 			focused = intersection;
 			focusNotice = `Applied focus filter (${intersection.length}/${projects.length}).`;
 		} else {
-			focusNotice =
-				'Focus filter produced no intersection; using full affected set.';
+			focusNotice = 'Focus filter produced no intersection; using full affected set.';
 		}
 	}
 
@@ -184,21 +176,10 @@ function computeAffected(target, focus, dryRun) {
 	let prewarmRan = false;
 	if (!dryRun && target === 'build' && focused.length > 0) {
 		try {
-			log(
-				'INFO',
-				`Pre-warming with typecheck for ${focused.length} project(s)`,
-			);
+			log('INFO', `Pre-warming with typecheck for ${focused.length} project(s)`);
 			spawnSync(
 				'npx',
-				[
-					'nx',
-					'run-many',
-					'-t',
-					'typecheck',
-					'--projects',
-					focused.join(','),
-					'--parallel=1',
-				],
+				['nx', 'run-many', '-t', 'typecheck', '--projects', focused.join(','), '--parallel=1'],
 				{ stdio: 'inherit' },
 			);
 			prewarmRan = true;
@@ -241,10 +222,7 @@ function writeSummary(summary, jsonMode) {
 function main() {
 	const opts = parseArgs();
 	ensureGit();
-	log(
-		'INFO',
-		`Pre-build orchestration start target=${opts.target} dryRun=${opts.dryRun}`,
-	);
+	log('INFO', `Pre-build orchestration start target=${opts.target} dryRun=${opts.dryRun}`);
 
 	if (!memoryHygieneCheck()) {
 		process.exit(1);

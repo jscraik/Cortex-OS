@@ -10,8 +10,7 @@ async function main() {
 	}
 	const token = process.env.PACT_BROKER_TOKEN;
 	const tags = (process.env.PACT_TAGS || 'main').split(',');
-	const consumerVersion =
-		process.env.GIT_SHA || process.env.GITHUB_SHA || `dev-${Date.now()}`;
+	const consumerVersion = process.env.GIT_SHA || process.env.GITHUB_SHA || `dev-${Date.now()}`;
 	const pactDir = path.resolve(__dirname, '..', 'pacts');
 	console.log(
 		'[pact] Publishing from',

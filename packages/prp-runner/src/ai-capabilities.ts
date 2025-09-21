@@ -17,9 +17,9 @@ import {
 	configureLLM,
 	getModel,
 	getProvider,
+	type LLMState,
 	generate as llmGenerate,
 	shutdown as shutdownLLM,
-	type LLMState,
 } from './llm-bridge.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
@@ -322,16 +322,16 @@ export class AICoreCapabilities {
 			},
 			embedding: this.embeddingAdapter
 				? {
-					provider: this.embeddingAdapter.getStats().provider,
-					dimensions: this.embeddingAdapter.getStats().dimensions,
-					documents: this.embeddingAdapter.getStats().totalDocuments,
-				}
+						provider: this.embeddingAdapter.getStats().provider,
+						dimensions: this.embeddingAdapter.getStats().dimensions,
+						documents: this.embeddingAdapter.getStats().totalDocuments,
+					}
 				: undefined,
 			reranker: this.rerankerAdapter
 				? {
-					provider: 'available',
-					available: true,
-				}
+						provider: 'available',
+						available: true,
+					}
 				: undefined,
 			features: this.getAvailableFeatures(),
 		};

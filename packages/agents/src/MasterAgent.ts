@@ -86,7 +86,7 @@ export const createMasterAgentGraph = (config: {
 		if (!currentAgent) {
 			return {
 				...state,
-				error: 'No agent selected'
+				error: 'No agent selected',
 			};
 		}
 

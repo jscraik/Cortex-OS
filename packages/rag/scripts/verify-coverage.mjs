@@ -29,8 +29,7 @@ function parseYamlSimple(yamlText) {
 			const l2 = line.slice(2);
 			const [k, ...rest] = l2.split(':');
 			const val = rest.join(':').trim();
-			if (typeof obj[currentKey] !== 'object' || obj[currentKey] === null)
-				obj[currentKey] = {};
+			if (typeof obj[currentKey] !== 'object' || obj[currentKey] === null) obj[currentKey] = {};
 			obj[currentKey][k.trim()] = parseScalar(val);
 		}
 	}
@@ -71,11 +70,8 @@ const autoRaise = args.has('--auto-raise');
 const dryRun = args.has('--dry-run');
 
 if (!fs.existsSync(summaryPath))
-	fail(
-		`Missing coverage summary: ${summaryPath}. Run pnpm -C packages/rag test:coverage first.`,
-	);
-if (!fs.existsSync(readinessPath))
-	fail(`Missing readiness file: ${readinessPath}`);
+	fail(`Missing coverage summary: ${summaryPath}. Run pnpm -C packages/rag test:coverage first.`);
+if (!fs.existsSync(readinessPath)) fail(`Missing readiness file: ${readinessPath}`);
 
 const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
 const readinessText = fs.readFileSync(readinessPath, 'utf8');

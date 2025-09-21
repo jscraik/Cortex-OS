@@ -22,12 +22,7 @@ function* walk(dir) {
 	for (const e of entries) {
 		const full = path.join(dir, e.name);
 		if (e.isDirectory()) {
-			if (
-				e.name === 'node_modules' ||
-				e.name === 'dist' ||
-				e.name.startsWith('.')
-			)
-				continue;
+			if (e.name === 'node_modules' || e.name === 'dist' || e.name.startsWith('.')) continue;
 			yield* walk(full);
 		} else if (e.isFile() && /\.[cm]?tsx?$/.test(e.name)) {
 			yield full;
@@ -86,10 +81,7 @@ for (const feature of featureDirs) {
 		// cross-feature infra import
 		if (spec.startsWith('.') && spec.includes('/infra/')) {
 			const resolved = path.normalize(path.join(path.dirname(file), spec));
-			if (
-				!resolved.startsWith(featurePath) &&
-				resolved.startsWith(featureRoot)
-			) {
+			if (!resolved.startsWith(featurePath) && resolved.startsWith(featureRoot)) {
 				const parts = path.relative(featureRoot, resolved).split(path.sep);
 				const targetFeature = parts[0];
 				if (targetFeature !== feature) {
@@ -160,9 +152,7 @@ if (warnings.length) {
 if (violations.length) {
 	console.error('\n[check-playbook] Violations:');
 	for (const v of violations) console.error('  -', v);
-	console.error(
-		`\n[check-playbook] ✖ ${violations.length} violation(s) found.`,
-	);
+	console.error(`\n[check-playbook] ✖ ${violations.length} violation(s) found.`);
 	process.exit(1);
 }
 

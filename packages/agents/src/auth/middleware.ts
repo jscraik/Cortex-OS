@@ -1,6 +1,8 @@
 import type { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+
 type Next = () => Promise<void>;
+
 import { extractAPIKey, getAPIKey, validateAPIKey } from './api-key';
 import { verifyJWT } from './jwt';
 import { createUserContextFromAPIKey } from './permissions';
@@ -22,7 +24,7 @@ export function authMiddleware(options: AuthMiddlewareOptions) {
 
 		// Try JWT authentication first
 		const authHeader = c.req.header(jwtHeader);
-		if (authHeader && authHeader.startsWith('Bearer ')) {
+		if (authHeader?.startsWith('Bearer ')) {
 			const token = authHeader.substring(7);
 			try {
 				const payload = await verifyJWT(token, secret);

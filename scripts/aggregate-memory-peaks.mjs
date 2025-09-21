@@ -17,9 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 if (process.argv.length < 3) {
-	console.error(
-		'Usage: node scripts/aggregate-memory-peaks.mjs <file1.jsonl> [file2.jsonl ...]',
-	);
+	console.error('Usage: node scripts/aggregate-memory-peaks.mjs <file1.jsonl> [file2.jsonl ...]');
 	process.exit(1);
 }
 
@@ -45,8 +43,6 @@ for (const p of process.argv.slice(2)) {
 		}
 	}
 	globalPeak = Math.max(globalPeak, peakRss);
-	console.log(
-		`${path.basename(p)},${peakRss.toFixed(2)},${peakHeap.toFixed(2)},${samples}`,
-	);
+	console.log(`${path.basename(p)},${peakRss.toFixed(2)},${peakHeap.toFixed(2)},${samples}`);
 }
 console.log(`TOTAL_MAX_RSS_MB=${globalPeak.toFixed(2)}`);

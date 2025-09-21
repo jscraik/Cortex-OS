@@ -9,8 +9,7 @@ async function main() {
 	}
 	const xml = readFileSync('coverage.xml', 'utf8');
 	const data = await parseStringPromise(xml);
-	const coverageAttr =
-		data.coverage?.$?.lineRate || data.coverage?.$?.line_rate || 0;
+	const coverageAttr = data.coverage?.$?.lineRate || data.coverage?.$?.line_rate || 0;
 	const pct = Math.round(parseFloat(coverageAttr) * 1000) / 10; // one decimal
 
 	if (!existsSync('reports')) mkdirSync('reports');
@@ -29,11 +28,7 @@ async function main() {
 	else if (pct >= 80) color = 'yellow';
 	writeFileSync(
 		'reports/coverage-badge.json',
-		JSON.stringify(
-			{ schemaVersion: 1, label: 'coverage', message: `${pct}%`, color },
-			null,
-			2,
-		),
+		JSON.stringify({ schemaVersion: 1, label: 'coverage', message: `${pct}%`, color }, null, 2),
 	);
 	console.log(`[coverage] Updated trend & badge: ${pct}%`);
 }

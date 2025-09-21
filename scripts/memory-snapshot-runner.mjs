@@ -153,10 +153,7 @@ function rssForPid(pid) {
 function manualHeapSnapshot(_label, _ts) {
 	// Manual snapshot via inspector protocol (requires --inspect / can use node --heap-prof) – simplified approach: use kill -USR2 for node >=16 to trigger heap profile (works for CPU profile; for heap snapshot we rely on near-heap-limit). As a fallback, we simply log.
 	// NOTE: Advanced manual snapshot automation (inspector client) intentionally deferred to keep script dependency-light.
-	log(
-		'INFO',
-		'Manual snapshot trigger placeholder (inspector automation can be added later).',
-	);
+	log('INFO', 'Manual snapshot trigger placeholder (inspector automation can be added later).');
 	// This placeholder keeps script lightweight and avoids complex deps.
 	return null;
 }
@@ -170,10 +167,7 @@ function main() {
 	const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 	const logFile = join(logDir, `${timestamp}-${opts.label}.jsonl`);
 	const outStream = createWriteStream(logFile, { flags: 'a' });
-	log(
-		'INFO',
-		`Starting memory snapshot run label=${opts.label} interval=${opts.interval}ms`,
-	);
+	log('INFO', `Starting memory snapshot run label=${opts.label} interval=${opts.interval}ms`);
 
 	const childEnv = {
 		...process.env,
@@ -198,10 +192,7 @@ function main() {
 		if (rssKB > peakRssKB) peakRssKB = rssKB;
 		outStream.write(`${JSON.stringify(sample)}\n`);
 		if (opts.limitMb && rssKB / 1024 > opts.limitMb) {
-			log(
-				'WARN',
-				`RSS exceeded soft limit (${formatMB(rssKB)}MB > ${opts.limitMb}MB)`,
-			);
+			log('WARN', `RSS exceeded soft limit (${formatMB(rssKB)}MB > ${opts.limitMb}MB)`);
 		}
 		if (opts.failOverMb && rssKB / 1024 > opts.failOverMb) {
 			log(
@@ -259,29 +250,17 @@ function main() {
 					'# HELP cortex_memory_peak_rss_bytes Peak resident set size during monitored run',
 				);
 				promLines.push('# TYPE cortex_memory_peak_rss_bytes gauge');
-				promLines.push(
-					`cortex_memory_peak_rss_bytes{label="${opts.label}"} ${peakRssKB * 1024}`,
-				);
-				promLines.push(
-					'# HELP cortex_memory_samples_total Number of RSS samples collected',
-				);
+				promLines.push(`cortex_memory_peak_rss_bytes{label="${opts.label}"} ${peakRssKB * 1024}`);
+				promLines.push('# HELP cortex_memory_samples_total Number of RSS samples collected');
 				promLines.push('# TYPE cortex_memory_samples_total counter');
-				promLines.push(
-					`cortex_memory_samples_total{label="${opts.label}"} ${samples.length}`,
-				);
-				const durationsMs =
-					samples.length > 1 ? samples[samples.length - 1].t - samples[0].t : 0;
+				promLines.push(`cortex_memory_samples_total{label="${opts.label}"} ${samples.length}`);
+				const durationsMs = samples.length > 1 ? samples[samples.length - 1].t - samples[0].t : 0;
 				promLines.push(
 					'# HELP cortex_memory_observation_window_ms Milliseconds covered by sampling window',
 				);
 				promLines.push('# TYPE cortex_memory_observation_window_ms gauge');
-				promLines.push(
-					`cortex_memory_observation_window_ms{label="${opts.label}"} ${durationsMs}`,
-				);
-				writeFileSync(
-					join(metricsDir, `${opts.label}.prom`),
-					`${promLines.join('\n')}\n`,
-				);
+				promLines.push(`cortex_memory_observation_window_ms{label="${opts.label}"} ${durationsMs}`);
+				writeFileSync(join(metricsDir, `${opts.label}.prom`), `${promLines.join('\n')}\n`);
 				log('INFO', `Prometheus metrics written (${opts.label}.prom)`);
 			} catch (e) {
 				log('WARN', `Failed to write Prometheus metrics: ${e.message}`);
@@ -290,10 +269,7 @@ function main() {
 		if (opts.json) {
 			console.log(JSON.stringify(summary));
 		} else {
-			log(
-				'INFO',
-				`Peak RSS: ${summary.peakRssMB}MB over ${samples.length} samples`,
-			);
+			log('INFO', `Peak RSS: ${summary.peakRssMB}MB over ${samples.length} samples`);
 			const recentStr = recent
 				.map((r) => `${r.file}(${(r.size / 1024 / 1024).toFixed(1)}MB)`)
 				.join(', ');

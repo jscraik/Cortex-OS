@@ -22,9 +22,7 @@ function run(cmd, args, opts = {}) {
 	});
 	if (res.status !== 0) {
 		const joined = [cmd, ...args].join(' ');
-		console.error(
-			`[precheck-rag-coverage] Command failed (${res.status}): ${joined}`,
-		);
+		console.error(`[precheck-rag-coverage] Command failed (${res.status}): ${joined}`);
 		process.exit(res.status || 1);
 	}
 }
@@ -54,6 +52,4 @@ if (autoRaise && dryRun) {
 	run('pnpm', ['-C', 'packages/rag', 'verify:coverage']);
 }
 
-console.log(
-	'[precheck-rag-coverage] RAG coverage precheck completed successfully.',
-);
+console.log('[precheck-rag-coverage] RAG coverage precheck completed successfully.');

@@ -44,9 +44,7 @@ for (const pkg of packages) {
 	const doc = yaml.load(fs.readFileSync(readinessPath, 'utf-8')) || {};
 	const valid = validate(doc);
 	if (!valid) {
-		console.error(
-			`[fail] ${pkg} readiness.yml invalid: ${ajv.errorsText(validate.errors)}`,
-		);
+		console.error(`[fail] ${pkg} readiness.yml invalid: ${ajv.errorsText(validate.errors)}`);
 		failed = true;
 		continue;
 	}
@@ -77,9 +75,7 @@ for (const pkg of packages) {
 }
 
 if (failed) {
-	console.error(
-		'Readiness check failed. Raise coverage or adjust thresholds intentionally.',
-	);
+	console.error('Readiness check failed. Raise coverage or adjust thresholds intentionally.');
 	process.exit(1);
 } else {
 	console.log('All packages meet readiness thresholds.');

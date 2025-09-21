@@ -38,12 +38,7 @@ async function getRepoRoot() {
 
 async function getUpstreamRef() {
 	try {
-		const ref = await git([
-			'rev-parse',
-			'--abbrev-ref',
-			'--symbolic-full-name',
-			'@{u}',
-		]);
+		const ref = await git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
 		return ref;
 	} catch {
 		return null;
@@ -52,13 +47,9 @@ async function getUpstreamRef() {
 
 async function _refExists(ref) {
 	try {
-		await execa(
-			'git',
-			['show-ref', '--verify', `refs/remotes/${ref.replace('origin/', '')}`],
-			{
-				stdio: 'ignore',
-			},
-		);
+		await execa('git', ['show-ref', '--verify', `refs/remotes/${ref.replace('origin/', '')}`], {
+			stdio: 'ignore',
+		});
 		return true;
 	} catch {
 		return false;
@@ -112,18 +103,13 @@ async function getChangedFiles(repoRoot) {
 			});
 			baseRef = await git(['merge-base', 'HEAD', 'origin/main']);
 		} catch {
-			throw new Error(
-				'Unable to determine base reference; ensure origin/main exists',
-			);
+			throw new Error('Unable to determine base reference; ensure origin/main exists');
 		}
 	}
 
-	const diff = await git(
-		['diff', '--name-only', '--diff-filter=ACMRTUXB', baseRef, 'HEAD'],
-		{
-			cwd: repoRoot,
-		},
-	);
+	const diff = await git(['diff', '--name-only', '--diff-filter=ACMRTUXB', baseRef, 'HEAD'], {
+		cwd: repoRoot,
+	});
 	const files = diff.split('\n').filter(Boolean);
 	return files;
 }
@@ -146,22 +132,14 @@ async function runPackageTests(pkgDir, _opts = {}) {
 	const useCoverage = process.env.PREPUSH_COVERAGE === '1';
 	const args = ['exec', 'vitest', 'run', '--reporter=dot'];
 	if (useCoverage)
-		args.push(
-			'--coverage',
-			'--coverage.reporter=json-summary',
-			'--coverage.reporter=text-summary',
-		);
-	log(
-		`Testing ${path.relative(process.cwd(), pkgDir)}${useCoverage ? ' (coverage)' : ''}`,
-	);
+		args.push('--coverage', '--coverage.reporter=json-summary', '--coverage.reporter=text-summary');
+	log(`Testing ${path.relative(process.cwd(), pkgDir)}${useCoverage ? ' (coverage)' : ''}`);
 	try {
 		await execa('pnpm', args, { cwd: pkgDir, stdio: 'inherit' });
 		return true;
 	} catch (err) {
 		// eslint-disable-next-line no-console
-		console.error(
-			`[pre-push] Tests failed in ${pkgDir}: ${err?.shortMessage || err?.message}`,
-		);
+		console.error(`[pre-push] Tests failed in ${pkgDir}: ${err?.shortMessage || err?.message}`);
 		return false;
 	}
 }
@@ -179,18 +157,14 @@ async function main() {
 
 	const docOnly = files.every((f) => isDocsOrConfigFile(f));
 	const pkgDirs = Array.from(
-		new Set(
-			files.map((f) => findNearestPackageDir(repoRoot, f)).filter(Boolean),
-		),
+		new Set(files.map((f) => findNearestPackageDir(repoRoot, f)).filter(Boolean)),
 	);
 
 	log(
 		`Changed files: ${files.length}, mapped packages: ${pkgDirs.length}, doc/config-only: ${docOnly}`,
 	);
 	if (argv.has('--dry')) {
-		const list =
-			pkgDirs.map((d) => ` - ${path.relative(repoRoot, d)}`).join('\n') ||
-			' (none)';
+		const list = pkgDirs.map((d) => ` - ${path.relative(repoRoot, d)}`).join('\n') || ' (none)';
 		log(`Dry run: would test packages ->\n${list}`);
 		return;
 	}
@@ -201,9 +175,7 @@ async function main() {
 	}
 
 	if (pkgDirs.length === 0) {
-		log(
-			'No package dirs mapped but non-doc changes detected; running workspace tests.',
-		);
+		log('No package dirs mapped but non-doc changes detected; running workspace tests.');
 		await execa('pnpm', ['test', '-w'], { stdio: 'inherit' });
 		return;
 	}

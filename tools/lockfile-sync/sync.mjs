@@ -48,9 +48,7 @@ export async function syncLockfiles(checkOnly = false) {
 	try {
 		const uvContent = await fs.readFile('uv.lock', 'utf8');
 		const uvSchema = z.object({
-			package: z
-				.array(z.object({ name: z.string(), version: z.string() }))
-				.default([]),
+			package: z.array(z.object({ name: z.string(), version: z.string() })).default([]),
 		});
 		uvLock = uvSchema.parse(parseToml(uvContent));
 	} catch {
@@ -66,10 +64,7 @@ export async function syncLockfiles(checkOnly = false) {
 		]),
 	);
 	const pyMap = new Map(
-		uvLock.package.map((pkg) => [
-			pkg.name.toLowerCase().replace(/_/g, '-'),
-			pkg.version,
-		]),
+		uvLock.package.map((pkg) => [pkg.name.toLowerCase().replace(/_/g, '-'), pkg.version]),
 	);
 
 	const mismatches = findMismatches(npmMap, pyMap);

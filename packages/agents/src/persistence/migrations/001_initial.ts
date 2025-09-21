@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3';
+
 type DbType = Database.Database;
 
 /**

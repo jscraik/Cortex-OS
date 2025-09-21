@@ -26,9 +26,7 @@ function computeWrapperPath(pkgJsonPath) {
 	const pkgDir = dirname(pkgJsonPath);
 	// path from package dir to repo root scripts/vitest-safe.mjs
 	const rel = relative(pkgDir, repoRoot).split(sep).join('/');
-	return rel.length
-		? `${rel}/scripts/vitest-safe.mjs`
-		: 'scripts/vitest-safe.mjs';
+	return rel.length ? `${rel}/scripts/vitest-safe.mjs` : 'scripts/vitest-safe.mjs';
 }
 
 const VITEST_RAW_PATTERNS = [
@@ -58,9 +56,7 @@ function transformScript(cmd, wrapperRel) {
 			// Extract args after 'vitest'
 			const after = trimmed.replace(/^vitest\s*/, '');
 			// Normalize leading 'run'
-			const normalized = after.startsWith('run')
-				? after.replace(/^run\s*/, '')
-				: after;
+			const normalized = after.startsWith('run') ? after.replace(/^run\s*/, '') : after;
 			const finalArgs = normalized.length ? normalized : '';
 			return `node ${wrapperRel} run ${finalArgs}`.trim();
 		}
@@ -105,10 +101,7 @@ function main() {
 	for (const f of files) {
 		if (processPackage(f)) touched++;
 	}
-	log(
-		'INFO',
-		`Completed. Modified ${touched}/${files.length} package.json files.`,
-	);
+	log('INFO', `Completed. Modified ${touched}/${files.length} package.json files.`);
 	if (touched > 0) {
 		log('INFO', 'Run: git add . && git diff --staged | less   (to review)');
 	}

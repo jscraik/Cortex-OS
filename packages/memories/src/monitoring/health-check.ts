@@ -1,5 +1,8 @@
-import { type MemoryStore } from '../ports/MemoryStore.js';
-import { type ExternalStorageManager, getExternalStorageManager } from '../adapters/external-storage.js';
+import {
+	type ExternalStorageManager,
+	getExternalStorageManager,
+} from '../adapters/external-storage.js';
+import type { MemoryStore } from '../ports/MemoryStore.js';
 
 export interface HealthCheckResult {
 	status: 'healthy' | 'degraded' | 'unhealthy';
@@ -95,7 +98,7 @@ export class MemoryHealthChecker {
 		}
 
 		// Determine overall status
-		const componentStatuses = Object.values(components).map(c => c.status);
+		const componentStatuses = Object.values(components).map((c) => c.status);
 		let overallStatus: HealthCheckResult['status'] = 'healthy';
 
 		if (componentStatuses.includes('unhealthy')) {
@@ -136,7 +139,10 @@ export class MemoryHealthChecker {
 			await Promise.race([
 				this.store.upsert(testMemory),
 				new Promise((_, reject) =>
-					setTimeout(() => reject(new Error('Store write timeout')), this.config.storeTestTimeoutMs)
+					setTimeout(
+						() => reject(new Error('Store write timeout')),
+						this.config.storeTestTimeoutMs,
+					),
 				),
 			]);
 
@@ -144,7 +150,7 @@ export class MemoryHealthChecker {
 			const retrieved = await Promise.race([
 				this.store.get(testMemory.id),
 				new Promise((_, reject) =>
-					setTimeout(() => reject(new Error('Store read timeout')), this.config.storeTestTimeoutMs)
+					setTimeout(() => reject(new Error('Store read timeout')), this.config.storeTestTimeoutMs),
 				),
 			]);
 
@@ -152,7 +158,10 @@ export class MemoryHealthChecker {
 			await Promise.race([
 				this.store.delete(testMemory.id),
 				new Promise((_, reject) =>
-					setTimeout(() => reject(new Error('Store delete timeout')), this.config.storeTestTimeoutMs)
+					setTimeout(
+						() => reject(new Error('Store delete timeout')),
+						this.config.storeTestTimeoutMs,
+					),
 				),
 			]);
 
@@ -242,7 +251,9 @@ export class MemoryHealthChecker {
 	/**
 	 * Check performance health
 	 */
-	private async checkPerformanceHealth(metrics: HealthCheckResult['metrics']): Promise<ComponentHealth> {
+	private async checkPerformanceHealth(
+		metrics: HealthCheckResult['metrics'],
+	): Promise<ComponentHealth> {
 		const memoryUsageMB = metrics.memoryUsage.heapUsed / (1024 * 1024);
 		const threshold = this.config.performanceThresholds.maxMemoryUsageMB;
 
@@ -259,7 +270,10 @@ export class MemoryHealthChecker {
 		}
 
 		// Check store latency if available
-		if (metrics.storeLatencyMs && metrics.storeLatencyMs > this.config.performanceThresholds.maxStoreLatencyMs) {
+		if (
+			metrics.storeLatencyMs &&
+			metrics.storeLatencyMs > this.config.performanceThresholds.maxStoreLatencyMs
+		) {
 			return {
 				status: 'degraded',
 				message: `Store latency ${metrics.storeLatencyMs}ms exceeds threshold`,
@@ -307,12 +321,12 @@ export function createHealthCheckMiddleware(healthChecker: MemoryHealthChecker) 
 		try {
 			if (detailed) {
 				const result = await healthChecker.checkHealth();
-				res.status(result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503)
+				res
+					.status(result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503)
 					.json(result);
 			} else {
 				const result = await healthChecker.quickCheck();
-				res.status(result.status === 'healthy' ? 200 : 503)
-					.json(result);
+				res.status(result.status === 'healthy' ? 200 : 503).json(result);
 			}
 		} catch (error) {
 			res.status(500).json({

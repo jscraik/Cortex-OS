@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 
 export interface RequestMetrics {
 	total: number;
@@ -252,7 +252,7 @@ export class MetricsCollector extends EventEmitter {
 			lines.push(`${this.config.prometheusPrefix}${name}_count ${values.length}`);
 		}
 
-		return lines.join('\n') + '\n';
+		return `${lines.join('\n')}\n`;
 	}
 
 	private calculateLatencyStats(latencies: number[]) {

@@ -82,10 +82,7 @@ function main() {
 		changes: changes.slice(0, 200),
 	};
 	if (!existsSync('reports')) mkdirSync('reports');
-	writeFileSync(
-		'reports/dependency-risk.json',
-		JSON.stringify(summary, null, 2),
-	);
+	writeFileSync('reports/dependency-risk.json', JSON.stringify(summary, null, 2));
 	console.log(`[dep-risk] Summary:\n${JSON.stringify(summary, null, 2)}`);
 }
 

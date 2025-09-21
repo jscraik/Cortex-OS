@@ -32,7 +32,7 @@ describe('Cortex Kernel Integration', () => {
 					'Security authentication',
 					'User interface design',
 					'Architecture design',
-					'Accessibility compliance'
+					'Accessibility compliance',
 				],
 			};
 

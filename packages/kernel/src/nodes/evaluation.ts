@@ -118,7 +118,7 @@ export class EvaluationNode {
 	 */
 	private async validatePreCerebrumGate(
 		state: PRPState,
-		evidence: Evidence[],
+		_evidence: Evidence[],
 		blockers: string[],
 	): Promise<void> {
 		const preCerebrumCheck = await this.preCerebrumValidation(state);
@@ -268,9 +268,11 @@ export class EvaluationNode {
 		// Final validation before Cerebrum decision - use gates instead of validationResults
 		const hasAllPhases = state.gates && !!(state.gates.G0 && state.gates.G2 && state.gates.G5);
 
-		const allPhasesPassedOrAcceptable = state.gates && Object.values(state.gates).every(
-			(gate) => gate.status === 'passed' || gate.status === 'skipped',
-		);
+		const allPhasesPassedOrAcceptable =
+			state.gates &&
+			Object.values(state.gates).every(
+				(gate) => gate.status === 'passed' || gate.status === 'skipped',
+			);
 
 		return {
 			readyForCerebrum: hasAllPhases && allPhasesPassedOrAcceptable,

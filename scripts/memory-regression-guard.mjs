@@ -27,14 +27,7 @@
  *   Meaning: if baselinePeak <= limit use pct% threshold; if hardMax present enforce peakMB <= hardMax for that tier.
  */
 
-import {
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	statSync,
-	writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,9 +46,7 @@ function parseArgs() {
 	const opts = {
 		file: null,
 		baselinePath: join(reportsDir, 'memory-baseline.json'),
-		maxMb: process.env.MEMORY_GUARD_MAX_MB
-			? parseInt(process.env.MEMORY_GUARD_MAX_MB, 10)
-			: null,
+		maxMb: process.env.MEMORY_GUARD_MAX_MB ? parseInt(process.env.MEMORY_GUARD_MAX_MB, 10) : null,
 		allowedPct: process.env.MEMORY_GUARD_ALLOWED_PCT
 			? parseFloat(process.env.MEMORY_GUARD_ALLOWED_PCT)
 			: 25,
@@ -146,8 +137,7 @@ function parseJsonlPeak(file) {
 		if (!line.trim()) continue;
 		try {
 			const obj = JSON.parse(line);
-			if (typeof obj.rssKB === 'number' && obj.rssKB > peakKB)
-				peakKB = obj.rssKB;
+			if (typeof obj.rssKB === 'number' && obj.rssKB > peakKB) peakKB = obj.rssKB;
 		} catch {
 			/* ignore malformed line */
 		}
@@ -190,19 +180,12 @@ function parseTierConfig(tierSpec) {
 			}
 			return { thresholdMB, allowedPct, hardMax };
 		})
-		.filter(
-			(t) => Number.isFinite(t.thresholdMB) && Number.isFinite(t.allowedPct),
-		)
+		.filter((t) => Number.isFinite(t.thresholdMB) && Number.isFinite(t.allowedPct))
 		.sort((a, b) => a.thresholdMB - b.thresholdMB);
 }
 
 // Determine which tier applies given the higher of baseline/current and compute allowed pct + hard max hit
-function _computeTierDecision({
-	baselinePeak,
-	currentPeak,
-	tiers,
-	explicitPctAllowed,
-}) {
+function _computeTierDecision({ baselinePeak, currentPeak, tiers, explicitPctAllowed }) {
 	if (!tiers || tiers.length === 0)
 		return {
 			pctAllowed: explicitPctAllowed,
@@ -251,9 +234,7 @@ function _evaluateFailure({
 	if (explicitMaxMB && currentPeak > explicitMaxMB) {
 		failed = true;
 		reasonCode = 'ABSOLUTE_MAX';
-		reasons.push(
-			`Current peak ${currentPeak}MB exceeded maxMb ${explicitMaxMB}MB`,
-		);
+		reasons.push(`Current peak ${currentPeak}MB exceeded maxMb ${explicitMaxMB}MB`);
 	}
 	if (!failed && typeof baselinePeak === 'number' && baselinePeak >= 0) {
 		const absoluteAllowed = baselinePeak + deltaAllowedMB;
@@ -265,12 +246,7 @@ function _evaluateFailure({
 			);
 		}
 	}
-	if (
-		!failed &&
-		typeof baselinePeak === 'number' &&
-		baselinePeak > 0 &&
-		pctAllowed != null
-	) {
+	if (!failed && typeof baselinePeak === 'number' && baselinePeak > 0 && pctAllowed != null) {
 		const pctLimit = Math.round(baselinePeak * (1 + pctAllowed / 100));
 		if (currentPeak > pctLimit) {
 			failed = true;
@@ -309,26 +285,14 @@ function _buildPromMetrics(summary) {
 			`memory_guard_info${labels({ baseline: summary.baselinePeak ?? 'NaN', current: summary.currentPeak ?? 'NaN', allowed_pct: summary.tier?.allowedPct ?? 'NaN' })} 1`,
 		);
 	};
-	pushGauge(
-		'baseline_peak_mb',
-		summary.baselinePeak ?? 0,
-		'Baseline peak memory in MB',
-	);
-	pushGauge(
-		'current_peak_mb',
-		summary.currentPeak ?? 0,
-		'Current run peak memory in MB',
-	);
+	pushGauge('baseline_peak_mb', summary.baselinePeak ?? 0, 'Baseline peak memory in MB');
+	pushGauge('current_peak_mb', summary.currentPeak ?? 0, 'Current run peak memory in MB');
 	pushGauge(
 		'delta_allowed_mb',
 		summary.deltaAllowedMB ?? 0,
 		'Configured absolute delta allowance in MB',
 	);
-	pushGauge(
-		'pct_allowed',
-		summary.tier?.allowedPct ?? -1,
-		'Allowed percentage increase',
-	);
+	pushGauge('pct_allowed', summary.tier?.allowedPct ?? -1, 'Allowed percentage increase');
 	pushGauge(
 		'hard_max_mb',
 		summary.tier?.hardMax ?? (summary.maxMb || 0),
@@ -393,9 +357,7 @@ function writeGuardPromMetrics(summary, _opts, peakMB) {
 		const metricsDir = join(rootDir, '.memory', 'metrics');
 		if (!existsSync(metricsDir)) mkdirSync(metricsDir, { recursive: true });
 		const lines = [];
-		lines.push(
-			'# HELP cortex_memory_guard_peak_bytes Peak RSS in bytes for evaluated run',
-		);
+		lines.push('# HELP cortex_memory_guard_peak_bytes Peak RSS in bytes for evaluated run');
 		lines.push('# TYPE cortex_memory_guard_peak_bytes gauge');
 		lines.push(
 			`cortex_memory_guard_peak_bytes{status="${summary.status}",reason="${summary.reasonCode}",tiered="${summary.policy.tiered}"} ${peakMB * 1024 * 1024}`,
@@ -411,10 +373,7 @@ function writeGuardPromMetrics(summary, _opts, peakMB) {
 				`cortex_memory_guard_tier_info{limit="${td.limit}",allowedPct="${td.pct}",hardMax="${hardMaxVal}"} 1`,
 			);
 		}
-		writeFileSync(
-			join(metricsDir, 'memory-guard.prom'),
-			`${lines.join('\n')}\n`,
-		);
+		writeFileSync(join(metricsDir, 'memory-guard.prom'), `${lines.join('\n')}\n`);
 		log('INFO', 'Prometheus guard metrics written (memory-guard.prom)');
 	} catch (e) {
 		log('WARN', `Failed to write Prometheus metrics: ${e.message}`);
@@ -443,9 +402,7 @@ function buildEvaluation({ peakMB, baseline, opts }) {
 	if (opts.maxMb && peakMB > opts.maxMb) {
 		failed = true;
 		reasonCode = 'HARD_MAX';
-		reasons.push(
-			`Peak ${peakMB.toFixed(2)}MB exceeds hard max ${opts.maxMb}MB`,
-		);
+		reasons.push(`Peak ${peakMB.toFixed(2)}MB exceeds hard max ${opts.maxMb}MB`);
 	}
 	if (!failed && tierInfo.tierHardMaxTriggered) {
 		failed = true;
@@ -457,16 +414,12 @@ function buildEvaluation({ peakMB, baseline, opts }) {
 	if (!failed && opts.allowedDeltaMb != null && delta > opts.allowedDeltaMb) {
 		failed = true;
 		reasonCode = 'DELTA';
-		reasons.push(
-			`Delta ${delta.toFixed(2)}MB exceeds allowed delta ${opts.allowedDeltaMb}MB`,
-		);
+		reasons.push(`Delta ${delta.toFixed(2)}MB exceeds allowed delta ${opts.allowedDeltaMb}MB`);
 	}
 	if (!failed && pct > tierInfo.effectiveAllowedPct) {
 		failed = true;
 		reasonCode = opts.tiered ? 'PCT_TIER' : 'PCT';
-		reasons.push(
-			`Increase ${pct.toFixed(1)}% exceeds allowed ${tierInfo.effectiveAllowedPct}%`,
-		);
+		reasons.push(`Increase ${pct.toFixed(1)}% exceeds allowed ${tierInfo.effectiveAllowedPct}%`);
 	}
 	return { baselinePeak, delta, pct, tierInfo, failed, reasonCode, reasons };
 }

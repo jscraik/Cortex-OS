@@ -22,9 +22,7 @@ function runCapture(cmd) {
 function ensureCleanTree() {
 	const status = runCapture('git status --porcelain');
 	if (status) {
-		console.error(
-			'[baseline] Working tree not clean. Commit or stash changes first.',
-		);
+		console.error('[baseline] Working tree not clean. Commit or stash changes first.');
 		process.exit(1);
 	}
 }
@@ -32,9 +30,7 @@ function ensureCleanTree() {
 function ensureOnMain() {
 	const branch = runCapture('git rev-parse --abbrev-ref HEAD');
 	if (branch !== 'main') {
-		console.error(
-			`[baseline] Must regenerate baseline from main (current: ${branch}).`,
-		);
+		console.error(`[baseline] Must regenerate baseline from main (current: ${branch}).`);
 		process.exit(1);
 	}
 }
@@ -91,9 +87,7 @@ async function main() {
 		execSync(semgrepCmd, { stdio: 'inherit', shell: '/bin/bash' });
 	} catch (e) {
 		semgrepFailed = true;
-		console.error(
-			`[baseline] Semgrep exited non-zero (code may be partial). error=${e.message}`,
-		);
+		console.error(`[baseline] Semgrep exited non-zero (code may be partial). error=${e.message}`);
 	}
 
 	if (!existsSync(tempPath)) {
@@ -107,11 +101,7 @@ async function main() {
 	}
 
 	const newData = readFileSync(tempPath, 'utf8');
-	const hash = crypto
-		.createHash('sha256')
-		.update(newData)
-		.digest('hex')
-		.slice(0, 12);
+	const hash = crypto.createHash('sha256').update(newData).digest('hex').slice(0, 12);
 	writeFileSync(BASELINE_PATH, newData, 'utf8');
 	run(`rm -f ${tempPath}`);
 

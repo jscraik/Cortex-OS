@@ -30,12 +30,7 @@ function findPackageRoots() {
 	const pkgDirs = entries
 		.map((p) => path.dirname(path.resolve(workspaceRoot, p)))
 		// filter only real directories excluding workspace root
-		.filter(
-			(dir) =>
-				dir !== workspaceRoot &&
-				fs.existsSync(dir) &&
-				fs.statSync(dir).isDirectory(),
-		);
+		.filter((dir) => dir !== workspaceRoot && fs.existsSync(dir) && fs.statSync(dir).isDirectory());
 	// de-duplicate in case of overlaps
 	return Array.from(new Set(pkgDirs));
 }

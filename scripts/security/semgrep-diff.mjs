@@ -17,9 +17,7 @@ if (fs.existsSync(baselinePath)) {
 		const raw = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
 		baselineFindings = raw.results || raw.findings || [];
 	} catch (_e) {
-		console.warn(
-			'[semgrep-diff] failed to parse baseline, continuing as empty',
-		);
+		console.warn('[semgrep-diff] failed to parse baseline, continuing as empty');
 	}
 }
 

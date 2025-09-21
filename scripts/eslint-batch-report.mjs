@@ -37,9 +37,7 @@ async function ensureFileList() {
 		encoding: 'utf8',
 	})
 		.split(/\n+/)
-		.filter(
-			(f) => f.includes('/src/') && !f.endsWith('.d.ts') && f.trim().length > 0,
-		);
+		.filter((f) => f.includes('/src/') && !f.endsWith('.d.ts') && f.trim().length > 0);
 	fs.mkdirSync(path.dirname(listFile), { recursive: true });
 	fs.writeFileSync(listFile, raw.join('\n'));
 	return raw;
@@ -51,9 +49,7 @@ async function ensureFileList() {
 		console.error('[eslint-batch] No files to lint.');
 		process.exit(1);
 	}
-	console.log(
-		`[eslint-batch] Files: ${allFiles.length}  Chunk size: ${chunkSize}`,
-	);
+	console.log(`[eslint-batch] Files: ${allFiles.length}  Chunk size: ${chunkSize}`);
 	const chunks = [];
 	for (let i = 0; i < allFiles.length; i += chunkSize) {
 		chunks.push(allFiles.slice(i, i + chunkSize));
@@ -63,9 +59,7 @@ async function ensureFileList() {
 	const aggregated = [];
 	for (let i = 0; i < chunks.length; i++) {
 		const chunk = chunks[i];
-		console.log(
-			`[eslint-batch] Linting chunk ${i + 1}/${chunks.length} (${chunk.length} files)`,
-		);
+		console.log(`[eslint-batch] Linting chunk ${i + 1}/${chunks.length} (${chunk.length} files)`);
 		try {
 			const { stdout } = await execa(
 				'pnpm',
@@ -88,32 +82,18 @@ async function ensureFileList() {
 			try {
 				const parsed = JSON.parse(stdout || '[]');
 				if (Array.isArray(parsed)) aggregated.push(...parsed);
-				else
-					console.warn(
-						'[eslint-batch] Unexpected JSON structure for chunk',
-						i + 1,
-					);
+				else console.warn('[eslint-batch] Unexpected JSON structure for chunk', i + 1);
 			} catch (err) {
-				console.warn(
-					'[eslint-batch] Failed to parse JSON for chunk',
-					i + 1,
-					err.message,
-				);
+				console.warn('[eslint-batch] Failed to parse JSON for chunk', i + 1, err.message);
 			}
 		} catch (err) {
-			console.warn(
-				'[eslint-batch] Chunk process error',
-				err.shortMessage || err.message,
-			);
+			console.warn('[eslint-batch] Chunk process error', err.shortMessage || err.message);
 		}
 	}
 
 	fs.mkdirSync(path.dirname(outFile), { recursive: true });
 	fs.writeFileSync(outFile, JSON.stringify(aggregated, null, 2));
-	const totalMessages = aggregated.reduce(
-		(acc, r) => acc + (r.messages?.length || 0),
-		0,
-	);
+	const totalMessages = aggregated.reduce((acc, r) => acc + (r.messages?.length || 0), 0);
 	console.log(
 		`[eslint-batch] Wrote ${aggregated.length} file results with ${totalMessages} total messages to ${outFile}`,
 	);

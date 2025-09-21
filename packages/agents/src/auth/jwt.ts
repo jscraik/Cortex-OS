@@ -1,4 +1,4 @@
-import { type JWTVerifyResult, SignJWT, jwtVerify } from 'jose';
+import { type JWTVerifyResult, jwtVerify, SignJWT } from 'jose';
 import type { AuthOptions, JWTPayload } from './types';
 
 const DEFAULT_ALGORITHM = 'HS256';

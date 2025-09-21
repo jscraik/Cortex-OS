@@ -1,11 +1,13 @@
-export * from './database';
-export * from './agent-state';
 export type { AgentState } from './agent-state';
+export * from './agent-state';
 export * from './checkpoint-store';
+export * from './database';
 export * from './migrations/001_initial';
 
 import type Database from 'better-sqlite3';
+
 type DbType = Database.Database;
+
 import {
 	type AgentState,
 	type AgentStateListResult,

@@ -15,10 +15,7 @@ const databaseManagerPath = join(
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Fix the formatting issue where methods are concatenated
-content = content.replace(
-	/\}async updateAgentStatus/,
-	'\n\n  async updateAgentStatus',
-);
+content = content.replace(/\}async updateAgentStatus/, '\n\n  async updateAgentStatus');
 
 // Write the updated content back to the file
 writeFileSync(databaseManagerPath, content);

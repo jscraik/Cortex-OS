@@ -1,9 +1,13 @@
 import { type Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
-
-import { type Memory, type MemorySearchOptions, type MemoryStore, type SearchResult } from '../ports/MemoryStore.js';
 import { StoreError } from '../errors.js';
-import { getExternalStorageManager, type ExternalStorageManager } from './external-storage.js';
+import type {
+	Memory,
+	MemorySearchOptions,
+	MemoryStore,
+	SearchResult,
+} from '../ports/MemoryStore.js';
+import { type ExternalStorageManager, getExternalStorageManager } from './external-storage.js';
 
 export interface ExternalSqliteConfig {
 	dbName?: string;
@@ -64,7 +68,7 @@ export class ExternalSqliteStore implements MemoryStore {
 		try {
 			// Ensure directory exists
 			const dbDir = this.dbPath.substring(0, this.dbPath.lastIndexOf('/'));
-			await import('node:fs').then(fs => fs.promises.mkdir(dbDir, { recursive: true }));
+			await import('node:fs').then((fs) => fs.promises.mkdir(dbDir, { recursive: true }));
 
 			// Open database connection
 			this.db = await open({
@@ -197,7 +201,9 @@ export class ExternalSqliteStore implements MemoryStore {
 		await this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_provenance ON memories(provenance)');
 
 		// Composite index for common queries
-		await this.db.run('CREATE INDEX IF NOT EXISTS idx_memories_kind_created_at ON memories(kind, created_at)');
+		await this.db.run(
+			'CREATE INDEX IF NOT EXISTS idx_memories_kind_created_at ON memories(kind, created_at)',
+		);
 	}
 
 	async upsert(memory: Omit<Memory, 'id'> & { id?: string }): Promise<Memory> {
@@ -230,7 +236,7 @@ export class ExternalSqliteStore implements MemoryStore {
 					fullMemory.updatedAt,
 					Buffer.byteLength(JSON.stringify(fullMemory), 'utf8'),
 					JSON.stringify(fullMemory.provenance || {}),
-				]
+				],
 			);
 
 			return fullMemory;
@@ -278,7 +284,7 @@ export class ExternalSqliteStore implements MemoryStore {
 			if (options.tags && options.tags.length > 0) {
 				const tagConditions = options.tags.map(() => 'm.tags LIKE ?').join(' OR ');
 				query += ` AND (${tagConditions})`;
-				options.tags.forEach(tag => {
+				options.tags.forEach((tag) => {
 					params.push(`%"${tag}"%`);
 				});
 			}
@@ -298,7 +304,7 @@ export class ExternalSqliteStore implements MemoryStore {
 			query += ` LIMIT ${Math.min(options.limit || 10, 100)}`;
 
 			const rows = await this.db.all(query, params);
-			const memories = rows.map(row => this.rowToMemory(row));
+			const memories = rows.map((row) => this.rowToMemory(row));
 
 			// Get total count
 			const countQuery = `

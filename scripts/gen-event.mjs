@@ -21,15 +21,11 @@ if (!domain || !eventName) {
 
 // Basic validation
 if (!/^[a-z0-9-]+$/.test(domain)) {
-	console.error(
-		'Domain must be kebab-case: lowercase letters, digits, hyphens',
-	);
+	console.error('Domain must be kebab-case: lowercase letters, digits, hyphens');
 	process.exit(1);
 }
 if (!/^[a-z0-9-.]+$/.test(eventName)) {
-	console.error(
-		'Event name must be dot-separated lifecycle tokens (e.g., task.created)',
-	);
+	console.error('Event name must be dot-separated lifecycle tokens (e.g., task.created)');
 	process.exit(1);
 }
 
@@ -37,10 +33,7 @@ const root = process.cwd();
 const contractsDir = path.join(root, 'libs', 'typescript', 'contracts', domain);
 const eventsFile = path.join(contractsDir, 'events.ts');
 const testsDir = path.join(root, 'contracts', 'tests');
-const testFile = path.join(
-	testsDir,
-	`${eventName.replace(/\./g, '-')}.contract.test.ts`,
-);
+const testFile = path.join(testsDir, `${eventName.replace(/\./g, '-')}.contract.test.ts`);
 
 fs.mkdirSync(contractsDir, { recursive: true });
 fs.mkdirSync(testsDir, { recursive: true });
@@ -54,9 +47,7 @@ if (
 	eventsContent.includes(`const ${schemaConstName}`) ||
 	eventsContent.includes(`export const ${schemaConstName}`)
 ) {
-	console.log(
-		`[gen-event] Schema already exists in ${eventsFile}, skipping schema append.`,
-	);
+	console.log(`[gen-event] Schema already exists in ${eventsFile}, skipping schema append.`);
 } else {
 	const schemaBlock = `\n// Schema for ${eventName}\nexport const ${schemaConstName} = z.object({\n  // REQUIRED FIELDS\n  // e.g. taskId: z.string(),\n});\n`;
 	eventsContent += schemaBlock;

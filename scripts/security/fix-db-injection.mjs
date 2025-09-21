@@ -72,8 +72,7 @@ const insecurePatterns = [
     stmt.run(...values);`,
 	},
 	{
-		pattern:
-			/this\.statements\.get\("updateTaskStatus"\)!\.run\(([^,]+),\s*([^)]+)\);/g,
+		pattern: /this\.statements\.get\("updateTaskStatus"\)!\.run\(([^,]+),\s*([^)]+)\);/g,
 		replacement: `// TODO: Implement proper input validation for updateTaskStatus
     this.statements.get("updateTaskStatus")!.run($1, $2);`,
 	},
@@ -146,6 +145,4 @@ writeFileSync(databaseManagerPath, content);
 console.log(
 	'✅ Database injection vulnerabilities have been marked for fixing in DatabaseManager.ts',
 );
-console.log(
-	'⚠️  Please review the TODO comments and implement proper input validation',
-);
+console.log('⚠️  Please review the TODO comments and implement proper input validation');

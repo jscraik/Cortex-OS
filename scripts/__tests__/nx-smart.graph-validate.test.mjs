@@ -23,17 +23,15 @@ describe('nx-smart graph validation', () => {
 					if (cmd.startsWith('nx graph')) {
 						// Minimal fake graph file
 						const fs = require('node:fs');
-						const graphContent = `(function(){ window.projectGraph = ${JSON.stringify(
-							{
-								graph: {
-									nodes: { 'pkg-root': {}, 'pkg-dep': {} },
-									dependencies: {
-										'pkg-root': [{ target: 'pkg-dep' }],
-										'pkg-dep': [],
-									},
+						const graphContent = `(function(){ window.projectGraph = ${JSON.stringify({
+							graph: {
+								nodes: { 'pkg-root': {}, 'pkg-dep': {} },
+								dependencies: {
+									'pkg-root': [{ target: 'pkg-dep' }],
+									'pkg-dep': [],
 								},
 							},
-						)}; })();`;
+						})}; })();`;
 						const file = cmd.split('--file=')[1].split(' ')[0];
 						fs.writeFileSync(file, graphContent, 'utf8');
 						return '';

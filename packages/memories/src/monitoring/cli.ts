@@ -1,19 +1,16 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { createStoreFromEnv } from '../config/store-from-env.js';
-import { MemoryHealthChecker, type HealthCheckConfig } from './health-check.js';
-import { MemoryMetricsCollector, type MetricsCollectorConfig } from './metrics-collector.js';
-import { OperationalDashboard } from './operaional-dashboard.js';
-import { initializeExternalStorage } from '../adapters/external-storage.js';
 import table from 'tty-table';
+import { initializeExternalStorage } from '../adapters/external-storage.js';
+import { createStoreFromEnv } from '../config/store-from-env.js';
+import { MemoryHealthChecker } from './health-check.js';
+import { MemoryMetricsCollector } from './metrics-collector.js';
+import { OperationalDashboard } from './operaional-dashboard.js';
 
 const program = new Command();
 
-program
-	.name('memories-monitor')
-	.description('Monitoring CLI for Cortex Memories')
-	.version('1.0.0');
+program.name('memories-monitor').description('Monitoring CLI for Cortex Memories').version('1.0.0');
 
 // Health check command
 program
@@ -30,11 +27,14 @@ program
 			console.log(`Watching health status every ${options.interval}ms...`);
 			console.log('Press Ctrl+C to stop\n');
 
-			const interval = setInterval(async () => {
-				const result = await healthChecker.checkHealth();
-				displayHealth(result, options.detailed);
-				console.log('\n');
-			}, parseInt(options.interval));
+			const interval = setInterval(
+				async () => {
+					const result = await healthChecker.checkHealth();
+					displayHealth(result, options.detailed);
+					console.log('\n');
+				},
+				parseInt(options.interval, 10),
+			);
 
 			process.on('SIGINT', () => {
 				clearInterval(interval);
@@ -67,18 +67,21 @@ program
 			console.log(`Watching metrics every ${options.interval}ms...`);
 			console.log('Press Ctrl+C to stop\n');
 
-			const interval = setInterval(async () => {
-				await metricsCollector.updateStorageMetrics();
-				const metrics = metricsCollector.getMetrics();
+			const interval = setInterval(
+				async () => {
+					await metricsCollector.updateStorageMetrics();
+					const metrics = metricsCollector.getMetrics();
 
-				if (options.json) {
-					console.log(JSON.stringify(metrics, null, 2));
-				} else {
-					displayMetrics(metrics);
-				}
+					if (options.json) {
+						console.log(JSON.stringify(metrics, null, 2));
+					} else {
+						displayMetrics(metrics);
+					}
 
-				console.log('\n');
-			}, parseInt(options.interval));
+					console.log('\n');
+				},
+				parseInt(options.interval, 10),
+			);
 
 			process.on('SIGINT', () => {
 				clearInterval(interval);
@@ -108,14 +111,14 @@ program
 		const store = await createStoreFromEnv();
 		const healthChecker = new MemoryHealthChecker(store);
 		const metricsCollector = new MemoryMetricsCollector(store);
-		const instrumentedStore = metricsCollector.createInstrumentedStore();
+		const _instrumentedStore = metricsCollector.createInstrumentedStore();
 
 		// Initialize external storage
 		await initializeExternalStorage();
 
 		const dashboard = new OperationalDashboard(healthChecker, metricsCollector, {
-			port: parseInt(options.port),
-			refreshIntervalMs: parseInt(options.refresh),
+			port: parseInt(options.port, 10),
+			refreshIntervalMs: parseInt(options.refresh, 10),
 		});
 
 		console.log(`Starting dashboard on port ${options.port}...`);
@@ -135,10 +138,13 @@ program
 			console.log(`Watching storage status every ${options.interval}ms...`);
 			console.log('Press Ctrl+C to stop\n');
 
-			const interval = setInterval(() => {
-				displayStorageStatus(externalManager);
-				console.log('\n');
-			}, parseInt(options.interval));
+			const interval = setInterval(
+				() => {
+					displayStorageStatus(externalManager);
+					console.log('\n');
+				},
+				parseInt(options.interval, 10),
+			);
 
 			process.on('SIGINT', () => {
 				clearInterval(interval);
@@ -163,11 +169,13 @@ program
 		});
 		const instrumentedStore = metricsCollector.createInstrumentedStore();
 
-		const concurrency = parseInt(options.concurrency);
-		const duration = parseInt(options.duration) * 1000;
+		const concurrency = parseInt(options.concurrency, 10);
+		const duration = parseInt(options.duration, 10) * 1000;
 		const operationType = options.operations;
 
-		console.log(`Running stress test: ${concurrency} concurrent ${operationType} operations for ${options.duration} seconds`);
+		console.log(
+			`Running stress test: ${concurrency} concurrent ${operationType} operations for ${options.duration} seconds`,
+		);
 
 		const startTime = Date.now();
 		let completedOperations = 0;
@@ -190,21 +198,23 @@ program
 			while (Date.now() - startTime < duration) {
 				try {
 					switch (operationType) {
-						case 'upsert':
+						case 'upsert': {
 							const memory = testMemories[Math.floor(Math.random() * testMemories.length)];
 							await instrumentedStore.upsert({ ...memory, id: `${memory.id}-${Date.now()}` });
 							break;
+						}
 						case 'search':
 							await instrumentedStore.search({
 								query: 'stress test',
 								limit: 10,
 							});
 							break;
-						case 'get':
+						case 'get': {
 							const id = `stress-test-${Math.floor(Math.random() * 100)}`;
 							await instrumentedStore.get(id);
 							break;
-						case 'mixed':
+						}
+						case 'mixed': {
 							const op = Math.floor(Math.random() * 3);
 							if (op === 0) {
 								const memory = testMemories[Math.floor(Math.random() * testMemories.length)];
@@ -216,9 +226,10 @@ program
 								await instrumentedStore.get(id);
 							}
 							break;
+						}
 					}
 					completedOperations++;
-				} catch (error) {
+				} catch (_error) {
 					errors++;
 				}
 			}
@@ -280,7 +291,9 @@ function displayHealth(result: any, detailed: boolean) {
 	if (result.metrics) {
 		console.log('\nSystem Metrics:');
 		console.log(`Uptime: ${formatDuration(result.metrics.uptimeMs)}`);
-		console.log(`Memory Usage: ${(result.metrics.memoryUsage.heapUsed / 1024 / 1024).toFixed(2)}MB`);
+		console.log(
+			`Memory Usage: ${(result.metrics.memoryUsage.heapUsed / 1024 / 1024).toFixed(2)}MB`,
+		);
 	}
 }
 
@@ -323,7 +336,7 @@ function displayStorageStatus(manager: any) {
 
 	if (current) {
 		console.log(`Current Storage: ${current}`);
-		const currentStatus = allStatus.find(s => s.path === current);
+		const currentStatus = allStatus.find((s) => s.path === current);
 		if (currentStatus) {
 			console.log(`Available: ${currentStatus.available ? 'Yes' : 'No'}`);
 			console.log(`Free Space: ${currentStatus.freeSpaceGB?.toFixed(2) || 'N/A'} GB`);

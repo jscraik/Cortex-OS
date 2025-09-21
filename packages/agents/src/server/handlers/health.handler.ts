@@ -8,12 +8,12 @@ export class HealthHandler {
 
 	constructor() {
 		this.healthMonitor = new HealthMonitor({
-			checkInterval: Number.parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000'),
+			checkInterval: Number.parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10),
 			enableEvents: true,
 		});
 		this.metricsCollector = new MetricsCollector({
 			enablePrometheus: true,
-			retentionPeriod: Number.parseInt(process.env.METRICS_RETENTION || '3600000'),
+			retentionPeriod: Number.parseInt(process.env.METRICS_RETENTION || '3600000', 10),
 		});
 	}
 

@@ -67,14 +67,7 @@ console.log('✅ Fixed remaining Cypher injection issues');
 console.log('Documenting safe subprocess calls...');
 
 // Add a comment to executor.py to indicate the subprocess call is safe
-const executorPath = join(
-	'packages',
-	'mcp',
-	'src',
-	'python',
-	'src',
-	'executor.py',
-);
+const executorPath = join('packages', 'mcp', 'src', 'python', 'src', 'executor.py');
 let executorContent = readFileSync(executorPath, 'utf-8');
 
 executorContent = executorContent.replace(
@@ -85,13 +78,7 @@ executorContent = executorContent.replace(
 writeFileSync(executorPath, executorContent);
 
 // Add a comment to thermal_guard.py to indicate the subprocess call is safe
-const thermalGuardPath = join(
-	'packages',
-	'orchestration',
-	'src',
-	'mlx',
-	'thermal_guard.py',
-);
+const thermalGuardPath = join('packages', 'orchestration', 'src', 'mlx', 'thermal_guard.py');
 let thermalGuardContent = readFileSync(thermalGuardPath, 'utf-8');
 
 thermalGuardContent = thermalGuardContent.replace(

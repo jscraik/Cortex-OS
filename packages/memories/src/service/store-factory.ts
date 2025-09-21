@@ -1,14 +1,14 @@
+import { initializeExternalStorage } from '../adapters/external-storage.js';
 import { PolicyEncryptedStore } from '../adapters/store.encrypted.policy.js';
+import { ExternalSqliteStore } from '../adapters/store.external-sqlite.js';
 import { LayeredMemoryStore } from '../adapters/store.layered.js';
 import { LocalMemoryStore } from '../adapters/store.localmemory.js';
 import { InMemoryStore } from '../adapters/store.memory.js';
-import { ExternalSqliteStore } from '../adapters/store.external-sqlite.js';
 import type { PrismaLike } from '../adapters/store.prisma/client.js';
 import { PrismaStore } from '../adapters/store.prisma/client.js';
 import { ENV, getEnvWithFallback } from '../config/constants.js';
 import { type EncryptionService, InMemoryAesGcm } from '../ports/Encryption.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
-import { initializeExternalStorage } from '../adapters/external-storage.js';
 
 export type NamespaceSelectorConfig = {
 	namespaces?: string[];

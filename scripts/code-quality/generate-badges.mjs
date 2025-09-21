@@ -17,8 +17,7 @@ function loadBranchCoverage() {
 	if (fs.existsSync(historyFile)) {
 		try {
 			const history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
-			if (Array.isArray(history) && history.length)
-				return history[history.length - 1].branchesPct;
+			if (Array.isArray(history) && history.length) return history[history.length - 1].branchesPct;
 		} catch {
 			// Silently fall back if file parsing fails
 		}
@@ -94,10 +93,7 @@ function qualityBadge(pass) {
 	const width = labelWidth + valueWidth;
 	return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="20" role="img" aria-label="${label}: ${text}">\n  <linearGradient id="s" x2="0" y2="100%">\n    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>\n    <stop offset="1" stop-opacity=".1"/>\n  </linearGradient>\n  <rect rx="3" width="${width}" height="20" fill="#555"/>\n  <rect rx="3" x="${labelWidth}" width="${valueWidth}" height="20" fill="${color}"/>\n  <rect rx="3" width="${width}" height="20" fill="url(#s)"/>\n  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">\n    <text x="${labelWidth / 2}" y="14">${label}</text>\n    <text x="${labelWidth + valueWidth / 2}" y="14">${text}</text>\n  </g>\n</svg>`;
 }
-fs.writeFileSync(
-	path.join(OUT_DIR, 'quality-gate.svg'),
-	qualityBadge(qualityGatePass),
-);
+fs.writeFileSync(path.join(OUT_DIR, 'quality-gate.svg'), qualityBadge(qualityGatePass));
 
 // 3. Mutation history append (simple array of samples)
 const mutationHistoryFile = path.resolve('reports/mutation-history.json');
@@ -147,19 +143,14 @@ if (fs.existsSync(branchHistoryFile)) {
 	try {
 		const raw = JSON.parse(fs.readFileSync(branchHistoryFile, 'utf8'));
 		if (Array.isArray(raw))
-			branchHistory = raw
-				.map((r) => r.branchesPct)
-				.filter((v) => typeof v === 'number');
+			branchHistory = raw.map((r) => r.branchesPct).filter((v) => typeof v === 'number');
 	} catch {
 		/* ignore */
 	}
 }
 if (branchHistory.length) {
 	try {
-		fs.writeFileSync(
-			path.join(OUT_DIR, 'branch-trend.svg'),
-			buildSparkline(branchHistory),
-		);
+		fs.writeFileSync(path.join(OUT_DIR, 'branch-trend.svg'), buildSparkline(branchHistory));
 	} catch {
 		/* ignore */
 	}
@@ -208,9 +199,7 @@ try {
 			const operatorArray = Array.from(operatorStats.entries())
 				.map(([mutator, stats]) => {
 					const detected = stats.killed + stats.timeout; // treat timeout as detected
-					const detectionRate = stats.total
-						? (detected / stats.total) * 100
-						: 0;
+					const detectionRate = stats.total ? (detected / stats.total) * 100 : 0;
 					return {
 						mutator,
 						...stats,
@@ -232,10 +221,7 @@ try {
 					`| ${op.mutator} | ${op.total} | ${op.killed} | ${op.survived} | ${op.noCoverage} | ${op.timeout} | ${op.detectionRate}% |`,
 				);
 			}
-			fs.writeFileSync(
-				path.join(OUT_DIR, 'mutation-operators-summary.md'),
-				mdLines.join('\n'),
-			);
+			fs.writeFileSync(path.join(OUT_DIR, 'mutation-operators-summary.md'), mdLines.join('\n'));
 		}
 	}
 } catch (e) {
@@ -254,10 +240,7 @@ try {
 		mutationSamples: mutationHistory.length,
 		generatedAt: new Date().toISOString(),
 	};
-	fs.writeFileSync(
-		path.join(OUT_DIR, 'metrics.json'),
-		JSON.stringify(metrics, null, 2),
-	);
+	fs.writeFileSync(path.join(OUT_DIR, 'metrics.json'), JSON.stringify(metrics, null, 2));
 } catch (e) {
 	console.warn('[generate-badges] Failed to write metrics.json', e);
 }

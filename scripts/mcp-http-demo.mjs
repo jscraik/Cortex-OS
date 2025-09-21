@@ -20,15 +20,7 @@ function parseArgs(argv) {
 const { port } = parseArgs(process.argv.slice(2));
 
 const cmd = 'pnpm';
-const forwarded = [
-	'-s',
-	'-C',
-	'packages/prp-runner',
-	'demo:mcp',
-	'--',
-	'--port',
-	String(port),
-];
+const forwarded = ['-s', '-C', 'packages/prp-runner', 'demo:mcp', '--', '--port', String(port)];
 
 const child = spawn(cmd, forwarded, { stdio: 'inherit', shell: false });
 child.on('exit', (code) => process.exit(code ?? 0));

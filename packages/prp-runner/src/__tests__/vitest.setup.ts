@@ -86,9 +86,7 @@ vi.mock('../mlx-adapter.js', async () => {
 		private unloadTimeout = 1000;
 		private maxCacheSize = 0;
 		constructor(config: MockMLXConfig | undefined) {
-			this.modelName = String(
-				config?.modelName || 'Qwen2.5-0.5B-Instruct-4bit',
-			); // valid, no change
+			this.modelName = String(config?.modelName || 'Qwen2.5-0.5B-Instruct-4bit'); // valid, no change
 			// include both canonical names and short tokens to improve matching
 			this.availableModels = (Object.values(AVAILABLE_MLX_MODELS) as string[]).concat([
 				'qwen',

@@ -184,7 +184,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 				name: 'test-neuron',
 				description: 'Test neuron',
 				inputSchema: { type: 'object' },
-				execute: async (params: any, context: any) => {
+				execute: async (params: any, _context: any) => {
 					return { success: true, params };
 				},
 			};

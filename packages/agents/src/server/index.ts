@@ -77,7 +77,7 @@ app.post('/auth/token', async (c) => {
 	});
 });
 
-// Metrics endpoint with authentication  
+// Metrics endpoint with authentication
 app.use('/metrics/*', authMiddleware({ secret: JWT_SECRET }));
 app.route('/metrics', metricsRoutes);
 

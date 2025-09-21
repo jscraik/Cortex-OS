@@ -130,7 +130,7 @@ export class MCPAdapter {
 		try {
 			const hooks = await this.initializeHooks();
 			const effectiveParams = await this.runPreToolHooks(hooks, toolName, params, context);
-			const result = await tool.execute(effectiveParams, context) as Result;
+			const result = (await tool.execute(effectiveParams, context)) as Result;
 			const evidence = this.createToolEvidence(toolName, effectiveParams, result);
 
 			await this.runPostToolHooks(hooks, toolName, effectiveParams, context);

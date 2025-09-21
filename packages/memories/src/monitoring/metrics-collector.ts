@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { type MemoryStore, type MemorySearchOptions, type SearchResult } from '../ports/MemoryStore.js';
+import type { MemorySearchOptions, MemoryStore } from '../ports/MemoryStore.js';
 
 export interface MemoryMetrics {
 	operations: {
@@ -159,10 +159,7 @@ export class MemoryMetricsCollector extends EventEmitter {
 	/**
 	 * Instrument an operation with metrics collection
 	 */
-	async instrumentOperation<T>(
-		operation: string,
-		fn: () => Promise<T>,
-	): Promise<T> {
+	async instrumentOperation<T>(operation: string, fn: () => Promise<T>): Promise<T> {
 		// Skip sampling if not enabled or random check fails
 		if (!this.shouldSample(operation)) {
 			return fn();
@@ -194,7 +191,7 @@ export class MemoryMetricsCollector extends EventEmitter {
 	/**
 	 * Check if operation should be sampled
 	 */
-	private shouldSample(operation: string): boolean {
+	private shouldSample(_operation: string): boolean {
 		if (!this.config.enabledMetrics.includes('operations')) {
 			return false;
 		}
@@ -236,7 +233,8 @@ export class MemoryMetricsCollector extends EventEmitter {
 		this.metrics.errors.total++;
 		const errorType = error?.name || 'Unknown';
 		this.metrics.errors.byType[errorType] = (this.metrics.errors.byType[errorType] || 0) + 1;
-		this.metrics.errors.byOperation[operation] = (this.metrics.errors.byOperation[operation] || 0) + 1;
+		this.metrics.errors.byOperation[operation] =
+			(this.metrics.errors.byOperation[operation] || 0) + 1;
 
 		this.emit('error', {
 			operation,
@@ -292,13 +290,14 @@ export class MemoryMetricsCollector extends EventEmitter {
 			}
 
 			this.metrics.storage.totalSizeBytes = totalSize;
-			this.metrics.storage.averageMemorySizeBytes = searchResult.total > 0 ? totalSize / searchResult.total : 0;
+			this.metrics.storage.averageMemorySizeBytes =
+				searchResult.total > 0 ? totalSize / searchResult.total : 0;
 			this.metrics.storage.memoriesByKind = kindCounts;
 
 			// If we got all memories, we're done. Otherwise, estimate total size
 			if (searchResult.hasMore && searchResult.total > searchResult.memories.length) {
 				this.metrics.storage.totalSizeBytes = Math.round(
-					(totalSize / searchResult.memories.length) * searchResult.total
+					(totalSize / searchResult.memories.length) * searchResult.total,
 				);
 			}
 		} catch (error) {
@@ -327,7 +326,8 @@ export class MemoryMetricsCollector extends EventEmitter {
 		if (allLatencies.length > 0) {
 			allLatencies.sort((a, b) => a - b);
 
-			this.metrics.performance.averageLatencyMs = allLatencies.reduce((a, b) => a + b, 0) / allLatencies.length;
+			this.metrics.performance.averageLatencyMs =
+				allLatencies.reduce((a, b) => a + b, 0) / allLatencies.length;
 
 			const p95Index = Math.floor(allLatencies.length * 0.95);
 			const p99Index = Math.floor(allLatencies.length * 0.99);
@@ -410,8 +410,14 @@ export class MemoryMetricsCollector extends EventEmitter {
 	 * Calculate overall success rate
 	 */
 	private calculateSuccessRate(): number {
-		const totalOperations = Object.values(this.metrics.operations).reduce((sum, op) => sum + op.count, 0);
-		const totalSuccess = Object.values(this.metrics.operations).reduce((sum, op) => sum + op.successCount, 0);
+		const totalOperations = Object.values(this.metrics.operations).reduce(
+			(sum, op) => sum + op.count,
+			0,
+		);
+		const totalSuccess = Object.values(this.metrics.operations).reduce(
+			(sum, op) => sum + op.successCount,
+			0,
+		);
 
 		return totalOperations > 0 ? totalSuccess / totalOperations : 1;
 	}
@@ -438,8 +444,12 @@ export function createPrometheusExporter(metricsCollector: MemoryMetricsCollecto
 				lines.push(`memories_operation_latency_ms_bucket{operation="${op}",le="1"} 0`);
 				lines.push(`memories_operation_latency_ms_bucket{operation="${op}",le="10"} 0`);
 				lines.push(`memories_operation_latency_ms_bucket{operation="${op}",le="100"} 0`);
-				lines.push(`memories_operation_latency_ms_bucket{operation="${op}",le="+Inf"} ${opMetrics.count}`);
-				lines.push(`memories_operation_latency_ms_sum{operation="${op}"} ${opMetrics.totalLatencyMs}`);
+				lines.push(
+					`memories_operation_latency_ms_bucket{operation="${op}",le="+Inf"} ${opMetrics.count}`,
+				);
+				lines.push(
+					`memories_operation_latency_ms_sum{operation="${op}"} ${opMetrics.totalLatencyMs}`,
+				);
 				lines.push(`memories_operation_latency_ms_count{operation="${op}"} ${opMetrics.count}`);
 			}
 
@@ -464,9 +474,11 @@ export function createPrometheusExporter(metricsCollector: MemoryMetricsCollecto
 
 			lines.push(`# TYPE memories_performance_throughput_per_second gauge`);
 			lines.push(`# HELP memories_performance_throughput_per_second Operations per second`);
-			lines.push(`memories_performance_throughput_per_second ${metrics.performance.throughputPerSecond}`);
+			lines.push(
+				`memories_performance_throughput_per_second ${metrics.performance.throughputPerSecond}`,
+			);
 
-			return lines.join('\n') + '\n';
+			return `${lines.join('\n')}\n`;
 		},
 	};
 }

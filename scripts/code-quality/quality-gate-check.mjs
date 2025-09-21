@@ -4,9 +4,7 @@ import path from 'node:path';
 
 const metricsPath = path.resolve('reports/badges/metrics.json');
 if (!fs.existsSync(metricsPath)) {
-	console.error(
-		'[quality-gate] metrics.json not found. Run pnpm badges:generate first.',
-	);
+	console.error('[quality-gate] metrics.json not found. Run pnpm badges:generate first.');
 	process.exit(1);
 }
 

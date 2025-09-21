@@ -1,20 +1,22 @@
 import { z } from 'zod';
 
 // Base JWT Payload schema
-export const JWTPayloadSchema = z.object({
-	sub: z.string(), // Subject (user ID)
-	iat: z.number().optional(), // Issued at
-	exp: z.number().optional(), // Expiration time
-	roles: z.array(z.string()).optional(), // User roles
-	permissions: z.array(z.string()).optional(), // User permissions
-	apiKeyId: z.string().optional(), // API Key ID if using API key auth
-	type: z.enum(['access', 'refresh']).optional(), // Token type
-	// Standard JWT claims
-	iss: z.string().optional(), // Issuer
-	aud: z.string().optional(), // Audience
-	nbf: z.number().optional(), // Not before
-	jti: z.string().optional(), // JWT ID
-}).passthrough(); // Allow additional properties for flexibility
+export const JWTPayloadSchema = z
+	.object({
+		sub: z.string(), // Subject (user ID)
+		iat: z.number().optional(), // Issued at
+		exp: z.number().optional(), // Expiration time
+		roles: z.array(z.string()).optional(), // User roles
+		permissions: z.array(z.string()).optional(), // User permissions
+		apiKeyId: z.string().optional(), // API Key ID if using API key auth
+		type: z.enum(['access', 'refresh']).optional(), // Token type
+		// Standard JWT claims
+		iss: z.string().optional(), // Issuer
+		aud: z.string().optional(), // Audience
+		nbf: z.number().optional(), // Not before
+		jti: z.string().optional(), // JWT ID
+	})
+	.passthrough(); // Allow additional properties for flexibility
 
 export type JWTPayload = z.infer<typeof JWTPayloadSchema> & {
 	[key: string]: any; // Allow additional properties for testing and extensions

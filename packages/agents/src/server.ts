@@ -7,7 +7,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { createAgentsBusIntegration } from './AgentsBusIntegration.js';
-import { type SubAgentConfig, createMasterAgentGraph } from './MasterAgent.js';
+import { createMasterAgentGraph, type SubAgentConfig } from './MasterAgent.js';
 
 // Define specialized sub-agents following your architecture diagram
 const subAgents: SubAgentConfig[] = [

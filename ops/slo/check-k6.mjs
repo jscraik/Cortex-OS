@@ -21,9 +21,7 @@ function checkSLO(summary, sloCfg) {
 	const p95 = getMetric(summary, 'http_req_duration').values['p(95)'];
 	const failRate = getMetric(summary, 'http_req_failed').values.rate;
 	const limitP95 = Number(process.env.P95_MS || sloCfg?.mcp?.p95_ms || 400);
-	const limitFail = Number(
-		process.env.ERROR_RATE_MAX || sloCfg?.mcp?.error_rate || 0.01,
-	);
+	const limitFail = Number(process.env.ERROR_RATE_MAX || sloCfg?.mcp?.error_rate || 0.01);
 	const ok = p95 <= limitP95 && failRate <= limitFail;
 	return { ok, p95, failRate, limitP95, limitFail };
 }
@@ -38,8 +36,7 @@ function checkBudget(summary, budgetCfg, profile = 'quick') {
 		max_total_req: Infinity,
 		max_total_duration_ms: Infinity,
 	};
-	const ok =
-		totalReq <= limits.max_total_req && totalMs <= limits.max_total_duration_ms;
+	const ok = totalReq <= limits.max_total_req && totalMs <= limits.max_total_duration_ms;
 	return { ok, totalReq, totalMs, limits };
 }
 

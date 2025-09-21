@@ -30,8 +30,7 @@ const testCategories = [
 	{
 		name: 'Static Analysis',
 		description: 'Semgrep security scanning',
-		command:
-			'npx semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR .',
+		command: 'npx semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR .',
 		required: true,
 	},
 	{
@@ -135,16 +134,11 @@ async function generateSecurityReport() {
 
 	const totalTests = testResults.length;
 	const passedTests = testResults.filter((r) => r.success).length;
-	const failedTests = testResults.filter(
-		(r) => !r.success && r.required,
-	).length;
-	const warningTests = testResults.filter(
-		(r) => !r.success && !r.required,
-	).length;
+	const failedTests = testResults.filter((r) => !r.success && r.required).length;
+	const warningTests = testResults.filter((r) => !r.success && !r.required).length;
 
 	const overallStatus = failedTests > 0 ? 'FAIL' : 'PASS';
-	const _overallColor =
-		overallStatus === 'PASS' ? colors.fg.green : colors.fg.red;
+	const _overallColor = overallStatus === 'PASS' ? colors.fg.green : colors.fg.red;
 
 	const reportContent = `
 # 🛡️ Security Test Report
@@ -237,9 +231,7 @@ function displaySummary(_results) {
 	console.log('');
 	const totalTests = testResults.length;
 	const passedTests = testResults.filter((r) => r.success).length;
-	const failedTests = testResults.filter(
-		(r) => !r.success && r.required,
-	).length;
+	const failedTests = testResults.filter((r) => !r.success && r.required).length;
 
 	logHeader(`📈 Overall: ${passedTests}/${totalTests} tests passed`);
 

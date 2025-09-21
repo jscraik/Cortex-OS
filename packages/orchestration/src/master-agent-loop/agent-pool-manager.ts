@@ -809,4 +809,3 @@ export class AgentPoolManager {
 		});
 	}
 }
-

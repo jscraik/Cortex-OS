@@ -16,13 +16,9 @@ try {
 	}
 
 	console.log('\n✅ RED Phase Complete: All tests fail as expected');
-	console.log(
-		'📝 Next: Implement PolicyHotReloader to make tests pass (GREEN phase)',
-	);
+	console.log('📝 Next: Implement PolicyHotReloader to make tests pass (GREEN phase)');
 } catch (error) {
 	console.error('❌ Test runner error:', error.message);
 }
 
-console.log(
-	'\n🎯 TDD Status: RED ✅ - Tests fail appropriately, ready for implementation',
-);
+console.log('\n🎯 TDD Status: RED ✅ - Tests fail appropriately, ready for implementation');

@@ -95,10 +95,6 @@ try {
 }
 
 console.log('✅ neo4j.ts has been updated to use SecureNeo4j');
-console.log(
-	'⚠️  Please review the TODO comments and fully implement the secure operations',
-);
+console.log('⚠️  Please review the TODO comments and fully implement the secure operations');
 console.log('✅ neo4j.ts has been updated to use SecureNeo4j');
-console.log(
-	'⚠️  Please review the TODO comments and fully implement the secure operations',
-);
+console.log('⚠️  Please review the TODO comments and fully implement the secure operations');

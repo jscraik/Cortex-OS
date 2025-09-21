@@ -34,9 +34,7 @@ async function generateWithSyft() {
 }
 async function main() {
 	if (!(await hasBinary('syft'))) {
-		throw new Error(
-			'Syft binary not found. Install from https://github.com/anchore/syft',
-		);
+		throw new Error('Syft binary not found. Install from https://github.com/anchore/syft');
 	}
 	const file = await generateWithSyft();
 	console.log(`SBOM written: ${path.relative(repoRoot, file)}`);

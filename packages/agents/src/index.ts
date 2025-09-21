@@ -5,17 +5,14 @@ export {
 	AGENTS_A2A_SKILLS,
 	AgentsAgent,
 	agentsAgent,
-	createAgentsAgent
+	createAgentsAgent,
 } from './AgentsAgent.js';
 export {
 	AgentsBusIntegration,
-	createAgentsBusIntegration
+	createAgentsBusIntegration,
 } from './AgentsBusIntegration.js';
 // A2A Bus Integration
-export {
-	createAgentsBus,
-	createAgentsSchemaRegistry, type AgentsBusConfig
-} from './a2a.js';
+export { type AgentsBusConfig, createAgentsBus, createAgentsSchemaRegistry } from './a2a.js';
 // Export the main agent class
 export { CortexAgent } from './CortexAgentLangGraph.js';
 // Export types
@@ -24,7 +21,7 @@ export type * from './lib/types';
 export {
 	createMasterAgentGraph,
 	type MasterAgentGraph,
-	type SubAgentConfig
+	type SubAgentConfig,
 } from './MasterAgent.js';
 // Export monitoring
 export * from './monitoring';

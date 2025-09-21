@@ -1,19 +1,19 @@
 // Export health monitoring
+
+export type {
+	ComponentHealth,
+	HealthCheck,
+	HealthMonitorConfig,
+	SystemHealth,
+} from './health';
 export { HealthMonitor } from './health';
 export type {
-	HealthCheck,
-	ComponentHealth,
-	SystemHealth,
-	HealthMonitorConfig,
-} from './health';
-
-// Export metrics collection
-export { MetricsCollector } from './metrics';
-export type {
+	MetricsConfig,
 	RequestMetrics,
 	ResourceMetrics,
-	MetricsConfig,
 } from './metrics';
+// Export metrics collection
+export { MetricsCollector } from './metrics';
 
 // Re-export AgentMetrics with a different name to avoid conflict
 export type AgentMetricsData = import('./metrics').AgentMetrics;

@@ -39,8 +39,7 @@ function updatePackageJson(packagePath) {
 				},
 				{
 					pattern: /^vitest run tests\/integration$/,
-					replacement:
-						'node ../../scripts/vitest-safe.mjs run tests/integration',
+					replacement: 'node ../../scripts/vitest-safe.mjs run tests/integration',
 				},
 				{
 					pattern: /^vitest run tests\/e2e$/,
@@ -48,8 +47,7 @@ function updatePackageJson(packagePath) {
 				},
 				{
 					pattern: /^vitest run --coverage --reporter=verbose$/,
-					replacement:
-						'node ../../scripts/vitest-safe.mjs run --coverage --reporter=verbose',
+					replacement: 'node ../../scripts/vitest-safe.mjs run --coverage --reporter=verbose',
 				},
 				{
 					pattern: /^vitest$/,
@@ -68,9 +66,7 @@ function updatePackageJson(packagePath) {
 				},
 			];
 
-			for (const [scriptName, scriptCommand] of Object.entries(
-				packageJson.scripts,
-			)) {
+			for (const [scriptName, scriptCommand] of Object.entries(packageJson.scripts)) {
 				if (typeof scriptCommand === 'string') {
 					for (const { pattern, replacement } of unsafePatterns) {
 						if (pattern.test(scriptCommand)) {
@@ -88,8 +84,7 @@ function updatePackageJson(packagePath) {
 
 			// Add memory-safe test script if not present
 			if (!packageJson.scripts['test:safe']) {
-				packageJson.scripts['test:safe'] =
-					'node ../../scripts/vitest-safe.mjs run';
+				packageJson.scripts['test:safe'] = 'node ../../scripts/vitest-safe.mjs run';
 				modified = true;
 				log('INFO', `Added test:safe script to ${packagePath}`);
 			}
@@ -138,16 +133,10 @@ function main() {
 		}
 	}
 
-	log(
-		'INFO',
-		`Updated ${updatedCount} out of ${packageJsonFiles.length} package.json files`,
-	);
+	log('INFO', `Updated ${updatedCount} out of ${packageJsonFiles.length} package.json files`);
 
 	if (updatedCount > 0) {
-		log(
-			'INFO',
-			'Memory safety updates complete. All packages now use memory-safe vitest wrapper.',
-		);
+		log('INFO', 'Memory safety updates complete. All packages now use memory-safe vitest wrapper.');
 		log('INFO', 'Recommendation: Run "pnpm install" to refresh dependencies');
 	} else {
 		log('INFO', 'No packages needed memory safety updates');

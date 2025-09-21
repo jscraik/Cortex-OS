@@ -26,8 +26,7 @@ function validatePackageName(packageName) {
 
 	// npm package names can only contain URL-safe characters
 	// See: https://docs.npmjs.com/cli/v8/configuring-npm/package-json#name
-	const validNamePattern =
-		/^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+	const validNamePattern = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
 	return validNamePattern.test(packageName) && packageName.length <= 214;
 }
 
@@ -47,9 +46,7 @@ class LicenseScanner {
 			this.policy = JSON.parse(policyContent);
 			console.log(`📋 Loaded license policy: ${this.policy.version}`);
 		} catch (error) {
-			throw new Error(
-				`Failed to load license policy from ${this.policyPath}: ${error.message}`,
-			);
+			throw new Error(`Failed to load license policy from ${this.policyPath}: ${error.message}`);
 		}
 	}
 
@@ -68,9 +65,7 @@ class LicenseScanner {
 				...(packageJson.optionalDependencies || {}),
 			};
 
-			console.log(
-				`📦 Found ${Object.keys(allDeps).length} dependencies in package.json`,
-			);
+			console.log(`📦 Found ${Object.keys(allDeps).length} dependencies in package.json`);
 
 			for (const [name, version] of Object.entries(allDeps)) {
 				this.dependencies.set(name, {
@@ -93,13 +88,10 @@ class LicenseScanner {
 
 			try {
 				// Attempt to use npm ls to get installed packages asynchronously
-				const { stdout } = await execAsync(
-					'npm ls --json --depth=0 2>/dev/null || echo "{}"',
-					{
-						cwd: this.workspacePath,
-						encoding: 'utf8',
-					},
-				);
+				const { stdout } = await execAsync('npm ls --json --depth=0 2>/dev/null || echo "{}"', {
+					cwd: this.workspacePath,
+					encoding: 'utf8',
+				});
 
 				const lsData = JSON.parse(stdout);
 				if (lsData.dependencies) {
@@ -113,9 +105,7 @@ class LicenseScanner {
 					}
 				}
 			} catch (_error) {
-				console.warn(
-					'⚠️ Could not get license data from npm ls, proceeding with manual detection',
-				);
+				console.warn('⚠️ Could not get license data from npm ls, proceeding with manual detection');
 			}
 
 			// Batch detection for packages without license data
@@ -127,9 +117,7 @@ class LicenseScanner {
 			}
 
 			if (packagesNeedingDetection.length > 0) {
-				const batchLicenses = await this.batchDetectLicenses(
-					packagesNeedingDetection,
-				);
+				const batchLicenses = await this.batchDetectLicenses(packagesNeedingDetection);
 				for (const [name, depInfo] of this.dependencies) {
 					if (!licenseData[name] && batchLicenses.has(name)) {
 						licenseData[name] = {
@@ -172,8 +160,7 @@ class LicenseScanner {
 			try {
 				const packageContent = await fs.readFile(packagePath, 'utf8');
 				const packageJson = JSON.parse(packageContent);
-				const license =
-					packageJson.license || packageJson.licenses || 'Unknown';
+				const license = packageJson.license || packageJson.licenses || 'Unknown';
 				this.licenseCache.set(packageName, license);
 				return license;
 			} catch {
@@ -199,9 +186,7 @@ class LicenseScanner {
 			this.licenseCache.set(packageName, 'Unknown');
 			return 'Unknown';
 		} catch (error) {
-			console.warn(
-				`⚠️ Could not detect license for ${packageName}: ${error.message}`,
-			);
+			console.warn(`⚠️ Could not detect license for ${packageName}: ${error.message}`);
 			this.licenseCache.set(packageName, 'Unknown');
 			return 'Unknown';
 		}
@@ -210,9 +195,7 @@ class LicenseScanner {
 	// Batch license detection for better performance
 	async batchDetectLicenses(packageNames) {
 		const results = new Map();
-		const uncachedPackages = packageNames.filter(
-			(name) => !this.licenseCache.has(name),
-		);
+		const uncachedPackages = packageNames.filter((name) => !this.licenseCache.has(name));
 
 		if (uncachedPackages.length === 0) {
 			// All packages are cached
@@ -222,9 +205,7 @@ class LicenseScanner {
 			return results;
 		}
 
-		console.log(
-			`🔍 Batch fetching licenses for ${uncachedPackages.length} packages...`,
-		);
+		console.log(`🔍 Batch fetching licenses for ${uncachedPackages.length} packages...`);
 
 		// First try to get licenses from local node_modules in parallel
 		const localLicensePromises = uncachedPackages.map(async (packageName) => {
@@ -241,8 +222,7 @@ class LicenseScanner {
 				);
 				const packageContent = await fs.readFile(packagePath, 'utf8');
 				const packageJson = JSON.parse(packageContent);
-				const license =
-					packageJson.license || packageJson.licenses || 'Unknown';
+				const license = packageJson.license || packageJson.licenses || 'Unknown';
 				return { packageName, license };
 			} catch {
 				return { packageName, license: null }; // Will fetch from registry
@@ -375,9 +355,7 @@ class LicenseScanner {
 					reason: 'Blocked license detected',
 					action: 'Remove package or find alternative',
 				});
-				console.log(
-					`❌ ${packageName}@${info.version}: BLOCKED license "${license}"`,
-				);
+				console.log(`❌ ${packageName}@${info.version}: BLOCKED license "${license}"`);
 				continue;
 			}
 
@@ -389,9 +367,7 @@ class LicenseScanner {
 					license: license,
 					status: 'COMPLIANT',
 				});
-				console.log(
-					`✅ ${packageName}@${info.version}: Compliant license "${license}"`,
-				);
+				console.log(`✅ ${packageName}@${info.version}: Compliant license "${license}"`);
 				continue;
 			}
 
@@ -401,9 +377,7 @@ class LicenseScanner {
 					package: packageName,
 					version: info.version,
 					license: license,
-					severity: this.policy.policy.allowUnknownLicenses
-						? 'WARNING'
-						: 'ERROR',
+					severity: this.policy.policy.allowUnknownLicenses ? 'WARNING' : 'ERROR',
 					reason: 'License could not be determined',
 					action: 'Manually verify license compatibility',
 				});
@@ -431,9 +405,7 @@ class LicenseScanner {
 				reason: 'License not in allowed list',
 				action: 'Review license compatibility and add to policy if acceptable',
 			});
-			console.log(
-				`⚠️ ${packageName}@${info.version}: Unrecognized license "${license}"`,
-			);
+			console.log(`⚠️ ${packageName}@${info.version}: Unrecognized license "${license}"`);
 		}
 
 		return { compliant, unknown, violations: this.violations };
@@ -455,13 +427,9 @@ class LicenseScanner {
 				compliantPackages: analysis.compliant.length,
 				unknownLicenses: analysis.unknown.length,
 				violations: this.violations.length,
-				criticalViolations: this.violations.filter(
-					(v) => v.severity === 'CRITICAL',
-				).length,
+				criticalViolations: this.violations.filter((v) => v.severity === 'CRITICAL').length,
 				status:
-					this.violations.filter((v) => v.severity === 'CRITICAL').length > 0
-						? 'FAILED'
-						: 'PASSED',
+					this.violations.filter((v) => v.severity === 'CRITICAL').length > 0 ? 'FAILED' : 'PASSED',
 			},
 			violations: this.violations,
 			compliant: analysis.compliant,
@@ -519,16 +487,9 @@ class LicenseScanner {
 			this.printSummary(report);
 
 			// Determine exit code based on policy
-			const criticalViolations = this.violations.filter(
-				(v) => v.severity === 'CRITICAL',
-			);
-			if (
-				this.policy.policy.failOnBlockedLicense &&
-				criticalViolations.length > 0
-			) {
-				console.log(
-					'\n💥 Critical license violations found. Build should fail.',
-				);
+			const criticalViolations = this.violations.filter((v) => v.severity === 'CRITICAL');
+			if (this.policy.policy.failOnBlockedLicense && criticalViolations.length > 0) {
+				console.log('\n💥 Critical license violations found. Build should fail.');
 				return { success: false, report, exitCode: 1 };
 			}
 

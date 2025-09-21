@@ -7,10 +7,9 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 function listPackageJson() {
-	const out = execSync(
-		"find packages apps -name package.json -not -path '*/node_modules/*'",
-		{ encoding: 'utf-8' },
-	);
+	const out = execSync("find packages apps -name package.json -not -path '*/node_modules/*'", {
+		encoding: 'utf-8',
+	});
 	return out.split(/\n/).filter(Boolean);
 }
 
@@ -28,9 +27,7 @@ for (const file of listPackageJson()) {
 if (violations.length) {
 	console.error('Memory Safety Guard FAILED. Raw vitest usage detected in:');
 	violations.forEach((v) => console.error(` - ${v}`));
-	console.error(
-		'Replace with memory-safe wrapper: node <rel>/scripts/vitest-safe.mjs run',
-	);
+	console.error('Replace with memory-safe wrapper: node <rel>/scripts/vitest-safe.mjs run');
 	process.exit(1);
 } else {
 	console.log('Memory Safety Guard PASS: no raw vitest usage detected.');

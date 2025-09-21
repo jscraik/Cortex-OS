@@ -1,6 +1,8 @@
 import { createId } from '@paralleldrive/cuid2';
 import type Database from 'better-sqlite3';
+
 type DbType = Database.Database;
+
 import { z } from 'zod';
 
 /**

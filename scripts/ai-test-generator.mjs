@@ -6,9 +6,7 @@ const [, , sourcePath, outPath] = process.argv;
 
 async function main() {
 	if (!sourcePath || !outPath) {
-		console.error(
-			'Usage: ai-test-generator.mjs <source-file> <output-test-file>',
-		);
+		console.error('Usage: ai-test-generator.mjs <source-file> <output-test-file>');
 		process.exit(1);
 	}
 	const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -32,9 +30,7 @@ async function main() {
 	) {
 		content = resp.content[0].text;
 	} else {
-		console.error(
-			"Unexpected API response structure: missing or invalid 'content[0].text'",
-		);
+		console.error("Unexpected API response structure: missing or invalid 'content[0].text'");
 		process.exit(1);
 	}
 	writeFileSync(outPath, content);

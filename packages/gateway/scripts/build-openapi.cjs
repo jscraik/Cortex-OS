@@ -160,8 +160,5 @@ const spec = {
 };
 
 mkdirSync(join(__dirname, '..', 'dist'), { recursive: true });
-writeFileSync(
-	join(__dirname, '..', 'openapi.json'),
-	JSON.stringify(spec, null, 2),
-);
+writeFileSync(join(__dirname, '..', 'openapi.json'), JSON.stringify(spec, null, 2));
 console.log('OpenAPI written to packages/gateway/openapi.json');

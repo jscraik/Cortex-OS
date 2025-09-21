@@ -133,12 +133,9 @@ async function runValidation() {
 
 		runTest('SecureCommandExecutor file exists', () => {
 			try {
-				execSync(
-					'test -f apps/cortex-os/packages/mvp-core/src/secure-executor.ts',
-					{
-						stdio: 'ignore',
-					},
-				);
+				execSync('test -f apps/cortex-os/packages/mvp-core/src/secure-executor.ts', {
+					stdio: 'ignore',
+				});
 				return true;
 			} catch (_error) {
 				return false;
@@ -432,12 +429,9 @@ async function runValidation() {
 				execSync('test -f docs/security/SECURITY_IMPROVEMENTS_SUMMARY.md', {
 					stdio: 'ignore',
 				});
-				execSync(
-					'test -f docs/security/FINAL_SECURITY_IMPLEMENTATION_SUMMARY.md',
-					{
-						stdio: 'ignore',
-					},
-				);
+				execSync('test -f docs/security/FINAL_SECURITY_IMPLEMENTATION_SUMMARY.md', {
+					stdio: 'ignore',
+				});
 				return true;
 			} catch (_error) {
 				return false;
@@ -478,15 +472,9 @@ async function runValidation() {
 	logHeader('\n📊 Validation Results Summary');
 	console.log('');
 	console.log(`Total tests: ${validationResults.totalTests}`);
-	console.log(
-		`${colors.fg.green}Passed tests: ${validationResults.passedTests}${colors.reset}`,
-	);
-	console.log(
-		`${colors.fg.red}Failed tests: ${validationResults.failedTests}${colors.reset}`,
-	);
-	console.log(
-		`${colors.fg.yellow}Warnings: ${validationResults.warnings}${colors.reset}`,
-	);
+	console.log(`${colors.fg.green}Passed tests: ${validationResults.passedTests}${colors.reset}`);
+	console.log(`${colors.fg.red}Failed tests: ${validationResults.failedTests}${colors.reset}`);
+	console.log(`${colors.fg.yellow}Warnings: ${validationResults.warnings}${colors.reset}`);
 
 	if (validationResults.errors.length > 0) {
 		logHeader('\n❌ Errors Found:');
@@ -505,18 +493,14 @@ async function runValidation() {
 	// Overall status
 	if (validationResults.failedTests === 0) {
 		logHeader('\n🎉 All security validation tests passed!');
-		console.log(
-			'✅ Security improvements have been successfully implemented and validated.',
-		);
+		console.log('✅ Security improvements have been successfully implemented and validated.');
 		console.log('✅ All critical vulnerabilities have been addressed.');
 		console.log('✅ Security infrastructure is properly configured.');
 		return true;
 	} else {
 		logHeader('\n💥 Security validation failed!');
 		console.log('❌ Some security validation tests failed.');
-		console.log(
-			'❌ Please review the errors and address them before proceeding.',
-		);
+		console.log('❌ Please review the errors and address them before proceeding.');
 		return false;
 	}
 }

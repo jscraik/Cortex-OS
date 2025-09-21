@@ -139,9 +139,7 @@ async function run() {
 		env: process.env,
 	});
 
-	console.error(
-		`[memory-sampler] Launched child pid=${child.pid} tag=${options.tag}`,
-	);
+	console.error(`[memory-sampler] Launched child pid=${child.pid} tag=${options.tag}`);
 	const stop = startSampling(child.pid, options.tag);
 
 	child.on('exit', (code, signal) => {
@@ -153,9 +151,7 @@ async function run() {
 		});
 		if (fileStream) fileStream.end();
 		if (code !== 0) {
-			console.error(
-				`[memory-sampler] Child exited with code=${code} signal=${signal ?? 'none'}`,
-			);
+			console.error(`[memory-sampler] Child exited with code=${code} signal=${signal ?? 'none'}`);
 			process.exit(code || 1);
 		}
 	});

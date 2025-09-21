@@ -193,7 +193,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializeSummarizationConfig(summarization?: IntelligentConfig['summarization']): Required<IntelligentConfig>['summarization'] {
+	private initializeSummarizationConfig(
+		summarization?: IntelligentConfig['summarization'],
+	): Required<IntelligentConfig>['summarization'] {
 		return {
 			enabled: true,
 			maxGroupSize: 10,
@@ -205,7 +207,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializeConsolidationConfig(consolidation?: IntelligentConfig['consolidation']): Required<IntelligentConfig>['consolidation'] {
+	private initializeConsolidationConfig(
+		consolidation?: IntelligentConfig['consolidation'],
+	): Required<IntelligentConfig>['consolidation'] {
 		return {
 			enabled: true,
 			similarityThreshold: 0.8,
@@ -216,7 +220,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializeKeyPointExtractionConfig(keyPointExtraction?: IntelligentConfig['keyPointExtraction']): Required<IntelligentConfig>['keyPointExtraction'] {
+	private initializeKeyPointExtractionConfig(
+		keyPointExtraction?: IntelligentConfig['keyPointExtraction'],
+	): Required<IntelligentConfig>['keyPointExtraction'] {
 		return {
 			enabled: true,
 			maxPoints: 5,
@@ -225,7 +231,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializeSearchConfig(search?: IntelligentConfig['search']): Required<IntelligentConfig>['search'] {
+	private initializeSearchConfig(
+		search?: IntelligentConfig['search'],
+	): Required<IntelligentConfig>['search'] {
 		return {
 			enabled: true,
 			includeSummaries: true,
@@ -235,7 +243,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializeSynthesisConfig(synthesis?: IntelligentConfig['synthesis']): Required<IntelligentConfig>['synthesis'] {
+	private initializeSynthesisConfig(
+		synthesis?: IntelligentConfig['synthesis'],
+	): Required<IntelligentConfig>['synthesis'] {
 		return {
 			enabled: true,
 			maxSources: 10,
@@ -244,7 +254,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializeInsightsConfig(insights?: IntelligentConfig['insights']): Required<IntelligentConfig>['insights'] {
+	private initializeInsightsConfig(
+		insights?: IntelligentConfig['insights'],
+	): Required<IntelligentConfig>['insights'] {
 		return {
 			enabled: true,
 			identifyGaps: false,
@@ -253,7 +265,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializeCacheConfig(cache?: IntelligentConfig['cache']): Required<IntelligentConfig>['cache'] {
+	private initializeCacheConfig(
+		cache?: IntelligentConfig['cache'],
+	): Required<IntelligentConfig>['cache'] {
 		return {
 			enabled: true,
 			ttl: 300000, // 5 minutes
@@ -261,7 +275,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		};
 	}
 
-	private initializePerformanceConfig(performance?: IntelligentConfig['performance']): Required<IntelligentConfig>['performance'] {
+	private initializePerformanceConfig(
+		performance?: IntelligentConfig['performance'],
+	): Required<IntelligentConfig>['performance'] {
 		return {
 			batchSize: 50,
 			maxProcessingTime: 5000,
@@ -577,7 +593,7 @@ export class IntelligentMemoryStore implements MemoryStore {
 	}
 
 	private async performVectorSearch(
-		searchText: string,
+		_searchText: string,
 		limit: number,
 		namespace: string,
 	): Promise<(Memory & { score: number })[]> {
@@ -684,7 +700,7 @@ export class IntelligentMemoryStore implements MemoryStore {
 	}
 
 	private async identifyKnowledgeGapsIfEnabled(
-		memories: Memory[],
+		_memories: Memory[],
 		domains?: string[],
 	): Promise<string[] | undefined> {
 		if (!this.config.insights.identifyGaps || !domains) {
@@ -693,7 +709,7 @@ export class IntelligentMemoryStore implements MemoryStore {
 		return this.identifyKnowledgeGaps({ namespace: '', domains });
 	}
 
-	private async suggestRelatedTopicsIfEnabled(memories: Memory[]): Promise<string[] | undefined> {
+	private async suggestRelatedTopicsIfEnabled(_memories: Memory[]): Promise<string[] | undefined> {
 		if (!this.config.insights.suggestTopics) {
 			return undefined;
 		}
@@ -1390,7 +1406,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 		if (deadlineMatch) {
 			info.set('deadline', deadlineMatch[1]);
 		}
-		const dateMatch = sentence.match(/\b(March \d{1,2}|\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2})\b/i);
+		const dateMatch = sentence.match(
+			/\b(March \d{1,2}|\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2})\b/i,
+		);
 		if (dateMatch) {
 			info.set('deadline', dateMatch[1]);
 		}

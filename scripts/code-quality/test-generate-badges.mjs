@@ -43,8 +43,7 @@ fs.writeFileSync(
 );
 
 const run = spawnSync(process.execPath, [SCRIPT], { encoding: 'utf8' });
-if (run.status !== 0)
-	fail(`script exited with code ${run.status}: ${run.stderr || run.stdout}`);
+if (run.status !== 0) fail(`script exited with code ${run.status}: ${run.stderr || run.stdout}`);
 
 const outDir = path.resolve('reports/badges');
 const needed = [
@@ -55,17 +54,12 @@ const needed = [
 	'mutation-operators-summary.json',
 ];
 for (const f of needed) {
-	if (!fs.existsSync(path.join(outDir, f)))
-		fail(`missing expected artifact ${f}`);
+	if (!fs.existsSync(path.join(outDir, f))) fail(`missing expected artifact ${f}`);
 }
 
-const metrics = JSON.parse(
-	fs.readFileSync(path.join(outDir, 'metrics.json'), 'utf8'),
-);
-if (Math.abs(metrics.branchCoverage - 70.2) > 0.11)
-	fail('branchCoverage mismatch');
-if (Math.abs(metrics.mutationScore - 82.4) > 0.11)
-	fail('mutationScore mismatch');
+const metrics = JSON.parse(fs.readFileSync(path.join(outDir, 'metrics.json'), 'utf8'));
+if (Math.abs(metrics.branchCoverage - 70.2) > 0.11) fail('branchCoverage mismatch');
+if (Math.abs(metrics.mutationScore - 82.4) > 0.11) fail('mutationScore mismatch');
 if (!metrics.qualityGate?.pass) fail('quality gate should pass with defaults');
 
 const ops = JSON.parse(
@@ -77,10 +71,7 @@ if (!ops.find((o) => o.mutator === 'StringLiteral' && o.total === 3))
 	fail('StringLiteral summary missing');
 
 // Validate SVG structure (basic check)
-const branchSvg = fs.readFileSync(
-	path.join(outDir, 'branch-coverage.svg'),
-	'utf8',
-);
+const branchSvg = fs.readFileSync(path.join(outDir, 'branch-coverage.svg'), 'utf8');
 if (!branchSvg.includes('70.2%') || !branchSvg.includes('role="img"'))
 	fail('branch coverage SVG malformed');
 

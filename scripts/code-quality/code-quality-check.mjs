@@ -43,9 +43,7 @@ function walk(dir) {
 		// Skip any folder paths that clearly look like Python envs or caches
 		if (
 			entry.isDirectory() &&
-			/(^|\/)(\.venv|venv|env|__pycache__|\.pytest_cache|site-packages)(\/|$)/.test(
-				fullPath,
-			)
+			/(^|\/)(\.venv|venv|env|__pycache__|\.pytest_cache|site-packages)(\/|$)/.test(fullPath)
 		)
 			continue;
 		if (entry.isDirectory()) {
@@ -80,10 +78,7 @@ function analyseFile(filePath) {
 			if (inFunc) {
 				const currentIndent = line.search(/\S|$/);
 				// function ends when indent less than or equal to starting indent and not the same line
-				if (
-					i > funcStart &&
-					(currentIndent <= indentLevel || line.trim() === '')
-				) {
+				if (i > funcStart && (currentIndent <= indentLevel || line.trim() === '')) {
 					const length = i - funcStart;
 					if (length > 40) {
 						const name = funcMatch ? funcMatch[1] : '<anonymous>';
@@ -170,9 +165,7 @@ function analyseFile(filePath) {
 		}
 	}
 	if (badNames.length > 0) {
-		recommendations.push(
-			`Inconsistent naming in ${filePath}: ${badNames.join(', ')}.`,
-		);
+		recommendations.push(`Inconsistent naming in ${filePath}: ${badNames.join(', ')}.`);
 	}
 	return recommendations;
 }
@@ -188,8 +181,7 @@ function main() {
 	let score = 10;
 	// Each category of issue counts as –2
 	if (allRecommendations.some((r) => r.includes('has'))) score -= 2;
-	if (allRecommendations.some((r) => r.includes('Inconsistent naming')))
-		score -= 2;
+	if (allRecommendations.some((r) => r.includes('Inconsistent naming'))) score -= 2;
 	if (score < 0) score = 0;
 	const output = {
 		score,

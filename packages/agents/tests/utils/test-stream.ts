@@ -3,8 +3,8 @@
  */
 
 export interface MemoryStreamOptions {
-  encoding?: BufferEncoding;
-  highWaterMark?: number;
+	encoding?: BufferEncoding;
+	highWaterMark?: number;
 }
 
 /**
@@ -14,29 +14,29 @@ export interface MemoryStreamOptions {
  * @returns A WritableStream instance
  */
 export function createMemoryWritableStream(
-  onData: (data: string) => void,
-  options: MemoryStreamOptions = {}
+	onData: (data: string) => void,
+	options: MemoryStreamOptions = {},
 ): WritableStream<Uint8Array> {
-  const { encoding = 'utf-8', highWaterMark = 16 * 1024 } = options;
+	const { encoding = 'utf-8', highWaterMark = 16 * 1024 } = options;
 
-  return new WritableStream({
-    highWaterMark,
-    async write(chunk, controller) {
-      try {
-        const text = new TextDecoder(encoding).decode(chunk);
-        onData(text);
-      } catch (error) {
-        controller.error(error);
-        throw error;
-      }
-    },
-    close() {
-      // No-op for memory stream
-    },
-    abort(reason) {
-      console.error('Memory stream aborted:', reason);
-    },
-  });
+	return new WritableStream({
+		highWaterMark,
+		async write(chunk, controller) {
+			try {
+				const text = new TextDecoder(encoding).decode(chunk);
+				onData(text);
+			} catch (error) {
+				controller.error(error);
+				throw error;
+			}
+		},
+		close() {
+			// No-op for memory stream
+		},
+		abort(reason) {
+			console.error('Memory stream aborted:', reason);
+		},
+	});
 }
 
 /**
@@ -46,25 +46,25 @@ export function createMemoryWritableStream(
  * @returns A ReadableStream instance
  */
 export function createMemoryReadableStream(
-  chunks: Uint8Array[],
-  options: MemoryStreamOptions = {}
+	chunks: Uint8Array[],
+	options: MemoryStreamOptions = {},
 ): ReadableStream<Uint8Array> {
-  const { highWaterMark = 16 * 1024 } = options;
-  let index = 0;
+	const { highWaterMark = 16 * 1024 } = options;
+	let index = 0;
 
-  return new ReadableStream({
-    highWaterMark,
-    async pull(controller) {
-      if (index < chunks.length) {
-        controller.enqueue(chunks[index++]);
-      } else {
-        controller.close();
-      }
-    },
-    cancel() {
-      // No-op for memory stream
-    },
-  });
+	return new ReadableStream({
+		highWaterMark,
+		async pull(controller) {
+			if (index < chunks.length) {
+				controller.enqueue(chunks[index++]);
+			} else {
+				controller.close();
+			}
+		},
+		cancel() {
+			// No-op for memory stream
+		},
+	});
 }
 
 /**
@@ -75,23 +75,23 @@ export function createMemoryReadableStream(
  * @returns A duplex stream instance
  */
 export function createMemoryDuplexStream(
-  onData: (data: string) => void,
-  chunks: Uint8Array[] = [],
-  options: MemoryStreamOptions = {}
+	onData: (data: string) => void,
+	chunks: Uint8Array[] = [],
+	_options: MemoryStreamOptions = {},
 ): TransformStream<Uint8Array, Uint8Array> {
-  let readIndex = 0;
+	let readIndex = 0;
 
-  return new TransformStream({
-    async transform(chunk, controller) {
-      // Echo written chunks back as readable data
-      onData(new TextDecoder().decode(chunk));
-      controller.enqueue(chunk);
-    },
-    async flush(controller) {
-      // Write any remaining chunks
-      while (readIndex < chunks.length) {
-        controller.enqueue(chunks[readIndex++]);
-      }
-    },
-  });
+	return new TransformStream({
+		async transform(chunk, controller) {
+			// Echo written chunks back as readable data
+			onData(new TextDecoder().decode(chunk));
+			controller.enqueue(chunk);
+		},
+		async flush(controller) {
+			// Write any remaining chunks
+			while (readIndex < chunks.length) {
+				controller.enqueue(chunks[readIndex++]);
+			}
+		},
+	});
 }

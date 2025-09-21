@@ -14,11 +14,7 @@ export function sanitizeEvent(event) {
 	const { sessionId, ...sanitizedData } = parsed.data;
 	let sanitizedMetadata;
 	if (parsed.metadata) {
-		const {
-			sessionId: _sid,
-			eventManagerId: _emid,
-			...restMetadata
-		} = parsed.metadata;
+		const { sessionId: _sid, eventManagerId: _emid, ...restMetadata } = parsed.metadata;
 		sanitizedMetadata = restMetadata;
 	}
 	return {
@@ -31,9 +27,7 @@ export function sanitizeEvent(event) {
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const [inputPath, outputPath] = process.argv.slice(2);
 	if (!inputPath || !outputPath) {
-		console.error(
-			'Usage: node scripts/sanitize-events.mjs <input.jsonl> <output.jsonl>',
-		);
+		console.error('Usage: node scripts/sanitize-events.mjs <input.jsonl> <output.jsonl>');
 		process.exit(1);
 	}
 
@@ -50,12 +44,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 			const sanitized = sanitizeEvent(event);
 			output.write(`${JSON.stringify(sanitized)}\n`);
 		} catch (err) {
-			const truncatedLine =
-				line.length > 100 ? `${line.slice(0, 100)}...` : line;
-			console.error(
-				`Failed to sanitize line ${lineNumber}: "${truncatedLine}"`,
-				err,
-			);
+			const truncatedLine = line.length > 100 ? `${line.slice(0, 100)}...` : line;
+			console.error(`Failed to sanitize line ${lineNumber}: "${truncatedLine}"`, err);
 		}
 	});
 
