@@ -355,7 +355,7 @@ export interface OrchestrationMemoryAdapter {
 	analyzePerformancePatterns(): Promise<unknown>;
 
 	// Store tool layer invocations
-	recordToolInvocation(layer: string, tool: string, result: any): Promise<string>;
+	recordToolInvocation(layer: string, tool: string, result: unknown): Promise<string>;
 }
 
 export class LocalMemoryOrchestrationAdapter implements OrchestrationMemoryAdapter {
