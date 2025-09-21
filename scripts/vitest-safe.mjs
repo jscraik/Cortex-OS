@@ -72,33 +72,75 @@ function validateSystemMemory() {
   }
 }
 
+function shouldAllowConcurrentVitest() {
+  return process.env.VITEST_ALLOW_CONCURRENT === 'true' || 
+         process.env.NODE_ENV === 'development' ||
+         process.env.VSCODE_PID; // VS Code terminal detection
+}
+
+function isVSCodeProcess(pid) {
+  try {
+    const parentPid = execSync(`ps -o ppid= -p ${pid.trim()}`, { encoding: 'utf-8' }).trim();
+    const parentCmd = execSync(`ps -o command= -p ${parentPid}`, { encoding: 'utf-8' });
+    return parentCmd.includes('Code Helper') || parentCmd.includes('Visual Studio Code');
+  } catch {
+    return false;
+  }
+}
+
+function hasVSCodeVitestProcess(pids) {
+  for (const pid of pids) {
+    if (pid.trim() && isVSCodeProcess(pid)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function checkForRunningVitest() {
+  if (shouldAllowConcurrentVitest()) {
+    log('INFO', 'Concurrent vitest processes allowed in development mode');
+    return;
+  }
+
   try {
     const processes = execSync('pgrep -f "vitest.*run" || true', {
       encoding: 'utf-8',
     });
-    if (processes.trim()) {
-      log(
-        'ERROR',
-        'Other Vitest processes detected! This could cause memory exhaustion.',
-      );
-      log('INFO', 'Run: pnpm memory:clean to cleanup existing processes');
-
-      // List the processes for visibility
-      try {
-        const processDetails = execSync(
-          `ps -p ${processes.trim().replace(/\n/g, ',')} -o pid,rss,command`,
-          { encoding: 'utf-8' },
-        );
-        console.error('Running Vitest processes:');
-        console.error(processDetails);
-      } catch { }
-
-      // Exit to prevent multiple vitest processes
-      process.exit(1);
+    
+    if (!processes.trim()) {
+      return;
     }
+
+    const pids = processes.trim().split('\n');
+    
+    if (hasVSCodeVitestProcess(pids)) {
+      log('INFO', 'VS Code vitest process detected - allowing concurrent execution');
+      return;
+    }
+
+    log('WARN', 'Other non-VS Code Vitest processes detected! This could cause memory exhaustion.');
+    log('INFO', 'Run: pnpm memory:clean to cleanup existing processes, or set VITEST_ALLOW_CONCURRENT=true');
+
+    // List the processes for visibility
+    try {
+      const processDetails = execSync(
+        `ps -p ${processes.trim().replace(/\n/g, ',')} -o pid,rss,command`,
+        { encoding: 'utf-8' },
+      );
+      console.error('Running Vitest processes:');
+      console.error(processDetails);
+    } catch { }
+
+    // Don't exit if we detect this might be a development scenario
+    if (!process.env.CI) {
+      log('WARN', 'Non-CI environment detected - continuing with caution');
+      return;
+    }
+
+    // Exit to prevent multiple vitest processes in CI
+    process.exit(1);
   } catch (error) {
-    // pgrep failed, probably no processes - that's good
     log('DEBUG', `Process check completed: ${error.message}`);
   }
 }

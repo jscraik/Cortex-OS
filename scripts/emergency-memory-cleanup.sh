@@ -2,11 +2,25 @@
 
 echo "🚨 Emergency Memory Cleanup for Cortex-OS"
 
-# Stop all development processes
+# Check if we should preserve VS Code processes
+PRESERVE_VSCODE="${PRESERVE_VSCODE:-true}"
+
+# Stop development processes (but preserve VS Code unless forced)
 echo "Stopping development processes..."
+if [[ "$PRESERVE_VSCODE" == "false" ]]; then
+    echo "⚠️  Killing TypeScript servers (may disrupt VS Code)"
+    pkill -f "tsserver" 2>/dev/null
+else
+    echo "🛡️  Preserving TypeScript servers for VS Code"
+fi
+
 pkill -f "nx.js" 2>/dev/null
-pkill -f "vitest" 2>/dev/null
-pkill -f "tsserver" 2>/dev/null
+# Only kill vitest processes, not those started by VS Code
+pgrep -f "vitest.*run" | while read pid; do
+    if ! ps -o command= -p "$pid" | grep -q "Code Helper"; then
+        kill "$pid" 2>/dev/null
+    fi
+done
 
 # Stop PM2 processes
 if command -v pm2 &> /dev/null; then
