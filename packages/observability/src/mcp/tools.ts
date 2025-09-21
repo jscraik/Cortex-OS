@@ -166,11 +166,9 @@ function assertSafeRecord(obj: unknown, context: string): asserts obj is Record<
 	const proto = Object.getPrototypeOf(obj);
 	// Only allow plain objects or null-prototype objects
 	if (proto !== Object.prototype && proto !== null) {
-		throw new ObservabilityToolError(
-			'security_error',
-			`Unsafe object prototype for ${context}`,
-			[`${context}: unsafe prototype`],
-		);
+		throw new ObservabilityToolError('security_error', `Unsafe object prototype for ${context}`, [
+			`${context}: unsafe prototype`,
+		]);
 	}
 	for (const key in obj as Record<string, unknown>) {
 		if (!Object.hasOwn?.(obj as object, key)) {
@@ -181,11 +179,9 @@ function assertSafeRecord(obj: unknown, context: string): asserts obj is Record<
 			);
 		}
 		if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
-			throw new ObservabilityToolError(
-				'security_error',
-				`Illegal key in ${context}`,
-				[`${context}: illegal key ${key}`],
-			);
+			throw new ObservabilityToolError('security_error', `Illegal key in ${context}`, [
+				`${context}: illegal key ${key}`,
+			]);
 		}
 	}
 }
@@ -219,11 +215,9 @@ function ensureTimeRange(start?: string, end?: string) {
 function validateTraceId(traceId: string) {
 	// W3C trace id: 32 hex chars
 	if (!/^[0-9a-fA-F]{32}$/.test(traceId)) {
-		throw new ObservabilityToolError(
-			'validation_error',
-			'Invalid traceId format',
-			['traceId: must be 32 hex characters'],
-		);
+		throw new ObservabilityToolError('validation_error', 'Invalid traceId format', [
+			'traceId: must be 32 hex characters',
+		]);
 	}
 }
 
@@ -248,7 +242,10 @@ export function validateObservabilityToolInput(
 					tags: sanitizeStringMap(parsed.tags),
 					startTime: toIsoOrUndefined(parsed.startTime),
 				};
-				logger.debug({ tool, correlationId: options?.correlationId }, 'validated observability tool input');
+				logger.debug(
+					{ tool, correlationId: options?.correlationId },
+					'validated observability tool input',
+				);
 				return sanitized;
 			}
 			case 'record_metric': {
@@ -263,7 +260,10 @@ export function validateObservabilityToolInput(
 					tags: sanitizeStringMap(parsed.tags),
 					timestamp: toIsoOrUndefined(parsed.timestamp),
 				};
-				logger.debug({ tool, correlationId: options?.correlationId }, 'validated observability tool input');
+				logger.debug(
+					{ tool, correlationId: options?.correlationId },
+					'validated observability tool input',
+				);
 				return sanitized;
 			}
 			case 'query_traces': {
@@ -275,7 +275,10 @@ export function validateObservabilityToolInput(
 					endTime: toIsoOrUndefined(parsed.endTime),
 					tags: sanitizeStringMap(parsed.tags),
 				};
-				logger.debug({ tool, correlationId: options?.correlationId }, 'validated observability tool input');
+				logger.debug(
+					{ tool, correlationId: options?.correlationId },
+					'validated observability tool input',
+				);
 				return sanitized;
 			}
 			case 'get_metrics': {
@@ -292,7 +295,10 @@ export function validateObservabilityToolInput(
 					endTime: toIsoOrUndefined(parsed.endTime),
 					labels: sanitizeStringMap(parsed.labels as Record<string, string> | undefined),
 				};
-				logger.debug({ tool, correlationId: options?.correlationId }, 'validated observability tool input');
+				logger.debug(
+					{ tool, correlationId: options?.correlationId },
+					'validated observability tool input',
+				);
 				return sanitized;
 			}
 			case 'search_logs': {
@@ -309,7 +315,10 @@ export function validateObservabilityToolInput(
 					endTime: toIsoOrUndefined(parsed.endTime),
 					tags: sanitizeStringMap(parsed.tags),
 				};
-				logger.debug({ tool, correlationId: options?.correlationId }, 'validated observability tool input');
+				logger.debug(
+					{ tool, correlationId: options?.correlationId },
+					'validated observability tool input',
+				);
 				return sanitized;
 			}
 			case 'evaluate_alert': {
@@ -318,16 +327,19 @@ export function validateObservabilityToolInput(
 					...parsed,
 					metricWindow: parsed.metricWindow
 						? {
-							...parsed.metricWindow,
-							startTime: toIsoOrUndefined(parsed.metricWindow.startTime),
-							endTime: toIsoOrUndefined(parsed.metricWindow.endTime),
-						}
+								...parsed.metricWindow,
+								startTime: toIsoOrUndefined(parsed.metricWindow.startTime),
+								endTime: toIsoOrUndefined(parsed.metricWindow.endTime),
+							}
 						: undefined,
 				};
 				if (sanitized.metricWindow) {
 					ensureTimeRange(sanitized.metricWindow.startTime, sanitized.metricWindow.endTime);
 				}
-				logger.debug({ tool, correlationId: options?.correlationId }, 'validated observability tool input');
+				logger.debug(
+					{ tool, correlationId: options?.correlationId },
+					'validated observability tool input',
+				);
 				return sanitized;
 			}
 			case 'generate_dashboard': {
@@ -336,24 +348,31 @@ export function validateObservabilityToolInput(
 					...parsed,
 					timeRange: parsed.timeRange
 						? {
-							start: toIsoOrUndefined(parsed.timeRange.start),
-							end: toIsoOrUndefined(parsed.timeRange.end),
-						}
+								start: toIsoOrUndefined(parsed.timeRange.start),
+								end: toIsoOrUndefined(parsed.timeRange.end),
+							}
 						: undefined,
 				};
 				if (sanitized.timeRange) {
 					ensureTimeRange(sanitized.timeRange.start, sanitized.timeRange.end);
 				}
-				logger.debug({ tool, correlationId: options?.correlationId }, 'validated observability tool input');
+				logger.debug(
+					{ tool, correlationId: options?.correlationId },
+					'validated observability tool input',
+				);
 				return sanitized;
 			}
 			default:
 				throw new ObservabilityToolError('validation_error', `Unknown tool: ${tool}`);
 		}
 	} catch (err) {
-		const ote = err instanceof ObservabilityToolError
-			? err
-			: new ObservabilityToolError('validation_error', (err as Error).message ?? 'validation failed');
+		const ote =
+			err instanceof ObservabilityToolError
+				? err
+				: new ObservabilityToolError(
+						'validation_error',
+						(err as Error).message ?? 'validation failed',
+					);
 		logger.warn({ tool, correlationId: options?.correlationId }, `${tool} validation failed`);
 		throw ote;
 	}

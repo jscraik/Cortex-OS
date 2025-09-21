@@ -306,7 +306,7 @@ export class McpGateway {
 	}
 
 	private async handleConfigSet(input: { key: string; value: unknown }) {
-	this.deps.config ??= { runtime: {} };
+		this.deps.config ??= { runtime: {} };
 		const previous = this.deps.config.runtime[input.key];
 		this.deps.config.runtime[input.key] = input.value;
 		return { key: input.key, previous, value: input.value, scope: 'runtime' };

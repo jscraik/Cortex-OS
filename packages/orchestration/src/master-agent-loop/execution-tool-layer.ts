@@ -299,17 +299,17 @@ export class ExecutionToolLayer extends ToolLayer {
 
 		switch (validated.operation) {
 			case 'read':
-				result['content'] = `Mock content for ${validated.path}`;
-				result['metadata'] = {
-					...(result['metadata'] as Record<string, unknown>),
+				result.content = `Mock content for ${validated.path}`;
+				result.metadata = {
+					...(result.metadata as Record<string, unknown>),
 					encoding: validated.encoding,
-					size: result['content'] ? String(result['content']).length : 0,
+					size: result.content ? String(result.content).length : 0,
 				};
 				break;
 
 			case 'write':
-				result['metadata'] = {
-					...(result['metadata'] as Record<string, unknown>),
+				result.metadata = {
+					...(result.metadata as Record<string, unknown>),
 					bytesWritten: typeof validated.content === 'string' ? validated.content.length : 0,
 					overwrite:
 						typeof (validated.options as Record<string, unknown> | undefined)?.overwrite ===
@@ -320,24 +320,24 @@ export class ExecutionToolLayer extends ToolLayer {
 				break;
 
 			case 'list':
-				result['items'] = ['file1.txt', 'file2.txt', 'subdir/'];
-				result['metadata'] = {
-					...(result['metadata'] as Record<string, unknown>),
-					totalItems: (result['items'] as unknown[]).length,
+				result.items = ['file1.txt', 'file2.txt', 'subdir/'];
+				result.metadata = {
+					...(result.metadata as Record<string, unknown>),
+					totalItems: (result.items as unknown[]).length,
 				};
 				break;
 
 			case 'chmod':
-				result['metadata'] = {
-					...(result['metadata'] as Record<string, unknown>),
+				result.metadata = {
+					...(result.metadata as Record<string, unknown>),
 					oldPermissions: '644',
 					newPermissions: validated.permissions,
 				};
 				break;
 
 			default:
-				result['metadata'] = {
-					...(result['metadata'] as Record<string, unknown>),
+				result.metadata = {
+					...(result.metadata as Record<string, unknown>),
 					operation: validated.operation,
 				};
 		}
@@ -377,7 +377,7 @@ export class ExecutionToolLayer extends ToolLayer {
 			validated.options &&
 			typeof validated.options === 'object' &&
 			'timeout' in (validated.options as Record<string, unknown>)
-				? (validated.options as Record<string, unknown>)['timeout']
+				? (validated.options as Record<string, unknown>).timeout
 				: undefined;
 		if (typeof timeoutOpt === 'number' && timeoutOpt < 1000 && validated.command === 'sleep') {
 			return {
@@ -395,11 +395,11 @@ export class ExecutionToolLayer extends ToolLayer {
 
 		switch (validated.action) {
 			case 'execute':
-				result['exitCode'] = 0;
-				result['stdout'] = `${validated.command} ${validated.args.join(' ')}`.trim();
-				result['stderr'] = '';
-				result['executionTime'] = 100 + Math.random() * 200;
-				result['securityChecks'] = {
+				result.exitCode = 0;
+				result.stdout = `${validated.command} ${validated.args.join(' ')}`.trim();
+				result.stderr = '';
+				result.executionTime = 100 + Math.random() * 200;
+				result.securityChecks = {
 					commandWhitelisted: true,
 					argumentsValidated: true,
 					pathAccessAllowed: true,
@@ -407,7 +407,7 @@ export class ExecutionToolLayer extends ToolLayer {
 				break;
 
 			case 'monitor':
-				result['processInfo'] = {
+				result.processInfo = {
 					pid: validated.processId,
 					status: 'running',
 					cpu: Math.random() * 100,
@@ -416,14 +416,14 @@ export class ExecutionToolLayer extends ToolLayer {
 				break;
 
 			case 'start':
-				result['processId'] = Math.floor(Math.random() * 10000) + 1000;
-				result['status'] = 'running';
+				result.processId = Math.floor(Math.random() * 10000) + 1000;
+				result.status = 'running';
 				break;
 
 			case 'terminate':
-				result['processId'] = validated.processId;
-				result['signal'] = validated.signal || 'SIGTERM';
-				result['terminated'] = true;
+				result.processId = validated.processId;
+				result.signal = validated.signal || 'SIGTERM';
+				result.terminated = true;
 				break;
 		}
 
@@ -454,24 +454,24 @@ export class ExecutionToolLayer extends ToolLayer {
 
 		switch (validated.type) {
 			case 'http': {
-				result['statusCode'] = 200;
+				result.statusCode = 200;
 				const responseTime = 50 + Math.random() * 200;
-				result['responseTime'] = responseTime;
-				result['data'] = { message: 'Success', timestamp: new Date() };
-				result['retryAttempts'] = retryAttempts;
-				result['totalTime'] = responseTime + retryAttempts * 1000;
+				result.responseTime = responseTime;
+				result.data = { message: 'Success', timestamp: new Date() };
+				result.retryAttempts = retryAttempts;
+				result.totalTime = responseTime + retryAttempts * 1000;
 				break;
 			}
 
 			case 'ping':
-				result['packetsTransmitted'] = validated.count || 1;
-				result['averageTime'] = 10 + Math.random() * 50;
-				result['packetLoss'] = Math.random() * 10;
+				result.packetsTransmitted = validated.count || 1;
+				result.averageTime = 10 + Math.random() * 50;
+				result.packetLoss = Math.random() * 10;
 				break;
 
 			case 'dns':
-				result['hostname'] = validated.hostname;
-				result['records'] = ['192.168.1.1', '192.168.1.2'];
+				result.hostname = validated.hostname;
+				result.records = ['192.168.1.1', '192.168.1.2'];
 				break;
 		}
 
@@ -485,7 +485,7 @@ export class ExecutionToolLayer extends ToolLayer {
 		// Handle both direct chain object and nested { chain: ... } format
 		const chainData =
 			typeof input === 'object' && input !== null && 'chain' in (input as Record<string, unknown>)
-				? (input as Record<string, unknown>)['chain']
+				? (input as Record<string, unknown>).chain
 				: input;
 		const validated = ToolChainSchema.parse(chainData);
 		const chain = validated;
@@ -520,22 +520,22 @@ export class ExecutionToolLayer extends ToolLayer {
 				};
 
 				stepResults.set(step.id, stepResult);
-				const stepsObj = result['steps'] as Record<string, unknown>;
+				const stepsObj = result.steps as Record<string, unknown>;
 				stepsObj[step.id] = stepResult;
-				const execOrder = result['executionOrder'] as string[];
+				const execOrder = result.executionOrder as string[];
 				execOrder.push(step.id);
-				result['stepsExecuted'] = (result['stepsExecuted'] as number) + 1;
-				result['stepsSuccessful'] = (result['stepsSuccessful'] as number) + 1;
+				result.stepsExecuted = (result.stepsExecuted as number) + 1;
+				result.stepsSuccessful = (result.stepsSuccessful as number) + 1;
 				executedSteps.add(step.id);
 			} catch {
-				result['stepsExecuted'] = (result['stepsExecuted'] as number) + 1;
+				result.stepsExecuted = (result.stepsExecuted as number) + 1;
 				if (chain.enableRollback) {
-					result['rollbackExecuted'] = true;
-					const rb = result['rollbackSteps'] as string[];
+					result.rollbackExecuted = true;
+					const rb = result.rollbackSteps as string[];
 					rb.push(step.id);
 				}
 				if (chain.failFast) {
-					result['success'] = false;
+					result.success = false;
 					break;
 				}
 			}
@@ -543,12 +543,12 @@ export class ExecutionToolLayer extends ToolLayer {
 
 		// Calculate parallel execution metrics
 		if (chain.parallelExecution) {
-			result['parallelSteps'] = Math.min(chain.steps.length, chain.maxConcurrency || 3);
-			const steps = result['steps'] as Record<string, { executionTime?: number }>;
+			result.parallelSteps = Math.min(chain.steps.length, chain.maxConcurrency || 3);
+			const steps = result.steps as Record<string, { executionTime?: number }>;
 			const times = Object.values(steps).map((s) =>
 				typeof s.executionTime === 'number' ? s.executionTime : 0,
 			);
-			result['totalExecutionTime'] = Math.max(...times);
+			result.totalExecutionTime = Math.max(...times);
 		}
 
 		// Handle resource optimization
@@ -557,8 +557,8 @@ export class ExecutionToolLayer extends ToolLayer {
 			input !== null &&
 			'resourceOptimization' in (input as Record<string, unknown>)
 		) {
-			const maxConc = (input as Record<string, unknown>)['maxConcurrency'];
-			result['resourceOptimization'] = {
+			const maxConc = (input as Record<string, unknown>).maxConcurrency;
+			result.resourceOptimization = {
 				enabled: true,
 				maxConcurrency: typeof maxConc === 'number' ? maxConc : 3,
 				peakMemoryUsage: Math.random() * 100 + 50,
@@ -581,7 +581,7 @@ export class ExecutionToolLayer extends ToolLayer {
 
 		switch (validated.action) {
 			case 'monitor':
-				result['resources'] = {
+				result.resources = {
 					cpu: {
 						usage: Math.random() * 100,
 						cores: 4,
@@ -604,8 +604,8 @@ export class ExecutionToolLayer extends ToolLayer {
 				break;
 
 			case 'allocate':
-				result['resourceId'] = `res-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-				result['allocated'] = {
+				result.resourceId = `res-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+				result.allocated = {
 					type: validated.resourceType,
 					amount: validated.amount,
 					priority: validated.priority,
@@ -613,13 +613,13 @@ export class ExecutionToolLayer extends ToolLayer {
 				break;
 
 			case 'deallocate':
-				result['resourceId'] = validated.resourceId;
-				result['deallocated'] = true;
+				result.resourceId = validated.resourceId;
+				result.deallocated = true;
 				break;
 
 			case 'enforce-limits':
-				result['processId'] = validated.processId;
-				result['limitsApplied'] = {
+				result.processId = validated.processId;
+				result.limitsApplied = {
 					memory: validated.limits?.maxMemory || '512MB',
 					cpu: validated.limits?.maxCpu || '50%',
 					diskIo: validated.limits?.maxDiskIo || '100MB/s',
@@ -679,7 +679,7 @@ export class ExecutionToolLayer extends ToolLayer {
 			// Handle both direct chain object and nested { chain: ... } format
 			const chainData =
 				typeof input === 'object' && input !== null && 'chain' in (input as Record<string, unknown>)
-					? (input as Record<string, unknown>)['chain']
+					? (input as Record<string, unknown>).chain
 					: input;
 			ToolChainSchema.parse(chainData);
 			return true;

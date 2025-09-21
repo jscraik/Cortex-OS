@@ -47,7 +47,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 	private readonly metrics = new Map<string, PluginMetrics>();
 	private errors: PluginExecutionError[] = [];
 
-	constructor(private readonly store: MemoryStore) { }
+	constructor(private readonly store: MemoryStore) {}
 
 	async registerPlugin(plugin: Plugin): Promise<void> {
 		// Check for duplicate ID

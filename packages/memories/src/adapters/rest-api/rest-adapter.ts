@@ -1,331 +1,331 @@
 import { FetchHttpClient } from './http-client.js';
 import type {
-  HealthCheckResponse,
-  HttpClient,
-  MemoryCreateRequest,
-  MemoryCreateResponse,
-  MemoryDeleteRequest,
-  MemoryGetRequest,
-  MemoryGetResponse,
-  MemoryPurgeRequest,
-  MemoryPurgeResponse,
-  MemorySearchRequest,
-  MemorySearchResponse,
-  MemoryUpdateRequest,
-  RateLimitInfo,
-  RestApiAdapter,
-  RestApiConfig,
-  RestApiError,
+	HealthCheckResponse,
+	HttpClient,
+	MemoryCreateRequest,
+	MemoryCreateResponse,
+	MemoryDeleteRequest,
+	MemoryGetRequest,
+	MemoryGetResponse,
+	MemoryPurgeRequest,
+	MemoryPurgeResponse,
+	MemorySearchRequest,
+	MemorySearchResponse,
+	MemoryUpdateRequest,
+	RateLimitInfo,
+	RestApiAdapter,
+	RestApiConfig,
+	RestApiError,
 } from './types.js';
 
 /**
  * REST API client implementing the RestApiAdapter interface
  */
 type RestApiConfigResolved = Omit<
-  Required<RestApiConfig>,
-  'apiKey' | 'headers' | 'namespacePrefix' | 'errorHandler'
+	Required<RestApiConfig>,
+	'apiKey' | 'headers' | 'namespacePrefix' | 'errorHandler'
 > &
-  Pick<RestApiConfig, 'apiKey' | 'headers' | 'namespacePrefix' | 'errorHandler'>;
+	Pick<RestApiConfig, 'apiKey' | 'headers' | 'namespacePrefix' | 'errorHandler'>;
 
 export class RestApiClient implements RestApiAdapter {
-  readonly config: RestApiConfigResolved;
-  private readonly client: HttpClient;
-  private closed = false;
+	readonly config: RestApiConfigResolved;
+	private readonly client: HttpClient;
+	private closed = false;
 
-  constructor(config: RestApiConfig) {
-    this.config = {
-      timeoutMs: 30000,
-      maxRetries: 3,
-      retryDelayMs: 1000,
-      enableCompression: true,
-      namespacePrefix: '',
-      ...config,
-    };
+	constructor(config: RestApiConfig) {
+		this.config = {
+			timeoutMs: 30000,
+			maxRetries: 3,
+			retryDelayMs: 1000,
+			enableCompression: true,
+			namespacePrefix: '',
+			...config,
+		};
 
-    this.client = new FetchHttpClient(this.config.baseUrl);
-    this.setupClient();
-  }
+		this.client = new FetchHttpClient(this.config.baseUrl);
+		this.setupClient();
+	}
 
-  /**
-   * Get the HTTP client (for testing purposes)
-   */
-  getHttpClient(): HttpClient {
-    return this.client;
-  }
+	/**
+	 * Get the HTTP client (for testing purposes)
+	 */
+	getHttpClient(): HttpClient {
+		return this.client;
+	}
 
-  /**
-   * Check if the API is healthy
-   */
-  async healthCheck(): Promise<HealthCheckResponse> {
-    const resp = await this.makeRequest<HealthCheckResponse>({
-      method: 'GET',
-      path: '/health',
-    });
-    return resp.data;
-  }
+	/**
+	 * Check if the API is healthy
+	 */
+	async healthCheck(): Promise<HealthCheckResponse> {
+		const resp = await this.makeRequest<HealthCheckResponse>({
+			method: 'GET',
+			path: '/health',
+		});
+		return resp.data;
+	}
 
-  /**
-   * Create a new memory
-   */
-  async createMemory(request: MemoryCreateRequest): Promise<MemoryCreateResponse> {
-    const namespace = this.resolveNamespace(request.namespace);
-    const response = await this.makeRequest<{
-      memory: MemoryCreateResponse['memory'];
-      requestId: string;
-    }>({
-      method: 'POST',
-      path: `/api/v1/memories`,
-      body: {
-        memory: request.memory,
-        namespace,
-      },
-    });
+	/**
+	 * Create a new memory
+	 */
+	async createMemory(request: MemoryCreateRequest): Promise<MemoryCreateResponse> {
+		const namespace = this.resolveNamespace(request.namespace);
+		const response = await this.makeRequest<{
+			memory: MemoryCreateResponse['memory'];
+			requestId: string;
+		}>({
+			method: 'POST',
+			path: `/api/v1/memories`,
+			body: {
+				memory: request.memory,
+				namespace,
+			},
+		});
 
-    // Return the memory with proper timestamps
-    return {
-      memory: {
-        ...response.data.memory,
-        createdAt: response.data.memory.createdAt || new Date().toISOString(),
-        updatedAt: response.data.memory.updatedAt || new Date().toISOString(),
-      },
-      requestId: response.data.requestId,
-    };
-  }
+		// Return the memory with proper timestamps
+		return {
+			memory: {
+				...response.data.memory,
+				createdAt: response.data.memory.createdAt || new Date().toISOString(),
+				updatedAt: response.data.memory.updatedAt || new Date().toISOString(),
+			},
+			requestId: response.data.requestId,
+		};
+	}
 
-  /**
-   * Get a memory by ID
-   */
-  async getMemory(request: MemoryGetRequest): Promise<MemoryGetResponse> {
-    const namespace = this.resolveNamespace(request.namespace);
-    const resp = await this.makeRequest<MemoryGetResponse>({
-      method: 'GET',
-      path: `/api/v1/memories/${encodeURIComponent(request.id)}`,
-      query: namespace ? { namespace } : undefined,
-    });
-    return resp.data;
-  }
+	/**
+	 * Get a memory by ID
+	 */
+	async getMemory(request: MemoryGetRequest): Promise<MemoryGetResponse> {
+		const namespace = this.resolveNamespace(request.namespace);
+		const resp = await this.makeRequest<MemoryGetResponse>({
+			method: 'GET',
+			path: `/api/v1/memories/${encodeURIComponent(request.id)}`,
+			query: namespace ? { namespace } : undefined,
+		});
+		return resp.data;
+	}
 
-  /**
-   * Update an existing memory
-   */
-  async updateMemory(request: MemoryUpdateRequest): Promise<MemoryCreateResponse> {
-    const namespace = this.resolveNamespace(request.namespace);
+	/**
+	 * Update an existing memory
+	 */
+	async updateMemory(request: MemoryUpdateRequest): Promise<MemoryCreateResponse> {
+		const namespace = this.resolveNamespace(request.namespace);
 
-    // Extract the memory ID
-    if (!request.memory.id) {
-      throw new Error('Memory ID is required for update');
-    }
+		// Extract the memory ID
+		if (!request.memory.id) {
+			throw new Error('Memory ID is required for update');
+		}
 
-    const response = await this.makeRequest<{
-      memory: MemoryCreateResponse['memory'];
-      requestId: string;
-    }>({
-      method: 'PUT',
-      path: `/api/v1/memories/${encodeURIComponent(request.memory.id)}`,
-      body: {
-        memory: request.memory,
-        namespace,
-      },
-    });
+		const response = await this.makeRequest<{
+			memory: MemoryCreateResponse['memory'];
+			requestId: string;
+		}>({
+			method: 'PUT',
+			path: `/api/v1/memories/${encodeURIComponent(request.memory.id)}`,
+			body: {
+				memory: request.memory,
+				namespace,
+			},
+		});
 
-    return {
-      memory: {
-        ...response.data.memory,
-        updatedAt: response.data.memory.updatedAt || new Date().toISOString(),
-      },
-      requestId: response.data.requestId,
-    };
-  }
+		return {
+			memory: {
+				...response.data.memory,
+				updatedAt: response.data.memory.updatedAt || new Date().toISOString(),
+			},
+			requestId: response.data.requestId,
+		};
+	}
 
-  /**
-   * Delete a memory
-   */
-  async deleteMemory(request: MemoryDeleteRequest): Promise<void> {
-    const namespace = this.resolveNamespace(request.namespace);
-    await this.makeRequest<void>({
-      method: 'DELETE',
-      path: `/api/v1/memories/${encodeURIComponent(request.id)}`,
-      query: namespace ? { namespace } : undefined,
-    });
-  }
+	/**
+	 * Delete a memory
+	 */
+	async deleteMemory(request: MemoryDeleteRequest): Promise<void> {
+		const namespace = this.resolveNamespace(request.namespace);
+		await this.makeRequest<void>({
+			method: 'DELETE',
+			path: `/api/v1/memories/${encodeURIComponent(request.id)}`,
+			query: namespace ? { namespace } : undefined,
+		});
+	}
 
-  /**
-   * Search memories
-   */
-  async searchMemories(request: MemorySearchRequest): Promise<MemorySearchResponse> {
-    const namespace = this.resolveNamespace(request.namespace);
-    const isVectorQuery = 'vector' in request.query;
+	/**
+	 * Search memories
+	 */
+	async searchMemories(request: MemorySearchRequest): Promise<MemorySearchResponse> {
+		const namespace = this.resolveNamespace(request.namespace);
+		const isVectorQuery = 'vector' in request.query;
 
-    const body: Record<string, unknown> = {
-      query: request.query,
-      namespace,
-    };
+		const body: Record<string, unknown> = {
+			query: request.query,
+			namespace,
+		};
 
-    const response = await this.makeRequest<MemorySearchResponse>({
-      method: 'POST',
-      path: isVectorQuery ? '/api/v1/memories/search/vector' : '/api/v1/memories/search/text',
-      body,
-    });
+		const response = await this.makeRequest<MemorySearchResponse>({
+			method: 'POST',
+			path: isVectorQuery ? '/api/v1/memories/search/vector' : '/api/v1/memories/search/text',
+			body,
+		});
 
-    return response.data;
-  }
+		return response.data;
+	}
 
-  /**
-   * Purge expired memories
-   */
-  async purgeMemories(request: MemoryPurgeRequest): Promise<MemoryPurgeResponse> {
-    const namespace = this.resolveNamespace(request.namespace);
-    const resp = await this.makeRequest<MemoryPurgeResponse>({
-      method: 'DELETE',
-      path: '/api/v1/memories/expired',
-      query: {
-        now: request.nowISO,
-        ...(namespace ? { namespace } : {}),
-      },
-    });
-    return resp.data;
-  }
+	/**
+	 * Purge expired memories
+	 */
+	async purgeMemories(request: MemoryPurgeRequest): Promise<MemoryPurgeResponse> {
+		const namespace = this.resolveNamespace(request.namespace);
+		const resp = await this.makeRequest<MemoryPurgeResponse>({
+			method: 'DELETE',
+			path: '/api/v1/memories/expired',
+			query: {
+				now: request.nowISO,
+				...(namespace ? { namespace } : {}),
+			},
+		});
+		return resp.data;
+	}
 
-  /**
-   * Get current rate limit status
-   */
-  async getRateLimit(): Promise<RateLimitInfo> {
-    const resp = await this.makeRequest<RateLimitInfo>({
-      method: 'GET',
-      path: '/api/v1/rate-limit',
-    });
-    return resp.data;
-  }
+	/**
+	 * Get current rate limit status
+	 */
+	async getRateLimit(): Promise<RateLimitInfo> {
+		const resp = await this.makeRequest<RateLimitInfo>({
+			method: 'GET',
+			path: '/api/v1/rate-limit',
+		});
+		return resp.data;
+	}
 
-  /**
-   * Close the adapter and cleanup resources
-   */
-  async close(): Promise<void> {
-    if (!this.closed) {
-      this.closed = true;
-      await this.client.close();
-    }
-  }
+	/**
+	 * Close the adapter and cleanup resources
+	 */
+	async close(): Promise<void> {
+		if (!this.closed) {
+			this.closed = true;
+			await this.client.close();
+		}
+	}
 
-  /**
-   * Setup the HTTP client with authentication and default headers
-   */
-  private setupClient(): void {
-    // Set default headers
-    const defaultHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'User-Agent': 'cortex-os-memories/1.0.0',
-    };
+	/**
+	 * Setup the HTTP client with authentication and default headers
+	 */
+	private setupClient(): void {
+		// Set default headers
+		const defaultHeaders: Record<string, string> = {
+			'Content-Type': 'application/json',
+			Accept: 'application/json',
+			'User-Agent': 'cortex-os-memories/1.0.0',
+		};
 
-    if (this.config.enableCompression) {
-      defaultHeaders['Accept-Encoding'] = 'gzip, deflate';
-    }
+		if (this.config.enableCompression) {
+			defaultHeaders['Accept-Encoding'] = 'gzip, deflate';
+		}
 
-    if (this.config.headers) {
-      Object.assign(defaultHeaders, this.config.headers);
-    }
+		if (this.config.headers) {
+			Object.assign(defaultHeaders, this.config.headers);
+		}
 
-    this.client.setDefaultHeaders(defaultHeaders);
+		this.client.setDefaultHeaders(defaultHeaders);
 
-    // Set authentication
-    if (this.config.apiKey) {
-      this.client.setAuth('header', this.config.apiKey);
-    }
-  }
+		// Set authentication
+		if (this.config.apiKey) {
+			this.client.setAuth('header', this.config.apiKey);
+		}
+	}
 
-  /**
-   * Make a request with retry logic
-   */
-  private async makeRequest<T>(
-    options: Omit<Parameters<HttpClient['request']>[0], 'retry'>,
-  ): Promise<{ data: T; headers: Record<string, string>; status: number }> {
-    if (this.closed) {
-      throw new Error('Adapter is closed');
-    }
+	/**
+	 * Make a request with retry logic
+	 */
+	private async makeRequest<T>(
+		options: Omit<Parameters<HttpClient['request']>[0], 'retry'>,
+	): Promise<{ data: T; headers: Record<string, string>; status: number }> {
+		if (this.closed) {
+			throw new Error('Adapter is closed');
+		}
 
-    let lastError: RestApiError | undefined;
-    let delay = this.config.retryDelayMs;
+		let lastError: RestApiError | undefined;
+		let delay = this.config.retryDelayMs;
 
-    for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
-      try {
-        const response = await this.client.request<T>({
-          ...options,
-          retry: attempt < this.config.maxRetries,
-        });
+		for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
+			try {
+				const response = await this.client.request<T>({
+					...options,
+					retry: attempt < this.config.maxRetries,
+				});
 
-        // Check rate limit headers
-        const rateLimitHeaders = this.parseRateLimitHeaders(response.headers);
-        if (rateLimitHeaders.remaining === 0 && attempt < this.config.maxRetries) {
-          // Wait until rate limit resets
-          const resetTime = new Date(rateLimitHeaders.resetAt).getTime();
-          const waitTime = Math.max(0, resetTime - Date.now());
-          await this.sleep(waitTime);
-          continue;
-        }
+				// Check rate limit headers
+				const rateLimitHeaders = this.parseRateLimitHeaders(response.headers);
+				if (rateLimitHeaders.remaining === 0 && attempt < this.config.maxRetries) {
+					// Wait until rate limit resets
+					const resetTime = new Date(rateLimitHeaders.resetAt).getTime();
+					const waitTime = Math.max(0, resetTime - Date.now());
+					await this.sleep(waitTime);
+					continue;
+				}
 
-        return response;
-      } catch (error) {
-        lastError = error as RestApiError;
+				return response;
+			} catch (error) {
+				lastError = error as RestApiError;
 
-        if (!this.shouldRetry(lastError, attempt)) break;
+				if (!this.shouldRetry(lastError, attempt)) break;
 
-        // Call error handler if provided
-        if (this.config.errorHandler) {
-          try {
-            this.config.errorHandler(lastError);
-          } catch {
-            // Ignore error handler errors
-          }
-        }
+				// Call error handler if provided
+				if (this.config.errorHandler) {
+					try {
+						this.config.errorHandler(lastError);
+					} catch {
+						// Ignore error handler errors
+					}
+				}
 
-        // Exponential backoff with jitter
-        const jitter = Math.random() * 0.1 * delay;
-        await this.sleep(delay + jitter);
-        delay *= 2;
-      }
-    }
+				// Exponential backoff with jitter
+				const jitter = Math.random() * 0.1 * delay;
+				await this.sleep(delay + jitter);
+				delay *= 2;
+			}
+		}
 
-    throw lastError || new Error('Unknown error occurred');
-  }
+		throw lastError || new Error('Unknown error occurred');
+	}
 
-  /** Determine whether we should retry based on error and attempt */
-  private shouldRetry(err: RestApiError, attempt: number): boolean {
-    if (!err.retryable) return false;
-    return attempt < this.config.maxRetries;
-  }
+	/** Determine whether we should retry based on error and attempt */
+	private shouldRetry(err: RestApiError, attempt: number): boolean {
+		if (!err.retryable) return false;
+		return attempt < this.config.maxRetries;
+	}
 
-  /**
-   * Parse rate limit headers
-   */
-  private parseRateLimitHeaders(headers: Record<string, string>): RateLimitInfo {
-    const limit = parseInt(headers['x-ratelimit-limit'] || '1000', 10);
-    const remaining = parseInt(headers['x-ratelimit-remaining'] || '1000', 10);
-    const resetAt = headers['x-ratelimit-reset'] || new Date(Date.now() + 3600000).toISOString();
-    const windowSize = parseInt(headers['x-ratelimit-window'] || '3600', 10);
+	/**
+	 * Parse rate limit headers
+	 */
+	private parseRateLimitHeaders(headers: Record<string, string>): RateLimitInfo {
+		const limit = parseInt(headers['x-ratelimit-limit'] || '1000', 10);
+		const remaining = parseInt(headers['x-ratelimit-remaining'] || '1000', 10);
+		const resetAt = headers['x-ratelimit-reset'] || new Date(Date.now() + 3600000).toISOString();
+		const windowSize = parseInt(headers['x-ratelimit-window'] || '3600', 10);
 
-    return {
-      limit,
-      remaining,
-      resetAt,
-      windowSize,
-    };
-  }
+		return {
+			limit,
+			remaining,
+			resetAt,
+			windowSize,
+		};
+	}
 
-  /**
-   * Resolve namespace with prefix
-   */
-  private resolveNamespace(namespace?: string): string | undefined {
-    if (!namespace) {
-      return undefined;
-    }
-    return this.config.namespacePrefix ? `${this.config.namespacePrefix}${namespace}` : namespace;
-  }
+	/**
+	 * Resolve namespace with prefix
+	 */
+	private resolveNamespace(namespace?: string): string | undefined {
+		if (!namespace) {
+			return undefined;
+		}
+		return this.config.namespacePrefix ? `${this.config.namespacePrefix}${namespace}` : namespace;
+	}
 
-  /**
-   * Sleep for a specified duration
-   */
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+	/**
+	 * Sleep for a specified duration
+	 */
+	private sleep(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
 }

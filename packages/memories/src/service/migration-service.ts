@@ -1,13 +1,23 @@
-import type { Migration, MigrationManager, MigrationResult, MigrationHistory, ValidationResult, SchemaVersion } from '../domain/migration.js';
+import type {
+	Migration,
+	MigrationHistory,
+	MigrationManager,
+	MigrationResult,
+	SchemaVersion,
+	ValidationResult,
+} from '../domain/migration.js';
+import { MigrationError } from '../domain/migration.js';
 import type { Memory } from '../domain/types.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
-import { MigrationError, SchemaValidationError } from '../domain/migration.js';
 
 export class DefaultMigrationManager implements MigrationManager {
 	private readonly logger = {
-		info: (message: string, context?: any) => console.log(`[MigrationManager] ${message}`, context || ''),
-		warn: (message: string, context?: any) => console.warn(`[MigrationManager] ${message}`, context || ''),
-		error: (message: string, context?: any) => console.error(`[MigrationManager] ${message}`, context || '')
+		info: (message: string, context?: any) =>
+			console.log(`[MigrationManager] ${message}`, context || ''),
+		warn: (message: string, context?: any) =>
+			console.warn(`[MigrationManager] ${message}`, context || ''),
+		error: (message: string, context?: any) =>
+			console.error(`[MigrationManager] ${message}`, context || ''),
 	};
 	private readonly migrations: Migration[] = [];
 	private readonly schemaVersions: SchemaVersion[] = [
@@ -17,7 +27,7 @@ export class DefaultMigrationManager implements MigrationManager {
 			releaseDate: '2024-01-01',
 			minCompatibleVersion: '1.0.0',
 			maxCompatibleVersion: '1.0.0',
-			changes: []
+			changes: [],
 		},
 		{
 			version: '2.0.0',
@@ -31,20 +41,22 @@ export class DefaultMigrationManager implements MigrationManager {
 					field: 'embedding',
 					description: 'Added vector embedding field for semantic search',
 					migrationRequired: true,
-					breakingChange: false
-				}
-			]
-		}
+					breakingChange: false,
+				},
+			],
+		},
 	];
 
 	constructor(
 		private readonly store: MemoryStore,
-		private readonly metadataStore: MetadataStore
+		private readonly metadataStore: MetadataStore,
 	) {}
 
 	registerMigration(migration: Migration): void {
 		this.migrations.push(migration);
-		this.migrations.sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true, sensitivity: 'base' }));
+		this.migrations.sort((a, b) =>
+			a.version.localeCompare(b.version, undefined, { numeric: true, sensitivity: 'base' }),
+		);
 	}
 
 	async getCurrentVersion(): Promise<string> {
@@ -77,7 +89,7 @@ export class DefaultMigrationManager implements MigrationManager {
 						throw new MigrationError(
 							`Migration validation failed for version ${migration.version}`,
 							'VALIDATION_FAILED',
-							migration.version
+							migration.version,
 						);
 					}
 				}
@@ -98,19 +110,27 @@ export class DefaultMigrationManager implements MigrationManager {
 				fromVersion: currentVersion,
 				toVersion: target,
 				migrationsApplied: appliedMigrations,
-				duration: Date.now() - startTime
+				duration: Date.now() - startTime,
 			};
 		} catch (error) {
-			this.logger.error('Migration failed', { error, failedVersion: migrationsToApply.find(m => !appliedMigrations.includes(m.version))?.version });
+			this.logger.error('Migration failed', {
+				error,
+				failedVersion: migrationsToApply.find((m) => !appliedMigrations.includes(m.version))
+					?.version,
+			});
 
 			// Attempt rollback
 			try {
 				// Get the actual migration objects for rollback
-				const migrationObjectsToRollback = migrationsToApply.filter(m => appliedMigrations.includes(m.version));
+				const migrationObjectsToRollback = migrationsToApply.filter((m) =>
+					appliedMigrations.includes(m.version),
+				);
 				await this.rollbackMigrations(migrationObjectsToRollback);
 			} catch (rollbackError) {
 				this.logger.error('Rollback failed', { error: rollbackError });
-				errors.push(`Rollback failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
+				errors.push(
+					`Rollback failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`,
+				);
 			}
 
 			return {
@@ -119,7 +139,7 @@ export class DefaultMigrationManager implements MigrationManager {
 				toVersion: target,
 				migrationsApplied: appliedMigrations,
 				errors: [...errors, error instanceof Error ? error.message : String(error)],
-				duration: Date.now() - startTime
+				duration: Date.now() - startTime,
 			};
 		}
 	}
@@ -131,7 +151,7 @@ export class DefaultMigrationManager implements MigrationManager {
 		this.logger.info('Starting rollback', { from: currentVersion, to: toVersion });
 
 		const migrationsToRollback = this.getMigrationsToRollback(currentVersion, toVersion);
-		const errors: string[] = [];
+		const _errors: string[] = [];
 		const rolledBackMigrations: string[] = [];
 
 		try {
@@ -140,8 +160,9 @@ export class DefaultMigrationManager implements MigrationManager {
 
 				await migration.down(this.store);
 				await this.recordMigration(migration, 'down');
-				await this.metadataStore.set('schema_version',
-					migrationsToRollback[migrationsToRollback.indexOf(migration) - 1]?.version || '1.0.0'
+				await this.metadataStore.set(
+					'schema_version',
+					migrationsToRollback[migrationsToRollback.indexOf(migration) - 1]?.version || '1.0.0',
 				);
 
 				rolledBackMigrations.push(migration.version);
@@ -152,7 +173,7 @@ export class DefaultMigrationManager implements MigrationManager {
 				fromVersion: currentVersion,
 				toVersion: toVersion,
 				migrationsApplied: rolledBackMigrations,
-				duration: Date.now() - startTime
+				duration: Date.now() - startTime,
 			};
 		} catch (error) {
 			this.logger.error('Rollback failed', { error });
@@ -162,20 +183,20 @@ export class DefaultMigrationManager implements MigrationManager {
 				toVersion: toVersion,
 				migrationsApplied: rolledBackMigrations,
 				errors: [error instanceof Error ? error.message : String(error)],
-				duration: Date.now() - startTime
+				duration: Date.now() - startTime,
 			};
 		}
 	}
 
 	async validateSchema(memory: Memory): Promise<ValidationResult> {
 		const currentVersion = await this.getCurrentVersion();
-		const schemaVersion = this.schemaVersions.find(v => v.version === currentVersion);
+		const schemaVersion = this.schemaVersions.find((v) => v.version === currentVersion);
 
 		if (!schemaVersion) {
 			return {
 				valid: false,
 				errors: [`Unknown schema version: ${currentVersion}`],
-				warnings: []
+				warnings: [],
 			};
 		}
 
@@ -195,7 +216,7 @@ export class DefaultMigrationManager implements MigrationManager {
 		return {
 			valid: errors.length === 0,
 			errors,
-			warnings
+			warnings,
 		};
 	}
 
@@ -208,15 +229,11 @@ export class DefaultMigrationManager implements MigrationManager {
 	}
 
 	private getMigrationsToApply(fromVersion: string, toVersion: string): Migration[] {
-		return this.migrations.filter(m =>
-			m.version > fromVersion && m.version <= toVersion
-		);
+		return this.migrations.filter((m) => m.version > fromVersion && m.version <= toVersion);
 	}
 
 	private getMigrationsToRollback(fromVersion: string, toVersion: string): Migration[] {
-		return this.migrations.filter(m =>
-			m.version > toVersion && m.version <= fromVersion
-		);
+		return this.migrations.filter((m) => m.version > toVersion && m.version <= fromVersion);
 	}
 
 	private async rollbackMigrations(migrations: Migration[]): Promise<void> {
@@ -239,7 +256,7 @@ export class DefaultMigrationManager implements MigrationManager {
 			direction,
 			timestamp: new Date().toISOString(),
 			duration: 0, // TODO: Track actual duration
-			success: true
+			success: true,
 		};
 
 		await this.metadataStore.addMigrationHistory(historyEntry);

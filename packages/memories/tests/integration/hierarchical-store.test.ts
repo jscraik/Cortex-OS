@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { HierarchicalMemoryStore } from '../../src/adapters/store.hierarchical.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
-import { HierarchicalMemoryStore, type HierarchyMetadata } from '../../src/adapters/store.hierarchical.js';
 import type { Memory } from '../../src/domain/types.js';
 import { createMemory } from '../test-utils.js';
 
@@ -12,7 +12,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 	beforeEach(() => {
 		baseStore = new InMemoryStore();
 		store = new HierarchicalMemoryStore(baseStore);
-		namespace = 'test-' + Math.random().toString(36).substring(7);
+		namespace = `test-${Math.random().toString(36).substring(7)}`;
 	});
 
 	afterEach(async () => {
@@ -45,9 +45,9 @@ describe('HierarchicalMemoryStore Integration', () => {
 				metadata: {
 					...parent.metadata,
 					hierarchy: {
-						parent: parent.id
-					}
-				}
+						parent: parent.id,
+					},
+				},
 			});
 			const result = await store.upsert(child, namespace);
 
@@ -69,8 +69,8 @@ describe('HierarchicalMemoryStore Integration', () => {
 			const child = createMemory({
 				text: 'Child',
 				metadata: {
-					hierarchy: { parent: root.id }
-				}
+					hierarchy: { parent: root.id },
+				},
 			});
 			await store.upsert(child, namespace);
 
@@ -79,11 +79,13 @@ describe('HierarchicalMemoryStore Integration', () => {
 				...root,
 				metadata: {
 					...root.metadata,
-					hierarchy: { parent: child.id }
-				}
+					hierarchy: { parent: child.id },
+				},
 			});
 
-			await expect(store.upsert(updatedRoot, namespace)).rejects.toThrow('Circular reference detected');
+			await expect(store.upsert(updatedRoot, namespace)).rejects.toThrow(
+				'Circular reference detected',
+			);
 		});
 
 		it('should handle multiple levels of hierarchy', async () => {
@@ -94,14 +96,14 @@ describe('HierarchicalMemoryStore Integration', () => {
 			// Create level 1
 			const level1 = createMemory({
 				text: 'Level 1',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(level1, namespace);
 
 			// Create level 2
 			const level2 = createMemory({
 				text: 'Level 2',
-				metadata: { hierarchy: { parent: level1.id } }
+				metadata: { hierarchy: { parent: level1.id } },
 			});
 			await store.upsert(level2, namespace);
 
@@ -124,7 +126,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 			for (let i = 0; i < 3; i++) {
 				const child = createMemory({
 					text: `Child ${i}`,
-					metadata: { hierarchy: { parent: parent.id } }
+					metadata: { hierarchy: { parent: parent.id } },
 				});
 				children.push(await store.upsert(child, namespace));
 			}
@@ -142,7 +144,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 
 			const child = createMemory({
 				text: 'Child',
-				metadata: { hierarchy: { parent: parent.id } }
+				metadata: { hierarchy: { parent: parent.id } },
 			});
 			await store.upsert(child, namespace);
 
@@ -156,13 +158,13 @@ describe('HierarchicalMemoryStore Integration', () => {
 
 			const child1 = createMemory({
 				text: 'Child 1',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(child1, namespace);
 
 			const child2 = createMemory({
 				text: 'Child 2',
-				metadata: { hierarchy: { parent: child1.id } }
+				metadata: { hierarchy: { parent: child1.id } },
 			});
 			await store.upsert(child2, namespace);
 
@@ -180,26 +182,26 @@ describe('HierarchicalMemoryStore Integration', () => {
 			// Create 3 levels
 			const level1 = createMemory({
 				text: 'Level 1',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(level1, namespace);
 
 			const level2 = createMemory({
 				text: 'Level 2',
-				metadata: { hierarchy: { parent: level1.id } }
+				metadata: { hierarchy: { parent: level1.id } },
 			});
 			await store.upsert(level2, namespace);
 
 			const level3 = createMemory({
 				text: 'Level 3',
-				metadata: { hierarchy: { parent: level2.id } }
+				metadata: { hierarchy: { parent: level2.id } },
 			});
 			await store.upsert(level3, namespace);
 
 			// Get subtree with maxDepth=1 (should only include level1)
 			const subtree = await store.getSubtree(root.id, namespace, 1);
 			expect(subtree).toHaveLength(2); // root + level1
-			expect(subtree.find(m => m.id === level3.id)).toBeUndefined();
+			expect(subtree.find((m) => m.id === level3.id)).toBeUndefined();
 		});
 	});
 
@@ -212,15 +214,18 @@ describe('HierarchicalMemoryStore Integration', () => {
 			// Create child
 			const child = createMemory({
 				text: 'Important child',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(child, namespace);
 
 			// Search with rootOnly
-			const results = await store.searchByText({
-				text: 'Important',
-				rootOnly: true
-			}, namespace);
+			const results = await store.searchByText(
+				{
+					text: 'Important',
+					rootOnly: true,
+				},
+				namespace,
+			);
 
 			expect(results).toHaveLength(1);
 			expect(results[0].id).toBe(root.id);
@@ -232,21 +237,24 @@ describe('HierarchicalMemoryStore Integration', () => {
 
 			const child = createMemory({
 				text: 'Child',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(child, namespace);
 
 			const grandchild = createMemory({
 				text: 'Grandchild',
-				metadata: { hierarchy: { parent: child.id } }
+				metadata: { hierarchy: { parent: child.id } },
 			});
 			await store.upsert(grandchild, namespace);
 
 			// Search root with includeChildren
-			const results = await store.searchByText({
-				text: 'Root',
-				includeChildren: true
-			}, namespace);
+			const results = await store.searchByText(
+				{
+					text: 'Root',
+					includeChildren: true,
+				},
+				namespace,
+			);
 
 			expect(results).toHaveLength(3); // root + child + grandchild
 		});
@@ -257,22 +265,25 @@ describe('HierarchicalMemoryStore Integration', () => {
 
 			const child = createMemory({
 				text: 'Child',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(child, namespace);
 
 			const grandchild = createMemory({
 				text: 'Grandchild',
-				metadata: { hierarchy: { parent: child.id } }
+				metadata: { hierarchy: { parent: child.id } },
 			});
 			await store.upsert(grandchild, namespace);
 
 			// Search with maxDepth=1
-			const results = await store.searchByText({
-				text: 'Root',
-				includeChildren: true,
-				maxDepth: 1
-			}, namespace);
+			const results = await store.searchByText(
+				{
+					text: 'Root',
+					includeChildren: true,
+					maxDepth: 1,
+				},
+				namespace,
+			);
 
 			expect(results).toHaveLength(2); // root + child
 		});
@@ -280,22 +291,25 @@ describe('HierarchicalMemoryStore Integration', () => {
 		it('should boost hierarchy scores in vector search', async () => {
 			const root = createMemory({
 				text: 'Test memory',
-				vector: [0.1, 0.2, 0.3]
+				vector: [0.1, 0.2, 0.3],
 			});
 			await store.upsert(root, namespace);
 
 			const child = createMemory({
 				text: 'Test child',
 				vector: [0.1, 0.2, 0.3],
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(child, namespace);
 
 			// Search with vector
-			const results = await store.searchByVector({
-				vector: [0.1, 0.2, 0.3],
-				includeChildren: true
-			}, namespace);
+			const results = await store.searchByVector(
+				{
+					vector: [0.1, 0.2, 0.3],
+					includeChildren: true,
+				},
+				namespace,
+			);
 
 			expect(results).toHaveLength(2);
 			// Root should have higher score due to rootBoost
@@ -311,7 +325,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 
 			const child = createMemory({
 				text: 'Child',
-				metadata: { hierarchy: { parent: parent.id } }
+				metadata: { hierarchy: { parent: parent.id } },
 			});
 			await store.upsert(child, namespace);
 
@@ -334,7 +348,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 			for (let i = 0; i < 100; i++) {
 				const child = createMemory({
 					text: `Child ${i}`,
-					metadata: { hierarchy: { parent: parent.id } }
+					metadata: { hierarchy: { parent: parent.id } },
 				});
 				children.push(await store.upsert(child, namespace));
 			}
@@ -355,7 +369,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 			// Update memory
 			const updated = createMemory({
 				...memory,
-				text: 'Updated'
+				text: 'Updated',
 			});
 			await store.upsert(updated, namespace);
 
@@ -373,20 +387,20 @@ describe('HierarchicalMemoryStore Integration', () => {
 			// Branch 1
 			const branch1_1 = createMemory({
 				text: 'Branch 1-1',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(branch1_1, namespace);
 
 			const branch1_2 = createMemory({
 				text: 'Branch 1-2',
-				metadata: { hierarchy: { parent: branch1_1.id } }
+				metadata: { hierarchy: { parent: branch1_1.id } },
 			});
 			await store.upsert(branch1_2, namespace);
 
 			// Branch 2
 			const branch2_1 = createMemory({
 				text: 'Branch 2-1',
-				metadata: { hierarchy: { parent: root.id } }
+				metadata: { hierarchy: { parent: root.id } },
 			});
 			await store.upsert(branch2_1, namespace);
 
@@ -395,16 +409,22 @@ describe('HierarchicalMemoryStore Integration', () => {
 			expect(subtree).toHaveLength(4);
 
 			// Verify search with filters - should find all memories with "Branch" text
-			const allBranches = await store.searchByText({
-				text: 'Branch'
-			}, namespace);
+			const allBranches = await store.searchByText(
+				{
+					text: 'Branch',
+				},
+				namespace,
+			);
 			expect(allBranches).toHaveLength(3); // All memories with "Branch" text
 
 			// Verify rootOnly filter - should find no root memories with "Branch" text
-			const rootsOnly = await store.searchByText({
-				text: 'Branch',
-				rootOnly: true
-			}, namespace);
+			const rootsOnly = await store.searchByText(
+				{
+					text: 'Branch',
+					rootOnly: true,
+				},
+				namespace,
+			);
 			expect(rootsOnly).toHaveLength(0); // No root memories contain "Branch"
 		});
 	});
@@ -413,7 +433,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 		it('should reject memory with non-existent parent', async () => {
 			const memory = createMemory({
 				text: 'Orphan',
-				metadata: { hierarchy: { parent: 'non-existent' } }
+				metadata: { hierarchy: { parent: 'non-existent' } },
 			});
 
 			await expect(store.upsert(memory, namespace)).rejects.toThrow('does not exist');
@@ -428,7 +448,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 			for (let i = 0; i < 10; i++) {
 				const child = createMemory({
 					text: `Child ${i}`,
-					metadata: { hierarchy: { parent: parent.id } }
+					metadata: { hierarchy: { parent: parent.id } },
 				});
 				children.push(child);
 			}
@@ -453,7 +473,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 			if (corrupted) {
 				corrupted.metadata = {
 					...corrupted.metadata,
-					hierarchy: { parent: null } as any // Invalid parent
+					hierarchy: { parent: null } as any, // Invalid parent
 				};
 				await baseStore.upsert(corrupted, namespace);
 			}
@@ -478,13 +498,13 @@ describe('HierarchicalMemoryStore Integration', () => {
 			for (let i = 1; i < depth; i++) {
 				const memory = createMemory({
 					text: `Level ${i}`,
-					metadata: { hierarchy: { parent: memories[i-1].id } }
+					metadata: { hierarchy: { parent: memories[i - 1].id } },
 				});
 				memories.push(await store.upsert(memory, namespace));
 			}
 
 			// Verify depth calculation
-			const deepest = await store.get(memories[depth-1].id, namespace);
+			const deepest = await store.get(memories[depth - 1].id, namespace);
 			expect(deepest?.metadata?.hierarchy?.depth).toBe(depth - 1);
 		});
 
@@ -497,7 +517,7 @@ describe('HierarchicalMemoryStore Integration', () => {
 			for (let i = 0; i < 100; i++) {
 				const child = createMemory({
 					text: `Child ${i}`,
-					metadata: { hierarchy: { parent: root.id } }
+					metadata: { hierarchy: { parent: root.id } },
 				});
 				children.push(await store.upsert(child, namespace));
 			}

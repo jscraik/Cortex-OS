@@ -63,9 +63,9 @@ export async function rerankDocs(
 		const start = Date.now();
 		const result = rel?.retry
 			? await withRetry(exec, {
-				maxAttempts: rel.retry.maxAttempts,
-				baseDelayMs: rel.retry.baseDelayMs ?? 100,
-			})
+					maxAttempts: rel.retry.maxAttempts,
+					baseDelayMs: rel.retry.baseDelayMs ?? 100,
+				})
 			: await exec();
 		const ms = Date.now() - start;
 		recordLatency('rag.reranker', ms, { component: 'rag' });

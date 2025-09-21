@@ -7,7 +7,7 @@ export class VersionedMemoryStore implements MemoryStore {
 	constructor(
 		private readonly store: MemoryStore,
 		private readonly migrationManager: MigrationManager,
-	) { }
+	) {}
 
 	async initialize(): Promise<void> {
 		const currentVersion = await this.migrationManager.getCurrentVersion();

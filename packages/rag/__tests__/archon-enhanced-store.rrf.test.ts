@@ -3,7 +3,7 @@ import { RemoteMCPEnhancedStore } from '../src/integrations/remote-mcp.js';
 import type { Chunk } from '../src/lib/types.js';
 
 const localStore = {
-	async upsert() { },
+	async upsert() {},
 	async query(_vector: number[], k = 10) {
 		const rows = [
 			{ id: 'l1', text: 'alpha', score: 0.9, metadata: { text: 'alpha' } },

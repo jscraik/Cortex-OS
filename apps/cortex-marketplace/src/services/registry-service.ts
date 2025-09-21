@@ -3,10 +3,10 @@
  * @description Handles registry management and caching
  */
 
-import type { RegistryIndex } from '@cortex-os/mcp-registry';
 import { constants as fsConstants } from 'node:fs';
 import { access, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import type { RegistryIndex } from '@cortex-os/mcp-registry';
 
 export interface RegistryConfig {
 	registries: Record<string, string>;

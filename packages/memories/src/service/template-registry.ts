@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events';
-import type { MemoryTemplate } from '../domain/types.js';
+import { EventEmitter } from 'node:events';
 import { TemplateDomainService, type TemplateValidationResult } from '../domain/templates.js';
+import type { MemoryTemplate } from '../domain/types.js';
 
 export interface TemplateRegistryEvents {
 	templateRegistered: [template: MemoryTemplate];
@@ -13,10 +13,6 @@ export class TemplateRegistry extends EventEmitter {
 	private domainService = new TemplateDomainService();
 	private compiledSchemas = new Map<string, any>();
 
-	constructor() {
-		super();
-	}
-
 	/**
 	 * Register a new template
 	 */
@@ -24,7 +20,9 @@ export class TemplateRegistry extends EventEmitter {
 		// Validate template
 		const validation = this.domainService.validateTemplate(template);
 		if (!validation.valid) {
-			throw new Error(`Template validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+			throw new Error(
+				`Template validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+			);
 		}
 
 		// Check if template already exists
@@ -63,7 +61,7 @@ export class TemplateRegistry extends EventEmitter {
 
 		// Return latest version
 		const versions = Array.from(versionMap.keys()).sort((a, b) =>
-			this.domainService.compareVersions(b, a)
+			this.domainService.compareVersions(b, a),
 		);
 		return versionMap.get(versions[0]) || null;
 	}
@@ -94,7 +92,7 @@ export class TemplateRegistry extends EventEmitter {
 	 */
 	async listByCategory(category: string): Promise<MemoryTemplate[]> {
 		const all = await this.list();
-		return all.filter(t => t.metadata?.category === category);
+		return all.filter((t) => t.metadata?.category === category);
 	}
 
 	/**
@@ -109,7 +107,9 @@ export class TemplateRegistry extends EventEmitter {
 		// Validate updated template
 		const validation = this.domainService.validateTemplate(template);
 		if (!validation.valid) {
-			throw new Error(`Template validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+			throw new Error(
+				`Template validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+			);
 		}
 
 		// Update template
@@ -145,9 +145,7 @@ export class TemplateRegistry extends EventEmitter {
 		const versionMap = this.templates.get(id);
 		if (!versionMap) return [];
 
-		return Array.from(versionMap.keys()).sort((a, b) =>
-			this.domainService.compareVersions(b, a)
-		);
+		return Array.from(versionMap.keys()).sort((a, b) => this.domainService.compareVersions(b, a));
 	}
 
 	/**
@@ -193,9 +191,11 @@ export class TemplateRegistry extends EventEmitter {
 	/**
 	 * Get latest version from a version map
 	 */
-	private async getLatestByVersionMap(versionMap: Map<string, MemoryTemplate>): Promise<MemoryTemplate | null> {
+	private async getLatestByVersionMap(
+		versionMap: Map<string, MemoryTemplate>,
+	): Promise<MemoryTemplate | null> {
 		const versions = Array.from(versionMap.keys()).sort((a, b) =>
-			this.domainService.compareVersions(b, a)
+			this.domainService.compareVersions(b, a),
 		);
 		return versionMap.get(versions[0]) || null;
 	}
@@ -203,7 +203,10 @@ export class TemplateRegistry extends EventEmitter {
 	/**
 	 * Get template validation status
 	 */
-	async getValidationStatus(id: string, version?: string): Promise<TemplateValidationResult | null> {
+	async getValidationStatus(
+		id: string,
+		version?: string,
+	): Promise<TemplateValidationResult | null> {
 		const template = await this.get(id, version);
 		if (!template) return null;
 

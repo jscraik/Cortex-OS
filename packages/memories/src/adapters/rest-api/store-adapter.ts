@@ -42,7 +42,7 @@ export class RestApiMemoryStore implements MemoryStore {
 				namespace,
 			});
 
-			if (existing && existing.memory) {
+			if (existing?.memory) {
 				// Update existing memory
 				const response = await this.adapter.updateMemory({
 					memory: {
@@ -115,7 +115,10 @@ export class RestApiMemoryStore implements MemoryStore {
 		return response.memories;
 	}
 
-	async searchByVector(query: VectorQuery, namespace = this.namespace): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		query: VectorQuery,
+		namespace = this.namespace,
+	): Promise<(Memory & { score: number })[]> {
 		const response = await this.adapter.searchMemories({
 			query,
 			namespace,

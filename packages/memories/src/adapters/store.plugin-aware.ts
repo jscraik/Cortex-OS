@@ -1,4 +1,4 @@
-import type { Memory, MemoryMetadata } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 export interface Plugin {
@@ -13,13 +13,22 @@ export interface PluginHooks {
 	beforeUpsert?: (memory: Memory, context?: PluginContext) => Promise<Memory> | Memory;
 	afterUpsert?: (memory: Memory, context?: PluginContext) => Promise<Memory> | Memory;
 	beforeGet?: (id: string, context?: PluginContext) => Promise<string> | string;
-	afterGet?: (memory: Memory | null, context?: PluginContext) => Promise<Memory | null> | Memory | null;
+	afterGet?: (
+		memory: Memory | null,
+		context?: PluginContext,
+	) => Promise<Memory | null> | Memory | null;
 	beforeDelete?: (id: string, context?: PluginContext) => Promise<string> | string;
 	afterDelete?: (id: string, context?: PluginContext) => Promise<string> | string;
 	beforeSearch?: (query: TextQuery, context?: PluginContext) => Promise<TextQuery> | TextQuery;
 	afterSearch?: (results: Memory[], context?: PluginContext) => Promise<Memory[]> | Memory[];
-	beforeVectorSearch?: (query: VectorQuery, context?: PluginContext) => Promise<VectorQuery> | VectorQuery;
-	afterVectorSearch?: (results: (Memory & { score: number })[], context?: PluginContext) => Promise<(Memory & { score: number })[]> | (Memory & { score: number })[];
+	beforeVectorSearch?: (
+		query: VectorQuery,
+		context?: PluginContext,
+	) => Promise<VectorQuery> | VectorQuery;
+	afterVectorSearch?: (
+		results: (Memory & { score: number })[],
+		context?: PluginContext,
+	) => Promise<(Memory & { score: number })[]> | (Memory & { score: number })[];
 }
 
 export interface PluginContext {
@@ -54,7 +63,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		const context: PluginContext = {
 			namespace,
 			operation: 'upsert',
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
 		};
 
 		let processedMemory = memory;
@@ -71,13 +80,13 @@ export class PluginAwareMemoryStore implements MemoryStore {
 						plugin.hooks.beforeUpsert,
 						processedMemory,
 						context,
-						name
+						name,
 					);
 				} catch (error) {
 					errors.push({
 						plugin: name,
 						error: error instanceof Error ? error.message : String(error),
-						timestamp: new Date().toISOString()
+						timestamp: new Date().toISOString(),
 					});
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -94,17 +103,12 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				context.pluginConfig = { ...plugin.config, ...plugin.runtimeConfig };
 
 				try {
-					await this.executeHook(
-						plugin.hooks.afterUpsert,
-						result,
-						context,
-						name
-					);
+					await this.executeHook(plugin.hooks.afterUpsert, result, context, name);
 				} catch (error) {
 					errors.push({
 						plugin: name,
 						error: error instanceof Error ? error.message : String(error),
-						timestamp: new Date().toISOString()
+						timestamp: new Date().toISOString(),
 					});
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -115,7 +119,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		if (errors.length > 0) {
 			result.metadata = {
 				...result.metadata,
-				pluginErrors: errors
+				pluginErrors: errors,
 			};
 		}
 
@@ -126,7 +130,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		const context: PluginContext = {
 			namespace,
 			operation: 'get',
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
 		};
 
 		let processedId = id;
@@ -138,13 +142,8 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				context.pluginConfig = { ...plugin.config, ...plugin.runtimeConfig };
 
 				try {
-					processedId = await this.executeHook(
-						plugin.hooks.beforeGet,
-						processedId,
-						context,
-						name
-					);
-				} catch (error) {
+					processedId = await this.executeHook(plugin.hooks.beforeGet, processedId, context, name);
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -161,13 +160,8 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				context.pluginConfig = { ...plugin.config, ...plugin.runtimeConfig };
 
 				try {
-					result = await this.executeHook(
-						plugin.hooks.afterGet,
-						result,
-						context,
-						name
-					);
-				} catch (error) {
+					result = await this.executeHook(plugin.hooks.afterGet, result, context, name);
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -181,7 +175,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		const context: PluginContext = {
 			namespace,
 			operation: 'delete',
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
 		};
 
 		let processedId = id;
@@ -197,9 +191,9 @@ export class PluginAwareMemoryStore implements MemoryStore {
 						plugin.hooks.beforeDelete,
 						processedId,
 						context,
-						name
+						name,
 					);
-				} catch (error) {
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -216,13 +210,8 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				context.pluginConfig = { ...plugin.config, ...plugin.runtimeConfig };
 
 				try {
-					await this.executeHook(
-						plugin.hooks.afterDelete,
-						processedId,
-						context,
-						name
-					);
-				} catch (error) {
+					await this.executeHook(plugin.hooks.afterDelete, processedId, context, name);
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -234,7 +223,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		const context: PluginContext = {
 			namespace,
 			operation: 'search',
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
 		};
 
 		let processedQuery = q;
@@ -250,9 +239,9 @@ export class PluginAwareMemoryStore implements MemoryStore {
 						plugin.hooks.beforeSearch,
 						processedQuery,
 						context,
-						name
+						name,
 					);
-				} catch (error) {
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -269,13 +258,8 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				context.pluginConfig = { ...plugin.config, ...plugin.runtimeConfig };
 
 				try {
-					results = await this.executeHook(
-						plugin.hooks.afterSearch,
-						results,
-						context,
-						name
-					);
-				} catch (error) {
+					results = await this.executeHook(plugin.hooks.afterSearch, results, context, name);
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -285,11 +269,14 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		return results;
 	}
 
-	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace = 'default',
+	): Promise<(Memory & { score: number })[]> {
 		const context: PluginContext = {
 			namespace,
 			operation: 'vectorSearch',
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
 		};
 
 		let processedQuery = q;
@@ -305,9 +292,9 @@ export class PluginAwareMemoryStore implements MemoryStore {
 						plugin.hooks.beforeVectorSearch,
 						processedQuery,
 						context,
-						name
+						name,
 					);
-				} catch (error) {
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -324,13 +311,8 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				context.pluginConfig = { ...plugin.config, ...plugin.runtimeConfig };
 
 				try {
-					results = await this.executeHook(
-						plugin.hooks.afterVectorSearch,
-						results,
-						context,
-						name
-					);
-				} catch (error) {
+					results = await this.executeHook(plugin.hooks.afterVectorSearch, results, context, name);
+				} catch (_error) {
 					// Log error but continue
 					this.recordMetric(name, 'error', Date.now() - startTime);
 				}
@@ -360,7 +342,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 
 		this.plugins.set(plugin.name, {
 			...plugin,
-			runtimeConfig: { ...plugin.config, ...runtimeConfig }
+			runtimeConfig: { ...plugin.config, ...runtimeConfig },
 		});
 
 		// Initialize metrics
@@ -368,7 +350,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 			executionTime: 0,
 			executionCount: 0,
 			errorCount: 0,
-			lastExecuted: ''
+			lastExecuted: '',
 		};
 	}
 
@@ -403,7 +385,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		hook: (arg: T, context?: PluginContext) => Promise<R> | R,
 		arg: T,
 		context: PluginContext,
-		pluginName: string
+		pluginName: string,
 	): Promise<R> {
 		const startTime = Date.now();
 
@@ -426,7 +408,7 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				executionTime: 0,
 				executionCount: 0,
 				errorCount: 0,
-				lastExecuted: ''
+				lastExecuted: '',
 			};
 		}
 

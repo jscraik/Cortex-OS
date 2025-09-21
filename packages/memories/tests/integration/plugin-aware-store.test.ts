@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import { PluginAwareMemoryStore } from '../../src/adapters/store.plugin-aware.js';
-import type { Memory, MemoryStore } from '../../src/domain/types.js';
+import type { Memory } from '../../src/domain/types.js';
 import { createMemory } from '../test-utils.js';
 
 describe('PluginAwareMemoryStore Integration', () => {
@@ -12,7 +12,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 	beforeEach(() => {
 		baseStore = new InMemoryStore();
 		store = new PluginAwareMemoryStore(baseStore);
-		namespace = 'test-' + Math.random().toString(36).substring(7);
+		namespace = `test-${Math.random().toString(36).substring(7)}`;
 	});
 
 	afterEach(async () => {
@@ -29,8 +29,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 				name: 'test-plugin',
 				version: '1.0.0',
 				hooks: {
-					beforeUpsert: async (memory: Memory) => memory
-				}
+					beforeUpsert: async (memory: Memory) => memory,
+				},
 			};
 
 			await store.registerPlugin(plugin);
@@ -43,7 +43,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 		it('should reject plugins without names', async () => {
 			const plugin = {
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			await expect(store.registerPlugin(plugin)).rejects.toThrow('Plugin name is required');
@@ -53,24 +53,26 @@ describe('PluginAwareMemoryStore Integration', () => {
 			const plugin1 = {
 				name: 'duplicate',
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			const plugin2 = {
 				name: 'duplicate',
 				version: '2.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			await store.registerPlugin(plugin1);
-			await expect(store.registerPlugin(plugin2)).rejects.toThrow('Plugin duplicate already registered');
+			await expect(store.registerPlugin(plugin2)).rejects.toThrow(
+				'Plugin duplicate already registered',
+			);
 		});
 
 		it('should unregister plugins', async () => {
 			const plugin = {
 				name: 'removable',
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			await store.registerPlugin(plugin);
@@ -92,8 +94,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					beforeUpsert: async (memory: Memory) => {
 						executionOrder.push('first');
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			const plugin2 = {
@@ -103,8 +105,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					beforeUpsert: async (memory: Memory) => {
 						executionOrder.push('second');
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin1);
@@ -131,8 +133,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					afterUpsert: async (memory: Memory) => {
 						afterHooks.push('after');
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin);
@@ -151,10 +153,10 @@ describe('PluginAwareMemoryStore Integration', () => {
 				name: 'failing',
 				version: '1.0.0',
 				hooks: {
-					beforeUpsert: async (memory: Memory) => {
+					beforeUpsert: async (_memory: Memory) => {
 						throw new Error('Plugin failure');
-					}
-				}
+					},
+				},
 			};
 
 			const plugin2 = {
@@ -163,8 +165,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 				hooks: {
 					beforeUpsert: async (memory: Memory) => {
 						return { ...memory, metadata: { ...memory.metadata, success: true } };
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin1);
@@ -182,10 +184,10 @@ describe('PluginAwareMemoryStore Integration', () => {
 				name: 'error-collector',
 				version: '1.0.0',
 				hooks: {
-					beforeUpsert: async (memory: Memory) => {
+					beforeUpsert: async (_memory: Memory) => {
 						throw new Error('Expected error');
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin);
@@ -238,8 +240,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					afterSearch: async (results: Memory[]) => {
 						hookCalls.push('afterSearch');
 						return results;
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin);
@@ -266,7 +268,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 				'beforeSearch',
 				'afterSearch',
 				'beforeDelete',
-				'afterDelete'
+				'afterDelete',
 			]);
 		});
 
@@ -282,11 +284,11 @@ describe('PluginAwareMemoryStore Integration', () => {
 							metadata: {
 								...memory.metadata,
 								modified: true,
-								timestamp: new Date().toISOString()
-							}
+								timestamp: new Date().toISOString(),
+							},
 						};
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin);
@@ -309,19 +311,19 @@ describe('PluginAwareMemoryStore Integration', () => {
 				version: '1.0.0',
 				config: {
 					enabled: true,
-					threshold: 0.8
+					threshold: 0.8,
 				},
 				hooks: {
 					beforeUpsert: async (memory: Memory, context?: any) => {
 						configCalls.push(context?.pluginConfig);
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin, {
 				custom: 'value',
-				override: true
+				override: true,
 			});
 
 			const memory = createMemory({ text: 'Test config' });
@@ -332,7 +334,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 				enabled: true,
 				threshold: 0.8,
 				custom: 'value',
-				override: true
+				override: true,
 			});
 		});
 
@@ -346,8 +348,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 							throw new Error('Plugin disabled');
 						}
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin, { enabled: true });
@@ -374,10 +376,10 @@ describe('PluginAwareMemoryStore Integration', () => {
 				hooks: {
 					beforeUpsert: async (memory: Memory) => {
 						// Simulate slow operation
-						await new Promise(resolve => setTimeout(resolve, 10));
+						await new Promise((resolve) => setTimeout(resolve, 10));
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(slowPlugin);
@@ -385,7 +387,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 			const memory = createMemory({ text: 'Test performance' });
 			const start = Date.now();
 			await store.upsert(memory, namespace);
-			const duration = Date.now() - start;
+			const _duration = Date.now() - start;
 
 			const metrics = store.getPluginMetrics();
 			expect(metrics.slow.executionTime).toBeGreaterThan(0);
@@ -404,8 +406,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 						const result = await Promise.resolve(42);
 						asyncResults.push(result);
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await store.registerPlugin(plugin);

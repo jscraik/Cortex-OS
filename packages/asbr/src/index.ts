@@ -21,7 +21,7 @@ export {
 	ASBRClient,
 	createASBRClient,
 	createIdempotencyKey,
-	createTaskInput
+	createTaskInput,
 } from './sdk/index.js';
 export { getXDGPaths, initializeXDG } from './xdg/index.js';
 
@@ -31,12 +31,12 @@ export { getXDGPaths, initializeXDG } from './xdg/index.js';
 export {
 	AriaAnnouncer,
 	createAccessibilityProfileFromProfile,
-	createDefaultAccessibilityProfile
+	createDefaultAccessibilityProfile,
 } from './accessibility/aria-announcer.js';
 export {
 	createFocusableElement,
 	getKeyboardNavigationManager,
-	KeyboardNavigationManager
+	KeyboardNavigationManager,
 } from './accessibility/keyboard-nav.js';
 // Authentication
 export {
@@ -44,7 +44,7 @@ export {
 	generateToken,
 	initializeAuth,
 	revokeToken,
-	validateToken
+	validateToken,
 } from './api/auth.js';
 export type {
 	CritiqueOptions,
@@ -58,18 +58,18 @@ export type {
 	SimulationOptions,
 	SimulationResult,
 	TeachingOptions,
-	TeachingSession
+	TeachingSession,
 } from './cerebrum/index.js';
 // Cerebrum - Meta-agent layer
 export { Cerebrum, Critique } from './cerebrum/index.js';
 // Default configuration
 export { DEFAULT_CONFIG } from './core/config.js';
+export type { EventManager } from './core/events.js';
 export {
 	createA11yEvent,
 	createEventManager,
-	getEventManager
+	getEventManager,
 } from './core/events.js';
-export type { EventManager } from './core/events.js';
 // Diff and normalization
 export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
 export { ContentNormalizer, createNormalizer } from './diff/normalizer.js';
@@ -80,7 +80,7 @@ export {
 	type FeedbackSubmittedEvent,
 	type ReviewCompletedEvent,
 	type ReviewCreatedEvent,
-	type SecurityScanExecutedEvent
+	type SecurityScanExecutedEvent,
 } from './events/asbr-events.js';
 // Evidence system
 export { EvidenceCollector } from './evidence/collector.js';
@@ -91,7 +91,7 @@ export { MCPSandbox, MCPToolRegistry } from './mcp/sandbox.js';
 export { asbrMcpTools } from './mcp/tools.js';
 export {
 	createDefaultSecurityPolicy,
-	OWASPLLMGuard
+	OWASPLLMGuard,
 } from './security/owasp-llm-guard.js';
 // Types
 export type {
@@ -130,7 +130,7 @@ export type {
 	// SDK types
 	UnsubscribeFunction,
 	ValidationError,
-	XDGPaths
+	XDGPaths,
 } from './types/index.js';
 
 /**

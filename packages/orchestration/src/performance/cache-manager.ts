@@ -1,478 +1,460 @@
 /**
  * nO Master Agent Loop - Intelligent Caching Manager
- * 
+ *
  * Provides multi-layer caching with optional Redis backend, LRU in-memory cache,
  * and intelligent cache strategies for performance optimization.
- * 
+ *
  * Co-authored-by: brAInwav Development Team
  */
 
 export interface CacheConfig {
-    redis: {
-        enabled: boolean;
-        url: string;
-        password?: string;
-        db?: number;
-        keyPrefix?: string;
-        defaultTTL: number; // seconds
-    };
-    memory: {
-        enabled: boolean;
-        maxSize: number; // number of entries
-        defaultTTL: number; // milliseconds
-    };
-    strategies: {
-        writeThrough: boolean;
-        writeBehind: boolean;
-        readThrough: boolean;
-    };
+	redis: {
+		enabled: boolean;
+		url: string;
+		password?: string;
+		db?: number;
+		keyPrefix?: string;
+		defaultTTL: number; // seconds
+	};
+	memory: {
+		enabled: boolean;
+		maxSize: number; // number of entries
+		defaultTTL: number; // milliseconds
+	};
+	strategies: {
+		writeThrough: boolean;
+		writeBehind: boolean;
+		readThrough: boolean;
+	};
 }
 
 export interface CacheEntry<T = unknown> {
-    key: string;
-    value: T;
-    ttl: number;
-    createdAt: number;
-    lastAccessed: number;
-    accessCount: number;
-    size: number; // bytes
+	key: string;
+	value: T;
+	ttl: number;
+	createdAt: number;
+	lastAccessed: number;
+	accessCount: number;
+	size: number; // bytes
 }
 
 export interface CacheStats {
-    hits: number;
-    misses: number;
-    sets: number;
-    deletes: number;
-    evictions: number;
-    memoryUsage: number;
-    totalKeys: number;
+	hits: number;
+	misses: number;
+	sets: number;
+	deletes: number;
+	evictions: number;
+	memoryUsage: number;
+	totalKeys: number;
 }
 
 /**
  * Multi-layer Cache Manager (In-Memory Implementation)
  */
 export class CacheManager {
-    private config: CacheConfig;
-    private memoryCache: Map<string, CacheEntry> = new Map();
-    private accessOrder: string[] = []; // For LRU eviction
-    private stats: CacheStats = {
-        hits: 0,
-        misses: 0,
-        sets: 0,
-        deletes: 0,
-        evictions: 0,
-        memoryUsage: 0,
-        totalKeys: 0,
-    };
+	private config: CacheConfig;
+	private memoryCache: Map<string, CacheEntry> = new Map();
+	private accessOrder: string[] = []; // For LRU eviction
+	private stats: CacheStats = {
+		hits: 0,
+		misses: 0,
+		sets: 0,
+		deletes: 0,
+		evictions: 0,
+		memoryUsage: 0,
+		totalKeys: 0,
+	};
 
-    constructor(config: CacheConfig) {
-        this.config = config;
-        this.startCleanupInterval();
-    }
+	constructor(config: CacheConfig) {
+		this.config = config;
+		this.startCleanupInterval();
+	}
 
-    /**
-     * Get value from cache
-     */
-    async get<T = unknown>(key: string): Promise<T | null> {
-        const cacheKey = this.buildKey(key);
+	/**
+	 * Get value from cache
+	 */
+	async get<T = unknown>(key: string): Promise<T | null> {
+		const cacheKey = this.buildKey(key);
 
-        try {
-            // Try memory cache
-            if (this.config.memory.enabled) {
-                const memoryResult = this.getFromMemory<T>(cacheKey);
-                if (memoryResult !== null) {
-                    this.stats.hits++;
-                    return memoryResult;
-                }
-            }
+		try {
+			// Try memory cache
+			if (this.config.memory.enabled) {
+				const memoryResult = this.getFromMemory<T>(cacheKey);
+				if (memoryResult !== null) {
+					this.stats.hits++;
+					return memoryResult;
+				}
+			}
 
-            this.stats.misses++;
-            return null;
+			this.stats.misses++;
+			return null;
+		} catch (error) {
+			console.error('Cache get error:', error);
+			this.stats.misses++;
+			return null;
+		}
+	}
 
-        } catch (error) {
-            console.error('Cache get error:', error);
-            this.stats.misses++;
-            return null;
-        }
-    }
+	/**
+	 * Set value in cache
+	 */
+	async set<T = unknown>(key: string, value: T, ttl?: number): Promise<boolean> {
+		const cacheKey = this.buildKey(key);
+		const memoryTTL = (ttl || this.config.memory.defaultTTL) * 1000; // Convert to ms
 
-    /**
-     * Set value in cache
-     */
-    async set<T = unknown>(
-        key: string,
-        value: T,
-        ttl?: number
-    ): Promise<boolean> {
-        const cacheKey = this.buildKey(key);
-        const memoryTTL = (ttl || this.config.memory.defaultTTL) * 1000; // Convert to ms
+		try {
+			// Write to memory cache if enabled
+			if (this.config.memory.enabled) {
+				this.setInMemory(cacheKey, value, memoryTTL);
+			}
 
-        try {
-            // Write to memory cache if enabled
-            if (this.config.memory.enabled) {
-                this.setInMemory(cacheKey, value, memoryTTL);
-            }
+			this.stats.sets++;
+			return true;
+		} catch (error) {
+			console.error('Cache set error:', error);
+			return false;
+		}
+	}
 
-            this.stats.sets++;
-            return true;
+	/**
+	 * Delete value from cache
+	 */
+	async delete(key: string): Promise<boolean> {
+		const cacheKey = this.buildKey(key);
 
-        } catch (error) {
-            console.error('Cache set error:', error);
-            return false;
-        }
-    }
+		try {
+			let deleted = false;
 
-    /**
-     * Delete value from cache
-     */
-    async delete(key: string): Promise<boolean> {
-        const cacheKey = this.buildKey(key);
+			// Delete from memory cache
+			if (this.config.memory.enabled && this.memoryCache.has(cacheKey)) {
+				const entry = this.memoryCache.get(cacheKey)!;
+				this.stats.memoryUsage -= entry.size;
+				this.memoryCache.delete(cacheKey);
+				this.removeFromAccessOrder(cacheKey);
+				deleted = true;
+			}
 
-        try {
-            let deleted = false;
+			if (deleted) {
+				this.stats.deletes++;
+				this.stats.totalKeys--;
+			}
 
-            // Delete from memory cache
-            if (this.config.memory.enabled && this.memoryCache.has(cacheKey)) {
-                const entry = this.memoryCache.get(cacheKey)!;
-                this.stats.memoryUsage -= entry.size;
-                this.memoryCache.delete(cacheKey);
-                this.removeFromAccessOrder(cacheKey);
-                deleted = true;
-            }
+			return deleted;
+		} catch (error) {
+			console.error('Cache delete error:', error);
+			return false;
+		}
+	}
 
-            if (deleted) {
-                this.stats.deletes++;
-                this.stats.totalKeys--;
-            }
+	/**
+	 * Get or set pattern - get value, or compute and cache if not found
+	 */
+	async getOrSet<T = unknown>(key: string, compute: () => Promise<T>, ttl?: number): Promise<T> {
+		const cached = await this.get<T>(key);
+		if (cached !== null) {
+			return cached;
+		}
 
-            return deleted;
+		try {
+			const computed = await compute();
+			await this.set(key, computed, ttl);
+			return computed;
+		} catch (error) {
+			console.error('Cache getOrSet compute error:', error);
+			throw error;
+		}
+	}
 
-        } catch (error) {
-            console.error('Cache delete error:', error);
-            return false;
-        }
-    }
+	/**
+	 * Check if key exists in cache
+	 */
+	async exists(key: string): Promise<boolean> {
+		const cacheKey = this.buildKey(key);
 
-    /**
-     * Get or set pattern - get value, or compute and cache if not found
-     */
-    async getOrSet<T = unknown>(
-        key: string,
-        compute: () => Promise<T>,
-        ttl?: number
-    ): Promise<T> {
-        const cached = await this.get<T>(key);
-        if (cached !== null) {
-            return cached;
-        }
+		// Check memory cache
+		if (this.config.memory.enabled && this.memoryCache.has(cacheKey)) {
+			const entry = this.memoryCache.get(cacheKey)!;
+			if (!this.isExpired(entry)) {
+				return true;
+			}
+		}
 
-        try {
-            const computed = await compute();
-            await this.set(key, computed, ttl);
-            return computed;
-        } catch (error) {
-            console.error('Cache getOrSet compute error:', error);
-            throw error;
-        }
-    }
+		return false;
+	}
 
-    /**
-     * Check if key exists in cache
-     */
-    async exists(key: string): Promise<boolean> {
-        const cacheKey = this.buildKey(key);
+	/**
+	 * Get multiple values at once
+	 */
+	async getMultiple<T = unknown>(keys: string[]): Promise<Map<string, T | null>> {
+		const result = new Map<string, T | null>();
 
-        // Check memory cache
-        if (this.config.memory.enabled && this.memoryCache.has(cacheKey)) {
-            const entry = this.memoryCache.get(cacheKey)!;
-            if (!this.isExpired(entry)) {
-                return true;
-            }
-        }
+		// Process in parallel for better performance
+		const promises = keys.map(async (key) => {
+			const value = await this.get<T>(key);
+			return { key, value };
+		});
 
-        return false;
-    }
+		const results = await Promise.allSettled(promises);
+		results.forEach((promiseResult, index) => {
+			if (promiseResult.status === 'fulfilled') {
+				result.set(promiseResult.value.key, promiseResult.value.value);
+			} else {
+				result.set(keys[index], null);
+			}
+		});
 
-    /**
-     * Get multiple values at once
-     */
-    async getMultiple<T = unknown>(keys: string[]): Promise<Map<string, T | null>> {
-        const result = new Map<string, T | null>();
+		return result;
+	}
 
-        // Process in parallel for better performance
-        const promises = keys.map(async key => {
-            const value = await this.get<T>(key);
-            return { key, value };
-        });
+	/**
+	 * Set multiple values at once
+	 */
+	async setMultiple<T = unknown>(
+		entries: Array<{ key: string; value: T; ttl?: number }>,
+	): Promise<boolean[]> {
+		const promises = entries.map((entry) => this.set(entry.key, entry.value, entry.ttl));
 
-        const results = await Promise.allSettled(promises);
-        results.forEach((promiseResult, index) => {
-            if (promiseResult.status === 'fulfilled') {
-                result.set(promiseResult.value.key, promiseResult.value.value);
-            } else {
-                result.set(keys[index], null);
-            }
-        });
+		const results = await Promise.allSettled(promises);
+		return results.map((result) => (result.status === 'fulfilled' ? result.value : false));
+	}
 
-        return result;
-    }
+	/**
+	 * Clear entire cache
+	 */
+	async clear(): Promise<void> {
+		try {
+			// Clear memory cache
+			if (this.config.memory.enabled) {
+				this.memoryCache.clear();
+				this.accessOrder = [];
+				this.stats.memoryUsage = 0;
+			}
 
-    /**
-     * Set multiple values at once
-     */
-    async setMultiple<T = unknown>(
-        entries: Array<{ key: string; value: T; ttl?: number }>
-    ): Promise<boolean[]> {
-        const promises = entries.map(entry =>
-            this.set(entry.key, entry.value, entry.ttl)
-        );
+			this.stats.totalKeys = 0;
+		} catch (error) {
+			console.error('Cache clear error:', error);
+		}
+	}
 
-        const results = await Promise.allSettled(promises);
-        return results.map(result =>
-            result.status === 'fulfilled' ? result.value : false
-        );
-    }
+	/**
+	 * Get cache statistics
+	 */
+	getStats(): CacheStats & {
+		hitRate: number;
+		memoryEntries: number;
+	} {
+		const totalRequests = this.stats.hits + this.stats.misses;
+		const hitRate = totalRequests > 0 ? this.stats.hits / totalRequests : 0;
 
-    /**
-     * Clear entire cache
-     */
-    async clear(): Promise<void> {
-        try {
-            // Clear memory cache
-            if (this.config.memory.enabled) {
-                this.memoryCache.clear();
-                this.accessOrder = [];
-                this.stats.memoryUsage = 0;
-            }
+		return {
+			...this.stats,
+			hitRate,
+			memoryEntries: this.memoryCache.size,
+		};
+	}
 
-            this.stats.totalKeys = 0;
+	/**
+	 * Invalidate cache by pattern
+	 */
+	async invalidatePattern(pattern: string): Promise<number> {
+		let deleted = 0;
 
-        } catch (error) {
-            console.error('Cache clear error:', error);
-        }
-    }
+		try {
+			// Invalidate from memory cache
+			if (this.config.memory.enabled) {
+				const regex = new RegExp(pattern);
+				const keysToDelete = Array.from(this.memoryCache.keys()).filter((key) => regex.test(key));
 
-    /**
-     * Get cache statistics
-     */
-    getStats(): CacheStats & {
-        hitRate: number;
-        memoryEntries: number;
-    } {
-        const totalRequests = this.stats.hits + this.stats.misses;
-        const hitRate = totalRequests > 0 ? this.stats.hits / totalRequests : 0;
+				for (const key of keysToDelete) {
+					await this.delete(key);
+					deleted++;
+				}
+			}
+		} catch (error) {
+			console.error('Cache invalidate pattern error:', error);
+		}
 
-        return {
-            ...this.stats,
-            hitRate,
-            memoryEntries: this.memoryCache.size,
-        };
-    }
+		return deleted;
+	}
 
-    /**
-     * Invalidate cache by pattern
-     */
-    async invalidatePattern(pattern: string): Promise<number> {
-        let deleted = 0;
+	/**
+	 * Get from memory cache
+	 */
+	private getFromMemory<T>(key: string): T | null {
+		const entry = this.memoryCache.get(key);
+		if (!entry) {
+			return null;
+		}
 
-        try {
-            // Invalidate from memory cache
-            if (this.config.memory.enabled) {
-                const regex = new RegExp(pattern);
-                const keysToDelete = Array.from(this.memoryCache.keys())
-                    .filter(key => regex.test(key));
+		if (this.isExpired(entry)) {
+			this.evictFromMemory(key);
+			return null;
+		}
 
-                for (const key of keysToDelete) {
-                    await this.delete(key);
-                    deleted++;
-                }
-            }
+		// Update access statistics
+		entry.lastAccessed = Date.now();
+		entry.accessCount++;
+		this.updateAccessOrder(key);
 
-        } catch (error) {
-            console.error('Cache invalidate pattern error:', error);
-        }
+		return entry.value as T;
+	}
 
-        return deleted;
-    }
+	/**
+	 * Set in memory cache
+	 */
+	private setInMemory<T>(key: string, value: T, ttl: number): void {
+		// Check if we need to evict entries
+		this.ensureMemoryCapacity();
 
-    /**
-     * Get from memory cache
-     */
-    private getFromMemory<T>(key: string): T | null {
-        const entry = this.memoryCache.get(key);
-        if (!entry) {
-            return null;
-        }
+		const size = this.estimateSize(value);
+		const entry: CacheEntry<T> = {
+			key,
+			value,
+			ttl,
+			createdAt: Date.now(),
+			lastAccessed: Date.now(),
+			accessCount: 1,
+			size,
+		};
 
-        if (this.isExpired(entry)) {
-            this.evictFromMemory(key);
-            return null;
-        }
+		// Remove existing entry if present
+		if (this.memoryCache.has(key)) {
+			const oldEntry = this.memoryCache.get(key)!;
+			this.stats.memoryUsage -= oldEntry.size;
+		} else {
+			this.stats.totalKeys++;
+		}
 
-        // Update access statistics
-        entry.lastAccessed = Date.now();
-        entry.accessCount++;
-        this.updateAccessOrder(key);
+		this.memoryCache.set(key, entry);
+		this.stats.memoryUsage += size;
+		this.updateAccessOrder(key);
+	}
 
-        return entry.value as T;
-    }
+	/**
+	 * Build cache key with prefix
+	 */
+	private buildKey(key: string): string {
+		const prefix = this.config.redis.keyPrefix || 'nO';
+		return `${prefix}:${key}`;
+	}
 
-    /**
-     * Set in memory cache
-     */
-    private setInMemory<T>(key: string, value: T, ttl: number): void {
-        // Check if we need to evict entries
-        this.ensureMemoryCapacity();
+	/**
+	 * Check if cache entry is expired
+	 */
+	private isExpired(entry: CacheEntry): boolean {
+		return Date.now() > entry.createdAt + entry.ttl;
+	}
 
-        const size = this.estimateSize(value);
-        const entry: CacheEntry<T> = {
-            key,
-            value,
-            ttl,
-            createdAt: Date.now(),
-            lastAccessed: Date.now(),
-            accessCount: 1,
-            size,
-        };
+	/**
+	 * Ensure memory cache doesn't exceed capacity
+	 */
+	private ensureMemoryCapacity(): void {
+		while (this.memoryCache.size >= this.config.memory.maxSize) {
+			this.evictLRU();
+		}
+	}
 
-        // Remove existing entry if present
-        if (this.memoryCache.has(key)) {
-            const oldEntry = this.memoryCache.get(key)!;
-            this.stats.memoryUsage -= oldEntry.size;
-        } else {
-            this.stats.totalKeys++;
-        }
+	/**
+	 * Evict least recently used entry
+	 */
+	private evictLRU(): void {
+		if (this.accessOrder.length === 0) return;
 
-        this.memoryCache.set(key, entry);
-        this.stats.memoryUsage += size;
-        this.updateAccessOrder(key);
-    }
+		const keyToEvict = this.accessOrder.shift()!;
+		this.evictFromMemory(keyToEvict);
+		this.stats.evictions++;
+	}
 
-    /**
-     * Build cache key with prefix
-     */
-    private buildKey(key: string): string {
-        const prefix = this.config.redis.keyPrefix || 'nO';
-        return `${prefix}:${key}`;
-    }
+	/**
+	 * Evict entry from memory cache
+	 */
+	private evictFromMemory(key: string): void {
+		const entry = this.memoryCache.get(key);
+		if (entry) {
+			this.stats.memoryUsage -= entry.size;
+			this.memoryCache.delete(key);
+			this.removeFromAccessOrder(key);
+			this.stats.totalKeys--;
+		}
+	}
 
-    /**
-     * Check if cache entry is expired
-     */
-    private isExpired(entry: CacheEntry): boolean {
-        return Date.now() > (entry.createdAt + entry.ttl);
-    }
+	/**
+	 * Update access order for LRU
+	 */
+	private updateAccessOrder(key: string): void {
+		this.removeFromAccessOrder(key);
+		this.accessOrder.push(key);
+	}
 
-    /**
-     * Ensure memory cache doesn't exceed capacity
-     */
-    private ensureMemoryCapacity(): void {
-        while (this.memoryCache.size >= this.config.memory.maxSize) {
-            this.evictLRU();
-        }
-    }
+	/**
+	 * Remove key from access order
+	 */
+	private removeFromAccessOrder(key: string): void {
+		const index = this.accessOrder.indexOf(key);
+		if (index > -1) {
+			this.accessOrder.splice(index, 1);
+		}
+	}
 
-    /**
-     * Evict least recently used entry
-     */
-    private evictLRU(): void {
-        if (this.accessOrder.length === 0) return;
+	/**
+	 * Estimate size of value in bytes
+	 */
+	private estimateSize(value: unknown): number {
+		try {
+			return JSON.stringify(value).length * 2; // Rough estimate (UTF-16)
+		} catch {
+			return 1000; // Default estimate
+		}
+	}
 
-        const keyToEvict = this.accessOrder.shift()!;
-        this.evictFromMemory(keyToEvict);
-        this.stats.evictions++;
-    }
+	/**
+	 * Start cleanup interval for expired entries
+	 */
+	private startCleanupInterval(): void {
+		setInterval(() => {
+			this.cleanupExpiredEntries();
+		}, 60000); // Clean up every minute
+	}
 
-    /**
-     * Evict entry from memory cache
-     */
-    private evictFromMemory(key: string): void {
-        const entry = this.memoryCache.get(key);
-        if (entry) {
-            this.stats.memoryUsage -= entry.size;
-            this.memoryCache.delete(key);
-            this.removeFromAccessOrder(key);
-            this.stats.totalKeys--;
-        }
-    }
+	/**
+	 * Clean up expired entries from memory cache
+	 */
+	private cleanupExpiredEntries(): void {
+		const now = Date.now();
+		const keysToDelete: string[] = [];
 
-    /**
-     * Update access order for LRU
-     */
-    private updateAccessOrder(key: string): void {
-        this.removeFromAccessOrder(key);
-        this.accessOrder.push(key);
-    }
+		for (const [key, entry] of this.memoryCache) {
+			if (now > entry.createdAt + entry.ttl) {
+				keysToDelete.push(key);
+			}
+		}
 
-    /**
-     * Remove key from access order
-     */
-    private removeFromAccessOrder(key: string): void {
-        const index = this.accessOrder.indexOf(key);
-        if (index > -1) {
-            this.accessOrder.splice(index, 1);
-        }
-    }
-
-    /**
-     * Estimate size of value in bytes
-     */
-    private estimateSize(value: unknown): number {
-        try {
-            return JSON.stringify(value).length * 2; // Rough estimate (UTF-16)
-        } catch {
-            return 1000; // Default estimate
-        }
-    }
-
-    /**
-     * Start cleanup interval for expired entries
-     */
-    private startCleanupInterval(): void {
-        setInterval(() => {
-            this.cleanupExpiredEntries();
-        }, 60000); // Clean up every minute
-    }
-
-    /**
-     * Clean up expired entries from memory cache
-     */
-    private cleanupExpiredEntries(): void {
-        const now = Date.now();
-        const keysToDelete: string[] = [];
-
-        for (const [key, entry] of this.memoryCache) {
-            if (now > (entry.createdAt + entry.ttl)) {
-                keysToDelete.push(key);
-            }
-        }
-
-        for (const key of keysToDelete) {
-            this.evictFromMemory(key);
-        }
-    }
+		for (const key of keysToDelete) {
+			this.evictFromMemory(key);
+		}
+	}
 }
 
 /**
  * Default cache configuration
  */
 export const defaultCacheConfig: CacheConfig = {
-    redis: {
-        enabled: false, // Disabled by default since Redis dependency is optional
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-        password: process.env.REDIS_PASSWORD,
-        db: 0,
-        keyPrefix: 'nO',
-        defaultTTL: 3600, // 1 hour
-    },
-    memory: {
-        enabled: true,
-        maxSize: 1000,
-        defaultTTL: 300000, // 5 minutes in ms
-    },
-    strategies: {
-        writeThrough: true,
-        writeBehind: false,
-        readThrough: true,
-    },
+	redis: {
+		enabled: false, // Disabled by default since Redis dependency is optional
+		url: process.env.REDIS_URL || 'redis://localhost:6379',
+		password: process.env.REDIS_PASSWORD,
+		db: 0,
+		keyPrefix: 'nO',
+		defaultTTL: 3600, // 1 hour
+	},
+	memory: {
+		enabled: true,
+		maxSize: 1000,
+		defaultTTL: 300000, // 5 minutes in ms
+	},
+	strategies: {
+		writeThrough: true,
+		writeBehind: false,
+		readThrough: true,
+	},
 };

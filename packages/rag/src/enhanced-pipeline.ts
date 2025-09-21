@@ -1,6 +1,6 @@
 import { Qwen3Embedder } from './embed/qwen3';
 import { type ModelSpec, MultiModelGenerator } from './generation/multi-model';
-import { validateConfig, enhancedRAGConfigSchema } from './lib/config-validation.js';
+import { enhancedRAGConfigSchema, validateConfig } from './lib/config-validation.js';
 import { embedQuery } from './lib/embed-query';
 import { generateAnswer } from './lib/generate-answer';
 import { rerankDocs } from './lib/rerank-docs';

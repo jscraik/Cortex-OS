@@ -85,7 +85,9 @@ export class PRPLangGraphWorkflow {
 		this.aiIntegration = aiIntegration;
 		this.modelSelector = modelSelector;
 		this.graph = this.createPRPGraph();
-		console.log(`PRPLangGraphWorkflow initialized with AI integration: ${this.isAIIntegrationReady()}`);
+		console.log(
+			`PRPLangGraphWorkflow initialized with AI integration: ${this.isAIIntegrationReady()}`,
+		);
 	}
 
 	/**

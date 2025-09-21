@@ -30,7 +30,7 @@ export class EncryptedStore implements MemoryStore {
 		private readonly inner: MemoryStore,
 		private readonly crypto: EncryptionService,
 		private readonly opts: EncryptedOptions = {},
-	) { }
+	) {}
 
 	private async toEncrypted(m: Memory): Promise<Memory> {
 		const encText = await encryptText(this.crypto, m.text);
@@ -98,7 +98,10 @@ export class EncryptedStore implements MemoryStore {
 		return Promise.all(res.map((m) => this.toDecrypted(m)));
 	}
 
-	async searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace?: string,
+	): Promise<(Memory & { score: number })[]> {
 		const res = await this.inner.searchByVector(q, namespace);
 		const decrypted = await Promise.all(res.map((m) => this.toDecrypted(m)));
 		return decrypted.map((m, i) => ({ ...m, score: res[i].score }));

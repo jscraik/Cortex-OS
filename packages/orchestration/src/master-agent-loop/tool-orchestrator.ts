@@ -7,8 +7,8 @@
  * @since 2024-12-09
  */
 
+import { EventEmitter } from 'node:events';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
-import { EventEmitter } from 'events';
 import { ZodError, z } from 'zod';
 import type { ToolLayer } from './tool-layer';
 import { ToolOrchestrationError, ToolOrchestrationErrorCode } from './tool-orchestration-error';
@@ -578,7 +578,7 @@ export class ToolOrchestrator extends EventEmitter {
 					if (stepResult.status === 'fulfilled') {
 						stepResults.set(stepId, stepResult.value);
 						result.stepsSuccessful++;
-						layersUsed.add(toolChain.steps.find((s) => s.id === stepId)!.layer);
+						layersUsed.add(toolChain.steps.find((s) => s.id === stepId)?.layer);
 					} else if (toolChain.failFast) {
 						throw stepResult.reason;
 					}

@@ -10,11 +10,23 @@ export default defineConfig({
 			'@cortex-os/agents': resolve(currentDir, '__tests__/stubs/agent-mcp-client.ts'),
 			'@cortex-os/a2a-contracts': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
 			'@cortex-os/a2a-contracts/dist/src': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
-			'../a2a/a2a-contracts/src/envelope.js': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
-			'../../a2a-contracts/src/envelope.js': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
+			'../a2a/a2a-contracts/src/envelope.js': resolve(
+				currentDir,
+				'__tests__/stubs/a2a-contracts.ts',
+			),
+			'../../a2a-contracts/src/envelope.js': resolve(
+				currentDir,
+				'__tests__/stubs/a2a-contracts.ts',
+			),
 			'../a2a-contracts/src/envelope.js': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
-			'../a2a/a2a-contracts/src/envelope.ts': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
-			'../../a2a-contracts/src/envelope.ts': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
+			'../a2a/a2a-contracts/src/envelope.ts': resolve(
+				currentDir,
+				'__tests__/stubs/a2a-contracts.ts',
+			),
+			'../../a2a-contracts/src/envelope.ts': resolve(
+				currentDir,
+				'__tests__/stubs/a2a-contracts.ts',
+			),
 			'../a2a-contracts/src/envelope.ts': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
 			'@cortex-os/a2a-core': resolve(currentDir, '../a2a/a2a-core/src'),
 			'@cortex-os/a2a-transport': resolve(currentDir, '../a2a/a2a-transport/src'),
@@ -37,7 +49,10 @@ export default defineConfig({
 				'contracts',
 				'src',
 			),
-			'@cortex-os/contracts/dist/src/index.js': resolve(currentDir, '__tests__/stubs/contracts-index.js'),
+			'@cortex-os/contracts/dist/src/index.js': resolve(
+				currentDir,
+				'__tests__/stubs/contracts-index.js',
+			),
 			'@cortex-os/contracts/dist/src/index': resolve(
 				currentDir,
 				'..',

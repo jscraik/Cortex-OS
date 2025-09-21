@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { z, ZodError, type ZodIssue } from 'zod';
+import { ZodError, type ZodIssue, z } from 'zod';
 import type { EnhancedSpanContext } from '../observability/otel.js';
 import {
 	recordAgentActivation,
@@ -374,11 +374,11 @@ function sanitizeAgent(agent: z.infer<typeof agentInputSchema>, index: number): 
 	}
 	const capabilities = agent.capabilities
 		? agent.capabilities.map((capability, capIndex) =>
-			sanitizeString(capability, `agents[${index}].capabilities[${capIndex}]`, {
-				min: 1,
-				max: 120,
-			}),
-		)
+				sanitizeString(capability, `agents[${index}].capabilities[${capIndex}]`, {
+					min: 1,
+					max: 120,
+				}),
+			)
 		: [];
 	const metadata = sanitizeOptionalRecord(agent.metadata, `agents[${index}].metadata`) ?? {};
 	return {
@@ -587,9 +587,9 @@ export const taskManagementTool: MCPToolDefinition = {
 					: `task-${randomUUID()}`;
 				const assignee = input.task.assignee
 					? sanitizeString(input.task.assignee, 'task.assignee', {
-						min: 1,
-						max: 160,
-					})
+							min: 1,
+							max: 160,
+						})
 					: undefined;
 				const metadata = sanitizeOptionalRecord(input.task.metadata, 'task.metadata');
 				const tags = input.task.tags?.map((tag, index) =>
@@ -597,17 +597,17 @@ export const taskManagementTool: MCPToolDefinition = {
 				);
 				const audit = input.audit
 					? {
-						actor: sanitizeString(input.audit.actor, 'audit.actor', {
-							min: 1,
-							max: 160,
-						}),
-						reason: input.audit.reason
-							? sanitizeString(input.audit.reason, 'audit.reason', {
+							actor: sanitizeString(input.audit.actor, 'audit.actor', {
 								min: 1,
-								max: 512,
-							})
-							: undefined,
-					}
+								max: 160,
+							}),
+							reason: input.audit.reason
+								? sanitizeString(input.audit.reason, 'audit.reason', {
+										min: 1,
+										max: 512,
+									})
+								: undefined,
+						}
 					: undefined;
 				const baseStatus = STATUS_BY_ACTION[input.action as keyof typeof STATUS_BY_ACTION];
 				const status = input.action === 'update' ? (input.task.status ?? baseStatus) : baseStatus;
@@ -618,24 +618,24 @@ export const taskManagementTool: MCPToolDefinition = {
 				};
 				const progress = input.task.progress
 					? (() => {
-						const current = input.task.progress?.current;
-						const total = input.task.progress?.total;
-						if (current > total) {
-							throw new OrchestrationToolError(
-								'validation_error',
-								'Progress current cannot exceed total',
-								['task.progress.current cannot exceed task.progress.total'],
-							);
-						}
-						const percentage = Math.round((current / total) * 100);
-						const message = input.task.progress?.message
-							? sanitizeString(input.task.progress?.message, 'task.progress.message', {
-								min: 1,
-								max: 512,
-							})
-							: undefined;
-						return { current, total, percentage, message };
-					})()
+							const current = input.task.progress?.current;
+							const total = input.task.progress?.total;
+							if (current > total) {
+								throw new OrchestrationToolError(
+									'validation_error',
+									'Progress current cannot exceed total',
+									['task.progress.current cannot exceed task.progress.total'],
+								);
+							}
+							const percentage = Math.round((current / total) * 100);
+							const message = input.task.progress?.message
+								? sanitizeString(input.task.progress?.message, 'task.progress.message', {
+										min: 1,
+										max: 512,
+									})
+								: undefined;
+							return { current, total, percentage, message };
+						})()
 					: undefined;
 				return withEnhancedSpan(
 					'mcp.tool.orchestration.task.manage',
@@ -694,9 +694,9 @@ export const processMonitoringTool: MCPToolDefinition = {
 			logic: async (input) => {
 				const workflowName = input.workflowName
 					? sanitizeString(input.workflowName, 'workflowName', {
-						min: 1,
-						max: 180,
-					})
+							min: 1,
+							max: 180,
+						})
 					: undefined;
 				const workflowId = input.workflowId
 					? sanitizeString(input.workflowId, 'workflowId', { min: 3, max: 128 })
@@ -806,7 +806,7 @@ export const orchestrationMcpTools = [
 ];
 export {
 	__resetOrchestrationMcpState,
-	configureOrchestrationMcp
+	configureOrchestrationMcp,
 } from './core-adapter.js';
 
 // MCP Tool Contract Definitions for Orchestration Package

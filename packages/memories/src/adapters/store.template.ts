@@ -1,6 +1,6 @@
-import type { Memory, MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
-import { TemplateRegistry } from '../service/template-registry.js';
 import { TemplateDomainService, type TemplateMigrationContext } from '../domain/templates.js';
+import type { Memory, MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import type { TemplateRegistry } from '../service/template-registry.js';
 
 export interface TemplateStoreConfig {
 	strictValidation?: boolean;
@@ -15,7 +15,7 @@ export class TemplateMemoryStore implements MemoryStore {
 	constructor(
 		private readonly store: MemoryStore,
 		private readonly registry: TemplateRegistry,
-		private readonly config: TemplateStoreConfig = {}
+		private readonly config: TemplateStoreConfig = {},
 	) {
 		// Set defaults
 		this.config = {
@@ -23,7 +23,7 @@ export class TemplateMemoryStore implements MemoryStore {
 			applyDefaults: true,
 			trackVersions: true,
 			migrateOnUpsert: false,
-			...config
+			...config,
 		};
 	}
 
@@ -40,7 +40,9 @@ export class TemplateMemoryStore implements MemoryStore {
 		// Get template
 		const template = await this.registry.get(templateId, templateVersion);
 		if (!template) {
-			throw new Error(`Template ${templateId}${templateVersion ? ` version ${templateVersion}` : ''} not found`);
+			throw new Error(
+				`Template ${templateId}${templateVersion ? ` version ${templateVersion}` : ''} not found`,
+			);
 		}
 
 		// Apply defaults if configured
@@ -48,21 +50,23 @@ export class TemplateMemoryStore implements MemoryStore {
 		if (this.config.applyDefaults) {
 			processedMemory = {
 				...memory,
-				metadata: this.domainService.applyDefaults(memory.metadata || {}, template)
+				metadata: this.domainService.applyDefaults(memory.metadata || {}, template),
 			};
 		}
 
 		// Merge template metadata
 		processedMemory = {
 			...processedMemory,
-			metadata: this.domainService.mergeMetadata(processedMemory.metadata || {}, template)
+			metadata: this.domainService.mergeMetadata(processedMemory.metadata || {}, template),
 		};
 
 		// Validate against template
 		if (this.config.strictValidation) {
 			const validation = await this.domainService.validateData(processedMemory.metadata, template);
 			if (!validation.valid) {
-				throw new Error(`Template validation failed: ${validation.errors.map(e => `${e.field}: ${e.message}`).join(', ')}`);
+				throw new Error(
+					`Template validation failed: ${validation.errors.map((e) => `${e.field}: ${e.message}`).join(', ')}`,
+				);
 			}
 		}
 
@@ -70,7 +74,7 @@ export class TemplateMemoryStore implements MemoryStore {
 		if (this.config.trackVersions) {
 			processedMemory.metadata = {
 				...processedMemory.metadata,
-				templateVersion: template.version
+				templateVersion: template.version,
 			};
 		}
 
@@ -98,7 +102,10 @@ export class TemplateMemoryStore implements MemoryStore {
 		return this.store.searchByText(q, namespace);
 	}
 
-	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace = 'default',
+	): Promise<(Memory & { score: number })[]> {
 		return this.store.searchByVector(q, namespace);
 	}
 
@@ -113,9 +120,13 @@ export class TemplateMemoryStore implements MemoryStore {
 	/**
 	 * Get memories by template
 	 */
-	async getByTemplate(templateId: string, namespace = 'default', version?: string): Promise<Memory[]> {
+	async getByTemplate(
+		templateId: string,
+		namespace = 'default',
+		version?: string,
+	): Promise<Memory[]> {
 		const allMemories = await this.store.list(namespace);
-		return allMemories.filter(memory => {
+		return allMemories.filter((memory) => {
 			const memTemplateId = memory.metadata?.template as string;
 			const memVersion = memory.metadata?.templateVersion as string;
 
@@ -133,7 +144,7 @@ export class TemplateMemoryStore implements MemoryStore {
 		templateId: string,
 		toVersion: string,
 		namespace = 'default',
-		fromVersion?: string
+		fromVersion?: string,
 	): Promise<number> {
 		const template = await this.registry.get(templateId, toVersion);
 		if (!template) {
@@ -164,7 +175,7 @@ export class TemplateMemoryStore implements MemoryStore {
 	/**
 	 * Validate a memory against its template
 	 */
-	async validateMemory(memory: Memory, namespace = 'default'): Promise<boolean> {
+	async validateMemory(memory: Memory, _namespace = 'default'): Promise<boolean> {
 		const templateId = memory.metadata?.template as string;
 		if (!templateId) return true; // No template to validate against
 
@@ -179,10 +190,15 @@ export class TemplateMemoryStore implements MemoryStore {
 	/**
 	 * Get template usage statistics
 	 */
-	async getTemplateStats(namespace = 'default'): Promise<Record<string, {
-		count: number;
-		versions: Record<string, number>;
-	}>> {
+	async getTemplateStats(namespace = 'default'): Promise<
+		Record<
+			string,
+			{
+				count: number;
+				versions: Record<string, number>;
+			}
+		>
+	> {
 		const allMemories = await this.store.list(namespace);
 		const stats: Record<string, any> = {};
 
@@ -193,13 +209,13 @@ export class TemplateMemoryStore implements MemoryStore {
 			if (!stats[templateId]) {
 				stats[templateId] = {
 					count: 0,
-					versions: {}
+					versions: {},
 				};
 			}
 
 			stats[templateId].count++;
 
-			const version = memory.metadata?.templateVersion as string || 'unknown';
+			const version = (memory.metadata?.templateVersion as string) || 'unknown';
 			stats[templateId].versions[version] = (stats[templateId].versions[version] || 0) + 1;
 		}
 
@@ -212,7 +228,7 @@ export class TemplateMemoryStore implements MemoryStore {
 	private async migrateMemory(
 		memory: Memory,
 		toTemplate: MemoryTemplate,
-		namespace: string
+		namespace: string,
 	): Promise<Memory> {
 		if (!toTemplate.migration) {
 			return memory;
@@ -227,7 +243,7 @@ export class TemplateMemoryStore implements MemoryStore {
 				fromVersion: currentVersion,
 				toVersion: toTemplate.version,
 				namespace,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			};
 
 			return {
@@ -237,9 +253,9 @@ export class TemplateMemoryStore implements MemoryStore {
 					template: toTemplate.id,
 					templateVersion: toTemplate.version,
 					migratedAt: context.timestamp,
-					migrationContext: context
+					migrationContext: context,
 				},
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			};
 		}
 

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
 	type A2AEventStreamEvent,
 	type A2AEventStreamSubscribeInput,
@@ -13,7 +14,6 @@ import {
 	type A2AQueueMessageResult,
 	A2AQueueMessageResultSchema,
 } from '@cortex-os/contracts';
-import { randomUUID } from 'node:crypto';
 import type { z } from 'zod';
 import type { OutboxService } from '../outbox-service.js';
 import type { TaskManager } from '../task-manager.js';
@@ -159,9 +159,9 @@ export const a2aQueueMessageTool: A2AMcpTool<A2AQueueMessageInput, A2AQueueMessa
 					},
 					context: params.context as
 						| {
-							role: 'user' | 'assistant' | 'system';
-							parts: { text?: string; data?: unknown }[];
-						}[]
+								role: 'user' | 'assistant' | 'system';
+								parts: { text?: string; data?: unknown }[];
+						  }[]
 						| undefined,
 				});
 				let payload: A2AQueueMessageResult;
@@ -235,12 +235,12 @@ export const a2aEventStreamSubscribeTool: A2AMcpTool<
 
 			const events: A2AEventStreamEvent[] = params.includeCurrent
 				? tasks.map((t) => ({
-					type: mapTaskStatus(t.status),
-					id: t.id,
-					status: t.status,
-					timestamp: t.updatedAt.toISOString(),
-					error: t.error ? { code: t.error.code, message: t.error.message } : undefined,
-				}))
+						type: mapTaskStatus(t.status),
+						id: t.id,
+						status: t.status,
+						timestamp: t.updatedAt.toISOString(),
+						error: t.error ? { code: t.error.code, message: t.error.message } : undefined,
+					}))
 				: [];
 
 			let result: A2AEventStreamSubscribeResult;

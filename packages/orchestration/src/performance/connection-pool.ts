@@ -1,523 +1,517 @@
 /**
  * nO Master Agent Loop - Connection Pool Manager
- * 
+ *
  * Provides intelligent connection pooling for HTTP requests, database connections,
  * and other network resources to optimize performance and resource utilization.
- * 
+ *
  * Co-authored-by: brAInwav Development Team
  */
 
 export interface PoolConfig {
-    min: number;
-    max: number;
-    acquireTimeoutMs: number;
-    idleTimeoutMs: number;
-    reapIntervalMs: number;
-    createTimeoutMs: number;
-    destroyTimeoutMs: number;
-    logLevel: 'none' | 'error' | 'warn' | 'info' | 'debug';
-    testOnBorrow: boolean;
-    testOnReturn: boolean;
-    testOnIdle: boolean;
+	min: number;
+	max: number;
+	acquireTimeoutMs: number;
+	idleTimeoutMs: number;
+	reapIntervalMs: number;
+	createTimeoutMs: number;
+	destroyTimeoutMs: number;
+	logLevel: 'none' | 'error' | 'warn' | 'info' | 'debug';
+	testOnBorrow: boolean;
+	testOnReturn: boolean;
+	testOnIdle: boolean;
 }
 
 export interface PoolStats {
-    total: number;
-    idle: number;
-    busy: number;
-    pending: number;
-    created: number;
-    destroyed: number;
-    borrowed: number;
-    returned: number;
-    failed: number;
+	total: number;
+	idle: number;
+	busy: number;
+	pending: number;
+	created: number;
+	destroyed: number;
+	borrowed: number;
+	returned: number;
+	failed: number;
 }
 
 export interface Resource {
-    id: string;
-    createdAt: number;
-    lastUsed: number;
-    usageCount: number;
-    isHealthy: boolean;
+	id: string;
+	createdAt: number;
+	lastUsed: number;
+	usageCount: number;
+	isHealthy: boolean;
 }
 
 /**
  * Generic Connection Pool
  */
 export class ConnectionPool<T extends Resource> {
-    private config: PoolConfig;
-    private factory: {
-        create: () => Promise<T>;
-        destroy: (resource: T) => Promise<void>;
-        validate: (resource: T) => Promise<boolean>;
-    };
+	private config: PoolConfig;
+	private factory: {
+		create: () => Promise<T>;
+		destroy: (resource: T) => Promise<void>;
+		validate: (resource: T) => Promise<boolean>;
+	};
 
-    private resources: Set<T> = new Set();
-    private idleResources: T[] = [];
-    private borrowedResources: Set<T> = new Set();
-    private pendingCreates: Promise<T>[] = [];
-    private waitingQueue: Array<{
-        resolve: (resource: T) => void;
-        reject: (error: Error) => void;
-        timestamp: number;
-    }> = [];
+	private resources: Set<T> = new Set();
+	private idleResources: T[] = [];
+	private borrowedResources: Set<T> = new Set();
+	private pendingCreates: Promise<T>[] = [];
+	private waitingQueue: Array<{
+		resolve: (resource: T) => void;
+		reject: (error: Error) => void;
+		timestamp: number;
+	}> = [];
 
-    private stats: PoolStats = {
-        total: 0,
-        idle: 0,
-        busy: 0,
-        pending: 0,
-        created: 0,
-        destroyed: 0,
-        borrowed: 0,
-        returned: 0,
-        failed: 0,
-    };
+	private stats: PoolStats = {
+		total: 0,
+		idle: 0,
+		busy: 0,
+		pending: 0,
+		created: 0,
+		destroyed: 0,
+		borrowed: 0,
+		returned: 0,
+		failed: 0,
+	};
 
-    private reapInterval?: NodeJS.Timeout;
+	private reapInterval?: NodeJS.Timeout;
 
-    constructor(
-        config: PoolConfig,
-        factory: {
-            create: () => Promise<T>;
-            destroy: (resource: T) => Promise<void>;
-            validate: (resource: T) => Promise<boolean>;
-        }
-    ) {
-        this.config = config;
-        this.factory = factory;
-        this.startReaper();
-        this.ensureMinimum();
-    }
+	constructor(
+		config: PoolConfig,
+		factory: {
+			create: () => Promise<T>;
+			destroy: (resource: T) => Promise<void>;
+			validate: (resource: T) => Promise<boolean>;
+		},
+	) {
+		this.config = config;
+		this.factory = factory;
+		this.startReaper();
+		this.ensureMinimum();
+	}
 
-    /**
-     * Acquire a resource from the pool
-     */
-    async acquire(): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                this.removeFromWaitingQueue(resolve);
-                reject(new Error(`Acquire timeout after ${this.config.acquireTimeoutMs}ms`));
-            }, this.config.acquireTimeoutMs);
+	/**
+	 * Acquire a resource from the pool
+	 */
+	async acquire(): Promise<T> {
+		return new Promise<T>((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				this.removeFromWaitingQueue(resolve);
+				reject(new Error(`Acquire timeout after ${this.config.acquireTimeoutMs}ms`));
+			}, this.config.acquireTimeoutMs);
 
-            const wrappedResolve = (resource: T) => {
-                clearTimeout(timeout);
-                resolve(resource);
-            };
+			const wrappedResolve = (resource: T) => {
+				clearTimeout(timeout);
+				resolve(resource);
+			};
 
-            const wrappedReject = (error: Error) => {
-                clearTimeout(timeout);
-                reject(error);
-            };
+			const wrappedReject = (error: Error) => {
+				clearTimeout(timeout);
+				reject(error);
+			};
 
-            this.tryAcquire(wrappedResolve, wrappedReject);
-        });
-    }
+			this.tryAcquire(wrappedResolve, wrappedReject);
+		});
+	}
 
-    /**
-     * Return a resource to the pool
-     */
-    async release(resource: T): Promise<void> {
-        if (!this.borrowedResources.has(resource)) {
-            this.log('warn', 'Attempted to release resource not in borrowed set');
-            return;
-        }
+	/**
+	 * Return a resource to the pool
+	 */
+	async release(resource: T): Promise<void> {
+		if (!this.borrowedResources.has(resource)) {
+			this.log('warn', 'Attempted to release resource not in borrowed set');
+			return;
+		}
 
-        this.borrowedResources.delete(resource);
-        this.stats.returned++;
-        resource.lastUsed = Date.now();
+		this.borrowedResources.delete(resource);
+		this.stats.returned++;
+		resource.lastUsed = Date.now();
 
-        try {
-            // Test resource health if configured
-            if (this.config.testOnReturn) {
-                const isValid = await this.factory.validate(resource);
-                if (!isValid) {
-                    resource.isHealthy = false;
-                    await this.destroyResource(resource);
-                    this.ensureMinimum();
-                    return;
-                }
-            }
+		try {
+			// Test resource health if configured
+			if (this.config.testOnReturn) {
+				const isValid = await this.factory.validate(resource);
+				if (!isValid) {
+					resource.isHealthy = false;
+					await this.destroyResource(resource);
+					this.ensureMinimum();
+					return;
+				}
+			}
 
-            // Return to idle pool
-            this.idleResources.push(resource);
-            this.updateStats();
+			// Return to idle pool
+			this.idleResources.push(resource);
+			this.updateStats();
 
-            // Serve waiting requests
-            this.processWaitingQueue();
+			// Serve waiting requests
+			this.processWaitingQueue();
+		} catch (error) {
+			this.log('error', 'Error returning resource to pool:', error);
+			await this.destroyResource(resource);
+			this.ensureMinimum();
+		}
+	}
 
-        } catch (error) {
-            this.log('error', 'Error returning resource to pool:', error);
-            await this.destroyResource(resource);
-            this.ensureMinimum();
-        }
-    }
+	/**
+	 * Destroy a specific resource
+	 */
+	async destroy(resource: T): Promise<void> {
+		if (this.borrowedResources.has(resource)) {
+			this.borrowedResources.delete(resource);
+		}
 
-    /**
-     * Destroy a specific resource
-     */
-    async destroy(resource: T): Promise<void> {
-        if (this.borrowedResources.has(resource)) {
-            this.borrowedResources.delete(resource);
-        }
+		const idleIndex = this.idleResources.indexOf(resource);
+		if (idleIndex > -1) {
+			this.idleResources.splice(idleIndex, 1);
+		}
 
-        const idleIndex = this.idleResources.indexOf(resource);
-        if (idleIndex > -1) {
-            this.idleResources.splice(idleIndex, 1);
-        }
+		await this.destroyResource(resource);
+		this.ensureMinimum();
+	}
 
-        await this.destroyResource(resource);
-        this.ensureMinimum();
-    }
+	/**
+	 * Drain the pool (destroy all resources)
+	 */
+	async drain(): Promise<void> {
+		// Clear reaper interval
+		if (this.reapInterval) {
+			clearInterval(this.reapInterval);
+			this.reapInterval = undefined;
+		}
 
-    /**
-     * Drain the pool (destroy all resources)
-     */
-    async drain(): Promise<void> {
-        // Clear reaper interval
-        if (this.reapInterval) {
-            clearInterval(this.reapInterval);
-            this.reapInterval = undefined;
-        }
+		// Reject all waiting requests
+		this.waitingQueue.forEach(({ reject }) => {
+			reject(new Error('Pool is draining'));
+		});
+		this.waitingQueue = [];
 
-        // Reject all waiting requests
-        this.waitingQueue.forEach(({ reject }) => {
-            reject(new Error('Pool is draining'));
-        });
-        this.waitingQueue = [];
+		// Destroy all idle resources
+		const idleToDestroy = [...this.idleResources];
+		this.idleResources = [];
 
-        // Destroy all idle resources
-        const idleToDestroy = [...this.idleResources];
-        this.idleResources = [];
+		for (const resource of idleToDestroy) {
+			await this.destroyResource(resource);
+		}
 
-        for (const resource of idleToDestroy) {
-            await this.destroyResource(resource);
-        }
+		// Wait for borrowed resources to be returned or timeout
+		const borrowed = Array.from(this.borrowedResources);
+		if (borrowed.length > 0) {
+			this.log('info', `Waiting for ${borrowed.length} borrowed resources to be returned`);
 
-        // Wait for borrowed resources to be returned or timeout
-        const borrowed = Array.from(this.borrowedResources);
-        if (borrowed.length > 0) {
-            this.log('info', `Waiting for ${borrowed.length} borrowed resources to be returned`);
+			// Set a reasonable timeout for draining
+			const drainTimeout = 30000; // 30 seconds
+			const start = Date.now();
 
-            // Set a reasonable timeout for draining
-            const drainTimeout = 30000; // 30 seconds
-            const start = Date.now();
+			while (this.borrowedResources.size > 0 && Date.now() - start < drainTimeout) {
+				await new Promise((resolve) => setTimeout(resolve, 100));
+			}
 
-            while (this.borrowedResources.size > 0 && (Date.now() - start) < drainTimeout) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
+			// Force destroy any remaining borrowed resources
+			for (const resource of this.borrowedResources) {
+				await this.destroyResource(resource);
+			}
+		}
 
-            // Force destroy any remaining borrowed resources
-            for (const resource of this.borrowedResources) {
-                await this.destroyResource(resource);
-            }
-        }
+		this.updateStats();
+	}
 
-        this.updateStats();
-    }
+	/**
+	 * Get pool statistics
+	 */
+	getStats(): PoolStats {
+		this.updateStats();
+		return { ...this.stats };
+	}
 
-    /**
-     * Get pool statistics
-     */
-    getStats(): PoolStats {
-        this.updateStats();
-        return { ...this.stats };
-    }
+	/**
+	 * Get pool configuration
+	 */
+	getConfig(): PoolConfig {
+		return { ...this.config };
+	}
 
-    /**
-     * Get pool configuration
-     */
-    getConfig(): PoolConfig {
-        return { ...this.config };
-    }
+	/**
+	 * Update pool configuration
+	 */
+	updateConfig(updates: Partial<PoolConfig>): void {
+		this.config = { ...this.config, ...updates };
 
-    /**
-     * Update pool configuration
-     */
-    updateConfig(updates: Partial<PoolConfig>): void {
-        this.config = { ...this.config, ...updates };
+		// Restart reaper if interval changed
+		if (updates.reapIntervalMs && this.reapInterval) {
+			clearInterval(this.reapInterval);
+			this.startReaper();
+		}
 
-        // Restart reaper if interval changed
-        if (updates.reapIntervalMs && this.reapInterval) {
-            clearInterval(this.reapInterval);
-            this.startReaper();
-        }
+		// Adjust pool size if min/max changed
+		if (updates.min !== undefined || updates.max !== undefined) {
+			this.ensureMinimum();
+			this.ensureMaximum();
+		}
+	}
 
-        // Adjust pool size if min/max changed
-        if (updates.min !== undefined || updates.max !== undefined) {
-            this.ensureMinimum();
-            this.ensureMaximum();
-        }
-    }
+	/**
+	 * Try to acquire a resource immediately
+	 */
+	private async tryAcquire(
+		resolve: (resource: T) => void,
+		reject: (error: Error) => void,
+	): Promise<void> {
+		try {
+			// Try to get from idle resources first
+			if (this.idleResources.length > 0) {
+				const resource = this.idleResources.pop()!;
 
-    /**
-     * Try to acquire a resource immediately
-     */
-    private async tryAcquire(
-        resolve: (resource: T) => void,
-        reject: (error: Error) => void
-    ): Promise<void> {
-        try {
-            // Try to get from idle resources first
-            if (this.idleResources.length > 0) {
-                const resource = this.idleResources.pop()!;
+				// Test resource health if configured
+				if (this.config.testOnBorrow) {
+					const isValid = await this.factory.validate(resource);
+					if (!isValid) {
+						await this.destroyResource(resource);
+						return this.tryAcquire(resolve, reject);
+					}
+				}
 
-                // Test resource health if configured
-                if (this.config.testOnBorrow) {
-                    const isValid = await this.factory.validate(resource);
-                    if (!isValid) {
-                        await this.destroyResource(resource);
-                        return this.tryAcquire(resolve, reject);
-                    }
-                }
+				this.borrowedResources.add(resource);
+				this.stats.borrowed++;
+				resource.usageCount++;
+				this.updateStats();
+				resolve(resource);
+				return;
+			}
 
-                this.borrowedResources.add(resource);
-                this.stats.borrowed++;
-                resource.usageCount++;
-                this.updateStats();
-                resolve(resource);
-                return;
-            }
+			// Try to create new resource if under limit
+			if (this.resources.size < this.config.max) {
+				try {
+					const resource = await this.createResource();
+					this.borrowedResources.add(resource);
+					this.stats.borrowed++;
+					resource.usageCount++;
+					this.updateStats();
+					resolve(resource);
+					return;
+				} catch (error) {
+					this.stats.failed++;
+					reject(error as Error);
+					return;
+				}
+			}
 
-            // Try to create new resource if under limit
-            if (this.resources.size < this.config.max) {
-                try {
-                    const resource = await this.createResource();
-                    this.borrowedResources.add(resource);
-                    this.stats.borrowed++;
-                    resource.usageCount++;
-                    this.updateStats();
-                    resolve(resource);
-                    return;
-                } catch (error) {
-                    this.stats.failed++;
-                    reject(error as Error);
-                    return;
-                }
-            }
+			// No resources available, add to waiting queue
+			this.waitingQueue.push({
+				resolve,
+				reject,
+				timestamp: Date.now(),
+			});
+		} catch (error) {
+			this.stats.failed++;
+			reject(error as Error);
+		}
+	}
 
-            // No resources available, add to waiting queue
-            this.waitingQueue.push({
-                resolve,
-                reject,
-                timestamp: Date.now(),
-            });
+	/**
+	 * Create a new resource
+	 */
+	private async createResource(): Promise<T> {
+		const createPromise = Promise.race([
+			this.factory.create(),
+			new Promise<never>((_, reject) => {
+				setTimeout(() => reject(new Error('Create timeout')), this.config.createTimeoutMs);
+			}),
+		]);
 
-        } catch (error) {
-            this.stats.failed++;
-            reject(error as Error);
-        }
-    }
+		this.pendingCreates.push(createPromise);
 
-    /**
-     * Create a new resource
-     */
-    private async createResource(): Promise<T> {
-        const createPromise = Promise.race([
-            this.factory.create(),
-            new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error('Create timeout')), this.config.createTimeoutMs);
-            }),
-        ]);
+		try {
+			const resource = await createPromise;
+			resource.createdAt = Date.now();
+			resource.lastUsed = Date.now();
+			resource.usageCount = 0;
+			resource.isHealthy = true;
 
-        this.pendingCreates.push(createPromise);
+			this.resources.add(resource);
+			this.stats.created++;
 
-        try {
-            const resource = await createPromise;
-            resource.createdAt = Date.now();
-            resource.lastUsed = Date.now();
-            resource.usageCount = 0;
-            resource.isHealthy = true;
+			return resource;
+		} finally {
+			const index = this.pendingCreates.indexOf(createPromise);
+			if (index > -1) {
+				this.pendingCreates.splice(index, 1);
+			}
+		}
+	}
 
-            this.resources.add(resource);
-            this.stats.created++;
+	/**
+	 * Destroy a resource
+	 */
+	private async destroyResource(resource: T): Promise<void> {
+		try {
+			this.resources.delete(resource);
+			this.stats.destroyed++;
 
-            return resource;
+			await Promise.race([
+				this.factory.destroy(resource),
+				new Promise<void>((_, reject) => {
+					setTimeout(() => reject(new Error('Destroy timeout')), this.config.destroyTimeoutMs);
+				}),
+			]);
+		} catch (error) {
+			this.log('error', 'Error destroying resource:', error);
+		}
+	}
 
-        } catch (error) {
-            throw error;
-        } finally {
-            const index = this.pendingCreates.indexOf(createPromise);
-            if (index > -1) {
-                this.pendingCreates.splice(index, 1);
-            }
-        }
-    }
+	/**
+	 * Process waiting queue
+	 */
+	private processWaitingQueue(): void {
+		while (this.waitingQueue.length > 0 && this.idleResources.length > 0) {
+			const { resolve } = this.waitingQueue.shift()!;
+			this.tryAcquire(resolve, () => {
+				// Error handling is done in tryAcquire
+			});
+		}
+	}
 
-    /**
-     * Destroy a resource
-     */
-    private async destroyResource(resource: T): Promise<void> {
-        try {
-            this.resources.delete(resource);
-            this.stats.destroyed++;
+	/**
+	 * Remove request from waiting queue
+	 */
+	private removeFromWaitingQueue(resolve: (resource: T) => void): void {
+		const index = this.waitingQueue.findIndex((req) => req.resolve === resolve);
+		if (index > -1) {
+			this.waitingQueue.splice(index, 1);
+		}
+	}
 
-            await Promise.race([
-                this.factory.destroy(resource),
-                new Promise<void>((_, reject) => {
-                    setTimeout(() => reject(new Error('Destroy timeout')), this.config.destroyTimeoutMs);
-                }),
-            ]);
+	/**
+	 * Ensure minimum number of resources
+	 */
+	private async ensureMinimum(): Promise<void> {
+		const needed = this.config.min - this.resources.size;
+		for (let i = 0; i < needed; i++) {
+			try {
+				const resource = await this.createResource();
+				this.idleResources.push(resource);
+			} catch (error) {
+				this.log('error', 'Failed to create minimum resource:', error);
+				break;
+			}
+		}
+		this.updateStats();
+	}
 
-        } catch (error) {
-            this.log('error', 'Error destroying resource:', error);
-        }
-    }
+	/**
+	 * Ensure maximum number of resources
+	 */
+	private ensureMaximum(): void {
+		while (this.idleResources.length > 0 && this.resources.size > this.config.max) {
+			const resource = this.idleResources.pop()!;
+			this.destroyResource(resource);
+		}
+		this.updateStats();
+	}
 
-    /**
-     * Process waiting queue
-     */
-    private processWaitingQueue(): void {
-        while (this.waitingQueue.length > 0 && this.idleResources.length > 0) {
-            const { resolve } = this.waitingQueue.shift()!;
-            this.tryAcquire(resolve, () => {
-                // Error handling is done in tryAcquire
-            });
-        }
-    }
+	/**
+	 * Start resource reaper
+	 */
+	private startReaper(): void {
+		this.reapInterval = setInterval(() => {
+			this.reapIdleResources();
+		}, this.config.reapIntervalMs);
+	}
 
-    /**
-     * Remove request from waiting queue
-     */
-    private removeFromWaitingQueue(resolve: (resource: T) => void): void {
-        const index = this.waitingQueue.findIndex(req => req.resolve === resolve);
-        if (index > -1) {
-            this.waitingQueue.splice(index, 1);
-        }
-    }
+	/**
+	 * Reap idle resources that have exceeded idle timeout
+	 */
+	private async reapIdleResources(): Promise<void> {
+		const now = Date.now();
+		const resourcesToReap: T[] = [];
 
-    /**
-     * Ensure minimum number of resources
-     */
-    private async ensureMinimum(): Promise<void> {
-        const needed = this.config.min - this.resources.size;
-        for (let i = 0; i < needed; i++) {
-            try {
-                const resource = await this.createResource();
-                this.idleResources.push(resource);
-            } catch (error) {
-                this.log('error', 'Failed to create minimum resource:', error);
-                break;
-            }
-        }
-        this.updateStats();
-    }
+		// Find resources that have been idle too long
+		for (let i = this.idleResources.length - 1; i >= 0; i--) {
+			const resource = this.idleResources[i];
+			const idleTime = now - resource.lastUsed;
 
-    /**
-     * Ensure maximum number of resources
-     */
-    private ensureMaximum(): void {
-        while (this.idleResources.length > 0 && this.resources.size > this.config.max) {
-            const resource = this.idleResources.pop()!;
-            this.destroyResource(resource);
-        }
-        this.updateStats();
-    }
+			if (idleTime > this.config.idleTimeoutMs && this.resources.size > this.config.min) {
+				resourcesToReap.push(resource);
+				this.idleResources.splice(i, 1);
+			}
+		}
 
-    /**
-     * Start resource reaper
-     */
-    private startReaper(): void {
-        this.reapInterval = setInterval(() => {
-            this.reapIdleResources();
-        }, this.config.reapIntervalMs);
-    }
+		// Test idle resources if configured
+		if (this.config.testOnIdle) {
+			for (let i = this.idleResources.length - 1; i >= 0; i--) {
+				const resource = this.idleResources[i];
+				try {
+					const isValid = await this.factory.validate(resource);
+					if (!isValid) {
+						resourcesToReap.push(resource);
+						this.idleResources.splice(i, 1);
+					}
+				} catch (error) {
+					this.log('error', 'Error testing idle resource:', error);
+					resourcesToReap.push(resource);
+					this.idleResources.splice(i, 1);
+				}
+			}
+		}
 
-    /**
-     * Reap idle resources that have exceeded idle timeout
-     */
-    private async reapIdleResources(): Promise<void> {
-        const now = Date.now();
-        const resourcesToReap: T[] = [];
+		// Destroy reaped resources
+		for (const resource of resourcesToReap) {
+			await this.destroyResource(resource);
+		}
 
-        // Find resources that have been idle too long
-        for (let i = this.idleResources.length - 1; i >= 0; i--) {
-            const resource = this.idleResources[i];
-            const idleTime = now - resource.lastUsed;
+		this.updateStats();
+		this.ensureMinimum();
+	}
 
-            if (idleTime > this.config.idleTimeoutMs && this.resources.size > this.config.min) {
-                resourcesToReap.push(resource);
-                this.idleResources.splice(i, 1);
-            }
-        }
+	/**
+	 * Update statistics
+	 */
+	private updateStats(): void {
+		this.stats.total = this.resources.size;
+		this.stats.idle = this.idleResources.length;
+		this.stats.busy = this.borrowedResources.size;
+		this.stats.pending = this.waitingQueue.length;
+	}
 
-        // Test idle resources if configured
-        if (this.config.testOnIdle) {
-            for (let i = this.idleResources.length - 1; i >= 0; i--) {
-                const resource = this.idleResources[i];
-                try {
-                    const isValid = await this.factory.validate(resource);
-                    if (!isValid) {
-                        resourcesToReap.push(resource);
-                        this.idleResources.splice(i, 1);
-                    }
-                } catch (error) {
-                    this.log('error', 'Error testing idle resource:', error);
-                    resourcesToReap.push(resource);
-                    this.idleResources.splice(i, 1);
-                }
-            }
-        }
+	/**
+	 * Log message based on log level
+	 */
+	private log(level: string, message: string, ...args: unknown[]): void {
+		const levels = ['none', 'error', 'warn', 'info', 'debug'];
+		const configLevel = levels.indexOf(this.config.logLevel);
+		const messageLevel = levels.indexOf(level);
 
-        // Destroy reaped resources
-        for (const resource of resourcesToReap) {
-            await this.destroyResource(resource);
-        }
-
-        this.updateStats();
-        this.ensureMinimum();
-    }
-
-    /**
-     * Update statistics
-     */
-    private updateStats(): void {
-        this.stats.total = this.resources.size;
-        this.stats.idle = this.idleResources.length;
-        this.stats.busy = this.borrowedResources.size;
-        this.stats.pending = this.waitingQueue.length;
-    }
-
-    /**
-     * Log message based on log level
-     */
-    private log(level: string, message: string, ...args: unknown[]): void {
-        const levels = ['none', 'error', 'warn', 'info', 'debug'];
-        const configLevel = levels.indexOf(this.config.logLevel);
-        const messageLevel = levels.indexOf(level);
-
-        if (messageLevel <= configLevel && messageLevel > 0) {
-            switch (level) {
-                case 'error':
-                    console.error(`[ConnectionPool] ${message}`, ...args);
-                    break;
-                case 'warn':
-                    console.warn(`[ConnectionPool] ${message}`, ...args);
-                    break;
-                case 'info':
-                    console.info(`[ConnectionPool] ${message}`, ...args);
-                    break;
-                case 'debug':
-                    console.debug(`[ConnectionPool] ${message}`, ...args);
-                    break;
-            }
-        }
-    }
+		if (messageLevel <= configLevel && messageLevel > 0) {
+			switch (level) {
+				case 'error':
+					console.error(`[ConnectionPool] ${message}`, ...args);
+					break;
+				case 'warn':
+					console.warn(`[ConnectionPool] ${message}`, ...args);
+					break;
+				case 'info':
+					console.info(`[ConnectionPool] ${message}`, ...args);
+					break;
+				case 'debug':
+					console.debug(`[ConnectionPool] ${message}`, ...args);
+					break;
+			}
+		}
+	}
 }
 
 /**
  * Default pool configuration
  */
 export const defaultPoolConfig: PoolConfig = {
-    min: 2,
-    max: 10,
-    acquireTimeoutMs: 10000,
-    idleTimeoutMs: 300000, // 5 minutes
-    reapIntervalMs: 60000,  // 1 minute
-    createTimeoutMs: 5000,
-    destroyTimeoutMs: 5000,
-    logLevel: 'warn',
-    testOnBorrow: true,
-    testOnReturn: false,
-    testOnIdle: true,
+	min: 2,
+	max: 10,
+	acquireTimeoutMs: 10000,
+	idleTimeoutMs: 300000, // 5 minutes
+	reapIntervalMs: 60000, // 1 minute
+	createTimeoutMs: 5000,
+	destroyTimeoutMs: 5000,
+	logLevel: 'warn',
+	testOnBorrow: true,
+	testOnReturn: false,
+	testOnIdle: true,
 };

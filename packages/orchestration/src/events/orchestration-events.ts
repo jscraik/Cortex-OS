@@ -97,12 +97,14 @@ export const agentCoordinationStartedEventSchema = z.object({
 	timestamp: z.string(),
 	planId: z.string(),
 	masterAgentId: z.string(),
-	coordinatedAgents: z.array(z.object({
-		agentId: z.string(),
-		specialization: z.string(),
-		assignedTasks: z.array(z.string()),
-		priority: z.number().int().min(1).max(10),
-	})),
+	coordinatedAgents: z.array(
+		z.object({
+			agentId: z.string(),
+			specialization: z.string(),
+			assignedTasks: z.array(z.string()),
+			priority: z.number().int().min(1).max(10),
+		}),
+	),
 	coordinationStrategy: z.enum(['parallel', 'sequential', 'hierarchical']),
 	estimatedDuration: z.number().positive(),
 	metadata: z.record(z.unknown()).optional(),
@@ -113,7 +115,12 @@ export const scheduleAdjustedEventSchema = z.object({
 	timestamp: z.string(),
 	scheduleId: z.string(),
 	planId: z.string(),
-	adjustmentType: z.enum(['resource_reallocation', 'agent_reallocation', 'priority_adjustment', 'adaptive_optimization']),
+	adjustmentType: z.enum([
+		'resource_reallocation',
+		'agent_reallocation',
+		'priority_adjustment',
+		'adaptive_optimization',
+	]),
 	previousSchedule: z.object({
 		totalAgents: z.number().int().positive(),
 		estimatedCompletion: z.string(),
@@ -149,11 +156,13 @@ export const toolLayerInvokedEventSchema = z.object({
 	invocationId: z.string(),
 	agentId: z.string(),
 	toolLayer: z.enum(['intelligence', 'execution', 'coordination', 'observation']),
-	toolsInvoked: z.array(z.object({
-		toolName: z.string(),
-		parameters: z.record(z.unknown()),
-		estimatedDuration: z.number().positive(),
-	})),
+	toolsInvoked: z.array(
+		z.object({
+			toolName: z.string(),
+			parameters: z.record(z.unknown()),
+			estimatedDuration: z.number().positive(),
+		}),
+	),
 	invocationContext: z.object({
 		taskId: z.string(),
 		stepId: z.string().optional(),
@@ -161,11 +170,13 @@ export const toolLayerInvokedEventSchema = z.object({
 	}),
 	parallelExecution: z.boolean().optional().default(false),
 	timeoutMs: z.number().positive().optional(),
-	securityContext: z.object({
-		permissionLevel: z.enum(['low', 'medium', 'high']),
-		allowedDomains: z.array(z.string()).optional(),
-		restrictedOperations: z.array(z.string()).optional(),
-	}).optional(),
+	securityContext: z
+		.object({
+			permissionLevel: z.enum(['low', 'medium', 'high']),
+			allowedDomains: z.array(z.string()).optional(),
+			restrictedOperations: z.array(z.string()).optional(),
+		})
+		.optional(),
 });
 
 export type TaskCreatedEvent = z.infer<typeof taskCreatedEventSchema>;

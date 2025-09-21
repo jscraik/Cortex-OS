@@ -1,6 +1,6 @@
-import fg from 'fast-glob';
 import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import fg from 'fast-glob';
 import { z } from 'zod';
 import type { McpTool, ToolExecutionContext } from '../tools.js';
 import { ToolExecutionError } from '../tools.js';

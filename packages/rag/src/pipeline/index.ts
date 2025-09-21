@@ -4,4 +4,3 @@ export * from './ingest';
 export * from './ingest-hierarchical';
 export * from './query';
 export * from './rerank_fusion';
-

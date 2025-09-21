@@ -7,11 +7,10 @@ export type StoreKind = 'local' | 'sqlite' | 'prisma' | 'memory';
 
 export function resolveStoreKindFromEnv(): StoreKind {
 	// Use centralized helper with fallback handling
-	const raw = getEnvWithFallback(
-		ENV.STORE_ADAPTER,
-		[ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2],
-		{ context: 'store adapter selection' }
-	)?.toLowerCase() || '';
+	const raw =
+		getEnvWithFallback(ENV.STORE_ADAPTER, [ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2], {
+			context: 'store adapter selection',
+		})?.toLowerCase() || '';
 
 	if (raw === 'local') return 'local';
 	if (raw === 'sqlite') return 'sqlite';

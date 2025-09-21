@@ -1,10 +1,13 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type {
+	ExecutionFeedback,
+	ExecutionPlan,
+} from '../../contracts/no-architecture-contracts.js';
 import { AdaptiveDecisionEngine } from '../adaptive-decision-engine.js';
-import type { ExecutionPlan, ExecutionFeedback } from '../../contracts/no-architecture-contracts.js';
 
 /**
  * Phase 1.5: Enhanced AdaptiveDecisionEngine Test Suite
- * 
+ *
  * Features tested:
  * - Advanced learning capabilities with pattern recognition
  * - Environment adaptation and contextual decision making
@@ -13,7 +16,7 @@ import type { ExecutionPlan, ExecutionFeedback } from '../../contracts/no-archit
  * - Historical data analysis and trend detection
  * - Real-time feedback integration
  * - nO architecture compliance and telemetry
- * 
+ *
  * Co-authored-by: brAInwav Development Team
  */
 describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
@@ -54,7 +57,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This will fail until learning patterns are implemented
 			const learningResult = await engine.learnFromHistory(historicalData);
-			
+
 			expect(learningResult.patternsIdentified).toBeDefined();
 			expect(learningResult.patternsIdentified.length).toBeGreaterThan(0);
 			expect(learningResult.strategyRecommendations).toBeDefined();
@@ -89,7 +92,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This will fail until real-time adaptation is implemented
 			const adaptation = await engine.adaptToRealTimePerformance(realtimeFeedback);
-			
+
 			expect(adaptation.recommendedStrategy).toBeDefined();
 			expect(adaptation.adaptationReason).toBeDefined();
 			expect(adaptation.confidence).toBeGreaterThan(0.5);
@@ -124,7 +127,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This will fail until multi-objective optimization is implemented
 			const optimization = await engine.optimizeMultiObjective(objectives, currentContext);
-			
+
 			expect(optimization.selectedStrategy).toBeDefined();
 			expect(optimization.objectiveScores).toBeDefined();
 			expect(optimization.overallScore).toBeGreaterThan(0);
@@ -162,7 +165,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This will fail until environment adaptation is implemented
 			const adaptationPlan = await engine.adaptToEnvironmentChanges(environmentChanges);
-			
+
 			expect(adaptationPlan.actions).toBeDefined();
 			expect(adaptationPlan.actions.length).toBeGreaterThan(0);
 			expect(adaptationPlan.prioritizedChanges).toBeDefined();
@@ -180,7 +183,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 				historicalPatterns: {
 					peakHours: ['09:00-11:00', '14:00-16:00'],
 					optimalStrategies: { morning: 'parallel', afternoon: 'hierarchical' },
-					averagePerformance: { sequential: 0.85, parallel: 0.78, hierarchical: 0.90 },
+					averagePerformance: { sequential: 0.85, parallel: 0.78, hierarchical: 0.9 },
 				},
 				businessConstraints: {
 					costSensitive: false,
@@ -199,9 +202,9 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 			// This will fail until contextual decision making is implemented
 			const contextualDecision = await engine.makeContextualDecision(
 				contextualFactors,
-				executionRequest
+				executionRequest,
 			);
-			
+
 			expect(contextualDecision.selectedStrategy).toBeDefined();
 			expect(contextualDecision.contextualFactors).toBeDefined();
 			expect(contextualDecision.reasoning).toContain('context');
@@ -259,9 +262,9 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 			// This will fail until prediction capabilities are implemented
 			const prediction = await engine.predictExecutionOutcome(
 				executionPlan as ExecutionPlan,
-				historicalContext
+				historicalContext,
 			);
-			
+
 			expect(prediction.predictedDuration).toBeDefined();
 			expect(prediction.confidenceInterval).toBeDefined();
 			expect(prediction.confidenceInterval.lower).toBeLessThan(prediction.predictedDuration);
@@ -284,7 +287,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This will fail until trend analysis is implemented
 			const trendAnalysis = await engine.analyzeTrends(performanceHistory);
-			
+
 			expect(trendAnalysis.trends).toBeDefined();
 			expect(trendAnalysis.trends.length).toBeGreaterThan(0);
 			expect(trendAnalysis.insights).toBeDefined();
@@ -320,7 +323,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This will fail until reinforcement learning is implemented
 			const learningUpdate = await engine.updateReinforcementModel(learningScenarios);
-			
+
 			expect(learningUpdate.modelVersion).toBeDefined();
 			expect(learningUpdate.improvementScore).toBeGreaterThan(0);
 			expect(learningUpdate.learningRate).toBeGreaterThan(0);
@@ -351,9 +354,9 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This will fail until adaptive learning is implemented
 			const adaptiveLearning = await engine.adaptLearningParameters(
-				performanceFeedback as ExecutionFeedback
+				performanceFeedback as ExecutionFeedback,
 			);
-			
+
 			expect(adaptiveLearning.learningRateAdjustment).toBeDefined();
 			expect(adaptiveLearning.explorationFactor).toBeDefined();
 			expect(adaptiveLearning.parameterUpdates).toBeDefined();
@@ -377,20 +380,19 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 			};
 
 			// This will fail until nO integration is implemented
-			const nODecision = await engine.makeDecisionWithTelemetry(
-				decisionContext,
-				{ onEvent: mockTelemetryCallback }
-			);
-			
+			const nODecision = await engine.makeDecisionWithTelemetry(decisionContext, {
+				onEvent: mockTelemetryCallback,
+			});
+
 			expect(nODecision.strategy).toBeDefined();
 			expect(nODecision.reasoning).toBeDefined();
 			expect(nODecision.confidence).toBeGreaterThan(0.6);
 			expect(nODecision.telemetryData).toBeDefined();
-			
+
 			// Verify telemetry events were emitted
 			expect(telemetryEvents.length).toBeGreaterThan(0);
-			expect(telemetryEvents.some(e => e.type === 'decision_analysis_started')).toBeTruthy();
-			expect(telemetryEvents.some(e => e.type === 'decision_analysis_completed')).toBeTruthy();
+			expect(telemetryEvents.some((e) => e.type === 'decision_analysis_started')).toBeTruthy();
+			expect(telemetryEvents.some((e) => e.type === 'decision_analysis_completed')).toBeTruthy();
 		});
 
 		it('should provide comprehensive decision audit trails', async () => {
@@ -412,11 +414,8 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 			};
 
 			// This will fail until audit trail implementation is complete
-			const auditableDecision = await engine.makeAuditableDecision(
-				decisionInput,
-				auditContext
-			);
-			
+			const auditableDecision = await engine.makeAuditableDecision(decisionInput, auditContext);
+
 			expect(auditableDecision.decision).toBeDefined();
 			expect(auditableDecision.auditTrail).toBeDefined();
 			expect(auditableDecision.auditTrail.decisionId).toBeDefined();
@@ -444,7 +443,7 @@ describe('Phase 1.5: Enhanced AdaptiveDecisionEngine (nO Architecture)', () => {
 
 			// This should continue to work with existing interface
 			const adjustment = engine.adaptStrategy(basicFeedback);
-			
+
 			expect(adjustment.newStrategy).toBeDefined();
 			expect(adjustment.reasoning).toBeDefined();
 			expect(adjustment.confidence).toBeGreaterThan(0);

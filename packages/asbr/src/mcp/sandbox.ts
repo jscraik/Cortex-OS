@@ -7,8 +7,8 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import pidusage from 'pidusage';
 import { PolicyRegistry } from '@cortex-os/asbr-policy';
+import pidusage from 'pidusage';
 import { loadMCPAllowlist, loadSecurityPolicies } from '../core/config.js';
 import type { MCPAllowlistEntry, SecurityPolicy, SecurityRule } from '../types/index.js';
 import { AuthorizationError, ValidationError } from '../types/index.js';
@@ -110,9 +110,7 @@ export class MCPSandbox {
 				},
 			});
 			if (!decision.allowed) {
-				throw new AuthorizationError(
-					decision.reason ?? 'Tool execution denied by security policy',
-				);
+				throw new AuthorizationError(decision.reason ?? 'Tool execution denied by security policy');
 			}
 
 			// Create sandboxed execution environment
@@ -195,7 +193,10 @@ export class MCPSandbox {
 		return { allowed: true };
 	}
 
-	private evaluateRule(rule: SecurityRule, context: SandboxContext): {
+	private evaluateRule(
+		rule: SecurityRule,
+		context: SandboxContext,
+	): {
 		allowed: boolean;
 		reason?: string;
 	} {

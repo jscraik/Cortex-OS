@@ -158,7 +158,7 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 		try {
 			const envelopes = events.map((event) => this.createEnvelope(event));
 
-			await this.withRetry(() => this.outbox!.publishBatch(envelopes));
+			await this.withRetry(() => this.outbox?.publishBatch(envelopes));
 		} catch (error) {
 			console.error('Failed to publish memory events:', error);
 			// Re-queue events for retry - they'll be retried on next flush

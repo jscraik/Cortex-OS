@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { VersionedMemoryStore } from '../../src/adapters/store.versioned.js';
-import { InMemoryStore } from '../../src/adapters/store.memory.js';
-import { DefaultMigrationManager } from '../../src/service/migration-service.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryMetadataStore } from '../../src/adapters/metadata.in-memory.js';
+import { InMemoryStore } from '../../src/adapters/store.memory.js';
+import { VersionedMemoryStore } from '../../src/adapters/store.versioned.js';
 import type { Migration } from '../../src/domain/migration.js';
 import { SchemaValidationError } from '../../src/domain/migration.js';
+import { DefaultMigrationManager } from '../../src/service/migration-service.js';
 
 describe('VersionedMemoryStore', () => {
 	let versionedStore: VersionedMemoryStore;
@@ -32,8 +32,12 @@ describe('VersionedMemoryStore', () => {
 			const migration: Migration = {
 				version: '2.0.0',
 				description: 'Test migration',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 			migrationManager.registerMigration(migration);
 
@@ -50,8 +54,12 @@ describe('VersionedMemoryStore', () => {
 			const migration = {
 				version: '2.0.0',
 				description: 'Test migration',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 			migrationManager.registerMigration(migration);
 
@@ -60,7 +68,7 @@ describe('VersionedMemoryStore', () => {
 				kind: 'document' as const,
 				text: 'Test content',
 				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			};
 
 			const stored = await versionedStore.upsert(memory);
@@ -76,7 +84,7 @@ describe('VersionedMemoryStore', () => {
 				text: 'Test content',
 				embedding: 'invalid' as any,
 				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			};
 
 			// Set version to require embedding validation
@@ -91,7 +99,7 @@ describe('VersionedMemoryStore', () => {
 				kind: 'document' as const,
 				text: 'Test content',
 				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			};
 
 			await versionedStore.upsert(memory);

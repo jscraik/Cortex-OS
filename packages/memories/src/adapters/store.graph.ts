@@ -1,4 +1,4 @@
-import type { Memory, MemoryMetadata } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 export interface MemoryNode {
@@ -73,8 +73,8 @@ export class GraphMemoryStore implements MemoryStore {
 			...memory,
 			metadata: {
 				...memory.metadata,
-				graph
-			}
+				graph,
+			},
 		};
 
 		const result = await this.store.upsert(memoryWithGraph, namespace);
@@ -110,7 +110,10 @@ export class GraphMemoryStore implements MemoryStore {
 		return this.store.searchByText(q, namespace);
 	}
 
-	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace = 'default',
+	): Promise<(Memory & { score: number })[]> {
 		return this.store.searchByVector(q, namespace);
 	}
 
@@ -128,7 +131,7 @@ export class GraphMemoryStore implements MemoryStore {
 		toId: string,
 		type: string,
 		metadata?: Record<string, any>,
-		namespace = 'default'
+		namespace = 'default',
 	): Promise<Relationship> {
 		// Validate relationship type
 		if (!type || type.trim() === '') {
@@ -138,7 +141,7 @@ export class GraphMemoryStore implements MemoryStore {
 		// Ensure both memories exist
 		const [fromMemory, toMemory] = await Promise.all([
 			this.store.get(fromId, namespace),
-			this.store.get(toId, namespace)
+			this.store.get(toId, namespace),
 		]);
 
 		if (!fromMemory) {
@@ -156,7 +159,7 @@ export class GraphMemoryStore implements MemoryStore {
 			type,
 			metadata,
 			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString()
+			updatedAt: new Date().toISOString(),
 		};
 
 		// Update memories with relationship reference
@@ -192,7 +195,7 @@ export class GraphMemoryStore implements MemoryStore {
 					...edge,
 					id: edge.id || `rel-${edge.from}-${edge.to}-${edge.type}`,
 					createdAt: edge.createdAt || new Date().toISOString(),
-					updatedAt: edge.updatedAt || new Date().toISOString()
+					updatedAt: edge.updatedAt || new Date().toISOString(),
 				});
 			}
 		}
@@ -211,7 +214,7 @@ export class GraphMemoryStore implements MemoryStore {
 			maxDepth?: number;
 			relationshipTypes?: string[];
 			includeStart?: boolean;
-		} = {}
+		} = {},
 	): Promise<MemoryNode[]> {
 		const cacheKey = `traverse:${namespace}:${startId}:${JSON.stringify(options)}`;
 
@@ -220,12 +223,7 @@ export class GraphMemoryStore implements MemoryStore {
 			return this.traversalCache.get(cacheKey)!;
 		}
 
-		const {
-			direction = 'both',
-			maxDepth = 10,
-			relationshipTypes,
-			includeStart = true
-		} = options;
+		const { direction = 'both', maxDepth = 10, relationshipTypes, includeStart = true } = options;
 
 		const visited = new Set<string>();
 		const result: MemoryNode[] = [];
@@ -249,12 +247,12 @@ export class GraphMemoryStore implements MemoryStore {
 			const node: MemoryNode = {
 				id,
 				memory,
-				edges: []
+				edges: [],
 			};
 
 			// Get relationships
 			const relationships = await this.getRelationships(id, namespace);
-			node.edges = relationships.filter(rel => {
+			node.edges = relationships.filter((rel) => {
 				if (relationshipTypes && !relationshipTypes.includes(rel.type)) {
 					return false;
 				}
@@ -284,7 +282,7 @@ export class GraphMemoryStore implements MemoryStore {
 		}
 
 		// Filter result if not including start
-		const finalResult = includeStart ? result : result.filter(n => n.id !== startId);
+		const finalResult = includeStart ? result : result.filter((n) => n.id !== startId);
 
 		// Cache result
 		this.traversalCache.set(cacheKey, finalResult);
@@ -302,10 +300,8 @@ export class GraphMemoryStore implements MemoryStore {
 
 			if (id === toId) {
 				// Found path, retrieve memories
-				const memories = await Promise.all(
-					path.map(id => this.store.get(id, namespace))
-				);
-				return memories.filter(m => m !== null) as Memory[];
+				const memories = await Promise.all(path.map((id) => this.store.get(id, namespace)));
+				return memories.filter((m) => m !== null) as Memory[];
 			}
 
 			const relationships = await this.getRelationships(id, namespace);
@@ -333,7 +329,7 @@ export class GraphMemoryStore implements MemoryStore {
 				const startNode: MemoryNode = {
 					id: query.startNodeId,
 					memory: startMemory,
-					edges: []
+					edges: [],
 				};
 				nodes.set(query.startNodeId, startNode);
 
@@ -342,7 +338,10 @@ export class GraphMemoryStore implements MemoryStore {
 
 				// Filter relationships based on query criteria
 				for (const rel of relationships) {
-					if (this.shouldIncludeEdge(rel, query) && this.matchesDirection(rel, query.startNodeId, query.direction)) {
+					if (
+						this.shouldIncludeEdge(rel, query) &&
+						this.matchesDirection(rel, query.startNodeId, query.direction)
+					) {
 						edges.add(rel);
 
 						// Add connected node if within maxDepth
@@ -353,7 +352,7 @@ export class GraphMemoryStore implements MemoryStore {
 								const connectedNode: MemoryNode = {
 									id: connectedId,
 									memory: connectedMemory,
-									edges: []
+									edges: [],
 								};
 								nodes.set(connectedId, connectedNode);
 							}
@@ -369,14 +368,14 @@ export class GraphMemoryStore implements MemoryStore {
 		}
 
 		// Filter by minimum weight
-		const filteredEdges = Array.from(edges).filter(edge => {
+		const filteredEdges = Array.from(edges).filter((edge) => {
 			const weight = edge.metadata?.weight || 1.0;
 			return weight >= (query.minWeight || 0);
 		});
 
 		return {
 			nodes: Array.from(nodes.values()),
-			edges: filteredEdges
+			edges: filteredEdges,
 		};
 	}
 
@@ -420,7 +419,7 @@ export class GraphMemoryStore implements MemoryStore {
 					id: `community-${communities.length}`,
 					nodes: Array.from(component),
 					size: component.size,
-					density: await this.calculateDensity(component, namespace)
+					density: await this.calculateDensity(component, namespace),
 				});
 			}
 		}
@@ -439,7 +438,7 @@ export class GraphMemoryStore implements MemoryStore {
 				id: memory.id,
 				degree: relationships.length,
 				betweenness: 0,
-				closeness: 0
+				closeness: 0,
 			};
 		}
 
@@ -519,14 +518,15 @@ export class GraphMemoryStore implements MemoryStore {
 	// Private helper methods
 	private async updateMemoryWithRelationship(
 		memory: Memory,
-		relationship: Relationship
+		relationship: Relationship,
 	): Promise<void> {
 		const graph = (memory.metadata?.graph as any) || { nodeId: memory.id, edges: [] };
 
 		// Add edge if not already present
-		const existingEdge = graph.edges.find((e: any) =>
-			e.id === relationship.id ||
-			(e.from === relationship.from && e.to === relationship.to && e.type === relationship.type)
+		const existingEdge = graph.edges.find(
+			(e: any) =>
+				e.id === relationship.id ||
+				(e.from === relationship.from && e.to === relationship.to && e.type === relationship.type),
 		);
 
 		if (!existingEdge) {
@@ -537,8 +537,8 @@ export class GraphMemoryStore implements MemoryStore {
 			...memory,
 			metadata: {
 				...memory.metadata,
-				graph
-			}
+				graph,
+			},
 		};
 
 		const namespace = memory.metadata?.namespace || 'default';
@@ -555,19 +555,22 @@ export class GraphMemoryStore implements MemoryStore {
 			if (otherMemory?.metadata?.graph?.edges) {
 				// Remove relationship from other memory
 				const updatedEdges = otherMemory.metadata.graph.edges.filter(
-					(edge: any) => !(edge.from === rel.from && edge.to === rel.to && edge.type === rel.type)
+					(edge: any) => !(edge.from === rel.from && edge.to === rel.to && edge.type === rel.type),
 				);
 
-				await this.store.upsert({
-					...otherMemory,
-					metadata: {
-						...otherMemory.metadata,
-						graph: {
-							...otherMemory.metadata.graph,
-							edges: updatedEdges
-						}
-					}
-				}, namespace);
+				await this.store.upsert(
+					{
+						...otherMemory,
+						metadata: {
+							...otherMemory.metadata,
+							graph: {
+								...otherMemory.metadata.graph,
+								edges: updatedEdges,
+							},
+						},
+					},
+					namespace,
+				);
 			}
 		}
 	}
@@ -585,7 +588,7 @@ export class GraphMemoryStore implements MemoryStore {
 		return true;
 	}
 
-private matchesDirection(edge: Relationship, nodeId: string, direction?: string): boolean {
+	private matchesDirection(edge: Relationship, nodeId: string, direction?: string): boolean {
 		const dir = direction || 'both';
 		if (dir === 'outgoing' && edge.from !== nodeId) {
 			return false;
@@ -598,16 +601,16 @@ private matchesDirection(edge: Relationship, nodeId: string, direction?: string)
 
 	private async applyPatternMatching(
 		nodes: Map<string, MemoryNode>,
-		edges: Set<Relationship>,
+		_edges: Set<Relationship>,
 		pattern: GraphPattern,
-		namespace: string
+		namespace: string,
 	): Promise<void> {
 		// Simple pattern matching implementation
 		// In a real implementation, use graph pattern matching algorithms
 
 		if (pattern.type === 'path') {
 			// Find paths matching the pattern
-			for (const [nodeId, node] of nodes) {
+			for (const [nodeId, _node] of nodes) {
 				const paths = await this.findAllPathsFromNode(nodeId, namespace, pattern.edges.length);
 
 				for (const path of paths) {
@@ -620,7 +623,7 @@ private matchesDirection(edge: Relationship, nodeId: string, direction?: string)
 								nodes.set(nodeId, {
 									id: nodeId,
 									memory,
-									edges: []
+									edges: [],
 								});
 							}
 						}
@@ -633,7 +636,7 @@ private matchesDirection(edge: Relationship, nodeId: string, direction?: string)
 	private async findAllPathsFromNode(
 		startId: string,
 		namespace: string,
-		maxLength: number
+		maxLength: number,
 	): Promise<string[][]> {
 		const paths: string[][] = [];
 		const dfs = async (currentId: string, path: string[], depth: number) => {
@@ -676,7 +679,7 @@ private matchesDirection(edge: Relationship, nodeId: string, direction?: string)
 			}
 		}
 
-		const maxEdges = size * (size - 1) / 2;
+		const maxEdges = (size * (size - 1)) / 2;
 		return edgeCount / maxEdges;
 	}
 

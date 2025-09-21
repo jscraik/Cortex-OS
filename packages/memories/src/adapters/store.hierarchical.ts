@@ -1,4 +1,4 @@
-import type { Memory, MemoryMetadata } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 export interface HierarchyMetadata {
@@ -58,8 +58,8 @@ export class HierarchicalMemoryStore implements MemoryStore {
 			...memory,
 			metadata: {
 				...memory.metadata,
-				hierarchy
-			}
+				hierarchy,
+			},
 		};
 
 		// Store the memory
@@ -96,8 +96,8 @@ export class HierarchicalMemoryStore implements MemoryStore {
 						...childMemory.metadata?.hierarchy,
 						parent: undefined,
 						depth: 0,
-						path: childMemory.id
-					}
+						path: childMemory.id,
+					},
 				};
 				await this.store.upsert({ ...childMemory, metadata: updatedMetadata }, namespace);
 			}
@@ -111,7 +111,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 		let results = await this.store.searchByText(q, namespace);
 
 		if (hq.rootOnly) {
-			results = results.filter(m => !m.metadata?.hierarchy?.parent);
+			results = results.filter((m) => !m.metadata?.hierarchy?.parent);
 		}
 
 		if (hq.includeChildren || hq.maxDepth) {
@@ -124,20 +124,23 @@ export class HierarchicalMemoryStore implements MemoryStore {
 			}
 
 			const allMemories = await Promise.all(
-				Array.from(expanded).map(id => this.store.get(id, namespace))
+				Array.from(expanded).map((id) => this.store.get(id, namespace)),
 			);
-			results = allMemories.filter(m => m !== null) as Memory[];
+			results = allMemories.filter((m) => m !== null) as Memory[];
 		}
 
 		return results;
 	}
 
-	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace = 'default',
+	): Promise<(Memory & { score: number })[]> {
 		const hvq = q as HierarchicalVectorQuery;
 		let results = await this.store.searchByVector(q, namespace);
 
 		if (hvq.rootOnly) {
-			results = results.filter(m => !m.metadata?.hierarchy?.parent);
+			results = results.filter((m) => !m.metadata?.hierarchy?.parent);
 		}
 
 		if (hvq.includeChildren || hvq.maxDepth) {
@@ -150,14 +153,14 @@ export class HierarchicalMemoryStore implements MemoryStore {
 			}
 
 			const allMemories = await Promise.all(
-				Array.from(expanded).map(id => this.store.get(id, namespace))
+				Array.from(expanded).map((id) => this.store.get(id, namespace)),
 			);
-			const filteredMemories = allMemories.filter(m => m !== null) as Memory[];
+			const filteredMemories = allMemories.filter((m) => m !== null) as Memory[];
 
 			// Re-score with hierarchy boost
-			results = filteredMemories.map(m => ({
+			results = filteredMemories.map((m) => ({
 				...m,
-				score: this.calculateHierarchyScore(m, hvq.vector || hvq.embedding || [])
+				score: this.calculateHierarchyScore(m, hvq.vector || hvq.embedding || []),
 			}));
 		}
 
@@ -211,7 +214,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 		memoryId: string,
 		parentId: string,
 		namespace: string,
-		visited = new Set<string>()
+		visited = new Set<string>(),
 	): Promise<void> {
 		// Check if the memory being added is in the parent's ancestry
 		let currentId = parentId;
@@ -232,18 +235,6 @@ export class HierarchicalMemoryStore implements MemoryStore {
 		}
 	}
 
-	private async calculateDepth(id: string, namespace: string): Promise<number> {
-		const memory = await this.store.get(id, namespace);
-		if (!memory?.metadata?.hierarchy?.parent) {
-			return 0;
-		}
-
-		const parentMemory = await this.store.get(memory.metadata.hierarchy.parent, namespace);
-		const parentHierarchy = parentMemory?.metadata?.hierarchy as HierarchyMetadata | undefined;
-
-		return (parentHierarchy?.depth || 0) + 1;
-	}
-
 	private async calculatePath(id: string, namespace: string): Promise<string> {
 		const memory = await this.store.get(id, namespace);
 		if (!memory?.metadata?.hierarchy?.parent) {
@@ -257,7 +248,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 	private async updateParentChildren(
 		childId: string,
 		parentId: string,
-		namespace: string
+		namespace: string,
 	): Promise<void> {
 		const parent = await this.store.get(parentId, namespace);
 		if (!parent) return;
@@ -270,8 +261,8 @@ export class HierarchicalMemoryStore implements MemoryStore {
 			...parent.metadata,
 			hierarchy: {
 				...hierarchy,
-				children: Array.from(children)
-			}
+				children: Array.from(children),
+			},
 		};
 
 		await this.store.upsert({ ...parent, metadata: updatedMetadata }, namespace);
@@ -280,7 +271,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 	private async removeFromParentChildren(
 		childId: string,
 		parentId: string,
-		namespace: string
+		namespace: string,
 	): Promise<void> {
 		const parent = await this.store.get(parentId, namespace);
 		if (!parent) return;
@@ -293,8 +284,8 @@ export class HierarchicalMemoryStore implements MemoryStore {
 			...parent.metadata,
 			hierarchy: {
 				...hierarchy,
-				children: Array.from(children)
-			}
+				children: Array.from(children),
+			},
 		};
 
 		await this.store.upsert({ ...parent, metadata: updatedMetadata }, namespace);
@@ -305,7 +296,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 		namespace: string,
 		collection: Set<string>,
 		maxDepth?: number,
-		currentDepth = 0
+		currentDepth = 0,
 	): Promise<void> {
 		if (maxDepth !== undefined && currentDepth >= maxDepth) {
 			return;
@@ -323,7 +314,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 	private calculateHierarchyScore(memory: Memory, queryVector: number[]): number {
 		// Boost score based on hierarchy position
 		const depth = memory.metadata?.hierarchy?.depth || 0;
-		const depthBoost = Math.max(0, 1 - (depth * 0.1)); // 10% penalty per level
+		const depthBoost = Math.max(0, 1 - depth * 0.1); // 10% penalty per level
 
 		// Additional boost for root nodes
 		const isRoot = !memory.metadata?.hierarchy?.parent;
@@ -338,7 +329,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 		result: Memory[],
 		visited: Set<string>,
 		currentDepth: number,
-		maxDepth?: number
+		maxDepth?: number,
 	): Promise<void> {
 		if (visited.has(id) || (maxDepth !== undefined && currentDepth > maxDepth)) {
 			return;

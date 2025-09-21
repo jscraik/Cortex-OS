@@ -82,7 +82,9 @@ describe('HTTP API', () => {
 		expect(listJson.tasks).toHaveLength(1);
 		expect(listJson.tasks[0]?.record).toEqual(created.task);
 
-		const getRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, { headers: { Authorization: authHeader } });
+		const getRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, {
+			headers: { Authorization: authHeader },
+		});
 		expect(getRes.status).toBe(200);
 		const fetched = (await getRes.json()) as { task: Record<string, unknown>; digest: string };
 		expect(fetched.task).toEqual(created.task);
@@ -109,10 +111,15 @@ describe('HTTP API', () => {
 		});
 		expect(conflictRes.status).toBe(409);
 
-		const deleteRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, { method: 'DELETE', headers: { Authorization: authHeader } });
+		const deleteRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, {
+			method: 'DELETE',
+			headers: { Authorization: authHeader },
+		});
 		expect(deleteRes.status).toBe(204);
 
-		const getMissingRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, { headers: { Authorization: authHeader } });
+		const getMissingRes = await fetch(`${baseUrl}/v1/tasks/task-http-1`, {
+			headers: { Authorization: authHeader },
+		});
 		expect(getMissingRes.status).toBe(404);
 	});
 
@@ -150,12 +157,17 @@ describe('HTTP API', () => {
 		});
 		expect(conflictRes.status).toBe(409);
 
-		const listRes = await fetch(`${baseUrl}/v1/profiles`, { headers: { Authorization: authHeader } });
+		const listRes = await fetch(`${baseUrl}/v1/profiles`, {
+			headers: { Authorization: authHeader },
+		});
 		expect(listRes.status).toBe(200);
 		const listJson = await listRes.json();
 		expect(listJson.profiles).toHaveLength(1);
 
-		const deleteRes = await fetch(`${baseUrl}/v1/profiles/profile-http-1`, { method: 'DELETE', headers: { Authorization: authHeader } });
+		const deleteRes = await fetch(`${baseUrl}/v1/profiles/profile-http-1`, {
+			method: 'DELETE',
+			headers: { Authorization: authHeader },
+		});
 		expect(deleteRes.status).toBe(204);
 	});
 
@@ -180,7 +192,9 @@ describe('HTTP API', () => {
 		const created = await createRes.json();
 		const artifactId = created.metadata.id as string;
 
-		const getRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, { headers: { Authorization: authHeader } });
+		const getRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, {
+			headers: { Authorization: authHeader },
+		});
 		expect(getRes.status).toBe(200);
 		const fetched = await getRes.json();
 		expect(Buffer.from(fetched.base64Payload, 'base64').toString()).toBe('artifact-http');
@@ -203,12 +217,17 @@ describe('HTTP API', () => {
 		const updated = await updateRes.json();
 		expect(updated.metadata.digest).not.toBe(created.digest);
 
-		const listRes = await fetch(`${baseUrl}/v1/artifacts?taskId=task-artifact`, { headers: { Authorization: authHeader } });
+		const listRes = await fetch(`${baseUrl}/v1/artifacts?taskId=task-artifact`, {
+			headers: { Authorization: authHeader },
+		});
 		expect(listRes.status).toBe(200);
 		const listJson = await listRes.json();
 		expect(listJson.artifacts).toHaveLength(1);
 
-		const deleteRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, { method: 'DELETE', headers: { Authorization: authHeader } });
+		const deleteRes = await fetch(`${baseUrl}/v1/artifacts/${artifactId}`, {
+			method: 'DELETE',
+			headers: { Authorization: authHeader },
+		});
 		expect(deleteRes.status).toBe(204);
 	});
 

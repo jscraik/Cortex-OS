@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryA2AEventPublisher } from '../../src/a2a/event-publisher.js';
 import { A2AAwareMemoryStore } from '../../src/a2a/store-wrapper.js';
-import type { Memory, TextQuery } from '../../src/domain/types.js';
+import type { TextQuery } from '../../src/domain/types.js';
 import { createExpiredMemory, createMemory, TestMemoryStore } from '../test-utils.js';
 
 describe('A2A Aware Memory Store', () => {
@@ -281,7 +281,7 @@ describe('A2A Aware Memory Store', () => {
 			newStore.setOutbox(mockOutbox);
 
 			const publisher = newStore.getEventPublisher();
-			expect(publisher['outbox']).toBe(mockOutbox);
+			expect(publisher.outbox).toBe(mockOutbox);
 		});
 	});
 

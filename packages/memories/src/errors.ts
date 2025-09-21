@@ -20,7 +20,10 @@ export class ConfigurationError extends Error {
 }
 
 export class StoreError extends Error {
-	constructor(message: string, public readonly cause?: Error) {
+	constructor(
+		message: string,
+		public readonly cause?: Error,
+	) {
 		super(message);
 		this.name = 'StoreError';
 		if (cause) {
@@ -33,7 +36,7 @@ export class PluginError extends Error {
 	constructor(
 		message: string,
 		public readonly pluginName: string,
-		public readonly cause?: Error
+		public readonly cause?: Error,
 	) {
 		super(message);
 		this.name = 'PluginError';

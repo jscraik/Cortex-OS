@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import { TemplateMemoryStore } from '../../src/adapters/store.template.js';
+import type { MemoryTemplate } from '../../src/domain/types.js';
 import { TemplateRegistry } from '../../src/service/template-registry.js';
-import type { Memory, MemoryTemplate } from '../../src/domain/types.js';
 import { createMemory } from '../test-utils.js';
 
 describe('TemplateMemoryStore Integration', () => {
@@ -15,7 +15,7 @@ describe('TemplateMemoryStore Integration', () => {
 		baseStore = new InMemoryStore();
 		templateRegistry = new TemplateRegistry();
 		store = new TemplateMemoryStore(baseStore, templateRegistry);
-		namespace = 'test-' + Math.random().toString(36).substring(7);
+		namespace = `test-${Math.random().toString(36).substring(7)}`;
 	});
 
 	afterEach(async () => {
@@ -40,18 +40,18 @@ describe('TemplateMemoryStore Integration', () => {
 						title: { type: 'string' },
 						priority: { type: 'string', enum: ['low', 'medium', 'high'] },
 						status: { type: 'string', enum: ['todo', 'in-progress', 'done'] },
-						dueDate: { type: 'string', format: 'date-time' }
+						dueDate: { type: 'string', format: 'date-time' },
 					},
-					required: ['title', 'priority', 'status']
+					required: ['title', 'priority', 'status'],
 				},
 				defaults: {
 					priority: 'medium',
-					status: 'todo'
+					status: 'todo',
 				},
 				metadata: {
 					category: 'task',
-					workflow: 'kanban'
-				}
+					workflow: 'kanban',
+				},
 			};
 
 			// Register template
@@ -64,8 +64,8 @@ describe('TemplateMemoryStore Integration', () => {
 					template: 'task-template',
 					title: 'Complete project documentation',
 					priority: 'high',
-					dueDate: '2023-12-31T23:59:59Z'
-				}
+					dueDate: '2023-12-31T23:59:59Z',
+				},
 			});
 
 			const result = await store.upsert(memory, namespace);
@@ -86,10 +86,10 @@ describe('TemplateMemoryStore Integration', () => {
 				schema: {
 					type: 'object',
 					properties: {
-						value: { type: 'number', minimum: 0 }
+						value: { type: 'number', minimum: 0 },
 					},
-					required: ['value']
-				}
+					required: ['value'],
+				},
 			};
 
 			await templateRegistry.register(template);
@@ -98,8 +98,8 @@ describe('TemplateMemoryStore Integration', () => {
 				text: 'Invalid memory',
 				metadata: {
 					template: 'strict-template',
-					value: -1 // Violates minimum constraint
-				}
+					value: -1, // Violates minimum constraint
+				},
 			});
 
 			// Should reject invalid memory
@@ -116,13 +116,13 @@ describe('TemplateMemoryStore Integration', () => {
 					type: 'object',
 					properties: {
 						category: { type: 'string' },
-						tags: { type: 'array', items: { type: 'string' } }
+						tags: { type: 'array', items: { type: 'string' } },
 					},
-					required: ['category']
+					required: ['category'],
 				},
 				defaults: {
-					tags: []
-				}
+					tags: [],
+				},
 			};
 
 			// Child template
@@ -136,13 +136,13 @@ describe('TemplateMemoryStore Integration', () => {
 					properties: {
 						category: { type: 'string' },
 						tags: { type: 'array', items: { type: 'string' } },
-						priority: { type: 'string' }
+						priority: { type: 'string' },
 					},
-					required: ['category', 'priority']
+					required: ['category', 'priority'],
 				},
 				defaults: {
-					priority: 'medium'
-				}
+					priority: 'medium',
+				},
 			};
 
 			await templateRegistry.register(parentTemplate);
@@ -153,8 +153,8 @@ describe('TemplateMemoryStore Integration', () => {
 				metadata: {
 					template: 'extended-template',
 					category: 'work',
-					tags: ['urgent', 'frontend']
-				}
+					tags: ['urgent', 'frontend'],
+				},
 			});
 
 			const result = await store.upsert(memory, namespace);
@@ -175,10 +175,10 @@ describe('TemplateMemoryStore Integration', () => {
 				schema: {
 					type: 'object',
 					properties: {
-						name: { type: 'string' }
+						name: { type: 'string' },
 					},
-					required: ['name']
-				}
+					required: ['name'],
+				},
 			};
 
 			await templateRegistry.register(template);
@@ -193,7 +193,7 @@ describe('TemplateMemoryStore Integration', () => {
 				name: 'Task Template',
 				version: '1.0.0',
 				schema: { type: 'object', properties: {} },
-				metadata: { category: 'task' }
+				metadata: { category: 'task' },
 			};
 
 			const template2: MemoryTemplate = {
@@ -201,7 +201,7 @@ describe('TemplateMemoryStore Integration', () => {
 				name: 'Note Template',
 				version: '1.0.0',
 				schema: { type: 'object', properties: {} },
-				metadata: { category: 'note' }
+				metadata: { category: 'note' },
 			};
 
 			await templateRegistry.register(template1);
@@ -217,7 +217,7 @@ describe('TemplateMemoryStore Integration', () => {
 				id: 'invalid-template',
 				name: 'Invalid Template',
 				version: '1.0.0',
-				schema: 'invalid-schema' // Should be an object
+				schema: 'invalid-schema', // Should be an object
 			};
 
 			await expect(templateRegistry.register(invalidTemplate as any)).rejects.toThrow();
@@ -233,9 +233,9 @@ describe('TemplateMemoryStore Integration', () => {
 				schema: {
 					type: 'object',
 					properties: {
-						value: { type: 'string' }
-					}
-				}
+						value: { type: 'string' },
+					},
+				},
 			};
 
 			const v2: MemoryTemplate = {
@@ -245,9 +245,9 @@ describe('TemplateMemoryStore Integration', () => {
 				schema: {
 					type: 'object',
 					properties: {
-						value: { type: 'number' } // Changed type
-					}
-				}
+						value: { type: 'number' }, // Changed type
+					},
+				},
 			};
 
 			await templateRegistry.register(v1);
@@ -269,9 +269,9 @@ describe('TemplateMemoryStore Integration', () => {
 				schema: {
 					type: 'object',
 					properties: {
-						status: { type: 'string', enum: ['open', 'closed'] }
-					}
-				}
+						status: { type: 'string', enum: ['open', 'closed'] },
+					},
+				},
 			};
 
 			await templateRegistry.register(v1);
@@ -282,8 +282,8 @@ describe('TemplateMemoryStore Integration', () => {
 				metadata: {
 					template: 'migration-template',
 					templateVersion: '1.0.0',
-					status: 'open'
-				}
+					status: 'open',
+				},
 			});
 
 			await store.upsert(memory, namespace);
@@ -296,16 +296,16 @@ describe('TemplateMemoryStore Integration', () => {
 				schema: {
 					type: 'object',
 					properties: {
-						status: { type: 'string', enum: ['active', 'inactive'] }
-					}
+						status: { type: 'string', enum: ['active', 'inactive'] },
+					},
 				},
 				migration: {
 					from: '1.0.0',
 					transform: (data: any) => ({
 						...data,
-						status: data.status === 'open' ? 'active' : 'inactive'
-					})
-				}
+						status: data.status === 'open' ? 'active' : 'inactive',
+					}),
+				},
 			};
 
 			await templateRegistry.register(v2);
@@ -332,11 +332,11 @@ describe('TemplateMemoryStore Integration', () => {
 						nested: {
 							type: 'object',
 							properties: {
-								value: { type: 'string' }
-							}
-						}
-					}
-				}
+								value: { type: 'string' },
+							},
+						},
+					},
+				},
 			};
 
 			await templateRegistry.register(template);
@@ -348,8 +348,8 @@ describe('TemplateMemoryStore Integration', () => {
 					text: `Memory ${i}`,
 					metadata: {
 						template: 'cached-template',
-						nested: { value: `test-${i}` }
-					}
+						nested: { value: `test-${i}` },
+					},
 				});
 				memories.push(memory);
 			}
@@ -369,7 +369,7 @@ describe('TemplateMemoryStore Integration', () => {
 			const largeSchema: any = {
 				type: 'object',
 				properties: {},
-				required: []
+				required: [],
 			};
 
 			for (let i = 0; i < 100; i++) {
@@ -382,7 +382,7 @@ describe('TemplateMemoryStore Integration', () => {
 				id: 'large-template',
 				name: 'Large Template',
 				version: '1.0.0',
-				schema: largeSchema
+				schema: largeSchema,
 			};
 
 			await templateRegistry.register(largeTemplate);
@@ -390,8 +390,8 @@ describe('TemplateMemoryStore Integration', () => {
 			const memory = createMemory({
 				text: 'Large template test',
 				metadata: {
-					template: 'large-template'
-				}
+					template: 'large-template',
+				},
 			});
 
 			// Add required fields

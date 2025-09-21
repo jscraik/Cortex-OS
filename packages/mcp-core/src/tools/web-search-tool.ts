@@ -47,7 +47,10 @@ export class WebSearchTool implements McpTool<unknown, WebSearchToolResult> {
 		this.baseUrl = opts?.baseUrl ?? 'https://duckduckgo.com/html/';
 	}
 
-	async execute(input: WebSearchInput, context?: ToolExecutionContext): Promise<WebSearchToolResult> {
+	async execute(
+		input: WebSearchInput,
+		context?: ToolExecutionContext,
+	): Promise<WebSearchToolResult> {
 		if (context?.signal?.aborted) {
 			throw new ToolExecutionError('WebSearch tool execution aborted.', { code: 'E_TOOL_ABORTED' });
 		}
@@ -89,10 +92,13 @@ export class WebSearchTool implements McpTool<unknown, WebSearchToolResult> {
 		} catch (err) {
 			if (err instanceof ToolExecutionError) throw err;
 			const msg = err instanceof Error ? err.message : String(err);
-			throw new ToolExecutionError(`Web search failed: ${msg} \nNote: Provider may throttle automated requests.`, {
-				code: 'E_SEARCH_FAILED',
-				cause: err,
-			});
+			throw new ToolExecutionError(
+				`Web search failed: ${msg} \nNote: Provider may throttle automated requests.`,
+				{
+					code: 'E_SEARCH_FAILED',
+					cause: err,
+				},
+			);
 		}
 	}
 
@@ -172,7 +178,10 @@ export class WebSearchTool implements McpTool<unknown, WebSearchToolResult> {
 	}
 
 	private stripTags(s: string): string {
-		return s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+		return s
+			.replace(/<[^>]*>/g, '')
+			.replace(/\s+/g, ' ')
+			.trim();
 	}
 
 	private resolveDDGRedirect(href: string): string {

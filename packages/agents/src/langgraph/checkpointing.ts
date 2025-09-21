@@ -186,7 +186,7 @@ export class SQLiteCheckpointSaver {
 		limit?: number,
 		before?: string,
 	): Promise<Array<[string, CortexCheckpoint['checkpoint'], CheckpointMetadata]>> {
-	const threadId = config.configurable?.threadId || 'default';
+		const threadId = config.configurable?.threadId || 'default';
 		const prefix = `${threadId}:`;
 		const entries = Array.from(this.storage.entries())
 			.filter(([key]) => key.startsWith(prefix))
@@ -229,7 +229,9 @@ export class CheckpointManager {
 	/**
 	 * Create checkpoint saver based on configuration
 	 */
-	private createCheckpointSaver(config: CheckpointConfig): MemoryCheckpointSaver | SQLiteCheckpointSaver {
+	private createCheckpointSaver(
+		config: CheckpointConfig,
+	): MemoryCheckpointSaver | SQLiteCheckpointSaver {
 		switch (config.storage) {
 			case 'memory':
 				return new MemoryCheckpointSaver(config);
@@ -337,7 +339,8 @@ export const checkpointUtils = {
 	 */
 	createConfig(): CheckpointConfig {
 		return {
-			storage: (process.env.CHECKPOINT_STORAGE as 'memory' | 'sqlite' | 'postgres' | 'redis') || 'memory',
+			storage:
+				(process.env.CHECKPOINT_STORAGE as 'memory' | 'sqlite' | 'postgres' | 'redis') || 'memory',
 			connectionString: process.env.CHECKPOINT_DB_URL,
 			tableName: process.env.CHECKPOINT_TABLE_NAME,
 			ttl: process.env.CHECKPOINT_TTL ? parseInt(process.env.CHECKPOINT_TTL, 10) : undefined,
@@ -372,5 +375,5 @@ export const checkpointUtils = {
 			sessionId: base.sessionId,
 			tags: base.tags || [],
 		};
-	}
+	},
 };

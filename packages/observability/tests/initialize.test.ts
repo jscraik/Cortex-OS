@@ -10,8 +10,12 @@ vi.mock('@opentelemetry/sdk-node', () => ({
 			this.config = config;
 			sdkInstances.push(this);
 		}
-		start() { /* noop for test */ }
-		shutdown() { /* noop for test */ }
+		start() {
+			/* noop for test */
+		}
+		shutdown() {
+			/* noop for test */
+		}
 	},
 }));
 vi.mock('@opentelemetry/auto-instrumentations-node', () => ({
@@ -19,7 +23,7 @@ vi.mock('@opentelemetry/auto-instrumentations-node', () => ({
 }));
 vi.mock('@opentelemetry/resources', () => ({
 	Resource: class Resource {
-		constructor(public attrs: Record<string, unknown>) { }
+		constructor(public attrs: Record<string, unknown>) {}
 	},
 	resourceFromAttributes: (attributes: Record<string, unknown>) => ({
 		attributes,
@@ -30,16 +34,16 @@ vi.mock('@opentelemetry/semantic-conventions', () => ({
 	ATTR_SERVICE_VERSION: 'service.version',
 }));
 vi.mock('@opentelemetry/exporter-trace-otlp-http', () => ({
-	OTLPTraceExporter: class OTLPTraceExporter { constructor(..._args: unknown[]) { } },
+	OTLPTraceExporter: class OTLPTraceExporter {},
 }));
 vi.mock('@opentelemetry/exporter-jaeger', () => ({
-	JaegerExporter: class JaegerExporter { constructor(..._args: unknown[]) { } },
+	JaegerExporter: class JaegerExporter {},
 }));
 vi.mock('@opentelemetry/sdk-trace-base', () => ({
-	ConsoleSpanExporter: class ConsoleSpanExporter { constructor(..._args: unknown[]) { } },
+	ConsoleSpanExporter: class ConsoleSpanExporter {},
 }));
 vi.mock('@opentelemetry/sdk-metrics', () => ({
-	ConsoleMetricExporter: class ConsoleMetricExporter { constructor(..._args: unknown[]) { } },
+	ConsoleMetricExporter: class ConsoleMetricExporter {},
 	PeriodicExportingMetricReader: class PeriodicExportingMetricReader {
 		exporter: unknown;
 		constructor(opts: { exporter: unknown }) {
@@ -48,7 +52,7 @@ vi.mock('@opentelemetry/sdk-metrics', () => ({
 	},
 }));
 vi.mock('@opentelemetry/exporter-metrics-otlp-http', () => ({
-	OTLPMetricExporter: class OTLPMetricExporter { constructor(..._args: unknown[]) { } },
+	OTLPMetricExporter: class OTLPMetricExporter {},
 }));
 
 import { initializeObservability } from '../src/tracing/index.js';
@@ -67,7 +71,10 @@ describe('initializeObservability', () => {
 
 	it('defaults to OTLP exporters', () => {
 		initializeObservability('svc');
-		const config = sdkInstances[0].config as { metricReader: { exporter: unknown }; traceExporter: unknown };
+		const config = sdkInstances[0].config as {
+			metricReader: { exporter: unknown };
+			traceExporter: unknown;
+		};
 		expect(config.traceExporter).toBeInstanceOf(OTLPTraceExporter);
 		expect(config.metricReader.exporter).toBeInstanceOf(OTLPMetricExporter);
 	});
@@ -76,7 +83,10 @@ describe('initializeObservability', () => {
 		process.env.TRACE_EXPORTER = 'console';
 		process.env.METRIC_EXPORTER = 'console';
 		initializeObservability('svc');
-		const config = sdkInstances[0].config as { metricReader: { exporter: unknown }; traceExporter: unknown };
+		const config = sdkInstances[0].config as {
+			metricReader: { exporter: unknown };
+			traceExporter: unknown;
+		};
 		expect(config.traceExporter).toBeInstanceOf(ConsoleSpanExporter);
 		expect(config.metricReader.exporter).toBeInstanceOf(ConsoleMetricExporter);
 	});

@@ -31,7 +31,7 @@ export class TemplateDomainService {
 			errors.push({
 				field: 'id',
 				message: 'Template ID is required and must be a string',
-				value: template.id
+				value: template.id,
 			});
 		}
 
@@ -39,7 +39,7 @@ export class TemplateDomainService {
 			errors.push({
 				field: 'name',
 				message: 'Template name is required and must be a string',
-				value: template.name
+				value: template.name,
 			});
 		}
 
@@ -47,7 +47,7 @@ export class TemplateDomainService {
 			errors.push({
 				field: 'version',
 				message: 'Template version is required and must be a string',
-				value: template.version
+				value: template.version,
 			});
 		}
 
@@ -56,7 +56,7 @@ export class TemplateDomainService {
 			errors.push({
 				field: 'schema',
 				message: 'Template schema is required and must be an object',
-				value: template.schema
+				value: template.schema,
 			});
 		}
 
@@ -65,13 +65,13 @@ export class TemplateDomainService {
 			errors.push({
 				field: 'version',
 				message: 'Template version must follow semantic versioning (e.g., 1.0.0)',
-				value: template.version
+				value: template.version,
 			});
 		}
 
 		return {
 			valid: errors.length === 0,
-			errors
+			errors,
 		};
 	}
 
@@ -95,21 +95,21 @@ export class TemplateDomainService {
 					errors.push({
 						field: 'custom',
 						message: 'Custom validation failed',
-						value: data
+						value: data,
 					});
 				}
 			} catch (error) {
 				errors.push({
 					field: 'custom',
 					message: `Custom validation error: ${error instanceof Error ? error.message : String(error)}`,
-					value: data
+					value: data,
 				});
 			}
 		}
 
 		return {
 			valid: errors.length === 0,
-			errors
+			errors,
 		};
 	}
 
@@ -141,7 +141,7 @@ export class TemplateDomainService {
 		if (template.metadata) {
 			result = {
 				...template.metadata,
-				...result
+				...result,
 			};
 		}
 
@@ -186,7 +186,7 @@ export class TemplateDomainService {
 					isValid = typeof value === 'string';
 					break;
 				case 'number':
-					isValid = typeof value === 'number' && !isNaN(value);
+					isValid = typeof value === 'number' && !Number.isNaN(value);
 					break;
 				case 'boolean':
 					isValid = typeof value === 'boolean';
@@ -203,7 +203,7 @@ export class TemplateDomainService {
 				errors.push({
 					field: path,
 					message: `Expected ${type}, got ${typeof value}`,
-					value
+					value,
 				});
 			}
 		};
@@ -216,7 +216,7 @@ export class TemplateDomainService {
 					errors.push({
 						field: path,
 						message: `Value must be >= ${constraints.minimum}`,
-						value
+						value,
 					});
 				}
 			}
@@ -226,7 +226,7 @@ export class TemplateDomainService {
 					errors.push({
 						field: path,
 						message: `Value must be one of: ${constraints.enum.join(', ')}`,
-						value
+						value,
 					});
 				}
 			}
@@ -257,7 +257,7 @@ export class TemplateDomainService {
 						errors.push({
 							field: path ? `${path}.${required}` : required,
 							message: 'Required field is missing',
-							value: undefined
+							value: undefined,
 						});
 					}
 				}

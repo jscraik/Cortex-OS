@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { HybridSearchMemoryStore } from '../../src/adapters/store.hybrid-search.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
-import type { Memory } from '../../src/domain/types.js';
 import { createMemory } from '../test-utils.js';
 
 describe('HybridSearchMemoryStore', () => {
@@ -12,7 +11,7 @@ describe('HybridSearchMemoryStore', () => {
 	beforeEach(() => {
 		baseStore = new InMemoryStore();
 		hybridStore = new HybridSearchMemoryStore(baseStore);
-		namespace = 'test-' + Math.random().toString(36).substring(7);
+		namespace = `test-${Math.random().toString(36).substring(7)}`;
 	});
 
 	afterEach(async () => {
@@ -604,7 +603,7 @@ describe('HybridSearchMemoryStore', () => {
 			await hybridStore.search({ text: 'learning', limit: 5 }, namespace);
 
 			const analytics = hybridStore.getQueryAnalytics();
-			expect(analytics.topTerms['learning']).toBe(2);
+			expect(analytics.topTerms.learning).toBe(2);
 		});
 	});
 });

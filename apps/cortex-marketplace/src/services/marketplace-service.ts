@@ -128,13 +128,14 @@ export class MarketplaceService {
 					const matchesQuery =
 						!query ||
 						extendedServer.name.toLowerCase().includes(query) ||
-						(extendedServer.description && extendedServer.description.toLowerCase().includes(query)) ||
+						extendedServer.description?.toLowerCase().includes(query) ||
 						extendedServer.id.toLowerCase().includes(query) ||
 						extendedServer.tags?.some((tag: string) => tag.toLowerCase().includes(query));
 
 					if (matchesQuery) {
 						if (extendedServer.category) {
-							facets.categories[extendedServer.category] = (facets.categories[extendedServer.category] || 0) + 1;
+							facets.categories[extendedServer.category] =
+								(facets.categories[extendedServer.category] || 0) + 1;
 						}
 						if (extendedServer.security?.riskLevel) {
 							const risk = extendedServer.security.riskLevel;
@@ -299,7 +300,7 @@ export class MarketplaceService {
 			const query = request.q.toLowerCase();
 			const matches =
 				server.name.toLowerCase().includes(query) ||
-				(server.description && server.description.toLowerCase().includes(query)) ||
+				server.description?.toLowerCase().includes(query) ||
 				server.id.toLowerCase().includes(query) ||
 				server.tags?.some((tag: string) => tag.toLowerCase().includes(query));
 			if (!matches) {
@@ -348,7 +349,12 @@ export class MarketplaceService {
 		}
 
 		if (request.capabilities && request.capabilities.length > 0) {
-			if (!server.capabilities || !request.capabilities.every((cap) => (server.capabilities as Record<string, boolean>)[cap] === true)) {
+			if (
+				!server.capabilities ||
+				!request.capabilities.every(
+					(cap) => (server.capabilities as Record<string, boolean>)[cap] === true,
+				)
+			) {
 				return false;
 			}
 		}
@@ -359,7 +365,10 @@ export class MarketplaceService {
 	/**
 	 * Sort search results
 	 */
-	private sortResults(servers: MarketplaceServerManifest[], request: SearchRequest): MarketplaceServerManifest[] {
+	private sortResults(
+		servers: MarketplaceServerManifest[],
+		request: SearchRequest,
+	): MarketplaceServerManifest[] {
 		const { sortBy, sortOrder } = request;
 
 		return servers.sort((a, b) => {

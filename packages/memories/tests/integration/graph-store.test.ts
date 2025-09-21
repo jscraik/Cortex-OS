@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { GraphMemoryStore } from '../../src/adapters/store.graph.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
-import { GraphMemoryStore, type MemoryNode, type Relationship, type GraphQuery } from '../../src/adapters/store.graph.js';
-import type { Memory } from '../../src/domain/types.js';
 import { createMemory } from '../test-utils.js';
 
 describe('GraphMemoryStore Integration', () => {
@@ -12,7 +11,7 @@ describe('GraphMemoryStore Integration', () => {
 	beforeEach(() => {
 		baseStore = new InMemoryStore();
 		store = new GraphMemoryStore(baseStore);
-		namespace = 'test-' + Math.random().toString(36).substring(7);
+		namespace = `test-${Math.random().toString(36).substring(7)}`;
 	});
 
 	afterEach(async () => {
@@ -46,7 +45,7 @@ describe('GraphMemoryStore Integration', () => {
 				memory2.id,
 				'references',
 				{ strength: 0.8 },
-				namespace
+				namespace,
 			);
 
 			expect(relationship).toBeDefined();
@@ -70,10 +69,10 @@ describe('GraphMemoryStore Integration', () => {
 			const updated2 = await store.get(memory2.id, namespace);
 
 			expect(updated1?.metadata?.graph?.edges).toContainEqual(
-				expect.objectContaining({ to: memory2.id, type: 'related_to' })
+				expect.objectContaining({ to: memory2.id, type: 'related_to' }),
 			);
 			expect(updated2?.metadata?.graph?.edges).toContainEqual(
-				expect.objectContaining({ from: memory1.id, type: 'related_to' })
+				expect.objectContaining({ from: memory1.id, type: 'related_to' }),
 			);
 		});
 
@@ -143,12 +142,18 @@ describe('GraphMemoryStore Integration', () => {
 			}
 
 			for (let i = 0; i < 3; i++) {
-				await store.createRelationship(memories[i].id, memories[i + 1].id, 'next', undefined, namespace);
+				await store.createRelationship(
+					memories[i].id,
+					memories[i + 1].id,
+					'next',
+					undefined,
+					namespace,
+				);
 			}
 
 			const traversal = await store.traverse(memories[0].id, namespace, {
 				direction: 'outgoing',
-				maxDepth: 2
+				maxDepth: 2,
 			});
 
 			expect(traversal).toHaveLength(3); // A, B, C
@@ -167,11 +172,11 @@ describe('GraphMemoryStore Integration', () => {
 
 			const traversal = await store.traverse(a.id, namespace, {
 				direction: 'outgoing',
-				relationshipTypes: ['references']
+				relationshipTypes: ['references'],
 			});
 
 			expect(traversal).toHaveLength(2);
-			expect(traversal.find(n => n.id === c.id)).toBeUndefined();
+			expect(traversal.find((n) => n.id === c.id)).toBeUndefined();
 		});
 
 		it('should handle cycles in traversal', async () => {
@@ -185,7 +190,7 @@ describe('GraphMemoryStore Integration', () => {
 
 			const traversal = await store.traverse(a.id, namespace, {
 				direction: 'outgoing',
-				maxDepth: 5
+				maxDepth: 5,
 			});
 
 			// Should not infinite loop
@@ -204,7 +209,13 @@ describe('GraphMemoryStore Integration', () => {
 			}
 
 			for (let i = 0; i < 3; i++) {
-				await store.createRelationship(memories[i].id, memories[i + 1].id, 'next', undefined, namespace);
+				await store.createRelationship(
+					memories[i].id,
+					memories[i + 1].id,
+					'next',
+					undefined,
+					namespace,
+				);
 			}
 
 			const path = await store.findPath(memories[0].id, memories[3].id, namespace);
@@ -260,12 +271,15 @@ describe('GraphMemoryStore Integration', () => {
 			await store.createRelationship(central.id, related1.id, 'references', undefined, namespace);
 			await store.createRelationship(central.id, related2.id, 'references', undefined, namespace);
 
-			const results = await store.queryGraph({
-				startNodeId: central.id,
-				relationshipTypes: ['references'],
-				maxDepth: 1,
-				direction: 'outgoing'
-			}, namespace);
+			const results = await store.queryGraph(
+				{
+					startNodeId: central.id,
+					relationshipTypes: ['references'],
+					maxDepth: 1,
+					direction: 'outgoing',
+				},
+				namespace,
+			);
 
 			expect(results.nodes).toHaveLength(3);
 			expect(results.edges).toHaveLength(2);
@@ -294,17 +308,20 @@ describe('GraphMemoryStore Integration', () => {
 					targets[i].id,
 					'similar',
 					{ weight: weights[i] },
-					namespace
+					namespace,
 				);
 			}
 
-			const results = await store.queryGraph({
-				startNodeId: source.id,
-				relationshipTypes: ['similar'],
-				minWeight: 0.5,
-				maxDepth: 1,
-				direction: 'outgoing'
-			}, namespace);
+			const results = await store.queryGraph(
+				{
+					startNodeId: source.id,
+					relationshipTypes: ['similar'],
+					minWeight: 0.5,
+					maxDepth: 1,
+					direction: 'outgoing',
+				},
+				namespace,
+			);
 
 			// Should only return relationships with weight >= 0.5
 			expect(results.nodes).toHaveLength(4); // source + 3 targets (weights 0.9, 0.7, 0.5)
@@ -331,8 +348,20 @@ describe('GraphMemoryStore Integration', () => {
 
 			// Connect within communities
 			for (let i = 0; i < 2; i++) {
-				await store.createRelationship(community1[i].id, community1[i + 1].id, 'related', undefined, namespace);
-				await store.createRelationship(community2[i].id, community2[i + 1].id, 'related', undefined, namespace);
+				await store.createRelationship(
+					community1[i].id,
+					community1[i + 1].id,
+					'related',
+					undefined,
+					namespace,
+				);
+				await store.createRelationship(
+					community2[i].id,
+					community2[i + 1].id,
+					'related',
+					undefined,
+					namespace,
+				);
 			}
 
 			const communities = await store.detectCommunities(namespace);
@@ -384,7 +413,9 @@ describe('GraphMemoryStore Integration', () => {
 
 			// Center should have highest centrality
 			expect(centrality[center.id].degree).toBe(5);
-			expect(centrality[center.id].betweenness).toBeGreaterThan(centrality[leaves[0].id].betweenness);
+			expect(centrality[center.id].betweenness).toBeGreaterThan(
+				centrality[leaves[0].id].betweenness,
+			);
 		});
 
 		it('should identify strongly connected components', async () => {
@@ -429,7 +460,7 @@ describe('GraphMemoryStore Integration', () => {
 
 			// Performance test
 			const start = Date.now();
-			const path = await store.findPath(nodes[0].id, nodes[99].id, namespace);
+			const _path = await store.findPath(nodes[0].id, nodes[99].id, namespace);
 			const duration = Date.now() - start;
 
 			expect(duration).toBeLessThan(1000); // Should complete within 1 second
@@ -462,9 +493,9 @@ describe('GraphMemoryStore Integration', () => {
 			const memory = createMemory({ text: 'Memory' });
 			await store.upsert(memory, namespace);
 
-			await expect(
-				store.createRelationship(memory.id, 'non-existent', 'test')
-			).rejects.toThrow('does not exist');
+			await expect(store.createRelationship(memory.id, 'non-existent', 'test')).rejects.toThrow(
+				'does not exist',
+			);
 		});
 
 		it('should handle circular reference detection', async () => {
@@ -487,13 +518,13 @@ describe('GraphMemoryStore Integration', () => {
 			await store.upsert(a, namespace);
 			await store.upsert(b, namespace);
 
-			await expect(
-				store.createRelationship(a.id, b.id, '')
-			).rejects.toThrow('Relationship type cannot be empty');
+			await expect(store.createRelationship(a.id, b.id, '')).rejects.toThrow(
+				'Relationship type cannot be empty',
+			);
 
-			await expect(
-				store.createRelationship(a.id, b.id, '   ')
-			).rejects.toThrow('Relationship type cannot be empty');
+			await expect(store.createRelationship(a.id, b.id, '   ')).rejects.toThrow(
+				'Relationship type cannot be empty',
+			);
 		});
 	});
 });

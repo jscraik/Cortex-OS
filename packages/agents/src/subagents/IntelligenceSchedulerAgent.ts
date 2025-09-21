@@ -18,11 +18,11 @@ export const IntelligenceStateAnnotation = Annotation.Root({
 	currentStep: Annotation<string>,
 	taskAnalysis: Annotation<
 		| {
-			type: string;
-			complexity: number;
-			priority: number;
-			estimatedDuration: number;
-		}
+				type: string;
+				complexity: number;
+				priority: number;
+				estimatedDuration: number;
+		  }
 		| undefined
 	>(),
 	schedule:
@@ -59,11 +59,15 @@ export class IntelligenceSchedulerAgent extends EventEmitter {
 	constructor(config: IntelligenceSchedulerConfig) {
 		super();
 		// Observability: log planning timeout to avoid unused warnings
-		console.log(`IntelligenceSchedulerAgent initialized (planningTimeout=${config.planningTimeout}ms)`);
+		console.log(
+			`IntelligenceSchedulerAgent initialized (planningTimeout=${config.planningTimeout}ms)`,
+		);
 		this.config = config;
 		this.graph = createIntelligenceSchedulerGraph();
 		// Use config to set up scheduler parameters
-		console.log(`IntelligenceSchedulerAgent initialized with max complexity: ${this.config.maxComplexity}, timeout: ${this.config.planningTimeout}ms`);
+		console.log(
+			`IntelligenceSchedulerAgent initialized with max complexity: ${this.config.maxComplexity}, timeout: ${this.config.planningTimeout}ms`,
+		);
 	}
 
 	/**

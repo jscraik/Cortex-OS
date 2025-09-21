@@ -32,8 +32,20 @@ describe('RemoteMCPEnhancedStore topK handling', () => {
 	beforeAll(async () => {
 		store = new RemoteMCPEnhancedStore(
 			localStore as unknown as {
-				upsert: (chunks: Array<{ id: string; text?: string; embedding?: number[]; metadata?: Record<string, unknown> }>) => Promise<void>;
-				query: (embedding: number[], k?: number) => Promise<Array<{ id: string; text?: string; score?: number; metadata?: Record<string, unknown> }>>;
+				upsert: (
+					chunks: Array<{
+						id: string;
+						text?: string;
+						embedding?: number[];
+						metadata?: Record<string, unknown>;
+					}>,
+				) => Promise<void>;
+				query: (
+					embedding: number[],
+					k?: number,
+				) => Promise<
+					Array<{ id: string; text?: string; score?: number; metadata?: Record<string, unknown> }>
+				>;
 				delete?: (ids: string[]) => Promise<void>;
 			},
 			config,

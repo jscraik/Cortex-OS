@@ -49,11 +49,11 @@ describe('AuthService configuration', () => {
 		const { AuthService } = (await import('../src/services/authService')) as {
 			AuthService: typeof AuthServiceType;
 		};
-		
+
 		// Mock that no existing user is found
 		mockDbGet.mockResolvedValueOnce(undefined);
 		mockDbRun.mockResolvedValueOnce({ lastID: 1, changes: 1 });
-		
+
 		const result = await AuthService.register('Test User', 'test@example.com', 'password123');
 		expect(result.user.email).toBe('test@example.com');
 		expect(result.user.name).toBe('Test User');
@@ -67,7 +67,7 @@ describe('AuthService configuration', () => {
 		const { AuthService } = (await import('../src/services/authService')) as {
 			AuthService: typeof AuthServiceType;
 		};
-		
+
 		// Mock finding a user with hashed password
 		const hashedPassword = AuthService.hashPassword('password123');
 		mockDbGet.mockResolvedValueOnce({
@@ -76,9 +76,9 @@ describe('AuthService configuration', () => {
 			name: 'Test User',
 			password: hashedPassword,
 			created_at: '2023-01-01',
-			updated_at: '2023-01-01'
+			updated_at: '2023-01-01',
 		});
-		
+
 		const result = await AuthService.login('test@example.com', 'password123');
 		expect(result).not.toBeNull();
 		if (result) {
@@ -94,10 +94,10 @@ describe('AuthService configuration', () => {
 		const { AuthService } = (await import('../src/services/authService')) as {
 			AuthService: typeof AuthServiceType;
 		};
-		
+
 		// Mock user not found
 		mockDbGet.mockResolvedValueOnce(undefined);
-		
+
 		const result = await AuthService.login('nonexistent@example.com', 'password123');
 		expect(result).toBeNull();
 	});

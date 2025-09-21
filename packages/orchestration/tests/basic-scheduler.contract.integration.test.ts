@@ -139,8 +139,6 @@ describe('BasicScheduler (contracts integration)', () => {
 		const schedule = await scheduler.scheduleAgents(plan, ['a1']);
 		const status = await scheduler.monitorExecution(schedule);
 		const parsed = ExecutionStatusSchema.parse(status);
-		expect(['pending', 'running', 'completed', 'failed', 'cancelled']).toContain(
-			parsed.status,
-		);
+		expect(['pending', 'running', 'completed', 'failed', 'cancelled']).toContain(parsed.status);
 	});
 });

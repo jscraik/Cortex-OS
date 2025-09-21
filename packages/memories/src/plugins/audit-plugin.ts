@@ -24,7 +24,9 @@ export const createAuditPlugin = (logFn: (message: string) => void = console.log
 				return id;
 			},
 			afterGet: async (memory: Memory | null) => {
-				logFn(`[AUDIT] Get result for ${memory?.id || 'unknown'}: ${memory ? 'found' : 'not found'}`);
+				logFn(
+					`[AUDIT] Get result for ${memory?.id || 'unknown'}: ${memory ? 'found' : 'not found'}`,
+				);
 				return memory;
 			},
 			beforeDelete: async (id: string) => {
@@ -42,13 +44,13 @@ export const createAuditPlugin = (logFn: (message: string) => void = console.log
 			afterSearch: async (results) => {
 				logFn(`[AUDIT] Search completed, found ${results.length} memories`);
 				return results;
-			}
+			},
 		},
 		onRegister: async () => {
 			logFn('[AUDIT] Audit plugin registered');
 		},
 		onUnregister: async () => {
 			logFn('[AUDIT] Audit plugin unregistered');
-		}
+		},
 	};
 };

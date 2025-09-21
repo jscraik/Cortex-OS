@@ -9,10 +9,10 @@ import type { MemoryStore } from '../lib/types.js';
 
 // MCP Tool schemas matching the memory MCP interface
 const MemoryStoreSchema = z.object({
-  kind: z.enum(['note', 'event', 'artifact', 'embedding']),
-  text: z.string().min(1),
-  tags: z.array(z.string()).default([]),
-  metadata: z.record(z.unknown()).optional(),
+	kind: z.enum(['note', 'event', 'artifact', 'embedding']),
+	text: z.string().min(1),
+	tags: z.array(z.string()).default([]),
+	metadata: z.record(z.unknown()).optional(),
 });
 
 const MemorySearchSchema = z.object({

@@ -65,7 +65,10 @@ export class LayeredMemoryStore implements MemoryStore {
 		return merged.slice(0, topK);
 	}
 
-	async searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace?: string,
+	): Promise<(Memory & { score: number })[]> {
 		const topK = q.topK ?? q.limit ?? 10;
 		const [shortRes, longRes] = await Promise.all([
 			this.shortTerm.searchByVector(q, namespace),

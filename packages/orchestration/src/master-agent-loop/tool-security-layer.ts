@@ -7,9 +7,9 @@
  * @since 2024-12-09
  */
 
-import { createHash } from 'crypto';
-import { EventEmitter } from 'events';
-import { URL } from 'url';
+import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
+import { URL } from 'node:url';
 import { ToolValidationError, ToolValidationErrorCode } from './tool-validation-error';
 
 /**

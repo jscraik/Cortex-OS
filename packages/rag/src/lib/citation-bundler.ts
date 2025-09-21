@@ -24,7 +24,10 @@ export class CitationBundler {
 
 		const citations = chunks.map((c) => {
 			const meta = c.metadata ?? ({} as Record<string, unknown>);
-			const ctx = typeof meta.context === 'string' && meta.context.trim().length > 0 ? meta.context : undefined;
+			const ctx =
+				typeof meta.context === 'string' && meta.context.trim().length > 0
+					? meta.context
+					: undefined;
 			const mergedText = ctx ? `${ctx}\n\n${c.text}` : c.text;
 			return {
 				id: c.id,

@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DefaultMigrationManager } from '../../src/service/migration-service.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryMetadataStore } from '../../src/adapters/metadata.in-memory.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import type { Migration } from '../../src/domain/migration.js';
-import { MigrationError } from '../../src/domain/migration.js';
+import { DefaultMigrationManager } from '../../src/service/migration-service.js';
 
 describe('MigrationManager', () => {
 	let migrationManager: DefaultMigrationManager;
@@ -37,15 +36,23 @@ describe('MigrationManager', () => {
 			const migration1: Migration = {
 				version: '1.1.0',
 				description: 'Test migration 1',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			const migration2: Migration = {
 				version: '1.2.0',
 				description: 'Test migration 2',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			migrationManager.registerMigration(migration2);
@@ -63,8 +70,12 @@ describe('MigrationManager', () => {
 			const migration: Migration = {
 				version: '1.1.0',
 				description: 'Test migration',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			migrationManager.registerMigration(migration);
@@ -83,15 +94,23 @@ describe('MigrationManager', () => {
 			const migration1: Migration = {
 				version: '1.1.0',
 				description: 'Test migration 1',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			const migration2: Migration = {
 				version: '1.2.0',
 				description: 'Test migration 2 (fails)',
-				up: async () => { throw new Error('Migration failed'); },
-				down: async () => { /* test */ }
+				up: async () => {
+					throw new Error('Migration failed');
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			migrationManager.registerMigration(migration1);
@@ -102,17 +121,21 @@ describe('MigrationManager', () => {
 			expect(result.success).toBe(false);
 			expect(result.migrationsApplied).toEqual(['1.1.0']);
 			expect(result.errors).toHaveLength(2);
-			expect(result.errors![0]).toContain('Rollback failed');
-			expect(result.errors![1]).toContain('Migration failed');
+			expect(result.errors?.[0]).toContain('Rollback failed');
+			expect(result.errors?.[1]).toContain('Migration failed');
 		});
 
 		it('should validate migrations before applying', async () => {
 			const migration: Migration = {
 				version: '1.1.0',
 				description: 'Test migration',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ },
-				validate: async () => false
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
+				validate: async () => false,
 			};
 
 			migrationManager.registerMigration(migration);
@@ -121,7 +144,7 @@ describe('MigrationManager', () => {
 
 			expect(result.success).toBe(false);
 			expect(result.errors).toHaveLength(1);
-			expect(result.errors![0]).toContain('validation failed');
+			expect(result.errors?.[0]).toContain('validation failed');
 		});
 	});
 
@@ -130,15 +153,23 @@ describe('MigrationManager', () => {
 			const migration1: Migration = {
 				version: '1.1.0',
 				description: 'Test migration 1',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			const migration2: Migration = {
 				version: '1.2.0',
 				description: 'Test migration 2',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			migrationManager.registerMigration(migration1);
@@ -164,7 +195,7 @@ describe('MigrationManager', () => {
 				kind: 'document',
 				text: 'Test content',
 				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			};
 
 			const validation = await migrationManager.validateSchema(memory);
@@ -180,7 +211,7 @@ describe('MigrationManager', () => {
 				text: 'Test content',
 				embedding: 'invalid' as any, // Should be number[]
 				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			};
 
 			// Set version to 2.0.0 to trigger embedding validation
@@ -198,7 +229,7 @@ describe('MigrationManager', () => {
 				kind: 'document',
 				text: 'Test content',
 				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			};
 
 			// Set version to 2.0.0
@@ -207,7 +238,9 @@ describe('MigrationManager', () => {
 			const validation = await migrationManager.validateSchema(memory);
 
 			expect(validation.valid).toBe(true);
-			expect(validation.warnings).toContain('Document memories should have embeddings for optimal search performance');
+			expect(validation.warnings).toContain(
+				'Document memories should have embeddings for optimal search performance',
+			);
 		});
 	});
 
@@ -216,8 +249,12 @@ describe('MigrationManager', () => {
 			const migration: Migration = {
 				version: '1.1.0',
 				description: 'Test migration',
-				up: async () => { /* test */ },
-				down: async () => { /* test */ }
+				up: async () => {
+					/* test */
+				},
+				down: async () => {
+					/* test */
+				},
 			};
 
 			migrationManager.registerMigration(migration);

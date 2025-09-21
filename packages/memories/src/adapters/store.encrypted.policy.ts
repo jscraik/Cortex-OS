@@ -17,7 +17,7 @@ export class PolicyEncryptedStore implements MemoryStore {
 		private readonly enc: EncryptionService,
 		private readonly shouldEncrypt: EncryptionSelector,
 		private readonly encOpts: EncryptedOptions = {},
-	) { }
+	) {}
 
 	private select(namespace: string, sample?: Memory): MemoryStore {
 		if (this.shouldEncrypt(namespace, sample)) {
@@ -43,7 +43,10 @@ export class PolicyEncryptedStore implements MemoryStore {
 	async searchByText(q: TextQuery, namespace = 'default'): Promise<Memory[]> {
 		return this.select(namespace).searchByText(q, namespace);
 	}
-	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace = 'default',
+	): Promise<(Memory & { score: number })[]> {
 		return this.select(namespace).searchByVector(q, namespace);
 	}
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {

@@ -168,7 +168,7 @@ export class StrategySelector {
 			recommendedStrategy: bestStrategy.strategy,
 			tradeoffs: bestStrategy.tradeoffs,
 			notes: [
-				`Optimized for ${objectives.map(o => o.type).join(', ')}`,
+				`Optimized for ${objectives.map((o) => o.type).join(', ')}`,
 				`Profile complexity=${profile.complexity}, branches=${profile.estimatedBranches}, dataSize=${profile.dataSize}`,
 				'Multi-objective analysis',
 			],
@@ -240,7 +240,7 @@ export class StrategySelector {
 			systemLoad: number;
 			networkLatency: number;
 			errorRate: number;
-		}
+		},
 	): Promise<AdaptedStrategy> {
 		const baseStrategy = this.selectStrategy(profile);
 		const adjustments: string[] = [];
@@ -310,7 +310,7 @@ export class StrategySelector {
 				memoryMB: number;
 				cpuPercent: number;
 			};
-		}>
+		}>,
 	): Promise<LearningUpdate> {
 		const heuristics: string[] = [];
 		const recommendations: string[] = [];
@@ -321,7 +321,7 @@ export class StrategySelector {
 			const durationAccuracy =
 				1 -
 				Math.abs(outcome.actualDurationMs - outcome.predictedDurationMs) /
-				outcome.predictedDurationMs;
+					outcome.predictedDurationMs;
 			return Math.max(0, Math.min(1, durationAccuracy));
 		});
 
@@ -368,7 +368,7 @@ export class StrategySelector {
 			complexity: number;
 			strategy: string;
 			performance: number;
-		}>
+		}>,
 	): Promise<ThresholdUpdate> {
 		// Find optimal complexity threshold for parallel strategies
 		const parallelData = historicalData.filter((d) => d.strategy === 'parallel-coordinated');

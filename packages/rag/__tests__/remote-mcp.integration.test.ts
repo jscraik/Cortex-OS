@@ -108,7 +108,7 @@ describe('RAG MCP integration', () => {
 			remoteSearchLimit: 2,
 		});
 
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await store.initialize();
 		const results = await store.query([0.1, 0.2, 0.3], {
 			hybridSearch: true,
@@ -150,8 +150,8 @@ describe('RAG MCP integration', () => {
 			fallbackToLocal: true,
 		});
 
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		await store.initialize();
 		const results = await store.query([0.9, 0.1, 0.4], {} as RemoteRetrievalOptions);
 		warnSpy.mockRestore();
@@ -178,7 +178,7 @@ describe('RAG MCP integration', () => {
 			apiKey: 'secure-token',
 		});
 
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		await manager.initialize();
 		const job = await manager.createIngestionJob(
 			'Index docs',

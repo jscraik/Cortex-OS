@@ -16,7 +16,7 @@ function createInprocTransport() {
 		},
 		subscribe: async (topics: string[], handler: (m: Envelope) => Promise<void>) => {
 			subs.push({ topics, handler });
-			return { close: async () => { } };
+			return { close: async () => {} };
 		},
 	};
 }
@@ -54,7 +54,7 @@ describe('bus idempotency & correlation edge cases', () => {
 		const received: string[] = [];
 		const transport = createInprocTransport();
 		const bus = createBus(
-			(transport as unknown as Transport),
+			transport as unknown as Transport,
 			undefined,
 			undefined,
 			{ 'evt.test2': { publish: true, subscribe: true } },

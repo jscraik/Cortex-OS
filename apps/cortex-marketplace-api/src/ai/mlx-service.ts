@@ -218,7 +218,7 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
 			child.on('exit', () => clearTimeout(to));
 		});
 	} finally {
-		await unlink(scriptPath).catch(() => { });
+		await unlink(scriptPath).catch(() => {});
 	}
 }
 
@@ -262,7 +262,7 @@ async function executeMLXScriptWithInput(
 			child.on('exit', () => clearTimeout(to));
 		});
 	} finally {
-		await unlink(scriptPath).catch(() => { });
+		await unlink(scriptPath).catch(() => {});
 	}
 }
 

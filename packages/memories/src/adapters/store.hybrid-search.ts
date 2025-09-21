@@ -257,7 +257,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		let filteredMemories = allMemories;
 		if (query.filters?.metadata) {
 			filteredMemories = allMemories.filter((memory) => {
-				for (const [key, value] of Object.entries(query.filters!.metadata!)) {
+				for (const [key, value] of Object.entries(query.filters?.metadata!)) {
 					if (memory.metadata?.[key] !== value) {
 						return false;
 					}
@@ -269,8 +269,8 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		if (query.filters?.dateRange) {
 			filteredMemories = filteredMemories.filter((memory) => {
 				const createdAt = new Date(memory.createdAt);
-				const start = new Date(query.filters!.dateRange!.start);
-				const end = new Date(query.filters!.dateRange!.end);
+				const start = new Date(query.filters?.dateRange?.start);
+				const end = new Date(query.filters?.dateRange?.end);
 				return createdAt >= start && createdAt <= end;
 			});
 		}
@@ -295,9 +295,12 @@ export class HybridSearchMemoryStore implements MemoryStore {
 					}
 
 					// Calculate cosine similarity
-					const dotProduct = memory.vector.reduce((sum, val, i) => sum + val * query.vector![i], 0);
+					const dotProduct = memory.vector.reduce(
+						(sum, val, i) => sum + val * query.vector?.[i],
+						0,
+					);
 					const magnitudeA = Math.sqrt(memory.vector.reduce((sum, val) => sum + val * val, 0));
-					const magnitudeB = Math.sqrt(query.vector!.reduce((sum, val) => sum + val * val, 0));
+					const magnitudeB = Math.sqrt(query.vector?.reduce((sum, val) => sum + val * val, 0));
 					const similarity = magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
 
 					return { ...memory, score: similarity };
@@ -314,7 +317,6 @@ export class HybridSearchMemoryStore implements MemoryStore {
 			case 'max':
 				fusedResults = this.maxScoreFusion(textResults, vectorResults);
 				break;
-			case 'weighted':
 			default:
 				fusedResults = this.weightedScoreFusion(
 					textResults,
@@ -346,7 +348,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		let filteredMemories = allMemories;
 		if (query.filters?.metadata) {
 			filteredMemories = allMemories.filter((memory) => {
-				for (const [key, value] of Object.entries(query.filters!.metadata!)) {
+				for (const [key, value] of Object.entries(query.filters?.metadata!)) {
 					if (memory.metadata?.[key] !== value) {
 						return false;
 					}
@@ -358,14 +360,14 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		if (query.filters?.dateRange) {
 			filteredMemories = filteredMemories.filter((memory) => {
 				const createdAt = new Date(memory.createdAt);
-				const start = new Date(query.filters!.dateRange!.start);
-				const end = new Date(query.filters!.dateRange!.end);
+				const start = new Date(query.filters?.dateRange?.start);
+				const end = new Date(query.filters?.dateRange?.end);
 				return createdAt >= start && createdAt <= end;
 			});
 		}
 
 		// Perform text search on filtered memories only
-		const searchText = query.text!.toLowerCase();
+		const searchText = query.text?.toLowerCase();
 		const textResults = filteredMemories.filter((memory) =>
 			memory.text.toLowerCase().includes(searchText),
 		);
@@ -388,7 +390,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		let filteredMemories = allMemories;
 		if (query.filters?.metadata) {
 			filteredMemories = allMemories.filter((memory) => {
-				for (const [key, value] of Object.entries(query.filters!.metadata!)) {
+				for (const [key, value] of Object.entries(query.filters?.metadata!)) {
 					if (memory.metadata?.[key] !== value) {
 						return false;
 					}
@@ -400,8 +402,8 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		if (query.filters?.dateRange) {
 			filteredMemories = filteredMemories.filter((memory) => {
 				const createdAt = new Date(memory.createdAt);
-				const start = new Date(query.filters!.dateRange!.start);
-				const end = new Date(query.filters!.dateRange!.end);
+				const start = new Date(query.filters?.dateRange?.start);
+				const end = new Date(query.filters?.dateRange?.end);
 				return createdAt >= start && createdAt <= end;
 			});
 		}
@@ -414,9 +416,9 @@ export class HybridSearchMemoryStore implements MemoryStore {
 				}
 
 				// Calculate cosine similarity
-				const dotProduct = memory.vector.reduce((sum, val, i) => sum + val * query.vector![i], 0);
+				const dotProduct = memory.vector.reduce((sum, val, i) => sum + val * query.vector?.[i], 0);
 				const magnitudeA = Math.sqrt(memory.vector.reduce((sum, val) => sum + val * val, 0));
-				const magnitudeB = Math.sqrt(query.vector!.reduce((sum, val) => sum + val * val, 0));
+				const magnitudeB = Math.sqrt(query.vector?.reduce((sum, val) => sum + val * val, 0));
 				const similarity = magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
 
 				return { ...memory, score: similarity };
@@ -527,7 +529,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 
 		// Process vector results
 		vectorResults.forEach((result) => {
-			const vectorScore = isNaN(result.score) ? 0 : result.score;
+			const vectorScore = Number.isNaN(result.score) ? 0 : result.score;
 			const score = vectorScore * normVectorWeight;
 			const existing = fusedMap.get(result.id);
 
@@ -544,36 +546,6 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		});
 
 		return Array.from(fusedMap.values()).sort((a, b) => b.score - a.score);
-	}
-
-	private async applyFilters(
-		results: HybridSearchResult[],
-		filters: HybridQuery['filters'],
-		namespace: string,
-	): Promise<HybridSearchResult[]> {
-		return results.filter((result) => {
-			// Metadata filters
-			if (filters.metadata) {
-				for (const [key, value] of Object.entries(filters.metadata)) {
-					if (result.metadata[key] !== value) {
-						return false;
-					}
-				}
-			}
-
-			// Date range filters
-			if (filters.dateRange) {
-				const createdAt = new Date(result.createdAt);
-				const start = new Date(filters.dateRange.start);
-				const end = new Date(filters.dateRange.end);
-
-				if (createdAt < start || createdAt > end) {
-					return false;
-				}
-			}
-
-			return true;
-		});
 	}
 
 	private async calculateAggregations(
@@ -660,8 +632,8 @@ export class HybridSearchMemoryStore implements MemoryStore {
 			return { buckets: [] };
 		}
 
-		const minValue = Math.min(...values);
-		const maxValue = Math.max(...values);
+		const _minValue = Math.min(...values);
+		const _maxValue = Math.max(...values);
 
 		if (interval) {
 			// Special case for the test: if we have values 10, 15, 20 with interval 10,
@@ -767,8 +739,8 @@ export class HybridSearchMemoryStore implements MemoryStore {
 
 	// Public methods for analytics and cache management
 	getCacheMetrics() {
-		const hits = 0;
-		const misses = 0;
+		const _hits = 0;
+		const _misses = 0;
 
 		// This is a simplified version - in production, you'd track actual cache hits/misses
 		// For now, we'll calculate based on cache size

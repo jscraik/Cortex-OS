@@ -57,9 +57,9 @@ export function materializeSubagentTool(config: SubagentConfig, subagent: Subage
 		/**
 		 * Execute the subagent tool
 		 */
-	async call(args, ctx?: { caller?: string; depth?: number }): Promise<ToolResponse> {
-		// Validate and narrow args to typed shape
-		const parsed = schema.parse(args);
+		async call(args, ctx?: { caller?: string; depth?: number }): Promise<ToolResponse> {
+			// Validate and narrow args to typed shape
+			const parsed = schema.parse(args);
 			// Recursion guard: prevent subagent from calling itself
 			if (ctx?.caller === `agent.${config.name}`) {
 				return {
@@ -136,7 +136,7 @@ export function createAutoDelegateTool(
 		description: 'Select K relevant subagents and run them in parallel; returns merged summary',
 		schema,
 
-	async call(args, ctx?: { caller?: string; depth?: number }): Promise<ToolResponse> {
+		async call(args, ctx?: { caller?: string; depth?: number }): Promise<ToolResponse> {
 			try {
 				const parsed = schema.parse(args);
 				// Select relevant subagents
@@ -144,9 +144,9 @@ export function createAutoDelegateTool(
 					(await selectSubagents?.(parsed.task, parsed.k)) ||
 					Array.from(subagents.keys())
 						.slice(0, parsed.k)
-						.map(key => {
+						.map((key) => {
 							const subagent = subagents.get(key);
-							return subagent?.config || { name: key } as SubagentConfig;
+							return subagent?.config || ({ name: key } as SubagentConfig);
 						});
 
 				if (selected.length === 0) {
@@ -159,11 +159,13 @@ export function createAutoDelegateTool(
 				// Split budget among subagents
 				const perAgentBudget = parsed.budget
 					? {
-						tokens: parsed.budget.tokens
-							? Math.floor((parsed.budget.tokens || 0) / selected.length)
-							: undefined,
-						ms: parsed.budget.ms ? Math.floor((parsed.budget.ms || 0) / selected.length) : undefined,
-					}
+							tokens: parsed.budget.tokens
+								? Math.floor((parsed.budget.tokens || 0) / selected.length)
+								: undefined,
+							ms: parsed.budget.ms
+								? Math.floor((parsed.budget.ms || 0) / selected.length)
+								: undefined,
+						}
 					: undefined;
 
 				// Execute subagents in parallel
@@ -221,14 +223,15 @@ export function createAutoDelegateTool(
 				}
 
 				// Calculate aggregate metrics
-				const aggregateMetrics = successful.length > 0
-					? successful.reduce<Record<string, number>>((acc, r) => {
-						acc.totalTokens = (acc.totalTokens || 0) + (Number(r.metrics?.tokensUsed) || 0);
-						acc.totalTime = (acc.totalTime || 0) + (Number(r.metrics?.executionTime) || 0);
-						acc.agentsExecuted = successful.length;
-						return acc;
-					}, {})
-					: undefined;
+				const aggregateMetrics =
+					successful.length > 0
+						? successful.reduce<Record<string, number>>((acc, r) => {
+								acc.totalTokens = (acc.totalTokens || 0) + (Number(r.metrics?.tokensUsed) || 0);
+								acc.totalTime = (acc.totalTime || 0) + (Number(r.metrics?.executionTime) || 0);
+								acc.agentsExecuted = successful.length;
+								return acc;
+							}, {})
+						: undefined;
 
 				return {
 					text: output,
@@ -262,7 +265,7 @@ export function createListSubagentsTool(subagents: Map<string, Subagent>): Tool 
 		description: 'List all available subagents and their capabilities',
 		schema: z.object({}),
 
-	async call(): Promise<ToolResponse> {
+		async call(): Promise<ToolResponse> {
 			const agentList = Array.from(subagents.entries()).map(([name, subagent]) => ({
 				name,
 				description: subagent.config.description,
@@ -294,7 +297,7 @@ export function createSubagentHealthTool(subagents: Map<string, Subagent>): Tool
 		description: 'Get health status of a specific subagent',
 		schema,
 
-	async call(args: z.infer<typeof schema>): Promise<ToolResponse> {
+		async call(args: z.infer<typeof schema>): Promise<ToolResponse> {
 			const subagent = subagents.get(args.agentName);
 
 			if (!subagent) {
@@ -307,15 +310,16 @@ export function createSubagentHealthTool(subagents: Map<string, Subagent>): Tool
 			try {
 				const health = await subagent.getHealth();
 				// Note: getMetrics is optional and not part of the core Subagent interface
-				const metrics = 'getMetrics' in subagent && typeof subagent.getMetrics === 'function'
-					? (subagent.getMetrics as () => Record<string, unknown>)()
-					: {
-						messagesProcessed: 0,
-						totalTokensUsed: 0,
-						averageResponseTime: 0,
-						errorRate: 0,
-						lastUpdated: new Date().toISOString(),
-					};
+				const metrics =
+					'getMetrics' in subagent && typeof subagent.getMetrics === 'function'
+						? (subagent.getMetrics as () => Record<string, unknown>)()
+						: {
+								messagesProcessed: 0,
+								totalTokensUsed: 0,
+								averageResponseTime: 0,
+								errorRate: 0,
+								lastUpdated: new Date().toISOString(),
+							};
 
 				return {
 					text: JSON.stringify(

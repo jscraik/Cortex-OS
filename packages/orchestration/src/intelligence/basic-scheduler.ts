@@ -63,7 +63,6 @@ export class BasicScheduler {
 					case 'hybrid':
 						strategy = 'hierarchical';
 						break;
-					case 'sequential-safe':
 					default:
 						strategy = 'sequential';
 						break;

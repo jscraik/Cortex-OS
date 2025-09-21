@@ -45,7 +45,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 
 	constructor(
 		private readonly store: MemoryStore,
-		config: DeduplicationConfig = {}
+		config: DeduplicationConfig = {},
 	) {
 		this.config = {
 			exactMatchThreshold: 1.0,
@@ -60,7 +60,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			ignoreCase: true,
 			ignorePunctuation: false,
 			normalizeWhitespace: true,
-			...config
+			...config,
 		};
 
 		this.stats = {
@@ -70,7 +70,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			fuzzyMatches: 0,
 			vectorMatches: 0,
 			cacheHits: 0,
-			cacheMisses: 0
+			cacheMisses: 0,
 		};
 	}
 
@@ -107,7 +107,10 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		return this.deduplicateResults(results);
 	}
 
-	async searchByVector(q: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace = 'default',
+	): Promise<(Memory & { score: number })[]> {
 		const results = await this.store.searchByVector(q, namespace);
 
 		// Deduplicate results based on vector similarity
@@ -208,7 +211,10 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			this.stats.cacheMisses++;
 
 			// Calculate text similarity
-			const similarity = this.calculateTextSimilarity(normalizedText, this.normalizeText(existing.text));
+			const similarity = this.calculateTextSimilarity(
+				normalizedText,
+				this.normalizeText(existing.text),
+			);
 
 			// Cache result
 			this.similarityCache.set(cacheKey, similarity);
@@ -230,10 +236,13 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		if (!memory.vector) return null;
 
 		// Use vector search to find similar memories
-		const results = await this.store.searchByVector({
-			vector: memory.vector,
-			limit: 10
-		}, namespace);
+		const results = await this.store.searchByVector(
+			{
+				vector: memory.vector,
+				limit: 10,
+			},
+			namespace,
+		);
 
 		for (const result of results) {
 			// Check if this is actually a different memory
@@ -253,11 +262,13 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 
 		if (maxLength === 0) return 1.0;
 
-		return 1.0 - (distance / maxLength);
+		return 1.0 - distance / maxLength;
 	}
 
 	private levenshteinDistance(str1: string, str2: string): number {
-		const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+		const matrix = Array(str2.length + 1)
+			.fill(null)
+			.map(() => Array(str1.length + 1).fill(null));
 
 		for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
 		for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
@@ -268,7 +279,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 				matrix[j][i] = Math.min(
 					matrix[j][i - 1] + 1,
 					matrix[j - 1][i] + 1,
-					matrix[j - 1][i - 1] + indicator
+					matrix[j - 1][i - 1] + indicator,
 				);
 			}
 		}
@@ -302,7 +313,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			...deduplicationMeta,
 			occurrences: (deduplicationMeta.occurrences || 1) + 1,
 			lastSeen: newMemory.createdAt,
-			firstSeen: deduplicationMeta.firstSeen || existing.createdAt
+			firstSeen: deduplicationMeta.firstSeen || existing.createdAt,
 		};
 
 		// Merge metadata based on strategy
@@ -312,20 +323,22 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			case 'newest':
 				mergedMetadata = {
 					...newMemory.metadata,
-					deduplication: updatedDeduplication
+					deduplication: updatedDeduplication,
 				};
 				break;
 
 			case 'oldest':
 				mergedMetadata = {
 					...existing.metadata,
-					deduplication: updatedDeduplication
+					deduplication: updatedDeduplication,
 				};
 				break;
-
-			case 'merge':
 			default:
-				mergedMetadata = this.mergeMetadataFields(existing.metadata, newMemory.metadata, updatedDeduplication);
+				mergedMetadata = this.mergeMetadataFields(
+					existing.metadata,
+					newMemory.metadata,
+					updatedDeduplication,
+				);
 				break;
 		}
 
@@ -338,12 +351,12 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			case 'oldest':
 				finalCreatedAt = existing.createdAt;
 				break;
-			case 'merge':
 			default:
 				// For merge strategy, use the newer timestamp
-				finalCreatedAt = Date.parse(existing.createdAt) < Date.parse(newMemory.createdAt)
-					? newMemory.createdAt
-					: existing.createdAt;
+				finalCreatedAt =
+					Date.parse(existing.createdAt) < Date.parse(newMemory.createdAt)
+						? newMemory.createdAt
+						: existing.createdAt;
 				break;
 		}
 
@@ -354,14 +367,14 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			vector: newMemory.vector || existing.vector, // Prefer new vector
 			metadata: mergedMetadata,
 			updatedAt: newMemory.createdAt,
-			createdAt: finalCreatedAt
+			createdAt: finalCreatedAt,
 		};
 	}
 
 	private mergeMetadataFields(
 		existing: MemoryMetadata = {},
 		newMeta: MemoryMetadata = {},
-		deduplication: any
+		deduplication: any,
 	): MemoryMetadata {
 		const merged: MemoryMetadata = { deduplication };
 
@@ -394,8 +407,12 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		}
 
 		// Handle objects by merging
-		if (typeof existing === 'object' && typeof newValue === 'object' &&
-			existing !== null && newValue !== null) {
+		if (
+			typeof existing === 'object' &&
+			typeof newValue === 'object' &&
+			existing !== null &&
+			newValue !== null
+		) {
 			return { ...existing, ...newValue };
 		}
 
@@ -419,7 +436,9 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		return deduplicated;
 	}
 
-	private deduplicateVectorResults(results: (Memory & { score: number })[]): (Memory & { score: number })[] {
+	private deduplicateVectorResults(
+		results: (Memory & { score: number })[],
+	): (Memory & { score: number })[] {
 		const seen = new Set<string>();
 		const deduplicated: (Memory & { score: number })[] = [];
 

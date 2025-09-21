@@ -82,9 +82,13 @@ export class CoordinationAgent extends EventEmitter {
 		this.initializeAgentRegistry();
 		this.graph = createCoordinationGraph();
 		// Light usage to avoid unused warning and provide observability
-		console.log(`CoordinationAgent initialized with max agents: ${this.config.maxCoordinatedAgents}`);
+		console.log(
+			`CoordinationAgent initialized with max agents: ${this.config.maxCoordinatedAgents}`,
+		);
 		// Use config to set up coordination parameters
-		console.log(`CoordinationAgent initialized with max agents: ${this.config.maxCoordinatedAgents}`);
+		console.log(
+			`CoordinationAgent initialized with max agents: ${this.config.maxCoordinatedAgents}`,
+		);
 	}
 
 	/**
@@ -501,7 +505,7 @@ function setupCommunicationChannels(
 	to: string;
 	message: string;
 	timestamp: string;
-    type: MessageType;
+	type: MessageType;
 }> {
 	const communicationLog: Array<{
 		from: string;
@@ -555,7 +559,7 @@ async function orchestrateWorkflow(
 		to: string;
 		message: string;
 		timestamp: string;
-        type: MessageType;
+		type: MessageType;
 	}>;
 }> {
 	const newCommunications: Array<{

@@ -120,7 +120,7 @@ export interface SubagentConfig {
 	maxConcurrency: number;
 	timeout: number;
 	systemPrompt: string;
-	scope: "user" | "project";
+	scope: 'user' | 'project';
 	model?: string;
 	tools?: string[];
 	maxTokens?: number;
@@ -146,13 +146,15 @@ export const SubagentRunResultSchema = z.object({
 	success: z.boolean(),
 	result: z.unknown().optional(),
 	error: z.string().optional(),
-	metrics: z.object({
-		messagesProcessed: z.number(),
-		totalTokensUsed: z.number(),
-		averageResponseTime: z.number(),
-		errorRate: z.number(),
-		lastUpdated: z.string(),
-	}).optional(),
+	metrics: z
+		.object({
+			messagesProcessed: z.number(),
+			totalTokensUsed: z.number(),
+			averageResponseTime: z.number(),
+			errorRate: z.number(),
+			lastUpdated: z.string(),
+		})
+		.optional(),
 	logs: z.array(z.string()).optional(),
 });
 

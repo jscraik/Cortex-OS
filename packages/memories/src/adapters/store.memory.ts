@@ -89,9 +89,9 @@ export class InMemoryStore implements MemoryStore {
 		const topK = q.topK ?? 10;
 		itemsWithScores.sort((a, b) => b.score - a.score);
 		const sorted = itemsWithScores.slice(0, topK).map((item) => ({
-		...item.memory,
-		score: item.score
-	}));
+			...item.memory,
+			score: item.score,
+		}));
 
 		return sorted;
 	}

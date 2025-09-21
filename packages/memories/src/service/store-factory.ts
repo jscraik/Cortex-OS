@@ -4,9 +4,9 @@ import { LocalMemoryStore } from '../adapters/store.localmemory.js';
 import { InMemoryStore } from '../adapters/store.memory.js';
 import type { PrismaLike } from '../adapters/store.prisma/client.js';
 import { PrismaStore } from '../adapters/store.prisma/client.js';
+import { ENV, getEnvWithFallback } from '../config/constants.js';
 import { type EncryptionService, InMemoryAesGcm } from '../ports/Encryption.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
-import { ENV, getEnvWithFallback } from '../config/constants.js';
 
 export type NamespaceSelectorConfig = {
 	namespaces?: string[];
@@ -86,7 +86,7 @@ export async function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): Promi
 		getEnvWithFallback(
 			'MEMORIES_LONG_STORE',
 			[ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2],
-			{ context: 'long-term store adapter' }
+			{ context: 'long-term store adapter' },
 		)?.toLowerCase() || 'memory';
 
 	const makeStore = async (
@@ -129,7 +129,9 @@ export async function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): Promi
 }
 
 // Build policy-aware layered store using both layered and encryption env
-export async function createPolicyAwareStoreFromEnv(opts?: LayeredEnvOptions): Promise<MemoryStore> {
+export async function createPolicyAwareStoreFromEnv(
+	opts?: LayeredEnvOptions,
+): Promise<MemoryStore> {
 	const layered = await createLayeredStoreFromEnv(opts);
 	// Use the same layered store for both short and long term by default
 	return createPolicyStoreFromEnv(layered, layered);

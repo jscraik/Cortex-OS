@@ -458,8 +458,11 @@ export const ragIngestTool: RAGTool = {
 	handler: async (params: unknown) => {
 		const correlationId = createCorrelationId();
 		// Perform schema validation first and let errors propagate (tests expect a rejection)
-		const { content: rawContent, source: rawSource, metadata: rawMetadata } =
-			ragIngestToolSchema.parse(params);
+		const {
+			content: rawContent,
+			source: rawSource,
+			metadata: rawMetadata,
+		} = ragIngestToolSchema.parse(params);
 
 		try {
 			const metadataCandidate = extractMetadataCandidate(params);

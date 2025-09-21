@@ -75,7 +75,7 @@ export class MigrationError extends Error {
 		message: string,
 		public readonly code: string,
 		public readonly version?: string,
-		public readonly cause?: Error
+		public readonly cause?: Error,
 	) {
 		super(message);
 		this.name = 'MigrationError';
@@ -85,7 +85,7 @@ export class MigrationError extends Error {
 export class SchemaValidationError extends Error {
 	constructor(
 		public readonly errors: string[],
-		public readonly memory?: Memory
+		public readonly memory?: Memory,
 	) {
 		super(`Schema validation failed: ${errors.join(', ')}`);
 		this.name = 'SchemaValidationError';

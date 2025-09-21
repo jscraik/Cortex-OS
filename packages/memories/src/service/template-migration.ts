@@ -1,6 +1,5 @@
-import { TemplateRegistry } from './template-registry.js';
 import type { Memory, MemoryTemplate } from '../domain/types.js';
-import type { TemplateMigrationContext } from '../domain/templates.js';
+import type { TemplateRegistry } from './template-registry.js';
 
 export interface MigrationPlan {
 	templateId: string;
@@ -21,7 +20,7 @@ export interface MigrationResult {
 export class TemplateMigrationService {
 	constructor(
 		private readonly registry: TemplateRegistry,
-		private readonly dryRun = false
+		private readonly dryRun = false,
 	) {}
 
 	/**
@@ -30,7 +29,7 @@ export class TemplateMigrationService {
 	async createMigrationPlan(
 		templateId: string,
 		toVersion: string,
-		memories: Memory[]
+		memories: Memory[],
 	): Promise<MigrationPlan> {
 		const toTemplate = await this.registry.get(templateId, toVersion);
 		if (!toTemplate) {
@@ -38,14 +37,16 @@ export class TemplateMigrationService {
 		}
 
 		// Find memories that need migration
-		const affectedMemories = memories.filter(memory => {
+		const affectedMemories = memories.filter((memory) => {
 			const memTemplateId = memory.metadata?.template as string;
 			const memVersion = memory.metadata?.templateVersion as string;
 
-			return memTemplateId === templateId &&
+			return (
+				memTemplateId === templateId &&
 				memVersion &&
 				memVersion !== toVersion &&
-				this.needsMigration(memVersion, toVersion);
+				this.needsMigration(memVersion, toVersion)
+			);
 		});
 
 		return {
@@ -55,7 +56,7 @@ export class TemplateMigrationService {
 			affectedMemories: affectedMemories.length,
 			migrationFunction: async (memory: Memory) => {
 				return this.migrateMemory(memory, toTemplate);
-			}
+			},
 		};
 	}
 
@@ -65,7 +66,7 @@ export class TemplateMigrationService {
 	async executeMigration(
 		plan: MigrationPlan,
 		store: { upsert: (memory: Memory, namespace: string) => Promise<Memory> },
-		namespace = 'default'
+		namespace = 'default',
 	): Promise<MigrationResult> {
 		const startTime = Date.now();
 		let migratedCount = 0;
@@ -85,7 +86,9 @@ export class TemplateMigrationService {
 				migratedCount++;
 			} catch (error) {
 				failedCount++;
-				errors.push(`Failed to migrate memory ${memory.id}: ${error instanceof Error ? error.message : String(error)}`);
+				errors.push(
+					`Failed to migrate memory ${memory.id}: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		}
 
@@ -94,7 +97,7 @@ export class TemplateMigrationService {
 			migratedCount,
 			failedCount,
 			errors,
-			duration: Date.now() - startTime
+			duration: Date.now() - startTime,
 		};
 	}
 
@@ -128,9 +131,9 @@ export class TemplateMigrationService {
 				...migratedData,
 				template: toTemplate.id,
 				templateVersion: toTemplate.version,
-				migratedAt: new Date().toISOString()
+				migratedAt: new Date().toISOString(),
 			},
-			updatedAt: new Date().toISOString()
+			updatedAt: new Date().toISOString(),
 		};
 	}
 
@@ -154,11 +157,11 @@ export class TemplateMigrationService {
 		// Check for potential data loss
 		if (targetTemplate) {
 			const sourceTemplate = await this.registry.get(plan.templateId, plan.fromVersion);
-			if (sourceTemplate && sourceTemplate.schema && targetTemplate.schema) {
+			if (sourceTemplate?.schema && targetTemplate.schema) {
 				const sourceFields = Object.keys(sourceTemplate.schema.properties || {});
 				const targetFields = Object.keys(targetTemplate.schema.properties || {});
 
-				const removedFields = sourceFields.filter(f => !targetFields.includes(f));
+				const removedFields = sourceFields.filter((f) => !targetFields.includes(f));
 				if (removedFields.length > 0) {
 					warnings.push(`The following fields will be removed: ${removedFields.join(', ')}`);
 				}
@@ -173,7 +176,7 @@ export class TemplateMigrationService {
 		return {
 			valid: errors.length === 0,
 			warnings,
-			errors
+			errors,
 		};
 	}
 
@@ -185,7 +188,7 @@ export class TemplateMigrationService {
 		fromVersion: string,
 		toVersion: string,
 		store: { upsert: (memory: Memory, namespace: string) => Promise<Memory> },
-		namespace = 'default'
+		namespace = 'default',
 	): Promise<MigrationResult> {
 		// Get the template we're rolling back from
 		const fromTemplate = await this.registry.get(templateId, fromVersion);
@@ -203,7 +206,7 @@ export class TemplateMigrationService {
 				// For rollback, we need to apply the inverse transform
 				// This is simplified - in practice, you'd need proper inverse functions
 				return memory;
-			}
+			},
 		};
 
 		return this.executeMigration(reversePlan, store, namespace);
@@ -212,12 +215,14 @@ export class TemplateMigrationService {
 	/**
 	 * Get migration history for a template
 	 */
-	async getMigrationHistory(templateId: string): Promise<Array<{
-		fromVersion: string;
-		toVersion: string;
-		executedAt: string;
-		migratedCount: number;
-	}>> {
+	async getMigrationHistory(_templateId: string): Promise<
+		Array<{
+			fromVersion: string;
+			toVersion: string;
+			executedAt: string;
+			migratedCount: number;
+		}>
+	> {
 		// This would typically query a migration log table
 		// For now, return empty array
 		return [];

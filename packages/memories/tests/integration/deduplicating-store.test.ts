@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { InMemoryStore } from '../../src/adapters/store.memory.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DeduplicatingMemoryStore } from '../../src/adapters/store.deduplicating.js';
-import type { Memory } from '../../src/domain/types.js';
+import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import { createMemory } from '../test-utils.js';
 
 describe('DeduplicatingMemoryStore Integration', () => {
@@ -12,7 +11,7 @@ describe('DeduplicatingMemoryStore Integration', () => {
 	beforeEach(() => {
 		baseStore = new InMemoryStore();
 		store = new DeduplicatingMemoryStore(baseStore);
-		namespace = 'test-' + Math.random().toString(36).substring(7);
+		namespace = `test-${Math.random().toString(36).substring(7)}`;
 	});
 
 	afterEach(async () => {
@@ -46,11 +45,11 @@ describe('DeduplicatingMemoryStore Integration', () => {
 		it('should detect duplicates with different metadata', async () => {
 			const memory1 = createMemory({
 				text: 'Same text',
-				metadata: { source: 'test1' }
+				metadata: { source: 'test1' },
 			});
 			const memory2 = createMemory({
 				text: 'Same text',
-				metadata: { source: 'test2' }
+				metadata: { source: 'test2' },
 			});
 
 			await store.upsert(memory1, namespace);
@@ -86,8 +85,12 @@ describe('DeduplicatingMemoryStore Integration', () => {
 		});
 
 		it('should not detect texts below similarity threshold as duplicates', async () => {
-			const memory1 = createMemory({ text: 'Machine learning is a subset of artificial intelligence' });
-			const memory2 = createMemory({ text: 'Quantum computing uses quantum mechanics to solve problems' });
+			const memory1 = createMemory({
+				text: 'Machine learning is a subset of artificial intelligence',
+			});
+			const memory2 = createMemory({
+				text: 'Quantum computing uses quantum mechanics to solve problems',
+			});
 
 			await store.upsert(memory1, namespace);
 			await store.upsert(memory2, namespace);
@@ -104,34 +107,36 @@ describe('DeduplicatingMemoryStore Integration', () => {
 				text: 'Duplicate test',
 				metadata: {
 					source: 'test1',
-					tags: ['common', 'unique1']
-				}
+					tags: ['common', 'unique1'],
+				},
 			});
 			const memory2 = createMemory({
 				text: 'Duplicate test',
 				metadata: {
 					source: 'test2',
 					tags: ['common', 'unique2'],
-					importance: 5
-				}
+					importance: 5,
+				},
 			});
 
 			await store.upsert(memory1, namespace);
 			const result = await store.upsert(memory2, namespace);
 
 			// Should merge metadata intelligently
-			expect(result.metadata?.tags).toEqual(expect.arrayContaining(['common', 'unique1', 'unique2']));
+			expect(result.metadata?.tags).toEqual(
+				expect.arrayContaining(['common', 'unique1', 'unique2']),
+			);
 			expect(result.metadata?.importance).toBe(5); // Keep higher importance
 		});
 
 		it('should update timestamp when duplicate is detected', async () => {
 			const memory1 = createMemory({
 				text: 'Timestamp test',
-				createdAt: '2023-01-01T00:00:00Z'
+				createdAt: '2023-01-01T00:00:00Z',
 			});
 			const memory2 = createMemory({
 				text: 'Timestamp test',
-				createdAt: '2023-01-02T00:00:00Z'
+				createdAt: '2023-01-02T00:00:00Z',
 			});
 
 			await store.upsert(memory1, namespace);
@@ -177,12 +182,12 @@ describe('DeduplicatingMemoryStore Integration', () => {
 
 		it('should handle large datasets efficiently', async () => {
 			// Use a fresh namespace for this test
-			const testNamespace = 'test-large-' + Math.random().toString(36).substring(7);
+			const testNamespace = `test-large-${Math.random().toString(36).substring(7)}`;
 
 			// Create many memories with more unique text to avoid false duplicates
 			for (let i = 0; i < 100; i++) {
 				const memory = createMemory({
-					text: `This is test memory number ${i} with unique content ${Math.random().toString(36).substring(7)}`
+					text: `This is test memory number ${i} with unique content ${Math.random().toString(36).substring(7)}`,
 				});
 				await store.upsert(memory, testNamespace);
 			}
@@ -215,14 +220,14 @@ describe('DeduplicatingMemoryStore Integration', () => {
 			// Configure store with higher threshold
 			store = new DeduplicatingMemoryStore(baseStore, {
 				exactMatchThreshold: 1.0,
-				fuzzyMatchThreshold: 0.95
+				fuzzyMatchThreshold: 0.95,
 			});
 
 			const memory1 = createMemory({ text: 'Test text with slight variation' });
 			const memory2 = createMemory({ text: 'Test text with slight variation!' });
 
 			// Use a fresh namespace for this test
-			const testNamespace = 'test-threshold-' + Math.random().toString(36).substring(7);
+			const testNamespace = `test-threshold-${Math.random().toString(36).substring(7)}`;
 
 			await store.upsert(memory1, testNamespace);
 			await store.upsert(memory2, testNamespace);
@@ -242,14 +247,14 @@ describe('DeduplicatingMemoryStore Integration', () => {
 		it('should enable/disable fuzzy matching', async () => {
 			// Configure store with fuzzy matching disabled
 			store = new DeduplicatingMemoryStore(baseStore, {
-				enableFuzzyMatching: false
+				enableFuzzyMatching: false,
 			});
 
 			const memory1 = createMemory({ text: 'The quick brown fox jumps' });
 			const memory2 = createMemory({ text: 'The quick brown fox jumped' });
 
 			// Use a fresh namespace for this test
-			const testNamespace = 'test-fuzzy-' + Math.random().toString(36).substring(7);
+			const testNamespace = `test-fuzzy-${Math.random().toString(36).substring(7)}`;
 
 			await store.upsert(memory1, testNamespace);
 			await store.upsert(memory2, testNamespace);
@@ -267,20 +272,20 @@ describe('DeduplicatingMemoryStore Integration', () => {
 		it('should support different merge strategies', async () => {
 			// Configure store to keep newest metadata
 			store = new DeduplicatingMemoryStore(baseStore, {
-				mergeStrategy: 'newest'
+				mergeStrategy: 'newest',
 			});
 
 			const memory1 = createMemory({
 				text: 'Merge strategy test',
-				metadata: { version: 1, old: true }
+				metadata: { version: 1, old: true },
 			});
 			const memory2 = createMemory({
 				text: 'Merge strategy test',
-				metadata: { version: 2, new: true }
+				metadata: { version: 2, new: true },
 			});
 
 			// Use a fresh namespace for this test
-			const testNamespace = 'test-merge-' + Math.random().toString(36).substring(7);
+			const testNamespace = `test-merge-${Math.random().toString(36).substring(7)}`;
 
 			await store.upsert(memory1, testNamespace);
 			const result = await store.upsert(memory2, testNamespace);
@@ -299,7 +304,7 @@ describe('DeduplicatingMemoryStore Integration', () => {
 		it('should handle malformed similarity thresholds', async () => {
 			// Test with invalid threshold
 			store = new DeduplicatingMemoryStore(baseStore, {
-				fuzzyMatchThreshold: 1.5 // Invalid: > 1
+				fuzzyMatchThreshold: 1.5, // Invalid: > 1
 			});
 
 			const memory = createMemory({ text: 'Test' });

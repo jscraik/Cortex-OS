@@ -446,7 +446,7 @@ export class PrimitiveToolLayer extends ToolLayer {
 				detection: {
 					detected: true,
 					resolution: 'abort',
-					victimTransaction: 'tx-' + Math.random().toString(36).slice(2, 8),
+					victimTransaction: `tx-${Math.random().toString(36).slice(2, 8)}`,
 				},
 			};
 		}
@@ -458,7 +458,7 @@ export class PrimitiveToolLayer extends ToolLayer {
 
 		switch (validated.action) {
 			case 'begin': {
-				const transactionId = 'tx-' + Math.random().toString(36).slice(2, 8);
+				const transactionId = `tx-${Math.random().toString(36).slice(2, 8)}`;
 				const transaction = {
 					id: transactionId,
 					parentId: validated.parentTransactionId,

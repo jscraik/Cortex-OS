@@ -10,7 +10,7 @@ export const createCompressionPlugin = (threshold: number = 1000): Plugin => {
 		if (text.length <= threshold) return text;
 
 		// Truncate and add compression marker
-		const compressed = text.substring(0, threshold) + '...[COMPRESSED]';
+		const compressed = `${text.substring(0, threshold)}...[COMPRESSED]`;
 		return compressed;
 	};
 
@@ -34,13 +34,13 @@ export const createCompressionPlugin = (threshold: number = 1000): Plugin => {
 						...memory.metadata,
 						compressed: true,
 						originalLength,
-						compressedAt: new Date().toISOString()
+						compressedAt: new Date().toISOString(),
 					};
 				}
 				return memory;
 			},
 			afterGet: async (memory: Memory | null) => {
-				if (memory && memory.metadata?.compressed) {
+				if (memory?.metadata?.compressed) {
 					// Keep the compressed text but add decompression marker
 					memory.text = memory.text.replace('[COMPRESSED]', '[DECOMPRESSED]');
 					// Remove compression metadata
@@ -51,26 +51,26 @@ export const createCompressionPlugin = (threshold: number = 1000): Plugin => {
 			},
 			afterSearch: async (results: Memory[]) => {
 				// Decompress search results
-				return results.map(memory => {
+				return results.map((memory) => {
 					if (memory.metadata?.compressed) {
 						return {
 							...memory,
 							text: decompressText(memory.text),
 							metadata: {
 								...memory.metadata,
-								searchResultCompressed: true
-							}
+								searchResultCompressed: true,
+							},
 						};
 					}
 					return memory;
 				});
-			}
+			},
 		},
 		onRegister: async () => {
 			console.log(`[COMPRESSION] Compression plugin registered with threshold: ${threshold}`);
 		},
 		onUnregister: async () => {
 			console.log('[COMPRESSION] Compression plugin unregistered');
-		}
+		},
 	};
 };

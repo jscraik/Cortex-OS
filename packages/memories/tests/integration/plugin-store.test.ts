@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
-import { PluginAwareMemoryStore, type Plugin, type PluginHook } from '../../src/adapters/store.plugin.js';
+import { type Plugin, PluginAwareMemoryStore } from '../../src/adapters/store.plugin.js';
 import { createMemory } from '../test-utils.js';
 
 describe('PluginAwareMemoryStore Integration', () => {
@@ -31,8 +31,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 				hooks: {
 					beforeUpsert: async (memory) => {
 						return { ...memory, metadata: { ...memory.metadata, processedBy: 'test-plugin' } };
-					}
-				}
+					},
+				},
 			};
 
 			// This should not throw
@@ -44,14 +44,16 @@ describe('PluginAwareMemoryStore Integration', () => {
 				id: 'duplicate-plugin',
 				name: 'Test Plugin',
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			// Register first time
 			await pluginStore.registerPlugin(testPlugin);
 
 			// Try to register again with same ID
-			await expect(pluginStore.registerPlugin(testPlugin)).rejects.toThrow('Plugin duplicate-plugin already registered');
+			await expect(pluginStore.registerPlugin(testPlugin)).rejects.toThrow(
+				'Plugin duplicate-plugin already registered',
+			);
 		});
 
 		it('should fail to register plugin with invalid hooks', async () => {
@@ -61,11 +63,13 @@ describe('PluginAwareMemoryStore Integration', () => {
 				version: '1.0.0',
 				hooks: {
 					// @ts-expect-error - Testing invalid hook
-					invalidHook: async (memory) => memory
-				}
+					invalidHook: async (memory) => memory,
+				},
 			};
 
-			await expect(pluginStore.registerPlugin(invalidPlugin)).rejects.toThrow('Invalid hook: invalidHook');
+			await expect(pluginStore.registerPlugin(invalidPlugin)).rejects.toThrow(
+				'Invalid hook: invalidHook',
+			);
 		});
 
 		it('should list registered plugins', async () => {
@@ -73,14 +77,14 @@ describe('PluginAwareMemoryStore Integration', () => {
 				id: 'plugin-1',
 				name: 'Plugin 1',
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			const plugin2: Plugin = {
 				id: 'plugin-2',
 				name: 'Plugin 2',
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			await pluginStore.registerPlugin(plugin1);
@@ -88,8 +92,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 
 			const plugins = pluginStore.listPlugins();
 			expect(plugins).toHaveLength(2);
-			expect(plugins.find(p => p.id === 'plugin-1')).toBeDefined();
-			expect(plugins.find(p => p.id === 'plugin-2')).toBeDefined();
+			expect(plugins.find((p) => p.id === 'plugin-1')).toBeDefined();
+			expect(plugins.find((p) => p.id === 'plugin-2')).toBeDefined();
 		});
 
 		it('should unregister plugins', async () => {
@@ -97,7 +101,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 				id: 'removable-plugin',
 				name: 'Removable Plugin',
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			await pluginStore.registerPlugin(testPlugin);
@@ -124,8 +128,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					beforeUpsert: async (memory) => {
 						executionOrder.push('first');
 						return { ...memory, metadata: { ...memory.metadata, order: 1 } };
-					}
-				}
+					},
+				},
 			};
 
 			const plugin2: Plugin = {
@@ -136,8 +140,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					beforeUpsert: async (memory) => {
 						executionOrder.push('second');
 						return { ...memory, metadata: { ...memory.metadata, order: 2 } };
-					}
-				}
+					},
+				},
 			};
 
 			// Register in reverse order to test execution order
@@ -162,8 +166,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					afterUpsert: async (memory) => {
 						executionOrder.push('first');
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			const plugin2: Plugin = {
@@ -174,8 +178,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					afterUpsert: async (memory) => {
 						executionOrder.push('second');
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await pluginStore.registerPlugin(plugin2);
@@ -196,8 +200,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 				hooks: {
 					beforeUpsert: async () => {
 						throw new Error('Plugin error');
-					}
-				}
+					},
+				},
 			};
 
 			const goodPlugin: Plugin = {
@@ -207,8 +211,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 				hooks: {
 					beforeUpsert: async (memory) => {
 						return { ...memory, metadata: { ...memory.metadata, processed: true } };
-					}
-				}
+					},
+				},
 			};
 
 			await pluginStore.registerPlugin(errorPlugin);
@@ -260,8 +264,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					afterSearch: async (results) => {
 						hookCalls.push('afterSearch');
 						return results;
-					}
-				}
+					},
+				},
 			};
 
 			await pluginStore.registerPlugin(testPlugin);
@@ -288,7 +292,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 				'beforeSearch',
 				'afterSearch',
 				'beforeDelete',
-				'afterDelete'
+				'afterDelete',
 			]);
 		});
 	});
@@ -307,7 +311,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 				},
 				onUnregister: async () => {
 					lifecycleEvents.push('unregistered');
-				}
+				},
 			};
 
 			await pluginStore.registerPlugin(testPlugin);
@@ -322,7 +326,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 				id: 'dependency-plugin',
 				name: 'Dependency Plugin',
 				version: '1.0.0',
-				hooks: {}
+				hooks: {},
 			};
 
 			const dependentPlugin: Plugin = {
@@ -330,11 +334,13 @@ describe('PluginAwareMemoryStore Integration', () => {
 				name: 'Dependent Plugin',
 				version: '1.0.0',
 				dependencies: ['dependency-plugin'],
-				hooks: {}
+				hooks: {},
 			};
 
 			// Should fail to register dependent plugin before dependency
-			await expect(pluginStore.registerPlugin(dependentPlugin)).rejects.toThrow('Missing dependencies: dependency-plugin');
+			await expect(pluginStore.registerPlugin(dependentPlugin)).rejects.toThrow(
+				'Missing dependencies: dependency-plugin',
+			);
 
 			// Register dependency first
 			await pluginStore.registerPlugin(dependencyPlugin);
@@ -347,7 +353,7 @@ describe('PluginAwareMemoryStore Integration', () => {
 	describe('Performance Considerations', () => {
 		it('should handle plugin execution efficiently', async () => {
 			// Create many plugins
-		 const plugins: Plugin[] = [];
+			const plugins: Plugin[] = [];
 			for (let i = 0; i < 100; i++) {
 				plugins.push({
 					id: `perf-plugin-${i}`,
@@ -356,8 +362,8 @@ describe('PluginAwareMemoryStore Integration', () => {
 					hooks: {
 						beforeUpsert: async (memory) => {
 							return { ...memory, metadata: { ...memory.metadata, [`plugin${i}`]: true } };
-						}
-					}
+						},
+					},
 				});
 			}
 
@@ -386,10 +392,10 @@ describe('PluginAwareMemoryStore Integration', () => {
 				hooks: {
 					beforeUpsert: async (memory) => {
 						// Simulate some work
-						await new Promise(resolve => setTimeout(resolve, 10));
+						await new Promise((resolve) => setTimeout(resolve, 10));
 						return memory;
-					}
-				}
+					},
+				},
 			};
 
 			await pluginStore.registerPlugin(metricsPlugin);

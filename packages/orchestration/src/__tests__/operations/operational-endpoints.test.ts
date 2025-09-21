@@ -51,8 +51,9 @@ const createMockResponse = (): Partial<Response> => {
 };
 
 describe('OperationalEndpoints - TDD Implementation', () => {
-  let config: OperationalEndpointsConfig;
-  let endpoints: unknown;	beforeEach(() => {
+	let config: OperationalEndpointsConfig;
+	let endpoints: unknown;
+	beforeEach(() => {
 		config = {
 			enableAdmin: true,
 			adminAuth: undefined,

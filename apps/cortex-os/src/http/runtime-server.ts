@@ -119,7 +119,7 @@ async function handleApiRequest(
 	dependencies: RuntimeHttpDependencies,
 ): Promise<void> {
 	// Authenticate all API requests under /v1/* (except SSE handled earlier)
-	const authHeaderRaw = req.headers['authorization'];
+	const authHeaderRaw = req.headers.authorization;
 	const authorizationHeader = Array.isArray(authHeaderRaw) ? authHeaderRaw[0] : authHeaderRaw;
 	await authenticateRequest({
 		authorizationHeader,
@@ -340,8 +340,7 @@ async function handleArtifactsRoute(
 				throw new HttpError(400, 'artifact payload required');
 			const base64 = artifact.base64Payload;
 			if (typeof base64 !== 'string') throw new HttpError(400, 'base64Payload required');
-			if (typeof artifact.filename !== 'string')
-				throw new HttpError(400, 'filename required');
+			if (typeof artifact.filename !== 'string') throw new HttpError(400, 'filename required');
 			if (typeof artifact.contentType !== 'string')
 				throw new HttpError(400, 'contentType required');
 			const binary = Buffer.from(base64, 'base64');
@@ -387,8 +386,7 @@ async function handleArtifactsRoute(
 				throw new HttpError(400, 'artifact payload required');
 			const base64 = artifact.base64Payload;
 			if (typeof base64 !== 'string') throw new HttpError(400, 'base64Payload required');
-			if (typeof artifact.filename !== 'string')
-				throw new HttpError(400, 'filename required');
+			if (typeof artifact.filename !== 'string') throw new HttpError(400, 'filename required');
 			if (typeof artifact.contentType !== 'string')
 				throw new HttpError(400, 'contentType required');
 			const binary = Buffer.from(base64, 'base64');

@@ -139,7 +139,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 		sql += ' AND LOWER(text) LIKE LOWER(?)';
 		params.push(`%${q.text}%`);
 		if (q.filterTags?.length) {
-			sql += ' AND (' + q.filterTags.map(() => 'tags LIKE ?').join(' OR ') + ')';
+			sql += ` AND (${q.filterTags.map(() => 'tags LIKE ?').join(' OR ')})`;
 			for (const t of q.filterTags) params.push(`%"${t}"%`);
 		}
 		sql += ' ORDER BY updatedAt DESC LIMIT ?';
@@ -157,7 +157,10 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 		return candidates.slice(0, topK);
 	}
 
-	async searchByVector(q: VectorQuery, namespace?: string): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		q: VectorQuery,
+		namespace?: string,
+	): Promise<(Memory & { score: number })[]> {
 		const topK = q.topK ?? q.limit ?? 10;
 		let baseVec: number[] = [];
 		if (Array.isArray(q.vector)) baseVec = q.vector.slice();
@@ -172,11 +175,18 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 			sql += ' WHERE m.id LIKE ?';
 			params.push(`${namespace}:%`);
 		}
-		const rows = this.db.prepare(sql).all(...params) as Array<Record<string, unknown> & { distance: number }>;
-		let candidatesWithDistance = rows.map((r) => ({ memory: this.rowToMemory(r), distance: r.distance }));
+		const rows = this.db.prepare(sql).all(...params) as Array<
+			Record<string, unknown> & { distance: number }
+		>;
+		let candidatesWithDistance = rows.map((r) => ({
+			memory: this.rowToMemory(r),
+			distance: r.distance,
+		}));
 		if (q.filterTags?.length) {
 			const tagSet = new Set(q.filterTags);
-			candidatesWithDistance = candidatesWithDistance.filter((c) => c.memory.tags.some((t) => tagSet.has(t)));
+			candidatesWithDistance = candidatesWithDistance.filter((c) =>
+				c.memory.tags.some((t) => tagSet.has(t)),
+			);
 		}
 		let resultsWithDistance = candidatesWithDistance.slice(0, topK);
 		if (decayEnabled()) {
@@ -195,7 +205,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
 		let purgedCount = 0;
 		const rows = this.db
-			.prepare('SELECT rowid, * FROM memories' + (namespace ? ' WHERE id LIKE ?' : ''))
+			.prepare(`SELECT rowid, * FROM memories${namespace ? ' WHERE id LIKE ?' : ''}`)
 			.all(...(namespace ? [`${namespace}:%`] : []));
 		const expiredIds: string[] = [];
 		const expiredRowids: number[] = [];

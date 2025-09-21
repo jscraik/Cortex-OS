@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import { PluginAwareMemoryStore } from '../../src/adapters/store.plugin.js';
 import { createAuditPlugin, createCompressionPlugin } from '../../src/plugins/index.js';
@@ -34,7 +34,9 @@ describe('Example Plugins Integration', () => {
 			await pluginStore.upsert(memory, namespace);
 
 			// Should have both before and after upsert logs
-			const upsertLogs = auditLogs.filter(log => log.includes('Upserting memory') || log.includes('Successfully upserted memory'));
+			const upsertLogs = auditLogs.filter(
+				(log) => log.includes('Upserting memory') || log.includes('Successfully upserted memory'),
+			);
 			expect(upsertLogs).toHaveLength(2);
 			expect(upsertLogs[0]).toContain('[AUDIT] Upserting memory:');
 			expect(upsertLogs[1]).toContain('[AUDIT] Successfully upserted memory:');
@@ -69,7 +71,9 @@ describe('Example Plugins Integration', () => {
 			await pluginStore.searchByText({ text: 'test', topK: 10 }, namespace);
 
 			// Should have both before and after search logs
-			const searchLogs = auditLogs.filter(log => log.includes('Searching memories') || log.includes('Search completed'));
+			const searchLogs = auditLogs.filter(
+				(log) => log.includes('Searching memories') || log.includes('Search completed'),
+			);
 			expect(searchLogs).toHaveLength(2);
 			expect(searchLogs[0]).toContain('[AUDIT] Searching memories');
 			expect(searchLogs[1]).toContain('[AUDIT] Search completed');
@@ -139,7 +143,7 @@ describe('Example Plugins Integration', () => {
 
 			// Audit plugin should log both before and after compression
 			expect(auditLogs.length).toBeGreaterThan(0);
-			expect(auditLogs.some(log => log.includes('Upserting memory'))).toBe(true);
+			expect(auditLogs.some((log) => log.includes('Upserting memory'))).toBe(true);
 		});
 
 		it('should handle plugin errors gracefully', async () => {
@@ -151,8 +155,8 @@ describe('Example Plugins Integration', () => {
 				hooks: {
 					beforeUpsert: async () => {
 						throw new Error('Plugin failure');
-					}
-				}
+					},
+				},
 			};
 
 			// Register after other plugins
@@ -168,7 +172,7 @@ describe('Example Plugins Integration', () => {
 
 			// Check plugin errors
 			const errors = pluginStore.getPluginErrors();
-			expect(errors.some(e => e.pluginId === 'faulty-plugin')).toBe(true);
+			expect(errors.some((e) => e.pluginId === 'faulty-plugin')).toBe(true);
 		});
 	});
 });

@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { createStoreFromEnv } from '../config/store-from-env.js';
-import { DefaultMigrationManager } from '../service/migration-service.js';
 import { InMemoryMetadataStore } from '../adapters/metadata.in-memory.js';
+import { createStoreFromEnv } from '../config/store-from-env.js';
 import { allMigrations } from '../migrations/predefined-migrations.js';
+import { DefaultMigrationManager } from '../service/migration-service.js';
 
 const program = new Command();
 const logger = {
-	info: (message: string, context?: any) => console.log(`[migration-cli] ${message}`, context || ''),
-	error: (message: string, context?: any) => console.error(`[migration-cli] ${message}`, context || '')
+	info: (message: string, context?: any) =>
+		console.log(`[migration-cli] ${message}`, context || ''),
+	error: (message: string, context?: any) =>
+		console.error(`[migration-cli] ${message}`, context || ''),
 };
 
 program
@@ -33,7 +35,7 @@ program
 
 			const currentVersion = await migrationManager.getCurrentVersion();
 			const availableMigrations = migrationManager.getAvailableMigrations();
-			const pendingMigrations = availableMigrations.filter(m => m.version > currentVersion);
+			const pendingMigrations = availableMigrations.filter((m) => m.version > currentVersion);
 
 			console.log('\n📊 Migration Status');
 			console.log('==================');
@@ -43,7 +45,7 @@ program
 
 			if (pendingMigrations.length > 0) {
 				console.log('\n⏳ Pending Migrations:');
-				pendingMigrations.forEach(m => {
+				pendingMigrations.forEach((m) => {
 					console.log(`  - ${m.version}: ${m.description}`);
 				});
 			}
@@ -72,7 +74,8 @@ program
 			}
 
 			const currentVersion = await migrationManager.getCurrentVersion();
-			const targetVersion = version || migrationManager.getAvailableMigrations().slice(-1)[0]?.version;
+			const targetVersion =
+				version || migrationManager.getAvailableMigrations().slice(-1)[0]?.version;
 
 			if (!targetVersion) {
 				console.error('No migrations available');
@@ -82,11 +85,12 @@ program
 			console.log(`\n🚀 Migrating from ${currentVersion} to ${targetVersion}`);
 
 			if (options.dryRun) {
-				const pendingMigrations = migrationManager.getAvailableMigrations()
-					.filter(m => m.version > currentVersion && m.version <= targetVersion);
+				const pendingMigrations = migrationManager
+					.getAvailableMigrations()
+					.filter((m) => m.version > currentVersion && m.version <= targetVersion);
 
 				console.log('\n📋 Migrations to apply:');
-				pendingMigrations.forEach(m => {
+				pendingMigrations.forEach((m) => {
 					console.log(`  - ${m.version}: ${m.description}`);
 				});
 				console.log('\n💡 Dry run complete - no changes made');
@@ -164,10 +168,12 @@ program
 				return;
 			}
 
-			history.forEach(entry => {
+			history.forEach((entry) => {
 				const icon = entry.success ? '✅' : '❌';
 				const direction = entry.direction === 'up' ? '↑' : '↓';
-				console.log(`${icon} ${entry.timestamp} ${direction} ${entry.version} - ${entry.description}`);
+				console.log(
+					`${icon} ${entry.timestamp} ${direction} ${entry.version} - ${entry.description}`,
+				);
 				if (!entry.success && entry.error) {
 					console.log(`   Error: ${entry.error}`);
 				}
@@ -216,7 +222,7 @@ program
 			console.log('✅ All migrations are valid');
 		} else {
 			console.error('❌ Migration validation failed:');
-			errors.forEach(error => console.error(`   - ${error}`));
+			errors.forEach((error) => console.error(`   - ${error}`));
 			process.exit(1);
 		}
 	});

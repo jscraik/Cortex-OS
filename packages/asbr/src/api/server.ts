@@ -3,12 +3,12 @@
  * Loopback-only HTTP server implementing the blueprint API specification
  */
 
-import { PolicyRegistry } from '@cortex-os/asbr-policy';
-import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import express from 'express';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
+import { PolicyRegistry } from '@cortex-os/asbr-policy';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import express from 'express';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
@@ -478,11 +478,11 @@ class ASBRServerClass {
 					const meta =
 						error instanceof Error
 							? {
-								error: {
-									message: error.message,
-									stack: error.stack,
-								},
-							}
+									error: {
+										message: error.message,
+										stack: error.stack,
+									},
+								}
 							: { error: { message: String(error) } };
 					logError('Failed to close SSE stream gracefully', meta);
 				}
