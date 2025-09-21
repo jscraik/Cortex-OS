@@ -1,0 +1,27 @@
+{
+  "summary": {
+    "totalDocuments": 20,
+    "totalBatches": 4,
+    "totalTime": 164.13662499999998,
+    "avgBatchTime": 29.8474165,
+    "overallThroughput": 121.84970904574163,
+    "peakMemoryMB": 5,
+    "docsPerBatch": 5,
+    "avgDocSize": 1000
+  },
+  "configuration": {
+    "batchSize": 5,
+    "docCount": 20,
+    "docSize": 1000,
+    "embeddingDim": 384,
+    "concurrency": 1,
+    "outputFile": "ingestion-results.json"
+  },
+  "timestamp": "2025-09-20T21:15:15.841Z",
+  "performance": {
+    "documentsPerSecond": 121.84970904574163,
+    "millisecondsPerDocument": 8.206831249999999,
+    "batchesPerSecond": 24.369941809148326,
+    "charactersPerSecond": 121849.70904574163
+  }
+}

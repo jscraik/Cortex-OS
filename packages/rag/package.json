@@ -15,6 +15,12 @@
     "verify:coverage:dry": "node ./scripts/verify-coverage.mjs --auto-raise --dry-run",
     "docs:verify": "./scripts/verify-docs.sh",
     "test:safe": "node ../../scripts/vitest-safe.mjs run",
+    "test:performance": "node benchmarks/performance-suite.js",
+    "test:performance:memory": "node benchmarks/performance-suite.js --profile=memory",
+    "test:performance:detailed": "node benchmarks/performance-suite.js --profile=detailed",
+    "benchmark:ingest": "node benchmarks/ingest.js",
+    "benchmark:retrieval": "node benchmarks/retrieval.js",
+    "benchmark:all": "npm run benchmark:ingest && npm run benchmark:retrieval && npm run test:performance",
     "security:scan": "pnpm -w security:scan:diff || pnpm -w security:scan"
   },
   "dependencies": {

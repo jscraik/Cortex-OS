@@ -89,6 +89,10 @@
     "security:probely:config": "bash -lc 'mkdir -p ~/.probely && umask 177 && { echo [AUTH]; echo api_key=$PROBELY_API_KEY; } > ~/.probely/config && chmod 600 ~/.probely/config'",
     "security:probely:targets": "probely targets get || echo 'Probely CLI not installed or not authenticated'",
     "security:audit": "pnpm audit --audit-level=high",
+    "security:gate": "node scripts/security-gate.mjs",
+    "security:gate:strict": "node scripts/security-gate.mjs --strict",
+    "security:gate:report": "node scripts/security-gate.mjs --report-only",
+    "security:gate:fix": "node scripts/security-gate.mjs --fix",
     "graphite:status": "gt status",
     "graphite:sync": "graphite repo sync",
     "graphite:stack": "graphite stack",
@@ -397,7 +401,14 @@
       "@opentelemetry/exporter-metrics-otlp-http": "0.205.0",
       "@opentelemetry/exporter-prometheus": "0.205.0",
       "@opentelemetry/sdk-node": "0.205.0",
-      "@opentelemetry/auto-instrumentations-node": "0.64.0"
+      "@opentelemetry/auto-instrumentations-node": "0.64.0",
+      "express@<4.19.2": ">=4.19.2",
+      "body-parser@<1.20.3": ">=1.20.3",
+      "send@<0.19.0": ">=0.19.0",
+      "serve-static@<1.16.0": ">=1.16.0",
+      "express@<4.20.0": ">=4.20.0",
+      "path-to-regexp@<0.1.10": ">=0.1.10",
+      "path-to-regexp@<0.1.12": ">=0.1.12"
     }
   },
   "lint-staged": {
