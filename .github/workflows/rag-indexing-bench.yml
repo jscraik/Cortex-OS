@@ -1,0 +1,64 @@
+name: RAG Indexing Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'packages/rag/**'
+      - '.github/workflows/rag-indexing-bench.yml'
+
+jobs:
+  bench-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 make gcc g++
+
+      - name: Install deps (workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace
+        run: pnpm build:smart
+
+      - name: Install hnswlib-node for RAG package
+        working-directory: packages/rag
+        run: pnpm add -D hnswlib-node@^1.5.0 || pnpm add -D hnswlib-node@latest
+
+      - name: Run indexing benchmark with budgets
+        working-directory: packages/rag
+        run: |
+          node benchmarks/indexing-bench.mjs \
+            --sizes=10000,100000 \
+            --queries=5 \
+            --ef=32,64,128 \
+            --topK=10 \
+            --seed=42 \
+            --memBudgetMB=4096 \
+            --cpuBudgetMs=3000 \
+            --report=reports/indexing-performance.json
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-indexing-performance
+          path: |
+            packages/rag/reports/indexing-performance.json
+            packages/rag/reports/indexing-performance.html
+          if-no-files-found: error

@@ -1,0 +1,47 @@
+{
+  "name": "@cortex-os/cortex-rules",
+  "version": "1.0.0",
+  "description": "Cortex-OS rules and utilities for AI agents",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "cortex-time-tool": "./tools/time-tool.js"
+  },
+  "files": [
+    "dist/**/*",
+    "src/python/**/*",
+    "tools/**/*",
+    "pyproject.toml"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:python": "python -m build",
+    "test:python": "python -m pytest"
+  },
+  "keywords": [
+    "cortex-os",
+    "ai",
+    "agents",
+    "rules"
+  ],
+  "author": "Cortex-OS Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
+}

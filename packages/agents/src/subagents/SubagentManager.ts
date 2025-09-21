@@ -30,7 +30,7 @@ export class SubagentManager extends EventEmitter {
 	private configDir: string;
 	private initialized = false;
 
-	constructor(configDir: string = './subagents') {
+	constructor(configDir = './subagents') {
 		super();
 		this.configDir = path.resolve(configDir);
 	}

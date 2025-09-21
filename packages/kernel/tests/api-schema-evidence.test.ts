@@ -23,8 +23,9 @@ describe('BuildNode API schema validation', () => {
 
 		expect(accessSpy).toHaveBeenCalled();
 
-		const blockers = result.validationResults.build?.blockers || [];
-		expect(blockers).toContain('API schema validation failed');
+		expect(result.gates.G2?.status).toBe('failed');
+		const checkOutput = result.gates.G2?.automatedChecks[0]?.output || '';
+		expect(checkOutput).toContain('blockers');
 
 		const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
 		expect(apiEvidence).toBeDefined();

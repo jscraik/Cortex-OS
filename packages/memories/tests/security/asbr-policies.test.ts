@@ -107,7 +107,7 @@ describe('ASBR Security Policies', () => {
 			];
 
 			for (const text of patterns) {
-				const _memory = createMemory({ text });
+				createMemory({ text });
 				expect(policy.containsSensitiveData(text)).toBe(true);
 			}
 		});

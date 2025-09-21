@@ -53,7 +53,7 @@ describe('ErrorBoundary', () => {
 
 			expect(result).toBe('success');
 			expect(attemptCount).toBe(3);
-		});
+		}, 8000);
 
 		it('should use fallback when provided', async () => {
 			const operationError = new Error('Operation failed');

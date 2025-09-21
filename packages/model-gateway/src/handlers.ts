@@ -1,21 +1,23 @@
 import type { IModelRouter as ModelRouter } from './model-router';
 
-export function embeddingsHandler(router: ModelRouter, body: { model?: string; texts: string[] }) {
+export async function embeddingsHandler(router: ModelRouter, body: { model?: string; texts: string[] }) {
 	const { texts, model } = body;
 
 	if (texts.length === 1) {
-		return router.generateEmbedding({ text: texts[0], model }).then((result) => ({
+		const result = await router.generateEmbedding({ text: texts[0], model });
+		return {
 			vectors: [result.embedding],
 			dimensions: result.embedding.length,
 			modelUsed: result.model,
-		}));
+		};
 	}
 
-	return router.generateEmbeddings({ texts, model }).then((result) => ({
+	const result = await router.generateEmbeddings({ texts, model });
+	return {
 		vectors: result.embeddings,
 		dimensions: result.embeddings[0]?.length || 0,
 		modelUsed: result.model,
-	}));
+	};
 }
 
 export async function rerankHandler(
@@ -42,7 +44,7 @@ export async function rerankHandler(
 	};
 }
 
-export function chatHandler(
+export async function chatHandler(
 	router: ModelRouter,
 	body: {
 		model?: string;
@@ -54,15 +56,15 @@ export function chatHandler(
 		throw new Error('No chat models available');
 	}
 
-	return router
-		.generateChat({
-			messages: body.msgs,
-			model: body.model,
-			max_tokens: 1000,
-			temperature: 0.7,
-		})
-		.then((result) => ({
-			content: result.content,
-			modelUsed: result.model,
-		}));
+	const result = await router.generateChat({
+		messages: body.msgs,
+		model: body.model,
+		max_tokens: 1000,
+		temperature: 0.7,
+	});
+
+	return {
+		content: result.content,
+		modelUsed: result.model,
+	};
 }

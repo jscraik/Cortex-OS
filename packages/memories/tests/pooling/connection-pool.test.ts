@@ -346,9 +346,6 @@ describe('Connection Pool', () => {
 		});
 
 		it('should close all connections and stop health check', async () => {
-			// Given
-			const _statsBefore = pool.getStats();
-
 			// When
 			await pool.drain();
 
@@ -368,7 +365,7 @@ describe('Connection Pool', () => {
 			await pool.initialize();
 
 			// Acquire the only connection
-			const _conn = await (pool as any).acquire();
+			await (pool as any).acquire();
 
 			// Start a pending request
 			const acquirePromise = (pool as any).acquire();

@@ -473,7 +473,7 @@ export class AgentError extends Error {
 		message: string,
 		public agentId?: string,
 		public code?: string,
-		public recoverable: boolean = false,
+		public recoverable = false,
 	) {
 		super(message);
 		this.name = 'AgentError';

@@ -10,6 +10,7 @@
 
 import express from 'express';
 import { ASBRAIMcpServer } from './asbr-ai-mcp-server';
+import { applyServerHardening } from './lib/server/hardening.js';
 
 /**
  * ASBR AI MCP Integration - Automatically exposes AI capabilities as MCP tools
@@ -102,7 +103,7 @@ export class ASBRAIMcpIntegration {
 	async startHTTPServer(port = 8081): Promise<void> {
 		const app = express();
 
-		app.use(express.json());
+		applyServerHardening(app);
 
 		// MCP tools/list endpoint
 		app.get('/mcp/tools/list', async (_req, res) => {

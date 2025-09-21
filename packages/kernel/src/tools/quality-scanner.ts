@@ -35,46 +35,71 @@ export class QualityScanner {
 		const startTime = Date.now();
 
 		if (!hasUIRequirement) {
-			return {
-				lighthouse: 100, // Backend-only passes UI metrics
-				axe: 100,
-				details: {
-					reason: 'backend-only project',
-					scanDuration: Date.now() - startTime,
-				},
-			};
+			return this.createBackendOnlyResult(startTime);
 		}
 
 		try {
-			// Run Lighthouse scan if URL provided or local server detected
-			const lighthouseResults = await this.runLighthouseScan(serverUrl);
+			// Execute quality scans
+			const scanResults = await this.executeQualityScans(serverUrl);
 
-			// Run Axe accessibility scan
-			const axeResults = await this.runAxeScan(serverUrl);
-
-			const lighthouseScore = this.calculateLighthouseScore(lighthouseResults);
-			const axeScore = this.calculateAxeScore(axeResults);
-
-			return {
-				lighthouse: lighthouseScore,
-				axe: axeScore,
-				details: {
-					lighthouse: lighthouseResults.details,
-					axe: axeResults.details,
-					scanDuration: Date.now() - startTime,
-				},
-			};
+			return this.createQualityResult(scanResults, startTime);
 		} catch (error) {
 			console.warn('Quality scan encountered errors:', error);
-			return {
-				lighthouse: 0,
-				axe: 0,
-				details: {
-					reason: `Quality scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-					scanDuration: Date.now() - startTime,
-				},
-			};
+			return this.createErrorResult(error, startTime);
 		}
+	}
+
+	private createBackendOnlyResult(startTime: number): QualityResult {
+		return {
+			lighthouse: 100, // Backend-only passes UI metrics
+			axe: 100,
+			details: {
+				reason: 'backend-only project',
+				scanDuration: Date.now() - startTime,
+			},
+		};
+	}
+
+	private async executeQualityScans(serverUrl?: string): Promise<{
+		lighthouseResults: { score: number; details?: any };
+		axeResults: { score: number; details?: any };
+	}> {
+		const lighthouseResults = await this.runLighthouseScan(serverUrl);
+		const axeResults = await this.runAxeScan(serverUrl);
+
+		return { lighthouseResults, axeResults };
+	}
+
+	private createQualityResult(
+		scanResults: {
+			lighthouseResults: { score: number; details?: any };
+			axeResults: { score: number; details?: any };
+		},
+		startTime: number,
+	): QualityResult {
+		const lighthouseScore = this.calculateLighthouseScore(scanResults.lighthouseResults);
+		const axeScore = this.calculateAxeScore(scanResults.axeResults);
+
+		return {
+			lighthouse: lighthouseScore,
+			axe: axeScore,
+			details: {
+				lighthouse: scanResults.lighthouseResults.details,
+				axe: scanResults.axeResults.details,
+				scanDuration: Date.now() - startTime,
+			},
+		};
+	}
+
+	private createErrorResult(error: unknown, startTime: number): QualityResult {
+		return {
+			lighthouse: 0,
+			axe: 0,
+			details: {
+				reason: `Quality scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				scanDuration: Date.now() - startTime,
+			},
+		};
 	}
 
 	private async runLighthouseScan(url?: string): Promise<{

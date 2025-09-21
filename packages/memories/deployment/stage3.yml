@@ -1,0 +1,320 @@
+# Stage 3: High Availability Deployment
+# - Multiple availability zones
+# - Database clustering
+# - Advanced monitoring
+# - Backup and disaster recovery
+
+version: '3.8'
+
+services:
+  # Global load balancer with GeoDNS
+  nginx-global:
+    image: nginx:alpine
+    container_name: cortex-memories-nginx-global
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-ha.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - memories-us-east-1
+      - memories-us-west-1
+    networks:
+      - cortex-global
+
+  # US East Region
+  memories-us-east-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: cortex-memories-use1-1
+    environment:
+      REGION: us-east-1
+      AVAILABILITY_ZONE: use1-az1
+
+      # Store configuration
+      MEMORIES_STORE_ADAPTER: external-sqlite
+      MEMORIES_EXTERNAL_STORAGE_ENABLED: true
+      MEMORIES_EXTERNAL_STORAGE_PREFERRED_PATH: /Volumes/ExternalSSD/cortex-memories-use1
+      MEMORIES_EXTERNAL_STORAGE_FALLBACK_PATHS: /Volumes/ExternalHDD/cortex-memories-use1,./data
+      MEMORIES_EXTERNAL_STORAGE_DB_NAME: memories-use1-1.db
+
+      # Security
+      MEMORIES_ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+      MEMORIES_ENCRYPTION_NAMESPACES: secure,pii
+      MEMORIES_ACCESS_CONTROL_ENABLED: true
+
+      # High Availability
+      MEMORIES_HA_ENABLED: true
+      MEMORIES_REPLICATION_ENABLED: true
+      REPLICATION_PEERS: memories-us-east-2:3001,memories-us-west-1:3001
+
+      # Monitoring
+      MEMORIES_MONITORING_ENABLED: true
+      MEMORIES_MONITORING_PORT: 3001
+      PROMETHEUS_ENABLED: true
+      JAEGER_ENABLED: true
+
+      # Performance
+      MEMORIES_CACHE_ENABLED: true
+      REDIS_URL: redis://redis-use1:6379
+      MEMORIES_CACHE_CLUSTER: true
+
+      # Logging
+      LOG_LEVEL: info
+      NODE_ENV: production
+
+    volumes:
+      - /Volumes/ExternalSSD:/Volumes/ExternalSSD:rw
+      - /Volumes/ExternalHDD:/Volumes/ExternalHDD:rw
+      - ./logs/use1:/app/logs:rw
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+    healthcheck:
+      test: ["CMD", "node", "dist/monitoring/cli.js", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+    networks:
+      - cortex-global
+
+  memories-us-east-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: cortex-memories-use1-2
+    environment:
+      REGION: us-east-1
+      AVAILABILITY_ZONE: use1-az2
+
+      # Store configuration
+      MEMORIES_STORE_ADAPTER: external-sqlite
+      MEMORIES_EXTERNAL_STORAGE_ENABLED: true
+      MEMORIES_EXTERNAL_STORAGE_PREFERRED_PATH: /Volumes/ExternalSSD/cortex-memories-use1
+      MEMORIES_EXTERNAL_STORAGE_FALLBACK_PATHS: /Volumes/ExternalHDD/cortex-memories-use1,./data
+      MEMORIES_EXTERNAL_STORAGE_DB_NAME: memories-use1-2.db
+
+      # Security
+      MEMORIES_ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+      MEMORIES_ENCRYPTION_NAMESPACES: secure,pii
+      MEMORIES_ACCESS_CONTROL_ENABLED: true
+
+      # High Availability
+      MEMORIES_HA_ENABLED: true
+      MEMORIES_REPLICATION_ENABLED: true
+      REPLICATION_PEERS: memories-us-east-1:3001,memories-us-west-1:3001
+
+      # Monitoring
+      MEMORIES_MONITORING_ENABLED: true
+      MEMORIES_MONITORING_PORT: 3001
+      PROMETHEUS_ENABLED: true
+      JAEGER_ENABLED: true
+
+      # Performance
+      MEMORIES_CACHE_ENABLED: true
+      REDIS_URL: redis://redis-use1:6379
+      MEMORIES_CACHE_CLUSTER: true
+
+      # Logging
+      LOG_LEVEL: info
+      NODE_ENV: production
+
+    volumes:
+      - /Volumes/ExternalSSD:/Volumes/ExternalSSD:rw
+      - /Volumes/ExternalHDD:/Volumes/ExternalHDD:rw
+      - ./logs/use1:/app/logs:rw
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+    healthcheck:
+      test: ["CMD", "node", "dist/monitoring/cli.js", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+    networks:
+      - cortex-global
+
+  # US West Region
+  memories-us-west-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: cortex-memories-usw1-1
+    environment:
+      REGION: us-west-1
+      AVAILABILITY_ZONE: usw1-az1
+
+      # Store configuration
+      MEMORIES_STORE_ADAPTER: external-sqlite
+      MEMORIES_EXTERNAL_STORAGE_ENABLED: true
+      MEMORIES_EXTERNAL_STORAGE_PREFERRED_PATH: /Volumes/ExternalSSD/cortex-memories-usw1
+      MEMORIES_EXTERNAL_STORAGE_FALLBACK_PATHS: /Volumes/ExternalHDD/cortex-memories-usw1,./data
+      MEMORIES_EXTERNAL_STORAGE_DB_NAME: memories-usw1-1.db
+
+      # Security
+      MEMORIES_ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+      MEMORIES_ENCRYPTION_NAMESPACES: secure,pii
+      MEMORIES_ACCESS_CONTROL_ENABLED: true
+
+      # High Availability
+      MEMORIES_HA_ENABLED: true
+      MEMORIES_REPLICATION_ENABLED: true
+      REPLICATION_PEERS: memories-us-east-1:3001,memories-us-east-2:3001
+
+      # Monitoring
+      MEMORIES_MONITORING_ENABLED: true
+      MEMORIES_MONITORING_PORT: 3001
+      PROMETHEUS_ENABLED: true
+      JAEGER_ENABLED: true
+
+      # Performance
+      MEMORIES_CACHE_ENABLED: true
+      REDIS_URL: redis://redis-usw1:6379
+      MEMORIES_CACHE_CLUSTER: true
+
+      # Logging
+      LOG_LEVEL: info
+      NODE_ENV: production
+
+    volumes:
+      - /Volumes/ExternalSSD:/Volumes/ExternalSSD:rw
+      - /Volumes/ExternalHDD:/Volumes/ExternalHDD:rw
+      - ./logs/usw1:/app/logs:rw
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+    healthcheck:
+      test: ["CMD", "node", "dist/monitoring/cli.js", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+    networks:
+      - cortex-global
+
+  # Redis Cluster
+  redis-use1:
+    image: redis:7-alpine
+    container_name: cortex-memories-redis-use1
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-use1-data:/data
+    networks:
+      - cortex-global
+
+  redis-usw1:
+    image: redis:7-alpine
+    container_name: cortex-memories-redis-usw1
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-usw1-data:/data
+    networks:
+      - cortex-global
+
+  # Prometheus Federation
+  prometheus-global:
+    image: prom/prometheus:latest
+    container_name: cortex-memories-prometheus-global
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-global.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-global-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - cortex-global
+
+  # Grafana for global monitoring
+  grafana-global:
+    image: grafana/grafana:latest
+    container_name: cortex-memories-grafana-global
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana-global-data:/var/lib/grafana
+      - ./monitoring/grafana-global/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana-global/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - cortex-global
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: cortex-memories-jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: :9411
+    networks:
+      - cortex-global
+
+  # Backup service
+  backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+    container_name: cortex-memories-backup
+    environment:
+      BACKUP_SCHEDULE: "0 2 * * *"  # Daily at 2 AM
+      BACKUP_RETENTION_DAYS: 30
+      S3_BUCKET: ${BACKUP_S3_BUCKET}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+    volumes:
+      - /Volumes/ExternalSSD:/backup/source:ro
+      - ./backups:/backup/local:rw
+    networks:
+      - cortex-global
+
+networks:
+  cortex-global:
+    driver: bridge
+
+volumes:
+  redis-use1-data:
+  redis-usw1-data:
+  prometheus-global-data:
+  grafana-global-data:

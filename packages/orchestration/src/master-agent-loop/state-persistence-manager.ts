@@ -850,4 +850,3 @@ export class StatePersistenceManager {
 	}
 }
 
-export default StatePersistenceManager;

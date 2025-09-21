@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"outDir": "dist",
 		"rootDir": "src",
+		"composite": true,
 		// Ensure modern package resolution for ESM packages with package.json exports
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",

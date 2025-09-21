@@ -14,18 +14,31 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@cortex-os/hooks": "workspace:*",
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/hooks": "workspace:*",
+    "@hono/node-server": "^1.19.3",
     "@langchain/core": "^0.3.40",
     "@langchain/langgraph": "^0.4.9",
+    "@opentelemetry/api": "^1.7.0",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "better-sqlite3": "^9.6.0",
     "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.30.0",
+    "hono": "^4.0.0",
+    "jose": "^5.10.0",
+    "pino": "^9.0.0",
+    "prom-client": "^15.0.0",
     "yaml": "^2.6.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.10.5",
+    "@types/supertest": "^6.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "msw": "^2.0.0",
+    "supertest": "^7.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vitest": "^3.2.4"

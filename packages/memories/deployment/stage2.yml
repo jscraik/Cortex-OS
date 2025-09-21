@@ -1,0 +1,175 @@
+# Stage 2: Production Deployment
+# - Multiple instances
+# - Load balancing
+# - Encryption enabled
+# - Redis caching
+# - Enhanced monitoring
+
+version: '3.8'
+
+services:
+  # Load balancer
+  nginx:
+    image: nginx:alpine
+    container_name: cortex-memories-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - memories-1
+      - memories-2
+    networks:
+      - cortex-network
+
+  # Primary memory service instances
+  memories-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: cortex-memories-1
+    environment:
+      # Store configuration
+      MEMORIES_STORE_ADAPTER: external-sqlite
+      MEMORIES_EXTERNAL_STORAGE_ENABLED: true
+      MEMORIES_EXTERNAL_STORAGE_PREFERRED_PATH: /Volumes/ExternalSSD/cortex-memories
+      MEMORIES_EXTERNAL_STORAGE_FALLBACK_PATHS: /Volumes/ExternalHDD/cortex-memories
+      MEMORIES_EXTERNAL_STORAGE_DB_NAME: memories-prod-1.db
+
+      # Security
+      MEMORIES_ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+      MEMORIES_ENCRYPTION_NAMESPACES: secure,pii
+      MEMORIES_ACCESS_CONTROL_ENABLED: true
+
+      # Monitoring
+      MEMORIES_MONITORING_ENABLED: true
+      MEMORIES_MONITORING_PORT: 3001
+      PROMETHEUS_ENABLED: true
+
+      # Performance
+      MEMORIES_CACHE_ENABLED: true
+      REDIS_URL: redis://redis:6379
+
+      # Logging
+      LOG_LEVEL: info
+      NODE_ENV: production
+
+    volumes:
+      - /Volumes/ExternalSSD:/Volumes/ExternalSSD:rw
+      - /Volumes/ExternalHDD:/Volumes/ExternalHDD:rw
+      - ./logs:/app/logs:rw
+
+    healthcheck:
+      test: ["CMD", "node", "dist/monitoring/cli.js", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+    networks:
+      - cortex-network
+
+  memories-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: cortex-memories-2
+    environment:
+      # Store configuration
+      MEMORIES_STORE_ADAPTER: external-sqlite
+      MEMORIES_EXTERNAL_STORAGE_ENABLED: true
+      MEMORIES_EXTERNAL_STORAGE_PREFERRED_PATH: /Volumes/ExternalSSD/cortex-memories
+      MEMORIES_EXTERNAL_STORAGE_FALLBACK_PATHS: /Volumes/ExternalHDD/cortex-memories
+      MEMORIES_EXTERNAL_STORAGE_DB_NAME: memories-prod-2.db
+
+      # Security
+      MEMORIES_ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+      MEMORIES_ENCRYPTION_NAMESPACES: secure,pii
+      MEMORIES_ACCESS_CONTROL_ENABLED: true
+
+      # Monitoring
+      MEMORIES_MONITORING_ENABLED: true
+      MEMORIES_MONITORING_PORT: 3001
+      PROMETHEUS_ENABLED: true
+
+      # Performance
+      MEMORIES_CACHE_ENABLED: true
+      REDIS_URL: redis://redis:6379
+
+      # Logging
+      LOG_LEVEL: info
+      NODE_ENV: production
+
+    volumes:
+      - /Volumes/ExternalSSD:/Volumes/ExternalSSD:rw
+      - /Volumes/ExternalHDD:/Volumes/ExternalHDD:rw
+      - ./logs:/app/logs:rw
+
+    healthcheck:
+      test: ["CMD", "node", "dist/monitoring/cli.js", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+    networks:
+      - cortex-network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: cortex-memories-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - cortex-network
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cortex-memories-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - cortex-network
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cortex-memories-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - cortex-network
+
+networks:
+  cortex-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  prometheus-data:
+  grafana-data:

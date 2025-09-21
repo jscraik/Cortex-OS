@@ -51,6 +51,14 @@ Cortex RAG provides comprehensive Retrieval-Augmented Generation functionality a
 - **📈 Performance Optimized** - Batch processing and memory-efficient operations
 - **🔐 Security First** - Input validation and secure data handling
 
+> Benchmarking and Reports
+>
+> See `packages/rag/benchmarks/README.md` for indexing benchmark CLI flags, per-variant/global thresholds, HTML reports, CSV columns, and CI artifact publishing via `RAG_DATA_DIR`/`RAG_BACKUP_DIR`.
+
+### Post-chunking (merge after retrieval)
+
+See detailed guide: `packages/rag/docs/retrieval-post-chunking.md`.
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -269,6 +277,18 @@ console.log('Python embedder status:', isHealthy ? 'healthy' : 'unhealthy');
 ```
 
 ### Custom Embedding Provider
+
+## ✅ MLX installation verification
+
+If you use the MLX-based embedding/reranking services, quickly verify MLX availability:
+
+```bash
+pnpm mlx:verify
+# or the Python variant
+pnpm mlx:verify:py
+```
+
+This checks `mlx.core` import and reports whether `mlx_lm` is present.
 
 ```typescript
 import { Embedder } from '@cortex-os/rag';
@@ -856,6 +876,7 @@ pnpm test
 - **[Storage Backends](./docs/storage.md)** - Vector storage implementations
 - **[Performance Tuning](./docs/performance.md)** - Optimization strategies
 - **[Examples](./examples/)** - Usage examples and tutorials
+- **[Product Quantization (PQ)](./docs/pq.md)** - PQ usage, parameters, persistence and trade-offs
 
 ### Community
 

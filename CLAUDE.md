@@ -3,6 +3,35 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
+
+**MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
+
+### Function Length Limits
+- **Maximum 40 lines per function** - Split immediately if readability suffers
+- **Strictly enforced in CI** - Build failures for violations
+- **No exceptions** for any code
+
+### Export Requirements
+- **Named exports only** - `export const functionName = ...`
+- **Default exports forbidden** - `export default` will cause build failures
+- **Required for tree-shaking and debugging**
+
+### Class Usage Restrictions
+- **Classes only when framework-required** (React ErrorBoundary, etc.)
+- **Prefer functional composition** over OOP patterns
+- **Justification required in code review for any class usage**
+
+### Async/Await Requirements
+- **Use async/await exclusively** - Never use `.then()` chains
+- **Promise chains are forbidden** and caught by linters
+- **Violations will block PR merges**
+
+### Project References
+- **All packages must set `composite: true`** in tsconfig.json
+- **Required for Nx task graph optimization**
+- **Missing configuration will cause build failures**
+
 ## Local Memory
 
 Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time.
@@ -279,6 +308,51 @@ Notes:
 - Selecting stores programmatically is available via `createStoreFromEnv` exported by `@cortex-os/memories`.
 - Fallback behavior: with no envs, an in-memory store is used (non-persistent, test/dev).
 
+## Development Patterns to Avoid
+
+### NEVER Continue These Anti-Patterns:
+1. **Default exports** - `export default class/Function` → Always use named exports
+2. **Function length > 40 lines** → Immediately split into smaller functions
+3. **`.then()` chains** → Use `async/await` exclusively
+4. **Classes without framework requirement** → Use functional composition
+5. **Missing `composite: true`** → All packages require this setting
+6. **Direct sibling package imports** → Use events/contracts instead
+7. **Bypassing local memory** → Store all development insights persistently
+
+### Required Local Memory Usage Patterns:
+```typescript
+// Store architectural decisions
+await memory.store({
+  content: 'Event-driven architecture prevents tight coupling between features',
+  importance: 9,
+  tags: ['architecture', 'decision', 'a2a'],
+  domain: 'software-design'
+});
+
+// Store code quality lessons
+await memory.store({
+  content: '40-line function limit significantly improves code maintainability',
+  importance: 8,
+  tags: ['lesson', 'codestyle', 'maintainability'],
+  domain: 'development-patterns'
+});
+
+// Store technical decisions
+await memory.store({
+  content: 'Named exports enable better debugging and tree-shaking',
+  importance: 7,
+  tags: ['typescript', 'exports', 'optimization'],
+  domain: 'frontend-architecture'
+});
+```
+
+### Mandatory Local Memory for Development Context:
+- **Store all architectural decisions** with clear reasoning
+- **Document lessons learned** from code reviews and refactoring
+- **Track development strategies** that prove effective
+- **Maintain persistent context** across development sessions
+- **Use semantic search** to find relevant past decisions
+
 ### Getting Help
 - Check existing **documentation** in `docs/` directory
 - Review **architecture guide**: `docs/architecture.md`
@@ -295,6 +369,10 @@ When conflicts arise, follow this precedence order:
 5. Individual package documentation
 
 Always escalate ambiguities via PR description comments rather than making assumptions.
+
+## Time Freshness Rules
+
+See `.cortex/rules/_time-freshness.md` for timezone and date handling rules that all agents must follow.
 
 ## Agent Toolkit
 

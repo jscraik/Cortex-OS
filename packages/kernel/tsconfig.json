@@ -9,6 +9,7 @@
 		"strict": true,
 		"noImplicitAny": true,
 		"noEmit": false,
+		"composite": true,
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,

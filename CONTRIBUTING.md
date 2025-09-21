@@ -53,27 +53,86 @@ pnpm dev
 
 ## 📋 Development Guidelines
 
+### 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
+
+**MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
+
+### Function Length Limits
+- **Maximum 40 lines per function** - Split immediately if readability suffers
+- **Strictly enforced in CI** - Build failures for violations
+- **No exceptions** for any code
+
+### Export Requirements
+- **Named exports only** - `export const functionName = ...`
+- **Default exports forbidden** - `export default` will cause build failures
+- **Required for tree-shaking and debugging**
+
+### Class Usage Restrictions
+- **Classes only when framework-required** (React ErrorBoundary, etc.)
+- **Prefer functional composition** over OOP patterns
+- **Justification required in code review for any class usage**
+
+### Async/Await Requirements
+- **Use async/await exclusively** - Never use `.then()` chains
+- **Promise chains are forbidden** and caught by linters
+- **Violations will block PR merges**
+
+### Project References
+- **All packages must set `composite: true`** in tsconfig.json
+- **Required for Nx task graph optimization**
+- **Missing configuration will cause build failures**
+
+### Mandatory Local Memory Usage
+- **Store all architectural decisions** with reasoning and context
+- **Document lessons learned** from code reviews and refactoring
+- **Track effective development strategies** for future reference
+- **Maintain persistent context** across development sessions
+- **Use semantic search** to find relevant past decisions
+
 ### Code Standards
 
 #### TypeScript/JavaScript
 
 ```typescript
-// ✅ Good: Clear function with type safety
-interface ProcessDataRequest {
+// ✅ Good: Clear function with type safety and proper exports
+export interface ProcessDataRequest {
   data: unknown;
   options: ProcessingOptions;
 }
 
-async function processData({ data, options }: ProcessDataRequest): Promise<ProcessedData> {
+export const processData = async ({
+  data,
+  options
+}: ProcessDataRequest): Promise<ProcessedData> => {
   const validator = createValidator(options.schema);
   const validatedData = await validator.validate(data);
 
   return await processor.process(validatedData, options);
-}
+};
 
-// ❌ Avoid: Unclear types and parameters
-function processData(data: any, opts?: any): any {
-  return processor.process(data, opts);
+// ✅ Good: Function split to respect 40-line limit
+export const validateData = async (
+  data: unknown,
+  schema: ValidationSchema
+): Promise<ValidatedData> => {
+  const validator = createValidator(schema);
+  return await validator.validate(data);
+};
+
+export const processValidatedData = async (
+  data: ValidatedData,
+  options: ProcessingOptions
+): Promise<ProcessedData> => {
+  return await processor.process(data, options);
+};
+
+// ❌ Avoid: Default export, unclear types, >40 lines
+export default function processData(data: any, opts?: any): any {
+  // Long function that should be split
+  const validator = createValidator(opts?.schema);
+  const validated = validator.validate(data);
+  const processed = processor.process(validated, opts);
+  return processed;
 }
 ```
 
@@ -537,6 +596,44 @@ Fixes #456
 - **Architecture Review**: For architectural changes
 - **Security Review**: For security-related changes
 
+## Development Patterns to Avoid
+
+### NEVER Continue These Anti-Patterns:
+1. **Default exports** - `export default class/Function` → Always use named exports
+2. **Function length > 40 lines** → Immediately split into smaller functions
+3. **`.then()` chains** → Use `async/await` exclusively
+4. **Classes without framework requirement** → Use functional composition
+5. **Missing `composite: true`** → All packages require this setting
+6. **Direct sibling package imports** → Use events/contracts instead
+7. **Bypassing local memory** → Store all development insights persistently
+
+### Required Local Memory Usage Patterns:
+```typescript
+// Store architectural decisions
+await memory.store({
+  content: 'Event-driven architecture prevents tight coupling between features',
+  importance: 9,
+  tags: ['architecture', 'decision', 'a2a'],
+  domain: 'software-design'
+});
+
+// Store development lessons
+await memory.store({
+  content: '40-line function limit significantly improves code maintainability',
+  importance: 8,
+  tags: ['lesson', 'codestyle', 'maintainability'],
+  domain: 'development-patterns'
+});
+
+// Store technical decisions
+await memory.store({
+  content: 'Named exports enable better debugging and tree-shaking',
+  importance: 7,
+  tags: ['typescript', 'exports', 'optimization'],
+  domain: 'frontend-architecture'
+});
+```
+
 ## 🏗️ Package Development
 
 ### Creating New Packages
@@ -625,6 +722,27 @@ packages/new-package/
   "tags": ["scope:new-package", "type:library"]
 }
 ```
+
+#### 4. **TypeScript Configuration (REQUIRED)**
+
+```json
+// tsconfig.json
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true, // MANDATORY for Nx task graph
+    "rootDir": "src",
+    "baseUrl": "."
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+}
+```
+
+**Important**: The `composite: true` setting is **required** for all packages to enable proper Nx task graph optimization and build performance.
 
 ### Package Integration
 

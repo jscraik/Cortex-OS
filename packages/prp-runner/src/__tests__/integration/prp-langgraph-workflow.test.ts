@@ -4,7 +4,7 @@ import { PRPLangGraphWorkflow } from '../../lib/prp-langgraph-workflow.js';
 // Mock dependencies
 vi.mock('../../asbr-ai-integration.js');
 vi.mock('../../lib/model-selector.js');
-vi.mock('../../gates/base.js');
+// Note: We'll partially mock gates/base to avoid breaking BaseGate export expected elsewhere
 
 describe('PRPLangGraphWorkflow Integration', () => {
 	let workflow: PRPLangGraphWorkflow;
@@ -28,11 +28,15 @@ describe('PRPLangGraphWorkflow Integration', () => {
 		};
 
 		// Mock gate execution
-		vi.doMock('../../gates/base.js', () => ({
-			createGate: vi.fn().mockReturnValue({
-				execute: vi.fn().mockResolvedValue({ success: true }),
-			}),
-		}));
+		vi.doMock('../../gates/base.js', async (importOriginal) => {
+			const actual = (await importOriginal()) as unknown as Record<string, unknown>;
+			return {
+				...actual,
+				createGate: vi.fn().mockReturnValue({
+					execute: vi.fn().mockResolvedValue({ success: true }),
+				}),
+			};
+		});
 
 		workflow = new PRPLangGraphWorkflow(mockAIIntegration, mockModelSelector);
 	});
@@ -54,11 +58,15 @@ describe('PRPLangGraphWorkflow Integration', () => {
 
 		it('should handle gate failures gracefully', async () => {
 			// Mock a gate failure
-			vi.doMock('../../gates/base.js', () => ({
-				createGate: vi.fn().mockReturnValue({
-					execute: vi.fn().mockRejectedValue(new Error('Gate failed')),
-				}),
-			}));
+			vi.doMock('../../gates/base.js', async (importOriginal) => {
+				const actual = (await importOriginal()) as unknown as Record<string, unknown>;
+				return {
+					...actual,
+					createGate: vi.fn().mockReturnValue({
+						execute: vi.fn().mockRejectedValue(new Error('Gate failed')),
+					}),
+				};
+			});
 
 			// Re-create workflow with new mock
 			workflow = new PRPLangGraphWorkflow(mockAIIntegration, mockModelSelector);
@@ -75,7 +83,7 @@ describe('PRPLangGraphWorkflow Integration', () => {
 			const result = await workflow.execute(prp);
 
 			expect(mockAIIntegration.collectEnhancedEvidence).toHaveBeenCalled();
-			expect(result.evidence).toHaveLength.greaterThan(0);
+			expect(result.evidence.length).toBeGreaterThan(0);
 		});
 
 		it('should select optimal model for execution', async () => {

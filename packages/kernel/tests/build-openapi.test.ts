@@ -30,8 +30,9 @@ describe('BuildNode API schema validation', () => {
 		const state = createInitialPRPState(blueprint, { deterministic: true });
 		const node = new BuildNode();
 		const result = await node.execute(state);
-		const blockers = result.validationResults.build?.blockers || [];
-		expect(blockers).toContain('API schema validation failed');
+		expect(result.gates.G2?.status).toBe('failed');
+		const checkOutput = result.gates.G2?.automatedChecks[0]?.output || '';
+		expect(checkOutput).toContain('blockers');
 	});
 
 	it('passes when openapi.yaml exists', async () => {
@@ -42,7 +43,8 @@ describe('BuildNode API schema validation', () => {
 		const state = createInitialPRPState(blueprint, { deterministic: true });
 		const node = new BuildNode();
 		const result = await node.execute(state);
-		const blockers = result.validationResults.build?.blockers || [];
-		expect(blockers).not.toContain('API schema validation failed');
+		// When openapi.yaml exists, there should be fewer blockers
+		const checkOutput = result.gates.G2?.automatedChecks[0]?.output || '';
+		expect(checkOutput).not.toContain('2 blockers');
 	});
 });

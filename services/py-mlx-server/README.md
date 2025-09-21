@@ -41,3 +41,16 @@ Environment variables:
 - `PORT` (default `8000`)
 - `EMBEDDINGS_MODEL` (default `qwen3-embed`)
 - `EMBEDDINGS_DIM` (default `768`)
+
+### SSD cache mapping (recommended)
+
+Point MLX/HF caches to your external SSD for speed and to save system disk:
+
+```bash
+export HF_HOME=/Volumes/ExternalSSD/huggingface_cache
+export MLX_CACHE_DIR=/Volumes/ExternalSSD/ai-cache
+# Optional: if your embedding pipeline reads local models directly
+export MLX_MODEL_PATH=/Volumes/ExternalSSD/ai-models
+```
+
+You can copy `.env.mlx.example` to `.env.local` at the repo root for a consistent setup.

@@ -198,4 +198,3 @@ export class SimReporter {
 	}
 }
 
-export default SimReporter;

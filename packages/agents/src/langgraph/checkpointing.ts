@@ -104,15 +104,15 @@ export class MemoryCheckpointSaver {
 		const entries = Array.from(this.checkpoints.entries())
 			.filter(([key]) => key.startsWith(prefix))
 			.sort((a, b) => {
-				const aStep = parseInt(a[0].split(':')[1], 10);
-				const bStep = parseInt(b[0].split(':')[1], 10);
+				const aStep = Number.parseInt(a[0].split(':')[1], 10);
+				const bStep = Number.parseInt(b[0].split(':')[1], 10);
 				return bStep - aStep; // Descending order
 			});
 
 		if (before) {
-			const beforeStep = parseInt(before.split(':')[1], 10);
+			const beforeStep = Number.parseInt(before.split(':')[1], 10);
 			return entries
-				.filter(([key]) => parseInt(key.split(':')[1], 10) < beforeStep)
+				.filter(([key]) => Number.parseInt(key.split(':')[1], 10) < beforeStep)
 				.slice(0, limit)
 				.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
 		}
@@ -191,15 +191,15 @@ export class SQLiteCheckpointSaver {
 		const entries = Array.from(this.storage.entries())
 			.filter(([key]) => key.startsWith(prefix))
 			.sort((a, b) => {
-				const aStep = parseInt(a[0].split(':')[1], 10);
-				const bStep = parseInt(b[0].split(':')[1], 10);
+				const aStep = Number.parseInt(a[0].split(':')[1], 10);
+				const bStep = Number.parseInt(b[0].split(':')[1], 10);
 				return bStep - aStep; // Descending order
 			});
 
 		if (before) {
-			const beforeStep = parseInt(before.split(':')[1], 10);
+			const beforeStep = Number.parseInt(before.split(':')[1], 10);
 			return entries
-				.filter(([key]) => parseInt(key.split(':')[1], 10) < beforeStep)
+				.filter(([key]) => Number.parseInt(key.split(':')[1], 10) < beforeStep)
 				.slice(0, limit)
 				.map(([key, checkpoint]) => [key, checkpoint.checkpoint, checkpoint.metadata]);
 		}
@@ -343,7 +343,7 @@ export const checkpointUtils = {
 				(process.env.CHECKPOINT_STORAGE as 'memory' | 'sqlite' | 'postgres' | 'redis') || 'memory',
 			connectionString: process.env.CHECKPOINT_DB_URL,
 			tableName: process.env.CHECKPOINT_TABLE_NAME,
-			ttl: process.env.CHECKPOINT_TTL ? parseInt(process.env.CHECKPOINT_TTL, 10) : undefined,
+			ttl: process.env.CHECKPOINT_TTL ? Number.parseInt(process.env.CHECKPOINT_TTL, 10) : undefined,
 			compression: process.env.CHECKPOINT_COMPRESSION === 'true',
 		};
 	},

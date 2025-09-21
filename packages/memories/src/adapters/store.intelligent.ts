@@ -177,59 +177,95 @@ export class IntelligentMemoryStore implements MemoryStore {
 		private readonly store: MemoryStore,
 		config: IntelligentConfig = {},
 	) {
-		this.config = {
-			summarization: {
-				enabled: true,
-				maxGroupSize: 10,
-				minGroupSize: 3,
-				summaryLength: 200,
-				extractThemes: false,
-				generateTimeline: false,
-				...config.summarization,
-			},
-			consolidation: {
-				enabled: true,
-				similarityThreshold: 0.8,
-				maxConsolidatedSize: 5000,
-				preserveMetadata: false,
-				autoConsolidate: false,
-				...config.consolidation,
-			},
-			keyPointExtraction: {
-				enabled: true,
-				maxPoints: 5,
-				importanceThreshold: 0.5,
-				...config.keyPointExtraction,
-			},
-			search: {
-				enabled: true,
-				includeSummaries: true,
-				includeKeyPoints: true,
-				useSemanticSearch: false,
-				...config.search,
-			},
-			synthesis: {
-				enabled: true,
-				maxSources: 10,
-				confidenceThreshold: 0.7,
-				...config.synthesis,
-			},
-			insights: {
-				enabled: true,
-				identifyGaps: false,
-				suggestTopics: false,
-				...config.insights,
-			},
-			cache: {
-				enabled: true,
-				ttl: 300000, // 5 minutes
-				...config.cache,
-			},
-			performance: {
-				batchSize: 50,
-				maxProcessingTime: 5000,
-				...config.performance,
-			},
+		this.config = this.initializeConfig(config);
+	}
+
+	private initializeConfig(config: IntelligentConfig): Required<IntelligentConfig> {
+		return {
+			summarization: this.initializeSummarizationConfig(config.summarization),
+			consolidation: this.initializeConsolidationConfig(config.consolidation),
+			keyPointExtraction: this.initializeKeyPointExtractionConfig(config.keyPointExtraction),
+			search: this.initializeSearchConfig(config.search),
+			synthesis: this.initializeSynthesisConfig(config.synthesis),
+			insights: this.initializeInsightsConfig(config.insights),
+			cache: this.initializeCacheConfig(config.cache),
+			performance: this.initializePerformanceConfig(config.performance),
+		};
+	}
+
+	private initializeSummarizationConfig(summarization?: IntelligentConfig['summarization']): Required<IntelligentConfig>['summarization'] {
+		return {
+			enabled: true,
+			maxGroupSize: 10,
+			minGroupSize: 3,
+			summaryLength: 200,
+			extractThemes: false,
+			generateTimeline: false,
+			...summarization,
+		};
+	}
+
+	private initializeConsolidationConfig(consolidation?: IntelligentConfig['consolidation']): Required<IntelligentConfig>['consolidation'] {
+		return {
+			enabled: true,
+			similarityThreshold: 0.8,
+			maxConsolidatedSize: 5000,
+			preserveMetadata: false,
+			autoConsolidate: false,
+			...consolidation,
+		};
+	}
+
+	private initializeKeyPointExtractionConfig(keyPointExtraction?: IntelligentConfig['keyPointExtraction']): Required<IntelligentConfig>['keyPointExtraction'] {
+		return {
+			enabled: true,
+			maxPoints: 5,
+			importanceThreshold: 0.5,
+			...keyPointExtraction,
+		};
+	}
+
+	private initializeSearchConfig(search?: IntelligentConfig['search']): Required<IntelligentConfig>['search'] {
+		return {
+			enabled: true,
+			includeSummaries: true,
+			includeKeyPoints: true,
+			useSemanticSearch: false,
+			...search,
+		};
+	}
+
+	private initializeSynthesisConfig(synthesis?: IntelligentConfig['synthesis']): Required<IntelligentConfig>['synthesis'] {
+		return {
+			enabled: true,
+			maxSources: 10,
+			confidenceThreshold: 0.7,
+			...synthesis,
+		};
+	}
+
+	private initializeInsightsConfig(insights?: IntelligentConfig['insights']): Required<IntelligentConfig>['insights'] {
+		return {
+			enabled: true,
+			identifyGaps: false,
+			suggestTopics: false,
+			...insights,
+		};
+	}
+
+	private initializeCacheConfig(cache?: IntelligentConfig['cache']): Required<IntelligentConfig>['cache'] {
+		return {
+			enabled: true,
+			ttl: 300000, // 5 minutes
+			...cache,
+		};
+	}
+
+	private initializePerformanceConfig(performance?: IntelligentConfig['performance']): Required<IntelligentConfig>['performance'] {
+		return {
+			batchSize: 50,
+			maxProcessingTime: 5000,
+			...performance,
 		};
 	}
 
@@ -279,59 +315,91 @@ export class IntelligentMemoryStore implements MemoryStore {
 	async generateSummary(request: SummaryRequest): Promise<SummaryResult> {
 		const cacheKey = this.getCacheKey('summary', request);
 
-		if (this.config.cache.enabled) {
-			const cached = this.summaryCache.get(cacheKey);
-			if (cached && cached.expires > Date.now()) {
-				return cached.result;
-			}
+		const cachedResult = await this.getCachedSummary(cacheKey);
+		if (cachedResult) {
+			return cachedResult;
 		}
 
-		// Get memories within time range
-		const memories = await this.getMemoriesInTimeRange(
+		const memories = await this.getMemoriesForSummary(request);
+		const relevantMemories = await this.filterRelevantMemories(memories, request.query);
+
+		this.validateMinMemoriesForSummary(relevantMemories);
+
+		const groupMemories = this.selectMemoriesForSummary(relevantMemories);
+		const summary = await this.createSummary(groupMemories, request);
+		const themes = await this.extractThemesIfEnabled(groupMemories);
+		const keyPoints = await this.extractKeyPointsFromGroup(groupMemories);
+
+		const result = this.buildSummaryResult(summary, keyPoints, themes, groupMemories);
+
+		await this.cacheSummaryResult(cacheKey, result);
+
+		return result;
+	}
+
+	private async getCachedSummary(cacheKey: string): Promise<SummaryResult | null> {
+		if (!this.config.cache.enabled) {
+			return null;
+		}
+
+		const cached = this.summaryCache.get(cacheKey);
+		if (cached && cached.expires > Date.now()) {
+			return cached.result;
+		}
+
+		return null;
+	}
+
+	private async getMemoriesForSummary(request: SummaryRequest): Promise<Memory[]> {
+		return this.getMemoriesInTimeRange(
 			request.namespace,
 			request.timeRange?.start || new Date(Date.now() - 86400000),
 			request.timeRange?.end || new Date(),
 		);
+	}
 
-		// Filter and group by relevance to query
-		const relevantMemories = await this.filterRelevantMemories(memories, request.query);
-
-		if (relevantMemories.length < this.config.summarization.minGroupSize) {
+	private validateMinMemoriesForSummary(memories: Memory[]): void {
+		if (memories.length < this.config.summarization.minGroupSize) {
 			throw new Error('Insufficient memories for summarization');
 		}
+	}
 
-		// Limit group size
-		const groupMemories = relevantMemories.slice(0, this.config.summarization.maxGroupSize);
+	private selectMemoriesForSummary(memories: Memory[]): Memory[] {
+		return memories.slice(0, this.config.summarization.maxGroupSize);
+	}
 
-		// Generate summary
-		const summary = await this.createSummary(groupMemories, request);
+	private async extractThemesIfEnabled(memories: Memory[]): Promise<string[]> {
+		if (!this.config.summarization.extractThemes) {
+			return [];
+		}
+		return this.extractThemes(memories);
+	}
 
-		// Extract themes if enabled
-		const themes = this.config.summarization.extractThemes
-			? await this.extractThemes(groupMemories)
-			: [];
-
-		// Extract key points
-		const keyPoints = await this.extractKeyPointsFromGroup(groupMemories);
-
-		const result: SummaryResult = {
+	private buildSummaryResult(
+		summary: { text: string; confidence: number },
+		keyPoints: KeyPoint[],
+		themes: string[],
+		memories: Memory[],
+	): SummaryResult {
+		return {
 			summary: summary.text,
 			keyPoints: keyPoints.map((kp) => kp.text),
 			themes,
-			memoriesIncluded: groupMemories.length,
+			memoriesIncluded: memories.length,
 			confidence: summary.confidence,
 			timestamp: new Date(),
 		};
+	}
 
-		// Cache result
-		if (this.config.cache.enabled) {
-			this.summaryCache.set(cacheKey, {
-				result,
-				expires: Date.now() + this.config.cache.ttl,
-			});
+	private async cacheSummaryResult(cacheKey: string, result: SummaryResult): Promise<void> {
+		if (!this.config.cache.enabled) {
+			return;
 		}
 
-		return result;
+		this.summaryCache.set(cacheKey, {
+			result,
+			expires: Date.now() + this.config.cache.ttl,
+		});
 	}
 
 	// Memory Consolidation
@@ -343,7 +411,6 @@ export class IntelligentMemoryStore implements MemoryStore {
 		const { namespace, strategy, threshold } = params;
 		const similarityThreshold = threshold || this.config.consolidation.similarityThreshold;
 
-		// Get all memories
 		const memories = await this.store.list(namespace);
 		const consolidated: Memory[] = [];
 		const processed = new Set<string>();
@@ -351,7 +418,6 @@ export class IntelligentMemoryStore implements MemoryStore {
 		for (const memory of memories) {
 			if (processed.has(memory.id)) continue;
 
-			// Find similar memories
 			const similar = await this.findSimilarMemories(
 				memory,
 				memories,
@@ -360,34 +426,49 @@ export class IntelligentMemoryStore implements MemoryStore {
 			);
 
 			if (similar.length > 1) {
-				// Consolidate memories
-				const consolidatedMemory = await this.createConsolidatedMemory(similar);
-				consolidated.push(consolidatedMemory);
-
-				// Mark as processed
-				for (const m of similar) {
-					processed.add(m.id);
-				}
-
-				// Delete original memories
-				for (const m of similar) {
-					await this.store.delete(m.id, namespace);
-				}
-
-				// Insert consolidated memory
-				await this.store.upsert(consolidatedMemory, namespace);
+				await this.processConsolidationGroup(similar, consolidated, processed, namespace);
 			} else {
 				processed.add(memory.id);
 			}
 		}
 
+		return this.buildConsolidationResult(memories, consolidated);
+	}
+
+	private async processConsolidationGroup(
+		similar: Memory[],
+		consolidated: Memory[],
+		processed: Set<string>,
+		namespace: string,
+	): Promise<void> {
+		const consolidatedMemory = await this.createConsolidatedMemory(similar);
+		consolidated.push(consolidatedMemory);
+
+		// Mark as processed
+		for (const m of similar) {
+			processed.add(m.id);
+		}
+
+		// Delete original memories
+		for (const m of similar) {
+			await this.store.delete(m.id, namespace);
+		}
+
+		// Insert consolidated memory
+		await this.store.upsert(consolidatedMemory, namespace);
+	}
+
+	private buildConsolidationResult(
+		originalMemories: Memory[],
+		consolidated: Memory[],
+	): ConsolidationResult {
 		return {
 			consolidated,
-			originalCount: memories.length,
+			originalCount: originalMemories.length,
 			spaceSaved:
-				memories.reduce((total, m) => total + m.text.length, 0) -
+				originalMemories.reduce((total, m) => total + m.text.length, 0) -
 				consolidated.reduce((total, m) => total + m.text.length, 0),
-			consolidationRatio: consolidated.length / memories.length,
+			consolidationRatio: consolidated.length / originalMemories.length,
 		};
 	}
 
@@ -473,7 +554,6 @@ export class IntelligentMemoryStore implements MemoryStore {
 	async intelligentSearch(query: IntelligentQuery): Promise<IntelligentSearchResult[]> {
 		const { query: searchText, namespace, includeContext, semanticThreshold, limit = 10 } = query;
 
-		// Perform text search
 		const textResults = await this.store.searchByText(
 			{
 				text: searchText,
@@ -482,11 +562,27 @@ export class IntelligentMemoryStore implements MemoryStore {
 			namespace,
 		);
 
-		// Perform vector search if available
-		let vectorResults: (Memory & { score: number })[] = [];
+		const vectorResults = await this.performVectorSearch(searchText, limit, namespace);
+		const allResults = [...textResults, ...vectorResults];
+		const uniqueResults = this.deduplicateResults(allResults);
+
+		const scoredResults = await this.scoreSearchResults(uniqueResults, searchText);
+		const filteredResults = this.applySemanticThreshold(scoredResults, semanticThreshold);
+
+		return includeContext
+			? await this.addSearchContext(filteredResults.slice(0, limit), namespace)
+			: filteredResults
+					.slice(0, limit)
+					.map((r) => ({ memory: r, context: { relatedMemories: [] } }));
+	}
+
+	private async performVectorSearch(
+		searchText: string,
+		limit: number,
+		namespace: string,
+	): Promise<(Memory & { score: number })[]> {
 		try {
-			// Simple vector query (would need actual embedding in real implementation)
-			vectorResults = await this.store.searchByVector(
+			return await this.store.searchByVector(
 				{
 					vector: new Array(5).fill(0.5), // Dummy vector
 					limit,
@@ -500,28 +596,18 @@ export class IntelligentMemoryStore implements MemoryStore {
 			);
 		} catch {
 			// Vector search not available
+			return [];
 		}
+	}
 
-		// Combine results
-		const allResults = [...textResults, ...vectorResults];
-		const uniqueResults = this.deduplicateResults(allResults);
-
-		// Score and rank results
-		const scoredResults = await this.scoreSearchResults(uniqueResults, searchText);
-
-		// Apply semantic threshold if specified
-		const filteredResults = semanticThreshold
-			? scoredResults.filter((r) => r.score >= semanticThreshold)
-			: scoredResults;
-
-		// Add context if requested
-		const resultsWithContext = includeContext
-			? await this.addSearchContext(filteredResults.slice(0, limit), namespace)
-			: filteredResults
-					.slice(0, limit)
-					.map((r) => ({ memory: r, context: { relatedMemories: [] } }));
-
-		return resultsWithContext;
+	private applySemanticThreshold(
+		results: (Memory & { score: number })[],
+		threshold?: number,
+	): (Memory & { score: number })[] {
+		if (!threshold) {
+			return results;
+		}
+		return results.filter((r) => r.score >= threshold);
 	}
 
 	// Answer Synthesis
@@ -562,20 +648,11 @@ export class IntelligentMemoryStore implements MemoryStore {
 	async generateInsights(request: InsightsRequest): Promise<InsightsResult> {
 		const { namespace, timeRange, domains } = request;
 
-		const memories = timeRange
-			? await this.getMemoriesInTimeRange(namespace, timeRange.start, timeRange.end)
-			: await this.store.list(namespace);
+		const memories = await this.getMemoriesForInsights(namespace, timeRange);
 
-		// Analyze temporal patterns
 		const temporalPatterns = await this.analyzeTemporalPatterns(memories);
-
-		// Analyze topical patterns
 		const topicalPatterns = await this.analyzeTopicalPatterns(memories);
-
-		// Analyze relationships
 		const relationalPatterns = await this.analyzeRelationalPatterns(memories);
-
-		// Identify trends
 		const trends = await this.identifyTrends(memories);
 
 		const patterns = {
@@ -584,19 +661,9 @@ export class IntelligentMemoryStore implements MemoryStore {
 			relational: relationalPatterns,
 		};
 
-		// Generate suggestions
 		const suggestions = await this.generateInsightSuggestions(memories, patterns);
-
-		// Identify knowledge gaps if enabled
-		const knowledgeGaps =
-			this.config.insights.identifyGaps && domains
-				? await this.identifyKnowledgeGaps(memories, domains)
-				: undefined;
-
-		// Suggest related topics if enabled
-		const relatedTopics = this.config.insights.suggestTopics
-			? await this.suggestRelatedTopics(memories)
-			: undefined;
+		const knowledgeGaps = await this.identifyKnowledgeGapsIfEnabled(memories, domains);
+		const relatedTopics = await this.suggestRelatedTopicsIfEnabled(memories);
 
 		return {
 			patterns,
@@ -605,6 +672,33 @@ export class IntelligentMemoryStore implements MemoryStore {
 			knowledgeGaps,
 			relatedTopics,
 		};
+	}
+
+	private async getMemoriesForInsights(
+		namespace: string,
+		timeRange?: { start: Date; end: Date },
+	): Promise<Memory[]> {
+		return timeRange
+			? await this.getMemoriesInTimeRange(namespace, timeRange.start, timeRange.end)
+			: await this.store.list(namespace);
+	}
+
+	private async identifyKnowledgeGapsIfEnabled(
+		memories: Memory[],
+		domains?: string[],
+	): Promise<string[] | undefined> {
+		if (!this.config.insights.identifyGaps || !domains) {
+			return undefined;
+		}
+		return this.identifyKnowledgeGaps({ namespace: '', domains });
+	}
+
+	private async suggestRelatedTopicsIfEnabled(memories: Memory[]): Promise<string[] | undefined> {
+		if (!this.config.insights.suggestTopics) {
+			return undefined;
+		}
+		// This is a simplified call - in reality we'd need a topic
+		return this.suggestRelatedTopics({ topic: '', namespace: '', maxSuggestions: 5 });
 	}
 
 	async identifyKnowledgeGaps(params: { namespace: string; domains: string[] }): Promise<string[]> {
@@ -643,7 +737,19 @@ export class IntelligentMemoryStore implements MemoryStore {
 			namespace,
 		);
 
-		// Extract related terms from memories
+		const relatedTerms = await this.extractRelatedTermsFromMemories(memories, topic);
+		this.addKnownRelatedTopics(relatedTerms, topic);
+
+		return Array.from(relatedTerms.entries())
+			.sort((a, b) => b[1] - a[1])
+			.map(([term]) => term)
+			.slice(0, maxSuggestions);
+	}
+
+	private async extractRelatedTermsFromMemories(
+		memories: Memory[],
+		topic: string,
+	): Promise<Map<string, number>> {
 		const relatedTerms = new Map<string, number>();
 
 		for (const memory of memories) {
@@ -655,7 +761,10 @@ export class IntelligentMemoryStore implements MemoryStore {
 			}
 		}
 
-		// Add known related topics based on the topic
+		return relatedTerms;
+	}
+
+	private addKnownRelatedTopics(relatedTerms: Map<string, number>, topic: string): void {
 		const knownRelations: Record<string, string[]> = {
 			'machine learning': [
 				'neural networks',
@@ -673,12 +782,6 @@ export class IntelligentMemoryStore implements MemoryStore {
 				relatedTerms.set(related, (relatedTerms.get(related) || 0) + 10); // Boost known relations
 			}
 		}
-
-		// Convert to array, sort by frequency, and limit
-		return Array.from(relatedTerms.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([term]) => term)
-			.slice(0, maxSuggestions);
 	}
 
 	// Helper methods
@@ -1202,84 +1305,30 @@ export class IntelligentMemoryStore implements MemoryStore {
 		sources: Memory[],
 	): Promise<{ answer: string; confidence: number; reasoning: string[] }> {
 		if (sources.length === 0) {
-			return {
-				answer: 'No information available to answer the question.',
-				confidence: 0,
-				reasoning: [],
-			};
+			return this.getEmptyAnswerResult();
 		}
 
-		// Look for specific patterns in the question
 		const questionLower = question.toLowerCase();
+		const info = new Map<string, string>();
 		let answer = '';
 		const reasoning: string[] = [];
 
-		// Extract information from sources
-		const info = new Map<string, string>();
-
+		// Extract structured information from sources
 		for (const source of sources) {
-			const sentences = source.text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
-
-			for (const sentence of sentences) {
-				const cleanSentence = sentence.trim();
-
-				// Look for deadline information
-				if (questionLower.includes('deadline') || questionLower.includes('when')) {
-					const deadlineMatch = cleanSentence.match(/(?:deadline|due|by)\s+[:-]?\s*(.+)/i);
-					if (deadlineMatch) {
-						info.set('deadline', deadlineMatch[1]);
-					}
-					const dateMatch = cleanSentence.match(
-						/\b(March \d{1,2}|\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2})\b/i,
-					);
-					if (dateMatch) {
-						info.set('deadline', dateMatch[1]);
-					}
-				}
-
-				// Look for budget information
-				if (questionLower.includes('budget') || questionLower.includes('cost')) {
-					const budgetMatch = cleanSentence.match(/\$([,\d]+(?:\.\d{2})?)/g);
-					if (budgetMatch) {
-						info.set('budget', budgetMatch[0]);
-					}
-				}
-
-				// Look for count/number information
-				if (questionLower.includes('how many') || questionLower.includes('number')) {
-					const numberMatch = cleanSentence.match(/\b(\d+)\b/);
-					if (numberMatch) {
-						info.set('count', numberMatch[1]);
-					}
-				}
-
-				// Always add relevant sentences
-				if (this.isSentenceRelevant(cleanSentence, question)) {
-					if (!answer.includes(cleanSentence)) {
-						answer += (answer ? '. ' : '') + cleanSentence;
-					}
-				}
-			}
+			this.extractInformationFromSource(source, questionLower, info, answer);
 		}
 
-		// Construct specific answer if we found structured information
+		// Construct answer with structured information if available
 		if (info.size > 0) {
-			const parts: string[] = [];
-			if (info.has('deadline')) parts.push(`The deadline is ${info.get('deadline')}`);
-			if (info.has('budget')) parts.push(`The budget is ${info.get('budget')}`);
-			if (info.has('count')) parts.push(`It requires ${info.get('count')} developers`);
-
-			if (parts.length > 0) {
-				answer = `${parts.join('. ')}.`;
-				reasoning.push('Extracted specific information from memories.');
-			}
+			answer = this.buildStructuredAnswer(info);
+			reasoning.push('Extracted specific information from memories.');
 		}
 
 		if (!answer) {
 			answer = 'No specific information found to answer the question.';
 		}
 
-		const confidence = Math.min(0.9, 0.3 + info.size / 3 + sources.length / 10);
+		const confidence = this.calculateAnswerConfidence(info, sources);
 
 		return {
 			answer,
@@ -1287,6 +1336,91 @@ export class IntelligentMemoryStore implements MemoryStore {
 			reasoning:
 				reasoning.length > 0 ? reasoning : ['Generated answer from available memory sources.'],
 		};
+	}
+
+	private getEmptyAnswerResult(): {
+		answer: string;
+		confidence: number;
+		reasoning: string[];
+	} {
+		return {
+			answer: 'No information available to answer the question.',
+			confidence: 0,
+			reasoning: [],
+		};
+	}
+
+	private extractInformationFromSource(
+		source: Memory,
+		questionLower: string,
+		info: Map<string, string>,
+		answer: string,
+	): void {
+		const sentences = source.text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+
+		for (const sentence of sentences) {
+			const cleanSentence = sentence.trim();
+
+			// Extract deadline information
+			if (questionLower.includes('deadline') || questionLower.includes('when')) {
+				this.extractDeadlineInfo(cleanSentence, info);
+			}
+
+			// Extract budget information
+			if (questionLower.includes('budget') || questionLower.includes('cost')) {
+				this.extractBudgetInfo(cleanSentence, info);
+			}
+
+			// Extract count/number information
+			if (questionLower.includes('how many') || questionLower.includes('number')) {
+				this.extractCountInfo(cleanSentence, info);
+			}
+
+			// Add relevant sentences
+			if (this.isSentenceRelevant(cleanSentence, questionLower)) {
+				if (!answer.includes(cleanSentence)) {
+					answer += (answer ? '. ' : '') + cleanSentence;
+				}
+			}
+		}
+	}
+
+	private extractDeadlineInfo(sentence: string, info: Map<string, string>): void {
+		const deadlineMatch = sentence.match(/(?:deadline|due|by)\s+[:-]?\s*(.+)/i);
+		if (deadlineMatch) {
+			info.set('deadline', deadlineMatch[1]);
+		}
+		const dateMatch = sentence.match(/\b(March \d{1,2}|\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2})\b/i);
+		if (dateMatch) {
+			info.set('deadline', dateMatch[1]);
+		}
+	}
+
+	private extractBudgetInfo(sentence: string, info: Map<string, string>): void {
+		const budgetMatch = sentence.match(/\$([,\d]+(?:\.\d{2})?)/g);
+		if (budgetMatch) {
+			info.set('budget', budgetMatch[0]);
+		}
+	}
+
+	private extractCountInfo(sentence: string, info: Map<string, string>): void {
+		const numberMatch = sentence.match(/\b(\d+)\b/);
+		if (numberMatch) {
+			info.set('count', numberMatch[1]);
+		}
+	}
+
+	private buildStructuredAnswer(info: Map<string, string>): string {
+		const parts: string[] = [];
+		if (info.has('deadline')) parts.push(`The deadline is ${info.get('deadline')}`);
+		if (info.has('budget')) parts.push(`The budget is ${info.get('budget')}`);
+		if (info.has('count')) parts.push(`It requires ${info.get('count')} developers`);
+
+		return parts.length > 0 ? `${parts.join('. ')}.` : '';
+	}
+
+	private calculateAnswerConfidence(info: Map<string, string>, sources: Memory[]): number {
+		return Math.min(0.9, 0.3 + info.size / 3 + sources.length / 10);
 	}
 
 	private isSentenceRelevant(sentence: string, question: string): boolean {

@@ -27,7 +27,13 @@
     "migration:up": "tsx src/tools/migration-cli.ts migrate",
     "migration:rollback": "tsx src/tools/migration-cli.ts rollback",
     "migration:history": "tsx src/tools/migration-cli.ts history",
-    "migration:validate": "tsx src/tools/migration-cli.ts validate"
+    "migration:validate": "tsx src/tools/migration-cli.ts validate",
+    "monitor:health": "tsx src/monitoring/cli.ts health",
+    "monitor:metrics": "tsx src/monitoring/cli.ts metrics",
+    "monitor:dashboard": "tsx src/monitoring/cli.ts dashboard",
+    "monitor:storage": "tsx src/monitoring/cli.ts storage",
+    "monitor:stress": "tsx src/monitoring/cli.ts stress",
+    "monitor": "tsx src/monitoring/cli.ts"
   },
   "dependencies": {
     "@cortex-os/a2a": "workspace:*",
@@ -51,7 +57,10 @@
     "tsx": "^4.19.1",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "tty-table": "^4.2.3"
   },
   "peerDependencies": {
     "@prisma/client": "^5.18.0"

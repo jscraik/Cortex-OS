@@ -12,7 +12,7 @@ Legend:
 - ⚡ Performance/scale blocker
 - 🔄 Enhancement/optimization
 
-## Recent Updates (2025-09-20)
+## Recent Updates (2025-09-21)
 
 - Reliability primitives wired into pipeline edges:
   - Embedded `withRetry` and `CircuitBreaker` around embedder and store calls in `RAGPipeline`.
@@ -35,6 +35,8 @@ Legend:
 - Observability expansion:
   - Reranker latency and success/error metrics recorded in `lib/rerank-docs.ts`.
   - Embedding batch sizes and total chunk characters recorded in `rag-pipeline.ts`.
+  - Ingest latency metrics added: `rag.ingest.embed_ms`, `rag.ingest.upsert_ms`, `rag.ingest.total_ms` with operation recording `rag.ingest`.
+  - Rerank score distribution metrics added: `rag.reranker.score_p50`, `rag.reranker.score_p95`, `rag.reranker.score_mean`.
   - MIME policy cache hit/miss metrics recorded in `policy/mime.ts`.
 
 - Security hardening and validation:
@@ -69,6 +71,50 @@ Legend:
     - Add ingest throughput and latency counters
     - Add rerank score distribution metrics
     - Publish initial dashboard and SLO specs
+
+- Indexing benchmarks and reporting:
+  - Added seeded RNG for deterministic datasets (`--seed`)
+  - Bench harness computes Recall@K and mAP vs flat baseline
+  - Per-query latency samples collected; HTML report includes sparkline
+  - Added overlap heatmap strip per variant in HTML
+  - CSV export alongside JSON/HTML for spreadsheet analysis
+  - Quantized-HNSW save/load implemented for on-disk size and cold-load time
+  - New CLI flag: `--no-cold-load` to skip cold-load measurements (default on)
+  - New CLI flag: `--reportTag` to group replicated artifacts under `reports/<tag>/<timestamp>/`
+  - External replication to `RAG_DATA_DIR` and `RAG_BACKUP_DIR` with timestamped subfolders
+  - Per-run `README.md` written in each stamped folder with Quick links (HTML/JSON/CSV), flags, and config hash
+  - New CLI flags: per-variant thresholds `--minRecallPctByVariant`, `--minMapByVariant`, and `--failOnMissingVariant`
+  - HTML summary enhanced: per-variant compact table showing min recall/mAP vs thresholds with pass/fail badges
+  - CI integration: when replication is enabled, benchmark emits GitHub Actions outputs and step summary links to reports
+
+  Additional completions (2025-09-21, follow-up):
+
+  - [x] Peak RSS sampler across build/query phases; exported as `peakRss` in JSON and CSV
+  - [x] New CLI flag: `--peakRssBudgetMB` (MB) with budget enforcement and HTML summary badge
+  - [x] Negative parsing tests for per-variant threshold strings (malformed entries ignored)
+  - [x] Mixed-row tests for missing variant metrics with `failOnMissingVariant` true/false
+  - [x] Repo-level README: CI snippet for running benchmark + artifact replication
+  - [x] Nx `bench` target for `@cortex-os/rag` to run the benchmark with passthrough args
+
+  Additional completions (2025-09-21):
+
+  - [x] Unit tests for benchmark budget logic including edge cases (empty results, only-global thresholds, only-variant thresholds)
+  - [x] Nx test target wiring for `@cortex-os/rag` to enable smart selection via `pnpm test:smart`
+  - [x] Benchmarks README documents new CLI flags, curve controls, replication, and CI outputs/summary behavior
+
+- Product Quantization (PQ):
+  - PQ codebook persistence and restore implemented in `PQFlatIndex` (save/load)
+  - Benchmark flag `--quant=pq` persists PQ, records `onDiskBytesPQ` and `coldLoadMsPQ`
+  - Budgets added: `--pqMinCompressionRatio` and `--pqMaxColdLoadMs`
+  - PQ recall/mAP stricter thresholds are env-gated via `RAG_PQ_STRICT=1` (tune with realistic corpus fixture)
+
+  Additional completions (2025-09-21, post-chunking & MLX):
+
+  - [x] Post-chunking A/B test validating reduced citations/length (`packages/rag/src/retrieval/post-chunking.ab.test.ts`)
+  - [x] Retrieval post-chunking feature-flag path (`retrieval.postChunking`) wired into pipeline
+  - [x] Post-chunking documentation added (`packages/rag/docs/retrieval-post-chunking.md`) and linked from README
+  - [x] MLX verification scripts: `scripts/mlx/verify.py`, `scripts/mlx/verify.mjs` (+ package scripts `mlx:verify`, `mlx:verify:py`)
+  - [x] PQ strict thresholds gated by `RAG_PQ_STRICT=1` for future realistic corpus tightening
 
 ## Priority 1: Production Blockers 🚨
 
@@ -144,68 +190,138 @@ Legend:
 
 ### 4) Vector Indexing / Quantization
 
-**Status:** [ ] Not started  
+**Status:** [~] In progress (HNSW implemented, CI benchmark wired; accuracy + reporting enhanced)  
 **Impact:** High - Won't scale beyond ~10k vectors  
 **Estimated Effort:** 5-7 days
 
 - [ ] Benchmarks:
-  - >10x speedup vs linear scan on 10k vectors
-  - <5% accuracy degradation
-  - Memory usage comparison
+  - [x] Multi-size runs (10k, 100k)
+  - [x] Multiple queries per configuration (averaged)
+  - [x] efSearch sweeps (32, 64, 128)
+  - [x] Performance report JSON written (`packages/rag/reports/indexing-performance.json`)
+  - [x] Budget gates implemented (>10x vs linear scan, <5% accuracy drop)
+  - [x] Memory usage comparison (RSS, heap checkpoints)
+  - [x] Baseline and variance stabilization (seeded RNG / fixed dataset)
+  - [x] Recall@K and mAP across variants
+  - [x] CSV export alongside JSON and HTML
+  - [x] HTML sparkline for per-query latencies
+  - [x] Overlap heatmap per variant (flat vs others)
+  - [x] Cold-load metrics and on-disk size for quantized-HNSW (toggle via flag)
+  - [x] Tag-aware timestamped report replication + per-run README with Quick links
+  - [x] CLI: `--reportTag` grouping support
+  - [x] Per-variant budget thresholds (`--minRecallPctByVariant`, `--minMapByVariant`) and optional missing-variant failure (`--failOnMissingVariant`)
+  - [x] HTML per-variant threshold summary table (min recall/mAP vs thresholds)
+  - [x] CI: publish report links via `GITHUB_OUTPUT` and `GITHUB_STEP_SUMMARY` when replication enabled
 - [ ] Implement HNSW backend:
-  - Configurable M, ef_construction parameters
-  - Dynamic index updates
-  - Persistence and recovery
-- [ ] Optional quantization:
-  - Product quantization for large datasets
-  - Scalar quantization for memory efficiency
+  - [x] Configurable M, ef_construction, ef_search parameters (`src/indexing/hnsw-index.ts`)
+  - [x] Dynamic index updates (resize + add after load)
+  - [x] Persistence and recovery (graph + label mapping)
+- [ ] quantization:
+  - [x] Product quantization for large datasets (flag: `--quant=pq`)
+    - [x] Tests first:
+      - [x] Recall/mAP parity vs flat at K∈{1,5,10} on 10k (env-gated via `RAG_PQ_STRICT=1`; thresholds to be tuned on realistic corpus)
+      - [x] Memory reduction ≥ 3x vs float32 baseline on 100k
+      - [x] Cold-load time and on-disk size captured; budgets configurable
+    - [x] Implement codebook persistence/restore; tie into benchmark `--quant=pq`
+    - [x] Hook into existing curves/export; include PQ curves in CSV and HTML
+    - [x] Add budgets to benchmarks for PQ recall/mAP where thresholds provided
+    - [x] Docs: README for PQ usage, parameters (m, k, iters), and trade-offs
+    - Note: Stricter thresholds are env-gated in `pq.characterization.test.ts` via `RAG_PQ_STRICT=1` and should be tuned with a
+      realistic corpus fixture.
+  - [~] Scalar quantization for memory efficiency (flag: `--quant=scalar`) — dequantized
+    benchmark path available; storage savings estimated in scalar path
+  - [x] CLI flags added in benchmark (+ `--no-cold-load`)
 - [ ] Migration path from flat index
+  - [x] Export/import tools and verification (migration utility + parity test)
 
 **Done when:** Benchmarks show >10x improvement, accuracy within bounds, and migration tested
 
+Kickoff notes:
+
+- Baseline `FlatIndex` added (`src/indexing/flat-index.ts`) with unit test — serves as control for benchmarks.
+- HNSW parity & persistence tests added (guarded): `src/indexing/hnsw-index.test.ts`.
+- Benchmark harness extended: `benchmarks/indexing-bench.mjs` supports multi-size, multi-query, efSearch sweeps, and budget enforcement.
+- CI job added (Linux) to install `hnswlib-node`.
+  - Runs benchmark with gates and uploads JSON report.
+  - Workflow: `.github/workflows/rag-indexing-bench.yml`.
+  - Script: `pnpm --filter @cortex-os/rag ci:bench:indexing`.
+
+Next steps:
+
+- Expand PQ path to persist/restore codebooks for external use and additional variants
+- Add CLI options for selecting which variants to run to speed focused experiments — [x] done
+- Add Recall@1/5/10 and mAP@K curves visualization in HTML (small canvas charts) — [x] done
+- Consider integrating memory sampler for peak RSS during build/query phases (optional)
+- Expand test coverage with additional negative cases (malformed threshold strings ignored; mixed-row missing metrics)
+- Document a GitHub Actions usage snippet in the repo-level README for running the benchmark with replication enabled
+
+## Outstanding Work (Follow-ups)
+
+- [x] Memory sampler for peak RSS during build/query phases
+- [x] Negative tests: malformed per-variant threshold strings are ignored safely
+- [x] Mixed-row tests: some rows missing variant metrics while thresholds are present
+- [x] Repo-level docs: CI snippet for benchmark + artifact replication
+- [x] Peak RSS budget flag `--peakRssBudgetMB` implemented and enforced; surfaced in HTML summary
+
 ### 5) Post-chunking (Query-time Adaptation)
 
-**Status:** [ ] Not started  
+**Status:** [~] In progress  
 **Impact:** High - Poor retrieval quality for varied queries  
 **Estimated Effort:** 3-4 days
 
 - [ ] Tests:
-  - Summary queries get larger chunks
-  - Detail queries get fine-grained chunks
-  - Large doc retrieval < 1s
-  - Context window optimization
+  - Summary-intent queries prefer larger chunks (avg chunk chars ↑, recall stable)
+  - Detail-intent queries prefer smaller chunks (avg chunk chars ↓, precision ↑)
+  - Large doc retrieval p95 latency < 1s on 50k-chunk corpus
+  - Context window utilization improved (≤ 85% token fill with same answer quality)
 - [ ] Implement `src/chunkers/post-chunker.ts`:
   - Query intent classification
   - Dynamic chunk sizing
   - Overlap adjustment
   - Metadata-aware chunking
-- [ ] Integration with retrieval pipeline
-- [ ] Performance regression tests
+- [x] Integration with retrieval pipeline (feature-flagged rollout)
+- [ ] Performance regression tests (baseline vs post-chunking; no >5% latency regression at p95)
 
-**Done when:** Adaptive chunking tests pass and latency targets met
+**Done when:** Adaptive chunking tests pass, p95 latency < 1s on large corpus, and
+answer quality (recall/mAP) is non-degraded within ±2% of baseline
+
+Progress so far:
+
+- [x] Minimal post-chunking contract (`src/chunkers/post-chunker.ts`)
+- [x] A/B integration test (`packages/rag/src/retrieval/post-chunking.ab.test.ts`) asserting reduced citation count/length
+- [x] Feature-flagged pipeline integration (`retrieval.postChunking`)
+- [x] Documentation for config and A/B test (`packages/rag/docs/retrieval-post-chunking.md`)
+- [ ] Intent classification and adaptive sizing/overlap
+- [ ] Large corpus perf tests and p95 target
 
 ### 6) End-to-End Observability
 
-**Status:** [~] Partial (store + pipeline + reranker + cache)  
+**Status:** [x] Complete (store + pipeline + reranker + cache)  
 **Impact:** High - Can't debug or optimize in production  
 **Estimated Effort:** 3-4 days
 
-- [ ] Tests: metrics emitted for all operations
+- [x] Tests: metrics emitted for all operations
 - [x] Store operations: latency and operation counts
-- [~] Pipeline metrics:
-  - Ingest throughput and latency — [ ] pending dedicated timers/counters
+- [x] Pipeline metrics:
+  - Ingest throughput and latency — [x] dedicated timers/counters added (embed/upsert/total)
   - Chunk distribution and sizes — [x] total chars recorded (`rag-pipeline.ts`)
   - Embedding batch sizes and timing — [x] batch size recorded (`rag-pipeline.ts`)
-  - Rerank scores and latency — [x] latency recorded (`lib/rerank-docs.ts`); [ ] scores TBD
+  - Rerank scores and latency — [x] latency recorded (`lib/rerank-docs.ts`); [x] score distribution metrics added
   - Cache hit rates — [x] MIME policy hits/misses recorded (`policy/mime.ts`)
-- [ ] Trace correlation across components
-- [ ] Dashboard specifications:
+- [x] Trace correlation across components
+  - [x] Correlate ingest -> embedder/store via shared runId
+  - [x] Propagate correlation through reranker path (correlationId)
+- [x] Dashboard specifications:
   - P50/P95/P99 latencies
   - Error rates by component
   - Resource utilization
-- [ ] SLO definitions and alerts
+- [x] SLO definitions and alerts
 
-**Done when:** All metrics visible in monitoring, dashboards deployed, SLOs documented
+- [x] CI integration:
+  - [x] Dashboard export script: `pnpm obs:dashboard:export` produces `reports/grafana/dashboards/rag-dashboard.json`
+  - [x] Setup guide: `docs/observability/prometheus-grafana-setup.md` (brew and docker-compose options)
+
+**Done when:** All metrics visible in monitoring, dashboards deployed, SLOs documented, and CI artifacts published
 
 ## Priority 3: Production Optimizations 🔄
 
@@ -367,7 +483,7 @@ Legend:
 **Status:** [ ] Not started  
 **Impact:** Low
 
-- [ ] Emit metrics for `PgVectorStore.init()`
+- [x] Emit metrics for `PgVectorStore.init()`
 - [ ] Fix markdown lint issues
 - [ ] API documentation generation
 - [ ] Example notebooks

@@ -21,6 +21,8 @@
     "benchmark:ingest": "node benchmarks/ingest.js",
     "benchmark:retrieval": "node benchmarks/retrieval.js",
     "benchmark:all": "npm run benchmark:ingest && npm run benchmark:retrieval && npm run test:performance",
+    "test:performance:indexing": "node benchmarks/indexing-bench.mjs",
+    "ci:bench:indexing": "node benchmarks/indexing-bench.mjs --sizes=10000,100000 --queries=5 --ef=32,64,128 --topK=10 --report=reports/indexing-performance.json",
     "security:scan": "pnpm -w security:scan:diff || pnpm -w security:scan"
   },
   "dependencies": {

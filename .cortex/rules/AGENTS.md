@@ -13,6 +13,7 @@
 - **Agents:** Role-based agents that interface with kernel nodes
 - **Local-First:** Prefers on-device execution (MLX inference, local vector DB) with optional remote model gateway
 - **Teaching:** Review steps include educational feedback
+- **Time Freshness:** See `_time-freshness.md` for timezone and date handling rules
 
 ---
 

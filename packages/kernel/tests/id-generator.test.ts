@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ExampleCaptureSystem } from '../src/teaching/example-capture.js';
-import { generateId, resetIdCounter } from '../src/utils/id.js';
+import { generateId, resetCounters as resetIdCounter } from '../src/utils/id.js';
 
 describe('ID generator', () => {
 	beforeEach(() => {

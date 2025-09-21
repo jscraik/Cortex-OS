@@ -273,7 +273,7 @@ export class RealtimeMemoryServer extends EventEmitter {
 		try {
 			const message = JSON.parse(data);
 			this.handleMessageContent(clientId, message);
-		} catch (_error) {
+		} catch {
 			this.sendMessage(connection.ws, {
 				type: 'error',
 				message: 'Invalid message format',
@@ -516,7 +516,7 @@ export class RealtimeMemoryServer extends EventEmitter {
 		const now = Date.now();
 		const timeout = this.config.connectionTimeout!;
 
-		for (const [_clientId, connection] of this.connections) {
+		for (const connection of this.connections.values()) {
 			if (now - connection.lastActivity > timeout) {
 				// Close stale connection
 				connection.ws.close(1000, 'Connection timeout');

@@ -1,0 +1,82 @@
+[
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/adapters/embedder.ollama.ts",
+    "lines": "29-31",
+    "severity": "high",
+    "category": "async-await-usage",
+    "description": "Promise chain (.then()) used instead of async/await pattern",
+    "evidence": "Line 29-31: .then((response: any) => {",
+    "fix": "Convert to async/await pattern: const response = await this.client.post(...);",
+    "tests_to_add": "Test async/await conversion maintains same behavior"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/pooling/connection-pool.ts",
+    "lines": "1-459",
+    "severity": "high",
+    "category": "function-length",
+    "description": "File contains 459 lines, likely contains functions exceeding 40-line limit",
+    "evidence": "File line count: 459 lines",
+    "fix": "Split large functions into smaller, focused functions under 40 lines each",
+    "tests_to_add": "Verify refactored functions maintain identical behavior"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/tools/memory-cli.ts",
+    "lines": "1-447",
+    "severity": "high",
+    "category": "function-length",
+    "description": "File contains 447 lines, likely contains functions exceeding 40-line limit",
+    "evidence": "File line count: 447 lines",
+    "fix": "Split large functions into smaller, focused functions under 40 lines each",
+    "tests_to_add": "Verify refactored functions maintain identical behavior"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/security/asbr-policies.ts",
+    "lines": "1-378",
+    "severity": "high",
+    "category": "function-length",
+    "description": "File contains 378 lines, likely contains functions exceeding 40-line limit",
+    "evidence": "File line count: 378 lines",
+    "fix": "Split large functions into smaller, focused functions under 40 lines each",
+    "tests_to_add": "Verify refactored functions maintain identical behavior"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/tools/migration-cli.ts",
+    "lines": "1-230",
+    "severity": "medium",
+    "category": "function-length",
+    "description": "File contains 230 lines, may contain functions exceeding 40-line limit",
+    "evidence": "File line count: 230 lines",
+    "fix": "Review and split any functions over 40 lines into smaller functions",
+    "tests_to_add": "Verify refactored functions maintain identical behavior"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/config/constants.ts",
+    "lines": "1-171",
+    "severity": "medium",
+    "category": "function-length",
+    "description": "File contains 171 lines, may contain functions exceeding 40-line limit",
+    "evidence": "File line count: 171 lines",
+    "fix": "Review and split any functions over 40 lines into smaller functions",
+    "tests_to_add": "Verify refactored functions maintain identical behavior"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/core/in-memory-cache.ts",
+    "lines": "83-86",
+    "severity": "low",
+    "category": "code-quality",
+    "description": "File contains copyright comment that should be removed",
+    "evidence": "Line 85-86: // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.",
+    "fix": "Remove copyright comment from source code",
+    "tests_to_add": "No tests needed - comment removal only"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memories/src/adapters/store.sqlite.ts",
+    "lines": "9-15",
+    "severity": "low",
+    "category": "code-quality",
+    "description": "ESLint disable comments should be justified and minimal",
+    "evidence": "Lines 9-12: eslint-disable-next-line @typescript-eslint/no-require-imports (used twice)",
+    "fix": "Replace require statements with ES6 imports or justify necessity",
+    "tests_to_add": "Verify import changes maintain functionality"
+  }
+]

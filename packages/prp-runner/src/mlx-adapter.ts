@@ -16,6 +16,12 @@ export interface MLXConfig {
 	knifePath?: string;
 	cachePath?: string;
 	timeoutMs?: number;
+	/** Enable auto-unload of model after inactivity (test support) */
+	autoUnload?: boolean;
+	/** Timeout in ms for auto-unload (test support) */
+	unloadTimeout?: number;
+	/** Maximum size of in-memory model cache (test support) */
+	maxCacheSize?: number;
 }
 
 export interface MLXGenerateOptions {
@@ -40,11 +46,28 @@ export interface MLXModelInfo {
  */
 export class MLXAdapter {
 	private config: MLXConfig;
-	private knifePath: string;
+	private readonly knifePath: string;
+	// Lightweight in-process state for tests (no impact on CLI behavior)
+	private loaded = false;
+	private unloadTimer?: ReturnType<typeof setTimeout>;
+	private modelCache: string[] = [];
 
 	constructor(config: MLXConfig) {
-		this.config = config;
-		this.knifePath = config.knifePath || 'mlx-knife';
+		// brAInwav: Enhanced ExternalSSD-aware defaults from environment
+		this.config = {
+			// Use ExternalSSD cache path if available in environment
+			cachePath: process.env.MLX_CACHE_DIR || config.cachePath,
+			// Use ExternalSSD knife path if available
+			knifePath: config.knifePath || process.env.MLX_KNIFE_PATH || 'mlx-knife',
+			// Extend timeout for large models on ExternalSSD
+			timeoutMs: config.timeoutMs || 45000, // 45s for ExternalSSD models
+			// Default model tokens for inference
+			maxTokens: config.maxTokens || 512,
+			temperature: config.temperature || 0.7,
+			...config,
+		};
+
+		this.knifePath = this.config.knifePath || 'mlx-knife';
 		this.validateConfig();
 	}
 
@@ -74,6 +97,44 @@ export class MLXAdapter {
 		if (this.config.timeoutMs !== undefined && this.config.timeoutMs <= 0) {
 			throw new Error('timeoutMs must be positive');
 		}
+	}
+
+	/**
+	 * TEST SUPPORT: mark adapter as loaded and optionally schedule auto-unload
+	 */
+	async load(): Promise<void> {
+		this.loaded = true;
+		this.resetUnloadTimer();
+	}
+
+	/** TEST SUPPORT: whether adapter is marked as loaded */
+	isLoaded(): boolean {
+		return this.loaded;
+	}
+
+	private resetUnloadTimer() {
+		if (!this.config.autoUnload) return;
+		if (this.unloadTimer) clearTimeout(this.unloadTimer);
+		const timeout = this.config.unloadTimeout ?? 1_000;
+		this.unloadTimer = setTimeout(() => {
+			this.loaded = false;
+		}, timeout);
+	}
+
+	/** TEST SUPPORT: maintain a tiny cache of model names with max size */
+	async loadModel(name: string): Promise<void> {
+		this.modelCache.push(name);
+		const max = this.config.maxCacheSize ?? 0;
+		if (max > 0 && this.modelCache.length > max) {
+			// keep most recent, drop older
+			this.modelCache = this.modelCache.slice(-max);
+		}
+		this.resetUnloadTimer();
+	}
+
+	/** TEST SUPPORT: obtain current cached model names */
+	getCachedModels(): string[] {
+		return [...this.modelCache];
 	}
 
 	/**
@@ -119,7 +180,11 @@ export class MLXAdapter {
 					model.id === modelName
 				);
 			});
-		} catch (_error) {
+		} catch (error) {
+			// Swallow with false – environment likely lacks mlx-knife
+			if (process.env.DEBUG?.includes('mlx')) {
+				console.debug('MLX availability check error:', error);
+			}
 			return false;
 		}
 	}
@@ -132,6 +197,10 @@ export class MLXAdapter {
 			throw new Error(`MLX runtime unavailable: cannot generate with ${this.config.modelName}`);
 		}
 		const { prompt, maxTokens = 512, temperature = 0.7 } = options;
+
+		// mark as active to postpone auto-unload in tests
+		this.loaded = true;
+		this.resetUnloadTimer();
 
 		// Get the actual model name that mlx-knife recognizes
 		const actualModelName = await this.getActualModelName(this.config.modelName);
@@ -173,7 +242,10 @@ export class MLXAdapter {
 		try {
 			const output = await this.executeCommand(['show', targetModel]);
 			return this.parseModelInfo(output);
-		} catch (_error) {
+		} catch (error) {
+			if (process.env.DEBUG?.includes('mlx')) {
+				console.debug('MLX getModelInfo error:', error);
+			}
 			return null;
 		}
 	}
@@ -212,9 +284,27 @@ export class MLXAdapter {
 	 */
 	private async executeCommand(args: string[]): Promise<string> {
 		return new Promise((resolve, reject) => {
+			// brAInwav: Enhanced ExternalSSD environment configuration
+			const childEnv = {
+				...process.env,
+				// Ensure mlx-knife sees ExternalSSD caches and models
+				...(process.env.MLX_MODEL_PATH ? { MLX_MODEL_PATH: process.env.MLX_MODEL_PATH } : {}),
+				...(process.env.HF_HOME
+					? { HF_HOME: process.env.HF_HOME, TRANSFORMERS_CACHE: process.env.HF_HOME }
+					: {}),
+				...(this.config.cachePath ? { MLX_CACHE_DIR: this.config.cachePath } : {}),
+				...(process.env.MLX_CACHE_DIR ? { MLX_CACHE_DIR: process.env.MLX_CACHE_DIR } : {}),
+				// Additional ExternalSSD optimizations
+				...(process.env.MLX_EMBED_BASE_URL
+					? { MLX_EMBED_BASE_URL: process.env.MLX_EMBED_BASE_URL }
+					: {}),
+				// Performance tuning for ExternalSSD
+				MLX_MEMORY_FRACTION: process.env.MLX_MEMORY_FRACTION || '0.8',
+				MLX_CACHE_ENABLED: process.env.MLX_CACHE_ENABLED || 'true',
+			};
 			const child = spawn(this.knifePath, args, {
 				stdio: ['pipe', 'pipe', 'pipe'],
-				env: process.env,
+				env: childEnv,
 			});
 
 			let stdout = '';
@@ -374,7 +464,10 @@ export class MLXAdapter {
 			);
 
 			return partialMatch?.name || null;
-		} catch (_error) {
+		} catch (error) {
+			if (process.env.DEBUG?.includes('mlx')) {
+				console.debug('MLX getActualModelName error:', error);
+			}
 			return null;
 		}
 	}

@@ -7,7 +7,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { createAgentsBusIntegration } from './AgentsBusIntegration.js';
-import { createMasterAgentGraph, type SubAgentConfig } from './MasterAgent.js';
+import { type SubAgentConfig, createMasterAgentGraph } from './MasterAgent.js';
 
 // Define specialized sub-agents following your architecture diagram
 const subAgents: SubAgentConfig[] = [
@@ -111,14 +111,17 @@ const startAgentSystem = async () => {
 
 // Start the system
 if (import.meta.url === `file://${process.argv[1]}`) {
-	startAgentSystem()
-		.then(() => {
-			console.log('📡 Agent system running. Press Ctrl+C to stop.');
-		})
-		.catch((error) => {
-			console.error('💥 Failed to start agent system:', error);
-			process.exit(1);
-		});
+	runAgentSystem();
+}
+
+async function runAgentSystem() {
+	try {
+		await startAgentSystem();
+		console.log('📡 Agent system running. Press Ctrl+C to stop.');
+	} catch (error) {
+		console.error('💥 Failed to start agent system:', error);
+		process.exit(1);
+	}
 }
 
 export { startAgentSystem };

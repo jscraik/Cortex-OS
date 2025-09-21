@@ -7,7 +7,7 @@ vi.mock('../../asbr-ai-integration.js');
 
 describe('ModelSelector', () => {
 	let modelSelector: ModelSelector;
-	let mockAIIntegration: any;
+	let mockAIIntegration: ASBRAIIntegration;
 
 	beforeEach(() => {
 		mockAIIntegration = new ASBRAIIntegration();
@@ -23,7 +23,7 @@ describe('ModelSelector', () => {
 	describe('selectOptimalModel', () => {
 		it('should select MLX model when available', () => {
 			// Mock MLX as available
-			vi.spyOn(modelSelector as any, 'mlxAvailable', 'get').returnValue(true);
+			vi.spyOn(modelSelector, 'mlxAvailable', 'get').mockReturnValue(true);
 
 			const model = modelSelector.selectOptimalModel('code-analysis');
 
@@ -34,8 +34,8 @@ describe('ModelSelector', () => {
 
 		it('should fallback to Ollama when MLX is unavailable', () => {
 			// Mock MLX as unavailable, Ollama as available
-			vi.spyOn(modelSelector as any, 'mlxAvailable', 'get').returnValue(false);
-			vi.spyOn(modelSelector as any, 'ollamaAvailable', 'get').returnValue(true);
+			vi.spyOn(modelSelector, 'mlxAvailable', 'get').mockReturnValue(false);
+			vi.spyOn(modelSelector, 'ollamaAvailable', 'get').mockReturnValue(true);
 
 			const model = modelSelector.selectOptimalModel('code-analysis');
 
@@ -51,8 +51,8 @@ describe('ModelSelector', () => {
 
 		it('should return null when no models meet requirements', () => {
 			// Mock all providers as unavailable
-			vi.spyOn(modelSelector as any, 'mlxAvailable', 'get').returnValue(false);
-			vi.spyOn(modelSelector as any, 'ollamaAvailable', 'get').returnValue(false);
+			vi.spyOn(modelSelector, 'mlxAvailable', 'get').mockReturnValue(false);
+			vi.spyOn(modelSelector, 'ollamaAvailable', 'get').mockReturnValue(false);
 
 			const model = modelSelector.selectOptimalModel(
 				'code-analysis',
@@ -108,8 +108,8 @@ describe('ModelSelector', () => {
 
 	describe('getProviderStatus', () => {
 		it('should return provider availability status', () => {
-			vi.spyOn(modelSelector as any, 'mlxAvailable', 'get').returnValue(true);
-			vi.spyOn(modelSelector as any, 'ollamaAvailable', 'get').returnValue(false);
+			vi.spyOn(modelSelector, 'mlxAvailable', 'get').mockReturnValue(true);
+			vi.spyOn(modelSelector, 'ollamaAvailable', 'get').mockReturnValue(false);
 
 			const status = modelSelector.getProviderStatus();
 

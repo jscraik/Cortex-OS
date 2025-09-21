@@ -38,66 +38,91 @@ export class TestRunner {
 		const startTime = Date.now();
 
 		try {
-			// Detect test framework and package manager
-			const framework = await this.detectTestFramework();
-			const packageManager = await this.detectPackageManager();
+			// Detect test environment
+			const testEnv = await this.detectTestEnvironment();
 
-			// Run compilation check first
-			const compilationResult = await this.checkCompilation(packageManager);
+			// Check compilation first
+			const compilationResult = await this.checkCompilation(testEnv.packageManager);
 			if (!compilationResult.success) {
-				return {
-					passed: false,
-					details: {
-						compilation: 'failed',
-						testsPassed: 0,
-						testsFailed: 0,
-						coverage: 0,
-						duration: Date.now() - startTime,
-						testFramework: framework,
-						coverageThreshold: 80,
-					},
-				};
+				return this.createCompilationFailureResult(testEnv, startTime);
 			}
 
-			// Run tests with coverage
-			const testResult = await this.executeTests(framework, packageManager);
+			// Execute tests and coverage
+			const testResult = await this.executeTests(testEnv.framework, testEnv.packageManager);
 			const coverageResult = await this.extractCoverage();
 
-			return {
-				passed: testResult.success && coverageResult.coverage >= 80,
-				details: {
-					compilation: 'success',
-					testsPassed: testResult.passed,
-					testsFailed: testResult.failed,
-					coverage: coverageResult.coverage,
-					duration: Date.now() - startTime,
-					testFramework: framework,
-					coverageThreshold: 80,
-					failedTests: testResult.failures,
-				},
-			};
+			return this.createTestResult(testResult, coverageResult, testEnv, startTime);
 		} catch (error) {
 			console.warn('Test execution encountered errors:', error);
-			return {
-				passed: false,
-				details: {
-					compilation: 'error',
-					testsPassed: 0,
-					testsFailed: 1,
-					coverage: 0,
-					duration: Date.now() - startTime,
-					testFramework: 'unknown',
-					coverageThreshold: 80,
-					failedTests: [
-						{
-							name: 'test-execution-error',
-							file: 'test-runner',
-							error: error instanceof Error ? error.message : 'Unknown test error',
-						},
-					],
-				},
-			};
+			return this.createErrorResult(error, startTime);
 		}
+	}
+
+	private async detectTestEnvironment(): Promise<{ framework: string; packageManager: string }> {
+		const framework = await this.detectTestFramework();
+		const packageManager = await this.detectPackageManager();
+		return { framework, packageManager };
+	}
+
+	private createCompilationFailureResult(
+		testEnv: { framework: string; packageManager: string },
+		startTime: number,
+	): TestResult {
+		return {
+			passed: false,
+			details: {
+				compilation: 'failed',
+				testsPassed: 0,
+				testsFailed: 0,
+				coverage: 0,
+				duration: Date.now() - startTime,
+				testFramework: testEnv.framework,
+				coverageThreshold: 80,
+			},
+		};
+	}
+
+	private createTestResult(
+		testResult: { success: boolean; passed: number; failed: number; failures: TestFailure[] },
+		coverageResult: { coverage: number },
+		testEnv: { framework: string; packageManager: string },
+		startTime: number,
+	): TestResult {
+		return {
+			passed: testResult.success && coverageResult.coverage >= 80,
+			details: {
+				compilation: 'success',
+				testsPassed: testResult.passed,
+				testsFailed: testResult.failed,
+				coverage: coverageResult.coverage,
+				duration: Date.now() - startTime,
+				testFramework: testEnv.framework,
+				coverageThreshold: 80,
+				failedTests: testResult.failures,
+			},
+		};
+	}
+
+	private createErrorResult(error: unknown, startTime: number): TestResult {
+		return {
+			passed: false,
+			details: {
+				compilation: 'error',
+				testsPassed: 0,
+				testsFailed: 1,
+				coverage: 0,
+				duration: Date.now() - startTime,
+				testFramework: 'unknown',
+				coverageThreshold: 80,
+				failedTests: [
+					{
+						name: 'test-execution-error',
+						file: 'test-runner',
+						error: error instanceof Error ? error.message : 'Unknown test error',
+					},
+				],
+			},
+		};
 	}
 
 	private async detectTestFramework(): Promise<string> {

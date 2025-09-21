@@ -1,18 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
-  "files": {
-    "ignoreUnknown": true,
-    "includes": [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.json",
-      "**/*.css",
-      "**/*.graphql",
-      "**/*.gql"
-    ]
-  },
+  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "tab",
@@ -27,8 +14,7 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
-      "semicolons": "always",
-      "trailingCommas": "all"
+      "semicolons": "always"
     }
   },
   "json": {
@@ -40,14 +26,6 @@
     }
   },
   "css": {
-    "formatter": {
-      "enabled": false
-    },
-    "linter": {
-      "enabled": false
-    }
-  },
-  "graphql": {
     "formatter": {
       "enabled": false
     },

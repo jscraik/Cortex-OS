@@ -1,0 +1,107 @@
+Metadata-Version: 2.4
+Name: cortex-os-rules
+Version: 1.0.0
+Summary: Cortex-OS rules and utilities for AI agents
+Author: Cortex-OS Team
+License: MIT
+Project-URL: Homepage, https://github.com/cortex-os/cortex-rules
+Project-URL: Repository, https://github.com/cortex-os/cortex-rules
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+
+# @cortex-os/cortex-rules
+
+A package for managing and rendering Cortex-OS rules for AI agents.
+
+## Installation
+
+```bash
+npm install @cortex-os/cortex-rules
+```
+
+## Usage
+
+### Node.js/TypeScript
+
+```typescript
+import { getFreshnessRule, renderRule } from '@cortex-os/cortex-rules';
+
+// Get the freshness rule with default values
+const rule = getFreshnessRule();
+
+// Get the freshness rule with custom values
+const customRule = getFreshnessRule({
+  userTimezone: 'America/New_York',
+  today: '2025-09-21'
+});
+
+// Render a custom rule template
+const rendered = renderRule('./path/to/template.md', {
+  USER_TIMEZONE: 'Europe/London',
+  TODAY: '2025-09-21'
+});
+```
+
+### Wiring into Agents
+
+Wherever you build messages for Claude/Gemini/Qwen/Copilot, prepend the rendered rule:
+
+```typescript
+import { getFreshnessRule } from '@cortex-os/cortex-rules';
+
+const rule = getFreshnessRule({ userTimezone: user.tz });
+
+messages.unshift({ role: "system", content: rule });
+```
+
+## Time Freshness Rule
+
+The package uses the `_time-freshness.md` template which contains:
+
+```
+Very important: The user's timezone is {{USER_TIMEZONE}}. Today's date is {{TODAY}}.
+
+Treat dates before this as past and after this as future. When asked for "latest", "most recent", "today's", etc., do not assume knowledge is current; verify freshness or ask the user.
+```
+
+## API
+
+### `getFreshnessRule(options?)`
+
+Returns the rendered time freshness rule.
+
+#### Options
+
+- `userTimezone` (string, optional): User's timezone. Defaults to system timezone.
+- `today` (string, optional): Today's date in YYYY-MM-DD format. Defaults to current date.
+- `rulePath` (string, optional): Path to the rule template file.
+
+### `renderRule(rulePath, vars)`
+
+Renders a rule template with the provided variables.
+
+#### Parameters
+
+- `rulePath` (string): Path to the rule template file.
+- `vars` (object): Variables to replace in the template.
+  - `USER_TIMEZONE` (string): User's timezone.
+  - `TODAY` (string): Today's date in YYYY-MM-DD format.
+
+## Source of Timezone Truth
+
+1. Prefer user.profile.timezone from your auth/session.
+2. Fallbacks: browser Intl.DateTimeFormat().resolvedOptions().timeZone (client), or server TZ/UTC.
+3. If you have multi-tenant agents, pass the tz along with each request so the rule is rendered per-user, not per-server.
+
+## Quick Test
+
+Ask each agent: "What timezone and date are you using per your rules?"
+You should see your actual user TZ and today's date—not {datetime...} and not server UTC (unless that's your fallback).

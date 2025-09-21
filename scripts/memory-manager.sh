@@ -10,6 +10,8 @@ readonly AGGRESSIVE_MEMORY_THRESHOLD_KB=409600  # 400MB (increased for developme
 readonly VSCODE_SAFE_MEMORY_THRESHOLD_KB=1048576  # 1GB for VS Code processes
 readonly MAX_NODE_PROCESSES=10
 readonly MAX_CODE_HELPERS=5
+readonly MAX_VITEST_PROCESSES=2
+readonly VITEST_RSS_HARD_KB=900000   # ~900MB per vitest worker hard cap
 readonly CLEANUP_WAIT_SECONDS=3
 readonly FORCE_KILL_WAIT_SECONDS=2
 
@@ -93,7 +95,9 @@ cleanup_test_processes() {
     log_info "Cleaning up test processes..."
 
     local test_patterns=(
-        "vitest.*run"
+        # Common vitest variants seen in Activity Monitor: "node (vitest 1)"
+        # Match any vitest process including forks and worker pools
+        "vitest"
         "jest.*test"
         "node.*test"
         "pytest.*test"
@@ -134,6 +138,9 @@ cleanup_excessive_node_processes() {
 
     log_info "Cleaning up Node processes using more than $((memory_threshold / 1024))MB..."
 
+    # Track vitest PIDs to enforce a global cap and per-proc RSS limit
+    declare -a vitest_pids=()
+
     # Get Node processes with memory usage
     while IFS=$'\t' read -r pid memory_kb command; do
         if [[ "$memory_kb" -gt "$memory_threshold" ]]; then
@@ -164,9 +171,37 @@ cleanup_excessive_node_processes() {
                 continue
             fi
 
+            # If vitest, apply hard cap and collect for post-pass trimming
+            if echo "$command" | grep -qi "vitest"; then
+                if [[ "$memory_kb" -ge "$VITEST_RSS_HARD_KB" ]]; then
+                    log_warn "Vitest worker over hard RSS cap: ${memory_kb}KB (PID: $pid)"
+                    safe_kill "-9" "$pid" "vitest worker over cap (${memory_kb}KB)"
+                    continue
+                fi
+                vitest_pids+=("$pid:$memory_kb")
+            fi
+
             safe_kill "-15" "$pid" "high-memory Node process (${memory_kb}KB)"
         fi
     done < <(ps -ax -o pid,rss,command | awk '/node/ && !/awk/ {printf "%s\t%s\t", $1, $2; for(i=3;i<=NF;i++) printf "%s ", $i; print ""}' 2>/dev/null || true)
+
+    # Enforce global vitest process cap by killing largest RSS first beyond cap
+    if (( ${#vitest_pids[@]} > MAX_VITEST_PROCESSES )); then
+        log_warn "Too many vitest processes: ${#vitest_pids[@]} (cap=${MAX_VITEST_PROCESSES})"
+        # sort by RSS desc
+        IFS=$'\n' sorted=($(printf '%s\n' "${vitest_pids[@]}" | sort -t: -k2,2nr))
+        # keep first MAX_VITEST_PROCESSES; kill the rest
+        idx=0
+        for entry in "${sorted[@]}"; do
+            pid="${entry%%:*}"
+            rss="${entry##*:}"
+            if (( idx < MAX_VITEST_PROCESSES )); then
+                idx=$((idx+1))
+                continue
+            fi
+            safe_kill "-15" "$pid" "excess vitest process (${rss}KB)"
+        done
+    fi
 }
 
 force_cleanup_remaining() {

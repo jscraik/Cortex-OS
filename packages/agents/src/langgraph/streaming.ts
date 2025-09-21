@@ -490,10 +490,10 @@ export const streamingUtils = {
 			includeIntermediate: process.env.STREAMING_INTERMEDIATE !== 'false',
 			includeMetadata: process.env.STREAMING_METADATA !== 'false',
 			bufferSize: process.env.STREAMING_BUFFER_SIZE
-				? parseInt(process.env.STREAMING_BUFFER_SIZE, 10)
+				? Number.parseInt(process.env.STREAMING_BUFFER_SIZE, 10)
 				: undefined,
 			flushInterval: process.env.STREAMING_FLUSH_INTERVAL
-				? parseInt(process.env.STREAMING_FLUSH_INTERVAL, 10)
+				? Number.parseInt(process.env.STREAMING_FLUSH_INTERVAL, 10)
 				: undefined,
 		};
 	},
@@ -525,7 +525,7 @@ export const streamingUtils = {
 		const byType: Record<string, number> = {};
 		const byThread: Record<string, number> = {};
 
-		let minTime = Infinity;
+		let minTime = Number.POSITIVE_INFINITY;
 		let maxTime = 0;
 
 		events.forEach((event) => {

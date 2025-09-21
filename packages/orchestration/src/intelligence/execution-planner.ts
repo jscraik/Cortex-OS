@@ -773,7 +773,7 @@ export class ExecutionPlanner {
 		return {
 			strategy: optimizedPlan.parallelizationScore > 0.3 ? 'parallel' : 'sequential',
 			estimatedDuration: optimizedPlan.estimatedDuration,
-			steps: [], // Add empty steps array for compatibility
+			steps: [],
 			optimizations: [
 				`Parallelization score: ${(optimizedPlan.parallelizationScore * 100).toFixed(1)}%`,
 				`Critical path: ${optimizedPlan.criticalPath.join(' -> ')}`,
@@ -962,7 +962,7 @@ export class ExecutionPlanner {
 			criticalPath,
 			duration,
 			bottlenecks,
-			totalDuration: duration, // Add alias for test compatibility
+			totalDuration: duration,
 			parallelizableSteps,
 		};
 	}

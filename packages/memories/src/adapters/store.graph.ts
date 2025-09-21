@@ -610,7 +610,7 @@ export class GraphMemoryStore implements MemoryStore {
 
 		if (pattern.type === 'path') {
 			// Find paths matching the pattern
-			for (const [nodeId, _node] of nodes) {
+			for (const nodeId of nodes.keys()) {
 				const paths = await this.findAllPathsFromNode(nodeId, namespace, pattern.edges.length);
 
 				for (const path of paths) {

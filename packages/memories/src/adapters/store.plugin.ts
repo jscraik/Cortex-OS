@@ -50,6 +50,13 @@ export class PluginAwareMemoryStore implements MemoryStore {
 	constructor(private readonly store: MemoryStore) {}
 
 	async registerPlugin(plugin: Plugin): Promise<void> {
+		this.validatePluginRegistration(plugin);
+		this.initializePluginMetrics(plugin);
+		this.storePlugin(plugin);
+		await this.executePluginOnRegister(plugin);
+	}
+
+	private validatePluginRegistration(plugin: Plugin): void {
 		// Check for duplicate ID
 		if (this.plugins.has(plugin.id)) {
 			throw new Error(`Plugin ${plugin.id} already registered`);
@@ -64,6 +71,10 @@ export class PluginAwareMemoryStore implements MemoryStore {
 		}
 
 		// Validate hooks
+		this.validatePluginHooks(plugin);
+	}
+
+	private validatePluginHooks(plugin: Plugin): void {
 		const validHooks = [
 			'beforeUpsert',
 			'afterUpsert',
@@ -82,20 +93,23 @@ export class PluginAwareMemoryStore implements MemoryStore {
 				throw new Error(`Invalid hook: ${hook}`);
 			}
 		}
+	}
 
-		// Initialize metrics
+	private initializePluginMetrics(plugin: Plugin): void {
 		this.metrics.set(plugin.id, {
 			executionCount: 0,
 			totalTime: 0,
 			errorCount: 0,
 			averageTime: 0,
 		});
+	}
 
-		// Store plugin
+	private storePlugin(plugin: Plugin): void {
 		this.plugins.set(plugin.id, plugin);
 		this.pluginOrder.push(plugin.id);
+	}
 
-		// Call onRegister if provided
+	private async executePluginOnRegister(plugin: Plugin): Promise<void> {
 		if (plugin.onRegister) {
 			try {
 				await plugin.onRegister();

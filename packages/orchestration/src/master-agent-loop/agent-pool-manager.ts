@@ -810,4 +810,3 @@ export class AgentPoolManager {
 	}
 }
 
-export default AgentPoolManager;

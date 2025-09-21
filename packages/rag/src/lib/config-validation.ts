@@ -48,6 +48,13 @@ export const hierarchicalRetrievalSchema = z.object({
 
 export const retrievalConfigSchema = z.object({
 	hierarchical: hierarchicalRetrievalSchema.optional(),
+	postChunking: z
+		.object({
+			enabled: z.boolean().optional(),
+			maxChars: z.number().int().positive().max(20000).optional(),
+			intentStrategy: z.enum(['none', 'stub']).optional(),
+		})
+		.optional(),
 });
 
 // Main RAG Pipeline configuration schema

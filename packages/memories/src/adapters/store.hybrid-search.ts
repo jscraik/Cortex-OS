@@ -257,7 +257,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		let filteredMemories = allMemories;
 		if (query.filters?.metadata) {
 			filteredMemories = allMemories.filter((memory) => {
-				for (const [key, value] of Object.entries(query.filters?.metadata!)) {
+				for (const [key, value] of Object.entries(query.filters.metadata)) {
 					if (memory.metadata?.[key] !== value) {
 						return false;
 					}
@@ -348,7 +348,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		let filteredMemories = allMemories;
 		if (query.filters?.metadata) {
 			filteredMemories = allMemories.filter((memory) => {
-				for (const [key, value] of Object.entries(query.filters?.metadata!)) {
+				for (const [key, value] of Object.entries(query.filters.metadata)) {
 					if (memory.metadata?.[key] !== value) {
 						return false;
 					}
@@ -390,7 +390,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 		let filteredMemories = allMemories;
 		if (query.filters?.metadata) {
 			filteredMemories = allMemories.filter((memory) => {
-				for (const [key, value] of Object.entries(query.filters?.metadata!)) {
+				for (const [key, value] of Object.entries(query.filters.metadata)) {
 					if (memory.metadata?.[key] !== value) {
 						return false;
 					}

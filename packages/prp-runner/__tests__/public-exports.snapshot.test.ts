@@ -16,6 +16,8 @@ describe('@cortex-os/prp-runner public API', () => {
         "G6ReleaseReadinessGate",
         "G7ReleaseGate",
         "LLMBridge",
+        "AVAILABLE_MLX_MODELS",
+        "MLXModelAdapter",
         "compileEnforcementProfile",
         "createExecutionContext",
         "createPRPOrchestrator",

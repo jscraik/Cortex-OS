@@ -230,4 +230,3 @@ export class UserSimulator {
 	}
 }
 
-export default UserSimulator;

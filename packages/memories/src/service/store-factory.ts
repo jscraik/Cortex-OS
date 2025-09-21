@@ -2,11 +2,13 @@ import { PolicyEncryptedStore } from '../adapters/store.encrypted.policy.js';
 import { LayeredMemoryStore } from '../adapters/store.layered.js';
 import { LocalMemoryStore } from '../adapters/store.localmemory.js';
 import { InMemoryStore } from '../adapters/store.memory.js';
+import { ExternalSqliteStore } from '../adapters/store.external-sqlite.js';
 import type { PrismaLike } from '../adapters/store.prisma/client.js';
 import { PrismaStore } from '../adapters/store.prisma/client.js';
 import { ENV, getEnvWithFallback } from '../config/constants.js';
 import { type EncryptionService, InMemoryAesGcm } from '../ports/Encryption.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
+import { initializeExternalStorage } from '../adapters/external-storage.js';
 
 export type NamespaceSelectorConfig = {
 	namespaces?: string[];
@@ -101,9 +103,26 @@ export async function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): Promi
 			});
 		}
 		if (kind === 'sqlite') {
+			// Check if external storage is enabled
+			if (process.env.MEMORIES_EXTERNAL_STORAGE_ENABLED === 'true') {
+				const externalManager = await initializeExternalStorage();
+				return new ExternalSqliteStore({
+					dbName: process.env.MEMORIES_EXTERNAL_STORAGE_DB_NAME || 'memories.db',
+					externalStorageManager: externalManager,
+				});
+			}
+
 			const { SQLiteStore } = await import('../adapters/store.sqlite.js');
 			// Use in-memory SQLite by default for testing
 			return new SQLiteStore(':memory:', 384);
+		}
+		if (kind === 'external-sqlite') {
+			// Explicit external SQLite storage
+			const externalManager = await initializeExternalStorage();
+			return new ExternalSqliteStore({
+				dbName: process.env.MEMORIES_EXTERNAL_STORAGE_DB_NAME || 'memories.db',
+				externalStorageManager: externalManager,
+			});
 		}
 		if (kind === 'prisma') {
 			const prismaUnknown =

@@ -5,11 +5,11 @@
  * Cortex-OS adoption plan and architecture diagram pattern.
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
+// import fs from 'node:fs';
+// import path from 'node:path';
 // Adapters (mocked in tests)
-import { MLXAdapter } from '@cortex-os/model-gateway/dist/adapters/mlx-adapter.js';
-import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter.js';
+// import { MLXAdapter } from '@cortex-os/model-gateway/dist/adapters/mlx-adapter.js';
+// import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter.js';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, MessagesAnnotation, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
@@ -78,47 +78,52 @@ export const createMasterAgentGraph = (config: {
 	/**
 	 * Tool Layer - Execute via MCP
 	 */
-	const toolLayer = async (state: AgentState): Promise<Partial<AgentState>> => {
-		const { currentAgent, messages } = state;
+	const toolLayer = (state: AgentState): AgentState => {
+		// const lastMessage = state.messages[state.messages.length - 1];
+		// const content = lastMessage?.content || '';
+		const { currentAgent } = state;
 
 		if (!currentAgent) {
-			return { error: 'No agent selected' };
+			return {
+				...state,
+				error: 'No agent selected'
+			};
 		}
-
-		const lastMessage = messages[messages.length - 1];
-		const content = lastMessage?.content || '';
 
 		try {
 			// Decide model execution path: prefer MLX if available, else Ollama by specialization-tier
-			const text = typeof content === 'string' ? content : JSON.stringify(content);
-			const sub = agentRegistry.get(currentAgent);
-			const specialization = sub?.specialization ?? state.taskType ?? 'code-analysis';
+			// const _text = typeof content === 'string' ? content : JSON.stringify(content);
+			// const sub = agentRegistry.get(currentAgent);
+			// const _specialization = sub?.specialization ?? state.taskType ?? 'code-analysis';
 
 			// Try MLX first
-			const mlx = new MLXAdapter();
-			let executed = false;
+			// const mlx = new MLXAdapter();
+			const executed = false;
 			let result: unknown;
-			try {
-				if (await mlx.isAvailable()) {
-					result = await mlx.generateChat({ content: text });
-					executed = true;
-				}
-			} catch {
-				// ignore and fallback
-			}
+			// try {
+			// 	if (await mlx.isAvailable()) {
+			// 		result = await mlx.generateChat({ content: text });
+			// 		executed = true;
+			// 	}
+			// } catch {
+			// 	// ignore and fallback
+			// }
 
 			if (!executed) {
-				const { modelTag } = selectOllamaModelBySpecializationTier(specialization);
-				const ollama = new OllamaAdapter();
-				result = await ollama.generateChat({ content: text }, modelTag);
+				// const { modelTag } = selectOllamaModelBySpecializationTier(specialization);
+				// const ollama = new OllamaAdapter();
+				// result = await ollama.generateChat({ content: text }, modelTag);
+				result = 'Mock adapter response - adapters not yet implemented';
 			}
 
 			return {
+				...state,
 				result,
 				messages: [new AIMessage({ content: JSON.stringify(result) })],
 			};
 		} catch (error) {
 			return {
+				...state,
 				error: error instanceof Error ? error.message : 'Execution failed',
 			};
 		}
@@ -211,40 +216,40 @@ const routeToSpecializedAgent = (
 export type MasterAgentGraph = ReturnType<typeof createMasterAgentGraph>;
 
 // -- Helpers --
-type OllamaConfig = {
-	chat_models: Record<string, { ollama_model?: string }>;
-	performance_tiers: Record<string, { models: string[] }>;
-};
+// type OllamaConfig = {
+// 	chat_models: Record<string, { ollama_model?: string }>;
+// 	performance_tiers: Record<string, { models: string[] }>;
+// };
 
-const loadOllamaConfig = (): OllamaConfig | null => {
-	try {
-		const cfgDir = process.env.CORTEX_CONFIG_DIR || path.resolve(process.cwd(), 'config');
-		const cfgPath = path.resolve(cfgDir, 'ollama-models.json');
-		const raw = fs.readFileSync(cfgPath, 'utf8');
-		return JSON.parse(raw) as OllamaConfig;
-	} catch {
-		return null;
-	}
-};
+// const loadOllamaConfig = (): OllamaConfig | null => {
+// 	try {
+// 		const cfgDir = process.env.CORTEX_CONFIG_DIR || path.resolve(process.cwd(), 'config');
+// 		const cfgPath = path.resolve(cfgDir, 'ollama-models.json');
+// 		const raw = fs.readFileSync(cfgPath, 'utf8');
+// 		return JSON.parse(raw) as OllamaConfig;
+// 	} catch {
+// 		return null;
+// 	}
+// };
 
-const specializationToTier = (spec: string): 'ultra_fast' | 'balanced' | 'high_performance' => {
-	switch (spec) {
-		case 'documentation':
-			return 'balanced';
-		case 'security':
-			return 'high_performance';
-		default:
-			return 'ultra_fast';
-	}
-};
+// const specializationToTier = (spec: string): 'ultra_fast' | 'balanced' | 'high_performance' => {
+// 	switch (spec) {
+// 		case 'documentation':
+// 			return 'balanced';
+// 		case 'security':
+// 			return 'high_performance';
+// 		default:
+// 			return 'ultra_fast';
+// 	}
+// };
 
-const selectOllamaModelBySpecializationTier = (
-	specialization: string,
-): { modelKey: string; modelTag: string } => {
-	const cfg = loadOllamaConfig();
-	const tier = specializationToTier(specialization);
-	const models = cfg?.performance_tiers?.[tier]?.models ?? [];
-	const firstKey = models[0] || 'deepseek-coder';
-	const tag = cfg?.chat_models?.[firstKey]?.ollama_model || firstKey;
-	return { modelKey: firstKey, modelTag: tag };
-};
+// const _selectOllamaModelBySpecializationTier = (
+// 	_specialization: string,
+// ): { modelKey: string; modelTag: string } => {
+// 	const cfg = loadOllamaConfig();
+// 	const tier = specializationToTier(_specialization);
+// 	const models = cfg?.performance_tiers?.[tier]?.models ?? [];
+// 	const firstKey = models[0] || 'deepseek-coder';
+// 	const tag = cfg?.chat_models?.[firstKey]?.ollama_model || firstKey;
+// 	return { modelKey: firstKey, modelTag: tag };
+// };

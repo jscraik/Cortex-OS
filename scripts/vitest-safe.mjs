@@ -10,8 +10,23 @@
  */
 
 import { execSync, spawn } from 'node:child_process';
+import fs from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// Load .env.local early so MLX/HF paths are available to tests
+try {
+  const dotenv = await import('dotenv');
+  const cwd = process.cwd();
+  const localPath = join(cwd, '.env.local');
+  const envFile = fs.existsSync(localPath) ? localPath : join(cwd, '.env');
+  dotenv.config({ path: envFile });
+  // eslint-disable-next-line no-console
+  if (process.env.VITEST_SAFE_DEBUG_ENV === '1')
+    console.error('[vitest-safe] env loaded:', envFile);
+} catch {
+  // optional
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const _rootDir = join(__dirname, '..');
@@ -44,6 +59,9 @@ const MEMORY_SAFE_VITEST_ENV = {
   VITEST_REPORTER: 'default', // Avoid memory-heavy reporters
 };
 
+// Cap for total concurrent vitest processes system-wide (workers + controller)
+const MAX_VITEST_PROCESSES_SAFE = parseInt(process.env.MAX_VITEST_PROCESSES_SAFE || '2', 10);
+
 function log(level, message) {
   const timestamp = new Date().toISOString();
   console.error(`[${timestamp}] [VITEST-SAFE] [${level}] ${message}`);
@@ -73,9 +91,11 @@ function validateSystemMemory() {
 }
 
 function shouldAllowConcurrentVitest() {
-  return process.env.VITEST_ALLOW_CONCURRENT === 'true' || 
-         process.env.NODE_ENV === 'development' ||
-         process.env.VSCODE_PID; // VS Code terminal detection
+  return (
+    process.env.VITEST_ALLOW_CONCURRENT === 'true' ||
+    process.env.NODE_ENV === 'development' ||
+    process.env.VSCODE_PID
+  ); // VS Code terminal detection
 }
 
 function isVSCodeProcess(pid) {
@@ -97,6 +117,18 @@ function hasVSCodeVitestProcess(pids) {
   return false;
 }
 
+function listVitestPids() {
+  try {
+    // Match controller and worker processes, including Activity Monitor style "node (vitest 1)"
+    const out = execSync('pgrep -f "(vitest( |$)|vitest.*run|\\(vitest)" || true', {
+      encoding: 'utf-8',
+    });
+    return out.trim() ? out.trim().split('\n').filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
 function checkForRunningVitest() {
   if (shouldAllowConcurrentVitest()) {
     log('INFO', 'Concurrent vitest processes allowed in development mode');
@@ -104,30 +136,25 @@ function checkForRunningVitest() {
   }
 
   try {
-    const processes = execSync('pgrep -f "vitest.*run" || true', {
-      encoding: 'utf-8',
-    });
-    
-    if (!processes.trim()) {
-      return;
-    }
+    const pids = listVitestPids();
+    if (pids.length === 0) return;
 
-    const pids = processes.trim().split('\n');
-    
     if (hasVSCodeVitestProcess(pids)) {
       log('INFO', 'VS Code vitest process detected - allowing concurrent execution');
       return;
     }
 
     log('WARN', 'Other non-VS Code Vitest processes detected! This could cause memory exhaustion.');
-    log('INFO', 'Run: pnpm memory:clean to cleanup existing processes, or set VITEST_ALLOW_CONCURRENT=true');
+    log(
+      'INFO',
+      'Run: pnpm memory:clean to cleanup existing processes, or set VITEST_ALLOW_CONCURRENT=true',
+    );
 
     // List the processes for visibility
     try {
-      const processDetails = execSync(
-        `ps -p ${processes.trim().replace(/\n/g, ',')} -o pid,rss,command`,
-        { encoding: 'utf-8' },
-      );
+      const processDetails = execSync(`ps -p ${pids.join(',')} -o pid,rss,command`, {
+        encoding: 'utf-8',
+      });
       console.error('Running Vitest processes:');
       console.error(processDetails);
     } catch { }
@@ -138,8 +165,14 @@ function checkForRunningVitest() {
       return;
     }
 
-    // Exit to prevent multiple vitest processes in CI
-    process.exit(1);
+    // Enforce global cap even locally if too many processes exist
+    if (pids.length > MAX_VITEST_PROCESSES_SAFE) {
+      log(
+        'ERROR',
+        `Too many vitest processes detected: ${pids.length} (cap=${MAX_VITEST_PROCESSES_SAFE}). Aborting to protect memory.`,
+      );
+      process.exit(1);
+    }
   } catch (error) {
     log('DEBUG', `Process check completed: ${error.message}`);
   }

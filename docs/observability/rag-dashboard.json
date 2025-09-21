@@ -1,0 +1,81 @@
+{
+    "title": "RAG Observability",
+    "description": "Latency percentiles, error rates by component, resource utilization",
+    "panels": [
+        {
+            "type": "timeseries",
+            "title": "Ingest Latency (p50/p95/p99)",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, sum(rate(cortex_latency_ms_bucket{operation=\"rag.ingest\"}[5m])) by (le))"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(cortex_latency_ms_bucket{operation=\"rag.ingest\"}[5m])) by (le))"
+                },
+                {
+                    "expr": "histogram_quantile(0.99, sum(rate(cortex_latency_ms_bucket{operation=\"rag.ingest\"}[5m])) by (le))"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "Retrieve Latency (p50/p95/p99)",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, sum(rate(cortex_latency_ms_bucket{operation=\"rag.retrieve\"}[5m])) by (le))"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(cortex_latency_ms_bucket{operation=\"rag.retrieve\"}[5m])) by (le))"
+                },
+                {
+                    "expr": "histogram_quantile(0.99, sum(rate(cortex_latency_ms_bucket{operation=\"rag.retrieve\"}[5m])) by (le))"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "Reranker Latency (p50/p95/p99)",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, sum(rate(cortex_latency_ms_bucket{operation=\"rag.reranker\"}[5m])) by (le))"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(cortex_latency_ms_bucket{operation=\"rag.reranker\"}[5m])) by (le))"
+                },
+                {
+                    "expr": "histogram_quantile(0.99, sum(rate(cortex_latency_ms_bucket{operation=\"rag.reranker\"}[5m])) by (le))"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "Error Rate (5m)",
+            "targets": [
+                {
+                    "expr": "sum(rate(cortex_operations_total{status=\"error\"}[5m])) / sum(rate(cortex_operations_total[5m]))"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "Component Error Rates",
+            "targets": [
+                {
+                    "expr": "sum(rate(cortex_operations_total{status=\"error\"}[5m])) by (operation) / sum(rate(cortex_operations_total[5m])) by (operation)"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "CPU / Memory",
+            "targets": [
+                {
+                    "expr": "avg(rate(process_cpu_seconds_total[1m]))"
+                },
+                {
+                    "expr": "avg(process_resident_memory_bytes)"
+                }
+            ]
+        }
+    ]
+}

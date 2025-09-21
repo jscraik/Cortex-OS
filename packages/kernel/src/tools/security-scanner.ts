@@ -46,58 +46,89 @@ export class SecurityScanner {
 
 	async scanProject(): Promise<SecurityScanResult> {
 		const startTime = Date.now();
-		let allVulnerabilities: Vulnerability[] = [];
-		const toolsUsed: string[] = [];
+		const scanContext = this.initializeScanContext();
 
 		try {
-			// Run Semgrep security scans
-			const semgrepResults = await this.runSemgrepScan();
-			allVulnerabilities = allVulnerabilities.concat(semgrepResults);
-			toolsUsed.push('Semgrep');
-
-			// Run additional security checks if available
-			if (await this.isCodeQLAvailable()) {
-				const codeqlResults = await this.runCodeQLScan();
-				allVulnerabilities = allVulnerabilities.concat(codeqlResults);
-				toolsUsed.push('CodeQL');
-			}
-
-			// Run secret detection
-			const secretResults = await this.runSecretDetection();
-			allVulnerabilities = allVulnerabilities.concat(secretResults);
-			toolsUsed.push('SecretScanner');
+			// Run all security scans
+			await this.executeSecurityScans(scanContext);
 		} catch (error) {
 			console.warn('Security scan encountered errors:', error);
-			// Return minimal viable result on error
-			return {
-				blockers: 0,
-				majors: 0,
-				details: {
-					tools: ['SecurityScanner-Fallback'],
-					vulnerabilities: [
-						{
-							severity: 'medium',
-							type: 'scan-error',
-							file: 'security-scan',
-							line: 0,
-							message: `Security scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-							rule: 'scan-failure',
-							confidence: 100,
-						},
-					],
-					scanDuration: Date.now() - startTime,
-					rulesetsUsed: [],
-					confidence: 50,
-				},
-			};
+			return this.createFallbackResult(error, startTime);
 		}
 
+		// Process and categorize results
+		return this.processScanResults(scanContext, startTime);
+	}
+
+	private initializeScanContext(): {
+		allVulnerabilities: Vulnerability[];
+		toolsUsed: string[];
+	} {
+		return {
+			allVulnerabilities: [],
+			toolsUsed: [],
+		};
+	}
+
+	private async executeSecurityScans(context: {
+		allVulnerabilities: Vulnerability[];
+		toolsUsed: string[];
+	}): Promise<void> {
+		// Run Semgrep security scans
+		const semgrepResults = await this.runSemgrepScan();
+		context.allVulnerabilities.push(...semgrepResults);
+		context.toolsUsed.push('Semgrep');
+
+		// Run additional security checks if available
+		if (await this.isCodeQLAvailable()) {
+			const codeqlResults = await this.runCodeQLScan();
+			context.allVulnerabilities.push(...codeqlResults);
+			context.toolsUsed.push('CodeQL');
+		}
+
+		// Run secret detection
+		const secretResults = await this.runSecretDetection();
+		context.allVulnerabilities.push(...secretResults);
+		context.toolsUsed.push('SecretScanner');
+	}
+
+	private createFallbackResult(
+		error: unknown,
+		startTime: number,
+	): SecurityScanResult {
+		return {
+			blockers: 0,
+			majors: 0,
+			details: {
+				tools: ['SecurityScanner-Fallback'],
+				vulnerabilities: [
+					{
+						severity: 'medium',
+						type: 'scan-error',
+						file: 'security-scan',
+						line: 0,
+						message: `Security scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+						rule: 'scan-failure',
+						confidence: 100,
+					},
+				],
+				scanDuration: Date.now() - startTime,
+				rulesetsUsed: [],
+				confidence: 50,
+			},
+		};
+	}
+
+	private processScanResults(
+		context: { allVulnerabilities: Vulnerability[]; toolsUsed: string[] },
+		startTime: number,
+	): SecurityScanResult {
 		// Categorize vulnerabilities
-		const blockers = allVulnerabilities.filter(
+		const blockers = context.allVulnerabilities.filter(
 			(v) => v.severity === 'critical' || (v.severity === 'high' && v.confidence > 90),
 		).length;
 
-		const majors = allVulnerabilities.filter(
+		const majors = context.allVulnerabilities.filter(
 			(v) => v.severity === 'high' || (v.severity === 'medium' && v.confidence > 80),
 		).length;
 
@@ -105,11 +136,11 @@ export class SecurityScanner {
 			blockers,
 			majors,
 			details: {
-				tools: toolsUsed,
-				vulnerabilities: allVulnerabilities,
+				tools: context.toolsUsed,
+				vulnerabilities: context.allVulnerabilities,
 				scanDuration: Date.now() - startTime,
 				rulesetsUsed: this.semgrepConfigPaths,
-				confidence: this.calculateOverallConfidence(allVulnerabilities),
+				confidence: this.calculateOverallConfidence(context.allVulnerabilities),
 			},
 		};
 	}

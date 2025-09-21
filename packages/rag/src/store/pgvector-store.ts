@@ -54,14 +54,16 @@ export class PgVectorStore implements Store {
 		this.dim = cfg.dimension ?? 768;
 		this.hybrid = cfg.hybrid?.enabled
 			? {
-					enabled: true,
-					vectorWeight: cfg.hybrid.vectorWeight ?? 0.6,
-					language: cfg.hybrid.language ?? 'english',
-				}
+				enabled: true,
+				vectorWeight: cfg.hybrid.vectorWeight ?? 0.6,
+				language: cfg.hybrid.language ?? 'english',
+			}
 			: undefined;
 	}
 
 	async init(): Promise<void> {
+		const runId = generateRunId();
+		const t0 = Date.now();
 		if (!this.pool) {
 			// Avoid Vite pre-bundling resolution errors when tests don't install optional deps
 			const { Pool } = await import(/* @vite-ignore */ 'pg');
@@ -89,6 +91,8 @@ export class PgVectorStore implements Store {
 			await client.query(
 				`CREATE INDEX IF NOT EXISTS ${this.table}_emb_${this.dim}_idx ON ${this.table} USING ivfflat (embedding_${this.dim})`,
 			);
+			recordLatency('pgvector.init', Date.now() - t0, { component: 'rag', store: 'pgvector' });
+			recordOperation('pgvector.init', true, runId, { component: 'rag', store: 'pgvector' });
 		} finally {
 			client.release();
 		}

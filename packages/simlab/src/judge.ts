@@ -337,4 +337,3 @@ export class Judge {
 	}
 }
 
-export default Judge;

@@ -12,9 +12,9 @@
       "require": "./dist/index.js"
     },
     "./kernel": {
-      "types": "./dist/kernel.d.ts",
-      "import": "./dist/kernel.js",
-      "require": "./dist/kernel.js"
+      "types": "./dist/graph-simple.d.ts",
+      "import": "./dist/graph-simple.js",
+      "require": "./dist/graph-simple.js"
     },
     "./state": {
       "types": "./dist/state.d.ts",

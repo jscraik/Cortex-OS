@@ -25,16 +25,17 @@ export class OllamaEmbedder implements Embedder {
 
 	async embed(texts: string[]): Promise<number[][]> {
 		try {
-			const requests = texts.map((text) =>
-				this.client
-					.post('/api/embeddings', { model: this.modelName, prompt: text })
-					.then((response: any) => {
-						if (response.data && Array.isArray(response.data.embedding)) {
-							return response.data.embedding as number[];
-						}
-						throw new Error('Invalid response from Ollama embedding API');
-					}),
-			);
+			const requests = texts.map(async (text) => {
+				const response = await this.client.post('/api/embeddings', {
+					model: this.modelName,
+					prompt: text,
+				});
+
+				if (response.data && Array.isArray(response.data.embedding)) {
+					return response.data.embedding as number[];
+				}
+				throw new Error('Invalid response from Ollama embedding API');
+			});
 
 			return await Promise.all(requests);
 		} catch (error) {

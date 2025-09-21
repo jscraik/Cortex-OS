@@ -1,0 +1,6 @@
+README.md
+pyproject.toml
+src/python/cortex_os_rules.egg-info/PKG-INFO
+src/python/cortex_os_rules.egg-info/SOURCES.txt
+src/python/cortex_os_rules.egg-info/dependency_links.txt
+src/python/cortex_os_rules.egg-info/top_level.txt

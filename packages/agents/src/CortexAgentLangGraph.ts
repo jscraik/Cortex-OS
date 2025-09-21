@@ -9,8 +9,8 @@ import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
+import { type MasterAgentGraph, type SubAgentConfig, createMasterAgentGraph } from './MasterAgent';
 import type { AgentConfig } from './lib/types';
-import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent';
 
 // Extended state for CortexAgent workflows
 export const CortexStateAnnotation = Annotation.Root({

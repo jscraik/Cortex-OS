@@ -4,7 +4,8 @@
  * Vitest global setup for prp-runner package.
  * Provides lightweight mocks for native / heavy dependencies not required for logic tests.
  */
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
+import { forceGC } from '../lib/testing/memory-utils';
 
 // Mock sharp to avoid native binary requirement in CI / local without install.
 vi.mock('sharp', () => {
@@ -68,12 +69,25 @@ vi.mock('ollama', () => {
 // Mock MLX adapter to simulate healthy model and simple generation
 vi.mock('../mlx-adapter.js', async () => {
 	// Provide a simple mock MLXAdapter class matching the real adapter surface used in tests
+	interface MockMLXConfig {
+		modelName?: string;
+		autoUnload?: boolean;
+		unloadTimeout?: number;
+		maxCacheSize?: number;
+	}
+
 	class MockMLXAdapter {
 		private modelName: string;
 		private availableModels: string[];
-		constructor(config: Record<string, unknown> | undefined) {
+		private loaded = false;
+		private unloadTimer?: ReturnType<typeof setTimeout>;
+		private modelCache: string[] = [];
+		private autoUnload = false;
+		private unloadTimeout = 1000;
+		private maxCacheSize = 0;
+		constructor(config: MockMLXConfig | undefined) {
 			this.modelName = String(
-				(config as Record<string, unknown>)?.modelName || 'Qwen2.5-0.5B-Instruct-4bit',
+				config?.modelName || 'Qwen2.5-0.5B-Instruct-4bit',
 			); // valid, no change
 			// include both canonical names and short tokens to improve matching
 			this.availableModels = (Object.values(AVAILABLE_MLX_MODELS) as string[]).concat([
@@ -82,6 +96,38 @@ vi.mock('../mlx-adapter.js', async () => {
 				'qwen2.5',
 				'phi-3',
 			]);
+			this.autoUnload = Boolean(config?.autoUnload);
+			this.unloadTimeout = Number(config?.unloadTimeout ?? 1000);
+			this.maxCacheSize = Number(config?.maxCacheSize ?? 0);
+		}
+
+		private resetUnloadTimer() {
+			if (!this.autoUnload) return;
+			if (this.unloadTimer) clearTimeout(this.unloadTimer);
+			this.unloadTimer = setTimeout(() => {
+				this.loaded = false;
+			}, this.unloadTimeout);
+		}
+
+		async load() {
+			this.loaded = true;
+			this.resetUnloadTimer();
+		}
+
+		isLoaded() {
+			return this.loaded;
+		}
+
+		async loadModel(name: string) {
+			this.modelCache.push(name);
+			if (this.maxCacheSize > 0 && this.modelCache.length > this.maxCacheSize) {
+				this.modelCache = this.modelCache.slice(-this.maxCacheSize);
+			}
+			this.resetUnloadTimer();
+		}
+
+		getCachedModels() {
+			return [...this.modelCache];
 		}
 
 		async checkHealth() {
@@ -332,4 +378,9 @@ vi.mock('../embedding-adapter.js', () => {
 		MockEmbeddingAdapter,
 		EmbeddingAdapter: MockEmbeddingAdapter,
 	};
+});
+
+// Global cleanup to improve test isolation and memory stability
+afterEach(async () => {
+	await forceGC();
 });

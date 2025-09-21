@@ -29,7 +29,7 @@ export class AgentsAgent {
 	private agentId: string;
 	private agentCard: AgentCard;
 
-	constructor(agentId: string = 'cortex-agents') {
+	constructor(agentId = 'cortex-agents') {
 		this.agentId = agentId;
 		this.agentCard = this.buildAgentCard();
 	}

@@ -71,11 +71,12 @@ export class EmbeddingAdapter {
 	private readonly documents: Map<string, AddDocumentsResultMeta> = new Map();
 	private idCounter = 0;
 
-	constructor(config: EmbeddingAdapterConfig) {
+	constructor(config?: EmbeddingAdapterConfig) {
+		const cfg = config ?? { provider: 'local', dimensions: 1024 };
 		this.config = {
-			provider: config.provider,
-			model: config.model || 'deterministic-test-model',
-			dimensions: config.dimensions || 1024,
+			provider: cfg.provider,
+			model: cfg.model || 'deterministic-test-model',
+			dimensions: cfg.dimensions || 1024,
 		};
 	}
 
@@ -189,8 +190,11 @@ export function createEmbeddingAdapter(provider: string): EmbeddingAdapter {
 }
 
 /** Factory to create a reranker adapter for provider name. */
-export function createRerankerAdapter(_provider: string): RerankerAdapter {
-	// SimpleLexicalReranker is stateless and doesn't need provider parameter
+export function createRerankerAdapter(provider: string): RerankerAdapter {
+	// SimpleLexicalReranker is stateless; provider kept for future extensibility
+	if (provider) {
+		// no-op
+	}
 	return new SimpleLexicalReranker();
 }
 

@@ -17,9 +17,9 @@ import {
 	configureLLM,
 	getModel,
 	getProvider,
-	type LLMState,
 	generate as llmGenerate,
 	shutdown as shutdownLLM,
+	type LLMState,
 } from './llm-bridge.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
@@ -322,16 +322,16 @@ export class AICoreCapabilities {
 			},
 			embedding: this.embeddingAdapter
 				? {
-						provider: this.embeddingAdapter.getStats().provider,
-						dimensions: this.embeddingAdapter.getStats().dimensions,
-						documents: this.embeddingAdapter.getStats().totalDocuments,
-					}
+					provider: this.embeddingAdapter.getStats().provider,
+					dimensions: this.embeddingAdapter.getStats().dimensions,
+					documents: this.embeddingAdapter.getStats().totalDocuments,
+				}
 				: undefined,
 			reranker: this.rerankerAdapter
 				? {
-						provider: 'available',
-						available: true,
-					}
+					provider: 'available',
+					available: true,
+				}
 				: undefined,
 			features: this.getAvailableFeatures(),
 		};
@@ -442,7 +442,7 @@ export class AICoreCapabilities {
  * Create AI capabilities with common configurations
  */
 export const createAICapabilities = (
-	preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
+	preset: 'full' | 'llm-only' | 'rag-focused' | 'minimal' = 'full',
 ): AICoreCapabilities => {
 	const env = process.env as Record<string, unknown>;
 	const rerankerProvider = env.RERANKER_PROVIDER as 'transformers' | 'local' | 'mock' | undefined;
@@ -501,7 +501,9 @@ export const createAICapabilities = (
 		if (configs['rag-focused'].embedding) configs['rag-focused'].reranker = reranker;
 	}
 
-	return new AICoreCapabilities(configs[preset]);
+	// Map legacy/minimal preset to llm-only for test convenience
+	const resolvedPreset = preset === 'minimal' ? 'llm-only' : preset;
+	return new AICoreCapabilities(configs[resolvedPreset]);
 };
 
 /**

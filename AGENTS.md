@@ -2,6 +2,33 @@
 
 These instructions apply to all developers and AI agents working in this repository.
 
+## 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
+
+**MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
+
+### Function Length Limits
+- **Maximum 40 lines per function** - Split immediately if readability suffers
+- **No exceptions** - This is strictly enforced in CI and will cause build failures
+
+### Export Requirements
+- **Named exports only** - `export const functionName = ...`
+- **NEVER use default exports** - `export default` is forbidden
+- **Violations will cause build failures**
+
+### Class Usage Restrictions
+- **Classes only when absolutely required** by framework (React ErrorBoundary, etc.)
+- **Prefer functional composition** and pure functions
+- **No classes without clear justification** in code review comments
+
+### Async/Await Requirements
+- **Use async/await exclusively** - Never use `.then()` chains
+- **Promise chains are forbidden** and will be caught by linters
+
+### Project References
+- **All packages must set `composite: true`** in tsconfig.json
+- **Required for Nx task graph optimization**
+- **Missing configuration will cause build failures**
+
 ## Local Memory
 
 Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time.
@@ -66,6 +93,44 @@ Code path:
 - Falls back to SQLite or in-memory based on envs.
 
 Privacy note: follow `.cortex/rules/RULES_OF_AI.md` — avoid storing secrets or personal data without consent; prefer encryption where applicable.
+
+## Development Patterns to Avoid
+
+### NEVER Continue These Anti-Patterns:
+1. **Default exports** - `export default class/Function` → Always use named exports
+2. **Function length > 40 lines** → Immediately split into smaller functions
+3. **`.then()` chains** → Use `async/await` exclusively
+4. **Classes without framework requirement** → Use functional composition
+5. **Missing `composite: true`** → All packages require this setting
+6. **Direct sibling package imports** → Use events/contracts instead
+7. **Bypassing local memory** → Store all development insights persistently
+
+### Required Local Memory Usage Patterns:
+```typescript
+// Store architectural decisions
+await memory.store({
+  content: 'Chose event-driven architecture over direct imports for decoupling',
+  importance: 8,
+  tags: ['architecture', 'decision', 'a2a'],
+  domain: 'software-design'
+});
+
+// Store lessons learned
+await memory.store({
+  content: 'Function length limit of 40 lines prevents cognitive overload',
+  importance: 9,
+  tags: ['lesson', 'codestyle', 'maintainability'],
+  domain: 'development-patterns'
+});
+
+// Store development strategies
+await memory.store({
+  content: 'Always use named exports to enable tree-shaking and better debugging',
+  importance: 7,
+  tags: ['strategy', 'exports', 'optimization'],
+  domain: 'typescript'
+});
+```
 
 ## 🔧 Agent Toolkit (MANDATORY)
 

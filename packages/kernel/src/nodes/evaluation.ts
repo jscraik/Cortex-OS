@@ -12,11 +12,35 @@ import { currentTimestamp } from '../utils/time.js';
  */
 export class EvaluationNode {
 	async execute(state: PRPState): Promise<PRPState> {
+		const evaluationResult = await this.runEvaluationValidations(state);
+		return this.createEvaluationState(state, evaluationResult);
+	}
+
+	/**
+	 * Run all evaluation validations
+	 */
+	private async runEvaluationValidations(state: PRPState): Promise<EvaluationValidationResult> {
 		const evidence: Evidence[] = [];
 		const blockers: string[] = [];
 		const majors: string[] = [];
 
-		// Gate 1: TDD validation (Red → Green cycle)
+		// Execute all evaluation gates
+		await this.validateTDDGate(state, evidence, blockers);
+		await this.validateCodeReviewGate(state, evidence, blockers, majors);
+		await this.validateQualityBudgetsGate(state, evidence, blockers, majors);
+		await this.validatePreCerebrumGate(state, evidence, blockers);
+
+		return { evidence, blockers, majors };
+	}
+
+	/**
+	 * Validate TDD cycle
+	 */
+	private async validateTDDGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+	): Promise<void> {
 		const tddValidation = await this.validateTDDCycle(state);
 		if (!tddValidation.passed) {
 			blockers.push('TDD cycle not completed - missing tests or failing tests');
@@ -30,8 +54,17 @@ export class EvaluationNode {
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 7),
 			phase: 'evaluation',
 		});
+	}
 
-		// Gate 2: Code review validation
+	/**
+	 * Validate code review
+	 */
+	private async validateCodeReviewGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+		majors: string[],
+	): Promise<void> {
 		const reviewValidation = await this.validateCodeReview(state);
 		if (reviewValidation.blockers > 0) {
 			blockers.push(`Code review found ${reviewValidation.blockers} blocking issues`);
@@ -48,8 +81,17 @@ export class EvaluationNode {
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 8),
 			phase: 'evaluation',
 		});
+	}
 
-		// Gate 3: Quality budget validation (A11y, Performance, Security)
+	/**
+	 * Validate quality budgets
+	 */
+	private async validateQualityBudgetsGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+		majors: string[],
+	): Promise<void> {
 		const budgetValidation = await this.validateQualityBudgets(state);
 		if (!budgetValidation.accessibility.passed) {
 			majors.push(`Accessibility score ${budgetValidation.accessibility.score} below threshold`);
@@ -69,33 +111,45 @@ export class EvaluationNode {
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 9),
 			phase: 'evaluation',
 		});
+	}
 
-		// Gate 4: Pre-Cerebrum validation
+	/**
+	 * Validate pre-Cerebrum readiness
+	 */
+	private async validatePreCerebrumGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+	): Promise<void> {
 		const preCerebrumCheck = await this.preCerebrumValidation(state);
 		if (!preCerebrumCheck.readyForCerebrum) {
 			blockers.push('System not ready for Cerebrum decision');
 		}
+	}
 
+	/**
+	 * Create updated evaluation state
+	 */
+	private createEvaluationState(state: PRPState, result: EvaluationValidationResult): PRPState {
 		return {
 			...state,
-			evidence: [...state.evidence, ...evidence],
-			// Note: validationResults removed - using gates system instead
+			evidence: [...state.evidence, ...result.evidence],
 			gates: {
 				...state.gates,
 				G5: {
 					id: 'G5',
 					name: 'TDD Validation Gate',
-					status: blockers.length === 0 ? 'passed' : 'failed',
+					status: result.blockers.length === 0 ? 'passed' : 'failed',
 					requiresHumanApproval: false,
 					automatedChecks: [
 						{
 							name: 'TDD Cycle Check',
-							status: blockers.length === 0 ? 'pass' : 'fail',
-							output: `Found ${blockers.length} blockers, ${majors.length} majors`,
+							status: result.blockers.length === 0 ? 'pass' : 'fail',
+							output: `Found ${result.blockers.length} blockers, ${result.majors.length} majors`,
 						},
 					],
 					artifacts: [],
-					evidence: evidence.map((e) => e.id),
+					evidence: result.evidence.map((e) => e.id),
 					timestamp: currentTimestamp(state.metadata.deterministic ?? false, 10),
 				},
 			},
@@ -189,17 +243,32 @@ export class EvaluationNode {
 	}
 
 	checkPreCerebrumConditions(state: PRPState): boolean {
-		// Check gates instead of legacy validationResults
-		return Object.values(state.gates).every((gate) => gate.status === 'passed');
+		// Defensive check for null/undefined state
+		if (!state) {
+			return false;
+		}
+
+		// Check gates if available, otherwise fall back to validationResults
+		if (state.gates && Object.keys(state.gates).length > 0) {
+			return Object.values(state.gates).every((gate) => gate.status === 'passed');
+		}
+
+		// Legacy support for validationResults
+		if (state.validationResults) {
+			return Object.values(state.validationResults).every((result) => result.passed);
+		}
+
+		// If neither is present, assume not ready
+		return false;
 	}
 
 	private async preCerebrumValidation(
 		state: PRPState,
 	): Promise<ReadinessResult<PreCerebrumDetails>> {
 		// Final validation before Cerebrum decision - use gates instead of validationResults
-		const hasAllPhases = !!(state.gates.G0 && state.gates.G2 && state.gates.G5);
+		const hasAllPhases = state.gates && !!(state.gates.G0 && state.gates.G2 && state.gates.G5);
 
-		const allPhasesPassedOrAcceptable = Object.values(state.gates).every(
+		const allPhasesPassedOrAcceptable = state.gates && Object.values(state.gates).every(
 			(gate) => gate.status === 'passed' || gate.status === 'skipped',
 		);
 
@@ -213,6 +282,12 @@ export class EvaluationNode {
 			},
 		};
 	}
+}
+
+interface EvaluationValidationResult {
+	evidence: Evidence[];
+	blockers: string[];
+	majors: string[];
 }
 
 // Type definitions for validation methods

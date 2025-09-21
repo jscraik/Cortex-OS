@@ -20,8 +20,8 @@ export {
 	NodeExecutionFailedEventSchema,
 	NodeExecutionStartedEventSchema,
 } from './events/kernel-events.js';
-// Core kernel exports - REMOVED broken graph-simple integration
-// export { CortexKernel, createKernel } from './graph-simple.js';
+// Core kernel exports
+export { CortexKernel, createKernel } from './graph-simple.js';
 // History helper
 export {
 	addToHistory,

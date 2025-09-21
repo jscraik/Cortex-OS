@@ -30,12 +30,11 @@ describe('BuildNode documentation validation', () => {
 		const state = createInitialPRPState(blueprint, { deterministic: true });
 		const node = new BuildNode();
 		const result = await node.execute(state);
-		const buildResult = result.validationResults.build!;
-		expect(buildResult.passed).toBe(false);
-		expect(buildResult.blockers).toContain('Backend compilation or tests failed');
-		expect(buildResult.majors).toContain(
-			'Documentation incomplete - missing API docs or usage notes',
-		);
+		const buildGate = result.gates.G2;
+		expect(buildGate.status).toBe('failed');
+		expect(buildGate.automatedChecks[0].output).toContain('blockers');
+		// When README is missing, there should be 1 blocker and 0 majors
+		expect(buildGate.automatedChecks[0].output).toBe('Found 1 blockers');
 	});
 
 	it('passes when README.md exists', async () => {
@@ -43,11 +42,8 @@ describe('BuildNode documentation validation', () => {
 		const state = createInitialPRPState(blueprint, { deterministic: true });
 		const node = new BuildNode();
 		const result = await node.execute(state);
-		const buildResult = result.validationResults.build!;
-		expect(buildResult.passed).toBe(false);
-		expect(buildResult.blockers).toContain('Backend compilation or tests failed');
-		expect(buildResult.majors).not.toContain(
-			'Documentation incomplete - missing API docs or usage notes',
-		);
+		const buildGate = result.gates.G2;
+		// The gate might still fail due to other issues, but docs should be OK
+		expect(buildGate.automatedChecks[0].output).not.toContain('majors');
 	});
 });

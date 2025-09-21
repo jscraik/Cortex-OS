@@ -1,8 +1,4 @@
-import {
-	type ExecutionFeedback,
-	ExecutionFeedbackSchema,
-	type ExecutionPlan,
-} from '../contracts/no-architecture-contracts.js';
+import type { ExecutionFeedback, ExecutionPlan } from '../contracts/no-architecture-contracts.js';
 import { withEnhancedSpan } from '../observability/otel.js';
 
 type Urgency = 'low' | 'medium' | 'high';
@@ -242,60 +238,6 @@ export class AdaptiveDecisionEngine {
 	private readonly modelVersion = '1.0.0-enhanced';
 	private readonly learningRate = 0.1;
 	private readonly explorationFactor = 0.2;
-
-	/**
-	 * Legacy method - maintained for backward compatibility
-	 */
-	adaptStrategy(feedback: unknown) {
-		// Add default notes if missing to satisfy schema
-		let notesValue: unknown;
-		if (typeof feedback === 'object' && feedback !== null && 'notes' in feedback) {
-			// Extract notes only if present and well-formed
-			notesValue = (feedback as Record<string, unknown>).notes;
-		}
-
-		const feedbackWithNotes = {
-			...(typeof feedback === 'object' && feedback !== null
-				? (feedback as Record<string, unknown>)
-				: {}),
-			notes: Array.isArray(notesValue) ? notesValue : [],
-		};
-
-		const fb = ExecutionFeedbackSchema.parse(feedbackWithNotes);
-
-		// Map to central contracts enum values and provide required rationale
-		let newStrategy: 'sequential-safe' | 'hybrid' | 'parallel-coordinated';
-		if (fb.successRate < 0.5) {
-			newStrategy = 'sequential-safe';
-		} else if (fb.successRate < 0.8) {
-			newStrategy = 'hybrid';
-		} else {
-			newStrategy = 'parallel-coordinated';
-		}
-
-		// Provide required rationale for the adjustment contract
-		let rationale: string;
-		if (fb.successRate < 0.5) {
-			rationale = 'Low success rate requires safer sequential execution';
-		} else if (fb.successRate < 0.8) {
-			rationale = 'Moderate success rate suggests hybrid strategy';
-		} else {
-			rationale = 'High success rate enables coordinated parallel execution';
-		}
-
-		// Return object matching @cortex-os/contracts StrategyAdjustmentSchema
-		return {
-			newStrategy,
-			rationale,
-			// Extra metadata is allowed by tests (parsed schema doesn't forbid unknown keys)
-			metadata: {
-				adaptedAt: new Date().toISOString(),
-				previousSuccessRate: fb.successRate,
-				enhancedEngine: true,
-				modelVersion: this.modelVersion,
-			},
-		} as unknown;
-	}
 
 	/**
 	 * Learn from historical execution patterns and identify strategies
@@ -795,4 +737,4 @@ export class AdaptiveDecisionEngine {
 	}
 }
 
-export default AdaptiveDecisionEngine;
+export { AdaptiveDecisionEngine };

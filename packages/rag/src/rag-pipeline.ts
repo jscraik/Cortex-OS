@@ -1,13 +1,16 @@
 import { generateRunId, recordLatency, recordOperation } from '@cortex-os/observability';
 import { z } from 'zod';
+import { postChunk as applyPostChunk, type PostChunkingOptions } from './chunkers/post-chunker.js';
 import { CircuitBreaker } from './lib/circuit-breaker.js';
 import { CitationBundler, type EnhancedCitationBundle } from './lib/citation-bundler.js';
 import { ragPipelineConfigSchema, validateConfig } from './lib/config-validation.js';
 import { type ContentSecurityConfig, ContentSecurityPolicy } from './lib/content-security.js';
-import type { Chunk, Embedder, ReliabilityPolicy, Store } from './lib/index.js';
+import type { Chunk, Document, Embedder, ReliabilityPolicy, Store } from './lib/index.js';
+import { rerankDocs } from './lib/rerank-docs.js';
 import { withRetry } from './lib/retry.js';
 import { validateContentSize, validateEmbeddingDim } from './lib/validation.js';
 import { ingestText as ingestTextHelper } from './pipeline/ingest.js';
+import type { Qwen3Reranker } from './pipeline/qwen3-reranker.js';
 import {
 	EvidenceGate,
 	type EvidenceGateOptions,
@@ -80,12 +83,17 @@ export class RAGPipeline {
 	private readonly allowedEmbeddingDims: number[];
 	private readonly maxContentChars: number;
 	private readonly contentSecurity: ContentSecurityPolicy;
+	private readonly postChunking?: PostChunkingOptions;
 	// Apply retry/breaker policies to an operation for a given edge
-	private async runWithPolicies<T>(edge: 'embedder' | 'store', op: () => Promise<T>): Promise<T> {
+	private async runWithPolicies<T>(
+		edge: 'embedder' | 'store',
+		op: () => Promise<T>,
+		runIdOverride?: string,
+	): Promise<T> {
 		const policy = this.reliability?.[edge];
 		const breakerInst = this.breaker?.[edge];
 		const label = edge === 'embedder' ? 'rag.embedder' : 'rag.store';
-		const runId = generateRunId();
+		const runId = runIdOverride ?? generateRunId();
 
 		const exec = async () => {
 			const start = Date.now();
@@ -223,10 +231,16 @@ export class RAGPipeline {
 			}
 		}
 		this.S = baseStore;
+		// Optional: post-chunking settings from retrieval config
+		this.postChunking = (
+			config.retrieval as { postChunking?: PostChunkingOptions } | undefined
+		)?.postChunking;
 	}
 
 	async ingest(chunks: Chunk[]): Promise<void> {
 		const texts = chunks.map((c) => c.text);
+		const ingestRunId = generateRunId();
+		const ingestStart = Date.now();
 		// Enforce content size limits pre-embed
 		for (const t of texts) validateContentSize(t, this.maxContentChars);
 
@@ -239,7 +253,17 @@ export class RAGPipeline {
 
 		const sanitizedTexts = sanitizedChunks.map((c) => c.text);
 		const doEmbed = async () => this.E.embed(sanitizedTexts);
-		const embeddings = await this.runWithPolicies('embedder', doEmbed);
+		const embedStart = Date.now();
+		let embeddings: number[][];
+		try {
+			embeddings = await this.runWithPolicies('embedder', doEmbed, ingestRunId);
+		} catch (err) {
+			// Record total latency and failed operation when embedder fails early
+			recordLatency('rag.ingest.total_ms', Date.now() - ingestStart, { component: 'rag' });
+			recordOperation('rag.ingest', false, ingestRunId, { component: 'rag' });
+			throw err;
+		}
+		recordLatency('rag.ingest.embed_ms', Date.now() - embedStart, { component: 'rag' });
 		// Observability: embedding batch size and chunk distribution (lengths)
 		recordLatency('rag.embed.batch_size', embeddings.length, { component: 'rag' });
 		const totalChars = sanitizedTexts.reduce((a, t) => a + (t?.length ?? 0), 0);
@@ -255,7 +279,18 @@ export class RAGPipeline {
 		}
 		const toUpsert = sanitizedChunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
 		const doUpsert = async () => this.S.upsert(toUpsert);
-		await this.runWithPolicies('store', doUpsert);
+		const upsertStart = Date.now();
+		try {
+			await this.runWithPolicies('store', doUpsert, ingestRunId);
+		} catch (err) {
+			recordLatency('rag.ingest.total_ms', Date.now() - ingestStart, { component: 'rag' });
+			recordOperation('rag.ingest', false, ingestRunId, { component: 'rag' });
+			throw err;
+		}
+		recordLatency('rag.ingest.upsert_ms', Date.now() - upsertStart, { component: 'rag' });
+		// total
+		recordLatency('rag.ingest.total_ms', Date.now() - ingestStart, { component: 'rag' });
+		recordOperation('rag.ingest', true, ingestRunId, { component: 'rag' });
 	}
 
 	async ingestText(source: string, text: string): Promise<void> {
@@ -276,16 +311,31 @@ export class RAGPipeline {
 	}
 
 	async retrieve(query: string, topK = 5): Promise<EnhancedCitationBundle> {
+		return this.retrieveInternal(query, topK);
+	}
+
+	private async retrieveInternal(
+		query: string,
+		topK: number,
+		runIdOverride?: string,
+	): Promise<EnhancedCitationBundle> {
 		validateContentSize(query, this.maxContentChars);
 
 		// Sanitize query for security
 		const sanitizedQuery = this.contentSecurity.sanitizeText(query);
 
+		const retrieveRunId = runIdOverride ?? generateRunId();
+		const totalStart = Date.now();
 		const doEmbed = async () => this.E.embed([sanitizedQuery]);
-		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
+		const embedStart = Date.now();
+		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed, retrieveRunId));
+		recordLatency('rag.retrieve.embed_ms', Date.now() - embedStart, { component: 'rag' });
 		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
-		let chunks = await this.queryMaybeHybrid(emb, sanitizedQuery, topK);
+		const queryStart = Date.now();
+		let chunks = await this.queryMaybeHybrid(emb, sanitizedQuery, topK, retrieveRunId);
+		chunks = this.applyPostChunkingIfEnabled(chunks, sanitizedQuery);
+		recordLatency('rag.retrieve.query_ms', Date.now() - queryStart, { component: 'rag' });
 		if (this.hierarchical?.expandContext) {
 			// Optionally dedupe and cap context
 			chunks = chunks.map((c) => this.applyContextPostprocessing(c));
@@ -300,7 +350,16 @@ export class RAGPipeline {
 
 		const routed = routeByFreshness(sanitizedChunks, this.freshnessOptions);
 		const bundler = new CitationBundler();
-		return bundler.bundle(routed);
+		try {
+			const bundle = bundler.bundle(routed);
+			recordLatency('rag.retrieve.total_ms', Date.now() - totalStart, { component: 'rag' });
+			recordOperation('rag.retrieve', true, retrieveRunId, { component: 'rag' });
+			return bundle;
+		} catch (err) {
+			recordLatency('rag.retrieve.total_ms', Date.now() - totalStart, { component: 'rag' });
+			recordOperation('rag.retrieve', false, retrieveRunId, { component: 'rag' });
+			throw err;
+		}
 	}
 
 	async retrieveWithClaims(
@@ -314,6 +373,7 @@ export class RAGPipeline {
 		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
+		chunks = this.applyPostChunkingIfEnabled(chunks, query);
 		if (this.hierarchical?.expandContext) {
 			chunks = chunks.map((c) => this.applyContextPostprocessing(c));
 		}
@@ -329,6 +389,7 @@ export class RAGPipeline {
 		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
+		chunks = this.applyPostChunkingIfEnabled(chunks, query);
 		if (this.hierarchical?.expandContext) {
 			chunks = chunks.map((c) => this.applyContextPostprocessing(c));
 		}
@@ -348,6 +409,7 @@ export class RAGPipeline {
 		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
+		chunks = this.applyPostChunkingIfEnabled(chunks, query);
 		if (this.hierarchical?.expandContext) {
 			chunks = chunks.map((c) => this.applyContextPostprocessing(c));
 		}
@@ -375,7 +437,7 @@ export class RAGPipeline {
 		return bundler.bundle(routed);
 	}
 
-	private async queryMaybeHybrid(emb: number[], query: string, topK: number) {
+	private async queryMaybeHybrid(emb: number[], query: string, topK: number, runId?: string) {
 		const sAny = this.S as unknown as {
 			queryWithText?: (
 				e: number[],
@@ -387,7 +449,7 @@ export class RAGPipeline {
 			typeof sAny.queryWithText === 'function'
 				? sAny.queryWithText(emb, query, topK)
 				: this.S.query(emb, topK);
-		return selfSafe(this.runWithPolicies('store', doQuery));
+		return selfSafe(this.runWithPolicies('store', doQuery, runId));
 	}
 
 	private applyContextPostprocessing<T extends Chunk & { score?: number }>(c: T): T {
@@ -413,6 +475,18 @@ export class RAGPipeline {
 			context = context.slice(0, this.hierarchical.maxContextChars);
 		}
 		return { ...c, metadata: { ...meta, context } } as T;
+	}
+
+	private applyPostChunkingIfEnabled<T extends Chunk & { score?: number }>(
+		chunks: T[],
+		query: string,
+	): T[] {
+		const cfg = this.postChunking;
+		if (!cfg?.enabled || chunks.length === 0) return chunks;
+		const simplified = chunks.map((c) => ({ id: c.id, text: c.text, metadata: c.metadata }));
+		const merged = applyPostChunk(simplified, query, cfg);
+		// Map merged back to minimal T by carrying text and metadata; ids already present
+		return merged.map((m) => ({ id: m.id, text: m.text, metadata: m.metadata }) as T);
 	}
 
 	/**
@@ -451,6 +525,32 @@ export class RAGPipeline {
 	 */
 	getEvidenceGateOptions() {
 		return this.evidenceGate.getOptions();
+	}
+
+	/**
+	 * Retrieve and rerank in a single correlated operation.
+	 * Emits retrieve metrics and correlates embedder/store/reranker via a shared run id.
+	 */
+	async retrieveAndRerank(
+		query: string,
+		topK: number,
+		reranker: Qwen3Reranker,
+	): Promise<Document[]> {
+		// Use a single correlation id across steps and emit top-level op
+		const runId = generateRunId();
+		const start = Date.now();
+		try {
+			const bundle = await this.retrieveInternal(query, topK, runId);
+			const docs: Document[] = bundle.citations.map((c) => ({ id: c.id, content: c.text ?? '' }));
+			const out = await rerankDocs(reranker, query, docs, topK, { correlationId: runId });
+			recordLatency('rag.retrieve_and_rerank.total_ms', Date.now() - start, { component: 'rag' });
+			recordOperation('rag.retrieve_and_rerank', true, runId, { component: 'rag' });
+			return out;
+		} catch (err) {
+			recordLatency('rag.retrieve_and_rerank.total_ms', Date.now() - start, { component: 'rag' });
+			recordOperation('rag.retrieve_and_rerank', false, runId, { component: 'rag' });
+			throw err;
+		}
 	}
 }
 

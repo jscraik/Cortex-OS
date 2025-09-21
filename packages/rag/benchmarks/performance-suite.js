@@ -56,7 +56,7 @@ class MockRAGPipeline {
         };
     }
 
-    async retrieve(query, _options = {}) {
+    async retrieve(query, options = {}) {
         const startTime = performance.now();
         const startMemory = process.memoryUsage();
 

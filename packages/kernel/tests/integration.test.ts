@@ -25,7 +25,15 @@ describe('Cortex Kernel Integration', () => {
 			const blueprint = {
 				title: 'Integration Test Project',
 				description: 'A test project to validate kernel integration',
-				requirements: ['Feature A', 'Feature B', 'Testing'],
+				requirements: [
+					'Feature A',
+					'Feature B',
+					'Testing',
+					'Security authentication',
+					'User interface design',
+					'Architecture design',
+					'Accessibility compliance'
+				],
 			};
 
 			const result = await kernel.runPRPWorkflow(blueprint, {
@@ -42,9 +50,9 @@ describe('Cortex Kernel Integration', () => {
 			expect(result.metadata.endTime).toBeDefined();
 
 			// Verify validation gates
-			expect(result.validationResults.strategy?.passed).toBe(true);
-			expect(result.validationResults.build?.passed).toBe(true);
-			expect(result.validationResults.evaluation?.passed).toBe(true);
+			expect(result.gates.G0?.status).toBe('passed');
+			expect(result.gates.G2?.status).toBe('passed');
+			expect(result.gates.G5?.status).toBe('passed');
 
 			// Verify cerebrum decision
 			expect(result.cerebrum?.decision).toBe('promote');
@@ -127,11 +135,11 @@ describe('Cortex Kernel Integration', () => {
 			// Final state should be valid
 			expect(['completed', 'recycled']).toContain(result.phase);
 
-			// All validation results should be present for completed workflows
+			// All gates should be present for completed workflows
 			if (result.phase === 'completed') {
-				expect(result.validationResults.strategy).toBeDefined();
-				expect(result.validationResults.build).toBeDefined();
-				expect(result.validationResults.evaluation).toBeDefined();
+				expect(result.gates.G0).toBeDefined();
+				expect(result.gates.G2).toBeDefined();
+				expect(result.gates.G5).toBeDefined();
 			}
 		});
 	});

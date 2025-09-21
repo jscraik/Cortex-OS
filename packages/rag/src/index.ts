@@ -71,6 +71,7 @@ export {
 } from './mcp/tools.js';
 export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
 export { startRagHealthServer } from './server/bootstrap.js';
+export { createPooledEmbedder, PooledEmbedder } from './embed/embedding-pool.js';
 export {
 	createEmbedderHealthCheck,
 	createPgvectorHealthCheck,

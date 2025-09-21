@@ -3,7 +3,7 @@ import { type PrismaLike, PrismaStore } from '../adapters/store.prisma/client.js
 import type { MemoryStore } from '../ports/MemoryStore.js';
 import { ENV, getEnvWithFallback } from './constants.js';
 
-export type StoreKind = 'local' | 'sqlite' | 'prisma' | 'memory';
+export type StoreKind = 'local' | 'sqlite' | 'external-sqlite' | 'prisma' | 'memory';
 
 export function resolveStoreKindFromEnv(): StoreKind {
 	// Use centralized helper with fallback handling
@@ -14,11 +14,15 @@ export function resolveStoreKindFromEnv(): StoreKind {
 
 	if (raw === 'local') return 'local';
 	if (raw === 'sqlite') return 'sqlite';
+	if (raw === 'external-sqlite') return 'external-sqlite';
 	if (raw === 'prisma') return 'prisma';
 	if (raw === 'memory') return 'memory';
 
 	// If Local Memory base URL is present, prefer it
 	if (process.env[ENV.LOCAL_MEMORY_BASE_URL]) return 'local';
+
+	// If external storage is enabled, prefer external-sqlite
+	if (process.env.MEMORIES_EXTERNAL_STORAGE_ENABLED === 'true') return 'external-sqlite';
 
 	// Default to in-memory for tests/dev without persistence
 	return 'memory';
@@ -28,9 +32,13 @@ export function resolveStoreKindFromEnv(): StoreKind {
  * Create a MemoryStore instance based on environment variables.
  *
  * Supported env vars:
- * - `MEMORIES_STORE_ADAPTER` (standardized) | `MEMORIES_ADAPTER` | `MEMORY_STORE` (legacy): one of `local`, `sqlite`, `prisma`, `memory`
+ * - `MEMORIES_STORE_ADAPTER` (standardized) | `MEMORIES_ADAPTER` | `MEMORY_STORE` (legacy): one of `local`, `sqlite`, `external-sqlite`, `prisma`, `memory`
  * - `LOCAL_MEMORY_BASE_URL`, `LOCAL_MEMORY_API_KEY`, `LOCAL_MEMORY_NAMESPACE`
  * - `MEMORIES_SQLITE_PATH` (default: `./data/memories.db`), `MEMORIES_VECTOR_DIM` (default: 1536)
+ * - `MEMORIES_EXTERNAL_STORAGE_ENABLED`: Enable external storage (default: false)
+ * - `MEMORIES_EXTERNAL_STORAGE_PREFERRED_PATH`: Preferred external storage path (default: /Volumes/ExternalSSD/cortex-memories)
+ * - `MEMORIES_EXTERNAL_STORAGE_FALLBACK_PATHS`: Comma-separated fallback paths
+ * - `MEMORIES_EXTERNAL_STORAGE_DB_NAME`: Database name for external storage (default: memories.db)
  */
 export async function createStoreFromEnv(opts?: { prismaClient?: unknown }): Promise<MemoryStore> {
 	const kind = resolveStoreKindFromEnv();
@@ -46,6 +54,15 @@ export async function createStoreFromEnv(opts?: { prismaClient?: unknown }): Pro
 			const { SQLiteStore } = await import('../adapters/store.sqlite.js');
 			// Use in-memory SQLite by default for testing
 			return new SQLiteStore(':memory:', 384);
+		}
+		case 'external-sqlite': {
+			const { initializeExternalStorage } = await import('../adapters/external-storage.js');
+			const { ExternalSqliteStore } = await import('../adapters/store.external-sqlite.js');
+			const externalManager = await initializeExternalStorage();
+			return new ExternalSqliteStore({
+				dbName: process.env.MEMORIES_EXTERNAL_STORAGE_DB_NAME || 'memories.db',
+				externalStorageManager: externalManager,
+			});
 		}
 		case 'prisma': {
 			// Expect a prisma client instance to be provided at runtime.

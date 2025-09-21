@@ -890,4 +890,3 @@ export class FailureRecoveryResilienceManager {
 	}
 }
 
-export default FailureRecoveryResilienceManager;

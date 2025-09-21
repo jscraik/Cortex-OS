@@ -70,7 +70,7 @@ export interface ComponentUpdatedEventData {
  */
 export class AGUIBusIntegration extends EventEmitter {
 	private agentId: string;
-	private busConnected: boolean = false;
+	private busConnected = false;
 
 	constructor(agentId: string) {
 		super();

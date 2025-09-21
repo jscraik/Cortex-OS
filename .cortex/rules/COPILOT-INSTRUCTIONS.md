@@ -19,6 +19,10 @@ Begin with a concise checklist (3-7 bullets) of what you will do; keep items con
 4. `.github/instructions/*` (code review, tests, markdown, PR, quality gates)
 5. MCP configs: `apps/*`, `.vscode/`, `.gemini/`
 
+## Time Freshness Rules
+
+See `.cortex/rules/_time-freshness.md` for timezone and date handling rules that all agents must follow.
+
 ## Overview
 
 - **Monorepo:** Managed via Turborepo and pnpm.

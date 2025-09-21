@@ -1,0 +1,68 @@
+# Stage 1: Development/Staging Deployment
+# - Single instance
+# - Basic monitoring
+# - External storage enabled
+# - No encryption (for easier debugging)
+
+version: '3.8'
+
+services:
+  memories-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: cortex-memories-dev
+    environment:
+      # Store configuration
+      MEMORIES_STORE_ADAPTER: external-sqlite
+      MEMORIES_EXTERNAL_STORAGE_ENABLED: true
+      MEMORIES_EXTERNAL_STORAGE_PREFERRED_PATH: /Volumes/ExternalSSD/cortex-memories
+      MEMORIES_EXTERNAL_STORAGE_FALLBACK_PATHS: /Volumes/ExternalHDD/cortex-memories,./data
+      MEMORIES_EXTERNAL_STORAGE_DB_NAME: memories-dev.db
+
+      # Monitoring
+      MEMORIES_MONITORING_ENABLED: true
+      MEMORIES_MONITORING_PORT: 3001
+
+      # Logging
+      LOG_LEVEL: debug
+      NODE_ENV: development
+
+    volumes:
+      # Mount external storage
+      - /Volumes/ExternalSSD:/Volumes/ExternalSSD:rw
+      - /Volumes/ExternalHDD:/Volumes/ExternalHDD:rw
+      - ./data:/app/data:rw
+
+    ports:
+      - "3001:3001"  # Dashboard
+      - "3002:3002"  # API (if running MCP server)
+
+    healthcheck:
+      test: ["CMD", "node", "dist/monitoring/cli.js", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+    networks:
+      - cortex-network
+
+  # Optional: Redis for caching (can be added in stage 2)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: cortex-memories-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - cortex-network
+
+networks:
+  cortex-network:
+    driver: bridge
+
+volumes:
+  redis-data:

@@ -35,11 +35,14 @@ describe('Cortex Kernel Determinism', () => {
 			};
 
 			const run1 = await kernel.runPRPWorkflow(blueprint, {
-				runId: 'test-run-1',
+				runId: 'test-run',
 				deterministic: true,
 			});
+
+			resetCounters();
+
 			const run2 = await kernel.runPRPWorkflow(blueprint, {
-				runId: 'test-run-2',
+				runId: 'test-run',
 				deterministic: true,
 			});
 
@@ -77,10 +80,18 @@ describe('Cortex Kernel Determinism', () => {
 				requirements: ['Deterministic'],
 			};
 
+			// Reset counters between runs for proper testing
+			resetCounters();
+
 			const run1 = await kernel.runPRPWorkflow(blueprint, {
+				runId: 'deterministic-test',
 				deterministic: true,
 			});
+
+			resetCounters();
+
 			const run2 = await kernel.runPRPWorkflow(blueprint, {
+				runId: 'deterministic-test',
 				deterministic: true,
 			});
 

@@ -5,7 +5,20 @@ import { defineConfig } from 'vitest/config';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-	test: { environment: 'node' },
+	test: {
+		environment: 'node',
+		include: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'json', 'lcov'],
+			thresholds: {
+				statements: 85,
+				branches: 85,
+				functions: 85,
+				lines: 85,
+			},
+		},
+	},
 	resolve: {
 		alias: {
 			'@cortex-os/a2a-contracts': resolve(__dirname, '../a2a/a2a-contracts/src'),

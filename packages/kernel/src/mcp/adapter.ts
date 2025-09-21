@@ -124,8 +124,33 @@ export class MCPAdapter {
 			timestamp: string;
 		};
 	}> {
-		const tool = this.tools.get(toolName);
+		const tool = this.validateAndGetTool(toolName, runId);
+		const context = this.getContext(runId);
 
+		try {
+			const hooks = await this.initializeHooks();
+			const effectiveParams = await this.runPreToolHooks(hooks, toolName, params, context);
+			const result = await tool.execute(effectiveParams, context) as Result;
+			const evidence = this.createToolEvidence(toolName, effectiveParams, result);
+
+			await this.runPostToolHooks(hooks, toolName, effectiveParams, context);
+
+			return { result, evidence };
+		} catch (error) {
+			throw new Error(
+				`MCP tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+	}
+
+	/**
+	 * Validate tool exists and is enabled
+	 */
+	private validateAndGetTool<Params extends Record<string, unknown>, Result = unknown>(
+		toolName: string,
+		runId: string,
+	): MCPTool<Params, Result> {
+		const tool = this.tools.get(toolName) as MCPTool<Params, Result>;
 		if (!tool) {
 			throw new Error(`MCP tool not found: ${toolName}`);
 		}
@@ -139,55 +164,96 @@ export class MCPAdapter {
 			throw new Error(`MCP tool not enabled: ${toolName}`);
 		}
 
-		try {
-			// Initialize hooks lazily via dynamic import
-			const hooksMod = await import('@cortex-os/hooks');
-			const hooks = new hooksMod.CortexHooks();
-			await hooks.init();
+		return tool;
+	}
 
-			// PreToolUse: allow/deny/mutate
-			let effectiveParams: Params = params;
-			const pre = await hooks.run('PreToolUse', {
-				event: 'PreToolUse',
-				tool: { name: toolName, input: effectiveParams },
+	/**
+	 * Get context for run ID
+	 */
+	private getContext(runId: string): MCPContext {
+		const context = this.contexts.get(runId);
+		if (!context) {
+			throw new Error(`MCP context not found for run: ${runId}`);
+		}
+		return context;
+	}
+
+	/**
+	 * Initialize hooks lazily
+	 */
+	private async initializeHooks() {
+		const hooksMod = await import('@cortex-os/hooks');
+		const hooks = new hooksMod.CortexHooks();
+		await hooks.init();
+		return hooks;
+	}
+
+	/**
+	 * Run pre-tool hooks for validation and parameter mutation
+	 */
+	private async runPreToolHooks<Params extends Record<string, unknown>>(
+		hooks: any,
+		toolName: string,
+		params: Params,
+		context: MCPContext,
+	): Promise<Params> {
+		let effectiveParams: Params = params;
+		const pre = await hooks.run('PreToolUse', {
+			event: 'PreToolUse',
+			tool: { name: toolName, input: effectiveParams },
+			cwd: context.workingDirectory,
+			user: context.prpState.runId || 'system',
+			tags: ['kernel', 'mcp'],
+		});
+
+		for (const r of pre) {
+			if (r.action === 'deny') {
+				throw new Error(`Hook denied tool '${toolName}': ${r.reason}`);
+			}
+			if (r.action === 'allow' && typeof r.input !== 'undefined') {
+				effectiveParams = r.input as Params;
+			}
+		}
+
+		return effectiveParams;
+	}
+
+	/**
+	 * Create tool evidence object
+	 */
+	private createToolEvidence<Params extends Record<string, unknown>, Result = unknown>(
+		toolName: string,
+		params: Params,
+		result: Result,
+	) {
+		return {
+			toolName,
+			params,
+			result,
+			timestamp: new Date().toISOString(),
+		};
+	}
+
+	/**
+	 * Run post-tool hooks (best-effort)
+	 */
+	private async runPostToolHooks<Params extends Record<string, unknown>>(
+		hooks: any,
+		toolName: string,
+		params: Params,
+		context: MCPContext,
+	): Promise<void> {
+		try {
+			await hooks.run('PostToolUse', {
+				event: 'PostToolUse',
+				tool: { name: toolName, input: params },
 				cwd: context.workingDirectory,
 				user: context.prpState.runId || 'system',
 				tags: ['kernel', 'mcp'],
 			});
-			for (const r of pre) {
-				if (r.action === 'deny') throw new Error(`Hook denied tool '${toolName}': ${r.reason}`);
-				if (r.action === 'allow' && typeof r.input !== 'undefined')
-					effectiveParams = r.input as Params;
-			}
-
-			const result = (await tool.execute(effectiveParams, context)) as Result;
-
-			const evidence = {
-				toolName,
-				params: effectiveParams,
-				result,
-				timestamp: new Date().toISOString(),
-			};
-
-			// PostToolUse (best-effort)
-			try {
-				await hooks.run('PostToolUse', {
-					event: 'PostToolUse',
-					tool: { name: toolName, input: effectiveParams },
-					cwd: context.workingDirectory,
-					user: context.prpState.runId || 'system',
-					tags: ['kernel', 'mcp'],
-				});
-			} catch (e) {
-				// best-effort only; log minimal warning without throwing
-				console.warn('[kernel/hooks] PostToolUse hook error:', (e as Error)?.message || e);
-			}
-
-			return { result, evidence };
-		} catch (error) {
-			throw new Error(
-				`MCP tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
-			);
+		} catch (e) {
+			// best-effort only; log minimal warning without throwing
+			console.warn('[kernel/hooks] PostToolUse hook error:', (e as Error)?.message || e);
 		}
 	}
 
@@ -275,7 +341,7 @@ export class MCPAdapter {
 	/**
 	 * Get context for run
 	 */
-	getContext(runId: string): MCPContext | undefined {
+	getContextSafe(runId: string): MCPContext | undefined {
 		return this.contexts.get(runId);
 	}
 

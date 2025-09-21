@@ -12,7 +12,7 @@ import { AgentToolkitMCPTools } from '../AgentToolkitMCPTools.js';
 
 // Performance measurement utilities
 class PerformanceProfiler {
-	private startTime: number = 0;
+	private startTime = 0;
 	private measurements: Array<{ operation: string; duration: number; memoryUsed: number }> = [];
 
 	start(): void {

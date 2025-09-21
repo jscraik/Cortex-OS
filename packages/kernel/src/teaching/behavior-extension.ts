@@ -84,50 +84,101 @@ export class BehaviorExtensionManager {
 			result: ExtensionResult;
 		}[];
 	}> {
-		const extensionContext: ExtensionContext = {
+		const extensionContext = this.createExtensionContext(context);
+		let modifiedState = { ...state };
+		const appliedExtensions = await this.applySortedExtensions(state, modifiedState, extensionContext);
+
+		this.updateExecutionHistory(modifiedState);
+
+		return { modifiedState, appliedExtensions };
+	}
+
+	/**
+	 * Create extension context with defaults
+	 */
+	private createExtensionContext(context: Partial<ExtensionContext>): ExtensionContext {
+		return {
 			captureSystem: this.captureSystem,
 			executionHistory: this.executionHistory,
 			...context,
 		};
+	}
 
-		let modifiedState = { ...state };
+	/**
+	 * Apply extensions sorted by confidence
+	 */
+	private async applySortedExtensions(
+		state: PRPState,
+		modifiedState: PRPState,
+		extensionContext: ExtensionContext,
+	): Promise<{
+		extension: BehaviorExtension;
+		result: ExtensionResult;
+	}[]> {
 		const appliedExtensions: {
 			extension: BehaviorExtension;
 			result: ExtensionResult;
 		}[] = [];
 
-		// Apply extensions in order of confidence
-		const sortedExtensions = Array.from(this.extensions.values())
-			.filter((ext) => ext.trigger(state))
-			.sort((a, b) => b.confidence - a.confidence);
+		const sortedExtensions = this.getSortedExtensions(state);
 
 		for (const extension of sortedExtensions) {
-			try {
-				const currentState = modifiedState;
-				const result = await extension.modify(currentState, extensionContext);
-
-				if (result.modified) {
-					const updatedState = this.applyModifications(currentState, result);
-					appliedExtensions.push({ extension, result });
-
-					// Capture this extension application with the state before modifications
-					this.captureExtensionApplication(extension, currentState, updatedState, result);
-
-					modifiedState = updatedState;
-				}
-			} catch (error) {
-				console.error(`Extension ${extension.id} failed:`, error);
-				// Continue with other extensions
-			}
+			await this.applySingleExtension(
+				extension,
+				modifiedState,
+				extensionContext,
+				appliedExtensions,
+			);
 		}
 
-		// Update execution history
+		return appliedExtensions;
+	}
+
+	/**
+	 * Get extensions sorted by confidence
+	 */
+	private getSortedExtensions(state: PRPState): BehaviorExtension[] {
+		return Array.from(this.extensions.values())
+			.filter((ext) => ext.trigger(state))
+			.sort((a, b) => b.confidence - a.confidence);
+	}
+
+	/**
+	 * Apply a single extension
+	 */
+	private async applySingleExtension(
+		extension: BehaviorExtension,
+		modifiedState: PRPState,
+		extensionContext: ExtensionContext,
+		appliedExtensions: {
+			extension: BehaviorExtension;
+			result: ExtensionResult;
+		}[],
+	): Promise<void> {
+		try {
+			const currentState = modifiedState;
+			const result = await extension.modify(currentState, extensionContext);
+
+			if (result.modified) {
+				const updatedState = this.applyModifications(currentState, result);
+				appliedExtensions.push({ extension, result });
+				this.captureExtensionApplication(extension, currentState, updatedState, result);
+				modifiedState = updatedState;
+			}
+		} catch (error) {
+			console.error(`Extension ${extension.id} failed:`, error);
+			// Continue with other extensions
+		}
+	}
+
+	/**
+	 * Update execution history with size limit
+	 */
+	private updateExecutionHistory(modifiedState: PRPState): void {
 		this.executionHistory.push(modifiedState);
 		if (this.executionHistory.length > 100) {
 			this.executionHistory = this.executionHistory.slice(-100); // Keep last 100
 		}
-
-		return { modifiedState, appliedExtensions };
 	}
 
 	/**
@@ -179,119 +230,150 @@ export class BehaviorExtensionManager {
 	 * Initialize default behavior extensions
 	 */
 	private initializeDefaultExtensions(): void {
-		// Extension 1: Adaptive validation gates
+		this.registerAdaptiveValidationExtension();
+		this.registerSmartGateSkipExtension();
+		this.registerContextEvidenceExtension();
+	}
+
+	/**
+	 * Register adaptive validation gates extension
+	 */
+	private registerAdaptiveValidationExtension(): void {
 		this.registerExtension({
 			id: 'adaptive-validation',
 			name: 'Adaptive Validation Gates',
 			description: 'Adjusts validation thresholds based on project context',
 			trigger: (state) => state.phase === 'strategy' || state.phase === 'build',
-			modify: async (state, _context) => {
-				const projectComplexity = this.assessProjectComplexity(state.blueprint);
-				const historicalSuccess = this.getHistoricalSuccessRate(state.blueprint);
-
-				if (projectComplexity === 'simple' && historicalSuccess > 0.8) {
-					return {
-						modified: true,
-						changes: [
-							{
-								type: 'validation_adjustment',
-								description: 'Relaxed validation for simple, successful project pattern',
-								impact: 'low',
-								parameters: {
-									maxMajorsAllowed: 5, // Increased from 3
-									skipMinorValidations: true,
-								},
-							},
-						],
-						reasoning: 'Project appears simple and follows successful patterns',
-					};
-				}
-
-				return {
-					modified: false,
-					changes: [],
-					reasoning: 'No adjustments needed',
-				};
-			},
+			modify: async (state, _context) => this.createAdaptiveValidationResult(state),
 			confidence: 0.7,
 			basedOnPatterns: [],
 		});
+	}
 
-		// Extension 2: Smart gate skipping
+	/**
+	 * Create adaptive validation result based on project context
+	 */
+	private async createAdaptiveValidationResult(state: PRPState): Promise<ExtensionResult> {
+		const projectComplexity = this.assessProjectComplexity(state.blueprint);
+		const historicalSuccess = this.getHistoricalSuccessRate(state.blueprint);
+
+		if (projectComplexity === 'simple' && historicalSuccess > 0.8) {
+			return {
+				modified: true,
+				changes: [
+					{
+						type: 'validation_adjustment',
+						description: 'Relaxed validation for simple, successful project pattern',
+						impact: 'low',
+						parameters: {
+							maxMajorsAllowed: 5, // Increased from 3
+							skipMinorValidations: true,
+						},
+					},
+				],
+				reasoning: 'Project appears simple and follows successful patterns',
+			};
+		}
+
+		return {
+			modified: false,
+			changes: [],
+			reasoning: 'No adjustments needed',
+		};
+	}
+
+	/**
+	 * Register smart gate skipping extension
+	 */
+	private registerSmartGateSkipExtension(): void {
 		this.registerExtension({
 			id: 'smart-gate-skip',
 			name: 'Smart Gate Skipping',
 			description: 'Skips redundant validation gates for certain project types',
 			trigger: (state) => state.phase === 'build',
-			modify: async (state, _context) => {
-				const projectType = this.inferProjectType(state.blueprint);
-
-				if (projectType === 'documentation-only') {
-					return {
-						modified: true,
-						changes: [
-							{
-								type: 'gate_modification',
-								description: 'Skip compilation gates for documentation project',
-								impact: 'medium',
-								parameters: {
-									skipGates: ['backend-compilation', 'frontend-performance'],
-									reason: 'Documentation project detected',
-								},
-							},
-						],
-						reasoning: 'Documentation projects do not require compilation validation',
-					};
-				}
-
-				return {
-					modified: false,
-					changes: [],
-					reasoning: 'No gate skipping applicable',
-				};
-			},
+			modify: async (state, _context) => this.createSmartGateSkipResult(state),
 			confidence: 0.8,
 			basedOnPatterns: [],
 		});
+	}
 
-		// Extension 3: Context-aware evidence collection
+	/**
+	 * Create smart gate skip result based on project type
+	 */
+	private async createSmartGateSkipResult(state: PRPState): Promise<ExtensionResult> {
+		const projectType = this.inferProjectType(state.blueprint);
+
+		if (projectType === 'documentation-only') {
+			return {
+				modified: true,
+				changes: [
+					{
+						type: 'gate_modification',
+						description: 'Skip compilation gates for documentation project',
+						impact: 'medium',
+						parameters: {
+							skipGates: ['backend-compilation', 'frontend-performance'],
+							reason: 'Documentation project detected',
+						},
+					},
+				],
+				reasoning: 'Documentation projects do not require compilation validation',
+			};
+		}
+
+		return {
+			modified: false,
+			changes: [],
+			reasoning: 'No gate skipping applicable',
+		};
+	}
+
+	/**
+	 * Register context-aware evidence collection extension
+	 */
+	private registerContextEvidenceExtension(): void {
 		this.registerExtension({
 			id: 'context-evidence',
 			name: 'Context-Aware Evidence Collection',
 			description: 'Adjusts evidence requirements based on project context',
 			trigger: (state) => state.evidence.length < 3,
-			modify: async (state, _context) => {
-				const evidenceNeeds = this.assessEvidenceNeeds(state);
-
-				if (evidenceNeeds.additional.length > 0) {
-					return {
-						modified: true,
-						changes: [
-							{
-								type: 'workflow_alteration',
-								description: 'Enhanced evidence collection for project type',
-								impact: 'low',
-								parameters: {
-									additionalEvidence: evidenceNeeds.additional,
-									priority: evidenceNeeds.priority,
-								},
-							},
-						],
-						reasoning: `Project requires additional evidence: ${evidenceNeeds.additional.join(', ')}`,
-						suggestedFeedback:
-							'System automatically enhanced evidence collection based on project analysis',
-					};
-				}
-
-				return {
-					modified: false,
-					changes: [],
-					reasoning: 'Evidence collection adequate',
-				};
-			},
+			modify: async (state, _context) => this.createContextEvidenceResult(state),
 			confidence: 0.6,
 			basedOnPatterns: [],
 		});
+	}
+
+	/**
+	 * Create context evidence result based on evidence needs
+	 */
+	private async createContextEvidenceResult(state: PRPState): Promise<ExtensionResult> {
+		const evidenceNeeds = this.assessEvidenceNeeds(state);
+
+		if (evidenceNeeds.additional.length > 0) {
+			return {
+				modified: true,
+				changes: [
+					{
+						type: 'workflow_alteration',
+						description: 'Enhanced evidence collection for project type',
+						impact: 'low',
+						parameters: {
+							additionalEvidence: evidenceNeeds.additional,
+							priority: evidenceNeeds.priority,
+						},
+					},
+				],
+				reasoning: `Project requires additional evidence: ${evidenceNeeds.additional.join(', ')}`,
+				suggestedFeedback:
+					'System automatically enhanced evidence collection based on project analysis',
+			};
+		}
+
+		return {
+			modified: false,
+			changes: [],
+			reasoning: 'Evidence collection adequate',
+		};
 	}
 
 	/**
@@ -471,32 +553,65 @@ export class BehaviorExtensionManager {
 		modifiedState: PRPState,
 		result: ExtensionResult,
 	): void {
+		const context = this.createCaptureContext(originalState);
+		const action = this.createCaptureAction(extension, result);
+		const outcome = this.createCaptureOutcome(modifiedState, extension);
+		const tags = this.createCaptureTags(originalState);
+
 		this.captureSystem.captureExample(
 			'workflow',
-			{
-				prpPhase: originalState.phase,
-				blueprint: originalState.blueprint,
-				inputState: originalState,
-			},
-			{
-				type: 'workflow_modification',
-				description: `Extension applied: ${extension.name}`,
-				parameters: {
-					extensionId: extension.id,
-					modifications: result.changes,
-				},
-				timestamp: new Date().toISOString(),
-			},
-			{
-				resultingState: modifiedState,
-				success: true, // Will be updated based on actual outcome
-				learningValue: extension.confidence,
-			},
-			{
-				tags: ['extension', 'auto-adaptation', originalState.phase],
-			},
+			context,
+			action,
+			outcome,
+			tags,
 			originalState.metadata?.deterministic,
 		);
+	}
+
+	/**
+	 * Create capture context from original state
+	 */
+	private createCaptureContext(originalState: PRPState) {
+		return {
+			prpPhase: originalState.phase,
+			blueprint: originalState.blueprint,
+			inputState: originalState,
+		};
+	}
+
+	/**
+	 * Create capture action from extension and result
+	 */
+	private createCaptureAction(extension: BehaviorExtension, result: ExtensionResult) {
+		return {
+			type: 'workflow_modification' as const,
+			description: `Extension applied: ${extension.name}`,
+			parameters: {
+				extensionId: extension.id,
+				modifications: result.changes,
+			},
+			timestamp: new Date().toISOString(),
+		};
+	}
+
+	/**
+	 * Create capture outcome from modified state and extension
+	 */
+	private createCaptureOutcome(modifiedState: PRPState, extension: BehaviorExtension) {
+		return {
+			resultingState: modifiedState,
+			success: true, // Will be updated based on actual outcome
+			learningValue: extension.confidence,
+		};
+	}
+
+	/**
+	 * Create capture tags from original state
+	 */
+	private createCaptureTags(originalState: PRPState) {
+		return {
+			tags: ['extension', 'auto-adaptation', originalState.phase],
+		};
 	}
 
 	/**

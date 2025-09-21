@@ -144,15 +144,6 @@ comprehensive quality gates.
 
 Automated quality signals are produced on every CI run and surfaced as static badges + an inline sparkline:
 
-- `reports/badges/branch-coverage.svg` – Latest branch coverage %
-- `reports/badges/mutation-score.svg` – Latest mutation testing score (Stryker)
-- `reports/badges/quality-gate.svg` – Composite gate (pass/fail)
-- `reports/badges/branch-trend.svg` – Historical branch coverage trend (also inlined between markers above)
-- `reports/badges/mutation-operators-summary.(json|md)` – Aggregated effectiveness per mutator/operator
-- `reports/mutation-history.json` – Time series of mutation scores
-- `reports/branch-coverage-history.json` – Time series of branch coverage samples
-- `reports/badges/metrics.json` – Canonical machine-readable snapshot consumed by the CI quality gate
-
 ### Thresholds
 
 Current (defaults – can be overridden at runtime via env):
@@ -206,13 +197,6 @@ reports/badges/mutation-operators-summary.md
 
 Columns:
 
-- Total – Mutants generated for the operator
-- Killed – Successfully detected
-- Survived – Escaped tests (improvement target)
-- NoCoverage – Untested regions (raises coverage priority)
-- Timeout – Counted as detected (test slowness risk)
-- Detection % – `(killed + timeout) / total * 100`
-
 ### metrics.json Structure
 
 ```jsonc
@@ -232,8 +216,6 @@ Deterministic, cache‑friendly artifacts (content-addressable in Git history)
 reduce API latency and allow offline inspection while still enabling future
 evolution to dynamic endpoints (e.g., GitHub Pages JSON → Shields endpoint
 pattern) without breaking existing consumers.
-
----
 
 ## Overview
 
@@ -289,11 +271,7 @@ pnpm structure:validate
 pnpm biome:staged  # format + lint staged files
 pnpm test:safe     # safe, minimal tests
 
-# Emergency: bypass hooks (use sparingly)
-HUSKY=0 git commit -m "chore: temp bypass"
-```
 
----
 
 ## Architecture Snapshot
 

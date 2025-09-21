@@ -235,9 +235,10 @@ export function createMLXAdapter(): MLXAdapterApi {
 			python: pythonPath,
 			setModulePath: path.resolve(process.cwd(), 'apps/cortex-py/src'),
 			envOverrides: {
-				HF_HOME: HUGGINGFACE_CACHE,
-				TRANSFORMERS_CACHE: HUGGINGFACE_CACHE,
-				MLX_CACHE_DIR: MLX_CACHE_DIR,
+				HF_HOME: process.env.HF_HOME || HUGGINGFACE_CACHE,
+				TRANSFORMERS_CACHE: process.env.TRANSFORMERS_CACHE || process.env.HF_HOME || HUGGINGFACE_CACHE,
+				MLX_CACHE_DIR: process.env.MLX_CACHE_DIR || MLX_CACHE_DIR,
+				MLX_MODEL_PATH: process.env.MLX_MODEL_PATH || process.env.MLX_MODEL_BASE_PATH || '',
 			},
 		});
 	};

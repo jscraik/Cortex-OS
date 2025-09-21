@@ -15,26 +15,52 @@ import { currentTimestamp } from '../utils/time.js';
  */
 export class BuildNode {
 	async execute(state: PRPState): Promise<PRPState> {
+		const buildResult = await this.runBuildValidations(state);
+		return this.createUpdatedState(state, buildResult);
+	}
+
+	/**
+	 * Run all build validations and collect results
+	 */
+	private async runBuildValidations(state: PRPState): Promise<BuildValidationResult> {
 		const evidence: Evidence[] = [];
 		const blockers: string[] = [];
 		const majors: string[] = [];
 
-		// Gate 1: Backend compilation and tests
+		// Execute all validation gates
+		await this.validateBackendGate(state, evidence, blockers);
+		await this.validateAPIGate(state, evidence, blockers);
+		await this.validateSecurityGate(state, evidence, blockers, majors);
+		await this.validateFrontendGate(state, evidence, majors);
+		await this.validateDocumentationGate(state, evidence, blockers);
+
+		return { evidence, blockers, majors };
+	}
+
+	/**
+	 * Validate backend compilation and tests
+	 */
+	private async validateBackendGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+	): Promise<void> {
 		const backendValidation = await this.validateBackend(state);
 		if (!backendValidation.passed) {
 			blockers.push('Backend compilation or tests failed');
 		}
 
-		evidence.push({
-			id: generateId('build-backend', state.metadata.deterministic),
-			type: 'test',
-			source: 'backend_validation',
-			content: JSON.stringify(backendValidation),
-			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 4),
-			phase: 'build',
-		});
+		evidence.push(this.createEvidence('build-backend', 'backend_validation', backendValidation, state, 4, 'test'));
+	}
 
-		// Gate 2: API schema validation
+	/**
+	 * Validate API schema
+	 */
+	private async validateAPIGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+	): Promise<void> {
 		const apiValidation = this.validateAPISchema(state);
 		// Also attempt async access call for evidence tests (non-blocking)
 		try {
@@ -47,16 +73,18 @@ export class BuildNode {
 			blockers.push('API schema validation failed');
 		}
 
-		evidence.push({
-			id: generateId('build-api', state.metadata.deterministic),
-			type: 'analysis',
-			source: 'api_schema_validation',
-			content: JSON.stringify(apiValidation),
-			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 5),
-			phase: 'build',
-		});
+		evidence.push(this.createEvidence('build-api', 'api_schema_validation', apiValidation, state, 5, 'analysis'));
+	}
 
-		// Gate 3: Security scanning
+	/**
+	 * Validate security scan results
+	 */
+	private async validateSecurityGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+		majors: string[],
+	): Promise<void> {
 		const securityScan = await this.runSecurityScan(state);
 		if (securityScan.blockers > 0) {
 			blockers.push(`Security scan found ${securityScan.blockers} critical issues`);
@@ -65,49 +93,89 @@ export class BuildNode {
 			majors.push(`Security scan found ${securityScan.majors} major issues (limit: 3)`);
 		}
 
-		evidence.push({
-			id: generateId('build-security', state.metadata.deterministic),
-			type: 'analysis',
-			source: 'security_scanner',
-			content: JSON.stringify(securityScan),
-			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 5),
-			phase: 'build',
-		});
+		evidence.push(this.createEvidence('build-security', 'security_scanner', securityScan, state, 5, 'analysis'));
+	}
 
-		// Gate 4: Frontend performance
+	/**
+	 * Validate frontend performance and accessibility
+	 */
+	private async validateFrontendGate(
+		state: PRPState,
+		evidence: Evidence[],
+		majors: string[],
+	): Promise<void> {
 		const frontendValidation = await this.validateFrontend(state);
-		if (frontendValidation.lighthouse < 90) {
-			majors.push(`Lighthouse score ${frontendValidation.lighthouse} below 90%`);
+		// Only check scores if frontend is required
+		if (frontendValidation.lighthouse > 0 && frontendValidation.axe > 0) {
+			if (frontendValidation.lighthouse < 90) {
+				majors.push(`Lighthouse score ${frontendValidation.lighthouse} below 90%`);
+			}
+			if (frontendValidation.axe < 90) {
+				majors.push(`Axe accessibility score ${frontendValidation.axe} below 90%`);
+			}
 		}
-		if (frontendValidation.axe < 90) {
-			majors.push(`Axe accessibility score ${frontendValidation.axe} below 90%`);
-		}
+		evidence.push(this.createEvidence('build-frontend', 'frontend_validation', frontendValidation, state, 4, 'test'));
+	}
 
-		// Gate 5: Documentation completeness
+	/**
+	 * Validate documentation completeness
+	 */
+	private async validateDocumentationGate(
+		state: PRPState,
+		evidence: Evidence[],
+		blockers: string[],
+	): Promise<void> {
 		const docsValidation = await this.validateDocumentation(state);
 		if (!docsValidation.passed) {
-			majors.push('Documentation incomplete - missing API docs or usage notes');
+			blockers.push('Documentation incomplete - missing README.md');
 		}
+		evidence.push(this.createEvidence('build-docs', 'documentation_validation', docsValidation, state, 4, 'analysis'));
+	}
 
+	/**
+	 * Create evidence object
+	 */
+	private createEvidence(
+		prefix: string,
+		source: string,
+		content: unknown,
+		state: PRPState,
+		timeOffset: number,
+		type: Evidence['type'],
+	): Evidence {
+		return {
+			id: generateId(prefix, state.metadata.deterministic),
+			type,
+			source,
+			content: JSON.stringify(content),
+			timestamp: currentTimestamp(state.metadata.deterministic ?? false, timeOffset),
+			phase: 'build',
+		};
+	}
+
+	/**
+	 * Create updated state with build results
+	 */
+	private createUpdatedState(state: PRPState, result: BuildValidationResult): PRPState {
 		return {
 			...state,
-			evidence: [...state.evidence, ...evidence],
+			evidence: [...state.evidence, ...result.evidence],
 			gates: {
 				...state.gates,
 				G2: {
 					id: 'G2',
 					name: 'Build Phase Gate',
-					status: blockers.length === 0 ? 'passed' : 'failed',
+					status: result.blockers.length === 0 ? 'passed' : 'failed',
 					requiresHumanApproval: false,
 					automatedChecks: [
 						{
 							name: 'Build Validation',
-							status: blockers.length === 0 ? 'pass' : 'fail',
-							output: `Found ${blockers.length} blockers, ${majors.length} majors`,
+							status: result.blockers.length === 0 ? 'pass' : 'fail',
+							output: `Found ${result.blockers.length} blockers, ${result.majors.length} majors`,
 						},
 					],
 					artifacts: [],
-					evidence: evidence.map((e) => e.id),
+					evidence: result.evidence.map((e) => e.id),
 					timestamp: currentTimestamp(state.metadata.deterministic ?? false, 6),
 				},
 			},
@@ -170,7 +238,29 @@ export class BuildNode {
 		return result;
 	}
 
-	private async runSecurityScan(_state: PRPState): Promise<ScanResult<SecurityScanDetails>> {
+	private async runSecurityScan(state: PRPState): Promise<ScanResult<SecurityScanDetails>> {
+		// Only run security scan if there are actual code requirements
+		const hasCode = state.blueprint.requirements?.some(
+			(req) =>
+				req.toLowerCase().includes('api') ||
+				req.toLowerCase().includes('endpoint') ||
+				req.toLowerCase().includes('backend') ||
+				req.toLowerCase().includes('ui') ||
+				req.toLowerCase().includes('frontend') ||
+				req.toLowerCase().includes('interface'),
+		);
+
+		if (!hasCode) {
+			return {
+				blockers: 0,
+				majors: 0,
+				details: {
+					tools: ['CodeQL', 'Semgrep'],
+					vulnerabilities: [],
+				},
+			};
+		}
+
 		// Mock security scan - in real implementation would run CodeQL, Semgrep, etc.
 		return {
 			blockers: 0,
@@ -225,7 +315,8 @@ export class BuildNode {
 			(req) =>
 				req.toLowerCase().includes('doc') ||
 				req.toLowerCase().includes('guide') ||
-				req.toLowerCase().includes('readme'),
+				req.toLowerCase().includes('readme') ||
+				req.toLowerCase().includes('documentation'),
 		);
 
 		if (!hasDocsReq) {
@@ -244,6 +335,12 @@ export class BuildNode {
 			},
 		};
 	}
+}
+
+interface BuildValidationResult {
+	evidence: Evidence[];
+	blockers: string[];
+	majors: string[];
 }
 
 interface ValidationResult<T> {

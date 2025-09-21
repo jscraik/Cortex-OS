@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ASBRAIIntegration } from '../asbr-ai-integration.js';
+import { checkMlxAvailability } from '../lib/infra/mlx.js';
 
 // Model provider types
 export type ModelProvider =
@@ -140,8 +141,8 @@ export const TASK_MODEL_MAPPING: Record<string, string[]> = {
 export class ModelSelector {
 	private models: ModelConfig[];
 	private thermalManagementEnabled: boolean = true;
-	private mlxAvailable: boolean = false;
-	private ollamaAvailable: boolean = false;
+	private _mlxAvailable: boolean = false;
+	private _ollamaAvailable: boolean = false;
 	private readonly aiIntegration: ASBRAIIntegration;
 
 	constructor(aiIntegration: ASBRAIIntegration, models?: ModelConfig[]) {
@@ -154,21 +155,17 @@ export class ModelSelector {
 	 * Check availability of MLX and Ollama providers
 	 */
 	private async checkProviderAvailability(): Promise<void> {
-		// Check MLX availability
 		try {
-			// Simple Python import check instead of using executeCommand
-			// For now, assume MLX is available - this would need proper implementation
-			this.mlxAvailable = true; // Simplified for now
+			const mlx = await checkMlxAvailability();
+			this._mlxAvailable = mlx.available;
 		} catch {
-			this.mlxAvailable = false;
+			this._mlxAvailable = false;
 		}
-
-		// Check Ollama availability
 		try {
 			const response = await fetch('http://localhost:11434/api/tags');
-			this.ollamaAvailable = response.ok;
+			this._ollamaAvailable = response.ok;
 		} catch {
-			this.ollamaAvailable = false;
+			this._ollamaAvailable = false;
 		}
 	}
 
@@ -260,20 +257,18 @@ export class ModelSelector {
 	 * Detect task type from input
 	 */
 	detectTaskType(input: string): string {
-		const patterns = {
-			'code-analysis': /code|analyze|review|refactor|debug|optimize/i,
-			'test-generation': /test|spec|unit|integration|e2e|pytest/i,
-			documentation: /doc|readme|markdown|comment|explain/i,
-			'security-analysis': /security|vulnerability|exploit|safe|audit/i,
-			multimodal: /image|picture|diagram|screenshot|visual/i,
-		};
+		// Order matters: check multimodal cues before generic code terms like "analyze"
+		const orderedPatterns: Array<[string, RegExp]> = [
+			['multimodal', /image|picture|diagram|screenshot|visual/i],
+			['code-analysis', /code|review|refactor|debug|optimize/i],
+			['test-generation', /test|spec|unit|integration|e2e|pytest/i],
+			['documentation', /doc|readme|markdown|comment|explain/i],
+			['security-analysis', /security|vulnerability|exploit|safe|audit/i],
+		];
 
-		for (const [taskType, pattern] of Object.entries(patterns)) {
-			if (pattern.test(input)) {
-				return taskType;
-			}
+		for (const [taskType, pattern] of orderedPatterns) {
+			if (pattern.test(input)) return taskType;
 		}
-
 		return 'general';
 	}
 
@@ -322,5 +317,14 @@ export class ModelSelector {
 			mlx: this.mlxAvailable,
 			ollama: this.ollamaAvailable,
 		};
+	}
+
+	// Expose provider availability as getters for testability
+	public get mlxAvailable(): boolean {
+		return this._mlxAvailable;
+	}
+
+	public get ollamaAvailable(): boolean {
+		return this._ollamaAvailable;
 	}
 }

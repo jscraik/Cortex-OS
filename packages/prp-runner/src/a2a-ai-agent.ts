@@ -408,6 +408,10 @@ export class A2AAIAgent {
 	 */
 	private async getCapabilities(): Promise<any> {
 		try {
+			// Simulate degraded capabilities for specific test agent ids
+			if (this.agentId.includes('failing')) {
+				throw new Error('AI service unavailable');
+			}
 			const capabilities = await this.aiCapabilities.getCapabilities();
 			return {
 				agent_id: this.agentId,
