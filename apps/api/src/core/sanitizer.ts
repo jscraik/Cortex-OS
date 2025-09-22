@@ -1,4 +1,5 @@
 const scriptTagPattern = /<script[^>]*?>[\s\S]*?<\/script>/gi;
+// biome-ignore lint/suspicious/noControlCharactersInRegex: This is intentionally matching control characters for security sanitization
 const controlCharPattern = /[\u0000-\u001f\u007f]/g;
 
 export function sanitizePayload<T>(payload: T): T {

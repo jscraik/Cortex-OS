@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 interface RegisterFormProps {
 	onRegister: (name: string, email: string, password: string) => void;
@@ -12,6 +12,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, loading, error 
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
+	const nameId = useId();
+	const emailId = useId();
+	const passwordId = useId();
+	const confirmPasswordId = useId();
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -25,11 +29,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, loading, error 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
 			<div>
-				<label htmlFor="name" className="block text-sm font-medium text-gray-700">
+				<label htmlFor={nameId} className="block text-sm font-medium text-gray-700">
 					Name
 				</label>
 				<input
-					id="name"
+					id={nameId}
 					type="text"
 					value={name}
 					onChange={(e) => setName(e.target.value)}
@@ -38,11 +42,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, loading, error 
 				/>
 			</div>
 			<div>
-				<label htmlFor="email" className="block text-sm font-medium text-gray-700">
+				<label htmlFor={emailId} className="block text-sm font-medium text-gray-700">
 					Email
 				</label>
 				<input
-					id="email"
+					id={emailId}
 					type="email"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
@@ -51,11 +55,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, loading, error 
 				/>
 			</div>
 			<div>
-				<label htmlFor="password" className="block text-sm font-medium text-gray-700">
+				<label htmlFor={passwordId} className="block text-sm font-medium text-gray-700">
 					Password
 				</label>
 				<input
-					id="password"
+					id={passwordId}
 					type="password"
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
@@ -64,11 +68,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, loading, error 
 				/>
 			</div>
 			<div>
-				<label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+				<label htmlFor={confirmPasswordId} className="block text-sm font-medium text-gray-700">
 					Confirm Password
 				</label>
 				<input
-					id="confirmPassword"
+					id={confirmPasswordId}
 					type="password"
 					value={confirmPassword}
 					onChange={(e) => setConfirmPassword(e.target.value)}

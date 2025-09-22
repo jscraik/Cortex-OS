@@ -240,10 +240,10 @@ const sanitizeMdxContentWithReport = (
 			.replace(/&quot;/g, '"') // Decode HTML entities
 			.replace(/&#39;/g, "'"); // Decode HTML entities
 		// Remove HTML comments (non-greedy)
-		let out = decoded.replace(/<!--[^]*?-->/g, '');
+		let out = decoded.replace(/<!--[\s\S]*?-->/g, '');
 
 		// Process fenced code blocks safely line-by-line (done later after protecting inline generics)
-		out = out.replace(/```([a-zA-Z0-9_-]+)?\n[^]*?```/g, (block) => {
+		out = out.replace(/```([a-zA-Z0-9_-]+)?\n[\s\S]*?```/g, (block) => {
 			const lines = block.split('\n');
 			if (lines.length < 3) return block;
 			const fence = lines[0];
@@ -285,6 +285,7 @@ const sanitizeMdxContentWithReport = (
 			const segments: Array<{ type: 'code' | 'text'; value: string }> = [];
 			let lastIndex = 0;
 			let m: RegExpExecArray | null;
+			// biome-ignore lint/suspicious/noAssignInExpressions: Standard regex loop pattern
 			while ((m = fenceRe.exec(out)) !== null) {
 				if (m.index > lastIndex)
 					segments.push({ type: 'text', value: out.slice(lastIndex, m.index) });
@@ -998,9 +999,9 @@ const createFrontmatter = (filename: string, displayName: string): string => {
 		filename === 'README.md'
 			? displayName
 			: filename
-					.replace(/\.md$/, '')
-					.replace(/-/g, ' ')
-					.replace(/\b\w/g, (l) => l.toUpperCase());
+				.replace(/\.md$/, '')
+				.replace(/-/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase());
 
 	return `---\ntitle: ${title}\nsidebar_label: ${title}\n---\n\n`;
 };
@@ -1581,5 +1582,6 @@ export {
 	normalizeReferenceLinks,
 	sanitizeMdxContent,
 	shouldSkipBaseFile,
-	syncAllDocs,
+	syncAllDocs
 };
+

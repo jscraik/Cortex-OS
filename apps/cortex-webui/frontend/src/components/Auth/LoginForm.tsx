@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 interface LoginFormProps {
 	onLogin: (email: string, password: string) => void;
@@ -10,6 +10,8 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, error }) => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
+	const emailId = useId();
+	const passwordId = useId();
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -19,11 +21,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, error }) => {
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
 			<div>
-				<label htmlFor="email" className="block text-sm font-medium text-gray-700">
+				<label htmlFor={emailId} className="block text-sm font-medium text-gray-700">
 					Email
 				</label>
 				<input
-					id="email"
+					id={emailId}
 					type="email"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
@@ -32,11 +34,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, error }) => {
 				/>
 			</div>
 			<div>
-				<label htmlFor="password" className="block text-sm font-medium text-gray-700">
+				<label htmlFor={passwordId} className="block text-sm font-medium text-gray-700">
 					Password
 				</label>
 				<input
-					id="password"
+					id={passwordId}
 					type="password"
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
