@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	test: {
 		name: 'website-docs',
-		include: ['__tests__/**/*.{test,spec}.ts'],
+		include: ['__tests__/**/*.{test,spec}.{ts,js}'],
 		environment: 'node',
 		globals: true,
 		fileParallelism: false,

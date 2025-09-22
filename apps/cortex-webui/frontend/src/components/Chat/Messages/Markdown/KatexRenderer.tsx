@@ -12,31 +12,27 @@ const KatexRenderer: React.FC<KatexRendererProps> = ({ content, displayMode = fa
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		if (containerRef.current) {
-			try {
-				// Dynamically import katex to avoid server-side rendering issues
-				import('katex')
-					.then((katex) => {
-						if (containerRef.current) {
-							containerRef.current.innerHTML = katex.default.renderToString(content, {
-								displayMode,
-								throwOnError: false,
-							});
-						}
-					})
-					.catch((error) => {
-						console.error('Failed to load katex:', error);
-						if (containerRef.current) {
-							containerRef.current.innerHTML = content;
-						}
-					});
-			} catch (error) {
-				console.error('Error rendering katex:', error);
-				if (containerRef.current) {
-					containerRef.current.innerHTML = content;
+		const loadKatex = async () => {
+			if (containerRef.current) {
+				try {
+					// Dynamically import katex to avoid server-side rendering issues
+					const katex = await import('katex');
+					if (containerRef.current) {
+						containerRef.current.innerHTML = katex.default.renderToString(content, {
+							displayMode,
+							throwOnError: false,
+						});
+					}
+				} catch (error) {
+					console.error('Failed to load katex:', error);
+					if (containerRef.current) {
+						containerRef.current.innerHTML = content;
+					}
 				}
 			}
-		}
+		};
+
+		loadKatex();
 	}, [content, displayMode]);
 
 	return <div ref={containerRef} />;

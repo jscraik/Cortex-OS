@@ -3,11 +3,55 @@
  * MLX adapter for model gateway - interfaces with Python MLX embedding generator
  */
 
-import os from 'node:os';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { z } from 'zod';
-import { runPython } from '../../../../libs/python/exec.js';
 import { estimateTokenCount } from '../lib/estimate-token-count.js';
+
+/**
+ * Execute Python script with arguments and environment
+ */
+function runPython(
+	scriptPath: string,
+	args: string[],
+	options: {
+		python?: string;
+		setModulePath?: string;
+		envOverrides?: Record<string, string>;
+	},
+): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const pythonBin = options.python || 'python3';
+		const env = { ...process.env, ...options.envOverrides };
+		if (options.setModulePath) {
+			env.PYTHONPATH = options.setModulePath;
+		}
+
+		const child = spawn(pythonBin, [scriptPath, ...args], { env });
+		let output = '';
+		let error = '';
+
+		child.stdout?.on('data', (data) => {
+			output += data.toString();
+		});
+
+		child.stderr?.on('data', (data) => {
+			error += data.toString();
+		});
+
+		child.on('close', (code) => {
+			if (code === 0) {
+				resolve(output.trim());
+			} else {
+				reject(new Error(`Python script failed with code ${code}: ${error}`));
+			}
+		});
+
+		child.on('error', (err) => {
+			reject(new Error(`Failed to start Python process: ${err.message}`));
+		});
+	});
+}
 
 // Types for MLX model configurations (discriminated union)
 type MLXModelType = 'embedding' | 'reranking' | 'chat';
@@ -38,10 +82,7 @@ type ChatMessage = { role: ChatRole; content: string };
 
 // Configuration paths - can be overridden via environment
 const HUGGINGFACE_CACHE =
-	process.env.HF_HOME ||
-	process.env.TRANSFORMERS_CACHE ||
-	path.join(os.homedir(), '.cache', 'huggingface');
-const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || path.join(os.homedir(), '.cache', 'mlx');
+	process.env.HF_HOME || process.env.TRANSFORMERS_CACHE || '/Volumes/ExternalSSD/huggingface_cache';
 const MODEL_BASE_PATH = process.env.MLX_MODEL_BASE_PATH || HUGGINGFACE_CACHE;
 
 // MLX model configurations with configurable paths
@@ -152,36 +193,7 @@ const MLX_MODELS: Record<string, MLXModelConfig> = {
 export type MLXModelName = keyof typeof MLX_MODELS;
 
 // Request/response schemas
-const MLXEmbeddingRequestSchema = z.object({
-	text: z.string(),
-	model: z.string().optional(),
-});
-
-const MLXChatRequestSchema = z.object({
-	messages: z.array(
-		z.object({
-			role: z.enum(['system', 'user', 'assistant']),
-			content: z.string(),
-		}),
-	),
-	model: z.string().optional(),
-	max_tokens: z.number().optional(),
-	temperature: z.number().optional(),
-});
-
-const MLXChatResponseSchema = z.object({
-	content: z.string(),
-	model: z.string(),
-	usage: z
-		.object({
-			prompt_tokens: z.number(),
-			completion_tokens: z.number(),
-			total_tokens: z.number(),
-		})
-		.optional(),
-});
-
-const MLXEmbeddingResponseSchema = z.object({
+export const MLXEmbeddingResponseSchema = z.object({
 	embedding: z.array(z.number()),
 	model: z.string(),
 	dimensions: z.number(),
@@ -193,10 +205,40 @@ const MLXEmbeddingResponseSchema = z.object({
 		.optional(),
 });
 
-export type MLXEmbeddingRequest = z.infer<typeof MLXEmbeddingRequestSchema>;
-export type MLXEmbeddingResponse = z.infer<typeof MLXEmbeddingResponseSchema>;
-export type MLXChatRequest = z.infer<typeof MLXChatRequestSchema>;
-export type MLXChatResponse = z.infer<typeof MLXChatResponseSchema>;
+export type MLXEmbeddingRequest = {
+	text: string;
+	model?: string;
+};
+
+export type MLXEmbeddingResponse = {
+	embedding: number[];
+	model: string;
+	dimensions: number;
+	usage?: {
+		tokens: number;
+		cost?: number;
+	};
+};
+
+export type MLXChatRequest = {
+	messages: {
+		role: 'system' | 'user' | 'assistant';
+		content: string;
+	}[];
+	model?: string;
+	max_tokens?: number;
+	temperature?: number;
+};
+
+export type MLXChatResponse = {
+	content: string;
+	model: string;
+	usage?: {
+		prompt_tokens: number;
+		completion_tokens: number;
+		total_tokens: number;
+	};
+};
 
 export interface MLXAdapterApi {
 	generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse>;
@@ -224,58 +266,24 @@ export function createMLXAdapter(): MLXAdapterApi {
 		path.dirname(new URL(import.meta.url).pathname),
 		'../../../../apps/cortex-py/src/mlx/mlx_unified.py',
 	);
-	const executePythonScript = (args: string[], useUnified = false): Promise<string> => {
-		// Return mock responses in test environment
-		if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
-			return Promise.resolve(generateMockResponse(args, useUnified));
-		}
 
+	const executePythonScript = (args: string[], useUnified = false): Promise<string> => {
+		// brAInwav: Real MLX integration - no mocks allowed per specification
 		const script = useUnified ? unifiedScriptPath : embeddingScriptPath;
 		return runPython(script, args, {
 			python: pythonPath,
 			setModulePath: path.resolve(process.cwd(), 'apps/cortex-py/src'),
 			envOverrides: {
-				HF_HOME: process.env.HF_HOME || HUGGINGFACE_CACHE,
+				// brAInwav: Use ExternalSSD paths from .env.local
+				HF_HOME: process.env.HF_HOME || '/Volumes/ExternalSSD/huggingface_cache',
 				TRANSFORMERS_CACHE:
-					process.env.TRANSFORMERS_CACHE || process.env.HF_HOME || HUGGINGFACE_CACHE,
-				MLX_CACHE_DIR: process.env.MLX_CACHE_DIR || MLX_CACHE_DIR,
-				MLX_MODEL_PATH: process.env.MLX_MODEL_PATH || process.env.MLX_MODEL_BASE_PATH || '',
+					process.env.TRANSFORMERS_CACHE ||
+					'/Volumes/ExternalSSD/ai-cache/huggingface/transformers',
+				MLX_CACHE_DIR: process.env.MLX_CACHE_DIR || '/Volumes/ExternalSSD/ai-cache',
+				MLX_MODEL_PATH: process.env.MLX_MODEL_PATH || '/Volumes/ExternalSSD/ai-models',
+				MLX_EMBED_BASE_URL: process.env.MLX_EMBED_BASE_URL || 'http://127.0.0.1:8000',
 			},
 		});
-	};
-
-	const generateMockResponse = (args: string[], useUnified: boolean): string => {
-		// Check for actual test command (not just "test" as input text)
-		if (args.length === 2 && args[0] === 'test' && args[1] === '--json-only') {
-			return JSON.stringify({ status: 'ok' });
-		}
-
-		if (useUnified) {
-			// Mock chat or rerank responses
-			if (
-				args.some((arg) => arg.includes('rerank')) ||
-				args.some((arg) => arg.includes('--rerank'))
-			) {
-				// Mock rerank response
-				return JSON.stringify({ scores: [0.9, 0.1] });
-			} else if (args.includes('--chat-mode')) {
-				// Mock chat response
-				return JSON.stringify({
-					content: `Mock response to: ${args[0] || 'user input'}`,
-				});
-			} else {
-				// Default chat response
-				return JSON.stringify({
-					content: `Mock response to: ${args[0] || 'user input'}`,
-				});
-			}
-		} else {
-			// Mock embedding response - return array of arrays as expected by the code
-			const mockEmbedding = Array(1536)
-				.fill(0)
-				.map(() => Math.random());
-			return JSON.stringify([mockEmbedding]); // Always return array of arrays for embedding
-		}
 	};
 
 	const generateEmbedding = async (request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> => {
@@ -290,10 +298,9 @@ export function createMLXAdapter(): MLXAdapterApi {
 
 		try {
 			const result = await executePythonScript([request.text, '--model', modelName, '--json-only']);
-
 			const data = JSON.parse(result);
 
-			return MLXEmbeddingResponseSchema.parse({
+			return {
 				embedding: data[0], // Python script returns array of arrays, take first
 				model: modelName,
 				dimensions: modelConfig.dimensions,
@@ -301,11 +308,11 @@ export function createMLXAdapter(): MLXAdapterApi {
 					tokens: estimateTokenCount(request.text),
 					cost: 0, // Local inference has no API cost
 				},
-			});
+			};
 		} catch (error) {
-			console.error('MLX embedding generation failed:', error);
+			console.error('brAInwav MLX embedding generation failed:', error);
 			throw new Error(
-				`MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				`brAInwav MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			);
 		}
 	};
@@ -331,7 +338,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 			}
 			const totalTokens = texts.reduce((sum, text) => sum + estimateTokenCount(text), 0);
 
-			return data.map((embedding: number[], _index: number) =>
+			return data.map((embedding: number[]) =>
 				MLXEmbeddingResponseSchema.parse({
 					embedding,
 					model: modelName,

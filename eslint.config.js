@@ -34,6 +34,7 @@ export default tseslint.config(
 				// Use package-specific ESLint tsconfig when present (e.g., rag/tsconfig.eslint.json)
 				project: [
 					'./tsconfig.json',
+					'website/tsconfig.json',
 					'packages/*/tsconfig.eslint.json',
 					'packages/*/*/tsconfig.eslint.json',
 					'apps/*/tsconfig.eslint.json',
@@ -78,6 +79,8 @@ export default tseslint.config(
 			'packages/observability/tests/**/*.ts',
 			'packages/observability/vitest.config.ts',
 			'packages/orchestration/src/**/__tests__/**/*.ts',
+			'website/__tests__/**/*.ts',
+			'website/vitest.config.ts',
 		],
 		// Remove type-checked rules and rely on non-type-aware parsing for these files
 		...tseslint.configs.disableTypeChecked,

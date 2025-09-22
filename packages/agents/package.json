@@ -9,6 +9,11 @@
     "start": "node dist/server.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
+    "test:integration": "vitest tests/integration",
+    "test:tdd": "vitest tests/integration/tdd-plan-implementation.test.ts",
+    "test:coverage": "vitest --coverage",
+    "health:check": "node -e \"import('./dist/lib/health-check.js').then(h => h.healthMonitor.getHealthStatus().then(s => console.log('brAInwav Health:', s)))\"",
+    "observability:export": "node -e \"import('./dist/lib/observability.js').then(o => console.log('brAInwav Observability:', o.observability.export()))\"",
     "lint": "biome check ./src",
     "lint:fix": "biome check --write ./src",
     "typecheck": "tsc --noEmit"

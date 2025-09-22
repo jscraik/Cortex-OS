@@ -15,12 +15,19 @@ async def test_health_tool_and_http_endpoint():
     module = importlib.import_module("cortex_fastmcp_server_v2")
     mcp = module.create_server()
 
-    # Invoke health_check tool directly (FastMCP registers tools as attributes on mcp.tools list)
-    # We call underlying coroutine via tool function reference in registry
-    # FastMCP internally stores tools in _tools (implementation detail)
-    raw_funcs = getattr(mcp, "_raw_funcs", {})
-    assert "health_check" in raw_funcs
-    result = await raw_funcs["health_check"]()
+    # Invoke health_check tool directly using FastMCP's public API
+    tools = await mcp.get_tools()
+    assert "health_check" in tools, "health_check tool should be registered"
+    
+    # Get the tool function and call it
+    health_tool_fn = tools["health_check"]
+    tool_result = await health_tool_fn.run({})  # No arguments required for health_check
+    
+    # Extract JSON content from the ToolResult
+    import json
+    json_text = tool_result.content[0].text
+    result = json.loads(json_text)
+    
     assert result["status"] == "ok"
     assert result["version"] == "2.0.0"
 

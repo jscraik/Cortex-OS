@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD025 MD040 MD046 -->
 # Cortex RAG
 
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/rag)](https://www.npmjs.com/package/@cortex-os/rag)
@@ -54,7 +55,8 @@ patterns.
 
 > Benchmarking and Reports
 >
-> See `packages/rag/benchmarks/README.md` for indexing benchmark CLI flags, per-variant/global thresholds, HTML reports, CSV columns, and CI artifact publishing via `RAG_DATA_DIR`/`RAG_BACKUP_DIR`.
+> See `packages/rag/benchmarks/README.md` for indexing benchmark CLI flags, per-variant/global thresholds,
+> HTML reports, CSV columns, and CI artifact publishing via `RAG_DATA_DIR`/`RAG_BACKUP_DIR`.
 
 ### Post-chunking (merge after retrieval)
 

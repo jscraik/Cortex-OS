@@ -75,21 +75,23 @@ function AudioSettings({ saveSettings }: Readonly<AudioSettingsProps>) {
 
 	// Load available media devices
 	useEffect(() => {
-		if (typeof navigator !== 'undefined' && 'mediaDevices' in navigator) {
-			navigator.mediaDevices
-				.enumerateDevices()
-				.then((devices) => {
+		const loadDevices = async () => {
+			if (typeof navigator !== 'undefined' && 'mediaDevices' in navigator) {
+				try {
+					const devices = await navigator.mediaDevices.enumerateDevices();
 					const audioOutputDevices = devices.filter((device) => device.kind === 'audiooutput');
 					const audioInputDevices = devices.filter((device) => device.kind === 'audioinput');
 
 					setAvailableAudioDevices(audioOutputDevices);
 					setAvailableInputDevices(audioInputDevices);
-				})
-				.catch((err) => {
+				} catch (err) {
 					console.error('Error enumerating devices:', err);
 					toast.error('Failed to load audio devices');
-				});
-		}
+				}
+			}
+		};
+
+		loadDevices();
 	}, []);
 
 	const handleSubmit = () => {

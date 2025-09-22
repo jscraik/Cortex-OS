@@ -77,10 +77,8 @@ export class A2ARpcHandler implements RpcHandler {
 			}
 
 			default:
-				throw new StructuredError('METHOD_NOT_FOUND', `Method '${request.method}' not found`, {
-					method: request.method,
-					code: A2A_ERROR_CODES.METHOD_NOT_FOUND,
-				});
+				// Per tests, do not include extra data for method-not-found
+				throw new StructuredError('METHOD_NOT_FOUND', `Method '${request.method}' not found`);
 		}
 	}
 
@@ -99,7 +97,7 @@ export class A2ARpcHandler implements RpcHandler {
 
 		// Handle StructuredError - check by name to avoid instanceof issues
 		if (error instanceof Error && error.name === 'StructuredError') {
-			const structuredError = error as any; // Cast to access custom properties
+			const structuredError = error as unknown as { code?: string; details?: unknown; message: string };
 
 			// Map StructuredError codes to A2A error codes
 			let errorCode: number = A2A_ERROR_CODES.INTERNAL_ERROR;
@@ -115,7 +113,6 @@ export class A2ARpcHandler implements RpcHandler {
 				error: {
 					code: errorCode,
 					message: error.message,
-					data: structuredError.details,
 				},
 			};
 		}
@@ -138,27 +135,54 @@ let globalTaskManager: TaskManager | undefined;
 // Main handler function for the package
 export async function handleA2A(input: unknown): Promise<string> {
 	try {
-		// Parse JSON-RPC request
+		// Normalize input: if a string, attempt to parse JSON first
+		if (typeof input === 'string') {
+			try {
+				input = JSON.parse(input);
+			} catch {
+				const parseErr: JsonRpcResponse = {
+					jsonrpc: '2.0',
+					id: null,
+					error: {
+						code: A2A_ERROR_CODES.PARSE_ERROR,
+						message: 'Parse error',
+					},
+				};
+				return createJsonOutput(parseErr);
+			}
+		}
+
+		// Attempt schema validation but preserve id if present in malformed input
 		const parseResult = JsonRpcRequestSchema.safeParse(input);
 		if (!parseResult.success) {
+			type JsonRpcId = string | number | null | undefined;
+			let maybeId: JsonRpcId = undefined;
+			// For batch requests (arrays), treat as invalid request with id=null (per tests/spec)
+			if (Array.isArray(input)) {
+				maybeId = null;
+			} else if (input && typeof input === 'object' && 'id' in (input as Record<string, unknown>)) {
+				maybeId = (input as Record<string, unknown>).id as string | number | null | undefined;
+			} else {
+				// leave undefined for notification-like invalid requests (no id provided)
+				maybeId = undefined;
+			}
 			const errorResponse: JsonRpcResponse = {
 				jsonrpc: '2.0',
-				id: null,
+				// Tests expect id to be preserved when available; allow undefined when omitted
+				id: maybeId,
 				error: {
 					code: A2A_ERROR_CODES.INVALID_REQUEST,
 					message: 'Invalid JSON-RPC request',
 					data: { issues: parseResult.error.issues },
 				},
-			};
+			} as JsonRpcResponse;
 			return createJsonOutput(errorResponse);
 		}
 
 		const request = parseResult.data;
 
 		// Use global task manager to maintain state across requests
-		if (!globalTaskManager) {
-			globalTaskManager = new TaskManager();
-		}
+		globalTaskManager ??= new TaskManager();
 		const rpcHandler = new A2ARpcHandler(globalTaskManager);
 
 		// Handle the request

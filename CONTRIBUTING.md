@@ -58,31 +58,37 @@ pnpm dev
 **MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
 
 ### Function Length Limits
+
 - **Maximum 40 lines per function** - Split immediately if readability suffers
 - **Strictly enforced in CI** - Build failures for violations
 - **No exceptions** for any code
 
 ### Export Requirements
+
 - **Named exports only** - `export const functionName = ...`
 - **Default exports forbidden** - `export default` will cause build failures
 - **Required for tree-shaking and debugging**
 
 ### Class Usage Restrictions
+
 - **Classes only when framework-required** (React ErrorBoundary, etc.)
 - **Prefer functional composition** over OOP patterns
 - **Justification required in code review for any class usage**
 
 ### Async/Await Requirements
+
 - **Use async/await exclusively** - Never use `.then()` chains
 - **Promise chains are forbidden** and caught by linters
 - **Violations will block PR merges**
 
 ### Project References
+
 - **All packages must set `composite: true`** in tsconfig.json
 - **Required for Nx task graph optimization**
 - **Missing configuration will cause build failures**
 
 ### Mandatory Local Memory Usage
+
 - **Store all architectural decisions** with reasoning and context
 - **Document lessons learned** from code reviews and refactoring
 - **Track effective development strategies** for future reference
@@ -598,7 +604,8 @@ Fixes #456
 
 ## Development Patterns to Avoid
 
-### NEVER Continue These Anti-Patterns:
+### NEVER Continue These Anti-Patterns
+
 1. **Default exports** - `export default class/Function` → Always use named exports
 2. **Function length > 40 lines** → Immediately split into smaller functions
 3. **`.then()` chains** → Use `async/await` exclusively
@@ -607,7 +614,8 @@ Fixes #456
 6. **Direct sibling package imports** → Use events/contracts instead
 7. **Bypassing local memory** → Store all development insights persistently
 
-### Required Local Memory Usage Patterns:
+### Required Local Memory Usage Patterns
+
 ```typescript
 // Store architectural decisions
 await memory.store({
@@ -985,3 +993,6 @@ pnpm nx:project:fix     # auto-fix all project.json files
 ```
 
 Pre-commit automatically runs the fixer for any staged `project.json` via lint-staged.
+
+CI Enforcement: The governance pipeline runs `pnpm nx:project:guard` so PRs that
+reintroduce `${workspaceRoot}` or `${args}` patterns will fail fast.

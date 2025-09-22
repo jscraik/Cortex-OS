@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020", "DOM"],
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -21,10 +24,26 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@shared/*": ["shared/*"]
-    }
+      "@/*": [
+        "src/*"
+      ],
+      "@shared/*": [
+        "shared/*"
+      ]
+    },
+    "jsx": "react-jsx",
+    "composite": true
   },
-  "include": ["shared/**/*"],
-  "exclude": ["node_modules", "dist", "frontend/dist", "backend/dist"]
+  "include": [
+    "shared/**/*",
+    "__tests__/**/*",
+    "app/**/*",
+    "backend/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "frontend/dist",
+    "backend/dist"
+  ]
 }

@@ -6,14 +6,15 @@
  * @status TDD-DRIVEN
  */
 
-import { randomUUID } from 'node:crypto';
 import type {
 	A2AMessage,
 	AgentCapabilities,
 	AgentCard,
 	AgentSkill,
 } from '@cortex-os/a2a-contracts';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { AgentListResponse, AgentStatus, SystemStatus, TaskDelegation } from './types.js';
 
 // Define TransportProtocol enum locally
 enum TransportProtocol {
@@ -248,7 +249,7 @@ export class AgentsAgent {
 	/**
 	 * List all available agents and their capabilities
 	 */
-	private async listAgents(): Promise<any> {
+	private async listAgents(): Promise<AgentListResponse> {
 		return {
 			agents: [
 				{
@@ -293,7 +294,7 @@ export class AgentsAgent {
 	/**
 	 * Get current status of agent system and active tasks
 	 */
-	private async getStatus(params: Record<string, unknown>) {
+	private async getStatus(params: Record<string, unknown>): Promise<AgentStatus | SystemStatus> {
 		const statusSchema = z.object({
 			agentId: z.string().optional(),
 		});
@@ -328,7 +329,7 @@ export class AgentsAgent {
 	/**
 	 * Delegate specific task to appropriate sub-agent
 	 */
-	private async delegateTask(params: Record<string, unknown>) {
+	private async delegateTask(params: Record<string, unknown>): Promise<TaskDelegation> {
 		const delegationSchema = z.object({
 			task: z.string(),
 			targetAgent: z.string(),

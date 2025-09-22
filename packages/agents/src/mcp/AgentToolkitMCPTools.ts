@@ -8,6 +8,8 @@
  */
 
 import { z } from 'zod';
+import type { MCPEvent } from './types';
+import { createTypedEvent } from './types';
 
 // Agent Toolkit interfaces - these will be replaced with proper imports once workspace resolution is fixed
 interface AgentToolkitSearchInput {
@@ -141,26 +143,7 @@ function createAgentToolkit(_toolsPath?: string) {
 	};
 }
 
-// Simplified event creation functions
-// In real implementation, these would be imported from '@cortex-os/agent-toolkit'
-const createAgentToolkitEvent = {
-	executionStarted: (data: any) => ({
-		type: 'agent_toolkit.execution.started' as const,
-		data,
-	}),
-	searchResults: (data: any) => ({
-		type: 'agent_toolkit.search.results' as const,
-		data,
-	}),
-	codeModification: (data: any) => ({
-		type: 'agent_toolkit.code.modified' as const,
-		data,
-	}),
-	validationReport: (data: any) => ({
-		type: 'agent_toolkit.validation.report' as const,
-		data,
-	}),
-};
+// No back-compat shim required: use typed event creators directly
 
 // Agent Toolkit MCP Tool Response interface
 export interface AgentToolkitMCPResponse {
@@ -189,7 +172,7 @@ export interface AgentToolkitMCPTool {
  * Integrates with real @cortex-os/agent-toolkit implementation and A2A bus transport layer
  */
 export class AgentToolkitMCPTools {
-	private executionHistory: Map<
+	private readonly executionHistory: Map<
 		string,
 		{
 			timestamp: Date;
@@ -199,15 +182,13 @@ export class AgentToolkitMCPTools {
 		}
 	>;
 
-	private agentToolkit: ReturnType<typeof createAgentToolkit>;
-	private eventBus?: {
-		emit: (event: { type: string; data: unknown }) => void;
-	};
+	private readonly agentToolkit: ReturnType<typeof createAgentToolkit>;
+	private eventBus?: { emit: (event: MCPEvent) => void };
 
-	constructor(
-		toolsPath?: string,
-		eventBus?: { emit: (event: { type: string; data: unknown }) => void },
-	) {
+		constructor(
+			toolsPath?: string,
+			eventBus?: { emit: (event: MCPEvent) => void },
+		) {
 		this.executionHistory = new Map();
 		this.agentToolkit = createAgentToolkit(toolsPath);
 		this.eventBus = eventBus;
@@ -224,21 +205,24 @@ export class AgentToolkitMCPTools {
 				pattern: z.string().min(1).describe('Search pattern (regex supported)'),
 				path: z.string().min(1).describe('Path to search in (file or directory)'),
 			}),
-			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+					const correlationId = `search_${Date.now()}_${Math.random()
+						.toString(36)
+						.slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
 				try {
-					const validInput = this.search().inputSchema.parse(input) as AgentToolkitSearchInput;
+						const validInput = this.search().inputSchema.parse(input) as AgentToolkitSearchInput;
 
 					// Emit execution started event to A2A bus
 					if (this.eventBus) {
-						const startedEvent = createAgentToolkitEvent.executionStarted({
+							const parameters: Record<string, unknown> = { ...validInput };
+							const startedEvent = createTypedEvent.executionStarted({
 							executionId,
 							toolName: 'ripgrep',
 							toolType: 'search',
-							parameters: validInput,
+								parameters,
 							initiatedBy: 'agents-package',
 							startedAt: timestamp,
 						});
@@ -247,15 +231,15 @@ export class AgentToolkitMCPTools {
 
 					// Execute real agent-toolkit search
 					const startTime = Date.now();
-					const result = (await this.agentToolkit.search(
-						validInput.pattern,
-						validInput.path,
-					)) as AgentToolkitSearchResult;
+						const result = await this.agentToolkit.search(
+							validInput.pattern,
+							validInput.path,
+						);
 					const duration = Date.now() - startTime;
 
 					// Emit search results event to A2A bus
 					if (this.eventBus) {
-						const resultsEvent = createAgentToolkitEvent.searchResults({
+							const resultsEvent = createTypedEvent.searchResults({
 							executionId,
 							query: validInput.pattern,
 							searchType: 'ripgrep',
@@ -312,8 +296,10 @@ export class AgentToolkitMCPTools {
 				pattern: z.string().min(1).describe('Search pattern for comprehensive matching'),
 				path: z.string().min(1).describe('Root path for multi-pattern search'),
 			}),
-			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `multi_search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+					const correlationId = `multi_search_${Date.now()}_${Math.random()
+						.toString(36)
+						.slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -322,11 +308,12 @@ export class AgentToolkitMCPTools {
 
 					// Emit execution started event to A2A bus
 					if (this.eventBus) {
-						const startedEvent = createAgentToolkitEvent.executionStarted({
+						const parameters: Record<string, unknown> = { ...validInput };
+						const startedEvent = createTypedEvent.executionStarted({
 							executionId,
 							toolName: 'multi-search',
 							toolType: 'search',
-							parameters: validInput,
+							parameters,
 							initiatedBy: 'agents-package',
 							startedAt: timestamp,
 						});
@@ -345,7 +332,7 @@ export class AgentToolkitMCPTools {
 
 					// Emit search results event to A2A bus
 					if (this.eventBus) {
-						const resultsEvent = createAgentToolkitEvent.searchResults({
+						const resultsEvent = createTypedEvent.searchResults({
 							executionId,
 							query: validInput.pattern,
 							searchType: 'multi',
@@ -401,8 +388,10 @@ export class AgentToolkitMCPTools {
 				replace: z.string().describe('Pattern to replace with (can be empty for deletion)'),
 				path: z.string().min(1).describe('Path to file or directory to modify'),
 			}),
-			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `codemod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+					const correlationId = `codemod_${Date.now()}_${Math.random()
+						.toString(36)
+						.slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -411,11 +400,12 @@ export class AgentToolkitMCPTools {
 
 					// Emit execution started event to A2A bus
 					if (this.eventBus) {
-						const startedEvent = createAgentToolkitEvent.executionStarted({
+						const parameters: Record<string, unknown> = { ...validInput };
+						const startedEvent = createTypedEvent.executionStarted({
 							executionId,
 							toolName: 'comby',
 							toolType: 'codemod',
-							parameters: validInput,
+							parameters,
 							initiatedBy: 'agents-package',
 							startedAt: timestamp,
 						});
@@ -423,20 +413,20 @@ export class AgentToolkitMCPTools {
 					}
 
 					// Execute real agent-toolkit codemod
-					const result = (await this.agentToolkit.codemod(
+					const result = await this.agentToolkit.codemod(
 						validInput.find,
 						validInput.replace,
 						validInput.path,
-					)) as AgentToolkitCodemodResult;
+					);
 
 					// Calculate modification statistics
-					const filesChanged = result.results?.map((r: any) => r.file) || [];
-					const totalChanges =
-						result.results?.reduce((sum: number, r: any) => sum + r.changes, 0) || 0;
+					const filesChanged =
+						result.results?.map((r: { file: string; changes: number; preview?: string }) => r.file) || [];
+					const totalChanges = result.results?.reduce((sum, r) => sum + r.changes, 0) || 0;
 
 					// Emit code modification event to A2A bus
 					if (this.eventBus) {
-						const modificationEvent = createAgentToolkitEvent.codeModification({
+						const modificationEvent = createTypedEvent.codeModification({
 							executionId,
 							modificationType: 'transform',
 							filesChanged,
@@ -494,8 +484,10 @@ export class AgentToolkitMCPTools {
 					.min(1)
 					.describe('Files to validate (relative or absolute paths)'),
 			}),
-			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `validate_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+					const correlationId = `validate_${Date.now()}_${Math.random()
+						.toString(36)
+						.slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -506,11 +498,12 @@ export class AgentToolkitMCPTools {
 
 					// Emit execution started event to A2A bus
 					if (this.eventBus) {
-						const startedEvent = createAgentToolkitEvent.executionStarted({
+						const parameters: Record<string, unknown> = { ...validInput };
+						const startedEvent = createTypedEvent.executionStarted({
 							executionId,
 							toolName: 'multi-validator',
 							toolType: 'validation',
-							parameters: validInput,
+							parameters,
 							initiatedBy: 'agents-package',
 							startedAt: timestamp,
 						});
@@ -518,18 +511,21 @@ export class AgentToolkitMCPTools {
 					}
 
 					// Execute real agent-toolkit validation
-					const result = (await this.agentToolkit.validate(
-						validInput.files,
-					)) as AgentToolkitValidationResult;
+					const result = await this.agentToolkit.validate(validInput.files);
 
 					// Determine validation status
 					const hasErrors = result.summary?.errors > 0;
 					const hasWarnings = result.summary?.warnings > 0;
-					const status = hasErrors ? 'failed' : hasWarnings ? 'warning' : 'passed';
+					let status: 'passed' | 'warning' | 'failed' = 'passed';
+					if (hasErrors) {
+						status = 'failed';
+					} else if (hasWarnings) {
+						status = 'warning';
+					}
 
 					// Emit validation report event to A2A bus
 					if (this.eventBus) {
-						const reportEvent = createAgentToolkitEvent.validationReport({
+						const reportEvent = createTypedEvent.validationReport({
 							executionId,
 							validationType: 'syntax', // Could be determined from file types
 							status,
@@ -610,7 +606,7 @@ export class AgentToolkitMCPTools {
 	async batchSearch(
 		requests: Array<{ pattern: string; path: string }>,
 	): Promise<AgentToolkitMCPResponse[]> {
-		const batchId = `batch_search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const batchId = `batch_search_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
 		try {
 			// Execute searches in parallel for performance
@@ -620,10 +616,10 @@ export class AgentToolkitMCPTools {
 
 				try {
 					const validInput = this.search().inputSchema.parse(request);
-					const result = (await this.agentToolkit.search(
+					const result = await this.agentToolkit.search(
 						validInput.pattern,
 						validInput.path,
-					)) as AgentToolkitSearchResult;
+					);
 
 					this.executionHistory.set(correlationId, {
 						timestamp: new Date(),
@@ -669,16 +665,13 @@ export class AgentToolkitMCPTools {
 
 			// Emit batch completion event
 			if (this.eventBus) {
-				const batchEvent = {
-					type: 'agent_toolkit.batch.completed',
-					data: {
-						batchId,
-						operationType: 'search',
-						totalOperations: requests.length,
-						successfulOperations: results.filter((r) => r.success).length,
-						completedAt: new Date().toISOString(),
-					},
-				};
+				const batchEvent = createTypedEvent.batchCompleted({
+					batchId,
+					operationType: 'search',
+					totalOperations: requests.length,
+					successfulOperations: results.filter((r) => r.success).length,
+					completedAt: new Date().toISOString(),
+				});
 				this.eventBus.emit(batchEvent);
 			}
 
@@ -687,15 +680,12 @@ export class AgentToolkitMCPTools {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown batch search error';
 
 			if (this.eventBus) {
-				const errorEvent = {
-					type: 'agent_toolkit.batch.failed',
-					data: {
-						batchId,
-						operationType: 'search',
-						error: errorMessage,
-						failedAt: new Date().toISOString(),
-					},
-				};
+				const errorEvent = createTypedEvent.batchFailed({
+					batchId,
+					operationType: 'search',
+					error: errorMessage,
+					failedAt: new Date().toISOString(),
+				});
 				this.eventBus.emit(errorEvent);
 			}
 
@@ -707,7 +697,7 @@ export class AgentToolkitMCPTools {
 	 * Batch validation operation for performance optimization
 	 */
 	async batchValidate(fileBatches: Array<string[]>): Promise<AgentToolkitMCPResponse[]> {
-		const batchId = `batch_validate_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const batchId = `batch_validate_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
 		try {
 			// Execute validations in parallel for performance
@@ -716,7 +706,7 @@ export class AgentToolkitMCPTools {
 				const timestamp = new Date().toISOString();
 
 				try {
-					const result = (await this.agentToolkit.validate(files)) as AgentToolkitValidationResult;
+					const result = await this.agentToolkit.validate(files);
 
 					this.executionHistory.set(correlationId, {
 						timestamp: new Date(),
@@ -752,16 +742,13 @@ export class AgentToolkitMCPTools {
 
 			// Emit batch completion event
 			if (this.eventBus) {
-				const batchEvent = {
-					type: 'agent_toolkit.batch.completed',
-					data: {
-						batchId,
-						operationType: 'validation',
-						totalOperations: fileBatches.length,
-						successfulOperations: results.filter((r) => r.success).length,
-						completedAt: new Date().toISOString(),
-					},
-				};
+				const batchEvent = createTypedEvent.batchCompleted({
+					batchId,
+					operationType: 'validation',
+					totalOperations: fileBatches.length,
+					successfulOperations: results.filter((r) => r.success).length,
+					completedAt: new Date().toISOString(),
+				});
 				this.eventBus.emit(batchEvent);
 			}
 
@@ -771,15 +758,12 @@ export class AgentToolkitMCPTools {
 				error instanceof Error ? error.message : 'Unknown batch validation error';
 
 			if (this.eventBus) {
-				const errorEvent = {
-					type: 'agent_toolkit.batch.failed',
-					data: {
-						batchId,
-						operationType: 'validation',
-						error: errorMessage,
-						failedAt: new Date().toISOString(),
-					},
-				};
+				const errorEvent = createTypedEvent.batchFailed({
+					batchId,
+					operationType: 'validation',
+					error: errorMessage,
+					failedAt: new Date().toISOString(),
+				});
 				this.eventBus.emit(errorEvent);
 			}
 

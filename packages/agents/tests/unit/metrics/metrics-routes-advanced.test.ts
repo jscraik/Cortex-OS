@@ -1,18 +1,20 @@
 import { Hono } from 'hono';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricsCollector } from '../../../src/monitoring/metrics';
+
+// Mock auth middleware  
+vi.mock('../../../src/auth/middleware');
+
+// Import mocked module
+import { requirePermission } from '../../../src/auth/middleware';
+
+// Create typed mock
+const mockRequirePermission = vi.mocked(requirePermission);
 
 // Create shared mock functions for metrics
 const mockGetPrometheusMetrics = vi.fn();
 const mockGetMetrics = vi.fn();
 const mockGetAgentMetrics = vi.fn();
-
-// Mock the auth middleware to simulate authentication (declared first for hoisting)
-const mockRequirePermission = vi.fn();
-vi.mock('../../../src/auth/middleware', () => ({
-	requirePermission: vi.fn((permission: string) => {
-		return mockRequirePermission(permission);
-	}),
-}));
 
 // Mock the MetricsCollector class completely
 const mockMetricsCollector = {

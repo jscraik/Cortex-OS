@@ -1,52 +1,58 @@
 // Message service for Cortex WebUI backend
 
-import type { Message } from '@shared/types';
+import { db, messages } from '../db';
+import { eq, asc } from 'drizzle-orm';
+import type { NewMessage } from '../db/schema';
 import { v4 as uuidv4 } from 'uuid';
-import { MessageModel, type MessageRecord } from '../models/message';
-import { getDatabase } from '../utils/database';
 
-export const getMessagesByConversationId = (conversationId: string): Message[] => {
-	const db = getDatabase();
-	const records = db
-		.prepare(
-			`SELECT * FROM ${MessageModel.tableName} WHERE conversation_id = ? ORDER BY created_at ASC`,
-		)
-		.all(conversationId) as MessageRecord[];
+export const getMessagesByConversationId = async (conversationId: string) => {
+	const records = await db
+		.select()
+		.from(messages)
+		.where(eq(messages.conversationId, conversationId))
+		.orderBy(asc(messages.createdAt));
 
-	return records.map(MessageModel.fromRecord);
+	return records.map(record => ({
+		id: record.id,
+		conversationId: record.conversationId,
+		role: record.role,
+		content: record.content,
+		metadata: record.metadata ? JSON.parse(record.metadata) : undefined,
+		createdAt: record.createdAt.toISOString(),
+	}));
 };
 
-export const createMessage = (
+export const createMessage = async (
 	conversationId: string,
 	role: 'user' | 'assistant' | 'system',
 	content: string,
-): Message => {
-	const db = getDatabase();
-
+	metadata?: Record<string, unknown>,
+) => {
 	const messageId = uuidv4();
-	const now = new Date().toISOString();
-	const messageRecord: MessageRecord = {
-		id: messageId,
-		conversation_id: conversationId,
-		role,
-		content,
-		created_at: now,
+	const now = new Date();
+
+	const result = await db
+		.insert(messages)
+		.values({
+			id: messageId,
+			conversationId,
+			role,
+			content,
+			metadata: metadata ? JSON.stringify(metadata) : null,
+			createdAt: now,
+		} as NewMessage)
+		.returning();
+
+	return {
+		id: result[0].id,
+		conversationId: result[0].conversationId,
+		role: result[0].role,
+		content: result[0].content,
+		metadata: result[0].metadata ? JSON.parse(result[0].metadata) : undefined,
+		createdAt: result[0].createdAt.toISOString(),
 	};
-
-	db.prepare(
-		`INSERT INTO ${MessageModel.tableName} (id, conversation_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)`,
-	).run(
-		messageRecord.id,
-		messageRecord.conversation_id,
-		messageRecord.role,
-		messageRecord.content,
-		messageRecord.created_at,
-	);
-
-	return MessageModel.fromRecord(messageRecord);
 };
 
-export const deleteMessagesByConversationId = (conversationId: string): void => {
-	const db = getDatabase();
-	db.prepare(`DELETE FROM ${MessageModel.tableName} WHERE conversation_id = ?`).run(conversationId);
+export const deleteMessagesByConversationId = async (conversationId: string): Promise<void> => {
+	await db.delete(messages).where(eq(messages.conversationId, conversationId));
 };

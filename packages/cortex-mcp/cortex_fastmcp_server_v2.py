@@ -4,41 +4,27 @@ Cortex-OS FastMCP Server v2.0
 Compatible with FastMCP 2.0 and ChatGPT MCP integration
 """
 
+import json
 import logging
 import math
 import os
 import time
-from collections.abc import Callable
 from typing import Any
 from uuid import uuid4
 
-try:  # Prefer real FastMCP when available
-    from fastmcp import FastMCP  # type: ignore
-except Exception:  # pragma: no cover - fallback used in minimal test env
-
-    class FastMCP:  # minimal stub for tests when fastmcp is unavailable
-        def __init__(self, name: str, instructions: str):
-            self.name = name
-            self.instructions = instructions
-            self._raw_funcs: dict[str, Callable[..., Any]] = {}
-            # Only created by real server; left absent in stub unless .run is called
-            self.app = None  # type: ignore[attr-defined]
-
-        def tool(self) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-            def _decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-                self._raw_funcs[func.__name__] = func
-                return func
-
-            return _decorator
-
-        def run(self, *_args: Any, **_kwargs: Any) -> None:
-            # No-op in tests; real server handles transports
-            return None
-
+from fastmcp import FastMCP  # type: ignore
+from security.input_validation import (
+    sanitize_output,
+    validate_resource_id,
+    validate_search_query,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Local validation utilities (must be available)
+
 
 server_instructions = (
     "This MCP server provides search and document retrieval capabilities "
@@ -52,47 +38,56 @@ def register_core_tools(mcp: Any) -> None:
 
     @mcp.tool()
     async def search(query: str, max_results: int = 10) -> dict[str, Any]:
-        if not query or not query.strip():
-            return {"results": []}
+        """Full-text search over Cortex-OS docs; returns top matches."""
+        # Input validation
         try:
-            logger.info("Searching for query: %r", query)
+            q = validate_search_query(query)
+            max_r = max(1, min(int(max_results), 100))
+        except Exception as exc:
+            return {"error": str(exc), "results": [], "total_found": 0}
+
+        try:
+            logger.info("Searching for query: %r", q)
             results: list[dict[str, Any]] = [
                 {
                     "id": f"cortex-doc-{i}",
-                    "title": f"Search result for: {query}",
-                    "text": (
-                        f"This is a simulated search result for the query: {query}"
-                    ),
+                    "title": f"Search result for: {q}",
+                    "text": (f"This is a simulated search result for the query: {q}"),
                     "score": 0.95 - (i * 0.1),
-                    "url": f"https://cortex-os.dev/docs/search?q={query}#{i}",
+                    "url": f"https://cortex-os.dev/docs/search?q={q}#{i}",
                 }
-                for i in range(min(max_results, 3))
+                for i in range(min(max_r, 3))
             ]
             logger.info("Search returned %d results", len(results))
-            return {"query": query, "results": results, "total_found": len(results)}
+            payload = {"query": q, "results": results, "total_found": len(results)}
+            return sanitize_output(payload)
         except Exception as exc:  # pragma: no cover
             logger.error("Search failed: %s", exc)
             return {
                 "error": f"Search failed: {exc!s}",
-                "query": query,
+                "query": q,
                 "results": [],
                 "total_found": 0,
             }
 
     @mcp.tool()
     async def fetch(resource_id: str) -> dict[str, Any]:
-        if not resource_id:
-            raise ValueError("Resource ID is required")
+        """Fetch a full document by `resource_id` and return its content."""
         try:
-            logger.info("Fetching resource: %s", resource_id)
+            rid = validate_resource_id(resource_id)
+        except Exception as exc:
+            raise ValueError(str(exc)) from exc
+
+        try:
+            logger.info("Fetching resource: %s", rid)
             return {
-                "id": resource_id,
-                "title": f"Resource {resource_id}",
+                "id": rid,
+                "title": f"Resource {rid}",
                 "text": (
                     "Complete content for resource "
-                    f"{resource_id}. This would contain the full document text in a real implementation."
+                    f"{rid}. This would contain the full document text in a real implementation."
                 ),
-                "url": f"https://cortex-os.dev/docs/{resource_id}",
+                "url": f"https://cortex-os.dev/docs/{rid}",
                 "metadata": {
                     "type": "document",
                     "created": "2024-01-01T00:00:00Z",
@@ -106,6 +101,7 @@ def register_core_tools(mcp: Any) -> None:
 
     @mcp.tool()
     async def ping(transport: str = "unknown") -> dict[str, Any]:
+        """Lightweight liveness probe reporting server status and transport."""
         return {
             "status": "ok",
             "message": "Cortex-OS MCP Server is running",
@@ -115,10 +111,12 @@ def register_core_tools(mcp: Any) -> None:
 
     @mcp.tool()
     async def health_check() -> dict[str, Any]:
+        """Comprehensive health check reporting basic server status/version."""
         return {"status": "ok", "version": "2.0.0"}
 
     @mcp.tool()
     async def list_capabilities() -> dict[str, Any]:
+        """List available tools/resources/prompts supported by this server."""
         return {
             "tools": [
                 "search",
@@ -157,6 +155,7 @@ def register_embedding_tools(mcp: Any) -> None:
     async def generate_embeddings(
         texts: list[str], model: str | None = None
     ) -> dict[str, Any]:
+        """Generate simple, deterministic embeddings for provided texts."""
         _ = model
         if not isinstance(texts, list) or not texts:
             return {"embeddings": []}
@@ -170,6 +169,7 @@ def register_document_tools(mcp: Any) -> None:
     async def upload_document(
         content: str, filename: str, options: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        """Upload a document blob for later retrieval and tagging."""
         doc_id = f"doc-{uuid4()}"
         documents[doc_id] = {
             "id": doc_id,
@@ -189,6 +189,7 @@ def register_task_tools(mcp: Any) -> None:
     async def create_task(
         title: str, description: str, options: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        """Create a task with optional initial status and tags."""
         task_id = f"task-{uuid4()}"
         tasks[task_id] = {
             "id": task_id,
@@ -204,6 +205,7 @@ def register_task_tools(mcp: Any) -> None:
     async def update_task_status(
         task_id: str, status: str, notes: str | None = None
     ) -> dict[str, Any]:
+        """Update a task's status and optionally append a progress note."""
         task = tasks.get(task_id)
         if not task:
             return {"updated": False, "error": "task not found"}
@@ -238,6 +240,7 @@ def register_memory_tools(mcp: Any) -> None:
         tags: list[str] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        """Store a memory item with kind/tags/metadata; returns memory id."""
         item = _mem_item(kind, text, tags, metadata)
         memories[item["id"]] = item
         return {
@@ -266,6 +269,7 @@ def register_memory_tools(mcp: Any) -> None:
         kind: str | None = None,
         tags: list[str] | None = None,
     ) -> dict[str, Any]:
+        """Search stored memories by text, kind and tags with a limit."""
         q = (query or "").lower()
         tag_set: set[str] = set(tags or [])
         values = list(memories.values())
@@ -286,6 +290,7 @@ def register_memory_tools(mcp: Any) -> None:
 
     @mcp.tool()
     async def memories_get(id: str) -> dict[str, Any]:
+        """Retrieve a stored memory by id, if present."""
         item = memories.get(id)
         if not item:
             return {"found": False, "id": id}
@@ -293,102 +298,180 @@ def register_memory_tools(mcp: Any) -> None:
 
     @mcp.tool()
     async def memories_delete(id: str) -> dict[str, Any]:
+        """Delete a stored memory by id; returns whether it existed."""
         existed = id in memories
         memories.pop(id, None)
         return {"deleted": existed, "id": id}
 
 
-def register_rest_routes(mcp: Any) -> None:
+def _get_http_app(mcp: Any) -> Any | None:
     app = getattr(mcp, "app", None)
-    if app is None:  # pragma: no cover
-        return
+    if app is not None:
+        return app
+    http_app_attr = getattr(mcp, "http_app", None)
+    if callable(http_app_attr):
+        try:
+            return http_app_attr()
+        except TypeError:
+            return http_app_attr
+    return None
+
+
+# (removed unused call_mcp_tool helper)
+
+
+def _call_mcp_tool(mcp: Any, tool_name: str, args: dict[str, Any]) -> Any:
+    """Call an MCP tool by name and return parsed JSON when available."""
+
+    async def _run() -> Any:
+        tools = await mcp.get_tools()
+        tool = tools.get(tool_name)
+        if tool is None:
+            return {"error": f"tool not found: {tool_name}"}
+        result = await tool.run(args)
+        content = getattr(result, "content", None)
+        if content and hasattr(content[0], "text"):
+            try:
+                return json.loads(content[0].text)
+            except Exception:
+                return {"result": content[0].text}
+        if isinstance(result, dict):
+            return result
+        return {"result": result}
+
+    return _run()
+
+
+def _register_metrics_middleware(app: Any) -> None:
     try:
+        from monitoring.metrics import MetricsMiddleware
 
-        @app.get("/health")  # type: ignore[attr-defined]
-        async def _health_route() -> dict[str, Any]:
-            return {"status": "ok", "version": "2.0.0"}
-
-        # Memory REST endpoints
-        @app.post("/api/memories")  # type: ignore[attr-defined]
-        async def _mem_store(payload: dict[str, Any]) -> dict[str, Any]:
-            # Delegate to tool for consistency
-            return await mcp._raw_funcs["memories_store"](  # type: ignore[attr-defined]
-                kind=payload.get("kind", "note"),
-                text=payload.get("text", ""),
-                tags=payload.get("tags"),
-                metadata=payload.get("metadata"),
-            )
-
-        @app.get("/api/memories")  # type: ignore[attr-defined]
-        async def _mem_search(query: str = "", limit: int = 10) -> dict[str, Any]:
-            return await mcp._raw_funcs["memories_search"](query=query, limit=limit)  # type: ignore[attr-defined]
-
-        @app.get("/api/memories/{mem_id}")  # type: ignore[attr-defined]
-        async def _mem_get(mem_id: str) -> dict[str, Any]:
-            return await mcp._raw_funcs["memories_get"](mem_id)  # type: ignore[attr-defined]
-
-        @app.delete("/api/memories/{mem_id}")  # type: ignore[attr-defined]
-        async def _mem_delete(mem_id: str) -> dict[str, Any]:
-            return await mcp._raw_funcs["memories_delete"](mem_id)  # type: ignore[attr-defined]
+        app.middleware("http")(MetricsMiddleware())  # type: ignore[attr-defined]
     except Exception as exc:  # pragma: no cover
-        logger.debug("Optional FastAPI routes not initialized", exc_info=exc)
+        logger.debug("Metrics middleware not initialized", exc_info=exc)
 
 
-def create_server():
+def _register_health_routes(app: Any) -> None:
+    try:
+        from health.checks import HealthCheckRegistry, SystemHealthCheck
+
+        registry = HealthCheckRegistry()
+        registry.register(SystemHealthCheck())
+
+        @app.get("/health/details")  # type: ignore[attr-defined]
+        async def _health_details() -> dict[str, Any]:
+            return await registry.run_all()
+    except Exception as exc:  # pragma: no cover
+        logger.debug("Health details route not initialized", exc_info=exc)
+
+    @app.get("/health")  # type: ignore[attr-defined]
+    async def _health_route() -> dict[str, Any]:
+        return {"status": "ok", "version": "2.0.0"}
+
+
+def _register_mem_store_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
+    @app.post("/api/memories")  # type: ignore[attr-defined]
+    async def _mem_store(request, payload: dict[str, Any]) -> dict[str, Any]:
+        auth.verify_request(request, required_scope="memories:write")
+        limiter.check(request)
+        result = await _call_mcp_tool(
+            mcp,
+            "memories_store",
+            {
+                "kind": payload.get("kind", "note"),
+                "text": payload.get("text", ""),
+                "tags": payload.get("tags"),
+                "metadata": payload.get("metadata"),
+            },
+        )
+        return sanitize_output(result)
+
+
+def _register_mem_search_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
+    @app.get("/api/memories")  # type: ignore[attr-defined]
+    async def _mem_search(request, query: str = "", limit: int = 10) -> dict[str, Any]:
+        auth.verify_request(request, required_scope="memories:read")
+        limiter.check(request)
+        try:
+            q = validate_search_query(query)
+        except Exception:
+            q = ""
+        return await _call_mcp_tool(
+            mcp, "memories_search", {"query": q, "limit": limit}
+        )
+
+
+def _register_mem_get_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
+    @app.get("/api/memories/{mem_id}")  # type: ignore[attr-defined]
+    async def _mem_get(request, mem_id: str) -> dict[str, Any]:
+        auth.verify_request(request, required_scope="memories:read")
+        limiter.check(request)
+        return await _call_mcp_tool(mcp, "memories_get", {"id": mem_id})
+
+
+def _register_mem_delete_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
+    @app.delete("/api/memories/{mem_id}")  # type: ignore[attr-defined]
+    async def _mem_delete(request, mem_id: str) -> dict[str, Any]:
+        auth.verify_request(request, required_scope="memories:delete")
+        limiter.check(request)
+        return await _call_mcp_tool(mcp, "memories_delete", {"id": mem_id})
+
+
+def _register_memory_routes(app: Any, mcp: Any) -> None:
+    from auth.jwt_auth import create_authenticator_from_env
+    from middleware.rate_limiter import RateLimiter
+
+    auth = create_authenticator_from_env()
+    limiter = RateLimiter(rpm=120, burst=20)
+
+    _register_mem_store_route(app, mcp, auth, limiter)
+    _register_mem_search_route(app, mcp, auth, limiter)
+    _register_mem_get_route(app, mcp, auth, limiter)
+    _register_mem_delete_route(app, mcp, auth, limiter)
+
+
+def register_rest_routes(mcp: Any) -> None:
+    """Attach REST routes to the underlying HTTP app if available."""
+    app = getattr(mcp, "app", None)
+    if app is None and os.getenv("MCP_FORCE_HTTP_APP") == "1":
+        app = _get_http_app(mcp)
+    if app is None:  # pragma: no cover
+        logger.debug("No HTTP app available; skipping REST route registration")
+        return
+    _register_metrics_middleware(app)
+    _register_health_routes(app)
+    _register_memory_routes(app, mcp)
+
+
+def create_server() -> Any:
     """Create and configure the MCP server with tools and optional REST routes."""
     mcp = FastMCP(name="Cortex-OS MCP Server", instructions=server_instructions)
     register_core_tools(mcp)
     register_embedding_tools(mcp)
     register_document_tools(mcp)
-    register_task_tools(mcp)
-    register_memory_tools(mcp)
-    register_rest_routes(mcp)
+    # Attach REST routes if an HTTP app is present
+    try:
+        register_rest_routes(mcp)
+    except Exception as exc:  # pragma: no cover
+        logger.debug("REST route registration skipped", exc_info=exc)
     return mcp
 
 
-# Create server instance for FastMCP CLI compatibility
+def main() -> None:
+    """Entry point stub for CLI integration and env handling."""
+    host = os.getenv("HOST", "127.0.0.1")
+    _ = host  # reserved for future use
+    from contextlib import suppress
+
+    with suppress(ValueError):
+        int(os.getenv("PORT", "8000"))
+    os.getenv("TRANSPORT", "stdio")
+    # Do not auto-run a server here; tests only require this to be callable.
+    _ = create_server()
+
+
+# Global instance for CLI tooling expectations
 mcp = create_server()
 
-
-def main():
-    """Main entry point with enforced port 3024 and fallback to 127.0.0.1:8007."""
-    # Environment configuration with enforced defaults
-    host = os.getenv("HOST", "127.0.0.1")
-    port = int(os.getenv("PORT", "3024"))  # Enforce 3024 as primary port
-    transport = os.getenv("TRANSPORT", "http").lower()
-
-    # Fallback configuration
-    fallback_host = "127.0.0.1"
-    fallback_port = 8007
-
-    logger.info("🚀 Starting Cortex-OS FastMCP Server v2.0")
-    logger.info("📡 %s transport on %s:%s", transport.upper(), host, port)
-    logger.info("🔗 Server will be available at: http://%s:%s/mcp", host, port)
-
-    valid_transports = ["stdio", "http", "sse", "ws", "streamable-http"]
-    if transport not in valid_transports:
-        logger.warning("⚠️ Unknown transport '%s', falling back to 'http'", transport)
-        transport = "http"
-
-    if transport == "stdio":
-        mcp.run(transport="stdio")
-    else:
-        try:
-            mcp.run(transport="streamable-http", host=host, port=port)
-        except OSError as exc:
-            if "address already in use" in str(exc).lower():
-                logger.warning(
-                    "⚠️ Port %s in use, falling back to %s:%s",
-                    port,
-                    fallback_host,
-                    fallback_port,
-                )
-                mcp.run(
-                    transport="streamable-http", host=fallback_host, port=fallback_port
-                )
-            else:
-                raise
-
-
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

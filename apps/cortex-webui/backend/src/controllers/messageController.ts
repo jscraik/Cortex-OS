@@ -20,7 +20,7 @@ const createMessageSchema = z.object({
 	role: z.enum(['user', 'assistant', 'system']),
 });
 
-export const getMessagesByConversationId = (req: AuthRequest, res: Response): void => {
+export const getMessagesByConversationId = async (req: AuthRequest, res: Response): Promise<void> => {
 	try {
 		if (!req.user) {
 			throw new HttpError(401, 'Unauthorized');
@@ -29,7 +29,7 @@ export const getMessagesByConversationId = (req: AuthRequest, res: Response): vo
 		const { conversationId } = conversationIdSchema.parse(req.params);
 
 		// Verify conversation exists and belongs to user
-		const conversation = ConversationService.getConversationById(conversationId);
+		const conversation = await ConversationService.getConversationById(conversationId);
 		if (!conversation) {
 			throw new HttpError(404, 'Conversation not found');
 		}
@@ -38,7 +38,7 @@ export const getMessagesByConversationId = (req: AuthRequest, res: Response): vo
 			throw new HttpError(403, 'Forbidden');
 		}
 
-		const messages = getMessagesById(conversationId);
+		const messages = await getMessagesById(conversationId);
 		res.json(messages);
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -51,7 +51,7 @@ export const getMessagesByConversationId = (req: AuthRequest, res: Response): vo
 	}
 };
 
-export const createMessage = (req: AuthRequest, res: Response): void => {
+export const createMessage = async (req: AuthRequest, res: Response): Promise<void> => {
 	try {
 		if (!req.user) {
 			throw new HttpError(401, 'Unauthorized');
@@ -61,7 +61,7 @@ export const createMessage = (req: AuthRequest, res: Response): void => {
 		const { content, role } = createMessageSchema.parse(req.body);
 
 		// Verify conversation exists and belongs to user
-		const conversation = ConversationService.getConversationById(conversationId);
+		const conversation = await ConversationService.getConversationById(conversationId);
 		if (!conversation) {
 			throw new HttpError(404, 'Conversation not found');
 		}
@@ -70,7 +70,7 @@ export const createMessage = (req: AuthRequest, res: Response): void => {
 			throw new HttpError(403, 'Forbidden');
 		}
 
-		const message = createMessageService(conversationId, role, content);
+		const message = await createMessageService(conversationId, role, content);
 		res.status(201).json(message);
 	} catch (error) {
 		if (error instanceof z.ZodError) {

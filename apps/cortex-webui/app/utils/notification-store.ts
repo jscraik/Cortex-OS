@@ -22,7 +22,9 @@ class NotificationStore {
 	}
 
 	private notify() {
-		this.listeners.forEach((listener) => listener([...this.notifications]));
+		this.listeners.forEach((listener) => {
+			listener([...this.notifications]);
+		});
 	}
 
 	addNotification(notification: Omit<Notification, 'id'>) {

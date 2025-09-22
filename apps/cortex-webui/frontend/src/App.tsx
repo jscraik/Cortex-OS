@@ -8,10 +8,14 @@ import useConversations from './hooks/useConversations';
 import useMessages from './hooks/useMessages';
 import ChatPage from './pages/ChatPage';
 import Dashboard from './pages/Dashboard';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 import RegisterPage from './pages/RegisterPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import SettingsPage from './pages/SettingsPage';
 import { applyMotionPreferences, applyTheme, getEffectiveTheme } from './utils/theme';
+import AuthProvider from './contexts/AuthContext';
 
 const AppContent: React.FC = () => {
 	const navigate = useNavigate();
@@ -91,6 +95,14 @@ const AppContent: React.FC = () => {
 					}
 				/>
 				<Route
+					path="/forgot-password"
+					element={<ForgotPasswordPage />}
+				/>
+				<Route
+					path="/reset-password"
+					element={<ResetPasswordPage />}
+				/>
+				<Route
 					path="/dashboard"
 					element={
 						auth.isAuthenticated ? (
@@ -144,6 +156,20 @@ const AppContent: React.FC = () => {
 					}
 				/>
 				<Route
+					path="/profile"
+					element={
+						auth.isAuthenticated ? (
+							<ProfilePage
+								theme={effectiveTheme}
+								onThemeChange={handleThemeChange}
+								onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+							/>
+						) : (
+							<Navigate to="/login" />
+						)
+					}
+				/>
+				<Route
 					path="/"
 					element={<Navigate to={auth.isAuthenticated ? '/dashboard' : '/login'} />}
 				/>
@@ -155,7 +181,9 @@ const AppContent: React.FC = () => {
 export const App: React.FC = () => {
 	return (
 		<Router>
-			<AppContent />
+			<AuthProvider>
+				<AppContent />
+			</AuthProvider>
 		</Router>
 	);
 };

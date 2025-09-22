@@ -6,12 +6,12 @@ import {
 	type OutboxRepository,
 } from '@cortex-os/a2a-contracts/outbox-types';
 import { withSpan } from '@cortex-os/telemetry';
-import { DeadLetterQueue, InMemoryDeadLetterStore } from '../a2a-core/src/dlq.js';
+import { DeadLetterQueue, InMemoryDeadLetterStore } from '@cortex-os/a2a-core/dlq';
 import {
 	createReliableOutboxProcessor,
 	EnhancedOutbox,
 	ReliableOutboxPublisher,
-} from '../a2a-core/src/outbox.js';
+} from '@cortex-os/a2a-core/outbox';
 
 /**
  * A2A Outbox Integration

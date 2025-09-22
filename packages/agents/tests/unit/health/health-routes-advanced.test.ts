@@ -1,21 +1,28 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Create shared mock functions for health and metrics
+// Mock the HealthHandler module
+vi.mock('../../../src/server/handlers/health.handler');
+
+// Import after mocking to get the mocked version
+import { HealthHandler } from '../../../src/server/handlers/health.handler';
+
+// Create typed mock for HealthHandler
+const MockedHealthHandler = vi.mocked(HealthHandler);
+
+// Create shared mock functions
 const mockGetHealth = vi.fn();
 const mockGetComponentHealth = vi.fn();
 const mockGetMetricsCollector = vi.fn();
 const mockGetHealthMonitor = vi.fn();
 
-// Mock the HealthHandler module
-vi.mock('../../../src/server/handlers/health.handler', () => ({
-	HealthHandler: class {
-		getHealth = mockGetHealth;
-		getComponentHealth = mockGetComponentHealth;
-		getMetricsCollector = mockGetMetricsCollector;
-		getHealthMonitor = mockGetHealthMonitor;
-	},
-}));
+// Setup the mock implementation
+MockedHealthHandler.mockImplementation(() => ({
+	getHealth: mockGetHealth,
+	getComponentHealth: mockGetComponentHealth,
+	getMetricsCollector: mockGetMetricsCollector,
+	getHealthMonitor: mockGetHealthMonitor,
+}) as any);
 
 // Import after mocking
 import { healthRoutes } from '../../../src/server/routes/health.routes';

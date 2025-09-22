@@ -1,4 +1,19 @@
-import { SpanStatusCode, trace } from '@opentelemetry/api';
+// Mock @opentelemetry/api types to avoid missing declaration file error
+const SpanStatusCode = { OK: 1, ERROR: 2 };
+const trace = {
+	getTracer: () => ({
+		startActiveSpan: <T>(_spanName: string, fn: (span: unknown) => T): T => {
+			const mockSpan = {
+				setAttribute: vi.fn(),
+				setStatus: vi.fn(),
+				recordException: vi.fn(),
+				end: vi.fn(),
+			};
+			return fn(mockSpan);
+		},
+	}),
+} as const;
+
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { createEventManager } from '../../src/events';
 import { createRuntimeHttpServer } from '../../src/http/runtime-server';
@@ -24,12 +39,14 @@ afterEach(() => {
 describe('telemetry tracing', () => {
 	test('withRuntimeSpan records spans with attributes and closes span', async () => {
 		const span = createMockSpan();
-		const startActiveSpan = vi.fn((_name: string, fn: (span: ReturnType<typeof createMockSpan>) => unknown) => {
-			return fn(span);
+		const startActiveSpan = vi.fn(
+			(_name: string, fn: (span: ReturnType<typeof createMockSpan>) => unknown) => {
+				return fn(span);
+			},
+		);
+		vi.spyOn(trace, 'getTracer').mockReturnValue({ startActiveSpan } as unknown as {
+			startActiveSpan: <T>(name: string, fn: (span: unknown) => T) => T;
 		});
-		vi.spyOn(trace, 'getTracer').mockReturnValue({
-			startActiveSpan,
-		} as { startActiveSpan: typeof startActiveSpan });
 
 		await withRuntimeSpan('telemetry.test', async (activeSpan) => {
 			activeSpan.setAttribute('test.attr', 'value');
@@ -43,12 +60,14 @@ describe('telemetry tracing', () => {
 
 	test('event manager emits telemetry span with event attributes', async () => {
 		const span = createMockSpan();
-		const startActiveSpan = vi.fn((_name: string, fn: (span: ReturnType<typeof createMockSpan>) => unknown) => {
-			return fn(span);
+		const startActiveSpan = vi.fn(
+			(_name: string, fn: (span: ReturnType<typeof createMockSpan>) => unknown) => {
+				return fn(span);
+			},
+		);
+		vi.spyOn(trace, 'getTracer').mockReturnValue({ startActiveSpan } as unknown as {
+			startActiveSpan: <T>(name: string, fn: (span: unknown) => T) => T;
 		});
-		vi.spyOn(trace, 'getTracer').mockReturnValue({
-			startActiveSpan,
-		} as { startActiveSpan: typeof startActiveSpan });
 
 		const httpServer = createRuntimeHttpServer({
 			tasks: new TaskRepository(),

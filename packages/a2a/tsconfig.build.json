@@ -3,7 +3,19 @@
 	"compilerOptions": {
 		"noEmit": false,
 		"declaration": true,
-		"emitDeclarationOnly": false
+		"emitDeclarationOnly": false,
+		"rootDir": "src",
+		"outDir": "dist"
 	},
-	"include": ["src"]
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"a2a-core/src",
+		"a2a-contracts/src",
+		"a2a-transport/src",
+		"**/*.test.ts"
+	]
 }

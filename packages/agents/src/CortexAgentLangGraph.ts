@@ -5,12 +5,13 @@
  * state management, and tool coordination. This replaces the simplified implementation.
  */
 
-import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
+import { EventEmitter } from 'node:events';
 import { z } from 'zod';
 import type { AgentConfig } from './lib/types';
 import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent';
+import { type SecurityCheckResult, type StreamChunk } from './types.js';
 
 // Extended state for CortexAgent workflows
 export const CortexStateAnnotation = Annotation.Root({
@@ -18,7 +19,7 @@ export const CortexStateAnnotation = Annotation.Root({
 	currentStep: Annotation<string>,
 	context: Annotation<Record<string, unknown>>(),
 	tools: Annotation<Array<{ name: string; description: string }>>(),
-	securityCheck: Annotation<{ passed: boolean; risk: string } | undefined>(),
+	securityCheck: Annotation<SecurityCheckResult | undefined>(),
 	memory: Annotation<Array<{ content: string; timestamp: string }>>(),
 	result: Annotation<unknown>(),
 	error: Annotation<string | undefined>(),
@@ -75,9 +76,9 @@ export class CortexAgent extends EventEmitter {
 			currentStep: 'input_processing',
 			context: options?.context || {},
 			tools:
-				options?.tools?.map((t: any) => ({
-					name: t.name || t,
-					description: t.description || '',
+				options?.tools?.map((t) => ({
+					name: (t as ToolConfig).name || (t as unknown as string),
+					description: (t as ToolConfig).description || '',
 				})) || [],
 			securityCheck: undefined,
 			memory: [],
@@ -105,13 +106,13 @@ export class CortexAgent extends EventEmitter {
 		// Handle different types of stream results
 		if (Symbol.asyncIterator in streamResult) {
 			// It's an async iterator
-			for await (const chunk of streamResult as AsyncIterable<any>) {
+			for await (const chunk of streamResult as AsyncIterable<StreamChunk>) {
 				// Handle different streaming modes
 				if (this.config.streamingMode === 'values') {
-					finalState = chunk;
+					finalState = chunk.data as CortexState;
 				} else {
 					// updates mode - merge with current state
-					finalState = { ...finalState, ...chunk };
+					finalState = { ...finalState, ...(chunk.data as Partial<CortexState>) };
 				}
 				// Emit events for real-time updates
 				this.emit('update', finalState);
@@ -142,7 +143,7 @@ export class CortexAgent extends EventEmitter {
 		return {
 			status: 'healthy',
 			model: this.config.model || 'glm-4.5-mlx',
-			tools: this.config.tools?.map((t: any) => t.name) || [],
+			tools: this.config.tools?.map((t) => (typeof t === 'string' ? t : t.name)) || [],
 			subagents: Array.from(this.masterAgentGraph.agentRegistry.values()).map((agent) => ({
 				name: agent.name,
 				status: 'ready',
@@ -151,8 +152,8 @@ export class CortexAgent extends EventEmitter {
 				currentStep: 'idle',
 				tools:
 					this.config.tools?.map((t) => ({
-						name: (t as any).name || t,
-						description: (t as any).description || '',
+						name: typeof t === 'string' ? t : t.name,
+						description: typeof t === 'string' ? '' : t.description || '',
 					})) || [],
 			},
 		};
@@ -347,7 +348,7 @@ function createAgentGraph(agent: CortexAgent) {
 /**
  * Perform security check on input
  */
-async function performSecurityCheck(messages: any[]): Promise<{ passed: boolean; risk: string }> {
+async function performSecurityCheck(messages: Array<{ content: string | unknown }>): Promise<SecurityCheckResult> {
 	// Simplified security check
 	const lastMessage = messages[messages.length - 1];
 	const content = lastMessage?.content || '';

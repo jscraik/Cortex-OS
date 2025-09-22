@@ -8,6 +8,7 @@
 import { randomUUID } from 'node:crypto';
 import { createAgentsBusIntegration } from './AgentsBusIntegration.js';
 import { createMasterAgentGraph, type SubAgentConfig } from './MasterAgent.js';
+import { ProductionErrorHandler, ResourceManager, setupErrorBoundary } from './lib/error-handling.js';
 
 // Define specialized sub-agents following your architecture diagram
 const subAgents: SubAgentConfig[] = [
@@ -51,6 +52,21 @@ const subAgents: SubAgentConfig[] = [
 const startAgentSystem = async () => {
 	console.log('🚀 Starting brAInwav Cortex-OS Agent System...');
 
+	// Initialize error handling and resource management
+	const errorHandler = new ProductionErrorHandler({
+		maxRetries: 3,
+		exitOnCritical: true,
+		notificationCallback: async (error) => {
+			console.error('🚨 CRITICAL ERROR NOTIFICATION:', error.toJSON());
+			// Here you could integrate with external alerting systems
+		},
+	});
+
+	const resourceManager = new ResourceManager();
+
+	// Setup global error boundary
+	setupErrorBoundary(errorHandler, resourceManager);
+
 	// Initialize global hooks singleton (watcher + telemetry) once per process
 	try {
 		const hooksMod: unknown = await import('@cortex-os/hooks');
@@ -66,11 +82,22 @@ const startAgentSystem = async () => {
 	const busIntegration = createAgentsBusIntegration();
 	await busIntegration.initialize();
 
+	// Register cleanup for bus integration
+	resourceManager.register('a2a-bus', async () => {
+		await busIntegration.destroy?.();
+	});
+
 	// Create master agent with LangGraphJS
 	const masterAgent = createMasterAgentGraph({
 		name: 'brAInwav-MasterAgent',
 		subAgents,
 		mcpEndpoint: process.env.MCP_ENDPOINT || 'http://localhost:3001/mcp',
+	});
+
+	// Register cleanup for master agent
+	resourceManager.register('master-agent', async () => {
+		// Add any master agent cleanup logic here
+		console.log('Cleaning up master agent...');
 	});
 
 	// Notify A2A bus about agent creation

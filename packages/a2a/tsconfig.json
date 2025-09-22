@@ -22,13 +22,10 @@
       "@cortex-os/contracts": [
         "../../libs/typescript/contracts/dist/src/index.d.ts"
       ],
-      "@cortex-os/a2a-core/*": [
-        "a2a-core/src/*"
-      ],
-      "@cortex-os/a2a-contracts/*": [
-        "a2a-contracts/src/*"
-      ],
       "@cortex-os/a2a-transport/stdio": [
+        "a2a-transport/dist/stdio.d.ts"
+      ],
+      "@cortex-os/a2a-transport/stdio.js": [
         "a2a-transport/dist/stdio.d.ts"
       ],
       "@cortex-os/a2a-transport/*": [
@@ -38,15 +35,12 @@
         "../observability/dist/index.d.ts"
       ],
       "@cortex-os/telemetry": [
-        "../libs/typescript/telemetry/src/index.ts"
+        "../../libs/typescript/telemetry/dist/index.d.ts"
       ]
     }
   },
   "include": [
-    "src/**/*",
-    "a2a-core/src/**/*",
-    "a2a-contracts/src/**/*",
-    "a2a-transport/src/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

@@ -33,6 +33,7 @@ import { getApprovals, postApproval } from './controllers/approvalsController';
 
 // Import controllers
 import { AuthController } from './controllers/authController';
+import { OAuthController } from './controllers/oauthController';
 import { getChatSession, postChatMessage, streamChatSSE } from './controllers/chatController';
 import { getContextMap } from './controllers/contextMapController';
 import { ConversationController } from './controllers/conversationController';
@@ -56,10 +57,13 @@ import { listWebuiMcpTools, mcpExecuteHandler } from './mcp/tools';
 // Import middleware
 import { authenticateToken } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
+// Better Auth routes
+import { setupBetterAuthRoutes } from './routes/better-auth-routes';
+import { initializeAuthTables } from './auth';
 // Import services
 import { initializeUploadDirectory } from './services/fileService';
 import { initializeDefaultModels } from './services/modelService';
-import { initializeDatabase } from './utils/database-temp';
+import { initializeDatabase, migrateLegacyUsers } from './db';
 import logger, { logWithContext } from './utils/logger';
 
 export interface ServerComponents {
@@ -86,9 +90,24 @@ export const createApp = (): Express => {
 	});
 
 	// API Routes
-	app.post(`${API_BASE_PATH}/auth/login`, AuthController.login);
-	app.post(`${API_BASE_PATH}/auth/register`, AuthController.register);
-	app.post(`${API_BASE_PATH}/auth/logout`, AuthController.logout);
+	// Legacy auth routes (will be deprecated after migration)
+	app.post(`${API_BASE_PATH}/auth/legacy/login`, AuthController.login);
+	app.post(`${API_BASE_PATH}/auth/legacy/register`, AuthController.register);
+	app.post(`${API_BASE_PATH}/auth/legacy/logout`, AuthController.logout);
+
+	// Better Auth routes
+	setupBetterAuthRoutes(app);
+
+	// OAuth routes
+	app.get(`${API_BASE_PATH}/oauth/providers`, OAuthController.getProviders);
+	app.get(`${API_BASE_PATH}/oauth/:providerId/url`, OAuthController.getOAuthURL);
+	app.get(`${API_BASE_PATH}/oauth/:providerId/callback`, OAuthController.handleCallback);
+	app.get(`${API_BASE_PATH}/oauth/accounts`, OAuthController.getUserAccounts);
+	app.post(`${API_BASE_PATH}/oauth/link`, OAuthController.linkAccount);
+	app.post(`${API_BASE_PATH}/oauth/unlink`, OAuthController.unlinkAccount);
+	app.post(`${API_BASE_PATH}/oauth/refresh`, OAuthController.refreshToken);
+	app.post(`${API_BASE_PATH}/oauth/revoke`, OAuthController.revokeAccess);
+	app.get(`${API_BASE_PATH}/oauth/validate`, OAuthController.validateConfiguration);
 
 	app.get(
 		`${API_BASE_PATH}/conversations`,
@@ -198,6 +217,10 @@ export const createServer = (): ServerComponents => {
 		try {
 			initializeDatabase();
 			logger.info('init:database');
+			await migrateLegacyUsers();
+			logger.info('init:migration');
+			await initializeAuthTables();
+			logger.info('init:auth_tables');
 			initializeDefaultModels();
 			logger.info('init:default_models');
 			initializeUploadDirectory();

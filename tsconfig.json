@@ -256,10 +256,13 @@
 		"**/*.d.ts",
 		"**/*.spec.ts",
 		"**/test/**",
-		"**/tools/**",
 		"security_backups/**",
 		"**/__*/**",
 		"apps/cortex-os/brain/**"
 	],
-	"references": []
+	"references": [
+		{
+			"path": "tools/tsconfig.json"
+		}
+	]
 }

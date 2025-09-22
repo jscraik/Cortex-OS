@@ -5,9 +5,9 @@
  * @status active
  */
 
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope.js';
-import { createBus } from '@cortex-os/a2a-core/bus.js';
-import type { Transport } from '@cortex-os/a2a-core/transport.js';
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { createBus } from '@cortex-os/a2a-core/bus';
+import type { Transport } from '@cortex-os/a2a-core/transport';
 import { stdio } from '@cortex-os/a2a-transport/stdio.js';
 import { createLogger } from '@cortex-os/observability';
 

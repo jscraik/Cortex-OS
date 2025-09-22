@@ -3,12 +3,14 @@
  * Implements A2A native communication following standardized pattern
  */
 
+import { type AccessControlList, type BusOptions, type BusTransport, type EventHandler, type SchemaRegistry } from './types.js';
+
 // Mock implementation until @cortex-os/a2a-core is available
 const createBus = () => {
-	const handlers = new Map<string, Array<(data: any) => void>>();
+	const handlers = new Map<string, Array<EventHandler>>();
 
 	return {
-		emit: async (event: string, data: any) => {
+		emit: async <T>(event: string, data: T) => {
 			const eventHandlers = handlers.get(event) || [];
 			for (const handler of eventHandlers) {
 				try {
@@ -18,12 +20,12 @@ const createBus = () => {
 				}
 			}
 		},
-		subscribe: (event: string, handler: (data: any) => void) => {
+		subscribe: <T>(event: string, handler: EventHandler<T>) => {
 			const eventHandlers = handlers.get(event) || [];
-			eventHandlers.push(handler);
+			eventHandlers.push(handler as EventHandler);
 			handlers.set(event, eventHandlers);
 			return () => {
-				const index = eventHandlers.indexOf(handler);
+				const index = eventHandlers.indexOf(handler as EventHandler);
 				if (index > -1) eventHandlers.splice(index, 1);
 			};
 		},
@@ -100,10 +102,10 @@ export function createAgentsSchemaRegistry() {
 
 // Agent Bus Configuration
 export interface AgentsBusConfig {
-	transport?: any;
-	schemaRegistry?: any;
-	acl?: any;
-	busOptions?: any;
+	transport?: BusTransport;
+	schemaRegistry?: SchemaRegistry;
+	acl?: AccessControlList;
+	busOptions?: BusOptions;
 }
 
 // Create Agents Bus following standardized pattern

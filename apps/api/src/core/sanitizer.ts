@@ -1,6 +1,13 @@
 const scriptTagPattern = /<script[^>]*?>[\s\S]*?<\/script>/gi;
-// biome-ignore lint/suspicious/noControlCharactersInRegex: This is intentionally matching control characters for security sanitization
-const controlCharPattern = /[\u0000-\u001f\u007f]/g;
+// Remove ASCII control characters (U+0000–U+001F) and DEL (U+007F) without regex to avoid linter false-positives
+const stripControlChars = (s: string): string => {
+	let out = '';
+	for (let i = 0; i < s.length; i++) {
+		const code = s.charCodeAt(i);
+		if (code >= 32 && code !== 127) out += s[i];
+	}
+	return out;
+};
 
 export function sanitizePayload<T>(payload: T): T {
 	if (payload === null || payload === undefined) {
@@ -8,7 +15,7 @@ export function sanitizePayload<T>(payload: T): T {
 	}
 
 	if (typeof payload === 'string') {
-		return payload.replace(scriptTagPattern, '').replace(controlCharPattern, '') as T;
+		return stripControlChars(payload.replace(scriptTagPattern, '')) as T;
 	}
 
 	if (Array.isArray(payload)) {

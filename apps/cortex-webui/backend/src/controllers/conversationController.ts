@@ -20,27 +20,27 @@ const conversationIdSchema = z.object({
 });
 
 export class ConversationController {
-	static getConversations(req: AuthRequest, res: Response): void {
+	static async getConversations(req: AuthRequest, res: Response): Promise<void> {
 		try {
 			if (!req.user) {
 				throw new HttpError(401, 'Unauthorized');
 			}
 
-			const conversations = ConversationService.getConversationsByUserId(req.user.userId);
+			const conversations = await ConversationService.getConversationsByUserId(req.user.userId);
 			res.json(conversations);
 		} catch (_error) {
 			res.status(500).json({ error: 'Internal server error' });
 		}
 	}
 
-	static getConversationById(req: AuthRequest, res: Response): void {
+	static async getConversationById(req: AuthRequest, res: Response): Promise<void> {
 		try {
 			if (!req.user) {
 				throw new HttpError(401, 'Unauthorized');
 			}
 
 			const { id } = conversationIdSchema.parse(req.params);
-			const conversation = ConversationService.getConversationById(id);
+			const conversation = await ConversationService.getConversationById(id);
 
 			if (!conversation) {
 				throw new HttpError(404, 'Conversation not found');
@@ -63,14 +63,14 @@ export class ConversationController {
 		}
 	}
 
-	static createConversation(req: AuthRequest, res: Response): void {
+	static async createConversation(req: AuthRequest, res: Response): Promise<void> {
 		try {
 			if (!req.user) {
 				throw new HttpError(401, 'Unauthorized');
 			}
 
 			const { title } = createConversationSchema.parse(req.body);
-			const conversation = ConversationService.createConversation(req.user.userId, title);
+			const conversation = await ConversationService.createConversation(req.user.userId, title);
 			res.status(201).json(conversation);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
@@ -81,7 +81,7 @@ export class ConversationController {
 		}
 	}
 
-	static updateConversation(req: AuthRequest, res: Response): void {
+	static async updateConversation(req: AuthRequest, res: Response): Promise<void> {
 		try {
 			if (!req.user) {
 				throw new HttpError(401, 'Unauthorized');
@@ -90,7 +90,7 @@ export class ConversationController {
 			const { id } = conversationIdSchema.parse(req.params);
 			const updates = updateConversationSchema.parse(req.body);
 
-			const conversation = ConversationService.getConversationById(id);
+			const conversation = await ConversationService.getConversationById(id);
 			if (!conversation) {
 				throw new HttpError(404, 'Conversation not found');
 			}
@@ -100,7 +100,7 @@ export class ConversationController {
 				throw new HttpError(403, 'Forbidden');
 			}
 
-			const updatedConversation = ConversationService.updateConversation(id, updates);
+			const updatedConversation = await ConversationService.updateConversation(id, updates);
 			res.json(updatedConversation);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
@@ -113,14 +113,14 @@ export class ConversationController {
 		}
 	}
 
-	static deleteConversation(req: AuthRequest, res: Response): void {
+	static async deleteConversation(req: AuthRequest, res: Response): Promise<void> {
 		try {
 			if (!req.user) {
 				throw new HttpError(401, 'Unauthorized');
 			}
 
 			const { id } = conversationIdSchema.parse(req.params);
-			const conversation = ConversationService.getConversationById(id);
+			const conversation = await ConversationService.getConversationById(id);
 
 			if (!conversation) {
 				throw new HttpError(404, 'Conversation not found');
@@ -131,7 +131,7 @@ export class ConversationController {
 				throw new HttpError(403, 'Forbidden');
 			}
 
-			ConversationService.deleteConversation(id);
+			await ConversationService.deleteConversation(id);
 			res.json({ message: 'Conversation deleted successfully' });
 		} catch (error) {
 			if (error instanceof z.ZodError) {

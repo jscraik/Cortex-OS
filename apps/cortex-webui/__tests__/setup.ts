@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
 // Mock crypto.randomUUID for jsdom
@@ -42,17 +42,36 @@ vi.mock('sonner', () => ({
 if (typeof window !== 'undefined') {
 	// jsdom doesn't implement scrollIntoView by default
 	if (!('scrollIntoView' in HTMLElement.prototype)) {
-		// @ts-expect-error - defining missing DOM API for tests
-		HTMLElement.prototype.scrollIntoView = vi.fn();
+		(HTMLElement.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = vi.fn();
 	}
 	// Ensure localStorage is available
 	if (!window.localStorage) {
 		const storageMock: Storage = {
-			getItem: vi.fn((_key: string) => null),
-			setItem: vi.fn((_key: string, _value: string) => undefined),
-			removeItem: vi.fn((_key: string) => undefined),
+			getItem: vi.fn((_k: string) => {
+				if (_k) {
+					// param intentionally unused beyond presence check
+				}
+				return null;
+			}),
+			setItem: vi.fn((_k: string, _v: string) => {
+				if (_k || _v) {
+					// params intentionally unused beyond presence check
+				}
+				return undefined;
+			}),
+			removeItem: vi.fn((_k: string) => {
+				if (_k) {
+					// param intentionally unused beyond presence check
+				}
+				return undefined;
+			}),
 			clear: vi.fn(() => undefined),
-			key: vi.fn((_index: number) => null),
+			key: vi.fn((_i: number) => {
+				if (_i || _i === 0) {
+					// param intentionally unused beyond presence check
+				}
+				return null;
+			}),
 			length: 0,
 		};
 		window.localStorage = storageMock;
@@ -64,6 +83,9 @@ if (typeof window !== 'undefined') {
 if (typeof (globalThis as { fetch?: typeof fetch }).fetch === 'undefined') {
 	(globalThis as { fetch: typeof fetch }).fetch = vi.fn(
 		async (_input: RequestInfo | URL, _init?: RequestInit) => {
+			if (_init) {
+				// init intentionally unused in mock
+			}
 			const url = typeof _input === 'string' ? _input : String(_input);
 			// handle models endpoint used by Chat component
 			if (url.endsWith('/api/models/ui')) {
