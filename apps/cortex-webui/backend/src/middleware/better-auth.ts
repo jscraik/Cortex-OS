@@ -346,14 +346,4 @@ export const betterAuthErrorHandler = (
   });
 };
 
-export {
-  betterAuth,
-  optionalBetterAuth,
-  requireRole,
-  authenticateAPIKey,
-  hybridAuth,
-  validateSession,
-  authRateLimit,
-  authCORS,
-  betterAuthErrorHandler,
-};
+// Individual exports are already done above

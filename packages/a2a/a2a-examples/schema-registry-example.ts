@@ -82,8 +82,16 @@ export async function runSchemaRegistryExample() {
 
 	console.warn('✅ Schemas registered successfully\n');
 
-	// Create bus with schema validation
-	const bus = createBus(inproc(), undefined, registry);
+	// Create ACL that allows all required topics
+	const acl = {
+		'user.created.v1': { publish: true, subscribe: true },
+		'order.created.v1': { publish: true, subscribe: true },
+		'payment.processed.v1': { publish: true, subscribe: true },
+		'order.shipped.v1': { publish: true, subscribe: true },
+	};
+
+	// Create bus with schema validation and ACL permissions
+	const bus = createBus(inproc(), undefined, registry, acl);
 
 	// Set up event handlers
 	const USER_CREATED_TYPE = 'user.created.v1';
@@ -108,7 +116,7 @@ export async function runSchemaRegistryExample() {
 				// Create order event
 				const orderMsg = createChildMessage(msg, {
 					type: ORDER_CREATED_TYPE,
-					source: '/order-service',
+					source: 'urn:cortex:order-service',
 					data: {
 						id: 'ord-001',
 						userId: data.id,
@@ -145,7 +153,7 @@ export async function runSchemaRegistryExample() {
 				// Create payment event
 				const paymentMsg = createChildMessage(msg, {
 					type: PAYMENT_PROCESSED_TYPE,
-					source: '/payment-service',
+					source: 'urn:cortex:payment-service',
 					data: {
 						id: 'pay-001',
 						orderId: data.id,
@@ -180,7 +188,7 @@ export async function runSchemaRegistryExample() {
 				// Create shipping event
 				const shippingMsg = createChildMessage(msg, {
 					type: ORDER_SHIPPED_TYPE,
-					source: '/shipping-service',
+					source: 'urn:cortex:shipping-service',
 					data: {
 						orderId: data.orderId,
 						trackingNumber: 'TRK123456789',
@@ -218,7 +226,7 @@ export async function runSchemaRegistryExample() {
 	// Valid event
 	const validUserEvent = createEnvelope({
 		type: 'user.created.v1',
-		source: '/user-service',
+		source: 'urn:cortex:user-service',
 		data: {
 			id: 'user-001',
 			email: 'john.doe@example.com',
@@ -234,7 +242,7 @@ export async function runSchemaRegistryExample() {
 	// Invalid event (missing required field)
 	const invalidUserEvent = createEnvelope({
 		type: 'user.created.v1',
-		source: '/user-service',
+		source: 'urn:cortex:user-service',
 		data: {
 			id: 'user-002',
 			// Missing required fields: email, firstName, lastName, createdAt

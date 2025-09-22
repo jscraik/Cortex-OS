@@ -13,12 +13,14 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "inversify": "^6.0.1",
-    "zod": "^3.22.4",
-    "@opentelemetry/api": "^1.9.0",
+    "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
-    "@cortex-os/a2a-contracts": "workspace:*"
+    "@cortex-os/simlab": "workspace:*",
+    "@cortex-os/utils": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
+    "inversify": "^6.0.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "eslint": "^9.35.0"

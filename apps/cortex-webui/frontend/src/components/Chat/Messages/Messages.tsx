@@ -3,7 +3,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
-// import type { ChatMessage } from '../../../../shared/types/chat';
+// import { ChatTypes } from '~/shared/types/chat';
 // TODO: Unify message shape across codebase (createdAt/timestamp)
 type ChatMessage = {
 	id: string;

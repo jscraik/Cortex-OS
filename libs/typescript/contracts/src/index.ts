@@ -91,6 +91,6 @@ export * from './security-events.js';
 export * from './webui-tools.js';
 
 // Note: Additional package event contracts are available directly from package imports
-// Use: import { createAsbrEvent } from '@cortex-os/asbr';
-// Use: import { createEvalsEvent } from '@cortex-os/evals';
+// Use: import { ASBRContract } from '@cortex-os/contracts';
+// Use: import { EvalContract } from '@cortex-os/contracts';
 // etc.

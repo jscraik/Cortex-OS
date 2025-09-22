@@ -8,7 +8,7 @@ set -euo pipefail
 # Configuration
 IMAGE_NAME="cortex-os/a2a-protocol"
 VERSION="${VERSION:-1.0.0}"
-PLATFORM="${PLATFORM:-linux/arm64,linux/amd64}"
+PLATFORM="${PLATFORM:-linux/arm64}"
 
 # Colors for output
 RED='\033[0;31m'

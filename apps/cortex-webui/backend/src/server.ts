@@ -29,10 +29,10 @@ process.on('uncaughtException', (error) => {
 import { getCorsOptions, getServerConfig } from './config/config';
 // Import constants from backend config (domain separation)
 import { API_BASE_PATH, WS_BASE_PATH } from './config/constants';
+import { initializeDatabaseAsync } from './db';
 import { getApprovals, postApproval } from './controllers/approvalsController';
 
 // Import controllers
-import { AuthController } from './controllers/authController';
 import { OAuthController } from './controllers/oauthController';
 import { getChatSession, postChatMessage, streamChatSSE } from './controllers/chatController';
 import { getContextMap } from './controllers/contextMapController';
@@ -90,11 +90,6 @@ export const createApp = (): Express => {
 	});
 
 	// API Routes
-	// Legacy auth routes (will be deprecated after migration)
-	app.post(`${API_BASE_PATH}/auth/legacy/login`, AuthController.login);
-	app.post(`${API_BASE_PATH}/auth/legacy/register`, AuthController.register);
-	app.post(`${API_BASE_PATH}/auth/legacy/logout`, AuthController.logout);
-
 	// Better Auth routes
 	setupBetterAuthRoutes(app);
 
@@ -215,12 +210,17 @@ export const createServer = (): ServerComponents => {
 	const start = async () => {
 		const { port, nodeEnv } = getServerConfig();
 		try {
-			initializeDatabase();
+			// Validate environment first
+			const { validateEnvironment } = await import('./lib/env');
+			validateEnvironment();
+			logger.info('init:env_validation');
+
+			await initializeDatabaseAsync();
 			logger.info('init:database');
-			await migrateLegacyUsers();
-			logger.info('init:migration');
+
 			await initializeAuthTables();
 			logger.info('init:auth_tables');
+
 			initializeDefaultModels();
 			logger.info('init:default_models');
 			initializeUploadDirectory();

@@ -13,6 +13,7 @@
     "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/mcp-core": "workspace:*",
     "fastify": "^4.28.1",
     "zod": "^3.25.76"
   },

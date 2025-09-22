@@ -4,7 +4,8 @@ import '@testing-library/jest-dom/vitest';
 
 // Mock environment variables for tests
 process.env.NODE_ENV = 'test';
-process.env.BETTER_AUTH_SECRET = 'test-secret-key-for-development-only';
+process.env.BETTER_AUTH_SECRET = 'test-secret-key-for-development-only-32-chars';
+process.env.JWT_SECRET = 'test-jwt-secret-for-development-only-32-chars';
 process.env.DATABASE_URL = ':memory:';
 process.env.BASE_URL = 'http://localhost:3000';
 process.env.GITHUB_CLIENT_ID = 'test-github-client';
@@ -13,6 +14,7 @@ process.env.GOOGLE_CLIENT_ID = 'test-google-client';
 process.env.GOOGLE_CLIENT_SECRET = 'test-google-secret';
 process.env.DISCORD_CLIENT_ID = 'test-discord-client';
 process.env.DISCORD_CLIENT_SECRET = 'test-discord-secret';
+process.env.JWT_SECRET = 'test-jwt-secret-for-development-only-32-chars';
 
 // Global test utilities
 global.describe = describe;

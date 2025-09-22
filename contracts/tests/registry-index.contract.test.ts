@@ -6,7 +6,7 @@
  * - Invalid server entry shape fails.
  */
 
-import { RegistryIndexSchema } from '@cortex-os/mcp-registry';
+import { RegistryEvent } from '@cortex-os/contracts';
 import { describe, expect, it } from 'vitest';
 
 function expectParseFailure(value: unknown) {

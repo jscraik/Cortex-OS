@@ -9,7 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { isValidHttpUrl } from '../../../../utils/validation';
+import { validation } from '~/utils/validation';
 
 interface KnowledgeItem {
 	id: string;

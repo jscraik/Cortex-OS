@@ -4,9 +4,9 @@
  * Handles real-time agent communication events and WebSocket broadcasting.
  */
 
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts';
+import { ContractEvent } from '@cortex-os/contracts';
 import { createBus } from '@cortex-os/a2a-core/bus';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
+import { A2ATransport } from '@cortex-os/a2a-core';
 import type { WebSocket } from 'ws';
 
 export interface WebUIEventData {

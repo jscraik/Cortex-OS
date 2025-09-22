@@ -1,4 +1,5 @@
 import type { ApiResponse, AuthMethod, HttpClient, RequestOptions, RestApiError } from './types.js';
+import { AuthManager } from './auth-manager.js';
 
 /**
  * HTTP client implementation using fetch API
@@ -7,6 +8,7 @@ export class FetchHttpClient implements HttpClient {
 	private defaultHeaders: Record<string, string> = {};
 	private authMethod: AuthMethod = 'none';
 	private authToken?: string;
+	private authManager?: AuthManager;
 	private controller?: AbortController;
 
 	constructor(private baseUrl: string = '') {}
@@ -25,7 +27,7 @@ export class FetchHttpClient implements HttpClient {
 
 		try {
 			const url = this.buildUrl(options.path, options.query);
-			const headers = this.buildHeaders(options.headers);
+			const headers = await this.buildHeaders(options.headers);
 			const body = this.buildBody(options.body);
 
 			const response = await fetch(url, {
@@ -62,9 +64,10 @@ export class FetchHttpClient implements HttpClient {
 	/**
 	 * Set authentication
 	 */
-	setAuth(method: AuthMethod, token: string): void {
+	setAuth(method: AuthMethod, token: string, authManager?: AuthManager): void {
 		this.authMethod = method;
 		this.authToken = token;
+		this.authManager = authManager;
 	}
 
 	/**
@@ -100,17 +103,29 @@ export class FetchHttpClient implements HttpClient {
 	/**
 	 * Build headers including authentication
 	 */
-	private buildHeaders(additionalHeaders?: Record<string, string>): Headers {
+	private async buildHeaders(additionalHeaders?: Record<string, string>): Promise<Headers> {
 		const headers = new Headers(this.defaultHeaders);
 
 		// Add authentication
-		if (this.authToken && this.authMethod !== 'none') {
+		let authToken = this.authToken;
+
+		// Try to refresh token if needed
+		if (this.authManager && this.authMethod === 'bearer') {
+			try {
+				authToken = await this.authManager.getAccessToken();
+			} catch (error) {
+				console.warn('Failed to refresh access token:', error);
+				// Fall back to existing token
+			}
+		}
+
+		if (authToken && this.authMethod !== 'none') {
 			switch (this.authMethod) {
 				case 'bearer':
-					headers.set('Authorization', `Bearer ${this.authToken}`);
+					headers.set('Authorization', `Bearer ${authToken}`);
 					break;
 				case 'header':
-					headers.set('X-API-Key', this.authToken);
+					headers.set('X-API-Key', authToken);
 					break;
 			}
 		}

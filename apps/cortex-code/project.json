@@ -1,35 +1,101 @@
 {
-    "name": "cortex-code",
+    "name": "@cortex-os/cortex-code",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "projectType": "application",
     "root": "apps/cortex-code",
     "sourceRoot": "apps/cortex-code",
     "targets": {
         "test": {
-            "command": "pnpm codex:test"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm codex:test",
+                "cwd": "apps/cortex-code"
+            }
         },
         "test-unit": {
-            "command": "pnpm codex:test:unit"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm codex:test:unit",
+                "cwd": "apps/cortex-code"
+            }
         },
         "test-integration": {
-            "command": "pnpm codex:test:integration"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm codex:test:integration",
+                "cwd": "apps/cortex-code"
+            }
         },
         "coverage": {
-            "command": "pnpm codex:test:coverage"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm codex:test:coverage",
+                "cwd": "apps/cortex-code"
+            }
         },
         "upstream:diff": {
-            "command": "apps/cortex-code/scripts/upstream-diff.sh"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "bash",
+                "args": [
+                    "scripts/upstream-diff.sh"
+                ],
+                "cwd": "apps/cortex-code"
+            }
         },
         "upstream:status": {
-            "command": "apps/cortex-code/scripts/upstream-status.sh"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "bash",
+                "args": [
+                    "scripts/upstream-status.sh"
+                ],
+                "cwd": "apps/cortex-code"
+            }
         },
         "upstream:pull": {
-            "command": "apps/cortex-code/scripts/codex-rs-subtree.sh pull"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "bash",
+                "args": [
+                    "scripts/codex-rs-subtree.sh",
+                    "pull"
+                ],
+                "cwd": "apps/cortex-code"
+            }
         },
         "sync:dry": {
-            "command": "bash scripts/sync-cortex-code.sh"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "bash",
+                "args": [
+                    "{workspaceRoot}/scripts/sync-cortex-code.sh"
+                ]
+            }
         },
         "sync:run": {
-            "command": "bash scripts/sync-cortex-code.sh --run"
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "bash",
+                "args": [
+                    "{workspaceRoot}/scripts/sync-cortex-code.sh",
+                    "--run"
+                ]
+            }
+        },
+        "build": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm build",
+                "cwd": "apps/cortex-code"
+            }
+        },
+        "lint": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm lint",
+                "cwd": "apps/cortex-code"
+            }
         }
     }
 }

@@ -20,10 +20,26 @@ def main():
         sys.exit(1)
 
     # Add the MLX models directory to the path
-    mlx_models_dir = os.environ.get(
-        "MLX_MODELS_DIR", "/Volumes/ExternalSSD/huggingface_cache"
-    )
-    sys.path.append(mlx_models_dir)
+    # Check multiple possible locations in order of preference
+    possible_paths = [
+        os.environ.get("MLX_MODELS_DIR"),
+        os.path.expanduser("~/.cache/huggingface/hub"),
+        os.path.expanduser("~/huggingface_cache"),
+        "/tmp/huggingface_cache",
+        "/var/tmp/huggingface_cache",
+    ]
+
+    mlx_models_dir = None
+    for path in possible_paths:
+        if path and os.path.isdir(path):
+            mlx_models_dir = path
+            break
+
+    if mlx_models_dir:
+        sys.path.append(mlx_models_dir)
+    else:
+        print(json.dumps({"error": "No valid MLX models directory found. Set MLX_MODELS_DIR environment variable."}), file=sys.stderr)
+        sys.exit(1)
 
     try:
         import mlx.core as mx

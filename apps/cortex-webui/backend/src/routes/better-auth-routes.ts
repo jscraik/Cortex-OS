@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
+import { Request, Response, Express } from 'express';
 import { auth, authUtils } from '../auth';
 import { betterAuthErrorHandler, authCORS, authRateLimit } from '../middleware/better-auth';
 
 // Better Auth API Routes
-export const setupBetterAuthRoutes = (app: any) => {
+export const setupBetterAuthRoutes = (app: Express) => {
   // Apply CORS to all auth routes
   app.use('/api/auth/*', authCORS);
 

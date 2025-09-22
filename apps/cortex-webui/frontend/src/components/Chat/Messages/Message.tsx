@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-// import type { ChatMessage } from '../../../../shared/types/chat';
+// import { ChatTypes } from '~/shared/types/chat';
 // TODO: Fix import path when shared types are properly set up
 type ChatMessage = {
 	id: string;

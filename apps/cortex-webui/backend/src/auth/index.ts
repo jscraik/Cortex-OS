@@ -1,24 +1,24 @@
 import { betterAuth } from 'better-auth';
 import { bearer } from 'better-auth/plugins';
 import { organization } from 'better-auth/plugins';
-import { passkey } from 'better-auth/plugins';
 import { twoFactor } from 'better-auth/plugins';
 import { magicLink } from 'better-auth/plugins';
 import { oauth2 } from 'better-auth/plugins';
-import { db, drizzleDb } from '../db';
+import { createBetterAuthAdapter } from '../db/better-auth-adapter';
 import { emailService } from '../services/emailService';
 import { authMonitoringService } from '../services/authMonitoringService';
+import { env } from '../lib/env';
 
 // Better Auth configuration
 export const auth = betterAuth({
-  database: drizzleDb,
-  secret: process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET_KEY || 'your-secret-key-change-in-production',
-  baseURL: process.env.BASE_URL || 'http://localhost:3000',
+  database: createBetterAuthAdapter(),
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BASE_URL,
 
   // Email and password authentication
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: process.env.NODE_ENV === 'production',
+    requireEmailVerification: env.NODE_ENV === 'production',
     minPasswordLength: 8,
     maxPasswordLength: 64,
     passwordReset: {
@@ -36,9 +36,9 @@ export const auth = betterAuth({
       name: 'session-cache',
     },
     cookieAttributes: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
-      domain: process.env.COOKIE_DOMAIN,
+      domain: env.COOKIE_DOMAIN,
     },
   },
 
@@ -56,7 +56,7 @@ export const auth = betterAuth({
     crossSubDomainCookies: {
       enabled: false, // Enable if using subdomains
     },
-    useSecureCookies: process.env.NODE_ENV === 'production',
+    useSecureCookies: env.NODE_ENV === 'production',
     disableCSRF: false,
   },
 
@@ -97,16 +97,16 @@ export const auth = betterAuth({
   // Social providers
   socialProviders: {
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      clientId: env.GITHUB_CLIENT_ID || '',
+      clientSecret: env.GITHUB_CLIENT_SECRET || '',
     },
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env.GOOGLE_CLIENT_ID || '',
+      clientSecret: env.GOOGLE_CLIENT_SECRET || '',
     },
     discord: {
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      clientId: env.DISCORD_CLIENT_ID || '',
+      clientSecret: env.DISCORD_CLIENT_SECRET || '',
     },
     // Add more providers as needed
   },
@@ -119,7 +119,7 @@ export const auth = betterAuth({
       } catch (error) {
         console.error('Failed to send verification email:', error);
         // Fallback to console logging in development
-        if (process.env.NODE_ENV === 'development') {
+        if (env.NODE_ENV === 'development') {
           console.log('\n=== EMAIL VERIFICATION (Fallback) ===');
           console.log('To:', user.email);
           console.log('URL:', url);
@@ -137,7 +137,7 @@ export const auth = betterAuth({
       } catch (error) {
         console.error('Failed to send password reset email:', error);
         // Fallback to console logging in development
-        if (process.env.NODE_ENV === 'development') {
+        if (env.NODE_ENV === 'development') {
           console.log('\n=== PASSWORD RESET (Fallback) ===');
           console.log('To:', user.email);
           console.log('URL:', url);
@@ -160,13 +160,6 @@ export const auth = betterAuth({
         enabled: true,
         model: 'rbac',
       },
-    }),
-
-    // Passkey/WebAuthn support
-    passkey({
-      rpName: 'Cortex-OS',
-      rpID: process.env.RP_ID || 'localhost',
-      origin: process.env.ORIGIN || 'http://localhost:3000',
     }),
 
     // Two-factor authentication
@@ -196,7 +189,7 @@ export const auth = betterAuth({
       },
       // Enforcement options
       enforce: {
-        enabled: process.env.ENFORCE_2FA === 'true',
+        enabled: env.ENFORCE_2FA,
         role: 'admin', // Only enforce for admin role
       },
     }),
@@ -209,7 +202,7 @@ export const auth = betterAuth({
         } catch (error) {
           console.error('Failed to send magic link:', error);
           // Fallback to console logging in development
-          if (process.env.NODE_ENV === 'development') {
+          if (env.NODE_ENV === 'development') {
             console.log('\n=== MAGIC LINK (Fallback) ===');
             console.log('To:', email);
             console.log('URL:', url);
@@ -220,8 +213,8 @@ export const auth = betterAuth({
       expiresIn: 3600, // 1 hour
     }),
 
-    // OAuth2 plugin for custom providers
-    oauth2(),
+    // OAuth2 plugin for custom providers - disabled for now
+    // oauth2(),
   ],
 });
 
@@ -279,8 +272,11 @@ export const authUtils = {
 
 // Initialize database tables if they don't exist
 export const initializeAuthTables = async () => {
+  // Import database instance
+  const { sqlite } = await import('../db');
+
   // Enable foreign keys
-  db.pragma('foreign_keys = ON');
+  await sqlite.exec('PRAGMA foreign_keys = ON');
 
   // Create tables using drizzle
   // Note: Better Auth handles schema creation automatically

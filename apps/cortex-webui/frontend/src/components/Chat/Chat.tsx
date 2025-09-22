@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatStore } from '@/utils/chat-store';
-import type { ChatMessage } from '../../../../shared/types/chat';
+import { ChatTypes } from '~/shared/types/chat';
 import MessageInput from './MessageInput';
 import MessageList from './MessageList';
 import ModelSelector from './ModelSelector/ModelSelector';

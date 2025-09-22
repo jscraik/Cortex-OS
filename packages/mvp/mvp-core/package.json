@@ -18,6 +18,7 @@
     "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/utils": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "pino": "^9.3.0",
     "zod": "^3.23.8"

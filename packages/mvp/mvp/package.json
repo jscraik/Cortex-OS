@@ -18,6 +18,9 @@
     "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/kernel": "workspace:*",
+    "@cortex-os/mvp-core": "workspace:*",
+    "@cortex-os/prp-runner": "workspace:*",
     "glob": "^10.3.10",
     "nanoid": "^5.0.4",
     "zod": "^3.22.4"

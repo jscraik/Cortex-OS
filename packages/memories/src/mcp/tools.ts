@@ -13,6 +13,8 @@ import { randomUUID } from 'node:crypto';
 import { ZodError, type ZodIssue, type ZodType, z } from 'zod';
 
 import { redactPII } from '../privacy/redact.js';
+import { createMemoryStoreHandler } from './handlers.js';
+import { createStoreFromEnv } from '../config/store-from-env.js';
 
 interface MemoryToolResponse {
 	content: Array<{ type: 'text'; text: string }>;
@@ -513,6 +515,17 @@ type MemoryListHandlerInput = z.infer<typeof memoryListToolSchema>;
 type MemoryStatsHandlerInput = z.infer<typeof memoryStatsToolSchema>;
 
 // Memory MCP Tool definitions
+let storeHandler: ReturnType<typeof createMemoryStoreHandler> | null = null;
+
+async function getStoreHandler() {
+	if (!storeHandler) {
+		const store = await createStoreFromEnv();
+		const namespace = process.env.LOCAL_MEMORY_NAMESPACE || 'default';
+		storeHandler = createMemoryStoreHandler(store, namespace);
+	}
+	return storeHandler;
+}
+
 export const memoryStoreTool: MemoryTool = {
 	name: 'memories.store',
 	aliases: ['memory_store'],
@@ -524,37 +537,9 @@ export const memoryStoreTool: MemoryTool = {
 			'memories.store',
 			memoryStoreToolSchema,
 			params,
-			({ kind, text, tags, metadata }: MemoryStoreHandlerInput, rawParams) => {
-				const rawRecord = isRecord(rawParams) ? rawParams : null;
-				const rawMetadata =
-					rawRecord && Object.hasOwn(rawRecord, 'metadata') ? rawRecord.metadata : undefined;
-				if (rawMetadata !== undefined && rawMetadata !== null) {
-					ensurePlainObject(rawMetadata, 'metadata');
-				}
-				const normalizedText = sanitizeText(text, 'text');
-				const sanitizedTags = sanitizeTags(tags);
-				const sanitizedMetadata = metadata ? sanitizeMetadata(metadata) : undefined;
-
-				const memoryItem = {
-					id: `mem-${Date.now()}`,
-					kind,
-					text: normalizedText,
-					tags: sanitizedTags,
-					metadata: sanitizedMetadata,
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
-					provenance: { source: 'mcp-tool' },
-				};
-
-				return {
-					stored: true,
-					id: memoryItem.id,
-					kind: memoryItem.kind,
-					tags: sanitizedTags,
-					textLength: normalizedText.length,
-					metadataKeys: sanitizedMetadata ? Object.keys(sanitizedMetadata).length : 0,
-					redactedPreview: redactPII(normalizedText).slice(0, 256),
-				};
+			async ({ kind, text, tags, metadata }: MemoryStoreHandlerInput) => {
+				const handler = await getStoreHandler();
+				return await handler.store({ kind, text, tags, metadata });
 			},
 		),
 };
@@ -570,29 +555,15 @@ export const memorySearchTool: MemoryTool = {
 			'memories.search',
 			memorySearchToolSchema,
 			params,
-			({ query, limit, kind, tags }: MemorySearchHandlerInput) => {
-				const sanitizedTags = tags ? sanitizeTags(tags) : undefined;
-				const effectiveLimit = Math.min(limit, 100);
-
-				const results = [
-					{
-						id: 'mem-example',
-						kind: kind || 'note',
-						text: `Sample memory result for query: ${query}`,
-						score: 0.9,
-						tags: sanitizedTags && sanitizedTags.length > 0 ? sanitizedTags : ['example'],
-						createdAt: new Date().toISOString(),
-					},
-				];
-
+			async ({ query, limit, kind, tags }: MemorySearchHandlerInput) => {
+				const handler = await getStoreHandler();
+				const results = await handler.search({ query, limit, kind, tags });
 				return {
-					query,
+					...results,
 					filters: {
 						kind: kind ?? null,
-						tags: sanitizedTags ?? [],
+						tags: tags ?? [],
 					},
-					results: results.slice(0, effectiveLimit),
-					totalFound: results.length,
 				};
 			},
 		),
@@ -609,46 +580,9 @@ export const memoryUpdateTool: MemoryTool = {
 			'memories.update',
 			memoryUpdateToolSchema,
 			params,
-			({ id, text, tags, metadata }: MemoryUpdateHandlerInput, rawParams) => {
-				if (text === undefined && tags === undefined && metadata === undefined) {
-					throw new MemoryToolError(
-						'validation_error',
-						'At least one of text, tags, or metadata must be provided for update',
-						['Provide at least one field to update'],
-					);
-				}
-
-				const rawRecord = isRecord(rawParams) ? rawParams : null;
-				const rawMetadata =
-					rawRecord && Object.hasOwn(rawRecord, 'metadata') ? rawRecord.metadata : undefined;
-				if (rawMetadata !== undefined && rawMetadata !== null) {
-					ensurePlainObject(rawMetadata, 'metadata');
-				}
-
-				const sanitizedText = text !== undefined ? sanitizeText(text, 'update_text') : undefined;
-				const sanitizedTags = tags !== undefined ? sanitizeTags(tags) : undefined;
-				const sanitizedMetadata = metadata !== undefined ? sanitizeMetadata(metadata) : undefined;
-
-				return {
-					id,
-					updated: true,
-					changes: {
-						text: sanitizedText !== undefined,
-						tags: sanitizedTags !== undefined,
-						metadata: sanitizedMetadata !== undefined,
-					},
-					data: {
-						...(sanitizedText !== undefined && {
-							textPreview: redactPII(sanitizedText).slice(0, 256),
-							textLength: sanitizedText.length,
-						}),
-						...(sanitizedTags !== undefined && { tags: sanitizedTags }),
-						...(sanitizedMetadata !== undefined && {
-							metadataKeys: Object.keys(sanitizedMetadata).length,
-						}),
-					},
-					updatedAt: new Date().toISOString(),
-				};
+			async ({ id, text, tags, metadata }: MemoryUpdateHandlerInput) => {
+				const handler = await getStoreHandler();
+				return await handler.update({ id, text, tags, metadata });
 			},
 		),
 };
@@ -664,11 +598,10 @@ export const memoryDeleteTool: MemoryTool = {
 			'memories.delete',
 			memoryDeleteToolSchema,
 			params,
-			({ id }: MemoryDeleteHandlerInput) => ({
-				id,
-				deleted: true,
-				deletedAt: new Date().toISOString(),
-			}),
+			async ({ id }: MemoryDeleteHandlerInput) => {
+				const handler = await getStoreHandler();
+				return await handler.delete({ id });
+			},
 		),
 };
 
@@ -683,12 +616,14 @@ export const memoryGetTool: MemoryTool = {
 			'memories.get',
 			memoryGetToolSchema,
 			params,
-			({ id, namespace }: MemoryGetHandlerInput) => ({
-				id,
-				namespace,
-				found: false,
-				status: 'NOT_IMPLEMENTED',
-			}),
+			async ({ id }: MemoryGetHandlerInput) => {
+				const handler = await getStoreHandler();
+				const memory = await handler.get({ id });
+				if (!memory) {
+					throw new Error(`Memory with ID ${id} not found`);
+				}
+				return memory;
+			},
 		),
 };
 
@@ -703,14 +638,10 @@ export const memoryListTool: MemoryTool = {
 			'memories.list',
 			memoryListToolSchema,
 			params,
-			({ namespace, limit, cursor, tags }: MemoryListHandlerInput) => ({
-				namespace: namespace ?? null,
-				limit,
-				cursor: cursor ?? null,
-				tags: tags ?? [],
-				items: [],
-				nextCursor: null,
-			}),
+			async ({ namespace, limit, cursor, tags }: MemoryListHandlerInput) => {
+				const handler = await getStoreHandler();
+				return await handler.list({ namespace, limit, cursor, tags });
+			},
 		),
 };
 
@@ -725,19 +656,10 @@ export const memoryStatsTool: MemoryTool = {
 			'memories.stats',
 			memoryStatsToolSchema,
 			params,
-			({ includeDetails }: MemoryStatsHandlerInput) => ({
-				totalItems: 0,
-				totalSize: 0,
-				itemsByKind: {},
-				lastActivity: new Date().toISOString(),
-				...(includeDetails && {
-					details: {
-						storageBackend: 'sqlite',
-						indexedFields: ['kind', 'tags', 'createdAt'],
-						averageItemSize: 0,
-					},
-				}),
-			}),
+			async ({ includeDetails }: MemoryStatsHandlerInput) => {
+				const handler = await getStoreHandler();
+				return await handler.stats({ includeDetails });
+			},
 		),
 };
 

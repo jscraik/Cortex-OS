@@ -7,7 +7,14 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node {workspaceRoot}/scripts/vitest-safe.mjs run -c {workspaceRoot}/packages/rag/vitest.config.ts --reporter=dot",
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/scripts/vitest-safe.mjs",
+          "run",
+          "-c",
+          "{workspaceRoot}/packages/rag/vitest.config.ts",
+          "--reporter=dot"
+        ],
         "parallel": false
       },
       "outputs": [
@@ -28,7 +35,10 @@
     "bench": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node {workspaceRoot}/packages/rag/benchmarks/indexing-bench.mjs",
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/packages/rag/benchmarks/indexing-bench.mjs"
+        ],
         "parallel": false,
         "forwardAllArgs": true
       }
@@ -36,7 +46,17 @@
     "bench:pq": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node {workspaceRoot}/packages/rag/benchmarks/indexing-bench.mjs --sizes=5000 --ef=64,128 --queries=10 --topK=10 --variants=flat,pq,hnsw,hnswPQ --minRecallPctByVariant=pq:40,hnswPQ:50 --minMapByVariant=pq:0.3,hnswPQ:0.4",
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/packages/rag/benchmarks/indexing-bench.mjs",
+          "--sizes=5000",
+          "--ef=64,128",
+          "--queries=10",
+          "--topK=10",
+          "--variants=flat,pq,hnsw,hnswPQ",
+          "--minRecallPctByVariant=pq:40,hnswPQ:50",
+          "--minMapByVariant=pq:0.3,hnswPQ:0.4"
+        ],
         "parallel": false,
         "forwardAllArgs": true
       }
@@ -52,6 +72,8 @@
       "executor": "@nx/js:tsc",
       "options": {
         "tsConfig": "packages/rag/tsconfig.json",
+        "main": "packages/rag/src/index.ts",
+        "outputPath": "dist/packages/rag",
         "assets": [
           "packages/rag/benchmarks/**/*"
         ]
