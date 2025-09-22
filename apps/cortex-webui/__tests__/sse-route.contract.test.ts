@@ -34,7 +34,7 @@ describe('SSE stream route contract', () => {
 		};
 
 		// Call the controller function
-		await streamChatSSE(req as any, res as any);
+		await streamChatSSE(req as never, res as never);
 
 		// Check that the response methods were called
 		expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream; charset=utf-8');

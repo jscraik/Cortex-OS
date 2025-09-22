@@ -1028,7 +1028,7 @@ pnpm test
 
 <div align="center">
 
-**Built with 💙 TypeScript, 🧠 Python, and ❤️ by the Cortex-OS Team**
+Built with 💙 TypeScript, 🧠 Python, and ❤️ by the Cortex-OS Team
 
 [![TypeScript](https://img.shields.io/badge/made%20with-TypeScript-blue)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/powered%20by-Python-yellow)](https://www.python.org/)

@@ -139,15 +139,6 @@ const normalizeReferenceLinks = (md: string): string => {
 const sanitizeMdxContentWithReport = (
 	content: string,
 ): { content: string; report: SanitizationReport } => {
-	const report: SanitizationReport = {
-		fencesRepaired: 0,
-		genericsEscaped: 0,
-		pseudoJsxEscaped: 0,
-		htmlTagsEscaped: 0,
-		spuriousFencesRepaired: 0,
-		totalChanges: 0,
-	};
-
 	// Original sanitizer logic with change tracking
 	const sanitizeMdxContent = (content: string): string => {
 		// Normalize leading BOM and stray leading spaces so fence detection is reliable
@@ -958,33 +949,50 @@ const sanitizeMdxContentWithReport = (
 	// Count changes by comparing before/after content
 	// This is a simplified approach - for more precise tracking,
 	// the sanitizer logic above would need individual counters
+	
+	// Calculate change statistics
+	let genericsEscaped = 0;
+	let pseudoJsxEscaped = 0;
+	let fencesRepaired = 0;
+	const htmlTagsEscaped = 0;
+	const spuriousFencesRepaired = 0;
+
 	if (originalContent !== sanitizedContent) {
 		// Count approximate changes (this could be enhanced for more precise tracking)
 		const genericMatches = originalContent.match(/\w+<[^>]+>/g) || [];
 		const jsxMatches = originalContent.match(/<[^>]*\/?>/g) || [];
 		const fenceMatches = originalContent.match(/``[^`]/g) || [];
 
-		report.genericsEscaped = genericMatches.filter(
+		genericsEscaped = genericMatches.filter(
 			(m) =>
 				!sanitizedContent.includes(m) &&
 				sanitizedContent.includes(m.replace(/</g, '&lt;').replace(/>/g, '&gt;')),
 		).length;
 
-		report.pseudoJsxEscaped = jsxMatches.filter(
+		pseudoJsxEscaped = jsxMatches.filter(
 			(m) =>
 				!sanitizedContent.includes(m) &&
 				sanitizedContent.includes(m.replace(/</g, '&lt;').replace(/>/g, '&gt;')),
 		).length;
 
-		report.fencesRepaired = fenceMatches.filter((m) => !sanitizedContent.includes(m)).length;
-
-		report.totalChanges =
-			report.fencesRepaired +
-			report.genericsEscaped +
-			report.pseudoJsxEscaped +
-			report.htmlTagsEscaped +
-			report.spuriousFencesRepaired;
+		fencesRepaired = fenceMatches.filter((m) => !sanitizedContent.includes(m)).length;
 	}
+
+	const totalChanges =
+		fencesRepaired +
+		genericsEscaped +
+		pseudoJsxEscaped +
+		htmlTagsEscaped +
+		spuriousFencesRepaired;
+
+	const report: SanitizationReport = {
+		fencesRepaired,
+		genericsEscaped,
+		pseudoJsxEscaped,
+		htmlTagsEscaped,
+		spuriousFencesRepaired,
+		totalChanges,
+	};
 
 	return { content: sanitizedContent, report };
 };
@@ -1203,6 +1211,7 @@ const syncPackageDocs = async (
 	category: string,
 	packageName: string,
 	displayName: string,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	_options: SyncOptions = { dryRun: false },
 ): Promise<SyncResult> => {
 	const sourceDocsDir = join(ROOT_DIR, category, packageName, 'docs');
@@ -1403,6 +1412,7 @@ const generateSidebarConfig = async (): Promise<object> => {
 // Split helpers for cognitive complexity reduction
 const syncCortexDocs = async (
 	displayName: string,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	_options: SyncOptions = { dryRun: false },
 ): Promise<SyncResult> => {
 	const cortexSourcePath = join(ROOT_DIR, '.cortex', 'docs');

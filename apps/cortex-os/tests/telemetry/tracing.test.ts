@@ -29,7 +29,7 @@ describe('telemetry tracing', () => {
 		});
 		vi.spyOn(trace, 'getTracer').mockReturnValue({
 			startActiveSpan,
-		} as any);
+		} as { startActiveSpan: typeof startActiveSpan });
 
 		await withRuntimeSpan('telemetry.test', async (activeSpan) => {
 			activeSpan.setAttribute('test.attr', 'value');
@@ -48,7 +48,7 @@ describe('telemetry tracing', () => {
 		});
 		vi.spyOn(trace, 'getTracer').mockReturnValue({
 			startActiveSpan,
-		} as any);
+		} as { startActiveSpan: typeof startActiveSpan });
 
 		const httpServer = createRuntimeHttpServer({
 			tasks: new TaskRepository(),
