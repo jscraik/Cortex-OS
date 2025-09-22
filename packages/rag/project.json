@@ -1,64 +1,61 @@
 {
-    "name": "@cortex-os/rag",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "packages/rag/src",
-    "projectType": "library",
-    "targets": {
-        "test": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "node scripts/vitest-safe.mjs run -c packages/rag/vitest.config.ts --reporter=dot",
-                "cwd": "{workspaceRoot}",
-                "parallel": false
-            },
-            "outputs": [
-                "packages/rag/coverage-rag"
-            ]
-        },
-        "lint": {
-            "executor": "@nx/eslint:lint",
-            "options": {
-                "lintFilePatterns": [
-                    "packages/rag/src/**/*.ts",
-                    "packages/rag/benchmarks/**/*.mjs",
-                    "packages/rag/tests/**/*.ts",
-                    "packages/rag/__tests__/**/*.ts"
-                ]
-            }
-        },
-        "bench": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "node packages/rag/benchmarks/indexing-bench.mjs",
-                "cwd": "{workspaceRoot}",
-                "parallel": false,
-                "forwardAllArgs": true
-            }
-        },
-        "bench:pq": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "node packages/rag/benchmarks/indexing-bench.mjs --sizes=5000 --ef=64,128 --queries=10 --topK=10 --variants=flat,pq,hnsw,hnswPQ --minRecallPctByVariant=pq:40,hnswPQ:50 --minMapByVariant=pq:0.3,hnswPQ:0.4",
-                "cwd": "{workspaceRoot}",
-                "parallel": false,
-                "forwardAllArgs": true
-            }
-        },
-        "typecheck": {
-            "executor": "@nx/js:tsc",
-            "options": {
-                "tsConfig": "packages/rag/tsconfig.json",
-                "noEmit": true
-            }
-        },
-        "build": {
-            "executor": "@nx/js:tsc",
-            "options": {
-                "tsConfig": "packages/rag/tsconfig.json",
-                "assets": [
-                    "packages/rag/benchmarks/**/*"
-                ]
-            }
-        }
+  "name": "@cortex-os/rag",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/rag/src",
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node {workspaceRoot}/scripts/vitest-safe.mjs run -c {workspaceRoot}/packages/rag/vitest.config.ts --reporter=dot",
+        "parallel": false
+      },
+      "outputs": [
+        "packages/rag/coverage-rag"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": [
+          "packages/rag/src/**/*.ts",
+          "packages/rag/benchmarks/**/*.mjs",
+          "packages/rag/tests/**/*.ts",
+          "packages/rag/__tests__/**/*.ts"
+        ]
+      }
+    },
+    "bench": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node {workspaceRoot}/packages/rag/benchmarks/indexing-bench.mjs",
+        "parallel": false,
+        "forwardAllArgs": true
+      }
+    },
+    "bench:pq": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node {workspaceRoot}/packages/rag/benchmarks/indexing-bench.mjs --sizes=5000 --ef=64,128 --queries=10 --topK=10 --variants=flat,pq,hnsw,hnswPQ --minRecallPctByVariant=pq:40,hnswPQ:50 --minMapByVariant=pq:0.3,hnswPQ:0.4",
+        "parallel": false,
+        "forwardAllArgs": true
+      }
+    },
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "packages/rag/tsconfig.json",
+        "noEmit": true
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "packages/rag/tsconfig.json",
+        "assets": [
+          "packages/rag/benchmarks/**/*"
+        ]
+      }
     }
+  }
 }
