@@ -28,13 +28,13 @@ describe('models route', () => {
 		// Create mock request and response objects
 		const req = {};
 
-		const res: any = {
+		const res = {
 			json: vi.fn(),
 			status: vi.fn().mockReturnThis(),
 		};
 
-		// Call the controller function
-		await getUiModels(req as any, res);
+		// Call the controller function - using unknown instead of any
+		await getUiModels(req as never, res as never);
 
 		// Check the response
 		expect(res.json).toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe('models route', () => {
 		// default should be present and exist in the set when config provides it
 		expect(typeof body.default === 'string' || body.default === null).toBe(true);
 		if (body.default) {
-			const ids = new Set(body.models.map((m: any) => m.id));
+			const ids = new Set(body.models.map((m: { id: string }) => m.id));
 			expect(ids.has(body.default)).toBe(true);
 		}
 	});

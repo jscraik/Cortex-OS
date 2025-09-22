@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('tools API route', () => {
 	it('returns events for session', async () => {
@@ -13,13 +13,13 @@ describe('tools API route', () => {
 			params: { sessionId: sid },
 		};
 
-		const res: any = {
+		const res = {
 			json: vi.fn(),
 			status: vi.fn().mockReturnThis(),
 		};
 
 		// Call the controller function
-		await getChatTools(req as any, res);
+		await getChatTools(req as never, res as never);
 
 		// Check the response
 		expect(res.json).toHaveBeenCalled();

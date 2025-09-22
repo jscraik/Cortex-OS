@@ -126,4 +126,31 @@ export class HierarchicalStore implements Store {
 		const newMeta = { ...(row.metadata ?? {}), context } as Record<string, unknown>;
 		return { ...row, metadata: newMeta } as T;
 	}
+
+	// Optional administrative helpers (pass-through when available)
+	async listAll?(): Promise<Array<Chunk & { embedding?: number[] }>> {
+		const any = this.base as unknown as {
+			listAll?: () => Promise<Array<Chunk & { embedding?: number[] }>>;
+		};
+		if (typeof any.listAll !== 'function') return [];
+		return any.listAll();
+	}
+
+	async delete?(ids: string[]): Promise<void> {
+		const any = this.base as unknown as { delete?: (ids: string[]) => Promise<void> };
+		if (typeof any.delete !== 'function') return;
+		return any.delete(ids);
+	}
+
+	async countByWorkspace?(workspaceId: string): Promise<number> {
+		const any = this.base as unknown as { countByWorkspace?: (ws: string) => Promise<number> };
+		if (typeof any.countByWorkspace !== 'function') return 0;
+		return any.countByWorkspace(workspaceId);
+	}
+
+	async deleteByWorkspace?(workspaceId: string): Promise<void> {
+		const any = this.base as unknown as { deleteByWorkspace?: (ws: string) => Promise<void> };
+		if (typeof any.deleteByWorkspace !== 'function') return;
+		return any.deleteByWorkspace(workspaceId);
+	}
 }

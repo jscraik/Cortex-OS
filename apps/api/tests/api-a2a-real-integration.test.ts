@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-
+import type { Envelope } from '../../../packages/a2a/a2a-contracts/src/envelope.js';
 import {
 	type ApiBusIntegration,
 	ApiEventTypes,
@@ -61,7 +61,7 @@ describe('API A2A Real Bus Integration', () => {
 			};
 
 			// Set up event capture via real A2A bus subscription
-			const capturedEvents: any[] = [];
+			const capturedEvents: Envelope[] = [];
 			const a2aBus = apiBus.getA2ABus();
 			await a2aBus.bus.subscribe(ApiEventTypes.REQUEST_RECEIVED, (envelope) => {
 				capturedEvents.push(envelope);
@@ -95,7 +95,7 @@ describe('API A2A Real Bus Integration', () => {
 			);
 
 			// Set up event capture via real A2A bus subscription
-			const capturedEvents: any[] = [];
+			const capturedEvents: Envelope[] = [];
 			const a2aBus = apiBus.getA2ABus();
 			await a2aBus.bus.subscribe(ApiEventTypes.WEBHOOK_RECEIVED, (envelope) => {
 				capturedEvents.push(envelope);

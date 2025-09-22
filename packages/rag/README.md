@@ -326,6 +326,78 @@ Notes:
 - Auto-scaling: pool increases/decreases active slots between `minWorkers..maxWorkers` based on queue pressure and idle windows.
 - Slot-level stats: `debug()` provides per-slot recent activity (last start/end/error, tasks processed, EMA texts/sec).
 
+## 🧭 Workspace Scoping
+
+Scope data by workspace without changing store contracts.
+
+```ts
+import { memoryStore, createScopedStore } from '@cortex-os/rag';
+
+const base = memoryStore();
+const storeA = createScopedStore(base, { workspaceId: 'A', quota: { maxItems: 1000 } });
+const storeB = createScopedStore(base, { workspaceId: 'B' });
+
+await storeA.upsert([{ id: 'a1', text: 'Doc A1', embedding }]);
+const onlyA = await storeA.query(embedding, 5); // isolated to A
+```
+
+Optional admin hooks (feature-detected): `listAll()`, `delete(ids)`, `countByWorkspace(ws)`, `deleteByWorkspace(ws)`.
+The in-memory store provides these for demos.
+
+## 🧭 Agentic Dispatcher
+
+Choose retrieval strategies dynamically and learn from feedback.
+
+```ts
+import { createAgenticDispatcher } from '@cortex-os/rag';
+
+const strategies = [
+  { id: 'short-context', matches: (m) => (m?.docType === 'tech') },
+  { id: 'long-context',  matches: (m) => (m?.docType === 'legal') },
+];
+
+const dispatcher = createAgenticDispatcher(strategies, { epsilon: 0.1, learningRate: 0.05 });
+const chosen = dispatcher.chooseWithMetrics({ docType: 'tech' }, 'rag.dispatch');
+// ... execute strategy ...
+dispatcher.recordFeedback({ docType: 'tech', strategyId: chosen.id, success: true });
+```
+
+Metrics emitted:
+
+- `rag.dispatch.decision` (operation) with `strategyId` and `docType`
+- `rag.dispatch.feedback` (operation) with success/failure, `strategyId` and `docType`
+
+## 🗄️ LanceDB Backend (Adapter) & Migration
+
+Use the lightweight adapter without a hard dependency. Provide a client that implements `LanceDbLike`.
+
+```ts
+import { createLanceDbStore } from '@cortex-os/rag';
+
+const client = {
+  async upsert(items) { /* write to LanceDB */ },
+  async query(vec, k) { return []; },
+  async delete(ids) { /* optional */ },
+  async listAll() { return []; }
+};
+
+const store = createLanceDbStore(client, { dimensions: 768 });
+```
+
+Migration helper:
+
+```ts
+import { fromAnyListableToLance } from '@cortex-os/rag/store/migration/lancedb-migration';
+const result = await fromAnyListableToLance(listableSource, client, { batchSize: 500 });
+console.log('migrated', result.migrated);
+```
+
+Backend selection notes:
+
+- LanceDB adapter is minimal; ideal for embedding vectors + metadata and fast prototyping.
+- pgvector remains recommended for relational integration and mature operational tooling.
+- For large-scale production, benchmark your corpus (see indexing benchmarks section) and validate SLOs.
+
 ## ✅ MLX installation verification
 
 If you use the MLX-based embedding/reranking services, quickly verify MLX availability:

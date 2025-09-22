@@ -20,6 +20,8 @@ interface WeightTable {
 	[strategyId: string]: number;
 }
 
+import { generateRunId, recordOperation } from '@cortex-os/observability';
+
 export class AgenticDispatcher {
 	private readonly strategies: Strategy[];
 	private readonly eps: number;
@@ -38,11 +40,26 @@ export class AgenticDispatcher {
 		return this.bestStrategyFor(docType);
 	}
 
+	chooseWithMetrics(meta: Record<string, unknown> | undefined, label = 'rag.dispatch'): Strategy {
+		const s = this.choose(meta);
+		// Record a decision as a successful operation (selection event)
+		recordOperation(`${label}.decision`, true, generateRunId(), {
+			strategyId: s.id,
+			docType: getDocType(meta),
+		});
+		return s;
+	}
+
 	recordFeedback(ev: FeedbackEvent): void {
 		const docType = ev.docType ?? 'default';
 		const table = this.ensureWeights(docType);
 		const delta = (ev.success ? 1 : -1) * (ev.magnitude ?? 1) * this.lr;
 		table[ev.strategyId] = (table[ev.strategyId] ?? 0) + delta;
+		// Emit a success/failure operation
+		recordOperation('rag.dispatch.feedback', ev.success, generateRunId(), {
+			strategyId: ev.strategyId,
+			docType,
+		});
 	}
 
 	getWeights(docType?: string): Record<string, number> {
