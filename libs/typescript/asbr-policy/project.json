@@ -1,14 +1,17 @@
 {
-  "name": "@cortex-os/asbr-policy",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/typescript/asbr-policy/src",
-  "projectType": "library",
-  "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["libs/typescript/asbr-policy/src/**/*.ts", "libs/typescript/asbr-policy/tests/**/*.ts"]
-      }
+    "name": "@cortex-os/asbr-policy",
+    "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/typescript/asbr-policy/src",
+    "projectType": "library",
+    "targets": {
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "options": {
+                "lintFilePatterns": [
+                    "libs/typescript/asbr-policy/src/**/*.ts",
+                    "libs/typescript/asbr-policy/tests/**/*.ts"
+                ]
+            }
+        }
     }
-  }
 }

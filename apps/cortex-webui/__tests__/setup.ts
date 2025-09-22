@@ -3,7 +3,6 @@ import { vi } from 'vitest';
 
 // Mock crypto.randomUUID for jsdom
 if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
-	// @ts-expect-error - we're adding a mock
 	crypto.randomUUID = () => '00000000-0000-4000-8000-000000000000';
 }
 
@@ -33,7 +32,7 @@ vi.mock('sonner', () => ({
 		error: vi.fn(),
 		// allow other toast methods if needed
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		custom: (_: any) => ({
+		custom: (_: unknown) => ({
 			dismiss: vi.fn(),
 		}),
 	},
@@ -56,15 +55,14 @@ if (typeof window !== 'undefined') {
 			key: vi.fn((_index: number) => null),
 			length: 0,
 		};
-		// @ts-expect-error - assigning to readonly for test environment
 		window.localStorage = storageMock;
 	}
 }
 
 // Provide a simple global fetch mock to handle relative API routes used by the frontend
 // so tests do not attempt real network calls and relative paths don't break in Node.
-if (typeof (globalThis as unknown as any).fetch === 'undefined') {
-	(globalThis as unknown as any).fetch = vi.fn(
+if (typeof (globalThis as { fetch?: typeof fetch }).fetch === 'undefined') {
+	(globalThis as { fetch: typeof fetch }).fetch = vi.fn(
 		async (_input: RequestInfo | URL, _init?: RequestInit) => {
 			const url = typeof _input === 'string' ? _input : String(_input);
 			// handle models endpoint used by Chat component

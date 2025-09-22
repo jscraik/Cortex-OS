@@ -1,11 +1,9 @@
 # Cortex RAG
 
-<div align="center">
-
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/rag)](https://www.npmjs.com/package/@cortex-os/rag)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
-[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#testing)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://example.com)
+[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://example.com)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](https://example.com)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue)](https://www.typescriptlang.org/)
 
@@ -18,7 +16,10 @@ _Enhanced chunking, multi-model embeddings, Qwen3 reranking, and batch ingest ca
 
 ## 🎯 Overview
 
-Cortex RAG provides comprehensive Retrieval-Augmented Generation functionality as a shared library for the Cortex-OS ASBR architecture. It includes advanced text chunking, multi-provider embedding support, Python client integration, vector storage, and high-performance batch ingestion capabilities inspired by RAG-Anything architecture patterns.
+Cortex RAG provides comprehensive Retrieval-Augmented Generation functionality as a shared library for the
+Cortex-OS ASBR architecture. It includes advanced text chunking, multi-provider embedding support, Python client
+integration, vector storage, and high-performance batch ingestion capabilities inspired by RAG-Anything architecture
+patterns.
 
 ## ✨ Key Features
 

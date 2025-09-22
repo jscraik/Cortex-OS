@@ -1,15 +1,15 @@
 {
-	"name": "@cortex-os/a2a-schema-registry",
-	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/a2a-services/schema-registry/src",
-	"projectType": "library",
-	"targets": {
-		"test": {
-			"executor": "@nx/vite:test",
-			"options": {
-				"configFile": "packages/a2a-services/schema-registry/vitest.config.ts",
-				"passWithNoTests": true
-			}
-		}
-	}
+    "name": "@cortex-os/a2a-schema-registry",
+    "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/a2a-services/schema-registry/src",
+    "projectType": "library",
+    "targets": {
+        "test": {
+            "executor": "@nx/vite:test",
+            "options": {
+                "configFile": "packages/a2a-services/schema-registry/vitest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    }
 }

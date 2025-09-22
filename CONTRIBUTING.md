@@ -969,3 +969,19 @@ _Together, we're building the future of AI agent systems_
 
 [![Contributors](https://img.shields.io/github/contributors/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/graphs/contributors)
 [![GitHub Stars](https://img.shields.io/github/stars/cortex-os/cortex-os?style=social)](https://github.com/cortex-os/cortex-os)
+
+## Nx project.json guard
+
+To keep Nx `project.json` files consistent across the monorepo, we enforce:
+
+- Replace legacy token `${workspaceRoot}` with `{workspaceRoot}`
+- Remove `${args}` from command strings and rely on `options.forwardAllArgs: true`
+
+Usage:
+
+```bash
+pnpm nx:project:guard   # check only (fails on issues)
+pnpm nx:project:fix     # auto-fix all project.json files
+```
+
+Pre-commit automatically runs the fixer for any staged `project.json` via lint-staged.

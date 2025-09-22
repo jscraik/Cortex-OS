@@ -8,7 +8,7 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "node scripts/vitest-safe.mjs run -c packages/rag/vitest.config.ts --reporter=dot",
-                "cwd": "${workspaceRoot}",
+                "cwd": "{workspaceRoot}",
                 "parallel": false
             },
             "outputs": [
@@ -29,17 +29,19 @@
         "bench": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "node packages/rag/benchmarks/indexing-bench.mjs ${args}",
-                "cwd": "${workspaceRoot}",
-                "parallel": false
+                "command": "node packages/rag/benchmarks/indexing-bench.mjs",
+                "cwd": "{workspaceRoot}",
+                "parallel": false,
+                "forwardAllArgs": true
             }
         },
         "bench:pq": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "node packages/rag/benchmarks/indexing-bench.mjs --sizes=5000 --ef=64,128 --queries=10 --topK=10 --variants=flat,pq,hnsw,hnswPQ --minRecallPctByVariant=pq:40,hnswPQ:50 --minMapByVariant=pq:0.3,hnswPQ:0.4 ${args}",
-                "cwd": "${workspaceRoot}",
-                "parallel": false
+                "command": "node packages/rag/benchmarks/indexing-bench.mjs --sizes=5000 --ef=64,128 --queries=10 --topK=10 --variants=flat,pq,hnsw,hnswPQ --minRecallPctByVariant=pq:40,hnswPQ:50 --minMapByVariant=pq:0.3,hnswPQ:0.4",
+                "cwd": "{workspaceRoot}",
+                "parallel": false,
+                "forwardAllArgs": true
             }
         },
         "typecheck": {

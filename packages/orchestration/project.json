@@ -1,7 +1,7 @@
 {
-	"name": "@cortex-os/orchestration",
-	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/orchestration/src",
-	"projectType": "library",
-	"targets": {}
+    "name": "@cortex-os/orchestration",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/orchestration/src",
+    "projectType": "library",
+    "targets": {}
 }

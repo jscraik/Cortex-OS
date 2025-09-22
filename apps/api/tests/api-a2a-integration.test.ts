@@ -164,15 +164,17 @@ describe('API A2A Integration', () => {
 
 			const webhook = createWebhookEvent('github', 'push', { commits: [] }, {});
 
-			// Simulate webhook handling by triggering event subscription
-			apiBus.subscribe(ApiEventTypes.WEBHOOK_RECEIVED, async (envelope) => {
-				const handler = apiBus.webhookHandlers.get(envelope.data.source);
-				if (handler) {
-					await handler(envelope.data);
-				}
+		// Simulate webhook handling by subscribing to the event
+		apiBus.subscribe(ApiEventTypes.WEBHOOK_RECEIVED, async (envelope) => {
+			// Type assertion to handle the webhook event data
+			const webhookData = envelope.data as WebhookEvent;
+			// The webhook handler will be called internally by ApiBusIntegration
+			// We just verify the event was received
+			expect(webhookData).toMatchObject({
+				source: 'github',
+				eventType: 'push',
 			});
-
-			await apiBus.publishWebhookReceived(webhook);
+		});			await apiBus.publishWebhookReceived(webhook);
 
 			// Wait for async processing
 			await new Promise((resolve) => setTimeout(resolve, 10));

@@ -9,6 +9,8 @@
   },
   "type": "module",
   "scripts": {
+  "nx:project:guard": "node tools/validators/nx-project-guard.mjs",
+  "nx:project:fix": "node tools/validators/nx-project-guard.mjs --fix",
     "op:build": "pnpm lint:smart && pnpm typecheck:smart && pnpm test:smart && pnpm build:smart",
     "op:build:dry": "node scripts/nx-smart.mjs lint --dry-run && node scripts/nx-smart.mjs typecheck --dry-run && node scripts/nx-smart.mjs test --dry-run && node scripts/nx-smart.mjs build --dry-run",
     "op:build:focus": "bash -lc 'node scripts/nx-smart.mjs lint --focus \"${CORTEX_SMART_FOCUS:-}\" && node scripts/nx-smart.mjs typecheck --focus \"${CORTEX_SMART_FOCUS:-}\" && node scripts/nx-smart.mjs test --focus \"${CORTEX_SMART_FOCUS:-}\" && node scripts/nx-smart.mjs build --focus \"${CORTEX_SMART_FOCUS:-}\"'",
@@ -420,6 +422,9 @@
     "**/*.{js,jsx,ts,tsx}": [
       "biome check --write --no-errors-on-unmatched --max-diagnostics=none",
       "ast-grep scan --config sgconfig.json --report-style rich"
+    ],
+    "**/project.json": [
+      "node tools/validators/nx-project-guard.mjs --fix"
     ]
   },
   "optionalDependencies": {

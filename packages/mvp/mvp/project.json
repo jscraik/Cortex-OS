@@ -1,49 +1,65 @@
 {
-	"name": "mvp",
-	"$schema": "https://raw.githubusercontent.com/nrwl/nx/master/packages/nx/schemas/project-schema.json",
-	"projectType": "library",
-	"sourceRoot": "packages/mvp/mvp/src",
-	"targets": {
-		"build": {
-			"executor": "@nx/rollup:rollup",
-			"outputs": ["{options.outputPath}"],
-			"options": {
-				"outputPath": "dist/packages/mvp",
-				"tsConfig": "packages/mvp/mvp/tsconfig.json",
-				"project": "packages/mvp/mvp/package.json",
-				"entryFile": "packages/mvp/mvp/src/index.ts",
-				"external": ["rxjs/operators", "rxjs/websocket", "rxjs/ajax"]
-			}
-		},
-		"lint": {
-			"executor": "@nx/eslint:lint",
-			"options": {
-				"lintFilePatterns": ["packages/mvp/**/*.ts"]
-			}
-		},
-		"test": {
-			"executor": "@nx/vite:test",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-			"options": {
-				"configFile": "packages/mvp/vitest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"coverage": true
-				}
-			}
-		}
-	},
-	"tags": ["scope:mvp", "type:feature"],
-	"namedInputs": {
-		"default": ["{projectRoot}/**/*", "sharedGlobals"],
-		"production": [
-			"default",
-			"!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-			"!{projectRoot}/tsconfig.spec.json",
-			"!{projectRoot}/src/test-setup.[jt]s",
-			"!{projectRoot}/test-setup.[jt]s"
-		]
-	}
+    "name": "mvp",
+    "$schema": "https://raw.githubusercontent.com/nrwl/nx/master/packages/nx/schemas/project-schema.json",
+    "projectType": "library",
+    "sourceRoot": "packages/mvp/mvp/src",
+    "targets": {
+        "build": {
+            "executor": "@nx/rollup:rollup",
+            "outputs": [
+                "{options.outputPath}"
+            ],
+            "options": {
+                "outputPath": "dist/packages/mvp",
+                "tsConfig": "packages/mvp/mvp/tsconfig.json",
+                "project": "packages/mvp/mvp/package.json",
+                "entryFile": "packages/mvp/mvp/src/index.ts",
+                "external": [
+                    "rxjs/operators",
+                    "rxjs/websocket",
+                    "rxjs/ajax"
+                ]
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "options": {
+                "lintFilePatterns": [
+                    "packages/mvp/**/*.ts"
+                ]
+            }
+        },
+        "test": {
+            "executor": "@nx/vite:test",
+            "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+            ],
+            "options": {
+                "configFile": "packages/mvp/vitest.config.ts",
+                "passWithNoTests": true
+            },
+            "configurations": {
+                "ci": {
+                    "coverage": true
+                }
+            }
+        }
+    },
+    "tags": [
+        "scope:mvp",
+        "type:feature"
+    ],
+    "namedInputs": {
+        "default": [
+            "{projectRoot}/**/*",
+            "sharedGlobals"
+        ],
+        "production": [
+            "default",
+            "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+            "!{projectRoot}/tsconfig.spec.json",
+            "!{projectRoot}/src/test-setup.[jt]s",
+            "!{projectRoot}/test-setup.[jt]s"
+        ]
+    }
 }

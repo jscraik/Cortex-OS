@@ -31,7 +31,7 @@ vi.mock('@/utils/sse', () => ({
 		),
 }));
 
-import Chat from '@/components/Chat/Chat';
+import Chat from '@/app/components/chat/Chat';
 
 describe('Chat Component', () => {
 	beforeEach(() => {

@@ -60,12 +60,15 @@ describe('API A2A Real Bus Integration', () => {
         source: 'test',
       };
 
-      // Set up event capture via real A2A bus subscription
+      // Set up event capture via real A2A bus binding
       const capturedEvents: Envelope[] = [];
       const a2aBus = apiBus.getA2ABus();
-      await a2aBus.bus.subscribe(ApiEventTypes.REQUEST_RECEIVED, (envelope) => {
-        capturedEvents.push(envelope);
-      });
+      await a2aBus.bus.bind([{
+        type: ApiEventTypes.REQUEST_RECEIVED,
+        handle: async (envelope: Envelope) => {
+          capturedEvents.push(envelope);
+        }
+      }]);
 
       await apiBus.publishRequestReceived(request, metadata);
 
@@ -94,12 +97,15 @@ describe('API A2A Real Bus Integration', () => {
         'sha256=abc123',
       );
 
-      // Set up event capture via real A2A bus subscription
+      // Set up event capture via real A2A bus binding
       const capturedEvents: Envelope[] = [];
       const a2aBus = apiBus.getA2ABus();
-      await a2aBus.bus.subscribe(ApiEventTypes.WEBHOOK_RECEIVED, (envelope) => {
-        capturedEvents.push(envelope);
-      });
+      await a2aBus.bus.bind([{
+        type: ApiEventTypes.WEBHOOK_RECEIVED,
+        handle: async (envelope: Envelope) => {
+          capturedEvents.push(envelope);
+        }
+      }]);
 
       await apiBus.publishWebhookReceived(webhook);
 
@@ -115,11 +121,14 @@ describe('API A2A Real Bus Integration', () => {
     });
 
     it('should handle job events via real A2A bus', async () => {
-      const jobEvents: unknown[] = [];
+      const jobEvents: Envelope[] = [];
       const a2aBus = apiBus.getA2ABus();
-      await a2aBus.bus.subscribe(ApiEventTypes.JOB_CREATED, (envelope) => {
-        jobEvents.push(envelope);
-      });
+      await a2aBus.bus.bind([{
+        type: ApiEventTypes.JOB_CREATED,
+        handle: async (envelope: Envelope) => {
+          jobEvents.push(envelope);
+        }
+      }]);
 
       const jobId = await apiBus.createJob('test-job', { data: 'test' });
 

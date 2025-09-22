@@ -1,35 +1,35 @@
 {
-  "name": "cortex-code",
-  "projectType": "application",
-  "root": "apps/cortex-code",
-  "sourceRoot": "apps/cortex-code",
-  "targets": {
-    "test": {
-      "command": "pnpm codex:test"
-    },
-    "test-unit": {
-      "command": "pnpm codex:test:unit"
-    },
-    "test-integration": {
-      "command": "pnpm codex:test:integration"
-    },
-    "coverage": {
-      "command": "pnpm codex:test:coverage"
-    },
-    "upstream:diff": {
-      "command": "apps/cortex-code/scripts/upstream-diff.sh"
-    },
-    "upstream:status": {
-      "command": "apps/cortex-code/scripts/upstream-status.sh"
-    },
-    "upstream:pull": {
-      "command": "apps/cortex-code/scripts/codex-rs-subtree.sh pull"
-    },
-    "sync:dry": {
-      "command": "bash scripts/sync-cortex-code.sh"
-    },
-    "sync:run": {
-      "command": "bash scripts/sync-cortex-code.sh --run"
+    "name": "cortex-code",
+    "projectType": "application",
+    "root": "apps/cortex-code",
+    "sourceRoot": "apps/cortex-code",
+    "targets": {
+        "test": {
+            "command": "pnpm codex:test"
+        },
+        "test-unit": {
+            "command": "pnpm codex:test:unit"
+        },
+        "test-integration": {
+            "command": "pnpm codex:test:integration"
+        },
+        "coverage": {
+            "command": "pnpm codex:test:coverage"
+        },
+        "upstream:diff": {
+            "command": "apps/cortex-code/scripts/upstream-diff.sh"
+        },
+        "upstream:status": {
+            "command": "apps/cortex-code/scripts/upstream-status.sh"
+        },
+        "upstream:pull": {
+            "command": "apps/cortex-code/scripts/codex-rs-subtree.sh pull"
+        },
+        "sync:dry": {
+            "command": "bash scripts/sync-cortex-code.sh"
+        },
+        "sync:run": {
+            "command": "bash scripts/sync-cortex-code.sh --run"
+        }
     }
-  }
 }

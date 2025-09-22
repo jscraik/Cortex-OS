@@ -1,31 +1,36 @@
 {
-	"name": "github",
-	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/github/src",
-	"projectType": "library",
-	"targets": {
-		"build": {
-			"executor": "nx:run-commands",
-			"outputs": ["{projectRoot}/target"],
-			"options": {
-				"command": "cargo build --release",
-				"cwd": "packages/github"
-			}
-		},
-		"lint": {
-			"executor": "nx:run-commands",
-			"options": {
-				"command": "cargo clippy -- -D warnings",
-				"cwd": "packages/github"
-			}
-		},
-		"test": {
-			"executor": "nx:run-commands",
-			"options": {
-				"command": "cargo test",
-				"cwd": "packages/github"
-			}
-		}
-	},
-	"tags": ["scope:github", "type:lib"]
+    "name": "github",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/github/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "nx:run-commands",
+            "outputs": [
+                "{projectRoot}/target"
+            ],
+            "options": {
+                "command": "cargo build --release",
+                "cwd": "packages/github"
+            }
+        },
+        "lint": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "cargo clippy -- -D warnings",
+                "cwd": "packages/github"
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "cargo test",
+                "cwd": "packages/github"
+            }
+        }
+    },
+    "tags": [
+        "scope:github",
+        "type:lib"
+    ]
 }

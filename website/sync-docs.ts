@@ -134,7 +134,6 @@ const normalizeReferenceLinks = (md: string): string => {
 	});
 };
 // Improved MDX sanitization - comprehensive approach
-// eslint-disable-next-line sonarjs/cognitive-complexity
 // Enhanced sanitizer that returns both content and change tracking
 const sanitizeMdxContentWithReport = (
 	content: string,
@@ -872,7 +871,7 @@ const sanitizeMdxContentWithReport = (
 						let hardStop = false;
 						for (; j < Math.min(lines.length, i + 40); j++) {
 							const ln = lines[j];
-							if (/^```/.test(ln)) break; // another fence; stop
+							if (ln.startsWith('```')) break; // another fence; stop
 							if (/^\s*$/.test(ln)) {
 								total++;
 								continue;
