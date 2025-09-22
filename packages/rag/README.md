@@ -278,6 +278,54 @@ console.log('Python embedder status:', isHealthy ? 'healthy' : 'unhealthy');
 
 ### Custom Embedding Provider
 
+### Embedding Process Pool (Concurrency & Backpressure)
+
+Use the pooled embedder to scale embedding throughput with logical worker slots, backpressure, and metrics:
+
+```ts
+import { createPooledEmbedder } from '@cortex-os/rag';
+
+const pooled = createPooledEmbedder(pythonEmbedder, {
+  minWorkers: 1,         // minimum concurrent slots
+  maxWorkers: 8,         // hard cap on slots
+  batchSize: 16,         // per-task batch size
+  maxQueueSize: 1000,    // backpressure limit
+  scaleUpAt: 2,          // queue-per-worker threshold to add a slot
+  scaleDownAt: 0,        // threshold to allow removing a slot
+  idleMillisBeforeScaleDown: 500,
+  failureRestartThreshold: 3,
+  label: 'rag.embed.pool', // metrics label prefix
+});
+
+const pipeline = new RAGPipeline({ embedder: pooled, store: memoryStore });
+```
+
+Pool emits metrics via `@cortex-os/observability`:
+
+- `rag.embed.pool.total_ms` – total embed call latency
+- `rag.embed.pool.queue_depth` – pending task count
+- `rag.embed.pool.utilization` – inflight/currentWorkers (0..1)
+
+Debugging and Health:
+
+```ts
+pooled.stats(); // { currentWorkers, inflight, queueDepth, utilization }
+pooled.health(); // { healthy, workers, queue, inflight }
+pooled.debug(); // { label, workers, inflight, queue, slots: [{ id, busy, isActive, tasks, texts, emaTps, ... }] }
+```
+
+Grafana Panel Hints:
+
+- Queue Depth: panel on `rag.embed.pool.queue_depth` with 95th percentile and alert when > 0 for sustained periods.
+- Utilization: panel on `rag.embed.pool.utilization` with warning at > 0.85 sustained; shows need to raise `maxWorkers`.
+- Total Latency: panel on `rag.embed.pool.total_ms` to track end-to-end embed time.
+
+Notes:
+
+- Backpressure: when `maxQueueSize` is exceeded, `embed()` throws `Backpressure: embed queue full`.
+- Auto-scaling: pool increases/decreases active slots between `minWorkers..maxWorkers` based on queue pressure and idle windows.
+- Slot-level stats: `debug()` provides per-slot recent activity (last start/end/error, tasks processed, EMA texts/sec).
+
 ## ✅ MLX installation verification
 
 If you use the MLX-based embedding/reranking services, quickly verify MLX availability:

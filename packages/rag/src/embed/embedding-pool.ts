@@ -27,6 +27,27 @@ interface Stats {
 	utilization: number; // inflight/currentWorkers
 }
 
+interface Slot {
+	id: number;
+	busy: boolean;
+	isActive: boolean;
+	lastStartAt?: number;
+	lastEndAt?: number;
+	lastErrorAt?: number;
+	lastDurationMs?: number;
+	tasks: number; // completed tasks
+	texts: number; // total texts processed
+	emaTps: number; // exponential moving avg of texts/sec
+}
+
+export interface PoolDebugInfo {
+	label: string;
+	workers: number;
+	inflight: number;
+	queue: number;
+	slots: Array<Omit<Slot, 'emaTps'> & { emaTps: number }>; // expose read-only slot snapshot
+}
+
 export class PooledEmbedder implements Embedder {
 	private readonly inner: Embedder;
 	private readonly opt: Required<EmbeddingPoolOptions>;
@@ -36,11 +57,14 @@ export class PooledEmbedder implements Embedder {
 	private lastActiveAt = Date.now();
 	private failures = 0;
 	private shuttingDown = false;
+	private readonly slots: Slot[] = [];
+	private nextSlotId = 0;
 
 	constructor(inner: Embedder, options?: EmbeddingPoolOptions) {
 		this.inner = inner;
 		this.opt = this.normalizeOptions(options);
 		this.currentWorkers = this.opt.minWorkers;
+		this.initSlots(this.currentWorkers);
 	}
 
 	async embed(texts: string[]): Promise<number[][]> {
@@ -85,6 +109,16 @@ export class PooledEmbedder implements Embedder {
 		return { healthy, workers: s.currentWorkers, queue: s.queueDepth, inflight: s.inflight };
 	}
 
+	debug(): PoolDebugInfo {
+		return {
+			label: this.opt.label,
+			workers: this.currentWorkers,
+			inflight: this.inflight,
+			queue: this.queue.length,
+			slots: this.slots.map((s) => ({ ...s })),
+		};
+	}
+
 	async close(): Promise<void> {
 		this.shuttingDown = true;
 		// Wait for inflight tasks to drain
@@ -103,6 +137,21 @@ export class PooledEmbedder implements Embedder {
 			failureRestartThreshold: o?.failureRestartThreshold ?? 3,
 			label: o?.label ?? 'rag.embed.pool',
 		} as Required<EmbeddingPoolOptions>;
+	}
+
+	private initSlots(n: number): void {
+		for (let i = 0; i < n; i++) this.slots.push(this.createSlot(true));
+	}
+
+	private createSlot(active: boolean): Slot {
+		return {
+			id: this.nextSlotId++,
+			busy: false,
+			isActive: active,
+			tasks: 0,
+			texts: 0,
+			emaTps: 0,
+		};
 	}
 
 	private partition(texts: string[]): Task[] {
@@ -130,6 +179,7 @@ export class PooledEmbedder implements Embedder {
 		const perWorker = Math.ceil(this.queue.length / Math.max(1, this.currentWorkers));
 		if (perWorker >= this.opt.scaleUpAt && this.currentWorkers < this.opt.maxWorkers) {
 			this.currentWorkers++;
+			this.activateOneSlotIfNeeded();
 		}
 	}
 
@@ -139,28 +189,32 @@ export class PooledEmbedder implements Embedder {
 		const perWorker = Math.ceil(this.queue.length / Math.max(1, this.currentWorkers));
 		if (idle >= this.opt.idleMillisBeforeScaleDown && perWorker <= this.opt.scaleDownAt) {
 			this.currentWorkers--;
+			this.deactivateOneIdleIfTooManyActive();
 		}
 	}
 
 	private pump(): void {
 		if (this.shuttingDown) return;
 		while (this.inflight < this.currentWorkers && this.queue.length > 0) {
+			const slot = this.pickFreeSlot();
+			if (!slot) break;
 			const t = this.queue.shift();
 			if (!t) break;
-			this.runTask(t).catch(() => {});
+			this.runTask(slot, t).catch(() => {});
 		}
 	}
 
-	private async runTask(task: Task): Promise<void> {
-		this.inflight++;
-		this.lastActiveAt = Date.now();
-		this.emitUtilization();
+	private async runTask(slot: Slot, task: Task): Promise<void> {
+		this.onTaskStart(slot);
 		try {
+			const start = Date.now();
 			const embs = await this.inner.embed(task.texts);
+			this.onTaskSuccess(slot, task, start);
 			const pairs = embs.map((v, i) => ({ idx: task.mapTo[i], v }));
 			task.resolve(pairs);
 			this.failures = 0;
 		} catch (e) {
+			this.onTaskFailure(slot);
 			this.failures++;
 			task.reject(e);
 			if (
@@ -168,14 +222,71 @@ export class PooledEmbedder implements Embedder {
 				this.currentWorkers > this.opt.minWorkers
 			) {
 				this.currentWorkers--; // shed a bad slot
+				this.deactivateOneIdleIfTooManyActive();
 				this.failures = 0;
 			}
 		} finally {
-			this.inflight--;
-			this.emitUtilization();
-			this.maybeScaleDown();
-			if (this.queue.length > 0) this.pump();
+			this.onTaskFinally();
 		}
+	}
+
+	private onTaskStart(slot: Slot): void {
+		this.inflight++;
+		this.lastActiveAt = Date.now();
+		slot.busy = true;
+		slot.lastStartAt = this.lastActiveAt;
+		this.emitUtilization();
+	}
+
+	private onTaskSuccess(slot: Slot, task: Task, start: number): void {
+		const durationMs = Date.now() - start;
+		slot.lastEndAt = Date.now();
+		slot.lastDurationMs = durationMs;
+		slot.tasks++;
+		slot.texts += task.texts.length;
+		const tps = task.texts.length / Math.max(0.001, durationMs / 1000);
+		slot.emaTps = this.updateEma(slot.emaTps, tps);
+		slot.busy = false;
+	}
+
+	private onTaskFailure(slot: Slot): void {
+		slot.lastErrorAt = Date.now();
+		slot.busy = false;
+	}
+
+	private onTaskFinally(): void {
+		this.inflight--;
+		this.emitUtilization();
+		this.maybeScaleDown();
+		this.deactivateOneIdleIfTooManyActive();
+		if (this.queue.length > 0) this.pump();
+	}
+
+	private pickFreeSlot(): Slot | undefined {
+		return this.slots.find((s) => s.isActive && !s.busy);
+	}
+
+	private activateOneSlotIfNeeded(): void {
+		const active = this.slots.filter((s) => s.isActive).length;
+		if (active >= this.currentWorkers) return;
+		const idleInactive = this.slots.find((s) => !s.isActive);
+		if (idleInactive) {
+			idleInactive.isActive = true;
+			return;
+		}
+		this.slots.push(this.createSlot(true));
+	}
+
+	private deactivateOneIdleIfTooManyActive(): void {
+		const active = this.slots.filter((s) => s.isActive).length;
+		if (active <= this.currentWorkers) return;
+		const candidate = this.slots.find((s) => s.isActive && !s.busy);
+		if (candidate) candidate.isActive = false;
+	}
+
+	private updateEma(current: number, value: number): number {
+		const alpha = 0.3;
+		return current === 0 ? value : alpha * value + (1 - alpha) * current;
 	}
 
 	private recordOk(start: number, runId: string): void {

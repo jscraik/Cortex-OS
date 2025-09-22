@@ -47,7 +47,7 @@ import {
 	uploadFileHandler,
 	uploadMiddleware,
 } from './controllers/fileController';
-import { MessageController } from './controllers/messageController';
+import { createMessage, getMessagesByConversationId } from './controllers/messageController';
 import { getModelById, getModels } from './controllers/modelController';
 import { getChatTools } from './controllers/toolController';
 import { getUiModels } from './controllers/uiModelsController';
@@ -57,8 +57,8 @@ import { listWebuiMcpTools, mcpExecuteHandler } from './mcp/tools';
 import { authenticateToken } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 // Import services
-import { FileService } from './services/fileService';
-import { ModelService } from './services/modelService';
+import { initializeUploadDirectory } from './services/fileService';
+import { initializeDefaultModels } from './services/modelService';
 import { initializeDatabase } from './utils/database-temp';
 import logger, { logWithContext } from './utils/logger';
 
@@ -119,12 +119,12 @@ export const createApp = (): Express => {
 	app.get(
 		`${API_BASE_PATH}/conversations/:conversationId/messages`,
 		authenticateToken,
-		MessageController.getMessagesByConversationId,
+		getMessagesByConversationId,
 	);
 	app.post(
 		`${API_BASE_PATH}/conversations/:conversationId/messages`,
 		authenticateToken,
-		MessageController.createMessage,
+		createMessage,
 	);
 
 	app.get(`${API_BASE_PATH}/models`, getModels);
@@ -198,9 +198,9 @@ export const createServer = (): ServerComponents => {
 		try {
 			initializeDatabase();
 			logger.info('init:database');
-			ModelService.initializeDefaultModels();
+			initializeDefaultModels();
 			logger.info('init:default_models');
-			FileService.initializeUploadDirectory();
+			initializeUploadDirectory();
 			logger.info('init:upload_dir');
 			await new Promise<void>((resolve, reject) => {
 				server.on('error', (err: Error) => {

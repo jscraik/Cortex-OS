@@ -8,6 +8,11 @@ export { PyEmbedder } from './embed/python-client.js';
 import { createMultiModelGenerator, ModelPresets } from './generation/multi-model.js';
 import { memoryStore } from './store/memory.js';
 
+// Agentic dispatcher
+export {
+	AgenticDispatcher,
+	createAgenticDispatcher,
+} from './agent/dispatcher.js';
 export { createPooledEmbedder, PooledEmbedder } from './embed/embedding-pool.js';
 export type {
 	RagBus,
@@ -82,7 +87,12 @@ export { HealthProvider } from './server/health-provider.js';
 export { createHealthServer } from './server/health-server.js';
 export { fileStore } from './store/file.js';
 export { HierarchicalStore } from './store/hierarchical-store.js';
+// Alternative backend: LanceDB (adapter)
+export { createLanceDbStore, LanceDbStore } from './store/lancedb-store.js';
 export { memoryStore } from './store/memory.js';
+// Workspace scoping
+export { createWorkspaceManager, WorkspaceManager } from './workspace/manager.js';
+export { createScopedStore, ScopedStore } from './workspace/scoped-store.js';
 
 const InputSchema = z.object({
 	config: AgentConfigSchema,

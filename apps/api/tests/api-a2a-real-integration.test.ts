@@ -115,7 +115,7 @@ describe('API A2A Real Bus Integration', () => {
 		});
 
 		it('should handle job events via real A2A bus', async () => {
-			const jobEvents: any[] = [];
+			const jobEvents: unknown[] = [];
 			const a2aBus = apiBus.getA2ABus();
 			await a2aBus.bus.subscribe(ApiEventTypes.JOB_CREATED, (envelope) => {
 				jobEvents.push(envelope);

@@ -3,7 +3,7 @@
  * @description API routes for MCP server operations
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
 
@@ -160,7 +160,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				};
 			} catch (error) {
 				if (error instanceof z.ZodError) {
-					return (reply as any).status(400).send({
+					return (reply as FastifyReply).status(400).send({
 						success: false,
 						error: {
 							code: 'INVALID_REQUEST',
@@ -231,7 +231,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				const server = await fastify.marketplaceService.getServer(validatedId);
 
 				if (!server) {
-					return (reply as any).status(404).send({
+					return (reply as FastifyReply).status(404).send({
 						success: false,
 						error: {
 							code: 'SERVER_NOT_FOUND',
@@ -246,7 +246,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				};
 			} catch (error) {
 				if (error instanceof z.ZodError) {
-					return (reply as any).status(400).send({
+					return (reply as FastifyReply).status(400).send({
 						success: false,
 						error: {
 							code: 'INVALID_REQUEST',
@@ -331,7 +331,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 			)) as MarketplaceServer | null;
 
 			if (!server) {
-				return (reply as any).status(404).send({
+				return (reply as FastifyReply).status(404).send({
 					success: false,
 					error: {
 						code: 'SERVER_NOT_FOUND',

@@ -62,6 +62,13 @@ Legend:
   - Integration of timeout controls into reranker operations with configurable limits.
   - Comprehensive test coverage for semaphore behavior, timeout handling, resource monitoring, and configuration management.
 
+- Embedding process pool:
+  - Implemented `PooledEmbedder` with autoscaling (min/max workers), backpressure (`maxQueueSize`), and utilization metrics.
+  - Added `debug()` API exposing per-slot stats (last start/end/error, tasks, texts, EMA TPS) plus pool queue/inflight.
+  - Recorded metrics: `rag.embed.pool.total_ms`, `rag.embed.pool.queue_depth`, `rag.embed.pool.utilization`.
+  - Unit tests: worker reuse, scale up/down under queue pressure, failure handling, backpressure, and debug snapshot.
+  - Pipeline integration test: verified compatibility and throughput improvement (>2x vs single-slot baseline).
+
   Remaining priorities:
   - Security:
     - Add command injection tests for additional subprocess boundaries
@@ -327,22 +334,31 @@ Progress so far:
 
 ### 7) Embedding Process Pool
 
-**Status:** [ ] Not started  
+**Status:** [x] Complete  
 **Impact:** Medium - Limits throughput  
-**Estimated Effort:** 3-4 days
+**Estimated Effort:** 0 days remaining
 
-- [ ] Tests:
-  - Worker reuse across batches
-  - Scales up/down based on queue depth
-  - Handles worker failures gracefully
-- [ ] Implement pool manager:
-  - Configurable min/max workers
-  - Queue management with backpressure
-  - Health checks per worker
-  - Metrics (queue depth, worker utilization)
-- [ ] Pipeline integration with async batching
+- [x] Tests:
+  - [x] Worker reuse across batches
+  - [x] Scales up/down based on queue depth
+  - [x] Handles worker failures gracefully
+  - [x] Backpressure behavior (queue full)
+  - [x] Pipeline integration + throughput improvement
+- [x] Implement pool manager:
+  - [x] Configurable min/max workers
+  - [x] Queue management with backpressure
+  - [x] Health checks per worker (pool-level `health()` + per-slot via `debug()`)
+  - [x] Metrics (queue depth, worker utilization, total latency)
+- [x] Pipeline integration with async batching
 
-**Done when:** Pool scales under load and throughput improves by >2x
+Notes:
+
+- New `debug()` API provides per-slot visibility (id, busy, isActive, lastStart/End/Error,
+  lastDurationMs, tasks, texts, emaTps).
+- Observability via `@cortex-os/observability` with `label` prefix (default `rag.embed.pool`).
+
+**Done when:** Pool scales under load and throughput improves by >2x — Achieved
+(validated by integration test comparing pooled vs single-slot baseline).
 
 ### 8) Workspace Scoping
 

@@ -6,6 +6,7 @@ import {
 	createApiBusIntegration,
 	createWebhookEvent,
 	JobManager,
+	type WebhookEvent,
 } from '../src/core/a2a-integration.js';
 import { StructuredLogger } from '../src/core/observability.js';
 import type {
@@ -155,7 +156,7 @@ describe('API A2A Integration', () => {
 		});
 
 		it('should register and handle webhook events', async () => {
-			let handledWebhook: any = null;
+			let handledWebhook: WebhookEvent | null = null;
 
 			apiBus.registerWebhookHandler('github', async (event) => {
 				handledWebhook = event;
@@ -338,9 +339,9 @@ describe('API A2A Integration', () => {
 
 	describe('Event Subscription and History', () => {
 		it('should allow event subscription and unsubscription', async () => {
-			const receivedEvents: any[] = [];
+			const receivedEvents: unknown[] = [];
 
-			const handler = (envelope: any) => {
+			const handler = (envelope: unknown) => {
 				receivedEvents.push(envelope);
 			};
 

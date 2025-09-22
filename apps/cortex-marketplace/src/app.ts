@@ -109,9 +109,8 @@ export function build(config: AppConfig): FastifyInstance {
 // Temporary compatibility helper to smooth Fastify v5 + plugin type gaps
 // (Upstream plugins may not yet publish v5-ready types)
 // NOTE: Fastify v5 ecosystem plugin types are lagging; localized cast retains safety elsewhere
-function compat<T>(plugin: T): any {
-	// eslint-disable-line @typescript-eslint/no-explicit-any
-	return plugin as unknown as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+function compat<T, R = T>(plugin: T): R {
+	return plugin as unknown as R;
 }
 
 function registerPlugins(fastify: FastifyInstance): void {
