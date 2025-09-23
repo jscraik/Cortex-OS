@@ -9,6 +9,8 @@
   },
   "type": "module",
   "scripts": {
+    "ci:agent-toolkit:validate": "node scripts/agent-toolkit.mjs validate:project \"**/*.{ts,tsx,js,jsx,py,rs}\"",
+    "ci:memory:enforce": "node tools/validators/enforce-local-memory.mjs",
     "nx:project:guard": "node tools/validators/nx-project-guard.mjs",
     "nx:project:fix": "node tools/validators/nx-project-guard.mjs --fix",
     "op:build": "pnpm lint:smart && pnpm typecheck:smart && pnpm test:smart && pnpm build:smart",
@@ -196,7 +198,8 @@
     "pw:update": "playwright test --update-snapshots",
     "pw:test:debug": "playwright test --debug",
     "pw:test:ui": "playwright test --ui",
-    "ci:governance": "bash -lc 'if [ \"${CI_SKIP_MEMORY_GUARD:-0}\" != \"1\" ]; then echo \"[ci:governance] Memory guard enabled\"; pnpm prebuild:graph -- --quiet || true; pnpm memory:snapshot:test || EXIT_CODE=$?; if [ -n \"${EXIT_CODE:-}\" ] && [ \"$EXIT_CODE\" -ne 0 ]; then echo \"Memory snapshot phase failed (code $EXIT_CODE)\"; exit $EXIT_CODE; fi; pnpm memory:regression || exit $?; else echo \"[ci:governance] Skipping memory guard (CI_SKIP_MEMORY_GUARD=$CI_SKIP_MEMORY_GUARD)\"; fi'; pnpm nx:project:guard && pnpm format:check && pnpm lint && pnpm test:security && pnpm structure:validate && pnpm license:validate && pnpm check:cycles && pnpm ci:mcp-path",
+  "ci:governance": "bash -lc 'if [ \"${CI_SKIP_MEMORY_GUARD:-0}\" != \"1\" ]; then echo \"[ci:governance] Memory guard enabled\"; pnpm prebuild:graph -- --quiet || true; pnpm memory:snapshot:test || EXIT_CODE=$?; if [ -n \"${EXIT_CODE:-}\" ] && [ \"$EXIT_CODE\" -ne 0 ]; then echo \"Memory snapshot phase failed (code $EXIT_CODE)\"; exit $EXIT_CODE; fi; pnpm memory:regression || exit $?; else echo \"[ci:governance] Skipping memory guard (CI_SKIP_MEMORY_GUARD=$CI_SKIP_MEMORY_GUARD)\"; fi'; pnpm nx:project:guard && pnpm format:check && pnpm lint && pnpm test:security && pnpm structure:validate && pnpm license:validate && pnpm check:cycles && pnpm ci:mcp-path && pnpm ci:agent-toolkit:validate && pnpm ci:memory:enforce",
+  "ci:agentos:quick": "pnpm ci:governance && pnpm at:validate:project && pnpm ci:memory:enforce",
     "check:cycles": "node scripts/check-circular-deps.mjs",
     "ci:guard:ports": "bash scripts/ci/guard_port_3004.sh",
     "ci:governance:extended": "pnpm ci:governance && pnpm ci:guard:ports",

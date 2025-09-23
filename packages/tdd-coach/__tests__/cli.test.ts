@@ -2,9 +2,10 @@ import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-describe('TDD Coach CLI', () => {
-	const _cliPath = resolve(__dirname, '../dist/cli/tdd-coach.js');
+// Resolve path to the built CLI entry
+const cliPath = resolve(__dirname, '../dist/cli/tdd-coach.js');
 
+describe('TDD Coach CLI', () => {
 	it('should show help when run without arguments', async () => {
 		const { stdout, stderr } = await runCLI([]);
 		expect(stderr).toBe('');

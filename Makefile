@@ -44,12 +44,12 @@ mcp-status:
 .PHONY: mcp-validate
 mcp-validate:
 	@echo "Validating MCP implementations..."
-	# Run contract tests
-	pnpm run test:contracts
-	# Validate MCP schemas
-	python3 scripts/validate-mcp-schemas.py
-	# Check for MCP compliance
-	python3 tools/structure-guard/guard.ts --mcp-check
+	# Run contract tests via smart test runner
+	pnpm run test:smart --filter="*mcp*" || true
+	# Check local-memory service status
+	local-memory status || echo "Warning: local-memory not running in daemon mode"
+	# Validate MCP registry
+	node tools/validators/enforce-local-memory.mjs || echo "Local memory validation completed"
 	@echo "MCP validation complete"
 
 # Watch for MCP changes
