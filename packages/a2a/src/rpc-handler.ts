@@ -97,7 +97,11 @@ export class A2ARpcHandler implements RpcHandler {
 
 		// Handle StructuredError - check by name to avoid instanceof issues
 		if (error instanceof Error && error.name === 'StructuredError') {
-			const structuredError = error as unknown as { code?: string; details?: unknown; message: string };
+			const structuredError = error as unknown as {
+				code?: string;
+				details?: unknown;
+				message: string;
+			};
 
 			// Map StructuredError codes to A2A error codes
 			let errorCode: number = A2A_ERROR_CODES.INTERNAL_ERROR;
@@ -156,7 +160,7 @@ export async function handleA2A(input: unknown): Promise<string> {
 		const parseResult = JsonRpcRequestSchema.safeParse(input);
 		if (!parseResult.success) {
 			type JsonRpcId = string | number | null | undefined;
-			let maybeId: JsonRpcId = undefined;
+			let maybeId: JsonRpcId;
 			// For batch requests (arrays), treat as invalid request with id=null (per tests/spec)
 			if (Array.isArray(input)) {
 				maybeId = null;

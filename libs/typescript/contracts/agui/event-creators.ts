@@ -1,5 +1,3 @@
-import { ContractEvent } from '@cortex-os/contracts';
-import { ContractEvent } from '@cortex-os/contracts';
 import {
 	AGUI_EVENT_TYPES,
 	type AiRecommendationEvent,

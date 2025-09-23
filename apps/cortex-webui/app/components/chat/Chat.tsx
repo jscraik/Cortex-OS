@@ -2,10 +2,6 @@
 
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-// Note: UI message shape may include extra fields like timestamp/model for display
-// compared to shared backend types.
-import { apiClient } from '~/utils/api-client';
-import { chatStore } from '~/utils/chat-store';
 import { generateId } from '~/utils/id';
 import notificationStore from '../../utils/notification-store';
 import MessageInput from './MessageInput/MessageInput';

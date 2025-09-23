@@ -11,10 +11,8 @@
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { ZodError, type ZodIssue, type ZodType, z } from 'zod';
-
-import { redactPII } from '../privacy/redact.js';
-import { createMemoryStoreHandler } from './handlers.js';
 import { createStoreFromEnv } from '../config/store-from-env.js';
+import { createMemoryStoreHandler } from './handlers.js';
 
 interface MemoryToolResponse {
 	content: Array<{ type: 'text'; text: string }>;
@@ -80,7 +78,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null;
 }
 
-function ensurePlainObject(
+function _ensurePlainObject(
 	value: unknown,
 	context: string,
 ): asserts value is Record<string, unknown> {
@@ -150,7 +148,7 @@ function createContractInvoker(canonicalName: string, schema: ZodType): ToolCont
 	};
 }
 
-function sanitizeText(text: string, field: 'text' | 'update_text'): string {
+function _sanitizeText(text: string, field: 'text' | 'update_text'): string {
 	const normalized = text.trim();
 	if (!normalized) {
 		throw new MemoryToolError('validation_error', 'Text content cannot be empty', [
@@ -167,7 +165,7 @@ function sanitizeText(text: string, field: 'text' | 'update_text'): string {
 	return normalized;
 }
 
-function sanitizeTags(tags: string[] = []): string[] {
+function _sanitizeTags(tags: string[] = []): string[] {
 	const unique: string[] = [];
 	const seen = new Set<string>();
 

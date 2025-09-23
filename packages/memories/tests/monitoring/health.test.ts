@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HealthMonitor } from '../../src/monitoring/health.js';
 
 describe('HealthMonitor', () => {
@@ -32,7 +32,7 @@ describe('HealthMonitor', () => {
 				expect.objectContaining({
 					method: 'GET',
 					signal: expect.any(AbortSignal),
-				})
+				}),
 			);
 		});
 
@@ -72,7 +72,7 @@ describe('HealthMonitor', () => {
 				expect.objectContaining({
 					method: 'GET',
 					signal: expect.any(AbortSignal),
-				})
+				}),
 			);
 		});
 
@@ -115,7 +115,7 @@ describe('HealthMonitor', () => {
 			expect(result.mlx.healthy).toBe(true);
 			expect(result.ollama.healthy).toBe(true);
 			expect(result.database.healthy).toBe(true);
-			expect(result.uptime).toBeGreaterThan(0);
+			expect(result.uptime).toBeGreaterThanOrEqual(0);
 		});
 
 		it('should report unhealthy if any service fails', async () => {

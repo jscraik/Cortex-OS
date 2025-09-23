@@ -13,9 +13,9 @@ export class CircuitBreakerManager {
 	getBreaker(name: string, options: CircuitBreakerOptions = {}): CircuitBreaker {
 		if (!this.breakers.has(name)) {
 			const breaker = new CircuitBreaker({
-				timeout: options.timeout ?? 30000,
-				errorThresholdPercentage: options.threshold ?? 50,
-				resetTimeout: options.resetTimeout ?? 30000,
+				timeoutDuration: options.timeout ?? 30000,
+				errorThreshold: options.threshold ?? 50,
+				windowDuration: options.resetTimeout ?? 30000,
 			});
 
 			this.breakers.set(name, breaker);
@@ -27,19 +27,26 @@ export class CircuitBreakerManager {
 	async execute<T>(
 		name: string,
 		fn: () => Promise<T>,
-		options: CircuitBreakerOptions = {}
+		options: CircuitBreakerOptions = {},
 	): Promise<T> {
 		const breaker = this.getBreaker(name, options);
 
 		return new Promise((resolve, reject) => {
-			breaker.fire(
-				(success: (result: T) => void, failure: (error: Error) => void) => {
+			breaker.run(
+				(success: () => void, failure: () => void) => {
 					fn()
-						.then(success)
-						.catch(failure);
+						.then(result => {
+							success();
+							resolve(result);
+						})
+						.catch(error => {
+							failure();
+							reject(error);
+						});
 				},
-				resolve,
-				reject
+				() => {
+					reject(new Error('Circuit breaker is open'));
+				},
 			);
 		});
 	}
@@ -50,7 +57,10 @@ export class CircuitBreakerManager {
 			throw new ConfigurationError(`Circuit breaker ${name} not found`);
 		}
 
-		return breaker.status;
+		return {
+			state: breaker._state,
+			isOpen: breaker.isOpen(),
+		};
 	}
 }
 

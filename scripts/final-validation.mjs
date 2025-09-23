@@ -1,183 +1,194 @@
 #!/usr/bin/env node
+
 /**
  * brAInwav Final Workspace Validation
  * Comprehensive validation of build system fixes and performance
  * Part of brAInwav Cross-Repository Build Fix TDD Implementation
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = path.resolve(__dirname, '..');
 
 class BrainwavFinalValidator {
-    constructor() {
-        this.results = {
-            timestamp: new Date().toISOString(),
-            phase: 'Final Validation',
-            violations: {
-                initial: '360+',
-                current: 0,
-                fixed: 0
-            },
-            builds: {
-                tested: [],
-                successful: 0,
-                failed: 0,
-                errors: []
-            },
-            performance: {
-                installTime: null,
-                avgBuildTime: null,
-                totalPackages: 0
-            },
-            compliance: {
-                dependencies: true,
-                imports: false,
-                naming: false,
-                targets: false
-            }
-        };
-    }
+	constructor() {
+		this.results = {
+			timestamp: new Date().toISOString(),
+			phase: 'Final Validation',
+			violations: {
+				initial: '360+',
+				current: 0,
+				fixed: 0,
+			},
+			builds: {
+				tested: [],
+				successful: 0,
+				failed: 0,
+				errors: [],
+			},
+			performance: {
+				installTime: null,
+				avgBuildTime: null,
+				totalPackages: 0,
+			},
+			compliance: {
+				dependencies: true,
+				imports: false,
+				naming: false,
+				targets: false,
+			},
+		};
+	}
 
-    async runFullValidation() {
-        console.log('🏁 brAInwav Final Workspace Validation');
-        console.log('='.repeat(50));
-        console.log(`📅 Started: ${this.results.timestamp}\n`);
+	async runFullValidation() {
+		console.log('🏁 brAInwav Final Workspace Validation');
+		console.log('='.repeat(50));
+		console.log(`📅 Started: ${this.results.timestamp}\n`);
 
-        try {
-            // 1. Scan current import violations
-            await this.scanViolations();
-            
-            // 2. Test key package builds
-            await this.testKeyBuilds();
-            
-            // 3. Validate dependencies installation
-            await this.validateDependencies();
-            
-            // 4. Generate final report
-            await this.generateFinalReport();
+		try {
+			// 1. Scan current import violations
+			await this.scanViolations();
 
-        } catch (error) {
-            console.error(`❌ Validation failed: ${error.message}`);
-            this.results.errors = [error.message];
-        }
-    }
+			// 2. Test key package builds
+			await this.testKeyBuilds();
 
-    async scanViolations() {
-        console.log('📊 Scanning current import violations...');
-        
-        try {
-            const result = await this.executeCommand('node', ['scripts/scan-import-violations.mjs']);
-            
-            // Extract violation count from output
-            const violationMatch = result.match(/❌ Total violations: (\d+)/);
-            if (violationMatch) {
-                this.results.violations.current = parseInt(violationMatch[1]);
-                this.results.violations.fixed = parseInt(this.results.violations.initial.replace('+', '')) - this.results.violations.current;
-            }
-            
-            console.log(`  ✅ Current violations: ${this.results.violations.current}`);
-            console.log(`  📈 Violations fixed: ${this.results.violations.fixed}`);
-            
-        } catch (error) {
-            console.log(`  ⚠️  Violation scan failed: ${error.message}`);
-        }
-    }
+			// 3. Validate dependencies installation
+			await this.validateDependencies();
 
-    async testKeyBuilds() {
-        console.log('\n🔨 Testing key package builds...');
-        
-        const keyPackages = [
-            '@cortex-os/types',
-            '@cortex-os/contracts', 
-            '@cortex-os/a2a-core',
-            '@cortex-os/a2a',
-            '@cortex-os/mvp-core',
-            '@cortex-os/mvp'
-        ];
+			// 4. Generate final report
+			await this.generateFinalReport();
+		} catch (error) {
+			console.error(`❌ Validation failed: ${error.message}`);
+			this.results.errors = [error.message];
+		}
+	}
 
-        for (const pkg of keyPackages) {
-            await this.testPackageBuild(pkg);
-        }
+	async scanViolations() {
+		console.log('📊 Scanning current import violations...');
 
-        console.log(`  📊 Build results: ${this.results.builds.successful}/${keyPackages.length} successful`);
-    }
+		try {
+			const result = await this.executeCommand('node', ['scripts/scan-import-violations.mjs']);
 
-    async testPackageBuild(packageName) {
-        console.log(`  🔍 Testing ${packageName}...`);
-        
-        try {
-            const startTime = Date.now();
-            const result = await this.executeCommand('pnpm', ['run', 'build', '--filter', packageName]);
-            const duration = Date.now() - startTime;
-            
-            this.results.builds.tested.push({
-                package: packageName,
-                success: true,
-                duration,
-                output: result.substring(0, 500) // Truncate output
-            });
-            
-            this.results.builds.successful++;
-            console.log(`    ✅ Built successfully (${duration}ms)`);
-            
-        } catch (error) {
-            this.results.builds.tested.push({
-                package: packageName,
-                success: false,
-                error: error.message.substring(0, 500)
-            });
-            
-            this.results.builds.failed++;
-            this.results.builds.errors.push(`${packageName}: ${error.message}`);
-            console.log(`    ❌ Build failed: ${error.message.split('\n')[0]}`);
-        }
-    }
+			// Extract violation count from output
+			const violationMatch = result.match(/❌ Total violations: (\d+)/);
+			if (violationMatch) {
+				this.results.violations.current = parseInt(violationMatch[1], 10);
+				this.results.violations.fixed =
+					parseInt(this.results.violations.initial.replace('+', ''), 10) -
+					this.results.violations.current;
+			}
 
-    async validateDependencies() {
-        console.log('\n📦 Validating dependencies...');
-        
-        try {
-            const startTime = Date.now();
-            await this.executeCommand('pnpm', ['install']);
-            this.results.performance.installTime = Date.now() - startTime;
-            
-            console.log(`  ✅ Dependencies installed (${this.results.performance.installTime}ms)`);
-            this.results.compliance.dependencies = true;
-            
-        } catch (error) {
-            console.log(`  ❌ Dependency installation failed: ${error.message}`);
-            this.results.compliance.dependencies = false;
-        }
-    }
+			console.log(`  ✅ Current violations: ${this.results.violations.current}`);
+			console.log(`  📈 Violations fixed: ${this.results.violations.fixed}`);
+		} catch (error) {
+			console.log(`  ⚠️  Violation scan failed: ${error.message}`);
+		}
+	}
 
-    async generateFinalReport() {
-        console.log('\n📋 Generating final report...');
-        
-        const report = this.createFinalReport();
-        const reportPath = path.join(workspaceRoot, 'project-documentation', 'brainwav-build-fix-final-report.md');
-        
-        await fs.writeFile(reportPath, report, 'utf-8');
-        console.log(`  ✅ Report saved: ${reportPath}`);
-        
-        // Display summary
-        this.displaySummary();
-    }
+	async testKeyBuilds() {
+		console.log('\n🔨 Testing key package builds...');
 
-    createFinalReport() {
-        const successRate = this.results.builds.tested.length > 0 
-            ? (this.results.builds.successful / this.results.builds.tested.length * 100).toFixed(1)
-            : 0;
-            
-        const violationReduction = this.results.violations.fixed > 0
-            ? ((this.results.violations.fixed / parseInt(this.results.violations.initial.replace('+', ''))) * 100).toFixed(1)
-            : 0;
+		const keyPackages = [
+			'@cortex-os/types',
+			'@cortex-os/contracts',
+			'@cortex-os/a2a-core',
+			'@cortex-os/a2a',
+			'@cortex-os/mvp-core',
+			'@cortex-os/mvp',
+		];
 
-        return `# brAInwav Cross-Repository Build Fix - FINAL REPORT
+		for (const pkg of keyPackages) {
+			await this.testPackageBuild(pkg);
+		}
+
+		console.log(
+			`  📊 Build results: ${this.results.builds.successful}/${keyPackages.length} successful`,
+		);
+	}
+
+	async testPackageBuild(packageName) {
+		console.log(`  🔍 Testing ${packageName}...`);
+
+		try {
+			const startTime = Date.now();
+			const result = await this.executeCommand('pnpm', ['run', 'build', '--filter', packageName]);
+			const duration = Date.now() - startTime;
+
+			this.results.builds.tested.push({
+				package: packageName,
+				success: true,
+				duration,
+				output: result.substring(0, 500), // Truncate output
+			});
+
+			this.results.builds.successful++;
+			console.log(`    ✅ Built successfully (${duration}ms)`);
+		} catch (error) {
+			this.results.builds.tested.push({
+				package: packageName,
+				success: false,
+				error: error.message.substring(0, 500),
+			});
+
+			this.results.builds.failed++;
+			this.results.builds.errors.push(`${packageName}: ${error.message}`);
+			console.log(`    ❌ Build failed: ${error.message.split('\n')[0]}`);
+		}
+	}
+
+	async validateDependencies() {
+		console.log('\n📦 Validating dependencies...');
+
+		try {
+			const startTime = Date.now();
+			await this.executeCommand('pnpm', ['install']);
+			this.results.performance.installTime = Date.now() - startTime;
+
+			console.log(`  ✅ Dependencies installed (${this.results.performance.installTime}ms)`);
+			this.results.compliance.dependencies = true;
+		} catch (error) {
+			console.log(`  ❌ Dependency installation failed: ${error.message}`);
+			this.results.compliance.dependencies = false;
+		}
+	}
+
+	async generateFinalReport() {
+		console.log('\n📋 Generating final report...');
+
+		const report = this.createFinalReport();
+		const reportPath = path.join(
+			workspaceRoot,
+			'project-documentation',
+			'brainwav-build-fix-final-report.md',
+		);
+
+		await fs.writeFile(reportPath, report, 'utf-8');
+		console.log(`  ✅ Report saved: ${reportPath}`);
+
+		// Display summary
+		this.displaySummary();
+	}
+
+	createFinalReport() {
+		const successRate =
+			this.results.builds.tested.length > 0
+				? ((this.results.builds.successful / this.results.builds.tested.length) * 100).toFixed(1)
+				: 0;
+
+		const violationReduction =
+			this.results.violations.fixed > 0
+				? (
+						(this.results.violations.fixed /
+							parseInt(this.results.violations.initial.replace('+', ''), 10)) *
+						100
+					).toFixed(1)
+				: 0;
+
+		return `# brAInwav Cross-Repository Build Fix - FINAL REPORT
 
 ## 🎯 Executive Summary
 **Project**: brAInwav Cross-Repository Build Fix TDD Implementation
@@ -220,11 +231,15 @@ class BrainwavFinalValidator {
 
 ## 🔨 Build Test Results
 
-${this.results.builds.tested.map(build => `
+${this.results.builds.tested
+	.map(
+		(build) => `
 ### ${build.package}
 - **Status**: ${build.success ? '✅ SUCCESS' : '❌ FAILED'}
 ${build.success ? `- **Duration**: ${build.duration}ms` : `- **Error**: ${build.error}`}
-`).join('')}
+`,
+	)
+	.join('')}
 
 ## 🎯 brAInwav Compliance Status
 
@@ -287,8 +302,8 @@ ${build.success ? `- **Duration**: ${build.duration}ms` : `- **Error**: ${build.
 | Metric | Target | Achieved | Status |
 |--------|--------|----------|--------|
 | NX Errors | 0 | ✅ 0 | Complete |
-| Dependency Install | <10s | ✅ ${(this.results.performance.installTime/1000).toFixed(1)}s | Complete |
-| Core Builds | 100% | ${successRate}% | ${successRate == 100 ? 'Complete' : 'In Progress'} |
+| Dependency Install | <10s | ✅ ${(this.results.performance.installTime / 1000).toFixed(1)}s | Complete |
+| Core Builds | 100% | ${successRate}% | ${successRate === 100 ? 'Complete' : 'In Progress'} |
 | Import Violations | <50 | ${this.results.violations.current} | ${this.results.violations.current < 50 ? 'Complete' : 'In Progress'} |
 
 ## 🎯 Recommendations
@@ -308,79 +323,86 @@ ${build.success ? `- **Duration**: ${build.duration}ms` : `- **Error**: ${build.
 **Report Generated**: ${this.results.timestamp}
 **Framework**: brAInwav Cross-Repository Build Fix TDD Implementation
 **Status**: ${this.getOverallStatus()}`;
-    }
+	}
 
-    getOverallStatus() {
-        const buildSuccess = this.results.builds.successful > this.results.builds.failed;
-        const violationsImproved = this.results.violations.fixed > 0;
-        const depsWorking = this.results.compliance.dependencies;
-        
-        if (buildSuccess && violationsImproved && depsWorking) {
-            return this.results.violations.current < 50 ? 'COMPLETE' : 'SUBSTANTIAL PROGRESS';
-        } else if (violationsImproved && depsWorking) {
-            return 'GOOD PROGRESS';
-        } else {
-            return 'IN PROGRESS';
-        }
-    }
+	getOverallStatus() {
+		const buildSuccess = this.results.builds.successful > this.results.builds.failed;
+		const violationsImproved = this.results.violations.fixed > 0;
+		const depsWorking = this.results.compliance.dependencies;
 
-    displaySummary() {
-        console.log('\n🏁 brAInwav Final Validation Summary');
-        console.log('='.repeat(50));
-        console.log(`📊 Overall Status: ${this.getOverallStatus()}`);
-        console.log(`🔧 Violations Fixed: ${this.results.violations.fixed} (${this.results.violations.current} remaining)`);
-        console.log(`🏗️ Build Success Rate: ${this.results.builds.successful}/${this.results.builds.tested.length}`);
-        console.log(`📦 Dependencies: ${this.results.compliance.dependencies ? 'Working' : 'Issues'}`);
-        console.log(`⏱️  Install Time: ${this.results.performance.installTime}ms`);
-        
-        if (this.results.violations.current < 50 && this.results.builds.successful > this.results.builds.failed) {
-            console.log('\n🎉 brAInwav Build Fix: SUCCESS');
-            console.log('🎯 Core build system restored and optimized');
-        } else {
-            console.log('\n🔄 brAInwav Build Fix: SUBSTANTIAL PROGRESS');
-            console.log('🎯 Continue with remaining violation resolution');
-        }
-    }
+		if (buildSuccess && violationsImproved && depsWorking) {
+			return this.results.violations.current < 50 ? 'COMPLETE' : 'SUBSTANTIAL PROGRESS';
+		} else if (violationsImproved && depsWorking) {
+			return 'GOOD PROGRESS';
+		} else {
+			return 'IN PROGRESS';
+		}
+	}
 
-    async executeCommand(command, args) {
-        return new Promise((resolve, reject) => {
-            const process = spawn(command, args, { 
-                cwd: workspaceRoot,
-                stdio: 'pipe'
-            });
-            
-            let output = '';
-            let error = '';
-            
-            process.stdout.on('data', (data) => {
-                output += data.toString();
-            });
-            
-            process.stderr.on('data', (data) => {
-                error += data.toString();
-            });
-            
-            process.on('close', (code) => {
-                if (code === 0) {
-                    resolve(output);
-                } else {
-                    reject(new Error(error || output));
-                }
-            });
-            
-            // Set timeout for long-running commands
-            setTimeout(() => {
-                process.kill();
-                reject(new Error('Command timeout'));
-            }, 120000); // 2 minute timeout
-        });
-    }
+	displaySummary() {
+		console.log('\n🏁 brAInwav Final Validation Summary');
+		console.log('='.repeat(50));
+		console.log(`📊 Overall Status: ${this.getOverallStatus()}`);
+		console.log(
+			`🔧 Violations Fixed: ${this.results.violations.fixed} (${this.results.violations.current} remaining)`,
+		);
+		console.log(
+			`🏗️ Build Success Rate: ${this.results.builds.successful}/${this.results.builds.tested.length}`,
+		);
+		console.log(`📦 Dependencies: ${this.results.compliance.dependencies ? 'Working' : 'Issues'}`);
+		console.log(`⏱️  Install Time: ${this.results.performance.installTime}ms`);
+
+		if (
+			this.results.violations.current < 50 &&
+			this.results.builds.successful > this.results.builds.failed
+		) {
+			console.log('\n🎉 brAInwav Build Fix: SUCCESS');
+			console.log('🎯 Core build system restored and optimized');
+		} else {
+			console.log('\n🔄 brAInwav Build Fix: SUBSTANTIAL PROGRESS');
+			console.log('🎯 Continue with remaining violation resolution');
+		}
+	}
+
+	async executeCommand(command, args) {
+		return new Promise((resolve, reject) => {
+			const process = spawn(command, args, {
+				cwd: workspaceRoot,
+				stdio: 'pipe',
+			});
+
+			let output = '';
+			let error = '';
+
+			process.stdout.on('data', (data) => {
+				output += data.toString();
+			});
+
+			process.stderr.on('data', (data) => {
+				error += data.toString();
+			});
+
+			process.on('close', (code) => {
+				if (code === 0) {
+					resolve(output);
+				} else {
+					reject(new Error(error || output));
+				}
+			});
+
+			// Set timeout for long-running commands
+			setTimeout(() => {
+				process.kill();
+				reject(new Error('Command timeout'));
+			}, 120000); // 2 minute timeout
+		});
+	}
 }
 
 // Run validator if script is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const validator = new BrainwavFinalValidator();
-    await validator.runFullValidation();
+	const validator = new BrainwavFinalValidator();
+	await validator.runFullValidation();
 }
 
 export default BrainwavFinalValidator;

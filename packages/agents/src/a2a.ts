@@ -3,7 +3,13 @@
  * Implements A2A native communication following standardized pattern
  */
 
-import { type AccessControlList, type BusOptions, type BusTransport, type EventHandler, type SchemaRegistry } from './types.js';
+import type {
+	AccessControlList,
+	BusOptions,
+	BusTransport,
+	EventHandler,
+	SchemaRegistry,
+} from './types.js';
 
 // Mock implementation until @cortex-os/a2a-core is available
 const createBus = () => {

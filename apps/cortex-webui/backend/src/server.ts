@@ -26,14 +26,11 @@ process.on('uncaughtException', (error) => {
 	}
 });
 
+import { initializeAuthTables } from './auth';
 import { getCorsOptions, getServerConfig } from './config/config';
 // Import constants from backend config (domain separation)
 import { API_BASE_PATH, WS_BASE_PATH } from './config/constants';
-import { initializeDatabaseAsync } from './db';
 import { getApprovals, postApproval } from './controllers/approvalsController';
-
-// Import controllers
-import { OAuthController } from './controllers/oauthController';
 import { getChatSession, postChatMessage, streamChatSSE } from './controllers/chatController';
 import { getContextMap } from './controllers/contextMapController';
 import { ConversationController } from './controllers/conversationController';
@@ -50,8 +47,11 @@ import {
 } from './controllers/fileController';
 import { createMessage, getMessagesByConversationId } from './controllers/messageController';
 import { getModelById, getModels } from './controllers/modelController';
+// Import controllers
+import { OAuthController } from './controllers/oauthController';
 import { getChatTools } from './controllers/toolController';
 import { getUiModels } from './controllers/uiModelsController';
+import { initializeDatabaseAsync } from './db';
 // MCP tool execution handlers
 import { listWebuiMcpTools, mcpExecuteHandler } from './mcp/tools';
 // Import middleware
@@ -59,11 +59,9 @@ import { authenticateToken } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 // Better Auth routes
 import { setupBetterAuthRoutes } from './routes/better-auth-routes';
-import { initializeAuthTables } from './auth';
 // Import services
 import { initializeUploadDirectory } from './services/fileService';
 import { initializeDefaultModels } from './services/modelService';
-import { initializeDatabase, migrateLegacyUsers } from './db';
 import logger, { logWithContext } from './utils/logger';
 
 export interface ServerComponents {

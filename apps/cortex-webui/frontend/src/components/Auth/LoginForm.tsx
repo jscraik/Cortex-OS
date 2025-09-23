@@ -23,7 +23,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, error }) => {
 			} else {
 				await authLogin(email, password);
 			}
-		} catch (error) {
+		} catch (_error) {
 			// Error is handled by the context
 		}
 	};
@@ -102,10 +102,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, error }) => {
 
 			{/* Forgot Password Link */}
 			<div className="text-sm text-center">
-				<a
-					href="/forgot-password"
-					className="font-medium text-blue-600 hover:text-blue-500"
-				>
+				<a href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
 					Forgot your password?
 				</a>
 			</div>

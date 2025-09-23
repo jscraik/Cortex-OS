@@ -3,7 +3,7 @@
  * Monitors and manages memory usage for MLX operations
  */
 
-import { totalmem, freemem } from 'node:os';
+import { freemem, totalmem } from 'node:os';
 
 export interface MemoryThresholds {
 	warning: number;
@@ -31,9 +31,9 @@ export interface SystemMemoryStats {
  */
 export class MLXMemoryManager {
 	private readonly thresholds: MemoryThresholds = {
-		warning: 0.7,  // 70% memory usage
+		warning: 0.7, // 70% memory usage
 		critical: 0.85, // 85% memory usage
-		shutdown: 0.95  // 95% memory usage
+		shutdown: 0.95, // 95% memory usage
 	};
 
 	private readonly cleanupCallbacks: Array<() => Promise<void>> = [];
@@ -113,7 +113,9 @@ export class MLXMemoryManager {
 		this.monitoringInterval = setInterval(async () => {
 			const status = await this.checkMemory();
 			if (status.status !== 'healthy') {
-				console.warn(`Memory status: ${status.status} (${(status.percentage * 100).toFixed(1)}%) - ${status.action}`);
+				console.warn(
+					`Memory status: ${status.status} (${(status.percentage * 100).toFixed(1)}%) - ${status.action}`,
+				);
 			}
 		}, intervalMs);
 	}
@@ -159,7 +161,7 @@ export class MLXMemoryManager {
 			const { runProcess } = await import('../run-process.js');
 
 			const result = await runProcess<string>('vm_stat', [], { timeoutMs: 5000 });
-			
+
 			if (typeof result !== 'string') {
 				throw new Error('Invalid vm_stat output');
 			}
@@ -182,11 +184,11 @@ export class MLXMemoryManager {
 		let pagesTotal = 0;
 
 		// Extract page size
-		const pageSizeLine = lines.find(line => line.includes('page size of'));
+		const pageSizeLine = lines.find((line) => line.includes('page size of'));
 		if (pageSizeLine) {
 			const match = pageSizeLine.match(/page size of (\d+) bytes/);
 			if (match) {
-				pageSize = parseInt(match[1]);
+				pageSize = parseInt(match[1], 10);
 			}
 		}
 
@@ -218,10 +220,12 @@ export class MLXMemoryManager {
 	 * Check if a line represents a used page type
 	 */
 	private isUsedPageType(line: string): boolean {
-		return line.includes('Pages active:') || 
-			   line.includes('Pages inactive:') || 
-			   line.includes('Pages wired down:') || 
-			   line.includes('Pages speculative:');
+		return (
+			line.includes('Pages active:') ||
+			line.includes('Pages inactive:') ||
+			line.includes('Pages wired down:') ||
+			line.includes('Pages speculative:')
+		);
 	}
 
 	/**
@@ -229,7 +233,7 @@ export class MLXMemoryManager {
 	 */
 	private extractPageCount(line: string): number {
 		const match = line.match(/Pages \w+:\s+(\d+)/);
-		return match ? parseInt(match[1]) : 0;
+		return match ? parseInt(match[1], 10) : 0;
 	}
 
 	/**
@@ -254,7 +258,7 @@ export class MLXMemoryManager {
 		console.warn('Performing emergency memory cleanup');
 
 		// Execute all registered cleanup callbacks
-		await Promise.allSettled(this.cleanupCallbacks.map(callback => callback()));
+		await Promise.allSettled(this.cleanupCallbacks.map((callback) => callback()));
 
 		// Force garbage collection if available
 		if (global.gc) {
@@ -274,7 +278,7 @@ export class MLXMemoryManager {
 		// Execute cleanup callbacks (first half)
 		const halfPoint = Math.ceil(this.cleanupCallbacks.length / 2);
 		await Promise.allSettled(
-			this.cleanupCallbacks.slice(0, halfPoint).map(callback => callback())
+			this.cleanupCallbacks.slice(0, halfPoint).map((callback) => callback()),
 		);
 
 		// Trigger garbage collection
@@ -292,7 +296,7 @@ export class MLXMemoryManager {
 		// Light cleanup - only execute a few callbacks
 		const maxCallbacks = Math.min(3, this.cleanupCallbacks.length);
 		await Promise.allSettled(
-			this.cleanupCallbacks.slice(0, maxCallbacks).map(callback => callback())
+			this.cleanupCallbacks.slice(0, maxCallbacks).map((callback) => callback()),
 		);
 	}
 

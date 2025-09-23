@@ -22,8 +22,13 @@ describe('Circuit Breaker', () => {
 	});
 
 	afterEach(() => {
+		// Clean up circuit breaker timers before resetting
+		if (circuitBreaker && typeof circuitBreaker.reset === 'function') {
+			circuitBreaker.reset();
+		}
 		vi.useRealTimers();
 		vi.restoreAllMocks();
+		vi.clearAllTimers();
 	});
 
 	describe('Initial state', () => {
@@ -173,14 +178,18 @@ describe('Circuit Breaker', () => {
 				timeout: 1000,
 			});
 
-			mockFn.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 2000)));
+			// Create a mock that never resolves, simulating a slow operation
+			mockFn.mockImplementation(() => new Promise(() => {})); // Never resolves
 
 			// Execute and run timers to trigger timeout
 			const executePromise = slowCircuitBreaker.execute(mockFn);
-			await vi.runAllTimersAsync();
+			
+			// Fast forward beyond the timeout period
+			vi.advanceTimersByTime(1500);
+			
 			await expect(executePromise).rejects.toThrow('Request timeout');
 			expect(mockFn).toHaveBeenCalled();
-		}, 3000); // Set test timeout to 3 seconds
+		});
 	});
 
 	describe('Metrics and monitoring', () => {
@@ -263,11 +272,15 @@ describe('Circuit Breaker', () => {
 				timeout: 1000,
 			});
 
-			mockFn.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 2000)));
+			// Create a mock that never resolves, simulating a slow operation
+			mockFn.mockImplementation(() => new Promise(() => {})); // Never resolves
 
 			// Execute and run timers to trigger timeout
 			const executePromise = slowCircuitBreaker.execute(mockFn, { fallback });
-			await vi.runAllTimersAsync();
+			
+			// Fast forward beyond the timeout period
+			vi.advanceTimersByTime(1500);
+			
 			const result = await executePromise;
 
 			expect(result).toBe('fallback response');

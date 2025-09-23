@@ -1,9 +1,9 @@
 // Conversation service for Cortex WebUI backend
 
-import { db, conversations, messages } from '../db';
-import { eq, desc } from 'drizzle-orm';
-import type { NewConversation } from '../db/schema';
+import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { conversations, db, messages } from '../db';
+import type { NewConversation } from '../db/schema';
 
 export class ConversationService {
 	static async getConversationsByUserId(userId: string) {
@@ -13,7 +13,7 @@ export class ConversationService {
 			.where(eq(conversations.userId, userId))
 			.orderBy(desc(conversations.updatedAt));
 
-		return records.map(record => ({
+		return records.map((record) => ({
 			id: record.id,
 			title: record.title,
 			userId: record.userId,
@@ -23,11 +23,7 @@ export class ConversationService {
 	}
 
 	static async getConversationById(id: string) {
-		const record = await db
-			.select()
-			.from(conversations)
-			.where(eq(conversations.id, id))
-			.limit(1);
+		const record = await db.select().from(conversations).where(eq(conversations.id, id)).limit(1);
 
 		if (!record[0]) {
 			return null;

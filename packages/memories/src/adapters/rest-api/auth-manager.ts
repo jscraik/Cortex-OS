@@ -56,7 +56,7 @@ export class AuthManager {
 		}
 
 		const now = Date.now();
-		return now >= (this.token.expiresAt - this.refreshBuffer);
+		return now >= this.token.expiresAt - this.refreshBuffer;
 	}
 
 	/**
@@ -65,7 +65,7 @@ export class AuthManager {
 	async refreshToken(): Promise<string> {
 		// If already refreshing, return the existing promise
 		if (this.refreshPromise) {
-			return await this.refreshPromise.then(t => t.accessToken);
+			return await this.refreshPromise.then((t) => t.accessToken);
 		}
 
 		if (!this.token?.refreshToken) {
@@ -98,7 +98,7 @@ export class AuthManager {
 			},
 			body: JSON.stringify({
 				grant_type: 'refresh_token',
-				refresh_token: this.token!.refreshToken,
+				refresh_token: this.token?.refreshToken,
 				client_id: this.config.clientId,
 				client_secret: this.config.clientSecret,
 				scope: this.config.scopes?.join(' '),
@@ -114,8 +114,8 @@ export class AuthManager {
 
 		return {
 			accessToken: data.access_token,
-			refreshToken: data.refresh_token || this.token!.refreshToken,
-			expiresAt: Date.now() + (data.expires_in * 1000),
+			refreshToken: data.refresh_token || this.token?.refreshToken,
+			expiresAt: Date.now() + data.expires_in * 1000,
 			tokenType: data.token_type === 'bearer' ? 'bearer' : 'api-key',
 		};
 	}

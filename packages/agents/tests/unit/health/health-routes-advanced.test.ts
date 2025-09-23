@@ -17,12 +17,15 @@ const mockGetMetricsCollector = vi.fn();
 const mockGetHealthMonitor = vi.fn();
 
 // Setup the mock implementation
-MockedHealthHandler.mockImplementation(() => ({
-	getHealth: mockGetHealth,
-	getComponentHealth: mockGetComponentHealth,
-	getMetricsCollector: mockGetMetricsCollector,
-	getHealthMonitor: mockGetHealthMonitor,
-}) as any);
+MockedHealthHandler.mockImplementation(
+	() =>
+		({
+			getHealth: mockGetHealth,
+			getComponentHealth: mockGetComponentHealth,
+			getMetricsCollector: mockGetMetricsCollector,
+			getHealthMonitor: mockGetHealthMonitor,
+		}) as any,
+);
 
 // Import after mocking
 import { healthRoutes } from '../../../src/server/routes/health.routes';

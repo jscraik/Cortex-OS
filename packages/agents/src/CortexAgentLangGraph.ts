@@ -5,13 +5,13 @@
  * state management, and tool coordination. This replaces the simplified implementation.
  */
 
+import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
-import { EventEmitter } from 'node:events';
 import { z } from 'zod';
 import type { AgentConfig } from './lib/types';
 import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent';
-import { type SecurityCheckResult, type StreamChunk } from './types.js';
+import type { SecurityCheckResult, StreamChunk } from './types.js';
 
 // Extended state for CortexAgent workflows
 export const CortexStateAnnotation = Annotation.Root({
@@ -348,7 +348,9 @@ function createAgentGraph(agent: CortexAgent) {
 /**
  * Perform security check on input
  */
-async function performSecurityCheck(messages: Array<{ content: string | unknown }>): Promise<SecurityCheckResult> {
+async function performSecurityCheck(
+	messages: Array<{ content: string | unknown }>,
+): Promise<SecurityCheckResult> {
 	// Simplified security check
 	const lastMessage = messages[messages.length - 1];
 	const content = lastMessage?.content || '';

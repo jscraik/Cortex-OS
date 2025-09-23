@@ -1,5 +1,4 @@
 import { logger } from '../logging/logger.js';
-import type { MemoryStore } from '../ports/MemoryStore.js';
 
 export interface ShutdownHandler {
 	name: string;
@@ -31,8 +30,8 @@ export class GracefulShutdown {
 				await Promise.race([
 					handler(),
 					new Promise((_, reject) =>
-						setTimeout(() => reject(new Error(`Handler ${name} timed out`)), timeout)
-					)
+						setTimeout(() => reject(new Error(`Handler ${name} timed out`)), timeout),
+					),
 				]);
 
 				logger.info({ handler: name }, 'Shutdown handler completed');

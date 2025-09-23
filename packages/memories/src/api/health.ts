@@ -1,12 +1,12 @@
 import express from 'express';
-import { healthMonitor } from '../monitoring/health.js';
 import { logger } from '../logging/logger.js';
+import { healthMonitor } from '../monitoring/health.js';
 
 const app = express();
 const PORT = process.env.MEMORIES_API_PORT || 3001;
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
 	try {
 		const health = await healthMonitor.checkAll();
 
@@ -31,7 +31,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Readiness check endpoint
-app.get('/ready', async (req, res) => {
+app.get('/ready', async (_req, res) => {
 	try {
 		const health = await healthMonitor.checkAll();
 		const ready = health.isHealthy;
@@ -50,7 +50,7 @@ app.get('/ready', async (req, res) => {
 });
 
 // Metrics endpoint
-app.get('/metrics', async (req, res) => {
+app.get('/metrics', async (_req, res) => {
 	try {
 		const { metrics } = await import('../monitoring/metrics.js');
 		const report = await metrics.report();

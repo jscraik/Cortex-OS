@@ -14,9 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface BetterSqliteLike {
 	exec: (sql: string) => unknown;
-	prepare: (
-		sql: string,
-	) => {
+	prepare: (sql: string) => {
 		run: (...params: unknown[]) => { changes?: number };
 		all: (...params: unknown[]) => unknown[];
 		get: (...params: unknown[]) => unknown;
@@ -147,10 +145,7 @@ const insertRow = (
 	return { changes: 1 } as const;
 };
 
-const updateNextRetry = (
-	params: unknown[],
-	indexes: ReturnType<typeof createIndexes>,
-) => {
+const updateNextRetry = (params: unknown[], indexes: ReturnType<typeof createIndexes>) => {
 	const [next_retry_at, id] = params as [number, string];
 	const row = indexes.byId.get(id);
 	if (!row) return { changes: 0 } as const;
@@ -158,10 +153,7 @@ const updateNextRetry = (
 	return { changes: 1 } as const;
 };
 
-const updateStatusAndError = (
-	params: unknown[],
-	indexes: ReturnType<typeof createIndexes>,
-) => {
+const updateStatusAndError = (params: unknown[], indexes: ReturnType<typeof createIndexes>) => {
 	const [status, last_error, id] = params as [string, string | null, string];
 	const row = indexes.byId.get(id);
 	if (!row) return { changes: 0 } as const;
@@ -170,10 +162,7 @@ const updateStatusAndError = (
 	return { changes: 1 } as const;
 };
 
-const updateProcessed = (
-	params: unknown[],
-	indexes: ReturnType<typeof createIndexes>,
-) => {
+const updateProcessed = (params: unknown[], indexes: ReturnType<typeof createIndexes>) => {
 	const [status, published_at, processed_at, id] = params as [string, number, number, string];
 	const row = indexes.byId.get(id);
 	if (!row) return { changes: 0 } as const;
@@ -183,10 +172,7 @@ const updateProcessed = (
 	return { changes: 1 } as const;
 };
 
-const updateRetry = (
-	params: unknown[],
-	indexes: ReturnType<typeof createIndexes>,
-) => {
+const updateRetry = (params: unknown[], indexes: ReturnType<typeof createIndexes>) => {
 	const [retry_count, last_error, status, next_retry_at, id] = params as [
 		number,
 		string,
@@ -220,10 +206,7 @@ const deleteOldProcessed = (
 	return { changes: before - store.length } as const;
 };
 
-const selectByStatus = (
-	params: unknown[],
-	indexes: ReturnType<typeof createIndexes>,
-) => {
+const selectByStatus = (params: unknown[], indexes: ReturnType<typeof createIndexes>) => {
 	const [status, limit] = params as [string, number | undefined];
 	const rows = (indexes.byStatus.get(status) || [])
 		.slice()
@@ -231,24 +214,18 @@ const selectByStatus = (
 	return typeof limit === 'number' ? rows.slice(0, limit) : rows;
 };
 
-const selectByAggregate = (
-	params: unknown[],
-	indexes: ReturnType<typeof createIndexes>,
-) => {
+const selectByAggregate = (params: unknown[], indexes: ReturnType<typeof createIndexes>) => {
 	const [aggregate_type, aggregate_id] = params as [string, string];
 	const key = `${aggregate_type}|${aggregate_id}`;
-	return (indexes.byAggregate.get(key) || [])
-		.slice()
-		.sort((a, b) => a.created_at - b.created_at);
+	return (indexes.byAggregate.get(key) || []).slice().sort((a, b) => a.created_at - b.created_at);
 };
 
-const selectReadyForRetry = (
-	params: unknown[],
-	indexes: ReturnType<typeof createIndexes>,
-) => {
+const selectReadyForRetry = (params: unknown[], indexes: ReturnType<typeof createIndexes>) => {
 	const [status, now, limit] = params as [string, number, number | undefined];
 	let rows = (indexes.byStatus.get(status) || []).filter(
-		(r) => (r.retry_count ?? 0) < (r.max_retries ?? 3) && (r.next_retry_at == null || r.next_retry_at <= now),
+		(r) =>
+			(r.retry_count ?? 0) < (r.max_retries ?? 3) &&
+			(r.next_retry_at == null || r.next_retry_at <= now),
 	);
 	rows = rows.slice().sort((a, b) => a.created_at - b.created_at);
 	return typeof limit === 'number' ? rows.slice(0, limit) : rows;
@@ -279,7 +256,8 @@ const createFallbackDb = (): BetterSqliteLike => {
 			return {
 				run: (...params: unknown[]) => {
 					if (isInsert) return insertRow(params, store, indexes);
-					if (sql.includes('SET status = ?, last_error = ?')) return updateStatusAndError(params, indexes);
+					if (sql.includes('SET status = ?, last_error = ?'))
+						return updateStatusAndError(params, indexes);
 					if (sql.includes('SET status = ?, published_at = ?, processed_at = ?'))
 						return updateProcessed(params, indexes);
 					if (sql.includes('SET retry_count = ?, last_error = ?, status = ?, next_retry_at = ?'))

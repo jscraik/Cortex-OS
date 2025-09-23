@@ -47,7 +47,7 @@ export const createBus = (
 
 	// Simple in-memory idempotency store
 	const seen = new Map<string, number>();
-	
+
 	const sweepExpired = (): void => {
 		if (idempotencyTtlMs <= 0) return;
 		const now = Date.now();
@@ -98,12 +98,12 @@ export const createBus = (
 
 	const checkBackpressure = async (msg: Envelope): Promise<void> => {
 		if (!loadManager) return;
-		
+
 		// Check if message should be dropped
 		if (loadManager.shouldDropMessage(msg)) {
 			throw new Error('Message dropped due to load shedding');
 		}
-		
+
 		// Check backpressure (might throw or throttle)
 		await loadManager.checkBackpressure(0); // Queue depth would come from transport
 	};
@@ -117,11 +117,11 @@ export const createBus = (
 	const authenticateMessage = async (msg: Envelope): Promise<void> => {
 		if (requireAuth && authenticator) {
 			const authContext = await authenticator.authenticate(msg);
-			
+
 			if (!authenticator.authorize(authContext, msg.type)) {
 				throw new Error(`Insufficient permissions for ${msg.type}`);
 			}
-			
+
 			// Add auth context to message headers for handlers
 			msg.headers = {
 				...msg.headers,
@@ -154,7 +154,7 @@ export const createBus = (
 		await checkBackpressure(validatedMsg);
 		validateInput(validatedMsg);
 		await authenticateMessage(validatedMsg);
-		
+
 		if (schemaRegistry) {
 			validateAgainstSchema(validatedMsg);
 		}
@@ -175,10 +175,10 @@ export const createBus = (
 		return transport.subscribe([...map.keys()], async (m: Envelope) => {
 			try {
 				validate(m);
-				
+
 				// Input validation
 				validateInput(m);
-				
+
 				// Idempotency check
 				if (m.id && hasSeen(m.id)) {
 					busMetrics().incDuplicates();
@@ -186,7 +186,7 @@ export const createBus = (
 				}
 
 				await authenticateMessage(m);
-				
+
 				const handler = map.get(m.type);
 				if (handler) {
 					addTraceContext(m);
@@ -201,4 +201,4 @@ export const createBus = (
 	};
 
 	return { publish, bind };
-}
+};

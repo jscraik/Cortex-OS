@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Memory } from '../../src/domain/types.js';
 import { createMemoryStoreHandler } from '../../src/mcp/handlers.js';
 import type { MemoryStore } from '../../src/ports/MemoryStore.js';
-import type { Memory } from '../../src/domain/types.js';
 
 describe('MemoryStoreHandler', () => {
 	let mockStore: vi.Mocked<MemoryStore>;
@@ -49,7 +49,7 @@ describe('MemoryStoreHandler', () => {
 					text: 'Test memory',
 					tags: ['test'],
 				}),
-				'test-namespace'
+				'test-namespace',
 			);
 		});
 	});
@@ -90,7 +90,7 @@ describe('MemoryStoreHandler', () => {
 					text: 'test query',
 					topK: 10,
 				},
-				'test-namespace'
+				'test-namespace',
 			);
 		});
 
@@ -131,7 +131,7 @@ describe('MemoryStoreHandler', () => {
 					id: 'test-id',
 					text: 'Updated text',
 				}),
-				'test-namespace'
+				'test-namespace',
 			);
 		});
 
@@ -142,7 +142,7 @@ describe('MemoryStoreHandler', () => {
 				handler.update({
 					id: 'non-existent',
 					text: 'Updated text',
-				})
+				}),
 			).rejects.toThrow('Memory with ID non-existent not found');
 		});
 	});

@@ -6,8 +6,6 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { RegistryEvent } from '@cortex-os/contracts';
-import { RegistryEvent } from '@cortex-os/contracts';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 const SEED_SERVERS_DIR = path.join(__dirname, '.');

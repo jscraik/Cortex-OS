@@ -7,8 +7,12 @@
 
 import { randomUUID } from 'node:crypto';
 import { createAgentsBusIntegration } from './AgentsBusIntegration.js';
+import {
+	ProductionErrorHandler,
+	ResourceManager,
+	setupErrorBoundary,
+} from './lib/error-handling.js';
 import { createMasterAgentGraph, type SubAgentConfig } from './MasterAgent.js';
-import { ProductionErrorHandler, ResourceManager, setupErrorBoundary } from './lib/error-handling.js';
 
 // Define specialized sub-agents following your architecture diagram
 const subAgents: SubAgentConfig[] = [

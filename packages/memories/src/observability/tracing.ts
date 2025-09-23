@@ -1,7 +1,7 @@
-import { trace, context, SpanStatusCode, diag } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 // Initialize tracing only if enabled
 if (process.env.OTEL_TRACING_ENABLED === 'true') {
@@ -37,7 +37,7 @@ class ConsoleSpanExporter {
 export function traced<T>(
 	operationName: string,
 	fn: () => Promise<T>,
-	attributes?: Record<string, unknown>
+	attributes?: Record<string, unknown>,
 ): Promise<T> {
 	if (process.env.OTEL_TRACING_ENABLED !== 'true') {
 		return fn();
@@ -53,7 +53,7 @@ export function traced<T>(
 		} catch (error) {
 			span.setStatus({
 				code: SpanStatusCode.ERROR,
-				message: error instanceof Error ? error.message : 'Unknown error'
+				message: error instanceof Error ? error.message : 'Unknown error',
 			});
 			span.recordException(error instanceof Error ? error : new Error(String(error)));
 			throw error;
@@ -63,10 +63,7 @@ export function traced<T>(
 	});
 }
 
-export function createSpan(
-	operationName: string,
-	attributes?: Record<string, unknown>
-) {
+export function createSpan(operationName: string, attributes?: Record<string, unknown>) {
 	if (process.env.OTEL_TRACING_ENABLED !== 'true') {
 		return {
 			end: () => {},

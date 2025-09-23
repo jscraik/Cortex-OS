@@ -185,10 +185,7 @@ export class AgentToolkitMCPTools {
 	private readonly agentToolkit: ReturnType<typeof createAgentToolkit>;
 	private eventBus?: { emit: (event: MCPEvent) => void };
 
-		constructor(
-			toolsPath?: string,
-			eventBus?: { emit: (event: MCPEvent) => void },
-		) {
+	constructor(toolsPath?: string, eventBus?: { emit: (event: MCPEvent) => void }) {
 		this.executionHistory = new Map();
 		this.agentToolkit = createAgentToolkit(toolsPath);
 		this.eventBus = eventBus;
@@ -205,24 +202,22 @@ export class AgentToolkitMCPTools {
 				pattern: z.string().min(1).describe('Search pattern (regex supported)'),
 				path: z.string().min(1).describe('Path to search in (file or directory)'),
 			}),
-				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-					const correlationId = `search_${Date.now()}_${Math.random()
-						.toString(36)
-						.slice(2, 11)}`;
+			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+				const correlationId = `search_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
 				try {
-						const validInput = this.search().inputSchema.parse(input) as AgentToolkitSearchInput;
+					const validInput = this.search().inputSchema.parse(input) as AgentToolkitSearchInput;
 
 					// Emit execution started event to A2A bus
 					if (this.eventBus) {
-							const parameters: Record<string, unknown> = { ...validInput };
-							const startedEvent = createTypedEvent.executionStarted({
+						const parameters: Record<string, unknown> = { ...validInput };
+						const startedEvent = createTypedEvent.executionStarted({
 							executionId,
 							toolName: 'ripgrep',
 							toolType: 'search',
-								parameters,
+							parameters,
 							initiatedBy: 'agents-package',
 							startedAt: timestamp,
 						});
@@ -231,15 +226,12 @@ export class AgentToolkitMCPTools {
 
 					// Execute real agent-toolkit search
 					const startTime = Date.now();
-						const result = await this.agentToolkit.search(
-							validInput.pattern,
-							validInput.path,
-						);
+					const result = await this.agentToolkit.search(validInput.pattern, validInput.path);
 					const duration = Date.now() - startTime;
 
 					// Emit search results event to A2A bus
 					if (this.eventBus) {
-							const resultsEvent = createTypedEvent.searchResults({
+						const resultsEvent = createTypedEvent.searchResults({
 							executionId,
 							query: validInput.pattern,
 							searchType: 'ripgrep',
@@ -296,10 +288,10 @@ export class AgentToolkitMCPTools {
 				pattern: z.string().min(1).describe('Search pattern for comprehensive matching'),
 				path: z.string().min(1).describe('Root path for multi-pattern search'),
 			}),
-				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-					const correlationId = `multi_search_${Date.now()}_${Math.random()
-						.toString(36)
-						.slice(2, 11)}`;
+			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+				const correlationId = `multi_search_${Date.now()}_${Math.random()
+					.toString(36)
+					.slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -388,10 +380,8 @@ export class AgentToolkitMCPTools {
 				replace: z.string().describe('Pattern to replace with (can be empty for deletion)'),
 				path: z.string().min(1).describe('Path to file or directory to modify'),
 			}),
-				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-					const correlationId = `codemod_${Date.now()}_${Math.random()
-						.toString(36)
-						.slice(2, 11)}`;
+			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+				const correlationId = `codemod_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -421,7 +411,9 @@ export class AgentToolkitMCPTools {
 
 					// Calculate modification statistics
 					const filesChanged =
-						result.results?.map((r: { file: string; changes: number; preview?: string }) => r.file) || [];
+						result.results?.map(
+							(r: { file: string; changes: number; preview?: string }) => r.file,
+						) || [];
 					const totalChanges = result.results?.reduce((sum, r) => sum + r.changes, 0) || 0;
 
 					// Emit code modification event to A2A bus
@@ -484,10 +476,8 @@ export class AgentToolkitMCPTools {
 					.min(1)
 					.describe('Files to validate (relative or absolute paths)'),
 			}),
-				handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-					const correlationId = `validate_${Date.now()}_${Math.random()
-						.toString(36)
-						.slice(2, 11)}`;
+			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
+				const correlationId = `validate_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -616,10 +606,7 @@ export class AgentToolkitMCPTools {
 
 				try {
 					const validInput = this.search().inputSchema.parse(request);
-					const result = await this.agentToolkit.search(
-						validInput.pattern,
-						validInput.path,
-					);
+					const result = await this.agentToolkit.search(validInput.pattern, validInput.path);
 
 					this.executionHistory.set(correlationId, {
 						timestamp: new Date(),

@@ -1,5 +1,3 @@
-import { ConfigurationError } from '../errors.js';
-
 export interface HealthStatus {
 	healthy: boolean;
 	latency?: number;

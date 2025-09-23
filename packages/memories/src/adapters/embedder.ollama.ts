@@ -49,7 +49,7 @@ export class OllamaEmbedder implements Embedder {
 				threshold: 5,
 				timeout: 30000,
 				resetTimeout: 60000,
-			}
+			},
 		);
 	}
 
@@ -63,7 +63,9 @@ export class OllamaEmbedder implements Embedder {
 				throw new Error(`Ollama health check failed: ${response.status}`);
 			}
 		} catch (error) {
-			throw new Error(`Ollama service unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Ollama service unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			);
 		}
 	}
 }

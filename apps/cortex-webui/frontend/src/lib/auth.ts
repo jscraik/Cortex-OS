@@ -1,153 +1,154 @@
-import { createAuthClient } from "@better-auth/react";
+import { createAuthClient } from '@better-auth/react';
 
 // Create Better Auth client
 export const authClient = createAuthClient({
-  baseURL: process.env.NODE_ENV === "production"
-    ? "https://your-domain.com/api/auth"
-    : "http://localhost:3001/api/auth",
+	baseURL:
+		process.env.NODE_ENV === 'production'
+			? 'https://your-domain.com/api/auth'
+			: 'http://localhost:3001/api/auth',
 
-  // Configure plugins
-  plugins: {
-    // Add any additional plugins here
-  },
+	// Configure plugins
+	plugins: {
+		// Add any additional plugins here
+	},
 });
 
 // Authentication hooks
 export const useAuth = () => {
-  const data = authClient.useSession();
-  const user = data.data?.user;
-  const session = data.data?.session;
-  const isPending = data.isPending;
-  const error = data.error;
+	const data = authClient.useSession();
+	const user = data.data?.user;
+	const session = data.data?.session;
+	const isPending = data.isPending;
+	const error = data.error;
 
-  return {
-    user,
-    session,
-    isAuthenticated: !!user && !!session,
-    isPending,
-    error,
-    // Authentication actions
-    signIn: authClient.signIn,
-    signUp: authClient.signUp,
-    signOut: authClient.signOut,
-    // OAuth methods
-    signInWithOAuth: authClient.signIn.oauth,
-    // Session management
-    refreshSession: authClient.refreshSession,
-    // Password management
-    updatePassword: authClient.updatePassword,
-    forgotPassword: authClient.forgotPassword,
-    resetPassword: authClient.resetPassword,
-    // Account management
-    updateProfile: authClient.updateProfile,
-    linkAccount: authClient.linkAccount,
-    unlinkAccount: authClient.unlinkAccount,
-  };
+	return {
+		user,
+		session,
+		isAuthenticated: !!user && !!session,
+		isPending,
+		error,
+		// Authentication actions
+		signIn: authClient.signIn,
+		signUp: authClient.signUp,
+		signOut: authClient.signOut,
+		// OAuth methods
+		signInWithOAuth: authClient.signIn.oauth,
+		// Session management
+		refreshSession: authClient.refreshSession,
+		// Password management
+		updatePassword: authClient.updatePassword,
+		forgotPassword: authClient.forgotPassword,
+		resetPassword: authClient.resetPassword,
+		// Account management
+		updateProfile: authClient.updateProfile,
+		linkAccount: authClient.linkAccount,
+		unlinkAccount: authClient.unlinkAccount,
+	};
 };
 
 // OAuth provider configuration
 export const OAUTH_PROVIDERS = [
-  {
-    id: "github",
-    name: "GitHub",
-    icon: "github",
-    color: "#24292e",
-  },
-  {
-    id: "google",
-    name: "Google",
-    icon: "google",
-    color: "#4285f4",
-  },
-  {
-    id: "discord",
-    name: "Discord",
-    icon: "discord",
-    color: "#5865f2",
-  },
-  {
-    id: "microsoft",
-    name: "Microsoft",
-    icon: "microsoft",
-    color: "#0078d4",
-  },
+	{
+		id: 'github',
+		name: 'GitHub',
+		icon: 'github',
+		color: '#24292e',
+	},
+	{
+		id: 'google',
+		name: 'Google',
+		icon: 'google',
+		color: '#4285f4',
+	},
+	{
+		id: 'discord',
+		name: 'Discord',
+		icon: 'discord',
+		color: '#5865f2',
+	},
+	{
+		id: 'microsoft',
+		name: 'Microsoft',
+		icon: 'microsoft',
+		color: '#0078d4',
+	},
 ];
 
 // Helper functions
 export const getOAuthProvider = (id: string) => {
-  return OAUTH_PROVIDERS.find((provider) => provider.id === id);
+	return OAUTH_PROVIDERS.find((provider) => provider.id === id);
 };
 
 // Authentication utilities
 export const authUtils = {
-  /**
-   * Check if user has specific role
-   */
-  hasRole: (user: any, role: string): boolean => {
-    return user?.role === role;
-  },
+	/**
+	 * Check if user has specific role
+	 */
+	hasRole: (user: any, role: string): boolean => {
+		return user?.role === role;
+	},
 
-  /**
-   * Check if user has specific permission
-   */
-  hasPermission: (user: any, permission: string): boolean => {
-    return user?.permissions?.includes(permission) || false;
-  },
+	/**
+	 * Check if user has specific permission
+	 */
+	hasPermission: (user: any, permission: string): boolean => {
+		return user?.permissions?.includes(permission) || false;
+	},
 
-  /**
-   * Format user display name
-   */
-  getDisplayName: (user: any): string => {
-    if (!user) return "";
-    return user.name || user.email || "Unknown User";
-  },
+	/**
+	 * Format user display name
+	 */
+	getDisplayName: (user: any): string => {
+		if (!user) return '';
+		return user.name || user.email || 'Unknown User';
+	},
 
-  /**
-   * Get user avatar URL
-   */
-  getAvatarUrl: (user: any): string | null => {
-    return user?.image || user?.avatar || null;
-  },
+	/**
+	 * Get user avatar URL
+	 */
+	getAvatarUrl: (user: any): string | null => {
+		return user?.image || user?.avatar || null;
+	},
 
-  /**
-   * Check if email is verified
-   */
-  isEmailVerified: (user: any): boolean => {
-    return user?.emailVerified || false;
-  },
+	/**
+	 * Check if email is verified
+	 */
+	isEmailVerified: (user: any): boolean => {
+		return user?.emailVerified || false;
+	},
 };
 
 // Authentication error types
 export const AUTH_ERRORS = {
-  UNAUTHORIZED: "UNAUTHORIZED",
-  INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
-  EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
-  ACCOUNT_LOCKED: "ACCOUNT_LOCKED",
-  RATE_LIMITED: "RATE_LIMITED",
-  SESSION_EXPIRED: "SESSION_EXPIRED",
-  OAUTH_ERROR: "OAUTH_ERROR",
-  NETWORK_ERROR: "NETWORK_ERROR",
+	UNAUTHORIZED: 'UNAUTHORIZED',
+	INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+	EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
+	ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
+	RATE_LIMITED: 'RATE_LIMITED',
+	SESSION_EXPIRED: 'SESSION_EXPIRED',
+	OAUTH_ERROR: 'OAUTH_ERROR',
+	NETWORK_ERROR: 'NETWORK_ERROR',
 } as const;
 
 export type AuthErrorType = keyof typeof AUTH_ERRORS;
 
 // Authentication event handlers
 export const createAuthEventHandlers = () => {
-  return {
-    onSuccess: (data: any) => {
-      console.log("Authentication successful:", data);
-      // You can emit custom events here
-      window.dispatchEvent(new CustomEvent("auth:success", { detail: data }));
-    },
-    onError: (error: any) => {
-      console.error("Authentication error:", error);
-      window.dispatchEvent(new CustomEvent("auth:error", { detail: error }));
-    },
-    onTransition: (state: string) => {
-      console.log("Auth state transition:", state);
-      window.dispatchEvent(new CustomEvent("auth:transition", { detail: state }));
-    },
-  };
+	return {
+		onSuccess: (data: any) => {
+			console.log('Authentication successful:', data);
+			// You can emit custom events here
+			window.dispatchEvent(new CustomEvent('auth:success', { detail: data }));
+		},
+		onError: (error: any) => {
+			console.error('Authentication error:', error);
+			window.dispatchEvent(new CustomEvent('auth:error', { detail: error }));
+		},
+		onTransition: (state: string) => {
+			console.log('Auth state transition:', state);
+			window.dispatchEvent(new CustomEvent('auth:transition', { detail: state }));
+		},
+	};
 };
 
 // Default export

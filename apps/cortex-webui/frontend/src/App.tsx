@@ -3,6 +3,7 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useNavigate } from 'react-router-dom';
+import AuthProvider from './contexts/AuthContext';
 import useAuth from './hooks/useAuth';
 import useConversations from './hooks/useConversations';
 import useMessages from './hooks/useMessages';
@@ -15,7 +16,6 @@ import RegisterPage from './pages/RegisterPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SettingsPage from './pages/SettingsPage';
 import { applyMotionPreferences, applyTheme, getEffectiveTheme } from './utils/theme';
-import AuthProvider from './contexts/AuthContext';
 
 const AppContent: React.FC = () => {
 	const navigate = useNavigate();
@@ -94,14 +94,8 @@ const AppContent: React.FC = () => {
 						<RegisterPage onRegister={handleRegister} loading={auth.loading} error={auth.error} />
 					}
 				/>
-				<Route
-					path="/forgot-password"
-					element={<ForgotPasswordPage />}
-				/>
-				<Route
-					path="/reset-password"
-					element={<ResetPasswordPage />}
-				/>
+				<Route path="/forgot-password" element={<ForgotPasswordPage />} />
+				<Route path="/reset-password" element={<ResetPasswordPage />} />
 				<Route
 					path="/dashboard"
 					element={

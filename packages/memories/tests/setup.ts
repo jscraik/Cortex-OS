@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 // Mock environment variables for testing
 process.env.NODE_ENV = 'test';
@@ -21,8 +21,7 @@ export const testUtils = {
 		...overrides,
 	}),
 
-	createTestVector: (dimensions = 384) =>
-		Array.from({ length: dimensions }, () => Math.random()),
+	createTestVector: (dimensions = 384) => Array.from({ length: dimensions }, () => Math.random()),
 };
 
 // Cleanup after each test

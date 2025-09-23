@@ -1,5 +1,5 @@
+import type { AuthManager } from './auth-manager.js';
 import type { ApiResponse, AuthMethod, HttpClient, RequestOptions, RestApiError } from './types.js';
-import { AuthManager } from './auth-manager.js';
 
 /**
  * HTTP client implementation using fetch API

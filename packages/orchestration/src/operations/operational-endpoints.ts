@@ -306,6 +306,7 @@ export class OperationalEndpoints {
 		next();
 	}
 
+	
 	/**
 	 * Get the Express router
 	 */

@@ -24,7 +24,7 @@ export class MetricsCollector {
 		if (!this.histograms.has(metric)) {
 			this.histograms.set(metric, []);
 		}
-		this.histograms.get(metric)!.push(duration);
+		this.histograms.get(metric)?.push(duration);
 	}
 
 	setGauge(metric: string, value: number): void {
@@ -35,7 +35,9 @@ export class MetricsCollector {
 		return this.counters.get(metric) || 0;
 	}
 
-	getHistogramStats(metric: string): { min: number; max: number; avg: number; count: number } | null {
+	getHistogramStats(
+		metric: string,
+	): { min: number; max: number; avg: number; count: number } | null {
 		const values = this.histograms.get(metric);
 		if (!values || values.length === 0) {
 			return null;
@@ -83,10 +85,7 @@ export class MetricsCollector {
 export const metrics = new MetricsCollector();
 
 // Helper function to measure execution time
-export async function measure<T>(
-	metric: string,
-	fn: () => Promise<T>
-): Promise<T> {
+export async function measure<T>(metric: string, fn: () => Promise<T>): Promise<T> {
 	const start = Date.now();
 	try {
 		const result = await fn();

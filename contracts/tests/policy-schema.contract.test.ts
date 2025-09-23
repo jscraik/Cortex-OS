@@ -1,7 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { PolicySchema } from '@cortex-os/contracts';
 
 // Contract Stability: Guard against accidental breaking changes to required top-level keys.
 // If a required field is intentionally changed/removed, update this list *and* document migration.

@@ -1,5 +1,5 @@
 {
-  "name": "cortex-webui",
+  "name": "@apps/cortex-webui",
   "version": "1.0.0",
   "description": "A modern web interface for AI models with real-time chat capabilities",
   "private": true,

@@ -1,6 +1,6 @@
-import type { MemoryStore } from '../ports/MemoryStore.js';
-import type { Memory } from '../domain/types.js';
 import { randomUUID } from 'node:crypto';
+import type { Memory } from '../domain/types.js';
+import type { MemoryStore } from '../ports/MemoryStore.js';
 
 /**
  * MCP handlers that integrate with MemoryStore implementations
@@ -63,12 +63,7 @@ export class MemoryStoreHandler {
 	/**
 	 * Search memories by text
 	 */
-	async search(params: {
-		query: string;
-		limit?: number;
-		kind?: string;
-		tags?: string[];
-	}): Promise<{
+	async search(params: { query: string; limit?: number; kind?: string; tags?: string[] }): Promise<{
 		query: string;
 		results: Array<Memory & { score?: number }>;
 		totalFound: number;
@@ -79,13 +74,11 @@ export class MemoryStoreHandler {
 				topK: params.limit || 10,
 				filterTags: params.tags,
 			},
-			this.ctx.namespace
+			this.ctx.namespace,
 		);
 
 		// Filter by kind if specified
-		const filtered = params.kind
-			? results.filter(r => r.kind === params.kind)
-			: results;
+		const filtered = params.kind ? results.filter((r) => r.kind === params.kind) : results;
 
 		return {
 			query: params.query,
@@ -164,20 +157,18 @@ export class MemoryStoreHandler {
 		const items = await this.ctx.store.list(
 			params.namespace || this.ctx.namespace,
 			params.limit || 20,
-			offset
+			offset,
 		);
 
-		const filtered = params.tags && params.tags.length > 0
-			? items.filter(item =>
-				params.tags!.some(tag => item.tags?.includes(tag))
-			)
-			: items;
+		const filtered =
+			params.tags && params.tags.length > 0
+				? items.filter((item) => params.tags?.some((tag) => item.tags?.includes(tag)))
+				: items;
 
 		return {
 			items: filtered.slice(0, params.limit || 20),
-			nextCursor: filtered.length > (params.limit || 20)
-				? String(offset + (params.limit || 20))
-				: undefined,
+			nextCursor:
+				filtered.length > (params.limit || 20) ? String(offset + (params.limit || 20)) : undefined,
 		};
 	}
 
@@ -222,6 +213,9 @@ export class MemoryStoreHandler {
 	}
 }
 
-export function createMemoryStoreHandler(store: MemoryStore, namespace?: string): MemoryStoreHandler {
+export function createMemoryStoreHandler(
+	store: MemoryStore,
+	namespace?: string,
+): MemoryStoreHandler {
 	return new MemoryStoreHandler({ store, namespace });
 }

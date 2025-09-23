@@ -14,7 +14,7 @@ export const ErrorSeverity = {
 	CRITICAL: 'critical',
 } as const;
 
-export type ErrorSeverityType = typeof ErrorSeverity[keyof typeof ErrorSeverity];
+export type ErrorSeverityType = (typeof ErrorSeverity)[keyof typeof ErrorSeverity];
 
 // Error categories
 export const ErrorCategory = {
@@ -26,7 +26,7 @@ export const ErrorCategory = {
 	UNKNOWN: 'unknown',
 } as const;
 
-export type ErrorCategoryType = typeof ErrorCategory[keyof typeof ErrorCategory];
+export type ErrorCategoryType = (typeof ErrorCategory)[keyof typeof ErrorCategory];
 
 // Error schema for validation
 export const AgentErrorSchema = z.object({
@@ -206,9 +206,7 @@ export class ProductionErrorHandler implements ErrorHandler {
 
 	shouldExit(error: AgentError): boolean {
 		return (
-			error.severity === ErrorSeverity.CRITICAL &&
-			this.exitOnCritical &&
-			!this.isRetryable(error)
+			error.severity === ErrorSeverity.CRITICAL && this.exitOnCritical && !this.isRetryable(error)
 		);
 	}
 }

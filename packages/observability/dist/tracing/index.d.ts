@@ -16,11 +16,15 @@ export declare function startConsoleViewer(serviceName: string, version?: string
 /**
  * Create a new span with ULID context
  */
-export declare function withSpan<T>(name: string, fn: (runId: ULID, traceContext: TraceContext) => Promise<T>, options?: {
-    runId?: ULID;
-    kind?: SpanKind;
-    attributes?: Record<string, string | number | boolean>;
-}): Promise<T>;
+export declare function withSpan<T>(
+	name: string,
+	fn: (runId: ULID, traceContext: TraceContext) => Promise<T>,
+	options?: {
+		runId?: ULID;
+		kind?: SpanKind;
+		attributes?: Record<string, string | number | boolean>;
+	},
+): Promise<T>;
 /**
  * Add ULID to active span
  */

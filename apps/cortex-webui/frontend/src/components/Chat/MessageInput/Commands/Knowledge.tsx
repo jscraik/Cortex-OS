@@ -9,7 +9,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { validation } from '~/utils/validation';
 
 interface KnowledgeItem {
 	id: string;

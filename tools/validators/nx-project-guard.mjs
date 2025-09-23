@@ -60,7 +60,7 @@ function normalizeCommand(cmd, options, issues) {
 	}
 	if (s.includes(LEGACY_ARGS)) {
 		issues.push(`command contains ${LEGACY_ARGS} -> remove and set forwardAllArgs`);
-		s = s.replaceAll(' ' + LEGACY_ARGS, '').replaceAll(LEGACY_ARGS, '');
+		s = s.replaceAll(` ${LEGACY_ARGS}`, '').replaceAll(LEGACY_ARGS, '');
 		if (!options || typeof options !== 'object') options = {};
 		if (options.forwardAllArgs !== true) options.forwardAllArgs = true;
 	}

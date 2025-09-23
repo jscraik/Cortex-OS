@@ -20,7 +20,10 @@ const createMessageSchema = z.object({
 	role: z.enum(['user', 'assistant', 'system']),
 });
 
-export const getMessagesByConversationId = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getMessagesByConversationId = async (
+	req: AuthRequest,
+	res: Response,
+): Promise<void> => {
 	try {
 		if (!req.user) {
 			throw new HttpError(401, 'Unauthorized');

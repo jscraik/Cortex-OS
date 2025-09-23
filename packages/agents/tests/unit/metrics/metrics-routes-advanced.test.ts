@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricsCollector } from '../../../src/monitoring/metrics';
 
-// Mock auth middleware  
+// Mock auth middleware
 vi.mock('../../../src/auth/middleware');
 
 // Import mocked module

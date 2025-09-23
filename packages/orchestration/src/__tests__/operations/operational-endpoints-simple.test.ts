@@ -5,7 +5,7 @@
 
 import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { OperationalEndpoints } from '../../operations/operational-endpoints.js';
+import { OperationalEndpoints } from '../../operations/operational-endpoints';
 
 // Create minimal mocks for dependencies
 const mockHealthChecker = {

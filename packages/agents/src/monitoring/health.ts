@@ -48,9 +48,9 @@ export class HealthMonitor {
 		this.config = config;
 	}
 	async getHealth(): Promise<SystemHealth> {
-			// Access config to satisfy unused property lint in placeholder implementation
-			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-			this.config?.checkInterval;
+		// Access config to satisfy unused property lint in placeholder implementation
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		this.config?.checkInterval;
 		return {
 			status: 'healthy',
 			timestamp: new Date().toISOString(),
@@ -64,10 +64,10 @@ export class HealthMonitor {
 			},
 		};
 	}
-				async getComponentHealth(componentName: string): Promise<ComponentHealth | null> {
-						// Placeholder: in a real implementation, return component-specific health
-						// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-						componentName;
-					return null;
-				}
+	async getComponentHealth(componentName: string): Promise<ComponentHealth | null> {
+		// Placeholder: in a real implementation, return component-specific health
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		componentName;
+		return null;
+	}
 }

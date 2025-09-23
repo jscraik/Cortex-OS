@@ -5,13 +5,13 @@ import {
 	OutboxMessageStatus,
 	type OutboxRepository,
 } from '@cortex-os/a2a-contracts/outbox-types';
-import { withSpan } from '@cortex-os/telemetry';
 import { DeadLetterQueue, InMemoryDeadLetterStore } from '@cortex-os/a2a-core/dlq';
 import {
 	createReliableOutboxProcessor,
 	EnhancedOutbox,
 	ReliableOutboxPublisher,
 } from '@cortex-os/a2a-core/outbox';
+import { withSpan } from '@cortex-os/telemetry';
 
 /**
  * A2A Outbox Integration

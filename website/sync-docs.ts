@@ -40,7 +40,10 @@ const normalizeReferenceLinks = (s: string): string =>
 const titleFromFilename = (filename: string, displayName: string): string =>
 	filename === 'README.md'
 		? displayName
-		: filename.replace(/\.md$/, '').replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+		: filename
+				.replace(/\.md$/, '')
+				.replace(/-/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase());
 const createFrontmatter = (filename: string, displayName: string): string =>
 	`---\ntitle: ${titleFromFilename(filename, displayName)}\nsidebar_label: ${titleFromFilename(filename, displayName)}\n---\n\n`;
 
@@ -80,9 +83,11 @@ const processMarkdownFile = async (
 	content = normalizeReferenceLinks(content);
 	if (!opts?.dryRun) await fs.writeFile(targetPath, content);
 	const report: SanitizationReport = {
-		fencesRepaired: (before.match(/``[^`]/g) || []).length - (content.match(/``[^`]/g) || []).length,
+		fencesRepaired:
+			(before.match(/``[^`]/g) || []).length - (content.match(/``[^`]/g) || []).length,
 		genericsEscaped: (before.match(/\w+<[^>]+>/g) || []).filter((m) => !content.includes(m)).length,
-		pseudoJsxEscaped: (before.match(/<[^>]*\/?>/g) || []).filter((m) => !content.includes(m)).length,
+		pseudoJsxEscaped: (before.match(/<[^>]*\/?>/g) || []).filter((m) => !content.includes(m))
+			.length,
 		htmlTagsEscaped: 0,
 		spuriousFencesRepaired: 0,
 		totalChanges: 0,
@@ -199,7 +204,12 @@ const syncPackageDocs = async (
 	try {
 		await fs.access(sourceDir);
 	} catch {
-		return { success: false, packageName, fileCount: 0, error: `No docs for ${category}/${packageName}` };
+		return {
+			success: false,
+			packageName,
+			fileCount: 0,
+			error: `No docs for ${category}/${packageName}`,
+		};
 	}
 	await ensureDir(targetDir, { dryRun: opts?.dryRun });
 	const existingTargetFiles = await fs.readdir(targetDir).catch(() => [] as string[]);
@@ -313,6 +323,3 @@ export {
 	sanitizeMdxContent,
 	shouldSkipBaseFile,
 };
- 
-
-

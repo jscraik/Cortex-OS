@@ -6,15 +6,15 @@
  * @status TDD-DRIVEN
  */
 
+import { randomUUID } from 'node:crypto';
 import type {
 	A2AMessage,
 	AgentCapabilities,
 	AgentCard,
 	AgentSkill,
 } from '@cortex-os/a2a-contracts';
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { AgentListResponse, AgentStatus, SystemStatus, TaskDelegation } from './types.js';
+import type { AgentListResponse, AgentStatus, SystemStatus, TaskDelegation } from './types.js';
 
 // Define TransportProtocol enum locally
 enum TransportProtocol {

@@ -31,7 +31,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, loading, error 
 			} else {
 				await authRegister(name, email, password);
 			}
-		} catch (error) {
+		} catch (_error) {
 			// Error is handled by the context
 		}
 	};

@@ -2,48 +2,43 @@ import { useNavigate } from 'react-router-dom';
 import ForgotPasswordForm from '../components/Auth/ForgotPasswordForm';
 
 interface ForgotPasswordPageProps {
-  onSubmit?: (email: string) => void;
-  loading?: boolean;
-  error?: string | null;
-  success?: boolean;
+	onSubmit?: (email: string) => void;
+	loading?: boolean;
+	error?: string | null;
+	success?: boolean;
 }
 
 function ForgotPasswordPage({ onSubmit, loading, error, success }: ForgotPasswordPageProps) {
-  const navigate = useNavigate();
+	const navigate = useNavigate();
 
-  const handleBackToLogin = () => {
-    navigate('/login');
-  };
+	const handleBackToLogin = () => {
+		navigate('/login');
+	};
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset Your Password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            We'll send you a link to reset your password
-          </p>
-        </div>
-        <ForgotPasswordForm
-          onSubmit={onSubmit}
-          loading={loading}
-          error={error}
-          success={success}
-        />
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={handleBackToLogin}
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
-            Back to Login
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="min-h-screen flex items-center justify-center bg-gray-50">
+			<div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow">
+				<div>
+					<h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+						Reset Your Password
+					</h2>
+					<p className="mt-2 text-center text-sm text-gray-600">
+						We'll send you a link to reset your password
+					</p>
+				</div>
+				<ForgotPasswordForm onSubmit={onSubmit} loading={loading} error={error} success={success} />
+				<div className="text-center">
+					<button
+						type="button"
+						onClick={handleBackToLogin}
+						className="font-medium text-blue-600 hover:text-blue-500"
+					>
+						Back to Login
+					</button>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export default ForgotPasswordPage;

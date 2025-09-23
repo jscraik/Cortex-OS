@@ -46,7 +46,7 @@
     "@opentelemetry/sdk-node": "^0.45.0",
     "axios": "^1.6.0",
     "better-sqlite3": "^12.2.0",
-    "circuit-breaker-js": "^0.0.2",
+    "circuit-breaker-js": "^0.0.1",
     "commander": "^12.1.0",
     "p-queue": "^7.4.1",
     "pino": "^8.16.0",

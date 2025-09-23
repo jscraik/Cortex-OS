@@ -1,14 +1,12 @@
-import { sql } from 'drizzle-orm';
-import { betterSqlite3 } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+import type Database from 'better-sqlite3';
 
 // Migration to create Better Auth compatible schema
 export const up = async (db: Database) => {
-  // Enable foreign keys
-  db.pragma('foreign_keys = ON');
+	// Enable foreign keys
+	db.pragma('foreign_keys = ON');
 
-  // Create user table
-  await db.exec(`
+	// Create user table
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS user (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
@@ -21,8 +19,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create session table
-  await db.exec(`
+	// Create session table
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS session (
       id TEXT PRIMARY KEY,
       session_token TEXT NOT NULL UNIQUE,
@@ -36,8 +34,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create account table for OAuth providers
-  await db.exec(`
+	// Create account table for OAuth providers
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS account (
       id TEXT PRIMARY KEY,
       provider_id TEXT NOT NULL,
@@ -58,8 +56,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create verification table for email verification and password reset
-  await db.exec(`
+	// Create verification table for email verification and password reset
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS verification (
       id TEXT PRIMARY KEY,
       identifier TEXT NOT NULL,
@@ -70,8 +68,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create organization table (for multi-tenancy)
-  await db.exec(`
+	// Create organization table (for multi-tenancy)
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS organization (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -83,8 +81,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create organization membership table
-  await db.exec(`
+	// Create organization membership table
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS organization_member (
       id TEXT PRIMARY KEY,
       organization_id TEXT NOT NULL,
@@ -98,8 +96,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create API key table
-  await db.exec(`
+	// Create API key table
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS api_key (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -115,8 +113,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create passkey table for WebAuthn
-  await db.exec(`
+	// Create passkey table for WebAuthn
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS passkey (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -133,8 +131,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create two-factor table
-  await db.exec(`
+	// Create two-factor table
+	await db.exec(`
     CREATE TABLE IF NOT EXISTS two_factor (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -148,8 +146,8 @@ export const up = async (db: Database) => {
     );
   `);
 
-  // Create indexes for better performance
-  await db.exec(`
+	// Create indexes for better performance
+	await db.exec(`
     CREATE INDEX IF NOT EXISTS idx_user_email ON user(email);
     CREATE INDEX IF NOT EXISTS idx_session_token ON session(session_token);
     CREATE INDEX IF NOT EXISTS idx_session_user_id ON session(user_id);
@@ -166,31 +164,31 @@ export const up = async (db: Database) => {
     CREATE INDEX IF NOT EXISTS idx_2fa_user_id ON two_factor(user_id);
   `);
 
-  console.log('Better Auth schema migration completed');
+	console.log('Better Auth schema migration completed');
 };
 
 export const down = async (db: Database) => {
-  // Drop tables in reverse order to respect foreign keys
-  await db.exec(`DROP TABLE IF EXISTS two_factor;`);
-  await db.exec(`DROP TABLE IF EXISTS passkey;`);
-  await db.exec(`DROP TABLE IF EXISTS api_key;`);
-  await db.exec(`DROP TABLE IF EXISTS organization_member;`);
-  await db.exec(`DROP TABLE IF EXISTS organization;`);
-  await db.exec(`DROP TABLE IF EXISTS verification;`);
-  await db.exec(`DROP TABLE IF EXISTS account;`);
-  await db.exec(`DROP TABLE IF EXISTS session;`);
-  await db.exec(`DROP TABLE IF EXISTS user;`);
+	// Drop tables in reverse order to respect foreign keys
+	await db.exec(`DROP TABLE IF EXISTS two_factor;`);
+	await db.exec(`DROP TABLE IF EXISTS passkey;`);
+	await db.exec(`DROP TABLE IF EXISTS api_key;`);
+	await db.exec(`DROP TABLE IF EXISTS organization_member;`);
+	await db.exec(`DROP TABLE IF EXISTS organization;`);
+	await db.exec(`DROP TABLE IF EXISTS verification;`);
+	await db.exec(`DROP TABLE IF EXISTS account;`);
+	await db.exec(`DROP TABLE IF EXISTS session;`);
+	await db.exec(`DROP TABLE IF EXISTS user;`);
 
-  console.log('Better Auth schema migration rolled back');
+	console.log('Better Auth schema migration rolled back');
 };
 
 // Helper function to run migration
 export const runMigration = async (db: Database) => {
-  try {
-    await up(db);
-    console.log('Better Auth migration completed successfully');
-  } catch (error) {
-    console.error('Migration failed:', error);
-    throw error;
-  }
+	try {
+		await up(db);
+		console.log('Better Auth migration completed successfully');
+	} catch (error) {
+		console.error('Migration failed:', error);
+		throw error;
+	}
 };

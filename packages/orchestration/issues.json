@@ -1,0 +1,190 @@
+{
+  "issues": [
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/providers/composite-provider.ts",
+      "lines": "94-95",
+      "severity": "medium",
+      "category": "type-safety",
+      "description": "Using `any` type for MLXServiceBridge parameter breaks type safety",
+      "evidence": "private readonly mlxService: any, // MLXServiceBridge instance",
+      "fix": "Replace with proper interface: `private readonly mlxService: MLXServiceBridge`"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/providers/composite-provider.ts",
+      "lines": "248",
+      "severity": "high",
+      "category": "performance",
+      "description": "Ollama provider only processes first text in embeddings array, silently ignoring others",
+      "evidence": "prompt: request.texts[0], // Ollama only supports single text embeddings",
+      "fix": "Add validation to throw error if texts.length > 1 or batch process multiple requests"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/providers/composite-provider.ts",
+      "lines": "396",
+      "severity": "medium",
+      "category": "type-safety",
+      "description": "Using `any` type for OpenAI response data",
+      "evidence": "const data = await response.json(); data.data.map((item: any) => item.embedding)",
+      "fix": "Define proper interface for OpenAI embeddings response"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/providers/composite-provider.ts",
+      "lines": "464",
+      "severity": "low",
+      "category": "unnecessary-complexity",
+      "description": "Service field in MLX config uses `any` type unnecessarily",
+      "evidence": "service: z.any().optional(),",
+      "fix": "Replace with proper MLXServiceBridge type or remove if not needed"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/api/orchestration-api.ts",
+      "lines": "21",
+      "severity": "medium",
+      "category": "security",
+      "description": "Hardcoded JWT fallback secret is a security risk",
+      "evidence": "const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';",
+      "fix": "Remove fallback and require JWT_SECRET environment variable"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/api/orchestration-api.ts",
+      "lines": "419",
+      "severity": "low",
+      "category": "formatting",
+      "description": "Inconsistent spacing in variable declaration",
+      "evidence": " const workflowId = query.workflowId;",
+      "fix": "Remove extra space: `const workflowId = query.workflowId;`"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/pooling/model-connection-pool.ts",
+      "lines": "47",
+      "severity": "medium",
+      "category": "type-safety",
+      "description": "Using `any` type for connection object",
+      "evidence": "private readonly connection: any, // Actual connection object",
+      "fix": "Define proper Connection interface for type safety"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/pooling/model-connection-pool.ts",
+      "lines": "218-219",
+      "severity": "medium",
+      "category": "type-safety",
+      "description": "Using `any` type for raw connection in createConnectionFn",
+      "evidence": "const rawConnection = await this.createConnectionFn(provider);",
+      "fix": "Define proper return type for createConnectionFn"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/pooling/model-connection-pool.ts",
+      "lines": "430-436",
+      "severity": "medium",
+      "category": "type-safety",
+      "description": "Using `any` type in testConnection method",
+      "evidence": "private async testConnection(connection: any): Promise<boolean>",
+      "fix": "Define proper interface for connection parameter"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/pooling/model-connection-pool.ts",
+      "lines": "490-492",
+      "severity": "medium",
+      "category": "type-safety",
+      "description": "Factory function uses `any` type for createConnectionFn",
+      "evidence": "createConnectionFn: (provider: string) => Promise<any>",
+      "fix": "Define proper return type for createConnectionFn"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/observability/distributed-tracing.ts",
+      "lines": "12",
+      "severity": "low",
+      "category": "backward-compatibility",
+      "description": "Global diagnostic logger configuration may not be needed",
+      "evidence": "diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);",
+      "fix": "Make configurable or remove if not needed for production"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/observability/distributed-tracing.ts",
+      "lines": "387-388",
+      "severity": "low",
+      "category": "backward-compatibility",
+      "description": "Commented context propagation suggests incomplete implementation",
+      "evidence": "// Note: In a real implementation, you'd use OpenTelemetry's context propagation",
+      "fix": "Implement proper context propagation or remove placeholder comment"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/observability/custom-metrics.ts",
+      "lines": "16-17",
+      "severity": "low",
+      "category": "unnecessary-complexity",
+      "description": "Metrics registry reference before initialization",
+      "evidence": "registers: [this.registry], used before this.registry is initialized",
+      "fix": "Initialize registry first or use lazy initialization"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/observability/custom-metrics.ts",
+      "lines": "345-381",
+      "severity": "medium",
+      "category": "performance",
+      "description": "Manual Prometheus metrics parsing is inefficient and error-prone",
+      "evidence": "Complex manual parsing logic in getMetricsAsJSON method",
+      "fix": "Use prom-client's built-in metrics methods or external parsing library"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/operations/operational-endpoints.ts",
+      "lines": "1-6",
+      "severity": "low",
+      "category": "backward-compatibility",
+      "description": "Header comment contains outdated branding information",
+      "evidence": "* nO Master Agent Loop - Operational Endpoints\\n * Part of brAInwav's production-ready nO implementation",
+      "fix": "Update header comment to reflect current Cortex-OS branding"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/operations/operational-endpoints.ts",
+      "lines": "10-11",
+      "severity": "high",
+      "category": "import-errors",
+      "description": "Missing import dependencies for graceful shutdown and health checking",
+      "evidence": "Importing from './graceful-shutdown' and './health-checker' but files don't exist",
+      "fix": "Create missing dependency files or update import paths"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/operations/operational-endpoints.ts",
+      "lines": "146-147",
+      "severity": "medium",
+      "category": "performance",
+      "description": "Using require() for prom-client instead of ES6 import",
+      "evidence": "// eslint-disable-next-line @typescript-eslint/no-require-imports\\nconst prometheusRegister = require('prom-client').register;",
+      "fix": "Use ES6 import: `import { register } from 'prom-client';`"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/operations/operational-endpoints.ts",
+      "lines": "164-166",
+      "severity": "low",
+      "category": "backward-compatibility",
+      "description": "Hardcoded service name that doesn't match current project",
+      "evidence": "service: 'nO Master Agent Loop',\\ncompany: 'brAInwav',",
+      "fix": "Update to reflect Cortex-OS branding"
+    },
+    {
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/orchestration/src/operations/operational-endpoints.ts",
+      "lines": "390-393",
+      "severity": "medium",
+      "category": "unnecessary-complexity",
+      "description": "Hardcoded mock values in health check configuration",
+      "evidence": "StandardHealthChecks.agentPool(async () => ({\\n  active: 5,\\n  total: 10,\\n  healthy: 8,\\n}))",
+      "fix": "Replace with actual agent pool metrics or make configurable"
+    }
+  ],
+  "summary": {
+    "totalIssues": 19,
+    "highSeverity": 3,
+    "mediumSeverity": 9,
+    "lowSeverity": 7,
+    "categories": {
+      "type-safety": 5,
+      "performance": 3,
+      "security": 1,
+      "backward-compatibility": 4,
+      "unnecessary-complexity": 3,
+      "formatting": 1,
+      "import-errors": 1
+    }
+  }
+}

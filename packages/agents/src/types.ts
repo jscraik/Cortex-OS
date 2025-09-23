@@ -1,7 +1,7 @@
 // Basic type definitions for Cortex-OS agents
 
 import type { EventEmitter } from 'node:events';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 export interface AgentConfig {
 	name: string;
@@ -129,9 +129,7 @@ export interface TaskDelegation {
 }
 
 // A2A Bus related types
-export interface EventHandler<T = unknown> {
-	(data: T): void;
-}
+export type EventHandler<T = unknown> = (data: T) => void;
 
 export interface BusTransport {
 	send(message: Record<string, unknown>): Promise<void>;

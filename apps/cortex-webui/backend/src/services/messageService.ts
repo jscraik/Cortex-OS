@@ -1,9 +1,9 @@
 // Message service for Cortex WebUI backend
 
-import { db, messages } from '../db';
-import { eq, asc } from 'drizzle-orm';
-import type { NewMessage } from '../db/schema';
+import { asc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { db, messages } from '../db';
+import type { NewMessage } from '../db/schema';
 
 export const getMessagesByConversationId = async (conversationId: string) => {
 	const records = await db
@@ -12,7 +12,7 @@ export const getMessagesByConversationId = async (conversationId: string) => {
 		.where(eq(messages.conversationId, conversationId))
 		.orderBy(asc(messages.createdAt));
 
-	return records.map(record => ({
+	return records.map((record) => ({
 		id: record.id,
 		conversationId: record.conversationId,
 		role: record.role,
