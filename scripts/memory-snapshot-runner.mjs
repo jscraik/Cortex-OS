@@ -49,7 +49,7 @@ const logDir = join(memoryDir, 'logs');
 for (const d of [memoryDir, snapshotDir, logDir]) {
 	try {
 		if (!existsSync(d)) mkdirSync(d, { recursive: true });
-	} catch {}
+	} catch { }
 }
 
 function log(level, msg) {
@@ -111,6 +111,7 @@ function parseArgs() {
 					'Usage: node scripts/memory-snapshot-runner.mjs [options] -- <command> [args...]',
 				);
 				process.exit(0);
+				break;
 			default:
 				i += 1;
 				break;
@@ -141,6 +142,37 @@ function listRecentSnapshots(limit = 5) {
 	}
 }
 
+function listChildPidsRecursive(pid) {
+	// Recursively collect child PIDs using pgrep -P. Handles multiple generations.
+	const seen = new Set();
+	const queue = [pid];
+	const all = new Set();
+	while (queue.length) {
+		const current = queue.pop();
+		if (!current || seen.has(current)) continue;
+		seen.add(current);
+		try {
+			const out = execSync(`pgrep -P ${current} || true`, { encoding: 'utf8' }).trim();
+			if (!out) continue;
+			const children = out
+				.split('\n')
+				.map((s) => s.trim())
+				.filter(Boolean)
+				.map((s) => parseInt(s, 10))
+				.filter((n) => Number.isFinite(n));
+			for (const c of children) {
+				if (!all.has(c)) {
+					all.add(c);
+					queue.push(c);
+				}
+			}
+		} catch {
+			/* ignore */
+		}
+	}
+	return Array.from(all);
+}
+
 function rssForPid(pid) {
 	try {
 		const out = execSync(`ps -o rss= -p ${pid}`).toString().trim();
@@ -148,6 +180,14 @@ function rssForPid(pid) {
 	} catch {
 		return 0;
 	}
+}
+
+function rssForProcessTree(rootPid) {
+	// Sum RSS for root + all descendants (KB)
+	let total = rssForPid(rootPid);
+	const children = listChildPidsRecursive(rootPid);
+	for (const c of children) total += rssForPid(c);
+	return total;
 }
 
 function manualHeapSnapshot(_label, _ts) {
@@ -185,7 +225,7 @@ function main() {
 	let peakRssKB = 0;
 	const samples = [];
 	const sampleInterval = setInterval(() => {
-		const rssKB = rssForPid(child.pid);
+		const rssKB = rssForProcessTree(child.pid);
 		if (rssKB === 0) return; // child exited
 		const sample = { t: Date.now(), rssKB };
 		samples.push(sample);
@@ -201,11 +241,11 @@ function main() {
 			);
 			try {
 				child.kill('SIGTERM');
-			} catch {}
+			} catch { }
 			setTimeout(() => {
 				try {
 					child.kill('SIGKILL');
-				} catch {}
+				} catch { }
 			}, 2000);
 		}
 	}, opts.interval);
@@ -231,13 +271,13 @@ function main() {
 		};
 		try {
 			mkdirSync(join(rootDir, 'reports'), { recursive: true });
-		} catch {}
+		} catch { }
 		try {
 			writeFileSync(
 				join(rootDir, 'reports', 'memory-snapshot-summary.json'),
 				JSON.stringify(summary, null, 2),
 			);
-		} catch {}
+		} catch { }
 
 		// Optional Prometheus metrics emission
 		const promEnabled = opts.prom || process.env.MEMORY_PROM_METRICS === '1';

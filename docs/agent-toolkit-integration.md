@@ -44,18 +44,24 @@ These are wired into `.github/workflows/tdd-enforcement.yml`. You can include th
 
 ## Enforcing Local Memory First Layer
 
-The guard script (`tools/validators/enforce-local-memory.mjs`) checks the following:
+The guard script (`tools/validators/enforce-local-memory.mjs`) checks the following (aligned with `local-memory-mcp@1.1.0` dual MCP/REST mode):
 
 - Local Memory is the short-term store (any of):
   - `MEMORIES_SHORT_STORE=local` (preferred)
   - `MEMORIES_ADAPTER=local` or `MEMORY_STORE=local` (legacy)
-- REST endpoint is configured:
+- REST endpoint is configured (dual-mode supported):
   - `LOCAL_MEMORY_BASE_URL=http://localhost:3002/api/v1`
 
 Optional but recommended:
 
 - `LOCAL_MEMORY_NAMESPACE=<namespace>`
 - `LOCAL_MEMORY_API_KEY=<key>`
+
+Strict mode (optional):
+
+- `LOCAL_MEMORY_ENFORCE_STRICT=1` (or `CI_LOCAL_MEMORY_STRICT=1`) will:
+  - Probe REST health at `BASE/health` and `BASE/api/v1/health`
+  - Verify the local binary exists: `LOCAL_MEMORY_BIN` or `~/.local/bin/local-memory` or `which local-memory`
 
 Temporary CI bypasses:
 

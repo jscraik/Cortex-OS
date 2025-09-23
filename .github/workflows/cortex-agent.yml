@@ -16,6 +16,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          npm i -g pnpm
+          pnpm install --frozen-lockfile
+
+      - name: Build Agent Toolkit
+        run: |
+          cd packages/agent-toolkit
+          pnpm build
+
+      - name: Agent Toolkit Project Validation
+        run: pnpm ci:agent-toolkit:validate
+
+      - name: Enforce Local Memory First Layer
+        env:
+          CI: true
+        run: pnpm ci:memory:enforce
+
       - name: Setup Cortex
         run: |
           curl -L https://github.com/${{ github.repository }}/releases/latest/download/cortex-linux-x64 -o cortex
@@ -23,9 +47,13 @@ jobs:
 
       - name: Parse Command
         id: parse
-        run: |
-          COMMAND=$(echo "${{ github.event.comment.body }}" | sed 's|/cortex ||')
-          echo "command=$COMMAND" >> $GITHUB_OUTPUT
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = context.payload.comment?.body || '';
+            const command = body.replace(/^\/cortex\s*/, '');
+            fs.writeFileSync('prompt.txt', command, 'utf8');
 
       - name: Run Cortex Agent
         env:
@@ -33,7 +61,7 @@ jobs:
           CORTEX_PROVIDER: github-models
         run: |
           ./cortex run --ci \
-            --prompt "${{ steps.parse.outputs.command }}" \
+            --prompt "$(cat prompt.txt)" \
             --output response.json
 
       - name: Post Response

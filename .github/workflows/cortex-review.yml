@@ -15,6 +15,30 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          npm i -g pnpm
+          pnpm install --frozen-lockfile
+
+      - name: Build Agent Toolkit
+        run: |
+          cd packages/agent-toolkit
+          pnpm build
+
+      - name: Agent Toolkit Project Validation
+        run: pnpm ci:agent-toolkit:validate
+
+      - name: Enforce Local Memory First Layer
+        env:
+          CI: true
+        run: pnpm ci:memory:enforce
+
       - name: Get PR Diff
         run: |
           git diff origin/${{ github.base_ref }}..HEAD > pr.diff

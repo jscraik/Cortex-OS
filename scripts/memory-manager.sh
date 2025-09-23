@@ -108,6 +108,28 @@ cleanup_test_processes() {
             [[ -n "$pid" ]] && safe_kill "-15" "$pid" "test process ($pattern)"
         done < <(pgrep -f "$pattern" 2>/dev/null || true)
     done
+
+    # Extra pass: kill legacy 'npm exec vitest' / 'npx vitest' trees that may not be covered above
+    # We first target npm exec invocations specifically, then ensure any vitest children are gone.
+    while IFS= read -r npm_pid; do
+        [[ -z "$npm_pid" ]] && continue
+        # Soft kill npm exec first
+        safe_kill "-15" "$npm_pid" "npm exec vitest controller"
+        sleep 1
+        # Kill remaining vitest processes that might be children of this npm exec tree
+        # Find immediate children and grandchildren; best-effort cleanup
+        if command -v pgrep >/dev/null 2>&1; then
+            # Collect descendants up to two levels to avoid deep loops here
+            children=$(pgrep -P "$npm_pid" 2>/dev/null || true)
+            for c in $children; do
+                safe_kill "-15" "$c" "npm-exec child"
+                gc=$(pgrep -P "$c" 2>/dev/null || true)
+                for g in $gc; do
+                    safe_kill "-15" "$g" "npm-exec grandchild"
+                done
+            done
+        fi
+    done < <(pgrep -f "npm exec vitest|npx vitest" 2>/dev/null || true)
 }
 
 cleanup_development_tools() {
