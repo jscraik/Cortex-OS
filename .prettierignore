@@ -3,3 +3,6 @@ dist
 .venv
 sbom.json
 coverage
+
+/.nx/cache
+/.nx/workspace-data

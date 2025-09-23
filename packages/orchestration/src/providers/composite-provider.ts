@@ -5,6 +5,7 @@
 
 import { EventEmitter } from 'node:events';
 import { z } from 'zod';
+import { CircuitBreaker } from '../lib/circuit-breaker';
 import { selectMLXModel, selectOllamaModel } from '../lib/model-selection';
 
 /**
@@ -172,7 +173,11 @@ class MLXProvider implements ModelProvider {
 		return this.circuitBreaker.execute(async () => {
 			const startTime = Date.now();
 
-			const result = await (this.mlxService as any).rerank(request.query, request.documents, request.model);
+			const result = await (this.mlxService as any).rerank(
+				request.query,
+				request.documents,
+				request.model,
+			);
 
 			const processingTime = Date.now() - startTime;
 
@@ -562,9 +567,7 @@ export class CompositeModelProvider extends EventEmitter {
 			request: EmbeddingRequest | ChatRequest | RerankRequest,
 		) => Promise<T>,
 	): Promise<{ result: T; provider: string; attempts: number }> {
-		if (this.providers.length === 0) {
-			throw new Error('No providers configured');
-		}
+		this.validateProvidersConfigured();
 
 		let lastError: Error | null = null;
 		const attempts: number[] = [];
@@ -574,46 +577,73 @@ export class CompositeModelProvider extends EventEmitter {
 			attempts.push(attemptStart);
 
 			try {
-				// Check if provider is available
-				const available = await provider.isAvailable();
-				if (!available) {
-					this.emit('provider-skipped', {
-						provider: provider.name,
-						reason: 'unavailable',
-					});
-					continue;
-				}
-
-				// Execute with timeout
-				const result = await Promise.race([
-					operation(provider, request),
-					new Promise<never>((_, reject) =>
-						setTimeout(
-							() => reject(new Error(`Provider ${provider.name} timeout`)),
-							this.config.fallbackTimeout,
-						),
-					),
-				]);
-
-				this.emit('provider-success', {
-					provider: provider.name,
-					processingTime: Date.now() - attemptStart,
-				});
-
+				const result = await this.executeWithProvider(provider, request, operation, attemptStart);
 				return { result, provider: provider.name, attempts: attempts.length };
 			} catch (error) {
-				lastError = error as Error;
-				this.emit('provider-failed', {
-					provider: provider.name,
-					error: error instanceof Error ? error.message : 'Unknown error',
-					processingTime: Date.now() - attemptStart,
-				});
-
-				// Continue to next provider
+				lastError = this.handleProviderError(error as Error, provider, attemptStart);
 			}
 		}
 
-		throw new Error(`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`);
+		throw this.createFinalError(lastError);
+	}
+
+	private validateProvidersConfigured(): void {
+		if (this.providers.length === 0) {
+			throw new Error('No providers configured');
+		}
+	}
+
+	private async executeWithProvider<T>(
+		provider: ModelProvider,
+		request: EmbeddingRequest | ChatRequest | RerankRequest,
+		operation: (
+			provider: ModelProvider,
+			request: EmbeddingRequest | ChatRequest | RerankRequest,
+		) => Promise<T>,
+		attemptStart: number,
+	): Promise<T> {
+		const available = await provider.isAvailable();
+		if (!available) {
+			this.emit('provider-skipped', {
+				provider: provider.name,
+				reason: 'unavailable',
+			});
+			throw new Error(`Provider ${provider.name} unavailable`);
+		}
+
+		const result = await Promise.race([
+			operation(provider, request),
+			this.createTimeoutPromise(provider),
+		]);
+
+		this.emit('provider-success', {
+			provider: provider.name,
+			processingTime: Date.now() - attemptStart,
+		});
+
+		return result;
+	}
+
+	private createTimeoutPromise(provider: ModelProvider): Promise<never> {
+		return new Promise<never>((_, reject) =>
+			setTimeout(
+				() => reject(new Error(`Provider ${provider.name} timeout`)),
+				this.config.fallbackTimeout,
+			),
+		);
+	}
+
+	private handleProviderError(error: Error, provider: ModelProvider, attemptStart: number): Error {
+		this.emit('provider-failed', {
+			provider: provider.name,
+			error: error.message,
+			processingTime: Date.now() - attemptStart,
+		});
+		return error;
+	}
+
+	private createFinalError(lastError: Error | null): Error {
+		return new Error(`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`);
 	}
 
 	/**

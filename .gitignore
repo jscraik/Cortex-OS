@@ -80,3 +80,5 @@ pnpm-lock.yaml.bak
 .venv311/
 .memory/logs/*.jsonl
 *.heapsnapshot
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md

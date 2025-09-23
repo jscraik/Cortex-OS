@@ -24,70 +24,39 @@
       "!{projectRoot}/**/*.spec.tsx",
       "!{projectRoot}/**/*.test.tsx"
     ],
-    "test": [
-      "default"
-    ],
-    "lint": [
-      "default"
-    ],
-    "typecheck": [
-      "default"
-    ]
+    "test": ["default"],
+    "lint": ["default"],
+    "typecheck": ["default"]
   },
   "targetDefaults": {
     "build": {
-      "inputs": [
-        "production",
-        "^production"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ],
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/dist"],
       "cache": true
     },
     "test": {
-      "inputs": [
-        "test",
-        "^production"
-      ],
-      "outputs": [
-        "{projectRoot}/coverage"
-      ],
-      "dependsOn": [
-        "^build"
-      ],
+      "inputs": ["test", "^production"],
+      "outputs": ["{projectRoot}/coverage"],
+      "dependsOn": ["^build"],
       "cache": true
     },
     "lint": {
-      "inputs": [
-        "lint",
-        "^production"
-      ],
+      "inputs": ["lint", "^production"],
       "cache": true
     },
     "typecheck": {
-      "inputs": [
-        "typecheck",
-        "^production"
-      ],
+      "inputs": ["typecheck", "^production"],
       "cache": true
     }
   },
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheDirectory": ".nx/cache",
-        "cacheableOperations": [
-          "build",
-          "test",
-          "lint",
-          "typecheck"
-        ],
-        "parallel": 1,
         "maxParallel": 1,
         "useDependencyGraph": true
       }
     }
-  }
+  },
+  "parallel": 1,
+  "cacheDirectory": ".nx/cache"
 }

@@ -142,18 +142,51 @@ export class OperationalEndpoints {
 	 */
 	private async getMetrics(_req: Request, res: Response): Promise<Response> {
 		try {
-			// Import prometheus metrics if available
-			// eslint-disable-next-line @typescript-eslint/no-require-imports
-			const prometheusRegister = require('prom-client').register;
-			const metrics = await prometheusRegister.metrics();
+			// Try to get prometheus metrics asynchronously
+			const { metrics, contentType } = await this.getPrometheusMetrics();
 
-			res.set('Content-Type', prometheusRegister.contentType);
+			res.set('Content-Type', contentType);
 			return res.end(metrics);
-		} catch {
+		} catch (error) {
 			return res.status(500).json({
 				status: 'error',
 				message: 'Metrics not available',
+				details: error instanceof Error ? error.message : undefined,
 			});
+		}
+	}
+
+	/**
+	 * Asynchronously get Prometheus metrics with proper error handling
+	 */
+	private async getPrometheusMetrics(): Promise<{ metrics: string; contentType: string }> {
+		try {
+			// Use dynamic import for better async handling
+			const promClient = await import('prom-client');
+			const register = promClient.register;
+
+			// Get metrics asynchronously
+			const metrics = await register.metrics();
+			const contentType = register.contentType;
+
+			return { metrics, contentType };
+		} catch (importError) {
+			// Fallback: try require if dynamic import fails
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-require-imports
+				const promClient = require('prom-client');
+				const register = promClient.register;
+
+				// Wrap in Promise to ensure async behavior
+				const metrics = await Promise.resolve(register.metrics());
+				const contentType = register.contentType;
+
+				return { metrics, contentType };
+			} catch (requireError) {
+				throw new Error(
+					`Failed to load prom-client: ${importError.message || requireError.message}`,
+				);
+			}
 		}
 	}
 

@@ -31,19 +31,40 @@ export class OllamaEmbedder implements Embedder {
 				// Check service health first
 				await this.checkHealth();
 
-				const requests = texts.map(async (text) => {
-					const response = await this.client.post('/api/embeddings', {
-						model: this.modelName,
-						prompt: text,
+				// Validate inputs
+				if (!Array.isArray(texts) || texts.length === 0) {
+					throw new Error('texts must be a non-empty array');
+				}
+
+				// Limit batch size to prevent overwhelming the service
+				const batchSize = 50;
+				const results: number[][] = [];
+
+				for (let i = 0; i < texts.length; i += batchSize) {
+					const batch = texts.slice(i, i + batchSize);
+
+					const batchRequests = batch.map(async (text) => {
+						if (typeof text !== 'string' || text.trim() === '') {
+							throw new Error('All texts must be non-empty strings');
+						}
+
+						// Use the correct Ollama API parameters
+						const response = await this.client.post('/api/embeddings', {
+							model: this.modelName,
+							input: text,
+						});
+
+						if (response.data && Array.isArray(response.data.embedding)) {
+							return response.data.embedding as number[];
+						}
+						throw new Error('Invalid response from Ollama embedding API');
 					});
 
-					if (response.data && Array.isArray(response.data.embedding)) {
-						return response.data.embedding as number[];
-					}
-					throw new Error('Invalid response from Ollama embedding API');
-				});
+					const batchResults = await Promise.all(batchRequests);
+					results.push(...batchResults);
+				}
 
-				return await Promise.all(requests);
+				return results;
 			},
 			{
 				threshold: 5,

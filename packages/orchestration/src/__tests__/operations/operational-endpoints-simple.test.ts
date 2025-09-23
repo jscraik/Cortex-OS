@@ -66,66 +66,131 @@ describe('OperationalEndpoints - TDD Handler Methods', () => {
 		});
 	});
 
-	it('should have handleHealth method', async () => {
-		// Verify the method exists
-		expect(typeof endpoints.handleHealth).toBe('function');
+	it('should respond to health endpoint', async () => {
+		const router = endpoints.getRouter();
 
-		// Test the method works
-		await endpoints.handleHealth(mockReq, mockRes);
+		// Create mock req and res with path
+		const req = {
+			...mockReq,
+			path: '/health',
+		};
 
-		// Verify it called the underlying health check
-		expect(mockHealthChecker.getSystemHealth).toHaveBeenCalled();
-		expect(mockRes.status).toHaveBeenCalledWith(200);
-		expect(mockRes.json).toHaveBeenCalledWith(
-			expect.objectContaining({
-				status: 'healthy',
-				timestamp: expect.any(String),
-				uptime: expect.any(Number),
-				version: expect.any(String),
-			}),
+		// Find and call the health route handler
+		const healthRoute = router.stack.find((layer: any) =>
+			layer.route?.path === '/health' && layer.route?.methods.get
 		);
+
+		expect(healthRoute).toBeDefined();
+
+		if (healthRoute) {
+			await healthRoute.route.stack[0].handle(req, mockRes);
+
+			// Verify it called the underlying health check
+			expect(mockHealthChecker.getSystemHealth).toHaveBeenCalled();
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+			expect(mockRes.json).toHaveBeenCalledWith(
+				expect.objectContaining({
+					status: 'healthy',
+					timestamp: expect.any(String),
+					uptime: expect.any(Number),
+					version: expect.any(String),
+				}),
+			);
+		}
 	});
 
-	it('should have handleLiveness method', async () => {
-		expect(typeof endpoints.handleLiveness).toBe('function');
+	it('should respond to liveness endpoint', async () => {
+		const router = endpoints.getRouter();
 
-		await endpoints.handleLiveness(mockReq, mockRes);
+		const req = {
+			...mockReq,
+			path: '/health/live',
+		};
 
-		expect(mockHealthChecker.getLivenessProbe).toHaveBeenCalled();
-		expect(mockRes.status).toHaveBeenCalledWith(200);
-	});
-
-	it('should have handleReadiness method', async () => {
-		expect(typeof endpoints.handleReadiness).toBe('function');
-
-		await endpoints.handleReadiness(mockReq, mockRes);
-
-		expect(mockHealthChecker.getReadinessProbe).toHaveBeenCalled();
-		expect(mockRes.status).toHaveBeenCalledWith(200);
-	});
-
-	it('should have handleMetrics method', async () => {
-		expect(typeof endpoints.handleMetrics).toBe('function');
-
-		await endpoints.handleMetrics(mockReq, mockRes);
-
-		// Either it succeeds with res.end() OR fails with status 500
-		expect(
-			(mockRes.status as any).mock.calls.length + (mockRes.end as any).mock.calls.length,
-		).toBeGreaterThan(0);
-	});
-
-	it('should have handleSystemInfo method', async () => {
-		expect(typeof endpoints.handleSystemInfo).toBe('function');
-
-		await endpoints.handleSystemInfo(mockReq, mockRes);
-
-		expect(mockRes.json).toHaveBeenCalledWith(
-			expect.objectContaining({
-				service: 'nO Master Agent Loop',
-				company: 'brAInwav',
-			}),
+		const livenessRoute = router.stack.find((layer: any) =>
+			layer.route?.path === '/health/live' && layer.route?.methods.get
 		);
+
+		expect(livenessRoute).toBeDefined();
+
+		if (livenessRoute) {
+			await livenessRoute.route.stack[0].handle(req, mockRes);
+
+			expect(mockHealthChecker.getLivenessProbe).toHaveBeenCalled();
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+		}
+	});
+
+	it('should respond to readiness endpoint', async () => {
+		const router = endpoints.getRouter();
+
+		const req = {
+			...mockReq,
+			path: '/health/ready',
+		};
+
+		const readinessRoute = router.stack.find((layer: any) =>
+			layer.route?.path === '/health/ready' && layer.route?.methods.get
+		);
+
+		expect(readinessRoute).toBeDefined();
+
+		if (readinessRoute) {
+			await readinessRoute.route.stack[0].handle(req, mockRes);
+
+			expect(mockHealthChecker.getReadinessProbe).toHaveBeenCalled();
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+		}
+	});
+
+	it('should respond to metrics endpoint', async () => {
+		const router = endpoints.getRouter();
+
+		const req = {
+			...mockReq,
+			path: '/metrics',
+		};
+
+		const metricsRoute = router.stack.find((layer: any) =>
+			layer.route?.path === '/metrics' && layer.route?.methods.get
+		);
+
+		expect(metricsRoute).toBeDefined();
+
+		if (metricsRoute) {
+			await metricsRoute.route.stack[0].handle(req, mockRes);
+
+			// Either it succeeds with res.end() OR fails with status 500
+			expect(
+				(mockRes.status as any).mock.calls.length + (mockRes.end as any).mock.calls.length,
+			).toBeGreaterThan(0);
+		}
+	});
+
+	it('should respond to info endpoint', async () => {
+		const router = endpoints.getRouter();
+
+		const req = {
+			...mockReq,
+			path: '/info',
+		};
+
+		const infoRoute = router.stack.find((layer: any) =>
+			layer.route?.path === '/info' && layer.route?.methods.get
+		);
+
+		expect(infoRoute).toBeDefined();
+
+		if (infoRoute) {
+			await infoRoute.route.stack[0].handle(req, mockRes);
+
+			expect(mockRes.json).toHaveBeenCalledWith(
+				expect.objectContaining({
+					service: 'nO Master Agent Loop',
+					company: 'brAInwav',
+				}),
+			);
+		}
 	});
 
 	it('should have getRouter method', () => {

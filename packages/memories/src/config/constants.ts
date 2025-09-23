@@ -7,11 +7,8 @@
 
 // Store Configuration
 export const ENV = {
-	// Primary store adapter (standardized)
+	// Store adapter
 	STORE_ADAPTER: 'MEMORIES_STORE_ADAPTER',
-	// Legacy fallbacks
-	STORE_ADAPTER_LEGACY: 'MEMORIES_ADAPTER',
-	STORE_ADAPTER_LEGACY2: 'MEMORY_STORE',
 
 	// Store types
 	SQLITE_PATH: 'MEMORIES_SQLITE_PATH',
@@ -40,32 +37,20 @@ export const EMBEDDER_ENV = {
 
 	// MLX Configuration
 	MLX_MODEL: 'MLX_MODEL',
-	MLX_EMBED_BASE_URL: 'MLX_EMBED_BASE_URL', // Standardized
-	MLX_SERVICE_URL: 'MLX_SERVICE_URL', // Legacy fallback
+	MLX_EMBED_BASE_URL: 'MLX_EMBED_BASE_URL',
 	MLX_MODELS_DIR: 'MLX_MODELS_DIR',
 	MLX_CACHE_DIR: 'MLX_CACHE_DIR',
 	MLX_MAX_MEMORY: 'MLX_MAX_MEMORY',
 
-	// Model paths (legacy - consider consolidating)
-	MLX_MODEL_QWEN3_0_6B_PATH: 'MLX_MODEL_QWEN3_0_6B_PATH',
-	MLX_MODEL_QWEN3_4B_PATH: 'MLX_MODEL_QWEN3_4B_PATH',
-	MLX_MODEL_QWEN3_8B_PATH: 'MLX_MODEL_QWEN3_8B_PATH',
-
-	// Python environment (standardized)
+	// Python environment
 	PYTHON_EXECUTABLE: 'PYTHON_EXEC',
 	PYTHON_MODULE_PATH: 'PYTHONPATH',
-
-	// Legacy Python variables (deprecated)
-	PYTHON_EXEC_LEGACY: 'PYTHON_PATH',
-	MLX_PYTHON_PATH: 'MLX_PYTHON_PATH',
 } as const;
 
 // Ollama Configuration
 export const OLLAMA_ENV = {
 	BASE_URL: 'OLLAMA_BASE_URL',
 	MODEL: 'OLLAMA_MODEL',
-	// Legacy
-	ENDPOINT: 'OLLAMA_ENDPOINT', // Documented but not used
 } as const;
 
 // Observability Configuration

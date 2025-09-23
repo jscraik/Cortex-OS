@@ -11,6 +11,32 @@ import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OperationalEndpoints } from '../../operations/operational-endpoints';
 
+// Helper function to test router endpoints
+async function testRouterEndpoint(
+	endpoints: OperationalEndpoints,
+	path: string,
+	method: string = 'get',
+	req?: any,
+): Promise<any> {
+	const router = endpoints.getRouter();
+	const mockRes = createMockResponse();
+
+	// Find the route
+	const route = router.stack.find((layer: any) => {
+		if (!layer.route) return false;
+		return layer.route.path === path && layer.route.methods[method.toLowerCase()];
+	});
+
+	if (!route) {
+		throw new Error(`Route ${method.toUpperCase()} ${path} not found`);
+	}
+
+	// Call the handler
+	await route.route.stack[0].handle(req || createMockRequest(), mockRes);
+
+	return { response: mockRes, route };
+}
+
 // Mock the health checker
 const mockHealthChecker = {
 	getSystemHealth: vi.fn(),
@@ -94,16 +120,12 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 
 	describe('Health Endpoints', () => {
 		it('should return healthy status for /health endpoint', async () => {
-			// Arrange
-			const req = createMockRequest();
-			const res = createMockResponse();
-
 			// Act
-			await endpoints.handleHealth(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(200);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(200);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'healthy',
 					timestamp: expect.any(String),
@@ -124,29 +146,23 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 				summary: { total: 1, healthy: 0, degraded: 0, unhealthy: 1 },
 			});
 
-			const req = createMockRequest();
-			const res = createMockResponse();
-
 			// Act
-			await endpoints.handleHealth(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(503);
+			expect(response.status).toHaveBeenCalledWith(503);
 		});
 
 		it('should handle health check errors gracefully', async () => {
 			// Arrange
 			mockHealthChecker.getSystemHealth.mockRejectedValue(new Error('Health check failed'));
 
-			const req = createMockRequest();
-			const res = createMockResponse();
-
 			// Act
-			await endpoints.handleHealth(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(500);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(500);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'error',
 					message: 'Health check failed',
@@ -158,15 +174,13 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 	describe('Liveness Probe', () => {
 		it('should return alive status for /health/live endpoint', async () => {
 			// Arrange
-			const req = createMockRequest();
-			const res = createMockResponse();
 
 			// Act
-			await endpoints.handleLiveness(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health/live');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(200);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(200);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'alive',
 					timestamp: expect.any(String),
@@ -179,15 +193,12 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			// Arrange
 			mockHealthChecker.getLivenessProbe.mockRejectedValue(new Error('Liveness check failed'));
 
-			const req = createMockRequest();
-			const res = createMockResponse();
-
 			// Act
-			await endpoints.handleLiveness(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health/live');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(500);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(500);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'error',
 					message: 'Liveness check failed',
@@ -199,15 +210,13 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 	describe('Readiness Probe', () => {
 		it('should return ready status for /health/ready endpoint', async () => {
 			// Arrange
-			const req = createMockRequest();
-			const res = createMockResponse();
 
 			// Act
-			await endpoints.handleReadiness(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health/ready');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(200);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(200);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					ready: true,
 					checks: expect.any(Object),
@@ -222,29 +231,29 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 				checks: { 'critical-service': { status: 'unhealthy' } },
 			});
 
-			const req = createMockRequest();
-			const res = createMockResponse();
+			const _req = createMockRequest();
+			const _res = createMockResponse();
 
 			// Act
-			await endpoints.handleReadiness(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health/ready');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(503);
+			expect(response.status).toHaveBeenCalledWith(503);
 		});
 
 		it('should handle readiness probe errors', async () => {
 			// Arrange
 			mockHealthChecker.getReadinessProbe.mockRejectedValue(new Error('Readiness check failed'));
 
-			const req = createMockRequest();
-			const res = createMockResponse();
+			const _req = createMockRequest();
+			const _res = createMockResponse();
 
 			// Act
-			await endpoints.handleReadiness(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health/ready');
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(503);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(503);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'error',
 					ready: false,
@@ -262,16 +271,17 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 
 		it('should handle metrics endpoint calls', async () => {
 			// Arrange
-			const req = createMockRequest();
-			const res = createMockResponse();
+			const _req = createMockRequest();
+			const _res = createMockResponse();
 
 			// Act - the behavior depends on whether prom-client is available
-			await endpoints.handleMetrics(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/metrics');
 
 			// Assert - either it returns metrics or an error
 			// Since we can't easily mock require() after instantiation,
 			// we just verify the method doesn't crash
-			const callCount = (res.status as any).mock.calls.length + (res.end as any).mock.calls.length;
+			const callCount =
+				(response.status as any).mock.calls.length + (response.end as any).mock.calls.length;
 			expect(callCount).toBeGreaterThan(0);
 		});
 	});
@@ -279,14 +289,14 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 	describe('System Information', () => {
 		it('should return system information', async () => {
 			// Arrange
-			const req = createMockRequest();
-			const res = createMockResponse();
+			const _req = createMockRequest();
+			const _res = createMockResponse();
 
 			// Act
-			await endpoints.handleSystemInfo(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/info');
 
 			// Assert
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					service: 'nO Master Agent Loop',
 					company: 'brAInwav',
@@ -318,7 +328,7 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			// Assert - check that shutdown was called (async)
 			// Note: Due to setImmediate, we can't easily test the async call in unit tests
 			// The important thing is that the endpoint returns success response
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'success',
 					message: 'Graceful shutdown initiated',
@@ -338,8 +348,8 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			await endpoints.handleShutdown(req, res);
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(409);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(409);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'error',
 					message: 'Shutdown already in progress',
@@ -361,7 +371,7 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			await endpoints.handleShutdown(req, res);
 
 			// Assert - endpoint still returns success even if shutdown fails later
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'success',
 					message: 'Graceful shutdown initiated',
@@ -376,14 +386,14 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 				{ name: 'db', status: 'degraded', timestamp: new Date() },
 			]);
 
-			const req = createMockRequest();
-			const res = createMockResponse();
+			const _req = createMockRequest();
+			const _res = createMockResponse();
 
 			// Act
-			await endpoints.handleHealthChecks(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/admin/health/checks');
 
 			// Assert
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					checks: expect.any(Array),
 					total: 2,
@@ -413,7 +423,7 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 
 			// Assert
 			expect(mockHealthChecker.runCheck).toHaveBeenCalledWith('test-service');
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					name: 'test-service',
 					status: 'healthy',
@@ -435,8 +445,8 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			await endpoints.handleRunHealthCheck(req, res);
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(404);
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.status).toHaveBeenCalledWith(404);
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'error',
 					message: 'Health check not found',
@@ -453,7 +463,7 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			await endpoints.handleShutdownHandlers(req, res);
 
 			// Assert
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					handlers: ['test-handler'],
 					total: 1,
@@ -481,7 +491,7 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			await endpointsWithoutAuth.handleHealth(req, res);
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(200);
+			expect(response.status).toHaveBeenCalledWith(200);
 		});
 
 		it('should require authentication when enabled', () => {
@@ -536,14 +546,14 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 	describe('Integration with brAInwav Standards', () => {
 		it('should include brAInwav branding in responses', async () => {
 			// Arrange
-			const req = createMockRequest();
-			const res = createMockResponse();
+			const _req = createMockRequest();
+			const _res = createMockResponse();
 
 			// Act
-			await endpoints.handleSystemInfo(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/info');
 
 			// Assert
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					company: 'brAInwav',
 				}),
@@ -554,14 +564,14 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			// Arrange
 			mockHealthChecker.getSystemHealth.mockRejectedValue(new Error('Test error'));
 
-			const req = createMockRequest();
-			const res = createMockResponse();
+			const _req = createMockRequest();
+			const _res = createMockResponse();
 
 			// Act
-			await endpoints.handleHealth(req, res);
+			const { response } = await testRouterEndpoint(endpoints, '/health');
 
 			// Assert
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					status: 'error',
 					message: expect.stringContaining('Test error'),
@@ -580,7 +590,7 @@ describe('OperationalEndpoints - TDD Implementation', () => {
 			await endpoints.handleShutdown(req, res);
 
 			// Assert
-			expect(res.json).toHaveBeenCalledWith(
+			expect(response.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					reason: 'brAInwav maintenance',
 				}),

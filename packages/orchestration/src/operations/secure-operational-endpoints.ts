@@ -88,30 +88,30 @@ export function createSecureOperationalEndpoints(config: SecureOperationalConfig
 		'/health',
 		securityMiddleware?.validateInput(RequestValidationSchemas.health) ||
 			((_req, _res, next) => next()),
-		endpoints.handleHealth.bind(endpoints),
+		(req, res) => endpoints.getRouter()(req, res),
 	);
 
 	router.get(
 		'/health/live',
 		securityMiddleware?.validateInput(RequestValidationSchemas.health) ||
 			((_req, _res, next) => next()),
-		endpoints.handleLiveness.bind(endpoints),
+		(req, res) => endpoints.getRouter()(req, res),
 	);
 
 	router.get(
 		'/health/ready',
 		securityMiddleware?.validateInput(RequestValidationSchemas.health) ||
 			((_req, _res, next) => next()),
-		endpoints.handleReadiness.bind(endpoints),
+		(req, res) => endpoints.getRouter()(req, res),
 	);
 
 	// Metrics endpoint
 	if (config.enableMetrics) {
-		router.get('/metrics', endpoints.handleMetrics.bind(endpoints));
+		router.get('/metrics', (req, res) => endpoints.getRouter()(req, res));
 	}
 
 	// System info endpoint
-	router.get('/info', endpoints.handleSystemInfo.bind(endpoints));
+	router.get('/info', (req, res) => endpoints.getRouter()(req, res));
 
 	// Admin endpoints (with enhanced validation and authentication)
 	if (config.enableAdminEndpoints) {
@@ -130,7 +130,7 @@ export function createSecureOperationalEndpoints(config: SecureOperationalConfig
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.shutdown) ||
 				((_req, _res, next) => next()),
-			endpoints.handleShutdown.bind(endpoints),
+			(req, res) => endpoints.getRouter()(req, res),
 		);
 
 		router.get(
@@ -138,7 +138,7 @@ export function createSecureOperationalEndpoints(config: SecureOperationalConfig
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.admin) ||
 				((_req, _res, next) => next()),
-			endpoints.handleHealthChecks.bind(endpoints),
+			(req, res) => endpoints.getRouter()(req, res),
 		);
 
 		router.post(
@@ -146,7 +146,7 @@ export function createSecureOperationalEndpoints(config: SecureOperationalConfig
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.healthCheck) ||
 				((_req, _res, next) => next()),
-			endpoints.handleRunHealthCheck.bind(endpoints),
+			(req, res) => endpoints.getRouter()(req, res),
 		);
 
 		router.get(
@@ -154,7 +154,7 @@ export function createSecureOperationalEndpoints(config: SecureOperationalConfig
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.admin) ||
 				((_req, _res, next) => next()),
-			endpoints.handleShutdownHandlers.bind(endpoints),
+			(req, res) => endpoints.getRouter()(req, res),
 		);
 	}
 

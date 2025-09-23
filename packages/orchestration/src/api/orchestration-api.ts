@@ -287,44 +287,55 @@ export class OrchestrationAPI {
 	// Create workflow
 	private async createWorkflow(c: any) {
 		try {
-			const body = await c.req.json();
-			const request: CreateWorkflowRequest = CreateWorkflowSchema.parse(body);
-
-			const workflow = await this.circuitBreakerManager.execute('create-workflow', async () => {
-				return this.orchestrationService.createWorkflow({
-					...request,
-					createdBy: c.get('jwtPayload').sub,
-					id: `workflow-${nanoid()}`,
-					status: 'pending',
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
-			});
-
-			return c.json(
-				{
-					id: workflow.id,
-					name: workflow.name,
-					goal: workflow.goal,
-					status: workflow.status,
-					strategy: workflow.strategy,
-					createdAt: workflow.createdAt,
-					links: {
-						self: `/api/v1/workflows/${workflow.id}`,
-						tasks: `/api/v1/workflows/${workflow.id}/tasks`,
-					},
-				},
-				201,
-			);
+			const request = await this.validateWorkflowRequest(c);
+			const workflow = await this.executeWorkflowCreation(c, request);
+			return c.json(this.formatWorkflowResponse(workflow), 201);
 		} catch (error) {
-			if (error instanceof z.ZodError) {
-				throw new HTTPException(400, {
-					message: 'Invalid request body',
-					cause: error.errors,
-				});
-			}
-			throw error;
+			this.handleWorkflowErrors(error);
 		}
+	}
+
+	private async validateWorkflowRequest(c: any): Promise<CreateWorkflowRequest> {
+		const body = await c.req.json();
+		return CreateWorkflowSchema.parse(body);
+	}
+
+	private async executeWorkflowCreation(c: any, request: CreateWorkflowRequest) {
+		return this.circuitBreakerManager.execute('create-workflow', async () => {
+			return this.orchestrationService.createWorkflow({
+				...request,
+				createdBy: c.get('jwtPayload').sub,
+				id: `workflow-${nanoid()}`,
+				status: 'pending',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
+		});
+	}
+
+	private formatWorkflowResponse(workflow: any) {
+		return {
+			id: workflow.id,
+			name: workflow.name,
+			goal: workflow.goal,
+			status: workflow.status,
+			strategy: workflow.strategy,
+			createdAt: workflow.createdAt,
+			links: {
+				self: `/api/v1/workflows/${workflow.id}`,
+				tasks: `/api/v1/workflows/${workflow.id}/tasks`,
+			},
+		};
+	}
+
+	private handleWorkflowErrors(error: unknown): never {
+		if (error instanceof z.ZodError) {
+			throw new HTTPException(400, {
+				message: 'Invalid request body',
+				cause: error.errors,
+			});
+		}
+		throw error;
 	}
 
 	// List workflows

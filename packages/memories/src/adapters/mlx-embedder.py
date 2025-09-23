@@ -13,6 +13,17 @@ def main():
         sys.exit(1)
 
     model_path = sys.argv[1]
+
+    # Validate and sanitize model_path to prevent directory traversal
+    if ".." in model_path or model_path.startswith("/"):
+        print(json.dumps({"error": "Invalid model path"}), file=sys.stderr)
+        sys.exit(1)
+
+    # Validate model_path contains only safe characters
+    import re
+    if not re.match(r'^[a-zA-Z0-9_\-./]+$', model_path):
+        print(json.dumps({"error": "Invalid characters in model path"}), file=sys.stderr)
+        sys.exit(1)
     try:
         texts = json.loads(sys.argv[2])
     except json.JSONDecodeError as e:
@@ -20,13 +31,10 @@ def main():
         sys.exit(1)
 
     # Add the MLX models directory to the path
-    # Check multiple possible locations in order of preference
+    # Check only necessary locations
     possible_paths = [
         os.environ.get("MLX_MODELS_DIR"),
         os.path.expanduser("~/.cache/huggingface/hub"),
-        os.path.expanduser("~/huggingface_cache"),
-        "/tmp/huggingface_cache",
-        "/var/tmp/huggingface_cache",
     ]
 
     mlx_models_dir = None
@@ -36,9 +44,13 @@ def main():
             break
 
     if mlx_models_dir:
+        # Verify path is safe before adding
+        if os.path.abspath(mlx_models_dir) != mlx_models_dir:
+            print(json.dumps({"error": "Invalid MLX models directory path"}), file=sys.stderr)
+            sys.exit(1)
         sys.path.append(mlx_models_dir)
     else:
-        print(json.dumps({"error": "No valid MLX models directory found. Set MLX_MODELS_DIR environment variable."}), file=sys.stderr)
+        print(json.dumps({"error": "MLX models directory not found. Set MLX_MODELS_DIR environment variable."}), file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -49,9 +61,28 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         model = AutoModel.from_pretrained(model_path)
 
+        # Validate texts is a list
+        if not isinstance(texts, list):
+            print(json.dumps({"error": "texts must be a list"}), file=sys.stderr)
+            sys.exit(1)
+
+        # Limit batch size to prevent memory issues
+        if len(texts) > 100:
+            print(json.dumps({"error": "Batch size too large (max 100)"}), file=sys.stderr)
+            sys.exit(1)
+
         embeddings = []
 
         for text in texts:
+            # Validate text input
+            if not isinstance(text, str):
+                print(json.dumps({"error": "All texts must be strings"}), file=sys.stderr)
+                sys.exit(1)
+
+            # Limit text length
+            if len(text) > 10000:
+                print(json.dumps({"error": "Text too long (max 10000 chars)"}), file=sys.stderr)
+                sys.exit(1)
             # Tokenize input
             inputs = tokenizer(
                 text, return_tensors="np", padding=True, truncation=True, max_length=512

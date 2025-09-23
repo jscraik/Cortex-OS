@@ -11,11 +11,6 @@ export interface VectorQuery {
 	filterTags?: string[];
 	// Optional original query text to enable second-stage reranking
 	queryText?: string;
-
-	// @deprecated Use 'vector' instead
-	embedding?: number[];
-	// @deprecated Use 'topK' instead
-	limit?: number;
 }
 
 export interface TextQuery {
@@ -25,9 +20,6 @@ export interface TextQuery {
 	topK?: number;
 	// Filter to memories with specific tags
 	filterTags?: string[];
-
-	// @deprecated Use 'topK' instead
-	limit?: number;
 }
 
 export interface MemoryStore {

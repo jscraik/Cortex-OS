@@ -667,5 +667,7 @@ export const memoryMcpTools: MemoryTool[] = [
 	memoryGetTool,
 	memoryListTool,
 	memorySearchTool,
+	memoryUpdateTool,
 	memoryDeleteTool,
+	memoryStatsTool,
 ];

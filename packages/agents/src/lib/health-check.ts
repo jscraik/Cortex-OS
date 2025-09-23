@@ -107,6 +107,20 @@ export class HealthCheck extends EventEmitter {
 	}
 
 	/**
+	 * Get the health check configuration
+	 */
+	getConfig(): HealthCheckConfig {
+		return this.config;
+	}
+
+	/**
+	 * Get the health check name
+	 */
+	getName(): string {
+		return this.config.name;
+	}
+
+	/**
 	 * Execute the health check
 	 */
 	async execute(): Promise<HealthCheckResult> {
@@ -398,7 +412,13 @@ export class HealthMonitor extends EventEmitter {
 			const checkPromises = Array.from(this.healthChecks.values()).map((check) =>
 				check.execute().catch((error) => {
 					console.error('brAInwav health check execution error:', error);
-					return check.getLastResult() || check.createUnknownResult('execution failed');
+					return check.getLastResult() || {
+						name: check.getName(),
+						status: 'unknown' as HealthStatus,
+						duration: 0,
+						timestamp: Date.now(),
+						message: 'execution failed'
+					};
 				}),
 			);
 
@@ -583,7 +603,7 @@ export class HealthMonitor extends EventEmitter {
 	 */
 	private async executeDependencyChecks(results: HealthCheckResult[]): Promise<void> {
 		for (const [name, healthCheck] of this.healthChecks) {
-			const config = healthCheck.config;
+			const config = healthCheck.getConfig();
 			if (config.dependencies && config.dependencies.length > 0) {
 				const dependencyResults = config.dependencies
 					.map((depName) => results.find((r) => r.name === depName))
@@ -610,13 +630,13 @@ export class HealthMonitor extends EventEmitter {
 		const criticalUnhealthy = results.some(
 			(r) =>
 				r.status === 'unhealthy' &&
-				this.healthChecks.get(r.name)?.config.criticality === 'critical',
+				this.healthChecks.get(r.name)?.getConfig().criticality === 'critical',
 		);
 
 		const importantUnhealthy = results.some(
 			(r) =>
 				r.status === 'unhealthy' &&
-				this.healthChecks.get(r.name)?.config.criticality === 'important',
+				this.healthChecks.get(r.name)?.getConfig().criticality === 'important',
 		);
 
 		let overall: HealthStatus;

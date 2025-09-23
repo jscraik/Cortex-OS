@@ -282,7 +282,7 @@ export class ModelConnectionPool extends EventEmitter {
 			});
 
 			// Process waiting queue
-			this.processWaitingQueue(provider);
+			setImmediate(() => this.processWaitingQueue(provider).catch(console.error));
 		} catch (_error) {
 			await this.destroyConnection(connection, provider);
 		}
@@ -340,6 +340,7 @@ export class ModelConnectionPool extends EventEmitter {
 	 * Destroy the pool
 	 */
 	async destroy(): Promise<void> {
+		// Stop eviction timer
 		if (this.evictionTimer) {
 			clearInterval(this.evictionTimer);
 			this.evictionTimer = undefined;
@@ -354,6 +355,10 @@ export class ModelConnectionPool extends EventEmitter {
 		}
 		this.waitingQueues.clear();
 
+		// Remove all event listeners to prevent memory leaks
+		this.removeAllListeners();
+
+		// Clear all connections
 		await this.clear();
 	}
 
@@ -419,21 +424,50 @@ export class ModelConnectionPool extends EventEmitter {
 		});
 	}
 
-	private processWaitingQueue(provider: string): void {
+	private async processWaitingQueue(provider: string): Promise<void> {
 		const queue = this.waitingQueues.get(provider)!;
 		const pool = this.getPool(provider);
 
-		while (queue.length > 0 && pool.some((conn) => conn.isIdle())) {
+		while (queue.length > 0) {
 			const waiter = queue.shift()!;
-			const idleConnection = pool.find((conn) => conn.isIdle());
+			clearTimeout(waiter.timeout);
 
-			if (idleConnection) {
-				// Remove from waiting queue and resolve
-				clearTimeout(waiter.timeout);
-				queue.splice(queue.indexOf(waiter), 1);
-				this.acquire(provider).then(waiter.resolve).catch(waiter.reject);
+			try {
+				const connection = await this.tryAcquireIdleConnection(provider, pool);
+				waiter.resolve(connection);
+			} catch (error) {
+				waiter.reject(error);
 			}
 		}
+	}
+
+	private async tryAcquireIdleConnection(
+		provider: string,
+		pool: ModelConnection[],
+	): Promise<ModelConnection> {
+		// Try to find an idle connection
+		for (const connection of pool) {
+			if (connection.isIdle()) {
+				try {
+					if (this.config.testOnBorrow) {
+						const isHealthy = await connection.test();
+						if (!isHealthy) {
+							await this.destroyConnection(connection, provider);
+							continue;
+						}
+					}
+
+					await connection.acquire();
+					this.emit('acquired', { provider, connectionId: connection.getId() });
+					return connection;
+				} catch (_error) {
+					await this.destroyConnection(connection, provider);
+				}
+			}
+		}
+
+		// No idle connection available
+		throw new Error('No idle connections available');
 	}
 
 	private async destroyConnection(connection: ModelConnection, provider: string): Promise<void> {
@@ -489,28 +523,41 @@ export class ModelConnectionPool extends EventEmitter {
 	private async evictIdleConnections(): Promise<void> {
 		for (const [provider, pool] of this.pools) {
 			const connectionsToDestroy: ModelConnection[] = [];
+			const _currentTime = Date.now();
 
+			// Find expired connections
 			for (const connection of pool) {
 				if (connection.isExpired(this.config.idleTimeoutMs)) {
 					connectionsToDestroy.push(connection);
 				}
 			}
 
-			// Destroy expired connections, but maintain minimum
-			const keepCount = Math.min(
-				this.config.minConnections,
-				pool.length - connectionsToDestroy.length,
-			);
-			const toDestroy = connectionsToDestroy.slice(
-				0,
-				Math.max(0, connectionsToDestroy.length - keepCount),
-			);
+			// Calculate how many to destroy while maintaining minimum
+			const currentPoolSize = pool.length;
+			const keepCount = Math.min(this.config.minConnections, currentPoolSize);
+			const maxDestroy = Math.max(0, connectionsToDestroy.length - (currentPoolSize - keepCount));
+			const toDestroy = connectionsToDestroy.slice(0, maxDestroy);
 
-			await Promise.all(toDestroy.map((conn) => this.destroyConnection(conn, provider)));
+			// Destroy expired connections in parallel
+			if (toDestroy.length > 0) {
+				await Promise.all(
+					toDestroy.map(async (conn) => {
+						try {
+							await this.destroyConnection(conn, provider);
+						} catch (error) {
+							this.emit('error', new Error(`Failed to evict connection: ${error}`));
+						}
+					}),
+				);
+			}
 
-			// Replenish if below minimum
-			if (pool.length < this.config.minConnections) {
-				await this.initializePool(provider);
+			// Replenish if below minimum (but don't overfill)
+			if (pool.length < this.config.minConnections && pool.length < this.config.maxConnections) {
+				try {
+					await this.initializePool(provider);
+				} catch (error) {
+					this.emit('error', new Error(`Failed to replenish pool for ${provider}: ${error}`));
+				}
 			}
 		}
 	}

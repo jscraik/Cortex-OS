@@ -17,10 +17,18 @@ export class AuthManager {
 	private token?: TokenInfo;
 	private refreshPromise?: Promise<TokenInfo>;
 	private refreshBuffer = 60000; // 1 minute
+	private isRefreshing = false;
 
 	constructor(private config?: AuthConfig) {
-		if (config?.refreshBuffer) {
-			this.refreshBuffer = config.refreshBuffer;
+		// Validate config if provided
+		if (config) {
+			if (config.refreshBuffer && (config.refreshBuffer < 5000 || config.refreshBuffer > 300000)) {
+				throw new Error('refreshBuffer must be between 5000 and 300000 milliseconds');
+			}
+			if (config.clientId && !config.clientSecret) {
+				throw new Error('clientSecret is required when clientId is provided');
+			}
+			this.refreshBuffer = config.refreshBuffer || 60000;
 		}
 	}
 
@@ -44,6 +52,11 @@ export class AuthManager {
 			return await this.refreshToken();
 		}
 
+		// Verify token hasn't expired
+		if (Date.now() >= this.token.expiresAt) {
+			throw new Error('Token has expired and cannot be refreshed');
+		}
+
 		return this.token.accessToken;
 	}
 
@@ -63,9 +76,16 @@ export class AuthManager {
 	 * Refresh the access token
 	 */
 	async refreshToken(): Promise<string> {
-		// If already refreshing, return the existing promise
-		if (this.refreshPromise) {
-			return await this.refreshPromise.then((t) => t.accessToken);
+		// Use atomic flag to prevent race conditions
+		if (this.isRefreshing) {
+			// Wait for existing refresh to complete
+			while (this.isRefreshing && this.refreshPromise) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+
+			if (this.token && Date.now() < this.token.expiresAt) {
+				return this.token.accessToken;
+			}
 		}
 
 		if (!this.token?.refreshToken) {
@@ -76,14 +96,27 @@ export class AuthManager {
 			throw new Error('Token refresh URL not configured');
 		}
 
+		// Validate token URL to prevent SSRF
+		try {
+			new URL(this.config.tokenUrl);
+		} catch {
+			throw new Error('Invalid token URL');
+		}
+
+		this.isRefreshing = true;
 		this.refreshPromise = this.performRefresh();
 
 		try {
 			const newToken = await this.refreshPromise;
 			this.setToken(newToken);
 			return newToken.accessToken;
+		} catch (error) {
+			// On refresh failure, clear the token to prevent stale state
+			this.clearToken();
+			throw error;
 		} finally {
 			this.refreshPromise = undefined;
+			this.isRefreshing = false;
 		}
 	}
 
@@ -91,7 +124,7 @@ export class AuthManager {
 	 * Perform the actual token refresh
 	 */
 	private async performRefresh(): Promise<TokenInfo> {
-		const response = await fetch(this.config.tokenUrl!, {
+		const response = await fetch(this.config!.tokenUrl, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -99,10 +132,12 @@ export class AuthManager {
 			body: JSON.stringify({
 				grant_type: 'refresh_token',
 				refresh_token: this.token?.refreshToken,
-				client_id: this.config.clientId,
-				client_secret: this.config.clientSecret,
-				scope: this.config.scopes?.join(' '),
+				client_id: this.config?.clientId,
+				client_secret: this.config?.clientSecret,
+				scope: this.config?.scopes?.join(' '),
 			}),
+			// Add timeout to prevent hanging
+			signal: AbortSignal.timeout(30000),
 		});
 
 		if (!response.ok) {

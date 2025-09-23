@@ -88,6 +88,7 @@ export class MetricsCollector extends EventEmitter {
 	private flushTimer?: NodeJS.Timeout;
 	private metricsPerSecond = 0;
 	private isDestroyed = false;
+	private lastFlush = 0;
 
 	constructor(config: Partial<MetricsConfig> = {}) {
 		super();
@@ -111,6 +112,13 @@ export class MetricsCollector extends EventEmitter {
 		if (this.config.enabled) {
 			this.startCollection();
 		}
+	}
+
+	/**
+	 * Get the last flush timestamp
+	 */
+	public getLastFlush(): number {
+		return this.lastFlush;
 	}
 
 	/**
@@ -334,6 +342,13 @@ export class TracingSystem extends EventEmitter {
 	}
 
 	/**
+	 * Get the tracing configuration
+	 */
+	public getConfig(): TracingConfig {
+		return this.config;
+	}
+
+	/**
 	 * Start a new trace span
 	 */
 	startSpan(
@@ -507,15 +522,15 @@ export class TracingSystem extends EventEmitter {
 	/**
 	 * Generate unique trace ID
 	 */
-	private generateTraceId(): string {
-		return `brAInwav-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+	public generateTraceId(): string {
+		return `brAInwav-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 	}
 
 	/**
 	 * Generate unique span ID
 	 */
-	private generateSpanId(): string {
-		return `span-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+	public generateSpanId(): string {
+		return `span-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 	}
 
 	/**
@@ -717,13 +732,13 @@ export class ObservabilitySystem {
 		return {
 			metrics: {
 				totalCollected: this.metrics.getMetrics().length,
-				lastFlush: this.metrics.lastFlush,
+				lastFlush: this.metrics.getLastFlush(),
 				systemMetrics: this.metrics.getSystemMetrics(),
 			},
 			tracing: {
 				activeSpans: this.tracing.getActiveSpans().length,
 				completedSpans: this.tracing.getCompletedSpans().length,
-				samplingRate: this.tracing.config.samplingRate,
+				samplingRate: this.tracing.getConfig().samplingRate,
 			},
 			brAInwav: {
 				service: 'cortex-agents',
