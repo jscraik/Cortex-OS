@@ -65,9 +65,9 @@ describe('Agent Toolkit Integration', () => {
 		});
 
 		it('should throw error for invalid input type', async () => {
-			await expect(
-				executor.execute('ripgrep', { invalid: 'input' } as Record<string, unknown>),
-			).rejects.toThrow("Unknown input type for tool 'ripgrep'");
+			await expect(executor.execute('ripgrep', { invalid: 'input' } as any)).rejects.toThrow(
+				"Unknown input type for tool 'ripgrep'",
+			);
 		});
 	});
 

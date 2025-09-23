@@ -46,16 +46,24 @@
   "dependi.dart.enabled": true,
   "dependi.dart.lockFileEnabled": true,
   "python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python",
-  "black-formatter.path": ["/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/black"],
-  "ruff.path": ["/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/ruff"],
-  "mypy-type-checker.path": ["/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/mypy"],
-  "python.analysis.typeCheckingMode": "basic",
-  "python.languageServer": "Pylance",
+  "black-formatter.path": [
+    "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/black"
+  ],
+  "ruff.path": [
+    "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/ruff"
+  ],
+  "mypy-type-checker.path": [
+    "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/mypy"
+  ],
+  "python.analysis.typeCheckingMode": "off",
+  "python.languageServer": "None",
   "python.terminal.activateEnvironment": true,
   "python.terminal.useEnvFile": true,
   "ruff.configuration": "/Users/jamiecraik/.Cortex-OS/config/pyproject.toml",
   "ruff.serverRestart.timeout": 30000,
-  "ruff.restartSettings": ["ruff.configuration"],
+  "ruff.restartSettings": [
+    "ruff.configuration"
+  ],
   "black-formatter.serverRestart.timeout": 30000,
   "mypy-type-checker.serverRestart.timeout": 30000,
   "python.linting.enabled": true,

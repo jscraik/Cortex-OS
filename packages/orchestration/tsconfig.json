@@ -14,7 +14,8 @@
 	],
 	"compilerOptions": {
 		"outDir": "dist",
-		"rootDir": "../../",
+		"rootDir": "src",
+		"noEmit": false,
 		"declaration": true,
 		"composite": true,
 		"skipLibCheck": true,

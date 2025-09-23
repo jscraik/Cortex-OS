@@ -20,16 +20,16 @@ const DEFAULT_TDD_COACH_ACL: TopicACL = {
 	'tdd_coach.refactoring.opportunity': { publish: true, subscribe: true },
 };
 
-function registerTddSchema(
+function registerTddCoachSchema(
 	registry: SchemaRegistry,
 	eventType: keyof typeof DEFAULT_TDD_COACH_ACL,
 	schema: ZodTypeAny,
 	description: string,
 	tags: string[],
 	examples: unknown[],
-) {
+): void {
 	registry.register({
-		eventType,
+		eventType: eventType as string,
 		version: '1.0.0',
 		schema,
 		description,
@@ -43,14 +43,8 @@ function registerTddSchema(
 	});
 }
 
-export function createTddCoachSchemaRegistry(): SchemaRegistry {
-	const registry = new SchemaRegistry({
-		strictValidation: true,
-		validateOnRegistration: true,
-		enableCache: true,
-	});
-
-	registerTddSchema(
+function registerCycleStarted(registry: SchemaRegistry): void {
+	registerTddCoachSchema(
 		registry,
 		'tdd_coach.cycle.started',
 		TddCycleStartedEventSchema,
@@ -68,8 +62,10 @@ export function createTddCoachSchemaRegistry(): SchemaRegistry {
 			},
 		],
 	);
+}
 
-	registerTddSchema(
+function registerTestWritten(registry: SchemaRegistry): void {
+	registerTddCoachSchema(
 		registry,
 		'tdd_coach.test.written',
 		TestWrittenEventSchema,
@@ -87,8 +83,10 @@ export function createTddCoachSchemaRegistry(): SchemaRegistry {
 			},
 		],
 	);
+}
 
-	registerTddSchema(
+function registerImplementationSuggested(registry: SchemaRegistry): void {
+	registerTddCoachSchema(
 		registry,
 		'tdd_coach.implementation.suggested',
 		ImplementationSuggestedEventSchema,
@@ -105,8 +103,10 @@ export function createTddCoachSchemaRegistry(): SchemaRegistry {
 			},
 		],
 	);
+}
 
-	registerTddSchema(
+function registerRefactoringOpportunity(registry: SchemaRegistry): void {
+	registerTddCoachSchema(
 		registry,
 		'tdd_coach.refactoring.opportunity',
 		RefactoringOpportunityEventSchema,
@@ -124,7 +124,18 @@ export function createTddCoachSchemaRegistry(): SchemaRegistry {
 			},
 		],
 	);
+}
 
+export function createTddCoachSchemaRegistry(): SchemaRegistry {
+	const registry = new SchemaRegistry({
+		strictValidation: true,
+		validateOnRegistration: true,
+		enableCache: true,
+	});
+	registerCycleStarted(registry);
+	registerTestWritten(registry);
+	registerImplementationSuggested(registry);
+	registerRefactoringOpportunity(registry);
 	return registry;
 }
 
@@ -137,10 +148,7 @@ export interface TddCoachBusConfig {
 
 export function createTddCoachBus(config: TddCoachBusConfig = {}) {
 	const registry = config.schemaRegistry ?? createTddCoachSchemaRegistry();
-	const acl: TopicACL = {
-		...DEFAULT_TDD_COACH_ACL,
-		...(config.acl ?? {}),
-	};
+	const acl: TopicACL = { ...DEFAULT_TDD_COACH_ACL, ...(config.acl ?? {}) };
 	const transport = config.transport ?? inproc();
 	const bus = createBus(transport, undefined, registry, acl, config.busOptions);
 	return { bus, schemaRegistry: registry, transport };

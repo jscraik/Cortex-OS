@@ -5,6 +5,7 @@
     "rootDir": "./src",
     "declaration": true,
     "composite": true,
+    "noEmit": false,
     "module": "esnext",
     "moduleResolution": "bundler",
     "target": "es2022",

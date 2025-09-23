@@ -22,14 +22,14 @@ const DEFAULT_GATEWAY_ACL: TopicACL = {
 
 function registerGatewaySchema(
 	registry: SchemaRegistry,
-	eventType: string & keyof typeof DEFAULT_GATEWAY_ACL,
+	eventType: keyof typeof DEFAULT_GATEWAY_ACL,
 	schema: ZodTypeAny,
 	description: string,
 	tags: string[],
 	examples: unknown[],
-) {
+): void {
 	registry.register({
-		eventType,
+		eventType: eventType as string,
 		version: '1.0.0',
 		schema,
 		description,
