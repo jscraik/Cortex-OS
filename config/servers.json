@@ -1,8 +1,41 @@
 {
   "services": [
-    { "name": "mcp", "port": 3000, "env": "MCP_PORT", "notes": "Cloudflare tunnel reserved" },
-    { "name": "github-ai", "port": 3001, "env": "GITHUB_AI_PORT", "notes": "GitHub AI app" },
-    { "name": "semgrep", "port": 3002, "env": "SEMGREP_PORT", "notes": "Semgrep app" },
-    { "name": "structure", "port": 3003, "env": "STRUCTURE_PORT", "notes": "Structure app" }
-  ]
+    {
+      "name": "mcp",
+      "port": 3000,
+      "env": "MCP_PORT",
+      "notes": "Cloudflare tunnel reserved"
+    },
+    {
+      "name": "github-ai",
+      "port": 3001,
+      "env": "GITHUB_AI_PORT",
+      "notes": "GitHub AI app"
+    },
+    {
+      "name": "semgrep",
+      "port": 3002,
+      "env": "SEMGREP_PORT",
+      "notes": "Semgrep app"
+    },
+    {
+      "name": "structure",
+      "port": 3003,
+      "env": "STRUCTURE_PORT",
+      "notes": "Structure app"
+    }
+  ],
+  "mcpServers": {
+    "RepPrompt": {
+      "command": "/Users/jamiecraik/RepoPrompt/repoprompt_cli",
+      "args": [],
+      "description": "brAInwav Repository analysis and context generation for Qoder IDE",
+      "capabilities": [
+        "repository-analysis",
+        "code-context-generation",
+        "file-structure-mapping",
+        "dependency-analysis"
+      ]
+    }
+  }
 }

@@ -48,7 +48,7 @@ pub struct Submission {
 /// Submission operation
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[non_exhaustive]
 pub enum Op {
     /// Abort current task.

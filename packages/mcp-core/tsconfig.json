@@ -9,7 +9,10 @@
         "target": "ES2022",
         "moduleResolution": "Bundler",
         "strict": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "noEmit": false,
+        "esModuleInterop": true,
+        "downlevelIteration": true
     },
     "include": [
         "src"

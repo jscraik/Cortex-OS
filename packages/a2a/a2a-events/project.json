@@ -12,7 +12,8 @@
             "options": {
                 "outputPath": "dist/packages/a2a/a2a-events",
                 "main": "packages/a2a/a2a-events/src/index.ts",
-                "tsConfig": "packages/a2a/a2a-events/tsconfig.lib.json"
+                "tsConfig": "packages/a2a/a2a-events/tsconfig.lib.json",
+                "assets": []
             }
         },
         "lint": {

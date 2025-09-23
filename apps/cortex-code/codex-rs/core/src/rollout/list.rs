@@ -110,7 +110,7 @@ pub(crate) async fn get_conversations(
 
 /// Load the full contents of a single conversation session file at `path`.
 /// Returns the entire file contents as a String.
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) async fn get_conversation(path: &Path) -> io::Result<String> {
     tokio::fs::read_to_string(path).await
 }
@@ -357,10 +357,10 @@ pub async fn find_conversation_path_by_id_str(
         return Ok(None);
     }
     // This is safe because we know the values are valid.
-    #[allow(clippy::unwrap_used)]
+    #[expect(clippy::unwrap_used)]
     let limit = NonZero::new(1).unwrap();
     // This is safe because we know the values are valid.
-    #[allow(clippy::unwrap_used)]
+    #[expect(clippy::unwrap_used)]
     let threads = NonZero::new(2).unwrap();
     let cancel = Arc::new(AtomicBool::new(false));
     let exclude: Vec<String> = Vec::new();

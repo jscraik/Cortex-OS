@@ -364,7 +364,7 @@ mod tests {
     /// in the presence of a process that never terminates (but produces
     /// output continuously).
     #[cfg(unix)]
-    #[allow(clippy::print_stderr)]
+    #[expect(clippy::print_stderr)]
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     async fn session_manager_streams_and_truncates_from_now() {
         use crate::exec_command::exec_command_params::ExecCommandParams;

@@ -46,7 +46,7 @@ pub struct ExecApprovalResponse {
     pub decision: ReviewDecision,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 pub(crate) async fn handle_exec_approval_request(
     command: Vec<String>,
     cwd: PathBuf,

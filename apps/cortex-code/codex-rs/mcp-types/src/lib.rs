@@ -1266,7 +1266,7 @@ pub enum ServerRequest {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize, TS)]
 #[serde(untagged)]
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 pub enum ServerResult {
     Result(Result),
     InitializeResult(InitializeResult),

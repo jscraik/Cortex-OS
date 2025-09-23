@@ -66,10 +66,6 @@ export async function writeJsonFile(
 		if ((error as NodeJS.ErrnoException)?.code === 'EEXIST') {
 			await rm(targetPath, { force: true });
 			await rename(tmpPath, targetPath);
-		} else if ((error as NodeJS.ErrnoException)?.code === 'EXDEV') {
-			// Cross-device rename fallback: copy + remove tmp.
-			await writeFile(targetPath, serialized, 'utf-8');
-			await rm(tmpPath, { force: true });
 		} else {
 			await rm(tmpPath, { force: true });
 			throw error;

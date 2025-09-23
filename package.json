@@ -196,7 +196,8 @@
     "pw:update": "playwright test --update-snapshots",
     "pw:test:debug": "playwright test --debug",
     "pw:test:ui": "playwright test --ui",
-    "ci:governance": "bash -lc 'if [ \"${CI_SKIP_MEMORY_GUARD:-0}\" != \"1\" ]; then echo \"[ci:governance] Memory guard enabled\"; pnpm prebuild:graph -- --quiet || true; pnpm memory:snapshot:test || EXIT_CODE=$?; if [ -n \"${EXIT_CODE:-}\" ] && [ \"$EXIT_CODE\" -ne 0 ]; then echo \"Memory snapshot phase failed (code $EXIT_CODE)\"; exit $EXIT_CODE; fi; pnpm memory:regression || exit $?; else echo \"[ci:governance] Skipping memory guard (CI_SKIP_MEMORY_GUARD=$CI_SKIP_MEMORY_GUARD)\"; fi'; pnpm nx:project:guard && pnpm format:check && pnpm lint && pnpm test:security && pnpm structure:validate && pnpm license:validate && pnpm ci:mcp-path",
+    "ci:governance": "bash -lc 'if [ \"${CI_SKIP_MEMORY_GUARD:-0}\" != \"1\" ]; then echo \"[ci:governance] Memory guard enabled\"; pnpm prebuild:graph -- --quiet || true; pnpm memory:snapshot:test || EXIT_CODE=$?; if [ -n \"${EXIT_CODE:-}\" ] && [ \"$EXIT_CODE\" -ne 0 ]; then echo \"Memory snapshot phase failed (code $EXIT_CODE)\"; exit $EXIT_CODE; fi; pnpm memory:regression || exit $?; else echo \"[ci:governance] Skipping memory guard (CI_SKIP_MEMORY_GUARD=$CI_SKIP_MEMORY_GUARD)\"; fi'; pnpm nx:project:guard && pnpm format:check && pnpm lint && pnpm test:security && pnpm structure:validate && pnpm license:validate && pnpm check:cycles && pnpm ci:mcp-path",
+    "check:cycles": "node scripts/check-circular-deps.mjs",
     "ci:guard:ports": "bash scripts/ci/guard_port_3004.sh",
     "ci:governance:extended": "pnpm ci:governance && pnpm ci:guard:ports",
     "cli:check": "cd apps/cortex-code && cargo run -- ctl validate",
@@ -326,6 +327,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "madge": "^8.0.0",
     "@biomejs/biome": "2.2.2",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",

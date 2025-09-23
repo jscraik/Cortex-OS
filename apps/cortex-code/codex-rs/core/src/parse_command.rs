@@ -68,7 +68,7 @@ pub fn parse_command(command: &[String]) -> Vec<ParsedCommand> {
 }
 
 #[cfg(test)]
-#[allow(clippy::items_after_test_module)]
+#[expect(clippy::items_after_test_module)]
 /// Tests are at the top to encourage using TDD + Codex to fix the implementation.
 mod tests {
     use super::*;

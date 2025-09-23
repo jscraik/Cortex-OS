@@ -56,7 +56,7 @@ pub enum ParseError {
 use ParseError::*;
 
 #[derive(Debug, PartialEq, Clone)]
-#[allow(clippy::enum_variant_names)]
+#[expect(clippy::enum_variant_names)]
 pub enum Hunk {
     AddFile {
         path: PathBuf,

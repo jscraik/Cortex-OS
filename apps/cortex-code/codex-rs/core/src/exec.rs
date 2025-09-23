@@ -130,7 +130,7 @@ pub async fn process_exec_tool_call(
     let duration = start.elapsed();
     match raw_output_result {
         Ok(raw_output) => {
-            #[allow(unused_mut)]
+            #[expect(unused_mut)]
             let mut timed_out = raw_output.timed_out;
 
             #[cfg(target_family = "unix")]
@@ -395,7 +395,7 @@ async fn read_capped<R: AsyncRead + Unpin + Send + 'static>(
                 id: stream.sub_id.clone(),
                 msg,
             };
-            #[allow(clippy::let_unit_value)]
+            #[expect(clippy::let_unit_value)]
             let _ = stream.tx_event.send(event).await;
             emitted_deltas += 1;
         }

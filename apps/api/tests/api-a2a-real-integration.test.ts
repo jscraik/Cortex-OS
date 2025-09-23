@@ -1,13 +1,13 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import type { Envelope } from '../../../packages/a2a/a2a-contracts/src/envelope.js';
 import {
 	type ApiBusIntegration,
 	ApiEventTypes,
 	createApiBusIntegration,
 	createWebhookEvent,
-} from '../src/core/a2a-integration.js';
-import { StructuredLogger } from '../src/core/observability.js';
-import type { ApiOperationMetadata, GatewayRequest } from '../src/core/types.js';
+} from '@apps/api/src/core/a2a-integration.js';
+import { StructuredLogger } from '@apps/api/src/core/observability.js';
+import type { ApiOperationMetadata, GatewayRequest } from '@apps/api/src/core/types.js';
+import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('API A2A Real Bus Integration', () => {
 	let logger: StructuredLogger;

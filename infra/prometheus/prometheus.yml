@@ -1,0 +1,44 @@
+# Prometheus configuration for Cortex-OS monitoring stack
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Scrape configurations for available services
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Qdrant metrics
+  - job_name: 'qdrant'
+    static_configs:
+      - targets: ['qdrant:6333']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Scaphandre bridge metrics
+  - job_name: 'scaphandre'
+    static_configs:
+      - targets: ['scaphandre-bridge:8080']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Grafana metrics
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Node exporter metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # Docker container metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8081']
+    scrape_interval: 30s

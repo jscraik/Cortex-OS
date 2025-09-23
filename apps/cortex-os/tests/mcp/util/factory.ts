@@ -1,8 +1,9 @@
+import { createMcpGateway } from '@apps/cortex-os/src/mcp/gateway';
+import type { CortexOsToolName } from '@apps/cortex-os/src/mcp/tools';
+import { TOKENS } from '@apps/cortex-os/src/tokens';
+import { provideMemories } from '@cortex-os/memories';
+import { provideOrchestration } from '@cortex-os/orchestration';
 import { Container } from 'inversify';
-import { createMcpGateway } from '../../../src/mcp/gateway';
-import type { CortexOsToolName } from '../../../src/mcp/tools';
-import { provideMemories, provideOrchestration } from '../../../src/services';
-import { TOKENS } from '../../../src/tokens';
 
 export interface TestMcpFacade {
 	listTools(): { name: CortexOsToolName; description: string }[];
@@ -46,8 +47,6 @@ export function createTestMcpContainer(opts: CreateTestMcpOptions = {}) {
 		listTools: () => gateway.listTools(),
 		callTool: (tool, input) => gateway.callTool(tool, input),
 	};
-
-	container.bind(TOKENS.MCPGateway).toConstantValue(gateway);
 
 	return { container, mcp: facade, published };
 }

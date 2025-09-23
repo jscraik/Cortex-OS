@@ -80,7 +80,7 @@ impl From<usize> for RtOptions<'_> {
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 impl<'a> RtOptions<'a> {
     pub fn new(width: usize) -> Self {
         RtOptions {
@@ -234,7 +234,7 @@ where
 
 /// Wrap a sequence of lines, applying the initial indent only to the very first
 /// output line, and using the subsequent indent for all later wrapped pieces.
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) fn word_wrap_lines<'a, I, O>(lines: I, width_or_options: O) -> Vec<Line<'static>>
 where
     I: IntoIterator<Item = &'a Line<'a>>,
@@ -259,7 +259,7 @@ where
     out
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) fn word_wrap_lines_borrowed<'a, I, O>(lines: I, width_or_options: O) -> Vec<Line<'a>>
 where
     I: IntoIterator<Item = &'a Line<'a>>,

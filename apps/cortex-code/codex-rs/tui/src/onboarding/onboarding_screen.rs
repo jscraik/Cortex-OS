@@ -26,7 +26,7 @@ use color_eyre::eyre::Result;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 enum Step {
     Welcome(WelcomeWidget),
     Auth(AuthModeWidget),

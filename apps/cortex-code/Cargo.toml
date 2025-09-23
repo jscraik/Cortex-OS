@@ -1,0 +1,54 @@
+[workspace]
+members = [
+    "codex-rs/ansi-escape",
+    "codex-rs/apply-patch",
+    "codex-rs/arg0",
+    "codex-rs/cli",
+    "codex-rs/common",
+    "codex-rs/core",
+    "codex-rs/exec",
+    "codex-rs/execpolicy",
+    "codex-rs/file-search",
+    "codex-rs/linux-sandbox",
+    "codex-rs/login",
+    "codex-rs/mcp-client",
+    "codex-rs/mcp-server",
+    "codex-rs/mcp-types",
+    "codex-rs/ollama",
+    "codex-rs/protocol",
+    "codex-rs/protocol-ts",
+    "codex-rs/tui",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+authors = ["brAInwav Development Team"]
+# Track the edition for all workspace crates in one place. Individual
+# crates can still override this value, but keeping it here means new
+# crates created with `cargo new -w ...` automatically inherit the 2024
+# edition.
+edition = "2024"
+license = "Apache-2.0"
+
+[workspace.lints]
+rust = {}
+
+[workspace.lints.clippy]
+expect_used = "deny"
+redundant_clone = "deny"
+uninlined_format_args = "deny"
+unwrap_used = "deny"
+
+[profile.release]
+lto = "fat"
+# Because we bundle some of these executables with the Cortex-OS TypeScript CLI, we
+# remove everything to make the binary as small as possible.
+strip = "symbols"
+
+# Optimize for size and performance
+codegen-units = 1
+
+[patch.crates-io]
+# ratatui = { path = "../../ratatui" }
+ratatui = { git = "https://github.com/nornagon/ratatui", branch = "nornagon-v0.29.0-patch" }

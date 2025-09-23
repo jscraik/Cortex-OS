@@ -145,7 +145,7 @@ pub async fn run_main(
     let overrides_cli = codex_common::CliConfigOverrides { raw_overrides };
     let cli_kv_overrides = match overrides_cli.parse_overrides() {
         Ok(v) => v,
-        #[allow(clippy::print_stderr)]
+        #[expect(clippy::print_stderr)]
         Err(e) => {
             eprintln!("Error parsing -c overrides: {e}");
             std::process::exit(1);
@@ -155,7 +155,7 @@ pub async fn run_main(
     let mut config = {
         // Load configuration and support CLI overrides.
 
-        #[allow(clippy::print_stderr)]
+        #[expect(clippy::print_stderr)]
         match Config::load_with_cli_overrides(cli_kv_overrides.clone(), overrides) {
             Ok(config) => config,
             Err(err) => {
@@ -166,7 +166,7 @@ pub async fn run_main(
     };
 
     // we load config.toml here to determine project state.
-    #[allow(clippy::print_stderr)]
+    #[expect(clippy::print_stderr)]
     let config_toml = {
         let codex_home = match find_codex_home() {
             Ok(codex_home) => codex_home,

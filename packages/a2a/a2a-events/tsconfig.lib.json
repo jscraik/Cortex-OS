@@ -2,11 +2,19 @@
 	"extends": "../../../tsconfig.base.json",
 	"compilerOptions": {
 		"module": "ESNext",
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"outDir": "../../../dist/packages/a2a/a2a-events",
 		"declaration": true,
-		"types": ["node"]
+		"types": [
+			"node"
+		]
 	},
-	"include": ["src/**/*"],
-	"exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+	"include": [
+		"src/**/*.ts"
+	],
+	"exclude": [
+		"jest.config.ts",
+		"src/**/*.spec.ts",
+		"src/**/*.test.ts"
+	]
 }

@@ -22,7 +22,7 @@ const DEFAULT_EVALS_ACL: TopicACL = {
 
 function registerEvalsSchema(
 	registry: SchemaRegistry,
-	eventType: keyof typeof DEFAULT_EVALS_ACL,
+	eventType: string,
 	schema: ZodTypeAny,
 	description: string,
 	tags: string[],

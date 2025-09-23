@@ -1,5 +1,23 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
+
+/// Extension trait for anyhow::Error to convert to CallToolResult
+trait ErrorExt {
+    fn into_call_tool_result(self) -> CallToolResult;
+}
+
+impl ErrorExt for anyhow::Error {
+    fn into_call_tool_result(self) -> CallToolResult {
+        CallToolResult {
+            content: vec![ContentBlock::TextContent(TextContent {
+                text: format!("{}", self),
+                r#type: "text".to_string(),
+                annotations: None,
+            })],
+            is_error: Some(true),
+            structured_content: None,
+        }
+    }
+}
 
 use crate::codex_message_processor::CodexMessageProcessor;
 use crate::codex_tool_config::CodexToolCallParam;
@@ -34,6 +52,7 @@ use mcp_types::ServerCapabilitiesTools;
 use mcp_types::ServerNotification;
 use mcp_types::TextContent;
 use serde_json::json;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::task;
@@ -347,7 +366,10 @@ impl MessageProcessor {
 
         if let Some(tool_result) = self
             .tool_registry
-            .call_tool(name.as_str(), arguments.clone())
+            .call_tool(
+                name.as_str(),
+                arguments.clone().unwrap_or(serde_json::Value::Null),
+            )
             .await
         {
             let call_result = match tool_result {

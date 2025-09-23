@@ -17,6 +17,14 @@ export const executeAgentResponseSchema = z.object({
 	timestamp: z.string(),
 	status: z.enum(['completed', 'failed', 'pending']),
 	error: z.string().optional(),
+	metadata: z
+		.object({
+			executionTime: z.number(),
+			specialization: z.string(),
+			selectedAgent: z.string(),
+			error: z.string().optional(),
+		})
+		.optional(),
 });
 
 export type ExecuteAgentResponse = z.infer<typeof executeAgentResponseSchema>;

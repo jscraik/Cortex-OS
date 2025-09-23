@@ -1502,7 +1502,7 @@ impl Notification {
                 format!(
                     "Codex wants to edit {}",
                     if changes.len() == 1 {
-                        #[allow(clippy::unwrap_used)]
+                        #[expect(clippy::unwrap_used)]
                         display_path_for(changes.first().unwrap(), cwd)
                     } else {
                         format!("{} files", changes.len())

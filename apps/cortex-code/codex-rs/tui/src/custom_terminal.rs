@@ -52,7 +52,7 @@ pub struct Frame<'a> {
     pub(crate) count: usize,
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 impl Frame<'_> {
     /// The area of the current frame
     ///
@@ -79,7 +79,7 @@ impl Frame<'_> {
     ///
     /// Usually the area argument is the size of the current frame or a sub-area of the current
     /// frame (which can be obtained using [`Layout`] to split the total area).
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value)]
     pub fn render_widget_ref<W: WidgetRef>(&mut self, widget: W, area: Rect) {
         widget.render_ref(area, self.buffer);
     }
@@ -108,7 +108,7 @@ impl Frame<'_> {
     ///
     /// The last argument should be an instance of the [`StatefulWidgetRef::State`] associated to
     /// the given [`StatefulWidgetRef`].
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value)]
     pub fn render_stateful_widget_ref<W>(&mut self, widget: W, area: Rect, state: &mut W::State)
     where
         W: StatefulWidgetRef,
@@ -182,7 +182,7 @@ impl<B> Drop for Terminal<B>
 where
     B: Backend,
 {
-    #[allow(clippy::print_stderr)]
+    #[expect(clippy::print_stderr)]
     fn drop(&mut self) {
         // Attempt to restore the cursor state
         if self.hidden_cursor
@@ -404,7 +404,7 @@ where
     /// Gets the current cursor position.
     ///
     /// This is the position of the cursor after the last draw call.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub fn get_cursor_position(&mut self) -> io::Result<Position> {
         self.backend.get_cursor_position()
     }

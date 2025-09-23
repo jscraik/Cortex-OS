@@ -5,15 +5,76 @@
 //! patch application, and file searching.
 
 use anyhow::Result;
-use mcp_types::{CallToolResult, ContentBlock, TextContent, Tool};
+use mcp_types::{CallToolResult, ContentBlock, TextContent, Tool, ToolInputSchema};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 use tokio::fs;
 
+/// Extension trait for anyhow::Error to convert to CallToolResult
+trait ErrorExt {
+    fn into_call_tool_result(self) -> CallToolResult;
+}
+
+impl ErrorExt for anyhow::Error {
+    fn into_call_tool_result(self) -> CallToolResult {
+        CallToolResult {
+            content: vec![ContentBlock::TextContent(TextContent {
+                text: format!("{, r#type: "text".to_string(), annotations: None }", self),
+                r#type: "text".to_string(),
+                annotations: None,
+            })],
+            is_error: Some(true),
+            structured_content: None,
+        }
+    }
+}
+
+/// Enum containing all possible MCP tools
+#[derive(Debug)]
+pub enum McpToolEnum {
+    Echo(EchoTool),
+    FileOperations(FileOperationsTool),
+    FileSearch(FileSearchTool),
+    ApplyPatch(ApplyPatchTool),
+    CodeAnalysis(CodeAnalysisTool),
+}
+
+impl McpToolEnum {
+    pub fn name(&self) -> &str {
+        match self {
+            McpToolEnum::Echo(tool) => tool.name(),
+            McpToolEnum::FileOperations(tool) => tool.name(),
+            McpToolEnum::FileSearch(tool) => tool.name(),
+            McpToolEnum::ApplyPatch(tool) => tool.name(),
+            McpToolEnum::CodeAnalysis(tool) => tool.name(),
+        }
+    }
+
+    pub fn definition(&self) -> Tool {
+        match self {
+            McpToolEnum::Echo(tool) => tool.definition(),
+            McpToolEnum::FileOperations(tool) => tool.definition(),
+            McpToolEnum::FileSearch(tool) => tool.definition(),
+            McpToolEnum::ApplyPatch(tool) => tool.definition(),
+            McpToolEnum::CodeAnalysis(tool) => tool.definition(),
+        }
+    }
+
+    pub async fn call(&self, arguments: Value) -> Result<CallToolResult> {
+        match self {
+            McpToolEnum::Echo(tool) => tool.call(arguments).await,
+            McpToolEnum::FileOperations(tool) => tool.call(arguments).await,
+            McpToolEnum::FileSearch(tool) => tool.call(arguments).await,
+            McpToolEnum::ApplyPatch(tool) => tool.call(arguments).await,
+            McpToolEnum::CodeAnalysis(tool) => tool.call(arguments).await,
+        }
+    }
+}
+
 /// Tool registry for managing MCP tools
 pub struct ToolRegistry {
-    tools: HashMap<String, Box<dyn McpTool + Send + Sync>>,
+    tools: HashMap<String, McpToolEnum>,
 }
 
 impl ToolRegistry {
@@ -23,29 +84,18 @@ impl ToolRegistry {
         };
 
         // Register built-in tools
-        registry
-            .register_tool(EchoTool::default())
-            .expect("Failed to register echo tool");
-        registry
-            .register_tool(FileOperationsTool::new())
-            .expect("Failed to register file operations tool");
-        registry
-            .register_tool(FileSearchTool::new())
-            .expect("Failed to register file search tool");
-        registry
-            .register_tool(ApplyPatchTool::new())
-            .expect("Failed to register apply patch tool");
-        registry
-            .register_tool(CodeAnalysisTool::new())
-            .expect("Failed to register code analysis tool");
+        registry.register_tool(McpToolEnum::Echo(EchoTool::default()));
+        registry.register_tool(McpToolEnum::FileOperations(FileOperationsTool));
+        registry.register_tool(McpToolEnum::FileSearch(FileSearchTool));
+        registry.register_tool(McpToolEnum::ApplyPatch(ApplyPatchTool));
+        registry.register_tool(McpToolEnum::CodeAnalysis(CodeAnalysisTool));
 
         registry
     }
 
-    pub fn register_tool(&mut self, tool: Box<dyn McpTool + Send + Sync>) -> Result<()> {
+    pub fn register_tool(&mut self, tool: McpToolEnum) {
         let name = tool.name().to_string();
         self.tools.insert(name, tool);
-        Ok(())
     }
 
     pub fn list_tools(&self) -> Vec<Tool> {
@@ -68,8 +118,17 @@ pub trait McpTool {
     async fn call(&self, arguments: Value) -> Result<CallToolResult>;
 }
 
+/// Helper function to create TextContent with required fields
+fn create_text_content(text: String) -> TextContent {
+    TextContent {
+        text,
+        r#type: "text".to_string(),
+        annotations: None,
+    }
+}
+
 /// Echo tool for testing
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct EchoTool;
 
 impl McpTool for EchoTool {
@@ -82,16 +141,18 @@ impl McpTool for EchoTool {
             name: "echo".to_string(),
             title: Some("Echo".to_string()),
             description: Some("Echo back the provided message".to_string()),
-            input_schema: serde_json::json!({
-                "type": "object",
-                "properties": {
+            annotations: None,
+            input_schema: ToolInputSchema {
+                r#type: "object".to_string(),
+                properties: Some(serde_json::json!({
                     "message": {
                         "type": "string",
                         "description": "Message to echo back"
                     }
-                },
-                "required": ["message"]
-            }),
+                })),
+                required: Some(vec!["message".to_string()]),
+            },
+            output_schema: None,
         }
     }
 
@@ -104,6 +165,8 @@ impl McpTool for EchoTool {
         Ok(CallToolResult {
             content: vec![ContentBlock::TextContent(TextContent {
                 text: message.to_string(),
+                r#type: "text".to_string(),
+                annotations: None,
             })],
             is_error: None,
             structured_content: None,
@@ -112,13 +175,8 @@ impl McpTool for EchoTool {
 }
 
 /// File operations tool
+#[derive(Debug)]
 pub struct FileOperationsTool;
-
-impl FileOperationsTool {
-    pub fn new() -> Box<dyn McpTool + Send + Sync> {
-        Box::new(Self)
-    }
-}
 
 impl McpTool for FileOperationsTool {
     fn name(&self) -> &str {
@@ -133,9 +191,10 @@ impl McpTool for FileOperationsTool {
                 "Perform file system operations (read, write, list, create directories)"
                     .to_string(),
             ),
-            input_schema: serde_json::json!({
-                "type": "object",
-                "properties": {
+            annotations: None,
+            input_schema: ToolInputSchema {
+                r#type: "object".to_string(),
+                properties: Some(serde_json::json!({
                     "operation": {
                         "type": "string",
                         "enum": ["read", "write", "list", "create_dir"],
@@ -149,9 +208,10 @@ impl McpTool for FileOperationsTool {
                         "type": "string",
                         "description": "Content to write (for write operation)"
                     }
-                },
-                "required": ["operation", "path"]
-            }),
+                })),
+                required: Some(vec!["operation".to_string(), "path".to_string()]),
+            },
+            output_schema: None,
         }
     }
 
@@ -171,13 +231,19 @@ impl McpTool for FileOperationsTool {
         match operation {
             "read" => match tokio::fs::read_to_string(path).await {
                 Ok(content) => Ok(CallToolResult {
-                    content: vec![ContentBlock::TextContent(TextContent { text: content })],
+                    content: vec![ContentBlock::TextContent(TextContent {
+                        text: content,
+                        r#type: "text".to_string(),
+                        annotations: None,
+                    })],
                     is_error: None,
                     structured_content: None,
                 }),
                 Err(e) => Ok(CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
                         text: format!("Error reading file: {}", e),
+                        r#type: "text".to_string(),
+                        annotations: None,
                     })],
                     is_error: Some(true),
                     structured_content: None,
@@ -195,6 +261,8 @@ impl McpTool for FileOperationsTool {
                     Ok(()) => Ok(CallToolResult {
                         content: vec![ContentBlock::TextContent(TextContent {
                             text: format!("Successfully wrote to {}", path_str),
+                            r#type: "text".to_string(),
+                            annotations: None,
                         })],
                         is_error: None,
                         structured_content: None,
@@ -202,6 +270,8 @@ impl McpTool for FileOperationsTool {
                     Err(e) => Ok(CallToolResult {
                         content: vec![ContentBlock::TextContent(TextContent {
                             text: format!("Error writing file: {}", e),
+                            r#type: "text".to_string(),
+                            annotations: None,
                         })],
                         is_error: Some(true),
                         structured_content: None,
@@ -224,6 +294,8 @@ impl McpTool for FileOperationsTool {
                     Ok(CallToolResult {
                         content: vec![ContentBlock::TextContent(TextContent {
                             text: items.join("\n"),
+                            r#type: "text".to_string(),
+                            annotations: None,
                         })],
                         is_error: None,
                         structured_content: None,
@@ -232,6 +304,8 @@ impl McpTool for FileOperationsTool {
                 Err(e) => Ok(CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
                         text: format!("Error listing directory: {}", e),
+                        r#type: "text".to_string(),
+                        annotations: None,
                     })],
                     is_error: Some(true),
                     structured_content: None,
@@ -241,6 +315,8 @@ impl McpTool for FileOperationsTool {
                 Ok(()) => Ok(CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
                         text: format!("Successfully created directory {}", path_str),
+                        r#type: "text".to_string(),
+                        annotations: None,
                     })],
                     is_error: None,
                     structured_content: None,
@@ -248,6 +324,8 @@ impl McpTool for FileOperationsTool {
                 Err(e) => Ok(CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
                         text: format!("Error creating directory: {}", e),
+                        r#type: "text".to_string(),
+                        annotations: None,
                     })],
                     is_error: Some(true),
                     structured_content: None,
@@ -256,6 +334,8 @@ impl McpTool for FileOperationsTool {
             _ => Ok(CallToolResult {
                 content: vec![ContentBlock::TextContent(TextContent {
                     text: format!("Unknown operation: {}", operation),
+                    r#type: "text".to_string(),
+                    annotations: None,
                 })],
                 is_error: Some(true),
                 structured_content: None,
@@ -265,13 +345,8 @@ impl McpTool for FileOperationsTool {
 }
 
 /// File search tool
+#[derive(Debug)]
 pub struct FileSearchTool;
-
-impl FileSearchTool {
-    pub fn new() -> Box<dyn McpTool + Send + Sync> {
-        Box::new(Self)
-    }
-}
 
 impl McpTool for FileSearchTool {
     fn name(&self) -> &str {
@@ -283,9 +358,10 @@ impl McpTool for FileSearchTool {
             name: "file_search".to_string(),
             title: Some("File Search".to_string()),
             description: Some("Search for files by name pattern using fuzzy matching".to_string()),
-            input_schema: serde_json::json!({
-                "type": "object",
-                "properties": {
+            annotations: None,
+            input_schema: ToolInputSchema {
+                r#type: "object".to_string(),
+                properties: Some(serde_json::json!({
                     "pattern": {
                         "type": "string",
                         "description": "Search pattern for file names"
@@ -298,9 +374,10 @@ impl McpTool for FileSearchTool {
                         "type": "integer",
                         "description": "Maximum number of results (default: 100)"
                     }
-                },
-                "required": ["pattern"]
-            }),
+                })),
+                required: Some(vec!["pattern".to_string()]),
+            },
+            output_schema: None,
         }
     }
 
@@ -341,6 +418,8 @@ impl McpTool for FileSearchTool {
                 return Ok(CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
                         text: format!("Error reading directory: {}", e),
+                        r#type: "text".to_string(),
+                        annotations: None,
                     })],
                     is_error: Some(true),
                     structured_content: None,
@@ -355,6 +434,8 @@ impl McpTool for FileSearchTool {
                 } else {
                     results.join("\n")
                 },
+                r#type: "text".to_string(),
+                annotations: None,
             })],
             is_error: None,
             structured_content: None,
@@ -363,13 +444,8 @@ impl McpTool for FileSearchTool {
 }
 
 /// Apply patch tool
+#[derive(Debug)]
 pub struct ApplyPatchTool;
-
-impl ApplyPatchTool {
-    pub fn new() -> Box<dyn McpTool + Send + Sync> {
-        Box::new(Self)
-    }
-}
 
 impl McpTool for ApplyPatchTool {
     fn name(&self) -> &str {
@@ -383,9 +459,10 @@ impl McpTool for ApplyPatchTool {
             description: Some(
                 "Apply a patch to modify files using unified diff format".to_string(),
             ),
-            input_schema: serde_json::json!({
-                "type": "object",
-                "properties": {
+            annotations: None,
+            input_schema: ToolInputSchema {
+                r#type: "object".to_string(),
+                properties: Some(serde_json::json!({
                     "patch": {
                         "type": "string",
                         "description": "Patch content in unified diff format"
@@ -394,9 +471,10 @@ impl McpTool for ApplyPatchTool {
                         "type": "string",
                         "description": "Working directory for patch application (optional)"
                     }
-                },
-                "required": ["patch"]
-            }),
+                })),
+                required: Some(vec!["patch".to_string()]),
+            },
+            output_schema: None,
         }
     }
 
@@ -414,9 +492,7 @@ impl McpTool for ApplyPatchTool {
             && (patch_content.contains("+++") || patch_content.contains("---"))
         {
             Ok(CallToolResult {
-                content: vec![ContentBlock::TextContent(TextContent {
-                    text: "Patch format validated successfully (actual application not implemented yet)".to_string(),
-                })],
+                content: vec![ContentBlock::TextContent(TextContent { text: "Patch format validated successfully (actual application not implemented yet)".to_string(), r#type: "text".to_string(), annotations: None })],
                 is_error: None,
                 structured_content: None,
             })
@@ -424,6 +500,8 @@ impl McpTool for ApplyPatchTool {
             Ok(CallToolResult {
                 content: vec![ContentBlock::TextContent(TextContent {
                     text: "Invalid patch format - expected unified diff format".to_string(),
+                    r#type: "text".to_string(),
+                    annotations: None,
                 })],
                 is_error: Some(true),
                 structured_content: None,
@@ -433,13 +511,8 @@ impl McpTool for ApplyPatchTool {
 }
 
 /// Code analysis tool
+#[derive(Debug)]
 pub struct CodeAnalysisTool;
-
-impl CodeAnalysisTool {
-    pub fn new() -> Box<dyn McpTool + Send + Sync> {
-        Box::new(Self)
-    }
-}
 
 impl McpTool for CodeAnalysisTool {
     fn name(&self) -> &str {
@@ -453,9 +526,10 @@ impl McpTool for CodeAnalysisTool {
             description: Some(
                 "Analyze code files for metrics, dependencies, and structure".to_string(),
             ),
-            input_schema: serde_json::json!({
-                "type": "object",
-                "properties": {
+            annotations: None,
+            input_schema: ToolInputSchema {
+                r#type: "object".to_string(),
+                properties: Some(serde_json::json!({
                     "file_path": {
                         "type": "string",
                         "description": "Path to the code file to analyze"
@@ -465,9 +539,10 @@ impl McpTool for CodeAnalysisTool {
                         "enum": ["metrics", "dependencies", "structure"],
                         "description": "Type of analysis to perform"
                     }
-                },
-                "required": ["file_path", "analysis_type"]
-            }),
+                })),
+                required: Some(vec!["file_path".to_string(), "analysis_type".to_string()]),
+            },
+            output_schema: None,
         }
     }
 
@@ -488,6 +563,8 @@ impl McpTool for CodeAnalysisTool {
             return Ok(CallToolResult {
                 content: vec![ContentBlock::TextContent(TextContent {
                     text: format!("File not found: {}", file_path),
+                    r#type: "text".to_string(),
+                    annotations: None,
                 })],
                 is_error: Some(true),
                 structured_content: None,
@@ -506,6 +583,8 @@ impl McpTool for CodeAnalysisTool {
                 Ok(CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
                         text: analysis_result,
+                        r#type: "text".to_string(),
+                        annotations: None,
                     })],
                     is_error: None,
                     structured_content: None,
@@ -514,6 +593,8 @@ impl McpTool for CodeAnalysisTool {
             Err(e) => Ok(CallToolResult {
                 content: vec![ContentBlock::TextContent(TextContent {
                     text: format!("Error reading file: {}", e),
+                    r#type: "text".to_string(),
+                    annotations: None,
                 })],
                 is_error: Some(true),
                 structured_content: None,

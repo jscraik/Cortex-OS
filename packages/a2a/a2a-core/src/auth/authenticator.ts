@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 import { z } from 'zod';
-import type { Envelope } from '../../../a2a-contracts/src/envelope.js';
 
 export const AuthTokenSchema = z.object({
 	sub: z.string(),
@@ -33,7 +33,7 @@ export class AuthorizationError extends Error {
 }
 
 export interface Authenticator {
-	authenticate(envelope: Envelope): Promise<AuthContext>;
+	authenticate(envelope: A2AEventEnvelope): Promise<AuthContext>;
 	authorize(context: AuthContext, operation: string): boolean;
 }
 
@@ -46,7 +46,7 @@ export class SimpleTokenAuthenticator implements Authenticator {
 		},
 	) {}
 
-	async authenticate(envelope: Envelope): Promise<AuthContext> {
+	async authenticate(envelope: A2AEventEnvelope): Promise<AuthContext> {
 		const token = this.extractToken(envelope);
 
 		if (!token) {
@@ -60,8 +60,10 @@ export class SimpleTokenAuthenticator implements Authenticator {
 		return this.hasScope(context.scopes, operation);
 	}
 
-	private extractToken(envelope: Envelope): string | null {
-		const authHeader = envelope.headers?.authorization;
+	private extractToken(envelope: A2AEventEnvelope): string | null {
+		// OLD (BROKEN): envelope.metadata.labels?.authorization
+		// NEW (FIXED): Use envelope.headers
+		const authHeader = envelope.headers?.authorization || envelope.headers?.Authorization;
 		if (authHeader) {
 			const bearerRegex = /^Bearer (.+)$/;
 			const match = bearerRegex.exec(authHeader);

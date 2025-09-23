@@ -415,10 +415,10 @@ fn create_expected_patch_approval_elicitation_request(
 pub struct McpHandle {
     pub process: McpProcess,
     /// Retain the server for the lifetime of the McpProcess.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     server: MockServer,
     /// Retain the temporary directory for the lifetime of the McpProcess.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     dir: TempDir,
 }
 

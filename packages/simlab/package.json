@@ -6,13 +6,34 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./runner": "./dist/runner.js",
-    "./agent-adapter": "./dist/agent-adapter.js",
-    "./judge": "./dist/judge.js",
-    "./report": "./dist/report.js",
-    "./types": "./dist/types.js",
-    "./user-sim": "./dist/user-sim.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./runner": {
+      "types": "./dist/runner.d.ts",
+      "import": "./dist/runner.js"
+    },
+    "./agent-adapter": {
+      "types": "./dist/agent-adapter.d.ts",
+      "import": "./dist/agent-adapter.js"
+    },
+    "./judge": {
+      "types": "./dist/judge.d.ts",
+      "import": "./dist/judge.js"
+    },
+    "./report": {
+      "types": "./dist/report.d.ts",
+      "import": "./dist/report.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    },
+    "./user-sim": {
+      "types": "./dist/user-sim.d.ts",
+      "import": "./dist/user-sim.js"
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -26,6 +47,7 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/kernel": "workspace:*",
     "@cortex-os/prp-runner": "workspace:*",
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",

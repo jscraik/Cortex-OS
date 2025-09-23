@@ -22,7 +22,7 @@ const DEFAULT_SECURITY_ACL: TopicACL = {
 
 function registerSecuritySchema(
 	registry: SchemaRegistry,
-	eventType: keyof typeof DEFAULT_SECURITY_ACL,
+	eventType: string,
 	schema: ZodTypeAny,
 	description: string,
 	tags: string[],

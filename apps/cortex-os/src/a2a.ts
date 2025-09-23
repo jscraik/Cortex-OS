@@ -58,14 +58,10 @@ function registerCortexOsSchema(
 		eventType,
 		version: '1.0.0',
 		schema,
+		compatibility: SchemaCompatibility.FORWARD,
 		description,
-		compatibility: SchemaCompatibility.BACKWARD,
 		tags,
 		examples,
-		metadata: {
-			package: '@cortex-os/app',
-			source: CORTEX_OS_EVENT_SOURCE,
-		},
 	});
 }
 

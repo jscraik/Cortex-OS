@@ -56,7 +56,7 @@ struct ErrorResponse {
 #[derive(Debug, Deserialize)]
 struct Error {
     r#type: Option<String>,
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     code: Option<String>,
     message: Option<String>,
 

@@ -1,7 +1,8 @@
 import { handleA2A } from '@cortex-os/a2a';
+import type { Envelope } from '@cortex-os/a2a-contracts';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { createJsonOutput } from '@cortex-os/lib';
 import { createEnhancedClient, type ServerInfo } from '@cortex-os/mcp-core';
-import { handleRAG } from '@cortex-os/rag';
 import { handleSimlab } from '@cortex-os/simlab';
 import Fastify from 'fastify';
 import client from 'prom-client';
@@ -13,6 +14,7 @@ import {
 	RAGQuerySchema,
 	SimlabCommandSchema,
 } from '../../../libs/typescript/contracts/dist/src/index.js';
+import { createGatewayBus } from './a2a.js';
 import { createAgentRoute } from './lib/create-agent-route.js';
 
 function parseMcpArgs(raw?: string): unknown {
@@ -68,6 +70,95 @@ const MCPRoute = z.object({
 });
 type MCPRouteSchema = z.infer<typeof MCPRoute>;
 
+// A2A-based RAG handler
+async function handleRAGViaA2A(input: unknown): Promise<string> {
+	const { bus } = createGatewayBus();
+
+	try {
+		const parsed = z
+			.object({
+				config: AgentConfigSchema,
+				query: RAGQuerySchema,
+				json: z.boolean().optional(),
+			})
+			.safeParse(input);
+
+		if (!parsed.success) {
+			return createJsonOutput({
+				error: {
+					code: 'INVALID_INPUT',
+					message: 'Invalid RAG input',
+					issues: parsed.error.issues,
+				},
+			});
+		}
+
+		const { config, query } = parsed.data;
+		const queryId = crypto.randomUUID();
+
+		// Create RAG query event
+		const queryEvent: Envelope = createEnvelope({
+			type: 'rag.query.executed',
+			source: 'urn:cortex:gateway',
+			data: {
+				queryId,
+				query: query.query,
+				topK: query.topK,
+				timestamp: new Date().toISOString(),
+			},
+		});
+
+		// Setup result handler
+		return new Promise((resolve) => {
+			const timeout = setTimeout(() => {
+				resolve(
+					createJsonOutput({
+						error: {
+							code: 'TIMEOUT',
+							message: 'RAG query timed out',
+						},
+					}),
+				);
+			}, config.timeoutMs || 30000);
+
+			bus.bind([
+				{
+					type: 'rag.query.completed',
+					handle: async (resultEvent: Envelope) => {
+						const data = resultEvent.data as {
+							queryId: string;
+							results: unknown[];
+							provider: string;
+							duration: number;
+						};
+						if (data.queryId === queryId) {
+							clearTimeout(timeout);
+							resolve(
+								createJsonOutput({
+									results: data.results,
+									provider: data.provider,
+									duration: data.duration,
+								}),
+							);
+						}
+					},
+				},
+			]);
+
+			// Publish the query event
+			bus.publish(queryEvent);
+		});
+	} catch (error) {
+		return createJsonOutput({
+			error: {
+				code: 'INTERNAL_ERROR',
+				message: 'Failed to process RAG query',
+				details: error instanceof Error ? error.message : 'Unknown error',
+			},
+		});
+	}
+}
+
 const handleMCP = async ({ request }: MCPRouteSchema) => {
 	const si = getMCPServerInfo();
 	if (!si) {
@@ -114,10 +205,10 @@ createAgentRoute(
 	'/rag',
 	z.object({
 		config: AgentConfigSchema,
-		query: RAGQuerySchema,
+		command: RAGQuerySchema,
 		json: z.boolean().optional(),
 	}),
-	handleRAG,
+	handleRAGViaA2A,
 );
 
 createAgentRoute(
@@ -128,7 +219,10 @@ createAgentRoute(
 		command: SimlabCommandSchema,
 		json: z.boolean().optional(),
 	}),
-	handleSimlab,
+	async ({ command }) => {
+		const result = await handleSimlab(command);
+		return createJsonOutput(result);
+	},
 );
 
 app.get('/openapi.json', async (_req, reply) => {

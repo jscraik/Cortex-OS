@@ -1,0 +1,63 @@
+{
+  "name": "RepPrompt MCP Server Configuration",
+  "description": "brAInwav Cortex-OS RepPrompt MCP integration for intelligent repository analysis",
+  "version": "1.0.0",
+  "mcpServers": {
+    "repoprompt": {
+      "command": "/Users/jamiecraik/RepoPrompt/repoprompt_cli",
+      "args": [],
+      "environment": {
+        "REPOPROMPT_LOG_LEVEL": "INFO",
+        "REPOPROMPT_CACHE_DIR": "/tmp/repoprompt-cache",
+        "REPOPROMPT_MAX_FILE_SIZE": "10MB",
+        "REPOPROMPT_TIMEOUT": "30000"
+      },
+      "capabilities": [
+        "repository-analysis",
+        "code-context-generation",
+        "dependency-mapping",
+        "file-structure-analysis",
+        "git-history-analysis"
+      ],
+      "security": {
+        "allowedPaths": [
+          "/Users/jamiecraik/.Cortex-OS",
+          "/tmp/repositories",
+          "/var/projects"
+        ],
+        "permissions": {
+          "read": true,
+          "write": false,
+          "network": false
+        }
+      }
+    }
+  },
+  "integration": {
+    "cortex-os": {
+      "enabled": true,
+      "autoRegister": true,
+      "mcpPort": 8084,
+      "healthCheckInterval": 30000
+    },
+    "memory-store": {
+      "storeAnalysis": true,
+      "namespace": "repoprompt-analysis",
+      "ttl": 3600000
+    },
+    "a2a-events": {
+      "publishAnalysis": true,
+      "eventTypes": [
+        "repository.analysis.started",
+        "repository.analysis.complete",
+        "repository.structure.updated",
+        "dependencies.changed"
+      ]
+    }
+  },
+  "brAInwav": {
+    "organization": "brAInwav Development Team",
+    "product": "Cortex-OS ASBR Runtime",
+    "component": "RepPrompt MCP Integration"
+  }
+}

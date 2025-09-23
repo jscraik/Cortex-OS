@@ -48,7 +48,7 @@ pub struct McpProcess {
     /// Retain this child process until the client is dropped. The Tokio runtime
     /// will make a "best effort" to reap the process after it exits, but it is
     /// not a guarantee. See the `kill_on_drop` documentation for details.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     process: Child,
     stdin: ChildStdin,
     stdout: BufReader<ChildStdout>,

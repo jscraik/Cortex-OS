@@ -40,7 +40,7 @@ pub struct PatchApprovalResponse {
     pub decision: ReviewDecision,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 pub(crate) async fn handle_patch_approval_request(
     call_id: String,
     reason: Option<String>,

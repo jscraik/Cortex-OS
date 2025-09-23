@@ -24,7 +24,7 @@ const DEFAULT_API_ACL: TopicACL = {
 
 function registerApiSchema(
 	registry: SchemaRegistry,
-	eventType: keyof typeof DEFAULT_API_ACL,
+	eventType: string,
 	schema: ZodTypeAny,
 	description: string,
 	tags: string[],

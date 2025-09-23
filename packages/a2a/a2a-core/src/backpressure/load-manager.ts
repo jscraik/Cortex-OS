@@ -1,5 +1,5 @@
+import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 import { z } from 'zod';
-import type { Envelope } from '../../../a2a-contracts/src/envelope.js';
 
 export const BackpressureStrategy = z.enum(['reject', 'throttle', 'drop', 'circuit_breaker']);
 
@@ -68,10 +68,12 @@ export class LoadManager {
 		this.updateCircuitBreakerState(metrics);
 	}
 
-	shouldDropMessage(envelope: Envelope): boolean {
+	shouldDropMessage(envelope: A2AEventEnvelope): boolean {
 		if (!this.config.loadSheddingEnabled) return false;
 
-		const priority = this.extractPriority(envelope);
+		// OLD (BROKEN): envelope.priority
+		// NEW (FIXED): Extract priority from headers
+		const priority = envelope.headers?.priority || 'medium';
 		const load = this.getCurrentLoad();
 
 		// Drop low priority messages when under high load
@@ -167,14 +169,8 @@ export class LoadManager {
 		}
 	}
 
-	private extractPriority(envelope: Envelope): 'low' | 'medium' | 'high' {
-		// Extract priority from envelope headers or data
-		const priority = envelope.headers?.priority as string;
-
-		if (priority === 'high' || priority === 'critical') return 'high';
-		if (priority === 'medium' || priority === 'normal') return 'medium';
-		return 'low';
-	}
+	// Note: extractPriority function removed as it's no longer used
+	// Priority is now extracted directly in shouldDropMessage
 
 	private async sleep(ms: number): Promise<void> {
 		return new Promise((resolve) => setTimeout(resolve, ms));

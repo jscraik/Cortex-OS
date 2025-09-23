@@ -125,32 +125,22 @@ export function getEnvWithFallback(
 }
 
 /**
- * Get store adapter type with proper fallback handling
+ * Get store adapter type
  */
 export function getStoreAdapter(): string | undefined {
-	return getEnvWithFallback(
-		ENV.STORE_ADAPTER,
-		[ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2],
-		{ context: 'store adapter selection' },
-	);
+	return process.env[ENV.STORE_ADAPTER];
 }
 
 /**
- * Get MLX service URL with proper fallback handling
+ * Get MLX service URL
  */
 export function getMLXServiceURL(): string | undefined {
-	return getEnvWithFallback(EMBEDDER_ENV.MLX_EMBED_BASE_URL, [EMBEDDER_ENV.MLX_SERVICE_URL], {
-		context: 'MLX embedding service URL',
-	});
+	return process.env[EMBEDDER_ENV.MLX_EMBED_BASE_URL];
 }
 
 /**
- * Get Python executable with proper fallback handling
+ * Get Python executable
  */
 export function getPythonExecutable(): string | undefined {
-	return getEnvWithFallback(
-		EMBEDDER_ENV.PYTHON_EXECUTABLE,
-		[EMBEDDER_ENV.PYTHON_EXEC_LEGACY, EMBEDDER_ENV.MLX_PYTHON_PATH],
-		{ context: 'Python executable path' },
-	);
+	return process.env[EMBEDDER_ENV.PYTHON_EXECUTABLE];
 }
