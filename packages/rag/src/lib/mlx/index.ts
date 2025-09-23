@@ -265,14 +265,10 @@ export class MLXClient {
 			throw new Error('Python bridge not initialized');
 		}
 
-		const result = await runProcess<PythonBridgeResponse>(
-			'python3',
-			['-c', this.pythonBridge],
-			{
-				input: JSON.stringify(input),
-				timeoutMs: 60000,
-			},
-		);
+		const result = await runProcess<PythonBridgeResponse>('python3', ['-c', this.pythonBridge], {
+			input: JSON.stringify(input),
+			timeoutMs: 60000,
+		});
 
 		if (result.error) {
 			throw new Error(`MLX Bridge error: ${result.error}`);

@@ -10,8 +10,6 @@
 import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OperationalEndpoints } from '../../operations/operational-endpoints';
-import { HealthChecker } from '../../operations/health-checker';
-import { GracefulShutdownManager } from '../../operations/graceful-shutdown';
 
 // Mock the health checker
 const mockHealthChecker = {

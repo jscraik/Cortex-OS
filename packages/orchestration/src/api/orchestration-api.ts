@@ -4,18 +4,18 @@
  */
 
 import { Hono } from 'hono';
-import { z } from 'zod';
-import { HTTPException } from 'hono/http-exception';
-import { jwt, sign, verify } from 'hono/jwt';
 import { cors } from 'hono/cors';
-import { rateLimiter } from 'hono-rate-limiter';
-import { timing } from 'hono/timing';
+import { HTTPException } from 'hono/http-exception';
+import { jwt } from 'hono/jwt';
 import { logger } from 'hono/logger';
-import { createCompositeProvider, CompositeModelProvider } from '../providers/composite-provider';
-import { OrchestrationService } from '../app/orchestration-service';
-import { CircuitBreakerManager } from '../lib/circuit-breaker';
-import { OrchestrationStrategy, TaskStatus, AgentRole } from '../types';
+import { timing } from 'hono/timing';
+import { rateLimiter } from 'hono-rate-limiter';
 import { nanoid } from 'nanoid';
+import { z } from 'zod';
+import type { OrchestrationService } from '../app/orchestration-service';
+import { CircuitBreakerManager } from '../lib/circuit-breaker';
+import type { CompositeModelProvider } from '../providers/composite-provider';
+import { AgentRole, OrchestrationStrategy, TaskStatus } from '../types';
 
 // JWT Secret - should be from environment
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -25,22 +25,28 @@ const CreateWorkflowSchema = z.object({
 	name: z.string().min(1).max(180),
 	goal: z.string().min(1).max(4096),
 	description: z.string().max(2048).optional(),
-	steps: z.array(
-		z.object({
-			name: z.string().min(1).max(160),
-			description: z.string().min(1).max(1024),
-			agent: z.string().min(1).max(160),
-			estimatedDurationMs: z.number().int().positive().max(86_400_000).optional(),
-		}),
-	).min(1).max(50),
-	agents: z.array(
-		z.object({
-			id: z.string().min(1).max(128),
-			name: z.string().min(1).max(160),
-			role: z.nativeEnum(AgentRole).optional(),
-			capabilities: z.array(z.string().min(1).max(120)).max(64).optional(),
-		}),
-	).min(1).max(32),
+	steps: z
+		.array(
+			z.object({
+				name: z.string().min(1).max(160),
+				description: z.string().min(1).max(1024),
+				agent: z.string().min(1).max(160),
+				estimatedDurationMs: z.number().int().positive().max(86_400_000).optional(),
+			}),
+		)
+		.min(1)
+		.max(50),
+	agents: z
+		.array(
+			z.object({
+				id: z.string().min(1).max(128),
+				name: z.string().min(1).max(160),
+				role: z.nativeEnum(AgentRole).optional(),
+				capabilities: z.array(z.string().min(1).max(120)).max(64).optional(),
+			}),
+		)
+		.min(1)
+		.max(32),
 	strategy: z.nativeEnum(OrchestrationStrategy).optional(),
 	priority: z.number().int().min(1).max(10).optional(),
 	context: z.record(z.unknown()).optional(),
@@ -73,19 +79,23 @@ const UpdateTaskSchema = z.object({
 	description: z.string().max(2048).optional(),
 	status: z.nativeEnum(TaskStatus).optional(),
 	assignee: z.string().min(1).max(160).optional(),
-	progress: z.object({
-		current: z.number().int().min(0),
-		total: z.number().int().positive(),
-		message: z.string().max(512).optional(),
-	}).optional(),
+	progress: z
+		.object({
+			current: z.number().int().min(0),
+			total: z.number().int().positive(),
+			message: z.string().max(512).optional(),
+		})
+		.optional(),
 	metadata: z.record(z.unknown()).optional(),
 });
 
 const AgentMetricsSchema = z.object({
-	timeRange: z.object({
-		start: z.string().datetime(),
-		end: z.string().datetime(),
-	}).optional(),
+	timeRange: z
+		.object({
+			start: z.string().datetime(),
+			end: z.string().datetime(),
+		})
+		.optional(),
 	granularity: z.enum(['minute', 'hour', 'day']).default('hour'),
 });
 
@@ -126,11 +136,14 @@ export class OrchestrationAPI {
 		// Global middleware
 		this.app.use('*', timing());
 		this.app.use('*', logger());
-		this.app.use('*', cors({
-			origin: process.env.CORS_ORIGIN || '*',
-			allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-			allowHeaders: ['Content-Type', 'Authorization'],
-		}));
+		this.app.use(
+			'*',
+			cors({
+				origin: process.env.CORS_ORIGIN || '*',
+				allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+				allowHeaders: ['Content-Type', 'Authorization'],
+			}),
+		);
 
 		// Health check (no auth required)
 		this.app.get('/health', this.healthCheck.bind(this));
@@ -192,11 +205,14 @@ export class OrchestrationAPI {
 				},
 			});
 		} catch (error) {
-			return c.json({
-				status: 'unhealthy',
-				timestamp: new Date().toISOString(),
-				error: error instanceof Error ? error.message : 'Unknown error',
-			}, 503);
+			return c.json(
+				{
+					status: 'unhealthy',
+					timestamp: new Date().toISOString(),
+					error: error instanceof Error ? error.message : 'Unknown error',
+				},
+				503,
+			);
 		}
 	}
 
@@ -209,7 +225,7 @@ export class OrchestrationAPI {
 					'Content-Type': 'text/plain',
 				},
 			});
-		} catch (error) {
+		} catch (_error) {
 			throw new HTTPException(500, {
 				message: 'Failed to fetch metrics',
 			});
@@ -221,7 +237,7 @@ export class OrchestrationAPI {
 		try {
 			const agents = await this.orchestrationService.listAgents();
 			return c.json({
-				agents: agents.map(agent => ({
+				agents: agents.map((agent) => ({
 					id: agent.id,
 					name: agent.name,
 					role: agent.role,
@@ -231,7 +247,7 @@ export class OrchestrationAPI {
 				})),
 				total: agents.length,
 			});
-		} catch (error) {
+		} catch (_error) {
 			throw new HTTPException(500, {
 				message: 'Failed to list agents',
 			});
@@ -244,10 +260,13 @@ export class OrchestrationAPI {
 			const agentId = c.req.param('id');
 			const query = c.req.query();
 			const request: AgentMetricsRequest = {
-				timeRange: query.start && query.end ? {
-					start: query.start,
-					end: query.end,
-				} : undefined,
+				timeRange:
+					query.start && query.end
+						? {
+								start: query.start,
+								end: query.end,
+							}
+						: undefined,
 				granularity: query.granularity || 'hour',
 			};
 
@@ -282,18 +301,21 @@ export class OrchestrationAPI {
 				});
 			});
 
-			return c.json({
-				id: workflow.id,
-				name: workflow.name,
-				goal: workflow.goal,
-				status: workflow.status,
-				strategy: workflow.strategy,
-				createdAt: workflow.createdAt,
-				links: {
-					self: `/api/v1/workflows/${workflow.id}`,
-					tasks: `/api/v1/workflows/${workflow.id}/tasks`,
+			return c.json(
+				{
+					id: workflow.id,
+					name: workflow.name,
+					goal: workflow.goal,
+					status: workflow.status,
+					strategy: workflow.strategy,
+					createdAt: workflow.createdAt,
+					links: {
+						self: `/api/v1/workflows/${workflow.id}`,
+						tasks: `/api/v1/workflows/${workflow.id}/tasks`,
+					},
 				},
-			}, 201);
+				201,
+			);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				throw new HTTPException(400, {
@@ -309,8 +331,8 @@ export class OrchestrationAPI {
 	private async listWorkflows(c: any) {
 		try {
 			const query = c.req.query();
-			const page = parseInt(query.page) || 1;
-			const limit = parseInt(query.limit) || 20;
+			const page = parseInt(query.page, 10) || 1;
+			const limit = parseInt(query.limit, 10) || 20;
 			const status = query.status as TaskStatus | undefined;
 			const createdBy = query.createdBy;
 
@@ -330,7 +352,7 @@ export class OrchestrationAPI {
 					pages: Math.ceil(result.total / limit),
 				},
 			});
-		} catch (error) {
+		} catch (_error) {
 			throw new HTTPException(500, {
 				message: 'Failed to list workflows',
 			});
@@ -416,11 +438,11 @@ export class OrchestrationAPI {
 	private async listTasks(c: any) {
 		try {
 			const query = c.req.query();
-		 const workflowId = query.workflowId;
+			const workflowId = query.workflowId;
 			const status = query.status as TaskStatus | undefined;
 			const assignee = query.assignee;
-			const page = parseInt(query.page) || 1;
-			const limit = parseInt(query.limit) || 20;
+			const page = parseInt(query.page, 10) || 1;
+			const limit = parseInt(query.limit, 10) || 20;
 
 			const result = await this.orchestrationService.listTasks({
 				workflowId,
@@ -439,7 +461,7 @@ export class OrchestrationAPI {
 					pages: Math.ceil(result.total / limit),
 				},
 			});
-		} catch (error) {
+		} catch (_error) {
 			throw new HTTPException(500, {
 				message: 'Failed to list tasks',
 			});
@@ -463,17 +485,20 @@ export class OrchestrationAPI {
 				});
 			});
 
-			return c.json({
-				id: task.id,
-				title: task.title,
-				status: task.status,
-				workflowId: task.workflowId,
-				createdAt: task.createdAt,
-				links: {
-					self: `/api/v1/tasks/${task.id}`,
-					workflow: `/api/v1/workflows/${task.workflowId}`,
+			return c.json(
+				{
+					id: task.id,
+					title: task.title,
+					status: task.status,
+					workflowId: task.workflowId,
+					createdAt: task.createdAt,
+					links: {
+						self: `/api/v1/tasks/${task.id}`,
+						workflow: `/api/v1/workflows/${task.workflowId}`,
+					},
 				},
-			}, 201);
+				201,
+			);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				throw new HTTPException(400, {
@@ -582,7 +607,7 @@ export class OrchestrationAPI {
 			});
 
 			return c.json(result);
-		} catch (error) {
+		} catch (_error) {
 			throw new HTTPException(500, {
 				message: 'Failed to generate embeddings',
 			});
@@ -609,7 +634,7 @@ export class OrchestrationAPI {
 			});
 
 			return c.json(result);
-		} catch (error) {
+		} catch (_error) {
 			throw new HTTPException(500, {
 				message: 'Failed to generate chat response',
 			});
@@ -634,7 +659,7 @@ export class OrchestrationAPI {
 			});
 
 			return c.json(result);
-		} catch (error) {
+		} catch (_error) {
 			throw new HTTPException(500, {
 				message: 'Failed to rerank documents',
 			});
@@ -646,22 +671,28 @@ export class OrchestrationAPI {
 		console.error('API Error:', error);
 
 		if (error instanceof HTTPException) {
-			return c.json({
-				error: {
-					code: error.status,
-					message: error.message,
-					details: error.cause,
+			return c.json(
+				{
+					error: {
+						code: error.status,
+						message: error.message,
+						details: error.cause,
+					},
 				},
-			}, error.status);
+				error.status,
+			);
 		}
 
-		return c.json({
-			error: {
-				code: 500,
-				message: 'Internal Server Error',
-				details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+		return c.json(
+			{
+				error: {
+					code: 500,
+					message: 'Internal Server Error',
+					details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+				},
 			},
-		}, 500);
+			500,
+		);
 	}
 
 	// Get Hono app instance

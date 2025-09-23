@@ -14,24 +14,26 @@ describe('Circuit Breaker', () => {
 	let breaker: CircuitBreaker;
 	let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
-        vi.useFakeTimers();
-        consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
-        breaker = new CircuitBreaker({
-            failureThreshold: 3,
-            successThreshold: 2,
-            resetTimeout: 1000,
-            monitoringPeriod: 500,
-            maxRetries: 2,
-            retryDelay: 100,
-            enableMetrics: false // Disable for cleaner test output
-        });
-    });    afterEach(() => {
-        breaker.destroy();
-        consoleLogSpy.mockRestore();
-        vi.useRealTimers();
-        vi.clearAllTimers();
-    });	describe('Basic Functionality', () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+		breaker = new CircuitBreaker({
+			failureThreshold: 3,
+			successThreshold: 2,
+			resetTimeout: 1000,
+			monitoringPeriod: 500,
+			maxRetries: 2,
+			retryDelay: 100,
+			enableMetrics: false, // Disable for cleaner test output
+		});
+	});
+	afterEach(() => {
+		breaker.destroy();
+		consoleLogSpy.mockRestore();
+		vi.useRealTimers();
+		vi.clearAllTimers();
+	});
+	describe('Basic Functionality', () => {
 		it('should start in closed state', () => {
 			expect(breaker.getState()).toBe(CircuitBreakerState.CLOSED);
 		});
@@ -162,39 +164,40 @@ describe('Circuit Breaker', () => {
 	});
 
 	describe('Retry Logic', () => {
-        it('should retry failed calls', async () => {
-            const retryFn = vi
-                .fn()
-                .mockRejectedValueOnce(new Error('Fail 1'))
-                .mockRejectedValueOnce(new Error('Fail 2'))
-                .mockResolvedValueOnce('Success');
+		it('should retry failed calls', async () => {
+			const retryFn = vi
+				.fn()
+				.mockRejectedValueOnce(new Error('Fail 1'))
+				.mockRejectedValueOnce(new Error('Fail 2'))
+				.mockResolvedValueOnce('Success');
 
-            // Start the retry operation
-            const resultPromise = breaker.callWithRetry(retryFn);
-            
-            // Fast-forward through retry delays
-            await vi.runAllTimersAsync();
-            
-            const result = await resultPromise;
+			// Start the retry operation
+			const resultPromise = breaker.callWithRetry(retryFn);
 
-            expect(result).toBe('Success');
-            expect(retryFn).toHaveBeenCalledTimes(3);
-        });
+			// Fast-forward through retry delays
+			await vi.runAllTimersAsync();
 
-        it('should fail after max retries', async () => {
-            const alwaysFailFn = vi.fn().mockRejectedValue(new Error('Always fail'));
+			const result = await resultPromise;
 
-            // Start the retry operation
-            const resultPromise = breaker.callWithRetry(alwaysFailFn);
-            
-            // Fast-forward through all retry delays
-            await vi.runAllTimersAsync();
-            
-            await expect(resultPromise).rejects.toThrow('Always fail');
+			expect(result).toBe('Success');
+			expect(retryFn).toHaveBeenCalledTimes(3);
+		});
 
-            // Should be called maxRetries times
-            expect(alwaysFailFn).toHaveBeenCalledTimes(2); // maxRetries from config
-        });		it('should not retry when circuit is open', async () => {
+		it('should fail after max retries', async () => {
+			const alwaysFailFn = vi.fn().mockRejectedValue(new Error('Always fail'));
+
+			// Start the retry operation
+			const resultPromise = breaker.callWithRetry(alwaysFailFn);
+
+			// Fast-forward through all retry delays
+			await vi.runAllTimersAsync();
+
+			await expect(resultPromise).rejects.toThrow('Always fail');
+
+			// Should be called maxRetries times
+			expect(alwaysFailFn).toHaveBeenCalledTimes(2); // maxRetries from config
+		});
+		it('should not retry when circuit is open', async () => {
 			// Open the circuit first
 			const failFn = vi.fn().mockRejectedValue(new Error('Service down'));
 			for (let i = 0; i < 3; i++) {

@@ -3,10 +3,19 @@
  * Provides comprehensive tracing capabilities across the orchestration system
  */
 
-import { trace, context, Span, SpanStatusCode, SpanOptions, Tracer } from '@opentelemetry/api';
+import {
+	context,
+	DiagConsoleLogger,
+	DiagLogLevel,
+	diag,
+	type Span,
+	type SpanOptions,
+	SpanStatusCode,
+	type Tracer,
+	trace,
+} from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
 // Initialize OpenTelemetry
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
@@ -49,10 +58,7 @@ export class OrchestrationTracer {
 	private readonly serviceName: string;
 	private readonly version: string;
 
-	constructor(
-		serviceName = 'orchestration',
-		version = '1.0.0',
-	) {
+	constructor(serviceName = 'orchestration', version = '1.0.0') {
 		this.serviceName = serviceName;
 		this.version = version;
 
@@ -60,7 +66,7 @@ export class OrchestrationTracer {
 		this.tracer = trace.getTracer(serviceName, version);
 
 		// Set up resource attributes
-		const resource = new Resource({
+		const _resource = new Resource({
 			[SemanticResourceAttributes.SERVICE_NAME]: serviceName,
 			[SemanticResourceAttributes.SERVICE_VERSION]: version,
 			[SemanticResourceAttributes.SERVICE_INSTANCE_ID]: `instance-${Date.now()}`,
@@ -71,8 +77,8 @@ export class OrchestrationTracer {
 	 * Extract trace context from incoming request
 	 */
 	extractContext(headers: Record<string, string>): TraceContext {
-		const traceparent = headers['traceparent'];
-		const tracestate = headers['tracestate'];
+		const traceparent = headers.traceparent;
+		const tracestate = headers.tracestate;
 
 		if (!traceparent) {
 			return {
@@ -103,11 +109,11 @@ export class OrchestrationTracer {
 		const headers: Record<string, string> = {};
 
 		// Inject traceparent
-		headers['traceparent'] = `00-${context.traceId}-${context.spanId}-01`;
+		headers.traceparent = `00-${context.traceId}-${context.spanId}-01`;
 
 		// Inject baggage if any
 		if (Object.keys(context.baggage).length > 0) {
-			headers['baggage'] = Object.entries(context.baggage)
+			headers.baggage = Object.entries(context.baggage)
 				.map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
 				.join(',');
 		}
@@ -295,7 +301,7 @@ export class OrchestrationTracer {
 	/**
 	 * Get the current trace context
 	 */
- getCurrentContext(): TraceContext {
+	getCurrentContext(): TraceContext {
 		const span = trace.getActiveSpan();
 		if (!span) {
 			return {
@@ -317,7 +323,8 @@ export class OrchestrationTracer {
 	 * Generate a random trace ID
 	 */
 	private generateTraceId(): string {
-		return crypto.getRandomValues(new Uint8Array(16))
+		return crypto
+			.getRandomValues(new Uint8Array(16))
 			.reduce((id, byte) => id + byte.toString(16).padStart(2, '0'), '');
 	}
 
@@ -325,7 +332,8 @@ export class OrchestrationTracer {
 	 * Generate a random span ID
 	 */
 	private generateSpanId(): string {
-		return crypto.getRandomValues(new Uint8Array(8))
+		return crypto
+			.getRandomValues(new Uint8Array(8))
 			.reduce((id, byte) => id + byte.toString(16).padStart(2, '0'), '');
 	}
 
@@ -338,14 +346,17 @@ export class OrchestrationTracer {
 		}
 
 		try {
-			return tracestate.split(',').reduce((baggage, item) => {
-				const [key, value] = item.split('=');
-				if (key && value) {
-					baggage[key.trim()] = decodeURIComponent(value.trim());
-				}
-				return baggage;
-			}, {} as Record<string, string>);
-		} catch (error) {
+			return tracestate.split(',').reduce(
+				(baggage, item) => {
+					const [key, value] = item.split('=');
+					if (key && value) {
+						baggage[key.trim()] = decodeURIComponent(value.trim());
+					}
+					return baggage;
+				},
+				{} as Record<string, string>,
+			);
+		} catch (_error) {
 			// If parsing fails, return empty baggage rather than crashing
 			return {};
 		}
@@ -386,10 +397,10 @@ export function withModelTracing<T>(
 export function tracingMiddleware(operation: string) {
 	return async (c: any, next: () => Promise<void>) => {
 		const headers = c.req.header();
-		const traceContext = orchestrationTracer.extractContext(headers);
+		const _traceContext = orchestrationTracer.extractContext(headers);
 
 		// Set up baggage in context
-		const carrier = context.active();
+		const _carrier = context.active();
 		// Note: In a real implementation, you'd use OpenTelemetry's context propagation
 
 		await orchestrationTracer.traceWorkflow(

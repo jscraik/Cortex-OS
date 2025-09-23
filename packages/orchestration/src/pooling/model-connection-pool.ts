@@ -115,7 +115,7 @@ export class ModelConnection {
 		if (this.testFn) {
 			try {
 				return await this.testFn();
-			} catch (error) {
+			} catch (_error) {
 				this.errorCount++;
 				return false;
 			}
@@ -131,7 +131,7 @@ export class ModelConnection {
 		if (typeof this.connection?.close === 'function') {
 			try {
 				await this.connection.close();
-			} catch (error) {
+			} catch (_error) {
 				// Ignore close errors
 			}
 		}
@@ -154,11 +154,14 @@ export interface AcquireOptions {
 
 export class ModelConnectionPool extends EventEmitter {
 	private readonly pools = new Map<string, ModelConnection[]>();
-	private readonly waitingQueues = new Map<string, Array<{
-		resolve: (conn: ModelConnection) => void;
-		reject: (error: Error) => void;
-		timeout: NodeJS.Timeout;
-	}>>();
+	private readonly waitingQueues = new Map<
+		string,
+		Array<{
+			resolve: (conn: ModelConnection) => void;
+			reject: (error: Error) => void;
+			timeout: NodeJS.Timeout;
+		}>
+	>();
 	private readonly config: Required<PoolConfig>;
 	private evictionTimer?: NodeJS.Timeout;
 
@@ -206,7 +209,7 @@ export class ModelConnectionPool extends EventEmitter {
 					await connection.acquire();
 					this.emit('acquired', { provider, connectionId: connection.getId() });
 					return connection;
-				} catch (error) {
+				} catch (_error) {
 					await this.destroyConnection(connection, provider);
 				}
 			}
@@ -216,7 +219,9 @@ export class ModelConnectionPool extends EventEmitter {
 		if (pool.length < this.config.maxConnections) {
 			try {
 				const rawConnection = await this.createConnectionFn(provider);
-				const connection = new ModelConnection(rawConnection, () => this.testConnection(rawConnection));
+				const connection = new ModelConnection(rawConnection, () =>
+					this.testConnection(rawConnection),
+				);
 
 				// Add to pool
 				pool.push(connection);
@@ -239,7 +244,7 @@ export class ModelConnectionPool extends EventEmitter {
 	 */
 	async release(connection: ModelConnection): Promise<void> {
 		const provider = connection.getProvider();
-		const pool = this.getPool(provider);
+		const _pool = this.getPool(provider);
 
 		// Test on return if enabled
 		if (this.config.testOnReturn) {
@@ -247,23 +252,38 @@ export class ModelConnectionPool extends EventEmitter {
 				const isHealthy = await connection.test();
 				if (!isHealthy) {
 					await this.destroyConnection(connection, provider);
-					this.emit('released', { provider, connectionId: connection.getId(), tested: true, healthy: false });
+					this.emit('released', {
+						provider,
+						connectionId: connection.getId(),
+						tested: true,
+						healthy: false,
+					});
 					return;
 				}
-			} catch (error) {
+			} catch (_error) {
 				await this.destroyConnection(connection, provider);
-				this.emit('released', { provider, connectionId: connection.getId(), tested: true, healthy: false });
+				this.emit('released', {
+					provider,
+					connectionId: connection.getId(),
+					tested: true,
+					healthy: false,
+				});
 				return;
 			}
 		}
 
 		try {
 			await connection.release();
-			this.emit('released', { provider, connectionId: connection.getId(), tested: !!this.config.testOnReturn, healthy: true });
+			this.emit('released', {
+				provider,
+				connectionId: connection.getId(),
+				tested: !!this.config.testOnReturn,
+				healthy: true,
+			});
 
 			// Process waiting queue
 			this.processWaitingQueue(provider);
-		} catch (error) {
+		} catch (_error) {
 			await this.destroyConnection(connection, provider);
 		}
 	}
@@ -288,12 +308,12 @@ export class ModelConnectionPool extends EventEmitter {
 	 */
 	getConnectionInfo(provider?: string): ConnectionInfo[] {
 		if (provider) {
-			return this.getPool(provider).map(conn => conn.getStats());
+			return this.getPool(provider).map((conn) => conn.getStats());
 		}
 
 		const allInfo: ConnectionInfo[] = [];
 		for (const pool of this.pools.values()) {
-			allInfo.push(...pool.map(conn => conn.getStats()));
+			allInfo.push(...pool.map((conn) => conn.getStats()));
 		}
 		return allInfo;
 	}
@@ -304,12 +324,12 @@ export class ModelConnectionPool extends EventEmitter {
 	async clear(provider?: string): Promise<void> {
 		if (provider) {
 			const pool = this.getPool(provider);
-			await Promise.all(pool.map(conn => this.destroyConnection(conn, provider)));
+			await Promise.all(pool.map((conn) => this.destroyConnection(conn, provider)));
 			pool.length = 0;
 		} else {
 			await Promise.all(
 				Array.from(this.pools.entries()).map(([p, pool]) =>
-					Promise.all(pool.map(conn => this.destroyConnection(conn, p))),
+					Promise.all(pool.map((conn) => this.destroyConnection(conn, p))),
 				),
 			);
 			this.pools.clear();
@@ -326,7 +346,7 @@ export class ModelConnectionPool extends EventEmitter {
 		}
 
 		// Clear all waiting queues
-		for (const [provider, queue] of this.waitingQueues) {
+		for (const [_provider, queue] of this.waitingQueues) {
 			for (const waiter of queue) {
 				clearTimeout(waiter.timeout);
 				waiter.reject(new Error('Connection pool is being destroyed'));
@@ -352,16 +372,23 @@ export class ModelConnectionPool extends EventEmitter {
 		const pool = this.getPool(provider);
 		const initialCount = Math.min(this.config.minConnections, this.config.maxConnections);
 
-		const createPromises = Array(initialCount).fill(null).map(async () => {
-			try {
-				const rawConnection = await this.createConnectionFn(provider);
-				const connection = new ModelConnection(rawConnection, () => this.testConnection(rawConnection));
-				pool.push(connection);
-				this.emit('initialized', { provider, connectionId: connection.getId() });
-			} catch (error) {
-				this.emit('error', new Error(`Failed to initialize connection for ${provider}: ${error}`));
-			}
-		});
+		const createPromises = Array(initialCount)
+			.fill(null)
+			.map(async () => {
+				try {
+					const rawConnection = await this.createConnectionFn(provider);
+					const connection = new ModelConnection(rawConnection, () =>
+						this.testConnection(rawConnection),
+					);
+					pool.push(connection);
+					this.emit('initialized', { provider, connectionId: connection.getId() });
+				} catch (error) {
+					this.emit(
+						'error',
+						new Error(`Failed to initialize connection for ${provider}: ${error}`),
+					);
+				}
+			});
 
 		await Promise.all(createPromises);
 	}
@@ -371,7 +398,7 @@ export class ModelConnectionPool extends EventEmitter {
 
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
-				const index = queue.findIndex(w => w.resolve === resolve);
+				const index = queue.findIndex((w) => w.resolve === resolve);
 				if (index !== -1) {
 					queue.splice(index, 1);
 				}
@@ -396,17 +423,15 @@ export class ModelConnectionPool extends EventEmitter {
 		const queue = this.waitingQueues.get(provider)!;
 		const pool = this.getPool(provider);
 
-		while (queue.length > 0 && pool.some(conn => conn.isIdle())) {
+		while (queue.length > 0 && pool.some((conn) => conn.isIdle())) {
 			const waiter = queue.shift()!;
-			const idleConnection = pool.find(conn => conn.isIdle());
+			const idleConnection = pool.find((conn) => conn.isIdle());
 
 			if (idleConnection) {
 				// Remove from waiting queue and resolve
 				clearTimeout(waiter.timeout);
 				queue.splice(queue.indexOf(waiter), 1);
-				this.acquire(provider)
-					.then(waiter.resolve)
-					.catch(waiter.reject);
+				this.acquire(provider).then(waiter.resolve).catch(waiter.reject);
 			}
 		}
 	}
@@ -472,10 +497,16 @@ export class ModelConnectionPool extends EventEmitter {
 			}
 
 			// Destroy expired connections, but maintain minimum
-			const keepCount = Math.min(this.config.minConnections, pool.length - connectionsToDestroy.length);
-			const toDestroy = connectionsToDestroy.slice(0, Math.max(0, connectionsToDestroy.length - keepCount));
+			const keepCount = Math.min(
+				this.config.minConnections,
+				pool.length - connectionsToDestroy.length,
+			);
+			const toDestroy = connectionsToDestroy.slice(
+				0,
+				Math.max(0, connectionsToDestroy.length - keepCount),
+			);
 
-			await Promise.all(toDestroy.map(conn => this.destroyConnection(conn, provider)));
+			await Promise.all(toDestroy.map((conn) => this.destroyConnection(conn, provider)));
 
 			// Replenish if below minimum
 			if (pool.length < this.config.minConnections) {

@@ -3,7 +3,7 @@
  * Provides comprehensive metrics collection and reporting
  */
 
-import { Counter, Histogram, Gauge, Registry } from 'prom-client';
+import { Counter, Gauge, Histogram, Registry } from 'prom-client';
 
 export class OrchestrationMetrics {
 	private readonly registry: Registry;
@@ -234,7 +234,7 @@ export class OrchestrationMetrics {
 
 	recordTaskCompleted(
 		workflowId: string,
-		agentRole: string,
+		_agentRole: string,
 		status: string,
 		result: 'success' | 'failure',
 		duration: number,
@@ -252,16 +252,16 @@ export class OrchestrationMetrics {
 
 	recordAgentExecution(
 		agentId: string,
-		agentRole: string,
+		_agentRole: string,
 		status: string,
-		taskType: string,
+		_taskType: string,
 		duration: number,
 	): void {
 		this.agentExecutions.inc({ agent_id: agentId, agent_role, status });
 		this.agentExecutionDuration.observe({ agent_id: agentId, agent_role, task_type }, duration);
 	}
 
-	updateAgentUtilization(agentId: string, agentRole: string, utilization: number): void {
+	updateAgentUtilization(agentId: string, _agentRole: string, utilization: number): void {
 		this.agentUtilization.set({ agent_id: agentId, agent_role }, utilization);
 	}
 
@@ -277,7 +277,12 @@ export class OrchestrationMetrics {
 		this.modelLatency.observe({ provider, model, operation }, latency);
 	}
 
-	recordModelTokens(provider: string, model: string, tokenType: 'input' | 'output', count: number): void {
+	recordModelTokens(
+		provider: string,
+		model: string,
+		tokenType: 'input' | 'output',
+		count: number,
+	): void {
 		this.modelTokens.inc({ provider, model, token_type: tokenType }, count);
 	}
 
@@ -286,7 +291,11 @@ export class OrchestrationMetrics {
 	}
 
 	// Connection pool metrics methods
-	updateConnectionPoolSize(provider: string, state: 'active' | 'idle' | 'acquiring', size: number): void {
+	updateConnectionPoolSize(
+		provider: string,
+		state: 'active' | 'idle' | 'acquiring',
+		size: number,
+	): void {
 		this.connectionPoolSize.set({ provider, state }, size);
 	}
 
@@ -313,12 +322,18 @@ export class OrchestrationMetrics {
 	}
 
 	// Circuit breaker metrics methods
-	updateCircuitBreakerState(circuitBreakerName: string, state: 'closed' | 'open' | 'half-open'): void {
+	updateCircuitBreakerState(
+		circuitBreakerName: string,
+		state: 'closed' | 'open' | 'half-open',
+	): void {
 		const stateValue = state === 'closed' ? 0 : state === 'open' ? 1 : 2;
 		this.circuitBreakerState.set({ circuit_breaker_name: circuitBreakerName }, stateValue);
 	}
 
-	recordCircuitBreakerRequest(circuitBreakerName: string, result: 'success' | 'rejected' | 'error'): void {
+	recordCircuitBreakerRequest(
+		_circuitBreakerName: string,
+		result: 'success' | 'rejected' | 'error',
+	): void {
 		this.circuitBreakerRequests.inc({ circuit_breaker_name, result });
 	}
 

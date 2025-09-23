@@ -35,11 +35,11 @@ export class CircuitBreakerManager {
 			breaker.run(
 				(success: () => void, failure: () => void) => {
 					fn()
-						.then(result => {
+						.then((result) => {
 							success();
 							resolve(result);
 						})
-						.catch(error => {
+						.catch((error) => {
 							failure();
 							reject(error);
 						});

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Create a simple mock for testing
 const createMockCircuitBreaker = () => ({
@@ -8,7 +8,7 @@ const createMockCircuitBreaker = () => ({
 });
 
 vi.mock('circuit-breaker-js', () => ({
-	default: vi.fn(() => createMockCircuitBreaker())
+	default: vi.fn(() => createMockCircuitBreaker()),
 }));
 
 import { CircuitBreakerManager } from '../../src/resilience/circuit-breaker.js';
@@ -34,7 +34,10 @@ describe('CircuitBreakerManager', () => {
 
 			// Mock the run method to execute the command
 			mockCircuitBreaker.run.mockImplementation((command: any) => {
-				command(() => {}, () => {});
+				command(
+					() => {},
+					() => {},
+				);
 			});
 
 			const result = await circuitBreaker.execute('test', fn);
@@ -57,7 +60,10 @@ describe('CircuitBreakerManager', () => {
 
 			// Mock the run method to execute the command
 			mockCircuitBreaker.run.mockImplementation((command: any) => {
-				command(() => {}, () => {});
+				command(
+					() => {},
+					() => {},
+				);
 			});
 
 			await expect(circuitBreaker.execute('test', fn)).rejects.toThrow('Command failed');
@@ -74,11 +80,13 @@ describe('CircuitBreakerManager', () => {
 
 			// Verify the circuit breaker was created with custom options
 			const CircuitBreaker = require('circuit-breaker-js').default;
-			expect(CircuitBreaker).toHaveBeenCalledWith(expect.objectContaining({
-				timeoutDuration: 5000,
-				errorThreshold: 75,
-				windowDuration: 60000,
-			}));
+			expect(CircuitBreaker).toHaveBeenCalledWith(
+				expect.objectContaining({
+					timeoutDuration: 5000,
+					errorThreshold: 75,
+					windowDuration: 60000,
+				}),
+			);
 		});
 	});
 
@@ -91,7 +99,9 @@ describe('CircuitBreakerManager', () => {
 		});
 
 		it('should throw error for non-existent breaker', () => {
-			expect(() => circuitBreaker.getStats('non-existent')).toThrow('Circuit breaker non-existent not found');
+			expect(() => circuitBreaker.getStats('non-existent')).toThrow(
+				'Circuit breaker non-existent not found',
+			);
 		});
 	});
 });

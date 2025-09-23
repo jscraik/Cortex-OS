@@ -3,9 +3,8 @@
  * Tests the unified model provider with fallback capabilities
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { CompositeModelProvider, createCompositeProvider } from '../composite-provider';
-import { CircuitBreaker } from '../../lib/circuit-breaker';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type CompositeModelProvider, createCompositeProvider } from '../composite-provider';
 
 // Mock model selection functions
 vi.mock('../../lib/model-selection', () => ({
@@ -15,7 +14,7 @@ vi.mock('../../lib/model-selection', () => ({
 }));
 
 // Mock provider implementations
-const createMockProvider = (name: string, available = true) => ({
+const _createMockProvider = (name: string, available = true) => ({
 	name,
 	isAvailable: vi.fn().mockResolvedValue(available),
 	executeEmbeddings: vi.fn().mockResolvedValue({
@@ -41,7 +40,7 @@ const createMockProvider = (name: string, available = true) => ({
 describe('CompositeModelProvider', () => {
 	let compositeProvider: CompositeModelProvider;
 	let mockMLXService: any;
-	let mockEventEmitter: any;
+	let _mockEventEmitter: any;
 
 	beforeEach(() => {
 		// Reset all mocks
@@ -258,21 +257,27 @@ describe('CompositeModelProvider', () => {
 				texts: ['test'],
 			});
 
-			expect(emitSpy).toHaveBeenCalledWith('embeddings-generated', expect.objectContaining({
-				provider: 'mlx',
-				attempts: 1,
-				textCount: 1,
-			}));
+			expect(emitSpy).toHaveBeenCalledWith(
+				'embeddings-generated',
+				expect.objectContaining({
+					provider: 'mlx',
+					attempts: 1,
+					textCount: 1,
+				}),
+			);
 
 			await compositeProvider.generateChat({
 				messages: [{ role: 'user', content: 'test' }],
 			});
 
-			expect(emitSpy).toHaveBeenCalledWith('chat-generated', expect.objectContaining({
-				provider: 'mlx',
-				attempts: 1,
-				messageCount: 1,
-			}));
+			expect(emitSpy).toHaveBeenCalledWith(
+				'chat-generated',
+				expect.objectContaining({
+					provider: 'mlx',
+					attempts: 1,
+					messageCount: 1,
+				}),
+			);
 		});
 	});
 
@@ -290,7 +295,11 @@ describe('CompositeModelProvider', () => {
 
 			expect(result.scores).toEqual([0.9, 0.8, 0.7]);
 			expect(result.provider).toBe('mlx');
-			expect(mockMLXService.rerank).toHaveBeenCalledWith('test query', ['doc1', 'doc2', 'doc3'], undefined);
+			expect(mockMLXService.rerank).toHaveBeenCalledWith(
+				'test query',
+				['doc1', 'doc2', 'doc3'],
+				undefined,
+			);
 		});
 	});
 });

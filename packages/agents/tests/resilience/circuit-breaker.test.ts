@@ -183,10 +183,10 @@ describe('Circuit Breaker', () => {
 
 			// Execute and run timers to trigger timeout
 			const executePromise = slowCircuitBreaker.execute(mockFn);
-			
+
 			// Fast forward beyond the timeout period
 			vi.advanceTimersByTime(1500);
-			
+
 			await expect(executePromise).rejects.toThrow('Request timeout');
 			expect(mockFn).toHaveBeenCalled();
 		});
@@ -277,10 +277,10 @@ describe('Circuit Breaker', () => {
 
 			// Execute and run timers to trigger timeout
 			const executePromise = slowCircuitBreaker.execute(mockFn, { fallback });
-			
+
 			// Fast forward beyond the timeout period
 			vi.advanceTimersByTime(1500);
-			
+
 			const result = await executePromise;
 
 			expect(result).toBe('fallback response');

@@ -5,7 +5,7 @@
 
 import { EventEmitter } from 'node:events';
 import { z } from 'zod';
-import { selectMLXModel, selectOllamaModel, selectFrontierModel } from '../lib/model-selection';
+import { selectMLXModel, selectOllamaModel } from '../lib/model-selection';
 
 /**
  * Model request schemas
@@ -90,7 +90,7 @@ class MLXProvider implements ModelProvider {
 	private readonly circuitBreaker: CircuitBreaker;
 
 	constructor(
-		private readonly mlxService: any, // MLXServiceBridge instance
+		private readonly mlxService: unknown, // MLXServiceBridge instance
 		private readonly healthCheckInterval = 30000, // 30 seconds
 	) {
 		this.circuitBreaker = new CircuitBreaker('mlx-provider', {
@@ -103,17 +103,14 @@ class MLXProvider implements ModelProvider {
 
 	async isAvailable(): Promise<boolean> {
 		// Check cache first
-		if (
-			this.healthCache &&
-			Date.now() - this.healthCache.timestamp < this.healthCheckInterval
-		) {
+		if (this.healthCache && Date.now() - this.healthCache.timestamp < this.healthCheckInterval) {
 			return this.healthCache.available;
 		}
 
 		try {
 			const available = await this.circuitBreaker.execute(async () => {
 				// Check if MLX service is actually available
-				return await selectMLXModel('chat') !== null;
+				return (await selectMLXModel('chat')) !== null;
 			});
 
 			this.healthCache = { available, timestamp: Date.now() };
@@ -131,7 +128,7 @@ class MLXProvider implements ModelProvider {
 			// Generate embeddings for each text
 			const embeddings: number[][] = [];
 			for (const text of request.texts) {
-				const result = await this.mlxService.generateEmbedding({
+				const result = await (this.mlxService as any).generateEmbedding({
 					text,
 					model: request.model,
 				});
@@ -153,7 +150,7 @@ class MLXProvider implements ModelProvider {
 		return this.circuitBreaker.execute(async () => {
 			const startTime = Date.now();
 
-			const result = await this.mlxService.generateChat({
+			const result = await (this.mlxService as any).generateChat({
 				messages: request.messages,
 				model: request.model,
 				max_tokens: request.maxTokens,
@@ -175,11 +172,7 @@ class MLXProvider implements ModelProvider {
 		return this.circuitBreaker.execute(async () => {
 			const startTime = Date.now();
 
-			const result = await this.mlxService.rerank(
-				request.query,
-				request.documents,
-				request.model,
-			);
+			const result = await (this.mlxService as any).rerank(request.query, request.documents, request.model);
 
 			const processingTime = Date.now() - startTime;
 
@@ -214,16 +207,13 @@ class OllamaProvider implements ModelProvider {
 	}
 
 	async isAvailable(): Promise<boolean> {
-		if (
-			this.healthCache &&
-			Date.now() - this.healthCache.timestamp < this.healthCheckInterval
-		) {
+		if (this.healthCache && Date.now() - this.healthCache.timestamp < this.healthCheckInterval) {
 			return this.healthCache.available;
 		}
 
 		try {
 			const available = await this.circuitBreaker.execute(async () => {
-				return await selectOllamaModel('chat') !== null;
+				return (await selectOllamaModel('chat')) !== null;
 			});
 
 			this.healthCache = { available, timestamp: Date.now() };
@@ -459,7 +449,7 @@ export const CompositeProviderConfigSchema = z.object({
 	mlx: z
 		.object({
 			enabled: z.boolean().default(true),
-			service: z.any().optional(),
+			service: z.unknown().optional(),
 			priority: z.number().min(1).max(10).default(1),
 		})
 		.optional(),
@@ -567,7 +557,10 @@ export class CompositeModelProvider extends EventEmitter {
 	 */
 	private async executeWithFallback<T>(
 		request: EmbeddingRequest | ChatRequest | RerankRequest,
-		operation: (provider: ModelProvider, request: EmbeddingRequest | ChatRequest | RerankRequest) => Promise<T>,
+		operation: (
+			provider: ModelProvider,
+			request: EmbeddingRequest | ChatRequest | RerankRequest,
+		) => Promise<T>,
 	): Promise<{ result: T; provider: string; attempts: number }> {
 		if (this.providers.length === 0) {
 			throw new Error('No providers configured');
@@ -620,9 +613,7 @@ export class CompositeModelProvider extends EventEmitter {
 			}
 		}
 
-		throw new Error(
-			`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`,
-		);
+		throw new Error(`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`);
 	}
 
 	/**
@@ -697,8 +688,6 @@ export class CompositeModelProvider extends EventEmitter {
 /**
  * Factory function to create composite provider
  */
-export function createCompositeProvider(
-	config: CompositeProviderConfig,
-): CompositeModelProvider {
+export function createCompositeProvider(config: CompositeProviderConfig): CompositeModelProvider {
 	return new CompositeModelProvider(config);
 }
