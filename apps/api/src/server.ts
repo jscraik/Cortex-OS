@@ -3,7 +3,11 @@ import express from 'express';
 import { securityMiddleware } from './auth/config.js';
 import { createApiBusIntegration } from './core/a2a-integration.js';
 import { setupMcpTools } from './mcp/tools.js';
-import authRoutes from './routes/auth.js';
+import { authRouter } from './routes/auth.js';
+
+type ExpressError = Error & {
+	status?: number;
+};
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,12 +28,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
 	res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Auth routes
-app.use(authRoutes);
+app.use(authRouter);
 
 // API routes (protected)
 // app.use("/api", apiRoutes); // TODO: Create API routes
@@ -44,20 +48,23 @@ const apiBus = createApiBusIntegration({
 setupMcpTools(app, apiBus);
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-	console.error(err.stack);
+app.use(
+	(err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+		const error = err instanceof Error ? err : new Error('Unknown error');
+		console.error(error.stack ?? error);
 
-	// Don't leak error details in production
-	const message = process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message;
+		const status = (error as ExpressError).status ?? 500;
+		const message = process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message;
 
-	res.status(err.status || 500).json({
-		error: message,
-		...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
-	});
-});
+		res.status(status).json({
+			error: message,
+			...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),
+		});
+	},
+);
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
 	res.status(404).json({ error: 'Not found' });
 });
 

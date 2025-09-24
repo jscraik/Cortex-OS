@@ -8,6 +8,15 @@ process.env.BETTER_AUTH_SECRET = 'test-secret';
 process.env.BETTER_AUTH_URL = 'http://localhost:3001';
 process.env.NODE_ENV = 'test';
 
+type SessionSummary = {
+	id: string;
+	current?: boolean;
+	userId?: string;
+	expires?: string;
+	createdAt?: string;
+	userAgent?: string;
+};
+
 describe('Authentication Flow Integration', () => {
 	let dbAdapter: DatabaseAdapter;
 
@@ -209,7 +218,10 @@ describe('Authentication Flow Integration', () => {
 			expect(sessionsResponse.body.sessions.length).toBeGreaterThanOrEqual(2);
 
 			// 5. Revoke device 2 session from device 1
-			const device2Session = sessionsResponse.body.sessions.find((s: any) => !s.current);
+			const sessions = Array.isArray(sessionsResponse.body.sessions)
+				? (sessionsResponse.body.sessions as SessionSummary[])
+				: [];
+			const device2Session = sessions.find((session) => !session.current);
 
 			if (device2Session) {
 				await request(app)

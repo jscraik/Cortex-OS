@@ -6,7 +6,6 @@ import {
 } from '@apps/api/src/core/a2a-integration';
 import { StructuredLogger } from '@apps/api/src/core/observability';
 import type { ApiOperationMetadata, GatewayRequest } from '@apps/api/src/core/types';
-import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('API A2A Real Bus Integration', () => {
