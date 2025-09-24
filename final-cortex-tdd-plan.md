@@ -12,12 +12,22 @@
 
 ## 0. Global Guardrails (Stop the TODO/Mock churn)
 
-| Goal | Tests to create first | Implementation pairing | Ongoing guard |
-|------|-----------------------|------------------------|---------------|
-| Detect residual placeholders/mocks before PR merge | `tests/regression/placeholders.spec.ts` scanning repo for forbidden tokens (`TODO:`, `Mock`, `not yet implemented`) while allowing allowlist for docs | N/A – uses existing file loader utilities | Add `pnpm test placeholders` to CI gate + Git hook in `package.json` |
-| Ensure every public endpoint has non-mock contract coverage | `tests/contracts/openapi-sync.spec.ts` validates generated OpenAPI spec vs. route handlers (no handler returns stub payload) | Generate OpenAPI from zod schemas; enforce real handler exports | Integrate into `pnpm test:contracts` |
-| Prevent new stubs in MCP tools | `packages/mcp-core/tests/tools-contract.spec.ts` checks each tool’s executor references a concrete adapter class, not `'mock'` strings | Implement detection in `packages/mcp-core/src/registry.ts` | Add to `pnpm test:mcp` |
+**Global Guardrails**
 
+- **Detect residual placeholders/mocks before PR merge**
+    - *Tests to create first*: `tests/regression/placeholders.spec.ts` scanning repo for forbidden tokens (`TODO:`, `Mock`, `not yet implemented`) while allowing allowlist for docs
+    - *Implementation pairing*: N/A – uses existing file loader utilities
+    - *Ongoing guard*: Add `pnpm test placeholders` to CI gate + Git hook in `package.json`
+
+- **Ensure every public endpoint has non-mock contract coverage**
+    - *Tests to create first*: `tests/contracts/openapi-sync.spec.ts` validates generated OpenAPI spec vs. route handlers (no handler returns stub payload)
+    - *Implementation pairing*: Generate OpenAPI from zod schemas; enforce real handler exports
+    - *Ongoing guard*: Integrate into `pnpm test:contracts`
+
+- **Prevent new stubs in MCP tools**
+    - *Tests to create first*: `packages/mcp-core/tests/tools-contract.spec.ts` checks each tool’s executor references a concrete adapter class, not `'mock'` strings
+    - *Implementation pairing*: Implement detection in `packages/mcp-core/src/registry.ts`
+    - *Ongoing guard*: Add to `pnpm test:mcp`
 ---
 
 ## 1. API Server & Auth Hardening (Issues 1–3)
