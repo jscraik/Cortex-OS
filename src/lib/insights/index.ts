@@ -67,7 +67,7 @@ function extractList(response: string, listName: string): string[] {
 	if (!match) return [];
 	return match[0]
 		.split('\\n')
-		.map((line) => line.replace(/^[-*•\\d.\\s]+/, '').trim())
+		.map((line) => line.replace(/^([-*•]|\\d+[.)]?)\\s*/, '').trim())
 		.filter((line) => line.length > 0)
 		.slice(0, 10);
 }

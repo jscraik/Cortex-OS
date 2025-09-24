@@ -2,7 +2,7 @@ import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 type LocalMemoryOptions = {
-	baseUrl?: string; // e.g., http://localhost:3002/api/v1
+	baseUrl?: string; // e.g., http://localhost:3028/api/v1
 	apiKey?: string; // if configured
 	defaultNamespace?: string;
 	timeoutMs?: number;
@@ -82,7 +82,7 @@ export class LocalMemoryStore implements MemoryStore {
 		this.baseUrl = (
 			opts.baseUrl ??
 			process.env.LOCAL_MEMORY_BASE_URL ??
-			'http://localhost:3010/api/v1'
+			'http://localhost:3028/api/v1'
 		).replace(/\/$/, '');
 		this.apiKey = opts.apiKey ?? process.env.LOCAL_MEMORY_API_KEY;
 		this.defaultNs = opts.defaultNamespace ?? process.env.LOCAL_MEMORY_NAMESPACE ?? undefined;

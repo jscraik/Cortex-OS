@@ -5,12 +5,17 @@
  * and data migration from legacy authentication systems.
  */
 
+import { env } from 'node:process';
 import { createId } from '@cortex-os/a2a-core';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 // Error messages
 const UNKNOWN_ERROR = 'Unknown error';
+const getEnvValue = (value: string | undefined, fallback: string) =>
+	value && value.trim().length > 0 ? value : fallback;
+const getLegacyJwtSecret = () => getEnvValue(env.LEGACY_JWT_SECRET, 'legacy-secret');
+const getBetterAuthSecret = () => getEnvValue(env.BETTER_AUTH_SECRET, 'better-auth-secret');
 
 export interface LegacyUser {
 	id: string;
@@ -58,6 +63,11 @@ export interface MigrationResult {
 	rolledBack?: boolean;
 }
 
+interface LegacyTokenPayload {
+	userId: string;
+	sessionId?: string;
+}
+
 export interface BatchMigrationResult {
 	success: boolean;
 	migratedCount: number;
@@ -70,7 +80,7 @@ export interface BatchMigrationResult {
  * Create a legacy JWT token for testing migration
  */
 export function createLegacyToken(payload: Record<string, unknown>): string {
-	return jwt.sign(payload, process.env.LEGACY_JWT_SECRET || 'legacy-secret', {
+	return jwt.sign(payload, getLegacyJwtSecret(), {
 		algorithm: 'HS256',
 	});
 }
@@ -114,8 +124,8 @@ export async function verifyNewPassword(password: string, hash: string): Promise
  * Migration helper for JWT tokens
  */
 export class JWTTokenMigrator {
-	private legacySecret: string;
-	private newSecret: string;
+	private readonly legacySecret: string;
+	private readonly newSecret: string;
 
 	constructor(legacySecret: string, newSecret: string) {
 		this.legacySecret = legacySecret;
@@ -128,7 +138,7 @@ export class JWTTokenMigrator {
 	async migrate(legacyToken: string): Promise<MigrationResult> {
 		try {
 			// Verify legacy token
-			const legacyPayload = jwt.verify(legacyToken, this.legacySecret) as Record<string, unknown>;
+			const legacyPayload = jwt.verify(legacyToken, this.legacySecret) as LegacyTokenPayload;
 
 			// Create new token
 			const newPayload = {
@@ -179,12 +189,20 @@ export class PasswordHashMigrator {
 	 */
 	async migrate(email: string, password: string, legacyHash: string): Promise<MigrationResult> {
 		try {
+			const normalizedEmail = email.trim();
+			if (!normalizedEmail) {
+				return {
+					success: false,
+					error: 'Email required for migration',
+				};
+			}
+
 			// Verify with legacy hash
 			const isValid = await verifyLegacyPassword(password, legacyHash);
 			if (!isValid) {
 				return {
 					success: false,
-					error: 'Invalid password',
+					error: `Invalid password for ${normalizedEmail}`,
 				};
 			}
 
@@ -249,7 +267,7 @@ export class UserDataMigrator {
 			};
 
 			// In a real implementation, save to database
-			console.log('Migrated user:', newUser);
+			console.warn('brAInwav migration test: user migrated mock payload', newUser);
 
 			return {
 				success: true,
@@ -294,7 +312,7 @@ export class OAuthAccountMigrator {
 			};
 
 			// In a real implementation, save to database
-			console.log('Migrated OAuth account:', newAccount);
+			console.warn('brAInwav migration test: OAuth account migrated mock payload', newAccount);
 
 			return {
 				success: true,
@@ -314,16 +332,14 @@ export class OAuthAccountMigrator {
  * Batch migration utilities
  */
 export class BatchMigrator {
-	private tokenMigrator: JWTTokenMigrator;
-	private passwordMigrator: PasswordHashMigrator;
-	private userMigrator: UserDataMigrator;
-	private oauthMigrator: OAuthAccountMigrator;
+	private readonly tokenMigrator: JWTTokenMigrator;
+	private readonly passwordMigrator: PasswordHashMigrator;
+	private readonly userMigrator: UserDataMigrator;
+	private readonly oauthMigrator: OAuthAccountMigrator;
+	private readonly userFixtures = new Map<string, LegacyUser>();
 
 	constructor() {
-		this.tokenMigrator = new JWTTokenMigrator(
-			process.env.LEGACY_JWT_SECRET || 'legacy-secret',
-			process.env.BETTER_AUTH_SECRET || 'better-auth-secret',
-		);
+		this.tokenMigrator = new JWTTokenMigrator(getLegacyJwtSecret(), getBetterAuthSecret());
 		this.passwordMigrator = new PasswordHashMigrator();
 		this.userMigrator = new UserDataMigrator();
 		this.oauthMigrator = new OAuthAccountMigrator();
@@ -346,11 +362,40 @@ export class BatchMigrator {
 				return { success: false, error: `User ${userId} not found` };
 			}
 
-			const result = await this.userMigrator.migrateUser(legacyUser);
-			return {
-				success: result.success,
-				error: result.success ? undefined : `Failed to migrate user ${userId}: ${result.error}`,
-			};
+			const userMigration = await this.userMigrator.migrateUser(legacyUser);
+			if (!userMigration.success) {
+				return {
+					success: false,
+					error: `Failed to migrate user ${userId}: ${userMigration.error}`,
+				};
+			}
+
+			const supplementalResults = await Promise.all([
+				this.passwordMigrator.migrate(
+					legacyUser.email,
+					'brAInwav-placeholder-password',
+					legacyUser.passwordHash,
+				),
+				this.oauthMigrator.migrateAccount(
+					TestDataGenerator.generateLegacyOAuthAccount({ userId: legacyUser.id }),
+				),
+				this.tokenMigrator.migrate(
+					createLegacyToken({
+						userId: legacyUser.id,
+						sessionId: createId(),
+					}),
+				),
+			]);
+
+			const failedSupplemental = supplementalResults.find((outcome) => !outcome.success);
+			if (failedSupplemental?.error) {
+				return {
+					success: false,
+					error: `Supplemental migration failed for ${userId}: ${failedSupplemental.error}`,
+				};
+			}
+
+			return { success: true };
 		} catch (error) {
 			return {
 				success: false,
@@ -382,17 +427,17 @@ export class BatchMigrator {
 
 			// Process batch in parallel
 			const results = await Promise.all(
-				batch.map(userId => this.migrateSingleUser(userId, options))
+				batch.map((userId) => this.migrateSingleUser(userId, options)),
 			);
 
 			// Update counters
-			results.forEach(result => {
-				if (result.success) {
+			results.forEach((migrationResult) => {
+				if (migrationResult.success) {
 					migrated++;
 				} else {
 					failed++;
-					if (result.error) {
-						errors.push(result.error);
+					if (migrationResult.error) {
+						errors.push(migrationResult.error);
 					}
 				}
 			});
@@ -418,10 +463,21 @@ export class BatchMigrator {
 	/**
 	 * Get legacy user (mock implementation)
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	private async getLegacyUser(_userId: string): Promise<LegacyUser | null> {
-		// In a real implementation, fetch from legacy database
-		return null;
+	private async getLegacyUser(userId: string): Promise<LegacyUser | null> {
+		const trimmedId = userId.trim();
+		if (!trimmedId) {
+			return null;
+		}
+
+		if (!this.userFixtures.has(trimmedId)) {
+			const synthesized = TestDataGenerator.generateLegacyUser({
+				id: trimmedId,
+				email: `legacy-${trimmedId}@example.com`,
+			});
+			this.userFixtures.set(trimmedId, synthesized);
+		}
+
+		return this.userFixtures.get(trimmedId) ?? null;
 	}
 }
 
@@ -478,15 +534,4 @@ export const TestDataGenerator = {
 			scope: overrides.scope || 'repo,user',
 		};
 	},
-};
-
-/**
- * Export all utilities
- */
-export {
-	JWTTokenMigrator,
-	PasswordHashMigrator,
-	UserDataMigrator,
-	OAuthAccountMigrator,
-	BatchMigrator,
 };

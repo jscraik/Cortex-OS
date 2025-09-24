@@ -147,9 +147,6 @@ echo "======================"
 
 # Check Local Memory dual mode
 if check_port "$LOCAL_MEMORY_PORT" "Local Memory" >/dev/null 2>&1; then
-    echo -e "${RED}❌ Local Memory not running on expected port $LOCAL_MEMORY_PORT${NC}"
-    echo "   Run: local-memory start --dual-mode"
-else
     echo -e "${GREEN}✅ Local Memory running in dual mode (MCP + REST API)${NC}"
     # Verify REST API
     if curl -s "http://localhost:$LOCAL_MEMORY_PORT/api/v1/health" >/dev/null 2>&1; then
@@ -157,6 +154,9 @@ else
     else
         echo -e "${YELLOW}   ⚠️  REST API may not be responding${NC}"
     fi
+else
+    echo -e "${RED}❌ Local Memory not running on expected port $LOCAL_MEMORY_PORT${NC}"
+    echo "   Run: LOCAL_MEMORY_MODE=dual LOCAL_MEMORY_PORT=$LOCAL_MEMORY_PORT local-memory"
 fi
 
 echo

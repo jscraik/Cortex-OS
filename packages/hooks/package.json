@@ -25,17 +25,17 @@
   },
   "dependencies": {
     "@cortex-os/observability": "workspace:*",
-    "chokidar": "^3.6.0",
-    "fast-glob": "^3.3.2",
+    "chokidar": "^4.0.0",
+    "fast-glob": "^3.3.3",
     "js-yaml": "^4.1.0",
     "picomatch": "^4.0.2"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.18.1",
     "@types/picomatch": "^4.0.2",
-    "eslint": "^9.33.0",
-    "typescript": "^5.7.2",
+    "eslint": "^9.35.0",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
   "repository": {

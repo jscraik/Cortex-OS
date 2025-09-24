@@ -8,11 +8,7 @@ export default [
 	...ts.configs.recommended,
 	{
 		// Limit to primary source directories to avoid loading every test/build artifact into the TS program (reduces memory footprint).
-		files: [
-			'src/**/*.{ts,tsx,js,jsx}',
-			'tests/**/*.{ts,tsx,js,jsx}',
-			'scripts/**/*.{ts,js}',
-		],
+		files: ['src/**/*.{ts,tsx,js,jsx}', 'scripts/**/*.{ts,js}'],
 		// Register sonarjs plugin exactly once in this file so rules resolve.
 		plugins: { '@typescript-eslint': ts.plugin, sonarjs },
 		languageOptions: {
@@ -126,11 +122,32 @@ export default [
 	},
 	{
 		// Test files - relax some security rules that are acceptable in tests
-		files: ['**/*.test.ts', '**/*.test.js', '**/*.spec.ts', '**/*.spec.js'],
+		files: ['tests/**/*.{ts,tsx,js,jsx}', '**/*.test.{ts,tsx,js,jsx}', '**/*.spec.{ts,tsx,js,jsx}'],
+		plugins: { '@typescript-eslint': ts.plugin, sonarjs },
+		languageOptions: {
+			parser: ts.parser,
+			parserOptions: {
+				projectService: false,
+				project: false,
+				allowDefaultProject: true,
+				tsconfigRootDir: process.cwd(),
+			},
+			globals: {
+				process: 'readonly',
+				console: 'readonly',
+				setTimeout: 'readonly',
+				clearTimeout: 'readonly',
+				setInterval: 'readonly',
+				clearInterval: 'readonly',
+			},
+		},
 		rules: {
 			'no-process-env': 'off',
 			'no-console': 'off',
 			'@typescript-eslint/no-explicit-any': 'warn',
+			'sonarjs/no-duplicate-string': 'off',
+			'sonarjs/cognitive-complexity': 'off',
+			'sonarjs/no-nested-functions': 'off',
 		},
 	},
 	{

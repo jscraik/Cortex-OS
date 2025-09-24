@@ -50,7 +50,7 @@ The guard script (`tools/validators/enforce-local-memory.mjs`) checks the follow
   - `MEMORIES_SHORT_STORE=local` (preferred)
   - `MEMORIES_ADAPTER=local` or `MEMORY_STORE=local` (legacy)
 - REST endpoint is configured (dual-mode supported):
-  - `LOCAL_MEMORY_BASE_URL=http://localhost:3002/api/v1`
+  - `LOCAL_MEMORY_BASE_URL=http://localhost:3028/api/v1`
 
 recommended:
 

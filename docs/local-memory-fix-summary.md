@@ -3,12 +3,12 @@
 ## Issues Resolved
 
 ### 🔧 **Primary Problem**
-Local memory service was running in MCP-only mode, causing REST API on port 3002 to be unavailable during pre-commit checks.
+Local memory service was running in MCP-only mode, causing REST API on the dedicated port to be unavailable during pre-commit checks.
 
 ### ✅ **Solution Implemented**
 - Started local-memory in **dual mode** using `LOCAL_MEMORY_MODE=dual`
 - Both MCP protocol and REST API now running simultaneously
-- Port 3002 responding correctly with all 25 endpoints
+- REST API migrated to port **3028** (Cloudflare-safe) with all 25 endpoints responding
 
 ### 🛠️ **Additional Fixes**
 
@@ -31,12 +31,12 @@ $ local-memory ps
 PID      TYPE         PORT   COMMAND
 ---      ----         ----   -------
 5410     MCP          -      /Users/jamiecraik/.local/bin/local-memory --mcp
-16915    Background   3002   /Users/jamiecraik/.local/bin/local-memory start-server
+16915    Background   3028   /Users/jamiecraik/.local/bin/local-memory start-server
 ```
 
 ### ✅ **REST API Health Check**
 ```bash
-$ curl -s http://localhost:3002/api/v1/health
+$ curl -s http://localhost:3028/api/v1/health
 {"success":true,"data":{"session":"daemon-.Cortex-OS","status":"healthy","timestamp":"2025-09-23T20:03:11Z"},"message":"Server is healthy"}
 ```
 
@@ -60,7 +60,7 @@ const adapter = new LocalMemoryOrchestrationAdapter();
 ```
 
 ### REST API Endpoints
-- **Base URL**: `http://localhost:3002/api/v1/`
+- **Base URL**: `http://localhost:3028/api/v1/`
 - **Categories**: Memory Operations, AI Operations, Relationships, Temporal Analysis
 - **Authentication**: Not required for local development
 

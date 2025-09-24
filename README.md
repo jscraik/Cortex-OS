@@ -1,5 +1,22 @@
 # Cortex-OS
 
+## 🚨 CRITICAL: brAInwav Production Standards
+
+**ABSOLUTE PROHIBITION**: NEVER claim any implementation is "production-ready", "complete", "operational", or "fully implemented" if it contains:
+
+- `Math.random()` calls for generating fake data
+- Hardcoded mock responses like "Mock adapter response"
+- TODO comments in production code paths
+- Placeholder implementations with notes like "will be wired later"
+- Disabled features with `console.warn("not implemented")`
+- Fake system metrics or data generation
+
+**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
+
+**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
+
+---
+
 <!-- markdownlint-disable MD013 -->
 
 ![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
@@ -136,7 +153,7 @@ comprehensive quality gates.
 
 [Documentation](#Documentation) • [Quick Start](./docs/quick-start.md) •
 [Architecture](./docs/architecture-overview.md) • [Python Integration](./docs/python-integration.md) •
-[Contributing](#Contributing) • [Packages](#Packages)
+[Contributing](#contributing) • [Packages](#Packages)
 
 ---
 

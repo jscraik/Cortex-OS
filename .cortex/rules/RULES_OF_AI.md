@@ -1,3 +1,88 @@
+# brAInwav Cortex-OS: Rules of AI
+
+## 🚨 CRITICAL: No False Implementation Claims
+
+### Rule #1: Zero Tolerance for Placeholder Production Claims
+
+**NEVER** claim code is "production-ready", "complete", "operational", or "fully implemented" when:
+
+- Using `Math.random()` for data generation
+- Returning hardcoded strings like "Mock adapter response"
+- Including TODO comments in production paths
+- Using placeholder implementations with intent to wire later
+- Generating fake metrics or system data
+- Disabling features with `console.warn("not implemented")`
+
+### Rule #2: brAInwav Truthfulness Standard
+
+All AI systems working on brAInwav Cortex-OS must:
+
+- Accurately assess implementation status before making claims
+- Differentiate between test scaffolding and production code
+- Never inflate completion percentages or readiness metrics
+- Include brAInwav branding in all system outputs and error messages
+- Verify claims against actual code before documentation
+
+### Rule #3: Production Validation Requirements
+
+Before claiming any component is production-ready:
+
+- [ ] All placeholder patterns eliminated (`Math.random()`, `TODO`, `Mock.*response`)
+- [ ] Real system integration implemented (no fake data)
+- [ ] Error messages include brAInwav branding
+- [ ] Documentation matches actual implementation
+- [ ] Tests validate real functionality, not mocks
+
+### Rule #4: Documentation Accuracy Enforcement
+
+When updating documentation:
+
+- Status claims must be verified against actual code
+- Implementation summaries require code evidence
+- Percentage completions must be calculated from real metrics
+- All README files must reflect current implementation reality
+- Never claim "COMPLETE" with placeholder implementations
+
+### Rule #5: Commit Message Standards
+
+All commits must:
+
+- Include "Co-authored-by: brAInwav Development Team"
+- Accurately describe what was actually implemented
+- Never claim completion when placeholders remain
+- Reference brAInwav in appropriate contexts
+
+## 🛡️ Enforcement Mechanisms
+
+### Automated Validation
+
+- `scripts/brainwav-production-guard.sh` - Detects placeholder patterns
+- `scripts/validate-implementation-claims.ts` - Verifies documentation accuracy
+- CI/CD integration prevents deployment with violations
+
+### Manual Review Requirements
+
+- All production claims require code review verification
+- Documentation updates must include implementation evidence
+- Status changes require validation against actual functionality
+
+## ⚠️ Violation Consequences
+
+Violating these rules results in:
+
+- Immediate CI/CD pipeline failure
+- Blocked deployment to production
+- Required remediation before merge approval
+- Documentation accuracy correction mandates
+
+---
+
+**Remember: brAInwav standards demand absolute truthfulness in implementation claims. When in doubt, err on the side of accuracy over optimism.**
+
+---
+
+**Maintained by: brAInwav Development Team**
+
 # RULES_OF_AI.md
 
 ## 🔧 Agent Toolkit (MANDATORY)
@@ -7,13 +92,14 @@ operations. This toolkit is **REQUIRED** for maintaining monorepo uniformity and
 
 ### Core Integration Pattern
 
-```typescript
+``typescript
 import { createAgentToolkit } from '@cortex-os/agent-toolkit';
 
 const toolkit = createAgentToolkit();
 // Use TypeScript interface for programmatic access
 await toolkit.multiSearch('pattern', './src');
 await toolkit.validateProject(['*.ts', '*.py', '*.rs']);
+
 ```
 
 ### Shell Interface (Just Recipes)

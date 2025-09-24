@@ -22,7 +22,7 @@
     "@cortex-os/telemetry": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.0.0",
-    "typescript": "^5.5.4"
+    "tsup": "8.5.0",
+    "typescript": "^5.9.2"
   }
 }

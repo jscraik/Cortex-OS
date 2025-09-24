@@ -14,7 +14,7 @@
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.2.4",

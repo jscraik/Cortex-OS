@@ -72,3 +72,117 @@ model Evidence {
   document   Document @relation(fields: [documentId], references: [id])
   chunk      Chunk    @relation(fields: [chunkId], references: [id])
 }
+
+model User {
+  id               String               @id @default(cuid())
+  email            String               @unique
+  emailVerified    Boolean              @default(false)
+  emailVerifiedAt  DateTime?
+  name             String
+  image            String?
+  password         String?
+  twoFactorEnabled Boolean              @default(false)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  sessions         Session[]            @relation("UserSessions")
+  accounts         Account[]            @relation("UserAccounts")
+  passkeys         PasskeyCredential[]  @relation("UserPasskeys")
+  twoFactorSecret  TwoFactorSecret?     @relation("UserTwoFactorSecret")
+  auditLogs        AuthAuditLog[]       @relation("UserAuditLogs")
+}
+
+model Session {
+  id         String        @id @default(cuid())
+  userId     String
+  token      String        @unique
+  ipAddress  String?
+  userAgent  String?
+  expiresAt  DateTime
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  user       User          @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+  auditLogs  AuthAuditLog[] @relation("SessionAuditLogs")
+
+  @@index([userId])
+}
+
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  provider           String
+  providerAccountId  String
+  type               String
+  accessToken        String?
+  refreshToken       String?
+  expiresAt          DateTime?
+  scope              String?
+  tokenType          String?
+  idToken            String?
+  sessionState       String?
+  oauthTokenSecret   String?
+  oauthToken         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  type       String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
+}
+
+model TwoFactorSecret {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  secret      String
+  backupCodes String
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation("UserTwoFactorSecret", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasskeyCredential {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String?
+  credentialId String   @unique
+  publicKey    String
+  counter      Int      @default(0)
+  deviceType   String
+  backedUp     Boolean  @default(false)
+  transports   String?
+  aaguid       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation("UserPasskeys", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuthAuditLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  sessionId     String?
+  action        String
+  message       String
+  correlationId String?
+  traceId       String?
+  ipAddress     String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  user          User?    @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+  session       Session? @relation("SessionAuditLogs", fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([sessionId])
+}

@@ -13,7 +13,7 @@ describe('store-from-env', () => {
 	});
 
 	it('prefers LocalMemory when LOCAL_MEMORY_BASE_URL is set', async () => {
-		process.env.LOCAL_MEMORY_BASE_URL = 'http://localhost:3010/api/v1';
+		process.env.LOCAL_MEMORY_BASE_URL = 'http://localhost:3028/api/v1';
 		const kind = resolveStoreKindFromEnv();
 		expect(kind).toBe('local');
 		const store = await createStoreFromEnv();
@@ -22,6 +22,18 @@ describe('store-from-env', () => {
 			'searchByText' in store &&
 				typeof (store as { searchByText: unknown }).searchByText === 'function',
 		).toBe(true);
+	});
+
+	it('honors MEMORIES_SHORT_STORE aliases before legacy adapters', () => {
+		process.env.MEMORIES_SHORT_STORE = 'local-mcp';
+		process.env.LOCAL_MEMORY_BASE_URL = 'http://localhost:3028/api/v1';
+		expect(resolveStoreKindFromEnv()).toBe('local');
+
+		process.env.MEMORIES_SHORT_STORE = 'external_sqlite';
+		expect(resolveStoreKindFromEnv()).toBe('external-sqlite');
+
+		process.env.MEMORIES_SHORT_STORE = 'memory';
+		expect(resolveStoreKindFromEnv()).toBe('memory');
 	});
 
 	it('falls back to memory adapter when explicitly requested', async () => {

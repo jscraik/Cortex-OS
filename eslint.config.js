@@ -1,7 +1,7 @@
 import js from '@eslint/js';
+import sonarjs from 'eslint-plugin-sonarjs';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import sonarjs from 'eslint-plugin-sonarjs';
 
 export default tseslint.config(
 	{
@@ -26,6 +26,7 @@ export default tseslint.config(
 		],
 	},
 	js.configs.recommended,
+	sonarjs.configs.recommended,
 	// Base TS rules
 	...tseslint.configs.recommended,
 	// Apply type-aware rules ONLY within a TS override so they don't execute on JS
@@ -47,11 +48,14 @@ export default tseslint.config(
 			'@typescript-eslint/no-explicit-any': 'warn',
 			'@typescript-eslint/no-unsafe-function-type': 'off',
 			'no-control-regex': 'off',
-			'@typescript-eslint/no-unused-vars': ['error', {
-				'argsIgnorePattern': '^_',
-				'varsIgnorePattern': '^_',
-				'ignoreRestSiblings': true
-			}],
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					ignoreRestSiblings: true,
+				},
+			],
 		},
 	},
 	// JS overrides - ensure type-aware rules that may leak are disabled
@@ -73,7 +77,12 @@ export default tseslint.config(
 	},
 	// Test files can use Node globals
 	{
-		files: ['tests/**/*.{js,ts}', '**/*.test.{js,ts}', '**/*.spec.{js,ts}', 'src/**/__tests__/**/*.ts'],
+		files: [
+			'tests/**/*.{js,ts}',
+			'**/*.test.{js,ts}',
+			'**/*.spec.{js,ts}',
+			'src/**/__tests__/**/*.ts',
+		],
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
@@ -93,7 +102,25 @@ export default tseslint.config(
 			'no-process-env': 'off',
 			'@typescript-eslint/prefer-nullish-coalescing': 'off',
 			'@typescript-eslint/no-non-null-assertion': 'off',
+			'sonarjs/code-eval': 'off',
+			'sonarjs/constructor-for-side-effects': 'off',
+			'sonarjs/cognitive-complexity': 'off',
+			'sonarjs/duplicates-in-character-class': 'off',
+			'sonarjs/hashing': 'off',
+			'sonarjs/no-clear-text-protocols': 'off',
+			'sonarjs/no-empty-test-file': 'off',
+			'sonarjs/no-hardcoded-passwords': 'off',
+			'sonarjs/no-ignored-exceptions': 'off',
+			'sonarjs/no-nested-functions': 'off',
+			'sonarjs/no-nested-template-literals': 'off',
+			'sonarjs/no-os-command-from-path': 'off',
+			'sonarjs/no-unused-collection': 'off',
+			'sonarjs/no-unused-vars': 'off',
+			'sonarjs/no-duplicate-string': 'off',
+			'sonarjs/os-command': 'off',
+			'sonarjs/pseudo-random': 'off',
+			'sonarjs/publicly-writable-directories': 'off',
+			'sonarjs/todo-tag': 'off',
 		},
 	},
-	sonarjs.configs.recommended,
 );

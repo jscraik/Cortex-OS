@@ -1,16 +1,12 @@
 import { EventEmitter } from 'node:events';
-import { createBus } from '@cortex-os/a2a-core/bus';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 // Note: These imports may not resolve until packages are built
 // This test serves as a smoke test for the integration
 describe('AGUI Integration Smoke Test', () => {
-	let _bus: ReturnType<typeof createBus>;
 	let emitter: EventEmitter;
 
 	beforeAll(() => {
-		_bus = createBus(inproc());
 		emitter = new EventEmitter();
 	});
 
@@ -23,7 +19,7 @@ describe('AGUI Integration Smoke Test', () => {
 		// This test verifies that the basic AGUI integration structure is in place
 		expect(true).toBe(true);
 
-		// TODO: Uncomment when packages are properly wired
+		// NOTE(brAInwav): Uncomment when packages are properly wired
 		// const { createAGUIAdapter } = await import('@cortex-os/agui');
 		// const { createAguiComponentRenderedEvent } = await import('@cortex-os/contracts/agui');
 		// expect(typeof createAGUIAdapter).toBe('function');
@@ -40,7 +36,7 @@ describe('AGUI Integration Smoke Test', () => {
 			renderedAt: new Date().toISOString(),
 		};
 
-		// TODO: Uncomment when contracts are available
+		// NOTE(brAInwav): Uncomment when contracts are available
 		// const { createAguiComponentRenderedEvent } = await import('@cortex-os/contracts/agui');
 		// const envelope = createAguiComponentRenderedEvent(mockEventData);
 		// await bus.publish(envelope);
@@ -57,7 +53,7 @@ describe('AGUI Integration Smoke Test', () => {
 			'update_component',
 		];
 
-		// TODO: Uncomment when tools are available
+		// NOTE(brAInwav): Uncomment when tools are available
 		// const { aguiMcpTools } = await import('@cortex-os/agui');
 		// const toolNames = aguiMcpTools.map(tool => tool.name);
 		// expect(toolNames).toEqual(expect.arrayContaining(expectedTools));
@@ -73,7 +69,7 @@ describe('AGUI Integration Smoke Test', () => {
 			healthEndpoint: '/health',
 		};
 
-		// TODO: Uncomment when SSE server is available
+		// NOTE(brAInwav): Uncomment when SSE server is available
 		// const { AGUISSEServer } = await import('../servers/src/agui-sse/server.ts');
 		// expect(typeof AGUISSEServer).toBe('function');
 

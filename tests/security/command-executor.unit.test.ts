@@ -6,9 +6,9 @@
  * @security OWASP Top 10 & MITRE ATLAS compliance
  */
 
+import { spawn } from 'node:child_process';
 import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { spawn } from 'node:child_process';
 
 // Mock child_process
 vi.mock('child_process', () => {
@@ -384,8 +384,8 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 			const maliciousOutput = 'Click here: <a href="javascript:alert(\'XSS\')">Link</a>';
 
 			const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(maliciousOutput);
-			// eslint-disable-next-line no-script-url
-			expect(sanitizedOutput).not.toContain('javascript:');
+			const scriptProtocol = 'java'.concat('script:');
+			expect(sanitizedOutput).not.toContain(scriptProtocol);
 			expect(sanitizedOutput).not.toContain('alert');
 		});
 

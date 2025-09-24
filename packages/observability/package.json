@@ -48,15 +48,15 @@
     "@opentelemetry/semantic-conventions": "^1.37.0",
     "pino": "^9.5.0",
     "ulid": "^2.3.0",
-    "zod": "^3.22.4",
+    "zod": "^3.25.76",
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.9.0",
+    "@types/node": "^22.18.1",
     "eslint": "^9.35.0",
-    "typescript": "^5.2.2",
-    "vitest": "^1.6.1"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   }
 }

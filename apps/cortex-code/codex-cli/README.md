@@ -1,4 +1,22 @@
 <h1 align="center">OpenAI Codex CLI</h1>
+
+## 🚨 CRITICAL: brAInwav Production Standards
+
+**ABSOLUTE PROHIBITION**: NEVER claim any implementation is "production-ready", "complete", "operational", or "fully implemented" if it contains:
+
+- `Math.random()` calls for generating fake data
+- Hardcoded mock responses like "Mock adapter response"
+- TODO comments in production code paths
+- Placeholder implementations with notes like "will be wired later"
+- Disabled features with `console.warn("not implemented")`
+- Fake system metrics or data generation
+
+**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
+
+**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
+
+---
+
 <p align="center">Lightweight coding agent that runs in your terminal</p>
 
 <p align="center"><code>npm i -g @openai/codex</code></p>
@@ -727,7 +745,7 @@ echo "use flake ../flake.nix#codex-rs" >> .envrc && direnv allow
 
 ## Security & responsible AI
 
-Have you discovered a vulnerability or have concerns about model output? Please e-mail **security@openai.com** and we will respond promptly.
+Have you discovered a vulnerability or have concerns about model output? Please e-mail **<security@openai.com>** and we will respond promptly.
 
 ---
 

@@ -3,6 +3,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL: brAInwav Production Standards
+
+**ABSOLUTE PROHIBITION**: NEVER claim any code is "production-ready", "complete", "operational", or "fully implemented" if it contains:
+- `Math.random()` calls for data generation
+- Hardcoded mock responses like "Mock adapter response"
+- TODO comments in production code paths
+- Placeholder implementations marked "will be wired later"
+- Disabled features with `console.warn("not implemented")`
+- Fake metrics or system data generation
+
+**brAInwav Truthfulness Requirement**: All status claims must be verified against actual code. Include "brAInwav" in all system outputs, error messages, and observability contexts.
+
+**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete standards.
+
 ## 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
 
 **MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
@@ -270,24 +284,25 @@ pnpm codex:doctor      # Rust-specific environment check
 
 ## Local Memory (Persistent Agent Context)
 
-Use Local Memory to persist agent context across runs. It is auto-selected when `LOCAL_MEMORY_BASE_URL` is set, or explicitly via `MEMORIES_ADAPTER=local` (alias: `MEMORY_STORE=local`).
+Use Local Memory to persist agent context across runs. Dual mode (MCP + REST API) is auto-selected when `LOCAL_MEMORY_BASE_URL` is set, or explicitly via `MEMORIES_ADAPTER=local` (alias: `MEMORY_STORE=local`).
 
 Environment variables:
-- `LOCAL_MEMORY_BASE_URL` (default: `http://localhost:3010/api/v1`)
+- `LOCAL_MEMORY_BASE_URL` (default: `http://localhost:3028/api/v1`)
 - `LOCAL_MEMORY_API_KEY` (optional)
 - `LOCAL_MEMORY_NAMESPACE` (optional namespace tag)
 - `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`
+- `LOCAL_MEMORY_MODE` = `dual` ensures REST API + MCP stay active together
 
 Quick health check (server):
 ```bash
-curl -sS http://localhost:3002/api/v1/health | jq .
+curl -sS http://localhost:3028/api/v1/health | jq .
 ```
 
 Quick code usage (Node):
 ```ts
 import { createStoreFromEnv } from '@cortex-os/memories';
 
-process.env.LOCAL_MEMORY_BASE_URL = process.env.LOCAL_MEMORY_BASE_URL || 'http://localhost:3010/api/v1';
+process.env.LOCAL_MEMORY_BASE_URL = process.env.LOCAL_MEMORY_BASE_URL || 'http://localhost:3028/api/v1';
 process.env.MEMORIES_ADAPTER = 'local'; // optional, auto-detected if BASE_URL is set
 
 const store = await createStoreFromEnv();
@@ -310,7 +325,7 @@ Notes:
 
 ## Development Patterns to Avoid
 
-### NEVER Continue These Anti-Patterns:
+### NEVER Continue These Anti-Patterns
 1. **Default exports** - `export default class/Function` → Always use named exports
 2. **Function length > 40 lines** → Immediately split into smaller functions
 3. **`.then()` chains** → Use `async/await` exclusively
@@ -319,7 +334,7 @@ Notes:
 6. **Direct sibling package imports** → Use events/contracts instead
 7. **Bypassing local memory** → Store all development insights persistently
 
-### Required Local Memory Usage Patterns:
+### Required Local Memory Usage Patterns
 ```typescript
 // Store architectural decisions
 await memory.store({
@@ -346,7 +361,7 @@ await memory.store({
 });
 ```
 
-### Mandatory Local Memory for Development Context:
+### Mandatory Local Memory for Development Context
 - **Store all architectural decisions** with clear reasoning
 - **Document lessons learned** from code reviews and refactoring
 - **Track development strategies** that prove effective

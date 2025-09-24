@@ -5,18 +5,28 @@ import { ENV, getEnvWithFallback } from './constants.js';
 
 export type StoreKind = 'local' | 'sqlite' | 'external-sqlite' | 'prisma' | 'memory';
 
+const normalizeStoreKind = (raw: string | undefined): StoreKind | null => {
+	if (!raw) return null;
+	const value = raw.toLowerCase();
+	if (value === 'local' || value === 'local-mcp' || value === 'local-memory') return 'local';
+	if (value === 'sqlite') return 'sqlite';
+	if (value === 'external-sqlite' || value === 'external_sqlite') return 'external-sqlite';
+	if (value === 'prisma') return 'prisma';
+	if (value === 'memory' || value === 'in-memory') return 'memory';
+	return null;
+};
+
 export function resolveStoreKindFromEnv(): StoreKind {
-	// Use centralized helper with fallback handling
-	const raw =
+	const shortStoreKind = normalizeStoreKind(process.env[ENV.SHORT_STORE]);
+	if (shortStoreKind) return shortStoreKind;
+
+	const adapterKind = normalizeStoreKind(
 		getEnvWithFallback(ENV.STORE_ADAPTER, [ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2], {
 			context: 'store adapter selection',
-		})?.toLowerCase() || '';
-
-	if (raw === 'local') return 'local';
-	if (raw === 'sqlite') return 'sqlite';
-	if (raw === 'external-sqlite') return 'external-sqlite';
-	if (raw === 'prisma') return 'prisma';
-	if (raw === 'memory') return 'memory';
+			deprecationWarning: true,
+		}),
+	);
+	if (adapterKind) return adapterKind;
 
 	// If Local Memory base URL is present, prefer it
 	if (process.env[ENV.LOCAL_MEMORY_BASE_URL]) return 'local';

@@ -1,3 +1,4 @@
+import { env } from 'node:process';
 import { createLogger } from '@cortex-os/mvp-core';
 import { z } from 'zod';
 
@@ -45,7 +46,7 @@ export async function requestModel(
 		return await requestMLX(prompt, options?.mlxUrl);
 	} catch (error) {
 		logger.error({ error }, 'MLX request failed');
-		if (process.env.ENABLE_OLLAMA !== 'true') {
+		if (env.ENABLE_OLLAMA !== 'true') {
 			throw error;
 		}
 		logger.warn('Falling back to Ollama');

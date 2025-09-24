@@ -24,8 +24,8 @@
     "@cortex-os/simlab": "workspace:*",
     "@cortex-os/utils": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
-    "inversify": "^6.0.1",
-    "zod": "^3.22.4"
+    "inversify": "6.0.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "eslint": "^9.35.0"

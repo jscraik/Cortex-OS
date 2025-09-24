@@ -6,7 +6,7 @@
  * Run with: node test-local-memory.mjs
  */
 
-const BASE_URL = 'http://localhost:3002/api/v1';
+const BASE_URL = 'http://localhost:3028/api/v1';
 
 async function testRestAPI() {
 	console.log('🧪 Testing Local Memory REST API...\n');
@@ -101,7 +101,7 @@ async function testRestAPI() {
 		console.log('\n🔧 Troubleshooting:');
 		console.log('   - Check if Local Memory daemon is running: local-memory status');
 		console.log('   - Restart if needed: local-memory start');
-		console.log('   - Verify port 3002 is accessible');
+		console.log(`   - Verify port ${new URL(BASE_URL).port} is accessible`);
 		return { success: false, error: error.message };
 	}
 }
@@ -110,17 +110,17 @@ async function testRestAPI() {
 function printCLIExamples() {
 	console.log('\n📋 CLI Usage Examples:\n');
 
-	console.log('curl -X POST http://localhost:3002/api/v1/memories \\');
+	console.log('curl -X POST http://localhost:3028/api/v1/memories \\');
 	console.log('  -H "Content-Type: application/json" \\');
 	console.log(
 		'  -d \'{"content":"TDD red phase: failing test written","tags":["tdd","red"],"importance":9}\'',
 	);
 	console.log('');
 
-	console.log('curl "http://localhost:3002/api/v1/memories/search?query=TDD%20patterns&limit=5"');
+	console.log('curl "http://localhost:3028/api/v1/memories/search?query=TDD%20patterns&limit=5"');
 	console.log('');
 
-	console.log('curl -X POST http://localhost:3002/api/v1/analyze \\');
+	console.log('curl -X POST http://localhost:3028/api/v1/analyze \\');
 	console.log('  -H "Content-Type: application/json" \\');
 	console.log(
 		'  -d \'{"query":"orchestration architecture decisions","analysis_type":"patterns"}\'',
@@ -132,8 +132,8 @@ function printIntegrationInfo() {
 	console.log('\n🔗 Integration Points for Cortex-OS:\n');
 
 	console.log('1. TypeScript/JavaScript: Import LocalMemoryOrchestrationAdapter');
-	console.log('2. Python: requests.post("http://localhost:3002/api/v1/memories", ...)');
-	console.log('3. Rust: reqwest::Client::post("http://localhost:3002/api/v1/memories")');
+	console.log('2. Python: requests.post("http://localhost:3028/api/v1/memories", ...)');
+	console.log('3. Rust: reqwest::Client::post("http://localhost:3028/api/v1/memories")');
 	console.log('4. Any HTTP client: 25 REST endpoints available');
 	console.log('5. MCP Protocol: All editors with MCP support');
 	console.log('');

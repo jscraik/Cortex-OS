@@ -108,7 +108,7 @@ async function main() {
 
 	if (!baseUrl) {
 		const msg =
-			'Missing `LOCAL_MEMORY_BASE_URL`. Configure the Local Memory REST endpoint (e.g., http://localhost:3002/api/v1).';
+			'Missing `LOCAL_MEMORY_BASE_URL`. Configure the Local Memory REST endpoint (e.g., http://localhost:3028/api/v1).';
 		if (isCI) return fail(msg);
 		return warn(msg);
 	}

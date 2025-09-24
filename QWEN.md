@@ -1,5 +1,22 @@
 # QWEN.md - Cortex-OS Context for Qwen Code
 
+# QWEN.md - brAInwav Cortex-OS Development Guide
+
+## 🚨 CRITICAL: brAInwav Production Standards
+
+**ABSOLUTE PROHIBITION**: NEVER claim any implementation is "production-ready", "complete", "operational", or "fully implemented" if it contains:
+
+- `Math.random()` calls for generating fake data
+- Hardcoded mock responses like "Mock adapter response - adapters not yet implemented"
+- TODO comments in production code paths
+- Placeholder implementations with notes like "will be wired later"
+- Disabled features with `console.warn("not implemented")`
+- Fake system metrics or thermal data
+
+**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
+
+**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
+
 ## Project Overview
 
 Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** that enables AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. This is a governed monorepo with strict architectural boundaries and comprehensive quality gates.
@@ -108,6 +125,7 @@ await toolkit.validateProject(['*.ts', '*.py', '*.rs']);
 ```
 
 Shell interface:
+
 - `just scout "pattern" path` - Multi-tool search
 - `just codemod 'find(:[x])' 'replace(:[x])' path` - Structural modifications
 - `just verify changed.txt` - Auto-validation
@@ -141,34 +159,40 @@ await memory.store({
 The monorepo contains numerous packages organized by function:
 
 ### AI & Automation
+
 - `@cortex-os/agents` - Core AI agent behaviors
 - `@cortex-os/rag` - Retrieval-Augmented Generation pipeline
 - `@cortex-os/orchestration` - Multi-agent workflows
 
 ### Communication & Integration
+
 - `@cortex-os/a2a` - Agent-to-agent communication
 - `@cortex-os/mcp` - Model Context Protocol integration
 - `@cortex-os/mcp-bridge` - MCP transport bridge
 
 ### Data & Memory
+
 - `@cortex-os/memories` - State management
 - `@cortex-os/registry` - Service registry and discovery
 
 ## Quality Gates
 
 ### Pre-Commit Hooks
+
 - Biome formatting and linting
 - Type checking
 - Test execution (affected only)
 - Structure validation
 
 ### CI Enforcement
+
 - 90%+ test coverage
 - Security scanning (Semgrep OWASP profiles)
 - Structure governance validation
 - License compliance checks
 
 ### Mutation Testing
+
 - Minimum mutation score threshold enforced
 - Generated badges for branch coverage and mutation score
 
@@ -200,6 +224,7 @@ The monorepo contains numerous packages organized by function:
 ## Memory Management
 
 The repository implements memory management mitigations:
+
 - Limited pnpm child concurrency
 - Serialized Nx tasks
 - Memory sampling scripts available
@@ -224,6 +249,7 @@ The repository implements memory management mitigations:
 ## Environment Variables
 
 Key environment variables for development:
+
 - `LOCAL_MEMORY_BASE_URL` - Local memory service URL
 - `CORTEX_SMART_FOCUS` - Focus specific projects in smart builds
 - `NX_BASE`, `NX_HEAD` - Git refs for affected detection

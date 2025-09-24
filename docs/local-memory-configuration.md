@@ -10,14 +10,14 @@ Both MCP and REST API modes are running simultaneously and verified working.
 - **Local Memory Version**: v1.0.9a
 - **License**: LM-D4***BA2 (activated and valid)
 - **Daemon Status**: Running (PID: 88234)
-- **REST API**: http://localhost:3002/api/v1/ (25 endpoints)
+- **REST API**: http://localhost:3028/api/v1/ (25 endpoints)
 - **MCP Server**: Available for all configured editors
 - **Qdrant**: Running on port 6333 (high-performance search)
 
 ### Port Configuration (Updated)
 ```bash
 # Local Memory (actual running configuration)
-LOCAL_MEMORY_PORT=3002     # REST API server
+LOCAL_MEMORY_PORT=3028     # REST API server
 QDRANT_PORT=6333           # Vector database
 ```
 
@@ -76,7 +76,7 @@ QDRANT_PORT=6333           # Vector database
 - **Use Case**: Interactive development and AI assistance
 
 ### 2. REST API Mode (HTTP/JSON)
-- **Base URL**: http://localhost:3002/api/v1/
+- **Base URL**: http://localhost:3028/api/v1/
 - **Endpoints**: 25 endpoints across 7 categories
 - **Use Case**: Programmatic access, custom integrations
 
@@ -116,7 +116,7 @@ await adapter.recordTDDProgress('1', 'test description', 'implementation', 'red'
 import requests
 
 response = requests.post(
-    'http://localhost:3002/api/v1/memories',
+  'http://localhost:3028/api/v1/memories',
     json={
         'content': 'TDD progress update',
         'tags': ['tdd', 'cortex-os'],
@@ -127,7 +127,7 @@ response = requests.post(
 
 ### cURL
 ```bash
-curl -X POST http://localhost:3002/api/v1/memories \
+curl -X POST http://localhost:3028/api/v1/memories \
   -H "Content-Type: application/json" \
   -d '{"content":"Memory content","tags":["tag1","tag2"],"importance":7}'
 ```
@@ -164,7 +164,7 @@ local-memory doctor
 local-memory ps
 
 # Check API health
-curl http://localhost:3002/api/v1/health
+curl http://localhost:3028/api/v1/health
 ```
 
 ### Restart if Needed

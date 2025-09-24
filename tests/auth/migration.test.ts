@@ -1,7 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DatabaseAdapter } from '../../apps/api/src/auth/database-adapter.js';
 
 // Mock environment variables
 process.env.BETTER_AUTH_SECRET = 'test-migration-secret';
@@ -35,6 +35,7 @@ interface LegacyUserData {
 	preferences?: Record<string, unknown>;
 	roles?: string[];
 	profile?: Record<string, unknown>;
+	emailVerified?: boolean;
 	legacy?: boolean;
 }
 
@@ -109,14 +110,44 @@ interface RollbackResult {
 	rolledBack: boolean;
 }
 
+const legacyUserStore = new Map<string, LegacyUserData>();
+const migratedUserStore = new Map<string, User>();
+const legacyOAuthAccountStore = new Map<string, OAuthAccount>();
+const migratedOAuthAccountStore = new Map<string, OAuthAccount>();
+
+const getLegacySecret = () => process.env.LEGACY_JWT_SECRET ?? 'legacy-secret';
+const getBetterAuthSecret = () => process.env.BETTER_AUTH_SECRET ?? 'better-auth-secret';
+
+const clearStores = () => {
+	legacyUserStore.clear();
+	migratedUserStore.clear();
+	legacyOAuthAccountStore.clear();
+	migratedOAuthAccountStore.clear();
+};
+
+const findLegacyUserByEmail = (email: string) => {
+	const normalizedEmail = email.trim();
+	return [...legacyUserStore.values()].find((user) => user.email === normalizedEmail);
+};
+
+const toMigratedUser = (legacy: LegacyUserData, passwordHash: string): User => ({
+	email: legacy.email,
+	hashVersion: 'v2',
+	name: legacy.name ?? null,
+	preferences: legacy.preferences ?? {},
+	emailVerified: legacy.emailVerified ?? false,
+	passwordHash,
+	roles: legacy.roles ?? [],
+	profile: legacy.profile ?? {},
+});
+
 describe('Authentication Migration Tests', () => {
 	beforeEach(() => {
-		// Initialize test database adapter
-		new DatabaseAdapter();
+		clearStores();
 	});
 
 	afterEach(() => {
-		// Clean up test data
+		clearStores();
 	});
 
 	describe('Legacy JWT Token Migration', () => {
@@ -129,7 +160,7 @@ describe('Authentication Migration Tests', () => {
 				exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
 			};
 
-			const legacyToken = jwt.sign(legacyPayload, process.env.LEGACY_JWT_SECRET!);
+			const legacyToken = jwt.sign(legacyPayload, getLegacySecret());
 
 			// Create new Better Auth token
 			const newPayload: JWTPayload = {
@@ -139,7 +170,7 @@ describe('Authentication Migration Tests', () => {
 				exp: Math.floor(Date.now() / 1000) + 3600,
 			};
 
-			const newToken = jwt.sign(newPayload, process.env.BETTER_AUTH_SECRET!, {
+			const newToken = jwt.sign(newPayload, getBetterAuthSecret(), {
 				algorithm: 'HS256',
 			});
 
@@ -164,7 +195,7 @@ describe('Authentication Migration Tests', () => {
 				exp: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
 			};
 
-			const expiredToken = jwt.sign(expiredPayload, process.env.LEGACY_JWT_SECRET!);
+			const expiredToken = jwt.sign(expiredPayload, getLegacySecret());
 
 			const result = await migrateLegacyToken(expiredToken);
 
@@ -249,6 +280,10 @@ describe('Authentication Migration Tests', () => {
 
 			// Migrate session
 			const migratedSession = await migrateSession(legacySession);
+			expect(migratedSession).not.toBeNull();
+			if (!migratedSession) {
+				throw new Error('Session migration should produce a session');
+			}
 
 			expect(migratedSession.id).toBeDefined();
 			expect(migratedSession.userId).toBe('session-migrate-user');
@@ -302,6 +337,10 @@ describe('Authentication Migration Tests', () => {
 
 			// Verify all data migrated correctly
 			const migratedUser = await getUserById('legacy-data-user');
+			expect(migratedUser).not.toBeNull();
+			if (!migratedUser) {
+				throw new Error('User migration should persist user');
+			}
 			expect(migratedUser.email).toBe(legacyUserData.email);
 			expect(migratedUser.name).toBe(legacyUserData.name);
 			expect(migratedUser.preferences).toEqual(legacyUserData.preferences);
@@ -326,6 +365,10 @@ describe('Authentication Migration Tests', () => {
 			expect(migrationResult.success).toBe(true);
 
 			const migratedUser = await getUserById('incomplete-user');
+			expect(migratedUser).not.toBeNull();
+			if (!migratedUser) {
+				throw new Error('Incomplete user should still migrate');
+			}
 			expect(migratedUser.name).toBeNull(); // Should be nullable
 			expect(migratedUser.preferences).toEqual({}); // Default empty object
 		});
@@ -384,9 +427,25 @@ describe('Authentication Migration Tests', () => {
 		it('should preserve data integrity during rollback', async () => {
 			// Create multiple related records
 			const userId = 'integrity-user';
-			await createLegacyUser({ id: userId, email: 'integrity@example.com', passwordHash: 'test-hash', hashVersion: 'v1' } as LegacyUserData);
-			await createLegacySession({ userId, token: 'session-token', createdAt: new Date(), expiresAt: new Date() } as LegacySession);
-			await createLegacyOAuthAccount({ id: 'oauth-test', userId, provider: 'github', providerAccountId: 'test-123', accessToken: 'test-token' } as OAuthAccount);
+			await createLegacyUser({
+				id: userId,
+				email: 'integrity@example.com',
+				passwordHash: 'test-hash',
+				hashVersion: 'v1',
+			} as LegacyUserData);
+			await createLegacySession({
+				userId,
+				token: 'session-token',
+				createdAt: new Date(),
+				expiresAt: new Date(),
+			} as LegacySession);
+			await createLegacyOAuthAccount({
+				id: 'oauth-test',
+				userId,
+				provider: 'github',
+				providerAccountId: 'test-123',
+				accessToken: 'test-token',
+			} as OAuthAccount);
 
 			// Fail migration halfway through
 			const result = await migrateUserWithRelatedData(userId, {
@@ -455,85 +514,106 @@ describe('Authentication Migration Tests', () => {
 });
 
 // Helper functions for migration tests
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function migrateLegacyToken(_token: string): Promise<TokenMigrationResult> {
-	// Implementation would validate legacy token and issue new one
-	return {
-		valid: true,
-		userId: 'user-123',
-		migrated: true,
-	};
+async function migrateLegacyToken(token: string): Promise<TokenMigrationResult> {
+	try {
+		const payload = jwt.verify(token, getLegacySecret()) as JWTPayload;
+		if (!payload.userId) {
+			return { valid: false, error: 'Invalid token format' };
+		}
+		const legacyUser = legacyUserStore.get(payload.userId);
+		if (legacyUser) {
+			migratedUserStore.set(payload.userId, toMigratedUser(legacyUser, legacyUser.passwordHash));
+		}
+		return { valid: true, userId: payload.userId, migrated: true };
+	} catch (error) {
+		if (error instanceof jwt.TokenExpiredError) {
+			return { valid: false, error: 'Token expired' };
+		}
+		if (error instanceof jwt.JsonWebTokenError) {
+			return { valid: false, error: 'Invalid token format' };
+		}
+		return {
+			valid: false,
+			error: error instanceof Error ? error.message : 'Migration failed',
+		};
+	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function validateNewToken(_token: string): Promise<TokenMigrationResult> {
-	// Implementation would validate new Better Auth token
-	return {
-		valid: true,
-		userId: 'user-123',
-	};
+async function validateNewToken(token: string): Promise<TokenMigrationResult> {
+	try {
+		const payload = jwt.verify(token, getBetterAuthSecret()) as JWTPayload;
+		return {
+			valid: true,
+			userId: payload.userId,
+		};
+	} catch (error) {
+		return {
+			valid: false,
+			error: error instanceof Error ? error.message : 'Invalid token',
+		};
+	}
 }
 
 async function createLegacyUser(data: LegacyUserData): Promise<LegacyUserData> {
-	// Mock creating user in legacy format
-	return { ...data, legacy: true };
+	const id = data.id ?? randomUUID();
+	const record: LegacyUserData = {
+		...data,
+		email: data.email.trim(),
+		id,
+		legacy: true,
+	};
+	legacyUserStore.set(id, record);
+	return record;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function loginWithMigration(_email: string, _password: string): Promise<LoginResult> {
-	// Mock login with migration
+async function loginWithMigration(email: string, password: string): Promise<LoginResult> {
+	const normalizedEmail = email.trim();
+	const legacyUser = findLegacyUserByEmail(normalizedEmail);
+	if (!legacyUser) {
+		return { success: false, error: 'User not found' };
+	}
+
+	let passwordMatches = false;
+	try {
+		passwordMatches = await bcrypt.compare(password, legacyUser.passwordHash);
+	} catch {
+		return { success: false, error: 'Migration failed' };
+	}
+
+	if (!passwordMatches) {
+		return { success: false, error: 'Migration failed' };
+	}
+
+	const alreadyMigrated = legacyUser.hashVersion === 'v2';
+	const newHash = alreadyMigrated ? legacyUser.passwordHash : await createNewHash(password);
+	const updatedLegacy: LegacyUserData = {
+		...legacyUser,
+		hashVersion: 'v2',
+		passwordHash: newHash,
+	};
+	legacyUserStore.set(updatedLegacy.id, updatedLegacy);
+	migratedUserStore.set(updatedLegacy.id, toMigratedUser(updatedLegacy, newHash));
+
 	return {
 		success: true,
-		migrated: true,
+		migrated: !alreadyMigrated,
 	};
 }
 
-async function getUserByEmail(_email: string): Promise<User> {
-	// Mock getting user by email
+async function getUserByEmail(email: string): Promise<User> {
+	const normalizedEmail = email.trim();
+	const migrated = [...migratedUserStore.values()].find((user) => user.email === normalizedEmail);
+	if (migrated) {
+		return migrated;
+	}
+	const legacy = findLegacyUserByEmail(normalizedEmail);
+	if (legacy) {
+		return toMigratedUser(legacy, legacy.passwordHash);
+	}
 	return {
-		email: _email,
+		email: normalizedEmail,
 		hashVersion: 'v2',
-		passwordHash: 'mock-hash',
-		roles: [],
-		profile: {},
-	};
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function createNewHash(_password: string): Promise<string> {
-	// Mock creating new hash format
-	return 'new-hash-format';
-}
-
-async function createLegacySession(data: LegacySession): Promise<LegacySession> {
-	// Mock creating legacy session
-	return data;
-}
-
-async function migrateSession(session: LegacySession): Promise<Session> {
-	// Mock session migration
-	return {
-		...session,
-		id: 'new-session-id',
-		token: 'new-session-token',
-	};
-}
-
-async function migrateUserData(userId: string): Promise<MigrationResult> {
-	// Mock user data migration
-	return {
-		success: true,
-		userId,
-	};
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getUserById(_userId: string): Promise<User | null> {
-	// Mock getting migrated user
-	return {
-		email: 'test@example.com',
-		hashVersion: 'v2',
-		passwordHash: 'mock-hash',
+		passwordHash: 'unknown',
 		roles: [],
 		profile: {},
 		name: null,
@@ -542,60 +622,142 @@ async function getUserById(_userId: string): Promise<User | null> {
 	};
 }
 
+async function createNewHash(password: string): Promise<string> {
+	return `new-hash-${Buffer.from(password).toString('base64url')}`;
+}
+
+async function createLegacySession(data: LegacySession): Promise<LegacySession> {
+	return { ...data };
+}
+
+async function migrateSession(session: LegacySession): Promise<Session | null> {
+	if (session.expiresAt.getTime() <= Date.now()) {
+		return null;
+	}
+	const migrated: Session = {
+		id: randomUUID(),
+		userId: session.userId,
+		token: `new-session-${randomUUID()}`,
+		expiresAt: new Date(session.expiresAt),
+	};
+	return migrated;
+}
+
+async function migrateUserData(userId: string): Promise<MigrationResult> {
+	const legacyUser = legacyUserStore.get(userId);
+	if (!legacyUser) {
+		return { success: false, userId };
+	}
+	migratedUserStore.set(userId, toMigratedUser(legacyUser, legacyUser.passwordHash));
+	return { success: true, userId };
+}
+
+async function getUserById(userId: string): Promise<User | null> {
+	return migratedUserStore.get(userId) ?? null;
+}
+
 async function createLegacyOAuthAccount(data: OAuthAccount): Promise<OAuthAccount> {
-	// Mock creating legacy OAuth account
-	return data;
+	const record: OAuthAccount = { ...data };
+	legacyOAuthAccountStore.set(record.id, record);
+	return record;
 }
 
 async function migrateOAuthAccount(accountId: string): Promise<MigrationResult> {
-	// Mock OAuth account migration
-	return {
-		success: true,
-		accountId,
+	const legacyAccount = legacyOAuthAccountStore.get(accountId);
+	if (!legacyAccount) {
+		return { success: false, accountId };
+	}
+	const migratedAccount: OAuthAccount = {
+		...legacyAccount,
+		accessToken: `encrypted:${legacyAccount.accessToken}`,
+		refreshToken: legacyAccount.refreshToken
+			? `encrypted:${legacyAccount.refreshToken}`
+			: undefined,
 	};
+	migratedOAuthAccountStore.set(accountId, migratedAccount);
+	return { success: true, accountId };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getOAuthAccountById(_accountId: string): Promise<OAuthAccount> {
-	// Mock getting OAuth account
-	return {
-		id: _accountId,
-		userId: 'test-user',
-		provider: 'github',
-		providerAccountId: 'github-123456',
-		accessToken: 'encrypted_token',
-	} as OAuthAccount;
+async function getOAuthAccountById(accountId: string): Promise<OAuthAccount> {
+	const migrated = migratedOAuthAccountStore.get(accountId);
+	if (migrated) {
+		return migrated;
+	}
+	const legacy = legacyOAuthAccountStore.get(accountId);
+	if (legacy) {
+		return legacy;
+	}
+	throw new Error(`OAuth account ${accountId} not found`);
 }
 
 async function getLegacyUserById(userId: string): Promise<LegacyUserData> {
-	// Mock getting legacy user
-	return {
-		id: userId,
-		email: 'legacy@example.com',
-	} as LegacyUserData;
+	return (
+		legacyUserStore.get(userId) ?? {
+			id: userId,
+			email: `${userId}@legacy.local`,
+			passwordHash: 'legacy-hash',
+			hashVersion: 'v1',
+		}
+	);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function migrateWithRollback(_userId: string, _options: MigrationOptions): Promise<RollbackResult> {
-	// Mock migration with rollback
-	return {
-		success: false,
-		rolledBack: true,
-	};
+async function migrateWithRollback(
+	userId: string,
+	options: MigrationOptions,
+): Promise<RollbackResult> {
+	if (options.shouldFail) {
+		migratedUserStore.delete(userId);
+		return { success: false, rolledBack: true };
+	}
+	const result = await migrateUserData(userId);
+	if (!result.success) {
+		return { success: false, rolledBack: true };
+	}
+	return { success: true, rolledBack: false };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function migrateUserWithRelatedData(_userId: string, _options: MigrationOptions): Promise<RollbackResult> {
-	// Mock migration with related data - same as migrateWithRollback
-	return migrateWithRollback(_userId, _options);
+async function migrateUserWithRelatedData(
+	userId: string,
+	options: MigrationOptions,
+): Promise<RollbackResult> {
+	const result = await migrateUserData(userId);
+	if (!result.success) {
+		return { success: false, rolledBack: true };
+	}
+	if (options.failAfter === 'sessions') {
+		migratedUserStore.delete(userId);
+		return { success: false, rolledBack: true };
+	}
+	return { success: true, rolledBack: false };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function batchMigrateUsers(userIds: string[], _options?: MigrationOptions): Promise<BatchMigrationResult> {
-	// Mock batch migration
+async function batchMigrateUsers(
+	userIds: string[],
+	options: MigrationOptions = {},
+): Promise<BatchMigrationResult> {
+	let migrated = 0;
+	let failed = 0;
+	const total = userIds.length;
+
+	for (let index = 0; index < userIds.length; index++) {
+		const userId = userIds[index];
+		const result = await migrateUserData(userId);
+		if (result.success) {
+			migrated++;
+		} else {
+			failed++;
+		}
+		const progress = total === 0 ? 100 : Math.round(((index + 1) / total) * 100);
+		options.onProgress?.({
+			progress,
+			processed: index + 1,
+			total,
+		});
+	}
+
 	return {
-		success: true,
-		migratedCount: userIds.length,
-		failedCount: 0,
+		success: failed === 0,
+		migratedCount: migrated,
+		failedCount: failed,
 	};
 }

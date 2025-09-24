@@ -4,7 +4,7 @@
  * This file demonstrates how to integrate Local Memory's REST API
  * with the Cortex-OS nO (Master Agent Loop) implementation.
  *
- * Base URL: http://localhost:3002/api/v1/
+ * Base URL: http://localhost:3028/api/v1/
  * Full API Documentation: 25 endpoints across 7 categories
  */
 
@@ -56,7 +56,7 @@ export type ApiResponse = z.infer<typeof ApiResponseSchema>;
 export class LocalMemoryClient {
 	private baseUrl: string;
 
-	constructor(baseUrl = 'http://localhost:3002/api/v1') {
+	constructor(baseUrl = 'http://localhost:3028/api/v1') {
 		this.baseUrl = baseUrl;
 	}
 

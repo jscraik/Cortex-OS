@@ -14,6 +14,7 @@
       "{projectRoot}/**/*",
       "!{projectRoot}/dist/**",
       "!{projectRoot}/coverage/**",
+      "!{projectRoot}/.nx/cache/**",
       "sharedGlobals"
     ],
     "production": [
@@ -32,7 +33,8 @@
     "build": {
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/dist"],
-      "cache": true
+      "cache": true,
+      "dependsOn": ["^build"]
     },
     "test": {
       "inputs": ["test", "^production"],
@@ -47,6 +49,10 @@
     "typecheck": {
       "inputs": ["typecheck", "^production"],
       "cache": true
+    },
+    "e2e": {
+      "inputs": ["default"],
+      "dependsOn": ["^build"]
     }
   },
   "tasksRunnerOptions": {
@@ -58,5 +64,7 @@
     }
   },
   "parallel": 1,
-  "cacheDirectory": ".nx/cache"
+  "cacheDirectory": ".nx/cache",
+  "useInferencePlugins": false,
+  "envFile": ".env"
 }

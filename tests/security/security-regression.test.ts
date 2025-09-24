@@ -67,10 +67,7 @@ interface MockDatabase {
 	close: ReturnType<typeof vi.fn>;
 }
 
-interface MockSession {
-	run: ReturnType<typeof vi.fn>;
-	close: ReturnType<typeof vi.fn>;
-}
+// Removed unused MockSession interface
 
 vi.mock('child_process', () => {
 	const mockChildProcess = {
@@ -96,21 +93,8 @@ describe('Security Regression Tests', () => {
 	let secureDb: SecureDatabaseWrapper;
 	let secureNeo4j: SecureNeo4j;
 	let mockDatabase: MockDatabase;
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let _mockSession: MockSession;
 
 	beforeEach(() => {
-		_mockSession = {
-			run: vi.fn().mockResolvedValue({
-				records: [
-					{
-						get: vi.fn().mockReturnValue([]),
-					},
-				],
-			}),
-			close: vi.fn(),
-		};
-
 		mockDatabase = {
 			prepare: vi.fn().mockReturnValue({
 				run: vi.fn().mockReturnValue({}),
@@ -331,7 +315,7 @@ describe('Security Regression Tests', () => {
 
 			unicodeEncodedInputs.forEach(async (encodedInput) => {
 				// Decode input before validation (real implementation would do this)
-				const decodedInput = encodedInput.replace(/\\u([\d\w]{4})/gi, (_match, grp) => {
+				const decodedInput = encodedInput.replace(/\\u([0-9a-f]{4})/gi, (_match, grp) => {
 					return String.fromCharCode(parseInt(grp, 16));
 				});
 
@@ -400,7 +384,7 @@ describe('Security Regression Tests', () => {
 					const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(decodedScript);
 					expect(sanitizedOutput).not.toContain('<script>');
 					expect(sanitizedOutput).not.toContain('alert');
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				} catch (_error) {
 					// If decoding fails, treat as regular string
 					const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(base64Script);

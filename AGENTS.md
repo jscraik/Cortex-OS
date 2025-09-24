@@ -1,30 +1,52 @@
 # AGENTS
 
+# Agent Instructions for brAInwav Cortex-OS
+
 These instructions apply to all developers and AI agents working in this repository.
+
+## 🚨 CRITICAL: brAInwav Production Standards
+
+**ABSOLUTE PROHIBITION**: NEVER claim any implementation is "production-ready", "complete", "operational", or "fully implemented" if it contains:
+
+- `Math.random()` calls for generating fake data
+- Hardcoded mock responses like "Mock adapter response - adapters not yet implemented"
+- TODO comments in production code paths
+- Placeholder implementations with notes like "will be wired to MarketplaceMcpService in next step"
+- Disabled features with `console.warn("not implemented")`
+- Fake system metrics or thermal data
+
+**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
+
+**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
 
 ## 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
 
 **MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
 
 ### Function Length Limits
+
 - **Maximum 40 lines per function** - Split immediately if readability suffers
 - **No exceptions** - This is strictly enforced in CI and will cause build failures
 
 ### Export Requirements
+
 - **Named exports only** - `export const functionName = ...`
 - **NEVER use default exports** - `export default` is forbidden
 - **Violations will cause build failures**
 
 ### Class Usage Restrictions
+
 - **Classes only when absolutely required** by framework (React ErrorBoundary, etc.)
 - **Prefer functional composition** and pure functions
 - **No classes without clear justification** in code review comments
 
 ### Async/Await Requirements
+
 - **Use async/await exclusively** - Never use `.then()` chains
 - **Promise chains are forbidden** and will be caught by linters
 
 ### Project References
+
 - **All packages must set `composite: true`** in tsconfig.json
 - **Required for Nx task graph optimization**
 - **Missing configuration will cause build failures**
@@ -70,21 +92,22 @@ pnpm docs:lint
 
 ## Persistent Agent Memory (Local Memory)
 
-Enable persistent context across runs using Local Memory.
+Enable persistent context across runs using Local Memory in dual mode (MCP + REST API).
 
 Setup:
 
-- Start the Local Memory daemon (default base URL `http://localhost:3002/api/v1`).
+- Start the Local Memory daemon (default base URL `http://localhost:3028/api/v1`).
 - Export envs:
-  - `LOCAL_MEMORY_BASE_URL` (e.g., `http://localhost:3010/api/v1`)
+  - `LOCAL_MEMORY_BASE_URL` (e.g., `http://localhost:3028/api/v1`)
   - `LOCAL_MEMORY_API_KEY` (if configured)
   - `LOCAL_MEMORY_NAMESPACE` (optional)
   - `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`
+  - `LOCAL_MEMORY_MODE=dual` to keep REST API + MCP active together
 
 Quick verify:
 
 ```bash
-curl -sS http://localhost:3002/api/v1/health | jq .
+curl -sS http://localhost:3028/api/v1/health | jq .
 ```
 
 Code path:
@@ -96,7 +119,8 @@ Privacy note: follow `.cortex/rules/RULES_OF_AI.md` — avoid storing secrets or
 
 ## Development Patterns to Avoid
 
-### NEVER Continue These Anti-Patterns:
+### NEVER Continue These Anti-Patterns
+
 1. **Default exports** - `export default class/Function` → Always use named exports
 2. **Function length > 40 lines** → Immediately split into smaller functions
 3. **`.then()` chains** → Use `async/await` exclusively
@@ -105,7 +129,8 @@ Privacy note: follow `.cortex/rules/RULES_OF_AI.md` — avoid storing secrets or
 6. **Direct sibling package imports** → Use events/contracts instead
 7. **Bypassing local memory** → Store all development insights persistently
 
-### Required Local Memory Usage Patterns:
+### Required Local Memory Usage Patterns
+
 ```typescript
 // Store architectural decisions
 await memory.store({
