@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handleRAG } from '../src/index';
+import { handleRAG } from '../src/index.js';
 
 describe('handleRAG', () => {
 	it('returns error for invalid input', async () => {

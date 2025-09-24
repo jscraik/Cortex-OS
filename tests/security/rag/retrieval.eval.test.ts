@@ -24,7 +24,7 @@ it('evaluates retrieval on golden set', async () => {
 	const S = memoryStore();
 	await ingestText('mem://doc1', 'Paris is the capital of France.', E, S);
 	await ingestText('mem://doc2', 'Berlin is the capital of Germany.', E, S);
-	const hits = await query({ q: 'capital of France', topK: 2 } as any, E, S);
+	const hits = await query({ q: 'capital of France', topK: 2 } as unknown, E, S);
 	const relevances = hits.map((h) => (h.text.toLowerCase().includes('paris') ? 1 : 0));
 	const ideal = [1, 0];
 	const recall = relevances.filter((r) => r > 0).length / 1;

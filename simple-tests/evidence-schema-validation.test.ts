@@ -26,7 +26,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Evidence Event Schema', () => {
 		it('should validate minimal evidence event', async () => {
-			const { validateEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { validateEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const event: EvidenceEvent = {
 				specversion: '1.0',
@@ -62,7 +62,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should validate complex evidence event with attachments', async () => {
-			const { validateEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { validateEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const event: EvidenceEvent = {
 				specversion: '1.0',
@@ -112,7 +112,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should reject evidence event with invalid CloudEvents structure', async () => {
-			const { validateEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { validateEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const invalidEvent = {
 				// Missing required CloudEvents fields
@@ -137,7 +137,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should reject evidence with invalid confidence score', async () => {
-			const { validateEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { validateEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const event: EvidenceEvent = {
 				specversion: '1.0',
@@ -166,7 +166,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Citation Validation', () => {
 		it('should validate documentation citation', async () => {
-			const { validateCitation } = await import('./evidence-schema-impl.js');
+			const { validateCitation } = await import('./evidence-schema-impl');
 
 			const citation: Citation = {
 				id: 'cite-doc-001',
@@ -182,7 +182,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should validate academic citation with additional fields', async () => {
-			const { validateCitation } = await import('./evidence-schema-impl.js');
+			const { validateCitation } = await import('./evidence-schema-impl');
 
 			const citation: Citation = {
 				id: 'cite-paper-001',
@@ -201,7 +201,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should reject citation with invalid URL', async () => {
-			const { validateCitation } = await import('./evidence-schema-impl.js');
+			const { validateCitation } = await import('./evidence-schema-impl');
 
 			const citation: Citation = {
 				id: 'cite-bad-url',
@@ -217,7 +217,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should require snippet for documentation citations', async () => {
-			const { validateCitation } = await import('./evidence-schema-impl.js');
+			const { validateCitation } = await import('./evidence-schema-impl');
 
 			const citation: Citation = {
 				id: 'cite-no-snippet',
@@ -235,7 +235,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Evidence Level Classification', () => {
 		it('should validate evidence levels', async () => {
-			const { validateEvidenceLevel } = await import('./evidence-schema-impl.js');
+			const { validateEvidenceLevel } = await import('./evidence-schema-impl');
 
 			expect(validateEvidenceLevel('high')).toBe(true);
 			expect(validateEvidenceLevel('medium')).toBe(true);
@@ -244,7 +244,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should reject invalid evidence levels', async () => {
-			const { validateEvidenceLevel } = await import('./evidence-schema-impl.js');
+			const { validateEvidenceLevel } = await import('./evidence-schema-impl');
 
 			expect(validateEvidenceLevel('critical')).toBe(false);
 			expect(validateEvidenceLevel('unknown')).toBe(false);
@@ -254,7 +254,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Evidence Attachment Validation', () => {
 		it('should validate code snippet attachment', async () => {
-			const { validateAttachment } = await import('./evidence-schema-impl.js');
+			const { validateAttachment } = await import('./evidence-schema-impl');
 
 			const attachment: EvidenceAttachment = {
 				id: 'att-code-001',
@@ -271,7 +271,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should validate image attachment', async () => {
-			const { validateAttachment } = await import('./evidence-schema-impl.js');
+			const { validateAttachment } = await import('./evidence-schema-impl');
 
 			const attachment: EvidenceAttachment = {
 				id: 'att-img-001',
@@ -289,7 +289,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should reject attachment with invalid checksum format', async () => {
-			const { validateAttachment } = await import('./evidence-schema-impl.js');
+			const { validateAttachment } = await import('./evidence-schema-impl');
 
 			const attachment: EvidenceAttachment = {
 				id: 'att-bad-checksum',
@@ -308,7 +308,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Evidence Event Creation', () => {
 		it('should create valid evidence event with auto-generated fields', async () => {
-			const { createEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { createEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const eventData = {
 				claim: 'Node.js uses V8 JavaScript engine',
@@ -337,7 +337,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should preserve custom traceparent in created events', async () => {
-			const { createEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { createEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const eventData = {
 				claim: 'Test claim with trace',
@@ -354,7 +354,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Citation Bundle Management', () => {
 		it('should create citation bundle with deduplication', async () => {
-			const { createCitationBundle } = await import('./evidence-schema-impl.js');
+			const { createCitationBundle } = await import('./evidence-schema-impl');
 
 			const citations: Citation[] = [
 				{
@@ -389,7 +389,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should sort citations by relevance and confidence', async () => {
-			const { createCitationBundle } = await import('./evidence-schema-impl.js');
+			const { createCitationBundle } = await import('./evidence-schema-impl');
 
 			const citations: Citation[] = [
 				{
@@ -429,7 +429,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Evidence Freshness Tracking', () => {
 		it('should calculate evidence freshness correctly', async () => {
-			const { calculateEvidenceFreshness } = await import('./evidence-schema-impl.js');
+			const { calculateEvidenceFreshness } = await import('./evidence-schema-impl');
 
 			// Evidence from 1 hour ago
 			const oneHourAgo = new Date('2025-01-15T11:00:00Z');
@@ -452,7 +452,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should handle evidence without timestamps', async () => {
-			const { calculateEvidenceFreshness } = await import('./evidence-schema-impl.js');
+			const { calculateEvidenceFreshness } = await import('./evidence-schema-impl');
 
 			const freshness = calculateEvidenceFreshness(undefined);
 			expect(freshness.score).toBe(0);
@@ -463,7 +463,7 @@ describe('Evidence Schema Validation TDD', () => {
 
 	describe('Integration with CloudEvents', () => {
 		it('should serialize evidence event to CloudEvents format', async () => {
-			const { serializeEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { serializeEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const event: EvidenceEvent = {
 				specversion: '1.0',
@@ -494,7 +494,7 @@ describe('Evidence Schema Validation TDD', () => {
 		});
 
 		it('should deserialize CloudEvents format to evidence event', async () => {
-			const { deserializeEvidenceEvent } = await import('./evidence-schema-impl.js');
+			const { deserializeEvidenceEvent } = await import('./evidence-schema-impl');
 
 			const cloudEvent = {
 				specversion: '1.0',

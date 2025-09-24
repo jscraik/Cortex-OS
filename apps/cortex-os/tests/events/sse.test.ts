@@ -2,8 +2,8 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { getStatePath } from '../../src/platform/xdg';
-import { startRuntime } from '../../src/runtime';
+import { getStatePath } from '../../src/platform/xdg.js';
+import { startRuntime } from '../../src/runtime.js';
 
 interface RuntimeHandle {
 	httpUrl: string;

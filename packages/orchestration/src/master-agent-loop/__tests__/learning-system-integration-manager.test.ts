@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	type LearningSystemConfig,
 	LearningSystemIntegrationManager,
-} from '../learning-system-integration-manager';
+} from '../learning-system-integration-manager.js';
 
 describe('LearningSystemIntegrationManager', () => {
 	let learningManager: LearningSystemIntegrationManager;

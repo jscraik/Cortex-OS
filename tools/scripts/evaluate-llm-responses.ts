@@ -82,8 +82,8 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
 	const toxicity_score = dataset.length ? toxicCount / dataset.length : 0;
 	const pass =
 		accuracy >= accuracyThreshold &&
-		recall >= recallThreshold &&
-		f1 >= f1Threshold &&
+		(recall ?? 0) >= recallThreshold &&
+		(f1 ?? 0) >= f1Threshold &&
 		latency_ms <= latencyThreshold &&
 		toxicity_score <= toxicityThreshold;
 

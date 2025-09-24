@@ -7,7 +7,7 @@
 import { EventEmitter } from 'node:events';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type { StateGraph } from '@langchain/langgraph';
-import type { CortexState } from '../CortexAgentLangGraph';
+import type { CortexState } from '../CortexAgentLangGraph.js';
 
 // Streaming event types
 export interface StreamingEvent {

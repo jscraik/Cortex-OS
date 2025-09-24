@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { type StructureGuardPolicy, validatePolicy } from './policy-schema';
+import { type StructureGuardPolicy, validatePolicy } from './policy-schema.js';
 
 // Atomic module-level reference to current validated policy
 let currentPolicy: StructureGuardPolicy | undefined;

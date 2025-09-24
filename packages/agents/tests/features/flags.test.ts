@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { FeatureFlags, type FlagConfig } from '../../src/features/flags';
+import { FeatureFlags, type FlagConfig } from '../../src/features/flags.js';
 
 describe('Feature Flags System', () => {
 	let featureFlags: FeatureFlags;

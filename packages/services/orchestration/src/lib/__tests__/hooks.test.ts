@@ -5,7 +5,7 @@ import {
 	type HookContext,
 	HookManager,
 	type WorkflowHookContext,
-} from '../hooks';
+} from '../hooks.js';
 
 describe('HookManager', () => {
 	let hookManager: HookManager;

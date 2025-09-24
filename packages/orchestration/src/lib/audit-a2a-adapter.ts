@@ -1,5 +1,5 @@
 import type { CloudEvent } from '../integrations/cloudevents.js';
-import { type auditEvent as auditEventType, setAuditPublisher } from './audit';
+import { type auditEvent as auditEventType, setAuditPublisher } from './audit.js';
 
 // Minimal event wrapper used by the A2A adapter
 export type Event<T = unknown> = { type: string; payload: T };

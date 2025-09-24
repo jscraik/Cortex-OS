@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { RAGPipeline } from '../src/rag-pipeline';
-import { memoryStore } from '../src/store/memory';
+import { RAGPipeline } from '../src/rag-pipeline.js';
+import { memoryStore } from '../src/store/memory.js';
 
 class StubEmbedder {
 	async embed(texts: string[]): Promise<number[][]> {

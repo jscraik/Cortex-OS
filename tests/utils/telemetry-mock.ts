@@ -20,6 +20,7 @@ export const withSpan = vi.fn(async (_name: string, fn: (span: unknown) => Promi
 });
 
 export const logWithSpan = vi.fn(
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	(_level: string, _message: string, _attributes: unknown, _span: unknown) => {
 		// Mock implementation that just stores the call
 	},

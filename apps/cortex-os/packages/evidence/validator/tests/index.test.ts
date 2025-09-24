@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type Evidence, validateEvidence } from '../src/index';
+import { type Evidence, validateEvidence } from '../src/index.js';
 
 describe('Evidence Validator', () => {
 	it('should validate valid evidence', async () => {

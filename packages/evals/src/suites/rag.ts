@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { type GoldenDataset, GoldenDatasetSchema, type SuiteOutcome } from '../types';
+import { type GoldenDataset, GoldenDatasetSchema, type SuiteOutcome } from '../types.js';
 
 export interface Embedder {
 	embed(texts: string[]): Promise<number[][]>;

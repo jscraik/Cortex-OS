@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { SqliteSchemaRepository } from '../src/database';
-import type { Schema } from '../src/schemas';
+import { SqliteSchemaRepository } from '../src/database.js';
+import type { Schema } from '../src/schemas.js';
 
 describe('SqliteSchemaRepository', () => {
 	let repository: SqliteSchemaRepository;

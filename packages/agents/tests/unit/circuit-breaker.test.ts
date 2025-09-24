@@ -16,7 +16,7 @@ describe('Circuit Breaker', () => {
 
 	beforeEach(() => {
 		vi.useFakeTimers();
-		consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
+		consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 		breaker = new CircuitBreaker({
 			failureThreshold: 3,
 			successThreshold: 2,
@@ -124,7 +124,8 @@ describe('Circuit Breaker', () => {
 			breaker.forceState(CircuitBreakerState.HALF_OPEN);
 
 			expect(breaker.getState()).toBe(CircuitBreakerState.HALF_OPEN);
-		}); it('should close circuit after success threshold in half-open state', async () => {
+		});
+		it('should close circuit after success threshold in half-open state', async () => {
 			// Open the circuit
 			const failFn = vi.fn().mockRejectedValue(new Error('Service down'));
 			for (let i = 0; i < 3; i++) {

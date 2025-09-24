@@ -4,9 +4,9 @@
  */
 
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { MLXAdapter } from '../src/adapters/mlx-adapter';
-import { OllamaAdapter } from '../src/adapters/ollama-adapter';
-import { ModelRouter } from '../src/model-router';
+import { MLXAdapter } from '../src/adapters/mlx-adapter.js';
+import { OllamaAdapter } from '../src/adapters/ollama-adapter.js';
+import { ModelRouter } from '../src/model-router.js';
 
 // Mock the adapters
 vi.mock('../src/adapters/mlx-adapter');

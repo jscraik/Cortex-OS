@@ -1,6 +1,6 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createMasterAgentGraph, type SubAgentConfig } from '../../../src/MasterAgent';
+import { createMasterAgentGraph, type SubAgentConfig } from '../../../src/MasterAgent.js';
 
 describe('LangGraph Integration Tests - Advanced Agent Coordination', () => {
 	let masterAgent: ReturnType<typeof createMasterAgentGraph>;

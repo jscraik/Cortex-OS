@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { authUtils } from '../auth';
-import { authMonitoringService } from '../services/authMonitoringService';
+import { authMonitoringService } from '../services/authMonitoringService.js';
 
 export class AuthMonitoringController {
 	async getMetrics(req: Request, res: Response) {

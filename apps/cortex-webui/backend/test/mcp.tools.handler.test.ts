@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import request from 'supertest';
-import { __setMcpRateLimitForTests } from '../src/mcp/tools';
-import { createServer } from '../src/server';
+import { __setMcpRateLimitForTests } from '../src/mcp/tools.js';
+import { createServer } from '../src/server.js';
 
 // Basic tests for MCP tool execution endpoint
 // These are smoke tests; more exhaustive contract tests live under contracts/tests

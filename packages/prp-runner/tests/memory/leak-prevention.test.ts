@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { QwenEmbedding } from '../../src/lib/embedding/qwen-embedding';
-import { MLXAdapter } from '../../src/mlx-adapter';
+import { QwenEmbedding } from '../../src/lib/embedding/qwen-embedding.js';
+import { MLXAdapter } from '../../src/mlx-adapter.js';
 
 // Simple sleep helper
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

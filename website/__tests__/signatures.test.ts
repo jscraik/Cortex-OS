@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasSlugCollision, sanitizeMdxContent } from '../sync-docs';
+import { hasSlugCollision, sanitizeMdxContent } from '../sync-docs.js';
 
 describe('sanitizeMdxContent signature normalization', () => {
 	it('wraps only Promise generic portion when pre-wrapped (current behavior)', () => {

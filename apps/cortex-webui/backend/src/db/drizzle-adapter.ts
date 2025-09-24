@@ -2,7 +2,7 @@
 // This provides a compatible interface for drizzle operations
 
 import { eq } from 'drizzle-orm';
-import { memoryAdapter } from './memory-adapter';
+import { memoryAdapter } from './memory-adapter.js';
 
 export interface DrizzleMemoryAdapter {
 	select: () => DrizzleSelectBuilder;

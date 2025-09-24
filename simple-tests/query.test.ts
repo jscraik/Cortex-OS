@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { query } from '../src/lib/query';
+import { query } from '../src/lib/query.js';
 
 describe('query validation', () => {
 	it('parses valid input with default topK', () => {

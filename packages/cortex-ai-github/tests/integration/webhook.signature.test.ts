@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 const request = require('supertest');
 
 import crypto from 'node:crypto';
-import { CortexWebhookServer } from '../../src/server/webhook-server';
+import { CortexWebhookServer } from '../../src/server/webhook-server.js';
 
 describe('AI /webhook signature', () => {
 	const fakeApp = {

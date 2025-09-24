@@ -1,5 +1,20 @@
 import { expect, test } from '@playwright/test';
 
+// Test constants
+const TEST_EMAIL = 'e2etest@example.com';
+const TEST_PASSWORD = 'SecurePass123!';
+const TEST_NAME = 'E2E Test User';
+const REGISTER_URL = '/auth/register';
+// const LOGIN_URL = '/auth/login';
+// const DASHBOARD_URL = '/dashboard';
+// const VERIFY_URL = '/auth/verify-email';
+const EMAIL_SELECTOR = '[data-testid="email"]';
+const PASSWORD_SELECTOR = '[data-testid="password"]';
+const NAME_SELECTOR = '[data-testid="name"]';
+const REGISTER_BUTTON_SELECTOR = '[data-testid="register-button"]';
+const LOGIN_BUTTON_SELECTOR = '[data-testid="login-button"]';
+const VERIFICATION_MESSAGE_SELECTOR = '[data-testid="verification-message"]';
+
 test.describe('Authentication Flows', () => {
 	test.beforeEach(async ({ page }) => {
 		// Clear cookies and local storage before each test
@@ -10,17 +25,17 @@ test.describe('Authentication Flows', () => {
 	test.describe('User Registration and Login', () => {
 		test('complete registration to dashboard flow', async ({ page }) => {
 			// Navigate to registration page
-			await page.goto('/auth/register');
+			await page.goto(REGISTER_URL);
 
 			// Fill registration form
-			await page.fill('[data-testid="email"]', 'e2etest@example.com');
-			await page.fill('[data-testid="password"]', 'SecurePass123!');
-			await page.fill('[data-testid="name"]', 'E2E Test User');
-			await page.click('[data-testid="register-button"]');
+			await page.fill(EMAIL_SELECTOR, TEST_EMAIL);
+			await page.fill(PASSWORD_SELECTOR, TEST_PASSWORD);
+			await page.fill(NAME_SELECTOR, TEST_NAME);
+			await page.click(REGISTER_BUTTON_SELECTOR);
 
 			// Should redirect to verification page
 			await expect(page).toHaveURL(/\/auth\/verify-email/);
-			await expect(page.locator('[data-testid="verification-message"]')).toBeVisible();
+			await expect(page.locator(VERIFICATION_MESSAGE_SELECTOR)).toBeVisible();
 
 			// Mock email verification for test environment
 			await page.evaluate(() => {
@@ -31,9 +46,9 @@ test.describe('Authentication Flows', () => {
 			await expect(page).toHaveURL(/\/auth\/login/);
 
 			// Login with new credentials
-			await page.fill('[data-testid="email"]', 'e2etest@example.com');
-			await page.fill('[data-testid="password"]', 'SecurePass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.fill(EMAIL_SELECTOR, TEST_EMAIL);
+			await page.fill(PASSWORD_SELECTOR, TEST_PASSWORD);
+			await page.click(LOGIN_BUTTON_SELECTOR);
 
 			// Should redirect to dashboard
 			await expect(page).toHaveURL(/\/dashboard/);
@@ -46,7 +61,7 @@ test.describe('Authentication Flows', () => {
 
 			await page.fill('[data-testid="email"]', 'invalid@example.com');
 			await page.fill('[data-testid="password"]', 'wrongpassword');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 
 			await expect(page.locator('[data-testid="error-message"]')).toBeVisible();
 			await expect(page.locator('[data-testid="error-message"]')).toHaveText(
@@ -55,13 +70,13 @@ test.describe('Authentication Flows', () => {
 		});
 
 		test('password validation during registration', async ({ page }) => {
-			await page.goto('/auth/register');
+			await page.goto(REGISTER_URL);
 
 			// Try with weak password
 			await page.fill('[data-testid="email"]', 'weak@example.com');
 			await page.fill('[data-testid="password"]', 'weak');
 			await page.fill('[data-testid="name"]', 'Weak User');
-			await page.click('[data-testid="register-button"]');
+			await page.click(REGISTER_BUTTON_SELECTOR);
 
 			await expect(page.locator('[data-testid="password-error"]')).toBeVisible();
 			await expect(page.locator('[data-testid="password-error"]')).toHaveText(
@@ -70,13 +85,13 @@ test.describe('Authentication Flows', () => {
 		});
 
 		test('email validation during registration', async ({ page }) => {
-			await page.goto('/auth/register');
+			await page.goto(REGISTER_URL);
 
 			// Try with invalid email
 			await page.fill('[data-testid="email"]', 'invalid-email');
-			await page.fill('[data-testid="password"]', 'SecurePass123!');
+			await page.fill(PASSWORD_SELECTOR, TEST_PASSWORD);
 			await page.fill('[data-testid="name"]', 'Invalid Email User');
-			await page.click('[data-testid="register-button"]');
+			await page.click(REGISTER_BUTTON_SELECTOR);
 
 			await expect(page.locator('[data-testid="email-error"]')).toBeVisible();
 			await expect(page.locator('[data-testid="email-error"]')).toHaveText(/Invalid email format/i);
@@ -149,11 +164,11 @@ test.describe('Authentication Flows', () => {
 	test.describe('Password Reset Flow', () => {
 		test.beforeEach(async ({ page }) => {
 			// Create a user first
-			await page.goto('/auth/register');
+			await page.goto(REGISTER_URL);
 			await page.fill('[data-testid="email"]', 'reset@example.com');
 			await page.fill('[data-testid="password"]', 'ResetPass123!');
 			await page.fill('[data-testid="name"]', 'Reset User');
-			await page.click('[data-testid="register-button"]');
+			await page.click(REGISTER_BUTTON_SELECTOR);
 
 			// Mock email verification
 			await page.evaluate(() => {
@@ -204,7 +219,7 @@ test.describe('Authentication Flows', () => {
 			await page.goto('/auth/login');
 			await page.fill('[data-testid="email"]', 'session@example.com');
 			await page.fill('[data-testid="password"]', 'SessionPass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 			await expect(page).toHaveURL(/\/dashboard/);
 		});
 
@@ -249,7 +264,7 @@ test.describe('Authentication Flows', () => {
 			await page.goto('/auth/login');
 			await page.fill('[data-testid="email"]', '2fa@example.com');
 			await page.fill('[data-testid="password"]', 'TwoFactorPass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 		});
 
 		test('setup 2FA with TOTP', async ({ page }) => {
@@ -301,7 +316,7 @@ test.describe('Authentication Flows', () => {
 			await page.goto('/auth/login');
 			await page.fill('[data-testid="email"]', 'profile@example.com');
 			await page.fill('[data-testid="password"]', 'ProfilePass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 		});
 
 		test('update profile information', async ({ page }) => {
@@ -345,7 +360,7 @@ test.describe('Authentication Flows', () => {
 				await page.goto('/auth/login');
 				await page.fill('[data-testid="email"]', 'ratelimit@example.com');
 				await page.fill('[data-testid="password"]', 'wrongpassword');
-				await page.click('[data-testid="login-button"]');
+				await page.click(LOGIN_BUTTON_SELECTOR);
 			}
 
 			// Should show rate limiting message
@@ -366,7 +381,7 @@ test.describe('Authentication Flows', () => {
 			await page.goto('/auth/login');
 			await page.fill('[data-testid="email"]', 'cookies@example.com');
 			await page.fill('[data-testid="password"]', 'CookiePass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 
 			// Check cookie attributes
 			const cookies = await page.context.cookies();
@@ -385,7 +400,7 @@ test.describe('Authentication Flows', () => {
 			await page.goto('/auth/login');
 			await page.fill('[data-testid="email"]', 'refresh@example.com');
 			await page.fill('[data-testid="password"]', 'RefreshPass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 			await expect(page).toHaveURL(/\/dashboard/);
 
 			// Refresh page
@@ -443,7 +458,7 @@ test.describe('Authentication Flows', () => {
 		});
 
 		test('screen reader support for auth forms', async ({ page }) => {
-			await page.goto('/auth/register');
+			await page.goto(REGISTER_URL);
 
 			// Check for proper ARIA labels
 			await expect(page.locator('[data-testid="email"]')).toHaveAttribute('aria-label', /email/i);
@@ -457,7 +472,7 @@ test.describe('Authentication Flows', () => {
 			);
 
 			// Check error announcements
-			await page.click('[data-testid="register-button"]');
+			await page.click(REGISTER_BUTTON_SELECTOR);
 			const errors = await page.locator('[role="alert"]').all();
 			expect(errors.length).toBeGreaterThan(0);
 		});
@@ -482,7 +497,7 @@ test.describe('Authentication Flows', () => {
 			// Can complete login flow
 			await page.fill('[data-testid="email"]', 'mobile@example.com');
 			await page.fill('[data-testid="password"]', 'MobilePass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 
 			await expect(page).toHaveURL(/\/dashboard/);
 		});
@@ -522,7 +537,7 @@ test.describe('Authentication Flows', () => {
 			await page.goto('/auth/login');
 			await page.fill('[data-testid="email"]', 'perf@example.com');
 			await page.fill('[data-testid="password"]', 'PerfPass123!');
-			await page.click('[data-testid="login-button"]');
+			await page.click(LOGIN_BUTTON_SELECTOR);
 
 			const endTime = Date.now();
 			expect(endTime - startTime).toBeLessThan(3000); // 3 second SLA

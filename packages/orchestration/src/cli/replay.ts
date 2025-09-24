@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { loadCheckpointHistory } from '../lib/checkpoints';
+import { loadCheckpointHistory } from '../lib/checkpoints.js';
 
 async function main() {
 	const runId = process.argv[2];

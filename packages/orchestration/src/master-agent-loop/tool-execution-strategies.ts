@@ -12,7 +12,7 @@ import type {
 	ExecutionContext,
 	ToolDefinition,
 	ToolExecutionResult,
-} from './tool-orchestration-contracts';
+} from './tool-orchestration-contracts.js';
 
 // Types for strategy execution
 export type StrategyExecutor = (

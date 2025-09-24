@@ -7,7 +7,7 @@ import {
 	Semaphore,
 	withAbortableTimeout,
 	withTimeout,
-} from '../src/lib/backpressure';
+} from '../src/lib/backpressure.js';
 
 describe('Semaphore', () => {
 	it('should allow operations up to the permit limit', async () => {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { mlxModelsSchema } from '../../schemas/mlx-models.schema';
+import { mlxModelsSchema } from '../../schemas/mlx-models.schema.js';
 
 describe('mlx-models.json', () => {
 	it('matches schema', () => {

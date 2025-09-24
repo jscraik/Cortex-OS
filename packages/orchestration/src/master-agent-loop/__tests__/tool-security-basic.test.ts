@@ -8,7 +8,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ToolSecurityLayer } from '../tool-security-layer';
+import { ToolSecurityLayer } from '../tool-security-layer.js';
 
 describe('ToolSecurityLayer Basic', () => {
 	let security: ToolSecurityLayer;

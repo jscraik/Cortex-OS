@@ -1,7 +1,7 @@
 import { promises as fs, type Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import type { Root } from '@modelcontextprotocol/sdk/types.js';
+import type { Root } from '@modelcontextprotocol/sdk/types';
 import { normalizePath } from './path-utils.js';
 
 /**

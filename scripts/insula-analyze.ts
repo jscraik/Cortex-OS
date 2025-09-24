@@ -14,7 +14,6 @@ import {
 } from '../packages/cortex-structure-github/src/core/structure-validator.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 type Options = {
 	root: string;

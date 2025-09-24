@@ -1,7 +1,7 @@
 // Model controller for Cortex WebUI backend
 
 import type { Request, Response } from 'express';
-import { getAllModels, getModelById as getModelByIdService } from '../services/modelService';
+import { getAllModels, getModelById as getModelByIdService } from '../services/modelService.js';
 
 export function getModels(_req: Request, res: Response): void {
 	try {

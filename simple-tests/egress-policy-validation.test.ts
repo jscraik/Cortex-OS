@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEgressPolicyValidator, type EgressPolicy } from './egress-policy-validator-impl';
+import { createEgressPolicyValidator, type EgressPolicy } from './egress-policy-validator-impl.js';
 
 describe('Egress Policy Validation', () => {
 	describe('Schema validation', () => {

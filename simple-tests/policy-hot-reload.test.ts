@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Explicit .ts extension to ensure Vitest loads the TypeScript implementation (avoids legacy .mjs)
 import { PolicyHotReloader } from './policy-hot-reloader-impl.ts';
-import { waitFor } from './test-utils';
+import { waitFor } from './test-utils.js';
 
 /**
  * Policy Hot-Reload Test Suite

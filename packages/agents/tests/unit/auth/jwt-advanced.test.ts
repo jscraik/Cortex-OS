@@ -5,7 +5,7 @@ import {
 	refreshAccessToken,
 	signJWT,
 	verifyJWT,
-} from '../../../src/auth/jwt';
+} from '../../../src/auth/jwt.js';
 
 describe('JWT Token Management - Advanced Tests', () => {
 	const TEST_SECRET = 'brAInwav-test-secret-key-2025';

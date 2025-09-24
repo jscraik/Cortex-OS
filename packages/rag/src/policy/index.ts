@@ -1,2 +1,2 @@
-export * from './load';
-export * from './mime';
+export * from './load.js';
+export * from './mime.js';

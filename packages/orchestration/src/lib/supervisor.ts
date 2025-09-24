@@ -1,8 +1,8 @@
 import { enforce, loadGrant } from '@cortex-os/policy';
 import { withSpan } from '../observability/otel.js';
 import { auditEvent, record } from './audit.js';
-import { type Checkpoint, loadLatestCheckpoint, saveCheckpoint } from './checkpoints';
-import { requiresApproval, waitForApproval } from './hitl';
+import { type Checkpoint, loadLatestCheckpoint, saveCheckpoint } from './checkpoints.js';
+import { requiresApproval, waitForApproval } from './hitl.js';
 
 export type Node = 'plan' | 'gather' | 'critic' | 'synthesize' | 'verify' | 'done';
 

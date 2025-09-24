@@ -1,12 +1,12 @@
 import express, { type Express } from 'express';
-import type { ASBRAIMcpServer } from '../../asbr-ai-mcp-server';
-import { applyMetrics } from '../../monitoring/metrics';
-import { applyLogging } from '../../observability/logging';
-import { createAdminRouter } from './admin-router';
-import { errorHandler } from './error-handler';
-import { applyServerHardening } from './hardening';
-import { createHealthRouter } from './health-router';
-import { createToolsRouter } from './tools-router';
+import type { ASBRAIMcpServer } from '../../asbr-ai-mcp-server.js';
+import { applyMetrics } from '../../monitoring/metrics.js';
+import { applyLogging } from '../../observability/logging.js';
+import { createAdminRouter } from './admin-router.js';
+import { errorHandler } from './error-handler.js';
+import { applyServerHardening } from './hardening.js';
+import { createHealthRouter } from './health-router.js';
+import { createToolsRouter } from './tools-router.js';
 
 export interface CreateAppOptions {
 	jsonLimit?: string;

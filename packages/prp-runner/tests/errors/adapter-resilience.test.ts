@@ -11,9 +11,9 @@ vi.mock('ollama', () => ({
 	},
 }));
 
-import { LLMBridge } from '../../src/llm-bridge';
-import * as MlxAdapterModule from '../../src/mlx-adapter';
-import { metrics } from '../../src/monitoring/metrics';
+import { LLMBridge } from '../../src/llm-bridge.js';
+import * as MlxAdapterModule from '../../src/mlx-adapter.js';
+import { metrics } from '../../src/monitoring/metrics.js';
 
 describe('Adapter resilience', () => {
 	beforeEach(() => {

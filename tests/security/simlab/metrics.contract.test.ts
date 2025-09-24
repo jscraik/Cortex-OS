@@ -12,7 +12,7 @@ it('summarize returns contract fields', async () => {
 		seed: { value: 7 },
 		agent: { id: 'a', kind: 'rule' },
 		env: { id: 'e', kind: 'local-counter' },
-	} as any;
+	} as unknown;
 	const run = await runScenario(scenario, counterEnv({ start: 0, target: 2 }), greedyToTarget());
 	const summary = summarize(run);
 	expect(summary).toStrictEqual({

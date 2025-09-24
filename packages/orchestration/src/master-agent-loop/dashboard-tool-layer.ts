@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { ToolLayer } from './tool-layer';
+import { ToolLayer } from './tool-layer.js';
 
 // Local types to eliminate `any` usage and satisfy lint rules
 type Step = { id: string; name?: string; dependencies?: string[] };

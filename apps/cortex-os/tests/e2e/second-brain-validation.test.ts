@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { type RuntimeHandle, startRuntime } from '../../src/runtime';
+import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
 
 describe('brAInwav Second Brain End-to-End Validation', () => {
 	let runtime: RuntimeHandle;

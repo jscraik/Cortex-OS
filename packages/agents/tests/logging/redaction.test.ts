@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Logger } from '../../src/logging/logger';
-import { createRedactionStream } from '../../src/logging/redaction';
-import type { RedactionConfig } from '../../src/logging/types';
-import { createMemoryWritableStream } from '../utils/test-stream';
+import { Logger } from '../../src/logging/logger.js';
+import { createRedactionStream } from '../../src/logging/redaction.js';
+import type { RedactionConfig } from '../../src/logging/types.js';
+import { createMemoryWritableStream } from '../utils/test-stream.js';
 
 describe('Log Redaction', () => {
 	let capturedOutput: string[];

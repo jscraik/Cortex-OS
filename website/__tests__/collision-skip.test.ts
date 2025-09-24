@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shouldSkipBaseFile } from '../sync-docs';
+import { shouldSkipBaseFile } from '../sync-docs.js';
 
 describe('shouldSkipBaseFile', () => {
 	it('skips base file when index.md exists in target', () => {

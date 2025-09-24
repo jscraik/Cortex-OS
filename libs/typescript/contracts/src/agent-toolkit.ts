@@ -10,8 +10,8 @@ export const AgentToolkitBaseResultSchema = z.object({
 
 // Search tools schemas
 export const AgentToolkitSearchInputSchema = z.object({
-	pattern: z.string(),
-	path: z.string(),
+	pattern: z.string().min(1, 'pattern must be non-empty'),
+	path: z.string().min(1, 'path must be non-empty'),
 });
 
 export const AgentToolkitSearchMatchSchema = z.object({
@@ -52,7 +52,7 @@ export const AgentToolkitCodemodResultSchema = AgentToolkitBaseResultSchema.exte
 
 // Validation schemas
 export const AgentToolkitValidationInputSchema = z.object({
-	files: z.array(z.string()),
+	files: z.array(z.string().min(1, 'file path must be non-empty')).min(1, 'at least one file is required'),
 });
 
 export const AgentToolkitValidationIssueSchema = z.object({

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ProcessingDispatcher, type ProcessingFile } from '../src/chunkers/dispatch';
-import { ProcessingStrategy } from '../src/policy/mime';
+import { ProcessingDispatcher, type ProcessingFile } from '../src/chunkers/dispatch.js';
+import { ProcessingStrategy } from '../src/policy/mime.js';
 
 describe('UnstructuredChunker', () => {
 	it('produces deterministic chunks', async () => {

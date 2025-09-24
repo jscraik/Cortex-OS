@@ -3,7 +3,7 @@
 import { asc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { db, messages } from '../db';
-import type { NewMessage } from '../db/schema';
+import type { NewMessage } from '../db/schema.js';
 
 export const getMessagesByConversationId = async (conversationId: string) => {
 	const records = await db

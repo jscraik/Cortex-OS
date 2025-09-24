@@ -8,7 +8,7 @@
  * Co-authored-by: brAInwav Development Team
  */
 
-import { createCerebrumAgent } from '../src/CerebrumAgent.js';
+import { createCerebrumAgent } from '../src/CerebrumAgent';
 import { createAgentToolkitBusIntegration } from '../src/integrations/AgentToolkitBusIntegration.js';
 import { createToolLayerAgent } from '../src/subagents/ToolLayerAgent.js';
 

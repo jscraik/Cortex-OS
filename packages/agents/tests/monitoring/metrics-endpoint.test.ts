@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MetricsCollector } from '../../src/monitoring/metrics';
-import { metricsRoutes } from '../../src/server/routes/metrics.routes';
+import { MetricsCollector } from '../../src/monitoring/metrics.js';
+import { metricsRoutes } from '../../src/server/routes/metrics.routes.js';
 
 // Mock the requirePermission middleware to bypass auth for unit testing
 vi.mock('../../src/auth/permissions', () => ({

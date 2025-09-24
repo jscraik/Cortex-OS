@@ -6,7 +6,7 @@ import {
 	loadPolicyFromDisk,
 	requirePolicy,
 	setCurrentPolicy,
-} from './policy-state';
+} from './policy-state.js';
 
 const POLICY_PATH = path.resolve(__dirname, 'policy.json');
 

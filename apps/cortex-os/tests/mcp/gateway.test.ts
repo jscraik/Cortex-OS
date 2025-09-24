@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cortexOsMcpTools } from '../../src/mcp/tools';
-import { createTestMcpContainer } from './util/factory';
+import { cortexOsMcpTools } from '../../src/mcp/tools.js';
+import { createTestMcpContainer } from './util/factory.js';
 
 describe('MCP Gateway', () => {
 	const { mcp: gw } = createTestMcpContainer({ allowMutations: false });

@@ -8,7 +8,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DashboardToolLayer } from '../dashboard-tool-layer';
+import { DashboardToolLayer } from '../dashboard-tool-layer.js';
 
 describe('DashboardToolLayer', () => {
 	let dashboardLayer: DashboardToolLayer;

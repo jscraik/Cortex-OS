@@ -8,7 +8,7 @@
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import type { Transport } from '@cortex-os/a2a-core/transport';
-import { stdio } from '@cortex-os/a2a-transport/stdio.js';
+import { stdio } from '@cortex-os/a2a-transport/stdio';
 import { createLogger } from '@cortex-os/observability';
 
 const logger = createLogger('cortex-py-bridge');

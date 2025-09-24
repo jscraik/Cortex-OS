@@ -1,4 +1,4 @@
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse';
 import express from 'express';
 import { createServer } from './everything.js';
 

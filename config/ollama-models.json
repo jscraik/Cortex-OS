@@ -176,6 +176,34 @@
     "general_purpose": "gemma3n",
     "enterprise": "granite-embed"
   },
+  "cloud_models": {
+    "qwen3-coder-cloud": {
+      "name": "qwen3-coder:480b-cloud",
+      "model_tag": "qwen3-coder:480b-cloud",
+      "context_length": 262144,
+      "memory_gb": 0,
+      "priority": 1,
+      "status": "available",
+      "size_bytes": 0,
+      "type": "cloud",
+      "recommended_for": [
+        "massive_context",
+        "repository_scale_analysis",
+        "enterprise_architecture",
+        "complex_system_design",
+        "agentic_coding_tasks"
+      ],
+      "coding_tasks": [
+        "large_codebase_analysis",
+        "enterprise_architecture",
+        "complex_system_design",
+        "repository_refactoring",
+        "cross_project_analysis"
+      ],
+      "ollama_model": "qwen3-coder:480b-cloud",
+      "requires_signin": true
+    }
+  },
   "task_routing": {
     "quick_fix": "phi4-mini-reasoning",
     "code_generation": "deepseek-coder",
@@ -192,7 +220,27 @@
     "code_review": "deepseek-coder",
     "enterprise_patterns": "qwen3-coder",
     "enterprise_embedding": "granite-embed",
+    "massive_context": "qwen3-coder-cloud",
+    "repository_analysis": "qwen3-coder-cloud",
+    "enterprise_architecture": "qwen3-coder-cloud",
     "default": "deepseek-coder"
+  },
+  "hybrid_routing": {
+    "mlx_conjunction": {
+      "embedding_primary": "mlx:qwen3-4b",
+      "embedding_verification": "nomic-embed",
+      "rerank_primary": "mlx:qwen3-reranker",
+      "chat_lightweight": "mlx:gemma-3-270m",
+      "chat_balanced": "mlx:glm-4.5",
+      "chat_enterprise": "qwen3-coder-cloud",
+      "vision_tasks": "mlx:qwen2.5-vl"
+    },
+    "decision_matrix": {
+      "privacy_required": "mlx_only",
+      "context_large": "cloud_primary_mlx_fallback",
+      "performance_critical": "mlx_primary_cloud_verification",
+      "enterprise_scale": "cloud_primary_mlx_support"
+    }
   },
   "service_configuration": {
     "ollama_endpoint": "http://localhost:11434",

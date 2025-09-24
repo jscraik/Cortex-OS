@@ -5,7 +5,7 @@ import {
 	cloneEnvelope,
 	createA2AEventEnvelope,
 	updateProcessingState,
-} from './envelope';
+} from './envelope.js';
 
 const baseErrorEvent = {
 	event_id: randomUUID(),

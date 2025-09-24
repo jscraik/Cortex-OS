@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Qwen3Reranker } from '../src/pipeline/qwen3-reranker';
+import { Qwen3Reranker } from '../src/pipeline/qwen3-reranker.js';
 
 describe('Qwen3Reranker.createBatches (helper)', () => {
 	it('splits documents into batches of given size', () => {

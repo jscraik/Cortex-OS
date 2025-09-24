@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createQuotaStore, InMemoryQuotaStore } from '../src/quota/QuotaStore';
+import { createQuotaStore, InMemoryQuotaStore } from '../src/quota/QuotaStore.js';
 
 describe('QuotaStore (InMemory)', () => {
 	it('increments global until limit then returns limit', async () => {

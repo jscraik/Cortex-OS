@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
-import { rerankHandler } from '../src/handlers';
-import type { ModelRouter } from '../src/model-router';
+import { rerankHandler } from '../src/handlers.js';
+import type { ModelRouter } from '../src/model-router.js';
 
 describe('rerankHandler', () => {
 	test('returns ranked items', async () => {

@@ -88,6 +88,7 @@ export * from './orchestration-no/intelligence-scheduler.js';
 export * from './rag-events.js';
 export * from './sandbox-audit-events.js';
 export * from './security-events.js';
+export * from './tooling/events.js';
 export * from './webui-tools.js';
 
 // Note: Additional package event contracts are available directly from package imports

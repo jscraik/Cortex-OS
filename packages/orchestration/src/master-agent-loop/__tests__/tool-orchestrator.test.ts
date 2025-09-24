@@ -8,11 +8,11 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DashboardToolLayer } from '../dashboard-tool-layer';
-import { ExecutionToolLayer } from '../execution-tool-layer';
-import { PrimitiveToolLayer } from '../primitive-tool-layer';
-import { ToolOrchestrationError } from '../tool-orchestration-error';
-import { ToolOrchestrator } from '../tool-orchestrator';
+import { DashboardToolLayer } from '../dashboard-tool-layer.js';
+import { ExecutionToolLayer } from '../execution-tool-layer.js';
+import { PrimitiveToolLayer } from '../primitive-tool-layer.js';
+import { ToolOrchestrationError } from '../tool-orchestration-error.js';
+import { ToolOrchestrator } from '../tool-orchestrator.js';
 
 /**
  * Create mock tool layers for testing

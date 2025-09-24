@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { McpConnection } from '../src/McpConnection';
+import { McpConnection } from '../src/McpConnection.js';
 import { ToolRegistry } from '../src/ToolRegistry.js';
 
 // Minimal MockWebSocket implementing the interface declared in src/types/ws.d.ts

@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ensureReferenceStubs } from '../sync-docs';
+import { ensureReferenceStubs } from '../sync-docs.js';
 
 const refsDir = join(__dirname, '..', 'docs', 'references');
 

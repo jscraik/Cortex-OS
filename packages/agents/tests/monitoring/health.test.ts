@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HealthMonitor } from '../../src/monitoring/health';
-import { MetricsCollector } from '../../src/monitoring/metrics';
+import { HealthMonitor } from '../../src/monitoring/health.js';
+import { MetricsCollector } from '../../src/monitoring/metrics.js';
 
 // Mock dependencies
 vi.mock('../../src/lib/secret-store', () => ({

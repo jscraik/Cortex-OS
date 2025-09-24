@@ -7,7 +7,7 @@ export interface Schema {
 	schema: Record<string, unknown>;
 }
 
-import { createSchemaCache, type SchemaCache } from './cache/schemaCache';
+import { createSchemaCache, type SchemaCache } from './cache/schemaCache.js';
 
 export interface SchemaRegistryClientOptions {
 	baseUrl: string; // e.g. http://localhost:3000

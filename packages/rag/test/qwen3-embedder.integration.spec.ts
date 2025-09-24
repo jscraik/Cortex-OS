@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Qwen3Embedder } from '../src/embed/qwen3';
+import { Qwen3Embedder } from '../src/embed/qwen3.js';
 
 const RUN_INTEGRATION = process.env.RUN_RAG_INTEGRATION === '1';
 const d = RUN_INTEGRATION ? describe : describe.skip;

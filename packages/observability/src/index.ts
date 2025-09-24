@@ -62,7 +62,7 @@ export * from './tracing/index.js';
 export * from './types.js';
 export * from './ulids.js';
 // Back-compat/alias names expected by tests
-export type TraceQueryInput = import('./mcp/tools.js').QueryTracesInput;
-export type MetricRetrievalInput = import('./mcp/tools.js').GetMetricsInput;
-export type AlertQueryInput = import('./mcp/tools.js').EvaluateAlertInput;
-export type DashboardRequestInput = import('./mcp/tools.js').GenerateDashboardInput;
+export type TraceQueryInput = import('./mcp/tools').QueryTracesInput;
+export type MetricRetrievalInput = import('./mcp/tools').GetMetricsInput;
+export type AlertQueryInput = import('./mcp/tools').EvaluateAlertInput;
+export type DashboardRequestInput = import('./mcp/tools').GenerateDashboardInput;

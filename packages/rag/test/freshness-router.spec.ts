@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { routeByFreshness } from '../src/retrieval/freshness-router';
+import { routeByFreshness } from '../src/retrieval/freshness-router.js';
 
 describe('routeByFreshness', () => {
 	it('keeps higher score first when difference > epsilon', () => {

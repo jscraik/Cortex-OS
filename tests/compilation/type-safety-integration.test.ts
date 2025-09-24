@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Envelope as EnvelopeType } from '../../packages/a2a/a2a-contracts/src/envelope';
-import { createEnvelope } from '../../packages/a2a/a2a-contracts/src/envelope';
-import { createBus } from '../../packages/a2a/a2a-core/src/bus';
-import type { Transport } from '../../packages/a2a/a2a-core/src/transport';
+import type { Envelope as EnvelopeType } from '../../packages/a2a/a2a-contracts/src/envelope.js';
+import { createEnvelope } from '../../packages/a2a/a2a-contracts/src/envelope.js';
+import { createBus } from '../../packages/a2a/a2a-core/src/bus.js';
+import type { Transport } from '../../packages/a2a/a2a-core/src/transport.js';
 
 function makeMockTransport() {
 	const publish = vi.fn(async () => {});

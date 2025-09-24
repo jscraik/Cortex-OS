@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { createTestServer, type TestServer } from './testServer';
+import { createTestServer, type TestServer } from './testServer.js';
 
 // Contract schema for /health endpoint response
 const healthResponseSchema = z.object({

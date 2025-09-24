@@ -1,5 +1,5 @@
 import { WritableStream } from 'node:stream/web';
-import type { RedactionConfig, RedactionPattern } from './types';
+import type { RedactionConfig, RedactionPattern } from './types.js';
 
 /**
  * Apply redaction patterns to a value

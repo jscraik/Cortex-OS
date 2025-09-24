@@ -259,7 +259,7 @@ export class MarketplaceMcpIntegration {
 	private async handleGetServer(params: unknown): Promise<MarketplaceToolResponse> {
 		try {
 			// Validate input against the same schema used in the tool contract
-			const { validateInput, GetServerInputSchema } = await import('./tools.js');
+			const { validateInput, GetServerInputSchema } = await import('./tools');
 
 			try {
 				validateInput(GetServerInputSchema, params);

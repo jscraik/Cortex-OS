@@ -6,7 +6,7 @@ import {
 	normalizeWhitespace,
 	unwrapSuperFence,
 	upgradeDoubleBacktickFences,
-} from '../src/sanitize-mdx';
+} from '../src/sanitize-mdx.js';
 
 describe('sanitize-mdx helpers', () => {
 	it('unwrapSuperFence: removes whole-doc ````markdown wrapper around valid doc', () => {

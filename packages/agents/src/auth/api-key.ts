@@ -1,4 +1,4 @@
-import type { APIKey } from './types';
+import type { APIKey } from './types.js';
 
 // In-memory store for API keys (in production, use database)
 const apiKeys: Map<string, APIKey> = new Map();

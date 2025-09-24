@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	createFeatureFlagsAdminRouter,
 	InMemoryStorageAdapter,
-} from '../../src/features/admin-api';
-import { FeatureFlags } from '../../src/features/flags';
+} from '../../src/features/admin-api.js';
+import { FeatureFlags } from '../../src/features/flags.js';
 
 describe('Feature Flags Admin API', () => {
 	let featureFlags: FeatureFlags;

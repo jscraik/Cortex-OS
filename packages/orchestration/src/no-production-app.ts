@@ -6,10 +6,10 @@
  */
 
 import express from 'express';
-import { ConfigurationManager } from './operations/configuration-manager';
-import { GracefulShutdownManager, StandardShutdownHandlers } from './operations/graceful-shutdown';
-import { HealthChecker, StandardHealthChecks } from './operations/health-checker';
-import { createOperationalEndpoints } from './operations/operational-endpoints';
+import { ConfigurationManager } from './operations/configuration-manager.js';
+import { GracefulShutdownManager, StandardShutdownHandlers } from './operations/graceful-shutdown.js';
+import { HealthChecker, StandardHealthChecks } from './operations/health-checker.js';
+import { createOperationalEndpoints } from './operations/operational-endpoints.js';
 
 /**
  * nO Master Agent Loop Production Application

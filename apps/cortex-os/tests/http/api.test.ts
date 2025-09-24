@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { createRuntimeHttpServer } from '../../src/http/runtime-server';
-import { ArtifactRepository } from '../../src/persistence/artifact-repository';
-import { EvidenceRepository } from '../../src/persistence/evidence-repository';
-import { ProfileRepository } from '../../src/persistence/profile-repository';
-import { TaskRepository } from '../../src/persistence/task-repository';
-import { initializeAuth } from '../../src/security/auth';
+import { createRuntimeHttpServer } from '../../src/http/runtime-server.js';
+import { ArtifactRepository } from '../../src/persistence/artifact-repository.js';
+import { EvidenceRepository } from '../../src/persistence/evidence-repository.js';
+import { ProfileRepository } from '../../src/persistence/profile-repository.js';
+import { TaskRepository } from '../../src/persistence/task-repository.js';
+import { initializeAuth } from '../../src/security/auth.js';
 
 interface ApiServerContext {
 	server: ReturnType<typeof createRuntimeHttpServer>;

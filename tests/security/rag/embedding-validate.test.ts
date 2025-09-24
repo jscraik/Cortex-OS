@@ -13,7 +13,7 @@ describe('Embedding validation', () => {
 	});
 	it('rejects non-finite', () => {
 		const vec = Array.from({ length: dim }, () => 0);
-		vec[10] = Number.NaN as any;
-		expect(() => validateEmbedding(vec as any)).toThrow(/embedding_non_finite/);
+		vec[10] = Number.NaN as unknown;
+		expect(() => validateEmbedding(vec as unknown)).toThrow(/embedding_non_finite/);
 	});
 });

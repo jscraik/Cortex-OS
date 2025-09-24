@@ -40,7 +40,7 @@ interface ResourceViolation {
 }
 
 // Import the implementation (placeholder for now)
-import { AgentResourceManagerImpl } from './agent-resource-manager-impl';
+import { AgentResourceManagerImpl } from './agent-resource-manager-impl.js';
 
 describe('Agent Resource Constraints', () => {
 	let resourceManager: AgentResourceManager;

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { MLXAdapter } from '../packages/model-gateway/src/adapters/mlx-adapter';
-import type { OllamaAdapter } from '../packages/model-gateway/src/adapters/ollama-adapter';
-import { ModelRouter } from '../packages/model-gateway/src/model-router';
+import type { MLXAdapter } from '../packages/model-gateway/src/adapters/mlx-adapter.js';
+import type { OllamaAdapter } from '../packages/model-gateway/src/adapters/ollama-adapter.js';
+import { ModelRouter } from '../packages/model-gateway/src/model-router.js';
 
 import {
 	MockMLXAdapter,
 	MockOllamaAdapter,
 	UnavailableMLXAdapter,
-} from './test-utils/mock-adapters';
+} from './test-utils/mock-adapters.js';
 
 // Use the typed mocks imported from test-utils
 

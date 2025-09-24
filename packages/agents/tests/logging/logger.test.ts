@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Logger } from '../../src/logging/logger';
-import type { LoggerConfig } from '../../src/logging/types';
-import { createMemoryWritableStream } from '../utils/test-stream';
+import { Logger } from '../../src/logging/logger.js';
+import type { LoggerConfig } from '../../src/logging/types.js';
+import { createMemoryWritableStream } from '../utils/test-stream.js';
 
 describe('Structured Logger', () => {
 	let logger: Logger;

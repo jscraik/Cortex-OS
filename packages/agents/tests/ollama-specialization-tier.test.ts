@@ -22,8 +22,8 @@ vi.mock('@cortex-os/model-gateway/dist/adapters/ollama-adapter.js', () => {
 	return { OllamaAdapter };
 });
 
-import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter.js';
-import { createMasterAgentGraph } from '../src/MasterAgent';
+import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter';
+import { createMasterAgentGraph } from '../src/MasterAgent.js';
 
 const OLD_ENV = { ...process.env };
 

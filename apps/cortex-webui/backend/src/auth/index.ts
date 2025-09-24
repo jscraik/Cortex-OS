@@ -1,9 +1,9 @@
 import { betterAuth } from 'better-auth';
 import { bearer, magicLink, organization, twoFactor } from 'better-auth/plugins';
-import { createBetterAuthAdapter } from '../db/better-auth-adapter';
-import { env } from '../lib/env';
-import { authMonitoringService } from '../services/authMonitoringService';
-import { emailService } from '../services/emailService';
+import { createBetterAuthAdapter } from '../db/better-auth-adapter.js';
+import { env } from '../lib/env.js';
+import { authMonitoringService } from '../services/authMonitoringService.js';
+import { emailService } from '../services/emailService.js';
 
 // Better Auth configuration
 export const auth = betterAuth({

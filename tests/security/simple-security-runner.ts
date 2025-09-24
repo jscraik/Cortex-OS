@@ -46,16 +46,83 @@ function logHeader(message: string) {
 	console.log(`${colors.bright}${colors.fg.cyan}${message}${colors.reset}`);
 }
 
+/**
+ * Helper function to check if files exist
+ */
+function checkFilesExist(files: string[], required: boolean = true): boolean {
+	let allExist = true;
+	for (const file of files) {
+		try {
+			execSync(`test -f ${file}`, { stdio: 'ignore' });
+			logSuccess(`✅ Found ${file}`);
+		} catch {
+			if (required) {
+				logError(`❌ Missing ${file}`);
+				allExist = false;
+			} else {
+				logWarning(`⚠️  Missing ${file} (optional)`);
+			}
+		}
+	}
+	return allExist;
+}
+
+/**
+ * Helper function to verify package.json scripts
+ */
+function verifyPackageScripts() {
+	try {
+		const packageJson = JSON.parse(execSync('cat ../../package.json', { encoding: 'utf-8' }));
+
+		const requiredScripts = [
+			'test:security:unit',
+			'test:security:integration',
+			'test:security:regression',
+		];
+
+		for (const script of requiredScripts) {
+			if (packageJson.scripts?.[script]) {
+				logSuccess(`✅ Found script: ${script}`);
+			} else {
+				logWarning(`⚠️  Missing script: ${script} (will be added)`);
+			}
+		}
+	} catch (error) {
+		logError(`❌ Failed to parse package.json: ${error.message}`);
+		throw error;
+	}
+}
+
+/**
+ * Create a simple security test file
+ */
+function createSimpleTest(): string {
+	const simpleTestContent = `
+import { test, expect } from 'vitest';
+
+test('simple security validation test', () => {
+  // Simple test to verify the testing framework works
+  const maliciousInput = "123'; DROP TABLE users; --";
+  const isValid = !maliciousInput.includes("';") && !maliciousInput.includes('--');
+  expect(isValid).toBe(false);
+});
+    `;
+
+	const testFileName = 'simple-security.test.ts';
+	writeFileSync(testFileName, simpleTestContent);
+	logSuccess(`✅ Created ${testFileName}`);
+	return testFileName;
+}
+
 // Simple test runner
 async function runSecurityTests() {
 	logHeader('🚀 Running Security Tests Verification');
 
-	try {
-		// Create a temporary test directory
-		const testDir = join(process.cwd(), 'temp-security-tests');
-		mkdirSync(testDir, { recursive: true });
+	const testDir = join(process.cwd(), 'temp-security-tests');
 
-		// Change to test directory
+	try {
+		// Setup test directory
+		mkdirSync(testDir, { recursive: true });
 		process.chdir(testDir);
 
 		// Test 1: Verify security test files exist
@@ -68,104 +135,36 @@ async function runSecurityTests() {
 			'../security-regression.test.ts',
 		];
 
-		let allFilesExist = true;
-		for (const file of testFiles) {
-			try {
-				execSync(`test -f ${file}`, { stdio: 'ignore' });
-				logSuccess(`✅ Found ${file}`);
-			} catch (_error) {
-				logError(`❌ Missing ${file}`);
-				allFilesExist = false;
-			}
-		}
-
-		if (!allFilesExist) {
+		if (!checkFilesExist(testFiles, true)) {
 			throw new Error('Some security test files are missing');
 		}
 
 		// Test 2: Verify security scripts exist
 		logInfo('Test 2: Verifying security scripts exist');
 		const scriptFiles = ['../../scripts/run-security-tests.mjs'];
+		checkFilesExist(scriptFiles, true);
 
-		for (const file of scriptFiles) {
-			try {
-				execSync(`test -f ${file}`, { stdio: 'ignore' });
-				logSuccess(`✅ Found ${file}`);
-			} catch (_error) {
-				logError(`❌ Missing ${file}`);
-				throw new Error(`Missing security script: ${file}`);
-			}
-		}
-
-		// Test 3: Verify package.json has security test scripts
+		// Test 3: Verify package.json scripts
 		logInfo('Test 3: Verifying package.json has security test scripts');
-		try {
-			const packageJson = JSON.parse(execSync('cat ../../package.json', { encoding: 'utf-8' }));
+		verifyPackageScripts();
 
-			const requiredScripts = [
-				'test:security:unit',
-				'test:security:integration',
-				'test:security:regression',
-			];
-
-			for (const script of requiredScripts) {
-				if (packageJson.scripts?.[script]) {
-					logSuccess(`✅ Found script: ${script}`);
-				} else {
-					logWarning(`⚠️  Missing script: ${script} (will be added)`);
-					// In a real implementation, we would add the missing script
-				}
-			}
-		} catch (error) {
-			logError(`❌ Failed to parse package.json: ${error.message}`);
-			throw error;
-		}
-
-		// Test 4: Verify CI/CD pipeline exists
+		// Test 4: Verify CI/CD pipeline
 		logInfo('Test 4: Verifying CI/CD pipeline exists');
-		try {
-			execSync('test -f ../../.github/workflows/security-testing.yml', {
-				stdio: 'ignore',
-			});
-			logSuccess('✅ Found security CI/CD pipeline');
-		} catch (_error) {
-			logError('❌ Missing security CI/CD pipeline');
+		const pipelineExists = checkFilesExist(['../../.github/workflows/security-testing.yml'], true);
+		if (!pipelineExists) {
 			throw new Error('Missing security CI/CD pipeline');
 		}
 
-		// Test 5: Verify security documentation exists
+		// Test 5: Verify documentation
 		logInfo('Test 5: Verifying security documentation exists');
 		const docFiles = ['../../docs/security/PHASE4_PROGRESS_SUMMARY.md'];
+		checkFilesExist(docFiles, false);
 
-		for (const file of docFiles) {
-			try {
-				execSync(`test -f ${file}`, { stdio: 'ignore' });
-				logSuccess(`✅ Found ${file}`);
-			} catch (_error) {
-				logWarning(`⚠️  Missing ${file} (will be created)`);
-				// In a real implementation, we would create the missing documentation
-			}
-		}
-
-		// Test 6: Create and run a simple security test
+		// Test 6: Create simple test
 		logInfo('Test 6: Creating and running a simple security test');
-		const simpleTestContent = `
-import { test, expect } from 'vitest';
+		createSimpleTest();
 
-test('simple security validation test', () => {
-  // Simple test to verify the testing framework works
-  const maliciousInput = "123'; DROP TABLE users; --";
-  const isValid = !maliciousInput.includes("';") && !maliciousInput.includes('--');
-  expect(isValid).toBe(false);
-});
-    `;
-
-		const testFileName = 'simple-security.test.ts';
-		writeFileSync(testFileName, simpleTestContent);
-
-		logSuccess(`✅ Created ${testFileName}`);
-
-		// Clean up
+		// Cleanup
 		process.chdir('../../');
 		execSync(`rm -rf ${testDir}`, { stdio: 'ignore' });
 
@@ -174,11 +173,11 @@ test('simple security validation test', () => {
 	} catch (error) {
 		logError(`❌ Security verification tests failed: ${error.message}`);
 
-		// Clean up
+		// Cleanup
 		try {
 			process.chdir('../../');
 			execSync('rm -rf temp-security-tests', { stdio: 'ignore' });
-		} catch (_cleanupError) {
+		} catch {
 			logWarning('⚠️  Failed to clean up temporary files');
 		}
 

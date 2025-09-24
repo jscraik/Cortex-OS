@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { streamChat } from '../services/chatGateway';
-import { addMessage, getSession, setModel } from '../services/chatStore';
-import { logEvent, makeDoneEvent, makeStartEvent } from '../utils/observability';
+import { streamChat } from '../services/chatGateway.js';
+import { addMessage, getSession, setModel } from '../services/chatStore.js';
+import { logEvent, makeDoneEvent, makeStartEvent } from '../utils/observability.js';
 
 export async function getChatSession(req: Request, res: Response) {
 	const { sessionId } = req.params as { sessionId: string };

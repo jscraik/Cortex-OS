@@ -1,7 +1,7 @@
-import { errorHandler } from './error-handler';
-import { jsonParsingMiddleware } from './json-parsing';
-import { requestId } from './request-id';
-import { requestLimit } from './request-limit';
+import { errorHandler } from './error-handler.js';
+import { jsonParsingMiddleware } from './json-parsing.js';
+import { requestId } from './request-id.js';
+import { requestLimit } from './request-limit.js';
 
 export { errorHandler, jsonParsingMiddleware, requestId, requestLimit };
 

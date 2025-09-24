@@ -23,6 +23,10 @@ export const SearchResultsEventSchema = z.object({
 	paths: z.array(z.string()),
 	duration: z.number().int().nonnegative(),
 	foundAt: z.string(),
+	// Optional chunked context summary
+	contextSummary: z
+		.object({ totalTokens: z.number().int().nonnegative(), files: z.array(z.object({ file: z.string(), tokens: z.number().int().nonnegative() })) })
+		.optional(),
 });
 
 // Code Modification Event
@@ -43,6 +47,10 @@ export const ValidationReportEventSchema = z.object({
 	issuesFound: z.number().int().nonnegative(),
 	filesValidated: z.array(z.string()),
 	reportedAt: z.string(),
+	// Optional per-file token summary when smart validation is used
+	contextSummary: z
+		.array(z.object({ file: z.string(), tokens: z.number().int().nonnegative() }))
+		.optional(),
 });
 
 // Export event type definitions

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createSchemaCache } from '../src/cache/schemaCache';
-import { createSchemaRegistryClient } from '../src/registryClient';
+import { createSchemaCache } from '../src/cache/schemaCache.js';
+import { createSchemaRegistryClient } from '../src/registryClient.js';
 
 interface MockSchema {
 	id: string;
@@ -18,7 +18,7 @@ interface MockResponse {
 describe('SchemaRegistryClient', () => {
 	it('uses cache to avoid duplicate network calls', async () => {
 		const responses: Record<string, MockSchema> = {
-			'http://example/schemas/Foo/latest': {
+			'https://example/schemas/Foo/latest': {
 				id: '1',
 				name: 'Foo',
 				version: '1.0.0',
@@ -45,7 +45,7 @@ describe('SchemaRegistryClient', () => {
 		};
 		const cache = createSchemaCache({ ttlMs: 10_000, maxEntries: 100 });
 		const client = createSchemaRegistryClient({
-			baseUrl: 'http://example',
+			baseUrl: 'https://example',
 			fetchImpl: fetchImpl as unknown as typeof fetch,
 			cache,
 		});

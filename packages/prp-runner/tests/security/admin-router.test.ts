@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { createAdminRouter } from '../../src/lib/server/admin-router';
+import { createAdminRouter } from '../../src/lib/server/admin-router.js';
 
 describe('Admin Router', () => {
 	it('rejects non-admin access', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type RagDeps, RagOptions, ragSuite, runRagSuite } from './suites/rag';
+import { type RagDeps, RagOptions, ragSuite, runRagSuite } from './suites/rag.js';
 
 const embedder = {
 	embed: async (texts: string[]) => texts.map((t) => [t.length]),

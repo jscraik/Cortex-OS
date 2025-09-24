@@ -12,7 +12,7 @@ import {
 	handleA2A,
 	InMemoryTaskStore,
 	TaskManager,
-} from './index';
+} from './index.js';
 import type { JsonRpcRequest, JsonRpcResponse, TaskResult } from './index.js';
 
 describe('A2A Protocol Implementation', () => {

@@ -9,8 +9,8 @@ import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
-import type { AgentConfig } from './lib/types';
-import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent';
+import type { AgentConfig } from './lib/types.js';
+import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent.js';
 import type { SecurityCheckResult, StreamChunk } from './types.js';
 
 // Extended state for CortexAgent workflows

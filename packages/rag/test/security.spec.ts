@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { Qwen3Embedder } from '../src/embed/qwen3';
+import { Qwen3Embedder } from '../src/embed/qwen3.js';
 import {
 	sanitizeMetadata,
 	sanitizeTextInputs,
 	validateContentSize,
 	validateEmbeddingDimensions,
-} from '../src/lib/security';
+} from '../src/lib/security.js';
 
 describe('Security utilities', () => {
 	it('rejects content over size limit', () => {

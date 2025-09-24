@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
-import { type CortexOsToolName, cortexOsMcpTools, getToolDefinition } from './tools';
+import { type CortexOsToolName, cortexOsMcpTools, getToolDefinition } from './tools.js';
 
 // Basic rate limiter per tool (token bucket style simplified)
 interface RateState {

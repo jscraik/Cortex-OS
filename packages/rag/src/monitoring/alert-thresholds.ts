@@ -107,7 +107,7 @@ export const DEV_ALERT_THRESHOLDS: AlertThresholds = {
  * Evaluates health summary against alert thresholds and returns alert status.
  */
 export function evaluateHealthAlerts(
-	health: import('../lib/health.js').HealthSummary,
+	health: import('../lib/health').HealthSummary,
 	thresholds: AlertThresholds = DEFAULT_ALERT_THRESHOLDS,
 ): {
 	level: 'ok' | 'warning' | 'critical';
@@ -144,7 +144,7 @@ export function evaluateHealthAlerts(
 }
 
 function checkMemoryAlerts(
-	health: import('../lib/health.js').HealthSummary,
+	health: import('../lib/health').HealthSummary,
 	thresholds: AlertThresholds,
 ): {
 	level: 'ok' | 'warning' | 'critical';
@@ -169,7 +169,7 @@ function checkMemoryAlerts(
 }
 
 function checkRSSMemory(
-	health: import('../lib/health.js').HealthSummary,
+	health: import('../lib/health').HealthSummary,
 	thresholds: AlertThresholds,
 ): {
 	level: 'ok' | 'warning' | 'critical';
@@ -207,7 +207,7 @@ function checkRSSMemory(
 }
 
 function checkHeapMemory(
-	health: import('../lib/health.js').HealthSummary,
+	health: import('../lib/health').HealthSummary,
 	thresholds: AlertThresholds,
 ): {
 	level: 'ok' | 'warning' | 'critical';
@@ -244,7 +244,7 @@ function checkHeapMemory(
 	return { level, alerts };
 }
 
-function checkComponentAlerts(health: import('../lib/health.js').HealthSummary): {
+function checkComponentAlerts(health: import('../lib/health').HealthSummary): {
 	level: 'ok' | 'warning' | 'critical';
 	alerts: ReturnType<typeof evaluateHealthAlerts>['alerts'];
 } {

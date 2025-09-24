@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { validateAPIKey } from '../../src/auth/api-key';
-import { signJWT, verifyJWT } from '../../src/auth/jwt';
-import { authMiddleware } from '../../src/auth/middleware';
-import { checkPermission, hasRole } from '../../src/auth/permissions';
+import { validateAPIKey } from '../../src/auth/api-key.js';
+import { signJWT, verifyJWT } from '../../src/auth/jwt.js';
+import { authMiddleware } from '../../src/auth/middleware.js';
+import { checkPermission, hasRole } from '../../src/auth/permissions.js';
 
 describe('Authentication & Authorization', () => {
 	let app: Hono;

@@ -10,10 +10,10 @@ import type {
 	StorageAdapter,
 	TargetingConfig,
 	UserContext,
-} from './types';
+} from './types.js';
 
 // Re-export types for external use
-export type { AttributeOperator, FlagConfig, TestGroup } from './types';
+export type { AttributeOperator, FlagConfig, TestGroup } from './types.js';
 
 /**
  * Feature Flags System with targeting, percentage rollout, and A/B testing support

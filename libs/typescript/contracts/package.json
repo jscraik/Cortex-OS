@@ -3,20 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/src/index.js",
-      "types": "./dist/src/index.d.ts"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     },
     "./evidence": {
-      "import": "./dist/src/evidence.js",
-      "types": "./dist/src/evidence.d.ts"
+      "import": "./dist/evidence.js",
+      "types": "./dist/evidence.d.ts"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/fix-dts-extensions.mjs",
+    "build": "rm -rf dist && tsc -p tsconfig.json && node scripts/fix-dts-extensions.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"

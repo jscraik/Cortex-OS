@@ -215,7 +215,7 @@ describe.skip('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
 
 			try {
 				// This will trigger Math.random() usage - should be removed
-				const { ExampleCaptureSystem } = await import('../src/teaching/example-capture.js');
+				const { ExampleCaptureSystem } = await import('../src/teaching/example-capture');
 				const system = new ExampleCaptureSystem();
 
 				system.captureExample('pattern', {}, 'user-action', 'outcome', {}, true);

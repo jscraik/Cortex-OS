@@ -9,8 +9,8 @@ import {
 	isAdmin,
 	PERMISSIONS,
 	ROLES,
-} from '../../../src/auth/permissions';
-import type { Role, UserContext } from '../../../src/auth/types';
+} from '../../../src/auth/permissions.js';
+import type { Role, UserContext } from '../../../src/auth/types.js';
 
 describe('RBAC (Role-Based Access Control) - Advanced Tests', () => {
 	describe('Permission Validation Edge Cases', () => {

@@ -13,7 +13,7 @@ import type {
 	ExecutionStatus,
 	ToolDefinition,
 	ToolExecutionResult,
-} from './tool-orchestration-contracts';
+} from './tool-orchestration-contracts.js';
 
 // Pure function to create execution result template
 export const createExecutionResult = (

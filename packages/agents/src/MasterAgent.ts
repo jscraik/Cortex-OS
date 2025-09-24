@@ -8,8 +8,8 @@
 // import fs from 'node:fs';
 // import path from 'node:path';
 // Adapters (mocked in tests)
-// import { MLXAdapter } from '@cortex-os/model-gateway/dist/adapters/mlx-adapter.js';
-// import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter.js';
+// import { MLXAdapter } from '@cortex-os/model-gateway/dist/adapters/mlx-adapter';
+// import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, MessagesAnnotation, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';

@@ -5,7 +5,7 @@ export interface Notification {
 	duration?: number;
 }
 
-import { generateId } from './id';
+import { generateId } from './id.js';
 
 export interface NotificationStoreApi {
 	addNotification: (notification: Omit<Notification, 'id'>) => string;

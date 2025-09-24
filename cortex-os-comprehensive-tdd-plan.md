@@ -1,5 +1,6 @@
 # Cortex-OS Comprehensive TDD Plan
-# Production-Ready ASBR Runtime with MLX-First Architecture
+
+# Production-Ready ASBR Runtime with MLX-First Hybrid Architecture
 
 **Version**: 2.0 • **Date**: 2025-09-23 • **Status**: Implementation Ready
 **Target**: Complete deterministic second brain with governance, proofs, and MLX acceleration
@@ -11,6 +12,7 @@ This comprehensive TDD plan transforms Cortex-OS from a conceptual architecture 
 ## Vision Alignment
 
 **Target State**: A governed, local-first, deterministic second brain that:
+
 - Plans, simulates, executes, and proves with MLX acceleration
 - Enforces contracts and routes capabilities via policy
 - Learns by replay and attaches proofs to every action
@@ -530,7 +532,7 @@ describe('Teaching & Replay System', () => {
 
 ---
 
-## ⚡ Phase 3: MLX Integration (Week 4-5)
+## ⚡ Phase 3: Hybrid Model Integration (MLX + Ollama Cloud) (Week 4-5)
 
 ### 3.1 MLX Server Integration
 
@@ -542,7 +544,7 @@ describe('MLX Integration', () => {
 
   beforeEach(async () => {
     cortex = await CortexOSRuntime.start();
-    mlxClient = new MLXClient({ url: 'http://localhost:8083' }); // cortex-py
+    mlxClient = new MLXClient({ url: 'http://localhost:8081' }); // cortex-py canonical MLX port
   });
 
   afterEach(async () => {
@@ -560,7 +562,7 @@ describe('MLX Integration', () => {
   it('should generate embeddings with Metal acceleration', async () => {
     const response = await mlxClient.embeddings({
       texts: ['Hello world', 'Machine learning'],
-      model: 'all-MiniLM-L6-v2'
+      'Qwen3-Embedding-4B'
     });
 
     expect(response.embeddings).toHaveLength(2);
@@ -570,7 +572,7 @@ describe('MLX Integration', () => {
 
   it('should execute chat completion with MLX models', async () => {
     const response = await mlxClient.chat({
-      model: 'mlx-community/Mistral-7B-Instruct-v0.2',
+      'GLM-4.5-mlx-4Bit'
       messages: [
         { role: 'user', content: 'What is machine learning?' }
       ],
@@ -638,7 +640,76 @@ describe('Python A2A Integration', () => {
     });
   });
 
-  it('should handle Python service lifecycle events', async () => {
+      #### Implementation Status (2025-09-23)
+
+      Module A (Deterministic Scheduler) implemented at `packages/kernel/src/scheduler/deterministicScheduler.ts` and exported via `packages/kernel/src/index.ts`.
+
+      Validated Capabilities (GREEN via tests in `simple-tests/kernel/`):
+      1. Deterministic ordering: priority (descending) then stable FNV-1a hash of `id + seed`, final `id` tiebreak.
+      2. Seed reproducibility: identical `executionHash` + record sequence for identical seed & inputs (`executeWithSeed`).
+      3. Resource gating: batch window via `maxConcurrent`; soft memory trimming via `maxMemoryMB` (keeps first fitting tasks, never empties batch).
+      4. Replay: `replay(trace, taskMap)` reconstructs tasks and produces identical `executionHash` when logic unchanged.
+
+      Tests Added:
+      - `deterministic-scheduler.order.test.ts`
+      - `deterministic-scheduler.seed.test.ts`
+      - `deterministic-scheduler.constraints.test.ts`
+      - `deterministic-scheduler.replay.test.ts`
+
+      Execution Hash Rationale:
+      - Initial implementation hashed only record canonical form; different seeds with identical task outputs could collide.
+      - Adjusted `computeExecutionHash` to include `seed` and record index, guaranteeing divergence across seeds while preserving determinism for identical seeds.
+
+      Outcome: Scheduler module considered stable foundation for Proof System (Module B). Proceeding to scaffold failing proof tests next.
+
+#### 1.5 Proof System (Module B) – Implementation Status (2025-09-24)
+
+Current Implementation (kernel package):
+- Source: `packages/kernel/src/proof/proofSystem.ts`
+- Exports: `createProofSession`, `finalizeProof` (async), `verifyProof`, `ProofSigner`, `createInMemoryProofStore`, `produceProofFromScheduleResult`.
+
+Deterministic Artifacts:
+- Digest = FNV-1a over canonical execution records + serialized claims.
+- Scheduler `executionHash` preserved as contextual field; digest is separate integrity primitive.
+- Required claims enforced at verification (currently `totalTasks`).
+
+Signing Layer:
+- Optional `ProofSigner` interface (sign + optional verify). Mock signer used in adapter tests.
+- Detached signature stored with signerId; verification path adds `signature-invalid` issue when mismatch.
+
+Persistence:
+- In-memory store offering `save/get/list/clear`. Future: emit `proof.generated` CloudEvent for cross-feature indexing.
+
+Adapter Integration:
+- `produceProofFromScheduleResult` populates baseline claims: `totalTasks`, `allSucceeded` and optionally signs & persists artifact.
+
+Test Coverage (GREEN):
+- `proof-system.basic.test.ts`: happy path, tampered digest detection, missing required claim detection.
+- `proof-system.adapter.test.ts`: adapter creation, persistence round-trip, signature verification, signature tamper invalidation.
+
+Acceptance Matrix (Initial)
+
+| Capability | Test Case | Status | Notes |
+|------------|-----------|--------|-------|
+| Create proof session | basic happy path | Pass | Claims mutable pre-finalize |
+| Required claim enforcement | missing totalTasks | Pass | Artifact produced; verification flags issue |
+| Digest integrity detection | tampered claims | Pass | `digest-mismatch` issued |
+| Signature support | adapter signer test | Pass | Mock implementation |
+| Signature tamper detection | altered signature | Pass | `signature-invalid` issued |
+| Adapter from scheduler | adapter creation | Pass | Seeds claims + persists |
+| Persistence list/get | adapter test | Pass | In-memory only |
+| All succeeded claim | adapter creation | Pass | Derived from records |
+| Missing required claim isolation | basic missing test | Pass | Future: extend set |
+
+Planned Enhancements (Exit Criteria for Module B Completion):
+1. Add CloudEvent emission on proof generation (contracts + test).
+2. Introduce Zod contract for `ProofArtifact` in `contracts/` with validation tests.
+3. Upgrade digest to cryptographic (e.g., BLAKE3) behind feature flag + reproducibility test.
+4. Add audit query API (time range + filters) with tests.
+5. Integrate with governance proofs tests (Phase 4) to reuse artifact path.
+
+Status: Proof System core primitives GREEN. Remaining enhancements tracked for completion milestone.
+
     const events: any[] = [];
 
     a2aClient.subscribe('service.*', (event) => {
@@ -657,6 +728,64 @@ describe('Python A2A Integration', () => {
 ```
 
 ### 3.2 Model Gateway Integration
+
+### 3.3 Hybrid Conjunction & Privacy Mode
+
+```typescript
+// tests/model-gateway/hybrid-routing.test.ts
+describe('Hybrid Routing & Conjunction', () => {
+  let router: import('@cortex-os/model-gateway').ModelRouter;
+
+  beforeEach(async () => {
+    router = new (await import('@cortex-os/model-gateway')).ModelRouter();
+    await router.initialize();
+  });
+
+  it('should select cloud model when context is massive and mode is enterprise', async () => {
+    // Ensure privacy mode disabled for this test
+    router.setPrivacyMode(false);
+    router.setHybridMode('enterprise');
+
+    // Ask for chat without specifying a model; very large context triggers cloud
+    const selected = (router as any).selectModel('chat', undefined, 120_000, 'enterprise');
+    expect(selected).toBeTruthy();
+    expect(selected.provider).toBe('ollama-cloud');
+  });
+
+  it('should enforce privacy mode to MLX-only routing', async () => {
+    router.setPrivacyMode(true);
+
+    const capabilities: Array<'embedding'|'chat'|'reranking'> = ['embedding','chat','reranking'];
+    for (const cap of capabilities) {
+      const models = router.getAvailableModels(cap as any);
+      // In privacy mode, only MLX providers should be present
+      expect(models.every(m => m.provider === 'mlx')).toBe(true);
+    }
+  });
+});
+```
+
+```typescript
+// tests/orchestration/hybrid-models-validation.test.ts
+describe('Orchestration Hybrid Models (7 required)', () => {
+  it('should validate all 7 required models are configured', async () => {
+    const mod = await import('@cortex-os/orchestration/src/config/hybrid-model-integration');
+    const router = new mod.OrchestrationHybridRouter();
+    const validation = router.validateModels();
+
+    expect(validation.valid).toBe(true);
+    expect(validation.missing).toHaveLength(0);
+  });
+});
+```
+
+### 3.4 Hybrid Configuration References
+
+- `config/hybrid-model-enforcement.json` — central routing rules (MLX-first = 100, privacy mode, conjunction patterns)
+- `packages/model-gateway/src/model-router.ts` — hybrid router (privacy/performance/enterprise/conjunction modes)
+- `packages/orchestration/src/config/hybrid-model-integration.ts` — 7 required models (GLM-4.5, Qwen2.5-VL, Gemma-2-2B, SmolLM-135M, Gemma-3-270M, Qwen3-Embedding-4B, Qwen3-Reranker-4B)
+- `scripts/hybrid-deployment-validation.sh` — deployment validation (health checks + routing)
+- Env: `CORTEX_HYBRID_MODE`, `CORTEX_MLX_FIRST_PRIORITY`, `CORTEX_PRIVACY_MODE`, `CORTEX_CONJUNCTION_ENABLED`, `MLX_BASE_URL`, `OLLAMA_BASE_URL`
 
 ```typescript
 // tests/model-gateway/router.test.ts
@@ -684,7 +813,7 @@ describe('Model Gateway Router', () => {
     // Mock MLX failure
     gateway.setProviderHealth('mlx', false);
 
-    const request = { model: 'mistral-7b', prompt: 'Test' };
+    const request = { model: 'glm-4.5', prompt: 'Test' };
     const response = await gateway.execute(request);
 
     expect(response.provider).toBe('ollama');
@@ -1054,8 +1183,9 @@ describe('Cortex-OS Metrics', () => {
   });
 
   it('should track MLX performance metrics', () => {
-    metrics.recordMLXInference({
-      model: 'mistral-7b',
+    // NOTE: Using glm-4.5 (primary) instead of legacy example models for consistency with hybrid set
+metrics.recordMLXInference({
+      model: 'glm-4.5',
       tokens: 100,
       latency: 1500,
       memory: '2GB'
@@ -1159,7 +1289,8 @@ describe('Container Orchestration', () => {
     const coreStack = {
       cortexOs: {
         image: 'cortex-os:latest',
-        ports: ['8080:8080', '8081:8081', '8082:8082'],
+        // Conceptual example (see compose for actual mapping)
+        ports: ['8080:8080'], // model-gateway/hybrid router in real deployment
         environment: {
           MLX_ENABLE_METAL: 'true',
           CORTEX_LOCAL_FIRST: 'true'
@@ -1171,7 +1302,7 @@ describe('Container Orchestration', () => {
       },
       mlx: {
         image: 'mlx-server:latest',
-        ports: ['8083:8083'],
+        ports: ['8081:8081'],
         devices: ['/dev/dri']
       }
     };
@@ -1413,7 +1544,7 @@ describe('REST API Integration', () => {
   });
 
   it('should provide health endpoint for external monitoring', async () => {
-    const response = await fetch(`${corsystem.httpUrl}/health`);
+    const response = await fetch(`${apiUrl}/health`);
 
     expect(response.status).toBe(200);
     const health = await response.json();
@@ -1424,7 +1555,7 @@ describe('REST API Integration', () => {
 
   it('should handle task management via API', async () => {
     // Create task via API
-    const createResponse = await fetch(`${corsystem.httpUrl}/api/v1/tasks`, {
+    const createResponse = await fetch(`${apiUrl}/api/v1/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1451,7 +1582,7 @@ describe('REST API Integration', () => {
       }
     };
 
-    const response = await fetch(`${corsystem.httpUrl}/webhooks/github`, {
+    const response = await fetch(`${apiUrl}/webhooks/github`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1590,7 +1721,7 @@ describe('Cortex-OS End-to-End Workflows', () => {
 describe('Load Testing', () => {
   it('should handle 100 concurrent requests', async () => {
     const requests = Array(100).fill().map(() =>
-      cortex.execute({ model: 'mistral-7b', prompt: 'Hello' })
+      cortex.execute({ model: 'glm-4.5', prompt: 'Hello' })
     );
 
     const results = await Promise.allSettled(requests);
@@ -1606,7 +1737,7 @@ describe('Load Testing', () => {
     const metrics = await loadTest({
       duration,
       rps: requestsPerSecond,
-      request: () => cortex.execute({ model: 'mistral-7b', prompt: 'Test' })
+      () => cortex.execute({ model: 'glm-4.5', prompt: 'Test' })
     });
 
     expect(metrics.p99Latency).toBeLessThan(2000);
@@ -1617,9 +1748,70 @@ describe('Load Testing', () => {
 
 ---
 
+## Boundaries & Independence
+
+Standalone Applications (run independently, protocol-only integration):
+
+- apps/cortex-code
+- apps/cortex-webui
+- apps/cortex-marketplace
+
+All other packages are part of the core cortex-os runtime and MUST NOT be treated as standalone deployables.
+
+Boundary Rules:
+
+- No cross-feature reach-through imports (enforced by structure validation)
+- External apps communicate only via MCP, A2A, or REST API
+- Shared logic resides in designated shared packages; no duplication in apps
+
+Validation Commands:
+
+```bash
+pnpm structure:validate
+pnpm lint:smart
+```
+
+## Governance & Nx Enforcement
+
+Repository Enforcement Gates:
+
+```bash
+pnpm build:smart
+pnpm typecheck:smart
+pnpm lint:smart
+pnpm test:smart
+pnpm ci:governance
+pnpm structure:validate
+pnpm security:scan:diff
+```
+
+Governance Assertions:
+
+- Named exports only (no default exports)
+- Functions <= 40 lines (CI enforced)
+- Async/await only (no .then chains)
+- All TS projects have "composite": true
+- Policy: hybrid MLX-first routing with privacy mode respected
+
+Recommended Pre-Commit Hook (conceptual):
+
+```bash
+pnpm biome:staged && pnpm lint && pnpm test --filter changed
+```
+
+Placeholder Annotations:
+
+- Patterns like `rules: [...]` or `steps: [...]` intentionally mark TDD scaffolding.
+- Replace with concrete implementations during the red/green phase.
+
 ## 📋 Success Criteria & Validation Gates
 
 ### ✅ Technical Requirements
+
+- [ ] Hybrid routing enforced (MLX-first + cloud conjunction)
+- [ ] Privacy mode forces MLX-only providers
+- [ ] 7 required orchestration models configured and validated
+
 - [ ] Zero compilation errors in all packages
 - [ ] 95%+ test coverage across all components
 - [ ] TypeScript strict mode enabled and passing
@@ -1631,6 +1823,7 @@ describe('Load Testing', () => {
 - [ ] Proof system operational
 
 ### ✅ Package Integration Requirements
+
 - [ ] **ASBR Package**: Brain-only orchestration functional
 - [ ] **Model Gateway**: MLX/Ollama/Frontier routing working
 - [ ] **A2A Stack**: Event bus, contracts, services operational
@@ -1649,6 +1842,7 @@ describe('Load Testing', () => {
 - [ ] **cortex-py**: MLX server providing Metal acceleration
 
 ### ✅ Application Requirements
+
 - [ ] **Cortex-OS App**: Main runtime operational
 - [ ] **External App Integration**: All external apps can connect via MCP/A2A/API
 - [ ] **MCP Protocol**: Tool discovery and execution working for external apps
@@ -1658,6 +1852,7 @@ describe('Load Testing', () => {
 - [ ] **Application Independence**: Each app can run standalone or integrated
 
 ### ✅ Operational Requirements
+
 - [ ] Container orchestration functional
 - [ ] Health checks comprehensive
 - [ ] Metrics collection complete
@@ -1667,6 +1862,7 @@ describe('Load Testing', () => {
 - [ ] Auto-healing functional
 
 ### ✅ Production Requirements
+
 - [ ] Load tests passing (100 RPS, <2s P99)
 - [ ] Security scans passing (OWASP L1 + MITRE ATLAS)
 - [ ] Memory stable under load
@@ -1683,6 +1879,7 @@ describe('Load Testing', () => {
 ## 🔧 Implementation Commands
 
 ### Phase 0: Foundation
+
 ```bash
 # Setup development environment
 ./scripts/dev-setup.sh
@@ -1695,6 +1892,7 @@ pnpm structure:validate
 ```
 
 ### Phase 1-2: Core Kernel & Cerebrum
+
 ```bash
 # Implement DI container
 pnpm test:watch tests/kernel/di-container.test.ts
@@ -1706,8 +1904,22 @@ pnpm test:watch tests/kernel/contract-registry.test.ts
 pnpm test:watch tests/cerebrum/
 ```
 
-### Phase 3-4: MLX & Governance
+### Phase 3-4: Hybrid & Governance
+
 ```bash
+# Test Hybrid (MLX + Ollama Cloud) integration
+./scripts/hybrid-deployment-validation.sh
+
+# MLX/Ollama health checks
+curl -sf http://localhost:8081/health >/dev/null
+curl -sf http://localhost:11434/api/tags >/dev/null
+
+# Env (example)
+export CORTEX_HYBRID_MODE=performance
+export CORTEX_MLX_FIRST_PRIORITY=100
+export CORTEX_PRIVACY_MODE=false
+export CORTEX_CONJUNCTION_ENABLED=true
+
 # Test MLX integration
 pnpm test:watch tests/mlx/integration.test.ts
 
@@ -1722,6 +1934,7 @@ pnpm test:performance
 ```
 
 ### Phase 5-8: Integration & Production
+
 ```bash
 # Full system tests
 pnpm test:e2e
@@ -1738,6 +1951,7 @@ pnpm security:scan:all
 ## 📊 Timeline & Resources
 
 ### Duration: 10 weeks
+
 - **Weeks 1-2**: Foundation & ASBR Kernel
 - **Weeks 3-4**: Cerebrum Layer
 - **Weeks 5-6**: MLX & Governance
@@ -1745,6 +1959,7 @@ pnpm security:scan:all
 - **Weeks 9-10**: E2E Testing & Production
 
 ### Required Resources
+
 - **Engineering**: 3-4 senior developers
 - **Infrastructure**: macOS hosts with Metal support
 - **Monitoring**: Prometheus/Grafana stack
@@ -1755,6 +1970,7 @@ pnpm security:scan:all
 ## 🚀 Expected Outcomes
 
 ### Before Implementation
+
 ```bash
 ❌ cortex-os conceptual only
 ❌ No working runtime
@@ -1763,6 +1979,7 @@ pnpm security:scan:all
 ```
 
 ### After Implementation
+
 ```bash
 ✅ Complete ASBR runtime operational
 ✅ MLX-first execution working
@@ -1777,16 +1994,19 @@ pnpm security:scan:all
 ## 📈 Risk Mitigation
 
 ### Technical Risks
+
 - **MLX Compatibility**: Comprehensive testing matrix
 - **Performance Issues**: Early profiling and optimization
 - **Determinism**: Strict validation and replay testing
 
 ### Operational Risks
+
 - **Deployment Complexity**: Container orchestration automation
 - **Monitoring Gaps**: Comprehensive observability stack
 - **Configuration Drift**: Configuration-as-code practices
 
 ### Quality Risks
+
 - **Test Coverage**: Strict 95% threshold enforcement
 - **Security**: Multiple scanning layers and validation
 - **Documentation**: Automated documentation generation
@@ -1875,3 +2095,287 @@ pnpm security:scan:all
 **This comprehensive TDD plan ensures Cortex-OS becomes a production-ready, governed ASBR runtime that serves as the brain for a pluggable ecosystem of applications, fulfilling its vision as a deterministic, local-first second brain with MLX acceleration and complete auditability.**
 
 **Co-authored-by: Cortex-OS Development Team**
+
+---
+
+## 🔍 Fresh Eyes Technical & Operational Review (2025-09-23)
+
+This section captures an independent gap analysis between the original phased TDD goals and the current repository
+state. It converts the assessment into an incremental, test-first execution backlog while preserving architectural
+governance rules.
+
+### ✅ Strength Summary
+
+- Strong governance: structure guard, memory constraints, mutation + coverage gates.
+- Mature security scanning layers (Semgrep multi-profile, Snyk, license, SBOM).
+- Refactored Cerebrum implementation (removal of legacy oversized agent code) aligns with ≤40 line function rule.
+- Hybrid / model gateway scaffolding present; MLX integration scripts exist.
+- Observability foundations (OTel, metrics scripts) + carbon & accessibility tracking.
+
+### ⚠ Key Gaps vs Plan (Condensed)
+
+| Area | Gap | Impact | Priority |
+|------|-----|--------|----------|
+| Deterministic Scheduler | Not implemented (only described) | Reproducibility + trust | High |
+| Proof System | Absent (no hash/sign/verify pipeline) | Audit + compliance blocking | High |
+| Hybrid 7-Model Validation | Test not enforced | Silent routing regressions | High |
+| Privacy Mode Enforcement | Lacks explicit negative test | Privacy guarantee risk | High |
+| Policy Conflict Resolution Tests | Missing conflict + local-first denial tests | Governance integrity | High |
+| Event Outbox + DLQ Reliability | Not validated with publish failure scenarios | Delivery guarantees | Medium |
+| Contract Evolution Guidance | No diff/migration path tests | Backward compatibility | Medium |
+| Budget / Quota Enforcement | Not fully tested | Cost containment risk | Medium |
+| Replay / Teaching Confidence Metrics | Partial scaffolding | Learning efficiency | Medium |
+| Load & Sustained Performance Tests | Absent harness | Scalability unknown | Medium |
+| Aggregated Health + Discovery | Not consolidated | Ops visibility | Medium |
+| Prometheus Metrics Schema Test | Not enforced | Monitoring drift | Medium |
+| Orchestrator Class + Auto-Heal Sim | Conceptual only | Deployment resilience | Medium |
+
+---
+
+## 🧪 Updated Test-Driven Backlog (Actionable Modules)
+
+Each module follows: (1) Write failing spec(s) (2) Minimal implementation (3) Refactor for governance; all functions ≤40 LOC, named exports only.
+
+### Module A: Deterministic Scheduler
+
+**Goal**: Provide reproducible task ordering with seed + resource constraints.
+
+**Tests (create first)**:
+
+1. `tests/kernel/deterministic-scheduler.order.test.ts` – Priority > FIFO > tie-break by deterministic hash.
+2. `tests/kernel/deterministic-scheduler.seed.test.ts` – Same seed ⇒ identical execution log.
+3. `tests/kernel/deterministic-scheduler.constraints.test.ts` – Enforces `maxConcurrent`, denies batch exceeding
+   memory budget.
+4. `tests/kernel/deterministic-scheduler.replay.test.ts` – Recorded trace replays to identical outcome hash.
+
+**Implementation Outline**:
+
+- File: `packages/kernel/src/scheduler/deterministicScheduler.ts`
+- Core steps: normalize tasks → stable sort → concurrent window executor → trace capture (ordered events) → produce
+  `executionHash` (e.g. blake3 of canonical JSON).
+- Expose: `schedule(tasks, opts)`, `executeWithSeed(tasks, seed)`, `replay(trace)`.
+
+### Module B: Proof System (Execution Verifiability)
+
+**Goal**: Cryptographically attest execution integrity + enable audit trail queries.
+
+**Tests**:
+
+1. `tests/governance/proof-system.generate.test.ts` – Produces hash + signature (Ed25519) + metadata.
+2. `tests/governance/proof-system.tamper.test.ts` – Tampering invalidates proof.
+3. `tests/governance/proof-system.audit.test.ts` – Filtering by time window returns expected proofs.
+
+**Implementation**:
+
+- Package: `packages/governance/src/proof/`
+- Export: `generateProof(execution)`, `verifyProof(proof)`, `getAuditTrail(query)`.
+- Hash canonicalization: deterministic key order JSON → blake3.
+- Key mgmt: ephemeral dev keypair; prod expects KMS or sealed secret (documented placeholder).
+
+### Module C: Hybrid Model Validation & Privacy Mode
+
+**Goal**: Ensure required model set + enforced provider filtering.
+
+**Tests**:
+
+1. `tests/model-gateway/hybrid-models-validation.test.ts` – 7 required models present; missing list empty.
+2. `tests/model-gateway/privacy-mode.test.ts` – When `CORTEX_PRIVACY_MODE=true` only MLX providers returned.
+3. `tests/model-gateway/fallback-health.test.ts` – Simulated MLX down → fallback provider chosen; logs fallback flag.
+
+**Implementation Notes**:
+
+- Add `validateModels()` returning `{ valid, missing }`.
+- Health injection via provider registry with overridable probe function.
+
+### Module D: Policy Enforcement & Conflict Resolution
+
+**Goal**: Guarantee local-first + deterministic policy resolution.
+
+**Tests**:
+
+1. `tests/policy/local-first-denial.test.ts` – Remote-only request rejected with explicit reason.
+2. `tests/policy/conflict-resolution.test.ts` – Higher priority policy overrides lower without residual conflicts.
+3. `tests/policy/capability-quota.test.ts` – Quota exhaustion produces governed denial event.
+
+**Implementation**:
+
+- Enhance `packages/policy/src/router.ts` with `explainDecision()` returning rule lineage.
+- Maintain internal `appliedPolicies` array for audits.
+
+### Module E: Event Reliability (Outbox + DLQ)
+
+**Goal**: Zero-loss semantics under transient failures.
+
+**Tests**:
+
+1. `tests/events/outbox.retry.test.ts` – Publisher failure ⇒ outbox stored ⇒ retry drains on recovery.
+2. `tests/events/dlq.escalation.test.ts` – N consecutive failures ⇒ DLQ entry + metrics increment.
+3. `tests/events/outbox.idempotency.test.ts` – Duplicate publish attempt suppressed by idempotency key.
+
+**Implementation**:
+
+- Add `packages/a2a-services/src/outbox` (sqlite or in-memory pluggable adapter).
+- Expose metrics counters: `events_outbox_pending`, `events_dlq_total`.
+
+### Module F: Contract Evolution & Schema Governance
+
+**Goal**: Safe additive change path + version diff assist.
+
+**Tests**:
+
+1. `tests/contracts/evolution.additive.test.ts` – Adding optional field keeps v1 consumers passing.
+2. `tests/contracts/evolution.breaking-warning.test.ts` – Removing required field triggers advisory.
+3. `tests/contracts/evolution.migration-path.test.ts` – `getEvolutionPath('X', '1.0.0','2.0.0')` returns migration steps.
+
+**Implementation**:
+
+- Extend registry to store `{version, schema, deprecated}`.
+- Provide `diffSchemas(a,b)` summarizing removed / changed fields.
+
+### Module G: Teaching & Replay Enhancements
+
+**Goal**: Structured example capture + confidence signal.
+
+**Tests**:
+
+1. `tests/cerebrum/teaching.capture.test.ts` – Captures example with normalized step signatures.
+2. `tests/cerebrum/teaching.pattern.test.ts` – Learns pattern returns confidence >= threshold.
+3. `tests/cerebrum/teaching.replay-diff.test.ts` – Replay on variant input records adaptation list.
+
+**Implementation**:
+
+- Add `patternModel` deriving feature vector (steps, tool types, branching count).
+- Confidence = (matched structural tokens / total) * weighting.
+
+### Module H: Performance & Load Harness
+
+**Goal**: Enforce p95/p99 latency budgets & error rate constraints.
+
+**Tests (flagged, not default):**
+
+1. `tests/performance/load.smoke.test.ts` – 20 concurrent short tasks < budget.
+2. `tests/performance/load.sustained.test.ts` – Simulated 1m run collects metrics JSON.
+
+**Implementation**:
+
+- Harness: `scripts/perf/harness.mjs` invoking runtime via local API.
+- Output JSON appended to `reports/perf/history.json` with median update command.
+
+### Module I: Observability & Metrics Schema Guard
+
+**Goal**: Prevent accidental metric name churn.
+
+**Tests**:
+
+1. `tests/monitoring/metrics.schema.test.ts` – Required metric names present.
+2. `tests/monitoring/tracing.span-link.test.ts` – Planning span parent of execution span.
+
+**Implementation**:
+
+- Add static required list under `packages/observability/src/required-metrics.ts`.
+
+### Module J: Deployment Orchestrator & Auto-Heal Simulation
+
+**Goal**: Abstract container/service lifecycle & verify restart logic.
+
+**Tests**:
+
+1. `tests/deployment/orchestrator.restart.test.ts` – Simulated failure increments restartCount.
+2. `tests/deployment/orchestrator.discovery.test.ts` – Service registry returns MCP / API / MLX endpoints.
+
+**Implementation**:
+
+- `packages/gateway/src/orchestrator/` with pluggable driver (compose shell adapter initially).
+
+---
+
+## 🧵 Phased Execution (Revised Sprints)
+
+| Sprint | Focus | Modules | Exit Criteria |
+|--------|-------|---------|---------------|
+| 1 | Determinism & Proof Foundations | A, B, C (core tests green) | Scheduler + Proof tests pass; hybrid privacy enforced |
+| 2 | Governance & Reliability | D, E, F | Policy denial + outbox retry + evolution tests passing |
+| 3 | Intelligence & Replay | G + remaining hybrid fallback test polish | Teaching confidence >= threshold; replay diff stable |
+| 4 | Performance & Observability | H, I | Perf harness JSON baseline committed; metrics schema guard passes |
+| 5 | Deployment Resilience | J + health aggregation | Orchestrator restart & discovery tests pass |
+
+All later refactors must remain additive—no breaking schema changes without dual-version strategy per contract rules.
+
+---
+
+## 🎯 Updated Acceptance Matrix (Additions)
+
+| Criterion | Added Validation Mechanism |
+|-----------|----------------------------|
+| Deterministic execution reproducibility | Seed replay test (Module A) |
+| Execution integrity & audit trail | Proof tamper test + audit query (Module B) |
+| Hybrid model presence guarantee | Model validation test (Module C) |
+| Privacy routing assurance | Privacy mode provider filter test (Module C) |
+| Policy conflict determinism | Conflict resolution lineage test (Module D) |
+| Reliable event delivery | Outbox retry + DLQ escalation tests (Module E) |
+| Safe contract evolution | Evolution diff + migration test (Module F) |
+| Teaching efficacy | Pattern confidence threshold test (Module G) |
+| Latency budgets adherence | Load harness p95/p99 assertion (Module H) |
+| Metrics stability | Required metrics schema guard (Module I) |
+| Deployment resilience | Orchestrator restart simulation test (Module J) |
+
+---
+
+## 📄 Documentation Additions (To Be Authored with Modules)
+
+| Doc File | Purpose | Module |
+|----------|---------|--------|
+| `docs/deterministic-scheduler.md` | Algorithm + reproducibility contract | A |
+| `docs/proof-system.md` | Proof format, signing, verification flow | B |
+| `docs/hybrid-routing.md` | 7-model matrix, fallback decision tree, privacy semantics | C |
+| `docs/policy-conflicts.md` | Priority & resolution lineage semantics | D |
+| `docs/event-reliability.md` | Outbox/Retry/DLQ patterns & metrics | E |
+| `docs/schema-evolution.md` | Versioning & migration examples | F |
+| `docs/teaching-replay.md` | Example capture, adaptation model | G |
+| `docs/performance-harness.md` | Load harness usage & budgets | H |
+| `docs/observability-metrics.md` | Canonical metric list & invariants | I |
+| `docs/deployment-orchestrator.md` | Orchestrator abstraction + auto-heal | J |
+
+Each document must include: Context, Contract (inputs/outputs), Invariants, Test References, Extension Points.
+
+---
+
+## 🧾 Definition of Done (Augmented)
+
+An epic / module is complete only when:
+
+1. All planned failing tests exist and pass (green) with mutation score ≥ threshold for new code.
+2. Documentation file merged with cross-links to tests (list test filenames).
+3. Coverage for new module ≥ 95% branches.
+4. No function > 40 LOC (enforced) – verify via structure guard.
+5. No default exports; all new exports named.
+6. Security scan adds zero new high/critical findings (diff mode).
+7. Performance-sensitive code has micro-benchmark or load guard if latency-critical.
+8. Added metrics appear in metrics schema guard test; no removals without deprecation note.
+9. All public APIs have Zod validation at boundary.
+10. Memory snapshot (optional for heavy modules) shows <10% regression vs baseline.
+
+---
+
+## 🧠 Architectural Constraints Reaffirmed
+
+- No cross-feature reach-through imports (event or contract boundary only).
+- Dual-version contracts retained until all consumers migrated & validated.
+- Deterministic scheduler must not depend on wall-clock ordering (time used only for metrics, not ordering keys).
+- Proof generation MUST run post-execution before side-effect finalization visible to downstream systems.
+- Hybrid routing decisions must be pure functions of (capability, contextSize, mode, privacy) for replayability.
+
+---
+
+## 🚦 Immediate Next Steps (Execution Kickoff)
+
+1. Create tests for Modules A, B, C (failing) – commit.
+2. Minimal scheduler implementation + proof generator skeleton – achieve green.
+3. Add hybrid model presence + privacy enforcement test; wire into CI (quality gate).
+4. Draft docs for scheduler & proof system referencing tests.
+5. Open tracking issues referencing this updated plan (one per module) and link to acceptance matrix row.
+
+---
+
+_This appended plan segment operationalizes the earlier conceptual phases into concrete, enforceable,
+test-first modules. It accelerates the path to a verifiable, deterministic ASBR runtime._

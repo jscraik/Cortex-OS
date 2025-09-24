@@ -128,14 +128,14 @@ describe('fs-store', () => {
 
 describe('types', () => {
 	it('exports correct schemas', async () => {
-		const types = await import('../src/types.js');
+		const types = await import('../src/types');
 		expect(types.TransportTypeSchema).toBeDefined();
 		expect(types.ServerManifestSchema).toBeDefined();
 		expect(types.RegistryIndexSchema).toBeDefined();
 	});
 
 	it('validates transport types correctly', async () => {
-		const { TransportTypeSchema } = await import('../src/types.js');
+		const { TransportTypeSchema } = await import('../src/types');
 		expect(TransportTypeSchema.parse('stdio')).toBe('stdio');
 		expect(TransportTypeSchema.parse('sse')).toBe('sse');
 		expect(TransportTypeSchema.parse('streamableHttp')).toBe('streamableHttp');
@@ -143,7 +143,7 @@ describe('types', () => {
 	});
 
 	it('validates server manifest schema', async () => {
-		const { ServerManifestSchema } = await import('../src/types.js');
+		const { ServerManifestSchema } = await import('../src/types');
 		const valid = {
 			id: 'test-id',
 			name: 'test-server',
@@ -157,7 +157,7 @@ describe('types', () => {
 	});
 
 	it('validates registry index schema', async () => {
-		const { RegistryIndexSchema } = await import('../src/types.js');
+		const { RegistryIndexSchema } = await import('../src/types');
 		const valid = {
 			updatedAt: '2023-09-14T12:00:00Z',
 			servers: [],
@@ -170,7 +170,7 @@ describe('types', () => {
 
 describe('index', () => {
 	it('exports types', async () => {
-		const index = await import('../src/index.js');
+		const index = await import('../src/index');
 		expect(index.TransportTypeSchema).toBeDefined();
 		expect(index.ServerManifestSchema).toBeDefined();
 		expect(index.RegistryIndexSchema).toBeDefined();

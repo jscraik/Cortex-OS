@@ -1,8 +1,8 @@
 // GitHub Integration Package - Main exports
 
 // Core functionality (Rust-based, exposed via FFI when needed)
-// export * from './client/index.js';
-// export * from './types/index.js';
+// export * from './client/index';
+// export * from './types/index';
 
 // A2A Events
 export {

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import type { FeatureFlags } from './flags';
-import type { StorageAdapter } from './types';
+import type { FeatureFlags } from './flags.js';
+import type { StorageAdapter } from './types.js';
 
 // Validation schemas
 const CreateFlagSchema = z.object({

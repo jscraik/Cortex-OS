@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { type CortexOsToolName, cortexOsMcpTools } from '../../src/mcp/tools';
-import { createTestMcpContainer } from './util/factory';
+import { type CortexOsToolName, cortexOsMcpTools } from '../../src/mcp/tools.js';
+import { createTestMcpContainer } from './util/factory.js';
 
 // Contract test: ensures facade tools list matches tool registry and selected calls conform.
 

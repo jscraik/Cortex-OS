@@ -2,13 +2,13 @@
 
 import type { Response } from 'express';
 import { z } from 'zod';
-import type { AuthRequest } from '../middleware/auth';
-import { HttpError } from '../middleware/errorHandler';
-import { ConversationService } from '../services/conversationService';
+import type { AuthRequest } from '../middleware/auth.js';
+import { HttpError } from '../middleware/errorHandler.js';
+import { ConversationService } from '../services/conversationService.js';
 import {
 	createMessage as createMessageService,
 	getMessagesByConversationId as getMessagesById,
-} from '../services/messageService';
+} from '../services/messageService.js';
 
 // Validation schemas
 const conversationIdSchema = z.object({

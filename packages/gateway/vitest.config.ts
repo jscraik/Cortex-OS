@@ -5,9 +5,7 @@ export default defineConfig({
 		environment: 'node',
 		globals: true,
 		include: ['**/__tests__/**/*.test.ts', '**/*.spec.ts', '**/*.test.ts'],
-		exclude: [
-			'../../**', // keep Vitest confined to this package
-		],
+		exclude: ['node_modules/**', 'dist/**'],
 	},
 	esbuild: { target: 'node18' },
 });

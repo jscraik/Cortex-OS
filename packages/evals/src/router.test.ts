@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { RouterOptions, routerSuite, runRouterSuite } from './suites/router';
+import { RouterOptions, routerSuite, runRouterSuite } from './suites/router.js';
 
 describe('runRouterSuite', () => {
 	const baseRouter = {

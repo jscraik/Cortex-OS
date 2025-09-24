@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import type { Request, Response } from 'express';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 type MapFile = { path: string; kind: 'repo' | 'context' };
 

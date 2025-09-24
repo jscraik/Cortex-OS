@@ -1,6 +1,6 @@
 import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { describe, expect, it } from 'vitest';
-import { CORTEX_OS_EVENT_SOURCE, createCortexOsBus } from '../../src/a2a';
+import { CORTEX_OS_EVENT_SOURCE, createCortexOsBus } from '../../src/a2a.js';
 
 /**
  * Minimal smoke test for A2A bus with ACL + schema registry

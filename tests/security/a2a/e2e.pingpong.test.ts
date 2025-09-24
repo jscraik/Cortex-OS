@@ -20,7 +20,7 @@ describe.skip('A2A ping-pong e2e', () => {
 			occurredAt: new Date().toISOString(),
 			headers: {},
 			payload: {},
-		} as any);
+		} as unknown);
 		expect(pong).toBe(true);
 	});
 });

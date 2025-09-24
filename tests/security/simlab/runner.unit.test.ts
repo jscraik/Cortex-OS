@@ -10,7 +10,7 @@ it('reaches target deterministically', async () => {
 		seed: { value: 123 },
 		agent: { id: 'a', kind: 'rule' },
 		env: { id: 'e', kind: 'local-counter' },
-	} as any;
+	} as unknown;
 	const res = await runScenario(scenario, counterEnv({ start: 0, target: 3 }), greedyToTarget());
 	expect(res.transitions.at(-1)?.done).toBe(true);
 	expect(res.totalReward).toBeCloseTo(1, 5);
@@ -23,7 +23,7 @@ it('produces identical runs for the same seed', async () => {
 		seed: { value: 42 },
 		agent: { id: 'a', kind: 'rule' },
 		env: { id: 'e', kind: 'local-counter' },
-	} as any;
+	} as unknown;
 	const run1 = await runScenario(scenario, counterEnv({ start: 0, target: 3 }), greedyToTarget());
 	const run2 = await runScenario(scenario, counterEnv({ start: 0, target: 3 }), greedyToTarget());
 	expect(run1).toEqual(run2);

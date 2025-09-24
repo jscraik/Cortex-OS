@@ -6,7 +6,7 @@ import {
 	hasSlugCollision,
 	normalizeReferenceLinks,
 	sanitizeMdxContent,
-} from '../sync-docs';
+} from '../sync-docs.js';
 
 // Clean, authoritative test suite for sanitizer behavior post fence-normalization refactor.
 

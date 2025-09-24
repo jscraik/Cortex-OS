@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RateLimiter } from '../../src/middleware/rate-limit';
+import { RateLimiter } from '../../src/middleware/rate-limit.js';
 
 describe('Rate Limiter Middleware', () => {
 	let app: Hono;

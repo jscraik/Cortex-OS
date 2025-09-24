@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { describe, expect, it } from 'vitest';
-import { MTLSClient } from './mtls';
+import { MTLSClient } from './mtls.js';
 
 const config = {
 	caCertificate: 'ca',

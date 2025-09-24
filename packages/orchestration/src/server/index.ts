@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { errorHandler } from './middleware/error-handler';
-import { requestId } from './middleware/request-id';
-import { requestLimit } from './middleware/request-limit';
+import { errorHandler } from './middleware/error-handler.js';
+import { requestId } from './middleware/request-id.js';
+import { requestLimit } from './middleware/request-limit.js';
 import { routes } from './routes';
 
 // Request schema for agent execution

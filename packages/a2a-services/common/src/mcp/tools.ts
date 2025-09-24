@@ -84,7 +84,6 @@ function checkRate(tool: string): boolean {
 
 // Security placeholder (inject later) -------------------------------------------------
 function securityCheck(_operation: string): void {
-	// eslint-disable-line @typescript-eslint/no-unused-vars
 	// Placeholder: integrate with security/access control package.
 	return; // No-op for now.
 }

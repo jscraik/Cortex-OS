@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
-import { executeAgentSchema } from '../index';
+import { executeAgentSchema } from '../index.js';
 
 export const routes = new Hono();
 

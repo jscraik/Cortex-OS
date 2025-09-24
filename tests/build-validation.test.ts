@@ -21,6 +21,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const workspaceRoot = join(__dirname, '../../..');
 
+interface CommandOptions {
+	timeout?: number;
+	encoding?: string;
+}
+
+interface CommandResult {
+	success: boolean;
+	output?: string;
+	error?: string;
+	exitCode: number;
+}
+
+interface NXViolation {
+	file: string;
+	line?: number;
+	issue: string;
+	content?: string;
+}
+
 class BuildValidationSuite {
 	projectFiles: string[];
 	packageFiles: string[];
@@ -59,15 +78,12 @@ class BuildValidationSuite {
 						await walk(fullPath);
 					}
 				} else {
-					if (pattern === '**/project.json' && entry === 'project.json') {
-						files.push(fullPath);
-					} else if (pattern === '**/package.json' && entry === 'package.json') {
-						files.push(fullPath);
-					} else if (
-						pattern === '**/*.{ts,tsx}' &&
-						/\.(ts|tsx)$/.test(entry) &&
-						!entry.endsWith('.d.ts')
-					) {
+					const isMatch =
+						(pattern === '**/project.json' && entry === 'project.json') ||
+						(pattern === '**/package.json' && entry === 'package.json') ||
+						(pattern === '**/*.{ts,tsx}' && /\.(ts|tsx)$/.test(entry) && !entry.endsWith('.d.ts'));
+
+					if (isMatch) {
 						files.push(fullPath);
 					}
 				}
@@ -78,7 +94,7 @@ class BuildValidationSuite {
 		return files;
 	}
 
-	async runCommand(command: string, options: any = {}): Promise<any> {
+	async runCommand(command: string, options: CommandOptions = {}): Promise<CommandResult> {
 		try {
 			const result = execSync(command, {
 				cwd: workspaceRoot,
@@ -87,12 +103,13 @@ class BuildValidationSuite {
 				...options,
 			});
 			return { success: true, output: result, exitCode: 0 };
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const errorObj = error as { stdout?: string; stderr?: string; message?: string; status?: number };
 			return {
 				success: false,
-				output: error.stdout || error.message,
-				error: error.stderr || error.message,
-				exitCode: error.status || 1,
+				output: errorObj.stdout || errorObj.message || '',
+				error: errorObj.stderr || errorObj.message || '',
+				exitCode: errorObj.status || 1,
 			};
 		}
 	}
@@ -109,7 +126,7 @@ describe('brAInwav Build Validation Suite', () => {
 		it('should have valid workspaceRoot token usage in all project.json files', async () => {
 			console.log('\n🔍 Validating NX workspaceRoot token usage...');
 
-			const violations: any[] = [];
+			const violations: NXViolation[] = [];
 
 			for (const projectFile of buildSuite.projectFiles) {
 				try {
@@ -140,10 +157,11 @@ describe('brAInwav Build Validation Suite', () => {
 							}
 						}
 					}
-				} catch (error: any) {
+				} catch (error: unknown) {
+					const errorObj = error as { message?: string };
 					violations.push({
 						file: relative(workspaceRoot, projectFile),
-						issue: `Failed to parse project.json: ${error.message}`,
+						issue: `Failed to parse project.json: ${errorObj.message || 'Unknown error'}`,
 					});
 				}
 			}

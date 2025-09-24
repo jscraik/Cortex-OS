@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { CheckpointStore } from '../../src/persistence/checkpoint-store';
+import { CheckpointStore } from '../../src/persistence/checkpoint-store.js';
 
 describe('CheckpointStore', () => {
 	let checkpointStore: CheckpointStore;

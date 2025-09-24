@@ -1,83 +1,3 @@
-# Top-level endpoint handlers
-def embed_endpoint(
-    req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus
-) -> Any:
-    text = req.text
-    if text is None:
-        return _validation_error("text field missing")
-    try:
-        import time
-
-        start_time = time.time()
-        result = embedding_service.generate_single(
-            text, normalize=req.normalize is not False
-        )
-        processing_time = time.time() - start_time
-        import asyncio
-
-        try:
-            event = create_mlx_embedding_event(
-                request_id=f"embed_{int(time.time() * 1000)}",
-                text_count=1,
-                total_chars=len(text),
-                processing_time=processing_time,
-                model_used=getattr(result, "model_name", "unknown"),
-                dimension=len(result.embedding) if result.embedding else 0,
-                success=True,
-            )
-            asyncio.create_task(a2a.publish(event))
-        except Exception as e:
-            logger.warning(f"Failed to publish A2A embedding event: {e}")
-    except ServiceError as exc:
-        return _handle_service_error(exc)
-    return {"embedding": result.embedding}
-
-
-def embeddings_endpoint(
-    req: EmbedRequest, embedding_service: EmbeddingService, a2a: A2ABus
-) -> Any:
-    if req.texts is None or not req.texts:
-        return _validation_error("texts field must be a non-empty list")
-    try:
-        import time
-
-        start_time = time.time()
-        result = embedding_service.generate_batch(
-            req.texts, normalize=req.normalize is not False
-        )
-        processing_time = time.time() - start_time
-        import asyncio
-
-        try:
-            total_chars = sum(len(text) for text in req.texts)
-            event = create_mlx_embedding_event(
-                request_id=f"batch_{int(time.time() * 1000)}",
-                text_count=len(req.texts),
-                total_chars=total_chars,
-                processing_time=processing_time,
-                model_used=getattr(result, "model_name", "unknown"),
-                dimension=len(result.embeddings[0])
-                if result.embeddings and result.embeddings[0]
-                else 0,
-                success=True,
-            )
-            asyncio.create_task(a2a.publish(event))
-        except Exception as e:
-            logger.warning(f"Failed to publish A2A batch embedding event: {e}")
-    except ServiceError as exc:
-        return _handle_service_error(exc)
-    return {"embeddings": result.embeddings}
-
-
-def _register_endpoints(app: FastAPI, embedding_service: EmbeddingService, a2a: A2ABus):
-    app.post("/embed", responses={422: {"model": ErrorResponse}})(
-        lambda req: embed_endpoint(req, embedding_service, a2a)
-    )
-    app.post("/embeddings", responses={422: {"model": ErrorResponse}})(
-        lambda req: embeddings_endpoint(req, embedding_service, a2a)
-    )
-
-
 from __future__ import annotations
 
 import logging
@@ -107,6 +27,10 @@ from cortex_py.a2a import (  # noqa: E402
 )
 from cortex_py.generator import (  # noqa: E402  - import after sys.path mutation
     build_embedding_generator,
+)
+from cortex_py.hybrid_config import (  # noqa: E402
+    get_hybrid_config,
+    validate_hybrid_deployment,
 )
 from cortex_py.services import (  # noqa: E402
     EmbeddingService,
@@ -142,7 +66,27 @@ def create_app(
 ) -> FastAPI:
     """Instantiate the FastAPI application and shared embedding service."""
 
-    app = FastAPI()
+    # Initialize hybrid configuration
+    hybrid_config = get_hybrid_config()
+    logger.info(
+        f"{hybrid_config.log_prefix} Initializing MLX service with hybrid strategy"
+    )
+    logger.info(
+        f"{hybrid_config.log_prefix} MLX priority: {hybrid_config.mlx_priority}"
+    )
+    logger.info(f"{hybrid_config.log_prefix} Hybrid mode: {hybrid_config.hybrid_mode}")
+
+    # Validate deployment readiness
+    if not validate_hybrid_deployment():
+        logger.warning(
+            f"{hybrid_config.log_prefix} Hybrid deployment validation failed, continuing with degraded service"
+        )
+
+    app = FastAPI(
+        title="brAInwav Cortex-OS MLX Service",
+        description="MLX-first embedding service with hybrid model integration",
+        version="1.0.0",
+    )
 
     resolved_generator = build_embedding_generator(
         generator=generator,
@@ -277,5 +221,30 @@ def create_app(
         except ServiceError as exc:
             return _handle_service_error(exc)
         return {"embeddings": result.embeddings}
+
+    @app.get("/health")
+    def health():
+        """Health endpoint with hybrid configuration info"""
+        health_info = hybrid_config.get_health_info()
+        embedding_config = hybrid_config.get_embedding_config()
+
+        return {
+            "status": "healthy",
+            "service": "brAInwav Cortex-OS MLX",
+            "company": hybrid_config.company,
+            "hybrid_config": health_info,
+            "embedding_config": embedding_config,
+            "mlx_first_priority": hybrid_config.mlx_priority,
+            "deployment_ready": health_info["status"] in ["healthy", "degraded"],
+        }
+
+    @app.get("/models")
+    def models():
+        """List available MLX models for hybrid routing"""
+        return {
+            "models": list(hybrid_config.required_models.keys()),
+            "model_details": hybrid_config.required_models,
+            "validation": hybrid_config.validate_models(),
+        }
 
     return app

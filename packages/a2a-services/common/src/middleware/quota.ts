@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import { serviceMetrics } from '../metrics/serviceMetrics';
-import { createQuotaStore, type QuotaStore } from '../quota/QuotaStore';
+import { serviceMetrics } from '../metrics/serviceMetrics.js';
+import { createQuotaStore, type QuotaStore } from '../quota/QuotaStore.js';
 
 export interface QuotaOptions {
 	/** Maximum total requests allowed */

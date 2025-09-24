@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { startScheduler } from '../core/scheduler';
+import { startScheduler } from '../core/scheduler.js';
 
 describe('scheduler', () => {
 	it('runs task on schedule', () => {

@@ -16,7 +16,7 @@ describe('MLXClient', () => {
 	let mockRunProcess: ReturnType<typeof vi.fn>;
 
 	beforeEach(async () => {
-		const { runProcess } = await import('../../src/lib/run-process.js');
+		const { runProcess } = await import('../../src/lib/run-process');
 		mockRunProcess = runProcess as ReturnType<typeof vi.fn>;
 		client = new MLXClient();
 	});

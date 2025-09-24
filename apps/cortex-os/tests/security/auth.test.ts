@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { ensureConfigDir, getConfigPath } from '../../src/platform/xdg';
+import { ensureConfigDir, getConfigPath } from '../../src/platform/xdg.js';
 import {
 	AuthHttpError,
 	authenticateRequest,
@@ -10,7 +10,7 @@ import {
 	generateToken,
 	initializeAuth,
 	validateToken,
-} from '../../src/security/auth';
+} from '../../src/security/auth.js';
 
 let tempDir: string;
 

@@ -1,6 +1,6 @@
 import { createJWTAuth, type JWTAuth } from '../auth/jwt-auth.js';
-import { HTTPException } from '../errors.js';
-import { Server } from '../server.js';
+import { HTTPException } from '../errors';
+import { Server } from '../server';
 
 interface AuthServerConfig {
 	jwt?: JWTAuth;

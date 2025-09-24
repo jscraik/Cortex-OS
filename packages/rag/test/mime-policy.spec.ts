@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MimePolicyEngine, ProcessingStrategy } from '../src/policy/mime';
+import { MimePolicyEngine, ProcessingStrategy } from '../src/policy/mime.js';
 
 describe('MimePolicyEngine.parseStrategy', () => {
 	it('routes text/plain to native text chunker', () => {

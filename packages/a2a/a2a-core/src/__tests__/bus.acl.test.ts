@@ -1,6 +1,6 @@
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import { describe, expect, it, vi } from 'vitest';
-import { createBus, type Transport } from '../bus';
+import { createBus, type Transport } from '../bus.js';
 
 function stubTransport(): Transport {
 	return {

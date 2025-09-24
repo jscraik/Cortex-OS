@@ -16,11 +16,11 @@ import { z } from 'zod';
 // Load environment variables from .env file
 dotenv.config();
 
-import { AutoFixEngine } from '../core/auto-fix-engine';
-import { CORTEX_STRUCTURE_RULES, StructureValidator } from '../core/structure-validator';
-import { analyzeBackendStructure } from '../lib/backend-structure-agent';
-import { ContextAnalyzer } from '../lib/context-analyzer';
-import { analyzeFrontendStructure } from '../lib/frontend-structure-agent';
+import { AutoFixEngine } from '../core/auto-fix-engine.js';
+import { CORTEX_STRUCTURE_RULES, StructureValidator } from '../core/structure-validator.js';
+import { analyzeBackendStructure } from '../lib/backend-structure-agent.js';
+import { ContextAnalyzer } from '../lib/context-analyzer.js';
+import { analyzeFrontendStructure } from '../lib/frontend-structure-agent.js';
 
 // Environment validation
 const envSchema = z.object({
@@ -1100,7 +1100,7 @@ function generateAnalysisComment(analysis: any, user: string, _changedFiles: str
 
 async function cloneRepository(cloneUrl: string, sha: string): Promise<string> {
 	// Import security validators
-	const { validateGitHubUrl, validateCommitSha } = await import('../lib/security-validators.js');
+	const { validateGitHubUrl, validateCommitSha } = await import('../lib/security-validators');
 
 	// Use strengthened security validation
 	const urlValidation = validateGitHubUrl(cloneUrl);

@@ -8,7 +8,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
-import Fuse from 'fuse.js';
+import Fuse from 'fuse';
 import type {
 	ApiResponse,
 	RegistryIndex,

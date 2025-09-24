@@ -4,7 +4,7 @@ vi.mock('@cortex-os/orchestration', () => ({
 	createEngine: (config: unknown) => ({ config }),
 }));
 
-import { createPRPOrchestrationEngine } from './create-prp-orchestration-engine';
+import { createPRPOrchestrationEngine } from './create-prp-orchestration-engine.js';
 
 describe('createPRPOrchestrationEngine', () => {
 	it('returns engine with parsed configuration', () => {

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
-import type { FrontierAdapter } from '../src/adapters/frontier-adapter';
-import type { MLXAdapter } from '../src/adapters/mlx-adapter';
-import type { OllamaAdapter } from '../src/adapters/ollama-adapter';
-import { ModelRouter } from '../src/model-router';
+import type { FrontierAdapter } from '../src/adapters/frontier-adapter.js';
+import type { MLXAdapter } from '../src/adapters/mlx-adapter.js';
+import type { OllamaAdapter } from '../src/adapters/ollama-adapter.js';
+import { ModelRouter } from '../src/model-router.js';
 
 /**
  * Integration tests ensuring ModelRouter can utilize the Frontier adapter

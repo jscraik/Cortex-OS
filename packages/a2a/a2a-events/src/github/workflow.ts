@@ -4,7 +4,7 @@ import {
 	GitHubRepositorySchema,
 	type GitHubUser,
 	GitHubUserSchema,
-} from './repository';
+} from './repository.js';
 
 // Workflow Commit Schema
 export const WorkflowCommitSchema = z.object({

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { SuiteOutcome } from '../types';
+import type { SuiteOutcome } from '../types.js';
 
 export interface Router {
 	initialize(): Promise<void>;

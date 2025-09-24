@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import 'dotenv/config';
-import { MemoryService } from '../MemoryService.js';
+import { MemoryService } from '../MemoryService';
 
 (async () => {
 	const embedder = {

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createDatabase, type DatabaseConfig } from '../../src/persistence/database';
+import { createDatabase, type DatabaseConfig } from '../../src/persistence/database.js';
 
 describe('Database', () => {
 	let db: Database;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ingestText } from '../src/pipeline/ingest';
-import { memoryStore } from '../src/store/memory';
+import { ingestText } from '../src/pipeline/ingest.js';
+import { memoryStore } from '../src/store/memory.js';
 
 class StubEmbedder {
 	async embed(texts: string[]): Promise<number[][]> {

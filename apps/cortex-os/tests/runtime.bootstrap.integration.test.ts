@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { startRuntime } from '../src/runtime';
+import { startRuntime } from '../src/runtime.js';
 
 interface RunningRuntime {
 	httpUrl: string;

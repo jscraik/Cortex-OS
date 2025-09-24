@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
-import type { MetricsCollector } from '../../../src/monitoring/metrics';
+import type { MetricsCollector } from '../../../src/monitoring/metrics.js';
 
 describe('Metrics Routes - Simple Tests', () => {
 	let app: Hono<{ Variables: { metricsCollector?: MetricsCollector } }>;

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../../../src/server/handlers/health.handler');
 
 // Import after mocking to get the mocked version
-import { HealthHandler } from '../../../src/server/handlers/health.handler';
+import { HealthHandler } from '../../../src/server/handlers/health.handler.js';
 
 // Create typed mock for HealthHandler
 const MockedHealthHandler = vi.mocked(HealthHandler);
@@ -28,7 +28,7 @@ MockedHealthHandler.mockImplementation(
 );
 
 // Import after mocking
-import { healthRoutes } from '../../../src/server/routes/health.routes';
+import { healthRoutes } from '../../../src/server/routes/health.routes.js';
 
 describe('Health Routes - Advanced Tests', () => {
 	let app: Hono;

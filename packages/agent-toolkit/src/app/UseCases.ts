@@ -19,7 +19,7 @@ export class ToolExecutorUseCase implements ToolExecutor {
 	constructor(
 		private readonly toolRegistry: ToolRegistry,
 		private readonly events?: ToolExecutionEvents,
-	) {}
+	) { }
 
 	async execute(toolName: string, inputs: AgentToolkitInput): Promise<AgentToolkitResult> {
 		const context: ToolExecutionContext = {
@@ -98,7 +98,7 @@ export class ToolExecutorUseCase implements ToolExecutor {
  * Use case for batch operations
  */
 export class BatchToolExecutorUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) {}
+	constructor(private readonly toolExecutor: ToolExecutor) { }
 
 	/**
 	 * Execute multiple tools in parallel
@@ -131,7 +131,7 @@ export class BatchToolExecutorUseCase {
  * Specialized use case for code search operations
  */
 export class CodeSearchUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) {}
+	constructor(private readonly toolExecutor: ToolExecutor) { }
 
 	/**
 	 * Multi-tool search: searches using ripgrep, semgrep, and ast-grep
@@ -168,7 +168,9 @@ export class CodeSearchUseCase {
 				if (result.results && result.results.length > 0) {
 					return result;
 				}
-			} catch {}
+			} catch {
+				// ignore and try next tool
+			}
 		}
 
 		// If all tools failed or returned no results
@@ -180,13 +182,44 @@ export class CodeSearchUseCase {
 			error: 'No results found with any search tool',
 		};
 	}
+
+	/**
+	 * Multi-search with optional chunked context building from matched files
+	 */
+	async multiSearchWithContext(
+		pattern: string,
+		path: string,
+		opts?: {
+			tokenBudget?: { maxTokens: number; trimToTokens?: number }; useTreeSitter?: boolean;
+			maxChunkChars?: number; overlap?: number; language?: 'js' | 'ts' | 'python' | 'go' | 'any'
+		}
+	): Promise<{
+		ripgrep: AgentToolkitResult;
+		semgrep: AgentToolkitResult;
+		astGrep: AgentToolkitResult;
+		context: import('../semantics/ContextBuilder').ChunkedContext | null;
+	}> {
+		const raw = await this.multiSearch(pattern, path);
+		const files = collectFilesFromResults([raw.ripgrep, raw.semgrep, raw.astGrep]);
+		if (files.length === 0) return { ...raw, context: null };
+		const { buildChunkedContext } = await import('../semantics/ContextBuilder.js');
+		const context = await buildChunkedContext({
+			files,
+			tokenBudget: opts?.tokenBudget,
+			useTreeSitter: opts?.useTreeSitter ?? tsFlag(),
+			maxChunkChars: opts?.maxChunkChars,
+			overlap: opts?.overlap,
+			language: opts?.language,
+		});
+		return { ...raw, context };
+	}
 }
 
 /**
  * Specialized use case for code quality operations
  */
 export class CodeQualityUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) {}
+	constructor(private readonly toolExecutor: ToolExecutor) { }
 
 	/**
 	 * Comprehensive validation of a set of files
@@ -207,9 +240,9 @@ export class CodeQualityUseCase {
 		let totalIssues = 0;
 
 		// Categorize files by type
-		const jsFiles = files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/));
-		const pyFiles = files.filter((f) => f.match(/\.py$/));
-		const rsFiles = files.filter((f) => f.match(/\.rs$/));
+		const jsFiles = files.filter((f) => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.js') || f.endsWith('.jsx'));
+		const pyFiles = files.filter((f) => f.endsWith('.py'));
+		const rsFiles = files.filter((f) => f.endsWith('.rs'));
 
 		// Run appropriate validators
 		if (jsFiles.length > 0) {
@@ -258,4 +291,49 @@ export class CodeQualityUseCase {
 			},
 		};
 	}
+
+	/**
+	 * Smart validation: chunk/prune large file sets and return per-file token summary when requested
+	 */
+	async validateProjectSmart(
+		files: string[],
+		opts?: { tokenBudget?: { maxTokens: number; trimToTokens?: number }; useTreeSitter?: boolean; maxFiles?: number },
+	): Promise<{
+		report: Awaited<ReturnType<CodeQualityUseCase['validateProject']>>;
+		context?: Array<{ file: string; totalTokens: number }>;
+	}> {
+		const maxFiles = Math.max(1, opts?.maxFiles ?? 500);
+		const target = files.slice(0, maxFiles);
+		const report = await this.validateProject(target);
+		let context: Array<{ file: string; totalTokens: number }> | undefined;
+		if (target.length > 50 || opts?.tokenBudget) {
+			const { buildChunkedContext } = await import('../semantics/ContextBuilder.js');
+			const cc = await buildChunkedContext({
+				files: target,
+				tokenBudget: opts?.tokenBudget,
+				useTreeSitter: opts?.useTreeSitter ?? tsFlag(),
+			});
+			const perFile = new Map<string, number>();
+			for (const c of cc.chunks) perFile.set(c.file, (perFile.get(c.file) ?? 0) + c.tokens);
+			context = [...perFile.entries()].map(([file, totalTokens]) => ({ file, totalTokens }));
+		}
+		return { report, context };
+	}
+}
+
+function collectFilesFromResults(results: AgentToolkitResult[]): string[] {
+	const set = new Set<string>();
+	for (const r of results) {
+		const arr = (r as unknown as { results?: unknown }).results;
+		if (!Array.isArray(arr)) continue;
+		for (const entry of arr) {
+			const maybe = entry as { file?: unknown };
+			if (maybe && typeof maybe.file === 'string') set.add(maybe.file);
+		}
+	}
+	return [...set];
+}
+
+function tsFlag(): boolean {
+	return process.env.CORTEX_TS_BOUNDARIES === '1' || process.env.CORTEX_TS_BOUNDARIES === 'true';
 }

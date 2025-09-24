@@ -1,3 +1,3 @@
-export { WebSocketClient } from './client';
-export * from './types';
-export { WebSocketServer } from './websocket';
+export { WebSocketClient } from './client.js';
+export * from './types.js';
+export { WebSocketServer } from './websocket.js';

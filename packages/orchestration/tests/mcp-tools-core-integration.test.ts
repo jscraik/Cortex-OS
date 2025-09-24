@@ -23,7 +23,7 @@ vi.mock('../src/service.js', () => ({
 }));
 
 vi.mock('../src/observability/otel.js', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('../src/observability/otel.js')>();
+	const actual = await importOriginal<typeof import('../src/observability/otel')>();
 	return {
 		...actual,
 		withEnhancedSpan: vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn()),
@@ -53,13 +53,13 @@ describe('orchestration MCP tools integration with core service', () => {
 			executionResults: { summary: 'ok' },
 		});
 
-		auditModule = await import('../src/lib/audit.js');
+		auditModule = await import('../src/lib/audit');
 		if (auditModule.enableMemoryAuditBuffer) {
 			auditModule.enableMemoryAuditBuffer();
 		}
 		recordSpy = vi.spyOn(auditModule, 'record').mockResolvedValue();
 
-		const toolsModule: any = await import('../src/mcp/tools.js');
+		const toolsModule: any = await import('../src/mcp/tools');
 		workflowTool = toolsModule.workflowOrchestrationTool;
 		configureTools = toolsModule.configureOrchestrationMcp ?? (() => {});
 		resetTools = toolsModule.__resetOrchestrationMcpState ?? (() => {});

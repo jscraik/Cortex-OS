@@ -6,8 +6,8 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Finding, ValidatorConfig } from './types';
-import { EvidenceValidator } from './validator';
+import type { Finding, ValidatorConfig } from './types.js';
+import { EvidenceValidator } from './validator.js';
 
 describe('Evidence Validator', () => {
 	let validator: EvidenceValidator;

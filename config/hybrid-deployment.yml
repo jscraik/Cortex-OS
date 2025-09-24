@@ -1,0 +1,214 @@
+# brAInwav Cortex-OS Hybrid Model Deployment Configuration
+# Ensures MLX-first routing with Ollama Cloud conjunction is deployment ready
+
+version: '3.8'
+
+x-brainwav-labels: &brainwav-labels
+  brainwav.cortex.company: "brAInwav"
+  brainwav.cortex.deployment: "hybrid-model-strategy"
+  brainwav.cortex.mlx-first: "true"
+  brainwav.cortex.ollama-cloud: "enabled"
+
+x-common-environment: &common-environment
+  # MLX Configuration
+  MLX_BASE_URL: "${MLX_HOST_URL:-http://host.docker.internal:8081}"
+  MLX_CACHE_DIR: "/Volumes/ExternalSSD/ai-cache/huggingface"
+  MLX_MODEL_PATH: "/Volumes/ExternalSSD/ai-models"
+  
+  # Ollama Configuration
+  OLLAMA_BASE_URL: "${OLLAMA_URL:-http://localhost:11434}"
+  OLLAMA_CLOUD_ENABLED: "true"
+  
+  # Model Gateway Configuration
+  MODEL_GATEWAY_URL: "http://localhost:8080"
+  
+  # Hybrid Strategy Configuration
+  CORTEX_HYBRID_MODE: "performance"
+  CORTEX_MLX_FIRST_PRIORITY: "100"
+  CORTEX_PRIVACY_MODE: "${PRIVACY_MODE:-false}"
+  CORTEX_CONJUNCTION_ENABLED: "true"
+  
+  # brAInwav Branding
+  CORTEX_COMPANY: "brAInwav"
+  CORTEX_LOG_PREFIX: "brAInwav Cortex-OS:"
+  
+  # Health Check URLs
+  MLX_HEALTH_URL: "http://host.docker.internal:8081/health"
+  OLLAMA_HEALTH_URL: "http://localhost:11434/api/tags"
+  
+services:
+  # Model Gateway - Central hybrid routing hub
+  model-gateway:
+    container_name: brainwav_cortex_model_gateway
+    build:
+      context: ../
+      dockerfile: packages/model-gateway/Dockerfile
+    environment:
+      <<: *common-environment
+      NODE_ENV: production
+      MODEL_GATEWAY_PORT: "8080"
+      # Enhanced hybrid configuration
+      HYBRID_ROUTING_ENABLED: "true"
+      PARALLEL_VERIFICATION_ENABLED: "true"
+      SEQUENTIAL_ENHANCEMENT_ENABLED: "true"
+      SPECIALIZED_DELEGATION_ENABLED: "true"
+      CONSENSUS_VOTING_ENABLED: "false"
+    ports:
+      - "${MODEL_GATEWAY_PORT:-8080}:8080"
+    volumes:
+      - ../config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    labels:
+      <<: *brainwav-labels
+      brainwav.cortex.service: "model-gateway"
+      brainwav.cortex.tier: "core"
+    restart: unless-stopped
+
+  # Cortex OS - Main application with hybrid routing
+  cortex-os:
+    container_name: brainwav_cortex_os
+    build:
+      context: ../
+      dockerfile: apps/cortex-os/Dockerfile
+    environment:
+      <<: *common-environment
+      # Orchestration Configuration
+      ORCHESTRATION_MLX_MODELS_COUNT: "7"
+      ORCHESTRATION_PRIMARY_MODEL: "glm-4.5"
+      ORCHESTRATION_VISION_MODEL: "qwen2.5-vl"
+      ORCHESTRATION_EMBEDDING_MODEL: "qwen3-embedding-4b"
+      ORCHESTRATION_RERANKER_MODEL: "qwen3-reranker-4b"
+      ORCHESTRATION_LIGHTWEIGHT_MODEL: "gemma-3-270m"
+      ORCHESTRATION_BALANCED_MODEL: "gemma-2-2b"
+      ORCHESTRATION_ULTRA_LIGHT_MODEL: "smollm-135m"
+    depends_on:
+      model-gateway:
+        condition: service_healthy
+    volumes:
+      - ../config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      <<: *brainwav-labels
+      brainwav.cortex.service: "cortex-os"
+      brainwav.cortex.tier: "application"
+    restart: unless-stopped
+
+  # API Service with hybrid integration
+  cortex-api:
+    container_name: brainwav_cortex_api
+    build:
+      context: ../
+      dockerfile: apps/api/Dockerfile
+    environment:
+      <<: *common-environment
+      API_PORT: "8000"
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      model-gateway:
+        condition: service_healthy
+    volumes:
+      - ../config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    labels:
+      <<: *brainwav-labels
+      brainwav.cortex.service: "api"
+      brainwav.cortex.tier: "service"
+    restart: unless-stopped
+
+  # Web UI with hybrid model access
+  cortex-webui:
+    container_name: brainwav_cortex_webui
+    build:
+      context: ../
+      dockerfile: apps/cortex-webui/Dockerfile
+    environment:
+      <<: *common-environment
+      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      NEXT_PUBLIC_MODEL_GATEWAY_URL: "http://localhost:8080"
+    ports:
+      - "${WEBUI_PORT:-3000}:3000"
+    depends_on:
+      cortex-api:
+        condition: service_healthy
+      model-gateway:
+        condition: service_healthy
+    volumes:
+      - ../config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      <<: *brainwav-labels
+      brainwav.cortex.service: "webui"
+      brainwav.cortex.tier: "frontend"
+    restart: unless-stopped
+
+  # Model Health Monitor
+  model-health-monitor:
+    container_name: brainwav_model_health_monitor
+    image: alpine/curl:latest
+    environment:
+      <<: *common-environment
+    command: |
+      sh -c "
+        echo 'brAInwav Cortex-OS: Starting hybrid model health monitoring...'
+        while true; do
+          echo 'brAInwav Cortex-OS: Checking MLX health...'
+          curl -fsS $$MLX_HEALTH_URL || echo 'brAInwav Cortex-OS: MLX health check failed'
+          
+          echo 'brAInwav Cortex-OS: Checking Ollama health...'
+          curl -fsS $$OLLAMA_HEALTH_URL || echo 'brAInwav Cortex-OS: Ollama health check failed'
+          
+          echo 'brAInwav Cortex-OS: Checking Model Gateway health...'
+          curl -fsS $$MODEL_GATEWAY_URL/health || echo 'brAInwav Cortex-OS: Model Gateway health check failed'
+          
+          sleep 30
+        done
+      "
+    depends_on:
+      model-gateway:
+        condition: service_healthy
+    labels:
+      <<: *brainwav-labels
+      brainwav.cortex.service: "health-monitor"
+      brainwav.cortex.tier: "monitoring"
+    restart: unless-stopped
+
+volumes:
+  mlx-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /Volumes/ExternalSSD/ai-cache
+  
+  model-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /Volumes/ExternalSSD/ai-models
+
+networks:
+  default:
+    name: brainwav-cortex-hybrid
+    driver: bridge

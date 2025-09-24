@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { HealthHandler } from '../handlers/health.handler';
+import { HealthHandler } from '../handlers/health.handler.js';
 
 const healthHandler = new HealthHandler();
 

@@ -6,8 +6,8 @@
 import { exec } from 'node:child_process';
 import fs from 'node:fs';
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { EvaluationNode } from '../../src/nodes/evaluation';
-import { createInitialPRPState, type PRPState } from '../../src/state';
+import { EvaluationNode } from '../../src/nodes/evaluation.js';
+import { createInitialPRPState, type PRPState } from '../../src/state.js';
 
 // Mock dependencies
 vi.mock('fs');

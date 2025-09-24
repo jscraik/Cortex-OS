@@ -13,9 +13,9 @@ vi.mock('./suites/router', () => ({
 	},
 }));
 
-import { runGate } from './index';
-import { ragSuite } from './suites/rag';
-import { routerSuite } from './suites/router';
+import { runGate } from './index.js';
+import { ragSuite } from './suites/rag.js';
+import { routerSuite } from './suites/router.js';
 
 describe('runGate', () => {
 	const dataset = { docs: [], queries: [] };

@@ -10,15 +10,15 @@ async function run() {
 		switch (scriptName) {
 			case 'stdio':
 				// Import and run the default server
-				await import('./stdio.js');
+				await import('./stdio');
 				break;
 			case 'sse':
 				// Import and run the SSE server
-				await import('./sse.js');
+				await import('./sse');
 				break;
 			case 'streamableHttp':
 				// Import and run the streamable HTTP server
-				await import('./streamableHttp.js');
+				await import('./streamableHttp');
 				break;
 			default:
 				console.error(`Unknown script: ${scriptName}`);

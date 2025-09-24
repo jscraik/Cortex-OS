@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { createTransport } from '../packages/mcp/src/lib/transport.js';
+import { createTransport } from '../packages/mcp/src/lib/transport';
 
 describe('Transport Integration', () => {
 	it('writes messages to child stdin for stdio transport', async () => {
@@ -49,7 +49,7 @@ describe('Transport Integration', () => {
 
 		await new Promise<void>((resolve) => server.listen(0, resolve));
 		const address = server.address();
-		if (!address || typeof address === 'string' || typeof (address as any).port !== 'number') {
+		if (!address || typeof address === 'string' || typeof (address as unknown).port !== 'number') {
 			throw new Error('Server address is not AddressInfo with port');
 		}
 		const port = (address as import('net').AddressInfo).port;

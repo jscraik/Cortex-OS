@@ -1,8 +1,8 @@
 // Integrations Package - Main exports
 
 // Core functionality (when implemented)
-// export * from './core/index.js';
-// export * from './types/index.js';
+// export * from './core/index';
+// export * from './types/index';
 
 // A2A Events
 export {

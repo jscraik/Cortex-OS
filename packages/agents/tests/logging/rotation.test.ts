@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Logger } from '../../src/logging/logger';
-import { createRotatingFileStream } from '../../src/logging/rotation';
-import type { RotationConfig } from '../../src/logging/types';
+import { Logger } from '../../src/logging/logger.js';
+import { createRotatingFileStream } from '../../src/logging/rotation.js';
+import type { RotationConfig } from '../../src/logging/types.js';
 
 describe('Log Rotation', () => {
 	let testDir: string;

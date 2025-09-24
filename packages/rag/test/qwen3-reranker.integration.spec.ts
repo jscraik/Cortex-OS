@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Qwen3Reranker } from '../src/pipeline/qwen3-reranker';
+import { Qwen3Reranker } from '../src/pipeline/qwen3-reranker.js';
 
 const RUN_INTEGRATION = process.env.RUN_RAG_INTEGRATION === '1';
 const d = RUN_INTEGRATION ? describe : describe.skip;

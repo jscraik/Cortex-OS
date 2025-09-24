@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { requestModel } from '../src/lib/model-provider';
+import { requestModel } from '../src/lib/model-provider.js';
 
 afterEach(() => {
 	vi.restoreAllMocks();

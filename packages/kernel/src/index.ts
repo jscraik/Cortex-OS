@@ -10,7 +10,7 @@ export type {
 	GraphStateChangedEvent,
 	NodeExecutionCompletedEvent,
 	NodeExecutionFailedEvent,
-	NodeExecutionStartedEvent,
+	NodeExecutionStartedEvent
 } from './events/kernel-events.js';
 // A2A Events for inter-package communication
 export {
@@ -18,7 +18,7 @@ export {
 	GraphStateChangedEventSchema,
 	NodeExecutionCompletedEventSchema,
 	NodeExecutionFailedEventSchema,
-	NodeExecutionStartedEventSchema,
+	NodeExecutionStartedEventSchema
 } from './events/kernel-events.js';
 // Core kernel exports
 export { CortexKernel, createKernel } from './graph-simple.js';
@@ -26,7 +26,7 @@ export { CortexKernel, createKernel } from './graph-simple.js';
 export {
 	addToHistory,
 	createHistory,
-	getExecutionHistory,
+	getExecutionHistory
 } from './lib/history.js';
 export type { MCPContext, MCPTool } from './mcp/adapter.js';
 // MCP integration
@@ -38,8 +38,35 @@ export {
 	runBuildNode,
 	runEvaluationNode,
 	runStrategyNode,
-	StrategyNode,
+	StrategyNode
 } from './nodes/index.js';
+// Proof system
+export {
+	createInMemoryProofStore,
+	createProofSession,
+	finalizeProof,
+	produceProofFromScheduleResult,
+	verifyProof
+} from './proof/proofSystem.js';
+export type {
+	ProofArtifact,
+	ProofSession,
+	ProofSigner,
+	ProofStore,
+	ProofVerification
+} from './proof/proofSystem.js';
+export type {
+	ReplayTrace as DeterministicReplayTrace,
+	ScheduleOptions as DeterministicScheduleOptions,
+	ScheduleResult as DeterministicScheduleResult, DeterministicTask
+} from './scheduler/deterministicScheduler.js';
+// Deterministic scheduler (Module A)
+export {
+	executeWithSeed as deterministicExecuteWithSeed,
+	replay as deterministicReplay,
+	schedule as deterministicSchedule
+} from './scheduler/deterministicScheduler.js';
+export { createInitialPRPState, PRPStateSchema, validateStateTransition } from './state.js';
 export type {
 	CerebrumDecision,
 	EnforcementProfile,
@@ -47,22 +74,18 @@ export type {
 	GateResult,
 	HumanApproval,
 	PRPState,
-	ValidationGate,
-} from './state.js';
-export {
-	createInitialPRPState,
-	PRPStateSchema,
-	validateStateTransition,
+	ValidationGate
 } from './state.js';
 export type {
 	BehaviorExtension,
 	ExtensionContext,
-	ExtensionResult,
+	ExtensionResult
 } from './teaching/behavior-extension.js';
 // Teaching layer
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
+export { ExampleCaptureSystem } from './teaching/example-capture.js';
 export type {
 	CapturedExample,
-	TeachingPattern,
+	TeachingPattern
 } from './teaching/example-capture.js';
-export { ExampleCaptureSystem } from './teaching/example-capture.js';
+

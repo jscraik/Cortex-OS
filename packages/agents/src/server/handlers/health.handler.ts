@@ -1,6 +1,6 @@
-import { HealthMonitor } from '../../monitoring/health';
-import { MetricsCollector } from '../../monitoring/metrics';
-import { type HealthResponse, healthResponseSchema } from '../types';
+import { HealthMonitor } from '../../monitoring/health.js';
+import { MetricsCollector } from '../../monitoring/metrics.js';
+import { type HealthResponse, healthResponseSchema } from '../types.js';
 
 export class HealthHandler {
 	private healthMonitor: HealthMonitor;

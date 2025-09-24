@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CancellationError, type CancellationResult } from '../cancellation';
-import { CompensationManager } from '../compensation';
-import { run, type Workflow } from '../executor';
-import { HookManager } from '../hooks';
+import { CancellationError, type CancellationResult } from '../cancellation.js';
+import { CompensationManager } from '../compensation.js';
+import { run, type Workflow } from '../executor.js';
+import { HookManager } from '../hooks.js';
 
 interface WorkflowWithHooks extends Workflow {
 	hooks?: HookManager;

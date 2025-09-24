@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { authUtils } from '../auth';
-import { HttpError } from '../middleware/errorHandler';
-import { OAuthService, oauthUtils } from '../services/oauthService';
+import { HttpError } from '../middleware/errorHandler.js';
+import { OAuthService, oauthUtils } from '../services/oauthService.js';
 
 // Validation schemas
 const callbackSchema = z.object({

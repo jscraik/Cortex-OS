@@ -1,7 +1,7 @@
 // Hook for managing conversations
 
 import { useCallback, useEffect, useState } from 'react';
-import { conversationAPI, messageAPI } from '../services/api';
+import { conversationAPI, messageAPI } from '../services/api.js';
 import type { Conversation, Message } from '../types';
 
 interface UseConversationsReturn {

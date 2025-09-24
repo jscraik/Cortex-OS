@@ -17,7 +17,7 @@ vi.mock('../../src/runtime', () => ({
 	startRuntime: () => mockRuntime,
 }));
 
-import { startRuntime } from '../../src/runtime';
+import { startRuntime } from '../../src/runtime.js';
 
 describe('Cortex-OS Runtime A2A Integration', () => {
 	it('should start runtime with functional A2A messaging', async () => {

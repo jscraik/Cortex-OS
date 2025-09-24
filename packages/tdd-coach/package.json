@@ -9,12 +9,12 @@
     "tdd-coach": "dist/cli/tdd-coach.js"
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build --force",
     "dev": "tsc --build --watch",
     "test": "node ../../scripts/vitest-safe.mjs run",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src --ext .ts",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {

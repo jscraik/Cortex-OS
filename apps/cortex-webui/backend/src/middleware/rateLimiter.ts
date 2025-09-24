@@ -3,7 +3,7 @@
 import type { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 // Use validated config instead of legacy DEFAULT_RATE_LIMITS fallbacks
-import { getRateLimitConfig } from '../config/config';
+import { getRateLimitConfig } from '../config/config.js';
 
 // Augment express Request interface to include rateLimit property
 declare module 'express' {

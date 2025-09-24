@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { authMiddleware, requirePermission, securityHeaders } from '../auth/middleware';
-import { HealthHandler } from './handlers/health.handler';
+import { authMiddleware, requirePermission, securityHeaders } from '../auth/middleware.js';
+import { HealthHandler } from './handlers/health.handler.js';
 import { commonMiddleware, errorHandler, routeMiddleware } from './middleware';
-import { agentRoutes } from './routes/agent.routes';
-import { healthRoutes } from './routes/health.routes';
-import { metricsRoutes } from './routes/metrics.routes';
+import { agentRoutes } from './routes/agent.routes.js';
+import { healthRoutes } from './routes/health.routes.js';
+import { metricsRoutes } from './routes/metrics.routes.js';
 
 // Get JWT secret from environment
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';

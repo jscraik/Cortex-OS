@@ -1,5 +1,5 @@
 import { createServer as createHttpServer, type Server } from 'node:http';
-import { app } from './index';
+import { app } from './index.js';
 
 export interface HttpServerOptions {
 	port?: number;

@@ -4,7 +4,7 @@ import {
 	CancellationError,
 	isCancellationError,
 	withCancellation,
-} from '../cancellation';
+} from '../cancellation.js';
 
 describe('cancellation system', () => {
 	describe('CancellationController', () => {

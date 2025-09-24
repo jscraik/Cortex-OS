@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
-import { chatHandler } from '../src/handlers';
-import type { ModelRouter } from '../src/model-router';
+import { chatHandler } from '../src/handlers.js';
+import type { ModelRouter } from '../src/model-router.js';
 
 describe('chatHandler', () => {
 	test('throws when chat capability missing', async () => {

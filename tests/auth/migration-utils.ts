@@ -9,6 +9,9 @@ import { createId } from '@cortex-os/a2a-core';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+// Error messages
+const UNKNOWN_ERROR = 'Unknown error';
+
 export interface LegacyUser {
 	id: string;
 	email: string;
@@ -18,7 +21,7 @@ export interface LegacyUser {
 	emailVerified?: boolean;
 	createdAt: Date;
 	lastLoginAt?: Date;
-	preferences?: Record<string, any>;
+	preferences?: Record<string, unknown>;
 	roles?: string[];
 	profile?: {
 		bio?: string;
@@ -66,7 +69,7 @@ export interface BatchMigrationResult {
 /**
  * Create a legacy JWT token for testing migration
  */
-export function createLegacyToken(payload: any): string {
+export function createLegacyToken(payload: Record<string, unknown>): string {
 	return jwt.sign(payload, process.env.LEGACY_JWT_SECRET || 'legacy-secret', {
 		algorithm: 'HS256',
 	});
@@ -125,7 +128,7 @@ export class JWTTokenMigrator {
 	async migrate(legacyToken: string): Promise<MigrationResult> {
 		try {
 			// Verify legacy token
-			const legacyPayload = jwt.verify(legacyToken, this.legacySecret) as any;
+			const legacyPayload = jwt.verify(legacyToken, this.legacySecret) as Record<string, unknown>;
 
 			// Create new token
 			const newPayload = {
@@ -135,7 +138,8 @@ export class JWTTokenMigrator {
 				exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
 			};
 
-			const newToken = jwt.sign(newPayload, this.newSecret, {
+			// Create token but don't use it (migration only validates)
+			jwt.sign(newPayload, this.newSecret, {
 				algorithm: 'HS256',
 				issuer: 'cortex-os-mcp',
 				audience: 'cortex-os-clients',
@@ -149,7 +153,7 @@ export class JWTTokenMigrator {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Unknown error',
+				error: error instanceof Error ? error.message : UNKNOWN_ERROR,
 			};
 		}
 	}
@@ -157,7 +161,7 @@ export class JWTTokenMigrator {
 	/**
 	 * Validate new token
 	 */
-	validate(newToken: string): any {
+	validate(newToken: string): unknown {
 		return jwt.verify(newToken, this.newSecret, {
 			algorithms: ['HS256'],
 			issuer: 'cortex-os-mcp',
@@ -184,8 +188,8 @@ export class PasswordHashMigrator {
 				};
 			}
 
-			// Create new hash
-			const newHash = await createNewPasswordHash(password);
+			// Create new hash but don't use it (migration only validates)
+			await createNewPasswordHash(password);
 
 			return {
 				success: true,
@@ -194,7 +198,7 @@ export class PasswordHashMigrator {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Unknown error',
+				error: error instanceof Error ? error.message : UNKNOWN_ERROR,
 			};
 		}
 	}
@@ -255,7 +259,7 @@ export class UserDataMigrator {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Unknown error',
+				error: error instanceof Error ? error.message : UNKNOWN_ERROR,
 			};
 		}
 	}
@@ -300,7 +304,7 @@ export class OAuthAccountMigrator {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Unknown error',
+				error: error instanceof Error ? error.message : UNKNOWN_ERROR,
 			};
 		}
 	}
@@ -326,6 +330,36 @@ export class BatchMigrator {
 	}
 
 	/**
+	 * Migrate a single user
+	 */
+	private async migrateSingleUser(
+		userId: string,
+		options: { dryRun?: boolean },
+	): Promise<{ success: boolean; error?: string }> {
+		try {
+			if (options.dryRun) {
+				return { success: true };
+			}
+
+			const legacyUser = await this.getLegacyUser(userId);
+			if (!legacyUser) {
+				return { success: false, error: `User ${userId} not found` };
+			}
+
+			const result = await this.userMigrator.migrateUser(legacyUser);
+			return {
+				success: result.success,
+				error: result.success ? undefined : `Failed to migrate user ${userId}: ${result.error}`,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: `Error migrating user ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			};
+		}
+	}
+
+	/**
 	 * Migrate all users in batch
 	 */
 	async migrateUsers(
@@ -346,38 +380,22 @@ export class BatchMigrator {
 		for (let i = 0; i < userIds.length; i += batchSize) {
 			const batch = userIds.slice(i, i + batchSize);
 
-			for (const userId of batch) {
-				try {
-					if (options.dryRun) {
-						// Simulate migration
-						migrated++;
-					} else {
-						// Get legacy user (mock)
-						const legacyUser = await this.getLegacyUser(userId);
-						if (!legacyUser) {
-							failed++;
-							errors.push(`User ${userId} not found`);
-							continue;
-						}
+			// Process batch in parallel
+			const results = await Promise.all(
+				batch.map(userId => this.migrateSingleUser(userId, options))
+			);
 
-						// Migrate user
-						const result = await this.userMigrator.migrateUser(legacyUser);
-						if (result.success) {
-							migrated++;
-						} else {
-							failed++;
-							errors.push(`Failed to migrate user ${userId}: ${result.error}`);
-						}
-					}
-				} catch (error) {
+			// Update counters
+			results.forEach(result => {
+				if (result.success) {
+					migrated++;
+				} else {
 					failed++;
-					errors.push(
-						`Error migrating user ${userId}: ${
-							error instanceof Error ? error.message : 'Unknown error'
-						}`,
-					);
+					if (result.error) {
+						errors.push(result.error);
+					}
 				}
-			}
+			});
 
 			// Report progress
 			if (options.onProgress) {
@@ -400,7 +418,8 @@ export class BatchMigrator {
 	/**
 	 * Get legacy user (mock implementation)
 	 */
-	private async getLegacyUser(userId: string): Promise<LegacyUser | null> {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	private async getLegacyUser(_userId: string): Promise<LegacyUser | null> {
 		// In a real implementation, fetch from legacy database
 		return null;
 	}
@@ -414,7 +433,7 @@ export const TestDataGenerator = {
 	 * Generate test legacy user
 	 */
 	generateLegacyUser(overrides: Partial<LegacyUser> = {}): LegacyUser {
-		return {
+		const user: LegacyUser = {
 			id: overrides.id || createId(),
 			email: overrides.email || `test-${Date.now()}@example.com`,
 			name: overrides.name || 'Test User',
@@ -427,6 +446,7 @@ export const TestDataGenerator = {
 			roles: overrides.roles || ['user'],
 			profile: overrides.profile || { bio: 'Test user' },
 		};
+		return user;
 	},
 
 	/**

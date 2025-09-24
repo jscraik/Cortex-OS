@@ -8,7 +8,7 @@
  */
 
 import { z } from 'zod';
-import { ToolLayer } from './tool-layer';
+import { ToolLayer } from './tool-layer.js';
 
 /**
  * Atomic operation schema

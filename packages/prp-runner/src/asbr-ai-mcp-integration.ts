@@ -9,7 +9,7 @@
  */
 
 import express from 'express';
-import { ASBRAIMcpServer } from './asbr-ai-mcp-server';
+import { ASBRAIMcpServer } from './asbr-ai-mcp-server.js';
 import { applyServerHardening } from './lib/server/hardening.js';
 
 /**

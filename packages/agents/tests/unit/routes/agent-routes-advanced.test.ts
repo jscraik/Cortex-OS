@@ -12,7 +12,7 @@ vi.mock('../../../src/server/handlers/agent.handler', () => ({
 }));
 
 // Import after mocking
-import { agentRoutes } from '../../../src/server/routes/agent.routes';
+import { agentRoutes } from '../../../src/server/routes/agent.routes.js';
 
 describe('Agent Routes - Advanced Tests', () => {
 	let app: Hono;

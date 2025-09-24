@@ -8,21 +8,21 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { withEnhancedSpan } from '../observability/otel';
-import { selectExecutionStrategy } from './tool-execution-strategies';
+import { withEnhancedSpan } from '../observability/otel.js';
+import { selectExecutionStrategy } from './tool-execution-strategies.js';
 import type {
 	ChainExecutionResult,
 	ExecutionContext,
 	ExecutionStatus,
 	ToolChain,
-} from './tool-orchestration-contracts';
-import { createExecutionContext, validateToolChain } from './tool-orchestration-contracts';
+} from './tool-orchestration-contracts.js';
+import { createExecutionContext, validateToolChain } from './tool-orchestration-contracts.js';
 import {
 	calculateFinalMetrics,
 	createExecutionResult,
 	createExecutionStatus,
 	simulateToolExecution,
-} from './tool-orchestration-utils';
+} from './tool-orchestration-utils.js';
 
 /**
  * Simplified Tool Orchestrator - Functional Design

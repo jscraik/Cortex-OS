@@ -2,14 +2,14 @@
 export const GITHUB_A2A_EVENTS_VERSION = '1.0.0';
 
 // Event Envelope and Routing
-export * from './envelope';
-export * from './error';
-export * from './issue';
-export * from './pull-request';
+export * from './envelope.js';
+export * from './error.js';
+export * from './issue.js';
+export * from './pull-request.js';
 // Core Event Types
-export * from './repository';
-export * from './routing';
-export * from './workflow';
+export * from './repository.js';
+export * from './routing.js';
+export * from './workflow.js';
 
 import { type A2AEventEnvelope, createA2AEventEnvelope, type GitHubEventData } from './envelope.js';
 import { type ErrorEvent, isErrorEvent, validateErrorEvent } from './error.js';

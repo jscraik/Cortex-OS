@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
 import multer from 'multer';
 import pdf from 'pdf-parse';
-import type { DocumentParseResult } from '../types/document';
-import logger from '../utils/logger';
+import type { DocumentParseResult } from '../types/document.js';
+import logger from '../utils/logger.js';
 
 // File size limits (50MB for documents)
 const MAX_FILE_SIZE = 50 * 1024 * 1024;

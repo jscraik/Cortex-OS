@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { container } from '../../src/boot';
-import type { ArtifactRepository } from '../../src/persistence/artifact-repository';
-import type { EvidenceRepository } from '../../src/persistence/evidence-repository';
-import type { ProfileRepository } from '../../src/persistence/profile-repository';
-import type { TaskRepository } from '../../src/persistence/task-repository';
-import { TOKENS } from '../../src/tokens';
+import { container } from '../../src/boot.js';
+import type { ArtifactRepository } from '../../src/persistence/artifact-repository.js';
+import type { EvidenceRepository } from '../../src/persistence/evidence-repository.js';
+import type { ProfileRepository } from '../../src/persistence/profile-repository.js';
+import type { TaskRepository } from '../../src/persistence/task-repository.js';
+import { TOKENS } from '../../src/tokens.js';
 
 describe('brAInwav Repository Contract Implementation', () => {
 	describe('brAInwav TaskRepository', () => {

@@ -315,7 +315,7 @@ describe('Authentication Integration', () => {
 			});
 
 			// Mock RBAC system to allow admin access
-			const { rbacSystem } = await import('../../security/rbac-system.js');
+			const { rbacSystem } = await import('../../security/rbac-system');
 			vi.spyOn(rbacSystem, 'authorize').mockResolvedValue({
 				allowed: true,
 			});
@@ -352,7 +352,7 @@ describe('Authentication Integration', () => {
 			});
 
 			// Mock RBAC system
-			const { rbacSystem } = await import('../../security/rbac-system.js');
+			const { rbacSystem } = await import('../../security/rbac-system');
 			vi.spyOn(rbacSystem, 'getUserEffectivePermissions').mockReturnValue([
 				{
 					id: 'read-profile',
@@ -450,7 +450,7 @@ describe('Authentication Integration', () => {
 			});
 
 			// Mock RBAC system to throw error
-			const { rbacSystem } = await import('../../security/rbac-system.js');
+			const { rbacSystem } = await import('../../security/rbac-system');
 			vi.spyOn(rbacSystem, 'authorize').mockRejectedValue(new Error('RBAC system error'));
 
 			const response = await request(app)

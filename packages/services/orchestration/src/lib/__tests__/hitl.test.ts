@@ -10,7 +10,7 @@ import {
 	resetHitl,
 	submitDecision,
 	waitForApproval,
-} from '../hitl';
+} from '../hitl.js';
 
 // Mock the logger to test structured logging
 vi.mock('@cortex-os/observability', () => ({

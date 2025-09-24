@@ -1,7 +1,7 @@
 // Authentication hook for managing user state
 // Updated to use Better Auth
 
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuthContext } from '../contexts/AuthContext.js';
 
 interface UseAuthReturn {
 	user: any;

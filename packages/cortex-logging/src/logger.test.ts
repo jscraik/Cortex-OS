@@ -1,6 +1,6 @@
 import { PassThrough } from 'node:stream';
 import { describe, expect, it } from 'vitest';
-import { createLogger, LogLevel } from './logger';
+import { createLogger, LogLevel } from './logger.js';
 
 type LogRecord = Record<string, any>;
 

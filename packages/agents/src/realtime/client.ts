@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { LangGraphUpdate, WebSocketMessage } from './types';
+import type { LangGraphUpdate, WebSocketMessage } from './types.js';
 
 interface WebSocketClientOptions {
 	/** WebSocket URL */

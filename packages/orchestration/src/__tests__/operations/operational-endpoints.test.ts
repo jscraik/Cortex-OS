@@ -9,7 +9,7 @@
 
 import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { OperationalEndpoints } from '../../operations/operational-endpoints';
+import { OperationalEndpoints } from '../../operations/operational-endpoints.js';
 
 // Helper function to test router endpoints
 async function testRouterEndpoint(

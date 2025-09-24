@@ -412,13 +412,15 @@ export class HealthMonitor extends EventEmitter {
 			const checkPromises = Array.from(this.healthChecks.values()).map((check) =>
 				check.execute().catch((error) => {
 					console.error('brAInwav health check execution error:', error);
-					return check.getLastResult() || {
-						name: check.getName(),
-						status: 'unknown' as HealthStatus,
-						duration: 0,
-						timestamp: Date.now(),
-						message: 'execution failed'
-					};
+					return (
+						check.getLastResult() || {
+							name: check.getName(),
+							status: 'unknown' as HealthStatus,
+							duration: 0,
+							timestamp: Date.now(),
+							message: 'execution failed',
+						}
+					);
 				}),
 			);
 

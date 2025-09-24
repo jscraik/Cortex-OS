@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TraceManager } from '../../src/monitoring/tracing';
+import { TraceManager } from '../../src/monitoring/tracing.js';
 
 // Mock OpenTelemetry API
 vi.mock('@opentelemetry/api', () => ({

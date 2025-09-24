@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MetricsCollector } from '../../../src/monitoring/metrics';
+import type { MetricsCollector } from '../../../src/monitoring/metrics.js';
 
 // Mock auth middleware
 vi.mock('../../../src/auth/middleware');
 
 // Import mocked module
-import { requirePermission } from '../../../src/auth/middleware';
+import { requirePermission } from '../../../src/auth/middleware.js';
 
 // Create typed mock
 const mockRequirePermission = vi.mocked(requirePermission);
@@ -24,7 +24,7 @@ const mockMetricsCollector = {
 } as unknown as MetricsCollector;
 
 // Import after mocking
-import { metricsRoutes } from '../../../src/server/routes/metrics.routes';
+import { metricsRoutes } from '../../../src/server/routes/metrics.routes.js';
 
 describe('Metrics Routes - Advanced Tests', () => {
 	let app: Hono<{ Variables: { metricsCollector?: MetricsCollector } }>;

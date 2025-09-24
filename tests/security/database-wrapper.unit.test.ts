@@ -1,9 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SecureDatabaseWrapper } from '../../packages/mvp-core/src/secure-db';
 
+// Error messages
+const RAW_SQL_INJECTION_DETECTED = 'Raw SQL injection detected';
+
+// Mock database and statement interfaces
+interface MockStatement {
+	run: ReturnType<typeof vi.fn>;
+	get: ReturnType<typeof vi.fn>;
+	all: ReturnType<typeof vi.fn>;
+}
+
+interface MockDatabase {
+	prepare: ReturnType<typeof vi.fn>;
+}
+
 // Mock database and statement for testing
-let mockStatement: any;
-let mockDatabase: any;
+let mockStatement: MockStatement;
+let mockDatabase: MockDatabase;
 let wrapper: SecureDatabaseWrapper;
 
 beforeEach(() => {
@@ -15,13 +29,13 @@ beforeEach(() => {
 	mockDatabase = {
 		prepare: vi.fn().mockReturnValue(mockStatement),
 	};
-	wrapper = new SecureDatabaseWrapper(mockDatabase);
+	wrapper = new SecureDatabaseWrapper(mockDatabase as unknown as Parameters<typeof SecureDatabaseWrapper>[0]);
 });
 
 describe('securePrepare', () => {
 	it('throws on _raw parameter', () => {
 		expect(() => wrapper.securePrepare('SELECT ? as x', [{ _raw: 'DROP TABLE users' }])).toThrow(
-			'Raw SQL injection detected',
+			RAW_SQL_INJECTION_DETECTED,
 		);
 	});
 
@@ -47,8 +61,8 @@ describe('secureRun', () => {
 	});
 
 	it('rejects _raw object parameter', () => {
-		expect(() => wrapper.secureRun('INSERT INTO t VALUES (?)', { _raw: '1' } as any)).toThrow(
-			'Raw SQL injection detected',
+		expect(() => wrapper.secureRun('INSERT INTO t VALUES (?)', { _raw: '1' } as unknown)).toThrow(
+			RAW_SQL_INJECTION_DETECTED,
 		);
 	});
 
@@ -68,8 +82,8 @@ describe('secureGet', () => {
 	});
 
 	it('rejects _raw object parameter', () => {
-		expect(() => wrapper.secureGet('SELECT ? as x', { _raw: '1' } as any)).toThrow(
-			'Raw SQL injection detected',
+		expect(() => wrapper.secureGet('SELECT ? as x', { _raw: '1' } as unknown)).toThrow(
+			RAW_SQL_INJECTION_DETECTED,
 		);
 	});
 
@@ -87,8 +101,8 @@ describe('secureAll', () => {
 	});
 
 	it('rejects _raw object parameter', () => {
-		expect(() => wrapper.secureAll('SELECT ? as x', { _raw: '1' } as any)).toThrow(
-			'Raw SQL injection detected',
+		expect(() => wrapper.secureAll('SELECT ? as x', { _raw: '1' } as unknown)).toThrow(
+			RAW_SQL_INJECTION_DETECTED,
 		);
 	});
 

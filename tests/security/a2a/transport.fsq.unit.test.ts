@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { fsQueue } from '../../../packages/a2a/a2a-transport/src/fsq';
+import { fsQueue } from '../../../packages/a2a/a2a-transport/src/fsq.js';
 
 it('fsq publishes and notifies subscribers', async () => {
 	const t = fsQueue(`test-${Date.now()}`);
@@ -17,7 +17,7 @@ it('fsq publishes and notifies subscribers', async () => {
 		occurredAt: new Date().toISOString(),
 		headers: {},
 		payload: {},
-	} as any);
+	} as unknown);
 	expect(seen).toBe(true);
 });
 
@@ -31,6 +31,6 @@ it('publishes immediately after creation', async () => {
 		occurredAt: new Date().toISOString(),
 		headers: {},
 		payload: {},
-	} as any);
+	} as unknown);
 	await expect(fs.stat(dir)).resolves.toBeDefined();
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Envelope } from '../src/envelope';
+import { Envelope } from '../src/envelope.js';
 
 describe('Envelope validation', () => {
 	it('throws when source is not a valid URI', () => {

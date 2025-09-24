@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFile, rename, writeFile } from 'node:fs/promises';
 
-import { ensureDataDir, getDataPath } from './xdg';
+import { ensureDataDir, getDataPath } from './xdg.js';
 
 const JSON_SPACING = 2;
 const TEMP_EXTENSION = '.tmp';

@@ -8,6 +8,7 @@
 
 import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { spawn } from 'node:child_process';
 
 // Mock child_process
 vi.mock('child_process', () => {
@@ -319,7 +320,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 				kill: vi.fn(),
 			};
 
-			vi.mocked(require('node:child_process').spawn).mockReturnValue(mockChildProcess);
+			vi.mocked(spawn).mockReturnValue(mockChildProcess);
 
 			// Set a short timeout
 			const shortTimeout = 50;
@@ -383,6 +384,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 			const maliciousOutput = 'Click here: <a href="javascript:alert(\'XSS\')">Link</a>';
 
 			const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(maliciousOutput);
+			// eslint-disable-next-line no-script-url
 			expect(sanitizedOutput).not.toContain('javascript:');
 			expect(sanitizedOutput).not.toContain('alert');
 		});
@@ -437,7 +439,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 				kill: vi.fn(),
 			};
 
-			vi.mocked(require('node:child_process').spawn).mockReturnValue(mockChildProcess);
+			vi.mocked(spawn).mockReturnValue(mockChildProcess);
 
 			const result = await SecureCommandExecutor.executeCommand(['nonexistent-command']);
 			expect(result.stderr).toContain('not found');
@@ -462,7 +464,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 				kill: vi.fn(),
 			};
 
-			vi.mocked(require('node:child_process').spawn).mockReturnValue(mockChildProcess);
+			vi.mocked(spawn).mockReturnValue(mockChildProcess);
 
 			const result = await SecureCommandExecutor.executeCommand(['/root/protected-script']);
 			expect(result.stderr).toContain('Permission denied');
@@ -493,7 +495,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 				kill: vi.fn(),
 			};
 
-			vi.mocked(require('node:child_process').spawn).mockReturnValue(mockChildProcess);
+			vi.mocked(spawn).mockReturnValue(mockChildProcess);
 
 			await expect(async () => {
 				await SecureCommandExecutor.executeCommand(['sleep', '10'], 50);
@@ -523,7 +525,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 				kill: vi.fn(),
 			};
 
-			vi.mocked(require('node:child_process').spawn).mockReturnValue(mockChildProcess);
+			vi.mocked(spawn).mockReturnValue(mockChildProcess);
 
 			// Kill the process after a short time
 			setTimeout(() => {
@@ -544,11 +546,11 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
 		test('should handle null and undefined command elements', async () => {
 			await expect(async () => {
-				await SecureCommandExecutor.executeCommand(['echo', null as any]);
+				await SecureCommandExecutor.executeCommand(['echo', null as unknown]);
 			}).rejects.toThrow(/All command elements must be strings/);
 
 			await expect(async () => {
-				await SecureCommandExecutor.executeCommand(['echo', undefined as any]);
+				await SecureCommandExecutor.executeCommand(['echo', undefined as unknown]);
 			}).rejects.toThrow(/All command elements must be strings/);
 		});
 

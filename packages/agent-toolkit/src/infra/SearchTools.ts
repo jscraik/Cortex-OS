@@ -7,20 +7,15 @@ import type { SearchTool } from '../domain/ToolInterfaces.js';
 import { ShellScriptAdapter } from './ShellScriptAdapter.js';
 
 /**
- * Ripgrep search tool implementation
+ * Base class for search tools to avoid code duplication
  */
-export class RipgrepAdapter implements SearchTool {
-	readonly tool = 'ripgrep' as const;
-	readonly name = 'ripgrep_search';
-	readonly description = 'Fast text search using ripgrep';
-	readonly operation = 'search';
+abstract class BaseSearchTool implements SearchTool {
+	protected readonly adapter: ShellScriptAdapter;
 
-	private readonly adapter: ShellScriptAdapter;
-
-	constructor() {
+	constructor(scriptName: string) {
 		this.adapter = new (class extends ShellScriptAdapter {
 			constructor() {
-				super('rg_search.sh');
+				super(scriptName);
 			}
 		})();
 	}
@@ -30,14 +25,10 @@ export class RipgrepAdapter implements SearchTool {
 
 		await this.adapter.validateScript();
 
-		const result = (await this.adapter.executeScript([
-			validatedInput.pattern,
-			validatedInput.path,
-		])) as Record<string, unknown>;
+		const result = await this.adapter.executeScript([validatedInput.pattern, validatedInput.path]);
 
-		// Add timestamp and context
 		const enrichedResult = {
-			...result,
+			...(result as object),
 			timestamp: new Date().toISOString(),
 			inputs: validatedInput,
 		};
@@ -47,6 +38,20 @@ export class RipgrepAdapter implements SearchTool {
 
 	validateInput(input: unknown): AgentToolkitSearchInput {
 		return AgentToolkitSearchInputSchema.parse(input);
+	}
+}
+
+/**
+ * Ripgrep search tool implementation
+ */
+export class RipgrepAdapter extends BaseSearchTool {
+	readonly tool = 'ripgrep' as const;
+	readonly name = 'ripgrep_search';
+	readonly description = 'Fast text search using ripgrep';
+	readonly operation = 'search';
+
+	constructor() {
+		super('rg_search.sh');
 	}
 
 	protected getInputSchema(): Record<string, unknown> {
@@ -70,40 +75,14 @@ export class RipgrepAdapter implements SearchTool {
 /**
  * Semgrep search tool implementation
  */
-export class SemgrepAdapter implements SearchTool {
+export class SemgrepAdapter extends BaseSearchTool {
 	readonly tool = 'semgrep' as const;
 	readonly name = 'semgrep_search';
 	readonly description = 'Search for patterns using Semgrep rules';
 	readonly operation = 'search';
 
-	private readonly adapter: ShellScriptAdapter;
-
 	constructor() {
-		this.adapter = new (class extends ShellScriptAdapter {
-			constructor() {
-				super('semgrep_search.sh');
-			}
-		})();
-	}
-
-	async search(input: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
-		const validatedInput = this.validateInput(input);
-
-		await this.adapter.validateScript();
-
-		const result = await this.adapter.executeScript([validatedInput.pattern, validatedInput.path]);
-
-		const enrichedResult = {
-			...(result as object),
-			timestamp: new Date().toISOString(),
-			inputs: validatedInput,
-		};
-
-		return AgentToolkitSearchResultSchema.parse(enrichedResult);
-	}
-
-	validateInput(input: unknown): AgentToolkitSearchInput {
-		return AgentToolkitSearchInputSchema.parse(input);
+		super('semgrep_search.sh');
 	}
 
 	protected getInputSchema(): Record<string, unknown> {
@@ -127,40 +106,14 @@ export class SemgrepAdapter implements SearchTool {
 /**
  * AST-grep search tool implementation
  */
-export class AstGrepAdapter implements SearchTool {
+export class AstGrepAdapter extends BaseSearchTool {
 	readonly tool = 'ast-grep' as const;
 	readonly name = 'ast_grep_search';
 	readonly description = 'Search for code patterns using AST-grep';
 	readonly operation = 'search';
 
-	private readonly adapter: ShellScriptAdapter;
-
 	constructor() {
-		this.adapter = new (class extends ShellScriptAdapter {
-			constructor() {
-				super('ast_grep_search.sh');
-			}
-		})();
-	}
-
-	async search(input: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
-		const validatedInput = this.validateInput(input);
-
-		await this.adapter.validateScript();
-
-		const result = await this.adapter.executeScript([validatedInput.pattern, validatedInput.path]);
-
-		const enrichedResult = {
-			...(result as object),
-			timestamp: new Date().toISOString(),
-			inputs: validatedInput,
-		};
-
-		return AgentToolkitSearchResultSchema.parse(enrichedResult);
-	}
-
-	validateInput(input: unknown): AgentToolkitSearchInput {
-		return AgentToolkitSearchInputSchema.parse(input);
+		super('ast_grep_search.sh');
 	}
 
 	protected getInputSchema(): Record<string, unknown> {

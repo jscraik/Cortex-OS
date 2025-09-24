@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { requirePermission } from '../../auth/middleware';
-import type { MetricsCollector } from '../../monitoring/metrics';
+import { requirePermission } from '../../auth/middleware.js';
+import type { MetricsCollector } from '../../monitoring/metrics.js';
 
 const metricsRoutes = new Hono<{ Variables: { metricsCollector?: MetricsCollector } }>();
 

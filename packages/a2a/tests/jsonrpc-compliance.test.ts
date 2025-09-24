@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { A2A_ERROR_CODES } from '../src/protocol';
-import { handleA2A } from '../src/rpc-handler';
+import { A2A_ERROR_CODES } from '../src/protocol.js';
+import { handleA2A } from '../src/rpc-handler.js';
 
 describe('JSON-RPC 2.0 Compliance Tests', () => {
 	beforeEach(() => {

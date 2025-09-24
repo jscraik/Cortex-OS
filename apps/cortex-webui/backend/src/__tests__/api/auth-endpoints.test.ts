@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { auth } from '../../auth';
-import { createApp } from '../../server';
+import { createApp } from '../../server.js';
 
 describe('Authentication API Endpoints', () => {
 	let app: any;

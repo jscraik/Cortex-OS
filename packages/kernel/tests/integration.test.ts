@@ -147,7 +147,7 @@ describe('Cortex Kernel Integration', () => {
 	describe('Behavior Extensions', () => {
 		it('should capture incremental state updates', async () => {
 			const { ExampleCaptureSystem, BehaviorExtensionManager, createInitialPRPState } =
-				await import('../src/index.js');
+				await import('../src/index');
 
 			const captureSystem = new ExampleCaptureSystem();
 			const manager = new BehaviorExtensionManager(captureSystem);

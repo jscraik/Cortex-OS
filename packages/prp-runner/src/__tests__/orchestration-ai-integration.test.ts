@@ -9,7 +9,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
 import { createASBRAIIntegration } from '../asbr-ai-integration.js';
-import { createNeuronRegistry } from '../neurons/index.js';
+import { createNeuronRegistry } from '../neurons/index';
 import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 // Mock orchestration types to avoid external dependencies

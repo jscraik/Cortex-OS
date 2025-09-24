@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { readJsonFile, writeJsonFile } from '../../src/persistence/json-store';
+import { readJsonFile, writeJsonFile } from '../../src/persistence/json-store.js';
 
 let root: string;
 

@@ -1,5 +1,5 @@
-import type { drizzleMemoryAdapter } from './drizzle-adapter';
-import type { memoryAdapter } from './memory-adapter';
+import type { drizzleMemoryAdapter } from './drizzle-adapter.js';
+import type { memoryAdapter } from './memory-adapter.js';
 
 // Use memory adapter to avoid native dependency issues
 let dbInstance: ReturnType<typeof memoryAdapter>;

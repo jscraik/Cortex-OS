@@ -60,6 +60,18 @@ vi.mock('neo4j-driver', () => {
 	};
 });
 
+// Mock interfaces
+interface MockDatabase {
+	prepare: ReturnType<typeof vi.fn>;
+	pragma: ReturnType<typeof vi.fn>;
+	close: ReturnType<typeof vi.fn>;
+}
+
+interface MockSession {
+	run: ReturnType<typeof vi.fn>;
+	close: ReturnType<typeof vi.fn>;
+}
+
 vi.mock('child_process', () => {
 	const mockChildProcess = {
 		stdout: {
@@ -83,12 +95,12 @@ vi.mock('child_process', () => {
 describe('Security Regression Tests', () => {
 	let secureDb: SecureDatabaseWrapper;
 	let secureNeo4j: SecureNeo4j;
-	let mockDatabase: any;
-	let _mockDriver: any;
-	let mockSession: any;
+	let mockDatabase: MockDatabase;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	let _mockSession: MockSession;
 
 	beforeEach(() => {
-		mockSession = {
+		_mockSession = {
 			run: vi.fn().mockResolvedValue({
 				records: [
 					{
@@ -96,11 +108,6 @@ describe('Security Regression Tests', () => {
 					},
 				],
 			}),
-			close: vi.fn(),
-		};
-
-		_mockDriver = {
-			session: vi.fn().mockReturnValue(mockSession),
 			close: vi.fn(),
 		};
 
@@ -393,6 +400,7 @@ describe('Security Regression Tests', () => {
 					const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(decodedScript);
 					expect(sanitizedOutput).not.toContain('<script>');
 					expect(sanitizedOutput).not.toContain('alert');
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				} catch (_error) {
 					// If decoding fails, treat as regular string
 					const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(base64Script);

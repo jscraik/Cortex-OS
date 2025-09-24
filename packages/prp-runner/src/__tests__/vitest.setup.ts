@@ -5,7 +5,7 @@
  * Provides lightweight mocks for native / heavy dependencies not required for logic tests.
  */
 import { afterEach, vi } from 'vitest';
-import { forceGC } from '../lib/testing/memory-utils';
+import { forceGC } from '../lib/testing/memory-utils.js';
 
 // Mock sharp to avoid native binary requirement in CI / local without install.
 vi.mock('sharp', () => {

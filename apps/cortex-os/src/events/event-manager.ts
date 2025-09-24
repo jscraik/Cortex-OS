@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { appendFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { RuntimeHttpServer } from '../http/runtime-server';
-import { ensureStateDir, getStatePath } from '../platform/xdg';
-import { withRuntimeSpan } from '../telemetry/tracing';
+import type { RuntimeHttpServer } from '../http/runtime-server.js';
+import { ensureStateDir, getStatePath } from '../platform/xdg.js';
+import { withRuntimeSpan } from '../telemetry/tracing.js';
 
 export interface RuntimeEvent {
 	id: string;

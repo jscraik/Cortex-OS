@@ -3,8 +3,8 @@ import { betterAuth } from 'better-auth';
 import { bearer, magicLink, oauth2, organization, passkey, twoFactor } from 'better-auth/plugins';
 import type { Database } from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../db/schema';
-import { createTestDatabase } from './database';
+import * as schema from '../db/schema.js';
+import { createTestDatabase } from './database.js';
 
 // OAuth providers configuration
 const oauthProviders = {

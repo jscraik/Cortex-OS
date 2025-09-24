@@ -2,7 +2,7 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { AuthService } from '../services/authService';
-import { UserService } from '../services/userService';
+import { UserService } from '../services/userService.js';
 
 export interface AuthRequest extends Request {
 	user?: {

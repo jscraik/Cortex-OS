@@ -1,9 +1,9 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server';
-import { createHealthRouter } from '../../src/lib/server/health-router';
-import { createToolsRouter } from '../../src/lib/server/tools-router';
+import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server.js';
+import { createHealthRouter } from '../../src/lib/server/health-router.js';
+import { createToolsRouter } from '../../src/lib/server/tools-router.js';
 
 // Minimal mock server implementation
 const mcpServer = {

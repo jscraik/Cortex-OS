@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { redact } from '../redaction';
+import { redact } from '../redaction.js';
 
 describe('schema-driven redaction', () => {
 	it('removes fields marked with description redact', () => {

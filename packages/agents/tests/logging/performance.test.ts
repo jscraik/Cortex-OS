@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Logger } from '../../src/logging/logger';
-import { createMemoryWritableStream } from '../utils/test-stream';
+import { Logger } from '../../src/logging/logger.js';
+import { createMemoryWritableStream } from '../utils/test-stream.js';
 
 describe('Logger Performance', () => {
 	let capturedOutput: string[];

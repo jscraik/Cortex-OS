@@ -11,6 +11,6 @@ describe.skip('MVP-Core Contract', () => {
 	});
 
 	it('rejects deep imports', async () => {
-		await expect(import('@cortex-os/mvp-core/src/env.js')).rejects.toThrow();
+		await expect(import('@cortex-os/mvp-core/src/env')).rejects.toThrow();
 	});
 });

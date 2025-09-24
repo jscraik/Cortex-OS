@@ -1,14 +1,14 @@
 import { z } from 'zod';
-import { container } from './boot';
-import { wireA2A } from './boot/a2a';
+import { container } from './boot.js';
+import { wireA2A } from './boot/a2a.js';
 import { createEventManager, type EventManager } from './events';
-import { createRuntimeHttpServer } from './http/runtime-server';
-import { createMcpHttpServer } from './mcp/server';
-import type { ArtifactRepository } from './persistence/artifact-repository';
-import type { EvidenceRepository } from './persistence/evidence-repository';
-import type { ProfileRepository } from './persistence/profile-repository';
-import type { TaskRepository } from './persistence/task-repository';
-import { TOKENS } from './tokens';
+import { createRuntimeHttpServer } from './http/runtime-server.js';
+import { createMcpHttpServer } from './mcp/server.js';
+import type { ArtifactRepository } from './persistence/artifact-repository.js';
+import type { EvidenceRepository } from './persistence/evidence-repository.js';
+import type { ProfileRepository } from './persistence/profile-repository.js';
+import type { TaskRepository } from './persistence/task-repository.js';
+import { TOKENS } from './tokens.js';
 
 export interface RuntimeHandle {
 	httpUrl: string;

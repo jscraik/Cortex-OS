@@ -5,13 +5,13 @@ import {
 	type DispatchResult,
 	ProcessingDispatcher,
 	type ProcessingFile,
-} from '../chunkers/dispatch';
+} from '../chunkers/dispatch.js';
 import {
 	type MimePolicyConfig,
 	MimePolicyEngine,
 	type ProcessingConfig,
 	type StrategyDecision,
-} from './mime';
+} from './mime.js';
 
 export interface RetrievalPolicy {
 	version?: string;

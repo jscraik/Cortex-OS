@@ -7,6 +7,12 @@ import { InterventionLevel } from '../types/TDDTypes.js';
 
 const program = new Command();
 
+// Ensure help and error messages are printed to stdout for stable CLI tests
+program.configureOutput({
+	writeOut: (str) => process.stdout.write(str),
+	writeErr: (str) => process.stdout.write(str),
+});
+
 program
 	.name('tdd-coach')
 	.description('TDD Coach CLI - Enforce Test-Driven Development principles')

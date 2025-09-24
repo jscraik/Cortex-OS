@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import * as gateway from '../utils/chat-gateway';
+import * as gateway from '../utils/chat-gateway.js';
 
 // Helper to create a ReadableStream that yields provided chunks
 function streamFromLines(lines: string[]): ReadableStream<Uint8Array> {

@@ -13,9 +13,9 @@ import { rateLimiter } from 'hono-rate-limiter';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import type { OrchestrationService } from '../app/orchestration-service';
-import { CircuitBreakerManager } from '../lib/circuit-breaker';
-import type { CompositeModelProvider } from '../providers/composite-provider';
-import { AgentRole, OrchestrationStrategy, TaskStatus } from '../types';
+import { CircuitBreakerManager } from '../lib/circuit-breaker.js';
+import type { CompositeModelProvider } from '../providers/composite-provider.js';
+import { AgentRole, OrchestrationStrategy, TaskStatus } from '../types.js';
 
 // JWT Secret - should be from environment
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';

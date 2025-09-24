@@ -181,7 +181,7 @@ describe('glob matcher mutation tests', () => {
 import fs from 'node:fs';
 import path from 'node:path';
 // Additional policy schema mutation tests
-import { validatePolicy } from './policy-schema';
+import { validatePolicy } from './policy-schema.js';
 
 describe('policy schema mutation guards', () => {
 	function loadBaseline() {

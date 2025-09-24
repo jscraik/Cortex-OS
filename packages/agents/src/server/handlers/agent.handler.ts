@@ -4,12 +4,12 @@ import {
 	createMasterAgentGraph,
 	type MasterAgentGraph,
 	type SubAgentConfig,
-} from '../../MasterAgent';
+} from '../../MasterAgent.js';
 import {
 	type ExecuteAgentRequest,
 	type ExecuteAgentResponse,
 	executeAgentResponseSchema,
-} from '../types';
+} from '../types.js';
 
 // Default sub-agent configurations
 const defaultSubAgents: SubAgentConfig[] = [

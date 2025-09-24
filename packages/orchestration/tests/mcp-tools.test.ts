@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/observability/otel.js', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('../src/observability/otel.js')>();
+	const actual = await importOriginal<typeof import('../src/observability/otel')>();
 	return {
 		...actual,
 		withEnhancedSpan: vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn()),
@@ -19,7 +19,7 @@ const executeWorkflowThroughCoreMock = vi.fn(async () => ({
 }));
 
 vi.mock('../src/mcp/core-adapter.js', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('../src/mcp/core-adapter.js')>();
+	const actual = await importOriginal<typeof import('../src/mcp/core-adapter')>();
 	return {
 		...actual,
 		executeWorkflowThroughCore: executeWorkflowThroughCoreMock,
@@ -29,11 +29,11 @@ vi.mock('../src/mcp/core-adapter.js', async (importOriginal) => {
 let workflowTool: any;
 let taskTool: any;
 let processTool: any;
-let otel: typeof import('../src/observability/otel.js');
+let otel: typeof import('../src/observability/otel');
 
 beforeAll(async () => {
-	otel = await import('../src/observability/otel.js');
-	const module = await import('../src/mcp/tools.js');
+	otel = await import('../src/observability/otel');
+	const module = await import('../src/mcp/tools');
 	workflowTool = module.workflowOrchestrationTool;
 	taskTool = module.taskManagementTool;
 	processTool = module.processMonitoringTool;

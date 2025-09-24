@@ -6,8 +6,8 @@
 import { readFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { type Finding, FindingSchema } from './types';
-import { EvidenceValidator } from './validator';
+import { type Finding, FindingSchema } from './types.js';
+import { EvidenceValidator } from './validator.js';
 
 /**
  * Validate findings from JSON file as per specification

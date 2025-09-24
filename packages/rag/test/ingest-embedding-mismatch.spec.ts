@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { type Embedder, RAGPipeline } from '../src/index';
-import { memoryStore } from '../src/store/memory';
+import { type Embedder, RAGPipeline } from '../src/index.js';
+import { memoryStore } from '../src/store/memory.js';
 
 describe('RAGPipeline.ingest', () => {
 	it('throws when embeddings length mismatches chunks', async () => {

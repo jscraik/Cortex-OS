@@ -5,7 +5,7 @@
 
 import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { OperationalEndpoints } from '../../operations/operational-endpoints';
+import { OperationalEndpoints } from '../../operations/operational-endpoints.js';
 
 // Create minimal mocks for dependencies
 const mockHealthChecker = {
@@ -76,8 +76,8 @@ describe('OperationalEndpoints - TDD Handler Methods', () => {
 		};
 
 		// Find and call the health route handler
-		const healthRoute = router.stack.find((layer: any) =>
-			layer.route?.path === '/health' && layer.route?.methods.get
+		const healthRoute = router.stack.find(
+			(layer: any) => layer.route?.path === '/health' && layer.route?.methods.get,
 		);
 
 		expect(healthRoute).toBeDefined();
@@ -107,8 +107,8 @@ describe('OperationalEndpoints - TDD Handler Methods', () => {
 			path: '/health/live',
 		};
 
-		const livenessRoute = router.stack.find((layer: any) =>
-			layer.route?.path === '/health/live' && layer.route?.methods.get
+		const livenessRoute = router.stack.find(
+			(layer: any) => layer.route?.path === '/health/live' && layer.route?.methods.get,
 		);
 
 		expect(livenessRoute).toBeDefined();
@@ -129,8 +129,8 @@ describe('OperationalEndpoints - TDD Handler Methods', () => {
 			path: '/health/ready',
 		};
 
-		const readinessRoute = router.stack.find((layer: any) =>
-			layer.route?.path === '/health/ready' && layer.route?.methods.get
+		const readinessRoute = router.stack.find(
+			(layer: any) => layer.route?.path === '/health/ready' && layer.route?.methods.get,
 		);
 
 		expect(readinessRoute).toBeDefined();
@@ -151,8 +151,8 @@ describe('OperationalEndpoints - TDD Handler Methods', () => {
 			path: '/metrics',
 		};
 
-		const metricsRoute = router.stack.find((layer: any) =>
-			layer.route?.path === '/metrics' && layer.route?.methods.get
+		const metricsRoute = router.stack.find(
+			(layer: any) => layer.route?.path === '/metrics' && layer.route?.methods.get,
 		);
 
 		expect(metricsRoute).toBeDefined();
@@ -175,8 +175,8 @@ describe('OperationalEndpoints - TDD Handler Methods', () => {
 			path: '/info',
 		};
 
-		const infoRoute = router.stack.find((layer: any) =>
-			layer.route?.path === '/info' && layer.route?.methods.get
+		const infoRoute = router.stack.find(
+			(layer: any) => layer.route?.path === '/info' && layer.route?.methods.get,
 		);
 
 		expect(infoRoute).toBeDefined();

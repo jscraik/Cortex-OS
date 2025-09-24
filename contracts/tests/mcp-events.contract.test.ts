@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	McpToolCallBeginSchema,
 	McpToolCallEndSchema,
-} from '../../libs/typescript/contracts/src/mcp-events';
+} from '../../libs/typescript/contracts/src/mcp-events.js';
 
 // These tests exist primarily to satisfy the schema coverage guard ensuring every exported *Schema
 // in contracts event files has at least one explicit reference in tests. We still include minimal

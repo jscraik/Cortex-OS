@@ -4,7 +4,7 @@ process.env.DATABASE_PATH = process.env.DATABASE_PATH || ':memory:';
 
 import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { authRateLimit, chatRateLimit, generalRateLimit } from '../src/middleware/rateLimiter';
+import { authRateLimit, chatRateLimit, generalRateLimit } from '../src/middleware/rateLimiter.js';
 
 // Mock config loader BEFORE importing middleware to bypass full env validation
 vi.mock('../src/config/config', () => ({

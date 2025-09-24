@@ -8,7 +8,7 @@ import type {
 	SubscriptionMessage,
 	WebSocketMessage,
 	WebSocketServerOptions,
-} from './types';
+} from './types.js';
 
 /**
  * WebSocket Server for real-time communication with LangGraph streaming

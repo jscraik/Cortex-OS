@@ -56,7 +56,7 @@ export {
 	LogRedactor,
 } from './lib/security.js';
 // Export types
-export type * from './lib/types';
+export type * from './lib/types.js';
 // Export LangGraphJS Master Agent
 export {
 	createMasterAgentGraph,

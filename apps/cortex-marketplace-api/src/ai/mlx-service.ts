@@ -189,7 +189,7 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
 	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
 	await writeFile(scriptPath, script);
 	// Use the centralized Python spawner so env merging and PYTHONPATH handling are consistent
-	const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
+	const { spawnPythonProcess } = await import('../../../../libs/python/exec');
 	try {
 		return await new Promise((resolve, reject) => {
 			const child: ChildProcess = spawnPythonProcess([scriptPath], {
@@ -230,7 +230,7 @@ async function executeMLXScriptWithInput(
 	const tmpDir = os.tmpdir();
 	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
 	await writeFile(scriptPath, script);
-	const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
+	const { spawnPythonProcess } = await import('../../../../libs/python/exec');
 	try {
 		return await new Promise((resolve, reject) => {
 			const child: ChildProcess = spawnPythonProcess([scriptPath], {

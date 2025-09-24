@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from 'express';
-import { generateApiKey, listApiKeys, revokeApiKey } from '../../security/api-keys';
-import { authMiddleware } from '../../security/auth-middleware';
+import { generateApiKey, listApiKeys, revokeApiKey } from '../../security/api-keys.js';
+import { authMiddleware } from '../../security/auth-middleware.js';
 
 function isAdmin(req: Request): boolean {
 	const role = (req.header('X-Role') || req.header('x-role') || '').trim();

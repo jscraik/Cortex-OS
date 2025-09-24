@@ -4,7 +4,7 @@ import type {
 	Message,
 	MLXAdapterInterface,
 	OllamaAdapterInterface,
-} from '../../packages/model-gateway/src/adapters/types';
+} from '../../packages/model-gateway/src/adapters/types.js';
 
 // Types are imported from the shared adapters `types.ts` above; no direct adapter-specific types needed here
 

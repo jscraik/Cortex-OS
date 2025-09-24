@@ -2,8 +2,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { ProfileRepository } from '../../src/persistence/profile-repository';
-import { ensureDataDir } from '../../src/platform/xdg';
+import { ProfileRepository } from '../../src/persistence/profile-repository.js';
+import { ensureDataDir } from '../../src/platform/xdg.js';
 
 const originalTmp = process.env.CORTEX_OS_TMP;
 let tempRoot: string | undefined;

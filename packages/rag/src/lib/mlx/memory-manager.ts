@@ -158,7 +158,7 @@ export class MLXMemoryManager {
 	private async getMacOSMemory(): Promise<SystemMemoryStats> {
 		try {
 			// Use dynamic import to avoid issues with missing run-process
-			const { runProcess } = await import('../run-process.js');
+			const { runProcess } = await import('../run-process');
 
 			const result = await runProcess<string>('vm_stat', [], { timeoutMs: 5000 });
 

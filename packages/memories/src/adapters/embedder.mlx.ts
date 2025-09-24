@@ -127,7 +127,7 @@ export class MLXEmbedder implements Embedder {
 				opts: Record<string, unknown>,
 			) => Promise<unknown>;
 		};
-		const mod = (await import('../../../../libs/python/exec.js')) as unknown as PyExec;
+		const mod = (await import('../../../../libs/python/exec')) as unknown as PyExec;
 		const { runPython } = mod;
 
 		const run = () =>

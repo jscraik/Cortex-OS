@@ -10,7 +10,7 @@
 import { EventEmitter } from 'node:events';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import { AgentNetworkErrorCode, createAgentNetworkError } from './agent-network-error';
+import { AgentNetworkErrorCode, createAgentNetworkError } from './agent-network-error.js';
 
 /**
  * Agent message schema

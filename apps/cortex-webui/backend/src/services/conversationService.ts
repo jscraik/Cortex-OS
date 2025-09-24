@@ -3,7 +3,7 @@
 import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { conversations, db, messages } from '../db';
-import type { NewConversation } from '../db/schema';
+import type { NewConversation } from '../db/schema.js';
 
 export class ConversationService {
 	static async getConversationsByUserId(userId: string) {

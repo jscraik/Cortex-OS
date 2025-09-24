@@ -12,10 +12,10 @@ import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { z } from 'zod';
 
 // Import component managers
-import type { AgentPoolManager } from './agent-pool-manager';
-import type { FailureRecoveryResilienceManager } from './failure-recovery-resilience-manager';
-import type { LearningSystemIntegrationManager } from './learning-system-integration-manager';
-import type { StatePersistenceManager } from './state-persistence-manager';
+import type { AgentPoolManager } from './agent-pool-manager.js';
+import type { FailureRecoveryResilienceManager } from './failure-recovery-resilience-manager.js';
+import type { LearningSystemIntegrationManager } from './learning-system-integration-manager.js';
+import type { StatePersistenceManager } from './state-persistence-manager.js';
 
 /**
  * Simple workflow schema for master agent loop

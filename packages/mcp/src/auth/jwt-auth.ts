@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { HTTPException } from '../errors.js';
+import { HTTPException } from '../errors';
 
 interface JWTPayload {
 	userId: string;

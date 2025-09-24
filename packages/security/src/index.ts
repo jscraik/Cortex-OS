@@ -7,8 +7,8 @@ export {
 	type SecurityBusConfig,
 } from './a2a.js';
 // Security Events
-export * from './events/security-event';
-export * from './events/security-events';
+export * from './events/security-event.js';
+export * from './events/security-events.js';
 // MCP Tools for external AI agent integration
 export {
 	SecurityTool,
@@ -28,11 +28,11 @@ export {
 	securityToolSchemas,
 } from './mcp/tools.js';
 // mTLS Implementation
-export * from './mtls/index';
-export * from './spiffe/index';
+export * from './mtls/index.js';
+export * from './spiffe/index.js';
 // Types and Interfaces
-export * from './types';
+export * from './types.js';
 // Security Utilities
-export * from './utils/index';
+export * from './utils/index.js';
 // Workload Identity Management
-export * from './workload-identity/index';
+export * from './workload-identity/index.js';

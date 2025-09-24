@@ -6,7 +6,7 @@ import {
 	compensationPatterns,
 	createCompensationRegistry,
 	SagaManager,
-} from '../compensation';
+} from '../compensation.js';
 
 describe('CompensationManager', () => {
 	let manager: CompensationManager;

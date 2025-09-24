@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadIngestPolicy, parseIngestPolicy } from '../src/policy';
+import { loadIngestPolicy, parseIngestPolicy } from '../src/policy.js';
 
 describe('loadIngestPolicy', () => {
 	it('returns default policy when file is missing', () => {

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Context, Next } from 'hono';
-import type { Logger } from './logger';
-import type { CorrelationIdOptions } from './types';
+import type { Logger } from './logger.js';
+import type { CorrelationIdOptions } from './types.js';
 
 /**
  * Default header names to check for correlation ID

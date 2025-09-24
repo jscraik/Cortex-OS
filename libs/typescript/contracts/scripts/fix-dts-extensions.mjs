@@ -7,8 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function fixDeclarationExtensions() {
-	const distDir = join(__dirname, '..', 'dist', 'src');
-	const indexPath = join(distDir, 'index.d.ts');
+	const indexPath = join(__dirname, '..', 'dist', 'index.d.ts');
 
 	try {
 		let content = await fs.readFile(indexPath, 'utf-8');

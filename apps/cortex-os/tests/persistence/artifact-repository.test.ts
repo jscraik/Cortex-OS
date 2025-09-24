@@ -3,9 +3,9 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { ArtifactRepository } from '../../src/persistence/artifact-repository';
-import { OptimisticLockError } from '../../src/persistence/errors';
-import { ensureDataDir, getDataPath } from '../../src/platform/xdg';
+import { ArtifactRepository } from '../../src/persistence/artifact-repository.js';
+import { OptimisticLockError } from '../../src/persistence/errors.js';
+import { ensureDataDir, getDataPath } from '../../src/platform/xdg.js';
 
 const FIXED_NOW = new Date('2025-09-18T12:34:56.000Z');
 

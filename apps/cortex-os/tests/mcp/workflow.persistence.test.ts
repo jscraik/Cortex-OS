@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTestMcpContainer } from './util/factory';
+import { createTestMcpContainer } from './util/factory.js';
 
 const { mcp } = createTestMcpContainer({ allowMutations: false });
 

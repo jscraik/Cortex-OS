@@ -5,8 +5,8 @@
 
 import { EventEmitter } from 'node:events';
 import { z } from 'zod';
-import { CircuitBreaker } from '../lib/circuit-breaker';
-import { selectMLXModel, selectOllamaModel } from '../lib/model-selection';
+import { CircuitBreaker } from '../lib/circuit-breaker.js';
+import { selectMLXModel, selectOllamaModel } from '../lib/model-selection.js';
 
 /**
  * Model request schemas

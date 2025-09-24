@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MultiModelGenerator } from '../src/generation/multi-model';
+import { MultiModelGenerator } from '../src/generation/multi-model.js';
 
 const RUN_INTEGRATION = process.env.RUN_RAG_INTEGRATION === '1';
 const d = RUN_INTEGRATION ? describe : describe.skip;

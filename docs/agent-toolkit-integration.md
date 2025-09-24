@@ -52,12 +52,12 @@ The guard script (`tools/validators/enforce-local-memory.mjs`) checks the follow
 - REST endpoint is configured (dual-mode supported):
   - `LOCAL_MEMORY_BASE_URL=http://localhost:3002/api/v1`
 
-Optional but recommended:
+recommended:
 
 - `LOCAL_MEMORY_NAMESPACE=<namespace>`
 - `LOCAL_MEMORY_API_KEY=<key>`
 
-Strict mode (optional):
+Strict mode:
 
 - `LOCAL_MEMORY_ENFORCE_STRICT=1` (or `CI_LOCAL_MEMORY_STRICT=1`) will:
   - Probe REST health at `BASE/health` and `BASE/api/v1/health`

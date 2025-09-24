@@ -9,7 +9,7 @@
 
 import { EventEmitter } from 'node:events';
 
-import { withEnhancedSpan } from '../observability/otel';
+import { withEnhancedSpan } from '../observability/otel.js';
 
 import type {
 	ChainExecutionResult,
@@ -22,12 +22,12 @@ import type {
 	ToolChainExecutor,
 	ToolDefinition,
 	ToolExecutionResult,
-} from './tool-orchestration-contracts';
+} from './tool-orchestration-contracts.js';
 import {
 	ChainExecutionResultSchema,
 	createExecutionContext,
 	validateToolChain,
-} from './tool-orchestration-contracts';
+} from './tool-orchestration-contracts.js';
 
 // Types for brAInwav nO tool orchestration optimization
 interface OptimizationResult {
@@ -1485,7 +1485,7 @@ export class LegacyToolOrchestrator extends EventEmitter {
 }
 
 // Export simplified orchestrator as the main implementation
-export { SimplifiedToolOrchestrator as ToolOrchestrator } from './simplified-tool-orchestrator';
+export { SimplifiedToolOrchestrator as ToolOrchestrator } from './simplified-tool-orchestrator.js';
 // Re-export types for convenience
 export type {
 	ChainExecutionResult,
@@ -1494,4 +1494,4 @@ export type {
 	OptimizationMetrics,
 	ToolChain,
 	ToolOrchestrator as IToolOrchestrator,
-} from './tool-orchestration-contracts';
+} from './tool-orchestration-contracts.js';

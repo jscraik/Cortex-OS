@@ -2,9 +2,9 @@
 
 import type { RequestHandler, Response } from 'express';
 import multer from 'multer';
-import type { AuthRequest } from '../middleware/auth';
-import { HttpError } from '../middleware/errorHandler';
-import { FileService } from '../services/fileService';
+import type { AuthRequest } from '../middleware/auth.js';
+import { HttpError } from '../middleware/errorHandler.js';
+import { FileService } from '../services/fileService.js';
 
 // Configure multer for file uploads
 const upload = multer({

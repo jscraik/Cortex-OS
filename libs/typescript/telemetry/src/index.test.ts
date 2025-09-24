@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { createCounter, meter, tracer, withSpan } from './index';
+import { createCounter, meter, tracer, withSpan } from './index.js';
 
 describe('telemetry basic', () => {
 	it('provides tracer and meter singletons', () => {

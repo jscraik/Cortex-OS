@@ -1,8 +1,8 @@
 // User service for Cortex WebUI backend
 
 import type { User, UserRecord } from '@shared/types';
-import { UserModel } from '../models/user';
-import { getDatabase } from '../utils/database';
+import { UserModel } from '../models/user.js';
+import { getDatabase } from '../utils/database.js';
 
 export const UserService = {
 	getUserById(userId: string): User | null {

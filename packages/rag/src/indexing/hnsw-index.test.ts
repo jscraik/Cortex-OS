@@ -14,7 +14,7 @@ beforeAll(async () => {
 	try {
 		const lib = 'hnswlib-node';
 		await import(lib);
-		const mod = await import('./hnsw-index.js');
+		const mod = await import('./hnsw-index');
 		HNSWIndex = (mod as { HNSWIndex: HNSWIndexCtor }).HNSWIndex;
 		hasHnsw = true;
 	} catch {

@@ -5,7 +5,7 @@ import {
 	createContentSecurityPolicy,
 	DEFAULT_CONTENT_SECURITY_CONFIG,
 	defaultContentSecurity,
-} from '../src/lib/content-security';
+} from '../src/lib/content-security.js';
 
 describe('Content Security Policy', () => {
 	describe('ContentSecurityPolicy', () => {

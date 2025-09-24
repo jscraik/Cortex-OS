@@ -1,5 +1,5 @@
 import { type JWTVerifyResult, jwtVerify, SignJWT } from 'jose';
-import type { AuthOptions, JWTPayload } from './types';
+import type { AuthOptions, JWTPayload } from './types.js';
 
 const DEFAULT_ALGORITHM = 'HS256';
 const DEFAULT_EXPIRES_IN = '15m';

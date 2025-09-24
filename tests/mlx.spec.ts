@@ -41,6 +41,6 @@ describe('mlx helpers', () => {
 	it('rerank rejects invalid input', async () => {
 		await expect(rerank('', ['doc'])).rejects.toThrow(/Invalid rerank input/);
 		await expect(rerank('query', [])).rejects.toThrow(/Invalid rerank input/);
-		await expect(rerank('query', ['doc', '' as any])).rejects.toThrow(/Invalid rerank input/);
+		await expect(rerank('query', ['doc', '' as unknown])).rejects.toThrow(/Invalid rerank input/);
 	});
 });

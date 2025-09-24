@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, it } from 'vitest';
-import { createBurstSmoother } from '../src/middleware/burstSmoother';
+import { createBurstSmoother } from '../src/middleware/burstSmoother.js';
 
 describe('createBurstSmoother', () => {
 	it('enforces burst then sustained rate', async () => {
@@ -41,11 +41,13 @@ describe('createBurstSmoother', () => {
 
 		await request(app).get('/').set('x-agent-id', 'A').expect(200);
 		await request(app).get('/').set('x-agent-id', 'A').expect(200);
-		await request(app).get('/').set('x-agent-id', 'A').expect(429);
+		const blockedA = await request(app).get('/').set('x-agent-id', 'A').expect(429);
+		expect(blockedA.status).toBe(429);
 
 		await request(app).get('/').set('x-agent-id', 'B').expect(200);
 		await request(app).get('/').set('x-agent-id', 'B').expect(200);
-		await request(app).get('/').set('x-agent-id', 'B').expect(429);
+		const blockedB = await request(app).get('/').set('x-agent-id', 'B').expect(429);
+		expect(blockedB.status).toBe(429);
 
 		now = 1000; // +1s refill one token each bucket
 		await request(app).get('/').set('x-agent-id', 'A').expect(200);

@@ -16,7 +16,7 @@ describe('MVP-Core Boundary Contract', () => {
 		// Verifies that only public APIs are accessible; deep ESM specifier should fail or throw
 		let failed = false;
 		try {
-			await import('@cortex-os/mvp-core/src/env.js');
+			await import('@cortex-os/mvp-core/src/env');
 		} catch (_deepImportError) {
 			failed = true;
 		}

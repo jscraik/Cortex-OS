@@ -2,8 +2,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { TaskRepository } from '../../src/persistence/task-repository';
-import { ensureDataDir } from '../../src/platform/xdg';
+import { TaskRepository } from '../../src/persistence/task-repository.js';
+import { ensureDataDir } from '../../src/platform/xdg.js';
 
 const originalTmp = process.env.CORTEX_OS_TMP;
 let tempRoot: string | undefined;

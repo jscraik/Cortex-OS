@@ -17,7 +17,7 @@ import {
 	updateMemoryMetrics,
 	updateModelCount,
 	updateQueueDepth,
-} from '../../src/lib/mlx/metrics';
+} from '../../src/lib/mlx/metrics.js';
 
 describe('MLX Metrics', () => {
 	beforeEach(() => {

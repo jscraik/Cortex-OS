@@ -4,7 +4,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type CompositeModelProvider, createCompositeProvider } from '../composite-provider';
+import { type CompositeModelProvider, createCompositeProvider } from '../composite-provider.js';
 
 // Mock model selection functions
 vi.mock('../../lib/model-selection', () => ({

@@ -2,7 +2,7 @@ import type { Server } from 'node:http';
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Express } from 'express';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createService } from '../src/service';
+import { createService } from '../src/service.js';
 
 // SSRF protection helper for test environment
 function validateTestUrl(url: string): void {

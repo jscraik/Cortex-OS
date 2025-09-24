@@ -7,7 +7,7 @@ import {
 	listAPIKeys,
 	revokeAPIKey,
 	validateAPIKey,
-} from '../../../src/auth/api-key';
+} from '../../../src/auth/api-key.js';
 
 describe('API Key Authentication - Advanced Tests', () => {
 	beforeEach(() => {

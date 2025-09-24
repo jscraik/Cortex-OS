@@ -1,4 +1,4 @@
-import type { Permission, Role, UserContext } from './types';
+import type { Permission, Role, UserContext } from './types.js';
 
 // Define permissions
 export const PERMISSIONS: Record<string, Permission> = {

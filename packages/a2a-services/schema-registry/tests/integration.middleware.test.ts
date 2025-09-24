@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { createService } from '../src/service';
+import { createService } from '../src/service.js';
 
 describe('Schema Registry Middleware Integration', () => {
 	const aclConfig = {

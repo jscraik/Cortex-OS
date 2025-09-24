@@ -1,4 +1,4 @@
-import type { IModelRouter as ModelRouter } from './model-router';
+import type { IModelRouter as ModelRouter } from './model-router.js';
 
 export async function embeddingsHandler(
 	router: ModelRouter,

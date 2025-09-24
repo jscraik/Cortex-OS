@@ -293,6 +293,6 @@ const executePythonScript = async (
 	args: string[] = [],
 ): Promise<string> => {
 	// @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
-	const { runPython } = await import('../../../../libs/python/exec.js');
+	const { runPython } = await import('../../../../libs/python/exec');
 	return runPython('-c', [script, ...args], { python: pythonPath } as any);
 };

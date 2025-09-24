@@ -2,7 +2,7 @@ import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { generatePrometheusMetrics, runDiagnostics } from '../diagnostics/diagnostics';
+import { generatePrometheusMetrics, runDiagnostics } from '../diagnostics/diagnostics.js';
 
 function createMockDiagScript(content: string): string {
 	const dir = mkdtempSync(join(tmpdir(), 'diag-test-'));

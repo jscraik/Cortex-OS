@@ -8,7 +8,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ExecutionToolLayer } from '../execution-tool-layer';
+import { ExecutionToolLayer } from '../execution-tool-layer.js';
 
 describe('ExecutionToolLayer', () => {
 	let executionLayer: ExecutionToolLayer;

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	DEFAULT_MODEL_INTEGRATION,
 	MODEL_PERFORMANCE_PROFILES,
-} from '../../config/model-integration-strategy';
+} from '../../config/model-integration-strategy.js';
 
 const mlxModels = JSON.parse(
 	readFileSync(join(process.cwd(), 'config', 'mlx-models.json'), 'utf8'),

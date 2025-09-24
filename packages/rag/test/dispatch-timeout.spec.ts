@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { ProcessingDispatcher, type ProcessingFile } from '../src/chunkers/dispatch';
-import { ProcessingStrategy } from '../src/policy/mime';
+import { ProcessingDispatcher, type ProcessingFile } from '../src/chunkers/dispatch.js';
+import { ProcessingStrategy } from '../src/policy/mime.js';
 
 describe('ProcessingDispatcher', () => {
 	test('clears timeout to avoid unhandled rejection', async () => {

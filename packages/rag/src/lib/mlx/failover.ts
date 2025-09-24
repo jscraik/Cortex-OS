@@ -404,7 +404,7 @@ export function createMLXFailoverSystem(): FailoverSystem {
 			healthCheck: async () => {
 				// Check if MLX is available and responsive
 				try {
-					const { MLXClient } = await import('./index.js');
+					const { MLXClient } = await import('./index');
 					const client = new MLXClient();
 					const health = await client.health();
 					return health.status === 'healthy';

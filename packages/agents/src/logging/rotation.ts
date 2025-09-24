@@ -3,7 +3,7 @@ import { basename, dirname, extname, join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { WritableStream } from 'node:stream/web';
 import { createGzip } from 'node:zlib';
-import type { RotationConfig } from './types';
+import type { RotationConfig } from './types.js';
 
 /**
  * Parse size string to bytes

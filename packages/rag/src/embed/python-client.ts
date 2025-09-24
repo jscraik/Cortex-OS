@@ -5,7 +5,7 @@ export class PyEmbedder {
 
 	async embed(texts: string[]): Promise<number[][]> {
 		// Validate inputs before network operations
-		const { sanitizeTextInputs } = await import('../lib/security.js');
+		const { sanitizeTextInputs } = await import('../lib/security');
 		sanitizeTextInputs(texts);
 		try {
 			const res = await fetch(new URL('/embed', this.endpoint).toString(), {

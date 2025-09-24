@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEmbed } from '../../src/lib/embed.js';
+import { createEmbed } from '../../src/lib/embed';
 
 describe('createEmbed', () => {
 	const strategy = {

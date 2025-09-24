@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type ASBRServer, createASBRServer } from '@/api/server.js';
+import { type ASBRServer, createASBRServer } from '@/api/server';
 import { getSharedServer } from '../fixtures/shared-server.js';
 
 describe('security headers', () => {

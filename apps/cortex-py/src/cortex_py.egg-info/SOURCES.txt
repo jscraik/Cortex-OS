@@ -4,6 +4,7 @@ pyproject.toml
 src/app.py
 src/cortex_py/__init__.py
 src/cortex_py/generator.py
+src/cortex_py/hybrid_config.py
 src/cortex_py/services.py
 src/cortex_py.egg-info/PKG-INFO
 src/cortex_py.egg-info/SOURCES.txt
@@ -12,8 +13,10 @@ src/cortex_py.egg-info/requires.txt
 src/cortex_py.egg-info/top_level.txt
 src/cortex_py/a2a/__init__.py
 src/cortex_py/a2a/bus.py
+src/cortex_py/a2a/bus_core.py
 src/cortex_py/a2a/events.py
 src/cortex_py/a2a/models.py
+src/cortex_py/a2a/stdio_bridge.py
 src/cortex_py/mcp/__init__.py
 src/cortex_py/mcp/docs.py
 src/cortex_py/mcp/models.py
@@ -24,6 +27,7 @@ src/mlx/embedding_generator.py
 src/mlx/mlx_unified.py
 tests/test_a2a_integration.py
 tests/test_app_endpoints.py
+tests/test_auth_client.py
 tests/test_compute_mlx_available_env.py
 tests/test_cortex_py_comprehensive.py
 tests/test_dummy_generator_errors.py
@@ -47,3 +51,4 @@ tests/test_mlx_unified_smoke.py
 tests/test_mlx_unified_unit.py
 tests/test_safe_subprocess_basic.py
 tests/test_safe_subprocess_extended.py
+tests/test_workflow_auth.py

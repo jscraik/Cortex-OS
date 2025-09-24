@@ -1,4 +1,4 @@
-import { AVAILABLE_MLX_MODELS } from '../mlx-adapter';
+import { AVAILABLE_MLX_MODELS } from '../mlx-adapter.js';
 
 const MLX_MODEL_KEY = 'QWEN_SMALL' as const;
 

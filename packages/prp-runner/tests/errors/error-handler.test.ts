@@ -2,8 +2,8 @@ import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AppError } from '../../src/errors';
-import { errorHandler } from '../../src/lib/server/error-handler';
-import { applyServerHardening } from '../../src/lib/server/hardening';
+import { errorHandler } from '../../src/lib/server/error-handler.js';
+import { applyServerHardening } from '../../src/lib/server/hardening.js';
 
 let originalNodeEnv: string | undefined;
 

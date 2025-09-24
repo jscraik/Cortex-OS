@@ -1,6 +1,6 @@
 import { serve } from '@hono/node-server';
-import { createServerConfig, type ServerConfig } from './config';
-import { app } from './index';
+import { createServerConfig, type ServerConfig } from './config.js';
+import { app } from './index.js';
 
 export interface HttpServerOptions {
 	port?: number;

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { app } from '../../src/server/index';
+import { app } from '../../src/server/index.js';
 
 describe('Authentication Integration Tests', () => {
 	describe('Health Endpoint', () => {

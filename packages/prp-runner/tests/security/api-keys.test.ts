@@ -6,7 +6,7 @@ import {
 	listApiKeys,
 	resolveRoleForKey,
 	revokeApiKey,
-} from '../../src/security/api-keys';
+} from '../../src/security/api-keys.js';
 
 const TMP_FILE = path.resolve(process.cwd(), 'tmp/api-keys.test.json');
 

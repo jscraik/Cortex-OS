@@ -10,7 +10,7 @@ import {
 	remoteRAGConfigSchema,
 	safeValidateConfig,
 	validateConfig,
-} from '../src/lib/config-validation';
+} from '../src/lib/config-validation.js';
 
 describe('Config Validation', () => {
 	describe('validateConfig', () => {

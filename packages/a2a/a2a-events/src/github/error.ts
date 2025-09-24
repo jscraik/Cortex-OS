@@ -4,7 +4,7 @@ import {
 	GitHubRepositorySchema,
 	type GitHubUser,
 	GitHubUserSchema,
-} from './repository';
+} from './repository.js';
 
 // Error Severity Levels
 export const ErrorSeveritySchema = z.enum(['low', 'medium', 'high', 'critical']);

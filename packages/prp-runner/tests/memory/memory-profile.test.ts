@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createAICapabilities } from '../../src/ai-capabilities';
-import { EmbeddingAdapter } from '../../src/embedding-adapter';
-import { forceGC, getActiveResources, measureHeapUsed } from '../../src/lib/testing/memory-utils';
+import { createAICapabilities } from '../../src/ai-capabilities.js';
+import { EmbeddingAdapter } from '../../src/embedding-adapter.js';
+import { forceGC, getActiveResources, measureHeapUsed } from '../../src/lib/testing/memory-utils.js';
 
 // Ensure tests only run when Node GC is exposed
 const hasGC = typeof (global as unknown as { gc?: () => void }).gc === 'function';

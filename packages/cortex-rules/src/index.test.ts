@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import { getCurrentTime, getFreshnessRule, renderRule } from './index';
+import { getCurrentTime, getFreshnessRule, renderRule } from './index.js';
 
 // Mock the file system
 vi.mock('fs');

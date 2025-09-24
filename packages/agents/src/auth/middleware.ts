@@ -3,10 +3,10 @@ import { HTTPException } from 'hono/http-exception';
 
 type Next = () => Promise<void>;
 
-import { extractAPIKey, getAPIKey, validateAPIKey } from './api-key';
-import { verifyJWT } from './jwt';
-import { createUserContextFromAPIKey } from './permissions';
-import type { AuthMiddlewareOptions, UserContext } from './types';
+import { extractAPIKey, getAPIKey, validateAPIKey } from './api-key.js';
+import { verifyJWT } from './jwt.js';
+import { createUserContextFromAPIKey } from './permissions.js';
+import type { AuthMiddlewareOptions, UserContext } from './types.js';
 
 /**
  * Authentication middleware that supports both JWT tokens and API keys

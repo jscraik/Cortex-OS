@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { A2aServicesTool } from '../src/mcp/tools';
-import { __resetInMemoryA2aServicesRegistry, a2aServicesMcpTools } from '../src/mcp/tools';
+import type { A2aServicesTool } from '../src/mcp/tools.js';
+import { __resetInMemoryA2aServicesRegistry, a2aServicesMcpTools } from '../src/mcp/tools.js';
 
 function tool(name: string): A2aServicesTool {
 	const found = a2aServicesMcpTools.find((t: A2aServicesTool) => t.name === name);

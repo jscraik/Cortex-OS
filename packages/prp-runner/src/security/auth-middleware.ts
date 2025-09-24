@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { resolveRoleForKey } from './api-keys';
+import { resolveRoleForKey } from './api-keys.js';
 
 interface RoleRequest extends Request {
 	userRole?: 'admin' | 'user';

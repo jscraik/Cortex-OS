@@ -52,7 +52,7 @@ app.get('/ready', async (_req, res) => {
 // Metrics endpoint
 app.get('/metrics', async (_req, res) => {
 	try {
-		const { metrics } = await import('../monitoring/metrics.js');
+		const { metrics } = await import('../monitoring/metrics');
 		const report = await metrics.report();
 
 		res.json(report);

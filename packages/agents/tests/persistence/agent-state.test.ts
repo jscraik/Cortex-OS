@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { AgentStateStore } from '../../src/persistence/agent-state';
-import type { AgentState } from '../../src/types';
+import { AgentStateStore } from '../../src/persistence/agent-state.js';
+import type { AgentState } from '../../src/types.js';
 
 describe('AgentStateStore', () => {
 	let agentStateStore: AgentStateStore;

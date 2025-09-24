@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { healthHandler, wireA2A } from '../src/boot/a2a';
+import { healthHandler, wireA2A } from '../src/boot/a2a.js';
 
 describe('routing', () => {
 	test('health events route to handler', async () => {

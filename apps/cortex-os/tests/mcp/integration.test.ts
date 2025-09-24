@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { CortexOsToolName } from '../../src/mcp/tools';
-import { TOKENS } from '../../src/tokens';
-import { createTestMcpContainer } from './util/factory';
+import type { CortexOsToolName } from '../../src/mcp/tools.js';
+import { TOKENS } from '../../src/tokens.js';
+import { createTestMcpContainer } from './util/factory.js';
 
 interface McpFacade {
 	listTools(): { name: CortexOsToolName; description: string }[];

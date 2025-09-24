@@ -15,7 +15,7 @@ import {
 	type WebUIAgentEvent,
 	type WebUISystemEvent,
 	type WebUIUserEvent,
-} from '../services/a2a-websocket';
+} from '../services/a2a-websocket.js';
 
 // ================================
 // Connection Hook

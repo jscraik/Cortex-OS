@@ -49,7 +49,7 @@ const logDir = join(memoryDir, 'logs');
 for (const d of [memoryDir, snapshotDir, logDir]) {
 	try {
 		if (!existsSync(d)) mkdirSync(d, { recursive: true });
-	} catch { }
+	} catch {}
 }
 
 function log(level, msg) {
@@ -241,11 +241,11 @@ function main() {
 			);
 			try {
 				child.kill('SIGTERM');
-			} catch { }
+			} catch {}
 			setTimeout(() => {
 				try {
 					child.kill('SIGKILL');
-				} catch { }
+				} catch {}
 			}, 2000);
 		}
 	}, opts.interval);
@@ -271,13 +271,13 @@ function main() {
 		};
 		try {
 			mkdirSync(join(rootDir, 'reports'), { recursive: true });
-		} catch { }
+		} catch {}
 		try {
 			writeFileSync(
 				join(rootDir, 'reports', 'memory-snapshot-summary.json'),
 				JSON.stringify(summary, null, 2),
 			);
-		} catch { }
+		} catch {}
 
 		// Optional Prometheus metrics emission
 		const promEnabled = opts.prom || process.env.MEMORY_PROM_METRICS === '1';

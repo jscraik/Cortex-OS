@@ -1,7 +1,7 @@
 import type { z } from 'zod';
-import { type RagDeps, ragSuite } from './suites/rag';
-import { type Router, routerSuite } from './suites/router';
-import { GateConfigSchema, type GateResult, type SuiteOutcome } from './types';
+import { type RagDeps, ragSuite } from './suites/rag.js';
+import { type Router, routerSuite } from './suites/router.js';
+import { GateConfigSchema, type GateResult, type SuiteOutcome } from './types.js';
 
 interface SuiteDef<O, D> {
 	optionsSchema: z.ZodType<O>;
@@ -63,4 +63,4 @@ export {
 
 // MCP Integration
 export { evalsMcpTools } from './mcp/tools.js';
-export type { GateConfig, GateResult } from './types';
+export type { GateConfig, GateResult } from './types.js';

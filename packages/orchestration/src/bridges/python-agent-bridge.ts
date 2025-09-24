@@ -14,7 +14,7 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
 import winston from 'winston';
-import { spawnPythonProcess } from '../../../../libs/python/exec.js';
+import { spawnPythonProcess } from '../../../../libs/python/exec';
 
 export interface PythonAgentConfig {
 	pythonPath?: string;

@@ -244,7 +244,7 @@ export class MigrationRunner {
 		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 		const filename = `${timestamp}_${name}.ts`;
 		const content = `import Database from 'better-sqlite3';
-import { Migration } from './001_initial';
+import { Migration } from './001_initial.js';
 
 export const migration: Migration = {
   name: '${filename.replace('.ts', '')}',

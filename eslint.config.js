@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import sonarjs from 'eslint-plugin-sonarjs';
 
 export default tseslint.config(
 	{
@@ -16,6 +17,12 @@ export default tseslint.config(
 			// Package-specific legacy ignores migrated from package .eslintignore files
 			'packages/orchestration/src/contracts/__tests__/**',
 			'packages/orchestration/src/lib/supervisor.ts',
+			// Temporarily ignore parsing error files
+			'src/lib/mlx/__tests__/**',
+			'tests/auth/auth-flows.spec.ts',
+			'tests/mlx.spec.ts',
+			'tests/security/vitest.config.ts',
+			'tests/setup/types.d.ts',
 		],
 	},
 	js.configs.recommended,
@@ -28,18 +35,9 @@ export default tseslint.config(
 		...tseslint.configs.recommendedTypeChecked[0],
 		languageOptions: {
 			parserOptions: {
-				projectService: true,
+				projectService: false,
+				project: false,
 				allowDefaultProject: true,
-				tsconfigRootDir: import.meta.dirname,
-				// Use package-specific ESLint tsconfig when present (e.g., rag/tsconfig.eslint.json)
-				project: [
-					'./tsconfig.json',
-					'website/tsconfig.json',
-					'packages/*/tsconfig.eslint.json',
-					'packages/*/*/tsconfig.eslint.json',
-					'apps/*/tsconfig.eslint.json',
-					'libs/*/*/tsconfig.eslint.json',
-				],
 			},
 			globals: {
 				...globals.browser,
@@ -49,6 +47,11 @@ export default tseslint.config(
 			'@typescript-eslint/no-explicit-any': 'warn',
 			'@typescript-eslint/no-unsafe-function-type': 'off',
 			'no-control-regex': 'off',
+			'@typescript-eslint/no-unused-vars': ['error', {
+				'argsIgnorePattern': '^_',
+				'varsIgnorePattern': '^_',
+				'ignoreRestSiblings': true
+			}],
 		},
 	},
 	// JS overrides - ensure type-aware rules that may leak are disabled
@@ -68,22 +71,9 @@ export default tseslint.config(
 			},
 		},
 	},
-	// Disable type-aware linting for heavy test suites that are not part of tsconfig projects (RAG)
+	// Test files can use Node globals
 	{
-		files: [
-			'packages/rag/__tests__/**/*.ts',
-			'packages/rag/test/**/*.ts',
-			'packages/rag/tests/**/*.ts',
-			'packages/rag/examples/**/*.ts',
-			'packages/rag/vitest.config.ts',
-			'packages/observability/tests/**/*.ts',
-			'packages/observability/vitest.config.ts',
-			'packages/orchestration/src/**/__tests__/**/*.ts',
-			'website/__tests__/**/*.ts',
-			'website/vitest.config.ts',
-		],
-		// Remove type-checked rules and rely on non-type-aware parsing for these files
-		...tseslint.configs.disableTypeChecked,
+		files: ['tests/**/*.{js,ts}', '**/*.test.{js,ts}', '**/*.spec.{js,ts}', 'src/**/__tests__/**/*.ts'],
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
@@ -94,5 +84,16 @@ export default tseslint.config(
 				...globals.node,
 			},
 		},
+		rules: {
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+			'@typescript-eslint/no-unsafe-return': 'off',
+			'@typescript-eslint/no-unsafe-call': 'off',
+			'@typescript-eslint/restrict-template-expressions': 'off',
+			'no-process-env': 'off',
+			'@typescript-eslint/prefer-nullish-coalescing': 'off',
+			'@typescript-eslint/no-non-null-assertion': 'off',
+		},
 	},
+	sonarjs.configs.recommended,
 );

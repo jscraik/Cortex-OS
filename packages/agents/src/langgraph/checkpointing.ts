@@ -7,7 +7,7 @@
 // Note: LangGraphJS checkpointing API may have changed
 // Using simplified implementation for now
 import type { RunnableConfig } from '@langchain/core/runnables';
-import type { CortexState } from '../CortexAgentLangGraph';
+import type { CortexState } from '../CortexAgentLangGraph.js';
 
 // Checkpoint configuration interface
 export interface CheckpointConfig {

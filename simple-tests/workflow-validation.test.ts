@@ -4,7 +4,7 @@ import {
 	MAX_WORKFLOW_DEPTH,
 	validateWorkflow,
 	type WorkflowStep,
-} from '../src/lib/workflow-validation';
+} from '../src/lib/workflow-validation.js';
 
 const baseWorkflow = {
 	id: '00000000-0000-0000-0000-000000000000',

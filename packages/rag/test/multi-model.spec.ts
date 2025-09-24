@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MultiModelGenerator } from '../src/generation/multi-model';
+import { MultiModelGenerator } from '../src/generation/multi-model.js';
 
 describe('MultiModelGenerator', () => {
 	beforeEach(() => {

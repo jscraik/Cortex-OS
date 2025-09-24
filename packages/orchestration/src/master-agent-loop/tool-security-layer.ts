@@ -10,7 +10,7 @@
 import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { URL } from 'node:url';
-import { ToolValidationError, ToolValidationErrorCode } from './tool-validation-error';
+import { ToolValidationError, ToolValidationErrorCode } from './tool-validation-error.js';
 
 /**
  * Security context for tool operations

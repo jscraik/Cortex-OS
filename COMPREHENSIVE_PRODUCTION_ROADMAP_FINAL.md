@@ -4,9 +4,9 @@
 **Integration:** Evidence-Based Assessment + Comprehensive TDD Plan  
 **Timeline:** 10 weeks - Production-Ready Deterministic Second Brain  
 **Team:** 3-4 senior developers  
-**Vision:** Local-first, governed, deterministic second brain with MLX acceleration
+Vision:** Local-first, governed, deterministic second brain with MLX-first hybrid (MLX + Ollama Cloud) acceleration
 
----
+- **Hybrid Integration** - MLX-first routing with Ollama Cloud conjunction (Metal-accelerated local inference)
 
 ## 🎯 EXECUTIVE SUMMARY
 
@@ -124,9 +124,9 @@ export class TeachingSystem {
 - ✅ Integration with existing memory/orchestration
 - ✅ Critique and improvement systems
 
-### **WEEK 5-6: MLX & Provider Integration**
+### **WEEK 5-6: Hybrid Integration (MLX + Ollama Cloud)**
 
-#### Week 5: Enhanced MLX Integration
+#### Week 5: Enhanced Hybrid Integration (MLX-first + Conjunction)
 
 ```typescript
 // packages/memories/src/adapters/enhanced-mlx-embedder.ts
@@ -141,7 +141,7 @@ export class EnhancedMLXEmbedder extends MLXEmbedder {
 }
 ```
 
-#### Week 6: Composite Provider Pattern
+#### Week 6: Composite Provider Pattern + Privacy Mode
 
 ```typescript
 // packages/model-gateway/src/composite-provider.ts
@@ -165,7 +165,8 @@ export class CompositeModelProvider {
 
 **Deliverables Week 5-6:**
 
-- ✅ Enhanced MLX with Metal acceleration
+- ✅ MLX-first hybrid routing with cloud conjunction
+- ✅ Privacy mode forcing MLX-only routing
 - ✅ Composite provider fallback pattern
 - ✅ A2A integration with cortex-py
 - ✅ Circuit breaker protection
@@ -278,7 +279,7 @@ const productionStack = {
 | **Test Success Rate** | 85% (440/549) | 95%+ | `npm run test:all` |
 | **MCP Handlers** | ✅ 7/7 implemented | ✅ Enhanced | Integration tests |
 | **Dependencies** | ✅ All present | ✅ Verified | Package.json audit |
-| **MLX Integration** | ⚠️ Basic | ✅ Enhanced | Metal acceleration tests |
+**Hybrid Integration** | ⚠️ MLX-only | ✅ MLX-first + Cloud Conjunction | Hybrid routing tests + Metal checks |
 | **Provider Fallbacks** | ❌ Missing | ✅ Implemented | Failure simulation |
 | **ASBR Kernel** | ❌ Missing | ✅ Operational | DI container tests |
 | **Cerebrum** | ❌ Missing | ✅ Functional | Planning/replay tests |
@@ -365,7 +366,7 @@ Capabilities:
 - ✅ **Cortex-OS ASBR Runtime** - Complete deterministic second brain
 - ✅ **MLX Integration** - Metal-accelerated local inference
 - ✅ **Governance System** - Policy enforcement and proof generation
-- ✅ **Provider Fallbacks** - MLX → Ollama → OpenAI chains
+**Provider Fallbacks** - MLX → Ollama (local/cloud) → OpenAI chains
 
 ### External Applications
 
@@ -398,16 +399,27 @@ npm run dev:kernel
 npm run test:watch tests/kernel/
 ```
 
-### Phase 2-3: Cerebrum & MLX (Week 3-6)
+### Phase 2-3: Cerebrum & Hybrid (Week 3-6)
 
 ```bash
 # Develop cerebrum on existing orchestration
 npm run dev:cerebrum
 npm run test:watch tests/cerebrum/
 
-# Enhance MLX integration
+# Enhance hybrid integration
 npm run dev:mlx-enhanced
 npm run test:mlx-integration
+
+# Validate hybrid deployment (health + routing)
+./scripts/hybrid-deployment-validation.sh
+curl -sf http://localhost:8081/health >/dev/null
+curl -sf http://localhost:11434/api/tags >/dev/null
+
+# Example env
+export CORTEX_HYBRID_MODE=performance
+export CORTEX_MLX_FIRST_PRIORITY=100
+export CORTEX_PRIVACY_MODE=false
+export CORTEX_CONJUNCTION_ENABLED=true
 ```
 
 ### Phase 4-5: Governance & Integration (Week 7-10)

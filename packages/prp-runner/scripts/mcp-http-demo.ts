@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import chalk from 'chalk';
 import { glob } from 'glob';
-import { getDocsSemsearchConfig } from '../../../.cortex/library/mcp/semsearch';
+import { getDocsSemsearchConfig } from '../../../.cortex/library/mcp/semsearch.js';
 import { ASBRAIMcpIntegration } from '../src/asbr-ai-mcp-integration.js';
 
 type Args = { port: number };

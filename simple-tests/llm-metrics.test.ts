@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateResponses } from '../tools/scripts/evaluate-llm-responses';
+import { evaluateResponses } from '../tools/scripts/evaluate-llm-responses.js';
 
 const dataset = [
 	{

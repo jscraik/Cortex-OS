@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { addState, clearHistory, getHistory, MAX_HISTORY } from '../src/lib/history';
+import { addState, clearHistory, getHistory, MAX_HISTORY } from '../src/lib/history.js';
 
 describe('history', () => {
 	afterEach(() => {

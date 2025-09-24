@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { TOKENS } from '../src/tokens';
+import { TOKENS } from '../src/tokens.js';
 
 type MemoryRecord = { id: string } & Record<string, unknown>;
 

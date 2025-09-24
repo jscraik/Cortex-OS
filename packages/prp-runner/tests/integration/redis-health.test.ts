@@ -1,8 +1,8 @@
 import type express from 'express';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server';
-import { createApp } from '../../src/lib/server/app';
+import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server.js';
+import { createApp } from '../../src/lib/server/app.js';
 
 const mcpServer = {
 	listTools: async () => ({ tools: [] }),

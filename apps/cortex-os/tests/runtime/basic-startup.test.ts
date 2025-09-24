@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { RuntimeHandle } from '../../src/runtime';
-import { startRuntime } from '../../src/runtime';
+import type { RuntimeHandle } from '../../src/runtime.js';
+import { startRuntime } from '../../src/runtime.js';
 
 describe('brAInwav Cortex-OS Basic Runtime', () => {
 	let runtime: RuntimeHandle;

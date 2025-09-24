@@ -1,6 +1,6 @@
 import { type Express, Request, type Response } from 'express';
 import { auth, authUtils } from '../auth';
-import { authCORS, authRateLimit, betterAuthErrorHandler } from '../middleware/better-auth';
+import { authCORS, authRateLimit, betterAuthErrorHandler } from '../middleware/better-auth.js';
 
 // Better Auth API Routes
 export const setupBetterAuthRoutes = (app: Express) => {

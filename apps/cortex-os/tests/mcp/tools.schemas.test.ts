@@ -4,7 +4,7 @@ import {
 	RestartServiceInputSchema,
 	RunWorkflowInputSchema,
 	SystemStatusInputSchema,
-} from '../../src/mcp/tools';
+} from '../../src/mcp/tools.js';
 
 describe('MCP Tool Schemas', () => {
 	it('validates system.status defaults', () => {

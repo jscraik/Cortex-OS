@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createJsonOutput, createStdOutput, withTimestamp } from './output';
+import { createJsonOutput, createStdOutput, withTimestamp } from './output.js';
 
 describe('output', () => {
 	it('adds ISO timestamp', () => {

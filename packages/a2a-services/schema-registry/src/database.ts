@@ -1,4 +1,4 @@
-import type { Schema } from './schemas';
+import type { Schema } from './schemas.js';
 
 export interface SchemaRepository {
 	save(schema: Schema): Promise<void>;

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LLMBridge } from '../../src/llm-bridge';
-import * as MlxAdapterModule from '../../src/mlx-adapter';
-import { type Blueprint, createPRPOrchestrator } from '../../src/orchestrator';
+import type { LLMBridge } from '../../src/llm-bridge.js';
+import * as MlxAdapterModule from '../../src/mlx-adapter.js';
+import { type Blueprint, createPRPOrchestrator } from '../../src/orchestrator.js';
 
 // Mock minimal LLM generate path so E2E doesn't require real Ollama/MLX
 let ollamaGenerateMock: (...args: unknown[]) => Promise<{ response?: string }>;

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { RateLimitStore } from './rate-limit-store';
-import { resolveRateLimitStoreFromEnv } from './rate-limit-store';
+import type { RateLimitStore } from './rate-limit-store.js';
+import { resolveRateLimitStoreFromEnv } from './rate-limit-store.js';
 
 export type KeyFn = (req: Request) => string;
 

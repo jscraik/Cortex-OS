@@ -11,7 +11,7 @@ describe('scenario snapshots', () => {
 			seed: { value: 2024 },
 			agent: { id: 'a', kind: 'rule' },
 			env: { id: 'e', kind: 'local-counter' },
-		} as any;
+		} as unknown;
 		const res = await runScenario(scenario, counterEnv({ start: 0, target: 2 }), greedyToTarget());
 		expect(res).toMatchSnapshot();
 	});

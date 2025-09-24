@@ -13,7 +13,7 @@
 // Setup DOM environment
 import { JSDOM } from 'jsdom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { A11yUtils } from './index';
+import { A11yUtils } from './index.js';
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
 	url: 'http://localhost',

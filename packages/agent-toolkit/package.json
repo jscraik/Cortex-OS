@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "pretest": "pnpm run build",
     "test": "node ../../scripts/vitest-safe.mjs run",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src/**/*.ts",

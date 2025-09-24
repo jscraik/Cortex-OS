@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { MemoryCacheManager } from '../src/core/in-memory-cache';
+import { MemoryCacheManager } from '../src/core/in-memory-cache.js';
 
 // Helper to advance time for TTL tests
 const advanceTime = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

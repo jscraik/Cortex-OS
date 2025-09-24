@@ -5,21 +5,21 @@ export type {
 	HealthCheck,
 	HealthMonitorConfig,
 	SystemHealth,
-} from './health';
-export { HealthMonitor } from './health';
+} from './health.js';
+export { HealthMonitor } from './health.js';
 export type {
 	MetricsConfig,
 	RequestMetrics,
 	ResourceMetrics,
-} from './metrics';
+} from './metrics.js';
 // Export metrics collection
-export { MetricsCollector } from './metrics';
+export { MetricsCollector } from './metrics.js';
 
 // Re-export AgentMetrics with a different name to avoid conflict
 export type AgentMetricsData = import('./metrics').AgentMetrics;
 
 // Export tracing
-export * from './tracing';
+export * from './tracing.js';
 
 // Export monitoring utilities
-export * from './utils';
+export * from './utils.js';

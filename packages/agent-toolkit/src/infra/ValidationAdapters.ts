@@ -1,14 +1,11 @@
-import { exec } from 'node:child_process';
-import { unlink, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { promisify } from 'node:util';
 import type {
 	AgentToolkitValidationInput,
 	AgentToolkitValidationResult,
 } from '@cortex-os/contracts';
+import { unlink, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import type { ValidationTool } from '../domain/ToolInterfaces.js';
-
-const execAsync = promisify(exec);
+import { execWithRetry } from './execUtil.js';
 
 /**
  * ESLint validation tool adapter
@@ -23,24 +20,13 @@ export class ESLintAdapter implements ValidationTool {
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
-			const { stdout } = await execAsync(`"${this.scriptPath}" ${filesArgs}`);
+			const cmd = `"${this.scriptPath}" ${filesArgs}`;
+			const { stdout } = await execWithRetry(cmd, { timeoutMs: 45_000, retries: 1, backoffMs: 250 });
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
-
-			// Validate the result matches our schema
-			if (result.tool !== 'eslint') {
-				throw new Error('Unexpected tool result format');
-			}
-
+			if (result.tool !== 'eslint') throw new Error('Unexpected tool result format');
 			return result;
 		} catch (error) {
-			return {
-				tool: 'eslint',
-				op: 'validate',
-				inputs,
-				results: [],
-				summary: { total: 0, errors: 0, warnings: 0 },
-				error: error instanceof Error ? error.message : 'Unknown error',
-			};
+			return summarizeValidationError('eslint', inputs, error);
 		}
 	}
 }
@@ -58,24 +44,13 @@ export class RuffAdapter implements ValidationTool {
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
-			const { stdout } = await execAsync(`"${this.scriptPath}" ${filesArgs}`);
+			const cmd = `"${this.scriptPath}" ${filesArgs}`;
+			const { stdout } = await execWithRetry(cmd, { timeoutMs: 45_000, retries: 1, backoffMs: 250 });
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
-
-			// Validate the result matches our schema
-			if (result.tool !== 'ruff') {
-				throw new Error('Unexpected tool result format');
-			}
-
+			if (result.tool !== 'ruff') throw new Error('Unexpected tool result format');
 			return result;
 		} catch (error) {
-			return {
-				tool: 'ruff',
-				op: 'validate',
-				inputs,
-				results: [],
-				summary: { total: 0, errors: 0, warnings: 0 },
-				error: error instanceof Error ? error.message : 'Unknown error',
-			};
+			return summarizeValidationError('ruff', inputs, error);
 		}
 	}
 }
@@ -92,24 +67,12 @@ export class CargoAdapter implements ValidationTool {
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
-			const { stdout } = await execAsync(`"${this.scriptPath}"`);
+			const { stdout } = await execWithRetry(`"${this.scriptPath}"`, { timeoutMs: 60_000, retries: 1, backoffMs: 300 });
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
-
-			// Validate the result matches our schema
-			if (result.tool !== 'cargo') {
-				throw new Error('Unexpected tool result format');
-			}
-
+			if (result.tool !== 'cargo') throw new Error('Unexpected tool result format');
 			return result;
 		} catch (error) {
-			return {
-				tool: 'cargo',
-				op: 'validate',
-				inputs,
-				results: [],
-				summary: { total: 0, errors: 0, warnings: 0 },
-				error: error instanceof Error ? error.message : 'Unknown error',
-			};
+			return summarizeValidationError('cargo', inputs, error);
 		}
 	}
 }
@@ -130,7 +93,7 @@ export class MultiValidatorAdapter implements ValidationTool {
 
 		try {
 			await writeFile(tempFile, (inputs.files || []).join('\n'));
-			const { stdout } = await execAsync(`"${this.scriptPath}" "${tempFile}"`);
+			const { stdout } = await execWithRetry(`"${this.scriptPath}" "${tempFile}"`, { timeoutMs: 60_000, retries: 1, backoffMs: 300 });
 			// Parse result for potential future use
 			JSON.parse(stdout) as {
 				tool: string;
@@ -147,14 +110,7 @@ export class MultiValidatorAdapter implements ValidationTool {
 				summary: { total: 0, errors: 0, warnings: 0 },
 			};
 		} catch (error) {
-			return {
-				tool: 'validator',
-				op: 'validate',
-				inputs,
-				results: [],
-				summary: { total: 0, errors: 0, warnings: 0 },
-				error: error instanceof Error ? error.message : 'Unknown error',
-			};
+			return summarizeValidationError('validator', inputs, error);
 		} finally {
 			// Clean up temp file
 			try {
@@ -164,4 +120,19 @@ export class MultiValidatorAdapter implements ValidationTool {
 			}
 		}
 	}
+}
+
+function summarizeValidationError(
+	tool: 'eslint' | 'ruff' | 'cargo' | 'validator',
+	inputs: AgentToolkitValidationInput,
+	error: unknown,
+): AgentToolkitValidationResult {
+	return {
+		tool,
+		op: 'validate',
+		inputs,
+		results: [],
+		summary: { total: 0, errors: 0, warnings: 0 },
+		error: error instanceof Error ? error.message : 'Unknown error',
+	};
 }

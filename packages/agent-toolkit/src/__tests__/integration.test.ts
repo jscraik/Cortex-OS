@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DefaultToolRegistry } from '../app/ToolRegistry.js';
-import { CodeQualityUseCase, CodeSearchUseCase, ToolExecutorUseCase } from '../app/UseCases.js';
+import { CodeSearchUseCase, ToolExecutorUseCase } from '../app/UseCases.js';
 import { createAgentToolkit } from '../index.js';
 import { CombyAdapter } from '../infra/CodemodAdapters.js';
 import { RipgrepAdapter } from '../infra/SearchAdapters.js';
@@ -123,7 +123,7 @@ describe('Agent Toolkit Integration', () => {
 	describe('CodeQualityUseCase', () => {
 		beforeEach(() => {
 			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
-			new CodeQualityUseCase(executor);
+			// CodeQualityUseCase is used by tests
 		});
 
 		it('should categorize files correctly', async () => {

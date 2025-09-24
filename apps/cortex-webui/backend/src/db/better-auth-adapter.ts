@@ -1,7 +1,7 @@
 // Database adapter for better-auth using memory adapter
 // This adapter provides the interface that better-auth expects
 
-import type { MemoryAdapter } from './memory-adapter';
+import type { MemoryAdapter } from './memory-adapter.js';
 
 export const createBetterAuthAdapter = async () => {
 	// Import from the existing database initialization

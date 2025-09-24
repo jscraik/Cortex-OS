@@ -7,7 +7,7 @@
 import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { z } from 'zod';
-import type { CortexState } from '../CortexAgentLangGraph';
+import type { CortexState } from '../CortexAgentLangGraph.js';
 
 // Input validation schemas
 export const NodeInputSchema = z.object({

@@ -21,7 +21,7 @@ export {
 	type CancellationResult,
 	isCancellationError,
 	withCancellation,
-} from './lib/cancellation';
+} from './lib/cancellation.js';
 // Compensation system (saga pattern)
 export {
 	type CompensationAction,
@@ -31,9 +31,9 @@ export {
 	type CompensationRegistry,
 	compensationPatterns,
 	SagaManager,
-} from './lib/compensation';
+} from './lib/compensation.js';
 // DAG utilities
-export { type Graph, topoSort, validateDAG } from './lib/dag';
+export { type Graph, topoSort, validateDAG } from './lib/dag.js';
 // Core workflow execution
 export {
 	type BranchConfig,
@@ -43,14 +43,14 @@ export {
 	run,
 	type StepFn,
 	type Workflow,
-} from './lib/executor';
+} from './lib/executor.js';
 
 // Human-in-the-loop (HITL)
 export {
 	requiresApproval,
 	submitDecision,
 	waitForApproval,
-} from './lib/hitl';
+} from './lib/hitl.js';
 // Hooks system
 export {
 	commonHooks,
@@ -61,4 +61,4 @@ export {
 	type HookRegistry,
 	type WorkflowHookContext,
 	type WorkflowHookFn,
-} from './lib/hooks';
+} from './lib/hooks.js';

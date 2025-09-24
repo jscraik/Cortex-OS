@@ -3,10 +3,10 @@ import {
 	CancellationError,
 	type CancellationOptions,
 	isCancellationError,
-} from './cancellation';
-import type { CompensationManager } from './compensation';
-import { type Graph, topoSort, validateDAG } from './dag';
-import type { HookManager } from './hooks';
+} from './cancellation.js';
+import type { CompensationManager } from './compensation.js';
+import { type Graph, topoSort, validateDAG } from './dag.js';
+import type { HookManager } from './hooks.js';
 
 export type StepFn = (ctx: { signal?: AbortSignal }) => Promise<void>;
 

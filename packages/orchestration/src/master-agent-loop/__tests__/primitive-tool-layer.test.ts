@@ -8,7 +8,7 @@
  */
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PrimitiveToolLayer } from '../primitive-tool-layer';
+import { PrimitiveToolLayer } from '../primitive-tool-layer.js';
 
 describe('PrimitiveToolLayer', () => {
 	let primitiveLayer: PrimitiveToolLayer;

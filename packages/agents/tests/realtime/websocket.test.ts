@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WebSocketServer } from '../../src/realtime/websocket';
+import { WebSocketServer } from '../../src/realtime/websocket.js';
 
 // Mock WebSocket
 class MockWebSocket extends EventEmitter {

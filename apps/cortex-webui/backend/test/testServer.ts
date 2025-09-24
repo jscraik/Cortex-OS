@@ -1,5 +1,5 @@
 import type { AddressInfo } from 'node:net';
-import { createServer, type ServerComponents } from '../src/server';
+import { createServer, type ServerComponents } from '../src/server.js';
 
 export interface TestServer {
 	url: string;

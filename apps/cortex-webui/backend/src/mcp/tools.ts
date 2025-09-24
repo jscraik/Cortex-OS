@@ -16,7 +16,7 @@ import {
 	webuiMcpTools,
 } from '@cortex-os/contracts';
 import type { Request, Response } from 'express';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 // Cortex WebUI MCP Tool Execution Layer
 // -------------------------------------

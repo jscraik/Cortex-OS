@@ -1,5 +1,5 @@
 import type { Envelope } from '@cortex-os/a2a-contracts';
-import type { GitHubEventData } from './types';
+import type { GitHubEventData } from './types.js';
 
 export interface EnvelopeOptions {
 	correlationId?: string;

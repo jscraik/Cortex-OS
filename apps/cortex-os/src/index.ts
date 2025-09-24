@@ -1,4 +1,4 @@
-import { startRuntime } from './runtime';
+import { startRuntime } from './runtime.js';
 
 startRuntime()
 	.then(() => console.warn('Cortex-OS runtime started'))

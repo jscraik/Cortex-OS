@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { estimateTokenCount } from '../packages/model-gateway/src/lib/estimate-token-count';
+import { estimateTokenCount } from '../packages/model-gateway/src/lib/estimate-token-count.js';
 
 describe('estimateTokenCount', () => {
 	it('roughly estimates one token per four characters', () => {

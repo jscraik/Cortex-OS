@@ -7,8 +7,8 @@
 
 import { freemem, loadavg, totalmem } from 'node:os';
 import { type NextFunction, type Request, type Response, Router } from 'express';
-import { GracefulShutdownManager, StandardShutdownHandlers } from './graceful-shutdown';
-import { HealthChecker, StandardHealthChecks } from './health-checker';
+import { GracefulShutdownManager, StandardShutdownHandlers } from './graceful-shutdown.js';
+import { HealthChecker, StandardHealthChecks } from './health-checker.js';
 
 export interface OperationalConfig {
 	healthChecker: HealthChecker;

@@ -10,12 +10,12 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
-import { getEventManager, stopEventManager } from '../core/events.js';
-import { createTask as buildTask } from '../lib/create-task.js';
-import { emitPlanStarted } from '../lib/emit-plan-started.js';
-import { logError, logInfo } from '../lib/logger.js';
-import { resolveIdempotency } from '../lib/resolve-idempotency.js';
-import { validateTaskInput } from '../lib/validate-task-input.js';
+import { getEventManager, stopEventManager } from '../core/events';
+import { createTask as buildTask } from '../lib/create-task';
+import { emitPlanStarted } from '../lib/emit-plan-started';
+import { logError, logInfo } from '../lib/logger';
+import { resolveIdempotency } from '../lib/resolve-idempotency';
+import { validateTaskInput } from '../lib/validate-task-input';
 import {
 	type ArtifactRef,
 	type Event,
@@ -26,9 +26,9 @@ import {
 	ServiceMapSchema,
 	type Task,
 	ValidationError,
-} from '../types/index.js';
-import { initializeXDG } from '../xdg/index.js';
-import { createAuthMiddleware, requireScopes } from './auth.js';
+} from '../types/index';
+import { initializeXDG } from '../xdg/index';
+import { createAuthMiddleware, requireScopes } from './auth';
 
 export interface ASBRServerOptions {
 	port?: number;

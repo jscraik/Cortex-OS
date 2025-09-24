@@ -9,7 +9,7 @@
 
 import { EventEmitter } from 'node:events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type MasterAgentLoopConfig, MasterAgentLoopCore } from '../master-agent-loop-core';
+import { type MasterAgentLoopConfig, MasterAgentLoopCore } from '../master-agent-loop-core.js';
 
 // Enhanced mock component managers with realistic behavior and better timing handling
 class MockAgentPoolManager extends EventEmitter {

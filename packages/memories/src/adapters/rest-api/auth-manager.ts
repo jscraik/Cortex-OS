@@ -80,7 +80,7 @@ export class AuthManager {
 		if (this.isRefreshing) {
 			// Wait for existing refresh to complete
 			while (this.isRefreshing && this.refreshPromise) {
-				await new Promise(resolve => setTimeout(resolve, 100));
+				await new Promise((resolve) => setTimeout(resolve, 100));
 			}
 
 			if (this.token && Date.now() < this.token.expiresAt) {

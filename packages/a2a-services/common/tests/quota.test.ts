@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
-import { createQuota } from '../src/middleware/quota';
+import { createQuota } from '../src/middleware/quota.js';
 
 function mockRequest(): Request {
 	return {} as Request;

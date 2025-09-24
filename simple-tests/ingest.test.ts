@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ingest } from '../src/lib/ingest';
+import { ingest } from '../src/lib/ingest.js';
 
 describe('ingest validation', () => {
 	it('parses valid input', () => {

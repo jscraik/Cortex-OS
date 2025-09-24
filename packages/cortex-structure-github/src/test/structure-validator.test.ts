@@ -4,8 +4,8 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { StructureRule } from '../core/structure-validator';
-import { CORTEX_STRUCTURE_RULES, StructureValidator } from '../core/structure-validator';
+import type { StructureRule } from '../core/structure-validator.js';
+import { CORTEX_STRUCTURE_RULES, StructureValidator } from '../core/structure-validator.js';
 
 describe('StructureValidator', () => {
 	let validator: StructureValidator;

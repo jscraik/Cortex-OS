@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { URL } from 'node:url';
-import type { ArtifactRepository } from '../persistence/artifact-repository';
-import { OptimisticLockError } from '../persistence/errors';
-import type { EvidenceRepository, SaveEvidenceInput } from '../persistence/evidence-repository';
-import type { ProfileRecord, ProfileRepository } from '../persistence/profile-repository';
-import type { TaskRecord, TaskRepository } from '../persistence/task-repository';
-import { AuthHttpError, authenticateRequest } from '../security/auth';
+import type { ArtifactRepository } from '../persistence/artifact-repository.js';
+import { OptimisticLockError } from '../persistence/errors.js';
+import type { EvidenceRepository, SaveEvidenceInput } from '../persistence/evidence-repository.js';
+import type { ProfileRecord, ProfileRepository } from '../persistence/profile-repository.js';
+import type { TaskRecord, TaskRepository } from '../persistence/task-repository.js';
+import { AuthHttpError, authenticateRequest } from '../security/auth.js';
 
 export interface RuntimeHttpServer {
 	listen(port: number, host?: string): Promise<{ port: number }>;

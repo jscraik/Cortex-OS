@@ -1,9 +1,9 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server';
-import { applyServerHardening } from '../../src/lib/server/hardening';
-import { createHealthRouter } from '../../src/lib/server/health-router';
+import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server.js';
+import { applyServerHardening } from '../../src/lib/server/hardening.js';
+import { createHealthRouter } from '../../src/lib/server/health-router.js';
 
 // Minimal mock server implementation
 const mcpServer = {

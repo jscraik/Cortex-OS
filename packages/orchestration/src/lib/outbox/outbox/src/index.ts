@@ -1,4 +1,4 @@
-import { createService } from './service';
+import { createService } from './service.js';
 
 const port = process.env.PORT || 3001;
 

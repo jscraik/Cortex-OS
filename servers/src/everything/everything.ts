@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index';
 import type {
 	ClientCapabilities,
 	CreateMessageRequest,
@@ -9,7 +9,7 @@ import type {
 	Resource,
 	Root,
 	Tool,
-} from '@modelcontextprotocol/sdk/types.js';
+} from '@modelcontextprotocol/sdk/types';
 // Separate value imports (schemas/constants) from type-only imports for lint clarity
 import {
 	CallToolRequestSchema,
@@ -25,7 +25,7 @@ import {
 	SetLevelRequestSchema,
 	SubscribeRequestSchema,
 	UnsubscribeRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+} from '@modelcontextprotocol/sdk/types';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -34,7 +34,7 @@ const __dirname = dirname(__filename);
 const instructions = readFileSync(join(__dirname, 'instructions.md'), 'utf-8');
 
 // Derive types for tool schemas without importing the runtime ToolSchema symbol
-type MCP_ToolSchema = typeof import('@modelcontextprotocol/sdk/types.js').ToolSchema;
+type MCP_ToolSchema = typeof import('@modelcontextprotocol/sdk/types').ToolSchema;
 type ToolInput = z.infer<MCP_ToolSchema['shape']['inputSchema']>;
 type ToolOutput = z.infer<MCP_ToolSchema['shape']['outputSchema']>;
 

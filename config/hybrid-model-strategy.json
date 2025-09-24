@@ -1,0 +1,109 @@
+{
+  "hybrid_routing_strategy": {
+    "description": "MLX + Ollama Cloud conjunction routing for brAInwav Cortex-OS",
+    "routing_rules": {
+      "privacy_mode": {
+        "condition": "privacy_required || local_only",
+        "primary": "mlx",
+        "models": [
+          "glm-4.5",
+          "qwen3-coder-30b",
+          "qwen2.5-vl"
+        ]
+      },
+      "massive_context": {
+        "condition": "context_length > 100000 || repository_scale",
+        "primary": "ollama_cloud",
+        "models": [
+          "qwen3-coder:480b-cloud"
+        ],
+        "fallback": "mlx:qwen3-coder-30b"
+      },
+      "embedding_tasks": {
+        "condition": "task_type == 'embedding'",
+        "primary": "mlx",
+        "models": [
+          "qwen3-4b",
+          "qwen3-8b"
+        ],
+        "enhanced_by": "ollama:nomic-embed-text:v1.5"
+      },
+      "reranking_tasks": {
+        "condition": "task_type == 'rerank'",
+        "primary": "mlx",
+        "models": [
+          "qwen3-reranker"
+        ],
+        "enhanced_by": "ollama_cloud:advanced_reranker"
+      },
+      "vision_tasks": {
+        "condition": "requires_vision",
+        "primary": "mlx",
+        "models": [
+          "qwen2.5-vl"
+        ],
+        "enhanced_by": "ollama_cloud:multimodal_models"
+      },
+      "ultra_performance": {
+        "condition": "requires_state_of_art",
+        "ensemble": {
+          "mlx_primary": "qwen3-coder-30b",
+          "cloud_verification": "qwen3-coder:480b-cloud",
+          "strategy": "consensus_or_cloud_override"
+        }
+      }
+    },
+    "dynamic_selection": {
+      "workload_based": {
+        "light_load": "mlx_preferred",
+        "heavy_load": "hybrid_distribution",
+        "critical_load": "cloud_assisted"
+      },
+      "complexity_based": {
+        "simple_tasks": "mlx:gemma-3-270m",
+        "moderate_tasks": "mlx:glm-4.5",
+        "complex_tasks": "hybrid:mlx+cloud",
+        "enterprise_tasks": "cloud:qwen3-coder:480b-cloud"
+      }
+    }
+  },
+  "integration_patterns": {
+    "parallel_processing": {
+      "description": "Run both MLX and Ollama simultaneously for verification",
+      "use_cases": [
+        "critical_code_review",
+        "architecture_validation"
+      ],
+      "implementation": "consensus_voting"
+    },
+    "sequential_enhancement": {
+      "description": "MLX generates, Ollama cloud refines",
+      "use_cases": [
+        "complex_refactoring",
+        "performance_optimization"
+      ],
+      "implementation": "iterative_improvement"
+    },
+    "specialized_delegation": {
+      "description": "Route specific subtasks to optimal systems",
+      "use_cases": [
+        "full_stack_development",
+        "system_integration"
+      ],
+      "implementation": "task_decomposition"
+    }
+  },
+  "performance_optimization": {
+    "caching_strategy": {
+      "mlx_cache": "local_gpu_memory",
+      "ollama_cache": "model_persistence",
+      "cross_system": "result_sharing"
+    },
+    "load_balancing": {
+      "mlx_priority": 100,
+      "ollama_local": 80,
+      "ollama_cloud": 60,
+      "adaptive": true
+    }
+  }
+}

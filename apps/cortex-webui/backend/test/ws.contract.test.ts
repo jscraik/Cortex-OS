@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 import { z } from 'zod';
-import { createTestServer, getWsUrl, type TestServer } from './testServer';
+import { createTestServer, getWsUrl, type TestServer } from './testServer.js';
 
 // Contract schemas for WebSocket message types
 const welcomeMsgSchema = z.object({

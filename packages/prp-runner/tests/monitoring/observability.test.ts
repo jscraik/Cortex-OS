@@ -1,12 +1,12 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server';
-import { applyServerHardening } from '../../src/lib/server/hardening';
-import { createHealthRouter } from '../../src/lib/server/health-router';
-import { createToolsRouter } from '../../src/lib/server/tools-router';
-import { applyMetrics } from '../../src/monitoring/metrics';
-import { applyLogging } from '../../src/observability/logging';
+import type { ASBRAIMcpServer } from '../../src/asbr-ai-mcp-server.js';
+import { applyServerHardening } from '../../src/lib/server/hardening.js';
+import { createHealthRouter } from '../../src/lib/server/health-router.js';
+import { createToolsRouter } from '../../src/lib/server/tools-router.js';
+import { applyMetrics } from '../../src/monitoring/metrics.js';
+import { applyLogging } from '../../src/observability/logging.js';
 
 const mcpServer: Partial<ASBRAIMcpServer> = {
 	listTools: (async () => ({

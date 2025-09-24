@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CitationBundler } from '../src/lib/citation-bundler';
+import { CitationBundler } from '../src/lib/citation-bundler.js';
 
 describe('CitationBundler', () => {
 	it('bundles chunks with citation metadata', () => {

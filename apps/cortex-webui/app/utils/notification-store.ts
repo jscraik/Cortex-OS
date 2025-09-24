@@ -1,6 +1,6 @@
 'use client';
 
-import { generateId } from '../../utils/id';
+import { generateId } from '../../utils/id.js';
 
 export interface Notification {
 	id: string;

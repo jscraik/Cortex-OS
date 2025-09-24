@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { URL } from 'node:url';
-import type { McpGateway } from './gateway';
+import type { McpGateway } from './gateway.js';
 
 function sendJson(res: import('node:http').ServerResponse, status: number, body: unknown) {
 	const payload = JSON.stringify(body);

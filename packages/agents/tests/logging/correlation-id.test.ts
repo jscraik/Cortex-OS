@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { correlationIdMiddleware } from '../../src/logging/correlation-id';
-import { Logger } from '../../src/logging/logger';
-import { createMemoryWritableStream } from '../utils/test-stream';
+import { correlationIdMiddleware } from '../../src/logging/correlation-id.js';
+import { Logger } from '../../src/logging/logger.js';
+import { createMemoryWritableStream } from '../utils/test-stream.js';
 
 describe('Correlation ID Middleware', () => {
 	let app: Hono;

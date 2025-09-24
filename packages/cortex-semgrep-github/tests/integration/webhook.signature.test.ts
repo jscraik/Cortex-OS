@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { app } from '../../src/server/app';
+import { app } from '../../src/server/app.js';
 
 // Ensure test env
 beforeEach(() => {

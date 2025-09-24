@@ -9,8 +9,8 @@ import {
 	provideProfileRepository,
 	provideTaskRepository,
 	tracer,
-} from './services';
-import { TOKENS } from './tokens';
+} from './services.js';
+import { TOKENS } from './tokens.js';
 
 export function createContainer(): Container {
 	const container = new Container({

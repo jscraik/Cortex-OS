@@ -1,6 +1,6 @@
 // Theme utility functions with enhanced accessibility support
 
-import storage from '../services/storage';
+import storage from '../services/storage.js';
 
 export type Theme = 'light' | 'dark' | 'system';
 

@@ -1,4 +1,4 @@
-import { StructuredError } from './structured-error';
+import { StructuredError } from './structured-error.js';
 
 export function ensureDeterministicSeed(seed?: number): number {
 	if (seed == null) return 1;

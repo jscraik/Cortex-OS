@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { provideMemories } from '../src/services';
+import { provideMemories } from '../src/services.js';
 
 describe('memories service', () => {
 	test('saves and retrieves a memory', async () => {

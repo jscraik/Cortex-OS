@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	createMemorySafeWatcher,
 	runTestsWithMemoryLimit,
-} from '../../src/lib/testing/test-runner';
+} from '../../src/lib/testing/test-runner.js';
 
 describe('Test Runner Optimization', () => {
 	it('should run tests within memory budget', async () => {

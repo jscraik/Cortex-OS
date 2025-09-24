@@ -134,9 +134,9 @@ Add new automation using smart scripts rather than chaining raw `nx run-many`.
 Clean, governed monorepo with strict architectural boundaries and
 comprehensive quality gates.
 
-[Documentation](#documentation) • [Quick Start](./docs/quick-start.md) •
+[Documentation](#Documentation) • [Quick Start](./docs/quick-start.md) •
 [Architecture](./docs/architecture-overview.md) • [Python Integration](./docs/python-integration.md) •
-[Contributing](#contributing) • [Packages](#packages)
+[Contributing](#Contributing) • [Packages](#Packages)
 
 ---
 

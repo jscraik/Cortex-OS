@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
-import { embeddingsHandler } from '../src/handlers';
-import type { ModelRouter } from '../src/model-router';
+import { embeddingsHandler } from '../src/handlers.js';
+import type { ModelRouter } from '../src/model-router.js';
 
 describe('embeddingsHandler', () => {
 	test('returns vectors for single text', async () => {

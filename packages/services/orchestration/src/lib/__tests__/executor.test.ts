@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { run, type Workflow } from '../executor';
+import { run, type Workflow } from '../executor.js';
 
 function makeStep(log: string[], name: string, failTimes = 0) {
 	let count = 0;

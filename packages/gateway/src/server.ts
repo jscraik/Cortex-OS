@@ -1,20 +1,20 @@
 import { handleA2A } from '@cortex-os/a2a';
 import type { Envelope } from '@cortex-os/a2a-contracts';
 import { createEnvelope } from '@cortex-os/a2a-contracts';
-import { createJsonOutput } from '@cortex-os/lib';
-import { createEnhancedClient, type ServerInfo } from '@cortex-os/mcp-core';
-import { handleSimlab } from '@cortex-os/simlab';
-import Fastify from 'fastify';
-import client from 'prom-client';
-import { z } from 'zod';
 import {
 	A2AMessageSchema,
 	AgentConfigSchema,
 	MCPRequestSchema,
 	RAGQuerySchema,
 	SimlabCommandSchema,
-} from '../../../libs/typescript/contracts/dist/src/index.js';
-import { createGatewayBus } from './a2a.js';
+} from '@cortex-os/contracts';
+import { createJsonOutput } from '@cortex-os/lib';
+import { createEnhancedClient, type ServerInfo } from '@cortex-os/mcp-core';
+import { handleSimlab } from '@cortex-os/simlab';
+import Fastify from 'fastify';
+import client from 'prom-client';
+import { z } from 'zod';
+import { getGatewayBus } from './a2a.js';
 import { createAgentRoute } from './lib/create-agent-route.js';
 
 function parseMcpArgs(raw?: string): unknown {
@@ -72,7 +72,7 @@ type MCPRouteSchema = z.infer<typeof MCPRoute>;
 
 // A2A-based RAG handler
 async function handleRAGViaA2A(input: unknown): Promise<string> {
-	const { bus } = createGatewayBus();
+	const { bus } = getGatewayBus();
 
 	try {
 		const parsed = z
@@ -205,7 +205,7 @@ createAgentRoute(
 	'/rag',
 	z.object({
 		config: AgentConfigSchema,
-		command: RAGQuerySchema,
+		query: RAGQuerySchema,
 		json: z.boolean().optional(),
 	}),
 	handleRAGViaA2A,
@@ -229,6 +229,13 @@ app.get('/openapi.json', async (_req, reply) => {
 	reply.header('content-type', 'application/json');
 	return createJsonOutput(openapiSpec);
 });
+
+// Test-only route to generate a 500 for metrics assertions
+if (process.env.NODE_ENV === 'test' || process.env.GATEWAY_TEST_ROUTES === '1' || process.env.GATEWAY_ALLOW_RAG === '1') {
+	app.post('/__boom', async () => {
+		throw new Error('kaboom');
+	});
+}
 
 export async function start(port = Number(process.env.PORT) || 3333) {
 	await app.listen({ port, host: '0.0.0.0' });

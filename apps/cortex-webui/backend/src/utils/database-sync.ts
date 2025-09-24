@@ -4,11 +4,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import sqlite3 from 'sqlite3';
-import { DATABASE_PATH } from '../config/constants';
-import { ConversationModel } from '../models/conversation';
-import { MessageModel } from '../models/message';
-import { ModelModel } from '../models/model';
-import { UserModel } from '../models/user';
+import { DATABASE_PATH } from '../config/constants.js';
+import { ConversationModel } from '../models/conversation.js';
+import { MessageModel } from '../models/message.js';
+import { ModelModel } from '../models/model.js';
+import { UserModel } from '../models/user.js';
 
 // Custom database wrapper that mimics better-sqlite3 API
 class Database {

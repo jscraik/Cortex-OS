@@ -1,8 +1,8 @@
-export type { AgentState } from './agent-state';
-export * from './agent-state';
-export * from './checkpoint-store';
-export * from './database';
-export * from './migrations/001_initial';
+export type { AgentState } from './agent-state.js';
+export * from './agent-state.js';
+export * from './checkpoint-store.js';
+export * from './database.js';
+export * from './migrations/001_initial.js';
 
 import type Database from 'better-sqlite3';
 
@@ -15,15 +15,15 @@ import {
 	AgentStateStore,
 	type CreateAgentState,
 	type UpdateAgentState,
-} from './agent-state';
+} from './agent-state.js';
 import {
 	type CheckpointListOptions,
 	CheckpointStore,
 	type CheckpointTuple,
 	type PendingWrite,
-} from './checkpoint-store';
-import { type DatabaseConfig, DatabasePool, getDatabasePool } from './database';
-import { MigrationRunner } from './migrations/001_initial';
+} from './checkpoint-store.js';
+import { type DatabaseConfig, DatabasePool, getDatabasePool } from './database.js';
+import { MigrationRunner } from './migrations/001_initial.js';
 
 /**
  * Main persistence interface that combines all storage operations

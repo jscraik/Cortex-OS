@@ -31,7 +31,7 @@ export class RedisRateLimiter {
 		const redisUrl = this.options.redisUrl || process.env.REDIS_URL || 'redis://localhost:6379';
 		this.client = createClient({ url: redisUrl });
 
-		this.client.on('error', (err: any) => {
+		this.client.on('error', (err: Error) => {
 			console.error('Redis connection error:', err);
 		});
 
@@ -103,7 +103,7 @@ end
 				arguments: [String(limit), String(windowMs), String(now)],
 			})) as [number, number, number];
 
-			const [_count, startTime, allowed] = result;
+			const [, startTime, allowed] = result;
 
 			if (allowed === 0) {
 				const retryAfter = Math.ceil((startTime + windowMs - now) / 1000);

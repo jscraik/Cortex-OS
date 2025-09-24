@@ -3,7 +3,7 @@ import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { send } from '@cortex-os/a2a-core/send';
 import axios from 'axios';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { createTestService } from '../src/service';
+import { createTestService } from '../src/service.js';
 
 // SSRF protection for test environment
 function validateTestUrl(url: string): void {

@@ -1,3 +1,3 @@
-export { analyzeContext } from './analyzeContext';
-export { collectRawEvidence } from './collectRawEvidence';
-export { validateEvidence } from './validateEvidence';
+export { analyzeContext } from './analyzeContext.js';
+export { collectRawEvidence } from './collectRawEvidence.js';
+export { validateEvidence } from './validateEvidence.js';

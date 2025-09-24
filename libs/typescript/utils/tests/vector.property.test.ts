@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { cosine } from '../src/vector';
+import { cosine } from '../src/vector.js';
 
 describe('vector cosine', () => {
 	it('cosine(a, a) is 1 for non-zero vectors', () => {

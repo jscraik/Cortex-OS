@@ -8,8 +8,8 @@
  */
 
 import { z } from 'zod';
-import type { MCPEvent } from './types';
-import { createTypedEvent } from './types';
+import type { MCPEvent } from './types.js';
+import { createTypedEvent } from './types.js';
 
 // Agent Toolkit interfaces - these will be replaced with proper imports once workspace resolution is fixed
 interface AgentToolkitSearchInput {
@@ -72,11 +72,35 @@ interface AgentToolkitValidationResult {
 	error?: string;
 }
 
+type MultiSearchWithContextResult = {
+	results: AgentToolkitSearchResult[];
+	context: { totalTokens: number; chunks: Array<{ file: string; tokens: number }> };
+};
+
+interface AgentToolkitApi {
+	search: (pattern: string, path: string) => Promise<AgentToolkitSearchResult>;
+	multiSearch: (pattern: string, path: string) => Promise<AgentToolkitSearchResult[]>;
+	codemod: (
+		find: string,
+		replace: string,
+		path: string,
+	) => Promise<AgentToolkitCodemodResult>;
+	validate: (files: string[]) => Promise<AgentToolkitValidationResult>;
+	multiSearchWithContext?: (
+		pattern: string,
+		path: string,
+		opts?: { tokenBudget?: { maxTokens: number; trimToTokens?: number } },
+	) => Promise<MultiSearchWithContextResult>;
+	validateProjectSmart?: (
+		files: string[],
+		opts?: { tokenBudget?: { maxTokens: number; trimToTokens?: number } },
+	) => Promise<{ context: Array<{ file: string; totalTokens: number }> }>;
+}
+
 // Simplified agent toolkit factory for integration demonstration
 // In real implementation, this would be imported from '@cortex-os/agent-toolkit'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function createAgentToolkit(_toolsPath?: string) {
-	return {
+function createAgentToolkit(_toolsPath?: string): AgentToolkitApi {
+	const api: AgentToolkitApi = {
 		search: async (pattern: string, path: string): Promise<AgentToolkitSearchResult> => {
 			// This would call real agent-toolkit search functionality
 			// For now, return a realistic structure
@@ -111,6 +135,18 @@ function createAgentToolkit(_toolsPath?: string) {
 				},
 			];
 		},
+		// Optional richer variant used when available to provide context for events
+		multiSearchWithContext: async (
+			pattern: string,
+			path: string,
+			_opts?: { tokenBudget?: { maxTokens: number; trimToTokens?: number } },
+		): Promise<MultiSearchWithContextResult> => {
+			const results = await api.multiSearch(pattern, path);
+			return {
+				results,
+				context: { totalTokens: 123, chunks: [{ file: path, tokens: 123 }] },
+			};
+		},
 		codemod: async (
 			find: string,
 			replace: string,
@@ -140,7 +176,15 @@ function createAgentToolkit(_toolsPath?: string) {
 				// error: 'Real implementation pending - workspace dependency resolution needed'
 			};
 		},
+		// Optional variant used when available to provide per-file token context in events
+		validateProjectSmart: async (
+			files: string[],
+			_opts?: { tokenBudget?: { maxTokens: number; trimToTokens?: number } },
+		): Promise<{ context: Array<{ file: string; totalTokens: number }> }> => ({
+			context: files.map((f) => ({ file: f, totalTokens: 100 })),
+		}),
 	};
+	return api;
 }
 
 // No back-compat shim required: use typed event creators directly
@@ -182,7 +226,7 @@ export class AgentToolkitMCPTools {
 		}
 	>;
 
-	private readonly agentToolkit: ReturnType<typeof createAgentToolkit>;
+	private readonly agentToolkit: AgentToolkitApi;
 	private eventBus?: { emit: (event: MCPEvent) => void };
 
 	constructor(toolsPath?: string, eventBus?: { emit: (event: MCPEvent) => void }) {
@@ -314,16 +358,35 @@ export class AgentToolkitMCPTools {
 
 					// Execute real agent-toolkit multi-search
 					const startTime = Date.now();
-					const result = await this.agentToolkit.multiSearch(validInput.pattern, validInput.path);
+					// Prefer building context when available for richer events
+					const resultWithCtx = this.agentToolkit.multiSearchWithContext
+						? await this.agentToolkit.multiSearchWithContext(
+							validInput.pattern,
+							validInput.path,
+							{ tokenBudget: { maxTokens: 4000, trimToTokens: 3000 } },
+						)
+						: undefined;
+					const used = resultWithCtx ?? (await this.agentToolkit.multiSearch(validInput.pattern, validInput.path));
 					const duration = Date.now() - startTime;
 
 					// Count total matches across all search results
-					const totalMatches = Array.isArray(result)
-						? result.reduce((sum, searchResult) => sum + (searchResult.results?.length || 0), 0)
+					const totalMatches = Array.isArray(used)
+						? used.reduce((sum, searchResult) => sum + (searchResult.results?.length || 0), 0)
 						: 0;
 
 					// Emit search results event to A2A bus
 					if (this.eventBus) {
+						let contextSummary: { totalTokens: number; files: Array<{ file: string; tokens: number }> } | undefined;
+						if (!Array.isArray(used) && used?.context) {
+							const perFile = new Map<string, number>();
+							for (const c of used.context.chunks) {
+								perFile.set(c.file, (perFile.get(c.file) ?? 0) + c.tokens);
+							}
+							contextSummary = {
+								totalTokens: used.context.totalTokens,
+								files: [...perFile.entries()].map(([file, tokens]) => ({ file, tokens }))
+							};
+						}
 						const resultsEvent = createTypedEvent.searchResults({
 							executionId,
 							query: validInput.pattern,
@@ -332,6 +395,7 @@ export class AgentToolkitMCPTools {
 							paths: [validInput.path],
 							duration,
 							foundAt: new Date().toISOString(),
+							contextSummary,
 						});
 						this.eventBus.emit(resultsEvent);
 					}
@@ -340,13 +404,13 @@ export class AgentToolkitMCPTools {
 					this.executionHistory.set(correlationId, {
 						timestamp: new Date(),
 						input: validInput,
-						result,
+						result: used,
 						success: true,
 					});
 
 					return {
 						success: true,
-						data: result,
+						data: used,
 						metadata: {
 							correlationId,
 							timestamp,
@@ -515,6 +579,14 @@ export class AgentToolkitMCPTools {
 
 					// Emit validation report event to A2A bus
 					if (this.eventBus) {
+						// If validateProjectSmart is exposed, compute per-file token summary
+						let contextSummary: Array<{ file: string; tokens: number }> | undefined;
+						const smart = this.agentToolkit.validateProjectSmart
+							? await this.agentToolkit.validateProjectSmart(validInput.files, { tokenBudget: { maxTokens: 4000, trimToTokens: 3000 } })
+							: undefined;
+						if (smart?.context) {
+							contextSummary = smart.context.map((c: { file: string; totalTokens: number }) => ({ file: c.file, tokens: c.totalTokens }));
+						}
 						const reportEvent = createTypedEvent.validationReport({
 							executionId,
 							validationType: 'syntax', // Could be determined from file types
@@ -522,6 +594,7 @@ export class AgentToolkitMCPTools {
 							issuesFound: result.summary?.total || 0,
 							filesValidated: validInput.files,
 							reportedAt: new Date().toISOString(),
+							contextSummary,
 						});
 						this.eventBus.emit(reportEvent);
 					}

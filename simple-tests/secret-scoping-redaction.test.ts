@@ -31,7 +31,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 
 	describe('SecretScope Schema', () => {
 		it('should validate minimal secret scope', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'test-scope',
@@ -48,7 +48,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should validate complex secret scope with time restrictions', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'production-scope',
@@ -69,7 +69,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should reject invalid scope with empty allowed secrets', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'invalid-scope',
@@ -88,7 +88,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 
 	describe('Secret Access Control', () => {
 		it('should allow access to secrets within scope', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'api-scope',
@@ -111,7 +111,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should deny access to secrets outside scope', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'limited-scope',
@@ -134,7 +134,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should deny access in wrong environment', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'prod-scope',
@@ -156,7 +156,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should deny access outside time window', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'time-restricted-scope',
@@ -188,7 +188,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 
 	describe('Log Redaction', () => {
 		it('should redact secrets in console.log messages', async () => {
-			const { createLogRedactor } = await import('./secret-accessor-impl.js');
+			const { createLogRedactor } = await import('./secret-accessor-impl');
 
 			const config: RedactionConfig = {
 				secretPatterns: [/api[_-]?key[_-]?=(\w+)/i, /password[_-]?=(\w+)/i, /token[_-]?=(\w+)/i],
@@ -216,7 +216,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should redact JWT tokens in error messages', async () => {
-			const { createLogRedactor } = await import('./secret-accessor-impl.js');
+			const { createLogRedactor } = await import('./secret-accessor-impl');
 
 			const config: RedactionConfig = {
 				secretPatterns: [/Bearer\s+([A-Za-z0-9\-_=]+\.[A-Za-z0-9\-_=]+\.[A-Za-z0-9\-_.+/=]*)/g],
@@ -245,7 +245,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should not redact non-secret content', async () => {
-			const { createLogRedactor } = await import('./secret-accessor-impl.js');
+			const { createLogRedactor } = await import('./secret-accessor-impl');
 
 			const config: RedactionConfig = {
 				secretPatterns: [/secret[_-]?=(\w+)/i],
@@ -272,7 +272,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should handle multiple secrets in one message', async () => {
-			const { createLogRedactor } = await import('./secret-accessor-impl.js');
+			const { createLogRedactor } = await import('./secret-accessor-impl');
 
 			const config: RedactionConfig = {
 				secretPatterns: [/api_key=(\w+)/g, /db_password=(\w+)/g],
@@ -303,7 +303,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 
 	describe('Secret Metadata and Audit', () => {
 		it('should track secret access metadata', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'audit-scope',
@@ -330,7 +330,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should increment access count on repeated access', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'counter-scope',
@@ -355,7 +355,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should track denied access attempts', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'limited-scope',
@@ -383,7 +383,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 
 	describe('Integration Scenarios', () => {
 		it('should handle scope changes during runtime', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const initialScope: SecretScope = {
 				name: 'initial-scope',
@@ -420,7 +420,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should work with multiple redactors', async () => {
-			const { createLogRedactor } = await import('./secret-accessor-impl.js');
+			const { createLogRedactor } = await import('./secret-accessor-impl');
 
 			const apiRedactor = createLogRedactor({
 				secretPatterns: [/api_key=(\w+)/g],
@@ -454,7 +454,7 @@ describe('Secret Scoping and Redaction TDD', () => {
 		});
 
 		it('should handle missing environment variables gracefully', async () => {
-			const { createSecretAccessor } = await import('./secret-accessor-impl.js');
+			const { createSecretAccessor } = await import('./secret-accessor-impl');
 
 			const scope: SecretScope = {
 				name: 'missing-scope',

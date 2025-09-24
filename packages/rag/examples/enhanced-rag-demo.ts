@@ -13,7 +13,7 @@ import {
 	createProductionRAGPipeline,
 	type Document,
 	EnhancedRAGPipeline,
-} from '../src/enhanced-pipeline';
+} from '../src/enhanced-pipeline.js';
 
 // Sample documents for testing
 const sampleDocuments: Document[] = [

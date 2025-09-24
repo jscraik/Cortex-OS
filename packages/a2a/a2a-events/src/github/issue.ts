@@ -4,7 +4,7 @@ import {
 	GitHubRepositorySchema,
 	type GitHubUser,
 	GitHubUserSchema,
-} from './repository';
+} from './repository.js';
 
 // Issue Label Schema
 export const IssueLabelSchema = z.object({

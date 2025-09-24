@@ -8,8 +8,8 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolSecurityLayer } from '../tool-security-layer';
-import { ToolValidationError } from '../tool-validation-error';
+import { ToolSecurityLayer } from '../tool-security-layer.js';
+import { ToolValidationError } from '../tool-validation-error.js';
 
 /**
  * Create malicious tool input for security testing

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createServer } from '../src/server';
+import { createServer } from '../src/server.js';
 
 describe('request validation', () => {
 	it('returns 400 for invalid embeddings payload', async () => {

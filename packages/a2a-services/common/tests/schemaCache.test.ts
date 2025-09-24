@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSchemaCache } from '../src/cache/schemaCache';
+import { createSchemaCache } from '../src/cache/schemaCache.js';
 
 describe('schemaCache', () => {
 	it('caches and returns hits within TTL', async () => {

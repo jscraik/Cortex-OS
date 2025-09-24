@@ -112,7 +112,7 @@ export async function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): Promi
 				});
 			}
 
-			const { SQLiteStore } = await import('../adapters/store.sqlite.js');
+			const { SQLiteStore } = await import('../adapters/store.sqlite');
 			// Use in-memory SQLite by default for testing
 			return new SQLiteStore(':memory:', 384);
 		}

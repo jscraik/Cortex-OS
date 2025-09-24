@@ -69,7 +69,7 @@ export class BasicScheduler {
 				}
 
 				// Generate steps based on strategy and complexity
-				let steps: import('../contracts/no-architecture-contracts.js').ExecutionStep[] = [];
+				let steps: import('../contracts/no-architecture-contracts').ExecutionStep[] = [];
 				const totalDuration = req.timeoutMs;
 
 				if (req.complexity > 0.7 && req.constraints.canParallelize) {

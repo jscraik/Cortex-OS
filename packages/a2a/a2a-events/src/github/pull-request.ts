@@ -4,7 +4,7 @@ import {
 	GitHubRepositorySchema,
 	type GitHubUser,
 	GitHubUserSchema,
-} from './repository';
+} from './repository.js';
 
 // Pull Request Branch Schema
 export const PullRequestBranchSchema = z.object({

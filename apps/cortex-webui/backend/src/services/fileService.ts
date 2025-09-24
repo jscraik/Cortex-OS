@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { FileUpload } from '@shared/types';
 import { v4 as uuidv4 } from 'uuid';
-import { UPLOAD_DIR } from '../config/constants';
+import { UPLOAD_DIR } from '../config/constants.js';
 
 export const initializeUploadDirectory = async (): Promise<void> => {
 	try {

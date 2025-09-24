@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { topoSort, validateDAG } from '../dag';
+import { topoSort, validateDAG } from '../dag.js';
 
 describe('DAG utilities', () => {
 	it('topologically sorts a simple workflow graph', () => {

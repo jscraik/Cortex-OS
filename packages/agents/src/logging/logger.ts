@@ -1,4 +1,4 @@
-import type { BufferOptions, LogEntry, LoggerConfig, LoggerStream, LogLevel } from './types';
+import type { BufferOptions, LogEntry, LoggerConfig, LoggerStream, LogLevel } from './types.js';
 
 const LOG_LEVELS: Record<LogLevel, number> = {
 	trace: 10,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { selectOptimalModel } from '../../config/model-integration-strategy';
+import { selectOptimalModel } from '../../config/model-integration-strategy.js';
 
 describe('selectOptimalModel', () => {
 	const base = {
@@ -52,7 +52,7 @@ describe('selectOptimalModel', () => {
 	});
 
 	it('throws on unknown category', () => {
-		expect(() => selectOptimalModel('agents', 'unknown', base as any)).toThrow(
+		expect(() => selectOptimalModel('agents', 'unknown', base as unknown)).toThrow(
 			/Unknown model category/,
 		);
 	});

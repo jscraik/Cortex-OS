@@ -1,6 +1,6 @@
 import { rateLimiter } from '@cortex-os/a2a-common';
 import express from 'express';
-import { type OutboxMessage, OutboxMessageStatus } from './schema';
+import { type OutboxMessage, OutboxMessageStatus } from './schema.js';
 
 type OutboxMessageExt = OutboxMessage & { _simulateFailure?: boolean };
 

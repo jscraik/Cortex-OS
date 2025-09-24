@@ -9,7 +9,7 @@
 
 import { EventEmitter } from 'node:events';
 import { z } from 'zod';
-import { AgentRegistryErrorHelpers } from './agent-registry-error';
+import { AgentRegistryErrorHelpers } from './agent-registry-error.js';
 
 /**
  * Agent Registration Schema

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CircuitBreaker, retry } from '../../src/lib/resilience/circuit-breaker';
+import { CircuitBreaker, retry } from '../../src/lib/resilience/circuit-breaker.js';
 
 describe('Circuit Breaker', () => {
 	it('opens after threshold and blocks calls until timeout', async () => {

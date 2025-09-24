@@ -2,8 +2,8 @@ import { hash } from 'bcryptjs';
 import { betterAuth } from 'better-auth';
 import Database from 'better-sqlite3';
 import type { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../db/schema';
-import { createTestDatabase } from './database';
+import * as schema from '../db/schema.js';
+import { createTestDatabase } from './database.js';
 
 // Test configuration
 export const testConfig = {

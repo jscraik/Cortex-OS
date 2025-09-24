@@ -2,8 +2,8 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { getDatabase } from '../utils/database';
-import logger from '../utils/logger';
+import { getDatabase } from '../utils/database.js';
+import logger from '../utils/logger.js';
 
 export interface HealthCheckResult {
 	status: 'healthy' | 'degraded' | 'unhealthy';

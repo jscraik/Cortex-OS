@@ -4,7 +4,7 @@ import {
 	ensureTraceContext,
 	getCurrentTraceContext,
 	withTraceContext,
-} from '../src/trace-context-manager';
+} from '../src/trace-context-manager.js';
 
 describe('trace-context-manager', () => {
 	it('propagates context across async boundaries', async () => {

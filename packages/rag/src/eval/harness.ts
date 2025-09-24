@@ -1,7 +1,7 @@
 import type { Embedder, Store } from '../lib';
-import { ingestText } from '../pipeline/ingest';
-import { query as doQuery } from '../pipeline/query';
-import { type EvalSummary, ndcgAtK, precisionAtK, type QueryEval, recallAtK } from './metrics';
+import { ingestText } from '../pipeline/ingest.js';
+import { query as doQuery } from '../pipeline/query.js';
+import { type EvalSummary, ndcgAtK, precisionAtK, type QueryEval, recallAtK } from './metrics.js';
 
 export interface GoldenItem {
 	id: string;

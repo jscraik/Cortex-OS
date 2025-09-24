@@ -20,7 +20,7 @@ describe('createBus', () => {
 			occurredAt: new Date().toISOString(),
 			headers: {},
 			payload: {},
-		} as any);
+		} as unknown);
 		expect(got).toBe(true);
 	});
 

@@ -451,7 +451,7 @@ describe('SecureNeo4j - Unit Tests', () => {
 		});
 
 		test('should reject circular references in objects', () => {
-			const circularObject: any = { name: 'John' };
+			const circularObject: Record<string, unknown> = { name: 'John' };
 			circularObject.self = circularObject; // Circular reference
 
 			const result = secureNeo4j.validateProperties(circularObject);

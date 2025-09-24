@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CertificateBundle, TrustDomainConfig } from '../types.js';
-import * as clientModule from './client';
-import { SpiffeClient } from './client';
+import * as clientModule from './client.js';
+import { SpiffeClient } from './client.js';
 
 describe('SpiffeClient', () => {
 	const config: TrustDomainConfig = {

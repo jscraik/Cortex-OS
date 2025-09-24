@@ -8,7 +8,7 @@
  * Co-authored-by: brAInwav Development Team
  */
 
-import { CerebrumAgent } from '../src/CerebrumAgent.js';
+import { CerebrumAgent } from '../src/CerebrumAgent';
 import { createAGUIBusIntegration } from '../src/integrations/AGUIBusIntegration.js';
 import { createAGUIMCPTools } from '../src/mcp/AGUIMCPTools.js';
 import { createToolLayerAgent } from '../src/subagents/ToolLayerAgent.js';

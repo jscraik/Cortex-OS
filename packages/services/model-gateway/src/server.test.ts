@@ -25,7 +25,7 @@ vi.mock('./lib/applyAuditPolicy.ts', () => ({
 	applyAuditPolicy: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { createServer } from './server';
+import { createServer } from './server.js';
 
 describe('server', () => {
 	it('handles embeddings', async () => {

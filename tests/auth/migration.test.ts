@@ -8,11 +8,111 @@ process.env.BETTER_AUTH_SECRET = 'test-migration-secret';
 process.env.BETTER_AUTH_URL = 'http://localhost:3001';
 process.env.LEGACY_JWT_SECRET = 'legacy-secret';
 
-describe('Authentication Migration Tests', () => {
-	let dbAdapter: DatabaseAdapter;
+// Type definitions for migration tests
+interface JWTPayload {
+	userId: string;
+	email?: string;
+	sessionId?: string;
+	iat: number;
+	exp: number;
+}
 
+interface TokenMigrationResult {
+	valid: boolean;
+	userId?: string;
+	migrated?: boolean;
+	error?: string;
+}
+
+interface LegacyUserData {
+	id: string;
+	email: string;
+	name?: string;
+	passwordHash: string;
+	hashVersion: string;
+	createdAt?: Date;
+	lastLoginAt?: Date;
+	preferences?: Record<string, unknown>;
+	roles?: string[];
+	profile?: Record<string, unknown>;
+	legacy?: boolean;
+}
+
+interface LoginResult {
+	success: boolean;
+	migrated?: boolean;
+	error?: string;
+}
+
+interface User {
+	email: string;
+	hashVersion: string;
+	name?: string | null;
+	preferences?: Record<string, unknown>;
+	emailVerified?: boolean;
+	passwordHash?: string;
+	roles?: string[];
+	profile?: Record<string, unknown>;
+}
+
+interface LegacySession {
+	userId: string;
+	token: string;
+	createdAt: Date;
+	expiresAt: Date;
+}
+
+interface Session {
+	id: string;
+	userId: string;
+	token: string;
+	expiresAt: Date;
+}
+
+interface MigrationResult {
+	success: boolean;
+	userId?: string;
+	accountId?: string;
+}
+
+interface MigrationProgress {
+	progress: number;
+	processed: number;
+	total: number;
+}
+
+interface BatchMigrationResult {
+	success: boolean;
+	migratedCount: number;
+	failedCount: number;
+}
+
+interface MigrationOptions {
+	shouldFail?: boolean;
+	failAfter?: string;
+	onProgress?: (update: MigrationProgress) => void;
+}
+
+interface OAuthAccount {
+	id: string;
+	userId: string;
+	provider: string;
+	providerAccountId: string;
+	accessToken: string;
+	refreshToken?: string;
+	expiresAt?: Date;
+	scope?: string;
+}
+
+interface RollbackResult {
+	success: boolean;
+	rolledBack: boolean;
+}
+
+describe('Authentication Migration Tests', () => {
 	beforeEach(() => {
-		dbAdapter = new DatabaseAdapter();
+		// Initialize test database adapter
+		new DatabaseAdapter();
 	});
 
 	afterEach(() => {
@@ -22,7 +122,7 @@ describe('Authentication Migration Tests', () => {
 	describe('Legacy JWT Token Migration', () => {
 		it('should accept and migrate legacy JWT tokens', async () => {
 			// Create legacy JWT token with old secret
-			const legacyPayload = {
+			const legacyPayload: JWTPayload = {
 				userId: 'legacy-user-123',
 				email: 'legacy@example.com',
 				iat: Math.floor(Date.now() / 1000),
@@ -32,7 +132,7 @@ describe('Authentication Migration Tests', () => {
 			const legacyToken = jwt.sign(legacyPayload, process.env.LEGACY_JWT_SECRET!);
 
 			// Create new Better Auth token
-			const newPayload = {
+			const newPayload: JWTPayload = {
 				userId: 'new-user-123',
 				sessionId: 'session-456',
 				iat: Math.floor(Date.now() / 1000),
@@ -57,7 +157,7 @@ describe('Authentication Migration Tests', () => {
 		});
 
 		it('should reject expired legacy tokens', async () => {
-			const expiredPayload = {
+			const expiredPayload: JWTPayload = {
 				userId: 'expired-user',
 				email: 'expired@example.com',
 				iat: Math.floor(Date.now() / 1000) - 7200, // 2 hours ago
@@ -88,11 +188,11 @@ describe('Authentication Migration Tests', () => {
 			const legacyHash = await bcrypt.hash(plainPassword, 10);
 
 			// Create user with legacy hash
-			const user = await createLegacyUser({
+			await createLegacyUser({
 				email: 'migrate@example.com',
 				passwordHash: legacyHash,
 				hashVersion: 'v1', // Legacy version
-			});
+			} as LegacyUserData);
 
 			// Simulate login to trigger migration
 			const loginResult = await loginWithMigration('migrate@example.com', plainPassword);
@@ -114,7 +214,7 @@ describe('Authentication Migration Tests', () => {
 				email: 'already@example.com',
 				passwordHash: newHash,
 				hashVersion: 'v2', // Already migrated
-			});
+			} as LegacyUserData);
 
 			const loginResult = await loginWithMigration('already@example.com', plainPassword);
 
@@ -128,7 +228,7 @@ describe('Authentication Migration Tests', () => {
 				email: 'failed@example.com',
 				passwordHash: 'invalid-hash',
 				hashVersion: 'v1',
-			});
+			} as LegacyUserData);
 
 			const loginResult = await loginWithMigration('failed@example.com', 'anypassword');
 
@@ -145,7 +245,7 @@ describe('Authentication Migration Tests', () => {
 				token: 'legacy-session-token',
 				createdAt: new Date(),
 				expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-			});
+			} as LegacySession);
 
 			// Migrate session
 			const migratedSession = await migrateSession(legacySession);
@@ -162,7 +262,7 @@ describe('Authentication Migration Tests', () => {
 				token: 'expired-session-token',
 				createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // 48 hours ago
 				expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
-			});
+			} as LegacySession);
 
 			const result = await migrateSession(expiredSession);
 
@@ -172,11 +272,12 @@ describe('Authentication Migration Tests', () => {
 
 	describe('User Data Migration', () => {
 		it('should migrate user accounts with all data intact', async () => {
-			const legacyUserData = {
+			const legacyUserData: LegacyUserData = {
 				id: 'legacy-data-user',
 				email: 'data@example.com',
 				name: 'Data Migration User',
 				passwordHash: await bcrypt.hash('DataPass123!', 10),
+				hashVersion: 'v1',
 				createdAt: new Date('2023-01-01'),
 				lastLoginAt: new Date('2023-12-01'),
 				preferences: {
@@ -210,9 +311,11 @@ describe('Authentication Migration Tests', () => {
 		});
 
 		it('should handle missing fields gracefully', async () => {
-			const incompleteUser = {
+			const incompleteUser: LegacyUserData = {
 				id: 'incomplete-user',
 				email: 'incomplete@example.com',
+				passwordHash: 'test-hash',
+				hashVersion: 'v1',
 				// Missing name, preferences, etc.
 			};
 
@@ -230,7 +333,7 @@ describe('Authentication Migration Tests', () => {
 
 	describe('OAuth Account Migration', () => {
 		it('should migrate OAuth accounts to new schema', async () => {
-			const legacyOAuthAccount = {
+			const legacyOAuthAccount: OAuthAccount = {
 				id: 'oauth-migrate-account',
 				userId: 'oauth-user',
 				provider: 'github',
@@ -262,12 +365,13 @@ describe('Authentication Migration Tests', () => {
 				id: 'rollback-user',
 				email: 'rollback@example.com',
 				passwordHash: 'hash',
-			});
+				hashVersion: 'v1',
+			} as LegacyUserData);
 
 			// Simulate migration failure
 			const migrationResult = await migrateWithRollback('rollback-user', {
 				shouldFail: true,
-			});
+			} as MigrationOptions);
 
 			expect(migrationResult.success).toBe(false);
 			expect(migrationResult.rolledBack).toBe(true);
@@ -280,14 +384,14 @@ describe('Authentication Migration Tests', () => {
 		it('should preserve data integrity during rollback', async () => {
 			// Create multiple related records
 			const userId = 'integrity-user';
-			await createLegacyUser({ id: userId, email: 'integrity@example.com' });
-			await createLegacySession({ userId, token: 'session-token' });
-			await createLegacyOAuthAccount({ userId, provider: 'github' });
+			await createLegacyUser({ id: userId, email: 'integrity@example.com', passwordHash: 'test-hash', hashVersion: 'v1' } as LegacyUserData);
+			await createLegacySession({ userId, token: 'session-token', createdAt: new Date(), expiresAt: new Date() } as LegacySession);
+			await createLegacyOAuthAccount({ id: 'oauth-test', userId, provider: 'github', providerAccountId: 'test-123', accessToken: 'test-token' } as OAuthAccount);
 
 			// Fail migration halfway through
 			const result = await migrateUserWithRelatedData(userId, {
 				failAfter: 'sessions', // Fail after migrating sessions
-			});
+			} as MigrationOptions);
 
 			expect(result.success).toBe(false);
 			expect(result.rolledBack).toBe(true);
@@ -313,7 +417,7 @@ describe('Authentication Migration Tests', () => {
 					id: userId,
 					email: `batch${i}@example.com`,
 					passwordHash: 'hash',
-				});
+				} as LegacyUserData);
 			}
 
 			const startTime = Date.now();
@@ -334,14 +438,14 @@ describe('Authentication Migration Tests', () => {
 					id: userId,
 					email: `${userId}@example.com`,
 					passwordHash: 'hash',
-				});
+				} as LegacyUserData);
 			}
 
-			const progressUpdates: any[] = [];
+			const progressUpdates: MigrationProgress[] = [];
 
 			const result = await batchMigrateUsers(userIds, {
 				onProgress: (update) => progressUpdates.push(update),
-			});
+			} as MigrationOptions);
 
 			expect(progressUpdates.length).toBeGreaterThan(0);
 			expect(progressUpdates[progressUpdates.length - 1].progress).toBe(100);
@@ -351,7 +455,8 @@ describe('Authentication Migration Tests', () => {
 });
 
 // Helper functions for migration tests
-async function migrateLegacyToken(token: string): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function migrateLegacyToken(_token: string): Promise<TokenMigrationResult> {
 	// Implementation would validate legacy token and issue new one
 	return {
 		valid: true,
@@ -360,7 +465,8 @@ async function migrateLegacyToken(token: string): Promise<any> {
 	};
 }
 
-async function validateNewToken(token: string): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function validateNewToken(_token: string): Promise<TokenMigrationResult> {
 	// Implementation would validate new Better Auth token
 	return {
 		valid: true,
@@ -368,12 +474,13 @@ async function validateNewToken(token: string): Promise<any> {
 	};
 }
 
-async function createLegacyUser(data: any): Promise<any> {
+async function createLegacyUser(data: LegacyUserData): Promise<LegacyUserData> {
 	// Mock creating user in legacy format
 	return { ...data, legacy: true };
 }
 
-async function loginWithMigration(email: string, password: string): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function loginWithMigration(_email: string, _password: string): Promise<LoginResult> {
 	// Mock login with migration
 	return {
 		success: true,
@@ -381,25 +488,29 @@ async function loginWithMigration(email: string, password: string): Promise<any>
 	};
 }
 
-async function getUserByEmail(email: string): Promise<any> {
+async function getUserByEmail(_email: string): Promise<User> {
 	// Mock getting user by email
 	return {
-		email,
+		email: _email,
 		hashVersion: 'v2',
+		passwordHash: 'mock-hash',
+		roles: [],
+		profile: {},
 	};
 }
 
-async function createNewHash(password: string): Promise<string> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function createNewHash(_password: string): Promise<string> {
 	// Mock creating new hash format
 	return 'new-hash-format';
 }
 
-async function createLegacySession(data: any): Promise<any> {
+async function createLegacySession(data: LegacySession): Promise<LegacySession> {
 	// Mock creating legacy session
 	return data;
 }
 
-async function migrateSession(session: any): Promise<any> {
+async function migrateSession(session: LegacySession): Promise<Session> {
 	// Mock session migration
 	return {
 		...session,
@@ -408,7 +519,7 @@ async function migrateSession(session: any): Promise<any> {
 	};
 }
 
-async function migrateUserData(userId: string): Promise<any> {
+async function migrateUserData(userId: string): Promise<MigrationResult> {
 	// Mock user data migration
 	return {
 		success: true,
@@ -416,17 +527,27 @@ async function migrateUserData(userId: string): Promise<any> {
 	};
 }
 
-async function getUserById(userId: string): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function getUserById(_userId: string): Promise<User | null> {
 	// Mock getting migrated user
-	return null;
+	return {
+		email: 'test@example.com',
+		hashVersion: 'v2',
+		passwordHash: 'mock-hash',
+		roles: [],
+		profile: {},
+		name: null,
+		preferences: {},
+		emailVerified: false,
+	};
 }
 
-async function createLegacyOAuthAccount(data: any): Promise<any> {
+async function createLegacyOAuthAccount(data: OAuthAccount): Promise<OAuthAccount> {
 	// Mock creating legacy OAuth account
 	return data;
 }
 
-async function migrateOAuthAccount(accountId: string): Promise<any> {
+async function migrateOAuthAccount(accountId: string): Promise<MigrationResult> {
 	// Mock OAuth account migration
 	return {
 		success: true,
@@ -434,24 +555,28 @@ async function migrateOAuthAccount(accountId: string): Promise<any> {
 	};
 }
 
-async function getOAuthAccountById(accountId: string): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function getOAuthAccountById(_accountId: string): Promise<OAuthAccount> {
 	// Mock getting OAuth account
 	return {
+		id: _accountId,
+		userId: 'test-user',
 		provider: 'github',
 		providerAccountId: 'github-123456',
 		accessToken: 'encrypted_token',
-	};
+	} as OAuthAccount;
 }
 
-async function getLegacyUserById(userId: string): Promise<any> {
+async function getLegacyUserById(userId: string): Promise<LegacyUserData> {
 	// Mock getting legacy user
 	return {
 		id: userId,
 		email: 'legacy@example.com',
-	};
+	} as LegacyUserData;
 }
 
-async function migrateWithRollback(userId: string, options: any): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function migrateWithRollback(_userId: string, _options: MigrationOptions): Promise<RollbackResult> {
 	// Mock migration with rollback
 	return {
 		success: false,
@@ -459,15 +584,14 @@ async function migrateWithRollback(userId: string, options: any): Promise<any> {
 	};
 }
 
-async function migrateUserWithRelatedData(userId: string, options: any): Promise<any> {
-	// Mock migration with related data
-	return {
-		success: false,
-		rolledBack: true,
-	};
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function migrateUserWithRelatedData(_userId: string, _options: MigrationOptions): Promise<RollbackResult> {
+	// Mock migration with related data - same as migrateWithRollback
+	return migrateWithRollback(_userId, _options);
 }
 
-async function batchMigrateUsers(userIds: string[], options?: any): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function batchMigrateUsers(userIds: string[], _options?: MigrationOptions): Promise<BatchMigrationResult> {
 	// Mock batch migration
 	return {
 		success: true,

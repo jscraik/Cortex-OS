@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { describe, expect, it } from 'vitest';
-import { createRedisRateLimiter, RedisRateLimiter } from '../src/middleware/redisRateLimiter';
+import { createRedisRateLimiter, RedisRateLimiter } from '../src/middleware/redisRateLimiter.js';
 
 // Test constants to avoid hardcoded IPs
 const _TEST_IP = '203.0.113.1'; // RFC 5737 test IP range

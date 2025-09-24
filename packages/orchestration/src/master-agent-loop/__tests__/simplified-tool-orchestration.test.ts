@@ -8,8 +8,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { SimplifiedToolOrchestrator } from '../simplified-tool-orchestrator';
-import type { ToolChain } from '../tool-orchestration-contracts';
+import { SimplifiedToolOrchestrator } from '../simplified-tool-orchestrator.js';
+import type { ToolChain } from '../tool-orchestration-contracts.js';
 
 // Simple test helper - functional approach (≤40 lines)
 const createSimpleToolChain = (id: string, toolCount: number = 2): ToolChain => ({

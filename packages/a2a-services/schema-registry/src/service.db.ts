@@ -8,8 +8,8 @@ import {
 } from '@cortex-os/a2a-common';
 import { busMetrics } from '@cortex-os/a2a-core';
 import express from 'express';
-import { type SchemaRepository, SqliteSchemaRepository } from './database';
-import { type Schema, schemaForSchema } from './schemas';
+import { type SchemaRepository, SqliteSchemaRepository } from './database.js';
+import { type Schema, schemaForSchema } from './schemas.js';
 
 function isValidVersion(version: string): boolean {
 	return /^\d+\.\d+\.\d+$/.test(version);

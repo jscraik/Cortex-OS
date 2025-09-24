@@ -3,15 +3,15 @@
 import { createReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio';
 import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema,
 	type Root,
 	RootsListChangedNotificationSchema,
 	ToolSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+} from '@modelcontextprotocol/sdk/types';
 import { minimatch } from 'minimatch';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';

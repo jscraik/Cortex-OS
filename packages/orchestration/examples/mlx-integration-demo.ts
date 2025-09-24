@@ -5,7 +5,7 @@
  * Demonstrates the complete model integration pipeline in action
  */
 
-import { MLXFirstOrchestrator } from '../src/coordinator/mlx-first-coordinator.js';
+import { MLXFirstOrchestrator } from '../src/coordinator/mlx-first-coordinator';
 import { MLXFirstModelProvider } from '../src/providers/mlx-first-provider.js';
 
 interface Subtask {

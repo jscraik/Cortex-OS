@@ -6,7 +6,7 @@ import {
 	logEvent,
 	makeDoneEvent,
 	makeStartEvent,
-} from '../utils/observability';
+} from '../utils/observability.js';
 
 describe('observability helpers', () => {
 	const originalEnv = { ...process.env };

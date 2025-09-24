@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
-import { createRateLimiter } from '../src/middleware/rateLimiter';
+import { createRateLimiter } from '../src/middleware/rateLimiter.js';
 
 // Test constants to avoid hardcoded IPs
 const _TEST_IP = '203.0.113.1'; // RFC 5737 test IP range

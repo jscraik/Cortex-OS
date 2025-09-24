@@ -1,1 +1,1 @@
-export * from './Tool';
+export * from './Tool.js';

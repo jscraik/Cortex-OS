@@ -21,7 +21,7 @@ describe('send', () => {
 		};
 		axios.post.mockResolvedValue({});
 
-		const { send } = await import('./send.js');
+		const { send } = await import('./send');
 		const params = {
 			type: 'event.test.v1',
 			source: 'urn:test',
@@ -47,7 +47,7 @@ describe('send', () => {
 		};
 		axios.post.mockRejectedValue(new Error('network error'));
 
-		const { send } = await import('./send.js');
+		const { send } = await import('./send');
 
 		await expect(
 			send({

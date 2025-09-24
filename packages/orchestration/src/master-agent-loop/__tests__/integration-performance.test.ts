@@ -8,8 +8,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { ChainExecutionResult, ToolChain } from '../tool-orchestration-contracts';
-import { ToolOrchestrator } from '../tool-orchestrator';
+import type { ChainExecutionResult, ToolChain } from '../tool-orchestration-contracts.js';
+import { ToolOrchestrator } from '../tool-orchestrator.js';
 
 // Functional test helper utilities following CODESTYLE.md
 const createBasicToolDefinition = (

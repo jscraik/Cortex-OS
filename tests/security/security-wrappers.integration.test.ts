@@ -11,6 +11,9 @@ import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
 import { SecureNeo4j } from '@cortex-os/utils';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+// Test constants
+const MALICIOUS_SQL_INPUT = "test'; DROP TABLE users; --";
+
 // Mock external dependencies
 vi.mock('better-sqlite3', () => {
 	const mockStatement = {
@@ -80,12 +83,29 @@ vi.mock('child_process', () => {
 	};
 });
 
+// Mock interfaces
+interface MockDatabase {
+	prepare: ReturnType<typeof vi.fn>;
+	pragma: ReturnType<typeof vi.fn>;
+	close: ReturnType<typeof vi.fn>;
+}
+
+interface MockDriver {
+	session: ReturnType<typeof vi.fn>;
+	close: ReturnType<typeof vi.fn>;
+}
+
+interface MockSession {
+	run: ReturnType<typeof vi.fn>;
+	close: ReturnType<typeof vi.fn>;
+}
+
 describe('Security Wrappers - Integration Tests', () => {
 	let secureDb: SecureDatabaseWrapper;
 	let secureNeo4j: SecureNeo4j;
-	let mockDatabase: any;
-	let mockDriver: any;
-	let mockSession: any;
+	let mockDatabase: MockDatabase;
+	let mockDriver: MockDriver;
+	let mockSession: MockSession;
 
 	beforeEach(() => {
 		// Setup mock database
@@ -256,7 +276,7 @@ describe('Security Wrappers - Integration Tests', () => {
 	describe('Unified Security Policy Enforcement Tests', () => {
 		test('should enforce consistent input validation across all wrappers', async () => {
 			// Test with the same malicious input across all wrappers
-			const maliciousInput = "test'; DROP TABLE users; --";
+			const maliciousInput = MALICIOUS_SQL_INPUT;
 
 			// Database wrapper should reject
 			expect(() => {
@@ -288,6 +308,7 @@ describe('Security Wrappers - Integration Tests', () => {
 			const dbStartTime = Date.now();
 			try {
 				secureDb.secureRun('SELECT * FROM users WHERE id = ?', '123');
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			} catch (_error) {
 				// Expected to succeed quickly
 			}
@@ -297,6 +318,7 @@ describe('Security Wrappers - Integration Tests', () => {
 			const neo4jStartTime = Date.now();
 			try {
 				await secureNeo4j.neighborhood('user_123', 2);
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			} catch (_error) {
 				// Expected to succeed quickly
 			}
@@ -306,6 +328,7 @@ describe('Security Wrappers - Integration Tests', () => {
 			const cmdStartTime = Date.now();
 			try {
 				await SecureCommandExecutor.executeCommand(['echo', 'test'], timeout);
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			} catch (_error) {
 				// May timeout depending on system
 			}
@@ -384,7 +407,7 @@ describe('Security Wrappers - Integration Tests', () => {
 			}).rejects.toThrow('Neo4j connection failed');
 
 			// Ensure database and command execution still enforce security
-			const maliciousInput = "test'; DROP TABLE users; --";
+			const maliciousInput = MALICIOUS_SQL_INPUT;
 
 			// Database should still prevent SQL injection through parameterization
 			expect(() => {
@@ -503,6 +526,8 @@ describe('Security Wrappers - Integration Tests', () => {
 
 		test('should handle resource exhaustion gracefully', async () => {
 			// Simulate resource exhaustion
+			// Mock limited resources for testing (documentation only)
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const _mockLimitedResources = {
 				databaseConnections: 0,
 				neo4jSessions: 0,

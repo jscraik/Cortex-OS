@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import logger, { logError } from '../utils/logger';
+import logger, { logError } from '../utils/logger.js';
 // Error handling middleware for Cortex WebUI backend
 
 export class HttpError extends Error {

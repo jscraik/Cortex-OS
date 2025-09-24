@@ -7,7 +7,7 @@
 
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import { describe, expect, it } from 'vitest';
-import { noForbiddenImportsRule } from './eslint-structure-guard-rule.js';
+import { noForbiddenImportsRule } from './eslint-structure-guard-rule';
 
 // Configure RuleTester for TypeScript
 RuleTester.afterAll = undefined;

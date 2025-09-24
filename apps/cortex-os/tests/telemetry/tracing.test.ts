@@ -16,12 +16,12 @@ const trace = {
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { createEventManager } from '../../src/events';
-import { createRuntimeHttpServer } from '../../src/http/runtime-server';
-import { ArtifactRepository } from '../../src/persistence/artifact-repository';
-import { EvidenceRepository } from '../../src/persistence/evidence-repository';
-import { ProfileRepository } from '../../src/persistence/profile-repository';
-import { TaskRepository } from '../../src/persistence/task-repository';
-import { withRuntimeSpan } from '../../src/telemetry/tracing';
+import { createRuntimeHttpServer } from '../../src/http/runtime-server.js';
+import { ArtifactRepository } from '../../src/persistence/artifact-repository.js';
+import { EvidenceRepository } from '../../src/persistence/evidence-repository.js';
+import { ProfileRepository } from '../../src/persistence/profile-repository.js';
+import { TaskRepository } from '../../src/persistence/task-repository.js';
+import { withRuntimeSpan } from '../../src/telemetry/tracing.js';
 
 function createMockSpan() {
 	return {

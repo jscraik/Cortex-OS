@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createApp } from '../../server';
+import { createApp } from '../../server.js';
 
 describe('Authentication Integration Flows', () => {
 	let app: any;

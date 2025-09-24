@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AgentToolkitMCPTools } from '../../src/mcp/AgentToolkitMCPTools';
-import type { MCPEvent } from '../../src/mcp/types';
+import { AgentToolkitMCPTools } from '../../src/mcp/AgentToolkitMCPTools.js';
+import type { MCPEvent } from '../../src/mcp/types.js';
 
 const makeEventBus = (sink: MCPEvent[]) => ({
 	emit: (event: MCPEvent) => {

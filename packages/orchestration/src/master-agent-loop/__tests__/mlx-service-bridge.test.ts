@@ -8,13 +8,13 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MLXAdapterApi } from '../mlx-service-bridge';
+import type { MLXAdapterApi } from '../mlx-service-bridge.js';
 import {
 	createMLXServiceBridge,
 	MLXServiceBridge,
 	MLXServiceError,
 	MLXServiceErrorCode,
-} from '../mlx-service-bridge';
+} from '../mlx-service-bridge.js';
 
 /**
  * Mock MLX adapter for testing

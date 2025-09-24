@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { container } from '../../src/boot';
-import { TOKENS } from '../../src/tokens';
+import { container } from '../../src/boot.js';
+import { TOKENS } from '../../src/tokens.js';
 
 describe('Service Container Wiring', () => {
 	it('should wire all required services', () => {

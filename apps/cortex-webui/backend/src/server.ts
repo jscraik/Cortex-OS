@@ -27,42 +27,42 @@ process.on('uncaughtException', (error) => {
 });
 
 import { initializeAuthTables } from './auth';
-import { getCorsOptions, getServerConfig } from './config/config';
+import { getCorsOptions, getServerConfig } from './config/config.js';
 // Import constants from backend config (domain separation)
-import { API_BASE_PATH, WS_BASE_PATH } from './config/constants';
-import { getApprovals, postApproval } from './controllers/approvalsController';
-import { getChatSession, postChatMessage, streamChatSSE } from './controllers/chatController';
-import { getContextMap } from './controllers/contextMapController';
-import { ConversationController } from './controllers/conversationController';
-import { postCrawl } from './controllers/crawlController';
+import { API_BASE_PATH, WS_BASE_PATH } from './config/constants.js';
+import { getApprovals, postApproval } from './controllers/approvalsController.js';
+import { getChatSession, postChatMessage, streamChatSSE } from './controllers/chatController.js';
+import { getContextMap } from './controllers/contextMapController.js';
+import { ConversationController } from './controllers/conversationController.js';
+import { postCrawl } from './controllers/crawlController.js';
 import {
 	documentUploadMiddleware,
 	getSupportedTypes,
 	parseDocument,
-} from './controllers/documentController';
+} from './controllers/documentController.js';
 import {
 	deleteFileHandler,
 	uploadFileHandler,
 	uploadMiddleware,
-} from './controllers/fileController';
-import { createMessage, getMessagesByConversationId } from './controllers/messageController';
-import { getModelById, getModels } from './controllers/modelController';
+} from './controllers/fileController.js';
+import { createMessage, getMessagesByConversationId } from './controllers/messageController.js';
+import { getModelById, getModels } from './controllers/modelController.js';
 // Import controllers
-import { OAuthController } from './controllers/oauthController';
-import { getChatTools } from './controllers/toolController';
-import { getUiModels } from './controllers/uiModelsController';
+import { OAuthController } from './controllers/oauthController.js';
+import { getChatTools } from './controllers/toolController.js';
+import { getUiModels } from './controllers/uiModelsController.js';
 import { initializeDatabaseAsync } from './db';
 // MCP tool execution handlers
-import { listWebuiMcpTools, mcpExecuteHandler } from './mcp/tools';
+import { listWebuiMcpTools, mcpExecuteHandler } from './mcp/tools.js';
 // Import middleware
-import { authenticateToken } from './middleware/auth';
-import { errorHandler } from './middleware/errorHandler';
+import { authenticateToken } from './middleware/auth.js';
+import { errorHandler } from './middleware/errorHandler.js';
 // Better Auth routes
-import { setupBetterAuthRoutes } from './routes/better-auth-routes';
+import { setupBetterAuthRoutes } from './routes/better-auth-routes.js';
 // Import services
-import { initializeUploadDirectory } from './services/fileService';
-import { initializeDefaultModels } from './services/modelService';
-import logger, { logWithContext } from './utils/logger';
+import { initializeUploadDirectory } from './services/fileService.js';
+import { initializeDefaultModels } from './services/modelService.js';
+import logger, { logWithContext } from './utils/logger.js';
 
 export interface ServerComponents {
 	app: Express;

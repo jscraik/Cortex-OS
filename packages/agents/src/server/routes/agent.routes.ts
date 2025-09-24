@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { ZodError } from 'zod';
-import { AgentHandler } from '../handlers/agent.handler';
-import { executeAgentSchema } from '../types';
+import { AgentHandler } from '../handlers/agent.handler.js';
+import { executeAgentSchema } from '../types.js';
 
 export const agentRoutes = new Hono();
 

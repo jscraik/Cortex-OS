@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMCPToolValidator, type MCPToolPolicy } from './mcp-tool-validator-impl';
+import { createMCPToolValidator, type MCPToolPolicy } from './mcp-tool-validator-impl.js';
 
 describe('MCP Tool Allowlist Validation', () => {
 	describe('Schema validation', () => {

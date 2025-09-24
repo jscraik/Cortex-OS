@@ -156,7 +156,7 @@ export class PRPLangGraphWorkflow {
 		let updated: PRPWorkflowState = { ...state, gates, currentGate: gateId, phase: gateId };
 
 		try {
-			const { createGate } = await import('../gates/base.js');
+			const { createGate } = await import('../gates/base');
 			const gate = createGate(gateId);
 			const result = await this.errorBoundary.execute(async () => gate.execute(), {
 				operationName: `gate-${gateId}`,

@@ -36,6 +36,7 @@ export interface SearchResultsEvent {
 	paths: string[];
 	duration: number;
 	foundAt: string;
+	contextSummary?: { totalTokens: number; files: Array<{ file: string; tokens: number }> };
 }
 
 export interface CodeModificationEvent {
@@ -54,6 +55,7 @@ export interface ValidationReportEvent {
 	issuesFound: number;
 	filesValidated: string[];
 	reportedAt: string;
+	contextSummary?: Array<{ file: string; tokens: number }>;
 }
 
 export interface BatchCompletedEvent {

@@ -51,13 +51,13 @@ export async function createStoreFromEnv(opts?: { prismaClient?: unknown }): Pro
 			});
 		}
 		case 'sqlite': {
-			const { SQLiteStore } = await import('../adapters/store.sqlite.js');
+			const { SQLiteStore } = await import('../adapters/store.sqlite');
 			// Use in-memory SQLite by default for testing
 			return new SQLiteStore(':memory:', 384);
 		}
 		case 'external-sqlite': {
-			const { initializeExternalStorage } = await import('../adapters/external-storage.js');
-			const { ExternalSqliteStore } = await import('../adapters/store.external-sqlite.js');
+			const { initializeExternalStorage } = await import('../adapters/external-storage');
+			const { ExternalSqliteStore } = await import('../adapters/store.external-sqlite');
 			const externalManager = await initializeExternalStorage();
 			return new ExternalSqliteStore({
 				dbName: process.env.MEMORIES_EXTERNAL_STORAGE_DB_NAME || 'memories.db',
@@ -90,7 +90,7 @@ export async function createStoreFromEnv(opts?: { prismaClient?: unknown }): Pro
 		}
 		default: {
 			// fallback to in-memory adapter for tests/dev without persistence
-			const mod = await import('../adapters/store.memory.js');
+			const mod = await import('../adapters/store.memory');
 			return new mod.InMemoryStore();
 		}
 	}

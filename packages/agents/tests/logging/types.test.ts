@@ -5,7 +5,7 @@ import type {
 	LogLevel,
 	RedactionConfig,
 	RotationConfig,
-} from '../../src/logging/types';
+} from '../../src/logging/types.js';
 
 describe('Logging Types', () => {
 	describe('LogLevel', () => {
