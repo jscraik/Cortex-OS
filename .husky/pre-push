@@ -71,6 +71,29 @@ if [ -n "$CODE_PUSH" ]; then
     echo "⚠️  semgrep not available - skipping security scan"
     echo "    Install semgrep for security validation"
   fi
+
+  if command -v gitleaks >/dev/null 2>&1; then
+    echo "🔑 Gitleaks secret scan (diff range: $PUSH_RANGE)"
+    if gitleaks detect --config=.gitleaks.toml --log-opts="$PUSH_RANGE" --redact; then
+      echo "✅ Gitleaks scan passed"
+    else
+      echo "❌ Gitleaks detected potential secrets - push blocked"
+      echo "   Review findings and remove/redact secrets before pushing."
+      exit 1
+    fi
+  elif command -v docker >/dev/null 2>&1; then
+    echo "🔑 Gitleaks (docker fallback)"
+    if docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
+      detect --config=/repo/.gitleaks.toml --source=/repo --log-opts="$PUSH_RANGE" --redact; then
+      echo "✅ Gitleaks scan passed (docker)"
+    else
+      echo "❌ Gitleaks detected potential secrets (docker) - push blocked"
+      exit 1
+    fi
+  else
+    echo "⚠️  gitleaks not available - skipping secret scan"
+    echo "    Install gitleaks (https://github.com/gitleaks/gitleaks) or enable Docker for fallback."
+  fi
 else
   echo "⏭️  No code changes - skipping security scan"
 fi
