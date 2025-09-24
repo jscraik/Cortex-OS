@@ -8,8 +8,16 @@ fi
 
 echo "[secret-scan] mode=$MODE"
 
+RUNNER="cli"
+
 if ! command -v gitleaks >/dev/null 2>&1; then
-  echo "[secret-scan] gitleaks not installed (try: go install github.com/gitleaks/gitleaks/v8@latest)" >&2
+  if command -v docker >/dev/null 2>&1; then
+    RUNNER="docker"
+    echo "[secret-scan] gitleaks CLI not found – using Docker fallback"
+  else
+    RUNNER="none"
+    echo "[secret-scan] gitleaks not installed (install binary or enable Docker)" >&2
+  fi
 fi
 
 # Pattern guard staged scan (fast)
@@ -22,13 +30,23 @@ TMP_DIR=$(mktemp -d)
 REPORT_JSON="$TMP_DIR/gitleaks.json"
 REPORT_SARIF="$TMP_DIR/gitleaks.sarif"
 
-if command -v gitleaks >/dev/null 2>&1; then
+if [[ "$RUNNER" == "cli" ]] && command -v gitleaks >/dev/null 2>&1; then
   if [[ "$MODE" == "diff" ]]; then
-    echo "[secret-scan] gitleaks detect (diff)"
+    echo "[secret-scan] gitleaks detect (diff, cli)"
     gitleaks detect --redact --report-format json --report-path "$REPORT_JSON" || true
   else
-    echo "[secret-scan] gitleaks detect (full)"
+    echo "[secret-scan] gitleaks detect (full, cli)"
     gitleaks detect --redact --no-git --report-format json --report-path "$REPORT_JSON" || true
+  fi
+elif [[ "$RUNNER" == "docker" ]]; then
+  if [[ "$MODE" == "diff" ]]; then
+    echo "[secret-scan] gitleaks detect (diff, docker)"
+    docker run --rm -v "$PWD:/scan" -v "$TMP_DIR:/reports" zricethezav/gitleaks:latest \
+      detect --redact --report-format json --report-path /reports/gitleaks.json --config=/scan/.gitleaks.toml --source=/scan || true
+  else
+    echo "[secret-scan] gitleaks detect (full, docker)"
+    docker run --rm -v "$PWD:/scan" -v "$TMP_DIR:/reports" zricethezav/gitleaks:latest \
+      detect --redact --no-git --report-format json --report-path /reports/gitleaks.json --config=/scan/.gitleaks.toml --source=/scan || true
   fi
 fi
 

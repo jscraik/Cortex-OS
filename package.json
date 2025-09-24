@@ -80,6 +80,8 @@
     "test:security:all": "pnpm run test:security:unit && pnpm run test:security:integration && pnpm run test:security:regression",
     "test:security:ci": "pnpm run test:security:all -- --reporter=dot",
     "security:scan": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048\" semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR . --max-memory=2048 --timeout 180 --max-target-bytes 200MB",
+  "security:scan:gitleaks": "bash scripts/security/secret-scan.sh",
+  "security:scan:gitleaks:full": "bash scripts/security/secret-scan.sh --full",
     "security:scan:all": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048\" semgrep scan --config=.semgrep/owasp-precise.yaml --config=.semgrep/owasp-top-10-improved.yaml . --max-memory=2048 --timeout 180 --max-target-bytes 200MB",
     "security:scan:llm": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048\" semgrep scan --config=.semgrep/owasp-llm-top-ten.yaml . --max-memory=2048 --timeout 180 --max-target-bytes 200MB",
     "security:scan:atlas": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048\" semgrep scan --config=.semgrep/mitre-atlas.yaml . --max-memory=2048 --timeout 180 --max-target-bytes 200MB",
