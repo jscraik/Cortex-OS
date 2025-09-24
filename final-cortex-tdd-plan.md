@@ -103,9 +103,9 @@
    - Inject real `OutboxService` implementation; verify metrics reflect processed events.
 
 ### Implementation pairing
-- Restore sanitization pipeline with support for `A2AEventEnvelope` shape using recursive sanitizer.
-- Implement streaming transport bridging MCP subscriptions to SSE/WS using Node streams.
-- Provide default `OutboxService` wiring hooking to message broker (e.g., Redis/SQLite queue) and metrics instrumentation.
+- Implement a sanitization process that recursively removes unsafe content (e.g., scripts, HTML tags) from all fields in the `A2AEventEnvelope` object, ensuring safe fields remain unchanged.
+- Create a streaming transport layer that receives events from MCP subscriptions and forwards them to clients using Server-Sent Events (SSE) or WebSockets, utilizing Node.js stream APIs for efficient data flow.
+- Connect the default `OutboxService` to a message broker (such as Redis or a SQLite-backed queue) for event delivery, and add instrumentation to collect and report metrics on processed events.
 
 ### Validation hooks
 - Add contract tests ensuring sanitized payloads persist; include `pnpm test:a2a` in CI gating.
