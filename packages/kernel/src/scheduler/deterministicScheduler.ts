@@ -16,147 +16,214 @@
  */
 
 export interface DeterministicTask<T = unknown> {
-    id: string;
-    priority?: number; // higher runs earlier
-    execute: () => Promise<T> | T;
-    memoryMB?: number;
+	id: string;
+	priority?: number; // higher runs earlier
+	execute: () => Promise<T> | T;
+	memoryMB?: number;
 }
 
 export interface ScheduleOptions {
-    seed?: string;
-    maxConcurrent?: number; // currently treated as batch size executed sequentially
-    maxMemoryMB?: number; // soft limit; batch trimmed if exceeded
-    failFast?: boolean;
+	seed?: string;
+	maxConcurrent?: number; // currently treated as batch size executed sequentially
+	maxMemoryMB?: number; // soft limit; batch trimmed if exceeded
+	failFast?: boolean;
 }
 
 export interface ExecutionRecord<T = unknown> {
-    id: string;
-    success: boolean;
-    value?: T;
-    error?: string;
-    startedAt: number;
-    endedAt: number;
+	id: string;
+	success: boolean;
+	value?: T;
+	error?: string;
+	startedAt: number;
+	endedAt: number;
 }
 
 export interface ScheduleResult<T = unknown> {
-    records: Array<ExecutionRecord<T>>;
-    executionHash: string; // hash over ordered (id, success, value|error)
-    seed: string;
+	records: Array<ExecutionRecord<T>>;
+	executionHash: string; // hash over ordered (id, success, value|error)
+	seed: string;
 }
 
 const DEFAULT_MAX_CONCURRENT = 4;
 
 // Simple FNV-1a 32-bit for stable ordering; deterministic across platforms.
 const fnv1a = (input: string): number => {
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < input.length; i++) {
-        hash ^= input.charCodeAt(i);
-        hash = (hash * 0x01000193) >>> 0; // uint32 overflow
-    }
-    return hash >>> 0;
+	let hash = 0x811c9dc5;
+	for (let i = 0; i < input.length; i++) {
+		hash ^= input.charCodeAt(i);
+		hash = (hash * 0x01000193) >>> 0; // uint32 overflow
+	}
+	return hash >>> 0;
 };
 
 const stableDeterministicSort = (tasks: DeterministicTask[], seed: string): DeterministicTask[] => {
-    return [...tasks].sort((a, b) => {
-        const pa = a.priority ?? 0;
-        const pb = b.priority ?? 0;
-        if (pa !== pb) return pb - pa; // higher priority first
-        const ha = fnv1a(a.id + seed);
-        const hb = fnv1a(b.id + seed);
-        if (ha === hb) return a.id.localeCompare(b.id); // final tiebreak to ensure total order
-        return ha - hb; // lower hash earlier to keep consistent order
-    });
+	return [...tasks].sort((a, b) => {
+		const pa = a.priority ?? 0;
+		const pb = b.priority ?? 0;
+		if (pa !== pb) return pb - pa; // higher priority first
+		const ha = fnv1a(a.id + seed);
+		const hb = fnv1a(b.id + seed);
+		if (ha === hb) return a.id.localeCompare(b.id); // final tiebreak to ensure total order
+		return ha - hb; // lower hash earlier to keep consistent order
+	});
 };
 
 // Incorporate seed + execution order index to ensure distinct seeds always produce distinct hashes
 // even when priority-only ordering makes record content identical.
 const computeExecutionHash = (records: ExecutionRecord[], seed: string): string => {
-    const canonical = records
-        .map((r, idx) => `${seed}|${idx}|${r.id}|${r.success ? '1' : '0'}|${r.success ? JSON.stringify(r.value) : r.error}`)
-        .join('\n');
-    return fnv1a(canonical).toString(16);
+	const canonical = records
+		.map(
+			(r, idx) =>
+				`${seed}|${idx}|${r.id}|${r.success ? '1' : '0'}|${r.success ? JSON.stringify(r.value) : r.error}`,
+		)
+		.join('\n');
+	return fnv1a(canonical).toString(16);
 };
 
-const trimBatchForMemory = <T>(batch: Array<DeterministicTask<T>>, maxMemoryMB?: number): Array<DeterministicTask<T>> => {
-    if (!maxMemoryMB) return batch;
-    let total = 0;
-    const kept: Array<DeterministicTask<T>> = [];
-    for (const t of batch) {
-        const m = t.memoryMB ?? 0;
-        if (total + m > maxMemoryMB) break;
-        total += m;
-        kept.push(t);
-    }
-    if (kept.length === 0 && batch.length > 0) return [batch[0]];
-    return kept;
+const trimBatchForMemory = <T>(
+	batch: Array<DeterministicTask<T>>,
+	maxMemoryMB?: number,
+): Array<DeterministicTask<T>> => {
+	if (!maxMemoryMB) return batch;
+	let total = 0;
+	const kept: Array<DeterministicTask<T>> = [];
+	for (const t of batch) {
+		const m = t.memoryMB ?? 0;
+		if (total + m > maxMemoryMB) break;
+		total += m;
+		kept.push(t);
+	}
+	if (kept.length === 0 && batch.length > 0) return [batch[0]];
+	return kept;
 };
 
 const executeTask = async <T>(task: DeterministicTask<T>): Promise<ExecutionRecord<T>> => {
-    const startedAt = Date.now();
-    try {
-        const value = await task.execute();
-        const endedAt = Date.now();
-        return { id: task.id, success: true, value, startedAt, endedAt };
-    } catch (e) {
-        const endedAt = Date.now();
-        const message = e instanceof Error ? e.message : String(e);
-        return { id: task.id, success: false, error: message, startedAt, endedAt };
-    }
+	const startedAt = Date.now();
+	try {
+		const value = await task.execute();
+		const endedAt = Date.now();
+		return { id: task.id, success: true, value, startedAt, endedAt };
+	} catch (e) {
+		const endedAt = Date.now();
+		const message = e instanceof Error ? e.message : String(e);
+		return { id: task.id, success: false, error: message, startedAt, endedAt };
+	}
 };
 
 const processBatches = async <T>(
-    ordered: Array<DeterministicTask<T>>,
-    options: ScheduleOptions
+	ordered: Array<DeterministicTask<T>>,
+	options: ScheduleOptions,
 ): Promise<Array<ExecutionRecord<T>>> => {
-    const records: Array<ExecutionRecord<T>> = [];
-    const step = options.maxConcurrent ?? DEFAULT_MAX_CONCURRENT;
-    for (let i = 0; i < ordered.length; i += step) {
-        const raw = ordered.slice(i, i + step);
-        const batch = trimBatchForMemory(raw, options.maxMemoryMB);
-        for (const task of batch) {
-            const rec = await executeTask(task);
-            records.push(rec);
-            if (options.failFast && !rec.success) return records;
-        }
-    }
-    return records;
+	const records: Array<ExecutionRecord<T>> = [];
+	const step = options.maxConcurrent ?? DEFAULT_MAX_CONCURRENT;
+	for (let i = 0; i < ordered.length; i += step) {
+		const raw = ordered.slice(i, i + step);
+		const batch = trimBatchForMemory(raw, options.maxMemoryMB);
+		for (const task of batch) {
+			const rec = await executeTask(task);
+			records.push(rec);
+			if (options.failFast && !rec.success) return records;
+		}
+	}
+	return records;
 };
 
 export const schedule = async <T = unknown>(
-    tasks: Array<DeterministicTask<T>>,
-    options: ScheduleOptions = {}
+	tasks: Array<DeterministicTask<T>>,
+	options: ScheduleOptions = {},
 ): Promise<ScheduleResult<T>> => {
-    const seed = options.seed || 'default-seed';
-    const ordered = stableDeterministicSort(tasks, seed) as Array<DeterministicTask<T>>;
-    const records = await processBatches(ordered, options);
-    const executionHash = computeExecutionHash(records as ExecutionRecord[], seed);
-    return { records, executionHash, seed };
+	const seed = options.seed || 'default-seed';
+	const ordered = stableDeterministicSort(tasks, seed) as Array<DeterministicTask<T>>;
+	const records = await processBatches(ordered, options);
+	const executionHash = computeExecutionHash(records as ExecutionRecord[], seed);
+	return { records, executionHash, seed };
 };
 
 export const executeWithSeed = async <T = unknown>(
-    tasks: Array<DeterministicTask<T>>,
-    seed: string,
-    opts: Omit<ScheduleOptions, 'seed'> = {}
+	tasks: Array<DeterministicTask<T>>,
+	seed: string,
+	opts: Omit<ScheduleOptions, 'seed'> = {},
 ): Promise<ScheduleResult<T>> => {
-    return schedule(tasks, { ...opts, seed });
+	return schedule(tasks, { ...opts, seed });
 };
 
 export interface ReplayTrace<T = unknown> {
-    seed: string;
-    tasks: Array<Pick<DeterministicTask<T>, 'id' | 'priority'>>;
-    records: Array<Pick<ExecutionRecord<T>, 'id' | 'success' | 'value' | 'error'>>;
-    executionHash: string;
+	seed: string;
+	tasks: Array<Pick<DeterministicTask<T>, 'id' | 'priority'>>;
+	records: Array<Pick<ExecutionRecord<T>, 'id' | 'success' | 'value' | 'error'>>;
+	executionHash: string;
 }
 
 export const replay = async <T = unknown>(
-    trace: ReplayTrace<T>,
-    taskMap: Record<string, DeterministicTask<T>>
+	trace: ReplayTrace<T>,
+	taskMap: Record<string, DeterministicTask<T>>,
 ): Promise<ScheduleResult<T>> => {
-    const tasks: DeterministicTask<T>[] = trace.tasks.map(t => {
-        const original = taskMap[t.id];
-        if (!original) throw new Error(`Missing task implementation for replay: ${t.id}`);
-        return { ...original, priority: t.priority };
-    });
-    const result = await schedule(tasks, { seed: trace.seed });
-    return result;
+	const tasks: DeterministicTask<T>[] = trace.tasks.map((t) => {
+		const original = taskMap[t.id];
+		if (!original) throw new Error(`Missing task implementation for replay: ${t.id}`);
+		return { ...original, priority: t.priority };
+	});
+	const result = await schedule(tasks, { seed: trace.seed });
+	return result;
+};
+
+// scheduleWithProof: convenience wrapper integrating proof generation
+export interface ScheduleWithProofOptions extends ScheduleOptions {
+	signer?: import('../proof/proofSystem.js').ProofSigner;
+	store?: import('../proof/proofSystem.js').ProofStore;
+	emit?: (
+		event:
+			| import('../proof/proofSystem.js').ProofGeneratedEvent
+			| import('../proof/proofSystem.js').ProofIndexedEvent,
+	) => Promise<void> | void;
+	digestAlgo?: 'fnv1a32' | 'sha256';
+}
+
+export interface ScheduleWithProofResult<T = unknown> extends ScheduleResult<T> {
+	proof: import('../proof/proofSystem.js').ProofArtifact;
+}
+
+export const scheduleWithProof = async <T = unknown>(
+	tasks: Array<DeterministicTask<T>>,
+	options: ScheduleWithProofOptions = {},
+): Promise<ScheduleWithProofResult<T>> => {
+	const { signer, store, emit, digestAlgo, ...sched } = options;
+	const result = await schedule(tasks, sched);
+	const { produceProofFromScheduleResult, finalizeProof } = await import('../proof/proofSystem.js');
+	// use adapter for claims + emission
+	const proof = await produceProofFromScheduleResult(
+		{
+			seed: result.seed,
+			executionHash: result.executionHash,
+			records: result.records.map((r) => ({
+				id: r.id,
+				success: r.success,
+				value: r.value,
+				error: r.error,
+			})),
+		},
+		{ signer, store, emit },
+	);
+	// If custom digestAlgo requested different from env/adapter default and not matching, regenerate proof (rare path)
+	if (digestAlgo && proof.digest.algo !== digestAlgo) {
+		const { createProofSession } = await import('../proof/proofSystem.js');
+		const session = createProofSession({
+			seed: result.seed,
+			executionHash: result.executionHash,
+			records: result.records.map((r) => ({
+				id: r.id,
+				success: r.success,
+				value: r.value,
+				error: r.error,
+			})),
+		});
+		session.addClaim('core.totalTasks', String(result.records.length));
+		session.addClaim(
+			'core.allSucceeded',
+			result.records.every((r) => r.success) ? 'true' : 'false',
+		);
+		const upgraded = await finalizeProof(session, { signer, digestAlgo });
+		return { ...result, proof: upgraded };
+	}
+	return { ...result, proof };
 };

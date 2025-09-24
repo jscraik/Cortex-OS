@@ -10,7 +10,7 @@ export type {
 	GraphStateChangedEvent,
 	NodeExecutionCompletedEvent,
 	NodeExecutionFailedEvent,
-	NodeExecutionStartedEvent
+	NodeExecutionStartedEvent,
 } from './events/kernel-events.js';
 // A2A Events for inter-package communication
 export {
@@ -18,15 +18,16 @@ export {
 	GraphStateChangedEventSchema,
 	NodeExecutionCompletedEventSchema,
 	NodeExecutionFailedEventSchema,
-	NodeExecutionStartedEventSchema
+	NodeExecutionStartedEventSchema,
 } from './events/kernel-events.js';
 // Core kernel exports
 export { CortexKernel, createKernel } from './graph-simple.js';
+// Contract union re-exports for multi-version parsing convenience
 // History helper
 export {
 	addToHistory,
 	createHistory,
-	getExecutionHistory
+	getExecutionHistory,
 } from './lib/history.js';
 export type { MCPContext, MCPTool } from './mcp/adapter.js';
 // MCP integration
@@ -38,35 +39,45 @@ export {
 	runBuildNode,
 	runEvaluationNode,
 	runStrategyNode,
-	StrategyNode
+	StrategyNode,
 } from './nodes/index.js';
-// Proof system
-export {
-	createInMemoryProofStore,
-	createProofSession,
-	finalizeProof,
-	produceProofFromScheduleResult,
-	verifyProof
-} from './proof/proofSystem.js';
 export type {
 	ProofArtifact,
 	ProofSession,
 	ProofSigner,
 	ProofStore,
-	ProofVerification
+	ProofVerification,
+} from './proof/proofSystem.js';
+// Proof system
+export {
+	createInMemoryKeyRegistry,
+	createInMemoryProofStore,
+	createProofGeneratedEvent,
+	createProofIndexedEvent,
+	createProofSession,
+	createRegistrySigner,
+	finalizeProof,
+	produceProofFromScheduleResult,
+	queryProofs,
+	registerClaimSchema,
+	summarizeProof,
+	verifyProof,
+	verifyProofAsync,
+	verifyProofAuto,
 } from './proof/proofSystem.js';
 export type {
+	DeterministicTask,
 	ReplayTrace as DeterministicReplayTrace,
 	ScheduleOptions as DeterministicScheduleOptions,
-	ScheduleResult as DeterministicScheduleResult, DeterministicTask
+	ScheduleResult as DeterministicScheduleResult,
 } from './scheduler/deterministicScheduler.js';
 // Deterministic scheduler (Module A)
 export {
 	executeWithSeed as deterministicExecuteWithSeed,
 	replay as deterministicReplay,
-	schedule as deterministicSchedule
+	schedule as deterministicSchedule,
+	scheduleWithProof,
 } from './scheduler/deterministicScheduler.js';
-export { createInitialPRPState, PRPStateSchema, validateStateTransition } from './state.js';
 export type {
 	CerebrumDecision,
 	EnforcementProfile,
@@ -74,18 +85,18 @@ export type {
 	GateResult,
 	HumanApproval,
 	PRPState,
-	ValidationGate
+	ValidationGate,
 } from './state.js';
+export { createInitialPRPState, PRPStateSchema, validateStateTransition } from './state.js';
 export type {
 	BehaviorExtension,
 	ExtensionContext,
-	ExtensionResult
+	ExtensionResult,
 } from './teaching/behavior-extension.js';
 // Teaching layer
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
-export { ExampleCaptureSystem } from './teaching/example-capture.js';
 export type {
 	CapturedExample,
-	TeachingPattern
+	TeachingPattern,
 } from './teaching/example-capture.js';
-
+export { ExampleCaptureSystem } from './teaching/example-capture.js';

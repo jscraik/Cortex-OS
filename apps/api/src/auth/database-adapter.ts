@@ -1,122 +1,183 @@
 import { createId } from '@cortex-os/a2a-core';
-import type { BetterAuthOptions, Database } from 'better-auth';
+import type { Database } from 'better-auth';
+
+type ModelRecord = {
+	id: string;
+	createdAt: Date;
+	updatedAt: Date;
+} & Record<string, unknown>;
+
+type ScalarFilter = {
+	readonly equals?: unknown;
+	readonly in?: readonly unknown[];
+};
+
+type WhereValue = ScalarFilter | string | number | boolean | Date | null | undefined;
+
+type WhereClause = Record<string, WhereValue>;
+
+type CreateArgs = {
+	readonly model: ModelName;
+	readonly data: Record<string, unknown>;
+};
+
+type QueryArgs = {
+	readonly model: ModelName;
+	readonly where?: WhereClause;
+};
+
+type FindUniqueArgs = {
+	readonly model: ModelName;
+	readonly where: WhereClause;
+};
+
+type UpdateArgs = {
+	readonly model: ModelName;
+	readonly where: { id: string };
+	readonly data: Record<string, unknown>;
+};
+
+type DeleteArgs = {
+	readonly model: ModelName;
+	readonly where: { id: string };
+};
+
+type UserCreateInput = {
+	readonly email: string;
+	readonly name?: string | null;
+	readonly image?: string | null;
+};
+
+type SessionCreateInput = {
+	readonly userId: string;
+	readonly token: string;
+	readonly expires: Date;
+};
+
+type AccountCreateInput = {
+	readonly userId: string;
+	readonly provider: string;
+	readonly providerAccountId: string;
+};
+
+type VerificationCreateInput = {
+	readonly identifier: string;
+	readonly token: string;
+	readonly expires: Date;
+	readonly type: string;
+};
+
+type ModelStoreMap = {
+	readonly user: Map<string, ModelRecord>;
+	readonly session: Map<string, ModelRecord>;
+	readonly account: Map<string, ModelRecord>;
+	readonly verification: Map<string, ModelRecord>;
+};
+
+type ModelName = keyof ModelStoreMap;
 
 // In-memory storage for demonstration
 // In production, this should be replaced with a real database
 class InMemoryDatabase implements Database {
-	private users = new Map<string, any>();
-	private sessions = new Map<string, any>();
-	private accounts = new Map<string, any>();
-	private verifications = new Map<string, any>();
+	private readonly stores: ModelStoreMap = {
+		user: new Map(),
+		session: new Map(),
+		account: new Map(),
+		verification: new Map(),
+	};
 
-	async create(data: any): Promise<any> {
-		const id = createId();
-		const record = { id, ...data, createdAt: new Date(), updatedAt: new Date() };
-
-		if (data.model === 'user') {
-			this.users.set(id, record);
-		} else if (data.model === 'session') {
-			this.sessions.set(id, record);
-		} else if (data.model === 'account') {
-			this.accounts.set(id, record);
-		} else if (data.model === 'verification') {
-			this.verifications.set(id, record);
-		}
-
-		return record;
+	private getStore(model: ModelName) {
+		return this.stores[model];
 	}
 
-	async findMany(args: any): Promise<any[]> {
-		let results: any[] = [];
-
-		if (args.model === 'user') {
-			results = Array.from(this.users.values());
-		} else if (args.model === 'session') {
-			results = Array.from(this.sessions.values());
-		} else if (args.model === 'account') {
-			results = Array.from(this.accounts.values());
-		} else if (args.model === 'verification') {
-			results = Array.from(this.verifications.values());
+	private static isScalarFilter(value: unknown): value is ScalarFilter {
+		if (typeof value !== 'object' || value === null) {
+			return false;
 		}
 
-		// Apply filters
-		if (args.where) {
-			results = results.filter((record) => {
-				return Object.entries(args.where).every(([key, value]) => {
-					if (typeof value === 'object' && value !== null) {
-						if (value.equals) return record[key] === value.equals;
-						if (value.in) return value.in.includes(record[key]);
-					}
-					return record[key] === value;
-				});
-			});
-		}
-
-		return results;
+		const candidate = value as Record<string, unknown>;
+		return 'equals' in candidate || 'in' in candidate;
 	}
 
-	async findUnique(args: any): Promise<any | null> {
-		const results = await this.findMany({
-			model: args.model,
-			where: args.where,
-		});
-		return results[0] || null;
-	}
-
-	async update(args: any): Promise<any> {
-		let record = null;
-
-		if (args.model === 'user') {
-			record = this.users.get(args.where.id);
-		} else if (args.model === 'session') {
-			record = this.sessions.get(args.where.id);
-		} else if (args.model === 'account') {
-			record = this.accounts.get(args.where.id);
-		} else if (args.model === 'verification') {
-			record = this.verifications.get(args.where.id);
+	private static matchesWhere(record: ModelRecord, where?: WhereClause) {
+		if (!where) {
+			return true;
 		}
 
-		if (record) {
-			const updated = { ...record, ...args.data, updatedAt: new Date() };
+		return Object.entries(where).every(([key, condition]) => {
+			const value = record[key];
 
-			if (args.model === 'user') {
-				this.users.set(args.where.id, updated);
-			} else if (args.model === 'session') {
-				this.sessions.set(args.where.id, updated);
-			} else if (args.model === 'account') {
-				this.accounts.set(args.where.id, updated);
-			} else if (args.model === 'verification') {
-				this.verifications.set(args.where.id, updated);
+			if (InMemoryDatabase.isScalarFilter(condition)) {
+				if (condition.equals !== undefined && value !== condition.equals) {
+					return false;
+				}
+
+				if (Array.isArray(condition.in) && !condition.in.includes(value)) {
+					return false;
+				}
+
+				return true;
 			}
 
-			return updated;
-		}
-
-		return null;
+			return value === condition;
+		});
 	}
 
-	async delete(args: any): Promise<any> {
-		let record = null;
+	async create(args: CreateArgs): Promise<ModelRecord> {
+		const id = createId();
+		const record: ModelRecord = {
+			id,
+			...args.data,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
 
-		if (args.model === 'user') {
-			record = this.users.get(args.where.id);
-			this.users.delete(args.where.id);
-		} else if (args.model === 'session') {
-			record = this.sessions.get(args.where.id);
-			this.sessions.delete(args.where.id);
-		} else if (args.model === 'account') {
-			record = this.accounts.get(args.where.id);
-			this.accounts.delete(args.where.id);
-		} else if (args.model === 'verification') {
-			record = this.verifications.get(args.where.id);
-			this.verifications.delete(args.where.id);
+		this.getStore(args.model).set(id, record);
+		return record;
+	}
+
+	async findMany(args: QueryArgs): Promise<ModelRecord[]> {
+		const records = Array.from(this.getStore(args.model).values());
+		return records.filter((record) => InMemoryDatabase.matchesWhere(record, args.where));
+	}
+
+	async findUnique(args: FindUniqueArgs): Promise<ModelRecord | null> {
+		const records = await this.findMany(args);
+		return records[0] ?? null;
+	}
+
+	async update(args: UpdateArgs): Promise<ModelRecord | null> {
+		const store = this.getStore(args.model);
+		const existing = store.get(args.where.id);
+
+		if (!existing) {
+			return null;
 		}
 
-		return record;
+		const updated: ModelRecord = {
+			...existing,
+			...args.data,
+			updatedAt: new Date(),
+		};
+
+		store.set(args.where.id, updated);
+		return updated;
+	}
+
+	async delete(args: DeleteArgs): Promise<ModelRecord | null> {
+		const store = this.getStore(args.model);
+		const existing = store.get(args.where.id);
+
+		if (!existing) {
+			return null;
+		}
+
+		store.delete(args.where.id);
+		return existing;
 	}
 
 	// Helper methods for Better Auth
-	async createUser(data: any) {
+	async createUser(data: UserCreateInput) {
 		return this.create({
 			model: 'user',
 			data: {
@@ -128,7 +189,7 @@ class InMemoryDatabase implements Database {
 		});
 	}
 
-	async createSession(data: any) {
+	async createSession(data: SessionCreateInput) {
 		return this.create({
 			model: 'session',
 			data: {
@@ -139,7 +200,7 @@ class InMemoryDatabase implements Database {
 		});
 	}
 
-	async createAccount(data: any) {
+	async createAccount(data: AccountCreateInput) {
 		return this.create({
 			model: 'account',
 			data: {
@@ -150,7 +211,7 @@ class InMemoryDatabase implements Database {
 		});
 	}
 
-	async createVerification(data: any) {
+	async createVerification(data: VerificationCreateInput) {
 		return this.create({
 			model: 'verification',
 			data: {
@@ -164,7 +225,7 @@ class InMemoryDatabase implements Database {
 }
 
 export class DatabaseAdapter {
-	private db: InMemoryDatabase;
+	private readonly db: InMemoryDatabase;
 
 	constructor() {
 		this.db = new InMemoryDatabase();
