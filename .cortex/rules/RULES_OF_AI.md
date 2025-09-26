@@ -54,7 +54,7 @@ All commits must:
 
 ## 🔄 Mandatory Agentic Coding Workflow
 
-All AI agents working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+All AI agents working on brAInwav Cortex-OS must follow this structured 5-phase workflow:
 
 ### 0. Tasks
 
@@ -96,6 +96,7 @@ All AI agents working on brAInwav Cortex-OS must follow this structured 4-phase 
   - **High Cohesion, Low Coupling** - related code together, minimal dependencies
 - **Ask clarifying questions** if needed to ensure clear understanding
 - **Write comprehensive plan** to `[feature]-tdd-plan.md` with all context required for implementation
+- **Create implementation checklist**: Develop detailed, actionable checklist items that break down the TDD plan into manageable tasks for systematic execution
 
 **Planning must include:**
 
@@ -113,6 +114,7 @@ All AI agents working on brAInwav Cortex-OS must follow this structured 4-phase 
 - **Go for as long as possible** - group ambiguous questions for the end
 - **Implementation must be 100% deployable** unless explicitly stated otherwise
 - **Follow brAInwav coding standards** and architectural patterns
+- **Update implementation checklist**: Mark tasks as complete as you iterate through the implementation plan
 
 **Implementation Requirements:**
 
@@ -133,6 +135,16 @@ All AI agents working on brAInwav Cortex-OS must follow this structured 4-phase 
 - **Return to implementation** if issues arise and make necessary adjustments
 - **Update task status** to **"verified"** once complete
 - **Store lessons learned** in local memory for future reference
+
+### 5. Archive
+
+- **Archive completed TDD plan**: Move `[feature]-tdd-plan.md` and related documentation to the appropriate location:
+  - Package-specific documentation: `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
+  - System-wide documentation: root directory `docs/` or `project-documentation/`
+  - Architectural decisions: `project-documentation/`
+- **Update all documentation**: Ensure all reports, implementation notes, and brAInwav-specific configurations are properly documented and placed in correct directories
+- **Complete implementation checklist**: Mark all remaining checklist items as complete and archive the final checklist in local memory
+- **Comprehensive knowledge archival**: Store detailed task summary including technical decisions, brAInwav integration requirements, security considerations, and lessons learned for future AI agent development sessions
 
 **Verification Checklist:**
 

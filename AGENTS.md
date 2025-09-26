@@ -21,7 +21,7 @@ These instructions apply to all developers and AI agents working in this reposit
 
 ## 🔄 Agentic Coding Workflow
 
-All agents working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+All agents working on brAInwav Cortex-OS must follow this structured 5-phase workflow:
 
 ### 0. Tasks
 
@@ -78,6 +78,7 @@ Implement secure login validation following brAInwav standards
   - **High Cohesion, Low Coupling** - related code together, minimal dependencies
 - **Ask clarifying questions** if needed to ensure clear understanding
 - **Write comprehensive plan** to `[feature]-tdd-plan.md` with all context required for implementation
+- **Create implementation checklist**: Break down the TDD plan into specific, trackable checklist items to guide Phase 3 execution
 
 **Example Structure:**
 
@@ -114,6 +115,7 @@ Implement secure login validation following brAInwav standards
 - **Go for as long as possible** - group ambiguous questions for the end
 - **Implementation must be 100% deployable** unless explicitly stated otherwise
 - **Follow brAInwav coding standards** and architectural patterns
+- **Update implementation checklist**: Mark completed tasks as you progress through implementation
 
 ### 4. Verification
 
@@ -123,6 +125,16 @@ Implement secure login validation following brAInwav standards
 - **Return to implementation** if issues arise and make necessary adjustments
 - **Update task status** to **"verified"** once complete
 - **Store lessons learned** in local memory for future reference
+
+### 5. Archive
+
+- **Archive completed TDD plan**: Move `[feature]-tdd-plan.md` to appropriate documentation location:
+  - Package documentation: `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
+  - System documentation: root `docs/` or `project-documentation/`
+  - Architecture decisions: `project-documentation/`
+- **Update all documentation**: Ensure reports, implementation notes, and architectural decisions are properly documented and placed
+- **Complete checklist archival**: Mark all final checklist items as complete and store in local memory
+- **Comprehensive knowledge storage**: Archive complete task summary including technical decisions, brAInwav integration points, and lessons learned for future development sessions
 
 ## 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
 

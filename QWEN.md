@@ -84,7 +84,7 @@ pnpm structure:validate
 
 ## 🔄 Agentic Coding Workflow
 
-All Qwen Code agents working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+All Qwen Code agents working on brAInwav Cortex-OS must follow this structured 5-phase workflow:
 
 ### 0. Tasks
 
@@ -127,6 +127,7 @@ All Qwen Code agents working on brAInwav Cortex-OS must follow this structured 4
   - **High Cohesion, Low Coupling** - respect package import boundaries
 - **Ask clarifying questions** to ensure complete understanding of scope
 - **Write comprehensive plan** to `[feature]-tdd-plan.md` including all implementation context
+- **Create implementation checklist**: Break down the TDD plan into specific, actionable checklist items for systematic execution in Phase 3
 
 **brAInwav Planning Checklist:**
 
@@ -145,6 +146,7 @@ All Qwen Code agents working on brAInwav Cortex-OS must follow this structured 4
 - **Go for as long as possible** - batch questions and clarifications
 - **Implementation must be 100% deployable** unless explicitly noted
 - **Follow brAInwav standards** and monorepo governance rules
+- **Update implementation checklist**: Mark completed tasks as you progress through the checklist items
 
 **Implementation Requirements:**
 
@@ -172,6 +174,15 @@ All Qwen Code agents working on brAInwav Cortex-OS must follow this structured 4
 - **Return to implementation** if any issues are discovered
 - **Update task status** to **"verified"** once all validations pass
 - **Store insights** in local memory for future development sessions
+
+### 5. Archive
+
+- **Archive completed TDD plan**: Move `[feature]-tdd-plan.md` and related documentation to appropriate location:
+  - Package-specific: `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
+  - System-wide: root directory `docs/` or `project-documentation/`
+- **Update documentation**: Ensure all reports, architectural decisions, and implementation notes are properly placed
+- **Complete final checklist**: Mark all remaining checklist items as complete and archive in local memory
+- **Knowledge preservation**: Store comprehensive task summary with technical insights and brAInwav context for future development sessions
 
 **Verification Checklist:**
 

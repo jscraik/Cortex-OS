@@ -76,7 +76,7 @@ Your role is to perform end-to-end development tasks under human supervision, ac
 
 ## 3. 🔄 Agentic Coding Workflow
 
-All GitHub Copilot activities must follow this structured 4-phase workflow:
+All GitHub Copilot activities must follow this structured 5-phase workflow:
 
 ### 0. Tasks
 
@@ -111,6 +111,7 @@ All GitHub Copilot activities must follow this structured 4-phase workflow:
 - Consider A2A event emission for cross-feature communication
 - Include accessibility (WCAG 2.2 AA) considerations
 - Plan security scanning and validation steps
+- **Create implementation checklist**: Break down TDD plan into actionable checklist items for Phase 3 iteration
 
 ### 3. Implementation
 
@@ -120,6 +121,7 @@ All GitHub Copilot activities must follow this structured 4-phase workflow:
 - **Keep functions ≤ 40 lines** - split immediately if longer
 - **Use async/await exclusively** - no `.then()` chains
 - **Include brAInwav branding** in all system outputs
+- **Update implementation checklist**: Mark completed items as you iterate through the plan
 
 ### 4. Verification
 
@@ -128,6 +130,16 @@ All GitHub Copilot activities must follow this structured 4-phase workflow:
 - **Check coverage**: Ensure 90%+ test coverage maintained
 - **Test accessibility**: Include a11y validation where applicable
 - **Store lessons learned** in local memory for future sessions
+
+### 5. Archive
+
+- **Archive TDD plan**: Move completed `[feature]-tdd-plan.md` to appropriate documentation location
+- **Update documentation**: Ensure all reports and documentation are placed in correct locations:
+  - Package-specific docs → `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
+  - System-wide documentation → root directory or `docs/`
+  - Architecture decisions → `project-documentation/`
+- **Checklist completion**: Mark final checklist items as complete and archive in local memory
+- **Knowledge transfer**: Store comprehensive task summary with brAInwav context for future reference
 
 ## 4. Repository Structure
 

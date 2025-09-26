@@ -17,7 +17,7 @@
 
 ## 🔄 Agentic Coding Workflow
 
-All Gemini agents working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+All Gemini agents working on brAInwav Cortex-OS must follow this structured 5-phase workflow:
 
 ### 0. Tasks
 
@@ -60,6 +60,7 @@ All Gemini agents working on brAInwav Cortex-OS must follow this structured 4-ph
   - **High Cohesion, Low Coupling** - related AI functions together, minimal dependencies
 - **Ask clarifying questions** if needed to ensure clear understanding of AI requirements
 - **Write comprehensive plan** to `[feature]-tdd-plan.md` with all AI integration context
+- **Create implementation checklist**: Develop specific, trackable checklist items that break down the TDD plan for systematic execution in Phase 3
 
 **Gemini Planning Requirements:**
 
@@ -76,6 +77,7 @@ All Gemini agents working on brAInwav Cortex-OS must follow this structured 4-ph
 - **Go for as long as possible** - group ambiguous questions for the end
 - **Implementation must be 100% deployable** unless explicitly stated otherwise
 - **Follow brAInwav coding standards** and Cortex-OS architectural patterns
+- **Update implementation checklist**: Mark completed tasks as you progress through the AI implementation plan
 
 **Gemini Implementation Standards:**
 
@@ -96,6 +98,16 @@ All Gemini agents working on brAInwav Cortex-OS must follow this structured 4-ph
 - **Return to implementation** if issues arise and make necessary adjustments
 - **Update task status** to **"verified"** once complete
 - **Store AI insights** in local memory for future Gemini development
+
+### 5. Archive
+
+- **Archive completed TDD plan**: Move `[feature]-tdd-plan.md` and AI-specific documentation to appropriate locations:
+  - AI agent documentation: `packages/agents/docs/` or `apps/cortex-os/docs/`
+  - System-wide AI architecture: root `docs/` or `project-documentation/`
+  - Gemini-specific configurations: relevant package `docs/` directories
+- **Update AI documentation**: Ensure all AI performance reports, multi-modal capability documentation, and brAInwav AI integration notes are properly placed
+- **Complete AI implementation checklist**: Mark all remaining AI-specific checklist items as complete and archive in local memory
+- **AI knowledge preservation**: Store comprehensive AI task summary including Gemini-specific optimizations, performance metrics, brAInwav AI integration patterns, and lessons learned for future AI agent development
 
 **Gemini Verification Checklist:**
 
