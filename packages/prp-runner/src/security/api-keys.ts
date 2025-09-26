@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createSecureId } from '../lib/secure-random.js';
 
 export interface ApiKeyRecord {
 	key: string;
@@ -40,7 +41,7 @@ export function generateApiKey(
 	label?: string,
 	filePath = DEFAULT_PATH,
 ): ApiKeyRecord {
-	const key = `key_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+	const key = createSecureId(`key_${Date.now()}`);
 	const rec: ApiKeyRecord = { key, role, label, createdAt: new Date().toISOString() };
 	const all = readAll(filePath);
 	all.push(rec);

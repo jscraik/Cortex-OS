@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { Router as ExpressRouter, Request, Response } from 'express';
 import { Router } from 'express';
 import { authCors, authMiddleware } from '../auth/config.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
@@ -198,4 +198,4 @@ router.post('/api/passkeys/authenticate', async (_req: Request, res: Response) =
 	}
 });
 
-export const authRouter = router;
+export const authRouter: ExpressRouter = router;

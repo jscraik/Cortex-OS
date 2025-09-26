@@ -82,6 +82,131 @@ pnpm security:scan
 pnpm structure:validate
 ```
 
+## 🔄 Agentic Coding Workflow
+
+All Qwen Code agents working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+
+### 0. Tasks
+
+- **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
+- **Store intermediate context** in Markdown files in the `~/tasks` folder
+- **Store all context** in the local memory MCP and/or REST API for persistence
+- **Use semantic task ID slugs** - descriptive identifiers like `orchestration-workflow-enhancement` or `batch-processing-optimization`
+
+### 1. Research
+
+- **Utilize semantic search** to identify existing patterns within this codebase
+- **Use Web-Search** to access the internet for the most relevant and up-to-date information
+- **Begin with follow-up questions** to establish the direction of the research
+- **Report findings** in `[feature].research.md` within the tasks folder
+
+**brAInwav Research Focus Areas:**
+
+- Event-driven architecture patterns (A2A communication)
+- MCP integration opportunities
+- Existing quality gates and governance patterns
+- TypeScript/Python/Rust integration points
+- Security and accessibility requirements
+
+### 2. Planning
+
+- **Read the research file** `[feature].research.md` from tasks folder
+- **Develop a TDD plan** based on software engineering principles:
+  - **Reuse existing patterns** - leverage monorepo shared components
+  - **Separation of concerns** - follow Cortex-OS layered architecture
+  - **Single Responsibility Principle (SRP)** - maximum 40 lines per function
+  - **Don't Repeat Yourself (DRY)** - use utilities from `libs/typescript/utils`
+  - **Keep it Simple, Stupid (KISS)** - prefer functional composition
+  - **You Aren't Gonna Need It (YAGNI)** - implement only specified requirements
+  - **Encapsulation** - proper module boundaries with contracts
+  - **Modularity** - event-driven communication between packages
+  - **Open/Closed Principle** - extend via interfaces and contracts
+  - **Testability** - design for Vitest with comprehensive test coverage
+  - **Principle of Least Astonishment (POLA)** - follow established patterns
+  - **Fail Fast** - early validation with Zod schemas
+  - **High Cohesion, Low Coupling** - respect package import boundaries
+- **Ask clarifying questions** to ensure complete understanding of scope
+- **Write comprehensive plan** to `[feature]-tdd-plan.md` including all implementation context
+
+**brAInwav Planning Checklist:**
+
+- [ ] Include brAInwav branding in all outputs and error messages
+- [ ] Plan MCP tool integration points
+- [ ] Design A2A event emission for cross-package communication
+- [ ] Include WCAG 2.2 AA accessibility considerations
+- [ ] Plan security scanning integration (Semgrep OWASP)
+- [ ] Design for 90%+ test coverage
+- [ ] Consider performance monitoring and telemetry
+
+### 3. Implementation
+
+- **Read the TDD plan** `[feature]-tdd-plan.md` and create a to-do list
+- **Execute the plan** systematically with strict TDD (red-green-refactor cycle)
+- **Go for as long as possible** - batch questions and clarifications
+- **Implementation must be 100% deployable** unless explicitly noted
+- **Follow brAInwav standards** and monorepo governance rules
+
+**Implementation Requirements:**
+
+- **Named exports only** - `export const functionName = ...` (no default exports)
+- **Function length limit** - maximum 40 lines, split immediately if longer
+- **Async/await only** - no `.then()` chains (linter enforced)
+- **TypeScript strict mode** - explicit type annotations at API boundaries
+- **Project references** - ensure `composite: true` in tsconfig.json
+- **brAInwav branding** - include in all system outputs, logs, and error messages
+
+### 4. Verification
+
+- **Verify all requirements** are implemented and bug-free
+- **Run comprehensive quality gates**:
+
+  ```bash
+  pnpm lint:smart && pnpm test:smart && pnpm typecheck:smart
+  pnpm security:scan:diff  # For security-sensitive changes
+  pnpm structure:validate  # Governance compliance
+  ```
+
+- **Validate test coverage** - ensure 90%+ threshold maintained
+- **Check accessibility** - run a11y tests where applicable
+- **Performance validation** - verify no memory leaks or performance regressions
+- **Return to implementation** if any issues are discovered
+- **Update task status** to **"verified"** once all validations pass
+- **Store insights** in local memory for future development sessions
+
+**Verification Checklist:**
+
+- [ ] All tests passing with 90%+ coverage
+- [ ] Security scan shows no new vulnerabilities
+- [ ] Structure validation passes (import boundaries respected)
+- [ ] brAInwav branding included in all relevant outputs
+- [ ] MCP integration functional (if applicable)
+- [ ] A2A events properly emitted (if applicable)
+- [ ] Accessibility requirements met (if UI changes)
+- [ ] Documentation updated to reflect changes
+
+### Task Context Persistence
+
+```typescript
+// Store comprehensive task context in local memory
+await memory.store({
+  content: `Completed ${taskId}: ${description}. Key learnings: ${insights}`,
+  importance: 9,
+  tags: ['task-complete', 'qwen-implementation', 'brainwav', ...specificTags],
+  domain: 'cortex-os-development',
+  metadata: {
+    taskId,
+    phase: 'verified',
+    technicalStack: ['typescript', 'python', 'rust'],
+    qualityMetrics: {
+      testCoverage: '95%',
+      securityScore: 'passed',
+      performanceImpact: 'minimal'
+    },
+    architecturalPatterns: ['event-driven', 'mcp-integration', 'layered-design']
+  }
+});
+```
+
 ## Code Quality Standards
 
 ### CODESTYLE.md Requirements

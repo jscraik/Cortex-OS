@@ -8,7 +8,8 @@
  */
 
 import { createHash } from 'node:crypto';
-import { EventEmitter } from 'node:events';
+import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 import { URL } from 'node:url';
 import { ToolValidationError, ToolValidationErrorCode } from './tool-validation-error.js';
 
@@ -867,7 +868,7 @@ export class ToolSecurityLayer extends EventEmitter {
 	 * Generate audit ID
 	 */
 	private generateAuditId(): string {
-		return `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+		return createPrefixedId(`audit-${Date.now()}`);
 	}
 
 	/**

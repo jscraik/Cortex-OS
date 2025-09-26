@@ -8,6 +8,7 @@
  */
 
 import { agentMetrics } from '../monitoring/prometheus-metrics.js';
+import { createPrefixedId, secureInt, secureRatio } from '../lib/secure-random.js';
 
 export interface AutoscalingConfig {
 	enabled: boolean;
@@ -338,14 +339,14 @@ export class AutoscalingManager {
 	 */
 	private getQueueDepth(): number {
 		// In production, this would come from actual queue metrics
-		return Math.floor(Math.random() * 5); // 0-4 items in queue
+		return secureInt(0, 5); // 0-4 items in queue
 	}
 
 	/**
 	 * Generate unique agent ID
 	 */
 	private generateAgentId(): string {
-		return `agent-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+		return createPrefixedId(`agent-${Date.now()}`).slice(0, 24);
 	}
 
 	/**

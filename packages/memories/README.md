@@ -714,8 +714,9 @@ When `MEMORIES_ENCRYPTION_SECRET` is not set, encryption is disabled and a plain
 
 Control short- and long-term adapters independently:
 
-- `MEMORIES_SHORT_STORE`: `memory | sqlite | prisma | local` (default: `memory`)
-- `MEMORIES_LONG_STORE`: `memory | sqlite | prisma | local` (default: `sqlite` if available)
+- `MEMORIES_SHORT_STORE`: `qdrant | local | sqlite | external-sqlite | prisma | memory` (defaults to `qdrant` when `QDRANT_URL` is set, otherwise `memory`)
+- `MEMORIES_LONG_STORE`: `memory | sqlite | external-sqlite | prisma | local | qdrant` (default: `memory`)
+- `MEMORIES_FALLBACK_STORE`: `sqlite | external-sqlite | local | memory` (defaults to SQLite or Local when Qdrant is primary)
 
 Then build the store with:
 
@@ -735,8 +736,9 @@ const store = createPolicyAwareStoreFromEnv();
     "MEMORIES_ENCRYPTION_REGEX": { "type": "string" },
     "MEMORIES_ENCRYPT_VECTORS": { "type": "string", "enum": ["true", "false"] },
     "MEMORIES_ENCRYPT_TAGS": { "type": "string", "enum": ["true", "false"] },
-    "MEMORIES_SHORT_STORE": { "type": "string", "enum": ["memory","sqlite","prisma","local"] },
-    "MEMORIES_LONG_STORE": { "type": "string", "enum": ["memory","sqlite","prisma","local"] },
+  "MEMORIES_SHORT_STORE": { "type": "string", "enum": ["qdrant","local","sqlite","external-sqlite","prisma","memory"] },
+  "MEMORIES_LONG_STORE": { "type": "string", "enum": ["memory","sqlite","external-sqlite","prisma","local","qdrant"] },
+  "MEMORIES_FALLBACK_STORE": { "type": "string", "enum": ["sqlite","external-sqlite","local","memory"] },
     "MEMORIES_SQLITE_PATH": { "type": "string" },
     "MEMORIES_VECTOR_DIM": { "type": "string", "pattern": "^\\d+$" },
     "LOCAL_MEMORY_BASE_URL": { "type": "string", "format": "uri" },

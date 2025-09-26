@@ -46,6 +46,98 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Required for Nx task graph optimization**
 - **Missing configuration will cause build failures**
 
+## 🔄 Agentic Coding Workflow
+
+All Claude Code sessions working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+
+### 0. Tasks
+
+- **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
+- **Store intermediate context** in Markdown files in the `~/tasks` folder  
+- **Store all context** in the local memory MCP and/or REST API for persistence
+- **Use semantic task ID slugs** - descriptive identifiers like `rag-query-optimization` or `mcp-bridge-enhancement`
+
+### 1. Research
+
+- **Utilize semantic search** to identify existing patterns within this codebase
+- **Use Web-Search** to access the internet for the most relevant and up-to-date information
+- **Begin with follow-up questions** to establish the direction of the research
+- **Report findings** in `[feature].research.md` within the tasks folder
+
+**brAInwav Research Standards:**
+- Include brAInwav-specific architectural patterns
+- Document existing MCP and A2A integration points
+- Reference Cortex-OS governance and quality gates
+- Note any security or accessibility requirements
+
+### 2. Planning
+
+- **Read the research file** `[feature].research.md` from tasks folder
+- **Develop a TDD plan** based on software engineering principles:
+  - **Reuse existing patterns** - leverage Cortex-OS architectural patterns
+  - **Separation of concerns** - follow domain/app/infra layering
+  - **Single Responsibility Principle (SRP)** - ≤ 40 lines per function
+  - **Don't Repeat Yourself (DRY)** - use shared utilities in `libs/`
+  - **Keep it Simple, Stupid (KISS)** - avoid unnecessary complexity
+  - **You Aren't Gonna Need It (YAGNI)** - implement only requirements
+  - **Encapsulation** - proper TypeScript module boundaries
+  - **Modularity** - event-driven communication via A2A
+  - **Open/Closed Principle** - extend through contracts/interfaces
+  - **Testability** - design for Vitest with 90%+ coverage
+  - **Principle of Least Astonishment (POLA)** - follow existing patterns
+  - **Fail Fast** - Zod validation at API boundaries
+  - **High Cohesion, Low Coupling** - respect package boundaries
+- **Ask clarifying questions** if needed for scope clarity
+- **Write comprehensive plan** to `[feature]-tdd-plan.md` with implementation context
+
+**brAInwav Planning Requirements:**
+- Include brAInwav branding in all outputs and error messages
+- Plan for MCP tool integration where applicable
+- Consider A2A event emission for cross-feature communication
+- Include accessibility (WCAG 2.2 AA) considerations
+- Plan security scanning and validation steps
+
+### 3. Implementation
+
+- **Read the TDD plan** `[feature]-tdd-plan.md` and create a to-do list
+- **Execute the plan** systematically with TDD approach (red-green-refactor)
+- **Go for as long as possible** - group ambiguous questions for the end
+- **Implementation must be 100% deployable** unless explicitly stated otherwise
+- **Follow brAInwav coding standards** and CODESTYLE.md requirements
+- **Use named exports only** - no default exports
+- **Keep functions ≤ 40 lines** - split immediately if longer
+- **Use async/await exclusively** - no `.then()` chains
+- **Include brAInwav branding** in all system outputs
+
+### 4. Verification
+
+- **Verify requirements** are met and implementation is bug-free
+- **Run quality gates**: `pnpm lint && pnpm test && pnpm security:scan`
+- **Validate structure**: `pnpm structure:validate` for governance compliance
+- **Check coverage**: Ensure 90%+ test coverage maintained
+- **Test accessibility**: Include a11y validation where applicable
+- **Return to implementation** if issues arise and make necessary adjustments
+- **Update task status** to **"verified"** once complete
+- **Store lessons learned** in local memory for future sessions
+
+### Task Context Storage
+
+```typescript
+// Store task context in local memory
+await memory.store({
+  content: 'Implemented auth validation with brAInwav error messaging',
+  importance: 8,
+  tags: ['task-complete', 'auth', 'validation', 'brainwav'],
+  domain: 'feature-implementation',
+  metadata: {
+    taskId: 'auth-login-validation',
+    phase: 'verified',
+    coverageAchieved: '95%',
+    securityValidated: true
+  }
+});
+```
+
 ## Local Memory
 
 Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time.

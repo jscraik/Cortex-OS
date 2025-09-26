@@ -12,10 +12,16 @@ export const ENV = {
 	STORE_ADAPTER_LEGACY: 'MEMORIES_ADAPTER',
 	STORE_ADAPTER_LEGACY2: 'MEMORY_STORE',
 	SHORT_STORE: 'MEMORIES_SHORT_STORE',
+	FALLBACK_STORE: 'MEMORIES_FALLBACK_STORE',
 
 	// Store types
 	SQLITE_PATH: 'MEMORIES_SQLITE_PATH',
 	VECTOR_DIM: 'MEMORIES_VECTOR_DIM',
+	QDRANT_COLLECTION: 'MEMORIES_QDRANT_COLLECTION',
+	QDRANT_DISTANCE: 'MEMORIES_QDRANT_DISTANCE',
+	QDRANT_ON_DISK: 'MEMORIES_QDRANT_ON_DISK',
+	QDRANT_HNSW_M: 'MEMORIES_QDRANT_HNSW_M',
+	QDRANT_HNSW_EF_CONSTRUCT: 'MEMORIES_QDRANT_HNSW_EF_CONSTRUCT',
 
 	// Local Memory Service
 	LOCAL_MEMORY_BASE_URL: 'LOCAL_MEMORY_BASE_URL',
@@ -115,9 +121,9 @@ export function getEnvWithFallback(
 	for (const fallback of fallbacks) {
 		if (process.env[fallback]) {
 			if (deprecationWarning) {
+				const contextSuffix = context ? ` Context: ${context}` : '';
 				console.warn(
-					`[DEPRECATED] Environment variable "${fallback}" is deprecated. ` +
-						`Use "${primary}" instead.${context ? ` Context: ${context}` : ''}`,
+					`[DEPRECATED] Environment variable "${fallback}" is deprecated. Use "${primary}" instead.${contextSuffix}`,
 				);
 			}
 			return process.env[fallback];

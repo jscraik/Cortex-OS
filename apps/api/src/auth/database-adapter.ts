@@ -1,5 +1,4 @@
-import { createId } from '@cortex-os/a2a-core';
-import type { Database } from 'better-auth';
+import { randomUUID } from 'node:crypto';
 
 type ModelRecord = {
 	id: string;
@@ -76,9 +75,21 @@ type ModelStoreMap = {
 
 type ModelName = keyof ModelStoreMap;
 
+type AdapterClient = {
+	readonly create: (args: CreateArgs) => Promise<ModelRecord>;
+	readonly findMany: (args: QueryArgs) => Promise<ModelRecord[]>;
+	readonly findUnique: (args: FindUniqueArgs) => Promise<ModelRecord | null>;
+	readonly update: (args: UpdateArgs) => Promise<ModelRecord | null>;
+	readonly delete: (args: DeleteArgs) => Promise<ModelRecord | null>;
+	readonly createUser: (data: UserCreateInput) => Promise<ModelRecord>;
+	readonly createSession: (data: SessionCreateInput) => Promise<ModelRecord>;
+	readonly createAccount: (data: AccountCreateInput) => Promise<ModelRecord>;
+	readonly createVerification: (data: VerificationCreateInput) => Promise<ModelRecord>;
+};
+
 // In-memory storage for demonstration
 // In production, this should be replaced with a real database
-class InMemoryDatabase implements Database {
+class InMemoryDatabase implements AdapterClient {
 	private readonly stores: ModelStoreMap = {
 		user: new Map(),
 		session: new Map(),
@@ -124,7 +135,7 @@ class InMemoryDatabase implements Database {
 	}
 
 	async create(args: CreateArgs): Promise<ModelRecord> {
-		const id = createId();
+		const id = randomUUID();
 		const record: ModelRecord = {
 			id,
 			...args.data,
@@ -231,7 +242,7 @@ export class DatabaseAdapter {
 		this.db = new InMemoryDatabase();
 	}
 
-	getAdapter() {
+	getAdapter(): AdapterClient {
 		return this.db;
 	}
 }

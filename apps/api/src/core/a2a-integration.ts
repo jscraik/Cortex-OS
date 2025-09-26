@@ -1,70 +1,39 @@
 import { randomUUID } from 'node:crypto';
 
 import { createApiBus } from '../a2a.js';
+import { API_EVENT_TYPES } from '../events/api-events.js';
 import type { StructuredLogger } from './observability.js';
 import type {
 	ApiOperationMetadata,
 	GatewayRequest,
 	GatewayResponse,
 	InternalRequest,
-	RouteDefinition,
 } from './types.js';
 
 // ================================
 // API A2A Event Type Constants
 // ================================
 
-export const ApiEventTypes = {
-	// Request Processing Events
-	REQUEST_RECEIVED: 'cortex.api.request.received',
-	REQUEST_ROUTED: 'cortex.api.request.routed',
-	REQUEST_VALIDATED: 'cortex.api.request.validated',
-	REQUEST_REJECTED: 'cortex.api.request.rejected',
-
-	// Response Events
-	RESPONSE_GENERATED: 'cortex.api.response.generated',
-	RESPONSE_CACHED: 'cortex.api.response.cached',
-	RESPONSE_SENT: 'cortex.api.response.sent',
-
-	// Webhook Events
-	WEBHOOK_RECEIVED: 'cortex.api.webhook.received',
-	WEBHOOK_PROCESSED: 'cortex.api.webhook.processed',
-	WEBHOOK_FAILED: 'cortex.api.webhook.failed',
-
-	// Async Job Events
-	JOB_CREATED: 'cortex.api.job.created',
-	JOB_STARTED: 'cortex.api.job.started',
-	JOB_PROGRESS: 'cortex.api.job.progress',
-	JOB_COMPLETED: 'cortex.api.job.completed',
-	JOB_FAILED: 'cortex.api.job.failed',
-
-	// Cross-Service Coordination Events
-	SERVICE_REQUEST: 'cortex.api.service.request',
-	SERVICE_RESPONSE: 'cortex.api.service.response',
-	SERVICE_ERROR: 'cortex.api.service.error',
-
-	// Security & Rate Limiting Events
-	RATE_LIMIT_HIT: 'cortex.api.rate_limit.hit',
-	AUTH_FAILED: 'cortex.api.auth.failed',
-	SECURITY_VIOLATION: 'cortex.api.security.violation',
-} as const;
+export const ApiEventTypes = API_EVENT_TYPES;
 
 // ================================
 // A2A Event Envelope Interface (CloudEvents 1.0 Compatible)
 // ================================
 
 export interface A2AEnvelope {
-	readonly specversion: string;
+	readonly specversion: '1.0';
 	readonly id: string;
 	readonly source: string;
 	readonly type: string;
 	readonly datacontenttype?: string;
 	readonly dataschema?: string;
 	readonly subject?: string;
-	readonly time?: string;
+	readonly time: string;
 	readonly data: unknown;
 	readonly correlationId?: string;
 	readonly causationId?: string;
+	readonly ttlMs: number;
+	readonly headers: Record<string, string>;
 }
 
 // ================================
@@ -83,10 +52,11 @@ export interface ApiRequestEvent {
 }
 
 export interface ApiRouteEvent extends ApiRequestEvent {
-	readonly route: RouteDefinition;
+	readonly routeId: string;
 	readonly handlerKey: string;
 	readonly requiresAuth: boolean;
 	readonly cacheable: boolean;
+	readonly cacheTtlSeconds?: number;
 }
 
 export interface ApiResponseEvent extends ApiRequestEvent {
@@ -101,6 +71,7 @@ export interface WebhookEvent {
 	readonly webhookId: string;
 	readonly source: string;
 	readonly event: string;
+	readonly eventType?: string;
 	readonly payload: unknown;
 	readonly headers: Record<string, string>;
 	readonly timestamp: number;
@@ -142,6 +113,11 @@ export interface SecurityEvent extends ApiRequestEvent {
 
 export type EventHandler = (envelope: A2AEnvelope) => Promise<void> | void;
 
+interface EventHandlerRegistration {
+	handlers: EventHandler[];
+	unbind?: (() => Promise<void>) | (() => void);
+}
+
 // ================================
 // API A2A Bus Integration Service
 // ================================
@@ -151,19 +127,14 @@ export class ApiBusIntegration {
 	private readonly logger: StructuredLogger;
 	private readonly activeJobs = new Map<string, AsyncJobEvent>();
 	private readonly webhookHandlers = new Map<string, (event: WebhookEvent) => Promise<void>>();
-	private readonly eventHandlers = new Map<string, EventHandler[]>();
+	private readonly eventHandlers = new Map<string, EventHandlerRegistration>();
 	private readonly events: A2AEnvelope[] = [];
 	private readonly a2aBus: ReturnType<typeof createApiBus>;
 
 	constructor(logger: StructuredLogger) {
 		this.logger = logger;
 		// Initialize real A2A core integration
-		this.a2aBus = createApiBus({
-			busOptions: {
-				enableTracing: true,
-				strictValidation: true,
-			},
-		});
+		this.a2aBus = createApiBus();
 	}
 
 	// ================================
@@ -174,29 +145,9 @@ export class ApiBusIntegration {
 		try {
 			this.logger.info('Starting API A2A bus integration');
 
-			// Bind event handlers to the real A2A bus
-			const handlerMappings = Object.entries(this.eventHandlers).map(([eventType, handlers]) => ({
-				type: eventType,
-				handle: async (envelope: A2AEnvelope) => {
-					// Store for history tracking
-					this.events.push(envelope);
-
-					// Execute all handlers
-					for (const handler of handlers) {
-						try {
-							await handler(envelope);
-						} catch (error) {
-							this.logger.error(`Error in event handler for ${eventType}`, {
-								error,
-							});
-						}
-					}
-				},
-			}));
-
-			if (handlerMappings.length > 0) {
-				await this.a2aBus.bus.bind(handlerMappings);
-			}
+			await Promise.all(
+				Array.from(this.eventHandlers.keys()).map((eventType) => this.bindEventType(eventType)),
+			);
 
 			this.logger.info('API A2A bus integration started successfully');
 		} catch (error) {
@@ -209,9 +160,10 @@ export class ApiBusIntegration {
 		try {
 			this.logger.info('Stopping API A2A bus integration');
 
-			// Stop the real A2A bus
-			if (this.a2aBus.bus && typeof this.a2aBus.bus.close === 'function') {
-				await this.a2aBus.bus.close();
+			// Stop the real A2A bus when supported by the transport
+			const closeable = this.a2aBus.bus as { close?: () => Promise<void> };
+			if (typeof closeable.close === 'function') {
+				await closeable.close();
 			}
 
 			this.activeJobs.clear();
@@ -238,6 +190,8 @@ export class ApiBusIntegration {
 			time: new Date().toISOString(),
 			data,
 			datacontenttype: 'application/json',
+			ttlMs: 0,
+			headers: {},
 		};
 
 		// Store event for retrieval
@@ -253,7 +207,7 @@ export class ApiBusIntegration {
 			this.logger.error(`Failed to publish A2A event: ${type}`, { error });
 
 			// Fallback to local handlers if bus publish fails
-			const handlers = this.eventHandlers.get(type) || [];
+			const handlers = this.eventHandlers.get(type)?.handlers ?? [];
 			for (const handler of handlers) {
 				try {
 					await handler(envelope);
@@ -282,7 +236,7 @@ export class ApiBusIntegration {
 			correlationId: metadata.correlationId,
 			source: metadata.source,
 			timestamp: metadata.timestamp,
-			metadata: request.metadata as Record<string, unknown> | undefined,
+			metadata: request.metadata,
 		};
 
 		await this.publishEvent(ApiEventTypes.REQUEST_RECEIVED, data);
@@ -300,10 +254,11 @@ export class ApiBusIntegration {
 			correlationId: request.metadata.correlationId,
 			source: request.metadata.source,
 			timestamp: request.metadata.timestamp,
-			route: request.route,
+			routeId: request.route.id,
 			handlerKey: `${request.route.service}.${request.route.action}`,
 			requiresAuth: request.route.requiresAuth,
 			cacheable: !!request.route.cacheTtlSeconds,
+			cacheTtlSeconds: request.route.cacheTtlSeconds,
 			metadata: request.metadata as unknown as Record<string, unknown>,
 		};
 
@@ -375,6 +330,22 @@ export class ApiBusIntegration {
 			webhookId: webhook.webhookId,
 			source: webhook.source,
 		});
+
+		const handler = this.webhookHandlers.get(webhook.source);
+		if (handler) {
+			try {
+				await handler(webhook);
+			} catch (error) {
+				this.logger.error('brAInwav webhook handler execution error', {
+					source: webhook.source,
+					error,
+				});
+			}
+		} else {
+			this.logger.warn('brAInwav webhook handler missing for source', {
+				source: webhook.source,
+			});
+		}
 	}
 
 	async publishWebhookProcessed(webhook: WebhookEvent, result: unknown): Promise<void> {
@@ -567,12 +538,14 @@ export class ApiBusIntegration {
 			severity,
 		};
 
-		const eventType =
-			violationType === 'rate_limit'
-				? ApiEventTypes.RATE_LIMIT_HIT
-				: violationType === 'auth_failure'
-					? ApiEventTypes.AUTH_FAILED
-					: ApiEventTypes.SECURITY_VIOLATION;
+		let eventType: string;
+		if (violationType === 'rate_limit') {
+			eventType = ApiEventTypes.RATE_LIMIT_HIT;
+		} else if (violationType === 'auth_failure') {
+			eventType = ApiEventTypes.AUTH_FAILED;
+		} else {
+			eventType = ApiEventTypes.SECURITY_VIOLATION;
+		}
 
 		await this.publishEvent(eventType, securityEvent);
 		this.logger.warn('Published security event', { violationType, severity });
@@ -583,46 +556,96 @@ export class ApiBusIntegration {
 	// ================================
 
 	subscribe(eventType: string, handler: EventHandler): void {
-		if (!this.eventHandlers.has(eventType)) {
-			this.eventHandlers.set(eventType, []);
+		let registration = this.eventHandlers.get(eventType);
+		if (!registration) {
+			registration = { handlers: [] };
+			this.eventHandlers.set(eventType, registration);
 		}
-		this.eventHandlers.get(eventType)?.push(handler);
+		registration.handlers.push(handler);
 		this.logger.info('Subscribed to event type', { eventType });
 
-		// If bus is already started, bind this handler immediately
-		if (this.a2aBus) {
-			this.a2aBus.bus
-				.bind([
-					{
-						type: eventType,
-						handle: async (envelope: A2AEnvelope) => {
-							this.events.push(envelope);
-							try {
-								await handler(envelope);
-							} catch (error) {
-								this.logger.error(`Error in event handler for ${eventType}`, {
-									error,
-								});
-							}
-						},
-					},
-				])
-				.catch((error) => {
-					this.logger.error(`Failed to bind handler for ${eventType}`, {
-						error,
-					});
-				});
+		if (!registration.unbind) {
+			this.bindEventType(eventType).catch((error: unknown) => {
+				this.logger.error(`Failed to bind handler for ${eventType}`, { error });
+			});
 		}
 	}
 
 	unsubscribe(eventType: string, handler: EventHandler): void {
-		const handlers = this.eventHandlers.get(eventType);
-		if (handlers) {
-			const index = handlers.indexOf(handler);
-			if (index !== -1) {
-				handlers.splice(index, 1);
-				this.logger.info('Unsubscribed from event type', { eventType });
+		const registration = this.eventHandlers.get(eventType);
+		if (!registration) {
+			return;
+		}
+
+		registration.handlers = registration.handlers.filter(
+			(existingHandler) => existingHandler !== handler,
+		);
+
+		if (registration.handlers.length === 0) {
+			this.eventHandlers.delete(eventType);
+			const unbind = registration.unbind;
+			if (unbind) {
+				registration.unbind = undefined;
+				Promise.resolve(unbind()).catch((error: unknown) => {
+					this.logger.error('Failed to unbind handler for event type', {
+						eventType,
+						error,
+					});
+				});
 			}
+		}
+	}
+
+	private async bindEventType(eventType: string): Promise<void> {
+		const registration = this.eventHandlers.get(eventType);
+		if (!registration || registration.handlers.length === 0 || registration.unbind) {
+			return;
+		}
+
+		const handle = async (message: unknown) => {
+			const envelope = message as A2AEnvelope;
+			this.events.push(envelope);
+			const handlers = [...(this.eventHandlers.get(eventType)?.handlers ?? [])];
+			for (const handler of handlers) {
+				try {
+					await handler(envelope);
+				} catch (error: unknown) {
+					this.logger.error(`Error in event handler for ${eventType}`, {
+						error,
+					});
+				}
+			}
+		};
+
+		try {
+			const unsubscribeResult: unknown = await this.a2aBus.bus.bind([
+				{
+					type: eventType,
+					handle,
+				},
+			]);
+
+			if (typeof unsubscribeResult === 'function') {
+				registration.unbind = async () => {
+					await Promise.resolve(unsubscribeResult());
+				};
+			} else if (Array.isArray(unsubscribeResult)) {
+				const candidates = (unsubscribeResult as unknown[]).filter(
+					(candidate): candidate is () => unknown => typeof candidate === 'function',
+				);
+				registration.unbind = async () => {
+					await Promise.all(
+						candidates.map(async (candidate: () => unknown) => {
+							await Promise.resolve(candidate());
+						}),
+					);
+				};
+			} else {
+				registration.unbind = undefined;
+			}
+		} catch (error) {
+			this.logger.error(`Failed to bind handler for ${eventType}`, { error });
+			throw error;
 		}
 	}
 
@@ -691,6 +714,7 @@ export function createWebhookEvent(
 		webhookId: randomUUID(),
 		source,
 		event,
+		eventType: event,
 		payload,
 		headers,
 		timestamp: Date.now(),
@@ -710,7 +734,7 @@ export interface JobOptions {
 }
 
 export class JobManager {
-	private apiBus: ApiBusIntegration;
+	private readonly apiBus: ApiBusIntegration;
 
 	constructor(apiBus: ApiBusIntegration) {
 		this.apiBus = apiBus;

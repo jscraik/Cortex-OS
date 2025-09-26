@@ -9,8 +9,12 @@ This guide summarizes common deployment configurations for the `@cortex-os/memor
 
 ## Store Backends (Short- and Long-Term)
 
-- `MEMORIES_SHORT_STORE`: `memory | sqlite | prisma | local` (default: `memory`)
-- `MEMORIES_LONG_STORE`: `memory | sqlite | prisma | local` (default: `sqlite`)
+- `MEMORIES_SHORT_STORE`: `qdrant | local | sqlite | external-sqlite | prisma | memory`
+  (defaults to `qdrant` when `QDRANT_URL` is set, otherwise `memory`)
+- `MEMORIES_LONG_STORE`: `memory | sqlite | external-sqlite | prisma | local | qdrant`
+  (default: `sqlite`)
+- `MEMORIES_FALLBACK_STORE`: `sqlite | external-sqlite | local | memory` (overrides the
+  automatic fallback used when Qdrant is unavailable)
 
 SQLite options:
 
@@ -69,7 +73,9 @@ export const memoryService = createMemoryService(store, embedder);
 Example runnable script: `examples/memories-mlx/ingest-and-search.ts` (uses `MLX_EMBED_BASE_URL` or `MLX_SERVICE_URL`).
 
 ## Docker Compose
+
 A minimal container setup:
+
 ```yaml
 services:
   neo4j:
@@ -79,8 +85,9 @@ services:
     image: qdrant/qdrant:latest
     ports: ["6333:6333"]
 ```
+
 Start services:
+
 ```bash
 docker compose up -d neo4j qdrant
-
 ```

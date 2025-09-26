@@ -370,37 +370,6 @@ Metrics emitted:
 - `rag.dispatch.decision` (operation) with `strategyId` and `docType`
 - `rag.dispatch.feedback` (operation) with success/failure, `strategyId` and `docType`
 
-## 🗄️ LanceDB Backend (Adapter) & Migration
-
-Use the lightweight adapter without a hard dependency. Provide a client that implements `LanceDbLike`.
-
-```ts
-import { createLanceDbStore } from '@cortex-os/rag';
-
-const client = {
-  async upsert(items) { /* write to LanceDB */ },
-  async query(vec, k) { return []; },
-  async delete(ids) { /* optional */ },
-  async listAll() { return []; }
-};
-
-const store = createLanceDbStore(client, { dimensions: 768 });
-```
-
-Migration helper:
-
-```ts
-import { fromAnyListableToLance } from '@cortex-os/rag/store/migration/lancedb-migration';
-const result = await fromAnyListableToLance(listableSource, client, { batchSize: 500 });
-console.log('migrated', result.migrated);
-```
-
-Backend selection notes:
-
-- LanceDB adapter is minimal; ideal for embedding vectors + metadata and fast prototyping.
-- pgvector remains recommended for relational integration and mature operational tooling.
-- For large-scale production, benchmark your corpus (see indexing benchmarks section) and validate SLOs.
-
 ## ✅ MLX installation verification
 
 If you use the MLX-based embedding/reranking services, quickly verify MLX availability:

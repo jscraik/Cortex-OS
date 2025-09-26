@@ -106,6 +106,7 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 
 	return make({});
 }
+import { secureRatio } from '../lib/secure-random.js';
 
 export interface ApplyLoggingOptions extends LoggerOptions {
 	logger?: Logger;
@@ -139,7 +140,7 @@ export function applyLogging(app: Express, opts: ApplyLoggingOptions = {}): Logg
 			const ended = process.hrtime.bigint();
 			const ns = Number(ended - started);
 			const ms = Math.round(ns / 1e6);
-			if (Math.random() <= sampleRate)
+			if (secureRatio() <= sampleRate)
 				child.info('request:finish', {
 					method: req.method,
 					path: req.path,

@@ -14,6 +14,7 @@ import type {
 	ToolDefinition,
 	ToolExecutionResult,
 } from './tool-orchestration-contracts.js';
+import { createPrefixedId, secureDelay, secureRatio } from '../lib/secure-random.js';
 
 // Pure function to create execution result template
 export const createExecutionResult = (
@@ -100,7 +101,7 @@ export const simulateToolExecution = async (
 	_context: ExecutionContext,
 ): Promise<ToolExecutionResult> => {
 	// Simulate execution time
-	const executionTime = Math.max(50, Math.random() * 100);
+	const executionTime = secureDelay(50, 151);
 
 	return {
 		toolId: tool.id,
@@ -111,7 +112,10 @@ export const simulateToolExecution = async (
 		executionTime,
 		cacheHit: false,
 		retryAttempt: 0,
-		telemetry: {},
+		telemetry: {
+			executionTrace: createPrefixedId(`trace-${tool.id}`),
+			efficiency: secureRatio(),
+		},
 	};
 };
 

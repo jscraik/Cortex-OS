@@ -5,6 +5,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
+    "skipLibCheck": true,
     "lib": [
       "ES2023",
       "DOM"
@@ -29,17 +30,35 @@
       "@cortex-os/a2a-contracts/*": [
         "packages/a2a/a2a-contracts/dist/*"
       ],
+      "@cortex-os/a2a-contracts/schema-registry-types.js": [
+        "packages/a2a/a2a-contracts/dist/schema-registry-types.d.ts"
+      ],
+      "@cortex-os/a2a-contracts/topic-acl.js": [
+        "packages/a2a/a2a-contracts/dist/topic-acl.d.ts"
+      ],
       "@cortex-os/a2a-core": [
         "packages/a2a/a2a-core/dist/index.d.ts"
       ],
       "@cortex-os/a2a-core/*": [
         "packages/a2a/a2a-core/dist/*"
       ],
+      "@cortex-os/a2a-core/bus.js": [
+        "packages/a2a/a2a-core/dist/bus.d.ts"
+      ],
+      "@cortex-os/a2a-core/schema-registry.js": [
+        "packages/a2a/a2a-core/dist/schema-registry.d.ts"
+      ],
+      "@cortex-os/a2a-core/transport.js": [
+        "packages/a2a/a2a-core/dist/transport.d.ts"
+      ],
       "@cortex-os/a2a-transport": [
         "packages/a2a/a2a-transport/dist/index.d.ts"
       ],
       "@cortex-os/a2a-transport/*": [
         "packages/a2a/a2a-transport/dist/*"
+      ],
+      "@cortex-os/a2a-transport/inproc.js": [
+        "packages/a2a/a2a-transport/dist/inproc.d.ts"
       ],
       "@cortex-os/lib": [
         "src/lib/index.ts"
@@ -60,9 +79,11 @@
         "packages/rag/src/store/*"
       ],
       "@cortex-os/*": [
+        "packages/*/dist/index.d.ts",
         "packages/*/src/index.ts"
       ],
       "@cortex/*": [
+        "packages/*/dist/index.d.ts",
         "packages/*/src/index.ts"
       ]
     }

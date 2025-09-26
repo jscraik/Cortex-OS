@@ -71,6 +71,7 @@ export const responseHandlingInputSchema = z.object({
 
 export const responseHandlingResultSchema = z.object({
 	status: z.enum(['success', 'error']),
+	statusCode: z.number().int().min(100).max(599),
 	body: z.unknown(),
 	headers: z.record(z.string(), z.string()),
 	metadata: z.record(z.string(), z.unknown()),

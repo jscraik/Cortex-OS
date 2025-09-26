@@ -1,8 +1,93 @@
 #!/usr/bin/env node
+import { ESLint } from 'eslint';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { ESLint } from 'eslint';
+
+const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.ts', '.tsx']);
+const IGNORED_DIRECTORIES = new Set([
+	'dist',
+	'node_modules',
+	'coverage',
+	'build',
+	'.turbo',
+	'.next',
+	'out',
+]);
+
+const isIgnoredDirectory = (name) => IGNORED_DIRECTORIES.has(name);
+const shouldIncludeFile = (name) => SOURCE_EXTENSIONS.has(path.extname(name));
+
+function formatResultsAsUnix(results) {
+	const lines = [];
+	for (const result of results) {
+		for (const message of result.messages) {
+			const line = message.line ?? 0;
+			const column = message.column ?? 0;
+			const severity = message.severity === 2 ? 'error' : 'warning';
+			const ruleSuffix = message.ruleId ? ` (${message.ruleId})` : '';
+			lines.push(
+				`${result.filePath}:${line}:${column}: ${severity} ${message.message}${ruleSuffix}`,
+			);
+		}
+	}
+	return lines.join('\n');
+}
+
+async function readDirEntries(current) {
+	try {
+		return await fs.promises.readdir(current, { withFileTypes: true });
+	} catch (error) {
+		if (error?.code === 'ENOTDIR') return [];
+		throw error;
+	}
+}
+
+function handleDirectoryEntry(entry, fullPath, pending) {
+	if (!isIgnoredDirectory(entry.name)) pending.push(fullPath);
+}
+
+function handleFileEntry(entry, fullPath, files) {
+	if (shouldIncludeFile(entry.name)) files.push(fullPath);
+}
+
+async function collectSourceFiles(rootDir) {
+	const pending = [rootDir];
+	const files = [];
+	while (pending.length) {
+		const current = pending.pop();
+		const entries = await readDirEntries(current);
+		for (const entry of entries) {
+			const fullPath = path.join(current, entry.name);
+			if (entry.isDirectory()) {
+				handleDirectoryEntry(entry, fullPath, pending);
+				continue;
+			}
+			if (!entry.isFile()) continue;
+			handleFileEntry(entry, fullPath, files);
+		}
+	}
+	return files;
+}
+
+function loadScanConfig(requireCJS) {
+	const configCandidates = [
+		path.resolve(process.cwd(), 'eslint.scan.config.cjs'),
+		path.resolve(process.cwd(), 'config/eslint.scan.config.cjs'),
+	];
+	let lastError;
+	for (const candidate of configCandidates) {
+		try {
+			return requireCJS(candidate);
+		} catch (error) {
+			lastError = error;
+		}
+	}
+	const tried = configCandidates.join(', ');
+	throw new Error(
+		`Failed to load eslint scan config from [${tried}]: ${lastError?.message ?? 'unknown error'}`,
+	);
+}
 
 async function runForDir(dir) {
 	const name = path.basename(dir);
@@ -14,53 +99,8 @@ async function runForDir(dir) {
 		// receives an object instead of an array/file path which avoids the
 		// "configuration in --config is invalid" errors we hit earlier.
 		const requireCJS = createRequire(import.meta.url);
-		let scanCfg;
-		try {
-			// eslint.scan.config.cjs exports an array (flat config). Prefer the first
-			// entry so overrideConfig is a plain object.
-			// Use require to ensure resolution of plugin modules inside the config.
-			scanCfg = requireCJS(path.resolve(process.cwd(), 'eslint.scan.config.cjs'));
-		} catch (err) {
-			throw new Error(`Failed to load eslint.scan.config.cjs: ${err.message}`);
-		}
-
-		// The flat config file exports an array element that includes a `files`
-		// matcher (ESLint flat config style). When using the programmatic API
-		// we pass file patterns separately to `lintFiles`, so remove any top
-		// level `files` property which is invalid in CLIOptions/overrideConfig.
-		const overrideConfig = Array.isArray(scanCfg) ? { ...scanCfg[0] } : { ...scanCfg };
-		if (overrideConfig?.files) {
-			// eslint-disable-next-line no-param-reassign
-			delete overrideConfig.files;
-		}
-
-		// Convert ESLint flat config 'languageOptions' into the legacy
-		// 'parser' + 'parserOptions' shape expected by the programmatic API.
-		if (overrideConfig?.languageOptions) {
-			const lo = overrideConfig.languageOptions;
-			if (lo.parser) overrideConfig.parser = lo.parser;
-			if (lo.parserOptions) overrideConfig.parserOptions = lo.parserOptions;
-			// remove languageOptions to satisfy CLIOptions schema
-			// eslint-disable-next-line no-param-reassign
-			delete overrideConfig.languageOptions;
-		}
-
-		// If plugins are provided as module instances (from flat-config require),
-		// convert them to plain plugin-name keys so the programmatic API will
-		// resolve them using `resolvePluginsRelativeTo`.
-		if (overrideConfig?.plugins && typeof overrideConfig.plugins === 'object') {
-			// When the flat-config was required it may have returned plugin modules
-			// as values. Convert to an array of plugin names so ESLint's
-			// configuration schema accepts it (expects array of strings).
-			overrideConfig.plugins = Object.keys(overrideConfig.plugins);
-		}
-
-		// DEBUG: dump the overrideConfig to help diagnose CLIOptions validation
-		// eslint-disable-next-line no-console
-		console.log('DEBUG overrideConfig keys:', Object.keys(overrideConfig || {}));
-
-		// Ensure we don't analyze built artifacts. Honor ignorePatterns via overrideConfig
-		overrideConfig.ignorePatterns = [
+		const scanCfg = loadScanConfig(requireCJS);
+		const DEFAULT_IGNORES = [
 			'**/dist/**',
 			'**/node_modules/**',
 			'**/coverage/**',
@@ -69,31 +109,39 @@ async function runForDir(dir) {
 			'**/.next/**',
 			'**/out/**',
 		];
-
-		const eslint = new ESLint({
-			useEslintrc: false,
-			resolvePluginsRelativeTo: path.resolve(process.cwd(), 'node_modules'),
-			overrideConfig,
-			extensions: ['.js', '.mjs', '.ts', '.tsx'],
-			ignore: false,
-		});
-
-		// Prefer src globs; also include negated patterns to exclude build dirs explicitly
-		const patterns = [
-			path.join(dir, 'src/**/*.{js,mjs,ts,tsx}'),
-			path.join(dir, '**/*.{js,mjs,ts,tsx}'),
-			`!${path.join(dir, 'dist/**')}`,
-			`!${path.join(dir, 'node_modules/**')}`,
-			`!${path.join(dir, 'coverage/**')}`,
-			`!${path.join(dir, 'build/**')}`,
-			`!${path.join(dir, '.turbo/**')}`,
-			`!${path.join(dir, '.next/**')}`,
-			`!${path.join(dir, 'out/**')}`,
+		const rawConfigs = Array.isArray(scanCfg) ? scanCfg.slice(0, 1) : [scanCfg];
+		const [primaryEntry] = rawConfigs;
+		const restOfConfig = { ...(primaryEntry ?? {}) };
+		if ('files' in restOfConfig) delete restOfConfig.files;
+		const overrideConfig = [
+			{
+				...restOfConfig,
+				ignores: [...(primaryEntry?.ignores ?? []), ...DEFAULT_IGNORES],
+			},
 		];
 
-		const results = await eslint.lintFiles(patterns);
-		const formatter = await eslint.loadFormatter('unix');
-		const output = formatter.format(results);
+		// DEBUG: dump the overrideConfig to help diagnose CLIOptions validation
+		// eslint-disable-next-line no-console
+		console.log('DEBUG overrideConfig length:', overrideConfig.length);
+
+		const eslint = new ESLint({
+			overrideConfig,
+			globInputPaths: false,
+			cwd: process.cwd(),
+			allowInlineConfig: true,
+			overrideConfigFile: true,
+		});
+
+		const filesToLint = await collectSourceFiles(dir);
+		if (!filesToLint.length) {
+			const skipMessage = `Skipping ${name}: no .js/.mjs/.ts/.tsx sources found under ${dir}`;
+			await fs.promises.writeFile(outPath, `${skipMessage}\n`, 'utf8');
+			console.log(skipMessage);
+			return { name, outPath, results: [] };
+		}
+
+		const results = await eslint.lintFiles(filesToLint);
+		const output = formatResultsAsUnix(results);
 		await fs.promises.writeFile(outPath, output, 'utf8');
 		console.log(`${name}: wrote ${outPath}`);
 		return { name, outPath, results };

@@ -8,6 +8,7 @@
  */
 
 import { EventEmitter } from 'node:events';
+import { createPrefixedId } from './secure-random.js';
 
 // Resource types in the agent system
 export type ResourceType =
@@ -444,7 +445,7 @@ export const resourceUtils = {
 		ms: number,
 		id?: string,
 	): string {
-		const timeoutId = id || `timeout-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const timeoutId = id || createPrefixedId(`timeout-${Date.now()}`);
 
 		const timeout = setTimeout(callback, ms);
 
@@ -464,7 +465,7 @@ export const resourceUtils = {
 		ms: number,
 		id?: string,
 	): string {
-		const intervalId = id || `interval-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const intervalId = id || createPrefixedId(`interval-${Date.now()}`);
 
 		const interval = setInterval(callback, ms);
 
@@ -485,7 +486,7 @@ export const resourceUtils = {
 		callback: (...args: unknown[]) => void,
 		id?: string,
 	): string {
-		const listenerId = id || `listener-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const listenerId = id || createPrefixedId(`listener-${Date.now()}`);
 
 		if ('addEventListener' in target) {
 			target.addEventListener(event, callback as EventListener);

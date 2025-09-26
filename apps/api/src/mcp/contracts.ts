@@ -58,6 +58,7 @@ export const responseHandlingContract: ToolContracts = {
 	},
 	outputExample: {
 		status: 'success',
+		statusCode: 200,
 		body: { users: [] },
 		headers: { 'content-type': 'application/json' },
 		metadata: { requestId: 'req-id' },

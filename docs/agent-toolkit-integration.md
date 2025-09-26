@@ -44,7 +44,7 @@ These are wired into `.github/workflows/tdd-enforcement.yml`. You can include th
 
 ## Enforcing Local Memory First Layer
 
-The guard script (`tools/validators/enforce-local-memory.mjs`) checks the following (aligned with `local-memory-mcp@1.1.0` dual MCP/REST mode):
+The guard script (`tools/validators/enforce-local-memory.mjs`) checks the following (aligned with `local-memory-mcp@1.1.0a` dual MCP/REST mode):
 
 - Local Memory is the short-term store (any of):
   - `MEMORIES_SHORT_STORE=local` (preferred)

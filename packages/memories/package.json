@@ -40,6 +40,7 @@
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
+    "@qdrant/js-client-rest": "^1.15.1",
     "@cortex-os/rag": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/instrumentation": "^0.45.0",

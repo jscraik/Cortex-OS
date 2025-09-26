@@ -1,8 +1,16 @@
 import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getContainerRuntimeDecision, logMissingRuntimeWarning } from '../helpers/container-runtime';
 
-const skipFlag = process.env.CORTEX_SKIP_AUTH_POSTGRES_TEST === '1';
+const skipFlagExplicit = process.env.CORTEX_SKIP_AUTH_POSTGRES_TEST === '1';
+const runtimeDecision = getContainerRuntimeDecision();
+
+if (!runtimeDecision.available && !skipFlagExplicit) {
+	logMissingRuntimeWarning('auth-features');
+}
+
+const skipFlag = skipFlagExplicit || !runtimeDecision.available;
 const suite = skipFlag ? describe.skip : describe;
 
 type PostgresError = Error & { code?: string };
@@ -54,11 +62,11 @@ suite('Auth feature persistence', () => {
 			testcontainers.PostgreSQLContainer) as
 			| undefined
 			| (new () => {
-					withDatabase: (name: string) => unknown;
-					withUsername: (username: string) => unknown;
-					withPassword: (password: string) => unknown;
-					start: () => Promise<{ stop: () => Promise<void>; getConnectionUri: () => string }>;
-			  });
+				withDatabase: (name: string) => unknown;
+				withUsername: (username: string) => unknown;
+				withPassword: (password: string) => unknown;
+				start: () => Promise<{ stop: () => Promise<void>; getConnectionUri: () => string }>;
+			});
 
 		if (!ContainerCtor) {
 			throw new Error('PostgreSqlContainer implementation unavailable');

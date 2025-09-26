@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 
 // Dynamic import to avoid TS rootDir cross-package issues
@@ -21,8 +22,8 @@ async function getLogger(): Promise<SimpleLogger> {
 	}
 }
 function generateRunIdLight(): string {
-	// Simple run id fallback: timestamp-random
-	return `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+	const suffix = randomUUID().split('-')[0];
+	return `run-${Date.now().toString(36)}-${suffix}`;
 }
 
 import { isBashAllowed, isFileAllowed } from './security.js';

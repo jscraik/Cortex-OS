@@ -6,7 +6,8 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { appendFile } from 'node:fs/promises';
+import { z } from 'zod';
+import { createSecureId } from '../lib/secure-random.js';
 import type { Response } from 'express';
 import type { DefaultEventsMap, Server as IOServer, Socket } from 'socket.io';
 import { logError } from '../lib/logger.js';
@@ -155,7 +156,7 @@ class EventManagerClass extends EventEmitter {
 	 * Subscribe to events with SSE or WebSocket transport
 	 */
 	subscribe(options: EventStreamOptions, callback: (event: Event) => void): string {
-		const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+		const subscriptionId = createSecureId(`sub_${Date.now()}`);
 
 		const subscription: EventSubscription = {
 			id: subscriptionId,

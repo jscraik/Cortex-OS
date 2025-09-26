@@ -310,7 +310,8 @@ export function calculateRetryDelay(
 			delay = classification.baseDelayMs * classification.backoffMultiplier ** (attempt - 1);
 			if (classification.jitter) {
 				const jitterAmount = delay * 0.1; // 10% jitter
-				delay += Math.random() * jitterAmount * 2 - jitterAmount;
+				const jitterSeed = (Date.now() % 1000) / 1000;
+				delay += jitterSeed * jitterAmount * 2 - jitterAmount;
 			}
 			break;
 

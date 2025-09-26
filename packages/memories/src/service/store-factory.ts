@@ -1,12 +1,11 @@
-import { initializeExternalStorage } from '../adapters/external-storage.js';
 import { PolicyEncryptedStore } from '../adapters/store.encrypted.policy.js';
-import { ExternalSqliteStore } from '../adapters/store.external-sqlite.js';
 import { LayeredMemoryStore } from '../adapters/store.layered.js';
-import { LocalMemoryStore } from '../adapters/store.localmemory.js';
-import { InMemoryStore } from '../adapters/store.memory.js';
-import type { PrismaLike } from '../adapters/store.prisma/client.js';
-import { PrismaStore } from '../adapters/store.prisma/client.js';
-import { ENV, getEnvWithFallback } from '../config/constants.js';
+import { ENV, EXTERNAL_ENV, getEnvWithFallback } from '../config/constants.js';
+import {
+	createStoreForKind,
+	normalizeStoreKind,
+	type StoreKind,
+} from '../config/store-from-env.js';
 import { type EncryptionService, InMemoryAesGcm } from '../ports/Encryption.js';
 import type { MemoryStore } from '../ports/MemoryStore.js';
 
@@ -81,69 +80,26 @@ export type LayeredEnvOptions = {
 };
 
 // Build layered store from env: MEMORIES_SHORT_STORE, MEMORIES_LONG_STORE
-// Kinds: memory | sqlite | prisma | local
+// Kinds: memory | sqlite | prisma | local | qdrant
 export async function createLayeredStoreFromEnv(opts?: LayeredEnvOptions): Promise<MemoryStore> {
-	const shortKind = (process.env.MEMORIES_SHORT_STORE || 'memory').toLowerCase();
-	const longKind =
+	const defaultShort: StoreKind = process.env[EXTERNAL_ENV.QDRANT_URL] ? 'qdrant' : 'memory';
+	const shortKindRaw = process.env.MEMORIES_SHORT_STORE ?? defaultShort;
+	const longKindRaw =
 		getEnvWithFallback(
 			'MEMORIES_LONG_STORE',
 			[ENV.STORE_ADAPTER_LEGACY, ENV.STORE_ADAPTER_LEGACY2],
 			{ context: 'long-term store adapter' },
-		)?.toLowerCase() || 'memory';
+		) ?? 'memory';
 
-	const makeStore = async (
-		kind: string,
-		prismaClient?: { memory?: unknown } | undefined,
-	): Promise<MemoryStore> => {
-		if (kind === 'local') {
-			return new LocalMemoryStore({
-				baseUrl: process.env[ENV.LOCAL_MEMORY_BASE_URL],
-				apiKey: process.env[ENV.LOCAL_MEMORY_API_KEY],
-				defaultNamespace: process.env[ENV.LOCAL_MEMORY_NAMESPACE],
-			});
-		}
-		if (kind === 'sqlite') {
-			// Check if external storage is enabled
-			if (process.env.MEMORIES_EXTERNAL_STORAGE_ENABLED === 'true') {
-				const externalManager = await initializeExternalStorage();
-				return new ExternalSqliteStore({
-					dbName: process.env.MEMORIES_EXTERNAL_STORAGE_DB_NAME || 'memories.db',
-					externalStorageManager: externalManager,
-				});
-			}
+	const shortKind = normalizeStoreKind(shortKindRaw) ?? defaultShort;
+	const longKind = normalizeStoreKind(longKindRaw) ?? 'memory';
 
-			const { SQLiteStore } = await import('../adapters/store.sqlite');
-			// Use in-memory SQLite by default for testing
-			return new SQLiteStore(':memory:', 384);
-		}
-		if (kind === 'external-sqlite') {
-			// Explicit external SQLite storage
-			const externalManager = await initializeExternalStorage();
-			return new ExternalSqliteStore({
-				dbName: process.env.MEMORIES_EXTERNAL_STORAGE_DB_NAME || 'memories.db',
-				externalStorageManager: externalManager,
-			});
-		}
-		if (kind === 'prisma') {
-			const prismaUnknown =
-				prismaClient ??
-				(
-					globalThis as unknown as {
-						__MEMORIES_PRISMA_CLIENT__?: { memory?: unknown };
-					}
-				).__MEMORIES_PRISMA_CLIENT__;
-			if (!prismaUnknown || !(prismaUnknown as Record<string, unknown>).memory) {
-				throw new Error('Prisma client not provided for layered store.');
-			}
-			// Cast to PrismaLike to ensure required shape
-			return new PrismaStore(prismaUnknown as PrismaLike);
-		}
-		// default memory
-		return new InMemoryStore();
-	};
-
-	const shortTerm = await makeStore(shortKind, opts?.prismaShort);
-	const longTerm = await makeStore(longKind, opts?.prismaLong);
+	const shortTerm = await createStoreForKind(shortKind, {
+		prismaClient: opts?.prismaShort,
+	});
+	const longTerm = await createStoreForKind(longKind, {
+		prismaClient: opts?.prismaLong,
+	});
 	return new LayeredMemoryStore(shortTerm, longTerm);
 }
 

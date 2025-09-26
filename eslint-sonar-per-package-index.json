@@ -1,0 +1,190 @@
+[
+  {
+    "name": "api",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-api.out"
+  },
+  {
+    "name": "cortex-code",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-code.out"
+  },
+  {
+    "name": "cortex-marketplace",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-marketplace.out"
+  },
+  {
+    "name": "cortex-marketplace-api",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-marketplace-api.out"
+  },
+  {
+    "name": "cortex-os",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-os.out"
+  },
+  {
+    "name": "cortex-py",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-py.out"
+  },
+  {
+    "name": "cortex-webui",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-webui.out"
+  },
+  {
+    "name": "a2a",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-a2a.out"
+  },
+  {
+    "name": "a2a-services",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-a2a-services.out"
+  },
+  {
+    "name": "agent-toolkit",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-agent-toolkit.out"
+  },
+  {
+    "name": "agents",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-agents.out"
+  },
+  {
+    "name": "agui",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-agui.out"
+  },
+  {
+    "name": "asbr",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-asbr.out"
+  },
+  {
+    "name": "commands",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-commands.out"
+  },
+  {
+    "name": "cortex-ai-github",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-ai-github.out"
+  },
+  {
+    "name": "cortex-logging",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-logging.out"
+  },
+  {
+    "name": "cortex-mcp",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-mcp.out"
+  },
+  {
+    "name": "cortex-rules",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-rules.out"
+  },
+  {
+    "name": "cortex-sec",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-sec.out"
+  },
+  {
+    "name": "cortex-semgrep-github",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-semgrep-github.out"
+  },
+  {
+    "name": "cortex-structure-github",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-structure-github.out"
+  },
+  {
+    "name": "evals",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-evals.out"
+  },
+  {
+    "name": "gateway",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-gateway.out"
+  },
+  {
+    "name": "github",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-github.out"
+  },
+  {
+    "name": "hooks",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-hooks.out"
+  },
+  {
+    "name": "integrations",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-integrations.out"
+  },
+  {
+    "name": "kernel",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-kernel.out"
+  },
+  {
+    "name": "mcp",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mcp.out"
+  },
+  {
+    "name": "mcp-bridge",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mcp-bridge.out"
+  },
+  {
+    "name": "mcp-core",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mcp-core.out"
+  },
+  {
+    "name": "mcp-registry",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mcp-registry.out"
+  },
+  {
+    "name": "memories",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-memories.out"
+  },
+  {
+    "name": "model-gateway",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-model-gateway.out"
+  },
+  {
+    "name": "mvp",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mvp.out"
+  },
+  {
+    "name": "mvp-core",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mvp-core.out"
+  },
+  {
+    "name": "mvp-group",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mvp-group.out"
+  },
+  {
+    "name": "mvp-server",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-mvp-server.out"
+  },
+  {
+    "name": "observability",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-observability.out"
+  },
+  {
+    "name": "orchestration",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-orchestration.out"
+  },
+  {
+    "name": "policy",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-policy.out"
+  },
+  {
+    "name": "prp-runner",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-prp-runner.out"
+  },
+  {
+    "name": "rag",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-rag.out"
+  },
+  {
+    "name": "registry",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-registry.out"
+  },
+  {
+    "name": "security",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-security.out"
+  },
+  {
+    "name": "services",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-services.out"
+  },
+  {
+    "name": "simlab",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-simlab.out"
+  },
+  {
+    "name": "tdd-coach",
+    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-tdd-coach.out"
+  }
+]

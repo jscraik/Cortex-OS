@@ -24,6 +24,7 @@
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/hooks": "workspace:*",
     "@cortex-os/model-gateway": "workspace:*",
+    "@cortex-os/orchestration": "workspace:*",
     "@hono/node-server": "^1.19.3",
     "@langchain/core": "^0.3.32",
     "@langchain/langgraph": "0.4.9",

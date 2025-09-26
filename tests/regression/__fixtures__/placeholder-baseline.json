@@ -1,0 +1,542 @@
+[
+  {
+    "file": ".eslintrc.cjs",
+    "token": "TODO:"
+  },
+  {
+    "file": ".semgrep/owasp-top-10-improved.yaml",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/api/src/server.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/core/src/default_client.rs",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/core/src/git_info.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/core/src/message_history.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/core/src/openai_tools.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/mcp-client/src/mcp_client.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/mcp-server/src/codex_tool_runner.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/mcp-server/src/tools.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/mcp-types/generate_mcp_types.py",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/ollama/src/client.rs",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/tui/src/chatwidget.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/tui/src/chatwidget/agent.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/tui/src/clipboard_paste.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-code/codex-rs/tui/src/onboarding/onboarding_screen.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-marketplace/src/mcp/tools.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-os/packages/evidence/analytics/src/agent-trace-collector.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-os/packages/evidence/analytics/src/metrics-collector.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-os/packages/ingest/src/dispatch.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-os/packages/planner/orchestration/src/mlx/kv_cache_manager.py",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-py/smoke_test.py",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-webui/backend/src/auth/index.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-webui/backend/src/db/mock.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-webui/backend/src/services/authMonitoringService.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-webui/backend/src/services/emailService.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/MessageInput/Commands/Knowledge.tsx",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/MessageInput/Commands/Models.tsx",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/MessageInput/Commands/Prompts.tsx",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Message.tsx",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Messages.tsx",
+    "token": "TODO:"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/SearchModal.tsx",
+    "token": "Mock"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Layout/SearchModal.tsx",
+    "token": "Mock"
+  },
+  {
+    "file": "config/eslint.config.js",
+    "token": "TODO:"
+  },
+  {
+    "file": "detects",
+    "token": "Mock"
+  },
+  {
+    "file": "docker/mlx-server-dev.py",
+    "token": "Mock"
+  },
+  {
+    "file": "docker/mlx-server.py",
+    "token": "Mock"
+  },
+  {
+    "file": "docker/model_manager.py",
+    "token": "Mock"
+  },
+  {
+    "file": "docker/production_model_manager.py",
+    "token": "Mock"
+  },
+  {
+    "file": "docker/real-model-manager.py",
+    "token": "Mock"
+  },
+  {
+    "file": "examples/middleware-integration-example.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "examples/skip-permissions-example.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/core/src/default_client.rs",
+    "token": "Mock"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/core/src/git_info.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/core/src/message_history.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/core/src/openai_tools.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/mcp-client/src/mcp_client.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/mcp-server/src/codex_tool_runner.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/mcp-types/generate_mcp_types.py",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/ollama/src/client.rs",
+    "token": "Mock"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/tui/src/chatwidget.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/tui/src/chatwidget/agent.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/tui/src/clipboard_paste.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "external/openai-codex/codex-rs/tui/src/onboarding/onboarding_screen.rs",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/a2a/a2a-core/src/monitoring/metrics.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/a2a/a2a-core/src/queue/postgres-queue.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/a2a/a2a-core/src/validation/input-validator.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/a2a/src/mcp/tools.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "packages/a2a/src/test-outbox-integration.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/a2a.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/index.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/integrations/AgentToolkitBusIntegration.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/langgraph/nodes.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/MasterAgent.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/MasterAgent.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "packages/agents/src/monitoring/tracing.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/monitoring/tracing.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/agents/src/testing/test-utilities.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/tests/unit/circuit-breaker.test.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/agents/tests/unit/langgraph/langgraph-integration-advanced.test.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "packages/agents/tests/unit/server.test.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/cortex-structure-github/src/server/app.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/github/src/actions.rs",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "packages/kernel/issues.json",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/kernel/src/integration-test.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/kernel/src/mcp/real-bridge.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "packages/kernel/src/nodes/build.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/kernel/src/nodes/evaluation.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/kernel/src/teaching/behavior-extension.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/kernel/tests/critical-issues.test.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/mcp-core/src/testing/mockServer.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/mcp-core/tests/tool-production-readiness.spec.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "packages/memories/src/mcp/handlers.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/memories/src/monitoring/health.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/memories/src/service/migration-service.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/memories/src/tools/memory-cli.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/memories/tests/integration/graph-store.test.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/mvp/mvp-group/src/lib/strategy-node.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/mvp/mvp/tests/nodes/evaluation.test.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/orchestration/src/master-agent-loop/agent-network.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/orchestration/src/master-agent-loop/execution-tool-layer.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/orchestration/src/master-agent-loop/learning-system-integration-manager.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/orchestration/src/master-agent-loop/master-agent-loop-core.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/orchestration/src/master-agent-loop/tool-orchestrator.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/orchestration/src/master-agent-loop/tool-security-layer.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/orchestration/src/no-production-app.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/orchestration/src/security/skip-permissions.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/orchestration/src/server/routes/index.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/prp-runner/src/lib/embedding/index.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/prp-runner/src/lib/reranker/index.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/prp-runner/src/unified-ai-evidence-workflow.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "packages/prp-runner/src/unified-ai-evidence-workflow.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/rag/benchmarks/performance-suite.js",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/rag/python/mlx_bridge.py",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/rag/src/indexing/pq.characterization.test.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "packages/rag/src/stubs/agent-mcp-client.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/tdd-coach/src/index.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/tdd-coach/src/reporters/LanguageReporters.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/tdd-coach/src/reporters/MockTestReporter.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/tdd-coach/src/reporters/VitestReporter.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "python/src/cortex_mlx/testing/__init__.py",
+    "token": "Mock"
+  },
+  {
+    "file": "python/src/cortex_mlx/testing/mcp.py",
+    "token": "Mock"
+  },
+  {
+    "file": "reports/eslint-rule-summary.json",
+    "token": "Mock"
+  },
+  {
+    "file": "reports/eslint-source.json",
+    "token": "Mock"
+  },
+  {
+    "file": "reports/eslint-source.json",
+    "token": "TODO:"
+  },
+  {
+    "file": "reports/semgrep-results.json",
+    "token": "Mock"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.sh",
+    "token": "Mock"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.sh",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.sh",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.ts",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/gen-event.mjs",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/security/fix_security_issues.sh",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/security/fix-command-injection.mjs",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/security/fix-neo4j-injection.mjs",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/updates/implement-mcp-server-secure.py",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server-secure.py",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server.mjs",
+    "token": "TODO:"
+  },
+  {
+    "file": "semgrep-findings.json",
+    "token": "Mock"
+  },
+  {
+    "file": "semgrep-results.json",
+    "token": "Mock"
+  },
+  {
+    "file": "servers/src/fetch/src/mcp_server_fetch/server.py",
+    "token": "TODO:"
+  },
+  {
+    "file": "tests/regression/placeholders.spec.ts",
+    "token": "not yet implemented"
+  },
+  {
+    "file": "tests/regression/placeholders.spec.ts",
+    "token": "TODO:"
+  }
+]

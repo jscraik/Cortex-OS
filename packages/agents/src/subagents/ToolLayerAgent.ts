@@ -15,6 +15,7 @@ import type { AGUIBusIntegration } from '../integrations/AGUIBusIntegration.js';
 import { createAGUIBusIntegration } from '../integrations/AGUIBusIntegration.js';
 import { type AGUIMCPTools, createAGUIMCPTools } from '../mcp/AGUIMCPTools.js';
 import { AgentToolkitMCPTools } from '../mcp/AgentToolkitMCPTools.js';
+import { createPrefixedId, secureDelay, secureInt, secureRatio } from '../lib/secure-random.js';
 
 // Tool Layer State with AGUI integration
 export const ToolLayerStateAnnotation = Annotation.Root({
@@ -208,7 +209,7 @@ export class ToolLayerAgent extends EventEmitter {
 					};
 
 					return {
-						componentId: `ui-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+						componentId: createPrefixedId(`ui-${Date.now()}`),
 						type: componentData.type || 'button',
 						properties: componentData.properties || {},
 						rendered: true,
@@ -244,7 +245,7 @@ export class ToolLayerAgent extends EventEmitter {
 					};
 
 					return {
-						interactionId: `int-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+						interactionId: createPrefixedId(`int-${Date.now()}`),
 						componentId: interactionData.componentId,
 						action: interactionData.action || 'click',
 						value: interactionData.value,
@@ -680,7 +681,7 @@ async function simulateToolExecution(
 	parameters: Record<string, unknown>,
 ): Promise<unknown> {
 	// Simulate tool execution delay
-	await new Promise((resolve) => setTimeout(resolve, 100 + Math.random() * 200));
+	await new Promise((resolve) => setTimeout(resolve, secureDelay(100, 301)));
 
 	// Return tool-specific results
 	switch (toolName) {
@@ -693,13 +694,13 @@ async function simulateToolExecution(
 		case 'monitor':
 			return {
 				status: 'healthy',
-				metrics: { cpu: Math.random() * 100, memory: Math.random() * 100 },
+				metrics: { cpu: secureRatio() * 100, memory: secureRatio() * 100 },
 				monitored: JSON.stringify(parameters),
 			};
 		case 'dashboard':
 			return {
 				dashboard: 'updated',
-				widgets: Math.floor(Math.random() * 10) + 1,
+				widgets: secureInt(1, 11),
 				data: JSON.stringify(parameters),
 			};
 		case 'tool-executor':

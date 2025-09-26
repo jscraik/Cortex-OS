@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { CircuitBreaker } from '../lib/circuit-breaker.js';
 import { AgentError, ErrorCategory, ErrorSeverity } from '../lib/error-handling.js';
 import { MemoryBoundedStore } from '../lib/memory-manager.js';
+import { secureRatio } from '../lib/secure-random.js';
 import type { AgentConfig, AgentMessage, Tool, ToolOutput } from '../types.js';
 
 // Test configuration schema
@@ -99,7 +100,7 @@ export class MockAgent extends EventEmitter {
 				await this.delay(60000); // Long delay to simulate timeout
 				break;
 			case 'random':
-				if (Math.random() < (this.config.failureRate || 0.3)) {
+				if (secureRatio() < (this.config.failureRate || 0.3)) {
 					throw new AgentError(
 						'brAInwav mock agent random failure',
 						ErrorCategory.UNKNOWN,

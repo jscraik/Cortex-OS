@@ -1,13 +1,13 @@
 # Task T1: Eliminate `any` Types in Agents Package
+
 **Priority**: HIGH  
+<!-- markdownlint-disable MD022 MD032 MD031 -->
+
 **Estimated Time**: 3 days  
 **Risk Level**: Medium - Type Safety Issues
 
 ## Problem Statement
 The agents package contains 15+ files with `any` type usage, creating runtime type safety risks. Key files include:
-- `/packages/agents/src/agents/code-analysis-agent.ts` (lines 189-190, 341)
-- `/apps/cortex-marketplace-api/src/registry.ts` (line 5 ESLint disable)
-- Multiple test files and utility functions
 
 ## Test-First Implementation
 
@@ -126,6 +126,7 @@ describe('Agent Type Constraints', () => {
     expect(eventData).toBeDefined();
   });
 });
+
 ```
 
 ### Step 2: GREEN - Implement Type Safety Fixes
@@ -400,6 +401,7 @@ import { z } from 'zod';
 import type { Fuse } from 'fuse.js';
 
 // Define strict types for search results
+
 interface SearchResult<T> {
   item: T;
   refIndex: number;

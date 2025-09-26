@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@cortex-os/hooks": "workspace:*",
+    "@cortex-os/orchestration": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

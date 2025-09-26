@@ -5,6 +5,10 @@ type AuthenticatedUser = {
 	id: string;
 	email?: string;
 	name?: string;
+	emailVerified?: boolean | Date | string | null;
+	image?: string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
 	roles?: string[];
 	permissions?: string[];
 	[key: string]: unknown;

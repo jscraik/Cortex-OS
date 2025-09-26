@@ -10,6 +10,7 @@
 import { EventEmitter } from 'node:events';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 
 /**
  * Tool layer types with specific capability boundaries
@@ -259,7 +260,7 @@ export class ToolLayer extends EventEmitter {
 		context?: Partial<ToolExecutionContext>,
 	): Promise<unknown> {
 		return this.tracer.startActiveSpan('tool-layer.invoke-tool', async (span) => {
-			const executionId = `exec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+			const executionId = createPrefixedId(`exec-${Date.now()}`);
 			const startTime = Date.now();
 
 			try {

@@ -11,6 +11,50 @@ status: "active"
 
 Begin with a concise checklist (3-7 bullets) of what you will do; keep items conceptual, not implementation-level.
 
+## 🔄 Agentic Coding Workflow for Copilot
+
+All GitHub Copilot sessions working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+
+### 0. Tasks
+
+- **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
+- **Store intermediate context** in Markdown files in the `~/tasks` folder
+- **Store all context** in the local memory MCP and/or REST API for persistence
+- **Use semantic task ID slugs** - descriptive identifiers like `mcp-tool-validation` or `ui-component-accessibility`
+
+### 1. Research
+
+- **Utilize semantic search** to identify existing patterns within this codebase
+- **Use Web-Search** to access the internet for the most relevant and up-to-date information
+- **Begin with follow-up questions** to establish the direction of the research
+- **Report findings** in `[feature].research.md` within the tasks folder
+
+### 2. Planning
+
+- **Read the research file** `[feature].research.md` from tasks folder
+- **Develop a TDD plan** following Copilot-specific principles:
+  - **Reuse monorepo patterns** - leverage Turborepo and pnpm workspace structure
+  - **Follow package boundaries** - respect TypeScript/Python/Rust separation
+  - **Implement incrementally** - small, focused changes with immediate feedback
+  - **Test-first approach** - write failing tests before implementation
+  - **brAInwav integration** - include branding in outputs and error messages
+- **Write comprehensive plan** to `[feature]-tdd-plan.md`
+
+### 3. Implementation
+
+- **Execute the TDD plan** with Copilot assistance for rapid iteration
+- **Follow monorepo commands** as specified in daily commands section
+- **Maintain quality gates** - run `pnpm lint && pnpm test` frequently
+- **Implementation must be 100% deployable** unless explicitly noted
+
+### 4. Verification
+
+- **Run comprehensive validation**: `pnpm format && pnpm lint && pnpm test`
+- **Check governance compliance**: `pnpm ci:governance`
+- **Validate accessibility** where applicable (Playwright a11y tests)
+- **Update documentation** for any behavior changes
+- **Update task status** to **"verified"** once complete
+
 ## Authority Order (highest wins)
 
 1. `RULES_OF_AI.md`

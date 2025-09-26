@@ -71,6 +71,7 @@ export class AgentHealthMonitor extends EventEmitter {
 			cleanupIntervalMs: number;
 			enableProactiveChecks: boolean;
 			defaultThresholds?: Partial<AgentHealthThresholds>;
+			agentHealthEndpoint?: string;
 		} = {
 			healthCheckIntervalMs: 30000, // 30 seconds
 			cleanupIntervalMs: 300000, // 5 minutes
@@ -302,20 +303,50 @@ export class AgentHealthMonitor extends EventEmitter {
 		const startTime = Date.now();
 
 		try {
-			// Implement actual ping logic here
-			// This is a placeholder that simulates a health check
-			await new Promise((resolve) => setTimeout(resolve, Math.random() * 100));
+			const endpoint =
+				process.env.BRAINWAV_AGENT_HEALTH_URL || this.options['agentHealthEndpoint'];
 
-			const responseTime = Date.now() - startTime;
+			if (endpoint) {
+				const controller = new AbortController();
+				const timeout = setTimeout(() => controller.abort(), this.options.healthCheckIntervalMs);
+				try {
+					const response = await fetch(
+						`${endpoint.replace(/\/$/, '')}/agents/${encodeURIComponent(agentId)}/health`,
+						{ method: 'GET', signal: controller.signal },
+					);
 
-			// Simulate occasional failures for testing
-			const success = Math.random() > 0.05; // 5% failure rate
+					if (!response.ok) {
+						return {
+							agentId,
+							success: false,
+							responseTime: Date.now() - startTime,
+							error: new Error(
+								`brAInwav agent health endpoint returned ${response.status}`,
+							),
+							timestamp,
+						};
+					}
+				} catch (error) {
+					return {
+						agentId,
+						success: false,
+						responseTime: Date.now() - startTime,
+						error: error instanceof Error ? error : new Error(String(error)),
+						timestamp,
+					};
+				} finally {
+					clearTimeout(timeout);
+				}
+			}
+
+			const status = this.healthStatus.get(agentId);
+			const success = status ? status.status !== 'unhealthy' : false;
 
 			return {
 				agentId,
 				success,
-				responseTime,
-				error: success ? undefined : new Error('Agent ping failed'),
+				responseTime: Date.now() - startTime,
+				error: success ? undefined : new Error('brAInwav agent reported unhealthy status'),
 				timestamp,
 			};
 		} catch (error) {

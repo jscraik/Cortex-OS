@@ -10,8 +10,9 @@
 import { z } from 'zod';
 import type { MCPEvent } from './types.js';
 import { createTypedEvent } from './types.js';
+import { createPrefixedId } from '../lib/secure-random.js';
 
-// Agent Toolkit interfaces - these will be replaced with proper imports once workspace resolution is fixed
+// Agent Toolkit interfaces
 interface AgentToolkitSearchInput {
 	pattern: string;
 	path: string;
@@ -247,7 +248,7 @@ export class AgentToolkitMCPTools {
 				path: z.string().min(1).describe('Path to search in (file or directory)'),
 			}),
 			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `search_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+				const correlationId = createPrefixedId(`search_${Date.now()}`);
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -333,7 +334,7 @@ export class AgentToolkitMCPTools {
 				path: z.string().min(1).describe('Root path for multi-pattern search'),
 			}),
 			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `multi_search_${Date.now()}_${Math.random()
+				const correlationId = createPrefixedId(`multi_search_${Date.now()}`);
 					.toString(36)
 					.slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
@@ -445,7 +446,7 @@ export class AgentToolkitMCPTools {
 				path: z.string().min(1).describe('Path to file or directory to modify'),
 			}),
 			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `codemod_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+				const correlationId = createPrefixedId(`codemod_${Date.now()}`);
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -541,7 +542,7 @@ export class AgentToolkitMCPTools {
 					.describe('Files to validate (relative or absolute paths)'),
 			}),
 			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
-				const correlationId = `validate_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+				const correlationId = createPrefixedId(`validate_${Date.now()}`);
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
@@ -669,7 +670,7 @@ export class AgentToolkitMCPTools {
 	async batchSearch(
 		requests: Array<{ pattern: string; path: string }>,
 	): Promise<AgentToolkitMCPResponse[]> {
-		const batchId = `batch_search_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+		const batchId = createPrefixedId(`batch_search_${Date.now()}`);
 
 		try {
 			// Execute searches in parallel for performance
@@ -757,7 +758,7 @@ export class AgentToolkitMCPTools {
 	 * Batch validation operation for performance optimization
 	 */
 	async batchValidate(fileBatches: Array<string[]>): Promise<AgentToolkitMCPResponse[]> {
-		const batchId = `batch_validate_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+		const batchId = createPrefixedId(`batch_validate_${Date.now()}`);
 
 		try {
 			// Execute validations in parallel for performance

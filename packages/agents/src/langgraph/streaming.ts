@@ -7,6 +7,7 @@
 import { EventEmitter } from 'node:events';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type { StateGraph } from '@langchain/langgraph';
+import { createSecureId } from '../lib/secure-random.js';
 import type { CortexState } from '../CortexAgentLangGraph.js';
 
 // Streaming event types
@@ -466,8 +467,8 @@ export const StreamingTransformers = {
 				...event,
 				data: {
 					...event.data,
-					debug: {
-						eventId: Math.random().toString(36).substr(2, 9),
+						debug: {
+						eventId: createSecureId('stream-debug')
 						timestamp: process.hrtime.bigint(),
 					},
 				},

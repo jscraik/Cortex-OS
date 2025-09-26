@@ -7,6 +7,7 @@
 import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 import type { CortexState } from '../CortexAgentLangGraph.js';
 
 // Input validation schemas
@@ -373,7 +374,7 @@ async function synthesizeResponse(params: {
 }
 
 function generateInteractionId(): string {
-	return `interaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+	return createPrefixedId(`interaction_${Date.now()}`);
 }
 
 async function storeInteraction(interaction: any): Promise<void> {

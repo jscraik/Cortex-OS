@@ -1,5 +1,6 @@
 import { createObservabilityEvent } from '../events/observability-events.js';
 import type { LogLevel, TraceContext, ULID } from '../types.js';
+import { securePivot } from '../utils/secure-random.js';
 import {
 	type AggregationMode,
 	type EvaluateAlertInput,
@@ -344,7 +345,7 @@ function quickselect(arr: number[], k: number): number {
 		right = arr.length - 1;
 	while (left <= right) {
 		// Choose a random pivot
-		const pivotIndex = left + Math.floor(Math.random() * (right - left + 1));
+		const pivotIndex = securePivot(left, right);
 		const pivotValue = arr[pivotIndex];
 		// Partition
 		let i = left,

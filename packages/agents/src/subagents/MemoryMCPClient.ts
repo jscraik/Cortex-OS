@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import type { MemoryStore } from '../lib/types.js';
+import { createPrefixedId } from '../lib/secure-random.js';
 
 // MCP Tool schemas matching the memory MCP interface
 const MemoryStoreSchema = z.object({
@@ -56,7 +57,7 @@ export class MemoryMCPClient {
 			const input = MemoryStoreSchema.parse(params);
 
 			const memory = {
-				id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+				id: createPrefixedId(`mem-${Date.now()}`),
 				kind: input.kind,
 				text: input.text,
 				tags: input.tags,

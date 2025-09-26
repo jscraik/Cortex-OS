@@ -9,6 +9,12 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
+import {
+	workflowStateToN0,
+	type N0AdapterOptions,
+	type N0Session,
+	type N0State,
+} from '@cortex-os/orchestration';
 import { fixedTimestamp } from './lib/determinism.js';
 import { addToHistory, createHistory, type ExecutionHistory } from './lib/history.js';
 import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';
@@ -379,4 +385,12 @@ export class CortexKernel {
 	getCompiledGraph(): any {
 		return this.compiledGraph;
 	}
+}
+
+export function projectKernelWorkflowToN0(
+	state: WorkflowState,
+	session: N0Session,
+	options: N0AdapterOptions = {},
+): N0State {
+	return workflowStateToN0(state, session, options);
 }

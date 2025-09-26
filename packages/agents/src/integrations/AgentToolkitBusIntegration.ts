@@ -8,7 +8,8 @@
  */
 
 import { EventEmitter } from 'node:events';
-
+import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 // Mock bus implementation until proper A2A integration is available
 const createMockBus = () => {
 	const handlers = new Map<string, Array<(data: unknown) => void>>();
@@ -55,7 +56,7 @@ export interface AgentToolkitBusConfig {
 // Mock envelope creation function
 const createMockEnvelope = (data: { type: string; source: string; data: unknown }) => {
 	return {
-		id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+		id: createPrefixedId(`${Date.now()}`),
 		type: data.type,
 		source: data.source,
 		data: data.data,
@@ -426,7 +427,7 @@ export class AgentToolkitBusIntegration extends EventEmitter {
 	 * Generate unique event ID
 	 */
 	private generateEventId(eventType: string): string {
-		return `${eventType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return createPrefixedId(`${eventType}_${Date.now()}`);
 	}
 
 	/**

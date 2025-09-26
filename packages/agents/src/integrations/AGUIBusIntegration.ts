@@ -8,7 +8,8 @@
  */
 
 import { EventEmitter } from 'node:events';
-import type { Envelope } from '@cortex-os/a2a-contracts';
+import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 import { createEnvelope } from '@cortex-os/a2a-contracts';
 
 // AGUI Event Types following Cortex-OS patterns
@@ -172,7 +173,7 @@ export class AGUIBusIntegration extends EventEmitter {
 		properties: Record<string, unknown>;
 		parentId?: string;
 	}): Promise<string> {
-		const componentId = `ui-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const componentId = createPrefixedId(`ui-${Date.now()}`);
 
 		// Publish component rendered event
 		await this.publishComponentRendered({
@@ -196,7 +197,7 @@ export class AGUIBusIntegration extends EventEmitter {
 		layout?: 'grid' | 'flex' | 'stack';
 		responsive?: boolean;
 	}): Promise<string> {
-		const viewId = `view-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const viewId = createPrefixedId(`view-${Date.now()}`);
 
 		// Publish view rendered event
 		await this.publishViewRendered({
@@ -220,7 +221,7 @@ export class AGUIBusIntegration extends EventEmitter {
 		value?: unknown;
 		coordinates?: { x: number; y: number };
 	}): Promise<string> {
-		const interactionId = `int-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const interactionId = createPrefixedId(`int-${Date.now()}`);
 
 		// Publish user interaction event
 		await this.publishUserInteraction({

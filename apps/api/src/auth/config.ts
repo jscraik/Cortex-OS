@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { DatabaseAdapter } from './database-adapter.js';
 
-export const auth = betterAuth({
+export const auth: ReturnType<typeof betterAuth> = betterAuth({
 	database: new DatabaseAdapter(),
 	baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
 	secret: process.env.BETTER_AUTH_SECRET || 'better-auth-secret',
@@ -54,7 +54,7 @@ export const auth = betterAuth({
 	},
 
 	// Plugins
-	plugins: [username(), passkey(), twoFactor({}), organization({})],
+	plugins: [username(), twoFactor({}), organization({})],
 
 	// Hooks
 	hooks: {},

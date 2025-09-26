@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderTemplate } from '../src/runner.js';
+import { renderTemplate, runCommand } from '../src/runner.js';
 
 describe('renderTemplate', () => {
 	it('substitutes arguments', async () => {
@@ -36,5 +36,26 @@ describe('renderTemplate', () => {
 			fileAllowlist: ['**/README.md'],
 		});
 		expect(out).toContain('CONTENT');
+	});
+
+	it('does not depend on Math.random for run ids', async () => {
+		const originalRandom = Math.random;
+		Math.random = () => {
+			throw new Error('brAInwav prohibits Math.random in production paths');
+		};
+		try {
+			const res = await runCommand(
+				{
+					name: 'test-cmd',
+					scope: 'builtin',
+					execute: async () => ({ text: 'ok' }),
+				},
+				[],
+				{ cwd: process.cwd() },
+			);
+			expect(res.text).toBe('ok');
+		} finally {
+			Math.random = originalRandom;
+		}
 	});
 });

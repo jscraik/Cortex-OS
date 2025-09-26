@@ -7,6 +7,7 @@ import { constants } from 'node:fs';
 import { access, mkdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { secureHex } from '../lib/secure-random.js';
 import { logWarn } from '../lib/logger.js';
 import type { XDGPaths } from '../types/index.js';
 
@@ -133,7 +134,7 @@ export async function isDirectory(path: string): Promise<boolean> {
  */
 export function getTempPath(prefix: string = 'tmp'): string {
 	const timestamp = Date.now();
-	const random = Math.random().toString(36).substring(2, 8);
+	const random = secureHex(6);
 	return getCachePath('tmp', `${prefix}_${timestamp}_${random}`);
 }
 

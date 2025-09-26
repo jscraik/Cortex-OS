@@ -5,12 +5,25 @@
  * Cortex-OS adoption plan and architecture diagram pattern.
  */
 
-// import fs from 'node:fs';
-// import path from 'node:path';
-// Adapters (mocked in tests)
-// import { MLXAdapter } from '@cortex-os/model-gateway/dist/adapters/mlx-adapter';
-// import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter';
+import { randomUUID } from 'node:crypto';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import {
+	createMLXAdapter,
+	type MLXAdapterApi,
+	createOllamaAdapter,
+	type OllamaAdapterApi,
+} from '@cortex-os/model-gateway';
+import {
+	agentStateToN0,
+	dispatchTools,
+	type N0AdapterOptions,
+	type N0Budget,
+	type N0Session,
+	type N0State,
+	type ToolDispatchJob,
+	type ToolDispatchResult,
+} from '@cortex-os/orchestration';
+import { getHooksSingleton } from '@cortex-os/hooks';
 import { Annotation, MessagesAnnotation, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
 
@@ -76,58 +89,175 @@ export const createMasterAgentGraph = (config: {
 	};
 
 	/**
-	 * Tool Layer - Execute via MCP
-	 */
-	const toolLayer = (state: AgentState): AgentState => {
-		// const lastMessage = state.messages[state.messages.length - 1];
-		// const content = lastMessage?.content || '';
-		const { currentAgent } = state;
-
-		if (!currentAgent) {
-			return {
-				...state,
-				error: 'No agent selected',
-			};
+		* Tool Layer - Execute via MCP
+		*/
+	const toolLayer = async (state: AgentState): Promise<AgentState> => {
+		const currentAgent = state.currentAgent;
+		if (!currentAgent) return state;
+		const rawContent = extractContent(state.messages[state.messages.length - 1]);
+		const conversation = createConversation(currentAgent, rawContent);
+		const session = createSession(state, currentAgent);
+		const { jobs, errors } = await buildToolJobs(
+			conversation,
+			currentAgent,
+			state.taskType,
+			agentRegistry,
+		);
+		const traceId = randomUUID();
+		if (jobs.length === 0) {
+			const outcome = finalizeToolExecution([], errors, traceId);
+			return applyExecutionOutcome(state, outcome);
 		}
-
-		try {
-			// Decide model execution path: prefer MLX if available, else Ollama by specialization-tier
-			// const _text = typeof content === 'string' ? content : JSON.stringify(content);
-			// const sub = agentRegistry.get(currentAgent);
-			// const _specialization = sub?.specialization ?? state.taskType ?? 'code-analysis';
-
-			// Try MLX first
-			// const mlx = new MLXAdapter();
-			const executed = false;
-			let result: unknown;
-			// try {
-			// 	if (await mlx.isAvailable()) {
-			// 		result = await mlx.generateChat({ content: text });
-			// 		executed = true;
-			// 	}
-			// } catch {
-			// 	// ignore and fallback
-			// }
-
-			if (!executed) {
-				// const { modelTag } = selectOllamaModelBySpecializationTier(specialization);
-				// const ollama = new OllamaAdapter();
-				// result = await ollama.generateChat({ content: text }, modelTag);
-				result = 'Mock adapter response - adapters not yet implemented';
-			}
-
-			return {
-				...state,
-				result,
-				messages: [new AIMessage({ content: JSON.stringify(result) })],
-			};
-		} catch (error) {
-			return {
-				...state,
-				error: error instanceof Error ? error.message : 'Execution failed',
-			};
-		}
+		const hooks = getHooksSingleton();
+		const dispatchResults = await dispatchTools(jobs, {
+			session,
+			hooks: hooks ? { run: hooks.run.bind(hooks) } : undefined,
+			budget: deriveBudget(),
+			concurrency: 1,
+		});
+		const outcome = finalizeToolExecution(dispatchResults, errors, traceId);
+		return applyExecutionOutcome(state, outcome);
 	};
+
+	type ConversationMessage = { role: 'system' | 'user'; content: string };
+	type ToolPayload = { content: string; model: string };
+	interface ToolExecutionOutcome {
+		execution: {
+			provider: 'mlx' | 'ollama' | 'none';
+			executed: boolean;
+			traceId: string;
+			payload?: ToolPayload;
+			errors: string[];
+		};
+		response: string;
+		error?: string;
+	}
+
+	function extractContent(message: AIMessage | HumanMessage | undefined): string {
+		if (!message) return '';
+		return typeof message.content === 'string'
+			? message.content
+			: JSON.stringify(message.content);
+	}
+
+	function createConversation(agent: string, input: string): ConversationMessage[] {
+		return [
+			{ role: 'system', content: `You are brAInwav agent ${agent}.` },
+			{ role: 'user', content: input },
+		];
+	}
+
+	function createSession(state: AgentState, agent: string): N0Session {
+		return {
+			id: `master-agent:${agent}`,
+			model: state.taskType ?? 'mlx-orchestration',
+			user: 'brAInwav-agent',
+			cwd: process.cwd(),
+		};
+	}
+
+	async function buildToolJobs(
+		conversation: ConversationMessage[],
+		agent: string,
+		taskType: string | undefined,
+		agents: Map<string, SubAgentConfig>,
+	): Promise<{ jobs: ToolDispatchJob<ToolPayload>[]; errors: string[] }> {
+		const jobs: ToolDispatchJob<ToolPayload>[] = [];
+		const errors: string[] = [];
+		try {
+			const mlx: MLXAdapterApi = createMLXAdapter();
+			if (await mlx.isAvailable()) {
+				jobs.push({
+					id: `mlx:${agent}`,
+					name: 'mlx.generateChat',
+					input: conversation,
+					estimateTokens: 2048,
+					metadata: { provider: 'mlx', tags: ['agents', 'mlx'] },
+					execute: async () => mlx.generateChat({ messages: conversation }),
+				});
+			} else {
+				errors.push('brAInwav MLX adapter unavailable');
+			}
+		} catch (error) {
+			errors.push(formatAdapterError('mlx', error));
+		}
+		try {
+			const specialization = agents.get(agent)?.specialization ?? taskType ?? 'code-analysis';
+			const modelHint = process.env.BRAINWAV_OLLAMA_MODEL ?? specialization;
+			const ollama: OllamaAdapterApi = createOllamaAdapter();
+			jobs.push({
+				id: `ollama:${agent}`,
+				name: 'ollama.generateChat',
+				input: conversation,
+				estimateTokens: 2048,
+				metadata: { provider: 'ollama', tags: ['agents', 'ollama'], model: modelHint },
+				execute: async () => ollama.generateChat(conversation, modelHint),
+			});
+		} catch (error) {
+			errors.push(formatAdapterError('ollama', error));
+		}
+		return { jobs, errors };
+	}
+
+	function deriveBudget(): N0Budget {
+		return { tokens: 8192, timeMs: 120000, depth: 1 };
+	}
+
+	function finalizeToolExecution(
+		results: ToolDispatchResult<ToolPayload>[] | undefined,
+		errors: string[],
+		traceId: string,
+	): ToolExecutionOutcome {
+		const collected = [...errors];
+		const settled = (results ?? []).filter(Boolean);
+		const success = settled.find((r) => r.status === 'fulfilled' && r.value);
+		for (const result of settled) {
+			if (result && result.status !== 'fulfilled' && result.reason) {
+				collected.push(result.reason.message);
+			}
+		}
+		if (success && success.value) {
+			return {
+				execution: {
+					provider: (success.metadata?.provider as 'mlx' | 'ollama') ?? 'none',
+					executed: true,
+					traceId,
+					payload: success.value,
+					errors: collected,
+				},
+				response: success.value.content,
+				error: collected.length ? collected.join('; ') : undefined,
+			};
+		}
+		const message = collected.length
+			? collected.join('; ')
+			: 'brAInwav tool dispatch failed with no available provider';
+		return {
+			execution: {
+				provider: 'none',
+				executed: false,
+				traceId,
+				errors: collected,
+			},
+			response: message,
+			error: message,
+		};
+	}
+
+	function applyExecutionOutcome(state: AgentState, outcome: ToolExecutionOutcome): AgentState {
+		const aiMessage = new AIMessage({ content: outcome.response });
+		return {
+			...state,
+			result: outcome.execution,
+			messages: [...state.messages, aiMessage],
+			error: outcome.error,
+		};
+	}
+
+	function formatAdapterError(provider: string, error: unknown): string {
+		const detail = error instanceof Error ? error.message : String(error);
+		return `brAInwav ${provider} adapter error: ${detail}`;
+	}
 
 	/**
 	 * Create the LangGraphJS StateGraph
@@ -158,6 +288,16 @@ export const createMasterAgentGraph = (config: {
 
 			const result = await this.graph.invoke(initialState);
 			return result;
+		},
+
+		async coordinateWithN0(
+			input: string,
+			session: N0Session,
+			options: N0AdapterOptions = {},
+		): Promise<{ agent: AgentState; n0: N0State }> {
+			const agent = await this.coordinate(input);
+			const n0 = agentStateToN0(agent, session, options);
+			return { agent, n0 };
 		},
 	};
 };

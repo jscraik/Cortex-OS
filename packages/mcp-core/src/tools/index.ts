@@ -17,6 +17,8 @@ export * from './todo-write-tool.js';
 // Web access tools
 export * from './web-fetch-tool.js';
 export * from './web-search-tool.js';
+// Workspace tools for nO architecture
+export * from './workspace-tools.js';
 export * from './write-tool.js';
 
 // Tool registry utilities
@@ -34,6 +36,12 @@ import { taskTool } from './task-tool.js';
 import { todoWriteTool } from './todo-write-tool.js';
 import { webFetchTool } from './web-fetch-tool.js';
 import { webSearchTool } from './web-search-tool.js';
+import {
+	workspaceCreateTool,
+	workspaceListTool,
+	workspaceReadTool,
+	workspaceWriteTool,
+} from './workspace-tools.js';
 import { writeTool } from './write-tool.js';
 
 /**
@@ -66,6 +74,12 @@ export const toolCategories = {
 		task: taskTool,
 		todoWrite: todoWriteTool,
 	},
+	workspace: {
+		workspaceCreate: workspaceCreateTool,
+		workspaceList: workspaceListTool,
+		workspaceRead: workspaceReadTool,
+		workspaceWrite: workspaceWriteTool,
+	},
 } as const;
 
 /**
@@ -97,6 +111,12 @@ export const allTools: ReadonlyArray<McpTool<any, any>> = [
 	// Task management tools
 	taskTool,
 	todoWriteTool,
+
+	// Workspace tools (nO architecture)
+	workspaceCreateTool,
+	workspaceListTool,
+	workspaceReadTool,
+	workspaceWriteTool,
 ];
 
 /**
@@ -110,6 +130,8 @@ export const permissionRequiredTools: ReadonlyArray<McpTool<any, any>> = [
 	notebookEditTool, // Notebook modification
 	webFetchTool, // HTTP requests
 	webSearchTool, // Web access
+	workspaceCreateTool, // Workspace creation
+	workspaceWriteTool, // Workspace file writing
 ];
 
 /**
@@ -123,6 +145,8 @@ export const noPermissionTools: ReadonlyArray<McpTool<any, any>> = [
 	taskTool, // Sub-agent tasks
 	todoWriteTool, // Task list management
 	echoTool, // Echo utility
+	workspaceListTool, // Workspace listing
+	workspaceReadTool, // Workspace file reading
 ];
 
 /**

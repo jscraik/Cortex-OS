@@ -7,10 +7,10 @@ Both MCP and REST API modes are running simultaneously and verified working.
 ## 🔧 Configuration Summary
 
 ### System Status
-- **Local Memory Version**: v1.0.9a
+- **Local Memory Version**: v1.1.0a
 - **License**: LM-D4***BA2 (activated and valid)
 - **Daemon Status**: Running (PID: 88234)
-- **REST API**: http://localhost:3028/api/v1/ (25 endpoints)
+- **REST API**: v1.1.0a — http://localhost:3028/api/v1/ (25 endpoints)
 - **MCP Server**: Available for all configured editors
 - **Qdrant**: Running on port 6333 (high-performance search)
 

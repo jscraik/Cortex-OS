@@ -2,15 +2,20 @@ import cors from 'cors';
 import express from 'express';
 import { securityMiddleware } from './auth/config.js';
 import { createApiBusIntegration } from './core/a2a-integration.js';
+import { StructuredLogger } from './core/observability.js';
 import { setupMcpTools } from './mcp/tools.js';
+import { apiV1Router } from './routes/api-v1.js';
 import { authRouter } from './routes/auth.js';
 
 type ExpressError = Error & {
 	status?: number;
 };
 
-const app = express();
+const app: express.Express = express();
 const PORT = process.env.PORT || 3001;
+
+const logger = new StructuredLogger();
+app.locals.logger = logger;
 
 // Security middleware
 app.use(securityMiddleware);
@@ -36,12 +41,16 @@ app.get('/health', (_req, res) => {
 app.use(authRouter);
 
 // API routes (protected)
-// app.use("/api", apiRoutes); // TODO: Create API routes
+app.use('/api/v1', apiV1Router);
 
 // A2A Integration
-const apiBus = createApiBusIntegration({
-	serviceName: 'api-gateway',
-	version: '1.0.0',
+const apiBus = createApiBusIntegration(logger);
+app.locals.apiBus = apiBus;
+
+apiBus.start().catch((error) => {
+	logger.error('brAInwav API bus startup failure', {
+		error: error instanceof Error ? error.message : error,
+	});
 });
 
 // MCP Tools integration

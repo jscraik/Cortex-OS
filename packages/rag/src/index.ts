@@ -11,21 +11,21 @@ import { memoryStore } from './store/memory.js';
 // Agentic dispatcher
 export {
 	AgenticDispatcher,
-	createAgenticDispatcher,
+	createAgenticDispatcher
 } from './agent/dispatcher.js';
 export { createPooledEmbedder, PooledEmbedder } from './embed/embedding-pool.js';
+export { createRagBus } from './events/rag-bus.js';
 export type {
 	RagBus,
 	RagEventEnvelope,
 	RagEventHandler,
-	RagPublishOptions,
+	RagPublishOptions
 } from './events/rag-bus.js';
-export { createRagBus } from './events/rag-bus.js';
 export type {
 	RAGIngestCompleteEvent,
 	RAGIngestEvent,
 	RAGQueryEvent,
-	RAGQueryResultEvent,
+	RAGQueryResultEvent
 } from './events/rag-events.js';
 // A2A Events for inter-package communication
 export {
@@ -38,14 +38,11 @@ export {
 	ragIngestCompleteEventSchema,
 	ragIngestEventSchema,
 	ragQueryEventSchema,
-	ragQueryResultEventSchema,
+	ragQueryResultEventSchema
 } from './events/rag-events.js';
 export type {
-	DocumentSyncResult as RemoteDocumentSyncResult,
-	MinimalStore as RemoteMinimalStore,
-	RemoteRAGConfig as RemoteMCPConfig,
-	RemoteRetrievalOptions as RemoteQueryOptions,
-	StoreLike as RemoteStoreLike,
+	DocumentSyncResult as RemoteDocumentSyncResult, RemoteRAGConfig as RemoteMCPConfig, MinimalStore as RemoteMinimalStore, RemoteRetrievalOptions as RemoteQueryOptions,
+	StoreLike as RemoteStoreLike
 } from './integrations/remote-mcp.js';
 // Archon integration exports removed in favor of vendor-neutral Remote MCP
 // Remote MCP Integration (vendor-neutral)
@@ -55,16 +52,15 @@ export {
 	createRemoteMCPIngestionManager,
 	RemoteMCPDocumentIngestionManager,
 	RemoteMCPEmbedder,
-	RemoteMCPEnhancedStore,
+	RemoteMCPEnhancedStore
 } from './integrations/remote-mcp.js';
 // Content security policy for XSS/injection protection
 export {
-	type ContentSecurityConfig,
-	type ContentSecurityError,
-	ContentSecurityPolicy,
+	ContentSecurityPolicy, type ContentSecurityConfig,
+	type ContentSecurityError
 } from './lib/content-security.js';
-export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
 export * as lib from './lib/index.js';
+export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
 // MCP Tools for external AI agent integration
 export {
 	ragIngestTool,
@@ -73,22 +69,20 @@ export {
 	ragQueryTool,
 	ragQueryToolSchema,
 	ragStatusTool,
-	ragStatusToolSchema,
+	ragStatusToolSchema
 } from './mcp/tools.js';
 export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
 export { startRagHealthServer } from './server/bootstrap.js';
 export {
 	createEmbedderHealthCheck,
 	createPgvectorHealthCheck,
-	createRerankerHealthCheck,
+	createRerankerHealthCheck
 } from './server/health-checks.js';
 // Health exports
 export { HealthProvider } from './server/health-provider.js';
 export { createHealthServer } from './server/health-server.js';
 export { fileStore } from './store/file.js';
 export { HierarchicalStore } from './store/hierarchical-store.js';
-// Alternative backend: LanceDB (adapter)
-export { createLanceDbStore, LanceDbStore } from './store/lancedb-store.js';
 export { memoryStore } from './store/memory.js';
 // Workspace scoping
 export { createWorkspaceManager, WorkspaceManager } from './workspace/manager.js';

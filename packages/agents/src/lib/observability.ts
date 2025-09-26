@@ -7,6 +7,7 @@ import { EventEmitter } from 'node:events';
 import { performance } from 'node:perf_hooks';
 import { AgentError, ErrorCategory, ErrorSeverity } from './error-handling.js';
 import { MemoryBoundedStore } from './memory-manager.js';
+import { createPrefixedId, createSecureId, secureRatio } from './secure-random.js';
 
 // Metrics collection interfaces
 export interface MetricValue {
@@ -280,7 +281,7 @@ export class MetricsCollector extends EventEmitter {
 			this.metricsPerSecond = Math.max(0, this.metricsPerSecond - 1);
 		}, 1000);
 
-		this.metrics.set(`${metric.name}-${metric.timestamp}-${Math.random()}`, metric);
+		this.metrics.set(createPrefixedId(`${metric.name}-${metric.timestamp}`), metric);
 
 		this.emit('metric', metric);
 	}
@@ -361,7 +362,7 @@ export class TracingSystem extends EventEmitter {
 		}
 
 		// Sampling decision
-		if (Math.random() > this.config.samplingRate) {
+		if (secureRatio() > this.config.samplingRate) {
 			return this.createNoOpSpan(operationName);
 		}
 
@@ -523,14 +524,14 @@ export class TracingSystem extends EventEmitter {
 	 * Generate unique trace ID
 	 */
 	public generateTraceId(): string {
-		return `brAInwav-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+		return `brAInwav-${Date.now()}-${createSecureId().substring(0, 11)}`;
 	}
 
 	/**
 	 * Generate unique span ID
 	 */
 	public generateSpanId(): string {
-		return `span-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+		return `span-${Date.now()}-${createSecureId().substring(0, 11)}`;
 	}
 
 	/**

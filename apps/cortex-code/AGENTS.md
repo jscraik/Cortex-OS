@@ -16,6 +16,104 @@
 
 **Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
 
+## 🔄 Agentic Coding Workflow for Rust/Codex
+
+All Rust development in brAInwav Cortex-OS must follow this structured 4-phase workflow:
+
+### 0. Tasks
+
+- **Operate on a task basis** - Each Rust feature/bugfix/enhancement is a discrete task
+- **Store intermediate context** in Markdown files in the `~/tasks` folder
+- **Store all context** in the local memory MCP and/or REST API for persistence
+- **Use semantic task ID slugs** - descriptive identifiers like `tui-accessibility-enhancement` or `codex-performance-optimization`
+
+### 1. Research
+
+- **Utilize semantic search** to identify existing Rust patterns within this codebase
+- **Use Web-Search** to access the internet for Rust best practices and crate information
+- **Begin with follow-up questions** to establish the direction of the research
+- **Report findings** in `[feature].research.md` within the tasks folder
+
+**Rust-Specific Research Focus:**
+
+- Existing Rust crate patterns in `codex-rs/` workspace
+- TUI development patterns with ratatui
+- Performance optimization opportunities
+- Integration with TypeScript/Python components
+- Rust testing strategies with `cargo-insta`
+
+### 2. Planning
+
+- **Read the research file** `[feature].research.md` from tasks folder
+- **Develop a TDD plan** based on Rust-specific principles:
+  - **Reuse existing patterns** - leverage codex-rs workspace structure
+  - **Separation of concerns** - maintain clear crate boundaries
+  - **Single Responsibility Principle (SRP)** - focused crate functionality
+  - **Don't Repeat Yourself (DRY)** - share common utilities across crates
+  - **Keep it Simple, Stupid (KISS)** - avoid unnecessary Rust complexity
+  - **You Aren't Gonna Need It (YAGNI)** - implement only required features
+  - **Encapsulation** - proper Rust module boundaries
+  - **Modularity** - loosely coupled crate architecture
+  - **Open/Closed Principle** - extend via traits and generics
+  - **Testability** - design for comprehensive Rust testing
+  - **Principle of Least Astonishment (POLA)** - idiomatic Rust patterns
+  - **Fail Fast** - robust error handling with Result types
+  - **High Cohesion, Low Coupling** - related functionality in same crate
+- **Write comprehensive plan** to `[feature]-tdd-plan.md` with Rust implementation context
+
+**Rust Planning Requirements:**
+
+- Include brAInwav branding in CLI outputs and error messages
+- Plan for TUI accessibility and keyboard navigation
+- Design for cross-platform compatibility
+- Consider performance implications and optimization opportunities
+- Plan for comprehensive testing with cargo and insta
+
+### 3. Implementation
+
+- **Read the TDD plan** `[feature]-tdd-plan.md` and create implementation checklist
+- **Execute with Rust TDD** - write failing tests, implement, refactor
+- **Follow codex-rs conventions** - crate naming, formatting, and style
+- **Implementation must be 100% deployable** unless explicitly stated otherwise
+- **Include brAInwav branding** in all user-facing outputs
+
+**Rust Implementation Standards:**
+
+- Use `just fmt` automatically after code changes
+- Run `just fix -p <project>` to resolve linter issues
+- Include brAInwav branding in error messages and CLI outputs
+- Follow TUI styling conventions from `codex-rs/tui/styles.md`
+- Use proper Rust error handling with Result and Error types
+- Implement comprehensive testing with deterministic outcomes
+
+### 4. Verification
+
+- **Verify Rust functionality** meets all requirements
+- **Run comprehensive testing**:
+
+  ```bash
+  cargo test -p <project>  # Project-specific tests
+  cargo test --all-features  # Full test suite (if core changes)
+  just fix -p <project>  # Linting and fixes
+  ```
+
+- **Update snapshot tests** with `cargo insta` if UI changes
+- **Test accessibility** features for TUI components
+- **Validate performance** meets requirements
+- **Check brAInwav branding** in all outputs
+- **Update task status** to **"verified"** once complete
+- **Store Rust insights** in local memory for future development
+
+**Rust Verification Checklist:**
+
+- [ ] All tests passing with proper coverage
+- [ ] Clippy lints resolved with `just fix`
+- [ ] TUI snapshot tests updated with `cargo insta`
+- [ ] brAInwav branding present in CLI/TUI outputs
+- [ ] Accessibility features working correctly
+- [ ] Performance benchmarks meet requirements
+- [ ] Cross-platform compatibility validated
+
 ## Rust Development Guidelines
 
 In the codex-rs folder where the rust code lives:

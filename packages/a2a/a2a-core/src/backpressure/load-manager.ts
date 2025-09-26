@@ -41,7 +41,7 @@ export class LoadManager {
 	private circuitBreakerOpen = false;
 	private lastCircuitBreakerOpenTime = 0;
 
-	constructor(private readonly config: BackpressureConfigType) {}
+	constructor(private readonly config: BackpressureConfigType) { }
 
 	async checkBackpressure(currentQueueDepth: number): Promise<void> {
 		const load = this.calculateLoad(currentQueueDepth);
@@ -129,7 +129,12 @@ export class LoadManager {
 	private getCurrentLoad(): number {
 		if (this.metrics.length === 0) return 0;
 
-		const latest = this.metrics[this.metrics.length - 1];
+		const latestIndex = this.metrics.length - 1;
+		const latest = this.metrics[latestIndex];
+		if (!latest) {
+			return 0;
+		}
+
 		return this.calculateLoad(latest.queueDepth);
 	}
 
@@ -160,12 +165,13 @@ export class LoadManager {
 			if (now - this.lastCircuitBreakerOpenTime >= this.config.cooldownPeriodMs) {
 				this.circuitBreakerOpen = false;
 			}
-		} else {
-			// Check if we should open the circuit breaker
-			if (metrics.errorRate >= this.config.circuitBreakerThreshold) {
-				this.circuitBreakerOpen = true;
-				this.lastCircuitBreakerOpenTime = now;
-			}
+			return;
+		}
+
+		// Check if we should open the circuit breaker
+		if (metrics.errorRate >= this.config.circuitBreakerThreshold) {
+			this.circuitBreakerOpen = true;
+			this.lastCircuitBreakerOpenTime = now;
 		}
 	}
 

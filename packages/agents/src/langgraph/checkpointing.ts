@@ -8,6 +8,7 @@
 // Using simplified implementation for now
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type { CortexState } from '../CortexAgentLangGraph.js';
+import { createPrefixedId } from '../lib/secure-random.js';
 
 // Checkpoint configuration interface
 export interface CheckpointConfig {
@@ -127,7 +128,7 @@ export class MemoryCheckpointSaver {
 	}
 
 	private generateCheckpointId(): string {
-		return `ckpt_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+		return createPrefixedId(`ckpt_${Date.now()}`);
 	}
 
 	private scheduleCleanup(key: string, ttl: number): void {
@@ -210,7 +211,7 @@ export class SQLiteCheckpointSaver {
 	}
 
 	private generateCheckpointId(): string {
-		return `ckpt_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+		return createPrefixedId(`ckpt_${Date.now()}`);
 	}
 }
 
@@ -326,7 +327,7 @@ export class CheckpointManager {
 	}
 
 	private generateCheckpointId(): string {
-		return `ckpt_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+		return createPrefixedId(`ckpt_${Date.now()}`);
 	}
 }
 

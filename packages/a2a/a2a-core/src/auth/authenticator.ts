@@ -81,7 +81,12 @@ export class SimpleTokenAuthenticator implements Authenticator {
 				throw new Error('Invalid token format');
 			}
 
-			const [payloadB64, signature] = parts;
+			const payloadB64 = parts[0];
+			const signature = parts[1];
+			if (!payloadB64 || !signature) {
+				throw new Error('Invalid token components');
+			}
+
 			const payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString('utf8')) as unknown;
 
 			// Verify signature

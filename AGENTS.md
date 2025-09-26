@@ -19,6 +19,111 @@ These instructions apply to all developers and AI agents working in this reposit
 
 **Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
 
+## 🔄 Agentic Coding Workflow
+
+All agents working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+
+### 0. Tasks
+
+- **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
+- **Store intermediate context** in Markdown files in the `~/tasks` folder
+- **Store all context** in the local memory MCP and/or REST API for persistence
+- **Use semantic task ID slugs** - descriptive identifiers like `auth-login-validation` or `rag-query-optimization`
+
+### 1. Research
+
+- **Utilize semantic search** to identify existing patterns within this codebase
+- **Use Web-Search** to access the internet for the most relevant and up-to-date information
+- **Begin with follow-up questions** to establish the direction of the research
+- **Report findings** in `[feature].research.md` within the tasks folder
+
+**Example Structure:**
+
+```markdown
+# auth-login-validation.research.md
+
+## Research Objective
+Implement secure login validation following brAInwav standards
+
+## Existing Patterns Found
+- Current auth implementation in `packages/auth/`
+- Security validation patterns in `packages/security/`
+- MCP integration patterns in `packages/mcp/`
+
+## External Research
+- OWASP authentication best practices
+- JWT security considerations
+- Rate limiting strategies
+
+## Recommendations
+[Detailed findings and recommendations]
+```
+
+### 2. Planning
+
+- **Read the research file** `[feature].research.md` from tasks folder
+- **Develop a TDD plan** based on software engineering principles:
+  - **Reuse existing patterns** and components where possible
+  - **Separation of concerns** - clear domain/app/infra boundaries
+  - **Single Responsibility Principle (SRP)** - one purpose per function/class
+  - **Don't Repeat Yourself (DRY)** - eliminate code duplication
+  - **Keep it Simple, Stupid (KISS)** - avoid unnecessary complexity
+  - **You Aren't Gonna Need It (YAGNI)** - implement only what's needed
+  - **Encapsulation** - hide implementation details
+  - **Modularity** - loosely coupled, highly cohesive components
+  - **Open/Closed Principle** - open for extension, closed for modification
+  - **Testability** - design for easy testing
+  - **Principle of Least Astonishment (POLA)** - behave as expected
+  - **Fail Fast** - detect and report errors early
+  - **High Cohesion, Low Coupling** - related code together, minimal dependencies
+- **Ask clarifying questions** if needed to ensure clear understanding
+- **Write comprehensive plan** to `[feature]-tdd-plan.md` with all context required for implementation
+
+**Example Structure:**
+
+```markdown
+# auth-login-validation-tdd-plan.md
+
+## Implementation Plan
+
+### Phase 1: Test Setup
+1. Create failing tests for login validation
+2. Test invalid credentials rejection
+3. Test rate limiting enforcement
+
+### Phase 2: Core Implementation
+1. Implement validation logic
+2. Add brAInwav error messaging
+3. Integrate with existing auth system
+
+### Phase 3: Integration
+1. MCP tool integration
+2. Event emission for A2A communication
+3. Memory persistence integration
+
+### Technical Decisions
+- Use Zod for input validation
+- Follow existing auth patterns in packages/auth/
+- Emit brAInwav-branded error messages
+```
+
+### 3. Implementation
+
+- **Read the TDD plan** `[feature]-tdd-plan.md` and create a to-do list
+- **Execute the plan** systematically with TDD approach
+- **Go for as long as possible** - group ambiguous questions for the end
+- **Implementation must be 100% deployable** unless explicitly stated otherwise
+- **Follow brAInwav coding standards** and architectural patterns
+
+### 4. Verification
+
+- **Verify requirements** are met and implementation is bug-free
+- **Run tests** and validate all tool calls work correctly
+- **Check output** matches expected behavior
+- **Return to implementation** if issues arise and make necessary adjustments
+- **Update task status** to **"verified"** once complete
+- **Store lessons learned** in local memory for future reference
+
 ## 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
 
 **MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:

@@ -3,6 +3,8 @@
  * Generates learning materials and instructions from plans and results
  */
 
+import { createSecureId } from '../lib/secure-random.js';
+
 export interface TeachingOptions {
 	format?: 'summary' | 'detailed' | 'tutorial';
 	audience?: 'beginner' | 'intermediate' | 'expert';
@@ -100,6 +102,6 @@ export class Teacher {
 	}
 
 	private generateId(): string {
-		return `teach_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return createSecureId(`teach_${Date.now()}`);
 	}
 }

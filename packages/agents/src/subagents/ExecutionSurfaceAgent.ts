@@ -11,6 +11,7 @@ import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
+import { secureDelay } from '../lib/secure-random.js';
 
 // Execution Surface State
 export const ExecutionSurfaceStateAnnotation = Annotation.Root({
@@ -671,7 +672,7 @@ async function simulateSurfaceExecution(
 		| undefined,
 ): Promise<unknown> {
 	// Simulate execution delay
-	await new Promise((resolve) => setTimeout(resolve, 200 + Math.random() * 300));
+	await new Promise((resolve) => setTimeout(resolve, secureDelay(200, 501)));
 
 	return {
 		action: step.action,

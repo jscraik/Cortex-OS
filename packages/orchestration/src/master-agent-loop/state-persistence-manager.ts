@@ -7,6 +7,7 @@ import {
 	ExecutionStatusSchema,
 } from '../contracts/no-architecture-contracts.js';
 import { withEnhancedSpan } from '../observability/otel.js';
+import { createPrefixedId } from '../lib/secure-random.js';
 
 // Enhanced types for Phase 2.2 State Persistence & Recovery
 export interface StateCheckpoint {
@@ -150,7 +151,7 @@ export class StatePersistenceManager {
 			'statePersistenceManager.createCheckpoint',
 			async () => {
 				// Use high-resolution time to reduce collision risk in tests
-				const checkpointId = `checkpoint-${Date.now()}-${Math.random().toString(36).slice(2, 11)}-${process.hrtime?.()[1] ?? 0}`;
+				const checkpointId = createPrefixedId(`checkpoint-${Date.now()}-${process.hrtime?.()[1] ?? 0}`);
 				const startTime = Date.now();
 
 				const systemState = JSON.parse(JSON.stringify(this.currentState));
@@ -207,9 +208,9 @@ export class StatePersistenceManager {
 				}
 
 				// Ensure uniqueness even within the same millisecond
-				let recoveryId = `recovery-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+				let recoveryId = createPrefixedId(`recovery-${Date.now()}`);
 				while (this.lastIds.has(recoveryId)) {
-					recoveryId = `recovery-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+					recoveryId = createPrefixedId(`recovery-${Date.now()}`);
 				}
 				this.lastIds.add(recoveryId);
 				const recoveryPlan: RecoveryPlan = {
@@ -235,7 +236,7 @@ export class StatePersistenceManager {
 	 * Begin transactional state update
 	 */
 	async beginTransaction(initiator: string, reason: string): Promise<string> {
-		const transactionId = `tx-${Date.now()}-${Math.random().toString(36).slice(2, 11)}-${process.hrtime?.()[1] ?? 0}`;
+		const transactionId = createPrefixedId(`tx-${Date.now()}-${process.hrtime?.()[1] ?? 0}`);
 
 		const transaction: StateTransaction = {
 			transactionId,

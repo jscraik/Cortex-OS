@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 
 // ================================
 // Core Tool Chain Types
@@ -478,7 +479,7 @@ export function createExecutionContext(
 ): ExecutionContext {
 	return {
 		chainId,
-		executionId: `exec-${chainId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+		executionId: createPrefixedId(`exec-${chainId}-${Date.now()}`),
 		securityLevel: options.securityLevel || 'medium',
 		startTime: new Date(),
 		timeout: options.timeout || 30000,

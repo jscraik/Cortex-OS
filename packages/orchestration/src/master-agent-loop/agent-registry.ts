@@ -9,6 +9,7 @@
 
 import { EventEmitter } from 'node:events';
 import { z } from 'zod';
+import { secureRatio } from '../lib/secure-random.js';
 import { AgentRegistryErrorHelpers } from './agent-registry-error.js';
 
 /**
@@ -614,7 +615,7 @@ export class AgentRegistry extends EventEmitter {
 		});
 
 		const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-		const random = Math.random() * totalWeight;
+		const random = secureRatio() * totalWeight;
 
 		let currentWeight = 0;
 		for (let i = 0; i < healthyAgents.length; i++) {

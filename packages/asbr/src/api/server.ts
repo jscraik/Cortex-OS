@@ -17,6 +17,7 @@ import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { logError, logInfo } from '../lib/logger.js';
 import { resolveIdempotency } from '../lib/resolve-idempotency.js';
 import { validateTaskInput } from '../lib/validate-task-input.js';
+import { secureHex } from '../lib/secure-random.js';
 import {
 	type ArtifactRef,
 	AuthorizationError,
@@ -131,9 +132,7 @@ class ASBRServerClass {
 	}
 
 	private generateTraceparent(): string {
-		const rand = (n: number) =>
-			Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-		return `00-${rand(32)}-${rand(16)}-01`;
+		return `00-${secureHex(32)}-${secureHex(16)}-01`;
 	}
 
 	private setupMiddleware(): void {

@@ -22,6 +22,7 @@ describe('ApiResponseHandlingTool', () => {
 		const result = await env.responseTool.execute(input, env.context);
 
 		expect(result.status).toBe('success');
+		expect(result.statusCode).toBe(200);
 		expect(result.body).toEqual({ users: [{ id: 'user-1', name: 'User' }] });
 		expect(result.metadata).toHaveProperty('requestId', 'req-1');
 		expect(result.headers).toEqual({ 'content-type': 'application/json' });
@@ -41,6 +42,7 @@ describe('ApiResponseHandlingTool', () => {
 		const result = await env.responseTool.execute(input, env.context);
 
 		expect(result.status).toBe('error');
+		expect(result.statusCode).toBe(500);
 		expect(result.body).toMatchObject({ code: 'E_API_HANDLER' });
 		expect(result.metadata).toMatchObject({ durationMs: 12 });
 	});

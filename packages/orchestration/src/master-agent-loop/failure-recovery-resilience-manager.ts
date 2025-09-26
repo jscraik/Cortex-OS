@@ -1,4 +1,5 @@
 import { withEnhancedSpan } from '../observability/otel.js';
+import { createPrefixedId, secureRatio } from '../lib/secure-random.js';
 
 // Enhanced types for Phase 2.3 Failure Recovery & Resilience
 export interface CircuitBreakerState {
@@ -341,7 +342,7 @@ export class FailureRecoveryResilienceManager {
 					throw new Error(`Recovery pattern ${patternId} not found`);
 				}
 
-				const recoveryId = `recovery-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+				const recoveryId = createPrefixedId(`recovery-${Date.now()}`);
 
 				this.activeRecoveries.set(recoveryId, {
 					startTime: new Date().toISOString(),
@@ -392,7 +393,7 @@ export class FailureRecoveryResilienceManager {
 			timeline?: Array<{ timestamp: string; event: string; data: Record<string, unknown> }>;
 		},
 	): Promise<FailureAnalysisReport> {
-		const reportId = `failure-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+		const reportId = createPrefixedId(`failure-${Date.now()}`);
 
 		const report: FailureAnalysisReport = {
 			id: reportId,
@@ -466,7 +467,7 @@ export class FailureRecoveryResilienceManager {
 	 */
 	registerCircuitBreaker(name: string, configuration: CircuitBreakerState['configuration']): void {
 		const breaker: CircuitBreakerState = {
-			id: `cb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+			id: createPrefixedId(`cb-${Date.now()}`),
 			name,
 			state: 'closed',
 			failureCount: 0,
@@ -718,7 +719,7 @@ export class FailureRecoveryResilienceManager {
 		let delay = policy.baseDelayMs * policy.backoffMultiplier ** (attempt - 1);
 		delay = Math.min(delay, policy.maxDelayMs);
 		if (policy.jitterEnabled) {
-			delay *= 0.5 + Math.random() * 0.5;
+			delay *= 0.5 + secureRatio() * 0.5;
 		}
 		return Math.floor(delay);
 	}

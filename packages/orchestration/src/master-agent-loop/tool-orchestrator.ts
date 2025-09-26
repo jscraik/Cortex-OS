@@ -9,6 +9,7 @@
 
 import { EventEmitter } from 'node:events';
 
+import { secureDelay } from '../lib/secure-random.js';
 import { withEnhancedSpan } from '../observability/otel.js';
 
 import type {
@@ -255,7 +256,7 @@ class ToolChainExecutorImpl implements ToolChainExecutor {
 		_context: ExecutionContext,
 	): Promise<ToolExecutionResult> {
 		// Add realistic execution time
-		const executionTime = Math.max(50, Math.random() * 100);
+		const executionTime = secureDelay(50, 151);
 		return {
 			toolId: tool.id,
 			layerType: tool.layer,

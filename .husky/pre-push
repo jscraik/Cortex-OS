@@ -159,6 +159,12 @@ fi
 if [ "${CORTEX_SKIP_PUSH_TESTS:-}" != "1" ]; then
   if [ -n "$CODE_PUSH" ]; then
     echo "🧪 Comprehensive test validation"
+
+    echo "🔎 Placeholder regression guard"
+    if ! pnpm test placeholders; then
+      echo "❌ Placeholder regression detected - push blocked"
+      exit 1
+    fi
     
     # Run affected tests with more thorough coverage
     if command -v pnpm >/dev/null 2>&1; then

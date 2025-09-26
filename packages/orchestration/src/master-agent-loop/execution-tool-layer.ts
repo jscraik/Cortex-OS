@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { createPrefixedId, secureDelay, secureInt, secureRatio } from '../lib/secure-random.js';
 import { ToolLayer } from './tool-layer.js';
 
 /**
@@ -398,7 +399,7 @@ export class ExecutionToolLayer extends ToolLayer {
 				result.exitCode = 0;
 				result.stdout = `${validated.command} ${validated.args.join(' ')}`.trim();
 				result.stderr = '';
-				result.executionTime = 100 + Math.random() * 200;
+				result.executionTime = secureDelay(100, 301);
 				result.securityChecks = {
 					commandWhitelisted: true,
 					argumentsValidated: true,
@@ -410,13 +411,13 @@ export class ExecutionToolLayer extends ToolLayer {
 				result.processInfo = {
 					pid: validated.processId,
 					status: 'running',
-					cpu: Math.random() * 100,
-					memory: Math.random() * 1024,
+					cpu: secureRatio() * 100,
+					memory: secureRatio() * 1024,
 				};
 				break;
 
 			case 'start':
-				result.processId = Math.floor(Math.random() * 10000) + 1000;
+				result.processId = secureInt(1000, 11000);
 				result.status = 'running';
 				break;
 
@@ -455,7 +456,7 @@ export class ExecutionToolLayer extends ToolLayer {
 		switch (validated.type) {
 			case 'http': {
 				result.statusCode = 200;
-				const responseTime = 50 + Math.random() * 200;
+				const responseTime = secureDelay(50, 251);
 				result.responseTime = responseTime;
 				result.data = { message: 'Success', timestamp: new Date() };
 				result.retryAttempts = retryAttempts;
@@ -465,8 +466,8 @@ export class ExecutionToolLayer extends ToolLayer {
 
 			case 'ping':
 				result.packetsTransmitted = validated.count || 1;
-				result.averageTime = 10 + Math.random() * 50;
-				result.packetLoss = Math.random() * 10;
+				result.averageTime = secureDelay(10, 61);
+				result.packetLoss = secureRatio() * 10;
 				break;
 
 			case 'dns':
@@ -515,7 +516,7 @@ export class ExecutionToolLayer extends ToolLayer {
 
 				const stepResult: Record<string, unknown> = {
 					success: true,
-					executionTime: 100 + Math.random() * 200,
+					executionTime: secureDelay(100, 301),
 					output: `Result from ${step.tool}`,
 				};
 
@@ -561,7 +562,7 @@ export class ExecutionToolLayer extends ToolLayer {
 			result.resourceOptimization = {
 				enabled: true,
 				maxConcurrency: typeof maxConc === 'number' ? maxConc : 3,
-				peakMemoryUsage: Math.random() * 100 + 50,
+				peakMemoryUsage: secureRatio() * 100 + 50,
 			};
 		}
 
@@ -583,28 +584,28 @@ export class ExecutionToolLayer extends ToolLayer {
 			case 'monitor':
 				result.resources = {
 					cpu: {
-						usage: Math.random() * 100,
+						usage: secureRatio() * 100,
 						cores: 4,
 					},
 					memory: {
-						used: Math.random() * 8192,
+						used: secureRatio() * 8192,
 						total: 8192,
-						percentage: Math.random() * 100,
+						percentage: secureRatio() * 100,
 					},
 					disk: {
-						used: Math.random() * 512000,
+						used: secureRatio() * 512000,
 						total: 512000,
-						percentage: Math.random() * 100,
+						percentage: secureRatio() * 100,
 					},
 					network: {
-						bytesIn: Math.random() * 1000000,
-						bytesOut: Math.random() * 1000000,
+						bytesIn: secureInt(0, 1_000_001),
+						bytesOut: secureInt(0, 1_000_001),
 					},
 				};
 				break;
 
 			case 'allocate':
-				result.resourceId = `res-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+				result.resourceId = createPrefixedId(`res-${Date.now()}`);
 				result.allocated = {
 					type: validated.resourceType,
 					amount: validated.amount,

@@ -7,6 +7,7 @@ import type { Config } from '../types/index.js';
 import { CritiqueEngine } from './critique.js';
 import { type SimulationResult, Simulator } from './simulator.js';
 import { Teacher } from './teacher.js';
+import { createSecureId } from '../lib/secure-random.js';
 import type { Plan, PlanningContext, PlanOptions } from './types.js';
 
 export interface CerebrumOptions {
@@ -129,6 +130,6 @@ export class Cerebrum {
 	}
 
 	private generateId(): string {
-		return `plan_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+		return createSecureId(`plan_${Date.now()}`);
 	}
 }

@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import { AgentError, ErrorCategory, ErrorSeverity } from './error-handling.js';
+import { createSecureId } from './secure-random.js';
 
 // Memory store entry interface
 export interface MemoryEntry<T = unknown> {
@@ -469,7 +470,7 @@ export class EventStore<T = unknown> {
 	 * Add an event
 	 */
 	add(event: T): string {
-		const id = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const id = createSecureId(`event_${Date.now()}`);
 
 		// Remove oldest if at capacity
 		while (this.eventOrder.length >= this.store.getMetrics().maxSize) {

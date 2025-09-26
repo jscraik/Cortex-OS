@@ -130,7 +130,7 @@ export class ApiService {
 		let handlerResult: ApiHandlerResult;
 		let durationMs = 0;
 		try {
-			const execution = await this.performance.measure(handlerKey, async () => {
+			const execution = await this.performance.measureAsync(handlerKey, async () => {
 				if (route.transactional) {
 					const { result } = await this.transactions.runInTransaction(() =>
 						handler(internalRequest, { metadata, logger: this.logger }),
@@ -159,25 +159,28 @@ export class ApiService {
 			});
 		}
 
-		const gatewayResponse: GatewayResponse = {
+		const baseResponse = {
 			statusCode: handlerResult.statusCode,
 			body: handlerResult.body,
 			headers: sanitizeHeaders(handlerResult.headers ?? {}),
 			durationMs,
 			fromCache: false,
 			requestId: metadata.requestId,
-			auditId: '',
 		};
 
 		const recorded = this.audit.record({
 			routeId: route.id,
-			statusCode: gatewayResponse.statusCode,
-			latencyMs: gatewayResponse.durationMs,
+			statusCode: baseResponse.statusCode,
+			latencyMs: baseResponse.durationMs,
 			requestId: metadata.requestId,
 			correlationId: metadata.correlationId,
 			metadata: request.metadata,
 		});
-		gatewayResponse.auditId = recorded.id;
+
+		const gatewayResponse: GatewayResponse = {
+			...baseResponse,
+			auditId: recorded.id,
+		};
 
 		this.metrics.increment('mcp.api.requests');
 
@@ -198,8 +201,12 @@ export class ApiService {
 				return this.router.resolveById(request.operationId);
 			}
 			return this.router.resolve(request.method, request.path);
-		} catch (_error) {
-			this.logger.warn('Failed to resolve route', { request, headers });
+		} catch (error) {
+			this.logger.warn('Failed to resolve route', {
+				error: error instanceof Error ? error.message : error,
+				request,
+				headers,
+			});
 			throw new ApiServiceError('Unknown API operation', 'E_ROUTE_NOT_FOUND', {
 				method: request.method,
 				path: request.path,

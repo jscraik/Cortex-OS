@@ -10,6 +10,7 @@
 import { EventEmitter } from 'node:events';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { z } from 'zod';
+import { secureRatio } from '../lib/secure-random.js';
 
 /**
  * Learning models for different types of learning
@@ -519,7 +520,7 @@ export class LearningSystemIntegrationManager extends EventEmitter {
 			...sourceKnowledge,
 			adaptedFor: targetComponent,
 			adaptationType: knowledgeType,
-			adaptationScore: Math.random() * 0.3 + 0.7, // Mock adaptation score
+			adaptationScore: 0.7 + secureRatio() * 0.3,
 			adaptedAt: new Date(),
 		};
 	}
@@ -532,7 +533,7 @@ export class LearningSystemIntegrationManager extends EventEmitter {
 		_adaptedKnowledge: Record<string, unknown>,
 	): number {
 		// Mock confidence calculation - can be enhanced with similarity metrics
-		return Math.min(0.95, Math.random() * 0.3 + 0.65);
+		return Math.min(0.95, 0.65 + secureRatio() * 0.3);
 	}
 
 	/**
@@ -544,8 +545,8 @@ export class LearningSystemIntegrationManager extends EventEmitter {
 		_knowledgeType: CrossComponentLearning['knowledgeType'],
 	): number {
 		// Mock applicability calculation - can be enhanced with component similarity
-		const similarity = sourceComponent === targetComponent ? 1.0 : Math.random() * 0.5 + 0.4;
-		return Math.min(0.95, similarity * (Math.random() * 0.2 + 0.8));
+		const similarity = sourceComponent === targetComponent ? 1.0 : 0.4 + secureRatio() * 0.5;
+		return Math.min(0.95, similarity * (0.8 + secureRatio() * 0.2));
 	}
 
 	/**
@@ -561,7 +562,7 @@ export class LearningSystemIntegrationManager extends EventEmitter {
 			component,
 			description: `Performance analysis for ${component}`,
 			impact: 'medium',
-			confidence: Math.random() * 0.3 + 0.7,
+			confidence: 0.7 + secureRatio() * 0.3,
 			actionable: true,
 			recommendedActions: ['Monitor performance trends', 'Consider optimization'],
 			metrics: (executionData.performance as Record<string, number>) || {},
@@ -607,8 +608,8 @@ export class LearningSystemIntegrationManager extends EventEmitter {
 		// Mock pattern extraction - can be enhanced with ML algorithms
 		return {
 			patternType: knowledgeType,
-			frequency: Math.random() * 100,
-			strength: Math.random(),
+			frequency: secureRatio() * 100,
+			strength: secureRatio(),
 			extractedAt: new Date(),
 		};
 	}
@@ -632,7 +633,7 @@ export class LearningSystemIntegrationManager extends EventEmitter {
 	): number {
 		// Mock accuracy calculation - can be enhanced with actual ML metrics
 		const baseAccuracy = existingModel?.accuracy || 0.5;
-		const improvement = Math.random() * 0.1 - 0.05; // Random improvement/degradation
+		const improvement = secureRatio() * 0.1 - 0.05;
 		return Math.max(0.1, Math.min(0.99, baseAccuracy + improvement));
 	}
 

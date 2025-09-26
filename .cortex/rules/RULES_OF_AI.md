@@ -52,6 +52,98 @@ All commits must:
 - Never claim completion when placeholders remain
 - Reference brAInwav in appropriate contexts
 
+## 🔄 Mandatory Agentic Coding Workflow
+
+All AI agents working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
+
+### 0. Tasks
+
+- **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
+- **Store intermediate context** in Markdown files in the `~/tasks` folder
+- **Store all context** in the local memory MCP and/or REST API for persistence
+- **Use semantic task ID slugs** - descriptive identifiers that reflect the work scope
+
+### 1. Research
+
+- **Utilize semantic search** to identify existing patterns within this codebase
+- **Use Web-Search** to access the internet for the most relevant and up-to-date information
+- **Begin with follow-up questions** to establish the direction of the research
+- **Report findings** in `[feature].research.md` within the tasks folder
+
+**Research must include:**
+
+- brAInwav-specific architectural patterns and requirements
+- Existing codebase patterns and integration points
+- External best practices and security considerations
+- Compliance requirements (WCAG 2.2 AA, OWASP, etc.)
+
+### 2. Planning
+
+- **Read the research file** `[feature].research.md` from tasks folder
+- **Develop a TDD plan** based on software engineering principles:
+  - **Reuse existing patterns** and components where possible
+  - **Separation of concerns** - clear domain/app/infra boundaries
+  - **Single Responsibility Principle (SRP)** - maximum 40 lines per function
+  - **Don't Repeat Yourself (DRY)** - eliminate code duplication
+  - **Keep it Simple, Stupid (KISS)** - avoid unnecessary complexity
+  - **You Aren't Gonna Need It (YAGNI)** - implement only what's needed
+  - **Encapsulation** - hide implementation details behind interfaces
+  - **Modularity** - loosely coupled, highly cohesive components
+  - **Open/Closed Principle** - open for extension, closed for modification
+  - **Testability** - design for easy testing with 90%+ coverage
+  - **Principle of Least Astonishment (POLA)** - behave as expected
+  - **Fail Fast** - detect and report errors early with validation
+  - **High Cohesion, Low Coupling** - related code together, minimal dependencies
+- **Ask clarifying questions** if needed to ensure clear understanding
+- **Write comprehensive plan** to `[feature]-tdd-plan.md` with all context required for implementation
+
+**Planning must include:**
+
+- brAInwav branding integration in all outputs and error messages
+- MCP tool integration points where applicable
+- A2A event emission for cross-package communication
+- Security scanning and validation steps
+- Accessibility requirements and testing approach
+- Performance monitoring and observability integration
+
+### 3. Implementation
+
+- **Read the TDD plan** `[feature]-tdd-plan.md` and create a to-do list
+- **Execute the plan** systematically with strict TDD approach (red-green-refactor)
+- **Go for as long as possible** - group ambiguous questions for the end
+- **Implementation must be 100% deployable** unless explicitly stated otherwise
+- **Follow brAInwav coding standards** and architectural patterns
+
+**Implementation Requirements:**
+
+- Include brAInwav branding in all system outputs, logs, and error messages
+- Follow CODESTYLE.md requirements (named exports, ≤40 lines, async/await)
+- Respect package boundaries and use event-driven communication
+- Implement comprehensive error handling with brAInwav context
+- Include proper TypeScript typing and Zod validation
+- Ensure security best practices and OWASP compliance
+
+### 4. Verification
+
+- **Verify requirements** are met and implementation is bug-free
+- **Run comprehensive quality gates** including tests, linting, and security scans
+- **Validate governance compliance** with structure and import boundary checks
+- **Check test coverage** meets 90%+ threshold
+- **Verify brAInwav branding** is included in all relevant outputs
+- **Return to implementation** if issues arise and make necessary adjustments
+- **Update task status** to **"verified"** once complete
+- **Store lessons learned** in local memory for future reference
+
+**Verification Checklist:**
+
+- [ ] All tests passing with 90%+ coverage
+- [ ] No security vulnerabilities introduced
+- [ ] brAInwav branding present in outputs/errors
+- [ ] Code follows CODESTYLE.md requirements
+- [ ] Package boundaries and governance rules respected
+- [ ] Documentation updated to reflect changes
+- [ ] Performance and accessibility requirements met
+
 ## 🛡️ Enforcement Mechanisms
 
 ### Automated Validation

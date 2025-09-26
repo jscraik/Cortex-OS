@@ -1,0 +1,156 @@
+type TaskExecutor<T> = () => Promise<T>;
+
+export interface SpoolTask<T> {
+	id: string;
+	name?: string;
+	estimateTokens?: number;
+	execute: TaskExecutor<T>;
+}
+
+export interface SpoolRunOptions {
+	ms?: number;
+	tokens?: number;
+	concurrency?: number;
+	signal?: AbortSignal;
+	onStart?: (task: SpoolTask<unknown>) => void;
+	onSettle?: (result: SpoolResult<unknown>) => void;
+}
+
+export type SpoolStatus = 'fulfilled' | 'rejected' | 'skipped';
+
+export interface SpoolResult<T> {
+	id: string;
+	status: SpoolStatus;
+	value?: T;
+	reason?: Error;
+	durationMs: number;
+	tokensUsed: number;
+	started: boolean;
+}
+
+interface InternalJob<T> {
+	index: number;
+	task: SpoolTask<T>;
+	tokens: number;
+}
+
+interface RunContext<T> {
+	queue: InternalJob<T>[];
+	results: SpoolResult<T>[];
+	options: SpoolRunOptions;
+	deadline?: number;
+	remainingTokens: number;
+	cursor: number;
+}
+
+export async function runSpool<T>(
+	tasks: SpoolTask<T>[],
+	opts: SpoolRunOptions = {},
+): Promise<SpoolResult<T>[]> {
+	const context = initContext(tasks, opts);
+	const workers = createWorkers(context, opts.concurrency ?? tasks.length);
+	await Promise.all(workers);
+	return context.results;
+}
+
+function initContext<T>(tasks: SpoolTask<T>[], options: SpoolRunOptions): RunContext<T> {
+	const queue = tasks.map((task, index) => ({
+		index,
+		task,
+		tokens: task.estimateTokens ?? 0,
+	}));
+	return {
+		queue,
+		results: new Array(queue.length),
+		options,
+		deadline: options.ms ? Date.now() + options.ms : undefined,
+		remainingTokens: options.tokens ?? Number.POSITIVE_INFINITY,
+		cursor: 0,
+	};
+}
+
+function createWorkers<T>(context: RunContext<T>, concurrency: number): Promise<void>[] {
+	const slots = Math.max(1, Math.min(concurrency, context.queue.length || 1));
+	return Array.from({ length: slots }, () => workerLoop(context));
+}
+
+async function workerLoop<T>(context: RunContext<T>): Promise<void> {
+	for (;;) {
+		const job = takeNextJob(context);
+		if (!job) return;
+		const result = await executeJob(job, context.options);
+		context.results[job.index] = result;
+		context.options.onSettle?.(result);
+	}
+}
+
+function takeNextJob<T>(context: RunContext<T>): InternalJob<T> | null {
+	while (context.cursor < context.queue.length) {
+		const job = context.queue[context.cursor++];
+		if (context.options.signal?.aborted) {
+			context.results[job.index] = createSkipped(job, 'abort', 'brAInwav spool aborted by signal');
+			context.options.onSettle?.(context.results[job.index]);
+			continue;
+		}
+		if (context.deadline && Date.now() >= context.deadline) {
+			context.results[job.index] = createSkipped(job, 'timeout', 'brAInwav spool time budget exceeded');
+			context.options.onSettle?.(context.results[job.index]);
+			continue;
+		}
+		if (context.remainingTokens < job.tokens) {
+			context.results[job.index] = createSkipped(job, 'tokens', 'brAInwav spool token budget exhausted');
+			context.options.onSettle?.(context.results[job.index]);
+			continue;
+		}
+		context.remainingTokens -= job.tokens;
+		context.options.onStart?.(job.task);
+		return job;
+	}
+	return null;
+}
+
+async function executeJob<T>(
+	job: InternalJob<T>,
+): Promise<SpoolResult<T>> {
+	const startedAt = Date.now();
+	try {
+		const value = await job.task.execute();
+		return {
+			id: job.task.id,
+			status: 'fulfilled',
+			value,
+			durationMs: Date.now() - startedAt,
+			tokensUsed: job.tokens,
+			started: true,
+		};
+	} catch (error) {
+		return {
+			id: job.task.id,
+			status: 'rejected',
+			reason: toError(error, job.task.id),
+			durationMs: Date.now() - startedAt,
+			tokensUsed: job.tokens,
+			started: true,
+		};
+	}
+}
+
+function createSkipped<T>(
+	job: InternalJob<T>,
+	type: 'timeout' | 'tokens' | 'abort',
+	message: string,
+): SpoolResult<T> {
+	return {
+		id: job.task.id,
+		status: 'skipped',
+		reason: new Error(`${message} [${type}]`),
+		durationMs: 0,
+		tokensUsed: 0,
+		started: false,
+	};
+}
+
+function toError(value: unknown, id: string): Error {
+	if (value instanceof Error) return value;
+	return new Error(`brAInwav tool execution failed for ${id}: ${String(value)}`);
+}

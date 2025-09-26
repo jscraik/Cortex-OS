@@ -9,6 +9,12 @@ import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
+import {
+	cortexStateToN0,
+	type N0AdapterOptions,
+	type N0Session,
+	type N0State,
+} from '@cortex-os/orchestration';
 import type { AgentConfig } from './lib/types.js';
 import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent.js';
 import type { SecurityCheckResult, StreamChunk } from './types.js';
@@ -36,6 +42,12 @@ export const ToolConfigSchema = z.object({
 });
 
 export type ToolConfig = z.infer<typeof ToolConfigSchema>;
+
+type ExecuteOptions = {
+	stream?: boolean;
+	tools?: ToolConfig[];
+	context?: Record<string, unknown>;
+};
 
 /**
  * CortexAgent with full LangGraphJS implementation
@@ -65,11 +77,7 @@ export class CortexAgent extends EventEmitter {
 	 */
 	async execute(
 		input: string,
-		options?: {
-			stream?: boolean;
-			tools?: ToolConfig[];
-			context?: Record<string, unknown>;
-		},
+		options?: ExecuteOptions,
 	): Promise<CortexState> {
 		const initialState: CortexState = {
 			messages: [new HumanMessage({ content: input })],
@@ -93,9 +101,20 @@ export class CortexAgent extends EventEmitter {
 		return await this.graph.invoke(initialState);
 	}
 
+	async executeWithN0(
+		input: string,
+		session: N0Session,
+		options: (ExecuteOptions & { adapter?: N0AdapterOptions }) = {},
+	): Promise<{ cortex: CortexState; n0: N0State }> {
+		const { adapter, ...rest } = options;
+		const cortex = await this.execute(input, rest);
+		const n0 = cortexStateToN0(cortex, session, adapter);
+		return { cortex, n0 };
+	}
+
 	/**
-	 * Execute with streaming support
-	 */
+		* Execute with streaming support
+		*/
 	private async streamExecution(initialState: CortexState): Promise<CortexState> {
 		const streamResult = this.graph.stream(initialState, {
 			streamMode: this.config.streamingMode || 'updates',

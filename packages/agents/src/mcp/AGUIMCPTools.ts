@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 
 // AGUI MCP Tool Schemas following Cortex-OS patterns
 export const CreateUIComponentSchema = z.object({
@@ -118,7 +119,7 @@ export class AGUIMCPTools {
 				const validInput = CreateUIComponentSchema.parse(input);
 				const componentId =
 					validInput.properties.id ||
-					`${validInput.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+					createPrefixedId(`${validInput.type}-${Date.now()}`);
 
 				const component = {
 					id: componentId,
@@ -211,7 +212,7 @@ export class AGUIMCPTools {
 					};
 				}
 
-				const interactionId = `int-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+				const interactionId = createPrefixedId(`int-${Date.now()}`);
 
 				return {
 					success: true,

@@ -10,6 +10,7 @@
 import { EventEmitter } from 'node:events';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { z } from 'zod';
+import { createPrefixedId, secureDelay } from '../lib/secure-random.js';
 
 // Import component managers
 import type { AgentPoolManager } from './agent-pool-manager.js';
@@ -179,7 +180,7 @@ export class MasterAgentLoopCore extends EventEmitter {
 
 				const validatedWorkflow = WorkflowSchema.parse(workflow);
 
-				const executionId = `exec-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+				const executionId = createPrefixedId(`exec-${Date.now()}`);
 				const context: WorkflowExecutionContext = {
 					workflowId: validatedWorkflow.id,
 					executionId,
@@ -391,14 +392,14 @@ export class MasterAgentLoopCore extends EventEmitter {
 		_context: WorkflowExecutionContext,
 	): Promise<unknown> {
 		// Mock step execution
-		await new Promise((resolve) => setTimeout(resolve, 100 + Math.random() * 400));
+		await new Promise((resolve) => setTimeout(resolve, secureDelay(100, 501)));
 
 		return {
 			stepId: step.id,
 			status: 'completed',
 			output: `Result of step ${step.id}`,
 			executedAt: new Date(),
-			executionTime: 100 + Math.random() * 400,
+			executionTime: secureDelay(100, 501),
 		};
 	}
 

@@ -2,6 +2,8 @@
  * Common utility functions
  */
 
+import { createSecureId } from './secure-random.js';
+
 /**
  * Sleep for a specified number of milliseconds
  */
@@ -10,12 +12,11 @@ export const sleep = (ms: number): Promise<void> => {
 };
 
 /**
- * Generate a random string
+	* Generate a secure identifier string of the requested length.
  */
 export const generateId = (length = 8): string => {
-	return Math.random()
-		.toString(36)
-		.substring(2, 2 + length);
+	const id = createSecureId().replace(/-/g, '');
+	return id.slice(0, Math.max(1, length));
 };
 
 /**

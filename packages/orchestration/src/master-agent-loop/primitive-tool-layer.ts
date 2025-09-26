@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { createPrefixedId, secureDelay, secureRatio } from '../lib/secure-random.js';
 import { ToolLayer } from './tool-layer.js';
 
 /**
@@ -446,7 +447,7 @@ export class PrimitiveToolLayer extends ToolLayer {
 				detection: {
 					detected: true,
 					resolution: 'abort',
-					victimTransaction: `tx-${Math.random().toString(36).slice(2, 8)}`,
+					victimTransaction: createPrefixedId('tx'),
 				},
 			};
 		}
@@ -458,7 +459,7 @@ export class PrimitiveToolLayer extends ToolLayer {
 
 		switch (validated.action) {
 			case 'begin': {
-				const transactionId = `tx-${Math.random().toString(36).slice(2, 8)}`;
+				const transactionId = createPrefixedId('tx');
 				const transaction = {
 					id: transactionId,
 					parentId: validated.parentTransactionId,
@@ -766,7 +767,7 @@ export class PrimitiveToolLayer extends ToolLayer {
 						validated.operations.length / validated.optimization.batchSize,
 					),
 					parallelOperations: validated.optimization.parallelism,
-					executionTime: Math.random() * 1000 + 100,
+					executionTime: secureDelay(100, 1101),
 				};
 			}
 		}
