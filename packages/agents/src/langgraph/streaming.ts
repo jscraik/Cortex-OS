@@ -4,11 +4,11 @@
  * Implements real-time streaming of agent execution with event emission
  */
 
-import { EventEmitter } from 'node:events';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type { StateGraph } from '@langchain/langgraph';
-import { createSecureId } from '../lib/secure-random.js';
+import { EventEmitter } from 'node:events';
 import type { CortexState } from '../CortexAgentLangGraph.js';
+import { createSecureId } from '../lib/secure-random.js';
 
 // Streaming event types
 export interface StreamingEvent {
@@ -467,8 +467,8 @@ export const StreamingTransformers = {
 				...event,
 				data: {
 					...event.data,
-						debug: {
-						eventId: createSecureId('stream-debug')
+					debug: {
+						eventId: createSecureId('stream-debug'),
 						timestamp: process.hrtime.bigint(),
 					},
 				},

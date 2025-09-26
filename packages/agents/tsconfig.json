@@ -1,32 +1,18 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../..",
     "noEmit": false,
+    "composite": true,
     "baseUrl": "./src",
     "paths": {
       "@/*": [
         "./*"
       ],
       "@cortex-os/hooks": [
-        "../../hooks/dist/index.d.ts"
+        "../../packages/hooks/src/index.ts",
+        "../../packages/hooks/dist/index.d.ts"
       ]
     }
   },

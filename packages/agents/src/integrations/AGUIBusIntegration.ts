@@ -8,9 +8,9 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { z } from 'zod';
 import { createPrefixedId } from '../lib/secure-random.js';
 import { createEnvelope } from '@cortex-os/a2a-contracts';
+import type { Envelope } from '@cortex-os/a2a-contracts';
 
 // AGUI Event Types following Cortex-OS patterns
 export const AGUI_EVENT_TYPES = {

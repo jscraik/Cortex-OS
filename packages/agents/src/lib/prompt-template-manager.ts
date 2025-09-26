@@ -389,7 +389,7 @@ An error condition has been detected. Apply systematic recovery procedures:
 Apply brAInwav's commitment to reliable, resilient operation.`,
       examples: [
         {
-          context: { complexity: 3, errorDetails: 'tool_failure: major severity' },
+          context: { complexity: 3, priority: 9 },
           input: 'File read operation failed due to permission error',
           expectedBehavior: 'Assess alternatives, try different approach, document recovery actions'
         }
@@ -453,17 +453,16 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
   }
 
   private getFallbackTemplate(context: PromptContext): TemplateSelection {
-    // Return basic system template as fallback
     const fallback = this.templates.get('long-horizon-system')!;
     return {
       template: fallback,
       confidence: 0.3,
-      reasoning: 'brAInwav: Using fallback template due to no suitable candidates',
-      adaptations: ['simplified for unknown context']
+      reasoning: `brAInwav: Using fallback template for task ${context.taskId} due to no suitable candidates`,
+      adaptations: [`maintain reliability for agent ${context.agentId}`]
     };
   }
 
-  private generateAdaptations(template: PromptTemplate, context: PromptContext): string[] {
+  private generateAdaptations(_template: PromptTemplate, context: PromptContext): string[] {
     const adaptations: string[] = [];
 
     // High complexity adaptations
@@ -515,7 +514,8 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
   private applyAdaptations(prompt: string, adaptations: string[], context: PromptContext): string {
     if (adaptations.length === 0) return prompt;
 
-    const adaptationSection = '\n**Context Adaptations for brAInwav nO Architecture:**\n' + adaptations.map(a => `- ${a}`).join('\n') + '\n';
+    const adaptationHeader = `\n**Context Adaptations for brAInwav nO Architecture (task ${context.taskId}):**\n`;
+    const adaptationSection = adaptationHeader + adaptations.map(a => `- ${a}`).join('\n') + '\n';
     return prompt + adaptationSection;
   }
 

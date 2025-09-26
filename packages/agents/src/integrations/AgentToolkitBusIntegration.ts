@@ -8,7 +8,6 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { z } from 'zod';
 import { createPrefixedId } from '../lib/secure-random.js';
 // Mock bus implementation until proper A2A integration is available
 const createMockBus = () => {

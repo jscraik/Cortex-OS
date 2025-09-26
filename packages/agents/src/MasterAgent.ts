@@ -109,9 +109,25 @@ export const createMasterAgentGraph = (config: {
 			return applyExecutionOutcome(state, outcome);
 		}
 		const hooks = getHooksSingleton();
+		const hookAdapter = hooks
+			? {
+				run: async (
+					event: 'PreToolUse' | 'PostToolUse',
+					ctx: Record<string, unknown>,
+				) => {
+					const hookResults = await hooks.run(event, ctx as any);
+					return hookResults.map((result) => ({
+						action: result.action,
+						input: (result as any).input,
+						note: (result as any).note,
+						reason: (result as any).reason,
+					}));
+				},
+			}
+			: undefined;
 		const dispatchResults = await dispatchTools(jobs, {
 			session,
-			hooks: hooks ? { run: hooks.run.bind(hooks) } : undefined,
+			hooks: hookAdapter,
 			budget: deriveBudget(),
 			concurrency: 1,
 		});

@@ -335,8 +335,6 @@ export class AgentToolkitMCPTools {
 			}),
 			handler: async (input: unknown): Promise<AgentToolkitMCPResponse> => {
 				const correlationId = createPrefixedId(`multi_search_${Date.now()}`);
-					.toString(36)
-					.slice(2, 11)}`;
 				const timestamp = new Date().toISOString();
 				const executionId = correlationId;
 
