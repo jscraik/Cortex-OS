@@ -1,0 +1,91 @@
+def create_streamable_http_app(
+    server: FastMCP[LifespanResultT],
+    streamable_http_path: str,
+    event_store: EventStore | None = None,
+    auth: AuthProvider | None = None,
+    json_response: bool = False,
+    stateless_http: bool = False,
+    debug: bool = False,
+    routes: list[BaseRoute] | None = None,
+    middleware: list[Middleware] | None = None,
+) -> StarletteWithLifespan:
+    """Return an instance of the StreamableHTTP server app.
+
+    Args:
+        server: The FastMCP server instance
+        streamable_http_path: Path for StreamableHTTP connections
+        event_store: Optional event store for session management
+        auth: Optional authentication provider (AuthProvider)
+        json_response: Whether to use JSON response format
+        stateless_http: Whether to use stateless mode (new transport per request)
+        debug: Whether to enable debug mode
+        routes: Optional list of custom routes
+        middleware: Optional list of middleware
+
+    Returns:
+        A Starlette application with StreamableHTTP support
+    """
+    server_routes: list[BaseRoute] = []
+    server_middleware: list[Middleware] = []
+
+    # Create session manager using the provided event store
+    session_manager = StreamableHTTPSessionManager(
+        app=server._mcp_server,
+        event_store=event_store,
+        json_response=json_response,
+        stateless=stateless_http,
+    )
+
+    # Create the ASGI app wrapper
+    streamable_http_app = StreamableHTTPASGIApp(session_manager)
+
+    # Add StreamableHTTP routes with or without auth
+    if auth:
+        # Get auth middleware from the provider
+        auth_middleware = auth.get_middleware()
+
+        # Get auth routes including protected MCP endpoint
+        auth_routes = auth.get_routes(
+            mcp_path=streamable_http_path,
+            mcp_endpoint=streamable_http_app,
+        )
+
+        server_routes.extend(auth_routes)
+        server_middleware.extend(auth_middleware)
+    else:
+        # No auth required
+        server_routes.append(
+            Route(
+                streamable_http_path,
+                endpoint=streamable_http_app,
+            )
+        )
+
+    # Add custom routes with lowest precedence
+    if routes:
+        server_routes.extend(routes)
+    server_routes.extend(server._get_additional_http_routes())
+
+    # Add middleware
+    if middleware:
+        server_middleware.extend(middleware)
+
+    # Create a lifespan manager to start and stop the session manager
+    @asynccontextmanager
+    async def lifespan(app: Starlette) -> AsyncGenerator[None, None]:
+        async with session_manager.run():
+            yield
+
+    # Create and return the app with lifespan
+    app = create_base_app(
+        routes=server_routes,
+        middleware=server_middleware,
+        debug=debug,
+        lifespan=lifespan,
+    )
+    # Store the FastMCP server instance on the Starlette app state
+    app.state.fastmcp_server = server
+
+    app.state.path = streamable_http_path
+
+    return app

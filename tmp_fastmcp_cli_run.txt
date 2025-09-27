@@ -1,0 +1,119 @@
+async def run_command(
+    server_spec: str,
+    transport: TransportType | None = None,
+    host: str | None = None,
+    port: int | None = None,
+    path: str | None = None,
+    log_level: LogLevelType | None = None,
+    server_args: list[str] | None = None,
+    show_banner: bool = True,
+    use_direct_import: bool = False,
+    skip_source: bool = False,
+) -> None:
+    """Run a MCP server or connect to a remote one.
+
+    Args:
+        server_spec: Python file, object specification (file:obj), config file, or URL
+        transport: Transport protocol to use
+        host: Host to bind to when using http transport
+        port: Port to bind to when using http transport
+        path: Path to bind to when using http transport
+        log_level: Log level
+        server_args: Additional arguments to pass to the server
+        show_banner: Whether to show the server banner
+        use_direct_import: Whether to use direct import instead of subprocess
+        skip_source: Whether to skip source preparation step
+    """
+    # Special case: URLs
+    if is_url(server_spec):
+        # Handle URL case
+        server = create_client_server(server_spec)
+        logger.debug(f"Created client proxy server for {server_spec}")
+    # Special case: MCPConfig files (legacy)
+    elif server_spec.endswith(".json"):
+        # Load JSON and check which type of config it is
+        config_path = Path(server_spec)
+        with open(config_path) as f:
+            data = json.load(f)
+
+        # Check if it's an MCPConfig first (has canonical mcpServers key)
+        if "mcpServers" in data:
+            # It's an MCP config
+            server = create_mcp_config_server(config_path)
+        else:
+            # It's a FastMCP config - load it properly
+            config = load_mcp_server_config(config_path)
+
+            # Merge deployment config with CLI arguments (CLI takes precedence)
+            transport = transport or config.deployment.transport
+            host = host or config.deployment.host
+            port = port or config.deployment.port
+            path = path or config.deployment.path
+            log_level = log_level or config.deployment.log_level
+            server_args = (
+                server_args if server_args is not None else config.deployment.args
+            )
+
+            # Prepare source only (environment is handled by uv run)
+            await config.prepare_source() if not skip_source else None
+
+            # Load the server using the source
+            from contextlib import nullcontext
+
+            from fastmcp.cli.cli import with_argv
+
+            # Use sys.argv context manager if deployment args specified
+            argv_context = with_argv(server_args) if server_args else nullcontext()
+
+            with argv_context:
+                server = await config.source.load_server()
+
+            logger.debug(f'Found server "{server.name}" from config {config_path}')
+    else:
+        # Regular file case - create a MCPServerConfig with FileSystemSource
+        source = FileSystemSource(path=server_spec)
+        config = MCPServerConfig(source=source)
+
+        # Prepare source only (environment is handled by uv run)
+        await config.prepare_source() if not skip_source else None
+
+        # Load the server
+        from contextlib import nullcontext
+
+        from fastmcp.cli.cli import with_argv
+
+        # Use sys.argv context manager if server_args specified
+        argv_context = with_argv(server_args) if server_args else nullcontext()
+
+        with argv_context:
+            server = await config.source.load_server()
+
+        logger.debug(f'Found server "{server.name}" in {source.path}')
+
+    # Run the server
+
+    # handle v1 servers
+    if isinstance(server, FastMCP1x):
+        run_v1_server(server, host=host, port=port, transport=transport)
+        return
+
+    kwargs = {}
+    if transport:
+        kwargs["transport"] = transport
+    if host:
+        kwargs["host"] = host
+    if port:
+        kwargs["port"] = port
+    if path:
+        kwargs["path"] = path
+    # Note: log_level is not currently supported by run_async
+    # TODO: Add log_level support to server.run_async
+
+    if not show_banner:
+        kwargs["show_banner"] = False
+
+    try:
+        await server.run_async(**kwargs)
+    except Exception as e:
+        logger.error(f"Failed to run server: {e}")
+        sys.exit(1)

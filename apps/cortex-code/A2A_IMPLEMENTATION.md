@@ -1,5 +1,7 @@
 # A2A Native Communication Implementation for Cortex-Code (Rust)
 
+<!-- markdownlint-disable MD013 -->
+
 ## Overview
 
 This document describes the implementation of A2A (Agent-to-Agent) native communication for the cortex-code application, which is written in Rust. The implementation follows the same patterns established in other Cortex-OS applications like cortex-py and the API service.

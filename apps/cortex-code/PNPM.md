@@ -1,6 +1,6 @@
 # Migration to pnpm
 
-This project has been migrated from npm to pnpm to improve dependency management and developer experience.
+The brAInwav Cortex Code project has been migrated from npm to pnpm to improve dependency management and developer experience.
 
 ## Why pnpm?
 
@@ -41,7 +41,7 @@ corepack prepare pnpm@10.8.1 --activate
 
 ## Monorepo structure
 
-```
+```text
 codex/
 ├── pnpm-workspace.yaml    # Workspace configuration
 ├── .npmrc                 # pnpm configuration

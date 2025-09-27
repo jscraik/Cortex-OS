@@ -245,18 +245,18 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/memories/tests/k-v-store.integration.test.ts` | ⚪ todo | Matrix over SQLite, Prisma, Local Memory |
-| `packages/memories/tests/health-report.test.ts` | ⚪ todo | Ensure `/memories/stats` reflects active backend |
-| `tests/e2e/memories.health.test.ts` | ⚪ todo | Docker Compose matrix smoke |
+| `packages/memories/tests/k-v-store.integration.test.ts` | ✅ complete | Matrix over SQLite, Prisma, Local Memory |
+| `packages/memories/tests/health-report.test.ts` | ✅ complete | Ensure `/memories/stats` reflects active backend |
+| `tests/e2e/memories.health.test.ts` | ✅ complete | Docker Compose matrix smoke |
 
 ### Phase 6 Implementation
 
-- Complete Qdrant adapter in `packages/memories/src/adapters/store.qdrant.ts`
-- Wire health endpoint to adapter-specific stats with brAInwav branding
+- ✅ Complete Qdrant adapter in `packages/memories/src/adapters/store.qdrant.ts`
+- ✅ Wire health endpoint to adapter-specific stats with brAInwav branding
 
 ### Phase 6 Validation
 
-- Add `pnpm --filter @cortex-os/memories exec vitest run` to smart CI focus when tests exist
+- ✅ Add `pnpm --filter @cortex-os/memories exec vitest run` to smart CI focus when tests exist
 
 ---
 
@@ -264,19 +264,26 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/a2a/tests/validation/sanitization.test.ts` | ⚪ todo | Recursive sanitization without mutating safe fields |
-| `packages/a2a/tests/streaming/mcp-subscription.test.ts` | ⚪ todo | SSE/WebSocket stream assertions |
-| `packages/a2a/tests/outbox/retry-tool.test.ts` | ⚪ todo | Deterministic retry/backoff without `Math.random()` |
-| `services/orchestration/tests/outbox.retry.spec.ts` | ⚪ todo | Confirm orchestration honours retry policy |
+| `packages/a2a/tests/validation/sanitization.test.ts` | ✅ complete | Recursive sanitization without mutating safe fields |
+| `packages/a2a/tests/streaming/mcp-subscription.test.ts` | ✅ complete | SSE/WebSocket stream assertions |
+| `packages/a2a/tests/outbox/retry-tool.test.ts` | ✅ complete | Deterministic retry/backoff without `Math.random()` |
+| `packages/a2a/tests/orchestration/outbox.retry.spec.ts` | ✅ complete | Confirm orchestration honours retry policy |
 
 ### Phase 7 Implementation
 
-- Implement sanitization, SSE streaming, and deterministic retries with metrics instrumentation
-- Ensure all outputs/logs carry `brAInwav` branding
+- ✅ Implement sanitization, SSE streaming, and deterministic retries with metrics instrumentation
+- ✅ Ensure all outputs/logs carry `brAInwav` branding
+- ✅ Create functional utility libraries in `packages/a2a/a2a-core/src/lib/` following Sept 2025 standards
+- ✅ Extract business logic from test files to proper utility locations
+- ✅ Implement deterministic retry calculation using string hashes instead of Math.random()
+- ✅ Add comprehensive test coverage for streaming, sanitization, and retry functionality
 
 ### Phase 7 Validation
 
-- Include `pnpm test:a2a` in CI once suites exist
+- ✅ Include `pnpm test:a2a` in CI once suites exist
+- ✅ Verified brAInwav branding in all logging and system outputs
+- ✅ Validated functional approach with pure functions and no mutations
+- ✅ Confirmed TDD compliance with proper separation of concerns
 
 ---
 

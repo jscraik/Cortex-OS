@@ -1,250 +1,134 @@
-## 🚨 CRITICAL: brAInwav Production Standards
+<!-- markdownlint-disable MD013 -->
 
-**ABSOLUTE PROHIBITION**: NEVER claim any implementation is "production-ready", "complete", "operational", or "fully implemented" if it contains:
+# 🚨 CRITICAL: brAInwav Production Standards
 
-- `Math.random()` calls for generating fake data
-- Hardcoded mock responses like "Mock adapter response"
-- TODO comments in production code paths
+**ABSOLUTE PROHIBITION**: NEVER describe any Cortex-Code integration as "production-ready", "complete", "operational", or "fully implemented" when it still includes placeholder logic such as:
+
+- `Math.random()` (or equivalent) fake data generators
+- Hardcoded mock responses such as "Mock adapter response"
+- TODO/FIXME comments in brAInwav execution paths
 - Placeholder implementations with notes like "will be wired later"
-- Disabled features with `console.warn("not implemented")`
-- Fake system metrics or data generation
+- Disabled features that emit `console.warn("not implemented")`
+- Fake metrics, thermal data, or synthetic telemetry
 
-**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
+**brAInwav Standards**: Every system output, error, audit log, and health indicator emitted from Cortex-Code **must** include brAInwav branding. Only report status claims that are verified by automated tests.
 
-**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
-
----
-
-<<<<<<< HEAD
-
-# Cortex Code (Rust) – Overview
-
-This directory vendors the Rust workspace for Codex CLI. For upstream sync details, see `apps/cortex-code/UPSTREAM_SYNC.md`.
-
-## MCP Integration
-
-Cortex Code now provides comprehensive MCP (Model Context Protocol) integration with 5 development tools:
-
-### Available MCP Tools
-
-- **file_operations** - File system operations (read, write, list, create_dir)
-- **file_search** - Fuzzy file searching with pattern matching
-- **apply_patch** - Apply unified diff patches to files
-- **code_analysis** - Code metrics, dependency analysis, and structure detection
-- **echo** - Testing and validation tool
-
-These tools expose cortex-code's core capabilities through MCP, enabling AI agents and external tools
-to interact with the development environment programmatically.
-
-### MCP Server
-
-The MCP server is located in `mcp-server/` and can be built and run:
-
-```bash
-cd apps/cortex-code/mcp-server
-cargo build
-cargo run
-```
-
-## Documentation
-
-Project documentation has been migrated from the backup into:
-
-- `project-documentation/cortex-code/README.md`
-- `project-documentation/cortex-code/SOFTWARE_ENGINEERING_PLAN.md`
-- `project-documentation/cortex-code/TASKS.md`
-- `project-documentation/cortex-code/TASK_TRACKER.md`
-
-The old `apps/cortex-code.backup/` directory is kept temporarily for safety and will be removed
-once documentation stabilizes and CI docs lint passes.
-
-## Quick Start
-
-```bash
-cd apps/cortex-code
-cargo build
-```
-
-=======
-<h1 align="center">OpenAI Codex CLI</h1>
-
-<p align="center"><code>npm i -g @openai/codex</code><br />or <code>brew install codex</code></p>
-
-<p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
-</br>
-</br>If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="https://developers.openai.com/codex/ide">install in your IDE</a>
-</br>If you are looking for the <em>cloud-based agent</em> from OpenAI, <strong>Codex Web</strong>, go to <a href="https://chatgpt.com/codex">chatgpt.com/codex</a></p>
-
-<!-- Cortex Code MCP Integration -->
-# Cortex Code MCP Integration
-
-This directory vendors the Rust workspace for Codex CLI. For MCP integration and local documentation, see:
-
-- `apps/cortex-code/UPSTREAM_SYNC.md`
-- `project-documentation/cortex-code/README.md`
-- `project-documentation/cortex-code/SOFTWARE_ENGINEERING_PLAN.md`
-- `project-documentation/cortex-code/TASKS.md`
-- `project-documentation/cortex-code/TASK_TRACKER.md`
-
-The MCP server is located in `mcp-server/` and can be built and run:
-
-```bash
-cd apps/cortex-code/mcp-server
-cargo build
-cargo run
-```
+**Reference**: See `../../.cortex/rules/RULES_OF_AI.md` for the full governance policy.
 
 ---
 
-<!-- Upstream OpenAI Codex CLI README follows -->
+## Cortex Code (Rust) – brAInwav Overview
 
-<h1 align="center">OpenAI Codex CLI</h1>
+This directory vendors the Rust workspace for the OpenAI Codex CLI. The exact upstream revision is tracked in `UPSTREAM_REF`; follow `UPSTREAM_SYNC.md` for the approved synchronization workflow.
 
-<p align="center"><code>npm i -g @openai/codex</code><br />or <code>brew install codex</code></p>
+## Local integration notes
 
-<p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
-</br>
-</br>If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="https://developers.openai.com/codex/ide">install in your IDE</a>
-</br>If you are looking for the <em>cloud-based agent</em> from OpenAI, <strong>Codex Web</strong>, go to <a href="https://chatgpt.com/codex">chatgpt.com/codex</a></p>
-
-<p align="center">
-  <img src="./.github/codex-cli-splash.png" alt="Codex CLI splash" width="80%" />
-  </p>
+- **Agent guidance**: brAInwav-specific operating instructions live in `AGENTS.md`.
+- **A2A interoperability**: The `A2A_IMPLEMENTATION.md` document outlines the Cortex-OS Agent-to-Agent wiring.
+- **Project documentation**: Long-form plans, task logs, and design notes live under `project-documentation/cortex-code/`.
+- **MCP usage**: MCP tool coverage remains under active development; align with the references in `docs/codex_mcp_interface.md` when exposing new surfaces.
 
 ---
 
-## Quickstart
+## Upstream README: Codex CLI (Rust Implementation)
 
-### Installing and running Codex CLI
+We provide Codex CLI as a standalone, native executable to ensure a zero-dependency install.
 
-Install globally with your preferred package manager. If you use npm:
+## Installing Codex
 
-```shell
-npm install -g @openai/codex
-```
-
-Alternatively, if you use Homebrew:
+Today, the easiest way to install Codex is via `npm`:
 
 ```shell
-brew install codex
-```
-
-Then simply run `codex` to get started:
-
-```shell
+npm i -g @openai/codex
 codex
 ```
 
-<details>
-<summary>You can also go to the <a href="https://github.com/openai/codex/releases/latest">latest GitHub Release</a> and download the appropriate binary for your platform.</summary>
+You can also install via Homebrew (`brew install codex`) or download a platform-specific release directly from our [GitHub Releases](https://github.com/openai/codex/releases).
 
-Each GitHub Release contains many executables, but in practice, you likely want one of these:
+## What's new in the Rust CLI
 
-- macOS
-  - Apple Silicon/arm64: `codex-aarch64-apple-darwin.tar.gz`
-  - x86_64 (older Mac hardware): `codex-x86_64-apple-darwin.tar.gz`
-- Linux
-  - x86_64: `codex-x86_64-unknown-linux-musl.tar.gz`
-  - arm64: `codex-aarch64-unknown-linux-musl.tar.gz`
+The Rust implementation is now the maintained Codex CLI and serves as the default experience. It includes a number of features that the legacy TypeScript CLI never supported.
 
-Each archive contains a single entry with the platform baked into the name (e.g., `codex-x86_64-unknown-linux-musl`), so you likely want to rename it to `codex` after extracting it.
+### Config
 
-</details>
+Codex supports a rich set of configuration options. Note that the Rust CLI uses `config.toml` instead of `config.json`. See [`docs/config.md`](../docs/config.md) for details.
 
-### Using Codex with your ChatGPT plan
+### Model Context Protocol Support
 
-<p align="center">
-  <img src="./.github/codex-cli-login.png" alt="Codex CLI login" width="80%" />
-  </p>
+Codex CLI functions as an MCP client that can connect to MCP servers on startup. See the [`mcp_servers`](../docs/config.md#mcp_servers) section in the configuration documentation for details.
 
-Run `codex` and select **Sign in with ChatGPT**. We recommend signing into your ChatGPT account to use Codex as part of your Plus, Pro, Team, Edu, or Enterprise plan. [Learn more about what's included in your ChatGPT plan](https://help.openai.com/en/articles/11369540-codex-in-chatgpt).
+It is still experimental, but you can also launch Codex as an MCP _server_ by running `codex mcp`. Use the [`@modelcontextprotocol/inspector`](https://github.com/modelcontextprotocol/inspector) to try it out:
 
-You can also use Codex with an API key, but this requires [additional setup](./docs/authentication.md#usage-based-billing-alternative-use-an-openai-api-key). If you previously used an API key for usage-based billing, see the [migration steps](./docs/authentication.md#migrating-from-usage-based-billing-api-key). If you're having trouble with login, please comment on [this issue](https://github.com/openai/codex/issues/1243).
+```shell
+npx @modelcontextprotocol/inspector codex mcp
+```
 
-### Model Context Protocol (MCP)
+### Notifications
 
-Codex CLI supports [MCP servers](./docs/advanced.md#model-context-protocol-mcp). Enable by adding an `mcp_servers` section to your `~/.codex/config.toml`.
+You can enable notifications by configuring a script that is run whenever the agent finishes a turn. The [notify documentation](../docs/config.md#notify) includes a detailed example that explains how to get desktop notifications via [terminal-notifier](https://github.com/julienXX/terminal-notifier) on macOS.
 
-### Configuration
+### `codex exec` to run Codex programmatically/non-interactively
 
-Codex CLI supports a rich set of configuration options, with preferences stored in `~/.codex/config.toml`. For full configuration options, see [Configuration](./docs/config.md).
+To run Codex non-interactively, run `codex exec PROMPT` (you can also pass the prompt via `stdin`) and Codex will work on your task until it decides that it is done and exits. Output is printed to the terminal directly. You can set the `RUST_LOG` environment variable to see more about what's going on.
 
----
+### Use `@` for file search
 
-### Docs & FAQ
+Typing `@` triggers a fuzzy-filename search over the workspace root. Use up/down to select among the results and Tab or Enter to replace the `@` with the selected path. You can use Esc to cancel the search.
 
-- [**Getting started**](./docs/getting-started.md)
-  - [CLI usage](./docs/getting-started.md#cli-usage)
-  - [Running with a prompt as input](./docs/getting-started.md#running-with-a-prompt-as-input)
-  - [Example prompts](./docs/getting-started.md#example-prompts)
-  - [Memory with AGENTS.md](./docs/getting-started.md#memory-with-agentsmd)
-  - [Configuration](./docs/config.md)
-- [**Sandbox & approvals**](./docs/sandbox.md)
-- [**Authentication**](./docs/authentication.md)
-  - [Auth methods](./docs/authentication.md#forcing-a-specific-auth-method-advanced)
-  - [Login on a "Headless" machine](./docs/authentication.md#connecting-on-a-headless-machine)
-- [**Advanced**](./docs/advanced.md)
-  - [Non-interactive / CI mode](./docs/advanced.md#non-interactive--ci-mode)
-  - [Tracing / verbose logging](./docs/advanced.md#tracing--verbose-logging)
-  - [Model Context Protocol (MCP)](./docs/advanced.md#model-context-protocol-mcp)
-- [**Zero data retention (ZDR)**](./docs/zdr.md)
-- [**Contributing**](./docs/contributing.md)
-- [**Install & build**](./docs/install.md)
-  - [System Requirements](./docs/install.md#system-requirements)
-  - [DotSlash](./docs/install.md#dotslash)
-  - [Build from source](./docs/install.md#build-from-source)
-- [**FAQ**](./docs/faq.md)
-- [**Open source fund**](./docs/open-source-fund.md)
+### Esc–Esc to edit a previous message
 
----
+When the chat composer is empty, press Esc to prime “backtrack” mode. Press Esc again to open a transcript preview highlighting the last user message; press Esc repeatedly to step to older user messages. Press Enter to confirm and Codex will fork the conversation from that point, trim the visible transcript accordingly, and pre‑fill the composer with the selected user message so you can edit and resubmit it.
 
-## License
+In the transcript preview, the footer shows an `Esc edit prev` hint while editing is active.
 
-This repository is licensed under the [Apache-2.0 License](LICENSE).
+### `--cd`/`-C` flag
 
-Run `codex` and select **Sign in with ChatGPT**. We recommend signing into your ChatGPT account to use Codex as part of your Plus, Pro, Team, Edu, or Enterprise plan. [Learn more about what's included in your ChatGPT plan](https://help.openai.com/en/articles/11369540-codex-in-chatgpt).
+Sometimes it is not convenient to `cd` to the directory you want Codex to use as the "working root" before running Codex. Fortunately, `codex` supports a `--cd` option so you can specify whatever folder you want. You can confirm that Codex is honoring `--cd` by double-checking the **workdir** it reports in the TUI at the start of a new session.
 
-You can also use Codex with an API key, but this requires [additional setup](./docs/authentication.md#usage-based-billing-alternative-use-an-openai-api-key). If you previously used an API key for usage-based billing, see the [migration steps](./docs/authentication.md#migrating-from-usage-based-billing-api-key). If you're having trouble with login, please comment on [this issue](https://github.com/openai/codex/issues/1243).
+### Shell completions
 
-### Model Context Protocol (MCP)
+Generate shell completion scripts via:
 
-Codex CLI supports [MCP servers](./docs/advanced.md#model-context-protocol-mcp). Enable by adding an `mcp_servers` section to your `~/.codex/config.toml`.
+```shell
+codex completion bash
+codex completion zsh
+codex completion fish
+```
 
-### Configuration
+### Experimenting with the Codex Sandbox
 
-Codex CLI supports a rich set of configuration options, with preferences stored in `~/.codex/config.toml`. For full configuration options, see [Configuration](./docs/config.md).
+To test to see what happens when a command is run under the sandbox provided by Codex, we provide the following subcommands in Codex CLI:
 
----
+```text
+# macOS
+codex debug seatbelt [--full-auto] [COMMAND]...
 
-### Docs & FAQ
+# Linux
+codex debug landlock [--full-auto] [COMMAND]...
+```
 
-- [**Getting started**](./docs/getting-started.md)
-  - [CLI usage](./docs/getting-started.md#cli-usage)
-  - [Running with a prompt as input](./docs/getting-started.md#running-with-a-prompt-as-input)
-  - [Example prompts](./docs/getting-started.md#example-prompts)
-  - [Memory with AGENTS.md](./docs/getting-started.md#memory-with-agentsmd)
-  - [Configuration](./docs/config.md)
-- [**Sandbox & approvals**](./docs/sandbox.md)
-- [**Authentication**](./docs/authentication.md)
-  - [Auth methods](./docs/authentication.md#forcing-a-specific-auth-method-advanced)
-  - [Login on a "Headless" machine](./docs/authentication.md#connecting-on-a-headless-machine)
-- [**Advanced**](./docs/advanced.md)
-  - [Non-interactive / CI mode](./docs/advanced.md#non-interactive--ci-mode)
-  - [Tracing / verbose logging](./docs/advanced.md#tracing--verbose-logging)
-  - [Model Context Protocol (MCP)](./docs/advanced.md#model-context-protocol-mcp)
-- [**Zero data retention (ZDR)**](./docs/zdr.md)
-- [**Contributing**](./docs/contributing.md)
-- [**Install & build**](./docs/install.md)
-  - [System Requirements](./docs/install.md#system-requirements)
-  - [DotSlash](./docs/install.md#dotslash)
-  - [Build from source](./docs/install.md#build-from-source)
-- [**FAQ**](./docs/faq.md)
-- [**Open source fund**](./docs/open-source-fund.md)
+### Selecting a sandbox policy via `--sandbox`
 
----
+The Rust CLI exposes a dedicated `--sandbox` (`-s`) flag that lets you pick the sandbox policy **without** having to reach for the generic `-c/--config` option:
 
-## License
+```shell
+# Run Codex with the default, read-only sandbox
+codex --sandbox read-only
 
-This repository is licensed under the [Apache-2.0 License](LICENSE).
+# Allow the agent to write within the current workspace while still blocking network access
+codex --sandbox workspace-write
 
->>>>>>> da5e59c32eac48fd01530cbf1ac0175d9626678e
+# Danger! Disable sandboxing entirely (only do this if you are already running in a container or other isolated env)
+codex --sandbox danger-full-access
+```
+
+The same setting can be persisted in `~/.codex/config.toml` via the top-level `sandbox_mode = "MODE"` key, e.g. `sandbox_mode = "workspace-write"`.
+
+## Code Organization
+
+This folder is the root of a Cargo workspace. It contains quite a bit of experimental code, but here are the key crates:
+
+- [`core/`](./core) contains the business logic for Codex. Ultimately, we hope this to be a library crate that is generally useful for building other Rust/native applications that use Codex.
+- [`exec/`](./exec) "headless" CLI for use in automation.
+- [`tui/`](./tui) CLI that launches a fullscreen TUI built with [Ratatui](https://ratatui.rs/).
+- [`cli/`](./cli) CLI multitool that provides the aforementioned CLIs via subcommands.

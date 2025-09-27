@@ -2,6 +2,8 @@
 title: Cortex Code Upstream Sync (Vendored Copy)
 ---
 
+<!-- markdownlint-disable MD013 -->
+
 <!-- Heading suppressed to satisfy single-title rule; title provided via front matter -->
 
 The contents of `apps/cortex-code/` are a vendored snapshot of the Rust portion
