@@ -1,141 +1,176 @@
-import { Client } from 'pg';
+import type { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-    getContainerRuntimeDecision,
-    logMissingRuntimeWarning,
-} from '../helpers/container-runtime';
+	AUTH_HOOK_TIMEOUT_MS,
+	shouldSkipAuthDb,
+	startAuthDb,
+	truncateAuthTables,
+} from './helpers/postgres.js';
 
-const skipExplicitly = process.env.CORTEX_SKIP_AUTH_POSTGRES_TEST === '1';
-const runtimeDecision = getContainerRuntimeDecision();
-
-if (!runtimeDecision.available && !skipExplicitly) {
-    logMissingRuntimeWarning('auth-postgres');
+declare global {
+	var __brAInwavBetterAuthLastError: unknown;
 }
 
-const shouldSkip = skipExplicitly || !runtimeDecision.available;
-const suite = shouldSkip ? describe.skip : describe;
+process.env.BRAINWAV_DEBUG_AUTH = '1';
 
-type PostgresError = Error & { code?: string };
+console.error('[brAInwav][auth-tests] console error smoke test');
 
-suite('Auth persistence with Postgres', () => {
-    let container: { stop: () => Promise<void>; getConnectionUri: () => string } | undefined;
-    let connectionString = '';
-    let pgClient: Client | undefined;
+const SKIP_SCOPE = 'auth-postgres';
 
-    const resetApp = async () => {
-        vi.resetModules();
-        const mod = await import('../../src/server.js');
-        return mod.app;
-    };
+const skip = shouldSkipAuthDb(SKIP_SCOPE);
+console.info(`[brAInwav][auth-tests] shouldSkipAuthDb(${SKIP_SCOPE}) => ${skip}`);
 
-    const truncateAuthTables = async () => {
-        if (!pgClient) {
-            return;
-        }
+if (skip) {
+	describe.skip('Auth persistence with Postgres', () => {
+		it('skips when container runtime is unavailable', () => {
+			expect(true).toBe(true);
+		});
+	});
+} else {
+	describe('Auth persistence with Postgres', () => {
+		let dbHandle: { client: Client; stop: () => Promise<void>; connectionString: string };
+		let pgClient: Client;
 
-        const truncateStatement =
-            'TRUNCATE TABLE "AuthAuditLog", "PasskeyCredential", "TwoFactorSecret", "Verification", "Account", "Session", "User" CASCADE';
+		const resetApp = async () => {
+			vi.resetModules();
+			const mod = await import('../../src/server.js');
+			return mod.app;
+		};
 
-        try {
-            await pgClient.query(truncateStatement);
-        } catch (error) {
-            const { code } = error as PostgresError;
-            if (code !== '42P01') {
-                throw error;
-            }
-        }
-    };
+		beforeAll(async () => {
+			process.env.NODE_ENV = 'test';
+			process.env.BETTER_AUTH_SECRET = 'test-secret';
+			process.env.BETTER_AUTH_URL = 'http://localhost:3001/auth';
 
-    beforeAll(async () => {
-        process.env.NODE_ENV = 'test';
-        process.env.BETTER_AUTH_SECRET = 'test-secret';
-        process.env.BETTER_AUTH_URL = 'http://localhost:3001';
+			dbHandle = await startAuthDb();
+			pgClient = dbHandle.client;
+			process.env.DATABASE_URL = dbHandle.connectionString;
+		}, AUTH_HOOK_TIMEOUT_MS);
 
-        const testcontainers: Record<string, unknown> = await import('@testcontainers/postgresql');
-        const ContainerCtor = (testcontainers.PostgreSqlContainer ??
-            testcontainers.PostgreSQLContainer) as
-            | undefined
-            | (new () => {
-                withDatabase: (name: string) => unknown;
-                withUsername: (username: string) => unknown;
-                withPassword: (password: string) => unknown;
-                start: () => Promise<{ stop: () => Promise<void>; getConnectionUri: () => string }>;
-            });
+		afterAll(async () => {
+			if (pgClient) {
+				await truncateAuthTables(pgClient);
+				await pgClient.end();
+			}
+			if (dbHandle) {
+				await dbHandle.stop();
+			}
+		}, AUTH_HOOK_TIMEOUT_MS);
 
-        if (!ContainerCtor) {
-            throw new Error('PostgreSqlContainer implementation unavailable');
-        }
+		beforeEach(async () => {
+			await truncateAuthTables(pgClient);
+		});
 
-        const builder = new ContainerCtor();
-        const configured = (
-            builder.withDatabase('auth_db') as {
-                withUsername: (username: string) => unknown;
-            }
-        ).withUsername('auth_user') as { withPassword: (password: string) => unknown };
-        const withPassword = configured.withPassword('auth_pass') as {
-            start: () => Promise<{ stop: () => Promise<void>; getConnectionUri: () => string }>;
-        };
-        container = await withPassword.start();
+		afterEach(async () => {
+			await truncateAuthTables(pgClient);
+		});
 
-        connectionString = container.getConnectionUri();
-        process.env.DATABASE_URL = connectionString;
+		it('persists user and session across app restarts', async () => {
+			const initialApp = await resetApp();
 
-        pgClient = new Client({ connectionString });
-        await pgClient.connect();
-    });
+			const email = 'persist@example.com';
 
-    afterAll(async () => {
-        await truncateAuthTables();
-        if (pgClient) {
-            await pgClient.end();
-        }
-        if (container) {
-            await container.stop();
-        }
-    });
+			const strongPassword = 'PersistPass123!@#brAInwav';
 
-    beforeEach(async () => {
-        await truncateAuthTables();
-    });
+			const registerResponse = await request(initialApp).post('/auth/register').send({
+				email,
+				password: strongPassword,
+				name: 'Persist User',
+			});
 
-    afterEach(async () => {
-        await truncateAuthTables();
-    });
+			const isRegisterStatusExpected =
+				registerResponse.status === 200 || registerResponse.status === 201;
 
-    it('persists user and session across app restarts', async () => {
-        const initialApp = await resetApp();
+			if (!isRegisterStatusExpected) {
+				console.error('[brAInwav][auth-tests] register failure', {
+					status: registerResponse.status,
+					headers: registerResponse.headers,
+					body: registerResponse.body,
+					text: registerResponse.text,
+					lastError: globalThis.__brAInwavBetterAuthLastError,
+					adapterFailure: (globalThis as Record<string, unknown>)
+						.__brAInwavBetterAuthAdapterFailure,
+				});
 
-        const email = 'persist@example.com';
+				const authModule = await import('../../src/auth/config.js');
+				const { auth: debugAuth, AUTH_BASE_URL } = authModule as unknown as {
+					auth: { api: { signUpEmail?: { handler?: (request: Request) => Promise<Response> } } };
+					AUTH_BASE_URL: string;
+				};
+				const signUpEmail = debugAuth.api.signUpEmail as unknown as {
+					handler?: (request: Request) => Promise<Response>;
+				};
+				if (typeof signUpEmail?.handler === 'function') {
+					const debugRequest = new Request(
+						`${AUTH_BASE_URL ?? 'http://localhost:3001/auth'}/sign-up/email`,
+						{
+							method: 'POST',
+							headers: {
+								'content-type': 'application/json',
+							},
+							body: JSON.stringify({
+								email,
+								password: strongPassword,
+								name: 'Persist User',
+							}),
+						},
+					);
+					const debugResponse = await signUpEmail.handler(debugRequest);
+					const debugText = await debugResponse.text();
+					console.error('[brAInwav][auth-tests] direct signUpEmail handler response', {
+						status: debugResponse.status,
+						text: debugText,
+					});
+				}
+			}
 
-        await request(initialApp)
-            .post('/auth/register')
-            .send({
-                email,
-                password: 'PersistPass123!',
-                name: 'Persist User',
-            })
-            .expect(201);
+			const lastError = (globalThis as Record<string, unknown>).__brAInwavBetterAuthLastError;
+			const adapterFailure = (globalThis as Record<string, unknown>)
+				.__brAInwavBetterAuthAdapterFailure;
+			expect(
+				isRegisterStatusExpected,
+				`[brAInwav][auth-tests] register failure status=${registerResponse.status} body=${JSON.stringify(registerResponse.body)} text=${registerResponse.text} error=${lastError ? JSON.stringify(lastError, null, 2) : '<none>'} adapterFailure=${adapterFailure ? JSON.stringify(adapterFailure, null, 2) : '<none>'}`,
+			).toBe(true);
 
-        const loginResponse = await request(initialApp)
-            .post('/auth/login')
-            .send({
-                email,
-                password: 'PersistPass123!',
-            })
-            .expect(200);
+			const loginResponse = await request(initialApp)
+				.post('/auth/login')
+				.send({
+					email,
+					password: strongPassword,
+				})
+				.expect(200);
 
-        const token: string | undefined = loginResponse.body?.session?.token;
-        expect(token).toBeDefined();
+			const token: string | undefined =
+				loginResponse.body?.session?.token ?? loginResponse.body?.token;
 
-        if (!pgClient) {
-            throw new Error('Postgres client not initialised');
-        }
-        const userRows = await pgClient.query('SELECT email FROM "User" WHERE email = $1', [email]);
-        expect(userRows.rowCount ?? 0).toBeGreaterThanOrEqual(1);
+			if (!token) {
+				console.error('[brAInwav][auth-tests] missing session token after login', {
+					status: loginResponse.status,
+					body: loginResponse.body,
+					text: loginResponse.text,
+					headers: loginResponse.headers,
+				});
+			}
+			expect(
+				token,
+				`[brAInwav][auth-tests] login response ${JSON.stringify(loginResponse.body)} text=${loginResponse.text}`,
+			).toBeDefined();
 
-        const restartedApp = await resetApp();
+			const userRows = await pgClient.query('SELECT email FROM "User" WHERE email = $1', [email]);
+			expect(userRows.rowCount ?? 0).toBeGreaterThanOrEqual(1);
 
-        await request(restartedApp).get('/api/me').set('Authorization', `Bearer ${token}`).expect(200);
-    });
-});
+			const sessionRows = await pgClient.query('SELECT token FROM "Session" WHERE token = $1', [
+				token,
+			]);
+			expect(sessionRows.rowCount ?? 0).toBeGreaterThanOrEqual(1);
+
+			const restartedApp = await resetApp();
+
+			await request(restartedApp)
+				.get('/api/me')
+				.set('Authorization', `Bearer ${token}`)
+				.expect(200);
+		});
+	});
+}

@@ -12,7 +12,7 @@ import { UserModel } from '../models/user.js';
 
 // Custom database wrapper that mimics better-sqlite3 API
 class Database {
-	private db: sqlite3.Database;
+	private readonly db: sqlite3.Database;
 
 	constructor(dbPath: string) {
 		this.db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE);
@@ -31,8 +31,8 @@ class Database {
 	// Synchronous prepare method that returns a statement-like object
 	prepare(sql: string) {
 		return {
-			all: (...params: any[]) => {
-				let result: any[] = [];
+			all: (...params: unknown[]) => {
+				let result: unknown[] = [];
 				let error: Error | null = null;
 				let finished = false;
 
@@ -53,8 +53,8 @@ class Database {
 
 				return result;
 			},
-			get: (...params: any[]) => {
-				let result: any = null;
+			get: (...params: unknown[]) => {
+				let result: unknown = null;
 				let error: Error | null = null;
 				let finished = false;
 
@@ -75,7 +75,7 @@ class Database {
 
 				return result;
 			},
-			run: (...params: any[]) => {
+			run: (...params: unknown[]) => {
 				let error: Error | null = null;
 				let finished = false;
 
@@ -93,7 +93,7 @@ class Database {
 					throw error;
 				}
 
-				return { lastID: (this as any).lastID, changes: (this as any).changes };
+				return { lastID: 0, changes: 0 }; // Note: SQLite3 callback context not available in synchronous wrapper
 			},
 		};
 	}

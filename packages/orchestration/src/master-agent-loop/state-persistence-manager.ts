@@ -151,7 +151,9 @@ export class StatePersistenceManager {
 			'statePersistenceManager.createCheckpoint',
 			async () => {
 				// Use high-resolution time to reduce collision risk in tests
-				const checkpointId = createPrefixedId(`checkpoint-${Date.now()}-${process.hrtime?.()[1] ?? 0}`);
+				const checkpointId = createPrefixedId(
+					`checkpoint-${Date.now()}-${process.hrtime?.()[1] ?? 0}`,
+				);
 				const startTime = Date.now();
 
 				const systemState = JSON.parse(JSON.stringify(this.currentState));

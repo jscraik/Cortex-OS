@@ -165,6 +165,11 @@ jobs:
             fi
           fi
 
+      - name: Orchestration LangGraph guard (dispatch & spool)
+        if: inputs.run-tests
+        run: |
+          pnpm --filter @cortex-os/orchestration exec vitest run tests/tool-dispatch.budget.test.ts tests/spool-settled.test.ts
+
       - name: Build
         if: inputs.run-build
         run: |

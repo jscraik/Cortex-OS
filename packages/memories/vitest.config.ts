@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -15,6 +16,11 @@ export default defineConfig({
 				functions: 80,
 				lines: 80,
 			},
+		},
+	},
+	resolve: {
+		alias: {
+			'@cortex-os/contracts': resolve(process.cwd(), 'libs/typescript/contracts/src/index.ts'),
 		},
 	},
 });

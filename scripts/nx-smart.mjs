@@ -80,6 +80,8 @@ if (args.length === 0) {
 
 const target = args[0];
 const flags = args.slice(1);
+const executorArgs = [];
+let passThroughMode = false;
 const isDryRun = flags.includes('--dry-run');
 const metricsJsonIndex = flags.indexOf('--metrics-json');
 let metricsJsonPath;
@@ -117,6 +119,16 @@ const forwardedFlags = [];
 let idx = 0;
 while (idx < flags.length) {
 	const f = flags[idx];
+	if (f === '--') {
+		passThroughMode = true;
+		idx += 1;
+		continue;
+	}
+	if (passThroughMode) {
+		executorArgs.push(f);
+		idx += 1;
+		continue;
+	}
 	if (
 		[
 			'--interactive',
@@ -309,6 +321,25 @@ function run(command) {
 		env: { ...process.env },
 	});
 	if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
+function shellEscape(arg) {
+	const str = String(arg ?? '');
+	if (str.length === 0) return "''";
+	return `'${str.replace(/'/g, `'\\''`)}'`;
+}
+
+function composeNxCommand(baseParts, forwarded, executor) {
+	const filtered = baseParts.filter((part) => part && part.trim().length > 0);
+	if (forwarded.length > 0) {
+		filtered.push(forwarded.join(' '));
+	}
+	let command = filtered.join(' ').replace(/\s+/g, ' ').trim();
+	if (executor.length > 0) {
+		const escapedExecutor = executor.map(shellEscape).join(' ');
+		command = `${command} -- ${escapedExecutor}`;
+	}
+	return command;
 }
 
 const baseRef = getBaseRef();
@@ -549,24 +580,28 @@ if (strategy === 'affected') {
 		const interactiveFlag = forceInteractive ? '--interactive' : '';
 		// Limit parallelism for tests explicitly to avoid multiple heavy processes
 		const parallelArgs = target === 'test' ? '--parallel --maxParallel=1' : '--parallel';
-		run(
-			`nx affected -t ${target} --base=${baseRef} --head=${headRef} ${narrowedProjectsArg} ${parallelArgs} ${interactiveFlag} ${forwardedFlags.join(' ')}`
-				.replace(/ {2,}/g, ' ')
-				.trim(),
-		);
+		const baseParts = [
+			`nx affected -t ${target}`,
+			`--base=${baseRef}`,
+			`--head=${headRef}`,
+			narrowedProjectsArg,
+			parallelArgs,
+			interactiveFlag,
+		];
+		run(composeNxCommand(baseParts, forwardedFlags, executorArgs));
 	} else {
 		const interactiveFlag = forceInteractive ? '--interactive' : '';
 		const parallelArgs = target === 'test' ? '--parallel --maxParallel=1' : '--parallel';
-		run(
-			`nx run-many -t ${target} ${parallelArgs} ${interactiveFlag} ${forwardedFlags.join(' ')}`.trim(),
-		);
+		const focusArg = focusList.length > 0 ? `--projects=${focusList.join(',')}` : '';
+		const baseParts = [`nx run-many -t ${target}`, parallelArgs, interactiveFlag, focusArg];
+		run(composeNxCommand(baseParts, forwardedFlags, executorArgs));
 	}
 } else {
 	const interactiveFlag = forceInteractive ? '--interactive' : '';
 	const parallelArgs = target === 'test' ? '--parallel --maxParallel=1' : '--parallel';
-	run(
-		`nx run-many -t ${target} ${parallelArgs} ${interactiveFlag} ${forwardedFlags.join(' ')}`.trim(),
-	);
+	const focusArg = focusList.length > 0 ? `--projects=${focusList.join(',')}` : '';
+	const baseParts = [`nx run-many -t ${target}`, parallelArgs, interactiveFlag, focusArg];
+	run(composeNxCommand(baseParts, forwardedFlags, executorArgs));
 }
 
 writeMetrics();

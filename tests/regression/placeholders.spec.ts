@@ -58,7 +58,7 @@ describe('brAInwav placeholder regression', () => {
 				.join('\n');
 			throw new Error(
 				`Forbidden placeholder tokens detected:\n${formatted}\n` +
-				'Apply real implementations before merging (enforced by brAInwav standards).',
+					'Apply real implementations before merging (enforced by brAInwav standards).',
 			);
 		}
 		expect(newFindings).toEqual([]);

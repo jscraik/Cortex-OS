@@ -110,4 +110,9 @@ export class EncryptedStore implements MemoryStore {
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
 		return this.inner.purgeExpired(nowISO, namespace);
 	}
+
+	async list(namespace?: string, limit?: number, offset?: number): Promise<Memory[]> {
+		const res = await this.inner.list(namespace, limit, offset);
+		return Promise.all(res.map((m) => this.toDecrypted(m)));
+	}
 }

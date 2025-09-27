@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DatabaseAdapter } from '../src/auth/database-adapter.js';
+import { prisma } from '../src/db/prisma-client.js';
 import { app } from '../src/server.js';
 
 // Mock environment variables
@@ -11,14 +11,12 @@ process.env.GITHUB_CLIENT_ID = 'test-github-client';
 process.env.GITHUB_CLIENT_SECRET = 'test-github-secret';
 
 describe('API Authentication', () => {
-	let dbAdapter: DatabaseAdapter;
-
 	beforeEach(() => {
-		dbAdapter = new DatabaseAdapter();
 		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
+		vi.restoreAllMocks();
 		// Clean up database
 	});
 
@@ -186,7 +184,7 @@ describe('API Authentication', () => {
 		it('should reject request with expired token', async () => {
 			const expiredToken = jwt.sign(
 				{ user: { id: 'test' }, session: { id: 'test' } },
-				process.env.BETTER_AUTH_SECRET!,
+				process.env.BETTER_AUTH_SECRET ?? 'test-secret',
 				{ expiresIn: '-1h' },
 			);
 
@@ -280,13 +278,19 @@ describe('API Authentication', () => {
 
 		describe('DELETE /auth/logout', () => {
 			it('should logout user and invalidate session', async () => {
-				const response = await request(app)
+				const logoutResponse = await request(app)
 					.post('/auth/logout')
 					.set('Authorization', `Bearer ${authToken}`)
 					.expect(200);
 
+				expect(logoutResponse.status).toBe(200);
+
 				// Try to access protected endpoint with same token
-				await request(app).get('/api/me').set('Authorization', `Bearer ${authToken}`).expect(401);
+				const meResponse = await request(app)
+					.get('/api/me')
+					.set('Authorization', `Bearer ${authToken}`)
+					.expect(401);
+				expect(meResponse.status).toBe(401);
 			});
 		});
 	});
@@ -344,9 +348,12 @@ describe('API Authentication', () => {
 	describe('Error Handling', () => {
 		it('should handle database errors gracefully', async () => {
 			// Mock database failure
-			vi.spyOn(dbAdapter, 'getAdapter').mockImplementationOnce(() => {
-				throw new Error('Database connection failed');
-			});
+			const userDelegate = prisma.user as {
+				create: (...args: unknown[]) => Promise<unknown>;
+			};
+			vi.spyOn(userDelegate, 'create').mockRejectedValueOnce(
+				new Error('Database connection failed'),
+			);
 
 			const response = await request(app)
 				.post('/auth/register')

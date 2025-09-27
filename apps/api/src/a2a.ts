@@ -22,9 +22,7 @@ function registerApiSchemas(registry: SchemaRegistry) {
 			description: definition.description,
 			compatibility: SchemaCompatibility.BACKWARD,
 			tags: Array.from(definition.tags),
-			examples: definition.examples
-				? [...(definition.examples as readonly unknown[])]
-				: undefined,
+			examples: definition.examples ? [...(definition.examples as readonly unknown[])] : undefined,
 			metadata: {
 				package: '@cortex-os/api',
 				source: API_EVENT_SOURCE,

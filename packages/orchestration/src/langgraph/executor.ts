@@ -14,7 +14,7 @@ export async function runOnce(input: RunInput): Promise<RunOutput> {
 	return await tracer.startActiveSpan('runOnce', async (span) => {
 		try {
 			const graph = createCerebrumGraph();
-			const res = await graph.invoke({ input: input.input, task: input.task });
+			const res = await graph.invoke({ input: input.input });
 			span.setAttribute('orchestration.output_length', res.output?.length ?? 0);
 			return { output: res.output };
 		} finally {

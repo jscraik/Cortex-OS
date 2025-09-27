@@ -12,7 +12,7 @@ export const sleep = (ms: number): Promise<void> => {
 };
 
 /**
-	* Generate a secure identifier string of the requested length.
+ * Generate a secure identifier string of the requested length.
  */
 export const generateId = (length = 8): string => {
 	const id = createSecureId().replace(/-/g, '');

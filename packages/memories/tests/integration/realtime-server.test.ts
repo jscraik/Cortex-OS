@@ -1,911 +1,497 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WebSocket } from 'ws';
+import type { WebSocket } from 'ws';
+import {
+	RealtimeMemoryChangeEventSchema,
+	type RealtimeMemoryInboundMessage,
+	RealtimeMemoryInboundMessageSchema,
+	RealtimeMemoryMetricsSnapshotSchema,
+	type RealtimeMemoryOutboundMessage,
+	RealtimeMemoryOutboundMessageSchema,
+} from '../../../../libs/typescript/contracts/src/memory-realtime.js';
 import { RealtimeMemoryServer } from '../../src/adapters/server.realtime.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import { StreamingMemoryStore } from '../../src/adapters/store.streaming.js';
 import { createMemory } from '../test-utils.js';
 
-// Mock WebSocket
-const createMockWebSocket = () => {
-	const eventHandlers: Record<string, Function[]> = {};
-	let readyState = 1; // WebSocket.OPEN by default
+type MockHandler = (...args: unknown[]) => void;
 
-	return {
-		get readyState() {
-			return readyState;
+const addHandler = (registry: Map<string, MockHandler[]>, event: string, handler: MockHandler) => {
+	const handlers = registry.get(event) ?? [];
+	handlers.push(handler);
+	registry.set(event, handlers);
+};
+
+const removeHandler = (
+	registry: Map<string, MockHandler[]>,
+	event: string,
+	handler: MockHandler,
+) => {
+	const handlers = registry.get(event);
+	if (!handlers) return;
+	const index = handlers.indexOf(handler);
+	if (index >= 0) {
+		handlers.splice(index, 1);
+	}
+};
+
+const invokeHandlers = (
+	registry: Map<string, MockHandler[]>,
+	event: string,
+	...args: unknown[]
+) => {
+	const handlers = registry.get(event);
+	if (!handlers) return;
+	for (const handler of handlers) {
+		handler(...args);
+	}
+};
+
+const createMockWebSocket = () => {
+	const registry = new Map<string, MockHandler[]>();
+	let readyState = 1;
+
+	const send = vi.fn<(payload: string) => void>();
+	const close = vi.fn<(code?: number, reason?: string) => void>();
+	const ping = vi.fn<() => void>();
+	const terminate = vi.fn<() => void>();
+	const addEventListener = vi.fn<(event: string, handler: MockHandler) => void>();
+	const removeEventListener = vi.fn<(event: string, handler: MockHandler) => void>();
+	const on = vi.fn<(event: string, handler: MockHandler) => unknown>();
+	const once = vi.fn<(event: string, handler: MockHandler) => unknown>();
+	const off = vi.fn<(event: string, handler: MockHandler) => unknown>();
+	const emit = vi.fn<(event: string, ...args: unknown[]) => void>();
+
+	const ws = {
+		readyState,
+		send,
+		close,
+		ping,
+		terminate,
+		addEventListener,
+		removeEventListener,
+		on,
+		once,
+		off,
+		emit,
+		_simulateMessage: (data: string | Buffer) => {
+			const payload = typeof data === 'string' ? data : Buffer.from(data);
+			invokeHandlers(registry, 'message', payload);
 		},
-		set readyState(state: number) {
+		_simulateClose: ({ code, reason }: { code: number; reason?: string }) => {
+			ws.readyState = 2;
+			const payload = reason ? Buffer.from(reason) : undefined;
+			invokeHandlers(registry, 'close', code, payload);
+			ws.readyState = 3;
+		},
+	};
+
+	Object.defineProperty(ws, 'readyState', {
+		get: () => readyState,
+		set: (state: number) => {
 			readyState = state;
 		},
-		send: vi.fn(),
-		close: vi.fn((code?: number, reason?: string) => {
-			readyState = 3; // WebSocket.CLOSED
-			// Trigger close event
-			const closeHandler = eventHandlers.close?.[0];
-			if (closeHandler) {
-				closeHandler({ code, reason, wasClean: true });
-			}
-		}),
-		addEventListener: vi.fn((event: string, handler: Function) => {
-			if (!eventHandlers[event]) {
-				eventHandlers[event] = [];
-			}
-			eventHandlers[event].push(handler);
-		}),
-		removeEventListener: vi.fn(),
-		ping: vi.fn(),
-		terminate: vi.fn(),
-		on: vi.fn((event: string, handler: Function) => {
-			if (!eventHandlers[event]) {
-				eventHandlers[event] = [];
-			}
-			eventHandlers[event].push(handler);
-		}),
-		once: vi.fn(),
-		off: vi.fn(),
-		emit: vi.fn((event: string, ...args: any[]) => {
-			if (eventHandlers[event]) {
-				eventHandlers[event].forEach((handler) => handler(...args));
-			}
-		}),
-		_getHandlers: () => eventHandlers,
-		_simulateMessage: (data: string) => {
-			const messageHandler = eventHandlers.message?.[0];
-			if (messageHandler) {
-				messageHandler({ data });
-			}
-		},
-		_simulateClose: (event: { code: number; reason: string }) => {
-			const closeHandler = eventHandlers.close?.[0];
-			if (closeHandler) {
-				closeHandler(event);
-			}
-		},
+		enumerable: true,
+		configurable: true,
+	});
+
+	close.mockImplementation((code?: number, reason?: string) => {
+		ws.readyState = 3;
+		const payload = typeof reason === 'string' ? Buffer.from(reason) : reason;
+		invokeHandlers(registry, 'close', code ?? 1000, payload);
+	});
+
+	addEventListener.mockImplementation((event: string, handler: MockHandler) => {
+		addHandler(registry, event, handler);
+	});
+
+	removeEventListener.mockImplementation((event: string, handler: MockHandler) => {
+		removeHandler(registry, event, handler);
+	});
+
+	on.mockImplementation((event: string, handler: MockHandler) => {
+		addHandler(registry, event, handler);
+		return ws;
+	});
+
+	once.mockImplementation((event: string, handler: MockHandler) => {
+		const wrapper: MockHandler = (...args: unknown[]) => {
+			removeHandler(registry, event, wrapper);
+			handler(...args);
+		};
+		addHandler(registry, event, wrapper);
+		return ws;
+	});
+
+	emit.mockImplementation((event: string, ...args: unknown[]) => {
+		invokeHandlers(registry, event, ...args);
+	});
+
+	off.mockImplementation((event: string, handler: MockHandler) => {
+		removeHandler(registry, event, handler);
+		return ws;
+	});
+
+	return ws;
+};
+
+type MockWebSocket = ReturnType<typeof createMockWebSocket>;
+
+const createMockWebSocketServer = () => {
+	const registry = new Map<string, MockHandler[]>();
+	const on = vi.fn<(event: string, handler: MockHandler) => unknown>();
+	const emit = vi.fn<(event: string, ...args: unknown[]) => void>();
+	const close = vi.fn<(callback?: () => void) => void>();
+
+	const server = {
+		on,
+		emit,
+		close,
+		clients: new Set<MockWebSocket>(),
+	};
+
+	on.mockImplementation((event: string, handler: MockHandler) => {
+		addHandler(registry, event, handler);
+		return server;
+	});
+
+	emit.mockImplementation((event: string, ...args: unknown[]) => {
+		invokeHandlers(registry, event, ...args);
+	});
+
+	close.mockImplementation((callback?: () => void) => {
+		callback?.();
+	});
+
+	return server;
+};
+
+type MockServer = ReturnType<typeof createMockWebSocketServer>;
+
+let mockServer: MockServer | undefined;
+let namespaceCounter = 0;
+
+vi.mock('ws', () => {
+	const WebSocketMock = vi.fn<(address: string) => MockWebSocket>(() => createMockWebSocket());
+	Object.assign(WebSocketMock, {
+		CONNECTING: 0,
+		OPEN: 1,
+		CLOSING: 2,
+		CLOSED: 3,
+	});
+
+	const WebSocketServerMock = vi.fn(() => {
+		const server = createMockWebSocketServer();
+		mockServer = server;
+		return server;
+	});
+
+	return {
+		WebSocket: WebSocketMock as unknown as typeof WebSocket,
+		WebSocketServer: WebSocketServerMock,
+	};
+});
+
+const flushAsync = async () => {
+	await Promise.resolve();
+};
+
+const advanceTimers = async (ms: number) => {
+	if (typeof vi.advanceTimersByTimeAsync === 'function') {
+		await vi.advanceTimersByTimeAsync(ms);
+		return;
+	}
+	vi.advanceTimersByTime(ms);
+	await flushAsync();
+};
+
+const getSentMessages = (ws: MockWebSocket): RealtimeMemoryOutboundMessage[] => {
+	return ws.send.mock.calls.map(([payload]) => {
+		if (typeof payload !== 'string') {
+			throw new Error('Expected payload to be a string');
+		}
+		const parsed = JSON.parse(payload);
+		return RealtimeMemoryOutboundMessageSchema.parse(parsed);
+	});
+};
+
+type OutboundMessageOf<TType extends RealtimeMemoryOutboundMessage['type']> = Extract<
+	RealtimeMemoryOutboundMessage,
+	{ type: TType }
+>;
+
+const getLatestMessageOfType = async <TType extends RealtimeMemoryOutboundMessage['type']>(
+	ws: MockWebSocket,
+	type: TType,
+): Promise<OutboundMessageOf<TType>> => {
+	await flushAsync();
+	const messages = getSentMessages(ws).filter(
+		(message): message is OutboundMessageOf<TType> => message.type === type,
+	);
+	expect(messages.length).toBeGreaterThan(0);
+	return messages[messages.length - 1];
+};
+
+const sendInboundMessage = (ws: MockWebSocket, message: RealtimeMemoryInboundMessage) => {
+	const payload = JSON.stringify(RealtimeMemoryInboundMessageSchema.parse(message));
+	ws._simulateMessage(payload);
+};
+
+type RequestLike = {
+	url: string;
+	headers: {
+		host: string;
+		'user-agent': string;
+	};
+	socket: {
+		remoteAddress: string;
 	};
 };
 
-const _mockWebSocket = createMockWebSocket();
+const buildRequest = (url: string): RequestLike => ({
+	url,
+	headers: {
+		host: 'localhost:3001',
+		'user-agent': 'vitest-suite',
+	},
+	socket: {
+		remoteAddress: '127.0.0.1',
+	},
+});
 
-vi.mock('ws', () => ({
-	WebSocket: vi.fn(() => {
-		const ws = createMockWebSocket();
-		// Track all created WebSockets for testing
-		if (!global._mockWebSockets) {
-			global._mockWebSockets = [];
-		}
-		global._mockWebSockets.push(ws);
-		return ws;
-	}),
-	Server: vi.fn().mockImplementation(() => {
-		const mockServer = {
-			on: vi.fn(),
-			emit: vi.fn(),
-			close: vi.fn((callback?: () => void) => {
-				callback?.();
-			}),
-			clients: new Set(),
-		};
+const simulateConnection = (url = '/?clientId=test-client'): MockWebSocket => {
+	const ws = createMockWebSocket();
+	if (!mockServer) {
+		throw new Error('Mock server not initialised');
+	}
+	const connectionHandler = mockServer.on.mock.calls.find(([event]) => event === 'connection')?.[1];
+	if (!connectionHandler) {
+		throw new Error('Connection handler not registered');
+	}
+	mockServer.clients.add(ws);
+	connectionHandler(ws, buildRequest(url));
+	ws.readyState = 1;
+	return ws;
+};
 
-		// Store reference to server for connection simulation
-		if (!global._mockServer) {
-			global._mockServer = mockServer;
-		}
-
-		return mockServer;
-	}),
-}));
-
-describe('RealtimeMemoryServer', () => {
+describe('RealtimeMemoryServer contracts integration', () => {
 	let baseStore: InMemoryStore;
 	let streamingStore: StreamingMemoryStore;
 	let server: RealtimeMemoryServer;
 	let namespace: string;
 
-	// Helper function to simulate WebSocket connection
-	const simulateConnection = (url: string = '/?id=test-client') => {
-		const _ws = new WebSocket('ws://localhost:3001');
-		const mockReq = {
-			url,
-			headers: {
-				host: 'localhost:3001',
-				'user-agent': 'test',
-			},
-			socket: {
-				remoteAddress: '127.0.0.1',
-			},
-		};
-
-		// Get the latest WebSocket created
-		const latestWs = global._mockWebSockets[global._mockWebSockets.length - 1];
-
-		// Find and call the connection handler
-		if (global._mockServer) {
-			const connectionHandler = global._mockServer.on.mock.calls.find(
-				(call) => call[0] === 'connection',
-			)?.[1];
-
-			if (connectionHandler) {
-				connectionHandler(latestWs, mockReq);
-				// Simulate the WebSocket being ready
-				latestWs.readyState = 1;
-			}
-		}
-
-		return latestWs;
-	};
-
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Clean up global mocks
-		global._mockWebSockets = [];
-		global._mockServer = undefined;
-
+		mockServer = undefined;
 		baseStore = new InMemoryStore();
 		streamingStore = new StreamingMemoryStore(baseStore);
 		server = new RealtimeMemoryServer(streamingStore);
-		namespace = `test-${Math.random().toString(36).substring(7)}`;
+		namespaceCounter += 1;
+		namespace = `realtime-namespace-${namespaceCounter}`;
 	});
 
 	afterEach(async () => {
-		try {
-			await Promise.race([
-				server.stop(),
-				new Promise((_, reject) =>
-					setTimeout(() => reject(new Error('Server stop timeout')), 5000),
-				),
-			]);
-		} catch (_error) {
-			// Ignore timeout errors during cleanup
-		}
-		// Clean up
-		const allMemories = await baseStore.list(namespace);
-		for (const memory of allMemories) {
-			await baseStore.delete(memory.id, namespace);
+		if (server.isRunning()) {
+			await server.stop().catch(() => undefined);
 		}
 	});
 
-	describe('WebSocket Connections', () => {
-		it('should handle new WebSocket connections', async () => {
-			// Start server
+	describe('connection lifecycle', () => {
+		it('sends a contract-compliant connected message on join', async () => {
 			await server.start(3001);
-
-			// Simulate new connection
 			const ws = simulateConnection();
-
-			// Wait for connection to be processed
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			// Should send welcome message
-			expect(ws.send).toHaveBeenCalledWith(expect.stringContaining('"type":"connected"'));
-
-			// Should store connection
-			expect(server.getConnectionCount()).toBe(1);
+			const connected = await getLatestMessageOfType(ws, 'connected');
+			expect(connected.message).toContain('brAInwav');
+			expect(connected.connectionId).toBeTruthy();
+			expect(connected.server?.port).toBe(3001);
 		});
 
-		it('should handle connection authentication', async () => {
-			await server.start(3001);
-
-			// Connect with auth token
-			const ws = simulateConnection('/?id=test-client&token=test-token');
-
-			expect(ws.send).toHaveBeenCalledWith(expect.stringContaining('"type":"connected"'));
-		});
-
-		it('should reject connections without valid token when auth is enabled', async () => {
-			// Enable auth
+		it('rejects unauthenticated connections when auth is required', async () => {
 			server = new RealtimeMemoryServer(streamingStore, {
 				enableAuth: true,
 				authToken: 'secret-token',
 			});
-
 			await server.start(3001);
-
-			// Connect without token
 			const ws = simulateConnection();
-
-			// Should close connection
-			expect(ws.close).toHaveBeenCalledWith(1008, 'Authentication required');
+			expect(ws.close).toHaveBeenCalledWith(1008, 'brAInwav authentication required');
 		});
 
-		it('should handle multiple concurrent connections', async () => {
-			await server.start(3001);
-
-			// Create multiple connections
-			const connections = [];
-			for (let i = 0; i < 5; i++) {
-				const ws = simulateConnection(`/?id=client-${i}`);
-				connections.push(ws);
-			}
-
-			expect(server.getConnectionCount()).toBe(5);
-		});
-
-		it('should handle connection limits', async () => {
-			// Set max connections to 2
+		it('accepts authenticated clients when token matches', async () => {
 			server = new RealtimeMemoryServer(streamingStore, {
-				maxConnections: 2,
+				enableAuth: true,
+				authToken: 'secret-token',
 			});
-
 			await server.start(3001);
-
-			// First two connections should succeed
-			const _ws1 = simulateConnection();
-			const _ws2 = simulateConnection();
-
-			// Third connection should be rejected
-			const ws3 = simulateConnection();
-			expect(ws3.close).toHaveBeenCalledWith(1008, 'Connection limit reached');
+			const ws = simulateConnection('/?clientId=auth-client&token=secret-token');
+			const connected = await getLatestMessageOfType(ws, 'connected');
+			expect(connected.connectionId).toBeTruthy();
 		});
 
-		it('should track connection metrics', async () => {
+		it('enforces the maximum connection limit with branded messaging', async () => {
+			server = new RealtimeMemoryServer(streamingStore, {
+				maxConnections: 1,
+			});
 			await server.start(3001);
-
-			// Connect and disconnect
-			const ws = simulateConnection();
-			ws.readyState = 3; // WebSocket.CLOSED
-			// Trigger disconnect event
-			const handlers = ws._getHandlers();
-			if (handlers.close) {
-				handlers.close[0]({ code: 1000, reason: 'Disconnect' });
-			}
-
-			const metrics = server.getConnectionMetrics();
-			expect(metrics.totalConnections).toBe(1);
-			expect(metrics.activeConnections).toBe(0);
+			const first = simulateConnection('/?clientId=first-client');
+			await getLatestMessageOfType(first, 'connected');
+			const second = simulateConnection('/?clientId=second-client');
+			expect(second.close).toHaveBeenCalledWith(1008, 'brAInwav connection limit reached');
 		});
 	});
 
-	describe('Subscription Management', () => {
-		it('should handle namespace subscriptions', async () => {
+	describe('subscription workflow', () => {
+		it('subscribes and unsubscribes using contract-compliant messages', async () => {
 			await server.start(3001);
-
 			const ws = simulateConnection();
-
-			// Send subscription message
-			const subscriptionMsg = {
+			sendInboundMessage(ws, {
 				type: 'subscribe',
 				namespace,
-			};
-
-			// Simulate message event
-			ws._simulateMessage(JSON.stringify(subscriptionMsg));
-
-			// Should confirm subscription
-			expect(ws.send).toHaveBeenCalledWith(
-				JSON.stringify({
-					type: 'subscribed',
-					namespace,
-					timestamp: expect.any(String),
-				}),
-			);
+			});
+			const subscribed = await getLatestMessageOfType(ws, 'subscribed');
+			expect(subscribed.namespace).toBe(namespace);
+			sendInboundMessage(ws, {
+				type: 'unsubscribe',
+				namespace,
+			});
+			const unsubscribed = await getLatestMessageOfType(ws, 'unsubscribed');
+			expect(unsubscribed.namespace).toBe(namespace);
+			expect(server.getSubscriptions(ws as unknown as WebSocket)).toHaveLength(0);
 		});
 
-		it('should handle multiple namespace subscriptions', async () => {
+		it('warns on duplicate subscriptions with brAInwav branding', async () => {
 			await server.start(3001);
-
 			const ws = simulateConnection();
-			const namespace2 = `${namespace}-2`;
-
-			// Subscribe to first namespace
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Subscribe to second namespace
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace: namespace2,
-				}),
-			);
-
-			// Should have both subscriptions
-			const subscriptions = server.getSubscriptions(ws);
-			expect(subscriptions).toContain(namespace);
-			expect(subscriptions).toContain(namespace2);
+			sendInboundMessage(ws, {
+				type: 'subscribe',
+				namespace,
+			});
+			await getLatestMessageOfType(ws, 'subscribed');
+			sendInboundMessage(ws, {
+				type: 'subscribe',
+				namespace,
+			});
+			const warning = await getLatestMessageOfType(ws, 'warning');
+			expect(warning.message).toBe('brAInwav realtime already subscribed');
 		});
 
-		it('should handle unsubscribe requests', async () => {
+		it('responds with pong to ping messages', async () => {
 			await server.start(3001);
-
 			const ws = simulateConnection();
-
-			// Subscribe then unsubscribe
-			// Subscribe
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Unsubscribe
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'unsubscribe',
-					namespace,
-				}),
-			);
-
-			// Should confirm unsubscription
-			expect(ws.send).toHaveBeenCalledWith(
-				JSON.stringify({
-					type: 'unsubscribed',
-					namespace,
-					timestamp: expect.any(String),
-				}),
-			);
-		});
-
-		it('should validate subscription format', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection();
-
-			// Send invalid subscription
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					// Missing namespace
-				}),
-			);
-
-			// Should send error
-			expect(ws.send).toHaveBeenCalledWith(
-				JSON.stringify({
-					type: 'error',
-					message: 'Invalid subscription format',
-					timestamp: expect.any(String),
-				}),
-			);
-		});
-
-		it('should prevent duplicate subscriptions', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection();
-
-			// Subscribe twice to same namespace
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Should send warning
-			expect(ws.send).toHaveBeenCalledWith(
-				JSON.stringify({
-					type: 'warning',
-					message: 'Already subscribed to namespace',
-					timestamp: expect.any(String),
-				}),
-			);
-		});
-
-		it('should handle connection cleanup on disconnect', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection();
-
-			// Subscribe
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Simulate disconnect
-			ws._simulateClose({ code: 1000, reason: 'Normal closure' });
-
-			// Should clean up subscriptions
-			expect(server.getSubscriptions(ws)).toHaveLength(0);
+			sendInboundMessage(ws, { type: 'ping' });
+			const pong = await getLatestMessageOfType(ws, 'pong');
+			expect(pong.timestamp).toBeDefined();
 		});
 	});
 
-	describe('Message Broadcasting', () => {
-		it('should broadcast memory changes to subscribers', async () => {
+	describe('change propagation', () => {
+		it('broadcasts change events that satisfy the outbound schema', async () => {
 			await server.start(3001);
-
-			const ws1 = simulateConnection('/?id=client1');
-			const ws2 = simulateConnection('/?id=client2');
-
-			// Both subscribe to namespace
-			ws1._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			ws2._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Create memory (should trigger broadcast)
-			const memory = createMemory({ text: 'Test memory' });
-			await streamingStore.upsert(memory, namespace);
-
-			// Both connections should receive the change
-			expect(ws1.send).toHaveBeenCalledTimes(3); // welcome + subscribed + change
-			expect(ws2.send).toHaveBeenCalledTimes(3); // welcome + subscribed + change
-		});
-
-		it('should only broadcast to relevant namespace subscribers', async () => {
-			await server.start(3001);
-
-			const ws1 = simulateConnection('/?id=client1');
-			const ws2 = simulateConnection('/?id=client2');
-			const otherNamespace = `${namespace}-other`;
-
-			// Subscribe to different namespaces
-			ws1._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			ws2._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace: otherNamespace,
-				}),
-			);
-
-			// Create memory in first namespace
-			const memory = createMemory({ text: 'Test memory' });
-			await streamingStore.upsert(memory, namespace);
-
-			// Only first connection should receive change
-			expect(ws1.send).toHaveBeenCalledWith(expect.stringContaining(`"namespace":"${namespace}"`));
-			expect(ws2.send).not.toHaveBeenCalledWith(
-				expect.stringContaining(`"namespace":"${namespace}"`),
-			);
-		});
-
-		it('should handle broadcast failures gracefully', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Make send fail
-			ws.send.mockImplementation(() => {
-				throw new Error('Send failed');
+			const ws = simulateConnection('/?clientId=change-client');
+			sendInboundMessage(ws, {
+				type: 'subscribe',
+				namespace,
 			});
-
-			// Subscribe
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Create memory (should not throw)
-			const memory = createMemory({ text: 'Test memory' });
-			await expect(streamingStore.upsert(memory, namespace)).resolves.not.toThrow();
-		});
-
-		it('should support selective message types', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Subscribe only to create events
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-					eventTypes: ['create'],
-				}),
-			);
-
-			// Create and update memory
-			const memory = createMemory({ text: 'Test memory' });
+			await getLatestMessageOfType(ws, 'subscribed');
+			const memory = createMemory({ text: 'Contract compliant broadcast' });
 			await streamingStore.upsert(memory, namespace);
-			await streamingStore.upsert({ ...memory, text: 'Updated' }, namespace);
-
-			// Should only receive create event
-			const createCalls = ws.send.mock.calls.filter((call) => call[0].includes('"type":"create"'));
-			const updateCalls = ws.send.mock.calls.filter((call) => call[0].includes('"type":"update"'));
-
-			expect(createCalls).toHaveLength(1);
-			expect(updateCalls).toHaveLength(0);
+			const change = await getLatestMessageOfType(ws, 'change');
+			expect(change.namespace).toBe(namespace);
+			RealtimeMemoryChangeEventSchema.parse(change.event);
 		});
 
-		it('should broadcast system events', async () => {
+		it('replays queued messages after reconnection', async () => {
 			await server.start(3001);
+			const clientId = 'queue-client';
+			const first = simulateConnection(`/?clientId=${clientId}`);
+			sendInboundMessage(first, {
+				type: 'subscribe',
+				namespace,
+			});
+			await getLatestMessageOfType(first, 'subscribed');
+			first._simulateClose({ code: 1000, reason: 'client disconnect' });
+			const queuedMemory = createMemory({ text: 'Queued update' });
+			await streamingStore.upsert(queuedMemory, namespace);
+			const second = simulateConnection(`/?clientId=${clientId}`);
+			await getLatestMessageOfType(second, 'subscriptions_restored');
+			const change = await getLatestMessageOfType(second, 'change');
+			expect(change.namespace).toBe(namespace);
+			RealtimeMemoryChangeEventSchema.parse(change.event);
+		});
+	});
 
-			const ws = simulateConnection('/?id=client1');
+	describe('realtime metrics publishing', () => {
+		let publishMetrics: ReturnType<typeof vi.fn>;
 
-			// Subscribe to system events
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace: '$system',
-				}),
-			);
+		beforeEach(() => {
+			vi.useFakeTimers();
+			publishMetrics = vi.fn(async () => undefined);
+			server = new RealtimeMemoryServer(streamingStore, {
+				metricsSnapshotDebounceMs: 5,
+			});
+			server.setMetricsPublisher({
+				publishRealtimeMetrics: publishMetrics,
+			});
+		});
 
-			// Trigger system event (e.g., server shutdown)
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		it('publishes a metrics snapshot when clients connect', async () => {
+			await server.start(3001);
+			const ws = simulateConnection();
+			await getLatestMessageOfType(ws, 'connected');
+			await advanceTimers(10);
+			expect(publishMetrics).toHaveBeenCalled();
+			const snapshot = publishMetrics.mock.calls[0]?.[0];
+			expect(() => RealtimeMemoryMetricsSnapshotSchema.parse(snapshot)).not.toThrow();
+			expect(snapshot.reason.split('|')).toContain('connection-established');
+			expect(snapshot.aggregate.activeConnections).toBe(1);
 			await server.stop();
-
-			// Should receive system event
-			expect(ws.send).toHaveBeenCalledWith(expect.stringContaining('"type":"system"'));
+			await advanceTimers(10);
 		});
 
-		it('should handle high-frequency broadcasts', async () => {
+		it('captures message activity in snapshot reasons', async () => {
 			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Subscribe
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Create many memories rapidly
-			const promises = [];
-			for (let i = 0; i < 100; i++) {
-				const memory = createMemory({ text: `Memory ${i}` });
-				promises.push(streamingStore.upsert(memory, namespace));
-			}
-
-			await Promise.all(promises);
-
-			// Should handle all broadcasts
-			expect(ws.send).toHaveBeenCalled();
-		});
-	});
-
-	describe('Connection Management', () => {
-		it('should ping connections periodically', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Wait for ping interval
-			await new Promise((resolve) => setTimeout(resolve, 35000));
-
-			// Should have sent ping
-			expect(ws.ping).toHaveBeenCalled();
-		});
-
-		it('should handle pong responses', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Simulate pong
-			ws.emit('pong');
-
-			// Should update last activity
-			const metrics = server.getConnectionMetrics();
-			expect(metrics.lastActivity).toBeDefined();
-		});
-
-		it('should close stale connections', async () => {
-			// Set short timeout
-			server = new RealtimeMemoryServer(streamingStore, {
-				connectionTimeout: 1000,
+			const ws = simulateConnection();
+			await getLatestMessageOfType(ws, 'connected');
+			await advanceTimers(10);
+			publishMetrics.mockClear();
+			sendInboundMessage(ws, {
+				type: 'subscribe',
+				namespace,
 			});
-
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Wait for timeout
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
-			// Should close stale connection
-			expect(ws.close).toHaveBeenCalledWith(1000, 'Connection timeout');
-		});
-
-		it('should handle connection errors gracefully', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Simulate error
-			ws.emit('error', new Error('Connection error'));
-
-			// Should log error and close connection
-			expect(ws.close).toHaveBeenCalled();
-		});
-
-		it('should track connection lifecycle metrics', async () => {
-			await server.start(3001);
-
-			const _ws = simulateConnection('/?id=client1');
-
-			// Get metrics
-			const metrics = server.getConnectionMetrics();
-
-			expect(metrics.totalConnections).toBe(1);
-			expect(metrics.activeConnections).toBe(1);
-			expect(metrics.connectionTimestamps).toHaveLength(1);
-		});
-
-		it('should handle graceful shutdown', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Stop server
+			await getLatestMessageOfType(ws, 'subscribed');
+			const memory = createMemory({ text: 'Metrics change event' });
+			await streamingStore.upsert(memory, namespace);
+			await advanceTimers(10);
+			expect(publishMetrics).toHaveBeenCalled();
+			const snapshot = publishMetrics.mock.calls[publishMetrics.mock.calls.length - 1]?.[0];
+			expect(() => RealtimeMemoryMetricsSnapshotSchema.parse(snapshot)).not.toThrow();
+			const reasons = snapshot.reason.split('|');
+			expect(reasons).toContain('message-received');
+			expect(reasons).toContain('message-sent');
 			await server.stop();
-
-			// Should close all connections
-			expect(ws.close).toHaveBeenCalledWith(1000, 'Server shutting down');
+			await advanceTimers(10);
 		});
 	});
 
-	describe('Reconnection Logic', () => {
-		it('should handle reconnection with same client ID', async () => {
+	describe('validation layer', () => {
+		it('returns a branded parse error for malformed JSON', async () => {
 			await server.start(3001);
-
-			const clientId = 'test-client';
-
-			// First connection
-			const ws1 = simulateConnection(`/?id=${clientId}`);
-
-			// Simulate disconnect
-			ws1._simulateClose({ code: 1000, reason: 'Normal closure' });
-
-			// Reconnect with same ID
-			const ws2 = simulateConnection(`/?id=${clientId}`);
-
-			// Should restore previous subscriptions
-			expect(ws2.send).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"subscriptions_restored"'),
-			);
+			const ws = simulateConnection();
+			ws._simulateMessage('not json');
+			const error = await getLatestMessageOfType(ws, 'error');
+			expect(error.message).toBe('brAInwav realtime message parsing failed');
+			expect(error.details).toEqual({ reason: 'invalid-json' });
 		});
 
-		it('should queue messages during reconnection', async () => {
+		it('returns schema validation errors when inbound payload is invalid', async () => {
 			await server.start(3001);
-
-			const clientId = 'test-client';
-
-			// Connect and subscribe
-			const ws1 = simulateConnection(`/?id=${clientId}`);
-
-			ws1._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Disconnect
-			ws1.close();
-
-			// Create changes while disconnected
-			const memory = createMemory({ text: 'Queued memory' });
-			await streamingStore.upsert(memory, namespace);
-
-			// Reconnect
-			const ws2 = simulateConnection(`/?id=${clientId}`);
-
-			// Should receive queued messages
-			expect(ws2.send).toHaveBeenCalledWith(expect.stringContaining('"type":"create"'));
-		});
-
-		it('should expire queued messages', async () => {
-			server = new RealtimeMemoryServer(streamingStore, {
-				messageQueueTimeout: 1000,
-			});
-
-			await server.start(3001);
-
-			const clientId = 'test-client';
-
-			// Connect and subscribe
-			const ws1 = simulateConnection(`/?id=${clientId}`);
-
-			ws1._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Disconnect
-			ws1.close();
-
-			// Create changes and wait for timeout
-			const memory = createMemory({ text: 'Expired memory' });
-			await streamingStore.upsert(memory, namespace);
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
-			// Reconnect
-			const ws2 = simulateConnection(`/?id=${clientId}`);
-
-			// Should not receive expired messages
-			const createCalls = ws2.send.mock.calls.filter((call) => call[0].includes('"type":"create"'));
-			expect(createCalls).toHaveLength(0);
-		});
-
-		it('should limit message queue size', async () => {
-			server = new RealtimeMemoryServer(streamingStore, {
-				maxQueueSize: 2,
-			});
-
-			await server.start(3001);
-
-			const clientId = 'test-client';
-
-			// Connect and subscribe
-			const ws1 = simulateConnection(`/?id=${clientId}`);
-
-			ws1._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			// Disconnect
-			ws1.close();
-
-			// Create many changes
-			for (let i = 0; i < 5; i++) {
-				const memory = createMemory({ text: `Memory ${i}` });
-				await streamingStore.upsert(memory, namespace);
-			}
-
-			// Reconnect
-			const ws2 = simulateConnection(`/?id=${clientId}`);
-
-			// Should only receive latest 2 messages
-			const createCalls = ws2.send.mock.calls.filter((call) => call[0].includes('"type":"create"'));
-			expect(createCalls).toHaveLength(2);
-		});
-
-		it('should track reconnection metrics', async () => {
-			await server.start(3001);
-
-			const clientId = 'test-client';
-
-			// Connect, disconnect, reconnect
-			const ws1 = simulateConnection(`/?id=${clientId}`);
-
-			ws1.close();
-
-			const _ws2 = simulateConnection(`/?id=${clientId}`);
-
-			const metrics = server.getConnectionMetrics();
-			expect(metrics.reconnections).toBe(1);
-		});
-
-		it('should handle reconnection with different namespaces', async () => {
-			await server.start(3001);
-
-			const clientId = 'test-client';
-			const namespace2 = `${namespace}-2`;
-
-			// Connect and subscribe to multiple namespaces
-			const ws1 = simulateConnection(`/?id=${clientId}`);
-
-			ws1._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace,
-				}),
-			);
-
-			ws1._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace: namespace2,
-				}),
-			);
-
-			// Disconnect and reconnect
-			if (handlers1.close?.[0]) {
-				handlers1.close[0]({ code: 1000, reason: 'Normal closure' });
-			}
-
-			const ws2 = simulateConnection(`/?id=${clientId}`);
-
-			// Should restore all namespace subscriptions
-			const subscriptions = server.getSubscriptions(ws2);
-			expect(subscriptions).toContain(namespace);
-			expect(subscriptions).toContain(namespace2);
-		});
-	});
-
-	describe('Error Handling', () => {
-		it('should handle malformed messages', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Send malformed JSON
-			ws._simulateMessage('invalid json');
-
-			// Should send error response
-			expect(ws.send).toHaveBeenCalledWith(
-				JSON.stringify({
-					type: 'error',
-					message: 'Invalid message format',
-					timestamp: expect.any(String),
-				}),
-			);
-		});
-
-		it('should handle unknown message types', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Send unknown message type
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'unknown_type',
-				}),
-			);
-
-			// Should send error response
-			expect(ws.send).toHaveBeenCalledWith(
-				JSON.stringify({
-					type: 'error',
-					message: 'Unknown message type',
-					timestamp: expect.any(String),
-				}),
-			);
-		});
-
-		it('should handle server errors gracefully', async () => {
-			// Mock server to throw error
-			vi.spyOn(server, 'broadcast').mockImplementation(() => {
-				throw new Error('Broadcast error');
-			});
-
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Should not crash
-			expect(ws.send).toHaveBeenCalled();
-		});
-
-		it('should validate subscription namespace format', async () => {
-			await server.start(3001);
-
-			const ws = simulateConnection('/?id=client1');
-
-			// Send invalid namespace
-			ws._simulateMessage(
-				JSON.stringify({
-					type: 'subscribe',
-					namespace: '../invalid',
-				}),
-			);
-
-			// Should send error
-			expect(ws.send).toHaveBeenCalledWith(
-				JSON.stringify({
-					type: 'error',
-					message: 'Invalid namespace format',
-					timestamp: expect.any(String),
-				}),
-			);
+			const ws = simulateConnection();
+			ws._simulateMessage(JSON.stringify({ type: 'subscribe' }));
+			const error = await getLatestMessageOfType(ws, 'error');
+			expect(error.message).toBe('brAInwav realtime schema validation failed');
+			expect(error.details).toBeDefined();
 		});
 	});
 });

@@ -243,17 +243,17 @@ export interface AdaptiveDecision {
 
 export interface OrchestrationEvent {
 	type:
-	| 'task_created'
-	| 'task_started'
-	| 'task_completed'
-	| 'task_failed'
-	| 'agent_assigned'
-	| 'agent_freed'
-	| 'plan_created'
-	| 'plan_updated'
-	| 'coordination_started'
-	| 'decision_made'
-	| 'resource_allocated';
+		| 'task_created'
+		| 'task_started'
+		| 'task_completed'
+		| 'task_failed'
+		| 'agent_assigned'
+		| 'agent_freed'
+		| 'plan_created'
+		| 'plan_updated'
+		| 'coordination_started'
+		| 'decision_made'
+		| 'resource_allocated';
 	taskId?: string;
 	agentId?: string;
 	planId?: string;
@@ -318,14 +318,14 @@ export interface OrchestrationState {
 	id: string;
 	taskId: string;
 	status:
-	| 'initializing'
-	| 'planning'
-	| 'deciding'
-	| 'executing'
-	| 'validating'
-	| 'completed'
-	| 'failed'
-	| 'cancelled';
+		| 'initializing'
+		| 'planning'
+		| 'deciding'
+		| 'executing'
+		| 'validating'
+		| 'completed'
+		| 'failed'
+		| 'cancelled';
 	strategy: OrchestrationStrategy;
 	planningContext: PlanningContext;
 	currentPhase: string;

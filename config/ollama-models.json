@@ -1,5 +1,30 @@
 {
   "embedding_models": {
+    "qwen3-embed": {
+      "name": "Qwen/Qwen3-Embedding",
+      "model_tag": "qwen3-embedding:latest",
+      "dimensions": 768,
+      "max_tokens": 8192,
+      "memory_gb": 2.0,
+      "context_length": 8192,
+      "status": "available",
+      "size_bytes": 2500000000,
+      "recommended_for": [
+        "state_of_art_embedding",
+        "high_accuracy_search",
+        "production_rag",
+        "multilingual_embedding"
+      ],
+      "ollama_model": "qwen3-embedding:latest",
+      "priority": 1,
+      "supports_multilingual": true,
+      "model_version": "v0.12.1+",
+      "features": [
+        "state_of_art_performance",
+        "multilingual_support",
+        "high_dimensional_space"
+      ]
+    },
     "nomic-embed": {
       "name": "nomic-ai/nomic-embed-text-v1.5",
       "model_tag": "nomic-embed-text:v1.5",
@@ -15,7 +40,7 @@
         "rag_systems"
       ],
       "ollama_model": "nomic-embed-text:v1.5",
-      "priority": 1
+      "priority": 2
     },
     "granite-embed": {
       "name": "ibm/granite-embedding-278m",
@@ -32,7 +57,7 @@
         "lightweight_rag"
       ],
       "ollama_model": "granite-embedding:278m",
-      "priority": 2
+      "priority": 3
     }
   },
   "chat_models": {
@@ -100,18 +125,29 @@
         "architecture",
         "complex_refactoring",
         "large_codebase",
-        "system_design"
+        "system_design",
+        "tool_calling_tasks"
       ],
       "coding_tasks": [
         "architecture",
         "complex_refactoring",
         "large_codebase",
         "system_design",
-        "enterprise_patterns"
+        "enterprise_patterns",
+        "tool_calling",
+        "function_calling"
       ],
       "ollama_model": "qwen3-coder:30b",
       "quantization": "q4_0",
-      "type": "code_specialist"
+      "type": "code_specialist",
+      "supports_tool_calling": true,
+      "model_version": "v0.12.1+",
+      "enhanced_features": [
+        "tool_calling",
+        "function_calling",
+        "improved_parsing",
+        "enhanced_code_generation"
+      ]
     },
     "phi4-mini-reasoning": {
       "name": "phi4-mini-reasoning:latest",
@@ -167,16 +203,57 @@
   "reranker_models": {},
   "safety_models": {},
   "default_models": {
-    "embedding": "nomic-embed",
+    "embedding": "qwen3-embed",
     "chat": "deepseek-coder",
     "coding": "deepseek-coder",
     "lightweight": "phi4-mini-reasoning",
     "large_context": "qwen3-coder",
     "reasoning": "phi4-mini-reasoning",
     "general_purpose": "gemma3n",
-    "enterprise": "granite-embed"
+    "enterprise": "granite-embed",
+    "tool_calling": "qwen3-coder",
+    "state_of_art_embedding": "qwen3-embed"
   },
   "cloud_models": {
+    "kimi-k2-cloud": {
+      "name": "kimi-k2:1t-cloud",
+      "model_tag": "kimi-k2:1t-cloud",
+      "context_length": 200000,
+      "memory_gb": 0,
+      "priority": 1,
+      "status": "available",
+      "size_bytes": 0,
+      "type": "cloud",
+      "recommended_for": [
+        "mixture_of_experts",
+        "state_of_art_reasoning",
+        "large_context_analysis",
+        "complex_problem_solving",
+        "enterprise_architecture",
+        "advanced_coding_tasks"
+      ],
+      "coding_tasks": [
+        "complex_architecture",
+        "large_system_design",
+        "advanced_algorithms",
+        "enterprise_patterns",
+        "performance_optimization",
+        "multi_language_codebases"
+      ],
+      "ollama_model": "kimi-k2:1t-cloud",
+      "requires_signin": true,
+      "model_version": "v0.12.3+",
+      "features": [
+        "mixture_of_experts",
+        "32b_activated_parameters",
+        "1t_total_parameters",
+        "state_of_art_performance",
+        "large_context_window"
+      ],
+      "architecture": "mixture_of_experts",
+      "activated_parameters": "32B",
+      "total_parameters": "1T"
+    },
     "qwen3-coder-cloud": {
       "name": "qwen3-coder:480b-cloud",
       "model_tag": "qwen3-coder:480b-cloud",
@@ -223,23 +300,38 @@
     "massive_context": "qwen3-coder-cloud",
     "repository_analysis": "qwen3-coder-cloud",
     "enterprise_architecture": "qwen3-coder-cloud",
+    "tool_calling": "qwen3-coder",
+    "function_calling": "qwen3-coder",
+    "state_of_art_embedding": "qwen3-embed",
+    "multilingual_embedding": "qwen3-embed",
+    "high_accuracy_search": "qwen3-embed",
+    "mixture_of_experts": "kimi-k2-cloud",
+    "state_of_art_reasoning": "kimi-k2-cloud",
+    "complex_problem_solving": "kimi-k2-cloud",
+    "large_context_analysis": "kimi-k2-cloud",
+    "advanced_coding_tasks": "kimi-k2-cloud",
     "default": "deepseek-coder"
   },
   "hybrid_routing": {
     "mlx_conjunction": {
       "embedding_primary": "mlx:qwen3-4b",
-      "embedding_verification": "nomic-embed",
+      "embedding_verification": "qwen3-embed",
+      "embedding_fallback": "nomic-embed",
       "rerank_primary": "mlx:qwen3-reranker",
       "chat_lightweight": "mlx:gemma-3-270m",
       "chat_balanced": "mlx:glm-4.5",
       "chat_enterprise": "qwen3-coder-cloud",
+      "chat_tool_calling": "qwen3-coder",
       "vision_tasks": "mlx:qwen2.5-vl"
     },
     "decision_matrix": {
       "privacy_required": "mlx_only",
       "context_large": "cloud_primary_mlx_fallback",
       "performance_critical": "mlx_primary_cloud_verification",
-      "enterprise_scale": "cloud_primary_mlx_support"
+      "enterprise_scale": "cloud_primary_mlx_support",
+      "mixture_of_experts_required": "kimi_k2_cloud_primary",
+      "state_of_art_reasoning_required": "kimi_k2_cloud_primary",
+      "trillion_parameter_tasks": "kimi_k2_cloud_exclusive"
     }
   },
   "service_configuration": {

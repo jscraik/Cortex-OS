@@ -111,7 +111,8 @@ model Account {
   userId             String
   provider           String
   providerAccountId  String
-  type               String
+  credentialHash     String?
+  type               String?
   accessToken        String?
   refreshToken       String?
   expiresAt          DateTime?

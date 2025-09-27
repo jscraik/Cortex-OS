@@ -25,7 +25,10 @@ export const SearchResultsEventSchema = z.object({
 	foundAt: z.string(),
 	// Optional chunked context summary
 	contextSummary: z
-		.object({ totalTokens: z.number().int().nonnegative(), files: z.array(z.object({ file: z.string(), tokens: z.number().int().nonnegative() })) })
+		.object({
+			totalTokens: z.number().int().nonnegative(),
+			files: z.array(z.object({ file: z.string(), tokens: z.number().int().nonnegative() })),
+		})
 		.optional(),
 });
 

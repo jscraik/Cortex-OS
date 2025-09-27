@@ -3,12 +3,12 @@
  * @description Registry management for MCP marketplace servers
  */
 
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '@noble/hashes/utils';
+import Fuse, { type FuseResult } from 'fuse.js';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex } from '@noble/hashes/utils';
-import Fuse from 'fuse';
 import type {
 	ApiResponse,
 	RegistryIndex,
@@ -74,7 +74,6 @@ export class MarketplaceRegistry {
 				await this.fetchRegistry();
 			}
 		} catch (error) {
-			// eslint-disable-next-line no-console
 			console.warn('Failed to load from cache, fetching fresh registry:', error);
 			await this.fetchRegistry();
 		}
@@ -114,13 +113,11 @@ export class MarketplaceRegistry {
 			// Cache the registry
 			await this.saveToCache();
 
-			// eslint-disable-next-line no-console
 			console.log(
 				`✅ Registry updated: ${this.registry.serverCount} servers available`,
 				` (checksum: ${this.getRegistryChecksum()})`,
 			);
 		} catch (error) {
-			// eslint-disable-next-line no-console
 			console.error('Failed to fetch registry:', error);
 			throw error;
 		}
@@ -161,7 +158,7 @@ export class MarketplaceRegistry {
 		// Text search using Fuse.js
 		if (request.q && this.searchIndex) {
 			const searchResults = this.searchIndex.search(request.q);
-			results = searchResults.map((result) => result.item);
+			results = searchResults.map((result: FuseResult<ServerManifest>) => result.item);
 		}
 
 		// Category filter

@@ -23,10 +23,7 @@ type AdapterState = {
 		generateChat: (args: { messages: MLXChatMessage[] }) => Promise<MLXChatResponse>;
 	};
 	ollama: {
-		generateChat: (
-			messages: MLXChatMessage[],
-			modelHint: string,
-		) => Promise<MLXChatResponse>;
+		generateChat: (messages: MLXChatMessage[], modelHint: string) => Promise<MLXChatResponse>;
 	};
 };
 

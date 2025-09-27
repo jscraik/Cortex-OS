@@ -10,35 +10,35 @@
 import { createAgentToolkit } from '@cortex-os/agent-toolkit';
 
 async function fixCriticalIssues() {
-  const toolkit = await createAgentToolkit();
+	const toolkit = await createAgentToolkit();
 
-  // Fix 1: Agent Toolkit Export Issues
-  console.log('🔧 Fix 1: Agent Toolkit Export Issues\n');
+	// Fix 1: Agent Toolkit Export Issues
+	console.log('🔧 Fix 1: Agent Toolkit Export Issues\n');
 
-  // Use semgrep to find and fix missing exports
-  await toolkit.semgrep.applyFixes({
-    patterns: [
-      {
-        id: 'add-missing-exports',
-        pattern: 'export class :[className]',
-        fix: {
-          // This would be customized based on actual missing exports
-          context: 'Ensure all required classes are exported from index.ts'
-        }
-      }
-    ],
-    files: ['packages/agent-toolkit/src/index.ts']
-  });
+	// Use semgrep to find and fix missing exports
+	await toolkit.semgrep.applyFixes({
+		patterns: [
+			{
+				id: 'add-missing-exports',
+				pattern: 'export class :[className]',
+				fix: {
+					// This would be customized based on actual missing exports
+					context: 'Ensure all required classes are exported from index.ts',
+				},
+			},
+		],
+		files: ['packages/agent-toolkit/src/index.ts'],
+	});
 
-  // Fix 2: Missing Imports (createId and Database)
-  console.log('🔧 Fix 2: Missing Imports\n');
+	// Fix 2: Missing Imports (createId and Database)
+	console.log('🔧 Fix 2: Missing Imports\n');
 
-  // Target specific files with missing imports
-  const importFixes = await toolkit.codemod.transform({
-    rules: [
-      {
-        name: 'add-createId-import',
-        find: `
+	// Target specific files with missing imports
+	const importFixes = await toolkit.codemod.transform({
+		rules: [
+			{
+				name: 'add-createId-import',
+				find: `
           import { execSync } from 'node:child_process';
           import { mkdirSync, writeFileSync } from 'node:fs';
           import { join } from 'node:path';
@@ -46,7 +46,7 @@ async function fixCriticalIssues() {
           // ... some code ...
           createId(
         `,
-        replace: `
+				replace: `
           import { execSync } from 'node:child_process';
           import { mkdirSync, writeFileSync } from 'node:fs';
           import { join } from 'node:path';
@@ -55,57 +55,53 @@ async function fixCriticalIssues() {
           // ... some code ...
           createId(
         `,
-        where: ['tests/auth/migration-utils.ts']
-      }
-    ]
-  });
+				where: ['tests/auth/migration-utils.ts'],
+			},
+		],
+	});
 
-  // Fix 3: Type Compatibility Issues
-  console.log('🔧 Fix 3: Type Compatibility Issues\n');
+	// Fix 3: Type Compatibility Issues
+	console.log('🔧 Fix 3: Type Compatibility Issues\n');
 
-  // Use type inference to fix compatibility issues
-  await toolkit.types.fixCompatibility({
-    files: ['apps/api/src/**/*.ts'],
-    strategies: [
-      'explicit-type-annotations',
-      'interface-expansion',
-      'generic-constraints'
-    ]
-  });
+	// Use type inference to fix compatibility issues
+	await toolkit.types.fixCompatibility({
+		files: ['apps/api/src/**/*.ts'],
+		strategies: ['explicit-type-annotations', 'interface-expansion', 'generic-constraints'],
+	});
 
-  // Fix 4: MCP Integration Issues
-  console.log('🔧 Fix 4: MCP Integration Issues\n');
+	// Fix 4: MCP Integration Issues
+	console.log('🔧 Fix 4: MCP Integration Issues\n');
 
-  // MCP-specific fixes
-  await toolkit.semgrep.applyFixes({
-    patterns: [
-      {
-        id: 'mcp-client-initialization',
-        pattern: 'new MCPClient(',
-        fix: {
-          prefix: `
+	// MCP-specific fixes
+	await toolkit.semgrep.applyFixes({
+		patterns: [
+			{
+				id: 'mcp-client-initialization',
+				pattern: 'new MCPClient(',
+				fix: {
+					prefix: `
 import { MCPClient } from '@cortex-os/mcp';
 import { createId } from '@cortex-os/a2a-core';
-`
-        }
-      }
-    ],
-    files: ['packages/agent-toolkit/src/**/*.ts']
-  });
+`,
+				},
+			},
+		],
+		files: ['packages/agent-toolkit/src/**/*.ts'],
+	});
 
-  // Fix 5: Cleanup Unused Variables
-  console.log('🔧 Fix 5: Cleanup Unused Variables\n');
+	// Fix 5: Cleanup Unused Variables
+	console.log('🔧 Fix 5: Cleanup Unused Variables\n');
 
-  // Remove unused variables and imports
-  await toolkit.cleanup.removeUnused({
-    files: [
-      'packages/agent-toolkit/src/index.ts',
-      'packages/agent-toolkit/src/semantics/SemanticChunker.ts'
-    ],
-    remove: ['variables', 'imports', 'types']
-  });
+	// Remove unused variables and imports
+	await toolkit.cleanup.removeUnused({
+		files: [
+			'packages/agent-toolkit/src/index.ts',
+			'packages/agent-toolkit/src/semantics/SemanticChunker.ts',
+		],
+		remove: ['variables', 'imports', 'types'],
+	});
 
-  console.log('✅ Critical fixes applied!');
+	console.log('✅ Critical fixes applied!');
 }
 
 // Run the fixes

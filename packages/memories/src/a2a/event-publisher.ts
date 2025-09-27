@@ -1,5 +1,6 @@
 import type { A2AOutboxIntegration } from '@cortex-os/a2a';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { randomUUID } from 'node:crypto';
 import type {
 	A2AEventPublisher,
 	A2AEventPublisherConfig,
@@ -8,9 +9,12 @@ import type {
 	MemoryErrorData,
 	MemoryEvent,
 	MemoryPurgedData,
+	MemoryRealtimeMetricsData,
 	MemorySearchedData,
 	MemoryUpdatedData,
 } from './types.js';
+
+type RetryConfig = Required<NonNullable<A2AEventPublisherConfig['retry']>>;
 
 /**
  * A2A Event Publisher for Memory Events
@@ -20,24 +24,30 @@ import type {
  */
 export class MemoryA2AEventPublisher implements A2AEventPublisher {
 	private outbox?: A2AOutboxIntegration;
-	private config: A2AEventPublisherConfig;
+	private readonly config: A2AEventPublisherConfig;
+	private readonly retryConfig: RetryConfig;
 	private running = false;
 	private eventQueue: MemoryEvent[] = [];
 	private batchTimer?: NodeJS.Timeout;
 
 	constructor(config: A2AEventPublisherConfig) {
+		const { retry, ...restConfig } = config;
+		const retryConfig: RetryConfig = {
+			maxAttempts: 3,
+			baseDelayMs: 100,
+			maxDelayMs: 5000,
+			...(retry ?? {}),
+		};
+
 		this.config = {
 			defaultTopic: 'memories.events',
 			enabled: true,
 			batchSize: 10,
 			batchTimeout: 1000,
-			retry: {
-				maxAttempts: 3,
-				baseDelayMs: 100,
-				maxDelayMs: 5000,
-			},
-			...config,
+			retry: retryConfig,
+			...restConfig,
 		};
+		this.retryConfig = retryConfig;
 	}
 
 	/**
@@ -57,16 +67,17 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 
 		this.eventQueue.push(event);
 
-		if (this.eventQueue.length >= this.config.batchSize!) {
+		const batchSize = this.config.batchSize ?? 10;
+		if (this.eventQueue.length >= batchSize) {
 			await this.flushEvents();
 		} else if (!this.batchTimer) {
-			// Track timer cleanup
-			this.batchTimer = setTimeout(() => {
+			const timeout = this.config.batchTimeout ?? 1000;
+			this.batchTimer ??= setTimeout(() => {
 				this.batchTimer = undefined;
 				this.flushEvents().catch((error) => {
-					console.error('Failed to flush events on timeout:', error);
+					console.error('brAInwav A2A flush failed during timeout:', error);
 				});
-			}, this.config.batchTimeout);
+			}, timeout);
 		}
 	}
 
@@ -80,7 +91,8 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 
 		this.eventQueue.push(...events);
 
-		if (this.eventQueue.length >= this.config.batchSize!) {
+		const batchSize = this.config.batchSize ?? 10;
+		if (this.eventQueue.length >= batchSize) {
 			await this.flushEvents();
 		}
 	}
@@ -157,10 +169,13 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 
 		try {
 			const envelopes = events.map((event) => this.createEnvelope(event));
-
-			await this.withRetry(() => this.outbox?.publishBatch(envelopes));
+			const outbox = this.outbox;
+			if (!outbox) {
+				return;
+			}
+			await this.withRetry(() => outbox.publishBatch(envelopes));
 		} catch (error) {
-			console.error('Failed to publish memory events:', error);
+			console.error('brAInwav A2A memory event publish failed:', error);
 			// Re-queue events for retry - they'll be retried on next flush
 			this.eventQueue.unshift(...events);
 		}
@@ -170,20 +185,28 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 	 * Create an A2A envelope from a memory event
 	 */
 	private createEnvelope(event: MemoryEvent): Envelope {
+		const sanitizedType = event.type.replace(/[^a-zA-Z0-9]/g, '-');
+		const envelopeId = `evt-${sanitizedType}-${randomUUID()}`;
+		const subject = event.subject ?? event.memoryId;
+		const dataschema =
+			event.dataschema ?? 'https://schemas.cortex-os/memories/v1/memory-event.json';
+		const ttlMs = event.ttlMs ?? 30000;
 		return {
-			id: `evt-${event.memoryId}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+			id: envelopeId,
 			type: `memories.${event.type}`,
 			source: this.config.source,
 			specversion: '1.0',
 			time: event.timestamp,
 			datacontenttype: 'application/json',
-			dataschema: 'https://schemas.cortex-os/memories/v1/memory-event.json',
-			subject: event.memoryId,
-			ttlMs: 30000, // 30 seconds TTL
+			dataschema,
+			subject,
+			ttlMs,
 			data: event.data,
 			headers: {
 				'memory-namespace': event.namespace,
 				'event-type': event.type,
+				'brainwav-brand': 'brAInwav',
+				...(event.headers ?? {}),
 			},
 		};
 	}
@@ -192,7 +215,7 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 	 * Execute operation with retry logic
 	 */
 	private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-		const { maxAttempts, baseDelayMs, maxDelayMs } = this.config.retry!;
+		const { maxAttempts, baseDelayMs, maxDelayMs } = this.retryConfig;
 
 		let attempt = 0;
 		let delay = baseDelayMs;
@@ -335,6 +358,26 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 			namespace,
 			timestamp: new Date().toISOString(),
 			data,
+		});
+	}
+
+	/**
+	 * Publish realtime connection metrics snapshot event
+	 */
+	async publishRealtimeMetrics(snapshot: MemoryRealtimeMetricsData): Promise<void> {
+		await this.publishEvent({
+			type: 'memory.realtime.metrics',
+			memoryId: snapshot.snapshotId,
+			namespace: 'metrics',
+			timestamp: snapshot.timestamp,
+			data: snapshot,
+			subject: snapshot.snapshotId,
+			dataschema: 'https://schemas.cortex-os/memories/v1/realtime-metrics-event.json',
+			ttlMs: 60000,
+			headers: {
+				'metrics-source': snapshot.source,
+				'metrics-reason': snapshot.reason,
+			},
 		});
 	}
 }

@@ -13,9 +13,9 @@ export interface ModelRecord {
 }
 
 export class ModelModel {
-	static tableName = 'models';
+	static readonly tableName = 'models';
 
-	static createTableSQL = `
+	static readonly createTableSQL = `
     CREATE TABLE IF NOT EXISTS ${this.tableName} (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,

@@ -1,10 +1,6 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { describe, expect, it } from 'vitest';
-import {
-	createInitialN0State,
-	mergeN0State,
-	type N0Session,
-} from '../src/langgraph/n0-state.js';
+import { createInitialN0State, mergeN0State, type N0Session } from '../src/langgraph/n0-state.js';
 import {
 	agentStateToN0,
 	cortexStateToN0,
@@ -71,10 +67,7 @@ describe('n0 state contracts', () => {
 
 	it('maps cortex agent state into n0 state shape', () => {
 		const cortexState = {
-			messages: [
-				new HumanMessage('Prompt'),
-				new AIMessage('Draft answer'),
-			],
+			messages: [new HumanMessage('Prompt'), new AIMessage('Draft answer')],
 			currentStep: 'drafting',
 			context: { filesTouched: 2 },
 			tools: [{ name: 'agent.write', description: 'Writes files' }],

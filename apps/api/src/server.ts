@@ -17,6 +17,8 @@ const PORT = process.env.PORT || 3001;
 const logger = new StructuredLogger();
 app.locals.logger = logger;
 
+console.error('[brAInwav][api-server] server module initialized');
+
 // Security middleware
 app.use(securityMiddleware);
 

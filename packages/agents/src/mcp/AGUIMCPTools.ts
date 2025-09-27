@@ -118,8 +118,7 @@ export class AGUIMCPTools {
 			execute: async (input: unknown) => {
 				const validInput = CreateUIComponentSchema.parse(input);
 				const componentId =
-					validInput.properties.id ||
-					createPrefixedId(`${validInput.type}-${Date.now()}`);
+					validInput.properties.id || createPrefixedId(`${validInput.type}-${Date.now()}`);
 
 				const component = {
 					id: componentId,

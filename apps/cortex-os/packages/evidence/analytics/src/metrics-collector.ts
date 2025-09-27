@@ -34,6 +34,10 @@ function getMinimalTracer(): MinimalTracer {
 	};
 }
 
+function getErrorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
 import type {
 	AgentMetrics,
 	AgentTrace,
@@ -212,8 +216,9 @@ export class MetricsCollector extends EventEmitter {
 
 			span.setStatus({ code: 'OK' });
 		} catch (error) {
-			this.logger.error('Failed to collect metrics', { error: error.message });
-			span.setStatus({ code: 'ERROR', message: error.message });
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			this.logger.error('Failed to collect metrics', { error: errorMessage });
+			span.setStatus({ code: 'ERROR', message: errorMessage });
 			this.collectionErrors++;
 			throw error;
 		} finally {
@@ -246,7 +251,7 @@ export class MetricsCollector extends EventEmitter {
 			metrics.push(...customMetrics);
 		} catch (error) {
 			this.logger.error('Error collecting agent metrics', {
-				error: error.message,
+				error: getErrorMessage(error),
 			});
 		}
 

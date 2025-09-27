@@ -7,7 +7,7 @@ import type { RestApiAdapter, RestApiConfig } from './types.js';
  * MemoryStore adapter for REST API
  */
 export class RestApiMemoryStore implements MemoryStore {
-	private adapter: RestApiAdapter;
+	private readonly adapter: RestApiAdapter;
 	private readonly namespace: string;
 
 	constructor(configOrAdapter: RestApiConfig | RestApiAdapter, namespace = 'default') {
@@ -18,6 +18,9 @@ export class RestApiMemoryStore implements MemoryStore {
 		} else {
 			this.adapter = new RestApiClient(configOrAdapter);
 		}
+	}
+	list(_namespace?: string, _limit?: number, _offset?: number): Promise<Memory[]> {
+		throw new Error('Method not implemented.');
 	}
 
 	/**
@@ -72,7 +75,7 @@ export class RestApiMemoryStore implements MemoryStore {
 				error &&
 				typeof error === 'object' &&
 				'status' in error &&
-				(error as any).status === 404
+				(error as Record<string, unknown>).status === 404
 			) {
 				const response = await this.adapter.createMemory({
 					memory: {

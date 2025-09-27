@@ -2,6 +2,27 @@
 
 This directory contains the Docusaurus-based documentation website for Cortex-OS.
 
+<!-- markdownlint-disable MD013 -->
+
+## Recent Updates
+
+### Reality Filter Integration
+
+All AI agent documentation has been updated to include Phase 6: Reality Filter, ensuring:
+
+- Enhanced truthfulness verification for all AI outputs
+- Standardized labeling of unverified content across all systems
+- Improved accuracy requirements for LLM behavior claims
+- Consistent brAInwav branding in all AI agent interactions
+
+Updated files include: `AGENTS.md`, `CLAUDE.md`, `QWEN.md`, `GEMINI.md`, `copilot-instructions.md`, and `RULES_OF_AI.md`.
+
+### Prisma Client Hardening
+
+- Documented the 2025-09-27 brAInwav fix that stabilizes the `apps/api` Prisma
+  bootstrap so `pnpm --filter @cortex-os/api build` remains reliable with
+  aligned logging configuration and fallback delegates.
+
 ## Quick Start
 
 ```bash
@@ -119,3 +140,5 @@ When modifying the sync pipeline:
 2. Update the integration test corpus if needed  
 3. Document new sanitization behaviors in this README
 4. Test with both regular sync and dry-run mode
+
+<!-- markdownlint-enable MD013 -->

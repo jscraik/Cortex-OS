@@ -1,181 +1,211 @@
 {
-    "enforcement_config": {
-        "version": "1.0.0",
-        "description": "brAInwav Cortex-OS Hybrid Model Enforcement Configuration for MLX + Ollama v0.12.0 Integration",
-        "author": "brAInwav Development Team",
-        "mlx_first_principle": {
-            "enabled": true,
-            "priority": 100,
-            "description": "MLX models have absolute priority for local execution"
-        },
-        "conjunction_strategy": {
-            "enabled": true,
-            "description": "Use Ollama Cloud models in conjunction with MLX, not just as fallbacks"
-        }
+  "enforcement_config": {
+    "version": "1.0.0",
+    "description": "brAInwav Cortex-OS Hybrid Model Enforcement Configuration for MLX + Ollama v0.12.0 Integration",
+    "author": "brAInwav Development Team",
+    "mlx_first_principle": {
+      "enabled": true,
+      "priority": 100,
+      "description": "MLX models have absolute priority for local execution"
     },
-    "routing_enforcement": {
-        "privacy_mode": {
-            "mlx_only": true,
-            "cloud_disabled": true,
-            "description": "Privacy mode enforces MLX-only routing"
-        },
-        "performance_mode": {
-            "mlx_primary": true,
-            "cloud_verification": true,
-            "description": "Performance mode uses MLX primary with cloud verification"
-        },
-        "enterprise_mode": {
-            "mlx_local": true,
-            "cloud_enhanced": true,
-            "description": "Enterprise mode combines MLX and cloud for maximum capability"
-        }
-    },
-    "model_priorities": {
-        "embedding": {
-            "mlx_qwen3_4b": 100,
-            "mlx_qwen3_8b": 95,
-            "ollama_nomic_embed": 80,
-            "ollama_granite_embed": 75,
-            "cloud_verification": 50
-        },
-        "chat": {
-            "mlx_glm_4_5": 100,
-            "mlx_qwen3_coder_30b": 95,
-            "ollama_deepseek_coder": 90,
-            "ollama_qwen3_coder_30b": 85,
-            "cloud_qwen3_coder_480b": 80,
-            "ollama_gpt_oss_20b": 75,
-            "ollama_phi4_mini": 70
-        },
-        "rerank": {
-            "mlx_qwen3_reranker": 100,
-            "ollama_nomic_embed": 80,
-            "cloud_advanced_reranker": 70
-        },
-        "vision": {
-            "mlx_qwen2_5_vl": 100,
-            "cloud_multimodal": 80
-        }
-    },
-    "conjunction_patterns": {
-        "parallel_verification": {
-            "enabled": true,
-            "use_cases": [
-                "critical_code_review",
-                "architecture_validation",
-                "enterprise_decisions"
-            ],
-            "implementation": "run_both_mlx_and_cloud_compare_results"
-        },
-        "sequential_enhancement": {
-            "enabled": true,
-            "use_cases": [
-                "complex_refactoring",
-                "performance_optimization",
-                "large_context_analysis"
-            ],
-            "implementation": "mlx_generates_cloud_refines"
-        },
-        "specialized_delegation": {
-            "enabled": true,
-            "use_cases": [
-                "massive_context",
-                "enterprise_architecture",
-                "repository_scale"
-            ],
-            "implementation": "route_by_context_size_and_complexity"
-        },
-        "consensus_voting": {
-            "enabled": true,
-            "use_cases": [
-                "critical_decisions",
-                "production_deployments",
-                "security_reviews"
-            ],
-            "implementation": "multiple_models_vote_on_outcome"
-        }
-    },
-    "deployment_enforcement": {
-        "required_models": {
-            "mlx": [
-                "glm-4.5",
-                "qwen3-coder-30b",
-                "qwen2.5-vl",
-                "qwen3-embedding-4b",
-                "qwen3-reranker-4b",
-                "gemma-3-270m",
-                "smollm-135m"
-            ],
-            "ollama": [
-                "deepseek-coder:6.7b",
-                "qwen3-coder:30b",
-                "gpt-oss:20b",
-                "phi4-mini-reasoning",
-                "gemma3n:e4b",
-                "nomic-embed-text:v1.5",
-                "granite-embedding:278m"
-            ],
-            "ollama_cloud": [
-                "qwen3-coder:480b-cloud",
-                "gpt-oss:120b-cloud",
-                "deepseek-v3.1:671b-cloud"
-            ]
-        },
-        "health_checks": {
-            "mlx_service": "http://localhost:8081/health",
-            "ollama_service": "http://localhost:11434/api/tags",
-            "model_gateway": "http://localhost:8080/health"
-        },
-        "fallback_chains": {
-            "embedding": [
-                "mlx:qwen3-4b",
-                "mlx:qwen3-8b",
-                "ollama:nomic-embed-text",
-                "ollama:granite-embedding"
-            ],
-            "chat": [
-                "mlx:glm-4.5",
-                "mlx:qwen3-coder-30b",
-                "ollama:deepseek-coder",
-                "ollama:qwen3-coder",
-                "cloud:qwen3-coder-480b"
-            ],
-            "rerank": [
-                "mlx:qwen3-reranker",
-                "ollama:nomic-embed-text"
-            ],
-            "vision": [
-                "mlx:qwen2.5-vl"
-            ]
-        }
-    },
-    "configuration_files": {
-        "mlx_models": "/Users/jamiecraik/.Cortex-OS/config/mlx-models.json",
-        "ollama_models": "/Users/jamiecraik/.Cortex-OS/config/ollama-models.json",
-        "hybrid_strategy": "/Users/jamiecraik/.Cortex-OS/config/hybrid-model-strategy.json",
-        "enforcement_config": "/Users/jamiecraik/.Cortex-OS/config/hybrid-model-enforcement.json"
-    },
-    "branding": {
-        "company": "brAInwav",
-        "system_logs_prefix": "brAInwav Cortex-OS:",
-        "commit_attribution": "Co-authored-by: brAInwav Development Team"
-    },
-    "enforcement_rules": {
-        "mandatory_mlx_first": {
-            "enabled": true,
-            "description": "All model routing MUST prioritize MLX models first"
-        },
-        "privacy_mode_enforcement": {
-            "enabled": true,
-            "description": "Privacy mode MUST disable all non-MLX providers"
-        },
-        "cloud_conjunction_only": {
-            "enabled": true,
-            "description": "Cloud models are used in conjunction, not as simple fallbacks"
-        },
-        "deployment_readiness": {
-            "enabled": true,
-            "description": "All configurations must be deployment-ready"
-        }
+    "conjunction_strategy": {
+      "enabled": true,
+      "description": "Use Ollama Cloud models in conjunction with MLX, not just as fallbacks"
     }
+  },
+  "routing_enforcement": {
+    "privacy_mode": {
+      "mlx_only": true,
+      "cloud_disabled": true,
+      "description": "Privacy mode enforces MLX-only routing"
+    },
+    "performance_mode": {
+      "mlx_primary": true,
+      "cloud_verification": true,
+      "description": "Performance mode uses MLX primary with cloud verification"
+    },
+    "enterprise_mode": {
+      "mlx_local": true,
+      "cloud_enhanced": true,
+      "description": "Enterprise mode combines MLX and cloud for maximum capability"
+    }
+  },
+  "model_priorities": {
+    "embedding": {
+      "qwen3_embedding_ollama": 100,
+      "mlx_qwen3_4b": 95,
+      "mlx_qwen3_8b": 90,
+      "ollama_nomic_embed": 80,
+      "ollama_granite_embed": 75,
+      "cloud_verification": 50
+    },
+    "chat": {
+      "mlx_glm_4_5": 100,
+      "mlx_qwen3_coder_30b": 95,
+      "ollama_qwen3_coder_30b_tool_calling": 92,
+      "ollama_deepseek_coder": 90,
+      "ollama_qwen3_coder_30b": 85,
+      "cloud_qwen3_coder_480b": 80,
+      "ollama_gpt_oss_20b": 75,
+      "ollama_phi4_mini": 70
+    },
+    "mixture_of_experts": {
+      "kimi_k2_1t_cloud": 100,
+      "qwen3_coder_480b_cloud": 95,
+      "mlx_qwen3_coder_30b": 90
+    },
+    "tool_calling": {
+      "ollama_qwen3_coder_30b": 100,
+      "mlx_qwen3_coder_30b": 95,
+      "cloud_qwen3_coder_480b": 90
+    },
+    "rerank": {
+      "mlx_qwen3_reranker": 100,
+      "ollama_nomic_embed": 80,
+      "cloud_advanced_reranker": 70
+    },
+    "vision": {
+      "mlx_qwen2_5_vl": 100,
+      "cloud_multimodal": 80
+    }
+  },
+  "conjunction_patterns": {
+    "parallel_verification": {
+      "enabled": true,
+      "use_cases": [
+        "critical_code_review",
+        "architecture_validation",
+        "enterprise_decisions"
+      ],
+      "implementation": "run_both_mlx_and_cloud_compare_results"
+    },
+    "sequential_enhancement": {
+      "enabled": true,
+      "use_cases": [
+        "complex_refactoring",
+        "performance_optimization",
+        "large_context_analysis"
+      ],
+      "implementation": "mlx_generates_cloud_refines"
+    },
+    "specialized_delegation": {
+      "enabled": true,
+      "use_cases": [
+        "massive_context",
+        "enterprise_architecture",
+        "repository_scale"
+      ],
+      "implementation": "route_by_context_size_and_complexity"
+    },
+    "consensus_voting": {
+      "enabled": true,
+      "use_cases": [
+        "critical_decisions",
+        "production_deployments",
+        "security_reviews"
+      ],
+      "implementation": "multiple_models_vote_on_outcome"
+    }
+  },
+  "deployment_enforcement": {
+    "required_models": {
+      "mlx": [
+        "glm-4.5",
+        "qwen3-coder-30b",
+        "qwen2.5-vl",
+        "qwen3-embedding-4b",
+        "qwen3-reranker-4b",
+        "gemma-3-270m",
+        "smollm-135m"
+      ],
+      "ollama": [
+        "deepseek-coder:6.7b",
+        "qwen3-coder:30b",
+        "qwen3-embedding:latest",
+        "gpt-oss:20b",
+        "phi4-mini-reasoning",
+        "gemma3n:e4b",
+        "nomic-embed-text:v1.5",
+        "granite-embedding:278m"
+      ],
+      "ollama_cloud": [
+        "kimi-k2:1t-cloud",
+        "qwen3-coder:480b-cloud",
+        "gpt-oss:120b-cloud",
+        "deepseek-v3.1:671b-cloud"
+      ]
+    },
+    "health_checks": {
+      "mlx_service": "http://localhost:8081/health",
+      "ollama_service": "http://localhost:11434/api/tags",
+      "model_gateway": "http://localhost:8080/health"
+    },
+    "fallback_chains": {
+      "embedding": [
+        "ollama:qwen3-embedding",
+        "mlx:qwen3-4b",
+        "mlx:qwen3-8b",
+        "ollama:nomic-embed-text",
+        "ollama:granite-embedding"
+      ],
+      "chat": [
+        "mlx:glm-4.5",
+        "mlx:qwen3-coder-30b",
+        "ollama:deepseek-coder",
+        "ollama:qwen3-coder",
+        "cloud:qwen3-coder-480b"
+      ],
+      "rerank": [
+        "mlx:qwen3-reranker",
+        "ollama:nomic-embed-text"
+      ],
+      "mixture_of_experts": [
+        "cloud:kimi-k2:1t-cloud",
+        "cloud:qwen3-coder:480b-cloud",
+        "mlx:qwen3-coder-30b"
+      ],
+      "tool_calling": [
+        "ollama:qwen3-coder:30b",
+        "mlx:qwen3-coder-30b",
+        "cloud:qwen3-coder-480b"
+      ],
+      "mixture_of_experts": [
+        "cloud:kimi-k2:1t-cloud",
+        "cloud:qwen3-coder:480b-cloud",
+        "mlx:qwen3-coder-30b"
+      ],
+      "vision": [
+        "mlx:qwen2.5-vl"
+      ]
+    }
+  },
+  "configuration_files": {
+    "mlx_models": "/Users/jamiecraik/.Cortex-OS/config/mlx-models.json",
+    "ollama_models": "/Users/jamiecraik/.Cortex-OS/config/ollama-models.json",
+    "hybrid_strategy": "/Users/jamiecraik/.Cortex-OS/config/hybrid-model-strategy.json",
+    "enforcement_config": "/Users/jamiecraik/.Cortex-OS/config/hybrid-model-enforcement.json"
+  },
+  "branding": {
+    "company": "brAInwav",
+    "system_logs_prefix": "brAInwav Cortex-OS:",
+    "commit_attribution": "Co-authored-by: brAInwav Development Team"
+  },
+  "enforcement_rules": {
+    "mandatory_mlx_first": {
+      "enabled": true,
+      "description": "All model routing MUST prioritize MLX models first"
+    },
+    "privacy_mode_enforcement": {
+      "enabled": true,
+      "description": "Privacy mode MUST disable all non-MLX providers"
+    },
+    "cloud_conjunction_only": {
+      "enabled": true,
+      "description": "Cloud models are used in conjunction, not as simple fallbacks"
+    },
+    "deployment_readiness": {
+      "enabled": true,
+      "description": "All configurations must be deployment-ready"
+    }
+  }
 }

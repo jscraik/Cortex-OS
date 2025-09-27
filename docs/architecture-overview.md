@@ -70,7 +70,7 @@ For the full detailed diagram and extended explanation see
 | -------------------- | ------------------------------------------- |
 | Import Boundaries    | ESLint rules + Nx project graph constraints |
 | Contract Consistency | Schema validation in CI (.cortex checks)    |
-| Coverage Thresholds  | 90% enforced in test pipeline               |
+| Coverage Thresholds  | 90% global / 95% lines enforced in test pipeline |
 | Security             | `pnpm security:scan` (Semgrep profiles)     |
 | Structure Validation | `pnpm structure:validate` custom governance |
 

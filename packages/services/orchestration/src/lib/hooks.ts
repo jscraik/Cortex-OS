@@ -204,7 +204,7 @@ export class HookManager {
 				await hook(ctx);
 			} catch (error) {
 				// Log hook errors but don't fail the workflow
-				console.warn(`Hook execution failed for step ${ctx.stepId}:`, error);
+				console.warn(`brAInwav hook execution failed for step ${ctx.stepId}:`, error);
 			}
 		}
 	}
@@ -220,7 +220,10 @@ export class HookManager {
 				await hook(ctx);
 			} catch (error) {
 				// Log hook errors but don't fail the workflow
-				console.warn(`Workflow hook execution failed for workflow ${ctx.workflowId}:`, error);
+				console.warn(
+					`brAInwav workflow hook execution failed for workflow ${ctx.workflowId}:`,
+					error,
+				);
 			}
 		}
 	}
@@ -257,29 +260,32 @@ export class HookManager {
 export const commonHooks = {
 	// Logging hooks
 	logStepStart: (ctx: HookContext) => {
-		console.warn(`Starting step: ${ctx.stepId}`, ctx.metadata);
+		const metadata = { brand: 'brAInwav', ...(ctx.metadata ?? {}) };
+		console.warn(`brAInwav starting step: ${ctx.stepId}`, metadata);
 	},
 
 	logStepComplete: (ctx: HookContext) => {
-		console.warn(`Completed step: ${ctx.stepId}`, ctx.metadata);
+		const metadata = { brand: 'brAInwav', ...(ctx.metadata ?? {}) };
+		console.warn(`brAInwav completed step: ${ctx.stepId}`, metadata);
 	},
 
 	logStepError: (ctx: HookContext) => {
-		console.error(`Error in step: ${ctx.stepId}`, ctx.metadata);
+		const metadata = { brand: 'brAInwav', ...(ctx.metadata ?? {}) };
+		console.error(`brAInwav error in step: ${ctx.stepId}`, metadata);
 	},
 
 	// Metrics hooks
 	recordStepMetrics: (ctx: HookContext) => {
 		// Implementation would integrate with actual metrics system
 		const timestamp = Date.now();
-		console.warn(`Metrics: step=${ctx.stepId}, timestamp=${timestamp}`);
+		console.warn(`brAInwav metrics: step=${ctx.stepId}, timestamp=${timestamp}`);
 	},
 
 	// Validation hooks
 	validateStepPreconditions: (ctx: HookContext) => {
 		// Custom validation logic would go here
 		if (ctx.signal?.aborted) {
-			throw new Error(`Step ${ctx.stepId} aborted during precondition check`);
+			throw new Error(`brAInwav step ${ctx.stepId} aborted during precondition check`);
 		}
 	},
 };

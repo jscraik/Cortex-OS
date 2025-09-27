@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { demonstrateManualValidation, runSchemaRegistryExample } from '../schema-registry-example.js';
+import {
+	demonstrateManualValidation,
+	runSchemaRegistryExample,
+} from '../schema-registry-example.js';
 
 // Mock the logger
 const mockLogger = {

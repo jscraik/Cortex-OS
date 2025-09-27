@@ -19,7 +19,7 @@ export class ToolExecutorUseCase implements ToolExecutor {
 	constructor(
 		private readonly toolRegistry: ToolRegistry,
 		private readonly events?: ToolExecutionEvents,
-	) { }
+	) {}
 
 	async execute(toolName: string, inputs: AgentToolkitInput): Promise<AgentToolkitResult> {
 		const context: ToolExecutionContext = {
@@ -98,7 +98,7 @@ export class ToolExecutorUseCase implements ToolExecutor {
  * Use case for batch operations
  */
 export class BatchToolExecutorUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) { }
+	constructor(private readonly toolExecutor: ToolExecutor) {}
 
 	/**
 	 * Execute multiple tools in parallel
@@ -131,7 +131,7 @@ export class BatchToolExecutorUseCase {
  * Specialized use case for code search operations
  */
 export class CodeSearchUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) { }
+	constructor(private readonly toolExecutor: ToolExecutor) {}
 
 	/**
 	 * Multi-tool search: searches using ripgrep, semgrep, and ast-grep
@@ -190,9 +190,12 @@ export class CodeSearchUseCase {
 		pattern: string,
 		path: string,
 		opts?: {
-			tokenBudget?: { maxTokens: number; trimToTokens?: number }; useTreeSitter?: boolean;
-			maxChunkChars?: number; overlap?: number; language?: 'js' | 'ts' | 'python' | 'go' | 'any'
-		}
+			tokenBudget?: { maxTokens: number; trimToTokens?: number };
+			useTreeSitter?: boolean;
+			maxChunkChars?: number;
+			overlap?: number;
+			language?: 'js' | 'ts' | 'python' | 'go' | 'any';
+		},
 	): Promise<{
 		ripgrep: AgentToolkitResult;
 		semgrep: AgentToolkitResult;
@@ -219,7 +222,7 @@ export class CodeSearchUseCase {
  * Specialized use case for code quality operations
  */
 export class CodeQualityUseCase {
-	constructor(private readonly toolExecutor: ToolExecutor) { }
+	constructor(private readonly toolExecutor: ToolExecutor) {}
 
 	/**
 	 * Comprehensive validation of a set of files
@@ -240,7 +243,9 @@ export class CodeQualityUseCase {
 		let totalIssues = 0;
 
 		// Categorize files by type
-		const jsFiles = files.filter((f) => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.js') || f.endsWith('.jsx'));
+		const jsFiles = files.filter(
+			(f) => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.js') || f.endsWith('.jsx'),
+		);
 		const pyFiles = files.filter((f) => f.endsWith('.py'));
 		const rsFiles = files.filter((f) => f.endsWith('.rs'));
 
@@ -297,7 +302,11 @@ export class CodeQualityUseCase {
 	 */
 	async validateProjectSmart(
 		files: string[],
-		opts?: { tokenBudget?: { maxTokens: number; trimToTokens?: number }; useTreeSitter?: boolean; maxFiles?: number },
+		opts?: {
+			tokenBudget?: { maxTokens: number; trimToTokens?: number };
+			useTreeSitter?: boolean;
+			maxFiles?: number;
+		},
 	): Promise<{
 		report: Awaited<ReturnType<CodeQualityUseCase['validateProject']>>;
 		context?: Array<{ file: string; totalTokens: number }>;

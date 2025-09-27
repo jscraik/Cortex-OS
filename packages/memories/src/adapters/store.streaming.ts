@@ -1,4 +1,5 @@
-import type { Memory, MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import type { Memory } from '../domain/types.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 export interface ChangeEvent {
 	type: 'create' | 'update' | 'delete';

@@ -1,6 +1,6 @@
 import { createEnvelope } from '@cortex-os/a2a-contracts';
 import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock runtime
 const mockRuntime = {

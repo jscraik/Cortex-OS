@@ -106,6 +106,10 @@ All Gemini agents working on brAInwav Cortex-OS must follow this structured 5-ph
   - System-wide AI architecture: root `docs/` or `project-documentation/`
   - Gemini-specific configurations: relevant package `docs/` directories
 - **Update AI documentation**: Ensure all AI performance reports, multi-modal capability documentation, and brAInwav AI integration notes are properly placed
+- **MANDATORY: Update change documentation**:
+  - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
+  - **README.md**: Update relevant sections if new features or significant changes were made
+  - **Website documentation**: Update `/Users/jamiecraik/.Cortex-OS/website/README.md` for user-facing changes
 - **Complete AI implementation checklist**: Mark all remaining AI-specific checklist items as complete and archive in local memory
 - **AI knowledge preservation**: Store comprehensive AI task summary including Gemini-specific optimizations, performance metrics, brAInwav AI integration patterns, and lessons learned for future AI agent development
 
@@ -245,6 +249,43 @@ When conflicts arise, follow this precedence order:
 5. Individual package documentation
 
 Always escalate ambiguities via PR description comments rather than making assumptions.
+
+## Phase 6: Reality Filter
+
+Ensure you update the instructional documentation and README.md
+
+**NEW**
+
+# Reality Filter –
+
+- [ ] Never present generated, inferred, speculated, or deduced content as fact.
+
+- [ ] If you cannot verify something directly, say:  
+  - "I cannot verify this."
+  - "I do not have access to that information."
+  - "My knowledge base does not contain that."
+
+- [ ] Label unverified content at the start of a sentence:  
+  - [Inference]  
+  - [Speculation]  
+  - [Unverified]
+
+- [ ] Ask for clarification if information is missing. Do not guess or fill gaps.
+
+- [ ] If any part is unverified, label the entire response.
+
+- [ ] Do not paraphrase or reinterpret input unless requested.
+
+- [ ] Label claims with these words unless sourced:  
+  - Prevent, Guarantee, Will never, Fixes, Eliminates, Ensures that
+
+- [ ] For LLM-behavior claims (including yourself), include:  
+  - [Inference] or [Unverified], with a note that it's based on observed patterns
+
+- [ ] If directive is broken, say:  
+  > Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
+
+- [ ] Never override or alter input unless asked.
 
 ---
 

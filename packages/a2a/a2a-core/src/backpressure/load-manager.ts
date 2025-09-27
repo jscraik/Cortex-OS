@@ -41,7 +41,7 @@ export class LoadManager {
 	private circuitBreakerOpen = false;
 	private lastCircuitBreakerOpenTime = 0;
 
-	constructor(private readonly config: BackpressureConfigType) { }
+	constructor(private readonly config: BackpressureConfigType) {}
 
 	async checkBackpressure(currentQueueDepth: number): Promise<void> {
 		const load = this.calculateLoad(currentQueueDepth);

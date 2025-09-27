@@ -324,7 +324,7 @@ describe('commonHooks', () => {
 		};
 
 		expect(() => commonHooks.validateStepPreconditions(context)).toThrow(
-			'Step test-step aborted during precondition check',
+			/brAInwav step test-step aborted during precondition check/,
 		);
 	});
 

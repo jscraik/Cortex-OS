@@ -16,7 +16,11 @@ import {
 	type N0State,
 } from '@cortex-os/orchestration';
 import type { AgentConfig } from './lib/types.js';
-import { createMasterAgentGraph, type MasterAgentGraph, type SubAgentConfig } from './MasterAgent.js';
+import {
+	createMasterAgentGraph,
+	type MasterAgentGraph,
+	type SubAgentConfig,
+} from './MasterAgent.js';
 import type { SecurityCheckResult, StreamChunk } from './types.js';
 
 // Extended state for CortexAgent workflows
@@ -75,10 +79,7 @@ export class CortexAgent extends EventEmitter {
 	/**
 	 * Execute agent workflow with LangGraphJS
 	 */
-	async execute(
-		input: string,
-		options?: ExecuteOptions,
-	): Promise<CortexState> {
+	async execute(input: string, options?: ExecuteOptions): Promise<CortexState> {
 		const initialState: CortexState = {
 			messages: [new HumanMessage({ content: input })],
 			currentStep: 'input_processing',
@@ -104,7 +105,7 @@ export class CortexAgent extends EventEmitter {
 	async executeWithN0(
 		input: string,
 		session: N0Session,
-		options: (ExecuteOptions & { adapter?: N0AdapterOptions }) = {},
+		options: ExecuteOptions & { adapter?: N0AdapterOptions } = {},
 	): Promise<{ cortex: CortexState; n0: N0State }> {
 		const { adapter, ...rest } = options;
 		const cortex = await this.execute(input, rest);
@@ -113,8 +114,8 @@ export class CortexAgent extends EventEmitter {
 	}
 
 	/**
-		* Execute with streaming support
-		*/
+	 * Execute with streaming support
+	 */
 	private async streamExecution(initialState: CortexState): Promise<CortexState> {
 		const streamResult = this.graph.stream(initialState, {
 			streamMode: this.config.streamingMode || 'updates',

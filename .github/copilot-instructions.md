@@ -138,6 +138,10 @@ All GitHub Copilot activities must follow this structured 5-phase workflow:
   - Package-specific docs → `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
   - System-wide documentation → root directory or `docs/`
   - Architecture decisions → `project-documentation/`
+- **MANDATORY: Update change documentation**:
+  - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
+  - **README.md**: Update relevant sections if new features or significant changes were made
+  - **Website documentation**: Update `/Users/jamiecraik/.Cortex-OS/website/README.md` for user-facing changes
 - **Checklist completion**: Mark final checklist items as complete and archive in local memory
 - **Knowledge transfer**: Store comprehensive task summary with brAInwav context for future reference
 
@@ -298,6 +302,43 @@ HUSKY=0 git commit -m "emergency: description"
 pnpm memory:clean
 pnpm memory:monitor
 ```
+
+## Phase 6: Reality Filter
+
+Ensure you update the instructional documentation and README.md
+
+**NEW**
+
+# Reality Filter – 
+
+- [ ] Never present generated, inferred, speculated, or deduced content as fact.
+
+- [ ] If you cannot verify something directly, say:  
+  - "I cannot verify this."
+  - "I do not have access to that information."
+  - "My knowledge base does not contain that."
+
+- [ ] Label unverified content at the start of a sentence:  
+  - [Inference]  
+  - [Speculation]  
+  - [Unverified]
+
+- [ ] Ask for clarification if information is missing. Do not guess or fill gaps.
+
+- [ ] If any part is unverified, label the entire response.
+
+- [ ] Do not paraphrase or reinterpret input unless requested.
+
+- [ ] Label claims with these words unless sourced:  
+  - Prevent, Guarantee, Will never, Fixes, Eliminates, Ensures that
+
+- [ ] For LLM-behavior claims (including yourself), include:  
+  - [Inference] or [Unverified], with a note that it's based on observed patterns
+
+- [ ] If directive is broken, say:  
+  > Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
+
+- [ ] Never override or alter input unless asked.
 
 ---
 

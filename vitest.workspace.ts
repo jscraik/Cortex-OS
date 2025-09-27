@@ -38,6 +38,10 @@ export default defineWorkspace([
 	},
 	{
 		...MEMORY_SAFE_DEFAULTS,
+		extends: 'apps/api/vitest.config.ts',
+	},
+	{
+		...MEMORY_SAFE_DEFAULTS,
 		extends: 'apps/cortex-webui/vitest.config.ts',
 	},
 	{
@@ -94,6 +98,10 @@ export default defineWorkspace([
 	},
 	{
 		...MEMORY_SAFE_DEFAULTS,
+		extends: 'packages/services/orchestration/vitest.config.ts',
+	},
+	{
+		...MEMORY_SAFE_DEFAULTS,
 		extends: 'packages/model-gateway/vitest.config.ts',
 	},
 	{
@@ -123,6 +131,10 @@ export default defineWorkspace([
 	{
 		...MEMORY_SAFE_DEFAULTS,
 		extends: 'simple-tests/vitest.config.ts',
+	},
+	{
+		...MEMORY_SAFE_DEFAULTS,
+		extends: 'tests/vitest.config.ts',
 	},
 	{
 		...MEMORY_SAFE_DEFAULTS,

@@ -12,10 +12,11 @@ describe('RegistryService', () => {
 		const baseDir = mkdtempSync(path.join(os.tmpdir(), 'registry-test-'));
 		const cacheDir = path.join(baseDir, 'cache');
 
-		new RegistryService({ registries: {}, cacheDir, cacheTtl: 1000 });
+		const service = new RegistryService({ registries: {}, cacheDir, cacheTtl: 1000 });
 		await delay(10);
 
 		expect(existsSync(cacheDir)).toBe(true);
+		expect(service).toBeDefined();
 
 		rmSync(baseDir, { recursive: true, force: true });
 	});
@@ -52,7 +53,8 @@ describe('RegistryService', () => {
 		const cachePath = path.join(baseDir, 'registry-test.json');
 		writeFileSync(cachePath, JSON.stringify({ data: {}, timestamp: Date.now() }));
 
-		await (service as unknown).removeFromDisk('test');
+		// @ts-expect-error - Testing private method
+		await service.removeFromDisk('test');
 		expect(existsSync(cachePath)).toBe(false);
 
 		rmSync(baseDir, { recursive: true, force: true });

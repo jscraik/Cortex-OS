@@ -1,3 +1,4 @@
+import type { RealtimeMemoryMetricsSnapshot } from '@cortex-os/contracts';
 import type { Memory } from '../domain/types.js';
 
 /**
@@ -14,6 +15,14 @@ export interface MemoryEvent {
 	timestamp: string;
 	/** Event data */
 	data: unknown;
+	/** Optional CloudEvents subject override */
+	subject?: string;
+	/** Optional dataschema override */
+	dataschema?: string;
+	/** Optional TTL override */
+	ttlMs?: number;
+	/** Additional headers to merge into the envelope */
+	headers?: Record<string, string>;
 }
 
 /**
@@ -25,7 +34,8 @@ export type MemoryEventType =
 	| 'memory.deleted'
 	| 'memory.searched'
 	| 'memory.purged'
-	| 'memory.error';
+	| 'memory.error'
+	| 'memory.realtime.metrics';
 
 /**
  * Memory created event data
@@ -93,6 +103,8 @@ export interface MemoryErrorData {
 	operation: string;
 	context?: Record<string, unknown>;
 }
+
+export type MemoryRealtimeMetricsData = RealtimeMemoryMetricsSnapshot;
 
 /**
  * A2A event publisher configuration

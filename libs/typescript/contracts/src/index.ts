@@ -81,6 +81,7 @@ export * from './gateway-events.js';
 export * from './kernel-events.js';
 export * from './mcp-events.js';
 export * from './memory-events.js';
+export * from './memory-realtime.js';
 export * from './model-gateway-events.js';
 export * from './observability-events.js';
 // nO Intelligence Scheduler contracts (used by orchestration tests)

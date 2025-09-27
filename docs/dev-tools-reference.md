@@ -58,6 +58,9 @@ pnpm run dev:orbstack:min     # Minimal environment
 pnpm run dev:orbstack:web     # Web-only environment
 pnpm run dev:orbstack:down    # Stop all containers
 pnpm run dev:orbstack:logs    # View container logs
+
+# Health checks
+./scripts/verify-hybrid-env.sh --json  # brAInwav OrbStack verification
 ```
 
 ---

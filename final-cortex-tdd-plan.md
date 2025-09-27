@@ -52,13 +52,13 @@
    - **Validation note (2025-09-26)**: TypeScript gate for `apps/api` now passes with real adapters and no placeholder exports; future changes must keep `pnpm exec tsc --noEmit` clean before proceeding.
 2. `apps/api/tests/auth/persistence.spec.ts`
    - Use `better-auth` test harness with Dockerized Postgres (via TestContainers) to verify user/session data persists across process restart.
-   - **Status update (2025-09-26, afternoon)**: Persistence spec scaffolded with TestContainers + Postgres flow; legacy Jasmine-style file now delegates to the new Vitest suite. Test currently skips when Docker runtime is unavailable—next action is to bring the container runtime online, watch the test fail against the in-memory adapter, then wire the Prisma persistence layer to turn it green.
+   - **Status update (2025-09-27, morning)**: TestContainers now spins up Postgres successfully under OrbStack, the Better Auth Express bridge runs against the official Prisma adapter, and the Vitest suite passes end-to-end. Assertions accept the provider’s 200/201 response variance and tolerate token returns at either the session or root level, guaranteeing the persistence regression remains covered each run.
 3. `apps/api/tests/auth/features.spec.ts`
    - Validate profile update, session revoke, 2FA enrollment, and passkey registration hit real database tables and return audit entries.
 
 ### Implementation pairing — API Server & Auth Hardening
 
-- Replace in-memory adapter with Prisma Postgres adapter (`packages/auth-prisma`).
+- Replace in-memory adapter with Prisma Postgres adapter (`packages/auth-prisma`), now wrapping Better Auth's official Prisma integration with brAInwav diagnostics.
 - Implement REST modules under `apps/api/src/routes/api/v1/*.ts` with Zod schemas + service layer.
 - Wire Better Auth plugins (2FA, passkeys) backed by DB tables.
 - Source task/agent payloads from Prisma `Task`/`User` models and surface live metrics via existing telemetry collectors (queue depth, placeholder detector counts).

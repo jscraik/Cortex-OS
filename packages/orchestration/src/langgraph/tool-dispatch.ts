@@ -3,10 +3,7 @@ import { runSpool, type SpoolResult, type SpoolTask } from './spool.js';
 import type { N0Budget, N0Session } from './n0-state.js';
 
 export interface ToolDispatchHooks {
-	run: (
-		event: 'PreToolUse' | 'PostToolUse',
-		ctx: Record<string, unknown>,
-	) => Promise<HookResult[]>;
+	run: (event: 'PreToolUse' | 'PostToolUse', ctx: Record<string, unknown>) => Promise<HookResult[]>;
 }
 
 export interface ToolDispatchJob<T = unknown> {
@@ -131,7 +128,10 @@ async function handleSettled<T>(
 		const enriched = enrichResult(job, settled);
 		results[job.index] = enriched;
 		if (opts.hooks && settled.started) {
-			await opts.hooks.run('PostToolUse', buildHookCtx(jobToDispatch(job), opts.session, job.input, 'PostToolUse'));
+			await opts.hooks.run(
+				'PostToolUse',
+				buildHookCtx(jobToDispatch(job), opts.session, job.input, 'PostToolUse'),
+			);
 		}
 	}
 }

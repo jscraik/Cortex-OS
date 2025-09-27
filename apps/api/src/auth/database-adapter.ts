@@ -1,248 +1,133 @@
-import { randomUUID } from 'node:crypto';
+import { prismaAdapter as createPrismaAdapter } from 'better-auth/adapters/prisma';
+import { execFile } from 'node:child_process';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+import { prisma } from '../db/prisma-client.js';
 
-type ModelRecord = {
-	id: string;
-	createdAt: Date;
-	updatedAt: Date;
-} & Record<string, unknown>;
+const execFileAsync = promisify(execFile);
 
-type ScalarFilter = {
-	readonly equals?: unknown;
-	readonly in?: readonly unknown[];
+type PrismaAdapterFactory = ReturnType<typeof createPrismaAdapter>;
+type PrismaAdapter = ReturnType<PrismaAdapterFactory>;
+
+const resolveWorkspaceRoot = () => {
+	const currentDir = fileURLToPath(new URL('.', import.meta.url));
+	return resolve(currentDir, '../../../..');
 };
 
-type WhereValue = ScalarFilter | string | number | boolean | Date | null | undefined;
-
-type WhereClause = Record<string, WhereValue>;
-
-type CreateArgs = {
-	readonly model: ModelName;
-	readonly data: Record<string, unknown>;
+const resolvePrismaBinary = (workspaceRoot: string) => {
+	const base = join(workspaceRoot, 'node_modules', '.bin', 'prisma');
+	return process.platform === 'win32' ? `${base}.cmd` : base;
 };
 
-type QueryArgs = {
-	readonly model: ModelName;
-	readonly where?: WhereClause;
-};
+const ensureDatabaseSchema = (() => {
+	let initialized = false;
+	return async () => {
+		if (initialized || process.env.CORTEX_SKIP_PRISMA_PUSH === '1') {
+			return;
+		}
 
-type FindUniqueArgs = {
-	readonly model: ModelName;
-	readonly where: WhereClause;
-};
+		const connectionString = process.env.DATABASE_URL;
+		if (!connectionString) {
+			console.warn('[brAInwav][better-auth] DATABASE_URL missing – skipping prisma db push');
+			return;
+		}
 
-type UpdateArgs = {
-	readonly model: ModelName;
-	readonly where: { id: string };
-	readonly data: Record<string, unknown>;
-};
+		const workspaceRoot = resolveWorkspaceRoot();
+		const prismaBinary = resolvePrismaBinary(workspaceRoot);
 
-type DeleteArgs = {
-	readonly model: ModelName;
-	readonly where: { id: string };
-};
-
-type UserCreateInput = {
-	readonly email: string;
-	readonly name?: string | null;
-	readonly image?: string | null;
-};
-
-type SessionCreateInput = {
-	readonly userId: string;
-	readonly token: string;
-	readonly expires: Date;
-};
-
-type AccountCreateInput = {
-	readonly userId: string;
-	readonly provider: string;
-	readonly providerAccountId: string;
-};
-
-type VerificationCreateInput = {
-	readonly identifier: string;
-	readonly token: string;
-	readonly expires: Date;
-	readonly type: string;
-};
-
-type ModelStoreMap = {
-	readonly user: Map<string, ModelRecord>;
-	readonly session: Map<string, ModelRecord>;
-	readonly account: Map<string, ModelRecord>;
-	readonly verification: Map<string, ModelRecord>;
-};
-
-type ModelName = keyof ModelStoreMap;
-
-type AdapterClient = {
-	readonly create: (args: CreateArgs) => Promise<ModelRecord>;
-	readonly findMany: (args: QueryArgs) => Promise<ModelRecord[]>;
-	readonly findUnique: (args: FindUniqueArgs) => Promise<ModelRecord | null>;
-	readonly update: (args: UpdateArgs) => Promise<ModelRecord | null>;
-	readonly delete: (args: DeleteArgs) => Promise<ModelRecord | null>;
-	readonly createUser: (data: UserCreateInput) => Promise<ModelRecord>;
-	readonly createSession: (data: SessionCreateInput) => Promise<ModelRecord>;
-	readonly createAccount: (data: AccountCreateInput) => Promise<ModelRecord>;
-	readonly createVerification: (data: VerificationCreateInput) => Promise<ModelRecord>;
-};
-
-// In-memory storage for demonstration
-// In production, this should be replaced with a real database
-class InMemoryDatabase implements AdapterClient {
-	private readonly stores: ModelStoreMap = {
-		user: new Map(),
-		session: new Map(),
-		account: new Map(),
-		verification: new Map(),
+		try {
+			const result = await execFileAsync(
+				prismaBinary,
+				['db', 'push', '--schema', './prisma/schema.prisma'],
+				{
+					cwd: workspaceRoot,
+					env: {
+						...process.env,
+						DATABASE_URL: connectionString,
+					},
+				},
+			);
+			console.error('[brAInwav][better-auth] prisma db push completed', {
+				stdout: result.stdout,
+				stderr: result.stderr,
+			});
+			initialized = true;
+		} catch (error) {
+			console.error('[brAInwav][better-auth] prisma db push failed', { error });
+			throw error;
+		}
 	};
+})();
 
-	private getStore(model: ModelName) {
-		return this.stores[model];
+await ensureDatabaseSchema();
+
+const enablePrismaDebug = process.env.BRAINWAV_DEBUG_AUTH === '1';
+
+const prismaFactory = createPrismaAdapter(prisma, {
+	provider: 'postgresql',
+	transaction: true,
+	debugLogs: enablePrismaDebug ? true : undefined,
+});
+
+const formatAdapterError = (error: unknown) => {
+	if (error instanceof Error) {
+		return {
+			name: error.name,
+			message: error.message,
+			stack: error.stack,
+		};
 	}
 
-	private static isScalarFilter(value: unknown): value is ScalarFilter {
-		if (typeof value !== 'object' || value === null) {
-			return false;
-		}
+	return { value: error };
+};
 
-		const candidate = value as Record<string, unknown>;
-		return 'equals' in candidate || 'in' in candidate;
-	}
+const captureAdapterFailure = (phase: string, error: unknown, meta?: Record<string, unknown>) => {
+	const payload = {
+		phase,
+		error: formatAdapterError(error),
+		meta,
+	};
+	(globalThis as Record<string, unknown>).__brAInwavBetterAuthAdapterFailure = payload;
+	console.error('[brAInwav][better-auth] adapter failure captured', payload);
+};
 
-	private static matchesWhere(record: ModelRecord, where?: WhereClause) {
-		if (!where) {
-			return true;
-		}
-
-		return Object.entries(where).every(([key, condition]) => {
-			const value = record[key];
-
-			if (InMemoryDatabase.isScalarFilter(condition)) {
-				if (condition.equals !== undefined && value !== condition.equals) {
-					return false;
-				}
-
-				if (Array.isArray(condition.in) && !condition.in.includes(value)) {
-					return false;
-				}
-
-				return true;
+const wrapAdapter = (adapter: PrismaAdapter): PrismaAdapter => {
+	const handler: ProxyHandler<PrismaAdapter> = {
+		get(target, prop, receiver) {
+			const value = Reflect.get(target, prop, receiver);
+			if (typeof value !== 'function') {
+				return value;
 			}
 
-			return value === condition;
-		});
-	}
+			return async (...args: unknown[]) => {
+				try {
+					return await Reflect.apply(value, target, args);
+				} catch (error) {
+					captureAdapterFailure('method', error, {
+						operation: String(prop),
+						args,
+					});
+					throw error;
+				}
+			};
+		},
+	};
 
-	async create(args: CreateArgs): Promise<ModelRecord> {
-		const id = randomUUID();
-		const record: ModelRecord = {
-			id,
-			...args.data,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		};
+	return new Proxy(adapter, handler);
+};
 
-		this.getStore(args.model).set(id, record);
-		return record;
-	}
-
-	async findMany(args: QueryArgs): Promise<ModelRecord[]> {
-		const records = Array.from(this.getStore(args.model).values());
-		return records.filter((record) => InMemoryDatabase.matchesWhere(record, args.where));
-	}
-
-	async findUnique(args: FindUniqueArgs): Promise<ModelRecord | null> {
-		const records = await this.findMany(args);
-		return records[0] ?? null;
-	}
-
-	async update(args: UpdateArgs): Promise<ModelRecord | null> {
-		const store = this.getStore(args.model);
-		const existing = store.get(args.where.id);
-
-		if (!existing) {
-			return null;
+export const createBetterAuthPrismaAdapter = (): PrismaAdapterFactory => {
+	return (options) => {
+		delete (globalThis as Record<string, unknown>).__brAInwavBetterAuthAdapterFailure;
+		try {
+			const adapter = prismaFactory(options);
+			return wrapAdapter(adapter);
+		} catch (error) {
+			captureAdapterFailure('factory', error, {
+				optionKeys: options ? Object.keys(options) : [],
+			});
+			throw error;
 		}
-
-		const updated: ModelRecord = {
-			...existing,
-			...args.data,
-			updatedAt: new Date(),
-		};
-
-		store.set(args.where.id, updated);
-		return updated;
-	}
-
-	async delete(args: DeleteArgs): Promise<ModelRecord | null> {
-		const store = this.getStore(args.model);
-		const existing = store.get(args.where.id);
-
-		if (!existing) {
-			return null;
-		}
-
-		store.delete(args.where.id);
-		return existing;
-	}
-
-	// Helper methods for Better Auth
-	async createUser(data: UserCreateInput) {
-		return this.create({
-			model: 'user',
-			data: {
-				email: data.email,
-				name: data.name,
-				emailVerified: false,
-				image: data.image,
-			},
-		});
-	}
-
-	async createSession(data: SessionCreateInput) {
-		return this.create({
-			model: 'session',
-			data: {
-				userId: data.userId,
-				token: data.token,
-				expires: data.expires,
-			},
-		});
-	}
-
-	async createAccount(data: AccountCreateInput) {
-		return this.create({
-			model: 'account',
-			data: {
-				userId: data.userId,
-				provider: data.provider,
-				providerAccountId: data.providerAccountId,
-			},
-		});
-	}
-
-	async createVerification(data: VerificationCreateInput) {
-		return this.create({
-			model: 'verification',
-			data: {
-				identifier: data.identifier,
-				token: data.token,
-				expires: data.expires,
-				type: data.type,
-			},
-		});
-	}
-}
-
-export class DatabaseAdapter {
-	private readonly db: InMemoryDatabase;
-
-	constructor() {
-		this.db = new InMemoryDatabase();
-	}
-
-	getAdapter(): AdapterClient {
-		return this.db;
-	}
-}
+	};
+};

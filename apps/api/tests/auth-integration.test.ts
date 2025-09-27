@@ -1,6 +1,6 @@
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DatabaseAdapter } from '../src/auth/database-adapter.js';
+import { afterEach, describe, expect, it } from 'vitest';
+import { prisma } from '../src/db/prisma-client.js';
 import { app } from '../src/server.js';
 
 // Mock environment variables
@@ -18,12 +18,6 @@ type SessionSummary = {
 };
 
 describe('Authentication Flow Integration', () => {
-	let dbAdapter: DatabaseAdapter;
-
-	beforeEach(() => {
-		dbAdapter = new DatabaseAdapter();
-	});
-
 	afterEach(async () => {
 		// Clean up test data
 		// In a real implementation, you would clear the test database
@@ -47,13 +41,12 @@ describe('Authentication Flow Integration', () => {
 
 			// 2. Simulate email verification (in test environment)
 			// In a real app, this would be done via email link
-			await dbAdapter.getAdapter().create({
-				model: 'verification',
+			await prisma.verification.create({
 				data: {
 					identifier: 'integration@example.com',
 					token: 'verification-token',
-					expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
 					type: 'email',
+					expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
 				},
 			});
 

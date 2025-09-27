@@ -6,7 +6,7 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { z } from 'zod';
+import { appendFile } from 'node:fs/promises';
 import { createSecureId } from '../lib/secure-random.js';
 import type { Response } from 'express';
 import type { DefaultEventsMap, Server as IOServer, Socket } from 'socket.io';

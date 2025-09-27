@@ -8,10 +8,12 @@ import json
 import logging
 import math
 import os
+import subprocess
 import time
 from typing import Any
 from uuid import uuid4
 
+import httpx  # type: ignore
 from fastmcp import FastMCP  # type: ignore
 from security.input_validation import (
     sanitize_output,
@@ -28,8 +30,10 @@ logger = logging.getLogger(__name__)
 
 server_instructions = (
     "This MCP server provides search and document retrieval capabilities "
-    "for the Cortex-OS knowledge base. Use the search tool to find relevant "
-    "information, then use the fetch tool to retrieve complete content."
+    "for the Cortex-OS knowledge base and Local Memory integration. "
+    "Use the search tool to find relevant information, then use the fetch tool "
+    "to retrieve complete content. Local Memory integration provides persistent "
+    "memory storage and retrieval for ChatGPT conversations."
 )
 
 

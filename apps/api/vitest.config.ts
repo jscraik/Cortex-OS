@@ -6,7 +6,6 @@ import { defineConfig } from 'vitest/config';
 const packageRoot = fileURLToPath(new URL('.', import.meta.url));
 const repoRoot = resolve(packageRoot, '..', '..');
 
-
 const aliasPackages: Array<{ scope: string; pathSegments: string[] }> = [
 	{ scope: 'a2a-contracts', pathSegments: ['packages', 'a2a', 'a2a-contracts'] },
 	{ scope: 'a2a-core', pathSegments: ['packages', 'a2a', 'a2a-core'] },
@@ -41,6 +40,9 @@ export default defineConfig({
 	test: {
 		globals: true,
 		include: ['tests/**/*.{test,spec}.ts'],
+		setupFiles: [resolve(packageRoot, 'tests', 'setup', 'bcrypt-mock.ts')],
+		testTimeout: 120_000,
+		hookTimeout: 120_000,
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json-summary'],

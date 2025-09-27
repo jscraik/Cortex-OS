@@ -4,7 +4,11 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type CompositeModelProvider, createCompositeProvider } from '../composite-provider.js';
+import {
+	type ChatRequest,
+	type CompositeModelProvider,
+	createCompositeProvider,
+} from '../composite-provider.js';
 
 // Mock model selection functions
 vi.mock('../../lib/model-selection', () => ({
@@ -37,30 +41,85 @@ const _createMockProvider = (name: string, available = true) => ({
 	}),
 });
 
+const captureEvents = (
+	emitter: CompositeModelProvider,
+	names: Array<'provider-failed' | 'provider-success' | 'provider-skipped' | 'chat-generated'>,
+) => {
+	const buckets: Record<string, Array<Record<string, unknown>>> = {};
+	for (const name of names) {
+		buckets[name] = [];
+		emitter.on(name, (payload: Record<string, unknown>) => {
+			const bucket = buckets[name];
+			if (bucket) {
+				bucket.push(payload);
+			}
+		});
+	}
+	return buckets;
+};
+
+const getEvents = (
+	events: Record<string, Array<Record<string, unknown>>>,
+	name: 'provider-failed' | 'provider-success' | 'provider-skipped' | 'chat-generated',
+) => events[name] ?? [];
+
+const mockFetchSuccess = (payload: Record<string, unknown>) =>
+	vi.spyOn(globalThis, 'fetch').mockImplementation(
+		async () =>
+			new Response(JSON.stringify(payload), {
+				headers: { 'Content-Type': 'application/json' },
+				status: 200,
+			}),
+	);
+
+const createMockMLXService = () => ({
+	isAvailable: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
+	generateEmbedding: vi
+		.fn<
+			(args: { text: string; model?: string }) => Promise<{ embedding: number[]; model: string }>
+		>()
+		.mockResolvedValue({
+			embedding: [0.1, 0.2, 0.3],
+			model: 'mlx-test',
+		}),
+	generateChat: vi
+		.fn<
+			(args: {
+				messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+				model?: string;
+				max_tokens?: number;
+				temperature?: number;
+			}) => Promise<{ content: string; model: string }>
+		>()
+		.mockResolvedValue({
+			content: 'MLX response',
+			model: 'mlx-test',
+		}),
+	rerank: vi
+		.fn<
+			(
+				query: string,
+				documents: string[],
+				model?: string,
+			) => Promise<{ scores: number[]; model: string }>
+		>()
+		.mockResolvedValue({
+			scores: [0.9, 0.8, 0.7],
+			model: 'mlx-test',
+		}),
+});
+
+type MockMLXService = ReturnType<typeof createMockMLXService>;
+
 describe('CompositeModelProvider', () => {
 	let compositeProvider: CompositeModelProvider;
-	let mockMLXService: any;
-	let _mockEventEmitter: any;
+	let mockMLXService: MockMLXService;
 
 	beforeEach(() => {
 		// Reset all mocks
 		vi.clearAllMocks();
 
-		mockMLXService = {
-			isAvailable: vi.fn().mockResolvedValue(true),
-			generateEmbedding: vi.fn().mockResolvedValue({
-				embedding: [0.1, 0.2, 0.3],
-				model: 'mlx-test',
-			}),
-			generateChat: vi.fn().mockResolvedValue({
-				content: 'MLX response',
-				model: 'mlx-test',
-			}),
-			rerank: vi.fn().mockResolvedValue({
-				scores: [0.9, 0.8, 0.7],
-				model: 'mlx-test',
-			}),
-		};
+		mockMLXService = createMockMLXService();
 	});
 
 	afterEach(() => {
@@ -190,7 +249,7 @@ describe('CompositeModelProvider', () => {
 			await expect(
 				compositeProvider.generateEmbeddings({
 					texts: [], // Invalid: empty array
-				} as any),
+				}),
 			).rejects.toThrow();
 		});
 	});
@@ -222,13 +281,13 @@ describe('CompositeModelProvider', () => {
 			};
 
 			compositeProvider = createCompositeProvider(config);
-			const request = {
+			const request: ChatRequest = {
 				messages: [
 					{ role: 'system', content: 'You are helpful' },
 					{ role: 'user', content: 'Hello' },
 				],
 				model: 'custom-model',
-				task: 'code' as const,
+				task: 'code',
 				maxTokens: 1000,
 				temperature: 0.5,
 			};
@@ -278,6 +337,88 @@ describe('CompositeModelProvider', () => {
 					messageCount: 1,
 				}),
 			);
+		});
+	});
+
+	describe('Fallback behavior', () => {
+		it('should fall back to the next provider when the primary execution fails', async () => {
+			const config = {
+				mlx: { enabled: true, service: mockMLXService, priority: 1 },
+				ollama: { enabled: true, priority: 2 },
+			};
+			mockMLXService.generateChat.mockRejectedValueOnce(
+				new Error('MLX failure for brAInwav fallback'),
+			);
+			compositeProvider = createCompositeProvider(config);
+			const events = captureEvents(compositeProvider, [
+				'provider-failed',
+				'provider-success',
+				'chat-generated',
+			]);
+			const fetchSpy = mockFetchSuccess({
+				response: 'Ollama fallback response with brAInwav context',
+				model: 'llama3.2:3b',
+				prompt_eval_count: 12,
+				eval_count: 4,
+			});
+			const result = await compositeProvider.generateChat({
+				messages: [{ role: 'user', content: 'Hi brAInwav fallback' }],
+			});
+			expect(result.provider).toBe('ollama');
+			expect(fetchSpy).toHaveBeenCalledTimes(1);
+			expect(mockMLXService.generateChat).toHaveBeenCalledTimes(1);
+			const failedEvents = getEvents(events, 'provider-failed');
+			expect(failedEvents).toHaveLength(1);
+			expect(failedEvents[0]).toMatchObject({
+				provider: 'mlx',
+				error: 'MLX failure for brAInwav fallback',
+			});
+			const successEvents = getEvents(events, 'provider-success');
+			expect(successEvents).toHaveLength(1);
+			expect(successEvents[0]).toMatchObject({ provider: 'ollama' });
+			const chatEvents = getEvents(events, 'chat-generated');
+			expect(chatEvents).toHaveLength(1);
+			expect(chatEvents[0]).toMatchObject({
+				provider: 'ollama',
+				attempts: 2,
+				messageCount: 1,
+			});
+		});
+
+		it('should skip unavailable providers and continue the fallback chain', async () => {
+			const config = {
+				ollama: { enabled: true, priority: 1 },
+				mlx: { enabled: true, service: mockMLXService, priority: 2 },
+			};
+			compositeProvider = createCompositeProvider(config);
+			const events = captureEvents(compositeProvider, [
+				'provider-skipped',
+				'provider-success',
+				'chat-generated',
+			]);
+			const [primaryProvider] = compositeProvider.getProviders();
+			vi.spyOn(primaryProvider, 'isAvailable').mockResolvedValue(false);
+			const result = await compositeProvider.generateChat({
+				messages: [{ role: 'user', content: 'Fallback for brAInwav availability' }],
+			});
+			expect(result.provider).toBe('mlx');
+			const skippedEvents = getEvents(events, 'provider-skipped');
+			expect(skippedEvents).toHaveLength(1);
+			expect(skippedEvents[0]).toMatchObject({
+				provider: primaryProvider.name,
+				reason: 'unavailable',
+			});
+			const successEvents = getEvents(events, 'provider-success');
+			expect(successEvents).toHaveLength(1);
+			expect(successEvents[0]).toMatchObject({ provider: 'mlx' });
+			const chatEvents = getEvents(events, 'chat-generated');
+			expect(chatEvents).toHaveLength(1);
+			expect(chatEvents[0]).toMatchObject({
+				provider: 'mlx',
+				attempts: 2,
+				messageCount: 1,
+			});
+			expect(mockMLXService.generateChat).toHaveBeenCalledTimes(1);
 		});
 	});
 

@@ -855,22 +855,30 @@ We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING
 
 ## 📣 Events
 
-This package currently does not emit cross-feature A2A bus events. It exposes internal Node-style events for observability and integrations inside the same process:
+The memories runtime now emits a contract-first realtime metrics snapshot across the brAInwav A2A bus while still exposing local Node-style observability hooks:
 
-- `memory.stored` — emitted after a successful upsert/store
-- `memory.retrieved` — emitted on successful retrieval
-- `policy.violation` — emitted when an operation violates configured policies
+- `memory.stored` — emitted after a successful upsert/store (process-local)
+- `memory.retrieved` — emitted on successful retrieval (process-local)
+- `policy.violation` — emitted when an operation violates configured policies (process-local)
 
-Future cross-boundary communication, if introduced, will follow contract-first rules:
+### `memories.memory.realtime.metrics`
 
-- Contract schemas live under `libs/typescript/contracts` and include Zod validators
+- **Contract**: `RealtimeMemoryMetricsSnapshotSchema` in `libs/typescript/contracts/src/memory-realtime.ts`
+- **Publisher**: `publishRealtimeMetrics` in `packages/memories/src/a2a/event-publisher.ts`, injected into the realtime server
+- **Source**: defaults to `brAInwav.realtime.memory`; envelopes include the required `brainwav-brand: brAInwav`, `metrics-source`, and `metrics-reason` headers
+- **Triggers**: connection lifecycle changes, message ingress/egress, queue churn, and graceful shutdown flushes. Multiple triggers are combined in the `reason` field using pipe separators (for example `connection-established|message-sent`).
+- **Validation Coverage**: contract and integration tests live in `packages/memories/tests/integration/realtime-server.test.ts`, ensuring every snapshot the server publishes is Zod-validated before hitting the bus.
+
+When introducing additional cross-boundary events, follow the established contract-first rules:
+
+- Contract schemas live under `libs/typescript/contracts` with Zod validators
 - Events are published via the A2A bus (see `packages/a2a`)
-- All new fields start optional; breaking changes are versioned (e.g., `event.v2`)
+- All new fields start optional; breaking changes are versioned (for example, `event.v2`)
 - Governance guidelines: `.cortex/rules/RULES_OF_AI.md`
 
-If/when this package begins producing bus events, this section will document:
+For each new event, document:
 
-- Event name and lifecycle (e.g., `memory.item.created`)
+- Event name and lifecycle (for example, `memory.item.created`)
 - Minimal envelope example and required fields
 - Link to the Zod schema and AsyncAPI definition
 - Round-trip contract test path under `contracts/tests/`

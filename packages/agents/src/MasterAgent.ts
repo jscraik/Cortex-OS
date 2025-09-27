@@ -5,12 +5,11 @@
  * Cortex-OS adoption plan and architecture diagram pattern.
  */
 
-import { randomUUID } from 'node:crypto';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import { getHooksSingleton } from '@cortex-os/hooks';
 import {
 	createMLXAdapter,
-	type MLXAdapterApi,
 	createOllamaAdapter,
+	type MLXAdapterApi,
 	type OllamaAdapterApi,
 } from '@cortex-os/model-gateway';
 import {
@@ -23,8 +22,9 @@ import {
 	type ToolDispatchJob,
 	type ToolDispatchResult,
 } from '@cortex-os/orchestration';
-import { getHooksSingleton } from '@cortex-os/hooks';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, MessagesAnnotation, StateGraph } from '@langchain/langgraph';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 // Extended state annotation for agent coordination
@@ -89,8 +89,8 @@ export const createMasterAgentGraph = (config: {
 	};
 
 	/**
-		* Tool Layer - Execute via MCP
-		*/
+	 * Tool Layer - Execute via MCP
+	 */
 	const toolLayer = async (state: AgentState): Promise<AgentState> => {
 		const currentAgent = state.currentAgent;
 		if (!currentAgent) return state;
@@ -111,19 +111,12 @@ export const createMasterAgentGraph = (config: {
 		const hooks = getHooksSingleton();
 		const hookAdapter = hooks
 			? {
-				run: async (
-					event: 'PreToolUse' | 'PostToolUse',
-					ctx: Record<string, unknown>,
-				) => {
-					const hookResults = await hooks.run(event, ctx as any);
-					return hookResults.map((result) => ({
-						action: result.action,
-						input: (result as any).input,
-						note: (result as any).note,
-						reason: (result as any).reason,
-					}));
-				},
-			}
+					run: async (event: 'PreToolUse' | 'PostToolUse', ctx: Record<string, unknown>) => {
+						const hookResults = await hooks.run(event, ctx as any);
+						// Return the results directly since they're already HookResult[]
+						return hookResults;
+					},
+				}
 			: undefined;
 		const dispatchResults = await dispatchTools(jobs, {
 			session,
@@ -151,9 +144,7 @@ export const createMasterAgentGraph = (config: {
 
 	function extractContent(message: AIMessage | HumanMessage | undefined): string {
 		if (!message) return '';
-		return typeof message.content === 'string'
-			? message.content
-			: JSON.stringify(message.content);
+		return typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
 	}
 
 	function createConversation(agent: string, input: string): ConversationMessage[] {

@@ -181,6 +181,10 @@ All Qwen Code agents working on brAInwav Cortex-OS must follow this structured 5
   - Package-specific: `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
   - System-wide: root directory `docs/` or `project-documentation/`
 - **Update documentation**: Ensure all reports, architectural decisions, and implementation notes are properly placed
+- **MANDATORY: Update change documentation**:
+  - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
+  - **README.md**: Update relevant sections if new features or significant changes were made
+  - **Website documentation**: Update `/Users/jamiecraik/.Cortex-OS/website/README.md` for user-facing changes
 - **Complete final checklist**: Mark all remaining checklist items as complete and archive in local memory
 - **Knowledge preservation**: Store comprehensive task summary with technical insights and brAInwav context for future development sessions
 
@@ -397,3 +401,40 @@ Key environment variables for development:
 - Memory usage is monitored and constrained
 - Parallelism is limited to prevent resource exhaustion
 - Use `pnpm memory:clean` to free up resources when needed
+
+## Phase 6: Reality Filter
+
+Ensure you update the instructional documentation and README.md
+
+**NEW**
+
+# Reality Filter –
+
+- [ ] Never present generated, inferred, speculated, or deduced content as fact.
+
+- [ ] If you cannot verify something directly, say:  
+  - "I cannot verify this."
+  - "I do not have access to that information."
+  - "My knowledge base does not contain that."
+
+- [ ] Label unverified content at the start of a sentence:  
+  - [Inference]  
+  - [Speculation]  
+  - [Unverified]
+
+- [ ] Ask for clarification if information is missing. Do not guess or fill gaps.
+
+- [ ] If any part is unverified, label the entire response.
+
+- [ ] Do not paraphrase or reinterpret input unless requested.
+
+- [ ] Label claims with these words unless sourced:  
+  - Prevent, Guarantee, Will never, Fixes, Eliminates, Ensures that
+
+- [ ] For LLM-behavior claims (including yourself), include:  
+  - [Inference] or [Unverified], with a note that it's based on observed patterns
+
+- [ ] If directive is broken, say:  
+  > Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
+
+- [ ] Never override or alter input unless asked.

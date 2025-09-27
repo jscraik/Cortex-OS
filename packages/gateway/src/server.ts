@@ -231,7 +231,11 @@ app.get('/openapi.json', async (_req, reply) => {
 });
 
 // Test-only route to generate a 500 for metrics assertions
-if (process.env.NODE_ENV === 'test' || process.env.GATEWAY_TEST_ROUTES === '1' || process.env.GATEWAY_ALLOW_RAG === '1') {
+if (
+	process.env.NODE_ENV === 'test' ||
+	process.env.GATEWAY_TEST_ROUTES === '1' ||
+	process.env.GATEWAY_ALLOW_RAG === '1'
+) {
 	app.post('/__boom', async () => {
 		throw new Error('kaboom');
 	});

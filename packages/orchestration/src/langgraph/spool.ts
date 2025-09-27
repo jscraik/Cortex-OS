@@ -71,14 +71,14 @@ function initContext<T>(tasks: SpoolTask<T>[], options: SpoolRunOptions): RunCon
 
 function createWorkers<T>(context: RunContext<T>, concurrency: number): Promise<void>[] {
 	const slots = Math.max(1, Math.min(concurrency, context.queue.length || 1));
-	return Array.from({ length: slots }, () => workerLoop(context));
+	return Array.from({ length: slots }, (_value, _index) => workerLoop(context));
 }
 
 async function workerLoop<T>(context: RunContext<T>): Promise<void> {
 	for (;;) {
 		const job = takeNextJob(context);
 		if (!job) return;
-		const result = await executeJob(job, context.options);
+		const result = await executeJob(job);
 		context.results[job.index] = result;
 		context.options.onSettle?.(result);
 	}
@@ -93,12 +93,20 @@ function takeNextJob<T>(context: RunContext<T>): InternalJob<T> | null {
 			continue;
 		}
 		if (context.deadline && Date.now() >= context.deadline) {
-			context.results[job.index] = createSkipped(job, 'timeout', 'brAInwav spool time budget exceeded');
+			context.results[job.index] = createSkipped(
+				job,
+				'timeout',
+				'brAInwav spool time budget exceeded',
+			);
 			context.options.onSettle?.(context.results[job.index]);
 			continue;
 		}
 		if (context.remainingTokens < job.tokens) {
-			context.results[job.index] = createSkipped(job, 'tokens', 'brAInwav spool token budget exhausted');
+			context.results[job.index] = createSkipped(
+				job,
+				'tokens',
+				'brAInwav spool token budget exhausted',
+			);
 			context.options.onSettle?.(context.results[job.index]);
 			continue;
 		}
@@ -109,9 +117,7 @@ function takeNextJob<T>(context: RunContext<T>): InternalJob<T> | null {
 	return null;
 }
 
-async function executeJob<T>(
-	job: InternalJob<T>,
-): Promise<SpoolResult<T>> {
+async function executeJob<T>(job: InternalJob<T>): Promise<SpoolResult<T>> {
 	const startedAt = Date.now();
 	try {
 		const value = await job.task.execute();

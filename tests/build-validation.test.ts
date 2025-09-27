@@ -104,7 +104,12 @@ class BuildValidationSuite {
 			});
 			return { success: true, output: result, exitCode: 0 };
 		} catch (error: unknown) {
-			const errorObj = error as { stdout?: string; stderr?: string; message?: string; status?: number };
+			const errorObj = error as {
+				stdout?: string;
+				stderr?: string;
+				message?: string;
+				status?: number;
+			};
 			return {
 				success: false,
 				output: errorObj.stdout || errorObj.message || '',

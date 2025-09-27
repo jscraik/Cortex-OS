@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { type AgentInfo, buildAgentPrompt, parseAgentSelection } from '../src/lib/agent-selection.js';
+import {
+	type AgentInfo,
+	buildAgentPrompt,
+	parseAgentSelection,
+} from '../src/lib/agent-selection.js';
 
 describe('agent selection helpers', () => {
 	const agents: AgentInfo[] = [

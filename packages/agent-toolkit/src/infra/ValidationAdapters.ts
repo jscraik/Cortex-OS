@@ -21,7 +21,11 @@ export class ESLintAdapter implements ValidationTool {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
 			const cmd = `"${this.scriptPath}" ${filesArgs}`;
-			const { stdout } = await execWithRetry(cmd, { timeoutMs: 45_000, retries: 1, backoffMs: 250 });
+			const { stdout } = await execWithRetry(cmd, {
+				timeoutMs: 45_000,
+				retries: 1,
+				backoffMs: 250,
+			});
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 			if (result.tool !== 'eslint') throw new Error('Unexpected tool result format');
 			return result;
@@ -45,7 +49,11 @@ export class RuffAdapter implements ValidationTool {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
 			const cmd = `"${this.scriptPath}" ${filesArgs}`;
-			const { stdout } = await execWithRetry(cmd, { timeoutMs: 45_000, retries: 1, backoffMs: 250 });
+			const { stdout } = await execWithRetry(cmd, {
+				timeoutMs: 45_000,
+				retries: 1,
+				backoffMs: 250,
+			});
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 			if (result.tool !== 'ruff') throw new Error('Unexpected tool result format');
 			return result;
@@ -67,7 +75,11 @@ export class CargoAdapter implements ValidationTool {
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
-			const { stdout } = await execWithRetry(`"${this.scriptPath}"`, { timeoutMs: 60_000, retries: 1, backoffMs: 300 });
+			const { stdout } = await execWithRetry(`"${this.scriptPath}"`, {
+				timeoutMs: 60_000,
+				retries: 1,
+				backoffMs: 300,
+			});
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 			if (result.tool !== 'cargo') throw new Error('Unexpected tool result format');
 			return result;
@@ -93,7 +105,11 @@ export class MultiValidatorAdapter implements ValidationTool {
 
 		try {
 			await writeFile(tempFile, (inputs.files || []).join('\n'));
-			const { stdout } = await execWithRetry(`"${this.scriptPath}" "${tempFile}"`, { timeoutMs: 60_000, retries: 1, backoffMs: 300 });
+			const { stdout } = await execWithRetry(`"${this.scriptPath}" "${tempFile}"`, {
+				timeoutMs: 60_000,
+				retries: 1,
+				backoffMs: 300,
+			});
 			// Parse result for potential future use
 			JSON.parse(stdout) as {
 				tool: string;

@@ -3,7 +3,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { OptimisticLockError } from '../../src/persistence/errors.js';
-import { type EvidenceRecord, EvidenceRepository } from '../../src/persistence/evidence-repository.js';
+import {
+	type EvidenceRecord,
+	EvidenceRepository,
+} from '../../src/persistence/evidence-repository.js';
 import { ensureDataDir } from '../../src/platform/xdg.js';
 
 const originalTmp = process.env.CORTEX_OS_TMP;

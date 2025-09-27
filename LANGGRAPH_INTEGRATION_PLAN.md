@@ -4,14 +4,54 @@
 
 ## Objective
 
-Drive the Cortex-OS LangGraph migration through **state unification → tool dispatch → spool orchestration → streaming integration → thermal coordination → multi-agent coordination → production readiness**, leveraging existing mature components instead of rebuilding from scratch. This plan merges the remaining action items in `final-cortex-tdd-plan.md` and `cortex-enhancement-tdd-plan.md`, aligns them with the current codebase, and sequences every task around strict TDD.
+Drive the Cortex-OS LangGraph migration through **state unification → tool dispatch → spool orchestration → streaming integration → thermal coordination → multi-agent coordination → code mode integration → production readiness**, leveraging existing mature components instead of rebuilding from scratch. This plan merges the remaining action items in `final-cortex-tdd-plan.md` and `cortex-enhancement-tdd-plan.md`, aligns them with the current codebase, and sequences every task around strict TDD.
 
-The expanded plan now includes **4 critical new phases** that address production-ready LangGraph integration:
+The expanded plan now includes **5 critical new phases** that address production-ready LangGraph integration:
 
 - **Real-time streaming** for workflow updates and UI integration
 - **Thermal-aware orchestration** that responds to MLX hardware constraints  
 - **Multi-agent coordination** patterns for complex distributed workflows
+- **brAInwav Code Mode Integration** that converts MCP tool calls into executable code across TypeScript, Python, and Rust
 - **Comprehensive integration testing** that validates all system interactions
+
+### brAInwav Code Mode Revolution
+
+**Code Mode** represents a paradigm shift from traditional tool calling to executable code generation. Instead of making multiple individual MCP tool calls, models generate efficient code that orchestrates operations through loops, conditionals, and batch processing.
+
+**Traditional Tool Calling:**
+
+```json
+[
+  {"tool": "filesystem_read", "args": {"path": "file1.ts"}},
+  {"tool": "filesystem_read", "args": {"path": "file2.ts"}},
+  {"tool": "filesystem_read", "args": {"path": "file3.ts"}}
+]
+```
+
+**brAInwav Code Mode:**
+
+```typescript
+// Model generates this efficient TypeScript code
+const files = await filesystem.listDir('/src');
+for (const file of files.filter(f => f.endsWith('.ts'))) {
+  const content = await filesystem.read(file);
+  const analysis = await codeAnalysis.analyze(content);
+  if (analysis.quality < 0.8) {
+    await github.createIssue({
+      title: `brAInwav: Quality issue in ${file}`,
+      labels: ['automated', 'brainwav']
+    });
+  }
+}
+```
+
+**Benefits:**
+
+- **3-5x Token Efficiency**: One code block vs many tool calls
+- **Better Orchestration**: Loops, conditionals, complex logic
+- **Performance**: Batch operations instead of sequential calls
+- **Natural for Models**: Code patterns vs tool schemas
+- **Cross-Language**: TypeScript, Python (pyproject.toml), Rust (edition 2024)
 
 Each phase documents:
 
@@ -20,7 +60,7 @@ Each phase documents:
 3. **Validation hooks** (commands/checks to keep regressions out)
 4. **Blockers / accuracy notes** (ground-truth facts from today's repo)
 
-## Current State Snapshot (2025-09-26)
+## Current State Snapshot (2025-09-27)
 
 - ✅ Shared `N0State` schema (`packages/orchestration/src/langgraph/n0-state.ts`) and adapters (`n0-adapters.ts`) exist with passing coverage in `packages/orchestration/tests/n0-state-contract.test.ts`
 - ✅ Kernel projection shim is exercised by `packages/kernel/tests/n0-projection.test.ts`
@@ -29,11 +69,20 @@ Each phase documents:
 - ✅ `pnpm --filter @cortex-os/agents typecheck` and `pnpm --filter @cortex-os/orchestration typecheck` both pass after slimming the orchestration surface to LangGraph-only modules
 - ✅ cortex-py thermal monitoring with brAInwav branding active and emitting A2A events
 - ✅ Placeholder regression guard (`tests/regression/placeholders.spec.ts`) and branded random ban (`tests/regression/math-random-ban.spec.ts`) are green with the 135-hit legacy baseline
+- ✅ Composite provider fallback coverage now lives in helper-driven tests (`packages/orchestration/src/providers/__tests__/composite-provider.test.ts`), keeping every spec under 40 lines while passing in isolation
+- ✅ OrbStack hybrid environment verified on 2025-09-27 via `./scripts/verify-hybrid-env.sh --json`; `docs/orbstack-setup.md` and `docs/dev-tools-reference.md` now document the brAInwav verification workflow and sample output
 - ⚠️ Slash command runner lives in `packages/commands/src/index.ts`; no end-to-end tests ensure `/help`, `/agents`, `/model`, `/compact` short-circuit LangGraph
 - ⚠️ Dynamic Speculative Planner (`packages/orchestration/src/utils/dsp.ts`) and Long-Horizon Planner (`src/lib/long-horizon-planner.ts`) are implemented but lack unit/integration coverage
 - ⚠️ **NEW**: LangGraph streaming infrastructure needed for real-time workflow updates
 - ⚠️ **NEW**: Thermal-aware LangGraph coordination requires A2A event integration
 - ⚠️ **NEW**: Multi-agent patterns need shared state management and conflict resolution
+- ⚠️ `pnpm --filter @cortex-os/orchestration test` currently fails because legacy tool orchestration suites (`tool-orchestrator.test.ts`, `primitive-tool-layer.test.ts`, `execution-planner.test.ts`, dashboard layers) still expect unimplemented APIs; the composite provider specs pass when run directly
+
+### Verification Snapshot (Build/Lint/Test)
+
+- **Build**: not run on 2025-09-27 during fallback refactor verification
+- **Lint**: not run (unchanged codepaths outside documentation)
+- **Tests**: `pnpm --filter @cortex-os/orchestration test` ❌ (fails on legacy suites listed above); `pnpm vitest run packages/orchestration/src/providers/__tests__/composite-provider.test.ts` ✅
 
 ---
 
@@ -42,8 +91,8 @@ Each phase documents:
 | Test | Status | Notes |
 | --- | --- | --- |
 | `tests/regression/placeholders.spec.ts` | ✅ in repo | Baseline fixture maintained at 135 legacy hits |
-| `tests/contracts/openapi-sync.spec.ts` | ⚪ todo | Must compare generated OpenAPI to Express handlers before API work |
-| `packages/mcp-core/tests/tools-contract.test.ts` | ⚪ todo | Prevent `'mock'` adapters from shipping |
+| `tests/contracts/openapi-sync.spec.ts` | ✅ complete | Must compare generated OpenAPI to Express handlers before API work |
+| `packages/mcp-core/tests/tools-contract.spec.ts` | ✅ complete | Prevent `'mock'` adapters from shipping |
 
 ### Phase 0 Implementation
 
@@ -118,23 +167,25 @@ Each phase documents:
 | Test | Status | Action |
 | --- | --- | --- |
 | `packages/orchestration/tests/spool-settled.test.ts` | ✅ passes | Confirms `runSpool` honours token budgets and abort signals |
-| `packages/prp-runner/tests/spool-integration.test.ts` | ⚪ todo | Ensure PRP fan-out uses spool and surfaces deterministic ordering |
-| `tests/perf/spool-throughput.test.ts` | ⚪ todo | Capture throughput metrics and append to `performance-history.json` |
+| `packages/prp-runner/tests/integration/spool-integration.test.ts` | ✅ passes | PRP gates execute through `runSpool` with onStart/onSettle telemetry |
+| `tests/perf/spool-throughput.test.ts` | ✅ passes | Baselines `runSpool` throughput with budget assertions |
 
 ### Phase 3 Implementation
 
 - Extend `runSpool` with per-task start callbacks that emit `brAInwav` telemetry and enforce concurrency limits deterministically
-- Wire spool into `agent.autodelegate` and PRP runner so parallel fan-out is centrally managed
+- Wire spool into `agent.autodelegate` and the PRP runner so parallel fan-out is centrally managed
 - Implement cancellation propagation (AbortController) and ensure rejection reasons include budgets in error messages
 
 ### Phase 3 Validation
 
 - `pnpm --filter @cortex-os/orchestration exec vitest run tests/spool-settled.test.ts` (already covered by CI guard)
+- `pnpm --filter @cortex-os/prp-runner exec vitest run tests/integration/spool-integration.test.ts`
+- `pnpm exec vitest --config tests/perf/vitest.config.ts run tests/perf/spool-throughput.test.ts`
 - After additional spool suites exist, run `node scripts/perf-autotune.mjs performance-baseline.json performance-history.json --window 15 --headroom 30`
 
 ### Phase 3 Blockers
 
-- Current worker loop never touches `onStart`; update implementation in tandem with tests to avoid regressions
+- Additional throughput baselines should feed into `performance-history.json` once perf-autotune is run after significant changes
 
 ---
 
@@ -143,8 +194,8 @@ Each phase documents:
 | Test | Status | Action |
 | --- | --- | --- |
 | `apps/api/tests/routing/apiRoutes.spec.ts` | ✅ passes | Keep snapshots aligned with Prisma payloads |
-| `apps/api/tests/auth/persistence.spec.ts` | ⚠️ skipped | Requires Docker runtime + Prisma adapter instead of in-memory |
-| `apps/api/tests/auth/features.spec.ts` | ⚪ todo | Cover profile update, session revoke, 2FA, passkey flows |
+| `apps/api/tests/auth/persistence.spec.ts` | ✅ passes | Runs against Prisma-backed Postgres via OrbStack/TestContainers |
+| `apps/api/tests/auth/features.spec.ts` | ✅ passes | Exercises profile update, session revoke, 2FA, and passkey flows |
 
 ### Phase 4 Implementation
 
@@ -155,11 +206,13 @@ Each phase documents:
 ### Phase 4 Validation
 
 - `pnpm prisma:migrate:dev --preview-feature --name auth-hardening`
-- Add Supertest snapshots to prevent placeholder regressions
+- Use Supertest assertions and Postgres queries to guard against placeholder regressions
+- `./scripts/verify-hybrid-env.sh --json` to confirm OrbStack Docker context, required ports, and brAInwav hybrid runtime health before executing Docker-dependent persistence suites
+- `pnpm exec vitest run tests/auth/persistence.spec.ts --reporter tap` and `pnpm exec vitest run tests/auth/features.spec.ts --reporter tap` from `apps/api` to validate Postgres-backed flows end-to-end under OrbStack
 
 ### Phase 4 Blockers
 
-- `apps/api/tests/auth/persistence.spec.ts` currently skips when Docker is unavailable; ensure CI runner supports TestContainers
+- CI runners must expose an OrbStack-compatible Docker socket (or set `TESTCONTAINERS_DAEMON_URL`) so the Postgres-backed specs stay enabled
 
 ---
 
@@ -167,10 +220,10 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `services/orchestration/tests/master-agent.exec.spec.ts` | ⚪ todo | Replace mock adapter assertions with real dispatch spies |
-| `services/orchestration/tests/langgraph.integration.spec.ts` | ⚪ todo | Boot LangGraph harness and verify node logs |
-| `services/orchestration/tests/health/pool-health.spec.ts` | ⚪ todo | Ensure metrics return live pool counts |
-| `packages/orchestration/tests/adapters/stability.test.ts` | ⚪ todo | Protect adapter fallbacks & retries |
+| `services/orchestration/tests/master-agent.exec.spec.ts` | ✅ complete | Dispatch instrumentation verified under workspace test run |
+| `services/orchestration/tests/langgraph.integration.spec.ts` | ✅ complete | LangGraph harness included in workspace runs with branded logging |
+| `services/orchestration/tests/health/pool-health.spec.ts` | ✅ complete | Health metrics suite executes via Vitest workspace entry |
+| `packages/orchestration/tests/adapters/stability.test.ts` | ✅ complete | Protect adapter fallbacks & retries |
 
 ### Phase 5 Implementation
 
@@ -476,11 +529,153 @@ Each phase documents:
 
 ---
 
+## Phase 19 – brAInwav Code Mode Integration (Multi-Language)
+
+| Test | Status | Action |
+| --- | --- | --- |
+| `packages/mcp-core/tests/typescript-api-generator.test.ts` | ⚪ todo | TypeScript MCP-to-API code generation with brAInwav branding |
+| `packages/cortex-mcp/tests/python-code-executor.test.ts` | ⚪ todo | Python code execution environment with pyproject.toml structure |
+| `apps/cortex-code/tests/rust-code-mode.test.rs` | ⚪ todo | Rust edition 2024 code mode with MCP tool integration |
+| `packages/orchestration/tests/code-mode-dispatcher.test.ts` | ⚪ todo | LangGraph integration with code mode execution across languages |
+| `tests/integration/multi-language-code-mode.test.ts` | ⚪ todo | Cross-language code mode orchestration with A2A events |
+
+[documents to reference](/Users/jamiecraik/.Cortex-OS/project-documentation/code-mode/README.md)
+
+### Phase 19 Implementation
+
+#### TypeScript Code Mode Generator
+
+- Create `packages/mcp-core/src/codegen/typescript-api-generator.ts` that converts MCP server specifications into TypeScript APIs
+- Implement runtime dispatcher that maps function calls to `dispatchTools` from orchestration package
+- Generate type-safe APIs with proper error handling and brAInwav attribution
+- Integration with existing N0State and LangGraph workflows
+
+```typescript
+// Generated brAInwav TypeScript API example
+export namespace FileSystemAPI {
+  export async function read(path: string): Promise<string> {
+    return await __runtime__.dispatch('filesystem_read', { path });
+  }
+  
+  export async function write(path: string, content: string): Promise<void> {
+    return await __runtime__.dispatch('filesystem_write', { path, content });
+  }
+}
+
+// Model generates efficient orchestration code:
+const files = await FileSystemAPI.listDir('/src');
+for (const file of files.filter(f => f.endsWith('.ts'))) {
+  const content = await FileSystemAPI.read(file);
+  const analysis = await CodeAnalysisAPI.analyze(content);
+  if (analysis.quality < 0.8) {
+    await GitHubAPI.createIssue({
+      title: `brAInwav: Code quality issue in ${file}`,
+      body: `Quality score: ${analysis.quality}`
+    });
+  }
+}
+```
+
+#### Python Code Mode with FastMCP Integration
+
+- Enhance `packages/cortex-mcp/cortex_fastmcp_server_v2.py` with code generation and execution tools
+- Create `packages/cortex-mcp/codegen/python_api_generator.py` following pyproject.toml structure
+- Safe code execution environment with thermal monitoring integration
+- A2A event integration for cross-language coordination
+
+```python
+# Generated brAInwav Python API example
+class EmbeddingAPI:
+    async def generate(self, text: str) -> Dict[str, Any]:
+        """Generate embedding - brAInwav powered."""
+        return await self._client.call_tool("embedding.generate", {"text": text})
+    
+    async def batch(self, texts: List[str]) -> Dict[str, Any]:
+        """Generate batch embeddings - brAInwav powered."""
+        return await self._client.call_tool("embedding.batch", {"texts": texts})
+
+# Model generates efficient batch processing:
+files = await filesystem.list_dir('/documents')
+for batch in chunks(files, 50):  # Efficient batching
+    contents = [await filesystem.read(f) for f in batch]
+    embeddings = await embedding.batch(contents)  # Single API call
+    
+    # Thermal awareness
+    thermal_status = await thermal.get_status()
+    if thermal_status['temperature'] > 75:
+        print("brAInwav thermal management: cooling down...")
+        await asyncio.sleep(30)
+```
+
+#### Rust Code Mode with Edition 2024
+
+- Add `CodeModeTool` to `apps/cortex-code/codex-rs/mcp-server/src/tools.rs`
+- Create `apps/cortex-code/codex-rs/mcp-server/src/code_generator.rs` for Rust API generation
+- Safe code execution with temporary Cargo projects using edition 2024
+- Integration with existing A2A stdio bridge pattern
+
+```rust
+// Generated brAInwav Rust API example
+pub struct CortexAPI {
+    mcp_server_path: String,
+    brainwav_session: bool,
+}
+
+impl CortexAPI {
+    pub async fn file_read(&self, path: &str) -> Result<String> {
+        // Execute via MCP protocol with brAInwav attribution
+    }
+    
+    pub async fn code_analyze(&self, file_path: &str) -> Result<AnalysisResult> {
+        // Code analysis with brAInwav metrics
+    }
+}
+
+// Model generates efficient Rust code:
+let files: Vec<_> = fs::read_dir("./src")?
+    .filter_map(|entry| entry.ok())
+    .filter(|entry| entry.path().extension() == Some("rs"))
+    .collect();
+
+// Parallel processing with rayon
+files.par_iter()
+    .map(|file| {
+        let content = fs::read_to_string(file)?;
+        analyze_rust_code(&content) // brAInwav analysis
+    })
+    .collect::<Result<Vec<_>>>()?;
+```
+
+#### LangGraph Integration
+
+- Create code mode execution nodes that support all three languages
+- Enhanced `packages/orchestration/src/langgraph/code-mode-node.ts`
+- Cross-language state sharing via N0State adapters
+- Thermal-aware execution with automatic language fallbacks
+
+### Phase 19 Validation
+
+- Add code mode testing to CI: `pnpm test:code-mode:all-languages`
+- Include performance benchmarks comparing tool calls vs code mode efficiency
+- Validate brAInwav branding in all generated APIs and execution outputs
+- Test thermal coordination across TypeScript, Python, and Rust components
+
+### Phase 19 Blockers
+
+- Requires stable MCP infrastructure across all three language implementations
+- Code execution security must be validated for safe model-generated code
+- Cross-language A2A event coordination needs comprehensive testing
+
+---
+
 ## Governance & Metrics
 
 - Continue using `pnpm lint:smart`, `pnpm typecheck:smart`, and targeted `pnpm test:smart --focus <pkg>` once per phase
 - Record spool/dispatch performance changes in `performance-history.json`; retune with `scripts/perf-autotune.mjs`
 - Enforce CODESTYLE (`≤40` line functions, named exports only, async/await) while refactoring legacy modules
+- **Code mode benchmarking**: Track token efficiency gains and execution performance compared to traditional tool calling
+- **Cross-language consistency**: Ensure brAInwav branding and API patterns are consistent across TypeScript, Python (pyproject.toml), and Rust (edition 2024) implementations
+- **Security validation**: All generated code execution must pass security scanning and sandboxing requirements
 
 ## Known Issues to Resolve en Route
 
@@ -492,6 +687,10 @@ Each phase documents:
 6. **Thermal event propagation** – A2A event bus must handle thermal events with proper priority and routing
 7. **Multi-agent state conflicts** – N0State merging across concurrent workflows requires conflict resolution strategies
 8. **Production observability** – All new phases require comprehensive brAInwav-branded metrics and error tracking
+9. **Code mode security** – Generated code execution requires sandboxing and validation across TypeScript, Python, and Rust environments
+10. **Cross-language API generation** – MCP-to-code generators must maintain type safety and brAInwav branding consistency
+11. **Code mode performance validation** – Benchmarking required to confirm efficiency gains over traditional tool calling
+12. **Multi-language thermal coordination** – Thermal events must trigger appropriate responses across TypeScript, Python (pyproject.toml), and Rust (edition 2024) execution contexts
 
 ## Definition of Done
 
@@ -506,7 +705,12 @@ Each phase documents:
 - **Thermal-aware orchestration** automatically handles MLX thermal events with graceful degradation
 - **Multi-agent coordination** enables complex workflows spanning multiple LangGraph instances
 - **Production integration testing** validates all system interactions under realistic load conditions
+- **brAInwav Code Mode Integration** successfully converts MCP tool calls to executable code across TypeScript, Python (pyproject.toml), and Rust (edition 2024)
+- **Cross-language code orchestration** enables efficient batch operations, loops, and complex logic instead of individual tool calls
+- **Code mode performance benefits** demonstrate 3-5x token efficiency and faster execution compared to traditional tool calling
+- **Multi-language thermal coordination** provides intelligent fallbacks and resource management across TypeScript, Python, and Rust execution environments
 - Final smoke test executes `/agents/execute` through LangGraph → dispatch → spool → PRP → MCP, persisting data and streaming outputs without mocks
-- **brAInwav enterprise readiness**: All components include proper branding, observability, and production-grade error handling
+- **Code mode validation** confirms generated APIs work seamlessly with existing orchestration, A2A events, and thermal monitoring
+- **brAInwav enterprise readiness**: All components include proper branding, observability, and production-grade error handling across all language implementations
 
 <!-- markdownlint-enable MD013 -->

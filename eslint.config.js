@@ -36,9 +36,8 @@ export default tseslint.config(
 		...tseslint.configs.recommendedTypeChecked[0],
 		languageOptions: {
 			parserOptions: {
-				projectService: false,
-				project: false,
-				allowDefaultProject: true,
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
 			},
 			globals: {
 				...globals.browser,
@@ -85,9 +84,8 @@ export default tseslint.config(
 		],
 		languageOptions: {
 			parserOptions: {
-				projectService: false,
-				project: false,
-				allowDefaultProject: true,
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
 			},
 			globals: {
 				...globals.node,

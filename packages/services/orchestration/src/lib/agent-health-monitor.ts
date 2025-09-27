@@ -303,8 +303,7 @@ export class AgentHealthMonitor extends EventEmitter {
 		const startTime = Date.now();
 
 		try {
-			const endpoint =
-				process.env.BRAINWAV_AGENT_HEALTH_URL || this.options['agentHealthEndpoint'];
+			const endpoint = process.env.BRAINWAV_AGENT_HEALTH_URL || this.options['agentHealthEndpoint'];
 
 			if (endpoint) {
 				const controller = new AbortController();
@@ -320,9 +319,7 @@ export class AgentHealthMonitor extends EventEmitter {
 							agentId,
 							success: false,
 							responseTime: Date.now() - startTime,
-							error: new Error(
-								`brAInwav agent health endpoint returned ${response.status}`,
-							),
+							error: new Error(`brAInwav agent health endpoint returned ${response.status}`),
 							timestamp,
 						};
 					}

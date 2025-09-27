@@ -1,5 +1,28 @@
 import { defineConfig } from 'vitest/config';
 
+const parseThreshold = (value: string | undefined, fallback: number) => {
+	const parsed = Number.parseInt(value ?? '', 10);
+	return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+export const resolveCoverageThresholds = (env: NodeJS.ProcessEnv = process.env) => {
+	const globalDefault = parseThreshold(env.COVERAGE_THRESHOLD_GLOBAL, 90);
+	const statements = parseThreshold(env.COVERAGE_THRESHOLD_STATEMENTS, globalDefault);
+	const branches = parseThreshold(env.COVERAGE_THRESHOLD_BRANCHES, globalDefault);
+	const functions = parseThreshold(env.COVERAGE_THRESHOLD_FUNCTIONS, globalDefault);
+	const linesGlobalFallback = parseThreshold(env.COVERAGE_THRESHOLD_GLOBAL, 95);
+	const lines = parseThreshold(env.COVERAGE_THRESHOLD_LINES, linesGlobalFallback);
+
+	return {
+		statements,
+		branches,
+		functions,
+		lines,
+	};
+};
+
+const coverageThresholds = resolveCoverageThresholds();
+
 // Root Vitest config: only orchestrates projects. Avoid sweeping up non-Vitest
 // suites (e.g., apps using Jest) and vendor/external code.
 export default defineConfig({
@@ -53,12 +76,7 @@ export default defineConfig({
 				'**/*.config.*',
 			],
 			thresholds: {
-				global: {
-					statements: 90,
-					branches: 90,
-					functions: 90,
-					lines: 90,
-				},
+				global: coverageThresholds,
 				perFile: false, // Enforced at app level
 			},
 			all: true,
@@ -81,6 +99,9 @@ export default defineConfig({
 		},
 		env: {
 			COVERAGE_THRESHOLD_GLOBAL: '90',
+			COVERAGE_THRESHOLD_STATEMENTS: '90',
+			COVERAGE_THRESHOLD_BRANCHES: '90',
+			COVERAGE_THRESHOLD_FUNCTIONS: '90',
 			COVERAGE_THRESHOLD_LINES: '95',
 			NODE_ENV: 'test',
 		},

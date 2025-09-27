@@ -81,11 +81,7 @@ type MultiSearchWithContextResult = {
 interface AgentToolkitApi {
 	search: (pattern: string, path: string) => Promise<AgentToolkitSearchResult>;
 	multiSearch: (pattern: string, path: string) => Promise<AgentToolkitSearchResult[]>;
-	codemod: (
-		find: string,
-		replace: string,
-		path: string,
-	) => Promise<AgentToolkitCodemodResult>;
+	codemod: (find: string, replace: string, path: string) => Promise<AgentToolkitCodemodResult>;
 	validate: (files: string[]) => Promise<AgentToolkitValidationResult>;
 	multiSearchWithContext?: (
 		pattern: string,
@@ -359,13 +355,13 @@ export class AgentToolkitMCPTools {
 					const startTime = Date.now();
 					// Prefer building context when available for richer events
 					const resultWithCtx = this.agentToolkit.multiSearchWithContext
-						? await this.agentToolkit.multiSearchWithContext(
-							validInput.pattern,
-							validInput.path,
-							{ tokenBudget: { maxTokens: 4000, trimToTokens: 3000 } },
-						)
+						? await this.agentToolkit.multiSearchWithContext(validInput.pattern, validInput.path, {
+								tokenBudget: { maxTokens: 4000, trimToTokens: 3000 },
+							})
 						: undefined;
-					const used = resultWithCtx ?? (await this.agentToolkit.multiSearch(validInput.pattern, validInput.path));
+					const used =
+						resultWithCtx ??
+						(await this.agentToolkit.multiSearch(validInput.pattern, validInput.path));
 					const duration = Date.now() - startTime;
 
 					// Count total matches across all search results
@@ -375,7 +371,9 @@ export class AgentToolkitMCPTools {
 
 					// Emit search results event to A2A bus
 					if (this.eventBus) {
-						let contextSummary: { totalTokens: number; files: Array<{ file: string; tokens: number }> } | undefined;
+						let contextSummary:
+							| { totalTokens: number; files: Array<{ file: string; tokens: number }> }
+							| undefined;
 						if (!Array.isArray(used) && used?.context) {
 							const perFile = new Map<string, number>();
 							for (const c of used.context.chunks) {
@@ -383,7 +381,7 @@ export class AgentToolkitMCPTools {
 							}
 							contextSummary = {
 								totalTokens: used.context.totalTokens,
-								files: [...perFile.entries()].map(([file, tokens]) => ({ file, tokens }))
+								files: [...perFile.entries()].map(([file, tokens]) => ({ file, tokens })),
 							};
 						}
 						const resultsEvent = createTypedEvent.searchResults({
@@ -581,10 +579,15 @@ export class AgentToolkitMCPTools {
 						// If validateProjectSmart is exposed, compute per-file token summary
 						let contextSummary: Array<{ file: string; tokens: number }> | undefined;
 						const smart = this.agentToolkit.validateProjectSmart
-							? await this.agentToolkit.validateProjectSmart(validInput.files, { tokenBudget: { maxTokens: 4000, trimToTokens: 3000 } })
+							? await this.agentToolkit.validateProjectSmart(validInput.files, {
+									tokenBudget: { maxTokens: 4000, trimToTokens: 3000 },
+								})
 							: undefined;
 						if (smart?.context) {
-							contextSummary = smart.context.map((c: { file: string; totalTokens: number }) => ({ file: c.file, tokens: c.totalTokens }));
+							contextSummary = smart.context.map((c: { file: string; totalTokens: number }) => ({
+								file: c.file,
+								tokens: c.totalTokens,
+							}));
 						}
 						const reportEvent = createTypedEvent.validationReport({
 							executionId,

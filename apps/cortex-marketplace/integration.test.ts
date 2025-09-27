@@ -3,19 +3,19 @@
  * @description End-to-end integration tests for MCP marketplace
  */
 
+import type { ServerManifest } from '@cortex-os/mcp-registry';
+import type { FastifyInstance } from 'fastify';
 import { existsSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import type { ServerManifest } from '@cortex-os/mcp-registry';
-import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from './src/app.js';
 
 describe('MCP Marketplace Integration Tests', () => {
 	let app: FastifyInstance;
 	let testCacheDir: string;
-	let _mockRegistryServer: unknown;
+
 	const mockRegistryData = {
 		version: '2025-01-15',
 		mcpVersion: '2025-06-18',
@@ -179,7 +179,9 @@ describe('MCP Marketplace Integration Tests', () => {
 			expect(categoryResponse.statusCode).toBe(200);
 			const categoryResult = JSON.parse(categoryResponse.body);
 			expect(categoryResult.success).toBe(true);
-			expect(categoryResult.data.every((s: unknown) => s.category === 'development')).toBe(true);
+			expect(categoryResult.data.every((s: ServerManifest) => s.category === 'development')).toBe(
+				true,
+			);
 
 			// Search by risk level
 			const riskResponse = await app.inject({
@@ -189,7 +191,9 @@ describe('MCP Marketplace Integration Tests', () => {
 			expect(riskResponse.statusCode).toBe(200);
 			const riskResult = JSON.parse(riskResponse.body);
 			expect(riskResult.success).toBe(true);
-			expect(riskResult.data.every((s: unknown) => s.security.riskLevel === 'low')).toBe(true);
+			expect(riskResult.data.every((s: ServerManifest) => s.security.riskLevel === 'low')).toBe(
+				true,
+			);
 
 			// Search featured only
 			const featuredResponse = await app.inject({

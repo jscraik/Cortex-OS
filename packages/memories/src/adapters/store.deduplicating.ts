@@ -1,4 +1,4 @@
-import type { Memory, MemoryMetadata } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 export interface DeduplicationConfig {
@@ -26,6 +26,12 @@ export interface DeduplicationConfig {
 	ignorePunctuation?: boolean;
 	/** Whether to normalize whitespace */
 	normalizeWhitespace?: boolean;
+}
+
+export interface DeduplicationMetadata {
+	occurrences?: number;
+	lastSeen?: string;
+	firstSeen?: string;
 }
 
 export interface DeduplicationStats {
@@ -148,7 +154,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		}
 
 		// Check for fuzzy matches if enabled
-		if (this.config.enableFuzzyMatching && memory.text.length >= this.config.minFuzzyLength) {
+		if (this.config.enableFuzzyMatching && memory.text && memory.text.length >= this.config.minFuzzyLength) {
 			const fuzzyMatch = await this.findFuzzyMatch(memory, namespace);
 			if (fuzzyMatch) {
 				this.stats.fuzzyMatches++;
@@ -176,6 +182,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		const allMemories = await this.store.list(namespace);
 
 		for (const existing of allMemories) {
+			if (!existing.text) continue;
 			const existingNormalized = this.normalizeText(existing.text);
 			if (normalizedText === existingNormalized) {
 				return existing;
@@ -186,6 +193,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 	}
 
 	private async findFuzzyMatch(memory: Memory, namespace: string): Promise<Memory | null> {
+		if (!memory.text) return null;
 		const normalizedText = this.normalizeText(memory.text);
 
 		// Get recent memories to check (in production, use a more efficient strategy)
@@ -193,6 +201,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 
 		for (const existing of allMemories) {
 			// Skip if already found exact match
+			if (!existing.text) continue;
 			if (this.normalizeText(existing.text) === normalizedText) {
 				continue;
 			}
@@ -221,7 +230,9 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 			if (this.similarityCache.size > this.config.cacheSize) {
 				// Simple LRU eviction
 				const firstKey = this.similarityCache.keys().next().value;
-				this.similarityCache.delete(firstKey);
+				if (firstKey) {
+					this.similarityCache.delete(firstKey);
+				}
 			}
 
 			if (similarity >= this.config.fuzzyMatchThreshold) {
@@ -239,7 +250,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		const results = await this.store.searchByVector(
 			{
 				vector: memory.vector,
-				limit: 10,
+				topK: 10,
 			},
 			namespace,
 		);
@@ -311,13 +322,13 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		// Update deduplication metadata
 		const updatedDeduplication = {
 			...deduplicationMeta,
-			occurrences: (deduplicationMeta.occurrences || 1) + 1,
+			occurrences: ((deduplicationMeta as DeduplicationMetadata).occurrences || 1) + 1,
 			lastSeen: newMemory.createdAt,
-			firstSeen: deduplicationMeta.firstSeen || existing.createdAt,
+			firstSeen: (deduplicationMeta as DeduplicationMetadata).firstSeen || existing.createdAt,
 		};
 
 		// Merge metadata based on strategy
-		let mergedMetadata: MemoryMetadata;
+		let mergedMetadata: Record<string, unknown>;
 
 		switch (this.config.mergeStrategy) {
 			case 'newest':
@@ -335,9 +346,9 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 				break;
 			default:
 				mergedMetadata = this.mergeMetadataFields(
+					updatedDeduplication,
 					existing.metadata,
 					newMemory.metadata,
-					updatedDeduplication,
 				);
 				break;
 		}
@@ -372,11 +383,11 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 	}
 
 	private mergeMetadataFields(
-		existing: MemoryMetadata = {},
-		newMeta: MemoryMetadata = {},
-		deduplication: any,
-	): MemoryMetadata {
-		const merged: MemoryMetadata = { deduplication };
+		deduplication: DeduplicationMetadata,
+		existing: Record<string, unknown> = {},
+		newMeta: Record<string, unknown> = {},
+	): Record<string, unknown> {
+		const merged: Record<string, unknown> = { deduplication };
 
 		// Merge all fields from both metadata objects
 		const allKeys = new Set([...Object.keys(existing), ...Object.keys(newMeta)]);
@@ -400,7 +411,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		return merged;
 	}
 
-	private mergeFieldValues(existing: any, newValue: any): any {
+	private mergeFieldValues(existing: unknown, newValue: unknown): unknown {
 		// Handle arrays by concatenating and deduplicating
 		if (Array.isArray(existing) && Array.isArray(newValue)) {
 			return [...new Set([...existing, ...newValue])];
@@ -425,6 +436,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		const deduplicated: Memory[] = [];
 
 		for (const memory of results) {
+			if (!memory.text) continue;
 			const key = this.normalizeText(memory.text);
 
 			if (!seen.has(key)) {
@@ -446,6 +458,7 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		results.sort((a, b) => b.score - a.score);
 
 		for (const memory of results) {
+			if (!memory.text) continue;
 			const key = this.normalizeText(memory.text);
 
 			if (!seen.has(key)) {

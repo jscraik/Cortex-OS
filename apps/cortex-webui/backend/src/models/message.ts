@@ -11,9 +11,9 @@ export interface MessageRecord {
 }
 
 export class MessageModel {
-	static tableName = 'messages';
+	static readonly tableName = 'messages';
 
-	static createTableSQL = `
+	static readonly createTableSQL = `
     CREATE TABLE IF NOT EXISTS ${this.tableName} (
       id TEXT PRIMARY KEY,
       conversation_id TEXT NOT NULL,

@@ -12,7 +12,7 @@ export enum PlanningPhase {
 	STRATEGY = 'strategy',
 	EXECUTION = 'execution',
 	VALIDATION = 'validation',
-	COMPLETION = 'completion'
+	COMPLETION = 'completion',
 }
 
 export interface PlanningContext {
@@ -84,7 +84,7 @@ export class DynamicSpeculativePlanner {
 				learned: success
 					? 'Complexity level appropriate, continue with current approach'
 					: 'Reduce complexity or adjust strategy for better outcomes',
-				timestamp: new Date()
+				timestamp: new Date(),
 			});
 			this.planningContext.metadata.updatedAt = new Date();
 		}
@@ -93,7 +93,11 @@ export class DynamicSpeculativePlanner {
 	/**
 	 * Initialize planning context for long-horizon tasks
 	 */
-	initializePlanning(taskId: string, complexity: number = 1, priority: number = 5): PlanningContext {
+	initializePlanning(
+		taskId: string,
+		complexity: number = 1,
+		priority: number = 5,
+	): PlanningContext {
 		if (this.contextIsolation && this.planningContext) {
 			// Context isolation: create new context
 			console.log(`brAInwav DSP: Isolating context for task ${taskId}`);
@@ -110,11 +114,13 @@ export class DynamicSpeculativePlanner {
 				createdAt: new Date(),
 				updatedAt: new Date(),
 				complexity,
-				priority
-			}
+				priority,
+			},
 		};
 
-		console.log(`brAInwav DSP: Initialized planning context for task ${taskId} with complexity ${complexity}`);
+		console.log(
+			`brAInwav DSP: Initialized planning context for task ${taskId} with complexity ${complexity}`,
+		);
 		return this.planningContext;
 	}
 
@@ -143,7 +149,7 @@ export class DynamicSpeculativePlanner {
 			phase: nextPhase,
 			action,
 			status: 'in_progress',
-			timestamp: new Date()
+			timestamp: new Date(),
 		});
 
 		this.planningContext.currentPhase = nextPhase;

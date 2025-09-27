@@ -11,9 +11,9 @@ export interface ConversationRecord {
 }
 
 export class ConversationModel {
-	static tableName = 'conversations';
+	static readonly tableName = 'conversations';
 
-	static createTableSQL = `
+	static readonly createTableSQL = `
     CREATE TABLE IF NOT EXISTS ${this.tableName} (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,

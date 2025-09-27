@@ -54,4 +54,8 @@ export class PolicyEncryptedStore implements MemoryStore {
 		// If no namespace provided, just delegate to base
 		return this.base.purgeExpired(nowISO);
 	}
+
+	async list(namespace?: string, limit?: number, offset?: number): Promise<Memory[]> {
+		return this.select(namespace || 'default').list(namespace, limit, offset);
+	}
 }

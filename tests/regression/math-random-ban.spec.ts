@@ -15,15 +15,7 @@ const allowlist = [
 	/README\.md$/,
 ];
 
-const monitoredExtensions = [
-	'.ts',
-	'.tsx',
-	'.js',
-	'.jsx',
-	'.mjs',
-	'.cjs',
-	'.py',
-];
+const monitoredExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py'];
 
 describe('brAInwav production random guard', () => {
 	it('should block Math.random usage in runtime code', async () => {
@@ -52,7 +44,7 @@ describe('brAInwav production random guard', () => {
 
 			throw new Error(
 				`Math.random detected in production paths:\n${report}\n` +
-				'Use secure, deterministic ID/metric sources before merging.',
+					'Use secure, deterministic ID/metric sources before merging.',
 			);
 		}
 

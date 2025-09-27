@@ -16,10 +16,10 @@ export interface AuthConfig {
 export class AuthManager {
 	private token?: TokenInfo;
 	private refreshPromise?: Promise<TokenInfo>;
-	private refreshBuffer = 60000; // 1 minute
+	private readonly refreshBuffer: number;
 	private isRefreshing = false;
 
-	constructor(private config?: AuthConfig) {
+	constructor(private readonly config?: AuthConfig) {
 		// Validate config if provided
 		if (config) {
 			if (config.refreshBuffer && (config.refreshBuffer < 5000 || config.refreshBuffer > 300000)) {
@@ -29,6 +29,8 @@ export class AuthManager {
 				throw new Error('clientSecret is required when clientId is provided');
 			}
 			this.refreshBuffer = config.refreshBuffer || 60000;
+		} else {
+			this.refreshBuffer = 60000;
 		}
 	}
 
@@ -64,7 +66,7 @@ export class AuthManager {
 	 * Check if token needs refreshing
 	 */
 	shouldRefreshToken(): boolean {
-		if (!this.token || !this.token.refreshToken) {
+		if (!this.token?.refreshToken) {
 			return false;
 		}
 
@@ -124,7 +126,11 @@ export class AuthManager {
 	 * Perform the actual token refresh
 	 */
 	private async performRefresh(): Promise<TokenInfo> {
-		const response = await fetch(this.config!.tokenUrl, {
+		if (!this.config?.tokenUrl) {
+			throw new Error('Token URL is required for token refresh');
+		}
+
+		const response = await fetch(this.config.tokenUrl, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

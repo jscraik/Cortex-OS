@@ -146,14 +146,22 @@ Add new automation using smart scripts rather than chaining raw `nx run-many`.
 
 ---
 
+### Latest Maintenance
+
+- **2025-09-27** – Reinforced the brAInwav Prisma bootstrap in `apps/api` so
+  `pnpm --filter @cortex-os/api build` stays green with mutable logging and
+  fallback delegates aligned to brAInwav standards.
+
+---
+
 ## Autonomous Software Behavior Reasoning (ASBR) Runtime
 
 Clean, governed monorepo with strict architectural boundaries and
 comprehensive quality gates.
 
-[Documentation](#Documentation) • [Quick Start](./docs/quick-start.md) •
+[Documentation](#documentation) • [Quick Start](./docs/quick-start.md) •
 [Architecture](./docs/architecture-overview.md) • [Python Integration](./docs/python-integration.md) •
-[Contributing](#contributing) • [Packages](#Packages)
+[Contributing](#contributing) • [Packages](#packages)
 
 ---
 
@@ -250,6 +258,7 @@ governance boundaries, comprehensive testing, and security practices.
 - **🏗️ Governed Architecture** – Import boundaries (ESLint + Nx)
 - **🧪 Quality Gates** – 90% test coverage & automated scans
 - **🚀 Production Ready** – Docker deployment & CI/CD pipelines
+- **🎯 Reality Filter** – Truthfulness verification and accuracy validation for all AI agents
 
 ---
 
@@ -324,6 +333,7 @@ Full guide: [Python Integration](./docs/python-integration.md)
 - **[Deployment Guide](./docs/deployment.md)** – Production deployment
 - **[Security Guide](./docs/security.md)** – Security practices and compliance
 - **[Streaming Modes](./docs/streaming-modes.md)** – Token, aggregated, and JSON streaming (CLI + config)
+- **[Changelog](./CHANGELOG.md)** – Release notes and feature updates
 
 ### 🛠️ Development Documentation
 

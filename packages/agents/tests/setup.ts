@@ -13,3 +13,36 @@ vi.mock('@cortex-os/model-gateway/dist/adapters/ollama-adapter.js', () => ({
 		generateChat: vi.fn().mockResolvedValue({ response: 'Mocked Ollama response' }),
 	})),
 }));
+
+vi.mock(
+	'@cortex-os/orchestration',
+	() => ({
+		agentStateToN0: (agent: any, session: any) => ({
+			input: agent.messages?.[0]?.content ?? '',
+			session,
+			ctx: {
+				currentAgent: agent.currentAgent,
+				taskType: agent.taskType,
+			},
+			messages: agent.messages,
+			output:
+				typeof agent.result?.content === 'string'
+					? agent.result.content
+					: (agent.messages?.at(-1)?.content ?? ''),
+		}),
+		dispatchTools: async (jobs: any[]) =>
+			Promise.all(
+				jobs.map(async (job) => ({
+					id: job.id,
+					name: job.name,
+					status: 'fulfilled',
+					value: await job.execute?.(job.input),
+					durationMs: 1,
+					tokensUsed: job.estimateTokens ?? 0,
+					metadata: job.metadata,
+					started: true,
+				})),
+			),
+	}),
+	{ virtual: true },
+);

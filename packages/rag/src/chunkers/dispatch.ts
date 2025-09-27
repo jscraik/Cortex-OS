@@ -1,4 +1,8 @@
-import { type ProcessingConfig, ProcessingStrategy, type StrategyDecision } from '../policy/mime.js';
+import {
+	type ProcessingConfig,
+	ProcessingStrategy,
+	type StrategyDecision,
+} from '../policy/mime.js';
 import { HierarchicalChunker } from './hierarchical-chunker.js';
 import { LateChunker } from './late-chunker.js';
 import { SemanticChunker } from './semantic-chunker.js';

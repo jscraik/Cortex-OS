@@ -21,12 +21,19 @@
       },
       "embedding_tasks": {
         "condition": "task_type == 'embedding'",
-        "primary": "mlx",
+        "primary": "ollama",
         "models": [
-          "qwen3-4b",
-          "qwen3-8b"
+          "qwen3-embedding:latest"
         ],
-        "enhanced_by": "ollama:nomic-embed-text:v1.5"
+        "enhanced_by": {
+          "mlx_verification": "qwen3-4b",
+          "fallback": "nomic-embed-text:v1.5"
+        },
+        "features": [
+          "state_of_art_performance",
+          "multilingual_support",
+          "high_accuracy"
+        ]
       },
       "reranking_tasks": {
         "condition": "task_type == 'rerank'",
@@ -35,6 +42,41 @@
           "qwen3-reranker"
         ],
         "enhanced_by": "ollama_cloud:advanced_reranker"
+      },
+      "tool_calling_tasks": {
+        "condition": "requires_tool_calling || requires_function_calling",
+        "primary": "ollama",
+        "models": [
+          "qwen3-coder:30b"
+        ],
+        "enhanced_by": {
+          "mlx_support": "qwen3-coder-30b",
+          "cloud_verification": "qwen3-coder:480b-cloud"
+        },
+        "features": [
+          "tool_calling",
+          "function_calling",
+          "improved_parsing",
+          "enhanced_code_generation"
+        ]
+      },
+      "mixture_of_experts_tasks": {
+        "condition": "requires_moe || complex_reasoning || trillion_parameters",
+        "primary": "ollama_cloud",
+        "models": [
+          "kimi-k2:1t-cloud"
+        ],
+        "enhanced_by": {
+          "mlx_support": "qwen3-coder-30b",
+          "local_verification": "glm-4.5"
+        },
+        "features": [
+          "mixture_of_experts",
+          "32b_activated_parameters",
+          "1t_total_parameters",
+          "state_of_art_reasoning",
+          "large_context_window"
+        ]
       },
       "vision_tasks": {
         "condition": "requires_vision",
@@ -47,10 +89,14 @@
       "ultra_performance": {
         "condition": "requires_state_of_art",
         "ensemble": {
+          "embedding_primary": "qwen3-embedding:latest",
           "mlx_primary": "qwen3-coder-30b",
           "cloud_verification": "qwen3-coder:480b-cloud",
+          "moe_reasoning": "kimi-k2:1t-cloud",
           "strategy": "consensus_or_cloud_override"
-        }
+        },
+        "tool_calling_support": true,
+        "mixture_of_experts_support": true
       }
     },
     "dynamic_selection": {
@@ -63,11 +109,46 @@
         "simple_tasks": "mlx:gemma-3-270m",
         "moderate_tasks": "mlx:glm-4.5",
         "complex_tasks": "hybrid:mlx+cloud",
-        "enterprise_tasks": "cloud:qwen3-coder:480b-cloud"
+        "enterprise_tasks": "cloud:qwen3-coder:480b-cloud",
+        "tool_calling_tasks": "ollama:qwen3-coder:30b",
+        "embedding_tasks": "ollama:qwen3-embedding:latest",
+        "moe_reasoning_tasks": "cloud:kimi-k2:1t-cloud",
+        "trillion_parameter_tasks": "cloud:kimi-k2:1t-cloud"
       }
     }
   },
   "integration_patterns": {
+    "tool_calling_optimization": {
+      "description": "Route tool calling tasks to Qwen3-Coder with v0.12.1+ enhancements",
+      "use_cases": [
+        "function_calling",
+        "api_integration",
+        "tool_orchestration",
+        "automated_workflows"
+      ],
+      "implementation": "qwen3_coder_primary_with_verification"
+    },
+    "mixture_of_experts_optimization": {
+      "description": "Route complex reasoning tasks to Kimi K2 with 1T parameters",
+      "use_cases": [
+        "complex_reasoning",
+        "advanced_problem_solving",
+        "large_system_architecture",
+        "multi_domain_expertise",
+        "enterprise_scale_analysis"
+      ],
+      "implementation": "kimi_k2_primary_with_mlx_verification"
+    },
+    "state_of_art_embedding": {
+      "description": "Use Qwen3 Embedding for highest accuracy embedding tasks",
+      "use_cases": [
+        "high_accuracy_search",
+        "production_rag",
+        "multilingual_embedding",
+        "research_applications"
+      ],
+      "implementation": "qwen3_embedding_primary_with_mlx_verification"
+    },
     "parallel_processing": {
       "description": "Run both MLX and Ollama simultaneously for verification",
       "use_cases": [

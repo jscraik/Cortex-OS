@@ -3,6 +3,7 @@ import type {
 	MigrationHistory,
 	MigrationManager,
 	MigrationResult,
+	RollbackResult,
 	SchemaVersion,
 	ValidationResult,
 } from '../domain/migration.js';
@@ -144,18 +145,18 @@ export class DefaultMigrationManager implements MigrationManager {
 		}
 	}
 
-	async rollback(toVersion: string): Promise<MigrationResult> {
+	async rollback(toVersion: string): Promise<RollbackResult> {
 		const startTime = Date.now();
 		const currentVersion = await this.getCurrentVersion();
 
 		this.logger.info('Starting rollback', { from: currentVersion, to: toVersion });
 
 		const migrationsToRollback = this.getMigrationsToRollback(currentVersion, toVersion);
-		const _errors: string[] = [];
 		const rolledBackMigrations: string[] = [];
 
 		try {
-			for (const migration of migrationsToRollback.reverse()) {
+			const reversedMigrations = [...migrationsToRollback].reverse();
+			for (const migration of reversedMigrations) {
 				this.logger.info('Rolling back migration', { version: migration.version });
 
 				await migration.down(this.store);
@@ -172,7 +173,7 @@ export class DefaultMigrationManager implements MigrationManager {
 				success: true,
 				fromVersion: currentVersion,
 				toVersion: toVersion,
-				migrationsApplied: rolledBackMigrations,
+				migrationsRolledBack: rolledBackMigrations,
 				duration: Date.now() - startTime,
 			};
 		} catch (error) {
@@ -181,7 +182,7 @@ export class DefaultMigrationManager implements MigrationManager {
 				success: false,
 				fromVersion: currentVersion,
 				toVersion: toVersion,
-				migrationsApplied: rolledBackMigrations,
+				migrationsRolledBack: rolledBackMigrations,
 				errors: [error instanceof Error ? error.message : String(error)],
 				duration: Date.now() - startTime,
 			};
@@ -204,13 +205,13 @@ export class DefaultMigrationManager implements MigrationManager {
 		const warnings: string[] = [];
 
 		// Validate memory against schema version
-		if (currentVersion >= '2.0.0' && memory.embedding && !Array.isArray(memory.embedding)) {
-			errors.push('Embedding must be an array of numbers');
+		if (currentVersion >= '2.0.0' && memory.vector && !Array.isArray(memory.vector)) {
+			errors.push('Vector must be an array of numbers');
 		}
 
 		// Check for required fields based on version
-		if (currentVersion >= '2.0.0' && memory.kind === 'document' && !memory.embedding) {
-			warnings.push('Document memories should have embeddings for optimal search performance');
+		if (currentVersion >= '2.0.0' && memory.kind === 'embedding' && !memory.vector) {
+			warnings.push('Embedding memories should have vectors for optimal search performance');
 		}
 
 		return {
@@ -237,7 +238,8 @@ export class DefaultMigrationManager implements MigrationManager {
 	}
 
 	private async rollbackMigrations(migrations: Migration[]): Promise<void> {
-		for (const migration of migrations.reverse()) {
+		const reversedMigrations = [...migrations].reverse();
+		for (const migration of reversedMigrations) {
 			try {
 				await migration.down(this.store);
 				this.logger.info('Rollback successful', { version: migration.version });
@@ -248,14 +250,18 @@ export class DefaultMigrationManager implements MigrationManager {
 		}
 	}
 
-	private async recordMigration(migration: Migration, direction: 'up' | 'down'): Promise<void> {
+	private async recordMigration(
+		migration: Migration,
+		direction: 'up' | 'down',
+		duration: number = 0,
+	): Promise<void> {
 		const historyEntry: MigrationHistory = {
 			id: `${migration.version}-${Date.now()}`,
 			version: migration.version,
 			description: migration.description,
 			direction,
 			timestamp: new Date().toISOString(),
-			duration: 0, // TODO: Track actual duration
+			duration,
 			success: true,
 		};
 

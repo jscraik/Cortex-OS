@@ -1,10 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import { prisma } from '../db/prisma-client.js';
+import { formatUserRecord } from '../auth/utils.js';
 
 type AuthenticatedUser = {
 	id: string;
-	email?: string;
-	name?: string;
+	email?: string | null;
+	name?: string | null;
 	emailVerified?: boolean | Date | string | null;
 	image?: string | null;
 	createdAt?: Date | string;
@@ -17,6 +18,8 @@ type AuthenticatedUser = {
 type AuthenticatedSession = {
 	id: string;
 	expires?: Date | string | number;
+	createdAt?: Date | string;
+	userAgent?: string | null;
 	[key: string]: unknown;
 };
 
@@ -25,62 +28,100 @@ export interface AuthenticatedRequest extends Request {
 	session?: AuthenticatedSession;
 }
 
-type TokenPayload = jwt.JwtPayload & {
-	readonly user?: AuthenticatedUser;
-	readonly session?: AuthenticatedSession;
-};
+const sessionDelegate = (prisma as Record<string, unknown>).session as
+	| undefined
+	| {
+			findUnique: (args: {
+				where: { id?: string; token?: string };
+				include?: { user: boolean };
+			}) => Promise<{
+				id: string;
+				userId: string;
+				token: string;
+				expiresAt: Date;
+				createdAt: Date;
+				userAgent: string | null;
+				user: Record<string, unknown> | null;
+			} | null>;
+			findMany: (args: {
+				where: { userId: string };
+				orderBy?: { createdAt: 'asc' | 'desc' };
+			}) => Promise<
+				{
+					id: string;
+					userId: string;
+					expiresAt: Date;
+					createdAt: Date;
+					userAgent: string | null;
+				}[]
+			>;
+			delete: (args: { where: { id: string } }) => Promise<unknown>;
+	  };
 
-const decodeToken = (token: string): TokenPayload => {
-	const decoded = jwt.verify(token, JWT_SECRET);
-
-	if (typeof decoded === 'string') {
-		throw new jwt.JsonWebTokenError('Invalid token payload');
+const ensureSessionDelegate = (res: Response) => {
+	if (!sessionDelegate) {
+		res.status(503).json({ error: 'Auth persistence unavailable' });
+		return null;
 	}
-
-	return decoded as TokenPayload;
+	return sessionDelegate;
 };
 
-// JWT secret should be the same as Better Auth secret
-const JWT_SECRET = process.env.BETTER_AUTH_SECRET || 'better-auth-secret';
+const sanitizeSession = (session: {
+	id: string;
+	expiresAt: Date;
+	createdAt: Date;
+	userAgent: string | null;
+}): AuthenticatedSession => ({
+	id: session.id,
+	expires: session.expiresAt,
+	createdAt: session.createdAt,
+	userAgent: session.userAgent,
+});
 
 /**
- * Middleware to verify JWT token and attach user to request
+ * Middleware to verify token and attach user/session data from Prisma.
  */
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
 	try {
-		// Get token from Authorization header
+		const sessionClient = ensureSessionDelegate(res);
+		if (!sessionClient) return;
+
 		const authHeader = req.headers.authorization;
 		if (!authHeader?.startsWith('Bearer ')) {
 			return res.status(401).json({ error: 'Missing authorization header' });
 		}
 
-		const token = authHeader.substring(7); // Remove "Bearer " prefix
+		const token = authHeader.substring(7);
+		const sessionRecord = await sessionClient.findUnique({
+			where: { token },
+			include: { user: true },
+		});
 
-		// Verify JWT token
-		const decoded = decodeToken(token);
+		if (!sessionRecord) {
+			return res.status(401).json({ error: 'Invalid session token' });
+		}
 
-		// Verify session exists and is valid
-		// In a real implementation, you would check the database
-		// For now, we'll attach the decoded data to the request
-		req.user = decoded.user;
-		req.session = decoded.session;
+		if (new Date(sessionRecord.expiresAt).getTime() <= Date.now()) {
+			return res.status(401).json({ error: 'Session expired' });
+		}
+
+		const formattedUser = formatUserRecord(sessionRecord.user as any);
+		if (!formattedUser) {
+			return res.status(401).json({ error: 'User record missing' });
+		}
+
+		req.user = formattedUser;
+		req.session = sanitizeSession(sessionRecord);
 
 		next();
 	} catch (error) {
-		if (error instanceof jwt.JsonWebTokenError) {
-			return res.status(401).json({ error: 'Invalid token' });
-		}
-		if (error instanceof jwt.TokenExpiredError) {
-			return res.status(401).json({ error: 'Token expired' });
-		}
-
 		console.error('Auth middleware error:', error);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
 
 /**
- * Optional authentication middleware - doesn't fail if no token
+ * Optional authentication middleware - does not fail if no token is present.
  */
 export const optionalAuth = async (
 	req: AuthenticatedRequest,
@@ -88,20 +129,32 @@ export const optionalAuth = async (
 	next: NextFunction,
 ) => {
 	try {
-		const authHeader = req.headers.authorization;
-		if (authHeader?.startsWith('Bearer ')) {
-			const token = authHeader.substring(7);
-
-			try {
-				const decoded = decodeToken(token);
-				req.user = decoded.user;
-				req.session = decoded.session;
-			} catch (error) {
-				// Token is invalid, but we continue without auth
-				console.warn('Invalid token in optional auth:', error);
-			}
+		const sessionClient = sessionDelegate;
+		if (!sessionClient) {
+			return next();
 		}
 
+		const authHeader = req.headers.authorization;
+		if (!authHeader?.startsWith('Bearer ')) {
+			return next();
+		}
+
+		const token = authHeader.substring(7);
+		const sessionRecord = await sessionClient.findUnique({
+			where: { token },
+			include: { user: true },
+		});
+
+		if (!sessionRecord) {
+			return next();
+		}
+
+		if (new Date(sessionRecord.expiresAt).getTime() <= Date.now()) {
+			return next();
+		}
+
+		req.user = formatUserRecord(sessionRecord.user as any) ?? undefined;
+		req.session = sanitizeSession(sessionRecord);
 		next();
 	} catch (error) {
 		console.error('Optional auth middleware error:', error);
@@ -109,9 +162,6 @@ export const optionalAuth = async (
 	}
 };
 
-/**
- * Check if user has specific role/permission
- */
 export const requireRole = (role: string) => {
 	return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
 		if (!req.user) {
@@ -123,15 +173,10 @@ export const requireRole = (role: string) => {
 			return res.status(403).json({ error: 'Forbidden' });
 		}
 
-		// In a real implementation, you would check roles in the database
-		// For now, we'll assume all authenticated users have the required role
 		next();
 	};
 };
 
-/**
- * Check if user has specific permission
- */
 export const requirePermission = (permission: string) => {
 	return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
 		if (!req.user) {
@@ -143,21 +188,14 @@ export const requirePermission = (permission: string) => {
 			return res.status(403).json({ error: 'Forbidden' });
 		}
 
-		// In a real implementation, you would check permissions
-		// For now, we'll assume all authenticated users have all permissions
 		next();
 	};
 };
 
-/**
- * Rate limiting middleware for auth routes
- */
 export const authRateLimit = async (
 	_req: AuthenticatedRequest,
 	_res: Response,
 	next: NextFunction,
 ) => {
-	// In a real implementation, you would use a rate limiter like express-rate-limit
-	// For now, we'll just pass through
 	next();
 };

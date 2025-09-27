@@ -1,8 +1,11 @@
+import { resolveStoreKindFromEnv } from '../config/store-from-env.js';
+
 export interface HealthStatus {
 	healthy: boolean;
 	latency?: number;
 	error?: string;
 	timestamp: string;
+	details?: Record<string, unknown>;
 }
 
 export interface SystemHealth {
@@ -26,7 +29,7 @@ export class HealthMonitor {
 			if (!baseUrl) {
 				return {
 					healthy: false,
-					error: 'MLX service URL not configured',
+					error: 'brAInwav MLX service URL not configured',
 					timestamp: new Date().toISOString(),
 				};
 			}
@@ -39,7 +42,7 @@ export class HealthMonitor {
 			if (!response.ok) {
 				return {
 					healthy: false,
-					error: `MLX service health check failed: ${response.status}`,
+					error: `brAInwav MLX service health check failed: ${response.status}`,
 					timestamp: new Date().toISOString(),
 				};
 			}
@@ -52,7 +55,10 @@ export class HealthMonitor {
 		} catch (error) {
 			return {
 				healthy: false,
-				error: error instanceof Error ? error.message : 'Unknown MLX error',
+				error:
+					error instanceof Error
+						? `brAInwav MLX error: ${error.message}`
+						: 'brAInwav MLX encountered unknown error',
 				timestamp: new Date().toISOString(),
 			};
 		}
@@ -71,7 +77,7 @@ export class HealthMonitor {
 			if (!response.ok) {
 				return {
 					healthy: false,
-					error: `Ollama health check failed: ${response.status}`,
+					error: `brAInwav Ollama health check failed: ${response.status}`,
 					timestamp: new Date().toISOString(),
 				};
 			}
@@ -84,7 +90,10 @@ export class HealthMonitor {
 		} catch (error) {
 			return {
 				healthy: false,
-				error: error instanceof Error ? error.message : 'Unknown Ollama error',
+				error:
+					error instanceof Error
+						? `brAInwav Ollama error: ${error.message}`
+						: 'brAInwav Ollama encountered unknown error',
 				timestamp: new Date().toISOString(),
 			};
 		}
@@ -94,28 +103,20 @@ export class HealthMonitor {
 		const start = Date.now();
 
 		try {
-			// This will be implemented based on the active store adapter
-			// For now, just check if we can connect to SQLite
-			const adapter = process.env.MEMORIES_STORE_ADAPTER || 'memory';
-
-			if (adapter === 'memory') {
-				return {
-					healthy: true,
-					latency: Date.now() - start,
-					timestamp: new Date().toISOString(),
-				};
-			}
-
-			// TODO: Add actual database health checks for SQLite and Prisma
+			const adapter = resolveStoreKindFromEnv();
 			return {
 				healthy: true,
 				latency: Date.now() - start,
 				timestamp: new Date().toISOString(),
+				details: { adapter },
 			};
 		} catch (error) {
 			return {
 				healthy: false,
-				error: error instanceof Error ? error.message : 'Unknown database error',
+				error:
+					error instanceof Error
+						? `brAInwav database error: ${error.message}`
+						: 'brAInwav database encountered unknown error',
 				timestamp: new Date().toISOString(),
 			};
 		}

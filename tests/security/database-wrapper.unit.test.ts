@@ -29,7 +29,9 @@ beforeEach(() => {
 	mockDatabase = {
 		prepare: vi.fn().mockReturnValue(mockStatement),
 	};
-	wrapper = new SecureDatabaseWrapper(mockDatabase as unknown as Parameters<typeof SecureDatabaseWrapper>[0]);
+	wrapper = new SecureDatabaseWrapper(
+		mockDatabase as unknown as Parameters<typeof SecureDatabaseWrapper>[0],
+	);
 });
 
 describe('securePrepare', () => {

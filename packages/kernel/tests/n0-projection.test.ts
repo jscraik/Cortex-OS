@@ -37,7 +37,7 @@ describe('projectKernelWorkflowToN0', () => {
 		expect(n0.ctx).toMatchObject({
 			prpState: expect.objectContaining({ phase: 'strategy' }),
 			nextStep: 'build',
-	});
+		});
 		expect(n0.budget).toEqual({ tokens: 4096, timeMs: 180000, depth: 1 });
 	});
 });

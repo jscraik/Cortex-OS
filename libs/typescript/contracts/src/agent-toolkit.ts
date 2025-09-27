@@ -52,7 +52,9 @@ export const AgentToolkitCodemodResultSchema = AgentToolkitBaseResultSchema.exte
 
 // Validation schemas
 export const AgentToolkitValidationInputSchema = z.object({
-	files: z.array(z.string().min(1, 'file path must be non-empty')).min(1, 'at least one file is required'),
+	files: z
+		.array(z.string().min(1, 'file path must be non-empty'))
+		.min(1, 'at least one file is required'),
 });
 
 export const AgentToolkitValidationIssueSchema = z.object({

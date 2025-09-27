@@ -50,11 +50,11 @@ async function isPortAvailable(port: number): Promise<boolean> {
  */
 export class RealtimeDataStream extends EventEmitter {
 	private server?: WebSocketServer;
-	private clients: Set<WebSocket> = new Set();
+	private readonly clients: Set<WebSocket> = new Set();
 
 	constructor(
 		_config: AnalyticsConfig,
-		private port: number = 8080,
+		private readonly port: number = 8080,
 	) {
 		super();
 	}

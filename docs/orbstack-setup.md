@@ -61,6 +61,45 @@ cp .orbstack/config.yaml ~/.orbstack/cortex-os.yaml
 ./scripts/orbstack-dev.sh stop
 ```
 
+### Validate OrbStack Environment
+
+Run the brAInwav hybrid environment verification script whenever you refresh your toolchain to confirm Docker, OrbStack, and required ports are healthy.
+
+```bash
+./scripts/verify-hybrid-env.sh --json
+```
+
+Sample output from the latest verification (2025-09-27):
+
+```text
+[INFO] Checking platform (macOS arm64) ...
+[OK] macOS detected
+[OK] arm64 architecture
+[INFO] Checking required commands ...
+[OK] docker present
+[OK] lsof present
+[OK] curl present
+[INFO] Checking optional commands ...
+[OK] pnpm present
+[OK] uv present
+[OK] python3 present
+[OK] jq present
+[INFO] Checking Docker OrbStack context ...
+[OK] OrbStack context active
+[OK] Docker daemon reachable
+[INFO] Checking host port availability ...
+[OK] Port 8080 (API) free
+[OK] Port 8081 (MLX) free
+[OK] Port 3000 (WEBUI) free
+[INFO] Checking Python version ...
+[OK] Python available (version 3.13.7)
+[WARN] mlx module not importable globally (will rely on venv)
+
+Environment verification passed ✅
+```
+
+> **Note:** The `mlx` warning is informational. The MLX runtime loads from the managed virtual environment inside OrbStack, so no manual action is required unless you plan to run MLX workloads on the host.
+
 ## Available Service Profiles
 
 ### Core Profiles

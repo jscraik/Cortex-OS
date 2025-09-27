@@ -182,6 +182,7 @@ export class MemoryStoreHandler {
 		lastActivity: string;
 		details?: {
 			storageBackend: string;
+			vectorSupport: boolean;
 			indexedFields: string[];
 			averageItemSize: number;
 		};
@@ -197,6 +198,8 @@ export class MemoryStoreHandler {
 			totalSize += JSON.stringify(item).length;
 		}
 
+		const backend = detectBackend(this.ctx.store);
+
 		return {
 			totalItems: items.length,
 			totalSize,
@@ -204,13 +207,25 @@ export class MemoryStoreHandler {
 			lastActivity: new Date().toISOString(),
 			...(params.includeDetails && {
 				details: {
-					storageBackend: 'memory', // TODO: detect actual backend
+					storageBackend: backend.id,
+					vectorSupport: backend.vectorSupport,
 					indexedFields: ['kind', 'tags', 'createdAt'],
 					averageItemSize: items.length > 0 ? Math.round(totalSize / items.length) : 0,
 				},
 			}),
 		};
 	}
+}
+
+function detectBackend(store: MemoryStore): { id: string; vectorSupport: boolean } {
+	const ctorName = store?.constructor?.name ?? '';
+	const normalized = ctorName.toLowerCase();
+	if (normalized.includes('sqlite')) return { id: 'sqlite', vectorSupport: true };
+	if (normalized.includes('prisma')) return { id: 'prisma', vectorSupport: true };
+	if (normalized.includes('qdrant')) return { id: 'qdrant', vectorSupport: true };
+	if (normalized.includes('local')) return { id: 'local', vectorSupport: false };
+	if (normalized.includes('memory')) return { id: 'memory', vectorSupport: false };
+	return { id: ctorName ? ctorName : 'unknown', vectorSupport: false };
 }
 
 export function createMemoryStoreHandler(

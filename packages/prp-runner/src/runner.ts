@@ -3,6 +3,7 @@
  * @description End-to-end PRP workflow runner using gate framework (G0→G1 for now)
  */
 
+import { runSpool } from '@cortex-os/orchestration';
 import type { HumanApproval, PRPState } from '@cortex-os/kernel';
 import {
 	generatePRPMarkdown,
@@ -11,7 +12,7 @@ import {
 	writePRPDocument,
 } from './documentation/index.js';
 import { loadInitialMd } from './enforcement/initial-processor.js';
-import type { BaseGate, GateContext } from './gates/base.js';
+import type { BaseGate, GateContext, GateResult } from './gates/base.js';
 import { G0IdeationGate } from './gates/g0-ideation.js';
 import { G1ArchitectureGate } from './gates/g1-architecture.js';
 import { G2TestPlanGate } from './gates/g2-test-plan.js';
@@ -128,9 +129,13 @@ export async function runPRPWorkflow(
 
 	const approver = approvalProvider ?? new AutoApproveProvider();
 
-	for (const gate of gates) {
+	const gateMap = new Map<string, BaseGate>();
+	for (const gate of gates) gateMap.set(gate.id, gate);
+
+	const executeGate = async (gate: BaseGate) => {
 		const context: GateContext = { ...ctxBase, state };
 		const result = await gate.execute(context);
+		let shouldAbort = false;
 
 		if (result.requiresHumanApproval) {
 			const approval = await approver.requestApproval({
@@ -140,9 +145,7 @@ export async function runPRPWorkflow(
 				context,
 			});
 			state.approvals.push(approval);
-			// Attach to gate result in state for completeness
-			result.humanApproval = approval;
-			// If approved and no automated failures, promote status to passed; if rejected, set to failed
+			(result as GateResult & { humanApproval?: HumanApproval }).humanApproval = approval;
 			const hasFailures = result.automatedChecks.some(
 				(c: { status: 'pass' | 'fail' | 'skip' }) => c.status === 'fail',
 			);
@@ -150,15 +153,80 @@ export async function runPRPWorkflow(
 				result.status = 'passed';
 			} else if (approval.decision !== 'approved') {
 				result.status = 'failed';
+				if (options.strictMode) {
+					shouldAbort = true;
+				}
 			}
-			// If strictMode and approval rejected, stop
 			if (options.strictMode && approval.decision !== 'approved') {
-				break;
+				shouldAbort = true;
 			}
 		}
 
-		// Persist final gate result after any approval handling
 		state.gates[gate.id] = result;
+		return { gateId: gate.id, status: result.status ?? 'pending', shouldAbort };
+	};
+
+	const controller = new AbortController();
+	const spoolEvents =
+		(state.metadata.spoolEvents as
+			| Array<{ type: string; id: string; status?: string }>
+			| undefined) ?? [];
+	if (!state.metadata.spoolEvents) {
+		state.metadata.spoolEvents = spoolEvents;
+	}
+
+	const spoolResults = await runSpool(
+		gates.map((gate) => ({
+			id: gate.id,
+			name: gate.name,
+			estimateTokens: 512,
+			execute: async () => {
+				const summary = await executeGate(gate);
+				if (summary.shouldAbort) {
+					controller.abort();
+				}
+				return summary;
+			},
+		})),
+		{
+			concurrency: 1,
+			tokens: Math.max(1, gates.length) * 2048,
+			ms: options.strictMode ? 10 * 60 * 1000 : undefined,
+			signal: controller.signal,
+			onStart: (task) => spoolEvents.push({ type: 'start', id: task.id }),
+			onSettle: (settled) =>
+				spoolEvents.push({ type: 'settle', id: settled.id, status: settled.status }),
+		},
+	);
+
+	state.metadata.spoolSummary = spoolResults.map(({ id, status }) => ({ id, status }));
+
+	for (const settled of spoolResults) {
+		if (settled.status === 'fulfilled') {
+			continue;
+		}
+		const gate = gateMap.get(settled.id);
+		if (!gate) continue;
+		if (!state.gates[gate.id]) {
+			const timestamp = new Date().toISOString();
+			state.gates[gate.id] = {
+				id: gate.id,
+				name: gate.name,
+				status: 'failed',
+				requiresHumanApproval: false,
+				automatedChecks: [
+					{
+						name: 'spool-dispatch',
+						status: 'fail',
+						output: settled.reason?.message ?? `spool ${settled.status}`,
+					},
+				],
+				artifacts: [],
+				evidence: [],
+				timestamp,
+				nextSteps: ['Review spool dispatch failure'],
+			} as GateResult;
+		}
 	}
 
 	// Generate review JSON and prp.md

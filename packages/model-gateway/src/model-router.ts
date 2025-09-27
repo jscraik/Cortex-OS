@@ -109,7 +109,7 @@ export class ModelRouter implements IModelRouter {
 		parallel_verification: false,
 		sequential_enhancement: true,
 		specialized_delegation: true,
-		consensus_voting: false
+		consensus_voting: false,
 	};
 	private enforcementConfig: any = null;
 
@@ -180,7 +180,7 @@ export class ModelRouter implements IModelRouter {
 					priority: 100,
 					fallback: this.privacyModeEnabled ? [] : ['qwen3-embedding-8b-mlx', ...ollamaFallback],
 					verification: this.privacyModeEnabled ? undefined : 'nomic-embed-text',
-					conjunction: this.privacyModeEnabled ? [] : ['nomic-embed-text', 'granite-embedding']
+					conjunction: this.privacyModeEnabled ? [] : ['nomic-embed-text', 'granite-embedding'],
 				},
 				{
 					name: 'qwen3-embedding-8b-mlx',
@@ -188,7 +188,7 @@ export class ModelRouter implements IModelRouter {
 					capabilities: ['embedding'],
 					priority: 95,
 					fallback: this.privacyModeEnabled ? [] : ['qwen3-embedding-4b-mlx', ...ollamaFallback],
-					verification: this.privacyModeEnabled ? undefined : 'nomic-embed-text'
+					verification: this.privacyModeEnabled ? undefined : 'nomic-embed-text',
 				},
 			);
 		}
@@ -203,15 +203,15 @@ export class ModelRouter implements IModelRouter {
 						capabilities: ['embedding'],
 						priority: mlxAvailable ? 80 : 100,
 						fallback: [],
-						conjunction: ['granite-embedding']
+						conjunction: ['granite-embedding'],
 					},
 					{
 						name: 'granite-embedding',
 						provider: 'ollama',
 						capabilities: ['embedding'],
 						priority: mlxAvailable ? 75 : 95,
-						fallback: []
-					}
+						fallback: [],
+					},
 				);
 			}
 			if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
@@ -245,9 +245,24 @@ export class ModelRouter implements IModelRouter {
 		if (ollamaAvailable) {
 			const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
 			const desiredChat = [
-				{ name: 'gpt-oss:20b', priority: 100, fallback: [] as string[], conjunction: ['qwen3-coder:30b'] },
-				{ name: 'qwen3-coder:30b', priority: 95, fallback: [] as string[], verification: 'deepseek-coder:6.7b' },
-				{ name: 'deepseek-coder:6.7b', priority: 90, fallback: [] as string[], conjunction: ['phi4-mini-reasoning'] },
+				{
+					name: 'gpt-oss:20b',
+					priority: 100,
+					fallback: [] as string[],
+					conjunction: ['qwen3-coder:30b'],
+				},
+				{
+					name: 'qwen3-coder:30b',
+					priority: 95,
+					fallback: [] as string[],
+					verification: 'deepseek-coder:6.7b',
+				},
+				{
+					name: 'deepseek-coder:6.7b',
+					priority: 90,
+					fallback: [] as string[],
+					conjunction: ['phi4-mini-reasoning'],
+				},
 				{ name: 'phi4-mini-reasoning', priority: 85, fallback: [] as string[] },
 				{ name: 'gemma3n:e4b', priority: 80, fallback: [] as string[] },
 				{ name: 'llama2', priority: 70, fallback: [] as string[] },
@@ -261,22 +276,22 @@ export class ModelRouter implements IModelRouter {
 						priority: 105, // Higher than local for enterprise tasks
 						fallback: ['qwen3-coder:30b'],
 						context_threshold: 100000,
-						complexity_threshold: 'enterprise' as const
+						complexity_threshold: 'enterprise' as const,
 					},
 					{
 						name: 'gpt-oss:120b-cloud',
 						priority: 102,
 						fallback: ['gpt-oss:20b'],
 						context_threshold: 80000,
-						complexity_threshold: 'complex' as const
+						complexity_threshold: 'complex' as const,
 					},
 					{
 						name: 'deepseek-v3.1:671b-cloud',
 						priority: 103,
 						fallback: ['deepseek-coder:6.7b'],
 						context_threshold: 150000,
-						complexity_threshold: 'enterprise' as const
-					}
+						complexity_threshold: 'enterprise' as const,
+					},
 				];
 
 				for (const cloudModel of cloudModels) {
@@ -287,7 +302,7 @@ export class ModelRouter implements IModelRouter {
 						priority: cloudModel.priority,
 						fallback: cloudModel.fallback,
 						context_threshold: cloudModel.context_threshold,
-						complexity_threshold: cloudModel.complexity_threshold
+						complexity_threshold: cloudModel.complexity_threshold,
 					});
 				}
 			}
@@ -314,7 +329,7 @@ export class ModelRouter implements IModelRouter {
 						priority: m.priority,
 						fallback: m.fallback,
 						conjunction: (m as any).conjunction,
-						verification: (m as any).verification
+						verification: (m as any).verification,
 					});
 				} else {
 					console.warn(`[brAInwav Cortex-OS] Ollama model ${m.name} not installed; skipping`);
@@ -396,7 +411,12 @@ export class ModelRouter implements IModelRouter {
 		return rerankingModels;
 	}
 
-	private selectModel(capability: ModelCapability, requestedModel?: string, contextLength?: number, complexity?: string): ModelConfig | null {
+	private selectModel(
+		capability: ModelCapability,
+		requestedModel?: string,
+		contextLength?: number,
+		complexity?: string,
+	): ModelConfig | null {
 		const models = this.availableModels.get(capability);
 		if (!models || models.length === 0) return null;
 
@@ -417,24 +437,26 @@ export class ModelRouter implements IModelRouter {
 		if (!this.privacyModeEnabled && this.hybridMode === 'enterprise') {
 			// For massive context, prefer cloud models
 			if (contextLength && contextLength > 100000) {
-				const cloudModel = filteredModels.find(m =>
-					m.provider === 'ollama-cloud' &&
-					(m.context_threshold || 0) <= contextLength
+				const cloudModel = filteredModels.find(
+					(m) => m.provider === 'ollama-cloud' && (m.context_threshold || 0) <= contextLength,
 				);
 				if (cloudModel) {
-					console.log(`brAInwav Cortex-OS: Selected cloud model ${cloudModel.name} for large context (${contextLength})`);
+					console.log(
+						`brAInwav Cortex-OS: Selected cloud model ${cloudModel.name} for large context (${contextLength})`,
+					);
 					return cloudModel;
 				}
 			}
 
 			// For enterprise complexity, prefer cloud models
 			if (complexity === 'enterprise') {
-				const enterpriseModel = filteredModels.find(m =>
-					m.provider === 'ollama-cloud' &&
-					m.complexity_threshold === 'enterprise'
+				const enterpriseModel = filteredModels.find(
+					(m) => m.provider === 'ollama-cloud' && m.complexity_threshold === 'enterprise',
 				);
 				if (enterpriseModel) {
-					console.log(`brAInwav Cortex-OS: Selected enterprise cloud model ${enterpriseModel.name}`);
+					console.log(
+						`brAInwav Cortex-OS: Selected enterprise cloud model ${enterpriseModel.name}`,
+					);
 					return enterpriseModel;
 				}
 			}
@@ -504,7 +526,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All embedding models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -555,7 +578,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All batch embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All batch embedding models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -609,7 +633,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All chat models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All chat models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -675,7 +700,8 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All reranking models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
+				`All reranking models failed. Last error: ${
+					error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -707,23 +733,26 @@ export class ModelRouter implements IModelRouter {
 
 		if (primary.conjunction && this.hybridConfig.parallel_verification) {
 			// Run both models in parallel for verification
-			const conjunctionModel = this.availableModels.get(capability)?.find(m =>
-				primary.conjunction?.includes(m.name)
-			);
+			const conjunctionModel = this.availableModels
+				.get(capability)
+				?.find((m) => primary.conjunction?.includes(m.name));
 			if (conjunctionModel) {
 				try {
 					const [primaryResult, conjunctionResult] = await Promise.all([
 						this.executeModelRequest(primary, capability, request),
-						this.executeModelRequest(conjunctionModel, capability, request)
+						this.executeModelRequest(conjunctionModel, capability, request),
 					]);
 					return {
 						primary: primaryResult,
 						verification: conjunctionResult,
 						consensus: this.calculateConsensus(primaryResult, conjunctionResult),
-						model: `${primary.name}+${conjunctionModel.name}`
+						model: `${primary.name}+${conjunctionModel.name}`,
 					};
 				} catch (error) {
-					console.warn('brAInwav Cortex-OS: Conjunction verification failed, using primary only:', error);
+					console.warn(
+						'brAInwav Cortex-OS: Conjunction verification failed, using primary only:',
+						error,
+					);
 				}
 			}
 		}
@@ -739,16 +768,20 @@ export class ModelRouter implements IModelRouter {
 		const result = await this.executeModelRequest(primary, capability, request);
 
 		if (primary.verification && this.hybridConfig.parallel_verification) {
-			const verificationModel = this.availableModels.get(capability)?.find(m =>
-				m.name === primary.verification
-			);
+			const verificationModel = this.availableModels
+				.get(capability)
+				?.find((m) => m.name === primary.verification);
 			if (verificationModel) {
 				try {
-					const verificationResult = await this.executeModelRequest(verificationModel, capability, request);
+					const verificationResult = await this.executeModelRequest(
+						verificationModel,
+						capability,
+						request,
+					);
 					return {
 						...result,
 						verification: verificationResult,
-						verified: true
+						verified: true,
 					};
 				} catch (error) {
 					console.warn('brAInwav Cortex-OS: Verification failed:', error);
@@ -759,7 +792,11 @@ export class ModelRouter implements IModelRouter {
 		return result;
 	}
 
-	private async executeModelRequest(model: ModelConfig, capability: ModelCapability, request: any): Promise<any> {
+	private async executeModelRequest(
+		model: ModelConfig,
+		capability: ModelCapability,
+		request: any,
+	): Promise<any> {
 		switch (capability) {
 			case 'embedding':
 				return await this.generateEmbedding(request);
@@ -778,7 +815,7 @@ export class ModelRouter implements IModelRouter {
 			agreement: JSON.stringify(primary) === JSON.stringify(verification),
 			confidence: 0.85, // Placeholder confidence score
 			primary_model: primary.model,
-			verification_model: verification.model
+			verification_model: verification.model,
 		};
 	}
 
