@@ -475,15 +475,15 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/agents/tests/prompts/template-selection.test.ts` | ⚪ todo | PromptTemplateManager selects correct template + reasoning |
-| `packages/agents/tests/prompts/context-adaptation.test.ts` | ⚪ todo | Adaptations respect planning context & capabilities |
-| `packages/agents/tests/prompts/effectiveness-tracking.test.ts` | ⚪ todo | Usage history trims, learns, and influences selection |
+| `packages/agents/tests/prompts/template-selection.test.ts` | ✅ done | PromptTemplateManager selects correct template + reasoning |
+| `packages/agents/tests/prompts/context-adaptation.test.ts` | ✅ done | Adaptations respect planning context & capabilities |
+| `packages/agents/tests/prompts/effectiveness-tracking.test.ts` | ✅ done | Usage history trims, learns, and influences selection |
 
 ### Phase 14 Implementation
 
-- Expand `PromptTemplateManager` default templates with measurable examples
-- Add effectiveness tracking and adaptive prompt selection logic tied to context
-- Ensure all prompts include brAInwav branding and nO behaviour guidelines
+- Expand `PromptTemplateManager` default templates with measurable examples ✅
+- Add effectiveness tracking and adaptive prompt selection logic tied to context ✅
+- Ensure all prompts include brAInwav branding and nO behaviour guidelines ✅
 
 ---
 
