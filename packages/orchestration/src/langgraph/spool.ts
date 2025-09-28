@@ -198,9 +198,9 @@ function createSkipped<T>(
 }
 
 function toError(value: unknown, id: string): Error {
-        const message = value instanceof Error ? value.message : String(value);
         if (value instanceof Error) {
-                return new Error(`brAInwav tool execution failed for ${id}: ${message}`, { cause: value });
+                return new Error(`brAInwav tool execution failed for ${id}: ${value.message}`, { cause: value });
+        } else {
+                return new Error(`brAInwav tool execution failed for ${id}: ${String(value)}`);
         }
-        return new Error(`brAInwav tool execution failed for ${id}: ${message}`);
 }
