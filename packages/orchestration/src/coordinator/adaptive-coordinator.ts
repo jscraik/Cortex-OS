@@ -178,7 +178,10 @@ export class AdaptiveCoordinationManager {
                         this.telemetryEmitter?.(event);
                 });
 
-                const plannerStats = this.longHorizonPlanner?.getStats();
+                const plannerStats =
+                        typeof this.longHorizonPlanner?.getStats === 'function'
+                                ? this.longHorizonPlanner.getStats()
+                                : undefined;
                 const coordinationResult: CoordinationResult = {
                         taskId: request.task.id,
                         strategy: strategyScore.strategy,
