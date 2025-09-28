@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { ZodError, type ZodIssue, z } from 'zod';
+import {
+        CORTEX_SEC_TOOL_ALLOWLIST,
+        cortexSecMcpTools,
+        type CortexSecTool,
+} from '@cortex-os/cortex-sec';
 import type { EnhancedSpanContext } from '../observability/otel.js';
 import {
 	recordAgentActivation,
@@ -39,6 +44,35 @@ type MCPToolDefinition = {
 	inputSchema: z.ZodTypeAny;
 	handler: (params: unknown) => Promise<MCPToolResponse>;
 };
+
+function adaptSecurityTool(tool: CortexSecTool): MCPToolDefinition {
+	return {
+		name: `cortex_sec.${tool.name}`,
+		description: `${tool.description} (brAInwav security allow-list enforced).`,
+		inputSchema: tool.inputSchema,
+		handler: async (params: unknown) => {
+			const result = await tool.handler(params);
+			return {
+				content: [
+					...result.content,
+					{
+						type: 'text',
+						text: JSON.stringify({
+							brand: result.metadata.brand,
+							allowList: tool.allowList,
+						}),
+					},
+				],
+				metadata: {
+					correlationId: result.metadata.correlationId,
+					timestamp: result.metadata.timestamp,
+					tool: `cortex_sec.${tool.name}`,
+				},
+			};
+		},
+	};
+}
+
 
 class OrchestrationToolError extends Error {
 	constructor(
@@ -799,11 +833,16 @@ export const processMonitoringTool: MCPToolDefinition = {
 		}),
 };
 
+const securityMcpTools = cortexSecMcpTools.map(adaptSecurityTool);
+
 export const orchestrationMcpTools = [
 	workflowOrchestrationTool,
 	taskManagementTool,
 	processMonitoringTool,
+	...securityMcpTools,
 ];
+
+export const orchestrationSecurityToolAllowList = CORTEX_SEC_TOOL_ALLOWLIST;
 export {
 	__resetOrchestrationMcpState,
 	configureOrchestrationMcp,

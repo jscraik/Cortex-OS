@@ -72,6 +72,8 @@ export type {
         StreamableStateGraph,
 } from './langgraph/streaming.js';
 
+export { SecurityCoordinator, type ComplianceEvaluationResult } from './security/security-coordinator.js';
+
 // Utility defaults
 export const OrchestrationDefaults = {
 	maxConcurrentOrchestrations: 10,

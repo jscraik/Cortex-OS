@@ -15,6 +15,18 @@ export enum PlanningPhase {
 	COMPLETION = 'completion',
 }
 
+const COMPLIANCE_RISK_ORDER: Array<'low' | 'medium' | 'high' | 'critical'> = ['low', 'medium', 'high', 'critical'];
+
+function escalateRiskLevel(current: 'low' | 'medium' | 'high' | 'critical'): 'low' | 'medium' | 'high' | 'critical' {
+        const index = COMPLIANCE_RISK_ORDER.indexOf(current);
+        return COMPLIANCE_RISK_ORDER[Math.min(index + 1, COMPLIANCE_RISK_ORDER.length - 1)];
+}
+
+function reduceRiskLevel(current: 'low' | 'medium' | 'high' | 'critical'): 'low' | 'medium' | 'high' | 'critical' {
+        const index = COMPLIANCE_RISK_ORDER.indexOf(current);
+        return COMPLIANCE_RISK_ORDER[Math.max(index - 1, 0)];
+}
+
 export interface PlanningContext {
 	id: string;
 	workspaceId?: string;
@@ -38,6 +50,11 @@ export interface PlanningContext {
 		updatedAt: Date;
 		complexity: number;
 		priority: number;
+		compliance: {
+			riskLevel: 'low' | 'medium' | 'high' | 'critical';
+			activeViolations: number;
+			notes: string[];
+		};
 	};
 }
 
@@ -86,6 +103,22 @@ export class DynamicSpeculativePlanner {
 					: 'Reduce complexity or adjust strategy for better outcomes',
 				timestamp: new Date(),
 			});
+			const compliance = this.planningContext.metadata.compliance;
+			if (compliance) {
+				const note = success
+					? 'brAInwav compliance checkpoint succeeded.'
+					: 'brAInwav compliance monitoring escalated risk.';
+				if (!compliance.notes.includes(note)) {
+					compliance.notes = [...compliance.notes, note];
+				}
+				if (success) {
+					compliance.riskLevel = reduceRiskLevel(compliance.riskLevel);
+					compliance.activeViolations = Math.max(0, compliance.activeViolations - 1);
+				} else {
+					compliance.riskLevel = escalateRiskLevel(compliance.riskLevel);
+					compliance.activeViolations = Math.max(1, compliance.activeViolations + 1);
+				}
+			}
 			this.planningContext.metadata.updatedAt = new Date();
 		}
 	}
@@ -115,6 +148,11 @@ export class DynamicSpeculativePlanner {
 				updatedAt: new Date(),
 				complexity,
 				priority,
+				compliance: {
+					riskLevel: 'low',
+					activeViolations: 0,
+					notes: ['brAInwav compliance baseline: no violations detected.'],
+				},
 			},
 		};
 
@@ -122,6 +160,27 @@ export class DynamicSpeculativePlanner {
 			`brAInwav DSP: Initialized planning context for task ${taskId} with complexity ${complexity}`,
 		);
 		return this.planningContext;
+	}
+
+	/**
+	 * Apply compliance summary updates from security coordination
+	 */
+	applyComplianceSummary(summary: { riskLevel: 'low' | 'medium' | 'high' | 'critical'; activeViolations: number; notes?: string[] }): void {
+		if (!this.planningContext) {
+			throw new Error('brAInwav DSP: Planning context not initialized');
+		}
+
+		const compliance = this.planningContext.metadata.compliance;
+		if (!compliance) {
+			return;
+		}
+
+		compliance.riskLevel = summary.riskLevel;
+		compliance.activeViolations = Math.max(0, summary.activeViolations);
+		if (summary.notes && summary.notes.length > 0) {
+			compliance.notes = summary.notes;
+		}
+		this.planningContext.metadata.updatedAt = new Date();
 	}
 
 	/**
@@ -170,8 +229,16 @@ export class DynamicSpeculativePlanner {
 		const baseDepth = this.planningDepth;
 		const complexityMultiplier = Math.min(complexity / 5, 2); // Cap at 2x
 		const priorityMultiplier = priority > 8 ? 1.5 : 1;
+		const complianceRisk = this.planningContext.metadata.compliance?.riskLevel ?? 'low';
+		const riskMultipliers: Record<string, number> = {
+			critical: 1.75,
+			high: 1.5,
+			medium: 1.2,
+			low: 1,
+		};
+		const riskMultiplier = riskMultipliers[complianceRisk] ?? 1;
 
-		return Math.ceil(baseDepth * complexityMultiplier * priorityMultiplier);
+		return Math.ceil(baseDepth * complexityMultiplier * priorityMultiplier * riskMultiplier);
 	}
 
 	/**
@@ -191,6 +258,15 @@ export class DynamicSpeculativePlanner {
 
 		this.planningContext.currentPhase = PlanningPhase.COMPLETION;
 		this.planningContext.metadata.updatedAt = new Date();
+
+		const compliance = this.planningContext.metadata.compliance;
+		if (compliance) {
+			compliance.riskLevel = reduceRiskLevel(compliance.riskLevel);
+			compliance.activeViolations = Math.max(0, compliance.activeViolations - 1);
+			if (!compliance.notes.includes('brAInwav compliance audit completed.')) {
+				compliance.notes = [...compliance.notes, 'brAInwav compliance audit completed.'];
+			}
+		}
 
 		console.log(`brAInwav DSP: Completed planning for task ${this.planningContext.id}`);
 	}

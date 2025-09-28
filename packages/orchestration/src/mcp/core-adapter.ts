@@ -223,6 +223,14 @@ export function getDefaultOrchestrationPlanningContext(
 			maxCost: 0,
 			availabilityWindow: [now, now],
 		},
+		compliance: {
+			policies: [],
+			riskLevel: 'low',
+			lastUpdated: now,
+			requiresHumanReview: false,
+			activeViolations: [],
+			notes: ['brAInwav compliance baseline: no violations detected.'],
+		},
 	};
 }
 
