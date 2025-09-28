@@ -22,6 +22,6 @@ describe('Thermal model fallback', () => {
                 expect(result.budget).toEqual(initialBudget);
                 expect(result.selectedModel?.provider).toBe('ollama');
                 const telemetry = result.ctx?.telemetry as any[] | undefined;
-                expect(telemetry?.[0]?.payload?.thermal?.response.fallbackProvider).toBe('ollama.brainwav-fallback');
+                expect(telemetry?.[0]?.payload?.thermal?.response.fallbackProvider).toBe('brainwav-mlx-fallback');
         });
 });
