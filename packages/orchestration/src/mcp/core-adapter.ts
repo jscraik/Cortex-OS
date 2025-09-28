@@ -223,6 +223,12 @@ export function getDefaultOrchestrationPlanningContext(
 			maxCost: 0,
 			availabilityWindow: [now, now],
 		},
+		compliance: {
+			standards: ['OWASP Top 10', 'SOC 2', 'ISO 27001'],
+			lastCheckedAt: null,
+			riskScore: 0,
+			outstandingViolations: [],
+		},
 	};
 }
 

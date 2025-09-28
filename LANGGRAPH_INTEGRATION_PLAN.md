@@ -291,20 +291,20 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/evidence-runner/tests/enhancement.test.ts` | ⚪ todo | Ensure `enhanceEvidence` enriches output |
-| `packages/mcp-bridge/tests/browser-executor.test.ts` | ⚪ todo | Playwright-driven DOM extraction |
-| `packages/mcp-bridge/tests/database-executor.test.ts` | ⚪ todo | Parameterised SQL execution |
-| `packages/mcp-core/tests/tool-mapping.test.ts` | ⚪ todo | Safe fallback for unknown tool types |
+| `packages/evidence-runner/tests/enhancement.test.ts` | ✅ completed | Evidence enhancement with MLX integration |
+| `packages/mcp-bridge/tests/browser-executor.test.ts` | ✅ completed | Playwright-driven DOM extraction |
+| `packages/mcp-bridge/tests/database-executor.test.ts` | ✅ completed | Parameterised SQL execution |
+| `packages/mcp-core/tests/tool-mapping.test.ts` | ✅ completed | Safe fallback for unknown tool types |
 
 ### Phase 8 Implementation
 
-- Integrate MLX/remote LLMs for evidence enhancement with deterministic configs
-- Wire Playwright + database executors with real drivers and secure parameterisation
-- Expand tool mappings and add telemetry/logging
+- ✅ Integrate MLX/remote LLMs for evidence enhancement with deterministic configs
+- ✅ Wire Playwright + database executors with real drivers and secure parameterisation
+- ✅ Expand tool mappings and add telemetry/logging
 
 ### Phase 8 Validation
 
-- Add `pnpm test:mcp:smoke` gated by `PLAYWRIGHT=1`
+- ✅ Add `pnpm test:mcp:smoke` gated by `PLAYWRIGHT=1`
 
 ---
 

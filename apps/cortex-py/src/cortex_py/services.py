@@ -4,9 +4,12 @@ import logging
 import threading
 import time
 from collections import OrderedDict, deque
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Callable, Iterable, Sequence
+from datetime import UTC, datetime
+from typing import Any
+
+# Import brAInwav thermal monitoring
 
 logger = logging.getLogger(__name__)
 
@@ -88,9 +91,9 @@ class EmbeddingService:
         self.audit_logger = audit_logger or logger.getChild("audit")
         self.rate_window_seconds = rate_window_seconds
 
-        self._cache: "OrderedDict[tuple[str, bool], tuple[list[float], dict[str, Any]]]" = (
-            OrderedDict()
-        )
+        self._cache: OrderedDict[
+            tuple[str, bool], tuple[list[float], dict[str, Any]]
+        ] = OrderedDict()
         self._lock = threading.RLock()
         self._requests: deque[float] = deque()
         self._metrics = {
@@ -117,7 +120,9 @@ class EmbeddingService:
 
     # Public API -----------------------------------------------------------------
 
-    def generate_single(self, text: str, *, normalize: bool = True) -> EmbeddingServiceResult:
+    def generate_single(
+        self, text: str, *, normalize: bool = True
+    ) -> EmbeddingServiceResult:
         sanitized = self._sanitize_text(text)
         self._run_security_checks([sanitized])
 
@@ -127,7 +132,9 @@ class EmbeddingService:
             embedding, metadata = cached
             metadata = {**metadata, "cached": True, "source": "cache"}
             self._metrics["cache_hits"] += 1
-            return EmbeddingServiceResult(embedding=list(embedding), cached=True, metadata=metadata)
+            return EmbeddingServiceResult(
+                embedding=list(embedding), cached=True, metadata=metadata
+            )
 
         self._metrics["cache_misses"] += 1
         self._enforce_rate_limit()
@@ -141,9 +148,13 @@ class EmbeddingService:
 
         metadata = self._build_metadata(generator, embedding, cached=False)
         self._store_cache(key, embedding, metadata)
-        return EmbeddingServiceResult(embedding=list(embedding), cached=False, metadata=metadata)
+        return EmbeddingServiceResult(
+            embedding=list(embedding), cached=False, metadata=metadata
+        )
 
-    def generate_batch(self, texts: Sequence[str], *, normalize: bool = True) -> BatchEmbeddingServiceResult:
+    def generate_batch(
+        self, texts: Sequence[str], *, normalize: bool = True
+    ) -> BatchEmbeddingServiceResult:
         if not isinstance(texts, Iterable):
             raise ServiceValidationError("texts must be an iterable of strings")
 
@@ -192,15 +203,19 @@ class EmbeddingService:
                 embeddings[idx] = list(vector)
 
         assert all(vec is not None for vec in embeddings)
+        # Type cast after assertion - we know all embeddings are not None
+        valid_embeddings: list[list[float]] = [
+            vec for vec in embeddings if vec is not None
+        ]  # type: ignore
         metadata = self._build_metadata(
             generator,
-            embeddings[0] if embeddings else [],
+            valid_embeddings[0] if valid_embeddings else [],
             cached=cached_hits == len(embeddings),
             batch_count=len(embeddings),
             cached_hits=cached_hits,
         )
         return BatchEmbeddingServiceResult(
-            embeddings=[list(vec) for vec in embeddings],
+            embeddings=[list(vec) for vec in valid_embeddings],
             cached_hits=cached_hits,
             metadata=metadata,
         )
@@ -274,7 +289,9 @@ class EmbeddingService:
                 raise RateLimitExceeded("rate limit exceeded")
             self._requests.append(now)
 
-    def _from_cache(self, key: tuple[str, bool]) -> tuple[list[float], dict[str, Any]] | None:
+    def _from_cache(
+        self, key: tuple[str, bool]
+    ) -> tuple[list[float], dict[str, Any]] | None:
         with self._lock:
             cached = self._cache.get(key)
             if cached is None:
@@ -284,7 +301,10 @@ class EmbeddingService:
             return list(vector), dict(metadata)
 
     def _store_cache(
-        self, key: tuple[str, bool], embedding: Sequence[float], metadata: dict[str, Any]
+        self,
+        key: tuple[str, bool],
+        embedding: Sequence[float],
+        metadata: dict[str, Any],
     ) -> None:
         with self._lock:
             self._cache[key] = (list(embedding), dict(metadata))
@@ -301,15 +321,17 @@ class EmbeddingService:
         batch_count: int | None = None,
         cached_hits: int | None = None,
     ) -> dict[str, Any]:
-        generated_at = datetime.now(timezone.utc)
-        info = {}
+        generated_at = datetime.now(UTC)
+        info: dict[str, Any] = {}
         try:
             info = generator.get_model_info() or {}
         except Exception:  # pragma: no cover - generator optional
             info = {}
         metadata = {
             "model_name": info.get("model_name") if isinstance(info, dict) else None,
-            "dimensions": info.get("dimensions") if isinstance(info, dict) else len(embedding),
+            "dimensions": info.get("dimensions")
+            if isinstance(info, dict)
+            else len(embedding),
             "backend": info.get("backend") if isinstance(info, dict) else None,
             "generated_at": generated_at,
             "cached": cached,
@@ -339,5 +361,3 @@ class EmbeddingService:
     @staticmethod
     def _redact_text(text: str) -> str:
         return text[:32] + ("…" if len(text) > 32 else "")
-
-

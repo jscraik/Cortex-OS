@@ -20,6 +20,7 @@ import { addToHistory, createHistory, type ExecutionHistory } from './lib/histor
 import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';
 import { createInitialPRPState, type PRPState } from './state.js';
 import { generateId } from './utils/id.js';
+import type { PRPOrchestrator } from '@cortex-os/prp-runner';
 
 /**
  * State annotation for LangGraphJS workflow using proper Annotation pattern
@@ -42,12 +43,6 @@ const WorkflowStateAnnotation = Annotation.Root({
 
 export type WorkflowState = typeof WorkflowStateAnnotation.State;
 
-/**
- * Minimal interface for orchestrator integration
- */
-export interface PRPOrchestrator {
-	getNeuronCount(): number;
-}
 
 /**
  * Blueprint interface for PRP workflows

@@ -4,6 +4,7 @@
  * Maintains brAInwav branding and security controls
  */
 
+import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
@@ -46,29 +47,25 @@ export interface WorkspaceFile {
 // Workspace Create Tool
 // ================================
 
+// brAInwav Schema: Simplified without unnecessary type gymnastics  
 const WorkspacePermissionsSchema = z.object({
-	read: z.boolean().default(true),
-	write: z.boolean().default(true),
-	execute: z.boolean().default(false),
+	read: z.boolean(),
+	write: z.boolean(),
+	execute: z.boolean(),
 });
 
 const WorkspaceIsolationLevelSchema = z.enum(['strict', 'moderate', 'relaxed']);
-
-const DEFAULT_WORKSPACE_ISOLATION_LEVEL: z.infer<typeof WorkspaceIsolationLevelSchema> = 'moderate';
 
 const WorkspaceCreateInputSchema = z.object({
 	name: z.string().min(1, 'workspace name is required'),
 	description: z.string().optional(),
 	agentId: z.string().optional(),
 	sessionId: z.string().optional(),
-	isolationLevel: WorkspaceIsolationLevelSchema.default(DEFAULT_WORKSPACE_ISOLATION_LEVEL),
+	isolationLevel: WorkspaceIsolationLevelSchema.optional(),
 	permissions: WorkspacePermissionsSchema.optional(),
 });
 
 export type WorkspaceCreateInput = z.infer<typeof WorkspaceCreateInputSchema>;
-
-const asToolSchema = <TInput>(schema: z.ZodTypeAny): z.ZodType<TInput> =>
-	schema as z.ZodType<TInput>;
 
 export interface WorkspaceCreateResult {
 	workspace: WorkspaceMetadata;
@@ -84,7 +81,7 @@ export class WorkspaceCreateTool implements McpTool<WorkspaceCreateInput, Worksp
 	readonly name = 'workspace-create';
 	readonly description =
 		'Creates a new isolated workspace for agent operations following nO architecture patterns';
-	readonly inputSchema = asToolSchema<WorkspaceCreateInput>(WorkspaceCreateInputSchema);
+	readonly inputSchema = WorkspaceCreateInputSchema;
 
 	async execute(
 		input: WorkspaceCreateInput,
@@ -98,17 +95,19 @@ export class WorkspaceCreateTool implements McpTool<WorkspaceCreateInput, Worksp
 
 		try {
 			// Generate workspace ID and path
-			const workspaceId = `workspace-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			const workspaceId = `workspace-${Date.now()}-${randomUUID().slice(0, 8)}`;
 			const workspacePath = this.getWorkspacePath(workspaceId);
 
 			// Create workspace directory
 			await mkdir(workspacePath, { recursive: true });
 
-			const permissions = WorkspacePermissionsSchema.parse(input.permissions ?? {});
+			const permissions = input.permissions ?? {
+				read: true,
+				write: true,
+				execute: false,
+			};
 
-			const isolationLevel = WorkspaceIsolationLevelSchema.parse(
-				input.isolationLevel ?? DEFAULT_WORKSPACE_ISOLATION_LEVEL,
-			);
+			const isolationLevel = input.isolationLevel ?? 'moderate';
 
 			// Create workspace metadata
 			const metadata: WorkspaceMetadata = {
@@ -162,8 +161,8 @@ export class WorkspaceCreateTool implements McpTool<WorkspaceCreateInput, Worksp
 const WorkspaceListInputSchema = z.object({
 	agentId: z.string().optional(),
 	sessionId: z.string().optional(),
-	includeMetadata: z.boolean().default(false),
-	maxResults: z.number().int().positive().max(100).default(50),
+	includeMetadata: z.boolean().optional(),
+	maxResults: z.number().int().positive().max(100).optional(),
 });
 
 export type WorkspaceListInput = z.infer<typeof WorkspaceListInputSchema>;
@@ -184,10 +183,39 @@ export interface WorkspaceListResult {
 	};
 }
 
+// brAInwav Utility: Extract workspace loading logic  
+const loadWorkspaceDirectories = async (baseDir: string, maxResults: number) => {
+	try {
+		await stat(baseDir);
+	} catch {
+		return [];
+	}
+
+	const entries = await readdir(baseDir, { withFileTypes: true });
+	return entries.filter((entry) => entry.isDirectory()).slice(0, maxResults);
+};
+
+// brAInwav Utility: Extract metadata parsing logic
+const parseWorkspaceMetadata = async (workspacePath: string): Promise<WorkspaceMetadata | null> => {
+	try {
+		const metadataPath = join(workspacePath, '.workspace-metadata.json');
+		const metadataContent = await readFile(metadataPath, 'utf8');
+		const metadata = JSON.parse(metadataContent);
+
+		// Convert string dates back to Date objects
+		metadata.createdAt = new Date(metadata.createdAt);
+		metadata.lastAccessed = new Date(metadata.lastAccessed);
+
+		return metadata;
+	} catch {
+		return null;
+	}
+};
+
 export class WorkspaceListTool implements McpTool<WorkspaceListInput, WorkspaceListResult> {
 	readonly name = 'workspace-list';
 	readonly description = 'Lists available workspaces for the current agent session';
-	readonly inputSchema = asToolSchema<WorkspaceListInput>(WorkspaceListInputSchema);
+	readonly inputSchema = WorkspaceListInputSchema;
 
 	async execute(
 		input: WorkspaceListInput,
@@ -200,67 +228,26 @@ export class WorkspaceListTool implements McpTool<WorkspaceListInput, WorkspaceL
 		}
 
 		try {
-			const baseDir =
-				process.env.CORTEX_WORKSPACES_DIR || join(process.cwd(), '.cortex-workspaces');
+			const baseDir = process.env.CORTEX_WORKSPACES_DIR || join(process.cwd(), '.cortex-workspaces');
+			const maxResults = input.maxResults ?? 50;
+			const includeMetadata = input.includeMetadata ?? false;
 
-			// Ensure base directory exists
-			try {
-				await stat(baseDir);
-			} catch {
-				// Base directory doesn't exist, return empty list
-				return {
-					workspaces: [],
-					totalCount: 0,
-					timestamp: new Date().toISOString(),
-					brainwavMetadata: {
-						queriedBy: 'brAInwav',
-						nOArchitecture: true,
-					},
-				};
-			}
-
-			// Read workspace directories
-			const entries = await readdir(baseDir, { withFileTypes: true });
-			const workspaceDirs = entries.filter((entry) => entry.isDirectory());
-
-			const workspaces: Array<{
-				id: string;
-				name: string;
-				path: string;
-				lastAccessed: Date;
-				metadata?: WorkspaceMetadata;
-			}> = [];
-
-			for (const dir of workspaceDirs.slice(0, input.maxResults)) {
-				const workspacePath = join(baseDir, dir.name);
-				const metadataPath = join(workspacePath, '.workspace-metadata.json');
-
-				try {
-					const metadataContent = await readFile(metadataPath, 'utf8');
-					const metadata: WorkspaceMetadata = JSON.parse(metadataContent);
-
-					// Filter by agent/session if specified
-					if (input.agentId && metadata.agentId !== input.agentId) {
-						continue;
-					}
-					if (input.sessionId && metadata.sessionId !== input.sessionId) {
-						continue;
-					}
-
-					workspaces.push({
-						id: metadata.id,
-						name: metadata.name,
-						path: workspacePath,
-						lastAccessed: metadata.lastAccessed,
-						metadata: input.includeMetadata ? metadata : undefined,
-					});
-				} catch {}
-			}
+			const workspaceDirs = await loadWorkspaceDirectories(baseDir, maxResults);
+			const workspaces = await this.processWorkspaceDirectories(
+				workspaceDirs,
+				baseDir,
+				input,
+				includeMetadata,
+			);
 
 			console.log(`brAInwav Workspace: Listed ${workspaces.length} nO workspaces`);
 
+			const sortedWorkspaces = [...workspaces].sort(
+				(a, b) => b.lastAccessed.getTime() - a.lastAccessed.getTime(),
+			);
+
 			return {
-				workspaces: workspaces.sort((a, b) => b.lastAccessed.getTime() - a.lastAccessed.getTime()),
+				workspaces: sortedWorkspaces,
 				totalCount: workspaces.length,
 				timestamp: new Date().toISOString(),
 				brainwavMetadata: {
@@ -276,6 +263,42 @@ export class WorkspaceListTool implements McpTool<WorkspaceListInput, WorkspaceL
 			});
 		}
 	}
+
+	private async processWorkspaceDirectories(
+		workspaceDirs: any[],
+		baseDir: string,
+		input: WorkspaceListInput,
+		includeMetadata: boolean,
+	) {
+		const workspaces: Array<{
+			id: string;
+			name: string;
+			path: string;
+			lastAccessed: Date;
+			metadata?: WorkspaceMetadata;
+		}> = [];
+
+		for (const dir of workspaceDirs) {
+			const workspacePath = join(baseDir, dir.name);
+			const metadata = await parseWorkspaceMetadata(workspacePath);
+
+			if (!metadata) continue;
+
+			// Filter by agent/session if specified
+			if (input.agentId && metadata.agentId !== input.agentId) continue;
+			if (input.sessionId && metadata.sessionId !== input.sessionId) continue;
+
+			workspaces.push({
+				id: metadata.id,
+				name: metadata.name,
+				path: workspacePath,
+				lastAccessed: metadata.lastAccessed,
+				metadata: includeMetadata ? metadata : undefined,
+			});
+		}
+
+		return workspaces;
+	}
 }
 
 // ================================
@@ -285,13 +308,13 @@ export class WorkspaceListTool implements McpTool<WorkspaceListInput, WorkspaceL
 const WorkspaceReadInputSchema = z.object({
 	workspaceId: z.string().min(1, 'workspace ID is required'),
 	filePath: z.string().min(1, 'file path is required'),
-	encoding: z.enum(['utf8', 'ascii', 'base64', 'hex']).default('utf8'),
+	encoding: z.enum(['utf8', 'ascii', 'base64', 'hex']).optional(),
 	maxSize: z
 		.number()
 		.int()
 		.positive()
 		.max(10 * 1024 * 1024)
-		.default(1024 * 1024), // 1MB default
+		.optional(),
 });
 
 export type WorkspaceReadInput = z.infer<typeof WorkspaceReadInputSchema>;
@@ -313,7 +336,7 @@ export interface WorkspaceReadResult {
 export class WorkspaceReadTool implements McpTool<WorkspaceReadInput, WorkspaceReadResult> {
 	readonly name = 'workspace-read';
 	readonly description = 'Reads a file from a workspace with security controls';
-	readonly inputSchema = asToolSchema<WorkspaceReadInput>(WorkspaceReadInputSchema);
+	readonly inputSchema = WorkspaceReadInputSchema;
 
 	async execute(
 		input: WorkspaceReadInput,
@@ -326,6 +349,9 @@ export class WorkspaceReadTool implements McpTool<WorkspaceReadInput, WorkspaceR
 		}
 
 		try {
+			const encoding = input.encoding ?? 'utf8';
+			const maxSize = input.maxSize ?? 1024 * 1024; // 1MB default
+
 			const workspacePath = this.getWorkspacePath(input.workspaceId);
 			const filePath = resolve(workspacePath, input.filePath);
 
@@ -358,14 +384,14 @@ export class WorkspaceReadTool implements McpTool<WorkspaceReadInput, WorkspaceR
 				});
 			}
 
-			if (fileStats.size > input.maxSize) {
+			if (fileStats.size > maxSize) {
 				throw new ToolExecutionError('brAInwav Workspace Read: File exceeds maximum size', {
 					code: 'E_FILE_TOO_LARGE',
 				});
 			}
 
 			// Read file content
-			const content = await readFile(filePath, input.encoding);
+			const content = await readFile(filePath, encoding);
 
 			// Update last accessed time
 			metadata.lastAccessed = new Date();
@@ -411,19 +437,25 @@ export class WorkspaceReadTool implements McpTool<WorkspaceReadInput, WorkspaceR
 		return join(baseDir, workspaceId);
 	}
 
-	private async loadWorkspaceMetadata(workspacePath: string): Promise<WorkspaceMetadata> {
+	private loadWorkspaceMetadata = async (workspacePath: string): Promise<WorkspaceMetadata> => {
 		const metadataPath = join(workspacePath, '.workspace-metadata.json');
 		const metadataContent = await readFile(metadataPath, 'utf8');
-		return JSON.parse(metadataContent);
-	}
+		const metadata = JSON.parse(metadataContent);
 
-	private async saveWorkspaceMetadata(
+		// Convert string dates back to Date objects
+		metadata.createdAt = new Date(metadata.createdAt);
+		metadata.lastAccessed = new Date(metadata.lastAccessed);
+
+		return metadata;
+	};
+
+	private saveWorkspaceMetadata = async (
 		workspacePath: string,
 		metadata: WorkspaceMetadata,
-	): Promise<void> {
+	): Promise<void> => {
 		const metadataPath = join(workspacePath, '.workspace-metadata.json');
 		await writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-	}
+	};
 }
 
 // ================================
@@ -434,9 +466,9 @@ const WorkspaceWriteInputSchema = z.object({
 	workspaceId: z.string().min(1, 'workspace ID is required'),
 	filePath: z.string().min(1, 'file path is required'),
 	content: z.string(),
-	encoding: z.enum(['utf8', 'ascii', 'base64', 'hex']).default('utf8'),
-	createDirs: z.boolean().default(true),
-	overwrite: z.boolean().default(true),
+	encoding: z.enum(['utf8', 'ascii', 'base64', 'hex']).optional(),
+	createDirs: z.boolean().optional(),
+	overwrite: z.boolean().optional(),
 });
 
 export type WorkspaceWriteInput = z.infer<typeof WorkspaceWriteInputSchema>;
@@ -458,7 +490,7 @@ export interface WorkspaceWriteResult {
 export class WorkspaceWriteTool implements McpTool<WorkspaceWriteInput, WorkspaceWriteResult> {
 	readonly name = 'workspace-write';
 	readonly description = 'Writes a file to a workspace with security controls';
-	readonly inputSchema = asToolSchema<WorkspaceWriteInput>(WorkspaceWriteInputSchema);
+	readonly inputSchema = WorkspaceWriteInputSchema;
 
 	async execute(
 		input: WorkspaceWriteInput,
@@ -471,6 +503,10 @@ export class WorkspaceWriteTool implements McpTool<WorkspaceWriteInput, Workspac
 		}
 
 		try {
+			const encoding = input.encoding ?? 'utf8';
+			const createDirs = input.createDirs ?? true;
+			const overwrite = input.overwrite ?? true;
+
 			const workspacePath = this.getWorkspacePath(input.workspaceId);
 			const filePath = resolve(workspacePath, input.filePath);
 
@@ -504,7 +540,7 @@ export class WorkspaceWriteTool implements McpTool<WorkspaceWriteInput, Workspac
 				// File doesn't exist
 			}
 
-			if (fileExists && !input.overwrite) {
+			if (fileExists && !overwrite) {
 				throw new ToolExecutionError(
 					'brAInwav Workspace Write: File exists and overwrite is disabled',
 					{
@@ -514,13 +550,13 @@ export class WorkspaceWriteTool implements McpTool<WorkspaceWriteInput, Workspac
 			}
 
 			// Create directories if needed
-			if (input.createDirs) {
+			if (createDirs) {
 				const dir = dirname(filePath);
 				await mkdir(dir, { recursive: true });
 			}
 
 			// Write file
-			await writeFile(filePath, input.content, input.encoding);
+			await writeFile(filePath, input.content, encoding);
 
 			// Get file stats
 			const fileStats = await stat(filePath);
@@ -569,19 +605,25 @@ export class WorkspaceWriteTool implements McpTool<WorkspaceWriteInput, Workspac
 		return join(baseDir, workspaceId);
 	}
 
-	private async loadWorkspaceMetadata(workspacePath: string): Promise<WorkspaceMetadata> {
+	private loadWorkspaceMetadata = async (workspacePath: string): Promise<WorkspaceMetadata> => {
 		const metadataPath = join(workspacePath, '.workspace-metadata.json');
 		const metadataContent = await readFile(metadataPath, 'utf8');
-		return JSON.parse(metadataContent);
-	}
+		const metadata = JSON.parse(metadataContent);
 
-	private async saveWorkspaceMetadata(
+		// Convert string dates back to Date objects
+		metadata.createdAt = new Date(metadata.createdAt);
+		metadata.lastAccessed = new Date(metadata.lastAccessed);
+
+		return metadata;
+	};
+
+	private saveWorkspaceMetadata = async (
 		workspacePath: string,
 		metadata: WorkspaceMetadata,
-	): Promise<void> {
+	): Promise<void> => {
 		const metadataPath = join(workspacePath, '.workspace-metadata.json');
 		await writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-	}
+	};
 }
 
 // ================================

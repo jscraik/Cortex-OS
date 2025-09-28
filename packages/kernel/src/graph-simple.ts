@@ -11,6 +11,7 @@ import { fixedTimestamp } from './lib/determinism.js';
 import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';
 import { createInitialPRPState, type PRPState, validateStateTransition } from './state.js';
 import { generateId } from './utils/id.js';
+import type { PRPOrchestrator } from '@cortex-os/prp-runner';
 
 // Minimal types to avoid any
 interface LangGraphConfig {
@@ -20,12 +21,6 @@ interface LangGraphApp {
 	invoke(input: PRPState, config?: LangGraphConfig): Promise<PRPState>;
 }
 
-/**
- * Minimal interface to break circular dependency
- */
-interface PRPOrchestrator {
-	getNeuronCount(): number;
-}
 
 // Zod schema for validating generateId inputs and run options
 const RunOptionsSchema = z

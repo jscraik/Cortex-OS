@@ -8,6 +8,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
+import type { Neuron } from '@cortex-os/prp-runner';
 import { runCommand } from '../lib/run-command.js';
 import type { Evidence, PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';

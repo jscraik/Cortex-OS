@@ -81,12 +81,32 @@ export class LongHorizonPlanner {
 		task: LongHorizonTask,
 		executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
 	): Promise<PlanningResult> {
+		return this.planTask(task, executor);
+	}
+
+	/**
+	 * Plan a task with enhanced DSP integration and persistence hooks
+	 */
+	async planTask(
+		task: LongHorizonTask,
+		executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
+	): Promise<PlanningResult> {
 		const startTime = Date.now();
 		console.log(`brAInwav Long-Horizon Planner: Starting planning for task ${task.id}`);
 
 		// Initialize planning context with task details
 		const context = this.dsp.initializePlanning(task.id, task.complexity, task.priority);
 		this.activeContext = context;
+
+		// Persistence hook: Record planning start
+		if (this.config.persistenceEnabled) {
+			await this.persistPlanningEvent('planning_started', {
+				taskId: task.id,
+				contextId: context.id,
+				timestamp: new Date(),
+				brainwavOrigin: true,
+			});
+		}
 
 		const result: PlanningResult = {
 			taskId: task.id,
@@ -113,6 +133,17 @@ export class LongHorizonPlanner {
 					// Advance to next phase
 					this.dsp.advancePhase(`Execute ${phase} phase for task: ${task.description}`);
 
+					// Persistence hook: Record phase start
+					if (this.config.persistenceEnabled) {
+						await this.persistPlanningEvent('phase_started', {
+							taskId: task.id,
+							contextId: context.id,
+							phase,
+							timestamp: new Date(),
+							brainwavOrigin: true,
+						});
+					}
+
 					// Execute phase with context isolation
 					const phaseResult = await this.executePhaseWithTimeout(phase, context, executor);
 
@@ -126,6 +157,18 @@ export class LongHorizonPlanner {
 
 					// Update DSP with success
 					this.dsp.update(true);
+
+					// Persistence hook: Record phase completion
+					if (this.config.persistenceEnabled) {
+						await this.persistPlanningEvent('phase_completed', {
+							taskId: task.id,
+							contextId: context.id,
+							phase,
+							duration: phaseDuration,
+							timestamp: new Date(),
+							brainwavOrigin: true,
+						});
+					}
 
 					console.log(
 						`brAInwav Long-Horizon Planner: Completed ${phase} phase in ${phaseDuration}ms`,
@@ -143,6 +186,19 @@ export class LongHorizonPlanner {
 					// Update DSP with failure
 					this.dsp.update(false);
 					result.success = false;
+
+					// Persistence hook: Record phase failure
+					if (this.config.persistenceEnabled) {
+						await this.persistPlanningEvent('phase_failed', {
+							taskId: task.id,
+							contextId: context.id,
+							phase,
+							error: errorMessage,
+							duration: phaseDuration,
+							timestamp: new Date(),
+							brainwavOrigin: true,
+						});
+					}
 
 					console.error(`brAInwav Long-Horizon Planner: Failed ${phase} phase: ${errorMessage}`);
 
@@ -162,6 +218,18 @@ export class LongHorizonPlanner {
 
 		result.totalDuration = Date.now() - startTime;
 		result.recommendations = this.generateRecommendations(task, result);
+
+		// Persistence hook: Record planning completion
+		if (this.config.persistenceEnabled) {
+			await this.persistPlanningEvent('planning_completed', {
+				taskId: task.id,
+				contextId: context.id,
+				success: result.success,
+				totalDuration: result.totalDuration,
+				timestamp: new Date(),
+				brainwavOrigin: true,
+			});
+		}
 
 		console.log(
 			`brAInwav Long-Horizon Planner: Completed planning for task ${task.id} in ${result.totalDuration}ms`,
@@ -289,6 +357,27 @@ export class LongHorizonPlanner {
 			currentPhase: this.dsp.currentPhase,
 			adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
 		};
+	}
+
+	/**
+	 * Persistence hook for planning events
+	 * In production, this would integrate with actual persistence layer
+	 */
+	private async persistPlanningEvent(eventType: string, eventData: Record<string, unknown>): Promise<void> {
+		if (!this.config.persistenceEnabled) {
+			return;
+		}
+
+		// Log persistence event for now (production would use actual persistence)
+		console.log(`brAInwav Persistence Hook: ${eventType}`, {
+			eventType,
+			timestamp: new Date().toISOString(),
+			brainwavOrigin: true,
+			...eventData,
+		});
+
+		// Future: Integrate with actual persistence layer
+		// await this.persistenceAdapter.recordEvent(eventType, eventData);
 	}
 }
 

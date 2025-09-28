@@ -1,4 +1,108 @@
 import { z } from 'zod';
+import { cortexSecMcpTools } from '@cortex-os/cortex-sec';
+
+const SecurityFindingSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	severity: z.enum(['info', 'warning', 'error', 'critical']),
+	description: z.string(),
+	location: z
+		.object({
+			file: z.string().optional(),
+			line: z.number().int().positive().optional(),
+		})
+		.optional(),
+	references: z.array(z.string()).optional(),
+	remediation: z.string().optional(),
+});
+
+const RunSemgrepScanOutputSchema = z.object({
+	scanId: z.string(),
+	startedAt: z.string(),
+	completedAt: z.string().optional(),
+	status: z.enum(['queued', 'running', 'completed', 'failed']).default('queued'),
+	findings: z.array(SecurityFindingSchema),
+	summary: z
+		.object({
+			totalFindings: z.number().int().nonnegative(),
+			critical: z.number().int().nonnegative(),
+			high: z.number().int().nonnegative(),
+			medium: z.number().int().nonnegative(),
+			low: z.number().int().nonnegative(),
+		})
+		.default({ totalFindings: 0, critical: 0, high: 0, medium: 0, low: 0 }),
+	reportPath: z.string().optional(),
+});
+
+const AnalyzeVulnerabilitiesOutputSchema = z.object({
+	analysisId: z.string(),
+	generatedAt: z.string(),
+	riskScore: z.number().min(0).max(1).optional(),
+	findings: z.array(SecurityFindingSchema),
+	recommendedActions: z.array(z.string()).optional(),
+});
+
+const GetSecurityPolicyOutputSchema = z.object({
+	policyId: z.string(),
+	policyType: z.enum(['owasp', 'atlas', 'custom']),
+	version: z.string(),
+	content: z.string(),
+	checksum: z.string().optional(),
+	updatedAt: z.string(),
+});
+
+const ComplianceViolationSchema = z.object({
+	id: z.string(),
+	standard: z.enum(['owasp-top10', 'cwe-25', 'nist', 'iso27001']),
+	rule: z.string(),
+	severity: z.enum(['low', 'medium', 'high', 'critical']),
+	description: z.string(),
+	location: z
+		.object({
+			file: z.string().optional(),
+			line: z.number().int().positive().optional(),
+		})
+		.optional(),
+	remediation: z.string().optional(),
+});
+
+const ValidateComplianceOutputSchema = z.object({
+	reportId: z.string(),
+	generatedAt: z.string(),
+	status: z.enum(['pass', 'fail', 'warning']),
+	standards: z.array(z.enum(['owasp-top10', 'cwe-25', 'nist', 'iso27001'])),
+	violations: z.array(ComplianceViolationSchema),
+	summary: z.string().optional(),
+});
+
+const DependencyIssueSchema = z.object({
+	name: z.string(),
+	currentVersion: z.string(),
+	recommendedVersion: z.string().optional(),
+	severity: z.enum(['info', 'warning', 'error', 'critical']),
+	advisoryUrl: z.string().url().optional(),
+	remediation: z.string().optional(),
+});
+
+const CheckDependenciesOutputSchema = z.object({
+	reportId: z.string(),
+	generatedAt: z.string(),
+	dependenciesChecked: z.number().int().nonnegative(),
+	vulnerable: z.array(DependencyIssueSchema),
+	outdated: z.array(DependencyIssueSchema).optional(),
+	toolVersion: z.string().optional(),
+});
+
+type CortexSecMcpTool = {
+	name:
+		| 'run_semgrep_scan'
+		| 'analyze_vulnerabilities'
+		| 'get_security_policy'
+		| 'validate_compliance'
+		| 'check_dependencies';
+	description: string;
+	inputSchema: z.ZodSchema;
+};
 
 // Common error shape
 export const ErrorResponseSchema = z.object({
@@ -131,6 +235,14 @@ export const ConfigListOutputSchema = z.object({
 	),
 });
 
+export type ToolComplianceMetadata = {
+	domain: 'security' | 'compliance';
+	standards: string[];
+	recommendedUsage: string;
+	riskLevel: 'low' | 'medium' | 'high' | 'critical';
+	autoEventEmission?: boolean;
+};
+
 export type ToolDefinition = {
 	name: string;
 	description: string;
@@ -138,9 +250,12 @@ export type ToolDefinition = {
 	outputSchema: z.ZodSchema;
 	secure?: boolean; // requires elevated permission
 	cacheTtlMs?: number; // optional caching hint
+	category?: 'system' | 'orchestration' | 'config' | 'security';
+	tags?: string[];
+	compliance?: ToolComplianceMetadata;
 };
 
-export const cortexOsMcpTools: ToolDefinition[] = [
+const systemMcpTools: ToolDefinition[] = [
 	{
 		name: 'system.status',
 		description: 'Get current system/service status and resource usage',
@@ -200,6 +315,72 @@ export const cortexOsMcpTools: ToolDefinition[] = [
 		cacheTtlMs: 5_000,
 	},
 ];
+
+const securityToolOutputSchemas: Record<string, z.ZodSchema> = {
+	run_semgrep_scan: RunSemgrepScanOutputSchema,
+	analyze_vulnerabilities: AnalyzeVulnerabilitiesOutputSchema,
+	get_security_policy: GetSecurityPolicyOutputSchema,
+	validate_compliance: ValidateComplianceOutputSchema,
+	check_dependencies: CheckDependenciesOutputSchema,
+};
+
+const securityToolComplianceMetadata: Record<string, ToolComplianceMetadata> = {
+	run_semgrep_scan: {
+		domain: 'security',
+		standards: ['owasp-top10', 'cwe-25'],
+		recommendedUsage:
+			'Run before major merges or releases to surface Semgrep policy findings for brAInwav.',
+		riskLevel: 'high',
+		autoEventEmission: true,
+	},
+	analyze_vulnerabilities: {
+		domain: 'security',
+		standards: ['owasp-top10', 'cwe-25'],
+		recommendedUsage: 'Use to triage suspected vulnerabilities and capture remediation steps.',
+		riskLevel: 'medium',
+	},
+	get_security_policy: {
+		domain: 'security',
+		standards: ['iso27001', 'nist'],
+		recommendedUsage: 'Retrieve brAInwav baseline policies when planning remediation work.',
+		riskLevel: 'low',
+	},
+	validate_compliance: {
+		domain: 'compliance',
+		standards: ['iso27001', 'nist'],
+		recommendedUsage: 'Run after changes touching regulated surfaces to validate compliance posture.',
+		riskLevel: 'high',
+		autoEventEmission: true,
+	},
+	check_dependencies: {
+		domain: 'security',
+		standards: ['owasp-top10'],
+		recommendedUsage: 'Assess dependency manifests for known CVEs and license concerns.',
+		riskLevel: 'medium',
+	},
+};
+
+const securityMcpTools: ToolDefinition[] = (cortexSecMcpTools as CortexSecMcpTool[]).map(
+	(tool) => {
+	const outputSchema = securityToolOutputSchemas[tool.name];
+	if (!outputSchema) {
+		throw new Error(
+			`brAInwav cortex-sec integration error: missing output schema for ${tool.name}`,
+		);
+	}
+	return {
+		name: `security.${tool.name}`,
+		description: `brAInwav security · ${tool.description}`,
+		inputSchema: tool.inputSchema,
+		outputSchema,
+		secure: true,
+		category: 'security',
+		tags: ['brAInwav', 'security', 'compliance'],
+		compliance: securityToolComplianceMetadata[tool.name],
+	};
+});
+
+export const cortexOsMcpTools: ToolDefinition[] = [...systemMcpTools, ...securityMcpTools];
 
 export type CortexOsToolName = (typeof cortexOsMcpTools)[number]['name'];
 

@@ -14,3 +14,11 @@ export {
 } from './events/cortex-sec-events.js';
 // MCP Integration
 export { cortexSecMcpTools } from './mcp/tools.js';
+export type {
+	CortexSecTool,
+	RunSemgrepScanInput,
+	AnalyzeVulnerabilitiesInput,
+	GetSecurityPolicyInput,
+	ValidateComplianceInput,
+	CheckDependenciesInput,
+} from './mcp/tools.js';

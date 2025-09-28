@@ -181,6 +181,12 @@
 			"@cortex-os/mcp-bridge/*": [
 				"packages/mcp-bridge/src/*"
 			],
+			"@cortex-os/cortex-sec": [
+				"packages/cortex-sec/src/index.ts"
+			],
+			"@cortex-os/cortex-sec/*": [
+				"packages/cortex-sec/src/*"
+			],
 			"@cortex-os/memories": [
 				"packages/memories/src/index.ts"
 			],
