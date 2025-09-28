@@ -15,7 +15,7 @@ allowed-tools:
 - Timeline with UTC timestamps
 
 ## Evidence
-- Metrics snapshot: !`journalctl -u brAInwav-$ARGUMENTS --since "24 hours ago" --no-pager | tail -n 20`
+- Metrics snapshot: !`if systemctl list-units --type=service --all | grep -q "brAInwav-$ARGUMENTS.service"; then journalctl -u brAInwav-$ARGUMENTS --since "24 hours ago" --no-pager | tail -n 20; else echo "No logs found: service brAInwav-$ARGUMENTS does not exist."; fi`
 - Related runbooks: !`rg --files -g"*$ARGUMENTS*.md" runbooks`
 
 ## Remediation
