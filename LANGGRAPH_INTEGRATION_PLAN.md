@@ -439,7 +439,7 @@ Each phase documents:
 
 #### Work Completed
 - ✅ `packages/mcp-core/src/tools/workspace-tools.ts` now ships with create/list/read/write helpers that persist
-  metadata alongside workspace directories, enforce per-workspace path boundaries, and honour permission flags
+  metadata alongside workspace directories, enforce per-workspace path boundaries, and honor permission flags
   when updating files. The tools are already exported through `packages/mcp-core/src/tools/index.ts`, so the
   registry can surface them to Cortex agents today.
 - ✅ `packages/mcp-core/src/tools/index.ts` categorises the workspace helpers under the `workspace` namespace and
