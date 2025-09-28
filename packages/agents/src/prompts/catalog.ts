@@ -88,7 +88,7 @@ Remember: You represent brAInwav's commitment to intelligent, reliable, and effi
                         'complianceViolations',
                         'complianceGuidance',
                 ],
-                brainwavBranding: true,
+                brAInwavBranding: true,
                 nOOptimized: true,
                 phases: [
                         PlanningPhase.INITIALIZATION,
