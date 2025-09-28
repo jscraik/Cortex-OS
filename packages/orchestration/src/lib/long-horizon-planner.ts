@@ -450,13 +450,23 @@ export function createLongHorizonPlanner(config?: LongHorizonPlannerConfig): Lon
 export class InMemoryPlanningPersistence implements PlanningPersistenceAdapter {
         private readonly results = new Map<string, PlanningResult>();
         private readonly phases = new Map<string, PlanningPhaseRecord[]>();
+        private readonly clonedResults = new Map<string, PlanningResult>();
 
         async load(taskId: string): Promise<PlanningResult | undefined> {
-                        return clonePlanningResult(this.results.get(taskId));
+                if (this.clonedResults.has(taskId)) {
+                        return this.clonedResults.get(taskId);
+                }
+                const original = this.results.get(taskId);
+                const cloned = clonePlanningResult(original);
+                if (cloned) {
+                        this.clonedResults.set(taskId, cloned);
+                }
+                return cloned;
         }
 
         async save(result: PlanningResult): Promise<void> {
                 this.results.set(result.taskId, clonePlanningResult(result));
+                this.clonedResults.delete(result.taskId);
         }
 
         async recordPhase(record: PlanningPhaseRecord): Promise<void> {
