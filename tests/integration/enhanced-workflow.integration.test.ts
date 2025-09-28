@@ -106,8 +106,8 @@ describe('Cross-cutting workflow integration', () => {
                 const searchResults = await memoryService.search({ text: 'orchestration', topK: 5 });
                 expect(searchResults.some((memory) => memory.id === memoryId)).toBe(true);
 
-                const pending = await memoryService.listPending?.();
+                const pending = await memoryService.listPending();
                 expect(pending).toBeDefined();
-                expect(pending?.length).toBe(0);
+                expect(pending.length).toBe(0);
         });
 });
