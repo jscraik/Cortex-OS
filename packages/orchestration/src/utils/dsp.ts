@@ -57,9 +57,9 @@ export class DynamicSpeculativePlanner {
                 this.workspaceId = config?.workspaceId;
                 this.persistenceAdapter = config?.persistenceAdapter;
                 this.autoPersist =
-                        config?.autoPersist ?? (this.persistenceAdapter ? true : false);
+                        config?.autoPersist ?? Boolean(this.persistenceAdapter);
                 this.resumeFromPersistence =
-                        config?.resumeFromPersistence ?? (this.persistenceAdapter ? true : false);
+                        config?.resumeFromPersistence ?? Boolean(this.persistenceAdapter);
                 this.isolationStrategy = config?.isolationStrategy;
                 this.isolationOptions = config?.isolationOptions;
                 this.isolationScope = this.isolationOptions?.scope ?? 'task';
