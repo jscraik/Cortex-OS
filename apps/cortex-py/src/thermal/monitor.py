@@ -98,7 +98,7 @@ class ThermalMonitor:
             threshold = self._policy.threshold_for(level)
             throttle_hint = self._policy.throttle_hint_for(level)
             timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-            message = f"brAInwav thermal {level} detected on {self._device_id}"
+            message = f"brAInwav thermal {level} detected for {self._device_id}"
 
             event = ThermalEvent(
                 device_id=self._device_id,
