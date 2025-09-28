@@ -291,6 +291,7 @@ pnpm build
 pnpm test:coverage
 pnpm security:scan
 pnpm structure:validate
+pnpm test:integration:langgraph   # LangGraph integration harness suite
 
 # Husky-only hooks
 # Manually run a quick pre-commit equivalent if needed:

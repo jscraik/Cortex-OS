@@ -98,19 +98,34 @@ const forceRun =
 let focusList = [];
 const focusFlagIndex = flags.indexOf('--focus');
 if (focusFlagIndex !== -1) {
-	const val = flags[focusFlagIndex + 1];
-	if (val && !val.startsWith('--')) {
-		focusList = val
-			.split(',')
-			.map((s) => s.trim())
-			.filter(Boolean);
-	}
+        const val = flags[focusFlagIndex + 1];
+        if (val && !val.startsWith('--')) {
+                focusList = val
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+        }
 }
 if (process.env.CORTEX_SMART_FOCUS?.trim()) {
-	focusList = process.env.CORTEX_SMART_FOCUS.split(',')
-		.map((s) => s.trim())
-		.filter(Boolean);
+        focusList = process.env.CORTEX_SMART_FOCUS.split(',')
+                .map((s) => s.trim())
+                .filter(Boolean);
 }
+const langgraphFocusPackages = [
+        '@cortex-os/orchestration',
+        '@cortex-os/agents',
+        '@cortex-os/a2a',
+];
+const langgraphFocusEnabled =
+        target === 'test' &&
+        !flags.includes('--skip-langgraph-focus') &&
+        process.env.CORTEX_SMART_LANGGRAPH_INTEGRATION !== '0';
+if (langgraphFocusEnabled) {
+        const merged = new Set(focusList);
+        for (const pkg of langgraphFocusPackages) merged.add(pkg);
+        focusList = Array.from(merged);
+}
+const shouldScheduleLanggraphIntegration = langgraphFocusEnabled && !isDryRun;
 // Detect interactive preference (default: non-interactive to avoid manual h/q prompts)
 const forceInteractive = flags.includes('--interactive');
 // Remove our custom flags before forwarding to nx
@@ -602,6 +617,12 @@ if (strategy === 'affected') {
 	const focusArg = focusList.length > 0 ? `--projects=${focusList.join(',')}` : '';
 	const baseParts = [`nx run-many -t ${target}`, parallelArgs, interactiveFlag, focusArg];
 	run(composeNxCommand(baseParts, forwardedFlags, executorArgs));
+}
+
+if (shouldScheduleLanggraphIntegration && !meta.skipped) {
+        if (!json)
+                log('[nx-smart] running LangGraph integration suite: pnpm test:integration:langgraph');
+        run('pnpm test:integration:langgraph');
 }
 
 writeMetrics();
