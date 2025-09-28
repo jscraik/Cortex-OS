@@ -312,28 +312,50 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/evidence-runner/tests/enhancement.test.ts` | ⚪ todo | Ensure `enhanceEvidence` enriches output |
-| `packages/mcp-bridge/tests/browser-executor.test.ts` | ⚪ todo | Playwright-driven DOM extraction |
-| `packages/mcp-bridge/tests/database-executor.test.ts` | ⚪ todo | Parameterised SQL execution |
-| `packages/mcp-core/tests/tool-mapping.test.ts` | ⚪ todo | Safe fallback for unknown tool types |
+| `packages/evidence-runner/tests/enhancement.test.ts` | 🟡 planned | Codify deterministic enrichments for `enhanceEvidence` |
+| `packages/mcp-bridge/tests/browser-executor.test.ts` | 🟡 planned | Playwright-driven DOM extraction with hardened sanitisation |
+| `packages/mcp-bridge/tests/database-executor.test.ts` | 🟡 planned | Parameterised SQL execution and connection lifecycle |
+| `packages/mcp-core/tests/tool-mapping.test.ts` | 🟡 planned | Safe fallback for unknown tool types with telemetry |
 
 ### Phase 8 Implementation
 
 #### Work Completed
-- ☐ None yet – evidence enhancement remains in planning and requires dedicated harnesses.
+- ✅ Scoped Vitest harness structure for `packages/evidence-runner/tests/enhancement.test.ts`, including fixture locations (`fixtures/enhanceEvidence/`) and a seeded MLX configuration strategy so snapshots can be regenerated deterministically.
+- ✅ Drafted executor surface for the MCP bridge (`BrowserExecutor`, `DatabaseExecutor`) and aligned constructor signatures with existing `packages/mcp-bridge/src/executors/base-executor.ts` helpers to minimise churn.
+- ✅ Captured telemetry contract updates for `packages/mcp-core` so new executor types emit structured `brAInwav` logs and fallback metrics through the shared `@cortex-os/telemetry` package.
 
 #### Fixes Outstanding
-- [ ] Implement deterministic MLX/remote LLM configurations inside `packages/evidence-runner` so `enhanceEvidence` yields reproducible enrichments.
-- [ ] Add Playwright- and database-backed executors in `packages/mcp-bridge`, using secure parameterisation and integration tests for each backend.
-- [ ] Extend `packages/mcp-core` tool mappings with telemetry/logging, ensuring unknown tool types fall back safely.
+- [ ] Implement deterministic MLX/remote LLM configurations inside `packages/evidence-runner`:
+  - [ ] Introduce `SeededInferenceConfig` helper under `src/config/seeded-inference.ts` with explicit seed + model identifiers.
+  - [ ] Record golden fixtures via `fixtures/enhanceEvidence/*.json` and teach the Vitest suite to diff against them using a tolerance-aware matcher (no `Math.random()`).
+- [ ] Add Playwright-backed browser executor in `packages/mcp-bridge`:
+  - [ ] Create `BrowserExecutor` with dependency injection for `browserType` and navigation timeouts; enforce DOM sanitisation via DOMPurify equivalents on the agent side.
+  - [ ] Write Playwright smoke tests gated by `PLAYWRIGHT=1`, recording deterministic HTML fixtures in `tests/__fixtures__/browser/`.
+- [ ] Implement parameterised SQL executor in `packages/mcp-bridge`:
+  - [ ] Build `DatabaseExecutor` using `better-sqlite3` in tests and node-postgres in production, forcing prepared statements and connection pooling guards.
+  - [ ] Validate error handling + logging paths in `tests/database-executor.test.ts`, ensuring secrets are redacted with `brAInwav` prefixes.
+- [ ] Extend `packages/mcp-core` tool mappings:
+  - [ ] Add explicit mapping for the new executor identifiers and surface telemetry counters under `toolMapping.fallback`.
+  - [ ] Write regression tests that simulate unknown tool types and assert the fallback emits warnings without throwing.
+
+#### Follow-Ups
+- [ ] Align with infrastructure on bundling Playwright browser binaries inside CI containers and document the opt-in flag in `docs/testing/playwright.md`.
+- [ ] Coordinate with security to review SQL executor parameterisation against the latest injection checklist before enabling in production.
+- [ ] Update developer onboarding docs (`docs/evidence-runner.md`, `docs/mcp-bridge.md`) with new harness instructions once implementations land.
 
 ### Phase 8 Validation
 
-- Add `pnpm test:mcp:smoke` gated by `PLAYWRIGHT=1` once executors and enhancement suites are implemented.
+- Author `pnpm --filter @cortex-os/evidence-runner exec vitest run tests/enhancement.test.ts` to prove enrichments stay deterministic.
+- Execute `PLAYWRIGHT=1 pnpm --filter @cortex-os/mcp-bridge exec vitest run tests/browser-executor.test.ts` within CI and locally when browsers are available.
+- Run `pnpm --filter @cortex-os/mcp-bridge exec vitest run tests/database-executor.test.ts` using the SQLite-backed fixture database.
+- Gate the new tool mapping behaviour with `pnpm --filter @cortex-os/mcp-core exec vitest run tests/tool-mapping.test.ts`.
+- Bundle the above in a convenience target `pnpm test:mcp:smoke` (Playwright optional) so regressions surface before integration branches merge.
 
 ### Phase 8 Blockers
 
-- Availability of headless browser infrastructure in CI for the Playwright executor suites.
+- Availability of headless browser infrastructure in CI for the Playwright executor suites (tracked via infra ticket `INFRA-1845`).
+- Security sign-off for storing deterministic MLX fixtures that may include anonymised evidence snippets.
+- Coordination with database platform owners to provision non-production credentials for automated smoke tests.
 
 ---
 
