@@ -22,7 +22,7 @@ export async function runOnce(input: RunInput): Promise<RunOutput> {
                         });
                         span.setAttribute('orchestration.output_length', result.output?.length ?? 0);
                         span.setAttribute('orchestration.planning_success', result.planningResult.success);
-                        span.setAttribute('orchestration.strategy', result.coordinationDecision.strategy);
+                        span.setAttribute('orchestration.strategy', result.coordinationResult.strategy);
                         return { output: result.output };
                 } finally {
                         span.end();
