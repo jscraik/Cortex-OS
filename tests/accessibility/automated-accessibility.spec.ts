@@ -17,7 +17,8 @@ test.describe('Automated accessibility compliance', () => {
                 for (const route of routesToScan) {
                         test(`route ${route} has no critical accessibility violations`, async ({ page }) => {
                                 const response = await page.goto(route, { waitUntil: 'networkidle' });
-                                expect(response?.status() ?? 200, `brAInwav accessibility: ${route} returned an unexpected status`).toBeLessThan(400);
+                                expect(response, `brAInwav accessibility: ${route} navigation failed (no response)`).not.toBeNull();
+                                expect(response.status(), `brAInwav accessibility: ${route} returned an unexpected status`).toBeLessThan(400);
 
                                 const { violations } = await new AxeBuilder({ page })
                                         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
