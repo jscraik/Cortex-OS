@@ -41,6 +41,36 @@ export type {
 } from './langgraph/tool-dispatch.js';
 
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
+export {
+        MultiAgentCoordinator,
+} from './langgraph/multi-agent-coordinator.js';
+export type {
+        AgentHandoffRecord,
+        DistributedWorkflowRequest,
+        DistributedWorkflowResult,
+        LangGraphRunner,
+        MultiAgentCoordinatorMetrics,
+        MultiAgentCoordinatorOptions,
+        MultiAgentEvent,
+        MultiAgentEventPublisher,
+        MultiAgentEventType,
+        RegisterWorkflowOptions,
+        StateSharedEvent,
+        WorkflowCompletedEvent,
+} from './langgraph/multi-agent-coordinator.js';
+
+export {
+        LangGraphStreamCoordinator,
+        streamGraphEvents,
+        streamGraphUpdates,
+} from './langgraph/streaming.js';
+export type {
+        LangGraphStreamEnvelope,
+        LangGraphStreamOptions,
+        LangGraphStreamResult,
+        StreamClient,
+        StreamableStateGraph,
+} from './langgraph/streaming.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {

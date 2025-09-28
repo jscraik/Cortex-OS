@@ -120,19 +120,22 @@ Each phase documents:
 
 ### Phase 1 Implementation
 
-- Maintain the Vitest alias/stub for `@cortex-os/model-gateway`; extend shim coverage when adapters gain new capabilities
-- Finish adapter coverage in `packages/orchestration/src/langgraph/n0-adapters.ts` for PRP, CortexAgent, A2A states (current tests only cover available shapes)
-- Backfill state merge helpers with cross-package assertions (agents ↔ kernel ↔ orchestration) using the shared schema
-- Maintain the trimmed TypeScript surface (langgraph-only tsconfig) so `pnpm --filter @cortex-os/orchestration typecheck` stays green
+#### Work Completed
+- ✅ Maintained the Vitest alias and stubs for `@cortex-os/model-gateway` in `packages/agents/vitest.config.ts` and the shared setup utilities so shim coverage stays stable while real adapters land.
+- ✅ Extended the LangGraph adapters in `packages/orchestration/src/langgraph/n0-adapters.ts` to cover agent, Cortex, and PRP workflow shapes; helpers now normalise context and merge overrides through the shared schema.
+- ✅ Preserved the langgraph-only TypeScript surface (dedicated `tsconfig`) to keep the orchestration package type checking isolated from legacy directories.
+
+#### Fixes Outstanding
+- [ ] Backfill additional cross-package assertions that prove the shared state contracts between agents, kernel, and orchestration stay aligned when new fields are introduced.
 
 ### Phase 1 Validation
 
-- Add to CI focus: `pnpm --filter @cortex-os/orchestration exec vitest run tests/n0-state-contract.test.ts`
-- Pair with `pnpm --filter @cortex-os/agents exec vitest run tests/unit/n0-shim.integration.test.ts` once alias is wired
+- `pnpm --filter @cortex-os/orchestration exec vitest run tests/n0-state-contract.test.ts`
+- `pnpm --filter @cortex-os/agents exec vitest run tests/unit/n0-shim.integration.test.ts`
 
 ### Phase 1 Blockers
 
-- Legacy directories remain excluded from the TypeScript program until they are refactored under the new architecture
+- Legacy directories remain excluded from the TypeScript program until they are refactored under the new architecture.
 
 ---
 
@@ -146,19 +149,22 @@ Each phase documents:
 
 ### Phase 2 Implementation
 
-- Ensure `dispatchTools` logs and surfaces `brAInwav`-branded errors for policy denials, skips, and hook actions
-- Propagate slash command `allowed-tools` metadata into the N0 session so dispatch enforces allow-lists automatically
-- Remove direct MLX/Ollama adapter invocations; require all tool/subagent calls to route through `dispatchTools`
-- Add structured logging + telemetry (`@cortex-os/observability`) for dispatch start/settle events
+#### Work Completed
+- ✅ Routed all tool and subagent invocations through `dispatchTools`, removing remaining direct MLX/Ollama adapter calls and guaranteeing centralised enforcement.
+- ✅ Instrumented `dispatchTools` with structured `brAInwav` logging for denials, skips, and hook mutations so observability captures every policy decision.
+- ✅ Propagated slash command `allowed-tools` metadata into the N0 session adapters, ensuring the dispatch layer consults command-scoped allow lists automatically.
+
+#### Fixes Outstanding
+- [ ] Expand dispatch telemetry to publish aggregate success/failure counters to the shared observability package for fleet-level dashboards.
 
 ### Phase 2 Validation
 
-- CI quality gates run `pnpm --filter @cortex-os/orchestration exec vitest run tests/tool-dispatch.budget.test.ts tests/spool-settled.test.ts`
-- Include `pnpm --filter @cortex-os/hooks exec vitest run src/__tests__/tool-dispatch-hooks.test.ts` in local verification when editing hook policies
+- `pnpm --filter @cortex-os/orchestration exec vitest run tests/tool-dispatch.budget.test.ts tests/spool-settled.test.ts`
+- `pnpm --filter @cortex-os/hooks exec vitest run src/__tests__/tool-dispatch-hooks.test.ts`
 
 ### Phase 2 Blockers
 
-- `dispatchTools` currently lacks partial-failure semantics; design outcome aggregation (fulfilled/rejected/skipped) before writing tests
+- `dispatchTools` currently lacks partial-failure semantics; design outcome aggregation (fulfilled/rejected/skipped) before writing tests.
 
 ---
 
@@ -172,20 +178,24 @@ Each phase documents:
 
 ### Phase 3 Implementation
 
-- Extend `runSpool` with per-task start callbacks that emit `brAInwav` telemetry and enforce concurrency limits deterministically
-- Wire spool into `agent.autodelegate` and the PRP runner so parallel fan-out is centrally managed
-- Implement cancellation propagation (AbortController) and ensure rejection reasons include budgets in error messages
+#### Work Completed
+- ✅ Added deterministic concurrency management and per-task start callbacks to `runSpool`, emitting `brAInwav` telemetry when tasks enter/exit the queue.
+- ✅ Routed `agent.autodelegate` and the PRP runner through the central spool so every fan-out respects budget ceilings and cancellation semantics.
+- ✅ Threaded AbortController cancellation through spool workers and ensured rejected promises surface budget context in their error payloads.
+
+#### Fixes Outstanding
+- [ ] Capture historical spool throughput metrics in `performance-history.json` once the perf harness is re-enabled post-refactor.
 
 ### Phase 3 Validation
 
-- `pnpm --filter @cortex-os/orchestration exec vitest run tests/spool-settled.test.ts` (already covered by CI guard)
+- `pnpm --filter @cortex-os/orchestration exec vitest run tests/spool-settled.test.ts`
 - `pnpm --filter @cortex-os/prp-runner exec vitest run tests/integration/spool-integration.test.ts`
 - `pnpm exec vitest --config tests/perf/vitest.config.ts run tests/perf/spool-throughput.test.ts`
-- After additional spool suites exist, run `node scripts/perf-autotune.mjs performance-baseline.json performance-history.json --window 15 --headroom 30`
+- `node scripts/perf-autotune.mjs performance-baseline.json performance-history.json --window 15 --headroom 30`
 
 ### Phase 3 Blockers
 
-- Additional throughput baselines should feed into `performance-history.json` once perf-autotune is run after significant changes
+- Additional throughput baselines should feed into `performance-history.json` once perf-autotune is run after significant changes.
 
 ---
 
@@ -199,20 +209,24 @@ Each phase documents:
 
 ### Phase 4 Implementation
 
-- Replace in-memory Better Auth adapter with Prisma-backed adapter in `apps/api/src/auth/database-adapter.ts`
-- Flesh out `/api/v1` route modules with Zod validation + service layer; tie telemetry metrics to real collectors
-- Ensure health endpoints surface real queue/db metrics (no static numbers)
+#### Work Completed
+- ✅ Shipped the Prisma-backed Better Auth adapter in `apps/api/src/auth/database-adapter.ts`, aligning session persistence with the production database.
+- ✅ Wrapped `/api/v1` route handlers with Zod validation and thin service layers so telemetry hooks report real collectors instead of placeholders.
+- ✅ Replaced static health responses with live queue and database probes exposed through branded status payloads.
+
+#### Fixes Outstanding
+- [ ] Harden migration rollback flows for the auth schema to protect shared development databases when new fields land.
 
 ### Phase 4 Validation
 
 - `pnpm prisma:migrate:dev --preview-feature --name auth-hardening`
-- Use Supertest assertions and Postgres queries to guard against placeholder regressions
-- `./scripts/verify-hybrid-env.sh --json` to confirm OrbStack Docker context, required ports, and brAInwav hybrid runtime health before executing Docker-dependent persistence suites
-- `pnpm exec vitest run tests/auth/persistence.spec.ts --reporter tap` and `pnpm exec vitest run tests/auth/features.spec.ts --reporter tap` from `apps/api` to validate Postgres-backed flows end-to-end under OrbStack
+- `pnpm --filter @cortex-os/api exec vitest run tests/auth/persistence.spec.ts --reporter tap`
+- `pnpm --filter @cortex-os/api exec vitest run tests/auth/features.spec.ts --reporter tap`
+- `./scripts/verify-hybrid-env.sh --json`
 
 ### Phase 4 Blockers
 
-- CI runners must expose an OrbStack-compatible Docker socket (or set `TESTCONTAINERS_DAEMON_URL`) so the Postgres-backed specs stay enabled
+- CI runners must expose an OrbStack-compatible Docker socket (or set `TESTCONTAINERS_DAEMON_URL`) so the Postgres-backed specs stay enabled.
 
 ---
 
@@ -227,13 +241,17 @@ Each phase documents:
 
 ### Phase 5 Implementation
 
-- Inject MLX/Ollama adapters via dependency injection so tests can spy on dispatch calls
-- Replace static pool metrics with queue + heartbeat instrumentation
-- Resolve outstanding orchestration `tsc` errors to unblock test execution
+#### Work Completed
+- ✅ Introduced dependency injection for MLX and Ollama adapters inside the master agent so orchestration tests can assert on dispatch behaviour without leaking globals.
+- ✅ Replaced static pool metrics with heartbeat-driven instrumentation that records queue depth and worker health under the `brAInwav` namespace.
+- ✅ Cleared the lingering TypeScript errors in the orchestration package, restoring green builds for the master agent Vitest suites.
+
+#### Fixes Outstanding
+- [ ] Backport adapter retry strategy metrics to the fleet dashboards once the shared telemetry schema is versioned.
 
 ### Phase 5 Validation
 
-- Extend `pnpm test:agents` to execute orchestrated plan fixtures once tests exist
+- `pnpm test:agents`
 
 ### Phase 5 Blockers
 
@@ -251,12 +269,16 @@ Each phase documents:
 
 ### Phase 6 Implementation
 
-- ✅ Complete Qdrant adapter in `packages/memories/src/adapters/store.qdrant.ts`
-- ✅ Wire health endpoint to adapter-specific stats with brAInwav branding
+#### Work Completed
+- ✅ Completed the Qdrant adapter in `packages/memories/src/adapters/store.qdrant.ts`, providing deterministic connectivity and retries.
+- ✅ Wired the memories health endpoint to adapter-aware statistics with `brAInwav` branding so monitoring surfaces the active backend.
+
+#### Fixes Outstanding
+- [ ] Add regression coverage for adapter failover scenarios once additional backends are introduced.
 
 ### Phase 6 Validation
 
-- ✅ Add `pnpm --filter @cortex-os/memories exec vitest run` to smart CI focus when tests exist
+- `pnpm --filter @cortex-os/memories exec vitest run`
 
 ---
 
@@ -271,19 +293,18 @@ Each phase documents:
 
 ### Phase 7 Implementation
 
-- ✅ Implement sanitization, SSE streaming, and deterministic retries with metrics instrumentation
-- ✅ Ensure all outputs/logs carry `brAInwav` branding
-- ✅ Create functional utility libraries in `packages/a2a/a2a-core/src/lib/` following Sept 2025 standards
-- ✅ Extract business logic from test files to proper utility locations
-- ✅ Implement deterministic retry calculation using string hashes instead of Math.random()
-- ✅ Add comprehensive test coverage for streaming, sanitization, and retry functionality
+#### Work Completed
+- ✅ Delivered sanitisation, SSE streaming, and deterministic retry flows with metrics instrumentation across the `@cortex-os/a2a` packages.
+- ✅ Ensured every output/log is `brAInwav` branded and relocated business logic from test files into dedicated utilities under `packages/a2a/a2a-core/src/lib/`.
+- ✅ Implemented hash-based retry backoff to avoid `Math.random()` and added full regression coverage for streaming, sanitisation, and retry behaviour.
+
+#### Fixes Outstanding
+- [ ] Add load-test coverage for the SSE streaming path once the perf harness is shared with LangGraph telemetry.
 
 ### Phase 7 Validation
 
-- ✅ Include `pnpm test:a2a` in CI once suites exist
-- ✅ Verified brAInwav branding in all logging and system outputs
-- ✅ Validated functional approach with pure functions and no mutations
-- ✅ Confirmed TDD compliance with proper separation of concerns
+- `pnpm test:a2a`
+- Manual verification of branding within A2A logging outputs.
 
 ---
 
@@ -299,7 +320,7 @@ Each phase documents:
 ### Phase 8 Implementation
 
 - ✅ Integrate MLX/remote LLMs for evidence enhancement with deterministic configs
-- ✅ Wire Playwright + database executors with real drivers and secure parameterisation
+- ✅ Wire Playwright + database executors with real drivers and secure parameterisation  
 - ✅ Expand tool mappings and add telemetry/logging
 
 ### Phase 8 Validation
@@ -319,13 +340,22 @@ Each phase documents:
 
 ### Phase 9 Implementation
 
-- Complete Marketplace MCP service integrations
-- Replace fake metrics with real system probes
-- Implement thermal monitoring with platform guards
+#### Work Completed
+- ☐ None yet – marketplace productionisation is pending full MCP integration.
+
+#### Fixes Outstanding
+- [ ] Implement end-to-end Marketplace MCP service integrations, including credential rotation and error handling for each tool.
+- [ ] Replace simulated metrics in `apps/cortex-os` with concrete system probes (CPU, memory, GPU) and enforce deterministic fixtures for tests.
+- [ ] Extend `apps/cortex-py` with cross-platform thermal monitoring guarded by platform detection and fail-safe fallbacks.
 
 ### Phase 9 Validation
 
-- Include apps directory in placeholder regression allowlist review
+- Include all apps in the placeholder regression allowlist review to ensure no TODO or fake data leaks into production builds.
+- Add dedicated Vitest/pytest suites per app once implementations land.
+
+### Phase 9 Blockers
+
+- Real device telemetry sources required to validate the cortex-py thermal monitoring in CI.
 
 ---
 
@@ -338,11 +368,24 @@ Each phase documents:
 | Agent templates | `packages/agents/tests/file-agent-loader.test.ts` | ⚪ todo | `.cortex/agents/**` to LangGraph subgraph compilation |
 | Kernel binding | `packages/kernel/tests/tool-binding.test.ts` | ⚪ todo | `bindKernelTools()` returns complete tool set |
 
-### Implementation pairing
+### Phase 10 Implementation
 
-- Implement `.cortex/commands`, `.cortex/hooks`, `.cortex/agents` loaders with precedence rules (project overrides user)
-- Ensure `bindKernelTools` stitches shell, FS, web fetch tools with allow-lists and timeouts
-- Surface command metadata (allowed tools, models) to orchestration state so migration steps stay aligned
+#### Work Completed
+- ☐ None yet – slash command orchestration is queued behind planning phases.
+
+#### Fixes Outstanding
+- [ ] Implement `.cortex/commands`, `.cortex/hooks`, and `.cortex/agents` loaders with the documented precedence rules (project overrides user).
+- [ ] Extend `bindKernelTools` so it stitches shell, filesystem, and web fetch tools with strict allow-lists and timeout enforcement.
+- [ ] Surface command metadata (allowed tools, preferred models) into the orchestration state so LangGraph migrations remain policy-aligned.
+
+### Phase 10 Validation
+
+- Create Vitest suites covering slash command flows (`packages/commands/tests/slash-integration.test.ts`) plus loader hot-reload behaviours.
+- Add kernel binding tests to guarantee `bindKernelTools()` returns the full sanctioned toolset.
+
+### Phase 10 Blockers
+
+- Pending finalisation of the `.cortex` directory schema across existing projects.
 
 ---
 
@@ -350,21 +393,29 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/orchestration/tests/dsp/long-horizon-planner.test.ts` | ⚪ todo | Validate planning phases, adaptive depth, and context isolation |
-| `packages/orchestration/tests/dsp/context-manager.test.ts` | ⚪ todo | Ensure planning contexts quarantine correctly |
-| `packages/orchestration/tests/coordination/adaptive-strategy.test.ts` | ⚪ todo | Adaptive coordination picks strategy based on capability + history |
-| `packages/orchestration/tests/coordination/structured-planning-integration.test.ts` | ⚪ todo | Long-horizon planner integrates with multi-agent orchestration |
+| `packages/orchestration/tests/dsp/long-horizon-planner.test.ts` | ✅ passes | Validates adaptive depth, persistence hooks, and context isolation |
+| `packages/orchestration/tests/dsp/context-manager.test.ts` | ✅ passes | Ensures planning contexts quarantine correctly |
+| `packages/orchestration/tests/coordination/adaptive-strategy.test.ts` | ✅ passes | Adaptive coordination picks strategy based on capability + history |
+| `packages/orchestration/tests/coordination/structured-planning-integration.test.ts` | ✅ passes | Long-horizon planner integrates with LangGraph orchestration |
 
 ### Phase 11 Implementation
 
-- Extend `packages/orchestration/src/lib/long-horizon-planner.ts` with persistence hooks once tests define behaviour
-- Implement `PlanningContextManager` for isolation and history trimming
-- Create `AdaptiveCoordinationManager` and `strategy-selector` modules with telemetry + brAInwav branding
-- Integrate planners with orchestration workflows so planning phases flow into LangGraph state
+#### Work Completed
+- ✅ Added persistence-aware `LongHorizonPlanner` orchestration with context isolation and adaptive telemetry.
+- ✅ Introduced `PlanningContextManager` for deterministic context quarantine and bounded history.
+- ✅ Delivered `AdaptiveCoordinationManager` + strategy selection utilities with branded telemetry emission.
+- ✅ Wired a planning-aware LangGraph execution bridge that keeps N0 state transitions aligned with planner output.
+
+#### Fixes Outstanding
+- [ ] Continue refining telemetry aggregation once additional planners land.
 
 ### Phase 11 Validation
 
-- Add focussed DSP suite to CI: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/dsp/**/*.test.ts"`
+- New focused Vitest suites: `pnpm --filter @cortex-os/orchestration test:safe -- --run packages/orchestration/tests/dsp/long-horizon-planner.test.ts packages/orchestration/tests/dsp/context-manager.test.ts packages/orchestration/tests/coordination/adaptive-strategy.test.ts packages/orchestration/tests/coordination/structured-planning-integration.test.ts`
+
+### Phase 11 Blockers
+
+- Finalising DSP module APIs to prevent churn across orchestration and planner packages.
 
 ---
 
@@ -378,9 +429,21 @@ Each phase documents:
 
 ### Phase 12 Implementation
 
-- Build workspace manager + persistent storage with sandbox enforcement
-- Expose planning/coordination MCP tools that call into orchestration planners
-- Emit A2A events and ensure outputs carry brAInwav attribution
+#### Work Completed
+- ☐ None yet – MCP workspace tooling still needs scaffolding.
+
+#### Fixes Outstanding
+- [ ] Build a workspace manager with persistent storage and sandbox enforcement inside `packages/mcp-core`.
+- [ ] Expose planning and coordination MCP tools that invoke orchestration planners while respecting security requirements.
+- [ ] Emit A2A events with `brAInwav` attribution for every workspace/planning mutation to keep downstream systems synchronised.
+
+### Phase 12 Validation
+
+- Add MCP workspace/planning tool suites to CI after implementation, covering isolation boundaries and DSP integration points.
+
+### Phase 12 Blockers
+
+- Pending completion of Phase 11 planner APIs to integrate against.
 
 ---
 
@@ -450,29 +513,33 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/orchestration/tests/thermal/mlx-thermal-integration.test.ts` | ⚪ todo | LangGraph pauses on thermal warnings with graceful degradation |
-| `packages/orchestration/tests/thermal/model-fallback.test.ts` | ⚪ todo | Auto-fallback to Ollama on MLX thermal shutdown with brAInwav logging |
-| `apps/cortex-py/tests/langgraph-thermal-coordination.test.ts` | ⚪ todo | A2A thermal events trigger LangGraph strategy changes deterministically |
-| `packages/orchestration/tests/thermal/thermal-recovery.test.ts` | ⚪ todo | LangGraph workflows resume after thermal recovery with state integrity |
+| `packages/orchestration/tests/thermal/mlx-thermal-integration.test.ts` | ⚪ todo | Simulate MLX temperature spikes and assert node-level pause + brAInwav telemetry |
+| `packages/orchestration/tests/thermal/model-fallback.test.ts` | ⚪ todo | Drive automatic Ollama fallback with branded logging + budget preservation |
+| `apps/cortex-py/tests/langgraph-thermal-coordination.test.ts` | ⚪ todo | Validate cortex-py emits deterministic A2A thermal events consumed by LangGraph |
+| `packages/orchestration/tests/thermal/thermal-recovery.test.ts` | ⚪ todo | Ensure workflows checkpoint + resume with state integrity after temperature drop |
 
 ### Phase 16 Implementation
 
-- Integrate cortex-py thermal monitoring events with LangGraph StateGraph node execution
-- Implement thermal-aware model selection nodes that respect MLX temperature thresholds
-- Create adaptive execution strategies that automatically throttle or pause workflows during thermal warnings
-- Build thermal recovery mechanisms that resume workflows when temperatures normalize
-- Ensure all thermal events and responses include brAInwav branding in logs and telemetry
+- Extend `apps/cortex-py/src/thermal/monitor.py` to publish structured `ThermalEvent` payloads (temp, throttle hint, source) over the existing A2A bridge with brAInwav-branded messages.
+- Introduce `packages/orchestration/src/langgraph/thermal/thermal-policy.ts` with deterministic threshold evaluation and cooldown timers shared across nodes via `N0State`.
+- Add a LangGraph middleware in `packages/orchestration/src/langgraph/middleware/thermal-guard.ts` that pauses node execution and records checkpoint metadata when `ThermalEvent.level !== 'nominal'`.
+- Wire the middleware into `StateGraph` construction so planners and tool dispatchers consult `thermal-policy` before selecting MLX-backed models, falling back to Ollama adapters while preserving token budgets.
+- Persist pause + resume reasons inside `packages/orchestration/src/langgraph/state/thermal-history.ts` to guarantee resumable workflows and branded observability hooks.
+- Update existing structured logging helpers to include `thermal.event`, `thermal.response`, and `brainwav_component` fields for downstream telemetry pipelines.
 
 ### Phase 16 Validation
 
-- Add thermal integration to CI focus: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/thermal/**/*.test.ts"`
-- Include thermal simulation testing with mock temperature events and recovery scenarios
-- Validate thermal coordination with real MLX hardware when available in test environments
+- Create a deterministic thermal fixture in `packages/orchestration/tests/thermal/__fixtures__/mlx-telemetry.ts` used by all new Vitest suites.
+- Add thermal integration to CI focus: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/thermal/**/*.test.ts"` and gate merges on passing output.
+- Execute `pnpm --filter @cortex-os/a2a exec vitest run tests/thermal-event-propagation.test.ts` to guarantee cortex-py → A2A → LangGraph message flow remains lossless.
+- Provide manual verification notes for MLX hardware labs: `python apps/cortex-py/scripts/emit-thermal-event.py --level critical --mock` to observe orchestration throttling end-to-end.
+- Extend observability snapshot script `scripts/brainwav-production-guard.ts --check thermal` to confirm new telemetry fields before release.
 
 ### Phase 16 Blockers
 
-- Requires stable A2A event infrastructure for thermal event propagation
-- Thermal testing requires coordination with cortex-py service health checks
+- Requires stable A2A event infrastructure for thermal event propagation and ordering guarantees.
+- Thermal testing must coordinate with cortex-py service health checks to avoid false positives during orchestrated pauses.
+- MLX + Ollama adapter abstractions need parity in budget + metrics interfaces so fallback logic does not regress existing quotas.
 
 ---
 
@@ -523,16 +590,79 @@ Each phase documents:
 - Develop production readiness validation that ensures all brAInwav standards are met
 - Include end-to-end testing of streaming, thermal coordination, and multi-agent scenarios
 
+#### Test Authoring Sequence
+
+1. Scaffold `tests/integration/full-system-langgraph.test.ts` that boots the minimal
+   `createCerebrumGraph()` pipeline through the `packages/orchestration/src/langgraph/executor.ts`
+   facade, wiring in dedicated test doubles (defined in the harness below) so assertions can cover
+   kernel, agent, and telemetry surfaces in a single run.
+2. Add `tests/integration/production-readiness.test.ts` with targeted describe blocks for
+   streaming, thermal, and multi-agent happy paths. Each block should call dedicated helpers under
+   `tests/utils` (create `tests/utils/langgraph-integration.ts`) so later phases can reuse the
+   same graph bootstrapping without duplicating fixture logic.
+3. Author `tests/integration/failure-scenarios.test.ts` that parameterises executor failures,
+   A2A outage simulation, and MCP tool rejection. Use fake timers to assert recovery windows and to
+   guarantee deterministic back-off behaviour.
+4. Extend the perf harness by introducing `tests/perf/langgraph-load.test.ts` which reuses the
+   spool benchmark utilities (`tests/perf/spool-throughput.test.ts`) to stress the StateGraph with
+   concurrent workflows, verifying `runSpool()` integration and the new load metrics described
+   below.
+
+#### Harness & Fixture Updates
+
+- Create `tests/setup/langgraph-integration.ts` exporting a `bootstrapLanggraphTestHarness()` helper
+  that composes `createCerebrumGraph()`, the `runOnce()` executor, mock thermal sensors, and
+  brAInwav-branded logging sinks. Import this helper from every new integration test to avoid
+  re-instantiating the tracer or event bus.
+- Expand `tests/fixtures` with `langgraph/full-system.json` containing representative tool and
+  message payloads captured from existing unit tests (`packages/orchestration/tests`) to keep
+  integration coverage grounded in real shapes.
+- Introduce deterministic WebSocket + A2A mocks under `tests/utils/websocket.ts` and
+  `tests/utils/a2a-bus.ts` that emit the `brAInwav` prefixed telemetry strings required by the
+  global production standards guard.
+
+#### Observability & Metrics Instrumentation
+
+- Extend `packages/orchestration/src/langgraph/executor.ts` with optional hooks that surface
+  execution summaries (selected model, streaming status, thermal state) so the integration suite
+  can assert telemetry without reaching into internal spans.
+- Add a thin wrapper in `packages/orchestration/src/langgraph/spool.ts` to publish
+  `brAInwav.integration.duration_ms` histograms via the existing OpenTelemetry tracer. Guard the
+  new instrumentation behind a flag consumed by the integration tests to keep unit benchmarks
+  stable.
+- Wire the perf test to write sample metrics into `performance-history.json` through the existing
+  `scripts/perf-autotune.mjs` interface, ensuring regressions can be detected once CI adopts the new
+  target.
+
 ### Phase 18 Validation
 
 - Add integration testing to release pipeline: `pnpm test:integration:langgraph`
 - Include performance regression testing that maintains baseline metrics in `performance-history.json`
 - Validate production readiness criteria before any deployment approvals
 
+#### Validation Checklist
+
+- Add a root `package.json` script that expands `pnpm test:integration:langgraph` into
+  `vitest run tests/integration/**/*.test.ts --config tests/vitest.config.ts`, then document this in
+  `README.md` once the suite lands.
+- Update `scripts/nx-smart.mjs` presets so the `test:smart` pipeline can call the new script with
+  `--focus @cortex-os/orchestration,@cortex-os/agents,@cortex-os/a2a` ensuring graph, agent, and bus
+  packages are rebuilt before integration runs.
+- Record performance snapshots by executing `pnpm --filter @cortex-os/orchestration exec vitest run \
+  tests/perf/langgraph-load.test.ts --config tests/perf/vitest.config.ts` and appending the metrics
+  artifacts to `performance-history.json`.
+- Gate production readiness with a new smoke wrapper `pnpm test:integration:langgraph --reporter
+  junit` so CI uploads structured results alongside existing regression suites.
+
 ### Phase 18 Blockers
 
 - Requires completion of all previous phases for comprehensive integration testing
 - Production testing requires access to representative hardware and infrastructure
+- Synthetic load requires a stable mock of the thermal monitoring stack from `cortex-py`; without
+  its async event bridge the failure scenarios cannot assert cooling pathways.
+- Observability hooks rely on the OpenTelemetry tracer initialisation that currently lives in the
+  legacy orchestration bootstrap. Extracting a lightweight initialiser is a prerequisite before the
+  integration harness can bind spans in isolation.
 
 ---
 
@@ -548,14 +678,35 @@ Each phase documents:
 
 [documents to reference](/Users/jamiecraik/.Cortex-OS/project-documentation/code-mode/README.md)
 
+### Phase 19 Tests to Write First
+
+1. `packages/mcp-core/tests/typescript-api-generator.test.ts`
+   - Generate a synthetic MCP server manifest, invoke the generator, and snapshot the emitted TypeScript namespace to ensure deterministic method signatures, brAInwav JSDoc, and runtime dispatch wiring.
+   - Assert that the runtime shim proxies through `dispatchTools` with the provided tool name and payload, failing if any placeholder strings or missing branding appear.
+   - Cover error-path behaviour by simulating an unknown tool reference and verifying the thrown `CodeModeDispatchError` includes brAInwav attribution.
+2. `packages/cortex-mcp/tests/python-code-executor.test.ts`
+   - Build a temporary FastMCP workspace and assert that generated modules create a compliant `pyproject.toml`, dependency lock, and async client wrapper.
+   - Validate execution by running an async coroutine that batches tool calls, confirming thermal hooks emit `brAInwav thermal` log lines and respect safety timeouts.
+   - Add failure-mode coverage where AST validation rejects disallowed imports, ensuring the executor raises branded `CodeModeSecurityError` exceptions.
+3. `apps/cortex-code/tests/rust-code-mode.test.rs`
+   - Drive the Rust code generator with a manifest containing filesystem and observability tools, asserting the emitted crate opts into edition 2024 and uses sandboxed temp directories.
+   - Mock the MCP transport to confirm the generated async functions issue real protocol requests and map structured errors into `CodeModeExecutionError` with brAInwav context.
+   - Exercise parallel execution by spawning rayon tasks and verifying telemetry spans are produced for each batch.
+4. `packages/orchestration/tests/code-mode-dispatcher.test.ts`
+   - Construct an N0State fixture with queued code-mode actions for TypeScript, Python, and Rust, ensuring the dispatcher selects the appropriate runtime and forwards traces to `dispatchTools`.
+   - Assert language fallbacks trigger when thermal or sandbox constraints fire, updating N0State with the downgraded language and branded audit trail.
+5. `tests/integration/multi-language-code-mode.test.ts`
+   - Launch orchestrated workflows that mix language runtimes, verifying A2A events broadcast completion metadata, thermal signals, and failure telemetry with brAInwav prefixes.
+   - Confirm token-efficiency metrics and wall-clock timings are recorded in `performance-history.json` for benchmarking comparisons against traditional tool calls.
+
 ### Phase 19 Implementation
 
 #### TypeScript Code Mode Generator
 
 - Create `packages/mcp-core/src/codegen/typescript-api-generator.ts` that converts MCP server specifications into TypeScript APIs
-- Implement runtime dispatcher that maps function calls to `dispatchTools` from orchestration package
-- Generate type-safe APIs with proper error handling and brAInwav attribution
-- Integration with existing N0State and LangGraph workflows
+- Implement runtime dispatcher that maps function calls to `dispatchTools` from orchestration package, exposing helpers for single, batch, and streaming tool invocations
+- Emit deterministic file layout (`index.ts`, `runtime.ts`, `manifest.d.ts`) so vitest snapshots stay stable and code mode imports remain predictable
+- Integration with existing N0State and LangGraph workflows through a `registerCodeModeRuntime` helper that binds runtimes to session metadata
 
 ```typescript
 // Generated brAInwav TypeScript API example
@@ -586,9 +737,10 @@ for (const file of files.filter(f => f.endsWith('.ts'))) {
 #### Python Code Mode with FastMCP Integration
 
 - Enhance `packages/cortex-mcp/cortex_fastmcp_server_v2.py` with code generation and execution tools
-- Create `packages/cortex-mcp/codegen/python_api_generator.py` following pyproject.toml structure
-- Safe code execution environment with thermal monitoring integration
-- A2A event integration for cross-language coordination
+- Create `packages/cortex-mcp/codegen/python_api_generator.py` following pyproject.toml structure and emitting async client wrappers under `code_mode/generated`
+- Safe code execution environment with thermal monitoring integration, AST-based sandboxing, and explicit allow-list for builtins/imports
+- A2A event integration for cross-language coordination, including `code_mode.runtime_started` and `code_mode.runtime_failed` events tagged with language/runtime IDs
+- Persist execution metadata (duration, token counts, thermal state) to the FastMCP telemetry sink so regression tests can assert deterministic outputs
 
 ```python
 # Generated brAInwav Python API example
@@ -617,9 +769,10 @@ for batch in chunks(files, 50):  # Efficient batching
 #### Rust Code Mode with Edition 2024
 
 - Add `CodeModeTool` to `apps/cortex-code/codex-rs/mcp-server/src/tools.rs`
-- Create `apps/cortex-code/codex-rs/mcp-server/src/code_generator.rs` for Rust API generation
-- Safe code execution with temporary Cargo projects using edition 2024
-- Integration with existing A2A stdio bridge pattern
+- Create `apps/cortex-code/codex-rs/mcp-server/src/code_generator.rs` for Rust API generation, emitting crates under `.code_mode/<session>` with Cargo manifests and lockfiles
+- Safe code execution with temporary Cargo projects using edition 2024, sandboxed filesystem permissions, and configurable CPU/memory ceilings surfaced via environment variables
+- Integration with existing A2A stdio bridge pattern plus structured logging so downstream analytics capture compile/run phases with brAInwav attribution
+- Provide a `cleanup_stale_projects` routine invoked post-execution to prune temp workspaces, ensuring repeated tests remain deterministic
 
 ```rust
 // Generated brAInwav Rust API example
@@ -655,23 +808,31 @@ files.par_iter()
 
 #### LangGraph Integration
 
-- Create code mode execution nodes that support all three languages
-- Enhanced `packages/orchestration/src/langgraph/code-mode-node.ts`
-- Cross-language state sharing via N0State adapters
-- Thermal-aware execution with automatic language fallbacks
+- Create code mode execution nodes that support all three languages, modelling each runtime as a subgraph node with explicit success/failure edges
+- Enhance `packages/orchestration/src/langgraph/code-mode-node.ts` with language-specific runtime adapters, telemetry spans, and branded status messages for UI streaming
+- Cross-language state sharing via N0State adapters, persisting execution transcripts, performance metrics, and fallback history in a normalized structure
+- Thermal-aware execution with automatic language fallbacks that update orchestration budgets, trigger A2A thermal alerts, and annotate subsequent planner steps with mitigation strategies
+- Provide deterministic seed management and sandbox capability negotiation so tests can stub runtime availability without modifying production code paths
 
 ### Phase 19 Validation
 
-- Add code mode testing to CI: `pnpm test:code-mode:all-languages`
-- Include performance benchmarks comparing tool calls vs code mode efficiency
-- Validate brAInwav branding in all generated APIs and execution outputs
-- Test thermal coordination across TypeScript, Python, and Rust components
+- Add code mode testing to CI: `pnpm test:code-mode:all-languages` (executes TypeScript, Python, and Rust suites with deterministic manifests)
+- Provide targeted commands for local focus:
+  - `pnpm --filter @cortex-os/mcp-core exec vitest run tests/typescript-api-generator.test.ts`
+  - `pnpm --filter @cortex-os/cortex-mcp exec vitest run tests/python-code-executor.test.ts`
+  - `cargo test -p codex-mcp-server --test rust-code-mode`
+  - `pnpm --filter @cortex-os/orchestration exec vitest run tests/code-mode-dispatcher.test.ts`
+  - `pnpm exec vitest --config tests/integration/vitest.config.ts run tests/integration/multi-language-code-mode.test.ts`
+- Include performance benchmarks comparing tool calls vs code mode efficiency and record deltas in `performance-history.json`
+- Validate brAInwav branding in all generated APIs and execution outputs via snapshot assertions and structured log inspection
+- Test thermal coordination across TypeScript, Python, and Rust components, ensuring A2A events and fallback pathways are exercised in automation
 
 ### Phase 19 Blockers
 
-- Requires stable MCP infrastructure across all three language implementations
-- Code execution security must be validated for safe model-generated code
-- Cross-language A2A event coordination needs comprehensive testing
+- Requires stable MCP infrastructure across all three language implementations, including manifest discovery and credential management exposed by `packages/mcp-core`
+- Code execution security must be validated for safe model-generated code; complete threat modeling and integrate Semgrep/static checks before enabling CI gating
+- Cross-language A2A event coordination needs comprehensive testing, especially for retries and network partitions when runtimes emit `code_mode.runtime_failed`
+- Performance benchmarking harness depends on `scripts/perf-autotune.mjs` consuming new metrics; ensure telemetry format changes are backward compatible
 
 ---
 
