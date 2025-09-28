@@ -271,7 +271,8 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                         const messages = [...(state.messages ?? []), aiMessage];
                         const output = toolCalls.length === 0 ? renderMessageContent(aiMessage.content) : state.output;
                         if (toolCalls.length === 0 && output) {
-                                await options.streamPublisher?.({ type: 'chunk', content: output });
+                                options.streamPublisher?.({ type: 'chunk', content: output })
+                                        ?.catch((err) => logger.error?.('streamPublisher error', err));
                         }
                         return {
                                 messages,
