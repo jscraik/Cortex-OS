@@ -23,11 +23,11 @@ hooks:
     - matcher: "Write|Edit|MultiEdit"
       hooks:
         - type: command
-          command: "pnpm lint:smart --focus @cortex-os/commands,@cortex-os/agents"
+          command: "pnpm lint:smart"
     - matcher: "Bash(*)"
       hooks:
         - type: command
-          command: "pnpm test:smart --focus @cortex-os/agents,@cortex-os/commands"
+          command: "pnpm test:smart"
   Notify:
     - matcher: "*"
       hooks:
