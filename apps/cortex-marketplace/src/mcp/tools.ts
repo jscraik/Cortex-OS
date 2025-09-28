@@ -231,7 +231,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(SearchServersInputSchema, params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.search_servers', error);
@@ -255,7 +258,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetServerInputSchema, params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_server', error);
@@ -279,7 +285,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetInstallInstructionsInputSchema, params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_install_instructions', error);
@@ -302,7 +311,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(z.object({}), params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.list_categories', error);
@@ -325,7 +337,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetCategoryServersInputSchema, params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_category_servers', error);
@@ -349,7 +364,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(z.object({}), params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_stats', error);
@@ -373,7 +391,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetTrendingInputSchema, params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_trending', error);
@@ -397,7 +418,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetPopularInputSchema, params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_popular', error);
@@ -421,7 +445,10 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				validateInput(GetTopRatedInputSchema, params);
 
 				// Handler will be wired by MarketplaceMcpIntegration
-				throw new MarketplaceToolError('internal_error', 'Handler not wired - integration required');
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_top_rated', error);

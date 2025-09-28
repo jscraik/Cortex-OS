@@ -9,6 +9,14 @@ from .services import (
     ServiceError,
     ServiceValidationError,
 )
+from .thermal import (
+    ThermalMonitor,
+    ThermalProbe,
+    ThermalProbeError,
+    ThermalReading,
+    ThermalStatus,
+    create_thermal_event_from_status,
+)
 
 __all__ = [
     "BatchEmbeddingServiceResult",
@@ -18,5 +26,11 @@ __all__ = [
     "SecurityViolation",
     "ServiceError",
     "ServiceValidationError",
+    "ThermalMonitor",
+    "ThermalProbe",
+    "ThermalProbeError",
+    "ThermalReading",
+    "ThermalStatus",
+    "create_thermal_event_from_status",
 ]
 

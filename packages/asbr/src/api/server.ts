@@ -16,8 +16,8 @@ import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { logError, logInfo } from '../lib/logger.js';
 import { resolveIdempotency } from '../lib/resolve-idempotency.js';
-import { validateTaskInput } from '../lib/validate-task-input.js';
 import { secureHex } from '../lib/secure-random.js';
+import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
 	type ArtifactRef,
 	AuthorizationError,

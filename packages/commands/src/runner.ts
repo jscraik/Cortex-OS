@@ -141,16 +141,44 @@ export async function runCommand(
 	const runId = generateRunIdLight();
 	const startedAt = Date.now();
 	logger.info({ runId, command: cmd.name, scope: cmd.scope, args }, 'command.start');
+	const commandMetadata = {
+		name: cmd.name,
+		description: cmd.description,
+		argumentHint: cmd.argumentHint,
+		model: cmd.model,
+		allowedTools: cmd.allowedTools,
+		scope: cmd.scope,
+		filePath: cmd.filePath,
+	} satisfies Record<string, unknown>;
+	const mergeMetadata = (existing?: Record<string, unknown>): Record<string, unknown> => {
+		const merged: Record<string, unknown> = existing ? { ...existing } : {};
+		const existingCommandRaw = existing?.['command'];
+		const existingCommand =
+			typeof existingCommandRaw === 'object' &&
+			existingCommandRaw &&
+			!Array.isArray(existingCommandRaw)
+				? (existingCommandRaw as Record<string, unknown>)
+				: undefined;
+		merged.command = {
+			...commandMetadata,
+			...existingCommand,
+		};
+		return merged;
+	};
 	try {
 		if (cmd.execute) {
 			const res = await cmd.execute(args, ctx);
+			const metadata = mergeMetadata(res.metadata);
 			logger.info({ runId, durationMs: Date.now() - startedAt }, 'command.success');
-			return res;
+			return {
+				...res,
+				metadata,
+			};
 		}
 		const template = cmd.template ?? '';
 		const prompt = await renderTemplate(template, args, ctx, cmd.allowedTools);
 		logger.info({ runId, durationMs: Date.now() - startedAt }, 'command.success');
-		return { text: prompt, metadata: { command: cmd.name, scope: cmd.scope } };
+		return { text: prompt, metadata: mergeMetadata() };
 	} catch (err) {
 		logger.error({ runId, durationMs: Date.now() - startedAt, err }, 'command.error');
 		throw err;

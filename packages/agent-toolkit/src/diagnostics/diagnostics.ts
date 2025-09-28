@@ -1,7 +1,7 @@
-import type { DiagnosticsResult } from '@cortex-os/contracts';
-import { metrics, trace } from '@opentelemetry/api';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import type { DiagnosticsResult } from '@cortex-os/contracts';
+import { metrics, trace } from '@opentelemetry/api';
 
 const tracer = trace.getTracer('agent-toolkit-diagnostics');
 const meter = metrics.getMeter('agent-toolkit-diagnostics');

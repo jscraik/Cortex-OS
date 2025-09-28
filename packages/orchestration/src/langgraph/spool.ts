@@ -1,3 +1,7 @@
+import { performance } from 'node:perf_hooks';
+import type { Histogram } from '@opentelemetry/api';
+import { meter } from '../observability/otel.js';
+
 type TaskExecutor<T> = () => Promise<T>;
 
 export interface SpoolTask<T> {
@@ -14,6 +18,7 @@ export interface SpoolRunOptions {
 	signal?: AbortSignal;
 	onStart?: (task: SpoolTask<unknown>) => void;
 	onSettle?: (result: SpoolResult<unknown>) => void;
+	integrationMetrics?: IntegrationMetricOptions;
 }
 
 export type SpoolStatus = 'fulfilled' | 'rejected' | 'skipped';
@@ -26,6 +31,12 @@ export interface SpoolResult<T> {
 	durationMs: number;
 	tokensUsed: number;
 	started: boolean;
+}
+
+export interface IntegrationMetricOptions {
+	enabled?: boolean;
+	attributes?: Record<string, string>;
+	onRecord?: (durationMs: number, attributes: Record<string, string>) => void;
 }
 
 interface InternalJob<T> {
@@ -43,13 +54,43 @@ interface RunContext<T> {
 	cursor: number;
 }
 
+let integrationHistogram: Histogram | undefined;
+
+function recordIntegrationDuration(durationMs: number, attributes: Record<string, string>): void {
+	if (!integrationHistogram) {
+		integrationHistogram = meter.createHistogram('brAInwav.integration.duration_ms', {
+			description: 'Duration of LangGraph integration runs',
+			unit: 'ms',
+		});
+	}
+	integrationHistogram.record(durationMs, attributes);
+}
+
 export async function runSpool<T>(
 	tasks: SpoolTask<T>[],
 	opts: SpoolRunOptions = {},
 ): Promise<SpoolResult<T>[]> {
+	const startedAt = performance.now();
 	const context = initContext(tasks, opts);
 	const workers = createWorkers(context, opts.concurrency ?? tasks.length);
 	await Promise.all(workers);
+	if (opts.integrationMetrics?.enabled) {
+		const duration = performance.now() - startedAt;
+		const attributes = {
+			scenario: 'default',
+			...(opts.integrationMetrics.attributes ?? {}),
+		};
+		try {
+			recordIntegrationDuration(duration, attributes);
+		} catch (error) {
+			console.warn('brAInwav integration metrics recording failed', error);
+		}
+		try {
+			opts.integrationMetrics.onRecord?.(duration, attributes);
+		} catch {
+			/* noop */
+		}
+	}
 	return context.results;
 }
 
@@ -157,6 +198,11 @@ function createSkipped<T>(
 }
 
 function toError(value: unknown, id: string): Error {
-	if (value instanceof Error) return value;
-	return new Error(`brAInwav tool execution failed for ${id}: ${String(value)}`);
+	if (value instanceof Error) {
+		return new Error(`brAInwav tool execution failed for ${id}: ${value.message}`, {
+			cause: value,
+		});
+	} else {
+		return new Error(`brAInwav tool execution failed for ${id}: ${String(value)}`);
+	}
 }

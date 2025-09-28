@@ -1,10 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { N0Session } from '../src/langgraph/n0-state.js';
 import {
 	dispatchTools,
 	type ToolDispatchJob,
 	type ToolDispatchResult,
 } from '../src/langgraph/tool-dispatch.js';
-import type { N0Session } from '../src/langgraph/n0-state.js';
+
+const RUN_ID = 'dispatch-run-id';
+const recordOperationSpy = vi.fn();
+const recordLatencySpy = vi.fn();
+const generateRunIdSpy = vi.fn(() => RUN_ID);
+
+vi.mock('@cortex-os/observability', () => ({
+	generateRunId: generateRunIdSpy,
+	recordLatency: recordLatencySpy,
+	recordOperation: recordOperationSpy,
+}));
 
 const session: N0Session = {
 	id: 'session-dispatch-tests',
@@ -14,6 +25,13 @@ const session: N0Session = {
 };
 
 describe('dispatchTools budget and allow-list behaviour', () => {
+	beforeEach(() => {
+		recordOperationSpy.mockClear();
+		recordLatencySpy.mockClear();
+		generateRunIdSpy.mockClear();
+		generateRunIdSpy.mockImplementation(() => RUN_ID);
+	});
+
 	it('enforces allow-lists and propagates hook mutations', async () => {
 		const executed: unknown[] = [];
 		const hookCalls: Array<{ event: string; ctx: Record<string, unknown> }> = [];
@@ -78,6 +96,36 @@ describe('dispatchTools budget and allow-list behaviour', () => {
 		const postCalls = hookCalls.filter((c) => c.event === 'PostToolUse');
 		expect(postCalls).toHaveLength(1);
 		expect(postCalls[0].ctx.tool).toMatchObject({ id: 'allowed-job', name: 'allowed.tool' });
+
+		expect(generateRunIdSpy).toHaveBeenCalledTimes(1);
+		expect(recordOperationSpy).toHaveBeenCalledWith(
+			'orchestration.tool_dispatch',
+			true,
+			RUN_ID,
+			expect.objectContaining({
+				tool: 'allowed.tool',
+				outcome: 'fulfilled',
+			}),
+		);
+		expect(recordOperationSpy).toHaveBeenCalledWith(
+			'orchestration.tool_dispatch',
+			false,
+			RUN_ID,
+			expect.objectContaining({
+				tool: 'blocked.tool',
+				outcome: 'skipped',
+			}),
+		);
+		expect(recordLatencySpy).toHaveBeenCalledWith(
+			'orchestration.tool_dispatch',
+			expect.any(Number),
+			expect.objectContaining({
+				tool: 'allowed.tool',
+				outcome: 'fulfilled',
+			}),
+		);
+		expect(recordLatencySpy).toHaveBeenCalledTimes(1);
+		expect(recordOperationSpy).toHaveBeenCalledTimes(2);
 	});
 
 	it('skips jobs when token budget is exhausted', async () => {
@@ -108,5 +156,21 @@ describe('dispatchTools budget and allow-list behaviour', () => {
 		expect(results[1].status).toBe('skipped');
 		expect(results[1].reason?.message).toContain('token budget exhausted');
 		expect(results[1].started).toBe(false);
+
+		expect(generateRunIdSpy).toHaveBeenCalledTimes(1);
+		expect(recordOperationSpy).toHaveBeenCalledWith(
+			'orchestration.tool_dispatch',
+			true,
+			RUN_ID,
+			expect.objectContaining({ tool: 'primary.tool', outcome: 'fulfilled' }),
+		);
+		expect(recordOperationSpy).toHaveBeenCalledWith(
+			'orchestration.tool_dispatch',
+			false,
+			RUN_ID,
+			expect.objectContaining({ tool: 'secondary.tool', outcome: 'skipped' }),
+		);
+		expect(recordOperationSpy).toHaveBeenCalledTimes(2);
+		expect(recordLatencySpy).toHaveBeenCalledTimes(1);
 	});
 });

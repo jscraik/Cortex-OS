@@ -18,16 +18,8 @@ export interface PlanningContext {
 	id: string;
 	workspaceId?: string;
 	currentPhase: PlanningPhase;
-	compliance?: {
-		standards?: string[];
-		lastCheckedAt?: string | Date | null;
-		riskScore?: number;
-		outstandingViolations?: Array<{
-			id?: string;
-			severity?: 'low' | 'medium' | 'high' | 'critical';
-			description?: string;
-		}>;
-	};
+	objectives?: string[];
+	contextTags?: string[];
 	[key: string]: unknown;
 }
 
@@ -41,8 +33,9 @@ export interface PromptContext {
 	tools: string[];
 	currentPhase?: PlanningPhase;
 	planningContext?: PlanningContext;
-	compliance?: PlanningContext['compliance'];
 	nOArchitecture: boolean;
+	objectives?: string[];
+	contextTags?: string[];
 }
 
 export interface PromptTemplate {
@@ -56,11 +49,21 @@ export interface PromptTemplate {
 		context: Partial<PromptContext>;
 		input: string;
 		expectedBehavior: string;
+		measurableOutcome?: string;
 	}>;
 	variables: string[];
 	brainwavBranding: boolean;
 	nOOptimized: boolean;
+	applicability?: {
+		phases?: PlanningPhase[];
+		requiredCapabilities?: string[];
+		tags?: string[];
+	};
 }
+
+const HISTORY_LIMIT = 100;
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+const HISTORY_RETENTION_MS = THIRTY_DAYS_MS;
 
 export interface TemplateSelection {
 	template: PromptTemplate;
@@ -109,12 +112,7 @@ export class PromptTemplateManager {
 		}));
 
 		// Select best scoring template
-		let best = scored[0];
-		for (const candidate of scored.slice(1)) {
-			if (candidate.score > best.score) {
-				best = candidate;
-			}
-		}
+		const best = scored.reduce((prev, current) => (current.score > prev.score ? current : prev));
 
 		const adaptations = this.generateAdaptations(best.template, context);
 
@@ -156,24 +154,31 @@ export class PromptTemplateManager {
 	 * Record template usage for learning
 	 */
 	recordUsage(templateId: string, context: PromptContext, effectiveness: number): void {
+		const normalizedEffectiveness = Math.max(0, Math.min(1, effectiveness));
+
 		if (!this.usageHistory.has(templateId)) {
 			this.usageHistory.set(templateId, []);
 		}
 
 		const history = this.usageHistory.get(templateId)!;
 		history.push({
-			context,
-			effectiveness,
+			context: this.snapshotContext(context),
+			effectiveness: normalizedEffectiveness,
 			timestamp: new Date(),
 		});
 
-		// Trim history to prevent memory bloat
-		if (history.length > 100) {
+		const retentionCutoff = Date.now() - HISTORY_RETENTION_MS;
+
+		while (history.length > 0 && history[0].timestamp.getTime() < retentionCutoff) {
 			history.shift();
 		}
 
+		if (history.length > HISTORY_LIMIT) {
+			history.splice(0, history.length - HISTORY_LIMIT);
+		}
+
 		console.log(
-			`brAInwav Prompt Manager: Recorded usage for template ${templateId} with effectiveness ${effectiveness}`,
+			`brAInwav Prompt Manager: Recorded usage for template ${templateId} with effectiveness ${normalizedEffectiveness}`,
 		);
 	}
 
@@ -246,6 +251,24 @@ Remember: You represent brAInwav's commitment to intelligent, reliable, and effi
 					input: 'Analyze and refactor a complex codebase',
 					expectedBehavior:
 						'Begin with explicit planning phase, use workspace tools for organization, break down into analysis/strategy/execution phases',
+					measurableOutcome:
+						'Document six-phase plan with at least three measurable milestones in workspace history.',
+				},
+				{
+					context: {
+						complexity: 9,
+						priority: 8,
+						capabilities: ['planning', 'coordination'],
+						planningContext: {
+							id: 'plan-ops-upgrade',
+							currentPhase: PlanningPhase.STRATEGY,
+						},
+					},
+					input: 'Coordinate infrastructure upgrade across multiple services',
+					expectedBehavior:
+						'Produce phased rollout strategy with risk mitigations and validation checkpoints',
+					measurableOutcome:
+						'Output includes five-step rollout with quantified rollback triggers and telemetry validation tasks.',
 				},
 			],
 			variables: [
@@ -259,6 +282,17 @@ Remember: You represent brAInwav's commitment to intelligent, reliable, and effi
 			],
 			brainwavBranding: true,
 			nOOptimized: true,
+			applicability: {
+				phases: [
+					PlanningPhase.INITIALIZATION,
+					PlanningPhase.ANALYSIS,
+					PlanningPhase.STRATEGY,
+					PlanningPhase.EXECUTION,
+					PlanningPhase.VALIDATION,
+				],
+				requiredCapabilities: ['planning'],
+				tags: ['long-horizon', 'complex-planning'],
+			},
 		});
 
 		// Task-specific prompt for code analysis
@@ -267,7 +301,7 @@ Remember: You represent brAInwav's commitment to intelligent, reliable, and effi
 			name: 'Code Analysis Task Prompt',
 			description: 'Specialized prompt for code analysis and review tasks',
 			category: 'task',
-			complexity: [3, 8],
+			complexity: [3, 9],
 			template: `**brAInwav Code Analysis Protocol**
 
 You are conducting a code analysis task within the nO Master Agent Loop architecture. Apply systematic analysis patterns:
@@ -306,11 +340,33 @@ Complexity: {{complexity}}/10 | Priority: {{priority}}/10`,
 					input: 'Analyze JavaScript React components for security issues',
 					expectedBehavior:
 						'Systematic file reading, security pattern matching, organized reporting in workspace',
+					measurableOutcome:
+						'Deliver report with at least four categorized findings and remediation steps per issue.',
+				},
+				{
+					context: {
+						complexity: 7,
+						capabilities: ['analysis', 'testing'],
+						planningContext: {
+							id: 'qa-hardening',
+							currentPhase: PlanningPhase.VALIDATION,
+						},
+					},
+					input: 'Review API layer for regression risks before release',
+					expectedBehavior:
+						'Cross-reference test coverage, flag risky endpoints, and suggest validation tasks',
+					measurableOutcome:
+						'Highlight minimum of three regression scenarios tied to test suite gaps with mitigation plan.',
 				},
 			],
 			variables: ['tools', 'taskDescription', 'complexity', 'priority'],
 			brainwavBranding: true,
 			nOOptimized: true,
+			applicability: {
+				phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION],
+				requiredCapabilities: ['analysis'],
+				tags: ['code-analysis', 'code-review'],
+			},
 		});
 
 		// Planning coordination prompt
@@ -364,6 +420,24 @@ Apply brAInwav's systematic approach to multi-agent coordination.`,
 					input: 'Coordinate deployment planning across 3 agents',
 					expectedBehavior:
 						'Create structured plan with dependencies, resource allocation, and agent assignments',
+					measurableOutcome:
+						'Define responsibilities for each agent and enumerate at least two dependency checks per agent.',
+				},
+				{
+					context: {
+						complexity: 8,
+						capabilities: ['coordination', 'planning'],
+						planningContext: {
+							id: 'expansion-phase',
+							workspaceId: 'workspace-ops',
+							currentPhase: PlanningPhase.EXECUTION,
+						},
+					},
+					input: 'Synchronize documentation updates and release tasks',
+					expectedBehavior:
+						'Sequence collaborative tasks, ensure documentation owners align with deployment steps',
+					measurableOutcome:
+						'Output includes shared schedule with timestamps and success criteria for each stream.',
 				},
 			],
 			variables: [
@@ -376,6 +450,11 @@ Apply brAInwav's systematic approach to multi-agent coordination.`,
 			],
 			brainwavBranding: true,
 			nOOptimized: true,
+			applicability: {
+				phases: [PlanningPhase.STRATEGY, PlanningPhase.EXECUTION],
+				requiredCapabilities: ['coordination'],
+				tags: ['multi-agent', 'coordination'],
+			},
 		});
 
 		// Error recovery prompt
@@ -430,6 +509,22 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 					input: 'File read operation failed due to permission error',
 					expectedBehavior:
 						'Assess alternatives, try different approach, document recovery actions',
+					measurableOutcome:
+						'Capture incident timeline with recovery steps and validation status in under five minutes.',
+				},
+				{
+					context: {
+						complexity: 5,
+						capabilities: ['resilience', 'monitoring'],
+						planningContext: {
+							id: 'stability-audit',
+							currentPhase: PlanningPhase.VALIDATION,
+						},
+					},
+					input: 'Service health check failing intermittently during rollout',
+					expectedBehavior: 'Stabilize system, gather metrics, and recommend fallback path',
+					measurableOutcome:
+						'Propose mitigation with quantified recovery time objective and monitoring verification checklist.',
 				},
 			],
 			variables: [
@@ -442,61 +537,81 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 			],
 			brainwavBranding: true,
 			nOOptimized: true,
+			applicability: {
+				phases: [PlanningPhase.EXECUTION, PlanningPhase.VALIDATION, PlanningPhase.COMPLETION],
+				requiredCapabilities: ['resilience'],
+				tags: ['recovery', 'stability'],
+			},
 		});
 
 		console.log('brAInwav Prompt Manager: Initialized 4 default nO-optimized templates');
 	}
 
 	private findCandidateTemplates(context: PromptContext): PromptTemplate[] {
-		const candidates: PromptTemplate[] = [];
+		const contextualMatches: PromptTemplate[] = [];
+		const fallbackMatches: PromptTemplate[] = [];
 
 		for (const template of this.templates.values()) {
-			// Check complexity range
-			if (
-				context.complexity >= template.complexity[0] &&
-				context.complexity <= template.complexity[1]
-			) {
-				candidates.push(template);
+			if (!this.isWithinComplexityRange(template, context.complexity)) {
+				continue;
+			}
+
+			fallbackMatches.push(template);
+
+			if (this.matchesApplicability(template, context)) {
+				contextualMatches.push(template);
 			}
 		}
 
-		// Prefer nO-optimized templates
+		const candidates = contextualMatches.length > 0 ? contextualMatches : fallbackMatches;
+
 		return candidates.sort((a, b) => {
+			const specificityDelta =
+				this.getApplicabilitySpecificity(b) - this.getApplicabilitySpecificity(a);
+			if (specificityDelta !== 0) {
+				return specificityDelta;
+			}
+
 			if (a.nOOptimized && !b.nOOptimized) return -1;
 			if (!a.nOOptimized && b.nOOptimized) return 1;
+
 			return 0;
 		});
 	}
 
 	private scoreTemplate(template: PromptTemplate, context: PromptContext): number {
-		let score = 0.5; // Base score
+		let score = 0.2;
 
-		// Complexity match scoring
-		const complexityRange = template.complexity[1] - template.complexity[0];
-		const complexityPosition = (context.complexity - template.complexity[0]) / complexityRange;
-		const complexityScore = 1 - Math.abs(complexityPosition - 0.5) * 2; // Peak at middle of range
-		score += complexityScore * 0.3;
+		const complexityScore = this.calculateComplexityScore(template, context.complexity);
+		score += complexityScore * 0.2;
 
-		// nO optimization bonus
 		if (template.nOOptimized && context.nOArchitecture) {
-			score += 0.2;
-		}
-
-		// Historical effectiveness
-		const history = this.usageHistory.get(template.id);
-		if (history && history.length > 0) {
-			const recentHistory = history.slice(-10); // Last 10 uses
-			const avgEffectiveness =
-				recentHistory.reduce((sum, use) => sum + use.effectiveness, 0) / recentHistory.length;
-			score += avgEffectiveness * 0.3;
-		}
-
-		// Capability match
-		const capabilityMatch =
-			template.variables.includes('capabilities') && context.capabilities.length > 0;
-		if (capabilityMatch) {
 			score += 0.1;
 		}
+
+		const capabilityCoverage = this.calculateCapabilityCoverage(template, context);
+		score += capabilityCoverage * 0.1;
+
+		const tagAlignment = this.calculateTagAlignment(template, context);
+		score += tagAlignment * 0.1;
+
+		const phaseAlignment = this.calculatePhaseAlignment(template, context);
+		score += phaseAlignment * 0.1;
+
+		if (template.variables.includes('capabilities') && context.capabilities.length > 0) {
+			score += 0.05;
+		}
+
+		if (template.variables.includes('tools') && context.tools.length > 0) {
+			score += 0.05;
+		}
+
+		if (context.objectives && context.objectives.length > 0) {
+			score += 0.05;
+		}
+
+		const historicalEffectiveness = this.calculateHistoricalEffectiveness(template.id, context);
+		score += historicalEffectiveness * 0.2;
 
 		return Math.min(score, 1.0);
 	}
@@ -512,41 +627,70 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 	}
 
 	private generateAdaptations(_template: PromptTemplate, context: PromptContext): string[] {
-		const adaptations: string[] = [];
+		const adaptations = new Set<string>();
 
-		// High complexity adaptations
 		if (context.complexity > 7) {
-			adaptations.push('enhanced error handling guidance');
-			adaptations.push('additional validation steps');
+			adaptations.add('enhanced error handling guidance');
+			adaptations.add('additional validation steps');
 		}
 
-		// High priority adaptations
 		if (context.priority > 8) {
-			adaptations.push('expedited execution protocols');
-			adaptations.push('simplified decision making');
+			adaptations.add('expedited execution protocols');
+			adaptations.add('simplified decision making');
 		}
 
-		// Phase-specific adaptations
-		if (context.currentPhase) {
-			adaptations.push(`optimized for ${context.currentPhase} phase`);
+		const effectivePhase = this.getEffectivePhase(context);
+		if (effectivePhase) {
+			adaptations.add(`optimized for ${effectivePhase} phase`);
 		}
 
-		return adaptations;
+		if (context.capabilities.length > 0) {
+			adaptations.add(`leverage capabilities: ${context.capabilities.join(', ')}`);
+		}
+
+		const planningContext = context.planningContext;
+		if (planningContext?.id) {
+			adaptations.add(`align with planning context ${planningContext.id}`);
+		}
+
+		if (planningContext?.workspaceId) {
+			adaptations.add(`preserve workspace continuity for ${planningContext.workspaceId}`);
+		}
+
+		if (planningContext?.objectives && planningContext.objectives.length > 0) {
+			adaptations.add(`track planning objectives: ${planningContext.objectives.join(', ')}`);
+		}
+
+		const contextTags = this.getContextTags(context);
+		if (contextTags.length > 0) {
+			adaptations.add(`maintain context tags: ${contextTags.join(', ')}`);
+		}
+
+		if (context.objectives && context.objectives.length > 0) {
+			adaptations.add(`focus on objectives: ${context.objectives.join(', ')}`);
+		}
+
+		return Array.from(adaptations);
 	}
 
 	private generateReasoningForSelection(template: PromptTemplate, context: PromptContext): string {
-		return (
-			`brAInwav Template Manager: Selected "${template.name}" for complexity ${context.complexity}, ` +
-			`priority ${context.priority}. Template optimized for nO architecture: ${template.nOOptimized}. ` +
-			`Branding enabled: ${template.brainwavBranding}.`
-		);
+		const effectivePhase = this.getEffectivePhase(context);
+		const contextTags = this.getContextTags(context);
+		const capabilityCoverage = this.calculateCapabilityCoverage(template, context);
+		const tagAlignment = this.calculateTagAlignment(template, context);
+
+		return [
+			`brAInwav Template Manager: Selected "${template.name}" for complexity ${context.complexity} and priority ${context.priority}.`,
+			`Phase: ${effectivePhase}.`,
+			`Context tags: ${contextTags.length > 0 ? contextTags.join(', ') : 'none'}.`,
+			`Capability alignment: ${(capabilityCoverage * 100).toFixed(0)}%.`,
+			`Tag alignment ${(tagAlignment * 100).toFixed(0)}%.`,
+			`Template optimized for nO architecture: ${template.nOOptimized}.`,
+			`Branding enabled: ${template.brainwavBranding}.`,
+		].join(' ');
 	}
 
 	private getVariableValue(variable: string, context: PromptContext): string {
-		const complianceValue = this.resolveComplianceVariable(variable, context);
-		if (complianceValue !== null) {
-			return complianceValue;
-		}
 		switch (variable) {
 			case 'taskId':
 				return context.taskId;
@@ -563,9 +707,9 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 			case 'tools':
 				return context.tools.join(', ');
 			case 'currentPhase':
-				return context.currentPhase || 'initialization';
+				return this.getEffectivePhase(context);
 			case 'agentCount':
-				return '1'; // Default for single agent
+				return '1';
 			case 'taskDescription':
 				return 'Task description not provided';
 			case 'errorType':
@@ -576,94 +720,27 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 				return 'unknown';
 			case 'errorDetails':
 				return 'Error details not available';
+			case 'objectives':
+				return context.objectives && context.objectives.length > 0
+					? context.objectives.join(', ')
+					: 'No explicit objectives';
+			case 'contextTags':
+				return this.getContextTags(context).join(', ') || 'none';
 			default:
 				return `{{${variable}}}`;
 		}
-	}
-
-	private resolveComplianceVariable(variable: string, context: PromptContext): string | null {
-		if (!variable.startsWith('compliance')) {
-			return null;
-		}
-		const presentation = this.buildCompliancePresentation(context);
-		switch (variable) {
-			case 'complianceStandards':
-				return presentation.standards;
-			case 'complianceRisk':
-				return presentation.risk;
-			case 'complianceViolations':
-				return presentation.violations;
-			case 'complianceGuidance':
-				return presentation.guidance;
-			default:
-				return null;
-		}
-	}
-
-	private buildCompliancePresentation(context: PromptContext): {
-		standards: string;
-		risk: string;
-		violations: string;
-		guidance: string;
-	} {
-		const source = context.compliance ?? context.planningContext?.compliance;
-		if (!source) {
-			return {
-				standards: 'brAInwav baseline (auto)',
-				risk: 'Nominal (0.00)',
-				violations: 'No active violations logged',
-				guidance: this.deriveComplianceGuidance(0, 0),
-			};
-		}
-		const standards = source.standards?.length
-			? source.standards.join(', ')
-			: 'brAInwav baseline (auto)';
-		const boundedScore = typeof source.riskScore === 'number' ? Math.min(Math.max(source.riskScore, 0), 1) : 0;
-		let riskLabel = 'Nominal';
-		if (boundedScore >= 0.7) {
-			riskLabel = 'High';
-		} else if (boundedScore >= 0.4) {
-			riskLabel = 'Elevated';
-		}
-		const violationsList = (source.outstandingViolations ?? [])
-			.slice(0, 3)
-			.map((violation) => {
-				const severity = violation.severity ?? 'info';
-				const description = violation.description ?? 'review pending';
-				return `${severity.toUpperCase()}: ${description}`;
-			})
-			.join('; ');
-		return {
-			standards,
-			risk: `${riskLabel} (${boundedScore.toFixed(2)})`,
-			violations: violationsList || 'No active violations logged',
-			guidance: this.deriveComplianceGuidance(
-				boundedScore,
-				source.outstandingViolations?.length ?? 0,
-			),
-		};
-	}
-
-	private deriveComplianceGuidance(score: number, violationCount: number): string {
-		if (score >= 0.7 || violationCount > 0) {
-			return 'Run security.run_semgrep_scan and security.validate_compliance immediately; document outcomes in the brAInwav compliance tracker.';
-		}
-		if (score >= 0.4) {
-			return 'Queue security.analyze_vulnerabilities and security.check_dependencies, then review remediation owners.';
-		}
-		return 'Maintain the routine brAInwav security.check_dependencies cadence and archive reports for audit readiness.';
 	}
 
 	private applyAdaptations(prompt: string, adaptations: string[], context: PromptContext): string {
 		if (adaptations.length === 0) return prompt;
 
 		const adaptationHeader = `\n**Context Adaptations for brAInwav nO Architecture (task ${context.taskId}):**\n`;
-		const adaptationSection = adaptationHeader + adaptations.map((a) => `- ${a}`).join('\n') + '\n';
+		const adaptationSection = `${adaptationHeader}${adaptations.map((a) => `- ${a}`).join('\n')}\n`;
 		return prompt + adaptationSection;
 	}
 
 	private addBrainwavBranding(prompt: string, context: PromptContext): string {
-		if (prompt.includes('brAInwav')) return prompt; // Already branded
+		if (prompt.includes('brAInwav')) return prompt;
 
 		const branding =
 			'\n**Powered by brAInwav** | Task: ' +
@@ -682,6 +759,7 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 		nOOptimizedTemplates: number;
 		averageEffectiveness: number;
 		mostUsedTemplate: string;
+		totalUsageEntries: number;
 	} {
 		const totalTemplates = this.templates.size;
 		const nOOptimizedTemplates = Array.from(this.templates.values()).filter(
@@ -689,7 +767,7 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 		).length;
 
 		let totalEffectiveness = 0;
-		let totalUsages = 0;
+		let totalUsageEntries = 0;
 		let mostUsedTemplate = 'unknown';
 		let maxUsages = 0;
 
@@ -699,15 +777,229 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 				mostUsedTemplate = templateId;
 			}
 
-			totalUsages += history.length;
+			totalUsageEntries += history.length;
 			totalEffectiveness += history.reduce((sum, use) => sum + use.effectiveness, 0);
 		}
 
 		return {
 			totalTemplates,
 			nOOptimizedTemplates,
-			averageEffectiveness: totalUsages > 0 ? totalEffectiveness / totalUsages : 0,
+			averageEffectiveness: totalUsageEntries > 0 ? totalEffectiveness / totalUsageEntries : 0,
 			mostUsedTemplate,
+			totalUsageEntries,
 		};
+	}
+
+	private isWithinComplexityRange(template: PromptTemplate, complexity: number): boolean {
+		const [min, max] = template.complexity;
+		return complexity >= min && complexity <= max;
+	}
+
+	private calculateComplexityScore(template: PromptTemplate, complexity: number): number {
+		const [min, max] = template.complexity;
+		if (max === min) {
+			return 1;
+		}
+
+		const clamped = Math.min(Math.max(complexity, min), max);
+		const position = (clamped - min) / (max - min);
+		return 1 - Math.abs(position - 0.5) * 2;
+	}
+
+	private matchesApplicability(template: PromptTemplate, context: PromptContext): boolean {
+		const applicability = template.applicability;
+		if (!applicability) {
+			return true;
+		}
+
+		const effectivePhase = this.getEffectivePhase(context);
+		if (applicability.phases && applicability.phases.length > 0) {
+			if (!applicability.phases.includes(effectivePhase)) {
+				return false;
+			}
+		}
+
+		if (applicability.requiredCapabilities && applicability.requiredCapabilities.length > 0) {
+			const hasAllCapabilities = applicability.requiredCapabilities.every((capability) =>
+				context.capabilities.includes(capability),
+			);
+
+			if (!hasAllCapabilities) {
+				return false;
+			}
+		}
+
+		if (applicability.tags && applicability.tags.length > 0) {
+			const tags = this.getContextTags(context);
+			if (!tags.some((tag) => applicability.tags?.includes(tag))) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private getEffectivePhase(context: PromptContext): PlanningPhase {
+		if (context.currentPhase) {
+			return context.currentPhase;
+		}
+
+		if (context.planningContext?.currentPhase) {
+			return context.planningContext.currentPhase;
+		}
+
+		return PlanningPhase.INITIALIZATION;
+	}
+
+	private getApplicabilitySpecificity(template: PromptTemplate): number {
+		if (!template.applicability) {
+			return 0;
+		}
+
+		const { phases, requiredCapabilities, tags } = template.applicability;
+		return (phases?.length ?? 0) + (requiredCapabilities?.length ?? 0) + (tags?.length ?? 0);
+	}
+
+	private calculateCapabilityCoverage(template: PromptTemplate, context: PromptContext): number {
+		const required = template.applicability?.requiredCapabilities ?? [];
+		if (required.length === 0) {
+			return context.capabilities.length > 0 ? 0.5 : 0;
+		}
+
+		const matches = required.filter((capability) =>
+			context.capabilities.includes(capability),
+		).length;
+		return matches / required.length;
+	}
+
+	private calculateTagAlignment(template: PromptTemplate, context: PromptContext): number {
+		const templateTags = template.applicability?.tags ?? [];
+		const contextTags = this.getContextTags(context);
+
+		if (templateTags.length === 0) {
+			return contextTags.length > 0 ? 0.4 : 0.2;
+		}
+
+		if (contextTags.length === 0) {
+			return 0;
+		}
+
+		const matchCount = contextTags.filter((tag) => templateTags.includes(tag)).length;
+		return matchCount / templateTags.length;
+	}
+
+	private calculatePhaseAlignment(template: PromptTemplate, context: PromptContext): number {
+		const phases = template.applicability?.phases ?? [];
+		if (phases.length === 0) {
+			return 0.5;
+		}
+
+		const effectivePhase = this.getEffectivePhase(context);
+		return phases.includes(effectivePhase) ? 1 : 0;
+	}
+
+	private calculateHistoricalEffectiveness(templateId: string, context: PromptContext): number {
+		const history = this.usageHistory.get(templateId);
+		if (!history || history.length === 0) {
+			return 0;
+		}
+
+		const now = Date.now();
+		let weightedSum = 0;
+		let totalWeight = 0;
+
+		for (const entry of history) {
+			const ageMs = now - entry.timestamp.getTime();
+			if (ageMs > HISTORY_RETENTION_MS) {
+				continue;
+			}
+
+			const similarity = this.calculateContextSimilarity(context, entry.context);
+			if (similarity <= 0) {
+				continue;
+			}
+
+			const timeWeight = 1 - ageMs / HISTORY_RETENTION_MS;
+			const weight = Math.max(similarity * timeWeight, 0);
+
+			if (weight <= 0) {
+				continue;
+			}
+
+			weightedSum += entry.effectiveness * weight;
+			totalWeight += weight;
+		}
+
+		if (totalWeight === 0) {
+			return 0;
+		}
+
+		return Math.min(weightedSum / totalWeight, 1);
+	}
+
+	private calculateContextSimilarity(current: PromptContext, previous: PromptContext): number {
+		const capabilitySimilarity = this.calculateSetSimilarity(
+			current.capabilities,
+			previous.capabilities,
+		);
+		const tagSimilarity = this.calculateSetSimilarity(
+			this.getContextTags(current),
+			this.getContextTags(previous),
+		);
+		const objectiveSimilarity = this.calculateSetSimilarity(
+			current.objectives ?? [],
+			previous.objectives ?? [],
+		);
+		const phaseSimilarity =
+			this.getEffectivePhase(current) === this.getEffectivePhase(previous) ? 1 : 0;
+
+		return (
+			capabilitySimilarity * 0.35 +
+			tagSimilarity * 0.35 +
+			phaseSimilarity * 0.2 +
+			objectiveSimilarity * 0.1
+		);
+	}
+
+	private calculateSetSimilarity(current: string[], previous: string[]): number {
+		if (current.length === 0 && previous.length === 0) {
+			return 1;
+		}
+
+		const currentSet = new Set(current);
+		const previousSet = new Set(previous);
+		let intersectionSize = 0;
+		for (const value of currentSet) {
+			if (previousSet.has(value)) {
+				intersectionSize++;
+			}
+		}
+		const unionSize = new Set([...currentSet, ...previousSet]).size;
+
+		if (unionSize === 0) {
+			return 0;
+		}
+
+		return intersectionSize / unionSize;
+	}
+
+	private getContextTags(context: PromptContext): string[] {
+		if (Array.isArray(context.contextTags) && context.contextTags.length > 0) {
+			return [...context.contextTags];
+		}
+
+		if (
+			context.planningContext &&
+			Array.isArray(context.planningContext.contextTags) &&
+			context.planningContext.contextTags.length > 0
+		) {
+			return [...context.planningContext.contextTags];
+		}
+
+		return [];
+	}
+
+	private snapshotContext(context: PromptContext): PromptContext {
+		return structuredClone(context);
 	}
 }

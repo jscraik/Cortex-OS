@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { createAgentToolkit } from '@cortex-os/agent-toolkit';
 import process from 'node:process';
+import { createAgentToolkit } from '@cortex-os/agent-toolkit';
 
 async function main() {
 	const patterns = process.argv.slice(2);

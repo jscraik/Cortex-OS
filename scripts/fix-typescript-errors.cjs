@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const { readFileSync, writeFileSync, readdirSync, existsSync } = require('fs');
-const { join } = require('path');
+const { execSync } = require('node:child_process');
+const { readFileSync, writeFileSync, readdirSync, existsSync } = require('node:fs');
+const { join } = require('node:path');
 
 console.log('🔧 Fixing TypeScript errors across the repository...\n');
 
@@ -80,7 +80,7 @@ const ERROR_FIXES = {
 	},
 	// Promise chain fixes
 	"Property 'then' does not exist on type": {
-		fix: (content, error) => {
+		fix: (content, _error) => {
 			// This is a simplified fix - complex cases need manual review
 			return content.replace(/(\w+)\.then\((\w+) => (.+?)\)/g, 'const $2 = await $1;\n$3');
 		},
@@ -90,7 +90,7 @@ const ERROR_FIXES = {
 
 function getTsErrors() {
 	try {
-		const output = execSync('npx tsc --noEmit --skipLibCheck', {
+		const _output = execSync('npx tsc --noEmit --skipLibCheck', {
 			encoding: 'utf8',
 			stdio: 'pipe',
 		});
@@ -111,8 +111,8 @@ function parseErrors(output) {
 				const [, file, line, col, message] = match;
 				errors.push({
 					file,
-					line: parseInt(line),
-					col: parseInt(col),
+					line: parseInt(line, 10),
+					col: parseInt(col, 10),
 					message: message.replace('error TS\\d+: ', ''),
 				});
 			}

@@ -3,12 +3,12 @@
  * @description End-to-end integration tests for MCP marketplace
  */
 
-import type { ServerManifest } from '@cortex-os/mcp-registry';
-import type { FastifyInstance } from 'fastify';
 import { existsSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import type { ServerManifest } from '@cortex-os/mcp-registry';
+import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from './src/app.js';
 

@@ -2,6 +2,7 @@ import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { OBSERVABILITY_EVENT_SCHEMAS, OBSERVABILITY_EVENT_TYPES } from './observability-events.js';
+
 const DEFAULT_SOURCE = 'urn:cortex:observability';
 const DEFAULT_TOPIC_ACL = Object.freeze(
 	Object.fromEntries(

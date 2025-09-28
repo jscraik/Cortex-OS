@@ -8,7 +8,7 @@
  */
 
 import { z } from 'zod';
-import { createPrefixedId, secureDelay, secureRatio } from '../lib/secure-random.js';
+import { createPrefixedId, secureDelay } from '../lib/secure-random.js';
 import { ToolLayer } from './tool-layer.js';
 
 /**

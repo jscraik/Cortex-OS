@@ -5,8 +5,8 @@
  */
 
 import { z } from 'zod';
-import type { MemoryStore } from '../lib/types.js';
 import { createPrefixedId } from '../lib/secure-random.js';
+import type { MemoryStore } from '../lib/types.js';
 
 // MCP Tool schemas matching the memory MCP interface
 const MemoryStoreSchema = z.object({

@@ -1,3 +1,4 @@
+import { generateRunId, recordLatency, recordOperation } from '@cortex-os/observability';
 import {
 	CancellationController,
 	CancellationError,
@@ -163,6 +164,7 @@ async function executeStepWithRetry(
 	workflowId?: string,
 ): Promise<void> {
 	let attempt = 0;
+	const runId = generateRunId();
 	const hookContext = {
 		stepId: node,
 		signal,
@@ -177,6 +179,8 @@ async function executeStepWithRetry(
 	// retry loop
 	for (;;) {
 		if (signal?.aborted) throw new Error('Aborted');
+		const attemptNumber = attempt + 1;
+		const attemptStartedAt = Date.now();
 		try {
 			await fn({ signal });
 			executed.push(node);
@@ -188,8 +192,25 @@ async function executeStepWithRetry(
 					metadata: { ...hookContext.metadata, attempt, success: true },
 				});
 			}
+			recordRetryTelemetry({
+				success: true,
+				attempt: attemptNumber,
+				durationMs: Date.now() - attemptStartedAt,
+				node,
+				runId,
+				workflowId,
+			});
 			return;
 		} catch (err) {
+			recordRetryTelemetry({
+				success: false,
+				attempt: attemptNumber,
+				durationMs: Date.now() - attemptStartedAt,
+				node,
+				runId,
+				workflowId,
+				error: err,
+			});
 			if (!policy || attempt >= policy.maxRetries) {
 				// Execute error hooks on final failure
 				if (hooks) {
@@ -207,6 +228,45 @@ async function executeStepWithRetry(
 			// Update hook context for retry
 			hookContext.metadata = { ...hookContext.metadata, attempt };
 		}
+	}
+}
+
+interface RetryTelemetryInput {
+	success: boolean;
+	attempt: number;
+	durationMs: number;
+	node: string;
+	runId: string;
+	workflowId?: string;
+	error?: unknown;
+}
+
+function recordRetryTelemetry({
+	success,
+	attempt,
+	durationMs,
+	node,
+	runId,
+	workflowId,
+	error,
+}: RetryTelemetryInput): void {
+	const labels = {
+		component: 'services.orchestration',
+		step: node,
+		attempt: String(attempt),
+		workflow_id: workflowId ?? 'unknown',
+		outcome: success ? 'success' : 'failure',
+		error_type: success ? 'none' : error instanceof Error ? (error.name ?? 'Error') : typeof error,
+	} as Record<string, string>;
+	try {
+		recordOperation('services.orchestration.retry', success, runId, labels);
+		recordLatency('services.orchestration.retry', durationMs, labels);
+	} catch (telemetryError) {
+		console.warn('[brAInwav][services-orchestration] retry telemetry failed', {
+			telemetryError,
+			step: node,
+			attempt,
+		});
 	}
 }
 

@@ -6,8 +6,8 @@ import {
 	type ExecutionStatus,
 	ExecutionStatusSchema,
 } from '../contracts/no-architecture-contracts.js';
-import { withEnhancedSpan } from '../observability/otel.js';
 import { createPrefixedId } from '../lib/secure-random.js';
+import { withEnhancedSpan } from '../observability/otel.js';
 
 // Enhanced types for Phase 2.2 State Persistence & Recovery
 export interface StateCheckpoint {

@@ -6,6 +6,7 @@ src/cortex_py/__init__.py
 src/cortex_py/generator.py
 src/cortex_py/hybrid_config.py
 src/cortex_py/services.py
+src/cortex_py/thermal.py
 src/cortex_py.egg-info/PKG-INFO
 src/cortex_py.egg-info/SOURCES.txt
 src/cortex_py.egg-info/dependency_links.txt
@@ -52,4 +53,5 @@ tests/test_mlx_unified_smoke.py
 tests/test_mlx_unified_unit.py
 tests/test_safe_subprocess_basic.py
 tests/test_safe_subprocess_extended.py
+tests/test_thermal_guard_production.py
 tests/test_workflow_auth.py

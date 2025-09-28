@@ -8,9 +8,9 @@
  */
 
 import { z } from 'zod';
+import { createPrefixedId } from '../lib/secure-random.js';
 import type { MCPEvent } from './types.js';
 import { createTypedEvent } from './types.js';
-import { createPrefixedId } from '../lib/secure-random.js';
 
 // Agent Toolkit interfaces
 interface AgentToolkitSearchInput {

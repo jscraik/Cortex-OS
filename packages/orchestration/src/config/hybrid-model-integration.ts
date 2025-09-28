@@ -292,8 +292,6 @@ export interface IOrchestrationHybridRouter {
 }
 export class OrchestrationHybridRouter implements IOrchestrationHybridRouter {
 	private models: Map<string, OrchestrationModelConfig> = new Map();
-	private hybridMode: HybridMode = 'performance';
-	private privacyMode: boolean = false;
 
 	constructor() {
 		// Load the 7 required models

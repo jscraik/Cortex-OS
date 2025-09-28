@@ -7,9 +7,9 @@
  * into your daily development workflow.
  */
 
+import { execSync } from 'node:child_process';
+import { watch } from 'node:fs';
 import { createAgentToolkit } from '@cortex-os/agent-toolkit';
-import { execSync } from 'child_process';
-import { watch } from 'fs';
 
 async function setupDevelopmentWorkflow() {
 	const toolkit = await createAgentToolkit();
@@ -108,7 +108,7 @@ async function setupDevelopmentWorkflow() {
 		try {
 			execSync('cd packages/agent-toolkit && pnpm test', { stdio: 'inherit' });
 			console.log('✅ Tests passed');
-		} catch (error) {
+		} catch (_error) {
 			console.error('❌ Tests failed');
 		}
 	};

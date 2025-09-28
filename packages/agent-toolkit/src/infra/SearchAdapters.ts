@@ -1,5 +1,5 @@
-import type { AgentToolkitSearchInput, AgentToolkitSearchResult } from '@cortex-os/contracts';
 import { resolve } from 'node:path';
+import type { AgentToolkitSearchInput, AgentToolkitSearchResult } from '@cortex-os/contracts';
 import type { SearchTool } from '../domain/ToolInterfaces.js';
 import { execWithRetry } from './execUtil.js';
 

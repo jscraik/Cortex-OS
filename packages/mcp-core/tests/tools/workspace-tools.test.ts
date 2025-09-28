@@ -110,7 +110,7 @@ describe('Workspace Tools - Phase 12 MCP Integration', () => {
 				agentId: 'agent-001',
 				sessionId: 'session-001',
 			});
-			const workspace2 = await workspaceCreateTool.execute({
+			const _workspace2 = await workspaceCreateTool.execute({
 				name: 'Workspace 2',
 				agentId: 'agent-002',
 				sessionId: 'session-001',
@@ -361,9 +361,7 @@ describe('Workspace Tools - Phase 12 MCP Integration', () => {
 				maxSize: 10, // Very small limit
 			};
 
-			await expect(workspaceReadTool.execute(input)).rejects.toThrow(
-				/File exceeds maximum size/,
-			);
+			await expect(workspaceReadTool.execute(input)).rejects.toThrow(/File exceeds maximum size/);
 		});
 
 		it('fails when file does not exist', async () => {
@@ -414,9 +412,9 @@ describe('Workspace Tools - Phase 12 MCP Integration', () => {
 		it('maintains isolation levels across all operations', async () => {
 			const listResult = await workspaceListTool.execute({ includeMetadata: true });
 
-			const strictWs = listResult.workspaces.find(w => w.id === strictWorkspaceId);
-			const moderateWs = listResult.workspaces.find(w => w.id === moderateWorkspaceId);
-			const relaxedWs = listResult.workspaces.find(w => w.id === relaxedWorkspaceId);
+			const strictWs = listResult.workspaces.find((w) => w.id === strictWorkspaceId);
+			const moderateWs = listResult.workspaces.find((w) => w.id === moderateWorkspaceId);
+			const relaxedWs = listResult.workspaces.find((w) => w.id === relaxedWorkspaceId);
 
 			expect(strictWs?.metadata?.isolationLevel).toBe('strict');
 			expect(moderateWs?.metadata?.isolationLevel).toBe('moderate');
@@ -464,7 +462,7 @@ describe('Workspace Tools - Phase 12 MCP Integration', () => {
 			const initialTime = workspace.workspace.lastAccessed;
 
 			// Wait a moment to ensure timestamp difference
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			await workspaceReadTool.execute({
 				workspaceId: workspace.workspace.id,
@@ -472,9 +470,11 @@ describe('Workspace Tools - Phase 12 MCP Integration', () => {
 			});
 
 			const listResult = await workspaceListTool.execute({ includeMetadata: true });
-			const updatedWorkspace = listResult.workspaces.find(w => w.id === workspace.workspace.id);
+			const updatedWorkspace = listResult.workspaces.find((w) => w.id === workspace.workspace.id);
 
-			expect(new Date(updatedWorkspace!.lastAccessed).getTime()).toBeGreaterThan(new Date(initialTime).getTime());
+			expect(new Date(updatedWorkspace?.lastAccessed).getTime()).toBeGreaterThan(
+				new Date(initialTime).getTime(),
+			);
 		});
 	});
 });

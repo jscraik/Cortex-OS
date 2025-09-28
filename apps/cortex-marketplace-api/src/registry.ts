@@ -3,12 +3,12 @@
  * @description Registry management for MCP marketplace servers
  */
 
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex } from '@noble/hashes/utils';
-import Fuse, { type FuseResult } from 'fuse.js';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '@noble/hashes/utils';
+import Fuse, { type FuseResult } from 'fuse.js';
 import type {
 	ApiResponse,
 	RegistryIndex,

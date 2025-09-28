@@ -5,6 +5,7 @@
  * Cortex-OS adoption plan and architecture diagram pattern.
  */
 
+import { randomUUID } from 'node:crypto';
 import { getHooksSingleton } from '@cortex-os/hooks';
 import {
 	createMLXAdapter,
@@ -24,7 +25,6 @@ import {
 } from '@cortex-os/orchestration';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, MessagesAnnotation, StateGraph } from '@langchain/langgraph';
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 // Extended state annotation for agent coordination
@@ -223,7 +223,7 @@ export const createMasterAgentGraph = (config: {
 				collected.push(result.reason.message);
 			}
 		}
-		if (success && success.value) {
+		if (success?.value) {
 			return {
 				execution: {
 					provider: (success.metadata?.provider as 'mlx' | 'ollama') ?? 'none',

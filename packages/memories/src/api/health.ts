@@ -1,5 +1,5 @@
-import express from 'express';
 import type { Express } from 'express';
+import express from 'express';
 import { logger } from '../logging/logger.js';
 import { healthMonitor } from '../monitoring/health.js';
 import type { StoreInspectionReport, StoreInspector } from '../monitoring/store-inspector.js';

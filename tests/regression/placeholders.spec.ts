@@ -49,7 +49,7 @@ describe('brAInwav placeholder regression', () => {
 			const formattedResolved = resolvedEntries
 				.map(({ file, token }) => `• ${file} → "${token}"`)
 				.join('\n');
-			console.log('🎉 brAInwav placeholder debt reduced for entries:\n' + formattedResolved);
+			console.log(`🎉 brAInwav placeholder debt reduced for entries:\n${formattedResolved}`);
 		}
 
 		if (newFindings.length > 0) {

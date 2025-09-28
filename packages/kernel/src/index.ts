@@ -100,9 +100,9 @@ export type {
 	TeachingPattern,
 } from './teaching/example-capture.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
-
 export type {
 	BindKernelToolsOptions,
+	BoundKernelTool,
 	KernelBashInput,
 	KernelBashResult,
 	KernelFetchInput,

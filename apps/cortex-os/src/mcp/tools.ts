@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { cortexSecMcpTools } from '@cortex-os/cortex-sec';
+import { z } from 'zod';
 
 const SecurityFindingSchema = z.object({
 	id: z.string(),
@@ -348,7 +348,8 @@ const securityToolComplianceMetadata: Record<string, ToolComplianceMetadata> = {
 	validate_compliance: {
 		domain: 'compliance',
 		standards: ['iso27001', 'nist'],
-		recommendedUsage: 'Run after changes touching regulated surfaces to validate compliance posture.',
+		recommendedUsage:
+			'Run after changes touching regulated surfaces to validate compliance posture.',
 		riskLevel: 'high',
 		autoEventEmission: true,
 	},
@@ -360,8 +361,7 @@ const securityToolComplianceMetadata: Record<string, ToolComplianceMetadata> = {
 	},
 };
 
-const securityMcpTools: ToolDefinition[] = (cortexSecMcpTools as CortexSecMcpTool[]).map(
-	(tool) => {
+const securityMcpTools: ToolDefinition[] = (cortexSecMcpTools as CortexSecMcpTool[]).map((tool) => {
 	const outputSchema = securityToolOutputSchemas[tool.name];
 	if (!outputSchema) {
 		throw new Error(

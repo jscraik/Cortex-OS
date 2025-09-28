@@ -65,7 +65,7 @@ app.route('/skip-permissions', skipAPI.getApp());
 // Protected routes with permission checks
 app.get('/api/admin/dashboard', async (c) => {
 	const user = c.get('user');
-	const bypassResult = c.get('skipPermissionsResult');
+	const _bypassResult = c.get('skipPermissionsResult');
 
 	// Check authorization
 	const authResult = await rbacSystem.authorize({
@@ -173,7 +173,7 @@ const port = parseInt(process.env.PORT || '3000', 10);
 console.log(`Server running on port ${port}`);
 
 // Example usage script
-async function demonstrateSkipPermissions() {
+async function _demonstrateSkipPermissions() {
 	const baseUrl = `http://localhost:${port}`;
 
 	console.log('=== Skip Permissions Demo ===\n');

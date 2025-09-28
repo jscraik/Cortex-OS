@@ -1,15 +1,15 @@
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMemoriesHealthApp } from '../src/api/health.js';
 import { createStoreForKind } from '../src/config/store-from-env.js';
 import type { Memory } from '../src/domain/types.js';
 import type { SystemHealth } from '../src/monitoring/health.js';
-import { createMemoriesHealthApp } from '../src/api/health.js';
 import { createStoreInspector } from '../src/monitoring/store-inspector.js';
 import {
+	type HarnessResult,
 	setupLocalHarness,
 	setupPrismaHarness,
-	type HarnessResult,
 } from './test-utils/store-harness.js';
 
 const BASE_MEMORY: Memory = {

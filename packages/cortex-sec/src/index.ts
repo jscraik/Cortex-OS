@@ -1,24 +1,40 @@
 // Cortex Security Package - Main exports
 
-// Core functionality (when implemented)
-// export * from './core/index';
-// export * from './types/index';
-
 // A2A Events
 export {
+	CORTEX_SEC_EVENT_SOURCE,
 	type ComplianceViolationEvent,
 	createCortexSecEvent,
 	type SecurityPolicyUpdatedEvent,
 	type SecurityScanStartedEvent,
 	type VulnerabilityFoundEvent,
 } from './events/cortex-sec-events.js';
-// MCP Integration
-export { cortexSecMcpTools } from './mcp/tools.js';
+export {
+	createSecurityEventPublisher,
+	type PublishEnvelope,
+	type SecurityEventPublisher,
+} from './events/security-event-publisher.js';
 export type {
-	CortexSecTool,
-	RunSemgrepScanInput,
 	AnalyzeVulnerabilitiesInput,
-	GetSecurityPolicyInput,
-	ValidateComplianceInput,
 	CheckDependenciesInput,
+	CortexSecTool,
+	CortexSecToolResponse,
+	GetSecurityPolicyInput,
+	RunSemgrepScanInput,
+	ValidateComplianceInput,
 } from './mcp/tools.js';
+// MCP Integration
+export {
+	CORTEX_SEC_TOOL_ALLOWLIST,
+	cortexSecMcpTools,
+} from './mcp/tools.js';
+
+// Planning utilities
+export {
+	type ComplianceSeverity,
+	type ComplianceState,
+	type ComplianceSummary,
+	type ComplianceViolation,
+	mergeComplianceState,
+	summarizeCompliance,
+} from './planning/compliance-strategy.js';

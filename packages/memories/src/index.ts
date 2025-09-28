@@ -13,14 +13,11 @@ export {
 	RAGIntegration,
 } from './adapters/rag-integration.js';
 export {
-	FetchHttpClient,
-	// interface type
-	RestApiAdapter,
-	RestApiMemoryStore,
-	createRestApiAdapter,
-	createRestApiMemoryStore,
 	type ApiResponse,
 	type AuthMethod,
+	createRestApiAdapter,
+	createRestApiMemoryStore,
+	FetchHttpClient,
 	type HealthCheckResponse,
 	type HttpClient,
 	type MemoryCreateRequest,
@@ -35,13 +32,16 @@ export {
 	type MemoryUpdateRequest,
 	type RateLimitInfo,
 	type RequestOptions,
+	// interface type
+	RestApiAdapter,
 	type RestApiConfig,
 	type RestApiError,
+	RestApiMemoryStore,
 } from './adapters/rest-api/index.js';
 export {
-	RealtimeMemoryServer,
 	type ConnectionInfo,
 	type ConnectionMetrics,
+	RealtimeMemoryServer,
 	type ServerConfig,
 } from './adapters/server.realtime.js';
 export {
@@ -52,9 +52,9 @@ export {
 export { EncryptedStore } from './adapters/store.encrypted.js';
 export { PolicyEncryptedStore } from './adapters/store.encrypted.policy.js';
 export {
-	GraphMemoryStore,
 	type Centrality,
 	type Community,
+	GraphMemoryStore,
 	type GraphQuery,
 	type GraphResult,
 	type MemoryNode,
@@ -67,19 +67,19 @@ export {
 	type HierarchyMetadata,
 } from './adapters/store.hierarchical.js';
 export {
-	HybridSearchMemoryStore,
 	type HybridQuery,
 	type HybridSearchConfig,
+	HybridSearchMemoryStore,
 	type HybridSearchResponse,
 	type HybridSearchResult,
 	type QueryAnalytics,
 } from './adapters/store.hybrid-search.js';
 export {
-	IntelligentMemoryStore,
 	type ConsolidationResult,
 	type InsightsRequest,
 	type InsightsResult,
 	type IntelligentConfig,
+	IntelligentMemoryStore,
 	type IntelligentQuery,
 	type IntelligentSearchResult,
 	type KeyPoint,
@@ -94,8 +94,8 @@ export { LayeredMemoryStore } from './adapters/store.layered.js';
 export { LocalMemoryStore } from './adapters/store.localmemory.js';
 export { InMemoryStore } from './adapters/store.memory.js';
 export {
-	PluginAwareMemoryStore,
 	type Plugin,
+	PluginAwareMemoryStore,
 	type PluginExecutionError,
 	type PluginHook,
 	type PluginMetrics,
@@ -103,24 +103,24 @@ export {
 export { PrismaStore } from './adapters/store.prisma/client.js';
 export { QdrantMemoryStore } from './adapters/store.qdrant.js';
 export {
-	RateLimitedMemoryStore,
 	type ClientUsage,
 	type RateLimitConfig,
 	type RateLimitContext,
+	RateLimitedMemoryStore,
 	type RateLimitInfo,
 	type UsageStats,
 } from './adapters/store.rate-limit.js';
 export {
-	SecureMemoryStore,
 	type AuditLogEntry,
+	SecureMemoryStore,
 	type SecureStoreConfig,
 } from './adapters/store.secure.js';
 export { SQLiteStore } from './adapters/store.sqlite.js';
 export {
-	StreamingMemoryStore,
 	type ChangeEvent,
 	type ChangeLogEntry,
 	type ChangeLogQuery,
+	StreamingMemoryStore,
 	type Subscription,
 } from './adapters/store.streaming.js';
 export { TemplateMemoryStore, type TemplateStoreConfig } from './adapters/store.template.js';
@@ -142,11 +142,11 @@ export type {
 } from './events/memory-events.js';
 // A2A Events for inter-package communication
 export {
+	createMemoryEvent,
 	MemoryCreatedEventSchema,
 	MemoryDeletedEventSchema,
 	MemoryRetrievedEventSchema,
 	MemoryUpdatedEventSchema,
-	createMemoryEvent,
 } from './events/memory-events.js';
 // MCP Tools for external AI agent integration
 export {
@@ -170,13 +170,13 @@ export {
 export { allMigrations } from './migrations/predefined-migrations.js';
 // Observability for monitoring and tracing
 export {
-	ObservableMemoryStore,
 	createMemoryObservability,
+	ObservableMemoryStore,
 } from './observability/observable-store.js';
 export {
-	OpenTelemetryObservabilityProvider,
 	createDefaultObservabilityConfig,
 	createObservabilityProvider,
+	OpenTelemetryObservabilityProvider,
 } from './observability/provider.js';
 export * from './observability/types.js';
 // Example plugins
@@ -191,5 +191,5 @@ export {
 	type MetadataStore,
 } from './service/migration-service.js';
 export * from './service/store-factory.js';
-export { TemplateMigrationService, type MigrationPlan } from './service/template-migration.js';
+export { type MigrationPlan, TemplateMigrationService } from './service/template-migration.js';
 export { TemplateRegistry } from './service/template-registry.js';

@@ -1,9 +1,10 @@
-import { prismaAdapter as createPrismaAdapter } from 'better-auth/adapters/prisma';
 import { execFile } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { prismaAdapter as createPrismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from '../db/prisma-client.js';
+import { prepareMigrationArtifacts } from './schema-guard.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -35,26 +36,41 @@ const ensureDatabaseSchema = (() => {
 
 		const workspaceRoot = resolveWorkspaceRoot();
 		const prismaBinary = resolvePrismaBinary(workspaceRoot);
+		const envWithDatabase = {
+			...process.env,
+			DATABASE_URL: connectionString,
+		} satisfies NodeJS.ProcessEnv;
+		const migrationArtifacts = await prepareMigrationArtifacts({
+			prismaBinary,
+			workspaceRoot,
+			connectionString,
+			env: envWithDatabase,
+		});
+
+		const command =
+			migrationArtifacts.pendingMigrations.length > 0
+				? ['migrate', 'deploy', '--schema', './prisma/schema.prisma']
+				: ['db', 'push', '--schema', './prisma/schema.prisma'];
 
 		try {
-			const result = await execFileAsync(
-				prismaBinary,
-				['db', 'push', '--schema', './prisma/schema.prisma'],
-				{
-					cwd: workspaceRoot,
-					env: {
-						...process.env,
-						DATABASE_URL: connectionString,
-					},
-				},
-			);
-			console.error('[brAInwav][better-auth] prisma db push completed', {
+			const result = await execFileAsync(prismaBinary, command, {
+				cwd: workspaceRoot,
+				env: envWithDatabase,
+			});
+			console.info('[brAInwav][better-auth] prisma schema synchronization completed', {
 				stdout: result.stdout,
 				stderr: result.stderr,
+				pendingMigrations: migrationArtifacts.pendingMigrations,
+				forwardScript: migrationArtifacts.forwardScriptPath,
+				rollbackScript: migrationArtifacts.rollbackScriptPath,
 			});
 			initialized = true;
 		} catch (error) {
-			console.error('[brAInwav][better-auth] prisma db push failed', { error });
+			console.error('[brAInwav][better-auth] prisma schema synchronization failed', {
+				error: formatAdapterError(error),
+				pendingMigrations: migrationArtifacts.pendingMigrations,
+				rollbackScript: migrationArtifacts.rollbackScriptPath,
+			});
 			throw error;
 		}
 	};

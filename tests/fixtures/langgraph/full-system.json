@@ -1,0 +1,15 @@
+{
+  "input": "Execute LangGraph integration ping",
+  "expectedOutput": "Execute LangGraph integration ping",
+  "thermalState": "nominal",
+  "streaming": true,
+  "tools": [
+    {
+      "name": "memory.write",
+      "args": { "key": "langgraph-phase-18", "value": "brAInwav" }
+    }
+  ],
+  "messages": [
+    { "role": "user", "content": "ping" }
+  ]
+}

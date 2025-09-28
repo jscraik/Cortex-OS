@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { container } from './boot.js';
 import { wireA2A } from './boot/a2a.js';
+import { container } from './boot.js';
 import { createEventManager, type EventManager } from './events';
 import { createRuntimeHttpServer } from './http/runtime-server.js';
 import { createMcpHttpServer } from './mcp/server.js';

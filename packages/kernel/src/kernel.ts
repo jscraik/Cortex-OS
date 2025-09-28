@@ -6,21 +6,21 @@
  * @status TDD-DRIVEN
  */
 
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
-import { z } from 'zod';
 import {
-	workflowStateToN0,
 	type N0AdapterOptions,
 	type N0Session,
 	type N0State,
+	workflowStateToN0,
 } from '@cortex-os/orchestration';
+import type { PRPOrchestrator } from '@cortex-os/prp-runner';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
+import { z } from 'zod';
 import { fixedTimestamp } from './lib/determinism.js';
 import { addToHistory, createHistory, type ExecutionHistory } from './lib/history.js';
 import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';
 import { createInitialPRPState, type PRPState } from './state.js';
 import { generateId } from './utils/id.js';
-import type { PRPOrchestrator } from '@cortex-os/prp-runner';
 
 /**
  * State annotation for LangGraphJS workflow using proper Annotation pattern
@@ -42,7 +42,6 @@ const WorkflowStateAnnotation = Annotation.Root({
 });
 
 export type WorkflowState = typeof WorkflowStateAnnotation.State;
-
 
 /**
  * Blueprint interface for PRP workflows

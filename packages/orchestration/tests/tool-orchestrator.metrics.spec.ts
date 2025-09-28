@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { simulateToolExecution } from '../src/master-agent-loop/tool-orchestration-utils.js';
 import type {
 	ExecutionContext,
 	ToolDefinition,
 } from '../src/master-agent-loop/tool-orchestration-contracts.js';
+import { simulateToolExecution } from '../src/master-agent-loop/tool-orchestration-utils.js';
 
 describe('Tool orchestration metrics integrity', () => {
 	it('should not depend on Math.random for execution telemetry', async () => {

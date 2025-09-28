@@ -57,7 +57,7 @@ describe('tool dispatch allow-list guard', () => {
 				.join('\n');
 			throw new Error(
 				'tool_dispatch references leaked outside sanctioned contexts. Ensure slash command metadata and dispatch wrappers enforce allow-lists.\n' +
-				report,
+					report,
 			);
 		}
 		expect(hits).toEqual([]);

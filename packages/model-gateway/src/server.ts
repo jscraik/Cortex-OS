@@ -138,13 +138,13 @@ export function createServer(
 			return reply.send({
 				status: 'ok',
 				orchestration: orchestrationHealth,
-				branding: 'brAInwav Cortex-OS Model Gateway with Orchestration Integration'
+				branding: 'brAInwav Cortex-OS Model Gateway with Orchestration Integration',
 			});
 		} catch (error) {
 			return reply.status(500).send({
 				status: 'error',
 				error: error instanceof Error ? error.message : 'Unknown error',
-				branding: 'brAInwav Cortex-OS Model Gateway'
+				branding: 'brAInwav Cortex-OS Model Gateway',
 			});
 		}
 	});

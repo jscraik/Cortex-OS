@@ -1,6 +1,7 @@
 import { performance } from 'node:perf_hooks';
 import { describe, expect, it } from 'vitest';
 import { runSpool, type SpoolResult } from '../../packages/orchestration/src/langgraph/spool.js';
+import { appendPerformanceHistory } from './perf-history.js';
 
 type Metrics = {
 	count: number;
@@ -52,5 +53,16 @@ describe('Spool throughput benchmark', () => {
 		const averageDuration = durations.reduce((sum, value) => sum + value, 0) / durations.length;
 		expect(averageDuration).toBeLessThan(50);
 		expect(elapsed).toBeLessThan(budgetMs);
+
+		await appendPerformanceHistory({
+			target: 'spool.throughput',
+			durationMs: elapsed,
+			timestamp: new Date().toISOString(),
+			metadata: {
+				taskCount: targetCount,
+				concurrency: 4,
+				averageTaskDurationMs: Number(averageDuration.toFixed(2)),
+			},
+		});
 	});
 });

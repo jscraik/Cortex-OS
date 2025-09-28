@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const defaultForbiddenTokens: readonly string[] = ['TODO:', 'Mock', 'not yet implemented'];
 const defaultAllowlist: readonly RegExp[] = [

@@ -29,6 +29,10 @@ URGENCY: ${urgency}
 AVAILABLE AGENTS:
 ${agentInfo}
 
+SECURITY ADVISORY:
+- brAInwav compliance requires selecting agents who can invoke allow-listed cortex-sec tools when violations exist.
+- Escalate to security specialists if risk is high or critical.
+
 Consider:
 - Agent capabilities vs task requirements
 - Current workload distribution

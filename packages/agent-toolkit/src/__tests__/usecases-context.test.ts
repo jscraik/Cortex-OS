@@ -1,7 +1,7 @@
-import type { AgentToolkitInput, AgentToolkitResult } from '@cortex-os/contracts';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { AgentToolkitInput, AgentToolkitResult } from '@cortex-os/contracts';
 import { describe, expect, it } from 'vitest';
 import { CodeQualityUseCase, CodeSearchUseCase } from '../app/UseCases.js';
 import type { ToolExecutor } from '../domain/ToolExecutor.js';

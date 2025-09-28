@@ -9,8 +9,11 @@ import { FrontierAdapter, type FrontierAdapterApi } from './adapters/frontier-ad
 import type { MCPAdapter } from './adapters/mcp-adapter.js';
 import { MLXAdapter, type MLXAdapterApi } from './adapters/mlx-adapter.js';
 import { OllamaAdapter, type OllamaAdapterApi } from './adapters/ollama-adapter.js';
+import {
+	createOrchestrationAdapter,
+	type OrchestrationAdapter,
+} from './adapters/orchestration-adapter.js';
 import type { Message } from './adapters/types.js';
-import { createOrchestrationAdapter, type OrchestrationAdapter } from './adapters/orchestration-adapter.js';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking' | 'vision';
 export type ModelProvider = 'mlx' | 'ollama' | 'ollama-cloud' | 'frontier' | 'mcp';
@@ -112,7 +115,6 @@ export class ModelRouter implements IModelRouter {
 		specialized_delegation: true,
 		consensus_voting: false,
 	};
-	private enforcementConfig: any = null;
 	private readonly orchestrationAdapter: OrchestrationAdapter;
 
 	constructor(
@@ -143,30 +145,21 @@ export class ModelRouter implements IModelRouter {
 		console.log(`brAInwav Cortex-OS: Loaded ${orchestrationModels.length} orchestration models`);
 
 		// Merge orchestration models with adapter-based models
-		this.availableModels.set(
-			'embedding',
-			[
-				...orchestrationModels.filter(m => m.capabilities.includes('embedding')),
-				...this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable)
-			]
-		);
-		this.availableModels.set(
-			'chat',
-			[
-				...orchestrationModels.filter(m => m.capabilities.includes('chat')),
-				...await this.buildChatModels(ollamaAvailable, mcpAvailable, frontierAvailable)
-			]
-		);
-		this.availableModels.set(
-			'reranking',
-			[
-				...orchestrationModels.filter(m => m.capabilities.includes('reranking')),
-				...this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable)
-			]
-		);
+		this.availableModels.set('embedding', [
+			...orchestrationModels.filter((m) => m.capabilities.includes('embedding')),
+			...this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable),
+		]);
+		this.availableModels.set('chat', [
+			...orchestrationModels.filter((m) => m.capabilities.includes('chat')),
+			...(await this.buildChatModels(ollamaAvailable, mcpAvailable, frontierAvailable)),
+		]);
+		this.availableModels.set('reranking', [
+			...orchestrationModels.filter((m) => m.capabilities.includes('reranking')),
+			...this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable),
+		]);
 
 		// Add vision models from orchestration
-		const visionModels = orchestrationModels.filter(m => m.capabilities.includes('vision'));
+		const visionModels = orchestrationModels.filter((m) => m.capabilities.includes('vision'));
 		if (visionModels.length > 0) {
 			this.availableModels.set('vision', visionModels);
 		}
@@ -743,8 +736,8 @@ export class ModelRouter implements IModelRouter {
 	}
 
 	/**
-		* Get orchestration health status
-		*/
+	 * Get orchestration health status
+	 */
 	getOrchestrationHealth() {
 		return this.orchestrationAdapter.getHealthStatus();
 	}
@@ -826,7 +819,7 @@ export class ModelRouter implements IModelRouter {
 	}
 
 	private async executeModelRequest(
-		model: ModelConfig,
+		_model: ModelConfig,
 		capability: ModelCapability,
 		request: any,
 	): Promise<any> {

@@ -852,27 +852,27 @@ export class MetricsCollector extends EventEmitter {
 			// Get real system resource metrics using Node.js built-in modules
 			const os = await import('node:os');
 			const process = await import('node:process');
-			
+
 			// Get CPU usage
 			const cpuUsage = process.cpuUsage();
 			const totalCpuTime = cpuUsage.user + cpuUsage.system;
-			const cpuPercent = Math.min(100, (totalCpuTime / 1000000) / os.uptime() * 100); // Convert microseconds to percentage
-			
+			const _cpuPercent = Math.min(100, (totalCpuTime / 1000000 / os.uptime()) * 100); // Convert microseconds to percentage
+
 			// Get memory usage
-			const memoryUsage = process.memoryUsage();
+			const _memoryUsage = process.memoryUsage();
 			const totalSystemMemory = os.totalmem();
 			const freeSystemMemory = os.freemem();
 			const systemMemoryUsed = totalSystemMemory - freeSystemMemory;
 			const systemMemoryPercent = (systemMemoryUsed / totalSystemMemory) * 100;
-			
+
 			// Get load averages
 			const loadAvg = os.loadavg();
 			const cpuCount = os.cpus().length;
 			const normalizedLoad = Math.min(100, (loadAvg[0] / cpuCount) * 100);
-			
+
 			// Calculate network approximation (simplified - in production would use netstat or similar)
 			const networkMetrics = this.calculateNetworkMetrics();
-			
+
 			return {
 				cpu: {
 					current: normalizedLoad,
@@ -919,11 +919,11 @@ export class MetricsCollector extends EventEmitter {
 			const process = await import('node:process');
 			const memoryUsage = process.memoryUsage();
 			const cpuUsage = process.cpuUsage();
-			
+
 			// Convert to percentages and MB
 			const memoryMB = memoryUsage.heapUsed / (1024 * 1024);
 			const cpuPercent = Math.min(100, (cpuUsage.user + cpuUsage.system) / 10000); // Simplified calculation
-			
+
 			return {
 				memory: memoryMB,
 				cpu: cpuPercent,
@@ -1133,17 +1133,17 @@ export class MetricsCollector extends EventEmitter {
 		if (!this.resourceHistory) {
 			this.resourceHistory = new Map();
 		}
-		
+
 		const history = this.resourceHistory.get(historyKey) || [];
 		history.push(currentValue);
-		
+
 		// Keep only last 10 readings for average
 		if (history.length > 10) {
 			history.shift();
 		}
-		
+
 		this.resourceHistory.set(historyKey, history);
-		
+
 		return history.reduce((sum, val) => sum + val, 0) / history.length;
 	}
 
@@ -1155,11 +1155,11 @@ export class MetricsCollector extends EventEmitter {
 		if (!this.resourcePeaks) {
 			this.resourcePeaks = new Map();
 		}
-		
+
 		const currentPeak = this.resourcePeaks.get(peakKey) || 0;
 		const newPeak = Math.max(currentPeak, currentValue);
 		this.resourcePeaks.set(peakKey, newPeak);
-		
+
 		return newPeak;
 	}
 

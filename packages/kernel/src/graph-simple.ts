@@ -6,12 +6,12 @@
  * @status TDD-DRIVEN
  */
 
+import type { PRPOrchestrator } from '@cortex-os/prp-runner';
 import { z } from 'zod';
 import { fixedTimestamp } from './lib/determinism.js';
 import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';
 import { createInitialPRPState, type PRPState, validateStateTransition } from './state.js';
 import { generateId } from './utils/id.js';
-import type { PRPOrchestrator } from '@cortex-os/prp-runner';
 
 // Minimal types to avoid any
 interface LangGraphConfig {
@@ -20,7 +20,6 @@ interface LangGraphConfig {
 interface LangGraphApp {
 	invoke(input: PRPState, config?: LangGraphConfig): Promise<PRPState>;
 }
-
 
 // Zod schema for validating generateId inputs and run options
 const RunOptionsSchema = z

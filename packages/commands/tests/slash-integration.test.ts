@@ -1,151 +1,91 @@
-import fs from 'node:fs/promises';
+import { promises as fs } from 'node:fs';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import {
-  createBuiltinCommands,
-  loadCommands,
-  parseSlash,
-  runCommand,
-  type BuiltinsApi,
-  type LoadedCommand,
-  type RenderContext,
-} from '../src/index.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { loadCommands } from '../src/loader.js';
+import { parseSlash } from '../src/parseSlash.js';
+import { runSlash } from '../src/runSlash.js';
+import type { RenderContext } from '../src/types.js';
 
-const TMP_PREFIX = 'commands-phase-10-';
+async function createTempProject(): Promise<{ projectDir: string; cleanup: () => Promise<void> }> {
+	const root = await mkdtemp(path.join(os.tmpdir(), 'commands-project-'));
+	await fs.mkdir(path.join(root, '.cortex', 'commands'), { recursive: true });
+	await writeFile(path.join(root, '.cortex', 'commands', 'README.md'), '# commands\n', {
+		flag: 'w',
+	});
+	return {
+		projectDir: root,
+		cleanup: async () => {
+			await rm(root, { recursive: true, force: true });
+		},
+	};
+}
 
-describe('slash command integration', () => {
-  let projectRoot: string;
-  let userRoot: string;
-  let cleanupPaths: string[] = [];
+describe('runSlash integration', () => {
+	let projectDir: string;
+	let cleanup: () => Promise<void>;
 
-  beforeAll(async () => {
-    projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), `${TMP_PREFIX}project-`));
-    userRoot = await fs.mkdtemp(path.join(os.tmpdir(), `${TMP_PREFIX}user-`));
-    cleanupPaths = [projectRoot, userRoot];
-    await seedCommandFixtures(projectRoot, userRoot);
-  });
+	beforeEach(async () => {
+		const tmp = await createTempProject();
+		projectDir = tmp.projectDir;
+		cleanup = tmp.cleanup;
+	});
 
-  afterAll(async () => {
-    await Promise.all(cleanupPaths.map(async (p) => fs.rm(p, { recursive: true, force: true })));
-  });
+	afterEach(async () => {
+		await cleanup();
+	});
 
-  it('parses, loads, and executes built-in commands end to end', async () => {
-    const map = await loadCommands({ projectDir: projectRoot, userDir: userRoot });
-    const api = createStubApi();
-    for (const builtin of createBuiltinCommands(api)) {
-      map.set(builtin.name, builtin);
-    }
-    const ctx: RenderContext = { cwd: projectRoot };
+	it('short-circuits built-in commands before LangGraph execution', async () => {
+		await fs.mkdir(path.join(projectDir, '.cortex', 'commands'), { recursive: true });
+		const parsed = parseSlash('/help');
+		if (!parsed) throw new Error('expected parsed command');
+		const result = await runSlash(parsed, {
+			session: { cwd: projectDir, projectDir },
+		});
+		expect(result.text).toContain('Usage: /help');
+		expect(result.metadata?.command).toMatchObject({
+			name: 'help',
+			scope: 'builtin',
+		});
+	});
 
-    const helpInvocation = parseAndRequire('/help');
-    const helpResult = await runCommand(
-      requireCommand(map, helpInvocation.cmd),
-      helpInvocation.args,
-      ctx,
-    );
-    expect(helpResult.text).toContain('Usage: /help');
+	it('loads project-defined command templates with precedence over user commands', async () => {
+		const commandsDir = path.join(projectDir, '.cortex', 'commands');
+		await fs.mkdir(commandsDir, { recursive: true });
+		const projectCommandPath = path.join(commandsDir, 'deploy.md');
+		await writeFile(
+			projectCommandPath,
+			`---\nname: deploy\ndescription: Project deploy\nallowed-tools:\n  - "Bash(pnpm run deploy)"\n---\nDeploying $ARGUMENTS`,
+		);
 
-    const agentsInvocation = parseAndRequire('/agents create builder');
-    await runCommand(requireCommand(map, agentsInvocation.cmd), agentsInvocation.args, ctx);
-    expect(api.createdAgents).toEqual(['builder']);
+		const userDir = await mkdtemp(path.join(os.tmpdir(), 'commands-user-'));
+		const userCommandsDir = path.join(userDir, 'commands');
+		await fs.mkdir(userCommandsDir, { recursive: true });
+		await writeFile(
+			path.join(userCommandsDir, 'deploy.md'),
+			`---\nname: deploy\ndescription: User override\n---\nUser $ARGUMENTS`,
+		);
 
-    const modelInvocation = parseAndRequire('/model cortex-pro');
-    await runCommand(requireCommand(map, modelInvocation.cmd), modelInvocation.args, ctx);
-    expect(api.currentModel).toBe('cortex-pro');
+		const parsed = parseSlash('/deploy main');
+		if (!parsed) throw new Error('expected parsed command');
+		const ctx: RenderContext = { cwd: projectDir };
+		const result = await runSlash(parsed, {
+			session: { cwd: projectDir, projectDir, userDir: userCommandsDir },
+			renderContext: ctx,
+		});
 
-    const compactInvocation = parseAndRequire('/compact focus area');
-    const compactRes = await runCommand(
-      requireCommand(map, compactInvocation.cmd),
-      compactInvocation.args,
-      ctx,
-    );
-    expect(compactRes.text).toBe('Compaction: focus area');
-  });
+		expect(result.text).toContain('Deploying main');
+		expect(result.metadata?.command).toMatchObject({
+			name: 'deploy',
+			scope: 'project',
+			description: 'Project deploy',
+			allowedTools: ['Bash(pnpm run deploy)'],
+			model: 'inherit',
+		});
+		const loaded = await loadCommands({ projectDir, userDir: userCommandsDir });
+		expect(loaded.get('deploy')?.scope).toBe('project');
 
-  it('resolves project command metadata with precedence over user scope', async () => {
-    const map = await loadCommands({ projectDir: projectRoot, userDir: userRoot });
-    const command = map.get('daily-summary');
-    expect(command?.scope).toBe('project');
-    expect(command?.model).toBe('brainwav-pro');
-    expect(command?.allowedTools).toEqual(['Bash(git status:*)']);
-
-    const ctx: RenderContext = {
-      cwd: projectRoot,
-      runBashSafe: async () => ({ stdout: 'git status', stderr: '', code: 0 }),
-      readFileCapped: async () => 'latest updates',
-      fileAllowlist: ['**/*.md'],
-    };
-
-    const res = await runCommand(command!, ['flagged'], ctx);
-    expect(res.metadata).toMatchObject({ command: 'daily-summary', scope: 'project' });
-    expect(res.text).toContain('flagged');
-    expect(res.text).toContain('git status');
-  });
+		await rm(userDir, { recursive: true, force: true });
+	});
 });
-
-async function seedCommandFixtures(projectDir: string, userDir: string): Promise<void> {
-  await fs.mkdir(path.join(projectDir, '.cortex/commands'), { recursive: true });
-  await fs.mkdir(userDir, { recursive: true });
-  await fs.mkdir(path.join(userDir, '.cortex/commands'), { recursive: true });
-
-  const userPath = path.join(userDir, '.cortex/commands/daily-summary.md');
-  await fs.writeFile(
-    userPath,
-    ['---', 'name: daily-summary', 'model: inherit', '---', 'User summary $ARGUMENTS'].join('\n'),
-    'utf8',
-  );
-
-  const projectPath = path.join(projectDir, '.cortex/commands/daily-summary.md');
-  await fs.writeFile(
-    projectPath,
-    [
-      '---',
-      'name: daily-summary',
-      'model: brainwav-pro',
-      'allowed-tools:',
-      '  - Bash(git status:*)',
-      '---',
-      'Project summary $ARGUMENTS',
-      '',
-      'Status: !`git status`',
-    ].join('\n'),
-    'utf8',
-  );
-}
-
-function parseAndRequire(input: string) {
-  const parsed = parseSlash(input);
-  if (!parsed) {
-    throw new Error(`brAInwav failed to parse slash command: ${input}`);
-  }
-  return parsed;
-}
-
-function requireCommand(map: Map<string, LoadedCommand>, name: string) {
-  const cmd = map.get(name);
-  if (!cmd) {
-    throw new Error(`brAInwav slash command not found: ${name}`);
-  }
-  return cmd;
-}
-
-function createStubApi(): BuiltinsApi & { createdAgents: string[]; currentModel: string } {
-  const createdAgents: string[] = [];
-  let currentModel = 'inherit';
-  return {
-    createdAgents,
-    currentModel,
-    listAgents: async () => [{ id: 'base', name: 'Base Agent' }],
-    createAgent: async (spec) => {
-      const name = spec?.name ?? `agent-${createdAgents.length + 1}`;
-      createdAgents.push(name);
-      return { id: `agent-${name}`, name };
-    },
-    getModel: () => currentModel,
-    setModel: async (model) => {
-      currentModel = model;
-    },
-    compact: async (opts) => `Compaction: ${opts?.focus ?? 'none'}`,
-  };
-}

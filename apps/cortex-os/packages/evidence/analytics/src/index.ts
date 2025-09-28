@@ -17,6 +17,8 @@ export { OptimizationEngine } from './optimization-engine.js';
 export { PatternAnalyzer } from './pattern-analyzer.js';
 export { PerformanceDashboard } from './performance-dashboard.js';
 export { RealtimeDataStream } from './realtime-data-stream.js';
+export type { AgentResourceUsage, SystemProbe, SystemProbeSnapshot } from './system-probe.js';
+export { NodeSystemProbe } from './system-probe.js';
 // Types and interfaces
 // Analytics configuration
 export type {

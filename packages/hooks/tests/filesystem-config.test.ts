@@ -1,94 +1,80 @@
-import fs from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { getHookDirs, loadHookConfigs } from '../src/loaders.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { loadHookConfigs } from '../src/loaders.js';
+import { CortexHooks } from '../src/manager.js';
 
-const TMP_PREFIX = 'hooks-phase-10-';
-
-describe('filesystem-backed hook configs', () => {
-  let projectRoot: string;
-  let userRoot: string;
-  let cleanup: string[] = [];
-
-  beforeAll(async () => {
-    projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), `${TMP_PREFIX}project-`));
-    userRoot = await fs.mkdtemp(path.join(os.tmpdir(), `${TMP_PREFIX}user-`));
-    cleanup = [projectRoot, userRoot];
-    await seedHookConfigs(projectRoot, userRoot);
-  });
-
-  afterAll(async () => {
-    await Promise.all(cleanup.map(async (p) => fs.rm(p, { recursive: true, force: true })));
-  });
-
-  it('honours precedence with project overrides and appended hooks', async () => {
-    const config = await loadHookConfigs({ projectDir: projectRoot, userDir: userRoot });
-    expect(config.settings?.command?.allowlist).toEqual(['project/*']);
-
-    const preTool = config.PreToolUse ?? [];
-    expect(preTool).toHaveLength(2);
-    expect(preTool[0]?.matcher).toBe('user-tool');
-    expect(preTool[1]?.matcher).toBe('project-tool');
-  });
-
-  it('reloads updated files without caching', async () => {
-    const projectFile = path.join(projectRoot, '.cortex/hooks/project.yaml');
-    await fs.writeFile(
-      projectFile,
-      ['hooks:', '  settings:', '    command:', '      allowlist:', '        - project-updated/*'].join('\n'),
-      'utf8',
-    );
-    const config = await loadHookConfigs({ projectDir: projectRoot, userDir: userRoot });
-    expect(config.settings?.command?.allowlist).toEqual(['project-updated/*']);
-  });
-
-  it('exposes resolved hook directories for consumers', () => {
-    const dirs = getHookDirs({ projectDir: projectRoot, userDir: userRoot });
-    expect(dirs).toEqual([
-      path.join(userRoot, 'hooks'),
-      path.join(projectRoot, '.cortex/hooks'),
-    ]);
-  });
-});
-
-async function seedHookConfigs(projectDir: string, userDir: string): Promise<void> {
-  const userHooksDir = path.join(userDir, 'hooks');
-  await fs.mkdir(userHooksDir, { recursive: true });
-  const projectHooksDir = path.join(projectDir, '.cortex/hooks');
-  await fs.mkdir(projectHooksDir, { recursive: true });
-
-  await fs.writeFile(
-    path.join(userHooksDir, 'user.yaml'),
-    [
-      'hooks:',
-      '  settings:',
-      '    command:',
-      '      allowlist:',
-      '        - user/*',
-      '  PreToolUse:',
-      '    - matcher: user-tool',
-      '      hooks:',
-      '        - type: command',
-      '          command: /status',
-    ].join('\n'),
-    'utf8',
-  );
-
-  await fs.writeFile(
-    path.join(projectHooksDir, 'project.yaml'),
-    [
-      'hooks:',
-      '  settings:',
-      '    command:',
-      '      allowlist:',
-      '        - project/*',
-      '  PreToolUse:',
-      '    - matcher: project-tool',
-      '      hooks:',
-      '        - type: command',
-      '          command: /agents',
-    ].join('\n'),
-    'utf8',
-  );
+async function writeHookFile(dir: string, filename: string, content: string) {
+	await mkdir(dir, { recursive: true });
+	await writeFile(path.join(dir, filename), content, 'utf8');
 }
+
+describe('hook filesystem loading', () => {
+	let projectDir: string;
+	let userDir: string;
+
+	beforeEach(async () => {
+		projectDir = await mkdtemp(path.join(os.tmpdir(), 'hooks-project-'));
+		userDir = await mkdtemp(path.join(os.tmpdir(), 'hooks-user-'));
+	});
+
+	afterEach(async () => {
+		await rm(projectDir, { recursive: true, force: true });
+		await rm(userDir, { recursive: true, force: true });
+	});
+
+	it('merges user hooks before project overrides', async () => {
+		await writeHookFile(
+			path.join(userDir, 'hooks'),
+			'pretool.yaml',
+			`settings:\n  command:\n    allowlist:\n      - echo\nPreToolUse:\n  - matcher: "*"\n    hooks:\n      - type: command\n        command: "echo user"\n`,
+		);
+		await writeHookFile(
+			path.join(projectDir, '.cortex', 'hooks'),
+			'pretool.yaml',
+			`PreToolUse:\n  - matcher: "*"\n    hooks:\n      - type: command\n        command: "echo project"\n`,
+		);
+
+		const cfg = await loadHookConfigs({ projectDir, userDir });
+		expect(cfg.settings?.command?.allowlist).toContain('echo');
+		expect(cfg.PreToolUse?.length).toBe(2);
+		expect(cfg.PreToolUse?.[0].hooks[0].command).toBe('echo user');
+		expect(cfg.PreToolUse?.[1].hooks[0].command).toBe('echo project');
+	});
+
+	it('hot reloads hook configuration changes', async () => {
+		const projectHooksDir = path.join(projectDir, '.cortex', 'hooks');
+		await writeHookFile(
+			projectHooksDir,
+			'pretool.yaml',
+			`PreToolUse:\n  - matcher: "*"\n    hooks:\n      - type: command\n        command: "echo initial"\n`,
+		);
+
+		const hooks = new CortexHooks();
+		await hooks.init({ projectDir, userDir });
+		const watcher = hooks.watch({ projectDir, userDir });
+
+		const ctx = {
+			event: 'PreToolUse' as const,
+			cwd: projectDir,
+			user: 'tester',
+			tool: { name: 'fs.read', input: {} },
+		};
+
+		const initial = await hooks.run('PreToolUse', ctx);
+		expect(initial[0]).toMatchObject({ action: 'exec', output: 'initial' });
+
+		await writeHookFile(
+			projectHooksDir,
+			'pretool.yaml',
+			`PreToolUse:\n  - matcher: "*"\n    hooks:\n      - type: command\n        command: "echo updated"\n`,
+		);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+
+		const updated = await hooks.run('PreToolUse', ctx);
+		expect(updated[0]).toMatchObject({ action: 'exec', output: 'updated' });
+
+		await watcher.close();
+	});
+});

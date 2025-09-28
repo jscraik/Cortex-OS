@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { readFileSync, writeFileSync, readdirSync, existsSync, lstatSync } = require('fs');
-const { join, dirname, relative } = require('path');
+const { readFileSync, writeFileSync, readdirSync, existsSync, lstatSync } = require('node:fs');
+const { join, dirname, relative } = require('node:path');
 
 console.log('🔧 Adding .js extensions to relative imports...\n');
 
@@ -46,7 +46,7 @@ function addJsExtensionsInFile(filePath) {
 		for (const ext of possibleExtensions) {
 			if (existsSync(absoluteImportPath + ext)) {
 				modified = true;
-				return match.replace(importPath, importPath + '.js');
+				return match.replace(importPath, `${importPath}.js`);
 			}
 		}
 
@@ -68,15 +68,15 @@ function main() {
 	console.log(`Found ${tsFiles.length} TypeScript files to check\n`);
 
 	let fixedCount = 0;
-	let fixedFiles = [];
+	const fixedFiles = [];
 
 	for (const file of tsFiles) {
 		if (addJsExtensionsInFile(file)) {
 			fixedCount++;
-			fixedFiles.push(file.replace(rootDir + '/', ''));
+			fixedFiles.push(file.replace(`${rootDir}/`, ''));
 
 			if (fixedFiles.length <= 10) {
-				console.log(`✅ Fixed: ${file.replace(rootDir + '/', '')}`);
+				console.log(`✅ Fixed: ${file.replace(`${rootDir}/`, '')}`);
 			} else if (fixedFiles.length === 11) {
 				console.log(`   ... and ${fixedCount - 10} more files`);
 			}

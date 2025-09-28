@@ -101,7 +101,6 @@ export const ApiJobCreatedEventSchema = z.object({
 	status: z.enum(['created', 'started', 'completed', 'failed']),
 	estimatedDuration: z.number().optional(),
 	priority: z.enum(['low', 'normal', 'high', 'critical']).default('normal'),
-	metadata: z.record(z.unknown()).optional(),
 
 	// Metadata
 	metadata: z.record(z.string()).optional(),
