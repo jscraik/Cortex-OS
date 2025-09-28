@@ -37,7 +37,7 @@ This review highlights the most immediate risks that could block or destabilize 
 1. **Invalid `.npmrc` copy pattern breaks Docker builds**
    - **Observation:** The optimized Dockerfile uses `COPY .npmr[c] ./`, which is not valid glob syntax and causes build failures once the Docker context lacks a `.npmr` file. 【F:Dockerfile.optimized†L21-L25】
    - **Impact:** Production builds fail before dependency installation begins.
-   - **Recommendation:** Replace the typo with a guarded `COPY .npmrc ./` (or `COPY --chown=... .npmrc .` with `--chmod`), and document the optional nature with `--from` patterns if needed.
+   - **Recommendation:** Replace the typo with a guarded `COPY .npmrc ./` (or `COPY --chown=... .npmrc .` if ownership needs to be set). If file permissions need to be changed, use a subsequent `RUN chmod ...` step. Document the optional nature with `--from` patterns if needed.
 
 2. **Testing stage calls undefined scripts**
    - **Observation:** The Docker testing stage runs `pnpm test:ci`, but the root `package.json` does not define that script. 【F:Dockerfile.optimized†L45-L52】【F:package.json†L1-L122】
