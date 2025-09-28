@@ -8,7 +8,7 @@ This review highlights the most immediate risks that could block or destabilize 
 1. **Unbranded error handling in `createGenerate`**
    - **Observation:** `createGenerate` throws `new Error(\`Unknown task: ${task}\`)` when a task mapping is missing, but the message omits the mandated "brAInwav" branding required for user-facing errors. 【F:src/lib/generate.ts†L34-L39】
    - **Impact:** Violates platform compliance rules, making it hard to trace errors back to brAInwav Cortex-OS and likely failing automated branding checks.
-   - **Recommendation:** Replace the generic error with a branded variant (for example, `throw new Error(\"brAInwav generate: unknown task ...\")`) and add coverage to prevent regressions.
+   - **Recommendation:** Replace the generic error with a branded variant (for example, `throw new Error('brAInwav generate: unknown task ...')`) and add coverage to prevent regressions.
 
 2. **Lack of resilient fallback logging in `createGenerate`**
    - **Observation:** When the primary MLX provider fails, the catch block marks the model unhealthy but swallows the underlying error, providing no telemetry or structured context for operators. 【F:src/lib/generate.ts†L41-L55】
