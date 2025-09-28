@@ -583,7 +583,7 @@ Each phase documents:
   packages are rebuilt before integration runs.
 - Record performance snapshots by executing `pnpm --filter @cortex-os/orchestration exec vitest run \
   tests/perf/langgraph-load.test.ts --config tests/perf/vitest.config.ts` and appending the metrics
-  artefacts to `performance-history.json`.
+  artifacts to `performance-history.json`.
 - Gate production readiness with a new smoke wrapper `pnpm test:integration:langgraph --reporter
   junit` so CI uploads structured results alongside existing regression suites.
 
