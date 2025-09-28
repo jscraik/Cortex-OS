@@ -23,7 +23,7 @@ export interface AgentResourceUsage {
 
 export interface SystemProbe {
         sample(): Promise<SystemProbeSnapshot>;
-        getAgentUsage(agentId: string): Promise<AgentResourceUsage>;
+        getAgentUsage(): Promise<AgentResourceUsage>;
 }
 
 const execFileAsync = promisify(execFile);
