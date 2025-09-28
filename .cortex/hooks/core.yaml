@@ -1,0 +1,35 @@
+hooks:
+  settings:
+    command:
+      allowlist:
+        - docs/**
+        - packages/**
+        - runbooks/**
+  PreToolUse:
+    - matcher: "Write|Edit|MultiEdit"
+      hooks:
+        - type: js
+          code: |
+            const path = (ctx.tool && ctx.tool.input && (ctx.tool.input.file_path || ctx.tool.input.path)) || "";
+            if (path.includes('/secrets/') || path.includes('production-deployment-checklist.md')) {
+              return { action: 'deny', reason: 'brAInwav guard: protected resource' };
+            }
+            return { action: 'allow' };
+    - matcher: "Bash(*)"
+      hooks:
+        - type: command
+          command: "pnpm lint:smart --filter packages/**"
+  PostToolUse:
+    - matcher: "Write|Edit|MultiEdit"
+      hooks:
+        - type: command
+          command: "pnpm lint:smart"
+    - matcher: "Bash(*)"
+      hooks:
+        - type: command
+          command: "pnpm test:smart"
+  Notify:
+    - matcher: "*"
+      hooks:
+        - type: command
+          command: "echo 'brAInwav hook: tool execution complete'"
