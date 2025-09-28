@@ -450,29 +450,33 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/orchestration/tests/thermal/mlx-thermal-integration.test.ts` | ⚪ todo | LangGraph pauses on thermal warnings with graceful degradation |
-| `packages/orchestration/tests/thermal/model-fallback.test.ts` | ⚪ todo | Auto-fallback to Ollama on MLX thermal shutdown with brAInwav logging |
-| `apps/cortex-py/tests/langgraph-thermal-coordination.test.ts` | ⚪ todo | A2A thermal events trigger LangGraph strategy changes deterministically |
-| `packages/orchestration/tests/thermal/thermal-recovery.test.ts` | ⚪ todo | LangGraph workflows resume after thermal recovery with state integrity |
+| `packages/orchestration/tests/thermal/mlx-thermal-integration.test.ts` | ⚪ todo | Simulate MLX temperature spikes and assert node-level pause + brAInwav telemetry |
+| `packages/orchestration/tests/thermal/model-fallback.test.ts` | ⚪ todo | Drive automatic Ollama fallback with branded logging + budget preservation |
+| `apps/cortex-py/tests/langgraph-thermal-coordination.test.ts` | ⚪ todo | Validate cortex-py emits deterministic A2A thermal events consumed by LangGraph |
+| `packages/orchestration/tests/thermal/thermal-recovery.test.ts` | ⚪ todo | Ensure workflows checkpoint + resume with state integrity after temperature drop |
 
 ### Phase 16 Implementation
 
-- Integrate cortex-py thermal monitoring events with LangGraph StateGraph node execution
-- Implement thermal-aware model selection nodes that respect MLX temperature thresholds
-- Create adaptive execution strategies that automatically throttle or pause workflows during thermal warnings
-- Build thermal recovery mechanisms that resume workflows when temperatures normalize
-- Ensure all thermal events and responses include brAInwav branding in logs and telemetry
+- Extend `apps/cortex-py/src/thermal/monitor.py` to publish structured `ThermalEvent` payloads (temp, throttle hint, source) over the existing A2A bridge with brAInwav-branded messages.
+- Introduce `packages/orchestration/src/langgraph/thermal/thermal-policy.ts` with deterministic threshold evaluation and cooldown timers shared across nodes via `N0State`.
+- Add a LangGraph middleware in `packages/orchestration/src/langgraph/middleware/thermal-guard.ts` that pauses node execution and records checkpoint metadata when `ThermalEvent.level !== 'nominal'`.
+- Wire the middleware into `StateGraph` construction so planners and tool dispatchers consult `thermal-policy` before selecting MLX-backed models, falling back to Ollama adapters while preserving token budgets.
+- Persist pause + resume reasons inside `packages/orchestration/src/langgraph/state/thermal-history.ts` to guarantee resumable workflows and branded observability hooks.
+- Update existing structured logging helpers to include `thermal.event`, `thermal.response`, and `brainwav_component` fields for downstream telemetry pipelines.
 
 ### Phase 16 Validation
 
-- Add thermal integration to CI focus: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/thermal/**/*.test.ts"`
-- Include thermal simulation testing with mock temperature events and recovery scenarios
-- Validate thermal coordination with real MLX hardware when available in test environments
+- Create a deterministic thermal fixture in `packages/orchestration/tests/thermal/__fixtures__/mlx-telemetry.ts` used by all new Vitest suites.
+- Add thermal integration to CI focus: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/thermal/**/*.test.ts"` and gate merges on passing output.
+- Execute `pnpm --filter @cortex-os/a2a exec vitest run tests/thermal-event-propagation.test.ts` to guarantee cortex-py → A2A → LangGraph message flow remains lossless.
+- Provide manual verification notes for MLX hardware labs: `python apps/cortex-py/scripts/emit-thermal-event.py --level critical --mock` to observe orchestration throttling end-to-end.
+- Extend observability snapshot script `scripts/brainwav-production-guard.ts --check thermal` to confirm new telemetry fields before release.
 
 ### Phase 16 Blockers
 
-- Requires stable A2A event infrastructure for thermal event propagation
-- Thermal testing requires coordination with cortex-py service health checks
+- Requires stable A2A event infrastructure for thermal event propagation and ordering guarantees.
+- Thermal testing must coordinate with cortex-py service health checks to avoid false positives during orchestrated pauses.
+- MLX + Ollama adapter abstractions need parity in budget + metrics interfaces so fallback logic does not regress existing quotas.
 
 ---
 
