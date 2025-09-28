@@ -39,6 +39,22 @@ export interface PlanningContext {
 		complexity: number;
 		priority: number;
 	};
+	preferences: {
+		failureHandling: 'strict' | 'resilient' | 'permissive';
+		notes: string[];
+	};
+	compliance: {
+		standards: string[];
+		lastCheckedAt: Date | null;
+		riskScore: number;
+		outstandingViolations: Array<{
+			id: string;
+			severity: 'low' | 'medium' | 'high' | 'critical';
+			description: string;
+			remediation: string;
+			detectedAt: Date;
+		}>;
+	};
 }
 
 export class DynamicSpeculativePlanner {
@@ -115,6 +131,16 @@ export class DynamicSpeculativePlanner {
 				updatedAt: new Date(),
 				complexity,
 				priority,
+			},
+			preferences: {
+				failureHandling: 'resilient',
+				notes: [],
+			},
+			compliance: {
+				standards: ['OWASP Top 10', 'SOC 2', 'ISO 27001'],
+				lastCheckedAt: null,
+				riskScore: 0,
+				outstandingViolations: [],
 			},
 		};
 

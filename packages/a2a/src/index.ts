@@ -71,10 +71,21 @@ export { createTaskEventStream } from './streaming.js';
 export type { Task, TaskProcessor, TaskStore } from './task-manager.js';
 // Re-export task management
 export {
-	createTaskManager,
-	EchoTaskProcessor,
-	InMemoryTaskStore,
-	TaskManager,
+        createTaskManager,
+        EchoTaskProcessor,
+        InMemoryTaskStore,
+        TaskManager,
 } from './task-manager.js';
+
+// LangGraph event bridge for multi-agent coordination
+export {
+        InMemoryGraphEventBus,
+} from './langgraph/event-bridge.js';
+export type {
+        GraphEventListener,
+        GraphEventPublisher,
+        GraphEventType,
+        GraphToGraphEvent,
+} from './langgraph/event-bridge.js';
 
 // handleA2A is already exported above in the main handler block

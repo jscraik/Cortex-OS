@@ -30,6 +30,30 @@
       ],
       "@shared/*": [
         "../shared/*"
+      ],
+      "@cortex-os/a2a-contracts": [
+        "../../../packages/a2a/a2a-contracts/dist/index.d.ts"
+      ],
+      "@cortex-os/a2a-contracts/*": [
+        "../../../packages/a2a/a2a-contracts/dist/*"
+      ],
+      "@cortex-os/a2a-core": [
+        "../../../packages/a2a/a2a-core/dist/index.d.ts"
+      ],
+      "@cortex-os/a2a-core/*": [
+        "../../../packages/a2a/a2a-core/dist/*"
+      ],
+      "@cortex-os/a2a-transport/inproc": [
+        "../../../packages/a2a/a2a-transport/dist/inproc.d.ts"
+      ],
+      "@cortex-os/a2a-transport/inproc.js": [
+        "../../../packages/a2a/a2a-transport/dist/inproc.d.ts"
+      ],
+      "@cortex-os/telemetry": [
+        "../../../libs/typescript/telemetry/src/index.ts"
+      ],
+      "@cortex-os/telemetry/*": [
+        "../../../libs/typescript/telemetry/src/*"
       ]
     }
   },

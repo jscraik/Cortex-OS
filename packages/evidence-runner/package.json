@@ -1,0 +1,45 @@
+{
+    "name": "@cortex-os/evidence-runner",
+    "version": "0.1.0",
+    "description": "Evidence enhancement and processing for brAInwav Cortex-OS",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest",
+        "test:watch": "vitest --watch",
+        "dev": "tsc --watch",
+        "lint": "eslint src tests --ext .ts",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@cortex-os/rag": "workspace:*",
+        "@cortex-os/a2a": "workspace:*",
+        "@cortex-os/observability": "workspace:*",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "typescript": "^5.3.0",
+        "vitest": "^1.0.0",
+        "eslint": "^8.0.0"
+    },
+    "keywords": [
+        "evidence",
+        "enhancement",
+        "mlx",
+        "brainwav",
+        "cortex-os"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/brainwav/cortex-os.git",
+        "directory": "packages/evidence-runner"
+    },
+    "author": "brAInwav Development Team",
+    "license": "MIT"
+}

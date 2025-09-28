@@ -101,6 +101,10 @@ export class MetricsCollector extends EventEmitter {
 	private lastCollectionTime?: Date;
 	private collectionErrors = 0;
 
+	// Resource monitoring storage
+	private resourceHistory: Map<string, number[]> = new Map();
+	private resourcePeaks: Map<string, number> = new Map();
+
 	constructor(config: AnalyticsConfig) {
 		super();
 		this.config = config;
@@ -845,35 +849,61 @@ export class MetricsCollector extends EventEmitter {
 	 */
 	private async collectResourceUtilization(): Promise<ResourceUtilization> {
 		try {
-			// Get system resource metrics
-			// In a real implementation, this would interface with system monitoring tools
+			// Get real system resource metrics using Node.js built-in modules
+			const os = await import('node:os');
+			const process = await import('node:process');
+			
+			// Get CPU usage
+			const cpuUsage = process.cpuUsage();
+			const totalCpuTime = cpuUsage.user + cpuUsage.system;
+			const cpuPercent = Math.min(100, (totalCpuTime / 1000000) / os.uptime() * 100); // Convert microseconds to percentage
+			
+			// Get memory usage
+			const memoryUsage = process.memoryUsage();
+			const totalSystemMemory = os.totalmem();
+			const freeSystemMemory = os.freemem();
+			const systemMemoryUsed = totalSystemMemory - freeSystemMemory;
+			const systemMemoryPercent = (systemMemoryUsed / totalSystemMemory) * 100;
+			
+			// Get load averages
+			const loadAvg = os.loadavg();
+			const cpuCount = os.cpus().length;
+			const normalizedLoad = Math.min(100, (loadAvg[0] / cpuCount) * 100);
+			
+			// Calculate network approximation (simplified - in production would use netstat or similar)
+			const networkMetrics = this.calculateNetworkMetrics();
+			
 			return {
 				cpu: {
-					current: Math.random() * 100,
-					average: 45 + Math.random() * 20,
-					peak: 80 + Math.random() * 20,
+					current: normalizedLoad,
+					average: this.calculateResourceAverage('cpu', normalizedLoad),
+					peak: this.updateResourcePeak('cpu', normalizedLoad),
 				},
 				memory: {
-					current: Math.random() * 100,
-					average: 60 + Math.random() * 15,
-					peak: 85 + Math.random() * 15,
+					current: systemMemoryPercent,
+					average: this.calculateResourceAverage('memory', systemMemoryPercent),
+					peak: this.updateResourcePeak('memory', systemMemoryPercent),
 				},
 				gpu: {
-					current: Math.random() * 100,
-					average: 30 + Math.random() * 25,
-					peak: 70 + Math.random() * 30,
+					// GPU monitoring requires additional libraries (nvidia-ml-py, etc.)
+					// For now, return 0 as GPU monitoring is not available via Node.js built-ins
+					current: 0,
+					average: 0,
+					peak: 0,
 				},
 				network: {
-					inbound: Math.random() * 1000,
-					outbound: Math.random() * 800,
+					inbound: networkMetrics.inbound,
+					outbound: networkMetrics.outbound,
 				},
 				storage: {
-					reads: Math.random() * 500,
-					writes: Math.random() * 300,
+					// Storage I/O monitoring requires platform-specific tools
+					// For now, return 0 as detailed I/O stats not available via Node.js built-ins
+					reads: 0,
+					writes: 0,
 				},
 			};
 		} catch (error) {
-			this.logger.error('Error collecting resource utilization', {
+			this.logger.error('brAInwav error collecting resource utilization', {
 				error: error.message,
 			});
 			throw error;
@@ -884,12 +914,32 @@ export class MetricsCollector extends EventEmitter {
 	 * Get resource usage for a specific agent
 	 */
 	private async getAgentResourceUsage(_agentId: string): Promise<AgentMetrics['resourceUsage']> {
-		// Mock implementation - replace with actual agent resource monitoring
-		return {
-			memory: Math.random() * 512, // MB
-			cpu: Math.random() * 100, // percentage
-			gpu: Math.random() * 100, // percentage (if available)
-		};
+		// Get real process resource usage for the agent
+		try {
+			const process = await import('node:process');
+			const memoryUsage = process.memoryUsage();
+			const cpuUsage = process.cpuUsage();
+			
+			// Convert to percentages and MB
+			const memoryMB = memoryUsage.heapUsed / (1024 * 1024);
+			const cpuPercent = Math.min(100, (cpuUsage.user + cpuUsage.system) / 10000); // Simplified calculation
+			
+			return {
+				memory: memoryMB,
+				cpu: cpuPercent,
+				gpu: 0, // GPU monitoring requires additional libraries
+			};
+		} catch (error) {
+			this.logger.warn('brAInwav unable to get agent resource usage, using defaults', {
+				agentId: _agentId,
+				error: error.message,
+			});
+			return {
+				memory: 0,
+				cpu: 0,
+				gpu: 0,
+			};
+		}
 	}
 
 	/**
@@ -1070,8 +1120,59 @@ export class MetricsCollector extends EventEmitter {
 		this.metricsCollected = 0;
 		this.collectionErrors = 0;
 
-		this.logger.info('Metrics cleared');
+		this.logger.info('brAInwav metrics cleared');
 		this.emit('metricsCleared');
+	}
+
+	/**
+	 * Calculate resource average over recent history
+	 */
+	private calculateResourceAverage(resourceType: string, currentValue: number): number {
+		// Store current value in history for averaging
+		const historyKey = `${resourceType}_history`;
+		if (!this.resourceHistory) {
+			this.resourceHistory = new Map();
+		}
+		
+		const history = this.resourceHistory.get(historyKey) || [];
+		history.push(currentValue);
+		
+		// Keep only last 10 readings for average
+		if (history.length > 10) {
+			history.shift();
+		}
+		
+		this.resourceHistory.set(historyKey, history);
+		
+		return history.reduce((sum, val) => sum + val, 0) / history.length;
+	}
+
+	/**
+	 * Update and return resource peak value
+	 */
+	private updateResourcePeak(resourceType: string, currentValue: number): number {
+		const peakKey = `${resourceType}_peak`;
+		if (!this.resourcePeaks) {
+			this.resourcePeaks = new Map();
+		}
+		
+		const currentPeak = this.resourcePeaks.get(peakKey) || 0;
+		const newPeak = Math.max(currentPeak, currentValue);
+		this.resourcePeaks.set(peakKey, newPeak);
+		
+		return newPeak;
+	}
+
+	/**
+	 * Calculate network metrics (simplified implementation)
+	 */
+	private calculateNetworkMetrics(): { inbound: number; outbound: number } {
+		// In a production system, this would interface with system network statistics
+		// For now, return 0 as real network monitoring requires platform-specific tools
+		return {
+			inbound: 0,
+			outbound: 0,
+		};
 	}
 
 	/**

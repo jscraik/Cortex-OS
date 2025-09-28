@@ -48,6 +48,7 @@ const CerebrumAnnotation = Annotation.Root({
         input: Annotation<string>({ reducer: (_prev, next) => next }),
         output: Annotation<string | undefined>({ reducer: (_prev, next) => next }),
         selectedModel: Annotation<ModelRef | undefined>({ reducer: (_prev, next) => next }),
+
         ctx: Annotation<Record<string, unknown>>({
                 reducer: (prev, next) => ({ ...(prev ?? {}), ...(next ?? {}) }),
         }),
@@ -221,4 +222,5 @@ export function createCerebrumGraph(config: CerebrumGraphConfig = {}) {
                 .addEdge('respond', END);
 
         return builder.compile();
+
 }

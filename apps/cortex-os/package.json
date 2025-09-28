@@ -17,6 +17,7 @@
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-events": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
+  "@cortex-os/cortex-sec": "workspace:*",
     "@cortex-os/mcp-core": "workspace:*",
     "@cortex-os/memories": "workspace:*",
     "@cortex-os/orchestration": "workspace:*",

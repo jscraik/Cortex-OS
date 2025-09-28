@@ -147,6 +147,18 @@ export interface PlanningContext {
 		quality: 'fast' | 'balanced' | 'thorough';
 		failureHandling: 'strict' | 'resilient' | 'permissive';
 	};
+	compliance: {
+		standards: string[];
+		lastCheckedAt: Date | null;
+		riskScore: number;
+		outstandingViolations: Array<{
+			id: string;
+			severity: 'low' | 'medium' | 'high' | 'critical';
+			description: string;
+			remediation: string;
+			detectedAt: Date;
+		}>;
+	};
 }
 
 export interface PlanningResult {

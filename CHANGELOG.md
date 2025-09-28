@@ -16,6 +16,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrated Reality Filter as Phase 6 in structured agentic coding workflows
 - Standardized unverified content labeling across all AI systems
 
+#### Backend Monitoring Enhancements
+
+- Introduced brAInwav authentication external monitoring service with Prometheus metrics, Datadog/New Relic dispatch, and secure webhook fan-out
+- Added resilient delegation tests covering timeout handling and provider skips for brAInwav auth monitoring
+- Documented new monitoring environment variables and configuration guidance in backend README
+
+#### MCP Discovery Manifest
+
+- Published a `.well-known/mcp.json` discovery manifest from the brAInwav FastMCP server so ChatGPT connectors can locate `https://cortex-mcp.brainwav.io/mcp`
+- Documented verification steps in `README.md`, including the
+  `curl https://cortex-mcp.brainwav.io/.well-known/mcp.json` smoke test prior to
+  connector retries
+- Added operational guidance in `packages/cortex-mcp/README.md` covering
+  deployment, Cloudflare cache purges, connector retests, and MCP discovery RFC
+  tracking
+
+**Files Updated:**
+
+- `apps/cortex-webui/backend/src/services/externalMonitoringService.ts`
+- `apps/cortex-webui/backend/src/services/authMonitoringService.ts`
+- `apps/cortex-webui/backend/src/__tests__/services/external-monitoring-service.test.ts`
+- `apps/cortex-webui/backend/src/__tests__/services/auth-monitoring-service.test.ts`
+- `apps/cortex-webui/backend/README.md`
+
 **Files Updated:**
 
 - `AGENTS.md` - Added Reality Filter as Phase 6 after Archive section
