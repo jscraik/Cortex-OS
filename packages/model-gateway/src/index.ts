@@ -6,6 +6,14 @@ export {
 	createModelGatewaySchemaRegistry,
 	type ModelGatewayBusConfig,
 } from './a2a.js';
+export {
+	createMLXAdapter,
+	type MLXAdapterApi,
+} from './adapters/mlx-adapter.js';
+export {
+	createOllamaAdapter,
+	type OllamaAdapterApi,
+} from './adapters/ollama-adapter.js';
 export type {
 	ModelErrorEvent,
 	ModelResponseEvent,
@@ -19,7 +27,6 @@ export {
 	ProviderHealthEventSchema,
 	RequestRoutedEventSchema,
 } from './events/model-gateway-events.js';
-
 // MCP Tools for external AI agent integration
 export type {
 	GetAvailableModelsInput,
@@ -31,11 +38,3 @@ export type {
 export { modelGatewayMcpTools } from './mcp/tools.js';
 export { createModelRouter } from './model-router.js';
 export { createServer, start } from './server.js';
-export {
-	createMLXAdapter,
-	type MLXAdapterApi,
-} from './adapters/mlx-adapter.js';
-export {
-	createOllamaAdapter,
-	type OllamaAdapterApi,
-} from './adapters/ollama-adapter.js';

@@ -246,7 +246,7 @@ async function sendToWebhook(
 	let parsed: URL;
 	try {
 		parsed = new URL(config.webhookUrl);
-	} catch (error) {
+	} catch (_error) {
 		logProviderSkip('webhook', 'invalid_url');
 		return;
 	}

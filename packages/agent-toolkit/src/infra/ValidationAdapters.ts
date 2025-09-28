@@ -1,9 +1,9 @@
+import { unlink, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import type {
 	AgentToolkitValidationInput,
 	AgentToolkitValidationResult,
 } from '@cortex-os/contracts';
-import { unlink, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import type { ValidationTool } from '../domain/ToolInterfaces.js';
 import { execWithRetry } from './execUtil.js';
 

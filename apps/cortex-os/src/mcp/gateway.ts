@@ -1,6 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
-import { z } from 'zod';
 import type {
 	AnalyzeVulnerabilitiesInput,
 	CheckDependenciesInput,
@@ -9,6 +8,7 @@ import type {
 	ValidateComplianceInput,
 } from '@cortex-os/cortex-sec';
 import { createCortexSecEvent } from '@cortex-os/cortex-sec';
+import { z } from 'zod';
 import { type CortexOsToolName, cortexOsMcpTools, getToolDefinition } from './tools.js';
 
 // Basic rate limiter per tool (token bucket style simplified)
@@ -391,17 +391,17 @@ export class McpGateway {
 		const generatedAt = new Date().toISOString();
 		const findings: SecurityFinding[] = input.codeSnippet
 			? [
-				{
-					id: `finding_${randomUUID()}`,
-					title: 'Review input validation guard',
-					severity: 'warning',
-					description:
-						'brAInwav runtime heuristics flagged this snippet for manual validation. Ensure sanitisation before use.',
-					location: input.filePath ? { file: input.filePath } : undefined,
-					references: ['https://security.brainwav.dev/secure-input-handling'],
-					remediation: 'Follow the brAInwav secure coding checklist for untrusted input.',
-				},
-			]
+					{
+						id: `finding_${randomUUID()}`,
+						title: 'Review input validation guard',
+						severity: 'warning',
+						description:
+							'brAInwav runtime heuristics flagged this snippet for manual validation. Ensure sanitisation before use.',
+						location: input.filePath ? { file: input.filePath } : undefined,
+						references: ['https://security.brainwav.dev/secure-input-handling'],
+						remediation: 'Follow the brAInwav secure coding checklist for untrusted input.',
+					},
+				]
 			: [];
 		for (const finding of findings) {
 			const lineNumber = finding.location?.line;
@@ -439,15 +439,15 @@ export class McpGateway {
 		const policyContent =
 			input.format === 'json'
 				? JSON.stringify(
-					{
-						header: 'brAInwav security baseline',
-						policyType: input.policyType,
-						statement: 'All changes must comply with brAInwav security and compliance controls.',
-						updatedAt,
-					},
-					null,
-					2,
-				  )
+						{
+							header: 'brAInwav security baseline',
+							policyType: input.policyType,
+							statement: 'All changes must comply with brAInwav security and compliance controls.',
+							updatedAt,
+						},
+						null,
+						2,
+					)
 				: `policyType: ${input.policyType}\nowner: brAInwav Security Office\nstatement: All updates honour brAInwav controls\nupdatedAt: ${updatedAt}`;
 		return {
 			policyId,
@@ -515,7 +515,8 @@ export class McpGateway {
 					severity: issue.severity,
 					type: 'dependency-audit',
 					file: input.packageFile,
-					description: issue.remediation ?? 'Review dependency guidance in the brAInwav security guide.',
+					description:
+						issue.remediation ?? 'Review dependency guidance in the brAInwav security guide.',
 					foundAt: generatedAt,
 				}),
 			);

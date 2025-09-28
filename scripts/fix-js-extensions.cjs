@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const { readFileSync, writeFileSync, readdirSync, existsSync, lstatSync } = require('fs');
-const { join, dirname } = require('path');
+const { execSync } = require('node:child_process');
+const { readFileSync, writeFileSync, readdirSync, existsSync, lstatSync } = require('node:fs');
+const { join, dirname } = require('node:path');
 
 console.log('🔧 Fixing .js extensions in imports...\n');
 
@@ -37,7 +37,7 @@ function fixJsExtensionsInFile(filePath) {
 
 	// Fix import statements with .js extensions
 	const importRegex = /from\s+['"]([^'"]*\.js)['"]/g;
-	newContent = newContent.replace(importRegex, (match, importPath) => {
+	newContent = newContent.replace(importRegex, (_match, importPath) => {
 		modified = true;
 		// Preserve relative paths
 		if (importPath.startsWith('./') || importPath.startsWith('../')) {
@@ -48,7 +48,7 @@ function fixJsExtensionsInFile(filePath) {
 
 	// Fix dynamic import() calls
 	const dynamicImportRegex = /import\(\s*['"]([^'"]*\.js)['"]\s*\)/g;
-	newContent = newContent.replace(dynamicImportRegex, (match, importPath) => {
+	newContent = newContent.replace(dynamicImportRegex, (_match, importPath) => {
 		modified = true;
 		if (importPath.startsWith('./') || importPath.startsWith('../')) {
 			return `import('${importPath.replace('.js', '')}')`;
@@ -71,15 +71,15 @@ function main() {
 	console.log(`Found ${tsFiles.length} TypeScript files to check\n`);
 
 	let fixedCount = 0;
-	let fixedFiles = [];
+	const fixedFiles = [];
 
 	for (const file of tsFiles) {
 		if (fixJsExtensionsInFile(file)) {
 			fixedCount++;
-			fixedFiles.push(file.replace(rootDir + '/', ''));
+			fixedFiles.push(file.replace(`${rootDir}/`, ''));
 
 			if (fixedFiles.length <= 10) {
-				console.log(`✅ Fixed: ${file.replace(rootDir + '/', '')}`);
+				console.log(`✅ Fixed: ${file.replace(`${rootDir}/`, '')}`);
 			} else if (fixedFiles.length === 11) {
 				console.log(`   ... and ${fixedCount - 10} more files`);
 			}
@@ -112,12 +112,12 @@ function main() {
 					try {
 						execSync(`cd ${pkg} && pnpm build`, { stdio: 'pipe' });
 						console.log(`✅ ${pkg} builds successfully`);
-					} catch (error) {
+					} catch (_error) {
 						console.log(`⚠️ ${pkg} still has issues`);
 					}
 				}
 			}
-		} catch (error) {
+		} catch (_error) {
 			console.log('Could not test builds');
 		}
 	} else {

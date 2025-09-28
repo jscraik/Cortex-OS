@@ -70,9 +70,7 @@ export const getRecommendedModelsForTask = (
 	taskType: string,
 ): OrchestrationModelConfig[] => {
 	return models.filter(
-		(model) =>
-			model.recommended_for.includes(taskType) ||
-			(model.coding_tasks && model.coding_tasks.includes(taskType)),
+		(model) => model.recommended_for.includes(taskType) || model.coding_tasks?.includes(taskType),
 	);
 };
 

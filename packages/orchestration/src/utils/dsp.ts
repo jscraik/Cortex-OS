@@ -15,16 +15,25 @@ export enum PlanningPhase {
 	COMPLETION = 'completion',
 }
 
-const COMPLIANCE_RISK_ORDER: Array<'low' | 'medium' | 'high' | 'critical'> = ['low', 'medium', 'high', 'critical'];
+const COMPLIANCE_RISK_ORDER: Array<'low' | 'medium' | 'high' | 'critical'> = [
+	'low',
+	'medium',
+	'high',
+	'critical',
+];
 
-function escalateRiskLevel(current: 'low' | 'medium' | 'high' | 'critical'): 'low' | 'medium' | 'high' | 'critical' {
-        const index = COMPLIANCE_RISK_ORDER.indexOf(current);
-        return COMPLIANCE_RISK_ORDER[Math.min(index + 1, COMPLIANCE_RISK_ORDER.length - 1)];
+function escalateRiskLevel(
+	current: 'low' | 'medium' | 'high' | 'critical',
+): 'low' | 'medium' | 'high' | 'critical' {
+	const index = COMPLIANCE_RISK_ORDER.indexOf(current);
+	return COMPLIANCE_RISK_ORDER[Math.min(index + 1, COMPLIANCE_RISK_ORDER.length - 1)];
 }
 
-function reduceRiskLevel(current: 'low' | 'medium' | 'high' | 'critical'): 'low' | 'medium' | 'high' | 'critical' {
-        const index = COMPLIANCE_RISK_ORDER.indexOf(current);
-        return COMPLIANCE_RISK_ORDER[Math.max(index - 1, 0)];
+function reduceRiskLevel(
+	current: 'low' | 'medium' | 'high' | 'critical',
+): 'low' | 'medium' | 'high' | 'critical' {
+	const index = COMPLIANCE_RISK_ORDER.indexOf(current);
+	return COMPLIANCE_RISK_ORDER[Math.max(index - 1, 0)];
 }
 
 export interface PlanningContext {
@@ -191,7 +200,11 @@ export class DynamicSpeculativePlanner {
 	/**
 	 * Apply compliance summary updates from security coordination
 	 */
-	applyComplianceSummary(summary: { riskLevel: 'low' | 'medium' | 'high' | 'critical'; activeViolations: number; notes?: string[] }): void {
+	applyComplianceSummary(summary: {
+		riskLevel: 'low' | 'medium' | 'high' | 'critical';
+		activeViolations: number;
+		notes?: string[];
+	}): void {
 		if (!this.planningContext) {
 			throw new Error('brAInwav DSP: Planning context not initialized');
 		}

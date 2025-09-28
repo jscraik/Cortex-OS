@@ -3,8 +3,8 @@
  * @description End-to-end PRP workflow runner using gate framework (G0→G1 for now)
  */
 
-import { runSpool } from '@cortex-os/orchestration';
 import type { HumanApproval, PRPState } from '@cortex-os/kernel';
+import { runSpool } from '@cortex-os/orchestration';
 import {
 	generatePRPMarkdown,
 	generateReviewJSON,

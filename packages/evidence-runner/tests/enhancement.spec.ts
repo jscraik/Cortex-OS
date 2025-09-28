@@ -69,7 +69,7 @@ describe('Evidence Enhancement with brAInwav ASBRAIIntegration', () => {
 			'   \n\t  ', // Whitespace only
 			'Single word', // Minimal input
 			'<script>alert("xss")</script>Malicious content', // XSS attempt
-			'Very '.repeat(1000) + 'long input' // Very long input
+			`${'Very '.repeat(1000)}long input`, // Very long input
 		];
 
 		for (const input of edgeCases) {
@@ -106,7 +106,7 @@ describe('Evidence Enhancement with brAInwav ASBRAIIntegration', () => {
 		// Test with MLX local model
 		const mlxEnhanced = await enhanceEvidence(testEvidence, {
 			provider: 'mlx',
-			model: 'glm-4.5-mlx'
+			model: 'glm-4.5-mlx',
 		});
 
 		expect(mlxEnhanced.metadata.provider).toBe('mlx');
@@ -115,7 +115,7 @@ describe('Evidence Enhancement with brAInwav ASBRAIIntegration', () => {
 		// Test with remote fallback
 		const fallbackEnhanced = await enhanceEvidence(testEvidence, {
 			provider: 'fallback',
-			deterministic: true
+			deterministic: true,
 		});
 
 		expect(fallbackEnhanced.metadata.provider).toBe('fallback');
@@ -137,8 +137,8 @@ describe('Evidence Enhancement with brAInwav ASBRAIIntegration', () => {
 			context: {
 				userAgent: 'Mozilla/5.0...',
 				ipAddress: '192.168.1.100',
-				sessionId: 'sess_abc123'
-			}
+				sessionId: 'sess_abc123',
+			},
 		};
 
 		const enhanced = await enhanceEvidence(JSON.stringify(structuredEvidence, null, 2));

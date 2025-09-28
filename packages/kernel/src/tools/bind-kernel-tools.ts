@@ -169,15 +169,17 @@ export function bindKernelTools(rawOptions: BindKernelToolsOptions): KernelToolB
 			surfaces: tools.map((tool) => tool.name),
 			security: securityMetadata.length
 				? {
-					brand: 'brAInwav cortex-sec',
-					tools: securityMetadata,
-				}
+						brand: 'brAInwav cortex-sec',
+						tools: securityMetadata,
+					}
 				: undefined,
 		},
 	};
 }
 
-function createBashTool(context: ToolBindingContext): KernelTool<KernelBashInput, KernelBashResult> {
+function createBashTool(
+	context: ToolBindingContext,
+): KernelTool<KernelBashInput, KernelBashResult> {
 	return {
 		name: 'kernel.bash',
 		description: 'Execute shell commands guarded by brAInwav kernel policy',

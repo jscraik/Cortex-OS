@@ -1,55 +1,55 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
+import { type MLXInferenceRequest, MLXService } from './mlx-service.js';
 import {
-    type EnhancedEvidence,
-    type EvidenceContext,
-    type EvidenceEnhancerConfig,
-    EvidenceEnhancerConfigSchema,
-    type HealthStatus,
-    type TelemetryEvent,
+	type EnhancedEvidence,
+	type EvidenceContext,
+	type EvidenceEnhancerConfig,
+	EvidenceEnhancerConfigSchema,
+	type HealthStatus,
+	type TelemetryEvent,
 } from './types.js';
-import { MLXService, type MLXInferenceRequest } from './mlx-service.js';
 
 /**
  * LRU Cache for memory-bounded caching
  */
 class LRUCache<K, V> {
-    private cache = new Map<K, V>();
-    private maxSize: number;
+	private cache = new Map<K, V>();
+	private maxSize: number;
 
-    constructor(maxSize: number = 1000) {
-        this.maxSize = maxSize;
-    }
+	constructor(maxSize: number = 1000) {
+		this.maxSize = maxSize;
+	}
 
-    get(key: K): V | undefined {
-        const value = this.cache.get(key);
-        if (value !== undefined) {
-            // Move to end (most recently used)
-            this.cache.delete(key);
-            this.cache.set(key, value);
-        }
-        return value;
-    }
+	get(key: K): V | undefined {
+		const value = this.cache.get(key);
+		if (value !== undefined) {
+			// Move to end (most recently used)
+			this.cache.delete(key);
+			this.cache.set(key, value);
+		}
+		return value;
+	}
 
-    set(key: K, value: V): void {
-        if (this.cache.has(key)) {
-            this.cache.delete(key);
-        } else if (this.cache.size >= this.maxSize) {
-            // Remove least recently used
-            const firstKey = this.cache.keys().next().value;
-            if (firstKey !== undefined) {
-                this.cache.delete(firstKey);
-            }
-        }
-        this.cache.set(key, value);
-    }
+	set(key: K, value: V): void {
+		if (this.cache.has(key)) {
+			this.cache.delete(key);
+		} else if (this.cache.size >= this.maxSize) {
+			// Remove least recently used
+			const firstKey = this.cache.keys().next().value;
+			if (firstKey !== undefined) {
+				this.cache.delete(firstKey);
+			}
+		}
+		this.cache.set(key, value);
+	}
 
-    size(): number {
-        return this.cache.size;
-    }
+	size(): number {
+		return this.cache.size;
+	}
 
-    clear(): void {
-        this.cache.clear();
-    }
+	clear(): void {
+		this.cache.clear();
+	}
 }
 
 /**
@@ -57,474 +57,478 @@ class LRUCache<K, V> {
  * Provides MLX-powered evidence analysis and enhancement capabilities
  */
 export class EvidenceEnhancer {
-    private config: EvidenceEnhancerConfig;
-    private readonly processorName = 'brAInwav Evidence Enhancer';
-    private readonly processorVersion = '1.0.0';
-    private mlxService: MLXService;
-    private evidenceCache: LRUCache<string, EnhancedEvidence>;
-    private embeddingCache: LRUCache<string, number[]>;
+	private config: EvidenceEnhancerConfig;
+	private readonly processorName = 'brAInwav Evidence Enhancer';
+	private readonly processorVersion = '1.0.0';
+	private mlxService: MLXService;
+	private evidenceCache: LRUCache<string, EnhancedEvidence>;
+	private embeddingCache: LRUCache<string, number[]>;
 
-    constructor(config: EvidenceEnhancerConfig) {
-        this.config = this.validateConfiguration(config);
-        this.mlxService = new MLXService(this.config.mlxModelPath);
-        
-        // Initialize bounded caches to prevent memory leaks
-        const cacheSize = this.config.maxCacheSize || 1000;
-        // Split cache size between two caches
-        const individualCacheSize = Math.floor(cacheSize / 2);
-        this.evidenceCache = new LRUCache(individualCacheSize);
-        this.embeddingCache = new LRUCache(individualCacheSize);
-    }
+	constructor(config: EvidenceEnhancerConfig) {
+		this.config = this.validateConfiguration(config);
+		this.mlxService = new MLXService(this.config.mlxModelPath);
 
-    /**
-     * Validate configuration (≤40 lines)
-     */
-    private validateConfiguration(config: EvidenceEnhancerConfig): EvidenceEnhancerConfig {
-        const validationResult = EvidenceEnhancerConfigSchema.safeParse(config);
-        if (!validationResult.success) {
-            throw new Error(`Invalid configuration: ${validationResult.error.message}`);
-        }
+		// Initialize bounded caches to prevent memory leaks
+		const cacheSize = this.config.maxCacheSize || 1000;
+		// Split cache size between two caches
+		const individualCacheSize = Math.floor(cacheSize / 2);
+		this.evidenceCache = new LRUCache(individualCacheSize);
+		this.embeddingCache = new LRUCache(individualCacheSize);
+	}
 
-        const validatedConfig = validationResult.data;
+	/**
+	 * Validate configuration (≤40 lines)
+	 */
+	private validateConfiguration(config: EvidenceEnhancerConfig): EvidenceEnhancerConfig {
+		const validationResult = EvidenceEnhancerConfigSchema.safeParse(config);
+		if (!validationResult.success) {
+			throw new Error(`Invalid configuration: ${validationResult.error.message}`);
+		}
 
-        if (!validatedConfig.mlxModelPath || validatedConfig.mlxModelPath.trim() === '') {
-            throw new Error('Invalid configuration: MLX model path cannot be empty');
-        }
+		const validatedConfig = validationResult.data;
 
-        if (validatedConfig.temperature < 0 || validatedConfig.temperature > 2.0) {
-            throw new Error('Invalid configuration: Temperature must be between 0 and 2.0');
-        }
+		if (!validatedConfig.mlxModelPath || validatedConfig.mlxModelPath.trim() === '') {
+			throw new Error('Invalid configuration: MLX model path cannot be empty');
+		}
 
-        if (validatedConfig.maxTokens < 1) {
-            throw new Error('Invalid configuration: Max tokens must be positive');
-        }
+		if (validatedConfig.temperature < 0 || validatedConfig.temperature > 2.0) {
+			throw new Error('Invalid configuration: Temperature must be between 0 and 2.0');
+		}
 
-        return validatedConfig;
-    }
+		if (validatedConfig.maxTokens < 1) {
+			throw new Error('Invalid configuration: Max tokens must be positive');
+		}
 
-    /**
-     * Enhance evidence with AI analysis and enrichment (≤40 lines)
-     */
-    async enhanceEvidence(context: EvidenceContext): Promise<EnhancedEvidence> {
-        const startTime = Date.now();
-        const evidenceId = crypto.randomUUID();
+		return validatedConfig;
+	}
 
-        this.emitTelemetryStart(context);
+	/**
+	 * Enhance evidence with AI analysis and enrichment (≤40 lines)
+	 */
+	async enhanceEvidence(context: EvidenceContext): Promise<EnhancedEvidence> {
+		const startTime = Date.now();
+		const evidenceId = crypto.randomUUID();
 
-        try {
-            // Check cache first for deterministic results
-            const cacheKey = this.generateCacheKey(context);
-            const cachedResult = this.evidenceCache.get(cacheKey);
-            if (cachedResult) {
-                return cachedResult;
-            }
+		this.emitTelemetryStart(context);
 
-            // Validate request
-            const validationError = this.validateRequest(context);
-            if (validationError) {
-                return this.createErrorResult(evidenceId, context, validationError, startTime);
-            }
+		try {
+			// Check cache first for deterministic results
+			const cacheKey = this.generateCacheKey(context);
+			const cachedResult = this.evidenceCache.get(cacheKey);
+			if (cachedResult) {
+				return cachedResult;
+			}
 
-            // Process evidence with real MLX
-            const evidenceResult = await this.processEvidenceWithMLX(evidenceId, context, startTime);
-            
-            // Cache the result
-            this.evidenceCache.set(cacheKey, evidenceResult);
-            
-            this.emitTelemetryComplete(evidenceResult.processingTime, evidenceResult.confidence);
-            return evidenceResult;
-        } catch (error) {
-            const processingTime = Date.now() - startTime;
-            this.emitTelemetryError(String(error), processingTime);
-            throw error;
-        }
-    }
+			// Validate request
+			const validationError = this.validateRequest(context);
+			if (validationError) {
+				return this.createErrorResult(evidenceId, context, validationError, startTime);
+			}
 
-    /**
-     * Generate cache key for deterministic results (≤40 lines)
-     */
-    private generateCacheKey(context: EvidenceContext): string {
-        const keyData = {
-            taskId: context.taskId,
-            claim: context.claim,
-            sources: context.sources.map(s => ({ type: s.type, path: s.path, content: s.content })),
-            config: {
-                modelPath: this.config.mlxModelPath,
-                temperature: this.config.temperature,
-                maxTokens: this.config.maxTokens
-            }
-        };
-        return crypto.createHash('sha256').update(JSON.stringify(keyData)).digest('hex');
-    }
+			// Process evidence with real MLX
+			const evidenceResult = await this.processEvidenceWithMLX(evidenceId, context, startTime);
 
-    /**
-     * Validate evidence request (≤40 lines)
-     */
-    private validateRequest(context: EvidenceContext): string | null {
-        if (!context.taskId || context.taskId.trim() === '') {
-            return 'Task ID is required';
-        }
+			// Cache the result
+			this.evidenceCache.set(cacheKey, evidenceResult);
 
-        if (!context.claim || context.claim.trim() === '') {
-            return 'Claim is required';
-        }
+			this.emitTelemetryComplete(evidenceResult.processingTime, evidenceResult.confidence);
+			return evidenceResult;
+		} catch (error) {
+			const processingTime = Date.now() - startTime;
+			this.emitTelemetryError(String(error), processingTime);
+			throw error;
+		}
+	}
 
-        if (!context.sources || context.sources.length === 0) {
-            return 'At least one evidence source is required';
-        }
+	/**
+	 * Generate cache key for deterministic results (≤40 lines)
+	 */
+	private generateCacheKey(context: EvidenceContext): string {
+		const keyData = {
+			taskId: context.taskId,
+			claim: context.claim,
+			sources: context.sources.map((s) => ({ type: s.type, path: s.path, content: s.content })),
+			config: {
+				modelPath: this.config.mlxModelPath,
+				temperature: this.config.temperature,
+				maxTokens: this.config.maxTokens,
+			},
+		};
+		return crypto.createHash('sha256').update(JSON.stringify(keyData)).digest('hex');
+	}
 
-        return null;
-    }
+	/**
+	 * Validate evidence request (≤40 lines)
+	 */
+	private validateRequest(context: EvidenceContext): string | null {
+		if (!context.taskId || context.taskId.trim() === '') {
+			return 'Task ID is required';
+		}
 
-    /**
-     * Process evidence with real MLX analysis (≤40 lines)
-     */
-    private async processEvidenceWithMLX(
-        evidenceId: string,
-        context: EvidenceContext,
-        startTime: number
-    ): Promise<EnhancedEvidence> {
-        // Determine if this is a deterministic test
-        const isDeterministic = context.taskId.includes('deterministic');
-        const isErrorTest = this.config.mlxModelPath.includes('nonexistent');
+		if (!context.claim || context.claim.trim() === '') {
+			return 'Claim is required';
+		}
 
-        if (isErrorTest) {
-            return this.createErrorResult(evidenceId, context, 'MLX model unavailable', startTime);
-        }
+		if (!context.sources || context.sources.length === 0) {
+			return 'At least one evidence source is required';
+		}
 
-        // Prepare text for MLX analysis
-        const analysisText = this.prepareAnalysisText(context);
-        
-        // Perform real MLX inference for analysis
-        const mlxAnalysis = await this.performMLXAnalysis(analysisText, isDeterministic);
-        
-        // Calculate confidence using MLX
-        const confidence = await this.calculateMLXConfidence(analysisText, isDeterministic);
-        
-        // Search for related evidence using embeddings
-        const relatedEvidence = await this.searchRelatedEvidenceMLX(context.claim);
-        
-        // Determine enhancements used
-        const enhancements = this.determineEnhancements();
-        
-        return this.createSuccessResult(
-            evidenceId,
-            context,
-            mlxAnalysis,
-            confidence,
-            relatedEvidence,
-            enhancements,
-            startTime
-        );
-    }
+		return null;
+	}
 
-    /**
-     * Prepare analysis text from evidence sources (≤40 lines)
-     */
-    private prepareAnalysisText(context: EvidenceContext): string {
-        const parts = [context.claim];
-        
-        for (const source of context.sources) {
-            parts.push(`Source (${source.type}): ${source.content}`);
-        }
-        
-        return parts.join('\n\n').substring(0, this.config.maxTokens * 4); // Rough token estimation
-    }
+	/**
+	 * Process evidence with real MLX analysis (≤40 lines)
+	 */
+	private async processEvidenceWithMLX(
+		evidenceId: string,
+		context: EvidenceContext,
+		startTime: number,
+	): Promise<EnhancedEvidence> {
+		// Determine if this is a deterministic test
+		const isDeterministic = context.taskId.includes('deterministic');
+		const isErrorTest = this.config.mlxModelPath.includes('nonexistent');
 
-    /**
-     * Perform real MLX analysis (≤40 lines)
-     */
-    private async performMLXAnalysis(text: string, isDeterministic: boolean): Promise<string> {
-        if (isDeterministic) {
-            // Return deterministic result for testing
-            return 'Deterministic analysis: Code quality metrics are acceptable based on validation function implementation.';
-        }
+		if (isErrorTest) {
+			return this.createErrorResult(evidenceId, context, 'MLX model unavailable', startTime);
+		}
 
-        const request: MLXInferenceRequest = {
-            text,
-            task: 'analysis',
-            modelPath: this.config.mlxModelPath,
-            temperature: this.config.temperature,
-            maxTokens: this.config.maxTokens
-        };
+		// Prepare text for MLX analysis
+		const analysisText = this.prepareAnalysisText(context);
 
-        const result = await this.mlxService.performInference(request);
-        return result.analysis || 'MLX analysis unavailable';
-    }
+		// Perform real MLX inference for analysis
+		const mlxAnalysis = await this.performMLXAnalysis(analysisText, isDeterministic);
 
-    /**
-     * Calculate confidence using real MLX model (≤40 lines)
-     */
-    private async calculateMLXConfidence(text: string, isDeterministic: boolean): Promise<number> {
-        if (isDeterministic) {
-            return 0.75; // Deterministic confidence for testing
-        }
+		// Calculate confidence using MLX
+		const confidence = await this.calculateMLXConfidence(analysisText, isDeterministic);
 
-        const request: MLXInferenceRequest = {
-            text,
-            task: 'confidence',
-            modelPath: this.config.mlxModelPath,
-            temperature: this.config.temperature
-        };
+		// Search for related evidence using embeddings
+		const relatedEvidence = await this.searchRelatedEvidenceMLX(context.claim);
 
-        const result = await this.mlxService.performInference(request);
-        const baseConfidence = result.confidence || 0.6;
-        
-        return Math.min(1.0, baseConfidence + this.config.confidenceBoost);
-    }
+		// Determine enhancements used
+		const enhancements = this.determineEnhancements();
 
-    /**
-     * Search for related evidence using real embeddings (≤40 lines)
-     */
-    private async searchRelatedEvidenceMLX(
-        claim: string
-    ): Promise<Array<{ claim: string; similarity: number; source: string }>> {
-        if (!this.config.enableEmbeddingSearch) {
-            return [];
-        }
+		return this.createSuccessResult(
+			evidenceId,
+			context,
+			mlxAnalysis,
+			confidence,
+			relatedEvidence,
+			enhancements,
+			startTime,
+		);
+	}
 
-        try {
-            // Check cache first
-            const cacheKey = `embedding:${claim}`;
-            let claimEmbedding = this.embeddingCache.get(cacheKey);
-            
-            if (!claimEmbedding) {
-                // Generate real embedding for the claim
-                const request: MLXInferenceRequest = {
-                    text: claim,
-                    task: 'embedding',
-                    modelPath: this.config.mlxModelPath
-                };
-                
-                const result = await this.mlxService.performInference(request);
-                claimEmbedding = result.embedding || [];
-                
-                // Cache the embedding
-                this.embeddingCache.set(cacheKey, claimEmbedding);
-            }
+	/**
+	 * Prepare analysis text from evidence sources (≤40 lines)
+	 */
+	private prepareAnalysisText(context: EvidenceContext): string {
+		const parts = [context.claim];
 
-            // For now, return simulated related evidence
-            // In production, this would search a vector database
-            const relatedEvidence = [
-                {
-                    claim: 'Related evidence from vector similarity search',
-                    similarity: this.calculateVectorSimilarity(claimEmbedding, claimEmbedding),
-                    source: 'vector-database'
-                }
-            ];
-            
-            return relatedEvidence;
-        } catch (error) {
-            // Fallback to empty results on error
-            return [];
-        }
-    }
+		for (const source of context.sources) {
+			parts.push(`Source (${source.type}): ${source.content}`);
+		}
 
-    /**
-     * Calculate vector similarity between embeddings (≤40 lines)
-     */
-    private calculateVectorSimilarity(vec1: number[], vec2: number[]): number {
-        if (vec1.length !== vec2.length || vec1.length === 0) {
-            return 0;
-        }
+		return parts.join('\n\n').substring(0, this.config.maxTokens * 4); // Rough token estimation
+	}
 
-        // Cosine similarity calculation
-        let dotProduct = 0;
-        let norm1 = 0;
-        let norm2 = 0;
+	/**
+	 * Perform real MLX analysis (≤40 lines)
+	 */
+	private async performMLXAnalysis(text: string, isDeterministic: boolean): Promise<string> {
+		if (isDeterministic) {
+			// Return deterministic result for testing
+			return 'Deterministic analysis: Code quality metrics are acceptable based on validation function implementation.';
+		}
 
-        for (let i = 0; i < vec1.length; i++) {
-            dotProduct += vec1[i] * vec2[i];
-            norm1 += vec1[i] * vec1[i];
-            norm2 += vec2[i] * vec2[i];
-        }
+		const request: MLXInferenceRequest = {
+			text,
+			task: 'analysis',
+			modelPath: this.config.mlxModelPath,
+			temperature: this.config.temperature,
+			maxTokens: this.config.maxTokens,
+		};
 
-        const magnitude = Math.sqrt(norm1) * Math.sqrt(norm2);
-        return magnitude === 0 ? 0 : dotProduct / magnitude;
-    }
+		const result = await this.mlxService.performInference(request);
+		return result.analysis || 'MLX analysis unavailable';
+	}
 
-    /**
-     * Determine enhancements used (≤40 lines)
-     */
-    private determineEnhancements(): string[] {
-        const enhancements: string[] = [];
-        
-        if (this.config.enableMLXGeneration) {
-            enhancements.push('mlx-generation');
-        }
-        
-        if (this.config.enableEmbeddingSearch) {
-            enhancements.push('embedding-search');
-        }
-        
-        return enhancements;
-    }
+	/**
+	 * Calculate confidence using real MLX model (≤40 lines)
+	 */
+	private async calculateMLXConfidence(text: string, isDeterministic: boolean): Promise<number> {
+		if (isDeterministic) {
+			return 0.75; // Deterministic confidence for testing
+		}
 
-    /**
-     * Create success result (≤40 lines)
-     */
-    private createSuccessResult(
-        evidenceId: string,
-        context: EvidenceContext,
-        aiAnalysis: string,
-        confidence: number,
-        relatedEvidence: Array<{ claim: string; similarity: number; source: string }>,
-        enhancements: string[],
-        startTime: number
-    ): EnhancedEvidence {
-        const processingTime = Date.now() - startTime;
-        
-        // For testing: simulate MLX availability based on model path
-        const isMLXActuallyAvailable = !this.config.mlxModelPath.includes('nonexistent');
-        
-        const mlxMetadata = isMLXActuallyAvailable ? {
-            mlxModelLoaded: true,
-            realMLXInference: true,
-            confidenceMethod: 'mlx-model-output' as const,
-            vectorSimilarityUsed: this.config.enableEmbeddingSearch && relatedEvidence.length > 0
-        } : {
-            mlxModelLoaded: false,
-            realMLXInference: false,
-            confidenceMethod: 'fallback-calculation' as const,
-            vectorSimilarityUsed: false
-        };
+		const request: MLXInferenceRequest = {
+			text,
+			task: 'confidence',
+			modelPath: this.config.mlxModelPath,
+			temperature: this.config.temperature,
+		};
 
-        return {
-            id: evidenceId,
-            taskId: context.taskId,
-            originalClaim: context.claim,
-            confidence,
-            aiAnalysis,
-            relatedEvidence,
-            enhancements,
-            processingTime,
-            metadata: {
-                processor: this.processorName,
-                processorVersion: this.processorVersion,
-                timestamp: new Date().toISOString(),
-                mlxModel: this.config.mlxModelPath,
-                embeddingModel: this.config.embeddingModelPath,
-                ...mlxMetadata,
-                methodSizeCompliant: true, // All methods are now ≤40 lines
-                maxMethodLines: 40,
-                embeddingVectors: this.config.enableEmbeddingSearch ? relatedEvidence.map(() => 0.1) : undefined,
-                mlxConfidenceScores: mlxMetadata.realMLXInference ? [confidence] : undefined
-            }
-        };
-    }
+		const result = await this.mlxService.performInference(request);
+		const baseConfidence = result.confidence || 0.6;
 
-    /**
-     * Create error result (≤40 lines)
-     */
-    private createErrorResult(
-        evidenceId: string,
-        context: EvidenceContext,
-        error: string,
-        startTime: number
-    ): EnhancedEvidence {
-        const processingTime = Date.now() - startTime;
+		return Math.min(1.0, baseConfidence + this.config.confidenceBoost);
+	}
 
-        return {
-            id: evidenceId,
-            taskId: context.taskId,
-            originalClaim: context.claim,
-            confidence: 0.3, // Reduced confidence due to error
-            aiAnalysis: `Evidence analysis completed using fallback processing. Error: ${error}`,
-            relatedEvidence: [],
-            enhancements: ['fallback-processing'],
-            processingTime,
-            errors: [error],
-            fallbackUsed: true,
-            metadata: {
-                processor: this.processorName,
-                processorVersion: this.processorVersion,
-                timestamp: new Date().toISOString(),
-                mlxModel: this.config.mlxModelPath,
-                mlxModelLoaded: false,
-                realMLXInference: false,
-                confidenceMethod: 'fallback-calculation',
-                methodSizeCompliant: true,
-                maxMethodLines: 40
-            }
-        };
-    }
+	/**
+	 * Search for related evidence using real embeddings (≤40 lines)
+	 */
+	private async searchRelatedEvidenceMLX(
+		claim: string,
+	): Promise<Array<{ claim: string; similarity: number; source: string }>> {
+		if (!this.config.enableEmbeddingSearch) {
+			return [];
+		}
 
-    /**
-     * Emit telemetry start event (≤40 lines)
-     */
-    private emitTelemetryStart(context: EvidenceContext): void {
-        this.emitTelemetry({
-            event: 'evidence_enhancement_started',
-            taskId: context.taskId,
-            processor: this.processorName,
-            timestamp: new Date().toISOString()
-        });
-    }
+		try {
+			// Check cache first
+			const cacheKey = `embedding:${claim}`;
+			let claimEmbedding = this.embeddingCache.get(cacheKey);
 
-    /**
-     * Emit telemetry completion event (≤40 lines)
-     */
-    private emitTelemetryComplete(processingTime: number, confidence: number): void {
-        this.emitTelemetry({
-            event: 'evidence_enhancement_completed',
-            processingTime,
-            confidence,
-            timestamp: new Date().toISOString()
-        });
-    }
+			if (!claimEmbedding) {
+				// Generate real embedding for the claim
+				const request: MLXInferenceRequest = {
+					text: claim,
+					task: 'embedding',
+					modelPath: this.config.mlxModelPath,
+				};
 
-    /**
-     * Emit telemetry error event (≤40 lines)
-     */
-    private emitTelemetryError(error: string, processingTime: number): void {
-        this.emitTelemetry({
-            event: 'evidence_enhancement_error',
-            error,
-            processingTime,
-            timestamp: new Date().toISOString()
-        });
-    }
+				const result = await this.mlxService.performInference(request);
+				claimEmbedding = result.embedding || [];
 
-    /**
-     * Emit telemetry events for observability (≤40 lines)
-     */
-    private emitTelemetry(event: TelemetryEvent): void {
-        if (this.config.telemetryCallback) {
-            this.config.telemetryCallback(event);
-        }
-    }
+				// Cache the embedding
+				this.embeddingCache.set(cacheKey, claimEmbedding);
+			}
 
-    /**
-     * Health check for Evidence Enhancer (≤40 lines)
-     */
-    async health(): Promise<HealthStatus> {
-        const isMLXAvailable = !this.config.mlxModelPath.includes('nonexistent');
-        const memoryUsage = process.memoryUsage().heapUsed;
-        const cacheSize = this.evidenceCache.size() + this.embeddingCache.size();
-        const maxCacheSize = this.config.maxCacheSize || 1000;
-        
-        return {
-            status: isMLXAvailable ? 'healthy' : 'degraded',
-            mlxAvailable: isMLXAvailable,
-            embeddingAvailable: !!this.config.embeddingModelPath,
-            processorName: this.processorName,
-            lastError: isMLXAvailable ? undefined : 'MLX model path not accessible',
-            memoryUsage,
-            modelsLoaded: isMLXAvailable ? 1 : 0,
-            cacheSize,
-            memoryLeakDetected: cacheSize > maxCacheSize
-        };
-    }
+			// For now, return simulated related evidence
+			// In production, this would search a vector database
+			const relatedEvidence = [
+				{
+					claim: 'Related evidence from vector similarity search',
+					similarity: this.calculateVectorSimilarity(claimEmbedding, claimEmbedding),
+					source: 'vector-database',
+				},
+			];
 
-    /**
-     * Cleanup resources (≤40 lines)
-     */
-    async cleanup(): Promise<void> {
-        // Clear caches to prevent memory leaks
-        this.evidenceCache.clear();
-        this.embeddingCache.clear();
-        
-        // Cleanup MLX service
-        await this.mlxService.cleanup();
-    }
+			return relatedEvidence;
+		} catch (_error) {
+			// Fallback to empty results on error
+			return [];
+		}
+	}
+
+	/**
+	 * Calculate vector similarity between embeddings (≤40 lines)
+	 */
+	private calculateVectorSimilarity(vec1: number[], vec2: number[]): number {
+		if (vec1.length !== vec2.length || vec1.length === 0) {
+			return 0;
+		}
+
+		// Cosine similarity calculation
+		let dotProduct = 0;
+		let norm1 = 0;
+		let norm2 = 0;
+
+		for (let i = 0; i < vec1.length; i++) {
+			dotProduct += vec1[i] * vec2[i];
+			norm1 += vec1[i] * vec1[i];
+			norm2 += vec2[i] * vec2[i];
+		}
+
+		const magnitude = Math.sqrt(norm1) * Math.sqrt(norm2);
+		return magnitude === 0 ? 0 : dotProduct / magnitude;
+	}
+
+	/**
+	 * Determine enhancements used (≤40 lines)
+	 */
+	private determineEnhancements(): string[] {
+		const enhancements: string[] = [];
+
+		if (this.config.enableMLXGeneration) {
+			enhancements.push('mlx-generation');
+		}
+
+		if (this.config.enableEmbeddingSearch) {
+			enhancements.push('embedding-search');
+		}
+
+		return enhancements;
+	}
+
+	/**
+	 * Create success result (≤40 lines)
+	 */
+	private createSuccessResult(
+		evidenceId: string,
+		context: EvidenceContext,
+		aiAnalysis: string,
+		confidence: number,
+		relatedEvidence: Array<{ claim: string; similarity: number; source: string }>,
+		enhancements: string[],
+		startTime: number,
+	): EnhancedEvidence {
+		const processingTime = Date.now() - startTime;
+
+		// For testing: simulate MLX availability based on model path
+		const isMLXActuallyAvailable = !this.config.mlxModelPath.includes('nonexistent');
+
+		const mlxMetadata = isMLXActuallyAvailable
+			? {
+					mlxModelLoaded: true,
+					realMLXInference: true,
+					confidenceMethod: 'mlx-model-output' as const,
+					vectorSimilarityUsed: this.config.enableEmbeddingSearch && relatedEvidence.length > 0,
+				}
+			: {
+					mlxModelLoaded: false,
+					realMLXInference: false,
+					confidenceMethod: 'fallback-calculation' as const,
+					vectorSimilarityUsed: false,
+				};
+
+		return {
+			id: evidenceId,
+			taskId: context.taskId,
+			originalClaim: context.claim,
+			confidence,
+			aiAnalysis,
+			relatedEvidence,
+			enhancements,
+			processingTime,
+			metadata: {
+				processor: this.processorName,
+				processorVersion: this.processorVersion,
+				timestamp: new Date().toISOString(),
+				mlxModel: this.config.mlxModelPath,
+				embeddingModel: this.config.embeddingModelPath,
+				...mlxMetadata,
+				methodSizeCompliant: true, // All methods are now ≤40 lines
+				maxMethodLines: 40,
+				embeddingVectors: this.config.enableEmbeddingSearch
+					? relatedEvidence.map(() => 0.1)
+					: undefined,
+				mlxConfidenceScores: mlxMetadata.realMLXInference ? [confidence] : undefined,
+			},
+		};
+	}
+
+	/**
+	 * Create error result (≤40 lines)
+	 */
+	private createErrorResult(
+		evidenceId: string,
+		context: EvidenceContext,
+		error: string,
+		startTime: number,
+	): EnhancedEvidence {
+		const processingTime = Date.now() - startTime;
+
+		return {
+			id: evidenceId,
+			taskId: context.taskId,
+			originalClaim: context.claim,
+			confidence: 0.3, // Reduced confidence due to error
+			aiAnalysis: `Evidence analysis completed using fallback processing. Error: ${error}`,
+			relatedEvidence: [],
+			enhancements: ['fallback-processing'],
+			processingTime,
+			errors: [error],
+			fallbackUsed: true,
+			metadata: {
+				processor: this.processorName,
+				processorVersion: this.processorVersion,
+				timestamp: new Date().toISOString(),
+				mlxModel: this.config.mlxModelPath,
+				mlxModelLoaded: false,
+				realMLXInference: false,
+				confidenceMethod: 'fallback-calculation',
+				methodSizeCompliant: true,
+				maxMethodLines: 40,
+			},
+		};
+	}
+
+	/**
+	 * Emit telemetry start event (≤40 lines)
+	 */
+	private emitTelemetryStart(context: EvidenceContext): void {
+		this.emitTelemetry({
+			event: 'evidence_enhancement_started',
+			taskId: context.taskId,
+			processor: this.processorName,
+			timestamp: new Date().toISOString(),
+		});
+	}
+
+	/**
+	 * Emit telemetry completion event (≤40 lines)
+	 */
+	private emitTelemetryComplete(processingTime: number, confidence: number): void {
+		this.emitTelemetry({
+			event: 'evidence_enhancement_completed',
+			processingTime,
+			confidence,
+			timestamp: new Date().toISOString(),
+		});
+	}
+
+	/**
+	 * Emit telemetry error event (≤40 lines)
+	 */
+	private emitTelemetryError(error: string, processingTime: number): void {
+		this.emitTelemetry({
+			event: 'evidence_enhancement_error',
+			error,
+			processingTime,
+			timestamp: new Date().toISOString(),
+		});
+	}
+
+	/**
+	 * Emit telemetry events for observability (≤40 lines)
+	 */
+	private emitTelemetry(event: TelemetryEvent): void {
+		if (this.config.telemetryCallback) {
+			this.config.telemetryCallback(event);
+		}
+	}
+
+	/**
+	 * Health check for Evidence Enhancer (≤40 lines)
+	 */
+	async health(): Promise<HealthStatus> {
+		const isMLXAvailable = !this.config.mlxModelPath.includes('nonexistent');
+		const memoryUsage = process.memoryUsage().heapUsed;
+		const cacheSize = this.evidenceCache.size() + this.embeddingCache.size();
+		const maxCacheSize = this.config.maxCacheSize || 1000;
+
+		return {
+			status: isMLXAvailable ? 'healthy' : 'degraded',
+			mlxAvailable: isMLXAvailable,
+			embeddingAvailable: !!this.config.embeddingModelPath,
+			processorName: this.processorName,
+			lastError: isMLXAvailable ? undefined : 'MLX model path not accessible',
+			memoryUsage,
+			modelsLoaded: isMLXAvailable ? 1 : 0,
+			cacheSize,
+			memoryLeakDetected: cacheSize > maxCacheSize,
+		};
+	}
+
+	/**
+	 * Cleanup resources (≤40 lines)
+	 */
+	async cleanup(): Promise<void> {
+		// Clear caches to prevent memory leaks
+		this.evidenceCache.clear();
+		this.embeddingCache.clear();
+
+		// Cleanup MLX service
+		await this.mlxService.cleanup();
+	}
 }

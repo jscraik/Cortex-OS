@@ -363,7 +363,10 @@ export class LongHorizonPlanner {
 	 * Persistence hook for planning events
 	 * In production, this would integrate with actual persistence layer
 	 */
-	private async persistPlanningEvent(eventType: string, eventData: Record<string, unknown>): Promise<void> {
+	private async persistPlanningEvent(
+		eventType: string,
+		eventData: Record<string, unknown>,
+	): Promise<void> {
 		if (!this.config.persistenceEnabled) {
 			return;
 		}

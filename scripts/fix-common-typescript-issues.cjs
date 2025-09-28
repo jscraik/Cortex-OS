@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const { readFileSync, writeFileSync, readdirSync, existsSync } = require('fs');
-const { join } = require('path');
+const { execSync } = require('node:child_process');
+const { readFileSync, writeFileSync, readdirSync, existsSync } = require('node:fs');
+const { join } = require('node:path');
 
 console.log('🔧 Fixing common TypeScript issues...\n');
 
 // Get TypeScript compiler errors
 function getTsErrors() {
 	try {
-		const output = execSync('npx tsc --noEmit --skipLibCheck', {
+		const _output = execSync('npx tsc --noEmit --skipLibCheck', {
 			encoding: 'utf8',
 			stdio: 'pipe',
 		});
@@ -25,8 +25,8 @@ function getTsErrors() {
 					const [, file, line, col, message] = match;
 					return {
 						file,
-						line: parseInt(line),
-						col: parseInt(col),
+						line: parseInt(line, 10),
+						col: parseInt(col, 10),
 						message: message.replace('error TS\\d+:\\s+', ''),
 					};
 				}
@@ -56,7 +56,7 @@ function fixError(filePath, error) {
 	if (!content) return false;
 
 	const lines = content.split('\n');
-	const errorLine = lines[error.line - 1];
+	const _errorLine = lines[error.line - 1];
 
 	let newContent = content;
 	let fixed = false;

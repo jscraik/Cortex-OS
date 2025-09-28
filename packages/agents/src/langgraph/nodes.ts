@@ -7,8 +7,8 @@
 import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { z } from 'zod';
-import { createPrefixedId } from '../lib/secure-random.js';
 import type { CortexState } from '../CortexAgentLangGraph.js';
+import { createPrefixedId } from '../lib/secure-random.js';
 
 // Input validation schemas
 export const NodeInputSchema = z.object({

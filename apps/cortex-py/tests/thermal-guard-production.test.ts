@@ -1,15 +1,15 @@
-import { describe, expect, it, beforeAll, afterAll } from 'vitest';
 import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import os from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const execAsync = promisify(exec);
 
 /**
  * Phase 9 Test: Thermal Guard Production Readiness
- * 
+ *
  * This test ensures cross-platform thermal monitoring is implemented
  * with proper platform guards for brAInwav production readiness.
  */
@@ -20,7 +20,7 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 		// Ensure Python environment is available
 		try {
 			await execAsync('python3 --version');
-		} catch (error) {
+		} catch (_error) {
 			throw new Error('Python3 is required for thermal monitoring tests');
 		}
 	});
@@ -34,9 +34,9 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 	it('should detect current platform and support thermal monitoring', () => {
 		const platform = os.platform();
 		const supportedPlatforms = ['darwin', 'linux', 'win32'];
-		
+
 		expect(supportedPlatforms).toContain(platform);
-		
+
 		// Platform-specific thermal monitoring capabilities
 		switch (platform) {
 			case 'darwin':
@@ -56,10 +56,10 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 
 	it('should have thermal event models with proper structure', async () => {
 		const modelsFile = join(process.cwd(), 'src/cortex_py/a2a/models.py');
-		
+
 		try {
 			const content = await readFile(modelsFile, 'utf-8');
-			
+
 			// Should contain MLXThermalEvent class
 			expect(content).toContain('class MLXThermalEvent');
 			expect(content).toContain('device_id: str');
@@ -68,7 +68,6 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 			expect(content).toContain('status: str');
 			expect(content).toContain('timestamp: str');
 			expect(content).toContain('action_taken: Optional[str]');
-			
 		} catch (error) {
 			throw new Error(`brAInwav thermal event models not found: ${error.message}`);
 		}
@@ -76,16 +75,15 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 
 	it('should have thermal event creation functions', async () => {
 		const eventsFile = join(process.cwd(), 'src/cortex_py/a2a/events.py');
-		
+
 		try {
 			const content = await readFile(eventsFile, 'utf-8');
-			
+
 			// Should contain thermal event creation function
 			expect(content).toContain('def create_mlx_thermal_event');
 			expect(content).toContain('MLXEventTypes.THERMAL_WARNING');
 			expect(content).toContain('MLXEventTypes.THERMAL_CRITICAL');
 			expect(content).toContain('MLXEventTypes.THERMAL_STATUS');
-			
 		} catch (error) {
 			throw new Error(`brAInwav thermal event creation functions not found: ${error.message}`);
 		}
@@ -100,12 +98,12 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 			// Test powermetrics availability (requires sudo, so we'll just check if it exists)
 			const { stdout } = await execAsync('which powermetrics');
 			expect(stdout.trim()).toContain('powermetrics');
-		} catch (error) {
+		} catch (_error) {
 			// Fallback: Check system_profiler
 			try {
 				const { stdout } = await execAsync('system_profiler SPHardwareDataType | grep -i thermal');
 				expect(typeof stdout).toBe('string');
-			} catch (fallbackError) {
+			} catch (_fallbackError) {
 				throw new Error('brAInwav: No thermal monitoring tools available on macOS');
 			}
 		}
@@ -118,15 +116,19 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 
 		try {
 			// Check for thermal zone files
-			const { stdout } = await execAsync('ls /sys/class/thermal/thermal_zone*/temp 2>/dev/null || echo "no_thermal_zones"');
-			
+			const { stdout } = await execAsync(
+				'ls /sys/class/thermal/thermal_zone*/temp 2>/dev/null || echo "no_thermal_zones"',
+			);
+
 			if (stdout.includes('no_thermal_zones')) {
 				// Fallback: Check for sensors command
 				try {
 					await execAsync('which sensors');
 					expect(true).toBe(true);
-				} catch (sensorsError) {
-					throw new Error('brAInwav: No thermal monitoring available on Linux (no /sys/class/thermal or sensors)');
+				} catch (_sensorsError) {
+					throw new Error(
+						'brAInwav: No thermal monitoring available on Linux (no /sys/class/thermal or sensors)',
+					);
 				}
 			} else {
 				expect(stdout).toContain('/sys/class/thermal');
@@ -143,12 +145,14 @@ describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
 
 		try {
 			// Check WMI availability for thermal monitoring
-			const { stdout } = await execAsync('wmic /namespace:\\\\root\\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature 2>nul || echo "no_wmi_thermal"');
-			
+			const { stdout } = await execAsync(
+				'wmic /namespace:\\\\root\\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature 2>nul || echo "no_wmi_thermal"',
+			);
+
 			if (stdout.includes('no_wmi_thermal')) {
 				throw new Error('brAInwav: No WMI thermal monitoring available on Windows');
 			}
-			
+
 			expect(typeof stdout).toBe('string');
 		} catch (error) {
 			throw new Error(`brAInwav Windows thermal monitoring check failed: ${error.message}`);
@@ -202,17 +206,18 @@ print("✓ All thermal threshold validation tests passed")
 `;
 
 		try {
-			const { stdout, stderr } = await execAsync(`cd ${process.cwd()} && python3 -c "${pythonTestScript}"`);
-			
+			const { stdout, stderr } = await execAsync(
+				`cd ${process.cwd()} && python3 -c "${pythonTestScript}"`,
+			);
+
 			if (stderr && !stderr.includes('warning')) {
 				throw new Error(`brAInwav thermal validation errors: ${stderr}`);
 			}
-			
+
 			expect(stdout).toContain('✓ Valid thermal event created');
 			expect(stdout).toContain('✓ Critical thermal event created');
 			expect(stdout).toContain('✓ Critical thermal event structure validated');
 			expect(stdout).toContain('✓ All thermal threshold validation tests passed');
-			
 		} catch (error) {
 			throw new Error(`brAInwav thermal threshold validation failed: ${error.message}`);
 		}
@@ -269,14 +274,18 @@ else:
 				criticalThreshold: 85.0,
 				shutdownThreshold: 95.0,
 				checkIntervalMs: 5000,
-				enabledPlatforms: ['darwin', 'linux', 'win32']
-			}
+				enabledPlatforms: ['darwin', 'linux', 'win32'],
+			},
 		};
 
 		// Validate configuration structure
 		expect(expectedConfig.thermal.warningThreshold).toBeGreaterThan(0);
-		expect(expectedConfig.thermal.criticalThreshold).toBeGreaterThan(expectedConfig.thermal.warningThreshold);
-		expect(expectedConfig.thermal.shutdownThreshold).toBeGreaterThan(expectedConfig.thermal.criticalThreshold);
+		expect(expectedConfig.thermal.criticalThreshold).toBeGreaterThan(
+			expectedConfig.thermal.warningThreshold,
+		);
+		expect(expectedConfig.thermal.shutdownThreshold).toBeGreaterThan(
+			expectedConfig.thermal.criticalThreshold,
+		);
 		expect(expectedConfig.thermal.checkIntervalMs).toBeGreaterThan(1000);
 		expect(expectedConfig.thermal.enabledPlatforms).toContain(os.platform());
 	});
@@ -285,7 +294,7 @@ else:
 		const sourceFiles = [
 			'src/cortex_py/a2a/events.py',
 			'src/cortex_py/a2a/models.py',
-			'src/cortex_py/services.py'
+			'src/cortex_py/services.py',
 		];
 
 		const placeholderViolations: Array<{ file: string; line: number; content: string }> = [];
@@ -294,16 +303,16 @@ else:
 			try {
 				const content = await readFile(join(process.cwd(), file), 'utf-8');
 				const lines = content.split('\n');
-				
+
 				lines.forEach((line, index) => {
 					const lowerLine = line.toLowerCase().trim();
-					
+
 					// Check for placeholder thermal implementations
 					if (
 						(lowerLine.includes('todo') && lowerLine.includes('thermal')) ||
-						(lowerLine.includes('mock thermal')) ||
-						(lowerLine.includes('fake thermal')) ||
-						(lowerLine.includes('placeholder thermal'))
+						lowerLine.includes('mock thermal') ||
+						lowerLine.includes('fake thermal') ||
+						lowerLine.includes('placeholder thermal')
 					) {
 						placeholderViolations.push({
 							file: file.replace(process.cwd(), '.'),
@@ -312,15 +321,12 @@ else:
 						});
 					}
 				});
-			} catch (error) {
-				// Skip files that don't exist
-				continue;
-			}
+			} catch (_error) {}
 		}
 
 		if (placeholderViolations.length > 0) {
 			const violationSummary = placeholderViolations
-				.map(v => `${v.file}:${v.line} - ${v.content}`)
+				.map((v) => `${v.file}:${v.line} - ${v.content}`)
 				.join('\n');
 
 			throw new Error(
@@ -328,7 +334,7 @@ else:
 
 ${violationSummary}
 
-All thermal monitoring must have real implementations for production readiness.`
+All thermal monitoring must have real implementations for production readiness.`,
 			);
 		}
 
@@ -364,7 +370,9 @@ else:
 `;
 
 		try {
-			const { stdout } = await execAsync(`cd ${process.cwd()} && python3 -c "${gracefulHandlingScript}"`);
+			const { stdout } = await execAsync(
+				`cd ${process.cwd()} && python3 -c "${gracefulHandlingScript}"`,
+			);
 			expect(stdout).toContain('✓ Graceful thermal handling test passed');
 		} catch (error) {
 			throw new Error(`brAInwav graceful thermal handling test failed: ${error.message}`);

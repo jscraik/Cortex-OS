@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { ZodError, type ZodIssue, z } from 'zod';
 import {
-        CORTEX_SEC_TOOL_ALLOWLIST,
-        cortexSecMcpTools,
-        type CortexSecTool,
+	CORTEX_SEC_TOOL_ALLOWLIST,
+	type CortexSecTool,
+	cortexSecMcpTools,
 } from '@cortex-os/cortex-sec';
+import { ZodError, type ZodIssue, z } from 'zod';
 import type { EnhancedSpanContext } from '../observability/otel.js';
 import {
 	recordAgentActivation,
@@ -72,7 +72,6 @@ function adaptSecurityTool(tool: CortexSecTool): MCPToolDefinition {
 		},
 	};
 }
-
 
 class OrchestrationToolError extends Error {
 	constructor(

@@ -1,9 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildChunkedContext } from '../semantics/ContextBuilder.js';
-import { randomUUID } from 'node:crypto';
 
 function makeTmpFile(content: string): string {
 	const p = join(tmpdir(), `ctx-${Date.now()}-${randomUUID().slice(0, 8)}.txt`);

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
+import { describe, expect, it } from 'vitest';
 
 // Import the sanitization function (needs to be implemented)
 import { sanitizeEventEnvelope } from '../../../a2a-core/src/validation/sanitizer.ts';
@@ -19,14 +19,14 @@ describe('A2A Event Envelope Sanitization', () => {
 					name: 'test-repo',
 					full_name: 'test/repo',
 					private: false,
-					description: '<script>alert("xss")</script>brAInwav repo'
-				}
+					description: '<script>alert("xss")</script>brAInwav repo',
+				},
 			},
 			routing: {
 				topic: 'github.repository.push',
 				partition_key: '123',
 				routing_key: 'github_repository_test_repo',
-				broadcast: false
+				broadcast: false,
 			},
 			priority: 'normal',
 			delivery_mode: 'at_least_once',
@@ -35,10 +35,10 @@ describe('A2A Event Envelope Sanitization', () => {
 				initial_delay_ms: 1000,
 				max_delay_ms: 30000,
 				backoff_multiplier: 2,
-				jitter: true
+				jitter: true,
 			},
 			correlation: {
-				correlation_id: 'test-correlation-001'
+				correlation_id: 'test-correlation-001',
 			},
 			metadata: {
 				version: '1.0',
@@ -49,13 +49,13 @@ describe('A2A Event Envelope Sanitization', () => {
 				tags: ['<script>malicious</script>tag1', 'safe-tag'],
 				labels: {
 					html: '<div onclick="steal()">Click me</div>',
-					text: 'Normal text content'
-				}
+					text: 'Normal text content',
+				},
 			},
 			source_info: {
 				service_name: 'brAInwav-test',
-				service_version: '1.0.0'
-			}
+				service_version: '1.0.0',
+			},
 		};
 
 		const sanitized = sanitizeEventEnvelope(maliciousEnvelope);
@@ -93,18 +93,20 @@ describe('A2A Event Envelope Sanitization', () => {
 						level3: {
 							level4: {
 								maliciousScript: '<script>document.cookie="stolen"</script>',
-								safeData: 'brAInwav processing complete'
-							}
-						}
-					}
-				}
-			}
+								safeData: 'brAInwav processing complete',
+							},
+						},
+					},
+				},
+			},
 		};
 
 		const sanitized = sanitizeEventEnvelope(deeplyNestedEnvelope);
-		
+
 		expect(sanitized.data.level1.level2.level3.level4.maliciousScript).toBe('');
-		expect(sanitized.data.level1.level2.level3.level4.safeData).toBe('brAInwav processing complete');
+		expect(sanitized.data.level1.level2.level3.level4.safeData).toBe(
+			'brAInwav processing complete',
+		);
 	});
 
 	it('preserves arrays and handles mixed content types', () => {
@@ -118,17 +120,17 @@ describe('A2A Event Envelope Sanitization', () => {
 					'Safe string',
 					123,
 					true,
-					{ 
+					{
 						name: '<script>evil()</script>Item Name',
 						value: 42,
-						active: true
+						active: true,
 					},
 					null,
-					'<iframe src="javascript:alert()">Content</iframe>'
+					'<iframe src="javascript:alert()">Content</iframe>',
 				],
 				count: 6,
-				valid: true
-			}
+				valid: true,
+			},
 		};
 
 		const sanitized = sanitizeEventEnvelope(mixedContentEnvelope);
@@ -140,7 +142,7 @@ describe('A2A Event Envelope Sanitization', () => {
 		expect(sanitized.data.items[3]).toEqual({
 			name: 'Item Name',
 			value: 42,
-			active: true
+			active: true,
 		});
 		expect(sanitized.data.items[4]).toBeNull();
 		expect(sanitized.data.items[5]).toBe('Content');
@@ -161,8 +163,8 @@ describe('A2A Event Envelope Sanitization', () => {
 				emptyObject: {},
 				emptyArray: [],
 				specialChars: '!@#$%^&*()_+-=[]{}|;:,.<>?',
-				unicodeContent: '🚀 brAInwav 🤖 <script>hack()</script> 🎯'
-			}
+				unicodeContent: '🚀 brAInwav 🤖 <script>hack()</script> 🎯',
+			},
 		};
 
 		const sanitized = sanitizeEventEnvelope(edgeCaseEnvelope);

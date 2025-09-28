@@ -1,7 +1,7 @@
-import type { Request as ExpressRequest, RequestHandler } from 'express';
 import { Buffer } from 'node:buffer';
 import { Readable } from 'node:stream';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
+import type { Request as ExpressRequest, RequestHandler } from 'express';
 
 type BetterAuthHandler = (request: Request) => Promise<Response>;
 type HeadersWithGetSetCookie = Headers & {

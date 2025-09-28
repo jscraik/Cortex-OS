@@ -7,11 +7,10 @@
 
 export { EvidenceEnhancer } from './evidence-enhancer.js';
 export type {
-    EnhancedEvidence,
-    EvidenceContext,
-    EvidenceEnhancerConfig,
-    EvidenceSource,
-    HealthStatus,
-    TelemetryEvent
+	EnhancedEvidence,
+	EvidenceContext,
+	EvidenceEnhancerConfig,
+	EvidenceSource,
+	HealthStatus,
+	TelemetryEvent,
 } from './types.js';
-

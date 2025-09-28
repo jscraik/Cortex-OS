@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import { prisma } from '../db/prisma-client.js';
 import { formatUserRecord } from '../auth/utils.js';
+import { prisma } from '../db/prisma-client.js';
 
 type AuthenticatedUser = {
 	id: string;

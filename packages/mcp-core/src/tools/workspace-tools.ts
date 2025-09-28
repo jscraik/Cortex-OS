@@ -47,7 +47,7 @@ export interface WorkspaceFile {
 // Workspace Create Tool
 // ================================
 
-// brAInwav Schema: Simplified without unnecessary type gymnastics  
+// brAInwav Schema: Simplified without unnecessary type gymnastics
 const WorkspacePermissionsSchema = z.object({
 	read: z.boolean(),
 	write: z.boolean(),
@@ -183,7 +183,7 @@ export interface WorkspaceListResult {
 	};
 }
 
-// brAInwav Utility: Extract workspace loading logic  
+// brAInwav Utility: Extract workspace loading logic
 const loadWorkspaceDirectories = async (baseDir: string, maxResults: number) => {
 	try {
 		await stat(baseDir);
@@ -228,7 +228,8 @@ export class WorkspaceListTool implements McpTool<WorkspaceListInput, WorkspaceL
 		}
 
 		try {
-			const baseDir = process.env.CORTEX_WORKSPACES_DIR || join(process.cwd(), '.cortex-workspaces');
+			const baseDir =
+				process.env.CORTEX_WORKSPACES_DIR || join(process.cwd(), '.cortex-workspaces');
 			const maxResults = input.maxResults ?? 50;
 			const includeMetadata = input.includeMetadata ?? false;
 

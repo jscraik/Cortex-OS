@@ -66,7 +66,7 @@ describe('CircuitBreakerManager', () => {
 			const fn = vi.fn().mockRejectedValue(new Error('Command failed'));
 
 			// Mock the run method to execute the command and call failure callback
-			mockCircuitBreaker.run.mockImplementation((success: () => void, failure: () => void) => {
+			mockCircuitBreaker.run.mockImplementation((_success: () => void, failure: () => void) => {
 				fn().catch(() => {
 					failure();
 				});

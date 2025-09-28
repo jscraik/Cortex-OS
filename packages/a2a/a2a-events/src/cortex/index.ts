@@ -1,45 +1,38 @@
 // Cortex-OS A2A Events - Main Export
 export const CORTEX_A2A_EVENTS_VERSION = '1.0.0';
 
+export * from './agent-events';
 // Core Event Types
 export * from './api-events.js';
 export * from './mcp-events.js';
 export * from './rag-events';
-export * from './agent-events';
 
 // Routing and Utilities
 export * from './routing';
 
-import {
-	type ApiRequestReceivedEvent,
-	type ApiRequestRoutedEvent,
-	type ApiResponseGeneratedEvent,
-	type ApiWebhookReceivedEvent,
-	type ApiJobCreatedEvent,
-	createApiEvent,
-} from './api-events.js';
-
-import {
-	type McpToolExecutionEvent,
-	type McpToolResponseEvent,
-	type McpContextCreatedEvent,
-	type McpErrorEvent,
-	createMcpEvent,
-} from './mcp-events.js';
-
-import {
-	type RagDocumentIndexedEvent,
-	type RagQueryProcessedEvent,
-	type RagEmbeddingGeneratedEvent,
-	createRagEvent,
-} from './rag-events';
-
-import {
-	type AgentTaskCreatedEvent,
-	type AgentTaskCompletedEvent,
-	type AgentStateChangedEvent,
-	createAgentEvent,
+import type {
+	AgentStateChangedEvent,
+	AgentTaskCompletedEvent,
+	AgentTaskCreatedEvent,
 } from './agent-events';
+import type {
+	ApiJobCreatedEvent,
+	ApiRequestReceivedEvent,
+	ApiRequestRoutedEvent,
+	ApiResponseGeneratedEvent,
+	ApiWebhookReceivedEvent,
+} from './api-events.js';
+import type {
+	McpContextCreatedEvent,
+	McpErrorEvent,
+	McpToolExecutionEvent,
+	McpToolResponseEvent,
+} from './mcp-events.js';
+import type {
+	RagDocumentIndexedEvent,
+	RagEmbeddingGeneratedEvent,
+	RagQueryProcessedEvent,
+} from './rag-events';
 
 // Union type for all Cortex-OS events
 export type CortexEvent =

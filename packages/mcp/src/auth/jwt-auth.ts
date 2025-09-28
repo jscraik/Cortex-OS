@@ -33,7 +33,7 @@ export class JWTAuth {
 		this.jwtAvailable = true;
 		try {
 			jwt.sign({}, 'test');
-		} catch (error) {
+		} catch (_error) {
 			console.warn('JWT library not available, falling back to static token');
 			this.jwtAvailable = false;
 		}

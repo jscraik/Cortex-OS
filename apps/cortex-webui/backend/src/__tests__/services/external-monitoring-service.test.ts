@@ -81,7 +81,9 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		process.env.AUTH_MONITORING_WEBHOOK_URL = 'https://hooks.brainwav.dev/analytics';
 		process.env.AUTH_MONITORING_TIMEOUT_MS = '2000';
 
-		const { externalMonitoringService } = await import('../../services/externalMonitoringService.js');
+		const { externalMonitoringService } = await import(
+			'../../services/externalMonitoringService.js'
+		);
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
 
@@ -133,7 +135,9 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		process.env.AUTH_MONITORING_NEW_RELIC_ACCOUNT_ID = '12345';
 		process.env.AUTH_MONITORING_NEW_RELIC_INSERT_KEY = 'nr-key';
 
-		const { externalMonitoringService } = await import('../../services/externalMonitoringService.js');
+		const { externalMonitoringService } = await import(
+			'../../services/externalMonitoringService.js'
+		);
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
 
@@ -150,7 +154,9 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 
 		fetchSpy.mockResolvedValueOnce(mockFetchResponse(500, false));
 
-		const { externalMonitoringService } = await import('../../services/externalMonitoringService.js');
+		const { externalMonitoringService } = await import(
+			'../../services/externalMonitoringService.js'
+		);
 
 		await expect(externalMonitoringService.emitAuthEvent(sampleEvent)).resolves.toBeUndefined();
 
@@ -160,31 +166,33 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		);
 	});
 
-		it('logs warning when webhook request times out but resolves', async () => {
-			vi.useFakeTimers();
-			try {
-				process.env.AUTH_MONITORING_WEBHOOK_URL = 'https://hooks.brainwav.dev/timeout';
-				process.env.AUTH_MONITORING_TIMEOUT_MS = '100';
+	it('logs warning when webhook request times out but resolves', async () => {
+		vi.useFakeTimers();
+		try {
+			process.env.AUTH_MONITORING_WEBHOOK_URL = 'https://hooks.brainwav.dev/timeout';
+			process.env.AUTH_MONITORING_TIMEOUT_MS = '100';
 
-				fetchSpy.mockImplementationOnce((_url: RequestInfo | URL, init?: RequestInit) =>
-					rejectOnAbort(init?.signal as AbortSignal | undefined),
-				);
+			fetchSpy.mockImplementationOnce((_url: RequestInfo | URL, init?: RequestInit) =>
+				rejectOnAbort(init?.signal as AbortSignal | undefined),
+			);
 
-				const { externalMonitoringService } = await import('../../services/externalMonitoringService.js');
+			const { externalMonitoringService } = await import(
+				'../../services/externalMonitoringService.js'
+			);
 
-				const emitPromise = externalMonitoringService.emitAuthEvent(sampleEvent);
-				await vi.advanceTimersByTimeAsync(250);
-				await expect(emitPromise).resolves.toBeUndefined();
-				expect(counterAddSpy).toHaveBeenCalledWith(
-					1,
-					expect.objectContaining({ status: 'success', actorType: 'user' }),
-				);
-				expect(warnSpy).toHaveBeenCalledWith(
-					'brAInwav external monitoring request error',
-					expect.objectContaining({ provider: 'webhook', reason: 'Aborted' }),
-				);
-			} finally {
-				vi.useRealTimers();
-			}
-		});
+			const emitPromise = externalMonitoringService.emitAuthEvent(sampleEvent);
+			await vi.advanceTimersByTimeAsync(250);
+			await expect(emitPromise).resolves.toBeUndefined();
+			expect(counterAddSpy).toHaveBeenCalledWith(
+				1,
+				expect.objectContaining({ status: 'success', actorType: 'user' }),
+			);
+			expect(warnSpy).toHaveBeenCalledWith(
+				'brAInwav external monitoring request error',
+				expect.objectContaining({ provider: 'webhook', reason: 'Aborted' }),
+			);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });

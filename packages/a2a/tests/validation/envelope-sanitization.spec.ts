@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createA2AEventEnvelope, type A2AEventEnvelope } from '../../a2a-events/src/github/envelope.ts';
-
 // Import the sanitization function
 import { sanitizeEventEnvelope } from '../../a2a-core/src/validation/sanitizer.ts';
+import { createA2AEventEnvelope } from '../../a2a-events/src/github/envelope.ts';
 
 describe('A2A Event Envelope Sanitization (TDD)', () => {
 	it('removes malicious scripts from repository descriptions', () => {
@@ -14,8 +13,8 @@ describe('A2A Event Envelope Sanitization (TDD)', () => {
 				name: 'test-repo',
 				full_name: 'test/repo',
 				private: false,
-				description: '<script>alert("xss")</script>brAInwav test repository'
-			}
+				description: '<script>alert("xss")</script>brAInwav test repository',
+			},
 		});
 
 		const sanitized = sanitizeEventEnvelope(maliciousRepo);
@@ -34,19 +33,19 @@ describe('A2A Event Envelope Sanitization (TDD)', () => {
 					id: 456,
 					number: 1,
 					title: 'Test Issue',
-					body: 'Clean issue body'
-				}
+					body: 'Clean issue body',
+				},
 			},
 			{
 				metadata: {
 					labels: {
 						malicious: '<script>document.cookie="stolen"</script>',
 						safe: 'brAInwav issue processing',
-						onclick: '<div onclick="steal()">Click me</div>'
+						onclick: '<div onclick="steal()">Click me</div>',
 					},
-					tags: ['<script>evil</script>security', 'safe-tag', 'brAInwav']
-				}
-			}
+					tags: ['<script>evil</script>security', 'safe-tag', 'brAInwav'],
+				},
+			},
 		);
 
 		const sanitized = sanitizeEventEnvelope(envelope);
@@ -64,8 +63,8 @@ describe('A2A Event Envelope Sanitization (TDD)', () => {
 			workflow: {
 				id: 789,
 				name: 'brAInwav CI Pipeline',
-				conclusion: 'success'
-			}
+				conclusion: 'success',
+			},
 		});
 
 		const sanitized = sanitizeEventEnvelope(envelope);
@@ -87,7 +86,7 @@ describe('A2A Event Envelope Sanitization (TDD)', () => {
 			{
 				event_type: 'github.error',
 				error_message: 'Test error',
-				error_code: 'TEST_ERROR'
+				error_code: 'TEST_ERROR',
 			},
 			{
 				metadata: {
@@ -95,10 +94,10 @@ describe('A2A Event Envelope Sanitization (TDD)', () => {
 						nullValue: null,
 						undefinedValue: undefined,
 						emptyString: '',
-						validString: 'brAInwav error handling'
-					}
-				}
-			}
+						validString: 'brAInwav error handling',
+					},
+				},
+			},
 		);
 
 		const sanitized = sanitizeEventEnvelope(envelope);

@@ -39,7 +39,7 @@ describe('A2A Error Recovery', () => {
 		const messages: A2AEventEnvelope[] = [];
 		let callCount = 0;
 
-		mockTransport.subscribe.mockImplementation((topics: string[], handler: Function) => {
+		mockTransport.subscribe.mockImplementation((_topics: string[], handler: Function) => {
 			// Simulate multiple messages
 			const envelopes = [
 				createEnvelope({
@@ -60,14 +60,14 @@ describe('A2A Error Recovery', () => {
 					try {
 						handler(env as A2AEventEnvelope);
 						messages.push(env as A2AEventEnvelope);
-					} catch (error) {
+					} catch (_error) {
 						consoleSpy(`Error processing message ${index}`);
 					}
 				}, 10 * index);
 			});
 		});
 
-		const handler = vi.fn().mockImplementation((msg: A2AEventEnvelope) => {
+		const handler = vi.fn().mockImplementation((_msg: A2AEventEnvelope) => {
 			callCount++;
 			if (callCount === 1) {
 				throw new Error('First handler error');
@@ -98,7 +98,7 @@ describe('A2A Error Recovery', () => {
 	it('should handle malformed envelopes in subscription', async () => {
 		let handlerCalled = false;
 
-		mockTransport.subscribe.mockImplementation((topics: string[], handler: Function) => {
+		mockTransport.subscribe.mockImplementation((_topics: string[], handler: Function) => {
 			// Send malformed envelope
 			setTimeout(() => {
 				try {
@@ -106,7 +106,7 @@ describe('A2A Error Recovery', () => {
 						// Missing required fields
 						data: { test: true },
 					} as A2AEventEnvelope);
-				} catch (error) {
+				} catch (_error) {
 					consoleSpy('Validation error');
 				}
 			}, 10);

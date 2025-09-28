@@ -222,7 +222,7 @@ const canonicalize = <T>(
 				`${r.id}|${r.success ? '1' : '0'}|${r.success ? JSON.stringify(r.value) : r.error || ''}`,
 		)
 		.join('\n');
-	return canonical + '\n--claims--\n' + JSON.stringify(claims);
+	return `${canonical}\n--claims--\n${JSON.stringify(claims)}`;
 };
 
 const computeDigest = async <T>(

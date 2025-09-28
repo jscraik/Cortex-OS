@@ -11,24 +11,27 @@ function sanitizeString(input: string): string {
 
 	// Remove script tags and their content
 	let sanitized = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-	
+
 	// Remove iframe with javascript protocol
-	sanitized = sanitized.replace(/<iframe[^>]*src=["']javascript:[^"']*["'][^>]*>.*?<\/iframe>/gi, '');
-	
+	sanitized = sanitized.replace(
+		/<iframe[^>]*src=["']javascript:[^"']*["'][^>]*>.*?<\/iframe>/gi,
+		'',
+	);
+
 	// Remove inline event handlers (onclick, onerror, etc.)
 	sanitized = sanitized.replace(/<[^>]*\s(on\w+)=["'][^"']*["'][^>]*>/gi, (match) => {
 		return match.replace(/\s(on\w+)=["'][^"']*["']/gi, '');
 	});
-	
+
 	// Remove img tags with onerror handlers, but preserve the alt text or content after
 	sanitized = sanitized.replace(/<img[^>]*onerror=["'][^"']*["'][^>]*>/gi, '');
-	
+
 	// Remove div with onclick and similar, but preserve inner text
 	sanitized = sanitized.replace(/<(\w+)[^>]*\s(on\w+)=["'][^"']*["'][^>]*>(.*?)<\/\1>/gi, '$3');
-	
+
 	// Remove any remaining HTML tags but preserve content
 	sanitized = sanitized.replace(/<[^>]*>/g, '');
-	
+
 	return sanitized;
 }
 
@@ -39,19 +42,19 @@ function sanitizeValue(value: unknown): unknown {
 	if (value === null || value === undefined) {
 		return value;
 	}
-	
+
 	if (typeof value === 'string') {
 		return sanitizeString(value);
 	}
-	
+
 	if (typeof value === 'number' || typeof value === 'boolean') {
 		return value;
 	}
-	
+
 	if (Array.isArray(value)) {
-		return value.map(item => sanitizeValue(item));
+		return value.map((item) => sanitizeValue(item));
 	}
-	
+
 	if (typeof value === 'object') {
 		const sanitizedObject: Record<string, unknown> = {};
 		for (const [key, val] of Object.entries(value)) {
@@ -59,7 +62,7 @@ function sanitizeValue(value: unknown): unknown {
 		}
 		return sanitizedObject;
 	}
-	
+
 	return value;
 }
 
@@ -74,6 +77,8 @@ export function sanitizeEventEnvelope(envelope: A2AEventEnvelope): A2AEventEnvel
 		source: envelope.source,
 		timestamp: envelope.timestamp,
 		data: sanitizeValue(envelope.data) as A2AEventEnvelope['data'],
-		metadata: envelope.metadata ? sanitizeValue(envelope.metadata) as A2AEventEnvelope['metadata'] : undefined
+		metadata: envelope.metadata
+			? (sanitizeValue(envelope.metadata) as A2AEventEnvelope['metadata'])
+			: undefined,
 	};
 }

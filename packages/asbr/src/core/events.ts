@@ -7,10 +7,10 @@
 
 import { EventEmitter } from 'node:events';
 import { appendFile } from 'node:fs/promises';
-import { createSecureId } from '../lib/secure-random.js';
 import type { Response } from 'express';
 import type { DefaultEventsMap, Server as IOServer, Socket } from 'socket.io';
 import { logError } from '../lib/logger.js';
+import { createSecureId } from '../lib/secure-random.js';
 import type { Config, Event, EventType } from '../types/index.js';
 import { getStatePath } from '../xdg/index.js';
 import { loadConfig } from './config.js';

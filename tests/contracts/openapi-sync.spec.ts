@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Router } from 'express';
 import { describe, expect, it } from 'vitest';
-import { apiOpenApiSpec, apiOpenApiJson } from '../../apps/api/src/openapi/spec.js';
+import { apiOpenApiJson, apiOpenApiSpec } from '../../apps/api/src/openapi/spec.js';
 import { apiV1Router } from '../../apps/api/src/routes/api-v1.js';
 import { authRouter } from '../../apps/api/src/routes/auth.js';
 

@@ -7,8 +7,8 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import { createPrefixedId, secureInt } from '../lib/secure-random.js';
 import { agentMetrics } from '../monitoring/prometheus-metrics.js';
-import { createPrefixedId, secureInt, secureRatio } from '../lib/secure-random.js';
 
 export interface AutoscalingConfig {
 	enabled: boolean;

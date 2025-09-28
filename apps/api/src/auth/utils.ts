@@ -1,5 +1,5 @@
-import bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
+import bcrypt from 'bcrypt';
 import { authenticator as baseAuthenticator } from 'otplib';
 import { prisma } from '../db/prisma-client.js';
 

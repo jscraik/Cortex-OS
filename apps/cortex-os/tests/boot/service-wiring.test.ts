@@ -53,7 +53,7 @@ describe('Service Container Wiring', () => {
 		// Retrieve the record
 		const retrieved = await memories.get('test-memory-1');
 		expect(retrieved).toBeDefined();
-		expect(retrieved!.content).toBe('Test memory content');
+		expect(retrieved?.content).toBe('Test memory content');
 	});
 
 	it('should provide functional orchestration service', () => {

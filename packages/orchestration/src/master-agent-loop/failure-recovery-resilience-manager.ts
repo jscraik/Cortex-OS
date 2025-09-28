@@ -1,5 +1,5 @@
-import { withEnhancedSpan } from '../observability/otel.js';
 import { createPrefixedId, secureRatio } from '../lib/secure-random.js';
+import { withEnhancedSpan } from '../observability/otel.js';
 
 // Enhanced types for Phase 2.3 Failure Recovery & Resilience
 export interface CircuitBreakerState {

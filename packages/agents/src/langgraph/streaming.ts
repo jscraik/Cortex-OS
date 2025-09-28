@@ -4,9 +4,9 @@
  * Implements real-time streaming of agent execution with event emission
  */
 
+import { EventEmitter } from 'node:events';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type { StateGraph } from '@langchain/langgraph';
-import { EventEmitter } from 'node:events';
 import type { CortexState } from '../CortexAgentLangGraph.js';
 import { createSecureId } from '../lib/secure-random.js';
 
