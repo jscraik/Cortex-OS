@@ -575,7 +575,6 @@ Each phase documents:
 
 - Create `packages/mcp-core/src/codegen/typescript-api-generator.ts` that converts MCP server specifications into TypeScript APIs
 - Implement runtime dispatcher that maps function calls to `dispatchTools` from orchestration package, exposing helpers for single, batch, and streaming tool invocations
-- Generate type-safe APIs with branded JSDoc, discriminated union error handling, and telemetry hooks for request/response envelopes
 - Emit deterministic file layout (`index.ts`, `runtime.ts`, `manifest.d.ts`) so vitest snapshots stay stable and code mode imports remain predictable
 - Integration with existing N0State and LangGraph workflows through a `registerCodeModeRuntime` helper that binds runtimes to session metadata
 
