@@ -983,23 +983,6 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
         }
 
         private snapshotContext(context: PromptContext): PromptContext {
-                return {
-                        ...context,
-                        capabilities: [...context.capabilities],
-                        tools: [...context.tools],
-                        contextTags: context.contextTags ? [...context.contextTags] : undefined,
-                        objectives: context.objectives ? [...context.objectives] : undefined,
-                        planningContext: context.planningContext
-                                ? {
-                                          ...context.planningContext,
-                                          objectives: Array.isArray(context.planningContext.objectives)
-                                                  ? [...context.planningContext.objectives]
-                                                  : context.planningContext.objectives,
-                                          contextTags: Array.isArray(context.planningContext.contextTags)
-                                                  ? [...context.planningContext.contextTags]
-                                                  : context.planningContext.contextTags,
-                                  }
-                                : undefined,
-                };
+                return structuredClone(context);
         }
 }
