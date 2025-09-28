@@ -401,25 +401,25 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/orchestration/tests/dsp/long-horizon-planner.test.ts` | ⚪ todo | Validate planning phases, adaptive depth, and context isolation |
-| `packages/orchestration/tests/dsp/context-manager.test.ts` | ⚪ todo | Ensure planning contexts quarantine correctly |
-| `packages/orchestration/tests/coordination/adaptive-strategy.test.ts` | ⚪ todo | Adaptive coordination picks strategy based on capability + history |
-| `packages/orchestration/tests/coordination/structured-planning-integration.test.ts` | ⚪ todo | Long-horizon planner integrates with multi-agent orchestration |
+| `packages/orchestration/tests/dsp/long-horizon-planner.test.ts` | ✅ passes | Validates adaptive depth, persistence hooks, and context isolation |
+| `packages/orchestration/tests/dsp/context-manager.test.ts` | ✅ passes | Ensures planning contexts quarantine correctly |
+| `packages/orchestration/tests/coordination/adaptive-strategy.test.ts` | ✅ passes | Adaptive coordination picks strategy based on capability + history |
+| `packages/orchestration/tests/coordination/structured-planning-integration.test.ts` | ✅ passes | Long-horizon planner integrates with LangGraph orchestration |
 
 ### Phase 11 Implementation
 
 #### Work Completed
-- ☐ None yet – DSP integration is awaiting dedicated planning modules.
+- ✅ Added persistence-aware `LongHorizonPlanner` orchestration with context isolation and adaptive telemetry.
+- ✅ Introduced `PlanningContextManager` for deterministic context quarantine and bounded history.
+- ✅ Delivered `AdaptiveCoordinationManager` + strategy selection utilities with branded telemetry emission.
+- ✅ Wired a planning-aware LangGraph execution bridge that keeps N0 state transitions aligned with planner output.
 
 #### Fixes Outstanding
-- [ ] Extend `packages/orchestration/src/lib/long-horizon-planner.ts` with persistence hooks once desired behaviour is codified in tests.
-- [ ] Implement a `PlanningContextManager` to isolate context windows and trim stale history between planning phases.
-- [ ] Create `AdaptiveCoordinationManager` and supporting `strategy-selector` utilities with telemetry and `brAInwav` branding.
-- [ ] Integrate the planners into orchestration workflows so planning outputs synchronise with LangGraph state transitions.
+- [ ] Continue refining telemetry aggregation once additional planners land.
 
 ### Phase 11 Validation
 
-- Add focussed DSP suites to CI: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/dsp/**/*.test.ts"` once tests exist.
+- New focused Vitest suites: `pnpm --filter @cortex-os/orchestration test:safe -- --run packages/orchestration/tests/dsp/long-horizon-planner.test.ts packages/orchestration/tests/dsp/context-manager.test.ts packages/orchestration/tests/coordination/adaptive-strategy.test.ts packages/orchestration/tests/coordination/structured-planning-integration.test.ts`
 
 ### Phase 11 Blockers
 
