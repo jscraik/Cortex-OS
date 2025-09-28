@@ -548,7 +548,7 @@ Each phase documents:
 
 [documents to reference](/Users/jamiecraik/.Cortex-OS/project-documentation/code-mode/README.md)
 
-### Phase 19 Tests to Author First
+### Phase 19 Tests to Write First
 
 1. `packages/mcp-core/tests/typescript-api-generator.test.ts`
    - Generate a synthetic MCP server manifest, invoke the generator, and snapshot the emitted TypeScript namespace to ensure deterministic method signatures, brAInwav JSDoc, and runtime dispatch wiring.
