@@ -134,17 +134,10 @@ export class AdaptiveCoordinationManager {
                 if (latest && latest.decision.strategy === outcome.strategy && !latest.outcome) {
                         latest.outcome = outcome;
                 } else {
-                        history.push({
-                                decision: {
-                                        taskId: outcome.taskId,
-                                        strategy: outcome.strategy,
-                                        assignments: [],
-                                        confidence: 0,
-                                        telemetry: [],
-                                        statePatch: {},
-                                },
-                                outcome,
-                        });
+                        console.warn(
+                                `AdaptiveCoordinator: Attempted to record outcome for task '${outcome.taskId}' with strategy '${outcome.strategy}', but no corresponding decision was found in history. Outcome not recorded.`
+                        );
+                        return;
                 }
 
                 this.trimHistory(outcome.taskId);
