@@ -474,7 +474,7 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 
 function ensureHooks(hooks: HookRunner | undefined, options?: HookLoadOptions): Promise<HookRunner> {
         if (hooks) {
-                                return Promise.resolve(hooks);
+                return Promise.resolve(hooks);
         }
         const instance = new CortexHooks();
         return instance.init(options).then(() => instance);
