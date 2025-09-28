@@ -548,14 +548,36 @@ Each phase documents:
 
 [documents to reference](/Users/jamiecraik/.Cortex-OS/project-documentation/code-mode/README.md)
 
+### Phase 19 Tests to Author First
+
+1. `packages/mcp-core/tests/typescript-api-generator.test.ts`
+   - Generate a synthetic MCP server manifest, invoke the generator, and snapshot the emitted TypeScript namespace to ensure deterministic method signatures, brAInwav JSDoc, and runtime dispatch wiring.
+   - Assert that the runtime shim proxies through `dispatchTools` with the provided tool name and payload, failing if any placeholder strings or missing branding appear.
+   - Cover error-path behaviour by simulating an unknown tool reference and verifying the thrown `CodeModeDispatchError` includes brAInwav attribution.
+2. `packages/cortex-mcp/tests/python-code-executor.test.ts`
+   - Build a temporary FastMCP workspace and assert that generated modules create a compliant `pyproject.toml`, dependency lock, and async client wrapper.
+   - Validate execution by running an async coroutine that batches tool calls, confirming thermal hooks emit `brAInwav thermal` log lines and respect safety timeouts.
+   - Add failure-mode coverage where AST validation rejects disallowed imports, ensuring the executor raises branded `CodeModeSecurityError` exceptions.
+3. `apps/cortex-code/tests/rust-code-mode.test.rs`
+   - Drive the Rust code generator with a manifest containing filesystem and observability tools, asserting the emitted crate opts into edition 2024 and uses sandboxed temp directories.
+   - Mock the MCP transport to confirm the generated async functions issue real protocol requests and map structured errors into `CodeModeExecutionError` with brAInwav context.
+   - Exercise parallel execution by spawning rayon tasks and verifying telemetry spans are produced for each batch.
+4. `packages/orchestration/tests/code-mode-dispatcher.test.ts`
+   - Construct an N0State fixture with queued code-mode actions for TypeScript, Python, and Rust, ensuring the dispatcher selects the appropriate runtime and forwards traces to `dispatchTools`.
+   - Assert language fallbacks trigger when thermal or sandbox constraints fire, updating N0State with the downgraded language and branded audit trail.
+5. `tests/integration/multi-language-code-mode.test.ts`
+   - Launch orchestrated workflows that mix language runtimes, verifying A2A events broadcast completion metadata, thermal signals, and failure telemetry with brAInwav prefixes.
+   - Confirm token-efficiency metrics and wall-clock timings are recorded in `performance-history.json` for benchmarking comparisons against traditional tool calls.
+
 ### Phase 19 Implementation
 
 #### TypeScript Code Mode Generator
 
 - Create `packages/mcp-core/src/codegen/typescript-api-generator.ts` that converts MCP server specifications into TypeScript APIs
-- Implement runtime dispatcher that maps function calls to `dispatchTools` from orchestration package
-- Generate type-safe APIs with proper error handling and brAInwav attribution
-- Integration with existing N0State and LangGraph workflows
+- Implement runtime dispatcher that maps function calls to `dispatchTools` from orchestration package, exposing helpers for single, batch, and streaming tool invocations
+- Generate type-safe APIs with branded JSDoc, discriminated union error handling, and telemetry hooks for request/response envelopes
+- Emit deterministic file layout (`index.ts`, `runtime.ts`, `manifest.d.ts`) so vitest snapshots stay stable and code mode imports remain predictable
+- Integration with existing N0State and LangGraph workflows through a `registerCodeModeRuntime` helper that binds runtimes to session metadata
 
 ```typescript
 // Generated brAInwav TypeScript API example
@@ -586,9 +608,10 @@ for (const file of files.filter(f => f.endsWith('.ts'))) {
 #### Python Code Mode with FastMCP Integration
 
 - Enhance `packages/cortex-mcp/cortex_fastmcp_server_v2.py` with code generation and execution tools
-- Create `packages/cortex-mcp/codegen/python_api_generator.py` following pyproject.toml structure
-- Safe code execution environment with thermal monitoring integration
-- A2A event integration for cross-language coordination
+- Create `packages/cortex-mcp/codegen/python_api_generator.py` following pyproject.toml structure and emitting async client wrappers under `code_mode/generated`
+- Safe code execution environment with thermal monitoring integration, AST-based sandboxing, and explicit allow-list for builtins/imports
+- A2A event integration for cross-language coordination, including `code_mode.runtime_started` and `code_mode.runtime_failed` events tagged with language/runtime IDs
+- Persist execution metadata (duration, token counts, thermal state) to the FastMCP telemetry sink so regression tests can assert deterministic outputs
 
 ```python
 # Generated brAInwav Python API example
@@ -617,9 +640,10 @@ for batch in chunks(files, 50):  # Efficient batching
 #### Rust Code Mode with Edition 2024
 
 - Add `CodeModeTool` to `apps/cortex-code/codex-rs/mcp-server/src/tools.rs`
-- Create `apps/cortex-code/codex-rs/mcp-server/src/code_generator.rs` for Rust API generation
-- Safe code execution with temporary Cargo projects using edition 2024
-- Integration with existing A2A stdio bridge pattern
+- Create `apps/cortex-code/codex-rs/mcp-server/src/code_generator.rs` for Rust API generation, emitting crates under `.code_mode/<session>` with Cargo manifests and lockfiles
+- Safe code execution with temporary Cargo projects using edition 2024, sandboxed filesystem permissions, and configurable CPU/memory ceilings surfaced via environment variables
+- Integration with existing A2A stdio bridge pattern plus structured logging so downstream analytics capture compile/run phases with brAInwav attribution
+- Provide a `cleanup_stale_projects` routine invoked post-execution to prune temp workspaces, ensuring repeated tests remain deterministic
 
 ```rust
 // Generated brAInwav Rust API example
@@ -655,23 +679,31 @@ files.par_iter()
 
 #### LangGraph Integration
 
-- Create code mode execution nodes that support all three languages
-- Enhanced `packages/orchestration/src/langgraph/code-mode-node.ts`
-- Cross-language state sharing via N0State adapters
-- Thermal-aware execution with automatic language fallbacks
+- Create code mode execution nodes that support all three languages, modelling each runtime as a subgraph node with explicit success/failure edges
+- Enhance `packages/orchestration/src/langgraph/code-mode-node.ts` with language-specific runtime adapters, telemetry spans, and branded status messages for UI streaming
+- Cross-language state sharing via N0State adapters, persisting execution transcripts, performance metrics, and fallback history in a normalized structure
+- Thermal-aware execution with automatic language fallbacks that update orchestration budgets, trigger A2A thermal alerts, and annotate subsequent planner steps with mitigation strategies
+- Provide deterministic seed management and sandbox capability negotiation so tests can stub runtime availability without modifying production code paths
 
 ### Phase 19 Validation
 
-- Add code mode testing to CI: `pnpm test:code-mode:all-languages`
-- Include performance benchmarks comparing tool calls vs code mode efficiency
-- Validate brAInwav branding in all generated APIs and execution outputs
-- Test thermal coordination across TypeScript, Python, and Rust components
+- Add code mode testing to CI: `pnpm test:code-mode:all-languages` (executes TypeScript, Python, and Rust suites with deterministic manifests)
+- Provide targeted commands for local focus:
+  - `pnpm --filter @cortex-os/mcp-core exec vitest run tests/typescript-api-generator.test.ts`
+  - `pnpm --filter @cortex-os/cortex-mcp exec vitest run tests/python-code-executor.test.ts`
+  - `cargo test -p codex-mcp-server --test rust-code-mode`
+  - `pnpm --filter @cortex-os/orchestration exec vitest run tests/code-mode-dispatcher.test.ts`
+  - `pnpm exec vitest --config tests/integration/vitest.config.ts run tests/integration/multi-language-code-mode.test.ts`
+- Include performance benchmarks comparing tool calls vs code mode efficiency and record deltas in `performance-history.json`
+- Validate brAInwav branding in all generated APIs and execution outputs via snapshot assertions and structured log inspection
+- Test thermal coordination across TypeScript, Python, and Rust components, ensuring A2A events and fallback pathways are exercised in automation
 
 ### Phase 19 Blockers
 
-- Requires stable MCP infrastructure across all three language implementations
-- Code execution security must be validated for safe model-generated code
-- Cross-language A2A event coordination needs comprehensive testing
+- Requires stable MCP infrastructure across all three language implementations, including manifest discovery and credential management exposed by `packages/mcp-core`
+- Code execution security must be validated for safe model-generated code; complete threat modelling and integrate Semgrep/static checks before enabling CI gating
+- Cross-language A2A event coordination needs comprehensive testing, especially for retries and network partitions when runtimes emit `code_mode.runtime_failed`
+- Performance benchmarking harness depends on `scripts/perf-autotune.mjs` consuming new metrics; ensure telemetry format changes are backward compatible
 
 ---
 
