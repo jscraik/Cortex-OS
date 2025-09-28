@@ -230,13 +230,13 @@ export class DynamicSpeculativePlanner {
 		const complexityMultiplier = Math.min(complexity / 5, 2); // Cap at 2x
 		const priorityMultiplier = priority > 8 ? 1.5 : 1;
 		const complianceRisk = this.planningContext.metadata.compliance?.riskLevel ?? 'low';
-		const riskMultiplier = complianceRisk === 'critical'
-		        ? 1.75
-		        : complianceRisk === 'high'
-		                ? 1.5
-		                : complianceRisk === 'medium'
-		                        ? 1.2
-		                        : 1;
+		const riskMultipliers: Record<string, number> = {
+			critical: 1.75,
+			high: 1.5,
+			medium: 1.2,
+			low: 1,
+		};
+		const riskMultiplier = riskMultipliers[complianceRisk] ?? 1;
 
 		return Math.ceil(baseDepth * complexityMultiplier * priorityMultiplier * riskMultiplier);
 	}
