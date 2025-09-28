@@ -956,7 +956,12 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 
                 const currentSet = new Set(current);
                 const previousSet = new Set(previous);
-                const intersectionSize = Array.from(currentSet).filter((value) => previousSet.has(value)).length;
+                let intersectionSize = 0;
+                for (const value of currentSet) {
+                        if (previousSet.has(value)) {
+                                intersectionSize++;
+                        }
+                }
                 const unionSize = new Set([...currentSet, ...previousSet]).size;
 
                 if (unionSize === 0) {
