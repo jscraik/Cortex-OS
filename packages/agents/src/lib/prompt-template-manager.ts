@@ -1,713 +1,630 @@
-/**
- * Enhanced Prompt Template Manager for Cortex-OS Agents
- * Implements structured prompt templates based on Deep Agents patterns
- * Follows nO Master Agent Loop architecture and maintains brAInwav branding
- */
+import {
+        PlanningPhase,
+        type PlanningContext,
+        type PromptContext,
+        type PromptTemplate,
+        type TemplateSelection,
+        type TemplateFilter,
+        type TemplateUsageRecord,
+        type TemplatePerformanceSnapshot,
+} from '../prompts';
+import { PROMPT_TEMPLATE_CATALOG } from '../prompts';
 
-// Define local interfaces to avoid cross-package imports
-export enum PlanningPhase {
-	INITIALIZATION = 'initialization',
-	ANALYSIS = 'analysis',
-	STRATEGY = 'strategy',
-	EXECUTION = 'execution',
-	VALIDATION = 'validation',
-	COMPLETION = 'completion',
+export interface PromptTemplateManagerOptions {
+        templates?: PromptTemplate[];
+        historyLimit?: number;
 }
 
-export interface PlanningContext {
-	id: string;
-	workspaceId?: string;
-	currentPhase: PlanningPhase;
-	compliance?: {
-		standards?: string[];
-		lastCheckedAt?: string | Date | null;
-		riskScore?: number;
-		outstandingViolations?: Array<{
-			id?: string;
-			severity?: 'low' | 'medium' | 'high' | 'critical';
-			description?: string;
-		}>;
-	};
-	[key: string]: unknown;
-}
-
-export interface PromptContext {
-	taskId: string;
-	agentId: string;
-	sessionId?: string;
-	complexity: number; // 1-10 scale
-	priority: number; // 1-10 scale
-	capabilities: string[];
-	tools: string[];
-	currentPhase?: PlanningPhase;
-	planningContext?: PlanningContext;
-	compliance?: PlanningContext['compliance'];
-	nOArchitecture: boolean;
-}
-
-export interface PromptTemplate {
-	id: string;
-	name: string;
-	description: string;
-	category: 'system' | 'task' | 'planning' | 'coordination' | 'error';
-	complexity: [number, number]; // min-max complexity range
-	template: string;
-	examples: Array<{
-		context: Partial<PromptContext>;
-		input: string;
-		expectedBehavior: string;
-	}>;
-	variables: string[];
-	brainwavBranding: boolean;
-	nOOptimized: boolean;
-}
-
-export interface TemplateSelection {
-	template: PromptTemplate;
-	confidence: number;
-	reasoning: string;
-	adaptations: string[];
-}
+const ISOLATION_ORDER: Record<string, number> = { none: 0, light: 1, strict: 2 };
 
 /**
  * Manages prompt templates with Deep Agents-inspired patterns
  * Optimized for nO Master Agent Loop architecture
  */
 export class PromptTemplateManager {
-	private readonly templates: Map<string, PromptTemplate>;
-	private readonly usageHistory: Map<
-		string,
-		Array<{
-			context: PromptContext;
-			effectiveness: number;
-			timestamp: Date;
-		}>
-	>;
-
-	constructor() {
-		this.templates = new Map();
-		this.usageHistory = new Map();
-		this.initializeDefaultTemplates();
-
-		console.log('brAInwav Prompt Template Manager: Initialized with nO architecture patterns');
-	}
-
-	/**
-	 * Select optimal prompt template based on context
-	 */
-	selectTemplate(context: PromptContext): TemplateSelection {
-		const candidates = this.findCandidateTemplates(context);
-
-		if (candidates.length === 0) {
-			return this.getFallbackTemplate(context);
-		}
-
-		// Score templates based on context match and historical effectiveness
-		const scored = candidates.map((template) => ({
-			template,
-			score: this.scoreTemplate(template, context),
-		}));
-
-		// Select best scoring template
-		let best = scored[0];
-		for (const candidate of scored.slice(1)) {
-			if (candidate.score > best.score) {
-				best = candidate;
-			}
-		}
-
-		const adaptations = this.generateAdaptations(best.template, context);
-
-		return {
-			template: best.template,
-			confidence: Math.min(best.score, 1.0),
-			reasoning: this.generateReasoningForSelection(best.template, context),
-			adaptations,
-		};
-	}
-
-	/**
-	 * Generate complete prompt from template and context
-	 */
-	generatePrompt(selection: TemplateSelection, context: PromptContext): string {
-		const { template } = selection;
-		let prompt = template.template;
-
-		// Apply variable substitutions
-		for (const variable of template.variables) {
-			const value = this.getVariableValue(variable, context);
-			prompt = prompt.replace(new RegExp(`{{${variable}}}`, 'g'), value);
-		}
-
-		// Apply context-specific adaptations
-		prompt = this.applyAdaptations(prompt, selection.adaptations, context);
-
-		// Ensure brAInwav branding
-		if (template.brainwavBranding) {
-			prompt = this.addBrainwavBranding(prompt, context);
-		}
-
-		console.log(`brAInwav Prompt Manager: Generated nO-optimized prompt for ${context.taskId}`);
-
-		return prompt;
-	}
-
-	/**
-	 * Record template usage for learning
-	 */
-	recordUsage(templateId: string, context: PromptContext, effectiveness: number): void {
-		if (!this.usageHistory.has(templateId)) {
-			this.usageHistory.set(templateId, []);
-		}
-
-		const history = this.usageHistory.get(templateId)!;
-		history.push({
-			context,
-			effectiveness,
-			timestamp: new Date(),
-		});
-
-		// Trim history to prevent memory bloat
-		if (history.length > 100) {
-			history.shift();
-		}
-
-		console.log(
-			`brAInwav Prompt Manager: Recorded usage for template ${templateId} with effectiveness ${effectiveness}`,
-		);
-	}
-
-	/**
-	 * Initialize default prompt templates based on Deep Agents patterns
-	 */
-	private initializeDefaultTemplates(): void {
-		// System prompt template for long-horizon tasks
-		this.templates.set('long-horizon-system', {
-			id: 'long-horizon-system',
-			name: 'Long-Horizon System Prompt',
-			description: 'Comprehensive system prompt for complex, multi-step tasks',
-			category: 'system',
-			complexity: [5, 10],
-			template: `You are a sophisticated AI agent from brAInwav, operating within the nO Master Agent Loop architecture. Your role is to handle complex, long-horizon tasks that require careful planning and execution.
-
-**Core Capabilities:**
-{{capabilities}}
-
-**Available Tools:**
-{{tools}}
-
-**Task Context:**
-- Task ID: {{taskId}}
-- Complexity Level: {{complexity}}/10
-- Priority: {{priority}}/10
-- Current Phase: {{currentPhase}}
-
-**Operating Principles:**
-
-1. **Planning First**: Always begin with explicit planning. Break down complex tasks into manageable phases:
-   - Initialization: Understand the task and gather context
-   - Analysis: Analyze requirements and constraints
-   - Strategy: Develop approach and select tools
-   - Execution: Implement the solution step by step
-   - Validation: Verify results and ensure quality
-   - Completion: Finalize and document outcomes
-
-2. **Tool Usage Guidelines**:
-   - Use workspace tools for persistent storage and organization
-   - Leverage planning tools to maintain task context
-   - Apply coordination tools for multi-agent workflows
-   - Always validate tool outputs before proceeding
-
-3. **Context Management**:
-   - Maintain clear separation between planning and execution contexts
-   - Use workspace files to offload information and prevent context pollution
-   - Document intermediate results for future reference
-   - Track progress explicitly using planning tools
-
-4. **Error Handling**:
-   - Implement graceful degradation when tools fail
-   - Provide clear error messages with brAInwav attribution
-   - Use fallback strategies for critical path failures
-   - Learn from errors to improve future performance
-
-5. **Quality Assurance**:
-   - Validate all outputs before marking tasks complete
-   - Use multiple verification approaches when possible
-   - Document assumptions and limitations
-   - Ensure all deliverables meet specified requirements
-
-Remember: You represent brAInwav's commitment to intelligent, reliable, and efficient AI assistance. Every interaction should reflect our high standards for quality and professionalism.
-
-**Current Task:**
-{{taskDescription}}`,
-			examples: [
-				{
-					context: { complexity: 8, priority: 9, capabilities: ['analysis', 'planning'] },
-					input: 'Analyze and refactor a complex codebase',
-					expectedBehavior:
-						'Begin with explicit planning phase, use workspace tools for organization, break down into analysis/strategy/execution phases',
-				},
-			],
-			variables: [
-				'capabilities',
-				'tools',
-				'taskId',
-				'complexity',
-				'priority',
-				'currentPhase',
-				'taskDescription',
-			],
-			brainwavBranding: true,
-			nOOptimized: true,
-		});
-
-		// Task-specific prompt for code analysis
-		this.templates.set('code-analysis-task', {
-			id: 'code-analysis-task',
-			name: 'Code Analysis Task Prompt',
-			description: 'Specialized prompt for code analysis and review tasks',
-			category: 'task',
-			complexity: [3, 8],
-			template: `**brAInwav Code Analysis Protocol**
-
-You are conducting a code analysis task within the nO Master Agent Loop architecture. Apply systematic analysis patterns:
-
-**Analysis Framework:**
-1. **Structure Analysis**: Examine code organization, patterns, and architecture
-2. **Quality Assessment**: Evaluate code quality, maintainability, and best practices
-3. **Security Review**: Identify potential security vulnerabilities and risks
-4. **Performance Evaluation**: Assess performance characteristics and optimization opportunities
-5. **Documentation Review**: Check documentation completeness and accuracy
-
-**Tools at Your Disposal:**
-{{tools}}
-
-**Analysis Guidelines:**
-- Use workspace tools to organize findings and maintain analysis state
-- Read files systematically, starting with entry points and configuration
-- Document patterns, anti-patterns, and recommendations
-- Provide specific, actionable feedback with examples
-- Consider the broader system context and integration points
-
-**Reporting Standards:**
-- Structure findings by category (structure, quality, security, performance, documentation)
-- Provide severity levels for issues (critical, major, minor, info)
-- Include code examples for recommendations
-- Suggest concrete improvement actions
-- Maintain brAInwav professional standards in all communications
-
-**Current Analysis Target:**
-{{taskDescription}}
-
-Complexity: {{complexity}}/10 | Priority: {{priority}}/10`,
-			examples: [
-				{
-					context: { complexity: 6, tools: ['read', 'grep', 'workspace-write'] },
-					input: 'Analyze JavaScript React components for security issues',
-					expectedBehavior:
-						'Systematic file reading, security pattern matching, organized reporting in workspace',
-				},
-			],
-			variables: ['tools', 'taskDescription', 'complexity', 'priority'],
-			brainwavBranding: true,
-			nOOptimized: true,
-		});
-
-		// Planning coordination prompt
-		this.templates.set('planning-coordination', {
-			id: 'planning-coordination',
-			name: 'Planning Coordination Prompt',
-			description: 'Prompt for coordinating multi-agent planning activities',
-			category: 'planning',
-			complexity: [4, 10],
-			template: `**brAInwav nO Planning Coordination**
-
-You are the planning coordinator in a multi-agent workflow. Your responsibility is to orchestrate planning activities across agents while maintaining coherent execution strategies.
-
-**Coordination Responsibilities:**
-1. **Plan Synthesis**: Combine individual agent plans into coherent workflows
-2. **Dependency Management**: Identify and resolve inter-agent dependencies
-3. **Resource Allocation**: Ensure optimal distribution of capabilities and tools
-4. **Timeline Coordination**: Synchronize agent activities for efficient execution
-5. **Quality Control**: Validate plans for completeness and feasibility
-
-**Available Coordination Tools:**
-{{tools}}
-
-**Current Planning Context:**
-- Task Complexity: {{complexity}}/10
-- Available Agents: {{agentCount}}
-- Planning Phase: {{currentPhase}}
-- Session: {{sessionId}}
-
-**Coordination Protocols:**
-- Use coordination tools to communicate with other agents
-- Maintain planning state in workspace for persistence
-- Apply nO Master Agent Loop patterns for agent interaction
-- Ensure all agents have clear, actionable assignments
-- Monitor planning progress and adjust strategies as needed
-
-**Quality Standards:**
-- Plans must be specific, measurable, and achievable
-- Dependencies must be explicitly documented
-- Resource conflicts must be resolved before execution
-- All agents must confirm understanding of their assignments
-- Fallback strategies must be defined for critical path failures
-
-**Planning Objective:**
-{{taskDescription}}
-
-Apply brAInwav's systematic approach to multi-agent coordination.`,
-			examples: [
-				{
-					context: { complexity: 7, currentPhase: PlanningPhase.STRATEGY },
-					input: 'Coordinate deployment planning across 3 agents',
-					expectedBehavior:
-						'Create structured plan with dependencies, resource allocation, and agent assignments',
-				},
-			],
-			variables: [
-				'tools',
-				'complexity',
-				'agentCount',
-				'currentPhase',
-				'sessionId',
-				'taskDescription',
-			],
-			brainwavBranding: true,
-			nOOptimized: true,
-		});
-
-		// Error recovery prompt
-		this.templates.set('error-recovery', {
-			id: 'error-recovery',
-			name: 'Error Recovery Prompt',
-			description: 'Prompt for handling errors and implementing recovery strategies',
-			category: 'error',
-			complexity: [1, 10],
-			template: `**brAInwav Error Recovery Protocol**
-
-An error condition has been detected. Apply systematic recovery procedures:
-
-**Error Context:**
-- Error Type: {{errorType}}
-- Severity: {{errorSeverity}}
-- Current Phase: {{currentPhase}}
-- Affected Components: {{affectedComponents}}
-
-**Recovery Strategy:**
-1. **Assess Impact**: Determine scope and severity of the error condition
-2. **Stabilize**: Implement immediate measures to prevent cascade failures
-3. **Analyze**: Identify root cause and contributing factors
-4. **Recover**: Execute appropriate recovery procedures
-5. **Validate**: Confirm successful recovery and system stability
-6. **Learn**: Document lessons learned for future prevention
-
-**Recovery Tools:**
-{{tools}}
-
-**Recovery Guidelines:**
-- Prioritize system stability over task completion
-- Use workspace tools to document recovery actions
-- Communicate status to coordinating agents when applicable
-- Implement graceful degradation where possible
-- Ensure all recovery actions maintain brAInwav quality standards
-
-**Available Fallback Strategies:**
-- Retry with different parameters
-- Switch to alternative tools or approaches
-- Request human intervention for critical decisions
-- Escalate to higher-level coordination agents
-- Implement partial completion with clear documentation
-
-**Error Details:**
-{{errorDetails}}
-
-Apply brAInwav's commitment to reliable, resilient operation.`,
-			examples: [
-				{
-					context: { complexity: 3, priority: 9 },
-					input: 'File read operation failed due to permission error',
-					expectedBehavior:
-						'Assess alternatives, try different approach, document recovery actions',
-				},
-			],
-			variables: [
-				'errorType',
-				'errorSeverity',
-				'currentPhase',
-				'affectedComponents',
-				'tools',
-				'errorDetails',
-			],
-			brainwavBranding: true,
-			nOOptimized: true,
-		});
-
-		console.log('brAInwav Prompt Manager: Initialized 4 default nO-optimized templates');
-	}
-
-	private findCandidateTemplates(context: PromptContext): PromptTemplate[] {
-		const candidates: PromptTemplate[] = [];
-
-		for (const template of this.templates.values()) {
-			// Check complexity range
-			if (
-				context.complexity >= template.complexity[0] &&
-				context.complexity <= template.complexity[1]
-			) {
-				candidates.push(template);
-			}
-		}
-
-		// Prefer nO-optimized templates
-		return candidates.sort((a, b) => {
-			if (a.nOOptimized && !b.nOOptimized) return -1;
-			if (!a.nOOptimized && b.nOOptimized) return 1;
-			return 0;
-		});
-	}
-
-	private scoreTemplate(template: PromptTemplate, context: PromptContext): number {
-		let score = 0.5; // Base score
-
-		// Complexity match scoring
-		const complexityRange = template.complexity[1] - template.complexity[0];
-		const complexityPosition = (context.complexity - template.complexity[0]) / complexityRange;
-		const complexityScore = 1 - Math.abs(complexityPosition - 0.5) * 2; // Peak at middle of range
-		score += complexityScore * 0.3;
-
-		// nO optimization bonus
-		if (template.nOOptimized && context.nOArchitecture) {
-			score += 0.2;
-		}
-
-		// Historical effectiveness
-		const history = this.usageHistory.get(template.id);
-		if (history && history.length > 0) {
-			const recentHistory = history.slice(-10); // Last 10 uses
-			const avgEffectiveness =
-				recentHistory.reduce((sum, use) => sum + use.effectiveness, 0) / recentHistory.length;
-			score += avgEffectiveness * 0.3;
-		}
-
-		// Capability match
-		const capabilityMatch =
-			template.variables.includes('capabilities') && context.capabilities.length > 0;
-		if (capabilityMatch) {
-			score += 0.1;
-		}
-
-		return Math.min(score, 1.0);
-	}
-
-	private getFallbackTemplate(context: PromptContext): TemplateSelection {
-		const fallback = this.templates.get('long-horizon-system')!;
-		return {
-			template: fallback,
-			confidence: 0.3,
-			reasoning: `brAInwav: Using fallback template for task ${context.taskId} due to no suitable candidates`,
-			adaptations: [`maintain reliability for agent ${context.agentId}`],
-		};
-	}
-
-	private generateAdaptations(_template: PromptTemplate, context: PromptContext): string[] {
-		const adaptations: string[] = [];
-
-		// High complexity adaptations
-		if (context.complexity > 7) {
-			adaptations.push('enhanced error handling guidance');
-			adaptations.push('additional validation steps');
-		}
-
-		// High priority adaptations
-		if (context.priority > 8) {
-			adaptations.push('expedited execution protocols');
-			adaptations.push('simplified decision making');
-		}
-
-		// Phase-specific adaptations
-		if (context.currentPhase) {
-			adaptations.push(`optimized for ${context.currentPhase} phase`);
-		}
-
-		return adaptations;
-	}
-
-	private generateReasoningForSelection(template: PromptTemplate, context: PromptContext): string {
-		return (
-			`brAInwav Template Manager: Selected "${template.name}" for complexity ${context.complexity}, ` +
-			`priority ${context.priority}. Template optimized for nO architecture: ${template.nOOptimized}. ` +
-			`Branding enabled: ${template.brainwavBranding}.`
-		);
-	}
-
-	private getVariableValue(variable: string, context: PromptContext): string {
-		const complianceValue = this.resolveComplianceVariable(variable, context);
-		if (complianceValue !== null) {
-			return complianceValue;
-		}
-		switch (variable) {
-			case 'taskId':
-				return context.taskId;
-			case 'agentId':
-				return context.agentId;
-			case 'sessionId':
-				return context.sessionId || 'unknown';
-			case 'complexity':
-				return context.complexity.toString();
-			case 'priority':
-				return context.priority.toString();
-			case 'capabilities':
-				return context.capabilities.join(', ');
-			case 'tools':
-				return context.tools.join(', ');
-			case 'currentPhase':
-				return context.currentPhase || 'initialization';
-			case 'agentCount':
-				return '1'; // Default for single agent
-			case 'taskDescription':
-				return 'Task description not provided';
-			case 'errorType':
-				return 'unknown_error';
-			case 'errorSeverity':
-				return 'moderate';
-			case 'affectedComponents':
-				return 'unknown';
-			case 'errorDetails':
-				return 'Error details not available';
-			default:
-				return `{{${variable}}}`;
-		}
-	}
-
-	private resolveComplianceVariable(variable: string, context: PromptContext): string | null {
-		if (!variable.startsWith('compliance')) {
-			return null;
-		}
-		const presentation = this.buildCompliancePresentation(context);
-		switch (variable) {
-			case 'complianceStandards':
-				return presentation.standards;
-			case 'complianceRisk':
-				return presentation.risk;
-			case 'complianceViolations':
-				return presentation.violations;
-			case 'complianceGuidance':
-				return presentation.guidance;
-			default:
-				return null;
-		}
-	}
-
-	private buildCompliancePresentation(context: PromptContext): {
-		standards: string;
-		risk: string;
-		violations: string;
-		guidance: string;
-	} {
-		const source = context.compliance ?? context.planningContext?.compliance;
-		if (!source) {
-			return {
-				standards: 'brAInwav baseline (auto)',
-				risk: 'Nominal (0.00)',
-				violations: 'No active violations logged',
-				guidance: this.deriveComplianceGuidance(0, 0),
-			};
-		}
-		const standards = source.standards?.length
-			? source.standards.join(', ')
-			: 'brAInwav baseline (auto)';
-		const boundedScore = typeof source.riskScore === 'number' ? Math.min(Math.max(source.riskScore, 0), 1) : 0;
-		let riskLabel = 'Nominal';
-		if (boundedScore >= 0.7) {
-			riskLabel = 'High';
-		} else if (boundedScore >= 0.4) {
-			riskLabel = 'Elevated';
-		}
-		const violationsList = (source.outstandingViolations ?? [])
-			.slice(0, 3)
-			.map((violation) => {
-				const severity = violation.severity ?? 'info';
-				const description = violation.description ?? 'review pending';
-				return `${severity.toUpperCase()}: ${description}`;
-			})
-			.join('; ');
-		return {
-			standards,
-			risk: `${riskLabel} (${boundedScore.toFixed(2)})`,
-			violations: violationsList || 'No active violations logged',
-			guidance: this.deriveComplianceGuidance(
-				boundedScore,
-				source.outstandingViolations?.length ?? 0,
-			),
-		};
-	}
-
-	private deriveComplianceGuidance(score: number, violationCount: number): string {
-		if (score >= 0.7 || violationCount > 0) {
-			return 'Run security.run_semgrep_scan and security.validate_compliance immediately; document outcomes in the brAInwav compliance tracker.';
-		}
-		if (score >= 0.4) {
-			return 'Queue security.analyze_vulnerabilities and security.check_dependencies, then review remediation owners.';
-		}
-		return 'Maintain the routine brAInwav security.check_dependencies cadence and archive reports for audit readiness.';
-	}
-
-	private applyAdaptations(prompt: string, adaptations: string[], context: PromptContext): string {
-		if (adaptations.length === 0) return prompt;
-
-		const adaptationHeader = `\n**Context Adaptations for brAInwav nO Architecture (task ${context.taskId}):**\n`;
-		const adaptationSection = adaptationHeader + adaptations.map((a) => `- ${a}`).join('\n') + '\n';
-		return prompt + adaptationSection;
-	}
-
-	private addBrainwavBranding(prompt: string, context: PromptContext): string {
-		if (prompt.includes('brAInwav')) return prompt; // Already branded
-
-		const branding =
-			'\n**Powered by brAInwav** | Task: ' +
-			context.taskId +
-			' | nO Architecture: ' +
-			context.nOArchitecture +
-			'\n';
-		return prompt + branding;
-	}
-
-	/**
-	 * Get template statistics for monitoring
-	 */
-	getStats(): {
-		totalTemplates: number;
-		nOOptimizedTemplates: number;
-		averageEffectiveness: number;
-		mostUsedTemplate: string;
-	} {
-		const totalTemplates = this.templates.size;
-		const nOOptimizedTemplates = Array.from(this.templates.values()).filter(
-			(t) => t.nOOptimized,
-		).length;
-
-		let totalEffectiveness = 0;
-		let totalUsages = 0;
-		let mostUsedTemplate = 'unknown';
-		let maxUsages = 0;
-
-		for (const [templateId, history] of this.usageHistory.entries()) {
-			if (history.length > maxUsages) {
-				maxUsages = history.length;
-				mostUsedTemplate = templateId;
-			}
-
-			totalUsages += history.length;
-			totalEffectiveness += history.reduce((sum, use) => sum + use.effectiveness, 0);
-		}
-
-		return {
-			totalTemplates,
-			nOOptimizedTemplates,
-			averageEffectiveness: totalUsages > 0 ? totalEffectiveness / totalUsages : 0,
-			mostUsedTemplate,
-		};
-	}
+        private readonly templates = new Map<string, PromptTemplate>();
+        private readonly usageHistory = new Map<string, TemplateUsageRecord[]>();
+        private readonly historyLimit: number;
+
+        constructor(options?: PromptTemplateManagerOptions) {
+                this.historyLimit = options?.historyLimit ?? 200;
+                this.initializeDefaultTemplates(options?.templates ?? []);
+                console.log('brAInwav Prompt Template Manager: Initialized with structured template library');
+        }
+
+        registerTemplate(template: PromptTemplate): void {
+                this.templates.set(template.id, template);
+        }
+
+        registerTemplates(templates: PromptTemplate[]): void {
+                for (const template of templates) {
+                        this.registerTemplate(template);
+                }
+        }
+
+        listTemplates(filter: TemplateFilter = {}): PromptTemplate[] {
+                const templates = Array.from(this.templates.values()).filter((template) =>
+                        this.matchesFilter(template, filter),
+                );
+                return templates.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        getTemplateById(id: string): PromptTemplate | undefined {
+                return this.templates.get(id);
+        }
+
+        /**
+         * Select optimal prompt template based on context
+         */
+        selectTemplate(context: PromptContext): TemplateSelection {
+                const candidates = this.findCandidateTemplates(context);
+                if (candidates.length === 0) {
+                        return this.getFallbackTemplate(context);
+                }
+
+                const scored = candidates
+                        .map((template) => ({ template, score: this.scoreTemplate(template, context) }))
+                        .sort((a, b) => b.score - a.score);
+
+                const best = scored[0];
+                const adaptations = this.generateAdaptations(best.template, context);
+
+                return {
+                        template: best.template,
+                        confidence: Math.min(Math.max(best.score, 0.1), 1),
+                        reasoning: this.generateReasoningForSelection(best.template, context, best.score),
+                        adaptations,
+                };
+        }
+
+        /**
+         * Generate complete prompt from template and context
+         */
+        generatePrompt(selection: TemplateSelection, context: PromptContext): string {
+                const { template } = selection;
+                let prompt = template.template;
+
+                for (const variable of template.variables) {
+                        const value = this.getVariableValue(variable, context);
+                        prompt = prompt.replace(new RegExp(`{{${variable}}}`, 'g'), value);
+                }
+
+                prompt = this.applyAdaptations(prompt, selection.adaptations, context);
+
+                if (template.brainwavBranding) {
+                        prompt = this.addBrainwavBranding(prompt, context);
+                }
+
+                console.log(`brAInwav Prompt Manager: Generated nO-optimized prompt for ${context.taskId}`);
+                return prompt;
+        }
+
+        /**
+         * Record template usage for learning
+         */
+        recordUsage(templateId: string, context: PromptContext, effectiveness: number): void {
+                const record: TemplateUsageRecord = {
+                        context: this.cloneContext(context),
+                        effectiveness: this.clampEffectiveness(effectiveness),
+                        timestamp: new Date(),
+                };
+
+                if (!this.usageHistory.has(templateId)) {
+                        this.usageHistory.set(templateId, []);
+                }
+
+                const history = this.usageHistory.get(templateId)!;
+                history.push(record);
+
+                if (history.length > this.historyLimit) {
+                        history.splice(0, history.length - this.historyLimit);
+                }
+
+                console.log(
+                        `brAInwav Prompt Manager: Recorded usage for template ${templateId} with effectiveness ${record.effectiveness}`,
+                );
+        }
+
+        getPerformanceSnapshot(): TemplatePerformanceSnapshot[] {
+                return Array.from(this.templates.values())
+                        .map((template) => this.summarizePerformance(template))
+                        .sort((a, b) => b.totalUses - a.totalUses || a.name.localeCompare(b.name));
+        }
+
+        getStats(): {
+                totalTemplates: number;
+                nOOptimizedTemplates: number;
+                averageEffectiveness: number;
+                mostUsedTemplate: string;
+        } {
+                const snapshot = this.getPerformanceSnapshot();
+                const totalTemplates = this.templates.size;
+                const nOOptimizedTemplates = snapshot.filter((entry) => {
+                        const template = this.templates.get(entry.templateId);
+                        return template?.nOOptimized ?? false;
+                }).length;
+                const totalUses = snapshot.reduce((sum, entry) => sum + entry.totalUses, 0);
+                const totalEffectiveness = snapshot.reduce(
+                        (sum, entry) => sum + entry.averageEffectiveness * entry.totalUses,
+                        0,
+                );
+                const mostUsed = snapshot.reduce<{ id: string; uses: number }>(
+                        (acc, entry) => (entry.totalUses > acc.uses ? { id: entry.templateId, uses: entry.totalUses } : acc),
+                        { id: 'unknown', uses: -1 },
+                );
+
+                return {
+                        totalTemplates,
+                        nOOptimizedTemplates,
+                        averageEffectiveness: totalUses > 0 ? totalEffectiveness / totalUses : 0,
+                        mostUsedTemplate: mostUsed.id,
+                };
+        }
+
+        private initializeDefaultTemplates(additionalTemplates: PromptTemplate[]): void {
+                const combined = [...PROMPT_TEMPLATE_CATALOG, ...additionalTemplates];
+                this.registerTemplates(combined);
+                console.log(
+                        `brAInwav Prompt Manager: Initialized ${combined.length} catalog templates; active total ${this.templates.size}`,
+                );
+        }
+
+        private matchesFilter(template: PromptTemplate, filter: TemplateFilter): boolean {
+                if (filter.category && template.category !== filter.category) {
+                        return false;
+                }
+                if (filter.supportsMultiAgent && !template.supportsMultiAgent) {
+                        return false;
+                }
+                if (filter.phase) {
+                        if (!template.phases?.includes(filter.phase)) {
+                                return false;
+                        }
+                }
+                if (filter.tags?.length) {
+                        if (!template.tags) {
+                                return false;
+                        }
+                        const hasAllTags = filter.tags.every((tag) => template.tags!.includes(tag));
+                        if (!hasAllTags) {
+                                return false;
+                        }
+                }
+                return true;
+        }
+
+        private findCandidateTemplates(context: PromptContext): PromptTemplate[] {
+                return Array.from(this.templates.values())
+                        .filter((template) => this.isComplexityCompatible(template, context))
+                        .filter((template) => this.isIsolationCompatible(template, context));
+        }
+
+        private isComplexityCompatible(template: PromptTemplate, context: PromptContext): boolean {
+                const [min, max] = template.complexity;
+                const tolerance = 1;
+                return context.complexity >= min - tolerance && context.complexity <= max + tolerance;
+        }
+
+        private isIsolationCompatible(template: PromptTemplate, context: PromptContext): boolean {
+                if (!context.contextIsolation || !template.contextIsolation) {
+                        return true;
+                }
+                return this.getIsolationLevel(template.contextIsolation) >= this.getIsolationLevel(context.contextIsolation);
+        }
+
+        private scoreTemplate(template: PromptTemplate, context: PromptContext): number {
+                let score = 0.35;
+                score += this.scoreComplexityMatch(template, context);
+                score += this.scorePhaseAlignment(template, context);
+                score += this.scoreMultiAgentCompatibility(template, context);
+                score += this.scoreTagAlignment(template, context);
+                score += this.scoreIsolationAlignment(template, context);
+                score += this.scoreComplianceAwareness(template, context);
+                score += this.scorePriorityAlignment(template, context);
+                score += this.scoreHistoricalEffectiveness(template.id, context);
+                if (template.nOOptimized && context.nOArchitecture) {
+                        score += 0.1;
+                }
+                return Math.max(0.1, Math.min(score, 1));
+        }
+
+        private scoreComplexityMatch(template: PromptTemplate, context: PromptContext): number {
+                const [min, max] = template.complexity;
+                if (context.complexity < min - 1 || context.complexity > max + 1) {
+                        return -0.2;
+                }
+                if (max === min) {
+                        return context.complexity === min ? 0.25 : -0.1;
+                }
+                const normalized = (context.complexity - min) / (max - min);
+                const distance = Math.abs(normalized - 0.5);
+                return 0.25 - distance * 0.25;
+        }
+
+        private scorePhaseAlignment(template: PromptTemplate, context: PromptContext): number {
+                if (!context.currentPhase) {
+                        return 0.05;
+                }
+                if (!template.phases?.length) {
+                        return 0.02;
+                }
+                return template.phases.includes(context.currentPhase) ? 0.15 : -0.03;
+        }
+
+        private scoreMultiAgentCompatibility(template: PromptTemplate, context: PromptContext): number {
+                const agentCount = context.agentCount ?? 1;
+                if (agentCount <= 1) {
+                        return template.supportsMultiAgent ? 0.02 : 0.03;
+                }
+                return template.supportsMultiAgent ? 0.1 : -0.05;
+        }
+
+        private scoreTagAlignment(template: PromptTemplate, context: PromptContext): number {
+                if (!context.contextTags?.length || !template.tags?.length) {
+                        return 0;
+                }
+                const overlap = context.contextTags.filter((tag) => template.tags!.includes(tag)).length;
+                if (overlap === 0) {
+                        return -0.05;
+                }
+                return Math.min(overlap / template.tags.length, 1) * 0.15;
+        }
+
+        private scoreIsolationAlignment(template: PromptTemplate, context: PromptContext): number {
+                if (!context.contextIsolation || !template.contextIsolation) {
+                        return 0.05;
+                }
+                const templateLevel = this.getIsolationLevel(template.contextIsolation);
+                const contextLevel = this.getIsolationLevel(context.contextIsolation);
+                return templateLevel >= contextLevel ? 0.1 : -0.05;
+        }
+
+        private scoreComplianceAwareness(template: PromptTemplate, context: PromptContext): number {
+                const risk = this.getComplianceRiskScore(context);
+                if (risk < 0.4) {
+                        return 0;
+                }
+                if (template.tags?.includes('compliance') || template.category === 'reflection') {
+                        return risk >= 0.7 ? 0.12 : 0.08;
+                }
+                return template.category === 'system' || template.category === 'error' ? 0.04 : -0.05;
+        }
+
+        private scorePriorityAlignment(template: PromptTemplate, context: PromptContext): number {
+                if (context.priority >= 8) {
+                        if (template.tags?.includes('rapid') || template.category === 'task') {
+                                return 0.08;
+                        }
+                        return -0.02;
+                }
+                if (context.priority <= 3 && template.category === 'system') {
+                        return 0.03;
+                }
+                return 0;
+        }
+
+        private scoreHistoricalEffectiveness(templateId: string, context: PromptContext): number {
+                const history = this.usageHistory.get(templateId);
+                if (!history?.length) {
+                        return 0;
+                }
+                const relevant = history.filter((record) => this.isContextSimilar(record.context, context));
+                const sample = relevant.length > 0 ? relevant : history.slice(-10);
+                const total = sample.reduce((sum, record) => sum + record.effectiveness, 0);
+                return (total / sample.length) * 0.3;
+        }
+
+        private isContextSimilar(a: PromptContext, b: PromptContext): boolean {
+                const samePhase = !a.currentPhase || !b.currentPhase || a.currentPhase === b.currentPhase;
+                const sameAgents = (a.agentCount ?? 1) === (b.agentCount ?? 1);
+                const tagsOverlap =
+                        !a.contextTags?.length || !b.contextTags?.length
+                                ? true
+                                : a.contextTags.some((tag) => b.contextTags?.includes(tag));
+                return samePhase && sameAgents && tagsOverlap;
+        }
+
+        private getFallbackTemplate(context: PromptContext): TemplateSelection {
+                const fallback = this.templates.get('long-horizon-system');
+                if (!fallback) {
+                        throw new Error('brAInwav Prompt Manager: Long-horizon system template missing');
+                }
+                return {
+                        template: fallback,
+                        confidence: 0.3,
+                        reasoning: `brAInwav: Using fallback template for task ${context.taskId} due to no suitable candidates`,
+                        adaptations: [`maintain reliability for agent ${context.agentId}`],
+                };
+        }
+
+        private generateAdaptations(template: PromptTemplate, context: PromptContext): string[] {
+                const adaptations: string[] = [];
+                if (context.complexity > 7) {
+                        adaptations.push('enhanced error handling guidance');
+                        adaptations.push('additional validation steps');
+                }
+                if (context.priority > 8) {
+                        adaptations.push('expedited execution protocols');
+                        adaptations.push('document checkpoints succinctly');
+                }
+                if (context.currentPhase) {
+                        adaptations.push(`optimized for ${context.currentPhase} phase`);
+                }
+                const agentCount = context.agentCount ?? 1;
+                if (agentCount > 1) {
+                        const message = template.supportsMultiAgent
+                                ? `multi-agent orchestration for ${agentCount} agents`
+                                : `coordinate ${agentCount} agents despite single-agent template; document delegation explicitly`;
+                        adaptations.push(message);
+                }
+                if (context.contextIsolation === 'strict') {
+                        adaptations.push('maintain strict context isolation boundaries');
+                }
+                const risk = this.getComplianceRiskScore(context);
+                if (risk >= 0.4) {
+                        const presentation = this.buildCompliancePresentation(context);
+                        const label = risk >= 0.7 ? 'high' : 'elevated';
+                        adaptations.push(`compliance risk ${label}; ${presentation.guidance}`);
+                }
+                return adaptations;
+        }
+
+        private generateReasoningForSelection(
+                template: PromptTemplate,
+                context: PromptContext,
+                score: number,
+        ): string {
+                const metadata: string[] = [`category ${template.category}`];
+                if (template.phases?.length) {
+                        metadata.push(`phases ${template.phases.join(', ')}`);
+                }
+                if (template.supportsMultiAgent) {
+                        metadata.push('multi-agent ready');
+                }
+                if (template.tags?.length) {
+                        metadata.push(`tags ${template.tags.join(', ')}`);
+                }
+                const compliance = (this.getComplianceRiskScore(context) * 100).toFixed(0);
+                return (
+                        `brAInwav Template Manager: Selected "${template.name}" (score ${score.toFixed(2)}) ` +
+                        `for task ${context.taskId}. Metadata: ${metadata.join(' | ')}. ` +
+                        `Compliance risk considered at ${compliance} percentile.`
+                );
+        }
+
+        private getVariableValue(variable: string, context: PromptContext): string {
+                const complianceValue = this.resolveComplianceVariable(variable, context);
+                if (complianceValue !== null) {
+                        return complianceValue;
+                }
+                switch (variable) {
+                        case 'taskId':
+                                return context.taskId;
+                        case 'agentId':
+                                return context.agentId;
+                        case 'sessionId':
+                                return context.sessionId || 'unknown';
+                        case 'complexity':
+                                return context.complexity.toString();
+                        case 'priority':
+                                return context.priority.toString();
+                        case 'capabilities':
+                                return this.formatList(context.capabilities, 'capabilities');
+                        case 'tools':
+                                return this.formatList(context.tools, 'tools');
+                        case 'currentPhase':
+                                return context.currentPhase ?? 'initialization';
+                        case 'agentCount':
+                                return (context.agentCount ?? 1).toString();
+                        case 'taskDescription':
+                                return context.taskDescription ?? 'Task description not provided';
+                        case 'contextIsolation':
+                                return context.contextIsolation ?? 'unspecified';
+                        case 'errorType':
+                                return 'unknown_error';
+                        case 'errorSeverity':
+                                return 'moderate';
+                        case 'affectedComponents':
+                                return 'unknown';
+                        case 'errorDetails':
+                                return 'Error details not available';
+                        default:
+                                return `{{${variable}}}`;
+                }
+        }
+
+        private resolveComplianceVariable(variable: string, context: PromptContext): string | null {
+                if (!variable.startsWith('compliance')) {
+                        return null;
+                }
+                const presentation = this.buildCompliancePresentation(context);
+                switch (variable) {
+                        case 'complianceStandards':
+                                return presentation.standards;
+                        case 'complianceRisk':
+                                return presentation.risk;
+                        case 'complianceViolations':
+                                return presentation.violations;
+                        case 'complianceGuidance':
+                                return presentation.guidance;
+                        default:
+                                return null;
+                }
+        }
+
+        private buildCompliancePresentation(context: PromptContext): {
+                standards: string;
+                risk: string;
+                violations: string;
+                guidance: string;
+        } {
+                const source = this.getComplianceSource(context);
+                if (!source) {
+                        return {
+                                standards: 'brAInwav baseline (auto)',
+                                risk: 'Nominal (0.00)',
+                                violations: 'No active violations logged',
+                                guidance: this.deriveComplianceGuidance(0, 0),
+                        };
+                }
+                const standards = source.standards?.length
+                        ? source.standards.join(', ')
+                        : 'brAInwav baseline (auto)';
+                const boundedScore = this.getComplianceRiskScore(context);
+                const riskLabel = boundedScore >= 0.7 ? 'High' : boundedScore >= 0.4 ? 'Elevated' : 'Nominal';
+                const violationsList = (source.outstandingViolations ?? [])
+                        .slice(0, 3)
+                        .map((violation) => {
+                                const severity = violation.severity ?? 'info';
+                                const description = violation.description ?? 'review pending';
+                                return `${severity.toUpperCase()}: ${description}`;
+                        })
+                        .join('; ');
+                return {
+                        standards,
+                        risk: `${riskLabel} (${boundedScore.toFixed(2)})`,
+                        violations: violationsList || 'No active violations logged',
+                        guidance: this.deriveComplianceGuidance(
+                                boundedScore,
+                                source.outstandingViolations?.length ?? 0,
+                        ),
+                };
+        }
+
+        private deriveComplianceGuidance(score: number, violationCount: number): string {
+                if (score >= 0.7 || violationCount > 0) {
+                        return 'Run security.run_semgrep_scan and security.validate_compliance immediately; document outcomes in the brAInwav compliance tracker.';
+                }
+                if (score >= 0.4) {
+                        return 'Queue security.analyze_vulnerabilities and security.check_dependencies, then review remediation owners.';
+                }
+                return 'Maintain the routine brAInwav security.check_dependencies cadence and archive reports for audit readiness.';
+        }
+
+        private applyAdaptations(prompt: string, adaptations: string[], context: PromptContext): string {
+                if (adaptations.length === 0) {
+                        return prompt;
+                }
+                const adaptationHeader = `\n**Context Adaptations for brAInwav nO Architecture (task ${context.taskId}):**\n`;
+                const adaptationSection = adaptationHeader + adaptations.map((a) => `- ${a}`).join('\n') + '\n';
+                return prompt + adaptationSection;
+        }
+
+        private addBrainwavBranding(prompt: string, context: PromptContext): string {
+                if (prompt.includes('brAInwav')) {
+                        return prompt;
+                }
+                const branding =
+                        '\n**Powered by brAInwav** | Task: ' +
+                        context.taskId +
+                        ' | nO Architecture: ' +
+                        context.nOArchitecture +
+                        '\n';
+                return prompt + branding;
+        }
+
+        private summarizePerformance(template: PromptTemplate): TemplatePerformanceSnapshot {
+                const history = this.usageHistory.get(template.id) ?? [];
+                const totalUses = history.length;
+                const totalEffectiveness = history.reduce((sum, record) => sum + record.effectiveness, 0);
+                return {
+                        templateId: template.id,
+                        name: template.name,
+                        category: template.category,
+                        totalUses,
+                        averageEffectiveness: totalUses > 0 ? totalEffectiveness / totalUses : 0,
+                        lastUsedAt: totalUses > 0 ? history[totalUses - 1].timestamp : null,
+                        phasePerformance: this.aggregatePhasePerformance(history),
+                        multiAgentUsageRate: this.calculateMultiAgentUsageRate(history),
+                        supportsMultiAgent: Boolean(template.supportsMultiAgent),
+                };
+        }
+
+        private aggregatePhasePerformance(
+                history: TemplateUsageRecord[],
+        ): TemplatePerformanceSnapshot['phasePerformance'] {
+                const summary: TemplatePerformanceSnapshot['phasePerformance'] = {};
+                for (const record of history) {
+                        if (!record.context.currentPhase) {
+                                continue;
+                        }
+                        const existing = summary[record.context.currentPhase] ?? { total: 0, averageEffectiveness: 0 };
+                        const total = existing.total + 1;
+                        const cumulative = existing.averageEffectiveness * existing.total + record.effectiveness;
+                        summary[record.context.currentPhase] = {
+                                total,
+                                averageEffectiveness: cumulative / total,
+                        };
+                }
+                return summary;
+        }
+
+        private calculateMultiAgentUsageRate(history: TemplateUsageRecord[]): number {
+                if (history.length === 0) {
+                        return 0;
+                }
+                const multiAgentUses = history.filter((record) => (record.context.agentCount ?? 1) > 1).length;
+                return multiAgentUses / history.length;
+        }
+
+        private clampEffectiveness(effectiveness: number): number {
+                if (Number.isNaN(effectiveness)) {
+                        return 0;
+                }
+                return Math.min(Math.max(effectiveness, 0), 1);
+        }
+
+        private cloneContext(context: PromptContext): PromptContext {
+                return {
+                        ...context,
+                        capabilities: [...context.capabilities],
+                        tools: [...context.tools],
+                        contextTags: context.contextTags ? [...context.contextTags] : undefined,
+                        planningContext: context.planningContext
+                                ? { ...context.planningContext, compliance: this.cloneCompliance(context.planningContext.compliance) }
+                                : undefined,
+                        compliance: this.cloneCompliance(context.compliance),
+                };
+        }
+
+        private cloneCompliance(
+                compliance?: PlanningContext['compliance'],
+        ): PlanningContext['compliance'] | undefined {
+                if (!compliance) {
+                        return undefined;
+                }
+                return {
+                        standards: compliance.standards ? [...compliance.standards] : undefined,
+                        lastCheckedAt: compliance.lastCheckedAt ?? undefined,
+                        riskScore: compliance.riskScore,
+                        outstandingViolations: compliance.outstandingViolations
+                                ? compliance.outstandingViolations.map((violation) => ({ ...violation }))
+                                : undefined,
+                };
+        }
+
+        private formatList(values: string[], label: string): string {
+                if (values.length === 0) {
+                        return `No ${label} configured`;
+                }
+                return values.map((value) => `- ${value}`).join('\n');
+        }
+
+        private getIsolationLevel(level: string): number {
+                return ISOLATION_ORDER[level] ?? 0;
+        }
+
+        private getComplianceSource(context: PromptContext): PlanningContext['compliance'] | null {
+                return context.compliance ?? context.planningContext?.compliance ?? null;
+        }
+
+        private getComplianceRiskScore(context: PromptContext): number {
+                const source = this.getComplianceSource(context);
+                if (!source || typeof source.riskScore !== 'number') {
+                        return 0;
+                }
+                return Math.min(Math.max(source.riskScore, 0), 1);
+        }
 }
+
+export { PlanningPhase };
