@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Optional, Protocol
 
 try:  # pragma: no cover - optional dependency
     import psutil  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
+except (ImportError, ModuleNotFoundError):  # pragma: no cover - optional dependency
     psutil = None
 
 from .a2a.events import create_mlx_thermal_event
