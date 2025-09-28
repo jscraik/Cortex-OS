@@ -165,7 +165,7 @@ function createDefaultAgent(id: string, role: AgentRole, capabilities: string[])
                 capabilities,
                 status: 'available',
                 metadata: {
-                        brainwavManaged: true,
+                        brAInwavManaged: true,
                         createdBy: 'brAInwav',
                 },
                 lastSeen: new Date(),
