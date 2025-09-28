@@ -396,25 +396,28 @@ Each phase documents:
 
 | Area | Test | Status | Action |
 | --- | --- | --- | --- |
-| Slash commands | `packages/commands/tests/slash-integration.test.ts` | ⚪ todo | End-to-end `/help`, `/agents`, `/model`, `/compact` coverage |
-| Hook filesystem | `packages/hooks/tests/filesystem-config.test.ts` | ⚪ todo | `.cortex/hooks/**` YAML hot reload |
-| Agent templates | `packages/agents/tests/file-agent-loader.test.ts` | ⚪ todo | `.cortex/agents/**` to LangGraph subgraph compilation |
-| Kernel binding | `packages/kernel/tests/tool-binding.test.ts` | ⚪ todo | `bindKernelTools()` returns complete tool set |
+| Slash commands | `packages/commands/tests/slash-integration.test.ts` | ✅ done | Added `runSlash` orchestration with builtin short-circuits and project/user command precedence |
+| Hook filesystem | `packages/hooks/tests/filesystem-config.test.ts` | ✅ done | Deterministic `.cortex/hooks/**` loader + hot reload watcher |
+| Agent templates | `packages/agents/tests/file-agent-loader.test.ts` | ✅ done | `.cortex/agents/**` loader with precedence + SubagentManager hot reload |
+| Kernel binding | `packages/kernel/tests/tool-binding.test.ts` | ✅ done | `bindKernelTools()` exposes shell, fs, and http tools with allow-lists |
 
 ### Phase 10 Implementation
 
 #### Work Completed
-- ☐ None yet – slash command orchestration is queued behind planning phases.
+- ✅ Delivered `runSlash` aggregator that merges builtin adapters with disk-backed `.cortex/commands` (project overrides user) and branded unknown-command responses.
+- ✅ Hardened command, hook, and agent loaders with precedence rules, hot reload support, and defensive parsing that logs branded failures instead of crashing.
+- ✅ Extended `SubagentManager` to watch `.cortex/agents/**` (Markdown + YAML) and surface normalized configs for LangGraph tooling.
+- ✅ Implemented `bindKernelTools()` with shell execution, filesystem reads, and HTTP fetch utilities guarded by allow-lists, byte caps, and timeouts.
 
 #### Fixes Outstanding
-- [ ] Implement `.cortex/commands`, `.cortex/hooks`, and `.cortex/agents` loaders with the documented precedence rules (project overrides user).
-- [ ] Extend `bindKernelTools` so it stitches shell, filesystem, and web fetch tools with strict allow-lists and timeout enforcement.
-- [ ] Surface command metadata (allowed tools, preferred models) into the orchestration state so LangGraph migrations remain policy-aligned.
+- ✅ Surface command metadata (allowed tools, preferred models) into orchestration state for LangGraph policy alignment.
 
 ### Phase 10 Validation
 
-- Create Vitest suites covering slash command flows (`packages/commands/tests/slash-integration.test.ts`) plus loader hot-reload behaviours.
-- Add kernel binding tests to guarantee `bindKernelTools()` returns the full sanctioned toolset.
+- ✅ `pnpm dlx vitest run tests/slash-integration.test.ts --config vitest.config.ts` (from `packages/commands`)
+- ✅ `pnpm dlx vitest run tests/file-agent-loader.test.ts --config vitest.config.ts` (from `packages/agents`)
+- ✅ `pnpm dlx vitest run tests/filesystem-config.test.ts --config vitest.config.ts` (from `packages/hooks`)
+- ✅ `pnpm dlx vitest run tests/tool-binding.test.ts --environment node`
 
 ### Phase 10 Blockers
 
