@@ -165,7 +165,7 @@ class LinuxSysfsProbe:
             raise ThermalProbeError("no thermal zones reported temperatures")
 
         warning = min((val for val in thresholds if val > 0), default=None)
-        critical = max(thresholds, default=None)
+        critical = max((val for val in thresholds if val > 0), default=None)
 
         return ThermalReading(
             temperature_c=max(temperatures),
