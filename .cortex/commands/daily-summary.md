@@ -2,7 +2,7 @@
 name: daily-summary
 description: Summarise today's brAInwav Cortex-OS progress for the team stand-up.
 argument-hint: optional focus phrase (e.g. observability)
-model: brainwav-pro
+model: brAInwav-pro
 allowed-tools:
   - Bash(git status:*)
   - Fs.read(docs/**)
