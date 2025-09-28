@@ -10,7 +10,10 @@ import { SubagentManager } from './SubagentManager.js';
 import type { BaseSubagent } from './BaseSubagent.js';
 import { createAutoDelegateTool, materializeSubagentTool, type Tool } from './SubagentTool.js';
 
-export interface LoadSubagentsOptions extends SubagentLoadOptions {}
+export interface LoadSubagentsOptions extends SubagentLoadOptions {
+        manager?: SubagentManager;
+        initializeProvidedManager?: boolean;
+}
 
 export interface LoadedSubagents {
         manager: SubagentManager;
@@ -28,8 +31,11 @@ export interface SubagentToolsOptions {
 }
 
 export async function loadSubagents(options: LoadSubagentsOptions = {}): Promise<LoadedSubagents> {
-        const manager = new SubagentManager();
-        await manager.initialize(options);
+        const { manager: providedManager, initializeProvidedManager = false, ...loadOptions } = options;
+        const manager = providedManager ?? new SubagentManager();
+        if (!providedManager || initializeProvidedManager) {
+                await manager.initialize(loadOptions);
+        }
         const loaded = await manager.loadSubagents();
         const subagents = new Map<string, ContractSubagent>();
 

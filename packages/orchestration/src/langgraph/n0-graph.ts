@@ -25,6 +25,7 @@ import {
         type LoadSubagentsOptions,
         type LoadedSubagents,
         type SubagentToolBinding,
+        type SubagentToolsOptions,
         type ContractSubagent,
 } from '@cortex-os/agents';
 import { CortexHooks, type HookContext, type HookEvent, type HookResult } from '@cortex-os/hooks';
@@ -100,6 +101,7 @@ export interface BuildN0Options {
         kernelOptions?: BindKernelToolsOptions;
         subagents?: Map<string, ContractSubagent>;
         subagentOptions?: LoadSubagentsOptions;
+        subagentToolOptions?: SubagentToolsOptions;
         disableSubagentDiscovery?: boolean;
         orchestratorTools?: ToolDefinition[];
         toolHooks?: ToolDispatchHooks;
@@ -141,7 +143,9 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
         }
 
         const subagentDefinitions = subagentMap.size
-                ? subagentTools(subagentMap).map((binding) => subagentToolToDefinition(binding))
+                ? subagentTools(subagentMap, options.subagentToolOptions).map((binding) =>
+                          subagentToolToDefinition(binding),
+                  )
                 : [];
 
         const allDefinitions = [...kernelDefinitions, ...subagentDefinitions, ...(options.orchestratorTools ?? [])];
