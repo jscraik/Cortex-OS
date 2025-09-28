@@ -49,17 +49,34 @@ export const NoTelemetryPayloadSchema = z.object({
 			}),
 		)
 		.optional(),
-	metrics: z
-		.object({
-			executionTimeMs: z.number().min(0).optional(),
-			memoryUsageMB: z.number().min(0).optional(),
-			cpuUtilizationPercent: z.number().min(0).max(100).optional(),
-			coordinationSetupTimeMs: z.number().min(0).optional(),
-			agentAllocationTimeMs: z.number().min(0).optional(),
-			totalMemoryAllocationMB: z.number().min(0).optional(),
-		})
-		.default({}),
-	tags: z.record(z.string(), z.string()).default({}),
+        metrics: z
+                .object({
+                        executionTimeMs: z.number().min(0).optional(),
+                        memoryUsageMB: z.number().min(0).optional(),
+                        cpuUtilizationPercent: z.number().min(0).max(100).optional(),
+                        coordinationSetupTimeMs: z.number().min(0).optional(),
+                        agentAllocationTimeMs: z.number().min(0).optional(),
+                        totalMemoryAllocationMB: z.number().min(0).optional(),
+                })
+                .default({}),
+        tags: z.record(z.string(), z.string()).default({}),
+        thermal: z
+                .object({
+                        event: z.object({
+                                level: z.enum(['nominal', 'warning', 'critical']),
+                                deviceId: z.string().min(1),
+                                temperature: z.number(),
+                                throttleHint: z.string().optional(),
+                                source: z.string().min(1),
+                        }),
+                        response: z.object({
+                                action: z.enum(['pause', 'resume', 'cooldown']),
+                                paused: z.boolean(),
+                                fallbackProvider: z.string().optional(),
+                                cooldownUntil: z.string().optional(),
+                        }),
+                })
+                .optional(),
 });
 
 export const NoTelemetrySchema = z.object({
@@ -86,16 +103,17 @@ export const NoTelemetrySchema = z.object({
 	]),
 	operation: z.string().min(1),
 	context: NoTelemetryContextSchema,
-	payload: NoTelemetryPayloadSchema,
-	metadata: z.object({
-		version: z.string().min(1),
-		component: z.string().min(1),
-		createdBy: z.string().min(1),
-		severity: z
-			.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
-			.optional()
-			.default('info'),
-		environment: z.enum(['development', 'staging', 'production']).optional(),
+        payload: NoTelemetryPayloadSchema,
+        metadata: z.object({
+                version: z.string().min(1),
+                component: z.string().min(1),
+                createdBy: z.string().min(1),
+                brainwav_component: z.string().min(1),
+                severity: z
+                        .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
+                        .optional()
+                        .default('info'),
+                environment: z.enum(['development', 'staging', 'production']).optional(),
 	}),
 });
 
@@ -301,13 +319,14 @@ export function createNoTelemetryEvent(
 		operation,
 		context,
 		payload,
-		metadata: {
-			version: '1.0.0',
-			component: 'nO-architecture',
-			createdBy: 'brAInwav',
-			...metadata,
-		},
-	});
+                metadata: {
+                        version: '1.0.0',
+                        component: 'nO-architecture',
+                        createdBy: 'brAInwav',
+                        brainwav_component: 'orchestration.core',
+                        ...metadata,
+                },
+        });
 }
 
 /**

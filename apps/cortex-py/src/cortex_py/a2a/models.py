@@ -51,14 +51,16 @@ class A2AEnvelope(BaseModel):
 
 
 class MLXThermalEvent(BaseModel):
-    """MLX thermal monitoring event data."""
+        """MLX thermal monitoring event data."""
 
-    device_id: str = Field(..., description="MLX device identifier")
-    temperature: float = Field(..., description="Current temperature in Celsius")
-    threshold: float = Field(..., description="Temperature threshold")
-    status: str = Field(..., description="Thermal status: normal, warning, critical")
-    timestamp: str = Field(..., description="Event timestamp ISO 8601")
-    action_taken: Optional[str] = Field(default=None, description="Action taken if any")
+        device_id: str = Field(..., description="MLX device identifier")
+        temperature: float = Field(..., description="Current temperature in Celsius")
+        threshold: float = Field(..., description="Temperature threshold")
+        status: str = Field(..., description="Thermal status: normal, warning, critical")
+        timestamp: str = Field(..., description="Event timestamp ISO 8601")
+        action_taken: Optional[str] = Field(default=None, description="Action taken if any")
+        message: Optional[str] = Field(default=None, description="brAInwav-branded status message")
+        throttle_hint: Optional[str] = Field(default=None, description="Recommended throttle action")
 
 
 class MLXModelEvent(BaseModel):

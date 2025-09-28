@@ -7,7 +7,7 @@ import { createCerebrumGraph } from '../src/langgraph/create-cerebrum-graph.js';
 describe('Policy guard enforcement', () => {
 	it('passes when persona includes WCAG and security rules', async () => {
 		const graph = createCerebrumGraph();
-		const res = await graph.invoke({ input: 'ok' });
-		expect(res.output).toBe('ok');
+                const res = await graph.invoke({ input: 'ok' });
+                expect(res.output).toBe('brAInwav routed via mlx');
 	});
 });

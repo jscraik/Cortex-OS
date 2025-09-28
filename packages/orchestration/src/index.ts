@@ -41,6 +41,23 @@ export type {
 } from './langgraph/tool-dispatch.js';
 
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
+export {
+        ThermalPolicy,
+        ThermalEventSchema,
+        ThermalLevelSchema,
+} from './langgraph/thermal/thermal-policy.js';
+export type { ThermalEvent, ThermalLevel, ThermalPolicyConfig } from './langgraph/thermal/thermal-policy.js';
+export { withThermalGuard } from './langgraph/middleware/thermal-guard.js';
+export type { ThermalGuardOptions, ThermalGuardState } from './langgraph/middleware/thermal-guard.js';
+export {
+        THERMAL_CTX_KEY,
+        applyThermalDecision,
+        enqueueThermalEvent,
+        getThermalContext,
+        holdForCooldown,
+        markThermalResume,
+} from './langgraph/state/thermal-history.js';
+export type { ThermalCheckpoint, ThermalContext } from './langgraph/state/thermal-history.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {
