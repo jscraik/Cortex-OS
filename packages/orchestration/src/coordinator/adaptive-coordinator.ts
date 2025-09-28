@@ -325,7 +325,12 @@ export class AdaptiveCoordinationManager {
                         return false;
                 }
 
-                const prototype = Object.getPrototypeOf(candidate);
+                let prototype;
+                try {
+                        prototype = Object.getPrototypeOf(candidate);
+                } catch {
+                        return false;
+                }
                 return prototype === Object.prototype || prototype === null;
         }
 }
