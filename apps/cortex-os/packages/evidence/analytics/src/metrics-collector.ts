@@ -11,6 +11,7 @@
 
 import { EventEmitter } from 'node:events';
 import pino from 'pino';
+import { NodeSystemProbe, type SystemProbe } from './system-probe.js';
 import { safeErrorMessage } from './utils/error-utils.js';
 
 // Minimal tracer types to avoid hard dependency on @opentelemetry/api
@@ -86,9 +87,10 @@ export class MetricsCollector extends EventEmitter {
 		level: 'info',
 	});
 	private readonly config: AnalyticsConfig;
-	private readonly tracer: MinimalTracer = getMinimalTracer();
-	private isCollecting = false;
-	private collectionInterval?: NodeJS.Timeout;
+        private readonly tracer: MinimalTracer = getMinimalTracer();
+        private isCollecting = false;
+        private collectionInterval?: NodeJS.Timeout;
+        private readonly systemProbe: SystemProbe;
 
 	// Storage for collected metrics
 	private readonly agentMetricsBuffer: Map<string, AgentMetrics[]> = new Map();
@@ -101,12 +103,13 @@ export class MetricsCollector extends EventEmitter {
 	private lastCollectionTime?: Date;
 	private collectionErrors = 0;
 
-	constructor(config: AnalyticsConfig) {
-		super();
-		this.config = config;
+        constructor(config: AnalyticsConfig, deps: { systemProbe?: SystemProbe } = {}) {
+                super();
+                this.config = config;
+                this.systemProbe = deps.systemProbe ?? new NodeSystemProbe();
 
-		this.initializeCollection();
-	}
+                this.initializeCollection();
+        }
 
 	/**
 	 * Initialize the metrics collection system
@@ -843,54 +846,61 @@ export class MetricsCollector extends EventEmitter {
 	/**
 	 * Collect system resource utilization
 	 */
-	private async collectResourceUtilization(): Promise<ResourceUtilization> {
-		try {
-			// Get system resource metrics
-			// In a real implementation, this would interface with system monitoring tools
-			return {
-				cpu: {
-					current: Math.random() * 100,
-					average: 45 + Math.random() * 20,
-					peak: 80 + Math.random() * 20,
-				},
-				memory: {
-					current: Math.random() * 100,
-					average: 60 + Math.random() * 15,
-					peak: 85 + Math.random() * 15,
-				},
-				gpu: {
-					current: Math.random() * 100,
-					average: 30 + Math.random() * 25,
-					peak: 70 + Math.random() * 30,
-				},
-				network: {
-					inbound: Math.random() * 1000,
-					outbound: Math.random() * 800,
-				},
-				storage: {
-					reads: Math.random() * 500,
-					writes: Math.random() * 300,
-				},
-			};
-		} catch (error) {
-			this.logger.error('Error collecting resource utilization', {
-				error: error.message,
-			});
-			throw error;
-		}
-	}
+        private async collectResourceUtilization(): Promise<ResourceUtilization> {
+                try {
+                        const snapshot = await this.systemProbe.sample();
+                        const history = this.resourceUtilizationHistory;
+                        const maxHistory = Math.max(this.config.collection.batchSize * 5, 1);
 
-	/**
-	 * Get resource usage for a specific agent
-	 */
-	private async getAgentResourceUsage(_agentId: string): Promise<AgentMetrics['resourceUsage']> {
-		// Mock implementation - replace with actual agent resource monitoring
-		return {
-			memory: Math.random() * 512, // MB
-			cpu: Math.random() * 100, // percentage
-			gpu: Math.random() * 100, // percentage (if available)
-		};
-	}
+                        const buildStats = (values: number[], current: number) => {
+                                const recent = values.slice(-maxHistory);
+                                const combined = [...recent, current];
+                                const average = combined.reduce((sum, value) => sum + value, 0) / combined.length;
+                                const peak = Math.max(...combined);
+
+                                return {
+                                        current: Number(current.toFixed(2)),
+                                        average: Number(average.toFixed(2)),
+                                        peak: Number(peak.toFixed(2)),
+                                };
+                        };
+
+                        const cpuHistory = history.map((entry) => entry.cpu.current);
+                        const memoryHistory = history.map((entry) => entry.memory.current);
+                        const gpuHistory = history.map((entry) => entry.gpu?.current ?? 0);
+
+                        return {
+                                cpu: buildStats(cpuHistory, snapshot.cpuPercent),
+                                memory: buildStats(memoryHistory, snapshot.memoryPercent),
+                                gpu: buildStats(gpuHistory, snapshot.gpuPercent ?? 0),
+                                network: {
+                                        inbound: Number(snapshot.networkInboundBytesPerSecond.toFixed(2)),
+                                        outbound: Number(snapshot.networkOutboundBytesPerSecond.toFixed(2)),
+                                },
+                                storage: {
+                                        reads: Number(snapshot.diskReadBytesPerSecond.toFixed(2)),
+                                        writes: Number(snapshot.diskWriteBytesPerSecond.toFixed(2)),
+                                },
+                        };
+                } catch (error) {
+                        this.logger.error('Error collecting resource utilization', {
+                                error: error instanceof Error ? error.message : String(error),
+                        });
+                        throw error;
+                }
+        }
+
+        /**
+         * Get resource usage for a specific agent
+         */
+        private async getAgentResourceUsage(agentId: string): Promise<AgentMetrics['resourceUsage']> {
+                const usage = await this.systemProbe.getAgentUsage(agentId);
+                return {
+                        memory: usage.memory,
+                        cpu: usage.cpu,
+                        gpu: usage.gpu,
+                };
+        }
 
 	/**
 	 * Get system-wide resource utilization
