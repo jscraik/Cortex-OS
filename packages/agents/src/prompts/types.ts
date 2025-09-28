@@ -77,7 +77,7 @@ export interface PromptTemplate {
         template: string;
         examples: PromptTemplateExample[];
         variables: string[];
-        brainwavBranding: boolean;
+        brAInwavBranding: boolean;
         nOOptimized: boolean;
         phases?: PlanningPhase[];
         tags?: string[];
