@@ -460,20 +460,40 @@ Each phase documents:
 ### Phase 12 Implementation
 
 #### Work Completed
-- ☐ None yet – MCP workspace tooling still needs scaffolding.
+- ✅ `packages/mcp-core/src/tools/workspace-tools.ts` now ships with create/list/read/write helpers that persist
+  metadata alongside workspace directories, enforce per-workspace path boundaries, and honor permission flags
+  when updating files. The tools are already exported through `packages/mcp-core/src/tools/index.ts`, so the
+  registry can surface them to Cortex agents today.
+- ✅ `packages/mcp-core/src/tools/index.ts` categorises the workspace helpers under the `workspace` namespace and
+  includes them in the restricted/permissioned registries so downstream callers can opt-in without touching
+  legacy tool wiring.
 
 #### Fixes Outstanding
-- [ ] Build a workspace manager with persistent storage and sandbox enforcement inside `packages/mcp-core`.
-- [ ] Expose planning and coordination MCP tools that invoke orchestration planners while respecting security requirements.
-- [ ] Emit A2A events with `brAInwav` attribution for every workspace/planning mutation to keep downstream systems synchronised.
+- [ ] Harden the existing workspace helpers into a formal manager module that removes the current
+  `Math.random`-based IDs, introduces deterministic `n0`-prefixed identifiers, and centralizes sandbox policy
+  (deny symlinks, enforce max workspace size) so the MCP layer meets the production guardrails.
+- [ ] Author end-to-end workspace tool suites in `packages/mcp-core/tests/tools/workspace/` that cover
+  create→read→write→list flows, permission enforcement, `maxSize` protections, and concurrent access updates.
+  Use Node's `fs/promises.mkdtemp` inside Vitest `beforeEach`/`afterEach` hooks to provision isolated directories
+  and guarantee deterministic cleanup.
+- [ ] Implement planning and coordination MCP tools inside `packages/mcp-core/src/tools/planning/` that broker
+  calls to the Phase 11 DSP modules. Each tool must surface explicit allow-list metadata and guard against
+  executing when the planner packages are unavailable.
+- [ ] Emit A2A telemetry for every workspace or planning mutation via the shared `packages/orchestration/src/events`
+  utilities so the rest of the fleet receives `brAInwav`-branded updates.
 
 ### Phase 12 Validation
 
-- Add MCP workspace/planning tool suites to CI after implementation, covering isolation boundaries and DSP integration points.
+- Add focused MCP suites to CI once the above tests land:
+  - `pnpm --filter @cortex-os/mcp-core exec vitest run "tests/tools/workspace/**/*.test.ts"`
+  - `pnpm --filter @cortex-os/mcp-core exec vitest run "tests/tools/planning/**/*.test.ts"`
+- Extend the production guard to require `pnpm test --filter mcp-core -- --runInBand` before shipping any new
+  workspace or planning tool behaviour.
 
 ### Phase 12 Blockers
 
 - Pending completion of Phase 11 planner APIs to integrate against.
+- Awaiting shared A2A event contract updates so MCP emissions match orchestration expectations.
 
 ---
 
