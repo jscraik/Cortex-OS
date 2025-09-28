@@ -131,8 +131,11 @@ function jsonDateReplacer(_key: string, value: unknown): unknown {
 }
 
 function jsonDateReviver(_key: string, value: unknown): unknown {
-        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
-                return new Date(value);
+        if (typeof value === 'string') {
+                const timestamp = Date.parse(value);
+                if (!isNaN(timestamp)) {
+                        return new Date(value);
+                }
         }
         return value;
 }
