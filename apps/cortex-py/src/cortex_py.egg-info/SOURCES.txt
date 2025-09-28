@@ -39,6 +39,7 @@ tests/test_embedding_generator_additional_branches.py
 tests/test_embedding_generator_branches.py
 tests/test_embedding_generator_coverage.py
 tests/test_env_overrides.py
+tests/test_hybrid_config.py
 tests/test_imports_smoke.py
 tests/test_lazy_loader.py
 tests/test_mlx_darwin_health.py

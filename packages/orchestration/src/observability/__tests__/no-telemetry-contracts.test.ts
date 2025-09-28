@@ -56,12 +56,13 @@ describe('nO Telemetry & Observability Contracts', () => {
 						environment: 'production',
 					},
 				},
-				metadata: {
-					version: '1.0.0',
-					component: 'nO-architecture',
-					createdBy: 'brAInwav',
-				},
-			};
+                                metadata: {
+                                        version: '1.0.0',
+                                        component: 'nO-architecture',
+                                        createdBy: 'brAInwav',
+                                        brainwav_component: 'orchestration.core',
+                                },
+                        };
 
 			// This will fail until we implement the schema
 			expect(() => NoTelemetrySchema.parse(mockTelemetryEvent)).not.toThrow();

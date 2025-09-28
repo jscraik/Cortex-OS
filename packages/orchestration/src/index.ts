@@ -42,35 +42,23 @@ export type {
 
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 export {
-        MultiAgentCoordinator,
-} from './langgraph/multi-agent-coordinator.js';
-export type {
-        AgentHandoffRecord,
-        DistributedWorkflowRequest,
-        DistributedWorkflowResult,
-        LangGraphRunner,
-        MultiAgentCoordinatorMetrics,
-        MultiAgentCoordinatorOptions,
-        MultiAgentEvent,
-        MultiAgentEventPublisher,
-        MultiAgentEventType,
-        RegisterWorkflowOptions,
-        StateSharedEvent,
-        WorkflowCompletedEvent,
-} from './langgraph/multi-agent-coordinator.js';
 
+        ThermalPolicy,
+        ThermalEventSchema,
+        ThermalLevelSchema,
+} from './langgraph/thermal/thermal-policy.js';
+export type { ThermalEvent, ThermalLevel, ThermalPolicyConfig } from './langgraph/thermal/thermal-policy.js';
+export { withThermalGuard } from './langgraph/middleware/thermal-guard.js';
+export type { ThermalGuardOptions, ThermalGuardState } from './langgraph/middleware/thermal-guard.js';
 export {
-        LangGraphStreamCoordinator,
-        streamGraphEvents,
-        streamGraphUpdates,
-} from './langgraph/streaming.js';
-export type {
-        LangGraphStreamEnvelope,
-        LangGraphStreamOptions,
-        LangGraphStreamResult,
-        StreamClient,
-        StreamableStateGraph,
-} from './langgraph/streaming.js';
+        THERMAL_CTX_KEY,
+        applyThermalDecision,
+        enqueueThermalEvent,
+        getThermalContext,
+        holdForCooldown,
+        markThermalResume,
+} from './langgraph/state/thermal-history.js';
+export type { ThermalCheckpoint, ThermalContext } from './langgraph/state/thermal-history.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {
