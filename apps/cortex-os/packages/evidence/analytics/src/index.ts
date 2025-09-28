@@ -17,11 +17,12 @@ export { OptimizationEngine } from './optimization-engine.js';
 export { PatternAnalyzer } from './pattern-analyzer.js';
 export { PerformanceDashboard } from './performance-dashboard.js';
 export { RealtimeDataStream } from './realtime-data-stream.js';
+export { NodeSystemProbe } from './system-probe.js';
 // Types and interfaces
 // Analytics configuration
 export type {
-	AgentMetrics,
-	AnalyticsConfig,
+        AgentMetrics,
+        AnalyticsConfig,
 	CrossAgentDependency,
 	DashboardData,
 	InteractionPattern,
@@ -31,8 +32,9 @@ export type {
 	PredictiveModel,
 	ResourceUtilization,
 	TrendAnalysis,
-	WorkflowBottleneck,
+        WorkflowBottleneck,
 } from './types.js';
+export type { AgentResourceUsage, SystemProbe, SystemProbeSnapshot } from './system-probe.js';
 
 // Version information
 export const version = '1.0.0';

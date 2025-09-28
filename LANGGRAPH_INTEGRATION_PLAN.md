@@ -363,25 +363,28 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `apps/api/tests/routing-completeness.test.ts` | ⚪ todo | Fail when TODO routes remain |
-| `apps/cortex-marketplace/tests/mcp-implementation.test.ts` | ⚪ todo | Verify nine MCP tools return real data |
-| `apps/cortex-os/tests/metrics-reality.test.ts` | ⚪ todo | Ensure no `Math.random()` metrics |
-| `apps/cortex-py/tests/thermal-guard-production.test.ts` | ⚪ todo | Cross-platform thermal monitoring |
+| `apps/api/tests/routing-completeness.test.ts` | ✅ done | Guard fails when TODO routes reappear |
+| `apps/cortex-marketplace/tests/mcp-implementation.test.ts` | ✅ done | Validates nine MCP tools return real data |
+| `apps/cortex-os/tests/metrics-reality.test.ts` | ✅ done | Ensures metrics use deterministic system probes |
+| `apps/cortex-py/tests/thermal-guard-production.test.ts` | ✅ done | Verifies cross-platform thermal monitoring |
 
 ### Phase 9 Implementation
 
 #### Work Completed
-- ☐ None yet – marketplace productionisation is pending full MCP integration.
+- [x] Added routing completeness guardrail covering all Express route modules with TODO detection.
+- [x] Exercised Marketplace MCP toolchain end-to-end with deterministic registries and error wiring.
+- [x] Replaced simulated orchestration metrics with concrete Node system probes and deterministic fixtures.
+- [x] Delivered cross-platform cortex-py thermal monitor with fallback logic and event generation helpers.
 
 #### Fixes Outstanding
-- [ ] Implement end-to-end Marketplace MCP service integrations, including credential rotation and error handling for each tool.
-- [ ] Replace simulated metrics in `apps/cortex-os` with concrete system probes (CPU, memory, GPU) and enforce deterministic fixtures for tests.
-- [ ] Extend `apps/cortex-py` with cross-platform thermal monitoring guarded by platform detection and fail-safe fallbacks.
+- [x] Implement end-to-end Marketplace MCP service integrations, including credential rotation and error handling for each tool.
+- [x] Replace simulated metrics in `apps/cortex-os` with concrete system probes (CPU, memory, GPU) and enforce deterministic fixtures for tests.
+- [x] Extend `apps/cortex-py` with cross-platform thermal monitoring guarded by platform detection and fail-safe fallbacks.
 
 ### Phase 9 Validation
 
-- Include all apps in the placeholder regression allowlist review to ensure no TODO or fake data leaks into production builds.
-- Add dedicated Vitest/pytest suites per app once implementations land.
+- Placeholder regression allowlist now covers the new metrics and routing suites; integrate targeted runs into CI.
+- Execute focused Vitest/Pytest commands (`apps/api`, `apps/cortex-marketplace`, `apps/cortex-os`, `apps/cortex-py`) as part of release gating.
 
 ### Phase 9 Blockers
 
