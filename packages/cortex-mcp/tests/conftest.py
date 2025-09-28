@@ -16,7 +16,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    "Ensure the asyncio marker is always defined."
+    """Ensure the asyncio marker is always defined."""
 
     config.addinivalue_line("markers", "asyncio: mark test as async-compatible")
 
