@@ -96,7 +96,9 @@ export type {
 // Teaching layer
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
 export type {
-	CapturedExample,
-	TeachingPattern,
+        CapturedExample,
+        TeachingPattern,
 } from './teaching/example-capture.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
+export { bindKernelTools } from './tool-binding.js';
+export type { BindKernelToolsOptions, BoundKernelTool } from './tool-binding.js';

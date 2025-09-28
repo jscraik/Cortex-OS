@@ -5,11 +5,12 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-	resolve: {
-		alias: {
-			'@cortex-os/model-gateway': resolve(__dirname, 'tests/stubs/model-gateway.ts'),
-		},
-	},
+        resolve: {
+                alias: {
+                        '@cortex-os/model-gateway': resolve(__dirname, 'tests/stubs/model-gateway.ts'),
+                        '@cortex-os/orchestration': resolve(__dirname, 'tests/stubs/orchestration.ts'),
+                },
+        },
 	test: {
 		environment: 'node',
 		globals: true,
