@@ -91,7 +91,7 @@ export class PromptTemplateManager {
 
                 prompt = this.applyAdaptations(prompt, selection.adaptations, context);
 
-                if (template.brainwavBranding) {
+                if (template.brAInwavBranding) {
                         prompt = this.addBrainwavBranding(prompt, context);
                 }
 
