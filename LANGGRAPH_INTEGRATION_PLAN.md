@@ -462,7 +462,7 @@ Each phase documents:
 
 ### Phase 12 Validation
 
-- Add focussed MCP suites to CI once the above tests land:
+- Add focused MCP suites to CI once the above tests land:
   - `pnpm --filter @cortex-os/mcp-core exec vitest run "tests/tools/workspace/**/*.test.ts"`
   - `pnpm --filter @cortex-os/mcp-core exec vitest run "tests/tools/planning/**/*.test.ts"`
 - Extend the production guard to require `pnpm test --filter mcp-core -- --runInBand` before shipping any new
