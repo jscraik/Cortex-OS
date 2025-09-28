@@ -23,7 +23,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
-    "Execute coroutine tests without requiring pytest-asyncio."
+    """Execute coroutine tests without requiring pytest-asyncio."""
 
     if pyfuncitem.config.pluginmanager.hasplugin("asyncio"):
         return None
