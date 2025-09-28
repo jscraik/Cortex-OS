@@ -988,6 +988,7 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
         }
 
         private snapshotContext(context: PromptContext): PromptContext {
-                return structuredClone(context);
+                // Use a shallow copy for performance; deep clone only if necessary for specific properties
+                return { ...context };
         }
 }
