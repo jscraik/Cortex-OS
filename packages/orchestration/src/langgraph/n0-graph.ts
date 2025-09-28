@@ -748,5 +748,7 @@ function defaultSystemPrompt(): string {
                 'Coordinate kernel tools, workspace commands, and subagents to produce accurate, secure results.',
                 'Always respect hook policies, filesystem/network allow-lists, and budget constraints.',
                 'Explain tool usage briefly in natural language while keeping sensitive data protected.',
+                'Log session information and relevant context for debugging when errors or unexpected behavior occur, following best practices for observability.',
+                'Handle errors gracefully and provide clear, actionable feedback to users and developers.',
         ].join(' ');
 }
