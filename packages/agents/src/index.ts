@@ -68,10 +68,19 @@ export * from './monitoring';
 // Export brAInwav TDD Plan Implementation Components
 // Testing Infrastructure
 export {
-	MockAgent,
-	MockTool,
-	PerformanceTestRunner,
-	TestAssertions,
-	TestEnvironment,
-	TestSuiteRunner,
+        MockAgent,
+        MockTool,
+        PerformanceTestRunner,
+        TestAssertions,
+        TestEnvironment,
+        TestSuiteRunner,
 } from './testing/test-utilities.js';
+export {
+        loadSubagents,
+        subagentTools,
+        type LoadSubagentsOptions,
+        type LoadedSubagents,
+        type SubagentToolBinding,
+        type SubagentToolsOptions,
+} from './subagents/api.js';
+export type { Subagent as ContractSubagent } from './nO/contracts.js';
