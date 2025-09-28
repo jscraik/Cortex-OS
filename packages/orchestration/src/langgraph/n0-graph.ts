@@ -427,7 +427,11 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                 .addNode('stream_and_log', async (state: N0State) => {
                         const finalOutput = state.output ?? deriveOutputFromMessages(state.messages);
                         if (finalOutput) {
-                                await options.streamPublisher?.({ type: 'final', content: finalOutput });
+                                try {
+                                        await options.streamPublisher?.({ type: 'final', content: finalOutput });
+                                } catch (err) {
+                                        logger.error?.('Error in streamPublisher during final output', { error: err, sessionId: state.session.id });
+                                }
                         }
                         logger.info?.('brAInwav n0 run complete', {
                                 sessionId: state.session.id,
