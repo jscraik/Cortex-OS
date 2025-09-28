@@ -42,6 +42,8 @@ export type {
 
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 
+export { SecurityCoordinator, type ComplianceEvaluationResult } from './security/security-coordinator.js';
+
 // Utility defaults
 export const OrchestrationDefaults = {
 	maxConcurrentOrchestrations: 10,
