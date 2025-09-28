@@ -1,8 +1,13 @@
 import {
-	CancellationController,
-	CancellationError,
-	type CancellationOptions,
-	isCancellationError,
+        generateRunId,
+        recordLatency,
+        recordOperation,
+} from '@cortex-os/observability';
+import {
+        CancellationController,
+        CancellationError,
+        type CancellationOptions,
+        isCancellationError,
 } from './cancellation.js';
 import type { CompensationManager } from './compensation.js';
 import { type Graph, topoSort, validateDAG } from './dag.js';
@@ -162,52 +167,115 @@ async function executeStepWithRetry(
 	hooks?: HookManager,
 	workflowId?: string,
 ): Promise<void> {
-	let attempt = 0;
-	const hookContext = {
-		stepId: node,
-		signal,
-		metadata: { attempt, workflowId },
-	};
+        let attempt = 0;
+        const runId = generateRunId();
+        const hookContext = {
+                stepId: node,
+                signal,
+                metadata: { attempt, workflowId },
+        };
 
 	// Execute pre-step hooks
 	if (hooks) {
 		await hooks.executePreStepHooks(hookContext);
 	}
 
-	// retry loop
-	for (;;) {
-		if (signal?.aborted) throw new Error('Aborted');
-		try {
-			await fn({ signal });
-			executed.push(node);
+        // retry loop
+        for (;;) {
+                if (signal?.aborted) throw new Error('Aborted');
+                const attemptNumber = attempt + 1;
+                const attemptStartedAt = Date.now();
+                try {
+                        await fn({ signal });
+                        executed.push(node);
 
-			// Execute post-step hooks on success
-			if (hooks) {
-				await hooks.executePostStepHooks({
-					...hookContext,
-					metadata: { ...hookContext.metadata, attempt, success: true },
-				});
-			}
-			return;
-		} catch (err) {
-			if (!policy || attempt >= policy.maxRetries) {
-				// Execute error hooks on final failure
-				if (hooks) {
-					await hooks.executeStepErrorHooks({
-						...hookContext,
+                        // Execute post-step hooks on success
+                        if (hooks) {
+                                await hooks.executePostStepHooks({
+                                        ...hookContext,
+                                        metadata: { ...hookContext.metadata, attempt, success: true },
+                                });
+                        }
+                        recordRetryTelemetry({
+                                success: true,
+                                attempt: attemptNumber,
+                                durationMs: Date.now() - attemptStartedAt,
+                                node,
+                                runId,
+                                workflowId,
+                        });
+                        return;
+                } catch (err) {
+                        recordRetryTelemetry({
+                                success: false,
+                                attempt: attemptNumber,
+                                durationMs: Date.now() - attemptStartedAt,
+                                node,
+                                runId,
+                                workflowId,
+                                error: err,
+                        });
+                        if (!policy || attempt >= policy.maxRetries) {
+                                // Execute error hooks on final failure
+                                if (hooks) {
+                                        await hooks.executeStepErrorHooks({
+                                                ...hookContext,
 						metadata: { ...hookContext.metadata, attempt, error: err },
 					});
 				}
 				throw err;
 			}
-			attempt++;
-			const delay = policy.backoffMs || 0;
-			if (delay) await new Promise((r) => setTimeout(r, delay));
+                        attempt++;
+                        const delay = policy.backoffMs || 0;
+                        if (delay) await new Promise((r) => setTimeout(r, delay));
 
-			// Update hook context for retry
-			hookContext.metadata = { ...hookContext.metadata, attempt };
-		}
-	}
+                        // Update hook context for retry
+                        hookContext.metadata = { ...hookContext.metadata, attempt };
+                }
+        }
+}
+
+interface RetryTelemetryInput {
+        success: boolean;
+        attempt: number;
+        durationMs: number;
+        node: string;
+        runId: string;
+        workflowId?: string;
+        error?: unknown;
+}
+
+function recordRetryTelemetry({
+        success,
+        attempt,
+        durationMs,
+        node,
+        runId,
+        workflowId,
+        error,
+}: RetryTelemetryInput): void {
+        const labels = {
+                component: 'services.orchestration',
+                step: node,
+                attempt: String(attempt),
+                workflow_id: workflowId ?? 'unknown',
+                outcome: success ? 'success' : 'failure',
+                error_type: success
+                        ? 'none'
+                        : error instanceof Error
+                        ? error.name ?? 'Error'
+                        : typeof error,
+        } as Record<string, string>;
+        try {
+                recordOperation('services.orchestration.retry', success, runId, labels);
+                recordLatency('services.orchestration.retry', durationMs, labels);
+        } catch (telemetryError) {
+                console.warn('[brAInwav][services-orchestration] retry telemetry failed', {
+                        telemetryError,
+                        step: node,
+                        attempt,
+                });
+        }
 }
 
 async function handleBranch(
