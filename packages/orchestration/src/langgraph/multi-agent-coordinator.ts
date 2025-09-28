@@ -378,13 +378,13 @@ function normalizeOutput(result: unknown): string | undefined {
         }
 
         if (result && typeof result === 'object') {
-                        const output = (result as Record<string, unknown>).output;
-                        if (typeof output === 'string') {
-                                return output;
-                        }
-                        if (output !== undefined) {
-                                return JSON.stringify(output);
-                        }
+                const output = (result as Record<string, unknown>).output;
+                if (typeof output === 'string') {
+                        return output;
+                }
+                if (output !== undefined) {
+                        return JSON.stringify(output);
+                }
         }
 
         return undefined;
