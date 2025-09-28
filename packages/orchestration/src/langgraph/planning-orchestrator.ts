@@ -1,18 +1,24 @@
 import { randomUUID } from 'node:crypto';
-import { createLongHorizonPlanner, type LongHorizonPlanner, type LongHorizonTask, type PlanningResult } from '../lib/long-horizon-planner.js';
+import {
+        createLongHorizonPlanner,
+        type LongHorizonPlanner,
+        type LongHorizonTask,
+        type PlanningResult,
+} from '../lib/long-horizon-planner.js';
 import {
         AdaptiveCoordinationManager,
-        type AgentDescriptor,
-        type CoordinationDecision,
+        type CoordinationRequest,
+        type CoordinationResult,
 } from '../coordinator/adaptive-coordinator.js';
 import { createCerebrumGraph } from './create-cerebrum-graph.js';
 import { createInitialN0State, mergeN0State, type N0Session, type N0State } from './n0-state.js';
 import type { PlanningContext } from '../utils/dsp.js';
+import { AgentRole, type Agent } from '../types.js';
 
 export interface ExecutePlannedWorkflowOptions {
         input: string;
         task: Partial<LongHorizonTask> & Pick<LongHorizonTask, 'description'>;
-        agents?: AgentDescriptor[];
+        agents?: Agent[];
         session?: Partial<N0Session>;
         planner?: LongHorizonPlanner;
         coordinationManager?: AdaptiveCoordinationManager;
@@ -22,7 +28,7 @@ export interface ExecutePlannedWorkflowOptions {
 export interface PlannedWorkflowResult {
         output?: string;
         planningResult: PlanningResult;
-        coordinationDecision: CoordinationDecision;
+        coordinationResult: CoordinationResult;
         stateTransitions: Array<{
                 phase: string;
                 status: 'completed' | 'failed';
@@ -41,12 +47,12 @@ const DEFAULT_SESSION: N0Session = {
 
 export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOptions): Promise<PlannedWorkflowResult> {
         const clock = options.clock ?? (() => new Date());
-        const planner = options.planner ?? createLongHorizonPlanner({ clock });
+        const planner = options.planner ?? createLongHorizonPlanner();
         const coordinationManager =
-                options.coordinationManager ?? new AdaptiveCoordinationManager({ clock, historyLimit: 25 });
-        const agents: AgentDescriptor[] = options.agents ?? [
-                { id: 'brAInwav.agent.primary', capabilities: ['analysis', 'execution'] },
-                { id: 'brAInwav.agent.support', capabilities: ['review', 'validation'] },
+                options.coordinationManager ?? new AdaptiveCoordinationManager({ maxHistorySize: 25 });
+        const agents: Agent[] = options.agents ?? [
+                createDefaultAgent('brAInwav.agent.primary', AgentRole.COORDINATOR, ['analysis', 'execution']),
+                createDefaultAgent('brAInwav.agent.support', AgentRole.SPECIALIST, ['review', 'validation']),
         ];
 
         const task = normalizeTask(options.task);
@@ -54,13 +60,19 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
                         return buildPhaseSummary(phase, context, clock);
         });
 
-        const coordinationDecision = coordinationManager.coordinate({
+        const coordinationRequest: CoordinationRequest = {
                 task,
-                agents,
+                availableAgents: agents,
                 planningResult,
-                contextSnapshot: planner.getCurrentContext(),
-                requiredCapabilities: gatherCapabilities(task),
-        });
+                context: planner.getCurrentContext(),
+                constraints: {
+                        maxDuration: task.estimatedDuration ?? 60_000,
+                        maxAgents: Math.max(1, agents.length),
+                        requiredCapabilities: gatherCapabilities(task),
+                },
+        };
+
+        const coordinationResult = await coordinationManager.coordinate(coordinationRequest);
 
         const graph = createCerebrumGraph();
         const graphState = await graph.invoke({
@@ -75,15 +87,15 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
                         recommendations: planningResult.recommendations,
                 },
                 coordination: {
-                        strategy: coordinationDecision.strategy,
-                        assignments: coordinationDecision.assignments,
-                        confidence: coordinationDecision.confidence,
+                        strategy: coordinationResult.strategy,
+                        assignments: projectAssignments(coordinationResult.assignments),
+                        confidence: coordinationResult.confidence,
                 },
         });
 
         const stateTransitions = planningResult.phases.map((phase) => ({
                 phase: phase.phase,
-                status: phase.error ? 'failed' : 'completed',
+                status: phase.error ? ('failed' as const) : ('completed' as const),
                 duration: phase.duration,
         }));
 
@@ -98,18 +110,18 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
                                 success: planningResult.success,
                         },
                         coordination: {
-                                strategy: coordinationDecision.strategy,
-                                assignments: coordinationDecision.assignments,
-                                confidence: coordinationDecision.confidence,
+                                strategy: coordinationResult.strategy,
+                                assignments: projectAssignments(coordinationResult.assignments),
+                                confidence: coordinationResult.confidence,
                         },
-                        telemetry: coordinationDecision.telemetry,
+                        telemetry: coordinationResult.telemetry,
                 },
         });
 
         return {
                 output: graphState.output,
                 planningResult,
-                coordinationDecision,
+                coordinationResult,
                 stateTransitions,
                 state,
         };
@@ -143,4 +155,32 @@ function buildPhaseSummary(phase: string, context: PlanningContext, clock: () =>
                 historyCount: context.history.length,
                 timestamp: clock().toISOString(),
         };
+}
+
+function createDefaultAgent(id: string, role: AgentRole, capabilities: string[]): Agent {
+        return {
+                id,
+                name: id,
+                role,
+                capabilities,
+                status: 'available',
+                metadata: {
+                        brAInwavManaged: true,
+                        createdBy: 'brAInwav',
+                },
+                lastSeen: new Date(),
+        };
+}
+
+function projectAssignments(assignments: CoordinationResult['assignments']): Array<{ agentId: string; role: string; weight: number }> {
+        if (assignments.length === 0) {
+                return [];
+        }
+
+        const weight = Number((1 / assignments.length).toFixed(2));
+        return assignments.map((assignment) => ({
+                agentId: assignment.agentId,
+                role: assignment.role,
+                weight,
+        }));
 }
