@@ -523,16 +523,79 @@ Each phase documents:
 - Develop production readiness validation that ensures all brAInwav standards are met
 - Include end-to-end testing of streaming, thermal coordination, and multi-agent scenarios
 
+#### Test Authoring Sequence
+
+1. Scaffold `tests/integration/full-system-langgraph.test.ts` that boots the minimal
+   `createCerebrumGraph()` pipeline through the `packages/orchestration/src/langgraph/executor.ts`
+   facade, wiring in dedicated test doubles (defined in the harness below) so assertions can cover
+   kernel, agent, and telemetry surfaces in a single run.
+2. Add `tests/integration/production-readiness.test.ts` with targeted describe blocks for
+   streaming, thermal, and multi-agent happy paths. Each block should call dedicated helpers under
+   `tests/utils` (create `tests/utils/langgraph-integration.ts`) so later phases can reuse the
+   same graph bootstrapping without duplicating fixture logic.
+3. Author `tests/integration/failure-scenarios.test.ts` that parameterises executor failures,
+   A2A outage simulation, and MCP tool rejection. Use fake timers to assert recovery windows and to
+   guarantee deterministic back-off behaviour.
+4. Extend the perf harness by introducing `tests/perf/langgraph-load.test.ts` which reuses the
+   spool benchmark utilities (`tests/perf/spool-throughput.test.ts`) to stress the StateGraph with
+   concurrent workflows, verifying `runSpool()` integration and the new load metrics described
+   below.
+
+#### Harness & Fixture Updates
+
+- Create `tests/setup/langgraph-integration.ts` exporting a `bootstrapLanggraphTestHarness()` helper
+  that composes `createCerebrumGraph()`, the `runOnce()` executor, mock thermal sensors, and
+  brAInwav-branded logging sinks. Import this helper from every new integration test to avoid
+  re-instantiating the tracer or event bus.
+- Expand `tests/fixtures` with `langgraph/full-system.json` containing representative tool and
+  message payloads captured from existing unit tests (`packages/orchestration/tests`) to keep
+  integration coverage grounded in real shapes.
+- Introduce deterministic WebSocket + A2A mocks under `tests/utils/websocket.ts` and
+  `tests/utils/a2a-bus.ts` that emit the `brAInwav` prefixed telemetry strings required by the
+  global production standards guard.
+
+#### Observability & Metrics Instrumentation
+
+- Extend `packages/orchestration/src/langgraph/executor.ts` with optional hooks that surface
+  execution summaries (selected model, streaming status, thermal state) so the integration suite
+  can assert telemetry without reaching into internal spans.
+- Add a thin wrapper in `packages/orchestration/src/langgraph/spool.ts` to publish
+  `brAInwav.integration.duration_ms` histograms via the existing OpenTelemetry tracer. Guard the
+  new instrumentation behind a flag consumed by the integration tests to keep unit benchmarks
+  stable.
+- Wire the perf test to write sample metrics into `performance-history.json` through the existing
+  `scripts/perf-autotune.mjs` interface, ensuring regressions can be detected once CI adopts the new
+  target.
+
 ### Phase 18 Validation
 
 - Add integration testing to release pipeline: `pnpm test:integration:langgraph`
 - Include performance regression testing that maintains baseline metrics in `performance-history.json`
 - Validate production readiness criteria before any deployment approvals
 
+#### Validation Checklist
+
+- Add a root `package.json` script that expands `pnpm test:integration:langgraph` into
+  `vitest run tests/integration/**/*.test.ts --config tests/vitest.config.ts`, then document this in
+  `README.md` once the suite lands.
+- Update `scripts/nx-smart.mjs` presets so the `test:smart` pipeline can call the new script with
+  `--focus @cortex-os/orchestration,@cortex-os/agents,@cortex-os/a2a` ensuring graph, agent, and bus
+  packages are rebuilt before integration runs.
+- Record performance snapshots by executing `pnpm --filter @cortex-os/orchestration exec vitest run \
+  tests/perf/langgraph-load.test.ts --config tests/perf/vitest.config.ts` and appending the metrics
+  artefacts to `performance-history.json`.
+- Gate production readiness with a new smoke wrapper `pnpm test:integration:langgraph --reporter
+  junit` so CI uploads structured results alongside existing regression suites.
+
 ### Phase 18 Blockers
 
 - Requires completion of all previous phases for comprehensive integration testing
 - Production testing requires access to representative hardware and infrastructure
+- Synthetic load requires a stable mock of the thermal monitoring stack from `cortex-py`; without
+  its async event bridge the failure scenarios cannot assert cooling pathways.
+- Observability hooks rely on the OpenTelemetry tracer initialisation that currently lives in the
+  legacy orchestration bootstrap. Extracting a lightweight initialiser is a prerequisite before the
+  integration harness can bind spans in isolation.
 
 ---
 
