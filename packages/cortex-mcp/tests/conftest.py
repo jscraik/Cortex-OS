@@ -6,8 +6,12 @@ import pytest
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
-    "Register compatibility options when pytest-asyncio is unavailable."
+    """
+    Register compatibility options for async tests when pytest-asyncio is unavailable.
 
+    This function adds the 'asyncio_mode' ini option to pytest, acting as a compatibility
+    shim to allow async test execution in environments where pytest-asyncio is not installed.
+    """
     parser.addini("asyncio_mode", "Compatibility shim for pytest-asyncio", default="auto")
 
 
