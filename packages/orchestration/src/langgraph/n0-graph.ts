@@ -185,7 +185,16 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                         const result = await runSlashImpl(parsed, slashOptions);
                         const outputText = typeof result.text === 'string' ? result.text : '';
                         const response = new AIMessage({ content: outputText });
-                        await options.streamPublisher?.({ type: 'chunk', content: outputText });
+                        if (outputText) {
+                                try {
+                                        await options.streamPublisher?.({ type: 'chunk', content: outputText });
+                                } catch (error) {
+                                        logger.error?.('brAInwav slash stream failed', {
+                                                sessionId: state.session.id,
+                                                error,
+                                        });
+                                }
+                        }
                         logger.info?.('brAInwav slash command executed', {
                                 sessionId: state.session.id,
                                 command: parsed.cmd,
@@ -216,6 +225,11 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                         for (const result of results) {
                                 if (result.action === 'deny') {
                                         const denial = result.reason ?? 'brAInwav prompt denied by policy';
+                                        logger.warn?.('brAInwav prompt denied by hook', {
+                                                sessionId: state.session.id,
+                                                hook: 'UserPromptSubmit',
+                                                reason: result.reason,
+                                        });
                                         const denialMessage = new AIMessage({ content: denial });
                                         return {
                                                 output: denial,
@@ -227,6 +241,12 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                                         };
                                 }
                                 if (result.action === 'allow' && 'input' in result && typeof result.input === 'string') {
+                                        if (result.input !== state.input) {
+                                                logger.info?.('brAInwav prompt mutated by hook', {
+                                                        sessionId: state.session.id,
+                                                        hook: 'UserPromptSubmit',
+                                                });
+                                        }
                                         input = result.input;
                                 }
                         }
@@ -271,8 +291,14 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                         const messages = [...(state.messages ?? []), aiMessage];
                         const output = toolCalls.length === 0 ? renderMessageContent(aiMessage.content) : state.output;
                         if (toolCalls.length === 0 && output) {
-                                options.streamPublisher?.({ type: 'chunk', content: output })
-                                        ?.catch((err) => logger.error?.('streamPublisher error', err));
+                                try {
+                                        await options.streamPublisher?.({ type: 'chunk', content: output });
+                                } catch (error) {
+                                        logger.error?.('brAInwav model stream failed', {
+                                                sessionId: state.session.id,
+                                                error,
+                                        });
+                                }
                         }
                         return {
                                 messages,
@@ -306,6 +332,10 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                                 const definition = toolMap.get(call.name);
                                 const callId = call.id ?? randomUUID();
                                 if (!definition) {
+                                        logger.warn?.('brAInwav tool missing for call', {
+                                                sessionId: state.session.id,
+                                                toolCall: call.name,
+                                        });
                                         toolMessages.push(
                                                 new ToolMessage({
                                                         tool_call_id: callId,
@@ -340,7 +370,7 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                                 };
                         }
 
-                        const results = await dispatchTools(jobs, {
+                        const results: ToolDispatchResult<ToolExecutionOutput>[] = await dispatchTools(jobs, {
                                 session: state.session,
                                 budget: state.budget,
                                 concurrency: options.toolConcurrency,
@@ -390,6 +420,12 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                                 status: msg.status,
                         }));
 
+                        logger.info?.('brAInwav tool dispatch complete', {
+                                sessionId: state.session.id,
+                                jobs: jobs.length,
+                                results: loopContext.lastToolResults,
+                        });
+
                         return {
                                 messages: [...messages, ...toolMessages],
                                 ctx: extendCtx(state.ctx, loopContext),
@@ -429,8 +465,11 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                         if (finalOutput) {
                                 try {
                                         await options.streamPublisher?.({ type: 'final', content: finalOutput });
-                                } catch (err) {
-                                        logger.error?.('Error in streamPublisher during final output', { error: err, sessionId: state.session.id });
+                                } catch (error) {
+                                        logger.error?.('brAInwav final stream failed', {
+                                                sessionId: state.session.id,
+                                                error,
+                                        });
                                 }
                         }
                         logger.info?.('brAInwav n0 run complete', {
