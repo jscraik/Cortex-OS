@@ -213,7 +213,7 @@ async function consumeEventStream(
                 await coordinator.broadcastSse('message', completion);
                 await options.publish?.(completion);
                 if (aborted) {
-                                await coordinator.closeAll(4000, 'LangGraph event stream aborted by controller');
+                        await coordinator.closeAll(4000, 'LangGraph event stream aborted by controller');
                 }
                 return { runId, emitted: sequence, aborted };
         } catch (error) {
