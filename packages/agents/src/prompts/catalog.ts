@@ -413,7 +413,7 @@ Keep the summary concise, actionable, and branded for brAInwav leadership visibi
                         'currentPhase',
                         'agentCount',
                 ],
-                brainwavBranding: true,
+                brAInwavBranding: true,
                 nOOptimized: true,
                 phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION, PlanningPhase.COMPLETION],
                 tags: ['compliance', 'review'],
