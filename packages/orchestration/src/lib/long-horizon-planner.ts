@@ -11,6 +11,12 @@ import {
 	PlanningPhase,
 } from '../utils/dsp.js';
 
+import {
+        createSecurityIntegrationService,
+        type SecurityIntegrationResult,
+        type SecurityIntegrationService,
+} from '@cortex-os/cortex-sec';
+
 export interface LongHorizonTask {
 	id: string;
 	description: string;
@@ -38,6 +44,7 @@ export interface PlanningResult {
 		version: string;
 		timestamp: Date;
 	};
+	security: SecurityIntegrationResult;
 }
 
 export interface LongHorizonPlannerConfig extends DSPConfig {
@@ -45,6 +52,7 @@ export interface LongHorizonPlannerConfig extends DSPConfig {
 	maxPlanningTime?: number; // milliseconds
 	adaptiveDepthEnabled?: boolean;
 	persistenceEnabled?: boolean;
+	securityIntegrationService?: SecurityIntegrationService;
 }
 
 /**
@@ -54,6 +62,7 @@ export interface LongHorizonPlannerConfig extends DSPConfig {
 export class LongHorizonPlanner {
 	private readonly dsp: DynamicSpeculativePlanner;
 	private readonly config: LongHorizonPlannerConfig;
+	private readonly securityIntegration: SecurityIntegrationService;
 	private activeContext?: PlanningContext;
 
 	constructor(config: LongHorizonPlannerConfig = {}) {
@@ -64,6 +73,9 @@ export class LongHorizonPlanner {
 			persistenceEnabled: true,
 			...config,
 		};
+
+		this.securityIntegration =
+			this.config.securityIntegrationService ?? createSecurityIntegrationService();
 
 		this.dsp = new DynamicSpeculativePlanner({
 			...config,
@@ -98,6 +110,41 @@ export class LongHorizonPlanner {
 		const context = this.dsp.initializePlanning(task.id, task.complexity, task.priority);
 		this.activeContext = context;
 
+		const complianceSnapshot = context.compliance
+		        ? {
+		                compliance: {
+		                        standards: context.compliance.standards,
+		                        lastCheckedAt: context.compliance.lastCheckedAt,
+		                        riskScore: context.compliance.riskScore,
+		                        outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
+		                                id: violation.id,
+		                                severity: violation.severity,
+		                        })),
+		                },
+		        }
+		        : undefined;
+
+		const securityEvaluation = this.securityIntegration.evaluate({
+		        taskId: task.id,
+		        description: task.description,
+		        complianceContext: complianceSnapshot,
+		});
+
+		if (!context.compliance) {
+		        context.compliance = {
+		                standards: securityEvaluation.standards,
+		                lastCheckedAt: securityEvaluation.lastCheckedAt,
+		                riskScore: securityEvaluation.aggregateRisk,
+		                outstandingViolations: [],
+		        };
+		} else {
+		        context.compliance.standards = securityEvaluation.standards;
+		        context.compliance.lastCheckedAt = securityEvaluation.lastCheckedAt;
+		        context.compliance.riskScore = securityEvaluation.aggregateRisk;
+		}
+
+                context.preferences.notes.push(`brAInwav security summary: ${securityEvaluation.summary}`);
+
 		// Persistence hook: Record planning start
 		if (this.config.persistenceEnabled) {
 			await this.persistPlanningEvent('planning_started', {
@@ -108,19 +155,20 @@ export class LongHorizonPlanner {
 			});
 		}
 
-		const result: PlanningResult = {
-			taskId: task.id,
-			success: true,
-			phases: [],
-			totalDuration: 0,
-			adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
-			recommendations: [],
-			brainwavMetadata: {
-				createdBy: 'brAInwav',
-				version: '1.0.0',
-				timestamp: new Date(),
-			},
-		};
+                const result: PlanningResult = {
+                        taskId: task.id,
+                        success: true,
+                        phases: [],
+                        totalDuration: 0,
+                        adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
+                        recommendations: [],
+                        brainwavMetadata: {
+                                createdBy: 'brAInwav',
+                                version: '1.0.0',
+                                timestamp: new Date(),
+                        },
+                        security: securityEvaluation,
+                };
 
 		try {
 			// Execute structured planning phases

@@ -1,3 +1,5 @@
+import { SECURITY_PROMPT_TEMPLATES } from '../prompts/security-templates.js';
+
 /**
  * Enhanced Prompt Template Manager for Cortex-OS Agents
  * Implements structured prompt templates based on Deep Agents patterns
@@ -32,17 +34,18 @@ export interface PlanningContext {
 }
 
 export interface PromptContext {
-	taskId: string;
-	agentId: string;
-	sessionId?: string;
-	complexity: number; // 1-10 scale
+        taskId: string;
+        agentId: string;
+        sessionId?: string;
+        complexity: number; // 1-10 scale
 	priority: number; // 1-10 scale
 	capabilities: string[];
 	tools: string[];
-	currentPhase?: PlanningPhase;
-	planningContext?: PlanningContext;
-	compliance?: PlanningContext['compliance'];
-	nOArchitecture: boolean;
+        currentPhase?: PlanningPhase;
+        planningContext?: PlanningContext;
+        compliance?: PlanningContext['compliance'];
+        nOArchitecture: boolean;
+        [key: string]: unknown;
 }
 
 export interface PromptTemplate {
@@ -84,13 +87,14 @@ export class PromptTemplateManager {
 		}>
 	>;
 
-	constructor() {
-		this.templates = new Map();
-		this.usageHistory = new Map();
-		this.initializeDefaultTemplates();
+        constructor() {
+                this.templates = new Map();
+                this.usageHistory = new Map();
+                this.initializeDefaultTemplates();
+                this.registerSecurityTemplates();
 
-		console.log('brAInwav Prompt Template Manager: Initialized with nO architecture patterns');
-	}
+                console.log('brAInwav Prompt Template Manager: Initialized with nO architecture patterns and security coverage');
+        }
 
 	/**
 	 * Select optimal prompt template based on context
@@ -542,16 +546,22 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 		);
 	}
 
-	private getVariableValue(variable: string, context: PromptContext): string {
-		const complianceValue = this.resolveComplianceVariable(variable, context);
-		if (complianceValue !== null) {
-			return complianceValue;
-		}
-		switch (variable) {
-			case 'taskId':
-				return context.taskId;
-			case 'agentId':
-				return context.agentId;
+        private getVariableValue(variable: string, context: PromptContext): string {
+                const complianceValue = this.resolveComplianceVariable(variable, context);
+                if (complianceValue !== null) {
+                        return complianceValue;
+                }
+
+                const dynamicValue = this.resolveDynamicVariable(variable, context);
+                if (dynamicValue !== null) {
+                        return dynamicValue;
+                }
+
+                switch (variable) {
+                        case 'taskId':
+                                return context.taskId;
+                        case 'agentId':
+                                return context.agentId;
 			case 'sessionId':
 				return context.sessionId || 'unknown';
 			case 'complexity':
@@ -576,10 +586,43 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 				return 'unknown';
 			case 'errorDetails':
 				return 'Error details not available';
-			default:
-				return `{{${variable}}}`;
-		}
-	}
+                        default:
+                                return `{{${variable}}}`;
+                }
+        }
+
+        private resolveDynamicVariable(variable: string, context: PromptContext): string | null {
+                const scopedContext = context as Record<string, unknown>;
+
+                if (Object.prototype.hasOwnProperty.call(scopedContext, variable)) {
+                        const value = scopedContext[variable];
+                        return this.presentDynamicValue(value);
+                }
+
+                const planningContext = context.planningContext as Record<string, unknown> | undefined;
+                if (planningContext && Object.prototype.hasOwnProperty.call(planningContext, variable)) {
+                        const value = planningContext[variable];
+                        return this.presentDynamicValue(value);
+                }
+
+                return null;
+        }
+
+        private presentDynamicValue(value: unknown): string {
+                if (value === null || value === undefined) {
+                        return '';
+                }
+
+                if (Array.isArray(value)) {
+                        return value.map((entry) => this.presentDynamicValue(entry)).join(', ');
+                }
+
+                if (typeof value === 'object') {
+                        return JSON.stringify(value);
+                }
+
+                return String(value);
+        }
 
 	private resolveComplianceVariable(variable: string, context: PromptContext): string | null {
 		if (!variable.startsWith('compliance')) {
@@ -673,6 +716,19 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 			'\n';
 		return prompt + branding;
 	}
+
+	private registerSecurityTemplates(): void {
+                const before = this.templates.size;
+
+                for (const template of SECURITY_PROMPT_TEMPLATES) {
+                        this.templates.set(template.id, template);
+                }
+
+                const registered = this.templates.size - before;
+                console.log(
+                        `brAInwav Prompt Manager: Registered ${registered} security templates (total ${this.templates.size})`,
+                );
+        }
 
 	/**
 	 * Get template statistics for monitoring

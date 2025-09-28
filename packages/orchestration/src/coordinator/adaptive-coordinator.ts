@@ -1,6 +1,7 @@
 import { StrategySelector, type Strategy, type TaskProfile } from '../intelligence/strategy-selector.js';
 import type { LongHorizonTask, PlanningResult } from '../lib/long-horizon-planner.js';
 import type { PlanningContext } from '../utils/dsp.js';
+import { SecurityCoordinator } from '../security/security-coordinator.js';
 
 export interface AgentDescriptor {
         id: string;
@@ -53,6 +54,7 @@ export interface AdaptiveCoordinationOptions {
         clock?: () => Date;
         telemetrySink?: (telemetry: CoordinationTelemetry) => void;
         historyLimit?: number;
+        securityCoordinator?: SecurityCoordinator;
 }
 
 interface HistoricalRecord {
@@ -65,6 +67,7 @@ export class AdaptiveCoordinationManager {
         private readonly clock: () => Date;
         private readonly telemetrySink?: (telemetry: CoordinationTelemetry) => void;
         private readonly historyLimit: number;
+        private readonly securityCoordinator: SecurityCoordinator;
         private readonly history = new Map<string, HistoricalRecord[]>();
 
         constructor(options: AdaptiveCoordinationOptions = {}) {
@@ -72,6 +75,7 @@ export class AdaptiveCoordinationManager {
                 this.clock = options.clock ?? (() => new Date());
                 this.telemetrySink = options.telemetrySink;
                 this.historyLimit = Math.max(1, options.historyLimit ?? 50);
+                this.securityCoordinator = options.securityCoordinator ?? new SecurityCoordinator();
         }
 
         coordinate(request: CoordinationRequest): CoordinationDecision {
@@ -82,6 +86,8 @@ export class AdaptiveCoordinationManager {
                 const assignments = this.buildAssignments(request, strategy);
                 const telemetry: CoordinationTelemetry[] = [];
                 const timestamp = this.clock().toISOString();
+
+                const confidence = this.computeConfidence(request.task.id, strategy);
 
                 telemetry.push({
                         branding: 'brAInwav',
@@ -104,19 +110,30 @@ export class AdaptiveCoordinationManager {
                         },
                 });
 
+                const securityReview = this.securityCoordinator.review({
+                        request,
+                        strategy,
+                        assignments,
+                        confidence,
+                        timestamp,
+                });
+                telemetry.push(...securityReview.telemetry);
+
                 for (const entry of telemetry) {
                         this.telemetrySink?.(entry);
                         console.log(`brAInwav AdaptiveCoordinator: ${entry.message}`);
                 }
 
-                const confidence = this.computeConfidence(request.task.id, strategy);
+                const baseStatePatch = this.createStatePatch(request, strategy, confidence);
+                const statePatch = this.mergeStatePatches(baseStatePatch, securityReview.statePatch);
+
                 const decision: CoordinationDecision = {
                         taskId: request.task.id,
                         strategy,
                         assignments,
                         confidence,
                         telemetry,
-                        statePatch: this.createStatePatch(request, strategy, confidence),
+                        statePatch,
                 };
 
                 this.recordDecision(decision);
@@ -266,5 +283,49 @@ export class AdaptiveCoordinationManager {
                 if (history.length > this.historyLimit) {
                         history.splice(0, history.length - this.historyLimit);
                 }
+        }
+
+        private mergeStatePatches(
+                ...patches: Array<Record<string, unknown> | undefined>,
+        ): Record<string, unknown> {
+                const merged: Record<string, unknown> = {};
+
+                for (const patch of patches) {
+                        if (!this.isPlainRecord(patch)) {
+                                continue;
+                        }
+
+                        for (const [key, value] of Object.entries(patch)) {
+                                const current = merged[key];
+
+                                if (this.isPlainRecord(current) && this.isPlainRecord(value)) {
+                                        merged[key] = this.mergeStatePatches(
+                                                current as Record<string, unknown>,
+                                                value as Record<string, unknown>,
+                                        );
+                                        continue;
+                                }
+
+                                if (Array.isArray(current) && Array.isArray(value)) {
+                                        merged[key] = [...current, ...value];
+                                        continue;
+                                }
+
+                                if (value !== undefined) {
+                                        merged[key] = value;
+                                }
+                        }
+                }
+
+                return merged;
+        }
+
+        private isPlainRecord(candidate: unknown): candidate is Record<string, unknown> {
+                if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+                        return false;
+                }
+
+                const prototype = Object.getPrototypeOf(candidate);
+                return prototype === Object.prototype || prototype === null;
         }
 }

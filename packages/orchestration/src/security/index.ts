@@ -449,3 +449,5 @@ export {
 	rbacSystem as RBACSystem,
 	SecurityMiddleware,
 };
+
+export { SecurityCoordinator } from './security-coordinator.js';

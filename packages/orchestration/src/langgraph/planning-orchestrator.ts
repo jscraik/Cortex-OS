@@ -73,6 +73,7 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
                                 status: phase.error ? 'failed' : 'completed',
                         })),
                         recommendations: planningResult.recommendations,
+                        security: planningResult.security,
                 },
                 coordination: {
                         strategy: coordinationDecision.strategy,
@@ -96,12 +97,14 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
                                 phases: planningResult.phases,
                                 recommendations: planningResult.recommendations,
                                 success: planningResult.success,
+                                security: planningResult.security,
                         },
                         coordination: {
                                 strategy: coordinationDecision.strategy,
                                 assignments: coordinationDecision.assignments,
                                 confidence: coordinationDecision.confidence,
                         },
+                        security: planningResult.security,
                         telemetry: coordinationDecision.telemetry,
                 },
         });
