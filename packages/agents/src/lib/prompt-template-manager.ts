@@ -594,13 +594,13 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
         private resolveDynamicVariable(variable: string, context: PromptContext): string | null {
                 const scopedContext = context as Record<string, unknown>;
 
-                if (Object.prototype.hasOwnProperty.call(scopedContext, variable)) {
+                if (Object.hasOwn(scopedContext, variable)) {
                         const value = scopedContext[variable];
                         return this.presentDynamicValue(value);
                 }
 
                 const planningContext = context.planningContext as Record<string, unknown> | undefined;
-                if (planningContext && Object.prototype.hasOwnProperty.call(planningContext, variable)) {
+                if (planningContext && Object.hasOwn(planningContext, variable)) {
                         const value = planningContext[variable];
                         return this.presentDynamicValue(value);
                 }
