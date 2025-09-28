@@ -18,7 +18,7 @@ hooks:
     - matcher: "Bash(*)"
       hooks:
         - type: command
-          command: "pnpm lint:smart --filter @cortex-os/security"
+          command: "pnpm lint:smart --filter packages/**"
   PostToolUse:
     - matcher: "Write|Edit|MultiEdit"
       hooks:
