@@ -563,7 +563,7 @@ Your architecture **exceeds the blueprint's vision** and provides a production-r
 **Implementation Strategy**:
 
 - Create reusable evaluation template stored under `docs/framework-evaluations/`
-- Automate generation via CLI script that inspects package manifests and adapter coverage
+- Automate generation via CLI script that inspects package manifests (e.g., `package.json`, `package-lock.json`, `yarn.lock`, or custom manifest files) and adapter coverage
 - Integrate evaluation workflow with `@cortex-os/prp-runner` evidence pipeline for audit trails
 - Emit results as brAInwav-branded markdown/JSON artifacts consumed by MCP tools
 
