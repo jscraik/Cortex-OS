@@ -62,7 +62,8 @@ export interface PromptTemplate {
 }
 
 const HISTORY_LIMIT = 100;
-const HISTORY_RETENTION_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+const HISTORY_RETENTION_MS = THIRTY_DAYS_MS;
 
 export interface TemplateSelection {
 	template: PromptTemplate;
