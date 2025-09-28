@@ -282,8 +282,7 @@ function createErrorEnvelope(
         sequence: number,
         error: unknown,
         metadata: Record<string, unknown> | undefined,
-): LangGraphStreamEnvelope<{ message: string; name: string }>
-{
+): LangGraphStreamEnvelope<{ message: string; name: string }> {
         const err = error instanceof Error ? error : new Error(String(error));
         return createEnvelope({
                 type: 'brAInwav.langgraph.error',
