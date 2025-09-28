@@ -96,11 +96,10 @@ export type {
 // Teaching layer
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
 export type {
-	CapturedExample,
-	TeachingPattern,
+        CapturedExample,
+        TeachingPattern,
 } from './teaching/example-capture.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
-
 export type {
 	BindKernelToolsOptions,
 	KernelBashInput,
@@ -111,5 +110,6 @@ export type {
 	KernelReadFileResult,
 	KernelTool,
 	KernelToolBinding,
+	BoundKernelTool,
 } from './tools/bind-kernel-tools.js';
 export { bindKernelTools } from './tools/bind-kernel-tools.js';

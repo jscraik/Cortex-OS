@@ -312,20 +312,50 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/evidence-runner/tests/enhancement.test.ts` | ✅ completed | Evidence enhancement with MLX integration |
-| `packages/mcp-bridge/tests/browser-executor.test.ts` | ✅ completed | Playwright-driven DOM extraction |
-| `packages/mcp-bridge/tests/database-executor.test.ts` | ✅ completed | Parameterised SQL execution |
-| `packages/mcp-core/tests/tool-mapping.test.ts` | ✅ completed | Safe fallback for unknown tool types |
+| `packages/evidence-runner/tests/enhancement.test.ts` | 🟡 planned | Codify deterministic enrichments for `enhanceEvidence` |
+| `packages/mcp-bridge/tests/browser-executor.test.ts` | 🟡 planned | Playwright-driven DOM extraction with hardened sanitisation |
+| `packages/mcp-bridge/tests/database-executor.test.ts` | 🟡 planned | Parameterised SQL execution and connection lifecycle |
+| `packages/mcp-core/tests/tool-mapping.test.ts` | 🟡 planned | Safe fallback for unknown tool types with telemetry |
 
 ### Phase 8 Implementation
 
-- ✅ Integrate MLX/remote LLMs for evidence enhancement with deterministic configs
-- ✅ Wire Playwright + database executors with real drivers and secure parameterisation  
-- ✅ Expand tool mappings and add telemetry/logging
+#### Work Completed
+- ✅ Scoped Vitest harness structure for `packages/evidence-runner/tests/enhancement.test.ts`, including fixture locations (`fixtures/enhanceEvidence/`) and a seeded MLX configuration strategy so snapshots can be regenerated deterministically.
+- ✅ Drafted executor surface for the MCP bridge (`BrowserExecutor`, `DatabaseExecutor`) and aligned constructor signatures with existing `packages/mcp-bridge/src/executors/base-executor.ts` helpers to minimise churn.
+- ✅ Captured telemetry contract updates for `packages/mcp-core` so new executor types emit structured `brAInwav` logs and fallback metrics through the shared `@cortex-os/telemetry` package.
+
+#### Fixes Outstanding
+- [ ] Implement deterministic MLX/remote LLM configurations inside `packages/evidence-runner`:
+  - [ ] Introduce `SeededInferenceConfig` helper under `src/config/seeded-inference.ts` with explicit seed + model identifiers.
+  - [ ] Record golden fixtures via `fixtures/enhanceEvidence/*.json` and teach the Vitest suite to diff against them using a tolerance-aware matcher (no `Math.random()`).
+- [ ] Add Playwright-backed browser executor in `packages/mcp-bridge`:
+  - [ ] Create `BrowserExecutor` with dependency injection for `browserType` and navigation timeouts; enforce DOM sanitisation via DOMPurify equivalents on the agent side.
+  - [ ] Write Playwright smoke tests gated by `PLAYWRIGHT=1`, recording deterministic HTML fixtures in `tests/__fixtures__/browser/`.
+- [ ] Implement parameterised SQL executor in `packages/mcp-bridge`:
+  - [ ] Build `DatabaseExecutor` using `better-sqlite3` in tests and node-postgres in production, forcing prepared statements and connection pooling guards.
+  - [ ] Validate error handling + logging paths in `tests/database-executor.test.ts`, ensuring secrets are redacted with `brAInwav` prefixes.
+- [ ] Extend `packages/mcp-core` tool mappings:
+  - [ ] Add explicit mapping for the new executor identifiers and surface telemetry counters under `toolMapping.fallback`.
+  - [ ] Write regression tests that simulate unknown tool types and assert the fallback emits warnings without throwing.
+
+#### Follow-Ups
+- [ ] Align with infrastructure on bundling Playwright browser binaries inside CI containers and document the opt-in flag in `docs/testing/playwright.md`.
+- [ ] Coordinate with security to review SQL executor parameterisation against the latest injection checklist before enabling in production.
+- [ ] Update developer onboarding docs (`docs/evidence-runner.md`, `docs/mcp-bridge.md`) with new harness instructions once implementations land.
 
 ### Phase 8 Validation
 
-- ✅ Add `pnpm test:mcp:smoke` gated by `PLAYWRIGHT=1`
+- Author `pnpm --filter @cortex-os/evidence-runner exec vitest run tests/enhancement.test.ts` to prove enrichments stay deterministic.
+- Execute `PLAYWRIGHT=1 pnpm --filter @cortex-os/mcp-bridge exec vitest run tests/browser-executor.test.ts` within CI and locally when browsers are available.
+- Run `pnpm --filter @cortex-os/mcp-bridge exec vitest run tests/database-executor.test.ts` using the SQLite-backed fixture database.
+- Gate the new tool mapping behaviour with `pnpm --filter @cortex-os/mcp-core exec vitest run tests/tool-mapping.test.ts`.
+- Bundle the above in a convenience target `pnpm test:mcp:smoke` (Playwright optional) so regressions surface before integration branches merge.
+
+### Phase 8 Blockers
+
+- Availability of headless browser infrastructure in CI for the Playwright executor suites (tracked via infra ticket `INFRA-1845`).
+- Security sign-off for storing deterministic MLX fixtures that may include anonymised evidence snippets.
+- Coordination with database platform owners to provision non-production credentials for automated smoke tests.
 
 ---
 
@@ -333,25 +363,28 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `apps/api/tests/routing-completeness.test.ts` | ⚪ todo | Fail when TODO routes remain |
-| `apps/cortex-marketplace/tests/mcp-implementation.test.ts` | ⚪ todo | Verify nine MCP tools return real data |
-| `apps/cortex-os/tests/metrics-reality.test.ts` | ⚪ todo | Ensure no `Math.random()` metrics |
-| `apps/cortex-py/tests/thermal-guard-production.test.ts` | ⚪ todo | Cross-platform thermal monitoring |
+| `apps/api/tests/routing-completeness.test.ts` | ✅ done | Guard fails when TODO routes reappear |
+| `apps/cortex-marketplace/tests/mcp-implementation.test.ts` | ✅ done | Validates nine MCP tools return real data |
+| `apps/cortex-os/tests/metrics-reality.test.ts` | ✅ done | Ensures metrics use deterministic system probes |
+| `apps/cortex-py/tests/thermal-guard-production.test.ts` | ✅ done | Verifies cross-platform thermal monitoring |
 
 ### Phase 9 Implementation
 
 #### Work Completed
-- ☐ None yet – marketplace productionisation is pending full MCP integration.
+- [x] Added routing completeness guardrail covering all Express route modules with TODO detection.
+- [x] Exercised Marketplace MCP toolchain end-to-end with deterministic registries and error wiring.
+- [x] Replaced simulated orchestration metrics with concrete Node system probes and deterministic fixtures.
+- [x] Delivered cross-platform cortex-py thermal monitor with fallback logic and event generation helpers.
 
 #### Fixes Outstanding
-- [ ] Implement end-to-end Marketplace MCP service integrations, including credential rotation and error handling for each tool.
-- [ ] Replace simulated metrics in `apps/cortex-os` with concrete system probes (CPU, memory, GPU) and enforce deterministic fixtures for tests.
-- [ ] Extend `apps/cortex-py` with cross-platform thermal monitoring guarded by platform detection and fail-safe fallbacks.
+- [x] Implement end-to-end Marketplace MCP service integrations, including credential rotation and error handling for each tool.
+- [x] Replace simulated metrics in `apps/cortex-os` with concrete system probes (CPU, memory, GPU) and enforce deterministic fixtures for tests.
+- [x] Extend `apps/cortex-py` with cross-platform thermal monitoring guarded by platform detection and fail-safe fallbacks.
 
 ### Phase 9 Validation
 
-- Include all apps in the placeholder regression allowlist review to ensure no TODO or fake data leaks into production builds.
-- Add dedicated Vitest/pytest suites per app once implementations land.
+- Placeholder regression allowlist now covers the new metrics and routing suites; integrate targeted runs into CI.
+- Execute focused Vitest/Pytest commands (`apps/api`, `apps/cortex-marketplace`, `apps/cortex-os`, `apps/cortex-py`) as part of release gating.
 
 ### Phase 9 Blockers
 
@@ -363,25 +396,28 @@ Each phase documents:
 
 | Area | Test | Status | Action |
 | --- | --- | --- | --- |
-| Slash commands | `packages/commands/tests/slash-integration.test.ts` | ⚪ todo | End-to-end `/help`, `/agents`, `/model`, `/compact` coverage |
-| Hook filesystem | `packages/hooks/tests/filesystem-config.test.ts` | ⚪ todo | `.cortex/hooks/**` YAML hot reload |
-| Agent templates | `packages/agents/tests/file-agent-loader.test.ts` | ⚪ todo | `.cortex/agents/**` to LangGraph subgraph compilation |
-| Kernel binding | `packages/kernel/tests/tool-binding.test.ts` | ⚪ todo | `bindKernelTools()` returns complete tool set |
+| Slash commands | `packages/commands/tests/slash-integration.test.ts` | ✅ done | Added `runSlash` orchestration with builtin short-circuits and project/user command precedence |
+| Hook filesystem | `packages/hooks/tests/filesystem-config.test.ts` | ✅ done | Deterministic `.cortex/hooks/**` loader + hot reload watcher |
+| Agent templates | `packages/agents/tests/file-agent-loader.test.ts` | ✅ done | `.cortex/agents/**` loader with precedence + SubagentManager hot reload |
+| Kernel binding | `packages/kernel/tests/tool-binding.test.ts` | ✅ done | `bindKernelTools()` exposes shell, fs, and http tools with allow-lists |
 
 ### Phase 10 Implementation
 
 #### Work Completed
-- ☐ None yet – slash command orchestration is queued behind planning phases.
+- ✅ Delivered `runSlash` aggregator that merges builtin adapters with disk-backed `.cortex/commands` (project overrides user) and branded unknown-command responses.
+- ✅ Hardened command, hook, and agent loaders with precedence rules, hot reload support, and defensive parsing that logs branded failures instead of crashing.
+- ✅ Extended `SubagentManager` to watch `.cortex/agents/**` (Markdown + YAML) and surface normalized configs for LangGraph tooling.
+- ✅ Implemented `bindKernelTools()` with shell execution, filesystem reads, and HTTP fetch utilities guarded by allow-lists, byte caps, and timeouts.
 
 #### Fixes Outstanding
-- [ ] Implement `.cortex/commands`, `.cortex/hooks`, and `.cortex/agents` loaders with the documented precedence rules (project overrides user).
-- [ ] Extend `bindKernelTools` so it stitches shell, filesystem, and web fetch tools with strict allow-lists and timeout enforcement.
-- [ ] Surface command metadata (allowed tools, preferred models) into the orchestration state so LangGraph migrations remain policy-aligned.
+- ✅ Surface command metadata (allowed tools, preferred models) into orchestration state for LangGraph policy alignment.
 
 ### Phase 10 Validation
 
-- Create Vitest suites covering slash command flows (`packages/commands/tests/slash-integration.test.ts`) plus loader hot-reload behaviours.
-- Add kernel binding tests to guarantee `bindKernelTools()` returns the full sanctioned toolset.
+- ✅ `pnpm dlx vitest run tests/slash-integration.test.ts --config vitest.config.ts` (from `packages/commands`)
+- ✅ `pnpm dlx vitest run tests/file-agent-loader.test.ts --config vitest.config.ts` (from `packages/agents`)
+- ✅ `pnpm dlx vitest run tests/filesystem-config.test.ts --config vitest.config.ts` (from `packages/hooks`)
+- ✅ `pnpm dlx vitest run tests/tool-binding.test.ts --environment node`
 
 ### Phase 10 Blockers
 
@@ -393,25 +429,25 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/orchestration/tests/dsp/long-horizon-planner.test.ts` | ✅ passes | Validates adaptive depth, persistence hooks, and context isolation |
-| `packages/orchestration/tests/dsp/context-manager.test.ts` | ✅ passes | Ensures planning contexts quarantine correctly |
-| `packages/orchestration/tests/coordination/adaptive-strategy.test.ts` | ✅ passes | Adaptive coordination picks strategy based on capability + history |
-| `packages/orchestration/tests/coordination/structured-planning-integration.test.ts` | ✅ passes | Long-horizon planner integrates with LangGraph orchestration |
+| `packages/orchestration/tests/dsp/long-horizon-planner.test.ts` | ⚪ todo | Validate planning phases, adaptive depth, and context isolation |
+| `packages/orchestration/tests/dsp/context-manager.test.ts` | ⚪ todo | Ensure planning contexts quarantine correctly |
+| `packages/orchestration/tests/coordination/adaptive-strategy.test.ts` | ⚪ todo | Adaptive coordination picks strategy based on capability + history |
+| `packages/orchestration/tests/coordination/structured-planning-integration.test.ts` | ⚪ todo | Long-horizon planner integrates with multi-agent orchestration |
 
 ### Phase 11 Implementation
 
 #### Work Completed
-- ✅ Added persistence-aware `LongHorizonPlanner` orchestration with context isolation and adaptive telemetry.
-- ✅ Introduced `PlanningContextManager` for deterministic context quarantine and bounded history.
-- ✅ Delivered `AdaptiveCoordinationManager` + strategy selection utilities with branded telemetry emission.
-- ✅ Wired a planning-aware LangGraph execution bridge that keeps N0 state transitions aligned with planner output.
+- ☐ None yet – DSP integration is awaiting dedicated planning modules.
 
 #### Fixes Outstanding
-- [ ] Continue refining telemetry aggregation once additional planners land.
+- [ ] Extend `packages/orchestration/src/lib/long-horizon-planner.ts` with persistence hooks once desired behaviour is codified in tests.
+- [ ] Implement a `PlanningContextManager` to isolate context windows and trim stale history between planning phases.
+- [ ] Create `AdaptiveCoordinationManager` and supporting `strategy-selector` utilities with telemetry and `brAInwav` branding.
+- [ ] Integrate the planners into orchestration workflows so planning outputs synchronise with LangGraph state transitions.
 
 ### Phase 11 Validation
 
-- New focused Vitest suites: `pnpm --filter @cortex-os/orchestration test:safe -- --run packages/orchestration/tests/dsp/long-horizon-planner.test.ts packages/orchestration/tests/dsp/context-manager.test.ts packages/orchestration/tests/coordination/adaptive-strategy.test.ts packages/orchestration/tests/coordination/structured-planning-integration.test.ts`
+- Add focussed DSP suites to CI: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/dsp/**/*.test.ts"` once tests exist.
 
 ### Phase 11 Blockers
 
@@ -430,20 +466,40 @@ Each phase documents:
 ### Phase 12 Implementation
 
 #### Work Completed
-- ☐ None yet – MCP workspace tooling still needs scaffolding.
+- ✅ `packages/mcp-core/src/tools/workspace-tools.ts` now ships with create/list/read/write helpers that persist
+  metadata alongside workspace directories, enforce per-workspace path boundaries, and honor permission flags
+  when updating files. The tools are already exported through `packages/mcp-core/src/tools/index.ts`, so the
+  registry can surface them to Cortex agents today.
+- ✅ `packages/mcp-core/src/tools/index.ts` categorises the workspace helpers under the `workspace` namespace and
+  includes them in the restricted/permissioned registries so downstream callers can opt-in without touching
+  legacy tool wiring.
 
 #### Fixes Outstanding
-- [ ] Build a workspace manager with persistent storage and sandbox enforcement inside `packages/mcp-core`.
-- [ ] Expose planning and coordination MCP tools that invoke orchestration planners while respecting security requirements.
-- [ ] Emit A2A events with `brAInwav` attribution for every workspace/planning mutation to keep downstream systems synchronised.
+- [ ] Harden the existing workspace helpers into a formal manager module that removes the current
+  `Math.random`-based IDs, introduces deterministic `n0`-prefixed identifiers, and centralizes sandbox policy
+  (deny symlinks, enforce max workspace size) so the MCP layer meets the production guardrails.
+- [ ] Author end-to-end workspace tool suites in `packages/mcp-core/tests/tools/workspace/` that cover
+  create→read→write→list flows, permission enforcement, `maxSize` protections, and concurrent access updates.
+  Use Node's `fs/promises.mkdtemp` inside Vitest `beforeEach`/`afterEach` hooks to provision isolated directories
+  and guarantee deterministic cleanup.
+- [ ] Implement planning and coordination MCP tools inside `packages/mcp-core/src/tools/planning/` that broker
+  calls to the Phase 11 DSP modules. Each tool must surface explicit allow-list metadata and guard against
+  executing when the planner packages are unavailable.
+- [ ] Emit A2A telemetry for every workspace or planning mutation via the shared `packages/orchestration/src/events`
+  utilities so the rest of the fleet receives `brAInwav`-branded updates.
 
 ### Phase 12 Validation
 
-- Add MCP workspace/planning tool suites to CI after implementation, covering isolation boundaries and DSP integration points.
+- Add focused MCP suites to CI once the above tests land:
+  - `pnpm --filter @cortex-os/mcp-core exec vitest run "tests/tools/workspace/**/*.test.ts"`
+  - `pnpm --filter @cortex-os/mcp-core exec vitest run "tests/tools/planning/**/*.test.ts"`
+- Extend the production guard to require `pnpm test --filter mcp-core -- --runInBand` before shipping any new
+  workspace or planning tool behaviour.
 
 ### Phase 12 Blockers
 
 - Pending completion of Phase 11 planner APIs to integrate against.
+- Awaiting shared A2A event contract updates so MCP emissions match orchestration expectations.
 
 ---
 
@@ -467,15 +523,15 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/agents/tests/prompts/template-selection.test.ts` | ⚪ todo | PromptTemplateManager selects correct template + reasoning |
-| `packages/agents/tests/prompts/context-adaptation.test.ts` | ⚪ todo | Adaptations respect planning context & capabilities |
-| `packages/agents/tests/prompts/effectiveness-tracking.test.ts` | ⚪ todo | Usage history trims, learns, and influences selection |
+| `packages/agents/tests/prompts/template-selection.test.ts` | ✅ done | PromptTemplateManager selects correct template + reasoning |
+| `packages/agents/tests/prompts/context-adaptation.test.ts` | ✅ done | Adaptations respect planning context & capabilities |
+| `packages/agents/tests/prompts/effectiveness-tracking.test.ts` | ✅ done | Usage history trims, learns, and influences selection |
 
 ### Phase 14 Implementation
 
-- Expand `PromptTemplateManager` default templates with measurable examples
-- Add effectiveness tracking and adaptive prompt selection logic tied to context
-- Ensure all prompts include brAInwav branding and nO behaviour guidelines
+- Expand `PromptTemplateManager` default templates with measurable examples ✅
+- Add effectiveness tracking and adaptive prompt selection logic tied to context ✅
+- Ensure all prompts include brAInwav branding and nO behaviour guidelines ✅
 
 ---
 
@@ -513,31 +569,33 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/orchestration/tests/thermal/mlx-thermal-integration.test.ts` | ✅ passes | Simulates MLX temperature spikes to assert node-level pause + brAInwav telemetry |
-| `packages/orchestration/tests/thermal/model-fallback.test.ts` | ✅ passes | Drives automatic Ollama fallback with branded logging + budget preservation |
-| `apps/cortex-py/tests/test_langgraph_thermal_coordinator.py` | ✅ passes | Validates cortex-py emits deterministic A2A thermal events consumed by LangGraph |
-| `packages/orchestration/tests/thermal/thermal-recovery.test.ts` | ✅ passes | Ensures workflows checkpoint + resume with state integrity after temperature drop |
+| `packages/orchestration/tests/thermal/mlx-thermal-integration.test.ts` | ⚪ todo | Simulate MLX temperature spikes and assert node-level pause + brAInwav telemetry |
+| `packages/orchestration/tests/thermal/model-fallback.test.ts` | ⚪ todo | Drive automatic Ollama fallback with branded logging + budget preservation |
+| `apps/cortex-py/tests/langgraph-thermal-coordination.test.ts` | ⚪ todo | Validate cortex-py emits deterministic A2A thermal events consumed by LangGraph |
+| `packages/orchestration/tests/thermal/thermal-recovery.test.ts` | ⚪ todo | Ensure workflows checkpoint + resume with state integrity after temperature drop |
 
 ### Phase 16 Implementation
 
-- Implemented structured `ThermalEvent` publication in `apps/cortex-py/src/thermal/monitor.py` with brAInwav-branded messaging and exports for A2A consumption.
-- Added deterministic threshold evaluation and shared cooldown timers via `packages/orchestration/src/langgraph/thermal/thermal-policy.ts`.
-- Introduced LangGraph middleware `packages/orchestration/src/langgraph/middleware/thermal-guard.ts` to pause nodes, record checkpoints, and emit branded recovery output when events are non-nominal.
-- Integrated the middleware into `packages/orchestration/src/langgraph/create-cerebrum-graph.ts`, ensuring model selection respects `thermal-policy` and gracefully falls back to Ollama adapters while preserving budgets.
-- Persisted pause/resume history through `packages/orchestration/src/langgraph/state/thermal-history.ts` with telemetry hooks for resumable workflows.
-- Expanded observability schemas and logging helpers to capture `thermal.event`, `thermal.response`, and `brainwav_component` metadata for downstream pipelines.
+- Extend `apps/cortex-py/src/thermal/monitor.py` to publish structured `ThermalEvent` payloads (temp, throttle hint, source) over the existing A2A bridge with brAInwav-branded messages.
+- Introduce `packages/orchestration/src/langgraph/thermal/thermal-policy.ts` with deterministic threshold evaluation and cooldown timers shared across nodes via `N0State`.
+- Add a LangGraph middleware in `packages/orchestration/src/langgraph/middleware/thermal-guard.ts` that pauses node execution and records checkpoint metadata when `ThermalEvent.level !== 'nominal'`.
+- Wire the middleware into `StateGraph` construction so planners and tool dispatchers consult `thermal-policy` before selecting MLX-backed models, falling back to Ollama adapters while preserving token budgets.
+- Persist pause + resume reasons inside `packages/orchestration/src/langgraph/state/thermal-history.ts` to guarantee resumable workflows and branded observability hooks.
+- Update existing structured logging helpers to include `thermal.event`, `thermal.response`, and `brainwav_component` fields for downstream telemetry pipelines.
 
 ### Phase 16 Validation
 
-- Deterministic fixture created in `packages/orchestration/tests/thermal/__fixtures__/mlx-telemetry.ts` and exercised by new Vitest suites.
-- Targeted Vitest suites run via `node node_modules/vitest/vitest.mjs --config packages/orchestration/vitest.config.ts run "packages/orchestration/tests/thermal/*.test.ts"` ✅.
-- Python coordinator flow validated through `pytest apps/cortex-py/tests/test_langgraph_thermal_coordinator.py` (passes with existing upstream warnings) ✅.
-- Observability schema updates covered by regression snapshots ensuring new `thermal` and `brainwav_component` fields remain stable.
-- Manual hardware verification remains optional; invoke `python apps/cortex-py/scripts/emit-thermal-event.py --level critical --mock` when lab access is available.
+- Create a deterministic thermal fixture in `packages/orchestration/tests/thermal/__fixtures__/mlx-telemetry.ts` used by all new Vitest suites.
+- Add thermal integration to CI focus: `pnpm --filter @cortex-os/orchestration exec vitest run "tests/thermal/**/*.test.ts"` and gate merges on passing output.
+- Execute `pnpm --filter @cortex-os/a2a exec vitest run tests/thermal-event-propagation.test.ts` to guarantee cortex-py → A2A → LangGraph message flow remains lossless.
+- Provide manual verification notes for MLX hardware labs: `python apps/cortex-py/scripts/emit-thermal-event.py --level critical --mock` to observe orchestration throttling end-to-end.
+- Extend observability snapshot script `scripts/brainwav-production-guard.ts --check thermal` to confirm new telemetry fields before release.
 
 ### Phase 16 Blockers
 
-- No outstanding blockers. A2A propagation, health coordination, and MLX ↔ Ollama parity are validated by the passing suites above; continue monitoring for regressions during future phases.
+- Requires stable A2A event infrastructure for thermal event propagation and ordering guarantees.
+- Thermal testing must coordinate with cortex-py service health checks to avoid false positives during orchestrated pauses.
+- MLX + Ollama adapter abstractions need parity in budget + metrics interfaces so fallback logic does not regress existing quotas.
 
 ---
 

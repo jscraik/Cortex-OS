@@ -129,6 +129,25 @@ export interface AgentAssignment {
 // Planning Interfaces
 // ================================
 
+export interface PlanningComplianceViolation {
+        id: string;
+        standard: 'owasp-top10' | 'cwe-25' | 'nist' | 'iso27001';
+        rule: string;
+        severity: 'low' | 'medium' | 'high' | 'critical';
+        file: string;
+        detectedAt: Date;
+        advisory?: string;
+}
+
+export interface PlanningComplianceState {
+        policies: string[];
+        riskLevel: 'low' | 'medium' | 'high' | 'critical';
+        lastUpdated: Date;
+        requiresHumanReview: boolean;
+        activeViolations: PlanningComplianceViolation[];
+        notes: string[];
+}
+
 export interface PlanningContext {
 	task: Task;
 	availableAgents: Agent[];
@@ -147,18 +166,7 @@ export interface PlanningContext {
 		quality: 'fast' | 'balanced' | 'thorough';
 		failureHandling: 'strict' | 'resilient' | 'permissive';
 	};
-	compliance: {
-		standards: string[];
-		lastCheckedAt: Date | null;
-		riskScore: number;
-		outstandingViolations: Array<{
-			id: string;
-			severity: 'low' | 'medium' | 'high' | 'critical';
-			description: string;
-			remediation: string;
-			detectedAt: Date;
-		}>;
-	};
+	compliance?: PlanningComplianceState;
 }
 
 export interface PlanningResult {

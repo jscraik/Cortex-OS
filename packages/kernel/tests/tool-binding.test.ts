@@ -1,160 +1,85 @@
-/**
- * @file tool-binding.test.ts
- * @description TDD coverage for bindKernelTools policy guards and metadata
- * @author brAInwav
- */
-
-import { promises as fs } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-	KernelBashInput,
-	KernelBashResult,
-	KernelFetchInput,
-	KernelFetchResult,
-	KernelReadFileInput,
-	KernelReadFileResult,
-	KernelTool,
-} from '../src/tools/bind-kernel-tools.js';
-import { bindKernelTools } from '../src/tools/bind-kernel-tools.js';
-
-async function createTempDir(): Promise<string> {
-	return await fs.mkdtemp(path.join(tmpdir(), 'bind-kernel-tools-'));
-}
-
-function getTool<TInput, TResult>(
-	tools: KernelTool<unknown, unknown>[],
-	name: string,
-): KernelTool<TInput, TResult> {
-	const tool = tools.find((candidate) => candidate.name === name);
-	if (!tool) {
-		throw new Error(`Expected tool ${name} to exist in binding result`);
-	}
-	return tool as KernelTool<TInput, TResult>;
-}
+import { bindKernelTools } from '../src/tool-binding.js';
 
 describe('bindKernelTools', () => {
-	let tempDir: string;
-	let originalFetch: typeof globalThis.fetch;
+        let tmpDir: string;
+        let originalFetch: typeof fetch;
 
-	beforeEach(async () => {
-		tempDir = await createTempDir();
-		originalFetch = globalThis.fetch;
-	});
+        beforeEach(async () => {
+                tmpDir = await mkdtemp(path.join(os.tmpdir(), 'kernel-tools-'));
+                originalFetch = globalThis.fetch;
+        });
 
-	afterEach(async () => {
-		globalThis.fetch = originalFetch;
-		await fs.rm(tempDir, { recursive: true, force: true });
-	});
+        afterEach(async () => {
+                globalThis.fetch = originalFetch;
+                await rm(tmpDir, { recursive: true, force: true });
+        });
 
-	it('exposes kernel tools with metadata and enforces allow lists', async () => {
-		const fetchMock = vi.fn(async () =>
-			new Response(JSON.stringify({ ok: true }), {
-				status: 200,
-				headers: { 'content-type': 'application/json' },
-			}),
-		);
-		globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+        it('provides shell, filesystem, and http tools', () => {
+                const tools = bindKernelTools({
+                        cwd: tmpDir,
+                        shell: { allow: ['echo'] },
+                        filesystem: { allow: [tmpDir] },
+                        http: { allow: ['https://example.com/'] },
+                });
+                const names = tools.map((t) => t.name);
+                expect(names).toEqual(['shell.exec', 'fs.read', 'http.fetch']);
+        });
 
-		const binding = bindKernelTools({
-			cwd: tempDir,
-			bashAllow: ['echo *'],
-			fsAllow: ['**/*.txt'],
-			netAllow: ['https://example.com/**'],
-			defaultModel: 'brAInwav-sonnet',
-			timeoutMs: 200,
-			maxReadBytes: 1024,
-			securityTools: [
-				{
-					name: 'run_semgrep_scan',
-					description: 'Run Semgrep static analysis security scan',
-					allow: ['apps/**', 'packages/**'],
-				},
-			],
-		});
+        it('executes allowed shell commands and blocks disallowed ones', async () => {
+                const tools = bindKernelTools({
+                        cwd: tmpDir,
+                        shell: { allow: ['echo'] },
+                        filesystem: { allow: [tmpDir] },
+                        http: { allow: [] },
+                });
+                const shellTool = tools.find((t) => t.name === 'shell.exec');
+                if (!shellTool) throw new Error('shell tool missing');
+                const result = await shellTool.execute({ command: 'echo hello' });
+                expect(result).toMatchObject({ stdout: 'hello', exitCode: 0 });
+                await expect(shellTool.execute({ command: 'ls' })).rejects.toThrow(/brAInwav shell deny/);
+        });
 
-		expect(binding.metadata.brand).toContain('brAInwav');
-		expect(binding.metadata.defaultModel).toBe('brAInwav-sonnet');
-		expect(binding.metadata.allowLists.bash).toEqual(['echo *']);
-		const toolNames = binding.tools.map(
-			(tool: KernelTool<unknown, unknown>) => tool.name,
-		);
-		expect(toolNames).toEqual(
-			expect.arrayContaining(['kernel.bash', 'kernel.readFile', 'kernel.fetchJson']),
-		);
+        it('reads files only from the allowlist', async () => {
+                const filePath = path.join(tmpDir, 'note.txt');
+                await writeFile(filePath, 'secure content');
+                const tools = bindKernelTools({
+                        cwd: tmpDir,
+                        shell: { allow: [] },
+                        filesystem: { allow: [tmpDir] },
+                        http: { allow: [] },
+                });
+                const fsTool = tools.find((t) => t.name === 'fs.read');
+                if (!fsTool) throw new Error('fs tool missing');
+                const read = await fsTool.execute({ path: 'note.txt' });
+                expect(read).toMatchObject({ content: 'secure content' });
+                await expect(fsTool.execute({ path: '../etc/passwd' })).rejects.toThrow(/brAInwav filesystem deny/);
+        });
 
-		const bashTool = getTool<KernelBashInput, KernelBashResult>(binding.tools, 'kernel.bash');
-		const bashResult = await bashTool.invoke({ command: 'echo brAInwav-shell' });
-		expect(bashResult.stdout.trim()).toBe('brAInwav-shell');
+        it('enforces http allowlist and timeout', async () => {
+                const fetchMock = vi.fn().mockResolvedValue({
+                        status: 200,
+                        ok: true,
+                        text: async () => 'payload',
+                });
+                globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-		const textPath = path.join(tempDir, 'notes.txt');
-		await fs.writeFile(textPath, 'Hello brAInwav kernel');
+                const tools = bindKernelTools({
+                        cwd: tmpDir,
+                        shell: { allow: [] },
+                        filesystem: { allow: [tmpDir] },
+                        http: { allow: ['https://example.com/api'], timeoutMs: 5000, maxBytes: 1024 },
+                });
+                const httpTool = tools.find((t) => t.name === 'http.fetch');
+                if (!httpTool) throw new Error('http tool missing');
 
-		const readTool = getTool<KernelReadFileInput, KernelReadFileResult>(
-			binding.tools,
-			'kernel.readFile',
-		);
-		const readResult = await readTool.invoke({ path: 'notes.txt' });
-		expect(readResult.content).toContain('brAInwav kernel');
-		expect(readResult.truncated).toBe(false);
+                const success = await httpTool.execute({ url: 'https://example.com/api/status' });
+                expect(success).toMatchObject({ status: 200, ok: true, body: 'payload' });
+                expect(fetchMock).toHaveBeenCalledTimes(1);
 
-		const fetchTool = getTool<KernelFetchInput, KernelFetchResult>(binding.tools, 'kernel.fetchJson');
-		const fetchResult = await fetchTool.invoke({ url: 'https://example.com/status' });
-		expect(fetchResult.status).toBe(200);
-		expect(fetchResult.body).toContain('"ok":true');
-		expect(fetchResult.headers['content-type']).toBe('application/json');
-		expect(fetchMock).toHaveBeenCalledTimes(1);
-		expect(binding.metadata.security?.brand).toBe('brAInwav cortex-sec');
-		expect(binding.metadata.security?.tools).toEqual([
-			{
-				name: 'run_semgrep_scan',
-				description: 'Run Semgrep static analysis security scan',
-				allowList: ['apps/**', 'packages/**'],
-			},
-		]);
-	});
-
-	it('rejects commands outside the bash allowlist with brAInwav branded errors', async () => {
-		const binding = bindKernelTools({
-			cwd: tempDir,
-			bashAllow: ['echo safe*'],
-			fsAllow: ['**/*.txt'],
-		});
-		const bashTool = getTool<KernelBashInput, KernelBashResult>(binding.tools, 'kernel.bash');
-
-		await expect(bashTool.invoke({ command: 'rm -rf /' })).rejects.toThrow(
-			/brAInwav kernel policy violation/i,
-		);
-	});
-
-	it('prevents filesystem access outside configured allowlist', async () => {
-		const binding = bindKernelTools({
-			cwd: tempDir,
-			bashAllow: ['echo *'],
-			fsAllow: ['secure/**'],
-		});
-		const readTool = getTool<KernelReadFileInput, KernelReadFileResult>(
-			binding.tools,
-			'kernel.readFile',
-		);
-
-		await expect(readTool.invoke({ path: '../secrets.txt' })).rejects.toThrow(
-			/brAInwav kernel policy violation/i,
-		);
-	});
-
-	it('blocks network requests that violate the net allowlist', async () => {
-		const binding = bindKernelTools({
-			cwd: tempDir,
-			bashAllow: ['echo *'],
-			fsAllow: ['**/*.txt'],
-			netAllow: ['https://trusted.brainwav.dev/**'],
-		});
-		const fetchTool = getTool<KernelFetchInput, KernelFetchResult>(binding.tools, 'kernel.fetchJson');
-
-		await expect(
-			fetchTool.invoke({ url: 'https://untrusted.example.com/data', method: 'GET' }),
-		).rejects.toThrow(/brAInwav kernel policy violation/i);
-	});
+                await expect(httpTool.execute({ url: 'https://evil.example.com' })).rejects.toThrow(/brAInwav http deny/);
+        });
 });

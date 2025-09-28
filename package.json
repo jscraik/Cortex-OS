@@ -67,6 +67,7 @@
     "ci:gitmcp": "pnpm test:gitmcp",
     "ci:release-gate": "bash scripts/release-gate.sh",
     "test:integration": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run -c vitest.integration.config.ts",
+    "test:integration:langgraph": "node scripts/run-langgraph-integration.mjs",
     "test:integration:multi-agent": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run tests/integration/multi-agent-workflow.test.ts",
     "test:integration:cli": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run tests/integration/cli-commands.test.ts",
     "test:integration:e2e": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run tests/integration/end-to-end-scenarios.test.ts",

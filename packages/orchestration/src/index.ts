@@ -61,6 +61,18 @@ export type {
         UnifiedToolSystemOptions,
 } from './langgraph/tool-system.js';
 
+export {
+        buildN0,
+        type BuildN0Options,
+        type BuildN0Result,
+        type PlanDecision,
+        type StreamEvent,
+        type ToolCallableModel,
+        type ToolDefinition,
+        type ToolExecutionContext,
+        type ToolExecutionOutput,
+} from './langgraph/n0-graph.js';
+
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 export {
 
@@ -80,6 +92,8 @@ export {
         markThermalResume,
 } from './langgraph/state/thermal-history.js';
 export type { ThermalCheckpoint, ThermalContext } from './langgraph/state/thermal-history.js';
+
+export { SecurityCoordinator, type ComplianceEvaluationResult } from './security/security-coordinator.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {

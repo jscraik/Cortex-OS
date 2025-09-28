@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import chokidar from 'chokidar';
 import picomatch from 'picomatch';
-import { getHookDirs, loadHookConfigs } from './loaders.js';
+import { getHookDirs, loadHookConfigs, type LoadOptions } from './loaders.js';
 import { runCommand } from './runners/command.js';
 import { runGraph, setGraphInvoker } from './runners/graph.js';
 import { runHTTP } from './runners/http.js';
@@ -11,10 +11,10 @@ import type { Hook, HookConfig, HookContext, HookEntry, HookEvent, HookResult } 
 export type GraphInvoker = (graphName: string, ctx: HookContext) => Promise<HookResult>;
 
 export class CortexHooks extends EventEmitter {
-	private cfg: HookConfig = {};
-	async init() {
-		this.cfg = await loadHookConfigs();
-	}
+        private cfg: HookConfig = {};
+        async init(opts: LoadOptions = {}) {
+                this.cfg = await loadHookConfigs(opts);
+        }
 	private watcher: chokidar.FSWatcher | null = null;
 	private lastReload = 0;
 

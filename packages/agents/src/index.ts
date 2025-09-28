@@ -89,3 +89,12 @@ export {
         type Tool as SubagentToolDefinition,
         type ToolResponse as SubagentToolResponse,
 } from './subagents/SubagentTool.js';
+export {
+        loadSubagents,
+        subagentTools,
+        type LoadSubagentsOptions,
+        type LoadedSubagents,
+        type SubagentToolBinding,
+        type SubagentToolsOptions,
+} from './subagents/api.js';
+export type { Subagent as ContractSubagent } from './nO/contracts.js';
