@@ -68,17 +68,24 @@ export * from './monitoring';
 // Export brAInwav TDD Plan Implementation Components
 // Testing Infrastructure
 export {
-	MockAgent,
-	MockTool,
-	PerformanceTestRunner,
-	TestAssertions,
-	TestEnvironment,
-	TestSuiteRunner,
+        MockAgent,
+        MockTool,
+        PerformanceTestRunner,
+        TestAssertions,
+        TestEnvironment,
+        TestSuiteRunner,
 } from './testing/test-utilities.js';
 // File-based agent templates loader
 export {
-	loadAgentTemplates,
-	AgentTemplateError,
-	type AgentTemplate,
-	type AgentTemplateMap,
+        loadAgentTemplates,
+        AgentTemplateError,
+        type AgentTemplate,
+        type AgentTemplateMap,
 } from './file-agent-loader.js';
+// Subagent tooling exports for orchestration integration
+export {
+        createAutoDelegateTool,
+        materializeSubagentTool,
+        type Tool as SubagentToolDefinition,
+        type ToolResponse as SubagentToolResponse,
+} from './subagents/SubagentTool.js';

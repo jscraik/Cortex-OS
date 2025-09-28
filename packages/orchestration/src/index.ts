@@ -4,13 +4,20 @@
  */
 
 export {
-	N0BudgetSchema,
-	N0SessionSchema,
-	N0StateSchema,
-	createInitialN0State,
-	mergeN0State,
+        N0BudgetSchema,
+        N0SessionSchema,
+        N0StateSchema,
+        createInitialN0State,
+        mergeN0State,
+        compactN0State,
 } from './langgraph/n0-state.js';
-export type { N0Budget, N0Session, N0State } from './langgraph/n0-state.js';
+export type {
+        N0Budget,
+        N0Session,
+        N0State,
+        MemoryCompactionOptions,
+        MemoryCompactionResult,
+} from './langgraph/n0-state.js';
 
 export {
 	agentStateToN0,
@@ -34,11 +41,25 @@ export type {
 
 export { dispatchTools } from './langgraph/tool-dispatch.js';
 export type {
-	ToolDispatchHooks,
-	ToolDispatchJob,
-	ToolDispatchOptions,
-	ToolDispatchResult,
+        ToolDispatchHooks,
+        ToolDispatchJob,
+        ToolDispatchOptions,
+        ToolDispatchResult,
+        ToolDispatchProgressEvent,
+        ToolDispatchProgressHandler,
 } from './langgraph/tool-dispatch.js';
+
+export {
+        createHookAwareDispatcher,
+        createUnifiedToolSystem,
+} from './langgraph/tool-system.js';
+export type {
+        HookRunner,
+        HookAwareDispatcher,
+        HookAwareDispatcherOptions,
+        UnifiedToolSystem,
+        UnifiedToolSystemOptions,
+} from './langgraph/tool-system.js';
 
 export { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 export {
