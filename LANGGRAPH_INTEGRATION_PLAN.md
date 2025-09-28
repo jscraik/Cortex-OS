@@ -448,7 +448,7 @@ Each phase documents:
 
 #### Fixes Outstanding
 - [ ] Harden the existing workspace helpers into a formal manager module that removes the current
-  `Math.random`-based IDs, introduces deterministic `n0`-prefixed identifiers, and centralises sandbox policy
+  `Math.random`-based IDs, introduces deterministic `n0`-prefixed identifiers, and centralizes sandbox policy
   (deny symlinks, enforce max workspace size) so the MCP layer meets the production guardrails.
 - [ ] Author end-to-end workspace tool suites in `packages/mcp-core/tests/tools/workspace/` that cover
   create→read→write→list flows, permission enforcement, `maxSize` protections, and concurrent access updates.
