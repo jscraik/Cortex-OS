@@ -304,7 +304,19 @@ function formatSse(eventName: string, envelope: LangGraphStreamEnvelope): string
         return `${lines.join('\n')}\n\n`;
 }
 
-function logWarning(action: 'send' | 'close', error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.warn(`brAInwav LangGraph stream ${action} failed: ${message}`);
+function logWarning(
+    action: 'send' | 'close',
+    error: unknown,
+    logger?: { warn: (msg: string, meta?: Record<string, unknown>) => void }
+) {
+    const message = error instanceof Error ? error.message : String(error);
+    const meta = {
+        action,
+        error: error instanceof Error ? { name: error.name, stack: error.stack } : error,
+    };
+    if (logger && typeof logger.warn === 'function') {
+        logger.warn(`brAInwav LangGraph stream ${action} failed: ${message}`, meta);
+    } else {
+        console.warn(`brAInwav LangGraph stream ${action} failed: ${message}`, meta);
+    }
 }
