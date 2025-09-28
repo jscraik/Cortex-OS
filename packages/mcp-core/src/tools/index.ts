@@ -1,5 +1,7 @@
 // Core system tools
 export * from './bash-tool.js';
+// Coordination tools with security controls
+export * from './coordination-tools.js';
 export * from './echo-tool.js';
 export * from './edit-tool.js';
 // File discovery and search tools
@@ -9,6 +11,8 @@ export * from './multiedit-tool.js';
 export * from './notebook-edit-tool.js';
 // Notebook tools
 export * from './notebook-read-tool.js';
+// Planning tools with DSP integration
+export * from './planning-tools.js';
 // File operation tools
 export * from './read-tool.js';
 // Task management tools
@@ -24,6 +28,11 @@ export * from './write-tool.js';
 // Tool registry utilities
 import { type McpTool, ToolRegistry } from '../tools.js';
 import { bashTool } from './bash-tool.js';
+import {
+	assignTaskTool,
+	createCoordinationSessionTool,
+	registerAgentTool,
+} from './coordination-tools.js';
 import { echoTool } from './echo-tool.js';
 import { editTool } from './edit-tool.js';
 import { globTool } from './glob-tool.js';
@@ -31,6 +40,11 @@ import { grepTool } from './grep-tool.js';
 import { multiEditTool } from './multiedit-tool.js';
 import { notebookEditTool } from './notebook-edit-tool.js';
 import { notebookReadTool } from './notebook-read-tool.js';
+import {
+	createPlanningSessionTool,
+	executePlanningPhaseTool,
+	getPlanningStatusTool,
+} from './planning-tools.js';
 import { readTool } from './read-tool.js';
 import { taskTool } from './task-tool.js';
 import { todoWriteTool } from './todo-write-tool.js';
@@ -80,6 +94,16 @@ export const toolCategories = {
 		workspaceRead: workspaceReadTool,
 		workspaceWrite: workspaceWriteTool,
 	},
+	planning: {
+		createPlanningSession: createPlanningSessionTool,
+		executePlanningPhase: executePlanningPhaseTool,
+		getPlanningStatus: getPlanningStatusTool,
+	},
+	coordination: {
+		createCoordinationSession: createCoordinationSessionTool,
+		registerAgent: registerAgentTool,
+		assignTask: assignTaskTool,
+	},
 } as const;
 
 /**
@@ -117,6 +141,16 @@ export const allTools: ReadonlyArray<McpTool<any, any>> = [
 	workspaceListTool,
 	workspaceReadTool,
 	workspaceWriteTool,
+
+	// Planning tools (DSP integration)
+	createPlanningSessionTool,
+	executePlanningPhaseTool,
+	getPlanningStatusTool,
+
+	// Coordination tools (security controls)
+	createCoordinationSessionTool,
+	registerAgentTool,
+	assignTaskTool,
 ];
 
 /**
@@ -132,6 +166,11 @@ export const permissionRequiredTools: ReadonlyArray<McpTool<any, any>> = [
 	webSearchTool, // Web access
 	workspaceCreateTool, // Workspace creation
 	workspaceWriteTool, // Workspace file writing
+	createPlanningSessionTool, // Planning session creation
+	executePlanningPhaseTool, // Planning phase execution
+	createCoordinationSessionTool, // Coordination session creation
+	registerAgentTool, // Agent registration
+	assignTaskTool, // Task assignment
 ];
 
 /**
@@ -147,6 +186,7 @@ export const noPermissionTools: ReadonlyArray<McpTool<any, any>> = [
 	echoTool, // Echo utility
 	workspaceListTool, // Workspace listing
 	workspaceReadTool, // Workspace file reading
+	getPlanningStatusTool, // Planning status retrieval
 ];
 
 /**

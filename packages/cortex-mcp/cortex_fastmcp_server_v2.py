@@ -8,18 +8,19 @@ import json
 import logging
 import math
 import os
-import subprocess
 import time
 from typing import Any
 from uuid import uuid4
 
-import httpx  # type: ignore
 from fastmcp import FastMCP  # type: ignore
 from security.input_validation import (
     sanitize_output,
     validate_resource_id,
     validate_search_query,
 )
+from starlette.middleware import Middleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -308,22 +309,6 @@ def register_memory_tools(mcp: Any) -> None:
         return {"deleted": existed, "id": id}
 
 
-def _get_http_app(mcp: Any) -> Any | None:
-    app = getattr(mcp, "app", None)
-    if app is not None:
-        return app
-    http_app_attr = getattr(mcp, "http_app", None)
-    if callable(http_app_attr):
-        try:
-            return http_app_attr()
-        except TypeError:
-            return http_app_attr
-    return None
-
-
-# (removed unused call_mcp_tool helper)
-
-
 def _call_mcp_tool(mcp: Any, tool_name: str, args: dict[str, Any]) -> Any:
     """Call an MCP tool by name and return parsed JSON when available."""
 
@@ -346,38 +331,71 @@ def _call_mcp_tool(mcp: Any, tool_name: str, args: dict[str, Any]) -> Any:
     return _run()
 
 
-def _register_metrics_middleware(app: Any) -> None:
+def _register_metrics_middleware(mcp: Any) -> None:
     try:
         from monitoring.metrics import MetricsMiddleware
 
-        app.middleware("http")(MetricsMiddleware())  # type: ignore[attr-defined]
+        mcp.add_middleware(Middleware(MetricsMiddleware))
     except Exception as exc:  # pragma: no cover
         logger.debug("Metrics middleware not initialized", exc_info=exc)
 
 
-def _register_health_routes(app: Any) -> None:
+def _register_health_routes(mcp: Any) -> None:
     try:
         from health.checks import HealthCheckRegistry, SystemHealthCheck
 
         registry = HealthCheckRegistry()
         registry.register(SystemHealthCheck())
 
-        @app.get("/health/details")  # type: ignore[attr-defined]
-        async def _health_details() -> dict[str, Any]:
-            return await registry.run_all()
+        @mcp.custom_route("/health/details", ["GET"])
+        async def _health_details(_: Request) -> JSONResponse:
+            return JSONResponse(await registry.run_all())
     except Exception as exc:  # pragma: no cover
         logger.debug("Health details route not initialized", exc_info=exc)
 
-    @app.get("/health")  # type: ignore[attr-defined]
-    async def _health_route() -> dict[str, Any]:
-        return {"status": "ok", "version": "2.0.0"}
+    @mcp.custom_route("/health", ["GET"])
+    async def _health_route(_: Request) -> JSONResponse:
+        return JSONResponse({"status": "ok", "version": "2.0.0"})
 
 
-def _register_mem_store_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
-    @app.post("/api/memories")  # type: ignore[attr-defined]
-    async def _mem_store(request, payload: dict[str, Any]) -> dict[str, Any]:
+def _register_discovery_route(mcp: Any) -> None:
+    manifest_payload = {
+        "version": "1.0",
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "servers": [
+            {
+                "id": "cortex-mcp",
+                "name": "brAInwav Cortex MCP Server",
+                "description": (
+                    "brAInwav Cortex MCP endpoint exposing tools, resources, and"
+                    " prompts for Cortex-OS clients."
+                ),
+                "endpoint": "https://cortex-mcp.brainwav.io/mcp",
+                "transport": "sse",
+                "capabilities": ["tools", "resources", "prompts"],
+                "authentication": {
+                    "required": False,
+                    "notes": "Public brAInwav discovery manifest; enforce auth per tool policies if updated.",
+                },
+            }
+        ],
+        "branding": {
+            "provider": "brAInwav",
+            "support": "https://github.com/jamiescottcraik/brAInwav",
+        },
+    }
+
+    @mcp.custom_route("/.well-known/mcp.json", ["GET"])
+    async def _discovery_manifest(_: Request) -> JSONResponse:
+        return JSONResponse(manifest_payload)
+
+
+def _register_mem_store_route(mcp: Any, auth: Any, limiter: Any) -> None:
+    @mcp.custom_route("/api/memories", ["POST"])
+    async def _mem_store(request: Request) -> JSONResponse:
         auth.verify_request(request, required_scope="memories:write")
         limiter.check(request)
+        payload = await request.json()
         result = await _call_mcp_tool(
             mcp,
             "memories_store",
@@ -388,63 +406,72 @@ def _register_mem_store_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> No
                 "metadata": payload.get("metadata"),
             },
         )
-        return sanitize_output(result)
+        return JSONResponse(sanitize_output(result))
 
 
-def _register_mem_search_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
-    @app.get("/api/memories")  # type: ignore[attr-defined]
-    async def _mem_search(request, query: str = "", limit: int = 10) -> dict[str, Any]:
+def _register_mem_search_route(mcp: Any, auth: Any, limiter: Any) -> None:
+    @mcp.custom_route("/api/memories", ["GET"])
+    async def _mem_search(request: Request) -> JSONResponse:
         auth.verify_request(request, required_scope="memories:read")
         limiter.check(request)
+        query = request.query_params.get("query", "")
+        limit_param = request.query_params.get("limit", "10")
         try:
-            q = validate_search_query(query)
+            limit = int(limit_param)
+        except (TypeError, ValueError):
+            limit = 10
+        try:
+            q = validate_search_query(query or "")
         except Exception:
             q = ""
-        return await _call_mcp_tool(
+        result = await _call_mcp_tool(
             mcp, "memories_search", {"query": q, "limit": limit}
         )
+        return JSONResponse(result)
 
 
-def _register_mem_get_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
-    @app.get("/api/memories/{mem_id}")  # type: ignore[attr-defined]
-    async def _mem_get(request, mem_id: str) -> dict[str, Any]:
+def _register_mem_get_route(mcp: Any, auth: Any, limiter: Any) -> None:
+    @mcp.custom_route("/api/memories/{mem_id}", ["GET"])
+    async def _mem_get(request: Request) -> JSONResponse:
         auth.verify_request(request, required_scope="memories:read")
         limiter.check(request)
-        return await _call_mcp_tool(mcp, "memories_get", {"id": mem_id})
+        mem_id = request.path_params.get("mem_id", "")
+        result = await _call_mcp_tool(mcp, "memories_get", {"id": mem_id})
+        return JSONResponse(result)
 
 
-def _register_mem_delete_route(app: Any, mcp: Any, auth: Any, limiter: Any) -> None:
-    @app.delete("/api/memories/{mem_id}")  # type: ignore[attr-defined]
-    async def _mem_delete(request, mem_id: str) -> dict[str, Any]:
+def _register_mem_delete_route(mcp: Any, auth: Any, limiter: Any) -> None:
+    @mcp.custom_route("/api/memories/{mem_id}", ["DELETE"])
+    async def _mem_delete(request: Request) -> JSONResponse:
         auth.verify_request(request, required_scope="memories:delete")
         limiter.check(request)
-        return await _call_mcp_tool(mcp, "memories_delete", {"id": mem_id})
+        mem_id = request.path_params.get("mem_id", "")
+        result = await _call_mcp_tool(mcp, "memories_delete", {"id": mem_id})
+        return JSONResponse(result)
 
 
-def _register_memory_routes(app: Any, mcp: Any) -> None:
+def _register_memory_routes(mcp: Any) -> None:
     from auth.jwt_auth import create_authenticator_from_env
     from middleware.rate_limiter import RateLimiter
 
     auth = create_authenticator_from_env()
     limiter = RateLimiter(rpm=120, burst=20)
 
-    _register_mem_store_route(app, mcp, auth, limiter)
-    _register_mem_search_route(app, mcp, auth, limiter)
-    _register_mem_get_route(app, mcp, auth, limiter)
-    _register_mem_delete_route(app, mcp, auth, limiter)
+    _register_mem_store_route(mcp, auth, limiter)
+    _register_mem_search_route(mcp, auth, limiter)
+    _register_mem_get_route(mcp, auth, limiter)
+    _register_mem_delete_route(mcp, auth, limiter)
 
 
 def register_rest_routes(mcp: Any) -> None:
     """Attach REST routes to the underlying HTTP app if available."""
-    app = getattr(mcp, "app", None)
-    if app is None and os.getenv("MCP_FORCE_HTTP_APP") == "1":
-        app = _get_http_app(mcp)
-    if app is None:  # pragma: no cover
-        logger.debug("No HTTP app available; skipping REST route registration")
-        return
-    _register_metrics_middleware(app)
-    _register_health_routes(app)
-    _register_memory_routes(app, mcp)
+    _register_metrics_middleware(mcp)
+    _register_health_routes(mcp)
+    _register_discovery_route(mcp)
+    try:
+        _register_memory_routes(mcp)
+    except Exception as exc:  # pragma: no cover
+        logger.debug("Memory routes not initialized", exc_info=exc)
 
 
 def create_server() -> Any:

@@ -18,6 +18,16 @@ export interface PlanningContext {
 	id: string;
 	workspaceId?: string;
 	currentPhase: PlanningPhase;
+	compliance?: {
+		standards?: string[];
+		lastCheckedAt?: string | Date | null;
+		riskScore?: number;
+		outstandingViolations?: Array<{
+			id?: string;
+			severity?: 'low' | 'medium' | 'high' | 'critical';
+			description?: string;
+		}>;
+	};
 	[key: string]: unknown;
 }
 
@@ -31,6 +41,7 @@ export interface PromptContext {
 	tools: string[];
 	currentPhase?: PlanningPhase;
 	planningContext?: PlanningContext;
+	compliance?: PlanningContext['compliance'];
 	nOArchitecture: boolean;
 }
 
@@ -98,7 +109,12 @@ export class PromptTemplateManager {
 		}));
 
 		// Select best scoring template
-		const best = scored.reduce((prev, current) => (current.score > prev.score ? current : prev));
+		let best = scored[0];
+		for (const candidate of scored.slice(1)) {
+			if (candidate.score > best.score) {
+				best = candidate;
+			}
+		}
 
 		const adaptations = this.generateAdaptations(best.template, context);
 
@@ -527,6 +543,10 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 	}
 
 	private getVariableValue(variable: string, context: PromptContext): string {
+		const complianceValue = this.resolveComplianceVariable(variable, context);
+		if (complianceValue !== null) {
+			return complianceValue;
+		}
 		switch (variable) {
 			case 'taskId':
 				return context.taskId;
@@ -559,6 +579,79 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 			default:
 				return `{{${variable}}}`;
 		}
+	}
+
+	private resolveComplianceVariable(variable: string, context: PromptContext): string | null {
+		if (!variable.startsWith('compliance')) {
+			return null;
+		}
+		const presentation = this.buildCompliancePresentation(context);
+		switch (variable) {
+			case 'complianceStandards':
+				return presentation.standards;
+			case 'complianceRisk':
+				return presentation.risk;
+			case 'complianceViolations':
+				return presentation.violations;
+			case 'complianceGuidance':
+				return presentation.guidance;
+			default:
+				return null;
+		}
+	}
+
+	private buildCompliancePresentation(context: PromptContext): {
+		standards: string;
+		risk: string;
+		violations: string;
+		guidance: string;
+	} {
+		const source = context.compliance ?? context.planningContext?.compliance;
+		if (!source) {
+			return {
+				standards: 'brAInwav baseline (auto)',
+				risk: 'Nominal (0.00)',
+				violations: 'No active violations logged',
+				guidance: this.deriveComplianceGuidance(0, 0),
+			};
+		}
+		const standards = source.standards?.length
+			? source.standards.join(', ')
+			: 'brAInwav baseline (auto)';
+		const boundedScore = typeof source.riskScore === 'number' ? Math.min(Math.max(source.riskScore, 0), 1) : 0;
+		let riskLabel = 'Nominal';
+		if (boundedScore >= 0.7) {
+			riskLabel = 'High';
+		} else if (boundedScore >= 0.4) {
+			riskLabel = 'Elevated';
+		}
+		const violationsList = (source.outstandingViolations ?? [])
+			.slice(0, 3)
+			.map((violation) => {
+				const severity = violation.severity ?? 'info';
+				const description = violation.description ?? 'review pending';
+				return `${severity.toUpperCase()}: ${description}`;
+			})
+			.join('; ');
+		return {
+			standards,
+			risk: `${riskLabel} (${boundedScore.toFixed(2)})`,
+			violations: violationsList || 'No active violations logged',
+			guidance: this.deriveComplianceGuidance(
+				boundedScore,
+				source.outstandingViolations?.length ?? 0,
+			),
+		};
+	}
+
+	private deriveComplianceGuidance(score: number, violationCount: number): string {
+		if (score >= 0.7 || violationCount > 0) {
+			return 'Run security.run_semgrep_scan and security.validate_compliance immediately; document outcomes in the brAInwav compliance tracker.';
+		}
+		if (score >= 0.4) {
+			return 'Queue security.analyze_vulnerabilities and security.check_dependencies, then review remediation owners.';
+		}
+		return 'Maintain the routine brAInwav security.check_dependencies cadence and archive reports for audit readiness.';
 	}
 
 	private applyAdaptations(prompt: string, adaptations: string[], context: PromptContext): string {

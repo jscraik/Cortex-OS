@@ -312,28 +312,20 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `packages/evidence-runner/tests/enhancement.test.ts` | ⚪ todo | Ensure `enhanceEvidence` enriches output |
-| `packages/mcp-bridge/tests/browser-executor.test.ts` | ⚪ todo | Playwright-driven DOM extraction |
-| `packages/mcp-bridge/tests/database-executor.test.ts` | ⚪ todo | Parameterised SQL execution |
-| `packages/mcp-core/tests/tool-mapping.test.ts` | ⚪ todo | Safe fallback for unknown tool types |
+| `packages/evidence-runner/tests/enhancement.test.ts` | ✅ completed | Evidence enhancement with MLX integration |
+| `packages/mcp-bridge/tests/browser-executor.test.ts` | ✅ completed | Playwright-driven DOM extraction |
+| `packages/mcp-bridge/tests/database-executor.test.ts` | ✅ completed | Parameterised SQL execution |
+| `packages/mcp-core/tests/tool-mapping.test.ts` | ✅ completed | Safe fallback for unknown tool types |
 
 ### Phase 8 Implementation
 
-#### Work Completed
-- ☐ None yet – evidence enhancement remains in planning and requires dedicated harnesses.
-
-#### Fixes Outstanding
-- [ ] Implement deterministic MLX/remote LLM configurations inside `packages/evidence-runner` so `enhanceEvidence` yields reproducible enrichments.
-- [ ] Add Playwright- and database-backed executors in `packages/mcp-bridge`, using secure parameterisation and integration tests for each backend.
-- [ ] Extend `packages/mcp-core` tool mappings with telemetry/logging, ensuring unknown tool types fall back safely.
+- ✅ Integrate MLX/remote LLMs for evidence enhancement with deterministic configs
+- ✅ Wire Playwright + database executors with real drivers and secure parameterisation  
+- ✅ Expand tool mappings and add telemetry/logging
 
 ### Phase 8 Validation
 
-- Add `pnpm test:mcp:smoke` gated by `PLAYWRIGHT=1` once executors and enhancement suites are implemented.
-
-### Phase 8 Blockers
-
-- Availability of headless browser infrastructure in CI for the Playwright executor suites.
+- ✅ Add `pnpm test:mcp:smoke` gated by `PLAYWRIGHT=1`
 
 ---
 

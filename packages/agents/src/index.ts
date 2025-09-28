@@ -75,3 +75,10 @@ export {
 	TestEnvironment,
 	TestSuiteRunner,
 } from './testing/test-utilities.js';
+// File-based agent templates loader
+export {
+	loadAgentTemplates,
+	AgentTemplateError,
+	type AgentTemplate,
+	type AgentTemplateMap,
+} from './file-agent-loader.js';

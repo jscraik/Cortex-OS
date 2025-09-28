@@ -262,18 +262,39 @@ src/
 
 The backend also provides a WebSocket server for real-time communication:
 
-- **Endpoint**: `ws://localhost:3001/ws`
+- **Endpoint**: `ws://localhost:3033/ws`
 - **Authentication**: Pass JWT token as query parameter `?token=YOUR_JWT_TOKEN`
 
 ## Environment Variables
 
-Create a `.env` file in the root of the backend directory:
+Create a `.env` file in the root of the backend directory (ports mirror `config/ports.env`):
 
 ```env
-PORT=3001
+PORT=3033
 JWT_SECRET=your_jwt_secret_here
 FRONTEND_URL=http://localhost:3000
+
+# Authentication monitoring dispatch (all optional unless noted)
+AUTH_MONITORING_PROMETHEUS_ENABLED=true
+AUTH_MONITORING_TIMEOUT_MS=3000
+AUTH_MONITORING_DATADOG_API_KEY=
+AUTH_MONITORING_DATADOG_APP_KEY=
+AUTH_MONITORING_DATADOG_SITE=datadoghq.com
+AUTH_MONITORING_NEW_RELIC_ACCOUNT_ID=
+AUTH_MONITORING_NEW_RELIC_INSERT_KEY=
+AUTH_MONITORING_WEBHOOK_URL=
 ```
+
+### Authentication Monitoring
+
+The brAInwav Cortex-OS backend publishes authentication activity to multiple observability targets:
+
+- **Prometheus counter** (`brainwav_auth_events_total`) capturing event type, actor, and status labels.
+- **Datadog events API** when `AUTH_MONITORING_DATADOG_API_KEY` (and optional app key/site) are provided.
+- **New Relic Insights** when both `AUTH_MONITORING_NEW_RELIC_ACCOUNT_ID` and `AUTH_MONITORING_NEW_RELIC_INSERT_KEY` are set.
+- **Custom JSON webhook** for any HTTPS endpoint via `AUTH_MONITORING_WEBHOOK_URL`.
+
+All dispatches use a shared timeout configured by `AUTH_MONITORING_TIMEOUT_MS` (defaults to 3000 ms). Missing credentials automatically disable the corresponding provider while logging a brAInwav-branded notice. Set `AUTH_MONITORING_PROMETHEUS_ENABLED=false` to opt out of the Prometheus counter.
 
 ## Database
 

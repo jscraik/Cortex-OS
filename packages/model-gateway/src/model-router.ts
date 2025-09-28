@@ -10,6 +10,7 @@ import type { MCPAdapter } from './adapters/mcp-adapter.js';
 import { MLXAdapter, type MLXAdapterApi } from './adapters/mlx-adapter.js';
 import { OllamaAdapter, type OllamaAdapterApi } from './adapters/ollama-adapter.js';
 import type { Message } from './adapters/types.js';
+import { createOrchestrationAdapter, type OrchestrationAdapter } from './adapters/orchestration-adapter.js';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking' | 'vision';
 export type ModelProvider = 'mlx' | 'ollama' | 'ollama-cloud' | 'frontier' | 'mcp';
@@ -112,6 +113,7 @@ export class ModelRouter implements IModelRouter {
 		consensus_voting: false,
 	};
 	private enforcementConfig: any = null;
+	private readonly orchestrationAdapter: OrchestrationAdapter;
 
 	constructor(
 		mlxAdapter: MLXAdapterApi = new MLXAdapter(),
@@ -121,10 +123,12 @@ export class ModelRouter implements IModelRouter {
 		this.mlxAdapter = mlxAdapter;
 		this.ollamaAdapter = ollamaAdapter;
 		this.frontierAdapter = frontierAdapter;
+		this.orchestrationAdapter = createOrchestrationAdapter();
 
 		// Check for privacy mode environment variable
 		if (process.env.CORTEX_PRIVACY_MODE === 'true') {
 			this.privacyModeEnabled = true;
+			this.orchestrationAdapter.setPrivacyMode(true);
 		}
 	}
 
@@ -134,18 +138,40 @@ export class ModelRouter implements IModelRouter {
 		const mcpAvailable = await this.ensureMcpLoaded();
 		const frontierAvailable = await this.frontierAdapter.isAvailable();
 
+		// Initialize orchestration models first
+		const orchestrationModels = this.orchestrationAdapter.getAllModels();
+		console.log(`brAInwav Cortex-OS: Loaded ${orchestrationModels.length} orchestration models`);
+
+		// Merge orchestration models with adapter-based models
 		this.availableModels.set(
 			'embedding',
-			this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable),
+			[
+				...orchestrationModels.filter(m => m.capabilities.includes('embedding')),
+				...this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable)
+			]
 		);
 		this.availableModels.set(
 			'chat',
-			await this.buildChatModels(ollamaAvailable, mcpAvailable, frontierAvailable),
+			[
+				...orchestrationModels.filter(m => m.capabilities.includes('chat')),
+				...await this.buildChatModels(ollamaAvailable, mcpAvailable, frontierAvailable)
+			]
 		);
 		this.availableModels.set(
 			'reranking',
-			this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable),
+			[
+				...orchestrationModels.filter(m => m.capabilities.includes('reranking')),
+				...this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable, frontierAvailable)
+			]
 		);
+
+		// Add vision models from orchestration
+		const visionModels = orchestrationModels.filter(m => m.capabilities.includes('vision'));
+		if (visionModels.length > 0) {
+			this.availableModels.set('vision', visionModels);
+		}
+
+		console.log('brAInwav Cortex-OS: Model Gateway initialized with orchestration integration');
 	}
 
 	// Try to lazy-load MCP adapter; return boolean available
@@ -714,6 +740,13 @@ export class ModelRouter implements IModelRouter {
 	hasAvailableModels(capability: ModelCapability): boolean {
 		const models = this.availableModels.get(capability);
 		return !!models && models.length > 0;
+	}
+
+	/**
+		* Get orchestration health status
+		*/
+	getOrchestrationHealth() {
+		return this.orchestrationAdapter.getHealthStatus();
 	}
 
 	// Add hybrid mode methods

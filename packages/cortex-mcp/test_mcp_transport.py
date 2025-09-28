@@ -54,16 +54,23 @@ def test_cloudflare_endpoint() -> bool:
     print("\n🌐 Testing Cloudflare tunnel endpoint...")
 
     try:
-        # Test basic connectivity
-        response = requests.get("https://cortex-mcp.brainwav.io/mcp", timeout=5)
+        # Test basic connectivity; advertise SSE support to receive a 200 response
+        response = requests.get(
+            "https://cortex-mcp.brainwav.io/mcp",
+            headers={"Accept": "text/event-stream"},
+            timeout=5,
+        )
         print(f"📡 Cloudflare response status: {response.status_code}")
 
-        if response.status_code in [400, 405]:  # Expected for MCP protocol
-            print("✅ Cloudflare tunnel is working (expected error response)")
+        if response.status_code == 200:
+            print("✅ Cloudflare tunnel is working (SSE stream accepted)")
             return True
-        else:
-            print(f"⚠️  Unexpected response: {response.text[:100]}...")
+        if response.status_code in [400, 405, 406]:
+            print("⚠️  Cloudflare tunnel reachable but returned protocol guard response")
             return False
+
+        print(f"⚠️  Unexpected response: {response.text[:100]}...")
+        return False
 
     except requests.RequestException as e:
         print(f"❌ Cloudflare test failed: {e}")

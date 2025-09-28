@@ -113,6 +113,80 @@ pnpm mcp:dev
 pnpm mcp:start-with-tunnel
 ```
 
+### Deployment & Discovery Verification
+
+1. Build the latest FastMCP bundle locally:
+
+   ```bash
+   pnpm mcp:build
+   ```
+
+2. Sync the updated package to the production host and restart the managed
+   process. For the default systemd unit, run:
+
+   ```bash
+   ssh brainwav-mcp "sudo systemctl restart cortex-fastmcp.service && sudo systemctl status cortex-fastmcp.service --no-pager"
+   ```
+
+3. Confirm the health endpoints through the Cloudflare tunnel:
+
+   ```bash
+   scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
+   ```
+
+4. Validate discovery by fetching the manifest. This must succeed before
+   reconnecting ChatGPT:
+
+   ```bash
+   curl -fsSL https://cortex-mcp.brainwav.io/.well-known/mcp.json | jq
+   ```
+
+### CDN Cache Flush (Cloudflare)
+
+[Unverified] Update the placeholders below with the Cloudflare account details for
+the brAInwav zone before executing the purge call.
+
+```bash
+export CLOUDFLARE_ZONE_ID="<zone-id>"
+export CLOUDFLARE_API_TOKEN="<token-with-cache-purge-scope>"
+
+curl -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  --data '{"files":["https://cortex-mcp.brainwav.io/.well-known/mcp.json"]}'
+```
+
+Re-run the manifest curl after the purge to confirm the latest payload is served
+from the edge.
+
+### Connector Retest Playbook
+
+1. In ChatGPT → Settings → MCP, remove any cached `cortex-mcp.brainwav.io`
+   configuration.
+2. Add the connector again and allow the client to fetch
+   `/.well-known/mcp.json`.
+3. Trigger a basic tool invocation to confirm SSE transport health. Example:
+
+   ```text
+   /mcp.tool call cortex-mcp search '{"query":"FastMCP manifest smoke"}'
+   ```
+
+4. Capture logs from the MCP host while running the test for observability:
+
+   ```bash
+   journalctl -u cortex-fastmcp.service -f
+   ```
+
+### MCP Discovery RFC Tracking
+
+- Watch the upstream issue: [modelcontextprotocol/spec issues](https://github.com/modelcontextprotocol/spec/issues)
+  (filter for "discovery manifest" / "auth hints").
+- Subscribe to the governance feed at
+   [modelcontextprotocol/spec discussions](https://github.com/modelcontextprotocol/spec/discussions).
+- When new fields (for example `auth`, `registries`) are proposed, mirror them in
+  `cortex_fastmcp_server_v2.py` and note the change in `CHANGELOG.md` under the
+  MCP section.
+
 ## Available MCP Tools (Python server)
 
 The FastMCP server exposes these core tools:

@@ -100,3 +100,16 @@ export type {
 	TeachingPattern,
 } from './teaching/example-capture.js';
 export { ExampleCaptureSystem } from './teaching/example-capture.js';
+
+export type {
+	BindKernelToolsOptions,
+	KernelBashInput,
+	KernelBashResult,
+	KernelFetchInput,
+	KernelFetchResult,
+	KernelReadFileInput,
+	KernelReadFileResult,
+	KernelTool,
+	KernelToolBinding,
+} from './tools/bind-kernel-tools.js';
+export { bindKernelTools } from './tools/bind-kernel-tools.js';
