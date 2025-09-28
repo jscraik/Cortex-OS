@@ -701,7 +701,7 @@ files.par_iter()
 ### Phase 19 Blockers
 
 - Requires stable MCP infrastructure across all three language implementations, including manifest discovery and credential management exposed by `packages/mcp-core`
-- Code execution security must be validated for safe model-generated code; complete threat modelling and integrate Semgrep/static checks before enabling CI gating
+- Code execution security must be validated for safe model-generated code; complete threat modeling and integrate Semgrep/static checks before enabling CI gating
 - Cross-language A2A event coordination needs comprehensive testing, especially for retries and network partitions when runtimes emit `code_mode.runtime_failed`
 - Performance benchmarking harness depends on `scripts/perf-autotune.mjs` consuming new metrics; ensure telemetry format changes are backward compatible
 
