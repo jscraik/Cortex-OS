@@ -301,9 +301,11 @@ async function dispatchVendors(
         config: MonitoringConfig,
         context: VendorContext,
 ): Promise<void> {
-        await sendToDatadog(event, config, context);
-        await sendToNewRelic(event, config, context);
-        await sendToWebhook(event, config, context);
+        await Promise.allSettled([
+            sendToDatadog(event, config, context),
+            sendToNewRelic(event, config, context),
+            sendToWebhook(event, config, context),
+        ]);
 }
 
 async function recordPrometheus(
