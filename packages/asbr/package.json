@@ -63,7 +63,7 @@
     "@cortex-os/asbr-policy": "workspace:*",
     "@cortex-os/utils": "workspace:*",
     "diff": "^8.0.2",
-    "express": "^5.1.0",
+    "express": "^4.20.0",
     "fast-xml-parser": "^5.2.5",
     "js-yaml": "^4.1.0",
     "micromatch": "^4.0.8",

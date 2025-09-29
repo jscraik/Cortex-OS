@@ -20,7 +20,7 @@
     "@octokit/rest": "^20.1.2",
     "@octokit/webhooks": "^12.3.2",
     "dotenv": "^16.4.5",
-    "express": "^4.21.2",
+    "express": "^4.20.0",
     "fs-extra": "^11.2.0",
     "minimatch": "^9.0.3",
     "zod": "^3.25.76"

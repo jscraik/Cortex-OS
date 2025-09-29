@@ -10,7 +10,7 @@
     "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.20.0",
     "@cortex-os/a2a-common": "workspace:*",
     "@cortex-os/a2a": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",

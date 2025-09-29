@@ -16,7 +16,7 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^4.20.0",
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
     "ajv": "^8.12.0",
