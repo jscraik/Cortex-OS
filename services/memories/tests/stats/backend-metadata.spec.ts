@@ -1,3 +1,4 @@
+
 import { describe, expect, it } from 'vitest';
 import { LocalMemoryBackend, MemoryHealthChecker } from '../../src/health/memoryHealth.js';
 import { MemoryStatsService } from '../../src/stats/memoryStats.js';
@@ -12,5 +13,6 @@ describe('MemoryStatsService', () => {
                 expect(stats.backendId).toBe('local-memory');
                 expect(stats.health.status).toBe('ok');
                 expect(stats.metadata).toMatchObject({ entries: 2 });
+
         });
 });

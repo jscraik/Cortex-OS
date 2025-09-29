@@ -1,3 +1,4 @@
+
 import { describe, expect, it, vi } from 'vitest';
 import { getResourcePoolHealth } from '../../src/health/poolHealth.js';
 
@@ -27,4 +28,5 @@ describe('Resource pool health', () => {
                 });
                 expect(pool.describe).toHaveBeenCalledTimes(2);
         });
+
 });

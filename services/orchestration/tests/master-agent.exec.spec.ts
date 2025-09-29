@@ -1,3 +1,4 @@
+
 import { describe, expect, it, vi } from 'vitest';
 import { AdapterRegistry } from '../src/adapters/adapterRegistry.js';
 import type { GenerationAdapter, GenerationResponse } from '../src/adapters/types.js';
@@ -74,4 +75,5 @@ describe('MasterAgentOrchestrator', () => {
                         }),
                 ).rejects.toThrowError(/brAInwav orchestration received an empty plan/);
         });
+
 });

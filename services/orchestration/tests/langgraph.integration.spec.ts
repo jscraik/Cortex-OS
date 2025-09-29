@@ -1,3 +1,4 @@
+
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AddressInfo } from 'node:net';
 import { createOrchestrationServer } from '../src/server.js';
@@ -90,4 +91,5 @@ describe('Orchestration server integration', () => {
                 expect(payload.stepLogs[0]).toMatchObject({ adapterId: 'ollama' });
                 expect(adapter.generate).toHaveBeenCalledOnce();
         });
+
 });

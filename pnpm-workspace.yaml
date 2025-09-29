@@ -5,6 +5,7 @@ packages:
   - "apps/*/packages/*"
   - "packages/*"
   - "packages/*/*"
+  - "services/*"
   - "libs/typescript/*"
   - "website"
 neverBuiltDependencies: []

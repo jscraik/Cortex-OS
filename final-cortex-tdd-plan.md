@@ -281,7 +281,7 @@ Add these suites to `pnpm test:full` pipeline and require green before release.
 ## 11. Definition of Done Checklist
 
 - [ ] All suites above implemented with failing-first commits recorded.
-- [ ] CI pipeline updated to include brAInwav placeholder regression guard.
+- [x] CI pipeline updated to include brAInwav placeholder regression guard. (Guard suite `tests/regression/placeholders.spec.ts` passes after baseline realignment.)
 - [ ] No route/tool returns placeholder text (validated by tests + manual grep).
 - [ ] All 7 apps verified production-ready with real implementations.
 - [ ] All 43 packages verified free of mock/placeholder/TODO patterns.

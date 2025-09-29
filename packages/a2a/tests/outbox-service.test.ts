@@ -1,36 +1,62 @@
+import { OutboxMessageStatus } from '@cortex-os/a2a-contracts/outbox-types';
 import { describe, expect, it } from 'vitest';
 import { createInMemoryOutboxService } from '../src/outbox-service.js';
+import { InMemoryOutboxRepository } from '../src/in-memory-outbox-repository.js';
 
-describe('OutboxService (in-memory stub)', () => {
-	const svc = createInMemoryOutboxService();
+describe('OutboxService (instrumented in-memory implementation)', () => {
+  it('processes pending messages and reports metrics', async () => {
+    const repository = new InMemoryOutboxRepository();
+    const dispatched: string[] = [];
+    const recordedActions: Array<{ action: string; metrics?: Record<string, unknown> }> = [];
 
-	it('processPending returns zeroed metrics', async () => {
-		const res = await svc.processPending();
-		expect(res).toEqual({
-			processed: 0,
-			successful: 0,
-			failed: 0,
-			deadLettered: 0,
-		});
-	});
+    const service = createInMemoryOutboxService({
+      repository,
+      onDispatch: (envelope) => {
+        dispatched.push(envelope.id);
+      },
+      metricsRecorder: {
+        record(action, payload) {
+          recordedActions.push({ action, metrics: payload.metrics });
+        },
+      },
+    });
 
-	it('processRetries returns zeroed metrics', async () => {
-		const res = await svc.processRetries();
-		expect(res).toEqual({
-			processed: 0,
-			successful: 0,
-			failed: 0,
-			deadLettered: 0,
-		});
-	});
+    await repository.save({
+      aggregateType: 'test',
+      aggregateId: '123',
+      eventType: 'test.event',
+      payload: { foo: 'bar' },
+      metadata: {},
+      correlationId: 'corr-1',
+      causationId: undefined,
+      traceparent: undefined,
+      tracestate: undefined,
+      baggage: undefined,
+      idempotencyKey: 'test:123:test.event:corr-1',
+      status: OutboxMessageStatus.PENDING,
+      retryCount: 0,
+      maxRetries: 3,
+    });
 
-	it('cleanup returns zeroed deletion count', async () => {
-		const res = await svc.cleanup();
-		expect(res).toEqual({ cleanupDeleted: 0 });
-	});
+    const pendingMetrics = await service.processPending();
+    expect(pendingMetrics.processed).toBe(1);
+    expect(pendingMetrics.successful).toBe(1);
+    expect(dispatched).toHaveLength(1);
+    expect(recordedActions.find((entry) => entry.action === 'processPending')).toBeDefined();
 
-	it('dlqStats returns size 0', async () => {
-		const res = await svc.dlqStats();
-		expect(res).toEqual({ size: 0 });
-	});
+    // Allow processedAt timestamps to settle before cleanup
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    const cleanupMetrics = await service.cleanup(0);
+    expect(cleanupMetrics.cleanupDeleted).toBeGreaterThanOrEqual(1);
+    expect(recordedActions.find((entry) => entry.action === 'cleanup')).toBeDefined();
+
+    const retryMetrics = await service.processRetries();
+    expect(retryMetrics.processed).toBe(0);
+
+    const dlqSnapshot = await service.dlqStats();
+    expect(dlqSnapshot.size).toBe(0);
+    expect(dlqSnapshot.details).toBeDefined();
+    expect(recordedActions.find((entry) => entry.action === 'dlqStats')).toBeDefined();
+  });
 });

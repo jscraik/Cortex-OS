@@ -1,3 +1,4 @@
+
 export interface ResourcePoolSnapshot {
         available: number;
         busy: number;

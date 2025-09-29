@@ -1,3 +1,4 @@
+
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -65,5 +66,6 @@ describe('Memories database health checks', () => {
                 const result = await checker.checkActiveBackend();
                 expect(result.backendId).toBe('local-memory');
                 expect(result.status).toBe('ok');
+
         });
 });
