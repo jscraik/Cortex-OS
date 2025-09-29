@@ -672,7 +672,7 @@ function extractCommandMetadata(metadata: unknown): Record<string, unknown> | un
 		return undefined;
 	}
 	if (isRecord(metadata)) {
-		const command = Object.prototype.hasOwnProperty.call(metadata, 'command')
+		const command = 'command' in metadata
 			? (metadata as { command?: unknown }).command
 			: undefined;
 		if (isRecord(command)) {
