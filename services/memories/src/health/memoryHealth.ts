@@ -106,7 +106,7 @@ export class PrismaMemoryBackend implements MemoryBackend {
                 } finally {
                         try {
                                 await client.$disconnect();
-                        } catch {
+                        } catch (disconnectError) {
                                 // Intentionally ignore disconnect failures; they should not mask the original error.
                         }
                 }
