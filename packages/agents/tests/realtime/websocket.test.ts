@@ -4,14 +4,14 @@ import { WebSocketServer } from '../../src/realtime/websocket.js';
 
 // Mock WebSocket
 class MockWebSocket extends EventEmitter {
-	static CONNECTING = 0;
-	static OPEN = 1;
-	static CLOSING = 2;
-	static CLOSED = 3;
+	static readonly CONNECTING = 0;
+	static readonly OPEN = 1;
+	static readonly CLOSING = 2;
+	static readonly CLOSED = 3;
 
 	readyState = MockWebSocket.CONNECTING;
 	url: string;
-	sentMessages: any[] = [];
+	sentMessages: unknown[] = [];
 
 	constructor(url: string) {
 		super();
@@ -34,7 +34,7 @@ class MockWebSocket extends EventEmitter {
 	}
 
 	// For simulating server messages
-	simulateMessage(data: any) {
+	simulateMessage(data: unknown) {
 		this.emit('message', { data: JSON.stringify(data) });
 	}
 }
@@ -44,7 +44,7 @@ vi.stubGlobal('WebSocket', MockWebSocket);
 
 describe('WebSocket Support', () => {
 	let wsServer: WebSocketServer;
-	let mockAuth: any;
+	let mockAuth: unknown;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -201,7 +201,7 @@ describe('WebSocket Support', () => {
 
 			await vi.runAllTimersAsync();
 
-			const receivedMessages: any[] = [];
+			const receivedMessages: unknown[] = [];
 			ws.on('message', (event) => {
 				receivedMessages.push(JSON.parse(event.data));
 			});
@@ -231,7 +231,7 @@ describe('WebSocket Support', () => {
 			ws.send(JSON.stringify(errorMessage));
 
 			// Should receive error message
-			const errorMessages: any[] = [];
+			const errorMessages: unknown[] = [];
 			ws.on('message', (event) => {
 				const msg = JSON.parse(event.data);
 				if (msg.type === 'error') {
@@ -256,7 +256,7 @@ describe('WebSocket Support', () => {
 
 			await vi.runAllTimersAsync();
 
-			const updates: any[] = [];
+			const updates: unknown[] = [];
 			ws.on('message', (event) => {
 				const msg = JSON.parse(event.data);
 				if (msg.type === 'langgraph-update') {
@@ -298,7 +298,7 @@ describe('WebSocket Support', () => {
 				}),
 			);
 
-			const receivedMessages: any[] = [];
+			const receivedMessages: unknown[] = [];
 			ws.on('message', (event) => {
 				receivedMessages.push(JSON.parse(event.data));
 			});

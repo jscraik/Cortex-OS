@@ -5,9 +5,11 @@
 
 ## Overview
 
-The MCP packages implement the Model Context Protocol for standardized
-communication between AI models and tools. They are production-oriented
-with strict memory management and comprehensive test coverage.
+The Cortex MCP package now ships a production-fast FastMCP server with
+first-class integrations into the Cortex knowledge search API and the Local
+Memory REST service. Requests are validated and sanitized by brAInwav security
+helpers, outbound calls are wrapped with retries + circuit breakers, and
+observability is handled via Prometheus metrics + health probes.
 
 ## Packages
 
@@ -27,25 +29,42 @@ Stdio ↔ HTTP/SSE bridge for MCP transports with rate limiting.
 
 Complete Python implementation of the Model Context Protocol.
 
+## Configuration
+
+The server reads all settings from environment variables (see `config.py`). Key
+values include:
+
+| Variable | Description |
+| --- | --- |
+| `CORTEX_MCP_CORTEX_SEARCH_URL` | HTTPS endpoint for knowledge search queries |
+| `CORTEX_MCP_CORTEX_DOCUMENT_BASE_URL` | Base URL for document fetch by ID |
+| `CORTEX_MCP_CORTEX_SEARCH_API_KEY` | Bearer token for Cortex search/document APIs |
+| `CORTEX_MCP_LOCAL_MEMORY_BASE_URL` | Local Memory REST API base (defaults to `http://localhost:3028/api/v1`) |
+| `CORTEX_MCP_LOCAL_MEMORY_API_KEY` | Optional Local Memory bearer token |
+| `CORTEX_MCP_LOCAL_MEMORY_NAMESPACE` | Optional namespace header for Local Memory |
+| `CORTEX_MCP_HTTP_TIMEOUT_SECONDS` | Timeout for outbound HTTP (default 15s) |
+| `CORTEX_MCP_HTTP_RETRIES` | Retry attempts for outbound HTTP (default 3) |
+
+JWT authentication for REST routes requires:
+
+```bash
+export JWT_SECRET_KEY="<32+ byte secret>"
+export JWT_ALGORITHM="HS256"
+```
+
 ## Memory Management
 
-1. Use the MCP-aware memory manager:
+1. Use the MCP-aware memory manager to observe production traffic:
 
    ```bash
    ./scripts/memory-manager-mcp.sh --gentle
    ```
 
-2. Run tests with memory constraints:
+2. Exercise memory CRUD through the REST bridge or MCP tools; data now persists
+   via Local Memory instead of process dictionaries.
 
-   ```bash
-   ./scripts/run-mcp-tests.sh all
-   ```
-
-3. Coverage reports:
-
-   ```bash
-   ./scripts/run-mcp-tests.sh all true
-   ```
+3. Coverage reports are generated automatically when `pytest` is invoked with
+   the `--cov` configuration in `pyproject.toml`.
 
 ## Docker Deployment
 
@@ -88,29 +107,26 @@ Apache 2.0
 
 ## Quick Start
 
-Most common local workflows:
-
 ```bash
-# 1. Start MCP Python server
-scripts/start-mcp-server.sh
+# 1. Install dependencies via uv (no virtualenv committed anymore)
+cd packages/cortex-mcp
+uv sync
 
-# 2. Run constrained tests
-./scripts/run-mcp-tests.sh all
+# 2. Run the FastMCP server with real adapters
+JWT_SECRET_KEY=dev-secret CORTEX_MCP_CORTEX_SEARCH_URL=https://search.cortex-os.ai/v1/search \
+  CORTEX_MCP_CORTEX_DOCUMENT_BASE_URL=https://search.cortex-os.ai/v1/documents \
+  uv run fastmcp run cortex_fastmcp_server_v2.py --transport http --port 3024
 
-# 3. Memory manager (gentle mode)
-./scripts/memory-manager-mcp.sh --gentle
+# 3. Exercise REST memory routes (persist via Local Memory)
+curl -H "Authorization: Bearer <jwt>" -X POST \
+  -d '{"kind":"note","text":"Persisted by Local Memory"}' \
+  http://localhost:3024/api/memories
 
-# 4. Launch Cloudflare tunnel (foreground)
+# 4. Run test suite (new adapter & REST coverage)
+uv run pytest tests/test_server_integration.py
+
+# 5. Optional: proxy through Cloudflare tunnel
 cloudflared tunnel --config packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
-
-# 5. Health probe via tunnel hostname
-scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
-
-# (Alt) Dev mode via root package scripts
-pnpm mcp:dev
-
-# (Alt) Start with tunnel helper script
-pnpm mcp:start-with-tunnel
 ```
 
 ### Deployment & Discovery Verification

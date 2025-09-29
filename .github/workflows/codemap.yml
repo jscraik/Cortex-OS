@@ -1,0 +1,38 @@
+name: codemap
+
+on:
+  pull_request:
+    branches:
+      - "*"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  codemap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install optional codemap tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install lizard
+
+      - name: Generate brAInwav codemap
+        run: |
+          echo "[brAInwav] Generating codemap snapshot"
+          make codemap SCOPE=repo
+
+      - name: Upload codemap artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: codemap
+          path: out/

@@ -230,10 +230,11 @@ export class LangGraphDSPBridge {
 		// Update workflow context with planning results
 		if (this.config.enableContextPropagation) {
 			workflowState.context.metadata = {
-				...workflowState.context.metadata,
+				// store planning completion flags in metadata (may be used by integration layers)
+				...(workflowState.context.metadata as unknown as Record<string, unknown>),
 				planningCompleted: true,
 				planningSuccess: planningResult.success,
-			};
+			} as unknown as PlanningContext['metadata'];
 		}
 
 		return planningResult;
@@ -257,24 +258,27 @@ export class LangGraphDSPBridge {
 		// Create coordination request with planning context
 		const coordinationRequest: CoordinationRequest = {
 			task,
-			availableAgents: agents,
-			constraints,
-			context: this.config.enableContextPropagation ? workflowState.context : undefined,
+			agents,
+			// Map required capabilities from constraints into the coordination request
+			requiredCapabilities: constraints.requiredCapabilities || [],
+			contextSnapshot: this.config.enableContextPropagation ? workflowState.context : undefined,
 		};
 
 		// Execute coordination
-		const coordinationResult = await this.coordinationManager.coordinate(coordinationRequest);
+		// AdaptiveCoordinationManager.coordinate is synchronous in this implementation
+		const coordinationResult = this.coordinationManager.coordinate(coordinationRequest);
 
 		// Create state node for coordination
 		const nodeId = `coordination-${coordinationResult.strategy}-${Date.now()}`;
 		const stateNode: LangGraphStateNode = {
 			id: nodeId,
 			type: 'coordination',
-			strategy: coordinationResult.strategy,
+			strategy: coordinationResult.strategy as unknown as OrchestrationStrategy,
 			context: {
-				strategy: coordinationResult.strategy,
+				strategy: coordinationResult.strategy as unknown as OrchestrationStrategy,
 				assignments: coordinationResult.assignments.length,
-				estimatedDuration: coordinationResult.estimatedDuration,
+				estimatedDuration: (coordinationResult as Partial<{ estimatedDuration: number }>).
+					estimatedDuration,
 				confidence: coordinationResult.confidence,
 			},
 			timestamp: new Date(),
@@ -417,7 +421,7 @@ export class LangGraphDSPBridge {
 		const validationChecks = {
 			planningCompleted: planningResult.phases.length > 0,
 			coordinationExecuted: coordinationResult.assignments.length > 0,
-			contextFlow: workflowState.context.metadata.planningCompleted === true,
+			contextFlow: (workflowState.context.metadata as any).planningCompleted === true,
 			stateConsistency: workflowState.nodes.size > 1,
 		};
 
@@ -443,7 +447,7 @@ export class LangGraphDSPBridge {
 		// Create initial context
 		const context: PlanningContext = {
 			id: task.id,
-			workspaceId: `workflow-${workflowId}`,
+			workspaceId: (task as any).workspaceId ?? 'default',
 			currentPhase: PlanningPhase.INITIALIZATION,
 			steps: [],
 			history: [],
@@ -454,7 +458,10 @@ export class LangGraphDSPBridge {
 				complexity: task.complexity,
 				priority: task.priority,
 			},
-		};
+			// Provide minimal placeholders for optional structural fields used by other components
+			preferences: {},
+			compliance: {},
+		} as unknown as PlanningContext;
 
 		// Register context with context manager
 		this.contextManager.createContext(context);

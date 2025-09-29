@@ -5,8 +5,8 @@
  * Express.js routes for health checks, metrics, and operational procedures
  */
 
-import { freemem, loadavg, totalmem } from 'node:os';
 import { type NextFunction, type Request, type Response, Router } from 'express';
+import { freemem, loadavg, totalmem } from 'node:os';
 import { GracefulShutdownManager, StandardShutdownHandlers } from './graceful-shutdown.js';
 import { HealthChecker, StandardHealthChecks } from './health-checker.js';
 
@@ -19,10 +19,10 @@ export interface OperationalConfig {
 }
 
 export class OperationalEndpoints {
-	private router: Router;
-	private healthChecker: HealthChecker;
-	private shutdownManager: GracefulShutdownManager;
-	private config: OperationalConfig;
+	private readonly router: Router;
+	private readonly healthChecker: HealthChecker;
+	private readonly shutdownManager: GracefulShutdownManager;
+	private readonly config: OperationalConfig;
 
 	constructor(config: OperationalConfig) {
 		this.config = config;
@@ -69,8 +69,10 @@ export class OperationalEndpoints {
 	private async getHealth(_req: Request, res: Response): Promise<Response> {
 		try {
 			const health = await this.healthChecker.getSystemHealth();
-			const statusCode =
-				health.overall === 'healthy' ? 200 : health.overall === 'degraded' ? 200 : 503;
+			let statusCode = 503;
+			if (health.overall === 'healthy' || health.overall === 'degraded') {
+				statusCode = 200;
+			}
 
 			return res.status(statusCode).json({
 				status: health.overall,
@@ -125,8 +127,10 @@ export class OperationalEndpoints {
 	private async getDetailedHealth(_req: Request, res: Response): Promise<Response> {
 		try {
 			const health = await this.healthChecker.getSystemHealth();
-			const statusCode =
-				health.overall === 'healthy' ? 200 : health.overall === 'degraded' ? 200 : 503;
+			let statusCode = 503;
+			if (health.overall === 'healthy' || health.overall === 'degraded') {
+				statusCode = 200;
+			}
 
 			return res.status(statusCode).json(health);
 		} catch (error) {
@@ -183,9 +187,10 @@ export class OperationalEndpoints {
 
 				return { metrics, contentType };
 			} catch (requireError) {
-				throw new Error(
-					`Failed to load prom-client: ${importError.message || requireError.message}`,
-				);
+				const importMsg = importError instanceof Error ? importError.message : String(importError);
+				const requireMsg =
+					requireError instanceof Error ? requireError.message : String(requireError);
+				throw new Error(`Failed to load prom-client: ${importMsg || requireMsg}`);
 			}
 		}
 	}
@@ -352,15 +357,15 @@ export class OperationalEndpoints {
  */
 export function createOperationalEndpoints(options: {
 	// Database connection for health checks
-	database?: any;
+	database?: unknown;
 	// Redis client for health checks
-	redis?: any;
+	redis?: unknown;
 	// Agent pool for health checks
-	agentPool?: any;
+	agentPool?: unknown;
 	// HTTP server for shutdown handling
-	httpServer?: any;
+	httpServer?: unknown;
 	// Job processor for shutdown handling
-	jobProcessor?: any;
+	jobProcessor?: unknown;
 	// Custom cleanup function
 	cleanup?: () => Promise<void>;
 	// Enable admin endpoints

@@ -12,28 +12,28 @@ import { selectMLXModel, selectOllamaModel } from '../lib/model-selection.js';
  * Model request schemas
  */
 export const EmbeddingRequestSchema = z.object({
-	texts: z.array(z.string().min(1)).min(1).max(100),
-	model: z.string().optional(),
-	task: z.enum(['embed', 'semantic-search', 'classification']).optional(),
+  texts: z.array(z.string().min(1)).min(1).max(100),
+  model: z.string().optional(),
+  task: z.enum(['embed', 'semantic-search', 'classification']).optional(),
 });
 
 export const ChatRequestSchema = z.object({
-	messages: z.array(
-		z.object({
-			role: z.enum(['system', 'user', 'assistant']),
-			content: z.string().min(1),
-		}),
-	),
-	model: z.string().optional(),
-	task: z.enum(['chat', 'code', 'analysis', 'reasoning']).optional(),
-	maxTokens: z.number().positive().max(8192).optional(),
-	temperature: z.number().min(0).max(2).optional(),
+  messages: z.array(
+    z.object({
+      role: z.enum(['system', 'user', 'assistant']),
+      content: z.string().min(1),
+    }),
+  ),
+  model: z.string().optional(),
+  task: z.enum(['chat', 'code', 'analysis', 'reasoning']).optional(),
+  maxTokens: z.number().positive().max(8192).optional(),
+  temperature: z.number().min(0).max(2).optional(),
 });
 
 export const RerankRequestSchema = z.object({
-	query: z.string().min(1),
-	documents: z.array(z.string().min(1)).min(1).max(100),
-	model: z.string().optional(),
+  query: z.string().min(1),
+  documents: z.array(z.string().min(1)).min(1).max(100),
+  model: z.string().optional(),
 });
 
 export type EmbeddingRequest = z.infer<typeof EmbeddingRequestSchema>;
@@ -44,27 +44,27 @@ export type RerankRequest = z.infer<typeof RerankRequestSchema>;
  * Model response schemas
  */
 export const EmbeddingResponseSchema = z.object({
-	embeddings: z.array(z.array(z.number())),
-	model: z.string(),
-	provider: z.string(),
-	processingTime: z.number(),
-	tokensUsed: z.number().optional(),
+  embeddings: z.array(z.array(z.number())),
+  model: z.string(),
+  provider: z.string(),
+  processingTime: z.number(),
+  tokensUsed: z.number().optional(),
 });
 
 export const ChatResponseSchema = z.object({
-	content: z.string(),
-	model: z.string(),
-	provider: z.string(),
-	processingTime: z.number(),
-	tokensUsed: z.record(z.unknown()).optional(),
-	finishReason: z.string().optional(),
+  content: z.string(),
+  model: z.string(),
+  provider: z.string(),
+  processingTime: z.number(),
+  tokensUsed: z.record(z.unknown()).optional(),
+  finishReason: z.string().optional(),
 });
 
 export const RerankResponseSchema = z.object({
-	scores: z.array(z.number()),
-	model: z.string(),
-	provider: z.string(),
-	processingTime: z.number(),
+  scores: z.array(z.number()),
+  model: z.string(),
+  provider: z.string(),
+  processingTime: z.number(),
 });
 
 export type EmbeddingResponse = z.infer<typeof EmbeddingResponseSchema>;
@@ -75,405 +75,409 @@ export type RerankResponse = z.infer<typeof RerankResponseSchema>;
  * Provider interface
  */
 export interface ModelProvider {
-	name: string;
-	isAvailable(): Promise<boolean>;
-	executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse>;
-	executeChat(request: ChatRequest): Promise<ChatResponse>;
-	executeRerank?(request: RerankRequest): Promise<RerankResponse>;
+  name: string;
+  isAvailable(): Promise<boolean>;
+  executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse>;
+  executeChat(request: ChatRequest): Promise<ChatResponse>;
+  executeRerank?(request: RerankRequest): Promise<RerankResponse>;
 }
 
 /**
  * MLX Provider Implementation
  */
 class MLXProvider implements ModelProvider {
-	readonly name = 'mlx';
-	private healthCache: { available: boolean; timestamp: number } | null = null;
-	private readonly circuitBreaker: CircuitBreaker;
+  readonly name = 'mlx';
+  private healthCache: { available: boolean; timestamp: number } | null = null;
+  private readonly circuitBreaker: CircuitBreaker;
 
-	constructor(
-		private readonly mlxService: unknown, // MLXServiceBridge instance
-		private readonly healthCheckInterval = 30000, // 30 seconds
-	) {
-		this.circuitBreaker = new CircuitBreaker('mlx-provider', {
-			failureThreshold: 3,
-			recoveryTimeoutMs: 60000,
-			monitoringWindowMs: 300000,
-			halfOpenMaxCalls: 2,
-		});
-	}
+  constructor(
+    private readonly mlxService: MLXServiceBridge, // MLXServiceBridge instance
+    private readonly healthCheckInterval = 30000, // 30 seconds
+  ) {
+    this.circuitBreaker = new CircuitBreaker('mlx-provider', {
+      failureThreshold: 3,
+      recoveryTimeoutMs: 60000,
+      monitoringWindowMs: 300000,
+      halfOpenMaxCalls: 2,
+    });
+  }
 
-	async isAvailable(): Promise<boolean> {
-		// Check cache first
-		if (this.healthCache && Date.now() - this.healthCache.timestamp < this.healthCheckInterval) {
-			return this.healthCache.available;
-		}
+  async isAvailable(): Promise<boolean> {
+    // Check cache first
+    if (this.healthCache && Date.now() - this.healthCache.timestamp < this.healthCheckInterval) {
+      return this.healthCache.available;
+    }
 
-		try {
-			const available = await this.circuitBreaker.execute(async () => {
-				// Check if MLX service is actually available
-				return (await selectMLXModel('chat')) !== null;
-			});
+    try {
+      const available = await this.circuitBreaker.execute(async () => {
+        // Check if MLX service is actually available
+        return (await selectMLXModel('chat')) !== null;
+      });
 
-			this.healthCache = { available, timestamp: Date.now() };
-			return available;
-		} catch {
-			this.healthCache = { available: false, timestamp: Date.now() };
-			return false;
-		}
-	}
+      this.healthCache = { available, timestamp: Date.now() };
+      return available;
+    } catch {
+      this.healthCache = { available: false, timestamp: Date.now() };
+      return false;
+    }
+  }
 
-	async executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
-		return this.circuitBreaker.execute(async () => {
-			const startTime = Date.now();
+  async executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+    return this.circuitBreaker.execute(async () => {
+      const startTime = Date.now();
 
-			// Generate embeddings for each text
-			const embeddings: number[][] = [];
-			for (const text of request.texts) {
-				const result = await (this.mlxService as any).generateEmbedding({
-					text,
-					model: request.model,
-				});
-				embeddings.push(result.embedding);
-			}
+      // Generate embeddings for each text
+      const embeddings: number[][] = [];
+      for (const text of request.texts) {
+        const result = await this.mlxService.generateEmbedding({ text, model: request.model });
+        if (Array.isArray(result.embedding)) embeddings.push(result.embedding);
+      }
 
-			const processingTime = Date.now() - startTime;
+      const processingTime = Date.now() - startTime;
 
-			return {
-				embeddings,
-				model: request.model || 'mlx-default',
-				provider: this.name,
-				processingTime,
-			};
-		});
-	}
+      return {
+        embeddings,
+        model: request.model || 'mlx-default',
+        provider: this.name,
+        processingTime,
+      };
+    });
+  }
 
-	async executeChat(request: ChatRequest): Promise<ChatResponse> {
-		return this.circuitBreaker.execute(async () => {
-			const startTime = Date.now();
+  async executeChat(request: ChatRequest): Promise<ChatResponse> {
+    return this.circuitBreaker.execute(async () => {
+      const startTime = Date.now();
 
-			const result = await (this.mlxService as any).generateChat({
-				messages: request.messages,
-				model: request.model,
-				max_tokens: request.maxTokens,
-				temperature: request.temperature,
-			});
+      const result = await this.mlxService.generateChat({
+        messages: request.messages,
+        model: request.model,
+        max_tokens: request.maxTokens,
+        temperature: request.temperature,
+      });
 
-			const processingTime = Date.now() - startTime;
+      const processingTime = Date.now() - startTime;
 
-			return {
-				content: result.content,
-				model: result.model,
-				provider: this.name,
-				processingTime,
-			};
-		});
-	}
+      return {
+        content: result.content,
+        model: result.model,
+        provider: this.name,
+        processingTime,
+      };
+    });
+  }
 
-	async executeRerank(request: RerankRequest): Promise<RerankResponse> {
-		return this.circuitBreaker.execute(async () => {
-			const startTime = Date.now();
+  async executeRerank(request: RerankRequest): Promise<RerankResponse> {
+    return this.circuitBreaker.execute(async () => {
+      const startTime = Date.now();
 
-			const result = await (this.mlxService as any).rerank(
-				request.query,
-				request.documents,
-				request.model,
-			);
+      let result: { scores: number[]; model: string };
+      const maybeRerank = this.mlxService.rerank?.(request.query, request.documents, request.model);
+      if (maybeRerank === undefined) {
+        result = { scores: [], model: request.model ?? 'mlx-default' };
+      } else {
+        result = await maybeRerank;
+      }
 
-			const processingTime = Date.now() - startTime;
+      const processingTime = Date.now() - startTime;
 
-			return {
-				scores: result.scores,
-				model: result.model,
-				provider: this.name,
-				processingTime,
-			};
-		});
-	}
+      return {
+        scores: result.scores,
+        model: result.model,
+        provider: this.name,
+        processingTime,
+      };
+    });
+  }
 }
 
 /**
  * Ollama Provider Implementation
  */
 class OllamaProvider implements ModelProvider {
-	readonly name = 'ollama';
-	private healthCache: { available: boolean; timestamp: number } | null = null;
-	private readonly circuitBreaker: CircuitBreaker;
+  readonly name = 'ollama';
+  private healthCache: { available: boolean; timestamp: number } | null = null;
+  private readonly circuitBreaker: CircuitBreaker;
 
-	constructor(
-		private readonly baseUrl = 'http://localhost:11434',
-		private readonly healthCheckInterval = 30000,
-	) {
-		this.circuitBreaker = new CircuitBreaker('ollama-provider', {
-			failureThreshold: 3,
-			recoveryTimeoutMs: 60000,
-			monitoringWindowMs: 300000,
-			halfOpenMaxCalls: 2,
-		});
-	}
+  constructor(
+    private readonly baseUrl = 'http://localhost:11434',
+    private readonly healthCheckInterval = 30000,
+  ) {
+    this.circuitBreaker = new CircuitBreaker('ollama-provider', {
+      failureThreshold: 3,
+      recoveryTimeoutMs: 60000,
+      monitoringWindowMs: 300000,
+      halfOpenMaxCalls: 2,
+    });
+  }
 
-	async isAvailable(): Promise<boolean> {
-		if (this.healthCache && Date.now() - this.healthCache.timestamp < this.healthCheckInterval) {
-			return this.healthCache.available;
-		}
+  async isAvailable(): Promise<boolean> {
+    if (this.healthCache && Date.now() - this.healthCache.timestamp < this.healthCheckInterval) {
+      return this.healthCache.available;
+    }
 
-		try {
-			const available = await this.circuitBreaker.execute(async () => {
-				return (await selectOllamaModel('chat')) !== null;
-			});
+    try {
+      const available = await this.circuitBreaker.execute(async () => {
+        return (await selectOllamaModel('chat')) !== null;
+      });
 
-			this.healthCache = { available, timestamp: Date.now() };
-			return available;
-		} catch {
-			this.healthCache = { available: false, timestamp: Date.now() };
-			return false;
-		}
-	}
+      this.healthCache = { available, timestamp: Date.now() };
+      return available;
+    } catch {
+      this.healthCache = { available: false, timestamp: Date.now() };
+      return false;
+    }
+  }
 
-	async executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
-		return this.circuitBreaker.execute(async () => {
-			const startTime = Date.now();
+  async executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+    return this.circuitBreaker.execute(async () => {
+      const startTime = Date.now();
 
-			// Use nomic-embed-text for embeddings
-			const response = await fetch(`${this.baseUrl}/api/embeddings`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					model: request.model || 'nomic-embed-text',
-					prompt: request.texts[0], // Ollama only supports single text embeddings
-				}),
-			});
+      // Use nomic-embed-text for embeddings
+      const response = await fetch(`${this.baseUrl}/api/embeddings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: request.model || 'nomic-embed-text',
+          prompt: request.texts[0], // Ollama only supports single text embeddings
+        }),
+      });
 
-			if (!response.ok) {
-				throw new Error(`Ollama embedding failed: ${response.statusText}`);
-			}
+      if (!response.ok) {
+        throw new Error(`Ollama embedding failed: ${response.statusText}`);
+      }
 
-			const data = await response.json();
-			const processingTime = Date.now() - startTime;
+      const data = await response.json();
+      const processingTime = Date.now() - startTime;
 
-			return {
-				embeddings: [data.embedding],
-				model: data.model,
-				provider: this.name,
-				processingTime,
-			};
-		});
-	}
+      return {
+        embeddings: [data.embedding],
+        model: data.model,
+        provider: this.name,
+        processingTime,
+      };
+    });
+  }
 
-	async executeChat(request: ChatRequest): Promise<ChatResponse> {
-		return this.circuitBreaker.execute(async () => {
-			const startTime = Date.now();
+  async executeChat(request: ChatRequest): Promise<ChatResponse> {
+    return this.circuitBreaker.execute(async () => {
+      const startTime = Date.now();
 
-			// Select model based on task or use default
-			const model = request.model || (await this.selectModelForTask(request.task || 'chat'));
+      // Select model based on task or use default
+      const model = request.model || (await this.selectModelForTask(request.task || 'chat'));
 
-			const response = await fetch(`${this.baseUrl}/api/generate`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					model,
-					prompt: this.formatMessages(request.messages),
-					stream: false,
-					options: {
-						temperature: request.temperature ?? 0.7,
-						num_predict: request.maxTokens,
-					},
-				}),
-			});
+      const response = await fetch(`${this.baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          prompt: this.formatMessages(request.messages),
+          stream: false,
+          options: {
+            temperature: request.temperature ?? 0.7,
+            num_predict: request.maxTokens,
+          },
+        }),
+      });
 
-			if (!response.ok) {
-				throw new Error(`Ollama chat failed: ${response.statusText}`);
-			}
+      if (!response.ok) {
+        throw new Error(`Ollama chat failed: ${response.statusText}`);
+      }
 
-			const data = await response.json();
-			const processingTime = Date.now() - startTime;
+      const data = await response.json();
+      const processingTime = Date.now() - startTime;
 
-			return {
-				content: data.response,
-				model: data.model,
-				provider: this.name,
-				processingTime,
-				tokensUsed: {
-					prompt: data.prompt_eval_count,
-					completion: data.eval_count,
-				},
-			};
-		});
-	}
+      return {
+        content: data.response,
+        model: data.model,
+        provider: this.name,
+        processingTime,
+        tokensUsed: {
+          prompt: data.prompt_eval_count,
+          completion: data.eval_count,
+        },
+      };
+    });
+  }
 
-	private async selectModelForTask(task: string): Promise<string> {
-		const modelMap: Record<string, string> = {
-			chat: 'llama3.2:3b',
-			code: 'codellama:7b',
-			analysis: 'llama3.2:8b',
-			reasoning: 'llama3.2:8b',
-		};
+  private async selectModelForTask(task: string): Promise<string> {
+    const modelMap: Record<string, string> = {
+      chat: 'llama3.2:3b',
+      code: 'codellama:7b',
+      analysis: 'llama3.2:8b',
+      reasoning: 'llama3.2:8b',
+    };
 
-		return modelMap[task] || modelMap.chat;
-	}
+    return modelMap[task] || modelMap.chat;
+  }
 
-	private formatMessages(messages: Array<{ role: string; content: string }>): string {
-		return messages
-			.map((msg) => {
-				if (msg.role === 'system') {
-					return `System: ${msg.content}`;
-				} else if (msg.role === 'user') {
-					return `User: ${msg.content}`;
-				} else {
-					return `Assistant: ${msg.content}`;
-				}
-			})
-			.join('\n\n');
-	}
+  private formatMessages(messages: Array<{ role: string; content: string }>): string {
+    return messages
+      .map((msg) => {
+        if (msg.role === 'system') {
+          return `System: ${msg.content}`;
+        } else if (msg.role === 'user') {
+          return `User: ${msg.content}`;
+        } else {
+          return `Assistant: ${msg.content}`;
+        }
+      })
+      .join('\n\n');
+  }
 }
 
 /**
  * OpenAI Provider Implementation
  */
 class OpenAIProvider implements ModelProvider {
-	readonly name = 'openai';
-	private readonly apiKey: string;
-	private readonly baseUrl: string;
-	private circuitBreaker: CircuitBreaker;
+  readonly name = 'openai';
+  private readonly apiKey: string;
+  private readonly baseUrl: string;
+  private readonly circuitBreaker: CircuitBreaker;
 
-	constructor(config: { apiKey: string; baseUrl?: string }) {
-		this.apiKey = config.apiKey;
-		this.baseUrl = config.baseUrl || 'https://api.openai.com/v1';
-		this.circuitBreaker = new CircuitBreaker('openai-provider', {
-			failureThreshold: 5,
-			recoveryTimeoutMs: 30000,
-			monitoringWindowMs: 300000,
-			halfOpenMaxCalls: 5,
-		});
-	}
+  constructor(config: { apiKey: string; baseUrl?: string }) {
+    this.apiKey = config.apiKey;
+    this.baseUrl = config.baseUrl || 'https://api.openai.com/v1';
+    this.circuitBreaker = new CircuitBreaker('openai-provider', {
+      failureThreshold: 5,
+      recoveryTimeoutMs: 30000,
+      monitoringWindowMs: 300000,
+      halfOpenMaxCalls: 5,
+    });
+  }
 
-	async isAvailable(): Promise<boolean> {
-		try {
-			await this.circuitBreaker.execute(async () => {
-				const response = await fetch(`${this.baseUrl}/models`, {
-					headers: { Authorization: `Bearer ${this.apiKey}` },
-				});
-				if (!response.ok) {
-					throw new Error(`OpenAI API unavailable: ${response.statusText}`);
-				}
-			});
-			return true;
-		} catch {
-			return false;
-		}
-	}
+  async isAvailable(): Promise<boolean> {
+    try {
+      await this.circuitBreaker.execute(async () => {
+        const response = await fetch(`${this.baseUrl}/models`, {
+          headers: { Authorization: `Bearer ${this.apiKey}` },
+        });
+        if (!response.ok) {
+          throw new Error(`OpenAI API unavailable: ${response.statusText}`);
+        }
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-	async executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
-		return this.circuitBreaker.execute(async () => {
-			const startTime = Date.now();
+  async executeEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+    return this.circuitBreaker.execute(async () => {
+      const startTime = Date.now();
 
-			const response = await fetch(`${this.baseUrl}/embeddings`, {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model: request.model || 'text-embedding-3-small',
-					input: request.texts,
-				}),
-			});
+      const response = await fetch(`${this.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: request.model || 'text-embedding-3-small',
+          input: request.texts,
+        }),
+      });
 
-			if (!response.ok) {
-				const error = await response.text();
-				throw new Error(`OpenAI embedding failed: ${error}`);
-			}
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`OpenAI embedding failed: ${error}`);
+      }
 
-			const data = await response.json();
-			const processingTime = Date.now() - startTime;
+      const data = await response.json();
+      const processingTime = Date.now() - startTime;
 
-			return {
-				embeddings: data.data.map((item: any) => item.embedding),
-				model: data.model,
-				provider: this.name,
-				processingTime,
-				tokensUsed: { total: data.usage.total_tokens },
-			};
-		});
-	}
+      return {
+        embeddings: Array.isArray(data.data)
+          ? data.data.map((item: unknown) => {
+            const emb = (item as { embedding?: unknown }).embedding;
+            return Array.isArray(emb) ? (emb as number[]) : [];
+          })
+          : [],
+        model: data.model,
+        provider: this.name,
+        processingTime,
+        tokensUsed: typeof data.usage?.total_tokens === 'number' ? data.usage.total_tokens : undefined,
+      };
+    });
+  }
 
-	async executeChat(request: ChatRequest): Promise<ChatResponse> {
-		return this.circuitBreaker.execute(async () => {
-			const startTime = Date.now();
+  async executeChat(request: ChatRequest): Promise<ChatResponse> {
+    return this.circuitBreaker.execute(async () => {
+      const startTime = Date.now();
 
-			const model = this.selectModelForTask(request.task || 'chat');
+      const model = this.selectModelForTask(request.task || 'chat');
 
-			const response = await fetch(`${this.baseUrl}/chat/completions`, {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model,
-					messages: request.messages,
-					max_tokens: request.maxTokens,
-					temperature: request.temperature,
-				}),
-			});
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: request.messages,
+          max_tokens: request.maxTokens,
+          temperature: request.temperature,
+        }),
+      });
 
-			if (!response.ok) {
-				const error = await response.text();
-				throw new Error(`OpenAI chat failed: ${error}`);
-			}
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`OpenAI chat failed: ${error}`);
+      }
 
-			const data = await response.json();
-			const processingTime = Date.now() - startTime;
+      const data = await response.json();
+      const processingTime = Date.now() - startTime;
 
-			return {
-				content: data.choices[0].message.content,
-				model: data.model,
-				provider: this.name,
-				processingTime,
-				tokensUsed: data.usage,
-				finishReason: data.choices[0].finish_reason,
-			};
-		});
-	}
+      return {
+        content: data.choices[0].message.content,
+        model: data.model,
+        provider: this.name,
+        processingTime,
+        tokensUsed: data.usage,
+        finishReason: data.choices[0].finish_reason,
+      };
+    });
+  }
 
-	private selectModelForTask(task: string): string {
-		const modelMap: Record<string, string> = {
-			chat: 'gpt-4o-mini',
-			code: 'gpt-4o',
-			analysis: 'gpt-4o',
-			reasoning: 'gpt-4o',
-		};
+  private selectModelForTask(task: string): string {
+    const modelMap: Record<string, string> = {
+      chat: 'gpt-4o-mini',
+      code: 'gpt-4o',
+      analysis: 'gpt-4o',
+      reasoning: 'gpt-4o',
+    };
 
-		return modelMap[task] || modelMap.chat;
-	}
+    return modelMap[task] || modelMap.chat;
+  }
 }
 
 /**
  * Composite Provider Configuration
  */
 export const CompositeProviderConfigSchema = z.object({
-	mlx: z
-		.object({
-			enabled: z.boolean().default(true),
-			service: z.unknown().optional(),
-			priority: z.number().min(1).max(10).default(1),
-		})
-		.optional(),
-	ollama: z
-		.object({
-			enabled: z.boolean().default(true),
-			baseUrl: z.string().default('http://localhost:11434'),
-			priority: z.number().min(1).max(10).default(2),
-		})
-		.optional(),
-	openai: z
-		.object({
-			enabled: z.boolean().default(false),
-			apiKey: z.string().optional(),
-			baseUrl: z.string().optional(),
-			priority: z.number().min(1).max(10).default(3),
-		})
-		.optional(),
-	fallbackTimeout: z.number().positive().default(5000),
+  mlx: z
+    .object({
+      enabled: z.boolean().default(true),
+      service: z.unknown().optional(),
+      priority: z.number().min(1).max(10).default(1),
+    })
+    .optional(),
+  ollama: z
+    .object({
+      enabled: z.boolean().default(true),
+      baseUrl: z.string().default('http://localhost:11434'),
+      priority: z.number().min(1).max(10).default(2),
+    })
+    .optional(),
+  openai: z
+    .object({
+      enabled: z.boolean().default(false),
+      apiKey: z.string().optional(),
+      baseUrl: z.string().optional(),
+      priority: z.number().min(1).max(10).default(3),
+    })
+    .optional(),
+  fallbackTimeout: z.number().positive().default(5000),
 });
 
 export type CompositeProviderConfig = z.infer<typeof CompositeProviderConfigSchema>;
@@ -483,241 +487,248 @@ export type CompositeProviderConfig = z.infer<typeof CompositeProviderConfigSche
  * Manages multiple providers with fallback capability
  */
 export class CompositeModelProvider extends EventEmitter {
-	private readonly providers: Array<{ provider: ModelProvider; priority: number }> = [];
-	private readonly config: CompositeProviderConfig;
+  private readonly providers: Array<{ provider: ModelProvider; priority: number }> = [];
+  private readonly config: CompositeProviderConfig;
 
-	constructor(config: CompositeProviderConfig) {
-		super();
-		this.config = CompositeProviderConfigSchema.parse(config);
+  constructor(config: CompositeProviderConfig) {
+    super();
+    this.config = CompositeProviderConfigSchema.parse(config);
 
-		// Initialize providers based on configuration
-		if (this.config.mlx?.enabled && this.config.mlx.service) {
-			this.providers.push({
-				provider: new MLXProvider(this.config.mlx.service),
-				priority: this.config.mlx.priority,
-			});
-		}
+    // Initialize providers based on configuration
+    if (this.config.mlx?.enabled && this.config.mlx.service) {
+      this.providers.push({
+        provider: new MLXProvider(this.config.mlx.service as MLXServiceBridge),
+        priority: this.config.mlx.priority,
+      });
+    }
 
-		if (this.config.ollama?.enabled) {
-			this.providers.push({
-				provider: new OllamaProvider(this.config.ollama.baseUrl),
-				priority: this.config.ollama.priority,
-			});
-		}
+    if (this.config.ollama?.enabled) {
+      this.providers.push({
+        provider: new OllamaProvider(this.config.ollama.baseUrl),
+        priority: this.config.ollama.priority,
+      });
+    }
 
-		if (this.config.openai?.enabled && this.config.openai.apiKey) {
-			this.providers.push({
-				provider: new OpenAIProvider({
-					apiKey: this.config.openai.apiKey,
-					baseUrl: this.config.openai.baseUrl,
-				}),
-				priority: this.config.openai.priority,
-			});
-		}
+    if (this.config.openai?.enabled && this.config.openai.apiKey) {
+      this.providers.push({
+        provider: new OpenAIProvider({
+          apiKey: this.config.openai.apiKey,
+          baseUrl: this.config.openai.baseUrl,
+        }),
+        priority: this.config.openai.priority,
+      });
+    }
 
-		// Sort by priority
-		this.providers.sort((a, b) => a.priority - b.priority);
-	}
+    // Sort by priority
+    this.providers.sort((a, b) => a.priority - b.priority);
+  }
 
-	/**
-	 * Get list of configured providers
-	 */
-	getProviders(): ModelProvider[] {
-		return this.providers.map((p) => p.provider);
-	}
+  /**
+   * Get list of configured providers
+   */
+  getProviders(): ModelProvider[] {
+    return this.providers.map((p) => p.provider);
+  }
 
-	/**
-	 * Check overall system health
-	 */
-	async healthCheck(): Promise<{
-		healthy: boolean;
-		providers: Array<{ name: string; available: boolean; error?: string }>;
-	}> {
-		const providerHealths = await Promise.allSettled(
-			this.providers.map(async ({ provider }) => {
-				const available = await provider.isAvailable();
-				return { name: provider.name, available };
-			}),
-		);
+  /**
+   * Check overall system health
+   */
+  async healthCheck(): Promise<{
+    healthy: boolean;
+    providers: Array<{ name: string; available: boolean; error?: string }>;
+  }> {
+    const providerHealths = await Promise.allSettled(
+      this.providers.map(async ({ provider }) => {
+        const available = await provider.isAvailable();
+        return { name: provider.name, available };
+      }),
+    );
 
-		const providers = providerHealths.map((result, index) => {
-			if (result.status === 'fulfilled') {
-				return result.value;
-			} else {
-				return {
-					name: this.providers[index].provider.name,
-					available: false,
-					error: result.reason.message,
-				};
-			}
-		});
+    const providers = providerHealths.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      } else {
+        return {
+          name: this.providers[index].provider.name,
+          available: false,
+          error: result.reason.message,
+        };
+      }
+    });
 
-		const healthy = providers.some((p) => p.available);
+    const healthy = providers.some((p) => p.available);
 
-		return { healthy, providers };
-	}
+    return { healthy, providers };
+  }
 
-	/**
-	 * Execute request with fallback across providers
-	 */
-	private async executeWithFallback<T>(
-		request: EmbeddingRequest | ChatRequest | RerankRequest,
-		operation: (
-			provider: ModelProvider,
-			request: EmbeddingRequest | ChatRequest | RerankRequest,
-		) => Promise<T>,
-	): Promise<{ result: T; provider: string; attempts: number }> {
-		this.validateProvidersConfigured();
+  /**
+   * Execute request with fallback across providers
+   */
+  private async executeWithFallback<TReq extends EmbeddingRequest | ChatRequest | RerankRequest, T>(
+    request: TReq,
+    operation: (
+      provider: ModelProvider,
+      request: TReq,
+    ) => Promise<T>,
+  ): Promise<{ result: T; provider: string; attempts: number }> {
+    this.validateProvidersConfigured();
 
-		let lastError: Error | null = null;
-		const attempts: number[] = [];
+    let lastError: Error | null = null;
+    const attempts: number[] = [];
 
-		for (const { provider } of this.providers) {
-			const attemptStart = Date.now();
-			attempts.push(attemptStart);
+    for (const { provider } of this.providers) {
+      const attemptStart = Date.now();
+      attempts.push(attemptStart);
 
-			try {
-				const result = await this.executeWithProvider(provider, request, operation, attemptStart);
-				return { result, provider: provider.name, attempts: attempts.length };
-			} catch (error) {
-				lastError = this.handleProviderError(error as Error, provider, attemptStart);
-			}
-		}
+      try {
+        const result = await this.executeWithProvider(provider, request, operation, attemptStart);
+        return { result, provider: provider.name, attempts: attempts.length };
+      } catch (error) {
+        lastError = this.handleProviderError(error as Error, provider, attemptStart);
+      }
+    }
 
-		throw this.createFinalError(lastError);
-	}
+    throw this.createFinalError(lastError);
+  }
 
-	private validateProvidersConfigured(): void {
-		if (this.providers.length === 0) {
-			throw new Error('No providers configured');
-		}
-	}
+  private validateProvidersConfigured(): void {
+    if (this.providers.length === 0) {
+      throw new Error('No providers configured');
+    }
+  }
 
-	private async executeWithProvider<T>(
-		provider: ModelProvider,
-		request: EmbeddingRequest | ChatRequest | RerankRequest,
-		operation: (
-			provider: ModelProvider,
-			request: EmbeddingRequest | ChatRequest | RerankRequest,
-		) => Promise<T>,
-		attemptStart: number,
-	): Promise<T> {
-		const available = await provider.isAvailable();
-		if (!available) {
-			this.emit('provider-skipped', {
-				provider: provider.name,
-				reason: 'unavailable',
-			});
-			throw new Error(`Provider ${provider.name} unavailable`);
-		}
+  private async executeWithProvider<TReq extends EmbeddingRequest | ChatRequest | RerankRequest, T>(
+    provider: ModelProvider,
+    request: TReq,
+    operation: (
+      provider: ModelProvider,
+      request: TReq,
+    ) => Promise<T>,
+    attemptStart: number,
+  ): Promise<T> {
+    const available = await provider.isAvailable();
+    if (!available) {
+      this.emit('provider-skipped', {
+        provider: provider.name,
+        reason: 'unavailable',
+      });
+      throw new Error(`Provider ${provider.name} unavailable`);
+    }
 
-		const result = await Promise.race([
-			operation(provider, request),
-			this.createTimeoutPromise(provider),
-		]);
+    const result = await Promise.race([
+      operation(provider, request),
+      this.createTimeoutPromise(provider),
+    ]);
 
-		this.emit('provider-success', {
-			provider: provider.name,
-			processingTime: Date.now() - attemptStart,
-		});
+    this.emit('provider-success', {
+      provider: provider.name,
+      processingTime: Date.now() - attemptStart,
+    });
 
-		return result;
-	}
+    return result;
+  }
 
-	private createTimeoutPromise(provider: ModelProvider): Promise<never> {
-		return new Promise<never>((_, reject) =>
-			setTimeout(
-				() => reject(new Error(`Provider ${provider.name} timeout`)),
-				this.config.fallbackTimeout,
-			),
-		);
-	}
+  private createTimeoutPromise(provider: ModelProvider): Promise<never> {
+    return new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Provider ${provider.name} timeout`)),
+        this.config.fallbackTimeout,
+      ),
+    );
+  }
 
-	private handleProviderError(error: Error, provider: ModelProvider, attemptStart: number): Error {
-		this.emit('provider-failed', {
-			provider: provider.name,
-			error: error.message,
-			processingTime: Date.now() - attemptStart,
-		});
-		return error;
-	}
+  private handleProviderError(error: Error, provider: ModelProvider, attemptStart: number): Error {
+    this.emit('provider-failed', {
+      provider: provider.name,
+      error: error.message,
+      processingTime: Date.now() - attemptStart,
+    });
+    return error;
+  }
 
-	private createFinalError(lastError: Error | null): Error {
-		return new Error(`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`);
-	}
+  private createFinalError(lastError: Error | null): Error {
+    return new Error(`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`);
+  }
 
-	/**
-	 * Generate embeddings with fallback
-	 */
-	async generateEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
-		const validated = EmbeddingRequestSchema.parse(request);
+  /**
+   * Generate embeddings with fallback
+   */
+  async generateEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+    const validated = EmbeddingRequestSchema.parse(request);
 
-		const { result, provider, attempts } = await this.executeWithFallback(
-			validated,
-			async (p, req) => await p.executeEmbeddings(req),
-		);
+    const { result, provider, attempts } = await this.executeWithFallback(
+      validated,
+      async (p, req) => await p.executeEmbeddings(req),
+    );
 
-		this.emit('embeddings-generated', {
-			requestId: crypto.randomUUID(),
-			provider,
-			attempts,
-			textCount: validated.texts.length,
-		});
+    this.emit('embeddings-generated', {
+      requestId: crypto.randomUUID(),
+      provider,
+      attempts,
+      textCount: validated.texts.length,
+    });
 
-		return result;
-	}
+    return result;
+  }
 
-	/**
-	 * Generate chat response with fallback
-	 */
-	async generateChat(request: ChatRequest): Promise<ChatResponse> {
-		const validated = ChatRequestSchema.parse(request);
+  /**
+   * Generate chat response with fallback
+   */
+  async generateChat(request: ChatRequest): Promise<ChatResponse> {
+    const validated = ChatRequestSchema.parse(request);
 
-		const { result, provider, attempts } = await this.executeWithFallback(
-			validated,
-			async (p, req) => await p.executeChat(req),
-		);
+    const { result, provider, attempts } = await this.executeWithFallback(
+      validated,
+      async (p, req) => await p.executeChat(req),
+    );
 
-		this.emit('chat-generated', {
-			requestId: crypto.randomUUID(),
-			provider,
-			attempts,
-			messageCount: validated.messages.length,
-		});
+    this.emit('chat-generated', {
+      requestId: crypto.randomUUID(),
+      provider,
+      attempts,
+      messageCount: validated.messages.length,
+    });
 
-		return result;
-	}
+    return result;
+  }
 
-	/**
-	 * Rerank documents with fallback
-	 */
-	async rerank(request: RerankRequest): Promise<RerankResponse> {
-		const validated = RerankRequestSchema.parse(request);
+  /**
+   * Rerank documents with fallback
+   */
+  async rerank(request: RerankRequest): Promise<RerankResponse> {
+    const validated = RerankRequestSchema.parse(request);
 
-		const { result, provider, attempts } = await this.executeWithFallback(
-			validated,
-			async (p, req) => {
-				if (p.executeRerank) {
-					return await p.executeRerank(req);
-				}
-				throw new Error(`Provider ${p.name} does not support reranking`);
-			},
-		);
+    const { result, provider, attempts } = await this.executeWithFallback(
+      validated,
+      async (p, req) => {
+        if (p.executeRerank) {
+          return await p.executeRerank(req);
+        }
+        throw new Error(`Provider ${p.name} does not support reranking`);
+      },
+    );
 
-		this.emit('rerank-completed', {
-			requestId: crypto.randomUUID(),
-			provider,
-			attempts,
-			documentCount: validated.documents.length,
-		});
+    this.emit('rerank-completed', {
+      requestId: crypto.randomUUID(),
+      provider,
+      attempts,
+      documentCount: validated.documents.length,
+    });
 
-		return result;
-	}
+    return result;
+  }
 }
 
 /**
  * Factory function to create composite provider
  */
 export function createCompositeProvider(config: CompositeProviderConfig): CompositeModelProvider {
-	return new CompositeModelProvider(config);
+  return new CompositeModelProvider(config);
 }
+
+// Local MLX service bridge shape to avoid `any` in provider calls
+type MLXServiceBridge = {
+  generateEmbedding(params: { text: string; model?: string }): Promise<{ embedding: number[] }>;
+  generateChat(params: { messages: Array<{ role: string; content: string }>; model?: string; max_tokens?: number; temperature?: number }): Promise<{ content: string; model: string }>;
+  rerank?(query: string, documents: string[], model?: string): Promise<{ scores: number[]; model: string }>;
+};

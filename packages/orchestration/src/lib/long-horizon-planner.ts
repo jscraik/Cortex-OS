@@ -5,17 +5,16 @@
  */
 
 import {
+	createSecurityIntegrationService,
+	type SecurityIntegrationResult,
+	type SecurityIntegrationService,
+} from '@cortex-os/cortex-sec';
+import {
 	type DSPConfig,
 	DynamicSpeculativePlanner,
 	type PlanningContext,
 	PlanningPhase,
 } from '../utils/dsp.js';
-
-import {
-        createSecurityIntegrationService,
-        type SecurityIntegrationResult,
-        type SecurityIntegrationService,
-} from '@cortex-os/cortex-sec';
 
 export interface LongHorizonTask {
 	id: string;
@@ -53,6 +52,7 @@ export interface LongHorizonPlannerConfig extends DSPConfig {
 	adaptiveDepthEnabled?: boolean;
 	persistenceEnabled?: boolean;
 	securityIntegrationService?: SecurityIntegrationService;
+	clock?: () => Date;
 }
 
 /**
@@ -111,39 +111,39 @@ export class LongHorizonPlanner {
 		this.activeContext = context;
 
 		const complianceSnapshot = context.compliance
-		        ? {
-		                compliance: {
-		                        standards: context.compliance.standards,
-		                        lastCheckedAt: context.compliance.lastCheckedAt,
-		                        riskScore: context.compliance.riskScore,
-		                        outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
-		                                id: violation.id,
-		                                severity: violation.severity,
-		                        })),
-		                },
-		        }
-		        : undefined;
+			? {
+				compliance: {
+					standards: context.compliance.standards,
+					lastCheckedAt: context.compliance.lastCheckedAt,
+					riskScore: context.compliance.riskScore,
+					outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
+						id: violation.id,
+						severity: violation.severity,
+					})),
+				},
+			}
+			: undefined;
 
 		const securityEvaluation = this.securityIntegration.evaluate({
-		        taskId: task.id,
-		        description: task.description,
-		        complianceContext: complianceSnapshot,
+			taskId: task.id,
+			description: task.description,
+			complianceContext: complianceSnapshot,
 		});
 
 		if (!context.compliance) {
-		        context.compliance = {
-		                standards: securityEvaluation.standards,
-		                lastCheckedAt: securityEvaluation.lastCheckedAt,
-		                riskScore: securityEvaluation.aggregateRisk,
-		                outstandingViolations: [],
-		        };
+			context.compliance = {
+				standards: securityEvaluation.standards,
+				lastCheckedAt: securityEvaluation.lastCheckedAt,
+				riskScore: securityEvaluation.aggregateRisk,
+				outstandingViolations: [],
+			};
 		} else {
-		        context.compliance.standards = securityEvaluation.standards;
-		        context.compliance.lastCheckedAt = securityEvaluation.lastCheckedAt;
-		        context.compliance.riskScore = securityEvaluation.aggregateRisk;
+			context.compliance.standards = securityEvaluation.standards;
+			context.compliance.lastCheckedAt = securityEvaluation.lastCheckedAt;
+			context.compliance.riskScore = securityEvaluation.aggregateRisk;
 		}
 
-                context.preferences.notes.push(`brAInwav security summary: ${securityEvaluation.summary}`);
+		context.preferences.notes.push(`brAInwav security summary: ${securityEvaluation.summary}`);
 
 		// Persistence hook: Record planning start
 		if (this.config.persistenceEnabled) {
@@ -155,20 +155,20 @@ export class LongHorizonPlanner {
 			});
 		}
 
-                const result: PlanningResult = {
-                        taskId: task.id,
-                        success: true,
-                        phases: [],
-                        totalDuration: 0,
-                        adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
-                        recommendations: [],
-                        brainwavMetadata: {
-                                createdBy: 'brAInwav',
-                                version: '1.0.0',
-                                timestamp: new Date(),
-                        },
-                        security: securityEvaluation,
-                };
+		const result: PlanningResult = {
+			taskId: task.id,
+			success: true,
+			phases: [],
+			totalDuration: 0,
+			adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
+			recommendations: [],
+			brainwavMetadata: {
+				createdBy: 'brAInwav',
+				version: '1.0.0',
+				timestamp: new Date(),
+			},
+			security: securityEvaluation,
+		};
 
 		try {
 			// Execute structured planning phases
@@ -411,7 +411,10 @@ export class LongHorizonPlanner {
 	 * Persistence hook for planning events
 	 * In production, this would integrate with actual persistence layer
 	 */
-	private async persistPlanningEvent(eventType: string, eventData: Record<string, unknown>): Promise<void> {
+	private async persistPlanningEvent(
+		eventType: string,
+		eventData: Record<string, unknown>,
+	): Promise<void> {
 		if (!this.config.persistenceEnabled) {
 			return;
 		}

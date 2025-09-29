@@ -37,7 +37,7 @@ export class ModelConnection {
 	private readonly provider: string;
 	private readonly createdAt: number;
 	private lastUsedAt: number;
-	private acquiredAt: number | null;
+	private acquiredAt: number | null = null;
 	private requestCount = 0;
 	private errorCount = 0;
 	private active = false;
@@ -115,7 +115,7 @@ export class ModelConnection {
 		if (this.testFn) {
 			try {
 				return await this.testFn();
-			} catch (_error) {
+			} catch {
 				this.errorCount++;
 				return false;
 			}
@@ -131,7 +131,7 @@ export class ModelConnection {
 		if (typeof this.connection?.close === 'function') {
 			try {
 				await this.connection.close();
-			} catch (_error) {
+			} catch {
 				// Ignore close errors
 			}
 		}
@@ -209,7 +209,7 @@ export class ModelConnectionPool extends EventEmitter {
 					await connection.acquire();
 					this.emit('acquired', { provider, connectionId: connection.getId() });
 					return connection;
-				} catch (_error) {
+				} catch {
 					await this.destroyConnection(connection, provider);
 				}
 			}
@@ -231,7 +231,7 @@ export class ModelConnectionPool extends EventEmitter {
 				this.emit('acquired', { provider, connectionId: connection.getId() });
 				return connection;
 			} catch (error) {
-				throw new Error(`Failed to create connection for provider ${provider}: ${error}`);
+				this.emit('error', new Error(`Failed to create connection for ${provider}: ${error}`));
 			}
 		}
 
@@ -244,7 +244,7 @@ export class ModelConnectionPool extends EventEmitter {
 	 */
 	async release(connection: ModelConnection): Promise<void> {
 		const provider = connection.getProvider();
-		const _pool = this.getPool(provider);
+		// pool not required here; release logic operates on the connection instance
 
 		// Test on return if enabled
 		if (this.config.testOnReturn) {
@@ -260,7 +260,7 @@ export class ModelConnectionPool extends EventEmitter {
 					});
 					return;
 				}
-			} catch (_error) {
+			} catch {
 				await this.destroyConnection(connection, provider);
 				this.emit('released', {
 					provider,
@@ -283,7 +283,7 @@ export class ModelConnectionPool extends EventEmitter {
 
 			// Process waiting queue
 			setImmediate(() => this.processWaitingQueue(provider).catch(console.error));
-		} catch (_error) {
+		} catch {
 			await this.destroyConnection(connection, provider);
 		}
 	}
@@ -417,7 +417,7 @@ export class ModelConnectionPool extends EventEmitter {
 				},
 				reject: (error) => {
 					clearTimeout(timeout);
-					reject(error);
+					reject(error instanceof Error ? error : new Error(String(error)));
 				},
 				timeout,
 			});
@@ -436,7 +436,7 @@ export class ModelConnectionPool extends EventEmitter {
 				const connection = await this.tryAcquireIdleConnection(provider, pool);
 				waiter.resolve(connection);
 			} catch (error) {
-				waiter.reject(error);
+				waiter.reject(error instanceof Error ? error : new Error(String(error)));
 			}
 		}
 	}
@@ -460,7 +460,7 @@ export class ModelConnectionPool extends EventEmitter {
 					await connection.acquire();
 					this.emit('acquired', { provider, connectionId: connection.getId() });
 					return connection;
-				} catch (_error) {
+				} catch {
 					await this.destroyConnection(connection, provider);
 				}
 			}
@@ -486,7 +486,7 @@ export class ModelConnectionPool extends EventEmitter {
 		}
 	}
 
-	private async testConnection(connection: any): Promise<boolean> {
+	private async testConnection(connection: unknown): Promise<boolean> {
 		// Default test implementation
 		if (typeof connection?.isAvailable === 'function') {
 			return connection.isAvailable();
@@ -523,7 +523,6 @@ export class ModelConnectionPool extends EventEmitter {
 	private async evictIdleConnections(): Promise<void> {
 		for (const [provider, pool] of this.pools) {
 			const connectionsToDestroy: ModelConnection[] = [];
-			const _currentTime = Date.now();
 
 			// Find expired connections
 			for (const connection of pool) {

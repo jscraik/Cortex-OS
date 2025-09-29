@@ -23,6 +23,15 @@ Updated files include: `AGENTS.md`, `CLAUDE.md`, `QWEN.md`, `GEMINI.md`, `copilo
   bootstrap so `pnpm --filter @cortex-os/api build` remains reliable with
   aligned logging configuration and fallback delegates.
 
+### Cortex MCP Production Hardening
+
+- Added deployment runbook updates covering the new Cortex/Local Memory adapters,
+  JWT-secured REST routes, and Prometheus metrics.
+- Updated package README and deployment guide references so docs site surfaces
+  the latest configuration variables (`CORTEX_MCP_*`, `JWT_SECRET_KEY`).
+- Highlighted the removal of committed virtual environments to keep the repo
+  lean and reproducible across environments.
+
 ## Quick Start
 
 ```bash
@@ -35,6 +44,13 @@ pnpm build:local
 # Start development server
 pnpm start
 ```
+
+## Codemap Artifacts
+
+- `pnpm codemap` generates `out/codemap.json` + `out/codemap.md` for the entire repository with brAInwav guidance for downstream automation.
+- `make codemap SCOPE=app:cortex-os SECTIONS=git,complexity TOOLS=lizard` narrows the scan to a single Nx project and limits emitted sections/tools.
+- Scope selectors (`repo`, `package:<name>`, `app:<name>`, `path:<relative>`) mirror Nx metadata and update the `scan` metadata block embedded in the JSON.
+- Filtered sections keep documentation-friendly Markdown tight while preserving canonical metadata headers (`scan`, `notes`, `tools`).
 
 ## Scripts
 

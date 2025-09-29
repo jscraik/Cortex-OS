@@ -1,131 +1,131 @@
 {
   "brainwav_assessment_version": "1.0.0",
-  "score": 0,
+  "score": 2,
   "max_score": 20,
-  "percentage": 0,
+  "percentage": 10,
   "criteria": [
     {
       "name": "Health endpoints",
       "status": "fail",
       "weight": 1,
-      "description": "Health monitoring endpoints"
+      "description": "Kubernetes-compatible health, readiness, and liveness endpoints"
     },
     {
       "name": "Environment configuration",
       "status": "fail",
       "weight": 1,
-      "description": "Environment configuration"
+      "description": "Environment variables, CLI flags, sane defaults, schema validation"
     },
     {
       "name": "Secrets management",
       "status": "fail",
       "weight": 1,
-      "description": "Secrets management"
+      "description": "Never hardcoded in code or logs, proper secret management"
     },
     {
       "name": "Network timeouts",
       "status": "fail",
       "weight": 1,
-      "description": "Network timeouts"
+      "description": "No indefinite hangs, configurable timeouts"
     },
     {
       "name": "Retry logic",
       "status": "fail",
       "weight": 1,
-      "description": "Retry mechanisms"
+      "description": "Exponential backoff, failure isolation"
     },
     {
       "name": "Idempotency",
       "status": "fail",
       "weight": 1,
-      "description": "Idempotency handling"
+      "description": "Safe retry mechanisms, idempotency keys"
     },
     {
       "name": "Structured logging",
       "status": "fail",
       "weight": 1,
-      "description": "Structured logging with branding"
+      "description": "Request IDs, user/session IDs, brAInwav branding in logs"
     },
     {
       "name": "Metrics collection",
       "status": "fail",
       "weight": 1,
-      "description": "Metrics collection"
+      "description": "Key counters, gauges, histograms; RED/USE methodology"
     },
     {
       "name": "Distributed tracing",
       "status": "fail",
       "weight": 1,
-      "description": "Distributed tracing"
+      "description": "Spans around I/O and business operations"
     },
     {
       "name": "Monitoring setup",
-      "status": "fail",
+      "status": "pass",
       "weight": 1,
-      "description": "Monitoring setup"
+      "description": "Actionable alerts, SLO-based monitoring"
     },
     {
       "name": "Graceful shutdown",
       "status": "fail",
       "weight": 1,
-      "description": "Graceful shutdown"
+      "description": "SIGTERM handling, connection draining"
     },
     {
       "name": "Resource monitoring",
       "status": "fail",
       "weight": 1,
-      "description": "Resource monitoring"
+      "description": "Memory/CPU monitoring, OOM protection, resource quotas"
     },
     {
       "name": "Migration testing",
       "status": "fail",
       "weight": 1,
-      "description": "Database migrations"
+      "description": "Both forward and rollback scenarios validated"
     },
     {
       "name": "Deployment strategy",
       "status": "fail",
       "weight": 1,
-      "description": "Deployment strategy"
+      "description": "Documented and scriptable deployment strategies"
     },
     {
-      "name": "Supply chain security",
+      "name": "SBOM and signatures",
       "status": "fail",
       "weight": 1,
-      "description": "Supply chain security"
+      "description": "Software Bill of Materials, artifact signing, supply chain security"
     },
     {
       "name": "Fault injection",
       "status": "fail",
       "weight": 1,
-      "description": "Chaos testing"
+      "description": "Timeout testing, 5xx responses, partial failure scenarios"
     },
     {
       "name": "Environment parity",
       "status": "fail",
       "weight": 1,
-      "description": "Environment parity"
+      "description": "Production-like staging, ephemeral environments for PRs"
     },
     {
       "name": "Operational runbooks",
       "status": "fail",
       "weight": 1,
-      "description": "Operational documentation"
+      "description": "Oncall procedures, incident playbooks, paging policies"
     },
     {
       "name": "Data privacy",
       "status": "fail",
       "weight": 1,
-      "description": "Data privacy compliance"
+      "description": "PII handling, retention policies, GDPR compliance"
     },
     {
-      "name": "Dependency management",
-      "status": "fail",
+      "name": "Dependency audit",
+      "status": "pass",
       "weight": 1,
-      "description": "Dependency management"
+      "description": "Clean vulnerability scans, update policies defined"
     }
   ],
-  "timestamp": "2025-09-29T19:41:24Z",
+  "timestamp": "2025-09-29T19:57:12Z",
   "brainwav_compliance": true,
   "production_ready": false
 }

@@ -7,6 +7,7 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import { randomInt } from 'node:crypto';
 import { createPrefixedId, secureInt } from '../lib/secure-random.js';
 import { agentMetrics } from '../monitoring/prometheus-metrics.js';
 
@@ -276,11 +277,11 @@ export class AutoscalingManager {
 			this.getActiveAgentCount() > 0 ? Math.min(80, 30 + this.getQueueDepth() * 10) : 20;
 
 		return {
-			cpuUtilization: baseLoad + (Math.random() * 20 - 10),
-			memoryUtilization: baseLoad * 0.8 + (Math.random() * 15 - 7.5),
+			cpuUtilization: baseLoad + (randomInt(0, 2001) - 1000) / 100,
+			memoryUtilization: baseLoad * 0.8 + (randomInt(0, 1501) - 750) / 100,
 			queueDepth: this.getQueueDepth(),
-			throughput: Math.max(0, 10 + (Math.random() * 5 - 2.5)),
-			responseTime: 200 + baseLoad * 5 + (Math.random() * 100 - 50),
+			throughput: Math.max(0, 10 + (randomInt(0, 501) - 250) / 100),
+			responseTime: 200 + baseLoad * 5 + (randomInt(0, 10001) - 5000) / 100,
 		};
 	}
 

@@ -48,6 +48,56 @@ const ServerIdSchema = z
 	.regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/, 'Invalid server ID format');
 
 export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
+
+	function getInstallForClient(installData: Record<string, unknown>, client?: string):
+		| { client: string; command: string; instructions: string; config: Record<string, unknown> }
+		| {
+			available: string[];
+			claude?: unknown;
+			cline?: unknown;
+			['cortex-mcp']?: unknown;
+			continue?: unknown;
+			json?: unknown;
+		} {
+		let command = '';
+		let instructions = '';
+		let config: Record<string, unknown> = {};
+
+		switch (client) {
+			case 'claude':
+				command = typeof installData.claude === 'string' ? installData.claude : '';
+				instructions = command ? `Run this command in Claude Desktop: ${command}` : 'Install via Claude settings';
+				config = (installData.json as Record<string, unknown>) || {};
+				break;
+			case 'cline':
+				command = typeof installData.cline === 'string' ? installData.cline : '';
+				instructions = command ? `Run this command in Cline: ${command}` : 'Install via Cline MCP settings';
+				break;
+			case 'cortex-mcp':
+			case 'cursor': {
+				const cortexInstall = typeof installData['cortex-mcp'] === 'string' ? installData['cortex-mcp'] : undefined;
+				const legacyCursorInstall = typeof installData.cursor === 'string' ? installData.cursor : undefined;
+				command = cortexInstall ?? legacyCursorInstall ?? '';
+				instructions = command || 'Add to cortex-mcp (local MCP) configuration';
+				break;
+			}
+			case 'continue':
+				command = typeof installData.continue === 'string' ? installData.continue : '';
+				instructions = command || 'Configure in Continue settings';
+				break;
+			default:
+				return {
+					available: Object.keys(installData).filter((key) => key !== 'json').map((k) => (k === 'cursor' ? 'cortex-mcp' : k)),
+					claude: installData.claude,
+					cline: installData.cline,
+					'cortex-mcp': installData['cortex-mcp'] ?? installData.cursor,
+					continue: installData.continue,
+					json: installData.json,
+				};
+		}
+
+		return { client: client || 'generic', command, instructions, config };
+	}
 	// Server search
 	fastify.get(
 		'/servers/search',
@@ -283,7 +333,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 					properties: {
 						client: {
 							type: 'string',
-							enum: ['claude', 'cline', 'cursor', 'continue', 'devin', 'windsurf'],
+							enum: ['claude', 'cline', 'cortex-mcp', 'cursor', 'continue', 'devin', 'windsurf'],
 							description: 'Target client for installation instructions',
 						},
 					},
@@ -340,62 +390,16 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				});
 			}
 
-			// Generate client-specific installation instructions
+			// Generate client-specific installation instructions using helper
 			const installData = server.install ?? {};
-			let instructions = '';
-			let command = '';
-			let config = {};
+			const installResult = getInstallForClient(installData, client);
 
-			switch (client) {
-				case 'claude': {
-					command = typeof installData.claude === 'string' ? installData.claude : '';
-					instructions = command
-						? `Run this command in Claude Desktop: ${command}`
-						: 'Install via Claude settings';
-					config = (installData.json as Record<string, unknown>) || {};
-					break;
-				}
-				case 'cline': {
-					command = typeof installData.cline === 'string' ? installData.cline : '';
-					instructions = command
-						? `Run this command in Cline: ${command}`
-						: 'Install via Cline MCP settings';
-					break;
-				}
-				case 'cursor': {
-					command = typeof installData.cursor === 'string' ? installData.cursor : '';
-					instructions = command || 'Add to Cursor MCP configuration';
-					break;
-				}
-				case 'continue': {
-					command = typeof installData.continue === 'string' ? installData.continue : '';
-					instructions = command || 'Configure in Continue settings';
-					break;
-				}
-				default:
-					// Return all available installation options
-					return {
-						success: true,
-						data: {
-							available: Object.keys(installData).filter((key) => key !== 'json'),
-							claude: installData.claude,
-							cline: installData.cline,
-							cursor: installData.cursor,
-							continue: installData.continue,
-							json: installData.json,
-						},
-					};
+			// If helper returned the generic available listing (no specific client), forward it directly
+			if ('available' in installResult) {
+				return { success: true, data: installResult };
 			}
 
-			return {
-				success: true,
-				data: {
-					client: client || 'generic',
-					command,
-					instructions,
-					config,
-				},
-			};
+			return { success: true, data: installResult };
 		},
 	);
 }

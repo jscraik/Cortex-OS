@@ -39,6 +39,9 @@ export interface CoordinationDecision {
         statePatch: Record<string, unknown>;
 }
 
+// Compatibility: some integration code expects a CoordinationResult shape
+export type CoordinationResult = CoordinationDecision & { estimatedDuration?: number };
+
 export interface CoordinationOutcome {
         taskId: string;
         strategy: Strategy;
@@ -76,6 +79,13 @@ export class AdaptiveCoordinationManager {
                 this.telemetrySink = options.telemetrySink;
                 this.historyLimit = Math.max(1, options.historyLimit ?? 50);
                 this.securityCoordinator = options.securityCoordinator ?? new SecurityCoordinator();
+        }
+
+        /**
+         * Optional integration hook used by LangGraph bridge to provide the long horizon planner
+         */
+        setLongHorizonPlanner(_planner: unknown): void {
+                // No-op default; planner is only used by integrations that need deeper coordination
         }
 
         coordinate(request: CoordinationRequest): CoordinationDecision {
@@ -286,7 +296,7 @@ export class AdaptiveCoordinationManager {
         }
 
         private mergeStatePatches(
-                ...patches: Array<Record<string, unknown> | undefined>,
+                ...patches: Array<Record<string, unknown> | undefined>
         ): Record<string, unknown> {
                 const merged: Record<string, unknown> = {};
 

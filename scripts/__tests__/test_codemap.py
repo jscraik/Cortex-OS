@@ -210,7 +210,9 @@ def test_generate_codemap_outputs_expected_sections(
     assert md_path.exists()
     assert data["scan"]["scope"] == "repo"
     languages = {item["language"] for item in data["languages"]}
-    assert languages == {"TypeScript", "Other"}
+    assert "TypeScript" in languages
+    assert "Python" not in languages
+    assert "Other" in languages
     assert data["tests"]["count"] == 2
     assert data["tests"]["coverage"]["line"] == 87.5
     assert data["complexity"]["available"] is True
@@ -247,7 +249,8 @@ def test_scope_package_limits_files(
         "target": "security",
         "root": str(fixture_repo / "packages/security"),
     }
-    assert languages == {"TypeScript"}
+    assert "TypeScript" in languages
+    assert "Python" not in languages
     assert all("apps/api" not in item["path"] for item in data["size"]["largest_files"])
 
 

@@ -230,6 +230,9 @@ importers:
       '@types/express':
         specifier: 4.17.21
         version: 4.17.21
+      '@types/js-yaml':
+        specifier: ^4.0.5
+        version: 4.0.9
       '@types/micromatch':
         specifier: ^4.0.9
         version: 4.0.9
@@ -2457,6 +2460,9 @@ importers:
       '@cortex-os/contracts':
         specifier: workspace:*
         version: link:../../libs/typescript/contracts
+      '@cortex-os/cortex-sec':
+        specifier: workspace:*
+        version: link:../cortex-sec
       '@cortex-os/hooks':
         specifier: workspace:*
         version: link:../hooks

@@ -7,6 +7,7 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import { randomInt } from 'node:crypto';
 import { healthMetrics } from './prometheus-metrics.js';
 
 export interface HealthCheck {
@@ -170,7 +171,7 @@ export class HealthChecker {
 			check: async () => {
 				// This would integrate with actual agent pool
 				// For now, simulate based on metrics
-				const availableAgents = Math.floor(Math.random() * 6); // 0-5 agents
+				const availableAgents = randomInt(0, 6); // 0-5 agents
 				const activeAgents = Math.min(3, availableAgents); // Max 3 active
 
 				let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
@@ -360,8 +361,8 @@ export class HealthChecker {
 	): Promise<{ healthy: boolean; latency?: number }> {
 		// This would implement actual service checks
 		// For now, simulate service health
-		const latency = Math.random() * 100; // Random latency 0-100ms
-		const healthy = Math.random() > 0.05; // 95% uptime simulation
+		const latency = randomInt(0, 100);
+		const healthy = randomInt(0, 100) > 5; // 95% uptime simulation
 
 		return { healthy, latency };
 	}

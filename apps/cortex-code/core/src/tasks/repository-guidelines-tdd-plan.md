@@ -19,5 +19,6 @@
 
 ## Implementation Checklist
 - [x] Section outline defined and mapped to requirements (structure, commands, style, testing, commits/PRs, security notes).
-- [ ] Draft written with commands, paths, and style notes.
-- [ ] Compliance checks completed (tone, word count, accuracy).
+- [x] Draft written with commands, paths, and style notes.
+- [x] Compliance checks completed (tone, word count, accuracy).
+- [x] Reintroduce concise repo-specific workflow and local-memory directives.

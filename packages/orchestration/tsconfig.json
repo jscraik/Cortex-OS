@@ -1,21 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "include": [
-    "src/index.ts",
-    "src/types.ts",
-    "src/types/**/*.d.ts",
-    "src/utils/dsp.ts",
-    "src/lib/long-horizon-planner.ts",
-    "src/coordinator/**/*.ts",
-    "src/langgraph/create-cerebrum-graph.ts",
-    "src/langgraph/planning-orchestrator.ts",
-    "src/langgraph/n0-state.ts",
-    "src/langgraph/n0-adapters.ts",
-    "src/observability/**/*.ts",
-    "src/master-agent-loop/**/*.ts",
-    "src/bridges/**/*.ts",
-    "src/langgraph/**/*.ts",
-    "src/lib/**/*.ts"
+    "src/**/*.ts",
+    "src/types/**/*.d.ts"
   ],
   "exclude": [
     "examples/**",

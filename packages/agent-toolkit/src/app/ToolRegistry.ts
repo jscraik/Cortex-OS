@@ -1,4 +1,5 @@
 import type {
+	CodemapTool,
 	CodemodTool,
 	SearchTool,
 	ToolRegistry,
@@ -12,6 +13,7 @@ export class DefaultToolRegistry implements ToolRegistry {
 	private readonly searchTools = new Map<string, SearchTool>();
 	private readonly codemodTools = new Map<string, CodemodTool>();
 	private readonly validationTools = new Map<string, ValidationTool>();
+	private readonly codemapTools = new Map<string, CodemapTool>();
 
 	registerSearchTool(name: string, tool: SearchTool): void {
 		this.searchTools.set(name, tool);
@@ -23,6 +25,10 @@ export class DefaultToolRegistry implements ToolRegistry {
 
 	registerValidationTool(name: string, tool: ValidationTool): void {
 		this.validationTools.set(name, tool);
+	}
+
+	registerCodemapTool(name: string, tool: CodemapTool): void {
+		this.codemapTools.set(name, tool);
 	}
 
 	getSearchTool(name: string): SearchTool | undefined {
@@ -37,15 +43,21 @@ export class DefaultToolRegistry implements ToolRegistry {
 		return this.validationTools.get(name);
 	}
 
+	getCodemapTool(name: string): CodemapTool | undefined {
+		return this.codemapTools.get(name);
+	}
+
 	listTools(): {
 		search: string[];
 		codemod: string[];
 		validation: string[];
+		codemap: string[];
 	} {
 		return {
 			search: Array.from(this.searchTools.keys()),
 			codemod: Array.from(this.codemodTools.keys()),
 			validation: Array.from(this.validationTools.keys()),
+			codemap: Array.from(this.codemapTools.keys()),
 		};
 	}
 }

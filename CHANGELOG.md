@@ -32,8 +32,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deployment, Cloudflare cache purges, connector retests, and MCP discovery RFC
   tracking
 
+#### Codemap Generator
+
+- Introduced `scripts/codemap.py` with brAInwav-branded CLI supporting repo, package, app, and arbitrary path scopes plus section/tool filtering.
+- Added pytest coverage under `scripts/__tests__/test_codemap.py` to validate scope resolution, optional tool execution, and section gating.
+- Wired `pnpm codemap` and `make codemap` targets along with a dedicated GitHub Actions workflow uploading codemap artifacts on pull requests.
+- Documented codemap usage across the root and website READMEs to surface scope flags, section filters, and tool selection patterns.
+
 **Files Updated:**
 
+- `scripts/codemap.py`
+- `scripts/__tests__/test_codemap.py`
+- `package.json`
+- `Makefile`
+- `.github/workflows/codemap.yml`
+- `README.md`
+- `website/README.md`
 - `apps/cortex-webui/backend/src/services/externalMonitoringService.ts`
 - `apps/cortex-webui/backend/src/services/authMonitoringService.ts`
 - `apps/cortex-webui/backend/src/__tests__/services/external-monitoring-service.test.ts`

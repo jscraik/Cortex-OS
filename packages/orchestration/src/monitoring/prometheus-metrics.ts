@@ -175,6 +175,33 @@ export const securityMetrics = {
 		help: 'Total rate limit hits',
 		labelNames: ['client_id', 'endpoint'],
 	}),
+
+	// CORS violations
+	corsViolations: new Counter({
+		name: 'no_cors_violations_total',
+		help: 'Total number of CORS policy violations',
+		labelNames: ['origin'],
+	}),
+
+	// Input validation metrics
+	inputValidationSuccess: new Counter({
+		name: 'no_input_validation_success_total',
+		help: 'Total successful input validations',
+		labelNames: ['endpoint'],
+	}),
+
+	inputValidationFailures: new Counter({
+		name: 'no_input_validation_failures_total',
+		help: 'Total failed input validations',
+		labelNames: ['endpoint', 'error_type'],
+	}),
+
+	// Generic security events counter
+	securityEvents: new Counter({
+		name: 'no_security_events_total',
+		help: 'Generic security event occurrences',
+		labelNames: ['type'],
+	}),
 };
 
 /**

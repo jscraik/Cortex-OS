@@ -100,6 +100,10 @@ export const ServerManifestSchema = z.object({
 	install: z.object({
 		claude: z.string(), // claude mcp add ...
 		json: z.record(z.any()), // Direct JSON config
+		// Optional Cursor CLI install string (e.g. `cursor mcp add ...`)
+		cursor: z.string().optional(),
+		// Optional explicit cortex-mcp install string
+		'cortex-mcp': z.string().optional(),
 	}),
 
 	// Security
@@ -163,7 +167,7 @@ export type SearchRequest = z.infer<typeof SearchRequestSchema>;
 /**
  * Installation command generation
  */
-export type ClientType = 'claude' | 'json';
+export type ClientType = 'claude' | 'json' | 'cursor' | 'cortex-mcp';
 
 export interface InstallCommand {
 	client: ClientType;

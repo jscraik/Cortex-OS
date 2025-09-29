@@ -1,10 +1,18 @@
 {
-    "servers": {
-        "local-memory": {
-            "command": "/Users/jamiecraik/.local/bin/local-memory",
-            "args": [
-                "--mcp"
-            ]
-        }
+  "servers": {
+    "local-memory": {
+      "command": "/Users/jamiecraik/.local/bin/local-memory",
+      "args": [
+        "--mcp"
+      ]
+    },
+    "cortex-mcp": {
+      "command": "/usr/bin/env",
+      "args": [
+        "python3",
+        "./packages/cortex-mcp/cortex_fastmcp_server_v2.py",
+        "--mcp"
+      ]
     }
+  }
 }

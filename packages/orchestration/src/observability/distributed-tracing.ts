@@ -5,14 +5,14 @@
 
 import {
 	context,
+	diag,
 	DiagConsoleLogger,
 	DiagLogLevel,
-	diag,
 	type Span,
 	type SpanOptions,
 	SpanStatusCode,
-	type Tracer,
 	trace,
+	type Tracer,
 } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -67,11 +67,14 @@ export class OrchestrationTracer {
 
 		// Set up resource attributes
 		// Create resource (side-effect) — no need to keep a local variable
-		void new Resource({
+		const _resource = new Resource({
 			[SemanticResourceAttributes.SERVICE_NAME]: serviceName,
 			[SemanticResourceAttributes.SERVICE_VERSION]: version,
 			[SemanticResourceAttributes.SERVICE_INSTANCE_ID]: `instance-${Date.now()}`,
 		});
+		if (_resource) {
+			// brAInwav: resource allocated for tracer
+		}
 	}
 
 	/**

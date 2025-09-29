@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import type { RunState, Step } from '../domain/types.js';
 
 export type Middleware = (
@@ -11,14 +12,14 @@ export const withRetry = (): Middleware => (next) => async (rs, step) => {
 	const rp = step.retry ?? { maxRetries: 0, backoffMs: 0, jitter: true };
 	let attempt = 0;
 
-	for (;;) {
+	for (; ;) {
 		try {
 			return await next(rs, step);
 		} catch (e) {
 			if (attempt++ >= rp.maxRetries) throw e;
 
 			// Calculate backoff with jitter and cap
-			const jitter = rp.jitter ? Math.floor(Math.random() * rp.backoffMs) : 0;
+			const jitter = rp.jitter ? randomInt(0, Math.max(1, rp.backoffMs)) : 0;
 			const backoffTime = Math.min(rp.backoffMs + jitter, MAX_BACKOFF_MS);
 
 			await new Promise((r) => setTimeout(r, backoffTime));

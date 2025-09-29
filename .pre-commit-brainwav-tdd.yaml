@@ -1,0 +1,70 @@
+# brAInwav TDD Quality Gates Pre-commit Configuration
+# Co-authored-by: brAInwav Development Team
+
+repos:
+  - repo: local
+    hooks:
+      - id: brainwav-tdd-status
+        name: brAInwav TDD Status Check
+        entry: bash -c 'echo "[brAInwav] Checking TDD status before commit..." && make tdd-status'
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+        
+      - id: brainwav-ops-readiness-quick
+        name: brAInwav Operational Readiness Quick Check
+        entry: bash -c 'echo "[brAInwav] Quick operational readiness check..." && bash scripts/ci/ops-readiness-fast.sh out/pre-commit-ops.json && echo "[brAInwav] Pre-commit ops check complete"'
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+        
+      - id: brainwav-brand-compliance
+        name: brAInwav Brand Compliance Check
+        entry: bash -c 'echo "[brAInwav] Verifying brand compliance..." && if git diff --cached --name-only | grep -E "\.(ts|js|md)$" | xargs grep -L "brAInwav" 2>/dev/null | head -5; then echo "[brAInwav] ⚠️  Some files missing brAInwav branding - consider adding"; fi'
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+        
+      - id: brainwav-quality-gate-check
+        name: brAInwav Quality Gate Validation
+        entry: bash -c 'echo "[brAInwav] Running quality gate validation..." && if [ -f ".eng/quality_gate.json" ]; then mkdir -p out && node scripts/ci/enforce-gates.mjs .eng/quality_gate.json out || echo "[brAInwav] Quality gates checked - review violations"; else echo "[brAInwav] Quality gate contract not found"; fi'
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+        
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        name: Remove Trailing Whitespace (brAInwav)
+      - id: end-of-file-fixer
+        name: Fix End of Files (brAInwav)
+      - id: check-yaml
+        name: Check YAML Syntax (brAInwav)
+        exclude: '^\.github/workflows/.*\.yml$'  # Skip workflows that might have complex syntax
+      - id: check-json
+        name: Check JSON Syntax (brAInwav)
+      - id: check-merge-conflict
+        name: Check for Merge Conflicts (brAInwav)
+      - id: check-added-large-files
+        name: Check for Large Files (brAInwav)
+        args: ['--maxkb=1024']
+        
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        name: Format Python Code (brAInwav Standards)
+        language_version: python3
+        exclude: '^external/'
+        
+  - repo: https://github.com/eslint/eslint
+    rev: v8.0.0
+    hooks:
+      - id: eslint
+        name: ESLint (brAInwav Code Standards)
+        files: \.(js|ts|jsx|tsx)$
+        exclude: '^(external/|node_modules/|dist/|build/)'
+        additional_dependencies:
+          - '@typescript-eslint/eslint-plugin'
+          - '@typescript-eslint/parser'

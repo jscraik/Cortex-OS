@@ -26,6 +26,7 @@ describe('Marketplace MCP integration', () => {
 					claude: 'claude mcp add test-filesystem -- npx -y @test/filesystem',
 					cline: 'cline mcp add test-filesystem -- npx -y @test/filesystem',
 					cursor: 'cursor mcp add test-filesystem -- npx -y @test/filesystem',
+					'cortex-mcp': 'cortex-mcp mcp add test-filesystem -- npx -y @test/filesystem',
 					json: {
 						mcpServers: {
 							'test-filesystem': {

@@ -735,4 +735,21 @@ export class AdaptiveDecisionEngine {
 			})),
 		};
 	}
+
+	/**
+	 * Backwards-compatible adaptStrategy helper — returns a lightweight recommended strategy change.
+	 * Implementation is intentionally conservative and synchronous to match existing usage patterns.
+	 */
+	adaptStrategy(feedback: unknown): { newStrategy?: string } {
+		// Simple heuristic placeholder: defer to an adaptive analysis if provided, otherwise no change
+		try {
+			// If feedback provides a recommendedStrategy, accept it
+			if (feedback && typeof feedback === 'object' && 'recommendedStrategy' in (feedback as any)) {
+				return { newStrategy: (feedback as any).recommendedStrategy };
+			}
+		} catch {
+			// swallow and return no-op adjustment
+		}
+		return { newStrategy: undefined };
+	}
 }

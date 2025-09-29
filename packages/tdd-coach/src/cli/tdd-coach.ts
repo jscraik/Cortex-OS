@@ -5,12 +5,36 @@ import { createTDDCoach, type TDDCoach } from '../index.js';
 import type { ChangeSet } from '../types/TDDTypes.js';
 import { InterventionLevel } from '../types/TDDTypes.js';
 
-const program = new Command();
+/**
+ * @typedef {Object} ValidateOptions
+ * @property {string} workspace
+ * @property {string[]} files
+ * @property {boolean} watch
+ * @property {boolean} qualityGates
+ */
+
+/**
+ * @typedef {Object} StatusOptions
+ * @property {string} workspace
+ * @property {boolean} opsReadiness
+ */
+
+/**
+ * @typedef {Object} RunTestsOptions
+ * @property {string} workspace
+ * @property {string[]} files
+ */
+
+const program: Command = new Command();
 
 // Ensure help and error messages are printed to stdout for stable CLI tests
 program.configureOutput({
-	writeOut: (str) => process.stdout.write(str),
-	writeErr: (str) => process.stdout.write(str),
+	writeOut: (str: string): void => {
+		process.stdout.write(str);
+	},
+	writeErr: (str: string): void => {
+		process.stdout.write(str);
+	},
 });
 
 program
@@ -25,9 +49,14 @@ program
 	.option('-f, --files <files...>', 'Files to validate')
 	.option('--watch', 'Watch for changes and validate continuously')
 	.option('--quality-gates', 'Enforce brAInwav quality gates during validation')
-	.action(async (options) => {
+	.action(async (options: {
+		workspace: string;
+		files?: string[];
+		watch?: boolean;
+		qualityGates?: boolean;
+	}): Promise<void> => {
 		try {
-			const coach = createTDDCoach({
+			const coach: TDDCoach = createTDDCoach({
 				workspaceRoot: options.workspace,
 				config: {
 					universalMode: options.watch || false,
@@ -40,12 +69,12 @@ program
 				console.log('[brAInwav] Starting TDD Coach in watch mode...');
 				await startWatchMode(coach);
 			} else if (options.files) {
-				await validateFiles(coach, options.files, options.qualityGates);
+				await validateFiles(coach, options.files, options.qualityGates || false);
 			} else {
 				console.log('[brAInwav] No files specified for validation');
 				process.exit(1);
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('[brAInwav] Error running TDD Coach:', error);
 			process.exit(1);
 		}
@@ -56,9 +85,12 @@ program
 	.description('Get current TDD status')
 	.option('-w, --workspace <path>', 'Workspace root path', process.cwd())
 	.option('--ops-readiness', 'Include operational readiness assessment')
-	.action(async (options) => {
+	.action(async (options: {
+		workspace: string;
+		opsReadiness?: boolean;
+	}): Promise<void> => {
 		try {
-			const coach = createTDDCoach({
+			const coach: TDDCoach = createTDDCoach({
 				workspaceRoot: options.workspace,
 			});
 
@@ -80,7 +112,7 @@ program
 				);
 				console.log(`[brAInwav] Coaching: ${status.coaching}`);
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error getting TDD status:', error);
 			process.exit(1);
 		}
@@ -91,18 +123,21 @@ program
 	.description('Run tests and update TDD state')
 	.option('-w, --workspace <path>', 'Workspace root path', process.cwd())
 	.option('-f, --files <files...>', 'Specific test files to run')
-	.action(async (options) => {
+	.action(async (options: {
+		workspace: string;
+		files?: string[];
+	}): Promise<void> => {
 		try {
-			const coach = createTDDCoach({
+			const coach: TDDCoach = createTDDCoach({
 				workspaceRoot: options.workspace,
 			});
 
 			const results = await coach.runTests(options.files);
 			console.log(`Ran ${results.length} tests`);
-			const passing = results.filter((r) => r.status === 'pass').length;
-			const failing = results.filter((r) => r.status === 'fail').length;
+			const passing: number = results.filter((r) => r.status === 'pass').length;
+			const failing: number = results.filter((r) => r.status === 'fail').length;
 			console.log(`${passing} passing, ${failing} failing`);
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('[brAInwav] Error running tests:', error);
 			process.exit(1);
 		}
@@ -113,7 +148,10 @@ program
 	.description('Generate TDD plan for package with brAInwav quality gates')
 	.option('-w, --workspace <path>', 'Workspace root path', process.cwd())
 	.option('-p, --package <name>', 'Package name to create plan for')
-	.action(async (options) => {
+	.action(async (options: {
+		workspace: string;
+		package?: string;
+	}): Promise<void> => {
 		try {
 			console.log('[brAInwav] Generating comprehensive TDD plan...');
 
@@ -136,7 +174,7 @@ program
 			console.log(
 				'[brAInwav] See TDD Planning Guide: packages/tdd-coach/docs/tdd-planning-guide.md',
 			);
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('[brAInwav] Error generating TDD plan:', error);
 			process.exit(1);
 		}
@@ -147,7 +185,10 @@ program
 	.description('Assess operational readiness criteria')
 	.option('-w, --workspace <path>', 'Workspace root path', process.cwd())
 	.option('--operational-criteria', 'Run full 20-point operational readiness assessment')
-	.action(async (options) => {
+	.action(async (options: {
+		workspace: string;
+		operationalCriteria?: boolean;
+	}): Promise<void> => {
 		try {
 			console.log('[brAInwav] Running operational readiness assessment...');
 
@@ -167,18 +208,21 @@ program
 				console.log('[brAInwav] Use --operational-criteria for full assessment');
 				console.log('[brAInwav] Quick assessment: reviewing key operational indicators...');
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('[brAInwav] Error running assessment:', error);
 			process.exit(1);
 		}
 	});
 
-async function validateFiles(coach: TDDCoach, files: string[], qualityGates = false) {
-	// Create a mock ChangeSet for validation
-	const changeSet: ChangeSet = {
-		files: files.map((file) => ({
+/**
+ * @param {ChangeSet} changeSet
+ * @returns {Object}
+ */
+const createMockChangeSet = (files: string[]): ChangeSet => {
+	return {
+		files: files.map((file: string) => ({
 			path: file,
-			status: 'modified',
+			status: 'modified' as const,
 			diff: '', // In a real implementation, this would contain the actual diff
 			linesAdded: 0,
 			linesDeleted: 0,
@@ -187,12 +231,13 @@ async function validateFiles(coach: TDDCoach, files: string[], qualityGates = fa
 		timestamp: new Date().toISOString(),
 		author: 'cli-user',
 	};
+};
 
-	const response = await coach.validateChange({
-		proposedChanges: changeSet,
-	});
-
-	// Output the validation results with brAInwav branding
+/**
+ * @param {Object} response
+ * @returns {void}
+ */
+const logValidationResults = (response: any): void => {
 	console.log(`[brAInwav] Validation Result: ${response.allowed ? 'ALLOWED' : 'BLOCKED'}`);
 	console.log(`[brAInwav] TDD State: ${response.state.current}`);
 	console.log(`[brAInwav] Coaching Level: ${response.coaching.level}`);
@@ -204,40 +249,74 @@ async function validateFiles(coach: TDDCoach, files: string[], qualityGates = fa
 			console.log(`  - ${action}`);
 		}
 	}
+};
 
-	// Run quality gates if requested
-	if (qualityGates) {
-		console.log('[brAInwav] Running quality gate enforcement...');
-		try {
-			// This would integrate with the quality gate enforcement script
-			console.log('[brAInwav] Quality gates passed - brAInwav standards met');
-		} catch (error) {
-			console.error('[brAInwav] Quality gate enforcement failed:', error);
-			process.exit(1);
-		}
+/**
+ * @param {boolean} qualityGates
+ * @returns {Promise<void>}
+ */
+const runQualityGatesIfRequested = async (qualityGates: boolean): Promise<void> => {
+	if (!qualityGates) return;
+
+	console.log('[brAInwav] Running quality gate enforcement...');
+	try {
+		// This would integrate with the quality gate enforcement script
+		console.log('[brAInwav] Quality gates passed - brAInwav standards met');
+	} catch (error: unknown) {
+		console.error('[brAInwav] Quality gate enforcement failed:', error);
+		process.exit(1);
 	}
+};
+
+/**
+ * @param {TDDCoach} coach
+ * @param {string[]} files
+ * @param {boolean} qualityGates
+ * @returns {Promise<void>}
+ */
+const validateFiles = async (coach: TDDCoach, files: string[], qualityGates: boolean = false): Promise<void> => {
+	const changeSet: ChangeSet = createMockChangeSet(files);
+
+	const response = await coach.validateChange({
+		proposedChanges: changeSet,
+	});
+
+	logValidationResults(response);
+	await runQualityGatesIfRequested(qualityGates);
 
 	// Exit with error code if validation failed
 	if (!response.allowed) {
 		process.exit(1);
 	}
-}
+};
 
-async function startWatchMode(coach: TDDCoach) {
+/**
+ * @param {TDDCoach} coach
+ * @returns {Promise<void>}
+ */
+const startWatchMode = async (coach: TDDCoach): Promise<void> => {
 	// Start test watching
 	await coach.startTestWatching();
 
 	console.log('[brAInwav] TDD Coach is now watching for changes. Press Ctrl+C to exit.');
 
 	// Keep the process alive
-	process.on('SIGINT', async () => {
+	process.on('SIGINT', async (): Promise<void> => {
 		console.log('\n[brAInwav] Stopping TDD Coach...');
 		await coach.stopTestWatching();
 		process.exit(0);
 	});
 
 	// Keep the process running
-	setInterval(() => {}, 1000);
-}
+	setInterval((): void => { }, 1000);
+};
 
-program.parse();
+// Named export for CLI execution
+export const runTDDCoachCLI = (): void => {
+	program.parse();
+};
+
+// CLI execution when run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+	runTDDCoachCLI();
+}

@@ -1,4 +1,5 @@
 import { enforce, loadGrant } from '@cortex-os/policy';
+import { randomInt } from 'node:crypto';
 import { withSpan } from '../observability/otel.js';
 import { auditEvent, record } from './audit.js';
 import { type Checkpoint, loadLatestCheckpoint, saveCheckpoint } from './checkpoints.js';
@@ -90,7 +91,7 @@ async function withRetry(_node: Node, fn: () => Promise<unknown>, policy?: Retry
 	let attempt = 0;
 	// First attempt + retries
 	// attempt 0: initial, then 1..maxRetries for retries
-	for (;;) {
+	for (; ;) {
 		try {
 			return await fn();
 		} catch (err) {
@@ -98,7 +99,7 @@ async function withRetry(_node: Node, fn: () => Promise<unknown>, policy?: Retry
 			attempt++;
 
 			// Calculate backoff with jitter and cap
-			const jitter = rp.jitter ? Math.floor(Math.random() * rp.backoffMs) : 0;
+			const jitter = rp.jitter ? randomInt(0, Math.max(1, rp.backoffMs)) : 0;
 			const backoffTime = Math.min(rp.backoffMs + jitter, MAX_BACKOFF_MS);
 
 			await sleep(backoffTime);

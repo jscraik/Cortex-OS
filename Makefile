@@ -2,6 +2,10 @@
 # Standardized commands for MCP integration development
 # Co-authored-by: brAInwav Development Team
 
+SCOPE ?= repo
+SECTIONS ?=
+TOOLS ?=
+
 # Default target
 .PHONY: help
 help:
@@ -22,6 +26,9 @@ help:
 	@echo "  mcp-test      - Run MCP tests"
 	@echo "  mcp-docs      - Generate MCP documentation"
 	@echo "  mcp-clean     - Clean MCP build artifacts"
+	@echo ""
+	@echo "Repository Insights:"
+	@echo "  codemap        - Generate multi-scope codemap (override SCOPE, SECTIONS, TOOLS)"
 
 # === brAInwav TDD Quality Gates ===
 
@@ -113,6 +120,12 @@ mcp-watch:
 	# Start file watchers for MCP files
 	pnpm run watch:mcp &
 	@echo "MCP watch started"
+
+.PHONY: codemap
+codemap:
+	@echo "[brAInwav] Generating codemap for scope '$(SCOPE)'..."
+	python3 scripts/codemap.py --repo . --out out/codemap.json --md out/codemap.md --scope $(SCOPE) $(if $(strip $(SECTIONS)),--sections $(SECTIONS),) $(if $(strip $(TOOLS)),--tools $(TOOLS),)
+	@echo "[brAInwav] Codemap generation complete"
 
 # Enforce MCP TDD practices
 .PHONY: mcp-enforce

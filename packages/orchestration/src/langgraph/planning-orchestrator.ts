@@ -64,27 +64,27 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
 
         const graph = createCerebrumGraph();
         const graphState = await graph.invoke({
-                input: options.input,
-                planning: {
-                        taskId: task.id,
-                        phases: planningResult.phases.map((phase) => ({
-                                phase: phase.phase,
-                                duration: phase.duration,
-                                status: phase.error ? 'failed' : 'completed',
-                        })),
-                        recommendations: planningResult.recommendations,
-                        security: planningResult.security,
-                },
-                coordination: {
-                        strategy: coordinationDecision.strategy,
-                        assignments: coordinationDecision.assignments,
-                        confidence: coordinationDecision.confidence,
-                },
-        });
+                 input: options.input,
+                 planning: {
+                         taskId: task.id,
+                         phases: planningResult.phases.map((phase) => ({
+                                 phase: phase.phase,
+                                 duration: phase.duration,
+                                 status: (phase.error ? 'failed' : 'completed') as 'failed' | 'completed',
+                         })),
+                         recommendations: planningResult.recommendations,
+                         security: planningResult.security,
+                 },
+                 coordination: {
+                         strategy: coordinationDecision.strategy,
+                         assignments: coordinationDecision.assignments,
+                         confidence: coordinationDecision.confidence,
+                 },
+        } as any);
 
         const stateTransitions = planningResult.phases.map((phase) => ({
                 phase: phase.phase,
-                status: phase.error ? 'failed' : 'completed',
+                status: (phase.error ? 'failed' : 'completed') as 'failed' | 'completed',
                 duration: phase.duration,
         }));
 

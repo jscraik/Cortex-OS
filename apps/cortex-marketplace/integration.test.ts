@@ -306,7 +306,7 @@ describe('MCP Marketplace Integration Tests', () => {
 		});
 
 		it('should handle client-specific installation instructions', async () => {
-			const clients = ['claude', 'cline', 'cursor', 'continue'];
+			const clients = ['claude', 'cline', 'cortex-mcp', 'cursor', 'continue'];
 
 			for (const client of clients) {
 				const response = await app.inject({

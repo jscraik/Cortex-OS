@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
 	type AgentSchedule,
 	AgentScheduleSchema,
@@ -142,7 +143,7 @@ export class BasicScheduler {
 
 				// Create execution plan with all required nO contract fields
 				const plan: ExecutionPlan = {
-					id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+					id: `plan-${Date.now()}-${randomUUID()}`,
 					requestId: req.id,
 					strategy,
 					estimatedDuration,
@@ -204,7 +205,7 @@ export class BasicScheduler {
 		const estimatedEndTime = new Date(Date.now() + p.estimatedDuration).toISOString();
 
 		const schedule: AgentSchedule = {
-			id: `schedule-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+			id: `schedule-${Date.now()}-${randomUUID()}`,
 			planId: p.id,
 			agents: agentAssignments,
 			coordinationEvents: [],
@@ -235,7 +236,7 @@ export class BasicScheduler {
 		if (this.bus) {
 			// best-effort decision event
 			void this.bus.publish(OrchestrationEventTypes.DecisionMade, {
-				decisionId: `decision-${Date.now()}`,
+				decisionId: `decision-${Date.now()}-${randomUUID()}`,
 				outcome: `newStrategy=${adjustment.newStrategy ?? 'unknown'}`,
 			});
 		}
@@ -247,7 +248,7 @@ export class BasicScheduler {
 
 		// Create execution status with all required nO contract fields
 		const status = {
-			id: `status-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+			id: `status-${Date.now()}-${randomUUID()}`,
 			planId: s.planId,
 			status: 'running' as const,
 			progress: 0.1, // Simple heuristic - 10% progress for running status

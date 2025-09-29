@@ -1,4 +1,5 @@
 import type {
+	AgentToolkitCodemapInput,
 	AgentToolkitCodemodInput,
 	AgentToolkitInput,
 	AgentToolkitResult,
@@ -53,6 +54,12 @@ export class ToolExecutorUseCase implements ToolExecutor {
 					throw new Error(`Validation tool '${toolName}' not found`);
 				}
 				result = await validationTool.validate(inputs);
+			} else if (this.isCodemapInput(inputs)) {
+				const codemapTool = this.toolRegistry.getCodemapTool(toolName);
+				if (!codemapTool) {
+					throw new Error(`Codemap tool '${toolName}' not found`);
+				}
+				result = await codemapTool.generate(inputs);
 			} else {
 				throw new Error(`Unknown input type for tool '${toolName}'`);
 			}
@@ -72,13 +79,14 @@ export class ToolExecutorUseCase implements ToolExecutor {
 		return (
 			tools.search.includes(toolName) ||
 			tools.codemod.includes(toolName) ||
-			tools.validation.includes(toolName)
+			tools.validation.includes(toolName) ||
+			tools.codemap.includes(toolName)
 		);
 	}
 
 	async getAvailableTools(): Promise<string[]> {
 		const tools = this.toolRegistry.listTools();
-		return [...tools.search, ...tools.codemod, ...tools.validation];
+		return [...tools.search, ...tools.codemod, ...tools.validation, ...tools.codemap];
 	}
 
 	private isSearchInput(inputs: AgentToolkitInput): inputs is AgentToolkitSearchInput {
@@ -91,6 +99,10 @@ export class ToolExecutorUseCase implements ToolExecutor {
 
 	private isValidationInput(inputs: AgentToolkitInput): inputs is AgentToolkitValidationInput {
 		return 'files' in inputs && Array.isArray(inputs.files);
+	}
+
+	private isCodemapInput(inputs: AgentToolkitInput): inputs is AgentToolkitCodemapInput {
+		return 'scope' in inputs && 'repoPath' in inputs;
 	}
 }
 

@@ -31,7 +31,10 @@ export function provideOrchestration(
 		) => {
 			// Minimal mapping from Task -> graph input for now
 			const input = task.title || task.description || 'run';
-			const result = await graph.invoke({ input, task: 'default' });
+			const result = await graph.invoke({ input, task: 'default' } as any);
+			// As this facade provides a minimal runtime mapping to the LangGraph program,
+			// the invoke payload is intentionally cast to any to avoid brittle cross-package
+			// type requirements during incremental refactors.
 			return result;
 		},
 		shutdown: async () => {

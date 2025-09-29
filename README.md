@@ -86,6 +86,15 @@ Agent-toolkit follows Cortex-OS principles:
 
 ## 🚀 Smart Nx Execution (Affected-Only)
 
+## 🗺️ Codemap Snapshots
+
+- `pnpm codemap` runs `scripts/codemap.py` to emit `out/codemap.json` and `out/codemap.md` with brAInwav-branded output.
+- `make codemap SCOPE=package:security SECTIONS=git,complexity TOOLS=lizard,madge` scopes generation to any Nx project or custom section/tool set.
+- Scopes: `repo`, `package:<name>`, `app:<name>`, or `path:<relative>` reflect Nx metadata and update the `scan` block in the JSON payload.
+- Section filters omit unused keys from the JSON/Markdown snapshots while preserving required metadata (`scan`, `notes`, `tools`).
+- Optional tools (e.g. `lizard`, `madge`, `depcheck`) annotate availability and embed results under `analysis` without failing when binaries are missing.
+
+
 Use smart wrappers instead of blanket `run-many`:
 
 ```bash

@@ -23,7 +23,12 @@ describe('install command utilities', () => {
 		category: 'development',
 		tags: ['test'],
 		transport: { streamableHttp: { url: 'https://example.com', headers: {} } },
-		install: { claude: '', json: {} },
+		install: {
+			claude: '',
+			json: {},
+			cursor: 'cursor mcp add test-server --transport streamableHttp https://example.com',
+			'cortex-mcp': 'cortex-mcp mcp add test-server --transport streamableHttp https://example.com',
+		},
 		permissions: [],
 		security: { riskLevel: 'low' },
 		featured: false,
@@ -32,8 +37,9 @@ describe('install command utilities', () => {
 	};
 
 	test('generates Claude and JSON commands', () => {
-		const commands = generateCommands(server);
-		expect(commands.map((c) => c.client)).toEqual(['claude', 'json']);
+	const commands = generateCommands(server);
+	// Expect cortex-mcp to be present (new canonical name) while cursor remains for back-compat
+	expect(commands.map((c) => c.client)).toEqual(['claude', 'cortex-mcp', 'cursor', 'json']);
 	});
 
 	test('includes command in instructions', () => {

@@ -297,8 +297,6 @@ export class EncryptionService {
 
 		// Clean up old keys if policy allows
 		if (!this.keyRotationPolicy.retainOldKeys) {
-			const _cutoffTime = Date.now() - this.keyRotationPolicy.maxKeyAge;
-
 			for (const [version] of this.keyVersions) {
 				// Keep current and recent keys only
 				if (version < this.currentKeyVersion - 2) {

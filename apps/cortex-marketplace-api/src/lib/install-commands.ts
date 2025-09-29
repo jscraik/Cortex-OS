@@ -8,6 +8,8 @@ export function generateCommands(server: ServerManifest): InstallCommand[] {
 	const commands: InstallCommand[] = [];
 	const claude = generateClaudeCommand(server);
 	if (claude) commands.push(claude);
+	const cursor = generateCursorCommand(server);
+	if (cursor) commands.push(cursor);
 	commands.push(generateJsonCommand(server));
 	return commands;
 }
@@ -18,9 +20,60 @@ export function generateCommand(server: ServerManifest, client: ClientType): Ins
 			return generateClaudeCommand(server);
 		case 'json':
 			return generateJsonCommand(server);
+		case 'cursor':
+			return generateCursorCommand(server);
+		case 'cortex-mcp':
+			// Mirror cursor behavior for cortex-mcp but prefer explicit 'cortex-mcp' install string
+			return generateCortexMcpCommand(server);
 		default:
 			return null;
 	}
+}
+
+function generateCursorCommand(server: ServerManifest): InstallCommand | null {
+	// If the manifest provides an explicit cursor install string, use it.
+	if (server.install?.cursor) {
+		return {
+			client: 'cursor',
+			command: server.install.cursor,
+			description: 'Cursor MCP CLI install string',
+		};
+	}
+
+	// Otherwise, derive a sensible cursor command from streamableHttp transport if available
+	if (server.transport?.streamableHttp) {
+		const cfg = server.transport.streamableHttp;
+		let cmd = `cursor mcp add --transport streamableHttp ${shellEscape(server.id)} ${shellEscape(cfg.url)}`;
+		if (cfg.headers) {
+			for (const [key, value] of Object.entries(cfg.headers)) {
+				cmd += ' --header ' + shellEscape(key + ': ' + value);
+			}
+		}
+		return { client: 'cursor', command: cmd, description: 'Cursor with remote server (Streamable HTTP)' };
+	}
+
+	return null;
+}
+
+function generateCortexMcpCommand(server: ServerManifest): InstallCommand | null {
+	// If the manifest provides an explicit cortex-mcp install string, use it.
+	// Otherwise, fall back to the legacy cursor behavior where applicable.
+	if (server.install?.['cortex-mcp']) {
+		return {
+			client: 'cortex-mcp',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			command: (server.install as any)['cortex-mcp'],
+			description: 'cortex-mcp CLI install string',
+		};
+	}
+
+	const legacy = generateCursorCommand(server);
+	if (legacy) {
+		// Adapt legacy cursor entry to cortex-mcp client label
+		return { client: 'cortex-mcp', command: legacy.command, description: legacy.description };
+	}
+
+	return null;
 }
 
 function generateClaudeCommand(server: ServerManifest): InstallCommand | null {
@@ -40,7 +93,7 @@ function buildClaudeHttpCommand(server: ServerManifest): string {
 	let command = `claude mcp add --transport streamableHttp ${shellEscape(server.id)} ${shellEscape(config.url)}`;
 	if (config.headers) {
 		for (const [key, value] of Object.entries(config.headers)) {
-			command += ` --header ${shellEscape(`${key}: ${value}`)}`;
+			command += ' --header ' + shellEscape(key + ': ' + value);
 		}
 	}
 	if (config.auth && config.auth.type !== 'none') {

@@ -84,6 +84,27 @@ export const AgentToolkitValidationResultSchema = AgentToolkitBaseResultSchema.e
 	error: z.string().optional(),
 });
 
+export const AgentToolkitCodemapInputSchema = z.object({
+	repoPath: z.string().default('.'),
+	scope: z.string().default('repo'),
+	sinceDays: z.number().int().positive().optional(),
+	sections: z.array(z.string()).optional(),
+	tools: z.array(z.string()).optional(),
+	jsonOut: z.string().optional(),
+	markdownOut: z.string().optional(),
+});
+
+export const AgentToolkitCodemapResultSchema = AgentToolkitBaseResultSchema.extend({
+	tool: z.string(),
+	op: z.literal('codemap'),
+	inputs: AgentToolkitCodemapInputSchema,
+	results: z.object({
+		codemap: z.record(z.any()),
+		jsonPath: z.string(),
+		markdownPath: z.string(),
+	}),
+});
+
 // Events for A2A communication
 export const AgentToolkitExecutionStartedEventSchema = z.object({
 	toolId: z.string(),
@@ -123,12 +144,14 @@ export const AgentToolkitInputSchema = z.union([
 	AgentToolkitSearchInputSchema,
 	AgentToolkitCodemodInputSchema,
 	AgentToolkitValidationInputSchema,
+	AgentToolkitCodemapInputSchema,
 ]);
 
 export const AgentToolkitResultSchema = z.union([
 	AgentToolkitSearchResultSchema,
 	AgentToolkitCodemodResultSchema,
 	AgentToolkitValidationResultSchema,
+	AgentToolkitCodemapResultSchema,
 ]);
 
 // Type exports
@@ -143,6 +166,8 @@ export type AgentToolkitCodemodResult = z.infer<typeof AgentToolkitCodemodResult
 export type AgentToolkitValidationInput = z.infer<typeof AgentToolkitValidationInputSchema>;
 export type AgentToolkitValidationIssue = z.infer<typeof AgentToolkitValidationIssueSchema>;
 export type AgentToolkitValidationResult = z.infer<typeof AgentToolkitValidationResultSchema>;
+export type AgentToolkitCodemapInput = z.infer<typeof AgentToolkitCodemapInputSchema>;
+export type AgentToolkitCodemapResult = z.infer<typeof AgentToolkitCodemapResultSchema>;
 
 export type AgentToolkitExecutionStartedEvent = z.infer<
 	typeof AgentToolkitExecutionStartedEventSchema

@@ -1,12 +1,10 @@
+import type { StreamMode } from '@langchain/langgraph';
 import { randomUUID } from 'node:crypto';
-import type { PregelOptions, StreamMode } from '@langchain/langgraph';
 
 const BRANDING = 'brAInwav' as const;
 const DEFAULT_STREAM_MODES: StreamMode[] = ['updates', 'debug'];
 
-type GenericPregelOptions = Partial<
-	PregelOptions<Record<string, unknown>, Record<string, unknown>>
->;
+type GenericPregelOptions = Record<string, unknown>;
 
 type StreamIterable = AsyncIterable<[string, unknown]>;
 
@@ -53,12 +51,12 @@ export interface StreamableStateGraph {
 }
 
 export class LangGraphStreamCoordinator {
-	#clients = new Set<StreamClient>();
+	private readonly clients = new Set<StreamClient>();
 
 	addClient(client: StreamClient): () => void {
-		this.#clients.add(client);
+		this.clients.add(client);
 		return () => {
-			this.#clients.delete(client);
+			this.clients.delete(client);
 		};
 	}
 
@@ -77,19 +75,19 @@ export class LangGraphStreamCoordinator {
 	}
 
 	async closeAll(code?: number, reason?: string): Promise<void> {
-		for (const client of this.#clients) {
+		for (const client of this.clients) {
 			try {
 				client.close?.(code, reason);
 			} catch (error) {
 				logWarning('close', error);
 			}
 		}
-		this.#clients.clear();
+		this.clients.clear();
 	}
 
 	async #dispatch(send: (client: StreamClient) => Promise<void>): Promise<void> {
 		const tasks: Promise<void>[] = [];
-		for (const client of this.#clients) {
+		for (const client of this.clients) {
 			tasks.push(
 				send(client).catch((error) => {
 					logWarning('send', error);
@@ -230,10 +228,13 @@ function resolveGraphOptions(options: LangGraphStreamOptions): GenericPregelOpti
 	const base: GenericPregelOptions = {
 		streamMode: options.streamMode ?? DEFAULT_STREAM_MODES,
 	};
-	return options.graphOptions ? { ...base, ...options.graphOptions } : base;
+	if (typeof options.graphOptions === 'object' && options.graphOptions !== null) {
+		return { ...base, ...(options.graphOptions as Record<string, unknown>) };
+	}
+	return base;
 }
 
-function normaliseChunk(chunk: [string, unknown] | unknown): { event: string; payload: unknown } {
+function normaliseChunk(chunk: unknown): { event: string; payload: unknown } {
 	if (Array.isArray(chunk) && chunk.length >= 2 && typeof chunk[0] === 'string') {
 		return { event: chunk[0], payload: chunk[1] };
 	}

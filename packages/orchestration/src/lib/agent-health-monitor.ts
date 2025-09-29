@@ -3,6 +3,7 @@
  * Monitors agent health, performance, and availability
  */
 
+import { randomInt } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 
 export interface AgentHealthMetrics {
@@ -51,12 +52,12 @@ export interface HealthCheckResult {
  * Agent Health Monitor for proactive health management
  */
 export class AgentHealthMonitor extends EventEmitter {
-	private healthMetrics = new Map<string, AgentHealthMetrics>();
-	private healthStatus = new Map<string, AgentHealthStatus>();
+	private readonly healthMetrics = new Map<string, AgentHealthMetrics>();
+	private readonly healthStatus = new Map<string, AgentHealthStatus>();
 	private healthCheckInterval?: NodeJS.Timeout;
 	private cleanupInterval?: NodeJS.Timeout;
 
-	private defaultThresholds: AgentHealthThresholds = {
+	private readonly defaultThresholds: AgentHealthThresholds = {
 		maxResponseTime: 10000, // 10 seconds
 		minSuccessRate: 0.8, // 80%
 		maxErrorRate: 0.2, // 20%
@@ -66,16 +67,16 @@ export class AgentHealthMonitor extends EventEmitter {
 	};
 
 	constructor(
-		private options: {
+		private readonly options: {
 			healthCheckIntervalMs: number;
 			cleanupIntervalMs: number;
 			enableProactiveChecks: boolean;
 			defaultThresholds?: Partial<AgentHealthThresholds>;
 		} = {
-			healthCheckIntervalMs: 30000, // 30 seconds
-			cleanupIntervalMs: 300000, // 5 minutes
-			enableProactiveChecks: true,
-		},
+				healthCheckIntervalMs: 30000, // 30 seconds
+				cleanupIntervalMs: 300000, // 5 minutes
+				enableProactiveChecks: true,
+			},
 	) {
 		super();
 
@@ -304,12 +305,10 @@ export class AgentHealthMonitor extends EventEmitter {
 		try {
 			// Implement actual ping logic here
 			// This is a placeholder that simulates a health check
-			await new Promise((resolve) => setTimeout(resolve, Math.random() * 100));
+			await new Promise((resolve) => setTimeout(resolve, randomInt(0, 100)));
+			const success = randomInt(0, 100) > 5; // 5% failure rate
 
 			const responseTime = Date.now() - startTime;
-
-			// Simulate occasional failures for testing
-			const success = Math.random() > 0.05; // 5% failure rate
 
 			return {
 				agentId,
@@ -564,12 +563,7 @@ export class AgentHealthMonitor extends EventEmitter {
 // Global health monitor instance
 let globalHealthMonitor: AgentHealthMonitor | null = null;
 
-/**
- * Get or create global health monitor instance
- */
 export function getGlobalHealthMonitor(): AgentHealthMonitor {
-	if (!globalHealthMonitor) {
-		globalHealthMonitor = new AgentHealthMonitor();
-	}
+	globalHealthMonitor ??= new AgentHealthMonitor();
 	return globalHealthMonitor;
 }

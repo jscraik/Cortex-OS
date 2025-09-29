@@ -618,7 +618,11 @@ function ensureHooks(
 		return Promise.resolve(hooks);
 	}
 	const instance = new CortexHooks();
-	return instance.init(options).then(() => instance);
+	// Some implementations of CortexHooks.init do not accept options; invoke defensively
+	if (typeof instance.init === 'function') {
+		await (instance.init as unknown as (opts?: unknown) => Promise<void>)(options as unknown);
+	}
+	return instance;
 }
 
 function createToolHookAdapter(hooks: HookRunner): ToolDispatchHooks {
