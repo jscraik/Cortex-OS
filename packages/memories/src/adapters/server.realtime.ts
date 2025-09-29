@@ -1056,7 +1056,7 @@ export class RealtimeMemoryServer extends EventEmitter {
                 try {
                         await this.metricsPublisher.publishRealtimeMetrics(event);
                 } catch (error) {
-                        this.emit('metricsError', { error, event, snapshot: event });
+                        this.emit('metricsError', { error, event });
                 }
         }
 
