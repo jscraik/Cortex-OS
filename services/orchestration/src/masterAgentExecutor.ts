@@ -6,12 +6,6 @@ export interface MasterAgentInput extends ModelInvocationContext {
   preferredProvider?: string;
 }
 
-export interface MasterAgentResult extends ModelInvocationResult {
-  executionLog: ReturnType<LangGraphHarness["execute"]> extends Promise<infer R>
-    ? R & { __log: never }
-    : never;
-}
-
 export interface ExecutionSummary {
   output: string;
   latencyMs: number;
