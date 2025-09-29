@@ -1,35 +1,32 @@
-import { describe, expect, it } from "vitest";
-import { calculatePoolHealth } from "../../src/health/poolHealth.js";
 
-describe("calculatePoolHealth", () => {
-  it("aggregates totals dynamically", () => {
-    const summary = calculatePoolHealth([
-      { id: "primary", running: 3, queued: 1, capacity: 5 },
-      { id: "secondary", running: 2, queued: 4, capacity: 8 },
-    ]);
+import { describe, expect, it, vi } from 'vitest';
+import { getResourcePoolHealth } from '../../src/health/poolHealth.js';
 
-    expect(summary.totalRunning).toBe(5);
-    expect(summary.totalQueued).toBe(5);
-    expect(summary.totalCapacity).toBe(13);
-    expect(summary.utilisation).toBeCloseTo(5 / 13);
-  });
+describe('Resource pool health', () => {
+        it('returns live pool counts without static placeholders', async () => {
+                const pool = {
+                        id: 'llm',
+                        describe: vi.fn()
+                                .mockResolvedValueOnce({ available: 4, busy: 6, capacity: 10 })
+                                .mockResolvedValueOnce({ available: 5, busy: 5, capacity: 10 }),
+                };
 
-  it("returns zeroed summary for empty pools", () => {
-    const summary = calculatePoolHealth([]);
-    expect(summary).toEqual({
-      members: [],
-      totalRunning: 0,
-      totalQueued: 0,
-      totalCapacity: 0,
-      utilisation: 0,
-    });
-  });
+                const firstSnapshot = await getResourcePoolHealth([pool]);
+                expect(firstSnapshot[0]).toMatchObject({
+                        available: 4,
+                        busy: 6,
+                        capacity: 10,
+                        saturation: 0.6,
+                });
 
-  it("guards against negative metrics", () => {
-    expect(() =>
-      calculatePoolHealth([
-        { id: "broken", running: -1, queued: 0, capacity: 1 },
-      ]),
-    ).toThrow("brAInwav pool metrics must be non-negative");
-  });
+                const secondSnapshot = await getResourcePoolHealth([pool]);
+                expect(secondSnapshot[0]).toMatchObject({
+                        available: 5,
+                        busy: 5,
+                        capacity: 10,
+                        saturation: 0.5,
+                });
+                expect(pool.describe).toHaveBeenCalledTimes(2);
+        });
+
 });

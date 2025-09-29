@@ -1,107 +1,79 @@
-import { describe, expect, it, vi } from "vitest";
-import { MlxAdapter } from "../src/adapters/mlx.js";
-import { OllamaAdapter } from "../src/adapters/ollama.js";
-import { AvailabilityError } from "../src/adapters/base.js";
-import { InMemoryAdapterRegistry, MasterAgentExecutor } from "../src/masterAgentExecutor.js";
-import type { WorkflowDefinition } from "../src/langgraph/harness.js";
 
-describe("MasterAgentExecutor", () => {
-  const workflow: WorkflowDefinition = {
-    name: "test",
-    nodes: [
-      {
-        id: "collect",
-        run: async (input) => ({
-          collected: (input.topic as string | undefined) ?? "unknown",
-        }),
-      },
-    ],
-  };
+import { describe, expect, it, vi } from 'vitest';
+import { AdapterRegistry } from '../src/adapters/adapterRegistry.js';
+import type { GenerationAdapter, GenerationResponse } from '../src/adapters/types.js';
+import { LangGraphOrchestrator } from '../src/orchestrator.js';
+import { MasterAgentOrchestrator } from '../src/masterAgent.js';
 
-  it("invokes the preferred adapter when available", async () => {
-    const mlxRunner = { generate: vi.fn().mockResolvedValue("mlx-output") };
-    const ollamaClient = {
-      chat: vi.fn().mockResolvedValue({ message: { content: "ollama-output" } }),
-    };
+describe('MasterAgentOrchestrator', () => {
+        const createAdapter = (id: string): GenerationAdapter => ({
+                id,
+                isAvailable: vi.fn().mockResolvedValue(true),
+                generate: vi.fn().mockImplementation(async () => ({
+                        output: `response-from-${id}`,
+                        adapterId: id,
+                        tokensUsed: 128,
+                }) satisfies GenerationResponse),
+        });
 
-    const mlxAdapter = new MlxAdapter({
-      runner: mlxRunner,
-      availabilityProbe: () => true,
-      clock: () => 10,
-    });
+        const orchestrator = () => {
+                const adapter = createAdapter('mlx');
+                const registry = new AdapterRegistry([adapter]);
+                const langGraph = new LangGraphOrchestrator({
+                        entryNode: 'finish',
+                        nodes: {
+                                finish: async (context) => ({
+                                        memory: { ...context.memory, status: 'done' },
+                                        inputs: context.inputs,
+                                }),
+                        },
+                        edges: {
+                                finish: [],
+                        },
+                });
 
-    const ollamaAdapter = new OllamaAdapter({
-      client: ollamaClient,
-      model: "llama3",
-      availabilityProbe: () => true,
-      clock: () => 20,
-    });
+                const master = new MasterAgentOrchestrator(registry, langGraph);
+                return { master, adapter };
+        };
 
-    const registry = new InMemoryAdapterRegistry([ollamaAdapter, mlxAdapter]);
-    const executor = new MasterAgentExecutor(registry);
+        it('invokes registered adapters for every plan step', async () => {
+                const { master, adapter } = orchestrator();
 
-    const result = await executor.execute({
-      prompt: "Explain the topic",
-      variables: { topic: "agents" },
-      workflow,
-      preferredProvider: "mlx",
-    });
+                const result = await master.execute({
+                        steps: [
+                                {
+                                        id: 'step-1',
+                                        adapterId: 'mlx',
+                                        prompt: 'Summarise the user request',
+                                },
+                        ],
+                        context: { memory: {}, inputs: { topic: 'safety' } },
+                });
 
-    expect(mlxRunner.generate).toHaveBeenCalledWith("Explain the topic", {
-      topic: "agents",
-      workflow: expect.any(Object),
-    });
-    expect(result.provider).toBe("mlx");
-    expect(result.output).toBe("mlx-output");
-    expect(result.log).toHaveLength(1);
-    expect(result.log[0]).toMatchObject({ nodeId: "collect" });
-  });
+                expect(adapter.isAvailable).toHaveBeenCalledOnce();
+                expect(adapter.generate).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                                prompt: 'Summarise the user request',
+                        }),
+                );
+                expect(result.stepLogs).toHaveLength(1);
+                expect(result.stepLogs[0]).toMatchObject({
+                        stepId: 'step-1',
+                        adapterId: 'mlx',
+                        output: 'response-from-mlx',
+                });
+                expect(result.workflow.executionLog.map((entry) => entry.nodeId)).toStrictEqual(['finish']);
+        });
 
-  it("falls back to the first available adapter when preferred is unavailable", async () => {
-    const mlxRunner = { generate: vi.fn().mockResolvedValue("mlx") };
-    const mlxAdapter = new MlxAdapter({ runner: mlxRunner, availabilityProbe: () => true });
+        it('fails fast when plan is empty', async () => {
+                const { master } = orchestrator();
 
-    const unavailableAdapter = {
-      name: "offline",
-      isAvailable: vi.fn().mockResolvedValue(false),
-      invoke: vi.fn(),
-    };
+                await expect(
+                        master.execute({
+                                steps: [],
+                                context: { memory: {} },
+                        }),
+                ).rejects.toThrowError(/brAInwav orchestration received an empty plan/);
+        });
 
-    const registry = new InMemoryAdapterRegistry([unavailableAdapter, mlxAdapter]);
-    const executor = new MasterAgentExecutor(registry);
-
-    const result = await executor.execute({ prompt: "status", workflow });
-
-    expect(result.provider).toBe("mlx");
-    expect(unavailableAdapter.isAvailable).toHaveBeenCalled();
-    expect(mlxRunner.generate).toHaveBeenCalledTimes(1);
-  });
-
-  it("throws when no adapters are available", async () => {
-    const offlineAdapter = {
-      name: "offline",
-      isAvailable: vi.fn().mockResolvedValue(false),
-      invoke: vi.fn(),
-    };
-
-    const registry = new InMemoryAdapterRegistry([offlineAdapter]);
-    const executor = new MasterAgentExecutor(registry);
-
-    await expect(executor.execute({ prompt: "hi", workflow })).rejects.toThrow(
-      "brAInwav master agent has no available adapters",
-    );
-  });
-
-  it("propagates adapter invocation failures", async () => {
-    const failingAdapter = {
-      name: "mlx",
-      isAvailable: vi.fn().mockResolvedValue(true),
-      invoke: vi.fn().mockRejectedValue(new AvailabilityError("down")),
-    };
-
-    const registry = new InMemoryAdapterRegistry([failingAdapter]);
-    const executor = new MasterAgentExecutor(registry);
-
-    await expect(executor.execute({ prompt: "hello", workflow })).rejects.toThrow("down");
-  });
 });

@@ -1,68 +1,18 @@
-import request from 'supertest';
-import { afterEach, describe, expect, it } from 'vitest';
-import { createMemoriesService } from '../../../src/app.js';
-import type { MemoriesServiceConfig } from '../../../src/app.js';
-import type { Server } from 'http';
 
-const scenarios: Array<{
-        name: string;
-        config: MemoriesServiceConfig;
-        expectedBackend: string;
-}> = [
-        {
-                name: 'sqlite backend exposes stats metadata',
-                config: {
-                        backend: 'sqlite',
-                        sqlite: {
-                                connectionString: 'file:/still/missing.db?mode=ro',
-                                uri: true,
-                                readonly: true,
-                        },
-                },
-                expectedBackend: 'sqlite',
-        },
-        {
-                name: 'prisma backend exposes stats metadata',
-                config: {
-                        backend: 'prisma',
-                        prisma: {
-                                connectionString: 'postgresql://invalid:invalid@localhost:65433/invalid?connect_timeout=1',
-                        },
-                },
-                expectedBackend: 'prisma',
-        },
-        {
-                name: 'local-memory backend exposes stats metadata',
-                config: {
-                        backend: 'local-memory',
-                        localMemory: {
-                                baseUrl: 'http://127.0.0.1:65535',
-                                timeoutMs: 250,
-                        },
-                },
-                expectedBackend: 'local-memory',
-        },
-];
+import { describe, expect, it } from 'vitest';
+import { LocalMemoryBackend, MemoryHealthChecker } from '../../src/health/memoryHealth.js';
+import { MemoryStatsService } from '../../src/stats/memoryStats.js';
 
-describe('memories stats metadata', () => {
-        let server: Server | undefined;
+describe('MemoryStatsService', () => {
+        it('reports metadata for the active backend', async () => {
+                const backend = new LocalMemoryBackend(new Map([['seed', 'value']]));
+                const checker = new MemoryHealthChecker(new Map([[backend.id, backend]]), backend.id);
+                const service = new MemoryStatsService(checker);
 
-        afterEach(async () => {
-                if (server) {
-                        await new Promise<void>((resolve) => server?.close(() => resolve()));
-                        server = undefined;
-                }
-        });
+                const stats = await service.collect();
+                expect(stats.backendId).toBe('local-memory');
+                expect(stats.health.status).toBe('ok');
+                expect(stats.metadata).toMatchObject({ entries: 2 });
 
-        it.each(scenarios)('$name', async ({ config, expectedBackend }) => {
-                const app = createMemoriesService(config);
-                server = app.listen();
-                const agent = request(server);
-
-                const response = await agent.get('/memories/stats');
-                expect(response.status).toBe(200);
-                expect(response.body.brand).toBe('brAInwav');
-                expect(response.body.backend.kind).toBe(expectedBackend);
-                expect(response.body.backend.healthy).toBeTypeOf('boolean');
         });
 });

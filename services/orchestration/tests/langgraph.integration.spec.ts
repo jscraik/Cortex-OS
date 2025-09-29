@@ -1,60 +1,95 @@
-import { describe, expect, it, vi } from "vitest";
-import { LangGraphHarness } from "../src/langgraph/harness.js";
-import { MasterAgentExecutor, InMemoryAdapterRegistry } from "../src/masterAgentExecutor.js";
-import type { WorkflowDefinition } from "../src/langgraph/harness.js";
-import type { ModelAdapter } from "../src/adapters/base.js";
 
-describe("LangGraph harness integration", () => {
-  it("records each node execution and surfaces the final payload", async () => {
-    const workflow: WorkflowDefinition = {
-      name: "sample",
-      nodes: [
-        {
-          id: "prepare",
-          run: async (input) => ({
-            prompt: `Summarise ${input.topic}`,
-          }),
-        },
-        {
-          id: "augment",
-          run: async (input) => ({
-            details: `${input.prompt} with metrics`,
-          }),
-        },
-      ],
-    };
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { AddressInfo } from 'node:net';
+import { createOrchestrationServer } from '../src/server.js';
+import { MasterAgentOrchestrator } from '../src/masterAgent.js';
+import { AdapterRegistry } from '../src/adapters/adapterRegistry.js';
+import type { GenerationAdapter } from '../src/adapters/types.js';
+import { LangGraphOrchestrator } from '../src/orchestrator.js';
 
-    const adapter: ModelAdapter = {
-      name: "mlx",
-      isAvailable: vi.fn().mockResolvedValue(true),
-      invoke: vi.fn(async (ctx) => ({
-        output: `Executed: ${ctx.prompt} :: ${JSON.stringify(ctx.variables.workflow)}`,
-        latencyMs: 5,
-        provider: "mlx",
-      })),
-    };
+const createAdapter = (id: string): GenerationAdapter => ({
+        id,
+        isAvailable: vi.fn().mockResolvedValue(true),
+        generate: vi.fn().mockImplementation(async () => ({
+                output: `generated-by-${id}`,
+                adapterId: id,
+                tokensUsed: 64,
+        })),
+});
 
-    const registry = new InMemoryAdapterRegistry([adapter]);
-    const executor = new MasterAgentExecutor(registry);
+describe('Orchestration server integration', () => {
+        const adapter = createAdapter('ollama');
+        const registry = new AdapterRegistry([adapter]);
+        const langGraph = new LangGraphOrchestrator({
+                entryNode: 'start',
+                nodes: {
+                        start: async (context) => ({
+                                memory: { ...context.memory, 'start:visited': true },
+                                inputs: context.inputs,
+                        }),
+                        finalize: async (context) => ({
+                                memory: { ...context.memory, outcome: 'completed' },
+                                inputs: context.inputs,
+                        }),
+                },
+                edges: {
+                        start: ['finalize'],
+                        finalize: [],
+                },
+        });
+        const master = new MasterAgentOrchestrator(registry, langGraph);
+        const server = createOrchestrationServer({ orchestrator: master });
+        let url: string;
 
-    const result = await executor.execute({
-      prompt: "Base prompt",
-      variables: { topic: "LangGraph" },
-      workflow,
-    });
+        beforeAll(() => {
+                return new Promise<void>((resolve) => {
+                        server.listen(0, '127.0.0.1', () => {
+                                const address = server.address() as AddressInfo;
+                                url = `http://${address.address}:${address.port}`;
+                                resolve();
+                        });
+                });
+        });
 
-    expect(result.workflowOutput).toMatchObject({
-      prompt: "Summarise LangGraph",
-      details: "Summarise LangGraph with metrics",
-    });
-    expect(result.log.map((entry) => entry.nodeId)).toEqual(["prepare", "augment"]);
-    expect(result.output).toContain("Executed: Base prompt");
-    expect(adapter.invoke).toHaveBeenCalledTimes(1);
-  });
+        afterAll(() => {
+                return new Promise<void>((resolve, reject) => {
+                        server.close((error) => {
+                                if (error) {
+                                        reject(error);
+                                } else {
+                                        resolve();
+                                }
+                        });
+                });
+        });
 
-  it("throws when constructing a harness without nodes", () => {
-    expect(() => new LangGraphHarness({ name: "invalid", nodes: [] })).toThrow(
-      "brAInwav LangGraph harness requires at least one node",
-    );
-  });
+        it('executes a workflow and returns execution log', async () => {
+                const response = await fetch(`${url}/agents/execute`, {
+                        method: 'POST',
+                        headers: {
+                                'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                                steps: [
+                                        {
+                                                id: 'plan-1',
+                                                adapterId: 'ollama',
+                                                prompt: 'Resolve the ticket',
+                                        },
+                                ],
+                                context: { memory: {}, inputs: { ticketId: '42' } },
+                        }),
+                });
+
+                expect(response.status).toBe(200);
+                const payload = (await response.json()) as {
+                        workflowLog: Array<{ nodeId: string }>;
+                        stepLogs: Array<{ adapterId: string }>;
+                };
+
+                expect(payload.workflowLog.map((entry) => entry.nodeId)).toStrictEqual(['start', 'finalize']);
+                expect(payload.stepLogs[0]).toMatchObject({ adapterId: 'ollama' });
+                expect(adapter.generate).toHaveBeenCalledOnce();
+        });
+
 });
