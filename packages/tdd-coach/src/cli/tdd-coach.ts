@@ -218,7 +218,7 @@ program
  * @param {ChangeSet} changeSet
  * @returns {Object}
  */
-const createMockChangeSet = (files: string[]): ChangeSet => {
+const _createChangeSetForValidation = (files: string[]): ChangeSet => {
 	return {
 		files: files.map((file: string) => ({
 			path: file,
@@ -275,7 +275,7 @@ const runQualityGatesIfRequested = async (qualityGates: boolean): Promise<void> 
  * @returns {Promise<void>}
  */
 const validateFiles = async (coach: TDDCoach, files: string[], qualityGates: boolean = false): Promise<void> => {
-	const changeSet: ChangeSet = createMockChangeSet(files);
+	const changeSet: ChangeSet = _createChangeSetForValidation(files);
 
 	const response = await coach.validateChange({
 		proposedChanges: changeSet,
