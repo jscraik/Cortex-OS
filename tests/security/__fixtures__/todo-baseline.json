@@ -1,50 +1,758 @@
 [
-  { "file": "apps/cortex-os/packages/ingest/src/dispatch.ts", "line": 95, "token": "TODO" },
-  { "file": "apps/cortex-os/packages/ingest/src/dispatch.ts", "line": 100, "token": "TODO" },
-  { "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Message.tsx", "line": 6, "token": "TODO" },
-  { "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Messages.tsx", "line": 7, "token": "TODO" },
-  { "file": "packages/prp-runner/src/unified-ai-evidence-workflow.ts", "line": 334, "token": "TODO" },
-  { "file": "packages/a2a/src/mcp/tools.ts", "line": 204, "token": "TODO" },
-  { "file": "packages/agents/src/monitoring/tracing.ts", "line": 2, "token": "TODO" },
-  { "file": "packages/asbr/src/cerebrum/critique.ts", "line": 45, "token": "TODO" },
-  { "file": "packages/asbr/src/cerebrum/critique.ts", "line": 47, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/index.ts", "line": 20, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/index.ts", "line": 50, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 57, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 80, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 96, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 104, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 172, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 194, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 218, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 232, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 244, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 258, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 267, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 281, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 287, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 293, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 323, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 350, "token": "TODO" },
-  { "file": "packages/mcp-core/src/tools/todo-write-tool.ts", "line": 404, "token": "TODO" },
-  { "file": "packages/memories/src/adapters/store.intelligent.ts", "line": 1169, "token": "TODO" },
-  { "file": "packages/orchestration/src/security/skip-permissions.ts", "line": 364, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 440, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 445, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 448, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 667, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 670, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 671, "token": "FIXME" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 672, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 683, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation.ts", "line": 721, "token": "TODO" },
-  { "file": "packages/mvp/mvp-group/src/lib/strategy-node.ts", "line": 8, "token": "TODO" },
-  { "file": "packages/orchestration/src/server/routes/index.ts", "line": 16, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts", "line": 161, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts", "line": 164, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts", "line": 167, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts", "line": 168, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts", "line": 169, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts", "line": 280, "token": "TODO" },
-  { "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts", "line": 289, "token": "TODO" }
+
+  {
+    "file": "apps/cortex-code/core/src/client_common.rs",
+    "line": 146,
+    "text": "// TODO(mbolin): ResponseItem::Other should not be serialized. Currently,"
+  },
+  {
+    "file": "apps/cortex-code/core/src/codex.rs",
+    "line": 2421,
+    "text": "// TODO(mbolin): Sandbox check."
+  },
+  {
+    "file": "apps/cortex-code/core/src/codex.rs",
+    "line": 2811,
+    "text": "// TODO(ragona): Isn't this a bug? It always saves the command in an | fork?"
+  },
+  {
+    "file": "apps/cortex-code/core/src/config.rs",
+    "line": 512,
+    "text": "// TODO(jif) refactor config persistence."
+  },
+  {
+    "file": "apps/cortex-code/core/src/config.rs",
+    "line": 556,
+    "text": "// TODO(jif) refactor the home creation"
+  },
+  {
+    "file": "apps/cortex-code/core/src/config_types.rs",
+    "line": 208,
+    "text": "/// TODO(mbolin): Not currently honored."
+  },
+  {
+    "file": "apps/cortex-code/core/src/git_info.rs",
+    "line": 522,
+    "text": "// TODO: we should make this async, but it's primarily used deep in"
+  },
+  {
+    "file": "apps/cortex-code/core/src/internal_storage.rs",
+    "line": 31,
+    "text": "// TODO(jif) generalise all the file writers and build proper async channel inserters."
+  },
+  {
+    "file": "apps/cortex-code/core/src/message_history.rs",
+    "line": 76,
+    "text": "// TODO: check `text` for sensitive patterns"
+  },
+  {
+    "file": "apps/cortex-code/core/src/openai_tools.rs",
+    "line": 18,
+    "text": "/// TODO: Validation. When strict is set to true, the JSON schema,"
+  },
+  {
+    "file": "apps/cortex-code/core/src/openai_tools.rs",
+    "line": 48,
+    "text": "// TODO: Understand why we get an error on web_search although the API docs say it's supported."
+  },
+  {
+    "file": "apps/cortex-code/core/src/openai_tools.rs",
+    "line": 278,
+    "text": "/// TODO(dylan): deprecate once we get rid of json tool"
+  },
+  {
+    "file": "apps/cortex-code/core/src/parse_command.rs",
+    "line": 169,
+    "text": "let inner = \"rg -n \\\"BUG|FIXME|TODO|XXX|HACK\\\" -S | head -n 200\";"
+  },
+  {
+    "file": "apps/cortex-code/core/src/parse_command.rs",
+    "line": 174,
+    "text": "cmd: \"rg -n 'BUG|FIXME|TODO|XXX|HACK' -S\".to_string(),"
+  },
+  {
+    "file": "apps/cortex-code/core/src/parse_command.rs",
+    "line": 175,
+    "text": "query: Some(\"BUG|FIXME|TODO|XXX|HACK\".to_string()),"
+  },
+  {
+    "file": "apps/cortex-code/core/src/parse_command.rs",
+    "line": 748,
+    "text": "&shlex_split_safe(\"grep -R TODO src\"),"
+  },
+  {
+    "file": "apps/cortex-code/core/src/parse_command.rs",
+    "line": 750,
+    "text": "cmd: \"grep -R TODO src\".to_string(),"
+  },
+  {
+    "file": "apps/cortex-code/core/src/parse_command.rs",
+    "line": 751,
+    "text": "query: Some(\"TODO\".to_string()),"
+  },
+  {
+    "file": "apps/cortex-code/core/src/plan_tool.rs",
+    "line": 18,
+    "text": "// Types for the TODO tool arguments matching codex-vscode/todo-mcp/src/main.rs"
+  },
+  {
+    "file": "apps/cortex-code/core/src/safety.rs",
+    "line": 39,
+    "text": "// TODO(ragona): I'm not sure this is actually correct? I believe in this case"
+  },
+  {
+    "file": "apps/cortex-code/core/src/seatbelt.rs",
+    "line": 106,
+    "text": "// TODO(mbolin): apply_patch calls must also honor the SandboxPolicy."
+  },
+  {
+    "file": "apps/cortex-code/core/src/shell.rs",
+    "line": 71,
+    "text": "// TODO (CODEX_2900): Handle escaping newlines."
+  },
+  {
+    "file": "apps/cortex-code/core/src/shell.rs",
+    "line": 544,
+    "text": "// TODO (CODEX_2900): Handle escaping newlines for powershell invocation."
+  },
+  {
+    "file": "apps/cortex-code/linux-sandbox/src/landlock.rs",
+    "line": 47,
+    "text": "// TODO(ragona): Add appropriate restrictions if"
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/codex_message_processor.rs",
+    "line": 1198,
+    "text": "// TODO(mbolin): Enforce a timeout so this task does not live indefinitely?"
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/codex_message_processor.rs",
+    "line": 1221,
+    "text": "// TODO(mbolin): Enforce a timeout so this task does not live indefinitely?"
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/codex_tool_config.rs",
+    "line": 124,
+    "text": "// TODO(mbolin): This should be defined."
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/codex_tool_runner.rs",
+    "line": 249,
+    "text": "// TODO: think how we want to support this in the MCP"
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/codex_tool_runner.rs",
+    "line": 252,
+    "text": "// TODO: think how we want to support this in the MCP"
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/codex_tool_runner.rs",
+    "line": 255,
+    "text": "// TODO: think how we want to support this in the MCP"
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/codex_tool_runner.rs",
+    "line": 302,
+    "text": "// TODO(mbolin): Could present the error in a more"
+  },
+  {
+    "file": "apps/cortex-code/mcp-server/src/exec_approval.rs",
+    "line": 40,
+    "text": "// TODO(mbolin): ExecApprovalResponse does not conform to ElicitResult. See:"
+  },
+  {
+    "file": "apps/cortex-code/protocol/src/mcp_protocol.rs",
+    "line": 604,
+    "text": "// TODO(mbolin): Need test to ensure these constants match the enum variants."
+  },
+  {
+    "file": "apps/cortex-code/protocol/src/plan_tool.rs",
+    "line": 5,
+    "text": "// Types for the TODO tool arguments matching codex-vscode/todo-mcp/src/main.rs"
+  },
+  {
+    "file": "apps/cortex-code/rmcp-client/src/logging_client_handler.rs",
+    "line": 31,
+    "text": "// TODO (CODEX-3571): support elicitations."
+  },
+  {
+    "file": "apps/cortex-os/packages/ingest/src/dispatch.ts",
+    "line": 95,
+    "text": "// TODO: fetch and parse with budgeted downloader; emit SSE events"
+  },
+  {
+    "file": "apps/cortex-os/packages/ingest/src/dispatch.ts",
+    "line": 100,
+    "text": "// TODO: parse by MIME (pdf, html, markdown, text) with size and time budgets; emit SSE events"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Message.tsx",
+    "line": 6,
+    "text": "// TODO: Fix import path when shared types are properly set up"
+  },
+  {
+    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Messages.tsx",
+    "line": 7,
+    "text": "// TODO: Unify message shape across codebase (createdAt/timestamp)"
+  },
+  {
+    "file": "packages/agents/examples/agent-toolkit-demo.ts",
+    "line": 202,
+    "text": "searchPatterns: ['TODO|FIXME|HACK', 'console\\\\.log', 'debugger', 'any\\\\s*;'],"
+  },
+  {
+    "file": "packages/prp-runner/src/unified-ai-evidence-workflow.ts",
+    "line": 334,
+    "text": "// TODO: Implement enhanceEvidence in ASBRAIIntegration when ready"
+  },
+  {
+    "file": "packages/a2a/src/mcp/tools.ts",
+    "line": 204,
+    "text": "'Establish an event stream subscription for A2A task lifecycle events (currently returns snapshot; streaming TODO).',"
+  },
+  {
+    "file": "packages/agents/src/monitoring/tracing.ts",
+    "line": 2,
+    "text": "// TODO: Fix OpenTelemetry API type declarations"
+  },
+  {
+    "file": "packages/asbr/src/cerebrum/critique.ts",
+    "line": 45,
+    "text": "if (input.includes('TODO') || input.includes('FIXME')) {"
+  },
+  {
+    "file": "packages/asbr/src/cerebrum/critique.ts",
+    "line": 47,
+    "text": "suggestions.push('Complete all TODO and FIXME items before proceeding');"
+  },
+  {
+    "file": "packages/mcp-core/src/tools/todo-write-tool.ts",
+    "line": 404,
+    "text": "const status = item.status === 'completed' ? '[DONE]' : '[TODO]';"
+  },
+  {
+    "file": "packages/orchestration/src/security/skip-permissions.ts",
+    "line": 364,
+    "text": "// TODO: Integrate with audit logging service"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation.ts",
+    "line": 440,
+    "text": "// Check for TODO/FIXME comments"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation.ts",
+    "line": 445,
+    "text": "tools.push('TODO/FIXME Scanner');"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation.ts",
+    "line": 448,
+    "text": "// TODO scanning failed"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation.ts",
+    "line": 667,
+    "text": "const todoMatch = line.match(/(TODO|FIXME|HACK|XXX|BUG)[:,\\s](.+)/i);"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation.ts",
+    "line": 671,
+    "text": "severity: todoMatch[1].toUpperCase() === 'FIXME' ? 'warning' : 'info',"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation.ts",
+    "line": 683,
+    "text": "// TODO scanning failed"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation.ts",
+    "line": 721,
+    "text": "recommendations.push('Address TODO/FIXME comments to reduce technical debt');"
+  },
+  {
+    "file": "packages/mvp/mvp-group/src/lib/strategy-node.ts",
+    "line": 8,
+    "text": "// TODO: Implement strategy node when needed"
+  },
+  {
+    "file": "packages/orchestration/src/server/routes/index.ts",
+    "line": 16,
+    "text": "// TODO: Implement actual agent execution with LangGraph"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts",
+    "line": 161,
+    "text": "// Check for TODO/FIXME comments"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts",
+    "line": 167,
+    "text": "description: `TODO/FIXME found: ${todo.text}`,"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts",
+    "line": 280,
+    "text": "* Finds TODO/FIXME comments"
+  },
+  {
+    "file": "packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts",
+    "line": 289,
+    "text": "'grep -rn \"TODO\\\\|FIXME\" --include=\"*.ts\" --include=\"*.js\" --include=\"*.tsx\" --include=\"*.jsx\" .',"
+  },
+  {
+    "file": "servers/src/fetch/src/mcp_server_fetch/server.py",
+    "line": 287,
+    "text": "# TODO: after SDK bug is addressed, don't catch the exception"
+  },
+  {
+    "file": "scripts/agent-toolkit.mjs",
+    "line": 23,
+    "text": "pnpm at:search TODO src/"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.sh",
+    "line": 7,
+    "text": "FORBIDDEN_PATTERNS=(\"TODO:\" \"Mock\" \"not yet implemented\")"
+  },
+  {
+    "file": "scripts/brainwav-production-guard.ts",
+    "line": 4,
+    "text": "const defaultForbiddenTokens: readonly string[] = ['TODO:', 'Mock', 'not yet implemented'];"
+  },
+  {
+    "file": "scripts/gen-event.mjs",
+    "line": 61,
+    "text": "const testContent = `// Contract test for ${eventName}\\nimport { ${schemaConstName} } from '../../libs/typescript/contracts/${domain}/events';\\n\\n// Minimal validation test; extend with domain-specific required fields.\\ndescribe('contract: ${eventName}', () => {\\n  it('accepts minimal shape (adjust once fields defined)', () => {\\n    const sample: any = {}; // TODO: add required fields when schema updated\\n    expect(() => ${schemaConstName}.parse(sample)).not.toThrow(); // will start failing once required fields added\\n  });\\n});\\n`;"
+  },
+  {
+    "file": "scripts/pattern-guard.sh",
+    "line": 43,
+    "text": "run_check \"TODO/FIXME/XXX/HACK\" \"(?i)\\b(TODO|FIXME|XXX|HACK)\\b\""
+  },
+  {
+    "file": "scripts/maintenance/test_security_implementation.js",
+    "line": 66,
+    "text": "console.log('\\n✅ Test 4: Placeholder and TODO cleanup...');"
+  },
+  {
+    "file": "scripts/maintenance/test_security_implementation.js",
+    "line": 67,
+    "text": "const hasTodoComments = securityContent.includes('TODO') || securityContent.includes('FIXME');"
+  },
+  {
+    "file": "scripts/maintenance/test_security_implementation.js",
+    "line": 72,
+    "text": "console.log(`   - No TODO/FIXME comments: ${hasTodoComments ? '❌' : '✅'}`);"
+  },
+  {
+    "file": "scripts/quality/pattern-guard.sh",
+    "line": 45,
+    "text": "[\"TODO markers\"]='TODO|FIXME|HACK|XXX'"
+  },
+  {
+    "file": "scripts/security/final-security-validation.sh",
+    "line": 79,
+    "text": "# Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/final-security-validation.sh",
+    "line": 80,
+    "text": "run_warning_test \"Security-related TODO comments\" \"grep -r -i 'TODO.*security\\\\|TODO.*secure\\\\|FIXME.*security\\\\|FIXME.*secure' packages/mvp-core/src/ 2>/dev/null\""
+  },
+  {
+    "file": "scripts/security/fix-command-injection.mjs",
+    "line": 86,
+    "text": "# TODO: Replace with SecureCommandExecutor for better security"
+  },
+  {
+    "file": "scripts/security/fix-command-injection.mjs",
+    "line": 124,
+    "text": "# TODO: Add host validation to prevent SSRF"
+  },
+  {
+    "file": "scripts/security/fix-command-injection.mjs",
+    "line": 143,
+    "text": "console.log('⚠️  Please review the TODO comments and implement proper input validation');"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 36,
+    "text": "replacement: `// TODO: Implement proper input validation for createSwarm"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 41,
+    "text": "replacement: `// TODO: Implement proper input validation for setActiveSwarm"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 46,
+    "text": "replacement: `// TODO: Implement proper input validation for createAgent"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 51,
+    "text": "replacement: `// TODO: Implement proper input validation for dynamic updates"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 57,
+    "text": "replacement: `// TODO: Implement proper input validation for updateAgentStatus"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 63,
+    "text": "replacement: `// TODO: Implement proper input validation for createTask"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 71,
+    "text": "replacement: `// TODO: Implement proper input validation for task updates"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 76,
+    "text": "replacement: `// TODO: Implement proper input validation for updateTaskStatus"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 81,
+    "text": "replacement: `// TODO: Implement proper input validation for storeMemory"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 87,
+    "text": "replacement: `// TODO: Implement proper input validation for updateMemoryAccess"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 93,
+    "text": "replacement: `// TODO: Implement proper input validation for deleteMemory"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 99,
+    "text": "replacement: `// TODO: Implement proper input validation for createConsensus"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 112,
+    "text": "replacement: `// TODO: Implement proper input validation for updateConsensus"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 123,
+    "text": "replacement: `// TODO: Implement proper input validation for storeMetric"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 132,
+    "text": "replacement: `// TODO: Implement proper input validation for memory deletion"
+  },
+  {
+    "file": "scripts/security/fix-db-injection.mjs",
+    "line": 148,
+    "text": "console.log('⚠️  Please review the TODO comments and implement proper input validation');"
+  },
+  {
+    "file": "scripts/security/fix-neo4j-injection.mjs",
+    "line": 32,
+    "text": "// TODO: Implement proper input validation using SecureNeo4j"
+  },
+  {
+    "file": "scripts/security/fix-neo4j-injection.mjs",
+    "line": 46,
+    "text": "// TODO: Implement proper input validation using SecureNeo4j"
+  },
+  {
+    "file": "scripts/security/fix-neo4j-injection.mjs",
+    "line": 62,
+    "text": "// TODO: Implement proper input validation using SecureNeo4j"
+  },
+  {
+    "file": "scripts/security/fix-neo4j-injection.mjs",
+    "line": 108,
+    "text": "'⚠️  Please review the TODO comments and implement proper input validation using SecureNeo4j',"
+  },
+  {
+    "file": "scripts/security/fix_security_issues.sh",
+    "line": 31,
+    "text": "// TODO: Add input validation and parameterization for all database queries"
+  },
+  {
+    "file": "scripts/security/fix_security_issues.sh",
+    "line": 46,
+    "text": "// TODO: Add input validation and parameterization for all database queries"
+  },
+  {
+    "file": "scripts/security/fix_security_issues.sh",
+    "line": 61,
+    "text": "// TODO: Add input validation and parameterization for all Cypher queries"
+  },
+  {
+    "file": "scripts/security/fix_security_issues.sh",
+    "line": 74,
+    "text": "# TODO: Implement sandboxing for code execution"
+  },
+  {
+    "file": "scripts/security/fix_security_issues.sh",
+    "line": 89,
+    "text": "# TODO: Add input validation for command execution"
+  },
+  {
+    "file": "scripts/security/security-test.sh",
+    "line": 41,
+    "text": "# 4. Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/security-test.sh",
+    "line": 42,
+    "text": "echo \"4. Checking for security-related TODO comments...\""
+  },
+  {
+    "file": "scripts/security/security-test.sh",
+    "line": 44,
+    "text": "if grep -r -i -n \"TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure\" --include=\"*.ts\" --include=\"*.js\" --include=\"*.py\" . 2>/dev/null; then"
+  },
+  {
+    "file": "scripts/security/security-test.sh",
+    "line": 45,
+    "text": "echo \"⚠️  Security-related TODO/FIXME comments found\""
+  },
+  {
+    "file": "scripts/security/security-test.sh",
+    "line": 47,
+    "text": "echo \"✅ No security-related TODO/FIXME comments found\""
+  },
+  {
+    "file": "scripts/security/security-test.sh",
+    "line": 50,
+    "text": "echo \"⚠️  grep not found, skipping TODO check\""
+  },
+  {
+    "file": "scripts/security/simple-security-validation.sh",
+    "line": 81,
+    "text": "run_warning_test \"No security-related TODO comments\" \"grep -r -i 'TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure' packages/mvp-core/src/ 2>/dev/null\""
+  },
+  {
+    "file": "scripts/security/test-command-security.sh",
+    "line": 16,
+    "text": "# 2. Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/test-command-security.sh",
+    "line": 17,
+    "text": "echo \"2. Checking for security-related TODO comments...\""
+  },
+  {
+    "file": "scripts/security/test-command-security.sh",
+    "line": 19,
+    "text": "if grep -r -i \"TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure\" packages/mcp/src/tools/docker/mcp_server.py packages/mvp-core/src/python/secure_executor.py 2>/dev/null; then"
+  },
+  {
+    "file": "scripts/security/test-command-security.sh",
+    "line": 20,
+    "text": "echo \"⚠️  Security-related TODO/FIXME comments found\""
+  },
+  {
+    "file": "scripts/security/test-command-security.sh",
+    "line": 22,
+    "text": "echo \"✅ No security-related TODO/FIXME comments found\""
+  },
+  {
+    "file": "scripts/security/test-command-security.sh",
+    "line": 25,
+    "text": "echo \"⚠️  grep not found, skipping TODO check\""
+  },
+  {
+    "file": "scripts/security/test-database-security.mjs",
+    "line": 21,
+    "text": "// Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/test-database-security.mjs",
+    "line": 22,
+    "text": "console.log('2. Checking for security-related TODO comments...');"
+  },
+  {
+    "file": "scripts/security/test-database-security.mjs",
+    "line": 25,
+    "text": "'grep -r -i \"TODO.*security\\\\|TODO.*secure\\\\|FIXME.*security\\\\|FIXME.*secure\" apps/cortex-os/packages/agents/src/legacy-instructions/DatabaseManager.ts',"
+  },
+  {
+    "file": "scripts/security/test-database-security.mjs",
+    "line": 31,
+    "text": "console.log('⚠️  Security-related TODO/FIXME comments found');"
+  },
+  {
+    "file": "scripts/security/test-database-security.mjs",
+    "line": 33,
+    "text": "console.log('✅ No security-related TODO/FIXME comments found');"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.mjs",
+    "line": 21,
+    "text": "// Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.mjs",
+    "line": 22,
+    "text": "console.log('2. Checking for security-related TODO comments...');"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.mjs",
+    "line": 25,
+    "text": "'grep -r -i \"TODO.*security\\\\|TODO.*secure\\\\|FIXME.*security\\\\|FIXME.*secure\" packages/memories/src/adapters/neo4j.ts libs/typescript/utils/src/secure-neo4j.ts',"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.mjs",
+    "line": 31,
+    "text": "console.log('⚠️  Security-related TODO/FIXME comments found');"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.mjs",
+    "line": 33,
+    "text": "console.log('✅ No security-related TODO/FIXME comments found');"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.sh",
+    "line": 16,
+    "text": "# 2. Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.sh",
+    "line": 17,
+    "text": "echo \"2. Checking for security-related TODO comments...\""
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.sh",
+    "line": 19,
+    "text": "if grep -r -i \"TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure\" packages/memories/src/adapters/neo4j.ts libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null; then"
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.sh",
+    "line": 20,
+    "text": "echo \"⚠️  Security-related TODO/FIXME comments found\""
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.sh",
+    "line": 22,
+    "text": "echo \"✅ No security-related TODO/FIXME comments found\""
+  },
+  {
+    "file": "scripts/security/test-neo4j-security.sh",
+    "line": 25,
+    "text": "echo \"⚠️  grep not found, skipping TODO check\""
+  },
+  {
+    "file": "scripts/security/validate-security-improvements.mjs",
+    "line": 240,
+    "text": "// 5. Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/validate-security-improvements.mjs",
+    "line": 241,
+    "text": "runTest('No security-related TODO comments in security wrappers', () => {"
+  },
+  {
+    "file": "scripts/security/validate-security-improvements.mjs",
+    "line": 244,
+    "text": "'grep -r -i \"TODO.*security\\\\|TODO.*secure\\\\|FIXME.*security\\\\|FIXME.*secure\" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null || true',"
+  },
+  {
+    "file": "scripts/security/validate-security-improvements.mjs",
+    "line": 252,
+    "text": "return 'Security-related TODO/FIXME comments found in security wrapper files';"
+  },
+  {
+    "file": "scripts/security/validate-security-improvements.sh",
+    "line": 4,
+    "text": "# This script checks thrun_warning_test \"Security-related TODO comments\" \"grep -r -i 'TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure' packages/mvp-core/src/secure-*.ts 2>/dev/null\""
+  },
+  {
+    "file": "scripts/security/validate-security-improvements.sh",
+    "line": 91,
+    "text": "# Check for security-related TODO comments"
+  },
+  {
+    "file": "scripts/security/validate-security-improvements.sh",
+    "line": 92,
+    "text": "run_warning_test \"Security-related TODO comments\" \"grep -r -i 'TODO.*security\\\\|TODO.*secure\\\\|FIXME.*security\\\\|FIXME.*secure' packages/mvp-core/src/secure-*.ts 2>/dev/null\""
+  },
+  {
+    "file": "scripts/updates/implement-mcp-server-secure.py",
+    "line": 20,
+    "text": "r\"def run_docker_command\\(command\\):(.*?)# TODO: Use SecureCommandExecutor for command execution(.*?)return \\{.*?\\}\","
+  },
+  {
+    "file": "scripts/updates/implement-mcp-server-secure.py",
+    "line": 47,
+    "text": "r'@app\\.get\\(\"/docker/containers\"\\)\\s*def docker_list_containers\\(\\):\\s*# TODO: Use SecureCommandExecutor for this operation\\s*return run_docker_command\\(\\[\"docker\", \"ps\", \"-a\"\\]\\)',"
+  },
+  {
+    "file": "scripts/updates/implement-mcp-server-secure.py",
+    "line": 63,
+    "text": "r'@app\\.get\\(\"/docker/images\"\\)\\s*def docker_list_images\\(\\):\\s*# TODO: Use SecureCommandExecutor for this operation\\s*return run_docker_command\\(\\[\"docker\", \"images\"\\]\\)',"
+  },
+  {
+    "file": "scripts/updates/implement-mcp-server-secure.py",
+    "line": 79,
+    "text": "r'@app\\.post\\(\"/docker/inspect\"\\)\\s*def docker_inspect_container\\(req: DockerInspectRequest\\):\\s*# TODO: Use SecureCommandExecutor for this operation\\s*return run_docker_command\\(\\[\"docker\", \"inspect\", req\\.container_id\\]\\)',"
+  },
+  {
+    "file": "scripts/updates/implement-mcp-server-secure.py",
+    "line": 95,
+    "text": "r'@app\\.post\\(\"/docker/logs\"\\)\\s*def docker_get_container_logs\\(req: DockerLogsRequest\\):\\s*# TODO: Use SecureCommandExecutor for this operation\\s*return run_docker_command\\(\\[\"docker\", \"logs\", req\\.container_id\\]\\)',"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server-secure.py",
+    "line": 31,
+    "text": "# TODO: Use SecureCommandExecutor for command execution"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server-secure.py",
+    "line": 62,
+    "text": "# TODO: Use SecureCommandExecutor for this operation"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server-secure.py",
+    "line": 73,
+    "text": "# TODO: Use SecureCommandExecutor for this operation"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server-secure.py",
+    "line": 84,
+    "text": "# TODO: Use SecureCommandExecutor for this operation"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server-secure.py",
+    "line": 95,
+    "text": "# TODO: Use SecureCommandExecutor for this operation"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server.mjs",
+    "line": 27,
+    "text": "# TODO: Use SecureCommandExecutor for command execution"
+  },
+  {
+    "file": "scripts/updates/update-mcp-server.mjs",
+    "line": 56,
+    "text": "console.log('⚠️  Please review the TODO comments and fully implement the secure operations');"
+  },
+  {
+    "file": "scripts/updates/update-neo4j.mjs",
+    "line": 98,
+    "text": "console.log('⚠️  Please review the TODO comments and fully implement the secure operations');"
+  },
+  {
+    "file": "scripts/updates/update-neo4j.mjs",
+    "line": 100,
+    "text": "console.log('⚠️  Please review the TODO comments and fully implement the secure operations');"
+  },
+  {
+    "file": "config/eslint.config.js",
+    "line": 104,
+    "text": "'@typescript-eslint/no-explicit-any': 'off', // TODO: Legacy TypeScript fixtures still rely on any. Re-enable once cleaned."
+  }
 ]

@@ -3,119 +3,131 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import { describe, expect, it } from 'vitest';
 
-const FORBIDDEN_PATTERNS = [/\bTODO\b/i, /\bFIXME\b/i];
-const BASELINE_PATH = path.resolve(__dirname, '__fixtures__/todo-baseline.json');
+type TodoFinding = {
+        readonly file: string;
+        readonly line: number;
+        readonly text: string;
+};
 
-const RUNTIME_GLOBS = [
-        'apps/**/src/**/*.{ts,tsx,js,jsx}',
-        'packages/**/src/**/*.{ts,tsx,js,jsx}',
-        'services/**/src/**/*.{ts,tsx,js,jsx}',
-        'servers/**/src/**/*.{ts,tsx,js,jsx}',
-        'libs/**/src/**/*.{ts,tsx,js,jsx}',
+const repoRoot = path.resolve(__dirname, '..', '..');
+const baselinePath = path.join(__dirname, '__fixtures__/todo-baseline.json');
+
+const includePatterns = [
+        'apps/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py}',
+        'packages/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py}',
+        'services/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py}',
+        'servers/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py}',
+        'libs/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py}',
+        'src/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py}',
+        'scripts/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py,sh}',
+        'config/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py,sh}',
+        'infra/**/*.{ts,tsx,js,jsx,mjs,cjs,cts,mts,rs,py,sh}',
 ];
 
-const IGNORE_GLOBS = [
-        '**/__tests__/**',
-        '**/__mocks__/**',
-        '**/*.spec.ts',
-        '**/*.spec.tsx',
-        '**/*.test.ts',
-        '**/*.test.tsx',
-        '**/*.d.ts',
+const ignorePatterns = [
+        '**/node_modules/**',
+        '**/.turbo/**',
+        '**/.next/**',
         '**/dist/**',
         '**/build/**',
-        '**/generated/**',
-        '**/node_modules/**',
-        '**/coverage/**',
-        '**/migrations/**',
+        '**/.venv/**',
+        '**/.git/**',
+        '**/tests/**',
+        '**/__tests__/**',
+        '**/__mocks__/**',
+        '**/__fixtures__/**',
+        '**/*.test.*',
+        '**/*.spec.*',
+        '**/*.stories.*',
+        '**/*.d.ts',
+        '**/*.map',
+        '**/*.snap',
+        '**/docs/**',
         'tests/**',
-        'docs/**',
-        'examples/**',
+        'project-documentation/**',
+        'website/**',
+        '**/README.md',
+        '**/CHANGELOG.md',
+        '**/LICENSE',
+        '**/NOTICE',
 ];
 
-describe('Security regression: TODO/FIXME banned in runtime code', () => {
-        it('fails when TODO or FIXME markers exist in runtime paths', async () => {
-                const repoRoot = path.resolve(__dirname, '..', '..');
-                const runtimeFiles = await fg(RUNTIME_GLOBS, {
-                        cwd: repoRoot,
-                        ignore: IGNORE_GLOBS,
-                        onlyFiles: true,
-                        absolute: true,
+function loadBaseline(): TodoFinding[] {
+        if (!fs.existsSync(baselinePath)) {
+                return [];
+        }
+        const raw = fs.readFileSync(baselinePath, 'utf8');
+        return JSON.parse(raw) as TodoFinding[];
+}
+
+async function scanForForbiddenComments(): Promise<TodoFinding[]> {
+        const files = await fg(includePatterns, {
+                cwd: repoRoot,
+                ignore: ignorePatterns,
+                dot: false,
+                absolute: true,
+        });
+
+        const findings: TodoFinding[] = [];
+
+        for (const file of files) {
+                const content = fs.readFileSync(file, 'utf8');
+                const lines = content.split(/\r?\n/);
+
+                lines.forEach((line, index) => {
+                        if (/\b(TODO|FIXME)\b/i.test(line)) {
+                                findings.push({
+                                        file: path.relative(repoRoot, file),
+                                        line: index + 1,
+                                        text: line.trim(),
+                                });
+                        }
                 });
+        }
 
+        findings.sort((a, b) => {
+                if (a.file === b.file) {
+                        return a.line - b.line;
+                }
+                return a.file.localeCompare(b.file);
+        });
+
+        return findings;
+}
+
+function createKey(entry: TodoFinding): string {
+        return `${entry.file}:${entry.line}::${entry.text}`;
+}
+
+describe('brAInwav security TODO/FIXME ban', () => {
+        it('does not allow TODO or FIXME comments in runtime code paths', async () => {
+                const findings = await scanForForbiddenComments();
                 const baseline = loadBaseline();
-                const baselineKeys = new Set(baseline.map((entry) => createKey(entry.file, entry.line, entry.token)));
-                const violations: Array<{ file: string; line: number; token: string }> = [];
 
-                for (const filePath of runtimeFiles) {
-                        const content = fs.readFileSync(filePath, 'utf8');
-                        const lines = content.split(/\r?\n/);
-                        lines.forEach((line, index) => {
-                                for (const pattern of FORBIDDEN_PATTERNS) {
-                                        if (pattern.test(line)) {
-                                                const file = path.relative(repoRoot, filePath);
-                                                const token = pattern.source.replace(/\\b/g, '');
-                                                violations.push({
-                                                        file,
-                                                        line: index + 1,
-                                                        token,
-                                                });
-                                                break;
-                                        }
-                                }
-                        });
+                const baselineKeys = new Set(baseline.map(createKey));
+                const findingKeys = new Set(findings.map(createKey));
+
+                const newFindings = findings.filter((entry) => !baselineKeys.has(createKey(entry)));
+                const resolvedEntries = baseline.filter((entry) => !findingKeys.has(createKey(entry)));
+
+                if (resolvedEntries.length > 0) {
+                        const formattedResolved = resolvedEntries
+                                .map((entry) => `• ${entry.file}:${entry.line} → "${entry.text}"`)
+                                .join('\n');
+                        console.log(`🎉 Security TODO/FIXME debt reduced for entries:\n${formattedResolved}`);
                 }
 
-                const newViolations = violations.filter(
-                        (violation) => !baselineKeys.has(createKey(violation.file, violation.line, violation.token)),
-                );
-
-                const resolved = baseline.filter(
-                        (entry) =>
-                                !violations.some((violation) =>
-                                        createKey(violation.file, violation.line, violation.token) ===
-                                        createKey(entry.file, entry.line, entry.token),
-                                ),
-                );
-
-                if (resolved.length > 0) {
-                        const formattedResolved = resolved
-                                .map((entry) => `• ${entry.file}:${entry.line} → ${entry.token}`)
+                if (newFindings.length > 0) {
+                        const formatted = newFindings
+                                .map((entry) => `• ${entry.file}:${entry.line} → "${entry.text}"`)
                                 .join('\n');
-                        console.log(`🎉 brAInwav TODO baseline reduced:\n${formattedResolved}`);
-                }
-
-                if (newViolations.length > 0) {
-                        const formatted = newViolations
-                                .map((violation) => `• ${violation.file}:${violation.line} → ${violation.token}`)
-                                .join('\n');
-
                         throw new Error(
-                                'brAInwav security gate detected TODO/FIXME markers in runtime code:\n' +
-                                        `${formatted}\nRemove or resolve these markers before merging.`,
+                                `Forbidden TODO/FIXME comments detected outside allowlist:\n${formatted}\n` +
+                                        'Replace these with implemented logic or documented tasks before merging.',
                         );
                 }
 
-                expect(newViolations).toEqual([]);
+                expect(newFindings).toEqual([]);
         });
 });
 
-type BaselineEntry = { file: string; line: number; token: string };
-
-function loadBaseline(): BaselineEntry[] {
-        if (!fs.existsSync(BASELINE_PATH)) {
-                return [];
-        }
-        const raw = fs.readFileSync(BASELINE_PATH, 'utf8');
-        try {
-                const parsed = JSON.parse(raw) as BaselineEntry[];
-                return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-                console.warn('brAInwav TODO baseline parse failure', { error });
-                return [];
-        }
-}
-
-function createKey(file: string, line: number, token: string): string {
-        return `${file}::${line}::${token}`;
-}
