@@ -27,10 +27,5 @@ export class AvailabilityError extends Error {
 }
 
 export function ensureAvailability(probe: AvailabilityProbe): Promise<boolean> {
-  try {
-    const result = probe();
-    return Promise.resolve(result);
-  } catch (error) {
-    return Promise.reject(error);
-  }
+  return Promise.resolve(probe());
 }
