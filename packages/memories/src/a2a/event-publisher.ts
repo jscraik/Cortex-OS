@@ -364,20 +364,21 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
 	/**
 	 * Publish realtime connection metrics snapshot event
 	 */
-	async publishRealtimeMetrics(snapshot: MemoryRealtimeMetricsData): Promise<void> {
-		await this.publishEvent({
-			type: 'memory.realtime.metrics',
-			memoryId: snapshot.snapshotId,
-			namespace: 'metrics',
-			timestamp: snapshot.timestamp,
-			data: snapshot,
-			subject: snapshot.snapshotId,
-			dataschema: 'https://schemas.cortex-os/memories/v1/realtime-metrics-event.json',
-			ttlMs: 60000,
-			headers: {
-				'metrics-source': snapshot.source,
-				'metrics-reason': snapshot.reason,
-			},
-		});
-	}
+        async publishRealtimeMetrics(event: MemoryRealtimeMetricsData): Promise<void> {
+                await this.publishEvent({
+                        type: event.type,
+                        memoryId: event.snapshotId,
+                        namespace: 'metrics',
+                        timestamp: event.timestamp,
+                        data: event,
+                        subject: event.snapshotId,
+                        dataschema: 'https://schemas.cortex-os/memories/v1/realtime-metrics-event.json',
+                        ttlMs: 60000,
+                        headers: {
+                                'metrics-source': event.source,
+                                'metrics-reason': event.reason,
+                                'metrics-brand': event.brand,
+                        },
+                });
+        }
 }

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WebSocket } from 'ws';
 import {
-	RealtimeMemoryChangeEventSchema,
-	type RealtimeMemoryInboundMessage,
-	RealtimeMemoryInboundMessageSchema,
-	RealtimeMemoryMetricsSnapshotSchema,
-	type RealtimeMemoryOutboundMessage,
-	RealtimeMemoryOutboundMessageSchema,
+        RealtimeMemoryChangeEventSchema,
+        type RealtimeMemoryInboundMessage,
+        RealtimeMemoryInboundMessageSchema,
+        RealtimeMemoryMetricsEventSchema,
+        type RealtimeMemoryOutboundMessage,
+        RealtimeMemoryOutboundMessageSchema,
 } from '../../../../libs/typescript/contracts/src/memory-realtime.js';
 import { RealtimeMemoryServer } from '../../src/adapters/server.realtime.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
@@ -436,44 +436,67 @@ describe('RealtimeMemoryServer contracts integration', () => {
 			vi.useRealTimers();
 		});
 
-		it('publishes a metrics snapshot when clients connect', async () => {
-			await server.start(3001);
-			const ws = simulateConnection();
-			await getLatestMessageOfType(ws, 'connected');
-			await advanceTimers(10);
-			expect(publishMetrics).toHaveBeenCalled();
-			const snapshot = publishMetrics.mock.calls[0]?.[0];
-			expect(() => RealtimeMemoryMetricsSnapshotSchema.parse(snapshot)).not.toThrow();
-			expect(snapshot.reason.split('|')).toContain('connection-established');
-			expect(snapshot.aggregate.activeConnections).toBe(1);
-			await server.stop();
-			await advanceTimers(10);
-		});
+                it('publishes a metrics event when clients connect', async () => {
+                        await server.start(3001);
+                        const ws = simulateConnection();
+                        await getLatestMessageOfType(ws, 'connected');
+                        await advanceTimers(10);
+                        expect(publishMetrics).toHaveBeenCalled();
+                        const event = publishMetrics.mock.calls[0]?.[0];
+                        expect(() => RealtimeMemoryMetricsEventSchema.parse(event)).not.toThrow();
+                        expect(event.type).toBe('memory.realtime.metrics');
+                        expect(event.brand).toBe('brAInwav');
+                        expect(event.description).toContain('brAInwav');
+                        expect(event.reason.split('|')).toContain('connection-established');
+                        expect(event.aggregate.activeConnections).toBe(1);
+                        await server.stop();
+                        await advanceTimers(10);
+                });
 
-		it('captures message activity in snapshot reasons', async () => {
-			await server.start(3001);
-			const ws = simulateConnection();
-			await getLatestMessageOfType(ws, 'connected');
-			await advanceTimers(10);
+                it('captures message activity in snapshot reasons', async () => {
+                        await server.start(3001);
+                        const ws = simulateConnection();
+                        await getLatestMessageOfType(ws, 'connected');
+                        await advanceTimers(10);
 			publishMetrics.mockClear();
 			sendInboundMessage(ws, {
 				type: 'subscribe',
 				namespace,
 			});
 			await getLatestMessageOfType(ws, 'subscribed');
-			const memory = createMemory({ text: 'Metrics change event' });
-			await streamingStore.upsert(memory, namespace);
-			await advanceTimers(10);
-			expect(publishMetrics).toHaveBeenCalled();
-			const snapshot = publishMetrics.mock.calls[publishMetrics.mock.calls.length - 1]?.[0];
-			expect(() => RealtimeMemoryMetricsSnapshotSchema.parse(snapshot)).not.toThrow();
-			const reasons = snapshot.reason.split('|');
-			expect(reasons).toContain('message-received');
-			expect(reasons).toContain('message-sent');
-			await server.stop();
-			await advanceTimers(10);
-		});
-	});
+                        const memory = createMemory({ text: 'Metrics change event' });
+                        await streamingStore.upsert(memory, namespace);
+                        await advanceTimers(10);
+                        expect(publishMetrics).toHaveBeenCalled();
+                        const event = publishMetrics.mock.calls[publishMetrics.mock.calls.length - 1]?.[0];
+                        expect(() => RealtimeMemoryMetricsEventSchema.parse(event)).not.toThrow();
+                        const reasons = event.reason.split('|');
+                        expect(reasons).toContain('message-received');
+                        expect(reasons).toContain('message-sent');
+                        expect(event.headers).toBeUndefined();
+                        await server.stop();
+                        await advanceTimers(10);
+                });
+
+                it('respects the metricsSnapshotsEnabled toggle', async () => {
+                        publishMetrics.mockClear();
+                        server = new RealtimeMemoryServer(
+                                streamingStore,
+                                {
+                                        metricsSnapshotDebounceMs: 5,
+                                        metricsSnapshotsEnabled: false,
+                                        metricsPublisher: { publishRealtimeMetrics: publishMetrics },
+                                },
+                        );
+                        await server.start(3001);
+                        const ws = simulateConnection();
+                        await getLatestMessageOfType(ws, 'connected');
+                        await advanceTimers(10);
+                        expect(publishMetrics).not.toHaveBeenCalled();
+                        await server.stop();
+                        await advanceTimers(10);
+                });
+        });
 
 	describe('validation layer', () => {
 		it('returns a branded parse error for malformed JSON', async () => {
