@@ -43,19 +43,36 @@ const CheckDependenciesInputSchema = z.object({
 	checkLicenses: z.boolean().default(true),
 });
 
-function stableStringify(value: unknown): string {
-	if (Array.isArray(value)) {
-		return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
-	}
-	if (value && typeof value === 'object') {
-		const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
-			a.localeCompare(b),
-		);
-		return `{${entries
-			.map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
-			.join(',')}}`;
-	}
-	return JSON.stringify(value);
+
+function stableStringify(
+        value: unknown,
+        seen: WeakSet<object> = new WeakSet(),
+        depth: number = 0,
+        maxDepth: number = 20
+): string {
+        if (depth > maxDepth) {
+                return '"[MaxDepth]"';
+        }
+        if (Array.isArray(value)) {
+                return `[${value.map((entry) => stableStringify(entry, seen, depth + 1, maxDepth)).join(',')}]`;
+        }
+        if (value && typeof value === 'object') {
+                if (seen.has(value as object)) {
+                        return '"[Circular]"';
+                }
+                seen.add(value as object);
+                const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+                        a.localeCompare(b),
+                );
+                const result = `{${entries
+                        .map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry, seen, depth + 1, maxDepth)}`)
+                        .join(',')}}`;
+                // Optionally remove from seen after traversal (not strictly necessary for WeakSet)
+                // seen.delete(value as object);
+                return result;
+        }
+        return JSON.stringify(value);
+
 }
 
 function createFingerprint(seed: string): string {

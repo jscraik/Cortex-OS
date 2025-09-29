@@ -795,211 +795,419 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 		return complexity >= min && complexity <= max;
 	}
 
-	private calculateComplexityScore(template: PromptTemplate, complexity: number): number {
-		const [min, max] = template.complexity;
-		if (max === min) {
-			return 1;
-		}
 
-		const clamped = Math.min(Math.max(complexity, min), max);
-		const position = (clamped - min) / (max - min);
-		return 1 - Math.abs(position - 0.5) * 2;
-	}
+                const complexityScore = this.calculateComplexityScore(template, context.complexity);
+                score += complexityScore * 0.2;
 
-	private matchesApplicability(template: PromptTemplate, context: PromptContext): boolean {
-		const applicability = template.applicability;
-		if (!applicability) {
-			return true;
-		}
+                if (template.nOOptimized && context.nOArchitecture) {
+                        score += 0.1;
+                }
 
-		const effectivePhase = this.getEffectivePhase(context);
-		if (applicability.phases && applicability.phases.length > 0) {
-			if (!applicability.phases.includes(effectivePhase)) {
-				return false;
-			}
-		}
+                const capabilityCoverage = this.calculateCapabilityCoverage(template, context);
+                score += capabilityCoverage * 0.1;
 
-		if (applicability.requiredCapabilities && applicability.requiredCapabilities.length > 0) {
-			const hasAllCapabilities = applicability.requiredCapabilities.every((capability) =>
-				context.capabilities.includes(capability),
-			);
+                const tagAlignment = this.calculateTagAlignment(template, context);
+                score += tagAlignment * 0.1;
 
-			if (!hasAllCapabilities) {
-				return false;
-			}
-		}
+                const phaseAlignment = this.calculatePhaseAlignment(template, context);
+                score += phaseAlignment * 0.1;
 
-		if (applicability.tags && applicability.tags.length > 0) {
-			const tags = this.getContextTags(context);
-			if (!tags.some((tag) => applicability.tags?.includes(tag))) {
-				return false;
-			}
-		}
+                if (template.variables.includes('capabilities') && context.capabilities.length > 0) {
+                        score += 0.05;
+                }
 
-		return true;
-	}
+                if (template.variables.includes('tools') && context.tools.length > 0) {
+                        score += 0.05;
+                }
 
-	private getEffectivePhase(context: PromptContext): PlanningPhase {
-		if (context.currentPhase) {
-			return context.currentPhase;
-		}
+                if (context.objectives && context.objectives.length > 0) {
+                        score += 0.05;
+                }
 
-		if (context.planningContext?.currentPhase) {
-			return context.planningContext.currentPhase;
-		}
+                const historicalEffectiveness = this.calculateHistoricalEffectiveness(template.id, context);
+                score += historicalEffectiveness * 0.2;
 
-		return PlanningPhase.INITIALIZATION;
-	}
+                return Math.min(score, 1.0);
+        }
 
-	private getApplicabilitySpecificity(template: PromptTemplate): number {
-		if (!template.applicability) {
-			return 0;
-		}
+        private getFallbackTemplate(context: PromptContext): TemplateSelection {
+                const fallback = this.templates.get('long-horizon-system')!;
+                return {
+                        template: fallback,
+                        confidence: 0.3,
+                        reasoning: `brAInwav: Using fallback template for task ${context.taskId} due to no suitable candidates`,
+                        adaptations: [`maintain reliability for agent ${context.agentId}`],
+                };
+        }
 
-		const { phases, requiredCapabilities, tags } = template.applicability;
-		return (phases?.length ?? 0) + (requiredCapabilities?.length ?? 0) + (tags?.length ?? 0);
-	}
+        private generateAdaptations(_template: PromptTemplate, context: PromptContext): string[] {
+                const adaptations = new Set<string>();
 
-	private calculateCapabilityCoverage(template: PromptTemplate, context: PromptContext): number {
-		const required = template.applicability?.requiredCapabilities ?? [];
-		if (required.length === 0) {
-			return context.capabilities.length > 0 ? 0.5 : 0;
-		}
+                if (context.complexity > 7) {
+                        adaptations.add('enhanced error handling guidance');
+                        adaptations.add('additional validation steps');
+                }
 
-		const matches = required.filter((capability) =>
-			context.capabilities.includes(capability),
-		).length;
-		return matches / required.length;
-	}
+                if (context.priority > 8) {
+                        adaptations.add('expedited execution protocols');
+                        adaptations.add('simplified decision making');
+                }
 
-	private calculateTagAlignment(template: PromptTemplate, context: PromptContext): number {
-		const templateTags = template.applicability?.tags ?? [];
-		const contextTags = this.getContextTags(context);
+                const effectivePhase = this.getEffectivePhase(context);
+                if (effectivePhase) {
+                        adaptations.add(`optimized for ${effectivePhase} phase`);
+                }
 
-		if (templateTags.length === 0) {
-			return contextTags.length > 0 ? 0.4 : 0.2;
-		}
+                if (context.capabilities.length > 0) {
+                        adaptations.add(`leverage capabilities: ${context.capabilities.join(', ')}`);
+                }
 
-		if (contextTags.length === 0) {
-			return 0;
-		}
+                const planningContext = context.planningContext;
+                if (planningContext?.id) {
+                        adaptations.add(`align with planning context ${planningContext.id}`);
+                }
 
-		const matchCount = contextTags.filter((tag) => templateTags.includes(tag)).length;
-		return matchCount / templateTags.length;
-	}
+                if (planningContext?.workspaceId) {
+                        adaptations.add(`preserve workspace continuity for ${planningContext.workspaceId}`);
+                }
 
-	private calculatePhaseAlignment(template: PromptTemplate, context: PromptContext): number {
-		const phases = template.applicability?.phases ?? [];
-		if (phases.length === 0) {
-			return 0.5;
-		}
+                if (planningContext?.objectives && planningContext.objectives.length > 0) {
+                        adaptations.add(`track planning objectives: ${planningContext.objectives.join(', ')}`);
+                }
 
-		const effectivePhase = this.getEffectivePhase(context);
-		return phases.includes(effectivePhase) ? 1 : 0;
-	}
+                const contextTags = this.getContextTags(context);
+                if (contextTags.length > 0) {
+                        adaptations.add(`maintain context tags: ${contextTags.join(', ')}`);
+                }
 
-	private calculateHistoricalEffectiveness(templateId: string, context: PromptContext): number {
-		const history = this.usageHistory.get(templateId);
-		if (!history || history.length === 0) {
-			return 0;
-		}
+                if (context.objectives && context.objectives.length > 0) {
+                        adaptations.add(`focus on objectives: ${context.objectives.join(', ')}`);
+                }
 
-		const now = Date.now();
-		let weightedSum = 0;
-		let totalWeight = 0;
+                return Array.from(adaptations);
+        }
 
-		for (const entry of history) {
-			const ageMs = now - entry.timestamp.getTime();
-			if (ageMs > HISTORY_RETENTION_MS) {
-				continue;
-			}
+        private generateReasoningForSelection(template: PromptTemplate, context: PromptContext): string {
+                const effectivePhase = this.getEffectivePhase(context);
+                const contextTags = this.getContextTags(context);
+                const capabilityCoverage = this.calculateCapabilityCoverage(template, context);
+                const tagAlignment = this.calculateTagAlignment(template, context);
 
-			const similarity = this.calculateContextSimilarity(context, entry.context);
-			if (similarity <= 0) {
-				continue;
-			}
+                return [
+                        `brAInwav Template Manager: Selected "${template.name}" for complexity ${context.complexity} and priority ${context.priority}.`,
+                        `Phase: ${effectivePhase}.`,
+                        `Context tags: ${contextTags.length > 0 ? contextTags.join(', ') : 'none'}.`,
+                        `Capability alignment: ${(capabilityCoverage * 100).toFixed(0)}%.`,
+                        `Tag alignment ${(tagAlignment * 100).toFixed(0)}%.`,
+                        `Template optimized for nO architecture: ${template.nOOptimized}.`,
+                        `Branding enabled: ${template.brainwavBranding}.`,
+                ].join(' ');
+        }
 
-			const timeWeight = 1 - ageMs / HISTORY_RETENTION_MS;
-			const weight = Math.max(similarity * timeWeight, 0);
+        private getVariableValue(variable: string, context: PromptContext): string {
+                switch (variable) {
+                        case 'taskId':
+                                return context.taskId;
+                        case 'agentId':
+                                return context.agentId;
+                        case 'sessionId':
+                                return context.sessionId || 'unknown';
+                        case 'complexity':
+                                return context.complexity.toString();
+                        case 'priority':
+                                return context.priority.toString();
+                        case 'capabilities':
+                                return context.capabilities.join(', ');
+                        case 'tools':
+                                return context.tools.join(', ');
+                        case 'currentPhase':
+                                return this.getEffectivePhase(context);
+                        case 'agentCount':
+                                return '1';
+                        case 'taskDescription':
+                                return 'Task description not provided';
+                        case 'errorType':
+                                return 'unknown_error';
+                        case 'errorSeverity':
+                                return 'moderate';
+                        case 'affectedComponents':
+                                return 'unknown';
+                        case 'errorDetails':
+                                return 'Error details not available';
+                        case 'objectives':
+                                return context.objectives && context.objectives.length > 0
+                                        ? context.objectives.join(', ')
+                                        : 'No explicit objectives';
+                        case 'contextTags':
+                                return this.getContextTags(context).join(', ') || 'none';
+                        default:
+                                return `{{${variable}}}`;
+                }
+        }
 
-			if (weight <= 0) {
-				continue;
-			}
+        private applyAdaptations(prompt: string, adaptations: string[], context: PromptContext): string {
+                if (adaptations.length === 0) return prompt;
 
-			weightedSum += entry.effectiveness * weight;
-			totalWeight += weight;
-		}
+                const adaptationHeader = `\n**Context Adaptations for brAInwav nO Architecture (task ${context.taskId}):**\n`;
+                const adaptationSection = adaptationHeader + adaptations.map((a) => `- ${a}`).join('\n') + '\n';
+                return prompt + adaptationSection;
+        }
 
-		if (totalWeight === 0) {
-			return 0;
-		}
+        private addBrainwavBranding(prompt: string, context: PromptContext): string {
+                if (prompt.includes('brAInwav')) return prompt;
 
-		return Math.min(weightedSum / totalWeight, 1);
-	}
+                const branding =
+                        '\n**Powered by brAInwav** | Task: ' +
+                        context.taskId +
+                        ' | nO Architecture: ' +
+                        context.nOArchitecture +
+                        '\n';
+                return prompt + branding;
+        }
 
-	private calculateContextSimilarity(current: PromptContext, previous: PromptContext): number {
-		const capabilitySimilarity = this.calculateSetSimilarity(
-			current.capabilities,
-			previous.capabilities,
-		);
-		const tagSimilarity = this.calculateSetSimilarity(
-			this.getContextTags(current),
-			this.getContextTags(previous),
-		);
-		const objectiveSimilarity = this.calculateSetSimilarity(
-			current.objectives ?? [],
-			previous.objectives ?? [],
-		);
-		const phaseSimilarity =
-			this.getEffectivePhase(current) === this.getEffectivePhase(previous) ? 1 : 0;
+        /**
+         * Get template statistics for monitoring
+         */
+        getStats(): {
+                totalTemplates: number;
+                nOOptimizedTemplates: number;
+                averageEffectiveness: number;
+                mostUsedTemplate: string;
+                totalUsageEntries: number;
+        } {
+                const totalTemplates = this.templates.size;
+                const nOOptimizedTemplates = Array.from(this.templates.values()).filter(
+                        (t) => t.nOOptimized,
+                ).length;
 
-		return (
-			capabilitySimilarity * 0.35 +
-			tagSimilarity * 0.35 +
-			phaseSimilarity * 0.2 +
-			objectiveSimilarity * 0.1
-		);
-	}
+                let totalEffectiveness = 0;
+                let totalUsageEntries = 0;
+                let mostUsedTemplate = 'unknown';
+                let maxUsages = 0;
 
-	private calculateSetSimilarity(current: string[], previous: string[]): number {
-		if (current.length === 0 && previous.length === 0) {
-			return 1;
-		}
+                for (const [templateId, history] of this.usageHistory.entries()) {
+                        if (history.length > maxUsages) {
+                                maxUsages = history.length;
+                                mostUsedTemplate = templateId;
+                        }
 
-		const currentSet = new Set(current);
-		const previousSet = new Set(previous);
-		let intersectionSize = 0;
-		for (const value of currentSet) {
-			if (previousSet.has(value)) {
-				intersectionSize++;
-			}
-		}
-		const unionSize = new Set([...currentSet, ...previousSet]).size;
+                        totalUsageEntries += history.length;
+                        totalEffectiveness += history.reduce((sum, use) => sum + use.effectiveness, 0);
+                }
 
-		if (unionSize === 0) {
-			return 0;
-		}
+                return {
+                        totalTemplates,
+                        nOOptimizedTemplates,
+                        averageEffectiveness:
+                                totalUsageEntries > 0 ? totalEffectiveness / totalUsageEntries : 0,
+                        mostUsedTemplate,
+                        totalUsageEntries,
+                };
+        }
 
-		return intersectionSize / unionSize;
-	}
+        private isWithinComplexityRange(template: PromptTemplate, complexity: number): boolean {
+                const [min, max] = template.complexity;
+                return complexity >= min && complexity <= max;
+        }
 
-	private getContextTags(context: PromptContext): string[] {
-		if (Array.isArray(context.contextTags) && context.contextTags.length > 0) {
-			return [...context.contextTags];
-		}
+        private calculateComplexityScore(template: PromptTemplate, complexity: number): number {
+                const [min, max] = template.complexity;
+                if (max === min) {
+                        return 1;
+                }
 
-		if (
-			context.planningContext &&
-			Array.isArray(context.planningContext.contextTags) &&
-			context.planningContext.contextTags.length > 0
-		) {
-			return [...context.planningContext.contextTags];
-		}
+                const clamped = Math.min(Math.max(complexity, min), max);
+                const position = (clamped - min) / (max - min);
+                return 1 - Math.abs(position - 0.5) * 2;
+        }
 
-		return [];
-	}
+        private matchesApplicability(template: PromptTemplate, context: PromptContext): boolean {
+                const applicability = template.applicability;
+                if (!applicability) {
+                        return true;
+                }
 
-	private snapshotContext(context: PromptContext): PromptContext {
-		return structuredClone(context);
-	}
+                const effectivePhase = this.getEffectivePhase(context);
+                if (applicability.phases && applicability.phases.length > 0) {
+                        if (!applicability.phases.includes(effectivePhase)) {
+                                return false;
+                        }
+                }
+
+                if (applicability.requiredCapabilities && applicability.requiredCapabilities.length > 0) {
+                        const hasAllCapabilities = applicability.requiredCapabilities.every((capability) =>
+                                context.capabilities.includes(capability),
+                        );
+
+                        if (!hasAllCapabilities) {
+                                return false;
+                        }
+                }
+
+                if (applicability.tags && applicability.tags.length > 0) {
+                        const tags = this.getContextTags(context);
+                        if (!tags.some((tag) => applicability.tags!.includes(tag))) {
+                                return false;
+                        }
+                }
+
+                return true;
+        }
+
+        private getEffectivePhase(context: PromptContext): PlanningPhase {
+                if (context.currentPhase) {
+                        return context.currentPhase;
+                }
+
+                if (context.planningContext?.currentPhase) {
+                        return context.planningContext.currentPhase;
+                }
+
+                return PlanningPhase.INITIALIZATION;
+        }
+
+        private getApplicabilitySpecificity(template: PromptTemplate): number {
+                if (!template.applicability) {
+                        return 0;
+                }
+
+                const { phases, requiredCapabilities, tags } = template.applicability;
+                return (
+                        (phases?.length ?? 0) +
+                        (requiredCapabilities?.length ?? 0) +
+                        (tags?.length ?? 0)
+                );
+        }
+
+        private calculateCapabilityCoverage(template: PromptTemplate, context: PromptContext): number {
+                const required = template.applicability?.requiredCapabilities ?? [];
+                if (required.length === 0) {
+                        return context.capabilities.length > 0 ? 0.5 : 0;
+                }
+
+                const matches = required.filter((capability) => context.capabilities.includes(capability)).length;
+                return matches / required.length;
+        }
+
+        private calculateTagAlignment(template: PromptTemplate, context: PromptContext): number {
+                const templateTags = template.applicability?.tags ?? [];
+                const contextTags = this.getContextTags(context);
+
+                if (templateTags.length === 0) {
+                        return contextTags.length > 0 ? 0.4 : 0.2;
+                }
+
+                if (contextTags.length === 0) {
+                        return 0;
+                }
+
+                const matchCount = contextTags.filter((tag) => templateTags.includes(tag)).length;
+                return matchCount / templateTags.length;
+        }
+
+        private calculatePhaseAlignment(template: PromptTemplate, context: PromptContext): number {
+                const phases = template.applicability?.phases ?? [];
+                if (phases.length === 0) {
+                        return 0.5;
+                }
+
+                const effectivePhase = this.getEffectivePhase(context);
+                return phases.includes(effectivePhase) ? 1 : 0;
+        }
+
+        private calculateHistoricalEffectiveness(templateId: string, context: PromptContext): number {
+                const history = this.usageHistory.get(templateId);
+                if (!history || history.length === 0) {
+                        return 0;
+                }
+
+                const now = Date.now();
+                let weightedSum = 0;
+                let totalWeight = 0;
+
+                for (const entry of history) {
+                        const ageMs = now - entry.timestamp.getTime();
+                        if (ageMs > HISTORY_RETENTION_MS) {
+                                continue;
+                        }
+
+                        const similarity = this.calculateContextSimilarity(context, entry.context);
+                        if (similarity <= 0) {
+                                continue;
+                        }
+
+                        const timeWeight = 1 - ageMs / HISTORY_RETENTION_MS;
+                        const weight = Math.max(similarity * timeWeight, 0);
+
+                        if (weight <= 0) {
+                                continue;
+                        }
+
+                        weightedSum += entry.effectiveness * weight;
+                        totalWeight += weight;
+                }
+
+                if (totalWeight === 0) {
+                        return 0;
+                }
+
+                return Math.min(weightedSum / totalWeight, 1);
+        }
+
+        private calculateContextSimilarity(current: PromptContext, previous: PromptContext): number {
+                const capabilitySimilarity = this.calculateSetSimilarity(current.capabilities, previous.capabilities);
+                const tagSimilarity = this.calculateSetSimilarity(this.getContextTags(current), this.getContextTags(previous));
+                const objectiveSimilarity = this.calculateSetSimilarity(current.objectives ?? [], previous.objectives ?? []);
+                const phaseSimilarity = this.getEffectivePhase(current) === this.getEffectivePhase(previous) ? 1 : 0;
+
+                return (
+                        capabilitySimilarity * 0.35 +
+                        tagSimilarity * 0.35 +
+                        phaseSimilarity * 0.2 +
+                        objectiveSimilarity * 0.1
+                );
+        }
+
+        private calculateSetSimilarity(current: string[], previous: string[]): number {
+                if (current.length === 0 && previous.length === 0) {
+                        return 1;
+                }
+
+                const currentSet = new Set(current);
+                const previousSet = new Set(previous);
+                let intersectionSize = 0;
+                for (const value of currentSet) {
+                        if (previousSet.has(value)) {
+                                intersectionSize++;
+                        }
+                }
+                const unionSize = new Set([...currentSet, ...previousSet]).size;
+
+                if (unionSize === 0) {
+                        return 0;
+                }
+
+                return intersectionSize / unionSize;
+        }
+
+        private getContextTags(context: PromptContext): string[] {
+                if (Array.isArray(context.contextTags) && context.contextTags.length > 0) {
+                        return [...context.contextTags];
+                }
+
+                if (
+                        context.planningContext &&
+                        Array.isArray(context.planningContext.contextTags) &&
+                        context.planningContext.contextTags.length > 0
+                ) {
+                        return [...context.planningContext.contextTags];
+                }
+
+                return [];
+        }
+
+        private snapshotContext(context: PromptContext): PromptContext {
+                // Use a shallow copy for performance; deep clone only if necessary for specific properties
+                return { ...context };
+        }
 }
