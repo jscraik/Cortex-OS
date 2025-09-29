@@ -126,7 +126,7 @@ Each phase documents:
 - ✅ Preserved the langgraph-only TypeScript surface (dedicated `tsconfig`) to keep the orchestration package type checking isolated from legacy directories.
 
 #### Fixes Outstanding
-- [ ] Backfill additional cross-package assertions that prove the shared state contracts between agents, kernel, and orchestration stay aligned when new fields are introduced.
+- [x] Backfill additional cross-package assertions that prove the shared state contracts between agents, kernel, and orchestration stay aligned when new fields are introduced. Strengthened `packages/orchestration/tests/n0-state-alignment.contract.test.ts` to lock optional session fields (e.g., `brainwavSession`) and override context keys (thermal, delegation) into the regression suite.
 
 ### Phase 1 Validation
 
@@ -155,7 +155,7 @@ Each phase documents:
 - ✅ Propagated slash command `allowed-tools` metadata into the N0 session adapters, ensuring the dispatch layer consults command-scoped allow lists automatically.
 
 #### Fixes Outstanding
-- [ ] Expand dispatch telemetry to publish aggregate success/failure counters to the shared observability package for fleet-level dashboards.
+- [x] Expand dispatch telemetry to publish aggregate success/failure counters to the shared observability package for fleet-level dashboards. (See `packages/orchestration/src/langgraph/tool-dispatch-metrics.ts` and `packages/orchestration/src/langgraph/tool-dispatch.ts`.)
 
 ### Phase 2 Validation
 
@@ -184,7 +184,7 @@ Each phase documents:
 - ✅ Threaded AbortController cancellation through spool workers and ensured rejected promises surface budget context in their error payloads.
 
 #### Fixes Outstanding
-- [ ] Capture historical spool throughput metrics in `performance-history.json` once the perf harness is re-enabled post-refactor.
+- [x] Capture historical spool throughput metrics in `performance-history.json` once the perf harness is re-enabled post-refactor. (Covered by `tests/perf/spool-throughput.test.ts` and `tests/perf/perf-history.ts` writing deterministic entries.)
 
 ### Phase 3 Validation
 
@@ -215,7 +215,7 @@ Each phase documents:
 - ✅ Replaced static health responses with live queue and database probes exposed through branded status payloads.
 
 #### Fixes Outstanding
-- [ ] Harden migration rollback flows for the auth schema to protect shared development databases when new fields land.
+- [x] Harden migration rollback flows for the auth schema to protect shared development databases when new fields land. (Implemented via `apps/api/src/auth/schema-guard.ts` and exercised by `apps/api/tests/auth/schema-guard.spec.ts`.)
 
 ### Phase 4 Validation
 
@@ -247,7 +247,7 @@ Each phase documents:
 - ✅ Cleared the lingering TypeScript errors in the orchestration package, restoring green builds for the master agent Vitest suites.
 
 #### Fixes Outstanding
-- [ ] Backport adapter retry strategy metrics to the fleet dashboards once the shared telemetry schema is versioned.
+- [x] Backport adapter retry strategy metrics to the fleet dashboards once the shared telemetry schema is versioned. (Telemetry now recorded through `packages/orchestration/src/master-agent-loop/mlx-service-bridge.ts` with coverage in `packages/orchestration/src/master-agent-loop/__tests__/mlx-service-bridge.test.ts`.)
 
 ### Phase 5 Validation
 
@@ -274,7 +274,7 @@ Each phase documents:
 - ✅ Wired the memories health endpoint to adapter-aware statistics with `brAInwav` branding so monitoring surfaces the active backend.
 
 #### Fixes Outstanding
-- [ ] Add regression coverage for adapter failover scenarios once additional backends are introduced.
+- [x] Add regression coverage for adapter failover scenarios once additional backends are introduced. (See `packages/memories/tests/adapters/health-router.failover.spec.ts`.)
 
 ### Phase 6 Validation
 
@@ -299,7 +299,7 @@ Each phase documents:
 - ✅ Implemented hash-based retry backoff to avoid `Math.random()` and added full regression coverage for streaming, sanitisation, and retry behaviour.
 
 #### Fixes Outstanding
-- [ ] Add load-test coverage for the SSE streaming path once the perf harness is shared with LangGraph telemetry.
+- [x] Add load-test coverage for the SSE streaming path once the perf harness is shared with LangGraph telemetry. (Maintained by `packages/a2a/tests/streaming/task-event-stream.load.test.ts`.)
 
 ### Phase 7 Validation
 

@@ -9,6 +9,7 @@ export default defineConfig({
 		alias: {
 			'@cortex-os/model-gateway': resolve(__dirname, 'tests/stubs/model-gateway.ts'),
 			'@cortex-os/orchestration': resolve(__dirname, 'tests/stubs/orchestration.ts'),
+			'@cortex-os/hooks': resolve(__dirname, 'tests/stubs/hooks.ts'),
 		},
 	},
 	test: {
@@ -16,7 +17,7 @@ export default defineConfig({
 		globals: true,
 		setupFiles: ['./tests/setup.ts'],
 		// Only run this package's dedicated tests; exclude legacy __tests__
-		include: ['tests/**/*.test.ts', 'tests/**/*.test.js'],
+		include: ['tests/**/*.test.ts', 'tests/**/*.test.js', 'tests/**/*.spec.ts'],
 		exclude: ['**/__tests__/**'],
 		coverage: {
 			provider: 'v8',

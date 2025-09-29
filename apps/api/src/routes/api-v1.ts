@@ -2,76 +2,61 @@ import type { NextFunction, Request, Response } from 'express';
 import { Router } from 'express';
 import type { ApiBusIntegration, AsyncJobEvent } from '../core/a2a-integration.js';
 import type { StructuredLogger } from '../core/observability.js';
-import { prisma } from '../db/prisma-client.js';
+import { prisma, isPrismaFallback } from '../db/prisma-client.js';
 import { API_EVENT_TYPES } from '../events/api-events.js';
-
-// Define PrismaClient interface locally to avoid import issues
-interface PrismaClient {
-	readonly task?: {
-		readonly findMany: (args: unknown) => Promise<unknown[]>;
-		readonly count: (args: unknown) => Promise<number>;
-	};
-}
-
-interface TaskResponse {
-	readonly id: string;
-	readonly title: string;
-	readonly status: string;
-	readonly createdAt: string;
-}
-
-interface AgentResponse {
-	readonly id: string;
-	readonly name: string;
-	readonly status: 'idle' | 'running' | 'error';
-	readonly lastRunAt: string | null;
-}
-
-interface MetricsResponse {
-	readonly uptimeSeconds: number;
-	readonly activeAgents: number;
-	readonly tasksProcessed: number;
-	readonly queueDepth: number;
-}
 
 const apiV1Router: ReturnType<typeof Router> = Router();
 
+interface TaskResponse {
+        readonly id: string;
+        readonly title: string;
+        readonly status: string;
+        readonly createdAt: string;
+}
+
+interface AgentResponse {
+        readonly id: string;
+        readonly name: string;
+        readonly status: 'idle' | 'running' | 'error';
+        readonly lastRunAt: string | null;
+}
+
+interface MetricsResponse {
+        readonly uptimeSeconds: number;
+        readonly activeAgents: number;
+        readonly tasksProcessed: number;
+        readonly queueDepth: number;
+}
+
 type LoggerLike = Pick<StructuredLogger, 'info' | 'warn' | 'error'>;
 
-type PrismaTask = {
-	readonly id: string;
-	readonly title: string;
-	readonly status: string;
-	readonly createdAt: Date;
-};
-
 type ExpressLocals = {
-	readonly logger?: LoggerLike;
-	readonly apiBus?: ApiBusIntegration;
+        readonly logger?: LoggerLike;
+        readonly apiBus?: ApiBusIntegration;
 };
 
-const prismaClient: PrismaClient = prisma;
-type TaskDelegate = {
-	findMany: (args: {
-		readonly select: {
-			readonly id: true;
-			readonly title: true;
-			readonly status: true;
-			readonly createdAt: true;
-		};
-		readonly orderBy: { readonly createdAt: 'desc' };
-		readonly take: number;
-	}) => Promise<readonly PrismaTask[]>;
-	count: (args: {
-		readonly where: {
-			readonly status: {
-				readonly in: readonly string[];
-			};
-		};
-	}) => Promise<number>;
-};
+type TaskDelegate = NonNullable<typeof prisma.task>;
+type PrismaTaskRecord = Awaited<ReturnType<TaskDelegate['findMany']>> extends readonly (infer Entry)[]
+        ? Entry
+        : never;
 
-const taskDelegate = prismaClient.task as unknown as TaskDelegate;
+const resolveTaskDelegate = async (
+        context: 'tasks-list' | 'metrics',
+        logger?: LoggerLike,
+): Promise<TaskDelegate | undefined> => {
+        const fallbackActive = await isPrismaFallback();
+        if (fallbackActive) {
+                logger?.warn?.('brAInwav Prisma fallback active for tasks operations', { context });
+        }
+
+        const delegate = prisma.task;
+        if (!delegate) {
+                logger?.warn?.('brAInwav Prisma task delegate unavailable', { context });
+                return undefined;
+        }
+
+        return delegate;
+};
 
 apiV1Router.get(
 	'/tasks',
@@ -129,29 +114,33 @@ function normalizeError(error: unknown): Record<string, unknown> {
 }
 
 async function fetchTasks(logger?: LoggerLike): Promise<TaskResponse[]> {
-	let records: readonly PrismaTask[] = [];
-	try {
-		records = await taskDelegate.findMany({
-			select: {
-				id: true,
-				title: true,
-				status: true,
-				createdAt: true,
-			},
-			orderBy: { createdAt: 'desc' },
-			take: 200,
-		});
-	} catch (error) {
-		logger?.warn?.('brAInwav tasks query degraded to empty payload', normalizeError(error));
-		return [];
-	}
+        const delegate = await resolveTaskDelegate('tasks-list', logger);
+        if (!delegate) {
+                return [];
+        }
 
-	return records.map<TaskResponse>((task) => ({
-		id: task.id,
-		title: task.title,
-		status: task.status,
-		createdAt: task.createdAt.toISOString(),
-	}));
+        try {
+                const records = await delegate.findMany({
+                        select: {
+                                id: true,
+                                title: true,
+                                status: true,
+                                createdAt: true,
+                        },
+                        orderBy: { createdAt: 'desc' },
+                        take: 200,
+                });
+
+                return records.map<TaskResponse>((task: PrismaTaskRecord) => ({
+                        id: task.id,
+                        title: task.title,
+                        status: task.status,
+                        createdAt: task.createdAt.toISOString(),
+                }));
+        } catch (error) {
+                logger?.warn?.('brAInwav tasks query degraded to empty payload', normalizeError(error));
+                return [];
+        }
 }
 
 function collectAgents(apiBus?: ApiBusIntegration): AgentResponse[] {
@@ -219,18 +208,23 @@ async function collectMetrics(
 }
 
 async function countCompletedTasks(logger?: LoggerLike): Promise<number> {
-	try {
-		return await taskDelegate.count({
-			where: {
-				status: {
-					in: ['completed', 'done', 'processed'],
-				},
-			},
-		});
-	} catch (error) {
-		logger?.warn?.('brAInwav metrics task counter degraded to zero', normalizeError(error));
-		return 0;
-	}
+        const delegate = await resolveTaskDelegate('metrics', logger);
+        if (!delegate) {
+                return 0;
+        }
+
+        try {
+                return await delegate.count({
+                        where: {
+                                status: {
+                                        in: ['completed', 'done', 'processed'],
+                                },
+                        },
+                });
+        } catch (error) {
+                logger?.warn?.('brAInwav metrics task counter degraded to zero', normalizeError(error));
+                return 0;
+        }
 }
 
 function computeQueueDepth(apiBus?: ApiBusIntegration): number {
@@ -304,4 +298,4 @@ function sortByLastRunDesc(left: AgentResponse, right: AgentResponse): number {
 	return rightTime - leftTime;
 }
 
-export { apiV1Router };
+export { apiV1Router, fetchTasks, countCompletedTasks };

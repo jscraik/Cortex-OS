@@ -12,56 +12,28 @@
     "token": "TODO:"
   },
   {
-    "file": "apps/cortex-code/codex-rs/core/src/default_client.rs",
+    "file": "apps/cortex-code/core/src/default_client.rs",
     "token": "Mock"
   },
   {
-    "file": "apps/cortex-code/codex-rs/core/src/git_info.rs",
+    "file": "apps/cortex-code/core/src/git_info.rs",
     "token": "TODO:"
   },
   {
-    "file": "apps/cortex-code/codex-rs/core/src/message_history.rs",
+    "file": "apps/cortex-code/core/src/message_history.rs",
     "token": "TODO:"
   },
   {
-    "file": "apps/cortex-code/codex-rs/core/src/openai_tools.rs",
+    "file": "apps/cortex-code/core/src/openai_tools.rs",
     "token": "TODO:"
   },
   {
-    "file": "apps/cortex-code/codex-rs/mcp-client/src/mcp_client.rs",
+    "file": "apps/cortex-code/mcp-server/src/codex_tool_runner.rs",
     "token": "TODO:"
   },
   {
-    "file": "apps/cortex-code/codex-rs/mcp-server/src/codex_tool_runner.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-code/codex-rs/mcp-server/src/tools.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-code/codex-rs/mcp-types/generate_mcp_types.py",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-code/codex-rs/ollama/src/client.rs",
+    "file": "apps/cortex-code/ollama/src/client.rs",
     "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-code/codex-rs/tui/src/chatwidget.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-code/codex-rs/tui/src/chatwidget/agent.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-code/codex-rs/tui/src/clipboard_paste.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-code/codex-rs/tui/src/onboarding/onboarding_screen.rs",
-    "token": "TODO:"
   },
   {
     "file": "apps/cortex-marketplace/src/mcp/tools.ts",
@@ -168,59 +140,15 @@
     "token": "Mock"
   },
   {
-    "file": "external/openai-codex/codex-rs/core/src/default_client.rs",
-    "token": "Mock"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/core/src/git_info.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/core/src/message_history.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/core/src/openai_tools.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/mcp-client/src/mcp_client.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/mcp-server/src/codex_tool_runner.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/mcp-types/generate_mcp_types.py",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/ollama/src/client.rs",
-    "token": "Mock"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/tui/src/chatwidget.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/tui/src/chatwidget/agent.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/tui/src/clipboard_paste.rs",
-    "token": "TODO:"
-  },
-  {
-    "file": "external/openai-codex/codex-rs/tui/src/onboarding/onboarding_screen.rs",
-    "token": "TODO:"
-  },
-  {
     "file": "packages/a2a/a2a-core/src/monitoring/metrics.ts",
     "token": "Mock"
   },
   {
     "file": "packages/a2a/a2a-core/src/queue/postgres-queue.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/a2a/a2a-core/src/streaming/mcp-client.ts",
     "token": "Mock"
   },
   {
@@ -234,6 +162,14 @@
   {
     "file": "packages/a2a/src/test-outbox-integration.ts",
     "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/MasterAgent.ts",
+    "token": "Mock"
+  },
+  {
+    "file": "packages/agents/src/MasterAgent.ts",
+    "token": "not yet implemented"
   },
   {
     "file": "packages/agents/src/a2a.ts",
@@ -250,14 +186,6 @@
   {
     "file": "packages/agents/src/langgraph/nodes.ts",
     "token": "Mock"
-  },
-  {
-    "file": "packages/agents/src/MasterAgent.ts",
-    "token": "Mock"
-  },
-  {
-    "file": "packages/agents/src/MasterAgent.ts",
-    "token": "not yet implemented"
   },
   {
     "file": "packages/agents/src/monitoring/tracing.ts",
@@ -492,10 +420,6 @@
     "token": "TODO:"
   },
   {
-    "file": "scripts/security/fix_security_issues.sh",
-    "token": "TODO:"
-  },
-  {
     "file": "scripts/security/fix-command-injection.mjs",
     "token": "TODO:"
   },
@@ -505,6 +429,10 @@
   },
   {
     "file": "scripts/security/fix-neo4j-injection.mjs",
+    "token": "TODO:"
+  },
+  {
+    "file": "scripts/security/fix_security_issues.sh",
     "token": "TODO:"
   },
   {
@@ -529,6 +457,10 @@
   },
   {
     "file": "servers/src/fetch/src/mcp_server_fetch/server.py",
+    "token": "TODO:"
+  },
+  {
+    "file": "tests/regression/apps-directory-allowlist.spec.ts",
     "token": "TODO:"
   },
   {

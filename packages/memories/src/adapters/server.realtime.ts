@@ -1,153 +1,22 @@
-import { z } from 'zod';
-
-// Define schemas locally until contracts package integration is fixed
-const isoTimestamp = z.string().datetime({ offset: true });
-
-const RealtimeMemoryNamespaceSchema = z
-	.string()
-	.min(1)
-	.max(64)
-	.regex(/^[a-zA-Z0-9_-]+$/, 'Namespaces must be alphanumeric plus dash/underscore.');
-
-const RealtimeMemoryEventTypeSchema = z
-	.string()
-	.min(1)
-	.max(128)
-	.regex(/^[a-zA-Z0-9_.:-]+$/, 'Event types must be namespaced identifiers.');
-
-const RealtimeMemoryChangeEventSchema = z.object({
-	type: z.enum(['create', 'update', 'delete']),
-	memory: z.record(z.unknown()).optional(),
-	previousMemory: z.record(z.unknown()).optional(),
-	memoryId: z.string().optional(),
-	timestamp: isoTimestamp,
-	namespace: RealtimeMemoryNamespaceSchema,
-	version: z.string().optional(),
-});
-
-const RealtimeMemoryInboundMessageSchema = z.discriminatedUnion('type', [
-	z.object({
-		type: z.literal('subscribe'),
-		namespace: RealtimeMemoryNamespaceSchema,
-		eventTypes: z.array(RealtimeMemoryEventTypeSchema).optional(),
-		replaySince: isoTimestamp.optional(),
-	}),
-	z.object({ type: z.literal('unsubscribe'), namespace: RealtimeMemoryNamespaceSchema }),
-	z.object({ type: z.literal('ping'), timestamp: isoTimestamp.optional() }),
-]);
-
-const RealtimeMemoryOutboundMessageSchema = z.discriminatedUnion('type', [
-	z.object({
-		type: z.literal('connected'),
-		connectionId: z.string(),
-		message: z.string(),
-		timestamp: isoTimestamp,
-		server: z
-			.object({
-				host: z.string().optional(),
-				port: z.number().optional(),
-			})
-			.optional(),
-	}),
-	z.object({
-		type: z.literal('subscriptions_restored'),
-		subscriptions: z.array(RealtimeMemoryNamespaceSchema),
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('subscribed'),
-		namespace: RealtimeMemoryNamespaceSchema,
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('unsubscribed'),
-		namespace: RealtimeMemoryNamespaceSchema,
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('change'),
-		event: RealtimeMemoryChangeEventSchema,
-		namespace: RealtimeMemoryNamespaceSchema,
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('error'),
-		message: z.string(),
-		timestamp: isoTimestamp,
-		code: z.string().optional(),
-		details: z.record(z.unknown()).optional(),
-	}),
-	z.object({
-		type: z.literal('warning'),
-		message: z.string(),
-		timestamp: isoTimestamp,
-		code: z.string().optional(),
-		details: z.record(z.unknown()).optional(),
-	}),
-	z.object({ type: z.literal('pong'), timestamp: isoTimestamp }),
-]);
-
-const RealtimeMemoryQueuedMessageSchema = z.object({
-	namespace: RealtimeMemoryNamespaceSchema,
-	payload: RealtimeMemoryOutboundMessageSchema,
-	timestamp: isoTimestamp,
-	expiresAt: isoTimestamp.optional(),
-});
-
-const RealtimeMemoryConnectionMetricsSchema = z.object({
-	messagesSent: z.number().int().nonnegative(),
-	messagesReceived: z.number().int().nonnegative(),
-	bytesSent: z.number().int().nonnegative(),
-	bytesReceived: z.number().int().nonnegative(),
-	queueDepth: z.number().int().nonnegative(),
-});
-
-const RealtimeMemoryConnectionStateSchema = z.object({
-	connectionId: z.string().min(1),
-	status: z.enum(['connecting', 'connected', 'authenticated', 'subscribed', 'closed']),
-	subscriptions: z.array(RealtimeMemoryNamespaceSchema),
-	connectedAt: isoTimestamp,
-	lastActivityAt: isoTimestamp.optional(),
-	isReconnecting: z.boolean().optional(),
-	metrics: RealtimeMemoryConnectionMetricsSchema.optional(),
-});
-
-const RealtimeMemoryConnectionSummarySchema = RealtimeMemoryConnectionStateSchema.extend({
-	metrics: RealtimeMemoryConnectionMetricsSchema,
-});
-
-const RealtimeMemoryMetricsSnapshotSchema = z.object({
-	snapshotId: z.string().min(1),
-	brand: z.literal('brAInwav'),
-	source: z.string().min(1),
-	timestamp: isoTimestamp,
-	description: z.string().min(1),
-	reason: z.string().min(1),
-	aggregate: z.object({
-		totalConnections: z.number().int().nonnegative(),
-		activeConnections: z.number().int().nonnegative(),
-		reconnections: z.number().int().nonnegative(),
-		messagesSent: z.number().int().nonnegative(),
-		messagesReceived: z.number().int().nonnegative(),
-		bytesSent: z.number().int().nonnegative(),
-		bytesReceived: z.number().int().nonnegative(),
-		lastActivityAt: isoTimestamp.optional(),
-		connectionTimestamps: z.array(isoTimestamp),
-	}),
-	connections: z.array(RealtimeMemoryConnectionSummarySchema),
-});
-
-// Export types for use in the file
-type RealtimeMemoryConnectionState = z.infer<typeof RealtimeMemoryConnectionStateSchema>;
-type RealtimeMemoryInboundMessage = z.infer<typeof RealtimeMemoryInboundMessageSchema>;
-type RealtimeMemoryOutboundMessage = z.infer<typeof RealtimeMemoryOutboundMessageSchema>;
-type RealtimeMemoryQueuedMessage = z.infer<typeof RealtimeMemoryQueuedMessageSchema>;
-type RealtimeMemoryMetricsSnapshot = z.infer<typeof RealtimeMemoryMetricsSnapshotSchema>;
 
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { RawData } from 'ws';
 import { WebSocket, WebSocketServer } from 'ws';
+import {
+        RealtimeMemoryChangeEventSchema,
+        RealtimeMemoryConnectionMetricsSchema,
+        RealtimeMemoryConnectionStateSchema,
+        RealtimeMemoryInboundMessageSchema,
+        type RealtimeMemoryInboundMessage,
+        RealtimeMemoryMetricsSnapshotSchema,
+        type RealtimeMemoryMetricsSnapshot,
+        RealtimeMemoryNamespaceSchema,
+        RealtimeMemoryOutboundMessageSchema,
+        type RealtimeMemoryOutboundMessage,
+        RealtimeMemoryQueuedMessageSchema,
+        type RealtimeMemoryQueuedMessage,
+} from '@cortex-os/contracts';
 import type { ChangeEvent, StreamingMemoryStore } from './store.streaming.js';
 
 type RequestContext = {
@@ -214,13 +83,13 @@ const createConnectionMetrics = () =>
 type ConnectionStateMetrics = ReturnType<typeof createConnectionMetrics>;
 
 type MetricsPublisher = {
-	publishRealtimeMetrics(snapshot: RealtimeMemoryMetricsSnapshot): Promise<void>;
+        publishRealtimeMetrics(event: RealtimeMemoryMetricsEvent): Promise<void>;
 };
 
 export interface ServerConfig {
-	port?: number;
-	host?: string;
-	enableAuth?: boolean;
+        port?: number;
+        host?: string;
+        enableAuth?: boolean;
 	authToken?: string;
 	maxConnections?: number;
 	connectionTimeout?: number;
@@ -239,9 +108,11 @@ export interface ServerConfig {
 				threshold?: number;
 		  }
 		| boolean;
-	metricsSnapshotDebounceMs?: number;
-	metricsSource?: string;
-	metricsDescription?: string;
+        metricsSnapshotDebounceMs?: number;
+        metricsSource?: string;
+        metricsDescription?: string;
+        metricsSnapshotsEnabled?: boolean;
+        metricsPublisher?: MetricsPublisher;
 }
 
 export interface ConnectionInfo {
@@ -290,39 +161,45 @@ export class RealtimeMemoryServer extends EventEmitter {
 	private metricsDebounceTimer?: NodeJS.Timeout;
 	private readonly pendingMetricsReasons = new Set<string>();
 
-	constructor(
-		private readonly streamingStore: StreamingMemoryStore,
-		private readonly config: ServerConfig = {},
-		metricsPublisher?: MetricsPublisher,
-	) {
-		super();
+        constructor(
+                private readonly streamingStore: StreamingMemoryStore,
+                private config: ServerConfig = {},
+                metricsPublisher?: MetricsPublisher,
+        ) {
+                super();
 
-		this.config = {
-			port: 3000,
-			host: 'localhost',
-			enableAuth: false,
-			maxConnections: 1000,
-			connectionTimeout: 300000, // 5 minutes
+                const { metricsPublisher: configPublisher, ...restConfig } = config ?? {};
+
+                this.config = {
+                        port: 3000,
+                        host: 'localhost',
+                        enableAuth: false,
+                        maxConnections: 1000,
+                        connectionTimeout: 300000, // 5 minutes
 			pingInterval: 30000, // 30 seconds
 			messageQueueTimeout: 300000, // 5 minutes
 			maxQueueSize: 1000,
 			enableCompression: true,
-			perMessageDeflate: {
-				zlibDeflateOptions: {
-					level: 3,
-				},
-				zlibInflateOptions: {
+                        perMessageDeflate: {
+                                zlibDeflateOptions: {
+                                        level: 3,
+                                },
+                                zlibInflateOptions: {
 					chunkSize: 10 * 1024,
 				},
 				threshold: 1024,
-			},
-			metricsSnapshotDebounceMs: 250,
-			metricsSource: 'brAInwav.realtime.memory',
-			metricsDescription: 'brAInwav RealtimeMemoryServer metrics snapshot',
-			...config,
-		};
-		this.metricsPublisher = metricsPublisher;
-	}
+                        },
+                        metricsSnapshotDebounceMs: 250,
+                        metricsSource: 'brAInwav.realtime.memory',
+                        metricsDescription: 'brAInwav RealtimeMemoryServer metrics snapshot',
+                        ...restConfig,
+                        metricsSnapshotsEnabled:
+                                restConfig.metricsSnapshotsEnabled ?? true,
+                };
+                const resolvedPublisher = metricsPublisher ?? configPublisher;
+                this.metricsPublisher = this.config.metricsSnapshotsEnabled ? resolvedPublisher : undefined;
+                this.config.metricsPublisher = this.metricsPublisher;
+        }
 
 	async start(port?: number): Promise<void> {
 		if (!port && !this.config.port) {
@@ -397,16 +274,18 @@ export class RealtimeMemoryServer extends EventEmitter {
 		this.emit('stopped');
 	}
 
-	setMetricsPublisher(publisher?: MetricsPublisher): void {
-		this.metricsPublisher = publisher;
-		this.pendingMetricsReasons.clear();
-		this.cancelMetricsDebounce();
-		if (!publisher) {
-			return;
-		}
-		if (this.connections.size > 0) {
-			this.scheduleMetricsSnapshot('metrics-publisher-attached');
-		}
+        setMetricsPublisher(publisher?: MetricsPublisher): void {
+                const snapshotsEnabled = this.config.metricsSnapshotsEnabled ?? true;
+                this.metricsPublisher = snapshotsEnabled ? publisher : undefined;
+                this.config.metricsPublisher = this.metricsPublisher;
+                this.pendingMetricsReasons.clear();
+                this.cancelMetricsDebounce();
+                if (!this.metricsPublisher) {
+                        return;
+                }
+                if (this.connections.size > 0) {
+                        this.scheduleMetricsSnapshot('metrics-publisher-attached');
+                }
 	}
 
 	private handleConnection(ws: WebSocket, req: RequestContext): void {
@@ -986,10 +865,10 @@ export class RealtimeMemoryServer extends EventEmitter {
 		});
 	}
 
-	private scheduleMetricsSnapshot(reason: string): void {
-		if (!this.metricsPublisher) {
-			return;
-		}
+        private scheduleMetricsSnapshot(reason: string): void {
+                if (!this.metricsPublisher || this.config.metricsSnapshotsEnabled === false) {
+                        return;
+                }
 		this.pendingMetricsReasons.add(reason);
 		if (this.metricsDebounceTimer) {
 			return;
@@ -1002,7 +881,7 @@ export class RealtimeMemoryServer extends EventEmitter {
 			if (reasons.length === 0) {
 				return;
 			}
-			void this.publishMetricsSnapshot(reasons);
+                        void this.publishMetricsEvent(reasons);
 		}, debounceMs);
 	}
 
@@ -1021,7 +900,7 @@ export class RealtimeMemoryServer extends EventEmitter {
 		if (reasons.size === 0) {
 			return;
 		}
-		await this.publishMetricsSnapshot(Array.from(reasons));
+                await this.publishMetricsEvent(Array.from(reasons));
 	}
 
 	private cancelMetricsDebounce(): void {
@@ -1032,38 +911,39 @@ export class RealtimeMemoryServer extends EventEmitter {
 		this.metricsDebounceTimer = undefined;
 	}
 
-	private async publishMetricsSnapshot(reasons: string[]): Promise<void> {
-		if (!this.metricsPublisher) {
-			return;
-		}
-		const timestamp = nowIso();
-		const snapshot = this.createMetricsSnapshot(reasons, timestamp);
-		try {
-			await this.metricsPublisher.publishRealtimeMetrics(snapshot);
-		} catch (error) {
-			this.emit('metricsError', { error, snapshot });
-		}
-	}
+        private async publishMetricsEvent(reasons: string[]): Promise<void> {
+                if (!this.metricsPublisher || this.config.metricsSnapshotsEnabled === false) {
+                        return;
+                }
+                const timestamp = nowIso();
+                const event = this.createMetricsEvent(reasons, timestamp);
+                try {
+                        await this.metricsPublisher.publishRealtimeMetrics(event);
+                } catch (error) {
+                        this.emit('metricsError', { error, event });
+                }
+        }
 
-	private createMetricsSnapshot(
-		reasons: string[],
-		timestamp: string,
-	): RealtimeMemoryMetricsSnapshot {
-		const aggregate = this.buildAggregateMetrics();
-		const connections = this.buildConnectionSummaries();
-		const snapshot = {
-			snapshotId: `metrics-${randomUUID()}`,
-			brand: 'brAInwav' as const,
-			source: this.config.metricsSource ?? 'brAInwav.realtime.memory',
-			timestamp,
-			description:
-				this.config.metricsDescription ?? 'brAInwav RealtimeMemoryServer metrics snapshot',
-			reason: reasons.length > 0 ? reasons.join('|') : 'unspecified',
-			aggregate,
-			connections,
-		};
-		return RealtimeMemoryMetricsSnapshotSchema.parse(snapshot);
-	}
+        private createMetricsEvent(
+                reasons: string[],
+                timestamp: string,
+        ): RealtimeMemoryMetricsEvent {
+                const aggregate = this.buildAggregateMetrics();
+                const connections = this.buildConnectionSummaries();
+                const snapshot = {
+                        type: 'memory.realtime.metrics' as const,
+                        snapshotId: `metrics-${randomUUID()}`,
+                        brand: 'brAInwav' as const,
+                        source: this.config.metricsSource ?? 'brAInwav.realtime.memory',
+                        timestamp,
+                        description:
+                                this.config.metricsDescription ?? 'brAInwav RealtimeMemoryServer metrics snapshot',
+                        reason: reasons.length > 0 ? reasons.join('|') : 'unspecified',
+                        aggregate,
+                        connections,
+                };
+                return RealtimeMemoryMetricsEventSchema.parse(snapshot);
+        }
 
 	private buildAggregateMetrics(): RealtimeMemoryMetricsSnapshot['aggregate'] {
 		const lastActivityAt =
