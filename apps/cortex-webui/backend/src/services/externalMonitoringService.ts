@@ -106,20 +106,8 @@ function resolveErrorReason(error: unknown): string {
         if (error instanceof Error) {
                 return error.message;
         }
-
-        if (typeof error === 'object' && error !== null) {
-                const potentialMessage = (error as { message?: unknown }).message;
-                if (typeof potentialMessage === 'string' && potentialMessage.trim() !== '') {
-                        return potentialMessage;
-                }
-
-                const potentialName = (error as { name?: unknown }).name;
-                if (typeof potentialName === 'string' && potentialName.trim() !== '') {
-                        return potentialName;
-                }
-        }
-
-        return 'unknown error';
+        const str = String(error);
+        return str && str !== '[object Object]' ? str : 'unknown error';
 }
 
 function buildDatadogBody(
