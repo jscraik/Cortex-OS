@@ -93,7 +93,7 @@ describe('runCommand', () => {
                 vi.useRealTimers();
         });
 
-        it('emits run ids via crypto.randomUUID and merges command metadata', async () => {
+        it('emits run IDs via crypto.randomUUID and merges command metadata', async () => {
                 const expectedRunId = `run-${Date.now().toString(36)}-aaaaaaaa`;
                 const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
                 const command = {
