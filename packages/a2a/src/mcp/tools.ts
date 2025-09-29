@@ -431,18 +431,13 @@ export function createA2AMcpTools(
   const manager = opts.taskManager ?? defaultTaskManager;
   const registry = opts.eventStreamRegistry ?? defaultStreamRegistry;
 
-  const queueTool = manager === defaultTaskManager
-    ? a2aQueueMessageTool
-    : createQueueMessageTool({ taskManager: manager });
+  const queueTool = createQueueMessageTool({ taskManager: manager });
 
-  const streamTool =
-    manager === defaultTaskManager && registry === defaultStreamRegistry && !opts.streamOptions
-      ? a2aEventStreamSubscribeTool
-      : createA2AEventStreamSubscribeTool({
-          taskManager: manager,
-          registry,
-          streamOptions: opts.streamOptions,
-        });
+  const streamTool = createA2AEventStreamSubscribeTool({
+    taskManager: manager,
+    registry,
+    streamOptions: opts.streamOptions,
+  });
 
   const outboxTool = createA2AOutboxSyncTool({
     outboxService: opts.outboxService,
