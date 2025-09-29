@@ -1,4 +1,4 @@
-import type { ContractSubagent } from '@cortex-os/agents';
+import type { ContractSubagent, BoundKernelTool } from '@cortex-os/agents';
 import type { HookResult } from '@cortex-os/hooks';
 import { AIMessage, type BaseMessage, ToolMessage } from '@langchain/core/messages';
 import { describe, expect, it, vi } from 'vitest';
@@ -13,6 +13,7 @@ import {
 import type { N0Session } from '../langgraph/n0-state.js';
 
 describe('buildN0 orchestration graph', () => {
+
         it('short-circuits to slash command execution', async () => {
                 const runSlash = vi.fn().mockResolvedValue({ text: 'brAInwav command output' });
                 const model: ToolCallableModel = new FailingModel();
@@ -30,11 +31,13 @@ describe('buildN0 orchestration graph', () => {
                 expect(runSlash).toHaveBeenCalledTimes(1);
         });
 
+
         it('executes tool calls and returns model output', async () => {
                 const schema = z.object({ text: z.string() });
                 const tool: ToolDefinition = {
                         name: 'test.echo',
                         description: 'Echo tool',
+
                         schema,
                         async execute(input) {
                                 const parsed = schema.parse(input);
@@ -94,10 +97,12 @@ describe('buildN0 orchestration graph', () => {
                         createOptions({
                                 runSlash,
                                 kernelBinding,
+
                         }),
                 );
 
                 const session = createSession();
+
                 const result = await graph.invoke({ input: '/deploy main', session });
 
                 expect(result.output).toBe('metadata result');
@@ -106,6 +111,7 @@ describe('buildN0 orchestration graph', () => {
                 expect(result.ctx?.commandModel).toBe('cortex-deploy');
                 expect(result.ctx?.commandAllowedTools).toEqual(['kernel.bash']);
                 expect(result.ctx?.kernelToolkit).toEqual(kernelBinding.metadata);
+
         });
 });
 
@@ -115,6 +121,7 @@ function createOptions(overrides: Partial<BuildN0Options>): BuildN0Options {
                 hooks: overrides.hooks ?? new NoopHooks(),
                 runSlash: overrides.runSlash,
                 runSlashOptions: overrides.runSlashOptions,
+
                 kernelBinding:
                         overrides.kernelBinding ??
                         ({
@@ -130,12 +137,14 @@ function createOptions(overrides: Partial<BuildN0Options>): BuildN0Options {
                                 },
                         } satisfies BuildN0Options['kernelBinding']),
                 kernelTools: overrides.kernelTools,
+
                 kernelOptions: overrides.kernelOptions,
                 subagents: overrides.subagents ?? new Map<string, ContractSubagent>(),
                 orchestratorTools: overrides.orchestratorTools ?? [],
                 disableSubagentDiscovery: true,
                 toolAllowList: overrides.toolAllowList,
                 toolConcurrency: overrides.toolConcurrency,
+
                 systemPrompt: overrides.systemPrompt,
                 planResolver: overrides.planResolver,
                 compaction: overrides.compaction,
