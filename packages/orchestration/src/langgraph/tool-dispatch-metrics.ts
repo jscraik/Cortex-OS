@@ -110,7 +110,7 @@ export function recordDispatchOutcome(
                 session_id: attributes.sessionId,
                 outcome,
                 tags: attributes.tags,
-        } as Record<string, string | undefined>;
+        };
 
         if (outcome === 'skipped') {
                 skippedCounter.add(1, labels);
