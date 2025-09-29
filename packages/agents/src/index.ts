@@ -56,11 +56,7 @@ export {
 	observability,
 	TracingSystem,
 } from './lib/observability.js';
-export {
-	createSecurityMiddleware,
-	InputSanitizer,
-	LogRedactor,
-} from './lib/security.js';
+export { createSecurityMiddleware, InputSanitizer, LogRedactor } from './lib/security.js';
 // Export types
 export type * from './lib/types.js';
 // Export LangGraphJS Master Agent
