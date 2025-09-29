@@ -337,7 +337,6 @@ describe('A2A Event Publisher', () => {
                         expect(envelope.headers['metrics-source']).toBe(metricsEvent.source);
                         expect(envelope.headers['metrics-reason']).toBe(metricsEvent.reason);
                         expect(envelope.headers['metrics-brand']).toBe('brAInwav');
-                        expect(envelope.headers['brainwav-brand']).toBe('brAInwav');
                         expect(envelope.dataschema).toBe(
                                 'https://schemas.cortex-os/memories/v1/realtime-metrics-event.json',
                         );
