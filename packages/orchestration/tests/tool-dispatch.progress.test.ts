@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { N0Session } from '../src/langgraph/n0-state.js';
 import { dispatchTools, type ToolDispatchJob } from '../src/langgraph/tool-dispatch.js';
+import { resetDispatchMetricsSnapshot } from '../src/langgraph/tool-dispatch-metrics.js';
 
 const session: N0Session = {
 	id: 'progress-session',
@@ -10,7 +11,11 @@ const session: N0Session = {
 };
 
 describe('dispatchTools progress events', () => {
-	it('emits start and settle notifications', async () => {
+        beforeEach(() => {
+                resetDispatchMetricsSnapshot();
+        });
+
+        it('emits start and settle notifications', async () => {
 		const events: Array<{ type: string; name: string; status?: string }> = [];
 		const jobs: Array<ToolDispatchJob<string>> = [
 			{

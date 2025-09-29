@@ -31,11 +31,13 @@ export type { A2AOutboxIntegration } from './outbox-integration.js';
 // Outbox integration
 export { createA2AOutboxIntegration } from './outbox-integration.js';
 export type {
-	CleanupResultMetrics,
-	DlqStatsMetrics,
-	OutboxService,
-	OutboxSyncAction,
-	ProcessResultMetrics,
+        CleanupResultMetrics,
+        DlqStatsMetrics,
+        OutboxMetricsPayload,
+        OutboxMetricsRecorder,
+        OutboxService,
+        OutboxSyncAction,
+        ProcessResultMetrics,
 } from './outbox-service.js';
 // Outbox service scaffold (domain abstraction for MCP / future metrics)
 export { createInMemoryOutboxService } from './outbox-service.js';
@@ -76,13 +78,18 @@ export {
 export { SqliteOutboxRepository } from './sqlite-outbox-repository.js';
 // Streaming utilities
 export { createTaskEventStream } from './streaming.js';
+export type { TaskEventStreamOptions } from './streaming.js';
+export { TaskEventStreamRegistry } from './streaming-registry.js';
 export type { Task, TaskProcessor, TaskStore } from './task-manager.js';
 // Re-export task management
 export {
-	createTaskManager,
-	EchoTaskProcessor,
-	InMemoryTaskStore,
-	TaskManager,
+        createTaskManager,
+        EchoTaskProcessor,
+        InMemoryTaskStore,
+        TaskManager,
 } from './task-manager.js';
+
+export type { EventStreamToolDependencies } from './mcp/tools.js';
+export { createA2AEventStreamSubscribeTool } from './mcp/tools.js';
 
 // handleA2A is already exported above in the main handler block

@@ -1,9 +1,10 @@
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
-	type OutboxConfig,
-	type OutboxMessage,
-	OutboxMessageStatus,
-	type OutboxRepository,
+        type OutboxConfig,
+        type OutboxMessage,
+        OutboxMessageStatus,
+        type OutboxProcessingResult,
+        type OutboxRepository,
 } from '@cortex-os/a2a-contracts/outbox-types';
 import { DeadLetterQueue, InMemoryDeadLetterStore } from '@cortex-os/a2a-core/dlq';
 import {
@@ -21,25 +22,25 @@ import { withSpan } from '@cortex-os/telemetry';
  */
 
 export interface A2AOutboxIntegration {
-	/**
-	 * Publish a message through the outbox
-	 */
-	publish: (envelope: Envelope) => Promise<void>;
+        /**
+         * Publish a message through the outbox
+         */
+        publish: (envelope: Envelope) => Promise<void>;
 
 	/**
 	 * Publish multiple messages through the outbox
 	 */
 	publishBatch: (envelopes: Envelope[]) => Promise<void>;
 
-	/**
-	 * Process pending outbox messages
-	 */
-	processPending: () => Promise<void>;
+        /**
+         * Process pending outbox messages
+         */
+        processPending: () => Promise<OutboxProcessingResult>;
 
-	/**
-	 * Process retry messages
-	 */
-	processRetries: () => Promise<void>;
+        /**
+         * Process retry messages
+         */
+        processRetries: () => Promise<OutboxProcessingResult>;
 
 	/**
 	 * Start background processing
@@ -56,10 +57,10 @@ export interface A2AOutboxIntegration {
 	 */
 	cleanup: (olderThanDays?: number) => Promise<number>;
 
-	/**
-	 * Get DLQ statistics
-	 */
-	getDlqStats: () => Promise<any>;
+        /**
+         * Get DLQ statistics
+         */
+        getDlqStats: () => Promise<{ size: number; details: Record<string, unknown> }>;
 }
 
 /**
@@ -140,7 +141,7 @@ export function createA2AOutboxIntegration(
 				await processor.processPending();
 			} catch (error) {
 				// If outbox fails, fallback to direct publish
-				console.warn('Outbox failed, falling back to direct publish', error);
+                                console.warn('brAInwav Outbox failed, falling back to direct publish', error);
 				await transport.publish(envelope);
 			}
 		});
@@ -164,7 +165,7 @@ export function createA2AOutboxIntegration(
 				await processor.processPending();
 			} catch (error) {
 				// If outbox fails, fallback to direct publish
-				console.warn('Outbox batch failed, falling back to direct publish', error);
+                                console.warn('brAInwav Outbox batch failed, falling back to direct publish', error);
 				await Promise.all(envelopes.map((env) => transport.publish(env)));
 			}
 		});
@@ -173,20 +174,20 @@ export function createA2AOutboxIntegration(
 	/**
 	 * Process pending messages
 	 */
-	async function processPending(): Promise<void> {
-		return withSpan('a2a.outbox.processPending', async () => {
-			await processor.processPending();
-		});
-	}
+        async function processPending(): Promise<OutboxProcessingResult> {
+                return withSpan('a2a.outbox.processPending', async () => {
+                        return await processor.processPending();
+                });
+        }
 
-	/**
-	 * Process retry messages
-	 */
-	async function processRetries(): Promise<void> {
-		return withSpan('a2a.outbox.processRetries', async () => {
-			await processor.processRetries();
-		});
-	}
+        /**
+         * Process retry messages
+         */
+        async function processRetries(): Promise<OutboxProcessingResult> {
+                return withSpan('a2a.outbox.processRetries', async () => {
+                        return await processor.processRetries();
+                });
+        }
 
 	/**
 	 * Start background processing
@@ -223,11 +224,17 @@ export function createA2AOutboxIntegration(
 	/**
 	 * Get DLQ statistics
 	 */
-	async function getDlqStats() {
-		return withSpan('a2a.outbox.getDlqStats', async () => {
-			return await dlq.getStats();
-		});
-	}
+        async function getDlqStats() {
+                return withSpan('a2a.outbox.getDlqStats', async () => {
+                        const stats = await dlq.getStats();
+                        return {
+                                size: (stats as { total?: number; size?: number }).total ??
+                                        (stats as { size?: number }).size ??
+                                        0,
+                                details: stats as Record<string, unknown>,
+                        };
+                });
+        }
 
 	return {
 		publish,
