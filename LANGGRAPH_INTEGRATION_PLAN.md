@@ -126,7 +126,7 @@ Each phase documents:
 - ✅ Preserved the langgraph-only TypeScript surface (dedicated `tsconfig`) to keep the orchestration package type checking isolated from legacy directories.
 
 #### Fixes Outstanding
-- [x] Backfill additional cross-package assertions that prove the shared state contracts between agents, kernel, and orchestration stay aligned when new fields are introduced. (See `packages/orchestration/tests/n0-state-alignment.contract.test.ts`.)
+- [x] Backfill additional cross-package assertions that prove the shared state contracts between agents, kernel, and orchestration stay aligned when new fields are introduced. Strengthened `packages/orchestration/tests/n0-state-alignment.contract.test.ts` to lock optional session fields (e.g., `brainwavSession`) and override context keys (thermal, delegation) into the regression suite.
 
 ### Phase 1 Validation
 

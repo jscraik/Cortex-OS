@@ -1,5 +1,6 @@
 import type { A2AOutboxIntegration } from '@cortex-os/a2a';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { RealtimeMemoryMetricsEventSchema } from '../../../../libs/typescript/contracts/src/memory-realtime.js';
 import { MemoryA2AEventPublisher } from '../../src/a2a/event-publisher.js';
 
 describe('A2A Event Publisher', () => {
@@ -205,7 +206,7 @@ describe('A2A Event Publisher', () => {
 
 			const envelope = mockOutbox.publishBatch.mock.calls[0][0][0];
 
-			expect(envelope.id).toMatch(/^evt-test-id-\d+-[a-z0-9]+$/);
+                        expect(envelope.id).toMatch(/^evt-memory-created-[0-9a-f-]{8}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{12}$/i);
 			expect(envelope.type).toBe('memories.memory.created');
 			expect(envelope.source).toBe('test-memories');
 			expect(envelope.specversion).toBe('1.0');
@@ -219,7 +220,7 @@ describe('A2A Event Publisher', () => {
 		});
 	});
 
-	describe('Convenience Methods', () => {
+        describe('Convenience Methods', () => {
 		it('should provide typed convenience methods', async () => {
 			// Use a larger batch size to prevent immediate flushing
 			const largeBatchPublisher = new MemoryA2AEventPublisher({
@@ -277,9 +278,70 @@ describe('A2A Event Publisher', () => {
 			});
 
 			// All events should be queued
-			expect(largeBatchPublisher.eventQueue).toHaveLength(6);
-		});
-	});
+                        expect(largeBatchPublisher.eventQueue).toHaveLength(6);
+                });
+
+                it('publishes realtime metrics events with branded envelope metadata', async () => {
+                        const metricsPublisher = new MemoryA2AEventPublisher({
+                                source: 'test-memories',
+                                enabled: true,
+                                batchSize: 1,
+                        });
+                        metricsPublisher.setOutbox(mockOutbox);
+
+                        const timestamp = new Date().toISOString();
+                        const metricsEvent = RealtimeMemoryMetricsEventSchema.parse({
+                                type: 'memory.realtime.metrics',
+                                snapshotId: 'metrics-123',
+                                brand: 'brAInwav',
+                                source: 'brAInwav.realtime.memory',
+                                timestamp,
+                                description: 'brAInwav realtime metrics snapshot for vitest',
+                                reason: 'connection-established',
+                                aggregate: {
+                                        totalConnections: 1,
+                                        activeConnections: 1,
+                                        reconnections: 0,
+                                        messagesSent: 2,
+                                        messagesReceived: 3,
+                                        bytesSent: 512,
+                                        bytesReceived: 256,
+                                        lastActivityAt: timestamp,
+                                        connectionTimestamps: [timestamp],
+                                },
+                                connections: [
+                                        {
+                                                connectionId: 'client-a',
+                                                status: 'connected',
+                                                subscriptions: ['default'],
+                                                connectedAt: timestamp,
+                                                lastActivityAt: timestamp,
+                                                metrics: {
+                                                        messagesSent: 2,
+                                                        messagesReceived: 3,
+                                                        bytesSent: 512,
+                                                        bytesReceived: 256,
+                                                        queueDepth: 0,
+                                                },
+                                        },
+                                ],
+                        });
+
+                        await metricsPublisher.publishRealtimeMetrics(metricsEvent);
+
+                        expect(mockOutbox.publishBatch).toHaveBeenCalledTimes(1);
+                        const envelope = mockOutbox.publishBatch.mock.calls[0][0][0];
+                        expect(envelope.type).toBe('memories.memory.realtime.metrics');
+                        expect(envelope.subject).toBe(metricsEvent.snapshotId);
+                        expect(envelope.data).toEqual(metricsEvent);
+                        expect(envelope.headers['metrics-source']).toBe(metricsEvent.source);
+                        expect(envelope.headers['metrics-reason']).toBe(metricsEvent.reason);
+                        expect(envelope.headers['metrics-brand']).toBe('brAInwav');
+                        expect(envelope.dataschema).toBe(
+                                'https://schemas.cortex-os/memories/v1/realtime-metrics-event.json',
+                        );
+                });
+        });
 
 	describe('Lifecycle Management', () => {
 		it('should start and stop the publisher', async () => {

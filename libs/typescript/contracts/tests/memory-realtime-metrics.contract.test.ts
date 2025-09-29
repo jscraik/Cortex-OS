@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-	RealtimeMemoryConnectionSummarySchema,
-	RealtimeMemoryMetricsSnapshotSchema,
+        RealtimeMemoryConnectionSummarySchema,
+        RealtimeMemoryMetricsEventSchema,
+        RealtimeMemoryMetricsSnapshotSchema,
 } from '../src/memory-realtime.js';
 
 const buildConnectionSummary = () => {
@@ -28,8 +29,8 @@ const buildConnectionSummary = () => {
 };
 
 describe('RealtimeMemoryMetricsSnapshotSchema', () => {
-	it('accepts contract-compliant realtime metrics snapshots', () => {
-		const timestamp = new Date().toISOString();
+        it('accepts contract-compliant realtime metrics snapshots', () => {
+                const timestamp = new Date().toISOString();
 		const snapshot = {
 			snapshotId: 'snapshot-123',
 			brand: 'brAInwav' as const,
@@ -85,7 +86,63 @@ describe('RealtimeMemoryMetricsSnapshotSchema', () => {
 			],
 		};
 
-		const result = RealtimeMemoryMetricsSnapshotSchema.safeParse(invalidSnapshot);
-		expect(result.success).toBe(false);
-	});
+                const result = RealtimeMemoryMetricsSnapshotSchema.safeParse(invalidSnapshot);
+                expect(result.success).toBe(false);
+        });
+});
+
+describe('RealtimeMemoryMetricsEventSchema', () => {
+        it('validates metrics events with brAInwav branding and type metadata', () => {
+                const timestamp = new Date().toISOString();
+                const event = {
+                        type: 'memory.realtime.metrics' as const,
+                        snapshotId: 'snapshot-123',
+                        brand: 'brAInwav' as const,
+                        source: 'brAInwav.memories.realtime',
+                        timestamp,
+                        description: 'brAInwav realtime metrics payload for vitest validation',
+                        reason: 'connection-established',
+                        aggregate: {
+                                totalConnections: 1,
+                                activeConnections: 1,
+                                reconnections: 0,
+                                messagesSent: 1,
+                                messagesReceived: 0,
+                                bytesSent: 512,
+                                bytesReceived: 0,
+                                lastActivityAt: timestamp,
+                                connectionTimestamps: [timestamp],
+                        },
+                        connections: [buildConnectionSummary()],
+                };
+
+                expect(() => RealtimeMemoryMetricsEventSchema.parse(event)).not.toThrow();
+        });
+
+        it('rejects events without metrics payloads or brand metadata', () => {
+                const timestamp = new Date().toISOString();
+                const invalidEvent = {
+                        type: 'memory.realtime.metrics' as const,
+                        snapshotId: 'snapshot-123',
+                        brand: 'OtherBrand',
+                        source: 'realtime.memories',
+                        timestamp,
+                        description: '',
+                        reason: 'connection-established',
+                        aggregate: {
+                                totalConnections: 0,
+                                activeConnections: 0,
+                                reconnections: 0,
+                                messagesSent: 0,
+                                messagesReceived: 0,
+                                bytesSent: 0,
+                                bytesReceived: 0,
+                                connectionTimestamps: [],
+                        },
+                        connections: [],
+                };
+
+                const result = RealtimeMemoryMetricsEventSchema.safeParse(invalidEvent);
+                expect(result.success).toBe(false);
+        });
 });

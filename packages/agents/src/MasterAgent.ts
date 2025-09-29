@@ -173,15 +173,15 @@ export const createMasterAgentGraph = (config: {
 		const errors: string[] = [];
 		try {
 			const mlx: MLXAdapterApi = createMLXAdapter();
-			if (await mlx.isAvailable()) {
-				jobs.push({
-					id: `mlx:${agent}`,
-					name: 'mlx.generateChat',
-					input: conversation,
-					estimateTokens: 2048,
-					metadata: { provider: 'mlx', tags: ['agents', 'mlx'] },
-					execute: async () => mlx.generateChat({ messages: conversation }),
-				});
+                        if (await mlx.isAvailable()) {
+                                jobs.push({
+                                        id: `mlx:${agent}`,
+                                        name: 'mlx.generateChat',
+                                        input: conversation,
+                                        estimateTokens: 2048,
+                                        metadata: { provider: 'mlx', tags: ['agents', 'mlx'], brand: 'brAInwav' },
+                                        execute: async () => mlx.generateChat({ messages: conversation }),
+                                });
 			} else {
 				errors.push('brAInwav MLX adapter unavailable');
 			}
@@ -192,14 +192,19 @@ export const createMasterAgentGraph = (config: {
 			const specialization = agents.get(agent)?.specialization ?? taskType ?? 'code-analysis';
 			const modelHint = process.env.BRAINWAV_OLLAMA_MODEL ?? specialization;
 			const ollama: OllamaAdapterApi = createOllamaAdapter();
-			jobs.push({
-				id: `ollama:${agent}`,
-				name: 'ollama.generateChat',
-				input: conversation,
-				estimateTokens: 2048,
-				metadata: { provider: 'ollama', tags: ['agents', 'ollama'], model: modelHint },
-				execute: async () => ollama.generateChat(conversation, modelHint),
-			});
+                        jobs.push({
+                                id: `ollama:${agent}`,
+                                name: 'ollama.generateChat',
+                                input: conversation,
+                                estimateTokens: 2048,
+                                metadata: {
+                                        provider: 'ollama',
+                                        tags: ['agents', 'ollama'],
+                                        model: modelHint,
+                                        brand: 'brAInwav',
+                                },
+                                execute: async () => ollama.generateChat(conversation, modelHint),
+                        });
 		} catch (error) {
 			errors.push(formatAdapterError('ollama', error));
 		}

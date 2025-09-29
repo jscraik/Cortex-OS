@@ -1,4 +1,4 @@
-import type { RealtimeMemoryMetricsSnapshot } from '@cortex-os/contracts';
+import type { RealtimeMemoryMetricsEvent } from '@cortex-os/contracts';
 import type { Memory } from '../domain/types.js';
 
 /**
@@ -104,7 +104,7 @@ export interface MemoryErrorData {
 	context?: Record<string, unknown>;
 }
 
-export type MemoryRealtimeMetricsData = RealtimeMemoryMetricsSnapshot;
+export type MemoryRealtimeMetricsData = RealtimeMemoryMetricsEvent;
 
 /**
  * A2A event publisher configuration

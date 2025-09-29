@@ -173,14 +173,20 @@ export const RealtimeMemoryConnectionSummarySchema = RealtimeMemoryConnectionSta
 });
 
 export const RealtimeMemoryMetricsSnapshotSchema = z.object({
-	snapshotId: z.string().min(1),
-	brand: z.literal('brAInwav'),
-	source: z.string().min(1),
-	timestamp: isoTimestamp,
-	description: z.string().min(1),
-	reason: z.string().min(1),
-	aggregate: RealtimeMemoryMetricsAggregateSchema,
-	connections: z.array(RealtimeMemoryConnectionSummarySchema),
+        snapshotId: z.string().min(1),
+        brand: z.literal('brAInwav'),
+        source: z.string().min(1),
+        timestamp: isoTimestamp,
+        description: z.string().min(1),
+        reason: z.string().min(1),
+        aggregate: RealtimeMemoryMetricsAggregateSchema,
+        connections: z.array(RealtimeMemoryConnectionSummarySchema),
 });
 
 export type RealtimeMemoryMetricsSnapshot = z.infer<typeof RealtimeMemoryMetricsSnapshotSchema>;
+
+export const RealtimeMemoryMetricsEventSchema = RealtimeMemoryMetricsSnapshotSchema.extend({
+        type: z.literal('memory.realtime.metrics'),
+});
+
+export type RealtimeMemoryMetricsEvent = z.infer<typeof RealtimeMemoryMetricsEventSchema>;

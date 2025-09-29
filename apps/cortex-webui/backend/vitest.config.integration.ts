@@ -33,11 +33,15 @@ export default defineConfig({
 			'vitest-sonar-reporter': 'test-results/sonar-report.xml',
 		},
 	},
-	resolve: {
-		alias: {
-			'@': resolve(__dirname, 'src'),
-			'@/test': resolve(__dirname, 'src/test'),
-			'@/db': resolve(__dirname, 'src/db'),
-		},
-	},
+        resolve: {
+                alias: {
+                        '@': resolve(__dirname, 'src'),
+                        '@/test': resolve(__dirname, 'src/test'),
+                        '@/db': resolve(__dirname, 'src/db'),
+                        '@cortex-os/telemetry': resolve(
+                                __dirname,
+                                'src/__tests__/mocks/telemetry.ts',
+                        ),
+                },
+        },
 });
