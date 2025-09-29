@@ -7,7 +7,7 @@ import {
 	RealtimeMemoryMetricsSnapshotSchema,
 	type RealtimeMemoryOutboundMessage,
 	RealtimeMemoryOutboundMessageSchema,
-} from '../../../../libs/typescript/contracts/src/memory-realtime.js';
+} from '@cortex-os/contracts';
 import { RealtimeMemoryServer } from '../../src/adapters/server.realtime.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import { StreamingMemoryStore } from '../../src/adapters/store.streaming.js';
