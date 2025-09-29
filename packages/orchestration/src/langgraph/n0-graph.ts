@@ -9,10 +9,10 @@ import {
 	subagentTools,
 } from '@cortex-os/agents';
 import {
-	runSlash as defaultRunSlash,
-	parseSlash,
-	type RunSlashOptions,
-	type SlashParseResult,
+        runSlash as defaultRunSlash,
+        parseSlash,
+        type RunSlashOptions,
+        type SlashParseResult,
 } from '@cortex-os/commands';
 import { CortexHooks, type HookContext, type HookEvent, type HookResult } from '@cortex-os/hooks';
 import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/src/loaders.js';
@@ -124,9 +124,14 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
         const compactionConfig = options.compaction ?? {};
         const dispatchHooks = options.toolHooks ?? createToolHookAdapter(hooks);
 
-        const kernelDefinitions = (options.kernelTools ?? bindKernelTools(options.kernelOptions ?? {})).map((tool) =>
-                kernelToolToDefinition(tool),
-        );
+        const kernelTools = options.kernelTools ?? bindKernelTools(options.kernelOptions ?? {});
+        const kernelDefinitions = kernelTools.map((tool) => kernelToolToDefinition(tool));
+        const renderDefaults = pickDefined({
+                runBashSafe: createKernelRunBash(kernelTools),
+                readFileCapped: createKernelReadFile(kernelTools),
+                fileAllowlist: deriveKernelFileAllowlist(options.kernelOptions),
+                maxIncludeBytes: options.kernelOptions?.filesystem?.maxBytes,
+        });
 
         let subagentManager: LoadedSubagents['manager'] | undefined;
         let subagentMap: Map<string, ContractSubagent> = options.subagents ?? new Map();
@@ -174,8 +179,9 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                                         modelStore: options.runSlashOptions?.session?.modelStore,
                                 },
                                 renderContext: {
+                                        ...renderDefaults,
+                                        ...(options.runSlashOptions?.renderContext ?? {}),
                                         cwd: state.session.cwd,
-                                        ...options.runSlashOptions?.renderContext,
                                 },
                         };
                         const result = await runSlashImpl(parsed, slashOptions);
@@ -514,20 +520,121 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 }
 
 function ensureHooks(
-	hooks: HookRunner | undefined,
-	options?: HookLoadOptions,
+        hooks: HookRunner | undefined,
+        options?: HookLoadOptions,
 ): Promise<HookRunner> {
-	if (hooks) {
-		return Promise.resolve(hooks);
-	}
-	const instance = new CortexHooks();
-	return instance.init(options).then(() => instance);
+        if (hooks) {
+                return Promise.resolve(hooks);
+        }
+        const instance = new CortexHooks();
+        return instance.init(options).then(() => instance);
+}
+
+type KernelRunBash = (
+        cmd: string,
+        allowlist: string[],
+) => Promise<{ stdout: string; stderr: string; code: number }>;
+
+type KernelReadFile = (target: string, maxBytes: number, allowlist: string[]) => Promise<string>;
+
+function createKernelRunBash(tools: BoundKernelTool[]): KernelRunBash | undefined {
+        const tool = findKernelTool(tools, ['kernel.bash', 'shell.exec']);
+        if (!tool) return undefined;
+        return async (cmd: string, allowlist: string[]) => {
+                // TODO: Use allowlist for command validation if needed
+                const payload = await tool.execute({ command: cmd });
+                const stdout =
+                        typeof payload === 'object' && payload && 'stdout' in payload && typeof payload.stdout === 'string'
+                                ? payload.stdout
+                                : '';
+                const stderr =
+                        typeof payload === 'object' && payload && 'stderr' in payload && typeof payload.stderr === 'string'
+                                ? payload.stderr
+                                : '';
+                return {
+                        stdout,
+                        stderr,
+                        code: normaliseKernelExitCode(payload),
+                } satisfies { stdout: string; stderr: string; code: number };
+        };
+}
+
+function createKernelReadFile(tools: BoundKernelTool[]): KernelReadFile | undefined {
+        const tool = findKernelTool(tools, ['kernel.fs.read', 'kernel.filesystem.read', 'fs.read']);
+        if (!tool) return undefined;
+        return async (target, maxBytes, allowlist) => {
+                // If allowlist is provided, check if target is allowed
+                if (Array.isArray(allowlist) && allowlist.length > 0) {
+                        const isAllowed = allowlist.some((allowedPath) => target.startsWith(allowedPath));
+                        if (!isAllowed) {
+                                throw new Error(`Access to file "${target}" is not allowed by the allowlist.`);
+                        }
+                }
+                const payload = await tool.execute(
+                        tool.name === 'fs.read' ? { path: target } : { path: target, maxBytes },
+                );
+                const content = extractKernelFileContent(payload);
+                return typeof maxBytes === 'number' ? content.slice(0, maxBytes) : content;
+        };
+}
+
+function deriveKernelFileAllowlist(options?: BindKernelToolsOptions): string[] | undefined {
+        const allow = options?.filesystem?.allow;
+        if (!allow || allow.length === 0) return undefined;
+        return [...allow];
+}
+
+function pickDefined<T extends Record<string, unknown>>(source: T): Partial<T> {
+        const defined: Partial<T> = {};
+        for (const [key, value] of Object.entries(source)) {
+                if (value !== undefined) {
+                        (defined as Record<string, unknown>)[key] = value;
+                }
+        }
+        return defined;
+}
+
+function findKernelTool(tools: BoundKernelTool[], names: string[]): BoundKernelTool | undefined {
+        return tools.find((tool) => names.includes(tool.name));
+}
+
+function normaliseKernelExitCode(payload: unknown): number {
+        if (typeof payload === 'object' && payload) {
+                const record = payload as Record<string, unknown>;
+                const exit = record['exitCode'];
+                if (typeof exit === 'number') {
+                        return exit;
+                }
+                const code = record['code'];
+                if (typeof code === 'number') {
+                        return code;
+                }
+        }
+        return 0;
+}
+
+function extractKernelFileContent(payload: unknown): string {
+        if (typeof payload === 'string') {
+                return payload;
+        }
+        if (typeof payload === 'object' && payload) {
+                const record = payload as Record<string, unknown>;
+                const content = record['content'];
+                if (typeof content === 'string') {
+                        return content;
+                }
+                const body = record['body'];
+                if (typeof body === 'string') {
+                        return body;
+                }
+        }
+        return '';
 }
 
 function createToolHookAdapter(hooks: HookRunner): ToolDispatchHooks {
-	return {
-		run: async (event, ctx) => hooks.run(event, ctx),
-	};
+        return {
+                run: async (event, ctx) => hooks.run(event, ctx),
+        };
 }
 
 function kernelToolToDefinition(tool: BoundKernelTool): ToolDefinition {
