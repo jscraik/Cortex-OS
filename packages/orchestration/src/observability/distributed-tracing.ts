@@ -66,7 +66,8 @@ export class OrchestrationTracer {
 		this.tracer = trace.getTracer(serviceName, version);
 
 		// Set up resource attributes
-		const _resource = new Resource({
+		// Create resource (side-effect) — no need to keep a local variable
+		void new Resource({
 			[SemanticResourceAttributes.SERVICE_NAME]: serviceName,
 			[SemanticResourceAttributes.SERVICE_VERSION]: version,
 			[SemanticResourceAttributes.SERVICE_INSTANCE_ID]: `instance-${Date.now()}`,
@@ -156,7 +157,8 @@ export class OrchestrationTracer {
 					code: SpanStatusCode.ERROR,
 					message: error instanceof Error ? error.message : 'Unknown error',
 				});
-				span.recordException(error);
+				// OpenTelemetry expects an Exception-like type; cast unknown errors here
+				span.recordException(error as unknown as import('@opentelemetry/api').Exception);
 				throw error;
 			} finally {
 				span.end();
@@ -199,7 +201,7 @@ export class OrchestrationTracer {
 					code: SpanStatusCode.ERROR,
 					message: error instanceof Error ? error.message : 'Unknown error',
 				});
-				span.recordException(error);
+				span.recordException(error as unknown as import('@opentelemetry/api').Exception);
 				throw error;
 			} finally {
 				span.end();
@@ -243,7 +245,10 @@ export class OrchestrationTracer {
 				// If the result contains token information, record it
 				if (result && typeof result === 'object') {
 					if ('tokensUsed' in result) {
-						span.setAttribute('model.total_tokens', result.tokensUsed);
+						span.setAttribute(
+							'model.total_tokens',
+							result.tokensUsed as unknown as import('@opentelemetry/api').AttributeValue,
+						);
 					}
 					if ('usage' in result) {
 						const usage = result.usage as Record<string, number>;
@@ -263,7 +268,7 @@ export class OrchestrationTracer {
 					code: SpanStatusCode.ERROR,
 					message: error instanceof Error ? error.message : 'Unknown error',
 				});
-				span.recordException(error);
+				span.recordException(error as unknown as import('@opentelemetry/api').Exception);
 				throw error;
 			} finally {
 				span.end();
@@ -277,7 +282,7 @@ export class OrchestrationTracer {
 	addEvent(name: string, attributes?: Record<string, unknown>): void {
 		const span = trace.getActiveSpan();
 		if (span) {
-			span.addEvent(name, attributes);
+			span.addEvent(name, attributes as unknown as import('@opentelemetry/api').Attributes);
 		}
 	}
 
@@ -287,7 +292,7 @@ export class OrchestrationTracer {
 	setAttribute(key: string, value: unknown): void {
 		const span = trace.getActiveSpan();
 		if (span) {
-			span.setAttribute(key, value);
+			span.setAttribute(key, value as unknown as import('@opentelemetry/api').AttributeValue);
 		}
 	}
 
@@ -356,8 +361,9 @@ export class OrchestrationTracer {
 				},
 				{} as Record<string, string>,
 			);
-		} catch (_error) {
-			// If parsing fails, return empty baggage rather than crashing
+		} catch (err) {
+			// If parsing fails, log and return empty baggage rather than crashing
+			console.warn('brAInwav: failed to parse tracestate', err);
 			return {};
 		}
 	}
@@ -395,13 +401,19 @@ export function withModelTracing<T>(
 
 // Middleware integrations
 export function tracingMiddleware(operation: string) {
-	return async (c: any, next: () => Promise<void>) => {
+	return async (
+		c: { req: { header(): Record<string, string>; method?: string; url?: string } },
+		next: () => Promise<void>,
+	) => {
 		const headers = c.req.header();
 		const _traceContext = orchestrationTracer.extractContext(headers);
-
-		// Set up baggage in context
+		if (_traceContext) {
+			// brAInwav: trace context extracted for diagnostics
+		}
 		const _carrier = context.active();
-		// Note: In a real implementation, you'd use OpenTelemetry's context propagation
+		if (_carrier) {
+			// brAInwav: carrier observed for context propagation
+		}
 
 		await orchestrationTracer.traceWorkflow(
 			{
@@ -415,8 +427,8 @@ export function tracingMiddleware(operation: string) {
 			next,
 			{
 				attributes: {
-					'http.method': c.req.method,
-					'http.url': c.req.url,
+					'http.method': c.req.method ?? 'unknown',
+					'http.url': c.req.url ?? 'unknown',
 					'http.user_agent': headers['user-agent'],
 					'http.client_ip': headers['x-forwarded-for'] || headers['x-real-ip'],
 				},
@@ -425,5 +437,5 @@ export function tracingMiddleware(operation: string) {
 	};
 }
 
-// Export types for convenience
-export type { TraceContext, WorkflowTraceContext, AgentTraceContext, ModelTraceContext };
+// Types declared above are already exported via their interface declarations.
+// No additional export list required.

@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-09-29T19:41:35.246Z",
+  "brainwav_quality_gate_version": "1.0.0",
+  "gates_passed": false,
+  "violations_count": 5,
+  "warnings_count": 11,
+  "violations": [
+    "Line coverage 0.0% < required 95% (brAInwav standard)",
+    "Branch coverage 64.7% < required 95% (brAInwav standard)",
+    "Mutation score 0.0% < required 80% (prevents vacuous tests)",
+    "Operational readiness 0.0% < required 95.0% (brAInwav production standard)",
+    "Failed operational criteria: Health endpoints, Environment configuration, Secrets management, Network timeouts, Retry logic, Idempotency, Structured logging, Metrics collection, Distributed tracing, Monitoring setup, Graceful shutdown, Resource monitoring, Migration testing, Deployment strategy, Supply chain security, Fault injection, Environment parity, Operational runbooks, Data privacy, Dependency management"
+  ],
+  "warnings": [
+    "Optional metrics file missing: coverage.json",
+    "Optional metrics file missing: mutation.json",
+    "No mutation testing data found",
+    "Optional metrics file missing: security.json",
+    "No security scan results found - run security audit",
+    "Optional metrics file missing: performance.json",
+    "No performance test results found - run load tests before production",
+    "Optional metrics file missing: reliability.json",
+    "No reliability test results found - fault injection testing recommended",
+    "Optional metrics file missing: branding.json",
+    "Verify all system logs include brAInwav branding for observability compliance"
+  ],
+  "contract_path": "/Users/jamiecraik/.Cortex-OS/.eng/quality_gate.json",
+  "metrics_dir": "/Users/jamiecraik/.Cortex-OS/out",
+  "brainwav_compliance": true
+}

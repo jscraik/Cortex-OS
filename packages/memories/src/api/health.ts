@@ -1,3 +1,4 @@
+import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import type { Express } from 'express';
 import express from 'express';
 import { logger } from '../logging/logger.js';
@@ -70,7 +71,14 @@ function registerHealthRoute(app: Express, deps: HealthAppDependencies) {
 				},
 			});
 		} catch (error) {
-			deps.logger.error({ error }, 'brAInwav memories health check failed');
+			deps.logger.error(
+				{
+					brand: 'brAInwav',
+					message: safeErrorMessage(error),
+					stack: safeErrorStack(error),
+				},
+				'brAInwav memories health check failed',
+			);
 			res.status(500).json({
 				status: 'error',
 				message: 'brAInwav health check failed',
@@ -89,7 +97,14 @@ function registerReadyRoute(app: Express, deps: HealthAppDependencies) {
 				timestamp: new Date().toISOString(),
 			});
 		} catch (error) {
-			deps.logger.error({ error }, 'brAInwav memories readiness check failed');
+			deps.logger.error(
+				{
+					brand: 'brAInwav',
+					message: safeErrorMessage(error),
+					stack: safeErrorStack(error),
+				},
+				'brAInwav memories readiness check failed',
+			);
 			res.status(500).json({
 				ready: false,
 				error: 'brAInwav readiness check failed',
@@ -105,7 +120,14 @@ function registerMetricsRoute(app: Express, deps: HealthAppDependencies) {
 			const report = await metrics.report();
 			res.json(report);
 		} catch (error) {
-			deps.logger.error({ error }, 'brAInwav memories metrics collection failed');
+			deps.logger.error(
+				{
+					brand: 'brAInwav',
+					message: safeErrorMessage(error),
+					stack: safeErrorStack(error),
+				},
+				'brAInwav memories metrics collection failed',
+			);
 			res.status(500).json({
 				error: 'brAInwav metrics collection failed',
 			});
@@ -122,7 +144,14 @@ function registerStatsRoute(app: Express, deps: HealthAppDependencies) {
 			]);
 			res.json(formatStatsPayload(report, systemHealth));
 		} catch (error) {
-			deps.logger.error({ error }, 'brAInwav memories stats collection failed');
+			deps.logger.error(
+				{
+					brand: 'brAInwav',
+					message: safeErrorMessage(error),
+					stack: safeErrorStack(error),
+				},
+				'brAInwav memories stats collection failed',
+			);
 			res.status(500).json({
 				brand: 'brAInwav',
 				error: 'brAInwav memories stats unavailable',

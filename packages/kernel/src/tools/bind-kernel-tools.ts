@@ -80,6 +80,7 @@ export interface KernelFetchResult {
 export interface KernelTool<TInput = unknown, TResult = unknown> {
 	name: string;
 	description: string;
+	schema: z.ZodTypeAny;
 	metadata: {
 		surface: ToolSurface;
 		allowList: string[];
@@ -87,6 +88,8 @@ export interface KernelTool<TInput = unknown, TResult = unknown> {
 	};
 	invoke: (input: TInput) => Promise<TResult>;
 }
+
+export type BoundKernelTool<TInput = unknown, TResult = unknown> = KernelTool<TInput, TResult>;
 
 type KernelToolAny = KernelTool<unknown, unknown>;
 
@@ -183,6 +186,7 @@ function createBashTool(
 	return {
 		name: 'kernel.bash',
 		description: 'Execute shell commands guarded by brAInwav kernel policy',
+		schema: BashInputSchema,
 		metadata: {
 			surface: 'bash',
 			allowList: [...context.bashAllow],
@@ -214,6 +218,7 @@ function createReadFileTool(
 	return {
 		name: 'kernel.readFile',
 		description: 'Read file contents within brAInwav filesystem guardrails',
+		schema: ReadFileInputSchema,
 		metadata: {
 			surface: 'filesystem',
 			allowList: [...context.fsAllow],
@@ -244,6 +249,7 @@ function createFetchTool(
 	return {
 		name: 'kernel.fetchJson',
 		description: 'Perform HTTP fetch guarded by brAInwav network policy',
+		schema: FetchInputSchema,
 		metadata: {
 			surface: 'network',
 			allowList: [...context.netAllow],

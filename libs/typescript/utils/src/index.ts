@@ -1,5 +1,7 @@
 export * from './complexity.js';
 export * from './env.js';
+export * from './error-utils.js';
+export { safeErrorMessage, safeErrorStack } from './error-utils.js';
 export * from './ids.js';
 export * from './node-event-source.js';
 export * from './port-utils.js';

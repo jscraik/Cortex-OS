@@ -1,3 +1,4 @@
+import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import { logger } from '../logging/logger.js';
 
 export interface ShutdownHandler {
@@ -36,7 +37,15 @@ export class GracefulShutdown {
 
 				logger.info({ handler: name }, 'Shutdown handler completed');
 			} catch (error) {
-				logger.error({ handler: name, error }, 'Shutdown handler failed');
+				logger.error(
+					{
+						brand: 'brAInwav',
+						handler: name,
+						message: safeErrorMessage(error),
+						stack: safeErrorStack(error),
+					},
+					'Shutdown handler failed',
+				);
 			}
 		});
 
@@ -44,7 +53,14 @@ export class GracefulShutdown {
 			await Promise.all(shutdownPromises);
 			logger.info('All shutdown handlers completed');
 		} catch (error) {
-			logger.error({ error }, 'Some shutdown handlers failed');
+			logger.error(
+				{
+					brand: 'brAInwav',
+					message: safeErrorMessage(error),
+					stack: safeErrorStack(error),
+				},
+				'Some shutdown handlers failed',
+			);
 		}
 
 		logger.info('Graceful shutdown complete');
@@ -60,12 +76,26 @@ process.on('SIGINT', () => gracefulShutdown.shutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-	logger.error({ error }, 'Uncaught exception');
+	logger.error(
+		{
+			brand: 'brAInwav',
+			message: safeErrorMessage(error),
+			stack: safeErrorStack(error),
+		},
+		'Uncaught exception',
+	);
 	gracefulShutdown.shutdown('uncaughtException');
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason) => {
-	logger.error({ reason }, 'Unhandled promise rejection');
+	logger.error(
+		{
+			brand: 'brAInwav',
+			message: typeof reason === 'string' ? reason : safeErrorMessage(reason),
+			stack: typeof reason === 'string' ? undefined : safeErrorStack(reason),
+		},
+		'Unhandled promise rejection',
+	);
 	gracefulShutdown.shutdown('unhandledRejection');
 });

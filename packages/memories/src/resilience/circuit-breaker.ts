@@ -11,17 +11,18 @@ export class CircuitBreakerManager {
 	private readonly breakers: Map<string, CircuitBreaker> = new Map();
 
 	getBreaker(name: string, options: CircuitBreakerOptions = {}): CircuitBreaker {
-		if (!this.breakers.has(name)) {
+		let maybeBreaker = this.breakers.get(name);
+		if (!maybeBreaker) {
 			const breaker = new CircuitBreaker({
 				timeoutDuration: options.timeout ?? 30000,
 				errorThreshold: options.threshold ?? 50,
 				windowDuration: options.resetTimeout ?? 30000,
 			});
-
 			this.breakers.set(name, breaker);
+			maybeBreaker = breaker;
 		}
 
-		return this.breakers.get(name)!;
+		return maybeBreaker;
 	}
 
 	async execute<T>(
@@ -41,7 +42,7 @@ export class CircuitBreakerManager {
 						})
 						.catch((error) => {
 							failure();
-							reject(error);
+							reject(error instanceof Error ? error : new Error(String(error)));
 						});
 				},
 				() => {

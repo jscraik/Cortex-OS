@@ -145,9 +145,11 @@ fn test_ls_multiple_flags_and_file_args() -> Result<()> {
 fn test_flags_after_file_args() -> Result<()> {
     let policy = setup();
 
-    // This documents that we currently accept flags after file arguments even
-    // though `ls` itself rejects that ordering. The program specification does
-    // not yet express ordering constraints, so this call is treated as allowed.
+    // TODO(mbolin): While this is "safe" in that it will not do anything bad
+    // to the user's machine, it will fail because apparently `ls` does not
+    // allow flags after file arguments (as some commands do). We should
+    // extend define_program() to make this part of the configuration so that
+    // this command is disallowed.
     let ls_flags_after_file_args = ExecCall::new("ls", &["foo", "-l"]);
     assert_eq!(
         Ok(MatchedExec::Match {

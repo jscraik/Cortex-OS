@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR=$(cd "$(dirname "$0")/../../.." && pwd)
+SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
+SCRIPT_DIR=$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)
+if [[ -z "$SCRIPT_DIR" ]]; then
+  echo "Unable to determine script directory" >&2
+  exit 1
+fi
+ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 PREFIX_PATH="apps/cortex-code"
 UPSTREAM_REPO_PATH="$ROOT_DIR/external/openai-codex"
 UPSTREAM_BRANCH="origin/main"

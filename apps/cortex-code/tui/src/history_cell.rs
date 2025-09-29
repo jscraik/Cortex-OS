@@ -414,6 +414,11 @@ pub(crate) fn new_session_info(
                 "/model".into(),
                 " - choose what model and reasoning effort to use".dim(),
             ]),
+            Line::from(vec![
+                "  ".into(),
+                "/review".into(),
+                " - review any changes and find issues".dim(),
+            ]),
         ];
 
         CompositeHistoryCell {
@@ -774,8 +779,8 @@ pub(crate) fn new_web_search_call(query: String) -> PlainHistoryCell {
     PlainHistoryCell { lines }
 }
 
-/// If the first content is an image, return a new cell with the image. Images
-/// that appear later in the response are ignored for now.
+/// If the first content is an image, return a new cell with the image.
+/// TODO(rgwood-dd): Handle images properly even if they're not the first result.
 fn try_new_completed_mcp_tool_call_with_image_output(
     result: &Result<mcp_types::CallToolResult, String>,
 ) -> Option<CompletedMcpToolCallWithImageOutput> {

@@ -60,6 +60,56 @@ describe('buildN0 orchestration graph', () => {
 		expect(toolMessages).toHaveLength(1);
 		expect((toolMessages[0] as ToolMessage).content).toBe('Echo:hi');
 	});
+
+	it('propagates slash command metadata into state context', async () => {
+		const runSlash = vi.fn().mockResolvedValue({
+			text: 'metadata result',
+			metadata: {
+				command: {
+					name: 'deploy',
+					model: 'cortex-deploy',
+					allowedTools: ['kernel.bash'],
+				},
+			},
+		});
+
+		const kernelBinding = {
+			tools: [],
+			metadata: {
+				brand: 'test kernel',
+				cwd: process.cwd(),
+				defaultModel: 'inherit',
+				allowLists: {
+					bash: ['echo*'],
+					filesystem: ['**/*.txt'],
+					network: [],
+				},
+				timeoutMs: 10_000,
+				surfaces: [],
+				security: undefined,
+			},
+		};
+
+		const { graph } = await buildN0(
+			createOptions({
+				runSlash,
+				kernelBinding,
+			}),
+		);
+
+		const session = createSession();
+		const result = await graph.invoke({ input: '/deploy main', session });
+
+		expect(result.output).toBe('metadata result');
+		expect(runSlash).toHaveBeenCalledWith(
+			expect.objectContaining({ cmd: 'deploy' }),
+			expect.any(Object),
+		);
+		expect(result.ctx?.commandMetadata).toMatchObject({ name: 'deploy', model: 'cortex-deploy' });
+		expect(result.ctx?.commandModel).toBe('cortex-deploy');
+		expect(result.ctx?.commandAllowedTools).toEqual(['kernel.bash']);
+		expect(result.ctx?.kernelToolkit).toEqual(kernelBinding.metadata);
+	});
 });
 
 function createOptions(overrides: Partial<BuildN0Options>): BuildN0Options {
@@ -68,7 +118,22 @@ function createOptions(overrides: Partial<BuildN0Options>): BuildN0Options {
 		hooks: overrides.hooks ?? new NoopHooks(),
 		runSlash: overrides.runSlash,
 		runSlashOptions: overrides.runSlashOptions,
-		kernelTools: [],
+		kernelBinding:
+			overrides.kernelBinding ??
+			({
+				tools: [],
+				metadata: {
+					brand: 'test kernel',
+					cwd: process.cwd(),
+					defaultModel: 'inherit',
+					allowLists: { bash: [], filesystem: [], network: [] },
+					timeoutMs: 30_000,
+					surfaces: [],
+					security: undefined,
+				},
+			} satisfies BuildN0Options['kernelBinding']),
+		kernelTools: overrides.kernelTools,
+		kernelOptions: overrides.kernelOptions,
 		subagents: overrides.subagents ?? new Map<string, ContractSubagent>(),
 		orchestratorTools: overrides.orchestratorTools ?? [],
 		disableSubagentDiscovery: true,

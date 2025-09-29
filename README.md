@@ -15,7 +15,7 @@
 include "brAInwav" branding. Status claims must be verified against actual code
 implementation.
 
-**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
+**Reference**: See `.cortex/rules/RULES_OF_AI.md` for complete production standards.
 
 ---
 
@@ -178,10 +178,12 @@ Automated quality signals are produced on every CI run and surfaced as static ba
 
 ### Thresholds
 
-Current (defaults – can be overridden at runtime via env):
+#### PR Gate Requirements (Must Pass)
 
-| Metric | Minimum | Env Override |
-|--------|---------|--------------|
+These are **mandatory minimums** for PR merges:
+
+| Metric | PR Gate Minimum | Env Override |
+|--------|----------------|-------------|
 | Branch Coverage | 65% | `BRANCH_MIN` |
 | Mutation Score  | 75% | `MUTATION_MIN` |
 
@@ -190,6 +192,17 @@ The composite gate passes only if BOTH thresholds are met. Customize via:
 ```bash
 BRANCH_MIN=85 MUTATION_MIN=80 pnpm badges:generate
 ```
+
+#### Aspirational Baselines (Target Goals)
+
+These are the **target coverage expectations** configured in `vitest.config.ts`:
+
+| Metric | Target | Environment Variable |
+|--------|--------|--------------------||
+| Statements | 90% | `COVERAGE_THRESHOLD_STATEMENTS` |
+| Branches | 90% | `COVERAGE_THRESHOLD_BRANCHES` |
+| Functions | 90% | `COVERAGE_THRESHOLD_FUNCTIONS` |
+| Lines | 95% | `COVERAGE_THRESHOLD_LINES` |
 
 ### CI Enforcement
 
@@ -263,7 +276,7 @@ governance boundaries, comprehensive testing, and security practices.
 - **🛡️ Security First** – OWASP compliance, SBOM generation, vulnerability scanning
 - **📊 Observability** – Monitoring, tracing, analytics hooks
 - **🏗️ Governed Architecture** – Import boundaries (ESLint + Nx)
-- **🧪 Quality Gates** – 90% test coverage & automated scans
+- **🧪 Quality Gates** – 65% branch coverage (PR gate) + 90% test coverage targets & automated scans
 - **🚀 Production Ready** – Docker deployment & CI/CD pipelines
 - **🎯 Reality Filter** – Truthfulness verification and accuracy validation for all AI agents
 
@@ -274,7 +287,7 @@ governance boundaries, comprehensive testing, and security practices.
 See the full guide: [docs/quick-start.md](./docs/quick-start.md)
 
 ```bash
-git clone https://github.com/cortex-os/cortex-os.git
+git clone https://github.com/jamiescottcraik/Cortex-OS.git
 cd cortex-os
 
 # Run automated setup (installs deps, auto-trusts mise, sets up hooks, lints, validates structure)
@@ -806,15 +819,15 @@ Quick Flow:
 
 ## License
 
-MIT – see [LICENSE](./LICENSE)
+Apache-2.0 – see [LICENSE](./LICENSE)
 
 ---
 
 ## Support
 
 - **📧 Email**: <support@cortex-os.dev>
-- **💬 Discussions**: [GitHub Discussions](https://github.com/cortex-os/cortex-os/discussions)
-- **🐛 Issues**: [GitHub Issues](https://github.com/cortex-os/cortex-os/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/jamiescottcraik/Cortex-OS/discussions)
+- **🐛 Issues**: [GitHub Issues](https://github.com/jamiescottcraik/Cortex-OS/issues)
 - **📖 Documentation**: <https://docs.cortex-os.dev>
 
 ---
@@ -832,7 +845,7 @@ Built with ❤️ by the Cortex-OS Team
 
 <!-- markdownlint-disable MD013 -->
 
-![GitHub Stars](https://img.shields.io/github/stars/cortex-os/cortex-os?style=social) ![GitHub Forks](https://img.shields.io/github/forks/cortex-os/cortex-os?style=social) ![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os) ![GitHub PRs](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)
+![GitHub Stars](https://img.shields.io/github/stars/jamiescottcraik/Cortex-OS?style=social) ![GitHub Forks](https://img.shields.io/github/forks/jamiescottcraik/Cortex-OS?style=social) ![GitHub Issues](https://img.shields.io/github/issues/jamiescottcraik/Cortex-OS) ![GitHub PRs](https://img.shields.io/github/issues-pr/jamiescottcraik/Cortex-OS)
 
 <!-- markdownlint-enable MD013 -->
 
@@ -853,7 +866,7 @@ See overlay governance guide: [openai-codex overlay](./docs/submodules/openai-co
 Clone (including submodules):
 
 ```bash
-git clone --recurse-submodules https://github.com/cortex-os/cortex-os.git
+git clone --recurse-submodules https://github.com/jamiescottcraik/Cortex-OS.git
 ```
 
 If you already cloned without `--recurse-submodules`:

@@ -1,4 +1,5 @@
 use codex_core::CodexAuth;
+use codex_core::default_client::ORIGINATOR;
 use codex_core::ContentItem;
 use codex_core::ConversationManager;
 use codex_core::LocalShellAction;
@@ -16,6 +17,8 @@ use codex_core::built_in_model_providers;
 use codex_core::protocol::EventMsg;
 use codex_core::protocol::InputItem;
 use codex_core::protocol::Op;
+use codex_otel::otel_event_manager::OtelEventManager;
+use codex_protocol::mcp_protocol::AuthMode;
 use codex_protocol::mcp_protocol::ConversationId;
 use codex_protocol::models::ReasoningItemReasoningSummary;
 use codex_protocol::models::WebSearchAction;
@@ -352,7 +355,10 @@ async fn includes_conversation_id_and_model_headers_in_request() {
         request_conversation_id.to_str().unwrap(),
         conversation_id.to_string()
     );
-    assert_eq!(request_originator.to_str().unwrap(), "codex_cli_rs");
+    assert_eq!(
+        request_originator.to_str().unwrap(),
+        ORIGINATOR.value.as_str()
+    );
     assert_eq!(
         request_authorization.to_str().unwrap(),
         "Bearer Test API Key"
@@ -478,7 +484,10 @@ async fn chatgpt_auth_sends_correct_request() {
         request_conversation_id.to_str().unwrap(),
         conversation_id.to_string()
     );
-    assert_eq!(request_originator.to_str().unwrap(), "codex_cli_rs");
+    assert_eq!(
+        request_originator.to_str().unwrap(),
+        ORIGINATOR.value.as_str()
+    );
     assert_eq!(
         request_authorization.to_str().unwrap(),
         "Bearer Access Token"
@@ -664,13 +673,26 @@ async fn azure_responses_request_includes_store_and_reasoning_ids() {
     let summary = config.model_reasoning_summary;
     let config = Arc::new(config);
 
+    let conversation_id = ConversationId::new();
+
+    let otel_event_manager = OtelEventManager::new(
+        conversation_id,
+        config.model.as_str(),
+        config.model_family.slug.as_str(),
+        None,
+        Some(AuthMode::ChatGPT),
+        false,
+        "test".to_string(),
+    );
+
     let client = ModelClient::new(
         Arc::clone(&config),
         None,
+        otel_event_manager,
         provider,
         effort,
         summary,
-        ConversationId::new(),
+        conversation_id,
     );
 
     let mut prompt = Prompt::default();

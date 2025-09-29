@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+# flake8: noqa: E501
 
 import argparse
 import json
 import subprocess
 import sys
 import tempfile
+
 from dataclasses import (
     dataclass,
 )
@@ -14,6 +16,7 @@ from shutil import copy2
 
 # Helper first so it is defined when other functions call it.
 from typing import Any, Literal
+
 
 SCHEMA_VERSION = "2025-06-18"
 JSONRPC_VERSION = "2.0"
@@ -133,9 +136,7 @@ fn default_jsonrpc() -> String {{ JSONRPC_VERSION.to_owned() }}
 
     for req_name in CLIENT_REQUEST_TYPE_NAMES:
         defn = definitions[req_name]
-        method_const = (
-            defn.get("properties", {}).get("method", {}).get("const", req_name)
-        )
+        method_const = defn.get("properties", {}).get("method", {}).get("const", req_name)
         payload_type = f"<{req_name} as ModelContextProtocolRequest>::Params"
         try_from_impl_lines.append(f'            "{method_const}" => {{\n')
         try_from_impl_lines.append(
@@ -144,9 +145,7 @@ fn default_jsonrpc() -> String {{ JSONRPC_VERSION.to_owned() }}
         try_from_impl_lines.append(
             f"                let params: {payload_type} = serde_json::from_value(params_json)?;\n"
         )
-        try_from_impl_lines.append(
-            f"                Ok(ClientRequest::{req_name}(params))\n"
-        )
+        try_from_impl_lines.append(f"                Ok(ClientRequest::{req_name}(params))\n")
         try_from_impl_lines.append("            },\n")
 
     try_from_impl_lines.append(
@@ -160,9 +159,7 @@ fn default_jsonrpc() -> String {{ JSONRPC_VERSION.to_owned() }}
 
     # Generate TryFrom for ServerNotification
     notif_impl_lines: list[str] = []
-    notif_impl_lines.append(
-        "impl TryFrom<JSONRPCNotification> for ServerNotification {\n"
-    )
+    notif_impl_lines.append("impl TryFrom<JSONRPCNotification> for ServerNotification {\n")
     notif_impl_lines.append("    type Error = serde_json::Error;\n")
     notif_impl_lines.append(
         "    fn try_from(n: JSONRPCNotification) -> std::result::Result<Self, Self::Error> {\n"
@@ -171,9 +168,7 @@ fn default_jsonrpc() -> String {{ JSONRPC_VERSION.to_owned() }}
 
     for notif_name in SERVER_NOTIFICATION_TYPE_NAMES:
         n_def = definitions[notif_name]
-        method_const = (
-            n_def.get("properties", {}).get("method", {}).get("const", notif_name)
-        )
+        method_const = n_def.get("properties", {}).get("method", {}).get("const", notif_name)
         payload_type = f"<{notif_name} as ModelContextProtocolNotification>::Params"
         notif_impl_lines.append(f'            "{method_const}" => {{\n')
         # params may be optional
@@ -183,9 +178,7 @@ fn default_jsonrpc() -> String {{ JSONRPC_VERSION.to_owned() }}
         notif_impl_lines.append(
             f"                let params: {payload_type} = serde_json::from_value(params_json)?;\n"
         )
-        notif_impl_lines.append(
-            f"                Ok(ServerNotification::{notif_name}(params))\n"
-        )
+        notif_impl_lines.append(f"                Ok(ServerNotification::{notif_name}(params))\n")
         notif_impl_lines.append("            },\n")
 
     notif_impl_lines.append(
@@ -303,7 +296,7 @@ def add_definition(name: str, definition: dict[str, Any], out: list[str]) -> Non
         out.extend(define_any_of(name, any_of, description))
         return
 
-    type_prop = definition.get("type")
+    type_prop = definition.get("type", None)
     if type_prop:
         if type_prop == "string":
             # Newtype pattern
@@ -320,7 +313,7 @@ def add_definition(name: str, definition: dict[str, Any], out: list[str]) -> Non
             return
         raise ValueError(f"Unknown type: {type_prop} in {name}")
 
-    ref_prop = definition.get("$ref")
+    ref_prop = definition.get("$ref", None)
     if ref_prop:
         ref = type_from_ref(ref_prop)
         out.extend(f"pub type {name} = {ref};\n\n")
@@ -365,7 +358,7 @@ def define_struct(
     fields: list[StructField] = []
     for prop_name, prop in properties.items():
         if prop_name == "_meta":
-            # The MCP spec reserves `_meta` for out-of-band metadata that Codex ignores.
+            # TODO?
             continue
         elif prop_name == "jsonrpc":
             fields.append(
@@ -494,15 +487,11 @@ def define_untagged_enum(name: str, type_list: list[str], out: list[str]) -> Non
             case "integer":
                 out.append("    Integer(i64),\n")
             case _:
-                raise ValueError(
-                    f"Unknown type in untagged enum: {simple_type} in {name}"
-                )
+                raise ValueError(f"Unknown type in untagged enum: {simple_type} in {name}")
     out.append("}\n\n")
 
 
-def define_any_of(
-    name: str, list_of_refs: list[Any], description: str | None = None
-) -> list[str]:
+def define_any_of(name: str, list_of_refs: list[Any], description: str | None = None) -> list[str]:
     """Generate a Rust enum for a JSON-Schema `anyOf` union.
 
     For most types we simply map each `$ref` inside the `anyOf` list to a
@@ -567,9 +556,7 @@ def define_any_of(
             if name == "ClientRequest":
                 payload_type = f"<{ref_name} as ModelContextProtocolRequest>::Params"
             else:
-                payload_type = (
-                    f"<{ref_name} as ModelContextProtocolNotification>::Params"
-                )
+                payload_type = f"<{ref_name} as ModelContextProtocolNotification>::Params"
 
             # Determine the wire value for `method` so we can annotate the
             # variant appropriately. If for some reason the schema does not
@@ -577,9 +564,7 @@ def define_any_of(
             # least compile (although deserialization will likely fail).
             request_def = DEFINITIONS.get(ref_name, {})
             method_const = (
-                request_def.get("properties", {})
-                .get("method", {})
-                .get("const", ref_name)
+                request_def.get("properties", {}).get("method", {}).get("const", ref_name)
             )
 
             out.append(f'    #[serde(rename = "{method_const}")]\n')
@@ -593,10 +578,7 @@ def define_any_of(
 
 
 def get_serde_annotation_for_anyof_type(type_name: str) -> str | None:
-    # The MCP schema currently uses method-based tagging for these specific
-    # composite types. If more schemas adopt the pattern we can extend this map
-    # or derive annotations dynamically, but for now the targeted mapping keeps
-    # code generation straightforward.
+    # TODO: Solve this in a more generic way.
     match type_name:
         case "ClientRequest":
             return '#[serde(tag = "method", content = "params")]'
@@ -612,11 +594,11 @@ def map_type(
     struct_name: str | None = None,
 ) -> str:
     """typedef must have a `type` key, but may also have an `items`key."""
-    ref_prop = typedef.get("$ref")
+    ref_prop = typedef.get("$ref", None)
     if ref_prop:
         return type_from_ref(ref_prop)
 
-    any_of = typedef.get("anyOf")
+    any_of = typedef.get("anyOf", None)
     if any_of:
         assert prop_name is not None
         assert struct_name is not None
@@ -624,13 +606,13 @@ def map_type(
         extra_defs.extend(define_any_of(custom_type, any_of))
         return custom_type
 
-    type_prop = typedef.get("type")
+    type_prop = typedef.get("type", None)
     if type_prop is None:
         # Likely `unknown` in TypeScript, like the JSONRPCError.data property.
         return "serde_json::Value"
 
     if type_prop == "string":
-        if const_prop := typedef.get("const"):
+        if const_prop := typedef.get("const", None):
             assert isinstance(const_prop, str)
             return f'&\'static str = "{const_prop}"'
         else:
@@ -642,7 +624,7 @@ def map_type(
     elif type_prop == "boolean":
         return "bool"
     elif type_prop == "array":
-        item_type = typedef.get("items")
+        item_type = typedef.get("items", None)
         if item_type:
             item_type = map_type(item_type, prop_name, struct_name)
             assert isinstance(item_type, str)
@@ -716,9 +698,7 @@ def rust_prop_name(name: str, is_optional: bool) -> RustProp:
 
 def to_snake_case(name: str) -> str:
     """Convert a camelCase or PascalCase name to snake_case."""
-    snake_case = name[0].lower() + "".join(
-        "_" + c.lower() if c.isupper() else c for c in name[1:]
-    )
+    snake_case = name[0].lower() + "".join("_" + c.lower() if c.isupper() else c for c in name[1:])
     if snake_case != name:
         return snake_case
     else:

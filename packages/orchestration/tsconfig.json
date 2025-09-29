@@ -1,79 +1,44 @@
 {
-	"extends": "../../tsconfig.json",
-        "include": [
-                "src/index.ts",
-                "src/types.ts",
-                "src/utils/dsp.ts",
-                "src/lib/long-horizon-planner.ts",
-                "src/coordinator/**/*.ts",
-                "src/langgraph/create-cerebrum-graph.ts",
-                "src/langgraph/planning-orchestrator.ts",
-                "src/langgraph/n0-state.ts",
-                "src/langgraph/n0-adapters.ts"
-        ],
-	"exclude": [
-		"examples/**",
-		"src/lib/outbox/**",
-		"tests/**",
-		"__tests__/**",
-		"src/**/__tests__/**",
-		"src/**/tests/**",
-		"src/lib/supervisor.ts"
-	],
-	"compilerOptions": {
-		"outDir": "dist",
-		"rootDir": "src",
-		"noEmit": false,
-		"declaration": true,
-		"composite": true,
-		"skipLibCheck": true,
-		"noEmitOnError": false,
-		"baseUrl": "../../",
-		"paths": {
-			"@cortex-os/hooks": [
-				"packages/hooks/dist/index.d.ts"
-			],
-			"@cortex-os/*": [
-				"packages/*/dist/index.d.ts"
-			],
-			"@cortex-os/contracts": [
-				"libs/typescript/contracts/dist/src/index.d.ts"
-			],
-			"@cortex-os/contracts/*": [
-				"libs/typescript/contracts/dist/src/*"
-			],
-			"@cortex-os/policy": [
-				"packages/policy/src/index.ts"
-			],
-			"@cortex-os/a2a-core": [
-				"packages/a2a/a2a-core/dist/index.d.ts"
-			],
-			"@cortex-os/a2a-core/*": [
-				"packages/a2a/a2a-core/dist/*"
-			],
-			"@cortex-os/a2a-contracts": [
-				"packages/a2a/a2a-contracts/dist/index.d.ts"
-			],
-			"@cortex-os/a2a-contracts/*": [
-				"packages/a2a/a2a-contracts/dist/*"
-			],
-			"@cortex-os/a2a-transport": [
-				"packages/a2a/a2a-transport/dist/index.d.ts"
-			],
-			"@cortex-os/a2a-transport/*": [
-				"packages/a2a/a2a-transport/dist/*"
-			],
-			"@cortex-os/memories": [
-				"packages/memories/dist/index.d.ts"
-			],
-			"@cortex-os/memories/*": [
-				"packages/memories/dist/*"
-			]
-		}
-	},
-	"references": [
-		{
-			"path": "../../packages/hooks"
-		}
-	]
+  "extends": "../../tsconfig.json",
+  "include": [
+    "src/index.ts",
+    "src/types.ts",
+    "src/types/**/*.d.ts",
+    "src/utils/dsp.ts",
+    "src/lib/long-horizon-planner.ts",
+    "src/coordinator/**/*.ts",
+    "src/langgraph/create-cerebrum-graph.ts",
+    "src/langgraph/planning-orchestrator.ts",
+    "src/langgraph/n0-state.ts",
+    "src/langgraph/n0-adapters.ts",
+    "src/observability/**/*.ts",
+    "src/master-agent-loop/**/*.ts",
+    "src/bridges/**/*.ts",
+    "src/langgraph/**/*.ts",
+    "src/lib/**/*.ts"
+  ],
+  "exclude": [
+    "examples/**",
+    "src/lib/outbox/**",
+    "tests/**",
+    "__tests__/**",
+    "src/**/__tests__/**",
+    "src/**/tests/**",
+    "src/lib/supervisor.ts"
+  ],
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false,
+    "declaration": true,
+    "composite": true,
+    "skipLibCheck": true,
+    "noEmitOnError": false,
+    "baseUrl": "../../"
+  },
+  "references": [
+    {
+      "path": "../../packages/hooks"
+    }
+  ]
 }

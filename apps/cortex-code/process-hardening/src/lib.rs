@@ -1,3 +1,19 @@
+/// This is designed to be called pre-main() (using `#[ctor::ctor]`) to perform
+/// various process hardening steps, such as
+/// - disabling core dumps
+/// - disabling ptrace attach on Linux and macOS.
+/// - removing dangerous environment variables such as LD_PRELOAD and DYLD_*
+pub fn pre_main_hardening() {
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    pre_main_hardening_linux();
+
+    #[cfg(target_os = "macos")]
+    pre_main_hardening_macos();
+
+    #[cfg(windows)]
+    pre_main_hardening_windows();
+}
+
 #[cfg(any(target_os = "linux", target_os = "android"))]
 const PRCTL_FAILED_EXIT_CODE: i32 = 5;
 
@@ -94,8 +110,5 @@ fn set_core_file_size_limit_to_zero() {
 
 #[cfg(windows)]
 pub(crate) fn pre_main_hardening_windows() {
-    // Windows relies on the built-in mitigation policies (DEP, ASLR, and
-    // signer enforcement) that ship with the release build. At the moment we
-    // do not need additional process configuration for the CLI beyond the
-    // standard runtime defaults.
+    // TODO(mbolin): Perform the appropriate configuration for Windows.
 }

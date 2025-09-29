@@ -35,7 +35,11 @@ export function createGenerate(deps: GenerateDeps) {
 	const { modelStrategy, mlxGenerate, ollamaGenerate, isHealthy, markUnhealthy } = deps;
 	return async function generate(task: string, request: unknown) {
 		const cfg = modelStrategy[task];
-		if (!cfg) throw new Error(`Unknown task: ${task}`);
+		// brAInwav-branded error for missing task configuration to satisfy platform compliance
+		if (!cfg) {
+			const errMsg = `brAInwav generate: unknown task: ${task}`;
+			throw new Error(errMsg);
+		}
 		const start = Date.now();
 		const parsed = requestSchema.parse(request);
 		if (isHealthy('mlx', cfg.primary.model)) {

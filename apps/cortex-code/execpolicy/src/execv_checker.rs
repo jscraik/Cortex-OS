@@ -131,34 +131,8 @@ fn is_executable_file(path: &str) -> bool {
 
         #[cfg(windows)]
         {
-            use std::env;
-
-            if !metadata.is_file() {
-                return false;
-            }
-
-            let normalized_ext = file_path
-                .extension()
-                .and_then(|ext| ext.to_str())
-                .map(|ext| format!(".{}", ext.to_ascii_uppercase()));
-
-            let pathext = env::var("PATHEXT").unwrap_or_default();
-            if let Some(ext) = normalized_ext {
-                return pathext
-                    .split(';')
-                    .filter_map(|candidate| {
-                        let trimmed = candidate.trim();
-                        if trimmed.is_empty() {
-                            None
-                        } else {
-                            Some(trimmed.to_ascii_uppercase())
-                        }
-                    })
-                    .any(|candidate| candidate == ext);
-            }
-
-            // If PATHEXT is absent, fall back to treating plain files as non-executable.
-            false
+            // TODO(mbolin): Check against PATHEXT environment variable.
+            return metadata.is_file();
         }
     }
 

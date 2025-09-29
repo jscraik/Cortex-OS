@@ -145,7 +145,7 @@ impl Command for SetScrollRegion {
 
     #[cfg(windows)]
     fn is_ansi_code_supported(&self) -> bool {
-        // Windows 10+ supports ANSI sequences when virtual terminal processing is enabled.
+        // TODO(nornagon): is this supported on Windows?
         true
     }
 }
@@ -165,7 +165,7 @@ impl Command for ResetScrollRegion {
 
     #[cfg(windows)]
     fn is_ansi_code_supported(&self) -> bool {
-        // Windows 10+ supports ANSI sequences when virtual terminal processing is enabled.
+        // TODO(nornagon): is this supported on Windows?
         true
     }
 }

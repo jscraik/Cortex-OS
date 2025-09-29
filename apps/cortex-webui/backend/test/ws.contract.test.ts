@@ -55,7 +55,7 @@ describe('contract: WebSocket welcome + echo', () => {
 				}
 			});
 
-			ws.on('error', (err) => reject(err));
+			ws.on('error', (err) => reject(err instanceof Error ? err : new Error(String(err))));
 		});
 
 		await received;
@@ -79,7 +79,7 @@ describe('contract: WebSocket welcome + echo', () => {
 				clearTimeout(timeout);
 				resolve();
 			});
-			ws.on('error', reject);
+			ws.on('error', (e) => reject(e instanceof Error ? e : new Error(String(e))));
 		});
 
 		await connectionPromise;

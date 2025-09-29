@@ -1,3 +1,4 @@
+import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import type {
 	Migration,
 	MigrationHistory,
@@ -13,11 +14,11 @@ import type { MemoryStore } from '../ports/MemoryStore.js';
 
 export class DefaultMigrationManager implements MigrationManager {
 	private readonly logger = {
-		info: (message: string, context?: any) =>
+		info: (message: string, context?: Record<string, unknown>) =>
 			console.log(`[MigrationManager] ${message}`, context || ''),
-		warn: (message: string, context?: any) =>
+		warn: (message: string, context?: Record<string, unknown>) =>
 			console.warn(`[MigrationManager] ${message}`, context || ''),
-		error: (message: string, context?: any) =>
+		error: (message: string, context?: Record<string, unknown>) =>
 			console.error(`[MigrationManager] ${message}`, context || ''),
 	};
 	private readonly migrations: Migration[] = [];
@@ -115,7 +116,9 @@ export class DefaultMigrationManager implements MigrationManager {
 			};
 		} catch (error) {
 			this.logger.error('Migration failed', {
-				error,
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
 				failedVersion: migrationsToApply.find((m) => !appliedMigrations.includes(m.version))
 					?.version,
 			});
@@ -128,10 +131,12 @@ export class DefaultMigrationManager implements MigrationManager {
 				);
 				await this.rollbackMigrations(migrationObjectsToRollback);
 			} catch (rollbackError) {
-				this.logger.error('Rollback failed', { error: rollbackError });
-				errors.push(
-					`Rollback failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`,
-				);
+				this.logger.error('Rollback failed', {
+					brand: 'brAInwav',
+					message: safeErrorMessage(rollbackError),
+					stack: safeErrorStack(rollbackError),
+				});
+				errors.push(`Rollback failed: ${safeErrorMessage(rollbackError)}`);
 			}
 
 			return {
@@ -177,13 +182,17 @@ export class DefaultMigrationManager implements MigrationManager {
 				duration: Date.now() - startTime,
 			};
 		} catch (error) {
-			this.logger.error('Rollback failed', { error });
+			this.logger.error('Rollback failed', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			return {
 				success: false,
 				fromVersion: currentVersion,
 				toVersion: toVersion,
 				migrationsRolledBack: rolledBackMigrations,
-				errors: [error instanceof Error ? error.message : String(error)],
+				errors: [safeErrorMessage(error)],
 				duration: Date.now() - startTime,
 			};
 		}
@@ -244,7 +253,12 @@ export class DefaultMigrationManager implements MigrationManager {
 				await migration.down(this.store);
 				this.logger.info('Rollback successful', { version: migration.version });
 			} catch (error) {
-				this.logger.error('Rollback failed for migration', { version: migration.version, error });
+				this.logger.error('Rollback failed for migration', {
+					brand: 'brAInwav',
+					version: migration.version,
+					message: safeErrorMessage(error),
+					stack: safeErrorStack(error),
+				});
 				throw error;
 			}
 		}

@@ -25,4 +25,11 @@ describe('createGenerate', () => {
 		expect(res.provider).toBe('ollama');
 		expect(baseDeps.ollamaGenerate).toHaveBeenCalled();
 	});
+
+	it('throws a branded error for unknown tasks', async () => {
+		const generate = createGenerate({ ...baseDeps, isHealthy: () => true });
+		await expect(generate('no-such-task', {})).rejects.toThrow(
+			/brAInwav generate: unknown task: no-such-task/,
+		);
+	});
 });

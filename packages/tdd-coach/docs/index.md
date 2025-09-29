@@ -8,6 +8,7 @@ Central entry point for all TDD Coach documentation. Distinguishes active featur
 ## Features
 
 ### Current
+
 - **TDD State Machine** – enforces red–green–refactor workflow.
 - **Multi-Framework Support** – Vitest, Jest, Pytest, Cargo, Go test.
 - **Contextual Coaching** – guidance based on developer skill.
@@ -16,13 +17,16 @@ Central entry point for all TDD Coach documentation. Distinguishes active featur
 - **AI Integration** – works with popular coding assistants.
 
 ### Planned
+
 - **PHP**: PHPUnit adapter.
 - **Java**: JUnit adapter.
 - **IDE Extensions** for VS Code and JetBrains.
 
 ## Sections
+
 - [Introduction](./introduction.md)
 - [Getting Started](./getting-started.md)
+- [TDD Planning Guide](./tdd-planning-guide.md) - **Comprehensive 95/95 production readiness methodology**
 - [Configuration](./configuration.md)
 - [Architecture](./architecture.md)
 - [CLI Reference](./cli-reference.md)

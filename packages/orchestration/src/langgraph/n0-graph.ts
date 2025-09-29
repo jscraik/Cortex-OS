@@ -18,8 +18,9 @@ import { CortexHooks, type HookContext, type HookEvent, type HookResult } from '
 import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/src/loaders.js';
 import {
 	type BindKernelToolsOptions,
-	type BoundKernelTool,
 	bindKernelTools,
+	type KernelTool,
+	type KernelToolBinding,
 } from '@cortex-os/kernel';
 import {
 	AIMessage,
@@ -33,7 +34,12 @@ import { DynamicStructuredTool, type StructuredTool } from '@langchain/core/tool
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
 import type { z } from 'zod';
 import type { N0Budget, N0Session, N0State } from './n0-state.js';
-import { dispatchTools, type ToolDispatchHooks, type ToolDispatchJob } from './tool-dispatch.js';
+import {
+	dispatchTools,
+	type ToolDispatchHooks,
+	type ToolDispatchJob,
+	type ToolDispatchResult,
+} from './tool-dispatch.js';
 
 export const N0Annotation = Annotation.Root({
 	...MessagesAnnotation.spec,
@@ -90,7 +96,8 @@ export interface BuildN0Options {
 	hookLoadOptions?: HookLoadOptions;
 	runSlash?: typeof defaultRunSlash;
 	runSlashOptions?: RunSlashOptions;
-	kernelTools?: BoundKernelTool[];
+	kernelBinding?: KernelToolBinding;
+	kernelTools?: KernelTool[];
 	kernelOptions?: BindKernelToolsOptions;
 	subagents?: Map<string, ContractSubagent>;
 	subagentOptions?: LoadSubagentsOptions;
@@ -108,409 +115,499 @@ export interface BuildN0Options {
 }
 
 export interface BuildN0Result {
-	graph: ReturnType<StateGraph<typeof N0Annotation>['compile']>;
+	// The compiled graph shape can vary across StateGraph instantiations
+	// because node names and waiting-edge tuple literal shapes are
+	// embedded into the compiled type. To avoid brittle cross-package
+	// mismatches we expose the compiled graph as `unknown` at this
+	// boundary. Callers that need to inspect the compiled graph should
+	// perform a guarded parse or cast to a more specific shape.
+	graph: unknown;
 	hooks: HookRunner;
 	tools: Map<string, ToolDefinition>;
 	subagentManager?: LoadedSubagents['manager'];
 }
 
 export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
+	const hooks = await ensureHooks(options.hooks, options.hookLoadOptions);
+	const logger = options.logger ?? console;
+	const runSlashImpl = options.runSlash ?? defaultRunSlash;
+	const systemPrompt = options.systemPrompt ?? defaultSystemPrompt();
+	const planResolver = options.planResolver ?? defaultPlanResolver;
+	const compactionConfig = options.compaction ?? {};
+	const dispatchHooks = options.toolHooks ?? createToolHookAdapter(hooks);
 
-        const hooks = await ensureHooks(options.hooks, options.hookLoadOptions);
-        const logger = options.logger ?? console;
-        const runSlashImpl = options.runSlash ?? defaultRunSlash;
-        const systemPrompt = options.systemPrompt ?? defaultSystemPrompt();
-        const planResolver = options.planResolver ?? defaultPlanResolver;
-        const compactionConfig = options.compaction ?? {};
-        const dispatchHooks = options.toolHooks ?? createToolHookAdapter(hooks);
+	const kernelBinding = resolveKernelBinding(options);
+	const kernelDefinitions: ToolDefinition[] = (kernelBinding?.tools ?? []).map((tool: KernelTool) =>
+		kernelToolToDefinition(tool),
+	);
 
-        const kernelDefinitions = (options.kernelTools ?? bindKernelTools(options.kernelOptions ?? {})).map((tool) =>
-                kernelToolToDefinition(tool),
-        );
+	let subagentManager: LoadedSubagents['manager'] | undefined;
+	let subagentMap: Map<string, ContractSubagent> = options.subagents ?? new Map();
+	if (!options.subagents && !options.disableSubagentDiscovery) {
+		const discovered = await discoverSubagents(options.subagentOptions ?? {});
+		subagentManager = discovered.manager;
+		subagentMap = discovered.subagents;
+	}
 
-        let subagentManager: LoadedSubagents['manager'] | undefined;
-        let subagentMap: Map<string, ContractSubagent> = options.subagents ?? new Map();
-        if (!options.subagents && !options.disableSubagentDiscovery) {
-                const discovered = await discoverSubagents(options.subagentOptions ?? {});
-                subagentManager = discovered.manager;
-                subagentMap = discovered.subagents;
-        }
+	const subagentDefinitions = subagentMap.size
+		? subagentTools(subagentMap).map((binding: SubagentToolBinding) =>
+				subagentToolToDefinition(binding),
+			)
+		: [];
 
-        const subagentDefinitions = subagentMap.size
-                ? subagentTools(subagentMap).map((binding) => subagentToolToDefinition(binding))
-                : [];
+	const allDefinitions = [
+		...kernelDefinitions,
+		...subagentDefinitions,
+		...(options.orchestratorTools ?? []),
+	];
+	const toolMap = new Map<string, ToolDefinition>();
+	for (const definition of allDefinitions) {
+		if (toolMap.has(definition.name)) {
+			throw new Error(`Duplicate tool registration detected for ${definition.name}`);
+		}
+		toolMap.set(definition.name, definition);
+	}
 
-        const allDefinitions = [...kernelDefinitions, ...subagentDefinitions, ...(options.orchestratorTools ?? [])];
-        const toolMap = new Map<string, ToolDefinition>();
-        for (const definition of allDefinitions) {
-                if (toolMap.has(definition.name)) {
-                        throw new Error(`Duplicate tool registration detected for ${definition.name}`);
-                }
-                toolMap.set(definition.name, definition);
-        }
+	const structuredTools = Array.from(toolMap.values()).map(toStructuredTool);
+	const toolModel = options.model.bindTools(structuredTools);
 
-        const structuredTools = Array.from(toolMap.values()).map(toStructuredTool);
-        const toolModel = options.model.bindTools(structuredTools);
+	const graph = new StateGraph(N0Annotation)
+		.addNode('parse_or_command', async (state: N0State) => {
+			const ctxPatch: Record<string, unknown> = { sessionStarted: true };
+			if (kernelBinding?.metadata) {
+				ctxPatch.kernelToolkit = kernelBinding.metadata;
+			}
+			const ctx = extendCtx(state.ctx, ctxPatch);
+			await safeRunHook(hooks, 'SessionStart', sessionHookContext(state), logger);
 
-        const graph = new StateGraph(N0Annotation)
-                .addNode('parse_or_command', async (state: N0State) => {
-                        const ctx = extendCtx(state.ctx, { sessionStarted: true });
-                        await safeRunHook(hooks, 'SessionStart', sessionHookContext(state), logger);
+			const baseMessages = [...(state.messages ?? []), new HumanMessage({ content: state.input })];
+			const parsed = tryParseSlash(state.input);
+			if (!parsed) {
+				return { messages: baseMessages, ctx };
+			}
 
-                        const baseMessages = [...(state.messages ?? []), new HumanMessage({ content: state.input })];
-                        const parsed = tryParseSlash(state.input);
-                        if (!parsed) {
-                                return { messages: baseMessages, ctx };
-                        }
+			const slashOptions: RunSlashOptions = {
+				...options.runSlashOptions,
+				session: {
+					...options.runSlashOptions?.session,
+					id: state.session.id,
+					cwd: state.session.cwd,
+					projectDir: options.runSlashOptions?.session?.projectDir ?? state.session.cwd,
+					userDir: options.runSlashOptions?.session?.userDir,
+					modelStore: options.runSlashOptions?.session?.modelStore,
+				},
+				renderContext: {
+					cwd: state.session.cwd,
+					...options.runSlashOptions?.renderContext,
+				},
+			};
+			const result = await runSlashImpl(parsed, slashOptions);
+			const outputText = typeof result.text === 'string' ? result.text : '';
+			const response = new AIMessage({ content: outputText });
+			if (outputText) {
+				try {
+					await options.streamPublisher?.({ type: 'chunk', content: outputText });
+				} catch (error) {
+					logger.error?.('brAInwav slash stream failed', {
+						sessionId: state.session.id,
+						error,
+					});
+				}
+			}
+			logger.info?.('brAInwav slash command executed', {
+				sessionId: state.session.id,
+				command: parsed.cmd,
+			});
+			const commandMetadata = extractCommandMetadata(result.metadata);
+			const commandModel = extractString(commandMetadata?.['model']) ?? 'inherit';
+			const commandAllowedTools = extractStringArray(commandMetadata?.['allowedTools']);
 
-                        const slashOptions: RunSlashOptions = {
-                                ...options.runSlashOptions,
-                                session: {
-                                        ...options.runSlashOptions?.session,
-                                        id: state.session.id,
-                                        cwd: state.session.cwd,
-                                        projectDir: options.runSlashOptions?.session?.projectDir ?? state.session.cwd,
-                                        userDir: options.runSlashOptions?.session?.userDir,
-                                        modelStore: options.runSlashOptions?.session?.modelStore,
-                                },
-                                renderContext: {
-                                        cwd: state.session.cwd,
-                                        ...options.runSlashOptions?.renderContext,
-                                },
-                        };
-                        const result = await runSlashImpl(parsed, slashOptions);
-                        const outputText = typeof result.text === 'string' ? result.text : '';
-                        const response = new AIMessage({ content: outputText });
-                        if (outputText) {
-                                try {
-                                        await options.streamPublisher?.({ type: 'chunk', content: outputText });
-                                } catch (error) {
-                                        logger.error?.('brAInwav slash stream failed', {
-                                                sessionId: state.session.id,
-                                                error,
-                                        });
-                                }
-                        }
-                        logger.info?.('brAInwav slash command executed', {
-                                sessionId: state.session.id,
-                                command: parsed.cmd,
-                        });
-                        return {
-                                messages: [...baseMessages, response],
-                                output: outputText,
-                                ctx: extendCtx(ctx, {
-                                        lastCommand: parsed.cmd,
-                                        commandResult: result,
-                                }),
-                        };
-                })
-                .addNode('pre_prompt_hooks', async (state: N0State) => {
-                        const results = await safeRunHook(hooks, 'UserPromptSubmit', {
-                                event: 'UserPromptSubmit',
-                                cwd: state.session.cwd,
-                                user: state.session.user,
-                                model: state.session.model,
-                                input: state.input,
-                        }, logger);
+			return {
+				messages: [...baseMessages, response],
+				output: outputText,
+				ctx: extendCtx(ctx, {
+					lastCommand: parsed.cmd,
+					commandResult: result,
+					commandMetadata,
+					commandModel,
+					commandAllowedTools,
+				}),
+			};
+		})
+		.addNode('pre_prompt_hooks', async (state: N0State) => {
+			const results = await safeRunHook(
+				hooks,
+				'UserPromptSubmit',
+				{
+					event: 'UserPromptSubmit',
+					cwd: state.session.cwd,
+					user: state.session.user,
+					model: state.session.model,
+					input: state.input,
+				},
+				logger,
+			);
 
-                        if (!results) {
-                                return { ctx: state.ctx, messages: state.messages, input: state.input };
-                        }
+			if (!results) {
+				return { ctx: state.ctx, messages: state.messages, input: state.input };
+			}
 
-                        let input = state.input;
-                        for (const result of results) {
-                                if (result.action === 'deny') {
-                                        const denial = result.reason ?? 'brAInwav prompt denied by policy';
-                                        logger.warn?.('brAInwav prompt denied by hook', {
-                                                sessionId: state.session.id,
-                                                hook: 'UserPromptSubmit',
-                                                reason: result.reason,
-                                        });
-                                        const denialMessage = new AIMessage({ content: denial });
-                                        return {
-                                                output: denial,
-                                                messages: [...(state.messages ?? []), denialMessage],
-                                                ctx: extendCtx(state.ctx, {
-                                                        promptDenied: true,
-                                                        hookResults: results,
-                                                }),
-                                        };
-                                }
-                                if (result.action === 'allow' && 'input' in result && typeof result.input === 'string') {
-                                        if (result.input !== state.input) {
-                                                logger.info?.('brAInwav prompt mutated by hook', {
-                                                        sessionId: state.session.id,
-                                                        hook: 'UserPromptSubmit',
-                                                });
-                                        }
-                                        input = result.input;
-                                }
-                        }
+			let input = state.input;
+			for (const result of results) {
+				if (result.action === 'deny') {
+					const denial = result.reason ?? 'brAInwav prompt denied by policy';
+					logger.warn?.('brAInwav prompt denied by hook', {
+						sessionId: state.session.id,
+						hook: 'UserPromptSubmit',
+						reason: result.reason,
+					});
+					const denialMessage = new AIMessage({ content: denial });
+					return {
+						output: denial,
+						messages: [...(state.messages ?? []), denialMessage],
+						ctx: extendCtx(state.ctx, {
+							promptDenied: true,
+							hookResults: results,
+						}),
+					};
+				}
+				if (result.action === 'allow' && 'input' in result && typeof result.input === 'string') {
+					if (result.input !== state.input) {
+						logger.info?.('brAInwav prompt mutated by hook', {
+							sessionId: state.session.id,
+							hook: 'UserPromptSubmit',
+						});
+					}
+					input = result.input;
+				}
+			}
 
-                        let updatedMessages = state.messages ?? [];
-                        if (updatedMessages.length > 0) {
-                                const lastIndex = updatedMessages.length - 1;
-                                const last = updatedMessages[lastIndex];
-                                if (last.getType() === 'human' && input !== state.input) {
-                                        updatedMessages = [
-                                                ...updatedMessages.slice(0, lastIndex),
-                                                new HumanMessage({ content: input }),
-                                        ];
-                                }
-                        }
+			let updatedMessages = state.messages ?? [];
+			if (updatedMessages.length > 0) {
+				const lastIndex = updatedMessages.length - 1;
+				const last = updatedMessages[lastIndex];
+				if (last.getType() === 'human' && input !== state.input) {
+					updatedMessages = [
+						...updatedMessages.slice(0, lastIndex),
+						new HumanMessage({ content: input }),
+					];
+				}
+			}
 
-                        return {
-                                input,
-                                messages: updatedMessages,
-                                ctx: extendCtx(state.ctx, { hookResults: results }),
-                        };
-                })
-                .addNode('plan_or_direct', async (state: N0State) => {
-                        const decision = planResolver(state);
-                        logger.info?.('brAInwav plan_or_direct decision', {
-                                sessionId: state.session.id,
-                                strategy: decision.strategy,
-                                rationale: decision.rationale,
-                        });
-                        return {
-                                ctx: extendCtx(state.ctx, {
-                                        strategy: decision.strategy,
-                                        planRationale: decision.rationale,
-                                }),
-                        };
-                })
-                .addNode('llm_with_tools', async (state: N0State) => {
-                        const prepared = ensureSystemPrompt(state.messages ?? [], systemPrompt, state.ctx);
-                        const response = await toolModel.invoke(prepared);
-                        const aiMessage = normaliseToAIMessage(response);
-                        const toolCalls = aiMessage.tool_calls ?? [];
-                        const messages = [...(state.messages ?? []), aiMessage];
-                        const output = toolCalls.length === 0 ? renderMessageContent(aiMessage.content) : state.output;
-                        if (toolCalls.length === 0 && output) {
-                                try {
-                                        await options.streamPublisher?.({ type: 'chunk', content: output });
-                                } catch (error) {
-                                        logger.error?.('brAInwav model stream failed', {
-                                                sessionId: state.session.id,
-                                                error,
-                                        });
-                                }
-                        }
-                        return {
-                                messages,
-                                output,
-                                ctx: extendCtx(state.ctx, {
-                                        toolLoopPending: toolCalls.length > 0,
-                                        lastModelResponse: {
-                                                toolCalls: toolCalls.length,
-                                                timestamp: new Date().toISOString(),
-                                        },
-                                }),
-                        };
-                })
-                .addNode('tool_dispatch', async (state: N0State) => {
-                        const messages = state.messages ?? [];
-                        const last = messages[messages.length - 1];
-                        if (!last || !isAIMessage(last) || !last.tool_calls || last.tool_calls.length === 0) {
-                                return {
-                                        ctx: extendCtx(state.ctx, { toolLoopPending: false }),
-                                };
-                        }
+			return {
+				input,
+				messages: updatedMessages,
+				ctx: extendCtx(state.ctx, { hookResults: results }),
+			};
+		})
+		.addNode('plan_or_direct', async (state: N0State) => {
+			const decision = planResolver(state);
+			logger.info?.('brAInwav plan_or_direct decision', {
+				sessionId: state.session.id,
+				strategy: decision.strategy,
+				rationale: decision.rationale,
+			});
+			return {
+				ctx: extendCtx(state.ctx, {
+					strategy: decision.strategy,
+					planRationale: decision.rationale,
+				}),
+			};
+		})
+		.addNode('llm_with_tools', async (state: N0State) => {
+			const prepared = ensureSystemPrompt(state.messages ?? [], systemPrompt, state.ctx);
+			const response = await toolModel.invoke(prepared);
+			const aiMessage = normaliseToAIMessage(response);
+			const toolCalls = aiMessage.tool_calls ?? [];
+			const messages = [...(state.messages ?? []), aiMessage];
+			const output =
+				toolCalls.length === 0 ? renderMessageContent(aiMessage.content) : state.output;
+			if (toolCalls.length === 0 && output) {
+				try {
+					await options.streamPublisher?.({ type: 'chunk', content: output });
+				} catch (error) {
+					logger.error?.('brAInwav model stream failed', {
+						sessionId: state.session.id,
+						error,
+					});
+				}
+			}
+			return {
+				messages,
+				output,
+				ctx: extendCtx(state.ctx, {
+					toolLoopPending: toolCalls.length > 0,
+					lastModelResponse: {
+						toolCalls: toolCalls.length,
+						timestamp: new Date().toISOString(),
+					},
+				}),
+			};
+		})
+		.addNode('tool_dispatch', async (state: N0State) => {
+			const messages = state.messages ?? [];
+			const last = messages[messages.length - 1];
+			if (!last || !isAIMessage(last) || !last.tool_calls || last.tool_calls.length === 0) {
+				return {
+					ctx: extendCtx(state.ctx, { toolLoopPending: false }),
+				};
+			}
 
-                        const jobs: ToolDispatchJob<ToolExecutionOutput>[] = [];
-                        const toolMessages: ToolMessage[] = [];
-                        const loopContext: Record<string, unknown> = {
-                                toolLoopPending: false,
-                                lastToolResults: [],
-                        };
+			const jobs: ToolDispatchJob<ToolExecutionOutput>[] = [];
+			const toolMessages: ToolMessage[] = [];
+			const loopContext: Record<string, unknown> = {
+				toolLoopPending: false,
+				lastToolResults: [],
+			};
 
-                        for (const call of last.tool_calls) {
-                                const definition = toolMap.get(call.name);
-                                const callId = call.id ?? randomUUID();
-                                if (!definition) {
-                                        logger.warn?.('brAInwav tool missing for call', {
-                                                sessionId: state.session.id,
-                                                toolCall: call.name,
-                                        });
-                                        toolMessages.push(
-                                                new ToolMessage({
-                                                        tool_call_id: callId,
-                                                        status: 'error',
-                                                        content: `brAInwav tool ${call.name} is not available`,
-                                                        metadata: { tool: call.name },
-                                                }),
-                                        );
-                                        continue;
-                                }
-                                jobs.push({
-                                        id: callId,
-                                        name: definition.name,
-                                        metadata: {
-                                                ...(definition.metadata ?? {}),
-                                                tool: definition.name,
-                                        },
-                                        input: call.args,
-                                        execute: async (input) =>
-                                                await definition.execute(input, {
-                                                        session: state.session,
-                                                        state,
-                                                        callId,
-                                                }),
-                                });
-                        }
+			for (const call of last.tool_calls) {
+				const definition = toolMap.get(call.name);
+				const callId = call.id ?? randomUUID();
+				if (!definition) {
+					logger.warn?.('brAInwav tool missing for call', {
+						sessionId: state.session.id,
+						toolCall: call.name,
+					});
+					toolMessages.push(
+						new ToolMessage({
+							tool_call_id: callId,
+							status: 'error',
+							content: `brAInwav tool ${call.name} is not available`,
+							metadata: { tool: call.name },
+						}),
+					);
+					continue;
+				}
+				jobs.push({
+					id: callId,
+					name: definition.name,
+					metadata: {
+						...(definition.metadata ?? {}),
+						tool: definition.name,
+					},
+					input: call.args,
+					execute: async (input) =>
+						await definition.execute(input, {
+							session: state.session,
+							state,
+							callId,
+						}),
+				});
+			}
 
-                        if (jobs.length === 0) {
-                                return {
-                                        messages: [...messages, ...toolMessages],
-                                        ctx: extendCtx(state.ctx, loopContext),
-                                };
-                        }
+			if (jobs.length === 0) {
+				return {
+					messages: [...messages, ...toolMessages],
+					ctx: extendCtx(state.ctx, loopContext),
+				};
+			}
 
-                        const results: ToolDispatchResult<ToolExecutionOutput>[] = await dispatchTools(jobs, {
-                                session: state.session,
-                                budget: state.budget,
-                                concurrency: options.toolConcurrency,
-                                allowList: options.toolAllowList,
-                                hooks: dispatchHooks,
-                        });
+			const results: ToolDispatchResult<ToolExecutionOutput>[] = await dispatchTools(jobs, {
+				session: state.session,
+				budget: state.budget,
+				concurrency: options.toolConcurrency,
+				allowList: options.toolAllowList,
+				hooks: dispatchHooks,
+			});
 
-                        for (let index = 0; index < results.length; index++) {
-                                const job = jobs[index];
-                                const settled = results[index];
-                                if (settled.status === 'fulfilled' && settled.value) {
-                                        const payload = settled.value;
-                                        toolMessages.push(
-                                                new ToolMessage({
-                                                        tool_call_id: job.id,
-                                                        status: payload.status ?? 'success',
-                                                        content: payload.content,
-                                                        metadata: {
-                                                                ...(job.metadata ?? {}),
-                                                                ...(payload.metadata ?? {}),
-                                                                durationMs: settled.durationMs,
-                                                                tokensUsed: settled.tokensUsed,
-                                                        },
-                                                        artifact: payload.artifact,
-                                                }),
-                                        );
-                                } else {
-                                        const reason = settled.reason?.message ?? 'unknown error';
-                                        toolMessages.push(
-                                                new ToolMessage({
-                                                        tool_call_id: job.id,
-                                                        status: 'error',
-                                                        content: `brAInwav tool ${job.name} failed: ${reason}`,
-                                                        metadata: {
-                                                                ...(job.metadata ?? {}),
-                                                                durationMs: settled.durationMs,
-                                                                tokensUsed: settled.tokensUsed,
-                                                        },
-                                                }),
-                                        );
-                                }
-                        }
+			for (let index = 0; index < results.length; index++) {
+				const job = jobs[index];
+				const settled = results[index];
+				if (settled.status === 'fulfilled' && settled.value) {
+					const payload = settled.value;
+					toolMessages.push(
+						new ToolMessage({
+							tool_call_id: job.id,
+							status: payload.status ?? 'success',
+							content: payload.content,
+							metadata: {
+								...(job.metadata ?? {}),
+								...(payload.metadata ?? {}),
+								durationMs: settled.durationMs,
+								tokensUsed: settled.tokensUsed,
+							},
+							artifact: payload.artifact,
+						}),
+					);
+				} else {
+					const reason = settled.reason?.message ?? 'unknown error';
+					toolMessages.push(
+						new ToolMessage({
+							tool_call_id: job.id,
+							status: 'error',
+							content: `brAInwav tool ${job.name} failed: ${reason}`,
+							metadata: {
+								...(job.metadata ?? {}),
+								durationMs: settled.durationMs,
+								tokensUsed: settled.tokensUsed,
+							},
+						}),
+					);
+				}
+			}
 
-                        loopContext.toolLoopPending = true;
-                        loopContext.lastToolResults = toolMessages.map((msg) => ({
-                                tool: msg.metadata?.tool ?? msg.tool_call_id,
-                                status: msg.status,
-                        }));
+			loopContext.toolLoopPending = true;
+			loopContext.lastToolResults = toolMessages.map((msg) => ({
+				tool: msg.metadata?.tool ?? msg.tool_call_id,
+				status: msg.status,
+			}));
 
-                        logger.info?.('brAInwav tool dispatch complete', {
-                                sessionId: state.session.id,
-                                jobs: jobs.length,
-                                results: loopContext.lastToolResults,
-                        });
+			logger.info?.('brAInwav tool dispatch complete', {
+				sessionId: state.session.id,
+				jobs: jobs.length,
+				results: loopContext.lastToolResults,
+			});
 
-                        return {
-                                messages: [...messages, ...toolMessages],
-                                ctx: extendCtx(state.ctx, loopContext),
-                        };
-                })
-                .addNode('compact_if_needed', async (state: N0State) => {
-                        const messages = state.messages ?? [];
-                        const maxMessages = compactionConfig.maxMessages ?? 30;
-                        const maxChars = compactionConfig.maxChars ?? 16_000;
-                        if (messages.length <= maxMessages && totalCharacters(messages) <= maxChars) {
-                                return {
-                                        ctx: extendCtx(state.ctx, { compacted: false }),
-                                };
-                        }
-                        await safeRunHook(hooks, 'PreCompact', {
-                                event: 'PreCompact',
-                                cwd: state.session.cwd,
-                                user: state.session.user,
-                                model: state.session.model,
-                        }, logger);
-                        const compacted = compactMessages(messages, maxMessages, maxChars);
-                        logger.warn?.('brAInwav memory compaction applied', {
-                                sessionId: state.session.id,
-                                originalCount: messages.length,
-                                compactedCount: compacted.length,
-                        });
-                        return {
-                                messages: compacted,
-                                ctx: extendCtx(state.ctx, {
-                                        compacted: true,
-                                        compactedAt: new Date().toISOString(),
-                                }),
-                        };
-                })
-                .addNode('stream_and_log', async (state: N0State) => {
-                        const finalOutput = state.output ?? deriveOutputFromMessages(state.messages);
-                        if (finalOutput) {
-                                try {
-                                        await options.streamPublisher?.({ type: 'final', content: finalOutput });
-                                } catch (error) {
-                                        logger.error?.('brAInwav final stream failed', {
-                                                sessionId: state.session.id,
-                                                error,
-                                        });
-                                }
-                        }
-                        logger.info?.('brAInwav n0 run complete', {
-                                sessionId: state.session.id,
-                                outputLength: finalOutput?.length ?? 0,
-                        });
-                        if (!state.ctx?.sessionCompleted) {
-                                const payload = stopHookContext(state, finalOutput);
-                                await safeRunHook(hooks, 'Stop', payload, logger);
-                                await safeRunHook(hooks, 'SessionEnd', payload, logger);
-                        }
-                        return {
-                                output: finalOutput,
-                                ctx: extendCtx(state.ctx, {
-                                        sessionCompleted: true,
-                                        finalisedAt: new Date().toISOString(),
-                                }),
-                        };
-                });
+			return {
+				messages: [...messages, ...toolMessages],
+				ctx: extendCtx(state.ctx, loopContext),
+			};
+		})
+		.addNode('compact_if_needed', async (state: N0State) => {
+			const messages = state.messages ?? [];
+			const maxMessages = compactionConfig.maxMessages ?? 30;
+			const maxChars = compactionConfig.maxChars ?? 16_000;
+			if (messages.length <= maxMessages && totalCharacters(messages) <= maxChars) {
+				return {
+					ctx: extendCtx(state.ctx, { compacted: false }),
+				};
+			}
+			await safeRunHook(
+				hooks,
+				'PreCompact',
+				{
+					event: 'PreCompact',
+					cwd: state.session.cwd,
+					user: state.session.user,
+					model: state.session.model,
+				},
+				logger,
+			);
+			const compacted = compactMessages(messages, maxMessages, maxChars);
+			logger.warn?.('brAInwav memory compaction applied', {
+				sessionId: state.session.id,
+				originalCount: messages.length,
+				compactedCount: compacted.length,
+			});
+			return {
+				messages: compacted,
+				ctx: extendCtx(state.ctx, {
+					compacted: true,
+					compactedAt: new Date().toISOString(),
+				}),
+			};
+		})
+		.addNode('stream_and_log', async (state: N0State) => {
+			const finalOutput = state.output ?? deriveOutputFromMessages(state.messages);
+			if (finalOutput) {
+				try {
+					await options.streamPublisher?.({ type: 'final', content: finalOutput });
+				} catch (error) {
+					logger.error?.('brAInwav final stream failed', {
+						sessionId: state.session.id,
+						error,
+					});
+				}
+			}
+			logger.info?.('brAInwav n0 run complete', {
+				sessionId: state.session.id,
+				outputLength: finalOutput?.length ?? 0,
+			});
+			if (!state.ctx?.sessionCompleted) {
+				const payload = stopHookContext(state, finalOutput);
+				await safeRunHook(hooks, 'Stop', payload, logger);
+				await safeRunHook(hooks, 'SessionEnd', payload, logger);
+			}
+			return {
+				output: finalOutput,
+				ctx: extendCtx(state.ctx, {
+					sessionCompleted: true,
+					finalisedAt: new Date().toISOString(),
+				}),
+			};
+		});
 
-        graph.addEdge(START, 'parse_or_command');
-        graph.addConditionalEdges('parse_or_command', (state: N0State) => (state.output ? 'stream_and_log' : 'pre_prompt_hooks'));
-        graph.addEdge('pre_prompt_hooks', 'plan_or_direct');
-        graph.addEdge('plan_or_direct', 'llm_with_tools');
-        graph.addConditionalEdges('llm_with_tools', (state: N0State) => {
-                const messages = state.messages ?? [];
-                const last = messages[messages.length - 1];
-                if (last && isAIMessage(last) && last.tool_calls && last.tool_calls.length > 0) {
-                        return 'tool_dispatch';
-                }
-                return 'compact_if_needed';
-        });
-        graph.addConditionalEdges('tool_dispatch', (state: N0State) => {
-                return state.ctx?.toolLoopPending ? 'llm_with_tools' : 'compact_if_needed';
-        });
-        graph.addEdge('compact_if_needed', 'stream_and_log');
-        graph.addEdge('stream_and_log', END);
+	graph.addEdge(START, 'parse_or_command');
+	graph.addConditionalEdges('parse_or_command', (state: N0State) =>
+		state.output ? 'stream_and_log' : 'pre_prompt_hooks',
+	);
+	graph.addEdge('pre_prompt_hooks', 'plan_or_direct');
+	graph.addEdge('plan_or_direct', 'llm_with_tools');
+	graph.addConditionalEdges('llm_with_tools', (state: N0State) => {
+		const messages = state.messages ?? [];
+		const last = messages[messages.length - 1];
+		if (last && isAIMessage(last) && last.tool_calls && last.tool_calls.length > 0) {
+			return 'tool_dispatch';
+		}
+		return 'compact_if_needed';
+	});
+	graph.addConditionalEdges('tool_dispatch', (state: N0State) => {
+		return state.ctx?.toolLoopPending ? 'llm_with_tools' : 'compact_if_needed';
+	});
+	graph.addEdge('compact_if_needed', 'stream_and_log');
+	graph.addEdge('stream_and_log', END);
 
-        return {
-                graph: graph.compile(),
-                hooks,
-                tools: toolMap,
-                subagentManager,
-        };
+	return {
+		graph: graph.compile(),
+		hooks,
+		tools: toolMap,
+		subagentManager,
+	};
+}
 
+function resolveKernelBinding(options: BuildN0Options): KernelToolBinding | undefined {
+	if (options.kernelBinding) {
+		return options.kernelBinding;
+	}
+	if (options.kernelOptions) {
+		return bindKernelTools(options.kernelOptions);
+	}
+	if (options.kernelTools) {
+		return createKernelBindingFromTools(options.kernelTools, options.kernelOptions);
+	}
+	return undefined;
+}
+
+function createKernelBindingFromTools(
+	tools: KernelTool[],
+	options?: BindKernelToolsOptions,
+): KernelToolBinding {
+	const allowLists = {
+		bash: collectAllowList(tools, 'bash'),
+		filesystem: collectAllowList(tools, 'filesystem'),
+		network: collectAllowList(tools, 'network'),
+	};
+	const timeoutMs = tools.reduce(
+		(acc, tool) => (tool.metadata.timeoutMs > acc ? tool.metadata.timeoutMs : acc),
+		options?.timeoutMs ?? 30000,
+	);
+	return {
+		tools,
+		metadata: {
+			brand: 'brAInwav kernel toolkit',
+			cwd: options?.cwd ?? process.cwd(),
+			defaultModel: options?.defaultModel ?? 'inherit',
+			allowLists,
+			timeoutMs,
+			surfaces: tools.map((tool) => tool.name),
+			security: undefined,
+		},
+	};
+}
+
+function collectAllowList(
+	tools: KernelTool[],
+	surface: 'bash' | 'filesystem' | 'network',
+): string[] {
+	const entries = new Set<string>();
+	for (const tool of tools) {
+		if (tool.metadata.surface === surface) {
+			for (const item of tool.metadata.allowList) {
+				entries.add(item);
+			}
+		}
+	}
+	return Array.from(entries);
 }
 
 function ensureHooks(
@@ -530,21 +627,29 @@ function createToolHookAdapter(hooks: HookRunner): ToolDispatchHooks {
 	};
 }
 
-function kernelToolToDefinition(tool: BoundKernelTool): ToolDefinition {
+function kernelToolToDefinition(tool: KernelTool): ToolDefinition {
 	return {
 		name: tool.name,
 		description: tool.description,
 		schema: tool.schema,
 		metadata: {
 			provider: 'kernel',
-			surface: tool.name,
+			surface: tool.metadata.surface,
+			allowList: [...tool.metadata.allowList],
+			timeoutMs: tool.metadata.timeoutMs,
 		},
 		async execute(input) {
-			const result = await tool.execute(input);
+			const parsed = tool.schema.parse(input);
+			const result = await tool.invoke(parsed);
 			return {
 				content: renderOutput(result),
 				status: 'success',
-				metadata: { provider: 'kernel', surface: tool.name },
+				metadata: {
+					provider: 'kernel',
+					surface: tool.metadata.surface,
+					allowList: [...tool.metadata.allowList],
+					timeoutMs: tool.metadata.timeoutMs,
+				},
 				artifact: result,
 			} satisfies ToolExecutionOutput;
 		},
@@ -587,6 +692,47 @@ function toStructuredTool(definition: ToolDefinition): StructuredTool {
 			);
 		},
 	});
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function extractCommandMetadata(metadata: unknown): Record<string, unknown> | undefined {
+	if (!metadata) {
+		return undefined;
+	}
+	if (isRecord(metadata)) {
+		const command = Object.hasOwn(metadata as object, 'command')
+			? (metadata as { command?: unknown }).command
+			: undefined;
+		if (isRecord(command)) {
+			return command;
+		}
+		if (typeof metadata['name'] === 'string') {
+			return metadata;
+		}
+	}
+	return undefined;
+}
+
+function extractString(value: unknown): string | undefined {
+	if (typeof value !== 'string') {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function extractStringArray(value: unknown): string[] | undefined {
+	if (Array.isArray(value)) {
+		const strings = value
+			.map((item) => (typeof item === 'string' ? item.trim() : undefined))
+			.filter((item): item is string => Boolean(item));
+		return strings.length ? strings : undefined;
+	}
+	const single = extractString(value);
+	return single ? [single] : undefined;
 }
 
 function extendCtx(
@@ -755,14 +901,12 @@ function defaultPlanResolver(state: N0State): PlanDecision {
 }
 
 function defaultSystemPrompt(): string {
-
-        return [
-                'You are brAInwav n0, the master orchestration loop for Cortex-OS.',
-                'Coordinate kernel tools, workspace commands, and subagents to produce accurate, secure results.',
-                'Always respect hook policies, filesystem/network allow-lists, and budget constraints.',
-                'Explain tool usage briefly in natural language while keeping sensitive data protected.',
-                'Log session information and relevant context for debugging when errors or unexpected behavior occur, following best practices for observability.',
-                'Handle errors gracefully and provide clear, actionable feedback to users and developers.',
-        ].join(' ');
-
+	return [
+		'You are brAInwav n0, the master orchestration loop for Cortex-OS.',
+		'Coordinate kernel tools, workspace commands, and subagents to produce accurate, secure results.',
+		'Always respect hook policies, filesystem/network allow-lists, and budget constraints.',
+		'Explain tool usage briefly in natural language while keeping sensitive data protected.',
+		'Log session information and relevant context for debugging when errors or unexpected behavior occur, following best practices for observability.',
+		'Handle errors gracefully and provide clear, actionable feedback to users and developers.',
+	].join(' ');
 }

@@ -43,6 +43,22 @@ describe('hook filesystem loading', () => {
 		expect(cfg.PreToolUse?.[1].hooks[0].command).toBe('echo project');
 	});
 
+	it('applies project command allowlist overrides', async () => {
+		await writeHookFile(
+			path.join(userDir, 'hooks'),
+			'settings.yaml',
+			`settings:\n  command:\n    allowlist:\n      - npm run test\n`,
+		);
+		await writeHookFile(
+			path.join(projectDir, '.cortex', 'hooks'),
+			'settings.yaml',
+			`settings:\n  command:\n    allowlist:\n      - pnpm run lint\n`,
+		);
+
+		const cfg = await loadHookConfigs({ projectDir, userDir });
+		expect(cfg.settings?.command?.allowlist).toEqual(['pnpm run lint']);
+	});
+
 	it('hot reloads hook configuration changes', async () => {
 		const projectHooksDir = path.join(projectDir, '.cortex', 'hooks');
 		await writeHookFile(

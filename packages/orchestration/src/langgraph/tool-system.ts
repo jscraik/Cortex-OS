@@ -54,9 +54,10 @@ export interface HookAwareDispatcher {
 export function createHookAwareDispatcher(
 	options: HookAwareDispatcherOptions,
 ): HookAwareDispatcher {
-	const hookAdapter: ToolDispatchHooks | undefined = options.hooks
+	const hooksRef = options.hooks;
+	const hookAdapter: ToolDispatchHooks | undefined = hooksRef
 		? {
-				run: (event, ctx) => options.hooks?.run(event, ctx),
+				run: (event, ctx) => hooksRef.run(event, ctx),
 			}
 		: undefined;
 	return {
@@ -64,12 +65,17 @@ export function createHookAwareDispatcher(
 			jobs: ToolDispatchJob<T>[],
 			overrides: Partial<ToolDispatchOptions<T>> = {},
 		): Promise<ToolDispatchResult<T>[]> {
-			const progress = overrides.onProgress
-				? overrides.onProgress
-				: options.onProgress
-					? (event: ToolDispatchProgressEvent<T>) =>
-							options.onProgress?.(event as ToolDispatchProgressEvent<unknown>)
-					: undefined;
+			let progress: ToolDispatchProgressHandler<unknown> | undefined;
+			if (overrides.onProgress) {
+				// Wrap the generic handler to a non-generic form that the dispatcher expects
+				progress = (event: ToolDispatchProgressEvent<unknown>) =>
+					overrides.onProgress?.(event as ToolDispatchProgressEvent<T>);
+			} else if (options.onProgress) {
+				progress = (event: ToolDispatchProgressEvent<unknown>) =>
+					options.onProgress?.(event as ToolDispatchProgressEvent<unknown>);
+			} else {
+				progress = undefined;
+			}
 			return dispatchTools(jobs, {
 				session: overrides.session ?? options.session,
 				budget: overrides.budget ?? options.budget,
@@ -112,6 +118,7 @@ export interface UnifiedToolSystem {
 }
 
 export function createUnifiedToolSystem(options: UnifiedToolSystemOptions): UnifiedToolSystem {
+	const hooksRef = options.hooks;
 	const kernel = bindKernelTools(options.kernel);
 	const agentTools: SubagentToolDefinition[] = [];
 
@@ -145,7 +152,7 @@ export function createUnifiedToolSystem(options: UnifiedToolSystemOptions): Unif
 		compact(state: N0State) {
 			const compactionOpts: MemoryCompactionOptions = {
 				...options.compaction,
-				hooks: options.hooks ? { run: (event, ctx) => options.hooks?.run(event, ctx) } : undefined,
+				hooks: hooksRef ? { run: (event, ctx) => hooksRef.run(event, ctx) } : undefined,
 				session: options.session,
 			};
 			return compactN0State(state, compactionOpts);

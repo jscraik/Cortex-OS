@@ -15,7 +15,7 @@ _Your contributions help make AI agent systems more accessible and powerful_
 
 ```bash
 # Clone the repository
-git clone https://github.com/cortex-os/cortex-os.git
+git clone https://github.com/jamiescottcraik/Cortex-OS.git
 cd cortex-os
 
 # Install dependencies (requires exact pnpm version)
@@ -968,7 +968,7 @@ We recognize contributions in several ways:
 
 ## 📜 License
 
-By contributing to Cortex-OS, you agree that your contributions will be licensed under the same [MIT License](./LICENSE) that covers the project.
+By contributing to Cortex-OS, you agree that your contributions will be licensed under the same [Apache-2.0 License](./LICENSE) that covers the project.
 
 ---
 

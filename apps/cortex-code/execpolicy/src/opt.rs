@@ -59,8 +59,8 @@ impl<'v> UnpackValue<'v> for Opt {
     type Error = starlark::Error;
 
     fn unpack_value_impl(value: Value<'v>) -> starlark::Result<Option<Self>> {
-        // Starlark values are shared, so we return a clone rather than taking
-        // ownership of the underlying value.
+        // TODO(mbolin): It fels like this should be doable without cloning?
+        // Cannot simply consume the value?
         Ok(value.downcast_ref::<Opt>().cloned())
     }
 }

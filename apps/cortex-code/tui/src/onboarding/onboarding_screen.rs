@@ -105,7 +105,7 @@ impl OnboardingScreen {
                 error: None,
             }))
         }
-        // TrustDirectoryWidget renders tailored guidance when the folder is not a Git repository.
+        // TODO: add git warning.
         Self {
             request_frame: tui.frame_requester(),
             steps,

@@ -434,19 +434,9 @@ const DEFAULT_ENV_VARS: &[&str] = &[
 
 #[cfg(windows)]
 const DEFAULT_ENV_VARS: &[&str] = &[
-    // Reference: https://learn.microsoft.com/windows/win32/procthread/environment-variables
-    // captures the core variables Windows sets for interactive processes.
-    "APPDATA",
-    "COMSPEC",
-    "LOCALAPPDATA",
+    // TODO: More research is necessary to curate this list.
     "PATH",
     "PATHEXT",
-    "PROGRAMDATA",
-    "PROGRAMFILES",
-    "PROGRAMFILES(X86)",
-    "PUBLIC",
-    "SYSTEMROOT",
-    "WINDIR",
     "USERNAME",
     "USERDOMAIN",
     "USERPROFILE",

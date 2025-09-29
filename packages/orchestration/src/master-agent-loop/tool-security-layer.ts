@@ -8,6 +8,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import { URL } from 'node:url';
 import { createPrefixedId } from '../lib/secure-random.js';
 import { ToolValidationError, ToolValidationErrorCode } from './tool-validation-error.js';
@@ -71,11 +72,16 @@ interface UserRateLimit {
 }
 
 /**
+ * Audit event type
+ */
+export type AuditEvent = Record<string, unknown>;
+
+/**
  * Comprehensive tool security and validation layer
  */
 export class ToolSecurityLayer extends EventEmitter {
 	private readonly rateLimits = new Map<string, UserRateLimit>();
-	private readonly auditLog: any[] = [];
+	private readonly auditLog: AuditEvent[] = [];
 	private readonly suspiciousPatterns = new Set<string>();
 
 	// Security configuration

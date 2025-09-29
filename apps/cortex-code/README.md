@@ -1,36 +1,4 @@
-<!-- markdownlint-disable MD013 -->
-
-# 🚨 CRITICAL: brAInwav Production Standards
-
-**ABSOLUTE PROHIBITION**: NEVER describe any Cortex-Code integration as "production-ready", "complete", "operational", or "fully implemented" when it still includes placeholder logic such as:
-
-- `Math.random()` (or equivalent) fake data generators
-- Hardcoded mock responses such as "Mock adapter response"
-- TODO/FIXME comments in brAInwav execution paths
-- Placeholder implementations with notes like "will be wired later"
-- Disabled features that emit `console.warn("not implemented")`
-- Fake metrics, thermal data, or synthetic telemetry
-
-**brAInwav Standards**: Every system output, error, audit log, and health indicator emitted from Cortex-Code **must** include brAInwav branding. Only report status claims that are verified by automated tests.
-
-**Reference**: See `../../.cortex/rules/RULES_OF_AI.md` for the full governance policy.
-
----
-
-## Cortex Code (Rust) – brAInwav Overview
-
-This directory vendors the Rust workspace for the OpenAI Codex CLI. The exact upstream revision is tracked in `UPSTREAM_REF`; follow `UPSTREAM_SYNC.md` for the approved synchronization workflow.
-
-## Local integration notes
-
-- **Agent guidance**: brAInwav-specific operating instructions live in `AGENTS.md`.
-- **A2A interoperability**: The `A2A_IMPLEMENTATION.md` document outlines the Cortex-OS Agent-to-Agent wiring.
-- **Project documentation**: Long-form plans, task logs, and design notes live under `project-documentation/cortex-code/`.
-- **MCP usage**: MCP tool coverage remains under active development; align with the references in `docs/codex_mcp_interface.md` when exposing new surfaces.
-
----
-
-## Upstream README: Codex CLI (Rust Implementation)
+# Codex CLI (Rust Implementation)
 
 We provide Codex CLI as a standalone, native executable to ensure a zero-dependency install.
 
@@ -99,7 +67,7 @@ codex completion fish
 
 To test to see what happens when a command is run under the sandbox provided by Codex, we provide the following subcommands in Codex CLI:
 
-```text
+```
 # macOS
 codex debug seatbelt [--full-auto] [COMMAND]...
 
@@ -132,3 +100,7 @@ This folder is the root of a Cargo workspace. It contains quite a bit of experim
 - [`exec/`](./exec) "headless" CLI for use in automation.
 - [`tui/`](./tui) CLI that launches a fullscreen TUI built with [Ratatui](https://ratatui.rs/).
 - [`cli/`](./cli) CLI multitool that provides the aforementioned CLIs via subcommands.
+
+## brAInwav Exception Note
+
+brAInwav mirrors the upstream `codex-core` user-agent logic, which currently reports the originator as `codex_vscode`. Tests in `core/src/default_client.rs` assert against the runtime `ORIGINATOR` value rather than hard-coding `codex_cli_rs`; do not pin the expectation to a specific string unless you are also updating `CODEX_INTERNAL_ORIGINATOR_OVERRIDE` for all call sites.

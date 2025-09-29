@@ -26,6 +26,7 @@ process.on('uncaughtException', (error) => {
 	}
 });
 
+import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import { initializeAuthTables } from './auth';
 import { getCorsOptions, getServerConfig } from './config/config.js';
 // Import constants from backend config (domain separation)
@@ -243,7 +244,11 @@ export const createServer = (): ServerComponents => {
 			});
 			logger.info('server:started:successfully');
 		} catch (error) {
-			logger.error('server:start_failed', { error });
+			logger.error('server:start_failed', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			process.exit(1);
 		}
 	};

@@ -2,6 +2,7 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import { getDatabase } from '../utils/database.js';
 import logger from '../utils/logger.js';
 
@@ -114,10 +115,14 @@ export class HealthService {
 				componentType: 'datastore',
 			};
 		} catch (error) {
-			logger.error('Database health check failed', error);
+			logger.error('Database health check failed', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			return {
 				status: 'fail',
-				message: `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				message: `Database connection failed: ${safeErrorMessage(error)}`,
 				componentId: 'database',
 				componentType: 'datastore',
 			};
@@ -145,10 +150,14 @@ export class HealthService {
 				componentType: 'system',
 			};
 		} catch (error) {
-			logger.error('File system health check failed', error);
+			logger.error('File system health check failed', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			return {
 				status: 'fail',
-				message: `File system check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				message: `File system check failed: ${safeErrorMessage(error)}`,
 				componentId: 'filesystem',
 				componentType: 'system',
 			};
@@ -193,10 +202,14 @@ export class HealthService {
 				componentType: 'system',
 			};
 		} catch (error) {
-			logger.error('Memory health check failed', error);
+			logger.error('Memory health check failed', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			return {
 				status: 'fail',
-				message: `Memory check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				message: `Memory check failed: ${safeErrorMessage(error)}`,
 				componentId: 'memory',
 				componentType: 'system',
 			};
@@ -226,10 +239,14 @@ export class HealthService {
 				componentType: 'system',
 			};
 		} catch (error) {
-			logger.error('Disk space health check failed', error);
+			logger.error('Disk space health check failed', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			return {
 				status: 'fail',
-				message: `Disk space check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				message: `Disk space check failed: ${safeErrorMessage(error)}`,
 				componentId: 'diskspace',
 				componentType: 'system',
 			};
@@ -268,10 +285,14 @@ export class HealthService {
 				componentType: 'system',
 			};
 		} catch (error) {
-			logger.error('Environment health check failed', error);
+			logger.error('Environment health check failed', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			return {
 				status: 'fail',
-				message: `Environment check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				message: `Environment check failed: ${safeErrorMessage(error)}`,
 				componentId: 'environment',
 				componentType: 'system',
 			};

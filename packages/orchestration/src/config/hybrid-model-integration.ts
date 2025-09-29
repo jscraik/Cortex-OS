@@ -292,6 +292,9 @@ export interface IOrchestrationHybridRouter {
 }
 export class OrchestrationHybridRouter implements IOrchestrationHybridRouter {
 	private models: Map<string, OrchestrationModelConfig> = new Map();
+	// Backing fields for setter methods
+	private privacyMode: boolean = ORCHESTRATION_HYBRID_CONFIG.privacy_mode_enabled;
+	private hybridMode: HybridMode = ORCHESTRATION_HYBRID_CONFIG.hybrid_mode;
 
 	constructor() {
 		// Load the 7 required models
@@ -383,6 +386,15 @@ export class OrchestrationHybridRouter implements IOrchestrationHybridRouter {
 	setHybridMode(mode: HybridMode): void {
 		this.hybridMode = mode;
 		console.log(`brAInwav Cortex-OS: Hybrid mode set to ${mode}`);
+	}
+
+	// Public getters to expose current router mode state
+	public getPrivacyMode(): boolean {
+		return this.privacyMode;
+	}
+
+	public getHybridMode(): HybridMode {
+		return this.hybridMode;
 	}
 
 	/**

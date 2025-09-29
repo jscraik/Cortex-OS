@@ -40,206 +40,64 @@
 		"downlevelIteration": true,
 		"baseUrl": ".",
 		"paths": {
-			"@cortex-os/hooks": [
-				"packages/hooks/dist/index.d.ts"
-			],
-			"@cortex-os-app/*": [
-				"apps/cortex-os/src/*"
-			],
-			"@testing/*": [
-				"packages/testing/src/*"
-			],
-			"@security/*": [
-				"packages/security/src/*"
-			],
-			"@utils/*": [
-				"packages/utils/src/*"
-			],
-			"@cortex-os/a2a-core/*": [
-				"packages/a2a/a2a-core/src/*"
-			],
-			"@cortex-os/a2a-transport/*": [
-				"packages/a2a/a2a-transport/src/*"
-			],
-			"@cortex-os/a2a-contracts/*": [
-				"packages/a2a/a2a-contracts/src/*"
-			],
-			"@cortex-os/utils": [
-				"libs/typescript/utils/dist/index.d.ts"
-			],
-			"@cortex-os/asbr-schemas": [
-				"libs/typescript/asbr-schemas/dist/index.d.ts"
-			],
-			"@cortex-os/asbr-schemas/*": [
-				"libs/typescript/asbr-schemas/dist/*"
-			],
-			"@cortex-os/asbr-policy": [
-				"libs/typescript/asbr-policy/dist/index.d.ts"
-			],
-			"@cortex-os/asbr-policy/*": [
-				"libs/typescript/asbr-policy/dist/*"
-			],
-			"@cortex-os/utils/*": [
-				"libs/typescript/utils/dist/*"
-			],
-			"@cortex-os/types": [
-				"libs/typescript/types/src/index.ts"
-			],
-			"@cortex-os/types/*": [
-				"libs/typescript/types/src/*"
-			],
-			"@cortex-os/contracts": [
-				"libs/typescript/contracts/dist/src/index.d.ts"
-			],
-			"@cortex-os/contracts/*": [
-				"libs/typescript/contracts/dist/src/*"
-			],
-			"@cortex-os/telemetry": [
-				"libs/typescript/telemetry/src"
-			],
-			"@cortex-os/mcp": [
-				"packages/mcp-core/dist/index.d.ts"
-			],
-			"@cortex-os/mcp/*": [
-				"packages/mcp-core/dist/*"
-			],
-			"@cortex-os/mcp-core": [
-				"packages/mcp-core/dist/index.d.ts"
-			],
-			"@cortex-os/mcp-core/*": [
-				"packages/mcp-core/dist/*"
-			],
-			"@cortex-os/mcp-transport-bridge": [
-				"packages/mcp-transport-bridge/src/index.ts"
-			],
-			"@cortex-os/mcp-transport-bridge/*": [
-				"packages/mcp-transport-bridge/src/*"
-			],
-			"@cortex-os/mcp-transport": [
-				"packages/mcp-transport-bridge/src/index.ts"
-			],
-			"@cortex-os/mcp-transport/*": [
-				"packages/mcp-transport-bridge/src/*"
-			],
-			"@cortex-os/mcp-registry": [
-				"packages/mcp-registry/dist/index.d.ts"
-			],
-			"@cortex-os/mcp-registry/*": [
-				"packages/mcp-registry/dist/*"
-			],
-			"@cortex-os/rag/*": [
-				"packages/rag/src/*"
-			],
-			"@cortex-os/rag-pipeline/*": [
-				"packages/rag/src/pipeline/*"
-			],
-			"@cortex-os/rag-embed/*": [
-				"packages/rag/src/embed/*"
-			],
-			"@cortex-os/rag-store/*": [
-				"packages/rag/src/store/*"
-			],
-			"@cortex-os/evals": [
-				"packages/evals/src/index.ts"
-			],
-			"@cortex-os/evals/*": [
-				"packages/evals/src/*"
-			],
-			"@cortex-os/simlab": [
-				"packages/simlab/src/index.ts"
-			],
-			"@cortex-os/simlab/*": [
-				"packages/simlab/src/*"
+			"@cortex-os/*": [
+				"packages/*/dist/index.d.ts",
+				"packages/*/src/index.ts"
 			],
 			"@cortex-os/agents": [
+				"packages/agents/dist/index.d.ts",
 				"packages/agents/src/index.ts"
 			],
 			"@cortex-os/agents/*": [
+				"packages/agents/dist/*",
 				"packages/agents/src/*"
 			],
-			"@cortex-os/asbr": [
-				"packages/asbr/src/index.ts"
-			],
-			"@cortex-os/asbr/*": [
-				"packages/asbr/src/*"
-			],
 			"@cortex-os/kernel": [
+				"packages/kernel/dist/index.d.ts",
 				"packages/kernel/src/index.ts"
 			],
 			"@cortex-os/kernel/*": [
+				"packages/kernel/dist/*",
 				"packages/kernel/src/*"
 			],
-			"@cortex-os/mcp-server": [
-				"packages/mcp-server/src/index.ts"
-			],
-			"@cortex-os/mcp-server/*": [
-				"packages/mcp-server/src/*"
-			],
-			"@cortex-os/mcp-bridge": [
-				"packages/mcp-bridge/src/index.ts"
-			],
-			"@cortex-os/mcp-bridge/*": [
-				"packages/mcp-bridge/src/*"
-			],
-			"@cortex-os/cortex-sec": [
-				"packages/cortex-sec/src/index.ts"
-			],
-			"@cortex-os/cortex-sec/*": [
-				"packages/cortex-sec/src/*"
-			],
-			"@cortex-os/memories": [
-				"packages/memories/src/index.ts"
-			],
-			"@cortex-os/memories/*": [
-				"packages/memories/src/*"
-			],
-			"@cortex-os/mvp": [
-				"packages/mvp/src/index.ts"
-			],
-			"@cortex-os/mvp/*": [
-				"packages/mvp/src/*"
-			],
-			"@cortex-os/mvp-server": [
-				"packages/mvp-server/src/index.ts"
-			],
-			"@cortex-os/mvp-server/*": [
-				"packages/mvp-server/src/*"
-			],
 			"@cortex-os/prp-runner": [
+				"packages/prp-runner/dist/index.d.ts",
 				"packages/prp-runner/src/index.ts"
 			],
 			"@cortex-os/prp-runner/*": [
+				"packages/prp-runner/dist/*",
 				"packages/prp-runner/src/*"
 			],
-			"@cortex-os/mvp-core": [
-				"packages/mvp-core/src/index.ts"
+			"@cortex-os/cortex-sec": [
+				"packages/cortex-sec/dist/index.d.ts",
+				"packages/cortex-sec/src/index.ts"
 			],
-			"@cortex-os/mvp-core/*": [
-				"packages/mvp-core/src/*"
+			"@cortex-os/cortex-sec/*": [
+				"packages/cortex-sec/dist/*",
+				"packages/cortex-sec/src/*"
 			],
-			"@cortex-os/model-gateway/*": [
-				"packages/model-gateway/src/*"
+			"@cortex-os/a2a-core": [
+				"packages/a2a/a2a-core/dist/index.d.ts",
+				"packages/a2a/a2a-core/src/index.ts"
 			],
-			"@cortex-os/orchestration": [
-				"packages/orchestration/src/index.ts"
+			"@cortex-os/a2a-core/*": [
+				"packages/a2a/a2a-core/dist/*",
+				"packages/a2a/a2a-core/src/*"
 			],
-			"@cortex-os/orchestration/*": [
-				"packages/orchestration/src/*"
+			"@cortex-os/utils": [
+				"libs/typescript/utils/dist/index.d.ts",
+				"libs/typescript/utils/src/index.ts"
 			],
-			"@brain/*": [
-				"apps/cortex-os/packages/*"
+			"@cortex-os/utils/*": [
+				"libs/typescript/utils/dist/*",
+				"libs/typescript/utils/src/*"
 			],
-			"@brain/evidence/*": [
-				"apps/cortex-os/packages/evidence/*"
+			"@cortex-os/hooks/src/loaders.js": [
+				"packages/hooks/dist/loaders.d.ts"
 			],
-			"@brain/ingest/*": [
-				"apps/cortex-os/packages/ingest/src/*"
-			],
-			"@brain/planner/*": [
-				"apps/cortex-os/packages/planner/*"
-			],
-			"@orchestration/*": [
-				"apps/cortex-os/packages/planner/orchestration/src/*"
+			"@cortex-os/hooks/*": [
+				"packages/hooks/dist/*",
+				"packages/hooks/src/*"
 			]
 		}
 	},

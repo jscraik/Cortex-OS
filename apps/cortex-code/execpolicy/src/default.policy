@@ -135,8 +135,8 @@ define_program(
         ["-m", "-n", "init"],
         ["--glob", "src"],
     ],
-    # NOTE: We assume `rg` (ripgrep) is provided by the host environment and
-    # should prefer that binary when enforcing the policy.
+    # TODO(mbolin): Perhaps we need a way to indicate that we expect `rg` to be
+    # bundled with the host environment and we should be using that version.
     system_path=[],
 )
 

@@ -29,6 +29,7 @@ pub(crate) fn spawn_agent(
         } = match server.new_conversation(config).await {
             Ok(v) => v,
             Err(e) => {
+                // TODO: surface this error to the user.
                 tracing::error!("failed to initialize codex: {e}");
                 return;
             }

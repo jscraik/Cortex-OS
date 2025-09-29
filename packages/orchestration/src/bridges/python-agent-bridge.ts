@@ -13,6 +13,7 @@ import type { ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import winston from 'winston';
 import { spawnPythonProcess } from '../../../../libs/python/exec';
 
@@ -122,7 +123,11 @@ export class PythonAgentBridge extends EventEmitter {
 			this.isInitialized = true;
 			this.logger.info('Python Agent Bridge initialized successfully');
 		} catch (error) {
-			this.logger.error('Failed to initialize Python Agent Bridge', { error });
+			this.logger.error('Failed to initialize Python Agent Bridge', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			throw error;
 		}
 	}
@@ -285,7 +290,11 @@ export class PythonAgentBridge extends EventEmitter {
 			});
 
 			this.pythonProcess.on('error', (error) => {
-				this.logger.error('Python agent process error', { error });
+				this.logger.error('Python agent process error', {
+					brand: 'brAInwav',
+					message: safeErrorMessage(error),
+					stack: safeErrorStack(error),
+				});
 				reject(error);
 			});
 
@@ -316,8 +325,10 @@ export class PythonAgentBridge extends EventEmitter {
 						this.handlePythonMessage(message);
 					} catch (error) {
 						this.logger.error('Failed to parse Python message', {
+							brand: 'brAInwav',
 							line,
-							error,
+							message: safeErrorMessage(error),
+							stack: safeErrorStack(error),
 						});
 					}
 				} else {
@@ -441,7 +452,11 @@ export class PythonAgentBridge extends EventEmitter {
 			this.pythonProcess.stdin.write(`${messageJson}\n`);
 			this.logger.debug('Sent message to Python', { message });
 		} catch (error) {
-			this.logger.error('Failed to send message to Python', { error });
+			this.logger.error('Failed to send message to Python', {
+				brand: 'brAInwav',
+				message: safeErrorMessage(error),
+				stack: safeErrorStack(error),
+			});
 			throw error;
 		}
 	}

@@ -88,9 +88,9 @@ pub enum Forbidden {
 }
 
 impl ProgramSpec {
-    // The matcher validates command-line arguments against the allowed options
-    // defined in the program specification so we can determine whether the
-    // invocation is permitted.
+    // TODO(mbolin): The idea is that there should be a set of rules defined for
+    // a program and the args should be checked against the rules to determine
+    // if the program should be allowed to run.
     pub fn check(&self, exec_call: &ExecCall) -> Result<MatchedExec> {
         let mut expecting_option_value: Option<(String, ArgType)> = None;
         let mut args = Vec::<PositionalArg>::new();

@@ -1,19 +1,73 @@
 # MCP TDD Enforcement Makefile
 # Standardized commands for MCP integration development
+# Co-authored-by: brAInwav Development Team
 
 # Default target
 .PHONY: help
 help:
-	@echo "Cortex-OS MCP TDD Enforcement Commands"
-	@echo "====================================="
-	@echo "mcp-setup     - Set up MCP development environment"
-	@echo "mcp-status    - Show MCP integration status"
-	@echo "mcp-validate  - Validate MCP implementations"
-	@echo "mcp-watch     - Watch for MCP changes"
-	@echo "mcp-enforce   - Enforce MCP TDD practices"
-	@echo "mcp-test      - Run MCP tests"
-	@echo "mcp-docs      - Generate MCP documentation"
-	@echo "mcp-clean     - Clean MCP build artifacts"
+	@echo "Cortex-OS MCP TDD Enforcement Commands - brAInwav Standards"
+	@echo "========================================================"
+	@echo "TDD Quality Gates (brAInwav Production Standards):"
+	@echo "  tdd-quality-gates  - Run comprehensive quality gate validation"
+	@echo "  tdd-ops-readiness  - Assess operational readiness (95% required)"
+	@echo "  tdd-plan          - Generate TDD plan for package"
+	@echo "  tdd-enforce       - Enforce TDD practices with quality gates"
+	@echo ""
+	@echo "MCP Development:"
+	@echo "  mcp-setup     - Set up MCP development environment"
+	@echo "  mcp-status    - Show MCP integration status"
+	@echo "  mcp-validate  - Validate MCP implementations"
+	@echo "  mcp-watch     - Watch for MCP changes"
+	@echo "  mcp-enforce   - Enforce MCP TDD practices"
+	@echo "  mcp-test      - Run MCP tests"
+	@echo "  mcp-docs      - Generate MCP documentation"
+	@echo "  mcp-clean     - Clean MCP build artifacts"
+
+# === brAInwav TDD Quality Gates ===
+
+# Run comprehensive TDD quality gates validation
+.PHONY: tdd-quality-gates
+tdd-quality-gates:
+	@echo "[brAInwav] Running comprehensive TDD quality gates validation..."
+	bash scripts/ci/tdd-quality-gates.sh
+	@echo "[brAInwav] Quality gates validation complete"
+
+# Assess operational readiness
+.PHONY: tdd-ops-readiness
+tdd-ops-readiness:
+	@echo "[brAInwav] Assessing operational readiness (95% required for production)..."
+	bash scripts/ci/ops-readiness-fast.sh out/ops-readiness.json
+	@echo "[brAInwav] Operational readiness assessment complete"
+
+# Generate TDD plan for package
+.PHONY: tdd-plan
+tdd-plan:
+	@echo "[brAInwav] Generating TDD plan with production readiness criteria..."
+	@if [ -z "$(PKG)" ]; then \
+		echo "[brAInwav] Usage: make tdd-plan PKG=package-name"; \
+		exit 1; \
+	fi
+	tdd-coach plan --package $(PKG) || echo "[brAInwav] Install @cortex-os/tdd-coach to use TDD planning"
+	@echo "[brAInwav] TDD plan generation complete"
+
+# Enforce TDD practices with quality gates
+.PHONY: tdd-enforce
+tdd-enforce:
+	@echo "[brAInwav] Enforcing TDD practices with brAInwav quality standards..."
+	# Run TDD Coach validation
+	tdd-coach validate --quality-gates || echo "[brAInwav] Install @cortex-os/tdd-coach for TDD enforcement"
+	# Enforce quality gates
+	node scripts/ci/enforce-gates.mjs
+	@echo "[brAInwav] TDD enforcement complete"
+
+# Validate TDD status
+.PHONY: tdd-status
+tdd-status:
+	@echo "[brAInwav] Checking TDD status with operational readiness..."
+	tdd-coach status --ops-readiness || echo "[brAInwav] Install @cortex-os/tdd-coach for TDD status"
+	@echo "[brAInwav] TDD status check complete"
+
+# === MCP Development ===
 
 # Setup MCP development environment
 .PHONY: mcp-setup
