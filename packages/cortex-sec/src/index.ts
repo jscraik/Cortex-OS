@@ -1,40 +1,46 @@
 // Cortex Security Package - Main exports
 
+// Core functionality (when implemented)
+// export * from './core/index';
+// export * from './types/index';
+
 // A2A Events
 export {
-	CORTEX_SEC_EVENT_SOURCE,
-	type ComplianceViolationEvent,
-	createCortexSecEvent,
-	type SecurityPolicyUpdatedEvent,
-	type SecurityScanStartedEvent,
-	type VulnerabilityFoundEvent,
+        type ComplianceViolationEvent,
+        createCortexSecEvent,
+        type SecurityPolicyUpdatedEvent,
+        type SecurityScanStartedEvent,
+        type VulnerabilityFoundEvent,
 } from './events/cortex-sec-events.js';
-export {
-	createSecurityEventPublisher,
-	type PublishEnvelope,
-	type SecurityEventPublisher,
-} from './events/security-event-publisher.js';
-export type {
-	AnalyzeVulnerabilitiesInput,
-	CheckDependenciesInput,
-	CortexSecTool,
-	CortexSecToolResponse,
-	GetSecurityPolicyInput,
-	RunSemgrepScanInput,
-	ValidateComplianceInput,
-} from './mcp/tools.js';
 // MCP Integration
-export {
-	CORTEX_SEC_TOOL_ALLOWLIST,
-	cortexSecMcpTools,
+export { cortexSecMcpTools } from './mcp/tools.js';
+export type {
+        CortexSecTool,
+        RunSemgrepScanInput,
+        AnalyzeVulnerabilitiesInput,
+        GetSecurityPolicyInput,
+        ValidateComplianceInput,
+        CheckDependenciesInput,
 } from './mcp/tools.js';
-
-// Planning utilities
+// Planning + Compliance utilities
 export {
-	type ComplianceSeverity,
-	type ComplianceState,
-	type ComplianceSummary,
-	type ComplianceViolation,
-	mergeComplianceState,
-	summarizeCompliance,
-} from './planning/compliance-strategy.js';
+        createCompliancePlanner,
+        type CompliancePlanner,
+        type CompliancePlanningResult,
+        type CompliancePlanningInput,
+        type SecurityActionPlan,
+} from './planning/compliance-planner.js';
+export {
+        getDefaultSecurityPolicies,
+        getSecurityPolicy,
+        SecurityStandardSchema,
+        type SecurityPolicy,
+        type SecurityPolicyThresholds,
+        type SecurityStandard,
+} from './policies/security-policies.js';
+export {
+        createSecurityIntegrationService,
+        type SecurityIntegrationInput,
+        type SecurityIntegrationResult,
+        type SecurityIntegrationService,
+} from './nO/security-integration.js';

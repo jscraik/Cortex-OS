@@ -5,59 +5,54 @@
  */
 
 import {
-        type DSPConfig,
-        DynamicSpeculativePlanner,
-        type PlanningContext,
-        PlanningPhase,
-        type PlanningContextSnapshot,
+	type DSPConfig,
+	DynamicSpeculativePlanner,
+	type PlanningContext,
+	PlanningPhase,
 } from '../utils/dsp.js';
+
 import {
-        PlanningContextManager as DSPPlanningContextManager,
-        type PlanningContextManagerOptions,
-} from '../dsp/planning-context-manager.js';
-import type { LongHorizonPlanningState } from '../types.js';
+        createSecurityIntegrationService,
+        type SecurityIntegrationResult,
+        type SecurityIntegrationService,
+} from '@cortex-os/cortex-sec';
 
 export interface LongHorizonTask {
-        id: string;
-        description: string;
-        complexity: number; // 1-10 scale
-        priority: number; // 1-10 scale
-        estimatedDuration: number; // milliseconds
-        dependencies: string[];
-        metadata: Record<string, unknown>;
+	id: string;
+	description: string;
+	complexity: number; // 1-10 scale
+	priority: number; // 1-10 scale
+	estimatedDuration: number; // milliseconds
+	dependencies: string[];
+	metadata: Record<string, unknown>;
 }
 
 export interface PlanningResult {
-        taskId: string;
-        success: boolean;
-        phases: Array<{
-                phase: PlanningPhase;
-                duration: number;
-                result?: unknown;
-                error?: string;
-        }>;
-        totalDuration: number;
-        adaptiveDepth: number;
-        recommendations: string[];
-        snapshots: PlanningContextSnapshot[];
-        contextId?: string;
-        contextState?: LongHorizonPlanningState;
-        brainwavMetadata: {
-                createdBy: 'brAInwav';
-                version: string;
-                timestamp: Date;
-                revision: number;
-        };
+	taskId: string;
+	success: boolean;
+	phases: Array<{
+		phase: PlanningPhase;
+		duration: number;
+		result?: unknown;
+		error?: string;
+	}>;
+	totalDuration: number;
+	adaptiveDepth: number;
+	recommendations: string[];
+	brainwavMetadata: {
+		createdBy: 'brAInwav';
+		version: string;
+		timestamp: Date;
+	};
+	security: SecurityIntegrationResult;
 }
 
 export interface LongHorizonPlannerConfig extends DSPConfig {
-        enableContextIsolation?: boolean;
-        maxPlanningTime?: number; // milliseconds
-        adaptiveDepthEnabled?: boolean;
-        persistenceEnabled?: boolean;
-        contextManager?: DSPPlanningContextManager;
-        contextManagerOptions?: PlanningContextManagerOptions;
-        snapshotLimit?: number;
+	enableContextIsolation?: boolean;
+	maxPlanningTime?: number; // milliseconds
+	adaptiveDepthEnabled?: boolean;
+	persistenceEnabled?: boolean;
+	securityIntegrationService?: SecurityIntegrationService;
 }
 
 /**
@@ -65,73 +60,100 @@ export interface LongHorizonPlannerConfig extends DSPConfig {
  * Implements context quarantine and adaptive planning depth
  */
 export class LongHorizonPlanner {
-        private readonly dsp: DynamicSpeculativePlanner;
-        private readonly config: LongHorizonPlannerConfig;
-        private readonly contextManager?: DSPPlanningContextManager;
-        private readonly snapshotLimit: number;
-        private activeContext?: PlanningContext;
-        private snapshots: PlanningContextSnapshot[] = [];
+	private readonly dsp: DynamicSpeculativePlanner;
+	private readonly config: LongHorizonPlannerConfig;
+	private readonly securityIntegration: SecurityIntegrationService;
+	private activeContext?: PlanningContext;
 
-        constructor(config: LongHorizonPlannerConfig = {}) {
-                const enableContextIsolation =
-                        config.enableContextIsolation ?? config.contextIsolation ?? true;
-                const persistenceActive =
-                        config.persistenceEnabled ?? Boolean(config.persistenceAdapter ?? config.autoPersist);
+	constructor(config: LongHorizonPlannerConfig = {}) {
+		this.config = {
+			enableContextIsolation: true,
+			maxPlanningTime: 300000, // 5 minutes default
+			adaptiveDepthEnabled: true,
+			persistenceEnabled: true,
+			...config,
+		};
 
-                this.config = {
-                        enableContextIsolation,
-                        maxPlanningTime: config.maxPlanningTime ?? 300000, // 5 minutes default
-                        adaptiveDepthEnabled: config.adaptiveDepthEnabled ?? true,
-                        persistenceEnabled: persistenceActive,
-                        snapshotLimit: Math.max(1, config.snapshotLimit ?? 12),
-                        ...config,
-                        contextIsolation: enableContextIsolation,
-                };
+		this.securityIntegration =
+			this.config.securityIntegrationService ?? createSecurityIntegrationService();
 
-                this.snapshotLimit = Math.max(1, this.config.snapshotLimit ?? 12);
-                this.contextManager =
-                        config.contextManager ??
-                        (enableContextIsolation
-                                ? new DSPPlanningContextManager(config.contextManagerOptions)
-                                : undefined);
+		this.dsp = new DynamicSpeculativePlanner({
+			...config,
+			contextIsolation: this.config.enableContextIsolation,
+			planningDepth: config.planningDepth ?? 3,
+		});
 
-                this.dsp = new DynamicSpeculativePlanner({
-                        ...config,
-                        contextIsolation: enableContextIsolation,
-                        autoPersist: config.autoPersist ?? persistenceActive,
-                        resumeFromPersistence: config.resumeFromPersistence ?? persistenceActive,
-                });
+		console.log('brAInwav Long-Horizon Planner: Initialized with enhanced DSP capabilities');
+	}
 
-                console.log('brAInwav Long-Horizon Planner: Initialized with enhanced DSP capabilities');
-        }
+	/**
+	 * Plan and execute a long-horizon task with structured phases
+	 */
+	async planAndExecute(
+		task: LongHorizonTask,
+		executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
+	): Promise<PlanningResult> {
+		return this.planTask(task, executor);
+	}
 
-        async planAndExecute(
-                task: LongHorizonTask,
-                executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
-        ): Promise<PlanningResult> {
-                return this.planTask(task, executor);
-        }
+	/**
+	 * Plan a task with enhanced DSP integration and persistence hooks
+	 */
+	async planTask(
+		task: LongHorizonTask,
+		executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
+	): Promise<PlanningResult> {
+		const startTime = Date.now();
+		console.log(`brAInwav Long-Horizon Planner: Starting planning for task ${task.id}`);
 
-        async planTask(
-                task: LongHorizonTask,
-                executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
-        ): Promise<PlanningResult> {
-                const startTime = Date.now();
-                console.log(`brAInwav Long-Horizon Planner: Starting planning for task ${task.id}`);
+		// Initialize planning context with task details
+		const context = this.dsp.initializePlanning(task.id, task.complexity, task.priority);
+		this.activeContext = context;
 
-                this.snapshots = [];
+		const complianceSnapshot = context.compliance
+		        ? {
+		                compliance: {
+		                        standards: context.compliance.standards,
+		                        lastCheckedAt: context.compliance.lastCheckedAt,
+		                        riskScore: context.compliance.riskScore,
+		                        outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
+		                                id: violation.id,
+		                                severity: violation.severity,
+		                        })),
+		                },
+		        }
+		        : undefined;
 
-                const context = this.hydrateContext(task);
-                this.activeContext = context;
+		const securityEvaluation = this.securityIntegration.evaluate({
+		        taskId: task.id,
+		        description: task.description,
+		        complianceContext: complianceSnapshot,
+		});
 
-                if (this.config.persistenceEnabled) {
-                        await this.persistPlanningEvent('planning_started', {
-                                taskId: task.id,
-                                contextId: context.id,
-                                timestamp: new Date(),
-                                brainwavOrigin: true,
-                        });
-                }
+		if (!context.compliance) {
+		        context.compliance = {
+		                standards: securityEvaluation.standards,
+		                lastCheckedAt: securityEvaluation.lastCheckedAt,
+		                riskScore: securityEvaluation.aggregateRisk,
+		                outstandingViolations: [],
+		        };
+		} else {
+		        context.compliance.standards = securityEvaluation.standards;
+		        context.compliance.lastCheckedAt = securityEvaluation.lastCheckedAt;
+		        context.compliance.riskScore = securityEvaluation.aggregateRisk;
+		}
+
+                context.preferences.notes.push(`brAInwav security summary: ${securityEvaluation.summary}`);
+
+		// Persistence hook: Record planning start
+		if (this.config.persistenceEnabled) {
+			await this.persistPlanningEvent('planning_started', {
+				taskId: task.id,
+				contextId: context.id,
+				timestamp: new Date(),
+				brainwavOrigin: true,
+			});
+		}
 
                 const result: PlanningResult = {
                         taskId: task.id,
@@ -140,376 +162,285 @@ export class LongHorizonPlanner {
                         totalDuration: 0,
                         adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
                         recommendations: [],
-                        snapshots: [],
-                        contextId: context.id,
-                        contextState: undefined,
                         brainwavMetadata: {
                                 createdBy: 'brAInwav',
                                 version: '1.0.0',
                                 timestamp: new Date(),
-                                revision: 0,
                         },
+                        security: securityEvaluation,
                 };
 
-                this.updateResultContextMetadata(result);
+		try {
+			// Execute structured planning phases
+			const phases = this.getPlanningPhases(task);
 
-                try {
-                        const phases = this.getPlanningPhases(task);
+			for (const phase of phases) {
+				const phaseStartTime = Date.now();
 
-                        for (const phase of phases) {
-                                const phaseStartTime = Date.now();
+				try {
+					// Advance to next phase
+					this.dsp.advancePhase(`Execute ${phase} phase for task: ${task.description}`);
 
-                                try {
-                                        this.dsp.advancePhase(`Execute ${phase} phase for task: ${task.description}`);
-                                        this.recordSnapshot(`phase_advanced:${phase}`);
-                                        this.updateResultContextMetadata(result);
+					// Persistence hook: Record phase start
+					if (this.config.persistenceEnabled) {
+						await this.persistPlanningEvent('phase_started', {
+							taskId: task.id,
+							contextId: context.id,
+							phase,
+							timestamp: new Date(),
+							brainwavOrigin: true,
+						});
+					}
 
-                                        if (this.config.persistenceEnabled) {
-                                                await this.persistPlanningEvent('phase_started', {
-                                                        taskId: task.id,
-                                                        contextId: context.id,
-                                                        phase,
-                                                        timestamp: new Date(),
-                                                        brainwavOrigin: true,
-                                                });
-                                        }
+					// Execute phase with context isolation
+					const phaseResult = await this.executePhaseWithTimeout(phase, context, executor);
 
-                                        const executionSnapshot = this.dsp.getContextSnapshot(
-                                                `phase_execute:${phase}`,
-                                        );
-                                        const executionContext = executionSnapshot?.context ?? (this.dsp.context ?? context);
+					const phaseDuration = Date.now() - phaseStartTime;
 
-                                        const phaseResult = await this.executePhaseWithTimeout(
-                                                phase,
-                                                executionContext,
-                                                executor,
-                                        );
+					result.phases.push({
+						phase,
+						duration: phaseDuration,
+						result: phaseResult,
+					});
 
-                                        const phaseDuration = Date.now() - phaseStartTime;
+					// Update DSP with success
+					this.dsp.update(true);
 
-                                        result.phases.push({
-                                                phase,
-                                                duration: phaseDuration,
-                                                result: phaseResult,
-                                        });
+					// Persistence hook: Record phase completion
+					if (this.config.persistenceEnabled) {
+						await this.persistPlanningEvent('phase_completed', {
+							taskId: task.id,
+							contextId: context.id,
+							phase,
+							duration: phaseDuration,
+							timestamp: new Date(),
+							brainwavOrigin: true,
+						});
+					}
 
-                                        this.dsp.update(true);
-                                        this.recordSnapshot(`phase_completed:${phase}`);
-                                        this.updateResultContextMetadata(result);
+					console.log(
+						`brAInwav Long-Horizon Planner: Completed ${phase} phase in ${phaseDuration}ms`,
+					);
+				} catch (error) {
+					const phaseDuration = Date.now() - phaseStartTime;
+					const errorMessage = error instanceof Error ? error.message : String(error);
 
-                                        if (this.config.persistenceEnabled) {
-                                                await this.persistPlanningEvent('phase_completed', {
-                                                        taskId: task.id,
-                                                        contextId: context.id,
-                                                        phase,
-                                                        duration: phaseDuration,
-                                                        timestamp: new Date(),
-                                                        brainwavOrigin: true,
-                                                });
-                                        }
+					result.phases.push({
+						phase,
+						duration: phaseDuration,
+						error: errorMessage,
+					});
 
-                                        console.log(
-                                                `brAInwav Long-Horizon Planner: Completed ${phase} phase in ${phaseDuration}ms`,
-                                        );
-                                } catch (error) {
-                                        const phaseDuration = Date.now() - phaseStartTime;
-                                        const errorMessage = error instanceof Error ? error.message : String(error);
+					// Update DSP with failure
+					this.dsp.update(false);
+					result.success = false;
 
-                                        result.phases.push({
-                                                phase,
-                                                duration: phaseDuration,
-                                                error: errorMessage,
-                                        });
+					// Persistence hook: Record phase failure
+					if (this.config.persistenceEnabled) {
+						await this.persistPlanningEvent('phase_failed', {
+							taskId: task.id,
+							contextId: context.id,
+							phase,
+							error: errorMessage,
+							duration: phaseDuration,
+							timestamp: new Date(),
+							brainwavOrigin: true,
+						});
+					}
 
-                                        this.dsp.update(false);
-                                        result.success = false;
-                                        this.recordSnapshot(`phase_failed:${phase}`);
-                                        this.updateResultContextMetadata(result);
+					console.error(`brAInwav Long-Horizon Planner: Failed ${phase} phase: ${errorMessage}`);
 
-                                        if (this.config.persistenceEnabled) {
-                                                await this.persistPlanningEvent('phase_failed', {
-                                                        taskId: task.id,
-                                                        contextId: context.id,
-                                                        phase,
-                                                        error: errorMessage,
-                                                        duration: phaseDuration,
-                                                        timestamp: new Date(),
-                                                        brainwavOrigin: true,
-                                                });
-                                        }
+					// Continue with next phase unless critical failure
+					if (this.isCriticalPhase(phase)) {
+						break;
+					}
+				}
+			}
 
-                                        console.error(
-                                                `brAInwav Long-Horizon Planner: Failed ${phase} phase: ${errorMessage}`,
-                                        );
+			// Complete planning
+			this.dsp.completePlanning(result);
+		} catch (error) {
+			result.success = false;
+			console.error(`brAInwav Long-Horizon Planner: Planning failed for task ${task.id}:`, error);
+		}
 
-                                        if (this.isCriticalPhase(phase)) {
-                                                break;
-                                        }
-                                }
-                        }
+		result.totalDuration = Date.now() - startTime;
+		result.recommendations = this.generateRecommendations(task, result);
 
-                        this.dsp.completePlanning(result);
-                        this.recordSnapshot('planning_completed');
-                        this.updateResultContextMetadata(result);
-                } catch (error) {
-                        result.success = false;
-                        this.recordSnapshot('planning_exception');
-                        this.updateResultContextMetadata(result);
-                        console.error(
-                                `brAInwav Long-Horizon Planner: Planning failed for task ${task.id}:`,
-                                error,
-                        );
-                }
+		// Persistence hook: Record planning completion
+		if (this.config.persistenceEnabled) {
+			await this.persistPlanningEvent('planning_completed', {
+				taskId: task.id,
+				contextId: context.id,
+				success: result.success,
+				totalDuration: result.totalDuration,
+				timestamp: new Date(),
+				brainwavOrigin: true,
+			});
+		}
 
-                result.totalDuration = Date.now() - startTime;
-                result.adaptiveDepth = this.config.adaptiveDepthEnabled
-                        ? this.dsp.getAdaptivePlanningDepth()
-                        : this.config.planningDepth ?? this.dsp.getAdaptivePlanningDepth();
-                result.recommendations = this.generateRecommendations(task, result);
-                result.snapshots = [...this.snapshots];
+		console.log(
+			`brAInwav Long-Horizon Planner: Completed planning for task ${task.id} in ${result.totalDuration}ms`,
+		);
 
-                if (this.config.persistenceEnabled) {
-                        await this.persistPlanningEvent('planning_completed', {
-                                taskId: task.id,
-                                contextId: context.id,
-                                success: result.success,
-                                totalDuration: result.totalDuration,
-                                timestamp: new Date(),
-                                brainwavOrigin: true,
-                        });
-                }
+		return result;
+	}
 
-                console.log(
-                        `brAInwav Long-Horizon Planner: Completed planning for task ${task.id} in ${result.totalDuration}ms`,
-                );
+	/**
+	 * Get planning phases based on task complexity
+	 */
+	private getPlanningPhases(task: LongHorizonTask): PlanningPhase[] {
+		const basePhases = [
+			PlanningPhase.INITIALIZATION,
+			PlanningPhase.ANALYSIS,
+			PlanningPhase.STRATEGY,
+			PlanningPhase.EXECUTION,
+		];
 
-                return result;
-        }
+		// Add validation phase for complex tasks
+		if (task.complexity > 5) {
+			basePhases.push(PlanningPhase.VALIDATION);
+		}
 
-        getCurrentContext(): PlanningContext | undefined {
-                return this.activeContext;
-        }
+		basePhases.push(PlanningPhase.COMPLETION);
+		return basePhases;
+	}
 
-        clearContext(): void {
-                this.activeContext = undefined;
-                this.snapshots = [];
-                this.dsp.clearContext();
-                console.log('brAInwav Long-Horizon Planner: Cleared active planning context');
-        }
+	/**
+	 * Execute phase with timeout protection
+	 */
+	private async executePhaseWithTimeout(
+		phase: PlanningPhase,
+		context: PlanningContext,
+		executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
+	): Promise<unknown> {
+		const timeoutMs = this.config.maxPlanningTime ?? 300000;
 
-        getStats(): {
-                hasActiveContext: boolean;
-                currentStep: number;
-                currentPhase?: PlanningPhase;
-                adaptiveDepth: number;
-                snapshotCount: number;
-        } {
-                return {
-                        hasActiveContext: !!this.dsp.context,
-                        currentStep: this.dsp.currentStep,
-                        currentPhase: this.dsp.currentPhase,
-                        adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
-                        snapshotCount: this.snapshots.length,
-                };
-        }
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(
+					new Error(`brAInwav Long-Horizon Planner: Phase ${phase} timed out after ${timeoutMs}ms`),
+				);
+			}, timeoutMs);
 
-        getContextSnapshots(): PlanningContextSnapshot[] {
-                return [...this.snapshots];
-        }
+			executor(phase, context)
+				.then(resolve)
+				.catch(reject)
+				.finally(() => clearTimeout(timeout));
+		});
+	}
 
-        private hydrateContext(task: LongHorizonTask): PlanningContext {
-                let context: PlanningContext | undefined;
+	/**
+	 * Check if phase is critical (failure should stop planning)
+	 */
+	private isCriticalPhase(phase: PlanningPhase): boolean {
+		return phase === PlanningPhase.INITIALIZATION || phase === PlanningPhase.ANALYSIS;
+	}
 
-                if (this.config.persistenceEnabled) {
-                        context = this.dsp.resumePlanning(task.id, {
-                                complexity: task.complexity,
-                                priority: task.priority,
-                        });
-                }
+	/**
+	 * Generate recommendations based on planning results
+	 */
+	private generateRecommendations(task: LongHorizonTask, result: PlanningResult): string[] {
+		const recommendations: string[] = [];
 
-                if (!context) {
-                        context = this.dsp.initializePlanning(task.id, task.complexity, task.priority);
-                }
+		// Complexity-based recommendations
+		if (task.complexity > 7) {
+			recommendations.push('Consider breaking down into smaller subtasks for better manageability');
+		}
 
-                if (this.contextManager) {
-                        this.contextManager.register(task.id, context);
-                        const isolated = this.contextManager.isolate(task.id, context);
-                        context = this.dsp.attachContext(isolated, {
-                                reason: 'attach',
-                                preserveRevision: true,
-                                currentStep: this.dsp.currentStep,
-                        });
-                        this.contextManager.register(task.id, context);
-                }
+		// Priority-based recommendations
+		if (task.priority > 8) {
+			recommendations.push('Allocate additional resources for high priority task execution');
+		}
 
-                this.activeContext = this.dsp.context ?? context;
-                this.recordSnapshot('context_hydrated');
-                this.updateContextStateMemory(task.id);
-                return this.activeContext ?? context;
-        }
+		// Performance-based recommendations
+		if (result.totalDuration > 180000) {
+			// > 3 minutes
+			recommendations.push('Monitor execution time closely for long-running planning phases');
+		}
 
-        private getPlanningPhases(task: LongHorizonTask): PlanningPhase[] {
-                const basePhases = [
-                        PlanningPhase.INITIALIZATION,
-                        PlanningPhase.ANALYSIS,
-                        PlanningPhase.STRATEGY,
-                        PlanningPhase.EXECUTION,
-                ];
+		// Failure-based recommendations
+		const failedPhases = result.phases.filter((p) => p.error);
+		if (failedPhases.length > 0) {
+			recommendations.push(
+				`Review and retry failed phases: ${failedPhases.map((p) => p.phase).join(', ')}`,
+			);
+		}
 
-                if (task.complexity > 5) {
-                        basePhases.push(PlanningPhase.VALIDATION);
-                }
+		// Adaptive depth recommendations
+		if (result.adaptiveDepth > 5) {
+			recommendations.push('High planning depth detected - ensure adequate context management');
+		}
 
-                basePhases.push(PlanningPhase.COMPLETION);
-                return basePhases;
-        }
+		return recommendations;
+	}
 
-        private async executePhaseWithTimeout(
-                phase: PlanningPhase,
-                context: PlanningContext,
-                executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
-        ): Promise<unknown> {
-                const timeoutMs = this.config.maxPlanningTime ?? 300000;
+	/**
+	 * Get current planning context (if any)
+	 */
+	getCurrentContext(): PlanningContext | undefined {
+		return this.activeContext;
+	}
 
-                return new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => {
-                                reject(
-                                        new Error(
-                                                `brAInwav Long-Horizon Planner: Phase ${phase} timed out after ${timeoutMs}ms`,
-                                        ),
-                                );
-                        }, timeoutMs);
+	/**
+	 * Clear active context (useful for context isolation)
+	 */
+	clearContext(): void {
+		this.activeContext = undefined;
+		console.log('brAInwav Long-Horizon Planner: Cleared active planning context');
+	}
 
-                        executor(phase, context)
-                                .then(resolve)
-                                .catch(reject)
-                                .finally(() => clearTimeout(timeout));
-                });
-        }
+	/**
+	 * Get planning statistics for monitoring
+	 */
+	getStats(): {
+		hasActiveContext: boolean;
+		currentStep: number;
+		currentPhase?: PlanningPhase;
+		adaptiveDepth: number;
+	} {
+		return {
+			hasActiveContext: !!this.activeContext,
+			currentStep: this.dsp.currentStep,
+			currentPhase: this.dsp.currentPhase,
+			adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
+		};
+	}
 
-        private isCriticalPhase(phase: PlanningPhase): boolean {
-                return phase === PlanningPhase.INITIALIZATION || phase === PlanningPhase.ANALYSIS;
-        }
+	/**
+	 * Persistence hook for planning events
+	 * In production, this would integrate with actual persistence layer
+	 */
+	private async persistPlanningEvent(eventType: string, eventData: Record<string, unknown>): Promise<void> {
+		if (!this.config.persistenceEnabled) {
+			return;
+		}
 
-        private generateRecommendations(task: LongHorizonTask, result: PlanningResult): string[] {
-                const recommendations: string[] = [];
+		// Log persistence event for now (production would use actual persistence)
+		console.log(`brAInwav Persistence Hook: ${eventType}`, {
+			eventType,
+			timestamp: new Date().toISOString(),
+			brainwavOrigin: true,
+			...eventData,
+		});
 
-                if (task.complexity > 7) {
-                        recommendations.push('Consider breaking down into smaller subtasks for better manageability');
-                }
-
-                if (task.priority > 8) {
-                        recommendations.push('Allocate additional resources for high priority task execution');
-                }
-
-                if (result.totalDuration > 180000) {
-                        recommendations.push('Monitor execution time closely for long-running planning phases');
-                }
-
-                const failedPhases = result.phases.filter((p) => p.error);
-                if (failedPhases.length > 0) {
-                        recommendations.push(
-                                `Review and retry failed phases: ${failedPhases.map((p) => p.phase).join(', ')}`,
-                        );
-                }
-
-                if (result.adaptiveDepth > 5) {
-                        recommendations.push('High planning depth detected - ensure adequate context management');
-                }
-
-                if (this.config.enableContextIsolation) {
-                        recommendations.push('brAInwav isolation layer active – contexts quarantined per task.');
-                }
-
-                if (this.config.persistenceEnabled) {
-                        recommendations.push('Persisted context available for follow-up sessions via brAInwav DSP.');
-                }
-
-                return recommendations;
-        }
-
-        private recordSnapshot(reason: string): void {
-                const snapshot = this.dsp.getContextSnapshot(reason);
-                if (!snapshot) {
-                        return;
-                }
-
-                this.snapshots.push(snapshot);
-                if (this.snapshots.length > this.snapshotLimit) {
-                        this.snapshots.splice(0, this.snapshots.length - this.snapshotLimit);
-                }
-
-                if (this.contextManager) {
-                        this.contextManager.register(snapshot.taskId, snapshot.context);
-                }
-
-                this.activeContext = this.dsp.context ?? snapshot.context;
-        }
-
-        private updateResultContextMetadata(result: PlanningResult): void {
-                const lastSnapshot = this.dsp.getLastSnapshot();
-                if (lastSnapshot) {
-                        result.contextId = lastSnapshot.taskId;
-                        result.brainwavMetadata.revision = lastSnapshot.revision;
-                        result.contextState = {
-                                contextId: lastSnapshot.taskId,
-                                currentPhase: lastSnapshot.phase,
-                                adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
-                                isolationScope: lastSnapshot.scope,
-                                lastSnapshotRevision: lastSnapshot.revision,
-                                lastSnapshotAt: lastSnapshot.timestamp,
-                        };
-                } else if (this.activeContext) {
-                        result.contextId = this.activeContext.id;
-                        result.contextState = {
-                                contextId: this.activeContext.id,
-                                currentPhase: this.activeContext.currentPhase,
-                                adaptiveDepth: this.dsp.getAdaptivePlanningDepth(),
-                                isolationScope: this.config.enableContextIsolation ? 'task' : 'global',
-                                lastSnapshotRevision: 0,
-                        };
-                }
-
-                result.snapshots = [...this.snapshots];
-        }
-
-        private updateContextStateMemory(taskId: string): void {
-                if (!this.contextManager || !this.dsp.context) {
-                        return;
-                }
-                this.contextManager.register(taskId, this.dsp.context);
-        }
-
-        private async persistPlanningEvent(eventType: string, eventData: Record<string, unknown>): Promise<void> {
-                if (!this.config.persistenceEnabled) {
-                        return;
-                }
-
-                const latestRevision = this.snapshots.length > 0
-                        ? this.snapshots[this.snapshots.length - 1].revision
-                        : 0;
-
-                console.log(`brAInwav Persistence Hook: ${eventType}`, {
-                        eventType,
-                        timestamp: new Date().toISOString(),
-                        brainwavOrigin: true,
-                        revision: latestRevision,
-                        snapshots: this.snapshots.length,
-                        ...eventData,
-                });
-        }
+		// Future: Integrate with actual persistence layer
+		// await this.persistenceAdapter.recordEvent(eventType, eventData);
+	}
 }
 
+/**
+ * Create a long-horizon planner with brAInwav-optimized defaults
+ */
 export function createLongHorizonPlanner(config?: LongHorizonPlannerConfig): LongHorizonPlanner {
-        const defaultConfig: LongHorizonPlannerConfig = {
-                enableContextIsolation: true,
-                maxPlanningTime: 300000,
-                adaptiveDepthEnabled: true,
-                persistenceEnabled: true,
-                planningDepth: 3,
-                snapshotLimit: 12,
-                ...config,
-        };
+	const defaultConfig: LongHorizonPlannerConfig = {
+		enableContextIsolation: true,
+		maxPlanningTime: 300000,
+		adaptiveDepthEnabled: true,
+		persistenceEnabled: true,
+		planningDepth: 3,
+		...config,
+	};
 
-        return new LongHorizonPlanner(defaultConfig);
+	return new LongHorizonPlanner(defaultConfig);
 }
