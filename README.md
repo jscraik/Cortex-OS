@@ -920,3 +920,32 @@ git rm -f external/openai-codex
 
 > Governance: Do **not** import submodule code directly across feature boundaries.
 > Copy needed snippets into governed packages and add tests + attribution.
+
+## MCP developer helpers
+
+This repository includes a couple of small helper scripts to make Model Context Protocol (MCP)
+local development more reproducible across machines.
+
+- `tools/mcp/wrap_local_memory.sh` — a repo-local wrapper that locates an installed `local-memory`
+  binary (or respects `LOCAL_MEMORY_BIN`), then execs it with the forwarded arguments. The VS Code
+  MCP configuration is set to call this wrapper so maintainers don't need to hardcode user-specific
+  absolute paths.
+
+- `tools/mcp/check_mcp_paths.sh` — a small diagnostic script that verifies the presence of an
+  executable `local-memory` and the in-repo MCP Python server script `packages/cortex-mcp/cortex_fastmcp_server_v2.py`.
+
+Quick checks:
+
+```bash
+# Run the environment diagnostic (exit 0 on success)
+./tools/mcp/check_mcp_paths.sh
+
+# If your local-memory binary is installed in a non-standard location, set the override:
+LOCAL_MEMORY_BIN=/custom/path/local-memory ./tools/mcp/check_mcp_paths.sh
+
+# The wrapper is used automatically by VS Code via .vscode/mcp.json. You can also run it directly:
+./tools/mcp/wrap_local_memory.sh --mcp
+```
+
+If you run into issues, the diagnostic script prints actionable hints. For CI or non-interactive
+environments set `LOCAL_MEMORY_BIN` to the absolute binary path.

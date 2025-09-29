@@ -1,7 +1,7 @@
 {
   "servers": {
     "local-memory": {
-      "command": "/Users/jamiecraik/.local/bin/local-memory",
+      "command": "./tools/mcp/wrap_local_memory.sh",
       "args": [
         "--mcp"
       ]
