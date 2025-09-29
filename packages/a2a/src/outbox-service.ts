@@ -50,9 +50,18 @@ export interface CreateInMemoryOutboxServiceOptions {
 
 const defaultMetricsRecorder: OutboxMetricsRecorder = {
   record(action, payload) {
+    // Only log non-sensitive metadata; omit metrics and error details
+    const safeLog = {
+      action,
+      outcome: payload.outcome,
+      durationMs: payload.durationMs,
+      timestamp: payload.timestamp,
+      // Optionally, indicate if there was an error without logging details
+      error: payload.error ? { message: '[REDACTED]' } : undefined,
+    };
     console.info(
       '[brAInwav OutboxService]',
-      JSON.stringify({ action, ...payload }),
+      JSON.stringify(safeLog),
     );
   },
 };
