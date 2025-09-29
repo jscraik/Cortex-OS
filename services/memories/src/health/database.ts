@@ -96,7 +96,7 @@ async function checkPrismaHealth(config?: PrismaHealthConfig): Promise<{ healthy
 
         try {
                 await prisma.$connect();
-                await prisma.$queryRawUnsafe('SELECT 1');
+                await prisma.$queryRaw`SELECT 1`;
                 return { healthy: true };
         } catch (error) {
                 return {
