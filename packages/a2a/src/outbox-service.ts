@@ -1,89 +1,137 @@
-/**
- * OutboxService (Domain Interface Scaffold)
- *
- * This interface abstracts the transactional outbox + DLQ processing lifecycle
- * behind a narrow contract suitable for exposure via MCP tools (e.g. a2a_outbox_sync)
- * without leaking repository / transport implementation details.
- *
- * Rationale:
- * - Decouple MCP layer from concrete outbox integration wiring
- * - Allow alternative persistence (SQLite, Postgres, cloud queue) without API churn
- * - Provide focused result shapes aligning with A2AOutboxSyncResultSchema
- *
- * Notes:
- * - All numeric counts are non-negative integers
- * - Duration & timing metrics are calculated at caller boundary (MCP handler) to avoid clock skew layering
- * - Additional OPTIONAL metrics (oldestAgeMs, byErrorCode histogram) will be added later when real integration lands.
- */
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { OutboxConfig, OutboxProcessingResult, OutboxRepository } from '@cortex-os/a2a-contracts/outbox-types';
+import { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
+import { createA2AOutboxIntegration } from './outbox-integration.js';
 
 export interface ProcessResultMetrics {
-	processed: number; // total processed (pending + retries)
-	successful: number; // successfully dispatched
-	failed: number; // failed this attempt (may retry)
-	deadLettered: number; // moved permanently to DLQ
-	// Future OPTIONAL metrics (keep optional when introduced):
-	// oldestAgeMs?: number;
-	// byErrorCode?: Record<string, { count: number; lastSeen: string }>;
+  processed: number;
+  successful: number;
+  failed: number;
+  deadLettered: number;
 }
 
 export interface CleanupResultMetrics {
-	cleanupDeleted: number; // number of purged (aged or succeeded) entries
+  cleanupDeleted: number;
 }
 
 export interface DlqStatsMetrics {
-	size: number; // current DLQ size
-	// Potential extensions: oldestAgeMs, byErrorCode histogram, recent sample, etc.
+  size: number;
+  details?: Record<string, unknown>;
 }
 
 export type OutboxSyncAction = 'processPending' | 'processRetries' | 'cleanup' | 'dlqStats';
 
+export interface OutboxMetricsPayload {
+  outcome: 'success' | 'error';
+  durationMs: number;
+  timestamp: string;
+  metrics?: Record<string, unknown>;
+  error?: { message: string; name?: string };
+}
+
+export interface OutboxMetricsRecorder {
+  record(action: OutboxSyncAction, payload: OutboxMetricsPayload): void;
+}
+
 export interface OutboxService {
-	/**
-	 * Process newly pending messages (first-attempt dispatch). Returns aggregated counters.
-	 */
-	processPending(): Promise<ProcessResultMetrics>;
-
-	/**
-	 * Process messages scheduled for retry (exponential backoff logic lies behind implementation boundary).
-	 */
-	processRetries(): Promise<ProcessResultMetrics>;
-
-	/**
-	 * Cleanup aged or terminally completed messages. Accepts retention window (days).
-	 * @param olderThanDays defaults to 30 if omitted.
-	 */
-	cleanup(olderThanDays?: number): Promise<CleanupResultMetrics>;
-
-	/**
-	 * Return DLQ statistics snapshot.
-	 */
-	dlqStats(): Promise<DlqStatsMetrics>;
+  processPending(): Promise<ProcessResultMetrics>;
+  processRetries(): Promise<ProcessResultMetrics>;
+  cleanup(olderThanDays?: number): Promise<CleanupResultMetrics>;
+  dlqStats(): Promise<DlqStatsMetrics>;
 }
 
-/**
- * In-memory no-op stub OutboxService implementation.
- * Provides stable shape with zeroed metrics for early integration & tests.
- * Replace with real wiring once persistence + processor logic is integrated.
- */
-export function createInMemoryOutboxService(): OutboxService {
-	return {
-		async processPending() {
-			await Promise.resolve();
-			return { processed: 0, successful: 0, failed: 0, deadLettered: 0 };
-		},
-		async processRetries() {
-			await Promise.resolve();
-			return { processed: 0, successful: 0, failed: 0, deadLettered: 0 };
-		},
-		async cleanup() {
-			await Promise.resolve();
-			return { cleanupDeleted: 0 };
-		},
-		async dlqStats() {
-			await Promise.resolve();
-			return { size: 0 };
-		},
-	};
+export interface CreateInMemoryOutboxServiceOptions {
+  repository?: OutboxRepository;
+  transport?: { publish: (envelope: Envelope) => Promise<void> };
+  config?: OutboxConfig;
+  metricsRecorder?: OutboxMetricsRecorder;
+  onDispatch?: (envelope: Envelope) => void;
 }
 
-// FUTURE: add factory adapting existing createA2AOutboxIntegration once metrics contract solidifies.
+const defaultMetricsRecorder: OutboxMetricsRecorder = {
+  record(action, payload) {
+    console.info(
+      '[brAInwav OutboxService]',
+      JSON.stringify({ action, ...payload }),
+    );
+  },
+};
+
+function toProcessMetrics(result: OutboxProcessingResult): ProcessResultMetrics {
+  return {
+    processed: result.processed,
+    successful: result.successful,
+    failed: result.failed,
+    deadLettered: result.deadLettered,
+  };
+}
+
+function toCleanupMetrics(count: number): CleanupResultMetrics {
+  return { cleanupDeleted: count };
+}
+
+function toDlqMetrics(stats: { size: number; details: Record<string, unknown> }): DlqStatsMetrics {
+  return { size: stats.size, details: stats.details };
+}
+
+export function createInMemoryOutboxService(
+  options: CreateInMemoryOutboxServiceOptions = {},
+): OutboxService {
+  const repository = options.repository ?? new InMemoryOutboxRepository();
+  const transport = options.transport ?? {
+    async publish(envelope: Envelope) {
+      options.onDispatch?.(envelope);
+    },
+  };
+  const integration = createA2AOutboxIntegration(transport, repository, options.config);
+  const recorder = options.metricsRecorder ?? defaultMetricsRecorder;
+
+  const instrument = async <T, R>(
+    action: OutboxSyncAction,
+    runner: () => Promise<T>,
+    mapper: (result: T) => R,
+  ): Promise<R> => {
+    const started = performance.now();
+    try {
+      const raw = await runner();
+      const metrics = mapper(raw);
+      recorder.record(action, {
+        outcome: 'success',
+        durationMs: Math.round(performance.now() - started),
+        timestamp: new Date().toISOString(),
+        metrics: metrics as Record<string, unknown>,
+      });
+      return metrics;
+    } catch (error) {
+      recorder.record(action, {
+        outcome: 'error',
+        durationMs: Math.round(performance.now() - started),
+        timestamp: new Date().toISOString(),
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          name: error instanceof Error ? error.name : 'Error',
+        },
+      });
+      throw error;
+    }
+  };
+
+  return {
+    async processPending() {
+      return instrument('processPending', () => integration.processPending(), toProcessMetrics);
+    },
+    async processRetries() {
+      return instrument('processRetries', () => integration.processRetries(), toProcessMetrics);
+    },
+    async cleanup(olderThanDays?: number) {
+      return instrument(
+        'cleanup',
+        () => integration.cleanup(olderThanDays),
+        toCleanupMetrics,
+      );
+    },
+    async dlqStats() {
+      return instrument('dlqStats', () => integration.getDlqStats(), toDlqMetrics);
+    },
+  };
+}

@@ -91,13 +91,15 @@ describe('a2a mcp tools runtime smoke', () => {
 		expect(res.content[0].text).toContain('status');
 	});
 
-	it('event stream subscribe returns snapshot', async () => {
-		const tool = tools.find((t) => t.name === 'a2a_event_stream_subscribe');
-		expect(tool).toBeDefined();
-		if (!tool) return;
-		const res = await tool.handler({ includeCurrent: false } as never);
-		expect(res.content[0].text).toContain('subscriptionId');
-	});
+        it('event stream subscribe establishes streaming note', async () => {
+                const tool = tools.find((t) => t.name === 'a2a_event_stream_subscribe');
+                expect(tool).toBeDefined();
+                if (!tool) return;
+                const res = await tool.handler({ includeCurrent: false } as never);
+                const payload = JSON.parse(res.content[0].text);
+                expect(payload.subscriptionId).toBeDefined();
+                expect(payload.note).toContain('Streaming active via SSE');
+        });
 
 	it('outbox sync tool returns placeholder metrics', async () => {
 		const tool = tools.find((t) => t.name === 'a2a_outbox_sync');
