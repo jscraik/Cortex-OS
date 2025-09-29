@@ -562,7 +562,14 @@ function createKernelRunBash(tools: BoundKernelTool[]): KernelRunBash | undefine
 function createKernelReadFile(tools: BoundKernelTool[]): KernelReadFile | undefined {
         const tool = findKernelTool(tools, ['kernel.fs.read', 'kernel.filesystem.read', 'fs.read']);
         if (!tool) return undefined;
-        return async (target, maxBytes) => {
+        return async (target, maxBytes, allowlist) => {
+                // If allowlist is provided, check if target is allowed
+                if (Array.isArray(allowlist) && allowlist.length > 0) {
+                        const isAllowed = allowlist.some((allowedPath) => target.startsWith(allowedPath));
+                        if (!isAllowed) {
+                                throw new Error(`Access to file "${target}" is not allowed by the allowlist.`);
+                        }
+                }
                 const payload = await tool.execute(
                         tool.name === 'fs.read' ? { path: target } : { path: target, maxBytes },
                 );
