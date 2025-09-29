@@ -24,6 +24,12 @@ export default defineConfig({
 			'@cortex-os/a2a-contracts': resolve(__dirname, '../a2a/a2a-contracts/src'),
 			'@cortex-os/a2a-core': resolve(__dirname, '../a2a/a2a-core/src'),
 			'@cortex-os/a2a-transport': resolve(__dirname, '../a2a/a2a-transport/src'),
+			'@cortex-os/hooks': resolve(__dirname, '../hooks/src'),
+			'@cortex-os/kernel': resolve(__dirname, '../kernel/src'),
+			'@cortex-os/agents': resolve(__dirname, '../agents/src'),
+			'@cortex-os/orchestration': resolve(__dirname, './src'),
+			'@cortex-os/model-gateway': resolve(__dirname, '../model-gateway/src'),
+			'@cortex-os/commands': resolve(__dirname, '../commands/src'),
 			'@cortex-os/contracts': resolve(
 				__dirname,
 				'..',

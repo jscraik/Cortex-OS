@@ -18,7 +18,8 @@ import { CortexHooks, type HookContext, type HookEvent, type HookResult } from '
 import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/src/loaders.js';
 import {
 	type BindKernelToolsOptions,
-	type BoundKernelTool,
+	type KernelTool,
+        type KernelToolBinding,
 	bindKernelTools,
 } from '@cortex-os/kernel';
 import {
@@ -90,7 +91,8 @@ export interface BuildN0Options {
 	hookLoadOptions?: HookLoadOptions;
 	runSlash?: typeof defaultRunSlash;
 	runSlashOptions?: RunSlashOptions;
-	kernelTools?: BoundKernelTool[];
+	kernelBinding?: KernelToolBinding;
+	kernelTools?: KernelTool[];
 	kernelOptions?: BindKernelToolsOptions;
 	subagents?: Map<string, ContractSubagent>;
 	subagentOptions?: LoadSubagentsOptions;
@@ -124,7 +126,8 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
         const compactionConfig = options.compaction ?? {};
         const dispatchHooks = options.toolHooks ?? createToolHookAdapter(hooks);
 
-        const kernelDefinitions = (options.kernelTools ?? bindKernelTools(options.kernelOptions ?? {})).map((tool) =>
+        const kernelBinding = resolveKernelBinding(options);
+        const kernelDefinitions = (kernelBinding?.tools ?? []).map((tool) =>
                 kernelToolToDefinition(tool),
         );
 
@@ -154,7 +157,11 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 
         const graph = new StateGraph(N0Annotation)
                 .addNode('parse_or_command', async (state: N0State) => {
-                        const ctx = extendCtx(state.ctx, { sessionStarted: true });
+                        const ctxPatch: Record<string, unknown> = { sessionStarted: true };
+                        if (kernelBinding?.metadata) {
+                                ctxPatch.kernelToolkit = kernelBinding.metadata;
+                        }
+                        const ctx = extendCtx(state.ctx, ctxPatch);
                         await safeRunHook(hooks, 'SessionStart', sessionHookContext(state), logger);
 
                         const baseMessages = [...(state.messages ?? []), new HumanMessage({ content: state.input })];
@@ -195,12 +202,19 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                                 sessionId: state.session.id,
                                 command: parsed.cmd,
                         });
+                        const commandMetadata = extractCommandMetadata(result.metadata);
+                        const commandModel = extractString(commandMetadata?.['model']) ?? 'inherit';
+                        const commandAllowedTools = extractStringArray(commandMetadata?.['allowedTools']);
+
                         return {
                                 messages: [...baseMessages, response],
                                 output: outputText,
                                 ctx: extendCtx(ctx, {
                                         lastCommand: parsed.cmd,
                                         commandResult: result,
+                                        commandMetadata,
+                                        commandModel,
+                                        commandAllowedTools,
                                 }),
                         };
                 })
@@ -513,6 +527,58 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 
 }
 
+function resolveKernelBinding(options: BuildN0Options): KernelToolBinding | undefined {
+        if (options.kernelBinding) {
+                return options.kernelBinding;
+        }
+        if (options.kernelOptions) {
+                return bindKernelTools(options.kernelOptions);
+        }
+        if (options.kernelTools) {
+                return createKernelBindingFromTools(options.kernelTools, options.kernelOptions);
+        }
+        return undefined;
+}
+
+function createKernelBindingFromTools(
+        tools: KernelTool[],
+        options?: BindKernelToolsOptions,
+): KernelToolBinding {
+        const allowLists = {
+                bash: collectAllowList(tools, 'bash'),
+                filesystem: collectAllowList(tools, 'filesystem'),
+                network: collectAllowList(tools, 'network'),
+        };
+        const timeoutMs = tools.reduce(
+                (acc, tool) => (tool.metadata.timeoutMs > acc ? tool.metadata.timeoutMs : acc),
+                options?.timeoutMs ?? 30000,
+        );
+        return {
+                tools,
+                metadata: {
+                        brand: 'brAInwav kernel toolkit',
+                        cwd: options?.cwd ?? process.cwd(),
+                        defaultModel: options?.defaultModel ?? 'inherit',
+                        allowLists,
+                        timeoutMs,
+                        surfaces: tools.map((tool) => tool.name),
+                        security: undefined,
+                },
+        };
+}
+
+function collectAllowList(tools: KernelTool[], surface: 'bash' | 'filesystem' | 'network'): string[] {
+        const entries = new Set<string>();
+        for (const tool of tools) {
+                if (tool.metadata.surface === surface) {
+                        for (const item of tool.metadata.allowList) {
+                                entries.add(item);
+                        }
+                }
+        }
+        return Array.from(entries);
+}
+
 function ensureHooks(
 	hooks: HookRunner | undefined,
 	options?: HookLoadOptions,
@@ -530,25 +596,33 @@ function createToolHookAdapter(hooks: HookRunner): ToolDispatchHooks {
 	};
 }
 
-function kernelToolToDefinition(tool: BoundKernelTool): ToolDefinition {
-	return {
-		name: tool.name,
-		description: tool.description,
-		schema: tool.schema,
-		metadata: {
-			provider: 'kernel',
-			surface: tool.name,
-		},
-		async execute(input) {
-			const result = await tool.execute(input);
-			return {
-				content: renderOutput(result),
-				status: 'success',
-				metadata: { provider: 'kernel', surface: tool.name },
-				artifact: result,
-			} satisfies ToolExecutionOutput;
-		},
-	} satisfies ToolDefinition;
+function kernelToolToDefinition(tool: KernelTool): ToolDefinition {
+        return {
+                name: tool.name,
+                description: tool.description,
+                schema: tool.schema,
+                metadata: {
+                        provider: 'kernel',
+                        surface: tool.metadata.surface,
+                        allowList: [...tool.metadata.allowList],
+                        timeoutMs: tool.metadata.timeoutMs,
+                },
+                async execute(input) {
+                        const parsed = tool.schema.parse(input);
+                        const result = await tool.invoke(parsed);
+                        return {
+                                content: renderOutput(result),
+                                status: 'success',
+                                metadata: {
+                                        provider: 'kernel',
+                                        surface: tool.metadata.surface,
+                                        allowList: [...tool.metadata.allowList],
+                                        timeoutMs: tool.metadata.timeoutMs,
+                                },
+                                artifact: result,
+                        } satisfies ToolExecutionOutput;
+                },
+        } satisfies ToolDefinition;
 }
 
 function subagentToolToDefinition(binding: SubagentToolBinding): ToolDefinition {
@@ -587,6 +661,47 @@ function toStructuredTool(definition: ToolDefinition): StructuredTool {
 			);
 		},
 	});
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function extractCommandMetadata(metadata: unknown): Record<string, unknown> | undefined {
+	if (!metadata) {
+		return undefined;
+	}
+	if (isRecord(metadata)) {
+		const command = Object.prototype.hasOwnProperty.call(metadata, 'command')
+			? (metadata as { command?: unknown }).command
+			: undefined;
+		if (isRecord(command)) {
+			return command;
+		}
+		if (typeof metadata['name'] === 'string') {
+			return metadata;
+		}
+	}
+	return undefined;
+}
+
+function extractString(value: unknown): string | undefined {
+	if (typeof value !== 'string') {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function extractStringArray(value: unknown): string[] | undefined {
+	if (Array.isArray(value)) {
+		const strings = value
+			.map((item) => (typeof item === 'string' ? item.trim() : undefined))
+			.filter((item): item is string => Boolean(item));
+		return strings.length ? strings : undefined;
+	}
+	const single = extractString(value);
+	return single ? [single] : undefined;
 }
 
 function extendCtx(
