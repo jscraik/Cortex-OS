@@ -263,7 +263,7 @@ governance boundaries, comprehensive testing, and security practices.
 - **🛡️ Security First** – OWASP compliance, SBOM generation, vulnerability scanning
 - **📊 Observability** – Monitoring, tracing, analytics hooks
 - **🏗️ Governed Architecture** – Import boundaries (ESLint + Nx)
-- **🧪 Quality Gates** – 90% test coverage & automated scans
+- **🧪 Quality Gates** – ≥90% coverage overall with ≥95% line coverage plus automated scans
 - **🚀 Production Ready** – Docker deployment & CI/CD pipelines
 - **🎯 Reality Filter** – Truthfulness verification and accuracy validation for all AI agents
 
@@ -417,13 +417,17 @@ See full spec & examples: [Streaming Modes Documentation](./docs/streaming-modes
 
 ```bash
 pnpm lint               # ESLint + Prettier
-pnpm test:coverage      # 90% coverage threshold
+pnpm test:coverage      # 90/90/90/95 coverage thresholds
 pnpm security:scan      # Semgrep OWASP profiles
 pnpm structure:validate # Governance/import rules
 pnpm nx graph           # Dependency visualization
 scripts/list-rust-editions.sh -e 2024  # Audit crates pinned to Rust 2024 edition
 scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config files
 ```
+
+Coverage enforcement is centralized through `resolveCoverageThresholds` in `vitest.config.ts`. The helper enforces default
+thresholds of 90% statements/branches/functions and 95% lines, while allowing overrides via per-metric environment variables or
+the `COVERAGE_THRESHOLD_GLOBAL` fallback.
 
 > **Latest:** Improved streaming modes with unified `--stream-mode` flag, JSON schema validation,
 > and comprehensive automation examples. See [`docs/streaming-modes.md`](./docs/streaming-modes.md).
