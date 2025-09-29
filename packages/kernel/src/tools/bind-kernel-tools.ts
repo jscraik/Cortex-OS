@@ -89,6 +89,10 @@ export interface KernelTool<TInput = unknown, TResult = unknown> {
         invoke: (input: TInput) => Promise<TResult>;
 }
 
+/**
+ * @deprecated This type alias is retained for backward compatibility.
+ * Please use {@link KernelTool} instead.
+ */
 export type BoundKernelTool<TInput = unknown, TResult = unknown> = KernelTool<TInput, TResult>;
 
 type KernelToolAny = KernelTool<unknown, unknown>;
