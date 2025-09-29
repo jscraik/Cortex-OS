@@ -1,18 +1,25 @@
 {
+  "_comment": "brAInwav MCP Server Configuration for VS Code",
   "servers": {
     "local-memory": {
-      "command": "./tools/mcp/wrap_local_memory.sh",
+      "command": "/Users/jamiecraik/.Cortex-OS/tools/mcp/wrap_local_memory.sh",
       "args": [
         "--mcp"
-      ]
+      ],
+      "env": {
+        "BRAINWAV_SERVICE": "local-memory"
+      }
     },
     "cortex-mcp": {
       "command": "/usr/bin/env",
       "args": [
         "python3",
-        "./packages/cortex-mcp/cortex_fastmcp_server_v2.py",
+        "/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/cortex_fastmcp_server_v2.py",
         "--mcp"
-      ]
+      ],
+      "env": {
+        "BRAINWAV_SERVICE": "cortex-mcp"
+      }
     }
   }
 }
