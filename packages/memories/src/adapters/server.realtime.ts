@@ -1,158 +1,22 @@
-import { z } from 'zod';
-
-// Define schemas locally until contracts package integration is fixed
-const isoTimestamp = z.string().datetime({ offset: true });
-
-const RealtimeMemoryNamespaceSchema = z
-	.string()
-	.min(1)
-	.max(64)
-	.regex(/^[a-zA-Z0-9_-]+$/, 'Namespaces must be alphanumeric plus dash/underscore.');
-
-const RealtimeMemoryEventTypeSchema = z
-	.string()
-	.min(1)
-	.max(128)
-	.regex(/^[a-zA-Z0-9_.:-]+$/, 'Event types must be namespaced identifiers.');
-
-const RealtimeMemoryChangeEventSchema = z.object({
-	type: z.enum(['create', 'update', 'delete']),
-	memory: z.record(z.unknown()).optional(),
-	previousMemory: z.record(z.unknown()).optional(),
-	memoryId: z.string().optional(),
-	timestamp: isoTimestamp,
-	namespace: RealtimeMemoryNamespaceSchema,
-	version: z.string().optional(),
-});
-
-const RealtimeMemoryInboundMessageSchema = z.discriminatedUnion('type', [
-	z.object({
-		type: z.literal('subscribe'),
-		namespace: RealtimeMemoryNamespaceSchema,
-		eventTypes: z.array(RealtimeMemoryEventTypeSchema).optional(),
-		replaySince: isoTimestamp.optional(),
-	}),
-	z.object({ type: z.literal('unsubscribe'), namespace: RealtimeMemoryNamespaceSchema }),
-	z.object({ type: z.literal('ping'), timestamp: isoTimestamp.optional() }),
-]);
-
-const RealtimeMemoryOutboundMessageSchema = z.discriminatedUnion('type', [
-	z.object({
-		type: z.literal('connected'),
-		connectionId: z.string(),
-		message: z.string(),
-		timestamp: isoTimestamp,
-		server: z
-			.object({
-				host: z.string().optional(),
-				port: z.number().optional(),
-			})
-			.optional(),
-	}),
-	z.object({
-		type: z.literal('subscriptions_restored'),
-		subscriptions: z.array(RealtimeMemoryNamespaceSchema),
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('subscribed'),
-		namespace: RealtimeMemoryNamespaceSchema,
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('unsubscribed'),
-		namespace: RealtimeMemoryNamespaceSchema,
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('change'),
-		event: RealtimeMemoryChangeEventSchema,
-		namespace: RealtimeMemoryNamespaceSchema,
-		timestamp: isoTimestamp,
-	}),
-	z.object({
-		type: z.literal('error'),
-		message: z.string(),
-		timestamp: isoTimestamp,
-		code: z.string().optional(),
-		details: z.record(z.unknown()).optional(),
-	}),
-	z.object({
-		type: z.literal('warning'),
-		message: z.string(),
-		timestamp: isoTimestamp,
-		code: z.string().optional(),
-		details: z.record(z.unknown()).optional(),
-	}),
-	z.object({ type: z.literal('pong'), timestamp: isoTimestamp }),
-]);
-
-const RealtimeMemoryQueuedMessageSchema = z.object({
-	namespace: RealtimeMemoryNamespaceSchema,
-	payload: RealtimeMemoryOutboundMessageSchema,
-	timestamp: isoTimestamp,
-	expiresAt: isoTimestamp.optional(),
-});
-
-const RealtimeMemoryConnectionMetricsSchema = z.object({
-	messagesSent: z.number().int().nonnegative(),
-	messagesReceived: z.number().int().nonnegative(),
-	bytesSent: z.number().int().nonnegative(),
-	bytesReceived: z.number().int().nonnegative(),
-	queueDepth: z.number().int().nonnegative(),
-});
-
-const RealtimeMemoryConnectionStateSchema = z.object({
-	connectionId: z.string().min(1),
-	status: z.enum(['connecting', 'connected', 'authenticated', 'subscribed', 'closed']),
-	subscriptions: z.array(RealtimeMemoryNamespaceSchema),
-	connectedAt: isoTimestamp,
-	lastActivityAt: isoTimestamp.optional(),
-	isReconnecting: z.boolean().optional(),
-	metrics: RealtimeMemoryConnectionMetricsSchema.optional(),
-});
-
-const RealtimeMemoryConnectionSummarySchema = RealtimeMemoryConnectionStateSchema.extend({
-	metrics: RealtimeMemoryConnectionMetricsSchema,
-});
-
-const RealtimeMemoryMetricsSnapshotSchema = z.object({
-        snapshotId: z.string().min(1),
-        brand: z.literal('brAInwav'),
-        source: z.string().min(1),
-        timestamp: isoTimestamp,
-        description: z.string().min(1),
-        reason: z.string().min(1),
-        aggregate: z.object({
-                totalConnections: z.number().int().nonnegative(),
-                activeConnections: z.number().int().nonnegative(),
-                reconnections: z.number().int().nonnegative(),
-                messagesSent: z.number().int().nonnegative(),
-                messagesReceived: z.number().int().nonnegative(),
-                bytesSent: z.number().int().nonnegative(),
-                bytesReceived: z.number().int().nonnegative(),
-                lastActivityAt: isoTimestamp.optional(),
-                connectionTimestamps: z.array(isoTimestamp),
-        }),
-        connections: z.array(RealtimeMemoryConnectionSummarySchema),
-});
-
-const RealtimeMemoryMetricsEventSchema = RealtimeMemoryMetricsSnapshotSchema.extend({
-        type: z.literal('memory.realtime.metrics'),
-});
-
-// Export types for use in the file
-type RealtimeMemoryConnectionState = z.infer<typeof RealtimeMemoryConnectionStateSchema>;
-type RealtimeMemoryInboundMessage = z.infer<typeof RealtimeMemoryInboundMessageSchema>;
-type RealtimeMemoryOutboundMessage = z.infer<typeof RealtimeMemoryOutboundMessageSchema>;
-type RealtimeMemoryQueuedMessage = z.infer<typeof RealtimeMemoryQueuedMessageSchema>;
-type RealtimeMemoryMetricsSnapshot = z.infer<typeof RealtimeMemoryMetricsSnapshotSchema>;
-type RealtimeMemoryMetricsEvent = z.infer<typeof RealtimeMemoryMetricsEventSchema>;
 
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { RawData } from 'ws';
 import { WebSocket, WebSocketServer } from 'ws';
+import {
+        RealtimeMemoryChangeEventSchema,
+        RealtimeMemoryConnectionMetricsSchema,
+        RealtimeMemoryConnectionStateSchema,
+        RealtimeMemoryInboundMessageSchema,
+        type RealtimeMemoryInboundMessage,
+        RealtimeMemoryMetricsSnapshotSchema,
+        type RealtimeMemoryMetricsSnapshot,
+        RealtimeMemoryNamespaceSchema,
+        RealtimeMemoryOutboundMessageSchema,
+        type RealtimeMemoryOutboundMessage,
+        RealtimeMemoryQueuedMessageSchema,
+        type RealtimeMemoryQueuedMessage,
+} from '@cortex-os/contracts';
 import type { ChangeEvent, StreamingMemoryStore } from './store.streaming.js';
 
 type RequestContext = {

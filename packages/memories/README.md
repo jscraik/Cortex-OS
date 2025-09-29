@@ -46,6 +46,11 @@ Cortex Memories provides comprehensive long-term state management for the Cortex
 - **📈 Performance Monitoring** - Memory usage analytics and optimization
 - **🔐 Security First** - OWASP compliance and secure data handling
 
+### 🔌 Realtime WebSocket Contracts
+- **📥 Inbound Schema Validation** - `@cortex-os/contracts` exposes `RealtimeMemoryInboundMessageSchema` covering subscribe/unsubscribe/ping flows so adapters can reject malformed payloads.
+- **📤 Structured Outbound Messages** - Standardized change, error, warning, and lifecycle payloads via `RealtimeMemoryOutboundMessageSchema` keep WebSocket broadcasts type-safe.
+- **📊 Connection Snapshots** - Connection state and metrics schemas make it easy to emit observability events and reconcile reconnecting clients.
+
 ## 🚀 Quick Start
 
 ### Installation

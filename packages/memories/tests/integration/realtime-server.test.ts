@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WebSocket } from 'ws';
 import {
-        RealtimeMemoryChangeEventSchema,
-        type RealtimeMemoryInboundMessage,
-        RealtimeMemoryInboundMessageSchema,
-        RealtimeMemoryMetricsEventSchema,
-        type RealtimeMemoryOutboundMessage,
-        RealtimeMemoryOutboundMessageSchema,
-} from '../../../../libs/typescript/contracts/src/memory-realtime.js';
+
+	RealtimeMemoryChangeEventSchema,
+	type RealtimeMemoryInboundMessage,
+	RealtimeMemoryInboundMessageSchema,
+	RealtimeMemoryMetricsSnapshotSchema,
+	type RealtimeMemoryOutboundMessage,
+	RealtimeMemoryOutboundMessageSchema,
+} from '@cortex-os/contracts';
+
 import { RealtimeMemoryServer } from '../../src/adapters/server.realtime.js';
 import { InMemoryStore } from '../../src/adapters/store.memory.js';
 import { StreamingMemoryStore } from '../../src/adapters/store.streaming.js';
