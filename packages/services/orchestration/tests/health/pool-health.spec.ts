@@ -59,17 +59,26 @@ describe('AgentHealthMonitor proactive checks', () => {
 
 		expect(summary.totalAgents).toBe(statuses.length);
 		expect(summary.healthy).toBe(counts.healthy);
-		expect(summary.degraded).toBe(counts.degraded);
-		expect(summary.unhealthy).toBe(counts.unhealthy);
-		expect(summary.offline).toBe(counts.offline);
-		expect(summary.healthy).toBeGreaterThanOrEqual(1);
-		expect(summary.systemStatus).toBe('degraded');
+                expect(summary.degraded).toBe(counts.degraded);
+                expect(summary.unhealthy).toBe(counts.unhealthy);
+                expect(summary.offline).toBe(counts.offline);
+                expect(summary.healthy).toBeGreaterThanOrEqual(1);
+                expect(summary.systemStatus).toBe('degraded');
 
-		const healthyStatus = monitor.getAgentHealthStatus('agent-alpha');
-		expect(healthyStatus?.status).toBe('healthy');
-		const degradedStatus = monitor.getAgentHealthStatus('agent-beta');
-		expect(degradedStatus?.status).toBe('degraded');
-		const unhealthyStatus = monitor.getAgentHealthStatus('agent-gamma');
-		expect(unhealthyStatus?.status).toBe('unhealthy');
-	});
+                const healthyStatus = monitor.getAgentHealthStatus('agent-alpha');
+                expect(healthyStatus?.status).toBe('healthy');
+                const degradedStatus = monitor.getAgentHealthStatus('agent-beta');
+                expect(degradedStatus?.status).toBe('degraded');
+                const unhealthyStatus = monitor.getAgentHealthStatus('agent-gamma');
+                expect(unhealthyStatus?.status).toBe('unhealthy');
+
+                monitor.recordAgentFailure('agent-alpha', new Error('brAInwav deterministic failure'));
+                const downgradedStatus = monitor.getAgentHealthStatus('agent-alpha');
+                expect(downgradedStatus?.status).toBe('degraded');
+
+                const downgradedSummary = monitor.getSystemHealthSummary();
+                expect(downgradedSummary.degraded).toBeGreaterThanOrEqual(counts.degraded + 1);
+                expect(downgradedSummary.healthy).toBeLessThan(summary.healthy);
+                expect(downgradedSummary.systemStatus).toBe('degraded');
+        });
 });
