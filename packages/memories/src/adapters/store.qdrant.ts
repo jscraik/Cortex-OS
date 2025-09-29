@@ -1,5 +1,5 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
 import { randomUUID } from 'node:crypto';
+import { QdrantClient } from '@qdrant/js-client-rest';
 import { ENV, EXTERNAL_ENV } from '../config/constants.js';
 import { decayEnabled, decayFactor, getHalfLifeMs } from '../core/decay.js';
 import { isExpired } from '../core/ttl.js';

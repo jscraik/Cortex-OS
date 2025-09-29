@@ -230,10 +230,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(SearchServersInputSchema, params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.search_servers', error);
@@ -256,10 +257,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(GetServerInputSchema, params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_server', error);
@@ -282,10 +284,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(GetInstallInstructionsInputSchema, params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_install_instructions', error);
@@ -307,10 +310,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(z.object({}), params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.list_categories', error);
@@ -332,10 +336,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(GetCategoryServersInputSchema, params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_category_servers', error);
@@ -358,10 +363,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(z.object({}), params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_stats', error);
@@ -384,10 +390,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(GetTrendingInputSchema, params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_trending', error);
@@ -410,10 +417,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(GetPopularInputSchema, params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_popular', error);
@@ -436,10 +444,11 @@ export const marketplaceMcpTools: MarketplaceTool[] = [
 				// Validate input
 				validateInput(GetTopRatedInputSchema, params);
 
-                                throw new MarketplaceToolError(
-                                        'service_error',
-                                        'Marketplace MCP handler is not configured. Instantiate MarketplaceMcpIntegration to enable this tool.',
-                                );
+				// Handler will be wired by MarketplaceMcpIntegration
+				throw new MarketplaceToolError(
+					'internal_error',
+					'Handler not wired - integration required',
+				);
 			} catch (error) {
 				if (error instanceof MarketplaceToolError) {
 					return createErrorResponse('marketplace.get_top_rated', error);

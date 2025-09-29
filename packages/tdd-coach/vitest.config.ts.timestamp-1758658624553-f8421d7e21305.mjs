@@ -1,7 +1,9 @@
 // vitest.config.ts
-import { resolve } from 'node:path';
+
 import tsconfigPaths from 'file:///Users/jamiecraik/.Cortex-OS/node_modules/.pnpm/vite-tsconfig-paths@5.1.4_typescript@5.9.2_vite@7.1.5_@types+node@22.18.1_jiti@2.5.1_le_6bf67ef1cadebafb04a4d58a7cff2970/node_modules/vite-tsconfig-paths/dist/index.js';
 import { defineConfig } from 'file:///Users/jamiecraik/.Cortex-OS/node_modules/.pnpm/vitest@2.1.9_@types+node@22.18.1_jsdom@26.1.0_less@4.4.1_lightningcss@1.30.1_msw@2.11.3_9a0ff8328e24ba06a9cd59a852b08a59/node_modules/vitest/dist/config.js';
+import { resolve } from 'node:path';
+
 var __vite_injected_original_dirname = '/Users/jamiecraik/.Cortex-OS/packages/tdd-coach';
 var vitest_config_default = defineConfig({
 	plugins: [tsconfigPaths({ projects: ['../../tsconfig.json'] })],

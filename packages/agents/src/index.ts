@@ -15,6 +15,13 @@ export {
 export { type AgentsBusConfig, createAgentsBus, createAgentsSchemaRegistry } from './a2a.js';
 // Export the main agent class
 export { CortexAgent } from './CortexAgentLangGraph.js';
+// File-based agent templates loader
+export {
+	type AgentTemplate,
+	AgentTemplateError,
+	type AgentTemplateMap,
+	loadAgentTemplates,
+} from './file-agent-loader.js';
 // Circuit Breaker
 export {
 	CircuitBreaker,
@@ -42,7 +49,6 @@ export {
 	MemoryBoundedStore,
 	RateLimiter,
 } from './lib/memory-manager.js';
-
 // Observability Implementation
 export {
 	MetricsCollector,
@@ -50,11 +56,7 @@ export {
 	observability,
 	TracingSystem,
 } from './lib/observability.js';
-export {
-	createSecurityMiddleware,
-	InputSanitizer,
-	LogRedactor,
-} from './lib/security.js';
+export { createSecurityMiddleware, InputSanitizer, LogRedactor } from './lib/security.js';
 // Export types
 export type * from './lib/types.js';
 // Export LangGraphJS Master Agent
@@ -65,22 +67,29 @@ export {
 } from './MasterAgent.js';
 // Export monitoring
 export * from './monitoring';
+export type { Subagent as ContractSubagent } from './nO/contracts.js';
+export {
+	type LoadedSubagents,
+	type LoadSubagentsOptions,
+	loadSubagents,
+	type SubagentToolBinding,
+	type SubagentToolsOptions,
+	subagentTools,
+} from './subagents/api.js';
+// Subagent tooling exports for orchestration integration
+export {
+	createAutoDelegateTool,
+	materializeSubagentTool,
+	type Tool as SubagentToolDefinition,
+	type ToolResponse as SubagentToolResponse,
+} from './subagents/SubagentTool.js';
 // Export brAInwav TDD Plan Implementation Components
 // Testing Infrastructure
 export {
-        MockAgent,
-        MockTool,
-        PerformanceTestRunner,
-        TestAssertions,
-        TestEnvironment,
-        TestSuiteRunner,
+	MockAgent,
+	MockTool,
+	PerformanceTestRunner,
+	TestAssertions,
+	TestEnvironment,
+	TestSuiteRunner,
 } from './testing/test-utilities.js';
-export {
-        loadSubagents,
-        subagentTools,
-        type LoadSubagentsOptions,
-        type LoadedSubagents,
-        type SubagentToolBinding,
-        type SubagentToolsOptions,
-} from './subagents/api.js';
-export type { Subagent as ContractSubagent } from './nO/contracts.js';

@@ -106,6 +106,7 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 
 	return make({});
 }
+
 import { secureRatio } from '../lib/secure-random.js';
 
 export interface ApplyLoggingOptions extends LoggerOptions {

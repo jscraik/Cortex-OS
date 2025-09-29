@@ -1,125 +1,121 @@
-import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
+import { randomUUID } from 'node:crypto';
 import {
-        AIMessage,
-        HumanMessage,
-        SystemMessage,
-        ToolMessage,
-        isAIMessage,
-        type BaseMessage,
-} from '@langchain/core/messages';
-import { DynamicStructuredTool, type StructuredTool } from '@langchain/core/tools';
-import {
-        parseSlash,
-        runSlash as defaultRunSlash,
-        type RunSlashOptions,
-        type SlashParseResult,
-} from '@cortex-os/commands';
-import {
-        bindKernelTools,
-        type BindKernelToolsOptions,
-        type BoundKernelTool,
-} from '@cortex-os/kernel';
-import {
-        loadSubagents as discoverSubagents,
-        subagentTools,
-        type LoadSubagentsOptions,
-        type LoadedSubagents,
-        type SubagentToolBinding,
-        type ContractSubagent,
+	type ContractSubagent,
+	loadSubagents as discoverSubagents,
+	type LoadedSubagents,
+	type LoadSubagentsOptions,
+	type SubagentToolBinding,
+	type SubagentToolsOptions,
+	subagentTools,
 } from '@cortex-os/agents';
+import {
+	runSlash as defaultRunSlash,
+	parseSlash,
+	type RunSlashOptions,
+	type SlashParseResult,
+} from '@cortex-os/commands';
 import { CortexHooks, type HookContext, type HookEvent, type HookResult } from '@cortex-os/hooks';
 import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/src/loaders.js';
 import {
-        dispatchTools,
-        type ToolDispatchHooks,
-        type ToolDispatchJob,
-        type ToolDispatchResult,
-} from './tool-dispatch.js';
-import { type N0Budget, type N0Session, type N0State } from './n0-state.js';
-import { randomUUID } from 'node:crypto';
-import { z } from 'zod';
+	type BindKernelToolsOptions,
+	type BoundKernelTool,
+	bindKernelTools,
+} from '@cortex-os/kernel';
+import {
+	AIMessage,
+	type BaseMessage,
+	HumanMessage,
+	isAIMessage,
+	SystemMessage,
+	ToolMessage,
+} from '@langchain/core/messages';
+import { DynamicStructuredTool, type StructuredTool } from '@langchain/core/tools';
+import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
+import type { z } from 'zod';
+import type { N0Budget, N0Session, N0State } from './n0-state.js';
+import { dispatchTools, type ToolDispatchHooks, type ToolDispatchJob } from './tool-dispatch.js';
 
 export const N0Annotation = Annotation.Root({
-        ...MessagesAnnotation.spec,
-        input: Annotation<string>({ reducer: (_prev, next) => next }),
-        session: Annotation<N0Session>({ reducer: (_prev, next) => next }),
-        ctx: Annotation<Record<string, unknown>>({
-                reducer: (prev, next) => ({ ...(prev ?? {}), ...(next ?? {}) }),
-        }),
-        output: Annotation<string | undefined>({ reducer: (_prev, next) => next }),
-        budget: Annotation<N0Budget | undefined>({ reducer: (_prev, next) => next }),
+	...MessagesAnnotation.spec,
+	input: Annotation<string>({ reducer: (_prev, next) => next }),
+	session: Annotation<N0Session>({ reducer: (_prev, next) => next }),
+	ctx: Annotation<Record<string, unknown>>({
+		reducer: (prev, next) => ({ ...(prev ?? {}), ...(next ?? {}) }),
+	}),
+	output: Annotation<string | undefined>({ reducer: (_prev, next) => next }),
+	budget: Annotation<N0Budget | undefined>({ reducer: (_prev, next) => next }),
 });
 
 export interface ToolCallableModel {
-        bindTools(tools: StructuredTool[]): ToolCallableModel;
-        invoke(messages: BaseMessage[], options?: unknown): Promise<BaseMessage>;
+	bindTools(tools: StructuredTool[]): ToolCallableModel;
+	invoke(messages: BaseMessage[], options?: unknown): Promise<BaseMessage>;
 }
 
 export interface ToolExecutionContext {
-        session: N0Session;
-        state: N0State;
-        callId: string;
+	session: N0Session;
+	state: N0State;
+	callId: string;
 }
 
 export interface ToolExecutionOutput {
-        content: string;
-        status?: 'success' | 'error';
-        metadata?: Record<string, unknown>;
-        artifact?: unknown;
+	content: string;
+	status?: 'success' | 'error';
+	metadata?: Record<string, unknown>;
+	artifact?: unknown;
 }
 
 export interface ToolDefinition {
-        name: string;
-        description: string;
-        schema: z.ZodTypeAny;
-        execute: (input: unknown, context: ToolExecutionContext) => Promise<ToolExecutionOutput>;
-        metadata?: Record<string, unknown>;
+	name: string;
+	description: string;
+	schema: z.ZodTypeAny;
+	execute: (input: unknown, context: ToolExecutionContext) => Promise<ToolExecutionOutput>;
+	metadata?: Record<string, unknown>;
 }
 
 export interface HookRunner {
-        run(event: HookEvent, ctx: HookContext | Record<string, unknown>): Promise<HookResult[]>;
-        init?(options?: HookLoadOptions): Promise<void>;
+	run(event: HookEvent, ctx: HookContext | Record<string, unknown>): Promise<HookResult[]>;
+	init?(options?: HookLoadOptions): Promise<void>;
 }
 
 export interface PlanDecision {
-        strategy: 'plan' | 'direct';
-        rationale?: string;
+	strategy: 'plan' | 'direct';
+	rationale?: string;
 }
 
-export type StreamEvent =
-        | { type: 'chunk'; content: string }
-        | { type: 'final'; content: string };
+export type StreamEvent = { type: 'chunk'; content: string } | { type: 'final'; content: string };
 
 export interface BuildN0Options {
-        model: ToolCallableModel;
-        hooks?: HookRunner;
-        hookLoadOptions?: HookLoadOptions;
-        runSlash?: typeof defaultRunSlash;
-        runSlashOptions?: RunSlashOptions;
-        kernelTools?: BoundKernelTool[];
-        kernelOptions?: BindKernelToolsOptions;
-        subagents?: Map<string, ContractSubagent>;
-        subagentOptions?: LoadSubagentsOptions;
-        disableSubagentDiscovery?: boolean;
-        orchestratorTools?: ToolDefinition[];
-        toolHooks?: ToolDispatchHooks;
-        toolAllowList?: string[];
-        toolConcurrency?: number;
-        systemPrompt?: string;
-        planResolver?: (state: N0State) => PlanDecision;
-        compaction?: { maxMessages?: number; maxChars?: number };
-        logger?: Pick<Console, 'info' | 'warn' | 'error'>;
-        streamPublisher?: (event: StreamEvent) => Promise<void> | void;
+	model: ToolCallableModel;
+	hooks?: HookRunner;
+	hookLoadOptions?: HookLoadOptions;
+	runSlash?: typeof defaultRunSlash;
+	runSlashOptions?: RunSlashOptions;
+	kernelTools?: BoundKernelTool[];
+	kernelOptions?: BindKernelToolsOptions;
+	subagents?: Map<string, ContractSubagent>;
+	subagentOptions?: LoadSubagentsOptions;
+	subagentToolOptions?: SubagentToolsOptions;
+	disableSubagentDiscovery?: boolean;
+	orchestratorTools?: ToolDefinition[];
+	toolHooks?: ToolDispatchHooks;
+	toolAllowList?: string[];
+	toolConcurrency?: number;
+	systemPrompt?: string;
+	planResolver?: (state: N0State) => PlanDecision;
+	compaction?: { maxMessages?: number; maxChars?: number };
+	logger?: Pick<Console, 'info' | 'warn' | 'error'>;
+	streamPublisher?: (event: StreamEvent) => Promise<void> | void;
 }
 
 export interface BuildN0Result {
-        graph: ReturnType<StateGraph<typeof N0Annotation>['compile']>;
-        hooks: HookRunner;
-        tools: Map<string, ToolDefinition>;
-        subagentManager?: LoadedSubagents['manager'];
+	graph: ReturnType<StateGraph<typeof N0Annotation>['compile']>;
+	hooks: HookRunner;
+	tools: Map<string, ToolDefinition>;
+	subagentManager?: LoadedSubagents['manager'];
 }
 
 export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
+
         const hooks = await ensureHooks(options.hooks, options.hookLoadOptions);
         const logger = options.logger ?? console;
         const runSlashImpl = options.runSlash ?? defaultRunSlash;
@@ -514,235 +510,252 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
                 tools: toolMap,
                 subagentManager,
         };
+
 }
 
-function ensureHooks(hooks: HookRunner | undefined, options?: HookLoadOptions): Promise<HookRunner> {
-        if (hooks) {
-                return Promise.resolve(hooks);
-        }
-        const instance = new CortexHooks();
-        return instance.init(options).then(() => instance);
+function ensureHooks(
+	hooks: HookRunner | undefined,
+	options?: HookLoadOptions,
+): Promise<HookRunner> {
+	if (hooks) {
+		return Promise.resolve(hooks);
+	}
+	const instance = new CortexHooks();
+	return instance.init(options).then(() => instance);
 }
 
 function createToolHookAdapter(hooks: HookRunner): ToolDispatchHooks {
-        return {
-                run: async (event, ctx) => hooks.run(event, ctx),
-        };
+	return {
+		run: async (event, ctx) => hooks.run(event, ctx),
+	};
 }
 
 function kernelToolToDefinition(tool: BoundKernelTool): ToolDefinition {
-        return {
-                name: tool.name,
-                description: tool.description,
-                schema: tool.schema,
-                metadata: {
-                        provider: 'kernel',
-                        surface: tool.name,
-                },
-                async execute(input) {
-                        const result = await tool.execute(input);
-                        return {
-                                content: renderOutput(result),
-                                status: 'success',
-                                metadata: { provider: 'kernel', surface: tool.name },
-                                artifact: result,
-                        } satisfies ToolExecutionOutput;
-                },
-        } satisfies ToolDefinition;
+	return {
+		name: tool.name,
+		description: tool.description,
+		schema: tool.schema,
+		metadata: {
+			provider: 'kernel',
+			surface: tool.name,
+		},
+		async execute(input) {
+			const result = await tool.execute(input);
+			return {
+				content: renderOutput(result),
+				status: 'success',
+				metadata: { provider: 'kernel', surface: tool.name },
+				artifact: result,
+			} satisfies ToolExecutionOutput;
+		},
+	} satisfies ToolDefinition;
 }
 
 function subagentToolToDefinition(binding: SubagentToolBinding): ToolDefinition {
-        return {
-                name: binding.tool.name,
-                description: binding.tool.description,
-                schema: binding.tool.schema,
-                metadata: binding.metadata,
-                async execute(input) {
-                        const response = await binding.tool.call(input, { caller: 'n0', depth: 0 });
-                        const status: 'success' | 'error' = response.success ? 'success' : 'error';
-                        const content = response.text ?? (response.error ? `brAInwav subagent error: ${response.error}` : '');
-                        return {
-                                content,
-                                status,
-                                metadata: {
-                                        ...(binding.metadata ?? {}),
-                                        traceId: response.traceId,
-                                        metrics: response.metrics,
-                                },
-                                artifact: response,
-                        } satisfies ToolExecutionOutput;
-                },
-        } satisfies ToolDefinition;
+	return {
+		name: binding.tool.name,
+		description: binding.tool.description,
+		schema: binding.tool.schema,
+		metadata: binding.metadata,
+		async execute(input) {
+			const response = await binding.tool.call(input, { caller: 'n0', depth: 0 });
+			const status: 'success' | 'error' = response.success ? 'success' : 'error';
+			const content =
+				response.text ?? (response.error ? `brAInwav subagent error: ${response.error}` : '');
+			return {
+				content,
+				status,
+				metadata: {
+					...(binding.metadata ?? {}),
+					traceId: response.traceId,
+					metrics: response.metrics,
+				},
+				artifact: response,
+			} satisfies ToolExecutionOutput;
+		},
+	} satisfies ToolDefinition;
 }
 
 function toStructuredTool(definition: ToolDefinition): StructuredTool {
-        return new DynamicStructuredTool({
-                name: definition.name,
-                description: definition.description,
-                schema: definition.schema,
-                func: async () => {
-                        throw new Error(
-                                `brAInwav tool ${definition.name} must be invoked via the LangGraph tool_dispatch pipeline`,
-                        );
-                },
-        });
+	return new DynamicStructuredTool({
+		name: definition.name,
+		description: definition.description,
+		schema: definition.schema,
+		func: async () => {
+			throw new Error(
+				`brAInwav tool ${definition.name} must be invoked via the LangGraph tool_dispatch pipeline`,
+			);
+		},
+	});
 }
 
-function extendCtx(base: Record<string, unknown> | undefined, patch: Record<string, unknown>): Record<string, unknown> {
-        return { ...(base ?? {}), ...patch };
+function extendCtx(
+	base: Record<string, unknown> | undefined,
+	patch: Record<string, unknown>,
+): Record<string, unknown> {
+	return { ...(base ?? {}), ...patch };
 }
 
 function ensureSystemPrompt(
-        messages: BaseMessage[],
-        prompt: string,
-        ctx?: Record<string, unknown>,
+	messages: BaseMessage[],
+	prompt: string,
+	ctx?: Record<string, unknown>,
 ): BaseMessage[] {
-        const cloned = [...messages];
-        if (cloned.length === 0 || cloned[0].getType() !== 'system') {
-                cloned.unshift(new SystemMessage({ content: prompt }));
-        }
-        const hasPlanInstruction = cloned.some(
-                (message) => message.getType() === 'system' && message.additional_kwargs?.['brAInwav-plan'],
-        );
-        if (ctx?.strategy && !hasPlanInstruction) {
-                const instruction =
-                        ctx.strategy === 'plan'
-                                ? 'You must outline a brief plan before executing tools. Use subagents when helpful.'
-                                : 'Respond directly while using tools only when they materially improve the answer.';
-                cloned.splice(1, 0, new SystemMessage({
-                        content: instruction,
-                        additional_kwargs: { 'brAInwav-plan': true },
-                }));
-        }
-        return cloned;
+	const cloned = [...messages];
+	if (cloned.length === 0 || cloned[0].getType() !== 'system') {
+		cloned.unshift(new SystemMessage({ content: prompt }));
+	}
+	const hasPlanInstruction = cloned.some(
+		(message) => message.getType() === 'system' && message.additional_kwargs?.['brAInwav-plan'],
+	);
+	if (ctx?.strategy && !hasPlanInstruction) {
+		const instruction =
+			ctx.strategy === 'plan'
+				? 'You must outline a brief plan before executing tools. Use subagents when helpful.'
+				: 'Respond directly while using tools only when they materially improve the answer.';
+		cloned.splice(
+			1,
+			0,
+			new SystemMessage({
+				content: instruction,
+				additional_kwargs: { 'brAInwav-plan': true },
+			}),
+		);
+	}
+	return cloned;
 }
 
 function normaliseToAIMessage(message: BaseMessage): AIMessage {
-        if (isAIMessage(message)) return message;
-        return new AIMessage({ content: renderMessageContent(message.content) });
+	if (isAIMessage(message)) return message;
+	return new AIMessage({ content: renderMessageContent(message.content) });
 }
 
 function renderMessageContent(content: BaseMessage['content']): string {
-        if (typeof content === 'string') return content;
-        if (Array.isArray(content)) {
-                return content
-                        .map((part) => {
-                                if (typeof part === 'string') return part;
-                                if (typeof part === 'object' && part && 'text' in part) {
-                                        return String((part as { text?: unknown }).text ?? '');
-                                }
-                                try {
-                                        return JSON.stringify(part);
-                                } catch {
-                                        return String(part);
-                                }
-                        })
-                        .join('\n');
-        }
-        try {
-                return JSON.stringify(content);
-        } catch {
-                return String(content);
-        }
+	if (typeof content === 'string') return content;
+	if (Array.isArray(content)) {
+		return content
+			.map((part) => {
+				if (typeof part === 'string') return part;
+				if (typeof part === 'object' && part && 'text' in part) {
+					return String((part as { text?: unknown }).text ?? '');
+				}
+				try {
+					return JSON.stringify(part);
+				} catch {
+					return String(part);
+				}
+			})
+			.join('\n');
+	}
+	try {
+		return JSON.stringify(content);
+	} catch {
+		return String(content);
+	}
 }
 
 function renderOutput(value: unknown): string {
-        if (value === undefined || value === null) return '';
-        if (typeof value === 'string') return value;
-        if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-        try {
-                return JSON.stringify(value);
-        } catch {
-                return String(value);
-        }
+	if (value === undefined || value === null) return '';
+	if (typeof value === 'string') return value;
+	if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return String(value);
+	}
 }
 
 async function safeRunHook(
-        hooks: HookRunner,
-        event: HookEvent,
-        ctx: Record<string, unknown>,
-        logger: Pick<Console, 'warn'>,
+	hooks: HookRunner,
+	event: HookEvent,
+	ctx: Record<string, unknown>,
+	logger: Pick<Console, 'warn'>,
 ): Promise<HookResult[] | undefined> {
-        try {
-                return await hooks.run(event, ctx as HookContext);
-        } catch (error) {
-                logger.warn?.('brAInwav hook execution failed', { event, error });
-                return undefined;
-        }
+	try {
+		return await hooks.run(event, ctx as HookContext);
+	} catch (error) {
+		logger.warn?.('brAInwav hook execution failed', { event, error });
+		return undefined;
+	}
 }
 
 function sessionHookContext(state: N0State): Record<string, unknown> {
-        return {
-                event: 'SessionStart',
-                cwd: state.session.cwd,
-                user: state.session.user,
-                model: state.session.model,
-                session: state.session,
-                tags: ['n0'],
-        };
+	return {
+		event: 'SessionStart',
+		cwd: state.session.cwd,
+		user: state.session.user,
+		model: state.session.model,
+		session: state.session,
+		tags: ['n0'],
+	};
 }
 
 function stopHookContext(state: N0State, output?: string): Record<string, unknown> {
-        return {
-                event: 'Stop',
-                cwd: state.session.cwd,
-                user: state.session.user,
-                model: state.session.model,
-                session: state.session,
-                output,
-                tags: ['n0'],
-        };
+	return {
+		event: 'Stop',
+		cwd: state.session.cwd,
+		user: state.session.user,
+		model: state.session.model,
+		session: state.session,
+		output,
+		tags: ['n0'],
+	};
 }
 
 function totalCharacters(messages: BaseMessage[]): number {
-        return messages.reduce((sum, message) => sum + renderMessageContent(message.content).length, 0);
+	return messages.reduce((sum, message) => sum + renderMessageContent(message.content).length, 0);
 }
 
-function compactMessages(messages: BaseMessage[], maxMessages: number, maxChars: number): BaseMessage[] {
-        const preserved: BaseMessage[] = [];
-        if (messages.length > 0) preserved.push(messages[0]);
-        const remainder = messages.slice(-Math.max(0, maxMessages - preserved.length));
-        let result = [...preserved, ...remainder];
-        while (totalCharacters(result) > maxChars && result.length > 2) {
-                result.splice(1, 1);
-        }
-        return result;
+function compactMessages(
+	messages: BaseMessage[],
+	maxMessages: number,
+	maxChars: number,
+): BaseMessage[] {
+	const preserved: BaseMessage[] = [];
+	if (messages.length > 0) preserved.push(messages[0]);
+	const remainder = messages.slice(-Math.max(0, maxMessages - preserved.length));
+	const result = [...preserved, ...remainder];
+	while (totalCharacters(result) > maxChars && result.length > 2) {
+		result.splice(1, 1);
+	}
+	return result;
 }
 
 function deriveOutputFromMessages(messages?: BaseMessage[]): string | undefined {
-        if (!messages || messages.length === 0) return undefined;
-        for (let index = messages.length - 1; index >= 0; index -= 1) {
-                const candidate = messages[index];
-                const type = candidate.getType();
-                if (type === 'ai' || type === 'tool') {
-                        return renderMessageContent(candidate.content);
-                }
-        }
-        return undefined;
+	if (!messages || messages.length === 0) return undefined;
+	for (let index = messages.length - 1; index >= 0; index -= 1) {
+		const candidate = messages[index];
+		const type = candidate.getType();
+		if (type === 'ai' || type === 'tool') {
+			return renderMessageContent(candidate.content);
+		}
+	}
+	return undefined;
 }
 
 function tryParseSlash(input: string): SlashParseResult | null {
-        try {
-                return parseSlash(input);
-        } catch {
-                return null;
-        }
+	try {
+		return parseSlash(input);
+	} catch {
+		return null;
+	}
 }
 
 function defaultPlanResolver(state: N0State): PlanDecision {
-        const content = state.input.toLowerCase();
-        const shouldPlan =
-                state.input.length > 240 ||
-                state.input.split('\n').length > 3 ||
-                ['plan', 'steps', 'strategy', 'investigate', 'analysis', 'roadmap'].some((keyword) =>
-                        content.includes(keyword),
-                );
-        return shouldPlan
-                ? { strategy: 'plan', rationale: 'Detected long or multi-part request requiring coordination.' }
-                : { strategy: 'direct', rationale: 'Prompt is concise; direct execution preferred.' };
+	const content = state.input.toLowerCase();
+	const shouldPlan =
+		state.input.length > 240 ||
+		state.input.split('\n').length > 3 ||
+		['plan', 'steps', 'strategy', 'investigate', 'analysis', 'roadmap'].some((keyword) =>
+			content.includes(keyword),
+		);
+	return shouldPlan
+		? { strategy: 'plan', rationale: 'Detected long or multi-part request requiring coordination.' }
+		: { strategy: 'direct', rationale: 'Prompt is concise; direct execution preferred.' };
 }
 
 function defaultSystemPrompt(): string {
+
         return [
                 'You are brAInwav n0, the master orchestration loop for Cortex-OS.',
                 'Coordinate kernel tools, workspace commands, and subagents to produce accurate, secure results.',
@@ -751,4 +764,5 @@ function defaultSystemPrompt(): string {
                 'Log session information and relevant context for debugging when errors or unexpected behavior occur, following best practices for observability.',
                 'Handle errors gracefully and provide clear, actionable feedback to users and developers.',
         ].join(' ');
+
 }

@@ -27,7 +27,7 @@ describe('A2A Message Flow Integration', () => {
 		};
 
 		// Mock the subscription to directly call the handler
-		mockTransport.subscribe.mockImplementation((topics: string[], handler: Function) => {
+		mockTransport.subscribe.mockImplementation((_topics: string[], handler: Function) => {
 			// Store handler for direct invocation
 			(mockTransport as any).handler = handler;
 		});
@@ -85,7 +85,7 @@ describe('A2A Message Flow Integration', () => {
 			},
 		};
 
-		mockTransport.subscribe.mockImplementation((topics: string[], handler: Function) => {
+		mockTransport.subscribe.mockImplementation((_topics: string[], handler: Function) => {
 			(mockTransport as any).handler = handler;
 		});
 
@@ -119,7 +119,7 @@ describe('A2A Message Flow Integration', () => {
 			},
 		};
 
-		mockTransport.subscribe.mockImplementation((topics: string[], handler: Function) => {
+		mockTransport.subscribe.mockImplementation((_topics: string[], handler: Function) => {
 			(mockTransport as any).handler = handler;
 		});
 
@@ -159,7 +159,7 @@ describe('A2A Message Flow Integration', () => {
 			},
 		};
 
-		mockTransport.subscribe.mockImplementation((topics: string[], handler: Function) => {
+		mockTransport.subscribe.mockImplementation((_topics: string[], handler: Function) => {
 			(mockTransport as any).handler = handler;
 		});
 

@@ -193,14 +193,14 @@ export const agentToolkit = createAgentToolkit();
 export {
 	generateHomebrewFormula,
 	generatePrometheusMetrics,
-	runDiagnostics,
 	type HomebrewFormulaOptions,
 	type RunDiagnosticsOptions,
+	runDiagnostics,
 } from './diagnostics/diagnostics.js';
 // A2A Events
 export {
-	createAgentToolkitEvent,
 	type CodeModificationEvent,
+	createAgentToolkitEvent,
 	type SearchResultsEvent,
 	type ToolExecutionStartedEvent,
 	type ValidationReportEvent,
@@ -208,16 +208,16 @@ export {
 // MCP Integration
 export { createAgentToolkitMcpTools } from './mcp/tools.js';
 export {
-	buildChunkedContext,
 	type BuildContextOptions,
+	buildChunkedContext,
 	type ChunkedContext,
 } from './semantics/ContextBuilder.js';
 // Semantics
 export {
-	chunkText,
-	createSemanticChunker,
 	type Chunk,
 	type ChunkOptions,
+	chunkText,
+	createSemanticChunker,
 } from './semantics/SemanticChunker.js';
 export {
 	createTreeSitterProvider,

@@ -2,33 +2,39 @@
 
 // A2A Events
 export {
-        CORTEX_SEC_EVENT_SOURCE,
-        type ComplianceViolationEvent,
-        createCortexSecEvent,
-        type SecurityPolicyUpdatedEvent,
-        type SecurityScanStartedEvent,
-        type VulnerabilityFoundEvent,
+	CORTEX_SEC_EVENT_SOURCE,
+	type ComplianceViolationEvent,
+	createCortexSecEvent,
+	type SecurityPolicyUpdatedEvent,
+	type SecurityScanStartedEvent,
+	type VulnerabilityFoundEvent,
 } from './events/cortex-sec-events.js';
 export {
-        createSecurityEventPublisher,
-        type PublishEnvelope,
-        type SecurityEventPublisher,
+	createSecurityEventPublisher,
+	type PublishEnvelope,
+	type SecurityEventPublisher,
 } from './events/security-event-publisher.js';
-
+export type {
+	AnalyzeVulnerabilitiesInput,
+	CheckDependenciesInput,
+	CortexSecTool,
+	CortexSecToolResponse,
+	GetSecurityPolicyInput,
+	RunSemgrepScanInput,
+	ValidateComplianceInput,
+} from './mcp/tools.js';
 // MCP Integration
 export {
-        CORTEX_SEC_TOOL_ALLOWLIST,
-        cortexSecMcpTools,
-        type CortexSecTool,
-        type CortexSecToolResponse,
+	CORTEX_SEC_TOOL_ALLOWLIST,
+	cortexSecMcpTools,
 } from './mcp/tools.js';
 
 // Planning utilities
 export {
-        mergeComplianceState,
-        summarizeCompliance,
-        type ComplianceSeverity,
-        type ComplianceState,
-        type ComplianceSummary,
-        type ComplianceViolation,
+	type ComplianceSeverity,
+	type ComplianceState,
+	type ComplianceSummary,
+	type ComplianceViolation,
+	mergeComplianceState,
+	summarizeCompliance,
 } from './planning/compliance-strategy.js';

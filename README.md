@@ -11,7 +11,9 @@
 - Disabled features with `console.warn("not implemented")`
 - Fake system metrics or data generation
 
-**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
+**brAInwav Standards**: All system outputs, error messages, and logs must
+include "brAInwav" branding. Status claims must be verified against actual code
+implementation.
 
 **Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
 
@@ -151,6 +153,11 @@ Add new automation using smart scripts rather than chaining raw `nx run-many`.
 - **2025-09-27** – Reinforced the brAInwav Prisma bootstrap in `apps/api` so
   `pnpm --filter @cortex-os/api build` stays green with mutable logging and
   fallback delegates aligned to brAInwav standards.
+- Implementation staged: Added a `.well-known/mcp.json` discovery manifest in
+  `packages/cortex-mcp/cortex_fastmcp_server_v2.py` so ChatGPT MCP connectors
+  can discover the brAInwav endpoint. Deploy and verify with
+  `curl https://cortex-mcp.brainwav.io/.well-known/mcp.json` before rerunning
+  connector setup.
 
 ---
 
@@ -159,9 +166,9 @@ Add new automation using smart scripts rather than chaining raw `nx run-many`.
 Clean, governed monorepo with strict architectural boundaries and
 comprehensive quality gates.
 
-[Documentation](#documentation) • [Quick Start](./docs/quick-start.md) •
+[Documentation](./README.md#documentation) • [Quick Start](./docs/quick-start.md) •
 [Architecture](./docs/architecture-overview.md) • [Python Integration](./docs/python-integration.md) •
-[Contributing](#contributing) • [Packages](#packages)
+[Contributing](./README.md#contributing) • [Packages](./README.md#packages)
 
 ---
 

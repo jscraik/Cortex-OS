@@ -25,10 +25,12 @@
     "test": "node ../../scripts/vitest-safe.mjs run",
     "test:watch": "echo 'DISABLED: watch/UI mode blocked for memory safety'",
     "test:coverage": "node ../../scripts/vitest-safe.mjs run --coverage",
-    "test:safe": "node ../../scripts/vitest-safe.mjs run"
+    "test:safe": "node ../../scripts/vitest-safe.mjs run",
+    "test:mcp:smoke": "node ../../scripts/vitest-safe.mjs run mcp-smoke.test.ts"
   },
   "dependencies": {
     "@cortex-os/mcp-core": "workspace:*",
+    "@cortex-os/evidence-runner": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

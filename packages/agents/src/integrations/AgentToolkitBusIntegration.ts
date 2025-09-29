@@ -9,6 +9,7 @@
 
 import { EventEmitter } from 'node:events';
 import { createPrefixedId } from '../lib/secure-random.js';
+
 // Mock bus implementation until proper A2A integration is available
 const createMockBus = () => {
 	const handlers = new Map<string, Array<(data: unknown) => void>>();

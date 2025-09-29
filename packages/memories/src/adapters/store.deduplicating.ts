@@ -154,7 +154,11 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		}
 
 		// Check for fuzzy matches if enabled
-		if (this.config.enableFuzzyMatching && memory.text && memory.text.length >= this.config.minFuzzyLength) {
+		if (
+			this.config.enableFuzzyMatching &&
+			memory.text &&
+			memory.text.length >= this.config.minFuzzyLength
+		) {
 			const fuzzyMatch = await this.findFuzzyMatch(memory, namespace);
 			if (fuzzyMatch) {
 				this.stats.fuzzyMatches++;

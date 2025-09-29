@@ -1,5 +1,5 @@
-import { createEnvelope, Envelope } from '@cortex-os/a2a-contracts';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
+import { describe, expect, it } from 'vitest';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

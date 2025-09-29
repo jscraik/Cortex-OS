@@ -11,7 +11,6 @@
 
 import { EventEmitter } from 'node:events';
 import pino from 'pino';
-import { NodeSystemProbe, type SystemProbe } from './system-probe.js';
 import { safeErrorMessage } from './utils/error-utils.js';
 
 // Minimal tracer types to avoid hard dependency on @opentelemetry/api
@@ -87,10 +86,9 @@ export class MetricsCollector extends EventEmitter {
 		level: 'info',
 	});
 	private readonly config: AnalyticsConfig;
-        private readonly tracer: MinimalTracer = getMinimalTracer();
-        private isCollecting = false;
-        private collectionInterval?: NodeJS.Timeout;
-        private readonly systemProbe: SystemProbe;
+	private readonly tracer: MinimalTracer = getMinimalTracer();
+	private isCollecting = false;
+	private collectionInterval?: NodeJS.Timeout;
 
 	// Storage for collected metrics
 	private readonly agentMetricsBuffer: Map<string, AgentMetrics[]> = new Map();
@@ -103,13 +101,16 @@ export class MetricsCollector extends EventEmitter {
 	private lastCollectionTime?: Date;
 	private collectionErrors = 0;
 
-        constructor(config: AnalyticsConfig, deps: { systemProbe?: SystemProbe } = {}) {
-                super();
-                this.config = config;
-                this.systemProbe = deps.systemProbe ?? new NodeSystemProbe();
+	// Resource monitoring storage
+	private resourceHistory: Map<string, number[]> = new Map();
+	private resourcePeaks: Map<string, number> = new Map();
 
-                this.initializeCollection();
-        }
+	constructor(config: AnalyticsConfig) {
+		super();
+		this.config = config;
+
+		this.initializeCollection();
+	}
 
 	/**
 	 * Initialize the metrics collection system
@@ -846,61 +847,100 @@ export class MetricsCollector extends EventEmitter {
 	/**
 	 * Collect system resource utilization
 	 */
-        private async collectResourceUtilization(): Promise<ResourceUtilization> {
-                try {
-                        const snapshot = await this.systemProbe.sample();
-                        const history = this.resourceUtilizationHistory;
-                        const maxHistory = Math.max(this.config.collection.batchSize * 5, 1);
+	private async collectResourceUtilization(): Promise<ResourceUtilization> {
+		try {
+			// Get real system resource metrics using Node.js built-in modules
+			const os = await import('node:os');
+			const process = await import('node:process');
 
-                        const buildStats = (values: number[], current: number) => {
-                                const recent = values.slice(-maxHistory);
-                                const combined = [...recent, current];
-                                const average = combined.reduce((sum, value) => sum + value, 0) / combined.length;
-                                const peak = Math.max(...combined);
+			// Get CPU usage
+			const cpuUsage = process.cpuUsage();
+			const totalCpuTime = cpuUsage.user + cpuUsage.system;
+			const _cpuPercent = Math.min(100, (totalCpuTime / 1000000 / os.uptime()) * 100); // Convert microseconds to percentage
 
-                                return {
-                                        current: Number(current.toFixed(2)),
-                                        average: Number(average.toFixed(2)),
-                                        peak: Number(peak.toFixed(2)),
-                                };
-                        };
+			// Get memory usage
+			const _memoryUsage = process.memoryUsage();
+			const totalSystemMemory = os.totalmem();
+			const freeSystemMemory = os.freemem();
+			const systemMemoryUsed = totalSystemMemory - freeSystemMemory;
+			const systemMemoryPercent = (systemMemoryUsed / totalSystemMemory) * 100;
 
-                        const cpuHistory = history.map((entry) => entry.cpu.current);
-                        const memoryHistory = history.map((entry) => entry.memory.current);
-                        const gpuHistory = history.map((entry) => entry.gpu?.current ?? 0);
+			// Get load averages
+			const loadAvg = os.loadavg();
+			const cpuCount = os.cpus().length;
+			const normalizedLoad = Math.min(100, (loadAvg[0] / cpuCount) * 100);
 
-                        return {
-                                cpu: buildStats(cpuHistory, snapshot.cpuPercent),
-                                memory: buildStats(memoryHistory, snapshot.memoryPercent),
-                                gpu: buildStats(gpuHistory, snapshot.gpuPercent ?? 0),
-                                network: {
-                                        inbound: Number(snapshot.networkInboundBytesPerSecond.toFixed(2)),
-                                        outbound: Number(snapshot.networkOutboundBytesPerSecond.toFixed(2)),
-                                },
-                                storage: {
-                                        reads: Number(snapshot.diskReadBytesPerSecond.toFixed(2)),
-                                        writes: Number(snapshot.diskWriteBytesPerSecond.toFixed(2)),
-                                },
-                        };
-                } catch (error) {
-                        this.logger.error('Error collecting resource utilization', {
-                                error: error instanceof Error ? error.message : String(error),
-                        });
-                        throw error;
-                }
-        }
+			// Calculate network approximation (simplified - in production would use netstat or similar)
+			const networkMetrics = this.calculateNetworkMetrics();
 
-        /**
-         * Get resource usage for a specific agent
-         */
-        private async getAgentResourceUsage(agentId: string): Promise<AgentMetrics['resourceUsage']> {
-                const usage = await this.systemProbe.getAgentUsage(agentId);
-                return {
-                        memory: usage.memory,
-                        cpu: usage.cpu,
-                        gpu: usage.gpu,
-                };
-        }
+			return {
+				cpu: {
+					current: normalizedLoad,
+					average: this.calculateResourceAverage('cpu', normalizedLoad),
+					peak: this.updateResourcePeak('cpu', normalizedLoad),
+				},
+				memory: {
+					current: systemMemoryPercent,
+					average: this.calculateResourceAverage('memory', systemMemoryPercent),
+					peak: this.updateResourcePeak('memory', systemMemoryPercent),
+				},
+				gpu: {
+					// GPU monitoring requires additional libraries (nvidia-ml-py, etc.)
+					// For now, return 0 as GPU monitoring is not available via Node.js built-ins
+					current: 0,
+					average: 0,
+					peak: 0,
+				},
+				network: {
+					inbound: networkMetrics.inbound,
+					outbound: networkMetrics.outbound,
+				},
+				storage: {
+					// Storage I/O monitoring requires platform-specific tools
+					// For now, return 0 as detailed I/O stats not available via Node.js built-ins
+					reads: 0,
+					writes: 0,
+				},
+			};
+		} catch (error) {
+			this.logger.error('brAInwav error collecting resource utilization', {
+				error: error.message,
+			});
+			throw error;
+		}
+	}
+
+	/**
+	 * Get resource usage for a specific agent
+	 */
+	private async getAgentResourceUsage(_agentId: string): Promise<AgentMetrics['resourceUsage']> {
+		// Get real process resource usage for the agent
+		try {
+			const process = await import('node:process');
+			const memoryUsage = process.memoryUsage();
+			const cpuUsage = process.cpuUsage();
+
+			// Convert to percentages and MB
+			const memoryMB = memoryUsage.heapUsed / (1024 * 1024);
+			const cpuPercent = Math.min(100, (cpuUsage.user + cpuUsage.system) / 10000); // Simplified calculation
+
+			return {
+				memory: memoryMB,
+				cpu: cpuPercent,
+				gpu: 0, // GPU monitoring requires additional libraries
+			};
+		} catch (error) {
+			this.logger.warn('brAInwav unable to get agent resource usage, using defaults', {
+				agentId: _agentId,
+				error: error.message,
+			});
+			return {
+				memory: 0,
+				cpu: 0,
+				gpu: 0,
+			};
+		}
+	}
 
 	/**
 	 * Get system-wide resource utilization
@@ -1080,8 +1120,59 @@ export class MetricsCollector extends EventEmitter {
 		this.metricsCollected = 0;
 		this.collectionErrors = 0;
 
-		this.logger.info('Metrics cleared');
+		this.logger.info('brAInwav metrics cleared');
 		this.emit('metricsCleared');
+	}
+
+	/**
+	 * Calculate resource average over recent history
+	 */
+	private calculateResourceAverage(resourceType: string, currentValue: number): number {
+		// Store current value in history for averaging
+		const historyKey = `${resourceType}_history`;
+		if (!this.resourceHistory) {
+			this.resourceHistory = new Map();
+		}
+
+		const history = this.resourceHistory.get(historyKey) || [];
+		history.push(currentValue);
+
+		// Keep only last 10 readings for average
+		if (history.length > 10) {
+			history.shift();
+		}
+
+		this.resourceHistory.set(historyKey, history);
+
+		return history.reduce((sum, val) => sum + val, 0) / history.length;
+	}
+
+	/**
+	 * Update and return resource peak value
+	 */
+	private updateResourcePeak(resourceType: string, currentValue: number): number {
+		const peakKey = `${resourceType}_peak`;
+		if (!this.resourcePeaks) {
+			this.resourcePeaks = new Map();
+		}
+
+		const currentPeak = this.resourcePeaks.get(peakKey) || 0;
+		const newPeak = Math.max(currentPeak, currentValue);
+		this.resourcePeaks.set(peakKey, newPeak);
+
+		return newPeak;
+	}
+
+	/**
+	 * Calculate network metrics (simplified implementation)
+	 */
+	private calculateNetworkMetrics(): { inbound: number; outbound: number } {
+		// In a production system, this would interface with system network statistics
+		// For now, return 0 as real network monitoring requires platform-specific tools
+		return {
+			inbound: 0,
+			outbound: 0,
+		};
 	}
 
 	/**

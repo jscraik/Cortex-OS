@@ -3,11 +3,11 @@
  * Implements planning, critiquing, simulation, and teaching capabilities
  */
 
+import { createSecureId } from '../lib/secure-random.js';
 import type { Config } from '../types/index.js';
 import { CritiqueEngine } from './critique.js';
 import { type SimulationResult, Simulator } from './simulator.js';
 import { Teacher } from './teacher.js';
-import { createSecureId } from '../lib/secure-random.js';
 import type { Plan, PlanningContext, PlanOptions } from './types.js';
 
 export interface CerebrumOptions {

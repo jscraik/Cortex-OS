@@ -8,9 +8,8 @@
  */
 
 import { createHash } from 'node:crypto';
-import { z } from 'zod';
-import { createPrefixedId } from '../lib/secure-random.js';
 import { URL } from 'node:url';
+import { createPrefixedId } from '../lib/secure-random.js';
 import { ToolValidationError, ToolValidationErrorCode } from './tool-validation-error.js';
 
 /**

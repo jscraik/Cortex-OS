@@ -60,6 +60,7 @@ describe('nO Telemetry & Observability Contracts', () => {
 					version: '1.0.0',
 					component: 'nO-architecture',
 					createdBy: 'brAInwav',
+					brainwav_component: 'orchestration.core',
 				},
 			};
 

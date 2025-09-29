@@ -224,12 +224,10 @@ export function getDefaultOrchestrationPlanningContext(
 			availabilityWindow: [now, now],
 		},
 		compliance: {
-			policies: [],
-			riskLevel: 'low',
-			lastUpdated: now,
-			requiresHumanReview: false,
-			activeViolations: [],
-			notes: ['brAInwav compliance baseline: no violations detected.'],
+			standards: ['OWASP Top 10', 'SOC 2', 'ISO 27001'],
+			lastCheckedAt: null,
+			riskScore: 0,
+			outstandingViolations: [],
 		},
 	};
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { ESLint } from 'eslint';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { ESLint } from 'eslint';
 
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.ts', '.tsx']);
 const IGNORED_DIRECTORIES = new Set([

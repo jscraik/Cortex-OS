@@ -31,18 +31,18 @@ describe('brAInwav Repository Contract Implementation', () => {
 			// Read
 			const retrieved = await taskRepo.get('task-123');
 			expect(retrieved).toBeDefined();
-			expect(retrieved!.record).toMatchObject(task);
-			expect(retrieved!.digest).toBe(savedTask.digest);
+			expect(retrieved?.record).toMatchObject(task);
+			expect(retrieved?.digest).toBe(savedTask.digest);
 
 			// Update
 			const updateResult = await taskRepo.update('task-123', { status: 'completed' });
 			expect(updateResult).toBeDefined();
-			expect(updateResult!.record.status).toBe('completed');
-			expect(updateResult!.record.id).toBe('task-123');
+			expect(updateResult?.record.status).toBe('completed');
+			expect(updateResult?.record.id).toBe('task-123');
 
 			// Verify update
 			const updated = await taskRepo.get('task-123');
-			expect(updated!.record.status).toBe('completed');
+			expect(updated?.record.status).toBe('completed');
 
 			// Delete
 			await taskRepo.delete('task-123');
@@ -125,7 +125,7 @@ describe('brAInwav Repository Contract Implementation', () => {
 			// Read
 			const retrieved = await profileRepo.get('profile-123');
 			expect(retrieved).toBeDefined();
-			expect(retrieved!.record).toMatchObject(profile);
+			expect(retrieved?.record).toMatchObject(profile);
 
 			// Update
 			const updateResult = await profileRepo.update('profile-123', {
@@ -133,8 +133,8 @@ describe('brAInwav Repository Contract Implementation', () => {
 				scopes: ['read', 'write', 'admin'],
 			});
 			expect(updateResult).toBeDefined();
-			expect(updateResult!.record.label).toBe('Updated Profile');
-			expect(updateResult!.record.scopes).toEqual(['read', 'write', 'admin']);
+			expect(updateResult?.record.label).toBe('Updated Profile');
+			expect(updateResult?.record.scopes).toEqual(['read', 'write', 'admin']);
 
 			// Delete
 			await profileRepo.delete('profile-123');
@@ -153,13 +153,13 @@ describe('brAInwav Repository Contract Implementation', () => {
 
 			// Update without changing scopes should preserve them
 			const result1 = await profileRepo.update('profile-scopes-test', { label: 'New Label' });
-			expect(result1!.record.scopes).toEqual(['read']);
+			expect(result1?.record.scopes).toEqual(['read']);
 
 			// Update with new scopes should replace them
 			const result2 = await profileRepo.update('profile-scopes-test', {
 				scopes: ['read', 'write'],
 			});
-			expect(result2!.record.scopes).toEqual(['read', 'write']);
+			expect(result2?.record.scopes).toEqual(['read', 'write']);
 
 			// Cleanup
 			await profileRepo.delete('profile-scopes-test');
@@ -193,8 +193,8 @@ describe('brAInwav Repository Contract Implementation', () => {
 			// Read
 			const retrieved = await artifactRepo.get('artifact-123');
 			expect(retrieved).toBeDefined();
-			expect(retrieved!.metadata.filename).toBe('test-document.txt');
-			expect(retrieved!.binary.toString()).toBe('Hello, world!');
+			expect(retrieved?.metadata.filename).toBe('test-document.txt');
+			expect(retrieved?.binary.toString()).toBe('Hello, world!');
 
 			// List
 			const artifacts = await artifactRepo.list({ taskId: 'task-456' });
@@ -237,8 +237,8 @@ describe('brAInwav Repository Contract Implementation', () => {
 			// Read
 			const retrieved = await evidenceRepo.get('evidence-123');
 			expect(retrieved).toBeDefined();
-			expect(retrieved!.record.type).toBe('screenshot');
-			expect(retrieved!.record.payload.url).toBe('https://example.com/screenshot.png');
+			expect(retrieved?.record.type).toBe('screenshot');
+			expect(retrieved?.record.payload.url).toBe('https://example.com/screenshot.png');
 
 			// List
 			const evidences = await evidenceRepo.list({ taskId: 'task-456' });

@@ -521,6 +521,85 @@ Your architecture **exceeds the blueprint's vision** and provides a production-r
 - Security and observability standards must be maintained
 - Performance impact must be minimized
 
+### 7.3 Adapter Layer Implementation
+
+**Objective**: Provide deterministic adapter layers that wrap each approved framework behind Cortex-OS abstractions.
+
+**Test Requirements**:
+
+- ✅ Adapter APIs should expose consistent TypeScript interfaces across frameworks
+- ✅ All adapter outputs must include brAInwav attribution strings
+- ✅ Error paths should map external failures to Cortex-OS error codes
+- ✅ Telemetry hooks must emit OpenTelemetry spans with `brAInwav.external` namespace
+
+**Implementation Strategy**:
+
+- Introduce `ExternalFrameworkAdapter` interface for orchestration layer
+- Create concrete adapters for LangChain Tools, Semgrep, CodeQL, and OpenTelemetry exporters
+- Route all framework calls through dependency-injected factories to maintain testability
+- Ensure adapters perform schema validation with Zod before invoking external APIs
+- Forward structured errors to existing observability/logging pipeline with brAInwav prefixes
+
+**Files to Modify / Create**:
+
+- `packages/orchestration/src/integration/external-framework-adapter.ts` – Core adapter contracts
+- `packages/orchestration/src/integration/langchain-adapter.ts` – LangChain tool bindings
+- `packages/cortex-sec/src/integration/semgrep-adapter.ts` – Semgrep integration wrapper
+- `packages/cortex-sec/src/integration/codeql-adapter.ts` – CodeQL orchestration bridge
+- `packages/observability/src/integration/otel-exporter-adapter.ts` – OpenTelemetry exporter wrapper
+- `packages/orchestration/tests/integration/external-framework-adapter.test.ts` – Adapter contract tests
+
+### 7.4 Framework Evaluation Playbooks
+
+**Objective**: Document and automate evaluation criteria to ensure long-term architectural fit.
+
+**Test Requirements**:
+
+- ✅ Evaluation checklists must gate new framework versions in CI
+- ✅ Compatibility reports should summarize API changes and mitigation steps
+- ✅ Playbooks should verify adherence to security and compliance requirements
+- ✅ Reports must render branded markdown output for stakeholder review
+
+**Implementation Strategy**:
+
+- Create reusable evaluation template stored under `docs/framework-evaluations/`
+- Automate generation via CLI script that inspects package manifests (e.g., `package.json`, `package-lock.json`, `yarn.lock`, or custom manifest files) and adapter coverage
+- Integrate evaluation workflow with `@cortex-os/prp-runner` evidence pipeline for audit trails
+- Emit results as brAInwav-branded markdown/JSON artifacts consumed by MCP tools
+
+**New Files**:
+
+- `docs/framework-evaluations/README.md` – Evaluation process overview
+- `docs/framework-evaluations/framework-evaluation-template.md` – Checklist template
+- `scripts/framework-evaluation-report.mjs` – Automated report generator
+- `packages/prp-runner/tests/framework-evaluation-report.test.ts` – Evidence workflow tests
+
+### 7.5 Branded Output & Observability Harmonization
+
+**Objective**: Guarantee consistent brAInwav-branded messaging and telemetry across all external framework interactions.
+
+**Test Requirements**:
+
+- ✅ Logs and user-facing messages must include `brAInwav` prefix and context metadata
+- ✅ Telemetry spans should carry framework identifiers and adapter versions
+- ✅ Branding compliance must be enforced through snapshot tests
+- ✅ Accessibility review ensures generated markdown adheres to WCAG AA contrast guidance
+
+**Implementation Strategy**:
+
+- Extend logging utilities with helper to append brAInwav branding tokens
+- Add OpenTelemetry attribute enrichment middleware for external adapter spans
+- Implement snapshot-based tests validating branded output across CLI and JSON modes
+- Update accessibility lint rules to scan generated documentation for contrast and heading structure
+
+**Files to Modify / Create**:
+
+- `packages/observability/src/logging/branded-logger.ts` – Branding helper utilities
+- `packages/observability/tests/branded-logger.spec.ts` – Logger compliance tests
+- `packages/prp-runner/src/workflows/framework-evidence.ts` – Evidence generation updates
+- `packages/prp-runner/tests/framework-evidence.spec.ts` – Snapshot coverage for branded outputs
+- `docs/style-guides/brAInwav-branding.md` – Updated branding and accessibility guidelines
+
 ## Phase 5: Integration Testing
 
 ## Phase 5: Integration Testing

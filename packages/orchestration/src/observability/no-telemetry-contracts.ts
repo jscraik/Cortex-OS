@@ -60,6 +60,23 @@ export const NoTelemetryPayloadSchema = z.object({
 		})
 		.default({}),
 	tags: z.record(z.string(), z.string()).default({}),
+	thermal: z
+		.object({
+			event: z.object({
+				level: z.enum(['nominal', 'warning', 'critical']),
+				deviceId: z.string().min(1),
+				temperature: z.number(),
+				throttleHint: z.string().optional(),
+				source: z.string().min(1),
+			}),
+			response: z.object({
+				action: z.enum(['pause', 'resume', 'cooldown']),
+				paused: z.boolean(),
+				fallbackProvider: z.string().optional(),
+				cooldownUntil: z.string().optional(),
+			}),
+		})
+		.optional(),
 });
 
 export const NoTelemetrySchema = z.object({
@@ -91,6 +108,7 @@ export const NoTelemetrySchema = z.object({
 		version: z.string().min(1),
 		component: z.string().min(1),
 		createdBy: z.string().min(1),
+		brainwav_component: z.string().min(1),
 		severity: z
 			.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
 			.optional()
@@ -305,6 +323,7 @@ export function createNoTelemetryEvent(
 			version: '1.0.0',
 			component: 'nO-architecture',
 			createdBy: 'brAInwav',
+			brainwav_component: 'orchestration.core',
 			...metadata,
 		},
 	});

@@ -104,7 +104,7 @@ function extractInput(messages: BaseMessage[] | undefined): string {
 }
 
 function deriveOutput(messages: BaseMessage[] | undefined, fallback?: unknown): string | undefined {
-	const last = messages && messages[messages.length - 1];
+	const last = messages?.[messages.length - 1];
 	if (last && typeof last.content === 'string') return last.content;
 	if (typeof fallback === 'string') return fallback;
 	if (fallback && typeof fallback === 'object') return JSON.stringify(fallback);

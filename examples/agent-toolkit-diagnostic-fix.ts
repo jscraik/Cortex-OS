@@ -8,8 +8,6 @@
  */
 
 import { createAgentToolkit } from '@cortex-os/agent-toolkit';
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
 
 async function main() {
 	console.log('🔧 Starting Agent-Toolkit Diagnostic Resolution...\n');

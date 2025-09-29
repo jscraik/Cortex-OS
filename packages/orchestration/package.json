@@ -16,8 +16,13 @@
     "build": "echo \"No build step required for this package\"",
     "lint": "eslint src --ext .ts",
     "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:dsp": "node ../../scripts/vitest-safe.mjs run \"tests/dsp/**/*.test.ts\"",
+    "test:coordination": "node ../../scripts/vitest-safe.mjs run \"tests/coordination/**/*.test.ts\"",
+    "test:integration": "node ../../scripts/vitest-safe.mjs run \"tests/coordination/structured-planning-integration.test.ts\"",
+    "test:phase11": "node ../../scripts/vitest-safe.mjs run \"tests/dsp/**/*.test.ts\" \"tests/coordination/adaptive-strategy.test.ts\" \"tests/coordination/structured-planning-integration.test.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:coverage": "vitest --coverage",
+    "test:coverage:dsp": "vitest --coverage \"tests/dsp/**/*.test.ts\" \"tests/coordination/adaptive-strategy.test.ts\" \"tests/coordination/structured-planning-integration.test.ts\"",
     "replay": "tsx src/cli/replay.ts",
     "approve": "tsx src/cli/approve.ts",
     "test:safe": "node ../../scripts/vitest-safe.mjs run"

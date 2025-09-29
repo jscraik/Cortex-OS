@@ -26,48 +26,63 @@ const RealtimeMemoryChangeEventSchema = z.object({
 });
 
 const RealtimeMemoryInboundMessageSchema = z.discriminatedUnion('type', [
-	z.object({ 
-		type: z.literal('subscribe'), 
+	z.object({
+		type: z.literal('subscribe'),
 		namespace: RealtimeMemoryNamespaceSchema,
 		eventTypes: z.array(RealtimeMemoryEventTypeSchema).optional(),
-		replaySince: isoTimestamp.optional()
+		replaySince: isoTimestamp.optional(),
 	}),
 	z.object({ type: z.literal('unsubscribe'), namespace: RealtimeMemoryNamespaceSchema }),
 	z.object({ type: z.literal('ping'), timestamp: isoTimestamp.optional() }),
 ]);
 
 const RealtimeMemoryOutboundMessageSchema = z.discriminatedUnion('type', [
-	z.object({ 
-		type: z.literal('connected'), 
-		connectionId: z.string(), 
-		message: z.string(), 
+	z.object({
+		type: z.literal('connected'),
+		connectionId: z.string(),
+		message: z.string(),
 		timestamp: isoTimestamp,
-		server: z.object({
-			host: z.string().optional(),
-			port: z.number().optional(),
-		}).optional()
+		server: z
+			.object({
+				host: z.string().optional(),
+				port: z.number().optional(),
+			})
+			.optional(),
 	}),
-	z.object({ 
-		type: z.literal('subscriptions_restored'), 
-		subscriptions: z.array(RealtimeMemoryNamespaceSchema), 
-		timestamp: isoTimestamp 
+	z.object({
+		type: z.literal('subscriptions_restored'),
+		subscriptions: z.array(RealtimeMemoryNamespaceSchema),
+		timestamp: isoTimestamp,
 	}),
-	z.object({ type: z.literal('subscribed'), namespace: RealtimeMemoryNamespaceSchema, timestamp: isoTimestamp }),
-	z.object({ type: z.literal('unsubscribed'), namespace: RealtimeMemoryNamespaceSchema, timestamp: isoTimestamp }),
-	z.object({ type: z.literal('change'), event: RealtimeMemoryChangeEventSchema, namespace: RealtimeMemoryNamespaceSchema, timestamp: isoTimestamp }),
-	z.object({ 
-		type: z.literal('error'), 
-		message: z.string(), 
+	z.object({
+		type: z.literal('subscribed'),
+		namespace: RealtimeMemoryNamespaceSchema,
+		timestamp: isoTimestamp,
+	}),
+	z.object({
+		type: z.literal('unsubscribed'),
+		namespace: RealtimeMemoryNamespaceSchema,
+		timestamp: isoTimestamp,
+	}),
+	z.object({
+		type: z.literal('change'),
+		event: RealtimeMemoryChangeEventSchema,
+		namespace: RealtimeMemoryNamespaceSchema,
+		timestamp: isoTimestamp,
+	}),
+	z.object({
+		type: z.literal('error'),
+		message: z.string(),
 		timestamp: isoTimestamp,
 		code: z.string().optional(),
-		details: z.record(z.unknown()).optional()
+		details: z.record(z.unknown()).optional(),
 	}),
-	z.object({ 
-		type: z.literal('warning'), 
-		message: z.string(), 
+	z.object({
+		type: z.literal('warning'),
+		message: z.string(),
 		timestamp: isoTimestamp,
 		code: z.string().optional(),
-		details: z.record(z.unknown()).optional()
+		details: z.record(z.unknown()).optional(),
 	}),
 	z.object({ type: z.literal('pong'), timestamp: isoTimestamp }),
 ]);

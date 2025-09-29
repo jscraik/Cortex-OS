@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { bearer, magicLink, organization, twoFactor } from 'better-auth/plugins';
 import { createBetterAuthAdapter } from '../db/better-auth-adapter.js';
 import { env } from '../lib/env.js';
+import { webUIBusIntegration } from '../services/a2a-integration.js';
 import { authMonitoringService } from '../services/authMonitoringService.js';
 import { emailService } from '../services/emailService.js';
 
@@ -72,7 +73,24 @@ export const auth = betterAuth({
 						userId: user.id,
 						eventType: 'register',
 					});
-					// TODO: Emit A2A event for user creation
+					const registrationMessage = user.email
+						? `brAInwav user registration completed for ${user.email}`
+						: 'brAInwav user registration completed';
+					try {
+						await webUIBusIntegration.publishUserEvent({
+							sessionId: `auth-${user.id}`,
+							userId: user.id,
+							timestamp: new Date().toISOString(),
+							eventType: 'user_connected',
+							message: registrationMessage,
+							metadata: {
+								source: 'better-auth',
+								environment: env.NODE_ENV,
+							},
+						});
+					} catch (error) {
+						console.error('brAInwav A2A user creation publish failed', error);
+					}
 				},
 			},
 		},

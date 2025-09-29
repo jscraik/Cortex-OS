@@ -14,13 +14,13 @@ export {
 	createAgenticDispatcher,
 } from './agent/dispatcher.js';
 export { createPooledEmbedder, PooledEmbedder } from './embed/embedding-pool.js';
-export { createRagBus } from './events/rag-bus.js';
 export type {
 	RagBus,
 	RagEventEnvelope,
 	RagEventHandler,
 	RagPublishOptions,
 } from './events/rag-bus.js';
+export { createRagBus } from './events/rag-bus.js';
 export type {
 	RAGIngestCompleteEvent,
 	RAGIngestEvent,
@@ -42,8 +42,8 @@ export {
 } from './events/rag-events.js';
 export type {
 	DocumentSyncResult as RemoteDocumentSyncResult,
-	RemoteRAGConfig as RemoteMCPConfig,
 	MinimalStore as RemoteMinimalStore,
+	RemoteRAGConfig as RemoteMCPConfig,
 	RemoteRetrievalOptions as RemoteQueryOptions,
 	StoreLike as RemoteStoreLike,
 } from './integrations/remote-mcp.js';
@@ -59,12 +59,12 @@ export {
 } from './integrations/remote-mcp.js';
 // Content security policy for XSS/injection protection
 export {
-	ContentSecurityPolicy,
 	type ContentSecurityConfig,
 	type ContentSecurityError,
+	ContentSecurityPolicy,
 } from './lib/content-security.js';
-export * as lib from './lib/index.js';
 export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
+export * as lib from './lib/index.js';
 // MCP Tools for external AI agent integration
 export {
 	ragIngestTool,

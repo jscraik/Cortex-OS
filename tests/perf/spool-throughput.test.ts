@@ -50,19 +50,19 @@ describe('Spool throughput benchmark', () => {
 			expect(res.started).toBe(true);
 		}
 
-                const averageDuration = durations.reduce((sum, value) => sum + value, 0) / durations.length;
-                expect(averageDuration).toBeLessThan(50);
-                expect(elapsed).toBeLessThan(budgetMs);
+		const averageDuration = durations.reduce((sum, value) => sum + value, 0) / durations.length;
+		expect(averageDuration).toBeLessThan(50);
+		expect(elapsed).toBeLessThan(budgetMs);
 
-                await appendPerformanceHistory({
-                        target: 'spool.throughput',
-                        durationMs: elapsed,
-                        timestamp: new Date().toISOString(),
-                        metadata: {
-                                taskCount: targetCount,
-                                concurrency: 4,
-                                averageTaskDurationMs: Number(averageDuration.toFixed(2)),
-                        },
-                });
-        });
+		await appendPerformanceHistory({
+			target: 'spool.throughput',
+			durationMs: elapsed,
+			timestamp: new Date().toISOString(),
+			metadata: {
+				taskCount: targetCount,
+				concurrency: 4,
+				averageTaskDurationMs: Number(averageDuration.toFixed(2)),
+			},
+		});
+	});
 });

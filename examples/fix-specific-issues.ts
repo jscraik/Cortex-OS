@@ -34,7 +34,7 @@ async function fixCriticalIssues() {
 	console.log('🔧 Fix 2: Missing Imports\n');
 
 	// Target specific files with missing imports
-	const importFixes = await toolkit.codemod.transform({
+	const _importFixes = await toolkit.codemod.transform({
 		rules: [
 			{
 				name: 'add-createId-import',

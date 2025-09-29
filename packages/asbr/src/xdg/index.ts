@@ -7,8 +7,8 @@ import { constants } from 'node:fs';
 import { access, mkdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { secureHex } from '../lib/secure-random.js';
 import { logWarn } from '../lib/logger.js';
+import { secureHex } from '../lib/secure-random.js';
 import type { XDGPaths } from '../types/index.js';
 
 /**

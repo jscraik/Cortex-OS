@@ -1,4 +1,4 @@
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { createBus } from '@cortex-os/a2a-core';
 import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

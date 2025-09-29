@@ -26,7 +26,7 @@ describe('Model selection (LangGraph foundation)', () => {
 		// Construct graph and perform a trivial run to ensure graph wiring is healthy
 		const graph = createCerebrumGraph();
 		const res = await graph.invoke({ input: 'hello', task: 'chat' });
-		expect(res.output).toBe('hello');
+		expect(res.output).toBe('brAInwav routed via mlx');
 
 		// Validate selection logic expectations by environment:
 		// - If MLX service is up, it should be chosen before Ollama/Frontier

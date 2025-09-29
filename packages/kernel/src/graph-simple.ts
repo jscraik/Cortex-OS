@@ -6,6 +6,7 @@
  * @status TDD-DRIVEN
  */
 
+import type { PRPOrchestrator } from '@cortex-os/prp-runner';
 import { z } from 'zod';
 import { fixedTimestamp } from './lib/determinism.js';
 import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';
@@ -18,13 +19,6 @@ interface LangGraphConfig {
 }
 interface LangGraphApp {
 	invoke(input: PRPState, config?: LangGraphConfig): Promise<PRPState>;
-}
-
-/**
- * Minimal interface to break circular dependency
- */
-interface PRPOrchestrator {
-	getNeuronCount(): number;
 }
 
 // Zod schema for validating generateId inputs and run options

@@ -16,6 +16,14 @@
 export { createTopicAcl, TopicAcl } from './acl.js';
 // In-memory outbox repository
 export { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
+export type {
+	GraphEventListener,
+	GraphEventPublisher,
+	GraphEventType,
+	GraphToGraphEvent,
+} from './langgraph/event-bridge.js';
+// LangGraph event bridge for multi-agent coordination
+export { InMemoryGraphEventBus } from './langgraph/event-bridge.js';
 export type { A2AMcpTool } from './mcp/tools.js';
 // MCP Tools (initial integration layer)
 export { createA2AMcpTools } from './mcp/tools.js';
@@ -71,21 +79,10 @@ export { createTaskEventStream } from './streaming.js';
 export type { Task, TaskProcessor, TaskStore } from './task-manager.js';
 // Re-export task management
 export {
-        createTaskManager,
-        EchoTaskProcessor,
-        InMemoryTaskStore,
-        TaskManager,
+	createTaskManager,
+	EchoTaskProcessor,
+	InMemoryTaskStore,
+	TaskManager,
 } from './task-manager.js';
-
-// LangGraph event bridge for multi-agent coordination
-export {
-        InMemoryGraphEventBus,
-} from './langgraph/event-bridge.js';
-export type {
-        GraphEventListener,
-        GraphEventPublisher,
-        GraphEventType,
-        GraphToGraphEvent,
-} from './langgraph/event-bridge.js';
 
 // handleA2A is already exported above in the main handler block

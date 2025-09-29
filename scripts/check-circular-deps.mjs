@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import madge from 'madge';
 import path from 'node:path';
+import madge from 'madge';
 
 // Scope cycle checks to A2A subtree to keep the signal focused and actionable.
 const roots = [path.resolve('packages/a2a')];
@@ -24,7 +24,7 @@ const main = async () => {
 				hasCycles = true;
 				console.error(`\n[circular-deps] Detected cycles in ${ROOT_FILTER}:`);
 				for (const cycle of scoped) {
-					console.error(' - ' + cycle.join(' -> '));
+					console.error(` - ${cycle.join(' -> ')}`);
 				}
 			}
 		} catch (e) {

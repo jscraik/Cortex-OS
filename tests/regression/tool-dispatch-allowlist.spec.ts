@@ -17,7 +17,10 @@ const allowlist: RegExp[] = [
 	/packages\/agents\/.*\.md$/,
 	/packages\/hooks\/src\/__tests__/,
 	/packages\/orchestration\/tests/,
-	/apps\/.*\/tests/,
+	/apps\/.*\/tests/, // Phase 9: apps directory tests included in regression allowlist
+	/apps\/.*\/.*\.test\./, // Phase 9: apps directory test files
+	/apps\/.*\/.*\.spec\./, // Phase 9: apps directory spec files
+	/apps\/.*\/__tests__/, // Phase 9: apps directory test folders
 	/\.spec\./,
 	/\.test\./,
 	/__tests__/,

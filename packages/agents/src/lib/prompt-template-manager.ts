@@ -15,54 +15,55 @@ export enum PlanningPhase {
 }
 
 export interface PlanningContext {
-        id: string;
-        workspaceId?: string;
-        currentPhase: PlanningPhase;
-        objectives?: string[];
-        contextTags?: string[];
-        [key: string]: unknown;
+	id: string;
+	workspaceId?: string;
+	currentPhase: PlanningPhase;
+	objectives?: string[];
+	contextTags?: string[];
+	[key: string]: unknown;
 }
 
 export interface PromptContext {
-        taskId: string;
-        agentId: string;
-        sessionId?: string;
-        complexity: number; // 1-10 scale
-        priority: number; // 1-10 scale
-        capabilities: string[];
-        tools: string[];
-        currentPhase?: PlanningPhase;
-        planningContext?: PlanningContext;
-        nOArchitecture: boolean;
-        objectives?: string[];
-        contextTags?: string[];
+	taskId: string;
+	agentId: string;
+	sessionId?: string;
+	complexity: number; // 1-10 scale
+	priority: number; // 1-10 scale
+	capabilities: string[];
+	tools: string[];
+	currentPhase?: PlanningPhase;
+	planningContext?: PlanningContext;
+	nOArchitecture: boolean;
+	objectives?: string[];
+	contextTags?: string[];
 }
 
 export interface PromptTemplate {
-        id: string;
-        name: string;
-        description: string;
-        category: 'system' | 'task' | 'planning' | 'coordination' | 'error';
+	id: string;
+	name: string;
+	description: string;
+	category: 'system' | 'task' | 'planning' | 'coordination' | 'error';
 	complexity: [number, number]; // min-max complexity range
 	template: string;
-        examples: Array<{
-                context: Partial<PromptContext>;
-                input: string;
-                expectedBehavior: string;
-                measurableOutcome?: string;
-        }>;
-        variables: string[];
-        brainwavBranding: boolean;
-        nOOptimized: boolean;
-        applicability?: {
-                phases?: PlanningPhase[];
-                requiredCapabilities?: string[];
-                tags?: string[];
-        };
+	examples: Array<{
+		context: Partial<PromptContext>;
+		input: string;
+		expectedBehavior: string;
+		measurableOutcome?: string;
+	}>;
+	variables: string[];
+	brainwavBranding: boolean;
+	nOOptimized: boolean;
+	applicability?: {
+		phases?: PlanningPhase[];
+		requiredCapabilities?: string[];
+		tags?: string[];
+	};
 }
 
 const HISTORY_LIMIT = 100;
-const HISTORY_RETENTION_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+const HISTORY_RETENTION_MS = THIRTY_DAYS_MS;
 
 export interface TemplateSelection {
 	template: PromptTemplate;
@@ -152,47 +153,47 @@ export class PromptTemplateManager {
 	/**
 	 * Record template usage for learning
 	 */
-        recordUsage(templateId: string, context: PromptContext, effectiveness: number): void {
-                const normalizedEffectiveness = Math.max(0, Math.min(1, effectiveness));
+	recordUsage(templateId: string, context: PromptContext, effectiveness: number): void {
+		const normalizedEffectiveness = Math.max(0, Math.min(1, effectiveness));
 
-                if (!this.usageHistory.has(templateId)) {
-                        this.usageHistory.set(templateId, []);
-                }
+		if (!this.usageHistory.has(templateId)) {
+			this.usageHistory.set(templateId, []);
+		}
 
-                const history = this.usageHistory.get(templateId)!;
-                history.push({
-                        context: this.snapshotContext(context),
-                        effectiveness: normalizedEffectiveness,
-                        timestamp: new Date(),
-                });
+		const history = this.usageHistory.get(templateId)!;
+		history.push({
+			context: this.snapshotContext(context),
+			effectiveness: normalizedEffectiveness,
+			timestamp: new Date(),
+		});
 
-                const retentionCutoff = Date.now() - HISTORY_RETENTION_MS;
+		const retentionCutoff = Date.now() - HISTORY_RETENTION_MS;
 
-                while (history.length > 0 && history[0].timestamp.getTime() < retentionCutoff) {
-                        history.shift();
-                }
+		while (history.length > 0 && history[0].timestamp.getTime() < retentionCutoff) {
+			history.shift();
+		}
 
-                if (history.length > HISTORY_LIMIT) {
-                        history.splice(0, history.length - HISTORY_LIMIT);
-                }
+		if (history.length > HISTORY_LIMIT) {
+			history.splice(0, history.length - HISTORY_LIMIT);
+		}
 
-                console.log(
-                        `brAInwav Prompt Manager: Recorded usage for template ${templateId} with effectiveness ${normalizedEffectiveness}`,
-                );
-        }
+		console.log(
+			`brAInwav Prompt Manager: Recorded usage for template ${templateId} with effectiveness ${normalizedEffectiveness}`,
+		);
+	}
 
 	/**
 	 * Initialize default prompt templates based on Deep Agents patterns
 	 */
 	private initializeDefaultTemplates(): void {
-                // System prompt template for long-horizon tasks
-                this.templates.set('long-horizon-system', {
-                        id: 'long-horizon-system',
-                        name: 'Long-Horizon System Prompt',
-                        description: 'Comprehensive system prompt for complex, multi-step tasks',
-                        category: 'system',
-                        complexity: [5, 10],
-                        template: `You are a sophisticated AI agent from brAInwav, operating within the nO Master Agent Loop architecture. Your role is to handle complex, long-horizon tasks that require careful planning and execution.
+		// System prompt template for long-horizon tasks
+		this.templates.set('long-horizon-system', {
+			id: 'long-horizon-system',
+			name: 'Long-Horizon System Prompt',
+			description: 'Comprehensive system prompt for complex, multi-step tasks',
+			category: 'system',
+			complexity: [5, 10],
+			template: `You are a sophisticated AI agent from brAInwav, operating within the nO Master Agent Loop architecture. Your role is to handle complex, long-horizon tasks that require careful planning and execution.
 
 **Core Capabilities:**
 {{capabilities}}
@@ -244,62 +245,64 @@ Remember: You represent brAInwav's commitment to intelligent, reliable, and effi
 
 **Current Task:**
 {{taskDescription}}`,
-                        examples: [
-                                {
-                                        context: { complexity: 8, priority: 9, capabilities: ['analysis', 'planning'] },
-                                        input: 'Analyze and refactor a complex codebase',
-                                        expectedBehavior:
-                                                'Begin with explicit planning phase, use workspace tools for organization, break down into analysis/strategy/execution phases',
-                                        measurableOutcome: 'Document six-phase plan with at least three measurable milestones in workspace history.',
-                                },
-                                {
-                                        context: {
-                                                complexity: 9,
-                                                priority: 8,
-                                                capabilities: ['planning', 'coordination'],
-                                                planningContext: {
-                                                        id: 'plan-ops-upgrade',
-                                                        currentPhase: PlanningPhase.STRATEGY,
-                                                },
-                                        },
-                                        input: 'Coordinate infrastructure upgrade across multiple services',
-                                        expectedBehavior:
-                                                'Produce phased rollout strategy with risk mitigations and validation checkpoints',
-                                        measurableOutcome: 'Output includes five-step rollout with quantified rollback triggers and telemetry validation tasks.',
-                                },
-                        ],
-                        variables: [
-                                'capabilities',
-                                'tools',
+			examples: [
+				{
+					context: { complexity: 8, priority: 9, capabilities: ['analysis', 'planning'] },
+					input: 'Analyze and refactor a complex codebase',
+					expectedBehavior:
+						'Begin with explicit planning phase, use workspace tools for organization, break down into analysis/strategy/execution phases',
+					measurableOutcome:
+						'Document six-phase plan with at least three measurable milestones in workspace history.',
+				},
+				{
+					context: {
+						complexity: 9,
+						priority: 8,
+						capabilities: ['planning', 'coordination'],
+						planningContext: {
+							id: 'plan-ops-upgrade',
+							currentPhase: PlanningPhase.STRATEGY,
+						},
+					},
+					input: 'Coordinate infrastructure upgrade across multiple services',
+					expectedBehavior:
+						'Produce phased rollout strategy with risk mitigations and validation checkpoints',
+					measurableOutcome:
+						'Output includes five-step rollout with quantified rollback triggers and telemetry validation tasks.',
+				},
+			],
+			variables: [
+				'capabilities',
+				'tools',
 				'taskId',
 				'complexity',
 				'priority',
-                                'currentPhase',
-                                'taskDescription',
-                        ],
-                        brainwavBranding: true,
-                        nOOptimized: true,
-                        applicability: {
-                                phases: [
-                                        PlanningPhase.INITIALIZATION,
-                                        PlanningPhase.ANALYSIS,
-                                        PlanningPhase.STRATEGY,
-                                        PlanningPhase.EXECUTION,
-                                        PlanningPhase.VALIDATION,
-                                ],
-                                requiredCapabilities: ['planning'],
-                                tags: ['long-horizon', 'complex-planning'],
-                        },
-                });
+				'currentPhase',
+				'taskDescription',
+			],
+			brainwavBranding: true,
+			nOOptimized: true,
+			applicability: {
+				phases: [
+					PlanningPhase.INITIALIZATION,
+					PlanningPhase.ANALYSIS,
+					PlanningPhase.STRATEGY,
+					PlanningPhase.EXECUTION,
+					PlanningPhase.VALIDATION,
+				],
+				requiredCapabilities: ['planning'],
+				tags: ['long-horizon', 'complex-planning'],
+			},
+		});
 
-                // Task-specific prompt for code analysis
-                this.templates.set('code-analysis-task', {
-                        id: 'code-analysis-task',
-                        name: 'Code Analysis Task Prompt',
-                        description: 'Specialized prompt for code analysis and review tasks',
-                        category: 'task',
-                        complexity: [3, 9],
-                        template: `**brAInwav Code Analysis Protocol**
+		// Task-specific prompt for code analysis
+		this.templates.set('code-analysis-task', {
+			id: 'code-analysis-task',
+			name: 'Code Analysis Task Prompt',
+			description: 'Specialized prompt for code analysis and review tasks',
+			category: 'task',
+			complexity: [3, 9],
+			template: `**brAInwav Code Analysis Protocol**
 
 You are conducting a code analysis task within the nO Master Agent Loop architecture. Apply systematic analysis patterns:
 
@@ -331,42 +334,44 @@ You are conducting a code analysis task within the nO Master Agent Loop architec
 {{taskDescription}}
 
 Complexity: {{complexity}}/10 | Priority: {{priority}}/10`,
-                        examples: [
-                                {
-                                        context: { complexity: 6, tools: ['read', 'grep', 'workspace-write'] },
-                                        input: 'Analyze JavaScript React components for security issues',
-                                        expectedBehavior:
-                                                'Systematic file reading, security pattern matching, organized reporting in workspace',
-                                        measurableOutcome: 'Deliver report with at least four categorized findings and remediation steps per issue.',
-                                },
-                                {
-                                        context: {
-                                                complexity: 7,
-                                                capabilities: ['analysis', 'testing'],
-                                                planningContext: {
-                                                        id: 'qa-hardening',
-                                                        currentPhase: PlanningPhase.VALIDATION,
-                                                },
-                                        },
-                                        input: 'Review API layer for regression risks before release',
-                                        expectedBehavior:
-                                                'Cross-reference test coverage, flag risky endpoints, and suggest validation tasks',
-                                        measurableOutcome: 'Highlight minimum of three regression scenarios tied to test suite gaps with mitigation plan.',
-                                },
-                        ],
-                        variables: ['tools', 'taskDescription', 'complexity', 'priority'],
-                        brainwavBranding: true,
-                        nOOptimized: true,
-                        applicability: {
-                                phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION],
-                                requiredCapabilities: ['analysis'],
-                                tags: ['code-analysis', 'code-review'],
-                        },
-                });
+			examples: [
+				{
+					context: { complexity: 6, tools: ['read', 'grep', 'workspace-write'] },
+					input: 'Analyze JavaScript React components for security issues',
+					expectedBehavior:
+						'Systematic file reading, security pattern matching, organized reporting in workspace',
+					measurableOutcome:
+						'Deliver report with at least four categorized findings and remediation steps per issue.',
+				},
+				{
+					context: {
+						complexity: 7,
+						capabilities: ['analysis', 'testing'],
+						planningContext: {
+							id: 'qa-hardening',
+							currentPhase: PlanningPhase.VALIDATION,
+						},
+					},
+					input: 'Review API layer for regression risks before release',
+					expectedBehavior:
+						'Cross-reference test coverage, flag risky endpoints, and suggest validation tasks',
+					measurableOutcome:
+						'Highlight minimum of three regression scenarios tied to test suite gaps with mitigation plan.',
+				},
+			],
+			variables: ['tools', 'taskDescription', 'complexity', 'priority'],
+			brainwavBranding: true,
+			nOOptimized: true,
+			applicability: {
+				phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION],
+				requiredCapabilities: ['analysis'],
+				tags: ['code-analysis', 'code-review'],
+			},
+		});
 
-                // Planning coordination prompt
-                this.templates.set('planning-coordination', {
-                        id: 'planning-coordination',
+		// Planning coordination prompt
+		this.templates.set('planning-coordination', {
+			id: 'planning-coordination',
 			name: 'Planning Coordination Prompt',
 			description: 'Prompt for coordinating multi-agent planning activities',
 			category: 'planning',
@@ -409,50 +414,52 @@ You are the planning coordinator in a multi-agent workflow. Your responsibility 
 {{taskDescription}}
 
 Apply brAInwav's systematic approach to multi-agent coordination.`,
-                        examples: [
-                                {
-                                        context: { complexity: 7, currentPhase: PlanningPhase.STRATEGY },
-                                        input: 'Coordinate deployment planning across 3 agents',
-                                        expectedBehavior:
-                                                'Create structured plan with dependencies, resource allocation, and agent assignments',
-                                        measurableOutcome: 'Define responsibilities for each agent and enumerate at least two dependency checks per agent.',
-                                },
-                                {
-                                        context: {
-                                                complexity: 8,
-                                                capabilities: ['coordination', 'planning'],
-                                                planningContext: {
-                                                        id: 'expansion-phase',
-                                                        workspaceId: 'workspace-ops',
-                                                        currentPhase: PlanningPhase.EXECUTION,
-                                                },
-                                        },
-                                        input: 'Synchronize documentation updates and release tasks',
-                                        expectedBehavior:
-                                                'Sequence collaborative tasks, ensure documentation owners align with deployment steps',
-                                        measurableOutcome: 'Output includes shared schedule with timestamps and success criteria for each stream.',
-                                },
-                        ],
-                        variables: [
-                                'tools',
-                                'complexity',
+			examples: [
+				{
+					context: { complexity: 7, currentPhase: PlanningPhase.STRATEGY },
+					input: 'Coordinate deployment planning across 3 agents',
+					expectedBehavior:
+						'Create structured plan with dependencies, resource allocation, and agent assignments',
+					measurableOutcome:
+						'Define responsibilities for each agent and enumerate at least two dependency checks per agent.',
+				},
+				{
+					context: {
+						complexity: 8,
+						capabilities: ['coordination', 'planning'],
+						planningContext: {
+							id: 'expansion-phase',
+							workspaceId: 'workspace-ops',
+							currentPhase: PlanningPhase.EXECUTION,
+						},
+					},
+					input: 'Synchronize documentation updates and release tasks',
+					expectedBehavior:
+						'Sequence collaborative tasks, ensure documentation owners align with deployment steps',
+					measurableOutcome:
+						'Output includes shared schedule with timestamps and success criteria for each stream.',
+				},
+			],
+			variables: [
+				'tools',
+				'complexity',
 				'agentCount',
 				'currentPhase',
 				'sessionId',
-                                'taskDescription',
-                        ],
-                        brainwavBranding: true,
-                        nOOptimized: true,
-                        applicability: {
-                                phases: [PlanningPhase.STRATEGY, PlanningPhase.EXECUTION],
-                                requiredCapabilities: ['coordination'],
-                                tags: ['multi-agent', 'coordination'],
-                        },
-                });
+				'taskDescription',
+			],
+			brainwavBranding: true,
+			nOOptimized: true,
+			applicability: {
+				phases: [PlanningPhase.STRATEGY, PlanningPhase.EXECUTION],
+				requiredCapabilities: ['coordination'],
+				tags: ['multi-agent', 'coordination'],
+			},
+		});
 
-                // Error recovery prompt
-                this.templates.set('error-recovery', {
-                        id: 'error-recovery',
+		// Error recovery prompt
+		this.templates.set('error-recovery', {
+			id: 'error-recovery',
 			name: 'Error Recovery Prompt',
 			description: 'Prompt for handling errors and implementing recovery strategies',
 			category: 'error',
@@ -496,86 +503,298 @@ An error condition has been detected. Apply systematic recovery procedures:
 {{errorDetails}}
 
 Apply brAInwav's commitment to reliable, resilient operation.`,
-                        examples: [
-                                {
-                                        context: { complexity: 3, priority: 9 },
-                                        input: 'File read operation failed due to permission error',
-                                        expectedBehavior:
-                                                'Assess alternatives, try different approach, document recovery actions',
-                                        measurableOutcome: 'Capture incident timeline with recovery steps and validation status in under five minutes.',
-                                },
-                                {
-                                        context: {
-                                                complexity: 5,
-                                                capabilities: ['resilience', 'monitoring'],
-                                                planningContext: {
-                                                        id: 'stability-audit',
-                                                        currentPhase: PlanningPhase.VALIDATION,
-                                                },
-                                        },
-                                        input: 'Service health check failing intermittently during rollout',
-                                        expectedBehavior:
-                                                'Stabilize system, gather metrics, and recommend fallback path',
-                                        measurableOutcome: 'Propose mitigation with quantified recovery time objective and monitoring verification checklist.',
-                                },
-                        ],
-                        variables: [
-                                'errorType',
-                                'errorSeverity',
+			examples: [
+				{
+					context: { complexity: 3, priority: 9 },
+					input: 'File read operation failed due to permission error',
+					expectedBehavior:
+						'Assess alternatives, try different approach, document recovery actions',
+					measurableOutcome:
+						'Capture incident timeline with recovery steps and validation status in under five minutes.',
+				},
+				{
+					context: {
+						complexity: 5,
+						capabilities: ['resilience', 'monitoring'],
+						planningContext: {
+							id: 'stability-audit',
+							currentPhase: PlanningPhase.VALIDATION,
+						},
+					},
+					input: 'Service health check failing intermittently during rollout',
+					expectedBehavior: 'Stabilize system, gather metrics, and recommend fallback path',
+					measurableOutcome:
+						'Propose mitigation with quantified recovery time objective and monitoring verification checklist.',
+				},
+			],
+			variables: [
+				'errorType',
+				'errorSeverity',
 				'currentPhase',
 				'affectedComponents',
 				'tools',
-                                'errorDetails',
-                        ],
-                        brainwavBranding: true,
-                        nOOptimized: true,
-                        applicability: {
-                                phases: [
-                                        PlanningPhase.EXECUTION,
-                                        PlanningPhase.VALIDATION,
-                                        PlanningPhase.COMPLETION,
-                                ],
-                                requiredCapabilities: ['resilience'],
-                                tags: ['recovery', 'stability'],
-                        },
-                });
+				'errorDetails',
+			],
+			brainwavBranding: true,
+			nOOptimized: true,
+			applicability: {
+				phases: [PlanningPhase.EXECUTION, PlanningPhase.VALIDATION, PlanningPhase.COMPLETION],
+				requiredCapabilities: ['resilience'],
+				tags: ['recovery', 'stability'],
+			},
+		});
 
 		console.log('brAInwav Prompt Manager: Initialized 4 default nO-optimized templates');
 	}
 
-        private findCandidateTemplates(context: PromptContext): PromptTemplate[] {
-                const contextualMatches: PromptTemplate[] = [];
-                const fallbackMatches: PromptTemplate[] = [];
+	private findCandidateTemplates(context: PromptContext): PromptTemplate[] {
+		const contextualMatches: PromptTemplate[] = [];
+		const fallbackMatches: PromptTemplate[] = [];
 
-                for (const template of this.templates.values()) {
-                        if (!this.isWithinComplexityRange(template, context.complexity)) {
-                                continue;
-                        }
+		for (const template of this.templates.values()) {
+			if (!this.isWithinComplexityRange(template, context.complexity)) {
+				continue;
+			}
 
-                        fallbackMatches.push(template);
+			fallbackMatches.push(template);
 
-                        if (this.matchesApplicability(template, context)) {
-                                contextualMatches.push(template);
-                        }
-                }
+			if (this.matchesApplicability(template, context)) {
+				contextualMatches.push(template);
+			}
+		}
 
-                const candidates = contextualMatches.length > 0 ? contextualMatches : fallbackMatches;
+		const candidates = contextualMatches.length > 0 ? contextualMatches : fallbackMatches;
 
-                return candidates.sort((a, b) => {
-                        const specificityDelta = this.getApplicabilitySpecificity(b) - this.getApplicabilitySpecificity(a);
-                        if (specificityDelta !== 0) {
-                                return specificityDelta;
-                        }
+		return candidates.sort((a, b) => {
+			const specificityDelta =
+				this.getApplicabilitySpecificity(b) - this.getApplicabilitySpecificity(a);
+			if (specificityDelta !== 0) {
+				return specificityDelta;
+			}
 
-                        if (a.nOOptimized && !b.nOOptimized) return -1;
-                        if (!a.nOOptimized && b.nOOptimized) return 1;
+			if (a.nOOptimized && !b.nOOptimized) return -1;
+			if (!a.nOOptimized && b.nOOptimized) return 1;
 
-                        return 0;
-                });
-        }
+			return 0;
+		});
+	}
 
-        private scoreTemplate(template: PromptTemplate, context: PromptContext): number {
-                let score = 0.2;
+	private scoreTemplate(template: PromptTemplate, context: PromptContext): number {
+		let score = 0.2;
+
+		const complexityScore = this.calculateComplexityScore(template, context.complexity);
+		score += complexityScore * 0.2;
+
+		if (template.nOOptimized && context.nOArchitecture) {
+			score += 0.1;
+		}
+
+		const capabilityCoverage = this.calculateCapabilityCoverage(template, context);
+		score += capabilityCoverage * 0.1;
+
+		const tagAlignment = this.calculateTagAlignment(template, context);
+		score += tagAlignment * 0.1;
+
+		const phaseAlignment = this.calculatePhaseAlignment(template, context);
+		score += phaseAlignment * 0.1;
+
+		if (template.variables.includes('capabilities') && context.capabilities.length > 0) {
+			score += 0.05;
+		}
+
+		if (template.variables.includes('tools') && context.tools.length > 0) {
+			score += 0.05;
+		}
+
+		if (context.objectives && context.objectives.length > 0) {
+			score += 0.05;
+		}
+
+		const historicalEffectiveness = this.calculateHistoricalEffectiveness(template.id, context);
+		score += historicalEffectiveness * 0.2;
+
+		return Math.min(score, 1.0);
+	}
+
+	private getFallbackTemplate(context: PromptContext): TemplateSelection {
+		const fallback = this.templates.get('long-horizon-system')!;
+		return {
+			template: fallback,
+			confidence: 0.3,
+			reasoning: `brAInwav: Using fallback template for task ${context.taskId} due to no suitable candidates`,
+			adaptations: [`maintain reliability for agent ${context.agentId}`],
+		};
+	}
+
+	private generateAdaptations(_template: PromptTemplate, context: PromptContext): string[] {
+		const adaptations = new Set<string>();
+
+		if (context.complexity > 7) {
+			adaptations.add('enhanced error handling guidance');
+			adaptations.add('additional validation steps');
+		}
+
+		if (context.priority > 8) {
+			adaptations.add('expedited execution protocols');
+			adaptations.add('simplified decision making');
+		}
+
+		const effectivePhase = this.getEffectivePhase(context);
+		if (effectivePhase) {
+			adaptations.add(`optimized for ${effectivePhase} phase`);
+		}
+
+		if (context.capabilities.length > 0) {
+			adaptations.add(`leverage capabilities: ${context.capabilities.join(', ')}`);
+		}
+
+		const planningContext = context.planningContext;
+		if (planningContext?.id) {
+			adaptations.add(`align with planning context ${planningContext.id}`);
+		}
+
+		if (planningContext?.workspaceId) {
+			adaptations.add(`preserve workspace continuity for ${planningContext.workspaceId}`);
+		}
+
+		if (planningContext?.objectives && planningContext.objectives.length > 0) {
+			adaptations.add(`track planning objectives: ${planningContext.objectives.join(', ')}`);
+		}
+
+		const contextTags = this.getContextTags(context);
+		if (contextTags.length > 0) {
+			adaptations.add(`maintain context tags: ${contextTags.join(', ')}`);
+		}
+
+		if (context.objectives && context.objectives.length > 0) {
+			adaptations.add(`focus on objectives: ${context.objectives.join(', ')}`);
+		}
+
+		return Array.from(adaptations);
+	}
+
+	private generateReasoningForSelection(template: PromptTemplate, context: PromptContext): string {
+		const effectivePhase = this.getEffectivePhase(context);
+		const contextTags = this.getContextTags(context);
+		const capabilityCoverage = this.calculateCapabilityCoverage(template, context);
+		const tagAlignment = this.calculateTagAlignment(template, context);
+
+		return [
+			`brAInwav Template Manager: Selected "${template.name}" for complexity ${context.complexity} and priority ${context.priority}.`,
+			`Phase: ${effectivePhase}.`,
+			`Context tags: ${contextTags.length > 0 ? contextTags.join(', ') : 'none'}.`,
+			`Capability alignment: ${(capabilityCoverage * 100).toFixed(0)}%.`,
+			`Tag alignment ${(tagAlignment * 100).toFixed(0)}%.`,
+			`Template optimized for nO architecture: ${template.nOOptimized}.`,
+			`Branding enabled: ${template.brainwavBranding}.`,
+		].join(' ');
+	}
+
+	private getVariableValue(variable: string, context: PromptContext): string {
+		switch (variable) {
+			case 'taskId':
+				return context.taskId;
+			case 'agentId':
+				return context.agentId;
+			case 'sessionId':
+				return context.sessionId || 'unknown';
+			case 'complexity':
+				return context.complexity.toString();
+			case 'priority':
+				return context.priority.toString();
+			case 'capabilities':
+				return context.capabilities.join(', ');
+			case 'tools':
+				return context.tools.join(', ');
+			case 'currentPhase':
+				return this.getEffectivePhase(context);
+			case 'agentCount':
+				return '1';
+			case 'taskDescription':
+				return 'Task description not provided';
+			case 'errorType':
+				return 'unknown_error';
+			case 'errorSeverity':
+				return 'moderate';
+			case 'affectedComponents':
+				return 'unknown';
+			case 'errorDetails':
+				return 'Error details not available';
+			case 'objectives':
+				return context.objectives && context.objectives.length > 0
+					? context.objectives.join(', ')
+					: 'No explicit objectives';
+			case 'contextTags':
+				return this.getContextTags(context).join(', ') || 'none';
+			default:
+				return `{{${variable}}}`;
+		}
+	}
+
+	private applyAdaptations(prompt: string, adaptations: string[], context: PromptContext): string {
+		if (adaptations.length === 0) return prompt;
+
+		const adaptationHeader = `\n**Context Adaptations for brAInwav nO Architecture (task ${context.taskId}):**\n`;
+		const adaptationSection = `${adaptationHeader}${adaptations.map((a) => `- ${a}`).join('\n')}\n`;
+		return prompt + adaptationSection;
+	}
+
+	private addBrainwavBranding(prompt: string, context: PromptContext): string {
+		if (prompt.includes('brAInwav')) return prompt;
+
+		const branding =
+			'\n**Powered by brAInwav** | Task: ' +
+			context.taskId +
+			' | nO Architecture: ' +
+			context.nOArchitecture +
+			'\n';
+		return prompt + branding;
+	}
+
+	/**
+	 * Get template statistics for monitoring
+	 */
+	getStats(): {
+		totalTemplates: number;
+		nOOptimizedTemplates: number;
+		averageEffectiveness: number;
+		mostUsedTemplate: string;
+		totalUsageEntries: number;
+	} {
+		const totalTemplates = this.templates.size;
+		const nOOptimizedTemplates = Array.from(this.templates.values()).filter(
+			(t) => t.nOOptimized,
+		).length;
+
+		let totalEffectiveness = 0;
+		let totalUsageEntries = 0;
+		let mostUsedTemplate = 'unknown';
+		let maxUsages = 0;
+
+		for (const [templateId, history] of this.usageHistory.entries()) {
+			if (history.length > maxUsages) {
+				maxUsages = history.length;
+				mostUsedTemplate = templateId;
+			}
+
+			totalUsageEntries += history.length;
+			totalEffectiveness += history.reduce((sum, use) => sum + use.effectiveness, 0);
+		}
+
+		return {
+			totalTemplates,
+			nOOptimizedTemplates,
+			averageEffectiveness: totalUsageEntries > 0 ? totalEffectiveness / totalUsageEntries : 0,
+			mostUsedTemplate,
+			totalUsageEntries,
+		};
+	}
+
+	private isWithinComplexityRange(template: PromptTemplate, complexity: number): boolean {
+		const [min, max] = template.complexity;
+		return complexity >= min && complexity <= max;
+	}
+
 
                 const complexityScore = this.calculateComplexityScore(template, context.complexity);
                 score += complexityScore * 0.2;

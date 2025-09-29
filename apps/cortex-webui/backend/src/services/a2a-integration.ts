@@ -4,7 +4,9 @@
  * Handles real-time agent communication events and WebSocket broadcasting.
  */
 
-import { createBus } from '@cortex-os/a2a-core/bus';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts';
+import { createBus } from '@cortex-os/a2a-core/bus.js';
+import { inproc } from '@cortex-os/a2a-transport/inproc.js';
 import type { WebSocket } from 'ws';
 
 export interface WebUIEventData {
@@ -84,16 +86,16 @@ export const WebUIEventTypes = {
 } as const;
 
 export interface WebSocketManager {
-	broadcast(message: any): void;
-	sendToSession(sessionId: string, message: any): void;
+	broadcast(message: Record<string, unknown>): void;
+	sendToSession(sessionId: string, message: Record<string, unknown>): void;
 	addConnection(sessionId: string, ws: WebSocket): void;
 	removeConnection(sessionId: string): void;
 }
 
 export class WebUIBusIntegration {
-	private bus = createBus(inproc());
+	private readonly bus = createBus(inproc());
 	private wsManager: WebSocketManager | null = null;
-	private source = 'urn:cortex:webui:backend';
+	private readonly source = 'urn:cortex:webui:backend';
 
 	constructor(wsManager?: WebSocketManager) {
 		this.wsManager = wsManager || null;
@@ -386,7 +388,12 @@ export class WebUIBusIntegration {
 	/**
 	 * Get health status of the A2A integration
 	 */
-	getHealthStatus(): Record<string, any> {
+	getHealthStatus(): {
+		busConnected: boolean;
+		wsManagerConnected: boolean;
+		source: string;
+		eventTypes: readonly string[];
+	} {
 		return {
 			busConnected: !!this.bus,
 			wsManagerConnected: !!this.wsManager,
@@ -395,6 +402,8 @@ export class WebUIBusIntegration {
 		};
 	}
 }
+
+export const webUIBusIntegration = new WebUIBusIntegration();
 
 export function createWebUIBusIntegration(wsManager?: WebSocketManager): WebUIBusIntegration {
 	return new WebUIBusIntegration(wsManager);

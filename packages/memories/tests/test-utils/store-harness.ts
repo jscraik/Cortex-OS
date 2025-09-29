@@ -22,7 +22,7 @@ export type HarnessResult = {
 	teardown: () => void;
 };
 
-export async function setupPrismaHarness(base: Memory): Promise<HarnessResult> {
+export async function setupPrismaHarness(_base: Memory): Promise<HarnessResult> {
 	const records = new Map<string, Memory>();
 	const prisma = { memory: buildPrismaApi(records) } as const;
 

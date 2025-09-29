@@ -1,4 +1,6 @@
 import { db } from '../db';
+import logger from '../utils/logger';
+import { externalMonitoringService } from './externalMonitoringService';
 
 interface AuthEvent {
 	id: string;
@@ -15,7 +17,7 @@ interface AuthEvent {
 		| 'failed_login';
 	ipAddress?: string;
 	userAgent?: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	timestamp: Date;
 }
 
@@ -30,7 +32,7 @@ interface AuthMetrics {
 
 export class AuthMonitoringService {
 	private static instance: AuthMonitoringService;
-	private metrics: AuthMetrics = {
+	private readonly metrics: AuthMetrics = {
 		totalLogins: 0,
 		failedLogins: 0,
 		newRegistrations: 0,
@@ -38,7 +40,7 @@ export class AuthMonitoringService {
 		twoFactorEnabled: 0,
 		oauthSignins: 0,
 	};
-	private recentEvents: AuthEvent[] = [];
+	private readonly recentEvents: AuthEvent[] = [];
 	private readonly maxRecentEvents = 1000;
 
 	private constructor() {
@@ -79,8 +81,8 @@ export class AuthMonitoringService {
 			console.error('Failed to store auth event in database:', error);
 		}
 
-		// Emit to monitoring systems
-		this.emitToMonitoringSystems(authEvent);
+		// Emit to monitoring systems (non-blocking)
+		void this.emitToMonitoringSystems(authEvent);
 	}
 
 	async logSuccessfulLogin(userId: string, ipAddress?: string, userAgent?: string): Promise<void> {
@@ -149,10 +151,15 @@ export class AuthMonitoringService {
 			type: 'suspicious_ip' | 'brute_force' | 'unusual_location';
 			message: string;
 			severity: 'low' | 'medium' | 'high';
-			data: any;
+			data: Record<string, unknown>;
 		}>
 	> {
-		const alerts = [];
+		const alerts: Array<{
+			type: 'suspicious_ip' | 'brute_force' | 'unusual_location';
+			message: string;
+			severity: 'low' | 'medium' | 'high';
+			data: Record<string, unknown>;
+		}> = [];
 
 		// Check for suspicious IPs
 		const ipCounts = new Map<string, number>();
@@ -211,7 +218,7 @@ export class AuthMonitoringService {
 		}
 	}
 
-	private emitToMonitoringSystems(event: AuthEvent): void {
+	private async emitToMonitoringSystems(event: AuthEvent): Promise<void> {
 		// Emit to console for development
 		if (process.env.NODE_ENV === 'development') {
 			console.log(`[Auth Event] ${event.eventType}:`, {
@@ -220,15 +227,27 @@ export class AuthMonitoringService {
 			});
 		}
 
-		// TODO: Emit to external monitoring systems
-		// - Prometheus
-		// - DataDog
-		// - New Relic
-		// - Custom analytics
+		try {
+			await externalMonitoringService.emitAuthEvent({
+				userId: event.userId,
+				eventType: event.eventType,
+				ipAddress: event.ipAddress,
+				userAgent: event.userAgent,
+				metadata: event.metadata,
+				timestamp: event.timestamp,
+			});
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : String(error);
+			logger.warn('brAInwav auth monitoring external dispatch failure', {
+				eventType: event.eventType,
+				userId: event.userId,
+				reason,
+			});
+		}
 	}
 
 	private generateEventId(): string {
-		return `auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `auth_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 	}
 
 	private getTimeRangeCutoff(timeRange: string): Date {

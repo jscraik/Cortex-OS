@@ -131,6 +131,24 @@ export function createServer(
 		return reply.send({ status: 'ok', capabilities: caps });
 	});
 
+	// Add orchestration health endpoint
+	app.get('/health/orchestration', async (_req, reply) => {
+		try {
+			const orchestrationHealth = modelRouter.getOrchestrationHealth();
+			return reply.send({
+				status: 'ok',
+				orchestration: orchestrationHealth,
+				branding: 'brAInwav Cortex-OS Model Gateway with Orchestration Integration',
+			});
+		} catch (error) {
+			return reply.status(500).send({
+				status: 'error',
+				error: error instanceof Error ? error.message : 'Unknown error',
+				branding: 'brAInwav Cortex-OS Model Gateway',
+			});
+		}
+	});
+
 	app.post('/embeddings', async (req, reply) => {
 		const endTimer = latencyHist.startTimer({ route: 'embeddings' });
 
