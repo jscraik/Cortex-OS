@@ -96,7 +96,7 @@ async function scanForForbiddenComments(): Promise<TodoFinding[]> {
 }
 
 function createKey(entry: TodoFinding): string {
-        return `${entry.file}::${entry.text}`;
+        return `${entry.file}:${entry.line}::${entry.text}`;
 }
 
 describe('brAInwav security TODO/FIXME ban', () => {
