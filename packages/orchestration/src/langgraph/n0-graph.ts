@@ -540,7 +540,8 @@ type KernelReadFile = (target: string, maxBytes: number, allowlist: string[]) =>
 function createKernelRunBash(tools: BoundKernelTool[]): KernelRunBash | undefined {
         const tool = findKernelTool(tools, ['kernel.bash', 'shell.exec']);
         if (!tool) return undefined;
-        return async (cmd) => {
+        return async (cmd: string, allowlist: string[]) => {
+                // TODO: Use allowlist for command validation if needed
                 const payload = await tool.execute({ command: cmd });
                 const stdout =
                         typeof payload === 'object' && payload && 'stdout' in payload && typeof payload.stdout === 'string'
