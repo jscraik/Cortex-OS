@@ -377,7 +377,7 @@ export class MemoryA2AEventPublisher implements A2AEventPublisher {
                         headers: {
                                 'metrics-source': event.source,
                                 'metrics-reason': event.reason,
-                                'metrics-brand': event.brand,
+                                'brainwav-brand': event.brand,
                         },
                 });
         }
