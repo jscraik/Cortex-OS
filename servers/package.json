@@ -19,6 +19,9 @@
 		"link-all": "npm link --workspaces"
 	},
 	"dependencies": {
+		"@cortex-os/a2a-core": "workspace:*",
+		"@cortex-os/a2a-transport": "workspace:*",
+		"@cortex-os/contracts": "workspace:*",
 		"@modelcontextprotocol/server-everything": "^2025.8.18",
 		"@modelcontextprotocol/server-filesystem": "^2025.8.21",
 		"@modelcontextprotocol/server-memory": "^2025.8.4",

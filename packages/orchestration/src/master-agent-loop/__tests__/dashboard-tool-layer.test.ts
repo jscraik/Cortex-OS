@@ -23,7 +23,7 @@ describe('DashboardToolLayer', () => {
 
 	describe('Dashboard Tool Layer Initialization', () => {
 		it('should provide high-level visualization and monitoring tools', async () => {
-			const result = await dashboardLayer.invoke('visualize-execution-graph', { planId: 'test' });
+			const result = (await dashboardLayer.invoke('visualize-execution-graph', { planId: 'test' })) as any;
 			expect(result.type).toBe('visualization');
 			expect(result.data).toBeDefined();
 			expect(result.planId).toBe('test');
@@ -59,11 +59,11 @@ describe('DashboardToolLayer', () => {
 				estimatedDuration: 5000,
 			};
 
-			const result = await dashboardLayer.invoke('visualize-execution-graph', {
+			const result = (await dashboardLayer.invoke('visualize-execution-graph', {
 				planId: executionPlan.id,
 				executionPlan,
 				layout: 'hierarchical',
-			});
+			})) as any;
 
 			expect(result.type).toBe('visualization');
 			expect(result.format).toBe('svg');
@@ -77,14 +77,14 @@ describe('DashboardToolLayer', () => {
 			const layouts = ['hierarchical', 'circular', 'force-directed', 'tree'];
 
 			for (const layout of layouts) {
-				const result = await dashboardLayer.invoke('visualize-execution-graph', {
+				const result = (await dashboardLayer.invoke('visualize-execution-graph', {
 					planId: 'test-layout',
 					layout,
 					executionPlan: {
 						id: 'test-layout',
 						steps: [{ id: 'step-1', name: 'Test', dependencies: [] }],
 					},
-				});
+				})) as any;
 
 				expect(result.metadata.layout).toBe(layout);
 				expect(result.type).toBe('visualization');
@@ -103,11 +103,11 @@ describe('DashboardToolLayer', () => {
 				},
 			};
 
-			const result = await dashboardLayer.invoke('visualize-execution-graph', {
+			const result = (await dashboardLayer.invoke('visualize-execution-graph', {
 				planId: 'live-plan',
 				executionState,
 				realTime: true,
-			});
+			})) as any;
 
 			expect(result.data.nodes).toEqual(
 				expect.arrayContaining([
@@ -119,7 +119,7 @@ describe('DashboardToolLayer', () => {
 		});
 
 		it('should generate interactive graph elements', async () => {
-			const result = await dashboardLayer.invoke('visualize-execution-graph', {
+			const result = (await dashboardLayer.invoke('visualize-execution-graph', {
 				planId: 'interactive-test',
 				interactive: true,
 				executionPlan: {
@@ -129,7 +129,7 @@ describe('DashboardToolLayer', () => {
 						{ id: 'step-2', name: 'Process', dependencies: ['step-1'] },
 					],
 				},
-			});
+			})) as any;
 
 			expect(result.interactive).toBe(true);
 			expect(result.data.nodes).toEqual(
@@ -160,11 +160,11 @@ describe('DashboardToolLayer', () => {
 				],
 			};
 
-			const result = await dashboardLayer.invoke('create-performance-dashboard', {
+			const result = (await dashboardLayer.invoke('create-performance-dashboard', {
 				data: performanceData,
 				dashboardType: 'comprehensive',
 				includeCharts: ['line', 'bar', 'pie'],
-			});
+			})) as any;
 
 			expect(result.type).toBe('dashboard');
 			expect(result.format).toBe('html');
@@ -178,10 +178,10 @@ describe('DashboardToolLayer', () => {
 			const themes = ['light', 'dark', 'high-contrast', 'minimal'];
 
 			for (const theme of themes) {
-				const result = await dashboardLayer.invoke('create-performance-dashboard', {
+				const result = (await dashboardLayer.invoke('create-performance-dashboard', {
 					data: { metrics: { totalExecutions: 10 } },
 					theme,
-				});
+				})) as any;
 
 				expect(result.metadata.theme).toBe(theme);
 				expect(result.styling.theme).toBe(theme);
@@ -192,10 +192,10 @@ describe('DashboardToolLayer', () => {
 			const formats = ['html', 'pdf', 'png', 'json'];
 
 			for (const format of formats) {
-				const result = await dashboardLayer.invoke('create-performance-dashboard', {
+				const result = (await dashboardLayer.invoke('create-performance-dashboard', {
 					data: { metrics: { totalExecutions: 10 } },
 					exportFormat: format,
-				});
+				})) as any;
 
 				expect(result.format).toBe(format);
 				expect(result.exportable).toBe(true);
@@ -227,11 +227,11 @@ describe('DashboardToolLayer', () => {
 				},
 			];
 
-			const result = await dashboardLayer.invoke('generate-agent-status-report', {
+			const result = (await dashboardLayer.invoke('generate-agent-status-report', {
 				agents: agentData,
 				includeHealthMetrics: true,
 				includePerformanceAnalysis: true,
-			});
+			})) as any;
 
 			expect(result.type).toBe('report');
 			expect(result.format).toBe('html');
@@ -252,10 +252,10 @@ describe('DashboardToolLayer', () => {
 				],
 			};
 
-			const result = await dashboardLayer.invoke('generate-agent-status-report', {
+			const result = (await dashboardLayer.invoke('generate-agent-status-report', {
 				healthHistory,
 				includeHealthTrending: true,
-			});
+			})) as any;
 
 			expect(result.components).toContain('health-trending-chart');
 			expect(result.data.healthTrends).toBeDefined();
@@ -279,11 +279,11 @@ describe('DashboardToolLayer', () => {
 				},
 			];
 
-			const result = await dashboardLayer.invoke('generate-agent-status-report', {
+			const result = (await dashboardLayer.invoke('generate-agent-status-report', {
 				agents: agentData,
 				detectAnomalies: true,
 				anomalyThresholds: { responseTime: 5000, errorRate: 0.1 },
-			});
+			})) as any;
 
 			expect(result.sections).toContain('anomaly-detection');
 			expect(result.data.anomalies).toHaveLength(1);
@@ -310,11 +310,11 @@ describe('DashboardToolLayer', () => {
 				},
 			};
 
-			const result = await dashboardLayer.invoke('create-system-health-overview', {
+			const result = (await dashboardLayer.invoke('create-system-health-overview', {
 				healthData: systemHealth,
 				includeResourceMonitoring: true,
 				alertThresholds: { cpu: 0.8, memory: 0.85 },
-			});
+			})) as any;
 
 			expect(result.type).toBe('dashboard');
 			expect(result.components).toContain('system-status-overview');
@@ -334,10 +334,10 @@ describe('DashboardToolLayer', () => {
 				},
 			};
 
-			const result = await dashboardLayer.invoke('create-system-health-overview', {
+			const result = (await dashboardLayer.invoke('create-system-health-overview', {
 				healthData: criticalHealth,
 				highlightCritical: true,
-			});
+			})) as any;
 
 			expect(result.data.criticalIssues).toHaveLength(2);
 			expect(result.data.criticalIssues).toEqual(
@@ -367,14 +367,14 @@ describe('DashboardToolLayer', () => {
 				},
 			];
 
-			const result = await dashboardLayer.invoke('visualize-workflow-timeline', {
+			const result = (await dashboardLayer.invoke('visualize-workflow-timeline', {
 				workflows: workflowHistory,
 				timeRange: {
 					start: new Date('2024-01-01T09:00:00Z'),
 					end: new Date('2024-01-01T11:00:00Z'),
 				},
 				includeStepDetails: true,
-			});
+			})) as any;
 
 			expect(result.type).toBe('visualization');
 			expect(result.format).toBe('svg');
@@ -391,11 +391,11 @@ describe('DashboardToolLayer', () => {
 				{ id: 'wf-3', category: 'data-processing', priority: 'medium' },
 			];
 
-			const result = await dashboardLayer.invoke('visualize-workflow-timeline', {
+			const result = (await dashboardLayer.invoke('visualize-workflow-timeline', {
 				workflows,
 				groupBy: 'category',
 				filterBy: { priority: ['high', 'medium'] },
-			});
+			})) as any;
 
 			expect(result.data.groups).toBeDefined();
 			expect(result.data.groups['data-processing']).toHaveLength(2);
@@ -431,19 +431,19 @@ describe('DashboardToolLayer', () => {
 			};
 
 			// First invocation - should create and cache
-			const result1 = await dashboardLayer.invoke('visualize-execution-graph', {
+			const result1 = (await dashboardLayer.invoke('visualize-execution-graph', {
 				planId,
 				executionPlan,
 				enableCaching: true,
-			});
+			})) as any;
 
 			// Second invocation - should use cache
 			const startTime = Date.now();
-			const result2 = await dashboardLayer.invoke('visualize-execution-graph', {
+			const result2 = (await dashboardLayer.invoke('visualize-execution-graph', {
 				planId,
 				executionPlan,
 				enableCaching: true,
-			});
+			})) as any;
 			const responseTime = Date.now() - startTime;
 
 			expect(result2.metadata.cached).toBe(true);
@@ -466,10 +466,10 @@ describe('DashboardToolLayer', () => {
 				refreshInterval: 30000,
 			};
 
-			const result = await dashboardLayer.invoke('create-performance-dashboard', {
+			const result = (await dashboardLayer.invoke('create-performance-dashboard', {
 				data: { metrics: {} },
 				customConfig,
-			});
+			})) as any;
 
 			expect(result.layout).toEqual(customConfig.layout);
 			expect(result.configuration.columns).toBe(3);
@@ -497,10 +497,10 @@ describe('DashboardToolLayer', () => {
 
 	describe('Error Handling and Resilience', () => {
 		it('should handle missing or invalid data gracefully', async () => {
-			const result = await dashboardLayer.invoke('visualize-execution-graph', {
+			const result = (await dashboardLayer.invoke('visualize-execution-graph', {
 				planId: 'missing-plan',
 				// Missing executionPlan
-			});
+			})) as any;
 
 			expect(result.type).toBe('visualization');
 			expect(result.data.nodes).toHaveLength(0);
@@ -514,11 +514,11 @@ describe('DashboardToolLayer', () => {
 				invalidField: 'should be ignored',
 			};
 
-			const result = await dashboardLayer.invoke('visualize-execution-graph', {
+			const result = (await dashboardLayer.invoke('visualize-execution-graph', {
 				planId: 'corrupted',
 				executionPlan: corruptedPlan,
 				fallbackEnabled: true,
-			});
+			})) as any;
 
 			expect(result.type).toBe('visualization');
 			expect(result.metadata.fallbackUsed).toBe(true);

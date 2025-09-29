@@ -12,6 +12,20 @@ canonical_url: "https://github.com/jamiescottcraik/brAInwav/.github/copilot-inst
 
 # GitHub Copilot Operational Guide 📎
 
+## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
+
+**CRITICAL**: This repository follows strict governance standards for file placement and structural integrity. Only approved, comprehensive files belong at the repository root level according to brAInwav organizational policies.
+
+### Root-Level File Governance
+- **Comprehensive Agent Documentation**: Authoritative instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) at root
+- **Core Foundation Documents**: Essential standards (CODESTYLE.md, README.md, CHANGELOG.md) maintained at root level
+- **Structure Guard Validation**: Automated enforcement of root entries against governance `allowedRootEntries` configuration
+- **brAInwav Standards**: All root documentation must reflect brAInwav branding and organizational identity
+
+**GitHub Copilot Compliance**: When suggesting file operations, ensure adherence to governance standards. Specialized configurations, working documents, and rules belong in structured locations (`.cortex/rules/`, `config/`, `.github/`, package-specific directories).
+
+---
+
 This guide directs all GitHub Copilot activities in the brAInwav Cortex-OS repository. Adherence to these instructions is mandatory for maintaining high-quality, accessible, and ethical development standards.
 
 ## 🚨 CRITICAL: brAInwav Production Standards

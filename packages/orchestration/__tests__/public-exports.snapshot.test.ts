@@ -6,36 +6,60 @@ import * as orchestration from '../src/index.js';
  * as we refactor internals towards LangGraph.
  */
 describe('@cortex-os/orchestration public API', () => {
-	it('exposes critical symbols', () => {
-		const keys = Object.keys(orchestration);
-		for (const k of ['version', 'name', 'OrchestrationDefaults', 'orchestrationMcpTools']) {
-			expect(keys).toContain(k);
-		}
-	});
+  it('exposes critical symbols', () => {
+    const keys = Object.keys(orchestration);
+    for (const k of ['version', 'name', 'OrchestrationDefaults', 'orchestrationMcpTools']) {
+      expect(keys).toContain(k);
+    }
+  });
 
-	it('matches the expected export keys (snapshot baseline)', () => {
-		const keys = Object.keys(orchestration).sort();
-		expect(keys).toMatchInlineSnapshot(`
-    [ 
-      "AgentRole",
+  it('matches the expected export keys (snapshot baseline)', () => {
+    const keys = Object.keys(orchestration).sort();
+    expect(keys).toMatchInlineSnapshot(`
+    [
+      "N0BudgetSchema",
+      "N0SessionSchema",
+      "N0StateSchema",
       "ORCHESTRATION_EVENT_SCHEMAS",
       "OrchestrationDefaults",
       "OrchestrationEventTypes",
-      "OrchestrationStrategy",
-      "Schemas",
+      "SecurityCoordinator",
+      "THERMAL_CTX_KEY",
+      "ThermalEventSchema",
+      "ThermalLevelSchema",
+      "ThermalPolicy",
       "ToolErrorCode",
       "ToolValidationError",
+      "agentStateToN0",
+      "applyThermalDecision",
+      "buildN0",
+      "compactN0State",
+      "cortexStateToN0",
       "createCerebrumGraph",
+      "createHookAwareDispatcher",
+      "createInitialN0State",
       "createOrchestrationBus",
       "createToolErrorResponse",
+      "createUnifiedToolSystem",
+      "dispatchTools",
+      "enqueueThermalEvent",
+      "getThermalContext",
+      "holdForCooldown",
+      "markThermalResume",
+      "mergeN0State",
       "name",
       "orchestrationMcpTools",
+      "orchestrationSecurityToolAllowList",
+      "orchestrationToolContracts",
       "processMonitoringTool",
+      "runSpool",
       "taskManagementTool",
       "toolErrorResponseSchema",
       "version",
+      "withThermalGuard",
       "workflowOrchestrationTool",
+      "workflowStateToN0",
     ]
     `);
-	});
+  });
 });

@@ -30,24 +30,48 @@ htmlcov/
 tmp/
 .venv-*/
 comparisons/
+*.heapsnapshot
+tmp_*
+test_*.py
+testfile*.txt
+temp_*.txt
+.uv-cache/
 
-# Security scan reports (do not commit large artifacts)
-semgrep-report.json
-reports/
+# Build artifacts
+*.tsbuildinfo
+*.d.ts.map
+*.js.map
+*.pyc
+__pycache__/
+.coverage
+coverage.xml
+**/coverage/
+coverage/
+htmlcov/
+**/htmlcov/
+*.bin
+persistence-test-*.db*
+.swcrc
 
-# Backup files
-*.backup
+# Generated reports and analysis files
+dependency-graph.json
+graph.json
+hook-validation-report.md
+import-violations-report.txt
+memories-codestyle-compliance.json
+performance-baseline.json
+semgrep-findings.json
+semgrep-results.json
+detects
 
-# Development files
-*.log
-
-# Security scan artifacts
-semgrep-report.json
-logs/*.log
-
-# Generated declaration files
-libs/typescript/contracts/src/*.d.ts
-libs/typescript/contracts/tests/policy.spec.ts
+# Development and testing artifacts
+.covenv/
+.eng/
+.cursor/
+.vitest-tmp-*/
+dist-test/
+out/
+public/
 # Upstream mirrors / vendored external references for cortex-codex (kept locally only)
 apps/cortex-codex/external/
 !packages/observability/dist/

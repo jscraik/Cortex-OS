@@ -8,7 +8,7 @@ vi.mock('@cortex-os/model-gateway/dist/adapters/mlx-adapter.js', () => ({
 	})),
 }));
 
-vi.mock('@cortex-os/model-gateway/dist/adapters/ollama-adapter.js', () => ({
+vi.mock('@cortex-os/model-gateway', () => ({
 	OllamaAdapter: vi.fn().mockImplementation(() => ({
 		generateChat: vi.fn().mockResolvedValue({ response: 'Mocked Ollama response' }),
 	})),

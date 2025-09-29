@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { createLongHorizonPlanner, type LongHorizonPlanner, type LongHorizonTask, type PlanningResult } from '../lib/long-horizon-planner.js';
 import {
         AdaptiveCoordinationManager,
         type AgentDescriptor,
         type CoordinationDecision,
 } from '../coordinator/adaptive-coordinator.js';
+import { createLongHorizonPlanner, type LongHorizonPlanner, type LongHorizonTask, type PlanningResult } from '../lib/long-horizon-planner.js';
+import type { PlanningContext } from '../utils/dsp.js';
 import { createCerebrumGraph } from './create-cerebrum-graph.js';
 import { createInitialN0State, mergeN0State, type N0Session, type N0State } from './n0-state.js';
-import type { PlanningContext } from '../utils/dsp.js';
 
 export interface ExecutePlannedWorkflowOptions {
         input: string;
@@ -51,7 +51,7 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
 
         const task = normalizeTask(options.task);
         const planningResult = await planner.planAndExecute(task, async (phase, context) => {
-                        return buildPhaseSummary(phase, context, clock);
+                return buildPhaseSummary(phase, context, clock);
         });
 
         const coordinationDecision = coordinationManager.coordinate({
@@ -63,30 +63,38 @@ export async function executePlannedWorkflow(options: ExecutePlannedWorkflowOpti
         });
 
         const graph = createCerebrumGraph();
-        const graphState = await graph.invoke({
-                 input: options.input,
-                 planning: {
-                         taskId: task.id,
-                         phases: planningResult.phases.map((phase) => ({
-                                 phase: phase.phase,
-                                 duration: phase.duration,
-                                 status: (phase.error ? 'failed' : 'completed') as 'failed' | 'completed',
-                         })),
-                         recommendations: planningResult.recommendations,
-                         security: planningResult.security,
-                 },
-                 coordination: {
-                         strategy: coordinationDecision.strategy,
-                         assignments: coordinationDecision.assignments,
-                         confidence: coordinationDecision.confidence,
-                 },
-        } as any);
+        const planningPayload = {
+                input: options.input,
+                planning: {
+                        taskId: task.id,
+                        phases: planningResult.phases.map((phase) => {
+                                const status: 'failed' | 'completed' = phase.error ? 'failed' : 'completed';
+                                return {
+                                        phase: phase.phase,
+                                        duration: phase.duration,
+                                        status,
+                                };
+                        }),
+                        recommendations: planningResult.recommendations,
+                        security: planningResult.security,
+                },
+                coordination: {
+                        strategy: coordinationDecision.strategy,
+                        assignments: coordinationDecision.assignments,
+                        confidence: coordinationDecision.confidence,
+                },
+        };
 
-        const stateTransitions = planningResult.phases.map((phase) => ({
-                phase: phase.phase,
-                status: (phase.error ? 'failed' : 'completed') as 'failed' | 'completed',
-                duration: phase.duration,
-        }));
+        const graphState = await graph.invoke(planningPayload as unknown as Parameters<typeof graph.invoke>[0]);
+
+        const stateTransitions = planningResult.phases.map((phase) => {
+                const status: 'failed' | 'completed' = phase.error ? 'failed' : 'completed';
+                return {
+                        phase: phase.phase,
+                        status,
+                        duration: phase.duration,
+                };
+        });
 
         const session = { ...DEFAULT_SESSION, ...options.session };
         const baseState = createInitialN0State(options.input, session);

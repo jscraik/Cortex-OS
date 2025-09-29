@@ -291,7 +291,7 @@ export interface IOrchestrationHybridRouter {
 	validateModels(): ModelValidationResult;
 }
 export class OrchestrationHybridRouter implements IOrchestrationHybridRouter {
-	private models: Map<string, OrchestrationModelConfig> = new Map();
+	private readonly models: Map<string, OrchestrationModelConfig> = new Map();
 	// Backing fields for setter methods
 	private privacyMode: boolean = ORCHESTRATION_HYBRID_CONFIG.privacy_mode_enabled;
 	private hybridMode: HybridMode = ORCHESTRATION_HYBRID_CONFIG.hybrid_mode;

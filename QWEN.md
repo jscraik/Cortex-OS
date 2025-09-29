@@ -1,6 +1,19 @@
-# QWEN.md - Cortex-OS Context for Qwen Code
-
 # QWEN.md - brAInwav Cortex-OS Development Guide
+
+## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
+
+**CRITICAL**: This repository adheres to strict governance standards for file organization and architectural clarity. Only approved, comprehensive files belong at the repository root level per brAInwav governance policies.
+
+### Root-Level File Governance
+
+- **Authoritative Agent Documentation**: Complete instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) belong at root
+- **Foundation Documents**: Core standards (CODESTYLE.md, README.md, CHANGELOG.md) maintained at root level
+- **Structure Guard Enforcement**: Automated validation against approved `allowedRootEntries` governance list
+- **brAInwav Compliance**: All root documentation must include brAInwav branding and organizational context
+
+**Qwen Agent Standards**: When suggesting file creation or movement, verify governance compliance. Specialized configurations, partial documents, and rules belong in structured subdirectories (`.cortex/rules/`, `config/`, package-specific `/docs`).
+
+---
 
 ## 🚨 CRITICAL: brAInwav Production Standards
 

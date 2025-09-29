@@ -103,6 +103,7 @@ export const AgentToolkitCodemapResultSchema = AgentToolkitBaseResultSchema.exte
 		jsonPath: z.string(),
 		markdownPath: z.string(),
 	}),
+	error: z.string().optional(),
 });
 
 // Events for A2A communication

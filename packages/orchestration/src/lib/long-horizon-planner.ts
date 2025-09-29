@@ -9,6 +9,7 @@ import {
 	type SecurityIntegrationResult,
 	type SecurityIntegrationService,
 } from '@cortex-os/cortex-sec';
+import { OrchestrationMetrics } from '../observability/custom-metrics.js';
 import {
 	type DSPConfig,
 	DynamicSpeculativePlanner,
@@ -63,6 +64,7 @@ export class LongHorizonPlanner {
 	private readonly dsp: DynamicSpeculativePlanner;
 	private readonly config: LongHorizonPlannerConfig;
 	private readonly securityIntegration: SecurityIntegrationService;
+	private readonly metrics: OrchestrationMetrics;
 	private activeContext?: PlanningContext;
 
 	constructor(config: LongHorizonPlannerConfig = {}) {
@@ -82,6 +84,8 @@ export class LongHorizonPlanner {
 			contextIsolation: this.config.enableContextIsolation,
 			planningDepth: config.planningDepth ?? 3,
 		});
+
+		this.metrics = new OrchestrationMetrics();
 
 		console.log('brAInwav Long-Horizon Planner: Initialized with enhanced DSP capabilities');
 	}
@@ -110,50 +114,14 @@ export class LongHorizonPlanner {
 		const context = this.dsp.initializePlanning(task.id, task.complexity, task.priority);
 		this.activeContext = context;
 
-		const complianceSnapshot = context.compliance
-			? {
-				compliance: {
-					standards: context.compliance.standards,
-					lastCheckedAt: context.compliance.lastCheckedAt,
-					riskScore: context.compliance.riskScore,
-					outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
-						id: violation.id,
-						severity: violation.severity,
-					})),
-				},
-			}
-			: undefined;
+		// Apply security evaluation and update context (extract to helper for clarity and testability)
+		const securityEvaluation = this.applySecurityEvaluation(task, context);
 
-		const securityEvaluation = this.securityIntegration.evaluate({
+		// Persistence hook: Record planning start (use centralized helper)
+		await this.recordPersistenceEvent('planning_started', {
 			taskId: task.id,
-			description: task.description,
-			complianceContext: complianceSnapshot,
+			contextId: context.id,
 		});
-
-		if (!context.compliance) {
-			context.compliance = {
-				standards: securityEvaluation.standards,
-				lastCheckedAt: securityEvaluation.lastCheckedAt,
-				riskScore: securityEvaluation.aggregateRisk,
-				outstandingViolations: [],
-			};
-		} else {
-			context.compliance.standards = securityEvaluation.standards;
-			context.compliance.lastCheckedAt = securityEvaluation.lastCheckedAt;
-			context.compliance.riskScore = securityEvaluation.aggregateRisk;
-		}
-
-		context.preferences.notes.push(`brAInwav security summary: ${securityEvaluation.summary}`);
-
-		// Persistence hook: Record planning start
-		if (this.config.persistenceEnabled) {
-			await this.persistPlanningEvent('planning_started', {
-				taskId: task.id,
-				contextId: context.id,
-				timestamp: new Date(),
-				brainwavOrigin: true,
-			});
-		}
 
 		const result: PlanningResult = {
 			taskId: task.id,
@@ -175,86 +143,15 @@ export class LongHorizonPlanner {
 			const phases = this.getPlanningPhases(task);
 
 			for (const phase of phases) {
-				const phaseStartTime = Date.now();
-
-				try {
-					// Advance to next phase
-					this.dsp.advancePhase(`Execute ${phase} phase for task: ${task.description}`);
-
-					// Persistence hook: Record phase start
-					if (this.config.persistenceEnabled) {
-						await this.persistPlanningEvent('phase_started', {
-							taskId: task.id,
-							contextId: context.id,
-							phase,
-							timestamp: new Date(),
-							brainwavOrigin: true,
-						});
-					}
-
-					// Execute phase with context isolation
-					const phaseResult = await this.executePhaseWithTimeout(phase, context, executor);
-
-					const phaseDuration = Date.now() - phaseStartTime;
-
-					result.phases.push({
-						phase,
-						duration: phaseDuration,
-						result: phaseResult,
-					});
-
-					// Update DSP with success
-					this.dsp.update(true);
-
-					// Persistence hook: Record phase completion
-					if (this.config.persistenceEnabled) {
-						await this.persistPlanningEvent('phase_completed', {
-							taskId: task.id,
-							contextId: context.id,
-							phase,
-							duration: phaseDuration,
-							timestamp: new Date(),
-							brainwavOrigin: true,
-						});
-					}
-
-					console.log(
-						`brAInwav Long-Horizon Planner: Completed ${phase} phase in ${phaseDuration}ms`,
-					);
-				} catch (error) {
-					const phaseDuration = Date.now() - phaseStartTime;
-					const errorMessage = error instanceof Error ? error.message : String(error);
-
-					result.phases.push({
-						phase,
-						duration: phaseDuration,
-						error: errorMessage,
-					});
-
-					// Update DSP with failure
-					this.dsp.update(false);
-					result.success = false;
-
-					// Persistence hook: Record phase failure
-					if (this.config.persistenceEnabled) {
-						await this.persistPlanningEvent('phase_failed', {
-							taskId: task.id,
-							contextId: context.id,
-							phase,
-							error: errorMessage,
-							duration: phaseDuration,
-							timestamp: new Date(),
-							brainwavOrigin: true,
-						});
-					}
-
-					console.error(`brAInwav Long-Horizon Planner: Failed ${phase} phase: ${errorMessage}`);
-
-					// Continue with next phase unless critical failure
-					if (this.isCriticalPhase(phase)) {
-						break;
-					}
-				}
+				// Use a dedicated helper to execute a phase and update the public result object
+				const continuePlanning = await this.executePhaseAndUpdateResult(
+					phase,
+					context,
+					executor,
+					task,
+					result,
+				);
+				if (!continuePlanning) break;
 			}
 
 			// Complete planning
@@ -267,17 +164,13 @@ export class LongHorizonPlanner {
 		result.totalDuration = Date.now() - startTime;
 		result.recommendations = this.generateRecommendations(task, result);
 
-		// Persistence hook: Record planning completion
-		if (this.config.persistenceEnabled) {
-			await this.persistPlanningEvent('planning_completed', {
-				taskId: task.id,
-				contextId: context.id,
-				success: result.success,
-				totalDuration: result.totalDuration,
-				timestamp: new Date(),
-				brainwavOrigin: true,
-			});
-		}
+		// Persistence hook: Record planning completion (use centralized helper)
+		await this.recordPersistenceEvent('planning_completed', {
+			taskId: task.id,
+			contextId: context.id,
+			success: result.success,
+			totalDuration: result.totalDuration,
+		});
 
 		console.log(
 			`brAInwav Long-Horizon Planner: Completed planning for task ${task.id} in ${result.totalDuration}ms`,
@@ -341,38 +234,49 @@ export class LongHorizonPlanner {
 	 * Generate recommendations based on planning results
 	 */
 	private generateRecommendations(task: LongHorizonTask, result: PlanningResult): string[] {
-		const recommendations: string[] = [];
+		return [
+			...this.recommendComplexity(task),
+			...this.recommendPriority(task),
+			...this.recommendPerformance(result),
+			...this.recommendFailures(result),
+			...this.recommendAdaptiveDepth(result),
+		];
+	}
 
-		// Complexity-based recommendations
+	private recommendComplexity(task: LongHorizonTask): string[] {
 		if (task.complexity > 7) {
-			recommendations.push('Consider breaking down into smaller subtasks for better manageability');
+			return ['Consider breaking down into smaller subtasks for better manageability'];
 		}
+		return [];
+	}
 
-		// Priority-based recommendations
+	private recommendPriority(task: LongHorizonTask): string[] {
 		if (task.priority > 8) {
-			recommendations.push('Allocate additional resources for high priority task execution');
+			return ['Allocate additional resources for high priority task execution'];
 		}
+		return [];
+	}
 
-		// Performance-based recommendations
+	private recommendPerformance(result: PlanningResult): string[] {
 		if (result.totalDuration > 180000) {
-			// > 3 minutes
-			recommendations.push('Monitor execution time closely for long-running planning phases');
+			return ['Monitor execution time closely for long-running planning phases'];
 		}
+		return [];
+	}
 
-		// Failure-based recommendations
+	private recommendFailures(result: PlanningResult): string[] {
 		const failedPhases = result.phases.filter((p) => p.error);
 		if (failedPhases.length > 0) {
-			recommendations.push(
-				`Review and retry failed phases: ${failedPhases.map((p) => p.phase).join(', ')}`,
-			);
+			return [`Review and retry failed phases: ${failedPhases.map((p) => p.phase).join(', ')}`];
 		}
+		return [];
+	}
 
-		// Adaptive depth recommendations
+	private recommendAdaptiveDepth(result: PlanningResult): string[] {
 		if (result.adaptiveDepth > 5) {
-			recommendations.push('High planning depth detected - ensure adequate context management');
+			return ['High planning depth detected - ensure adequate context management'];
 		}
-
-		return recommendations;
+		return [];
 	}
 
 	/**
@@ -429,6 +333,207 @@ export class LongHorizonPlanner {
 
 		// Future: Integrate with actual persistence layer
 		// await this.persistenceAdapter.recordEvent(eventType, eventData);
+	}
+
+	/**
+	 * Centralized persistence/telemetry helper. Adds common envelope fields, respects
+	 * persistenceEnabled, and handles errors without bubbling to callers.
+	 */
+	private async recordPersistenceEvent(
+		eventType: string,
+		eventData: Record<string, unknown>,
+	): Promise<void> {
+		if (!this.config.persistenceEnabled) return;
+
+		const envelope = {
+			...eventData,
+			timestamp: new Date(),
+			brainwavOrigin: true,
+		};
+
+		const start = Date.now();
+		try {
+			await this.persistPlanningEvent(eventType, envelope);
+			const durationMs = Date.now() - start;
+			// Emit metric for persistence success
+			try {
+				this.metrics.recordPlannerPersistenceEvent(eventType, 'success', undefined, durationMs / 1000);
+			} catch (merr) {
+				console.warn('brAInwav Telemetry hook failed (recordPlannerPersistenceEvent):', merr);
+			}
+		} catch (err) {
+			console.warn(`brAInwav Persistence helper failed (${eventType}):`, err);
+			// Emit metric for persistence failure
+			try {
+				this.metrics.recordPlannerPersistenceEvent(
+					eventType,
+					'error',
+					err instanceof Error ? err.message : String(err),
+				);
+			} catch (merr) {
+				console.warn('brAInwav Telemetry hook failed (recordPlannerPersistenceEvent):', merr);
+			}
+		}
+	}
+
+	/**
+	 * Execute a single planning phase and handle persistence and timeouts.
+	 * Returns an outcome object describing success or failure and the duration.
+	 */
+	private async runPhase(
+		phase: PlanningPhase,
+		context: PlanningContext,
+		executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
+		task: LongHorizonTask,
+	): Promise<{ phaseDuration: number; result?: unknown; error?: string }> {
+		const phaseStartTime = Date.now();
+
+		// Advance DSP to indicate phase execution
+		this.dsp.advancePhase(`Execute ${phase} phase for task: ${task.description}`);
+
+		// Persistence hook: Record phase start
+		// Fire-and-forget persistence call through the resilient helper
+		this.recordPersistenceEvent('phase_started', {
+			taskId: task.id,
+			contextId: context.id,
+			phase,
+		});
+
+		try {
+			const phaseResult = await this.executePhaseWithTimeout(phase, context, executor);
+			const phaseDuration = Date.now() - phaseStartTime;
+
+			// Persistence hook: Record phase completion
+			if (this.config.persistenceEnabled) {
+				this.recordPersistenceEvent('phase_completed', {
+					taskId: task.id,
+					contextId: context.id,
+					phase,
+					duration: phaseDuration,
+				});
+			}
+
+			return { phaseDuration, result: phaseResult };
+		} catch (err) {
+			const phaseDuration = Date.now() - phaseStartTime;
+			const errorMessage = err instanceof Error ? err.message : String(err);
+
+			if (this.config.persistenceEnabled) {
+				this.recordPersistenceEvent('phase_failed', {
+					taskId: task.id,
+					contextId: context.id,
+					phase,
+					error: errorMessage,
+					duration: phaseDuration,
+				});
+			}
+
+			return { phaseDuration, error: errorMessage };
+		}
+	}
+
+	/**
+	 * Apply security evaluation to the planning context. Wraps the configured securityIntegration
+	 * call and ensures the context.compliance is populated; on failure, returns a safe fallback
+	 * and records a note on the context.
+	 */
+	private applySecurityEvaluation(task: LongHorizonTask, context: PlanningContext) {
+		const complianceSnapshot = context.compliance
+			? {
+				compliance: {
+					standards: context.compliance.standards,
+					lastCheckedAt: context.compliance.lastCheckedAt,
+					riskScore: context.compliance.riskScore,
+					outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
+						id: violation.id,
+						severity: violation.severity,
+					})),
+				},
+			}
+			: undefined;
+
+		try {
+			const evaluation = this.securityIntegration.evaluate({
+				taskId: task.id,
+				description: task.description,
+				complianceContext: complianceSnapshot,
+			});
+
+			if (!context.compliance) {
+				context.compliance = {
+					standards: evaluation.standards,
+					lastCheckedAt: evaluation.lastCheckedAt,
+					riskScore: evaluation.aggregateRisk,
+					outstandingViolations: [],
+				};
+			} else {
+				context.compliance.standards = evaluation.standards;
+				context.compliance.lastCheckedAt = evaluation.lastCheckedAt;
+				context.compliance.riskScore = evaluation.aggregateRisk;
+			}
+
+			context.preferences.notes.push(`brAInwav security summary: ${evaluation.summary}`);
+			return evaluation;
+		} catch (e) {
+			// Fail open: record the failure in context notes and return a safe fallback
+			const errMsg = e instanceof Error ? e.message : String(e);
+			console.warn(`brAInwav Long-Horizon Planner: Security evaluation failed: ${errMsg}`);
+
+			const fallback = {
+				standards: [],
+				lastCheckedAt: new Date(),
+				aggregateRisk: 0,
+				outstandingViolations: [],
+				summary: `Security evaluation failed: ${errMsg}`,
+			} as unknown as SecurityIntegrationResult;
+
+			if (!context.compliance) {
+				context.compliance = {
+					standards: fallback.standards,
+					lastCheckedAt: fallback.lastCheckedAt,
+					riskScore: fallback.aggregateRisk,
+					outstandingViolations: [],
+				};
+			}
+
+			context.preferences.notes.push(`brAInwav security evaluation failed: ${errMsg}`);
+			return fallback;
+		}
+	}
+
+	/**
+	 * Execute a single planning phase and update the public PlanningResult with phase outcome.
+	 * Returns true to continue planning or false to stop (critical failure).
+	 */
+	private async executePhaseAndUpdateResult(
+		phase: PlanningPhase,
+		context: PlanningContext,
+		executor: (phase: PlanningPhase, context: PlanningContext) => Promise<unknown>,
+		task: LongHorizonTask,
+		result: PlanningResult,
+	): Promise<boolean> {
+		const phaseOutcome = await this.runPhase(phase, context, executor, task);
+
+		if (phaseOutcome.result !== undefined) {
+			result.phases.push({
+				phase,
+				duration: phaseOutcome.phaseDuration,
+				result: phaseOutcome.result,
+			});
+			this.dsp.update(true);
+			return true;
+		}
+
+		result.phases.push({ phase, duration: phaseOutcome.phaseDuration, error: phaseOutcome.error });
+		this.dsp.update(false);
+		result.success = false;
+		console.error(`brAInwav Long-Horizon Planner: Failed ${phase} phase: ${phaseOutcome.error}`);
+
+		if (this.isCriticalPhase(phase)) {
+			return false;
+		}
+
+		return true;
 	}
 }
 

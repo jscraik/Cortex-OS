@@ -5,6 +5,7 @@
  * Simplified integration example showing how to use operational components
  */
 
+import type { Server } from 'node:http';
 import express from 'express';
 import { ConfigurationManager } from './operations/configuration-manager.js';
 import {
@@ -19,9 +20,9 @@ import { createOperationalEndpoints } from './operations/operational-endpoints.j
  * Integrates core operational components for production deployment
  */
 export class NOProductionApp {
-	private app: express.Application;
-	private server: any;
-	private config: ConfigurationManager;
+	private readonly app: express.Application;
+	private server: Server | null = null;
+	private readonly config: ConfigurationManager;
 	private healthChecker!: HealthChecker;
 	private shutdownManager!: GracefulShutdownManager;
 
@@ -201,38 +202,40 @@ export class NOProductionApp {
 			return undefined;
 		}
 
-		return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+		return (req: express.Request, res: express.Response, next: express.NextFunction): void => {
 			try {
 				const authHeader = req.headers.authorization;
-				if (!authHeader || !authHeader.startsWith('Bearer ')) {
-					return res.status(401).json({
+				if (!authHeader?.startsWith('Bearer ')) {
+					res.status(401).json({
 						error: {
 							code: 'UNAUTHORIZED',
 							message: 'Bearer token required',
 						},
 					});
+					return;
 				}
 
 				// Simplified token validation for demo
 				const token = authHeader.substring(7);
 				if (token !== 'admin-token') {
-					return res.status(401).json({
+					res.status(401).json({
 						error: {
 							code: 'UNAUTHORIZED',
 							message: 'Invalid token',
 						},
 					});
+					return;
 				}
 
 				next();
-				return;
 			} catch {
-				return res.status(401).json({
+				res.status(401).json({
 					error: {
 						code: 'UNAUTHORIZED',
 						message: 'Authentication failed',
 					},
 				});
+				return;
 			}
 		};
 	}

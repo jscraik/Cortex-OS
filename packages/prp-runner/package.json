@@ -39,6 +39,7 @@
     "@cortex-os/a2a": "workspace:*",
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/kernel": "workspace:*",
+    "@cortex-os/orchestration": "workspace:*",
     "@langchain/core": "^0.3.32",
     "@langchain/langgraph": "0.4.9",
     "axe-core": "^4.9.1",

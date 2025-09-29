@@ -72,7 +72,7 @@ export const workflowMetrics: ExtendedWorkflowMetrics = {
 
 	resourceUtilization: meter.createGauge('resource_utilization_ratio', {
 		description: 'Resource utilization ratio (0-1)',
-	}),
+	}) as unknown as GaugeLike,
 };
 
 export async function withSpan<T>(

@@ -1,0 +1,7 @@
+/Users/jamiecraik/.Cortex-OS/packages/registry/vitest.config.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/registry/test/schema-registry.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/registry/test/unit.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/registry/src/index.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/registry/src/logger.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/registry/src/mcp/tools.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/registry/src/events/registry-events.ts:0:0: warning File ignored because no matching configuration was supplied.

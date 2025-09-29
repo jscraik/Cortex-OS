@@ -31,8 +31,15 @@ async function testRouterEndpoint(
 		throw new Error(`Route ${method.toUpperCase()} ${path} not found`);
 	}
 
-	// Call the handler
-	await route.route.stack[0].handle(req || createMockRequest(), mockRes);
+	// Call the final handler in the route stack (last middleware is the actual endpoint handler)
+	const finalLayer = route.route.stack[route.route.stack.length - 1];
+	const handler = finalLayer && finalLayer.handle ? finalLayer.handle : null;
+	if (!handler) throw new Error('No handler found for route');
+	// Provide a no-op next function to satisfy middleware that expects it
+	const noopNext = () => {
+		/* intentionally empty */
+	};
+	await handler(req || createMockRequest(), mockRes as Response, noopNext);
 
 	return { response: mockRes, route };
 }

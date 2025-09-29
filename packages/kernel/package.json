@@ -51,6 +51,7 @@
   "dependencies": {
     "@cortex-os/hooks": "workspace:*",
     "@cortex-os/orchestration": "workspace:*",
+    "@cortex-os/prp-runner": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

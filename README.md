@@ -94,7 +94,6 @@ Agent-toolkit follows Cortex-OS principles:
 - Section filters omit unused keys from the JSON/Markdown snapshots while preserving required metadata (`scan`, `notes`, `tools`).
 - Optional tools (e.g. `lizard`, `madge`, `depcheck`) annotate availability and embed results under `analysis` without failing when binaries are missing.
 
-
 Use smart wrappers instead of blanket `run-many`:
 
 ```bash

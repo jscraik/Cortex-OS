@@ -1,0 +1,22 @@
+[
+  {
+    "id": "readme",
+    "title": "Project README",
+    "snippet": "Overview of the Cortex MCP service, deployment steps, and tooling.",
+    "text": "# Cortex MCP\n\nThis service provides ...",
+    "url": "https://cortex-os.local/docs/readme",
+    "source": "docs",
+    "score": 0.93,
+    "metadata": {"path": "docs/README.md"}
+  },
+  {
+    "id": "deployment",
+    "title": "Deployment Guide",
+    "snippet": "How to run the FastMCP server and configure Cloudflare tunnel.",
+    "text": "# Deployment Guide\n\nConfigure the tunnel and environment variables ...",
+    "url": "https://cortex-os.local/docs/deployment",
+    "source": "docs",
+    "score": 0.88,
+    "metadata": {"path": "docs/DEPLOYMENT.md"}
+  }
+]

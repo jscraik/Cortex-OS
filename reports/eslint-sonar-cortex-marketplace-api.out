@@ -1,0 +1,11 @@
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/vitest.config.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/constants.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/index.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/install.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/install.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/registry.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/registry.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/types.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/lib/install-commands.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/ai/mlx-service.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/apps/cortex-marketplace-api/src/ai/mlx-service.ts:0:0: warning File ignored because no matching configuration was supplied.

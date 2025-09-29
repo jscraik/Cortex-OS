@@ -10,6 +10,8 @@
 import { randomInt } from 'node:crypto';
 import { healthMetrics } from './prometheus-metrics.js';
 
+export type HealthStatus = 'healthy' | 'unhealthy' | 'degraded';
+
 export interface HealthCheck {
 	name: string;
 	description: string;
@@ -19,7 +21,7 @@ export interface HealthCheck {
 }
 
 export interface HealthCheckResult {
-	status: 'healthy' | 'unhealthy' | 'degraded';
+	status: HealthStatus;
 	message?: string;
 	details?: Record<string, unknown>;
 	responseTime?: number;
@@ -27,7 +29,7 @@ export interface HealthCheckResult {
 }
 
 export interface SystemHealth {
-	status: 'healthy' | 'unhealthy' | 'degraded';
+	status: HealthStatus;
 	timestamp: string;
 	version: string;
 	uptime: number;
@@ -44,9 +46,9 @@ export interface SystemHealth {
  * Health Check Manager
  */
 export class HealthChecker {
-	private checks: Map<string, HealthCheck> = new Map();
-	private lastResults: Map<string, HealthCheckResult> = new Map();
-	private startTime: number = Date.now();
+	private readonly checks: Map<string, HealthCheck> = new Map();
+	private readonly lastResults: Map<string, HealthCheckResult> = new Map();
+	private readonly startTime: number = Date.now();
 
 	/**
 	 * Register a health check
@@ -124,7 +126,7 @@ export class HealthChecker {
 				const usedMB = usage.heapUsed / 1024 / 1024;
 				const usagePercent = (usedMB / totalMB) * 100;
 
-				let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+				let status: HealthStatus = 'healthy';
 				if (usagePercent > 90) status = 'unhealthy';
 				else if (usagePercent > 80) status = 'degraded';
 
@@ -150,7 +152,7 @@ export class HealthChecker {
 				await new Promise((resolve) => setImmediate(resolve));
 				const lag = Number(process.hrtime.bigint() - start) / 1e6; // Convert to ms
 
-				let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+				let status: HealthStatus = 'healthy';
 				if (lag > 100) status = 'unhealthy';
 				else if (lag > 50) status = 'degraded';
 
@@ -174,7 +176,7 @@ export class HealthChecker {
 				const availableAgents = randomInt(0, 6); // 0-5 agents
 				const activeAgents = Math.min(3, availableAgents); // Max 3 active
 
-				let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+				let status: HealthStatus = 'healthy';
 				if (availableAgents === 0) status = 'unhealthy';
 				else if (availableAgents < 2) status = 'degraded';
 
@@ -184,7 +186,7 @@ export class HealthChecker {
 					details: {
 						available: availableAgents,
 						active: activeAgents,
-						utilization: (activeAgents / availableAgents) * 100,
+						utilization: availableAgents ? (activeAgents / availableAgents) * 100 : 0,
 					},
 					timestamp: new Date().toISOString(),
 				};
@@ -234,7 +236,7 @@ export class HealthChecker {
 					(r) => r.status === 'fulfilled' && r.value.healthy,
 				).length;
 
-				let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+				let status: HealthStatus = 'healthy';
 				if (healthyCount === 0) status = 'unhealthy';
 				else if (healthyCount < services.length) status = 'degraded';
 
@@ -315,7 +317,7 @@ export class HealthChecker {
 	 */
 	private determineOverallStatus(
 		results: Record<string, HealthCheckResult>,
-	): 'healthy' | 'degraded' | 'unhealthy' {
+	): HealthStatus {
 		const checks = Array.from(this.checks.values());
 		const criticalChecks = checks.filter((check) => check.critical);
 
@@ -340,7 +342,7 @@ export class HealthChecker {
 	/**
 	 * Update Prometheus metrics
 	 */
-	private updateMetrics(overallStatus: string, results: Record<string, HealthCheckResult>): void {
+	private updateMetrics(overallStatus: HealthStatus, results: Record<string, HealthCheckResult>): void {
 		// Update overall health status
 		healthMetrics.healthStatus.set(overallStatus === 'healthy' ? 1 : 0);
 

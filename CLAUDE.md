@@ -1,6 +1,20 @@
 <!-- markdownlint-disable MD013 MD022 MD031 MD032 MD040 MD009 -->
 # CLAUDE.md
 
+## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
+
+**CRITICAL**: This repository follows strict governance standards for file placement and architectural integrity. Only approved files belong at the repository root to maintain brAInwav development standards.
+
+### Root-Level File Policy
+- **Model Documentation**: Comprehensive, authoritative agent instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) at root
+- **Foundation Standards**: Core project documents (CODESTYLE.md, README.md, CHANGELOG.md) belong at root level
+- **Governance Validation**: Structure Guard enforces root entries against approved `allowedRootEntries` list
+- **brAInwav Identity**: All root documentation must reflect brAInwav branding and company standards
+
+**Claude Agent Responsibility**: When creating or relocating files, ensure compliance with governance standards. Specialized rules, configurations, and partial documents belong in appropriate subdirectories (`.cortex/rules/`, `config/`, package-specific locations).
+
+---
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 🚨 CRITICAL: brAInwav Production Standards

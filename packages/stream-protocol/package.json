@@ -1,0 +1,41 @@
+{
+  "name": "@cortex-os/stream-protocol",
+  "version": "0.1.0",
+  "description": "Typed event stream server for Cortex-OS dual-buffer streaming",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --project tsconfig.json --watch",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts --no-ignore",
+    "test": "node ../../scripts/vitest-safe.mjs run",
+    "test:safe": "node ../../scripts/vitest-safe.mjs run"
+  },
+  "dependencies": {
+    "@cortex-os/protocol": "workspace:*",
+    "eventemitter3": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.1",
+    "@types/ws": "^8.18.1",
+    "eslint": "^9.35.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "(Apache-2.0 OR Commercial)"
+}

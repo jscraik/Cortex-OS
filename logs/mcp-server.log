@@ -1,0 +1,430 @@
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/starlette/applications.py:239: DeprecationWarning: The `middleware` decorator is deprecated, and will be removed in version 1.0.0. Refer to https://www.starlette.io/middleware/#using-middleware for recommended approach.
+  warnings.warn(
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/27/25 17:32:27] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [69449]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:3024 (Press CTRL+C to quit)
+INFO:     Shutting down
+ERROR:    Cancel 0 running task(s), timeout graceful shutdown exceeded
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+INFO:     Finished server process [69449]
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/starlette/applications.py:239: DeprecationWarning: The `middleware` decorator is deprecated, and will be removed in version 1.0.0. Refer to https://www.starlette.io/middleware/#using-middleware for recommended approach.
+  warnings.warn(
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/27/25 18:10:02] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [18222]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:3024 (Press CTRL+C to quit)
+INFO:     Shutting down
+ERROR:    Cancel 0 running task(s), timeout graceful shutdown exceeded
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+INFO:     Finished server process [18222]
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 13:28:35] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [10919]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 23:20:04] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [51586]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 23:25:04] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [54115]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 23:27:34] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [58437]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 23:30:54] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [60929]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 23:31:29] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [61878]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 23:36:24] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [65854]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│                                                                            │
+│        _ __ ___  _____           __  __  _____________    ____    ____     │
+│       _ __ ___ .'____/___ ______/ /_/  |/  / ____/ __ \  |___ \  / __ \    │
+│      _ __ ___ / /_  / __ `/ ___/ __/ /|_/ / /   / /_/ /  ___/ / / / / /    │
+│     _ __ ___ / __/ / /_/ (__  ) /_/ /  / / /___/ ____/  /  __/_/ /_/ /     │
+│    _ __ ___ /_/    \____/____/\__/_/  /_/\____/_/      /_____(*)____/      │
+│                                                                            │
+│                                                                            │
+│                                FastMCP  2.0                                │
+│                                                                            │
+│                                                                            │
+│               🖥️  Server name:     Cortex-OS MCP Server                     │
+│               📦 Transport:       Streamable-HTTP                          │
+│               🔗 Server URL:      http://127.0.0.1:3024/mcp                │
+│                                                                            │
+│               🏎️  FastMCP version: 2.12.3                                   │
+│               🤝 MCP SDK version: 1.14.0                                   │
+│                                                                            │
+│               📚 Docs:            https://gofastmcp.com                    │
+│               🚀 Deploy:          https://fastmcp.cloud                    │
+│                                                                            │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+
+[09/28/25 23:37:08] INFO     Starting MCP server 'Cortex-OS MCP   server.py:1572
+                             Server' with transport 'http' on                   
+                             http://127.0.0.1:3024/mcp                          
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [66142]
+INFO:     Waiting for application startup.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 3024): [errno 48] address already in use
+INFO:     Waiting for application shutdown.
+INFO:mcp.server.streamable_http_manager:StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.

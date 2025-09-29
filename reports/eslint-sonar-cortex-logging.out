@@ -1,0 +1,6 @@
+/Users/jamiecraik/.Cortex-OS/packages/cortex-logging/vitest.config.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-logging/src/index.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-logging/src/logger.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-logging/src/logger.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-logging/src/mcp/tools.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-logging/src/events/cortex-logging-events.ts:0:0: warning File ignored because no matching configuration was supplied.

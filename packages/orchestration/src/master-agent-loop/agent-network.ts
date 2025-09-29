@@ -7,8 +7,8 @@
  * @since 2024-12-09
  */
 
-import { EventEmitter } from 'node:events';
 import { nanoid } from 'nanoid';
+import { EventEmitter } from 'node:events';
 import { z } from 'zod';
 import { AgentNetworkErrorCode, createAgentNetworkError } from './agent-network-error.js';
 
@@ -26,6 +26,16 @@ export const AgentMessageSchema = z.object({
 });
 
 export type AgentMessage = z.infer<typeof AgentMessageSchema>;
+
+// Processed message type includes encryption/integrity metadata added by the network
+export type ProcessedAgentMessage = AgentMessage & {
+	encrypted?: boolean;
+	algorithm?: string;
+	integrity?: {
+		hash: string;
+		signature: string;
+	};
+};
 
 /**
  * Broadcast message schema
@@ -445,7 +455,7 @@ export class AgentNetwork extends EventEmitter {
 
 	// Private methods
 
-	private async deliverMessage(target: string, message: any): Promise<void> {
+	private async deliverMessage(target: string, message: ProcessedAgentMessage): Promise<void> {
 		const handler = this.messageHandlers.get(target);
 		if (!handler) {
 			throw createAgentNetworkError(
@@ -458,7 +468,7 @@ export class AgentNetwork extends EventEmitter {
 		await handler(message);
 	}
 
-	private encryptMessage(message: AgentMessage): any {
+	private encryptMessage(message: AgentMessage): ProcessedAgentMessage {
 		// Mock encryption - in real implementation would use actual encryption
 		// Always include integrity even when encrypted
 		return {
@@ -472,7 +482,7 @@ export class AgentNetwork extends EventEmitter {
 		};
 	}
 
-	private addIntegrityCheck(message: AgentMessage): any {
+	private addIntegrityCheck(message: AgentMessage): ProcessedAgentMessage {
 		// Add integrity verification - always add integrity check when encryption is not enabled
 		return {
 			...message,

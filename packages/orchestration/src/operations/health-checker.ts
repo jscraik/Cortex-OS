@@ -9,17 +9,19 @@
 import { EventEmitter } from 'node:events';
 import { totalmem } from 'node:os';
 
+export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
+
 export interface HealthCheckResult {
 	name: string;
-	status: 'healthy' | 'degraded' | 'unhealthy';
+	status: HealthStatus;
 	timestamp: Date;
 	responseTime: number;
-	details?: any;
+	details?: Record<string, unknown>;
 	error?: string;
 }
 
 export interface SystemHealth {
-	overall: 'healthy' | 'degraded' | 'unhealthy';
+	overall: HealthStatus;
 	timestamp: Date;
 	checks: HealthCheckResult[];
 	uptime: number;
@@ -35,13 +37,13 @@ export interface HealthCheck {
 }
 
 export class HealthChecker extends EventEmitter {
-	private checks: Map<string, HealthCheck> = new Map();
-	private results: Map<string, HealthCheckResult> = new Map();
-	private intervals: Map<string, NodeJS.Timeout> = new Map();
-	private startTime: Date = new Date();
+	private readonly checks: Map<string, HealthCheck> = new Map();
+	private readonly results: Map<string, HealthCheckResult> = new Map();
+	private readonly intervals: Map<string, NodeJS.Timeout> = new Map();
+	private readonly startTime: Date = new Date();
 
 	constructor(
-		private config: {
+		private readonly config: {
 			defaultTimeout?: number;
 			defaultInterval?: number;
 		} = {},
@@ -58,8 +60,8 @@ export class HealthChecker extends EventEmitter {
 		this.checks.set(check.name, check);
 
 		// Start periodic checking if interval is specified
-		if (check.interval || this.config.defaultInterval) {
-			const interval = check.interval || this.config.defaultInterval!;
+		const interval = check.interval ?? this.config.defaultInterval;
+		if (interval !== undefined && interval !== null) {
 			const timer = setInterval(async () => {
 				await this.runCheck(check.name);
 			}, interval);
@@ -92,7 +94,7 @@ export class HealthChecker extends EventEmitter {
 		}
 
 		const startTime = Date.now();
-		const timeout = check.timeout || this.config.defaultTimeout!;
+		const timeout = check.timeout ?? this.config.defaultTimeout;
 
 		try {
 			const result = await Promise.race([
@@ -135,7 +137,7 @@ export class HealthChecker extends EventEmitter {
 				status: 'unhealthy' as const,
 				timestamp: new Date(),
 				responseTime: 0,
-				error: error.message,
+				error: error instanceof Error ? error.message : String(error),
 			})),
 		);
 
@@ -152,7 +154,7 @@ export class HealthChecker extends EventEmitter {
 			return check?.critical !== false; // Default to critical
 		});
 
-		let overall: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+		let overall: HealthStatus = 'healthy';
 
 		// Determine overall status
 		const unhealthyCount = checks.filter((c) => c.status === 'unhealthy').length;
@@ -202,7 +204,7 @@ export class HealthChecker extends EventEmitter {
 	start(): void {
 		for (const [name, check] of this.checks) {
 			if (!this.intervals.has(name) && (check.interval || this.config.defaultInterval)) {
-				const interval = check.interval || this.config.defaultInterval!;
+				const interval = check.interval ?? this.config.defaultInterval;
 				const timer = setInterval(async () => {
 					await this.runCheck(name);
 				}, interval);
@@ -277,20 +279,25 @@ export class StandardHealthChecks {
 	/**
 	 * Redis cache connectivity check
 	 */
-	static redis(redisClient: any): HealthCheck {
+	static redis(redisClient: unknown): HealthCheck {
 		return {
 			name: 'redis',
 			critical: false,
 			check: async (): Promise<HealthCheckResult> => {
 				try {
-					await redisClient.ping();
-					return {
-						name: 'redis',
-						status: 'healthy',
-						timestamp: new Date(),
-						responseTime: 0,
-						details: { connected: true },
-					};
+					const rc = redisClient as { ping?: unknown } | undefined;
+					if (rc && typeof rc.ping === 'function') {
+						// ping may return a string or promise
+						await (rc.ping as () => unknown)();
+						return {
+							name: 'redis',
+							status: 'healthy',
+							timestamp: new Date(),
+							responseTime: 0,
+							details: { connected: true },
+						};
+					}
+					throw new Error('redis client does not support ping');
 				} catch (error) {
 					return {
 						name: 'redis',

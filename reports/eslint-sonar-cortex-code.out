@@ -1,0 +1,2 @@
+/Users/jamiecraik/.Cortex-OS/apps/cortex-code/codex-cli/bin/codex.js:71:3: error Definition for rule 'node/no-unsupported-features/es-syntax' was not found. (node/no-unsupported-features/es-syntax)
+/Users/jamiecraik/.Cortex-OS/apps/cortex-code/codex-cli/bin/codex.js:109:2: warning Unused eslint-disable directive (no problems were reported from 'no-console').

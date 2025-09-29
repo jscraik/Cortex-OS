@@ -1,0 +1,15 @@
+/Users/jamiecraik/.Cortex-OS/packages/gateway/vitest.config.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/tests/mcp.pact.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/tests/openapi.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/tests/provider.verify.skip.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/src/a2a.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/src/index.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/src/server.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/src/mcp/tools.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/src/lib/create-agent-route.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/src/events/gateway-events.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/__tests__/a2a.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/__tests__/create-agent-route.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/__tests__/server-rag-e2e-bus.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/__tests__/server-rag-mcp-metrics.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/gateway/__tests__/server-routes.test.ts:0:0: warning File ignored because no matching configuration was supplied.

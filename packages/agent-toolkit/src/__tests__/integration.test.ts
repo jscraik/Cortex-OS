@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DefaultToolRegistry } from '../app/ToolRegistry.js';
 import { CodeSearchUseCase, ToolExecutorUseCase } from '../app/UseCases.js';
 import { createAgentToolkit } from '../index.js';
@@ -28,11 +28,13 @@ describe('Agent Toolkit Integration', () => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
 			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
+			registry.registerCodemapTool('codemap', { generate: vi.fn() } as any);
 
 			const tools = registry.listTools();
 			expect(tools.search).toContain('ripgrep');
 			expect(tools.codemod).toContain('comby');
 			expect(tools.validation).toContain('multi-validator');
+			expect(tools.codemap).toContain('codemap');
 		});
 	});
 
@@ -41,6 +43,7 @@ describe('Agent Toolkit Integration', () => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
 			registry.registerValidationTool('multi-validator', new MultiValidatorAdapter());
+			registry.registerCodemapTool('codemap', { generate: vi.fn() } as any);
 		});
 
 		it('should check tool availability', async () => {
@@ -56,6 +59,7 @@ describe('Agent Toolkit Integration', () => {
 			expect(availableTools).toContain('ripgrep');
 			expect(availableTools).toContain('comby');
 			expect(availableTools).toContain('multi-validator');
+			expect(availableTools).toContain('codemap');
 		});
 
 		it('should throw error for unregistered tool', async () => {
@@ -117,6 +121,7 @@ describe('Agent Toolkit Integration', () => {
 			expect(typeof toolkit.codemod).toBe('function');
 			expect(typeof toolkit.validate).toBe('function');
 			expect(typeof toolkit.validateProject).toBe('function');
+			expect(typeof toolkit.generateCodemap).toBe('function');
 		});
 	});
 

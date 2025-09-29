@@ -1,0 +1,7 @@
+{
+    "name": "@cortex-os/stream-client",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/stream-client/src",
+    "projectType": "library",
+    "targets": {}
+}

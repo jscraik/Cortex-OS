@@ -1,0 +1,30 @@
+{
+    // Relax some rules for long-form plan/report docs that contain lengthy lines, inline HTML, and multiple headings.
+    "MD013": false,
+    "MD033": {
+        "allowed_elements": [
+            "sup",
+            "sub",
+            "img",
+            "br",
+            "details",
+            "summary"
+        ]
+    },
+    "MD025": false,
+    "MD022": false,
+    "MD031": false,
+    "MD032": false,
+    "MD029": false,
+    "MD024": false,
+    "MD026": false,
+    "MD009": false,
+    "MD034": false,
+    "MD040": false,
+    "MD041": {
+        "allow_preamble": true
+    },
+    "MD051": {
+        "ignore_case": true
+    }
+}

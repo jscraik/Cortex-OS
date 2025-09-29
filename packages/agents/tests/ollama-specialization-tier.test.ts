@@ -13,7 +13,7 @@ vi.mock('@cortex-os/model-gateway/dist/adapters/mlx-adapter.js', () => {
 	return { MLXAdapter };
 });
 
-vi.mock('@cortex-os/model-gateway/dist/adapters/ollama-adapter.js', () => {
+vi.mock('@cortex-os/model-gateway', () => {
 	class OllamaAdapter {
 		generateChat(_payload: unknown, model?: string) {
 			return Promise.resolve({ content: 'ok-ollama', model: model ?? 'deepseek-coder:6.7b' });
@@ -22,7 +22,7 @@ vi.mock('@cortex-os/model-gateway/dist/adapters/ollama-adapter.js', () => {
 	return { OllamaAdapter };
 });
 
-import { OllamaAdapter } from '@cortex-os/model-gateway/dist/adapters/ollama-adapter';
+import { OllamaAdapter } from '@cortex-os/model-gateway';
 import { createMasterAgentGraph } from '../src/MasterAgent.js';
 
 const OLD_ENV = { ...process.env };

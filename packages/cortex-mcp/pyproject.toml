@@ -136,10 +136,12 @@ minversion = "7.0"
 addopts = [
   "--strict-markers",
   "--strict-config",
-  "--cov=core/protocol.py",
-  "--cov=tasks/task_queue.py",
-  "--cov=mcp/mcp_servers/chatgpt_connector/server.py",
-  # vector_store.py removed; coverage updated
+  "--cov=cortex_fastmcp_server_v2",
+  "--cov=adapters",
+  "--cov=auth.jwt_auth",
+  "--cov=middleware.rate_limiter",
+  "--cov=security.input_validation",
+  "--cov=config",
   "--cov-report=term-missing:skip-covered",
   "--cov-report=html:htmlcov",
   "--cov-report=xml",
@@ -155,14 +157,18 @@ markers = [
   "performance: marks tests as performance tests",
   "unit: marks tests as unit tests",
   "asyncio: marks async tests",
+  "contract: marks live service contract tests",
 ]
 asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = [
-  "mcp/core/protocol.py",
-  "mcp/tasks/task_queue.py",
-  "mcp/mcp_servers/chatgpt_connector/server.py",
+  "cortex_fastmcp_server_v2",
+  "adapters",
+  "auth",
+  "middleware",
+  "security",
+  "config",
 ]
 omit = ["*/tests/*", "*/examples/*", "*/migrations/*", "*/__pycache__/*"]
 branch = true

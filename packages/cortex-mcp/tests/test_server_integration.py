@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
+from adapters.memory_adapter import MemoryAdapterError
 from httpx import ASGITransport, AsyncClient
 
 if "jwt" not in sys.modules:
@@ -23,11 +24,12 @@ if "jwt" not in sys.modules:
     sys.modules["jwt"] = jwt_stub
 
 if "prometheus_client" not in sys.modules:
+
     class _CounterStub:
         def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
-        def labels(self, **_: Any) -> "_CounterStub":
+        def labels(self, **_: Any) -> _CounterStub:
             return self
 
         def inc(self, *_: Any, **__: Any) -> None:
@@ -127,6 +129,19 @@ class StubMemoryAdapter:
 
 
 @dataclass
+class ErrorMemoryAdapter(StubMemoryAdapter):
+    async def store(
+        self,
+        *,
+        kind: str,
+        text: str,
+        tags: list[str] | None,
+        metadata: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        raise MemoryAdapterError("store failed")
+
+
+@dataclass
 class StubTokenData:
     user_id: str
     scopes: list[str]
@@ -136,7 +151,9 @@ class StubTokenData:
 class StubAuthenticator:
     required_scopes: list[str | None] = field(default_factory=list)
 
-    def verify_request(self, request: Any, required_scope: str | None = None) -> StubTokenData:
+    def verify_request(
+        self, request: Any, required_scope: str | None = None
+    ) -> StubTokenData:
         self.required_scopes.append(required_scope)
         request.state.user_id = "user-123"  # type: ignore[attr-defined]
         request.state.scopes = ["*"]  # type: ignore[attr-defined]
@@ -198,7 +215,9 @@ async def test_memory_routes_delegate_to_adapter_and_enforce_auth() -> None:
 
     app = server.http_app(transport="http")
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         response = await client.post(
             "/api/memories",
             json={"kind": "note", "text": "<b>Hello</b> Cortex"},
@@ -218,6 +237,13 @@ async def test_memory_routes_delegate_to_adapter_and_enforce_auth() -> None:
         search_payload = search_resp.json()
         assert search_payload["results"]
 
+        invalid_limit_resp = await client.get(
+            "/api/memories",
+            params={"query": "cortex", "limit": "not-a-number"},
+            headers={"Authorization": "Bearer test"},
+        )
+        assert invalid_limit_resp.status_code == 200
+
         get_resp = await client.get(
             f"/api/memories/{mem_id}", headers={"Authorization": "Bearer test"}
         )
@@ -232,6 +258,33 @@ async def test_memory_routes_delegate_to_adapter_and_enforce_auth() -> None:
         "memories:write",
         "memories:read",
         "memories:read",
+        "memories:read",
         "memories:delete",
     ]
     assert limiter.hits >= 4
+
+
+@pytest.mark.asyncio
+async def test_memory_routes_surface_adapter_errors() -> None:
+    search_adapter = StubSearchAdapter()
+    memory_adapter = ErrorMemoryAdapter()
+    authenticator = StubAuthenticator()
+    limiter = StubRateLimiter()
+
+    server = create_server(
+        adapters={"search": search_adapter, "memory": memory_adapter},
+        auth_overrides={"authenticator": authenticator, "rate_limiter": limiter},
+    )
+    app = server.http_app(transport="http")
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/api/memories",
+            json={"kind": "note", "text": "fail"},
+            headers={"Authorization": "Bearer test"},
+        )
+        assert response.status_code == 502
+        body = response.json()
+        assert body["error"]

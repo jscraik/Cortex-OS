@@ -1,0 +1,184 @@
+DEBUG uv 0.8.19 (Homebrew 2025-09-19)
+DEBUG Acquired shared lock for `/Users/jamiecraik/.Cortex-OS/.uv-cache`
+DEBUG Found project root: `/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp`
+DEBUG No workspace root found, using project root
+DEBUG Discovered project `cortex-mcp` at: /Users/jamiecraik/.Cortex-OS/packages/cortex-mcp
+DEBUG Acquired lock for `/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp`
+DEBUG No Python version file found in workspace: /Users/jamiecraik/.Cortex-OS/packages/cortex-mcp
+DEBUG Using Python request `>=3.12` from `requires-python` metadata
+DEBUG Checking for Python environment at: `.venv`
+DEBUG The project environment's Python version satisfies the request: `Python >=3.12`
+DEBUG Released lock at `/Volumes/ExternalSSD/ai-tmp/uv-8d9cc7780b3540e4.lock`
+DEBUG Acquired lock for `.venv`
+DEBUG Using request timeout of 30s
+DEBUG Found static `pyproject.toml` for: cortex-mcp @ file:///Users/jamiecraik/.Cortex-OS/packages/cortex-mcp
+DEBUG No workspace root found, using project root
+DEBUG Existing `uv.lock` satisfies workspace requirements
+DEBUG Using request timeout of 30s
+DEBUG Computed cache info: Some(Timestamp(SystemTime { tv_sec: 1759178987, tv_nsec: 8657169 })), None, None, {}, {"src": None}
+DEBUG Requirement already installed: cortex-mcp==1.0.0 (from file:///Users/jamiecraik/.Cortex-OS/packages/cortex-mcp)
+DEBUG Requirement already installed: aiofiles==24.1.0
+DEBUG Requirement already installed: aiomysql==0.2.0
+DEBUG Requirement already installed: aiosqlite==0.21.0
+DEBUG Requirement already installed: alembic==1.16.5
+DEBUG Requirement already installed: asyncpg==0.30.0
+DEBUG Requirement already installed: celery==5.5.3
+DEBUG Requirement already installed: click==8.3.0
+DEBUG Requirement already installed: cryptography==46.0.1
+DEBUG Requirement already installed: email-validator==2.3.0
+DEBUG Requirement already installed: fastapi==0.117.1
+DEBUG Requirement already installed: fastmcp==2.12.3
+DEBUG Requirement already installed: gguf==0.17.1
+DEBUG Requirement already installed: httpx==0.28.1
+DEBUG Requirement already installed: jsonrpclib-pelix==0.4.3.4
+DEBUG Requirement already installed: jsonschema==4.25.1
+DEBUG Requirement already installed: llama-cpp-python==0.3.16
+DEBUG Requirement already installed: mlx==0.29.1
+DEBUG Requirement already installed: mlx-lm==0.28.0
+DEBUG Requirement already installed: neo4j==5.28.2
+DEBUG Requirement already installed: opentelemetry-api==1.25.0
+DEBUG Requirement already installed: opentelemetry-instrumentation-fastapi==0.46b0
+DEBUG Requirement already installed: opentelemetry-instrumentation-sqlalchemy==0.46b0
+DEBUG Requirement already installed: opentelemetry-sdk==1.25.0
+DEBUG Requirement already installed: passlib==1.7.4
+DEBUG Requirement already installed: prometheus-client==0.23.1
+DEBUG Requirement already installed: psutil==7.1.0
+DEBUG Requirement already installed: pybreaker==1.4.1
+DEBUG Requirement already installed: pydantic==2.11.9
+DEBUG Requirement already installed: pydantic-settings==2.11.0
+DEBUG Requirement already installed: pyjwt==2.10.1
+DEBUG Requirement already installed: pymysql==1.1.2
+DEBUG Requirement already installed: python-dotenv==1.1.1
+DEBUG Requirement already installed: python-multipart==0.0.20
+DEBUG Requirement already installed: qdrant-client==1.15.1
+DEBUG Requirement already installed: redis==5.2.1
+DEBUG Requirement already installed: sentence-transformers==5.1.1
+DEBUG Requirement already installed: sqlalchemy==2.0.43
+DEBUG Requirement already installed: tenacity==9.1.2
+DEBUG Requirement already installed: torch==2.8.0
+DEBUG Requirement already installed: transformers==4.56.2
+DEBUG Requirement already installed: typing-extensions==4.15.0
+DEBUG Requirement already installed: uvicorn==0.37.0
+DEBUG Requirement already installed: websockets==15.0.1
+DEBUG Requirement already installed: mako==1.3.10
+DEBUG Requirement already installed: billiard==4.2.2
+DEBUG Requirement already installed: click-didyoumean==0.3.1
+DEBUG Requirement already installed: click-plugins==1.1.1.2
+DEBUG Requirement already installed: click-repl==0.3.0
+DEBUG Requirement already installed: kombu==5.5.4
+DEBUG Requirement already installed: python-dateutil==2.9.0.post0
+DEBUG Requirement already installed: vine==5.1.0
+DEBUG Requirement already installed: cffi==2.0.0
+DEBUG Requirement already installed: dnspython==2.8.0
+DEBUG Requirement already installed: idna==3.10
+DEBUG Requirement already installed: starlette==0.48.0
+DEBUG Requirement already installed: authlib==1.6.4
+DEBUG Requirement already installed: cyclopts==3.24.0
+DEBUG Requirement already installed: exceptiongroup==1.2.2
+DEBUG Requirement already installed: mcp==1.14.1
+DEBUG Requirement already installed: openapi-core==0.19.5
+DEBUG Requirement already installed: openapi-pydantic==0.5.1
+DEBUG Requirement already installed: pyperclip==1.10.0
+DEBUG Requirement already installed: rich==14.1.0
+DEBUG Requirement already installed: numpy==2.3.3
+DEBUG Requirement already installed: pyyaml==6.0.2
+DEBUG Requirement already installed: tqdm==4.67.1
+DEBUG Requirement already installed: anyio==4.11.0
+DEBUG Requirement already installed: certifi==2025.8.3
+DEBUG Requirement already installed: httpcore==1.0.9
+DEBUG Requirement already installed: attrs==25.3.0
+DEBUG Requirement already installed: jsonschema-specifications==2025.9.1
+DEBUG Requirement already installed: referencing==0.36.2
+DEBUG Requirement already installed: rpds-py==0.27.1
+DEBUG Requirement already installed: diskcache==5.6.3
+DEBUG Requirement already installed: jinja2==3.1.6
+DEBUG Requirement already installed: mlx-metal==0.29.1
+DEBUG Requirement already installed: protobuf==4.25.8
+DEBUG Requirement already installed: pytz==2025.2
+DEBUG Requirement already installed: deprecated==1.2.18
+DEBUG Requirement already installed: importlib-metadata==7.1.0
+DEBUG Requirement already installed: opentelemetry-instrumentation==0.46b0
+DEBUG Requirement already installed: opentelemetry-instrumentation-asgi==0.46b0
+DEBUG Requirement already installed: opentelemetry-semantic-conventions==0.46b0
+DEBUG Requirement already installed: opentelemetry-util-http==0.46b0
+DEBUG Requirement already installed: packaging==25.0
+DEBUG Requirement already installed: wrapt==1.17.3
+DEBUG Requirement already installed: bcrypt==4.3.0
+DEBUG Requirement already installed: annotated-types==0.7.0
+DEBUG Requirement already installed: pydantic-core==2.33.2
+DEBUG Requirement already installed: typing-inspection==0.4.1
+DEBUG Requirement already installed: grpcio==1.75.0
+DEBUG Requirement already installed: portalocker==3.2.0
+DEBUG Requirement already installed: urllib3==2.5.0
+DEBUG Requirement already installed: huggingface-hub==0.35.1
+DEBUG Requirement already installed: pillow==11.3.0
+DEBUG Requirement already installed: scikit-learn==1.7.2
+DEBUG Requirement already installed: scipy==1.16.2
+DEBUG Requirement already installed: filelock==3.19.1
+DEBUG Requirement already installed: fsspec==2025.9.0
+DEBUG Requirement already installed: networkx==3.5
+DEBUG Requirement already installed: setuptools==80.9.0
+DEBUG Requirement already installed: sympy==1.14.0
+DEBUG Requirement already installed: regex==2025.9.18
+DEBUG Requirement already installed: requests==2.32.5
+DEBUG Requirement already installed: safetensors==0.6.2
+DEBUG Requirement already installed: tokenizers==0.22.1
+DEBUG Requirement already installed: h11==0.16.0
+DEBUG Requirement already installed: httptools==0.6.4
+DEBUG Requirement already installed: uvloop==0.21.0
+DEBUG Requirement already installed: watchfiles==1.1.0
+DEBUG Requirement already installed: markupsafe==3.0.2
+DEBUG Requirement already installed: prompt-toolkit==3.0.52
+DEBUG Requirement already installed: amqp==5.3.1
+DEBUG Requirement already installed: tzdata==2025.2
+DEBUG Requirement already installed: six==1.17.0
+DEBUG Requirement already installed: pycparser==2.23
+DEBUG Requirement already installed: docstring-parser==0.17.0
+DEBUG Requirement already installed: rich-rst==1.3.1
+DEBUG Requirement already installed: httpx-sse==0.4.1
+DEBUG Requirement already installed: sse-starlette==3.0.2
+DEBUG Requirement already installed: isodate==0.7.2
+DEBUG Requirement already installed: jsonschema-path==0.3.4
+DEBUG Requirement already installed: more-itertools==10.8.0
+DEBUG Requirement already installed: openapi-schema-validator==0.6.3
+DEBUG Requirement already installed: openapi-spec-validator==0.7.2
+DEBUG Requirement already installed: parse==1.20.2
+DEBUG Requirement already installed: werkzeug==3.1.1
+DEBUG Requirement already installed: markdown-it-py==4.0.0
+DEBUG Requirement already installed: pygments==2.19.2
+DEBUG Requirement already installed: sniffio==1.3.1
+DEBUG Requirement already installed: zipp==3.23.0
+DEBUG Requirement already installed: asgiref==3.9.2
+DEBUG Requirement already installed: h2==4.3.0
+DEBUG Requirement already installed: hf-xet==1.1.10
+DEBUG Requirement already installed: joblib==1.5.2
+DEBUG Requirement already installed: threadpoolctl==3.6.0
+DEBUG Requirement already installed: mpmath==1.3.0
+DEBUG Requirement already installed: charset-normalizer==3.4.3
+DEBUG Requirement already installed: wcwidth==0.2.14
+DEBUG Requirement already installed: docutils==0.22.2
+DEBUG Requirement already installed: pathable==0.4.4
+DEBUG Requirement already installed: rfc3339-validator==0.1.4
+DEBUG Requirement already installed: lazy-object-proxy==1.12.0
+DEBUG Requirement already installed: mdurl==0.1.2
+DEBUG Requirement already installed: hpack==4.1.0
+DEBUG Requirement already installed: hyperframe==6.1.0
+DEBUG Released lock at `/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/.venv/.lock`
+DEBUG Using Python 3.12.11 interpreter at: /Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/.venv/bin/python3
+DEBUG Running `python cortex_fastmcp_server_v2.py`
+DEBUG Released lock at `/Users/jamiecraik/.Cortex-OS/.uv-cache/.lock`
+DEBUG Spawned child 77918 in process group 95080
+2025-09-30 00:04:21,836 [info] brAInwav Cortex MCP server configured
+/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/.venv/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+  warnings.warn(  # deprecated in 14.0 - 2024-11-09
+/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/.venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+INFO:     Started server process [77918]
+INFO:     Waiting for application startup.
+2025-09-30 00:04:21,861 [info] StreamableHTTP session manager started
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 3024): address already in use
+INFO:     Waiting for application shutdown.
+2025-09-30 00:04:21,863 [info] StreamableHTTP session manager shutting down
+INFO:     Application shutdown complete.
+DEBUG Command exited with code: 1

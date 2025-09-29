@@ -1,0 +1,12 @@
+/Users/jamiecraik/.Cortex-OS/packages/commands/vitest.config.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/tests/builtins.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/tests/parseSlash.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/tests/runner.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/adapters.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/builtins.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/index.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/loader.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/parseSlash.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/runner.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/security.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/commands/src/types.ts:0:0: warning File ignored because no matching configuration was supplied.

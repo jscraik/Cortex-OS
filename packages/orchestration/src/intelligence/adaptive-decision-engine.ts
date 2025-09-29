@@ -744,8 +744,11 @@ export class AdaptiveDecisionEngine {
 		// Simple heuristic placeholder: defer to an adaptive analysis if provided, otherwise no change
 		try {
 			// If feedback provides a recommendedStrategy, accept it
-			if (feedback && typeof feedback === 'object' && 'recommendedStrategy' in (feedback as any)) {
-				return { newStrategy: (feedback as any).recommendedStrategy };
+			if (feedback && typeof feedback === 'object' && 'recommendedStrategy' in feedback) {
+				const fb = feedback as Record<string, unknown>;
+				if (typeof fb.recommendedStrategy === 'string') {
+					return { newStrategy: fb.recommendedStrategy };
+				}
 			}
 		} catch {
 			// swallow and return no-op adjustment

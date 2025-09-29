@@ -151,17 +151,35 @@ export class OrchestrationTracer {
 		};
 
 		return this.tracer.startActiveSpan(spanName, spanOptions, async (span) => {
+			const startTime = Date.now();
+
 			try {
 				const result = await fn();
+
+				// Record timing
+				const duration = Date.now() - startTime;
+				span.setAttribute('model.duration_ms', duration);
+
+				// If the result contains token information, record it
+				if (result && typeof result === 'object') {
+					if ('tokensUsed' in result) {
+						span.setAttribute('model.total_tokens', this.normalizeAttributeValue(result.tokensUsed));
+					}
+					if ('usage' in result) {
+						const usage = result.usage as Record<string, number>;
+						if (usage.prompt_tokens) {
+							span.setAttribute('model.input_tokens', usage.prompt_tokens);
+						}
+						if (usage.completion_tokens) {
+							span.setAttribute('model.output_tokens', usage.completion_tokens);
+						}
+					}
+				}
+
 				span.setStatus({ code: SpanStatusCode.OK });
 				return result;
 			} catch (error) {
-				span.setStatus({
-					code: SpanStatusCode.ERROR,
-					message: error instanceof Error ? error.message : 'Unknown error',
-				});
-				// OpenTelemetry expects an Exception-like type; cast unknown errors here
-				span.recordException(error as unknown as import('@opentelemetry/api').Exception);
+				this.handleSpanException(span, error);
 				throw error;
 			} finally {
 				span.end();
@@ -200,11 +218,7 @@ export class OrchestrationTracer {
 				span.setStatus({ code: SpanStatusCode.OK });
 				return result;
 			} catch (error) {
-				span.setStatus({
-					code: SpanStatusCode.ERROR,
-					message: error instanceof Error ? error.message : 'Unknown error',
-				});
-				span.recordException(error as unknown as import('@opentelemetry/api').Exception);
+				this.handleSpanException(span, error);
 				throw error;
 			} finally {
 				span.end();
@@ -248,10 +262,7 @@ export class OrchestrationTracer {
 				// If the result contains token information, record it
 				if (result && typeof result === 'object') {
 					if ('tokensUsed' in result) {
-						span.setAttribute(
-							'model.total_tokens',
-							result.tokensUsed as unknown as import('@opentelemetry/api').AttributeValue,
-						);
+						span.setAttribute('model.total_tokens', this.normalizeAttributeValue(result.tokensUsed));
 					}
 					if ('usage' in result) {
 						const usage = result.usage as Record<string, number>;
@@ -267,11 +278,7 @@ export class OrchestrationTracer {
 				span.setStatus({ code: SpanStatusCode.OK });
 				return result;
 			} catch (error) {
-				span.setStatus({
-					code: SpanStatusCode.ERROR,
-					message: error instanceof Error ? error.message : 'Unknown error',
-				});
-				span.recordException(error as unknown as import('@opentelemetry/api').Exception);
+				this.handleSpanException(span, error);
 				throw error;
 			} finally {
 				span.end();
@@ -285,7 +292,7 @@ export class OrchestrationTracer {
 	addEvent(name: string, attributes?: Record<string, unknown>): void {
 		const span = trace.getActiveSpan();
 		if (span) {
-			span.addEvent(name, attributes as unknown as import('@opentelemetry/api').Attributes);
+			span.addEvent(name, this.normalizeAttributes(attributes));
 		}
 	}
 
@@ -295,7 +302,7 @@ export class OrchestrationTracer {
 	setAttribute(key: string, value: unknown): void {
 		const span = trace.getActiveSpan();
 		if (span) {
-			span.setAttribute(key, value as unknown as import('@opentelemetry/api').AttributeValue);
+			span.setAttribute(key, this.normalizeAttributeValue(value));
 		}
 	}
 
@@ -368,6 +375,44 @@ export class OrchestrationTracer {
 			// If parsing fails, log and return empty baggage rather than crashing
 			console.warn('brAInwav: failed to parse tracestate', err);
 			return {};
+		}
+	}
+
+	// Helper to normalize unknown values to OpenTelemetry AttributeValue
+	private normalizeAttributeValue(value: unknown): import('@opentelemetry/api').AttributeValue {
+		if (value === null || value === undefined) return String(value) as unknown as import('@opentelemetry/api').AttributeValue;
+		if (Array.isArray(value)) return value as unknown as import('@opentelemetry/api').AttributeValue;
+		if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
+			return value as import('@opentelemetry/api').AttributeValue;
+		}
+		// Fallback to string representation for complex objects
+		try {
+			return JSON.stringify(value) as unknown as import('@opentelemetry/api').AttributeValue;
+		} catch {
+			return String(value) as unknown as import('@opentelemetry/api').AttributeValue;
+		}
+	}
+
+	// Helper to normalize a record of attributes
+	private normalizeAttributes(attrs?: Record<string, unknown>): import('@opentelemetry/api').Attributes | undefined {
+		if (!attrs) return undefined;
+		const out: Record<string, import('@opentelemetry/api').AttributeValue> = {};
+		for (const [k, v] of Object.entries(attrs)) {
+			out[k] = this.normalizeAttributeValue(v);
+		}
+		return out as import('@opentelemetry/api').Attributes;
+	}
+
+	// Helper to handle exceptions inside spans
+	private handleSpanException(span: Span, error: unknown): void {
+		span.setStatus({
+			code: SpanStatusCode.ERROR,
+			message: error instanceof Error ? error.message : 'Unknown error',
+		});
+		if (error instanceof Error) {
+			span.recordException(error);
+		} else {
+			span.recordException({ name: 'Error', message: String(error) } as import('@opentelemetry/api').Exception);
 		}
 	}
 }

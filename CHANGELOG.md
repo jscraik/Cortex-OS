@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added pytest coverage under `scripts/__tests__/test_codemap.py` to validate scope resolution, optional tool execution, and section gating.
 - Wired `pnpm codemap` and `make codemap` targets along with a dedicated GitHub Actions workflow uploading codemap artifacts on pull requests.
 - Documented codemap usage across the root and website READMEs to surface scope flags, section filters, and tool selection patterns.
+- Promoted codemap generation into `@cortex-os/agent-toolkit`, including new contracts, adapters, MCP surfacing, and supporting vitest coverage.
 
 **Files Updated:**
 

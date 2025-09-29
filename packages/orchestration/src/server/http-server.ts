@@ -18,8 +18,12 @@ export class HttpServer {
 
 	async start(): Promise<void> {
 		return new Promise((resolve, reject) => {
-			// createHttpServer expects a Node request listener; cast the app adapter to any to avoid framework-specific overload mismatches
-			this.server = createHttpServer(app as unknown as any);
+			// createHttpServer expects a Node request listener; cast the Express app to a Node request listener via unknown
+			type NodeRequestListener = (
+				req: import('node:http').IncomingMessage,
+				res: import('node:http').ServerResponse,
+			) => void;
+			this.server = createHttpServer(app as unknown as NodeRequestListener);
 
 			this.server.listen(this.port, this.host, () => {
 				console.log(`brAInwav HTTP server running at http://${this.host}:${this.port}`);

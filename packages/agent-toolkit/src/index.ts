@@ -14,11 +14,13 @@ export type {
 	ToolExecutor,
 } from './domain/ToolExecutor.js';
 export type {
+	CodemapTool,
 	CodemodTool,
 	SearchTool,
 	ToolRegistry,
 	ValidationTool,
 } from './domain/ToolInterfaces.js';
+export { CodemapAdapter } from './infra/CodemapAdapter.js';
 export { CombyAdapter } from './infra/CodemodAdapters.js';
 // Infrastructure adapters
 export {
@@ -26,7 +28,6 @@ export {
 	RipgrepAdapter,
 	SemgrepAdapter,
 } from './infra/SearchAdapters.js';
-
 export {
 	CargoAdapter,
 	ESLintAdapter,
@@ -40,12 +41,23 @@ import { DefaultToolRegistry } from './app/ToolRegistry.js';
 // Direct import to avoid relying on dist type generation for newly added tooling events
 // Local duplication of tooling event type constants to avoid direct cross-package source import
 // when contracts build output (dist) is not present. Keep in sync with contracts tooling/events.ts.
+import type { AgentToolkitCodemapInput, AgentToolkitResult } from '@cortex-os/contracts';
+
 const TOOLING_EVENT_TYPES = {
 	TOOL_RUN_COMPLETED: 'tool.run.completed',
 	PIPELINE_RUN_COMPLETED: 'pipeline.run.completed',
 } as const;
 
+const getResultError = (result: AgentToolkitResult): string | undefined =>
+	'error' in result && typeof (result as { error?: string }).error === 'string'
+		? (result as { error?: string }).error
+		: undefined;
+
+const getResultCount = (result: AgentToolkitResult): string | undefined =>
+	Array.isArray(result.results) ? `results=${result.results.length}` : undefined;
+
 import { CodeQualityUseCase, CodeSearchUseCase, ToolExecutorUseCase } from './app/UseCases.js';
+import { CodemapAdapter, type CodemapAdapterOptions } from './infra/CodemapAdapter.js';
 import { CombyAdapter } from './infra/CodemodAdapters.js';
 import { AstGrepAdapter, RipgrepAdapter, SemgrepAdapter } from './infra/SearchAdapters.js';
 import {
@@ -67,6 +79,7 @@ export interface AgentToolkitOptions {
 	}) => void | Promise<void>;
 	// Optional run identifier/grouping for pipeline events
 	pipelineRunId?: string;
+	codemap?: CodemapAdapterOptions;
 }
 
 export function createAgentToolkit(toolsPathOrOptions?: string | AgentToolkitOptions) {
@@ -91,6 +104,14 @@ export function createAgentToolkit(toolsPathOrOptions?: string | AgentToolkitOpt
 	registry.registerValidationTool('cargo', new CargoAdapter(toolsPath));
 	registry.registerValidationTool('multi-validator', new MultiValidatorAdapter(toolsPath));
 
+	const codemapOptions: CodemapAdapterOptions = {
+		workingDirectory: opts.codemap?.workingDirectory ?? process.cwd(),
+		scriptPath: opts.codemap?.scriptPath,
+		pythonExecutable: opts.codemap?.pythonExecutable,
+		timeoutMs: opts.codemap?.timeoutMs,
+	};
+	registry.registerCodemapTool('codemap', new CodemapAdapter(codemapOptions));
+
 	// Wrap ToolExecutorUseCase with emission callbacks when publisher provided
 	let executor = new ToolExecutorUseCase(registry);
 	if (opts.publishEvent) {
@@ -100,16 +121,16 @@ export function createAgentToolkit(toolsPathOrOptions?: string | AgentToolkitOpt
 			},
 			onComplete: (_ctx, result, duration) => {
 				try {
+					const errorMessage = getResultError(result);
+					const contextSummary = getResultCount(result);
 					const p = opts.publishEvent?.({
 						type: TOOLING_EVENT_TYPES.TOOL_RUN_COMPLETED,
 						data: {
 							toolName: result.tool,
 							durationMs: duration,
-							success: !result.error,
-							error: result.error,
-							contextSummary: Array.isArray(result.results)
-								? `results=${result.results.length}`
-								: undefined,
+							success: !errorMessage,
+							error: errorMessage,
+							contextSummary,
 						},
 					});
 					if (p && typeof (p as Promise<unknown>).then === 'function')
@@ -157,6 +178,7 @@ export function createAgentToolkit(toolsPathOrOptions?: string | AgentToolkitOpt
 			executor.execute('comby', { find, replace, path }),
 		validate: (files: string[]) => executor.execute('multi-validator', { files }),
 		validateProject: (files: string[]) => new CodeQualityUseCase(executor).validateProject(files),
+		generateCodemap: (input: AgentToolkitCodemapInput) => executor.execute('codemap', input),
 		validateProjectSmart: (
 			files: string[],
 			opts?: {

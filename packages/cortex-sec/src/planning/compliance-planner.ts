@@ -1,10 +1,10 @@
 import {
         computeAggregateRisk,
+        SecurityStandardSchema,
         type ComplianceSignal,
         type RiskComputationResult,
         type SecurityPolicy,
         type SecurityStandard,
-        SecurityStandardSchema,
 } from '../policies/security-policies.js';
 
 export interface ComplianceSnapshot {
@@ -77,7 +77,7 @@ function normalizeStandards(candidate?: SecurityStandard[]): SecurityStandard[] 
                 return [...SecurityStandardSchema.options];
         }
         const unique = new Set(candidate);
-        return [...unique];
+        return Array.from(unique);
 }
 
 function normalizeTimestamp(timestamp: Date | string | null | undefined): Date | null {
@@ -85,7 +85,7 @@ function normalizeTimestamp(timestamp: Date | string | null | undefined): Date |
                 return null;
         }
         if (timestamp instanceof Date) {
-                        return timestamp;
+                return timestamp;
         }
         const parsed = new Date(timestamp);
         return Number.isNaN(parsed.getTime()) ? null : parsed;

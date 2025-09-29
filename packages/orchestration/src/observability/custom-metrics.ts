@@ -58,6 +58,11 @@ export class OrchestrationMetrics {
 
 	readonly mcpToolDuration: Histogram;
 
+	// Planner persistence metrics
+	readonly plannerPersistenceEvents: Counter;
+
+	readonly plannerPersistenceDuration: Histogram;
+
 	// Circuit breaker metrics
 	readonly circuitBreakerState: Gauge;
 
@@ -237,6 +242,22 @@ export class OrchestrationMetrics {
 			registers: [this.registry],
 		});
 
+		// Planner persistence metrics
+		this.plannerPersistenceEvents = new Counter({
+			name: 'planner_persistence_events_total',
+			help: 'Planner persistence events total',
+			labelNames: ['event_type', 'status', 'error_type'],
+			registers: [this.registry],
+		});
+
+		this.plannerPersistenceDuration = new Histogram({
+			name: 'planner_persistence_duration_seconds',
+			help: 'Duration of planner persistence operations in seconds',
+			labelNames: ['event_type'],
+			buckets: [0.001, 0.01, 0.1, 0.5, 1, 5],
+			registers: [this.registry],
+		});
+
 		// Circuit breaker metrics
 		this.circuitBreakerState = new Gauge({
 			name: 'orchestration_circuit_breaker_state',
@@ -381,6 +402,19 @@ export class OrchestrationMetrics {
 		this.mcpToolInvocations.inc({ tool_name: toolName, status, error_type: errorType || 'none' });
 		if (duration !== undefined) {
 			this.mcpToolDuration.observe({ tool_name: toolName }, duration);
+		}
+	}
+
+	// Planner persistence metrics methods
+	recordPlannerPersistenceEvent(
+		eventType: string,
+		status: 'success' | 'error',
+		errorType?: string,
+		durationSeconds?: number,
+	): void {
+		this.plannerPersistenceEvents.inc({ event_type: eventType, status, error_type: errorType || 'none' });
+		if (durationSeconds !== undefined) {
+			this.plannerPersistenceDuration.observe({ event_type: eventType }, durationSeconds);
 		}
 	}
 

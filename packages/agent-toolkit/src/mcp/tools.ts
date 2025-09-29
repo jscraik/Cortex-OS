@@ -1,4 +1,8 @@
-import type { AgentToolkitSearchInput } from '@cortex-os/contracts';
+import type {
+	AgentToolkitCodemapInput,
+	AgentToolkitResult,
+	AgentToolkitSearchInput,
+} from '@cortex-os/contracts';
 import { createAgentToolkit } from '../index.js';
 
 // Input type definitions for the tools
@@ -19,6 +23,7 @@ export interface JsonSchema {
 	required?: string[];
 	items?: JsonSchema;
 	description?: string;
+	default?: unknown;
 }
 
 export interface SimpleMcpTool {
@@ -30,6 +35,11 @@ export interface SimpleMcpTool {
 		isError?: boolean;
 	}>;
 }
+
+const hasResultError = (result: AgentToolkitResult): boolean =>
+	'error' in result && typeof (result as { error?: string }).error === 'string'
+		? Boolean((result as { error?: string }).error)
+		: false;
 
 /**
  * Search tool for MCP integration
@@ -57,7 +67,7 @@ export const createSearchTool = (): SimpleMcpTool => ({
 					text: JSON.stringify(result, null, 2),
 				},
 			],
-			isError: !!result.error,
+			isError: hasResultError(result),
 		};
 	},
 });
@@ -125,7 +135,7 @@ export const createCodemodTool = (): SimpleMcpTool => ({
 					text: JSON.stringify(result, null, 2),
 				},
 			],
-			isError: !!result.error,
+			isError: hasResultError(result),
 		};
 	},
 });
@@ -159,7 +169,7 @@ export const createValidationTool = (): SimpleMcpTool => ({
 					text: JSON.stringify(result, null, 2),
 				},
 			],
-			isError: !!result.error,
+			isError: hasResultError(result),
 		};
 	},
 });
@@ -168,5 +178,65 @@ export const createValidationTool = (): SimpleMcpTool => ({
  * Factory function to create all agent toolkit MCP tools
  */
 export function createAgentToolkitMcpTools(): SimpleMcpTool[] {
-	return [createSearchTool(), createMultiSearchTool(), createCodemodTool(), createValidationTool()];
+	return [
+		createSearchTool(),
+		createMultiSearchTool(),
+		createCodemodTool(),
+		createValidationTool(),
+		createCodemapTool(),
+	];
 }
+
+export const createCodemapTool = (): SimpleMcpTool => ({
+	name: 'agent_toolkit_codemap',
+	description: 'Generate repository codemap artifacts via agent toolkit',
+	inputSchema: {
+		type: 'object',
+		properties: {
+			repoPath: { type: 'string', description: 'Repository root path', default: '.' },
+			scope: {
+				type: 'string',
+				description: "Scope specifier (repo|package:<name>|app:<name>|path:<relative>)",
+				default: 'repo',
+			},
+			sinceDays: {
+				type: 'number',
+				description: 'Hotspot window in days',
+			},
+			sections: {
+				type: 'array',
+				description: 'Comma separated sections to include',
+				items: { type: 'string' },
+			},
+			tools: {
+				type: 'array',
+				description: 'Optional tools to enable (e.g., lizard, madge)',
+				items: { type: 'string' },
+			},
+			jsonOut: {
+				type: 'string',
+				description: 'Optional JSON output file path',
+			},
+			markdownOut: {
+				type: 'string',
+				description: 'Optional Markdown output file path',
+			},
+		},
+		required: ['repoPath'],
+	},
+	handler: async (input: Record<string, unknown>) => {
+		const codemapInput = input as AgentToolkitCodemapInput;
+		const toolkit = createAgentToolkit();
+		const result = await toolkit.generateCodemap(codemapInput);
+
+		return {
+			content: [
+				{
+					type: 'text' as const,
+					text: JSON.stringify(result, null, 2),
+				},
+			],
+			isError: hasResultError(result),
+		};
+	},
+});

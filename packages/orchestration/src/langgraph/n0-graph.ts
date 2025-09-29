@@ -610,7 +610,7 @@ function collectAllowList(
 	return Array.from(entries);
 }
 
-function ensureHooks(
+async function ensureHooks(
 	hooks: HookRunner | undefined,
 	options?: HookLoadOptions,
 ): Promise<HookRunner> {

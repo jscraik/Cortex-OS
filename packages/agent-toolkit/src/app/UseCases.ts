@@ -177,7 +177,7 @@ export class CodeSearchUseCase {
 		for (const toolName of tools) {
 			try {
 				const result = await this.toolExecutor.execute(toolName, searchInput);
-				if (result.results && result.results.length > 0) {
+				if (Array.isArray(result.results) && result.results.length > 0) {
 					return result;
 				}
 			} catch {
@@ -269,7 +269,7 @@ export class CodeQualityUseCase {
 				});
 				results.eslint = result;
 				toolsRun.push('eslint');
-				totalIssues += result.results?.length || 0;
+				totalIssues += this.countIssues(result.results);
 			} catch {
 				// Continue with other validators
 			}
@@ -282,7 +282,7 @@ export class CodeQualityUseCase {
 				});
 				results.ruff = result;
 				toolsRun.push('ruff');
-				totalIssues += result.results?.length || 0;
+				totalIssues += this.countIssues(result.results);
 			} catch {
 				// Continue with other validators
 			}
@@ -293,7 +293,7 @@ export class CodeQualityUseCase {
 				const result = await this.toolExecutor.execute('cargo', validationInput);
 				results.cargo = result;
 				toolsRun.push('cargo');
-				totalIssues += result.results?.length || 0;
+				totalIssues += this.countIssues(result.results);
 			} catch {
 				// Continue
 			}
@@ -339,6 +339,10 @@ export class CodeQualityUseCase {
 			context = [...perFile.entries()].map(([file, totalTokens]) => ({ file, totalTokens }));
 		}
 		return { report, context };
+	}
+
+	private countIssues(results: AgentToolkitResult['results']): number {
+		return Array.isArray(results) ? results.length : 0;
 	}
 }
 

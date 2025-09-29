@@ -18,6 +18,8 @@
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/telemetry": "workspace:*",
+    "@cortex-os/utils": "workspace:*",
     "@types/nodemailer": "^7.0.1",
     "bcryptjs": "^2.4.3",
     "better-auth": "^1.1.16",

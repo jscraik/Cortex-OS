@@ -14,11 +14,16 @@ import { createPrefixedId } from '../lib/secure-random.js';
 import { ToolValidationError, ToolValidationErrorCode } from './tool-validation-error.js';
 
 /**
+ * Named type for security levels used across the tool security layer
+ */
+export type SecurityLevel = 'low' | 'medium' | 'high' | 'critical';
+
+/**
  * Security context for tool operations
  */
 export interface SecurityContext {
 	validated: boolean;
-	securityLevel: 'low' | 'medium' | 'high' | 'critical';
+	securityLevel: SecurityLevel;
 	permissions: string[];
 	auditId: string;
 	timestamp: Date;
@@ -759,28 +764,36 @@ export class ToolSecurityLayer extends EventEmitter {
 	}
 
 	/**
+	 * Infer security level from operation type
+	 */
+	private inferSecurityLevelFromOperationType(operationType: string): SecurityLevel {
+		if (operationType.includes('admin') || operationType.includes('system')) {
+			return 'critical';
+		}
+		if (operationType.includes('delete') || operationType.includes('modify')) {
+			return 'high';
+		}
+		if (operationType.includes('write') || operationType.includes('update')) {
+			return 'medium';
+		}
+		return 'low';
+	}
+
+	/**
 	 * Determine security level of operation
 	 */
-	private determineSecurityLevel(operation: unknown): 'low' | 'medium' | 'high' | 'critical' {
+	private determineSecurityLevel(operation: unknown): SecurityLevel {
 		if (typeof operation === 'object' && operation !== null) {
 			const obj = operation as Record<string, unknown>;
 
 			if (obj.securityLevel && typeof obj.securityLevel === 'string') {
-				return obj.securityLevel as 'low' | 'medium' | 'high' | 'critical';
+				return obj.securityLevel as SecurityLevel;
 			}
 
 			// Infer from operation type
 			const operationType = obj.operation as string;
 			if (operationType) {
-				if (operationType.includes('admin') || operationType.includes('system')) {
-					return 'critical';
-				}
-				if (operationType.includes('delete') || operationType.includes('modify')) {
-					return 'high';
-				}
-				if (operationType.includes('write') || operationType.includes('update')) {
-					return 'medium';
-				}
+				return this.inferSecurityLevelFromOperationType(operationType);
 			}
 		}
 
@@ -790,7 +803,7 @@ export class ToolSecurityLayer extends EventEmitter {
 	/**
 	 * Get max requests for security level
 	 */
-	private getMaxRequestsForSecurityLevel(securityLevel: string): number {
+	private getMaxRequestsForSecurityLevel(securityLevel: SecurityLevel): number {
 		switch (securityLevel) {
 			case 'critical':
 				return this.config.rateLimitConfig.maxRequestsByCritical;

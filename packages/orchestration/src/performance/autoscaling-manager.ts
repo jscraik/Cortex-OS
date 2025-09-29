@@ -63,7 +63,7 @@ export interface AgentInstance {
  */
 export class AutoscalingManager {
 	private config: AutoscalingConfig;
-	private agents: Map<string, AgentInstance> = new Map();
+	private readonly agents: Map<string, AgentInstance> = new Map();
 	private lastScaleAction: number = 0;
 	private metricsHistory: Array<{
 		timestamp: number;
@@ -310,7 +310,7 @@ export class AutoscalingManager {
 				case 'max':
 					return Math.max(...values);
 				case 'p95': {
-					const sorted = values.sort((a, b) => a - b);
+					const sorted = [...values].sort((a, b) => a - b);
 					const index = Math.floor(sorted.length * 0.95);
 					return sorted[index] || 0;
 				}

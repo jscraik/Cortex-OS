@@ -310,8 +310,8 @@ export interface ToolOrchestrator {
 	/**
 	 * Event emitter interface for monitoring
 	 */
-	on(event: string, listener: (...args: any[]) => void): void;
-	emit(event: string, ...args: any[]): boolean;
+	on(event: string, listener: (...args: unknown[]) => void): void;
+	emit(event: string, ...args: unknown[]): boolean;
 }
 
 // ================================

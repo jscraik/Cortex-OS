@@ -3,569 +3,658 @@
  * Manages connection pooling for model provider connections
  */
 
+import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
+import { z } from 'zod';
 
 export interface PoolConfig {
-	minConnections?: number;
-	maxConnections?: number;
-	acquireTimeoutMs?: number;
-	idleTimeoutMs?: number;
-	testOnBorrow?: boolean;
-	testOnReturn?: boolean;
-	evictionRunIntervalMs?: number;
+  minConnections?: number;
+  maxConnections?: number;
+  acquireTimeoutMs?: number;
+  idleTimeoutMs?: number;
+  testOnBorrow?: boolean;
+  testOnReturn?: boolean;
+  evictionRunIntervalMs?: number;
 }
 
 export interface ConnectionStats {
-	total: number;
-	active: number;
-	idle: number;
-	acquiring: number;
-	destroyed: number;
+  total: number;
+  active: number;
+  idle: number;
+  acquiring: number;
+  destroyed: number;
 }
 
 export interface ConnectionInfo {
-	id: string;
-	createdAt: number;
-	lastUsedAt: number;
-	acquiredAt?: number;
-	requestCount: number;
-	errorCount: number;
+  id: string;
+  createdAt: number;
+  lastUsedAt: number;
+  acquiredAt?: number;
+  requestCount: number;
+  errorCount: number;
 }
 
+// Minimal shape for provider connection objects used by the pool
+export type ModelRawConnection = {
+  name?: string;
+  close?: () => Promise<void> | void;
+  isAvailable?: () => boolean | Promise<boolean>;
+  // provider-specific methods/props are allowed but not typed here
+};
+
 export class ModelConnection {
-	private readonly id: string;
-	private readonly provider: string;
-	private readonly createdAt: number;
-	private lastUsedAt: number;
-	private acquiredAt: number | null = null;
-	private requestCount = 0;
-	private errorCount = 0;
-	private active = false;
-	private destroyed = false;
+  private readonly id: string;
+  private readonly provider: string;
+  private readonly createdAt: number;
+  private lastUsedAt: number;
+  private acquiredAt: number | null = null;
+  private requestCount = 0;
+  private errorCount = 0;
+  private active = false;
+  private destroyed = false;
 
-	constructor(
-		private readonly connection: any, // Actual connection object
-		private readonly testFn?: () => Promise<boolean>,
-	) {
-		this.id = `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-		this.provider = connection.name || 'unknown';
-		this.createdAt = Date.now();
-		this.lastUsedAt = this.createdAt;
-	}
+  constructor(
+    private readonly connection: ModelRawConnection, // Actual connection object
+    private readonly testFn?: () => Promise<boolean>,
+  ) {
+    // Use a cryptographically strong UUID instead of Math.random() and deprecated substr
+    this.id = `conn-${Date.now()}-${randomUUID()}`;
+    this.provider = connection.name || 'unknown';
+    this.createdAt = Date.now();
+    this.lastUsedAt = this.createdAt;
+  }
 
-	getId(): string {
-		return this.id;
-	}
+  getId(): string {
+    return this.id;
+  }
 
-	getProvider(): string {
-		return this.provider;
-	}
+  getProvider(): string {
+    return this.provider;
+  }
 
-	isActive(): boolean {
-		return this.active && !this.destroyed;
-	}
+  isActive(): boolean {
+    return this.active && !this.destroyed;
+  }
 
-	isIdle(): boolean {
-		return !this.active && !this.destroyed;
-	}
+  isIdle(): boolean {
+    return !this.active && !this.destroyed;
+  }
 
-	isExpired(idleTimeoutMs: number): boolean {
-		return this.isIdle() && Date.now() - this.lastUsedAt > idleTimeoutMs;
-	}
+  isExpired(idleTimeoutMs: number): boolean {
+    return this.isIdle() && Date.now() - this.lastUsedAt > idleTimeoutMs;
+  }
 
-	getConnection(): any {
-		return this.connection;
-	}
+  getConnection(): ModelRawConnection {
+    return this.connection;
+  }
 
-	getStats(): ConnectionInfo {
-		return {
-			id: this.id,
-			createdAt: this.createdAt,
-			lastUsedAt: this.lastUsedAt,
-			acquiredAt: this.acquiredAt || undefined,
-			requestCount: this.requestCount,
-			errorCount: this.errorCount,
-		};
-	}
+  getStats(): ConnectionInfo {
+    return {
+      id: this.id,
+      createdAt: this.createdAt,
+      lastUsedAt: this.lastUsedAt,
+      acquiredAt: this.acquiredAt || undefined,
+      requestCount: this.requestCount,
+      errorCount: this.errorCount,
+    };
+  }
 
-	async acquire(): Promise<void> {
-		if (this.destroyed) {
-			throw new Error(`Connection ${this.id} is destroyed`);
-		}
+  async acquire(): Promise<void> {
+    if (this.destroyed) {
+      throw new Error(`Connection ${this.id} is destroyed`);
+    }
 
-		if (this.active) {
-			throw new Error(`Connection ${this.id} is already acquired`);
-		}
+    if (this.active) {
+      throw new Error(`Connection ${this.id} is already acquired`);
+    }
 
-		this.active = true;
-		this.acquiredAt = Date.now();
-	}
+    this.active = true;
+    this.acquiredAt = Date.now();
+  }
 
-	async release(): Promise<void> {
-		if (!this.active) {
-			throw new Error(`Connection ${this.id} is not acquired`);
-		}
+  async release(): Promise<void> {
+    if (!this.active) {
+      throw new Error(`Connection ${this.id} is not acquired`);
+    }
 
-		this.active = false;
-		this.acquiredAt = null;
-		this.lastUsedAt = Date.now();
-	}
+    this.active = false;
+    this.acquiredAt = null;
+    this.lastUsedAt = Date.now();
+  }
 
-	async test(): Promise<boolean> {
-		if (this.testFn) {
-			try {
-				return await this.testFn();
-			} catch {
-				this.errorCount++;
-				return false;
-			}
-		}
-		return true;
-	}
+  async test(): Promise<boolean> {
+    if (this.testFn) {
+      try {
+        return await this.testFn();
+      } catch {
+        this.errorCount++;
+        return false;
+      }
+    }
+    return true;
+  }
 
-	async destroy(): Promise<void> {
-		this.destroyed = true;
-		this.active = false;
+  async destroy(): Promise<void> {
+    this.destroyed = true;
+    this.active = false;
 
-		// If the connection has a close method, call it
-		if (typeof this.connection?.close === 'function') {
-			try {
-				await this.connection.close();
-			} catch {
-				// Ignore close errors
-			}
-		}
-	}
+    // If the connection has a close method, call it
+    if (typeof this.connection?.close === 'function') {
+      try {
+        await this.connection.close();
+      } catch {
+        // Ignore close errors
+      }
+    }
+  }
 
-	recordSuccess(): void {
-		this.requestCount++;
-		this.lastUsedAt = Date.now();
-	}
+  recordSuccess(): void {
+    this.requestCount++;
+    this.lastUsedAt = Date.now();
+  }
 
-	recordError(): void {
-		this.errorCount++;
-	}
+  recordError(): void {
+    this.errorCount++;
+  }
 }
 
 export interface AcquireOptions {
-	timeoutMs?: number;
-	testOnBorrow?: boolean;
+  timeoutMs?: number;
+  testOnBorrow?: boolean;
 }
 
 export class ModelConnectionPool extends EventEmitter {
-	private readonly pools = new Map<string, ModelConnection[]>();
-	private readonly waitingQueues = new Map<
-		string,
-		Array<{
-			resolve: (conn: ModelConnection) => void;
-			reject: (error: Error) => void;
-			timeout: NodeJS.Timeout;
-		}>
-	>();
-	private readonly config: Required<PoolConfig>;
-	private evictionTimer?: NodeJS.Timeout;
+  private readonly pools = new Map<string, ModelConnection[]>();
+  private readonly waitingQueues = new Map<
+    string,
+    Array<{
+      resolve: (conn: ModelConnection) => void;
+      reject: (error: Error) => void;
+      timeout: NodeJS.Timeout;
+    }>
+  >();
+  private readonly config: Required<PoolConfig>;
+  private evictionTimer?: NodeJS.Timeout;
 
-	constructor(
-		private readonly createConnectionFn: (provider: string) => Promise<any>,
-		config: PoolConfig = {},
-	) {
-		super();
+  // Zod schema to validate configuration at runtime and provide clear errors
+  private static readonly PoolConfigSchema = z
+    .object({
+      minConnections: z.number().int().min(0).optional(),
+      maxConnections: z.number().int().min(1).optional(),
+      acquireTimeoutMs: z.number().int().min(0).optional(),
+      idleTimeoutMs: z.number().int().min(0).optional(),
+      testOnBorrow: z.boolean().optional(),
+      testOnReturn: z.boolean().optional(),
+      evictionRunIntervalMs: z.number().int().min(100).optional(),
+    })
+    .strict();
 
-		this.config = {
-			minConnections: 2,
-			maxConnections: 10,
-			acquireTimeoutMs: 30000,
-			idleTimeoutMs: 300000, // 5 minutes
-			testOnBorrow: true,
-			testOnReturn: false,
-			evictionRunIntervalMs: 60000, // 1 minute
-			...config,
-		};
+  private static readonly AcquireOptionsSchema = z.object({
+    timeoutMs: z.number().int().min(0).optional(),
+    testOnBorrow: z.boolean().optional(),
+  });
 
-		// Start eviction timer
-		this.startEvictionTimer();
-	}
+  constructor(
+    private readonly createConnectionFn: (provider: string) => Promise<ModelRawConnection>,
+    config: PoolConfig = {},
+  ) {
+    super();
 
-	/**
-	 * Acquire a connection from the pool
-	 */
-	async acquire(provider: string, options: AcquireOptions = {}): Promise<ModelConnection> {
-		const pool = this.getPool(provider);
-		const testOnBorrow = options.testOnBorrow ?? this.config.testOnBorrow;
-		const timeoutMs = options.timeoutMs ?? this.config.acquireTimeoutMs;
+    // Validate config at runtime to avoid silent misconfiguration
+    const parsed = (() => {
+      try {
+        return ModelConnectionPool.PoolConfigSchema.parse(config);
+      } catch (err) {
+        // Normalize and emit a clear error while still applying defaults
+        this.emitError(err);
+        return config as PoolConfig;
+      }
+    })();
 
-		// Try to find an idle connection
-		for (const connection of pool) {
-			if (connection.isIdle()) {
-				try {
-					if (testOnBorrow) {
-						const isHealthy = await connection.test();
-						if (!isHealthy) {
-							await this.destroyConnection(connection, provider);
-							continue;
-						}
-					}
+    this.config = {
+      minConnections: 2,
+      maxConnections: 10,
+      acquireTimeoutMs: 30000,
+      idleTimeoutMs: 300000, // 5 minutes
+      testOnBorrow: true,
+      testOnReturn: false,
+      evictionRunIntervalMs: 60000, // 1 minute
+      ...(parsed as PoolConfig),
+    };
 
-					await connection.acquire();
-					this.emit('acquired', { provider, connectionId: connection.getId() });
-					return connection;
-				} catch {
-					await this.destroyConnection(connection, provider);
-				}
-			}
-		}
+    // Start eviction timer
+    this.startEvictionTimer();
+  }
 
-		// Create new connection if under limit
-		if (pool.length < this.config.maxConnections) {
-			try {
-				const rawConnection = await this.createConnectionFn(provider);
-				const connection = new ModelConnection(rawConnection, () =>
-					this.testConnection(rawConnection),
-				);
+  /**
+   * Acquire a connection from the pool
+   */
+  async acquire(provider: string, options: AcquireOptions = {}): Promise<ModelConnection> {
+    // Validate options shape
+    try {
+      ModelConnectionPool.AcquireOptionsSchema.parse(options);
+    } catch (err) {
+      this.emitError(err);
+      // Continue using the provided options, but tests will catch invalid shapes
+    }
 
-				// Add to pool
-				pool.push(connection);
-				await connection.acquire();
+    const pool = this.getPool(provider);
+    const testOnBorrow = options.testOnBorrow ?? this.config.testOnBorrow;
+    const timeoutMs = options.timeoutMs ?? this.config.acquireTimeoutMs;
 
-				this.emit('created', { provider, connectionId: connection.getId() });
-				this.emit('acquired', { provider, connectionId: connection.getId() });
-				return connection;
-			} catch (error) {
-				this.emit('error', new Error(`Failed to create connection for ${provider}: ${error}`));
-			}
-		}
+    // Try to find an idle connection
+    const found = await this.findAndAcquireIdleConnection(pool, provider, testOnBorrow);
+    if (found) return found;
 
-		// Wait for available connection
-		return this.waitForConnection(provider, timeoutMs);
-	}
+    // Create new connection if under limit
+    if (pool.length < this.config.maxConnections) {
+      try {
+        return await this.createAndAcquireConnection(provider);
+      } catch (error) {
+        this.emit('error', new Error(`Failed to create connection for ${provider}: ${String(error)}`));
+      }
+    }
 
-	/**
-	 * Release a connection back to the pool
-	 */
-	async release(connection: ModelConnection): Promise<void> {
-		const provider = connection.getProvider();
-		// pool not required here; release logic operates on the connection instance
+    // Wait for available connection
+    return this.waitForConnection(provider, timeoutMs);
+  }
 
-		// Test on return if enabled
-		if (this.config.testOnReturn) {
-			try {
-				const isHealthy = await connection.test();
-				if (!isHealthy) {
-					await this.destroyConnection(connection, provider);
-					this.emit('released', {
-						provider,
-						connectionId: connection.getId(),
-						tested: true,
-						healthy: false,
-					});
-					return;
-				}
-			} catch {
-				await this.destroyConnection(connection, provider);
-				this.emit('released', {
-					provider,
-					connectionId: connection.getId(),
-					tested: true,
-					healthy: false,
-				});
-				return;
-			}
-		}
+  /**
+   * Release a connection back to the pool
+   */
+  async release(connection: ModelConnection): Promise<void> {
+    const provider = connection.getProvider();
+    // pool not required here; release logic operates on the connection instance
 
-		try {
-			await connection.release();
-			this.emit('released', {
-				provider,
-				connectionId: connection.getId(),
-				tested: !!this.config.testOnReturn,
-				healthy: true,
-			});
+    // Test on return if enabled
+    if (this.config.testOnReturn) {
+      try {
+        const isHealthy = await connection.test();
+        if (!isHealthy) {
+          await this.destroyConnection(connection, provider);
+          this.emit('released', {
+            provider,
+            connectionId: connection.getId(),
+            tested: true,
+            healthy: false,
+          });
+          return;
+        }
+      } catch {
+        await this.destroyConnection(connection, provider);
+        this.emit('released', {
+          provider,
+          connectionId: connection.getId(),
+          tested: true,
+          healthy: false,
+        });
+        return;
+      }
+    }
 
-			// Process waiting queue
-			setImmediate(() => this.processWaitingQueue(provider).catch(console.error));
-		} catch {
-			await this.destroyConnection(connection, provider);
-		}
-	}
+    try {
+      await connection.release();
+      this.emit('released', {
+        provider,
+        connectionId: connection.getId(),
+        tested: !!this.config.testOnReturn,
+        healthy: true,
+      });
 
-	/**
-	 * Get pool statistics
-	 */
-	getStats(provider?: string): ConnectionStats | Record<string, ConnectionStats> {
-		if (provider) {
-			return this.calculateStats(this.getPool(provider));
-		}
+      // Process waiting queue
+      setImmediate(() => this.processWaitingQueue(provider).catch(console.error));
+    } catch {
+      await this.destroyConnection(connection, provider);
+    }
+  }
 
-		const stats: Record<string, ConnectionStats> = {};
-		for (const [p, pool] of this.pools) {
-			stats[p] = this.calculateStats(pool);
-		}
-		return stats;
-	}
+  /**
+   * Get pool statistics
+   */
+  getStats(provider?: string): ConnectionStats | Record<string, ConnectionStats> {
+    if (provider) {
+      return this.calculateStats(this.getPool(provider));
+    }
 
-	/**
-	 * Get detailed connection information
-	 */
-	getConnectionInfo(provider?: string): ConnectionInfo[] {
-		if (provider) {
-			return this.getPool(provider).map((conn) => conn.getStats());
-		}
+    const stats: Record<string, ConnectionStats> = {};
+    for (const [p, pool] of this.pools) {
+      stats[p] = this.calculateStats(pool);
+    }
+    return stats;
+  }
 
-		const allInfo: ConnectionInfo[] = [];
-		for (const pool of this.pools.values()) {
-			allInfo.push(...pool.map((conn) => conn.getStats()));
-		}
-		return allInfo;
-	}
+  /**
+   * Get detailed connection information
+   */
+  getConnectionInfo(provider?: string): ConnectionInfo[] {
+    if (provider) {
+      return this.getPool(provider).map((conn) => conn.getStats());
+    }
 
-	/**
-	 * Clear all connections
-	 */
-	async clear(provider?: string): Promise<void> {
-		if (provider) {
-			const pool = this.getPool(provider);
-			await Promise.all(pool.map((conn) => this.destroyConnection(conn, provider)));
-			pool.length = 0;
-		} else {
-			await Promise.all(
-				Array.from(this.pools.entries()).map(([p, pool]) =>
-					Promise.all(pool.map((conn) => this.destroyConnection(conn, p))),
-				),
-			);
-			this.pools.clear();
-		}
-	}
+    const allInfo: ConnectionInfo[] = [];
+    for (const pool of this.pools.values()) {
+      allInfo.push(...pool.map((conn) => conn.getStats()));
+    }
+    return allInfo;
+  }
 
-	/**
-	 * Destroy the pool
-	 */
-	async destroy(): Promise<void> {
-		// Stop eviction timer
-		if (this.evictionTimer) {
-			clearInterval(this.evictionTimer);
-			this.evictionTimer = undefined;
-		}
+  /**
+   * Clear all connections
+   */
+  async clear(provider?: string): Promise<void> {
+    if (provider) {
+      const pool = this.getPool(provider);
+      await Promise.all(pool.map((conn) => this.destroyConnection(conn, provider)));
+      pool.length = 0;
+    } else {
+      await Promise.all(
+        Array.from(this.pools.entries()).map(([p, pool]) =>
+          Promise.all(pool.map((conn) => this.destroyConnection(conn, p))),
+        ),
+      );
+      this.pools.clear();
+    }
+  }
 
-		// Clear all waiting queues
-		for (const [_provider, queue] of this.waitingQueues) {
-			for (const waiter of queue) {
-				clearTimeout(waiter.timeout);
-				waiter.reject(new Error('Connection pool is being destroyed'));
-			}
-		}
-		this.waitingQueues.clear();
+  /**
+   * Destroy the pool
+   */
+  async destroy(): Promise<void> {
+    // Stop eviction timer
+    if (this.evictionTimer) {
+      clearInterval(this.evictionTimer);
+      this.evictionTimer = undefined;
+    }
 
-		// Remove all event listeners to prevent memory leaks
-		this.removeAllListeners();
+    // Clear all waiting queues
+    for (const [_provider, queue] of this.waitingQueues) {
+      for (const waiter of queue) {
+        clearTimeout(waiter.timeout);
+        waiter.reject(new Error('Connection pool is being destroyed'));
+      }
+    }
+    this.waitingQueues.clear();
 
-		// Clear all connections
-		await this.clear();
-	}
+    // Remove all event listeners to prevent memory leaks
+    this.removeAllListeners();
 
-	private getPool(provider: string): ModelConnection[] {
-		if (!this.pools.has(provider)) {
-			this.pools.set(provider, []);
-			this.waitingQueues.set(provider, []);
+    // Clear all connections
+    await this.clear();
+  }
 
-			// Initialize minimum connections
-			this.initializePool(provider);
-		}
-		return this.pools.get(provider)!;
-	}
+  private getPool(provider: string): ModelConnection[] {
+    if (!this.pools.has(provider)) {
+      this.pools.set(provider, []);
+      this.waitingQueues.set(provider, []);
 
-	private async initializePool(provider: string): Promise<void> {
-		const pool = this.getPool(provider);
-		const initialCount = Math.min(this.config.minConnections, this.config.maxConnections);
+      // Initialize minimum connections
+      this.initializePool(provider);
+    }
 
-		const createPromises = Array(initialCount)
-			.fill(null)
-			.map(async () => {
-				try {
-					const rawConnection = await this.createConnectionFn(provider);
-					const connection = new ModelConnection(rawConnection, () =>
-						this.testConnection(rawConnection),
-					);
-					pool.push(connection);
-					this.emit('initialized', { provider, connectionId: connection.getId() });
-				} catch (error) {
-					this.emit(
-						'error',
-						new Error(`Failed to initialize connection for ${provider}: ${error}`),
-					);
-				}
-			});
+    const pool = this.pools.get(provider);
+    if (!pool) {
+      const emptyPool: ModelConnection[] = [];
+      this.pools.set(provider, emptyPool);
+      return emptyPool;
+    }
+    return pool;
+  }
 
-		await Promise.all(createPromises);
-	}
+  private async initializePool(provider: string): Promise<void> {
+    const initialCount = Math.min(this.config.minConnections, this.config.maxConnections);
 
-	private async waitForConnection(provider: string, timeoutMs: number): Promise<ModelConnection> {
-		const queue = this.waitingQueues.get(provider)!;
+    const createPromises = Array(initialCount)
+      .fill(null)
+      .map(async () => {
+        try {
+          const connection = await this.createAndAcquireConnection(provider);
+          // When initializing we don't want to leave the connection acquired — release it immediately
+          await connection.release();
+          this.emit('initialized', { provider, connectionId: connection.getId() });
+        } catch (error) {
+          this.emit(
+            'error',
+            new Error(`Failed to initialize connection for ${provider}: ${error}`),
+          );
+        }
+      });
 
-		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				const index = queue.findIndex((w) => w.resolve === resolve);
-				if (index !== -1) {
-					queue.splice(index, 1);
-				}
-				reject(new Error(`Connection acquisition timeout after ${timeoutMs}ms`));
-			}, timeoutMs);
+    await Promise.all(createPromises);
+  }
 
-			queue.push({
-				resolve: (conn) => {
-					clearTimeout(timeout);
-					resolve(conn);
-				},
-				reject: (error) => {
-					clearTimeout(timeout);
-					reject(error instanceof Error ? error : new Error(String(error)));
-				},
-				timeout,
-			});
-		});
-	}
+  private async waitForConnection(provider: string, timeoutMs: number): Promise<ModelConnection> {
+    let queue = this.waitingQueues.get(provider);
+    if (!queue) {
+      queue = [];
+      this.waitingQueues.set(provider, queue);
+    }
 
-	private async processWaitingQueue(provider: string): Promise<void> {
-		const queue = this.waitingQueues.get(provider)!;
-		const pool = this.getPool(provider);
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        const index = queue.findIndex((w) => w.resolve === resolve);
+        if (index !== -1) {
+          queue.splice(index, 1);
+        }
+        reject(new Error(`Connection acquisition timeout after ${timeoutMs}ms`));
+      }, timeoutMs);
 
-		while (queue.length > 0) {
-			const waiter = queue.shift()!;
-			clearTimeout(waiter.timeout);
+      queue.push({
+        resolve: (conn) => {
+          clearTimeout(timeout);
+          resolve(conn);
+        },
+        reject: (error) => {
+          clearTimeout(timeout);
+          reject(error instanceof Error ? error : new Error(String(error)));
+        },
+        timeout,
+      });
+    });
+  }
 
-			try {
-				const connection = await this.tryAcquireIdleConnection(provider, pool);
-				waiter.resolve(connection);
-			} catch (error) {
-				waiter.reject(error instanceof Error ? error : new Error(String(error)));
-			}
-		}
-	}
+  private async processWaitingQueue(provider: string): Promise<void> {
+    const queue = this.waitingQueues.get(provider) ?? [];
+    const pool = this.getPool(provider);
 
-	private async tryAcquireIdleConnection(
-		provider: string,
-		pool: ModelConnection[],
-	): Promise<ModelConnection> {
-		// Try to find an idle connection
-		for (const connection of pool) {
-			if (connection.isIdle()) {
-				try {
-					if (this.config.testOnBorrow) {
-						const isHealthy = await connection.test();
-						if (!isHealthy) {
-							await this.destroyConnection(connection, provider);
-							continue;
-						}
-					}
+    while (queue.length > 0) {
+      const waiter = queue.shift();
+      if (!waiter) continue;
+      clearTimeout(waiter.timeout);
 
-					await connection.acquire();
-					this.emit('acquired', { provider, connectionId: connection.getId() });
-					return connection;
-				} catch {
-					await this.destroyConnection(connection, provider);
-				}
-			}
-		}
+      try {
+        const connection = await this.tryAcquireIdleConnection(provider, pool);
+        waiter.resolve(connection);
+      } catch (error) {
+        waiter.reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+  }
 
-		// No idle connection available
-		throw new Error('No idle connections available');
-	}
+  private async tryAcquireIdleConnection(
+    provider: string,
+    pool: ModelConnection[],
+  ): Promise<ModelConnection> {
+    // Try to find an idle connection
+    for (const connection of pool) {
+      if (connection.isIdle()) {
+        try {
+          if (this.config.testOnBorrow) {
+            const isHealthy = await connection.test();
+            if (!isHealthy) {
+              await this.destroyConnection(connection, provider);
+              continue;
+            }
+          }
 
-	private async destroyConnection(connection: ModelConnection, provider: string): Promise<void> {
-		const pool = this.getPool(provider);
-		const index = pool.indexOf(connection);
+          await connection.acquire();
+          this.emit('acquired', { provider, connectionId: connection.getId() });
+          return connection;
+        } catch {
+          await this.destroyConnection(connection, provider);
+        }
+      }
+    }
 
-		if (index !== -1) {
-			pool.splice(index, 1);
-		}
+    // No idle connection available
+    throw new Error('No idle connections available');
+  }
 
-		try {
-			await connection.destroy();
-			this.emit('destroyed', { provider, connectionId: connection.getId() });
-		} catch (error) {
-			this.emit('error', new Error(`Failed to destroy connection: ${error}`));
-		}
-	}
+  private async destroyConnection(connection: ModelConnection, provider: string): Promise<void> {
+    const pool = this.getPool(provider);
+    const index = pool.indexOf(connection);
 
-	private async testConnection(connection: unknown): Promise<boolean> {
-		// Default test implementation
-		if (typeof connection?.isAvailable === 'function') {
-			return connection.isAvailable();
-		}
-		return true;
-	}
+    if (index !== -1) {
+      pool.splice(index, 1);
+    }
 
-	private calculateStats(pool: ModelConnection[]): ConnectionStats {
-		const stats: ConnectionStats = {
-			total: pool.length,
-			active: 0,
-			idle: 0,
-			acquiring: 0,
-			destroyed: 0,
-		};
+    try {
+      await connection.destroy();
+      this.emit('destroyed', { provider, connectionId: connection.getId() });
+    } catch (error) {
+      this.emit('error', new Error(`Failed to destroy connection: ${error}`));
+    }
+  }
 
-		for (const connection of pool) {
-			if (connection.isActive()) {
-				stats.active++;
-			} else if (connection.isIdle()) {
-				stats.idle++;
-			}
-		}
+  // Private helper to test a raw connection — keep inside the class so other members can call it
+  private async testConnection(connection: unknown): Promise<boolean> {
+    if (isModelRawConnection(connection) && typeof connection.isAvailable === 'function') {
+      try {
+        const res = connection.isAvailable();
+        return typeof res === 'boolean' ? res : !!(await Promise.resolve(res));
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  }
 
-		return stats;
-	}
+  private calculateStats(pool: ModelConnection[]): ConnectionStats {
+    const stats: ConnectionStats = {
+      total: pool.length,
+      active: 0,
+      idle: 0,
+      acquiring: 0,
+      destroyed: 0,
+    };
 
-	private startEvictionTimer(): void {
-		this.evictionTimer = setInterval(() => {
-			this.evictIdleConnections();
-		}, this.config.evictionRunIntervalMs);
-	}
+    for (const connection of pool) {
+      if (connection.isActive()) {
+        stats.active++;
+      } else if (connection.isIdle()) {
+        stats.idle++;
+      }
+    }
 
-	private async evictIdleConnections(): Promise<void> {
-		for (const [provider, pool] of this.pools) {
-			const connectionsToDestroy: ModelConnection[] = [];
+    return stats;
+  }
 
-			// Find expired connections
-			for (const connection of pool) {
-				if (connection.isExpired(this.config.idleTimeoutMs)) {
-					connectionsToDestroy.push(connection);
-				}
-			}
+  private startEvictionTimer(): void {
+    this.evictionTimer = setInterval(() => {
+      this.evictIdleConnections().catch((err) => this.emit('error', err));
+    }, this.config.evictionRunIntervalMs);
+  }
 
-			// Calculate how many to destroy while maintaining minimum
-			const currentPoolSize = pool.length;
-			const keepCount = Math.min(this.config.minConnections, currentPoolSize);
-			const maxDestroy = Math.max(0, connectionsToDestroy.length - (currentPoolSize - keepCount));
-			const toDestroy = connectionsToDestroy.slice(0, maxDestroy);
+  private async evictIdleConnections(): Promise<void> {
+    for (const [provider, pool] of this.pools) {
+      const connectionsToDestroy: ModelConnection[] = [];
 
-			// Destroy expired connections in parallel
-			if (toDestroy.length > 0) {
-				await Promise.all(
-					toDestroy.map(async (conn) => {
-						try {
-							await this.destroyConnection(conn, provider);
-						} catch (error) {
-							this.emit('error', new Error(`Failed to evict connection: ${error}`));
-						}
-					}),
-				);
-			}
+      // Find expired connections
+      for (const connection of pool) {
+        if (connection.isExpired(this.config.idleTimeoutMs)) {
+          connectionsToDestroy.push(connection);
+        }
+      }
 
-			// Replenish if below minimum (but don't overfill)
-			if (pool.length < this.config.minConnections && pool.length < this.config.maxConnections) {
-				try {
-					await this.initializePool(provider);
-				} catch (error) {
-					this.emit('error', new Error(`Failed to replenish pool for ${provider}: ${error}`));
-				}
-			}
-		}
-	}
+      // Calculate how many to destroy while maintaining minimum
+      const currentPoolSize = pool.length;
+      const keepCount = Math.min(this.config.minConnections, currentPoolSize);
+      const maxDestroy = Math.max(0, connectionsToDestroy.length - (currentPoolSize - keepCount));
+      const toDestroy = connectionsToDestroy.slice(0, maxDestroy);
+
+      // Destroy expired connections in parallel
+      if (toDestroy.length > 0) {
+        await Promise.all(
+          toDestroy.map(async (conn) => {
+            try {
+              await this.destroyConnection(conn, provider);
+            } catch (error) {
+              this.emit('error', new Error(`Failed to evict connection: ${error}`));
+            }
+          }),
+        );
+      }
+
+      // Replenish if below minimum (but don't overfill)
+      if (pool.length < this.config.minConnections && pool.length < this.config.maxConnections) {
+        try {
+          await this.initializePool(provider);
+        } catch (error) {
+          this.emit('error', new Error(`Failed to replenish pool for ${provider}: ${error}`));
+        }
+      }
+    }
+  }
+
+  private async createAndAcquireConnection(provider: string): Promise<ModelConnection> {
+    const rawConnection = await this.createConnectionFn(provider);
+    const connection = new ModelConnection(rawConnection, () => this.testConnection(rawConnection));
+
+    // Add to pool
+    this.getPool(provider).push(connection);
+    await connection.acquire();
+
+    this.emit('created', { provider, connectionId: connection.getId() });
+    this.emit('acquired', { provider, connectionId: connection.getId() });
+    return connection;
+  }
+
+  private async findAndAcquireIdleConnection(
+    pool: ModelConnection[],
+    provider: string,
+    testOnBorrow: boolean,
+  ): Promise<ModelConnection | null> {
+    for (const connection of pool) {
+      if (connection.isIdle()) {
+        try {
+          if (testOnBorrow) {
+            const isHealthy = await connection.test();
+            if (!isHealthy) {
+              await this.destroyConnection(connection, provider);
+              continue;
+            }
+          }
+
+          await connection.acquire();
+          this.emit('acquired', { provider, connectionId: connection.getId() });
+          return connection;
+        } catch {
+          await this.destroyConnection(connection, provider);
+        }
+      }
+    }
+    return null;
+  }
+
+  // Private helper to safely emit error events with normalized Error objects
+  private emitError(err: unknown): void {
+    const errorObj = err instanceof Error ? err : new Error(String(err));
+    // Use a safe emit to preserve brAInwav branding in logs
+    this.emit('error', new Error(`brAInwav: ${errorObj.message}`));
+  }
+}
+
+function isModelRawConnection(candidate: unknown): candidate is ModelRawConnection {
+  return (
+    typeof candidate === 'object' &&
+    candidate !== null &&
+    'isAvailable' in (candidate as Record<string, unknown>)
+  );
 }
 
 // Factory function
 export function createModelConnectionPool(
-	createConnectionFn: (provider: string) => Promise<any>,
-	config?: PoolConfig,
+  createConnectionFn: (provider: string) => Promise<ModelRawConnection>,
+  config?: PoolConfig,
 ): ModelConnectionPool {
-	return new ModelConnectionPool(createConnectionFn, config);
+  return new ModelConnectionPool(createConnectionFn, config);
 }

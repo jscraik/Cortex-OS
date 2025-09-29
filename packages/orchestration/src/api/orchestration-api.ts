@@ -13,10 +13,10 @@ import { logger } from 'hono/logger';
 import { timing } from 'hono/timing';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import type { OrchestrationService } from '../types/orchestration-service';
 import { CircuitBreakerManager } from '../lib/circuit-breaker.js';
 import type { CompositeModelProvider } from '../providers/composite-provider.js';
 import { AgentRole, OrchestrationStrategy, TaskStatus } from '../types.js';
+import type { OrchestrationService } from '../types/orchestration-service';
 
 // JWT Secret - should be from environment
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -240,7 +240,7 @@ export class OrchestrationAPI {
   // Prometheus metrics endpoint
   private async prometheusMetrics(c: Context) {
     try {
-      const metrics = (await this.orchestrationService.getMetrics()) as unknown;
+      const metrics = await this.orchestrationService.getMetrics();
       // metrics may be a structured object; return as JSON
       return c.json(metrics);
     } catch (error) {
@@ -309,7 +309,7 @@ export class OrchestrationAPI {
     try {
       const request = await this.validateWorkflowRequest(c);
       const workflow = await this.executeWorkflowCreation(c, request);
-      return c.json(this.formatWorkflowResponse(workflow as unknown as any), 201);
+      return c.json(this.formatWorkflowResponse(workflow as unknown as WorkflowView), 201);
     } catch (error) {
       this.handleWorkflowErrors(error);
     }
@@ -369,9 +369,9 @@ export class OrchestrationAPI {
       const createdBy = query.createdBy;
 
       const result = (await this.orchestrationService.listWorkflows({
-         page,
-         limit,
-         createdBy,
+        page,
+        limit,
+        createdBy,
       })) as unknown as { workflows: WorkflowView[]; total: number };
 
       return c.json({
@@ -482,10 +482,12 @@ export class OrchestrationAPI {
         limit,
       });
 
+      type ListTasksResult = { tasks: unknown[]; total: number };
+      const resultTyped = result as unknown as ListTasksResult;
       return c.json({
-        tasks: (result as any).tasks,
-        total: (result as any).total,
-        pages: Math.ceil(((result as any).total || 0) / limit),
+        tasks: resultTyped.tasks,
+        total: resultTyped.total,
+        pages: Math.ceil((resultTyped.total || 0) / limit),
       });
     } catch (error) {
       console.error('brAInwav: list tasks failed', error);
@@ -735,7 +737,7 @@ export class OrchestrationAPI {
     // Wrap Hono app.fetch so the type matches the expected signature
     return async (req: Request) => {
       // Ensure we always return a Promise<Response>
-      return await this.app.fetch(req as Request);
+      return await this.app.fetch(req);
     };
   }
 }

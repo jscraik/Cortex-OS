@@ -1,7 +1,7 @@
 import { StrategySelector, type Strategy, type TaskProfile } from '../intelligence/strategy-selector.js';
 import type { LongHorizonTask, PlanningResult } from '../lib/long-horizon-planner.js';
-import type { PlanningContext } from '../utils/dsp.js';
 import { SecurityCoordinator } from '../security/security-coordinator.js';
+import type { PlanningContext } from '../utils/dsp.js';
 
 export interface AgentDescriptor {
         id: string;
@@ -308,26 +308,27 @@ export class AdaptiveCoordinationManager {
                         for (const [key, value] of Object.entries(patch)) {
                                 const current = merged[key];
 
-                                if (this.isPlainRecord(current) && this.isPlainRecord(value)) {
-                                        merged[key] = this.mergeStatePatches(
-                                                current as Record<string, unknown>,
-                                                value as Record<string, unknown>,
-                                        );
-                                        continue;
-                                }
-
-                                if (Array.isArray(current) && Array.isArray(value)) {
-                                        merged[key] = [...current, ...value];
-                                        continue;
-                                }
-
-                                if (value !== undefined) {
-                                        merged[key] = value;
-                                }
+                                merged[key] = this.mergeValues(current, value);
                         }
                 }
 
                 return merged;
+        }
+
+        // Helper to centralize value merging logic and reduce cognitive complexity of the main loop
+        private mergeValues(current: unknown, value: unknown): unknown {
+                if (this.isPlainRecord(current) && this.isPlainRecord(value)) {
+                        return this.mergeStatePatches(current, value);
+                }
+
+                if (Array.isArray(current) && Array.isArray(value)) {
+                        return [...current, ...value];
+                }
+
+                // If incoming value is explicitly undefined, keep current value
+                if (value === undefined) return current;
+
+                return value;
         }
 
         private isPlainRecord(candidate: unknown): candidate is Record<string, unknown> {

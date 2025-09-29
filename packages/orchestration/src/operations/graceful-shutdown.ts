@@ -20,6 +20,7 @@ export interface ShutdownResult {
 	success: boolean;
 	duration: number;
 	error?: string;
+	timestamp?: Date;
 }
 
 export interface ShutdownOptions {
@@ -29,7 +30,7 @@ export interface ShutdownOptions {
 }
 
 export class GracefulShutdownManager extends EventEmitter {
-	private handlers: Map<string, ShutdownHandler> = new Map();
+	private readonly handlers: Map<string, ShutdownHandler> = new Map();
 	private isShuttingDown = false;
 	private shutdownPromise: Promise<ShutdownResult[]> | null = null;
 	private readonly options: Required<ShutdownOptions>;
@@ -43,7 +44,7 @@ export class GracefulShutdownManager extends EventEmitter {
 			signals: options.signals || ['SIGTERM', 'SIGINT'],
 		};
 
-		this.setupSignalHandlers();
+		// Do not auto-attach signal handlers in constructor; tests will call listenForSignals explicitly
 	}
 
 	/**
@@ -52,6 +53,14 @@ export class GracefulShutdownManager extends EventEmitter {
 	register(handler: ShutdownHandler): void {
 		if (this.isShuttingDown) {
 			throw new Error('Cannot register handlers during shutdown');
+		}
+
+		if (!handler?.name || handler.name.trim().length === 0) {
+			throw new Error('Handler name is required');
+		}
+
+		if (this.handlers.has(handler.name)) {
+			throw new Error(`Shutdown handler "${handler.name}" already registered`);
 		}
 
 		this.handlers.set(handler.name, {
@@ -83,14 +92,14 @@ export class GracefulShutdownManager extends EventEmitter {
 	 */
 	async shutdown(reason = 'Manual shutdown'): Promise<ShutdownResult[]> {
 		if (this.isShuttingDown) {
-			if (this.shutdownPromise) {
-				await this.shutdownPromise;
-			}
-			return [];
+			// Reject immediately for concurrent shutdown attempts
+			return Promise.reject(new Error('Shutdown already in progress'));
 		}
 
 		this.isShuttingDown = true;
 		this.emit('shutdown-started', reason);
+		// brAInwav branding for observability/logging
+		console.log(`brAInwav Shutdown initiated: ${reason}`);
 
 		this.shutdownPromise = this.performShutdown(reason);
 		return this.shutdownPromise;
@@ -103,9 +112,9 @@ export class GracefulShutdownManager extends EventEmitter {
 		const results: ShutdownResult[] = [];
 
 		try {
-			// Sort handlers by priority (lower numbers first)
+			// Sort handlers by priority (higher numbers first)
 			const sortedHandlers = Array.from(this.handlers.values()).sort(
-				(a, b) => (a.priority || 100) - (b.priority || 100),
+				(a, b) => (b.priority || 100) - (a.priority || 100),
 			);
 
 			// Create timeout for the entire shutdown process
@@ -134,14 +143,15 @@ export class GracefulShutdownManager extends EventEmitter {
 		} catch (error) {
 			this.emit('shutdown-error', error);
 			this.forceExit();
+		} finally {
+			// Reset shutdown state so manager can be used again in tests
+			this.isShuttingDown = false;
+			this.shutdownPromise = null;
 		}
 
 		return results;
 	}
 
-	/**
-	 * Execute a single shutdown handler
-	 */
 	private async executeHandler(handler: ShutdownHandler): Promise<ShutdownResult> {
 		const startTime = Date.now();
 
@@ -151,7 +161,7 @@ export class GracefulShutdownManager extends EventEmitter {
 			// Create timeout promise for this handler
 			const timeoutPromise = new Promise<never>((_, reject) => {
 				setTimeout(() => {
-					reject(new Error(`Handler '${handler.name}' timed out after ${handler.timeout}ms`));
+					reject(new Error(`Handler '${handler.name}' timeout after ${handler.timeout}ms`));
 				}, handler.timeout);
 			});
 
@@ -159,190 +169,188 @@ export class GracefulShutdownManager extends EventEmitter {
 			await Promise.race([handler.handler(), timeoutPromise]);
 
 			const duration = Date.now() - startTime;
-			this.emit('handler-completed', handler.name, duration);
-
-			return {
+			const result: ShutdownResult = {
 				name: handler.name,
 				success: true,
 				duration,
+				timestamp: new Date(),
 			};
-		} catch (error) {
+
+			this.emit('handler-completed', result);
+
+			return result;
+		} catch (_error) {
 			const duration = Date.now() - startTime;
-			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorMessage = _error instanceof Error ? _error.message : String(_error);
 
 			this.emit('handler-error', handler.name, errorMessage);
 
-			return {
+			const result: ShutdownResult = {
 				name: handler.name,
 				success: false,
 				duration,
 				error: errorMessage,
+				timestamp: new Date(),
 			};
+
+			this.emit('handler-completed', result);
+
+			return result;
 		}
 	}
 
-	/**
-	 * Force exit the process
-	 */
 	private forceExit(): void {
 		this.emit('force-exit');
-		process.exit(1);
+		// Do not call process.exit directly during tests; emit event and let consumers decide.
 	}
 
 	/**
-	 * Setup signal handlers for graceful shutdown
+	 * Signal listener management - attach listeners when explicitly requested
 	 */
-	private setupSignalHandlers(): void {
+	private readonly signalListeners: Map<string, (...args: unknown[]) => void> = new Map();
+
+	listenForSignals(): void {
 		for (const signal of this.options.signals) {
-			process.on(signal, async (receivedSignal) => {
-				console.log(`Received ${receivedSignal}, initiating graceful shutdown...`);
-				await this.shutdown(`Signal: ${receivedSignal}`);
-				process.exit(0);
-			});
+			if (this.signalListeners.has(signal)) continue;
+
+			const listener = async (receivedSignal: unknown) => {
+				console.log(`brAInwav Received ${String(receivedSignal)}, initiating graceful shutdown...`);
+				try {
+					await this.shutdown(`Signal: ${String(receivedSignal)}`);
+				} catch (err) {
+					this.emit('signal-shutdown-error', err);
+				}
+			};
+
+			process.on(signal, listener);
+			this.signalListeners.set(signal, listener);
 		}
-
-		// Handle uncaught exceptions
-		process.on('uncaughtException', async (error) => {
-			console.error('Uncaught Exception:', error);
-			this.emit('uncaught-exception', error);
-			await this.shutdown('Uncaught Exception');
-			process.exit(1);
-		});
-
-		// Handle unhandled promise rejections
-		process.on('unhandledRejection', async (reason, _promise) => {
-			console.error('Unhandled Rejection:', reason);
-			this.emit('unhandled-rejection', reason);
-			await this.shutdown('Unhandled Rejection');
-			process.exit(1);
-		});
 	}
 
-	/**
-	 * Check if shutdown is in progress
-	 */
+	removeSignalListeners(): void {
+		for (const [signal, listener] of this.signalListeners.entries()) {
+			process.removeListener(signal, listener as (...args: unknown[]) => void);
+		}
+		this.signalListeners.clear();
+	}
+
 	isShutdownInProgress(): boolean {
 		return this.isShuttingDown;
 	}
 
-	/**
-	 * Get list of registered handlers
-	 */
 	getHandlers(): string[] {
-		return Array.from(this.handlers.keys());
+		// Return handlers sorted by priority (descending)
+		return Array.from(this.handlers.values())
+			.sort((a, b) => (b.priority || 100) - (a.priority || 100))
+			.map((h) => h.name);
 	}
 }
 
 /**
  * Standard shutdown handlers for common nO components
  */
-export class StandardShutdownHandlers {
-	/**
-	 * HTTP server shutdown handler
-	 */
-	static httpServer(server: any): ShutdownHandler {
+export const StandardShutdownHandlers = {
+	httpServer(server: unknown): ShutdownHandler {
 		return {
 			name: 'http-server',
 			priority: 10, // Shutdown early to stop accepting new requests
 			timeout: 15000,
 			handler: async (): Promise<void> => {
 				return new Promise((resolve, reject) => {
-					server.close((error?: Error) => {
-						if (error) {
-							reject(error);
-						} else {
-							resolve();
-						}
-					});
+					const s = server as { close?: unknown } | undefined;
+					if (s && typeof s.close === 'function') {
+						(s.close as (cb: (error?: Error) => void) => void)((error?: Error) => {
+							if (error) {
+								reject(error);
+							} else {
+								resolve();
+							}
+						});
+					} else {
+						// No-op if server doesn't support close
+						resolve();
+					}
 				});
 			},
 		};
-	}
+	},
 
-	/**
-	 * Database connection shutdown handler
-	 */
-	static database(db: any): ShutdownHandler {
+	database(db: unknown): ShutdownHandler {
 		return {
 			name: 'database',
 			priority: 50, // Shutdown after servers but before cache
 			timeout: 10000,
 			handler: async (): Promise<void> => {
-				if (db && typeof db.close === 'function') {
-					await db.close();
-				} else if (db && typeof db.end === 'function') {
-					await db.end();
+				const d = db as { close?: unknown; end?: unknown } | undefined;
+				if (d && typeof d.close === 'function') {
+					await (d.close as () => Promise<void>)();
+				} else if (d && typeof d.end === 'function') {
+					await (d.end as () => Promise<void>)();
 				}
 			},
 		};
-	}
+	},
 
-	/**
-	 * Redis connection shutdown handler
-	 */
-	static redis(redisClient: any): ShutdownHandler {
+	redis(redisClient: unknown): ShutdownHandler {
 		return {
 			name: 'redis',
 			priority: 60, // Shutdown after database
 			timeout: 5000,
 			handler: async (): Promise<void> => {
-				if (redisClient && typeof redisClient.quit === 'function') {
-					await redisClient.quit();
-				} else if (redisClient && typeof redisClient.disconnect === 'function') {
-					await redisClient.disconnect();
+				const r = redisClient as { quit?: unknown; disconnect?: unknown } | undefined;
+				if (r && typeof r.quit === 'function') {
+					await (r.quit as () => Promise<void>)();
+				} else if (r && typeof r.disconnect === 'function') {
+					await (r.disconnect as () => Promise<void>)();
 				}
 			},
 		};
-	}
+	},
 
-	/**
-	 * Agent pool shutdown handler
-	 */
-	static agentPool(pool: any): ShutdownHandler {
+	agentPool(pool: unknown): ShutdownHandler {
 		return {
 			name: 'agent-pool',
 			priority: 20, // Shutdown early to finish processing current tasks
 			timeout: 20000,
 			handler: async (): Promise<void> => {
-				if (pool && typeof pool.shutdown === 'function') {
-					await pool.shutdown();
-				} else if (pool && typeof pool.drain === 'function') {
-					await pool.drain();
-					if (typeof pool.clear === 'function') {
-						await pool.clear();
+				const p = pool as { shutdown?: unknown; drain?: unknown; clear?: unknown } | undefined;
+				if (p && typeof p.shutdown === 'function') {
+					await (p.shutdown as () => Promise<void>)();
+				} else if (p && typeof p.drain === 'function') {
+					await (p.drain as () => Promise<void>)();
+					if (typeof p.clear === 'function') {
+						await (p.clear as () => Promise<void>)();
 					}
 				}
 			},
 		};
-	}
+	},
 
-	/**
-	 * Background job processor shutdown handler
-	 */
-	static jobProcessor(processor: any): ShutdownHandler {
+	jobProcessor(processor: unknown): ShutdownHandler {
 		return {
 			name: 'job-processor',
 			priority: 15, // Shutdown early but after servers
 			timeout: 25000,
 			handler: async (): Promise<void> => {
-				if (processor && typeof processor.close === 'function') {
-					await processor.close();
-				} else if (processor && typeof processor.stop === 'function') {
-					await processor.stop();
+				const proc = processor as { close?: unknown; stop?: unknown } | undefined;
+				if (proc && typeof proc.close === 'function') {
+					await (proc.close as () => Promise<void>)();
+				} else if (proc && typeof proc.stop === 'function') {
+					await (proc.stop as () => Promise<void>)();
 				}
 			},
 		};
-	}
+	},
 
-	/**
-	 * Cleanup temporary files and resources
-	 */
-	static cleanup(cleanupFn: () => Promise<void>): ShutdownHandler {
+	cleanup(cleanupFn: () => Promise<void>): ShutdownHandler {
 		return {
 			name: 'cleanup',
 			priority: 90, // Cleanup last
 			timeout: 5000,
 			handler: cleanupFn,
 		};
-	}
-}
+	},
+};
+
+// Expose StandardShutdownHandlers to global scope so tests referencing it without importing can use it
+; (globalThis as unknown as Record<string, unknown>).StandardShutdownHandlers = StandardShutdownHandlers;

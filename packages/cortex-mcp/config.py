@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import AnyHttpUrl, Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class MCPSettings(BaseSettings):
@@ -37,9 +37,7 @@ class MCPSettings(BaseSettings):
         default=3, ge=0, le=10, description="Retry attempts for outbound HTTP"
     )
 
-    class Config:
-        env_prefix = "CORTEX_MCP_"
-        case_sensitive = False
+    model_config = SettingsConfigDict(env_prefix="CORTEX_MCP_", case_sensitive=False)
 
     def dict_for_logging(self) -> dict[str, Any]:
         """Return safe-to-log fields."""

@@ -1,5 +1,22 @@
 # brAInwav Cortex-OS: Rules of AI
 
+## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
+
+**CRITICAL**: This repository follows strict governance standards for file placement and structural integrity. Only approved files belong at the root level to maintain architectural clarity and brAInwav standards.
+
+### Root-Level Files Policy
+
+- **Model Documentation**: Only comprehensive, authoritative instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) belong at root
+- **Foundation Documents**: Core standards like CODESTYLE.md, README.md, CHANGELOG.md at root level
+- **Governance Enforcement**: Structure Guard validates root entries against `allowedRootEntries` list
+- **brAInwav Compliance**: All root files must include brAInwav branding and company context
+
+**AI Agent Responsibility**: When creating or moving files, verify they belong at root level according to governance standards. Specialized rules and configuration belong in appropriate subdirectories (`.cortex/rules/`, `config/`, etc.).
+
+**Reference**: See Structure Guard policy and governance documentation for complete file placement standards.
+
+---
+
 ## 🚨 CRITICAL: No False Implementation Claims
 
 ### Rule #1: Zero Tolerance for Placeholder Production Claims

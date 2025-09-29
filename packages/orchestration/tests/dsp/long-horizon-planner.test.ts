@@ -4,13 +4,46 @@
  * Validates brAInwav-enhanced DSP patterns for complex task coordination
  */
 
+import type { SecurityIntegrationResult, SecurityIntegrationService } from '@cortex-os/cortex-sec';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	LongHorizonPlanner,
 	type LongHorizonPlannerConfig,
 	type LongHorizonTask,
+	type PlanningResult,
 } from '../../src/lib/long-horizon-planner.js';
+import type { OrchestrationMetrics } from '../../src/observability/custom-metrics.js';
+import type { PlanningContext } from '../../src/utils/dsp.js';
 import { PlanningPhase } from '../../src/utils/dsp.js';
+
+// Test-only private interface to safely access private internals without using `any`
+type PlannerPrivate = {
+	dsp: {
+		initializePlanning: (id: string, complexity: number, priority: number) => PlanningContext;
+	};
+	persistPlanningEvent: (eventType: string, eventData: Record<string, unknown>) => Promise<void>;
+	runPhase: (
+		phase: PlanningPhase,
+		context: PlanningContext,
+		executor: (p: PlanningPhase, c: PlanningContext) => Promise<unknown>,
+		task: LongHorizonTask,
+	) => Promise<{ phaseDuration: number; result?: unknown; error?: string }>;
+	applySecurityEvaluation: (
+		task: LongHorizonTask,
+		context: PlanningContext,
+	) => SecurityIntegrationResult;
+	executePhaseAndUpdateResult: (
+		phase: PlanningPhase,
+		context: PlanningContext,
+		executor: (p: PlanningPhase, c: PlanningContext) => Promise<unknown>,
+		task: LongHorizonTask,
+		result: PlanningResult,
+	) => Promise<boolean>;
+	recommendComplexity: (task: LongHorizonTask) => string[];
+	recommendFailures: (result: PlanningResult) => string[];
+	recordPersistenceEvent: (eventType: string, eventData: Record<string, unknown>) => Promise<void>;
+	metrics: OrchestrationMetrics;
+};
 
 describe('Long-Horizon Planner - Phase 11 DSP Integration', () => {
 	let planner: LongHorizonPlanner;
@@ -123,7 +156,7 @@ describe('Long-Horizon Planner - Phase 11 DSP Integration', () => {
 			const mockExecutor = vi.fn();
 
 			// Make executor hang for longer than timeout
-			mockExecutor.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 200)));
+			mockExecutor.mockImplementation(() => hangPromise(200));
 
 			const result = await timeoutPlanner.planTask(mockTask, mockExecutor);
 
@@ -247,12 +280,64 @@ describe('Long-Horizon Planner - Phase 11 DSP Integration', () => {
 			expect(result.recommendations.length).toBeGreaterThan(0);
 			expect(result.recommendations.some((r) => r.includes('brAInwav') || r.length > 0)).toBe(true);
 		});
+
+		it('should emit planner persistence metric for planning start and completion', async () => {
+			const persistSpy = vi
+				.spyOn(planner as unknown as PlannerPrivate, 'persistPlanningEvent')
+				.mockResolvedValue(undefined);
+			const metricsSpy = vi.spyOn(
+				(planner as unknown as PlannerPrivate).metrics as unknown as OrchestrationMetrics,
+				'recordPlannerPersistenceEvent',
+			);
+
+			await planner.planTask(mockTask, vi.fn().mockResolvedValue({ success: true }));
+
+			expect(metricsSpy).toHaveBeenCalledWith(
+				'planning_started',
+				'success',
+				undefined,
+				expect.any(Number),
+			);
+			expect(metricsSpy).toHaveBeenCalledWith(
+				'planning_completed',
+				'success',
+				undefined,
+				expect.any(Number),
+			);
+
+			persistSpy.mockRestore();
+			metricsSpy.mockRestore();
+		});
+
+		it('should emit planner persistence metric with error on persistence failure', async () => {
+			const err = new Error('persistence-down');
+			const persistSpy = vi
+				.spyOn(planner as unknown as PlannerPrivate, 'persistPlanningEvent')
+				.mockRejectedValue(err);
+			const metricsSpy = vi.spyOn(
+				(planner as unknown as PlannerPrivate).metrics as unknown as OrchestrationMetrics,
+				'recordPlannerPersistenceEvent',
+			);
+
+			await planner.planTask(mockTask, vi.fn().mockResolvedValue({ success: true }));
+
+			expect(metricsSpy).toHaveBeenCalled();
+			// At least one of the invocations should be an error recorded for a persistence failure
+			expect(
+				metricsSpy.mock.calls.some(
+					(c) => c[1] === 'error' && String(c[2]).includes('persistence-down'),
+				),
+			).toBe(true);
+
+			persistSpy.mockRestore();
+			metricsSpy.mockRestore();
+		});
 	});
 
 	describe('brAInwav Branding Integration', () => {
 		it('should include brAInwav branding in all outputs', async () => {
 			const mockExecutor = vi.fn().mockResolvedValue({ success: true });
-			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
 			await planner.planTask(mockTask, mockExecutor);
 
@@ -274,4 +359,250 @@ describe('Long-Horizon Planner - Phase 11 DSP Integration', () => {
 			expect(context?.metadata.updatedAt).toBeInstanceOf(Date);
 		});
 	});
+
+	describe('runPhase Helper', () => {
+		it('runPhase helper should execute a phase, record start and completion persistence events', async () => {
+			const mockExecutor = vi.fn().mockResolvedValue({ success: true });
+			const persistSpy = vi
+				.spyOn(planner as unknown as PlannerPrivate, 'persistPlanningEvent')
+				.mockResolvedValue(undefined);
+
+			// Initialize a context via the private dsp for isolated helper testing
+			const context = (planner as unknown as PlannerPrivate).dsp.initializePlanning(
+				mockTask.id,
+				mockTask.complexity,
+				mockTask.priority,
+			);
+
+			const outcome = await (planner as unknown as PlannerPrivate).runPhase(
+				PlanningPhase.INITIALIZATION,
+				context,
+				mockExecutor,
+				mockTask,
+			);
+
+			expect(outcome.result).toBeDefined();
+			expect(outcome.error).toBeUndefined();
+			expect(outcome.phaseDuration).toBeGreaterThanOrEqual(0);
+			expect(persistSpy).toHaveBeenCalledWith('phase_started', expect.any(Object));
+			expect(persistSpy).toHaveBeenCalledWith('phase_completed', expect.any(Object));
+
+			persistSpy.mockRestore();
+		});
+
+		it('runPhase helper should handle executor failures and record phase_failed', async () => {
+			const mockExecutor = vi.fn().mockRejectedValue(new Error('simulated fail'));
+			const persistSpy = vi
+				.spyOn(planner as unknown as PlannerPrivate, 'persistPlanningEvent')
+				.mockResolvedValue(undefined);
+
+			const context = (planner as unknown as PlannerPrivate).dsp.initializePlanning(
+				mockTask.id,
+				mockTask.complexity,
+				mockTask.priority,
+			);
+
+			const outcome = await (planner as unknown as PlannerPrivate).runPhase(
+				PlanningPhase.STRATEGY,
+				context,
+				mockExecutor,
+				mockTask,
+			);
+
+			expect(outcome.result).toBeUndefined();
+			expect(outcome.error).toContain('simulated fail');
+			expect(outcome.phaseDuration).toBeGreaterThanOrEqual(0);
+			expect(persistSpy).toHaveBeenCalledWith('phase_started', expect.any(Object));
+			expect(persistSpy).toHaveBeenCalledWith('phase_failed', expect.any(Object));
+
+			persistSpy.mockRestore();
+		});
+	});
+
+	describe('applySecurityEvaluation Helper', () => {
+		it('applySecurityEvaluation sets compliance when security service returns data', () => {
+			// Prepare a mock security service that returns a deterministic evaluation
+			const fakeEval = {
+				standards: ['ISO-9001'],
+				lastCheckedAt: new Date(),
+				aggregateRisk: 3,
+				outstandingViolations: [],
+				summary: 'All checks passed',
+			} as unknown as SecurityIntegrationResult;
+
+			const secureService = {
+				evaluate: vi.fn().mockReturnValue(fakeEval),
+			} as unknown as SecurityIntegrationService;
+			const confWithSec: LongHorizonPlannerConfig = {
+				...config,
+				securityIntegrationService: secureService,
+			};
+			const localPlanner = new LongHorizonPlanner(confWithSec);
+
+			const context = (localPlanner as unknown as PlannerPrivate).dsp.initializePlanning(
+				mockTask.id,
+				mockTask.complexity,
+				mockTask.priority,
+			);
+
+			const res = (localPlanner as unknown as PlannerPrivate).applySecurityEvaluation(
+				mockTask,
+				context,
+			);
+
+			expect(res).toBeDefined();
+			expect(res).toEqual(fakeEval);
+			expect(context.compliance).toBeDefined();
+			expect(
+				context.preferences.notes.some((n: string) => n.includes('brAInwav security summary')),
+			).toBe(true);
+		});
+
+		it('applySecurityEvaluation records failure and returns fallback when security service throws', () => {
+			const failingService = {
+				evaluate: vi.fn().mockImplementation(() => {
+					throw new Error('connector-error');
+				}),
+			} as unknown as SecurityIntegrationService;
+			const confWithFail: LongHorizonPlannerConfig = {
+				...config,
+				securityIntegrationService: failingService,
+			};
+			const localPlanner = new LongHorizonPlanner(confWithFail);
+
+			const context = (localPlanner as unknown as PlannerPrivate).dsp.initializePlanning(
+				mockTask.id,
+				mockTask.complexity,
+				mockTask.priority,
+			);
+
+			const res = (localPlanner as unknown as PlannerPrivate).applySecurityEvaluation(
+				mockTask,
+				context,
+			);
+
+			expect(res).toBeDefined();
+			expect(res.summary).toContain('Security evaluation failed');
+			expect(context.compliance).toBeDefined();
+			expect(
+				context.preferences.notes.some((n: string) => n.includes('security evaluation failed')),
+			).toBe(true);
+		});
+	});
+
+	describe('Phase Execution Orchestration helper', () => {
+		it('executePhaseAndUpdateResult pushes a successful phase and updates DSP', async () => {
+			const mockExecutor = vi.fn();
+			const persistSpy = vi
+				.spyOn(planner as unknown as PlannerPrivate, 'persistPlanningEvent')
+				.mockResolvedValue(undefined);
+
+			// Mock runPhase to return success
+			vi.spyOn(planner as unknown as PlannerPrivate, 'runPhase').mockResolvedValue({
+				phaseDuration: 12,
+				result: { ok: true },
+			});
+
+			const context = (planner as unknown as PlannerPrivate).dsp.initializePlanning(
+				mockTask.id,
+				mockTask.complexity,
+				mockTask.priority,
+			);
+			const result: PlanningResult = {
+				taskId: mockTask.id,
+				success: true,
+				phases: [],
+				totalDuration: 0,
+				adaptiveDepth: 0,
+				recommendations: [],
+				brainwavMetadata: { createdBy: 'brAInwav', version: '1.0.0', timestamp: new Date() },
+				security: {} as SecurityIntegrationResult,
+			};
+
+			const cont = await (planner as unknown as PlannerPrivate).executePhaseAndUpdateResult(
+				PlanningPhase.EXECUTION,
+				context,
+				mockExecutor,
+				mockTask,
+				result,
+			);
+			expect(cont).toBe(true);
+			expect(result.phases.length).toBe(1);
+			expect(result.phases[0].phase).toBe(PlanningPhase.EXECUTION);
+			expect((planner as unknown as PlannerPrivate).dsp).toBeDefined();
+			persistSpy.mockRestore();
+		});
+
+		it('executePhaseAndUpdateResult records failure and stops on critical phase', async () => {
+			const mockExecutor = vi.fn();
+			// Mock runPhase to return error
+			vi.spyOn(planner as unknown as PlannerPrivate, 'runPhase').mockResolvedValue({
+				phaseDuration: 5,
+				error: 'simulated fail',
+			});
+
+			const context = (planner as unknown as PlannerPrivate).dsp.initializePlanning(
+				mockTask.id,
+				mockTask.complexity,
+				mockTask.priority,
+			);
+			const result: PlanningResult = {
+				taskId: mockTask.id,
+				success: true,
+				phases: [],
+				totalDuration: 0,
+				adaptiveDepth: 0,
+				recommendations: [],
+				brainwavMetadata: { createdBy: 'brAInwav', version: '1.0.0', timestamp: new Date() },
+				security: {} as SecurityIntegrationResult,
+			};
+
+			const cont = await (planner as unknown as PlannerPrivate).executePhaseAndUpdateResult(
+				PlanningPhase.INITIALIZATION,
+				context,
+				mockExecutor,
+				mockTask,
+				result,
+			);
+			expect(cont).toBe(false);
+			expect(result.success).toBe(false);
+			expect(result.phases.length).toBe(1);
+			expect(result.phases[0].error).toContain('simulated fail');
+		});
+	});
+
+	describe('Recommendations helpers', () => {
+		it('recommendComplexity returns recommendation for high complexity tasks', () => {
+			const recs = (planner as unknown as PlannerPrivate).recommendComplexity({
+				...mockTask,
+				complexity: 9,
+			});
+			expect(recs.length).toBeGreaterThan(0);
+			expect(recs[0]).toContain('smaller subtasks');
+		});
+
+		it('recommendFailures returns suggestions when phases have errors', () => {
+			const fakeResult: PlanningResult = {
+				taskId: mockTask.id,
+				success: false,
+				phases: [{ phase: PlanningPhase.ANALYSIS, duration: 10, error: 'err' }],
+				totalDuration: 10,
+				adaptiveDepth: 1,
+				recommendations: [],
+				brainwavMetadata: { createdBy: 'brAInwav', version: '1.0.0', timestamp: new Date() },
+				security: {} as SecurityIntegrationResult,
+			};
+
+			const recs = (planner as unknown as PlannerPrivate).recommendFailures(fakeResult);
+			expect(recs.length).toBeGreaterThan(0);
+			expect(recs[0]).toContain('Review and retry failed phases');
+		});
+	});
+
+	/**
+	 * Test helper to simulate a long-running executor by returning a promise that resolves after a delay.
+	 */
+	function hangPromise(ms = 200) {
+		return new Promise<void>((resolve) => setTimeout(resolve, ms));
+	}
 });

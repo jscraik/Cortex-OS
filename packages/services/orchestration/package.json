@@ -11,7 +11,9 @@
     "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/agents": "workspace:*",
     "@cortex-os/observability": "workspace:*",
+    "@cortex-os/orchestration": "workspace:*",
     "@cortex-os/policy": "workspace:*",
     "@cortex-os/utils": "workspace:*",
     "@opentelemetry/api": "^1.9.0",

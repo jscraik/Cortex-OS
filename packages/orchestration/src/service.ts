@@ -31,9 +31,9 @@ export function provideOrchestration(
 		) => {
 			// Minimal mapping from Task -> graph input for now
 			const input = task.title || task.description || 'run';
-			const result = await graph.invoke({ input, task: 'default' } as any);
+			const result = await graph.invoke({ input });
 			// As this facade provides a minimal runtime mapping to the LangGraph program,
-			// the invoke payload is intentionally cast to any to avoid brittle cross-package
+			// the invoke payload is intentionally simple to avoid brittle cross-package
 			// type requirements during incremental refactors.
 			return result;
 		},
@@ -44,7 +44,7 @@ export function provideOrchestration(
 }
 
 export class OrchestrationService {
-	constructor(private readonly service: { execute: (input: string) => Promise<unknown> }) {}
+	constructor(private readonly service: { execute: (input: string) => Promise<unknown> }) { }
 
 	async handle(input: string) {
 		// Ensure hooks are initialized and watcher is running once per process

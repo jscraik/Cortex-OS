@@ -37,6 +37,12 @@
         <string>1</string>
         <key>HOME</key>
         <string>/Users/jamiecraik</string>
+        <key>CORTEX_MCP_CORTEX_SEARCH_URL</key>
+        <string>https://search.cortex-os.ai/v1/search</string>
+        <key>CORTEX_MCP_CORTEX_DOCUMENT_BASE_URL</key>
+        <string>https://search.cortex-os.ai/v1/documents</string>
+        <key>CORTEX_MCP_CORTEX_SEARCH_API_KEY</key>
+        <string>***</string>
     </dict>
 </dict>
 </plist>

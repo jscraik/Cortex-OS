@@ -1,0 +1,7 @@
+{
+    "name": "@cortex-os/patchkit",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/patchkit/src",
+    "projectType": "library",
+    "targets": {}
+}

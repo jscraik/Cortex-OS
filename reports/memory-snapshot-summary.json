@@ -1,0 +1,11 @@
+{
+  "label": "quick",
+  "timestamp": "2025-09-29T21-38-29-581Z",
+  "exitCode": 1,
+  "signal": null,
+  "peakRssMB": 0,
+  "samples": 0,
+  "logFile": "/Users/jamiecraik/.Cortex-OS/.memory/logs/2025-09-29T21-38-29-581Z-quick.jsonl",
+  "manualSnapshotFile": null,
+  "recentSnapshots": []
+}

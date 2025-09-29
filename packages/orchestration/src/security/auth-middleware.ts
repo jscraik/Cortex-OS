@@ -9,11 +9,13 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { securityMetrics } from '../monitoring/prometheus-metrics.js';
-import type { AuthenticationResult, OAuthProvider } from './oauth-provider.js';
+import type { AuthenticationResult, OAuthProvider, UserClaims } from './oauth-provider.js';
 import { type PolicyContext, rbacSystem } from './rbac-system.js';
 
+export type AuthenticatedUser = UserClaims;
+
 export interface AuthenticatedRequest extends Request {
-	user?: any;
+	user?: AuthenticatedUser;
 	auth?: AuthenticationResult;
 }
 
@@ -32,8 +34,8 @@ export interface AuthMiddlewareConfig {
  * Authentication Middleware
  */
 export class AuthMiddleware {
-	private config: AuthMiddlewareConfig;
-	private requestCounts: Map<string, { count: number; resetTime: number }> = new Map();
+	private readonly config: AuthMiddlewareConfig;
+	private readonly requestCounts: Map<string, { count: number; resetTime: number }> = new Map();
 
 	constructor(config: AuthMiddlewareConfig) {
 		this.config = config;
@@ -344,7 +346,7 @@ export class AuthMiddleware {
 		return (
 			(req.headers['x-forwarded-for'] as string) ||
 			(req.headers['x-real-ip'] as string) ||
-			req.connection.remoteAddress ||
+			(req.ip as string) ||
 			req.socket.remoteAddress ||
 			'unknown'
 		);
@@ -355,9 +357,8 @@ export class AuthMiddleware {
 	 */
 	private getClientId(req: Request): string {
 		// Use authenticated user ID if available
-		if ((req as AuthenticatedRequest).user?.sub) {
-			return (req as AuthenticatedRequest).user.sub;
-		}
+		const user = (req as AuthenticatedRequest).user;
+		if (user?.sub) return user.sub;
 
 		// Fall back to IP address
 		return this.getClientIP(req);

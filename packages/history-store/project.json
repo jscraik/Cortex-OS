@@ -1,0 +1,7 @@
+{
+    "name": "@cortex-os/history-store",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/history-store/src",
+    "projectType": "library",
+    "targets": {}
+}

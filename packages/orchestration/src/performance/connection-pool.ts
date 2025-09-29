@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * nO Master Agent Loop - Connection Pool Manager
  *
@@ -84,7 +86,17 @@ export class ConnectionPool<T extends Resource> {
 			validate: (resource: T) => Promise<boolean>;
 		},
 	) {
-		this.config = config;
+		// Validate configuration at runtime and apply defaults
+		try {
+			PoolConfigSchema.parse(config);
+		} catch (err) {
+			this.emitError(err);
+		}
+
+		this.config = {
+			...defaultPoolConfig,
+			...(config as Partial<PoolConfig>),
+		};
 		this.factory = factory;
 		this.startReaper();
 		this.ensureMinimum();
@@ -259,7 +271,10 @@ export class ConnectionPool<T extends Resource> {
 		try {
 			// Try to get from idle resources first
 			if (this.idleResources.length > 0) {
-				const resource = this.idleResources.pop()!;
+				const resource = this.idleResources.pop();
+				if (!resource) {
+					return this.tryAcquire(resolve, reject);
+				}
 
 				// Test resource health if configured
 				if (this.config.testOnBorrow) {
@@ -363,7 +378,9 @@ export class ConnectionPool<T extends Resource> {
 	 */
 	private processWaitingQueue(): void {
 		while (this.waitingQueue.length > 0 && this.idleResources.length > 0) {
-			const { resolve } = this.waitingQueue.shift()!;
+			const entry = this.waitingQueue.shift();
+			if (!entry) break;
+			const { resolve } = entry;
 			this.tryAcquire(resolve, () => {
 				// Error handling is done in tryAcquire
 			});
@@ -402,10 +419,17 @@ export class ConnectionPool<T extends Resource> {
 	 */
 	private ensureMaximum(): void {
 		while (this.idleResources.length > 0 && this.resources.size > this.config.max) {
-			const resource = this.idleResources.pop()!;
-			this.destroyResource(resource);
+			const resource = this.idleResources.pop();
+			if (resource) this.destroyResource(resource);
 		}
 		this.updateStats();
+	}
+
+	// Normalize and emit errors consistently with brAInwav branding
+	private emitError(err: unknown): void {
+		const e = err instanceof Error ? err : new Error(String(err));
+		// Include brAInwav branding in emitted error messages
+		this.log('error', `brAInwav: ${e.message}`);
 	}
 
 	/**
@@ -515,3 +539,22 @@ export const defaultPoolConfig: PoolConfig = {
 	testOnReturn: false,
 	testOnIdle: true,
 };
+
+/**
+ * PoolConfig schema for validation
+ */
+const PoolConfigSchema = z
+	.object({
+		min: z.number().int().min(0).optional(),
+		max: z.number().int().min(1).optional(),
+		acquireTimeoutMs: z.number().int().min(0).optional(),
+		idleTimeoutMs: z.number().int().min(0).optional(),
+		reapIntervalMs: z.number().int().min(100).optional(),
+		createTimeoutMs: z.number().int().min(0).optional(),
+		destroyTimeoutMs: z.number().int().min(0).optional(),
+		logLevel: z.enum(['none', 'error', 'warn', 'info', 'debug']).optional(),
+		testOnBorrow: z.boolean().optional(),
+		testOnReturn: z.boolean().optional(),
+		testOnIdle: z.boolean().optional(),
+	})
+	.strict();

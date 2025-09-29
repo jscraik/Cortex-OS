@@ -1,0 +1,10 @@
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/vitest.config.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/tests/circuit-breaker-events.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/tests/integration.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/tests/request-timeout.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/tests/stdio-buffering.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/tests/stdio-http.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/src/index.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/src/stdio-http.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/src/mcp/index.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/mcp-bridge/src/mcp/tools.ts:0:0: warning File ignored because no matching configuration was supplied.

@@ -1,372 +1,406 @@
 #!/usr/bin/env python3
-"""brAInwav Cortex-OS FastMCP Server v2.x."""
+"""brAInwav Cortex MCP FastMCP server entrypoint."""
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Callable
+from importlib.metadata import version as pkg_version
+from typing import Any
 
-from fastmcp import FastMCP  # type: ignore
-from starlette.middleware import Middleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse
-
-from adapters.memory_adapter import LocalMemoryAdapter
+import uvicorn
+from adapters.memory_adapter import (
+    InMemoryMemoryAdapter,
+    LocalMemoryAdapter,
+    MemoryAdapterError,
+    ResilientMemoryAdapter,
+)
 from adapters.search_adapter import CortexSearchAdapter, SearchAdapterError
 from auth.jwt_auth import JWTAuthenticator, create_authenticator_from_env
 from config import MCPSettings
-from health.checks import HealthCheckRegistry, SystemHealthCheck
+from fastapi import status
+from fastmcp import FastMCP
 from middleware.rate_limiter import RateLimiter
-from monitoring.metrics import MetricsMiddleware
-from resilience.circuit_breaker import CircuitBreaker, CircuitBreakerError
 from security.input_validation import (
     sanitize_output,
     validate_resource_id,
     validate_search_query,
 )
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - brAInwav Cortex MCP - %(levelname)s - %(message)s",
+BRANDING = {
+    "provider": "brAInwav",
+    "product": "Cortex MCP",
+    "docs": "https://docs.cortex-os.ai/mcp",
+}
+DEFAULT_PUBLIC_ENDPOINT = os.getenv(
+    "CORTEX_MCP_PUBLIC_ENDPOINT", "https://cortex-mcp.brainwav.io/mcp"
 )
-logger = logging.getLogger(__name__)
 
-server_instructions = (
-    "This brAInwav Cortex MCP server exposes knowledge search, document fetch, and "
-    "Local Memory tooling. Use the search tool to locate Cortex-OS documentation, "
-    "fetch to retrieve full content, and the memories_* tools to persist context via "
-    "Local Memory."
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [info] %(message)s")
+logger = logging.getLogger("cortex-mcp")
 
 
 @dataclass
-class ServerAdapters:
-    search: CortexSearchAdapter
-    memory: LocalMemoryAdapter
+class AdapterBundle:
+    search: CortexSearchAdapter | None
+    memory: LocalMemoryAdapter | None
 
 
 @dataclass
-class AuthComponents:
-    authenticator: JWTAuthenticator
-    rate_limiter: RateLimiter
+class AuthBundle:
+    authenticator: JWTAuthenticator | None
+    rate_limiter: RateLimiter | None
 
 
-def _build_adapters(settings: MCPSettings) -> ServerAdapters:
-    search_adapter = CortexSearchAdapter(
-        search_url=str(settings.cortex_search_url or ""),
-        document_url=str(settings.cortex_document_base_url or ""),
-        api_key=settings.cortex_search_api_key,
-        timeout_seconds=settings.http_timeout_seconds,
-        retries=settings.http_retries,
-    )
-    memory_adapter = LocalMemoryAdapter(
-        base_url=str(settings.local_memory_base_url),
-        api_key=settings.local_memory_api_key,
-        namespace=settings.local_memory_namespace,
-        timeout_seconds=settings.http_timeout_seconds,
-        retries=settings.http_retries,
-    )
-    return ServerAdapters(search=search_adapter, memory=memory_adapter)
+@dataclass
+class ToolCatalog:
+    entries: list[dict[str, Any]]
+
+    def add(self, *, name: str, description: str, enabled: bool = True) -> None:
+        self.entries.append(
+            {
+                "name": name,
+                "description": description,
+                "enabled": enabled,
+            }
+        )
+
+    def list(self) -> list[dict[str, Any]]:
+        return [dict(entry) for entry in self.entries]
+
+    def manifest(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "name": entry["name"],
+                "description": entry.get("description", ""),
+                "transport": "sse",
+            }
+            for entry in self.entries
+            if entry.get("enabled", True)
+        ]
 
 
-def _build_auth(overrides: dict[str, Any] | None = None) -> AuthComponents:
-    if overrides and "authenticator" in overrides:
-        authenticator = overrides["authenticator"]
+def _resolve_adapters(
+    settings: MCPSettings, overrides: dict[str, Any] | None
+) -> AdapterBundle:
+    overrides = overrides or {}
+    search = overrides.get("search")
+    if search is None and settings.cortex_search_url:
+        search = CortexSearchAdapter(
+            search_url=str(settings.cortex_search_url),
+            document_url=(
+                str(settings.cortex_document_base_url)
+                if settings.cortex_document_base_url
+                else None
+            ),
+            api_key=settings.cortex_search_api_key,
+            timeout_seconds=settings.http_timeout_seconds,
+            retries=settings.http_retries,
+        )
+    memory_override = overrides.get("memory")
+    if memory_override is not None:
+        memory = memory_override
     else:
-        authenticator = create_authenticator_from_env()
-    if overrides and "rate_limiter" in overrides:
-        limiter = overrides["rate_limiter"]
-    else:
-        limiter = RateLimiter(rpm=120, burst=20)
-    return AuthComponents(authenticator=authenticator, rate_limiter=limiter)
+        primary: LocalMemoryAdapter | None = None
+        if settings.local_memory_base_url:
+            primary = LocalMemoryAdapter(
+                base_url=str(settings.local_memory_base_url),
+                api_key=settings.local_memory_api_key,
+                namespace=settings.local_memory_namespace,
+                timeout_seconds=settings.http_timeout_seconds,
+                retries=settings.http_retries,
+            )
+        memory = ResilientMemoryAdapter(
+            primary=primary,
+            fallback=InMemoryMemoryAdapter(),
+        )
+    return AdapterBundle(search=search, memory=memory)
 
 
-def _register_search_tool(mcp: FastMCP, adapters: ServerAdapters) -> None:
-    circuit = CircuitBreaker(name="cortex-search", failure_threshold=5, recovery_timeout=30)
-
-    @mcp.tool()
-    async def search(query: str, max_results: int = 10) -> dict[str, Any]:
+def _resolve_auth_bundle(overrides: dict[str, Any] | None) -> AuthBundle:
+    overrides = overrides or {}
+    authenticator = overrides.get("authenticator")
+    if authenticator is None:
         try:
-            clean_query = validate_search_query(query)
-        except ValueError as exc:
-            return sanitize_output({"error": str(exc), "results": [], "total_found": 0})
-        limit = max(1, min(int(max_results), 100))
-        try:
-            payload = await circuit.call(adapters.search.search, clean_query, limit=limit)
-            if isinstance(payload, dict):
-                payload.setdefault("query", clean_query)
-                results = payload.get("results", [])
-                if isinstance(results, list):
-                    payload.setdefault("total_found", len(results))
-            return sanitize_output(payload)
-        except (SearchAdapterError, CircuitBreakerError) as exc:
-            logger.error("brAInwav search failed: %s", exc)
-            return sanitize_output({"error": str(exc), "results": [], "total_found": 0})
+            authenticator = create_authenticator_from_env()
+        except RuntimeError:
+            authenticator = None
+    rate_limiter = overrides.get("rate_limiter")
+    if rate_limiter is None:
+        rpm = int(os.getenv("CORTEX_MCP_RATE_LIMIT_RPM", "120"))
+        burst = int(os.getenv("CORTEX_MCP_RATE_LIMIT_BURST", "20"))
+        rate_limiter = RateLimiter(rpm=rpm, burst=burst)
+    return AuthBundle(authenticator=authenticator, rate_limiter=rate_limiter)
 
 
-def _register_fetch_tool(mcp: FastMCP, adapters: ServerAdapters) -> None:
-    @mcp.tool()
-    async def fetch(resource_id: str) -> dict[str, Any]:
+def _register_search_tool(
+    server: FastMCP, adapters: AdapterBundle, catalog: ToolCatalog
+) -> None:
+    if adapters.search is None:
+        return
+
+    @server.tool("search", description="Search Cortex-OS knowledge base.")
+    async def search_tool(query: str, max_results: int = 10) -> str:
+        cleaned = validate_search_query(query)
+        limit = max(1, min(int(max_results or 10), 25))
         try:
-            rid = validate_resource_id(resource_id)
-        except ValueError as exc:
-            return sanitize_output({"error": str(exc)})
-        try:
-            if rid.startswith("mem-"):
-                memory = await adapters.memory.get(rid)
-                if not memory:
-                    return sanitize_output({"error": "memory not found", "id": rid})
-                return sanitize_output({"id": rid, "source": "local-memory", "data": memory})
-            document = await adapters.search.fetch(rid)
-            return sanitize_output({"id": rid, "source": "cortex-docs", "data": document})
+            payload = await adapters.search.search(query=cleaned, limit=limit)
         except SearchAdapterError as exc:
-            logger.error("brAInwav fetch failed: %s", exc)
-            return sanitize_output({"error": str(exc), "id": rid})
+            logger.error("brAInwav search adapter failure: %s", exc)
+            return json.dumps({"error": "search_failed"})
+        sanitized = sanitize_output(payload)
+        return json.dumps(sanitized)
+
+    catalog.add(name="search", description="Search Cortex-OS knowledge base.")
 
 
-def _register_capabilities_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
-    async def list_capabilities() -> dict[str, Any]:
-        return sanitize_output(
-            {
-                "tools": [
-                    "search",
-                    "fetch",
-                    "ping",
-                    "health_check",
-                    "memories_store",
-                    "memories_search",
-                    "memories_get",
-                    "memories_delete",
-                ],
-                "resources": [],
-                "prompts": [],
-                "version": "2.1.0",
-            }
-        )
+def _register_fetch_tool(
+    server: FastMCP, adapters: AdapterBundle, catalog: ToolCatalog
+) -> None:
+    if adapters.search is None:
+        return
+
+    @server.tool("fetch", description="Fetch Cortex document details by ID.")
+    async def fetch_tool(resource_id: str) -> str:
+        rid = validate_resource_id(resource_id)
+        try:
+            document = await adapters.search.fetch(resource_id=rid)
+        except SearchAdapterError as exc:
+            logger.error("brAInwav fetch adapter failure: %s", exc)
+            return json.dumps({"error": "fetch_failed"})
+        sanitized = sanitize_output(document)
+        return json.dumps(sanitized)
+
+    catalog.add(name="fetch", description="Fetch Cortex document details by ID.")
 
 
-def _register_ping_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
-    async def ping(transport: str = "unknown") -> dict[str, Any]:
-        return sanitize_output(
-            {
-                "status": "ok",
-                "message": "brAInwav Cortex MCP is operational",
-                "transport": transport,
-                "version": "2.1.0",
-            }
-        )
-
-
-def _register_health_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
-    async def health_check() -> dict[str, Any]:
-        return sanitize_output({"status": "ok", "version": "2.1.0"})
-
-
-def _register_memory_tools(mcp: FastMCP, adapters: ServerAdapters) -> None:
-    @mcp.tool()
-    async def memories_store(
-        kind: str,
-        text: str,
-        tags: list[str] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        record = await adapters.memory.store(
-            kind=kind,
-            text=text,
-            tags=tags,
-            metadata=metadata,
-        )
-        return sanitize_output({"stored": True, "memory": record})
-
-    @mcp.tool()
-    async def memories_search(
-        query: str,
-        limit: int = 10,
-        kind: str | None = None,
-        tags: list[str] | None = None,
-    ) -> dict[str, Any]:
-        return await adapters.memory.search(
-            query=query or "",
-            limit=max(1, min(int(limit), 100)),
-            kind=kind,
-            tags=tags,
-        )
-
-    @mcp.tool()
-    async def memories_get(id: str) -> dict[str, Any]:
-        record = await adapters.memory.get(id)
-        if not record:
-            return sanitize_output({"found": False, "id": id})
-        return sanitize_output({"found": True, "memory": record})
-
-    @mcp.tool()
-    async def memories_delete(id: str) -> dict[str, Any]:
-        deleted = await adapters.memory.delete(id)
-        return sanitize_output({"deleted": deleted, "id": id})
-
-
-def _register_metrics(mcp: FastMCP) -> None:
-    mcp.add_middleware(Middleware(MetricsMiddleware))
-
-
-def _register_health_routes(mcp: FastMCP, adapters: ServerAdapters) -> None:
-    registry = HealthCheckRegistry()
-    registry.register(SystemHealthCheck())
-
-    @mcp.custom_route("/health", ["GET"])
-    async def _health(_: Request) -> JSONResponse:
-        return JSONResponse({"status": "ok", "version": "2.1.0"})
-
-    @mcp.custom_route("/health/details", ["GET"])
-    async def _health_details(_: Request) -> JSONResponse:
-        summary = await registry.run_all()
-        summary["adapters"] = {
-            "search": adapters.search.search_url != "",
-            "memory": bool(adapters.memory.base_url),
+def _register_ping_tool(server: FastMCP, catalog: ToolCatalog) -> None:
+    @server.tool("ping", description="Return basic server heartbeat info.")
+    async def ping_tool(transport: str | None = None) -> str:
+        payload = {
+            "status": "ok",
+            "transport": transport or "unknown",
+            "branding": BRANDING,
         }
-        return JSONResponse(sanitize_output(summary))
+        return json.dumps(payload)
+
+    catalog.add(name="ping", description="Return basic server heartbeat info.")
 
 
-def _register_discovery_route(mcp: FastMCP) -> None:
-    manifest_payload = {
-        "version": "1.0",
-        "generatedAt": os.getenv("MCP_MANIFEST_GENERATED_AT", ""),
+def _register_health_tool(
+    server: FastMCP, adapters: AdapterBundle, catalog: ToolCatalog
+) -> None:
+    @server.tool("health_check", description="Detailed MCP health probe.")
+    async def health_tool() -> str:
+        payload = {
+            "status": "ok",
+            "branding": BRANDING,
+            "adapters": {
+                "search": adapters.search is not None,
+                "memory": adapters.memory is not None,
+            },
+        }
+        return json.dumps(payload)
+
+    catalog.add(name="health_check", description="Detailed MCP health probe.")
+
+
+def _register_capabilities_tool(server: FastMCP, catalog: ToolCatalog) -> None:
+    @server.tool(
+        "list_capabilities",
+        description="List registered MCP tools and metadata.",
+    )
+    async def list_capabilities() -> str:
+        tools = sanitize_output(catalog.list())
+        return json.dumps({"tools": tools})
+
+    catalog.add(
+        name="list_capabilities",
+        description="List registered MCP tools and metadata.",
+    )
+
+
+def _package_version() -> str:
+    try:
+        return pkg_version("cortex-mcp")
+    except Exception:
+        return "1.0.0"
+
+
+def _manifest_payload(catalog: ToolCatalog, version: str) -> dict[str, Any]:
+    return {
+        "version": version,
+        "branding": BRANDING,
         "servers": [
             {
-                "id": "cortex-mcp",
-                "name": "brAInwav Cortex MCP Server",
-                "description": "Cortex-OS MCP endpoint exposing knowledge tools and Local Memory integration.",
-                "endpoint": os.getenv("CORTEX_MCP_PUBLIC_ENDPOINT", "https://cortex-mcp.brainwav.io/mcp"),
                 "transport": "sse",
-                "capabilities": ["tools", "resources", "prompts"],
-                "authentication": {
-                    "required": True,
-                    "notes": "JWT authentication enforced on REST endpoints.",
-                },
+                "endpoint": DEFAULT_PUBLIC_ENDPOINT,
+                "priority": 1,
             }
         ],
-        "branding": {
-            "provider": "brAInwav",
-            "support": "https://github.com/jamiescottcraik/brAInwav",
-        },
+        "tools": sanitize_output(catalog.manifest()),
     }
 
-    @mcp.custom_route("/.well-known/mcp.json", ["GET"])
-    async def _manifest(_: Request) -> JSONResponse:
-        return JSONResponse(sanitize_output(manifest_payload))
+
+def _enforce_security(request: Request, bundle: AuthBundle, scope: str | None) -> None:
+    if bundle.rate_limiter:
+        bundle.rate_limiter.check(request)
+    if bundle.authenticator and scope:
+        bundle.authenticator.verify_request(request, required_scope=scope)
 
 
-async def _authorized_response(
-    request: Request,
-    scope: str,
-    auth: AuthComponents,
-    handler: Callable[[], Any],
-) -> JSONResponse:
-    auth.authenticator.verify_request(request, required_scope=scope)
-    auth.rate_limiter.check(request)
-    payload = await handler()
-    return JSONResponse(sanitize_output(payload))
+def _memory_tags(raw: Any) -> list[str]:
+    if not isinstance(raw, list):
+        return []
+    return [str(tag) for tag in raw if isinstance(tag, (str, int))]
 
 
-def _register_memory_store_route(
-    mcp: FastMCP,
-    adapters: ServerAdapters,
-    auth: AuthComponents,
+def _memory_metadata(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, dict):
+        return {str(k): v for k, v in raw.items()}
+    return {}
+
+
+def _register_health_routes(
+    server: FastMCP,
+    manifest: dict[str, Any],
+    settings: MCPSettings,
+    adapters: AdapterBundle,
 ) -> None:
-    @mcp.custom_route("/api/memories", ["POST"])
-    async def _mem_store(request: Request) -> JSONResponse:
-        body = await request.json()
+    @server.custom_route("/health", methods=["GET"], name="health")
+    async def health_route(_request: Request) -> Response:
+        payload = {
+            "status": "ok",
+            "branding": BRANDING,
+            "adapters": {
+                "search": adapters.search is not None,
+                "memory": adapters.memory is not None,
+            },
+        }
+        return JSONResponse(payload)
 
-        async def _store() -> dict[str, Any]:
-            record = await adapters.memory.store(
-                kind=body.get("kind", "note"),
-                text=body.get("text", ""),
-                tags=body.get("tags"),
-                metadata=body.get("metadata"),
-            )
-            return {"stored": True, "memory": record}
+    @server.custom_route("/health/details", methods=["GET"], name="health_details")
+    async def health_details(_request: Request) -> Response:
+        payload = {
+            "status": "ok",
+            "branding": BRANDING,
+            "config": settings.dict_for_logging(),
+        }
+        return JSONResponse(payload)
 
-        return await _authorized_response(request, "memories:write", auth, _store)
-
-
-def _register_memory_search_route(
-    mcp: FastMCP,
-    adapters: ServerAdapters,
-    auth: AuthComponents,
-) -> None:
-    @mcp.custom_route("/api/memories", ["GET"])
-    async def _mem_search(request: Request) -> JSONResponse:
-        params = request.query_params
-
-        async def _search() -> dict[str, Any]:
-            tags_param: list[str] | None = None
-            if hasattr(params, "getlist"):
-                tags_param = params.getlist("tags")
-            return await adapters.memory.search(
-                query=params.get("query", ""),
-                limit=int(params.get("limit", "10")),
-                kind=params.get("kind"),
-                tags=tags_param,
-            )
-
-        return await _authorized_response(request, "memories:read", auth, _search)
-
-
-def _register_memory_get_route(
-    mcp: FastMCP,
-    adapters: ServerAdapters,
-    auth: AuthComponents,
-) -> None:
-    @mcp.custom_route("/api/memories/{mem_id}", ["GET"])
-    async def _mem_get(request: Request) -> JSONResponse:
-        mem_id = request.path_params.get("mem_id", "")
-
-        async def _get() -> dict[str, Any]:
-            record = await adapters.memory.get(mem_id)
-            if not record:
-                return {"found": False, "id": mem_id}
-            return {"found": True, "memory": record}
-
-        return await _authorized_response(request, "memories:read", auth, _get)
-
-
-def _register_memory_delete_route(
-    mcp: FastMCP,
-    adapters: ServerAdapters,
-    auth: AuthComponents,
-) -> None:
-    @mcp.custom_route("/api/memories/{mem_id}", ["DELETE"])
-    async def _mem_delete(request: Request) -> JSONResponse:
-        mem_id = request.path_params.get("mem_id", "")
-
-        async def _delete() -> dict[str, Any]:
-            deleted = await adapters.memory.delete(mem_id)
-            return {"deleted": deleted, "id": mem_id}
-
-        return await _authorized_response(request, "memories:delete", auth, _delete)
+    @server.custom_route("/.well-known/mcp.json", methods=["GET"], name="mcp_manifest")
+    async def manifest_route(_request: Request) -> Response:
+        return JSONResponse(manifest)
 
 
 def _register_memory_routes(
-    mcp: FastMCP,
-    adapters: ServerAdapters,
-    auth: AuthComponents,
+    server: FastMCP, adapters: AdapterBundle, auth_bundle: AuthBundle
 ) -> None:
-    _register_memory_store_route(mcp, adapters, auth)
-    _register_memory_search_route(mcp, adapters, auth)
-    _register_memory_get_route(mcp, adapters, auth)
-    _register_memory_delete_route(mcp, adapters, auth)
+    if adapters.memory is None:
+        logger.warning("Memory adapter not configured; REST routes disabled")
+        return
+
+    memory = adapters.memory
+    _register_memory_store_route(server, memory, auth_bundle)
+    _register_memory_search_route(server, memory, auth_bundle)
+    _register_memory_get_route(server, memory, auth_bundle)
+    _register_memory_delete_route(server, memory, auth_bundle)
 
 
-def register_rest_routes(mcp: FastMCP, adapters: ServerAdapters, auth: AuthComponents) -> None:
-    _register_metrics(mcp)
-    _register_health_routes(mcp, adapters)
-    _register_discovery_route(mcp)
-    _register_memory_routes(mcp, adapters, auth)
+def _register_memory_store_route(
+    server: FastMCP, memory: LocalMemoryAdapter, auth_bundle: AuthBundle
+) -> None:
+    @server.custom_route("/api/memories", methods=["POST"], name="memories_store")
+    async def store_memory(request: Request) -> Response:
+        _enforce_security(request, auth_bundle, "memories:write")
+        try:
+            payload = await request.json()
+        except ValueError:
+            return JSONResponse(
+                {"error": "invalid JSON payload"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        kind = str(payload.get("kind") or "note").strip() or "note"
+        text = str(payload.get("text") or "").strip()
+        tags = _memory_tags(payload.get("tags"))
+        metadata = _memory_metadata(payload.get("metadata"))
+        try:
+            record = await memory.store(
+                kind=kind, text=text, tags=tags, metadata=metadata
+            )
+        except MemoryAdapterError as exc:  # pragma: no cover - exercised separately
+            logger.error("brAInwav memory store failed: %s", exc)
+            return JSONResponse(
+                {"error": "memory store failed"},
+                status_code=status.HTTP_502_BAD_GATEWAY,
+            )
+        sanitized = sanitize_output(record)
+        return JSONResponse({"memory": sanitized})
+
+
+def _register_memory_search_route(
+    server: FastMCP, memory: LocalMemoryAdapter, auth_bundle: AuthBundle
+) -> None:
+    @server.custom_route("/api/memories", methods=["GET"], name="memories_search")
+    async def search_memories(request: Request) -> Response:
+        _enforce_security(request, auth_bundle, "memories:read")
+        params = request.query_params
+        query = params.get("query") or params.get("q") or ""
+        try:
+            limit = int(params.get("limit", "10"))
+        except ValueError:
+            limit = 10
+        limit = max(1, min(limit, 50))
+        kind = params.get("kind")
+        tags = params.get("tags")
+        tag_list = tags.split(",") if tags else None
+        result = await memory.search(
+            query=query,
+            limit=limit,
+            kind=kind,
+            tags=tag_list,
+        )
+        sanitized = sanitize_output(result)
+        return JSONResponse(sanitized)
+
+
+def _register_memory_get_route(
+    server: FastMCP, memory: LocalMemoryAdapter, auth_bundle: AuthBundle
+) -> None:
+    @server.custom_route(
+        "/api/memories/{memory_id}", methods=["GET"], name="memories_get"
+    )
+    async def get_memory(request: Request) -> Response:
+        _enforce_security(request, auth_bundle, "memories:read")
+        memory_id = request.path_params["memory_id"]
+        record = await memory.get(memory_id)
+        if record is None:
+            return JSONResponse(
+                {"error": "memory not found"}, status_code=status.HTTP_404_NOT_FOUND
+            )
+        sanitized = sanitize_output(record)
+        return JSONResponse({"memory": sanitized})
+
+
+def _register_memory_delete_route(
+    server: FastMCP, memory: LocalMemoryAdapter, auth_bundle: AuthBundle
+) -> None:
+    @server.custom_route(
+        "/api/memories/{memory_id}", methods=["DELETE"], name="memories_delete"
+    )
+    async def delete_memory(request: Request) -> Response:
+        _enforce_security(request, auth_bundle, "memories:delete")
+        memory_id = request.path_params["memory_id"]
+        deleted = await memory.delete(memory_id)
+        status_code = status.HTTP_200_OK if deleted else status.HTTP_404_NOT_FOUND
+        body = {"deleted": deleted}
+        if not deleted:
+            body["error"] = "memory not found"
+        return JSONResponse(body, status_code=status_code)
 
 
 def create_server(
@@ -375,42 +409,55 @@ def create_server(
     auth_overrides: dict[str, Any] | None = None,
     settings: MCPSettings | None = None,
 ) -> FastMCP:
-    resolved_settings = settings or MCPSettings()
-    logger.info("brAInwav MCP settings: %s", resolved_settings.dict_for_logging())
+    cfg = settings or MCPSettings()
+    adapter_bundle = _resolve_adapters(cfg, adapters)
+    auth_bundle = _resolve_auth_bundle(auth_overrides)
 
-    if adapters:
-        search_adapter = adapters.get("search")
-        memory_adapter = adapters.get("memory")
-        if search_adapter is None or memory_adapter is None:
-            raise ValueError("Both search and memory adapters are required")
-        resolved_adapters = ServerAdapters(
-            search=search_adapter,
-            memory=memory_adapter,
-        )
-    else:
-        resolved_adapters = _build_adapters(resolved_settings)
+    version = _package_version()
+    server = FastMCP(
+        name="Cortex-OS MCP Server",
+        version=version,
+    )
 
-    auth_components = _build_auth(auth_overrides)
+    catalog = ToolCatalog(entries=[])
+    _register_search_tool(server, adapter_bundle, catalog)
+    _register_fetch_tool(server, adapter_bundle, catalog)
+    _register_ping_tool(server, catalog)
+    _register_health_tool(server, adapter_bundle, catalog)
+    _register_capabilities_tool(server, catalog)
 
-    mcp = FastMCP(name="brAInwav Cortex MCP", instructions=server_instructions)
-    _register_search_tool(mcp, resolved_adapters)
-    _register_fetch_tool(mcp, resolved_adapters)
-    _register_capabilities_tool(mcp)
-    _register_ping_tool(mcp)
-    _register_health_tool(mcp)
-    _register_memory_tools(mcp, resolved_adapters)
-    register_rest_routes(mcp, resolved_adapters, auth_components)
-    return mcp
+    manifest = _manifest_payload(catalog, version)
+    _register_health_routes(server, manifest, cfg, adapter_bundle)
+    _register_memory_routes(server, adapter_bundle, auth_bundle)
+
+    logger.info(
+        "brAInwav Cortex MCP server configured",
+        extra={
+            "branding": BRANDING,
+            "config": cfg.dict_for_logging(),
+        },
+    )
+
+    return server
+
+
+def build_application(server: FastMCP) -> Any:
+    # Expose the FastMCP streamable HTTP transport under /mcp so connectors can
+    # establish a session and upgrade to SSE using the discovery manifest endpoint.
+    return server.http_app(transport="streamable-http", path="/mcp")
 
 
 def main() -> None:
-    host = os.getenv("HOST", "127.0.0.1")
-    os.getenv("PORT", "8000")
-    logger.info("brAInwav MCP entrypoint invoked on %s", host)
-    _ = create_server()
+    server = create_server()
+    app = build_application(server)
+    config = uvicorn.Config(app=app, host="0.0.0.0", port=3024, log_level="info")
+    uvicorn.Server(config).run()
 
 
-mcp = create_server()
-
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     main()
+
+
+# FastMCP CLI entrypoint
+server = create_server()
+app = build_application(server)

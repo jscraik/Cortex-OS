@@ -1,5 +1,20 @@
 # GEMINI.md - brAInwav Cortex-OS Development Guide
 
+## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
+
+**CRITICAL**: This repository operates under strict governance standards for file organization and architectural integrity. Only approved, comprehensive documentation belongs at the repository root level per brAInwav development policies.
+
+### Root-Level File Governance
+
+- **Authoritative Agent Instructions**: Complete, comprehensive instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) at root
+- **Foundation Standards**: Core project documents (CODESTYLE.md, README.md, CHANGELOG.md) belong at root level
+- **Structure Guard Enforcement**: Automated validation of root entries against approved `allowedRootEntries` governance list
+- **brAInwav Identity**: All root documentation must maintain brAInwav branding and organizational standards
+
+**Gemini Agent Compliance**: When creating, modifying, or suggesting file placement, ensure adherence to governance standards. Specialized configurations, partial documents, and working files belong in appropriate subdirectories (`.cortex/rules/`, `config/`, package-specific `/docs`).
+
+---
+
 ## 🚨 CRITICAL: brAInwav Production Standards
 
 **ABSOLUTE PROHIBITION**: NEVER claim any implementation is "production-ready", "complete", "operational", or "fully implemented" if it contains:

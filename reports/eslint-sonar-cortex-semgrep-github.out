@@ -1,0 +1,11 @@
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/vitest.config.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/tests/setup/vitest.setup.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/tests/integration/webhook.issue_comment.positive.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/tests/integration/webhook.positive.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/tests/integration/webhook.signature.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/src/test/security-scanner.test.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/src/server/app.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/src/server/start.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/src/lib/comment-formatter.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/src/lib/scan-operations.ts:0:0: warning File ignored because no matching configuration was supplied.
+/Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github/src/lib/semgrep-scanner.ts:0:0: warning File ignored because no matching configuration was supplied.

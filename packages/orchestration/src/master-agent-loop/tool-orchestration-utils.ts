@@ -120,7 +120,7 @@ export const simulateToolExecution = async (
 };
 
 // Pure function to check if strategy should fail fast
-export const shouldFailFast = (strategy: string, errors: any[]): boolean => {
+export const shouldFailFast = (strategy: string, errors: unknown[]): boolean => {
 	return strategy === 'fail-fast' && errors.length > 0;
 };
 
