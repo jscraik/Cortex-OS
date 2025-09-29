@@ -53,7 +53,7 @@ export function createTaskEventStream(
   const heartbeatTimer = setInterval(() => {
     stream.push(`: heartbeat ${Date.now()}\n\n`);
   }, heartbeatInterval);
-  heartbeatTimer.unref?.();
+  heartbeatTimer.unref();
 
   // Cleanup function to remove listeners, only runs once
   let cleanedUp = false;
