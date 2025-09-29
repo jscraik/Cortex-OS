@@ -19,7 +19,7 @@ import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/src/loader
 import {
 	type BindKernelToolsOptions,
 	type KernelTool,
-        type KernelToolBinding,
+	type KernelToolBinding,
 	bindKernelTools,
 } from '@cortex-os/kernel';
 import {
