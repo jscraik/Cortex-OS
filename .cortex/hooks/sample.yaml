@@ -1,0 +1,19 @@
+hooks:
+  PostToolUse:
+    - matcher: "Edit|Write|MultiEdit"
+      hooks:
+        - type: command
+          command: "node ./scripts/format-changed.js"
+  PreToolUse:
+    - matcher: "Write|Edit|MultiEdit"
+      hooks:
+        - type: js
+          code: |
+            const p = (ctx.tool && ctx.tool.input && (ctx.tool.input.file_path || ctx.tool.input.path)) || "";
+            if (p.includes('/infra/prod/')) return { action: 'deny', reason: 'Protected path' };
+            return { action: 'allow' };
+  Notify:
+    - matcher: "*"
+      hooks:
+        - type: command
+          command: 'osascript -e ''display notification "Cortex awaiting input" with title "Cortex"'''
