@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deployment, Cloudflare cache purges, connector retests, and MCP discovery RFC
   tracking
 
+#### Coverage Enforcement
+
+- Added regression coverage for `resolveCoverageThresholds` ensuring default thresholds, per-metric overrides, and global fallback logic behave as documented.
+
 **Files Updated:**
 
 - `apps/cortex-webui/backend/src/services/externalMonitoringService.ts`
@@ -80,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with brAInwav-branded logging and resilient fallback delegates
 - Tuned global coverage enforcement to default to 95% line coverage and added reusable
   threshold resolver for Vitest configuration and scripts
+- Documented centralized coverage thresholds (90/90/90/95) and helper usage in `README.md` to align with the brAInwav policy update.
 
 ### Technical Details
 

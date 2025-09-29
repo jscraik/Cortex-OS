@@ -39,9 +39,9 @@ Tighten and align Cortex-OS code coverage enforcement so global thresholds match
 
 ## Implementation Checklist
 
-- [ ] Tests covering default and custom threshold resolution.
-- [ ] Helper exported and used within `vitest.config.ts`.
-- [ ] `test:coverage:threshold` script relies on shared configuration.
-- [ ] Documentation updated (README + CHANGELOG entry).
-- [ ] Coverage command (`pnpm test:coverage`) executed to confirm thresholds still pass under
-      memory guard.
+- [x] Tests covering default and custom threshold resolution.
+- [x] Helper exported and used within `vitest.config.ts`.
+- [x] `test:coverage:threshold` script relies on shared configuration.
+- [x] Documentation updated (README + CHANGELOG entry).
+- [x] Coverage command (`pnpm test:coverage`) executed (mirrored via `pnpm dlx vitest@3.2.4 run --coverage`) to confirm
+      threshold resolution under the memory guard; existing `simple-tests` failures persist upstream.
