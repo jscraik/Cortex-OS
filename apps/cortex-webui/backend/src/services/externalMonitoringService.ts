@@ -76,26 +76,50 @@ function deriveActorType(event: AuthMonitoringPayload): 'user' | 'system' {
 }
 
 function logProviderSkip(provider: ProviderName, reason: ProviderSkipReason): void {
-	logger.info('external-monitoring: provider skipped for brAInwav auth monitoring', {
-		provider,
-		reason,
-	});
+        const payload = { provider, reason } as const;
+
+        if (reason === 'invalid_url') {
+                logger.warn('brAInwav external monitoring invalid webhook configuration', payload);
+                return;
+        }
+
+        logger.info('external-monitoring: provider skipped for brAInwav auth monitoring', payload);
 }
 
 function logProviderFailure(provider: ProviderName, status?: number, error?: unknown): void {
-	if (status !== undefined) {
-		logger.warn('brAInwav external monitoring provider failure', {
-			provider,
-			status,
-		});
-		return;
-	}
+        if (status !== undefined) {
+                logger.warn('brAInwav external monitoring provider failure', {
+                        provider,
+                        status,
+                });
+                return;
+        }
 
-	const message = error instanceof Error ? error.message : 'unknown error';
-	logger.warn('brAInwav external monitoring request error', {
-		provider,
-		reason: message,
-	});
+        const message = resolveErrorReason(error);
+        logger.warn('brAInwav external monitoring request error', {
+                provider,
+                reason: message,
+        });
+}
+
+function resolveErrorReason(error: unknown): string {
+        if (error instanceof Error) {
+                return error.message;
+        }
+
+        if (typeof error === 'object' && error !== null) {
+                const potentialMessage = (error as { message?: unknown }).message;
+                if (typeof potentialMessage === 'string' && potentialMessage.trim() !== '') {
+                        return potentialMessage;
+                }
+
+                const potentialName = (error as { name?: unknown }).name;
+                if (typeof potentialName === 'string' && potentialName.trim() !== '') {
+                        return potentialName;
+                }
+        }
+
+        return 'unknown error';
 }
 
 function buildDatadogBody(
@@ -273,15 +297,13 @@ async function sendToWebhook(
 }
 
 async function dispatchVendors(
-	event: AuthMonitoringPayload,
-	config: MonitoringConfig,
-	context: VendorContext,
+        event: AuthMonitoringPayload,
+        config: MonitoringConfig,
+        context: VendorContext,
 ): Promise<void> {
-	await Promise.all([
-		sendToDatadog(event, config, context),
-		sendToNewRelic(event, config, context),
-		sendToWebhook(event, config, context),
-	]);
+        await sendToDatadog(event, config, context);
+        await sendToNewRelic(event, config, context);
+        await sendToWebhook(event, config, context);
 }
 
 async function recordPrometheus(
