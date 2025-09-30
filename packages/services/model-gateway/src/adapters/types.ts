@@ -3,7 +3,7 @@
  * These interfaces provide canonical, typed method shapes for adapters.
  */
 
-export type Embedding = { embedding: number[]; model: string };
+export type Embedding = { embedding: number[]; model: string; vector?: number[] };
 export type ChatResponse = { content: string; model: string };
 
 export type Message = {
@@ -37,11 +37,11 @@ export interface OllamaAdapterApi {
 	generateChat(
 		request:
 			| {
-					messages: Message[];
-					model?: string;
-					temperature?: number;
-					max_tokens?: number;
-			  }
+				messages: Message[];
+				model?: string;
+				temperature?: number;
+				max_tokens?: number;
+			}
 			| Message[],
 		model?: string,
 		options?: { temperature?: number; max_tokens?: number },

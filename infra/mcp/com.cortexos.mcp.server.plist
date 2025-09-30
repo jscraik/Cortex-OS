@@ -39,6 +39,8 @@
         <string>3024</string>
         <key>MCP_LOG_LEVEL</key>
         <string>info</string>
+        <key>LOCAL_MEMORY_BASE_URL</key>
+        <string>http://127.0.0.1:9400</string>
     </dict>
 </dict>
 </plist>

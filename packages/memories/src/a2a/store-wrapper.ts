@@ -116,7 +116,7 @@ export class A2AAwareMemoryStore implements MemoryStore {
 			await this.eventPublisher.publishMemorySearched(`search-${Date.now()}`, namespace, {
 				query: {
 					text: query.text,
-					limit: query.limit || query.topK || 10,
+					limit: query.topK ?? 10,
 				},
 				results: {
 					count: results.length,
@@ -156,8 +156,8 @@ export class A2AAwareMemoryStore implements MemoryStore {
 
 			await this.eventPublisher.publishMemorySearched(`search-${Date.now()}`, namespace, {
 				query: {
-					vector: query.vector || query.embedding,
-					limit: query.limit || query.topK || 10,
+					vector: query.vector ?? (query as unknown as { embedding?: number[] }).embedding,
+					limit: query.topK ?? 10,
 				},
 				results: {
 					count: results.length,
@@ -215,5 +215,19 @@ export class A2AAwareMemoryStore implements MemoryStore {
 			});
 			throw error;
 		}
+	}
+
+	async list(namespace = 'default', limit?: number, offset?: number): Promise<Memory[]> {
+		const startTime = Date.now();
+		const results = await this.store.list(namespace, limit, offset);
+
+		await this.eventPublisher.publishMemorySearched(`list-${Date.now()}`, namespace, {
+			query: {
+				limit: limit ?? 0,
+			},
+			results: { count: results.length, memories: results, executionTimeMs: Date.now() - startTime },
+		});
+
+		return results;
 	}
 }

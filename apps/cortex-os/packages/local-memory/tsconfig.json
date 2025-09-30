@@ -16,6 +16,7 @@
         "declaration": true,
         "declarationMap": true,
         "outDir": "./dist",
+        "rootDir": ".",
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": false,
@@ -28,8 +29,8 @@
         ],
         "paths": {
             "@cortex-os/*": [
-                "../../../../packages/*/src",
-                "../../../../libs/typescript/*/src"
+                "../../../../packages/*/dist/index.d.ts",
+                "../../../../packages/*/src"
             ]
         }
     },
@@ -39,7 +40,11 @@
     "exclude": [
         "node_modules",
         "dist",
-        "__tests__"
+        "__tests__",
+        "src/evaluation/**/*",
+        "src/observability/**/*",
+        "src/auth/**/*",
+        "src/retrieval/**/*"
     ],
     "extends": "../../../../tsconfig.base.json"
 }

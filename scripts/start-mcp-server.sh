@@ -18,6 +18,7 @@ NODE_PATH="/Users/jamiecraik/.local/share/mise/installs/node/22.11.0/bin/node"
 LOG_DIR="/Users/jamiecraik/.Cortex-OS/logs"
 MCP_PORT="${MCP_PORT:-3024}"
 MCP_LOG_LEVEL="${MCP_LOG_LEVEL:-info}"
+LOCAL_MEMORY_BASE_URL="${LOCAL_MEMORY_BASE_URL:-http://127.0.0.1:9400}"
 
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"
@@ -105,15 +106,15 @@ echo "[$(date)] NODE_PATH=$NODE_PATH"
 echo "[$(date)] NODE_ENV=$NODE_ENV"
 echo "[$(date)] MCP_PORT=$MCP_PORT"
 echo "[$(date)] MCP_LOG_LEVEL=$MCP_LOG_LEVEL"
+echo "[$(date)] LOCAL_MEMORY_BASE_URL=$LOCAL_MEMORY_BASE_URL"
 echo "[$(date)] PWD=$(pwd)"
 
-# Prepare command - use test server for now until TypeScript build issues are resolved
-if [ -f "$MCP_SERVER_DIR/test-server.js" ]; then
-    CMD=("$NODE_BIN" "$MCP_SERVER_DIR/test-server.js")
-elif [ -f "$MCP_SERVER_DIR/dist/index.js" ]; then
-    CMD=("$NODE_BIN" "$MCP_SERVER_DIR/dist/index.js")
+# Prepare command
+export LOCAL_MEMORY_BASE_URL
+if [ -f "$MCP_SERVER_DIR/dist/index.js" ]; then
+    CMD=("$NODE_BIN" "$MCP_SERVER_DIR/dist/index.js" --transport http --port "$MCP_PORT")
 else
-    echo "[$(date)] Error: No server implementation found"
+    echo "[$(date)] Error: MCP server build not found"
     exit 1
 fi
 echo "[$(date)] Executing: ${CMD[*]}"

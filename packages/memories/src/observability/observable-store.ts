@@ -141,13 +141,13 @@ export class ObservableMemoryStore implements MemoryStore {
 			{
 				'operation.type': 'searchByText',
 				'query.text': query.text,
-				'query.limit': query.limit || query.topK || 10,
+				'query.topK': query.topK ?? 10,
 				'memory.namespace': namespace,
 			},
 		);
 	}
 
-	async searchByVector(query: VectorQuery, namespace = 'default'): Promise<Memory[]> {
+	async searchByVector(query: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
 		return this.wrapStoreOperation(
 			'searchByVector',
 			async () => {
@@ -157,7 +157,7 @@ export class ObservableMemoryStore implements MemoryStore {
 			namespace,
 			{
 				'operation.type': 'searchByVector',
-				'query.limit': query.limit || query.topK || 10,
+				'query.limit': query.topK ?? 10,
 				'memory.namespace': namespace,
 			},
 		);
@@ -173,6 +173,19 @@ export class ObservableMemoryStore implements MemoryStore {
 			namespace,
 			{
 				'operation.type': 'purgeExpired',
+				'memory.namespace': namespace,
+			},
+		);
+	}
+
+	async list(namespace = 'default', limit?: number, offset?: number): Promise<Memory[]> {
+		return this.wrapStoreOperation(
+			'list',
+			() => this.store.list(namespace, limit, offset),
+			namespace,
+			{
+				'operation.type': 'list',
+				'query.limit': limit ?? 0,
 				'memory.namespace': namespace,
 			},
 		);

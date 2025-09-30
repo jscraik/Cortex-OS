@@ -1,5 +1,6 @@
 import type {
   MemoryProvider,
+  Memory,
   MemorySearchResult,
   MemoryAnalysisResult,
   MemoryStats,
@@ -13,7 +14,7 @@ import type {
   MemoryAnalysisInput,
   MemoryRelationshipsInput,
   MemoryStatsInput,
-} from '../tool-spec/index.js';
+} from '@cortex-os/tool-spec';
 
 interface RemoteMemoryProviderOptions {
   baseUrl: string;
@@ -47,7 +48,8 @@ export class RemoteMemoryProvider implements MemoryProvider {
   }
 
   async search(input: MemorySearchInput): Promise<MemorySearchResult[]> {
-    return this.post('/memory/search', input);
+    const results = await this.post<MemorySearchResult[]>('/memory/search', input);
+    return results.map((result) => this.reviveSearchResult(result));
   }
 
   async analysis(input: MemoryAnalysisInput): Promise<MemoryAnalysisResult> {
@@ -120,5 +122,26 @@ export class RemoteMemoryProvider implements MemoryProvider {
     }
 
     return payload.data;
+  }
+
+  private reviveMemory(data: Memory | (Memory & { createdAt: string; updatedAt: string })): Memory {
+    const createdAt = data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt);
+    const updatedAt = data.updatedAt instanceof Date ? data.updatedAt : new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
+  }
+
+  private reviveSearchResult(result: MemorySearchResult | (MemorySearchResult & { createdAt: string; updatedAt: string })): MemorySearchResult {
+    const revived = this.reviveMemory(result);
+    return {
+      ...result,
+      ...revived,
+      createdAt: revived.createdAt,
+      updatedAt: revived.updatedAt,
+    } as MemorySearchResult;
   }
 }

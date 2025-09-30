@@ -1,6 +1,6 @@
 /**
- * @file License Management with 1Password CLI Integration
- * @description Secure license storage and retrieval using 1Password CLI with fallbacks
+ * License management utilities leveraging the 1Password CLI.
+ * Provides secure storage, retrieval, and validation of brAInwav license data.
  */
 
 import { exec } from 'child_process';
@@ -12,7 +12,11 @@ import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
-// License data schema
+const LICENSE_TEMP_PREFIX = 'brainwav-license-';
+const LICENSE_PAYLOAD_FILENAME = 'license.json';
+
+const escapeShellArg = (value: string): string => `'${value.replace(/'/g, "'\\''")}'`;
+
 export const LicenseSchema = z.object({
     licenseKey: z.string().min(1),
     customerEmail: z.string().email(),
@@ -28,11 +32,15 @@ export type License = z.infer<typeof LicenseSchema>;
 export interface LicenseConfig {
     onePasswordItem?: string;
     onePasswordVault?: string;
-    fallbackPath?: string;
     environmentOverride?: string;
 }
 
-// 1Password item interfaces
+interface InternalLicenseConfig {
+    onePasswordItem: string;
+    onePasswordVault: string;
+    environmentOverride: string;
+}
+
 interface OnePasswordField {
     id?: string;
     label?: string;
@@ -41,106 +49,78 @@ interface OnePasswordField {
 }
 
 interface OnePasswordItem {
+    id?: string;
     title: string;
     category: string;
+    vault?: { id?: string };
     fields?: OnePasswordField[];
 }
+
+type LicenseValidationResult = {
+    valid: boolean;
+    reason?: string;
+    daysRemaining?: number;
+};
 
 /**
  * brAInwav License Manager with 1Password CLI integration
  */
 export class LicenseManager {
-    private config: LicenseConfig;
+    private readonly config: InternalLicenseConfig;
     private cache: License | null = null;
     private cacheExpiration = 0;
-    private readonly cacheDurationMs = 5 * 60 * 1000; // 5 minutes
+    private readonly cacheDurationMs = 5 * 60 * 1000;
 
     constructor(config: LicenseConfig = {}) {
         this.config = {
-            onePasswordItem: config.onePasswordItem || 'brainwav-cortex-os-license',
-            onePasswordVault: config.onePasswordVault || 'brAInwav Development',
-            fallbackPath: config.fallbackPath || path.join(os.homedir(), '.cortex-os', 'license.json'),
-            environmentOverride: config.environmentOverride || 'CORTEX_LICENSE_DATA',
-            ...config,
+            onePasswordItem: config.onePasswordItem ?? 'brainwav-cortex-os-license',
+            onePasswordVault: config.onePasswordVault ?? 'brAInwav Development',
+            environmentOverride: config.environmentOverride ?? 'CORTEX_LICENSE_DATA',
         };
     }
 
-    /**
-     * Retrieve license from 1Password CLI, fallback sources, or cache
-     */
+    getConfiguration(): InternalLicenseConfig {
+        return { ...this.config };
+    }
+
     async getLicense(): Promise<License> {
-        // Check cache first
         if (this.cache && Date.now() < this.cacheExpiration) {
             return this.cache;
         }
 
-        try {
-            // 1. Try environment override first
-            if (this.config.environmentOverride) {
-                const envLicense = process.env[this.config.environmentOverride];
-                if (envLicense) {
-                    const license = await this.parseLicense(envLicense, 'environment');
-                    this.updateCache(license);
-                    return license;
-                }
-            }
-
-            // 2. Try 1Password CLI (primary method)
-            const onePasswordLicense = await this.getLicenseFrom1Password();
-            if (onePasswordLicense) {
-                this.updateCache(onePasswordLicense);
-                return onePasswordLicense;
-            }
-
-            // 3. Fallback to local file (encrypted or plaintext)
-            const fallbackLicense = await this.getLicenseFromFallback();
-            if (fallbackLicense) {
-                console.warn(
-                    '[brAInwav] License loaded from fallback file - consider migrating to 1Password CLI',
-                );
-                this.updateCache(fallbackLicense);
-                return fallbackLicense;
-            }
-
-            throw new Error('brAInwav license not found in any configured source');
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`brAInwav license retrieval failed: ${errorMessage}`);
-        }
-    }
-
-    /**
-     * Store license in 1Password CLI
-     */
-    async storeLicense(license: License): Promise<void> {
-        try {
-            // Validate license data
-            LicenseSchema.parse(license);
-
-            // Store in 1Password CLI
-            await this.storeLicenseIn1Password(license);
-
-            // Update cache
+        const envLicense = process.env[this.config.environmentOverride];
+        if (envLicense) {
+            const license = this.parseLicense(envLicense, 'environment override');
             this.updateCache(license);
-
-            console.info('[brAInwav] License successfully stored in 1Password CLI');
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`brAInwav license storage failed: ${errorMessage}`);
+            return license;
         }
+
+        const cliLicense = await this.fetchLicenseFrom1Password();
+        if (cliLicense) {
+            this.updateCache(cliLicense);
+            return cliLicense;
+        }
+
+        throw new Error('brAInwav license not found in any configured source');
     }
 
-    /**
-     * Validate license and check expiration
-     */
-    async validateLicense(): Promise<{ valid: boolean; reason?: string; daysRemaining?: number }> {
+    async storeLicense(license: License): Promise<void> {
+        LicenseSchema.parse(license);
+
+        await this.persistLicenseTo1Password(license);
+        this.updateCache(license);
+
+        console.info('[brAInwav] License successfully stored in 1Password CLI');
+    }
+
+    async validateLicense(): Promise<LicenseValidationResult> {
         try {
             const license = await this.getLicense();
 
             const now = new Date();
             const expiration = new Date(license.expirationDate);
 
-            if (expiration <= now) {
+            if (Number.isNaN(expiration.getTime()) || expiration <= now) {
                 return {
                     valid: false,
                     reason: `brAInwav license expired on ${expiration.toLocaleDateString()}`,
@@ -168,140 +148,123 @@ export class LicenseManager {
         }
     }
 
-    /**
-     * Clear cached license data
-     */
     clearCache(): void {
         this.cache = null;
         this.cacheExpiration = 0;
     }
 
-    /**
-     * Get license from 1Password CLI
-     */
-    private async getLicenseFrom1Password(): Promise<License | null> {
-        try {
-            // Check if 1Password CLI is available
-            await execAsync('op --version');
+    private async fetchLicenseFrom1Password(): Promise<License | null> {
+        const item = await this.fetch1PasswordItem();
+        if (!item) {
+            return null;
+        }
 
-            // Retrieve license from 1Password
-            const command = `op item get "${this.config.onePasswordItem}" --vault="${this.config.onePasswordVault}" --format=json`;
+        const payload = this.extract1PasswordLicenseData(item);
+        return this.parseLicense(JSON.stringify(payload), '1Password CLI');
+    }
+
+    private async fetch1PasswordItem(skipAvailabilityCheck = false): Promise<OnePasswordItem | null> {
+        if (!skipAvailabilityCheck && !(await this.is1PasswordAvailable())) {
+            return null;
+        }
+
+        const command = [
+            'op item get',
+            escapeShellArg(this.config.onePasswordItem),
+            `--vault=${escapeShellArg(this.config.onePasswordVault)}`,
+            '--format=json',
+        ].join(' ');
+
+        try {
             const { stdout } = await execAsync(command);
-
-            const item = JSON.parse(stdout);
-
-            // Extract license data from 1Password item
-            const licenseData = this.extract1PasswordLicenseData(item);
-
-            return await this.parseLicense(JSON.stringify(licenseData), '1Password CLI');
+            return JSON.parse(stdout) as OnePasswordItem;
         } catch (error) {
-            if (error instanceof Error && error.message.includes('op: command not found')) {
-                console.warn(
-                    '[brAInwav] 1Password CLI not installed - falling back to alternative methods',
-                );
+            this.warn1Password('1Password CLI error', error);
+            return null;
+        }
+    }
+
+    private async persistLicenseTo1Password(license: License): Promise<void> {
+        await this.assert1PasswordAvailable();
+
+        const itemPayload = this.build1PasswordItemPayload(license);
+        const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), LICENSE_TEMP_PREFIX));
+        const payloadPath = path.join(tempDir, LICENSE_PAYLOAD_FILENAME);
+
+        try {
+            await fs.writeFile(payloadPath, JSON.stringify(itemPayload, null, 2), 'utf8');
+
+            const existingItem = await this.fetch1PasswordItem(true);
+            if (existingItem?.id) {
+                const editCommand = [
+                    'op item edit',
+                    escapeShellArg(existingItem.id),
+                    `--input=${escapeShellArg(payloadPath)}`,
+                ].join(' ');
+                await execAsync(editCommand);
             } else {
-                console.warn(
-                    `[brAInwav] 1Password CLI error: ${error instanceof Error ? error.message : String(error)}`,
-                );
+                const createCommand = [
+                    'op item create',
+                    `--vault=${escapeShellArg(this.config.onePasswordVault)}`,
+                    `--input=${escapeShellArg(payloadPath)}`,
+                ].join(' ');
+                await execAsync(createCommand);
             }
-            return null;
+        } finally {
+            await fs.rm(tempDir, { recursive: true, force: true });
         }
     }
 
-    /**
-     * Store license in 1Password CLI
-     */
-    private async storeLicenseIn1Password(license: License): Promise<void> {
+    private build1PasswordItemPayload(license: License): OnePasswordItem {
+        return {
+            title: this.config.onePasswordItem,
+            category: 'SECURE_NOTE',
+            fields: [
+                { id: 'notesPlain', type: 'STRING', value: JSON.stringify(license, null, 2) },
+                { label: 'License Key', type: 'STRING', value: license.licenseKey },
+                { label: 'Customer Email', type: 'STRING', value: license.customerEmail },
+                { label: 'Organization', type: 'STRING', value: license.brainwavOrganization },
+                { label: 'Expiration', type: 'STRING', value: license.expirationDate },
+                { label: 'Max Users', type: 'STRING', value: license.maxUsers.toString() },
+                { label: 'Features', type: 'STRING', value: license.features.join(', ') },
+                { label: 'Issued At', type: 'STRING', value: license.issuedAt },
+            ],
+        };
+    }
+
+    private async assert1PasswordAvailable(): Promise<void> {
+        if (!(await this.is1PasswordAvailable())) {
+            throw new Error('brAInwav license storage requires 1Password CLI installation and authentication');
+        }
+    }
+
+    private async is1PasswordAvailable(): Promise<boolean> {
         try {
-            // Check if 1Password CLI is available
             await execAsync('op --version');
-
-            // Create or update 1Password item
-            const itemData = {
-                title: this.config.onePasswordItem,
-                category: 'SECURE_NOTE',
-                fields: [
-                    { id: 'notesPlain', type: 'STRING', value: JSON.stringify(license, null, 2) },
-                    { label: 'License Key', type: 'STRING', value: license.licenseKey },
-                    { label: 'Customer Email', type: 'STRING', value: license.customerEmail },
-                    { label: 'Organization', type: 'STRING', value: license.brainwavOrganization },
-                    { label: 'Expiration', type: 'STRING', value: license.expirationDate },
-                    { label: 'Max Users', type: 'STRING', value: license.maxUsers.toString() },
-                    { label: 'Features', type: 'STRING', value: license.features.join(', ') },
-                ],
-            };
-
-            const command = `echo '${JSON.stringify(itemData)}' | op item create --vault="${this.config.onePasswordVault}" -`;
-            await execAsync(command);
+            return true;
         } catch (error) {
-            if (error instanceof Error && error.message.includes('op: command not found')) {
-                throw new Error('brAInwav license storage requires 1Password CLI installation');
-            }
-            throw error;
+            this.warn1Password('1Password CLI not available', error);
+            return false;
         }
     }
 
-    /**
-     * Get license from fallback file
-     */
-    private async getLicenseFromFallback(): Promise<License | null> {
-        try {
-            if (!this.config.fallbackPath) {
-                return null;
-            }
-
-            const licenseData = await fs.readFile(this.config.fallbackPath, 'utf8');
-            return await this.parseLicense(licenseData, 'fallback file');
-        } catch (error) {
-            if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-                return null; // File doesn't exist
-            }
-            console.warn(
-                `[brAInwav] Fallback license file error: ${error instanceof Error ? error.message : String(error)}`,
-            );
-            return null;
-        }
+    private warn1Password(message: string, error: unknown): void {
+        const details = error instanceof Error ? error.message : String(error);
+        console.warn(`[brAInwav] ${message}: ${details}`);
     }
 
-    /**
-     * Parse and validate license data
-     */
-    private async parseLicense(licenseData: string, source: string): Promise<License> {
-        try {
-            const parsed = JSON.parse(licenseData);
-            const license = LicenseSchema.parse(parsed);
-
-            console.info(`[brAInwav] License loaded from ${source}`);
-            return license;
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                throw new Error(
-                    `brAInwav license validation failed from ${source}: ${error.errors.map((e) => e.message).join(', ')}`,
-                );
-            }
-            throw new Error(
-                `brAInwav license parsing failed from ${source}: ${error instanceof Error ? error.message : String(error)}`,
-            );
-        }
-    }
-
-    /**
-     * Extract license data from 1Password item
-     */
     private extract1PasswordLicenseData(item: OnePasswordItem): License {
-        // Extract from notes field (primary storage)
-        const notes = item.fields?.find((field: OnePasswordField) => field.id === 'notesPlain')?.value;
+        const notes = item.fields?.find((field) => field.id === 'notesPlain')?.value;
         if (notes) {
             try {
-                return JSON.parse(notes);
+                return JSON.parse(notes) as License;
             } catch {
-                // Fall through to field extraction
+                // fall through to field extraction when notes parsing fails
             }
         }
 
-        // Extract from individual fields (fallback)
         const getField = (label: string) =>
-            item.fields?.find((field: OnePasswordField) => field.label === label)?.value || '';
+            item.fields?.find((field) => field.label === label)?.value ?? '';
 
         return {
             licenseKey: getField('License Key'),
@@ -314,9 +277,26 @@ export class LicenseManager {
         };
     }
 
-    /**
-     * Update cache with license data
-     */
+    private parseLicense(licenseData: string, source: string): License {
+        try {
+            const parsed = JSON.parse(licenseData) as Record<string, unknown>;
+            const license = LicenseSchema.parse(parsed);
+
+            console.info(`[brAInwav] License loaded from ${source}`);
+            return license;
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                throw new Error(
+                    `brAInwav license validation failed from ${source}: ${error.errors.map((e) => e.message).join(', ')}`,
+                );
+            }
+
+            throw new Error(
+                `brAInwav license parsing failed from ${source}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
+    }
+
     private updateCache(license: License): void {
         this.cache = license;
         this.cacheExpiration = Date.now() + this.cacheDurationMs;
@@ -330,8 +310,7 @@ export function createLicenseManagerFromEnv(): LicenseManager {
     return new LicenseManager({
         onePasswordItem: process.env.CORTEX_LICENSE_1P_ITEM,
         onePasswordVault: process.env.CORTEX_LICENSE_1P_VAULT,
-        fallbackPath: process.env.CORTEX_LICENSE_FALLBACK_PATH,
-        environmentOverride: process.env.CORTEX_LICENSE_ENV_VAR || 'CORTEX_LICENSE_DATA',
+        environmentOverride: process.env.CORTEX_LICENSE_ENV_VAR,
     });
 }
 

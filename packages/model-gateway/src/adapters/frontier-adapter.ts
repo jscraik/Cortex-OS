@@ -10,11 +10,11 @@ import type { Message } from './types.js';
 export interface FrontierAdapterApi {
 	isAvailable(model?: string): Promise<boolean>;
 	listModels?(): Promise<string[]>; // optional for future parity with other adapters
-	generateEmbedding(_text: string, model?: string): Promise<{ embedding: number[]; model: string }>;
+	generateEmbedding(_text: string, model?: string): Promise<{ embedding: number[]; model: string; vector?: number[] }>;
 	generateEmbeddings(
 		texts: string[],
 		model?: string,
-	): Promise<{ embedding: number[]; model: string }[]>;
+	): Promise<{ embedding: number[]; model: string; vector?: number[] }[]>;
 	generateChat(request: {
 		messages: Message[];
 		model?: string;
@@ -39,9 +39,11 @@ export class FrontierAdapter implements FrontierAdapterApi {
 	async generateEmbedding(
 		_text: string,
 		model = 'frontier-embedding',
-	): Promise<{ embedding: number[]; model: string }> {
+	): Promise<{ embedding: number[]; model: string; vector?: number[] }> {
+		const vec = new Array(8).fill(0).map((_, i) => i);
 		return {
-			embedding: new Array(8).fill(0).map((_, i) => i),
+			embedding: vec,
+			vector: vec,
 			model,
 		};
 	}
@@ -49,7 +51,7 @@ export class FrontierAdapter implements FrontierAdapterApi {
 	async generateEmbeddings(
 		texts: string[],
 		model?: string,
-	): Promise<{ embedding: number[]; model: string }[]> {
+	): Promise<{ embedding: number[]; model: string; vector?: number[] }[]> {
 		return Promise.all(texts.map((t) => this.generateEmbedding(t, model)));
 	}
 

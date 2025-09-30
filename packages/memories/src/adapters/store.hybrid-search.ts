@@ -557,4 +557,15 @@ export class HybridSearchMemoryStore implements MemoryStore {
     this.analytics.topTerms.clear();
     this.analytics.queryTypes = { textOnly: 0, vectorOnly: 0, hybrid: 0 };
   }
+
+  private invalidateCache(namespace: string): void {
+    for (const key of Array.from(this.queryCache.keys())) {
+      try {
+        const parsed = JSON.parse(key);
+        if (parsed && parsed.namespace === namespace) this.queryCache.delete(key);
+      } catch {
+        // ignore invalid cache keys
+      }
+    }
+  }
 }

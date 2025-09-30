@@ -4,7 +4,7 @@ import type {
   MemoryAnalysisInput,
   MemoryRelationshipsInput,
   MemoryStatsInput
-} from './tool-spec/index.js';
+} from '@cortex-os/tool-spec';
 
 // Base memory entity
 export interface Memory {
@@ -151,6 +151,7 @@ export interface MemoryProvider {
   // Optional: cleanup/maintenance
   cleanup?(): Promise<void>;
   optimize?(): Promise<void>;
+  close?(): Promise<void>;
 }
 
 // Qdrant-specific types

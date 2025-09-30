@@ -15,7 +15,7 @@ import type {
 
 export interface MCPAdapter {
 	isAvailable(): Promise<boolean>;
-	generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string }>;
+	generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string; vector: number[] }>;
 	generateEmbeddings(
 		request: EmbeddingBatchRequest,
 	): Promise<{ embeddings: number[][]; model: string }>;
@@ -79,7 +79,7 @@ export function createMCPAdapter(): MCPAdapter {
 				}),
 			);
 			const emb = (result?.embeddings?.[0] as number[]) || [];
-			return { embedding: emb, model: result?.model || 'mcp:embeddings' };
+			return { embedding: emb, model: result?.model || 'mcp:embeddings', vector: emb };
 		},
 		async generateEmbeddings(request) {
 			const result = await withClient(async (c) =>

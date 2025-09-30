@@ -21,10 +21,11 @@ try {
 	if (process.env.NX_SMART_DEBUG_BOOT) {
 		console.error('[nx-smart][env] loaded', envFile);
 	}
-} catch (e) {
+} catch (error) {
 	// optional - dotenv is not available
 	if (process.env.NX_SMART_DEBUG_BOOT) {
-		console.error('[nx-smart][env] dotenv not available, skipping');
+		const message = error instanceof Error ? error.message : String(error);
+		console.error('[nx-smart][env] dotenv not available, skipping:', message);
 	}
 }
 
@@ -131,6 +132,7 @@ const forceInteractive = flags.includes('--interactive');
 // Remove our custom flags before forwarding to nx
 // Remove wrapper-specific flags and sanitize unsupported ones like --filter that should not leak to executors
 const forwardedFlags = [];
+const positionalFocus = [];
 let idx = 0;
 while (idx < flags.length) {
 	const f = flags[idx];
@@ -141,6 +143,11 @@ while (idx < flags.length) {
 	}
 	if (passThroughMode) {
 		executorArgs.push(f);
+		idx += 1;
+		continue;
+	}
+	if (!f.startsWith('-')) {
+		positionalFocus.push(f);
 		idx += 1;
 		continue;
 	}
@@ -173,6 +180,12 @@ while (idx < flags.length) {
 const json = flags.includes('--json');
 const verbose = flags.includes('--verbose');
 
+if (positionalFocus.length > 0) {
+	const merged = new Set(focusList.length > 0 ? focusList : []);
+	for (const token of positionalFocus) merged.add(token);
+	focusList = Array.from(merged);
+}
+
 function log(msg) {
 	if (!json) console.log(msg);
 }
@@ -187,7 +200,7 @@ function writeMetrics(metaExtra = {}) {
 				strategy,
 				skipped: Boolean(metaExtra.skipped),
 			});
-		} catch {}
+		} catch { }
 	}
 	if (telemetryEnabled && span) {
 		try {
@@ -196,7 +209,7 @@ function writeMetrics(metaExtra = {}) {
 			span.setAttribute('nx.smart.duration_ms', durationMs);
 			if (metaExtra.skipped)
 				span.setAttribute('nx.smart.skipped', String(metaExtra.reason || true));
-		} catch {}
+		} catch { }
 	}
 	if (metricsJsonPath) {
 		try {
@@ -212,7 +225,7 @@ function writeMetrics(metaExtra = {}) {
 async function finalizeAndExit(code, metaExtra = {}) {
 	try {
 		await writeMetrics(metaExtra);
-	} catch {}
+	} catch { }
 	if (telemetryEnabled && span) {
 		try {
 			if (code === 0)
@@ -224,12 +237,12 @@ async function finalizeAndExit(code, metaExtra = {}) {
 					code: (await import('@opentelemetry/api')).SpanStatusCode.ERROR,
 				});
 			span.end();
-		} catch {}
+		} catch { }
 	}
 	if (telemetryEnabled && telemetry) {
 		try {
 			await telemetry.shutdownTelemetry({ timeoutMs: 2000 });
-		} catch {}
+		} catch { }
 	}
 	process.exit(code);
 }
@@ -341,7 +354,8 @@ function run(command) {
 function shellEscape(arg) {
 	const str = String(arg ?? '');
 	if (str.length === 0) return "''";
-	return `'${str.replace(/'/g, `'\\''`)}'`;
+	const escaped = str.replace(/'/g, "'\\''");
+	return `'${escaped}'`;
 }
 
 function composeNxCommand(baseParts, forwarded, executor) {
@@ -434,6 +448,18 @@ if (strategy === 'affected') {
 		if (filtered.length > 0) {
 			if (!json) log(`[nx-smart] focus (pre-summary) ${original.length}->${filtered.length}`);
 			affectedList = filtered;
+		} else {
+			const hint =
+				focusList.length === 1
+					? `Check the project name. Example: pnpm ${target}:smart --focus @scope/project`
+					: 'Verify each focused project exists and is affected.';
+			if (!json) {
+				console.error('[nx-smart] focus requested but no overlap with affected set.');
+				console.error(`[nx-smart] Requested focus: ${focusList.join(', ')}`);
+				console.error(`[nx-smart] Affected projects: ${original.join(', ')}`);
+				console.error(`[nx-smart] Hint: ${hint}`);
+			}
+			await finalizeAndExit(1, { skipped: true, reason: 'focus-mismatch' });
 		}
 	}
 
@@ -579,7 +605,7 @@ if (strategy === 'affected') {
 					}
 					try {
 						fs.unlinkSync(graphTmp);
-					} catch {}
+					} catch { }
 				}
 			} catch (e) {
 				if (verbose && !json)
@@ -629,10 +655,10 @@ if (json) console.log(JSON.stringify({ ...meta, completed: true }));
 if (telemetryEnabled && span) {
 	try {
 		span.end();
-	} catch {}
+	} catch { }
 	if (telemetry?.shutdownTelemetry) {
 		try {
 			await telemetry.shutdownTelemetry({ timeoutMs: 2000 });
-		} catch {}
+		} catch { }
 	}
 }

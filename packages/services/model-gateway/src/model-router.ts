@@ -194,12 +194,12 @@ export class ModelRouter implements IModelRouter {
 				priority: number;
 				fallback: string[];
 			}> = [
-				{ name: 'mixtral-8x7b-mlx', priority: 100, fallback: [] },
-				{ name: 'gpt-oss-20b-mlx', priority: 95, fallback: [] },
-				{ name: 'qwen3-coder-30b-mlx', priority: 90, fallback: [] },
-				{ name: 'gemma2-2b-mlx', priority: 80, fallback: [] },
-				{ name: 'phi3-mini-mlx', priority: 70, fallback: [] },
-			];
+					{ name: 'mixtral-8x7b-mlx', priority: 100, fallback: [] },
+					{ name: 'gpt-oss-20b-mlx', priority: 95, fallback: [] },
+					{ name: 'qwen3-coder-30b-mlx', priority: 90, fallback: [] },
+					{ name: 'gemma2-2b-mlx', priority: 80, fallback: [] },
+					{ name: 'phi3-mini-mlx', priority: 70, fallback: [] },
+				];
 			for (const m of mlxDesired) {
 				// MLX models are local; we optimistically register. Fallbacks can include MCP if present.
 				if (this.preferOllamaFallback && ollamaAvailable) {
@@ -336,14 +336,14 @@ export class ModelRouter implements IModelRouter {
 					text: request.text,
 					model: m.name,
 				});
-				return { embedding: response.embedding, model: m.name };
+				return { embedding: response.embedding, model: m.name, vector: response.embedding };
 			} else if (m.provider === 'ollama') {
 				const response = await this.ollamaAdapter.generateEmbedding(request.text, m.name);
-				return { embedding: response.embedding, model: m.name };
+				return { embedding: response.embedding, model: m.name, vector: response.embedding };
 			} else {
 				// MCP adapter path (ensure loaded earlier)
 				const response = await (this.mcpAdapter as MCPAdapterApi).generateEmbedding(request);
-				return { embedding: response.embedding, model: response.model };
+				return { embedding: response.embedding, model: response.model, vector: response.embedding };
 			}
 		};
 
@@ -369,8 +369,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All embedding models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -425,8 +424,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All batch embedding models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All batch embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -477,8 +475,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All chat models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All chat models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -536,8 +533,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All reranking models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All reranking models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}

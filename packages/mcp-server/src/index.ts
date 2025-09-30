@@ -47,7 +47,7 @@ class DualMcpServer {
   private setupTools(): void {
     const specs = Object.values(TOOL_SPECS);
 
-    this.server.setRequestHandler('tools/list', async () => ({
+    (this.server as any).setRequestHandler('tools/list', async () => ({
       tools: specs.map((spec) => ({
         name: spec.name,
         description: spec.description,
@@ -55,7 +55,7 @@ class DualMcpServer {
       })),
     }));
 
-    this.server.setRequestHandler('tools/call', async (request) => {
+    (this.server as any).setRequestHandler('tools/call', async (request: any) => {
       const spec = TOOL_SPECS[request.params.name];
       if (!spec) {
         throw new Error(`Unknown tool: ${request.params.name}`);

@@ -1,5 +1,4 @@
 {
-  "_comment": "brAInwav MCP Server Configuration for VS Code",
   "servers": {
     "local-memory": {
       "command": "/Users/jamiecraik/.Cortex-OS/tools/mcp/wrap_local_memory.sh",
@@ -8,6 +7,15 @@
       ],
       "env": {
         "BRAINWAV_SERVICE": "local-memory"
+      }
+    },
+    "nx-mcp": {
+      "command": "npx",
+      "args": [
+        "nx-mcp@latest"
+      ],
+      "env": {
+        "BRAINWAV_WORKSPACE": "cortex-os"
       }
     }
   }

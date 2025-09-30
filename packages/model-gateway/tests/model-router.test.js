@@ -48,6 +48,7 @@ describe('ModelRouter', () => {
 			const mockEmbedding = {
 				embedding: [0.1, 0.2, 0.3],
 				model: 'qwen3-embedding-4b-mlx',
+				vector: [0.1, 0.2, 0.3],
 			};
 			mockMLXAdapter.generateEmbedding.mockResolvedValue(mockEmbedding);
 			const result = await modelRouter.generateEmbedding({ text: 'test text' });
@@ -56,7 +57,7 @@ describe('ModelRouter', () => {
 		});
 		it('should fallback to Ollama when MLX fails', async () => {
 			mockMLXAdapter.generateEmbedding.mockRejectedValue(new Error('MLX failed'));
-			const mockEmbedding = { embedding: [0.4, 0.5, 0.6] };
+			const mockEmbedding = { embedding: [0.4, 0.5, 0.6], vector: [0.4, 0.5, 0.6] };
 			mockOllamaAdapter.generateEmbedding.mockResolvedValue(mockEmbedding);
 			const result = await modelRouter.generateEmbedding({ text: 'test text' });
 			expect(result.embedding).toEqual([0.4, 0.5, 0.6]);
@@ -70,7 +71,7 @@ describe('ModelRouter', () => {
 			);
 		});
 		it('should handle batch embeddings', async () => {
-			const mockEmbeddings = [{ embedding: [0.1, 0.2] }, { embedding: [0.3, 0.4] }];
+			const mockEmbeddings = [{ embedding: [0.1, 0.2], vector: [0.1, 0.2] }, { embedding: [0.3, 0.4], vector: [0.3, 0.4] }];
 			mockMLXAdapter.generateEmbeddings.mockResolvedValue(mockEmbeddings);
 			const result = await modelRouter.generateEmbeddings({
 				texts: ['text1', 'text2'],

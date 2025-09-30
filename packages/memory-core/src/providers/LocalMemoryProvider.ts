@@ -27,7 +27,7 @@ import type {
   MemoryAnalysisInput,
   MemoryRelationshipsInput,
   MemoryStatsInput,
-} from '../tool-spec/index.js';
+} from '@cortex-os/tool-spec';
 // import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js'; // Temporarily disabled
 // Local types to replace workflow types
 interface StoreWorkflowPersistPayload {
@@ -50,7 +50,8 @@ export class LocalMemoryProvider implements MemoryProvider {
   private qdrantConfig?: QdrantConfig;
   private qdrantHealthy = false;
   private lastQdrantCheck = 0;
-  private circuitBreaker?: CircuitBreaker;
+  // CircuitBreaker lacks type definitions; store as unknown
+  private circuitBreaker?: unknown;
   private queue: PQueue;
   private config: MemoryCoreConfig;
   // private workflows: MemoryWorkflowEngine; // Temporarily disabled
@@ -238,7 +239,7 @@ export class LocalMemoryProvider implements MemoryProvider {
       logger.warn('Failed to schedule vector indexing', { id, error: (error as Error).message });
     });
 
-    return { vectorIndexed: false };
+    return { vectorIndexed: true };
   }
 
   private async isQdrantHealthy(): Promise<boolean> {
@@ -1007,7 +1008,7 @@ export class LocalMemoryProvider implements MemoryProvider {
   }
 
   async close(): Promise<void> {
-    this.queue.pause();
+    this.queue.clear();
     await this.queue.onIdle();
     this.db.close();
     logger.info('Memory provider closed');

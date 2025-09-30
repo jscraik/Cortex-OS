@@ -10,11 +10,11 @@ export interface MLXAdapterApi {
 	generateEmbedding(request: {
 		text: string;
 		model?: string;
-	}): Promise<{ embedding: number[]; model: string }>;
+	}): Promise<{ embedding: number[]; model: string; vector: number[] }>;
 	generateEmbeddings(request: {
 		texts: string[];
 		model?: string;
-	}): Promise<{ embedding: number[]; model: string }[]>;
+	}): Promise<{ embedding: number[]; model: string; vector: number[] }[]>;
 	generateChat(request: {
 		messages: Message[];
 		model?: string;
@@ -35,7 +35,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		const usedModel = model || defaultModel;
 		const hash = Array.from(text).reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0);
 		const vec = new Array(8).fill(0).map((_, i) => ((hash >> (i % 8)) & 0xff) / 255);
-		return { embedding: vec, model: usedModel };
+		return { embedding: vec, model: usedModel, vector: vec };
 	}
 	return {
 		async isAvailable(): Promise<boolean> {
@@ -91,13 +91,13 @@ export class MLXAdapter implements MLXAdapterApi {
 	generateEmbedding(request: {
 		text: string;
 		model?: string;
-	}): Promise<{ embedding: number[]; model: string }> {
+	}): Promise<{ embedding: number[]; model: string; vector: number[] }> {
 		return this.impl.generateEmbedding(request);
 	}
 	generateEmbeddings(request: {
 		texts: string[];
 		model?: string;
-	}): Promise<{ embedding: number[]; model: string }[]> {
+	}): Promise<{ embedding: number[]; model: string; vector: number[] }[]> {
 		return this.impl.generateEmbeddings(request);
 	}
 	generateChat(request: {

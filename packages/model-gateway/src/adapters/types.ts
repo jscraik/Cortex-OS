@@ -3,7 +3,7 @@
  * These interfaces provide canonical, typed method shapes for adapters.
  */
 
-export type Embedding = { embedding: number[]; model: string };
+export type Embedding = { embedding: number[]; model: string; vector?: number[] };
 export type ChatResponse = { content: string; model: string };
 
 export type Message = {
