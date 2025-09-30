@@ -69,7 +69,7 @@ uv pip install dist/cortex_mcp-*.whl
 ### 4.1 FastMCP CLI
 
 ```bash
-uv run fastmcp run cortex_fastmcp_server_v2.py --transport http --port 3024
+uv run fastmcp run src/cortex_mcp/cortex_fastmcp_server_v2.py --transport http --port 3024
 ```
 
 Available transports: `stdio`, `http`, `sse`. The server automatically registers:
@@ -89,7 +89,7 @@ After=network-online.target
 [Service]
 WorkingDirectory=/opt/cortex-os/packages/cortex-mcp
 EnvironmentFile=/etc/cortex-mcp.env
-ExecStart=/opt/cortex-os/packages/cortex-mcp/.venv/bin/uv run fastmcp run cortex_fastmcp_server_v2.py --transport http --port 3024
+ExecStart=/opt/cortex-os/packages/cortex-mcp/.venv/bin/uv run fastmcp run src/cortex_mcp/cortex_fastmcp_server_v2.py --transport http --port 3024
 Restart=on-failure
 RestartSec=5
 

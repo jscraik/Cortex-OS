@@ -1,0 +1,20 @@
+[0;34m[INFO][0m brAInwav Cortex MCP Deployment Script Starting
+[2025-09-30 01:28:21] [INFO] brAInwav Cortex MCP Deployment Script Starting
+[0;34m[INFO][0m Configuration:
+[2025-09-30 01:28:21] [INFO] Configuration:
+[0;34m[INFO][0m   Host: brainwav-mcp
+[2025-09-30 01:28:21] [INFO]   Host: brainwav-mcp
+[0;34m[INFO][0m   Service: cortex-fastmcp.service
+[2025-09-30 01:28:21] [INFO]   Service: cortex-fastmcp.service
+[0;34m[INFO][0m   Transport: streamable-http
+[2025-09-30 01:28:21] [INFO]   Transport: streamable-http
+[0;34m[INFO][0m   Dry Run: false
+[2025-09-30 01:28:21] [INFO]   Dry Run: false
+[0;34m[INFO][0m   Log File: /Users/jamiecraik/.Cortex-OS/logs/mcp-deployment-20250930-012821.log
+[2025-09-30 01:28:21] [INFO]   Log File: /Users/jamiecraik/.Cortex-OS/logs/mcp-deployment-20250930-012821.log
+[0;34m[INFO][0m Checking prerequisites...
+[2025-09-30 01:28:21] [INFO] Checking prerequisites...
+[0;34m[INFO][0m Testing SSH connectivity to brainwav-mcp...
+[2025-09-30 01:28:21] [INFO] Testing SSH connectivity to brainwav-mcp...
+[0;31m[ERROR][0m Cannot connect to brainwav-mcp via SSH. Check your SSH configuration.
+[2025-09-30 01:28:22] [ERROR] Cannot connect to brainwav-mcp via SSH. Check your SSH configuration.

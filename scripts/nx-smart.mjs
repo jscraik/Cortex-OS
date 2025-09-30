@@ -21,8 +21,11 @@ try {
 	if (process.env.NX_SMART_DEBUG_BOOT) {
 		console.error('[nx-smart][env] loaded', envFile);
 	}
-} catch {
-	// optional
+} catch (e) {
+	// optional - dotenv is not available
+	if (process.env.NX_SMART_DEBUG_BOOT) {
+		console.error('[nx-smart][env] dotenv not available, skipping');
+	}
 }
 
 // Lazy import telemetry only if enabled to avoid unnecessary startup cost in minimal environments.
@@ -62,7 +65,8 @@ if (!process.env.NX_INTERACTIVE) {
 	process.env.NX_INTERACTIVE = 'false';
 }
 // In some environments Nx only fully disables prompts when CI=true.
-if (!process.env.CI) {
+// Only force CI mode if explicitly enabled via environment variable
+if (process.env.NX_SMART_FORCE_CI === '1' && !process.env.CI) {
 	process.env.CI = '1';
 }
 
@@ -620,7 +624,6 @@ if (shouldScheduleLanggraphIntegration && !meta.skipped) {
 	run('pnpm test:integration:langgraph');
 }
 
-writeMetrics();
 await writeMetrics();
 if (json) console.log(JSON.stringify({ ...meta, completed: true }));
 if (telemetryEnabled && span) {

@@ -1,7 +1,6 @@
 """Tests for the discovery manifest route exposed by the FastMCP server."""
 
-import importlib.util
-from pathlib import Path
+from importlib import import_module
 from types import ModuleType
 from typing import Any, cast
 import sys
@@ -10,17 +9,9 @@ from fastmcp import FastMCP
 from fastmcp.server.http import StarletteWithLifespan
 from starlette.testclient import TestClient
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "cortex_fastmcp_server_v2.py"
-
 
 def _load_server_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location(
-        "cortex_fastmcp_server_v2", MODULE_PATH
-    )
-    if spec is None or spec.loader is None:
-        raise RuntimeError("Unable to load cortex_fastmcp_server_v2 module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules.setdefault(spec.name, module)
+    module = import_module("cortex_mcp.cortex_fastmcp_server_v2")
 
     if "jwt" not in sys.modules:
         jwt_stub = ModuleType("jwt")
@@ -36,7 +27,6 @@ def _load_server_module() -> ModuleType:
         jwt_stub.decode = _decode_stub  # type: ignore[attr-defined]
         sys.modules["jwt"] = jwt_stub
 
-    spec.loader.exec_module(module)
     return module
 
 

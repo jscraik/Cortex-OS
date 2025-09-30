@@ -5,7 +5,14 @@ import { Command } from 'commander';
 
 const platform = os.platform();
 
+// Check if we're on a POSIX-compliant system (Linux/macOS)
+const isPosix = platform !== 'win32';
+
 function getProcessList(pattern) {
+	if (!isPosix) {
+		console.warn('[brAInwav memory-guard] Process monitoring not supported on Windows');
+		return [];
+	}
 	const output = execSync('ps -eo pid,rss,command').toString().trim().split('\n').slice(1);
 
 	return output
@@ -24,8 +31,10 @@ function getProcessList(pattern) {
 
 function getRssMB(pid) {
 	// Validate that pid is a positive integer
-
 	if (!Number.isInteger(pid) || pid <= 0) {
+		return 0;
+	}
+	if (!isPosix) {
 		return 0;
 	}
 	try {
@@ -41,27 +50,44 @@ function log(entry) {
 }
 
 export function startGuard({ pids = [], pattern = 'node', maxRssMB, intervalMs }) {
+	// Validate pids are all positive integers
+	const validPids = pids.filter(pid => Number.isInteger(pid) && pid > 0);
+	if (validPids.length !== pids.length && pids.length > 0) {
+		console.warn('[brAInwav memory-guard] Invalid PIDs detected and filtered out');
+	}
+
 	const warned = new Map();
 	const timer = setInterval(() => {
 		const targets =
-			pids.length > 0
-				? pids.map((pid) => ({ pid, rssMB: getRssMB(pid) }))
+			validPids.length > 0
+				? validPids.map((pid) => ({ pid, rssMB: getRssMB(pid) }))
 				: getProcessList(pattern);
 		targets.forEach(({ pid, rssMB }) => {
 			log({ pid, rssMB, action: 'check' });
 			if (rssMB > maxRssMB) {
 				if (!warned.has(pid)) {
-					try {
-						process.kill(pid, 'SIGUSR2');
-					} catch {}
-					warned.set(pid, true);
-					log({ pid, rssMB, action: 'sigusr2' });
+					if (isPosix) {
+						try {
+							process.kill(pid, 'SIGUSR2');
+						} catch {}
+						warned.set(pid, true);
+						log({ pid, rssMB, action: 'sigusr2' });
+					} else {
+						// On Windows, warn that process control is not available
+						console.warn(`[brAInwav memory-guard] Process ${pid} exceeds memory limit (${rssMB}MB > ${maxRssMB}MB) but cannot be controlled on Windows`);
+						warned.set(pid, true);
+						log({ pid, rssMB, action: 'windows-warning' });
+					}
 				} else {
-					try {
-						process.kill(pid, 'SIGKILL');
-					} catch {}
-
-					log({ pid, rssMB, action: 'killed' });
+					if (isPosix) {
+						try {
+							process.kill(pid, 'SIGKILL');
+						} catch {}
+						log({ pid, rssMB, action: 'killed' });
+					} else {
+						console.warn(`[brAInwav memory-guard] Process ${pid} still exceeds memory limit on Windows - manual intervention required`);
+						log({ pid, rssMB, action: 'windows-fatal-warning' });
+					}
 				}
 			}
 		});

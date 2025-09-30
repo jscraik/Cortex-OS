@@ -43,6 +43,8 @@
         <string>https://search.cortex-os.ai/v1/documents</string>
         <key>CORTEX_MCP_CORTEX_SEARCH_API_KEY</key>
         <string>***</string>
+        <key>CORTEX_MCP_TRANSPORT</key>
+        <string>streamable-http</string>
     </dict>
 </dict>
 </plist>

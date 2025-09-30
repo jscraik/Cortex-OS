@@ -21,7 +21,7 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Copy .npmrc if it exists, otherwise create a minimal one
-COPY .npmr[c] ./
+COPY .npmrc ./
 RUN [ -f .npmrc ] || echo "registry=https://registry.npmjs.org/" > .npmrc
 
 # Development stage
@@ -47,7 +47,7 @@ FROM development AS testing
 ENV NODE_ENV=test
 
 # Run tests
-RUN pnpm test:ci
+RUN pnpm test:smart
 RUN pnpm test:integration
 
 # Build stage

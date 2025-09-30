@@ -1,7 +1,7 @@
 # MCP (Model Context Protocol) Packages
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Coverage Status](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](coverage)
+[![Coverage Status](https://img.shields.io/badge/coverage-88%25-green.svg)](coverage)
 
 ## Overview
 
@@ -44,6 +44,10 @@ values include:
 | `CORTEX_MCP_LOCAL_MEMORY_NAMESPACE` | Optional namespace header for Local Memory |
 | `CORTEX_MCP_HTTP_TIMEOUT_SECONDS` | Timeout for outbound HTTP (default 15s) |
 | `CORTEX_MCP_HTTP_RETRIES` | Retry attempts for outbound HTTP (default 3) |
+| `CORTEX_MCP_SEARCH_BREAKER_FAILURES` | Failure threshold before the search circuit opens (default 5) |
+| `CORTEX_MCP_SEARCH_BREAKER_TIMEOUT_SECONDS` | Recovery timeout for the search circuit breaker (default 30s) |
+| `CORTEX_MCP_MEMORY_BREAKER_FAILURES` | Failure threshold before the memory circuit opens (default 5) |
+| `CORTEX_MCP_MEMORY_BREAKER_TIMEOUT_SECONDS` | Recovery timeout for the memory circuit breaker (default 15s) |
 
 JWT authentication for REST routes requires:
 
@@ -115,7 +119,7 @@ uv sync
 # 2. Run the FastMCP server with real adapters
 JWT_SECRET_KEY=dev-secret CORTEX_MCP_CORTEX_SEARCH_URL=https://search.cortex-os.ai/v1/search \
   CORTEX_MCP_CORTEX_DOCUMENT_BASE_URL=https://search.cortex-os.ai/v1/documents \
-  uv run fastmcp run cortex_fastmcp_server_v2.py --transport http --port 3024
+  uv run fastmcp run src/cortex_mcp/cortex_fastmcp_server_v2.py --transport http --port 3024
 
 # 3. Exercise REST memory routes (persist via Local Memory)
 curl -H "Authorization: Bearer <jwt>" -X POST \
@@ -141,14 +145,14 @@ cloudflared tunnel --config packages/cortex-mcp/infrastructure/cloudflare/tunnel
    process. For the default systemd unit, run:
 
    ```bash
-   ssh brainwav-mcp "sudo systemctl restart cortex-fastmcp.service && sudo systemctl status cortex-fastmcp.service --no-pager"
+  ssh brainwav-mcp "sudo systemctl restart cortex-fastmcp.service && sudo systemctl status cortex-fastmcp.service --no-pager"
    ```
 
 3. Confirm the health endpoints through the Cloudflare tunnel:
 
-   ```bash
-   scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
-   ```
+  ```bash
+  scripts/cloudflare/mcp-tunnel-health.sh cortex-mcp.brainwav.io /health
+  ```
 
 4. Validate discovery by fetching the manifest. This must succeed before
    reconnecting ChatGPT:

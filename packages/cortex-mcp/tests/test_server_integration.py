@@ -10,8 +10,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
-from adapters.memory_adapter import MemoryAdapterError
 from httpx import ASGITransport, AsyncClient
+
+from cortex_mcp.adapters.memory_adapter import MemoryAdapterError
+from cortex_mcp.adapters.search_adapter import SearchAdapterError
+from cortex_mcp.resilience.circuit_breaker import CircuitBreaker
 
 if "jwt" not in sys.modules:
     jwt_stub = types.SimpleNamespace(
@@ -47,7 +50,7 @@ if "prometheus_client" not in sys.modules:
 os.environ.setdefault("JWT_SECRET_KEY", "stub-secret")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
 
-from cortex_fastmcp_server_v2 import create_server
+from cortex_mcp.cortex_fastmcp_server_v2 import create_server
 
 
 @dataclass
@@ -71,6 +74,12 @@ class StubSearchAdapter:
             ],
             "total_found": 1,
         }
+
+
+@dataclass
+class FailingSearchAdapter(StubSearchAdapter):
+    async def search(self, query: str, *, limit: int) -> dict[str, Any]:
+        raise SearchAdapterError("boom")
 
 
 @dataclass
@@ -194,6 +203,10 @@ async def test_search_tool_uses_adapter_and_sanitizes_output() -> None:
     assert "<" not in snippet
     assert search_adapter.calls[0]["limit"] == 5
 
+    health_tool = tools["health_check"]
+    health_payload = json.loads((await health_tool.run({})).content[0].text)
+    assert health_payload["resilience"]["search_breaker"] == "closed"
+
 
 @pytest.mark.asyncio
 async def test_memory_routes_delegate_to_adapter_and_enforce_auth() -> None:
@@ -220,7 +233,12 @@ async def test_memory_routes_delegate_to_adapter_and_enforce_auth() -> None:
     ) as client:
         response = await client.post(
             "/api/memories",
-            json={"kind": "note", "text": "<b>Hello</b> Cortex"},
+            json={
+                "kind": "note",
+                "text": "<b>Hello</b> Cortex",
+                "tags": ["alpha", 2],
+                "metadata": {"origin": "integration"},
+            },
             headers={"Authorization": "Bearer test"},
         )
         assert response.status_code == 200
@@ -230,7 +248,7 @@ async def test_memory_routes_delegate_to_adapter_and_enforce_auth() -> None:
 
         search_resp = await client.get(
             "/api/memories",
-            params={"query": "cortex", "limit": 5},
+            params={"query": "cortex", "limit": 5, "tags": "alpha,beta", "kind": "note"},
             headers={"Authorization": "Bearer test"},
         )
         assert search_resp.status_code == 200
@@ -288,3 +306,86 @@ async def test_memory_routes_surface_adapter_errors() -> None:
         assert response.status_code == 502
         body = response.json()
         assert body["error"]
+
+
+@pytest.mark.asyncio
+async def test_search_circuit_breaker_trips() -> None:
+    search_adapter = FailingSearchAdapter()
+    memory_adapter = StubMemoryAdapter()
+    authenticator = StubAuthenticator()
+    limiter = StubRateLimiter()
+    breaker = CircuitBreaker(
+        failure_threshold=1,
+        recovery_timeout=60.0,
+        expected_exception=SearchAdapterError,
+        name="test-search",
+    )
+
+    server = create_server(
+        adapters={"search": search_adapter, "memory": memory_adapter},
+        auth_overrides={"authenticator": authenticator, "rate_limiter": limiter},
+        resilience_overrides={"search_breaker": breaker},
+    )
+
+    tools = await server.get_tools()
+    search_tool = tools["search"]
+
+    first = json.loads((await search_tool.run({"query": "fail"})).content[0].text)
+    second = json.loads((await search_tool.run({"query": "fail"})).content[0].text)
+
+    assert first["error"] == "search_failed"
+    assert second["error"] == "search_unavailable"
+
+
+@pytest.mark.asyncio
+async def test_health_routes_include_resilience() -> None:
+    server = create_server(
+        adapters={"search": StubSearchAdapter(), "memory": StubMemoryAdapter()},
+        auth_overrides={
+            "authenticator": StubAuthenticator(),
+            "rate_limiter": StubRateLimiter(),
+        },
+    )
+    app = server.http_app(transport="http")
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/health")
+        payload = response.json()
+        assert payload["resilience"]["memory_breaker"] == "closed"
+
+
+@pytest.mark.asyncio
+async def test_memory_circuit_breaker_returns_service_unavailable() -> None:
+    search_adapter = StubSearchAdapter()
+    memory_adapter = ErrorMemoryAdapter()
+    authenticator = StubAuthenticator()
+    limiter = StubRateLimiter()
+    breaker = CircuitBreaker(
+        failure_threshold=1,
+        recovery_timeout=60.0,
+        expected_exception=MemoryAdapterError,
+        name="test-memory",
+    )
+
+    server = create_server(
+        adapters={"search": search_adapter, "memory": memory_adapter},
+        auth_overrides={"authenticator": authenticator, "rate_limiter": limiter},
+        resilience_overrides={"memory_breaker": breaker},
+    )
+    app = server.http_app(transport="http")
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        first = await client.post(
+            "/api/memories",
+            json={"kind": "note", "text": "fail"},
+            headers={"Authorization": "Bearer test"},
+        )
+        assert first.status_code == 502
+
+        second = await client.post(
+            "/api/memories",
+            json={"kind": "note", "text": "fail"},
+            headers={"Authorization": "Bearer test"},
+        )
+        assert second.status_code == 503
+        assert second.json()["error"] == "memory service unavailable"

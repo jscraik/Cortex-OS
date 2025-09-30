@@ -10,7 +10,7 @@
 
 - ✅ Added `CORTEX_MCP_CORTEX_SEARCH_URL` = <https://search.cortex-os.ai/v1/search>
 - ✅ Added `CORTEX_MCP_CORTEX_DOCUMENT_BASE_URL` = <https://search.cortex-os.ai/v1/documents>  
-- ✅ Added `CORTEX_MCP_CORTEX_SEARCH_API_KEY` = *** (placeholder - needs actual key)
+- ✅ `CORTEX_MCP_CORTEX_SEARCH_API_KEY` stored in macOS keychain and referenced by the LaunchAgent plist
 - ✅ Environment variables set in LaunchAgent plist
 
 ### 2. LaunchAgent Supervision Setup

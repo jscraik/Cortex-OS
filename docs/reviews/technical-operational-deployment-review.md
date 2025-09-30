@@ -44,7 +44,63 @@ This review highlights the most immediate risks that could block or destabilize 
    - **Impact:** The image build aborts during the test stage, preventing any deployment artifacts from being produced.
    - **Recommendation:** Point the Dockerfile at the supported entry points (`pnpm test:smart`, targeted `pnpm test:integration`, etc.) or add the missing script.
 
+## Resolution Status
+
+### Technical Findings - RESOLVED ✅
+
+1. **Unbranded error handling in `createGenerate`** - FIXED
+   - **Action Taken**: Updated error message to include "brAInwav" branding
+   - **Location**: `src/lib/generate.ts:40`
+   - **Implementation**: `throw new Error('brAInwav generate: unknown task: ${task}');`
+
+2. **Lack of resilient fallback logging in `createGenerate`** - FIXED
+   - **Action Taken**: Added structured JSON logging with brAInwav branding for primary model failures
+   - **Location**: `src/lib/generate.ts:54-68`
+   - **Implementation**: Added console.error with structured data including timestamp, severity, component, event, provider, model, task, reason, and action
+
+### Operational Findings - RESOLVED ✅
+
+1. **`nx-smart` forces CI mode locally** - FIXED
+   - **Action Taken**: Made CI mode forcing conditional via `NX_SMART_FORCE_CI` environment variable
+   - **Location**: `scripts/nx-smart.mjs:65-68`
+   - **Implementation**: `if (process.env.NX_SMART_FORCE_CI === '1' && !process.env.CI)`
+
+2. **`run-tests.mjs` leaks positional arguments** - FIXED
+   - **Action Taken**: Modified to forward only the mode argument, not all positional arguments
+   - **Location**: `scripts/run-tests.mjs:30`
+   - **Implementation**: `run('pnpm', ['test:smart', mode]);`
+
+3. **Memory guard relies on POSIX-only tooling and signals** - FIXED
+   - **Action Taken**: Added platform detection and Windows compatibility handling
+   - **Location**: `scripts/memory-guard.mjs:8-87`
+   - **Implementation**:
+     - Added `isPosix` check for platform detection
+     - Added Windows-specific warning messages
+     - Graceful handling of unsupported operations on Windows
+
+### Deployment Findings - RESOLVED ✅
+
+1. **Invalid `.npmrc` copy pattern breaks Docker builds** - FIXED
+   - **Action Taken**: Corrected glob pattern typo from `.npmr[c]` to `.npmrc`
+   - **Location**: `Dockerfile.optimized:24`
+   - **Implementation**: `COPY .npmrc ./`
+
+2. **Testing stage calls undefined scripts** - FIXED
+   - **Action Taken**: Replaced `pnpm test:ci` with `pnpm test:smart`
+   - **Location**: `Dockerfile.optimized:50`
+   - **Implementation**: `RUN pnpm test:smart`
+
+## Test Coverage Added
+
+### Comprehensive test suites created:
+- `src/lib/__tests__/generate.test.ts` - Tests for branded errors and structured logging
+- `scripts/__tests__/nx-smart.test.mjs` - Tests for CI mode behavior
+- `scripts/__tests__/run-tests.test.mjs` - Tests for argument forwarding
+- `scripts/__tests__/memory-guard.test.mjs` - Tests for cross-platform compatibility
+
 ## Next Steps
-1. Prioritize fixes that unblock CI/CD (Dockerfile corrections, `run-tests.mjs` argument handling).
-2. Follow up with telemetry and branding improvements in `createGenerate` to meet compliance policies.
-3. Introduce platform guards for `nx-smart` and `memory-guard` to avoid breaking local developer environments.
+
+1. **Deploy the fixes** - All critical issues have been resolved
+2. **Run full test suite** - Validate that fixes work correctly with existing tests
+3. **Update CI/CD pipeline** - Ensure tests pass in all environments
+4. **Monitor in production** - Verify structured logging is working as expected

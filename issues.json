@@ -1,0 +1,92 @@
+[
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/src/lib/generate.ts",
+    "lines": "71",
+    "severity": "medium",
+    "category": "error-handling",
+    "description": "Missing error handling for fallback generation in createGenerate function",
+    "evidence": "Line 71: const res = await ollamaGenerate({ model: cfg.fallback.model, ...parsed }); lacks try-catch wrapper",
+    "fix": "Wrap the ollamaGenerate call in a try-catch block and throw a proper brAInwav-branded error if both models fail",
+    "tests_to_add": "Test case where both primary and fallback models fail to ensure proper error handling"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/scripts/nx-smart.mjs",
+    "lines": "624-625",
+    "severity": "medium",
+    "category": "logic-error",
+    "description": "Duplicate writeMetrics() calls causing redundant operations",
+    "evidence": "Lines 624 and 625 both call writeMetrics() without any conditional logic",
+    "fix": "Remove the duplicate await writeMetrics() call on line 625",
+    "tests_to_add": "Verify metrics are written exactly once during script execution"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/scripts/nx-smart.mjs",
+    "lines": "15-16",
+    "severity": "critical",
+    "category": "async-error",
+    "description": "Missing await for dynamic import in non-async function",
+    "evidence": "Line 16 uses await import('dotenv') but the function is not declared as async",
+    "fix": "Wrap the dotenv import in an async IIFE or refactor the top-level logic",
+    "tests_to_add": "Test script startup in environments where dotenv is required"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/scripts/nx-smart.mjs",
+    "lines": "624-636",
+    "severity": "low",
+    "category": "code-duplication",
+    "description": "Redundant telemetry cleanup code duplicated from finalizeAndExit function",
+    "evidence": "Lines 624-636 repeat telemetry shutdown logic that already exists in finalizeAndExit",
+    "fix": "Remove redundant cleanup code and rely on the existing finalizeAndExit function",
+    "tests_to_add": "Verify telemetry cleanup works correctly in all exit scenarios"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/scripts/nx-smart.mjs",
+    "lines": "577-580",
+    "severity": "low",
+    "category": "error-handling",
+    "description": "Graph file cleanup lacks proper error handling",
+    "evidence": "Line 578: fs.unlinkSync(graphTmp) without try-catch wrapper",
+    "fix": "Wrap the unlinkSync call in a try-catch block to handle potential file system errors",
+    "tests_to_add": "Test cleanup behavior when graph file cannot be deleted"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/scripts/run-tests.mjs",
+    "lines": "26-27",
+    "severity": "low",
+    "category": "deprecation",
+    "description": "Script contains deprecated functionality warning",
+    "evidence": "Line 26-27: Console.warn indicates deprecated functionality that should be updated",
+    "fix": "Update script to use current testing patterns or remove if legacy code",
+    "tests_to_add": "Verify current testing workflow works without deprecated warnings"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/scripts/memory-guard.mjs",
+    "lines": "95",
+    "severity": "critical",
+    "category": "type-safety",
+    "description": "PID parsing vulnerability without proper validation",
+    "evidence": "Line 95: .map(Number) without validation can produce NaN values from non-numeric input",
+    "fix": "Add validation to ensure PID values are positive integers before processing",
+    "tests_to_add": "Test with invalid PID inputs to ensure proper error handling"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/Dockerfile.optimized",
+    "lines": "58",
+    "severity": "medium",
+    "category": "docker-syntax",
+    "description": "Incorrect pnpm flag syntax --prod=false",
+    "evidence": "Line 58: RUN pnpm install --frozen-lockfile --prod=false uses invalid syntax",
+    "fix": "Use proper pnpm syntax: remove --prod=false flag as it's not needed for this context",
+    "tests_to_add": "Verify Docker build works correctly with corrected pnpm command"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/Dockerfile.optimized",
+    "lines": "102-103",
+    "severity": "low",
+    "category": "docker-health",
+    "description": "Health check assumes /health endpoint exists without validation",
+    "evidence": "Line 103: Health check references /health endpoint that may not exist in all applications",
+    "fix": "Make health check endpoint configurable or validate that the application actually provides this endpoint",
+    "tests_to_add": "Test Docker container health check with actual application endpoints"
+  }
+]

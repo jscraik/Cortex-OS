@@ -26,5 +26,6 @@ if (mode === 'placeholders') {
 	if (!process.env.CI) {
 		console.warn('[deprecated] use "pnpm test:smart" directly for full-suite testing.');
 	}
-	run('pnpm', ['test:smart', ...args]);
+	// Only forward the 'mode' argument, not additional positional arguments
+	run('pnpm', ['test:smart', mode]);
 }

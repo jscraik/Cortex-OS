@@ -51,16 +51,52 @@ export function createGenerate(deps: GenerateDeps) {
 					latency: Date.now() - start,
 					model: cfg.primary.model,
 				};
-			} catch {
+			} catch (error) {
+				// brAInwav-branded structured logging for primary model failures
+				const fallbackReason = error instanceof Error ? error.message : 'unknown error';
+				console.error(
+					JSON.stringify({
+						timestamp: new Date().toISOString(),
+						severity: 'warning',
+						component: 'brAInwav-generate',
+						event: 'primary-model-failure',
+						provider: 'mlx',
+						model: cfg.primary.model,
+						task,
+						reason: fallbackReason,
+						action: 'fallback-to-ollama',
+					}),
+				);
 				markUnhealthy('mlx', cfg.primary.model);
 			}
 		}
-		const res = await ollamaGenerate({ model: cfg.fallback.model, ...parsed });
-		return {
-			...res,
-			provider: 'ollama',
-			latency: Date.now() - start,
-			model: cfg.fallback.model,
-		};
+		try {
+			const res = await ollamaGenerate({ model: cfg.fallback.model, ...parsed });
+			return {
+				...res,
+				provider: 'ollama',
+				latency: Date.now() - start,
+				model: cfg.fallback.model,
+			};
+		} catch (error) {
+			// Both primary and fallback failed - this is a critical failure
+			const failureReason = error instanceof Error ? error.message : 'unknown error';
+			console.error(
+				JSON.stringify({
+					timestamp: new Date().toISOString(),
+					severity: 'error',
+					component: 'brAInwav-generate',
+					event: 'all-providers-failed',
+					task,
+					primaryModel: cfg.primary.model,
+					fallbackModel: cfg.fallback.model,
+					reason: failureReason,
+					action: 'critical-failure',
+				}),
+			);
+			throw new Error(
+				`brAInwav generate: all providers failed for task '${task}': ${failureReason}`,
+			);
+		}
 	};
 }
