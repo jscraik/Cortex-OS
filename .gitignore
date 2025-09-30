@@ -113,3 +113,7 @@ pnpm-lock.yaml.bak
 *.heapsnapshot
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Logs
+logs/
+logs/*.log
