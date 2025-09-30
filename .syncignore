@@ -1,0 +1,17 @@
+# Sync ignore patterns for cortex-code vendor updates
+# Preserve brAInwav-specific customizations
+
+# Custom brAInwav documentation
+A2A_IMPLEMENTATION.md
+AGENTS.md
+PNPM.md
+UPSTREAM_SYNC.md
+UPSTREAM_REF
+CHANGELOG.md
+
+# Custom configuration
+config.md
+
+# Build artifacts (should not be vendored)
+target/
+Cargo.lock
