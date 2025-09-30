@@ -38,6 +38,7 @@ installations as of 2025-09-30.
      reintroduction of OrbStack files.
    - Ensure package Dockerfiles no longer set `orbstack.*` labels; replace with neutral Docker labels
      (e.g., `com.brainwav.service`) if telemetry still needs metadata.
+
 2. **Introduce Docker-First Tooling**
    - Replace `scripts/orbstack-dev.sh` with a new Docker-focused helper (for example,
      `scripts/docker-dev.sh`) that mirrors start/stop/profile behaviours using standard Docker compose.
@@ -45,6 +46,7 @@ installations as of 2025-09-30.
      brAInwav branding in log output.
    - Adjust other automation scripts (backup, validation, CLI tests) to rely on Docker contexts and the
      new helper instead of OrbStack-specific logic.
+
 3. **Modernize Compose Profiles**
    - Refactor `infra/compose/docker-compose.dev.yml` to rely on official Docker features for multi-arch
      builds, caching, and hot reload.
@@ -52,17 +54,20 @@ installations as of 2025-09-30.
      labels when unnecessary.
    - Revisit `docker-compose.dev-hot-reload.yml` to ensure file-watching annotations use Docker best
      practices (Bind mount `delegated`, Mutagen, or Docker Desktop file sync if required).
+
 4. **Monitoring and Telemetry Alignment**
    - Evaluate OrbStack monitoring stack; if redundant, document removal in CHANGELOG.
    - If the telemetry remains relevant, convert scripts (e.g., `orbstack-monitor.py`) to operate against
      Docker default socket/context and rename resources accordingly.
    - Update any Prometheus/Grafana references to the new naming conventions.
+
 5. **Documentation Overhaul**
    - Replace OrbStack instructions across `docs/`, `packages/*/README*.md`, and website docs with Docker
      guidance (e.g., installation via Docker Desktop 4.x or Docker CLI + `lima/colima`).
    - Update setup scripts (`scripts/dev-setup.sh`, `scripts/verify-hybrid-env.sh`) so README snippets and
      tutorials reference the Docker-first workflow.
    - Ensure all docs note brAInwav branding in commands and log outputs.
+
 6. **Validation and Cleanup**
    - Run the full quality gate (`pnpm lint && pnpm test && pnpm security:scan && pnpm structure:validate`).
    - Execute `pnpm build:smart` and `pnpm test:smart` with the Docker dev stack running to validate
@@ -73,7 +78,7 @@ installations as of 2025-09-30.
 ## Implementation Checklist
 
 - [ ] Remove OrbStack-specific files and update structure guard rules to block reintroduction.
-- [ ] Introduce Docker-first helper script(s) and replace `dev:orbstack*` runners with `dev:docker*`.
+- [x] Introduce Docker-first helper script(s) and replace `dev:orbstack*` runners with `dev:docker*`.
 - [ ] Update compose files and Dockerfiles to eliminate `orbstack.*` labels while adopting Docker
       best-practice metadata or removing unused labels.
 - [ ] Migrate monitoring/telemetry assets to Docker naming or remove redundant components with proper

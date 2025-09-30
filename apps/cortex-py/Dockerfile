@@ -76,15 +76,15 @@ USER python
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
-# Labels for OrbStack optimization
+# Standard OCI + brAInwav metadata for Docker environments
 LABEL \
     org.opencontainers.image.title="Cortex Python Services" \
     org.opencontainers.image.description="Python-based ML/AI workflows and services" \
-    org.opencontainers.image.vendor="Cortex-OS" \
-    org.opencontainers.image.source="https://github.com/your-org/cortex-os" \
-    orbstack.optimize="true" \
-    orbstack.python="true" \
-    orbstack.platform="linux/arm64,linux/amd64"
+    org.opencontainers.image.vendor="brAInwav" \
+    org.opencontainers.image.source="https://github.com/jamiescottcraik/Cortex-OS" \
+    com.brainwav.runtime.name="cortex-py" \
+    com.brainwav.runtime.tier="ml" \
+    com.brainwav.docker.profiles="ml,dev-full"
 
 # Use tini as PID 1
 ENTRYPOINT ["/usr/bin/tini", "--"]

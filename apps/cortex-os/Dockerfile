@@ -24,15 +24,15 @@ USER nodeusr
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD curl -fsS http://localhost:3000/health || exit 1
 
-# Labels for OrbStack optimization
+# Standard OCI + brAInwav metadata for Docker environments
 LABEL \
     org.opencontainers.image.title="Cortex OS Runtime" \
     org.opencontainers.image.description="ASBR Runtime orchestrator" \
-    org.opencontainers.image.vendor="Cortex-OS" \
-    org.opencontainers.image.source="https://github.com/your-org/cortex-os" \
-    orbstack.optimize="true" \
-    orbstack.node="true" \
-    orbstack.platform="linux/arm64,linux/amd64"
+    org.opencontainers.image.vendor="brAInwav" \
+    org.opencontainers.image.source="https://github.com/jamiescottcraik/Cortex-OS" \
+    com.brainwav.runtime.name="cortex-os" \
+    com.brainwav.runtime.tier="core" \
+    com.brainwav.docker.profiles="dev-full,dev-min"
 
 ENTRYPOINT ["/usr/bin/tini","--"]
 CMD ["node","dist/server.js"]

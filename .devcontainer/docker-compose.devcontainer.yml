@@ -1,0 +1,88 @@
+version: '3.9'
+
+services:
+  # Main development container
+  devcontainer:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      target: dev
+    volumes:
+      - ..:/opt/cortex-home:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/vscode/.ssh:ro
+      - ~/.gitconfig:/home/vscode/.gitconfig:ro
+      - ~/.npmrc:/home/vscode/.npmrc:ro
+    environment:
+      - NODE_ENV=development
+      - CORTEX_HOME=/opt/cortex-home
+      - AGENT_TOOLKIT_TOOLS_DIR=/opt/cortex-home/tools/agent-toolkit
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      - dev_net
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    command: sleep infinity
+
+  # Qdrant for vector storage
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - dev_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dev_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL for advanced features (optional)
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=cortex
+      - POSTGRES_PASSWORD=cortex
+      - POSTGRES_DB=cortex_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dev_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cortex"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  dev_net:
+    driver: bridge
+
+volumes:
+  qdrant_data:
+  redis_data:
+  postgres_data:

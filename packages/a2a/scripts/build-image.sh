@@ -143,8 +143,8 @@ main() {
     echo_info "Or use docker-compose:"
     echo_info "  docker-compose up"
     echo_info ""
-    echo_info "Or use OrbStack:"
-    echo_info "  docker-compose -f orbstack.yml up"
+    echo_info "Or use the Docker dev stack:"
+    echo_info "  pnpm dev:docker"
 }
 
 # Handle script arguments

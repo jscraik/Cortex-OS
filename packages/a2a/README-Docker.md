@@ -1,23 +1,23 @@
-# A2A Protocol Server - Docker & OrbStack Deployment
+# A2A Protocol Server - Docker Deployment
 
-This directory contains everything needed to run the A2A Protocol Server in containers using Docker or OrbStack.
+This directory contains everything needed to run the A2A Protocol Server in containers using the brAInwav Docker workflow.
 
 ## Quick Start
 
-### Option 1: OrbStack (Recommended for macOS)
+### Option 1: brAInwav Docker Dev Stack (Recommended)
 
 ```bash
-# Deploy to OrbStack
-pnpm run orbstack:deploy
+# Start the development stack via the shared helper
+pnpm dev:docker
 
 # Check status
-pnpm run orbstack:status
+pnpm dev:docker:ps
 
 # View logs
-pnpm run orbstack:logs
+pnpm dev:docker:logs
 
-# Test the deployment
-pnpm run orbstack:test
+# Stop everything
+pnpm dev:docker:down
 ```
 
 ### Option 2: Docker Compose
@@ -142,9 +142,6 @@ curl http://localhost:3000/health
 ```bash
 # View live logs
 docker-compose logs -f a2a-server
-
-# Or with OrbStack
-pnpm run orbstack:logs
 ```
 
 ### Metrics (Optional)
@@ -267,11 +264,9 @@ docker-compose exec a2a-server sh
 
 - `pnpm run docker:build` - Build container image
 - `pnpm run docker:test` - Run tests only
-- `pnpm run orbstack:deploy` - Deploy to OrbStack
-- `pnpm run orbstack:status` - Check deployment status
-- `pnpm run orbstack:logs` - View logs
-- `pnpm run orbstack:test` - Test deployed service
-- `pnpm run orbstack:stop` - Stop service
+- `pnpm dev:docker` - Start the shared brAInwav Docker development stack
+- `pnpm dev:docker:logs` - Tail logs from the brAInwav Docker stack
+- `pnpm dev:docker:down` - Stop the Docker development stack
 
 ## Performance
 

@@ -36,15 +36,15 @@ USER nodeusr
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
 
-# Labels for OrbStack optimization
+# Standard OCI + brAInwav metadata for Docker environments
 LABEL \
     org.opencontainers.image.title="Model Gateway" \
     org.opencontainers.image.description="AI model routing and policy enforcement gateway" \
-    org.opencontainers.image.vendor="Cortex-OS" \
-    org.opencontainers.image.source="https://github.com/your-org/cortex-os" \
-    orbstack.optimize="true" \
-    orbstack.node="true" \
-    orbstack.service="model-gateway"
+    org.opencontainers.image.vendor="brAInwav" \
+    org.opencontainers.image.source="https://github.com/jamiescottcraik/Cortex-OS" \
+    com.brainwav.runtime.name="model-gateway" \
+    com.brainwav.runtime.tier="ai" \
+    com.brainwav.docker.profiles="ml,dev-full"
 
 ENTRYPOINT ["/usr/bin/tini","--"]
 CMD ["node","src/server.js"]

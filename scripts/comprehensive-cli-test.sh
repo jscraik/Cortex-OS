@@ -54,8 +54,7 @@ test_cli_tool "Rustc" "rustc --version" "Rust compiler"
 echo "=== Container Tools ==="
 test_cli_tool "Docker" "docker --version" "Container runtime"
 test_cli_tool "Docker Compose" "docker compose version" "Container orchestration"
-test_cli_tool "OrbStack CLI" "orb --version" "OrbStack container platform CLI"
-test_cli_tool "OrbStack Status" "orb status | head -1" "OrbStack runtime status"
+test_cli_tool "Docker Info" "docker info --format '{{.ServerVersion}}'" "Docker daemon availability"
 
 # Development Tools
 echo "=== Development Tools ==="
@@ -91,8 +90,7 @@ test_cli_tool "Memory Manager" "bash scripts/memory-manager.sh --help | head -1"
 test_cli_tool "Dev Setup" "bash scripts/dev-setup.sh --minimal --dry-run" "Development environment setup"
 test_cli_tool "Memory Monitor" "timeout 5 bash scripts/memory-monitor.sh --dry-run" "Memory monitoring"
 test_cli_tool "Agent Toolkit" "node scripts/agent-toolkit.mjs --help | head -1" "Agent development tools"
-test_cli_tool "OrbStack Dev" "timeout 5 bash scripts/orbstack-dev.sh --help | head -1" "OrbStack development manager"
-test_cli_tool "OrbStack Validation" "timeout 10 bash scripts/validate-orbstack-env.sh --dry-run" "OrbStack environment validation"
+test_cli_tool "Docker Dev Helper" "timeout 5 bash scripts/docker-dev.sh help | head -1" "brAInwav Docker development manager"
 
 # Test Package.json Scripts (dry-run where possible)
 echo "=== Package.json Scripts ==="
@@ -100,7 +98,7 @@ test_cli_tool "Build Smart" "timeout 5 pnpm build:smart --dry-run" "Smart build 
 test_cli_tool "Test Smart" "timeout 5 pnpm test:smart --dry-run" "Smart test wrapper"
 test_cli_tool "Lint Check" "timeout 5 pnpm format:check | head -1" "Format checking"
 test_cli_tool "Structure Validation" "timeout 10 pnpm structure:validate --dry-run" "Project structure validation"
-test_cli_tool "OrbStack Dev Scripts" "grep -q 'dev:orbstack' package.json && echo 'OrbStack scripts configured'" "OrbStack Docker Compose scripts"
+test_cli_tool "Docker Dev Scripts" "grep -q 'dev:docker' package.json && echo 'Docker scripts configured'" "Docker Compose scripts"
 
 # Test Cortex Binary
 echo "=== Custom Binaries ==="

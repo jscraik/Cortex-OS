@@ -2,17 +2,17 @@
 
 ## Quick Start
 
-### Development Environment (OrbStack)
+### Development Environment (Docker)
 
 ```bash
 # Start development environment
-./scripts/orbstack-dev.sh start dev-min
+./scripts/docker-dev.sh start dev-min
 
 # View logs
-./scripts/orbstack-dev.sh logs
+./scripts/docker-dev.sh logs
 
 # Stop services
-./scripts/orbstack-dev.sh stop
+./scripts/docker-dev.sh stop
 ```
 
 ### Production Deployment
@@ -52,7 +52,7 @@
 
 - `docker/docker-compose.yml` - Base configuration
 - `docker/docker-compose.prod.yml` - Production overlay
-- `docker/docker-compose.orbstack.yml` - OrbStack development optimizations
+- `scripts/docker-dev.sh` - brAInwav Docker helper for local development
 - `infra/prometheus/prometheus.yml` - Prometheus configuration
 - `infra/grafana/` - Grafana provisioning
 
@@ -79,7 +79,7 @@ docker compose restart [service-name]
 ```
 
 ### Resource Limits
-OrbStack provides better resource management. Monitor usage:
+Docker Desktop includes resource controls. Monitor usage:
 ```bash
 # View container resource usage
 docker stats

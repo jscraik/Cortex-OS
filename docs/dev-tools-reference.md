@@ -9,7 +9,7 @@
 | **JS/TS** | Biome | Fast formatting + basic linting | Prettier |
 | **JS/TS** | ESLint + SonarJS | Advanced code quality | - |
 | **Python** | Ruff | Formatting + linting + imports | Black + isort |
-| **Containers** | OrbStack | Fast container runtime | Docker Desktop |
+| **Containers** | Docker Desktop / CLI | Standard container runtime | OrbStack |
 
 ---
 
@@ -49,18 +49,18 @@ pnpm run security:scan:all   # Comprehensive security scan
 pnpm run typecheck           # TypeScript type checking
 ```
 
-### **Container Development (OrbStack)**
+### **Container Development (Docker)**
 
 ```bash
 # Development environments
-pnpm run dev:orbstack         # Full dev environment
-pnpm run dev:orbstack:min     # Minimal environment
-pnpm run dev:orbstack:web     # Web-only environment
-pnpm run dev:orbstack:down    # Stop all containers
-pnpm run dev:orbstack:logs    # View container logs
+pnpm run dev:docker           # Full dev environment
+pnpm run dev:docker:min       # Minimal environment
+pnpm run dev:docker:web       # Web-only environment
+pnpm run dev:docker:down      # Stop all containers
+pnpm run dev:docker:logs      # View container logs
 
 # Health checks
-./scripts/verify-hybrid-env.sh --json  # brAInwav OrbStack verification
+./scripts/docker-dev.sh status         # brAInwav Docker stack status
 ```
 
 ---
@@ -69,7 +69,7 @@ pnpm run dev:orbstack:logs    # View container logs
 
 - **Biome**: ~10x faster than Prettier
 - **Ruff**: ~100x faster than Black + isort
-- **OrbStack**: ~2x faster than Docker Desktop on macOS
+- **Docker Desktop**: Officially supported by brAInwav with scripted helpers
 - **Reduced dependencies**: Fewer packages to maintain
 
 ---

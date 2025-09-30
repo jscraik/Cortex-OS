@@ -1,0 +1,193 @@
+{
+  "name": "Cortex-OS Development Environment",
+  "dockerComposeFile": "docker-compose.devcontainer.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/opt/cortex-home",
+  "shutdownAction": "stopCompose",
+
+  // Features to install in the container
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22.12.0",
+      "nodeGypDependencies": true
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.80.1",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12.6",
+      "installTools": true
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": false
+    }
+  },
+
+  // Customizations to run after container creation
+  "postCreateCommand": "/opt/cortex-home/scripts/dev-setup-postcreate.sh",
+
+  // Ports to forward
+  "forwardPorts": [3000, 3001, 3002, 3003, 3028, 6333, 9600, 9700],
+  "portsAttributes": {
+    "3000": {
+      "label": "MCP Server (Cloudflare Tunnel)",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "label": "GitHub AI App",
+      "onAutoForward": "notify"
+    },
+    "3002": {
+      "label": "Semgrep App",
+      "onAutoForward": "notify"
+    },
+    "3003": {
+      "label": "Structure App",
+      "onAutoForward": "notify"
+    },
+    "3028": {
+      "label": "Local Memory API",
+      "onAutoForward": "notify"
+    },
+    "6333": {
+      "label": "Qdrant Dashboard",
+      "onAutoForward": "notify"
+    },
+    "9600": {
+      "label": "MCP Hub HTTP",
+      "onAutoForward": "notify"
+    },
+    "9700": {
+      "label": "REST API",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // Environment variables
+  "remoteEnv": {
+    "NODE_ENV": "development",
+    "CORTEX_HOME": "/opt/cortex-home",
+    "AGENT_TOOLKIT_TOOLS_DIR": "/opt/cortex-home/tools/agent-toolkit",
+    "MEMORY_LOG_LEVEL": "debug",
+    "LOG_FORMAT": "pretty",
+    "MISE_ENV": "development"
+  },
+
+  // VS Code specific settings
+  "customizations": {
+    "vscode": {
+      // Extensions to install
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "biomejs.biome",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "rust-lang.rust-analyzer",
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.ruff",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode-remote.remote-ssh",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-vscode.test-adapter-converter",
+        "vitest.explorer",
+        "ms-playwright.playwright",
+        "ms-vscode.docker",
+        "ms-azuretools.vscode-docker"
+      ],
+
+      // Settings
+      "settings": {
+        // General
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.scrollback": 10000,
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 1000,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit",
+          "source.organizeImports": "explicit"
+        },
+
+        // TypeScript/JavaScript
+        "typescript.preferences.includePackageJsonAutoImports": "on",
+        "typescript.suggest.autoImports": true,
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        "eslint.workingDirectories": ["packages/*", "apps/*"],
+        "eslint.validate": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
+
+        // Python
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.linting.ruffEnabled": true,
+
+        // Rust
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.cargo.features": "all",
+
+        // Testing
+        "vitest.enable": true,
+        "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
+
+        // Docker
+        "docker.composeFile": "../docker/memory-stack/docker-compose.new.yml",
+        "docker.dockerComposeBuild": "docker-compose",
+
+        // Files
+        "files.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/build": true,
+          "**/.nx/cache": true,
+          "**/coverage": true,
+          "**/.git": true,
+          "**/.DS_Store": true,
+          "**/Thumbs.db": true
+        },
+
+        // Search
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/build": true,
+          "**/.nx/cache": true,
+          "**/coverage": true,
+          "**/pnpm-lock.yaml": true,
+          "**/*.lock": true
+        }
+      }
+    }
+  },
+
+  // Mount the agent toolkit tools
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=${localWorkspaceFolder}/tools/agent-toolkit,target=/opt/cortex-home/tools/agent-toolkit,type=bind,consistency=cached"
+  ],
+
+  // Run commands after the container is created
+  "postStartCommand": "/opt/cortex-home/scripts/dev-setup-poststart.sh",
+
+  // User configuration
+  "remoteUser": "root",
+
+  // Lifecycle scripts
+  "onCreateCommand": "/opt/cortex-home/scripts/dev-setup-oncreate.sh",
+  "updateContentCommand": "/opt/cortex-home/scripts/dev-setup-update.sh"
+}

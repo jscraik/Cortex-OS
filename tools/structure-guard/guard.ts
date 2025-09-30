@@ -175,7 +175,6 @@ await (async () => {
 			'!**/temp/**',
 			'!**/coverage/**',
 			'!**/.nyc_output/**',
-			'!**/.orbstack/**',
 			'!**/security_backups/**',
 			'!**/*.secret',
 			'!**/*.pem',

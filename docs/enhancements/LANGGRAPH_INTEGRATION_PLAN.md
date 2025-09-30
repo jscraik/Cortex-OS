@@ -1,6 +1,6 @@
 # LangGraph Integration Plan – TDD Roadmap for n0 Master Agent Loop
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 -->
 
 ## Objective
 
@@ -70,7 +70,7 @@ Each phase documents:
 - ✅ cortex-py thermal monitoring with brAInwav branding active and emitting A2A events
 - ✅ Placeholder regression guard (`tests/regression/placeholders.spec.ts`) and branded random ban (`tests/regression/math-random-ban.spec.ts`) are green with the 135-hit legacy baseline
 - ✅ Composite provider fallback coverage now lives in helper-driven tests (`packages/orchestration/src/providers/__tests__/composite-provider.test.ts`), keeping every spec under 40 lines while passing in isolation
-- ✅ OrbStack hybrid environment verified on 2025-09-27 via `./scripts/verify-hybrid-env.sh --json`; `docs/orbstack-setup.md` and `docs/dev-tools-reference.md` now document the brAInwav verification workflow and sample output
+- ✅ Docker-first hybrid environment verified on 2025-09-27 via `pnpm dev:docker` health checks; `docs/docker-setup.md` and `docs/dev-tools-reference.md` now document the brAInwav verification workflow and sample output
 - ⚠️ Slash command runner lives in `packages/commands/src/index.ts`; no end-to-end tests ensure `/help`, `/agents`, `/model`, `/compact` short-circuit LangGraph
 - ⚠️ Dynamic Speculative Planner (`packages/orchestration/src/utils/dsp.ts`) and Long-Horizon Planner (`src/lib/long-horizon-planner.ts`) are implemented but lack unit/integration coverage
 - ⚠️ **NEW**: LangGraph streaming infrastructure needed for real-time workflow updates

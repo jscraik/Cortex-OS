@@ -4,7 +4,7 @@ set -euo pipefail
 # Enhancements: selective service start, --fast (skip builds/install), propagate MLX flags, JSON status, follow logs, restart subset
 
 # Cortex-OS Development Workflow Script
-# Orchestrates the hybrid MLX (host-native) + Containers (OrbStack) workflow
+# Orchestrates the hybrid MLX (host-native) + Docker Desktop workflow
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -58,23 +58,14 @@ check_prerequisites() {
         exit 1
     fi
     
-    # Check Docker context
-    if ! docker context inspect orbstack >/dev/null 2>&1; then
-        warn "OrbStack context not found. Creating it..."
-        docker context create orbstack --docker "host=unix:///var/run/docker.sock"
-    fi
-    
-    # Set OrbStack as active context if not already
+    # Capture current Docker context for visibility
     local current_context
     current_context=$(docker context show 2>/dev/null || echo "unknown")
-    if [[ "$current_context" != "orbstack" ]]; then
-        log "Switching to OrbStack context..."
-        docker context use orbstack
-    fi
-    
-    # Verify OrbStack is running
+    log "Using Docker context: $current_context"
+
+    # Verify Docker Desktop is running
     if ! docker info >/dev/null 2>&1; then
-        error "Docker/OrbStack is not running. Please start OrbStack first."
+        error "Docker Desktop is not running. Please start Docker Desktop and retry."
         exit 1
     fi
     
@@ -487,7 +478,7 @@ case "$command" in
 Cortex-OS Development Workflow
 ==============================
 
-Hybrid MLX (host-native) + Containers (OrbStack) orchestrator.
+Hybrid MLX (host-native) + Containers (Docker Desktop) orchestrator.
 
 Commands:
     start        Start MLX (unless --fast) + selected containers

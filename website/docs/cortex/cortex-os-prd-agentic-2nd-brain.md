@@ -496,11 +496,11 @@ Cloudflare Workers/Queues/Tunnels (egress allowlist)
 │
 ▼
 ┌───────────────────────────────────────────────────────────────┐
-│ OrbStack (lightweight Linux VM with shared kernel) │ ← Docker engine inside VM; low overhead, WSL2-like. [oai_citation:0‡docs.orbstack.dev](https://docs.orbstack.dev/architecture)
+│ Docker Desktop (native engine on macOS/WSL) │ ← brAInwav standard runtime; low overhead with virtiofs file sharing.
 │ │
-│ Host networking: containers ⇄ macOS via localhost │ ← --net host supported on mac; no host.docker.internal needed. [oai_citation:1‡docs.orbstack.dev](https://docs.orbstack.dev/docker/host-networking)
-│ VirtioFS: fast bind mounts; prefer volumes for hot I/O │ ← VirtioFS + tuning; volumes faster than bind mounts. [oai_citation:2‡docs.orbstack.dev](https://docs.orbstack.dev/architecture)
-│ Rosetta: fast x86 emulation on Apple Silicon │ ← Faster than QEMU for x86. [oai_citation:3‡docs.orbstack.dev](https://docs.orbstack.dev/architecture)
+│ Host networking: containers ⇄ macOS via localhost │ ← Use default docker context; `host.docker.internal` bridges to host services.
+│ VirtioFS bind mounts: prefer volumes for hot I/O │ ← Combine docker volumes + caching for best throughput.
+│ Apple Silicon emulation: Rosetta/QEMU fallback │ ← Use multi-arch images; avoid x86-only builds when possible.
 │ │
 │ Containers (one service per image) │
 │ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐

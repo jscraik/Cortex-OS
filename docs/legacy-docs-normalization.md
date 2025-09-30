@@ -38,7 +38,7 @@ Source: recent `markdownlint-cli2` run.
 | `docs/mcp.fix-plan.md`                         | MD013 long lines                                                                |
 | `docs/mcp.security-score.md`                   | MD013 + MD040 missing code lang                                                 |
 | `docs/mlx-and-ci-setup-summary.md`             | MD013 + MD029 ordered list prefix + MD013 heavy lines                           |
-| `docs/orbstack-dev.md`                         | MD034 bare URL + MD013                                                          |
+| `docs/orbstack-dev.md`                         | Archived (superseded by Docker workflow notice)                                 |
 | `docs/README.md`                               | MD033 inline HTML + MD013                                                       |
 | `docs/repository-organization-improvements.md` | MD013                                                                           |
 | `docs/typescript-template-config.md`           | MD013                                                                           |

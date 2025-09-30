@@ -12,11 +12,6 @@
     "dev:server": "node -e \"console.log('Dev server would start here - use main build for container')\"",
     "docker:build": "./scripts/build-image.sh",
     "docker:test": "./scripts/build-image.sh test-only",
-    "orbstack:deploy": "./scripts/deploy-orbstack.sh deploy",
-    "orbstack:status": "./scripts/deploy-orbstack.sh status",
-    "orbstack:logs": "./scripts/deploy-orbstack.sh logs",
-    "orbstack:stop": "./scripts/deploy-orbstack.sh stop",
-    "orbstack:test": "./scripts/deploy-orbstack.sh test",
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {

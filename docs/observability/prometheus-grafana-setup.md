@@ -44,7 +44,7 @@ brew services start grafana
 If you use the repo's compose files:
 
 ```bash
-pnpm dev:orbstack:obs
+pnpm dev:docker:obs
 ```
 
 This starts Prometheus + Grafana (and other observability services if configured). Then:

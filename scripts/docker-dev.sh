@@ -40,6 +40,16 @@ check_docker() {
     log_success "Docker environment detected and ready for brAInwav Cortex-OS."
 }
 
+load_local_env() {
+    if [[ -f "$ROOT_DIR/.env.local" ]]; then
+        set -a
+        # shellcheck disable=SC1091
+        source "$ROOT_DIR/.env.local"
+        set +a
+        log_info "Loaded overrides from .env.local for brAInwav Docker workflow"
+    fi
+}
+
 validate_environment() {
     local required_files=(
         "$COMPOSE_DIR/docker-compose.dev.yml"
@@ -103,6 +113,7 @@ start_services() {
     build_profile_args "$profiles" profile_args
 
     pushd "$ROOT_DIR" >/dev/null
+    load_local_env
     docker compose \
         --env-file "$ENV_FILE" \
         -f "$COMPOSE_DIR/docker-compose.dev.yml" \
@@ -118,6 +129,7 @@ stop_services() {
     log_info "Stopping brAInwav Cortex-OS development stack"
 
     pushd "$ROOT_DIR" >/dev/null
+    load_local_env
     docker compose \
         --env-file "$ENV_FILE" \
         -f "$COMPOSE_DIR/docker-compose.dev.yml" \
@@ -131,6 +143,7 @@ show_status() {
     log_info "Current Docker Compose status"
 
     pushd "$ROOT_DIR" >/dev/null
+    load_local_env
     docker compose \
         --env-file "$ENV_FILE" \
         -f "$COMPOSE_DIR/docker-compose.dev.yml" \
@@ -156,6 +169,7 @@ show_logs() {
     local service="${1:-}"
 
     pushd "$ROOT_DIR" >/dev/null
+    load_local_env
     if [[ -z "$service" ]]; then
         docker compose \
             --env-file "$ENV_FILE" \
@@ -198,6 +212,7 @@ exec_service() {
     log_info "Executing in $service: ${cmd[*]}"
 
     pushd "$ROOT_DIR" >/dev/null
+    load_local_env
     docker compose \
         --env-file "$ENV_FILE" \
         -f "$COMPOSE_DIR/docker-compose.dev.yml" \

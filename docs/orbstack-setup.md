@@ -1,6 +1,6 @@
-# OrbStack Development Environment Setup
+# OrbStack Workflow Retired# OrbStack Development Environment Setup
 
-This guide covers setting up and using the OrbStack-optimized containerized development environment for Cortex-OS.
+OrbStack-based development flows are no longer supported. Use the Docker-first workflow documented in [`docs/docker-setup.md`](./docker-setup.md) and [`docs/dev-tools-reference.md`](./dev-tools-reference.md) for current brAInwav Cortex-OS guidance.This guide covers setting up and using the OrbStack-optimized containerized development environment for Cortex-OS.
 
 ## Prerequisites
 
