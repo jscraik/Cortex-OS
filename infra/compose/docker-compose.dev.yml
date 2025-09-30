@@ -1,9 +1,10 @@
-# OrbStack optimized development environment for Cortex-OS
+# brAInwav Cortex-OS Docker development environment
 # Profiles: dev-min, dev-full, web, api, workers, observability
 
-x-orbstack-labels: &orbstack-labels
-  orbstack.optimize: "true"
-  orbstack.platform: "linux/arm64,linux/amd64"
+x-brainwav-labels: &brainwav-labels
+  com.brainwav.project: "cortex-os"
+  com.brainwav.environment: "development"
+  com.brainwav.stack: "docker"
 
 services:
   nats:
@@ -23,12 +24,11 @@ services:
       retries: 3
       start_period: 5s
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "nats"
-      orbstack.tier: "messaging"
-      orbstack.project: "cortex-os"
-      orbstack.description: "NATS messaging server with JetStream"
-      orbstack.profile: "dev-min,dev-full"
+      <<: *brainwav-labels
+      com.brainwav.service: "nats"
+      com.brainwav.tier: "messaging"
+      com.brainwav.description: "NATS messaging server with JetStream"
+      com.brainwav.profiles: "dev-min,dev-full"
 
   model-gateway:
     container_name: cortexos_model_gateway
@@ -40,10 +40,8 @@ services:
         - linux/amd64
     profiles: ["dev-min","dev-full"]
     environment:
-      # MLX runs host-native (Metal) on macOS; OrbStack exposes host via host.docker.internal
       MLX_BASE_URL: "${MLX_HOST_URL:-http://host.docker.internal:8081}"
       NODE_ENV: development
-      # Constrain Node heap to reduce memory usage
       NODE_OPTIONS: "--max-old-space-size=384"
       MODEL_GATEWAY_PORT: "8080"
     ports:
@@ -59,13 +57,12 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "model-gateway"
-      orbstack.tier: "api"
-      orbstack.node: "true"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Model Gateway API for MLX integration"
-      orbstack.profile: "dev-min,dev-full"
+      <<: *brainwav-labels
+      com.brainwav.service: "model-gateway"
+      com.brainwav.tier: "api"
+      com.brainwav.runtime: "node"
+      com.brainwav.description: "Model Gateway API for MLX integration"
+      com.brainwav.profiles: "dev-min,dev-full"
 
   mcp-registry:
     container_name: cortexos_mcp_registry
@@ -89,13 +86,12 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "mcp-registry"
-      orbstack.tier: "api"
-      orbstack.node: "true"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Model Context Protocol Registry"
-      orbstack.profile: "dev-full"
+      <<: *brainwav-labels
+      com.brainwav.service: "mcp-registry"
+      com.brainwav.tier: "api"
+      com.brainwav.runtime: "node"
+      com.brainwav.description: "Model Context Protocol Registry"
+      com.brainwav.profiles: "dev-full"
 
   cortex-os:
     container_name: cortexos_cortex_os
@@ -126,13 +122,12 @@ services:
       retries: 3
       start_period: 15s
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "cortex-os"
-      orbstack.tier: "app"
-      orbstack.node: "true"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Main Cortex-OS runtime application"
-      orbstack.profile: "dev-min,dev-full"
+      <<: *brainwav-labels
+      com.brainwav.service: "cortex-os"
+      com.brainwav.tier: "app"
+      com.brainwav.runtime: "node"
+      com.brainwav.description: "Main Cortex-OS runtime application"
+      com.brainwav.profiles: "dev-min,dev-full"
 
   agents-workers:
     container_name: cortexos_agents_workers
@@ -148,6 +143,13 @@ services:
       nats:
         condition: service_healthy
     mem_limit: "384m"
+    labels:
+      <<: *brainwav-labels
+      com.brainwav.service: "agents-workers"
+      com.brainwav.tier: "workers"
+      com.brainwav.runtime: "node"
+      com.brainwav.description: "Worker pool for Cortex-OS agents"
+      com.brainwav.profiles: "workers"
 
   otel-collector:
     container_name: cortexos_otel_collector
@@ -164,12 +166,12 @@ services:
       timeout: 2s
       retries: 3
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "otel-collector"
-      orbstack.tier: "observability"
-      orbstack.project: "cortex-os"
-      orbstack.description: "OpenTelemetry metrics and traces collector"
-      orbstack.profile: "observability"
+      <<: *brainwav-labels
+      com.brainwav.service: "otel-collector"
+      com.brainwav.tier: "observability"
+      com.brainwav.runtime: "otel"
+      com.brainwav.description: "OpenTelemetry metrics and traces collector"
+      com.brainwav.profiles: "observability"
 
   loki:
     container_name: cortexos_loki
@@ -184,12 +186,12 @@ services:
       timeout: 2s
       retries: 3
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "loki"
-      orbstack.tier: "observability"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Grafana Loki log aggregation system"
-      orbstack.profile: "observability"
+      <<: *brainwav-labels
+      com.brainwav.service: "loki"
+      com.brainwav.tier: "observability"
+      com.brainwav.runtime: "grafana"
+      com.brainwav.description: "Grafana Loki log aggregation system"
+      com.brainwav.profiles: "observability"
 
   tempo:
     container_name: cortexos_tempo
@@ -204,12 +206,12 @@ services:
       timeout: 2s
       retries: 3
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "tempo"
-      orbstack.tier: "observability"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Grafana Tempo distributed tracing backend"
-      orbstack.profile: "observability"
+      <<: *brainwav-labels
+      com.brainwav.service: "tempo"
+      com.brainwav.tier: "observability"
+      com.brainwav.runtime: "grafana"
+      com.brainwav.description: "Grafana Tempo distributed tracing backend"
+      com.brainwav.profiles: "observability"
 
   grafana:
     container_name: cortexos_grafana
@@ -231,12 +233,12 @@ services:
       - ../../docs/mcp/observability/dashboards:/var/lib/grafana/dashboards:ro
     mem_limit: "512m"
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "grafana"
-      orbstack.tier: "observability"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Grafana visualization and monitoring dashboard"
-      orbstack.profile: "observability"
+      <<: *brainwav-labels
+      com.brainwav.service: "grafana"
+      com.brainwav.tier: "observability"
+      com.brainwav.runtime: "grafana"
+      com.brainwav.description: "Grafana visualization and monitoring dashboard"
+      com.brainwav.profiles: "observability"
 
   cortex-web:
     container_name: cortexos_cortex_web
@@ -257,13 +259,12 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "cortex-web"
-      orbstack.tier: "web"
-      orbstack.node: "true"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Cortex-OS web frontend application"
-      orbstack.profile: "web"
+      <<: *brainwav-labels
+      com.brainwav.service: "cortex-web"
+      com.brainwav.tier: "web"
+      com.brainwav.runtime: "node"
+      com.brainwav.description: "Cortex-OS web frontend application"
+      com.brainwav.profiles: "web"
 
   api:
     container_name: cortexos_api
@@ -284,13 +285,12 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      <<: *orbstack-labels
-      orbstack.service: "api"
-      orbstack.tier: "api"
-      orbstack.python: "true"
-      orbstack.project: "cortex-os"
-      orbstack.description: "Cortex-OS Python API backend"
-      orbstack.profile: "api"
+      <<: *brainwav-labels
+      com.brainwav.service: "api"
+      com.brainwav.tier: "api"
+      com.brainwav.runtime: "python"
+      com.brainwav.description: "Cortex-OS Python API backend"
+      com.brainwav.profiles: "api"
 
 volumes:
   nats: {}

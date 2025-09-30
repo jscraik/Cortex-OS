@@ -330,12 +330,60 @@ pnpm test:safe     # safe, minimal tests
 
 ## Architecture Snapshot
 
-High‑level governed monorepo:
+### High-Level Architecture
 
-- UI + runtime apps mount feature packages via DI
-- Feature packages communicate via **A2A events** and **MCP tools**
-- Contracts + schemas in `libs/typescript/contracts`
-- Governance rules & structure validation in `.cortex/`
+Cortex-OS is a governed monorepo implementing a unified memory architecture:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Clients                                  │
+├──────────┬──────────┬──────────┬──────────┬───────────────┤
+│ Claude   │ ChatGPT  │ VS Code  │ Editors  │ Others        │
+│ Desktop  │          │          │          │               │
+└─────┬────┴─────┬────┴─────┬─────┬─────┬─────┬───────┘
+      │          │          │     │     │     │
+      │ STDIO    │ HTTP/    │ HTTP/│     │     │
+      │ (stdio)  │ stream   │ stream│     │     │
+      │          │ (sse)    │ (poll)│     │     │
+┌─────▼─────┐  ┌─▼───────────────────────▼─────┐ ┌───▼───┐
+│ cortex-   │  │          cortex-mcp         │ │Tools  │
+│ os (app)  │  │        (MCP Server)         │ │mount  │
+└───────────┘  └─────┬────────────────────┬────┘ └───────┘
+                      │                    │
+                ┌─────▼─────┐        ┌─────▼─────┐
+                │ rest-api  │        │ agent-    │
+                │ (gateway) │        │ toolkit   │
+                └───────────┘        └───────────┘
+                      │                    │
+                      └────────┬───────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │     memory-core    │
+                    │   (Single Source   │
+                    │      of Truth)     │
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │    Storage Layer    │
+                    │  SQLite + Qdrant    │
+                    └─────────────────────┘
+```
+
+### Core Principles
+
+- **Single Source of Truth** - `memory-core` contains all business logic
+- **Thin Adapter Pattern** - MCP, REST, and agent-toolkit adapters delegate to `memory-core`
+- **Event-Driven Architecture** - All operations emit A2A events for observability
+- **Transport Agnostic** - Supports STDIO, HTTP/streamable, and REST access patterns
+- **Governed Boundaries** - Strict import validation and architectural rules
+
+### Key Components
+
+- **UI + runtime apps** mount feature packages via dependency injection
+- **Feature packages** communicate via **A2A events** and **MCP tools**
+- **Contracts + schemas** in `libs/typescript/contracts`
+- **Governance rules & structure validation** in `.cortex/`
+- **Agent-Toolkit integration** with tools path resolution prioritizing `$HOME/.Cortex-OS/tools/agent-toolkit`
 
 More detail: [Architecture Overview](./docs/architecture-overview.md) • Full reference: [architecture.md](./docs/architecture.md)
 
