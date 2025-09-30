@@ -6,7 +6,7 @@
   "percentIncrease": -100,
   "reasons": [],
   "baselinePath": "/Users/jamiecraik/.Cortex-OS/reports/memory-baseline.json",
-  "logFile": "/Users/jamiecraik/.Cortex-OS/.memory/logs/2025-09-30T21-45-43-586Z-quick.jsonl",
+  "logFile": "/Users/jamiecraik/.Cortex-OS/.memory/logs/2025-09-30T21-46-17-292Z-quick.jsonl",
   "policy": {
     "maxMb": 1500,
     "allowedPct": 25,
