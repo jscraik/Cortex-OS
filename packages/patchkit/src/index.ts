@@ -1,16 +1,15 @@
+export {
+	applyPatch,
+	createDiff,
+	formatJsonSideBySide,
+	formatUnifiedDiff,
+	hasConflicts,
+} from './diff.js';
 export type {
 	DiffHunk,
 	FilePatch,
-	PatchPlan,
-	PatchOperation,
-	PatchResult,
 	PatchFormattingOptions,
+	PatchOperation,
+	PatchPlan,
+	PatchResult,
 } from './types.js';
-
-export {
-	createDiff,
-	applyPatch,
-	hasConflicts,
-	formatUnifiedDiff,
-	formatJsonSideBySide,
-} from './diff.js';

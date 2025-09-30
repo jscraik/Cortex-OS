@@ -12,13 +12,7 @@ export interface Envelope {
 	headers?: Record<string, unknown>;
 }
 
-export type TaskStatus =
-	| 'idle'
-	| 'running'
-	| 'blocked'
-	| 'completed'
-	| 'failed'
-	| 'cancelled';
+export type TaskStatus = 'idle' | 'running' | 'blocked' | 'completed' | 'failed' | 'cancelled';
 
 export interface TaskContext {
 	locale?: string;

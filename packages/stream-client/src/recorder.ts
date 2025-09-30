@@ -11,7 +11,11 @@ export const createEventRecorder = (): EventRecorder => {
 	const packets: RecordedPacket[] = [];
 	return {
 		record(lane: StreamLane, events: StreamEvent[]): void {
-			packets.push({ lane, events: events.map((event) => ({ ...event })), at: new Date().toISOString() });
+			packets.push({
+				lane,
+				events: events.map((event) => ({ ...event })),
+				at: new Date().toISOString(),
+			});
 		},
 		export(): ReadonlyArray<RecordedPacket> {
 			return packets.map((packet) => ({

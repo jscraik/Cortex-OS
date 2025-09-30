@@ -1,8 +1,8 @@
-import { EventEmitter } from 'node:events';
-import { createServer } from 'node:http';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { createAguiEvent } from '@cortex-os/contracts';
+import { EventEmitter } from 'node:events';
+import { createServer } from 'node:http';
 
 const AGUI_PORT = Number.parseInt(process.env.AGUI_PORT || '3023', 10);
 
@@ -67,7 +67,9 @@ export class AGUISSEServer {
 		req: import('node:http').IncomingMessage,
 		res: import('node:http').ServerResponse,
 	): void {
-		const connectionId = `sse-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const randomBytes = crypto.getRandomValues(new Uint8Array(7));
+		const randomStr = Array.from(randomBytes, byte => byte.toString(36)).join('').slice(0, 9);
+		const connectionId = `sse-${Date.now()}-${randomStr}`;
 
 		// Set SSE headers
 		res.writeHead(200, {

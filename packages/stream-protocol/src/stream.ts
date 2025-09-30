@@ -1,13 +1,15 @@
 import type { StreamEvent, StreamLane } from '@cortex-os/protocol';
 import type { FlushPacket, StreamConfig, StreamListener, StreamMultiplexer } from './types.js';
 
-const DEFAULT_CONFIG: Required<Pick<StreamConfig, 'hotFlushMs' | 'heavyFlushMs' | 'bufferLimit'>> = {
-	hotFlushMs: 25,
-	heavyFlushMs: 250,
-	bufferLimit: 2_000,
-};
+const DEFAULT_CONFIG: Required<Pick<StreamConfig, 'hotFlushMs' | 'heavyFlushMs' | 'bufferLimit'>> =
+	{
+		hotFlushMs: 25,
+		heavyFlushMs: 250,
+		bufferLimit: 2_000,
+	};
 
-const defaultCategorize = (event: StreamEvent): StreamLane => (event.type === 'token' ? 'hot' : 'heavy');
+const defaultCategorize = (event: StreamEvent): StreamLane =>
+	event.type === 'token' ? 'hot' : 'heavy';
 
 const clonePacket = (lane: StreamLane, events: StreamEvent[]): FlushPacket => ({
 	lane,
@@ -17,9 +19,14 @@ const clonePacket = (lane: StreamLane, events: StreamEvent[]): FlushPacket => ({
 class StreamMultiplexerImpl implements StreamMultiplexer {
 	private readonly listeners = new Set<StreamListener>();
 	private readonly buffers: Record<StreamLane, StreamEvent[]> = { hot: [], heavy: [] };
-	private readonly timers: Record<StreamLane, NodeJS.Timeout | undefined> = { hot: undefined, heavy: undefined };
+	private readonly timers: Record<StreamLane, NodeJS.Timeout | undefined> = {
+		hot: undefined,
+		heavy: undefined,
+	};
 	private readonly history: StreamEvent[] = [];
-	private readonly limits: Required<Pick<StreamConfig, 'hotFlushMs' | 'heavyFlushMs' | 'bufferLimit'>>;
+	private readonly limits: Required<
+		Pick<StreamConfig, 'hotFlushMs' | 'heavyFlushMs' | 'bufferLimit'>
+	>;
 	private readonly categorize: (event: StreamEvent) => StreamLane;
 
 	public constructor(config: StreamConfig = {}) {
@@ -81,4 +88,5 @@ class StreamMultiplexerImpl implements StreamMultiplexer {
 	}
 }
 
-export const makeStream = (config: StreamConfig = {}): StreamMultiplexer => new StreamMultiplexerImpl(config);
+export const makeStream = (config: StreamConfig = {}): StreamMultiplexer =>
+	new StreamMultiplexerImpl(config);

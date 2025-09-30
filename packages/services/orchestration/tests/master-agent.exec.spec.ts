@@ -127,35 +127,35 @@ describe('brAInwav master agent LangGraph execution', () => {
 		);
 
 		expect(orchestrationHarness.dispatchSpy).toHaveBeenCalledTimes(1);
-                const [jobs] = orchestrationHarness.dispatchSpy.mock.calls[0];
-                expect(jobs).toHaveLength(2);
-                expect(jobs.map((job) => job.metadata?.provider)).toEqual(
-                        expect.arrayContaining(['mlx', 'ollama']),
-                );
-                expect(orchestrationHarness.recordedJobs[0]?.metadata?.brand).toBe('brAInwav');
-                expect(orchestrationHarness.recordedJobs[1]?.metadata?.brand).toBe('brAInwav');
-                expect(jobs[0]?.metadata?.tags).toContain('agents');
-                expect(jobs[1]?.name).toBe('ollama.generateChat');
+		const [jobs] = orchestrationHarness.dispatchSpy.mock.calls[0];
+		expect(jobs).toHaveLength(2);
+		expect(jobs.map((job) => job.metadata?.provider)).toEqual(
+			expect.arrayContaining(['mlx', 'ollama']),
+		);
+		expect(orchestrationHarness.recordedJobs[0]?.metadata?.brand).toBe('brAInwav');
+		expect(orchestrationHarness.recordedJobs[1]?.metadata?.brand).toBe('brAInwav');
+		expect(jobs[0]?.metadata?.tags).toContain('agents');
+		expect(jobs[1]?.name).toBe('ollama.generateChat');
 
-                expect(mlxAdapterFactory.factory).toHaveBeenCalledTimes(1);
-                const mlxAdapter = mlxAdapterFactory.instances[0];
-                expect(mlxAdapter.isAvailable).toHaveBeenCalledTimes(1);
-                expect(mlxAdapter.generateChat).toHaveBeenCalledTimes(1);
-                expect(orchestrationHarness.dispatchSpy.mock.invocationCallOrder[0]).toBeLessThan(
-                        mlxAdapter.generateChat.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
-                );
+		expect(mlxAdapterFactory.factory).toHaveBeenCalledTimes(1);
+		const mlxAdapter = mlxAdapterFactory.instances[0];
+		expect(mlxAdapter.isAvailable).toHaveBeenCalledTimes(1);
+		expect(mlxAdapter.generateChat).toHaveBeenCalledTimes(1);
+		expect(orchestrationHarness.dispatchSpy.mock.invocationCallOrder[0]).toBeLessThan(
+			mlxAdapter.generateChat.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+		);
 
-                expect(ollamaAdapterFactory.factory).toHaveBeenCalledTimes(1);
-                const ollamaAdapter = ollamaAdapterFactory.instances[0];
-                expect(ollamaAdapter.generateChat).toHaveBeenCalledTimes(1);
-                expect(mlxAdapter.generateChat.mock.invocationCallOrder[0]).toBeLessThan(
-                        ollamaAdapter.generateChat.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
-                );
+		expect(ollamaAdapterFactory.factory).toHaveBeenCalledTimes(1);
+		const ollamaAdapter = ollamaAdapterFactory.instances[0];
+		expect(ollamaAdapter.generateChat).toHaveBeenCalledTimes(1);
+		expect(mlxAdapter.generateChat.mock.invocationCallOrder[0]).toBeLessThan(
+			ollamaAdapter.generateChat.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+		);
 
-                expect(result.result?.executed).toBe(true);
-                expect(result.result?.provider).toBe('mlx');
-                const aiMessage = result.messages[result.messages.length - 1];
-                const aiContent =
+		expect(result.result?.executed).toBe(true);
+		expect(result.result?.provider).toBe('mlx');
+		const aiMessage = result.messages[result.messages.length - 1];
+		const aiContent =
 			typeof aiMessage.content === 'string' ? aiMessage.content : JSON.stringify(aiMessage.content);
 		expect(aiContent).toContain('brAInwav');
 	});

@@ -88,31 +88,31 @@ export function createSecureOperationalEndpoints(config: SecureOperationalConfig
 	router.get(
 		'/health',
 		securityMiddleware?.validateInput(RequestValidationSchemas.health) ||
-		((_req, _res, next) => next()),
-		(req, res) => endpoints.getRouter()(req, res, () => { }),
+			((_req, _res, next) => next()),
+		(req, res) => endpoints.getRouter()(req, res, () => {}),
 	);
 
 	router.get(
 		'/health/live',
 		securityMiddleware?.validateInput(RequestValidationSchemas.health) ||
-		((_req, _res, next) => next()),
-		(req, res) => endpoints.getRouter()(req, res, () => { }),
+			((_req, _res, next) => next()),
+		(req, res) => endpoints.getRouter()(req, res, () => {}),
 	);
 
 	router.get(
 		'/health/ready',
 		securityMiddleware?.validateInput(RequestValidationSchemas.health) ||
-		((_req, _res, next) => next()),
-		(req, res) => endpoints.getRouter()(req, res, () => { }),
+			((_req, _res, next) => next()),
+		(req, res) => endpoints.getRouter()(req, res, () => {}),
 	);
 
 	// Metrics endpoint
 	if (config.enableMetrics) {
-		router.get('/metrics', (req, res) => endpoints.getRouter()(req, res, () => { }));
+		router.get('/metrics', (req, res) => endpoints.getRouter()(req, res, () => {}));
 	}
 
 	// System info endpoint
-	router.get('/info', (req, res) => endpoints.getRouter()(req, res, () => { }));
+	router.get('/info', (req, res) => endpoints.getRouter()(req, res, () => {}));
 
 	// Admin endpoints (with enhanced validation and authentication)
 	if (config.enableAdminEndpoints) {
@@ -130,32 +130,32 @@ export function createSecureOperationalEndpoints(config: SecureOperationalConfig
 			'/admin/shutdown',
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.shutdown) ||
-			((_req, _res, next) => next()),
-			(req, res) => endpoints.getRouter()(req, res, () => { }),
+				((_req, _res, next) => next()),
+			(req, res) => endpoints.getRouter()(req, res, () => {}),
 		);
 
 		router.get(
 			'/admin/health/checks',
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.admin) ||
-			((_req, _res, next) => next()),
-			(req, res) => endpoints.getRouter()(req, res, () => { }),
+				((_req, _res, next) => next()),
+			(req, res) => endpoints.getRouter()(req, res, () => {}),
 		);
 
 		router.post(
 			'/admin/health/check/:name',
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.healthCheck) ||
-			((_req, _res, next) => next()),
-			(req, res) => endpoints.getRouter()(req, res, () => { }),
+				((_req, _res, next) => next()),
+			(req, res) => endpoints.getRouter()(req, res, () => {}),
 		);
 
 		router.get(
 			'/admin/shutdown/handlers',
 			adminAuth,
 			securityMiddleware?.validateInput(RequestValidationSchemas.admin) ||
-			((_req, _res, next) => next()),
-			(req, res) => endpoints.getRouter()(req, res, () => { }),
+				((_req, _res, next) => next()),
+			(req, res) => endpoints.getRouter()(req, res, () => {}),
 		);
 	}
 

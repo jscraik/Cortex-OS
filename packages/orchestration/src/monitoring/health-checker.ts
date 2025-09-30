@@ -315,9 +315,7 @@ export class HealthChecker {
 	/**
 	 * Determine overall system status
 	 */
-	private determineOverallStatus(
-		results: Record<string, HealthCheckResult>,
-	): HealthStatus {
+	private determineOverallStatus(results: Record<string, HealthCheckResult>): HealthStatus {
 		const checks = Array.from(this.checks.values());
 		const criticalChecks = checks.filter((check) => check.critical);
 
@@ -342,7 +340,10 @@ export class HealthChecker {
 	/**
 	 * Update Prometheus metrics
 	 */
-	private updateMetrics(overallStatus: HealthStatus, results: Record<string, HealthCheckResult>): void {
+	private updateMetrics(
+		overallStatus: HealthStatus,
+		results: Record<string, HealthCheckResult>,
+	): void {
 		// Update overall health status
 		healthMetrics.healthStatus.set(overallStatus === 'healthy' ? 1 : 0);
 

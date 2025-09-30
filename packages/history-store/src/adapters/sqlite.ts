@@ -1,6 +1,6 @@
-import Database from 'better-sqlite3';
-import { EnvelopeSchema } from '@cortex-os/protocol';
 import type { Envelope } from '@cortex-os/protocol';
+import { EnvelopeSchema } from '@cortex-os/protocol';
+import Database from 'better-sqlite3';
 import type { HistoryRange, HistoryRecord, HistoryStore, SQLiteConfig } from '../types.js';
 
 const CREATE_EVENTS = `
@@ -69,11 +69,21 @@ class SqliteHistoryStore implements HistoryStore {
 
 	public async append(envelope: Envelope): Promise<void> {
 		const parsed = EnvelopeSchema.parse(envelope);
-		this.insertEvent.run(parsed.id, parsed.sessionId ?? 'unknown', parsed.occurredAt, JSON.stringify(parsed));
+		this.insertEvent.run(
+			parsed.id,
+			parsed.sessionId ?? 'unknown',
+			parsed.occurredAt,
+			JSON.stringify(parsed),
+		);
 	}
 
 	public async *stream(sessionId: string, range?: HistoryRange): AsyncIterable<HistoryRecord> {
-		const rows = this.readRange.all(sessionId, range?.from ?? null, range?.to ?? null, range?.limit ?? null);
+		const rows = this.readRange.all(
+			sessionId,
+			range?.from ?? null,
+			range?.to ?? null,
+			range?.limit ?? null,
+		);
 		for (const row of rows) {
 			yield {
 				id: String(row.id),
@@ -105,4 +115,5 @@ class SqliteHistoryStore implements HistoryStore {
 	}
 }
 
-export const createSqliteHistoryStore = (config?: SQLiteConfig): HistoryStore => new SqliteHistoryStore(config);
+export const createSqliteHistoryStore = (config?: SQLiteConfig): HistoryStore =>
+	new SqliteHistoryStore(config);

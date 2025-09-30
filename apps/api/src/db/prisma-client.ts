@@ -184,7 +184,10 @@ const createFallbackClient = (): PrismaClient => {
 			if (prop === '$transaction') {
 				return async (callback: unknown) => {
 					if (typeof callback === 'function') {
-						const delegate = new Proxy({}, proxyDelegateHandler) as unknown as Prisma.TransactionClient;
+						const delegate = new Proxy(
+							{},
+							proxyDelegateHandler,
+						) as unknown as Prisma.TransactionClient;
 						const result = await Promise.resolve(
 							(callback as (tx: Prisma.TransactionClient) => unknown)(delegate),
 						);
@@ -201,55 +204,55 @@ const createFallbackClient = (): PrismaClient => {
 };
 
 const getSingleton = async (): Promise<PrismaClientSingleton> => {
-        const existing = globalForPrisma.__cortexPrisma;
+	const existing = globalForPrisma.__cortexPrisma;
 
-        if (existing) {
-                activeSingleton = existing;
-                return existing;
-        }
+	if (existing) {
+		activeSingleton = existing;
+		return existing;
+	}
 
-        const client = await loadPrismaClient();
-        if (client) {
-                const entry: PrismaClientSingleton = {
-                        client,
-                        disconnect: async () => {
-                                await client.$disconnect();
-                                if (process.env.NODE_ENV !== 'production') {
-                                        delete globalForPrisma.__cortexPrisma;
-                                }
-                                activeSingleton = undefined;
-                        },
-                        isFallback: false,
-                };
+	const client = await loadPrismaClient();
+	if (client) {
+		const entry: PrismaClientSingleton = {
+			client,
+			disconnect: async () => {
+				await client.$disconnect();
+				if (process.env.NODE_ENV !== 'production') {
+					delete globalForPrisma.__cortexPrisma;
+				}
+				activeSingleton = undefined;
+			},
+			isFallback: false,
+		};
 
-                activeSingleton = entry;
-                if (process.env.NODE_ENV !== 'production') {
-                        globalForPrisma.__cortexPrisma = entry;
-                }
+		activeSingleton = entry;
+		if (process.env.NODE_ENV !== 'production') {
+			globalForPrisma.__cortexPrisma = entry;
+		}
 
-                return entry;
-        }
+		return entry;
+	}
 
-        const fallbackClient = createFallbackClient();
-        const entry: PrismaClientSingleton = {
-                client: fallbackClient,
-                disconnect: async () => {
-                        await noopAsync();
-                        if (process.env.NODE_ENV !== 'production') {
-                                delete globalForPrisma.__cortexPrisma;
-                        }
-                        activeSingleton = undefined;
-                },
-                isFallback: true,
-        };
+	const fallbackClient = createFallbackClient();
+	const entry: PrismaClientSingleton = {
+		client: fallbackClient,
+		disconnect: async () => {
+			await noopAsync();
+			if (process.env.NODE_ENV !== 'production') {
+				delete globalForPrisma.__cortexPrisma;
+			}
+			activeSingleton = undefined;
+		},
+		isFallback: true,
+	};
 
-        activeSingleton = entry;
-        if (process.env.NODE_ENV !== 'production') {
-                globalForPrisma.__cortexPrisma = entry;
-        }
+	activeSingleton = entry;
+	if (process.env.NODE_ENV !== 'production') {
+		globalForPrisma.__cortexPrisma = entry;
+	}
 
-        console.warn('brAInwav Prisma client unavailable; using fallback stub singleton');
-        return entry;
+	console.warn('brAInwav Prisma client unavailable; using fallback stub singleton');
+	return entry;
 };
 
 const prismaSingleton = await getSingleton();
@@ -257,18 +260,18 @@ const prismaSingleton = await getSingleton();
 export const prisma = prismaSingleton.client;
 
 export const getPrismaSingleton = async (): Promise<PrismaClientSingleton> => {
-        if (!activeSingleton) {
-                return await getSingleton();
-        }
-        return activeSingleton;
+	if (!activeSingleton) {
+		return await getSingleton();
+	}
+	return activeSingleton;
 };
 
 export const isPrismaFallback = async (): Promise<boolean> => {
-        const singleton = await getPrismaSingleton();
-        return singleton.isFallback;
+	const singleton = await getPrismaSingleton();
+	return singleton.isFallback;
 };
 
 export const disconnectPrisma = async () => {
-        const singleton = await getPrismaSingleton();
-        await singleton.disconnect();
+	const singleton = await getPrismaSingleton();
+	await singleton.disconnect();
 };

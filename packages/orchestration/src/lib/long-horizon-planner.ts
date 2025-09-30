@@ -357,7 +357,12 @@ export class LongHorizonPlanner {
 			const durationMs = Date.now() - start;
 			// Emit metric for persistence success
 			try {
-				this.metrics.recordPlannerPersistenceEvent(eventType, 'success', undefined, durationMs / 1000);
+				this.metrics.recordPlannerPersistenceEvent(
+					eventType,
+					'success',
+					undefined,
+					durationMs / 1000,
+				);
 			} catch (merr) {
 				console.warn('brAInwav Telemetry hook failed (recordPlannerPersistenceEvent):', merr);
 			}
@@ -440,16 +445,16 @@ export class LongHorizonPlanner {
 	private applySecurityEvaluation(task: LongHorizonTask, context: PlanningContext) {
 		const complianceSnapshot = context.compliance
 			? {
-				compliance: {
-					standards: context.compliance.standards,
-					lastCheckedAt: context.compliance.lastCheckedAt,
-					riskScore: context.compliance.riskScore,
-					outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
-						id: violation.id,
-						severity: violation.severity,
-					})),
-				},
-			}
+					compliance: {
+						standards: context.compliance.standards,
+						lastCheckedAt: context.compliance.lastCheckedAt,
+						riskScore: context.compliance.riskScore,
+						outstandingViolations: context.compliance.outstandingViolations.map((violation) => ({
+							id: violation.id,
+							severity: violation.severity,
+						})),
+					},
+				}
 			: undefined;
 
 		try {

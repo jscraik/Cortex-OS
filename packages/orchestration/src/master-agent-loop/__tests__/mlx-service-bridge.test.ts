@@ -8,14 +8,14 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as telemetry from '../../observability/otel.js';
 import type { MLXAdapterApi } from '../mlx-service-bridge.js';
 import {
-        createMLXServiceBridge,
-        MLXServiceBridge,
-        MLXServiceError,
-        MLXServiceErrorCode,
+	createMLXServiceBridge,
+	MLXServiceBridge,
+	MLXServiceError,
+	MLXServiceErrorCode,
 } from '../mlx-service-bridge.js';
-import * as telemetry from '../../observability/otel.js';
 
 /**
  * Mock MLX adapter for testing
@@ -98,17 +98,17 @@ class MockMLXAdapter implements MLXAdapterApi {
 }
 
 describe('MLXServiceBridge', () => {
-        let mockAdapter: MockMLXAdapter;
-        let serviceBridge: MLXServiceBridge;
-        const retrySpy = vi.spyOn(telemetry, 'recordRetryAttempt').mockImplementation(() => undefined);
+	let mockAdapter: MockMLXAdapter;
+	let serviceBridge: MLXServiceBridge;
+	const retrySpy = vi.spyOn(telemetry, 'recordRetryAttempt').mockImplementation(() => undefined);
 
-        beforeEach(() => {
-                retrySpy.mockClear();
-                mockAdapter = new MockMLXAdapter();
-                serviceBridge = new MLXServiceBridge(mockAdapter, {
-                        defaultModel: 'test-model',
-                        timeout: 5000,
-                        retryAttempts: 2,
+	beforeEach(() => {
+		retrySpy.mockClear();
+		mockAdapter = new MockMLXAdapter();
+		serviceBridge = new MLXServiceBridge(mockAdapter, {
+			defaultModel: 'test-model',
+			timeout: 5000,
+			retryAttempts: 2,
 			retryDelay: 100,
 		});
 	});
@@ -286,11 +286,11 @@ describe('MLXServiceBridge', () => {
 			await serviceBridge.initialize();
 		});
 
-                it('should retry failed operations', async () => {
-                        let callCount = 0;
-                        const originalMethod = mockAdapter.generateEmbedding;
+		it('should retry failed operations', async () => {
+			let callCount = 0;
+			const originalMethod = mockAdapter.generateEmbedding;
 
-                        mockAdapter.generateEmbedding = vi.fn(async (request) => {
+			mockAdapter.generateEmbedding = vi.fn(async (request) => {
 				callCount++;
 				if (callCount < 3) {
 					throw new Error('Temporary failure');
@@ -298,29 +298,29 @@ describe('MLXServiceBridge', () => {
 				return originalMethod.call(mockAdapter, request);
 			});
 
-                        const result = await serviceBridge.generateEmbedding({
-                                text: 'test with retry',
-                        });
+			const result = await serviceBridge.generateEmbedding({
+				text: 'test with retry',
+			});
 
-                        expect(result.embedding).toEqual([0.1, 0.2, 0.3, 0.4]);
-                        expect(callCount).toBe(3); // Initial attempt + 2 retries
-                        expect(retrySpy).toHaveBeenCalledTimes(2);
-                        expect(retrySpy).toHaveBeenNthCalledWith(1, 'mlx.adapter', 1, 'Error', 100);
-                        expect(retrySpy).toHaveBeenNthCalledWith(2, 'mlx.adapter', 2, 'Error', 200);
-                });
+			expect(result.embedding).toEqual([0.1, 0.2, 0.3, 0.4]);
+			expect(callCount).toBe(3); // Initial attempt + 2 retries
+			expect(retrySpy).toHaveBeenCalledTimes(2);
+			expect(retrySpy).toHaveBeenNthCalledWith(1, 'mlx.adapter', 1, 'Error', 100);
+			expect(retrySpy).toHaveBeenNthCalledWith(2, 'mlx.adapter', 2, 'Error', 200);
+		});
 
-                it('should fail after exhausting retries', async () => {
-                        mockAdapter.setShouldFail(true);
+		it('should fail after exhausting retries', async () => {
+			mockAdapter.setShouldFail(true);
 
-                        await expect(serviceBridge.generateEmbedding({ text: 'test' })).rejects.toThrow(
-                                expect.objectContaining({
-                                        code: MLXServiceErrorCode.INFERENCE_FAILED,
-                                }),
-                        );
-                        expect(retrySpy).toHaveBeenCalledTimes(3);
-                        expect(retrySpy).toHaveBeenLastCalledWith('mlx.adapter', 3, 'Error', 0);
-                });
-        });
+			await expect(serviceBridge.generateEmbedding({ text: 'test' })).rejects.toThrow(
+				expect.objectContaining({
+					code: MLXServiceErrorCode.INFERENCE_FAILED,
+				}),
+			);
+			expect(retrySpy).toHaveBeenCalledTimes(3);
+			expect(retrySpy).toHaveBeenLastCalledWith('mlx.adapter', 3, 'Error', 0);
+		});
+	});
 
 	describe('Timeout Handling', () => {
 		beforeEach(async () => {

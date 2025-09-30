@@ -1,16 +1,17 @@
-import type { HistoryStore, SQLiteConfig, FileConfig, PostgresConfig } from './types.js';
-export type {
-	HistoryStore,
-	HistoryRecord,
-	HistoryRange,
-	Checkpoint,
-	SQLiteConfig,
-	FileConfig,
-	PostgresConfig,
-} from './types.js';
-export { createSqliteHistoryStore } from './adapters/sqlite.js';
+import type { FileConfig, HistoryStore, PostgresConfig, SQLiteConfig } from './types.js';
+
 export { createFileHistoryStore } from './adapters/file.js';
 export { PostgresHistoryStore } from './adapters/postgres.js';
+export { createSqliteHistoryStore } from './adapters/sqlite.js';
+export type {
+	Checkpoint,
+	FileConfig,
+	HistoryRange,
+	HistoryRecord,
+	HistoryStore,
+	PostgresConfig,
+	SQLiteConfig,
+} from './types.js';
 
 export type HistoryStoreConfig =
 	| { kind: 'sqlite'; config?: SQLiteConfig }

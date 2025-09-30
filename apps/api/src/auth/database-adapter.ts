@@ -22,23 +22,23 @@ const resolvePrismaBinary = (workspaceRoot: string) => {
 };
 
 const formatAdapterError = (error: unknown) => {
-        if (error instanceof Error) {
-                return {
-                        name: error.name,
-                        message: error.message,
-                        stack: error.stack,
-                };
-        }
+	if (error instanceof Error) {
+		return {
+			name: error.name,
+			message: error.message,
+			stack: error.stack,
+		};
+	}
 
-        return { value: error };
+	return { value: error };
 };
 
 const ensureDatabaseSchema = (() => {
-        let initialized = false;
-        return async () => {
-                if (initialized || process.env.CORTEX_SKIP_PRISMA_PUSH === '1') {
-                        return;
-                }
+	let initialized = false;
+	return async () => {
+		if (initialized || process.env.CORTEX_SKIP_PRISMA_PUSH === '1') {
+			return;
+		}
 
 		const connectionString = process.env.DATABASE_URL;
 		if (!connectionString) {
@@ -77,12 +77,12 @@ const ensureDatabaseSchema = (() => {
 				rollbackScript: migrationArtifacts.rollbackScriptPath,
 			});
 			initialized = true;
-                } catch (error) {
-                        console.error('[brAInwav][better-auth] prisma schema synchronization failed', {
-                                error: formatAdapterError(error),
-                                pendingMigrations: migrationArtifacts.pendingMigrations,
-                                rollbackScript: migrationArtifacts.rollbackScriptPath,
-                        });
+		} catch (error) {
+			console.error('[brAInwav][better-auth] prisma schema synchronization failed', {
+				error: formatAdapterError(error),
+				pendingMigrations: migrationArtifacts.pendingMigrations,
+				rollbackScript: migrationArtifacts.rollbackScriptPath,
+			});
 			throw error;
 		}
 	};
@@ -99,9 +99,9 @@ const prismaFactory = createPrismaAdapter(prisma, {
 });
 
 const captureAdapterFailure = (phase: string, error: unknown, meta?: Record<string, unknown>) => {
-        const payload = {
-                phase,
-                error: formatAdapterError(error),
+	const payload = {
+		phase,
+		error: formatAdapterError(error),
 		meta,
 	};
 	(globalThis as Record<string, unknown>).__brAInwavBetterAuthAdapterFailure = payload;

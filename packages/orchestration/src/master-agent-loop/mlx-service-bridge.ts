@@ -300,28 +300,29 @@ export class MLXServiceBridge extends EventEmitter {
 	private async executeWithRetry<T>(operation: () => Promise<T>, requestId: string): Promise<T> {
 		let lastError: Error | null = null;
 
-                for (let attempt = 1; attempt <= this.config.retryAttempts + 1; attempt++) {
-                        try {
-                                const promise = operation();
-                                const result = await Promise.race([
-                                        promise,
+		for (let attempt = 1; attempt <= this.config.retryAttempts + 1; attempt++) {
+			try {
+				const promise = operation();
+				const result = await Promise.race([
+					promise,
 					new Promise<never>((_, reject) =>
 						setTimeout(() => reject(new Error('Operation timeout')), this.config.timeout),
 					),
 				]);
 
 				return result;
-                        } catch (error) {
-                                lastError = error as Error;
+			} catch (error) {
+				lastError = error as Error;
 
-                                const errorType = (lastError as { name?: string }).name ?? lastError.constructor?.name ?? 'Error';
-                                const backoff = attempt <= this.config.retryAttempts ? this.config.retryDelay * attempt : 0;
-                                recordRetryAttempt('mlx.adapter', attempt, errorType, backoff);
+				const errorType =
+					(lastError as { name?: string }).name ?? lastError.constructor?.name ?? 'Error';
+				const backoff = attempt <= this.config.retryAttempts ? this.config.retryDelay * attempt : 0;
+				recordRetryAttempt('mlx.adapter', attempt, errorType, backoff);
 
-                                if (lastError.message === 'Operation timeout') {
-                                        throw new MLXServiceError(
-                                                MLXServiceErrorCode.TIMEOUT_EXCEEDED,
-                                                `Operation timed out after ${this.config.timeout}ms`,
+				if (lastError.message === 'Operation timeout') {
+					throw new MLXServiceError(
+						MLXServiceErrorCode.TIMEOUT_EXCEEDED,
+						`Operation timed out after ${this.config.timeout}ms`,
 						{ requestId, attempt, timeout: this.config.timeout },
 					);
 				}

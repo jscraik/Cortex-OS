@@ -1,5 +1,5 @@
-import { EnvelopeSchema } from '@cortex-os/protocol';
 import type { Envelope } from '@cortex-os/protocol';
+import { EnvelopeSchema } from '@cortex-os/protocol';
 import type { HistoryRange, HistoryRecord, HistoryStore, PostgresConfig } from '../types.js';
 
 const DEFAULT_SCHEMA = 'public';

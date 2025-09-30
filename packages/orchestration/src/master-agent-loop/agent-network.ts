@@ -7,8 +7,8 @@
  * @since 2024-12-09
  */
 
-import { nanoid } from 'nanoid';
 import { EventEmitter } from 'node:events';
+import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { AgentNetworkErrorCode, createAgentNetworkError } from './agent-network-error.js';
 

@@ -1,13 +1,10 @@
 import { execFile } from 'node:child_process';
-import { dirname, resolve } from 'node:path';
-import { mkdtemp, mkdir, readFile, access } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
+import { access, mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { dirname, resolve } from 'node:path';
 import { promisify } from 'node:util';
-import type {
-	AgentToolkitCodemapInput,
-	AgentToolkitCodemapResult,
-} from '@cortex-os/contracts';
+import type { AgentToolkitCodemapInput, AgentToolkitCodemapResult } from '@cortex-os/contracts';
 import type { CodemapTool } from '../domain/ToolInterfaces.js';
 
 const execFileAsync = promisify(execFile);
@@ -99,7 +96,15 @@ export class CodemapAdapter implements CodemapTool {
 		outputs: { jsonPath: string; markdownPath: string },
 		scriptPath: string,
 	): string[] {
-		const args = [scriptPath, '--repo', inputs.repoPath, '--out', outputs.jsonPath, '--md', outputs.markdownPath];
+		const args = [
+			scriptPath,
+			'--repo',
+			inputs.repoPath,
+			'--out',
+			outputs.jsonPath,
+			'--md',
+			outputs.markdownPath,
+		];
 
 		if (inputs.scope) {
 			args.push('--scope', inputs.scope);
@@ -122,7 +127,9 @@ export class CodemapAdapter implements CodemapTool {
 			return JSON.parse(raw) as Record<string, unknown>;
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
-			throw new Error(`Codemap adapter failed: unable to parse JSON output at ${jsonPath}. ${message}`);
+			throw new Error(
+				`Codemap adapter failed: unable to parse JSON output at ${jsonPath}. ${message}`,
+			);
 		}
 	}
 
@@ -138,7 +145,9 @@ export class CodemapAdapter implements CodemapTool {
 		try {
 			await access(scriptPath, fsConstants.F_OK | fsConstants.R_OK);
 		} catch {
-			throw new Error(`Codemap adapter dependency missing: codemap script not found or unreadable at ${scriptPath}`);
+			throw new Error(
+				`Codemap adapter dependency missing: codemap script not found or unreadable at ${scriptPath}`,
+			);
 		}
 
 		try {

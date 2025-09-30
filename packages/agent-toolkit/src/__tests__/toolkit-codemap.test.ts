@@ -1,9 +1,9 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { join, resolve } from 'node:path';
 import type { AgentToolkitCodemapResult } from '@cortex-os/contracts';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAgentToolkit } from '../index.js';
 
 const execMock = vi.hoisted(() => vi.fn());
@@ -45,7 +45,11 @@ describe('Agent toolkit codemap integration', () => {
 		await mkdir(join(workdir, 'out'), { recursive: true });
 		await mkdir(join(workdir, 'scripts'), { recursive: true });
 		scriptPath = join('scripts', 'codemap.py');
-		await writeFile(resolve(workdir, scriptPath), '#!/usr/bin/env python3\nprint("codemap")\n', 'utf-8');
+		await writeFile(
+			resolve(workdir, scriptPath),
+			'#!/usr/bin/env python3\nprint("codemap")\n',
+			'utf-8',
+		);
 		execMock.mockImplementation(defaultExecImplementation);
 		execMock.mockClear();
 	});
@@ -106,9 +110,7 @@ describe('Agent toolkit codemap integration', () => {
 			},
 		});
 
-		await expect(
-			toolkit.generateCodemap({ repoPath: '.', scope: 'repo' }),
-		).rejects.toThrow(
+		await expect(toolkit.generateCodemap({ repoPath: '.', scope: 'repo' })).rejects.toThrow(
 			"python executable 'python3' not found",
 		);
 	});

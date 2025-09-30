@@ -11,6 +11,13 @@ if [[ -f config/ports.env ]]; then
   source config/ports.env
 fi
 
+# Configure Cortex Search API integration for brAInwav MCP server
+export CORTEX_MCP_CORTEX_SEARCH_URL="http://127.0.0.1:3124/search"
+export CORTEX_MCP_CORTEX_DOCUMENT_BASE_URL="http://127.0.0.1:3124/documents"
+if [[ -f config/cortex-search.key ]]; then
+  export CORTEX_MCP_CORTEX_SEARCH_API_KEY="$(cat config/cortex-search.key)"
+fi
+
 export NODE_ENV="production"
 PORT_TO_USE="${PORT:-3024}"  # Use port 3024 as standard for MCP
 

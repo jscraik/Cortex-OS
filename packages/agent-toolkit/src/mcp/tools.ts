@@ -196,7 +196,7 @@ export const createCodemapTool = (): SimpleMcpTool => ({
 			repoPath: { type: 'string', description: 'Repository root path', default: '.' },
 			scope: {
 				type: 'string',
-				description: "Scope specifier (repo|package:<name>|app:<name>|path:<relative>)",
+				description: 'Scope specifier (repo|package:<name>|app:<name>|path:<relative>)',
 				default: 'repo',
 			},
 			sinceDays: {

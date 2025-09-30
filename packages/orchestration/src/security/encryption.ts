@@ -8,13 +8,14 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import bcrypt from 'bcrypt';
 import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  createHmac,
-  randomBytes,
-  scrypt,
+	createCipheriv,
+	createDecipheriv,
+	createHash,
+	createHmac,
+	randomBytes,
+	scrypt,
 } from 'node:crypto';
 import { promisify } from 'node:util';
 import { z } from 'zod';
@@ -22,413 +23,435 @@ import { z } from 'zod';
 const scryptAsync = promisify(scrypt);
 
 export interface EncryptionConfig {
-  algorithm: string;
-  keyLength: number;
-  ivLength: number;
-  saltLength: number;
-  tagLength: number;
-  iterations: number;
+	algorithm: string;
+	keyLength: number;
+	ivLength: number;
+	saltLength: number;
+	tagLength: number;
+	iterations: number;
 }
 
 export interface EncryptedData {
-  data: string;
-  iv: string;
-  salt?: string;
-  tag?: string;
-  algorithm: string;
-  timestamp: number;
+	data: string;
+	iv: string;
+	salt?: string;
+	tag?: string;
+	algorithm: string;
+	timestamp: number;
 }
 
 export interface KeyRotationPolicy {
-  enabled: boolean;
-  rotationIntervalMs: number;
-  maxKeyAge: number;
-  retainOldKeys: boolean;
+	enabled: boolean;
+	rotationIntervalMs: number;
+	maxKeyAge: number;
+	retainOldKeys: boolean;
 }
 
 /**
  * Default encryption configuration
  */
 export const DEFAULT_ENCRYPTION_CONFIG: EncryptionConfig = {
-  algorithm: 'aes-256-gcm',
-  keyLength: 32, // 256 bits
-  ivLength: 16, // 128 bits
-  saltLength: 16, // 128 bits
-  tagLength: 16, // 128 bits
-  iterations: 100000, // PBKDF2 iterations
+	algorithm: 'aes-256-gcm',
+	keyLength: 32, // 256 bits
+	ivLength: 16, // 128 bits
+	saltLength: 16, // 128 bits
+	tagLength: 16, // 128 bits
+	iterations: 100000, // PBKDF2 iterations
 };
 
 /**
  * Data Encryption Service
  */
 export class EncryptionService {
-  private readonly config: EncryptionConfig;
-  private readonly masterKey: Buffer;
-  private readonly keyRotationPolicy: KeyRotationPolicy;
-  private readonly keyVersions: Map<number, Buffer> = new Map();
-  private currentKeyVersion: number = 1;
+	private readonly config: EncryptionConfig;
+	private readonly masterKey: Buffer;
+	private readonly keyRotationPolicy: KeyRotationPolicy;
+	private readonly keyVersions: Map<number, Buffer> = new Map();
+	private currentKeyVersion: number = 1;
 
-  constructor(
-    masterKey: string | Buffer,
-    config: Partial<EncryptionConfig> = {},
-    keyRotationPolicy: Partial<KeyRotationPolicy> = {},
-  ) {
-    this.config = { ...DEFAULT_ENCRYPTION_CONFIG, ...config };
-    this.masterKey = typeof masterKey === 'string' ? Buffer.from(masterKey) : masterKey;
+	constructor(
+		masterKey: string | Buffer,
+		config: Partial<EncryptionConfig> = {},
+		keyRotationPolicy: Partial<KeyRotationPolicy> = {},
+	) {
+		this.config = { ...DEFAULT_ENCRYPTION_CONFIG, ...config };
+		this.masterKey = typeof masterKey === 'string' ? Buffer.from(masterKey) : masterKey;
 
-    this.keyRotationPolicy = {
-      enabled: true,
-      rotationIntervalMs: 24 * 60 * 60 * 1000, // 24 hours
-      maxKeyAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      retainOldKeys: true,
-      ...keyRotationPolicy,
-    };
+		this.keyRotationPolicy = {
+			enabled: true,
+			rotationIntervalMs: 24 * 60 * 60 * 1000, // 24 hours
+			maxKeyAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+			retainOldKeys: true,
+			...keyRotationPolicy,
+		};
 
-    // Initialize first key version
-    this.keyVersions.set(this.currentKeyVersion, this.masterKey);
+		// Initialize first key version
+		this.keyVersions.set(this.currentKeyVersion, this.masterKey);
 
-    // Setup automatic key rotation if enabled
-    if (this.keyRotationPolicy.enabled) {
-      this.setupKeyRotation();
-    }
-  }
+		// Setup automatic key rotation if enabled
+		if (this.keyRotationPolicy.enabled) {
+			this.setupKeyRotation();
+		}
+	}
 
-  /**
-   * Encrypt sensitive data with authenticated encryption
-   */
-  async encrypt(data: string | object, keyVersion?: number): Promise<EncryptedData> {
-    try {
-      const plaintext = typeof data === 'string' ? data : JSON.stringify(data);
-      const dataBuffer = Buffer.from(plaintext, 'utf8');
+	/**
+	 * Encrypt sensitive data with authenticated encryption
+	 */
+	async encrypt(data: string | object, keyVersion?: number): Promise<EncryptedData> {
+		try {
+			const plaintext = typeof data === 'string' ? data : JSON.stringify(data);
+			const dataBuffer = Buffer.from(plaintext, 'utf8');
 
-      // Generate random IV and salt
-      const iv = randomBytes(this.config.ivLength);
-      const salt = randomBytes(this.config.saltLength);
+			// Generate random IV and salt
+			const iv = randomBytes(this.config.ivLength);
+			const salt = randomBytes(this.config.saltLength);
 
-      // Derive encryption key
-      const key = await this.deriveKey(salt, keyVersion);
+			// Derive encryption key
+			const key = await this.deriveKey(salt, keyVersion);
 
-      // Create cipher
-      const cipher = createCipheriv(this.config.algorithm, key, iv);
+			// Create cipher
+			const cipher = createCipheriv(this.config.algorithm, key, iv);
 
-      // Encrypt data
-      const encrypted = Buffer.concat([cipher.update(dataBuffer), cipher.final()]);
+			// Encrypt data
+			const encrypted = Buffer.concat([cipher.update(dataBuffer), cipher.final()]);
 
-      // Cipher for GCM provides an authentication tag
-      const tag = (cipher as unknown as { getAuthTag(): Buffer }).getAuthTag();
+			// Cipher for GCM provides an authentication tag
+			const tag = (cipher as unknown as { getAuthTag(): Buffer }).getAuthTag();
 
-      return {
-        data: encrypted.toString('base64'),
-        iv: iv.toString('base64'),
-        salt: salt.toString('base64'),
-        tag: tag.toString('base64'),
-        algorithm: this.config.algorithm,
-        timestamp: Date.now(),
-      };
-    } catch (error) {
-      throw new Error(
-        `Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
-  }
+			return {
+				data: encrypted.toString('base64'),
+				iv: iv.toString('base64'),
+				salt: salt.toString('base64'),
+				tag: tag.toString('base64'),
+				algorithm: this.config.algorithm,
+				timestamp: Date.now(),
+			};
+		} catch (error) {
+			throw new Error(
+				`Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			);
+		}
+	}
 
-  /**
-   * Decrypt authenticated encrypted data
-   */
-  async decrypt(encryptedData: EncryptedData): Promise<string> {
-    try {
-      // Parse components
-      const dataBuffer = Buffer.from(encryptedData.data, 'base64');
-      const iv = Buffer.from(encryptedData.iv, 'base64');
-      const salt = encryptedData.salt ? Buffer.from(encryptedData.salt, 'base64') : undefined;
-      const tag = encryptedData.tag ? Buffer.from(encryptedData.tag, 'base64') : undefined;
+	/**
+	 * Decrypt authenticated encrypted data
+	 */
+	async decrypt(encryptedData: EncryptedData): Promise<string> {
+		try {
+			// Parse components
+			const dataBuffer = Buffer.from(encryptedData.data, 'base64');
+			const iv = Buffer.from(encryptedData.iv, 'base64');
+			const salt = encryptedData.salt ? Buffer.from(encryptedData.salt, 'base64') : undefined;
+			const tag = encryptedData.tag ? Buffer.from(encryptedData.tag, 'base64') : undefined;
 
-      // Derive decryption key
-      const key = await this.deriveKey(salt);
+			// Derive decryption key
+			const key = await this.deriveKey(salt);
 
-      // Create decipher
-      const decipher = createDecipheriv(encryptedData.algorithm, key, iv);
+			// Create decipher
+			const decipher = createDecipheriv(encryptedData.algorithm, key, iv);
 
-      // Set auth tag for GCM mode
-      if (tag) {
-        (decipher as unknown as { setAuthTag(tag: Buffer): void }).setAuthTag(tag);
-      }
+			// Set auth tag for GCM mode
+			if (tag) {
+				(decipher as unknown as { setAuthTag(tag: Buffer): void }).setAuthTag(tag);
+			}
 
-      // Decrypt data
-      const decrypted = Buffer.concat([decipher.update(dataBuffer), decipher.final()]);
+			// Decrypt data
+			const decrypted = Buffer.concat([decipher.update(dataBuffer), decipher.final()]);
 
-      return decrypted.toString('utf8');
-    } catch (error) {
-      throw new Error(
-        `Decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
-  }
+			return decrypted.toString('utf8');
+		} catch (error) {
+			throw new Error(
+				`Decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			);
+		}
+	}
 
-  /**
-   * Encrypt multiple fields in an object
-   */
-  async encryptFields(
-    obj: Record<string, unknown>,
-    fieldsToEncrypt: string[],
-  ): Promise<Record<string, unknown>> {
-    const result = { ...obj };
+	/**
+	 * Encrypt multiple fields in an object
+	 */
+	async encryptFields(
+		obj: Record<string, unknown>,
+		fieldsToEncrypt: string[],
+	): Promise<Record<string, unknown>> {
+		const result = { ...obj };
 
-    for (const field of fieldsToEncrypt) {
-      if (result[field] !== undefined && result[field] !== null) {
-        result[field] = await this.encrypt(result[field]);
-      }
-    }
+		for (const field of fieldsToEncrypt) {
+			if (result[field] !== undefined && result[field] !== null) {
+				result[field] = await this.encrypt(result[field]);
+			}
+		}
 
-    return result;
-  }
+		return result;
+	}
 
-  /**
-   * Decrypt multiple fields in an object
-   */
-  public async decryptFields(
-    obj: Record<string, unknown>,
-    fieldsToDecrypt: string[],
-  ): Promise<Record<string, unknown>> {
-    const result = { ...obj };
+	/**
+	 * Decrypt multiple fields in an object
+	 */
+	public async decryptFields(
+		obj: Record<string, unknown>,
+		fieldsToDecrypt: string[],
+	): Promise<Record<string, unknown>> {
+		const result = { ...obj };
 
-    for (const field of fieldsToDecrypt) {
-      const candidate = result[field];
-      if (
-        candidate &&
-        typeof candidate === 'object' &&
-        'data' in (candidate as Record<string, unknown>)
-      ) {
-        try {
-          result[field] = await this.decrypt(candidate as unknown as EncryptedData);
-        } catch (error) {
-          // Log error but don't fail entire operation
-          console.warn(`Failed to decrypt field ${field}:`, error);
-        }
-      }
-    }
+		for (const field of fieldsToDecrypt) {
+			const candidate = result[field];
+			if (
+				candidate &&
+				typeof candidate === 'object' &&
+				'data' in (candidate as Record<string, unknown>)
+			) {
+				try {
+					result[field] = await this.decrypt(candidate as unknown as EncryptedData);
+				} catch (error) {
+					// Log error but don't fail entire operation
+					console.warn(`Failed to decrypt field ${field}:`, error);
+				}
+			}
+		}
 
-    return result;
-  }
+		return result;
+	}
 
-  /**
-   * Generate secure hash with salt
-   */
-  hash(data: string, salt?: string): { hash: string; salt: string } {
-    const saltString = salt || randomBytes(this.config.saltLength).toString('hex');
-    const hash = createHash('sha256').update(data).update(saltString).digest('hex');
+	/**
+	 * Generate secure hash with salt
+	 */
+	hash(data: string, salt?: string): { hash: string; salt: string } {
+		const saltString = salt || randomBytes(this.config.saltLength).toString('hex');
+		const hash = createHash('sha256').update(data).update(saltString).digest('hex');
 
-    return {
-      hash,
-      salt: saltString,
-    };
-  }
+		return {
+			hash,
+			salt: saltString,
+		};
+	}
 
-  /**
-   * Verify hash with salt
-   */
-  verifyHash(data: string, hash: string, salt: string): boolean {
-    const computed = this.hash(data, salt);
-    return computed.hash === hash;
-  }
+	/**
+	 * Verify hash with salt
+	 */
+	verifyHash(data: string, hash: string, salt: string): boolean {
+		const computed = this.hash(data, salt);
+		return computed.hash === hash;
+	}
 
-  /**
-   * Generate HMAC for message authentication
-   */
-  generateHMAC(data: string, key?: string): string {
-    const hmacKey = key || this.masterKey.toString('hex');
-    return createHmac('sha256', hmacKey).update(data).digest('hex');
-  }
+	/**
+	 * Hash sensitive credentials (passwords, API keys) using bcrypt
+	 * More secure than SHA-256 for password storage as it's designed to be slow
+	 */
+	async hashCredential(credential: string, rounds = 12): Promise<string> {
+		return await bcrypt.hash(credential, rounds);
+	}
 
-  /**
-   * Verify HMAC
-   */
-  verifyHMAC(data: string, hmac: string, key?: string): boolean {
-    const computed = this.generateHMAC(data, key);
-    return computed === hmac;
-  }
+	/**
+	 * Verify sensitive credential against bcrypt hash
+	 */
+	async verifyCredential(credential: string, hash: string): Promise<boolean> {
+		return await bcrypt.compare(credential, hash);
+	}
 
-  /**
-   * Generate secure random token
-   */
-  generateToken(length: number = 32): string {
-    return randomBytes(length).toString('hex');
-  }
+	/**
+	 * Generate HMAC for message authentication
+	 */
+	generateHMAC(data: string, key?: string): string {
+		const hmacKey = key || this.masterKey.toString('hex');
+		return createHmac('sha256', hmacKey).update(data).digest('hex');
+	}
 
-  /**
-   * Generate API key with metadata
-   */
-  generateAPIKey(): { key: string; hash: string; salt: string } {
-    const key = this.generateToken(32);
-    const { hash, salt } = this.hash(key);
+	/**
+	 * Verify HMAC
+	 */
+	verifyHMAC(data: string, hmac: string, key?: string): boolean {
+		const computed = this.generateHMAC(data, key);
+		return computed === hmac;
+	}
 
-    return { key, hash, salt };
-  }
+	/**
+	 * Generate secure random token
+	 */
+	generateToken(length: number = 32): string {
+		return randomBytes(length).toString('hex');
+	}
 
-  /**
-   * Derive encryption key from master key and salt
-   */
-  private async deriveKey(salt?: Buffer, keyVersion?: number): Promise<Buffer> {
-    const masterKey = keyVersion
-      ? this.keyVersions.get(keyVersion) || this.masterKey
-      : this.masterKey;
+	/**
+	 * Generate API key with metadata using secure credential hashing
+	 */
+	async generateAPIKey(): Promise<{ key: string; hash: string }> {
+		const key = this.generateToken(32);
+		const hash = await this.hashCredential(key);
 
-    if (!salt) {
-      return masterKey.subarray(0, this.config.keyLength);
-    }
+		return { key, hash };
+	}
 
-    return (await scryptAsync(masterKey, salt, this.config.keyLength)) as Buffer;
-  }
+	/**
+	 * Verify API key against stored hash
+	 */
+	async verifyAPIKey(key: string, hash: string): Promise<boolean> {
+		return await this.verifyCredential(key, hash);
+	}
 
-  /**
-   * Setup automatic key rotation
-   */
-  private setupKeyRotation(): void {
-    setInterval(() => {
-      this.rotateKeys();
-    }, this.keyRotationPolicy.rotationIntervalMs);
-  }
+	/**
+	 * Derive encryption key from master key and salt
+	 */
+	private async deriveKey(salt?: Buffer, keyVersion?: number): Promise<Buffer> {
+		const masterKey = keyVersion
+			? this.keyVersions.get(keyVersion) || this.masterKey
+			: this.masterKey;
 
-  /**
-   * Rotate encryption keys
-   */
-  private rotateKeys(): void {
-    if (!this.keyRotationPolicy.enabled) return;
+		if (!salt) {
+			return masterKey.subarray(0, this.config.keyLength);
+		}
 
-    // Generate new key version
-    this.currentKeyVersion++;
-    const newKey = this.deriveNewKey();
-    this.keyVersions.set(this.currentKeyVersion, newKey);
+		return (await scryptAsync(masterKey, salt, this.config.keyLength)) as Buffer;
+	}
 
-    // Clean up old keys if policy allows
-    if (!this.keyRotationPolicy.retainOldKeys) {
-      for (const [version] of this.keyVersions) {
-        // Keep current and recent keys only
-        if (version < this.currentKeyVersion - 2) {
-          this.keyVersions.delete(version);
-        }
-      }
-    }
+	/**
+	 * Setup automatic key rotation
+	 */
+	private setupKeyRotation(): void {
+		setInterval(() => {
+			this.rotateKeys();
+		}, this.keyRotationPolicy.rotationIntervalMs);
+	}
 
-    console.log(`Key rotation completed. New version: ${this.currentKeyVersion}`);
-  }
+	/**
+	 * Rotate encryption keys
+	 */
+	private rotateKeys(): void {
+		if (!this.keyRotationPolicy.enabled) return;
 
-  /**
-   * Derive new key for rotation
-   */
-  private deriveNewKey(): Buffer {
-    const timestamp = Date.now().toString();
-    const newKeySeed = createHash('sha256').update(this.masterKey).update(timestamp).digest();
+		// Generate new key version
+		this.currentKeyVersion++;
+		const newKey = this.deriveNewKey();
+		this.keyVersions.set(this.currentKeyVersion, newKey);
 
-    return newKeySeed.subarray(0, this.config.keyLength);
-  }
+		// Clean up old keys if policy allows
+		if (!this.keyRotationPolicy.retainOldKeys) {
+			for (const [version] of this.keyVersions) {
+				// Keep current and recent keys only
+				if (version < this.currentKeyVersion - 2) {
+					this.keyVersions.delete(version);
+				}
+			}
+		}
 
-  /**
-   * Get current key version
-   */
-  getCurrentKeyVersion(): number {
-    return this.currentKeyVersion;
-  }
+		console.log(`Key rotation completed. New version: ${this.currentKeyVersion}`);
+	}
 
-  /**
-   * Get encryption statistics
-   */
-  getStats(): {
-    currentKeyVersion: number;
-    totalKeyVersions: number;
-    algorithm: string;
-    keyRotationEnabled: boolean;
-  } {
-    return {
-      currentKeyVersion: this.currentKeyVersion,
-      totalKeyVersions: this.keyVersions.size,
-      algorithm: this.config.algorithm,
-      keyRotationEnabled: this.keyRotationPolicy.enabled,
-    };
-  }
+	/**
+	 * Derive new key for rotation
+	 */
+	private deriveNewKey(): Buffer {
+		const timestamp = Date.now().toString();
+		const newKeySeed = createHash('sha256').update(this.masterKey).update(timestamp).digest();
+
+		return newKeySeed.subarray(0, this.config.keyLength);
+	}
+
+	/**
+	 * Get current key version
+	 */
+	getCurrentKeyVersion(): number {
+		return this.currentKeyVersion;
+	}
+
+	/**
+	 * Get encryption statistics
+	 */
+	getStats(): {
+		currentKeyVersion: number;
+		totalKeyVersions: number;
+		algorithm: string;
+		keyRotationEnabled: boolean;
+	} {
+		return {
+			currentKeyVersion: this.currentKeyVersion,
+			totalKeyVersions: this.keyVersions.size,
+			algorithm: this.config.algorithm,
+			keyRotationEnabled: this.keyRotationPolicy.enabled,
+		};
+	}
 }
 
 /**
  * Validation schemas for encryption operations
  */
 export const EncryptionSchemas = {
-  encryptData: z.object({
-    data: z.union([z.string(), z.record(z.unknown())]),
-    keyVersion: z.number().optional(),
-  }),
+	encryptData: z.object({
+		data: z.union([z.string(), z.record(z.unknown())]),
+		keyVersion: z.number().optional(),
+	}),
 
-  decryptData: z.object({
-    data: z.string(),
-    iv: z.string(),
-    salt: z.string().optional(),
-    tag: z.string().optional(),
-    algorithm: z.string(),
-    timestamp: z.number(),
-  }),
+	decryptData: z.object({
+		data: z.string(),
+		iv: z.string(),
+		salt: z.string().optional(),
+		tag: z.string().optional(),
+		algorithm: z.string(),
+		timestamp: z.number(),
+	}),
 
-  hashData: z.object({
-    data: z.string(),
-    salt: z.string().optional(),
-  }),
+	hashData: z.object({
+		data: z.string(),
+		salt: z.string().optional(),
+	}),
 
-  generateToken: z.object({
-    length: z.number().min(8).max(256).optional(),
-  }),
+	generateToken: z.object({
+		length: z.number().min(8).max(256).optional(),
+	}),
 };
 
 /**
  * Secure field encryption decorator for sensitive data
  */
 export function encryptSensitiveFields(encryptionService: EncryptionService, fields: string[]) {
-  return (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
-    const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
+	return (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
+		const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
 
-    descriptor.value = async function (...args: unknown[]) {
-      const result = await originalMethod.apply(this, args);
+		descriptor.value = async function (...args: unknown[]) {
+			const result = await originalMethod.apply(this, args);
 
-      if (result && typeof result === 'object') {
-        return await encryptionService.encryptFields(result as Record<string, unknown>, fields);
-      }
+			if (result && typeof result === 'object') {
+				return await encryptionService.encryptFields(result as Record<string, unknown>, fields);
+			}
 
-      return result;
-    };
+			return result;
+		};
 
-    return descriptor;
-  };
+		return descriptor;
+	};
 }
 
 /**
  * Factory function to create encryption service with brAInwav defaults
  */
 export function createEncryptionService(
-  masterKey?: string,
-  config?: Partial<EncryptionConfig>,
+	masterKey?: string,
+	config?: Partial<EncryptionConfig>,
 ): EncryptionService {
-  const key =
-    masterKey ||
-    process.env.ENCRYPTION_KEY ||
-    'brainwav-default-encryption-key-change-in-production';
+	const key =
+		masterKey ||
+		process.env.ENCRYPTION_KEY ||
+		'brainwav-default-encryption-key-change-in-production';
 
-  return new EncryptionService(key, {
-    ...DEFAULT_ENCRYPTION_CONFIG,
-    ...config,
-  });
+	return new EncryptionService(key, {
+		...DEFAULT_ENCRYPTION_CONFIG,
+		...config,
+	});
 }
 
 /**
  * Utility function for quick encryption
  */
 export async function quickEncrypt(data: string, key: string): Promise<string> {
-  const service = createEncryptionService(key);
-  const encrypted = await service.encrypt(data);
-  return JSON.stringify(encrypted);
+	const service = createEncryptionService(key);
+	const encrypted = await service.encrypt(data);
+	return JSON.stringify(encrypted);
 }
 
 /**
  * Utility function for quick decryption
  */
 export async function quickDecrypt(encryptedData: string, key: string): Promise<string> {
-  const service = createEncryptionService(key);
-  const parsed = JSON.parse(encryptedData);
-  return await service.decrypt(parsed);
+	const service = createEncryptionService(key);
+	const parsed = JSON.parse(encryptedData);
+	return await service.decrypt(parsed);
 }

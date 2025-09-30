@@ -24,20 +24,20 @@ export type {
 } from './langgraph/event-bridge.js';
 // LangGraph event bridge for multi-agent coordination
 export { InMemoryGraphEventBus } from './langgraph/event-bridge.js';
-export type { A2AMcpTool } from './mcp/tools.js';
+export type { A2AMcpTool, EventStreamToolDependencies } from './mcp/tools.js';
 // MCP Tools (initial integration layer)
-export { createA2AMcpTools } from './mcp/tools.js';
+export { createA2AEventStreamSubscribeTool, createA2AMcpTools } from './mcp/tools.js';
 export type { A2AOutboxIntegration } from './outbox-integration.js';
 // Outbox integration
 export { createA2AOutboxIntegration } from './outbox-integration.js';
 export type {
-        CleanupResultMetrics,
-        DlqStatsMetrics,
-        OutboxMetricsPayload,
-        OutboxMetricsRecorder,
-        OutboxService,
-        OutboxSyncAction,
-        ProcessResultMetrics,
+	CleanupResultMetrics,
+	DlqStatsMetrics,
+	OutboxMetricsPayload,
+	OutboxMetricsRecorder,
+	OutboxService,
+	OutboxSyncAction,
+	ProcessResultMetrics,
 } from './outbox-service.js';
 // Outbox service scaffold (domain abstraction for MCP / future metrics)
 export { createInMemoryOutboxService } from './outbox-service.js';
@@ -76,20 +76,17 @@ export {
 } from './rpc-handler.js';
 // SQLite outbox repository
 export { SqliteOutboxRepository } from './sqlite-outbox-repository.js';
+export type { TaskEventStreamOptions } from './streaming.js';
 // Streaming utilities
 export { createTaskEventStream } from './streaming.js';
-export type { TaskEventStreamOptions } from './streaming.js';
 export { TaskEventStreamRegistry } from './streaming-registry.js';
 export type { Task, TaskProcessor, TaskStore } from './task-manager.js';
 // Re-export task management
 export {
-        createTaskManager,
-        EchoTaskProcessor,
-        InMemoryTaskStore,
-        TaskManager,
+	createTaskManager,
+	EchoTaskProcessor,
+	InMemoryTaskStore,
+	TaskManager,
 } from './task-manager.js';
-
-export type { EventStreamToolDependencies } from './mcp/tools.js';
-export { createA2AEventStreamSubscribeTool } from './mcp/tools.js';
 
 // handleA2A is already exported above in the main handler block

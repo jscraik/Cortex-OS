@@ -6,8 +6,8 @@ import {
 import type { Subagent, SubagentConfig } from '@cortex-os/agents/nO/contracts.js';
 import type { HookResult } from '@cortex-os/hooks';
 import {
-	bindKernelTools,
 	type BindKernelToolsOptions,
+	bindKernelTools,
 	type KernelToolBinding,
 } from '@cortex-os/kernel';
 import {
@@ -57,8 +57,8 @@ export function createHookAwareDispatcher(
 	const hooksRef = options.hooks;
 	const hookAdapter: ToolDispatchHooks | undefined = hooksRef
 		? {
-			run: (event, ctx) => hooksRef.run(event, ctx),
-		}
+				run: (event, ctx) => hooksRef.run(event, ctx),
+			}
 		: undefined;
 	return {
 		async dispatch<T>(

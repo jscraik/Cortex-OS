@@ -9,17 +9,6 @@
       "env": {
         "BRAINWAV_SERVICE": "local-memory"
       }
-    },
-    "cortex-mcp": {
-      "command": "/usr/bin/env",
-      "args": [
-        "python3",
-        "/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp/cortex_fastmcp_server_v2.py",
-        "--mcp"
-      ],
-      "env": {
-        "BRAINWAV_SERVICE": "cortex-mcp"
-      }
     }
   }
 }

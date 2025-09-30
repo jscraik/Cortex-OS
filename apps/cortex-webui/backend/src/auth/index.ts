@@ -194,7 +194,8 @@ export const auth = betterAuth({
 					for (let i = 0; i < 10; i++) {
 						let code = '';
 						for (let j = 0; j < 8; j++) {
-							code += chars.charAt(Math.floor(Math.random() * chars.length));
+							const randomIndex = crypto.getRandomValues(new Uint32Array(1))[0] % chars.length;
+							code += chars.charAt(randomIndex);
 						}
 						codes.push(code);
 					}

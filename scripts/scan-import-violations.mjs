@@ -211,19 +211,21 @@ class BrainwavImportScanner {
 			// Skip relative imports within same package
 			if (importPath.startsWith('./') || importPath.startsWith('../')) {
 				// Allow more traversal in test files and legitimate architectural patterns
-				const isTestFile = relativeFilePath.includes('/test') ||
+				const isTestFile =
+					relativeFilePath.includes('/test') ||
 					relativeFilePath.includes('/__tests__/') ||
 					relativeFilePath.includes('.test.') ||
 					relativeFilePath.includes('.spec.');
 
 				// Allow cross-app access to shared utilities (libs, bootstrap, shared types)
-				const isSharedUtilityAccess = importPath.includes('/libs/') ||
+				const isSharedUtilityAccess =
+					importPath.includes('/libs/') ||
 					importPath.includes('/bootstrap/') ||
 					importPath.includes('/shared/') ||
 					importPath.includes('/agents/');
 
 				// Check for excessive parent traversal (more lenient for tests and shared utilities)
-				const maxTraversal = (isTestFile || isSharedUtilityAccess) ? 6 : 3;
+				const maxTraversal = isTestFile || isSharedUtilityAccess ? 6 : 3;
 				const traversalCount = (importPath.match(/\.\./g) || []).length;
 				if (traversalCount > maxTraversal) {
 					this.violations.push({

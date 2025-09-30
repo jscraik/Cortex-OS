@@ -17,14 +17,20 @@ export interface PatchOptions {
 	ignoreConflicts?: boolean;
 }
 
-export type SpoolValidator = (patches: FilePatch[], context: SpoolValidationContext) => Promise<void> | void;
+export type SpoolValidator = (
+	patches: FilePatch[],
+	context: SpoolValidationContext,
+) => Promise<void> | void;
 
 export interface SpoolValidationContext {
 	sessionId?: string;
 	budgetMeters?: BudgetMeterKind[];
 }
 
-export type SpoolCommitGate = (patches: FilePatch[], context: SpoolValidationContext) => Promise<void> | void;
+export type SpoolCommitGate = (
+	patches: FilePatch[],
+	context: SpoolValidationContext,
+) => Promise<void> | void;
 
 export interface SpoolFilesystemOptions {
 	root?: string;

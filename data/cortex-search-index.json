@@ -1,22 +1,132 @@
 [
   {
-    "id": "readme",
-    "title": "Project README",
-    "snippet": "Overview of the Cortex MCP service, deployment steps, and tooling.",
-    "text": "# Cortex MCP\n\nThis service provides ...",
-    "url": "https://cortex-os.local/docs/readme",
-    "source": "docs",
-    "score": 0.93,
-    "metadata": {"path": "docs/README.md"}
+    "id": "cortex-os-overview",
+    "title": "Cortex-OS: brAInwav Autonomous Software Behavior Reasoning Runtime",
+    "snippet": "Production-ready ASBR Runtime that enables AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations.",
+    "text": "# Cortex-OS Runtime Architecture\n\nCortex-OS is a production-ready Autonomous Software Behavior Reasoning (ASBR) Runtime that enables AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. The system implements strict governance boundaries, comprehensive testing, and security practices to ensure reliable operation in production environments.\n\nKey Features:\n- AI Agent Orchestration: Multi-agent workflows with A2A communication\n- MCP Integration: Standardized tool integration via Model Control Protocol\n- Security First: OWASP compliance, SBOM generation, and vulnerability scanning\n- Observability: Monitoring, tracing, and analytics hooks\n- Governed Architecture: Import boundaries with ESLint and Nx\n- Quality Gates: 90%+ test coverage and automated scans\n- Production Ready: Docker deployment and CI/CD pipelines",
+    "url": "https://cortex-os.brainwav.io/docs/architecture",
+    "source": "brAInwav Documentation",
+    "score": 0.95,
+    "metadata": {
+      "path": "architecture/overview.md",
+      "category": "architecture"
+    }
   },
   {
-    "id": "deployment",
-    "title": "Deployment Guide",
-    "snippet": "How to run the FastMCP server and configure Cloudflare tunnel.",
-    "text": "# Deployment Guide\n\nConfigure the tunnel and environment variables ...",
-    "url": "https://cortex-os.local/docs/deployment",
-    "source": "docs",
+    "id": "a2a-communication",
+    "title": "A2A (Agent-to-Agent) Communication Architecture",
+    "snippet": "Event-driven messaging system for agent coordination with message bus, routing, outbox pattern, and distributed tracing.",
+    "text": "# A2A Communication System\n\nThe A2A (Agent-to-Agent) communication system provides robust, event-driven messaging capabilities for coordinating multiple AI agents. Features include:\n\n- Message Bus Implementation with reliable delivery\n- Routing and Message Dispatch with intelligent targeting\n- Outbox Pattern and Message Durability for consistency\n- Idempotency Handling to prevent duplicate processing\n- Dead-Letter Queue Management for failed messages\n- Distributed Tracing Context for observability\n- Saga Orchestration for complex workflows\n- Schema Registry Integration for message validation\n\nSupported transport protocols:\n- File-based Queue (FSQ) Transport\n- In-Process Transport for local agents\n- Standard I/O (Stdio) Transport for external integration",
+    "url": "https://cortex-os.brainwav.io/docs/a2a",
+    "source": "brAInwav Documentation",
+    "score": 0.92,
+    "metadata": {
+      "path": "a2a/architecture.md",
+      "category": "communication"
+    }
+  },
+  {
+    "id": "mcp-integration",
+    "title": "Model Control Protocol (MCP) Integration",
+    "snippet": "Standardized protocol for AI model and tool integration with ChatGPT compatibility and HTTP transport support.",
+    "text": "# MCP Integration Architecture\n\nThe Model Control Protocol (MCP) provides standardized integration for AI models and tools:\n\n- MCP Protocol Specification compliance\n- MCP Server Implementation with FastMCP framework\n- MCP Bridge Integration for legacy systems\n- MCP Client SDK for easy integration\n- MCP Registry and Service Discovery\n- MCP Security Model with authentication\n\nKey capabilities:\n- ChatGPT connector support\n- HTTP and SSE transport protocols\n- Tool registration and discovery\n- Secure authentication with JWT\n- Rate limiting and input validation\n- Distributed tracing and metrics\n\nAvailable tools:\n- search: Search Cortex-OS knowledge base\n- fetch: Retrieve specific resources by ID\n- ping: Health check endpoint\n- memories_store/search/get/delete: Memory management",
+    "url": "https://cortex-os.brainwav.io/docs/mcp",
+    "source": "brAInwav Documentation",
+    "score": 0.94,
+    "metadata": {
+      "path": "mcp/integration.md",
+      "category": "protocol"
+    }
+  },
+  {
+    "id": "rag-system",
+    "title": "RAG (Retrieval-Augmented Generation) System",
+    "snippet": "Advanced document ingestion, vector search, and answer generation with Qwen3 reranker and embedding systems.",
+    "text": "# RAG System Architecture\n\nThe RAG system provides sophisticated document retrieval and answer generation:\n\nDocument Ingestion:\n- File Discovery with intelligent scanning\n- Document Parsing for multiple formats\n- Chunking Strategy for optimal retrieval\n- Batch Ingestion for large datasets\n\nRetrieval System:\n- Query Embedding with advanced models\n- Vector Similarity Search using Qdrant\n- Document Reranking with Qwen3 implementation\n- Rerank Fusion Strategy for improved results\n\nAnswer Generation:\n- Context-aware response generation\n- Multi-model support (MLX, Ollama)\n- Quality scoring and validation\n\nEmbedding System:\n- Local MLX-based embedding generation\n- Multiple model support\n- Efficient caching and batching\n\nEvaluation Framework:\n- Performance metrics and benchmarking\n- Quality assessment tools\n- Continuous improvement feedback",
+    "url": "https://cortex-os.brainwav.io/docs/rag",
+    "source": "brAInwav Documentation",
+    "score": 0.91,
+    "metadata": {
+      "path": "rag/architecture.md",
+      "category": "ai"
+    }
+  },
+  {
+    "id": "agent-orchestration",
+    "title": "Agent Orchestration System",
+    "snippet": "Workflow management and agent coordination with resilience, fault tolerance, and comprehensive observability.",
+    "text": "# Agent Orchestration Architecture\n\nThe orchestration system manages complex multi-agent workflows:\n\nOrchestration System Overview:\n- Architecture and Design for scalable coordination\n- Workflow Management with state tracking\n- Agent Coordination across distributed systems\n- System Integration with external services\n- Resilience and Reliability mechanisms\n- Observability and Monitoring integration\n\nWorkflow Definition and Validation:\n- YAML-based workflow definitions\n- Schema validation and type checking\n- Dependency management and resolution\n\nCoordinator Patterns and Execution Planning:\n- Task scheduling and prioritization\n- Resource allocation and optimization\n- Parallel and sequential execution\n\nModel Provider Integration:\n- Multi-provider support (OpenAI, Anthropic, local models)\n- Load balancing and failover\n- Cost optimization and usage tracking\n\nResilience and Fault Tolerance:\n- Circuit breaker patterns\n- Retry mechanisms with backoff\n- Dead letter queues for failed tasks",
+    "url": "https://cortex-os.brainwav.io/docs/orchestration",
+    "source": "brAInwav Documentation",
+    "score": 0.90,
+    "metadata": {
+      "path": "orchestration/architecture.md",
+      "category": "orchestration"
+    }
+  },
+  {
+    "id": "model-gateway",
+    "title": "Model Gateway and Provider Adapters",
+    "snippet": "Unified interface for multiple AI model providers with routing, policy enforcement, and comprehensive API endpoints.",
+    "text": "# Model Gateway Architecture\n\nThe Model Gateway provides unified access to multiple AI model providers:\n\nAdapters:\n- MCP Adapter for Model Control Protocol integration\n- MLX Adapter for local Apple Silicon acceleration\n- Ollama Adapter for local model serving\n- OpenAI Adapter for cloud-based models\n- Anthropic Adapter for Claude integration\n\nModel Routing:\n- Intelligent routing based on request type\n- Load balancing across providers\n- Failover and redundancy support\n- Cost optimization strategies\n\nPolicy Enforcement:\n- Rate limiting per provider\n- Cost controls and budgeting\n- Content filtering and safety checks\n- Usage analytics and reporting\n\nAPI Endpoints:\n- Standardized REST API\n- WebSocket support for streaming\n- Batch processing capabilities\n- Health checks and status monitoring\n\nSecurity Features:\n- API key management\n- Request/response validation\n- Audit logging\n- Compliance reporting",
+    "url": "https://cortex-os.brainwav.io/docs/gateway",
+    "source": "brAInwav Documentation",
+    "score": 0.89,
+    "metadata": {
+      "path": "gateway/architecture.md",
+      "category": "api"
+    }
+  },
+  {
+    "id": "security-architecture",
+    "title": "Security Architecture and Compliance",
+    "snippet": "Comprehensive security framework with static analysis, runtime protection, policy enforcement, and OWASP compliance.",
+    "text": "# Security Architecture\n\nCortex-OS implements a multi-layered security approach:\n\nStatic Analysis Security:\n- SAST scanning with Semgrep\n- Dependency vulnerability scanning\n- License compliance checking\n- SBOM (Software Bill of Materials) generation\n\nRuntime Security Protection:\n- Input validation and sanitization\n- Output filtering and content safety\n- Rate limiting and DDoS protection\n- Authentication and authorization\n\nPolicy Enforcement Mechanisms:\n- Role-based access control (RBAC)\n- Resource quotas and limits\n- Audit logging and compliance\n- Incident response procedures\n\nInput and Output Security:\n- Request/response validation\n- Content filtering for harmful material\n- Data privacy and anonymization\n- Secure communication protocols\n\nCompliance Standards:\n- OWASP Top 10 compliance\n- SOC 2 Type II controls\n- GDPR data protection\n- Industry-specific regulations",
+    "url": "https://cortex-os.brainwav.io/docs/security",
+    "source": "brAInwav Documentation",
     "score": 0.88,
-    "metadata": {"path": "docs/DEPLOYMENT.md"}
+    "metadata": {
+      "path": "security/architecture.md",
+      "category": "security"
+    }
+  },
+  {
+    "id": "observability-monitoring",
+    "title": "Observability and Monitoring System",
+    "snippet": "Comprehensive monitoring with distributed tracing, metrics collection, SLO tracking, and performance analysis.",
+    "text": "# Observability Architecture\n\nComprehensive monitoring and observability across all systems:\n\nDistributed Tracing:\n- OpenTelemetry integration\n- Request flow tracking\n- Performance bottleneck identification\n- Cross-service correlation\n\nMetrics Collection and Monitoring:\n- Prometheus metrics collection\n- Custom business metrics\n- System health indicators\n- Performance benchmarks\n\nMonitoring Dashboards:\n- Grafana visualization\n- Real-time system status\n- Historical trend analysis\n- Alert management\n\nSLO and Performance Testing:\n- Service Level Objective tracking\n- Automated performance testing\n- Load testing with K6\n- Capacity planning\n\nLogging and Analytics:\n- Structured logging with ELK stack\n- Log aggregation and search\n- Error tracking and alerting\n- Audit trail maintenance\n\nAlert Management:\n- Intelligent alerting rules\n- Escalation procedures\n- Integration with incident response\n- Noise reduction algorithms",
+    "url": "https://cortex-os.brainwav.io/docs/observability",
+    "source": "brAInwav Documentation",
+    "score": 0.87,
+    "metadata": {
+      "path": "observability/monitoring.md",
+      "category": "monitoring"
+    }
+  },
+  {
+    "id": "cortex-cli",
+    "title": "Cortex CLI Command Interface",
+    "snippet": "Comprehensive command-line interface for MCP management, RAG operations, agent control, and system administration.",
+    "text": "# Cortex CLI Documentation\n\nThe Cortex CLI provides comprehensive command-line access to all system functions:\n\nMCP Commands:\n- mcp add: Add new MCP servers\n- mcp list: List available servers\n- mcp remove: Remove MCP servers\n- mcp show: Display server details\n- mcp search: Search MCP marketplace\n- mcp security: Security scanning and validation\n\nRAG Commands:\n- rag query: Search knowledge base\n- rag ingest: Add documents to RAG system\n- rag evaluation: Run RAG performance tests\n\nAgent Commands:\n- agent start: Launch agent workflows\n- agent stop: Terminate agent processes\n- agent status: Check agent health\n- agent logs: View agent execution logs\n\nA2A Commands:\n- a2a send: Send messages between agents\n- a2a list: List active message queues\n- a2a doctor: Diagnose communication issues\n\nControl Commands:\n- start: Start Cortex-OS services\n- stop: Stop all services\n- restart: Restart system components\n- health: System health check",
+    "url": "https://cortex-os.brainwav.io/docs/cli",
+    "source": "brAInwav Documentation",
+    "score": 0.86,
+    "metadata": {
+      "path": "cli/commands.md",
+      "category": "tools"
+    }
+  },
+  {
+    "id": "deployment-operations",
+    "title": "Deployment and Operations Guide",
+    "snippet": "Production deployment with Docker, infrastructure management, operational workflows, and service management.",
+    "text": "# Deployment and Operations\n\nComprehensive guide for deploying and operating Cortex-OS:\n\nDeployment Environments:\n- Development environment setup\n- Staging environment configuration\n- Production deployment procedures\n- Multi-region deployment strategies\n\nInfrastructure Components:\n- Docker and Docker Compose\n- Kubernetes integration (optional)\n- Load balancers and proxies\n- Database and storage systems\n\nOperational Workflows:\n- CI/CD pipeline configuration\n- Automated testing and validation\n- Rolling updates and rollbacks\n- Backup and recovery procedures\n\nContainer Configuration:\n- Service dependencies and networking\n- Environment variable management\n- Secret and configuration management\n- Resource limits and scaling\n\nService Management:\n- Health checks and monitoring\n- Log management and rotation\n- Performance tuning\n- Troubleshooting and debugging\n\nSecurity Operations:\n- Certificate management\n- Access control and authentication\n- Vulnerability scanning\n- Incident response procedures",
+    "url": "https://cortex-os.brainwav.io/docs/deployment",
+    "source": "brAInwav Documentation",
+    "score": 0.85,
+    "metadata": {
+      "path": "deployment/operations.md",
+      "category": "operations"
+    }
   }
 ]

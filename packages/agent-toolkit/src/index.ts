@@ -35,13 +35,12 @@ export {
 	RuffAdapter,
 } from './infra/ValidationAdapters.js';
 
-// Convenience factory function
-import { DefaultToolRegistry } from './app/ToolRegistry.js';
-
 // Direct import to avoid relying on dist type generation for newly added tooling events
 // Local duplication of tooling event type constants to avoid direct cross-package source import
 // when contracts build output (dist) is not present. Keep in sync with contracts tooling/events.ts.
 import type { AgentToolkitCodemapInput, AgentToolkitResult } from '@cortex-os/contracts';
+// Convenience factory function
+import { DefaultToolRegistry } from './app/ToolRegistry.js';
 
 const TOOLING_EVENT_TYPES = {
 	TOOL_RUN_COMPLETED: 'tool.run.completed',

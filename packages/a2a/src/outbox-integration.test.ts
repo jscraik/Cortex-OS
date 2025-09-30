@@ -94,11 +94,11 @@ describe('A2A Outbox Integration', () => {
 		expect(transport.publish).toHaveBeenCalledWith(envelope);
 	});
 
-        it('should call transport publish for batch when outbox fails', async () => {
-                // Mock transport
-                const transport = {
-                        publish: vi.fn().mockResolvedValue(undefined),
-                };
+	it('should call transport publish for batch when outbox fails', async () => {
+		// Mock transport
+		const transport = {
+			publish: vi.fn().mockResolvedValue(undefined),
+		};
 
 		// Create a mock repository that throws an error
 		const repository = {
@@ -156,39 +156,39 @@ describe('A2A Outbox Integration', () => {
 		await integration.publishBatch(envelopes);
 
 		// Verify transport was called for each message as fallback
-                expect(transport.publish).toHaveBeenCalledTimes(2);
-                expect(transport.publish).toHaveBeenCalledWith(envelopes[0]);
-                expect(transport.publish).toHaveBeenCalledWith(envelopes[1]);
-        });
+		expect(transport.publish).toHaveBeenCalledTimes(2);
+		expect(transport.publish).toHaveBeenCalledWith(envelopes[0]);
+		expect(transport.publish).toHaveBeenCalledWith(envelopes[1]);
+	});
 
-        it('processPending returns processing metrics', async () => {
-                const transport = {
-                        publish: vi.fn().mockResolvedValue(undefined),
-                };
+	it('processPending returns processing metrics', async () => {
+		const transport = {
+			publish: vi.fn().mockResolvedValue(undefined),
+		};
 
-                const repository = new InMemoryOutboxRepository();
-                const integration = createA2AOutboxIntegration(transport, repository);
+		const repository = new InMemoryOutboxRepository();
+		const integration = createA2AOutboxIntegration(transport, repository);
 
-                await repository.save({
-                        aggregateType: 'test',
-                        aggregateId: 'agg-1',
-                        eventType: 'test.event',
-                        payload: { foo: 'bar' },
-                        metadata: {},
-                        correlationId: 'corr-1',
-                        causationId: undefined,
-                        traceparent: undefined,
-                        tracestate: undefined,
-                        baggage: undefined,
-                        idempotencyKey: 'test:agg-1:test.event:corr-1',
-                        status: OutboxMessageStatus.PENDING,
-                        retryCount: 0,
-                        maxRetries: 3,
-                });
+		await repository.save({
+			aggregateType: 'test',
+			aggregateId: 'agg-1',
+			eventType: 'test.event',
+			payload: { foo: 'bar' },
+			metadata: {},
+			correlationId: 'corr-1',
+			causationId: undefined,
+			traceparent: undefined,
+			tracestate: undefined,
+			baggage: undefined,
+			idempotencyKey: 'test:agg-1:test.event:corr-1',
+			status: OutboxMessageStatus.PENDING,
+			retryCount: 0,
+			maxRetries: 3,
+		});
 
-                const metrics = await integration.processPending();
-                expect(metrics.processed).toBe(1);
-                expect(metrics.successful).toBe(1);
-                expect(transport.publish).toHaveBeenCalledTimes(1);
-        });
+		const metrics = await integration.processPending();
+		expect(metrics.processed).toBe(1);
+		expect(metrics.successful).toBe(1);
+		expect(transport.publish).toHaveBeenCalledTimes(1);
+	});
 });

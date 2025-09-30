@@ -1,7 +1,7 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CodemapAdapter } from '../infra/CodemapAdapter.js';
 
@@ -44,7 +44,11 @@ describe('CodemapAdapter', () => {
 		await mkdir(join(workdir, 'out'), { recursive: true });
 		await mkdir(join(workdir, 'scripts'), { recursive: true });
 		scriptPath = join('scripts', 'codemap.py');
-		await writeFile(resolve(workdir, scriptPath), '#!/usr/bin/env python3\nprint("codemap")\n', 'utf-8');
+		await writeFile(
+			resolve(workdir, scriptPath),
+			'#!/usr/bin/env python3\nprint("codemap")\n',
+			'utf-8',
+		);
 		execMock.mockImplementation(defaultExecImplementation);
 		execMock.mockClear();
 	});
@@ -97,9 +101,9 @@ describe('CodemapAdapter', () => {
 			pythonExecutable: 'python3',
 		});
 
-		await expect(
-			adapter.generate({ repoPath: '.', scope: 'repo' }),
-		).rejects.toThrow("python executable 'python3' not found");
+		await expect(adapter.generate({ repoPath: '.', scope: 'repo' })).rejects.toThrow(
+			"python executable 'python3' not found",
+		);
 	});
 
 	it('throws descriptive error when codemap script is missing', async () => {
@@ -109,15 +113,15 @@ describe('CodemapAdapter', () => {
 			pythonExecutable: 'python3',
 		});
 
-		await expect(
-			adapter.generate({ repoPath: '.', scope: 'repo' }),
-		).rejects.toThrow('codemap script not found');
+		await expect(adapter.generate({ repoPath: '.', scope: 'repo' })).rejects.toThrow(
+			'codemap script not found',
+		);
 		expect(execMock).not.toHaveBeenCalled();
 	});
 
 	it('throws helpful error when output JSON is invalid', async () => {
 		execMock
-			.mockImplementationOnce((_, args, __, callback) => {
+			.mockImplementationOnce((_, _args, __, callback) => {
 				callback(null, { stdout: 'Python 3.11.0', stderr: '' });
 			})
 			.mockImplementationOnce((_, args, __, callback) => {

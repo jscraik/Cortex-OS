@@ -134,101 +134,104 @@ export type PlanningStepStatus = 'pending' | 'in_progress' | 'completed' | 'fail
 export type PlanningIsolationScope = 'task' | 'workspace' | 'global';
 
 export enum PlanningPhase {
-        INITIALIZATION = 'initialization',
-        ANALYSIS = 'analysis',
-        STRATEGY = 'strategy',
-        EXECUTION = 'execution',
-        VALIDATION = 'validation',
-        COMPLETION = 'completion',
+	INITIALIZATION = 'initialization',
+	ANALYSIS = 'analysis',
+	STRATEGY = 'strategy',
+	EXECUTION = 'execution',
+	VALIDATION = 'validation',
+	COMPLETION = 'completion',
 }
 
 export interface DSPPlanningStep {
-        phase: PlanningPhase;
-        action: string;
-        status: PlanningStepStatus;
-        timestamp: Date;
-        result?: unknown;
+	phase: PlanningPhase;
+	action: string;
+	status: PlanningStepStatus;
+	timestamp: Date;
+	result?: unknown;
 }
 
 export interface DSPPlanningHistoryEntry {
-        decision: string;
-        outcome: 'success' | 'failure';
-        learned: string;
-        timestamp: Date;
+	decision: string;
+	outcome: 'success' | 'failure';
+	learned: string;
+	timestamp: Date;
 }
 
 export interface DSPPlanningMetadata {
-        createdBy: 'brAInwav';
-        createdAt: Date;
-        updatedAt: Date;
-        complexity: number;
-        priority: number;
+	createdBy: 'brAInwav';
+	createdAt: Date;
+	updatedAt: Date;
+	complexity: number;
+	priority: number;
 }
 
 export interface DSPPlanningPreferences {
-        failureHandling: 'strict' | 'resilient' | 'permissive';
-        notes: string[];
+	failureHandling: 'strict' | 'resilient' | 'permissive';
+	notes: string[];
 }
 
 export interface DSPPlanningComplianceIssue {
-        id: string;
-        severity: 'low' | 'medium' | 'high' | 'critical';
-        description: string;
-        remediation: string;
-        detectedAt: Date;
+	id: string;
+	severity: 'low' | 'medium' | 'high' | 'critical';
+	description: string;
+	remediation: string;
+	detectedAt: Date;
 }
 
 export interface DSPPlanningCompliance {
-        standards: string[];
-        lastCheckedAt: Date | null;
-        riskScore: number;
-        outstandingViolations: DSPPlanningComplianceIssue[];
+	standards: string[];
+	lastCheckedAt: Date | null;
+	riskScore: number;
+	outstandingViolations: DSPPlanningComplianceIssue[];
 }
 
 export interface DSPPlanningContext {
-        id: string;
-        workspaceId?: string;
-        currentPhase: PlanningPhase;
-        steps: DSPPlanningStep[];
-        history: DSPPlanningHistoryEntry[];
-        metadata: DSPPlanningMetadata;
-        preferences: DSPPlanningPreferences;
-        compliance: DSPPlanningCompliance;
-        retention?: {
-                ttlMs?: number;
-                persist?: boolean;
-        };
+	id: string;
+	workspaceId?: string;
+	currentPhase: PlanningPhase;
+	steps: DSPPlanningStep[];
+	history: DSPPlanningHistoryEntry[];
+	metadata: DSPPlanningMetadata;
+	preferences: DSPPlanningPreferences;
+	compliance: DSPPlanningCompliance;
+	retention?: {
+		ttlMs?: number;
+		persist?: boolean;
+	};
 }
 
 export interface PlanningContextSnapshot {
-        id: string;
-        taskId: string;
-        workspaceId?: string;
-        revision: number;
-        timestamp: Date;
-        phase: PlanningPhase;
-        scope: PlanningIsolationScope;
-        currentStep: number;
-        context: DSPPlanningContext;
-        reason?: string;
+	id: string;
+	taskId: string;
+	workspaceId?: string;
+	revision: number;
+	timestamp: Date;
+	phase: PlanningPhase;
+	scope: PlanningIsolationScope;
+	currentStep: number;
+	context: DSPPlanningContext;
+	reason?: string;
 }
 
 export interface PlanningContextPersistenceAdapter {
-        save(snapshot: PlanningContextSnapshot): void;
-        load(taskId: string, workspaceId?: string): PlanningContextSnapshot | undefined;
-        delete(taskId: string, workspaceId?: string): void;
-        list?(workspaceId?: string): PlanningContextSnapshot[];
+	save(snapshot: PlanningContextSnapshot): void;
+	load(taskId: string, workspaceId?: string): PlanningContextSnapshot | undefined;
+	delete(taskId: string, workspaceId?: string): void;
+	list?(workspaceId?: string): PlanningContextSnapshot[];
 }
 
 export interface PlanningContextIsolationOptions {
-        scope?: PlanningIsolationScope;
-        preserveHistory?: boolean;
-        tags?: string[];
+	scope?: PlanningIsolationScope;
+	preserveHistory?: boolean;
+	tags?: string[];
 }
 
 export interface PlanningContextIsolationStrategy {
-        isolate(context: DSPPlanningContext, options?: PlanningContextIsolationOptions): DSPPlanningContext;
-        release?(contextId: string): void;
+	isolate(
+		context: DSPPlanningContext,
+		options?: PlanningContextIsolationOptions,
+	): DSPPlanningContext;
+	release?(contextId: string): void;
 }
 
 export interface PlanningContext {
@@ -249,28 +252,28 @@ export interface PlanningContext {
 		quality: 'fast' | 'balanced' | 'thorough';
 		failureHandling: 'strict' | 'resilient' | 'permissive';
 	};
-        compliance: {
-                standards: string[];
-                lastCheckedAt: Date | null;
-                riskScore: number;
-                outstandingViolations: Array<{
+	compliance: {
+		standards: string[];
+		lastCheckedAt: Date | null;
+		riskScore: number;
+		outstandingViolations: Array<{
 			id: string;
 			severity: 'low' | 'medium' | 'high' | 'critical';
 			description: string;
 			remediation: string;
-                        detectedAt: Date;
-                }>;
-        };
-        longHorizon?: LongHorizonPlanningState;
+			detectedAt: Date;
+		}>;
+	};
+	longHorizon?: LongHorizonPlanningState;
 }
 
 export interface LongHorizonPlanningState {
-        contextId?: string;
-        currentPhase?: PlanningPhase;
-        adaptiveDepth?: number;
-        isolationScope?: PlanningIsolationScope;
-        lastSnapshotRevision?: number;
-        lastSnapshotAt?: Date;
+	contextId?: string;
+	currentPhase?: PlanningPhase;
+	adaptiveDepth?: number;
+	isolationScope?: PlanningIsolationScope;
+	lastSnapshotRevision?: number;
+	lastSnapshotAt?: Date;
 }
 
 export interface PlanningResult {

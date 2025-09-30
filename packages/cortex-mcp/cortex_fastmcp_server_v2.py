@@ -39,6 +39,7 @@ BRANDING = {
 DEFAULT_PUBLIC_ENDPOINT = os.getenv(
     "CORTEX_MCP_PUBLIC_ENDPOINT", "https://cortex-mcp.brainwav.io/mcp"
 )
+DEFAULT_TRANSPORT = os.getenv("CORTEX_MCP_TRANSPORT", "streamable-http")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [info] %(message)s")
 logger = logging.getLogger("cortex-mcp")
@@ -77,7 +78,7 @@ class ToolCatalog:
             {
                 "name": entry["name"],
                 "description": entry.get("description", ""),
-                "transport": "sse",
+                "transport": DEFAULT_TRANSPORT,
             }
             for entry in self.entries
             if entry.get("enabled", True)
@@ -237,7 +238,7 @@ def _manifest_payload(catalog: ToolCatalog, version: str) -> dict[str, Any]:
         "branding": BRANDING,
         "servers": [
             {
-                "transport": "sse",
+                "transport": DEFAULT_TRANSPORT,
                 "endpoint": DEFAULT_PUBLIC_ENDPOINT,
                 "priority": 1,
             }
@@ -448,9 +449,10 @@ def build_application(server: FastMCP) -> Any:
 
 
 def main() -> None:
+    port = int(os.getenv("PORT", "3024"))
     server = create_server()
     app = build_application(server)
-    config = uvicorn.Config(app=app, host="0.0.0.0", port=3024, log_level="info")
+    config = uvicorn.Config(app=app, host="0.0.0.0", port=port, log_level="info")
     uvicorn.Server(config).run()
 
 

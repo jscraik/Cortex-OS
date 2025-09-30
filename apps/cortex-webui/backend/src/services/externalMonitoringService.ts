@@ -76,38 +76,38 @@ function deriveActorType(event: AuthMonitoringPayload): 'user' | 'system' {
 }
 
 function logProviderSkip(provider: ProviderName, reason: ProviderSkipReason): void {
-        const payload = { provider, reason } as const;
+	const payload = { provider, reason } as const;
 
-        if (reason === 'invalid_url') {
-                logger.warn('brAInwav external monitoring invalid webhook configuration', payload);
-                return;
-        }
+	if (reason === 'invalid_url') {
+		logger.warn('brAInwav external monitoring invalid webhook configuration', payload);
+		return;
+	}
 
-        logger.info('external-monitoring: provider skipped for brAInwav auth monitoring', payload);
+	logger.info('external-monitoring: provider skipped for brAInwav auth monitoring', payload);
 }
 
 function logProviderFailure(provider: ProviderName, status?: number, error?: unknown): void {
-        if (status !== undefined) {
-                logger.warn('brAInwav external monitoring provider failure', {
-                        provider,
-                        status,
-                });
-                return;
-        }
+	if (status !== undefined) {
+		logger.warn('brAInwav external monitoring provider failure', {
+			provider,
+			status,
+		});
+		return;
+	}
 
-        const message = resolveErrorReason(error);
-        logger.warn('brAInwav external monitoring request error', {
-                provider,
-                reason: message,
-        });
+	const message = resolveErrorReason(error);
+	logger.warn('brAInwav external monitoring request error', {
+		provider,
+		reason: message,
+	});
 }
 
 function resolveErrorReason(error: unknown): string {
-        if (error instanceof Error) {
-                return error.message;
-        }
-        const str = String(error);
-        return str && str !== '[object Object]' ? str : 'unknown error';
+	if (error instanceof Error) {
+		return error.message;
+	}
+	const str = String(error);
+	return str && str !== '[object Object]' ? str : 'unknown error';
 }
 
 function buildDatadogBody(
@@ -285,15 +285,15 @@ async function sendToWebhook(
 }
 
 async function dispatchVendors(
-        event: AuthMonitoringPayload,
-        config: MonitoringConfig,
-        context: VendorContext,
+	event: AuthMonitoringPayload,
+	config: MonitoringConfig,
+	context: VendorContext,
 ): Promise<void> {
-        await Promise.allSettled([
-            sendToDatadog(event, config, context),
-            sendToNewRelic(event, config, context),
-            sendToWebhook(event, config, context),
-        ]);
+	await Promise.allSettled([
+		sendToDatadog(event, config, context),
+		sendToNewRelic(event, config, context),
+		sendToWebhook(event, config, context),
+	]);
 }
 
 async function recordPrometheus(

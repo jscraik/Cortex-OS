@@ -12,7 +12,7 @@ export const withRetry = (): Middleware => (next) => async (rs, step) => {
 	const rp = step.retry ?? { maxRetries: 0, backoffMs: 0, jitter: true };
 	let attempt = 0;
 
-	for (; ;) {
+	for (;;) {
 		try {
 			return await next(rs, step);
 		} catch (e) {

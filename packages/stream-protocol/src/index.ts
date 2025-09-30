@@ -1,12 +1,12 @@
-export { makeStream } from './stream.js';
 export { createSSEHandler } from './sse.js';
-export { createWSHandler } from './ws.js';
+export { makeStream } from './stream.js';
 export type {
-	StreamMultiplexer,
-	StreamListener,
-	StreamConfig,
 	FlushPacket,
 	SSEOptions,
-	WSOptions,
+	StreamConfig,
+	StreamListener,
+	StreamMultiplexer,
 	WebSocketLike,
+	WSOptions,
 } from './types.js';
+export { createWSHandler } from './ws.js';

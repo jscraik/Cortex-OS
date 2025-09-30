@@ -161,7 +161,7 @@ describe('EncryptionService', () => {
 			};
 
 			// Mock console.warn to avoid test output noise
-			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 			const result = await encryptionService.decryptFields(testObject, ['password']);
 
@@ -252,20 +252,26 @@ describe('EncryptionService', () => {
 			expect(token).toHaveLength(32); // 16 bytes in hex
 		});
 
-		it('should generate API keys with metadata', () => {
-			const apiKey = encryptionService.generateAPIKey();
+		it('should generate API keys with metadata', async () => {
+			const apiKey = await encryptionService.generateAPIKey();
 
 			expect(apiKey).toMatchObject({
 				key: expect.any(String),
 				hash: expect.any(String),
-				salt: expect.any(String),
 			});
 
 			expect(apiKey.key).toHaveLength(64); // 32 bytes in hex
-			expect(apiKey.hash).toHaveLength(64); // SHA-256 hex
+			expect(apiKey.hash).toMatch(/^\$2[aby]\$\d{2}\$.{53}$/); // bcrypt hash format
 
-			// Verify the hash matches the key
-			expect(encryptionService.verifyHash(apiKey.key, apiKey.hash, apiKey.salt)).toBe(true);
+			// Verify the API key can be validated
+			const isValid = await encryptionService.verifyAPIKey(apiKey.key, apiKey.hash);
+			expect(isValid).toBe(true);
+
+			// Verify wrong key fails validation
+			const wrongKey = encryptionService.generateToken(32);
+			const isInvalid = await encryptionService.verifyAPIKey(wrongKey, apiKey.hash);
+			expect(isInvalid).toBe(false);
+
 		});
 	});
 
@@ -381,7 +387,7 @@ describe('EncryptionService', () => {
 		it('should handle encryption errors gracefully', async () => {
 			// Create service with invalid configuration
 			const invalidService = new EncryptionService('', {
-				algorithm: 'invalid-algorithm' as any,
+				algorithm: 'invalid-algorithm' as 'aes-256-gcm',
 			});
 
 			await expect(invalidService.encrypt(testData)).rejects.toThrow('Encryption failed');

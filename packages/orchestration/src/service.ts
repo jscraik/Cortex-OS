@@ -44,7 +44,7 @@ export function provideOrchestration(
 }
 
 export class OrchestrationService {
-	constructor(private readonly service: { execute: (input: string) => Promise<unknown> }) { }
+	constructor(private readonly service: { execute: (input: string) => Promise<unknown> }) {}
 
 	async handle(input: string) {
 		// Ensure hooks are initialized and watcher is running once per process

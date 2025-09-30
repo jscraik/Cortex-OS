@@ -1,21 +1,21 @@
-export { spoolFs, FilesystemSpool } from './spool.js';
-export { persistentShell } from './shell.js';
+export type { FilePatch, PatchPlan, PatchResult } from '@cortex-os/patchkit';
 export { restrictedFetch } from './fetch.js';
+export { persistentShell } from './shell.js';
+export { FilesystemSpool, spoolFs } from './spool.js';
 export type {
-	SpoolFs,
-	SpoolFilesystemOptions,
-	SpoolValidator,
-	SpoolCommitGate,
-	WriteFileOptions,
-	ReplaceOptions,
+	FetchResult,
 	PatchOptions,
-	ShellRunOptions,
-	ShellResult,
-	ShellUsage,
 	PersistentShell,
 	PersistentShellOptions,
-	RestrictedFetchPolicy,
+	ReplaceOptions,
 	RestrictedFetchOptions,
-	FetchResult,
+	RestrictedFetchPolicy,
+	ShellResult,
+	ShellRunOptions,
+	ShellUsage,
+	SpoolCommitGate,
+	SpoolFilesystemOptions,
+	SpoolFs,
+	SpoolValidator,
+	WriteFileOptions,
 } from './types.js';
-export type { FilePatch, PatchPlan, PatchResult } from '@cortex-os/patchkit';

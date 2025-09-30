@@ -11,11 +11,11 @@ const session: N0Session = {
 };
 
 describe('dispatchTools progress events', () => {
-        beforeEach(() => {
-                resetDispatchMetricsSnapshot();
-        });
+	beforeEach(() => {
+		resetDispatchMetricsSnapshot();
+	});
 
-        it('emits start and settle notifications', async () => {
+	it('emits start and settle notifications', async () => {
 		const events: Array<{ type: string; name: string; status?: string }> = [];
 		const jobs: Array<ToolDispatchJob<string>> = [
 			{

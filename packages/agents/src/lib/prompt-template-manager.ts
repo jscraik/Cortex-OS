@@ -34,18 +34,18 @@ export interface PlanningContext {
 }
 
 export interface PromptContext {
-        taskId: string;
-        agentId: string;
-        sessionId?: string;
-        complexity: number; // 1-10 scale
+	taskId: string;
+	agentId: string;
+	sessionId?: string;
+	complexity: number; // 1-10 scale
 	priority: number; // 1-10 scale
 	capabilities: string[];
 	tools: string[];
-        currentPhase?: PlanningPhase;
-        planningContext?: PlanningContext;
-        compliance?: PlanningContext['compliance'];
-        nOArchitecture: boolean;
-        [key: string]: unknown;
+	currentPhase?: PlanningPhase;
+	planningContext?: PlanningContext;
+	compliance?: PlanningContext['compliance'];
+	nOArchitecture: boolean;
+	[key: string]: unknown;
 }
 
 export interface PromptTemplate {
@@ -87,14 +87,16 @@ export class PromptTemplateManager {
 		}>
 	>;
 
-        constructor() {
-                this.templates = new Map();
-                this.usageHistory = new Map();
-                this.initializeDefaultTemplates();
-                this.registerSecurityTemplates();
+	constructor() {
+		this.templates = new Map();
+		this.usageHistory = new Map();
+		this.initializeDefaultTemplates();
+		this.registerSecurityTemplates();
 
-                console.log('brAInwav Prompt Template Manager: Initialized with nO architecture patterns and security coverage');
-        }
+		console.log(
+			'brAInwav Prompt Template Manager: Initialized with nO architecture patterns and security coverage',
+		);
+	}
 
 	/**
 	 * Select optimal prompt template based on context
@@ -546,22 +548,22 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 		);
 	}
 
-        private getVariableValue(variable: string, context: PromptContext): string {
-                const complianceValue = this.resolveComplianceVariable(variable, context);
-                if (complianceValue !== null) {
-                        return complianceValue;
-                }
+	private getVariableValue(variable: string, context: PromptContext): string {
+		const complianceValue = this.resolveComplianceVariable(variable, context);
+		if (complianceValue !== null) {
+			return complianceValue;
+		}
 
-                const dynamicValue = this.resolveDynamicVariable(variable, context);
-                if (dynamicValue !== null) {
-                        return dynamicValue;
-                }
+		const dynamicValue = this.resolveDynamicVariable(variable, context);
+		if (dynamicValue !== null) {
+			return dynamicValue;
+		}
 
-                switch (variable) {
-                        case 'taskId':
-                                return context.taskId;
-                        case 'agentId':
-                                return context.agentId;
+		switch (variable) {
+			case 'taskId':
+				return context.taskId;
+			case 'agentId':
+				return context.agentId;
 			case 'sessionId':
 				return context.sessionId || 'unknown';
 			case 'complexity':
@@ -586,43 +588,43 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 				return 'unknown';
 			case 'errorDetails':
 				return 'Error details not available';
-                        default:
-                                return `{{${variable}}}`;
-                }
-        }
+			default:
+				return `{{${variable}}}`;
+		}
+	}
 
-        private resolveDynamicVariable(variable: string, context: PromptContext): string | null {
-                const scopedContext = context as Record<string, unknown>;
+	private resolveDynamicVariable(variable: string, context: PromptContext): string | null {
+		const scopedContext = context as Record<string, unknown>;
 
-                if (Object.hasOwn(scopedContext, variable)) {
-                        const value = scopedContext[variable];
-                        return this.presentDynamicValue(value);
-                }
+		if (Object.hasOwn(scopedContext, variable)) {
+			const value = scopedContext[variable];
+			return this.presentDynamicValue(value);
+		}
 
-                const planningContext = context.planningContext as Record<string, unknown> | undefined;
-                if (planningContext && Object.hasOwn(planningContext, variable)) {
-                        const value = planningContext[variable];
-                        return this.presentDynamicValue(value);
-                }
+		const planningContext = context.planningContext as Record<string, unknown> | undefined;
+		if (planningContext && Object.hasOwn(planningContext, variable)) {
+			const value = planningContext[variable];
+			return this.presentDynamicValue(value);
+		}
 
-                return null;
-        }
+		return null;
+	}
 
-        private presentDynamicValue(value: unknown): string {
-                if (value === null || value === undefined) {
-                        return '';
-                }
+	private presentDynamicValue(value: unknown): string {
+		if (value === null || value === undefined) {
+			return '';
+		}
 
-                if (Array.isArray(value)) {
-                        return value.map((entry) => this.presentDynamicValue(entry)).join(', ');
-                }
+		if (Array.isArray(value)) {
+			return value.map((entry) => this.presentDynamicValue(entry)).join(', ');
+		}
 
-                if (typeof value === 'object') {
-                        return JSON.stringify(value);
-                }
+		if (typeof value === 'object') {
+			return JSON.stringify(value);
+		}
 
-                return String(value);
-        }
+		return String(value);
+	}
 
 	private resolveComplianceVariable(variable: string, context: PromptContext): string | null {
 		if (!variable.startsWith('compliance')) {
@@ -661,7 +663,8 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 		const standards = source.standards?.length
 			? source.standards.join(', ')
 			: 'brAInwav baseline (auto)';
-		const boundedScore = typeof source.riskScore === 'number' ? Math.min(Math.max(source.riskScore, 0), 1) : 0;
+		const boundedScore =
+			typeof source.riskScore === 'number' ? Math.min(Math.max(source.riskScore, 0), 1) : 0;
 		let riskLabel = 'Nominal';
 		if (boundedScore >= 0.7) {
 			riskLabel = 'High';
@@ -701,7 +704,7 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 		if (adaptations.length === 0) return prompt;
 
 		const adaptationHeader = `\n**Context Adaptations for brAInwav nO Architecture (task ${context.taskId}):**\n`;
-		const adaptationSection = adaptationHeader + adaptations.map((a) => `- ${a}`).join('\n') + '\n';
+		const adaptationSection = `${adaptationHeader + adaptations.map((a) => `- ${a}`).join('\n')}\n`;
 		return prompt + adaptationSection;
 	}
 
@@ -718,17 +721,17 @@ Apply brAInwav's commitment to reliable, resilient operation.`,
 	}
 
 	private registerSecurityTemplates(): void {
-                const before = this.templates.size;
+		const before = this.templates.size;
 
-                for (const template of SECURITY_PROMPT_TEMPLATES) {
-                        this.templates.set(template.id, template);
-                }
+		for (const template of SECURITY_PROMPT_TEMPLATES) {
+			this.templates.set(template.id, template);
+		}
 
-                const registered = this.templates.size - before;
-                console.log(
-                        `brAInwav Prompt Manager: Registered ${registered} security templates (total ${this.templates.size})`,
-                );
-        }
+		const registered = this.templates.size - before;
+		console.log(
+			`brAInwav Prompt Manager: Registered ${registered} security templates (total ${this.templates.size})`,
+		);
+	}
 
 	/**
 	 * Get template statistics for monitoring

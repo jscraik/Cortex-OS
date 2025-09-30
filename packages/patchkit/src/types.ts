@@ -20,27 +20,27 @@ export interface FilePatch {
 
 export type PatchOperation =
 	| {
-		kind: 'write';
-		path: string;
-		content: string;
-		mode?: number;
-	}
+			kind: 'write';
+			path: string;
+			content: string;
+			mode?: number;
+	  }
 	| {
-		kind: 'delete';
-		path: string;
-	}
+			kind: 'delete';
+			path: string;
+	  }
 	| {
-		kind: 'replace';
-		path: string;
-		match: string | RegExp;
-		replacement: string;
-		all?: boolean;
-	}
+			kind: 'replace';
+			path: string;
+			match: string | RegExp;
+			replacement: string;
+			all?: boolean;
+	  }
 	| {
-		kind: 'patch';
-		path: string;
-		diff: string;
-	};
+			kind: 'patch';
+			path: string;
+			diff: string;
+	  };
 
 export interface PatchPlan {
 	description?: string;

@@ -31,8 +31,8 @@ export interface ValidationTool {
 }
 
 /**
-	* Codemap generator interface
-	*/
+ * Codemap generator interface
+ */
 export interface CodemapTool {
 	generate(inputs: AgentToolkitCodemapInput): Promise<AgentToolkitCodemapResult>;
 }

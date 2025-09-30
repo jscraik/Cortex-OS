@@ -1,6 +1,6 @@
-import NodeEventSource from 'eventsource';
-import { StreamEventSchema } from '@cortex-os/protocol';
 import type { StreamEvent, StreamLane } from '@cortex-os/protocol';
+import { StreamEventSchema } from '@cortex-os/protocol';
+import NodeEventSource from 'eventsource';
 import type { ClientOptions, ReconnectPolicy, StreamConnection, StreamHandlers } from './types.js';
 
 interface EventSourceMessage {
@@ -61,7 +61,11 @@ class StreamClient implements StreamConnection {
 	private closed = false;
 	private es?: EventSourceLike;
 
-	public constructor(private readonly url: string, handlers: StreamHandlers, options: ClientOptions = {}) {
+	public constructor(
+		private readonly url: string,
+		handlers: StreamHandlers,
+		options: ClientOptions = {},
+	) {
 		this.handlers = handlers;
 		this.options = options;
 		this.lanes = chooseLanes(options);

@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { N0Session } from '../src/langgraph/n0-state.js';
 import {
-        dispatchTools,
-        type ToolDispatchJob,
-        type ToolDispatchResult,
+	dispatchTools,
+	type ToolDispatchJob,
+	type ToolDispatchResult,
 } from '../src/langgraph/tool-dispatch.js';
 import {
-        getDispatchMetricsSnapshot,
-        resetDispatchMetricsSnapshot,
+	getDispatchMetricsSnapshot,
+	resetDispatchMetricsSnapshot,
 } from '../src/langgraph/tool-dispatch-metrics.js';
 
 const RUN_ID = 'dispatch-run-id';
@@ -29,13 +29,13 @@ const session: N0Session = {
 };
 
 describe('dispatchTools budget and allow-list behaviour', () => {
-        beforeEach(() => {
-                recordOperationSpy.mockClear();
-                recordLatencySpy.mockClear();
-                generateRunIdSpy.mockClear();
-                generateRunIdSpy.mockImplementation(() => RUN_ID);
-                resetDispatchMetricsSnapshot();
-        });
+	beforeEach(() => {
+		recordOperationSpy.mockClear();
+		recordLatencySpy.mockClear();
+		generateRunIdSpy.mockClear();
+		generateRunIdSpy.mockImplementation(() => RUN_ID);
+		resetDispatchMetricsSnapshot();
+	});
 
 	it('enforces allow-lists and propagates hook mutations', async () => {
 		const executed: unknown[] = [];
@@ -129,14 +129,14 @@ describe('dispatchTools budget and allow-list behaviour', () => {
 				outcome: 'fulfilled',
 			}),
 		);
-                expect(recordLatencySpy).toHaveBeenCalledTimes(1);
-                expect(recordOperationSpy).toHaveBeenCalledTimes(2);
+		expect(recordLatencySpy).toHaveBeenCalledTimes(1);
+		expect(recordOperationSpy).toHaveBeenCalledTimes(2);
 
-                const snapshot = getDispatchMetricsSnapshot();
-                expect(snapshot.started).toBe(1);
-                expect(snapshot.outcomes).toEqual({ fulfilled: 1, rejected: 0, skipped: 1 });
-                expect(snapshot.tokens).toBeGreaterThanOrEqual(2);
-        });
+		const snapshot = getDispatchMetricsSnapshot();
+		expect(snapshot.started).toBe(1);
+		expect(snapshot.outcomes).toEqual({ fulfilled: 1, rejected: 0, skipped: 1 });
+		expect(snapshot.tokens).toBeGreaterThanOrEqual(2);
+	});
 
 	it('skips jobs when token budget is exhausted', async () => {
 		const jobs: Array<ToolDispatchJob<string>> = [
@@ -180,11 +180,11 @@ describe('dispatchTools budget and allow-list behaviour', () => {
 			RUN_ID,
 			expect.objectContaining({ tool: 'secondary.tool', outcome: 'skipped' }),
 		);
-                expect(recordOperationSpy).toHaveBeenCalledTimes(2);
-                expect(recordLatencySpy).toHaveBeenCalledTimes(1);
+		expect(recordOperationSpy).toHaveBeenCalledTimes(2);
+		expect(recordLatencySpy).toHaveBeenCalledTimes(1);
 
-                const snapshot = getDispatchMetricsSnapshot();
-                expect(snapshot.started).toBe(1);
-                expect(snapshot.outcomes).toEqual({ fulfilled: 1, rejected: 0, skipped: 1 });
-        });
+		const snapshot = getDispatchMetricsSnapshot();
+		expect(snapshot.started).toBe(1);
+		expect(snapshot.outcomes).toEqual({ fulfilled: 1, rejected: 0, skipped: 1 });
+	});
 });

@@ -23,7 +23,9 @@ describe('DashboardToolLayer', () => {
 
 	describe('Dashboard Tool Layer Initialization', () => {
 		it('should provide high-level visualization and monitoring tools', async () => {
-			const result = (await dashboardLayer.invoke('visualize-execution-graph', { planId: 'test' })) as any;
+			const result = (await dashboardLayer.invoke('visualize-execution-graph', {
+				planId: 'test',
+			})) as any;
 			expect(result.type).toBe('visualization');
 			expect(result.data).toBeDefined();
 			expect(result.planId).toBe('test');

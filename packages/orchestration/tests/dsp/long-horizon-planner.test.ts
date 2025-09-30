@@ -337,7 +337,7 @@ describe('Long-Horizon Planner - Phase 11 DSP Integration', () => {
 	describe('brAInwav Branding Integration', () => {
 		it('should include brAInwav branding in all outputs', async () => {
 			const mockExecutor = vi.fn().mockResolvedValue({ success: true });
-			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
+			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 			await planner.planTask(mockTask, mockExecutor);
 

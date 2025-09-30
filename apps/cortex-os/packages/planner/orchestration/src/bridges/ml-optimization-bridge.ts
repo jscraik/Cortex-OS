@@ -608,7 +608,9 @@ export class MLOptimizationBridge extends EventEmitter {
 			throw new Error('ML Optimization Bridge not initialized');
 		}
 
-		const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const randomBytes = crypto.getRandomValues(new Uint8Array(7));
+		const randomStr = Array.from(randomBytes, byte => byte.toString(36)).join('').slice(0, 9);
+		const requestId = `req_${Date.now()}_${randomStr}`;
 		const timeout = timeoutMs || this.config.timeout;
 
 		this.metrics.totalRequests++;

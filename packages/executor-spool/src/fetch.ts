@@ -59,12 +59,19 @@ const takeToken = (key: string, rpm: number, burst: number): void => {
 	rateState.set(key, bucket);
 };
 
-const chooseResponseBody = (buffer: Uint8Array, contentType: string | undefined): string | Uint8Array => {
+const chooseResponseBody = (
+	buffer: Uint8Array,
+	contentType: string | undefined,
+): string | Uint8Array => {
 	if (!contentType) {
 		return buffer;
 	}
 	const normalized = contentType.toLowerCase();
-	if (normalized.includes('json') || normalized.startsWith('text/') || normalized.includes('yaml')) {
+	if (
+		normalized.includes('json') ||
+		normalized.startsWith('text/') ||
+		normalized.includes('yaml')
+	) {
 		return new TextDecoder().decode(buffer);
 	}
 	return buffer;

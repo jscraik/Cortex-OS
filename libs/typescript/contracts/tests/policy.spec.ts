@@ -1,4 +1,3 @@
-import { PolicyContract } from '@cortex-os/contracts';
 import { describe, expect, test } from 'vitest';
 
 describe('Policy compliance for model-gateway', () => {

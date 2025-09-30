@@ -1,7 +1,7 @@
-import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
+import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { performance } from 'node:perf_hooks';
 import { resolve } from 'node:path';
+import { performance } from 'node:perf_hooks';
 import type {
 	PersistentShell,
 	PersistentShellOptions,
@@ -85,7 +85,10 @@ const enforceAllowlist = (command: string, allowed: Set<string>): void => {
 	}
 };
 
-const extractExit = (buffer: string, sentinel: string): { exitCode: number; output: string } | null => {
+const extractExit = (
+	buffer: string,
+	sentinel: string,
+): { exitCode: number; output: string } | null => {
 	const marker = `${sentinel} `;
 	const index = buffer.lastIndexOf(marker);
 	if (index === -1) {
@@ -152,7 +155,10 @@ class PersistentShellImpl implements PersistentShell {
 			() => this.execute(command, options),
 			() => this.execute(command, options),
 		);
-		this.queue = job.then(() => undefined, () => undefined);
+		this.queue = job.then(
+			() => undefined,
+			() => undefined,
+		);
 		return job;
 	}
 
@@ -162,7 +168,10 @@ class PersistentShellImpl implements PersistentShell {
 		}
 	}
 
-	private buildScript(command: string, options?: ShellRunOptions): { script: string; sentinel: string; timeout: number } {
+	private buildScript(
+		command: string,
+		options?: ShellRunOptions,
+	): { script: string; sentinel: string; timeout: number } {
 		const sentinel = `__CORTEX_EXIT_${randomUUID()}__`;
 		const timeout = options?.timeoutMs ?? this.timeoutMs;
 		const prefix = options?.cwd ? `cd ${quote(resolve(this.root, options.cwd))}\n` : '';
@@ -195,7 +204,11 @@ class PersistentShellImpl implements PersistentShell {
 		}
 	}
 
-	private startTimer(state: RunState, context: ListenerContext, fail: (error: Error) => void): NodeJS.Timeout {
+	private startTimer(
+		state: RunState,
+		_context: ListenerContext,
+		fail: (error: Error) => void,
+	): NodeJS.Timeout {
 		return setTimeout(() => {
 			fail(new Error(`Persistent shell timed out after ${state.timeout}ms`));
 			this.proc.kill('SIGKILL');
@@ -212,7 +225,13 @@ class PersistentShellImpl implements PersistentShell {
 			const stdout = state.stdout.join('');
 			const stderr = state.stderr.join('');
 			const usage = diffUsage(state.beforeUsage, this.proc.resourceUsage());
-			resolveResult({ stdout, stderr, exitCode, durationMs: performance.now() - state.start, usage });
+			resolveResult({
+				stdout,
+				stderr,
+				exitCode,
+				durationMs: performance.now() - state.start,
+				usage,
+			});
 		};
 	}
 
@@ -274,7 +293,10 @@ class PersistentShellImpl implements PersistentShell {
 		this.proc.stderr.on('data', context.stderrHandler);
 	}
 
-	private async execute(command: string | string[], options?: ShellRunOptions): Promise<ShellResult> {
+	private async execute(
+		command: string | string[],
+		options?: ShellRunOptions,
+	): Promise<ShellResult> {
 		this.ensureAlive();
 		const formatted = stringifyCommand(command);
 		enforceAllowlist(formatted, this.allowed);
@@ -287,4 +309,5 @@ class PersistentShellImpl implements PersistentShell {
 	}
 }
 
-export const persistentShell = (options: PersistentShellOptions): PersistentShell => new PersistentShellImpl(options);
+export const persistentShell = (options: PersistentShellOptions): PersistentShell =>
+	new PersistentShellImpl(options);

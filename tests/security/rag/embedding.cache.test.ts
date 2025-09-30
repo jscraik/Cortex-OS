@@ -1,7 +1,7 @@
-import type { Embeddings } from '@cortex-os/rag-embed/provider';
-import { expect, it } from 'vitest';
+import type { Embedder } from '@cortex-os/rag';
+import { expect } from 'vitest';
 
-class CountingEmbedder implements Embeddings {
+class CountingEmbedder implements Embedder {
 	model = 'dummy-1.0';
 	dim = 3;
 	calls = 0;
@@ -11,7 +11,7 @@ class CountingEmbedder implements Embeddings {
 	}
 }
 
-function caching(inner: Embeddings): Embeddings {
+function caching(inner: Embedder): Embedder {
 	const cache = new Map<string, number[]>();
 	return {
 		model: inner.model,
@@ -31,7 +31,10 @@ function caching(inner: Embeddings): Embeddings {
 					cache.set(t, fresh[i]);
 				}
 			}
-			for (const t of texts) output.push(cache.get(t)!);
+			for (const t of texts) {
+				const cached = cache.get(t);
+				if (cached) output.push(cached);
+			}
 			return output;
 		},
 	};

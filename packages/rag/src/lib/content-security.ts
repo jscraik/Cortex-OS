@@ -7,6 +7,9 @@
 
 import { z } from 'zod';
 
+// Type definitions
+export type SecurityLevel = 'low' | 'medium' | 'high';
+
 // Content Security Policy configuration
 export interface ContentSecurityConfig {
 	// XSS protection settings
@@ -58,28 +61,31 @@ export const DEFAULT_CONTENT_SECURITY_CONFIG: ContentSecurityConfig = {
 	},
 };
 
-// Suspicious patterns that indicate potential attacks
+// Suspicious patterns that indicate potential attacks - fixed for ReDoS safety
 const SUSPICIOUS_PATTERNS = [
 	// Remaining dangerous patterns after sanitization
-	/(eval|exec|system|shell_exec|passthru)\s*\(/gi,
+	/(?:eval|exec|system|shell_exec|passthru)\s*\(/gi,
 
-	// Command injection patterns
-	/(\||&|;|\$\(|`)/g,
+	// Command injection patterns - made more specific to avoid ReDoS
+	/[|&;](?=\s*[a-zA-Z_])/g, // Only match when followed by potential command
+	/\$\([^)]{0,100}\)/g, // Limit length to prevent backtracking
+	/`[^`]{0,100}`/g, // Limit length to prevent backtracking
 
 	// Path traversal patterns
-	/(\.\.\/|\.\.\\)/g,
+	/\.\.[\\/]/g,
 
-	// Template injection patterns (stricter - only catch actual template syntax)
-	/\{\{[^}]*\}\}/g,
-	/\$\{[^}]*\}/g,
+	// Template injection patterns - length limited to prevent ReDoS
+	/\{\{[^}]{0,50}\}\}/g,
+	/\$\{[^}]{0,50}\}/g,
 
 	// SQL injection (more conservative, post-sanitization)
-	/(\bunion\b.*\bselect\b|\bselect\b.*\bunion\b)/gi,
-	/'[^']*'[^']*OR[^']*'[^']*'/gi,
-	/';.*drop.*table/gi,
+	/\bunion\b[\s\w]{0,20}\bselect\b/gi,
+	/\bselect\b[\s\w]{0,20}\bunion\b/gi,
+	/'[^']{0,30}'[^']{0,30}OR[^']{0,30}'[^']{0,30}'/gi,
+	/';[^;]{0,50}drop[^;]{0,50}table/gi,
 
 	// Protocol handlers that might have escaped sanitization
-	/(file|ftp):\/\//gi,
+	/(?:file|ftp):\/\//gi,
 
 	// Specific JavaScript function calls that indicate XSS
 	/alert\s*\(/gi,
@@ -114,7 +120,7 @@ export class ContentSecurityError extends Error {
 	constructor(
 		public readonly reason: string,
 		public readonly details: string[] = [],
-		public readonly securityLevel: 'low' | 'medium' | 'high' = 'medium',
+		public readonly securityLevel: SecurityLevel = 'medium',
 	) {
 		super(`Content security violation: ${reason}`);
 		this.name = 'ContentSecurityError';
@@ -202,12 +208,12 @@ export class ContentSecurityPolicy {
 
 		// Strip event handlers - comprehensive approach
 		if (this.config.xss.stripEventHandlers) {
-			// Remove all on* attributes in various formats
-			sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '');
-			sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^>\s]+/gi, '');
+			// Remove all on* attributes in various formats - ReDoS safe
+			sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']{0,100}["']/gi, '');
+			sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^>\s]{1,50}/gi, '');
 			// Also handle specific cases
 			for (const handler of EVENT_HANDLERS) {
-				const regex = new RegExp(`\\s*${handler}\\s*=\\s*["'][^"']*["']`, 'gi');
+				const regex = new RegExp(`\\s*${handler}\\s*=\\s*["'][^"']{0,100}["']`, 'gi');
 				sanitized = sanitized.replace(regex, '');
 			}
 		}
@@ -218,7 +224,7 @@ export class ContentSecurityPolicy {
 
 		// Handle data URLs based on config
 		if (!this.config.content.allowDataUrls) {
-			sanitized = sanitized.replace(/data:\s*[^;]+;base64[^"'>\s]*/gi, '');
+			sanitized = sanitized.replace(/data:\s*[^;]{1,50};base64[^"'>\s]{0,200}/gi, '');
 		}
 
 		// Remove eval and related functions
@@ -258,8 +264,10 @@ export class ContentSecurityPolicy {
 			// Basic URL validation
 			try {
 				const url = new URL(match);
-				// Block suspicious domains or protocols
-				if (url.protocol === 'javascript:' || url.protocol === 'vbscript:') {
+				// Block suspicious protocols - safely check without eval risk
+				const protocol = url.protocol.toLowerCase();
+				if (protocol === 'javascript:' || protocol === 'vbscript:' ||
+					protocol === 'data:' || protocol === 'file:') {
 					return '[BLOCKED_URL]';
 				}
 				return match;

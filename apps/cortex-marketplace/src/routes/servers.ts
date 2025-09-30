@@ -48,17 +48,19 @@ const ServerIdSchema = z
 	.regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/, 'Invalid server ID format');
 
 export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
-
-	function getInstallForClient(installData: Record<string, unknown>, client?: string):
+	function getInstallForClient(
+		installData: Record<string, unknown>,
+		client?: string,
+	):
 		| { client: string; command: string; instructions: string; config: Record<string, unknown> }
 		| {
-			available: string[];
-			claude?: unknown;
-			cline?: unknown;
-			['cortex-mcp']?: unknown;
-			continue?: unknown;
-			json?: unknown;
-		} {
+				available: string[];
+				claude?: unknown;
+				cline?: unknown;
+				['cortex-mcp']?: unknown;
+				continue?: unknown;
+				json?: unknown;
+		  } {
 		let command = '';
 		let instructions = '';
 		let config: Record<string, unknown> = {};
@@ -66,17 +68,23 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 		switch (client) {
 			case 'claude':
 				command = typeof installData.claude === 'string' ? installData.claude : '';
-				instructions = command ? `Run this command in Claude Desktop: ${command}` : 'Install via Claude settings';
+				instructions = command
+					? `Run this command in Claude Desktop: ${command}`
+					: 'Install via Claude settings';
 				config = (installData.json as Record<string, unknown>) || {};
 				break;
 			case 'cline':
 				command = typeof installData.cline === 'string' ? installData.cline : '';
-				instructions = command ? `Run this command in Cline: ${command}` : 'Install via Cline MCP settings';
+				instructions = command
+					? `Run this command in Cline: ${command}`
+					: 'Install via Cline MCP settings';
 				break;
 			case 'cortex-mcp':
 			case 'cursor': {
-				const cortexInstall = typeof installData['cortex-mcp'] === 'string' ? installData['cortex-mcp'] : undefined;
-				const legacyCursorInstall = typeof installData.cursor === 'string' ? installData.cursor : undefined;
+				const cortexInstall =
+					typeof installData['cortex-mcp'] === 'string' ? installData['cortex-mcp'] : undefined;
+				const legacyCursorInstall =
+					typeof installData.cursor === 'string' ? installData.cursor : undefined;
 				command = cortexInstall ?? legacyCursorInstall ?? '';
 				instructions = command || 'Add to cortex-mcp (local MCP) configuration';
 				break;
@@ -87,7 +95,9 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				break;
 			default:
 				return {
-					available: Object.keys(installData).filter((key) => key !== 'json').map((k) => (k === 'cursor' ? 'cortex-mcp' : k)),
+					available: Object.keys(installData)
+						.filter((key) => key !== 'json')
+						.map((k) => (k === 'cursor' ? 'cortex-mcp' : k)),
 					claude: installData.claude,
 					cline: installData.cline,
 					'cortex-mcp': installData['cortex-mcp'] ?? installData.cursor,

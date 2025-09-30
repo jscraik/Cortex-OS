@@ -5,14 +5,14 @@
 
 import {
 	context,
-	diag,
 	DiagConsoleLogger,
 	DiagLogLevel,
+	diag,
 	type Span,
 	type SpanOptions,
 	SpanStatusCode,
-	trace,
 	type Tracer,
+	trace,
 } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -163,7 +163,10 @@ export class OrchestrationTracer {
 				// If the result contains token information, record it
 				if (result && typeof result === 'object') {
 					if ('tokensUsed' in result) {
-						span.setAttribute('model.total_tokens', this.normalizeAttributeValue(result.tokensUsed));
+						span.setAttribute(
+							'model.total_tokens',
+							this.normalizeAttributeValue(result.tokensUsed),
+						);
 					}
 					if ('usage' in result) {
 						const usage = result.usage as Record<string, number>;
@@ -262,7 +265,10 @@ export class OrchestrationTracer {
 				// If the result contains token information, record it
 				if (result && typeof result === 'object') {
 					if ('tokensUsed' in result) {
-						span.setAttribute('model.total_tokens', this.normalizeAttributeValue(result.tokensUsed));
+						span.setAttribute(
+							'model.total_tokens',
+							this.normalizeAttributeValue(result.tokensUsed),
+						);
 					}
 					if ('usage' in result) {
 						const usage = result.usage as Record<string, number>;
@@ -380,8 +386,10 @@ export class OrchestrationTracer {
 
 	// Helper to normalize unknown values to OpenTelemetry AttributeValue
 	private normalizeAttributeValue(value: unknown): import('@opentelemetry/api').AttributeValue {
-		if (value === null || value === undefined) return String(value) as unknown as import('@opentelemetry/api').AttributeValue;
-		if (Array.isArray(value)) return value as unknown as import('@opentelemetry/api').AttributeValue;
+		if (value === null || value === undefined)
+			return String(value) as unknown as import('@opentelemetry/api').AttributeValue;
+		if (Array.isArray(value))
+			return value as unknown as import('@opentelemetry/api').AttributeValue;
 		if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
 			return value as import('@opentelemetry/api').AttributeValue;
 		}
@@ -394,7 +402,9 @@ export class OrchestrationTracer {
 	}
 
 	// Helper to normalize a record of attributes
-	private normalizeAttributes(attrs?: Record<string, unknown>): import('@opentelemetry/api').Attributes | undefined {
+	private normalizeAttributes(
+		attrs?: Record<string, unknown>,
+	): import('@opentelemetry/api').Attributes | undefined {
 		if (!attrs) return undefined;
 		const out: Record<string, import('@opentelemetry/api').AttributeValue> = {};
 		for (const [k, v] of Object.entries(attrs)) {
@@ -412,7 +422,10 @@ export class OrchestrationTracer {
 		if (error instanceof Error) {
 			span.recordException(error);
 		} else {
-			span.recordException({ name: 'Error', message: String(error) } as import('@opentelemetry/api').Exception);
+			span.recordException({
+				name: 'Error',
+				message: String(error),
+			} as import('@opentelemetry/api').Exception);
 		}
 	}
 }

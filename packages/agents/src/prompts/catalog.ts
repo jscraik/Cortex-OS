@@ -1,13 +1,13 @@
 import { PlanningPhase, type PromptTemplate } from './types';
 
 export const PROMPT_TEMPLATE_CATALOG: PromptTemplate[] = [
-        {
-                id: 'long-horizon-system',
-                name: 'Long-Horizon System Prompt',
-                description: 'Comprehensive system prompt for complex, multi-step tasks',
-                category: 'system',
-                complexity: [5, 10],
-                template: `You are a sophisticated AI agent from brAInwav, operating within the nO Master Agent Loop architecture. Your role is to handle complex, long-horizon tasks that require careful planning and execution.
+	{
+		id: 'long-horizon-system',
+		name: 'Long-Horizon System Prompt',
+		description: 'Comprehensive system prompt for complex, multi-step tasks',
+		category: 'system',
+		complexity: [5, 10],
+		template: `You are a sophisticated AI agent from brAInwav, operating within the nO Master Agent Loop architecture. Your role is to handle complex, long-horizon tasks that require careful planning and execution.
 
 **Core Capabilities:**
 {{capabilities}}
@@ -66,48 +66,48 @@ Remember: You represent brAInwav's commitment to intelligent, reliable, and effi
 
 **Current Task:**
 {{taskDescription}}`,
-                examples: [
-                        {
-                                context: { complexity: 8, priority: 9, capabilities: ['analysis', 'planning'] },
-                                input: 'Analyze and refactor a complex codebase',
-                                expectedBehavior:
-                                        'Begin with explicit planning, use workspace tools for organization, break work into analysis/strategy/execution phases.',
-                        },
-                ],
-                variables: [
-                        'capabilities',
-                        'tools',
-                        'taskId',
-                        'complexity',
-                        'priority',
-                        'currentPhase',
-                        'taskDescription',
-                        'contextIsolation',
-                        'complianceStandards',
-                        'complianceRisk',
-                        'complianceViolations',
-                        'complianceGuidance',
-                ],
-                brAInwavBranding: true,
-                nOOptimized: true,
-                phases: [
-                        PlanningPhase.INITIALIZATION,
-                        PlanningPhase.ANALYSIS,
-                        PlanningPhase.STRATEGY,
-                        PlanningPhase.EXECUTION,
-                        PlanningPhase.VALIDATION,
-                ],
-                tags: ['long-horizon', 'system'],
-                supportsMultiAgent: true,
-                contextIsolation: 'light',
-        },
-        {
-                id: 'code-analysis-task',
-                name: 'Code Analysis Task Prompt',
-                description: 'Specialized prompt for code analysis and review tasks',
-                category: 'task',
-                complexity: [3, 8],
-                template: `**brAInwav Code Analysis Protocol**
+		examples: [
+			{
+				context: { complexity: 8, priority: 9, capabilities: ['analysis', 'planning'] },
+				input: 'Analyze and refactor a complex codebase',
+				expectedBehavior:
+					'Begin with explicit planning, use workspace tools for organization, break work into analysis/strategy/execution phases.',
+			},
+		],
+		variables: [
+			'capabilities',
+			'tools',
+			'taskId',
+			'complexity',
+			'priority',
+			'currentPhase',
+			'taskDescription',
+			'contextIsolation',
+			'complianceStandards',
+			'complianceRisk',
+			'complianceViolations',
+			'complianceGuidance',
+		],
+		brAInwavBranding: true,
+		nOOptimized: true,
+		phases: [
+			PlanningPhase.INITIALIZATION,
+			PlanningPhase.ANALYSIS,
+			PlanningPhase.STRATEGY,
+			PlanningPhase.EXECUTION,
+			PlanningPhase.VALIDATION,
+		],
+		tags: ['long-horizon', 'system'],
+		supportsMultiAgent: true,
+		contextIsolation: 'light',
+	},
+	{
+		id: 'code-analysis-task',
+		name: 'Code Analysis Task Prompt',
+		description: 'Specialized prompt for code analysis and review tasks',
+		category: 'task',
+		complexity: [3, 8],
+		template: `**brAInwav Code Analysis Protocol**
 
 You are conducting a code analysis task within the nO Master Agent Loop architecture. Apply systematic analysis patterns:
 
@@ -145,38 +145,38 @@ You are conducting a code analysis task within the nO Master Agent Loop architec
 {{taskDescription}}
 
 Complexity: {{complexity}}/10 | Priority: {{priority}}/10`,
-                examples: [
-                        {
-                                context: { complexity: 6, tools: ['read', 'grep', 'workspace-write'] },
-                                input: 'Analyze JavaScript React components for security issues',
-                                expectedBehavior:
-                                        'Systematic file reading, security pattern matching, organized reporting in workspace with compliance summary.',
-                        },
-                ],
-                variables: [
-                        'tools',
-                        'taskDescription',
-                        'complexity',
-                        'priority',
-                        'complianceStandards',
-                        'complianceRisk',
-                        'complianceViolations',
-                        'complianceGuidance',
-                ],
-                brAInwavBranding: true,
-                nOOptimized: true,
-                phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION],
-                tags: ['analysis', 'code-review'],
-                supportsMultiAgent: false,
-                contextIsolation: 'light',
-        },
-        {
-                id: 'planning-coordination',
-                name: 'Planning Coordination Prompt',
-                description: 'Prompt for coordinating multi-agent planning activities',
-                category: 'planning',
-                complexity: [4, 10],
-                template: `**brAInwav nO Planning Coordination**
+		examples: [
+			{
+				context: { complexity: 6, tools: ['read', 'grep', 'workspace-write'] },
+				input: 'Analyze JavaScript React components for security issues',
+				expectedBehavior:
+					'Systematic file reading, security pattern matching, organized reporting in workspace with compliance summary.',
+			},
+		],
+		variables: [
+			'tools',
+			'taskDescription',
+			'complexity',
+			'priority',
+			'complianceStandards',
+			'complianceRisk',
+			'complianceViolations',
+			'complianceGuidance',
+		],
+		brAInwavBranding: true,
+		nOOptimized: true,
+		phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION],
+		tags: ['analysis', 'code-review'],
+		supportsMultiAgent: false,
+		contextIsolation: 'light',
+	},
+	{
+		id: 'planning-coordination',
+		name: 'Planning Coordination Prompt',
+		description: 'Prompt for coordinating multi-agent planning activities',
+		category: 'planning',
+		complexity: [4, 10],
+		template: `**brAInwav nO Planning Coordination**
 
 You are the planning coordinator in a multi-agent workflow. Your responsibility is to orchestrate planning activities across agents while maintaining coherent execution strategies.
 
@@ -221,41 +221,41 @@ You are the planning coordinator in a multi-agent workflow. Your responsibility 
 {{taskDescription}}
 
 Apply brAInwav's systematic approach to multi-agent coordination.`,
-                examples: [
-                        {
-                                context: { complexity: 7, currentPhase: PlanningPhase.STRATEGY, agentCount: 3 },
-                                input: 'Coordinate deployment planning across 3 agents',
-                                expectedBehavior:
-                                        'Create structured plan with dependencies, resource allocation, compliance callouts, and agent assignments.',
-                        },
-                ],
-                variables: [
-                        'tools',
-                        'complexity',
-                        'agentCount',
-                        'currentPhase',
-                        'sessionId',
-                        'taskDescription',
-                        'contextIsolation',
-                        'complianceStandards',
-                        'complianceRisk',
-                        'complianceViolations',
-                        'complianceGuidance',
-                ],
-                brAInwavBranding: true,
-                nOOptimized: true,
-                phases: [PlanningPhase.STRATEGY, PlanningPhase.EXECUTION],
-                tags: ['coordination', 'multi-agent'],
-                supportsMultiAgent: true,
-                contextIsolation: 'strict',
-        },
-        {
-                id: 'error-recovery',
-                name: 'Error Recovery Prompt',
-                description: 'Prompt for handling errors and implementing recovery strategies',
-                category: 'error',
-                complexity: [1, 10],
-                template: `**brAInwav Error Recovery Protocol**
+		examples: [
+			{
+				context: { complexity: 7, currentPhase: PlanningPhase.STRATEGY, agentCount: 3 },
+				input: 'Coordinate deployment planning across 3 agents',
+				expectedBehavior:
+					'Create structured plan with dependencies, resource allocation, compliance callouts, and agent assignments.',
+			},
+		],
+		variables: [
+			'tools',
+			'complexity',
+			'agentCount',
+			'currentPhase',
+			'sessionId',
+			'taskDescription',
+			'contextIsolation',
+			'complianceStandards',
+			'complianceRisk',
+			'complianceViolations',
+			'complianceGuidance',
+		],
+		brAInwavBranding: true,
+		nOOptimized: true,
+		phases: [PlanningPhase.STRATEGY, PlanningPhase.EXECUTION],
+		tags: ['coordination', 'multi-agent'],
+		supportsMultiAgent: true,
+		contextIsolation: 'strict',
+	},
+	{
+		id: 'error-recovery',
+		name: 'Error Recovery Prompt',
+		description: 'Prompt for handling errors and implementing recovery strategies',
+		category: 'error',
+		complexity: [1, 10],
+		template: `**brAInwav Error Recovery Protocol**
 
 An error condition has been detected. Apply systematic recovery procedures:
 
@@ -295,38 +295,38 @@ An error condition has been detected. Apply systematic recovery procedures:
 {{errorDetails}}
 
 Apply brAInwav's commitment to reliable, resilient operation.`,
-                examples: [
-                        {
-                                context: { complexity: 3, priority: 9 },
-                                input: 'File read operation failed due to permission error',
-                                expectedBehavior:
-                                        'Assess alternatives, try different approach, document recovery actions with compliance risk acknowledgement.',
-                        },
-                ],
-                variables: [
-                        'errorType',
-                        'errorSeverity',
-                        'currentPhase',
-                        'affectedComponents',
-                        'tools',
-                        'errorDetails',
-                        'complianceRisk',
-                        'complianceGuidance',
-                ],
-                brAInwavBranding: true,
-                nOOptimized: true,
-                phases: [PlanningPhase.EXECUTION, PlanningPhase.VALIDATION],
-                tags: ['resilience', 'incident-response'],
-                supportsMultiAgent: true,
-                contextIsolation: 'none',
-        },
-        {
-                id: 'rapid-delivery-execution',
-                name: 'Rapid Delivery Execution Prompt',
-                description: 'Focused prompt for high-priority, low-complexity execution tasks',
-                category: 'task',
-                complexity: [1, 5],
-                template: `**brAInwav Rapid Delivery Lane**
+		examples: [
+			{
+				context: { complexity: 3, priority: 9 },
+				input: 'File read operation failed due to permission error',
+				expectedBehavior:
+					'Assess alternatives, try different approach, document recovery actions with compliance risk acknowledgement.',
+			},
+		],
+		variables: [
+			'errorType',
+			'errorSeverity',
+			'currentPhase',
+			'affectedComponents',
+			'tools',
+			'errorDetails',
+			'complianceRisk',
+			'complianceGuidance',
+		],
+		brAInwavBranding: true,
+		nOOptimized: true,
+		phases: [PlanningPhase.EXECUTION, PlanningPhase.VALIDATION],
+		tags: ['resilience', 'incident-response'],
+		supportsMultiAgent: true,
+		contextIsolation: 'none',
+	},
+	{
+		id: 'rapid-delivery-execution',
+		name: 'Rapid Delivery Execution Prompt',
+		description: 'Focused prompt for high-priority, low-complexity execution tasks',
+		category: 'task',
+		complexity: [1, 5],
+		template: `**brAInwav Rapid Delivery Lane**
 
 This task demands swift execution while respecting brAInwav quality and compliance guardrails.
 
@@ -349,39 +349,39 @@ This task demands swift execution while respecting brAInwav quality and complian
 - Required Action: {{complianceGuidance}}
 
 Use the minimal toolset required: {{tools}}. Escalate if unexpected complexity appears.`,
-                examples: [
-                        {
-                                context: { priority: 9, complexity: 3, taskDescription: 'Publish release notes draft' },
-                                input: 'Publish a prepared release note to workspace',
-                                expectedBehavior:
-                                        'Confirm inputs, execute concise steps, and report completion with compliance reminder.',
-                        },
-                ],
-                variables: [
-                        'taskDescription',
-                        'priority',
-                        'complexity',
-                        'agentId',
-                        'contextIsolation',
-                        'tools',
-                        'complianceStandards',
-                        'complianceRisk',
-                        'complianceGuidance',
-                ],
-                brainwavBranding: true,
-                nOOptimized: true,
-                phases: [PlanningPhase.EXECUTION, PlanningPhase.COMPLETION],
-                tags: ['execution', 'rapid'],
-                supportsMultiAgent: false,
-                contextIsolation: 'light',
-        },
-        {
-                id: 'compliance-review-brief',
-                name: 'Compliance Review Brief',
-                description: 'Template for summarizing compliance findings during planning checkpoints',
-                category: 'reflection',
-                complexity: [2, 7],
-                template: `**brAInwav Compliance Review Brief**
+		examples: [
+			{
+				context: { priority: 9, complexity: 3, taskDescription: 'Publish release notes draft' },
+				input: 'Publish a prepared release note to workspace',
+				expectedBehavior:
+					'Confirm inputs, execute concise steps, and report completion with compliance reminder.',
+			},
+		],
+		variables: [
+			'taskDescription',
+			'priority',
+			'complexity',
+			'agentId',
+			'contextIsolation',
+			'tools',
+			'complianceStandards',
+			'complianceRisk',
+			'complianceGuidance',
+		],
+		brainwavBranding: true,
+		nOOptimized: true,
+		phases: [PlanningPhase.EXECUTION, PlanningPhase.COMPLETION],
+		tags: ['execution', 'rapid'],
+		supportsMultiAgent: false,
+		contextIsolation: 'light',
+	},
+	{
+		id: 'compliance-review-brief',
+		name: 'Compliance Review Brief',
+		description: 'Template for summarizing compliance findings during planning checkpoints',
+		category: 'reflection',
+		complexity: [2, 7],
+		template: `**brAInwav Compliance Review Brief**
 
 Use this briefing pattern to summarize compliance posture before continuing execution.
 
@@ -397,27 +397,27 @@ Use this briefing pattern to summarize compliance posture before continuing exec
 4. Communicate status to coordinating agents if multi-agent context applies ({{agentCount}} agents active).
 
 Keep the summary concise, actionable, and branded for brAInwav leadership visibility.`,
-                examples: [
-                        {
-                                context: { currentPhase: PlanningPhase.VALIDATION, agentCount: 2 },
-                                input: 'Summarize compliance status before deployment',
-                                expectedBehavior:
-                                        'Provide concise compliance summary with remediation owners and follow-up plan.',
-                        },
-                ],
-                variables: [
-                        'complianceStandards',
-                        'complianceRisk',
-                        'complianceViolations',
-                        'complianceGuidance',
-                        'currentPhase',
-                        'agentCount',
-                ],
-                brAInwavBranding: true,
-                nOOptimized: true,
-                phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION, PlanningPhase.COMPLETION],
-                tags: ['compliance', 'review'],
-                supportsMultiAgent: true,
-                contextIsolation: 'strict',
-        },
+		examples: [
+			{
+				context: { currentPhase: PlanningPhase.VALIDATION, agentCount: 2 },
+				input: 'Summarize compliance status before deployment',
+				expectedBehavior:
+					'Provide concise compliance summary with remediation owners and follow-up plan.',
+			},
+		],
+		variables: [
+			'complianceStandards',
+			'complianceRisk',
+			'complianceViolations',
+			'complianceGuidance',
+			'currentPhase',
+			'agentCount',
+		],
+		brAInwavBranding: true,
+		nOOptimized: true,
+		phases: [PlanningPhase.ANALYSIS, PlanningPhase.VALIDATION, PlanningPhase.COMPLETION],
+		tags: ['compliance', 'review'],
+		supportsMultiAgent: true,
+		contextIsolation: 'strict',
+	},
 ];

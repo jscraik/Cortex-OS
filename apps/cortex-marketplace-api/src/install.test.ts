@@ -37,9 +37,9 @@ describe('install command utilities', () => {
 	};
 
 	test('generates Claude and JSON commands', () => {
-	const commands = generateCommands(server);
-	// Expect cortex-mcp to be present (new canonical name) while cursor remains for back-compat
-	expect(commands.map((c) => c.client)).toEqual(['claude', 'cortex-mcp', 'cursor', 'json']);
+		const commands = generateCommands(server);
+		// Expect cortex-mcp to be present (new canonical name) while cursor remains for back-compat
+		expect(commands.map((c) => c.client)).toEqual(['claude', 'cortex-mcp', 'cursor', 'json']);
 	});
 
 	test('includes command in instructions', () => {

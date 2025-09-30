@@ -131,45 +131,45 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		expect(webhookBody.eventType).toBe('login');
 	});
 
-        it('skips providers without credentials but still increments metrics', async () => {
-                process.env.AUTH_MONITORING_NEW_RELIC_ACCOUNT_ID = '12345';
-                process.env.AUTH_MONITORING_NEW_RELIC_INSERT_KEY = 'nr-key';
+	it('skips providers without credentials but still increments metrics', async () => {
+		process.env.AUTH_MONITORING_NEW_RELIC_ACCOUNT_ID = '12345';
+		process.env.AUTH_MONITORING_NEW_RELIC_INSERT_KEY = 'nr-key';
 
-                const { externalMonitoringService } = await import(
-                        '../../services/externalMonitoringService.js'
-                );
+		const { externalMonitoringService } = await import(
+			'../../services/externalMonitoringService.js'
+		);
 
-                await externalMonitoringService.emitAuthEvent(sampleEvent);
+		await externalMonitoringService.emitAuthEvent(sampleEvent);
 
-                expect(counterAddSpy).toHaveBeenCalledTimes(1);
-                expect(fetchSpy).toHaveBeenCalledTimes(1);
-                expect(infoSpy).toHaveBeenCalledWith(
-                        'external-monitoring: provider skipped for brAInwav auth monitoring',
-                        expect.objectContaining({ provider: 'datadog', reason: 'missing_credentials' }),
-                );
-        });
+		expect(counterAddSpy).toHaveBeenCalledTimes(1);
+		expect(fetchSpy).toHaveBeenCalledTimes(1);
+		expect(infoSpy).toHaveBeenCalledWith(
+			'external-monitoring: provider skipped for brAInwav auth monitoring',
+			expect.objectContaining({ provider: 'datadog', reason: 'missing_credentials' }),
+		);
+	});
 
-        it('warns and skips webhook dispatch when configured with non-HTTPS URL', async () => {
-                process.env.AUTH_MONITORING_WEBHOOK_URL = 'http://hooks.brainwav.dev/insecure';
+	it('warns and skips webhook dispatch when configured with non-HTTPS URL', async () => {
+		process.env.AUTH_MONITORING_WEBHOOK_URL = 'http://hooks.brainwav.dev/insecure';
 
-                const { externalMonitoringService } = await import(
-                        '../../services/externalMonitoringService.js'
-                );
+		const { externalMonitoringService } = await import(
+			'../../services/externalMonitoringService.js'
+		);
 
-                await externalMonitoringService.emitAuthEvent(sampleEvent);
+		await externalMonitoringService.emitAuthEvent(sampleEvent);
 
-                expect(counterAddSpy).toHaveBeenCalledTimes(1);
-                expect(fetchSpy).not.toHaveBeenCalled();
-                expect(warnSpy).toHaveBeenCalledWith(
-                        'brAInwav external monitoring invalid webhook configuration',
-                        expect.objectContaining({ provider: 'webhook', reason: 'invalid_url' }),
-                );
-        });
+		expect(counterAddSpy).toHaveBeenCalledTimes(1);
+		expect(fetchSpy).not.toHaveBeenCalled();
+		expect(warnSpy).toHaveBeenCalledWith(
+			'brAInwav external monitoring invalid webhook configuration',
+			expect.objectContaining({ provider: 'webhook', reason: 'invalid_url' }),
+		);
+	});
 
-        it('logs warning when provider returns non-ok response but resolves', async () => {
-                process.env.AUTH_MONITORING_DATADOG_API_KEY = 'dd-key';
+	it('logs warning when provider returns non-ok response but resolves', async () => {
+		process.env.AUTH_MONITORING_DATADOG_API_KEY = 'dd-key';
 
-                fetchSpy.mockResolvedValueOnce(mockFetchResponse(500, false));
+		fetchSpy.mockResolvedValueOnce(mockFetchResponse(500, false));
 
 		const { externalMonitoringService } = await import(
 			'../../services/externalMonitoringService.js'
@@ -183,11 +183,11 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		);
 	});
 
-        it('logs warning when webhook request times out but resolves', async () => {
-                vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
-                try {
-                        process.env.AUTH_MONITORING_WEBHOOK_URL = 'https://hooks.brainwav.dev/timeout';
-                        process.env.AUTH_MONITORING_TIMEOUT_MS = '100';
+	it('logs warning when webhook request times out but resolves', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+		try {
+			process.env.AUTH_MONITORING_WEBHOOK_URL = 'https://hooks.brainwav.dev/timeout';
+			process.env.AUTH_MONITORING_TIMEOUT_MS = '100';
 
 			fetchSpy.mockImplementationOnce((_url: RequestInfo | URL, init?: RequestInit) =>
 				rejectOnAbort(init?.signal as AbortSignal | undefined),

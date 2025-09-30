@@ -6,16 +6,16 @@ import * as orchestration from '../src/index.js';
  * as we refactor internals towards LangGraph.
  */
 describe('@cortex-os/orchestration public API', () => {
-  it('exposes critical symbols', () => {
-    const keys = Object.keys(orchestration);
-    for (const k of ['version', 'name', 'OrchestrationDefaults', 'orchestrationMcpTools']) {
-      expect(keys).toContain(k);
-    }
-  });
+	it('exposes critical symbols', () => {
+		const keys = Object.keys(orchestration);
+		for (const k of ['version', 'name', 'OrchestrationDefaults', 'orchestrationMcpTools']) {
+			expect(keys).toContain(k);
+		}
+	});
 
-  it('matches the expected export keys (snapshot baseline)', () => {
-    const keys = Object.keys(orchestration).sort();
-    expect(keys).toMatchInlineSnapshot(`
+	it('matches the expected export keys (snapshot baseline)', () => {
+		const keys = Object.keys(orchestration).sort();
+		expect(keys).toMatchInlineSnapshot(`
     [
       "N0BudgetSchema",
       "N0SessionSchema",
@@ -61,5 +61,5 @@ describe('@cortex-os/orchestration public API', () => {
       "workflowStateToN0",
     ]
     `);
-  });
+	});
 });

@@ -24,8 +24,6 @@
     "@cortex-os/memories": "workspace:*",
     "@cortex-os/orchestration": "workspace:*",
     "@cortex-os/rag": "workspace:*",
-    "@cortex-os/rag-embed": "workspace:*",
-    "@cortex-os/rag-store": "workspace:*",
     "@cortex-os/simlab": "workspace:*",
     "@cortex-os/utils": "workspace:*",
     "@opentelemetry/api": "^1.9.0",

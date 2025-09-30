@@ -351,6 +351,6 @@ export const StandardShutdownHandlers = {
 		};
 	},
 };
-
 // Expose StandardShutdownHandlers to global scope so tests referencing it without importing can use it
-; (globalThis as unknown as Record<string, unknown>).StandardShutdownHandlers = StandardShutdownHandlers;
+(globalThis as unknown as Record<string, unknown>).StandardShutdownHandlers =
+	StandardShutdownHandlers;

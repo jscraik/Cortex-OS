@@ -1,4 +1,4 @@
-import type { ContractSubagent, BoundKernelTool } from '@cortex-os/agents';
+import type { BoundKernelTool, ContractSubagent } from '@cortex-os/agents';
 import type { HookResult } from '@cortex-os/hooks';
 import { AIMessage, type BaseMessage, ToolMessage } from '@langchain/core/messages';
 import { describe, expect, it, vi } from 'vitest';
@@ -30,11 +30,11 @@ describe('buildN0 orchestration graph', () => {
 		expect(runSlash).toHaveBeenCalledTimes(1);
 	});
 
-        it('executes tool calls and returns model output', async () => {
-                const schema = z.object({ text: z.string() });
-                const tool: ToolDefinition = {
-                        name: 'test.echo',
-                        description: 'Echo tool',
+	it('executes tool calls and returns model output', async () => {
+		const schema = z.object({ text: z.string() });
+		const tool: ToolDefinition = {
+			name: 'test.echo',
+			description: 'Echo tool',
 			schema,
 			async execute(input) {
 				const parsed = schema.parse(input);
@@ -58,81 +58,81 @@ describe('buildN0 orchestration graph', () => {
 		expect(result.output).toBe('Tool said: Echo:hi');
 		const toolMessages = (result.messages ?? []).filter((message) => message.getType() === 'tool');
 		expect(toolMessages).toHaveLength(1);
-                expect((toolMessages[0] as ToolMessage).content).toBe('Echo:hi');
-        });
+		expect((toolMessages[0] as ToolMessage).content).toBe('Echo:hi');
+	});
 
-        it('wires kernel surfaces into slash commands', async () => {
-                const shellExecute = vi.fn().mockResolvedValue({ stdout: 'git-ok', stderr: '', exitCode: 0 });
-                const fileExecute = vi.fn().mockResolvedValue({ content: 'FILE', truncated: false });
-                const shellTool: BoundKernelTool = {
-                        name: 'shell.exec',
-                        description: 'Execute shell',
-                        schema: z.object({ command: z.string() }),
-                        execute: shellExecute,
-                } satisfies BoundKernelTool;
-                const fileTool: BoundKernelTool = {
-                        name: 'kernel.fs.read',
-                        description: 'Read file',
-                        schema: z.object({ path: z.string(), maxBytes: z.number().optional() }),
-                        execute: fileExecute,
-                } satisfies BoundKernelTool;
-                const runSlash = vi.fn(async (_parsed, options) => {
-                        const context = options.renderContext;
-                        expect(context?.fileAllowlist).toEqual(['docs/**']);
-                        const bashResult = await context?.runBashSafe?.('git status', ['Bash(git status:*)']);
-                        expect(shellExecute).toHaveBeenCalledWith({ command: 'git status' });
-                        expect(bashResult).toEqual({ stdout: 'git-ok', stderr: '', code: 0 });
-                        const fileResult = await context?.readFileCapped?.(
-                                '/workspace/docs/guide.md',
-                                512,
-                                ['docs/**'],
-                        );
-                        expect(fileExecute).toHaveBeenCalledWith({ path: '/workspace/docs/guide.md', maxBytes: 512 });
-                        expect(fileResult).toBe('FILE');
-                        return {
-                                text: 'wired',
-                                metadata: {
-                                        command: {
-                                                model: 'gpt-4o-mini',
-                                                allowedTools: ['Bash(git status:*)'],
-                                        },
-                                },
-                        };
-                });
+	it('wires kernel surfaces into slash commands', async () => {
+		const shellExecute = vi.fn().mockResolvedValue({ stdout: 'git-ok', stderr: '', exitCode: 0 });
+		const fileExecute = vi.fn().mockResolvedValue({ content: 'FILE', truncated: false });
+		const shellTool: BoundKernelTool = {
+			name: 'shell.exec',
+			description: 'Execute shell',
+			schema: z.object({ command: z.string() }),
+			execute: shellExecute,
+		} satisfies BoundKernelTool;
+		const fileTool: BoundKernelTool = {
+			name: 'kernel.fs.read',
+			description: 'Read file',
+			schema: z.object({ path: z.string(), maxBytes: z.number().optional() }),
+			execute: fileExecute,
+		} satisfies BoundKernelTool;
+		const runSlash = vi.fn(async (_parsed, options) => {
+			const context = options.renderContext;
+			expect(context?.fileAllowlist).toEqual(['docs/**']);
+			const bashResult = await context?.runBashSafe?.('git status', ['Bash(git status:*)']);
+			expect(shellExecute).toHaveBeenCalledWith({ command: 'git status' });
+			expect(bashResult).toEqual({ stdout: 'git-ok', stderr: '', code: 0 });
+			const fileResult = await context?.readFileCapped?.('/workspace/docs/guide.md', 512, [
+				'docs/**',
+			]);
+			expect(fileExecute).toHaveBeenCalledWith({ path: '/workspace/docs/guide.md', maxBytes: 512 });
+			expect(fileResult).toBe('FILE');
+			return {
+				text: 'wired',
+				metadata: {
+					command: {
+						model: 'gpt-4o-mini',
+						allowedTools: ['Bash(git status:*)'],
+					},
+				},
+			};
+		});
 
-                const { graph } = await buildN0(
-                        createOptions({
-                                runSlash,
-                                kernelTools: [shellTool, fileTool],
-                                kernelOptions: {
-                                        filesystem: { allow: ['docs/**'], maxBytes: 4096 },
-                                        shell: { allow: ['git'], timeoutMs: 3000 },
-                                },
-                        }),
-                );
+		const { graph } = await buildN0(
+			createOptions({
+				runSlash,
+				kernelTools: [shellTool, fileTool],
+				kernelOptions: {
+					filesystem: { allow: ['docs/**'], maxBytes: 4096 },
+					shell: { allow: ['git'], timeoutMs: 3000 },
+				},
+			}),
+		);
 
-                const session = createSession();
-                const result = await graph.invoke({ input: '/status', session });
+		const session = createSession();
+		const result = await graph.invoke({ input: '/status', session });
 
-                expect(runSlash).toHaveBeenCalledTimes(1);
-                expect(result.ctx?.commandResult?.metadata?.command?.model).toBe('gpt-4o-mini');
-                expect(result.ctx?.commandResult?.metadata?.command?.allowedTools).toEqual(['Bash(git status:*)']);
-        });
+		expect(runSlash).toHaveBeenCalledTimes(1);
+		expect(result.ctx?.commandResult?.metadata?.command?.model).toBe('gpt-4o-mini');
+		expect(result.ctx?.commandResult?.metadata?.command?.allowedTools).toEqual([
+			'Bash(git status:*)',
+		]);
+	});
 });
 
 function createOptions(overrides: Partial<BuildN0Options>): BuildN0Options {
-        return {
-                model: overrides.model ?? new ToolLoopModel(),
-                hooks: overrides.hooks ?? new NoopHooks(),
-                runSlash: overrides.runSlash,
-                runSlashOptions: overrides.runSlashOptions,
-                kernelTools: overrides.kernelTools ?? [],
-                kernelOptions: overrides.kernelOptions,
-                subagents: overrides.subagents ?? new Map<string, ContractSubagent>(),
-                orchestratorTools: overrides.orchestratorTools ?? [],
-                disableSubagentDiscovery: true,
-                toolAllowList: overrides.toolAllowList,
-                toolConcurrency: overrides.toolConcurrency,
+	return {
+		model: overrides.model ?? new ToolLoopModel(),
+		hooks: overrides.hooks ?? new NoopHooks(),
+		runSlash: overrides.runSlash,
+		runSlashOptions: overrides.runSlashOptions,
+		kernelTools: overrides.kernelTools ?? [],
+		kernelOptions: overrides.kernelOptions,
+		subagents: overrides.subagents ?? new Map<string, ContractSubagent>(),
+		orchestratorTools: overrides.orchestratorTools ?? [],
+		disableSubagentDiscovery: true,
+		toolAllowList: overrides.toolAllowList,
+		toolConcurrency: overrides.toolConcurrency,
 		systemPrompt: overrides.systemPrompt,
 		planResolver: overrides.planResolver,
 		compaction: overrides.compaction,

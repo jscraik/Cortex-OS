@@ -1,15 +1,17 @@
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { EnvelopeSchema } from '@cortex-os/protocol';
 import type { Envelope } from '@cortex-os/protocol';
+import { EnvelopeSchema } from '@cortex-os/protocol';
 import type { FileConfig, HistoryRange, HistoryRecord, HistoryStore } from '../types.js';
 
 const ensureDir = async (path: string): Promise<void> => {
 	await mkdir(dirname(path), { recursive: true });
 };
 
-const buildEventPath = (root: string, sessionId: string): string => join(root, `${sessionId}.jsonl`);
-const buildCheckpointPath = (root: string, sessionId: string): string => join(root, `${sessionId}.checkpoint.json`);
+const buildEventPath = (root: string, sessionId: string): string =>
+	join(root, `${sessionId}.jsonl`);
+const buildCheckpointPath = (root: string, sessionId: string): string =>
+	join(root, `${sessionId}.checkpoint.json`);
 
 const parseLine = (line: string): HistoryRecord | null => {
 	if (!line.trim()) {
@@ -90,4 +92,5 @@ class FileHistoryStore implements HistoryStore {
 	public async close(): Promise<void> {}
 }
 
-export const createFileHistoryStore = (config: FileConfig): HistoryStore => new FileHistoryStore(config);
+export const createFileHistoryStore = (config: FileConfig): HistoryStore =>
+	new FileHistoryStore(config);

@@ -412,7 +412,11 @@ export class OrchestrationMetrics {
 		errorType?: string,
 		durationSeconds?: number,
 	): void {
-		this.plannerPersistenceEvents.inc({ event_type: eventType, status, error_type: errorType || 'none' });
+		this.plannerPersistenceEvents.inc({
+			event_type: eventType,
+			status,
+			error_type: errorType || 'none',
+		});
 		if (durationSeconds !== undefined) {
 			this.plannerPersistenceDuration.observe({ event_type: eventType }, durationSeconds);
 		}

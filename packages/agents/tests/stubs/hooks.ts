@@ -1,3 +1,3 @@
 export function getHooksSingleton() {
-        return undefined;
+	return undefined;
 }

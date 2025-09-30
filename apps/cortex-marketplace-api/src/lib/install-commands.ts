@@ -46,10 +46,14 @@ function generateCursorCommand(server: ServerManifest): InstallCommand | null {
 		let cmd = `cursor mcp add --transport streamableHttp ${shellEscape(server.id)} ${shellEscape(cfg.url)}`;
 		if (cfg.headers) {
 			for (const [key, value] of Object.entries(cfg.headers)) {
-				cmd += ' --header ' + shellEscape(key + ': ' + value);
+				cmd += ` --header ${shellEscape(`${key}: ${value}`)}`;
 			}
 		}
-		return { client: 'cursor', command: cmd, description: 'Cursor with remote server (Streamable HTTP)' };
+		return {
+			client: 'cursor',
+			command: cmd,
+			description: 'Cursor with remote server (Streamable HTTP)',
+		};
 	}
 
 	return null;
@@ -93,7 +97,7 @@ function buildClaudeHttpCommand(server: ServerManifest): string {
 	let command = `claude mcp add --transport streamableHttp ${shellEscape(server.id)} ${shellEscape(config.url)}`;
 	if (config.headers) {
 		for (const [key, value] of Object.entries(config.headers)) {
-			command += ' --header ' + shellEscape(key + ': ' + value);
+			command += ` --header ${shellEscape(`${key}: ${value}`)}`;
 		}
 	}
 	if (config.auth && config.auth.type !== 'none') {

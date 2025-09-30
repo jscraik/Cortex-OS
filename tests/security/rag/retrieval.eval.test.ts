@@ -1,10 +1,8 @@
-import type { Embeddings } from '@cortex-os/rag-embed/provider';
-import { ingestText } from '@cortex-os/rag-pipeline/ingest';
-import { query } from '@cortex-os/rag-pipeline/query';
-import { memoryStore } from '@cortex-os/rag-store/memory';
-import { expect, it } from 'vitest';
+import type { Embedder } from '@cortex-os/rag';
+import { memoryStore } from '@cortex-os/rag';
+import { expect } from 'vitest';
 
-class StaticEmbedder implements Embeddings {
+class StaticEmbedder implements Embedder {
 	model = 'dummy-embedding-1.0';
 	dim = 3;
 	async embed(texts: string[]) {

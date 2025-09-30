@@ -1,32 +1,40 @@
 import { z } from 'zod';
 
 const streamLaneValues = ['hot', 'heavy'] as const;
-const taskStatusValues = ['idle', 'running', 'blocked', 'completed', 'failed', 'cancelled'] as const;
+const taskStatusValues = [
+	'idle',
+	'running',
+	'blocked',
+	'completed',
+	'failed',
+	'cancelled',
+] as const;
 const planStepStatusValues = ['pending', 'active', 'completed', 'skipped', 'failed'] as const;
 const toolCallStatusValues = ['pending', 'running', 'completed', 'failed'] as const;
 const streamStatusValues = ['queued', 'running', 'paused', 'completed', 'failed'] as const;
 const budgetMeterKinds = ['tokens', 'time', 'tools', 'network', 'filesystem'] as const;
 
-export const JsonSchemaDefinitionSchema: z.ZodType<import('./types.js').JsonSchemaDefinition> = z.lazy(() =>
-	z.object({
-		$id: z.string().optional(),
-		title: z.string().optional(),
-		type: z.string().optional(),
-		properties: z.record(JsonSchemaDefinitionSchema).optional(),
-		required: z.array(z.string()).optional(),
-		items: z.union([JsonSchemaDefinitionSchema, z.array(JsonSchemaDefinitionSchema)]).optional(),
-		additionalProperties: z.union([z.boolean(), JsonSchemaDefinitionSchema]).optional(),
-		anyOf: z.array(JsonSchemaDefinitionSchema).optional(),
-		allOf: z.array(JsonSchemaDefinitionSchema).optional(),
-		oneOf: z.array(JsonSchemaDefinitionSchema).optional(),
-		enum: z.array(z.unknown()).optional(),
-		const: z.unknown().optional(),
-		format: z.string().optional(),
-		minimum: z.number().optional(),
-		maximum: z.number().optional(),
-		pattern: z.string().optional(),
-	}),
-);
+export const JsonSchemaDefinitionSchema: z.ZodType<import('./types.js').JsonSchemaDefinition> =
+	z.lazy(() =>
+		z.object({
+			$id: z.string().optional(),
+			title: z.string().optional(),
+			type: z.string().optional(),
+			properties: z.record(JsonSchemaDefinitionSchema).optional(),
+			required: z.array(z.string()).optional(),
+			items: z.union([JsonSchemaDefinitionSchema, z.array(JsonSchemaDefinitionSchema)]).optional(),
+			additionalProperties: z.union([z.boolean(), JsonSchemaDefinitionSchema]).optional(),
+			anyOf: z.array(JsonSchemaDefinitionSchema).optional(),
+			allOf: z.array(JsonSchemaDefinitionSchema).optional(),
+			oneOf: z.array(JsonSchemaDefinitionSchema).optional(),
+			enum: z.array(z.unknown()).optional(),
+			const: z.unknown().optional(),
+			format: z.string().optional(),
+			minimum: z.number().optional(),
+			maximum: z.number().optional(),
+			pattern: z.string().optional(),
+		}),
+	);
 
 export const ErrorShapeSchema = z.object({
 	code: z.string(),

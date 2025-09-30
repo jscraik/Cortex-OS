@@ -73,10 +73,10 @@ export class AgentHealthMonitor extends EventEmitter {
 			enableProactiveChecks: boolean;
 			defaultThresholds?: Partial<AgentHealthThresholds>;
 		} = {
-				healthCheckIntervalMs: 30000, // 30 seconds
-				cleanupIntervalMs: 300000, // 5 minutes
-				enableProactiveChecks: true,
-			},
+			healthCheckIntervalMs: 30000, // 30 seconds
+			cleanupIntervalMs: 300000, // 5 minutes
+			enableProactiveChecks: true,
+		},
 	) {
 		super();
 
@@ -180,18 +180,18 @@ export class AgentHealthMonitor extends EventEmitter {
 	/**
 	 * Record agent activity (success/failure)
 	 */
-        recordAgentActivity(
-                agentId: string,
-                result: {
-                        success: boolean;
-                        responseTime: number;
-                        error?: Error;
-                },
-        ): void {
-                const metrics = this.healthMetrics.get(agentId);
-                if (!metrics) {
-                        return; // Agent not registered
-                }
+	recordAgentActivity(
+		agentId: string,
+		result: {
+			success: boolean;
+			responseTime: number;
+			error?: Error;
+		},
+	): void {
+		const metrics = this.healthMetrics.get(agentId);
+		if (!metrics) {
+			return; // Agent not registered
+		}
 
 		const now = new Date();
 		metrics.lastSeen = now;
@@ -217,40 +217,40 @@ export class AgentHealthMonitor extends EventEmitter {
 		// Update health status
 		this.updateAgentHealthStatus(agentId);
 
-                this.emit('activityRecorded', {
-                        agentId,
-                        success: result.success,
-                        responseTime: result.responseTime,
-                        error: result.error,
-                        timestamp: now,
-                });
-        }
+		this.emit('activityRecorded', {
+			agentId,
+			success: result.success,
+			responseTime: result.responseTime,
+			error: result.error,
+			timestamp: now,
+		});
+	}
 
-        /**
-         * Explicitly record an agent failure without relying on random sampling
-         */
-        recordAgentFailure(agentId: string, error?: Error): void {
-                const metrics = this.healthMetrics.get(agentId);
-                if (!metrics) {
-                        return;
-                }
+	/**
+	 * Explicitly record an agent failure without relying on random sampling
+	 */
+	recordAgentFailure(agentId: string, error?: Error): void {
+		const metrics = this.healthMetrics.get(agentId);
+		if (!metrics) {
+			return;
+		}
 
-                const failureResponseTime = metrics.responseTime || metrics.averageResponseTime || 1;
-                this.recordAgentActivity(agentId, {
-                        success: false,
-                        responseTime: failureResponseTime,
-                        error,
-                });
+		const failureResponseTime = metrics.responseTime || metrics.averageResponseTime || 1;
+		this.recordAgentActivity(agentId, {
+			success: false,
+			responseTime: failureResponseTime,
+			error,
+		});
 
-                const status = this.healthStatus.get(agentId);
-                this.emit('agentFailureRecorded', {
-                        agentId,
-                        brand: 'brAInwav',
-                        error,
-                        status: status?.status ?? 'unknown',
-                        timestamp: new Date(),
-                });
-        }
+		const status = this.healthStatus.get(agentId);
+		this.emit('agentFailureRecorded', {
+			agentId,
+			brand: 'brAInwav',
+			error,
+			status: status?.status ?? 'unknown',
+			timestamp: new Date(),
+		});
+	}
 
 	/**
 	 * Perform health checks on all registered agents

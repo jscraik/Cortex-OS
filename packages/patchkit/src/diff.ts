@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { applyPatch as applyUnifiedPatch, createTwoFilesPatch, structuredPatch } from 'diff';
 import type { StreamPatchSummary } from '@cortex-os/protocol';
+import { applyPatch as applyUnifiedPatch, createTwoFilesPatch, structuredPatch } from 'diff';
 import type { DiffHunk, FilePatch, PatchFormattingOptions } from './types.js';
 
 const NEWLINE = '\n';
@@ -44,7 +44,10 @@ const buildPreview = (lines: string[], limit: number): string | undefined => {
 	return `${preview.slice(0, limit)}…`;
 };
 
-const determineChangeType = (baseline: string | null, proposed: string | null): FilePatch['changeType'] => {
+const determineChangeType = (
+	baseline: string | null,
+	proposed: string | null,
+): FilePatch['changeType'] => {
 	const beforeLen = (baseline ?? '').length;
 	const afterLen = (proposed ?? '').length;
 	if (beforeLen === 0 && afterLen > 0) {
@@ -56,7 +59,15 @@ const determineChangeType = (baseline: string | null, proposed: string | null): 
 	return 'modified';
 };
 
-const toDiffHunks = (hunks: Array<{ newLines: number; newStart: number; oldLines: number; oldStart: number; lines: string[] }>): DiffHunk[] =>
+const toDiffHunks = (
+	hunks: Array<{
+		newLines: number;
+		newStart: number;
+		oldLines: number;
+		oldStart: number;
+		lines: string[];
+	}>,
+): DiffHunk[] =>
 	hunks.map((hunk) => ({
 		oldStart: hunk.oldStart,
 		oldLines: hunk.oldLines,
@@ -89,24 +100,12 @@ export const createDiff = (
 	options?: PatchFormattingOptions,
 ): FilePatch => {
 	const formatting = { ...defaultFormatting, ...options };
-	const patch = structuredPatch(
-		path,
-		path,
-		baseline ?? '',
-		proposed ?? '',
-		'',
-		'',
-		{ context: formatting.contextLines },
-	);
-	const diffText = createTwoFilesPatch(
-		path,
-		path,
-		baseline ?? '',
-		proposed ?? '',
-		'',
-		'',
-		{ context: formatting.contextLines },
-	);
+	const patch = structuredPatch(path, path, baseline ?? '', proposed ?? '', '', '', {
+		context: formatting.contextLines,
+	});
+	const diffText = createTwoFilesPatch(path, path, baseline ?? '', proposed ?? '', '', '', {
+		context: formatting.contextLines,
+	});
 	const changeType = determineChangeType(baseline, proposed);
 	const hunks = toDiffHunks(patch.hunks);
 	return {
@@ -139,7 +138,10 @@ export const hasConflicts = (baseline: string | null, patch: FilePatch): boolean
 
 export const formatUnifiedDiff = (patch: FilePatch): string => patch.diff;
 
-export const formatJsonSideBySide = (baseline: unknown, proposed: unknown): { left: string; right: string } => {
+export const formatJsonSideBySide = (
+	baseline: unknown,
+	proposed: unknown,
+): { left: string; right: string } => {
 	const stringify = (value: unknown): string => {
 		if (value === undefined) {
 			return 'undefined';

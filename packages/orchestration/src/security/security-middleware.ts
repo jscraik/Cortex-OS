@@ -8,7 +8,9 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import createDOMPurify from 'dompurify';
 import type { NextFunction, Request, Response } from 'express';
+import { JSDOM } from 'jsdom';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { securityMetrics } from '../monitoring/prometheus-metrics.js';
@@ -384,17 +386,29 @@ export class SecurityMiddleware {
 	}
 
 	/**
-	 * Sanitize HTML content recursively (basic implementation)
+	 * Sanitize HTML content recursively using DOMPurify
 	 */
 	private sanitizeHtmlRecursive<T>(obj: T): T {
 		if (typeof obj === 'string') {
-			// Basic HTML sanitization - remove script tags and dangerous attributes
-			const s = obj
-				.replace(/<script[^>]*>.*?<\/script>/gi, '')
-				.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
-				.replace(/javascript:/gi, '')
-				.replace(/on\w+\s*=/gi, '');
-			return (s as unknown) as T;
+			// Use DOMPurify for secure HTML sanitization
+			const window = new JSDOM('').window;
+			const DOMPurify = createDOMPurify(window as unknown as Window & typeof globalThis);
+
+			// Configure DOMPurify to be very strict
+			const clean = DOMPurify.sanitize(obj, {
+				USE_PROFILES: { html: false, mathMl: false, svg: false },
+				FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input'],
+				FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+				ALLOW_UNKNOWN_PROTOCOLS: false,
+				KEEP_CONTENT: false,
+			});
+
+			// Additional check for dangerous schemes
+			if (this.containsDangerousScheme(clean)) {
+				return '' as unknown as T;
+			}
+
+			return clean as unknown as T;
 		}
 
 		if (Array.isArray(obj)) {
@@ -413,6 +427,15 @@ export class SecurityMiddleware {
 		}
 
 		return obj;
+	}
+
+	/**
+	 * Check for dangerous URL schemes
+	 */
+	private containsDangerousScheme(input: string): boolean {
+		const dangerousSchemes = ['javascript:', 'data:', 'vbscript:'];
+		const lowerInput = input.toLowerCase().trim();
+		return dangerousSchemes.some((scheme) => lowerInput.includes(scheme));
 	}
 
 	/**
@@ -447,7 +470,9 @@ export class SecurityMiddleware {
 			for (const key of Object.keys(obj)) {
 				const val = obj[key];
 				if (
-					this.config.audit.sensitiveFields.some((field) => key.toLowerCase().includes(field.toLowerCase()))
+					this.config.audit.sensitiveFields.some((field) =>
+						key.toLowerCase().includes(field.toLowerCase()),
+					)
 				) {
 					obj[key] = '[REDACTED]';
 				} else if (val && typeof val === 'object' && !Array.isArray(val)) {
