@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### cortex-code Vendor Sync (ddfb7eb5481646861c4ce5661a8f20df70962a3c)
+
+- **NEW**: Synced with upstream openai/codex repository bringing major architectural improvements
+  - Added `app-server` crate (reorganized from `mcp-server` for better modularity)
+  - Added `backend-client` crate for API communication with cloud services  
+  - Added `cloud-tasks-client` and `cloud-tasks` crates for distributed task management
+  - Added `codex-backend-openapi-models` for type-safe API interaction
+  - Added `git-apply` utility crate for patch operations
+  - Added `utils/json-to-toml` utility crate (extracted from mcp-server)
+- **ENHANCED**: TUI interface with improved user experience
+  - Added new prompt args functionality for better command composition
+  - Enhanced footer modes with better keyboard shortcut overlay
+  - Improved chat composer with better ESC hint handling
+  - Added public widget components for reusability
+- **ENHANCED**: Protocol and core modules updated for latest upstream features
+  - Updated MCP protocol handling for better tool integration
+  - Enhanced configuration management and custom prompts
+  - Improved OpenTelemetry initialization and rollout recording
+  - Updated login module with device code authentication support
+- **PRESERVED**: brAInwav customizations via `.syncignore` protection
+  - Maintained `A2A_IMPLEMENTATION.md` for agent-to-agent communication
+  - Preserved `AGENTS.md`, `PNPM.md`, and `UPSTREAM_SYNC.md` documentation
+  - Protected `CHANGELOG.md` and custom configuration files
+
 #### Local Memory Hardening & Security Enhancements
 
 - **NEW**: OAuth 2.1 + PKCE authentication system for brAInwav Local Memory MCP/REST API
