@@ -7,6 +7,7 @@ target/
 .uv/
 .tmp/
 **/.tmp/
+.cache/
 apps/cortex-webui/open-webui/
 
 # Build artifacts
