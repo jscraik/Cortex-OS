@@ -1,0 +1,501 @@
+# Container and Infrastructure Security Rules - Updated 2025-09-30
+# Covers Docker, Kubernetes, Terraform, and cloud-native security patterns
+rules:
+  # Docker Security
+  - id: docker-root-user
+    message: 'Container running as root user'
+    metadata:
+      owasp-docker: '2021-01'
+      cwe: [CWE-250]
+      cis-docker: 4.1
+      severity: ERROR
+    languages: [dockerfile]
+    patterns:
+      - pattern: |
+          USER root
+      - pattern: |
+          USER 0
+    fix: 'Use non-root user: USER username or create specific user'
+
+  - id: docker-privileged-mode
+    message: 'Container running in privileged mode'
+    metadata:
+      owasp-docker: '2021-02'
+      cwe: [CWE-250]
+      severity: ERROR
+    languages: [yaml, json, shell]
+    patterns:
+      - pattern: |
+          privileged: true
+      - pattern: |
+          docker run --privileged ...
+      - pattern: |
+          --privileged
+    fix: 'Remove privileged flag and use specific capabilities instead'
+
+  - id: docker-docker-socket-mount
+    message: 'Docker socket mounted in container'
+    metadata:
+      owasp-docker: '2021-03'
+      cwe: [CWE-250]
+      severity: ERROR
+    languages: [yaml, json, shell]
+    patterns:
+      - pattern: |
+          - /var/run/docker.sock:/var/run/docker.sock
+      - pattern: |
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /var/run/docker.sock
+    fix: 'Avoid mounting Docker socket; use Docker-out-of-Docker pattern carefully'
+
+  - id: docker-sensitive-data
+    message: 'Sensitive data in Docker image'
+    metadata:
+      owasp-docker: '2021-04'
+      cwe: [CWE-532]
+      severity: ERROR
+    languages: [dockerfile]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              ENV PASSWORD=...
+          - pattern: |
+              ENV API_KEY=...
+          - pattern: |
+              ENV SECRET=...
+          - pattern: |
+              COPY secrets.txt /
+    fix: 'Use secrets management and runtime injection'
+
+  - id: docker-outdated-base-image
+    message: 'Using outdated or vulnerable base image'
+    metadata:
+      owasp-docker: '2021-05'
+      cwe: [CWE-1104]
+      severity: WARNING
+    languages: [dockerfile]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              FROM ubuntu:18.04
+          - pattern: |
+              FROM alpine:3.12
+          - pattern: |
+              FROM python:3.7
+    fix: 'Use updated base images and regularly scan for vulnerabilities'
+
+  - id: docker-no-security-scanner
+    message: 'Missing security scanner in build process'
+    metadata:
+      cwe: [CWE-1059]
+      severity: INFO
+    languages: [dockerfile]
+    patterns:
+      - pattern: |
+          # No security scanning step
+          RUN pip install -r requirements.txt
+    fix: 'Add security scanning tools like Trivy, Grype, or Snyk'
+
+  # Kubernetes Security
+  - id: k8s-rbac-wildcard
+    message: 'Kubernetes RBAC with wildcard permissions'
+    metadata:
+      cwe: [CWE-862]
+      cis-kubernetes: 5.1.5
+      severity: ERROR
+    languages: [yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              verbs: ["*"]
+          - pattern: |
+              apiGroups: ["*"]
+          - pattern: |
+              resources: ["*"]
+    fix: 'Use principle of least privilege with specific permissions'
+
+  - id: k8s-no-network-policy
+    message: 'Namespace without network policy'
+    metadata:
+      cwe: [CWE-400]
+      cis-kubernetes: 5.3.2
+      severity: WARNING
+    languages: [yaml]
+    patterns:
+      - pattern: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: $NAME
+    fix: 'Implement network policies for all namespaces'
+
+  - id: k8s-expose-dashboard
+    message: 'Kubernetes dashboard exposed externally'
+    metadata:
+      cwe: [CWE-200]
+      severity: ERROR
+    languages: [yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              type: LoadBalancer
+              name: kubernetes-dashboard
+          - pattern: |
+              nodePort: 30000
+    fix: 'Don't expose dashboard externally; use internal access only'
+
+  - id: k8s-no-pod-security-policy
+    message: 'Pod without security context'
+    metadata:
+      cwe: [CWE-250]
+      severity: WARNING
+    languages: [yaml]
+    patterns:
+      - pattern: |
+          apiVersion: v1
+          kind: Pod
+          spec:
+            containers:
+              - name: $NAME
+                # No securityContext
+    fix: 'Define securityContext with runAsNonRoot and readOnlyRootFilesystem'
+
+  - id: k8s-no-resource-limits
+    message: 'Container without resource limits'
+    metadata:
+      cwe: [CWE-400]
+      cis-kubernetes: 5.2.6
+      severity: WARNING
+    languages: [yaml]
+    patterns:
+      - pattern: |
+          containers:
+            - name: $NAME
+              image: $IMAGE
+              # No resources section
+    fix: 'Set resource requests and limits for CPU and memory'
+
+  - id: k8s-sensitive-config-secrets
+    message: 'Sensitive data in ConfigMap instead of Secret'
+    metadata:
+      cwe: [CWE-532]
+      severity: ERROR
+    languages: [yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              data:
+                database_password: ...
+                api_key: ...
+                private_key: ...
+    fix: 'Use Kubernetes Secrets for sensitive data'
+
+  - id: k8s-insecure-service-account
+    message: 'Pod using default service account with token mounted'
+    metadata:
+      cwe: [CWE-287]
+      severity: WARNING
+    languages: [yaml]
+    patterns:
+      - pattern: |
+          spec:
+            # No serviceAccountName or serviceAccountName: default
+            containers:
+              - name: $NAME
+    fix: 'Create dedicated service accounts and disable automountServiceAccountToken'
+
+  # Terraform Security
+  - id: tf-unencrypted-storage
+    message: 'Unencrypted storage resources'
+    metadata:
+      cwe: [CWE-311]
+      severity: ERROR
+    languages: [hcl]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              resource "aws_s3_bucket" "$NAME" {
+                # No server_side_encryption_configuration
+              }
+          - pattern: |
+              resource "azurerm_storage_account" "$NAME" {
+                # No encryption settings
+              }
+    fix: 'Enable encryption at rest for all storage resources'
+
+  - id: tf-public-rdp-ssh
+    message: 'RDP or SSH ports open to public internet'
+    metadata:
+      cwe: [CWE-284]
+      severity: ERROR
+    languages: [hcl]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              cidr_blocks = ["0.0.0.0/0"]
+              ingress {
+                from_port = 22
+                to_port = 22
+              }
+          - pattern: |
+              cidr_blocks = ["0.0.0.0/0"]
+              ingress {
+                from_port = 3389
+                to_port = 3389
+              }
+    fix: 'Restrict SSH/RDP access to specific IP ranges'
+
+  - id: tf-no-encryption-key-rotation
+    message: 'KMS key without rotation enabled'
+    metadata:
+      cwe: [CWE-320]
+      severity: WARNING
+    languages: [hcl]
+    patterns:
+      - pattern: |
+          resource "aws_kms_key" "$NAME" {
+            # No enable_key_rotation = true
+          }
+    fix: 'Enable automatic key rotation for KMS keys'
+
+  - id: tf-unencrypted-db
+    message: 'Database without encryption'
+    metadata:
+      cwe: [CWE-311]
+      severity: ERROR
+    languages: [hcl]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              resource "aws_rds_instance" "$NAME" {
+                # No storage_encrypted = true
+              }
+          - pattern: |
+              resource "google_sql_database_instance" "$NAME" {
+                # No database_version with encryption
+              }
+    fix: 'Enable encryption for all databases'
+
+  - id: tf-no-vpc-flow-logs
+    message: 'VPC without flow logging enabled'
+    metadata:
+      cwe: [CWE-778]
+      severity: WARNING
+    languages: [hcl]
+    patterns:
+      - pattern: |
+          resource "aws_vpc" "$NAME" {
+            # No flow log configuration
+          }
+    fix: 'Enable VPC flow logs for network monitoring'
+
+  - id: tf-admin-iam-policies
+    message: 'IAM policies with administrative privileges'
+    metadata:
+      cwe: [CWE-862]
+      severity: ERROR
+    languages: [hcl]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              policy = "*"
+          - pattern: |
+              "arn:aws:iam::aws:policy/AdministratorAccess"
+    fix: 'Use least privilege principle with specific permissions'
+
+  # Cloud Security Patterns
+  - id: cloud-metadata-ssrf
+    message: 'Potential SSRF to cloud metadata service'
+    metadata:
+      owasp: 'A10:2025'
+      cwe: [CWE-918]
+      severity: ERROR
+    languages: [python, javascript, typescript, shell]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              fetch('http://169.254.169.254/latest/meta-data/...')
+          - pattern: |
+              urllib.request.urlopen('http://metadata.google.internal/...')
+          - pattern: |
+              curl 'http://100.100.100.200/latest/meta-data/...'
+    fix: 'Disallow requests to metadata services or use metadata proxy'
+
+  - id: cloud-insecure-object-storage
+    message: 'Object storage bucket publicly accessible'
+    metadata:
+      cwe: [CWE-284]
+      severity: ERROR
+    languages: [hcl, yaml, json]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              aws_s3_bucket_public_access_block:
+                block_public_acls: false
+          - pattern: |
+              acl: "public-read"
+          - pattern: |
+              allUsers: objectViewer
+    fix: 'Block all public access and use signed URLs'
+
+  - id: cloud-no-cmk-encryption
+    message: 'Using default cloud provider keys instead of CMK'
+    metadata:
+      cwe: [CWE-320]
+      severity: WARNING
+    languages: [hcl, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              encryption_type: "SSE-S3"  # AWS default
+          - pattern: |
+              # No customer-managed key specified
+    fix: 'Use customer-managed keys for sensitive data'
+
+  # Infrastructure as Code Security
+  - id: iac-hardcoded-secrets
+    message: 'Hardcoded secrets in infrastructure code'
+    metadata:
+      cwe: [CWE-798]
+      severity: ERROR
+    languages: [hcl, yaml, json, dockerfile]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              password = "..."
+          - pattern: |
+              secret_key = "..."
+          - pattern: |
+              api_token = "..."
+          - pattern: |
+              ENV DATABASE_PASSWORD="..."
+    fix: 'Use secret management solutions and environment variables'
+
+  - id: iac-no-vulnerability-scanning
+    message: 'Infrastructure code without vulnerability scanning'
+    metadata:
+      cwe: [CWE-1059]
+      severity: INFO
+    languages: [yaml]
+    patterns:
+      - pattern: |
+          # No tfsec, checkov, or terrascan in pipeline
+          steps:
+            - name: terraform-apply
+    fix: 'Add IaC security scanning tools to CI/CD pipeline'
+
+  # Container Runtime Security
+  - id: container-no-apparmor-seccomp
+    message: 'Container without AppArmor or Seccomp profile'
+    metadata:
+      cwe: [CWE-250]
+      severity: WARNING
+    languages: [yaml, json]
+    patterns:
+      - pattern: |
+          securityContext:
+            # No seccompProfile or appArmorProfile
+    fix: 'Apply restrictive AppArmor and Seccomp profiles'
+
+  - id: container-capabilities-too-permissive
+    message: 'Container with excessive capabilities'
+    metadata:
+      cwe: [CWE-250]
+      severity: WARNING
+    languages: [yaml, json]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              capabilities:
+                add: ["ALL"]
+          - pattern: |
+              capabilities:
+                add: ["SYS_ADMIN", "NET_ADMIN"]
+    fix: 'Remove unnecessary capabilities and use specific ones only'
+
+  # Network Security
+  - id: network-no-encryption-in-transit
+    message: 'Unencrypted network communication'
+    metadata:
+      cwe: [CWE-319]
+      severity: ERROR
+    languages: [yaml, hcl, python, javascript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              protocol: "HTTP"
+          - pattern: |
+              use_ssl: false
+          - pattern: |
+              tls: disabled
+    fix: 'Enable TLS/SSL for all network communications'
+
+  - id: network-no-dnssec
+    message: 'DNS queries without DNSSEC validation'
+    metadata:
+      cwe: [CWE-346]
+      severity: INFO
+    languages: [yaml, hcl]
+    patterns:
+      - pattern: |
+          # No DNSSEC validation enabled
+          dns_config:
+            options: []
+    fix: 'Enable DNSSEC validation for DNS resolution'
+
+  # Monitoring and Logging
+  - id: infra-no-security-monitoring
+    message: 'Missing security monitoring and alerting'
+    metadata:
+      cwe: [CWE-778]
+      severity: WARNING
+    languages: [yaml, hcl]
+    patterns:
+      - pattern: |
+          # No security monitoring configured
+          monitoring: {}
+    fix: 'Implement comprehensive security monitoring and alerting'
+
+  # Backup and Recovery
+  - id: infra-no-backup-encryption
+    message: 'Backups not encrypted'
+    metadata:
+      cwe: [CWE-311]
+      severity: ERROR
+    languages: [hcl, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              backup_storage:
+                encryption: disabled
+          - pattern: |
+              # No backup encryption specified
+    fix: 'Encrypt all backups at rest and in transit'
+
+  # Compliance and Governance
+  - id: infra-no-compliance-checks
+    message: 'Missing compliance and policy enforcement'
+    metadata:
+      cwe: [CWE-1059]
+      severity: INFO
+    languages: [yaml]
+    patterns:
+      - pattern: |
+          # No OPA Gatekeeper or Kyverno policies
+    fix: 'Implement policy-as-code for compliance enforcement'
+
+  # Multi-Cloud Security
+  - id: multi-cloud-inconsistent-security
+    message: 'Inconsistent security across cloud providers'
+    metadata:
+      cwe: [CWE-1059]
+      severity: WARNING
+    languages: [hcl, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AWS: encrypted, GCP: unencrypted
+              aws_s3_bucket: { encryption: true }
+              google_storage_bucket: { # No encryption }
+    fix: 'Maintain consistent security posture across all cloud providers'
