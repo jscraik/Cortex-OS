@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { AgentToolkitCodemapInput, AgentToolkitCodemapResult } from '@cortex-os/contracts';
 import type { CodemapTool } from '../domain/ToolInterfaces.js';
+import { resolveToolsDirFromOverride } from './paths.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -17,11 +18,17 @@ export interface CodemapAdapterOptions {
 }
 
 export class CodemapAdapter implements CodemapTool {
-	constructor(private readonly options: CodemapAdapterOptions = {}) {}
+	private readonly defaultScriptPathPromise: Promise<string>;
+
+	constructor(private readonly options: CodemapAdapterOptions = {}) {
+		this.defaultScriptPathPromise = resolveToolsDirFromOverride(undefined).then((dir) =>
+			resolve(dir, 'codemap.py'),
+		);
+	}
 
 	public async generate(inputs: AgentToolkitCodemapInput): Promise<AgentToolkitCodemapResult> {
 		const cwd = this.options.workingDirectory ?? process.cwd();
-		const scriptPath = this.resolveScriptPath(cwd);
+		const scriptPath = await this.resolveScriptPath(cwd);
 		const pythonExecutable = this.options.pythonExecutable ?? 'python3';
 		const normalizedInputs = this.normalizeInputs(inputs, cwd);
 		const outputPaths = await this.prepareOutputPaths(inputs, cwd);
@@ -52,11 +59,11 @@ export class CodemapAdapter implements CodemapTool {
 		};
 	}
 
-	private resolveScriptPath(cwd: string): string {
+	private async resolveScriptPath(cwd: string): Promise<string> {
 		if (this.options.scriptPath) {
 			return resolve(cwd, this.options.scriptPath);
 		}
-		return resolve(cwd, 'scripts/codemap.py');
+		return this.defaultScriptPathPromise;
 	}
 
 	private normalizeInputs(inputs: AgentToolkitCodemapInput, cwd: string): AgentToolkitCodemapInput {

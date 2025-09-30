@@ -2,20 +2,53 @@ import { resolve } from 'node:path';
 import type { AgentToolkitSearchInput, AgentToolkitSearchResult } from '@cortex-os/contracts';
 import type { SearchTool } from '../domain/ToolInterfaces.js';
 import { execWithRetry } from './execUtil.js';
+import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
+
+function summarizeSearchError(
+	tool: 'ripgrep' | 'semgrep' | 'ast-grep',
+	inputs: AgentToolkitSearchInput,
+	error: unknown,
+): AgentToolkitSearchResult {
+	return {
+		tool,
+		op: 'search',
+		inputs,
+		results: [],
+		error: error instanceof Error ? error.message : 'Unknown error',
+	};
+}
+
+abstract class BaseSearchAdapter implements SearchTool {
+	private readonly scriptPathPromise: Promise<string>;
+
+	protected constructor(
+		toolsPath: ToolsDirOverride,
+		private readonly scriptName: string,
+	) {
+		this.scriptPathPromise = resolveToolsDirFromOverride(toolsPath).then((dir) =>
+			resolve(dir, scriptName),
+		);
+	}
+
+	protected async getScriptPath(): Promise<string> {
+		return this.scriptPathPromise;
+	}
+
+	public abstract search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult>;
+}
 
 /**
  * Ripgrep search tool adapter
  */
-export class RipgrepAdapter implements SearchTool {
-	private readonly scriptPath: string;
-
-	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
-		this.scriptPath = resolve(toolsPath, 'rg_search.sh');
+export class RipgrepAdapter extends BaseSearchAdapter {
+	constructor(toolsPath?: ToolsDirOverride) {
+		super(toolsPath, 'rg_search.sh');
 	}
 
 	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
-			const cmd = `"${this.scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
+			const scriptPath = await this.getScriptPath();
+			const cmd = `"${scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
 			const { stdout } = await execWithRetry(cmd, {
 				timeoutMs: 30_000,
 				retries: 1,
@@ -33,16 +66,15 @@ export class RipgrepAdapter implements SearchTool {
 /**
  * Semgrep search tool adapter
  */
-export class SemgrepAdapter implements SearchTool {
-	private readonly scriptPath: string;
-
-	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
-		this.scriptPath = resolve(toolsPath, 'semgrep_search.sh');
+export class SemgrepAdapter extends BaseSearchAdapter {
+	constructor(toolsPath?: ToolsDirOverride) {
+		super(toolsPath, 'semgrep_search.sh');
 	}
 
 	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
-			const cmd = `"${this.scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
+			const scriptPath = await this.getScriptPath();
+			const cmd = `"${scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
 			const { stdout } = await execWithRetry(cmd, {
 				timeoutMs: 40_000,
 				retries: 1,
@@ -60,16 +92,15 @@ export class SemgrepAdapter implements SearchTool {
 /**
  * AST-grep search tool adapter
  */
-export class AstGrepAdapter implements SearchTool {
-	private readonly scriptPath: string;
-
-	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
-		this.scriptPath = resolve(toolsPath, 'astgrep_search.sh');
+export class AstGrepAdapter extends BaseSearchAdapter {
+	constructor(toolsPath?: ToolsDirOverride) {
+		super(toolsPath, 'astgrep_search.sh');
 	}
 
 	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
-			const cmd = `"${this.scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
+			const scriptPath = await this.getScriptPath();
+			const cmd = `"${scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
 			const { stdout } = await execWithRetry(cmd, {
 				timeoutMs: 40_000,
 				retries: 1,
@@ -82,18 +113,4 @@ export class AstGrepAdapter implements SearchTool {
 			return summarizeSearchError('ast-grep', inputs, error);
 		}
 	}
-}
-
-function summarizeSearchError(
-	tool: 'ripgrep' | 'semgrep' | 'ast-grep',
-	inputs: AgentToolkitSearchInput,
-	error: unknown,
-): AgentToolkitSearchResult {
-	return {
-		tool,
-		op: 'search',
-		inputs,
-		results: [],
-		error: error instanceof Error ? error.message : 'Unknown error',
-	};
 }

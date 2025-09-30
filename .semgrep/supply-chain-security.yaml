@@ -1,0 +1,314 @@
+# Supply Chain Security Rules - Updated 2025-09-30
+# Covers dependency confusion, model provenance, SBOM generation, and AI supply chain threats
+rules:
+  # Dependency Confusion Attacks
+  - id: supply-chain-dependency-confusion
+    message: 'Potential dependency confusion attack - package installation without integrity check'
+    metadata:
+      owasp: 'A06:2025'
+      cwe: [CWE-829, CWE-506]
+      nist: [SA-12, SR-1]
+      severity: ERROR
+    languages: [python, javascript, typescript, shell]
+    patterns:
+      - pattern-either:
+          - pattern: pip install $PACKAGE --trusted-host pypi.org
+          - pattern: npm install $PACKAGE@latest
+          - pattern: yarn add $PACKAGE
+          - pattern: pip install -r requirements.txt # Without hash checking
+          - pattern: subprocess.run(['pip', 'install', $PACKAGE])
+    fix: 'Use package pinning, checksum verification, and private registries'
+
+  - id: supply-chain-unverified-download
+    message: 'Downloading and executing unverified code from external sources'
+    metadata:
+      owasp: 'A08:2025'
+      cwe: [CWE-346, CWE-502]
+      severity: ERROR
+    languages: [python, javascript, typescript, shell]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $DATA = requests.get($UNTRUSTED_URL).text
+              exec($DATA)
+          - pattern: |
+              eval(requests.get($UNTRUSTED_URL).text)
+          - pattern: |
+              curl $UNTRUSTED_URL | bash
+          - pattern: |
+              wget -qO- $UNTRUSTED_URL | sh
+          - pattern: |
+              $SCRIPT = download($URL)
+              os.system($SCRIPT)
+    fix: 'Verify signatures and checksums before executing external code'
+
+  # AI Model Supply Chain Security
+  - id: supply-chain-unverified-model
+    message: 'Loading AI model without integrity verification'
+    metadata:
+      owasp-llm-top-10: LLM03-Supply-Chain
+      mitre-atlas: T0081
+      cwe: [CWE-506, CWE-353]
+      nist-ai-rmf: RMG.3
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              model = joblib.load($MODEL_PATH)
+          - pattern: |
+              model = torch.load($MODEL_FILE)
+          - pattern: |
+              model = pickle.load(open($MODEL_PATH, 'rb'))
+          - pattern: |
+              model = transformers.AutoModel.from_pretrained($MODEL_NAME)
+          - pattern: |
+              model = tf.keras.models.load_model($MODEL_PATH)
+    fix: 'Verify model signatures, checksums, and use trusted model registries'
+
+  - id: supply-chain-model-provenance-missing
+    message: 'Missing model provenance and lineage tracking'
+    metadata:
+      nist-ai-rmf: RMG.3
+      cwe: [CWE-545]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Model loaded without provenance check
+              model = load_model('model.pkl')
+          - pattern: |
+              # No model version tracking
+              MODEL_VERSION = None
+    fix: 'Implement model provenance tracking and lineage documentation'
+
+  - id: supply-chain-data-poisoning-risk
+    message: 'Training data ingestion without validation or provenance'
+    metadata:
+      owasp-llm-top-10: LLM03-Supply-Chain
+      mitre-atlas: T0081
+      cwe: [CWE-345, CWE-506]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              model.fit(pd.read_csv($UNVALIDATED_DATA_PATH))
+          - pattern: |
+              training_data = load_dataset($EXTERNAL_SOURCE)
+          - pattern: |
+              # No data validation before training
+              X_train = np.load($DATA_FILE)
+    fix: 'Validate data sources, implement data provenance, and scan for poisoning'
+
+  # SBOM and Transparency
+  - id: supply-chain-missing-sbom
+    message: 'Missing SBOM generation for software components'
+    metadata:
+      executive-order-14028: true
+      cwe: [CWE-545]
+      severity: INFO
+    languages: [shell, yaml, json]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # CI/CD without SBOM generation
+              steps:
+                - name: build
+          - pattern: |
+              # No component inventory
+          - pattern: |
+              # Missing software bill of materials
+    fix: 'Generate SBOM using tools like Syft, CycloneDX, or SPDX'
+
+  - id: supply-chain-unpinned-dependencies
+    message: 'Dependencies not pinned to specific versions'
+    metadata:
+      owasp: 'A06:2025'
+      cwe: [CWE-1104]
+      severity: WARNING
+    languages: [yaml, json]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              dependencies:
+                $PACKAGE: '*'  # Wildcard version
+          - pattern: |
+              dependencies:
+                $PACKAGE: latest  # Latest version
+          - pattern: |
+              requirements.txt: |
+                $PACKAGE  # No version specified
+    fix: 'Pin all dependencies to specific versions and use lock files'
+
+  # Container Supply Chain
+  - id: supply-chain-unverified-container-image
+    message: 'Using container images without verification'
+    metadata:
+      cwe: [CWE-506]
+      severity: WARNING
+    languages: [yaml, dockerfile]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              FROM $REGISTRY/$IMAGE:latest  # Using latest tag
+          - pattern: |
+              docker pull $UNTRUSTED_IMAGE
+          - pattern: |
+              kubectl run $POD --image=$UNVERIFIED_IMAGE
+    fix: 'Use specific image tags, verify signatures, and scan images'
+
+  # Build and Pipeline Security
+  - id: supply-chain-insecure-build-process
+    message: 'Insecure build process without integrity checks'
+    metadata:
+      cwe: [CWE-345]
+      severity: ERROR
+    languages: [yaml, shell]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Build without verification
+              steps:
+                - uses: actions/checkout@v2
+                - run: make build
+          - pattern: |
+              # No artifact signing
+              artifacts:
+                - path: dist/
+    fix: 'Implement build verification, artifact signing, and reproducible builds'
+
+  - id: supply-chain-missing-artifact-verification
+    message: 'Missing artifact verification in deployment'
+    metadata:
+      cwe: [CWE-353]
+      severity: WARNING
+    languages: [yaml, shell]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Deploy without verification
+              helm install $APP ./charts/$APP
+          - pattern: |
+              # No checksum verification
+              wget $ARTIFACT_URL
+              tar -xzf $ARTIFACT
+    fix: 'Verify artifact signatures and checksums before deployment'
+
+  # Third-Party Integration Security
+  - id: supply-chain-third-party-api-no-verification
+    message: 'Third-party API responses used without verification'
+    metadata:
+      owasp: 'A08:2025'
+      cwe: [CWE-345]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $DATA = requests.get($THIRD_PARTY_API).json()
+              process($DATA)  # No verification
+          - pattern: |
+              const data = await fetch($API_URL).then(r => r.json())
+              useData(data)  # No schema validation
+    fix: 'Verify API responses with schema validation and digital signatures'
+
+  # OpenSSF Scorecard Compliance
+  - id: supply-chain-low-security-score
+    message: 'Using dependencies with low security scores'
+    metadata:
+      openssf-scorecard: true
+      cwe: [CWE-1104]
+      severity: INFO
+    languages: [yaml, json]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Check OpenSSF score before using
+              # TODO: Verify OpenSSF score > 8
+    fix: 'Check OpenSSF Scorecard metrics before adopting dependencies'
+
+  # Dependency Update Security
+  - id: supply-chain-automated-update-without-review
+    message: 'Automated dependency updates without security review'
+    metadata:
+      cwe: [CWE-1104]
+      severity: WARNING
+    languages: [yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Auto-merge dependency updates
+              - package-ecosystem: 'npm'
+                schedule:
+                  interval: daily
+                open-pull-requests-limit: 10
+                auto-merge: true
+    fix: 'Review dependency updates before auto-merging'
+
+  # Model Registry Security
+  - id: supply-chain-insecure-model-registry
+    message: 'Insecure model registry access'
+    metadata:
+      nist-ai-rmf: RMG.3
+      cwe: [CWE-306, CWE-522]
+      severity: WARNING
+    languages: [python, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              model_registry.login($USERNAME, $PASSWORD)  # Plain text
+          - pattern: |
+              registry_url = 'http://insecure-registry.local'
+    fix: 'Use authentication with secure protocols and encrypted credentials'
+
+  # AI Supply Chain Monitoring
+  - id: supply-chain-no-drift-detection
+    message: 'Missing model and data drift detection'
+    metadata:
+      nist-ai-rmf: RMG.4
+      cwe: [CWE-758]
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Model deployed without drift monitoring
+              model.deploy()
+          - pattern: |
+              # No performance monitoring
+              predictions = model.predict(data)
+    fix: 'Implement drift detection and continuous monitoring'
+
+  # Reproducibility and Traceability
+  - id: supply-chain-non-reproducible-builds
+    message: 'Non-reproducible build configuration'
+    metadata:
+      cwe: [CWE-1059]
+      severity: WARNING
+    languages: [dockerfile, yaml, shell]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Build with timestamp
+              RUN echo "Built at $(date)" > /build-info
+          - pattern: |
+              # Non-deterministic source
+              ADD http://$UNTRUSTED_URL /app/
+    fix: 'Use deterministic builds with reproducible artifacts'
+
+  # Supply Chain Attack Detection
+  - id: supply-chain-typosquatting-risk
+    message: 'Potential typosquatting attack in package names'
+    metadata:
+      cwe: [CWE-1104]
+      severity: WARNING
+    languages: [yaml, json]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              dependencies:
+                reqeusts: ^2.28.0  # Typo for requests
+                numpys: ^1.24.0    # Typo for numpy
+    fix: 'Verify package names and use automated typosquatting detection'

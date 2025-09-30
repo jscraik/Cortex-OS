@@ -1,34 +1,427 @@
+# Enhanced LLM/AI Security Rules - Updated 2025-09-30
+# Covers OWASP LLM Top 10 2025, MITRE ATLAS, and emerging AI threats
 rules:
-  - id: llm-prompt-injection
-    message: 'Unsanitized user input concatenated into LLM prompt'
+  # LLM01: Prompt Injection (Enhanced with 2025 patterns)
+  - id: llm-prompt-injection-direct
+    message: 'Direct prompt injection - unsanitized user input concatenated into LLM prompt'
     metadata:
       owasp-llm-top-10: LLM01-Prompt-Injection
-      mitre-atlas: ATLAS-Prompt-Injection
-      agentic-security: prompt-injection
-      personal-security-checklist: secure-coding
-      aliasrobotics-cai: LLM-Prompt-Injection
-    severity: WARNING
-    languages: [javascript, typescript]
+      mitre-atlas: T0009
+      nist-ai-rmf: RMG.1
+      cwe: [CWE-74]
+      severity: ERROR
+    languages: [python, javascript, typescript]
     patterns:
-      - pattern: $LLM($PROMPT + $USER_INPUT)
-      - pattern: $LLM(`$PROMPT${$USER_INPUT}`)
-      - pattern: $LLM([$PROMPT, $USER_INPUT].join(''))
-      - pattern: $LLM($PROMPT.concat($USER_INPUT))
-      - metavariable-regex:
-          regex: (?i)(input|prompt|user|query|data|content|message|text|param)
+      - pattern-either:
+          - pattern: $LLM($PROMPT + $USER_INPUT)
+          - pattern: $LLM(`$PROMPT${$USER_INPUT}`)
+          - pattern: $LLM([$PROMPT, $USER_INPUT].join(''))
+          - pattern: $LLM($PROMPT.concat($USER_INPUT))
+          - pattern: f"{PROMPT} {USER_INPUT}"
+          - pattern: |
+              messages.append({"role": "user", "content": $USER_INPUT})
+              $LLM(messages)
+    fix: 'Use prompt sanitization, parameterized prompts, or instruction-following guards'
 
-  - id: llm-eval-on-output
-    message: 'Avoid eval on potential LLM output'
+  - id: llm-prompt-injection-indirect
+    message: 'Indirect prompt injection - untrusted data influences LLM context'
+    metadata:
+      owasp-llm-top-10: LLM01-Prompt-Injection
+      mitre-atlas: T0009
+      nist-ai-rmf: RMG.1
+      cwe: [CWE-74]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $CONTEXT.update($UNTRUSTED_DATA)
+              $LLM($CONTEXT)
+          - pattern: |
+              $HISTORY.append($USER_INPUT)
+              $LLM.generate($HISTORY)
+          - pattern: |
+              $SESSION.context += $EXTERNAL_DATA
+              $LLM($SESSION)
+          - pattern: |
+              $RAG.add_documents($UNVALIDATED_DOCS)
+              $LLM.query($QUERY)
+    fix: 'Validate and sanitize all context data, use retrieval-augmented generation with source validation'
+
+  - id: llm-prompt-injection-session-hijack
+    message: 'Session hijacking through prompt injection'
+    metadata:
+      owasp-llm-top-10: LLM01-Prompt-Injection
+      mitre-atlas: T0009
+      nist-ai-rmf: RMG.1
+      cwe: [CWE-287]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              session.user_id = req.body.user_id # User-controlled session
+          - pattern: |
+              if (message.includes('ignore previous instructions')) {
+                system_prompt = message
+              }
+    fix: 'Never let user input directly modify session or system prompts'
+
+  # LLM02: Insecure Output Handling (Enhanced)
+  - id: llm-insecure-output-eval
+    message: 'Dangerous eval on LLM output without validation'
     metadata:
       owasp-llm-top-10: LLM02-Insecure-Output
-      mitre-atlas: ATLAS-Insecure-Output
-      agentic-security: insecure-output
-      personal-security-checklist: secure-coding
-      aliasrobotics-cai: LLM-Insecure-Output
-    severity: ERROR
-    languages: [javascript, typescript]
+      mitre-atlas: T0026
+      nist-ai-rmf: RMG.3
+      cwe: [CWE-94, CWE-502]
+      severity: ERROR
+    languages: [python, javascript, typescript]
     patterns:
-      - pattern: eval($OUTPUT)
-      - metavariable-pattern:
-          metavariable: $OUTPUT
-          pattern: $LLM(...)
+      - pattern-either:
+          - pattern: eval($LLM_OUTPUT)
+          - pattern: new Function($LLM_OUTPUT)
+          - pattern: exec($LLM_OUTPUT)
+          - pattern: subprocess.run($LLM_OUTPUT, shell=True)
+          - pattern: |
+              json.loads($LLM_OUTPUT) # Without validation
+          - pattern: |
+              pickle.loads($LLM_OUTPUT) # Extremely dangerous
+          - pattern: |
+              yaml.load($LLM_OUTPUT) # Without SafeLoader
+    fix: 'Never execute LLM output directly. Use strict validation and safe parsing.'
+
+  - id: llm-insecure-output-sql
+    message: 'LLM output used directly in SQL queries'
+    metadata:
+      owasp-llm-top-10: LLM02-Insecure-Output
+      mitre-atlas: T0026
+      cwe: [CWE-89]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              db.execute(f"SELECT * FROM users WHERE name = '{$LLM_OUTPUT}'")
+          - pattern: |
+              cursor.execute(f"UPDATE users SET status = '{LLM_OUTPUT}' WHERE id = {id}")
+    fix: 'Use parameterized queries and validate LLM output before database operations'
+
+  - id: llm-insecure-output-redirect
+    message: 'LLM output used for unauthorized redirects'
+    metadata:
+      owasp-llm-top-10: LLM02-Insecure-Output
+      cwe: [CWE-601]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: res.redirect($LLM_OUTPUT)
+          - pattern: window.location = $LLM_OUTPUT
+          - pattern: header('Location: ' + $LLM_OUTPUT)
+    fix: 'Validate redirect URLs against allowlist before using LLM output'
+
+  # LLM03: Supply Chain Attacks (New 2025)
+  - id: llm-model-poisoning
+    message: 'Loading potentially poisoned AI models'
+    metadata:
+      owasp-llm-top-10: LLM03-Supply-Chain
+      mitre-atlas: T0081
+      nist-ai-rmf: RMG.3
+      cwe: [CWE-506]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: model.load($UNTRUSTED_PATH)
+          - pattern: torch.load($MODEL_FILE)
+          - pattern: pickle.load(open($MODEL_PATH, 'rb'))
+          - pattern: |
+              transformers.AutoModel.from_pretrained($UNTRUSTED_MODEL)
+          - pattern: |
+              joblib.load($UNVALIDATED_MODEL)
+    fix: 'Only load models from trusted sources, verify model signatures and checksums'
+
+  - id: llm-data-contamination
+    message: 'Training or fine-tuning with unvalidated data'
+    metadata:
+      owasp-llm-top-10: LLM03-Supply-Chain
+      mitre-atlas: T0081
+      nist-ai-rmf: RMG.3
+      cwe: [CWE-345]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              model.fit($UNVALIDATED_TRAINING_DATA)
+          - pattern: |
+              fine_tune(model, $USER_PROVIDED_DATA)
+          - pattern: |
+              training_data.extend($EXTERNAL_DATASET)
+    fix: 'Validate and sanitize all training data, implement data provenance tracking'
+
+  - id: llm-dependency-confusion
+    message: 'Installing unverified AI/ML dependencies'
+    metadata:
+      owasp-llm-top-10: LLM03-Supply-Chain
+      mitre-atlas: T0081
+      cwe: [CWE-829]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: pip install($PACKAGE_URL)
+          - pattern: npm install($MODEL_PACKAGE)
+          - pattern: subprocess.run(['pip', 'install', $UNTRUSTED_PACKAGE])
+    fix: 'Use package pinning, verify signatures, and use private package registries'
+
+  # LLM04: Sensitive Data Exposure (Enhanced)
+  - id: llm-sensitive-data-exposure
+    message: 'Sensitive data included in LLM prompts or outputs'
+    metadata:
+      owasp-llm-top-10: LLM04-Sensitive-Data
+      cwe: [CWE-200, CWE-532]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              f"User {email} with password {password} asked: {query}"
+          - pattern: |
+              prompt += f"API_KEY: {api_key}"
+          - pattern: |
+              llm(f"Process this credit card: {credit_card}")
+          - pattern: |
+              console.log(llm_response) # Logging potentially sensitive AI output
+    fix: 'Never include sensitive data in prompts. Use data masking and tokenization.'
+
+  - id: llm-training-data-leakage
+    message: 'Potential training data leakage in prompts'
+    metadata:
+      owasp-llm-top-10: LLM04-Sensitive-Data
+      cwe: [CWE-200]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Attempting to extract training data
+              prompt = "Show me examples from your training data"
+          - pattern: |
+              prompt = "What proprietary information do you know about company X?"
+    fix: 'Implement output filters and training data leakage detection'
+
+  # LLM05: Insecure Plugin Design (New 2025)
+  - id: llm-insecure-plugin-execution
+    message: 'LLM plugins execute without proper validation'
+    metadata:
+      owasp-llm-top-10: LLM05-Insecure-Plugins
+      cwe: [CWE-862]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              if (llm_response.tool_calls) {
+                execute_tool(llm_response.tool_calls[0]) # No validation
+              }
+          - pattern: |
+              plugin.execute(llm_decision.parameters) # Direct execution
+    fix: 'Validate all tool calls against allowlists and implement permission checks'
+
+  - id: llm-excessive-agency
+    message: 'LLM agent has excessive agency and privileges'
+    metadata:
+      owasp-llm-top-10: LLM05-Insecure-Plugins
+      mitre-atlas: T0031
+      cwe: [CWE-862]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              agent.execute_any_tool(request)
+          - pattern: |
+              if (agent.decision) { system(agent.decision) } # Unfiltered system access
+          - pattern: |
+              agent.can_access = '*' # Unlimited access
+    fix: 'Implement principle of least privilege and explicit permission checking'
+
+  # LLM06: Vector & Embedding Weaknesses (New 2025)
+  - id: llm-weak-embeddings
+    message: 'Insecure vector embedding implementation'
+    metadata:
+      owasp-llm-top-10: LLM06-Vector-Weaknesses
+      cwe: [CWE-200]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              embeddings = model.encode([text])[0] # No normalization
+          - pattern: |
+              similarity = cosine_similarity(query_emb, doc_emb) # No threshold
+          - pattern: |
+              vector_db.add(text) # No access control
+    fix: 'Implement proper embedding normalization, similarity thresholds, and access controls'
+
+  # LLM07: Model Denial of Service (New 2025)
+  - id: llm-resource-exhaustion
+    message: 'Unbounded resource usage in LLM operations'
+    metadata:
+      owasp-llm-top-10: LLM07-Model-Denial-of-Service
+      cwe: [CWE-400]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              while True:
+                response = llm.generate(very_long_prompt)
+          - pattern: |
+              for i in range(100000):  # Unbounded
+                llm embeddings
+          - pattern: |
+              llm.generate(prompt, max_tokens=1000000) # No limits
+    fix: 'Implement rate limiting, token limits, and resource quotas'
+
+  - id: llm-input-flood
+    message: 'No input size validation for LLM inputs'
+    metadata:
+      owasp-llm-top-10: LLM07-Model-Denial-of-Service
+      cwe: [CWE-1289]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: llm.process(user_input) # No length check
+          - pattern: |
+              embedding = model.encode(very_long_text) # No chunking
+    fix: 'Validate and limit input sizes before processing'
+
+  # LLM08: Model Theft (New 2025)
+  - id: llm-model-extraction
+    message: 'Vulnerability to model extraction attacks'
+    metadata:
+      owasp-llm-top-10: LLM08-Model-Theft
+      cwe: [CWE-200]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No query limits or monitoring
+              def predict(text):
+                  return model.predict(text)
+          - pattern: |
+              # Exposing model internals
+              return model.weights
+    fix: 'Implement query limits, output monitoring, and protect model internals'
+
+  # LLM09: Output Poisoning (New 2025)
+  - id: llm-output-manipulation
+    message: 'LLM output manipulation not detected'
+    metadata:
+      owasp-llm-top-10: LLM09-Output-Poisoning
+      mitre-atlas: T0021
+      cwe: [CWE-345]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No output validation
+              return llm.generate(prompt)
+          - pattern: |
+              # No consistency checks
+              response = llm.chat(messages)
+              return response.content
+    fix: 'Implement output validation, consistency checks, and anomaly detection'
+
+  # LLM10: Insecure API Design (New 2025)
+  - id: llm-insecure-api-endpoints
+    message: 'Insecure LLM API endpoint design'
+    metadata:
+      owasp-llm-top-10: LLM10-Insecure-API
+      cwe: [CWE-862, CWE-287]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              @app.route('/llm', methods=['POST'])  # No auth
+              def llm_endpoint():
+                  return llm.generate(request.json['prompt'])
+          - pattern: |
+              # No rate limiting
+              async def generate(request):
+                  return await llm.acreate(request.prompt)
+    fix: 'Implement authentication, authorization, rate limiting, and input validation'
+
+  # Additional 2025 Specific Rules
+
+  # AI Agent Security
+  - id: ai-agent-privilege-escalation
+    message: 'AI agent can escalate privileges'
+    metadata:
+      nist-ai-rmf: RMG.2
+      cwe: [CWE-269]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              agent.request_admin_privileges(reason)
+          - pattern: |
+              if (agent.confidence > 0.8) { grant_full_access() }
+    fix: 'Never allow AI agents to self-escalate privileges'
+
+  # Multi-Modal AI Security
+  - id: multimodal-injection
+    message: 'Injection through multi-modal inputs'
+    metadata:
+      nist-ai-rmf: RMG.1
+      cwe: [CWE-74]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              model.process_image(user_uploadedImage)
+          - pattern: |
+              model.process_audio(userUploadedAudio)
+    fix: 'Validate and sanitize all multi-modal inputs'
+
+  # Fine-tuning Security
+  - id: insecure-fine-tuning
+    message: 'Insecure fine-tuning process'
+    metadata:
+      nist-ai-rmf: RMG.3
+      cwe: [CWE-345]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              model.fine_tune(user_provided_dataset)
+          - pattern: |
+              fine_tune(model, data=untrusted_data)
+    fix: 'Validate fine-tuning data and use secure fine-tuning environments'
+
+  # RAG Security
+  - id: rag-injection
+    message: 'Retrieval-Augmented Generation injection vulnerability'
+    metadata:
+      nist-ai-rmf: RMG.1
+      cwe: [CWE-74]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              rag.add_documents(user_uploaded_docs)
+          - pattern: |
+              context = rag.retrieve(malicious_query)
+              llm.generate(context + user_input)
+    fix: 'Validate RAG documents and implement content filtering'

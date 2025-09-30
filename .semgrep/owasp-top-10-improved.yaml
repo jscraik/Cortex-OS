@@ -1,25 +1,51 @@
-# Updated: 2025-08-29
+# Updated: 2025-09-30 - OWASP Top 10 2025
 rules:
-  - id: owasp-top-10-2021-a01-broken-access-control
+  # A01:2025 - Broken Access Control (Enhanced)
+  - id: owasp-a01-2025-broken-access-control
     patterns:
       - pattern-either:
           - pattern: $X[$Y] # Potential path traversal
-    message: 'Potential OWASP Top 10 2021 A01: Broken Access Control'
+          - pattern: |
+              $USER.role === 'admin' or $USER.admin === true
+          - pattern: |
+              if ($USER.id === $RESOURCE.owner) { $ACCESS.grant() }
+          - pattern: |
+              $OBJECT[$USER_INPUT] = $VALUE # Object property injection
+          - pattern: |
+              req.session.user = req.params.id # Mass assignment
+    message: 'OWASP Top 10 2025 A01: Broken Access Control - IDOR, privilege escalation, or mass assignment vulnerability'
     languages: [python, javascript, typescript]
-    severity: WARNING
+    severity: ERROR
+    metadata:
+      cwe: [CWE-284, CWE-639, CWE-915]
+      owasp: 'A01:2025'
 
-  - id: owasp-top-10-2021-a02-cryptographic-failures
+  # A02:2025 - Cryptographic Failures (Enhanced for Post-Quantum)
+  - id: owasp-a02-2025-cryptographic-failures
     patterns:
       - pattern-either:
           - pattern: md5(...)
           - pattern: sha1(...)
+          - pattern: sha256($SECRET + $SALT) # Without proper iterations
           - pattern: |
               Crypto.Cipher.AES.new(..., Crypto.Cipher.AES.MODE_ECB, ...)
-    message: 'Potential OWASP Top 10 2021 A02: Cryptographic Failures'
+          - pattern: |
+              crypto.createCipher('aes-256-cbc', ...) # Deprecated API
+          - pattern: |
+              RSA.import_key($KEY).export_key(passphrase=None) # Unencrypted private key
+          - pattern: |
+              jwt.sign($PAYLOAD, $SECRET, { algorithm: 'none' })
+          - pattern: |
+              $TOKEN = base64_encode($PAYLOAD) # No signature
+    message: 'OWASP Top 10 2025 A02: Cryptographic Failures - Weak hashing, deprecated algorithms, or post-quantum vulnerability'
     languages: [python, javascript, typescript]
-    severity: WARNING
+    severity: ERROR
+    metadata:
+      cwe: [CWE-327, CWE-328, CWE-329]
+      owasp: 'A02:2025'
 
-  - id: owasp-top-10-2021-a03-injection
+  # A03:2025 - Injection (Enhanced with new patterns)
+  - id: owasp-a03-2025-injection
     patterns:
       - pattern-either:
           - pattern: |
@@ -34,33 +60,103 @@ rules:
               subprocess.run($USER_INPUT, ...)
           - pattern: |
               os.system($USER_INPUT)
-    message: 'Potential OWASP Top 10 2021 A03: Injection'
+          # New patterns for 2025
+          - pattern: |
+              $ORM.raw(`...${$USER_INPUT}...`)
+          - pattern: |
+              $COLL.find({ $FIELD: { $regex: $USER_INPUT } })
+          - pattern: |
+              $TEMPLATE.render($TEMPLATE_STRING, user_input=$USER_INPUT)
+          - pattern: |
+              exec($USER_INPUT) # GraphQL injection
+          - pattern: |
+              $REDIS.eval($LUA_SCRIPT, [$USER_INPUT], ...)
+    message: 'OWASP Top 10 2025 A03: Injection - SQL, NoSQL, Command, LDAP, GraphQL, or Template injection detected'
     languages: [python, javascript, typescript]
     severity: ERROR
+    metadata:
+      cwe: [CWE-78, CWE-89, CWE-943]
+      owasp: 'A03:2025'
 
-  - id: owasp-top-10-2021-a04-insecure-design
+  # A04:2025 - Insecure Design (New category)
+  - id: owasp-a04-2025-insecure-design
     patterns:
       - pattern-either:
           - pattern: |
               // TODO: Implement proper validation
           - pattern: |
               // FIXME: Security check needed
-    message: 'Potential OWASP Top 10 2021 A04: Insecure Design'
+          # New patterns for 2025
+          - pattern: |
+              function $FUNC($INPUT) { /* No input validation */ }
+          - pattern: |
+              $ROUTE.get('/admin', (req, res) => { /* No auth check */ })
+          - pattern: |
+              $API.post('/transfer', (req) => { transfer(req.body.from, req.body.to, req.body.amount) })
+          - pattern: |
+              // Business logic missing rate limiting
+          - pattern: |
+              if ($USER.authenticated) { $ADMIN_FUNCTION() } # Missing role check
+    message: 'OWASP Top 10 2025 A04: Insecure Design - Missing security controls, business logic flaws, or trust boundary violations'
     languages: [python, javascript, typescript]
     severity: WARNING
+    metadata:
+      cwe: [CWE-1059, CWE-1061]
+      owasp: 'A04:2025'
 
-  - id: owasp-top-10-2021-a05-security-misconfiguration
+  # A05:2025 - Security Misconfiguration (Enhanced)
+  - id: owasp-a05-2025-security-misconfiguration
     patterns:
       - pattern-either:
           - pattern: |
               app.run(..., debug=True, ...)
           - pattern: |
               process.env.NODE_ENV === 'development'
-    message: 'Potential OWASP Top 10 2021 A05: Security Misconfiguration'
+          # New cloud-native patterns
+          - pattern: |
+              app.use(express.static('public', { dotfiles: 'allow' }))
+          - pattern: |
+              cors({ origin: '*' })
+          - pattern: |
+              helmet({ contentSecurityPolicy: false })
+          - pattern: |
+              aws.configure({ accessKeyId: 'AKIA...', secretAccessKey: '...' })
+          - pattern: |
+              MONGODB_URI = 'mongodb://admin:password@localhost'
+          - pattern: |
+              JWT_SECRET = 'hardcoded-secret'
+          - pattern: |
+              app.enable('trust proxy') # In production
+    message: 'OWASP Top 10 2025 A05: Security Misconfiguration - Debug mode, insecure defaults, or exposed credentials'
     languages: [python, javascript, typescript]
     severity: WARNING
+    metadata:
+      cwe: [CWE-16, CWE-2]
+      owasp: 'A05:2025'
 
-  - id: owasp-top-10-2021-a07-identification-and-authentication-failures
+  # A06:2025 - Vulnerable and Outdated Components (Supply Chain)
+  - id: owasp-a06-2025-vulnerable-components
+    patterns:
+      - pattern-either:
+          - pattern: |
+              pip install $PACKAGE == '0.0.1'
+          - pattern: |
+              npm install $PACKAGE@latest # Without lockfile
+          - pattern: |
+              requests.get('http://insecure-package.com/package.zip')
+          - pattern: |
+              subprocess.check_output(['curl', $UNTRUSTED_URL])
+          - pattern: |
+              eval(download($UNTRUSTED_MODULE_URL))
+    message: 'OWASP Top 10 2025 A06: Vulnerable and Outdated Components - Supply chain risk or dependency confusion'
+    languages: [python, javascript, typescript]
+    severity: WARNING
+    metadata:
+      cwe: [CWE-829, CWE-1104]
+      owasp: 'A06:2025'
+
+  # A07:2025 - Identification and Authentication Failures (Enhanced)
+  - id: owasp-a07-2025-identification-authentication-failures
     patterns:
       - pattern-either:
           - pattern: |
@@ -69,31 +165,82 @@ rules:
               sessionStorage.setItem('password', ...)
           - pattern: |
               document.cookie = ... + 'password=' + ...
-    message: 'Potential OWASP Top 10 2021 A07: Identification and Authentication Failures'
-    languages: [javascript, typescript]
+          # New patterns for 2025
+          - pattern: |
+              if ($PASSWORD === 'password123') { /* Auth success */ }
+          - pattern: |
+              $TOKEN = jwt.sign({ user: $USER_ID }, 'secret')
+          - pattern: |
+              if ($USER.email && $USER.password) { /* No MFA */ }
+          - pattern: |
+              session.id = req.query.session_id # Session fixation
+          - pattern: |
+              // Missing password complexity check
+          - pattern: |
+              if ($ATTEMPTS < 100) { /* No account lockout */ }
+    message: 'OWASP Top 10 2025 A07: Identification and Authentication Failures - Weak passwords, missing MFA, or session issues'
+    languages: [python, javascript, typescript]
     severity: ERROR
+    metadata:
+      cwe: [CWE-287, CWE-521]
+      owasp: 'A07:2025'
 
-  - id: owasp-top-10-2021-a08-software-and-data-integrity-failures
+  # A08:2025 - Software and Data Integrity Failures (Enhanced for AI)
+  - id: owasp-a08-2025-integrity-failures
     patterns:
       - pattern-either:
           - pattern: |
               eval(...)
           - pattern: |
               new Function(...)
-    message: 'Potential OWASP Top 10 2021 A08: Software and Data Integrity Failures'
-    languages: [javascript, typescript]
+          # New AI/ML integrity patterns
+          - pattern: |
+              model.load($UNTRUSTED_MODEL_PATH)
+          - pattern: |
+              pickle.load(open($UNTRUSTED_PICKLE, 'rb'))
+          - pattern: |
+              exec(compile($DOWNLOADED_CODE, '<string>', 'exec'))
+          - pattern: |
+              $MODEL.update_weights($UNVALIDATED_DATA)
+          - pattern: |
+              subprocess.run(['pip', 'install', $UNTRUSTED_PACKAGE])
+          - pattern: |
+              $CI_PIPELINE.run($UNTRUSTED_SCRIPT)
+    message: 'OWASP Top 10 2025 A08: Software and Data Integrity Failures - Code injection, model poisoning, or unsigned updates'
+    languages: [python, javascript, typescript]
     severity: ERROR
+    metadata:
+      cwe: [CWE-346, CWE-502]
+      owasp: 'A08:2025'
 
-  - id: owasp-top-10-2021-a09-security-logging-and-monitoring-failures
+  # A09:2025 - Security Logging and Monitoring Failures (Enhanced)
+  - id: owasp-a09-2025-logging-monitoring-failures
     patterns:
       - pattern-either:
           - pattern: console.log($SECRET) # Logging sensitive data
           - pattern: print($SECRET) # Logging sensitive data
-    message: 'Potential OWASP Top 10 2021 A09: Security Logging and Monitoring Failures'
+          # New patterns for 2025
+          - pattern: |
+              // Login without audit trail
+          - pattern: |
+              $CRITICAL_OPERATION() # No logging
+          - pattern: |
+              logger.info(f'User {username} logged in with {password}')
+          - pattern: |
+              if ($ERROR) { return } # Swallowing errors
+          - pattern: |
+              // Missing security event correlation
+          - pattern: |
+              $ADMIN_ACTION performed without audit
+    message: 'OWASP Top 10 2025 A09: Security Logging and Monitoring Failures - Insufficient logging, missing alerts, or exposed sensitive data'
     languages: [python, javascript, typescript]
     severity: WARNING
+    metadata:
+      cwe: [CWE-532, CWE-778]
+      owasp: 'A09:2025'
 
-  - id: owasp-top-10-2021-a10-server-side-request-forgery
+  # A10:2025 - Server-Side Request Forgery (Enhanced)
+  - id: owasp-a10-2025-ssrf
     patterns:
       - pattern-either:
           - pattern: |
@@ -102,6 +249,22 @@ rules:
               fetch($USER_INPUT)
           - pattern: |
               axios.get($USER_INPUT)
-    message: 'Potential OWASP Top 10 2021 A10: Server-Side Request Forgery'
+          # New cloud-specific SSRF patterns
+          - pattern: |
+              fetch('http://169.254.169.254/latest/meta-data/...')
+          - pattern: |
+              urllib.request.urlopen('http://metadata.google.internal/...')
+          - pattern: |
+              requests.get('http://100.100.100.200/latest/meta-data/...')
+          - pattern: |
+              $WEBHOOK.send($USER_CONTROLLED_URL)
+          - pattern: |
+              $PDF_GENERATOR.load($USER_URL)
+          - pattern: |
+              $IMAGE_PROCESSOR.fetch($USER_IMAGE_URL)
+    message: 'OWASP Top 10 2025 A10: Server-Side Request Forgery - Cloud metadata attacks or blind SSRF'
     languages: [python, javascript, typescript]
     severity: ERROR
+    metadata:
+      cwe: [CWE-918]
+      owasp: 'A10:2025'

@@ -6,7 +6,6 @@
   "workbench.fontAliasing": "antialiased",
   "workbench.list.fastScrollSensitivity": 5,
   "workbench.productIconTheme": "macos-modern",
-
   // --- EDITOR BEHAVIOR & FONT (ACCESSIBILITY OPTIMIZED) --------------------
   "editor.accessibilitySupport": "off",
   "editor.accessibilityPageSize": 16,
@@ -32,13 +31,11 @@
   },
   "explorer.confirmDelete": false,
   "explorer.confirmDragAndDrop": false,
-
   // --- FILE AUTO-SAVE SETTINGS ----------------------------------------------
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 30000,
   "files.autoGuessEncoding": true,
   "files.eol": "\n",
-
   // --- CODE ACTIONS & FORMATTING --------------------------------------------
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
@@ -94,14 +91,12 @@
       "source.organizeImports.biome": "never"
     }
   },
-
   // --- SECURITY SETTINGS ----------------------------------------------------
   "security.workspace.trust.enabled": false,
   "security.workspace.trust.untrustedFiles": "open",
   "markdownlint.config": {
     "default": true
   },
-
   // --- TYPESCRIPT & JAVASCRIPT STACK ----------------------------------------
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.validate.enable": true,
@@ -129,7 +124,6 @@
   "files.associations": {
     "turbo.json": "json"
   },
-
   // --- ESLINT & DEPENDENCY INSIGHTS ----------------------------------------
   "eslint.enable": true,
   "eslint.run": "onSave",
@@ -150,7 +144,6 @@
   "dependi.php.lockFileEnabled": true,
   "dependi.dart.enabled": true,
   "dependi.dart.lockFileEnabled": true,
-
   // --- FILE EXCLUSIONS ------------------------------------------------------
   "files.exclude": {
     "**/node_modules": true,
@@ -187,7 +180,6 @@
     "**/.turbo/**": true,
     "**/dist/**": true
   },
-
   // --- PYTHON & TESTING -----------------------------------------------------
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
@@ -217,7 +209,6 @@
     "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/mypy"
   ],
   "mypy-type-checker.serverRestart.timeout": 30000,
-
   // --- TERMINAL CONFIGURATION -----------------------------------------------
   "terminal.integrated.fontFamily": "JetBrains Mono, monospace",
   "terminal.integrated.fontSize": 14,
@@ -255,11 +246,9 @@
     "editor.action.startFindReplaceAction"
   ],
   "terminal.integrated.fontWeight": "normal",
-  "terminal.integrated.gpuAcceleration": "auto",
   "terminal.integrated.persistentSessionScrollback": 10000,
   "terminal.integrated.sendKeybindingsToShell": true,
   "terminal.integrated.shellIntegration.enabled": false,
-
   // --- GIT SETTINGS ---------------------------------------------------------
   "git.autofetch": true,
   "git.autofetchPeriod": 180,
@@ -276,7 +265,6 @@
   ],
   "gitlens.launchpad.indicator.enabled": false,
   "gitlens.views.repositories.showIncomingActivity": true,
-
   // --- RUN ON SAVE AUTOMATION -----------------------------------------------
   "emeraldwalk.runonsave": {
     "commands": [
@@ -286,7 +274,6 @@
       }
     ]
   },
-
   // --- MATERIAL ICON THEME CONFIGURATION ------------------------------------
   "material-icon-theme.enableLogging": true,
   "material-icon-theme.opacity": 1,
@@ -296,7 +283,6 @@
   "material-icon-theme.activeIconPack": "none",
   "material-icon-theme.hidesExplorerArrows": false,
   "material-icon-theme.files.associations": {
-
     // AI & Security Files
     "RULES_OF_AI.md": "lock",
     "AGENTS.md": "robot",
@@ -333,7 +319,6 @@
     ".pre-commit-hooks.yaml": "pre-commit",
     "pre-commit-config.yaml": "pre-commit",
     ".husky": "husky",
-
     // Cortex OS Specific Files
     "cortex-config.json": "settings",
     "cortex-config.yaml": "settings",
@@ -370,7 +355,6 @@
     "PERFORMANCE_OPTIMIZATION_REPORT.md": "document",
     "DEVELOPMENT_WORKFLOW_IMPROVEMENTS_REPORT.md": "document",
     "PHASE45_IMPLEMENTATION_SUMMARY.md": "document",
-
     // Database & Data Files
     "*.sqlite": "database",
     "*.sqlite3": "database",
@@ -382,7 +366,6 @@
     "ai.sqlite": "database",
     "default.sqlite": "database",
     "*.brainstore": "database",
-
     // Configuration & Settings Files
     "turbo.json": "settings",
     "vitest.config.ts": "test-ts",
@@ -418,13 +401,11 @@
     "tdd.plan.json": "json",
     "MigrationPlan.json": "json",
     "initial.yaml": "yaml",
-
     // Environment & Secrets
     ".env*": "tune",
     ".env.template": "tune",
     ".env.carbon": "tune",
     ".env.local": "tune",
-
     // Git & CI/CD
     ".gitmodules": "git",
     ".gitignore": "git",
@@ -433,7 +414,6 @@
     ".markdownlint.json": "settings",
     "ci.patch": "git",
     "git_plan.sh": "git",
-
     // Project Structure Files
     ".project-structure.json": "json",
     "demo_sample_prp.json": "json",
@@ -446,7 +426,6 @@
     "demo-output.txt": "text",
     "marketplace-demo-output.txt": "text",
     "project-scan-results.json": "json",
-
     // AI & ML Files
     "*.prompt": "copilot",
     "*.chatmode": "copilot",
@@ -454,27 +433,23 @@
     "*.claude": "ai",
     "*.mcp": "robot",
     "mlxclaude": "ai",
-
     // Development Tools
     "Dockerfile*": "docker",
     "docker-compose*.yml": "docker",
     "docker-compose*.yaml": "docker",
     "Containerfile*": "docker",
     ".dockerignore": "docker",
-
     // Python Files
     "requirements*.txt": "python",
     "requirements*.txt.bak": "python",
     "pyproject.toml": "python",
     "setup.py": "python",
     "setup.cfg": "python",
-
     // Node.js & JavaScript
     "package*.json": "nodejs",
     "package*.json.bak": "nodejs",
     "tsconfig.json": "tsconfig",
     "tsconfig*.json": "tsconfig",
-
     // Documentation & Assets
     "SECURITY.md": "lock",
     "CONTRIBUTING.md": "document",
@@ -490,7 +465,6 @@
     "improved-cleanmac.sh": "shell",
     "README-improved-cleanmac.md": "document"
   },
-
   // --- FOLDER ASSOCIATIONS ---------------------------------------------------
   "material-icon-theme.folders.associations": {
     // AI & Machine Learning
@@ -514,7 +488,6 @@
     "keras": "ai",
     "transformers": "ai",
     "huggingface": "ai",
-
     // Cortex OS Specific Directories
     "cortex-instructions": "robot",
     "cortex-prompts": "robot",
@@ -546,10 +519,13 @@
     "__archive__": "archive",
     "_inbox": "temp",
     "CONTEXT": "document",
-
     // Apps & Services Structure
     "apps": "app",
     "api": "api",
+    "cortex-code": "app",
+    "cortex-marketplace": "app",
+    "cortex-marketplace-api": "api",
+    "cortex-webui": "ui",
     "web": "app",
     "vscode-extension": "vscode",
     "asbr-dashboard": "dashboard",
@@ -557,54 +533,95 @@
     "asbr-portal": "app",
     "bun-react": "react",
     "docs-api": "docs",
-
     // Packages & Libraries
     "packages": "lib",
     "a2a": "api",
     "a2a-protocol": "api",
+    "a2a-services": "api",
     "accessibility": "rules",
+    "agent-toolkit": "tools",
     "agents-docgen": "robot",
+    "agui": "ui",
     "asbr": "api",
     "asbr-ui": "ui",
+    "commands": "command",
     "avaturl": "lib",
+    "cortex-ai-github": "github",
+    "cortex-logging": "log",
+    "cortex-mcp": "robot",
     "brainwav-agents": "robot",
     "brainwav-api": "api",
     "brainwav-memory": "database",
     "brainwav-ui": "ui",
+    "cortex-sec": "lock",
+    "cortex-semgrep-github": "github",
+    "cortex-structure-github": "github",
     "carbon-monitoring": "monitoring",
     "chatterbox-tts": "audio",
     "cli-tools": "command",
     "component-docs": "docs",
     "cortex-core": "core",
+    "evals": "test",
+    "evidence-runner": "test",
+    "executor-spool": "tools",
+    "gateway": "server",
     "create-cortex-app": "template",
     "datamax": "database",
+    "github": "github",
+    "history-store": "database",
+    "hooks": "git",
+    "integrations": "api",
+    "kernel": "core",
+    "license-scanner": "license",
+    "mcp-bridge": "robot",
+    "mcp-core": "core",
+    "mcp-registry": "robot",
+    "mcp-server": "server",
+    "memories": "database",
+    "memory-core": "core",
+    "memory-rest-api": "api",
+    "model-gateway": "api",
     "dependency-management": "package",
     "evidence-validator": "test",
     "ingest-marker": "database",
-    "license-scanner": "license",
+    "mvp": "app",
+    "mvp-core": "core",
+    "mvp-group": "app",
+    "mvp-server": "server",
+    "observability": "monitoring",
     "model-templates": "template",
     "openai-anthropic-middleware": "api",
     "orchestration": "api",
     "orchestration-analytics": "analytics",
+    "patchkit": "tools",
+    "policy": "rules",
+    "protocol": "api",
+    "prp-runner": "tools",
     "python-agents": "python",
+    "rag": "ai",
     "repo-guardrails": "rules",
+    "registry": "settings",
     "retrieval-layer": "database",
     "sakura": "lib",
     "sdk": "lib",
     "security": "lock",
     "security-atlas": "lock",
     "security-file-validation": "lock",
+    "simlab": "test",
     "slash-commands": "command",
     "stage-schemas": "json",
+    "stream-client": "analytics",
+    "stream-protocol": "api",
     "struct-scan": "tools",
     "telemetry": "analytics",
     "testing": "test",
+    "tdd-coach": "test",
     "ui": "ui",
     "ui-components": "ui",
     "ui2code": "ui",
+    "tool-spec": "tools",
     "utils": "tools",
     "yt-safe-downloader": "download",
-
     // Data & Databases
     "data": "database",
     "datasets": "database",
@@ -613,7 +630,6 @@
     "performance-logs": "log",
     "backups": "archive",
     ":memory:": "database",
-
     // Infrastructure & DevOps
     "infra": "server",
     "terraform": "server",
@@ -625,7 +641,6 @@
     "nginx": "server",
     "server": "server",
     "services": "api",
-
     // Development & Testing
     "notebooks": "jupyter",
     "jupyter": "jupyter",
@@ -657,7 +672,6 @@
     "examples": "examples",
     "snapshots": "test",
     "out": "build",
-
     // Documentation & Resources
     "docs": "docs",
     "docs-built": "docs",
@@ -669,14 +683,12 @@
     "reviews": "docs",
     "migration-specs": "docs",
     "reports": "docs",
-
     // Shared & Common
     "common": "shared",
     "shared": "shared",
     "lib": "lib",
     "vendor": "lib",
     "ext": "lib",
-
     // CLI & Scripts
     "bin": "scripts",
     "cli": "command",
@@ -685,20 +697,17 @@
     "scripts": "tools",
     "tools": "tools",
     "plugins": "plugin",
-
     // Version Control & CI/CD
     ".github": "github",
     ".vscode": "vscode",
     ".cortex": "app",
     ".cortex-os": "app",
     ".turbo": "turbo",
-
     // Databases & Storage
     ".neo4j_data": "database",
     ".qdrant_data": "database",
     "provenance": "database",
     "schemas": "json",
-
     // Build & Distribution
     "dist": "build",
     "site": "build",
@@ -706,7 +715,6 @@
     "downloads": "download",
     "tmp": "temp",
     "term-code-temp": "temp",
-
     // AI & Content Generation
     "personas": "robot",
     "voice": "audio",
@@ -714,7 +722,6 @@
     "ide": "vscode",
     "types": "typescript"
   },
-
   // --- ACCESSIBILITY SIGNALS ------------------------------------------------
   "accessibility.signals.codeActionApplied": {
     "sound": "off"
@@ -747,7 +754,6 @@
     "sound": "off"
   },
   "accessibility.hideAccessibleView": true,
-
   // --- GITHUB COPILOT SETTINGS ----------------------------------------------
   "github.copilot.enable": {
     "*": true,
@@ -777,7 +783,6 @@
   "github.copilot.chat.useResponsesApi": true,
   "github.copilot.chat.alternateGptPrompt.enabled": true,
   "github.copilot.chat.azureModels": {},
-
   // --- CHAT & AGENT TOOLING -------------------------------------------------
   "chat.tools.terminal": {
     "autoApprove": true
@@ -786,7 +791,7 @@
   "chat.tools": {
     "autoApprove": true
   },
-  "chat.agentSessionsViewLocation": "showChatsMenu",
+  "chat.agentSessionsViewLocation": "view",
   "chat.mcp.assisted.nuget.enabled": true,
   "chat.mcp.serverSampling": {
     "Global in Code: apify": {
@@ -801,14 +806,12 @@
   "chat.todoListTool.writeOnly": true,
   "chat.mcp.serverSamplingStrategy": "balanced",
   "chat.editing.confirmEditRequestRemoval": false,
-
   // --- TELEMETRY & PRIVACY --------------------------------------------------
   "redhat.telemetry.enabled": false,
   "docker.extension.enableComposeLanguageServer": true,
   "docker.extension.dockerEngineAvailabilityPrompt": false,
   "docker.commands.build": "--pull",
   "containers.commands.build": "--pull",
-
   // --- SPELL CHECKER --------------------------------------------------------
   "streetsidesoftware.code-spell-checker.userLanguageIds": [
     "typescript",
@@ -851,7 +854,6 @@
     "worktrees"
   ],
   "cSpell.blockCheckingWhenAverageChunkSizeGreaterThan": 120,
-
   // --- WORKBENCH & COMMAND PALETTE -----------------------------------------
   "workbench.editor.autoLockGroups": {
     "imagePreview.previewEditor": true,
@@ -869,7 +871,6 @@
   "diffEditor.experimental.showMoves": true,
   "remoteHub.experimental.syncRecentList": true,
   "remoteHub.experimental.useDiffMatchPatch": true,
-
   // --- EXTENSION-SPECIFIC CONFIGURATION ------------------------------------
   "nxConsole.generateAiAgentRules": true,
   "nxConsole.enableTelemetry": false,
@@ -901,23 +902,18 @@
   "debug.javascript.defaultRuntimeExecutable": {
     "pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
   },
-
   // --- OTHER SETTINGS -------------------------------------------------------
-  "workbench.list.smoothScrolling": true,
   "terminal.explorerKind": "both",
   "terminal.integrated.tabs.hideCondition": "never",
   "terminal.integrated.automationProfile.osx": {
     "path": "/bin/zsh"
   },
   "terminal.integrated.enablePersistentSessions": true,
-  "terminal.integrated.g AutomationShell.osx": null,
   "terminal.integrated.environmentChangesIndicator": "on",
   "terminal.integrated.defaultProfile.osx": "zsh",
   "terminal.integrated.allowChords": true,
   "terminal.integrated.showExitAlert": false,
-  "github.copilot.chat.useResponsesApi": true,
   "chatgpt.openOnStartup": true,
-  "python.terminal.useEnvFile": true,
   "workbench.editor.enablePreview": false,
   "mssql.connectionGroups": [
     {
@@ -928,6 +924,5 @@
   "[github-actions-workflow]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
   },
-  "chat.tools.terminal.autoApprove": true,
   "chat.agentSessions.discovery": "enabled"
 }

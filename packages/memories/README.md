@@ -1,5 +1,7 @@
 # Cortex Memories
 
+> **Legacy Notice (2025-09-30):** The `@cortex-os/memories` package is now classified as legacy. All new development must target `@cortex-os/memory-core`, with adapters and tests migrating there during the MCP & Memory refactor. These sources will be removed in Phase 8 once replacement coverage is in place.
+
 <div align="center">
 
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/memories)](https://www.npmjs.com/package/@cortex-os/memories)

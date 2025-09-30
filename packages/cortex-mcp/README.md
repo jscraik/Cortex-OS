@@ -1,5 +1,7 @@
 # MCP (Model Context Protocol) Packages
 
+> **Deprecation Notice (2025-09-30):** The Python `cortex-mcp` package is now considered legacy. Future MCP integrations must route through the unified Local Memory core via the TypeScript MCP hub. This package will either proxy to the new HTTP adapter or be removed entirely during Phase 8 of the MCP & Memory refactor plan. Tests and documentation should be migrated to the consolidated stack.
+
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Coverage Status](https://img.shields.io/badge/coverage-88%25-green.svg)](coverage)
 

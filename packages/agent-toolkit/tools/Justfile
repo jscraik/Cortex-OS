@@ -1,0 +1,31 @@
+default: help
+
+help:
+
+	@echo "Available recipes:"
+	@echo "  scout pattern path         - Search for a pattern in the codebase using multiple tools (ripgrep, semgrep, ast-grep)."
+	@echo "  codemod find replace path  - Perform a codemod: replace occurrences of 'find' with 'replace' in the given path using comby."
+	@echo "  verify listfile            - Run validators on a list of files specified in 'listfile'."
+	@echo "  tsq query path             - Run a Tree-sitter query on the codebase at the given path."
+	@echo "  apply-diff diff            - Apply a unified diff file to the codebase."
+	@echo "  apply-diff-stdin           - Apply a unified diff from standard input."
+
+scout pattern path:
+@tools/rg_search.sh {{pattern}} {{path}}
+@tools/semgrep_search.sh {{pattern}} {{path}}
+@tools/astgrep_search.sh {{pattern}} {{path}}
+
+codemod find replace path:
+@tools/comby_rewrite.sh {{find}} {{replace}} {{path}}
+
+verify listfile:
+@tools/run_validators.sh {{listfile}}
+
+tsq query path=".":
+@tools/treesitter_query.sh {{query}} {{path}}
+
+apply-diff diff:
+@tools/patch_apply.sh --diff {{diff}}
+
+apply-diff-stdin:
+@tools/patch_apply.sh --stdin

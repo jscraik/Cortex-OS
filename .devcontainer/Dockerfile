@@ -38,6 +38,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Install mise for tool management
 RUN curl https://mise.run | sh
 ENV PATH="/root/.local/bin:${PATH}"
+RUN install -Dm755 /root/.local/bin/mise /usr/local/bin/mise
 RUN mise install -y
 
 # Python setup
@@ -51,16 +52,48 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && apt-get update \
-    && apt-get install -y sudo \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    existing_group=""; \
+    if getent group "$USER_GID" > /dev/null; then \
+    existing_group="$(getent group "$USER_GID" | cut -d: -f1)"; \
+    fi; \
+    if [ -n "$existing_group" ]; then \
+    if [ "$existing_group" != "$USERNAME" ]; then \
+    groupmod --new-name "$USERNAME" "$existing_group"; \
+    fi; \
+    else \
+    groupadd --gid "$USER_GID" "$USERNAME"; \
+    fi; \
+    existing_user=""; \
+    if getent passwd "$USERNAME" > /dev/null; then \
+    existing_user="$USERNAME"; \
+    else \
+    existing_user="$(getent passwd | awk -F: -v uid="$USER_UID" '$3==uid {print $1}')"; \
+    fi; \
+    if [ -n "$existing_user" ] && [ "$existing_user" != "$USERNAME" ]; then \
+    usermod --login "$USERNAME" --home "/home/$USERNAME" --move-home "$existing_user"; \
+    elif [ -z "$existing_user" ]; then \
+    useradd --uid "$USER_UID" --gid "$USER_GID" -m "$USERNAME"; \
+    fi; \
+    mkdir -p "/home/$USERNAME"; \
+    chown "$USER_UID:$USER_GID" "/home/$USERNAME"; \
+    if [ -d /root/.cargo ] && [ ! -d "/home/$USERNAME/.cargo" ]; then \
+    mv /root/.cargo "/home/$USERNAME/.cargo"; \
+    chown -R "$USER_UID:$USER_GID" "/home/$USERNAME/.cargo"; \
+    fi; \
+    if [ -d /root/.rustup ] && [ ! -d "/home/$USERNAME/.rustup" ]; then \
+    mv /root/.rustup "/home/$USERNAME/.rustup"; \
+    chown -R "$USER_UID:$USER_GID" "/home/$USERNAME/.rustup"; \
+    fi; \
+    apt-get update; \
+    apt-get install -y sudo; \
+    echo "$USERNAME ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/$USERNAME"; \
+    chmod 0440 "/etc/sudoers.d/$USERNAME"; \
+    rm -rf /var/lib/apt/lists/*
 
 # Set up the user's home directory
 USER $USERNAME
+ENV PATH="/home/$USERNAME/.cargo/bin:${PATH}"
 ENV HOME=/home/$USERNAME
 
 # Copy mise configuration
@@ -76,7 +109,7 @@ WORKDIR /opt/cortex-home
 FROM base as dev
 
 # Install additional development tools
-RUN npm install -g \
+RUN sudo npm install -g \
     @biomejs/biome \
     typescript \
     tsx \

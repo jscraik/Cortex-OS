@@ -6,21 +6,30 @@ import type {
 } from '@cortex-os/contracts';
 import type { ValidationTool } from '../domain/ToolInterfaces.js';
 import { execWithRetry } from './execUtil.js';
+import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
+
+function createScriptPathPromise(
+	scriptName: string,
+	toolsPath?: ToolsDirOverride,
+): Promise<string> {
+	return resolveToolsDirFromOverride(toolsPath).then((dir) => resolve(dir, scriptName));
+}
 
 /**
  * ESLint validation tool adapter
  */
 export class ESLintAdapter implements ValidationTool {
-	private readonly scriptPath: string;
+	private readonly scriptPathPromise: Promise<string>;
 
-	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
-		this.scriptPath = resolve(toolsPath, 'eslint_verify.sh');
+	constructor(toolsPath?: ToolsDirOverride) {
+		this.scriptPathPromise = createScriptPathPromise('eslint_verify.sh', toolsPath);
 	}
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
-			const cmd = `"${this.scriptPath}" ${filesArgs}`;
+			const scriptPath = await this.scriptPathPromise;
+			const cmd = `"${scriptPath}" ${filesArgs}`;
 			const { stdout } = await execWithRetry(cmd, {
 				timeoutMs: 45_000,
 				retries: 1,
@@ -39,16 +48,17 @@ export class ESLintAdapter implements ValidationTool {
  * Ruff Python validation tool adapter
  */
 export class RuffAdapter implements ValidationTool {
-	private readonly scriptPath: string;
+	private readonly scriptPathPromise: Promise<string>;
 
-	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
-		this.scriptPath = resolve(toolsPath, 'ruff_verify.sh');
+	constructor(toolsPath?: ToolsDirOverride) {
+		this.scriptPathPromise = createScriptPathPromise('ruff_verify.sh', toolsPath);
 	}
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
-			const cmd = `"${this.scriptPath}" ${filesArgs}`;
+			const scriptPath = await this.scriptPathPromise;
+			const cmd = `"${scriptPath}" ${filesArgs}`;
 			const { stdout } = await execWithRetry(cmd, {
 				timeoutMs: 45_000,
 				retries: 1,
@@ -67,15 +77,16 @@ export class RuffAdapter implements ValidationTool {
  * Cargo Rust validation tool adapter
  */
 export class CargoAdapter implements ValidationTool {
-	private readonly scriptPath: string;
+	private readonly scriptPathPromise: Promise<string>;
 
-	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
-		this.scriptPath = resolve(toolsPath, 'cargo_verify.sh');
+	constructor(toolsPath?: ToolsDirOverride) {
+		this.scriptPathPromise = createScriptPathPromise('cargo_verify.sh', toolsPath);
 	}
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
-			const { stdout } = await execWithRetry(`"${this.scriptPath}"`, {
+			const scriptPath = await this.scriptPathPromise;
+			const { stdout } = await execWithRetry(`"${scriptPath}"`, {
 				timeoutMs: 60_000,
 				retries: 1,
 				backoffMs: 300,
@@ -93,10 +104,10 @@ export class CargoAdapter implements ValidationTool {
  * Multi-file validator that uses run_validators.sh
  */
 export class MultiValidatorAdapter implements ValidationTool {
-	private readonly scriptPath: string;
+	private readonly scriptPathPromise: Promise<string>;
 
-	constructor(toolsPath: string = resolve(process.cwd(), 'packages/agent-toolkit/tools')) {
-		this.scriptPath = resolve(toolsPath, 'run_validators.sh');
+	constructor(toolsPath?: ToolsDirOverride) {
+		this.scriptPathPromise = createScriptPathPromise('run_validators.sh', toolsPath);
 	}
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
@@ -105,7 +116,8 @@ export class MultiValidatorAdapter implements ValidationTool {
 
 		try {
 			await writeFile(tempFile, (inputs.files || []).join('\n'));
-			const { stdout } = await execWithRetry(`"${this.scriptPath}" "${tempFile}"`, {
+			const scriptPath = await this.scriptPathPromise;
+			const { stdout } = await execWithRetry(`"${scriptPath}" "${tempFile}"`, {
 				timeoutMs: 60_000,
 				retries: 1,
 				backoffMs: 300,
