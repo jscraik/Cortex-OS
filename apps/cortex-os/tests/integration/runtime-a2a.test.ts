@@ -36,7 +36,7 @@ describe('Cortex-OS Runtime A2A Integration', () => {
 		});
 
 		// Should not throw errors
-		await expect(runtime.a2a.publish(envelope as A2AEventEnvelope)).resolves.not.toThrow();
+		await expect(runtime.a2a.publish(envelope)).resolves.not.toThrow();
 
 		expect(runtime.a2a.publish).toHaveBeenCalledWith(envelope);
 
@@ -84,7 +84,7 @@ describe('Cortex-OS Runtime A2A Integration', () => {
 		});
 
 		// Should propagate the error
-		await expect(runtime.a2a.publish(envelope as A2AEventEnvelope)).rejects.toThrow(publishError);
+		await expect(runtime.a2a.publish(envelope)).rejects.toThrow(publishError);
 
 		await runtime.stop();
 	});
@@ -117,7 +117,7 @@ describe('Cortex-OS Runtime A2A Integration', () => {
 			return Promise.resolve();
 		});
 
-		await runtime.a2a.publish(originalEnvelope as A2AEventEnvelope);
+		await runtime.a2a.publish(originalEnvelope);
 
 		expect(runtime.a2a.publish).toHaveBeenCalled();
 		await runtime.stop();

@@ -1,7 +1,26 @@
-import { SpanStatusCode, trace } from '@opentelemetry/api';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+class ConsoleSpanExporter {
+	export(span: unknown) {
+		const s = span as {
+			spanContext: () => { traceId: string; spanId: string };
+			name?: string;
+			status?: unknown;
+			duration?: unknown;
+			attributes?: Record<string, unknown>;
+		};
+		console.log({
+			traceId: s.spanContext().traceId,
+			spanId: s.spanContext().spanId,
+			name: s.name,
+			status: s.status,
+			duration: s.duration,
+			attributes: s.attributes,
+		});
+	}
+
+	shutdown() {
+		return Promise.resolve();
+	}
+}
 
 // Initialize tracing only if enabled
 if (process.env.OTEL_TRACING_ENABLED === 'true') {
@@ -15,23 +34,6 @@ if (process.env.OTEL_TRACING_ENABLED === 'true') {
 			// Add specific instrumentations as needed
 		],
 	});
-}
-
-class ConsoleSpanExporter {
-	export(span: any) {
-		console.log({
-			traceId: span.spanContext().traceId,
-			spanId: span.spanContext().spanId,
-			name: span.name,
-			status: span.status,
-			duration: span.duration,
-			attributes: span.attributes,
-		});
-	}
-
-	shutdown() {
-		return Promise.resolve();
-	}
 }
 
 export function traced<T>(
@@ -66,9 +68,9 @@ export function traced<T>(
 export function createSpan(operationName: string, attributes?: Record<string, unknown>) {
 	if (process.env.OTEL_TRACING_ENABLED !== 'true') {
 		return {
-			end: () => {},
-			setAttribute: () => {},
-			recordException: () => {},
+			end: () => { },
+			setAttribute: () => { },
+			recordException: () => { },
 		};
 	}
 

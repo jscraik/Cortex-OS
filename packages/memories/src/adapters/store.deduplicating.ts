@@ -46,8 +46,8 @@ export interface DeduplicationStats {
 
 export class DeduplicatingMemoryStore implements MemoryStore {
 	private config: Required<DeduplicationConfig>;
-	private stats: DeduplicationStats;
-	private similarityCache = new Map<string, number>();
+	private readonly stats: DeduplicationStats;
+	private readonly similarityCache = new Map<string, number>();
 
 	constructor(
 		private readonly store: MemoryStore,
@@ -204,44 +204,54 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		const allMemories = await this.store.list(namespace);
 
 		for (const existing of allMemories) {
-			// Skip if already found exact match
-			if (!existing.text) continue;
-			if (this.normalizeText(existing.text) === normalizedText) {
-				continue;
-			}
+			const match = await this.evaluateFuzzyCandidate(memory, normalizedText, existing);
+			if (match) return match;
+		}
 
-			// Check cache first
-			const cacheKey = `${memory.id}:${existing.id}`;
-			if (this.similarityCache.has(cacheKey)) {
-				this.stats.cacheHits++;
-				const similarity = this.similarityCache.get(cacheKey)!;
-				if (similarity >= this.config.fuzzyMatchThreshold) {
-					return existing;
-				}
-				continue;
-			}
+		return null;
+	}
 
-			this.stats.cacheMisses++;
+	private async evaluateFuzzyCandidate(
+		memory: Memory,
+		normalizedText: string,
+		existing: Memory,
+	): Promise<Memory | null> {
+		if (!existing.text) return null;
+		if (this.normalizeText(existing.text) === normalizedText) {
+			// Already handled by exact match logic elsewhere
+			return null;
+		}
 
-			// Calculate text similarity
-			const similarity = this.calculateTextSimilarity(
-				normalizedText,
-				this.normalizeText(existing.text),
-			);
-
-			// Cache result
-			this.similarityCache.set(cacheKey, similarity);
-			if (this.similarityCache.size > this.config.cacheSize) {
-				// Simple LRU eviction
-				const firstKey = this.similarityCache.keys().next().value;
-				if (firstKey) {
-					this.similarityCache.delete(firstKey);
-				}
-			}
-
+		// Check cache first
+		const cacheKey = `${memory.id}:${existing.id}`;
+		if (this.similarityCache.has(cacheKey)) {
+			this.stats.cacheHits++;
+			const cachedVal = this.similarityCache.get(cacheKey);
+			if (typeof cachedVal !== 'number') return null;
+			const similarity = cachedVal;
 			if (similarity >= this.config.fuzzyMatchThreshold) {
 				return existing;
 			}
+			return null;
+		}
+
+		this.stats.cacheMisses++;
+
+		// Calculate text similarity
+		const similarity = this.calculateTextSimilarity(normalizedText, this.normalizeText(existing.text));
+
+		// Cache result
+		this.similarityCache.set(cacheKey, similarity);
+		if (this.similarityCache.size > this.config.cacheSize) {
+			// Simple LRU eviction
+			const firstKey = this.similarityCache.keys().next().value;
+			if (firstKey) {
+				this.similarityCache.delete(firstKey);
+			}
+		}
+
+		if (similarity >= this.config.fuzzyMatchThreshold) {
+			return existing;
 		}
 
 		return null;
@@ -302,7 +312,8 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		return matrix[str2.length][str1.length];
 	}
 
-	private normalizeText(text: string): string {
+	private normalizeText(text?: string): string {
+		if (!text) return '';
 		let normalized = text;
 
 		if (this.config.ignoreCase) {

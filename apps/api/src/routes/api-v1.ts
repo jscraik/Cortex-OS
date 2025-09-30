@@ -12,6 +12,7 @@ interface TaskResponse {
 	readonly title: string;
 	readonly status: string;
 	readonly createdAt: string;
+	readonly projectId: string;
 }
 
 interface AgentResponse {
@@ -128,6 +129,7 @@ async function fetchTasks(logger?: LoggerLike): Promise<TaskResponse[]> {
 				title: true,
 				status: true,
 				createdAt: true,
+				projectId: true,
 			},
 			orderBy: { createdAt: 'desc' },
 			take: 200,
@@ -138,6 +140,7 @@ async function fetchTasks(logger?: LoggerLike): Promise<TaskResponse[]> {
 			title: task.title,
 			status: task.status,
 			createdAt: task.createdAt.toISOString(),
+			projectId: task.projectId,
 		}));
 	} catch (error) {
 		logger?.warn?.('brAInwav tasks query degraded to empty payload', normalizeError(error));
@@ -300,4 +303,5 @@ function sortByLastRunDesc(left: AgentResponse, right: AgentResponse): number {
 	return rightTime - leftTime;
 }
 
-export { apiV1Router, fetchTasks, countCompletedTasks };
+export { apiV1Router, countCompletedTasks, fetchTasks };
+

@@ -1,5 +1,5 @@
 import type { Plugin } from '../adapters/store.plugin.js';
-import type { Memory } from '../ports/MemoryStore.js';
+import type { Memory } from '../domain/types.js';
 
 /**
  * Audit Plugin - Logs all memory operations for auditing purposes

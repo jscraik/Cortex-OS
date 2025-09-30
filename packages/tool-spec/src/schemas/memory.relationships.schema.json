@@ -1,0 +1,109 @@
+{
+  "$id": "https://cortex-os.org/tool/memory.relationships",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Memory Relationships",
+  "description": "Manage and query relationships between memories",
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["create", "find", "map_graph", "delete"],
+      "description": "Action to perform on relationships"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "Source memory ID (for create/delete actions)"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "Target memory ID (for create/delete actions)"
+    },
+    "relationship_type": {
+      "type": "string",
+      "enum": ["references", "extends", "contradicts", "supports", "precedes", "follows", "related_to"],
+      "description": "Type of relationship (for create action)"
+    },
+    "strength": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.5,
+      "description": "Strength of relationship (0-1)"
+    },
+    "bidirectional": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether relationship is bidirectional"
+    },
+    "max_depth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 3,
+      "description": "Maximum depth for graph mapping (for map_graph action)"
+    },
+    "max_nodes": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 1000,
+      "default": 100,
+      "description": "Maximum nodes to include in graph mapping"
+    },
+    "memory_id": {
+      "type": "string",
+      "description": "Central memory ID for finding relationships"
+    },
+    "include_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "enum": ["references", "extends", "contradicts", "supports", "precedes", "follows", "related_to"],
+      "uniqueItems": true,
+      "description": "Filter by relationship types (for find action)"
+    }
+  },
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "properties": {
+        "action": {
+          "const": "create"
+        },
+        "source_id": {},
+        "target_id": {},
+        "relationship_type": {}
+      },
+      "required": ["action", "source_id", "target_id", "relationship_type"]
+    },
+    {
+      "properties": {
+        "action": {
+          "const": "delete"
+        },
+        "source_id": {},
+        "target_id": {},
+        "relationship_type": {}
+      },
+      "required": ["action", "source_id", "target_id", "relationship_type"]
+    },
+    {
+      "properties": {
+        "action": {
+          "const": "find"
+        },
+        "memory_id": {}
+      },
+      "required": ["action", "memory_id"]
+    },
+    {
+      "properties": {
+        "action": {
+          "const": "map_graph"
+        },
+        "memory_id": {}
+      },
+      "required": ["action", "memory_id"]
+    }
+  ]
+}

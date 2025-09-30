@@ -73,7 +73,7 @@ export class InMemoryStore implements MemoryStore {
 		let itemsWithScores = [...this.ns(namespace).values()]
 			.filter((x) => x.vector && (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))))
 			.map((x) => {
-				const queryVec = q.vector ?? q.embedding;
+				const queryVec = q.vector;
 				const targetVec = x.vector;
 				const score = queryVec && targetVec ? cosineSimilarity(queryVec, targetVec) : 0;
 				return { memory: x, score };
@@ -125,9 +125,12 @@ export class InMemoryStore implements MemoryStore {
 		}
 
 		// Apply offset and limit
-		const start = offset || 0;
-		const end = limit ? start + limit : undefined;
-
-		return result.slice(start, end);
+		const start = offset ?? 0;
+		if (typeof offset === 'number' && offset > 0) {
+			if (typeof limit === 'number') return result.slice(start, start + limit);
+			return result.slice(start);
+		}
+		if (typeof limit === 'number') return result.slice(0, limit);
+		return result;
 	}
 }

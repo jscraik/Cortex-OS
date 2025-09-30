@@ -536,8 +536,13 @@ export const memoryStoreTool: MemoryTool = {
 			memoryStoreToolSchema,
 			params,
 			async ({ kind, text, tags, metadata }: MemoryStoreHandlerInput) => {
+				// perform conservative sanitization and validation using helpers
+				_ensurePlainObject({ kind, text, tags, metadata }, 'store_payload');
+				const cleanedText = _sanitizeText(String(text), 'text');
+				const cleanedTags = _sanitizeTags(Array.isArray(tags) ? tags.map(String) : []);
+				const cleanedMetadata = metadata ? sanitizeMetadata(metadata) : undefined;
 				const handler = await getStoreHandler();
-				return await handler.store({ kind, text, tags, metadata });
+				return await handler.store({ kind, text: cleanedText, tags: cleanedTags, metadata: cleanedMetadata });
 			},
 		),
 };
@@ -579,8 +584,13 @@ export const memoryUpdateTool: MemoryTool = {
 			memoryUpdateToolSchema,
 			params,
 			async ({ id, text, tags, metadata }: MemoryUpdateHandlerInput) => {
+				// sanitize optional update fields
+				let cleanedText: string | undefined;
+				if (typeof text === 'string') cleanedText = _sanitizeText(text, 'update_text');
+				const cleanedTags = Array.isArray(tags) ? _sanitizeTags(tags.map(String)) : undefined;
+				const cleanedMetadata = metadata ? sanitizeMetadata(metadata) : undefined;
 				const handler = await getStoreHandler();
-				return await handler.update({ id, text, tags, metadata });
+				return await handler.update({ id, text: cleanedText, tags: cleanedTags, metadata: cleanedMetadata });
 			},
 		),
 };

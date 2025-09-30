@@ -59,12 +59,12 @@ type PrismaSessionDelegate = {
 };
 
 const resolveUserDelegate = (): PrismaUserDelegate | null => {
-	const delegate = (prisma as Record<string, unknown>).user as PrismaUserDelegate | undefined;
+	const delegate = (prisma as unknown as Record<string, unknown>).user as PrismaUserDelegate | undefined;
 	return delegate ?? null;
 };
 
 const resolveSessionDelegate = (): PrismaSessionDelegate | null => {
-	const delegate = (prisma as Record<string, unknown>).session as PrismaSessionDelegate | undefined;
+	const delegate = (prisma as unknown as Record<string, unknown>).session as PrismaSessionDelegate | undefined;
 	return delegate ?? null;
 };
 

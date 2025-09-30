@@ -116,7 +116,7 @@ function registerReadyRoute(app: Express, deps: HealthAppDependencies) {
 function registerMetricsRoute(app: Express, deps: HealthAppDependencies) {
 	app.get('/metrics', async (_req, res) => {
 		try {
-			const { metrics } = await import('../monitoring/metrics');
+			const { metrics } = await import('../monitoring/metrics.js');
 			const report = await metrics.report();
 			res.json(report);
 		} catch (error) {

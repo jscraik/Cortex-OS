@@ -28,35 +28,35 @@ export interface AuthenticatedRequest extends Request {
 	session?: AuthenticatedSession;
 }
 
-const sessionDelegate = (prisma as Record<string, unknown>).session as
+const sessionDelegate = (prisma as unknown as Record<string, unknown>).session as
 	| undefined
 	| {
-			findUnique: (args: {
-				where: { id?: string; token?: string };
-				include?: { user: boolean };
-			}) => Promise<{
+		findUnique: (args: {
+			where: { id?: string; token?: string };
+			include?: { user: boolean };
+		}) => Promise<{
+			id: string;
+			userId: string;
+			token: string;
+			expiresAt: Date;
+			createdAt: Date;
+			userAgent: string | null;
+			user: Record<string, unknown> | null;
+		} | null>;
+		findMany: (args: {
+			where: { userId: string };
+			orderBy?: { createdAt: 'asc' | 'desc' };
+		}) => Promise<
+			{
 				id: string;
 				userId: string;
-				token: string;
 				expiresAt: Date;
 				createdAt: Date;
 				userAgent: string | null;
-				user: Record<string, unknown> | null;
-			} | null>;
-			findMany: (args: {
-				where: { userId: string };
-				orderBy?: { createdAt: 'asc' | 'desc' };
-			}) => Promise<
-				{
-					id: string;
-					userId: string;
-					expiresAt: Date;
-					createdAt: Date;
-					userAgent: string | null;
-				}[]
-			>;
-			delete: (args: { where: { id: string } }) => Promise<unknown>;
-	  };
+			}[]
+		>;
+		delete: (args: { where: { id: string } }) => Promise<unknown>;
+	};
 
 const ensureSessionDelegate = (res: Response) => {
 	if (!sessionDelegate) {
@@ -113,10 +113,10 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
 		req.user = formattedUser;
 		req.session = sanitizeSession(sessionRecord);
 
-		next();
+		return next();
 	} catch (error) {
 		console.error('Auth middleware error:', error);
-		res.status(500).json({ error: 'Internal server error' });
+		return res.status(500).json({ error: 'Internal server error' });
 	}
 };
 
@@ -155,10 +155,10 @@ export const optionalAuth = async (
 
 		req.user = formatUserRecord(sessionRecord.user as any) ?? undefined;
 		req.session = sanitizeSession(sessionRecord);
-		next();
+		return next();
 	} catch (error) {
 		console.error('Optional auth middleware error:', error);
-		next();
+		return next();
 	}
 };
 
@@ -173,7 +173,7 @@ export const requireRole = (role: string) => {
 			return res.status(403).json({ error: 'Forbidden' });
 		}
 
-		next();
+		return next();
 	};
 };
 
@@ -188,7 +188,7 @@ export const requirePermission = (permission: string) => {
 			return res.status(403).json({ error: 'Forbidden' });
 		}
 
-		next();
+		return next();
 	};
 };
 
@@ -197,5 +197,5 @@ export const authRateLimit = async (
 	_res: Response,
 	next: NextFunction,
 ) => {
-	next();
+	return next();
 };

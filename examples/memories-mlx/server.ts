@@ -93,7 +93,7 @@ async function bootstrap() {
 	});
 
 	server.listen(PORT, () => {
-		// eslint-disable-next-line no-console
+
 		console.error(`Demo server listening on http://127.0.0.1:${PORT}`);
 	});
 }
@@ -112,7 +112,7 @@ function readJson(req: http.IncomingMessage): Promise<any> {
 			try {
 				resolve(data ? JSON.parse(data) : {});
 			} catch (_e) {
-				reject(badRequest('Invalid JSON body'));
+				reject(new Error('Invalid JSON body'));
 			}
 		});
 		req.on('error', reject);
@@ -120,7 +120,7 @@ function readJson(req: http.IncomingMessage): Promise<any> {
 }
 
 bootstrap().catch((err) => {
-	// eslint-disable-next-line no-console
+
 	console.error(err);
 	process.exit(1);
 });

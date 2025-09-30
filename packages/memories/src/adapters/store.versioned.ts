@@ -7,7 +7,7 @@ export class VersionedMemoryStore implements MemoryStore {
 	constructor(
 		private readonly store: MemoryStore,
 		private readonly migrationManager: MigrationManager,
-	) {}
+	) { }
 
 	async initialize(): Promise<void> {
 		const currentVersion = await this.migrationManager.getCurrentVersion();
@@ -61,6 +61,10 @@ export class VersionedMemoryStore implements MemoryStore {
 
 	async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
 		return this.store.purgeExpired(nowISO, namespace);
+	}
+
+	async list(namespace?: string, limit?: number, offset?: number): Promise<Memory[]> {
+		return this.store.list(namespace, limit, offset);
 	}
 
 	private getLatestVersion(): string {

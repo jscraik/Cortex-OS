@@ -1,0 +1,66 @@
+{
+  "$id": "https://cortex-os.org/tool/memory.analysis",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Analyze Memory",
+  "description": "Analyze memories to extract insights, patterns, and summaries",
+  "type": "object",
+  "properties": {
+    "analysis_type": {
+      "type": "string",
+      "enum": ["summary", "temporal_patterns", "tag_clusters", "concept_network", "custom"],
+      "description": "Type of analysis to perform"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain to analyze (optional, defaults to all domains)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "description": "Filter by tags for analysis"
+    },
+    "time_range": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Start of time range (ISO 8601)"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time",
+          "description": "End of time range (ISO 8601)"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Time range for temporal analysis"
+    },
+    "concept": {
+      "type": "string",
+      "description": "Specific concept to analyze (for concept_network analysis)"
+    },
+    "question": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Specific question to answer from memories"
+    },
+    "max_memories": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 1000,
+      "default": 100,
+      "description": "Maximum number of memories to include in analysis"
+    },
+    "output_format": {
+      "type": "string",
+      "enum": ["json", "markdown", "text"],
+      "default": "json",
+      "description": "Format for analysis output"
+    }
+  },
+  "additionalProperties": false
+}

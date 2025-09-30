@@ -1,0 +1,65 @@
+{
+  "$id": "https://cortex-os.org/tool/memory.stats",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Memory Statistics",
+  "description": "Get statistics and metrics about stored memories",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "type": "string",
+      "description": "Domain to get stats for (optional, defaults to all domains)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "description": "Filter by tags for stats"
+    },
+    "include": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "total_count",
+          "domain_distribution",
+          "tag_distribution",
+          "importance_distribution",
+          "temporal_distribution",
+          "storage_size",
+          "index_stats",
+          "qdrant_stats",
+          "recent_activity"
+        ]
+      },
+      "uniqueItems": true,
+      "default": ["total_count", "domain_distribution", "tag_distribution"],
+      "description": "Types of statistics to include"
+    },
+    "time_range": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Start of time range (ISO 8601)"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time",
+          "description": "End of time range (ISO 8601)"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Time range for temporal statistics"
+    },
+    "granularity": {
+      "type": "string",
+      "enum": ["day", "week", "month", "year"],
+      "default": "day",
+      "description": "Granularity for temporal distribution"
+    }
+  },
+  "additionalProperties": false
+}

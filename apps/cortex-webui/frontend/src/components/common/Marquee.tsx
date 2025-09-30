@@ -38,7 +38,7 @@ const Marquee: React.FC<MarqueeProps> = ({
 				</div>
 			</div>
 
-			<style jsx>{`
+			<style>{`
         @keyframes flyIn {
           from {
             opacity: 0;

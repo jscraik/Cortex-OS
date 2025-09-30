@@ -36,18 +36,18 @@ const SlideShow: React.FC<SlideShowProps> = ({
 
 	return (
 		<div className={`relative w-full h-full ${className}`}>
-			{imageUrls.map((imageUrl, idx) => (
+			{imageUrls.map((imageUrl) => (
 				<div
-					key={idx}
+					key={imageUrl}
 					className="absolute top-0 left-0 w-full h-full bg-cover bg-center transition-opacity duration-1000"
 					style={{
-						opacity: selectedImageIdx === idx ? 1 : 0,
+						opacity: selectedImageIdx === imageUrls.indexOf(imageUrl) ? 1 : 0,
 						backgroundImage: `url('${getImageUrl(imageUrl)}')`,
 					}}
 				/>
 			))}
 
-			<style jsx>{`
+			<style>{`
         .bg-cover {
           background-size: cover;
         }

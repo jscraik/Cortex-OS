@@ -12,7 +12,7 @@ export interface Relationship {
 	from: string;
 	to: string;
 	type: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -29,8 +29,8 @@ export interface GraphQuery {
 
 export interface GraphPattern {
 	type: 'path' | 'star' | 'clique';
-	nodes: Record<string, any>[];
-	edges: Record<string, any>[];
+	nodes: Record<string, unknown>[];
+	edges: Record<string, unknown>[];
 }
 
 export interface GraphResult {
@@ -54,10 +54,10 @@ export interface Community {
 }
 
 export class GraphMemoryStore implements MemoryStore {
-	private relationshipCache = new Map<string, Relationship[]>();
-	private traversalCache = new Map<string, MemoryNode[]>();
+	private readonly relationshipCache = new Map<string, Relationship[]>();
+	private readonly traversalCache = new Map<string, MemoryNode[]>();
 
-	constructor(private readonly store: MemoryStore) {}
+	constructor(private readonly store: MemoryStore) { }
 
 	async upsert(memory: Memory, namespace = 'default'): Promise<Memory> {
 		// Ensure graph metadata exists
@@ -230,7 +230,9 @@ export class GraphMemoryStore implements MemoryStore {
 		const queue: { id: string; depth: number }[] = [{ id: startId, depth: 0 }];
 
 		while (queue.length > 0) {
-			const { id, depth } = queue.shift()!;
+			const item = queue.shift();
+			if (!item) break;
+			const { id, depth } = item;
 
 			if (visited.has(id) || depth > maxDepth) {
 				continue;
@@ -292,11 +294,13 @@ export class GraphMemoryStore implements MemoryStore {
 
 	async findPath(fromId: string, toId: string, namespace = 'default'): Promise<Memory[]> {
 		// BFS to find shortest path
-		const queue: { id: string; path: string[] }[] = [{ id: fromId, path: [fromId] }];
+		const queuePath: { id: string; path: string[] }[] = [{ id: fromId, path: [fromId] }];
 		const visited = new Set<string>([fromId]);
 
-		while (queue.length > 0) {
-			const { id, path } = queue.shift()!;
+		while (queuePath.length > 0) {
+			const entry = queuePath.shift();
+			if (!entry) break;
+			const { id, path } = entry;
 
 			if (id === toId) {
 				// Found path, retrieve memories
@@ -310,7 +314,7 @@ export class GraphMemoryStore implements MemoryStore {
 
 				if (!visited.has(neighborId)) {
 					visited.add(neighborId);
-					queue.push({ id: neighborId, path: [...path, neighborId] });
+					queuePath.push({ id: neighborId, path: [...path, neighborId] });
 				}
 			}
 		}

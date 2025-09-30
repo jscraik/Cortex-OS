@@ -28,8 +28,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 	return (
 		<>
 			{/* Backdrop */}
-			<div
-				className="absolute z-20 top-0 right-0 left-0 bottom-0 bg-white/20 dark:bg-black/5 w-full min-h-full h-full flex justify-center overflow-hidden overscroll-contain"
+			<button
+				type="button"
+				aria-label="Close sidebar"
+				className="absolute z-20 top-0 right-0 left-0 bottom-0 bg-white/20 dark:bg-black/5 w-full min-h-full h-full flex justify-center overflow-hidden overscroll-contain appearance-none border-0"
 				onClick={onClose}
 				style={{
 					animation: `fadeIn ${duration}ms ease-out forwards`,
@@ -47,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 				<div className={`${className} h-full`}>{children}</div>
 			</div>
 
-			<style jsx>{`
+			<style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }

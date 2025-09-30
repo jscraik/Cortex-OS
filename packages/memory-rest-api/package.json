@@ -1,0 +1,46 @@
+{
+  "name": "@cortex-os/memory-rest-api",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest",
+    "start": "node dist/index.js",
+    "swagger": "node dist/utils/swagger.js"
+  },
+  "dependencies": {
+    "@cortex-os/memory-core": "workspace:*",
+    "@cortex-os/tool-spec": "workspace:*",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "pino": "^8.16.0",
+    "pino-http": "^10.2.0",
+    "zod": "^3.25.76",
+    "swagger-ui-express": "^5.0.0",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/swagger-ui-express": "^4.1.6",
+    "@types/node": "^22.18.1",
+    "@types/yaml": "^2.0.10",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "tsx": "^4.19.1",
+    "supertest": "^6.3.4"
+  }
+}

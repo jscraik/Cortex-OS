@@ -66,7 +66,7 @@ type PrismaPasskeyDelegate = {
 };
 
 const resolveDelegate = (): PrismaPasskeyDelegate | null => {
-	const candidate = (prisma as Record<string, unknown>).passkeyCredential as
+	const candidate = (prisma as unknown as Record<string, unknown>).passkeyCredential as
 		| PrismaPasskeyDelegate
 		| undefined;
 	return candidate ?? null;

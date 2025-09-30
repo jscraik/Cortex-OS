@@ -1,0 +1,50 @@
+{
+  "$id": "https://cortex-os.org/tool/memory.store",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Store Memory",
+  "description": "Store a memory with content, importance, tags, and domain",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192,
+      "description": "The memory content to store"
+    },
+    "importance": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 5,
+      "description": "Importance level (1-10, higher is more important)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "maxItems": 32,
+      "uniqueItems": true,
+      "description": "Tags to categorize the memory"
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z0-9._-]+$",
+      "description": "Domain/category for the memory"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "number", "boolean", "array", "object", "null"]
+      },
+      "maxProperties": 50,
+      "description": "Additional metadata key-value pairs"
+    }
+  },
+  "additionalProperties": false
+}

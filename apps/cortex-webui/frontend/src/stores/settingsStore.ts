@@ -12,6 +12,7 @@ export function useSettingsStore() {
 			showUsernameInChat: true,
 			showModelNameInChat: true,
 		},
+		pinnedModels: [],
 		notifications: {
 			webhook_url: '',
 		},

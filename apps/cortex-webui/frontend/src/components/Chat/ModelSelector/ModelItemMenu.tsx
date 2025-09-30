@@ -1,8 +1,8 @@
 'use client';
 
+import { useSettingsStore } from '@/stores/settingsStore';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
-import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ModelItemMenuProps {
 	show: boolean;
@@ -30,6 +30,12 @@ const ModelItemMenu: React.FC<ModelItemMenuProps> = ({
 	children,
 }) => {
 	const settings = useSettingsStore();
+	const storeSettings = settings as unknown as { pinnedModels?: string[] } & Record<
+		string,
+		unknown
+	>;
+	const pinned = Array.isArray(storeSettings.pinnedModels) ? storeSettings.pinnedModels : [];
+
 	const menuRef = useRef<HTMLDivElement>(null);
 
 	// Close menu when clicking outside
@@ -54,8 +60,19 @@ const ModelItemMenu: React.FC<ModelItemMenuProps> = ({
 	return (
 		<>
 			{children}
-			<div ref={menuRef} className="fixed inset-0 z-50" onClick={() => setShow(false)}>
+			<button
+				aria-label="Close model menu"
+				type="button"
+				className="fixed inset-0 z-50 appearance-none bg-transparent border-0"
+				onClick={() => setShow(false)}
+				onKeyDown={(e) => {
+					if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+						setShow(false);
+					}
+				}}
+			>
 				<div
+					ref={menuRef}
 					className="absolute w-full max-w-[180px] text-sm rounded-xl px-1 py-1.5 z-[9999999] bg-white dark:bg-gray-850 dark:text-white shadow-lg border border-gray-300/30 dark:border-gray-700/40"
 					style={{
 						top: '100%',
@@ -71,9 +88,9 @@ const ModelItemMenu: React.FC<ModelItemMenuProps> = ({
 							pinModelHandler(model?.id);
 							setShow(false);
 						}}
-						aria-pressed={(settings?.pinnedModels ?? []).includes(model?.id)}
+						aria-pressed={pinned.includes(model?.id)}
 					>
-						{(settings?.pinnedModels ?? []).includes(model?.id) ? (
+						{pinned.includes(model?.id) ? (
 							<>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -81,6 +98,7 @@ const ModelItemMenu: React.FC<ModelItemMenuProps> = ({
 									fill="currentColor"
 									className="size-4"
 								>
+									<title>Hide from Sidebar</title>
 									<path d="M10 2.5a.75.75 0 0 1 .75.75v7.5h7.5a.75.75 0 0 1 0 1.5h-7.5v7.5a.75.75 0 0 1-1.5 0v-7.5h-7.5a.75.75 0 0 1 0-1.5h7.5v-7.5A.75.75 0 0 1 10 2.5Z" />
 								</svg>
 								<div className="flex items-center">Hide from Sidebar</div>
@@ -93,6 +111,7 @@ const ModelItemMenu: React.FC<ModelItemMenuProps> = ({
 									fill="currentColor"
 									className="size-4"
 								>
+									<title>Keep in Sidebar</title>
 									<path
 										fillRule="evenodd"
 										d="M10 2.5a.75.75 0 0 1 .75.75v7.5h7.5a.75.75 0 0 1 0 1.5h-7.5v7.5a.75.75 0 0 1-1.5 0v-7.5h-7.5a.75.75 0 0 1 0-1.5h7.5v-7.5A.75.75 0 0 1 10 2.5Z"
@@ -119,13 +138,14 @@ const ModelItemMenu: React.FC<ModelItemMenuProps> = ({
 							fill="currentColor"
 							className="size-4"
 						>
+							<title>Copy Link</title>
 							<path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" />
 							<path d="M11.603 7.963a.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.667l-3 3a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 1 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865Z" />
 						</svg>
 						<div className="flex items-center">Copy Link</div>
 					</button>
 				</div>
-			</div>
+			</button>
 		</>
 	);
 };

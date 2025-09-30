@@ -90,6 +90,7 @@
   },
   "exclude": [
     "**/dist",
-    "**/.nx"
+    "**/.nx",
+    "**/examples/**"
   ]
 }

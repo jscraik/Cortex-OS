@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Development overrides
+  cortex-mcp:
+    environment:
+      - MEMORY_LOG_LEVEL=debug
+      - TRANSPORT=http
+    volumes:
+      - ../../packages/mcp-server/src:/app/src:ro
+      - ../../packages/memory-core/src:/memory-core/src:ro
+      - ../../packages/tool-spec/src:/tool-spec/src:ro
+    command: ["npm", "run", "dev"]
+
+  cortex-rest-api:
+    environment:
+      - MEMORY_LOG_LEVEL=debug
+      - API_LOG_LEVEL=debug
+      - ENABLE_SWAGGER=true
+    volumes:
+      - ../../packages/memory-rest-api/src:/app/src:ro
+      - ../../packages/memory-core/src:/memory-core/src:ro
+      - ../../packages/tool-spec/src:/tool-spec/src:ro
+    command: ["npm", "run", "dev"]
+
+  # Optional: Add embedding service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cortex-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - cortex-network
+    profiles:
+      - embeddings
+
+volumes:
+  ollama_data:
+    driver: local

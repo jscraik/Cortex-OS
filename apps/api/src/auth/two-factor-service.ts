@@ -56,14 +56,14 @@ type PrismaUserDelegate = {
 };
 
 const resolveDelegate = (): PrismaTwoFactorDelegate | null => {
-	const candidate = (prisma as Record<string, unknown>).twoFactorSecret as
+	const candidate = (prisma as unknown as Record<string, unknown>).twoFactorSecret as
 		| PrismaTwoFactorDelegate
 		| undefined;
 	return candidate ?? null;
 };
 
 const resolveUserDelegate = (): PrismaUserDelegate | null => {
-	const candidate = (prisma as Record<string, unknown>).user as PrismaUserDelegate | undefined;
+	const candidate = (prisma as unknown as Record<string, unknown>).user as PrismaUserDelegate | undefined;
 	return candidate ?? null;
 };
 

@@ -1,5 +1,5 @@
 import type { Plugin } from '../adapters/store.plugin.js';
-import type { Memory } from '../ports/MemoryStore.js';
+import type { Memory } from '../domain/types.js';
 
 /**
  * Compression Plugin - Compresses large memory texts to save space
@@ -40,19 +40,24 @@ export const createCompressionPlugin = (threshold: number = 1000): Plugin => {
 				return memory;
 			},
 			afterGet: async (memory: Memory | null) => {
-				if (memory?.metadata?.compressed) {
+				if (memory?.metadata?.compressed && typeof memory.text === 'string') {
 					// Keep the compressed text but add decompression marker
 					memory.text = memory.text.replace('[COMPRESSED]', '[DECOMPRESSED]');
-					// Remove compression metadata
-					const { compressed, originalLength, compressedAt, ...rest } = memory.metadata;
-					memory.metadata = rest;
+					// Remove compression metadata safely
+					if (memory.metadata) {
+						const metaCopy = { ...memory.metadata } as Record<string, unknown>;
+						delete metaCopy.compressed;
+						delete metaCopy.originalLength;
+						delete metaCopy.compressedAt;
+						memory.metadata = metaCopy;
+					}
 				}
 				return memory;
 			},
 			afterSearch: async (results: Memory[]) => {
 				// Decompress search results
 				return results.map((memory) => {
-					if (memory.metadata?.compressed) {
+					if (memory.metadata?.compressed && typeof memory.text === 'string') {
 						return {
 							...memory,
 							text: decompressText(memory.text),
