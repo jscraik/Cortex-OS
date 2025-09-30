@@ -59,7 +59,7 @@ services:
       timeout: 10s
       retries: 3
 
-  
+
   # Local AI - Ollama for local LLM inference
   ollama:
     image: ollama/ollama:0.5.4
@@ -67,19 +67,23 @@ services:
       - '11434:11434'
     volumes:
       - ollama_data:/root/.ollama
+      # Mount Hugging Face cache for model persistence
+      - ${HUGGINGFACE_CACHE_DIR:-/Volumes/ExternalSSD/huggingface_cache}:/app/huggingface_cache
     environment:
       - OLLAMA_HOST=0.0.0.0
+      - HUGGINGFACE_CACHE_DIR=/app/huggingface_cache
+      - HF_HOME=/app/huggingface_cache
     networks:
       - cortex-network
     restart: unless-stopped
-    # Uncomment the following lines if you have GPU support
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+  # Uncomment the following lines if you have GPU support
+  # deploy:
+  #   resources:
+  #     reservations:
+  #       devices:
+  #         - driver: nvidia
+  #           count: all
+  #           capabilities: [gpu]
 
   # Carbon Monitoring - Scaphandre Bridge Service (GPL isolation)
   scaphandre-bridge:

@@ -13,11 +13,15 @@ services:
       - ./tests:/app/tests
       - ./logs:/app/logs
       - ./data:/app/data
+      # Mount Hugging Face cache for model persistence
+      - ${HUGGINGFACE_CACHE_DIR:-/Volumes/ExternalSSD/huggingface_cache}:/app/huggingface_cache
     environment:
       - ENVIRONMENT=development
       - LOG_LEVEL=DEBUG
       - OLLAMA_BASE_URL=http://ollama:11434
       - PROMETHEUS_PORT=8001
+      - HUGGINGFACE_CACHE_DIR=/app/huggingface_cache
+      - HF_HOME=/app/huggingface_cache
     depends_on:
       - ollama
       - prometheus
@@ -40,11 +44,15 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
+      # Mount Hugging Face cache for model persistence
+      - ${HUGGINGFACE_CACHE_DIR:-/Volumes/ExternalSSD/huggingface_cache}:/app/huggingface_cache
     environment:
       - ENVIRONMENT=production
       - LOG_LEVEL=INFO
       - OLLAMA_BASE_URL=http://ollama:11434
       - PROMETHEUS_PORT=8001
+      - HUGGINGFACE_CACHE_DIR=/app/huggingface_cache
+      - HF_HOME=/app/huggingface_cache
     depends_on:
       - ollama
       - prometheus
@@ -67,12 +75,16 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
+      # Mount Hugging Face cache for model persistence
+      - ${HUGGINGFACE_CACHE_DIR:-/Volumes/ExternalSSD/huggingface_cache}:/app/huggingface_cache
     environment:
       - ENVIRONMENT=production
       - LOG_LEVEL=INFO
       - OLLAMA_BASE_URL=http://ollama:11434
       - PROMETHEUS_PORT=8001
       - MLX_ENABLED=true
+      - HUGGINGFACE_CACHE_DIR=/app/huggingface_cache
+      - HF_HOME=/app/huggingface_cache
     depends_on:
       - ollama
       - prometheus
@@ -92,8 +104,12 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+      # Mount Hugging Face cache for model persistence
+      - ${HUGGINGFACE_CACHE_DIR:-/Volumes/ExternalSSD/huggingface_cache}:/app/huggingface_cache
     environment:
       - OLLAMA_HOST=0.0.0.0
+      - HUGGINGFACE_CACHE_DIR=/app/huggingface_cache
+      - HF_HOME=/app/huggingface_cache
     networks:
       - ml-network
     restart: unless-stopped
