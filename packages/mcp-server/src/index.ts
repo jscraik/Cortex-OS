@@ -1,236 +1,236 @@
 #!/usr/bin/env node
 
+import { randomUUID } from 'node:crypto';
+import { createMemoryProviderFromEnv, type MemoryProvider } from '@cortex-os/memory-core';
+import { TOOL_SPECS } from '@cortex-os/tool-spec';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import express from 'express';
 import cors from 'cors';
-import { createMemoryProviderFromEnv, type MemoryProvider } from '@cortex-os/memory-core';
-import { TOOL_SPECS, type ToolSpec } from '@cortex-os/tool-spec';
+import express from 'express';
 import { pino } from 'pino';
-import { randomUUID } from 'node:crypto';
 
 const logger = pino({ level: 'info' });
 
 interface McpServerConfig {
-  transport: 'stdio' | 'http';
-  port?: number;
-  host?: string;
+	transport: 'stdio' | 'http';
+	port?: number;
+	host?: string;
 }
 
 class DualMcpServer {
-  private server: Server;
-  private provider: MemoryProvider;
-  private config: McpServerConfig;
-  private httpServer?: any;
-  private httpTransport?: StreamableHTTPServerTransport;
+	private server: Server;
+	private provider: MemoryProvider;
+	private config: McpServerConfig;
+	private httpServer?: any;
+	private httpTransport?: StreamableHTTPServerTransport;
 
-  constructor(config: McpServerConfig) {
-    this.config = config;
-    this.provider = createMemoryProviderFromEnv();
-    this.server = new Server(
-      {
-        name: 'cortex-memory',
-        version: '0.1.0',
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      }
-    );
+	constructor(config: McpServerConfig) {
+		this.config = config;
+		this.provider = createMemoryProviderFromEnv();
+		this.server = new Server(
+			{
+				name: 'cortex-memory',
+				version: '0.1.0',
+			},
+			{
+				capabilities: {
+					tools: {},
+				},
+			},
+		);
 
-    this.setupTools();
-    this.setupErrorHandling();
-  }
+		this.setupTools();
+		this.setupErrorHandling();
+	}
 
-  private setupTools(): void {
-    const specs = Object.values(TOOL_SPECS);
+	private setupTools(): void {
+		const specs = Object.values(TOOL_SPECS);
 
-    (this.server as any).setRequestHandler('tools/list', async () => ({
-      tools: specs.map((spec) => ({
-        name: spec.name,
-        description: spec.description,
-        inputSchema: spec.schema,
-      })),
-    }));
+		(this.server as any).setRequestHandler('tools/list', async () => ({
+			tools: specs.map((spec) => ({
+				name: spec.name,
+				description: spec.description,
+				inputSchema: spec.schema,
+			})),
+		}));
 
-    (this.server as any).setRequestHandler('tools/call', async (request: any) => {
-      const spec = TOOL_SPECS[request.params.name];
-      if (!spec) {
-        throw new Error(`Unknown tool: ${request.params.name}`);
-      }
+		(this.server as any).setRequestHandler('tools/call', async (request: any) => {
+			const spec = TOOL_SPECS[request.params.name];
+			if (!spec) {
+				throw new Error(`Unknown tool: ${request.params.name}`);
+			}
 
-      try {
-        spec.zodSchema.parse(request.params.arguments);
-        const result = await this.handleToolCall(spec.name, request.params.arguments);
+			try {
+				spec.zodSchema.parse(request.params.arguments);
+				const result = await this.handleToolCall(spec.name, request.params.arguments);
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        logger.error('Tool call failed', {
-          tool: spec.name,
-          error: (error as Error).message,
-        });
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(result, null, 2),
+						},
+					],
+				};
+			} catch (error) {
+				logger.error('Tool call failed', {
+					tool: spec.name,
+					error: (error as Error).message,
+				});
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                error: {
-                  code: 'INTERNAL_ERROR',
-                  message: (error as Error).message,
-                },
-              }),
-            },
-          ],
-          isError: true,
-        };
-      }
-    });
-  }
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify({
+								error: {
+									code: 'INTERNAL_ERROR',
+									message: (error as Error).message,
+								},
+							}),
+						},
+					],
+					isError: true,
+				};
+			}
+		});
+	}
 
-  private async handleToolCall(toolName: string, args: any): Promise<any> {
-    switch (toolName) {
-      case 'memory.store':
-        return await this.provider.store(args);
+	private async handleToolCall(toolName: string, args: any): Promise<any> {
+		switch (toolName) {
+			case 'memory.store':
+				return await this.provider.store(args);
 
-      case 'memory.search':
-        return await this.provider.search(args);
+			case 'memory.search':
+				return await this.provider.search(args);
 
-      case 'memory.analysis':
-        return await this.provider.analysis(args);
+			case 'memory.analysis':
+				return await this.provider.analysis(args);
 
-      case 'memory.relationships':
-        return await this.provider.relationships(args);
+			case 'memory.relationships':
+				return await this.provider.relationships(args);
 
-      case 'memory.stats':
-        return await this.provider.stats(args);
+			case 'memory.stats':
+				return await this.provider.stats(args);
 
-      default:
-        throw new Error(`Unknown tool: ${toolName}`);
-    }
-  }
+			default:
+				throw new Error(`Unknown tool: ${toolName}`);
+		}
+	}
 
-  private setupErrorHandling(): void {
-    this.server.onerror = (error) => logger.error('MCP Server error', error);
-    process.on('SIGINT', async () => {
-      logger.info('Shutting down MCP server...');
-      await this.stop();
-      process.exit(0);
-    });
-  }
+	private setupErrorHandling(): void {
+		this.server.onerror = (error) => logger.error('MCP Server error', error);
+		process.on('SIGINT', async () => {
+			logger.info('Shutting down MCP server...');
+			await this.stop();
+			process.exit(0);
+		});
+	}
 
-  private setupHttpServer(): void {
-    if (this.config.transport === 'http') {
-      const app = express();
-      app.use(cors());
-      app.use(express.json());
+	private setupHttpServer(): void {
+		if (this.config.transport === 'http') {
+			const app = express();
+			app.use(cors());
+			app.use(express.json());
 
-      // Health check endpoint
-      app.get('/healthz', async (req, res) => {
-        try {
-          const health = await this.provider.healthCheck();
-          res.status(health.healthy ? 200 : 503).json(health);
-        } catch (error) {
-          res.status(503).json({
-            healthy: false,
-            error: (error as Error).message,
-          });
-        }
-      });
+			// Health check endpoint
+			app.get('/healthz', async (_req, res) => {
+				try {
+					const health = await this.provider.healthCheck();
+					res.status(health.healthy ? 200 : 503).json(health);
+				} catch (error) {
+					res.status(503).json({
+						healthy: false,
+						error: (error as Error).message,
+					});
+				}
+			});
 
-      // Readiness check
-      app.get('/readyz', async (req, res) => {
-        const health = await this.provider.healthCheck();
-        res.status(health.healthy ? 200 : 503).json(health);
-      });
+			// Readiness check
+			app.get('/readyz', async (_req, res) => {
+				const health = await this.provider.healthCheck();
+				res.status(health.healthy ? 200 : 503).json(health);
+			});
 
-      // MCP HTTP endpoint (streamable)
-      app.post('/mcp', async (req, res) => {
-        await this.httpTransport!.handleRequest(req, res, req.body);
-      });
+			// MCP HTTP endpoint (streamable)
+			app.post('/mcp', async (req, res) => {
+				await this.httpTransport?.handleRequest(req, res, req.body);
+			});
 
-      app.get('/mcp/stream', async (req, res) => {
-        await this.httpTransport!.handleRequest(req, res);
-      });
+			app.get('/mcp/stream', async (req, res) => {
+				await this.httpTransport?.handleRequest(req, res);
+			});
 
-      app.delete('/mcp/session', async (req, res) => {
-        await this.httpTransport!.handleRequest(req, res);
-      });
+			app.delete('/mcp/session', async (req, res) => {
+				await this.httpTransport?.handleRequest(req, res);
+			});
 
-      const port = this.config.port || 9600;
-      const host = this.config.host || '127.0.0.1';
+			const port = this.config.port || 9600;
+			const host = this.config.host || '127.0.0.1';
 
-      this.httpServer = app.listen(port, host, () => {
-        logger.info(`MCP HTTP server listening on http://${host}:${port}`);
-      });
-    }
-  }
+			this.httpServer = app.listen(port, host, () => {
+				logger.info(`MCP HTTP server listening on http://${host}:${port}`);
+			});
+		}
+	}
 
-  async start(): Promise<void> {
-    logger.info('Starting MCP server', { transport: this.config.transport });
+	async start(): Promise<void> {
+		logger.info('Starting MCP server', { transport: this.config.transport });
 
-    if (this.config.transport === 'stdio') {
-      const transport = new StdioServerTransport();
-      await this.server.connect(transport);
-      logger.info('MCP STDIO server started');
-    } else {
-      if (this.httpTransport) {
-        throw new Error('HTTP transport already initialized');
-      }
-      this.httpTransport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-      });
-      await this.server.connect(this.httpTransport);
-      this.setupHttpServer();
-    }
-  }
+		if (this.config.transport === 'stdio') {
+			const transport = new StdioServerTransport();
+			await this.server.connect(transport);
+			logger.info('MCP STDIO server started');
+		} else {
+			if (this.httpTransport) {
+				throw new Error('HTTP transport already initialized');
+			}
+			this.httpTransport = new StreamableHTTPServerTransport({
+				sessionIdGenerator: () => randomUUID(),
+			});
+			await this.server.connect(this.httpTransport);
+			this.setupHttpServer();
+		}
+	}
 
-  async stop(): Promise<void> {
-    if (this.httpServer) {
-      await new Promise<void>((resolve, reject) => {
-        this.httpServer.close((err: any) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-    }
+	async stop(): Promise<void> {
+		if (this.httpServer) {
+			await new Promise<void>((resolve, reject) => {
+				this.httpServer.close((err: any) => {
+					if (err) reject(err);
+					else resolve();
+				});
+			});
+		}
 
-    await this.httpTransport?.close?.();
-    await this.provider.close?.();
-    logger.info('MCP server stopped');
-  }
+		await this.httpTransport?.close?.();
+		await this.provider.close?.();
+		logger.info('MCP server stopped');
+	}
 }
 
 // Parse command line arguments
 function parseArgs(): McpServerConfig {
-  const args = process.argv.slice(2);
-  const config: McpServerConfig = {
-    transport: 'stdio',
-  };
+	const args = process.argv.slice(2);
+	const config: McpServerConfig = {
+		transport: 'stdio',
+	};
 
-  for (let i = 0; i < args.length; i++) {
-    switch (args[i]) {
-      case '--transport':
-        config.transport = args[++i] as 'stdio' | 'http';
-        break;
-      case '--port':
-        config.port = parseInt(args[++i]);
-        break;
-      case '--host':
-        config.host = args[++i];
-        break;
-      case '--help':
-      case '-h':
-        console.log(`
+	for (let i = 0; i < args.length; i++) {
+		switch (args[i]) {
+			case '--transport':
+				config.transport = args[++i] as 'stdio' | 'http';
+				break;
+			case '--port':
+				config.port = parseInt(args[++i], 10);
+				break;
+			case '--host':
+				config.host = args[++i];
+				break;
+			case '--help':
+			case '-h':
+				console.log(`
 Cortex Memory MCP Server
 
 Usage:
@@ -261,27 +261,27 @@ Examples:
   # Run with HTTP on all interfaces
   mcp-server --transport http --host 0.0.0.0 --port 9600
         `);
-        process.exit(0);
-    }
-  }
+				process.exit(0);
+		}
+	}
 
-  return config;
+	return config;
 }
 
 // Start the server
 async function main(): Promise<void> {
-  try {
-    const config = parseArgs();
-    const server = new DualMcpServer(config);
-    await server.start();
-  } catch (error) {
-    logger.error('Failed to start MCP server', { error: (error as Error).message });
-    process.exit(1);
-  }
+	try {
+		const config = parseArgs();
+		const server = new DualMcpServer(config);
+		await server.start();
+	} catch (error) {
+		logger.error('Failed to start MCP server', { error: (error as Error).message });
+		process.exit(1);
+	}
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
+	main();
 }
 
 export { DualMcpServer };

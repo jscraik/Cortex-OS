@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
 import type { MemoryStoreInput } from '@cortex-os/tool-spec';
+import { describe, expect, it, vi } from 'vitest';
 import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js';
 
 describe('MemoryWorkflowEngine', () => {

@@ -304,4 +304,3 @@ function sortByLastRunDesc(left: AgentResponse, right: AgentResponse): number {
 }
 
 export { apiV1Router, countCompletedTasks, fetchTasks };
-

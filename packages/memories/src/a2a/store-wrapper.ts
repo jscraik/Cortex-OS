@@ -225,7 +225,11 @@ export class A2AAwareMemoryStore implements MemoryStore {
 			query: {
 				limit: limit ?? 0,
 			},
-			results: { count: results.length, memories: results, executionTimeMs: Date.now() - startTime },
+			results: {
+				count: results.length,
+				memories: results,
+				executionTimeMs: Date.now() - startTime,
+			},
 		});
 
 		return results;

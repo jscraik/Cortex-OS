@@ -609,7 +609,9 @@ export class MLOptimizationBridge extends EventEmitter {
 		}
 
 		const randomBytes = crypto.getRandomValues(new Uint8Array(7));
-		const randomStr = Array.from(randomBytes, byte => byte.toString(36)).join('').slice(0, 9);
+		const randomStr = Array.from(randomBytes, (byte) => byte.toString(36))
+			.join('')
+			.slice(0, 9);
 		const requestId = `req_${Date.now()}_${randomStr}`;
 		const timeout = timeoutMs || this.config.timeout;
 

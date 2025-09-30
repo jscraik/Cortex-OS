@@ -8,7 +8,10 @@ import type { ChatResponse, Message } from './types.js';
 export interface OllamaAdapterApi {
 	isAvailable(model?: string): Promise<boolean>;
 	listModels(): Promise<string[]>;
-	generateEmbedding(text: string, model?: string): Promise<{ embedding: number[]; model: string; vector?: number[] }>;
+	generateEmbedding(
+		text: string,
+		model?: string,
+	): Promise<{ embedding: number[]; model: string; vector?: number[] }>;
 	generateEmbeddings(
 		texts: string[],
 		model?: string,
@@ -16,11 +19,11 @@ export interface OllamaAdapterApi {
 	generateChat(
 		request:
 			| {
-				messages: Message[];
-				model?: string;
-				temperature?: number;
-				max_tokens?: number;
-			}
+					messages: Message[];
+					model?: string;
+					temperature?: number;
+					max_tokens?: number;
+			  }
 			| Message[],
 		model?: string,
 		options?: { temperature?: number; max_tokens?: number },
@@ -95,7 +98,11 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 				});
 				return { embedding: data.embedding, model: usedModel, vector: data.embedding };
 			} catch {
-				return { embedding: fallbackEmbedding(text), model: usedModel, vector: fallbackEmbedding(text) };
+				return {
+					embedding: fallbackEmbedding(text),
+					model: usedModel,
+					vector: fallbackEmbedding(text),
+				};
 			}
 		},
 		async generateEmbeddings(texts: string[], model?: string) {
@@ -105,11 +112,11 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		async generateChat(
 			req:
 				| {
-					messages: Message[];
-					model?: string;
-					temperature?: number;
-					max_tokens?: number;
-				}
+						messages: Message[];
+						model?: string;
+						temperature?: number;
+						max_tokens?: number;
+				  }
 				| Message[],
 			model?: string,
 			options?: { temperature?: number; max_tokens?: number },
@@ -166,7 +173,10 @@ export class OllamaAdapter implements OllamaAdapterApi {
 	listModels(): Promise<string[]> {
 		return this.impl.listModels();
 	}
-	generateEmbedding(text: string, model?: string): Promise<{ embedding: number[]; model: string; vector?: number[] }> {
+	generateEmbedding(
+		text: string,
+		model?: string,
+	): Promise<{ embedding: number[]; model: string; vector?: number[] }> {
 		return this.impl.generateEmbedding(text, model);
 	}
 	generateEmbeddings(
@@ -178,11 +188,11 @@ export class OllamaAdapter implements OllamaAdapterApi {
 	generateChat(
 		request:
 			| {
-				messages: Message[];
-				model?: string;
-				temperature?: number;
-				max_tokens?: number;
-			}
+					messages: Message[];
+					model?: string;
+					temperature?: number;
+					max_tokens?: number;
+			  }
 			| Message[],
 		model?: string,
 		options?: { temperature?: number; max_tokens?: number },

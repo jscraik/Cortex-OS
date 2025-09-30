@@ -15,7 +15,9 @@ import type {
 
 export interface MCPAdapter {
 	isAvailable(): Promise<boolean>;
-	generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string; vector?: number[] }>;
+	generateEmbedding(
+		request: EmbeddingRequest,
+	): Promise<{ embedding: number[]; model: string; vector?: number[] }>;
 	generateEmbeddings(
 		request: EmbeddingBatchRequest,
 	): Promise<{ embeddings: number[][]; model: string }>;
@@ -89,9 +91,9 @@ export function createMCPAdapter(): MCPAdapter {
 					: undefined;
 			const model =
 				typeof result === 'object' &&
-					result &&
-					'model' in result &&
-					typeof (result as { model?: unknown }).model === 'string'
+				result &&
+				'model' in result &&
+				typeof (result as { model?: unknown }).model === 'string'
 					? (result as { model: string }).model
 					: 'mcp:embeddings';
 			const emb = Array.isArray(embeddings) ? (embeddings[0] as number[]) : [];
@@ -111,9 +113,9 @@ export function createMCPAdapter(): MCPAdapter {
 					: undefined;
 			const model =
 				typeof result === 'object' &&
-					result &&
-					'model' in result &&
-					typeof (result as { model?: unknown }).model === 'string'
+				result &&
+				'model' in result &&
+				typeof (result as { model?: unknown }).model === 'string'
 					? (result as { model: string }).model
 					: 'mcp:embeddings';
 			const embs = Array.isArray(embeddings) ? (embeddings as number[][]) : [];
@@ -129,9 +131,9 @@ export function createMCPAdapter(): MCPAdapter {
 			const result: unknown = raw || {};
 			const model =
 				typeof result === 'object' &&
-					result &&
-					'model' in result &&
-					typeof (result as { model?: unknown }).model === 'string'
+				result &&
+				'model' in result &&
+				typeof (result as { model?: unknown }).model === 'string'
 					? (result as { model: string }).model
 					: 'mcp:chat';
 			let content = '';
@@ -162,9 +164,9 @@ export function createMCPAdapter(): MCPAdapter {
 					: undefined;
 			const model =
 				typeof result === 'object' &&
-					result &&
-					'model' in result &&
-					typeof (result as { model?: unknown }).model === 'string'
+				result &&
+				'model' in result &&
+				typeof (result as { model?: unknown }).model === 'string'
 					? (result as { model: string }).model
 					: 'mcp:rerank';
 			const scores = Array.isArray(scoresRaw) ? (scoresRaw as number[]) : [];

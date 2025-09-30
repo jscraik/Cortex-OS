@@ -93,7 +93,6 @@ async function bootstrap() {
 	});
 
 	server.listen(PORT, () => {
-
 		console.error(`Demo server listening on http://127.0.0.1:${PORT}`);
 	});
 }
@@ -120,7 +119,6 @@ function readJson(req: http.IncomingMessage): Promise<any> {
 }
 
 bootstrap().catch((err) => {
-
 	console.error(err);
 	process.exit(1);
 });

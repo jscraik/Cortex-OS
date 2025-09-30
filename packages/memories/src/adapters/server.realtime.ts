@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import {
 	RealtimeMemoryChangeEventSchema,
 	RealtimeMemoryConnectionMetricsSchema,
@@ -13,8 +15,6 @@ import {
 	type RealtimeMemoryQueuedMessage,
 	RealtimeMemoryQueuedMessageSchema,
 } from '@cortex-os/contracts';
-import { randomUUID } from 'node:crypto';
-import { EventEmitter } from 'node:events';
 import type { RawData } from 'ws';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { ChangeEvent, StreamingMemoryStore } from './store.streaming.js';
@@ -98,16 +98,16 @@ export interface ServerConfig {
 	maxQueueSize?: number;
 	enableCompression?: boolean;
 	perMessageDeflate?:
-	| {
-		zlibDeflateOptions?: {
-			level?: number;
-		};
-		zlibInflateOptions?: {
-			chunkSize?: number;
-		};
-		threshold?: number;
-	}
-	| boolean;
+		| {
+				zlibDeflateOptions?: {
+					level?: number;
+				};
+				zlibInflateOptions?: {
+					chunkSize?: number;
+				};
+				threshold?: number;
+		  }
+		| boolean;
 	metricsSnapshotDebounceMs?: number;
 	metricsSource?: string;
 	metricsDescription?: string;
@@ -801,9 +801,9 @@ export class RealtimeMemoryServer extends EventEmitter {
 			server:
 				this.boundPort !== undefined
 					? {
-						host: this.boundHost ?? 'localhost',
-						port: this.boundPort,
-					}
+							host: this.boundHost ?? 'localhost',
+							port: this.boundPort,
+						}
 					: undefined,
 		});
 	}

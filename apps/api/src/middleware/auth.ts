@@ -31,32 +31,32 @@ export interface AuthenticatedRequest extends Request {
 const sessionDelegate = (prisma as unknown as Record<string, unknown>).session as
 	| undefined
 	| {
-		findUnique: (args: {
-			where: { id?: string; token?: string };
-			include?: { user: boolean };
-		}) => Promise<{
-			id: string;
-			userId: string;
-			token: string;
-			expiresAt: Date;
-			createdAt: Date;
-			userAgent: string | null;
-			user: Record<string, unknown> | null;
-		} | null>;
-		findMany: (args: {
-			where: { userId: string };
-			orderBy?: { createdAt: 'asc' | 'desc' };
-		}) => Promise<
-			{
+			findUnique: (args: {
+				where: { id?: string; token?: string };
+				include?: { user: boolean };
+			}) => Promise<{
 				id: string;
 				userId: string;
+				token: string;
 				expiresAt: Date;
 				createdAt: Date;
 				userAgent: string | null;
-			}[]
-		>;
-		delete: (args: { where: { id: string } }) => Promise<unknown>;
-	};
+				user: Record<string, unknown> | null;
+			} | null>;
+			findMany: (args: {
+				where: { userId: string };
+				orderBy?: { createdAt: 'asc' | 'desc' };
+			}) => Promise<
+				{
+					id: string;
+					userId: string;
+					expiresAt: Date;
+					createdAt: Date;
+					userAgent: string | null;
+				}[]
+			>;
+			delete: (args: { where: { id: string } }) => Promise<unknown>;
+	  };
 
 const ensureSessionDelegate = (res: Response) => {
 	if (!sessionDelegate) {

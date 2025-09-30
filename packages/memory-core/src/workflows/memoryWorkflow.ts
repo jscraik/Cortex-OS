@@ -1,5 +1,5 @@
-import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import type { MemoryStoreInput } from '@cortex-os/tool-spec';
+import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 
 export interface StoreWorkflowPersistPayload {
 	id: string;
@@ -59,13 +59,15 @@ export class MemoryWorkflowEngine {
 		const result = await this.storeApp.invoke({
 			input,
 		});
-		return result.output ?? {
-			id: result.id!,
-			vectorIndexed: result.vectorIndexed ?? false,
-		};
+		return (
+			result.output ?? {
+				id: result.id!,
+				vectorIndexed: result.vectorIndexed ?? false,
+			}
+		);
 	}
 
-	private readonly prepareStoreNode = async (state: StoreState): Promise<Partial<StoreState>> => {
+	private readonly prepareStoreNode = async (_state: StoreState): Promise<Partial<StoreState>> => {
 		const id = this.options.store.generateId();
 		const timestamp = this.options.store.getTimestamp();
 		return { id, timestamp };

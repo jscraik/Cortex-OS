@@ -238,7 +238,10 @@ export class DeduplicatingMemoryStore implements MemoryStore {
 		this.stats.cacheMisses++;
 
 		// Calculate text similarity
-		const similarity = this.calculateTextSimilarity(normalizedText, this.normalizeText(existing.text));
+		const similarity = this.calculateTextSimilarity(
+			normalizedText,
+			this.normalizeText(existing.text),
+		);
 
 		// Cache result
 		this.similarityCache.set(cacheKey, similarity);

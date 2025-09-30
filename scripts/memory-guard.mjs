@@ -51,7 +51,7 @@ function log(entry) {
 
 export function startGuard({ pids = [], pattern = 'node', maxRssMB, intervalMs }) {
 	// Validate pids are all positive integers
-	const validPids = pids.filter(pid => Number.isInteger(pid) && pid > 0);
+	const validPids = pids.filter((pid) => Number.isInteger(pid) && pid > 0);
 	if (validPids.length !== pids.length && pids.length > 0) {
 		console.warn('[brAInwav memory-guard] Invalid PIDs detected and filtered out');
 	}
@@ -74,7 +74,9 @@ export function startGuard({ pids = [], pattern = 'node', maxRssMB, intervalMs }
 						log({ pid, rssMB, action: 'sigusr2' });
 					} else {
 						// On Windows, warn that process control is not available
-						console.warn(`[brAInwav memory-guard] Process ${pid} exceeds memory limit (${rssMB}MB > ${maxRssMB}MB) but cannot be controlled on Windows`);
+						console.warn(
+							`[brAInwav memory-guard] Process ${pid} exceeds memory limit (${rssMB}MB > ${maxRssMB}MB) but cannot be controlled on Windows`,
+						);
 						warned.set(pid, true);
 						log({ pid, rssMB, action: 'windows-warning' });
 					}
@@ -85,7 +87,9 @@ export function startGuard({ pids = [], pattern = 'node', maxRssMB, intervalMs }
 						} catch {}
 						log({ pid, rssMB, action: 'killed' });
 					} else {
-						console.warn(`[brAInwav memory-guard] Process ${pid} still exceeds memory limit on Windows - manual intervention required`);
+						console.warn(
+							`[brAInwav memory-guard] Process ${pid} still exceeds memory limit on Windows - manual intervention required`,
+						);
 						log({ pid, rssMB, action: 'windows-fatal-warning' });
 					}
 				}

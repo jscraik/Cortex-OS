@@ -161,7 +161,7 @@ describe('EncryptionService', () => {
 			};
 
 			// Mock console.warn to avoid test output noise
-			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			const result = await encryptionService.decryptFields(testObject, ['password']);
 
@@ -271,7 +271,6 @@ describe('EncryptionService', () => {
 			const wrongKey = encryptionService.generateToken(32);
 			const isInvalid = await encryptionService.verifyAPIKey(wrongKey, apiKey.hash);
 			expect(isInvalid).toBe(false);
-
 		});
 	});
 

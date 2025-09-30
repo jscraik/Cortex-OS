@@ -68,9 +68,9 @@ export function traced<T>(
 export function createSpan(operationName: string, attributes?: Record<string, unknown>) {
 	if (process.env.OTEL_TRACING_ENABLED !== 'true') {
 		return {
-			end: () => { },
-			setAttribute: () => { },
-			recordException: () => { },
+			end: () => {},
+			setAttribute: () => {},
+			recordException: () => {},
 		};
 	}
 

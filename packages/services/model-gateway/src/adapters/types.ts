@@ -37,11 +37,11 @@ export interface OllamaAdapterApi {
 	generateChat(
 		request:
 			| {
-				messages: Message[];
-				model?: string;
-				temperature?: number;
-				max_tokens?: number;
-			}
+					messages: Message[];
+					model?: string;
+					temperature?: number;
+					max_tokens?: number;
+			  }
 			| Message[],
 		model?: string,
 		options?: { temperature?: number; max_tokens?: number },

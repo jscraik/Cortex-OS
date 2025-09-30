@@ -200,7 +200,7 @@ function writeMetrics(metaExtra = {}) {
 				strategy,
 				skipped: Boolean(metaExtra.skipped),
 			});
-		} catch { }
+		} catch {}
 	}
 	if (telemetryEnabled && span) {
 		try {
@@ -209,7 +209,7 @@ function writeMetrics(metaExtra = {}) {
 			span.setAttribute('nx.smart.duration_ms', durationMs);
 			if (metaExtra.skipped)
 				span.setAttribute('nx.smart.skipped', String(metaExtra.reason || true));
-		} catch { }
+		} catch {}
 	}
 	if (metricsJsonPath) {
 		try {
@@ -225,7 +225,7 @@ function writeMetrics(metaExtra = {}) {
 async function finalizeAndExit(code, metaExtra = {}) {
 	try {
 		await writeMetrics(metaExtra);
-	} catch { }
+	} catch {}
 	if (telemetryEnabled && span) {
 		try {
 			if (code === 0)
@@ -237,12 +237,12 @@ async function finalizeAndExit(code, metaExtra = {}) {
 					code: (await import('@opentelemetry/api')).SpanStatusCode.ERROR,
 				});
 			span.end();
-		} catch { }
+		} catch {}
 	}
 	if (telemetryEnabled && telemetry) {
 		try {
 			await telemetry.shutdownTelemetry({ timeoutMs: 2000 });
-		} catch { }
+		} catch {}
 	}
 	process.exit(code);
 }
@@ -605,7 +605,7 @@ if (strategy === 'affected') {
 					}
 					try {
 						fs.unlinkSync(graphTmp);
-					} catch { }
+					} catch {}
 				}
 			} catch (e) {
 				if (verbose && !json)
@@ -655,10 +655,10 @@ if (json) console.log(JSON.stringify({ ...meta, completed: true }));
 if (telemetryEnabled && span) {
 	try {
 		span.end();
-	} catch { }
+	} catch {}
 	if (telemetry?.shutdownTelemetry) {
 		try {
 			await telemetry.shutdownTelemetry({ timeoutMs: 2000 });
-		} catch { }
+		} catch {}
 	}
 }

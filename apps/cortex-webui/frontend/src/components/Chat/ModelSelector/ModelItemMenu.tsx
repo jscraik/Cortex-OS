@@ -1,8 +1,8 @@
 'use client';
 
-import { useSettingsStore } from '@/stores/settingsStore';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ModelItemMenuProps {
 	show: boolean;

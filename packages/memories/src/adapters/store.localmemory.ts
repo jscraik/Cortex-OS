@@ -214,7 +214,8 @@ export class LocalMemoryStore implements MemoryStore {
 		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
 		try {
 			const url = new URL(`${this.baseUrl}/memories`);
-			if (namespace ?? this.defaultNs) url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
+			if (namespace ?? this.defaultNs)
+				url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
 			if (typeof limit === 'number') url.searchParams.set('limit', String(limit));
 			if (typeof offset === 'number') url.searchParams.set('offset', String(offset));
 			const res = await fetch(url, { headers: toHeaders(this.apiKey), signal: ctrl.signal });

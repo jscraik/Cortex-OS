@@ -8,10 +8,10 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import { createHash } from 'node:crypto';
 import createDOMPurify from 'dompurify';
 import type { NextFunction, Request, Response } from 'express';
 import { JSDOM } from 'jsdom';
-import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { securityMetrics } from '../monitoring/prometheus-metrics.js';
 

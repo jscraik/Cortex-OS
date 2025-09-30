@@ -4,7 +4,9 @@ import { embeddingsHandler } from '../src/handlers';
 describe('embeddingsHandler', () => {
 	test('returns vectors for single text', async () => {
 		const router = {
-			generateEmbedding: vi.fn().mockResolvedValue({ embedding: [1, 2], vector: [1, 2], model: 'm' }),
+			generateEmbedding: vi
+				.fn()
+				.mockResolvedValue({ embedding: [1, 2], vector: [1, 2], model: 'm' }),
 			generateEmbeddings: vi.fn(),
 		};
 		const result = await embeddingsHandler(router, {

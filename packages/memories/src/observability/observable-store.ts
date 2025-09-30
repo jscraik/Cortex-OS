@@ -147,7 +147,10 @@ export class ObservableMemoryStore implements MemoryStore {
 		);
 	}
 
-	async searchByVector(query: VectorQuery, namespace = 'default'): Promise<(Memory & { score: number })[]> {
+	async searchByVector(
+		query: VectorQuery,
+		namespace = 'default',
+	): Promise<(Memory & { score: number })[]> {
 		return this.wrapStoreOperation(
 			'searchByVector',
 			async () => {

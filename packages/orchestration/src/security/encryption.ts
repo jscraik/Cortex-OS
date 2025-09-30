@@ -8,7 +8,6 @@
  * Co-authored-by: brAInwav Development Team
  */
 
-import bcrypt from 'bcrypt';
 import {
 	createCipheriv,
 	createDecipheriv,
@@ -18,6 +17,7 @@ import {
 	scrypt,
 } from 'node:crypto';
 import { promisify } from 'node:util';
+import bcrypt from 'bcrypt';
 import { z } from 'zod';
 
 const scryptAsync = promisify(scrypt);

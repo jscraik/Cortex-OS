@@ -452,13 +452,17 @@ export class A2AWebSocketManager {
 
 	private generateSessionId(): string {
 		const randomBytes = crypto.getRandomValues(new Uint8Array(7));
-		const randomStr = Array.from(randomBytes, byte => byte.toString(36)).join('').slice(0, 9);
+		const randomStr = Array.from(randomBytes, (byte) => byte.toString(36))
+			.join('')
+			.slice(0, 9);
 		return `webui-${Date.now()}-${randomStr}`;
 	}
 
 	private generateEventId(): string {
 		const randomBytes = crypto.getRandomValues(new Uint8Array(7));
-		const randomStr = Array.from(randomBytes, byte => byte.toString(36)).join('').slice(0, 9);
+		const randomStr = Array.from(randomBytes, (byte) => byte.toString(36))
+			.join('')
+			.slice(0, 9);
 		return `event-${Date.now()}-${randomStr}`;
 	}
 

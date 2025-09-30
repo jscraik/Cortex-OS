@@ -6,15 +6,15 @@ interface AuthEvent {
 	id: string;
 	userId?: string;
 	eventType:
-	| 'login'
-	| 'logout'
-	| 'register'
-	| 'password_reset'
-	| 'email_verified'
-	| '2fa_enabled'
-	| '2fa_disabled'
-	| 'oauth_signin'
-	| 'failed_login';
+		| 'login'
+		| 'logout'
+		| 'register'
+		| 'password_reset'
+		| 'email_verified'
+		| '2fa_enabled'
+		| '2fa_disabled'
+		| 'oauth_signin'
+		| 'failed_login';
 	ipAddress?: string;
 	userAgent?: string;
 	metadata?: Record<string, unknown>;
@@ -248,7 +248,9 @@ export class AuthMonitoringService {
 
 	private generateEventId(): string {
 		const randomBytes = crypto.getRandomValues(new Uint8Array(6));
-		const randomStr = Array.from(randomBytes, byte => byte.toString(36)).join('').slice(0, 9);
+		const randomStr = Array.from(randomBytes, (byte) => byte.toString(36))
+			.join('')
+			.slice(0, 9);
 		return `auth_${Date.now()}_${randomStr}`;
 	}
 

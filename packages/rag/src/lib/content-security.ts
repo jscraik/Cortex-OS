@@ -266,8 +266,12 @@ export class ContentSecurityPolicy {
 				const url = new URL(match);
 				// Block suspicious protocols - safely check without eval risk
 				const protocol = url.protocol.toLowerCase();
-				if (protocol === 'javascript:' || protocol === 'vbscript:' ||
-					protocol === 'data:' || protocol === 'file:') {
+				if (
+					protocol === 'javascript:' ||
+					protocol === 'vbscript:' ||
+					protocol === 'data:' ||
+					protocol === 'file:'
+				) {
 					return '[BLOCKED_URL]';
 				}
 				return match;

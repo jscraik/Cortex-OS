@@ -10,7 +10,10 @@ import type { Message } from './types.js';
 export interface FrontierAdapterApi {
 	isAvailable(model?: string): Promise<boolean>;
 	listModels?(): Promise<string[]>; // optional for future parity with other adapters
-	generateEmbedding(_text: string, model?: string): Promise<{ embedding: number[]; model: string; vector?: number[] }>;
+	generateEmbedding(
+		_text: string,
+		model?: string,
+	): Promise<{ embedding: number[]; model: string; vector?: number[] }>;
 	generateEmbeddings(
 		texts: string[],
 		model?: string,

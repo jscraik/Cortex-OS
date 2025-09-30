@@ -40,7 +40,7 @@ export class LoggerMetricsEmitter implements ValidationMetricsEmitter {
 			format: winston.format.json(),
 			transports: [new winston.transports.Console()],
 		}),
-	) { }
+	) {}
 
 	incrementCounter(metric: string, tags?: Record<string, string | number | boolean>): void {
 		this.logger.info(`counter.${metric}`, { ...tags, value: 1 });

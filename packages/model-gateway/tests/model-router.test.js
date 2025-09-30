@@ -71,7 +71,10 @@ describe('ModelRouter', () => {
 			);
 		});
 		it('should handle batch embeddings', async () => {
-			const mockEmbeddings = [{ embedding: [0.1, 0.2], vector: [0.1, 0.2] }, { embedding: [0.3, 0.4], vector: [0.3, 0.4] }];
+			const mockEmbeddings = [
+				{ embedding: [0.1, 0.2], vector: [0.1, 0.2] },
+				{ embedding: [0.3, 0.4], vector: [0.3, 0.4] },
+			];
 			mockMLXAdapter.generateEmbeddings.mockResolvedValue(mockEmbeddings);
 			const result = await modelRouter.generateEmbeddings({
 				texts: ['text1', 'text2'],
