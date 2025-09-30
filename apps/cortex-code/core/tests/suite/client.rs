@@ -1,5 +1,4 @@
 use codex_core::CodexAuth;
-use codex_core::default_client::ORIGINATOR;
 use codex_core::ContentItem;
 use codex_core::ConversationManager;
 use codex_core::LocalShellAction;
@@ -355,10 +354,7 @@ async fn includes_conversation_id_and_model_headers_in_request() {
         request_conversation_id.to_str().unwrap(),
         conversation_id.to_string()
     );
-    assert_eq!(
-        request_originator.to_str().unwrap(),
-        ORIGINATOR.value.as_str()
-    );
+    assert_eq!(request_originator.to_str().unwrap(), "codex_cli_rs");
     assert_eq!(
         request_authorization.to_str().unwrap(),
         "Bearer Test API Key"
@@ -484,10 +480,7 @@ async fn chatgpt_auth_sends_correct_request() {
         request_conversation_id.to_str().unwrap(),
         conversation_id.to_string()
     );
-    assert_eq!(
-        request_originator.to_str().unwrap(),
-        ORIGINATOR.value.as_str()
-    );
+    assert_eq!(request_originator.to_str().unwrap(), "codex_cli_rs");
     assert_eq!(
         request_authorization.to_str().unwrap(),
         "Bearer Access Token"
