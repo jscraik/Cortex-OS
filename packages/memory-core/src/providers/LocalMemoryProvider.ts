@@ -25,6 +25,11 @@ import type {
   MemoryRelationshipsInput,
   MemoryStatsInput,
 } from '@cortex-os/tool-spec';
+import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js';
+import type {
+  StoreWorkflowIndexPayload,
+  StoreWorkflowPersistPayload,
+} from '../workflows/memoryWorkflow.js';
 
 const logger = pino({ level: 'info' });
 
@@ -37,6 +42,7 @@ export class LocalMemoryProvider implements MemoryProvider {
   private circuitBreaker?: CircuitBreaker;
   private queue: PQueue;
   private config: MemoryCoreConfig;
+  private workflows: MemoryWorkflowEngine;
 
   constructor(config: MemoryCoreConfig) {
     this.config = config;
@@ -67,6 +73,19 @@ export class LocalMemoryProvider implements MemoryProvider {
     }
 
     this.initializeDatabase();
+
+    this.workflows = new MemoryWorkflowEngine({
+      store: {
+        generateId: () => randomUUID(),
+        getTimestamp: () => Date.now(),
+        persistMemory: async (payload: StoreWorkflowPersistPayload) => {
+          await this.persistMemoryRecord(payload);
+        },
+        scheduleVectorIndex: async (payload: StoreWorkflowIndexPayload) => {
+          return this.scheduleVectorIndexing(payload);
+        },
+      },
+    });
   }
 
   private initializeDatabase(): void {
@@ -138,6 +157,71 @@ export class LocalMemoryProvider implements MemoryProvider {
     `);
   }
 
+  private async persistMemoryRecord({ id, input, timestamp }: StoreWorkflowPersistPayload): Promise<void> {
+    const stmt = this.db.prepare(`
+      INSERT INTO memories (
+        id, content, importance, domain, tags, metadata, created_at, updated_at, vector_indexed
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      input.content,
+      input.importance || 5,
+      input.domain || null,
+      input.tags ? JSON.stringify(input.tags) : null,
+      input.metadata ? JSON.stringify(input.metadata) : null,
+      timestamp,
+      timestamp,
+      0
+    );
+  }
+
+  private async scheduleVectorIndexing({ id, input, timestamp }: StoreWorkflowIndexPayload): Promise<{ vectorIndexed: boolean }> {
+    if (!this.qdrant || !this.qdrantConfig) {
+      return { vectorIndexed: false };
+    }
+
+    if (!(await this.isQdrantHealthy())) {
+      return { vectorIndexed: false };
+    }
+
+    const task = async () => {
+      try {
+        await this.ensureQdrantCollection();
+        const embedding = await this.generateEmbedding(input.content);
+
+        await this.qdrant!.upsert(this.qdrantConfig.collection, {
+          points: [
+            {
+              id,
+              vector: embedding,
+              payload: {
+                id,
+                domain: input.domain,
+                tags: input.tags || [],
+                createdAt: timestamp,
+                updatedAt: timestamp,
+                importance: input.importance || 5,
+              },
+            },
+          ],
+        });
+
+        this.db.prepare('UPDATE memories SET vector_indexed = 1 WHERE id = ?').run(id);
+        logger.debug('Vector indexed', { id, domain: input.domain });
+      } catch (error) {
+        logger.warn('Failed to index vector', { id, error: (error as Error).message });
+      }
+    };
+
+    this.queue.add(task).catch(error => {
+      logger.warn('Failed to schedule vector indexing', { id, error: (error as Error).message });
+    });
+
+    return { vectorIndexed: false };
+  }
+
   private async isQdrantHealthy(): Promise<boolean> {
     if (!this.qdrant) return false;
 
@@ -193,69 +277,22 @@ export class LocalMemoryProvider implements MemoryProvider {
   }
 
   async store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }> {
-    const id = randomUUID();
-    const now = Date.now();
-    let vectorIndexed = false;
-
     try {
-      // Insert into SQLite
-      const stmt = this.db.prepare(`
-        INSERT INTO memories (
-          id, content, importance, domain, tags, metadata, created_at, updated_at, vector_indexed
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(
-        id,
-        input.content,
-        input.importance || 5,
-        input.domain || null,
-        input.tags ? JSON.stringify(input.tags) : null,
-        input.metadata ? JSON.stringify(input.metadata) : null,
-        now,
-        now,
-        0 // Will update after vector indexing
-      );
-
-      // Try to index in Qdrant
-      if (await this.isQdrantHealthy()) {
-        this.queue.add(async () => {
-          try {
-            await this.ensureQdrantCollection();
-            const embedding = await this.generateEmbedding(input.content);
-
-            await this.qdrant!.upsert(this.qdrantConfig!.collection, {
-              points: [{
-                id,
-                vector: embedding,
-                payload: {
-                  id,
-                  domain: input.domain,
-                  tags: input.tags || [],
-                  createdAt: now,
-                  updatedAt: now,
-                  importance: input.importance || 5,
-                },
-              }],
-            });
-
-            // Mark as vector indexed
-            this.db.prepare('UPDATE memories SET vector_indexed = 1 WHERE id = ?').run(id);
-            vectorIndexed = true;
-
-            logger.debug('Vector indexed', { id, domain: input.domain });
-          } catch (error) {
-            logger.warn('Failed to index vector', { id, error: (error as Error).message });
-            // Don't fail the operation if vector indexing fails
-          }
-        });
-      }
-
-      logger.info('Memory stored', { id, domain: input.domain, vectorIndexed });
-      return { id, vectorIndexed };
+      const result = await this.workflows.runStore(input);
+      logger.info('Memory stored', {
+        id: result.id,
+        domain: input.domain,
+        vectorIndexed: result.vectorIndexed,
+      });
+      return result;
     } catch (error) {
-      logger.error('Failed to store memory', { id, error: (error as Error).message });
-      throw new MemoryProviderError('STORAGE', 'Failed to store memory', { error: (error as Error).message });
+      logger.error('Failed to store memory', {
+        error: (error as Error).message,
+        domain: input.domain,
+      });
+      throw new MemoryProviderError('STORAGE', 'Failed to store memory', {
+        error: (error as Error).message,
+      });
     }
   }
 

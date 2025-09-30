@@ -148,25 +148,6 @@ export {
 	MemoryRetrievedEventSchema,
 	MemoryUpdatedEventSchema,
 } from './events/memory-events.js';
-// MCP Tools for external AI agent integration
-export {
-	MAX_MEMORY_TEXT_LENGTH,
-	memoryDeleteTool,
-	memoryDeleteToolSchema,
-	memoryGetTool,
-	memoryGetToolSchema,
-	memoryListTool,
-	memoryListToolSchema,
-	memoryMcpTools,
-	memorySearchTool,
-	memorySearchToolSchema,
-	memoryStatsTool,
-	memoryStatsToolSchema,
-	memoryStoreTool,
-	memoryStoreToolSchema,
-	memoryUpdateTool,
-	memoryUpdateToolSchema,
-} from './mcp/tools.js';
 export { allMigrations } from './migrations/predefined-migrations.js';
 // Observability for monitoring and tracing
 export {

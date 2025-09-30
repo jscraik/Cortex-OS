@@ -25,6 +25,7 @@
   "dependencies": {
     "@cortex-os/tool-spec": "workspace:*",
     "@cortex-os/utils": "workspace:*",
+    "@langchain/langgraph": "^0.4.9",
     "@qdrant/js-client-rest": "^1.15.1",
     "better-sqlite3": "^12.2.0",
     "circuit-breaker-js": "^0.0.1",
