@@ -2,6 +2,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express from 'express';
 import cors from 'cors';
 import { createMemoryProviderFromEnv, type MemoryProvider } from '@cortex-os/memory-core';
@@ -22,6 +23,7 @@ class DualMcpServer {
   private provider: MemoryProvider;
   private config: McpServerConfig;
   private httpServer?: any;
+  private httpTransport?: StreamableHTTPServerTransport;
 
   constructor(config: McpServerConfig) {
     this.config = config;
@@ -43,61 +45,56 @@ class DualMcpServer {
   }
 
   private setupTools(): void {
-    // Register each tool from tool-spec
-    for (const spec of Object.values(TOOL_SPECS)) {
-      this.server.setRequestHandler('tools/list', async () => ({
-        tools: [
-          {
-            name: spec.name,
-            description: spec.description,
-            inputSchema: spec.schema,
-          },
-        ],
-      }));
+    const specs = Object.values(TOOL_SPECS);
 
-      this.server.setRequestHandler('tools/call', async (request) => {
-        if (request.params.name === spec.name) {
-          try {
-            // Validate input
-            spec.zodSchema.parse(request.params.arguments);
+    this.server.setRequestHandler('tools/list', async () => ({
+      tools: specs.map((spec) => ({
+        name: spec.name,
+        description: spec.description,
+        inputSchema: spec.schema,
+      })),
+    }));
 
-            // Call appropriate method on provider
-            const result = await this.handleToolCall(spec.name, request.params.arguments);
-
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          } catch (error) {
-            logger.error('Tool call failed', {
-              tool: spec.name,
-              error: (error as Error).message,
-            });
-
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({
-                    error: {
-                      code: 'INTERNAL_ERROR',
-                      message: (error as Error).message,
-                    },
-                  }),
-                },
-              ],
-              isError: true,
-            };
-          }
-        }
-
+    this.server.setRequestHandler('tools/call', async (request) => {
+      const spec = TOOL_SPECS[request.params.name];
+      if (!spec) {
         throw new Error(`Unknown tool: ${request.params.name}`);
-      });
-    }
+      }
+
+      try {
+        spec.zodSchema.parse(request.params.arguments);
+        const result = await this.handleToolCall(spec.name, request.params.arguments);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        logger.error('Tool call failed', {
+          tool: spec.name,
+          error: (error as Error).message,
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: {
+                  code: 'INTERNAL_ERROR',
+                  message: (error as Error).message,
+                },
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+    });
   }
 
   private async handleToolCall(toolName: string, args: any): Promise<any> {
@@ -158,43 +155,15 @@ class DualMcpServer {
 
       // MCP HTTP endpoint (streamable)
       app.post('/mcp', async (req, res) => {
-        const requestId = randomUUID();
-        logger.info('MCP HTTP request', { requestId, method: req.body.method });
-
-        try {
-          // Handle MCP protocol over HTTP
-          const result = await this.server.request(req.body, {
-            sessionId: requestId,
-          });
-
-          res.json(result);
-        } catch (error) {
-          logger.error('MCP HTTP request failed', { requestId, error: (error as Error).message });
-          res.status(500).json({
-            error: {
-              code: 'INTERNAL_ERROR',
-              message: (error as Error).message,
-            },
-          });
-        }
+        await this.httpTransport!.handleRequest(req, res, req.body);
       });
 
-      // Server-Sent Events for streaming
-      app.get('/mcp/stream', (req, res) => {
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-        });
+      app.get('/mcp/stream', async (req, res) => {
+        await this.httpTransport!.handleRequest(req, res);
+      });
 
-        const heartbeat = setInterval(() => {
-          res.write(': heartbeat\n\n');
-        }, 30000);
-
-        req.on('close', () => {
-          clearInterval(heartbeat);
-        });
+      app.delete('/mcp/session', async (req, res) => {
+        await this.httpTransport!.handleRequest(req, res);
       });
 
       const port = this.config.port || 9600;
@@ -214,6 +183,13 @@ class DualMcpServer {
       await this.server.connect(transport);
       logger.info('MCP STDIO server started');
     } else {
+      if (this.httpTransport) {
+        throw new Error('HTTP transport already initialized');
+      }
+      this.httpTransport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+      });
+      await this.server.connect(this.httpTransport);
       this.setupHttpServer();
     }
   }
@@ -228,6 +204,7 @@ class DualMcpServer {
       });
     }
 
+    await this.httpTransport?.close?.();
     await this.provider.close?.();
     logger.info('MCP server stopped');
   }

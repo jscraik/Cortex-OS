@@ -1,6 +1,6 @@
+import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
 
 /**
  * brAInwav Local Memory - Model Detection and Selection
@@ -30,14 +30,14 @@ export interface ModelInventory {
 export async function loadMLXModels(): Promise<ModelInventory> {
   try {
     const configPath = join(process.cwd(), 'config', 'mlx-models.json');
-    
+
     if (!existsSync(configPath)) {
       throw new Error(`brAInwav model config not found: ${configPath}`);
     }
 
     const content = await readFile(configPath, 'utf-8');
     const config: ModelInventory = JSON.parse(content);
-    
+
     console.log('brAInwav MLX model configuration loaded successfully');
     return config;
   } catch (error) {
@@ -57,13 +57,13 @@ export async function isModelAvailable(model: ModelConfig): Promise<boolean> {
     });
 
     const isAvailable = existsSync(expandedPath);
-    
+
     if (isAvailable) {
       console.log(`brAInwav model available: ${model.name} at ${expandedPath}`);
     } else {
       console.warn(`brAInwav model not found: ${model.name} at ${expandedPath}`);
     }
-    
+
     return isAvailable;
   } catch (error) {
     console.error(`brAInwav model availability check failed for ${model.name}:`, error);
@@ -77,10 +77,10 @@ export async function isModelAvailable(model: ModelConfig): Promise<boolean> {
 export async function selectEmbeddingModel(): Promise<ModelConfig> {
   const config = await loadMLXModels();
   const defaultKey = config.default_models.embedding || 'qwen3-4b';
-  
+
   // Try default first
   const defaultModel = config.embedding_models[defaultKey];
-  if (defaultModel && await isModelAvailable(defaultModel)) {
+  if (defaultModel && (await isModelAvailable(defaultModel))) {
     console.log(`brAInwav selected default embedding model: ${defaultModel.name}`);
     return defaultModel;
   }
@@ -103,9 +103,9 @@ export async function selectRerankerModel(): Promise<ModelConfig | null> {
   try {
     const config = await loadMLXModels();
     const defaultKey = config.default_models.reranker || 'qwen3-reranker';
-    
+
     const defaultModel = config.reranker_models[defaultKey];
-    if (defaultModel && await isModelAvailable(defaultModel)) {
+    if (defaultModel && (await isModelAvailable(defaultModel))) {
       console.log(`brAInwav selected reranker model: ${defaultModel.name}`);
       return defaultModel;
     }
@@ -138,15 +138,19 @@ export function getModelMemoryRequirements(models: ModelConfig[]): number {
  */
 export function checkMemoryAvailability(requiredGB: number): boolean {
   const totalMemory = process.memoryUsage();
-  const availableGB = (totalMemory.heapTotal + totalMemory.external) / (1024 ** 3);
-  
+  const availableGB = (totalMemory.heapTotal + totalMemory.external) / 1024 ** 3;
+
   const hasMemory = availableGB >= requiredGB;
-  
+
   if (hasMemory) {
-    console.log(`brAInwav memory check passed: ${availableGB.toFixed(1)}GB available, ${requiredGB}GB required`);
+    console.log(
+      `brAInwav memory check passed: ${availableGB.toFixed(1)}GB available, ${requiredGB}GB required`,
+    );
   } else {
-    console.warn(`brAInwav memory check failed: ${availableGB.toFixed(1)}GB available, ${requiredGB}GB required`);
+    console.warn(
+      `brAInwav memory check failed: ${availableGB.toFixed(1)}GB available, ${requiredGB}GB required`,
+    );
   }
-  
+
   return hasMemory;
 }

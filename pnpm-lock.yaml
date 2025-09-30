@@ -74,7 +74,7 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
       axios:
-        specifier: ^1.12.2
+        specifier: ^1.8.0
         version: 1.12.2(debug@4.4.3)
       better-sqlite3:
         specifier: ^12.2.0
@@ -694,6 +694,82 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
 
+  apps/cortex-os/packages/local-memory:
+    dependencies:
+      '@cortex-os/contracts':
+        specifier: workspace:*
+        version: link:../../../../libs/typescript/contracts
+      '@cortex-os/memories':
+        specifier: workspace:*
+        version: link:../../../../packages/memories
+      '@cortex-os/memory-core':
+        specifier: workspace:*
+        version: link:../../../../packages/memory-core
+      '@cortex-os/telemetry':
+        specifier: workspace:*
+        version: link:../../../../libs/typescript/telemetry
+      '@cortex-os/tool-spec':
+        specifier: workspace:*
+        version: link:../../../../packages/tool-spec
+      '@cortex-os/utils':
+        specifier: workspace:*
+        version: link:../../../../libs/typescript/utils
+      '@opentelemetry/api':
+        specifier: 1.9.0
+        version: 1.9.0
+      '@opentelemetry/instrumentation':
+        specifier: ^0.45.0
+        version: 0.45.1(@opentelemetry/api@1.9.0)
+      commander:
+        specifier: ^12.0.0
+        version: 12.1.0
+      compression:
+        specifier: ^1.7.5
+        version: 1.8.1
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      express:
+        specifier: ^4.21.1
+        version: 4.21.2
+      helmet:
+        specifier: ^7.2.0
+        version: 7.2.0
+      pino:
+        specifier: ^8.16.0
+        version: 8.21.0
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/commander':
+        specifier: ^2.12.2
+        version: 2.12.5
+      '@types/compression':
+        specifier: ^1.7.5
+        version: 1.8.1
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.19
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.21
+      '@types/node':
+        specifier: ^22.18.1
+        version: 22.18.1
+      '@vitest/coverage-v8':
+        specifier: ^3.2.4
+        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1))
+      eslint:
+        specifier: ^9.35.0
+        version: 9.35.0(jiti@2.5.1)
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
+
   apps/cortex-os/packages/planner:
     dependencies:
       '@cortex-os/a2a':
@@ -1000,6 +1076,8 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
 
+  libs/typescript/agent-contracts: {}
+
   libs/typescript/asbr-policy:
     devDependencies:
       typescript:
@@ -1071,6 +1149,8 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
+
+  libs/typescript/prp-types: {}
 
   libs/typescript/telemetry:
     dependencies:
@@ -2157,6 +2237,49 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
 
+  packages/mcp-server:
+    dependencies:
+      '@cortex-os/memory-core':
+        specifier: workspace:*
+        version: link:../memory-core
+      '@cortex-os/tool-spec':
+        specifier: workspace:*
+        version: link:../tool-spec
+      '@modelcontextprotocol/sdk':
+        specifier: ^0.6.1
+        version: 0.6.1
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      express:
+        specifier: '>=4.20.0'
+        version: 5.1.0
+      pino:
+        specifier: ^8.16.0
+        version: 8.21.0
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.19
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.21
+      '@types/node':
+        specifier: ^22.18.1
+        version: 22.18.1
+      tsx:
+        specifier: ^4.19.1
+        version: 4.20.5
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
+
   packages/memories:
     dependencies:
       '@cortex-os/a2a':
@@ -2259,9 +2382,122 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
-      ws:
-        specifier: ^8.18.0
-        version: 8.18.3
+
+  packages/memory-core:
+    dependencies:
+      '@cortex-os/tool-spec':
+        specifier: workspace:*
+        version: link:../tool-spec
+      '@cortex-os/utils':
+        specifier: workspace:*
+        version: link:../../libs/typescript/utils
+      '@langchain/langgraph':
+        specifier: ^0.4.9
+        version: 0.4.9(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.205.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.1.0(@opentelemetry/api@1.9.0))(openai@5.12.2(ws@8.18.3)(zod@3.25.76)))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod-to-json-schema@3.24.6(zod@3.25.76))
+      '@qdrant/js-client-rest':
+        specifier: ^1.15.1
+        version: 1.15.1(typescript@5.9.2)
+      better-sqlite3:
+        specifier: ^12.2.0
+        version: 12.2.0
+      circuit-breaker-js:
+        specifier: ^0.0.1
+        version: 0.0.1
+      p-queue:
+        specifier: ^7.4.1
+        version: 7.4.1
+      pino:
+        specifier: ^8.16.0
+        version: 8.21.0
+      sqlite-vec:
+        specifier: ^0.1.7-alpha.2
+        version: 0.1.7-alpha.2
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.13
+        version: 7.6.13
+      '@types/node':
+        specifier: ^22.18.1
+        version: 22.18.1
+      '@vitest/coverage-v8':
+        specifier: ^3.2.4
+        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1))
+      tsx:
+        specifier: ^4.19.1
+        version: 4.20.5
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
+
+  packages/memory-rest-api:
+    dependencies:
+      '@cortex-os/memory-core':
+        specifier: workspace:*
+        version: link:../memory-core
+      '@cortex-os/tool-spec':
+        specifier: workspace:*
+        version: link:../tool-spec
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      express:
+        specifier: '>=4.20.0'
+        version: 5.1.0
+      express-rate-limit:
+        specifier: ^7.1.5
+        version: 7.5.1(express@5.1.0)
+      helmet:
+        specifier: ^7.1.0
+        version: 7.2.0
+      pino:
+        specifier: ^8.16.0
+        version: 8.21.0
+      pino-http:
+        specifier: ^10.2.0
+        version: 10.5.0
+      swagger-ui-express:
+        specifier: ^5.0.0
+        version: 5.0.1(express@5.1.0)
+      yaml:
+        specifier: ^2.3.4
+        version: 2.8.1
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.19
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.21
+      '@types/node':
+        specifier: ^22.18.1
+        version: 22.18.1
+      '@types/swagger-ui-express':
+        specifier: ^4.1.6
+        version: 4.1.8
+      '@types/yaml':
+        specifier: ^1.9.7
+        version: 1.9.7
+      supertest:
+        specifier: ^6.3.4
+        version: 6.3.4
+      tsx:
+        specifier: ^4.19.1
+        version: 4.20.5
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
 
   packages/model-gateway:
     dependencies:
@@ -3248,6 +3484,65 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.1)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@22.18.1)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
+
+  packages/testing:
+    dependencies:
+      '@cortex-os/mcp-server':
+        specifier: workspace:*
+        version: link:../mcp-server
+      '@cortex-os/memory-core':
+        specifier: workspace:*
+        version: link:../memory-core
+      '@cortex-os/memory-rest-api':
+        specifier: workspace:*
+        version: link:../memory-rest-api
+      '@cortex-os/tool-spec':
+        specifier: workspace:*
+        version: link:../tool-spec
+      '@modelcontextprotocol/sdk':
+        specifier: ^0.6.0
+        version: 0.6.1
+      express:
+        specifier: '>=4.20.0'
+        version: 5.1.0
+      supertest:
+        specifier: ^6.3.4
+        version: 6.3.4
+    devDependencies:
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.21
+      '@types/supertest':
+        specifier: ^2.0.16
+        version: 2.0.16
+      '@vitest/coverage-v8':
+        specifier: ^3.2.4
+        version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.5.2)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@24.5.2)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1))
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.5.2)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(lightningcss@1.30.1)(msw@2.11.3(@types/node@24.5.2)(typescript@5.9.2))(sass-embedded@1.92.1)(sass@1.92.1)(terser@5.44.0)(tsx@4.20.5)(yaml@2.8.1)
+
+  packages/tool-spec:
+    dependencies:
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.18.1
+        version: 22.18.1
+      tsx:
+        specifier: ^4.19.1
+        version: 4.20.5
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
 
   services/memories:
     dependencies:
@@ -6510,6 +6805,9 @@ packages:
     resolution: {integrity: sha512-/mn4UXziHzGXnKCg+r8HGgPy+w4RzpgdoqFuqaKOqUVBT5x2CygGefIrO4SusaY7t0C4gyIWMNu6YQT6Jw64Cw==}
     engines: {node: '>= 14'}
 
+  '@modelcontextprotocol/sdk@0.6.1':
+    resolution: {integrity: sha512-OkVXMix3EIbB5Z6yife2XTrSlOnVvCLR1Kg91I4pYFEsV9RbnoyQVScXCuVhGaZHOnTZgso8lMQN1Po2TadGKQ==}
+
   '@modelcontextprotocol/sdk@1.17.4':
     resolution: {integrity: sha512-zq24hfuAmmlNZvik0FLI58uE5sriN0WWsQzIlYnzSuKDAHFqJtBFrl/LfB1NLgJT5Y7dEBzaX4yAKqOPrcetaw==}
     engines: {node: '>=18'}
@@ -8291,6 +8589,9 @@ packages:
     resolution: {integrity: sha512-4It2mxPSr4OGn4HSQWGmhFMsNFGfFVhWeRPCRwbH972Ek2pzfGRZtb0pJ4Ze6oIzcyh2jw7nUDa6qGlWofgd9g==}
     engines: {node: '>=v16'}
 
+  '@scarf/scarf@1.4.0':
+    resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
+
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
 
@@ -9046,6 +9347,10 @@ packages:
     resolution: {integrity: sha512-A7/MFHf6KF7peCzjEC1BBTF8jpmZTokb3vr/A0NxRGfwRLK3Ws+Hq6ugVn6cJIMfM6wkCak/aplWrxbTcu8oig==}
     deprecated: This is a stub types definition. chokidar provides its own type definitions, so you do not need this installed.
 
+  '@types/commander@2.12.5':
+    resolution: {integrity: sha512-YXGZ/rz+s57VbzcvEV9fUoXeJlBt5HaKu5iUheiIWNsJs23bz6AnRuRiZBRVBLYyPnixNvVnuzM5pSaxr8Yp/g==}
+    deprecated: This is a stub types definition. commander provides its own type definitions, so you do not need this installed.
+
   '@types/compression@1.8.1':
     resolution: {integrity: sha512-kCFuWS0ebDbmxs0AXYn6e2r2nrGAb5KwQhknjSPSPgJcGd8+HVSILlUyFhGqML2gk39HcG7D1ydW9/qpYkN00Q==}
 
@@ -9324,9 +9629,6 @@ packages:
   '@types/node@17.0.45':
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
 
-  '@types/node@18.19.124':
-    resolution: {integrity: sha512-hY4YWZFLs3ku6D2Gqo3RchTd9VRCcrjqp/I0mmohYeUVA5Y8eCXKJEasHxLAJVZRJuQogfd1GiJ9lgogBgKeuQ==}
-
   '@types/node@18.19.128':
     resolution: {integrity: sha512-m7wxXGpPpqxp2QDi/rpih5O772APRuBIa/6XiGqLNoM1txkjI8Sz1V4oSXJxQLTz/yP5mgy9z6UXEO6/lP70Gg==}
 
@@ -9459,6 +9761,9 @@ packages:
   '@types/swagger-jsdoc@6.0.4':
     resolution: {integrity: sha512-W+Xw5epcOZrF/AooUM/PccNMSAFOKWZA5dasNyMujTwsBkU74njSJBpvCCJhHAJ95XRMzQrrW844Btu0uoetwQ==}
 
+  '@types/swagger-ui-express@4.1.8':
+    resolution: {integrity: sha512-AhZV8/EIreHFmBV5wAs0gzJUNq9JbbSXgJLQubCC0jtIo6prnI9MIRRxnU4MZX9RB9yXxF1V4R7jtLl/Wcj31g==}
+
   '@types/tedious@4.0.14':
     resolution: {integrity: sha512-KHPsfX/FoVbUGbyYvk1q9MMQHLPeRZhRJZdO45Q4YjvFkv4hMNghCWTvy7rdKessBsmtz4euWCWAB6/tVpI1Iw==}
 
@@ -9491,6 +9796,10 @@ packages:
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
+  '@types/yaml@1.9.7':
+    resolution: {integrity: sha512-8WMXRDD1D+wCohjfslHDgICd2JtMATZU8CkhH8LVJqcJs6dyYj5TGptzP8wApbmEullGBSsCEzzap73DQ1HJaA==}
+    deprecated: This is a stub types definition. yaml provides its own type definitions, so you do not need this installed.
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -16366,6 +16675,9 @@ packages:
   pino-abstract-transport@2.0.0:
     resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
 
+  pino-http@10.5.0:
+    resolution: {integrity: sha512-hD91XjgaKkSsdn8P7LaebrNzhGTdB086W3pyPihX0EzGPjq5uBJBXo4N5guqNaK6mUjg9aubMF7wDViYek9dRA==}
+
   pino-pretty@9.4.1:
     resolution: {integrity: sha512-loWr5SNawVycvY//hamIzyz3Fh5OSpvkcO13MwdDW+eKIGylobPLqnVGTDwDXkdmpJd1BhEG+qhDw09h6SqJiQ==}
     hasBin: true
@@ -18785,6 +19097,15 @@ packages:
   swagger-parser@10.0.3:
     resolution: {integrity: sha512-nF7oMeL4KypldrQhac8RyHerJeGPD1p2xDh900GPvc+Nk7nWP6jX2FcC7WmkinMoAmoO774+AFXcWsW8gMWEIg==}
     engines: {node: '>=10'}
+
+  swagger-ui-dist@5.29.1:
+    resolution: {integrity: sha512-qyjpz0qgcomRr41a5Aye42o69TKwCeHM9F8htLGVeUMKekNS6qAqz9oS7CtSvgGJSppSNAYAIh7vrfrSdHj9zw==}
+
+  swagger-ui-express@5.0.1:
+    resolution: {integrity: sha512-SrNU3RiBGTLLmFU8GIJdOdanJTl4TOmT27tt3bWWHppqYmAZ6IDuEuBvMU6nZq0zLEe6b/1rACXCgLZqO6ZfrA==}
+    engines: {node: '>= v0.10.32'}
+    peerDependencies:
+      express: '>=4.20.0'
 
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
@@ -23167,7 +23488,7 @@ snapshots:
 
   '@docusaurus/react-loadable@6.0.0(react@19.1.1)':
     dependencies:
-      '@types/react': 19.1.13
+      '@types/react': 19.1.15
       react: 19.1.1
 
   '@docusaurus/theme-classic@3.8.1(@rspack/core@1.5.2(@swc/helpers@0.5.17))(@types/react@19.1.15)(esbuild@0.25.9)(lightningcss@1.30.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.2.2)':
@@ -24851,6 +25172,12 @@ snapshots:
       utf8: 3.0.0
     transitivePeerDependencies:
       - supports-color
+
+  '@modelcontextprotocol/sdk@0.6.1':
+    dependencies:
+      content-type: 1.0.5
+      raw-body: 3.0.1
+      zod: 3.25.76
 
   '@modelcontextprotocol/sdk@1.17.4':
     dependencies:
@@ -26864,7 +27191,7 @@ snapshots:
       axios: 1.12.2
       body-parser: 1.20.3
       cli-color: 2.0.4
-      express: 5.1.0
+      express: 4.21.2
       graphql: 14.7.0
       graphql-tag: 2.12.6(graphql@14.7.0)
       http-proxy: 1.18.1
@@ -27407,6 +27734,8 @@ snapshots:
     dependencies:
       fast-deep-equal: 3.1.3
       lodash: 4.17.21
+
+  '@scarf/scarf@1.4.0': {}
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -28401,7 +28730,7 @@ snapshots:
 
   '@types/better-sqlite3@7.6.13':
     dependencies:
-      '@types/node': 24.5.2
+      '@types/node': 20.19.11
 
   '@types/body-parser@1.19.6':
     dependencies:
@@ -28425,6 +28754,10 @@ snapshots:
   '@types/chokidar@2.1.7':
     dependencies:
       chokidar: 4.0.3
+
+  '@types/commander@2.12.5':
+    dependencies:
+      commander: 13.1.0
 
   '@types/compression@1.8.1':
     dependencies:
@@ -28636,7 +28969,7 @@ snapshots:
   '@types/fs-extra@11.0.4':
     dependencies:
       '@types/jsonfile': 6.1.4
-      '@types/node': 24.5.2
+      '@types/node': 20.19.11
 
   '@types/fs-extra@8.1.5':
     dependencies:
@@ -28758,10 +29091,6 @@ snapshots:
 
   '@types/node@17.0.45': {}
 
-  '@types/node@18.19.124':
-    dependencies:
-      undici-types: 5.26.5
-
   '@types/node@18.19.128':
     dependencies:
       undici-types: 5.26.5
@@ -28785,7 +29114,7 @@ snapshots:
   '@types/nodemailer@7.0.1':
     dependencies:
       '@aws-sdk/client-sesv2': 3.893.0
-      '@types/node': 24.5.2
+      '@types/node': 20.19.11
     transitivePeerDependencies:
       - aws-crt
 
@@ -28797,7 +29126,7 @@ snapshots:
 
   '@types/pdf-parse@1.1.5':
     dependencies:
-      '@types/node': 24.5.2
+      '@types/node': 20.19.11
 
   '@types/pg-pool@2.0.6':
     dependencies:
@@ -28847,7 +29176,7 @@ snapshots:
   '@types/react-router@5.1.20':
     dependencies:
       '@types/history': 4.7.11
-      '@types/react': 19.1.13
+      '@types/react': 19.1.15
 
   '@types/react@19.1.12':
     dependencies:
@@ -28912,7 +29241,7 @@ snapshots:
 
   '@types/ssh2@1.15.5':
     dependencies:
-      '@types/node': 18.19.124
+      '@types/node': 18.19.128
 
   '@types/stack-utils@2.0.3': {}
 
@@ -28935,6 +29264,11 @@ snapshots:
       '@types/superagent': 8.1.9
 
   '@types/swagger-jsdoc@6.0.4': {}
+
+  '@types/swagger-ui-express@4.1.8':
+    dependencies:
+      '@types/express': 4.17.21
+      '@types/serve-static': 1.15.8
 
   '@types/tedious@4.0.14':
     dependencies:
@@ -28961,7 +29295,11 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 24.5.2
+      '@types/node': 20.19.11
+
+  '@types/yaml@1.9.7':
+    dependencies:
+      yaml: 2.8.1
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -37119,7 +37457,7 @@ snapshots:
 
   openai@4.104.0(encoding@0.1.13)(ws@8.18.3)(zod@3.25.76):
     dependencies:
-      '@types/node': 18.19.124
+      '@types/node': 18.19.128
       '@types/node-fetch': 2.6.13
       abort-controller: 3.0.0
       agentkeepalive: 4.6.0
@@ -37516,6 +37854,13 @@ snapshots:
   pino-abstract-transport@2.0.0:
     dependencies:
       split2: 4.2.0
+
+  pino-http@10.5.0:
+    dependencies:
+      get-caller-file: 2.0.5
+      pino: 9.11.0
+      pino-std-serializers: 7.0.0
+      process-warning: 5.0.0
 
   pino-pretty@9.4.1:
     dependencies:
@@ -40406,6 +40751,15 @@ snapshots:
       '@apidevtools/swagger-parser': 10.0.3(openapi-types@12.1.3)
     transitivePeerDependencies:
       - openapi-types
+
+  swagger-ui-dist@5.29.1:
+    dependencies:
+      '@scarf/scarf': 1.4.0
+
+  swagger-ui-express@5.0.1(express@5.1.0):
+    dependencies:
+      express: 5.1.0
+      swagger-ui-dist: 5.29.1
 
   symbol-tree@3.2.4: {}
 

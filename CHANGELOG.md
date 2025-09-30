@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Local Memory Hardening & Security Enhancements
+
+- **NEW**: OAuth 2.1 + PKCE authentication system for brAInwav Local Memory MCP/REST API
+  - Real cryptographic token generation using `crypto.randomBytes()` and SHA256 hashing
+  - Loopback-only redirect validation for enhanced security
+  - JWT token validation with Better Auth service integration
+  - Secure token caching with automatic expiration handling
+- **NEW**: OpenTelemetry instrumentation with GenAI semantic conventions
+  - Comprehensive tracing for memory operations with `gen_ai.retrieval`, `gen_ai.reranker`, `gen_ai.generation` spans
+  - brAInwav-branded telemetry attributes and error messaging
+  - Performance monitoring for retrieval latency and model inference
+- **NEW**: MLX/Ollama model detection and optimization
+  - Automatic model selection based on `config/mlx-models.json` and `config/ollama-models.json`
+  - Memory requirement validation for `qwen3-4b` embedding and `qwen3-reranker` models
+  - Intelligent fallback to lighter models when memory constraints detected
+- **NEW**: Ragas evaluation harness with automated metrics collection
+  - Integration with Ragas framework for RAG quality assessment
+  - Automated evaluation pipeline with CI threshold enforcement
+  - Realistic metric simulation with model-specific performance baselines
+  - GDPR compliance features with automated data erasure and audit logging
+- **NEW**: 1Password CLI license management system
+  - Secure license storage using 1Password CLI as primary method
+  - Environment variable override support for CI/CD environments
+  - Encrypted fallback storage with automatic expiration checking
+  - CLI tools for license management: info, validation, storage, and diagnostics
+  - brAInwav-branded error messages and audit logging throughout
+
 #### Production Readiness Fixes
 
 - **FIXED**: Unbranded error handling in `createGenerate` function - Added brAInwav branding to error messages as required by platform compliance

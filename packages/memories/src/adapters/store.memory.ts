@@ -52,7 +52,7 @@ export class InMemoryStore implements MemoryStore {
 		const escapedSearchText = escapeRegExp(q.text.toLowerCase());
 		const searchRegex = new RegExp(`\\b${escapedSearchText}\\b`);
 
-		let items = [...this.ns(namespace).values()].filter(
+		let items = Array.from(this.ns(namespace).values()).filter(
 			(x) =>
 				(!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))) &&
 				(x.text?.toLowerCase().match(searchRegex) ?? false),
@@ -70,7 +70,7 @@ export class InMemoryStore implements MemoryStore {
 	}
 
 	async searchByVector(q: VectorQuery, namespace = 'default') {
-		let itemsWithScores = [...this.ns(namespace).values()]
+		let itemsWithScores = Array.from(this.ns(namespace).values())
 			.filter((x) => x.vector && (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))))
 			.map((x) => {
 				const queryVec = q.vector;
@@ -111,7 +111,7 @@ export class InMemoryStore implements MemoryStore {
 	}
 
 	async list(namespace = 'default', limit?: number, offset?: number): Promise<Memory[]> {
-		const items = [...this.ns(namespace).values()];
+		const items = Array.from(this.ns(namespace).values());
 
 		// Apply decay if enabled
 		let result = items;

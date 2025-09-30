@@ -161,10 +161,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 		q: VectorQuery,
 		namespace?: string,
 	): Promise<(Memory & { score: number })[]> {
-		const topK = q.topK ?? q.limit ?? 10;
+		const topK = q.topK ?? 10;
 		let baseVec: number[] = [];
 		if (Array.isArray(q.vector)) baseVec = q.vector.slice();
-		else if (Array.isArray(q.embedding)) baseVec = q.embedding.slice();
 		const queryVec = padVector(baseVec, this.dim);
 		const initialLimit = Math.max(topK * 10, topK);
 		const knnSubquery =
@@ -328,5 +327,25 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 			policy,
 			embeddingModel,
 		};
+	}
+
+	async list(namespace = 'default', limit?: number, offset?: number): Promise<Memory[]> {
+		let sql = 'SELECT * FROM memories';
+		const params: unknown[] = [];
+		if (namespace) {
+			sql += ' WHERE id LIKE ?';
+			params.push(`${namespace}:%`);
+		}
+		sql += ' ORDER BY updatedAt DESC';
+		if (typeof limit === 'number') {
+			sql += ' LIMIT ?';
+			params.push(limit);
+		}
+		if (typeof offset === 'number') {
+			sql += ' OFFSET ?';
+			params.push(offset);
+		}
+		const rows = this.db.prepare(sql).all(...params);
+		return rows.map((r) => this.rowToMemory(r));
 	}
 }

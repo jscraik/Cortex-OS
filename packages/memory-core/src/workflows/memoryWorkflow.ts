@@ -65,7 +65,7 @@ export class MemoryWorkflowEngine {
 		};
 	}
 
-	private readonly prepareStoreNode = async (): Promise<Partial<StoreState>> => {
+	private readonly prepareStoreNode = async (state: StoreState): Promise<Partial<StoreState>> => {
 		const id = this.options.store.generateId();
 		const timestamp = this.options.store.getTimestamp();
 		return { id, timestamp };

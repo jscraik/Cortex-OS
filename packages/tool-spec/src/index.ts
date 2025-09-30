@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import Ajv from 'ajv';
+import { Ajv } from 'ajv';
 
 // Import schemas
-import memoryStoreSchema from './schemas/memory.store.schema.json';
-import memorySearchSchema from './schemas/memory.search.schema.json';
-import memoryAnalysisSchema from './schemas/memory.analysis.schema.json';
-import memoryRelationshipsSchema from './schemas/memory.relationships.schema.json';
-import memoryStatsSchema from './schemas/memory.stats.schema.json';
+import memoryStoreSchema from './schemas/memory.store.schema.json' with { type: 'json' };
+import memorySearchSchema from './schemas/memory.search.schema.json' with { type: 'json' };
+import memoryAnalysisSchema from './schemas/memory.analysis.schema.json' with { type: 'json' };
+import memoryRelationshipsSchema from './schemas/memory.relationships.schema.json' with { type: 'json' };
+import memoryStatsSchema from './schemas/memory.stats.schema.json' with { type: 'json' };
 
 // Generate Zod schemas from JSON schemas
 export const MemoryStoreInputSchema = z.object({
@@ -14,7 +14,7 @@ export const MemoryStoreInputSchema = z.object({
   importance: z.number().int().min(1).max(10).default(5),
   tags: z.array(z.string().min(1).max(50)).max(32).optional(),
   domain: z.string().min(1).max(100).regex(/^[a-zA-Z0-9._-]+$/).optional(),
-  metadata: z.record(z.any()).max(50).optional(),
+  metadata: z.record(z.any()).optional(),
 });
 
 export const MemorySearchInputSchema = z.object({

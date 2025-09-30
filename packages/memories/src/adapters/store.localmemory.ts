@@ -208,4 +208,27 @@ export class LocalMemoryStore implements MemoryStore {
 		// Local Memory manages retention internally; no-op here.
 		return 0;
 	}
+
+	async list(namespace?: string, limit?: number, offset?: number): Promise<Memory[]> {
+		const ctrl = new AbortController();
+		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
+		try {
+			const url = new URL(`${this.baseUrl}/memories`);
+			if (namespace ?? this.defaultNs) url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
+			if (typeof limit === 'number') url.searchParams.set('limit', String(limit));
+			if (typeof offset === 'number') url.searchParams.set('offset', String(offset));
+			const res = await fetch(url, { headers: toHeaders(this.apiKey), signal: ctrl.signal });
+			if (!res.ok) throw new Error(`local-memory: list failed: ${res.status}`);
+			const raw: unknown = await res.json().catch(() => ({}));
+			const parsed = (raw ?? {}) as LocalDocEnvelope | LocalDocEnvelope[];
+			let list: LocalDocEnvelope[] = [];
+			if (Array.isArray(parsed)) list = parsed;
+			else if (Array.isArray(parsed.items)) list = parsed.items;
+			else if (Array.isArray(parsed.data)) list = parsed.data;
+			else if (parsed) list = [parsed];
+			return list.map(fromLocalDoc).filter(Boolean) as Memory[];
+		} finally {
+			clearTimeout(to);
+		}
+	}
 }

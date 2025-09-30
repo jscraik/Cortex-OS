@@ -1,5 +1,6 @@
 import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import { applyFilters, computeTextHybrid, computeVectorHybrid } from './store.hybrid-search.helpers.js';
 
 export interface HybridQuery {
   text?: string;
@@ -234,78 +235,19 @@ export class HybridSearchMemoryStore implements MemoryStore {
       this.analytics.totalLatency += response.queryTime;
     }
 
-    // Build and return final response via helper
-    return await this.buildResponse(results, query, startTime, namespace);
+    // Build and return final response
+    return response;
   }
 
-  private applyFilters(query: HybridQuery, memories: Memory[]): Memory[] {
-    let filtered = memories;
-    const metadataFilters = query.filters?.metadata;
-    if (metadataFilters) {
-      filtered = filtered.filter((memory) => {
-        for (const [key, value] of Object.entries(metadataFilters)) {
-          if (memory.metadata?.[key] !== value) return false;
-        }
-        return true;
-      });
-    }
-
-    const dr = query.filters?.dateRange;
-    if (dr) {
-      const start = new Date(dr.start);
-      const end = new Date(dr.end);
-      filtered = filtered.filter((m) => {
-        const createdAt = new Date(m.createdAt);
-        return createdAt >= start && createdAt <= end;
-      });
-    }
-
-    return filtered;
-  }
-
-  private computeTextHybrid(query: HybridQuery, memories: Memory[]): HybridSearchResult[] {
-    if (!query.text) return [];
-    const searchText = String(query.text).toLowerCase();
-    const textResults = memories.filter((m) => !!m.text && m.text.toLowerCase().includes(searchText));
-    return textResults.map((m, idx) => ({
-      ...m,
-      score: textResults.length > 0 ? (textResults.length - idx) / textResults.length : 0,
-      textScore: textResults.length > 0 ? (textResults.length - idx) / textResults.length : 0,
-    }));
-  }
-
-  private computeVectorHybrid(query: HybridQuery, memories: Memory[]): HybridSearchResult[] {
-    if (!query.vector || (Array.isArray(query.vector) && query.vector.length === 0)) return [];
-    const qv = query.vector ?? [];
-    const vectorResults = memories
-      .map((m) => {
-        if (!m.vector) return { ...m, score: 0 } as HybridSearchResult;
-        const dotProduct = m.vector.reduce((sum, val, i) => sum + val * (qv[i] ?? 0), 0);
-        const magnitudeA = Math.sqrt(m.vector.reduce((sum, val) => sum + val * val, 0));
-        const magnitudeB = Math.sqrt(qv.reduce((sum, val) => sum + val * val, 0));
-        const similarity = magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
-        return { ...m, score: similarity } as HybridSearchResult;
-      })
-      .filter((r) => r.score > 0.01);
-    return vectorResults.map((r) => ({ ...r, vectorScore: r.score }));
-  }
-
-  private async performHybridSearch(
-    query: HybridQuery,
-    namespace: string,
-  ): Promise<HybridSearchResult[]> {
+  private async performHybridSearch(query: HybridQuery, namespace: string): Promise<HybridSearchResult[]> {
     const textWeight = query.textWeight || this.config.defaultTextWeight || 0.5;
     const vectorWeight = query.vectorWeight || this.config.defaultVectorWeight || 0.5;
     const fusionStrategy = query.fusionStrategy || this.config.defaultFusionStrategy || 'weighted';
 
     const allMemories = await this.store.list(namespace);
-
-    // Apply filters via helper
-    const filteredMemories = this.applyFilters(query, allMemories);
-
-    // Compute hybrids via helpers
-    const textHybrid = this.computeTextHybrid(query, filteredMemories);
-    const vectorHybrid = this.computeVectorHybrid(query, filteredMemories);
+    const filteredMemories = applyFilters(query, allMemories);
+    const textHybrid = computeTextHybrid(query, filteredMemories);
+    const vectorHybrid = computeVectorHybrid(query, filteredMemories);
 
     let fusedResults: HybridSearchResult[] = [];
     switch (fusionStrategy) {
@@ -328,100 +270,16 @@ export class HybridSearchMemoryStore implements MemoryStore {
     return fusedResults;
   }
 
-  private async performTextSearch(
-    query: HybridQuery,
-    namespace: string,
-  ): Promise<HybridSearchResult[]> {
-    // Get all memories in namespace for filtering
+  private async performTextSearch(query: HybridQuery, namespace: string): Promise<HybridSearchResult[]> {
     const allMemories = await this.store.list(namespace);
-
-    // Apply filters first
-    let filteredMemories = allMemories;
-    const metadataFilters2 = query.filters?.metadata;
-    if (metadataFilters2) {
-      filteredMemories = allMemories.filter((memory) => {
-        for (const [key, value] of Object.entries(metadataFilters2)) {
-          if (memory.metadata?.[key] !== value) {
-            return false;
-          }
-        }
-        return true;
-      });
-    }
-
-    const dr = query.filters?.dateRange;
-    if (dr) {
-      const start = new Date(dr.start);
-      const end = new Date(dr.end);
-      filteredMemories = filteredMemories.filter((memory) => {
-        const createdAt = new Date(memory.createdAt);
-        return createdAt >= start && createdAt <= end;
-      });
-    }
-
-    // Perform text search on filtered memories only
-    const searchText = String(query.text ?? '').toLowerCase();
-    const textResults = filteredMemories.filter(
-      (memory) => !!memory.text && memory.text.toLowerCase().includes(searchText),
-    );
-
-    return textResults.map((memory, index) => ({
-      ...memory,
-      score: (textResults.length - index) / textResults.length, // Higher score for better rank
-      textScore: (textResults.length - index) / textResults.length,
-    }));
+    const filteredMemories = applyFilters(query, allMemories);
+    return computeTextHybrid(query, filteredMemories);
   }
 
-  private async performVectorSearch(
-    query: HybridQuery,
-    namespace: string,
-  ): Promise<HybridSearchResult[]> {
-    // Get all memories in namespace for filtering
+  private async performVectorSearch(query: HybridQuery, namespace: string): Promise<HybridSearchResult[]> {
     const allMemories = await this.store.list(namespace);
-
-    // Apply filters first
-    let filteredMemories = allMemories;
-    const metadataFilters2 = query.filters?.metadata;
-    if (metadataFilters2) {
-      filteredMemories = allMemories.filter((memory) => {
-        for (const [key, value] of Object.entries(metadataFilters2)) {
-          if (memory.metadata?.[key] !== value) {
-            return false;
-          }
-        }
-        return true;
-      });
-    }
-
-    const dr2 = query.filters?.dateRange;
-    if (dr2) {
-      const start = new Date(dr2.start);
-      const end = new Date(dr2.end);
-      filteredMemories = filteredMemories.filter((memory) => {
-        const createdAt = new Date(memory.createdAt);
-        return createdAt >= start && createdAt <= end;
-      });
-    }
-
-    // Perform vector search on filtered memories only
-    const vectorResults = filteredMemories
-      .map((memory) => {
-        if (!memory.vector) {
-          return { ...memory, score: 0 };
-        }
-
-        // Calculate cosine similarity
-        const qv = query.vector ?? [];
-        const dotProduct = memory.vector.reduce((sum, val, i) => sum + val * (qv[i] ?? 0), 0);
-        const magnitudeA = Math.sqrt(memory.vector.reduce((sum, val) => sum + val * val, 0));
-        const magnitudeB = Math.sqrt(qv.reduce((sum, val) => sum + val * val, 0));
-        const similarity = magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
-
-        return { ...memory, score: similarity };
-      })
-      .filter((result) => result.score > 0.01); // Lower threshold to include more results
-
-    return vectorResults;
+    const filteredMemories = applyFilters(query, allMemories);
+    return computeVectorHybrid(query, filteredMemories);
   }
 
   private generateCacheKey(query: HybridQuery, namespace: string): string {
@@ -444,7 +302,7 @@ export class HybridSearchMemoryStore implements MemoryStore {
 
   private cleanupCache(): void {
     const now = Date.now();
-    for (const [key, value] of this.queryCache) {
+    for (const [key, value] of Array.from(this.queryCache.entries())) {
       if (value.expires <= now) {
         this.queryCache.delete(key);
       }
@@ -622,26 +480,23 @@ export class HybridSearchMemoryStore implements MemoryStore {
     textResults: HybridSearchResult[],
     vectorResults: HybridSearchResult[],
   ): HybridSearchResult[] {
-    // Combine results by taking the maximum score from text or vector results
-    const maxScores = new Map<string, HybridSearchResult>();
+    const fused = new Map<string, HybridSearchResult>();
 
-    for (const result of textResults) {
-      maxScores.set(result.id, { ...result });
+    for (const t of textResults) {
+      fused.set(t.id, { ...t });
     }
 
-    for (const result of vectorResults) {
-      const existing = maxScores.get(result.id);
+    for (const v of vectorResults) {
+      const existing = fused.get(v.id);
       if (existing) {
-        maxScores.set(result.id, {
-          ...result,
-          score: Math.max(existing.score, result.score),
-        });
+        existing.score = Math.max(existing.score ?? 0, v.score ?? 0);
+        existing.vectorScore = v.vectorScore ?? v.score;
       } else {
-        maxScores.set(result.id, { ...result });
+        fused.set(v.id, { ...v });
       }
     }
 
-    return Array.from(maxScores.values());
+    return Array.from(fused.values()).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }
 
   private weightedScoreFusion(
@@ -650,33 +505,56 @@ export class HybridSearchMemoryStore implements MemoryStore {
     textWeight: number,
     vectorWeight: number,
   ): HybridSearchResult[] {
-    // Combine results using a weighted sum of scores
-    const combinedScores = new Map<string, HybridSearchResult>();
+    const combined = new Map<string, HybridSearchResult>();
+    const totalWeight = textWeight + vectorWeight || 1;
 
-    for (const result of textResults) {
-      combinedScores.set(result.id, { ...result });
+    for (const t of textResults) {
+      combined.set(t.id, { ...t });
     }
 
-    for (const result of vectorResults) {
-      const existing = combinedScores.get(result.id);
+    for (const v of vectorResults) {
+      const existing = combined.get(v.id);
       if (existing) {
-        combinedScores.set(result.id, {
-          ...result,
-          score: (existing.score * textWeight + result.score * vectorWeight) / (textWeight + vectorWeight),
-        });
+        const tScore = existing.score ?? 0;
+        const vScore = v.score ?? 0;
+        existing.score = (tScore * textWeight + vScore * vectorWeight) / totalWeight;
+        existing.vectorScore = v.vectorScore ?? v.score;
       } else {
-        combinedScores.set(result.id, { ...result });
+        combined.set(v.id, { ...v, score: (v.score ?? 0) * (vectorWeight / totalWeight) });
       }
     }
 
-    return Array.from(combinedScores.values());
+    return Array.from(combined.values()).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }
 
-  private invalidateCache(namespace: string): void {
-    for (const key of this.queryCache.keys()) {
-      if (key.includes(`"namespace":"${namespace}"`)) {
-        this.queryCache.delete(key);
-      }
+  // Public methods for analytics and cache management
+  getCacheMetrics() {
+    return { hits: this.queryCache.size, misses: 0, size: this.queryCache.size };
+  }
+
+  getQueryAnalytics(): QueryAnalytics {
+    const avgLatency = this.analytics.totalQueries > 0 ? this.analytics.totalLatency / this.analytics.totalQueries : 0;
+    const topTerms: Record<string, number> = {};
+    for (const [term, count] of Array.from(this.analytics.topTerms.entries())) {
+      topTerms[term] = count;
     }
+
+    return {
+      totalQueries: this.analytics.totalQueries,
+      averageLatency: avgLatency,
+      topTerms,
+      queryTypes: { ...this.analytics.queryTypes },
+    };
+  }
+
+  clearCache(): void {
+    this.queryCache.clear();
+  }
+
+  clearAnalytics(): void {
+    this.analytics.totalQueries = 0;
+    this.analytics.totalLatency = 0;
+    this.analytics.topTerms.clear();
+    this.analytics.queryTypes = { textOnly: 0, vectorOnly: 0, hybrid: 0 };
   }
 }

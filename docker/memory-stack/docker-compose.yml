@@ -25,6 +25,47 @@ services:
       - cortex-network
 
   # MCP Server (STDIO + HTTP/streamable)
+  local-memory:
+    build:
+      context: ../../
+      dockerfile: apps/cortex-os/packages/local-memory/Dockerfile
+    container_name: cortex-local-memory
+    restart: unless-stopped
+    ports:
+      - "9400:9400"
+    environment:
+      - LOCAL_MEMORY_PORT=9400
+      - LOCAL_MEMORY_HOST=0.0.0.0
+      - MEMORY_DB_PATH=/data/unified-memories.db
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=local_memory_v1
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      - EMBED_DIM=384
+      - SIMILARITY=Cosine
+      - MEMORY_DEFAULT_LIMIT=10
+      - MEMORY_MAX_LIMIT=100
+      - MEMORY_DEFAULT_THRESHOLD=0.5
+      - MEMORY_HYBRID_WEIGHT=0.6
+      - MEMORY_ENABLE_CIRCUIT_BREAKER=true
+      - MEMORY_CIRCUIT_BREAKER_THRESHOLD=5
+      - MEMORY_QUEUE_CONCURRENCY=10
+      - MEMORY_LOG_LEVEL=info
+    volumes:
+      - memory_data:/data
+      - ./logs:/app/logs
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fSs", "http://localhost:9400/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - cortex-network
+
+  # MCP Server (STDIO + HTTP/streamable)
   cortex-mcp:
     build:
       context: ../../
@@ -37,30 +78,13 @@ services:
       - TRANSPORT=http
       - PORT=9600
       - HOST=0.0.0.0
-      # Database config
-      - MEMORY_DB_PATH=/data/unified-memories.db
-      # Qdrant config
-      - QDRANT_URL=http://qdrant:6333
-      - QDRANT_COLLECTION=local_memory_v1
-      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
-      # Embedding config
-      - EMBED_DIM=384
-      - SIMILARITY=Cosine
-      # Performance
-      - MEMORY_DEFAULT_LIMIT=10
-      - MEMORY_MAX_LIMIT=100
-      - MEMORY_DEFAULT_THRESHOLD=0.5
-      - MEMORY_HYBRID_WEIGHT=0.6
-      - MEMORY_ENABLE_CIRCUIT_BREAKER=true
-      - MEMORY_CIRCUIT_BREAKER_THRESHOLD=5
-      - MEMORY_QUEUE_CONCURRENCY=10
-      # Logging
+      - LOCAL_MEMORY_BASE_URL=http://local-memory:9400
+      - LOCAL_MEMORY_API_KEY=${LOCAL_MEMORY_API_KEY:-}
       - MEMORY_LOG_LEVEL=info
     volumes:
-      - memory_data:/data
       - ./logs:/app/logs
     depends_on:
-      qdrant:
+      local-memory:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fSs", "http://localhost:9600/healthz"]
@@ -83,15 +107,8 @@ services:
     environment:
       - PORT=9700
       - HOST=0.0.0.0
-      # Database config
-      - MEMORY_DB_PATH=/data/unified-memories.db
-      # Qdrant config
-      - QDRANT_URL=http://qdrant:6333
-      - QDRANT_COLLECTION=local_memory_v1
-      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
-      # Embedding config
-      - EMBED_DIM=384
-      - SIMILARITY=Cosine
+      - LOCAL_MEMORY_BASE_URL=http://local-memory:9400
+      - LOCAL_MEMORY_API_KEY=${LOCAL_MEMORY_API_KEY:-}
       # API config
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - ENABLE_SWAGGER=${ENABLE_SWAGGER:-true}
@@ -102,10 +119,9 @@ services:
       - MEMORY_LOG_LEVEL=info
       - API_LOG_LEVEL=info
     volumes:
-      - memory_data:/data
       - ./logs:/app/logs
     depends_on:
-      qdrant:
+      local-memory:
         condition: service_healthy
       cortex-mcp:
         condition: service_healthy

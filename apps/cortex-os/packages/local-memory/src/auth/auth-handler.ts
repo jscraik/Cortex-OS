@@ -6,7 +6,7 @@ import type { AuthOptions } from './types.js';
  */
 export class LocalMemoryAuthHandler {
   private readonly authOptions: AuthOptions;
-  
+
   constructor(authOptions: AuthOptions) {
     this.authOptions = authOptions;
     console.log(`brAInwav auth handler initialized with client: ${authOptions.clientId}`);
@@ -19,14 +19,14 @@ export class LocalMemoryAuthHandler {
    */
   private validateLoopbackOnly(): void {
     const url = new URL(this.authOptions.redirectUri);
-    const isLoopback = url.hostname === 'localhost' || 
-                      url.hostname === '127.0.0.1' || 
-                      url.hostname === '::1';
-    
+    const isLoopback = url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1' ||
+      url.hostname === '::1';
+
     if (!isLoopback) {
       throw new Error(`brAInwav security: redirect URI must be loopback, got ${url.hostname}`);
     }
-    
+
     console.log('brAInwav loopback validation passed');
   }
 
@@ -37,13 +37,13 @@ export class LocalMemoryAuthHandler {
     try {
       const authEndpoint = this.getAuthEndpoint();
       const authUrl = this.buildAuthUrl(authEndpoint);
-      
+
       // In a real implementation, this would:
       // 1. Open browser to authUrl
       // 2. Start local callback server
       // 3. Wait for callback with authorization code
       // For now, simulate Better Auth integration
-      
+
       const response = await fetch(authEndpoint, {
         method: 'POST',
         headers: {

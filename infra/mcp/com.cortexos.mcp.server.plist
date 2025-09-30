@@ -11,7 +11,7 @@
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp</string>
+    <string>/Users/jamiecraik/.Cortex-OS</string>
 
     <key>RunAtLoad</key>
     <true/>
@@ -28,23 +28,17 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin:/usr/local/bin:/usr/bin:/bin</string>
-        <key>PYTHONPATH</key>
-        <string>/Users/jamiecraik/.Cortex-OS/packages/cortex-mcp</string>
-        <key>UVICORN_LOG_LEVEL</key>
-        <string>info</string>
-        <key>PYTHONUNBUFFERED</key>
-        <string>1</string>
+        <string>/Users/jamiecraik/.local/share/mise/installs/node/22.11.0/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>NODE_PATH</key>
+        <string>/Users/jamiecraik/.Cortex-OS</string>
+        <key>NODE_ENV</key>
+        <string>production</string>
         <key>HOME</key>
         <string>/Users/jamiecraik</string>
-        <key>CORTEX_MCP_CORTEX_SEARCH_URL</key>
-        <string>https://search.cortex-os.ai/v1/search</string>
-        <key>CORTEX_MCP_CORTEX_DOCUMENT_BASE_URL</key>
-        <string>https://search.cortex-os.ai/v1/documents</string>
-        <key>CORTEX_MCP_CORTEX_SEARCH_API_KEY</key>
-        <string>***</string>
-        <key>CORTEX_MCP_TRANSPORT</key>
-        <string>streamable-http</string>
+        <key>MCP_PORT</key>
+        <string>3024</string>
+        <key>MCP_LOG_LEVEL</key>
+        <string>info</string>
     </dict>
 </dict>
 </plist>

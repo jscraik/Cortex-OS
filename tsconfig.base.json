@@ -10,6 +10,10 @@
       "ES2023",
       "DOM"
     ],
+    "typeRoots": [
+      "types",
+      "node_modules/@types"
+    ],
     "types": [
       "node"
     ],

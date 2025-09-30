@@ -1,38 +1,45 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": false,
-    "composite": true,
-    "incremental": true,
-    "tsBuildInfoFile": ".tsbuildinfo",
-    "baseUrl": ".",
-    "types": ["node"],
-    "paths": {
-      "@cortex-os/*": ["../../../../packages/*/src", "../../../../libs/typescript/*/src"]
-    }
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "__tests__"
-  ],
-  "extends": "../../../../tsconfig.base.json"
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": [
+            "ES2022",
+            "DOM"
+        ],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "declaration": true,
+        "declarationMap": true,
+        "outDir": "./dist",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": false,
+        "composite": true,
+        "incremental": true,
+        "tsBuildInfoFile": ".tsbuildinfo",
+        "baseUrl": ".",
+        "types": [
+            "node"
+        ],
+        "paths": {
+            "@cortex-os/*": [
+                "../../../../packages/*/src",
+                "../../../../libs/typescript/*/src"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "__tests__"
+    ],
+    "extends": "../../../../tsconfig.base.json"
 }

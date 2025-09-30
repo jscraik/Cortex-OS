@@ -35,7 +35,6 @@ export type PrismaLike = {
 };
 
 // Local helper to mark variables as used
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _use = (..._args: unknown[]): void => {};
 
 export class PrismaStore implements MemoryStore {
@@ -107,10 +106,10 @@ export class PrismaStore implements MemoryStore {
 			.filter((memory): memory is Memory & { vector: number[] } => Array.isArray(memory.vector));
 
 		// Perform similarity matching in memory
-		const queryVec = q.vector ?? q.embedding ?? [];
+		const queryVec = q.vector ?? [];
 		let scoredCandidates = candidates.map((memory) => ({
 			memory,
-			score: cosineSimilarity(queryVec, memory.vector as number[]),
+			score: cosineSimilarity(queryVec, memory.vector),
 		}));
 		if (decayEnabled()) {
 			const half = getHalfLifeMs();
@@ -120,7 +119,7 @@ export class PrismaStore implements MemoryStore {
 				score: it.score * decayFactor(it.memory.createdAt, now, half),
 			}));
 		}
-		const topK = q.topK ?? q.limit ?? 10;
+		const topK = q.topK ?? 10;
 		scoredCandidates.sort((a, b) => b.score - a.score);
 		return scoredCandidates.slice(0, topK).map((item) => ({ ...item.memory, score: item.score }));
 	}
@@ -147,6 +146,14 @@ export class PrismaStore implements MemoryStore {
 		}
 
 		return 0;
+	}
+
+	async list(_namespace = 'default', limit?: number, offset?: number): Promise<Memory[]> {
+		// _namespace is intentionally unused for the Prisma-backed store in this implementation
+		const take = typeof limit === 'number' ? limit : 100;
+		const skip = typeof offset === 'number' ? offset : 0;
+		const rows = await this.prisma.memory.findMany({ take, skip, orderBy: { updatedAt: 'desc' } });
+		return rows.map(prismaToDomain);
 	}
 }
 

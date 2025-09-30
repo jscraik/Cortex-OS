@@ -4,7 +4,7 @@ import type {
   MemoryAnalysisInput,
   MemoryRelationshipsInput,
   MemoryStatsInput
-} from '@cortex-os/tool-spec';
+} from './tool-spec/index.js';
 
 // Base memory entity
 export interface Memory {

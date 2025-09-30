@@ -22,7 +22,7 @@ export class LocalMemoryOAuthClient {
     async generatePKCETokens(): Promise<PKCETokens> {
         const codeVerifier = this.generateCodeVerifier();
         const codeChallenge = this.generateCodeChallenge(codeVerifier);
-        
+
         console.log('brAInwav OAuth PKCE tokens generated successfully');
         return {
             codeVerifier,
@@ -57,7 +57,7 @@ export class LocalMemoryOAuthClient {
      */
     async exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
         const tokenEndpoint = this.getTokenEndpoint();
-        
+
         const payload = {
             grant_type: 'authorization_code',
             client_id: this.clientId,
@@ -81,7 +81,7 @@ export class LocalMemoryOAuthClient {
             }
 
             const tokenResponse: TokenResponse = await response.json();
-            
+
             // Cache the token with expiration
             if (tokenResponse.expires_in) {
                 const expires = Date.now() + (tokenResponse.expires_in * 1000);
@@ -111,7 +111,7 @@ export class LocalMemoryOAuthClient {
             // Decode JWT payload to check expiration
             const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
             const now = Math.floor(Date.now() / 1000);
-            
+
             if (payload.exp && payload.exp < now) {
                 console.warn('brAInwav OAuth token validation failed: token expired');
                 return false;

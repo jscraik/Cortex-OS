@@ -245,7 +245,7 @@ export class ExternalSqliteStore implements MemoryStore {
 		}
 	}
 
-	async get(id: string): Promise<Memory | null> {
+	async get(id: string, _namespace?: string): Promise<Memory | null> {
 		if (!this.db) throw new Error('Database not initialized');
 
 		try {
@@ -325,12 +325,11 @@ export class ExternalSqliteStore implements MemoryStore {
 		}
 	}
 
-	async delete(id: string): Promise<boolean> {
+	async delete(id: string, _namespace?: string): Promise<void> {
 		if (!this.db) throw new Error('Database not initialized');
 
 		try {
-			const result = await this.db.run('DELETE FROM memories WHERE id = ?', [id]);
-			return (result.changes || 0) > 0;
+			await this.db.run('DELETE FROM memories WHERE id = ?', [id]);
 		} catch (error) {
 			throw new StoreError('DELETE_FAILED', `Failed to delete memory: ${error}`);
 		}
@@ -387,5 +386,24 @@ export class ExternalSqliteStore implements MemoryStore {
 			currentStorage: this.externalStorageManager.getCurrentStorage(),
 			allStatus: this.externalStorageManager.getAllStatus(),
 		};
+	}
+
+	async list(namespace?: string, limit?: number, offset?: number): Promise<Memory[]> {
+		if (!this.db) throw new Error('Database not initialized');
+		try {
+			let query = 'SELECT * FROM memories';
+			const params: unknown[] = [];
+			if (namespace) {
+				query += ' WHERE id LIKE ?';
+				params.push(`${namespace}:%`);
+			}
+			query += ' ORDER BY created_at DESC';
+			if (typeof limit === 'number') query += ' LIMIT ?';
+			if (typeof offset === 'number') query += ' OFFSET ?';
+			const rows = await this.db.all(query, params);
+			return rows.map((r: any) => this.rowToMemory(r));
+		} catch (error) {
+			throw new StoreError('LIST_FAILED', `Failed to list memories: ${error}`);
+		}
 	}
 }

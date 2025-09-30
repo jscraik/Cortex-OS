@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { CircuitBreaker } from 'circuit-breaker-js';
+import CircuitBreaker from 'circuit-breaker-js';
 import PQueue from 'p-queue';
 import { randomUUID } from 'node:crypto';
 import { pino } from 'pino';
@@ -15,8 +15,11 @@ import type {
   QdrantConfig,
   SQLiteMemoryRow,
   SQLiteRelationshipRow,
-  MemoryProviderError,
   MemoryRelationship,
+  RelationshipType,
+} from '../types.js';
+import {
+  MemoryProviderError,
 } from '../types.js';
 import type {
   MemoryStoreInput,
@@ -24,12 +27,20 @@ import type {
   MemoryAnalysisInput,
   MemoryRelationshipsInput,
   MemoryStatsInput,
-} from '@cortex-os/tool-spec';
-import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js';
-import type {
-  StoreWorkflowIndexPayload,
-  StoreWorkflowPersistPayload,
-} from '../workflows/memoryWorkflow.js';
+} from '../tool-spec/index.js';
+// import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js'; // Temporarily disabled
+// Local types to replace workflow types
+interface StoreWorkflowPersistPayload {
+  id: string;
+  input: any;
+  timestamp: number;
+}
+
+interface StoreWorkflowIndexPayload {
+  id: string;
+  input: any;
+  timestamp: number;
+}
 
 const logger = pino({ level: 'info' });
 
@@ -42,7 +53,7 @@ export class LocalMemoryProvider implements MemoryProvider {
   private circuitBreaker?: CircuitBreaker;
   private queue: PQueue;
   private config: MemoryCoreConfig;
-  private workflows: MemoryWorkflowEngine;
+  // private workflows: MemoryWorkflowEngine; // Temporarily disabled
 
   constructor(config: MemoryCoreConfig) {
     this.config = config;
@@ -66,7 +77,7 @@ export class LocalMemoryProvider implements MemoryProvider {
     // Initialize circuit breaker
     if (config.enableCircuitBreaker) {
       this.circuitBreaker = new CircuitBreaker({
-        threshold: config.circuitBreakerThreshold,
+        maxFailures: config.circuitBreakerThreshold,
         timeout: 5000,
         resetTimeout: 30000,
       });
@@ -74,18 +85,20 @@ export class LocalMemoryProvider implements MemoryProvider {
 
     this.initializeDatabase();
 
-    this.workflows = new MemoryWorkflowEngine({
-      store: {
-        generateId: () => randomUUID(),
-        getTimestamp: () => Date.now(),
-        persistMemory: async (payload: StoreWorkflowPersistPayload) => {
-          await this.persistMemoryRecord(payload);
-        },
-        scheduleVectorIndex: async (payload: StoreWorkflowIndexPayload) => {
-          return this.scheduleVectorIndexing(payload);
-        },
-      },
-    });
+    /* Temporarily disabled
+    // this.workflows = new MemoryWorkflowEngine({
+    //   store: {
+    //     generateId: () => randomUUID(),
+    //     getTimestamp: () => Date.now(),
+    //     persistMemory: async (payload: StoreWorkflowPersistPayload) => {
+    //       await this.persistMemoryRecord(payload);
+    //     },
+    //     scheduleVectorIndex: async (payload: StoreWorkflowIndexPayload) => {
+    //       return this.scheduleVectorIndexing(payload);
+    //     },
+    //   },
+    // });
+    */
   }
 
   private initializeDatabase(): void {
@@ -190,8 +203,14 @@ export class LocalMemoryProvider implements MemoryProvider {
       try {
         await this.ensureQdrantCollection();
         const embedding = await this.generateEmbedding(input.content);
+        if (!embedding || embedding.length === 0) {
+          throw new MemoryProviderError('INTERNAL', 'Failed to generate embedding');
+        }
 
-        await this.qdrant!.upsert(this.qdrantConfig.collection, {
+        if (!this.qdrant || !this.qdrantConfig) {
+          throw new MemoryProviderError('INTERNAL', 'Qdrant not configured');
+        }
+        await this.qdrant.upsert(this.qdrantConfig.collection, {
           points: [
             {
               id,
@@ -232,7 +251,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 
     this.lastQdrantCheck = now;
     try {
-      await this.qdrant.getCollections({ timeout: 500 });
+      await this.qdrant.getCollections();
       this.qdrantHealthy = true;
     } catch (error) {
       logger.warn('Qdrant health check failed', { error: (error as Error).message });
@@ -251,7 +270,7 @@ export class LocalMemoryProvider implements MemoryProvider {
       await this.qdrant.createCollection(this.qdrantConfig.collection, {
         vectors: {
           size: this.qdrantConfig.embedDim,
-          distance: this.qdrantConfig.similarity,
+          distance: this.qdrantConfig.similarity as any, // Type assertion for compatibility
         },
       });
       logger.info(`Created Qdrant collection: ${this.qdrantConfig.collection}`);
@@ -278,7 +297,12 @@ export class LocalMemoryProvider implements MemoryProvider {
 
   async store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }> {
     try {
-      const result = await this.workflows.runStore(input);
+      // Direct implementation without workflow engine
+      const id = randomUUID();
+      const timestamp = Date.now();
+      await this.persistMemoryRecord({ id, input, timestamp });
+      const indexingResult = await this.scheduleVectorIndexing({ id, input, timestamp });
+      const result = { id, vectorIndexed: indexingResult.vectorIndexed };
       logger.info('Memory stored', {
         id: result.id,
         domain: input.domain,
@@ -749,8 +773,8 @@ export class LocalMemoryProvider implements MemoryProvider {
     // BFS to find related memories
     const visited = new Set<string>();
     const queue = [input.memory_id];
-    const nodes = new Map<string, { id: string; label: string; weight: number }>();
-    const edges = new Map<string, { source: string; target: string; weight: number; type: string }>();
+    const nodes = new Map<string, { id: string; label: string; type: 'concept' | 'memory' | 'tag'; weight: number; metadata?: Record<string, unknown> }>();
+    const edges = new Map<string, { source: string; target: string; weight: number; type: RelationshipType; directed: boolean }>();
 
     visited.add(input.memory_id);
 
@@ -760,6 +784,7 @@ export class LocalMemoryProvider implements MemoryProvider {
       nodes.set(input.memory_id, {
         id: input.memory_id,
         label: memoryRow.content.slice(0, 50) + '...',
+        type: 'memory' as const,
         weight: memoryRow.importance,
       });
     }
@@ -789,6 +814,7 @@ export class LocalMemoryProvider implements MemoryProvider {
               nodes.set(otherId, {
                 id: otherId,
                 label: otherRow.content.slice(0, 50) + '...',
+                type: 'memory' as const,
                 weight: otherRow.importance,
               });
             }
@@ -801,7 +827,8 @@ export class LocalMemoryProvider implements MemoryProvider {
               source: row.source_id,
               target: row.target_id,
               weight: row.strength,
-              type: row.type,
+              type: row.type as RelationshipType,
+              directed: true,
             });
           }
         }
@@ -810,10 +837,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 
     return {
       nodes: Array.from(nodes.values()),
-      edges: Array.from(edges.values()).map(e => ({
-        ...e,
-        directed: true,
-      })),
+      edges: Array.from(edges.values()),
       centralNode: input.memory_id,
       metrics: {
         nodeCount: nodes.size,
@@ -948,7 +972,7 @@ export class LocalMemoryProvider implements MemoryProvider {
       sqlite: 'healthy',
       qdrant: this.qdrant ? (await this.isQdrantHealthy() ? 'healthy' : 'unhealthy') : 'disabled',
       queueSize: this.queue.size,
-      circuitBreaker: this.circuitBreaker ? this.circuitBreaker.getState() : 'disabled',
+      circuitBreaker: this.circuitBreaker ? 'active' : 'disabled', // TODO: Implement proper circuit breaker state
     };
 
     const healthy = details.sqlite === 'healthy' && (details.qdrant === 'healthy' || details.qdrant === 'disabled');

@@ -1,0 +1,2 @@
+Testing MCP server startup at $(date)
+Executing: /Users/jamiecraik/.Cortex-OS/scripts/start-mcp-server.sh

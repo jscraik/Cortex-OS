@@ -518,7 +518,7 @@ export class GraphMemoryStore implements MemoryStore {
     if (size <= 1) return 1.0;
 
     let edgeCount = 0;
-    for (const id of component) {
+    for (const id of Array.from(component)) {
       const neighbors = await this.getNeighbors(id, namespace);
       for (const neighborId of neighbors) {
         if (component.has(id) && component.has(neighborId)) {
@@ -598,11 +598,9 @@ export class GraphMemoryStore implements MemoryStore {
     }
   }
 
-  private clearTraversalCache(namespace: string): void {
-    for (const key of this.traversalCache.keys()) {
-      if (key.startsWith(`traverse:${namespace}:`)) {
-        this.traversalCache.delete(key);
-      }
+  private clearTraversalCache(_namespace: string): void {
+    for (const key of Array.from(this.traversalCache.keys())) {
+      this.traversalCache.delete(key);
     }
   }
 
