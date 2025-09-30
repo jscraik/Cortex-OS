@@ -1,0 +1,512 @@
+# Dynamic Testing and Red Teaming Rules - Updated 2025-09-30
+# Identifies code patterns that require dynamic testing, adversarial testing, and red team validation
+rules:
+  # LLM Prompt Injection Testing Requirements
+  - id: redteam-prompt-injection-testing-missing
+    message: 'LLM system requires prompt injection red team testing'
+    metadata:
+      mitre-atlas: T0009
+      red-team: required
+      owasp-llm-top-10: LLM01
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # LLM endpoint without adversarial testing
+              @app.route('/chat', methods=['POST'])
+              def chat():
+                  response = llm.generate(request.json['prompt'])
+                  return jsonify(response)
+          - pattern: |
+              # No prompt injection testing documented
+              class LLMService:
+                  def process(self, prompt):
+                      return self.model.generate(prompt)
+    fix: 'Implement comprehensive prompt injection red team testing before deployment'
+
+  - id: redteam-prompt-injection-test-patterns
+    message: 'Add adversarial prompt testing patterns'
+    metadata:
+      mitre-atlas: T0009
+      red-team: recommended
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # LLM system - needs adversarial test suite
+              def llm_endpoint(prompt):
+                  return model.generate(prompt)  # Add red team tests
+    fix: 'Create adversarial prompt test suite with injection attacks'
+
+  # SQL Injection Dynamic Testing
+  - id: redteam-sql-injection-testing-missing
+    message: 'SQL interface requires injection testing validation'
+    metadata:
+      owasp: 'A03:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Database query without injection testing
+              def get_user(user_id):
+              query = f"SELECT * FROM users WHERE id = {user_id}"
+              return db.execute(query)
+          - pattern: |
+              # No SQL injection tests documented
+              def query_database(sql):
+              return cursor.execute(sql)
+    fix: 'Perform SQL injection penetration testing with automated tools'
+
+  # Authentication Bypass Testing
+  - id: redteam-auth-bypass-testing-missing
+    message: 'Authentication system requires bypass testing'
+    metadata:
+      owasp: 'A07:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Auth endpoint without bypass testing
+              @app.route('/login', methods=['POST'])
+              def login():
+                  if validate_user(username, password):
+                      return create_token(username)
+          - pattern: |
+              # Session management without testing
+              def create_session(user_id):
+                  session['user_id'] = user_id  # Needs testing
+    fix: 'Conduct authentication bypass red team exercises'
+
+  # API Security Testing
+  - id: redteam-api-security-testing-missing
+    message: 'API endpoints require security testing'
+    metadata:
+      owasp-api-security: true
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # REST API without security testing
+              @app.route('/api/users', methods=['GET'])
+              def get_users():
+                  return jsonify(get_all_users())  # Needs testing
+          - pattern: |
+              # GraphQL without security testing
+              @app.route('/graphql', methods=['POST'])
+              def graphql_handler():
+                  return execute GraphQL query  # Needs testing
+    fix: 'Perform API security penetration testing including OWASP API Security Top 10'
+
+  # XSS and Content Security Testing
+  - id: redteam-xss-testing-missing
+    message: 'User content rendering requires XSS testing'
+    metadata:
+      owasp: 'A03:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # User input rendered without XSS testing
+              def render_user_content(content):
+              return f"<div>{content}</div>"  # Needs XSS testing
+          - pattern: |
+              # Template rendering without security testing
+              def render_template(template, context):
+              return template.render(context)  # Needs testing
+    fix: 'Conduct XSS red team testing with various payload vectors'
+
+  # File Upload Security Testing
+  - id: redteam-file-upload-testing-missing
+    message: 'File upload requires security testing'
+    metadata:
+      owasp: 'A03:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # File upload without security testing
+              @app.route('/upload', methods=['POST'])
+              def upload_file():
+                  file = request.files['file']
+                  file.save(f"uploads/{file.filename}")  # Needs testing
+    fix: 'Test file upload with malicious files, path traversal, and DoS attacks'
+
+  # SSRF Testing Requirements
+  - id: redteam-ssrf-testing-missing
+    message: 'URL fetching requires SSRF testing'
+    metadata:
+      owasp: 'A10:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # URL fetching without SSRF testing
+              def fetch_url(url):
+                  return requests.get(url)  # Needs SSRF testing
+          - pattern: |
+              # Webhook without SSRF protection testing
+              def send_webhook(url, data):
+                  return requests.post(url, json=data)  # Needs testing
+    fix: 'Perform SSRF penetration testing with cloud metadata targets'
+
+  # AI Model Extraction Testing
+  - id: redteam-model-extraction-testing-missing
+    message: 'AI model requires extraction attack testing'
+    metadata:
+      owasp-llm-top-10: LLM08
+      mitre-atlas: T0021
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI model without extraction protection testing
+              class AIModel:
+                  def predict(self, input):
+                      return self.model(input)  # Needs extraction testing
+          - pattern: |
+              # Model API without rate limiting testing
+              def model_api(input_data):
+                  return model.predict(input_data)  # Needs testing
+    fix: 'Conduct model extraction red team testing with query optimization'
+
+  # Business Logic Testing
+  - id: redteam-business-logic-testing-missing
+    message: 'Business logic requires adversarial testing'
+    metadata:
+      owasp: 'A04:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Financial transaction without business logic testing
+              def transfer_money(from_account, to_account, amount):
+                  # Business logic - needs testing
+                  process_transfer(from_account, to_account, amount)
+          - pattern: |
+              # Authorization logic without testing
+              def can_access_resource(user, resource):
+                  return user.role == 'admin' or resource.owner == user.id  # Needs testing
+    fix: 'Perform business logic abuse case testing'
+
+  # Rate Limiting and DoS Testing
+  - id: redteam-dos-testing-missing
+    message: 'System requires DoS and rate limiting testing'
+    metadata:
+      owasp: 'A04:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # API without rate limiting testing
+              @app.route('/api/expensive', methods=['POST'])
+              def expensive_operation():
+                  return process_heavy_task()  # Needs DoS testing
+          - pattern: |
+              # Resource-intensive operation without limits
+              def generate_report(data):
+                  return cpu_intensive_processing(data)  # Needs testing
+    fix: 'Conduct DoS and rate limiting penetration testing'
+
+  # Cryptographic Implementation Testing
+  - id: redteam-crypto-testing-missing
+    message: 'Cryptographic implementation requires security testing'
+    metadata:
+      owasp: 'A02:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Custom crypto without security testing
+              def custom_encrypt(data, key):
+                  return apply_custom_cipher(data, key)  # Needs crypto testing
+          - pattern: |
+              # Token generation without randomness testing
+              def generate_token():
+                  return str(random.random())  # Needs randomness testing
+    fix: 'Perform cryptographic implementation security review and testing'
+
+  # Session Management Testing
+  - id: redteam-session-testing-missing
+    message: 'Session management requires security testing'
+    metadata:
+      owasp: 'A07:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Session creation without security testing
+              def create_session(user_id):
+                  session_id = generate_session_id()
+                  sessions[session_id] = user_id  # Needs session testing
+          - pattern: |
+              # JWT without security testing
+              def create_jwt(payload):
+                  return jwt.encode(payload, secret)  # Needs JWT testing
+    fix: 'Conduct session fixation and hijacking penetration testing'
+
+  # Authorization Testing
+  - id: redteam-authorization-testing-missing
+    message: 'Authorization logic requires bypass testing'
+    metadata:
+      owasp: 'A01:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Authorization check without testing
+              def access_resource(user_id, resource_id):
+                  if owns_resource(user_id, resource_id):
+                      return get_resource(resource_id)  # Needs authz testing
+          - pattern: |
+              # Role-based access without testing
+              def admin_operation(user):
+                  if user.is_admin:
+                      return perform_admin_task()  # Needs testing
+    fix: 'Perform authorization bypass and privilege escalation testing'
+
+  # Input Validation Testing
+  - id: redteam-input-validation-testing-missing
+    message: 'Input validation requires fuzzing and boundary testing'
+    metadata:
+      owasp: 'A03:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Input processing without validation testing
+              def process_input(user_input):
+                  return transform_data(user_input)  # Needs fuzzing
+          - pattern: |
+              # Parser without malformed input testing
+              def parse_data(data_string):
+                  return json.loads(data_string)  # Needs malformed testing
+    fix: 'Perform input fuzzing and boundary condition testing'
+
+  # Error Handling Testing
+  - id: redteam-error-disclosure-testing-missing
+    message: 'Error handling requires information disclosure testing'
+    metadata:
+      owasp: 'A09:2025'
+      red-team: required
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Error handling without disclosure testing
+              try:
+                  result = risky_operation()
+              except Exception as e:
+                  return str(e)  # Needs disclosure testing
+          - pattern: |
+              # Debug info in production
+              except Exception as e:
+                  logger.error(f"Error: {e}", exc_info=True)  # Needs testing
+    fix: 'Test error conditions for information disclosure'
+
+  # Cache Poisoning Testing
+  - id: redteam-cache-poisoning-testing-missing
+    message: 'Caching requires poisoning attack testing'
+    metadata:
+      red-team: recommended
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Cache implementation without poisoning testing
+              @cache.memoize()
+              def get_data(key):
+                  return fetch_from_database(key)  # Needs cache testing
+    fix: 'Perform cache poisoning and web cache deception testing'
+
+  # Race Condition Testing
+  - id: redteam-race-condition-testing-missing
+    message: 'Concurrent operations require race condition testing'
+    metadata:
+      red-team: recommended
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # State modification without race condition testing
+              def update_balance(account_id, amount):
+                  balance = get_balance(account_id)
+                  new_balance = balance + amount
+                  set_balance(account_id, new_balance)  # Needs race testing
+    fix: 'Perform race condition and time-of-check-time-of-use (TOCTOU) testing'
+
+  # Template Injection Testing
+  - id: redteam-template-injection-testing-missing
+    message: 'Template rendering requires injection testing'
+    metadata:
+      owasp: 'A03:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Template rendering without injection testing
+              def render_template(template_name, context):
+                  template = load_template(template_name)
+                  return template.render(context)  # Needs injection testing
+    fix: 'Perform template injection (SSTI) penetration testing'
+
+  # Deserialization Testing
+  - id: redteam-deserialization-testing-missing
+    message: 'Deserialization requires security testing'
+    metadata:
+      owasp: 'A08:2025'
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Deserialization without security testing
+              def load_object(data):
+                  return pickle.loads(data)  # Needs deserialization testing
+          - pattern: |
+              # JSON deserialization without validation
+              def parse_config(json_data):
+                  return json.loads(json_data)  # Needs malicious input testing
+    fix: 'Perform insecure deserialization attack testing'
+
+  # Webhook Testing
+  - id: redteam-webhook-testing-missing
+    message: 'Webhook endpoints require security testing'
+    metadata:
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Webhook handler without security testing
+              @app.route('/webhook', methods=['POST'])
+              def webhook_handler():
+                  process_webhook(request.json)  # Needs webhook testing
+    fix: 'Perform webhook replay, tampering, and injection testing'
+
+  # CORS Testing
+  - id: redteam-cors-testing-missing
+    message: 'CORS configuration requires security testing'
+    metadata:
+      red-team: required
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # CORS configuration without testing
+              @app.after_request
+              def after_request(response):
+                  response.headers.add('Access-Control-Allow-Origin', '*')  # Needs CORS testing
+    fix: 'Perform CORS misconfiguration and bypass testing'
+
+  # WebSocket Testing
+  - id: redteam-websocket-testing-missing
+    message: 'WebSocket implementation requires security testing'
+    metadata:
+      red-team: recommended
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # WebSocket handler without security testing
+              @socket.on('message')
+              def handle_message(data):
+                  process_message(data)  # Needs WebSocket testing
+    fix: 'Perform WebSocket injection and DoS testing'
+
+  # GraphQL Testing
+  - id: redteam-graphql-testing-missing
+    message: 'GraphQL API requires security testing'
+    metadata:
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # GraphQL resolver without security testing
+              def resolve_user(root, info, id):
+                  return get_user_by_id(id)  # Needs GraphQL testing
+    fix: 'Perform GraphQL injection, introspection, and DoS testing'
+
+  # Microservices Testing
+  - id: redteam-microservices-testing-missing
+    message: 'Microservices communication requires security testing'
+    metadata:
+      red-team: required
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Service-to-service call without security testing
+              def call_user_service(user_id):
+                  response = requests.get(f"http://user-service/{user_id}")  # Needs testing
+    fix: 'Perform microservice authentication bypass and injection testing'
+
+  # Container Security Testing
+  - id: redteam-container-testing-missing
+    message: 'Container deployment requires escape testing'
+    metadata:
+      red-team: recommended
+      severity: INFO
+    languages: [dockerfile, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Container with potential escape vectors
+              RUN chmod +x /app/entrypoint.sh
+              ENTRYPOINT ["/app/entrypoint.sh"]  # Needs container testing
+    fix: 'Perform container escape and privilege escalation testing'
+
+  # Dynamic Test Coverage Requirements
+  - id: redteam-no-dynamic-tests-documented
+    message: 'Critical security functionality lacks documented dynamic tests'
+    metadata:
+      red-team: documentation
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Security-critical function without test documentation
+              def security_critical_function():
+                  # TODO: Add dynamic security tests
+                  pass
+    fix: 'Document and implement dynamic security tests for all critical functionality'

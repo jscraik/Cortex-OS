@@ -48,7 +48,7 @@ export const validateWebhookSignature = async (
 	signature: string,
 	secret: string,
 ): Promise<WebhookValidationResult> => {
-	if (!signature || !signature.startsWith('sha256=')) {
+	if (!signature?.startsWith('sha256=')) {
 		return { isValid: false, error: 'Missing or invalid signature format' };
 	}
 

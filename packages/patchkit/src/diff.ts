@@ -129,7 +129,7 @@ export const applyPatch = (baseline: string | null, patch: FilePatch): string =>
 
 export const hasConflicts = (baseline: string | null, patch: FilePatch): boolean => {
 	try {
-		void applyPatch(baseline, patch);
+		applyPatch(baseline, patch);
 		return false;
 	} catch {
 		return true;

@@ -126,7 +126,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 			const allMemories = await Promise.all(
 				Array.from(expanded).map((id) => this.store.get(id, namespace)),
 			);
-			results = allMemories.filter((m) => m !== null) as Memory[];
+			results = allMemories.filter((m): m is Memory => m !== null);
 		}
 
 		return results;
@@ -155,7 +155,7 @@ export class HierarchicalMemoryStore implements MemoryStore {
 			const allMemories = await Promise.all(
 				Array.from(expanded).map((id) => this.store.get(id, namespace)),
 			);
-			const filteredMemories = allMemories.filter((m) => m !== null) as Memory[];
+			const filteredMemories = allMemories.filter((m): m is Memory => m !== null);
 
 			// Re-score with hierarchy boost
 			const queryVector =

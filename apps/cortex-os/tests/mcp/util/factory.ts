@@ -1,7 +1,7 @@
 import { createMcpGateway } from '@apps/cortex-os/src/mcp/gateway';
 import type { CortexOsToolName } from '@apps/cortex-os/src/mcp/tools';
+import { provideMemories } from '@apps/cortex-os/src/services';
 import { TOKENS } from '@apps/cortex-os/src/tokens';
-import { provideMemories } from '@cortex-os/memories';
 import { provideOrchestration } from '@cortex-os/orchestration';
 import { Container } from 'inversify';
 

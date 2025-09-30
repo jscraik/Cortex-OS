@@ -76,7 +76,7 @@ export function sanitizeEventEnvelope(envelope: A2AEventEnvelope): A2AEventEnvel
 		type: envelope.type,
 		source: envelope.source,
 		timestamp: envelope.timestamp,
-		data: sanitizeValue(envelope.data) as A2AEventEnvelope['data'],
+		data: sanitizeValue(envelope.data),
 		metadata: envelope.metadata
 			? (sanitizeValue(envelope.metadata) as A2AEventEnvelope['metadata'])
 			: undefined,

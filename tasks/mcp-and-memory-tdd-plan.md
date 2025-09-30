@@ -240,11 +240,11 @@ On startup, toolkit resolves tool scripts in priority order:
 
 #### 2.1 Remove Memory Duplications
 
-- [ ] Remove/strip `packages/memories/src/adapters/store.sqlite.ts`
-- [ ] Remove/strip `packages/memories/src/adapters/store.qdrant.ts`
-- [ ] Remove `packages/memories/src/adapters/hybrid-search.ts`
+- [x] Remove/strip `packages/memories/src/adapters/store.sqlite.ts`
+- [x] Remove/strip `packages/memories/src/adapters/store.qdrant.ts`
+- [x] Remove `packages/memories/src/adapters/hybrid-search.ts`
 - [ ] Remove/strip `packages/rag/src/adapters/*`
-- [ ] Remove `packages/rag-integration.ts`
+- [x] Remove `packages/rag-integration.ts`
 
 #### 2.2 Refactor Python Cortex-MCP
 
@@ -262,7 +262,7 @@ On startup, toolkit resolves tool scripts in priority order:
 #### 2.4 Create Tests
 
 - [ ] Write memory deduplication enforcement tests
-  - [ ] Fail on direct imports from `packages/memories`
+  - [x] Fail on direct imports from `packages/memories`
   - [ ] Fail on direct imports from `packages/rag`
   - [ ] Ensure all ops go through `LocalMemoryProvider`
 

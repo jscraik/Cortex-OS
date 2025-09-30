@@ -18,6 +18,10 @@
       "import": "./dist/envelope.js",
       "types": "./dist/envelope.d.ts"
     },
+    "./evidence": {
+      "import": "./dist/evidence.js",
+      "types": "./dist/evidence.d.ts"
+    },
     "./events": {
       "import": "./dist/events.js",
       "types": "./dist/events.d.ts"
@@ -66,7 +70,6 @@
     "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "@cortex-os/contracts": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/js-yaml": "^4.0.9",
     "@types/micromatch": "^4.0.9",

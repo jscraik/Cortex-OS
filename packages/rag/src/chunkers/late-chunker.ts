@@ -14,8 +14,7 @@ export class LateChunker implements Chunker {
 	) {}
 
 	async chunk(file: ProcessingFile, _config: ProcessingConfig): Promise<DocumentChunk[]> {
-		// reference parameter to avoid unused warning
-		const _unused = _config; // eslint-disable-line @typescript-eslint/no-unused-vars
+		// Config parameter reserved for future late fusion configuration
 		const text = file.content.toString('utf-8');
 		const chunks: DocumentChunk[] = [];
 		if (!text.trim()) return chunks;

@@ -20,9 +20,8 @@ describe('circular dependency guard', () => {
 					.slice(0, 5)
 					.map((c: string[]) => c.join(' -> '))
 					.join('\n');
-				throw new Error(
-					`Circular dependencies detected under ${root}:\n${sample}${cycles.length > 5 ? `\n... (+${cycles.length - 5} more)` : ''}`,
-				);
+				const moreText = cycles.length > 5 ? `\n... (+${cycles.length - 5} more)` : '';
+				throw new Error(`Circular dependencies detected under ${root}:\n${sample}${moreText}`);
 			}
 			expect(cycles.length).toBe(0);
 		});

@@ -1,5 +1,5 @@
+import { evidenceArraySchema } from '@cortex-os/a2a-contracts/evidence';
 import { z } from 'zod';
-import { evidenceArraySchema } from './evidence.js';
 
 /**
  * Model Gateway-related A2A event schemas for inter-package communication

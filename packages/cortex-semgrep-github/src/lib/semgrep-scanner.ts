@@ -30,7 +30,18 @@ async function resolveBinary(binName: 'git' | 'semgrep'): Promise<string> {
 }
 
 async function runSemgrepAnalysis(semgrepBin: string, targetDir: string): Promise<string> {
-	const rulesets = ['auto', 'security-audit', 'owasp-top-ten'];
+	// Updated to use new 2025 Semgrep rules from .semgrep directory
+	const rulesets = [
+		'.semgrep/owasp-top-10-improved.yaml',
+		'.semgrep/llm-security.yaml',
+		'.semgrep/supply-chain-security.yaml',
+		'.semgrep/container-infra-security.yaml',
+		'.semgrep/privacy-compliance.yaml',
+		'.semgrep/ai-security-frameworks.yaml',
+		'.semgrep/dynamic-testing-redteam.yaml',
+		'p/security-audit',
+		'p/owasp-top-ten',
+	];
 
 	return new Promise((resolve, reject) => {
 		const semgrep = spawn(
@@ -44,6 +55,8 @@ async function runSemgrepAnalysis(semgrepBin: string, targetDir: string): Promis
 				'300',
 				'--max-target-bytes',
 				'10MB',
+				'--severity',
+				'INFO', // Include all findings for comprehensive coverage
 				'.',
 			],
 			{

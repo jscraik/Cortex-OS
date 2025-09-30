@@ -12,9 +12,16 @@ export interface UserCreatedEnvelope {
 export const onUserCreated = async (evt: UserCreatedEnvelope) => {
 	const tk = getAgentToolkit();
 	const text = buildUserNote(evt.data);
-	// Fail-fast if memories API absent (should not happen when properly configured)
-	if (!tk.memories || typeof tk.memories.upsert !== 'function') return;
-	await tk.memories.upsert({
+
+	// Check if toolkit has memories integration (may be undefined in some configurations)
+	const memoryStore = (tk as { memories?: { upsert: (data: unknown) => Promise<unknown> } })
+		.memories;
+	if (!memoryStore || typeof memoryStore.upsert !== 'function') {
+		console.warn('brAInwav: Memory integration not available in agent toolkit configuration');
+		return;
+	}
+
+	await memoryStore.upsert({
 		id: `user:${evt.data.userId}:profile`,
 		kind: 'profile',
 		text,

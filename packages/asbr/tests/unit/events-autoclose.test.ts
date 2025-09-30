@@ -11,21 +11,21 @@ vi.mock('../../src/lib/logger.js', () => {
 import { createASBRServer } from '../../src/api/server.js';
 import { logError } from '../../src/lib/logger.js';
 
-function getEventsHandler(app: any): RequestHandler {
+function getEventsHandler(app: import('express').Application): RequestHandler {
 	const fromLocals = app?.locals?.asbrGetEventsHandler;
 	if (typeof fromLocals === 'function') {
 		return fromLocals;
 	}
 
-	const stack: any[] = app?._router?.stack ?? [];
+	const stack: unknown[] = app?._router?.stack ?? [];
 	for (const layer of stack) {
 		if (layer?.route?.path === '/v1/events') {
 			const stackEntries = layer.route.stack.slice().reverse();
 			const handlerEntry =
 				stackEntries.find(
-					(entry: any) =>
+					(entry: unknown) =>
 						typeof entry?.handle === 'function' && entry.handle.name?.includes?.('getEvents'),
-				) ?? stackEntries.find((entry: any) => typeof entry?.handle === 'function');
+				) ?? stackEntries.find((entry: unknown) => typeof entry?.handle === 'function');
 
 			if (typeof handlerEntry?.handle === 'function') {
 				return handlerEntry.handle;
@@ -49,7 +49,7 @@ describe('getEvents auto-close behaviour', () => {
 		const server = createASBRServer({ port: 0, host: '127.0.0.1' });
 
 		try {
-			const app: any = server.app;
+			const app: import('express').Application = server.app;
 			const handler = getEventsHandler(app);
 
 			const req = {
@@ -73,10 +73,10 @@ describe('getEvents auto-close behaviour', () => {
 				writableEnded: false,
 			} as unknown as Response;
 
-			const result = handler(req, res);
+			// Execute handler which triggers SSE stream setup
+			handler(req, res);
 
 			await vi.advanceTimersByTimeAsync(100);
-			await result;
 
 			expect(logError).toHaveBeenCalledWith(
 				'Failed to close SSE stream gracefully',

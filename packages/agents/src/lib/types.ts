@@ -52,7 +52,7 @@ export interface GenerateOptions {
 	presencePenalty?: number;
 	stop?: string[];
 	stream?: boolean;
-	[key: string]: any;
+	[key: string]: unknown;
 }
 
 export interface GenerateResult {
@@ -64,7 +64,7 @@ export interface GenerateResult {
 	};
 	model?: string;
 	finishReason?: string;
-	[key: string]: any;
+	[key: string]: unknown;
 }
 
 export interface ModelProvider {
@@ -77,8 +77,8 @@ export interface ModelProvider {
 export interface Tool {
 	name: string;
 	description: string;
-	schema: any;
-	execute: (input: any) => Promise<any>;
+	schema: unknown;
+	execute: (input: unknown) => Promise<unknown>;
 }
 
 export interface AgentMessage {
@@ -86,7 +86,7 @@ export interface AgentMessage {
 	type: 'user' | 'assistant' | 'system';
 	content: string;
 	timestamp: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 export interface AgentConfig {
@@ -135,7 +135,7 @@ export interface SubagentRunInput {
 
 export interface SubagentRunResult {
 	success: boolean;
-	result?: any;
+	result?: unknown;
 	error?: string;
 	metrics?: AgentMetrics;
 	logs?: string[];

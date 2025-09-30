@@ -1,0 +1,519 @@
+# Privacy and Regulatory Compliance Rules - Updated 2025-09-30
+# Covers GDPR, CCPA, EU AI Act, HIPAA, and other 2025 privacy regulations
+rules:
+  # GDPR Compliance
+  - id: gdpr-data-collection-without-consent
+    message: 'Personal data collection without explicit consent mechanism'
+    metadata:
+      gdpr: ['Article 6', 'Article 7']
+      ccpa: 1798.120
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              database.save({
+                email: user.email,
+                name: user.name,
+                phone: user.phone
+                # No consent recorded
+              })
+          - pattern: |
+              analytics.track('user_signup', {
+                email: email,
+                ip_address: req.ip
+                # No consent tracking
+              })
+    fix: 'Implement explicit consent collection and record consent timestamp and purpose'
+
+  - id: gdpr-data-retention-policy-missing
+    message: 'Data stored without retention policy or deletion mechanism'
+    metadata:
+      gdpr: 'Article 5(1)(e)'
+      severity: WARNING
+    languages: [python, javascript, typescript, sql]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255),
+                -- No created_at or retention policy
+              )
+          - pattern: |
+              # No data retention or cleanup jobs
+              db.insert('user_data', data)
+    fix: 'Implement data retention policies and automated deletion mechanisms'
+
+  - id: gdpr-right-to-erasure-missing
+    message: 'Missing implementation of right to erasure (right to be forgotten)'
+    metadata:
+      gdpr: 'Article 17'
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No delete_user or erase_data functionality
+              def deactivate_user(user_id):
+                  user.active = False
+    fix: 'Implement complete data deletion functionality for user requests'
+
+  - id: gdpr-data-transfer-outside-eu
+    message: 'Personal data transferred outside EU without proper safeguards'
+    metadata:
+      gdpr: 'Chapter V'
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Data transfer to US without GDPR safeguards
+              us_server.upload(user_data)
+          - pattern: |
+              # No SCCs, BCRs, or Adequacy decision
+              international_transfer(data, country='US')
+    fix: 'Implement GDPR-compliant transfer mechanisms (SCCs, BCRs, etc.)'
+
+  # CCPA/CPRA Compliance
+  - id: ccpa-no-opt-out-selling
+    message: 'Missing CCPA opt-out mechanism for data selling'
+    metadata:
+      ccpa: 1798.120
+      cpra: 1798.115
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No "Do Not Sell My Personal Information" link
+              data_broker.sell(user_profile)
+    fix: 'Implement CCPA-compliant opt-out mechanism and honor user preferences'
+
+  - id: ccpa-data-minimization-violation
+    message: 'Collecting more data than necessary for business purpose'
+    metadata:
+      ccpa: 1798.120
+      gdpr: 'Article 5(1)(c)'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              user_profile = {
+                email: email,
+                ssn: ssn,  # Unnecessary for marketing
+                biometric_data: fingerprint  # Unnecessary
+              }
+    fix: 'Implement data minimization - collect only necessary data'
+
+  # EU AI Act Compliance (2025)
+  - id: eu-ai-act-high-risk-system-no- conformity
+    message: 'High-risk AI system without conformity assessment'
+    metadata:
+      eu-ai-act: 'Article 6'
+      nist-ai-rmf: RMG.1
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # High-risk AI deployment without CE marking
+              class MedicalDiagnosisAI:
+                  def diagnose(self, patient_data):
+                      # No conformity assessment
+                      return self.model.predict(patient_data)
+          - pattern: |
+              # Critical infrastructure AI without quality management
+              class GridControlAI:
+                  def optimize_grid(self, data):
+                      # No risk management system
+    fix: 'Implement EU AI Act conformity assessment and quality management'
+
+  - id: eu-ai-act-no-transparency-requirement
+    message: 'AI system without transparency disclosure'
+    metadata:
+      eu-ai-act: 'Article 52'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI interaction without disclosure
+              response = ai.generate(prompt)
+              return response  # No "AI-generated" notice
+    fix: 'Disclose AI interaction and provide system capabilities information'
+
+  - id: eu-ai-act-prohibited-system
+    message: 'Potentially prohibited AI system pattern detected'
+    metadata:
+      eu-ai-act: 'Article 5'
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Government social scoring
+              def calculate_social_score(user_behavior):
+                  return ai.score(user_behavior)
+          - pattern: |
+              # Real-time biometric identification in public
+              def facial_recognition_surveillance(video_stream):
+                  return ai.identify_faces(video_stream)
+    fix: 'Review against EU AI Act prohibited applications'
+
+  # HIPAA Compliance
+  - id: hipaa-phi-in-transit-unencrypted
+    message: 'PHI transmitted without encryption'
+    metadata:
+      hipaa: [45 CFR §164.312]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Unencrypted PHI transmission
+              http.post('/api/patient', {
+                ssn: patient.ssn,
+                medical_record: patient.history
+              })
+          - pattern: |
+              send_email(patient.email, medical_results)
+    fix: 'Encrypt all PHI in transit using TLS 1.2+'
+
+  - id: hipaa-phi-storage-unencrypted
+    message: 'PHI stored without encryption'
+    metadata:
+      hipaa: [45 CFR §164.312]
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Unencrypted PHI storage
+              db.insert('patients', {
+                phi_data: sensitive_medical_info
+              })
+    fix: 'Encrypt all PHI at rest with AES-256 or stronger'
+
+  - id: hipaa-audit-logging-missing
+    message: 'Missing audit logging for PHI access'
+    metadata:
+      hipaa: [45 CFR §164.312]
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # PHI access without audit trail
+              def get_patient_record(patient_id):
+                  return db.find_one('patients', patient_id)
+    fix: 'Implement comprehensive audit logging for all PHI access'
+
+  # Data Minimization
+  - id: privacy-excessive-data-collection
+    message: 'Collecting excessive personal data'
+    metadata:
+      gdpr: 'Article 5(1)(c)'
+      privacy-by-design: true
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              user_registration({
+                email: email,
+                password: password,
+                mothers_maiden_name: mmn,  # Unnecessary
+                biometric_data: fingerprint  # Excessive
+              })
+    fix: 'Apply data minimization principle - collect only necessary data'
+
+  - id: privacy-data-aggregation-without-anonymization
+    message: 'Aggregating personal data without anonymization'
+    metadata:
+      gdpr: 'Article 25'
+      severity: WARNING
+    languages: [python, javascript, typescript, sql]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              SELECT user_id, COUNT(*) as actions
+              FROM user_behavior
+              GROUP BY user_id  # Not anonymized
+          - pattern: |
+              analytics.track_user_behavior(user_id, all_actions)
+    fix: 'Anonymize or pseudonymize data before aggregation'
+
+  # Consent Management
+  - id: consent-management-missing
+    message: 'Missing consent management system'
+    metadata:
+      gdpr: ['Article 7', 'Article 9']
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Processing special category data without explicit consent
+              process_health_data(health_record)
+          - pattern: |
+              # No consent withdrawal mechanism
+              user_data = collect_all_user_info()
+    fix: 'Implement comprehensive consent management with withdrawal capability'
+
+  - id: consent-record-keeping-missing
+    message: 'Missing consent record keeping'
+    metadata:
+      gdpr: 'Article 7(1)'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No consent timestamp or scope recording
+              if user.consents:
+                  process_data(user.data)
+    fix: 'Record consent timestamp, scope, and purpose for audit trail'
+
+  # Data Subject Rights
+  - id: dsr-access-right-missing
+    message: 'Missing data subject access right implementation'
+    metadata:
+      gdpr: 'Article 15'
+      ccpa: 1798.130
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No mechanism to provide data copy to user
+              def user_profile_view():
+                  return view_only, not_downloadable
+    fix: 'Implement portable data export in machine-readable format'
+
+  - id: dsr-rectification-missing
+    message: 'Missing data rectification mechanism'
+    metadata:
+      gdpr: 'Article 16'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No way for users to correct their data
+              user_data = immutable_record
+    fix: 'Implement data correction and update mechanisms'
+
+  # International Data Transfers
+  - id: international-transfer-compliance-missing
+    message: 'International data transfer without compliance checks'
+    metadata:
+      gdpr: 'Chapter V'
+      schrems-II: true
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Data transfer to third country without assessment
+              cloud_provider.upload_to_region(data, 'us-east-1')
+    fix: 'Implement transfer impact assessments and appropriate safeguards'
+
+  # Privacy by Design and Default
+  - id: privacy-by-design-missing
+    message: 'Privacy-by-design principles not implemented'
+    metadata:
+      gdpr: 'Article 25'
+      privacy-engineering: true
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No privacy impact assessment
+              def new_feature_with_data_processing():
+                  # Direct implementation without privacy review
+    fix: 'Conduct privacy impact assessments for new features'
+
+  - id: privacy-by-default-missing
+    message: 'Privacy-unfriendly default settings'
+    metadata:
+      gdpr: 'Article 25'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Opt-in defaults should be opt-out
+              user.share_data_publicly = True  # Default enabled
+          - pattern: |
+              # Data retention periods too long by default
+              settings.default_retention_years = 10
+    fix: 'Set privacy-friendly defaults and require explicit opt-in'
+
+  # AI Ethics and Fairness
+  - id: ai-bias-mitigation-missing
+    message: 'AI system without bias mitigation'
+    metadata:
+      eu-ai-act: 'Article 10'
+      nist-ai-rmf: RMG.4
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No bias testing or mitigation
+              def hiring_ai_candidate_score(resume):
+                  return model.score(resume)  # Potential bias
+    fix: 'Implement bias testing, monitoring, and mitigation strategies'
+
+  - id: ai-explainability-missing
+    message: 'AI decision without explainability'
+    metadata:
+      eu-ai-act: 'Article 13'
+      nist-ai-rmf: RMG.4
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Black box decision without explanation
+              decision = ai.make_decision(input_data)
+              return decision  # No explanation
+    fix: 'Implement explainable AI with decision rationale'
+
+  # Children's Privacy (COPPA)
+  - id: coppa-age-verification-missing
+    message: 'Missing age verification for children'
+    metadata:
+      coppa: 16 C.F.R. §312.2
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No age verification before data collection
+              def collect_user_info(name, email):
+                  db.save(user_info)
+    fix: 'Implement age verification and parental consent mechanisms'
+
+  # Data Breach Notification
+  - id: breach-notification-missing
+    message: 'Missing data breach notification system'
+    metadata:
+      gdpr: 'Article 33'
+      ccpa: 1798.82
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No breach detection or notification
+              def data_access():
+                  return sensitive_data  # No monitoring
+    fix: 'Implement breach detection and notification procedures'
+
+  # Security Standards Integration
+  - id: iso27001-compliance-missing
+    message: 'Missing ISO 27001 control implementation'
+    metadata:
+      iso27001: ['A.8.2', 'A.13.2']
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No information classification system
+              data = unclassified_sensitive_data
+    fix: 'Implement ISO 27001 controls for information security'
+
+  # Data Localization Requirements
+  - id: data-localization-violation
+    message: 'Data stored in violation of localization requirements'
+    metadata:
+      gdpr: 'Article 45'
+      severity: ERROR
+    languages: [python, javascript, typescript, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # EU data stored outside EU without proper basis
+              aws_region: us-east-1  # For EU customer data
+    fix: 'Implement data localization or adequate transfer mechanisms'
+
+  # Cookie and Tracking Compliance
+  - id: cookie-consent-missing
+    message: 'Missing cookie consent management'
+    metadata:
+      eprivacy-directive: 'Article 5(3)'
+      severity: WARNING
+    languages: [javascript, typescript, html]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              // Setting cookies without consent
+              document.cookie = "tracking_id=123; max-age=31536000"
+    fix: 'Implement cookie consent management per ePrivacy Directive'
+
+  # Vendor and Processor Management
+  - id: vendor-dpa-missing
+    message: 'Missing Data Processing Agreement with vendor'
+    metadata:
+      gdpr: 'Article 28'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Third-party processing without DPA
+              third_party_api.send(user_data)
+    fix: 'Ensure DPAs are in place with all data processors'
+
+  # Privacy Impact Assessments
+  - id: pia-missing-high-risk-processing
+    message: 'High-risk processing without Privacy Impact Assessment'
+    metadata:
+      gdpr: 'Article 35'
+      severity: ERROR
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # High-risk processing without PIA
+              def profiling_algorithm():
+                  return complex_user_profiling(data)
+    fix: 'Conduct Privacy Impact Assessment for high-risk processing'
+
+  # Anonymization and Pseudonymization
+  - id: pseudonymization-missing
+    message: 'Sensitive data stored without pseudonymization'
+    metadata:
+      gdpr: 'Article 25'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Direct identifiers stored without protection
+              users_collection.insert({
+                name: real_name,
+                email: real_email,
+                ssn: real_ssn
+              })
+    fix: 'Implement pseudonymization to protect direct identifiers'
+
+  # Data Portability
+  - id: data-portability-missing
+    message: 'Missing data portability implementation'
+    metadata:
+      gdpr: 'Article 20'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No mechanism for data export in common format
+              def user_data_export():
+                  return proprietary_format_only
+    fix: 'Implement data export in structured, machine-readable format'

@@ -6,11 +6,7 @@ const suite = shouldAttempt ? describe : describe.skip;
 
 suite('NATS connectivity', () => {
 	test('starts container and accepts connections', async () => {
-		let container:
-			| {
-					stop: () => Promise<void>;
-			  }
-			| undefined;
+		let container: { stop: () => Promise<void> } | undefined;
 		let connection:
 			| {
 					publish: (subject: string, payload?: Uint8Array) => Promise<void>;
@@ -24,8 +20,12 @@ suite('NATS connectivity', () => {
 			const testcontainers = await import('@testcontainers/nats');
 			const nats = await import('nats');
 			const { NatsContainer } = testcontainers;
-			container = await new NatsContainer().start();
-			const url = `nats://${container.getHost()}:${container.getPort()}`;
+			const startedContainer = await new NatsContainer().start();
+			container = { stop: () => startedContainer.stop() };
+
+			// Type assertion to access container methods that may not be in the type definition
+			const containerWithMethods = startedContainer as { getHost(): string; getPort(): number };
+			const url = `nats://${containerWithMethods.getHost()}:${containerWithMethods.getPort()}`;
 			connection = await nats.connect({ servers: url });
 			try {
 				const subject = `test.${Date.now()}`;

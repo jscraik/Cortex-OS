@@ -1,0 +1,477 @@
+# AI Security Frameworks Integration - Updated 2025-09-30
+# Integrates NIST AI RMF, CSA AI Controls Matrix (AICM), ISO 42001, and other AI governance frameworks
+rules:
+  # NIST AI Risk Management Framework (RMF) 2024
+  - id: nist-ai-rmf-govern-missing
+    message: 'Missing NIST AI RMF Govern function implementation'
+    metadata:
+      nist-ai-rmf: GOV
+      category: 'AI Governance'
+      severity: WARNING
+    languages: [python, javascript, typescript, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # No AI governance structure
+              class AISystem:
+                  def __init__(self):
+                      # No risk management governance
+                      pass
+          - pattern: |
+              # Missing AI risk assessment documentation
+              def deploy_ai_model(model):
+                  model.deploy()  # No governance review
+    fix: 'Implement NIST AI RMF Govern function with proper risk management governance'
+
+  - id: nist-ai-rmf-map-missing
+    message: 'Missing NIST AI RMF Map function - AI context not documented'
+    metadata:
+      nist-ai-rmf: MAP
+      category: 'AI Context Mapping'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI system without context documentation
+              def process_with_ai(input_data):
+                  return ai_model.predict(input_data)  # No context mapping
+          - pattern: |
+              # No AI use case assessment
+              ai_system = AISystem()
+              ai_system.run()  # No use case documentation
+    fix: 'Document AI system context, use cases, and potential impacts per NIST MAP function'
+
+  - id: nist-ai-rmf-measure-missing
+    message: 'Missing NIST AI RMF Measure function - No AI metrics or monitoring'
+    metadata:
+      nist-ai-rmf: MEA
+      category: 'AI Metrics & Monitoring'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI predictions without metrics
+              def ai_prediction(input):
+                  result = model.predict(input)
+                  return result  # No accuracy or bias measurement
+          - pattern: |
+              # No AI performance monitoring
+              ai_response = ai.generate(prompt)
+              return ai_response  # No quality metrics
+    fix: 'Implement comprehensive AI metrics, monitoring, and evaluation per NIST MEA function'
+
+  - id: nist-ai-rmf-manage-missing
+    message: 'Missing NIST AI RMF Manage function - No AI risk treatment'
+    metadata:
+      nist-ai-rmf: MAN
+      category: 'AI Risk Management'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI deployment without risk management
+              def deploy_ai_system():
+                  ai_system.start()  # No risk management plan
+          - pattern: |
+              # No AI incident response
+              try:
+                  result = ai.process(data)
+              except AIError:
+                  pass  # No incident management
+    fix: 'Implement AI risk management, treatment, and incident response per NIST MAN function'
+
+  # CSA AI Controls Matrix (AICM) 2025
+  - id: csa-aicm-model-security-missing
+    message: 'Missing CSA AICM Model Security controls'
+    metadata:
+      csa-aicm: MSC
+      category: 'Model Security Controls'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Model without access controls
+              class AIModel:
+                  def load_model(self):
+                      self.model = pickle.load(open('model.pkl', 'rb'))  # No access control
+          - pattern: |
+              # Model parameters exposed
+              def get_model_weights():
+                  return model.get_weights()  # Unrestricted access
+    fix: 'Implement model access controls, parameter protection per CSA AICM MSC'
+
+  - id: csa-aicm-data-lineage-missing
+    message: 'Missing CSA AICM Data Lineage tracking'
+    metadata:
+      csa-aicm: DTL
+      category: 'Data Lineage & Provenance'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Training data without provenance
+              model.fit(training_data)  # No data lineage tracking
+          - pattern: |
+              # No data source documentation
+              dataset = load_data('data.csv')  # No provenance info
+    fix: 'Implement comprehensive data lineage and provenance tracking per CSA AICM DTL'
+
+  - id: csa-aicm-bias-monitoring-missing
+    message: 'Missing CSA AICM Bias Detection and Monitoring'
+    metadata:
+      csa-aicm: BDM
+      category: 'Bias Detection & Monitoring'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI decisions without bias monitoring
+              def make_decision(input_data):
+                  return ai_model.predict(input_data)  # No bias detection
+          - pattern: |
+              # No fairness metrics
+              predictions = model.predict(test_data)
+              return predictions  # No fairness evaluation
+    fix: 'Implement bias detection, monitoring, and fairness metrics per CSA AICM BDM'
+
+  # ISO/IEC 42001:2023 AI Management System
+  - id: iso-42001-organization-context-missing
+    message: 'Missing ISO 42001 organization context and AI policy'
+    metadata:
+      iso-42001: clause-4
+      category: 'Organization Context'
+      severity: WARNING
+    languages: [yaml, python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI deployment without organizational policy alignment
+              def deploy_ai():
+                  ai_service.launch()  # No policy alignment check
+          - pattern: |
+              # No AI responsibility assignment
+              class AISystem:
+                  def __init__(self):
+                      # No defined responsibilities
+                      pass
+    fix: 'Establish AI policy, roles, and responsibilities per ISO 42001 clause 4'
+
+  - id: iso-42001-risk-assessment-missing
+    message: 'Missing ISO 42001 AI risk assessment and treatment'
+    metadata:
+      iso-42001: clause-6
+      category: 'Risk Assessment'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI system without risk assessment
+              def implement_ai_feature():
+                  new_ai_feature.deploy()  # No risk assessment
+          - pattern: |
+              # No AI impact assessment
+              ai_system = AISystem()
+              ai_system.activate()  # No impact evaluation
+    fix: 'Implement AI risk assessment and treatment planning per ISO 42001 clause 6'
+
+  - id: iso-42001-ai-impact-assessment-missing
+    message: 'Missing ISO 42001 AI system impact assessment'
+    metadata:
+      iso-42001: clause-8
+      category: 'Impact Assessment'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # High-risk AI without impact assessment
+              class CriticalAISystem:
+                  def make_decision(self):
+                      # No impact assessment for critical decisions
+                      return self.model.predict()
+    fix: 'Conduct AI impact assessments for high-risk systems per ISO 42001 clause 8'
+
+  # AI Supply Chain Security (Atlantic Council Model)
+  - id: ai-supply-chain-component-tracking-missing
+    message: 'Missing AI supply chain component tracking'
+    metadata:
+      atlantic-council: ai-supply-chain
+      category: 'Component Tracking'
+      severity: INFO
+    languages: [python, javascript, typescript, yaml]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Model without component tracking
+              model = load_model('model.h5')  # No component provenance
+          - pattern: |
+              # No training data source tracking
+              training_data = collect_data()  # No source documentation
+    fix: 'Track all AI supply chain components: training data, models, APIs, dependencies'
+
+  - id: ai-supply-chain-third-party-risk-missing
+    message: 'Missing third-party AI component risk assessment'
+    metadata:
+      atlantic-council: third-party-risk
+      category: 'Third-Party Risk'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Using third-party AI API without risk assessment
+              result = openai.api_call(prompt)  # No risk assessment
+          - pattern: |
+              # External model integration without evaluation
+              external_model = load_pretrained_model('huggingface/model')  # No evaluation
+    fix: 'Assess and manage third-party AI component risks'
+
+  # AI Fairness and Transparency
+  - id: ai-fairness-evaluation-missing
+    message: 'Missing AI fairness evaluation'
+    metadata:
+      eu-ai-act: fairness
+      nist-ai-rmf: FAIR
+      category: 'AI Fairness'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI decisions without fairness evaluation
+              def make_hiring_decision(resume):
+                  score = ai_model.score(resume)
+                  return score > threshold  # No fairness check
+          - pattern: |
+              # No demographic parity checking
+              predictions = model.predict(protected_data)
+              return predictions  # No bias analysis
+    fix: 'Implement fairness metrics and regular bias evaluations'
+
+  - id: ai-explainability-missing
+    message: 'Missing AI explainability and interpretability'
+    metadata:
+      eu-ai-act: transparency
+      nist-ai-rmf: EXPLAIN
+      category: 'AI Explainability'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Black box AI decisions
+              def ai_decision(input_data):
+                  result = black_box_model.predict(input_data)
+                  return result  # No explanation provided
+          - pattern: |
+              # No interpretable features
+              class BlackBoxAI:
+                  def process(self, data):
+                      return self.neural_network(data)  # No interpretability
+    fix: 'Implement explainable AI with decision rationale and feature importance'
+
+  # AI Robustness and Reliability
+  - id: ai-robustness-testing-missing
+    message: 'Missing AI robustness and adversarial testing'
+    metadata:
+      nist-ai-rmf: ROBUST
+      category: 'AI Robustness'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI deployment without robustness testing
+              def deploy_ai_model():
+                  model.deploy()  # No adversarial testing
+          - pattern: |
+              # No uncertainty quantification
+              prediction = model.predict(input)
+              return prediction  # No confidence intervals
+    fix: 'Implement adversarial testing and uncertainty quantification'
+
+  - id: ai-performance-monitoring-missing
+    message: 'Missing AI performance monitoring and drift detection'
+    metadata:
+      nist-ai-rmf: MONITOR
+      category: 'AI Monitoring'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI in production without monitoring
+              def ai_service_endpoint(data):
+                  return ai_model.predict(data)  # No performance monitoring
+          - pattern: |
+              # No drift detection
+              predictions = model.batch_predict(new_data)
+              return predictions  # No drift analysis
+    fix: 'Implement comprehensive AI monitoring with drift detection'
+
+  # AI Security Controls
+  - id: ai-threat-modeling-missing
+    message: 'Missing AI-specific threat modeling'
+    metadata:
+      mitre-atlas: threat-modeling
+      category: 'AI Threat Modeling'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI system without threat model
+              class AISystem:
+                  def __init__(self):
+                      # No AI-specific threats considered
+                      pass
+    fix: 'Conduct AI-specific threat modeling using MITRE ATLAS framework'
+
+  - id: ai-red-team-testing-missing
+    message: 'Missing AI red team testing and adversarial evaluation'
+    metadata:
+      nist-ai-rmf: RED-TEAM
+      category: 'AI Red Teaming'
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI deployment without red team testing
+              def production_ai():
+                  return model.predict(input)  # No adversarial testing
+    fix: 'Implement regular AI red team exercises and adversarial testing'
+
+  # AI Data Governance
+  - id: ai-data-governance-missing
+    message: 'Missing AI data governance framework'
+    metadata:
+      iso-42001: data-governance
+      category: 'AI Data Governance'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Training data without governance
+              def train_model():
+                  model.train(raw_data)  # No data governance
+          - pattern: |
+              # No data quality checks
+              dataset = load_dataset('training.csv')
+              model.fit(dataset)  # No quality validation
+    fix: 'Implement comprehensive AI data governance and quality controls'
+
+  # AI Incident Response
+  - id: ai-incident-response-missing
+    message: 'Missing AI-specific incident response plan'
+    metadata:
+      nist-ai-rmf: INCIDENT
+      category: 'AI Incident Response'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI failure without incident response
+              try:
+                  result = ai.predict(input)
+              except Exception as e:
+                  log(e)  # No AI-specific incident response
+    fix: 'Develop and implement AI-specific incident response procedures'
+
+  # AI Continuous Improvement
+  - id: ai-continuous-improvement-missing
+    message: 'Missing AI continuous improvement and learning'
+    metadata:
+      iso-42001: continuous-improvement
+      category: 'AI Continuous Improvement'
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Static AI model without improvement
+              class StaticAI:
+                  def predict(self, data):
+                      return self.model.predict(data)  # No learning loop
+    fix: 'Implement AI continuous monitoring, feedback, and improvement cycles'
+
+  # AI Documentation and Transparency
+  - id: ai-model-cards-missing
+    message: 'Missing AI model cards and documentation'
+    metadata:
+      eu-ai-act: documentation
+      category: 'AI Documentation'
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Model deployed without documentation
+              def deploy_model():
+                  model.serve()  # No model card or documentation
+    fix: 'Create comprehensive model cards and AI system documentation'
+
+  - id: ai-datasheets-missing
+    message: 'Missing AI datasheets for training data'
+    metadata:
+      eu-ai-act: documentation
+      category: 'AI Data Documentation'
+      severity: INFO
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # Training data without datasheet
+              training_data = collect_data()  # No datasheet documentation
+    fix: 'Create datasheets documenting training data sources, characteristics, and limitations'
+
+  # AI Human Oversight
+  - id: ai-human-oversight-missing
+    message: 'Missing human oversight for AI decisions'
+    metadata:
+      eu-ai-act: human-oversight
+      category: 'Human Oversight'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # High-stakes AI decisions without human oversight
+              def critical_decision(data):
+                  decision = ai_model.predict(data)
+                  execute_decision(decision)  # No human review
+          - pattern: |
+              # No human-in-the-loop for sensitive operations
+              def sensitive_operation(input):
+                  return ai.process(input)  # Automated execution
+    fix: 'Implement human oversight mechanisms for high-impact AI decisions'
+
+  # AI Testing and Validation
+  - id: ai-testing-inadequate
+    message: 'Inadequate AI testing and validation procedures'
+    metadata:
+      nist-ai-rmf: TESTING
+      category: 'AI Testing'
+      severity: WARNING
+    languages: [python, javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              # AI model with basic accuracy only
+              def evaluate_model():
+                  accuracy = model.score(X_test, y_test)
+                  return accuracy  # Insufficient evaluation
+          - pattern: |
+              # No comprehensive AI validation
+              def deploy_model():
+                  model.save()  # No validation before deployment
+    fix: 'Implement comprehensive AI testing including robustness, fairness, and security validation'

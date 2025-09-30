@@ -10,8 +10,7 @@ import type { Chunker, DocumentChunk, ProcessingFile } from './dispatch.js';
  */
 export class SemanticChunker implements Chunker {
 	async chunk(file: ProcessingFile, _config: ProcessingConfig): Promise<DocumentChunk[]> {
-		// reference parameter to avoid unused warning (config hooks may be added later)
-		const _unused = _config; // eslint-disable-line @typescript-eslint/no-unused-vars
+		// Config parameter reserved for future semantic chunking configuration
 		const text = file.content.toString('utf-8');
 		const paragraphs = splitIntoParagraphs(text);
 		const chunks: DocumentChunk[] = [];

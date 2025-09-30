@@ -1,0 +1,126 @@
+# OWASP Top 10 2025 Security Policies
+# Defines compliance thresholds and remediation requirements for OWASP Top 10 2025
+
+policy:
+  name: "OWASP Top 10 2025 Compliance"
+  standard: "owasp-top10-2025"
+  version: "2025.09.30"
+  description: "Security policies for OWASP Top 10 2025 compliance with brAInwav Cortex-OS"
+
+thresholds:
+  max_risk_score: 0.35
+  max_outstanding_violations: 0
+  scan_cadence_hours: 6
+  escalation_threshold: 0.55
+
+tools:
+  - security.run_semgrep_scan
+  - security.analyze_vulnerabilities
+  - security.validate_compliance
+
+remediation:
+  window_hours: 4
+  auto_escalate: true
+  block_merge_on_critical: true
+
+ruleset_mapping:
+  critical_severity:
+    - owasp-top-10-improved.yaml
+    - llm-security.yaml
+  high_severity:
+    - supply-chain-security.yaml
+    - container-infra-security.yaml
+  medium_severity:
+    - privacy-compliance.yaml
+    - ai-security-frameworks.yaml
+  info_severity:
+    - dynamic-testing-redteam.yaml
+
+risk_weights:
+  critical: 1.0
+  high: 0.7
+  medium: 0.4
+  low: 0.2
+  info: 0.1
+
+exemptions:
+  test_files:
+    patterns:
+      - "**/__tests__/**"
+      - "**/*.test.*"
+      - "**/*.spec.*"
+    reason: "Test code exempt from production security policies"
+
+  documentation:
+    patterns:
+      - "**/docs/**"
+      - "**/*.md"
+      - "**/*.txt"
+    reason: "Documentation files exempt"
+
+compliance_checks:
+  injection_flaws:
+    required: true
+    max_findings: 0
+    rules:
+      - "owasp-top-10-improved.yaml:sql-injection"
+      - "owasp-top-10-improved.yaml:command-injection"
+      - "owasp-top-10-improved.yaml:xss"
+
+  cryptographic_failures:
+    required: true
+    max_findings: 0
+    rules:
+      - "owasp-top-10-improved.yaml:weak-cryptography"
+      - "owasp-top-10-improved.yaml:post-quantum-crypto"
+
+  insecure_design:
+    required: true
+    max_findings: 2
+    rules:
+      - "owasp-top-10-improved.yaml:insecure-design"
+
+  supply_chain_vulnerabilities:
+    required: true
+    max_findings: 0
+    rules:
+      - "supply-chain-security.yaml:dependency-confusion"
+      - "supply-chain-security.yaml:model-poisoning"
+
+escalation_triggers:
+  critical_findings:
+    count: 1
+    notify: ["security-team@brainwav.io", "dev-lead@brainwav.io"]
+
+  high_risk_score:
+    threshold: 0.55
+    notify: ["security-team@brainwav.io"]
+
+  remediation_overdue:
+    hours: 4
+    notify: ["engineering-manager@brainwav.io"]
+
+reporting:
+  format: "sarif"
+  include_metrics: true
+  include_evidence: true
+  aggregate_by_severity: true
+
+integration:
+  github_actions:
+    fail_on_critical: true
+    fail_on_threshold: true
+    comment_on_pr: true
+
+  slack:
+    webhook_url: "${SECURITY_SLACK_WEBHOOK}"
+    notify_on_failure: true
+
+  jira:
+    project: "SEC"
+    auto_create_tickets: true
+    priority_mapping:
+      critical: "Highest"
+      high: "High"
+      medium: "Medium"
+      low: "Low"

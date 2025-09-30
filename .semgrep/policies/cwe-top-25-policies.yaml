@@ -1,0 +1,121 @@
+# CWE Top 25 Security Policies
+# Defines compliance thresholds and remediation requirements for CWE Top 25
+
+policy:
+  name: "CWE Top 25 Compliance"
+  standard: "cwe-top-25"
+  version: "2025.09.30"
+  description: "Security policies for CWE Top 25 compliance with brAInwav Cortex-OS"
+
+thresholds:
+  max_risk_score: 0.40
+  max_outstanding_violations: 1
+  scan_cadence_hours: 12
+  escalation_threshold: 0.60
+
+tools:
+  - security.run_semgrep_scan
+  - security.validate_compliance
+
+remediation:
+  window_hours: 8
+  auto_escalate: true
+  block_merge_on_critical: true
+
+ruleset_mapping:
+  critical_severity:
+    - owasp-top-10-improved.yaml
+    - llm-security.yaml
+  high_severity:
+    - supply-chain-security.yaml
+    - container-infra-security.yaml
+  medium_severity:
+    - privacy-compliance.yaml
+    - ai-security-frameworks.yaml
+
+risk_weights:
+  critical: 1.0
+  high: 0.7
+  medium: 0.4
+  low: 0.2
+  info: 0.1
+
+exemptions:
+  test_files:
+    patterns:
+      - "**/__tests__/**"
+      - "**/*.test.*"
+      - "**/*.spec.*"
+    reason: "Test code exempt from production security policies"
+
+  documentation:
+    patterns:
+      - "**/docs/**"
+      - "**/*.md"
+      - "**/*.txt"
+    reason: "Documentation files exempt"
+
+compliance_checks:
+  buffer_errors:
+    required: true
+    max_findings: 0
+    cwe_ids: ["CWE-119", "CWE-120", "CWE-787"]
+
+  injection:
+    required: true
+    max_findings: 0
+    cwe_ids: ["CWE-74", "CWE-89", "CWE-94"]
+
+  xss:
+    required: true
+    max_findings: 0
+    cwe_ids: ["CWE-79"]
+
+  misconfiguration:
+    required: true
+    max_findings: 2
+    cwe_ids: ["CWE-16", "CWE-2"]
+
+  crypto_errors:
+    required: true
+    max_findings: 0
+    cwe_ids: ["CWE-327", "CWE-328", "CWE-330"]
+
+escalation_triggers:
+  critical_findings:
+    count: 1
+    notify: ["security-team@brainwav.io", "dev-lead@brainwav.io"]
+
+  high_risk_score:
+    threshold: 0.60
+    notify: ["security-team@brainwav.io"]
+
+  remediation_overdue:
+    hours: 8
+    notify: ["engineering-manager@brainwav.io"]
+
+reporting:
+  format: "sarif"
+  include_metrics: true
+  include_evidence: true
+  aggregate_by_severity: true
+  include_cwe_mapping: true
+
+integration:
+  github_actions:
+    fail_on_critical: true
+    fail_on_threshold: true
+    comment_on_pr: true
+
+  slack:
+    webhook_url: "${SECURITY_SLACK_WEBHOOK}"
+    notify_on_failure: true
+
+  jira:
+    project: "SEC"
+    auto_create_tickets: true
+    priority_mapping:
+      critical: "Highest"
+      high: "High"
+      medium: "Medium"
+      low: "Low"

@@ -58,7 +58,7 @@ async function bootstrap() {
 					updatedAt: now,
 					provenance: { source: 'agent' },
 					embeddingModel: embedder.name(),
-				} as any);
+				} as unknown);
 
 				res.writeHead(201, { 'Content-Type': 'application/json' });
 				res.end(JSON.stringify({ id, status: 'ingested' }));
@@ -85,7 +85,7 @@ async function bootstrap() {
 
 			res.writeHead(404, { 'Content-Type': 'application/json' });
 			res.end(JSON.stringify({ error: 'Not Found' }));
-		} catch (err: any) {
+		} catch (err: unknown) {
 			const status = err?.statusCode || 500;
 			res.writeHead(status, { 'Content-Type': 'application/json' });
 			res.end(JSON.stringify({ error: String(err?.message || err) }));
@@ -98,19 +98,22 @@ async function bootstrap() {
 }
 
 function badRequest(message: string) {
-	const e = new Error(message) as any;
+	const e = new Error(message) as unknown;
 	e.statusCode = 400;
 	return e;
 }
 
-function readJson(req: http.IncomingMessage): Promise<any> {
+function readJson(req: http.IncomingMessage): Promise<unknown> {
 	return new Promise((resolve, reject) => {
 		let data = '';
-		req.on('data', (chunk) => (data += chunk));
+		req.on('data', (chunk) => {
+			data += chunk;
+		});
 		req.on('end', () => {
 			try {
 				resolve(data ? JSON.parse(data) : {});
-			} catch (_e) {
+			} catch (parseError) {
+				console.error('JSON parsing failed:', parseError);
 				reject(new Error('Invalid JSON body'));
 			}
 		});

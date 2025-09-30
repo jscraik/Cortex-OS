@@ -1,0 +1,159 @@
+# ISO 27001 Security Policies
+# Defines compliance thresholds and remediation requirements for ISO 27001
+
+policy:
+  name: "ISO 27001 Compliance"
+  standard: "iso27001"
+  version: "2025.09.30"
+  description: "Security policies for ISO 27001 compliance with brAInwav Cortex-OS"
+
+thresholds:
+  max_risk_score: 0.40
+  max_outstanding_violations: 0
+  scan_cadence_hours: 24
+  escalation_threshold: 0.60
+
+tools:
+  - security.check_dependencies
+  - security.get_security_policy
+  - security.validate_compliance
+
+remediation:
+  window_hours: 24
+  auto_escalate: true
+  block_merge_on_critical: true
+
+ruleset_mapping:
+  critical_severity:
+    - privacy-compliance.yaml
+    - supply-chain-security.yaml
+  high_severity:
+    - owasp-top-10-improved.yaml
+    - container-infra-security.yaml
+  medium_severity:
+    - ai-security-frameworks.yaml
+    - llm-security.yaml
+
+risk_weights:
+  critical: 1.0
+  high: 0.7
+  medium: 0.4
+  low: 0.2
+  info: 0.1
+
+exemptions:
+  test_files:
+    patterns:
+      - "**/__tests__/**"
+      - "**/*.test.*"
+      - "**/*.spec.*"
+    reason: "Test code exempt from production security policies"
+
+  documentation:
+    patterns:
+      - "**/docs/**"
+      - "**/*.md"
+      - "**/*.txt"
+    reason: "Documentation files exempt"
+
+compliance_checks:
+  information_security_policies:
+    required: true
+    max_findings: 0
+    iso_clause: "A.5.1"
+    rules:
+      - "privacy-compliance.yaml:gdpr-policy-missing"
+
+  risk_assessment:
+    required: true
+    max_findings: 1
+    iso_clause: "A.6.1"
+    rules:
+      - "ai-security-frameworks.yaml:iso-42001-risk-assessment-missing"
+
+  access_control:
+    required: true
+    max_findings: 0
+    iso_clause: "A.9"
+    rules:
+      - "owasp-top-10-improved.yaml:broken-access-control"
+
+  cryptography:
+    required: true
+    max_findings: 0
+    iso_clause: "A.10.1"
+    rules:
+      - "owasp-top-10-improved.yaml:weak-cryptography"
+
+  operations_security:
+    required: true
+    max_findings: 2
+    iso_clause: "A.12"
+    rules:
+      - "container-infra-security.yaml:docker-security"
+      - "supply-chain-security.yaml:build-process-security"
+
+  data_protection:
+    required: true
+    max_findings: 0
+    iso_clause: "A.18"
+    rules:
+      - "privacy-compliance.yaml:gdpr-data-protection"
+
+escalation_triggers:
+  critical_findings:
+    count: 1
+    notify: ["compliance@brainwav.io", "security-team@brainwav.io", "iso-auditor@brainwav.io"]
+
+  high_risk_score:
+    threshold: 0.60
+    notify: ["compliance-officer@brainwav.io"]
+
+  remediation_overdue:
+    hours: 24
+    notify: ["management-review@brainwav.io"]
+
+reporting:
+  format: "sarif"
+  include_metrics: true
+  include_evidence: true
+  aggregate_by_severity: true
+  include_iso_clause_mapping: true
+
+integration:
+  github_actions:
+    fail_on_critical: true
+    fail_on_threshold: true
+    comment_on_pr: true
+
+  slack:
+    webhook_url: "${COMPLIANCE_SLACK_WEBHOOK}"
+    notify_on_failure: true
+
+  jira:
+    project: "COMPLIANCE"
+    auto_create_tickets: true
+    priority_mapping:
+      critical: "Highest"
+      high: "High"
+      medium: "Medium"
+      low: "Low"
+
+audit_requirements:
+  evidence_collection:
+    frequency: "continuous"
+    retention_days: 2555  # 7 years
+    storage: "secure-audit-log"
+
+  compliance_reporting:
+    frequency: "monthly"
+    recipients: ["compliance-officer@brainwav.io", "management@brainwav.io"]
+
+  third_party_audit:
+    frequency: "annual"
+    audit_type: "ISO 27001:2022"
+
+  incident_response:
+    response_time: "4 hours"
+    escalation_time: "24 hours"
+    reporting: "security-incident@brainwav.io"

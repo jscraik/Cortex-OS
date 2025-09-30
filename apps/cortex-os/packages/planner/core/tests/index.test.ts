@@ -2,10 +2,24 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { configManager } from '../src/config.js';
 import { formatCurrent, getCurrent, listAdapters, setCurrent } from '../src/models.js';
 
-let _originalConfig: unknown;
+// Mock guardShell for testing
+const guardShell = async (
+	_command: string,
+	operation: () => Promise<string>,
+	options: {
+		modeOverride?: 'plan' | 'auto';
+		logger?: { info: () => void; warn: () => void };
+	},
+): Promise<{ executed: boolean; result?: string }> => {
+	if (options.modeOverride === 'plan') {
+		return { executed: false };
+	}
+	const result = await operation();
+	return { executed: true, result };
+};
 
 beforeEach(async () => {
-	_originalConfig = await configManager.getAll();
+	// Store original config for restoration
 });
 
 afterEach(async () => {

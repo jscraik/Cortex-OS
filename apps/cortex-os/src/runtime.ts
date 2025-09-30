@@ -20,14 +20,18 @@ export interface RuntimeHandle {
 export async function startRuntime(): Promise<RuntimeHandle> {
 	const memories = container.get(TOKENS.Memories);
 	const orchestration = container.get(TOKENS.Orchestration);
-	const mcpGateway = container.get(TOKENS.MCPGateway) as import('./mcp/gateway').McpGateway;
+	const mcpGateway = container.get(TOKENS.MCPGateway);
 	const taskRepository = container.get<TaskRepository>(TOKENS.TaskRepository);
 	const profileRepository = container.get<ProfileRepository>(TOKENS.ProfileRepository);
 	const artifactRepository = container.get<ArtifactRepository>(TOKENS.ArtifactRepository);
 	const evidenceRepository = container.get<EvidenceRepository>(TOKENS.EvidenceRepository);
 
-	void memories;
-	void orchestration;
+	// Memories and orchestration will be used in future implementations
+	// Currently available but not actively used in this runtime initialization
+
+	const _memories = memories;
+
+	const _orchestration = orchestration;
 
 	const { publish } = (() => {
 		const wiring = wireA2A();

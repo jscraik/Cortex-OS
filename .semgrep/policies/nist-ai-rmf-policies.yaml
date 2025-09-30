@@ -1,0 +1,156 @@
+# NIST AI Risk Management Framework Policies
+# Defines compliance thresholds and remediation requirements for NIST AI RMF
+
+policy:
+  name: "NIST AI Risk Management Framework Compliance"
+  standard: "nist-ai-rmf"
+  version: "2025.09.30"
+  description: "Security policies for NIST AI RMF compliance with brAInwav Cortex-OS"
+
+thresholds:
+  max_risk_score: 0.45
+  max_outstanding_violations: 1
+  scan_cadence_hours: 24
+  escalation_threshold: 0.65
+
+tools:
+  - security.check_dependencies
+  - security.validate_compliance
+  - security.analyze_vulnerabilities
+
+remediation:
+  window_hours: 24
+  auto_escalate: true
+  block_merge_on_critical: false
+
+ruleset_mapping:
+  critical_severity:
+    - ai-security-frameworks.yaml
+    - llm-security.yaml
+  high_severity:
+    - supply-chain-security.yaml
+    - dynamic-testing-redteam.yaml
+  medium_severity:
+    - privacy-compliance.yaml
+    - container-infra-security.yaml
+
+risk_weights:
+  critical: 1.0
+  high: 0.7
+  medium: 0.4
+  low: 0.2
+  info: 0.1
+
+exemptions:
+  test_files:
+    patterns:
+      - "**/__tests__/**"
+      - "**/*.test.*"
+      - "**/*.spec.*"
+    reason: "Test code exempt from production security policies"
+
+  documentation:
+    patterns:
+      - "**/docs/**"
+      - "**/*.md"
+      - "**/*.txt"
+    reason: "Documentation files exempt"
+
+  experimental_features:
+    patterns:
+      - "**/experimental/**"
+      - "**/research/**"
+    reason: "Experimental AI features allowed temporary exemption"
+
+compliance_checks:
+  govern_function:
+    required: true
+    max_findings: 2
+    rules:
+      - "ai-security-frameworks.yaml:nist-ai-rmf-govern-missing"
+
+  map_function:
+    required: true
+    max_findings: 1
+    rules:
+      - "ai-security-frameworks.yaml:nist-ai-rmf-map-missing"
+
+  measure_function:
+    required: true
+    max_findings: 1
+    rules:
+      - "ai-security-frameworks.yaml:nist-ai-rmf-measure-missing"
+
+  manage_function:
+    required: true
+    max_findings: 1
+    rules:
+      - "ai-security-frameworks.yaml:nist-ai-rmf-manage-missing"
+
+  ai_fairness:
+    required: true
+    max_findings: 2
+    rules:
+      - "ai-security-frameworks.yaml:ai-fairness-evaluation-missing"
+
+  ai_explainability:
+    required: true
+    max_findings: 2
+    rules:
+      - "ai-security-frameworks.yaml:ai-explainability-missing"
+
+escalation_triggers:
+  critical_findings:
+    count: 2
+    notify: ["ai-security@brainwav.io", "security-team@brainwav.io"]
+
+  high_risk_score:
+    threshold: 0.65
+    notify: ["ai-governance@brainwav.io"]
+
+  remediation_overdue:
+    hours: 24
+    notify: ["ai-ethics-board@brainwav.io"]
+
+reporting:
+  format: "sarif"
+  include_metrics: true
+  include_evidence: true
+  aggregate_by_severity: true
+  include_nist_mapping: true
+
+integration:
+  github_actions:
+    fail_on_critical: false
+    fail_on_threshold: true
+    comment_on_pr: true
+
+  slack:
+    webhook_url: "${AI_SECURITY_SLACK_WEBHOOK}"
+    notify_on_failure: true
+
+  jira:
+    project: "AISEC"
+    auto_create_tickets: true
+    priority_mapping:
+      critical: "Highest"
+      high: "High"
+      medium: "Medium"
+      low: "Low"
+
+governance_requirements:
+  risk_assessment:
+    frequency: "quarterly"
+    stakeholders: ["ai-team", "security-team", "legal"]
+
+  model_card_documentation:
+    required: true
+    template: "ai-model-card-template.md"
+
+  human_oversight:
+    required_for_high_risk: true
+    escalation_path: "human-review@brainwav.io"
+
+  continuous_monitoring:
+    required: true
+    metrics: ["accuracy", "bias", "drift", "performance"]

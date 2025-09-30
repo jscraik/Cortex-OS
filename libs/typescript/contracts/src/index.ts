@@ -76,7 +76,7 @@ export * from './a2a-mcp.js';
 export * from './agent-events.js';
 export * from './agent-toolkit.js';
 export * from './diagnostics.js';
-export * from './evidence.js';
+
 export * from './gateway-events.js';
 export * from './kernel-events.js';
 export * from './mcp-events.js';

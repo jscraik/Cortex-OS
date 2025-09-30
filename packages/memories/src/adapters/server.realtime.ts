@@ -163,7 +163,7 @@ export class RealtimeMemoryServer extends EventEmitter {
 
 	constructor(
 		private readonly streamingStore: StreamingMemoryStore,
-		private config: ServerConfig = {},
+		private readonly config: ServerConfig = {},
 		metricsPublisher?: MetricsPublisher,
 	) {
 		super();

@@ -36,7 +36,7 @@ describe('contract: structure-guard policy schema', () => {
 	});
 
 	it('ensures required top-level keys remain stable', () => {
-		const keys = Object.keys(policyJson).sort();
+		const keys = Object.keys(policyJson).sort((a, b) => a.localeCompare(b));
 		for (const required of REQUIRED_KEYS) {
 			expect(keys).toContain(required);
 		}

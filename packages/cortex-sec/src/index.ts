@@ -1,10 +1,9 @@
-// Cortex Security Package - Main exports
+// Cortex Security Compliance Package - Main exports
 
-// Core functionality (when implemented)
-// export * from './core/index';
-// export * from './types/index';
+// Refactored to focus on compliance planning and orchestration
+// Static policies moved to .semgrep/policies/
 
-// A2A Events
+// A2A Events for compliance and security
 export {
 	type ComplianceViolationEvent,
 	createCortexSecEvent,
@@ -12,23 +11,14 @@ export {
 	type SecurityScanStartedEvent,
 	type VulnerabilityFoundEvent,
 } from './events/cortex-sec-events.js';
-export type {
-	AnalyzeVulnerabilitiesInput,
-	CheckDependenciesInput,
-	CortexSecTool,
-	GetSecurityPolicyInput,
-	RunSemgrepScanInput,
-	ValidateComplianceInput,
-} from './mcp/tools.js';
-// MCP Integration
-export { cortexSecMcpTools } from './mcp/tools.js';
+// Security Integration Service
 export {
 	createSecurityIntegrationService,
 	type SecurityIntegrationInput,
 	type SecurityIntegrationResult,
 	type SecurityIntegrationService,
 } from './nO/security-integration.js';
-// Planning + Compliance utilities
+// Compliance Planning and Risk Management
 export {
 	type CompliancePlanner,
 	type CompliancePlanningInput,
@@ -37,10 +27,16 @@ export {
 	type SecurityActionPlan,
 } from './planning/compliance-planner.js';
 export {
-	getDefaultSecurityPolicies,
-	getSecurityPolicy,
-	type SecurityPolicy,
-	type SecurityPolicyThresholds,
-	type SecurityStandard,
-	SecurityStandardSchema,
-} from './policies/security-policies.js';
+	type ComplianceStrategy,
+	type ComplianceStrategyInput,
+	type ComplianceStrategyResult,
+	createComplianceStrategy,
+} from './planning/compliance-strategy.js';
+
+// Policy Utilities (now reads from .semgrep/policies/)
+export {
+	getPolicyThresholds,
+	loadSecurityPolicies,
+	type PolicyThresholds,
+	type SecurityPolicyConfig,
+} from './utils/policy-loader.js';

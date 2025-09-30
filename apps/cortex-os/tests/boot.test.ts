@@ -3,8 +3,10 @@ import { TOKENS } from '../src/tokens.js';
 
 type MemoryRecord = { id: string } & Record<string, unknown>;
 
-vi.mock('@cortex-os/memories', () => {
+vi.mock('../src/services', async () => {
+	const actual = await vi.importActual<typeof import('../src/services')>('../src/services');
 	return {
+		...actual,
 		createPolicyAwareStoreFromEnv: vi.fn(() => ({})),
 		createEmbedderFromEnv: vi.fn(() => ({})),
 		createMemoryService: vi.fn(() => {

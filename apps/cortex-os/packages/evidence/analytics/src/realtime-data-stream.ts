@@ -10,43 +10,32 @@
  */
 
 import { EventEmitter } from 'node:events';
-import * as net from 'node:net';
 import WebSocket, { WebSocketServer } from 'ws';
 import type { AnalyticsConfig, DashboardData } from './types.js';
 
 /**
  * Find an available port starting from a base port
  */
-async function _findAvailablePort(startPort: number = 9000): Promise<number> {
-	for (let port = startPort; port < startPort + 100; port++) {
-		if (await isPortAvailable(port)) {
-			return port;
-		}
-	}
-	throw new Error(`No available port found starting from ${startPort}`);
-}
+// Utility function for finding available ports (reserved for future use)
+// async function findAvailablePort(startPort: number = 9000): Promise<number> {
+//   for (let port = startPort; port < startPort + 100; port++) {
+//     try {
+//       const server = new (await import('node:net')).Server();
+//       await new Promise<void>((resolve, reject) => {
+//         server.listen(port, resolve);
+//         server.on('error', reject);
+//       });
+//       server.close();
+//       return port;
+//     } catch {
+//       continue;
+//     }
+//   }
+//   throw new Error('brAInwav: No available ports found in range');
+// }
 
 /**
- * Check if a port is available
- */
-async function isPortAvailable(port: number): Promise<boolean> {
-	return new Promise((resolve) => {
-		const server = net.createServer();
-
-		server.listen(port, 'localhost', () => {
-			server.close(() => {
-				resolve(true);
-			});
-		});
-
-		server.on('error', () => {
-			resolve(false);
-		});
-	});
-}
-
-/**
- * Real-time data streaming service for analytics dashboard
+ * Real-time analytics data stream manager for brAInwav dashboard
  */
 export class RealtimeDataStream extends EventEmitter {
 	private server?: WebSocketServer;
