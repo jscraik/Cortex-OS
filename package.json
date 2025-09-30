@@ -46,7 +46,7 @@
     "memory:clean:gentle": "bash scripts/memory-manager.sh --gentle",
     "vscode:optimize": "echo 'VS Code optimization disabled for stability'",
     "vscode:optimize:gentle": "echo 'VS Code optimization disabled for stability'",
-    "test": "node scripts/run-tests.mjs",
+    "test": "node scripts/nx-smart.mjs test",
     "test:placeholders": "vitest run -c tests/regression/vitest.config.ts",
     "test:smart": "node scripts/nx-smart.mjs test",
     "test:full": "bash -lc 'NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=1 VITEST_MIN_FORKS=1 vitest run -c tests/vitest.config.ts tests/e2e/full-stack/orchestrated-run.spec.ts tests/e2e/observability.metrics.spec.ts tests/security/todo-banned.spec.ts'",
