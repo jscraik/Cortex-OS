@@ -5,30 +5,36 @@ const { mcp } = createTestMcpContainer({ allowMutations: false });
 
 describe('MCP workflow persistence', () => {
 	it('stores synchronous workflow results', async () => {
-		const runResult = await mcp.callTool('orchestration.run_workflow', {
+		const runEnvelope = await mcp.callTool('orchestration.run_workflow', {
 			workflow: 'wf.echo',
 			input: { foo: 'bar' },
 			async: false,
 		});
 
-		if (!isRecord(runResult)) throw new Error('Run result not object');
-		expect(runResult.status).toBe('completed');
+		if (!isRecord(runEnvelope)) throw new Error('Run result not object');
+		expect(runEnvelope.tool).toBe('orchestration.run_workflow');
+		const runData = runEnvelope.data as Record<string, unknown> | undefined;
+		expect(runData?.status).toBe('completed');
+		const runId = String(runData?.runId ?? '');
+		expect(runId).not.toHaveLength(0);
 
-		const statusResult = await mcp.callTool('orchestration.get_workflow_status', {
-			runId: String(runResult.runId),
+		const statusEnvelope = await mcp.callTool('orchestration.get_workflow_status', {
+			runId,
 		});
-		if (!isRecord(statusResult)) throw new Error('Status result not object');
-		expect(statusResult.runId).toBe(runResult.runId);
-		expect(statusResult.status).toBeTruthy();
+		if (!isRecord(statusEnvelope)) throw new Error('Status result not object');
+		const statusData = statusEnvelope.data as Record<string, unknown> | undefined;
+		expect(statusData?.runId).toBe(runId);
+		expect(statusData?.status).toBeTruthy();
 	});
 
 	it('returns not_found error for missing workflow run', async () => {
-		const statusResult = await mcp.callTool('orchestration.get_workflow_status', {
+		const statusEnvelope = await mcp.callTool('orchestration.get_workflow_status', {
 			runId: 'missing-run-id',
 		});
-		if (!isRecord(statusResult)) throw new Error('Status result not object');
-		expect(statusResult.status).toBe('failed');
-		const err = statusResult.error as Record<string, unknown> | undefined;
+		if (!isRecord(statusEnvelope)) throw new Error('Status result not object');
+		const statusData = statusEnvelope.data as Record<string, unknown> | undefined;
+		expect(statusData?.status).toBe('failed');
+		const err = statusData?.error as Record<string, unknown> | undefined;
 		expect(err?.code).toBe('not_found');
 	});
 });

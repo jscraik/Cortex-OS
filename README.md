@@ -996,3 +996,59 @@ LOCAL_MEMORY_BIN=/custom/path/local-memory ./tools/mcp/check_mcp_paths.sh
 
 If you run into issues, the diagnostic script prints actionable hints. For CI or non-interactive
 environments set `LOCAL_MEMORY_BIN` to the absolute binary path.
+
+## Port Configuration
+
+Cortex-OS uses several ports for different services. See `ports.env` for the complete list:
+
+### MCP Ports
+- **Pieces OS**: `39300` - Pieces MCP server (required for Pieces CLI integration)
+- **Cortex MCP**: `3023` - Main Cortex-OS MCP server
+- **Memory MCP**: `3024` - Local memory MCP server with Cloudflare tunnel access
+  - Cloudflare tunnel: https://cortex-mcp.brainwav.io
+  - External integrations connect via the tunnel URL
+- **Memory API**: `3028` - Local memory REST API
+
+### Core Services
+- **Cortex Runtime**: `3000` - Main runtime server
+- **WebUI Backend**: `3001` - Web application backend
+- **WebUI Frontend**: `5173` - Development server
+
+### Quick Port Check
+
+```bash
+# Verify all required ports are available
+./scripts/system/check-port-conflicts.sh
+
+# Check if Pieces OS is running on its port
+lsof -i :39300
+
+# Check if MCP server is running and accessible via tunnel
+curl -I http://localhost:3024/health
+curl -I https://cortex-mcp.brainwav.io/health
+```
+
+### External MCP Integration
+
+For external integrations (ChatGPT, Claude Desktop, VS Code, Cursor):
+
+- **Local Development**: Connect to `http://localhost:3024`
+- **External Access**: Connect via Cloudflare tunnel: `https://cortex-mcp.brainwav.io`
+- **Authentication**: Configure with MCP tokens or API keys as needed
+
+### Pieces CLI Setup
+
+The Pieces CLI provides access to Pieces OS Long-Term Memory (LTM):
+
+```bash
+# Install Pieces CLI
+bash ./scripts/install-pieces-cli.sh
+
+# Enable Pieces MCP integration
+export PIECES_MCP_ENABLED=true
+
+# Run Pieces CLI
+pieces run --ignore-onboarding
+```
+
+See `docs/pieces-cli-installation.md` for complete setup instructions.

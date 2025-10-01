@@ -23,12 +23,44 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+ensure_user_cache_permissions() {
+    local uid
+    local gid
+    local path
+
+    uid="$(id -u)"
+    gid="$(id -g)"
+
+    for path in "$@"; do
+        if [ -d "$path" ]; then
+            if ! owner=$(stat -c '%u' "$path" 2>/dev/null); then
+                owner=""
+            fi
+
+            if [ "$owner" != "$uid" ] || [ ! -w "$path" ]; then
+                if command -v sudo >/dev/null 2>&1; then
+                    log_info "[brAInwav] Repairing ownership for $path..."
+                    if ! sudo chown -R "$uid:$gid" "$path"; then
+                        log_warn "[brAInwav] Unable to adjust ownership for $path"
+                    fi
+                else
+                    log_warn "[brAInwav] $path is not writable and sudo is unavailable"
+                fi
+            fi
+        fi
+    done
+}
+
 # Set up environment
 export NODE_ENV=development
 export CORTEX_HOME=/opt/cortex-home
 export AGENT_TOOLKIT_TOOLS_DIR=$CORTEX_HOME/tools/agent-toolkit
 
 log_info "[brAInwav] Setting up workspace..."
+
+log_info "[brAInwav] Ensuring cache ownership for dev user..."
+mkdir -p "$HOME/.npm"
+ensure_user_cache_permissions "$HOME/.npm" "$HOME/.local/share/pnpm" "$HOME/.pnpm-store"
 
 # Install dependencies (fast path by default)
 log_info "[brAInwav] Installing Node.js dependencies (fast path)..."

@@ -21,8 +21,9 @@
 - `LocalMemoryAdapter` now proxies every memory-core REST endpoint (store/search/get/delete/analysis/relationships/stats/health/cleanup/optimize) and returns FastMCP v3 response envelopes; `InMemoryMemoryAdapter`/`ResilientMemoryAdapter` were removed along with the `CORTEX_MCP_ALLOW_INPROCESS_MEMORY` escape hatch.
 - `apps/cortex-os` `provideMemories()` instantiates the Remote Memory service against `LOCAL_MEMORY_BASE_URL`; tests currently rely on a fetch stub that covers store/search only, so analysis/relationship/stats paths still need end-to-end coverage.
 - `packages/cortex-mcp/tests/test_unit_components.py` and `packages/cortex-mcp/tests/test_server_configuration.py` were updated for the `{ success, data, count }` payloads; rerun with `uv run pytest ...` once virtualenv deps (e.g., `pyjwt`) are present.
-- `apps/cortex-os` emits `cortex.mcp.tool.execution.started/completed` events via the A2A bus; runtime HTTP suites now seed loopback auth tokens (2025-10-01), but Phase 2.3 stays open pending a fixed `provideOrchestration()` export for MCP suites, `eventManager.emitEvent` negative tests, and a decision on the memory-core stub vs service strategy.
-- MCP HTTP integration tests (`tests/mcp/facade.contract.test.ts`, `tests/mcp/mcp-server-integration.test.ts`, etc.) still bail out because `provideOrchestration()` from `@cortex-os/orchestration` is undefined and newly added MCP tool handlers return empty payloads; align those exports and enforce content-array responses with proper 400s for unknown tools before rerunning the green suite.
+- `apps/cortex-os` emits `cortex.mcp.tool.execution.started/completed` events via the A2A bus; runtime HTTP suites now seed loopback auth tokens (2025-10-01). The `provideOrchestration()` export and MCP envelope fixes landed on 2025-10-01 and `pnpm --filter @apps/cortex-os test` passed at 2025-10-01T21:14:44Z; NATS smoke still skips until `CORTEX_TESTCONTAINERS_NATS_IMAGE` (or equivalent) is provided.
+- MCP HTTP integration tests (`tests/mcp/facade.contract.test.ts`, `tests/mcp/mcp-server-integration.test.ts`, etc.) now validate the brAInwav envelope metadata, cache annotations, and workflow persistence; outstanding Phase 2.3 work: align unknown-tool HTTP 400 responses, add `eventManager.emitEvent` negative tests, and decide on the memory-core service vs stub strategy before closure.
+- NATS smoke remains opt-in—keep `CORTEX_TESTCONTAINERS_NATS_IMAGE` (or `TESTCONTAINERS_NATS_IMAGE`/`NATS_TEST_IMAGE`) unset for skips, or point it at the desired registry tag to run the container path.
 - Guard targets (`pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`, `pnpm nx run simple-tests:memories-guard`) stay green; unrelated simple-tests suites still fail on legacy scripts.
 
 ## Critical Architecture Deltas
@@ -284,12 +285,12 @@ On startup, toolkit resolves tool scripts in priority order:
   - 2025-10-01: `apps/cortex-os/tests/setup.global.ts` now provisions a loopback JWT and exports helpers so HTTP suites reuse a single token per run.
 - [x] Update runtime HTTP suites to send authenticated requests
   - 2025-10-01: `apps/cortex-os/tests/http/runtime-server.test.ts` and sibling suites apply the loopback helper, ensuring `Authorization: Bearer <token>` hits the authenticated code paths.
-- [ ] Re-run `pnpm --filter @apps/cortex-os test` until green
-  - Blocked: suite exits early because `provideOrchestration()` from `@cortex-os/orchestration` resolves to `undefined`; complete the orchestration facade export and rerun to verify authenticated routes remain covered.
+- [x] Re-run `pnpm --filter @apps/cortex-os test` until green
+  - 2025-10-01: suite completed successfully at 21:14:44Z; NATS smoke remains opt-in via `CORTEX_TESTCONTAINERS_NATS_IMAGE`.
 
 ##### 2.3.2 Pieces MCP Integration for Unified Memory Architecture
 
-- [x] **Pieces MCP Proxy Implementation** (2025-10-01)
+- [x] **Pieces LTM Proxy Implementation** (2025-10-01)
   - Created `PiecesMCPProxy` class in `packages/mcp-server/src/pieces-proxy.ts` (206 lines)
   - Uses `@modelcontextprotocol/sdk` SSEClientTransport for streamable HTTP connection to Pieces OS
   - Implements auto-reconnect with 5-second delay on connection failures
@@ -320,79 +321,252 @@ On startup, toolkit resolves tool scripts in priority order:
   - Validate `memory.hybrid_search` merges results from both sources
   - Test graceful degradation when Pieces offline
 
-#### 2.4 Pieces MCP Integration Architecture
+##### 2.3.3 Extended Pieces Integration: Drive, Copilot & Context Capture
 
-##### 2.4.1 Integration Pattern: Remote MCP Proxy
+**Guiding Principles:**
+1. **Local-first & private:** All data remains on your machine (SQLite + Qdrant); cloud syncing is opt-in
+2. **Single source of truth:** `memory-core` stays the only canonical store; external services are secondary
+3. **Modular proxies:** New Pieces services (Drive, Copilot) surfaced through dedicated proxies
+4. **MCP-native tooling:** Every feature exposed as MCP tool (and optionally REST endpoint)
+
+#### 2.3.3.1 Pieces Drive Proxy Implementation
+
+- [ ] **Create PiecesDriveProxy** (`packages/mcp-server/src/pieces-drive-proxy.ts`)
+  - Connect to Pieces Drive endpoint: `http://localhost:39301/model_context_protocol/2024-11-05/sse`
+  - Auto-discover Drive tools: `drive.list_files`, `drive.get_file`, `drive.create_snippet`, `drive.save_resource`
+  - Register tools with `pieces_drive.` prefix in MCP hub
+  - Graceful degradation when Drive service unavailable
+
+- [ ] **Environment Configuration**
+  - `PIECES_DRIVE_ENDPOINT=http://localhost:39301/model_context_protocol/2024-11-05/sse`
+  - `PIECES_DRIVE_ENABLED=true` (default, set to 'false' to disable)
+  - Data stays local; optional file-level encryption support
+
+- [ ] **Hub Integration**
+  - Initialize Drive proxy in `packages/mcp-server/src/index.ts`
+  - Dynamic tool registration with prefix `pieces_drive.`
+  - Health check status for Drive connection
+
+#### 2.3.3.2 Pieces Copilot Proxy Implementation
+
+- [ ] **Create PiecesCopilotProxy** (`packages/mcp-server/src/pieces-copilot-proxy.ts`)
+  - Connect to Copilot endpoint: `http://localhost:39302/model_context_protocol/2024-11-05/sse`
+  - Register Copilot tools:
+    - `copilot.ask` - context-aware questions
+    - `copilot.summarize` - generate summaries/reports
+    - `copilot.comment_code` - code analysis with context
+  - Auto-gather context from Local Memory + Drive + LTM before sending to Copilot
+  - Emit A2A events for Copilot interactions
+
+- [ ] **Environment Configuration**
+  - `PIECES_COPILOT_ENDPOINT=http://localhost:39302/model_context_protocol/2024-11-05/sse`
+  - `PIECES_COPILOT_ENABLED=true` (default, set to 'false' to disable)
+
+- [ ] **Context Orchestration**
+  - When `copilot.ask` called, first run `memory.hybrid_search` for relevant context
+  - Include Drive files and LTM memories in Copilot query
+  - Persist Copilot interactions in Local Memory for future recall
+
+#### 2.3.3.3 Universal Context Capture Bridge
+
+- [ ] **Create Context Bridge Service** (`packages/memory-core/src/context-bridge.ts`)
+  - Listen to Pieces OS capture events (via gRPC or SSE if available)
+  - Forward summarized entries to Local Memory using `memory.store`
+  - Capture: tabs, code changes, notes, meetings, etc.
+  - Tag with domain/session metadata for later querying
+
+- [ ] **Configuration**
+  - `PIECES_CONTEXT_BRIDGE_ENABLED=true` (default)
+  - `PIECES_CONTEXT_FILTERS` (optional: domains to include/exclude)
+  - Can be disabled if user doesn't want automatic ingestion
+
+#### 2.3.3.4 Reporting & Documentation Tool
+
+- [ ] **Create Memory Report Tool** (`packages/memory-core/src/reporting.ts`)
+  - Add MCP tool `memory.report` to memory-core
+  - Accept time range, domain, formatting options
+  - Query Local Memory + optional Pieces services for relevant entries
+  - Generate summaries/timelines (meeting notes, status updates, research highlights)
+
+- [ ] **Integration**
+  - Register `memory.report` in MCP hub
+  - Accessible via agents, CLI, or ChatGPT
+  - Support various output formats: markdown, JSON, plain text
+
+#### 2.3.3.5 Enhanced Hybrid Search & Aggregation
+
+- [ ] **Extend Hybrid Search** (`memory.hybrid_search` tool)
+  - Add `include_drive` flag to include Pieces Drive results
+  - Add `include_copilot` flag to include Copilot query results
+  - Deduplicate and rerank results from multiple sources
+  - Attribute sources in response (cortex-local, pieces-ltm, pieces-drive, copilot)
+
+- [ ] **Updated Search Parameters**
+  ```typescript
+  {
+    query: string,
+    include_pieces?: boolean,    // LTM
+    include_drive?: boolean,     // Drive
+    include_copilot?: boolean,   // Copilot
+    limit?: number,
+    time_range?: {
+      start?: string,
+      end?: string
+    }
+  }
+  ```
+
+##### 2.3.4 Event Manager Validation Hardening
+
+- [x] Guard `apps/cortex-os/src/events/event-manager.ts` so `emitEvent` enforces required `type` and `payload` structure.
+  - 2025-10-01: Event manager now validates non-empty `type` strings and object payloads before emitting or persisting.
+- [ ] Add negative/positive unit coverage in `apps/cortex-os/tests/events/event-manager.test.ts` (or create the suite) ensuring malformed events throw.
+- [ ] Re-run focused tests (`pnpm vitest apps/cortex-os/tests/events/event-manager.test.ts --runInBand`) to confirm behavior.
+
+##### 2.3.5 Memory-Core Test Strategy
+
+- [ ] Adopt production-faithful coverage by launching the real memory-core service via Testcontainers (no synthetic stubs beyond network mocking safeguards).
+- [ ] Add fixtures that provision memory-core with loopback auth, run migrations, and expose the base URL to runtime HTTP tests.
+- [ ] Ensure teardown cleans containers and secrets; cache images where CI allows to keep runtimes acceptable.
+- [ ] Update regression suites so Phase 2.3 closes with end-to-end coverage for analysis/relationships/stats/health using the live service.
+
+##### 2.3.6 MCP Runtime Stabilization
+
+- [x] Export a concrete orchestration facade
+  - 2025-10-01: `packages/orchestration/src/service.ts` now emits a merged `config`; apps resolve `provideOrchestration()` via the package surface.
+- [x] Return MCP tool envelopes with populated `content` arrays
+  - 2025-10-01: Gateway responses include brAInwav metadata, timing fields, and text content; cache hits reuse the same envelope shape.
+- [ ] Normalize unknown-tool responses to HTTP 400
+  - Align `apps/cortex-os/src/mcp/gateway.ts` and related handlers with the contract expected in `tests/mcp/facade.contract.test.ts`.
+- [x] Cover status/config endpoints
+  - 2025-10-01: Integration suites assert envelope metadata, cache annotations, and workflow persistence.
+- [ ] Resolve observability hook timeout
+  - Either extend the timeout or ensure the SSE/metrics poll settles within 10 seconds during test runs.
+
+#### 2.4 Full Pieces Integration Architecture
+
+##### 2.4.1 Integration Pattern: Remote MCP Proxies
 
 **Design Principles:**
 
-1. **Zero Code Duplication**: Pieces functionality accessed via proxy, not re-implemented
+1. **Zero Code Duplication**: Pieces functionality accessed via proxies, not re-implemented
 2. **Unified MCP Hub**: Single endpoint exposes both local and remote tools
 3. **Local-First Architecture**: memory-core (SQLite + Qdrant) remains canonical truth
-4. **Graceful Degradation**: Hub fully functional even if Pieces offline
+4. **Graceful Degradation**: Hub fully functional even if Pieces services offline
 5. **Hybrid Retrieval**: Optional aggregator merges local + remote context
 
-**Remote Tool Registration:**
+**Multi-Proxy Architecture:**
 
 ```typescript
 // packages/mcp-server/src/index.ts (simplified)
-const piecesProxy = new PiecesMCPProxy({
-  endpoint: process.env.PIECES_MCP_ENDPOINT,
-  enabled: process.env.PIECES_MCP_ENABLED !== 'false',
-  logger,
-});
+// Initialize all Pieces proxies
+const piecesProxies = {
+  ltm: new PiecesMCPProxy({
+    endpoint: process.env.PIECES_MCP_ENDPOINT,
+    enabled: process.env.PIECES_MCP_ENABLED !== 'false',
+    logger,
+  }),
+  drive: new PiecesDriveProxy({
+    endpoint: process.env.PIECES_DRIVE_ENDPOINT,
+    enabled: process.env.PIECES_DRIVE_ENABLED !== 'false',
+    logger,
+  }),
+  copilot: new PiecesCopilotProxy({
+    endpoint: process.env.PIECES_COPILOT_ENDPOINT,
+    enabled: process.env.PIECES_COPILOT_ENABLED !== 'false',
+    logger,
+  }),
+};
 
-await piecesProxy.connect();
+// Connect all proxies
+await Promise.all(Object.values(piecesProxies).map(p => p.connect()));
 
-for (const tool of piecesProxy.getTools()) {
-  server.addTool({
-    name: `pieces.${tool.name}`,
-    description: `[Remote Pieces] ${tool.description}`,
-    parameters: tool.inputSchema,
-    async execute(args) {
-      return await piecesProxy.callTool(tool.name, args);
-    },
-  });
+// Register tools from each proxy
+for (const [service, proxy] of Object.entries(piecesProxies)) {
+  for (const tool of proxy.getTools()) {
+    server.addTool({
+      name: `pieces_${service}.${tool.name}`,
+      description: `[Remote Pieces ${service}] ${tool.description}`,
+      parameters: tool.inputSchema,
+      async execute(args) {
+        return await proxy.callTool(tool.name, args);
+      },
+    });
+  }
 }
 ```
 
-**Hybrid Search Aggregator:**
+**Enhanced Hybrid Search Aggregator:**
 
 ```typescript
 // memory.hybrid_search tool
 server.addTool({
   name: 'memory.hybrid_search',
-  description: 'Search both local Cortex memory and remote Pieces LTM',
+  description: 'Search across local Cortex memory and all connected Pieces services',
   parameters: z.object({
     query: z.string(),
     include_pieces: z.boolean().default(true),
+    include_drive: z.boolean().default(true),
+    include_copilot: z.boolean().default(false),
     limit: z.number().default(10),
+    time_range: z.object({
+      start: z.string().optional(),
+      end: z.string().optional(),
+    }).optional(),
   }),
-  async execute({ query, include_pieces, limit }) {
+  async execute({ query, include_pieces, include_drive, include_copilot, limit, time_range }) {
+    const results = { sources: [], combined: [] };
+
     // Query local memory-core
-    const localResults = await memoryProvider.search({ query, limit });
-    
-    // Query remote Pieces if enabled and connected
-    let piecesResults = [];
-    if (include_pieces && piecesProxy.isConnected()) {
-      const response = await piecesProxy.callTool('ask_pieces_ltm', {
+    results.local = await memoryProvider.search({ query, limit, time_range });
+    results.sources.push({ name: 'cortex-local', count: results.local.length });
+
+    // Query Pieces LTM
+    if (include_pieces && piecesProxies.ltm.isConnected()) {
+      const response = await piecesProxies.ltm.callTool('ask_pieces_ltm', {
         question: query,
-        chat_llm: 'gpt-4',
+        time_range,
       });
-      piecesResults = parsePiecesResponse(response);
+      results.ltm = parsePiecesResponse(response);
+      results.sources.push({ name: 'pieces-ltm', count: results.ltm.length });
     }
-    
-    // Merge and return with source attribution
-    return {
-      local: localResults.map(r => ({ ...r, source: 'cortex-local' })),
-      remote: piecesResults.map(r => ({ ...r, source: 'pieces-ltm' })),
-      combined: mergeAndRerank(localResults, piecesResults),
-    };
+
+    // Query Pieces Drive
+    if (include_drive && piecesProxies.drive.isConnected()) {
+      const response = await piecesProxies.drive.callTool('drive.search_files', {
+        query,
+        limit,
+      });
+      results.drive = parseDriveResponse(response);
+      results.sources.push({ name: 'pieces-drive', count: results.drive.length });
+    }
+
+    // Query Pieces Copilot (context-aware search)
+    if (include_copilot && piecesProxies.copilot.isConnected()) {
+      // First gather context from other sources
+      const context = gatherContext([results.local, results.ltm, results.drive]);
+      const response = await piecesProxies.copilot.callTool('copilot.search_with_context', {
+        query,
+        context,
+      });
+      results.copilot = parseCopilotResponse(response);
+      results.sources.push({ name: 'pieces-copilot', count: results.copilot.length });
+    }
+
+    // Merge, deduplicate, and rerank all results
+    results.combined = mergeAndRerank([
+      ...results.local?.map(r => ({ ...r, source: 'cortex-local' })) || [],
+      ...results.ltm?.map(r => ({ ...r, source: 'pieces-ltm' })) || [],
+      ...results.drive?.map(r => ({ ...r, source: 'pieces-drive' })) || [],
+      ...results.copilot?.map(r => ({ ...r, source: 'pieces-copilot' })) || [],
+    ]);
+
+    return results;
   },
 });
 ```
 
-##### 2.4.2 Connection Management
+##### 2.4.2 Multi-Proxy Connection Management
 
 **SSE Client Transport:**
 
@@ -457,14 +631,14 @@ MEMORIES_SHORT_STORE=local
 
 ##### 2.3.5 MCP Runtime Stabilization
 
-- [ ] Export a concrete orchestration facade
-  - Target: update `packages/orchestration/src/service.ts` and re-export via `packages/orchestration/src/index.ts` so `provideOrchestration()` resolves in `apps/cortex-os/src/services.ts`.
-- [ ] Return MCP tool envelopes with populated `content` arrays
-  - `packages/orchestration/src/mcp/tools.ts` must map orchestration results to `content: [{ type: 'text', text: ... }]` so `tests/mcp/mcp-server-integration.test.ts` assertions pass.
+- [x] Export a concrete orchestration facade
+  - 2025-10-01: `packages/orchestration/src/service.ts` now emits a merged `config`; apps resolve `provideOrchestration()` via the package surface.
+- [x] Return MCP tool envelopes with populated `content` arrays
+  - 2025-10-01: Gateway responses include brAInwav metadata, timing fields, and text content; cache hits reuse the same envelope shape.
 - [ ] Normalize unknown-tool responses to HTTP 400
   - Align `apps/cortex-os/src/mcp/gateway.ts` and related handlers with the contract expected in `tests/mcp/facade.contract.test.ts`.
-- [ ] Cover status/config endpoints
-  - Add MCP tests for `system.status` and `config.list` plus an invalid tool path to lock in the new formatting.
+- [x] Cover status/config endpoints
+  - 2025-10-01: Integration suites assert envelope metadata, cache annotations, and workflow persistence.
 - [ ] Resolve observability hook timeout
   - Either extend the timeout or ensure the SSE/metrics poll settles within 10 seconds during test runs.
 
@@ -649,7 +823,7 @@ MEMORIES_SHORT_STORE=local
 
 ```
 ───────────────────────────────────────────────
-        Local Deployment (with Pieces MCP)
+        Local Deployment (Full Pieces Integration)
 ───────────────────────────────────────────────
 
                  ┌───────────────────────────┐
@@ -671,13 +845,15 @@ MEMORIES_SHORT_STORE=local
    │ - MCP stdio (local)                       │
    │ - MCP httpStream (remote)                 │
    │ - Local Tools:                            │
-   │   • memory.* (9 tools)                    │
+   │   • memory.* (10 tools: store/search/    │
+   │     analysis/relationships/stats/report)  │
    │   • agent_toolkit_* (5 tools)             │
    │   • memory.hybrid_search (aggregator)     │
-   │ - Remote Tools (via Pieces proxy):        │
-   │   • pieces.ask_pieces_ltm                 │
-   │   • pieces.create_pieces_memory           │
-   │   • pieces.* (auto-discovered)            │
+   │   • memory.context_bridge (capture)       │
+   │ - Remote Tools (via Pieces proxies):      │
+   │   • pieces_ltm.* (LTM tools)              │
+   │   • pieces_drive.* (Drive tools)          │
+   │   • pieces_copilot.* (Copilot tools)      │
    │ - A2A events emit                         │
    │ - /healthz, /readyz                       │
    └───────────┬───────────────┬───────────────┘
@@ -697,20 +873,24 @@ MEMORIES_SHORT_STORE=local
    │ - SQLite (truth)    │     │
    │ - Qdrant (ANN)      │     │
    │ - Embeddings        │     │
+   │ - Context Bridge    │     │
+   │ - Reporting Engine  │     │
    │ - /healthz          │     │
    └───────────┬─────────┘     │
                │               │
-───────────────┼───────────────┼────────────────
+───────────────┼───────────────┼───────────────────────────────
                │               │
    ┌───────────▼─────┐  ┌──────▼────┐  ┌────────────────────────┐
    │ SQLite          │  │ Qdrant    │  │ Pieces OS (host)       │
    │─────────────────│  │───────────│  │────────────────────────│
-   │ unified-        │  │ :6333     │  │ localhost:39300        │
-   │ memories.db     │  │ ANN+filter│  │ - Pieces LTM engine    │
-   │ - Canonical     │  │ (optional)│  │ - SSE/streamable HTTP  │
-   │ - FTS5          │  └───────────┘  │ - ask_pieces_ltm       │
-   └─────────────────┘                 │ - create_pieces_memory │
-                                       └────────────────────────┘
+   │ unified-        │  │ :6333     │  │────────────────────────│
+   │ memories.db     │  │ ANN+filter│  │ :39300  :39301  :39302 │
+   │ - Canonical     │  │ (optional)│  │ - LTM     - Drive    │
+   │ - FTS5          │  └───────────┘  │ - Copilot (all SSE)   │
+   └─────────────────┘                 │ - ask_pieces_ltm       │
+                                      │ - drive.* operations   │
+                                      │ - copilot.* queries    │
+                                      └────────────────────────┘
 
 ───────────────────────────────────────────────
                 Optional/Support
@@ -727,6 +907,8 @@ MEMORIES_SHORT_STORE=local
    │───────────────────────────│
    │ - Calls MCP httpStream    │
    │ - Uses hybrid search      │
+   │ - Context capture bridge  │
+   │ - Generates reports       │
    │ - Emits A2A events        │
    └───────────────────────────┘
 
@@ -738,12 +920,15 @@ MEMORIES_SHORT_STORE=local
    │  agent-toolkit            │
    └───────────────────────────┘
 
-Notes:
-- Pieces MCP runs on host (localhost:39300), accessed via SSE proxy
-- Hub exposes unified tool list: local (memory.*, agent_toolkit_*) + remote (pieces.*)
-- memory.hybrid_search aggregates results from both local and remote sources
-- Graceful degradation: if Pieces offline, hub continues with local tools
-- No code duplication: Pieces functionality accessed via proxy only
+Key Features:
+- Pieces LTM (39300): Long-term memory storage and retrieval
+- Pieces Drive (39301): File/snippet/screenshot/code storage
+- Pieces Copilot (39302): Context-aware AI assistant
+- Hub exposes unified tool list from all sources
+- Context bridge automatically captures Pieces events to Local Memory
+- Hybrid search aggregates across: local + LTM + Drive + Copilot
+- Graceful degradation: hub fully functional with any subset of services
+- All data stays local; cloud syncing is opt-in
 ```
 
 ### Implementation Tasks
@@ -830,6 +1015,9 @@ services:
       - MEMORIES_SHORT_STORE=local
       - MEMORY_DB_PATH=/data/unified-memories.db
       - QDRANT_URL=http://qdrant:6333
+      # Context Bridge Configuration
+      - PIECES_CONTEXT_BRIDGE_ENABLED=true
+      - PIECES_CONTEXT_FILTERS=code,notes,meetings
     depends_on:
       qdrant:
         condition: service_healthy
@@ -849,15 +1037,22 @@ services:
       - CORTEX_HOME=/root/.Cortex-OS
       - AGENT_TOOLKIT_TOOLS_DIR=/opt/agent-toolkit/tools
       - A2A_BUS_URL=nats://a2a-bus:4222
+      # Pieces LTM Configuration
       - PIECES_MCP_ENDPOINT=http://host.docker.internal:39300/model_context_protocol/2024-11-05/sse
       - PIECES_MCP_ENABLED=true
+      # Pieces Drive Configuration
+      - PIECES_DRIVE_ENDPOINT=http://host.docker.internal:39301/model_context_protocol/2024-11-05/sse
+      - PIECES_DRIVE_ENABLED=true
+      # Pieces Copilot Configuration
+      - PIECES_COPILOT_ENDPOINT=http://host.docker.internal:39302/model_context_protocol/2024-11-05/sse
+      - PIECES_COPILOT_ENABLED=true
     depends_on:
       local-memory:
         condition: service_healthy
       a2a-bus:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # Access host's Pieces OS
+      - "host.docker.internal:host-gateway"  # Access all Pieces OS services
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9600/healthz"]
       interval: 30s
@@ -899,6 +1094,9 @@ services:
     environment:
       - MCP_BASE_URL=http://cortex-mcp:9600
       - A2A_BUS_URL=nats://a2a-bus:4222
+      # Enable reporting and context capture
+      - MEMORY_REPORTING_ENABLED=true
+      - CONTEXT_BRIDGE_ENABLED=true
     depends_on:
       cortex-mcp:
         condition: service_healthy
@@ -919,6 +1117,12 @@ services:
 volumes:
   qdrant_data:
   sqlite_data:
+
+# Note: Pieces OS services run on the host machine and are accessed via host.docker.internal:
+# - Pieces LTM: localhost:39300
+# - Pieces Drive: localhost:39301
+# - Pieces Copilot: localhost:39302
+# All use the SSE endpoint: /model_context_protocol/2024-11-05/sse
 ```
 
 ### Client Access Patterns
@@ -1185,9 +1389,24 @@ QDRANT_URL=http://localhost:6333
 QDRANT_API_KEY=...
 QDRANT_COLLECTION=local_memory_v1
 
-# Pieces MCP Integration
+# Pieces LTM Integration
 PIECES_MCP_ENDPOINT=http://localhost:39300/model_context_protocol/2024-11-05/sse
-PIECES_MCP_ENABLED=true  # Set to 'false' to disable remote Pieces integration
+PIECES_MCP_ENABLED=true  # Set to 'false' to disable LTM
+
+# Pieces Drive Integration
+PIECES_DRIVE_ENDPOINT=http://localhost:39301/model_context_protocol/2024-11-05/sse
+PIECES_DRIVE_ENABLED=true  # Set to 'false' to disable Drive
+
+# Pieces Copilot Integration
+PIECES_COPILOT_ENDPOINT=http://localhost:39302/model_context_protocol/2024-11-05/sse
+PIECES_COPILOT_ENABLED=true  # Set to 'false' to disable Copilot
+
+# Pieces Context Bridge
+PIECES_CONTEXT_BRIDGE_ENABLED=true  # Auto-capture Pieces events
+PIECES_CONTEXT_FILTERS=code,notes,meetings  # Comma-separated domains
+
+# Memory Reporting
+MEMORY_REPORTING_ENABLED=true  # Enable memory.report tool
 
 # A2A
 A2A_BUS_URL=nats://localhost:4222
@@ -1227,3 +1446,7 @@ docker compose -f docker/memory-stack/docker-compose.yml down
 - A2A events provide observability for all operations
 - Legacy duplications are eliminated
 - CI/CD enforces all quality gates
+- Full Pieces integration provides LTM, Drive, Copilot, context capture, and reporting
+- All data remains local-first; cloud syncing is opt-in only
+- Modular proxy architecture allows enabling/disabling any Pieces service independently
+- Hybrid search aggregates results from all connected sources with source attribution

@@ -52,15 +52,19 @@ describe('MCP Server Integration', () => {
 		const result = await response.json();
 		expect(result).toBeDefined();
 
+		expect(result.tool).toBe('system.status');
+		expect(result.metadata?.brand).toBe('brAInwav');
+		expect(typeof result.metadata?.correlationId).toBe('string');
+		expect(result.metadata?.resultSource).toBe('direct');
+
 		// System status should return basic runtime information
 		expect(result.content).toBeDefined();
 		expect(Array.isArray(result.content)).toBe(true);
+		expect(result.content[0]?.text).toContain('[brAInwav MCP] system.status');
 
-		if (result.content.length > 0) {
-			const systemInfo = result.content[0];
-			expect(systemInfo.type).toBe('text');
-			expect(systemInfo.text).toBeDefined();
-		}
+		const payload = result.data;
+		expect(payload).toBeDefined();
+		expect(Array.isArray(payload?.services)).toBe(true);
 	});
 
 	it('should handle configuration tool requests', async () => {
@@ -78,14 +82,38 @@ describe('MCP Server Integration', () => {
 		expect(response.status).toBe(200);
 		const result = await response.json();
 		expect(result).toBeDefined();
-		expect(result.content).toBeDefined();
+		expect(result.tool).toBe('config.list');
+		expect(result.metadata?.brand).toBe('brAInwav');
+		expect(result.metadata?.resultSource).toBe('direct');
+		expect(Array.isArray(result.content)).toBe(true);
+		expect(result.content[0]?.text).toContain('[brAInwav MCP] config.list');
+	});
 
-		// Should return configuration data
-		if (result.content.length > 0) {
-			const configInfo = result.content[0];
-			expect(configInfo.type).toBe('text');
-			expect(configInfo.text).toBeDefined();
-		}
+	it('should annotate cached results with cache metadata', async () => {
+		const request = {
+			name: 'config.list',
+			arguments: { prefix: 'cache-test' },
+		};
+
+		const firstResponse = await fetch(`${runtime.mcpUrl}/tools/call`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(request),
+		});
+		expect(firstResponse.status).toBe(200);
+		const firstResult = await firstResponse.json();
+		expect(firstResult.metadata?.resultSource).toBe('direct');
+
+		const secondResponse = await fetch(`${runtime.mcpUrl}/tools/call`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(request),
+		});
+		expect(secondResponse.status).toBe(200);
+		const secondResult = await secondResponse.json();
+		expect(secondResult.metadata?.resultSource).toBe('cache');
+		expect(typeof secondResult.metadata?.correlationId).toBe('string');
+		expect(secondResult.content[0]?.text).toContain('via cache');
 	});
 
 	it('should handle orchestration workflow listing', async () => {
@@ -125,6 +153,9 @@ describe('MCP Server Integration', () => {
 		expect(response.status).toBe(400);
 		const error = await response.json();
 		expect(error.error).toBeDefined();
+		expect(error.error.code).toBe('not_found');
+		expect(typeof error.error.message).toBe('string');
+		expect(error.error.message).toContain('nonexistent.tool');
 	});
 
 	it('should handle malformed requests properly', async () => {

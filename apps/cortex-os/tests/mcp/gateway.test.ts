@@ -14,8 +14,10 @@ describe('MCP Gateway', () => {
 		const result: unknown = await gw.callTool('system.status', {});
 		if (isError(result)) throw new Error('Unexpected error response');
 		if (!isRecord(result)) throw new Error('Result not object');
-		const services = result.services as unknown[] | undefined;
-		expect(services?.length).toBeGreaterThan(0);
+		expect(result.tool).toBe('system.status');
+		const data = result.data as Record<string, unknown> | undefined;
+		const services = (data?.services as unknown[]) ?? [];
+		expect(services.length).toBeGreaterThan(0);
 	});
 	it('rate limits after threshold (synthetic)', async () => {
 		let triggered = false;
@@ -29,8 +31,12 @@ describe('MCP Gateway', () => {
 				triggered = true;
 				break;
 			}
-			if (isRecord(res) && typeof res.cpu === 'number') {
-				lastOkCpu = res.cpu;
+			if (isRecord(res)) {
+				const data = res.data as Record<string, unknown> | undefined;
+				const cpu = data?.cpu;
+				if (typeof cpu === 'number') {
+					lastOkCpu = cpu;
+				}
 			}
 		}
 		if (!triggered) expect(lastOkCpu).toBeDefined();

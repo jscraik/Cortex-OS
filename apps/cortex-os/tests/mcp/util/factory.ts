@@ -43,6 +43,8 @@ export function createTestMcpContainer(opts: CreateTestMcpOptions = {}) {
 		},
 	});
 
+	container.bind(TOKENS.MCPGateway).toConstantValue(gateway);
+
 	const facade: TestMcpFacade = {
 		listTools: () => gateway.listTools(),
 		callTool: (tool, input) => gateway.callTool(tool, input),

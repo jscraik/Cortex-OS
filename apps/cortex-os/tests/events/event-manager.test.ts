@@ -1,4 +1,11 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { randomUUID } from 'node:crypto';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	createEventManager,
+	type EventManager,
+	type RuntimeEvent,
+} from '../../src/events/event-manager.js';
+import type { RuntimeHttpServer } from '../../src/http/runtime-server.js';
 import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
 import { prepareLoopbackAuth } from '../setup.global.js';
 
@@ -252,5 +259,69 @@ describe('Event Manager', () => {
 		}
 
 		expect(eventOrder).toEqual(['test.order.1', 'test.order.2', 'test.order.3']);
+	});
+});
+
+describe('createEventManager validation', () => {
+	let manager: EventManager;
+	let broadcast: ReturnType<typeof vi.fn>;
+
+	function createHttpServerStub(): RuntimeHttpServer {
+		return {
+			broadcast,
+			listen: vi.fn(),
+			close: vi.fn(),
+			dependencies: {
+				tasks: {} as unknown,
+				profiles: {} as unknown,
+				artifacts: {} as unknown,
+				evidence: {} as unknown,
+			},
+		} as unknown as RuntimeHttpServer;
+	}
+
+	beforeEach(() => {
+		broadcast = vi.fn();
+		manager = createEventManager({
+			httpServer: createHttpServerStub(),
+			maxBufferedEvents: 5,
+			ledgerFilename: `events/test-${randomUUID()}.ndjson`,
+		});
+	});
+
+	it('rejects non-object events', async () => {
+		await expect(manager.emitEvent(null as unknown as RuntimeEvent)).rejects.toThrow(
+			'Runtime events require an object payload',
+		);
+	});
+
+	it('rejects events with empty type', async () => {
+		await expect(
+			manager.emitEvent({ type: '   ', data: { ok: true } } as unknown as RuntimeEvent),
+		).rejects.toThrow('Runtime events require a non-empty type');
+	});
+
+	it('rejects events with non-object payloads', async () => {
+		await expect(
+			manager.emitEvent({ type: 'test.invalid', data: null } as unknown as RuntimeEvent),
+		).rejects.toThrow('Runtime events require a data object payload');
+
+		await expect(
+			manager.emitEvent({ type: 'test.invalid', data: [] } as unknown as RuntimeEvent),
+		).rejects.toThrow('Runtime events require a data object payload');
+	});
+
+	it('trims event types before broadcasting', async () => {
+		await manager.emitEvent({
+			type: '  test.trim  ',
+			data: { value: 42 },
+		});
+
+		expect(broadcast).toHaveBeenCalledTimes(1);
+		const payload = broadcast.mock.calls[0]?.[0] as { type: string; data: RuntimeEvent };
+		expect(payload.type).toBe('test.trim');
+		expect(payload.data.type).toBe('test.trim');
+		const recent = manager.getRecentEvents();
+		expect(recent[0]?.type).toBe('test.trim');
 	});
 });

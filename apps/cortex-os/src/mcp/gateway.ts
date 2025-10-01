@@ -158,11 +158,21 @@ export class McpGateway {
 		if (cacheKey) {
 			const entry = cache[cacheKey];
 			if (entry && entry.expires > Date.now()) {
+				const finishedAt = new Date().toISOString();
 				const durationMs = this.computeDuration(startedClock);
+				const formatted = this.formatToolResult(name, entry.value, {
+					correlationId,
+					startedAt,
+					finishedAt,
+					durationMs,
+					resultSource: 'cache',
+					sessionId: this.getRuntimeSession(),
+					inputDigest,
+				});
 				this.publishToolCompleted({
 					tool: name,
 					correlationId,
-					finishedAt: new Date().toISOString(),
+					finishedAt,
 					durationMs,
 					status: 'success',
 					resultSource: 'cache',
@@ -171,7 +181,7 @@ export class McpGateway {
 					correlationId,
 					resultSource: 'cache',
 				});
-				return entry.value;
+				return formatted;
 			}
 		}
 
@@ -179,27 +189,37 @@ export class McpGateway {
 			const parsed = def.inputSchema.parse(input);
 			const result = await this.dispatch(name, parsed);
 			const output = def.outputSchema.parse(result);
-			const formatted = this.formatToolResult(name, output);
 
 			if (cacheKey && def.cacheTtlMs) {
 				cache[cacheKey] = {
-					value: formatted,
+					value: output,
 					expires: Date.now() + def.cacheTtlMs,
 				};
 			}
 
+			const finishedAt = new Date().toISOString();
 			const durationMs = this.computeDuration(startedClock);
+			const resultSource: 'cache' | 'direct' = 'direct';
+			const formatted = this.formatToolResult(name, output, {
+				correlationId,
+				startedAt,
+				finishedAt,
+				durationMs,
+				resultSource,
+				sessionId: this.getRuntimeSession(),
+				inputDigest,
+			});
 			this.publishToolCompleted({
 				tool: name,
 				correlationId,
-				finishedAt: new Date().toISOString(),
+				finishedAt,
 				durationMs,
 				status: 'success',
-				resultSource: cacheKey ? 'cache' : 'direct',
+				resultSource,
 			});
 			this.audit(name, 'success', durationMs, {
 				correlationId,
-				resultSource: cacheKey ? 'cache' : 'direct',
+				resultSource,
 			});
 			return formatted;
 		} catch (err) {
@@ -391,8 +411,33 @@ export class McpGateway {
 		return Math.max(1, Math.round(performance.now() - startedClock));
 	}
 
-	private formatToolResult(name: string, output: unknown) {
-		const text = typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+	private formatToolResult(
+		name: string,
+		output: unknown,
+		context: {
+			correlationId: string;
+			startedAt: string;
+			finishedAt: string;
+			durationMs: number;
+			resultSource: 'cache' | 'direct';
+			sessionId?: string;
+			inputDigest?: string;
+		},
+	) {
+		const baseText = typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+		const summary = `[brAInwav MCP] ${name} completed via ${context.resultSource} in ${context.durationMs}ms.`;
+		const text = `${summary}\n${baseText}`;
+		const metadataEntries: Array<[string, unknown]> = [
+			['brand', 'brAInwav'],
+			['correlationId', context.correlationId],
+			['startedAt', context.startedAt],
+			['finishedAt', context.finishedAt],
+			['durationMs', context.durationMs],
+			['resultSource', context.resultSource],
+			['sessionId', context.sessionId],
+			['inputDigest', context.inputDigest],
+		];
+		const metadata = Object.fromEntries(metadataEntries.filter(([, value]) => value !== undefined));
 		return {
 			tool: name,
 			content: [
@@ -401,6 +446,7 @@ export class McpGateway {
 					text,
 				},
 			],
+			metadata,
 			data: output,
 		};
 	}

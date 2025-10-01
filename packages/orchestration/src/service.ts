@@ -1,10 +1,23 @@
 import type { Logger } from 'winston';
 import { createCerebrumGraph } from './langgraph/create-cerebrum-graph.js';
 import type { Agent, OrchestrationConfig, PlanningContext, Task } from './types.js';
+
 // Defer hooks init to runtime to avoid build order issues; dynamic import inside method
+
+const DEFAULT_FACADE_CONFIG: OrchestrationConfig = {
+	maxConcurrentOrchestrations: 10,
+	defaultStrategy: 'adaptive',
+	enableMultiAgentCoordination: true,
+	enableAdaptiveDecisions: true,
+	planningTimeout: 300_000,
+	executionTimeout: 1_800_000,
+	qualityThreshold: 0.8,
+	performanceMonitoring: true,
+};
 
 export interface OrchestrationFacade {
 	engine: { kind: 'langgraph' };
+	config: OrchestrationConfig;
 	run: (
 		task: Task,
 		agents: Agent[],
@@ -20,9 +33,15 @@ export function provideOrchestration(
 ): OrchestrationFacade {
 	const engine = { kind: 'langgraph' as const };
 	const graph = createCerebrumGraph();
+	const config: OrchestrationConfig = {
+		...DEFAULT_FACADE_CONFIG,
+		..._config,
+		defaultStrategy: _config.defaultStrategy ?? DEFAULT_FACADE_CONFIG.defaultStrategy,
+	};
 
 	return {
 		engine,
+		config,
 		run: async (
 			task: Task,
 			_agents: Agent[],

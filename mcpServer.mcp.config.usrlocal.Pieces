@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "pieces": {
+      "command": "pieces",
+      "args": ["mcp"],
+      "env": {
+        "PIECES_MCP_ENABLED": "true",
+        "PIECES_OS_URL": "http://localhost:39300"
+      }
+    }
+  }
+}

@@ -1,11 +1,23 @@
 import { describe, expect, test } from 'vitest';
 
 const shouldAttempt = process.env.CORTEX_SKIP_NATS_TEST !== '1';
+const imageName =
+	process.env.CORTEX_TESTCONTAINERS_NATS_IMAGE ??
+	process.env.TESTCONTAINERS_NATS_IMAGE ??
+	process.env.NATS_TEST_IMAGE ??
+	'';
 
 const suite = shouldAttempt ? describe : describe.skip;
 
 suite('NATS connectivity', () => {
 	test('starts container and accepts connections', async () => {
+		if (!imageName) {
+			console.warn(
+				'NATS smoke test skipped: set CORTEX_TESTCONTAINERS_NATS_IMAGE (or TESTCONTAINERS_NATS_IMAGE) to run this suite',
+			);
+			return;
+		}
+
 		let container: { stop: () => Promise<void> } | undefined;
 		let connection:
 			| {
@@ -20,7 +32,7 @@ suite('NATS connectivity', () => {
 			const testcontainers = await import('@testcontainers/nats');
 			const nats = await import('nats');
 			const { NatsContainer } = testcontainers;
-			const startedContainer = await new NatsContainer().start();
+			const startedContainer = await new NatsContainer(imageName).start();
 			container = { stop: () => startedContainer.stop() };
 
 			// Type assertion to access container methods that may not be in the type definition

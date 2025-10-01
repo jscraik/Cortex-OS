@@ -70,6 +70,7 @@ The brAInwav Cortex MCP Server is a unified Model Context Protocol hub that prov
 ┌─────────────────────────────────────────┐
 │        brAInwav MCP Hub                 │
 │        (port 3024)                      │
+│  Cloudflare: cortex-mcp.brainwav.io    │
 └───────────┬─────────────────────────────┘
             │
     ┌───────┴─────────┐
@@ -333,7 +334,8 @@ curl -X POST http://localhost:3024/mcp \
 
 ### Health Checks
 
-- **Endpoint**: `http://localhost:3024/health`
+- **Local Endpoint**: `http://localhost:3024/health`
+- **Cloudflare Tunnel**: `https://cortex-mcp.brainwav.io/health`
 - **Returns**: Server status and memory-core health
 - **Pieces Status**: Included in health response
 

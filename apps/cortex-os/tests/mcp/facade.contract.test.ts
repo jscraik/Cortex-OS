@@ -19,10 +19,23 @@ describe('MCP Facade Contract', () => {
 		expect(listed).toEqual(registry);
 	});
 
-	it('system.status returns expected shape subset', async () => {
+	it('system.status returns expected envelope shape subset', async () => {
 		const res = await mcp.callTool('system.status', {});
 		if (!res || typeof res !== 'object') throw new Error('Result not object');
-		const maybeServices = (res as Record<string, unknown>).services;
+		const envelope = res as {
+			tool?: string;
+			content?: Array<{ type: string; text?: string }>;
+			metadata?: Record<string, unknown>;
+			data?: { services?: unknown[] };
+		};
+		expect(envelope.tool).toBe('system.status');
+		const metadata = envelope.metadata as Record<string, unknown> | undefined;
+		expect(metadata?.['brand']).toBe('brAInwav');
+		expect(typeof metadata?.['correlationId']).toBe('string');
+		const firstContent = envelope.content?.[0];
+		expect(firstContent?.type).toBe('text');
+		expect(firstContent?.text).toContain('brAInwav MCP');
+		const maybeServices = envelope.data?.services;
 		expect(Array.isArray(maybeServices)).toBe(true);
 	});
 

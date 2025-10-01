@@ -40,6 +40,8 @@ async function readRequestBody(req: IncomingMessage): Promise<string> {
 
 function statusForError(code: string | undefined): number {
 	switch (code) {
+		case 'unknown_tool':
+		case 'tool_not_found':
 		case 'not_found':
 			return 400;
 		case 'forbidden':
