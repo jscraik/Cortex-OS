@@ -20,7 +20,7 @@
 - Phase 2 remains in progress: legacy adapters in `packages/memories` now throw via `legacyMemoryAdapterRemoved`; `packages/memories/src/adapters/hybrid-search.ts` was converted to a guard on 2025-09-30, leaving Python and enforcement work outstanding.
 - Python `packages/cortex-mcp` continues to host a full server implementation with no deprecation notice or proxy shim; the package must either emit a clear deprecation message or forward every request to the HTTP memory-core before Phase 2.2 can close out.
 - `apps/cortex-os` does not yet emit `tool.execution.started/completed` A2A events; integration work is still required before we can check off Phase 2.3 and the downstream MCP tooling in Phase 3.
-- The `examples/memories-mlx` demo now targets `@cortex-os/memory-core`, the guard runs clean (no allowlist) via `pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`; next step is surfacing the check inside `pnpm test:smart`.
+- The `examples/memories-mlx` demo now targets `@cortex-os/memory-core`, the guard runs clean (no allowlist) via `pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`; the `simple-tests` Nx project now exists, but `pnpm nx test simple-tests` fails earlier on pre-existing build errors (`@cortex-os/hooks`, `@cortex-os/model-gateway`, `a2a`), so Smart Nx wiring remains pending.
 
 ## Critical Architecture Deltas
 
@@ -257,7 +257,8 @@ On startup, toolkit resolves tool scripts in priority order:
 
 #### 2.2 Refactor Python Cortex-MCP
 
-- [ ] Deprecate `packages/cortex-mcp` (Python)
+- [x] Deprecate `packages/cortex-mcp` (Python)
+  - 2025-09-30: Module import now emits a DeprecationWarning and runtime requires `LOCAL_MEMORY_BASE_URL`, with `CORTEX_MCP_ALLOW_INPROCESS_MEMORY` as a temporary escape hatch.
 - [ ] Or refactor to proxy to memory-core HTTP endpoint
 - [ ] Remove separate LocalMemoryAdapter
 - [ ] Ensure no duplicate memory logic
@@ -274,7 +275,7 @@ On startup, toolkit resolves tool scripts in priority order:
   - [x] Fail on direct imports from `packages/memories`
     - 2025-09-30: Guard runs via `pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`, blocking both package and relative imports with no allowlist.
 - [x] Fail on direct imports from `packages/rag`
-    - 2025-09-30: Covered by the same guard; extend enforcement into Smart Nx once CI wiring is ready.
+    - 2025-09-30: Covered by the same guard; Nx project `simple-tests` added to bring the check under Smart Nx once the upstream build failures (`@cortex-os/hooks`, `@cortex-os/model-gateway`, `a2a`) are resolved.
   - [ ] Ensure all ops go through `LocalMemoryProvider`
 
 - [ ] Write A2A integration tests for `apps/cortex-os`

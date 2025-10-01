@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-echo "🚀 Initializing Cortex-OS DevContainer..."
+echo "[brAInwav] 🚀 Initializing Cortex-OS DevContainer..."
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -28,42 +28,59 @@ export NODE_ENV=development
 export CORTEX_HOME=/opt/cortex-home
 export AGENT_TOOLKIT_TOOLS_DIR=$CORTEX_HOME/tools/agent-toolkit
 
-log_info "Setting up workspace..."
+log_info "[brAInwav] Setting up workspace..."
 
-# Install dependencies
-log_info "Installing Node.js dependencies..."
+# Install dependencies (fast path by default)
+log_info "[brAInwav] Installing Node.js dependencies (fast path)..."
 cd $CORTEX_HOME
-pnpm install || {
+pnpm install --frozen-lockfile --prefer-offline || {
     log_warn "pnpm install failed, trying with corepack..."
     corepack enable
-    pnpm install
+    pnpm install --frozen-lockfile --prefer-offline
 }
 
-# Trust mise configuration
-log_info "Configuring mise..."
-mise trust
-mise install
+# Trust mise configuration (non-fatal and quick)
+log_info "[brAInwav] Configuring mise..."
+mise trust || true
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ]; then
+    log_info "[brAInwav] Installing mise tools (full mode)"
+    mise install || true
+else
+    log_info "[brAInwav] Skipping mise install (set CORTEX_DEV_FULL=1 to enable)"
+fi
 
 # Create necessary directories
-log_info "Creating directories..."
+log_info "[brAInwav] Creating directories..."
 mkdir -p $CORTEX_HOME/tools/agent-toolkit
 mkdir -p $CORTEX_HOME/.nx/cache
 mkdir -p $CORTEX_HOME/coverage
 
 # Set up Git hooks if not already set
-if [ ! -d "$CORTEX_HOME/.git/hooks" ]; then
-    log_info "Setting up Git hooks..."
-    cd $CORTEX_HOME
-    npx husky install || true
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ]; then
+    if [ ! -d "$CORTEX_HOME/.git/hooks" ]; then
+            log_info "[brAInwav] Setting up Git hooks..."
+            cd $CORTEX_HOME
+            npx husky install || true
+    fi
+else
+    log_info "[brAInwav] Skipping Git hooks setup (set CORTEX_DEV_FULL=1 to enable)"
 fi
 
-# Build packages
-log_info "Building packages..."
-pnpm build || log_warn "Build failed - this might be expected on first run"
+# Skip default build for faster startup; allow opt-in
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ]; then
+    log_info "[brAInwav] Building packages (full mode)..."
+    pnpm build || log_warn "Build failed - this might be expected on first run"
+else
+    log_info "[brAInwav] Skipping initial build (set CORTEX_DEV_FULL=1 to enable)"
+fi
 
-# Verify installation
-log_info "Verifying installation..."
-pnpm readiness:check || log_warn "Readiness check failed - some services might not be available"
+# Optional readiness check
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ]; then
+    log_info "[brAInwav] Verifying installation..."
+    pnpm readiness:check || log_warn "Readiness check failed - some services might not be available"
+else
+    log_info "[brAInwav] Skipping readiness check (set CORTEX_DEV_FULL=1 to enable)"
+fi
 
 # Create a welcome message
 cat > $CORTEX_HOME/.devcontainer-welcome.txt << 'EOF'
@@ -90,5 +107,5 @@ Useful Commands:
 Happy coding! 🚀
 EOF
 
-log_info "✅ DevContainer setup complete!"
-log_info "Check .devcontainer-welcome.txt for quick start info."
+log_info "[brAInwav] ✅ DevContainer setup complete!"
+log_info "[brAInwav] Check .devcontainer-welcome.txt for quick start info."

@@ -8,15 +8,6 @@
       "env": {
         "BRAINWAV_SERVICE": "local-memory"
       }
-    },
-    "nx-mcp": {
-      "command": "npx",
-      "args": [
-        "nx-mcp@latest"
-      ],
-      "env": {
-        "BRAINWAV_WORKSPACE": "cortex-os"
-      }
     }
   }
 }

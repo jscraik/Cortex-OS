@@ -456,7 +456,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 				.map(() => 'json_extract(memories.tags, ?) IS NOT NULL')
 				.join(' AND ');
 			conditions.push(`(${tagConditions})`);
-			input.tags.forEach((tag) => params.push(`$[? == "${tag}"]`));
+			for (const tag of input.tags) {
+				params.push(`$[? == "${tag}"]`);
+			}
 		}
 
 		if (conditions.length > 0) {

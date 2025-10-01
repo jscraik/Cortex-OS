@@ -3,17 +3,18 @@
 
 set -euo pipefail
 
-echo "🚀 Running post-start setup..."
+echo "[brAInwav] 🚀 Running post-start setup..."
 
 cd /opt/cortex-home
 
-# Start background services if needed
-if command -v docker-compose &> /dev/null; then
-    # Start Qdrant if not running
+# Do not auto-start heavy services by default; allow opt-in
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ] && command -v docker-compose &> /dev/null; then
     if ! docker ps | grep -q qdrant; then
-        echo "Starting Qdrant..."
-        docker-compose -f docker/memory-stack/docker-compose.new.yml up -d qdrant
+            echo "[brAInwav] Starting Qdrant (full mode)..."
+            docker-compose -f docker/memory-stack/docker-compose.new.yml up -d qdrant || true
     fi
+else
+    echo "[brAInwav] Skipping service auto-start (set CORTEX_DEV_FULL=1 to enable)"
 fi
 
 # Show welcome message
@@ -23,25 +24,25 @@ fi
 
 # Check if services are ready
 echo ""
-echo "Checking service status..."
+echo "[brAInwav] Checking service status..."
 sleep 2
 
 # Check Qdrant
 if curl -fsS http://localhost:6333/collections &> /dev/null; then
-    echo "✅ Qdrant is running"
+    echo "[brAInwav] ✅ Qdrant is running"
 else
-    echo "⚠️ Qdrant not available"
+    echo "[brAInwav] ⚠️ Qdrant not available"
 fi
 
 # Check Local Memory
 if curl -fsS http://localhost:3028/healthz &> /dev/null; then
-    echo "✅ Local Memory is running"
+    echo "[brAInwav] ✅ Local Memory is running"
 else
-    echo "⚠️ Local Memory not available"
+    echo "[brAInwav] ⚠️ Local Memory not available"
 fi
 
 echo ""
-echo "To start development:"
+echo "[brAInwav] To start development:"
 echo "  pnpm dev        # Start all services"
 echo "  pnpm test       # Run tests"
 echo "  pnpm lint       # Lint code"

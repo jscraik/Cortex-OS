@@ -111,24 +111,47 @@ def _resolve_adapters(
             timeout_seconds=settings.http_timeout_seconds,
             retries=settings.http_retries,
         )
-    memory_override = overrides.get("memory")
-    if memory_override is not None:
-        memory = memory_override
-    else:
-        primary: LocalMemoryAdapter | None = None
-        if settings.local_memory_base_url:  # pragma: no cover - runtime HTTP wiring
-            primary = LocalMemoryAdapter(
-                base_url=str(settings.local_memory_base_url),
-                api_key=settings.local_memory_api_key,
-                namespace=settings.local_memory_namespace,
-                timeout_seconds=settings.http_timeout_seconds,
-                retries=settings.http_retries,
-            )
-        memory = ResilientMemoryAdapter(
+    memory = _build_memory_adapter(settings=settings, overrides=overrides)
+    return AdapterBundle(search=search, memory=memory)
+
+
+def _build_memory_adapter(
+    *, settings: MCPSettings, overrides: dict[str, Any]
+) -> LocalMemoryAdapter | ResilientMemoryAdapter | None:
+    override = overrides.get("memory")
+    if override is not None:
+        return override
+
+    allow_fallback = (
+        os.getenv("CORTEX_MCP_ALLOW_INPROCESS_MEMORY", "false").lower()
+        in {"1", "true", "yes"}
+    )
+    if not settings.local_memory_base_url and not allow_fallback:
+        raise RuntimeError(
+            "LOCAL_MEMORY_BASE_URL is required for cortex-mcp. Configure the "
+            "@cortex-os/memory-core HTTP endpoint or set "
+            "CORTEX_MCP_ALLOW_INPROCESS_MEMORY=1 as a temporary legacy escape hatch."
+        )
+
+    primary: LocalMemoryAdapter | None = None
+    if settings.local_memory_base_url:  # pragma: no cover - runtime HTTP wiring
+        primary = LocalMemoryAdapter(
+            base_url=str(settings.local_memory_base_url),
+            api_key=settings.local_memory_api_key,
+            namespace=settings.local_memory_namespace,
+            timeout_seconds=settings.http_timeout_seconds,
+            retries=settings.http_retries,
+        )
+        return ResilientMemoryAdapter(
             primary=primary,
             fallback=InMemoryMemoryAdapter(),
         )
-    return AdapterBundle(search=search, memory=memory)
+
+    logger.warning(
+        "In-process memory fallback enabled via CORTEX_MCP_ALLOW_INPROCESS_MEMORY. "
+        "This path is deprecated and will be removed."
+    )
+    return ResilientMemoryAdapter(primary=None, fallback=InMemoryMemoryAdapter())
 
 
 def _resolve_auth_bundle(overrides: dict[str, Any] | None) -> AuthBundle:

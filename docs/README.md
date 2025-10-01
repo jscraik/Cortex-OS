@@ -3,118 +3,137 @@
 <div align="center">
 
 [![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
-[![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 
-This directory contains comprehensive documentation for the Cortex-OS project, including architectural guides, development workflows, and user documentation.
+Welcome to the Cortex-OS documentation hub. Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** that enables AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations.
 
-## Documentation Structure
+## 📚 Documentation Structure
 
-### Core Documentation
+### 🚀 Getting Started
+- [Installation & Setup](guides/getting-started/development-setup.md)
+- [Cortex CLI Upgrade Guide](guides/getting-started/README-CORTEX-CLI-UPGRADE.md)
+- [Docker Configuration](guides/configuration/docker-setup.md)
+- [TDD Enforcement Guide](guides/tdd/tdd-enforcement-guide.md)
 
-- **Architecture Guides** - System design and component interaction patterns
-- **API Documentation** - Service interfaces and contract specifications
-- **Development Guides** - Setup, workflow, and contribution guidelines
-- **User Manuals** - End-user documentation for applications and tools
+### 🏗️ Architecture
+- [System Architecture Overview](architecture/README.md)
+- [Agent Toolkit Integration](architecture/agent-toolkit-integration.md)
+- [Agent Toolkit Resolution](architecture/agent-toolkit-resolution.md)
+- [Agent Toolkit Review](architecture/agent-toolkit-review.md)
+- [Archon Integration](architecture/archon-integration.md)
 
-### Key Documents
+### 🔧 Reference & Standards
+- [Build Configuration Standards](reference/standards/BUILD_CONFIGURATION_STANDARDS.md)
+- [Coding Standards](reference/standards/CODING_STANDARDS.md)
+- [Code Quality Guidelines](reference/standards/code-quality.md)
+- [Evaluation Gates](reference/standards/evals-and-gates.md)
 
-- `architecture.md` - System architecture including configuration management
-- `repository-organization.md` - Repository structure and organization principles
-- `repository-organization-improvements.md` - Recent improvements and changes
-- `final-status-report.md` - Project status and completion summaries
-- `brainwav-cortex-mcp-user-guide.md` - MCP integration and usage guide
-- `dev-tools-reference.md` - Development tools and script references
-- Various implementation and status reports
+### 🛠️ CLI & Tools
+- [CLI Comparison](reference/cli/cli-comparison.md)
+- [CLI Tools Integration](reference/cli/cli-tools-integration.md)
+- [Development Tools Reference](reference/cli/dev-tools-reference.md)
+- [Cortex Code Model Picker](reference/cli/cortex-code-model-picker.md)
 
-## Documentation Types
+### 🔌 Integrations
+- **MCP (Model Context Protocol)**
+  - [User Guide](integrations/mcp/brainwav-cortex-mcp-user-guide.md)
+  - [Security Audit](integrations/mcp/mcp.audit.md)
+  - [Fix Plan](integrations/mcp/mcp.fix-plan.md)
+  - [Security Score](integrations/mcp/mcp.security-score.md)
 
-### Technical Documentation
+- **Python & ML**
+  - [AI Models Status](integrations/python/AI_MODELS_STATUS_FINAL.md)
+  - [Cortex-Py MLX Servers Plan](integrations/python/cortex-py-mlx-servers-plan.md)
+  - [External SSD Model Setup](integrations/python/EXTERNALSSD_MODEL_SETUP.md)
+  - [Corrected Models Guide](integrations/python/EXTERNALSSD_MODELS_CORRECTED.md)
 
-#### Architecture Documentation
+- **Cloud Services**
+  - [Cloudflare Tunnel Setup](integrations/cloud-services/CLOUDFLARE_TUNNEL.md)
+  - [Port Configuration Summary](integrations/cloud-services/cloudflare-tunnel-ports-summary.md)
 
-- System design principles
-- Component interaction patterns
-- Data flow diagrams
-- Integration guidelines
+### 🔒 Security
+- **Implementation**
+  - [OAuth Implementation Summary](security/implementation/oauth-implementation-summary.md)
+  - [OAuth Provider Setup](security/implementation/oauth-provider-setup.md)
 
-#### API Documentation
+### 👥 Community
+- [Agent Guidelines](community/AGENTS.md)
+- [Claude Instructions](community/CLAUDE.md)
 
-- Service interfaces
-- Contract specifications
-- Schema definitions
-- Integration examples
+### 📊 Project Management
+- **Planning**
+  - [AGUI Integration](project/planning/agui-integration.md)
+  - [Docusaurus Migration Plan](project/planning/docusaurus-migration-plan.md)
+  - [Data Sanitization](project/planning/data-sanitization.md)
 
-### Process Documentation
+## 🎯 Key Concepts
 
-#### Development Workflows
+### ASBR Runtime
+Cortex-OS implements an **Autonomous Software Behavior Reasoning** runtime that:
+- Orchestrates AI agents through event-driven architecture
+- Provides secure MCP integrations for external tooling
+- Maintains strict governance and quality boundaries
+- Enables multi-agent collaboration via A2A communication
 
-- Setup and installation procedures
-- Build and test automation
-- Code quality and security validation
-- Deployment and release processes
+### Architecture Principles
+1. **Event-Driven**: All inter-package communication via A2A events
+2. **Loose Coupling**: No direct cross-package imports enforced by linting
+3. **Contract-Based**: Well-defined interfaces with Zod validation
+4. **Governance-First**: All behavior governed by `.cortex/` policies
+5. **Security-First**: OWASP compliance and capability boundaries
 
-#### Configuration Management
+### Development Workflow
+1. **Research**: Use semantic search to find existing patterns
+2. **Planning**: Create TDD plans based on requirements
+3. **Implementation**: Execute with red-green-refactor cycle
+4. **Verification**: Run quality gates and validate structure
 
-- Environment variable configuration
-- Port allocation and management
-- Service configuration and setup
-- Development script usage
+## 🔍 Quick Links
 
-#### GitHub Apps Integration
+### Development Commands
+```bash
+# Install dependencies
+pnpm install
 
-- Setup and configuration procedures
-- Diagnostic and troubleshooting tools
-- Port management and conflict resolution
-- Service orchestration and monitoring
+# Start development server
+pnpm dev
 
-- Setup and installation guides
-- Development best practices
-- Testing procedures
-- Deployment guidelines
+# Run tests with coverage
+pnpm test:coverage
 
-#### Governance
+# Security scanning
+pnpm security:scan
 
-- Code review processes
-- Quality standards
-- Security policies
-- Compliance requirements
+# Structure validation
+pnpm structure:validate
+```
 
-## Documentation Standards
+### Quality Gates
+- **Coverage**: 90% minimum threshold
+- **Security**: Semgrep OWASP compliance
+- **Structure**: Import boundary validation
+- **Documentation**: Consistent markdown standards
 
-All documentation follows these standards:
+## 📝 Contributing to Documentation
 
-- **Markdown Format**: All docs use GitHub-flavored Markdown
-- **Status Badges**: Include relevant CI/CD and project status badges
-- **Clear Structure**: Logical organization with proper headings
-- **Code Examples**: Include practical examples where applicable
-- **Links**: Cross-reference related documentation
+When adding documentation:
+1. Choose the appropriate category directory
+2. Follow the existing naming conventions
+3. Include proper cross-references
+4. Test internal links
+5. Update this README if adding a new category
 
-## Maintenance
+## 🤝 Getting Help
 
-Documentation is maintained alongside code changes:
+- Check existing documentation in relevant sections
+- Review the architecture guide for system design
+- Consult package READMEs for specific functionality
+- Join our community discussions
 
-- Update docs when changing functionality
-- Review documentation during code reviews
-- Ensure examples remain current
-- Validate links and references
+---
 
-## Contributing
-
-When contributing documentation:
-
-1. Follow the established format and style
-2. Include relevant status badges
-3. Cross-reference related documents
-4. Validate markdown syntax
-5. Test all code examples
-
-## Related Resources
-
-- [Repository Organization](/project-documentation/repository-organization-audit.md)
-- [Development Guidelines](/.github/copilot-instructions.md)
-- [Agent Documentation](/../AGENTS.md)
-- [Package Documentation](/packages/README.md)
+**Last Updated**: October 2025
+**Version**: 1.0.0
+**Maintainer**: Cortex-OS Team

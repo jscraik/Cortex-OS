@@ -22,7 +22,7 @@ function sendJson(res: http.ServerResponse, status: number, payload: unknown): v
 	res.end(JSON.stringify(payload));
 }
 
-function parseStoreInput(body: any): MemoryStoreInput {
+function parseStoreInput(body: unknown): MemoryStoreInput {
 	const now = new Date().toISOString();
 	const content = String(body.text ?? '').trim();
 	return {
@@ -47,7 +47,7 @@ async function readJson(req: http.IncomingMessage): Promise<unknown> {
 		req.on('end', () => {
 			try {
 				resolve(data ? JSON.parse(data) : {});
-			} catch (error) {
+			} catch (_error) {
 				reject(new Error('Invalid JSON body'));
 			}
 		});
