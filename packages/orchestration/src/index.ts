@@ -94,6 +94,12 @@ export {
 } from './langgraph/tool-system.js';
 
 export {
+	type OrchestrationFacade,
+	provideOrchestration,
+	OrchestrationService,
+} from './service.js';
+
+export {
 	type ComplianceEvaluationResult,
 	SecurityCoordinator,
 } from './security/security-coordinator.js';

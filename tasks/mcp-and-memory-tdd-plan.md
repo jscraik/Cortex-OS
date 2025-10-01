@@ -455,6 +455,19 @@ MEMORIES_SHORT_STORE=local
 - [ ] Ensure teardown cleans containers and secrets; cache images where CI allows to keep runtimes acceptable.
 - [ ] Update regression suites so Phase 2.3 closes with end-to-end coverage for analysis/relationships/stats/health using the live service.
 
+##### 2.3.5 MCP Runtime Stabilization
+
+- [ ] Export a concrete orchestration facade
+  - Target: update `packages/orchestration/src/service.ts` and re-export via `packages/orchestration/src/index.ts` so `provideOrchestration()` resolves in `apps/cortex-os/src/services.ts`.
+- [ ] Return MCP tool envelopes with populated `content` arrays
+  - `packages/orchestration/src/mcp/tools.ts` must map orchestration results to `content: [{ type: 'text', text: ... }]` so `tests/mcp/mcp-server-integration.test.ts` assertions pass.
+- [ ] Normalize unknown-tool responses to HTTP 400
+  - Align `apps/cortex-os/src/mcp/gateway.ts` and related handlers with the contract expected in `tests/mcp/facade.contract.test.ts`.
+- [ ] Cover status/config endpoints
+  - Add MCP tests for `system.status` and `config.list` plus an invalid tool path to lock in the new formatting.
+- [ ] Resolve observability hook timeout
+  - Either extend the timeout or ensure the SSE/metrics poll settles within 10 seconds during test runs.
+
 #### 2.4 Create Tests
 
 - [ ] Write memory deduplication enforcement tests
