@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import {
-	type ContractSubagent,
+	type Subagent as ContractSubagent,
 	loadSubagents as discoverSubagents,
 	type LoadedSubagents,
 	type LoadSubagentsOptions,
 	type SubagentToolBinding,
 	type SubagentToolsOptions,
 	subagentTools,
-} from '@cortex-os/agents';
+} from '@cortex-os/agent-contracts';
 import {
 	runSlash as defaultRunSlash,
 	parseSlash,

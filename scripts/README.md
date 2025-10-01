@@ -11,98 +11,188 @@
 
 This directory contains utility scripts, templates, fixes, tests, and other development tools for the Cortex-OS project.
 
-## New Management Scripts (Root Level)
+## 🏗️ Directory Organization (Updated October 2025)
 
-**Important**: Key management scripts have been moved to the repository root for easy access:
+The scripts directory has been reorganized for better maintainability and discoverability:
 
-### GitHub Apps Management
+### Core Categories
 
-- **`../github-apps-diagnostic.sh`** - Comprehensive diagnostic and status checking for all GitHub apps
-- **`../start-github-apps.sh`** - Start all GitHub apps (AI, Semgrep, Structure) with proper configuration  
-- **`../free-ports.sh`** - Manage port allocation and free ports used by GitHub apps
+- **`/scripts/core/`** - Essential development scripts (dev-setup, health-check)
+- **`/scripts/memory/`** - Memory management, monitoring, and safety tools
+- **`/scripts/testing/`** - Test execution, validation, and TDD tools
+- **`/scripts/ai-ml/`** - AI/ML model tools and integration scripts
+- **`/scripts/deployment/`** - Build and deployment automation
+- **`/scripts/system/`** - System utilities and process management
+- **`/scripts/development/`** - Development workflow and pattern enforcement
+- **`/scripts/performance/`** - Performance monitoring and optimization tools
 
-#### Usage Examples
+### Existing Specialized Directories
+
+- **`/scripts/security/`** - Security scanning and validation (30+ scripts)
+- **`/scripts/code-quality/`** - Code quality and linting tools (16+ scripts)
+- **`/scripts/mcp/`** - Model Context Protocol tools
+- **`/scripts/maintenance/`** - System maintenance scripts
+- **`/scripts/github-apps/`** - GitHub applications management
+- **`/scripts/mlx/`** - MLX-specific tools (under ai-ml/)
+- **`/scripts/compliance/`** - Licensing and governance
+- **`/scripts/templates/`** - Template files for code generation
+- **`/scripts/updates/`** - Component update scripts
+- **`/scripts/utils/`** - General utility scripts
+- **`/scripts/legacy/`** - Deprecated or outdated scripts
+
+## 🚀 Quick Start
+
+### Essential Commands
 
 ```bash
-# From repository root:
-./github-apps-diagnostic.sh    # Check GitHub apps status
-./start-github-apps.sh         # Start all GitHub apps
-./free-ports.sh all            # Free all GitHub app ports
-./free-ports.sh list           # Show current port usage
+# Development environment setup
+./scripts/core/dev-setup.sh
+
+# System health check
+./scripts/core/health-check.sh
+
+# Memory management
+./scripts/memory/memory-guard.sh
+
+# Run tests safely
+./scripts/testing/test-safe.sh
+
+# Security scanning
+./scripts/security/security-scan.sh
+
+# Code quality checks
+./scripts/code-quality/run-all-checks.sh
 ```
 
-### Port Configuration
+## 📋 Script Categories
 
-The new centralized port management system uses:
+### Core Scripts (`/scripts/core/`)
 
-- **`config/ports.env`** - Environment variable definitions for all services
-- **`config/ports.json`** - Structured service registry with metadata
+- **`dev-setup.sh`** - Primary development environment setup
+- **`enforce-node-version.sh`** - Ensures correct Node.js version
+- **`health-check.sh`** - System health verification
 
-All scripts now support the `CORTEX_OS_HOME` environment variable for portable configuration.
+### Memory Management (`/scripts/memory/`)
 
-## Directory Structure
+- **`memory-guard.sh`** - Active memory monitoring and protection
+- **`memory-monitor.sh`** - Passive memory usage tracking
+- **`memory-manager-mcp.sh`** - MCP-based memory management
+- **`emergency-memory-cleanup.sh`** - Emergency memory cleanup procedures
+- **`memory-regression-guard.mjs`** - Prevents memory regressions
+- **`aggregate-memory-peaks.mjs`** - Analyzes memory usage patterns
 
-- `/scripts/cleanup/` - Scripts for cleaning up and removing legacy code
-- `/scripts/code-quality/` - Scripts related to code quality, formatting, and static analysis
-- `/scripts/compliance/` - Scripts related to licensing, compliance, and governance
-- `/scripts/database/` - Scripts related to database management and operations
-- `/scripts/deploy/` - Scripts for deploying Cortex-OS to various environments
-- `/scripts/dist/` - Distribution and packaging scripts
-- `/scripts/fixes/` - Scripts that fix specific issues or perform one-time corrections
-- `/scripts/license/` - Scripts for license scanning and management
-- `/scripts/security/` - Scripts related to security fixes, validations, and improvements
-- `/scripts/temp/` - Temporary configuration files and snippets
-- `/scripts/templates/` - Template files used for code generation or injection
-- `/scripts/tests/` - Scripts for testing various components of the system
-- `/scripts/updates/` - Scripts that update components and configurations
-- `/scripts/utils/` - Utility scripts that help with common development tasks
+### Testing (`/scripts/testing/`)
 
-## Best Practices
+- **`test-safe.sh`** - Memory-safe test execution
+- **`run-mcp-tests.sh`** - MCP-specific test suite
+- **`test-tdd-coach.sh`** - TDD coaching and validation
+- **`verify-tdd-integration.sh`** - TDD integration verification
+- **`comprehensive-cli-test.sh`** - Full CLI testing suite
+
+### AI/ML Tools (`/scripts/ai-ml/`)
+
+- **`ai-test-generator.mjs`** - Automated test generation
+- **`validate-ai-setup.sh`** - AI environment validation
+- **`scan-ai-models.sh`** - AI model scanning and validation
+- **`optimize-ai-cache.sh`** - AI cache optimization
+- **`mlx/`** - MLX-specific tools and utilities
+
+### System Utilities (`/scripts/system/`)
+
+- **`free-ports.sh`** - Port management and cleanup
+- **`emergency-pnpm-kill.sh`** - Emergency pnpm process termination
+- **`codemap.py`** - Visual codebase mapping tool
+- **`enforce-node-version.sh`** - Node.js version enforcement
+
+### Development Workflow (`/scripts/development/`)
+
+- **`tdd-enforcer.sh`** - Enforces TDD practices
+- **`pattern-guard.sh`** - Pattern compliance checking
+- **`release-gate.sh`** - Release gate validation
+- **`comprehensive-demo.sh`** - Full system demonstration
+
+### Performance (`/scripts/performance/`)
+
+- **`perf-check.mjs`** - Performance baseline checking
+- **`perf-autotune.mjs`** - Automatic performance tuning
+- **`memory-baseline-auto.mjs`** - Automated memory baselining
+
+## 🔧 Usage Guidelines
+
+### Running Scripts
+
+```bash
+# Make scripts executable
+chmod +x scripts/category/script.sh
+
+# Run bash scripts
+./scripts/category/script.sh [options]
+
+# Run Node.js scripts
+node scripts/category/script.mjs [options]
+
+# Run Python scripts
+python3 scripts/category/script.py [options]
+```
+
+### Environment Variables
+
+Most scripts support these environment variables:
+
+- **`CORTEX_OS_HOME`** - Cortex-OS installation directory (auto-detected)
+- **`DEBUG`** - Enable debug output (`DEBUG=1`)
+- **`VERBOSE`** - Enable verbose logging (`VERBOSE=1`)
+
+### Best Practices
 
 1. **Script Organization**:
-   - Place scripts in the appropriate subdirectory based on their function
-   - Use descriptive filenames that indicate the script's purpose
+   - Scripts are categorized by function and domain
+   - Use descriptive filenames that indicate purpose
    - Include proper shebang lines for executable scripts
 
-2. **Template Files**:
-   - Store all template files in `/scripts/templates/`
-   - Use `.template` extension for non-executable templates
-   - Provide proper documentation in template files
+2. **Script Documentation**:
+   - Each script includes a header comment explaining its purpose
+   - Required arguments and environment variables are documented
+   - Usage examples provided where appropriate
 
-3. **Script Documentation**:
-   - Include a header comment explaining the script's purpose
-   - Document any required arguments or environment variables
-   - Add usage examples where appropriate
+3. **Error Handling**:
+   - Scripts include proper error handling and logging
+   - Exit codes follow standard conventions (0=success, non-zero=error)
+   - Failed operations are logged with context
 
-4. **TypeScript Exclusion**:
-   - Template files and standalone TypeScript files used as templates are excluded from compilation in tsconfig.json
-   - Patterns: `scripts/**/*template*.ts`, `scripts/**/*-class.ts`, `scripts/**/*-standalone.ts`
+4. **Portability**:
+   - Scripts work across macOS and Linux
+   - Paths are relative to script location or use `$CORTEX_OS_HOME`
+   - Dependencies are minimal and well-documented
 
-## Usage
+## 🔄 Migration Notes
 
-To run a script:
+The following scripts were moved during reorganization (October 2025):
 
-```bash
-# For Node.js scripts
-node scripts/utils/example-script.mjs
+- Memory-related scripts → `/scripts/memory/`
+- Testing scripts → `/scripts/testing/`
+- AI/ML scripts → `/scripts/ai-ml/`
+- System utilities → `/scripts/system/`
+- Development workflow tools → `/scripts/development/`
+- Performance tools → `/scripts/performance/`
+- Outdated scripts → `/scripts/legacy/`
 
-# For bash scripts
-./scripts/fixes/fix-terminal.sh
-```
+If you have scripts referencing the old paths, please update them accordingly.
 
-## Available Scripts
+## 🤝 Contributing
 
-### Fixes
+When adding new scripts:
 
-- `fix-mlx-test.sh` - Fixes MLX test files
-- `fix-terminal.sh` - Resolves sudo terminal issues
+1. Choose the appropriate category directory
+2. Follow the existing naming conventions
+3. Include proper documentation and error handling
+4. Test scripts across different environments
+5. Update this README if adding a new category
 
-### Templates
+## 📞 Support
 
-- `neo4j-secure-class.template` - Template for Neo4j secure class implementation
-- `neo4j-secure-standalone.ts` - Standalone TypeScript implementation of secure Neo4j class
-
-### Utils
-
-- `example-template-usage.mjs` - Example of how to use template files
-- `verify-template-setup.mjs` - Verifies template configuration is correct
+For script-related issues:
+- Check the script's help text (`script.sh --help`)
+- Review the script header for usage information
+- Create an issue in the Cortex-OS repository
+- Join the `#scripts` channel in our Discord

@@ -15,6 +15,13 @@
 - [ ] **Phase 8**: Legacy Code Removal & Migration (Day 11)
 - [ ] **Phase 9**: Final Integration & Documentation (Day 12)
 
+### Status Snapshot (2025-09-30)
+
+- Phase 2 remains in progress: legacy adapters in `packages/memories` now throw via `legacyMemoryAdapterRemoved`; `packages/memories/src/adapters/hybrid-search.ts` was converted to a guard on 2025-09-30, leaving Python and enforcement work outstanding.
+- Python `packages/cortex-mcp` continues to host a full server implementation with no deprecation notice or proxy shim; the package must either emit a clear deprecation message or forward every request to the HTTP memory-core before Phase 2.2 can close out.
+- `apps/cortex-os` does not yet emit `tool.execution.started/completed` A2A events; integration work is still required before we can check off Phase 2.3 and the downstream MCP tooling in Phase 3.
+- The `examples/memories-mlx` demo now targets `@cortex-os/memory-core`, the guard runs clean (no allowlist) via `pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`; next step is surfacing the check inside `pnpm test:smart`.
+
 ## Critical Architecture Deltas
 
 ### Non-Negotiable Changes
@@ -243,7 +250,9 @@ On startup, toolkit resolves tool scripts in priority order:
 - [x] Remove/strip `packages/memories/src/adapters/store.sqlite.ts`
 - [x] Remove/strip `packages/memories/src/adapters/store.qdrant.ts`
 - [x] Remove `packages/memories/src/adapters/hybrid-search.ts`
+  - 2025-09-30: Replaced with a legacy guard that throws via `legacyMemoryAdapterRemoved` to enforce use of memory-core.
 - [ ] Remove/strip `packages/rag/src/adapters/*`
+  - 2025-09-30: Verify removal of any resurrected adapters under `packages/rag/src/` as part of cleanup.
 - [x] Remove `packages/rag-integration.ts`
 
 #### 2.2 Refactor Python Cortex-MCP
@@ -263,7 +272,9 @@ On startup, toolkit resolves tool scripts in priority order:
 
 - [ ] Write memory deduplication enforcement tests
   - [x] Fail on direct imports from `packages/memories`
-  - [ ] Fail on direct imports from `packages/rag`
+    - 2025-09-30: Guard runs via `pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`, blocking both package and relative imports with no allowlist.
+- [x] Fail on direct imports from `packages/rag`
+    - 2025-09-30: Covered by the same guard; extend enforcement into Smart Nx once CI wiring is ready.
   - [ ] Ensure all ops go through `LocalMemoryProvider`
 
 - [ ] Write A2A integration tests for `apps/cortex-os`

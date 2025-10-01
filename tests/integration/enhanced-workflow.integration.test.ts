@@ -5,10 +5,16 @@ import {
 	getPlanningStatusTool,
 	type PlanningPhase as McpPlanningPhase,
 } from '../../packages/mcp-core/src/tools/planning-tools.js';
-import { NoopEmbedder } from '../../packages/memories/src/adapters/embedder.noop.js';
-import { InMemoryStore } from '../../packages/memories/src/adapters/store.memory.js';
-import { createMemoryService } from '../../packages/memories/src/service/memory-service.js';
+import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
 import { executePlannedWorkflow } from '../../packages/orchestration/src/langgraph/planning-orchestrator.js';
+
+function createEphemeralProvider() {
+	process.env.MEMORY_DB_PATH = ':memory:';
+	process.env.MEMORY_DEFAULT_LIMIT = process.env.MEMORY_DEFAULT_LIMIT || '10';
+	process.env.MEMORY_MAX_LIMIT = process.env.MEMORY_MAX_LIMIT || '25';
+	process.env.MEMORY_DEFAULT_THRESHOLD = process.env.MEMORY_DEFAULT_THRESHOLD || '0.2';
+	return createMemoryProviderFromEnv();
+}
 
 describe('Cross-cutting workflow integration', () => {
 	it('runs the brAInwav planning pipeline end-to-end with memory persistence', async () => {
@@ -58,9 +64,7 @@ describe('Cross-cutting workflow integration', () => {
 			priority: 6,
 		});
 
-		const store = new InMemoryStore();
-		const embedder = new NoopEmbedder();
-		const memoryService = createMemoryService(store, embedder);
+		const memoryProvider = createEphemeralProvider();
 
 		for (const phase of workflow.planningResult.phases) {
 			const result = await executePlanningPhaseTool.execute({
@@ -85,34 +89,35 @@ describe('Cross-cutting workflow integration', () => {
 		expect(status.context.history.length).toBeGreaterThan(0);
 
 		const nowIso = new Date().toISOString();
-		const memoryId = `integration-${Date.now()}`;
-		const stored = await memoryService.save({
-			id: memoryId,
-			kind: 'event',
-			text: `brAInwav orchestration summary: ${workflow.output ?? 'no output generated'}`,
+		const stored = await memoryProvider.store({
+			content: `brAInwav orchestration summary: ${workflow.output ?? 'no output generated'}`,
 			tags: ['brAInwav', 'orchestration', workflow.coordinationDecision.strategy],
-			createdAt: nowIso,
-			updatedAt: nowIso,
-			provenance: {
+			domain: 'integration-session',
+			importance: 6,
+			metadata: {
 				source: 'system',
 				actor: 'brAInwav-integration-suite',
-			},
-			policy: {
-				scope: 'session',
+				recordedAt: nowIso,
 			},
 		});
 
-		expect(stored.status).toBe('approved');
+		expect(stored.vectorIndexed).toBeDefined();
 
-		const fetched = await memoryService.get(memoryId);
-		expect(fetched?.status).toBe('approved');
-		expect(fetched?.tags).toContain('orchestration');
+		const searchResults = await memoryProvider.search({
+			query: 'orchestration summary',
+			limit: 5,
+			search_type: 'keyword',
+			domain: 'integration-session',
+		});
 
-		const searchResults = await memoryService.search({ text: 'orchestration', topK: 5 });
-		expect(searchResults.some((memory) => memory.id === memoryId)).toBe(true);
+		expect(searchResults.some((memory) => memory.id === stored.id)).toBe(true);
 
-		const pending = await memoryService.listPending();
-		expect(pending).toBeDefined();
-		expect(pending.length).toBe(0);
+		const stats = await memoryProvider.stats({
+			domain: 'integration-session',
+			include: ['total_count', 'domain_distribution'],
+		});
+
+		expect(stats.totalCount).toBeGreaterThan(0);
+		expect(stats.domainDistribution['integration-session']).toBeGreaterThan(0);
 	});
 });

@@ -6,7 +6,7 @@
  * @status TDD-DRIVEN
  */
 
-import type { PRPOrchestrator } from '@cortex-os/prp-runner';
+import type { PRPOrchestrator } from '@cortex-os/prp-types';
 import { z } from 'zod';
 import { fixedTimestamp } from './lib/determinism.js';
 import { runBuildNode, runEvaluationNode, runStrategyNode } from './nodes/index.js';

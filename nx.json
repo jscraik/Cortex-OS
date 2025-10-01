@@ -25,41 +25,110 @@
       "!{projectRoot}/**/*.spec.tsx",
       "!{projectRoot}/**/*.test.tsx"
     ],
-    "test": ["default"],
-    "lint": ["default"],
-    "typecheck": ["default"]
+    "test": [
+      "default"
+    ],
+    "lint": [
+      "default"
+    ],
+    "typecheck": [
+      "default"
+    ]
   },
   "targetDefaults": {
     "build": {
-      "inputs": ["production", "^production"],
-      "outputs": ["{projectRoot}/dist"],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "cache": true,
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "test": {
-      "inputs": ["test", "^production"],
-      "outputs": ["{projectRoot}/coverage"],
-      "dependsOn": ["^build"],
-      "cache": true
+      "inputs": [
+        "test",
+        "^production"
+      ],
+      "outputs": [
+        "{projectRoot}/coverage"
+      ],
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": true,
+      "options": {
+        "retryFailedTests": true,
+        "maxRetries": 3,
+        "flakyTestRetryOptions": {
+          "enabled": true,
+          "maxAttempts": 3,
+          "retryDelay": 500
+        }
+      }
     },
     "lint": {
-      "inputs": ["lint", "^production"],
+      "inputs": [
+        "lint",
+        "^production"
+      ],
       "cache": true
     },
     "typecheck": {
-      "inputs": ["typecheck", "^production"],
+      "inputs": [
+        "typecheck",
+        "^production"
+      ],
       "cache": true
     },
     "e2e": {
-      "inputs": ["default"],
-      "dependsOn": ["^build"]
+      "inputs": [
+        "default"
+      ],
+      "dependsOn": [
+        "^build"
+      ],
+      "options": {
+        "retryFailedTests": true,
+        "maxRetries": 2,
+        "flakyTestRetryOptions": {
+          "enabled": true,
+          "maxAttempts": 2,
+          "retryDelay": 1000
+        }
+      }
     }
   },
   "tasksRunnerOptions": {
     "default": {
+      "runner": "nx-cloud",
       "options": {
         "maxParallel": 1,
-        "useDependencyGraph": true
+        "useDependencyGraph": true,
+        "cacheableOperations": [
+          "build",
+          "test",
+          "lint",
+          "typecheck"
+        ],
+        "accessToken": "${NX_CLOUD_ACCESS_TOKEN}",
+        "distributedTaskExecution": true,
+        "retryableOperations": [
+          "test",
+          "e2e",
+          "build"
+        ],
+        "flakyTaskRetryOptions": {
+          "maxRetries": 3,
+          "enabled": true,
+          "retryDelay": 1000,
+          "retryDelayMultiplier": 2,
+          "maxRetryDelay": 10000
+        }
       }
     }
   },

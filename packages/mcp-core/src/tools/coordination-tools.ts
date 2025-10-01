@@ -274,10 +274,16 @@ export class RegisterAgentTool implements McpTool<RegisterAgentInput, RegisterAg
 				},
 			};
 
-			session.agents.push(agent);
-			session.metadata.updatedAt = new Date();
+			const updatedSession = {
+				...session,
+				agents: [...session.agents, agent],
+				metadata: {
+					...session.metadata,
+					updatedAt: new Date(),
+				},
+			};
 
-			this.manager.saveSession(session);
+			this.manager.saveSession(updatedSession);
 
 			console.log(
 				`brAInwav Coordination: Registered agent ${agent.id} in session ${input.coordinationId} with security validation`,
@@ -463,30 +469,50 @@ export class AssignTaskTool implements McpTool<AssignTaskInput, AssignTaskResult
 			}
 
 			const task = createCoordinationTask(input);
-			const assignedAgent = selectAgentForTask(session.agents, input.strategy, task, input.agentId);
+			const selectedAgent = selectAgentForTask(
+				session.agents,
+				input.strategy,
+				task,
+				input.agentId,
+			);
 
-			if (assignedAgent) {
-				await this.processAgentAssignment(
+			let updatedAgent: Agent | undefined = selectedAgent;
+			let updatedTask: CoordinationTask = task;
+			if (selectedAgent) {
+				const validated = await this.validateAndPrepareAssignment(
 					task,
-					assignedAgent,
+					selectedAgent,
 					session.securityContext,
 					input.validateSecurity !== false,
 				);
+				updatedAgent = validated.updatedAgent;
+				updatedTask = validated.updatedTask;
 			}
 
-			session.tasks.push(task);
-			session.metadata.updatedAt = new Date();
+			const updatedAgents = selectedAgent
+				? session.agents.map((a) => (a.id === selectedAgent.id ? (updatedAgent as Agent) : a))
+				: session.agents;
 
-			this.manager.saveSession(session);
+			const updatedSession = {
+				...session,
+				tasks: [...session.tasks, updatedTask],
+				agents: updatedAgents,
+				metadata: {
+					...session.metadata,
+					updatedAt: new Date(),
+				},
+			};
+
+			this.manager.saveSession(updatedSession);
 
 			console.log(
-				`brAInwav Coordination: Assigned task ${task.id} to agent ${assignedAgent?.id || 'unassigned'} using ${input.strategy} strategy`,
+				`brAInwav Coordination: Assigned task ${updatedTask.id} to agent ${updatedAgent?.id || 'unassigned'} using ${input.strategy} strategy`,
 			);
 
 			this.emitA2AEvent('coordination.task.assigned', {
 				coordinationId: input.coordinationId,
-				taskId: task.id,
-				agentId: assignedAgent?.id,
+				taskId: updatedTask.id,
+				agentId: updatedAgent?.id,
 				strategy: input.strategy,
 				priority: input.task.priority,
 				securityValidated: input.validateSecurity,
@@ -496,8 +522,8 @@ export class AssignTaskTool implements McpTool<AssignTaskInput, AssignTaskResult
 
 			return {
 				coordinationId: input.coordinationId,
-				task,
-				assignedAgent,
+				task: updatedTask,
+				assignedAgent: updatedAgent,
 				strategy: input.strategy,
 				securityValidated: input.validateSecurity !== false,
 				timestamp: new Date().toISOString(),
@@ -516,16 +542,16 @@ export class AssignTaskTool implements McpTool<AssignTaskInput, AssignTaskResult
 		}
 	}
 
-	private async processAgentAssignment(
+	private async validateAndPrepareAssignment(
 		task: CoordinationTask,
-		assignedAgent: Agent,
+		agent: Agent,
 		securityContext: SecurityContext,
 		validateSecurity: boolean,
-	): Promise<void> {
-		task.assignedAgent = assignedAgent.id;
+	): Promise<{ updatedAgent: Agent; updatedTask: CoordinationTask }> {
+		const updatedTask: CoordinationTask = { ...task, assignedAgent: agent.id };
 
 		if (validateSecurity) {
-			const isValid = await this.validateTaskAssignment(task, assignedAgent, securityContext);
+			const isValid = await this.validateTaskAssignment(updatedTask, agent, securityContext);
 			if (!isValid) {
 				throw new ToolExecutionError(
 					'brAInwav Coordination: Task assignment failed security validation',
@@ -536,8 +562,13 @@ export class AssignTaskTool implements McpTool<AssignTaskInput, AssignTaskResult
 			}
 		}
 
-		assignedAgent.status = 'busy';
-		assignedAgent.metadata.lastActive = new Date();
+		const updatedAgent: Agent = {
+			...agent,
+			status: 'busy',
+			metadata: { ...agent.metadata, lastActive: new Date() },
+		};
+
+		return { updatedAgent, updatedTask };
 	}
 
 	private async validateTaskAssignment(

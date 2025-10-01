@@ -4,7 +4,6 @@
   "service": "devcontainer",
   "workspaceFolder": "/opt/cortex-home",
   "shutdownAction": "stopCompose",
-
   // Features to install in the container
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
@@ -19,21 +18,24 @@
       "version": "3.12.6",
       "installTools": true
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": true
-    },
     "ghcr.io/devcontainers/features/git:1": {
       "version": "latest",
       "ppa": false
     }
   },
-
   // Customizations to run after container creation
-  "postCreateCommand": "/opt/cortex-home/scripts/dev-setup-postcreate.sh",
-
+  "postCreateCommand": "bash -lc 'bash /opt/cortex-home/scripts/development/dev-setup-postcreate.sh'",
   // Ports to forward
-  "forwardPorts": [3000, 3001, 3002, 3003, 3028, 6333, 9600, 9700],
+  "forwardPorts": [
+    3000,
+    3001,
+    3002,
+    3003,
+    3028,
+    6333,
+    9600,
+    9700
+  ],
   "portsAttributes": {
     "3000": {
       "label": "MCP Server (Cloudflare Tunnel)",
@@ -68,7 +70,6 @@
       "onAutoForward": "notify"
     }
   },
-
   // Environment variables
   "remoteEnv": {
     "NODE_ENV": "development",
@@ -78,7 +79,6 @@
     "LOG_FORMAT": "pretty",
     "MISE_ENV": "development"
   },
-
   // VS Code specific settings
   "customizations": {
     "vscode": {
@@ -105,7 +105,6 @@
         "ms-vscode.docker",
         "ms-azuretools.vscode-docker"
       ],
-
       // Settings
       "settings": {
         // General
@@ -118,37 +117,34 @@
           "source.fixAll.eslint": "explicit",
           "source.organizeImports": "explicit"
         },
-
         // TypeScript/JavaScript
         "typescript.preferences.includePackageJsonAutoImports": "on",
         "typescript.suggest.autoImports": true,
         "typescript.updateImportsOnFileMove.enabled": "always",
-        "eslint.workingDirectories": ["packages/*", "apps/*"],
+        "eslint.workingDirectories": [
+          "packages/*",
+          "apps/*"
+        ],
         "eslint.validate": [
           "javascript",
           "javascriptreact",
           "typescript",
           "typescriptreact"
         ],
-
         // Python
         "python.defaultInterpreterPath": "/usr/local/bin/python",
         "python.formatting.provider": "black",
         "python.linting.enabled": true,
         "python.linting.ruffEnabled": true,
-
         // Rust
         "rust-analyzer.checkOnSave.command": "clippy",
         "rust-analyzer.cargo.features": "all",
-
         // Testing
         "vitest.enable": true,
         "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
-
         // Docker
         "docker.composeFile": "../docker/memory-stack/docker-compose.new.yml",
         "docker.dockerComposeBuild": "docker-compose",
-
         // Files
         "files.exclude": {
           "**/node_modules": true,
@@ -160,7 +156,6 @@
           "**/.DS_Store": true,
           "**/Thumbs.db": true
         },
-
         // Search
         "search.exclude": {
           "**/node_modules": true,
@@ -174,20 +169,16 @@
       }
     }
   },
-
   // Mount the agent toolkit tools
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localWorkspaceFolder}/tools/agent-toolkit,target=/opt/cortex-home/tools/agent-toolkit,type=bind,consistency=cached"
   ],
-
   // Run commands after the container is created
-  "postStartCommand": "/opt/cortex-home/scripts/dev-setup-poststart.sh",
-
+  "postStartCommand": "bash -lc 'bash /opt/cortex-home/scripts/development/dev-setup-poststart.sh'",
   // User configuration
-  "remoteUser": "root",
-
+  "remoteUser": "vscode",
   // Lifecycle scripts
-  "onCreateCommand": "/opt/cortex-home/scripts/dev-setup-oncreate.sh",
-  "updateContentCommand": "/opt/cortex-home/scripts/dev-setup-update.sh"
+  "onCreateCommand": "bash -lc 'bash /opt/cortex-home/scripts/development/dev-setup-oncreate.sh'",
+  "updateContentCommand": "bash -lc 'bash /opt/cortex-home/scripts/development/dev-setup-update.sh'"
 }

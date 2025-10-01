@@ -1,27 +1,13 @@
-#!/bin/bash
-# dev-setup-update.sh - Update script for DevContainer
-
+#!/usr/bin/env bash
 set -euo pipefail
 
-echo "🔄 Updating DevContainer..."
+echo "[brAInwav] devcontainer updateContent: syncing environment..."
 
-cd /opt/cortex-home
+WS="${CORTEX_HOME:-/opt/cortex-home}"
+cd "$WS"
 
-# Update dependencies
-echo "Updating dependencies..."
-pnpm update
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm install --frozen-lockfile || pnpm install
+fi
 
-# Update mise tools
-echo "Updating mise tools..."
-mise install
-
-# Clean caches
-echo "Cleaning caches..."
-pnpm store prune
-pnpm nx reset
-
-# Rebuild if needed
-echo "Rebuilding packages..."
-pnpm build
-
-echo "✅ Update complete!"
+echo "[brAInwav] updateContent complete."

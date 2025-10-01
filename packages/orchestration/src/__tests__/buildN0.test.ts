@@ -1,5 +1,6 @@
-import type { BoundKernelTool, ContractSubagent } from '@cortex-os/agents';
+import type { Subagent as ContractSubagent } from '@cortex-os/agent-contracts';
 import type { HookResult } from '@cortex-os/hooks';
+import type { BoundKernelTool } from '@cortex-os/kernel';
 import { AIMessage, type BaseMessage, ToolMessage } from '@langchain/core/messages';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';

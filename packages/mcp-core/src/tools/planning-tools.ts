@@ -16,15 +16,7 @@ import { ToolExecutionError } from '../tools.js';
 
 const sharedPlanningSessionManager = new PlanningSessionManager();
 
-const _PlanningTaskSchema = z.object({
-	id: z.string().min(1),
-	description: z.string().min(1),
-	complexity: z.number().int().min(1).max(10),
-	priority: z.number().int().min(1).max(10),
-	estimatedDuration: z.number().int().positive(),
-	dependencies: z.array(z.string()),
-	metadata: z.record(z.unknown()).default({}),
-});
+// Note: Planning task schema is defined in the planning session manager; no local unused schema here.
 
 const CreatePlanningSessionInputSchema = z.object({
 	name: z.string().min(1, 'planning session name is required'),
@@ -185,17 +177,23 @@ export class ExecutePlanningPhaseTool
 
 			const phaseResult = await this.executeDSPPhase(input.phase, input.action, planningContext);
 
-			planningContext.currentPhase = input.phase;
-			planningContext.steps.push({
-				phase: input.phase,
-				action: input.action,
-				status: phaseResult.success ? 'completed' : 'failed',
-				timestamp: new Date(),
-				result: phaseResult.result,
-			});
-			planningContext.metadata.updatedAt = new Date();
+			const updatedContext: PlanningContext = {
+				...planningContext,
+				currentPhase: input.phase,
+				steps: [
+					...planningContext.steps,
+					{
+						phase: input.phase,
+						action: input.action,
+						status: phaseResult.success ? 'completed' : 'failed',
+						timestamp: new Date(),
+						result: phaseResult.result,
+					},
+				],
+				metadata: { ...planningContext.metadata, updatedAt: new Date() },
+			};
 
-			this.manager.saveContext(planningContext);
+			this.manager.saveContext(updatedContext);
 
 			const nextPhase = this.determineNextPhase(input.phase);
 

@@ -880,7 +880,7 @@ importers:
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.39.3
-        version: 0.39.3(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(better-sqlite3@12.2.0)(kysely@0.28.7)(pg@8.16.3)(prisma@5.22.0)(sqlite3@5.1.7)
+        version: 0.39.3(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(better-sqlite3@12.2.0)(bun-types@1.1.34)(kysely@0.28.7)(pg@8.16.3)(prisma@5.22.0)(sqlite3@5.1.7)
       express:
         specifier: '>=4.20.0'
         version: 4.21.2
@@ -1111,9 +1111,6 @@ importers:
       '@cortex-os/asbr':
         specifier: workspace:*
         version: link:../../../packages/asbr
-      '@cortex-os/evals':
-        specifier: workspace:*
-        version: link:../../../packages/evals
       '@cortex-os/policy':
         specifier: workspace:*
         version: link:../../../packages/policy
@@ -1333,9 +1330,6 @@ importers:
 
   packages/a2a/a2a-contracts:
     dependencies:
-      '@cortex-os/contracts':
-        specifier: workspace:*
-        version: link:../../../libs/typescript/contracts
       '@types/cors':
         specifier: ^2.8.19
         version: 2.8.19
@@ -1449,9 +1443,6 @@ importers:
       '@cortex-os/a2a-core':
         specifier: workspace:*
         version: link:../a2a-core
-      '@cortex-os/observability':
-        specifier: workspace:*
-        version: link:../../observability
     devDependencies:
       tsup:
         specifier: 8.5.0
@@ -1528,7 +1519,7 @@ importers:
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.30.0
-        version: 0.30.10(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(@types/react@19.1.15)(better-sqlite3@12.2.0)(kysely@0.28.7)(pg@8.16.3)(react@19.1.1)(sqlite3@5.1.7)
+        version: 0.30.10(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(@types/react@19.1.15)(better-sqlite3@12.2.0)(bun-types@1.1.34)(kysely@0.28.7)(pg@8.16.3)(react@19.1.1)(sqlite3@5.1.7)
       hono:
         specifier: ^4.0.0
         version: 4.9.8
@@ -2133,13 +2124,16 @@ importers:
       '@cortex-os/orchestration':
         specifier: workspace:*
         version: link:../orchestration
-      '@cortex-os/prp-runner':
+      '@cortex-os/prp-types':
         specifier: workspace:*
-        version: link:../prp-runner
+        version: link:../../libs/typescript/prp-types
       zod:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
+      '@types/bun':
+        specifier: 1.1.13
+        version: 1.1.13
       '@types/node':
         specifier: ^22.18.1
         version: 22.18.1
@@ -2513,9 +2507,6 @@ importers:
       '@cortex-os/mcp-core':
         specifier: workspace:*
         version: link:../mcp-core
-      '@cortex-os/orchestration':
-        specifier: workspace:*
-        version: link:../orchestration
       '@types/chokidar':
         specifier: ^2.1.7
         version: 2.1.7
@@ -2734,9 +2725,6 @@ importers:
       '@cortex-os/a2a-core':
         specifier: workspace:*
         version: link:../a2a/a2a-core
-      '@cortex-os/a2a-transport':
-        specifier: workspace:*
-        version: link:../a2a/a2a-transport
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -2804,9 +2792,9 @@ importers:
       '@cortex-os/a2a-transport':
         specifier: workspace:*
         version: link:../a2a/a2a-transport
-      '@cortex-os/agents':
+      '@cortex-os/agent-contracts':
         specifier: workspace:*
-        version: link:../agents
+        version: link:../../libs/typescript/agent-contracts
       '@cortex-os/contracts':
         specifier: workspace:*
         version: link:../../libs/typescript/contracts
@@ -2816,9 +2804,6 @@ importers:
       '@cortex-os/hooks':
         specifier: workspace:*
         version: link:../hooks
-      '@cortex-os/memories':
-        specifier: workspace:*
-        version: link:../memories
       '@cortex-os/observability':
         specifier: workspace:*
         version: link:../observability
@@ -2872,7 +2857,7 @@ importers:
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.30.0
-        version: 0.30.10(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(@types/react@19.1.15)(better-sqlite3@12.2.0)(kysely@0.28.7)(pg@8.16.3)(react@19.1.1)(sqlite3@5.1.7)
+        version: 0.30.10(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(@types/react@19.1.15)(better-sqlite3@12.2.0)(bun-types@1.1.34)(kysely@0.28.7)(pg@8.16.3)(react@19.1.1)(sqlite3@5.1.7)
       express:
         specifier: '>=4.20.0'
         version: 4.21.2
@@ -3060,9 +3045,6 @@ importers:
       '@cortex-os/a2a-contracts':
         specifier: workspace:*
         version: link:../a2a/a2a-contracts
-      '@cortex-os/kernel':
-        specifier: workspace:*
-        version: link:../kernel
       '@cortex-os/orchestration':
         specifier: workspace:*
         version: link:../orchestration
@@ -3376,9 +3358,9 @@ importers:
       '@cortex-os/kernel':
         specifier: workspace:*
         version: link:../kernel
-      '@cortex-os/prp-runner':
+      '@cortex-os/prp-types':
         specifier: workspace:*
-        version: link:../prp-runner
+        version: link:../../libs/typescript/prp-types
 
   packages/stream-client:
     dependencies:
@@ -9337,6 +9319,9 @@ packages:
   '@types/braces@3.0.5':
     resolution: {integrity: sha512-SQFof9H+LXeWNz8wDe7oN5zu7ket0qwMu5vZubW4GCJ8Kkeh6nBWUz87+KTz/G3Kqsrp0j/W253XJb3KMEeg3w==}
 
+  '@types/bun@1.1.13':
+    resolution: {integrity: sha512-KmQxSBgVWCl6RSuerlLGZlIWfdxkKqat0nxN61+qu4y1KDn0Ll3j7v1Pl8GnaL3a/U6GGWVTJh75ap62kR1E8Q==}
+
   '@types/bunyan@1.8.11':
     resolution: {integrity: sha512-758fRH7umIMk5qt5ELmRMff4mLDlN+xyYzC+dkPTdKwbSkJFvz6xwyScrytPU0QIBbRRwbiE8/BIg8bpajerNQ==}
 
@@ -9632,6 +9617,9 @@ packages:
   '@types/node@18.19.128':
     resolution: {integrity: sha512-m7wxXGpPpqxp2QDi/rpih5O772APRuBIa/6XiGqLNoM1txkjI8Sz1V4oSXJxQLTz/yP5mgy9z6UXEO6/lP70Gg==}
 
+  '@types/node@20.12.14':
+    resolution: {integrity: sha512-scnD59RpYD91xngrQQLGkE+6UrHUPzeKZWhhjBSa3HSkwjbQc38+q3RoIVEwxQGRw3M+j5hpNAM+lgV3cVormg==}
+
   '@types/node@20.19.11':
     resolution: {integrity: sha512-uug3FEEGv0r+jrecvUUpbY8lLisvIjg6AAic6a2bSP5OEOLeJsDSnvhCDov7ipFFMXS3orMpzlmi0ZcuGkBbow==}
 
@@ -9796,6 +9784,9 @@ packages:
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
+  '@types/ws@8.5.14':
+    resolution: {integrity: sha512-bd/YFLW+URhBzMXurx7lWByOu+xzU9+kb3RboOteXYDfW+tr+JZa99OyNmPINEGB/ahzKrEuc8rcv4gnpJmxTw==}
 
   '@types/yaml@1.9.7':
     resolution: {integrity: sha512-8WMXRDD1D+wCohjfslHDgICd2JtMATZU8CkhH8LVJqcJs6dyYj5TGptzP8wApbmEullGBSsCEzzap73DQ1HJaA==}
@@ -10769,6 +10760,9 @@ packages:
 
   builtins@5.1.0:
     resolution: {integrity: sha512-SW9lzGTLvWTP1AY8xeAMZimqDrIaSdLQUcVr9DMef51niJ022Ri87SwRRKYm4A6iHfkPaiVUu/Duw2Wc4J7kKg==}
+
+  bun-types@1.1.34:
+    resolution: {integrity: sha512-br5QygTEL/TwB4uQOb96Ky22j4Gq2WxWH/8Oqv20fk5HagwKXo/akB+LiYgSfzexCt6kkcUaVm+bKiPl71xPvw==}
 
   bundle-name@4.1.0:
     resolution: {integrity: sha512-tjwM5exMg6BGRI+kNmTntNsvdZS1X8BFYS6tnJ2hdH0kVxM6/eVZ2xy+FqStSWvYmtfFMDLIxurorHwDKfDz5Q==}
@@ -28743,6 +28737,10 @@ snapshots:
 
   '@types/braces@3.0.5': {}
 
+  '@types/bun@1.1.13':
+    dependencies:
+      bun-types: 1.1.34
+
   '@types/bunyan@1.8.11':
     dependencies:
       '@types/node': 20.19.11
@@ -29095,6 +29093,10 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
+  '@types/node@20.12.14':
+    dependencies:
+      undici-types: 5.26.5
+
   '@types/node@20.19.11':
     dependencies:
       undici-types: 6.21.0
@@ -29294,6 +29296,10 @@ snapshots:
   '@types/wrap-ansi@3.0.0': {}
 
   '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 20.19.11
+
+  '@types/ws@8.5.14':
     dependencies:
       '@types/node': 20.19.11
 
@@ -30541,6 +30547,11 @@ snapshots:
   builtins@5.1.0:
     dependencies:
       semver: 7.7.2
+
+  bun-types@1.1.34:
+    dependencies:
+      '@types/node': 20.12.14
+      '@types/ws': 8.5.14
 
   bundle-name@4.1.0:
     dependencies:
@@ -32104,25 +32115,27 @@ snapshots:
 
   drange@1.1.1: {}
 
-  drizzle-orm@0.30.10(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(@types/react@19.1.15)(better-sqlite3@12.2.0)(kysely@0.28.7)(pg@8.16.3)(react@19.1.1)(sqlite3@5.1.7):
+  drizzle-orm@0.30.10(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(@types/react@19.1.15)(better-sqlite3@12.2.0)(bun-types@1.1.34)(kysely@0.28.7)(pg@8.16.3)(react@19.1.1)(sqlite3@5.1.7):
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       '@types/better-sqlite3': 7.6.13
       '@types/pg': 8.15.5
       '@types/react': 19.1.15
       better-sqlite3: 12.2.0
+      bun-types: 1.1.34
       kysely: 0.28.7
       pg: 8.16.3
       react: 19.1.1
       sqlite3: 5.1.7
 
-  drizzle-orm@0.39.3(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(better-sqlite3@12.2.0)(kysely@0.28.7)(pg@8.16.3)(prisma@5.22.0)(sqlite3@5.1.7):
+  drizzle-orm@0.39.3(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(better-sqlite3@12.2.0)(bun-types@1.1.34)(kysely@0.28.7)(pg@8.16.3)(prisma@5.22.0)(sqlite3@5.1.7):
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       '@prisma/client': 5.22.0(prisma@5.22.0)
       '@types/better-sqlite3': 7.6.13
       '@types/pg': 8.15.5
       better-sqlite3: 12.2.0
+      bun-types: 1.1.34
       kysely: 0.28.7
       pg: 8.16.3
       prisma: 5.22.0

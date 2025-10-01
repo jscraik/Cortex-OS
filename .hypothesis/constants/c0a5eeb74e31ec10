@@ -1,4 +1,0 @@
-# file: /Users/jamiecraik/.Cortex-OS/apps/cortex-py/src/app.py
-# hypothesis_version: 6.138.16
-
-[0.0, 384, 422, 500, '/embed', '/embeddings', '/health', '/model-info', '0', '1', '8192', 'CORTEX_PY_FAST_TEST', 'CORTEX_PY_FORCE_LAZY', 'EMBED_MAX_CHARS', 'INTERNAL_ERROR', 'MLX_AVAILABLE', 'TEXT_TOO_LONG', 'VALIDATION_ERROR', 'backend', 'backends_available', 'can_use_mlx', 'code', 'dimensions', 'dummy-fallback', 'dummy-fast-test', 'embedding', 'embedding_generator', 'embeddings', 'error', 'healthy', 'lazy-uninitialized', 'message', 'mlx', 'mlx_available', 'model', 'model_loaded', 'model_name', 'platform', 'status', 'text field missing', 'unavailable']

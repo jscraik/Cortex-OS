@@ -363,7 +363,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 		// Qdrant search with filters
 		const filter = this.buildQdrantFilter(input);
 
-		const qdrantResults = await this.qdrant?.search(this.qdrantConfig?.collection, {
+		const qdrantResults = await this.qdrant?.search(this.qdrantConfig?.collection ?? '', {
 			vector: embedding,
 			limit: limit + offset,
 			score_threshold: searchType === 'semantic' ? threshold : 0,
@@ -374,7 +374,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 		const results: MemorySearchResult[] = [];
 
 		// Get SQLite rows for full data
-		const ids = qdrantResults.slice(offset).map((r) => r.id);
+		const sliced = (qdrantResults ?? []).slice(offset);
+		const ids = sliced.map((r) => r.id as string).filter((id): id is string => typeof id === 'string');
 		if (ids.length === 0) return results;
 
 		const rows = this.db
@@ -385,7 +386,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 		const rowMap = new Map(rows.map((r) => [r.id, r]));
 
-		for (const point of qdrantResults.slice(offset)) {
+		for (const point of sliced) {
 			const row = rowMap.get(point.id as string);
 			if (!row) continue;
 
@@ -403,7 +404,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 				if (ftsResult) {
 					// Weighted combination
 					const hybridWeight = input.hybrid_weight || this.config.hybridWeight;
-					result.score = hybridWeight * point.score! + (1 - hybridWeight) * ftsResult.score;
+					const pointScore = typeof point.score === 'number' ? point.score : 0;
+					result.score = hybridWeight * pointScore + (1 - hybridWeight) * ftsResult.score;
 					result.matchType = 'hybrid';
 				}
 			}
@@ -1043,9 +1045,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 			// Qdrant stats
 			if (include.includes('qdrant_stats') && this.qdrant) {
 				try {
-					if (await this.isQdrantHealthy()) {
-						const _collection = await this.qdrant.getCollection(this.qdrantConfig?.collection);
-						const vectorCount = await this.qdrant.count(this.qdrantConfig?.collection);
+						if (await this.isQdrantHealthy()) {
+							const collectionName = this.qdrantConfig?.collection ?? '';
+							await this.qdrant.getCollection(collectionName);
+							const vectorCount = await this.qdrant.count(collectionName);
 
 						stats.qdrantStats = {
 							healthy: true,

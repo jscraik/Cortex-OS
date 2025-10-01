@@ -91,6 +91,9 @@ RUN set -eux; \
   chmod 0440 "/etc/sudoers.d/$USERNAME"; \
   rm -rf /var/lib/apt/lists/*
 
+# Ensure docker group exists and add user for docker.sock access (if group present later)
+RUN groupadd -f docker && usermod -aG docker "$USERNAME"
+
 # Set up the user's home directory
 USER $USERNAME
 ENV PATH="/home/$USERNAME/.cargo/bin:${PATH}"
@@ -109,7 +112,7 @@ RUN rustup default stable
 WORKDIR /opt/cortex-home
 
 # Development stage
-FROM base as dev
+FROM base AS dev
 
 # Install additional development tools
 RUN sudo npm install -g \
@@ -138,9 +141,9 @@ RUN cargo install \
 
 # Create necessary directories
 RUN mkdir -p \
-  $HOME/.config \
-  $HOME/.local/share \
-  $HOME/.cache \
+  "$HOME/.config" \
+  "$HOME/.local/share" \
+  "$HOME/.cache" \
   /opt/cortex-home/tools/agent-toolkit
 
 # Set up git configuration

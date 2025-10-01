@@ -1,9 +1,15 @@
 import { spawn } from 'node:child_process';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Transport } from '@cortex-os/a2a-core/transport';
-import { createLogger } from '@cortex-os/observability';
 
-const logger = createLogger('a2a-stdio-transport');
+// Simple logger to avoid circular dependency with @cortex-os/observability
+const createSimpleLogger = (component: string) => ({
+	warn: (context: { error: string; context: string }, message: string) => {
+		console.warn(`[${component}] ${message}`, context);
+	},
+});
+
+const logger = createSimpleLogger('a2a-stdio-transport');
 
 export function stdio(
 	command: string,

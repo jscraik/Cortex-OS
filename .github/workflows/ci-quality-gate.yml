@@ -4,12 +4,16 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   quality-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+      NX_CLOUD_DISTRIBUTED_TASK_EXECUTION: true
+      NX_CLOUD_CACHE: true
     steps:
       - uses: actions/checkout@v4
       - name: Setup pnpm
@@ -20,13 +24,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Run coverage (branch sample)
         run: pnpm coverage:branches:record
+        env:
+          NX_CLOUD_RETRY_FLAKY_TASKS: true
       - name: Run mutation (no enforcement here)
         run: pnpm mutation:test
+        env:
+          NX_CLOUD_RETRY_FLAKY_TASKS: true
       - name: Generate badges & metrics
         run: pnpm badges:generate
       - name: Quality Gate Check

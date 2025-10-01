@@ -9,10 +9,10 @@ import { FrontierAdapter, type FrontierAdapterApi } from './adapters/frontier-ad
 import type { MCPAdapter } from './adapters/mcp-adapter.js';
 import { MLXAdapter, type MLXAdapterApi } from './adapters/mlx-adapter.js';
 import { OllamaAdapter, type OllamaAdapterApi } from './adapters/ollama-adapter.js';
-import {
-	createOrchestrationAdapter,
-	type OrchestrationAdapter,
-} from './adapters/orchestration-adapter.js';
+// import {
+//	createOrchestrationAdapter,
+//	type OrchestrationAdapter,
+// } from './adapters/orchestration-adapter.js';
 import type { Message } from './adapters/types.js';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking' | 'vision';
@@ -117,7 +117,7 @@ export class ModelRouter implements IModelRouter {
 		specialized_delegation: true,
 		consensus_voting: false,
 	};
-	private readonly orchestrationAdapter: OrchestrationAdapter;
+	// private readonly orchestrationAdapter: OrchestrationAdapter;
 
 	constructor(
 		mlxAdapter: MLXAdapterApi = new MLXAdapter(),
@@ -127,12 +127,12 @@ export class ModelRouter implements IModelRouter {
 		this.mlxAdapter = mlxAdapter;
 		this.ollamaAdapter = ollamaAdapter;
 		this.frontierAdapter = frontierAdapter;
-		this.orchestrationAdapter = createOrchestrationAdapter();
+		// this.orchestrationAdapter = createOrchestrationAdapter();
 
 		// Check for privacy mode environment variable
 		if (process.env.CORTEX_PRIVACY_MODE === 'true') {
 			this.privacyModeEnabled = true;
-			this.orchestrationAdapter.setPrivacyMode(true);
+			// this.orchestrationAdapter.setPrivacyMode(true);
 		}
 	}
 
@@ -143,7 +143,8 @@ export class ModelRouter implements IModelRouter {
 		const frontierAvailable = await this.frontierAdapter.isAvailable();
 
 		// Initialize orchestration models first
-		const orchestrationModels = this.orchestrationAdapter.getAllModels();
+		// const orchestrationModels = this.orchestrationAdapter.getAllModels();
+		const orchestrationModels: ModelConfig[] = []; // Temporary placeholder
 		console.log(`brAInwav Cortex-OS: Loaded ${orchestrationModels.length} orchestration models`);
 
 		// Merge orchestration models with adapter-based models
@@ -741,7 +742,8 @@ export class ModelRouter implements IModelRouter {
 	 * Get orchestration health status
 	 */
 	getOrchestrationHealth() {
-		return this.orchestrationAdapter.getHealthStatus();
+		// return this.orchestrationAdapter.getHealthStatus();
+		return { status: 'ok', orchestration: 'disabled' }; // Temporary
 	}
 
 	// Add hybrid mode methods

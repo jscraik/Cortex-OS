@@ -1,4 +1,0 @@
-# file: /Users/jamiecraik/.Cortex-OS/libs/python/memories/src/brainwav_memories/models.py
-# hypothesis_version: 6.138.16
-
-['agent', 'artifact', 'createdAt', 'embedding', 'event', 'note', 'org', 'populate_by_name', 'session', 'system', 'updatedAt', 'user']

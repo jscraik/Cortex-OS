@@ -1,7 +1,7 @@
 import { createEnvelope, type Envelope, type TopicACL } from '@cortex-os/a2a-contracts';
 import { type BusOptions, createBus } from '@cortex-os/a2a-core/bus';
 import type { Transport } from '@cortex-os/a2a-core/transport';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
+import { createLocalTransport } from './local-transport.js';
 
 import {
 	type AlertTriggeredEvent,
@@ -90,7 +90,7 @@ function validateEnvelope(envelope: Envelope): ObservabilityEventEnvelope {
 }
 
 export function createObservabilityBus(options: ObservabilityBusOptions = {}): ObservabilityBus {
-	const transport = options.transport ?? inproc();
+	const transport = options.transport ?? createLocalTransport();
 	const source = options.source ?? DEFAULT_SOURCE;
 	const acl = cloneAcl(options.acl ?? DEFAULT_TOPIC_ACL);
 

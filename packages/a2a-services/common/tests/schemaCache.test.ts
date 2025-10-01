@@ -30,7 +30,7 @@ describe('schemaCache', () => {
 		let now = 0;
 		const cache = createSchemaCache<string>({
 			ttlMs: 100,
-			mconsEntries: 10,
+			maxEntries: 10,
 			now: () => now,
 		});
 		let loads = 0;

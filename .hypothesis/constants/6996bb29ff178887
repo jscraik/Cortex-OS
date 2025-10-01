@@ -1,4 +1,0 @@
-# file: /Users/jamiecraik/.Cortex-OS/services/py-mlx-server/src/py_mlx_server/main.py
-# hypothesis_version: 6.138.16
-
-[0.0, 1.0, 23.0, 400, '/embed', '/health', '/ping', '0.0.0.0', '768', '8000', 'EMBEDDINGS_DIM', 'EMBEDDINGS_MODEL', 'HOST', 'PORT', '__main__', 'dimensions', 'message', 'mlx.core', 'mlx.core not found', 'model', 'ok', 'pong', 'qwen3-embed', 'status', 'utf-8']

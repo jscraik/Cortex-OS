@@ -115,6 +115,35 @@ pnpm-lock.yaml.bak
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
+# Nx configuration with sensitive tokens
+nx.json
+
 # Logs
 logs/
 logs/*.log
+
+# Additional cache and temporary files
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+.rollup.cache/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Virtual environments
+.venv*/
+.venv311/
+
+# Rust build artifacts
+*.rlib
+*.dylib
+
+# Temporary files
+*.tmp
+*.temp
+

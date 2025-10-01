@@ -12,7 +12,7 @@ import {
 	type N0State,
 	workflowStateToN0,
 } from '@cortex-os/orchestration';
-import type { PRPOrchestrator } from '@cortex-os/prp-runner';
+import type { PRPOrchestrator } from '@cortex-os/prp-types';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';

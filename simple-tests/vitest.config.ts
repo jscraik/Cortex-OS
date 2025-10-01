@@ -6,5 +6,5 @@ export default defineConfig({
 		environment: 'node',
 		include: ['simple-tests/**/*.test.ts', 'tests/**/*.spec.ts', 'tests/**/*.test.ts'],
 	},
-	plugins: [tsconfigPaths({ ignoreConfigErrors: true })],
+	plugins: [tsconfigPaths({ projects: ['tsconfig.json'], ignoreConfigErrors: true })],
 });

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { enhanceEvidence } from '../../../packages/evidence-runner/src/enhancement/evidence-enhancer.js';
 import { DatabaseExecutor } from '../../../packages/mcp-bridge/src/database-executor.js';
 import type { DatabaseTelemetryEvent } from '../../../packages/mcp-bridge/src/database-types.js';
-import { InMemoryStore } from '../../../packages/memories/src/adapters/store.memory.js';
+import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
 import { assertNoPlaceholders } from '../utils/assert-no-placeholders.js';
 
 describe('Cross-cutting acceptance: orchestrated run', () => {
@@ -73,25 +73,37 @@ describe('Cross-cutting acceptance: orchestrated run', () => {
 			queueDepth: 0,
 		};
 
-		const memoryStore = new InMemoryStore();
-		const memoryRecord = {
-			id: randomUUID(),
-			kind: 'note' as const,
-			text: 'Agent execution result was archived for orchestrated acceptance run.',
-			tags: ['orchestrated-run', 'agent', 'evidence'],
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			provenance: {
-				source: 'system' as const,
+		process.env.MEMORY_DB_PATH = ':memory:';
+		process.env.MEMORY_DEFAULT_LIMIT = process.env.MEMORY_DEFAULT_LIMIT || '8';
+		process.env.MEMORY_MAX_LIMIT = process.env.MEMORY_MAX_LIMIT || '15';
+		process.env.MEMORY_DEFAULT_THRESHOLD = process.env.MEMORY_DEFAULT_THRESHOLD || '0.2';
+
+		const memoryProvider = createMemoryProviderFromEnv();
+		const content = 'Agent execution result was archived for orchestrated acceptance run.';
+		const tags = ['orchestrated-run', 'agent', 'evidence'];
+
+		const storeResult = await memoryProvider.store({
+			content,
+			tags,
+			domain: 'acceptance',
+			importance: 6,
+			metadata: {
+				source: 'system',
 				actor: 'cross-cutting-suite',
 			},
-		};
+		});
 
-		await memoryStore.upsert(memoryRecord, 'acceptance');
-		const storedMemory = await memoryStore.get(memoryRecord.id, 'acceptance');
+		const searchResults = await memoryProvider.search({
+			query: 'acceptance run result',
+			limit: 5,
+			search_type: 'keyword',
+			domain: 'acceptance',
+		});
 
-		expect(storedMemory).not.toBeNull();
-		expect(storedMemory?.text).toContain('Agent execution result');
+		const storedMemory = searchResults.find((memory) => memory.id === storeResult.id);
+
+		expect(storedMemory).toBeDefined();
+		expect(storedMemory?.content).toContain('Agent execution result');
 
 		const enhancedEvidence = await enhanceEvidence(
 			'The orchestrated pipeline processed live telemetry without degradation.',

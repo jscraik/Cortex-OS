@@ -9,16 +9,35 @@ import {
 	UnknownToolRequestSchema,
 } from './tool-mapping-types.js';
 
+// Internal helper types to avoid any
+type DiscoveryInfo =
+	| {
+			discovered: true;
+			toolInfo: {
+				type: string;
+				category: 'search' | 'file' | 'database' | 'browser' | 'utility' | 'analysis';
+				version: string;
+			};
+		}
+	| { discovered: false };
+
+interface FallbackMappedTool {
+	type: string;
+	category: 'search' | 'file' | 'database' | 'browser' | 'utility' | 'analysis';
+	parameters: Record<string, unknown>;
+	version?: string;
+}
+
 /**
  * Tool Mapper for brAInwav Cortex-OS MCP Core
  * Provides safe fallback mechanisms for unknown tool types
  */
 export class ToolMapper {
-	private config: ToolMapperConfig;
+	private readonly config: ToolMapperConfig;
 	private readonly processorName = 'brAInwav Tool Mapper';
-	private toolCache = new Map<string, any>();
-	private registeredTools = new Set<string>();
-	private resolutionTimes: number[] = [];
+	private readonly toolCache = new Map<string, ToolMappingResult>();
+	private readonly registeredTools = new Set<string>();
+	private readonly resolutionTimes: number[] = [];
 
 	constructor(config: ToolMapperConfig) {
 		// Validate configuration
@@ -73,22 +92,25 @@ export class ToolMapper {
 			// Security validation
 			const securityResult = this.validateSecurity(request);
 			if (!securityResult.safe) {
-				return this.createSecurityErrorResult(request, securityResult.reason, startTime, sessionId);
+				const reason = securityResult.reason ?? 'invalid-parameters';
+				return this.createSecurityErrorResult(request, reason, startTime, sessionId);
 			}
 
 			// Check cache if available
 			const cacheKey = this.generateCacheKey(request);
 			if (this.toolCache.has(cacheKey)) {
 				const cachedResult = this.toolCache.get(cacheKey);
-				return {
-					...cachedResult,
-					fromCache: true,
-					processingTime: Date.now() - startTime,
-					metadata: {
-						...cachedResult.metadata,
-						sessionId,
-					},
-				};
+				if (cachedResult) {
+					return {
+						...cachedResult,
+						fromCache: true,
+						processingTime: Date.now() - startTime,
+						metadata: {
+							...cachedResult.metadata,
+							sessionId,
+						},
+					};
+				}
 			}
 
 			// Attempt tool discovery
@@ -102,10 +124,11 @@ export class ToolMapper {
 				mappingResult.mlSuggestions = await this.generateMLSuggestions(request);
 			}
 
-			// Handle version compatibility
-			if (request.context.requiredVersion) {
+			// Handle version compatibility (guard optional value explicitly)
+			const requiredVersion = request.context.requiredVersion;
+			if (typeof requiredVersion === 'string' && requiredVersion.length > 0) {
 				mappingResult.versionCompatibility = this.checkVersionCompatibility(
-					request.context.requiredVersion,
+					requiredVersion,
 					mappingResult.mappedTool?.version,
 				);
 			}
@@ -122,7 +145,8 @@ export class ToolMapper {
 			// Track resolution time
 			this.resolutionTimes.push(processingTime);
 			if (this.resolutionTimes.length > 100) {
-				this.resolutionTimes = this.resolutionTimes.slice(-100);
+				const excess = this.resolutionTimes.length - 100;
+				this.resolutionTimes.splice(0, excess);
 			}
 
 			// Emit completion telemetry
@@ -183,11 +207,12 @@ export class ToolMapper {
 	/**
 	 * Attempt to discover new tools
 	 */
-	private async attemptToolDiscovery(
-		request: UnknownToolRequest,
-	): Promise<{ discovered: boolean; toolInfo?: any }> {
+	private async attemptToolDiscovery(request: UnknownToolRequest): Promise<DiscoveryInfo> {
 		// Simulate tool discovery process
-		const discoveryPatterns = {
+		const discoveryPatterns: Record<
+			string,
+			{ category: 'search' | 'file' | 'database' | 'browser' | 'utility' | 'analysis'; version: string }
+		> = {
 			'data-visualization': { category: 'utility', version: '1.0.0' },
 			'ml-task': { category: 'analysis', version: '2.0.0' },
 			'custom-processor': { category: 'utility', version: '1.2.0' },
@@ -198,7 +223,7 @@ export class ToolMapper {
 		if (pattern) {
 			const toolInfo = {
 				type: request.toolType,
-				...discoveryPatterns[pattern as keyof typeof discoveryPatterns],
+				...discoveryPatterns[pattern],
 			};
 
 			// Register the discovered tool
@@ -215,7 +240,7 @@ export class ToolMapper {
 	 */
 	private async performToolMapping(
 		request: UnknownToolRequest,
-		discoveryResult: any,
+		discoveryResult: DiscoveryInfo,
 	): Promise<ToolMappingResult> {
 		// If tool was discovered, use it directly
 		if (discoveryResult.discovered) {
@@ -276,7 +301,7 @@ export class ToolMapper {
 	/**
 	 * Determine appropriate fallback mapping
 	 */
-	private determineFallbackMapping(request: UnknownToolRequest): any {
+	private determineFallbackMapping(request: UnknownToolRequest): FallbackMappedTool {
 		// Simple heuristic-based fallback mapping
 		const toolType = request.toolType.toLowerCase();
 
@@ -341,7 +366,9 @@ export class ToolMapper {
 	/**
 	 * Generate ML-based tool suggestions
 	 */
-	private async generateMLSuggestions(_request: UnknownToolRequest): Promise<any[]> {
+	private async generateMLSuggestions(_request: UnknownToolRequest): Promise<
+		Array<{ toolType: string; confidence: number; reasoning: string }>
+	> {
 		// Simulate ML suggestions based on tool patterns
 		const suggestions = [
 			{
@@ -362,7 +389,10 @@ export class ToolMapper {
 	/**
 	 * Check version compatibility
 	 */
-	private checkVersionCompatibility(requested: string, resolved?: string): any {
+	private checkVersionCompatibility(
+		requested: string,
+		resolved?: string,
+	): { requested: string; resolved: string; compatible: boolean } {
 		return {
 			requested,
 			resolved: resolved || '1.0.0',
@@ -395,7 +425,7 @@ export class ToolMapper {
 			success: false,
 			processingTime: Date.now() - startTime,
 			error: 'Security violation: Request blocked due to security constraints',
-			securityReason: reason as any,
+			securityReason: reason as 'dangerous-operation' | 'external-tools-disabled' | 'invalid-parameters',
 			metadata: {
 				processor: this.processorName,
 				originalToolType: request.toolType,

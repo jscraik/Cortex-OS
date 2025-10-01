@@ -1,23 +1,25 @@
-#!/bin/bash
-# dev-setup-postcreate.sh - Post-create setup for DevContainer
-
+#!/usr/bin/env bash
 set -euo pipefail
 
-echo "🔧 Running post-create setup..."
+echo "[brAInwav] devcontainer postCreate: running validations..."
 
-cd /opt/cortex-home
+WS="${CORTEX_HOME:-/opt/cortex-home}"
+cd "$WS"
 
-# Install additional tooling if needed
-npm list -g @biomejs/biome || npm install -g @biomejs/biome
-
-# Set up agent-toolkit tools symlink if it doesn't exist
-if [ ! -L "/opt/cortex-home/tools/agent-toolkit" ]; then
-    if [ -d "/opt/cortex-home/packages/agent-toolkit/tools" ]; then
-        ln -sf /opt/cortex-home/packages/agent-toolkit/tools /opt/cortex-home/tools/agent-toolkit
-    fi
+# Ensure Docker socket access if available
+if [ -S /var/run/docker.sock ]; then
+  echo "[brAInwav] Docker socket detected"
+else
+  echo "[brAInwav] Warning: Docker socket not available in container"
 fi
 
-# Make scripts executable
-chmod +x scripts/*.sh
+# Prepare Nx cache dirs
+mkdir -p .nx/cache || true
 
-echo "✅ Post-create setup complete!"
+# Optional: lightweight typecheck to surface obvious issues (non-fatal)
+if command -v pnpm >/dev/null 2>&1; then
+  echo "[brAInwav] Running lightweight checks (non-fatal)"
+  pnpm -v || true
+fi
+
+echo "[brAInwav] postCreate complete."

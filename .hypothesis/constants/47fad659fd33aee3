@@ -1,4 +1,0 @@
-# file: /Users/jamiecraik/.Cortex-OS/services/ml-inference/src/error_handling.py
-# hypothesis_version: 6.138.16
-
-[0.0, 1.0, 60.0, 768, 'checks', 'closed', 'completion_tokens', 'content', 'critical', 'degrade', 'degraded', 'disk_space', 'embedding', 'embeddings', 'fail_fast', 'fallback', 'half_open', 'high', 'inference', 'last_check', 'low', 'medium', 'memory', 'open', 'overall_health', 'prompt_tokens', 'retry', 'status', 'timestamp', 'total_tokens', 'unknown', 'usage']
