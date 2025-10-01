@@ -597,7 +597,11 @@ function sendNoContent(res: ServerResponse): void {
 	res.end();
 }
 
-function sendNotFound(res: ServerResponse, message: string, meta: Record<string, unknown> = {}): void {
+function sendNotFound(
+	res: ServerResponse,
+	message: string,
+	meta: Record<string, unknown> = {},
+): void {
 	if (process.env.VITEST_DEBUG?.includes('runtime-http')) {
 		console.debug('[runtime-http] not-found', message, meta);
 	}

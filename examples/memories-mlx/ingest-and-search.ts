@@ -37,7 +37,9 @@ async function runDemo(): Promise<void> {
 
 	console.log(
 		'Query results:',
-		results.slice(0, 3).map((memory) => ({ id: memory.id, score: memory.score, content: memory.content })),
+		results
+			.slice(0, 3)
+			.map((memory) => ({ id: memory.id, score: memory.score, content: memory.content })),
 	);
 }
 

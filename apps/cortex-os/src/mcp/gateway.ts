@@ -379,7 +379,9 @@ export class McpGateway {
 
 	private computeInputDigest(input: unknown): string | undefined {
 		try {
-			return createHash('sha256').update(JSON.stringify(input ?? null)).digest('hex');
+			return createHash('sha256')
+				.update(JSON.stringify(input ?? null))
+				.digest('hex');
 		} catch {
 			return undefined;
 		}
@@ -408,7 +410,9 @@ export class McpGateway {
 		return typeof session === 'string' ? session : undefined;
 	}
 
-	private mapErrorCodeToStatus(code?: string): 'success' | 'error' | 'rate_limited' | 'forbidden' | 'validation_failed' {
+	private mapErrorCodeToStatus(
+		code?: string,
+	): 'success' | 'error' | 'rate_limited' | 'forbidden' | 'validation_failed' {
 		switch (code) {
 			case 'validation_failed':
 				return 'validation_failed';

@@ -19,10 +19,7 @@ export interface Handler {
 
 export interface A2AWiring {
 	publish: (type: string, payload: Record<string, unknown>, source?: string) => Promise<void>;
-	on: (
-		type: string,
-		handler: Handler['handle'],
-	) => Promise<() => Promise<void>>;
+	on: (type: string, handler: Handler['handle']) => Promise<() => Promise<void>>;
 	emit: (envelope: Envelope) => void;
 	publishMcpEvent: (evt: { type: string; payload: Record<string, unknown> }) => Promise<void>;
 	publishToolEvent: (evt: { type: string; payload: Record<string, unknown> }) => Promise<void>;

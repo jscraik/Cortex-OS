@@ -57,11 +57,7 @@ export function createEventManager({
 			throw new TypeError('Runtime events require a non-empty type');
 		}
 
-		if (
-			typeof event.data !== 'object' ||
-			event.data === null ||
-			Array.isArray(event.data)
-		) {
+		if (typeof event.data !== 'object' || event.data === null || Array.isArray(event.data)) {
 			throw new TypeError('Runtime events require a data object payload');
 		}
 	}

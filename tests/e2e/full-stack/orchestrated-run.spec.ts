@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
 import { describe, expect, it } from 'vitest';
 import { enhanceEvidence } from '../../../packages/evidence-runner/src/enhancement/evidence-enhancer.js';
 import { DatabaseExecutor } from '../../../packages/mcp-bridge/src/database-executor.js';
 import type { DatabaseTelemetryEvent } from '../../../packages/mcp-bridge/src/database-types.js';
-import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
 import { assertNoPlaceholders } from '../utils/assert-no-placeholders.js';
 
 describe('Cross-cutting acceptance: orchestrated run', () => {

@@ -1,3 +1,4 @@
+import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
 import { describe, expect, it } from 'vitest';
 import {
 	createPlanningSessionTool,
@@ -5,7 +6,6 @@ import {
 	getPlanningStatusTool,
 	type PlanningPhase as McpPlanningPhase,
 } from '../../packages/mcp-core/src/tools/planning-tools.js';
-import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
 import { executePlannedWorkflow } from '../../packages/orchestration/src/langgraph/planning-orchestrator.js';
 
 function createEphemeralProvider() {

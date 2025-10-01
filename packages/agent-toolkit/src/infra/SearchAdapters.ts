@@ -23,7 +23,7 @@ abstract class BaseSearchAdapter implements SearchTool {
 
 	protected constructor(
 		toolsPath: ToolsDirOverride,
-		private readonly scriptName: string,
+		readonly scriptName: string,
 	) {
 		this.scriptPathPromise = resolveToolsDirFromOverride(toolsPath).then((dir) =>
 			resolve(dir, scriptName),

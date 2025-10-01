@@ -44,8 +44,8 @@ This directory contains the working documentation and task artifacts for the com
       │          │          │          │          │
       │          │          │          │          │
 ┌─────▼─────┐  ┌─▼──────────▼──────────▼──────────▼─┐
-│ cortex-   │  │          cortex-mcp               │
-│ os (app)  │  │        (MCP Server)               │
+│ cortex-   │  │       brAInwav MCP Hub            │
+│ os (app)  │  │       (FastMCP v3)                │
 └───────────┘  └─────┬──────────────────────┬──────┘
                       │                      │
                 ┌─────▼─────┐          ┌─────▼─────┐
@@ -59,12 +59,26 @@ This directory contains the working documentation and task artifacts for the com
                     │     memory-core         │
                     │   (Single Source of     │
                     │      Truth)             │
+                    │                         │
+                    │ • memory.store()        │
+                    │ • memory.search()       │
+                    │ • memory.analysis()     │
+                    │ • memory.relationships()│
+                    │ • memory.stats()        │
+                    │ • memory.hybrid_search()│ ← Aggregates local + remote
                     └──────────┬─────────────┘
                                │
-                    ┌──────────▼──────────┐
-                    │    Storage Layer    │
-                    │  SQLite + Qdrant    │
-                    └─────────────────────┘
+                    ┌──────────┼──────────┐
+                    │          │          │
+                    ▼          ▼          ▼
+            ┌─────────────┐ ┌──────────────────┐ ┌──────────────────┐
+            │  SQLite     │ │ Optional Qdrant  │ │ Pieces MCP Proxy │
+            │ (canonical) │ │ (vector search)  │ │ (remote LTM)     │
+            │             │ │                  │ │                  │
+            │ • Memories  │ │ • Embeddings     │ │ • localhost:     │
+            │ • Metadata  │ │ • Semantic       │ │   39300          │
+            │ • Relations │ │   similarity     │ │ • ask_pieces_ltm │
+            └─────────────┘ └──────────────────┘ └──────────────────┘
 ```
 
 ## Deployment Architecture
@@ -78,6 +92,66 @@ The refactor includes a comprehensive Docker Compose setup that provides:
 - **Observability** - A2A event emission for all operations
 
 See the [Docker Compose Architecture](./mcp-and-memory-tdd-plan.md#docker-compose-deployment-architecture) section in the TDD plan for detailed configuration.
+
+## Pieces MCP Integration
+
+The `memory-core` package integrates with **Pieces OS Long-Term Memory** via the brAInwav MCP Hub. This provides:
+
+### Hybrid Memory Architecture
+
+- **Local Memory**: SQLite-backed canonical storage with optional Qdrant vector search
+- **Remote Memory**: Pieces OS LTM running on host (localhost:39300)
+- **Hybrid Search**: Aggregates results from both local and remote sources via `memory.hybrid_search()`
+
+### Integration Pattern
+
+The integration uses a **proxy pattern** in the MCP server to avoid code duplication:
+
+```typescript
+// MCP Hub connects to Pieces OS via SSE transport
+const piecesProxy = new PiecesMCPProxy({
+  endpoint: 'http://localhost:39300/model_context_protocol/2024-11-05/sse',
+  enabled: process.env.PIECES_MCP_ENABLED === 'true',
+});
+
+// Hybrid search aggregates local + remote results
+async function hybridSearch(query: string) {
+  const localResults = await memoryProvider.search({ query });
+  const piecesResults = await piecesProxy.callTool('ask_pieces_ltm', { question: query });
+  
+  return {
+    local: localResults.map(r => ({ ...r, source: 'cortex-local' })),
+    remote: piecesResults.map(r => ({ ...r, source: 'pieces-ltm' })),
+    combined: mergeAndRerank(localResults, piecesResults),
+  };
+}
+```
+
+### Environment Configuration
+
+```bash
+# Enable Pieces integration
+PIECES_MCP_ENABLED=true
+
+# Pieces OS endpoint (SSE transport)
+PIECES_MCP_ENDPOINT=http://localhost:39300/model_context_protocol/2024-11-05/sse
+```
+
+### Docker Compose Configuration
+
+When deploying with Docker Compose, Pieces OS runs on the host:
+
+```yaml
+services:
+  cortex-mcp:
+    environment:
+      - PIECES_MCP_ENDPOINT=http://host.docker.internal:39300/model_context_protocol/2024-11-05/sse
+      - PIECES_MCP_ENABLED=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+```
+
+See `packages/mcp-server/README.md` for complete integration documentation.
 
 ## Progress Tracking
 

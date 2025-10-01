@@ -86,8 +86,10 @@ export function createMcpHttpServer(gateway: McpGateway): McpHttpServer {
 				let payload: string;
 				try {
 					payload = await readRequestBody(req);
-				} catch (error) {
-					sendJson(res, 500, { error: { code: 'internal_error', message: 'Failed to read request body' } });
+				} catch (_error) {
+					sendJson(res, 500, {
+						error: { code: 'internal_error', message: 'Failed to read request body' },
+					});
 					return;
 				}
 
@@ -110,7 +112,10 @@ export function createMcpHttpServer(gateway: McpGateway): McpHttpServer {
 				}
 
 				const args = body.arguments ?? {};
-				if (args !== undefined && (typeof args !== 'object' || args === null || Array.isArray(args))) {
+				if (
+					args !== undefined &&
+					(typeof args !== 'object' || args === null || Array.isArray(args))
+				) {
 					sendJson(res, 400, {
 						error: {
 							code: 'invalid_request',

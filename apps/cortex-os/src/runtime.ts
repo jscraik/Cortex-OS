@@ -4,13 +4,13 @@ import type { Envelope as A2AEnvelope } from './boot/a2a.js';
 import { wireA2A } from './boot/a2a.js';
 import { container } from './boot.js';
 import { createEventManager, type EventManager } from './events';
-import { setA2aPublishers } from './services.js';
 import { createRuntimeHttpServer } from './http/runtime-server.js';
 import { createMcpHttpServer } from './mcp/server.js';
 import type { ArtifactRepository } from './persistence/artifact-repository.js';
 import type { EvidenceRepository } from './persistence/evidence-repository.js';
 import type { ProfileRepository } from './persistence/profile-repository.js';
 import type { TaskRepository } from './persistence/task-repository.js';
+import { setA2aPublishers } from './services.js';
 import { TOKENS } from './tokens.js';
 
 export interface RuntimeHandle {

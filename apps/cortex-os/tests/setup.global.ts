@@ -95,19 +95,24 @@ export async function getLoopbackAuthHeader(): Promise<string> {
 
 export function getLoopbackTokenSync(): string {
 	if (!loopbackToken) {
-		throw new Error('Loopback auth token unavailable. Call await prepareLoopbackAuth() in your test setup.');
+		throw new Error(
+			'Loopback auth token unavailable. Call await prepareLoopbackAuth() in your test setup.',
+		);
 	}
 	return loopbackToken;
 }
 
 export function getLoopbackAuthHeaderSync(): string {
 	if (!loopbackAuthHeader) {
-		throw new Error('Loopback auth header unavailable. Call await prepareLoopbackAuth() in your test setup.');
+		throw new Error(
+			'Loopback auth header unavailable. Call await prepareLoopbackAuth() in your test setup.',
+		);
 	}
 	return loopbackAuthHeader;
 }
 
-const realFetch = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : undefined;
+const realFetch =
+	typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : undefined;
 
 const memoryFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
 	const url = typeof input === 'string' ? input : input.toString();

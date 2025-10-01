@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type {
 	MemoryAnalysisInput,
 	MemoryRelationshipsInput,
@@ -8,7 +9,6 @@ import type {
 import { QdrantClient } from '@qdrant/js-client-rest';
 import Database from 'better-sqlite3';
 import CircuitBreaker from 'circuit-breaker-js';
-import { randomUUID } from 'node:crypto';
 import PQueue from 'p-queue';
 import { pino } from 'pino';
 import type {
@@ -305,7 +305,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 	async get(id: string): Promise<Memory | null> {
 		try {
-			const row = await this.db.prepare('SELECT * FROM memories WHERE id = ?').get(id) as SQLiteMemoryRow | undefined;
+			const row = (await this.db.prepare('SELECT * FROM memories WHERE id = ?').get(id)) as
+				| SQLiteMemoryRow
+				| undefined;
 
 			if (!row) {
 				return null;
@@ -405,7 +407,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 		// Get SQLite rows for full data
 		const sliced = (qdrantResults ?? []).slice(offset);
-		const ids = sliced.map((r) => r.id as string).filter((id): id is string => typeof id === 'string');
+		const ids = sliced
+			.map((r) => r.id as string)
+			.filter((id): id is string => typeof id === 'string');
 		if (ids.length === 0) return results;
 
 		const rows = this.db

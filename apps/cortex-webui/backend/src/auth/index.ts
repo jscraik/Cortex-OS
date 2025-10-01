@@ -218,7 +218,7 @@ export const authUtils = {
 		return (user as { role?: string })?.role === role;
 	},
 
-	// Create API key for user  
+	// Create API key for user
 	createAPIKey: async (_userId: string, _name: string) => {
 		// NOTE: Update when API key plugin is properly configured
 		throw new Error('API key creation not yet implemented');

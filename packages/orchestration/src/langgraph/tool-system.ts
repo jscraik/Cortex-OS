@@ -1,9 +1,9 @@
 import {
 	createAutoDelegateTool,
 	materializeSubagentTool,
-	type Tool as SubagentToolDefinition,
 	type Subagent,
 	type SubagentConfig,
+	type Tool as SubagentToolDefinition,
 } from '@cortex-os/agent-contracts';
 import type { HookResult } from '@cortex-os/hooks';
 import {

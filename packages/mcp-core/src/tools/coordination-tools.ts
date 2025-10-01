@@ -469,12 +469,7 @@ export class AssignTaskTool implements McpTool<AssignTaskInput, AssignTaskResult
 			}
 
 			const task = createCoordinationTask(input);
-			const selectedAgent = selectAgentForTask(
-				session.agents,
-				input.strategy,
-				task,
-				input.agentId,
-			);
+			const selectedAgent = selectAgentForTask(session.agents, input.strategy, task, input.agentId);
 
 			let updatedAgent: Agent | undefined = selectedAgent;
 			let updatedTask: CoordinationTask = task;

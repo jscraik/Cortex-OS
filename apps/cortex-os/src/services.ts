@@ -1,5 +1,5 @@
-import { trace } from '@opentelemetry/api';
 import { provideOrchestration as coreProvideOrchestration } from '@cortex-os/orchestration';
+import { trace } from '@opentelemetry/api';
 import { createMcpGateway, type McpGateway, type MemoriesLike } from './mcp/gateway.js';
 import { ArtifactRepository } from './persistence/artifact-repository.js';
 import { EvidenceRepository } from './persistence/evidence-repository.js';
@@ -173,8 +173,7 @@ export function provideMemories(): MemoryService {
 }
 
 export function provideOrchestration() {
-	// Placeholder orchestration surface – extend with real orchestrator wiring.
-	return { config: {} };
+	return coreProvideOrchestration();
 }
 
 export function provideTaskRepository(): TaskRepository {
@@ -193,8 +192,12 @@ export function provideEvidenceRepository(): EvidenceRepository {
 	return new EvidenceRepository();
 }
 
-let globalPublishMcpEvent: ((evt: { type: string; payload: Record<string, unknown> }) => void) | undefined;
-let globalPublishToolEvent: ((evt: { type: string; payload: Record<string, unknown> }) => void) | undefined;
+let globalPublishMcpEvent:
+	| ((evt: { type: string; payload: Record<string, unknown> }) => void)
+	| undefined;
+let globalPublishToolEvent:
+	| ((evt: { type: string; payload: Record<string, unknown> }) => void)
+	| undefined;
 
 export function setA2aPublishers(publishers: {
 	publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;

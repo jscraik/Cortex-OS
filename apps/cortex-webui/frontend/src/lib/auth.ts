@@ -14,9 +14,7 @@ interface User {
 // Create Better Auth client
 export const authClient = createAuthClient({
 	baseURL:
-		process.env.NODE_ENV === 'production'
-			? 'https://your-domain.com'
-			: 'http://localhost:3001',
+		process.env.NODE_ENV === 'production' ? 'https://your-domain.com' : 'http://localhost:3001',
 });
 
 // Extract commonly used methods from authClient

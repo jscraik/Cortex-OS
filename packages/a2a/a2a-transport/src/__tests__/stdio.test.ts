@@ -118,7 +118,7 @@ describe('Stdio Transport', () => {
 		it('should log warnings for invalid JSON', () => {
 			// Mock console.warn to verify logging
 			const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			
+
 			const mockChild = {
 				stdout: { on: vi.fn(), removeAllListeners: vi.fn() },
 				stderr: { on: vi.fn(), removeAllListeners: vi.fn() },
@@ -144,13 +144,13 @@ describe('Stdio Transport', () => {
 					context: 'stdio-message-parsing',
 				}),
 			);
-			
+
 			mockConsoleWarn.mockRestore();
 		});
 
 		it('should handle empty lines gracefully', () => {
 			const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			
+
 			const mockChild = {
 				stdout: { on: vi.fn(), removeAllListeners: vi.fn() },
 				stderr: { on: vi.fn(), removeAllListeners: vi.fn() },
@@ -169,7 +169,7 @@ describe('Stdio Transport', () => {
 			}
 			// Should handle gracefully without logging errors
 			expect(mockConsoleWarn).not.toHaveBeenCalled();
-			
+
 			mockConsoleWarn.mockRestore();
 		});
 	});

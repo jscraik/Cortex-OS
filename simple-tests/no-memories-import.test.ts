@@ -79,16 +79,15 @@ describe('Repository does not import @cortex-os/memories', () => {
 		for (const file of files) {
 			const content = readFileSync(file, 'utf-8');
 			const relPath = relative(repoRoot, file).replace(/\\/g, '/');
-	
+
 			const hits = FORBIDDEN_IMPORT_PATTERNS.filter((pattern) => pattern.test(content));
 			if (hits.length > 0) {
-				offenders.push(
-					`${relPath} → ${hits.map((hit) => hit.id).join(', ')}`,
-				);
+				offenders.push(`${relPath} → ${hits.map((hit) => hit.id).join(', ')}`);
 			}
 		}
-		expect(offenders, `Legacy memories/rag imports found: ${offenders.join(', ') || 'none'}`).toEqual(
-			[],
-		);
+		expect(
+			offenders,
+			`Legacy memories/rag imports found: ${offenders.join(', ') || 'none'}`,
+		).toEqual([]);
 	});
 });

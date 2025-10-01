@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { defineConfig } from 'vitest/config';
 
 if (!process.env.ROLLUP_SKIP_NATIVE_BUILD) {
 	process.env.ROLLUP_SKIP_NATIVE_BUILD = 'true';
@@ -27,9 +27,7 @@ const aliasPackages: Array<{ scope: string; pathSegments: string[] }> = [
 const appsSourceRoot = resolve(repoRoot, 'apps', 'cortex-os');
 
 export default defineConfig({
-	plugins: [
-		tsconfigPaths({ projects: [resolve(repoRoot, 'tsconfig.json')] }),
-	],
+	plugins: [tsconfigPaths({ projects: [resolve(repoRoot, 'tsconfig.json')] })],
 	resolve: {
 		alias: [
 			...aliasPackages.flatMap(({ scope, pathSegments }) => {

@@ -305,9 +305,7 @@ describe('Runtime HTTP Server', () => {
 			}[];
 		};
 		expect(Array.isArray(artifactsPayload.artifacts)).toBe(true);
-		expect(
-			artifactsPayload.artifacts.find((a) => a.id === 'test-artifact-http-001'),
-		).toBeDefined();
+		expect(artifactsPayload.artifacts.find((a) => a.id === 'test-artifact-http-001')).toBeDefined();
 
 		// Cleanup
 		await fetch(`${runtime.httpUrl}/v1/artifacts/${uploadedArtifact.metadata.id}`, {

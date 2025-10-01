@@ -57,6 +57,10 @@
         <string>brainwav-cortex-mcp</string>
         <key>LOCAL_MEMORY_MODE</key>
         <string>dual</string>
+        <key>PIECES_MCP_ENDPOINT</key>
+        <string>http://localhost:39300/model_context_protocol/2024-11-05/sse</string>
+        <key>PIECES_MCP_ENABLED</key>
+        <string>true</string>
     </dict>
 
     <key>ThrottleInterval</key>

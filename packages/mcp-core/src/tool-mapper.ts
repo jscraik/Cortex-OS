@@ -18,7 +18,7 @@ type DiscoveryInfo =
 				category: 'search' | 'file' | 'database' | 'browser' | 'utility' | 'analysis';
 				version: string;
 			};
-		}
+	  }
 	| { discovered: false };
 
 interface FallbackMappedTool {
@@ -211,7 +211,10 @@ export class ToolMapper {
 		// Simulate tool discovery process
 		const discoveryPatterns: Record<
 			string,
-			{ category: 'search' | 'file' | 'database' | 'browser' | 'utility' | 'analysis'; version: string }
+			{
+				category: 'search' | 'file' | 'database' | 'browser' | 'utility' | 'analysis';
+				version: string;
+			}
 		> = {
 			'data-visualization': { category: 'utility', version: '1.0.0' },
 			'ml-task': { category: 'analysis', version: '2.0.0' },
@@ -366,9 +369,9 @@ export class ToolMapper {
 	/**
 	 * Generate ML-based tool suggestions
 	 */
-	private async generateMLSuggestions(_request: UnknownToolRequest): Promise<
-		Array<{ toolType: string; confidence: number; reasoning: string }>
-	> {
+	private async generateMLSuggestions(
+		_request: UnknownToolRequest,
+	): Promise<Array<{ toolType: string; confidence: number; reasoning: string }>> {
 		// Simulate ML suggestions based on tool patterns
 		const suggestions = [
 			{
@@ -425,7 +428,10 @@ export class ToolMapper {
 			success: false,
 			processingTime: Date.now() - startTime,
 			error: 'Security violation: Request blocked due to security constraints',
-			securityReason: reason as 'dangerous-operation' | 'external-tools-disabled' | 'invalid-parameters',
+			securityReason: reason as
+				| 'dangerous-operation'
+				| 'external-tools-disabled'
+				| 'invalid-parameters',
 			metadata: {
 				processor: this.processorName,
 				originalToolType: request.toolType,

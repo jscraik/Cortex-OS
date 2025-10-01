@@ -45,7 +45,7 @@
 
 ### Updated Agent System Flow
 
-```
+```markdown
 User Interaction Layer
 │
 ├─ CLI / VS Code / Web UI
@@ -277,14 +277,159 @@ On startup, toolkit resolves tool scripts in priority order:
 - [x] Ensure memory requests go through MCP hub
   - 2025-10-01: `provideMemories()` wraps the Local Memory REST API via `LOCAL_MEMORY_BASE_URL`, with tests stubbing outbound fetch to enforce HTTP proxying.
 
-##### 2.3.1 Loopback Authentication for Runtime HTTP Tests
+##### 2.3.1 Pieces MCP Integration for Unified Memory Architecture
 
-- [x] Generate a loopback token during test bootstrap (`apps/cortex-os/tests/setup.global.ts`) and export helpers for HTTP suites.
-  - 2025-10-01: Test bootstrap provisions a loopback token once per `CORTEX_OS_TMP` context and exports async/sync helpers for reuse.
-- [x] Update all runtime HTTP tests (e.g., `apps/cortex-os/tests/http/runtime-server.test.ts`) to send the header `Authorization: Bearer <loopback-token>`.
-  - 2025-10-01: HTTP, MCP, event, and E2E suites import the shared helper and wrap all positive requests with `withAuthHeaders` (401 expectations remain unauthenticated).
-- [ ] Verify `pnpm --filter @apps/cortex-os test` now exercises authenticated paths instead of failing 401/404.
-  - Pending: Suites reach authenticated paths, but runtime HTTP + MCP still respond 404 due to missing /v1 resource handlers; follow-up fixes required.
+- [x] **Pieces MCP Proxy Implementation** (2025-10-01)
+  - Created `PiecesMCPProxy` class in `packages/mcp-server/src/pieces-proxy.ts` (206 lines)
+  - Uses `@modelcontextprotocol/sdk` SSEClientTransport for streamable HTTP connection to Pieces OS
+  - Implements auto-reconnect with 5-second delay on connection failures
+  - Graceful degradation: hub continues with local tools if Pieces offline
+  - Remote tool discovery via `listTools()` API with "pieces." prefix registration
+
+- [x] **Hub Integration** (2025-10-01)
+  - Modified `packages/mcp-server/src/index.ts` to initialize Pieces proxy at startup
+  - Dynamic remote tool registration: `pieces.ask_pieces_ltm`, `pieces.create_pieces_memory`, etc.
+  - Added `memory.hybrid_search` aggregator tool that queries both local memory-core and remote Pieces LTM
+  - Graceful shutdown handlers for clean proxy disconnect (SIGINT/SIGTERM)
+
+- [x] **Environment Configuration** (2025-10-01)
+  - `PIECES_MCP_ENDPOINT=http://localhost:39300/model_context_protocol/2024-11-05/sse` (default)
+  - `PIECES_MCP_ENABLED=true` (default, set to 'false' to disable)
+  - LaunchAgent plist updated with Pieces environment variables
+  - Configuration replicated in workspace: `scripts/com.cortexos.mcp.server.plist`
+
+- [x] **Build & Deployment** (2025-10-01)
+  - TypeScript compilation successful: `dist/pieces-proxy.js` generated
+  - LaunchAgent configuration updated and service reloaded
+  - Ready for Docker Compose integration (Phase 6)
+
+- [ ] **Testing & Verification** (Pending Pieces OS startup)
+  - Verify Pieces OS running on `localhost:39300`
+  - Confirm "Successfully connected to Pieces MCP server" in logs
+  - Test `tools/list` shows `pieces.*` tools alongside local tools
+  - Validate `memory.hybrid_search` merges results from both sources
+  - Test graceful degradation when Pieces offline
+
+#### 2.4 Pieces MCP Integration Architecture
+
+##### 2.4.1 Integration Pattern: Remote MCP Proxy
+
+**Design Principles:**
+
+1. **Zero Code Duplication**: Pieces functionality accessed via proxy, not re-implemented
+2. **Unified MCP Hub**: Single endpoint exposes both local and remote tools
+3. **Local-First Architecture**: memory-core (SQLite + Qdrant) remains canonical truth
+4. **Graceful Degradation**: Hub fully functional even if Pieces offline
+5. **Hybrid Retrieval**: Optional aggregator merges local + remote context
+
+**Remote Tool Registration:**
+
+```typescript
+// packages/mcp-server/src/index.ts (simplified)
+const piecesProxy = new PiecesMCPProxy({
+  endpoint: process.env.PIECES_MCP_ENDPOINT,
+  enabled: process.env.PIECES_MCP_ENABLED !== 'false',
+  logger,
+});
+
+await piecesProxy.connect();
+
+for (const tool of piecesProxy.getTools()) {
+  server.addTool({
+    name: `pieces.${tool.name}`,
+    description: `[Remote Pieces] ${tool.description}`,
+    parameters: tool.inputSchema,
+    async execute(args) {
+      return await piecesProxy.callTool(tool.name, args);
+    },
+  });
+}
+```
+
+**Hybrid Search Aggregator:**
+
+```typescript
+// memory.hybrid_search tool
+server.addTool({
+  name: 'memory.hybrid_search',
+  description: 'Search both local Cortex memory and remote Pieces LTM',
+  parameters: z.object({
+    query: z.string(),
+    include_pieces: z.boolean().default(true),
+    limit: z.number().default(10),
+  }),
+  async execute({ query, include_pieces, limit }) {
+    // Query local memory-core
+    const localResults = await memoryProvider.search({ query, limit });
+    
+    // Query remote Pieces if enabled and connected
+    let piecesResults = [];
+    if (include_pieces && piecesProxy.isConnected()) {
+      const response = await piecesProxy.callTool('ask_pieces_ltm', {
+        question: query,
+        chat_llm: 'gpt-4',
+      });
+      piecesResults = parsePiecesResponse(response);
+    }
+    
+    // Merge and return with source attribution
+    return {
+      local: localResults.map(r => ({ ...r, source: 'cortex-local' })),
+      remote: piecesResults.map(r => ({ ...r, source: 'pieces-ltm' })),
+      combined: mergeAndRerank(localResults, piecesResults),
+    };
+  },
+});
+```
+
+##### 2.4.2 Connection Management
+
+**SSE Client Transport:**
+
+- Uses `@modelcontextprotocol/sdk` SSEClientTransport for streamable HTTP
+- Endpoint: `http://localhost:39300/model_context_protocol/2024-11-05/sse`
+- No WebSockets required (already eliminated per architecture)
+
+**Auto-Reconnect Strategy:**
+
+```typescript
+private scheduleReconnect(): void {
+  if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+  
+  this.reconnectTimer = setTimeout(async () => {
+    this.config.logger.info('Attempting to reconnect to Pieces MCP...');
+    await this.connect();
+  }, this.config.reconnectDelay); // 5 seconds default
+}
+```
+
+**Graceful Error Handling:**
+
+- Connection failure logs warning, hub continues with local tools
+- Tool calls return clear errors if Pieces disconnected
+- Health checks reflect Pieces connection status
+
+##### 2.4.3 File Locations
+
+**Implementation Files:**
+
+- **Proxy Client**: `/Users/jamiecraik/.Cortex-OS/packages/mcp-server/src/pieces-proxy.ts`
+- **Hub Integration**: `/Users/jamiecraik/.Cortex-OS/packages/mcp-server/src/index.ts`
+- **Memory Core**: `/Users/jamiecraik/.Cortex-OS/packages/memory-core/src/providers/LocalMemoryProvider.ts`
+- **LaunchAgent Config**: `/Users/jamiecraik/.Cortex-OS/scripts/com.cortexos.mcp.server.plist`
+
+**Environment Variables:**
+
+```bash
+# Pieces MCP Configuration
+PIECES_MCP_ENDPOINT=http://localhost:39300/model_context_protocol/2024-11-05/sse
+PIECES_MCP_ENABLED=true  # Set to 'false' to disable
+
+# Existing Memory-Core Configuration
+LOCAL_MEMORY_BASE_URL=http://localhost:3028/api/v1
+MEMORY_DB_PATH=/Users/jamiecraik/.Cortex-OS/packages/mcp-server/data/unified-memories.db
+MEMORIES_SHORT_STORE=local
+```
 
 ##### 2.3.2 Event Manager Validation Hardening
 
@@ -481,7 +626,7 @@ On startup, toolkit resolves tool scripts in priority order:
 
 ```
 ───────────────────────────────────────────────
-        Local Deployment (Docker Compose)
+        Local Deployment (with Pieces MCP)
 ───────────────────────────────────────────────
 
                  ┌───────────────────────────┐
@@ -497,45 +642,52 @@ On startup, toolkit resolves tool scripts in priority order:
              Service Containers (core)
 ───────────────────────────────────────────────
 
-   ┌───────────────────────────┐
-   │ cortex-mcp (hub)          │
-   │───────────────────────────│
-   │ - MCP stdio (local)       │
-   │ - MCP httpStream (remote) │
-   │ - Tools:                  │
-   │   • memory.*              │
-   │   • agent_toolkit_*       │
-   │ - A2A events emit         │
-   │ - /healthz, /readyz       │
-   └───────────┬───────────────┘
-               │  (calls)
-   ┌───────────────────────────┐
-   │ rest-api                  │
-   │───────────────────────────│
-   │ - OpenAPI (thin)          │
-   │ - Delegates → memory-core │
-   │ - /healthz                │
-   └───────────┬───────────────┘
-               │  (delegates)
-   ┌───────────────────────────┐
-   │ local-memory              │
-   │───────────────────────────│
-   │ - Memory-Core API         │
-   │ - Uses SQLite (truth)     │
-   │ - Qdrant client (ANN)     │
-   │ - Embeddings gen          │
-   │ - /healthz                │
-   └───────────┬───────────────┘
-               │
-───────────────┼────────────────────────────────
-               │
-   ┌───────────────────────────┐    ┌───────────────────────────┐
-   │ SQLite                    │    │ Qdrant                    │
-   │───────────────────────────│    │───────────────────────────│
-   │ unified-memories.db       │    │ localhost:6333            │
-   │ - Canonical store         │    │ - Vector ANN index        │
-   │ - FTS5 keyword search     │    │ - Filters, hybrid (opt.)  │
-   └───────────────────────────┘    └───────────────────────────┘
+   ┌───────────────────────────────────────────┐
+   │ cortex-mcp (hub)                          │
+   │───────────────────────────────────────────│
+   │ - MCP stdio (local)                       │
+   │ - MCP httpStream (remote)                 │
+   │ - Local Tools:                            │
+   │   • memory.* (9 tools)                    │
+   │   • agent_toolkit_* (5 tools)             │
+   │   • memory.hybrid_search (aggregator)     │
+   │ - Remote Tools (via Pieces proxy):        │
+   │   • pieces.ask_pieces_ltm                 │
+   │   • pieces.create_pieces_memory           │
+   │   • pieces.* (auto-discovered)            │
+   │ - A2A events emit                         │
+   │ - /healthz, /readyz                       │
+   └───────────┬───────────────┬───────────────┘
+               │  (calls)      │  (proxies)
+   ┌───────────▼─────────┐     │
+   │ rest-api            │     │
+   │─────────────────────│     │
+   │ - OpenAPI (thin)    │     │
+   │ - Delegates         │     │
+   │ - /healthz          │     │
+   └───────────┬─────────┘     │
+               │               │
+   ┌───────────▼─────────┐     │
+   │ local-memory        │     │
+   │─────────────────────│     │
+   │ - Memory-Core API   │     │
+   │ - SQLite (truth)    │     │
+   │ - Qdrant (ANN)      │     │
+   │ - Embeddings        │     │
+   │ - /healthz          │     │
+   └───────────┬─────────┘     │
+               │               │
+───────────────┼───────────────┼────────────────
+               │               │
+   ┌───────────▼─────┐  ┌──────▼────┐  ┌────────────────────────┐
+   │ SQLite          │  │ Qdrant    │  │ Pieces OS (host)       │
+   │─────────────────│  │───────────│  │────────────────────────│
+   │ unified-        │  │ :6333     │  │ localhost:39300        │
+   │ memories.db     │  │ ANN+filter│  │ - Pieces LTM engine    │
+   │ - Canonical     │  │ (optional)│  │ - SSE/streamable HTTP  │
+   │ - FTS5          │  └───────────┘  │ - ask_pieces_ltm       │
+   └─────────────────┘                 │ - create_pieces_memory │
+                                       └────────────────────────┘
 
 ───────────────────────────────────────────────
                 Optional/Support
@@ -551,6 +703,7 @@ On startup, toolkit resolves tool scripts in priority order:
    │ apps-cortex-os (service)  │
    │───────────────────────────│
    │ - Calls MCP httpStream    │
+   │ - Uses hybrid search      │
    │ - Emits A2A events        │
    └───────────────────────────┘
 
@@ -561,6 +714,13 @@ On startup, toolkit resolves tool scripts in priority order:
    │  .Cortex-OS/tools/        │
    │  agent-toolkit            │
    └───────────────────────────┘
+
+Notes:
+- Pieces MCP runs on host (localhost:39300), accessed via SSE proxy
+- Hub exposes unified tool list: local (memory.*, agent_toolkit_*) + remote (pieces.*)
+- memory.hybrid_search aggregates results from both local and remote sources
+- Graceful degradation: if Pieces offline, hub continues with local tools
+- No code duplication: Pieces functionality accessed via proxy only
 ```
 
 ### Implementation Tasks
@@ -666,11 +826,15 @@ services:
       - CORTEX_HOME=/root/.Cortex-OS
       - AGENT_TOOLKIT_TOOLS_DIR=/opt/agent-toolkit/tools
       - A2A_BUS_URL=nats://a2a-bus:4222
+      - PIECES_MCP_ENDPOINT=http://host.docker.internal:39300/model_context_protocol/2024-11-05/sse
+      - PIECES_MCP_ENABLED=true
     depends_on:
       local-memory:
         condition: service_healthy
       a2a-bus:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Access host's Pieces OS
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9600/healthz"]
       interval: 30s
@@ -997,6 +1161,10 @@ MEMORY_DB_PATH=./data/unified-memories.db
 QDRANT_URL=http://localhost:6333
 QDRANT_API_KEY=...
 QDRANT_COLLECTION=local_memory_v1
+
+# Pieces MCP Integration
+PIECES_MCP_ENDPOINT=http://localhost:39300/model_context_protocol/2024-11-05/sse
+PIECES_MCP_ENABLED=true  # Set to 'false' to disable remote Pieces integration
 
 # A2A
 A2A_BUS_URL=nats://localhost:4222

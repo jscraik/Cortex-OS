@@ -11,6 +11,11 @@ export {
 	type SecurityScanStartedEvent,
 	type VulnerabilityFoundEvent,
 } from './events/cortex-sec-events.ts';
+// MCP tool definitions for security automation
+export {
+	CORTEX_SEC_TOOL_ALLOWLIST,
+	cortexSecMcpTools,
+} from './mcp/tools.ts';
 // Security Integration Service
 export {
 	createSecurityIntegrationService,
@@ -33,9 +38,3 @@ export {
 	type PolicyThresholds,
 	type SecurityPolicyConfig,
 } from './utils/policy-loader.ts';
-
-// MCP tool definitions for security automation
-export {
-	cortexSecMcpTools,
-	CORTEX_SEC_TOOL_ALLOWLIST,
-} from './mcp/tools.ts';

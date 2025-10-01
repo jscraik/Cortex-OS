@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, type vi } from 'vitest';
 import { provideMemories } from '../src/services.js';
 
 describe('memories service', () => {
