@@ -21,7 +21,8 @@
 - `LocalMemoryAdapter` now proxies every memory-core REST endpoint (store/search/get/delete/analysis/relationships/stats/health/cleanup/optimize) and returns FastMCP v3 response envelopes; `InMemoryMemoryAdapter`/`ResilientMemoryAdapter` were removed along with the `CORTEX_MCP_ALLOW_INPROCESS_MEMORY` escape hatch.
 - `apps/cortex-os` `provideMemories()` instantiates the Remote Memory service against `LOCAL_MEMORY_BASE_URL`; tests currently rely on a fetch stub that covers store/search only, so analysis/relationship/stats paths still need end-to-end coverage.
 - `packages/cortex-mcp/tests/test_unit_components.py` and `packages/cortex-mcp/tests/test_server_configuration.py` were updated for the `{ success, data, count }` payloads; rerun with `uv run pytest ...` once virtualenv deps (e.g., `pyjwt`) are present.
-- `apps/cortex-os` emits `cortex.mcp.tool.execution.started/completed` events via the A2A bus; remaining Phase 2.3 verification blockers are seeding loopback auth for runtime HTTP tests, hardening `eventManager.emitEvent` validation, and deciding on the memory-core stub vs service strategy.
+- `apps/cortex-os` emits `cortex.mcp.tool.execution.started/completed` events via the A2A bus; runtime HTTP suites now seed loopback auth tokens (2025-10-01), but Phase 2.3 stays open pending a fixed `provideOrchestration()` export for MCP suites, `eventManager.emitEvent` negative tests, and a decision on the memory-core stub vs service strategy.
+- MCP HTTP integration tests (`tests/mcp/facade.contract.test.ts`, `tests/mcp/mcp-server-integration.test.ts`, etc.) still bail out because `provideOrchestration()` from `@cortex-os/orchestration` is undefined and newly added MCP tool handlers return empty payloads; align those exports and enforce content-array responses with proper 400s for unknown tools before rerunning the green suite.
 - Guard targets (`pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`, `pnpm nx run simple-tests:memories-guard`) stay green; unrelated simple-tests suites still fail on legacy scripts.
 
 ## Critical Architecture Deltas
@@ -277,7 +278,16 @@ On startup, toolkit resolves tool scripts in priority order:
 - [x] Ensure memory requests go through MCP hub
   - 2025-10-01: `provideMemories()` wraps the Local Memory REST API via `LOCAL_MEMORY_BASE_URL`, with tests stubbing outbound fetch to enforce HTTP proxying.
 
-##### 2.3.1 Pieces MCP Integration for Unified Memory Architecture
+##### 2.3.1 Loopback Authentication for Runtime HTTP Tests
+
+- [x] Generate and expose loopback tokens during global test bootstrap
+  - 2025-10-01: `apps/cortex-os/tests/setup.global.ts` now provisions a loopback JWT and exports helpers so HTTP suites reuse a single token per run.
+- [x] Update runtime HTTP suites to send authenticated requests
+  - 2025-10-01: `apps/cortex-os/tests/http/runtime-server.test.ts` and sibling suites apply the loopback helper, ensuring `Authorization: Bearer <token>` hits the authenticated code paths.
+- [ ] Re-run `pnpm --filter @apps/cortex-os test` until green
+  - Blocked: suite exits early because `provideOrchestration()` from `@cortex-os/orchestration` resolves to `undefined`; complete the orchestration facade export and rerun to verify authenticated routes remain covered.
+
+##### 2.3.2 Pieces MCP Integration for Unified Memory Architecture
 
 - [x] **Pieces MCP Proxy Implementation** (2025-10-01)
   - Created `PiecesMCPProxy` class in `packages/mcp-server/src/pieces-proxy.ts` (206 lines)
@@ -431,14 +441,14 @@ MEMORY_DB_PATH=/Users/jamiecraik/.Cortex-OS/packages/mcp-server/data/unified-mem
 MEMORIES_SHORT_STORE=local
 ```
 
-##### 2.3.2 Event Manager Validation Hardening
+##### 2.3.3 Event Manager Validation Hardening
 
 - [x] Guard `apps/cortex-os/src/events/event-manager.ts` so `emitEvent` enforces required `type` and `payload` structure.
   - 2025-10-01: Event manager now validates non-empty `type` strings and object payloads before emitting or persisting.
 - [ ] Add negative/positive unit coverage in `apps/cortex-os/tests/events/event-manager.test.ts` (or create the suite) ensuring malformed events throw.
 - [ ] Re-run focused tests (`pnpm vitest apps/cortex-os/tests/events/event-manager.test.ts --runInBand`) to confirm behavior.
 
-##### 2.3.3 Memory-Core Test Strategy
+##### 2.3.4 Memory-Core Test Strategy
 
 - [ ] Adopt production-faithful coverage by launching the real memory-core service via Testcontainers (no synthetic stubs beyond network mocking safeguards).
 - [ ] Add fixtures that provision memory-core with loopback auth, run migrations, and expose the base URL to runtime HTTP tests.
