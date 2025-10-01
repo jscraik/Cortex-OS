@@ -16,6 +16,14 @@ type MemoryStoreRecord = {
 	vectorIndexed: boolean;
 };
 
+if (!process.env.ROLLUP_SKIP_NATIVE_BUILD) {
+	process.env.ROLLUP_SKIP_NATIVE_BUILD = 'true';
+}
+
+if (!process.env.ROLLUP_SKIP_NATIVE) {
+	process.env.ROLLUP_SKIP_NATIVE = 'true';
+}
+
 const DEFAULT_MEMORY_BASE_URL =
 	process.env.LOCAL_MEMORY_BASE_URL ?? 'https://memory-core.local/api/v1';
 process.env.LOCAL_MEMORY_BASE_URL = DEFAULT_MEMORY_BASE_URL;

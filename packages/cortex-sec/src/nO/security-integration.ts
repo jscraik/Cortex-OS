@@ -1,9 +1,9 @@
-import type { SecurityActionPlan } from '../planning/compliance-planner.js';
+import type { SecurityActionPlan } from '../planning/compliance-planner.ts';
 import {
 	type CompliancePlanner,
 	type CompliancePlanningResult,
 	createCompliancePlanner,
-} from '../planning/compliance-planner.js';
+} from '../planning/compliance-planner.ts';
 
 export interface SecurityIntegrationInput {
 	taskId: string;

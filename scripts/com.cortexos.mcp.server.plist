@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.cortexos.mcp.server</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/jamiecraik/.Cortex-OS/scripts/start-mcp-server-typescript.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/jamiecraik/.Cortex-OS/packages/mcp-server</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/jamiecraik/Library/Logs/com.cortexos.mcp.server.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/jamiecraik/Library/Logs/com.cortexos.mcp.server.err.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/Users/jamiecraik/.local/share/mise/installs/node/22.11.0/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>NODE_ENV</key>
+        <string>production</string>
+        <key>HOME</key>
+        <string>/Users/jamiecraik</string>
+        <key>PORT</key>
+        <string>3024</string>
+        <key>MCP_HOST</key>
+        <string>127.0.0.1</string>
+        <key>MCP_HTTP_ENDPOINT</key>
+        <string>/mcp</string>
+        <key>MCP_LOG_LEVEL</key>
+        <string>info</string>
+        <key>MEMORY_LOG_LEVEL</key>
+        <string>info</string>
+        <key>MEMORY_DB_PATH</key>
+        <string>/Users/jamiecraik/.Cortex-OS/packages/mcp-server/data/unified-memories.db</string>
+        <key>MEMORIES_SHORT_STORE</key>
+        <string>local</string>
+        <key>MEMORIES_ADAPTER</key>
+        <string>local</string>
+        <key>MEMORY_STORE</key>
+        <string>local</string>
+        <key>LOCAL_MEMORY_BASE_URL</key>
+        <string>http://localhost:3028/api/v1</string>
+        <key>LOCAL_MEMORY_NAMESPACE</key>
+        <string>brainwav-cortex-mcp</string>
+        <key>LOCAL_MEMORY_MODE</key>
+        <string>dual</string>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>

@@ -279,13 +279,17 @@ On startup, toolkit resolves tool scripts in priority order:
 
 ##### 2.3.1 Loopback Authentication for Runtime HTTP Tests
 
-- [ ] Generate a loopback token during test bootstrap (`apps/cortex-os/tests/setup.global.ts`) and export helpers for HTTP suites.
-- [ ] Update all runtime HTTP tests (e.g., `apps/cortex-os/tests/http/runtime-server.test.ts`) to send the header `Authorization: Bearer <loopback-token>`.
+- [x] Generate a loopback token during test bootstrap (`apps/cortex-os/tests/setup.global.ts`) and export helpers for HTTP suites.
+  - 2025-10-01: Test bootstrap provisions a loopback token once per `CORTEX_OS_TMP` context and exports async/sync helpers for reuse.
+- [x] Update all runtime HTTP tests (e.g., `apps/cortex-os/tests/http/runtime-server.test.ts`) to send the header `Authorization: Bearer <loopback-token>`.
+  - 2025-10-01: HTTP, MCP, event, and E2E suites import the shared helper and wrap all positive requests with `withAuthHeaders` (401 expectations remain unauthenticated).
 - [ ] Verify `pnpm --filter @apps/cortex-os test` now exercises authenticated paths instead of failing 401/404.
+  - Pending: Suites reach authenticated paths, but runtime HTTP + MCP still respond 404 due to missing /v1 resource handlers; follow-up fixes required.
 
 ##### 2.3.2 Event Manager Validation Hardening
 
-- [ ] Guard `apps/cortex-os/src/events/event-manager.ts` so `emitEvent` enforces required `type` and `payload` structure.
+- [x] Guard `apps/cortex-os/src/events/event-manager.ts` so `emitEvent` enforces required `type` and `payload` structure.
+  - 2025-10-01: Event manager now validates non-empty `type` strings and object payloads before emitting or persisting.
 - [ ] Add negative/positive unit coverage in `apps/cortex-os/tests/events/event-manager.test.ts` (or create the suite) ensuring malformed events throw.
 - [ ] Re-run focused tests (`pnpm vitest apps/cortex-os/tests/events/event-manager.test.ts --runInBand`) to confirm behavior.
 

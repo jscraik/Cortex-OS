@@ -125,7 +125,7 @@ export class McpGateway {
 		});
 
 		if (def.secure && this.deps.security && !this.deps.security.allowTool?.(name)) {
-			const durationMs = Math.round(performance.now() - startedClock);
+			const durationMs = this.computeDuration(startedClock);
 			this.publishToolCompleted({
 				tool: name,
 				correlationId,
@@ -140,7 +140,7 @@ export class McpGateway {
 		}
 
 		if (!this.consumeRate(name)) {
-			const durationMs = Math.round(performance.now() - startedClock);
+			const durationMs = this.computeDuration(startedClock);
 			this.publishToolCompleted({
 				tool: name,
 				correlationId,
@@ -158,7 +158,7 @@ export class McpGateway {
 		if (cacheKey) {
 			const entry = cache[cacheKey];
 			if (entry && entry.expires > Date.now()) {
-				const durationMs = Math.round(performance.now() - startedClock);
+				const durationMs = this.computeDuration(startedClock);
 				this.publishToolCompleted({
 					tool: name,
 					correlationId,
@@ -179,32 +179,32 @@ export class McpGateway {
 			const parsed = def.inputSchema.parse(input);
 			const result = await this.dispatch(name, parsed);
 			const output = def.outputSchema.parse(result);
+			const formatted = this.formatToolResult(name, output);
 
 			if (cacheKey && def.cacheTtlMs) {
 				cache[cacheKey] = {
-					value: output,
+					value: formatted,
 					expires: Date.now() + def.cacheTtlMs,
 				};
 			}
 
-			const durationMs = Math.round(performance.now() - startedClock);
+			const durationMs = this.computeDuration(startedClock);
 			this.publishToolCompleted({
 				tool: name,
 				correlationId,
 				finishedAt: new Date().toISOString(),
 				durationMs,
 				status: 'success',
-				resultSource: 'direct',
+				resultSource: cacheKey ? 'cache' : 'direct',
 			});
 			this.audit(name, 'success', durationMs, {
 				correlationId,
-				resultSource: 'direct',
-				input: parsed,
+				resultSource: cacheKey ? 'cache' : 'direct',
 			});
-			return output;
+			return formatted;
 		} catch (err) {
 			const response = this.handleError(name, err, startedClock, correlationId);
-			const durationMs = Math.round(performance.now() - startedClock);
+			const durationMs = this.computeDuration(startedClock);
 			const errorCode = 'error' in response ? response.error.code : undefined;
 			const errorMessage = 'error' in response ? response.error.message : undefined;
 			this.publishToolCompleted({
@@ -383,6 +383,24 @@ export class McpGateway {
 		} catch {
 			return undefined;
 		}
+	}
+
+	private computeDuration(startedClock: number): number {
+		return Math.max(1, Math.round(performance.now() - startedClock));
+	}
+
+	private formatToolResult(name: string, output: unknown) {
+		const text = typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+		return {
+			tool: name,
+			content: [
+				{
+					type: 'text' as const,
+					text,
+				},
+			],
+			data: output,
+		};
 	}
 
 	private getRuntimeSession(): string | undefined {

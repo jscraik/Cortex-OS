@@ -1,4 +1,4 @@
-import type { ComplianceViolationEvent } from '../events/cortex-sec-events.js';
+import type { ComplianceViolationEvent } from '../events/cortex-sec-events.ts';
 
 export type ComplianceSeverity = 'low' | 'medium' | 'high' | 'critical';
 

@@ -139,6 +139,7 @@ export interface MemoryGraph {
 // Provider interface
 export interface MemoryProvider {
 	// Core operations
+	get(id: string): Promise<Memory | null>;
 	store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }>;
 	search(input: MemorySearchInput): Promise<MemorySearchResult[]>;
 	analysis(input: MemoryAnalysisInput): Promise<MemoryAnalysisResult>;

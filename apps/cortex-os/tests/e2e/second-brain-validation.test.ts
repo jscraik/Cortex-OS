@@ -267,6 +267,11 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		});
 
 		expect(sseResponse.status).toBe(200);
+		const reader = sseResponse.body?.getReader();
+		if (reader) {
+			await reader.read().catch(() => undefined);
+			await reader.cancel();
+		}
 
 		// 3. Verify MCP tools provide system information
 		const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);

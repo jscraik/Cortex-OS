@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type {
 	MemoryAnalysisInput,
 	MemoryRelationshipsInput,
@@ -9,6 +8,7 @@ import type {
 import { QdrantClient } from '@qdrant/js-client-rest';
 import Database from 'better-sqlite3';
 import CircuitBreaker from 'circuit-breaker-js';
+import { randomUUID } from 'node:crypto';
 import PQueue from 'p-queue';
 import { pino } from 'pino';
 import type {
@@ -86,19 +86,19 @@ export class LocalMemoryProvider implements MemoryProvider {
 		this.initializeDatabase();
 
 		/* Temporarily disabled
-    // this.workflows = new MemoryWorkflowEngine({
-    //   store: {
-    //     generateId: () => randomUUID(),
-    //     getTimestamp: () => Date.now(),
-    //     persistMemory: async (payload: StoreWorkflowPersistPayload) => {
-    //       await this.persistMemoryRecord(payload);
-    //     },
-    //     scheduleVectorIndex: async (payload: StoreWorkflowIndexPayload) => {
-    //       return this.scheduleVectorIndexing(payload);
-    //     },
-    //   },
-    // });
-    */
+	// this.workflows = new MemoryWorkflowEngine({
+	//   store: {
+	//     generateId: () => randomUUID(),
+	//     getTimestamp: () => Date.now(),
+	//     persistMemory: async (payload: StoreWorkflowPersistPayload) => {
+	//       await this.persistMemoryRecord(payload);
+	//     },
+	//     scheduleVectorIndex: async (payload: StoreWorkflowIndexPayload) => {
+	//       return this.scheduleVectorIndexing(payload);
+	//     },
+	//   },
+	// });
+	*/
 	}
 
 	private initializeDatabase(): void {
@@ -301,6 +301,36 @@ export class LocalMemoryProvider implements MemoryProvider {
 		// Normalize
 		const norm = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
 		return embedding.map((val) => val / norm);
+	}
+
+	async get(id: string): Promise<Memory | null> {
+		try {
+			const row = await this.db.prepare('SELECT * FROM memories WHERE id = ?').get(id) as SQLiteMemoryRow | undefined;
+
+			if (!row) {
+				return null;
+			}
+
+			return {
+				id: row.id,
+				content: row.content,
+				importance: row.importance,
+				tags: row.tags ? JSON.parse(row.tags) : [],
+				domain: row.domain,
+				metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+				createdAt: new Date(row.created_at),
+				updatedAt: new Date(row.updated_at),
+				vectorIndexed: Boolean(row.vector_indexed),
+			};
+		} catch (error) {
+			logger.error('Failed to get memory by ID', {
+				error: (error as Error).message,
+				id,
+			});
+			throw new MemoryProviderError('INTERNAL', 'Failed to get memory', {
+				error: (error as Error).message,
+			});
+		}
 	}
 
 	async store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }> {
@@ -1047,10 +1077,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 			// Qdrant stats
 			if (include.includes('qdrant_stats') && this.qdrant) {
 				try {
-						if (await this.isQdrantHealthy()) {
-							const collectionName = this.qdrantConfig?.collection ?? '';
-							await this.qdrant.getCollection(collectionName);
-							const vectorCount = await this.qdrant.count(collectionName);
+					if (await this.isQdrantHealthy()) {
+						const collectionName = this.qdrantConfig?.collection ?? '';
+						await this.qdrant.getCollection(collectionName);
+						const vectorCount = await this.qdrant.count(collectionName);
 
 						stats.qdrantStats = {
 							healthy: true,

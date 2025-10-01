@@ -35,12 +35,39 @@ class HttpError extends Error {
 	}
 }
 
+const CORS_ALLOWED_METHODS = 'GET,POST,PUT,DELETE,OPTIONS';
+const CORS_ALLOWED_HEADERS = 'Content-Type, Authorization, Accept';
+
+function applyCors(req: IncomingMessage, res: ServerResponse): void {
+	const origin = req.headers.origin ?? '*';
+	res.setHeader('Access-Control-Allow-Origin', origin);
+	res.setHeader('Access-Control-Allow-Methods', CORS_ALLOWED_METHODS);
+	res.setHeader(
+		'Access-Control-Allow-Headers',
+		req.headers['access-control-request-headers'] ?? CORS_ALLOWED_HEADERS,
+	);
+	res.setHeader('Access-Control-Allow-Credentials', 'true');
+	res.setHeader('Vary', 'Origin');
+}
+
+function handleCorsPreflight(req: IncomingMessage, res: ServerResponse): boolean {
+	if (req.method !== 'OPTIONS') return false;
+	applyCors(req, res);
+	res.writeHead(204);
+	res.end();
+	return true;
+}
+
 export function createRuntimeHttpServer(dependencies: RuntimeHttpDependencies): RuntimeHttpServer {
 	const clients = new Set<ServerResponse>();
 
 	const server = createServer((req, res) => {
 		void (async () => {
 			try {
+				if (handleCorsPreflight(req, res)) {
+					return;
+				}
+				applyCors(req, res);
 				await handleRequest(req, res, clients, dependencies);
 			} catch (error) {
 				handleError(res, error);
@@ -95,6 +122,11 @@ async function handleRequest(
 		return;
 	}
 
+	if (req.method === 'GET' && url.pathname === '/metrics') {
+		handleMetrics(res);
+		return;
+	}
+
 	if (
 		req.method === 'GET' &&
 		url.pathname === '/v1/events' &&
@@ -109,7 +141,7 @@ async function handleRequest(
 		return;
 	}
 
-	sendNotFound(res, 'Route not found');
+	sendNotFound(res, 'Route not found', { path: url.pathname, method: req.method });
 }
 
 async function handleApiRequest(
@@ -118,6 +150,9 @@ async function handleApiRequest(
 	url: URL,
 	dependencies: RuntimeHttpDependencies,
 ): Promise<void> {
+	if (process.env.VITEST_DEBUG?.includes('runtime-http')) {
+		console.debug('[runtime-http] request', req.method, url.pathname);
+	}
 	// Authenticate all API requests under /v1/* (except SSE handled earlier)
 	const authHeaderRaw = req.headers.authorization;
 	const authorizationHeader = Array.isArray(authHeaderRaw) ? authHeaderRaw[0] : authHeaderRaw;
@@ -169,8 +204,12 @@ async function handleTasksRoute(
 		if (req.method === 'POST') {
 			const body = await readJsonBody(req);
 			const task = (body as { task?: Partial<TaskRecord> })?.task;
-			if (!task || typeof task !== 'object') throw new HttpError(400, 'task payload required');
-			if (!task.id) task.id = randomUUID();
+			if (!task || typeof task !== 'object') {
+				throw new HttpError(400, 'task payload required');
+			}
+			if (typeof task.id !== 'string' || task.id.trim().length === 0) {
+				throw new HttpError(400, 'task id required');
+			}
 			const saved = await tasks.save(task as TaskRecord);
 			sendJson(res, 201, { task: saved.record, digest: saved.digest });
 			return;
@@ -536,16 +575,39 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
 	res.end(body);
 }
 
+function sendText(res: ServerResponse, status: number, body: string): void {
+	res.writeHead(status, {
+		'Content-Type': 'text/plain; version=0.0.4',
+		'Content-Length': Buffer.byteLength(body),
+	});
+	res.end(body);
+}
+
+function handleMetrics(res: ServerResponse): void {
+	const lines = [
+		'# HELP cortex_runtime_health Runtime health status (1=ok)',
+		'# TYPE cortex_runtime_health gauge',
+		'cortex_runtime_health 1',
+	];
+	sendText(res, 200, `${lines.join('\n')}\n`);
+}
+
 function sendNoContent(res: ServerResponse): void {
 	res.writeHead(204);
 	res.end();
 }
 
-function sendNotFound(res: ServerResponse, message: string): void {
-	sendJson(res, 404, { error: 'NotFound', code: 'NOT_FOUND', message });
+function sendNotFound(res: ServerResponse, message: string, meta: Record<string, unknown> = {}): void {
+	if (process.env.VITEST_DEBUG?.includes('runtime-http')) {
+		console.debug('[runtime-http] not-found', message, meta);
+	}
+	sendJson(res, 404, { error: 'NotFound', code: 'NOT_FOUND', message, ...meta });
 }
 
 function handleError(res: ServerResponse, error: unknown): void {
+	if (process.env.VITEST_DEBUG?.includes('runtime-http')) {
+		console.error('[runtime-http] error', error);
+	}
 	if (res.headersSent) {
 		res.end();
 		return;

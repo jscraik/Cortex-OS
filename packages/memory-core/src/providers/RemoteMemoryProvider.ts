@@ -47,6 +47,19 @@ export class RemoteMemoryProvider implements MemoryProvider {
 		return this.post('/memory/store', input);
 	}
 
+	async get(id: string): Promise<Memory | null> {
+		try {
+			const memory = await this.fetch<Memory>(`/memory/${id}`);
+			return this.reviveMemory(memory);
+		} catch (error) {
+			// If it's a 404, return null; otherwise re-throw
+			if (error instanceof MemoryProviderError && error.details?.status === 404) {
+				return null;
+			}
+			throw error;
+		}
+	}
+
 	async search(input: MemorySearchInput): Promise<MemorySearchResult[]> {
 		const results = await this.post<MemorySearchResult[]>('/memory/search', input);
 		return results.map((result) => this.reviveSearchResult(result));
@@ -67,7 +80,7 @@ export class RemoteMemoryProvider implements MemoryProvider {
 	}
 
 	async healthCheck(): Promise<{ healthy: boolean; details: Record<string, unknown> }> {
-		return this.get('/healthz');
+		return this.fetch('/healthz');
 	}
 
 	async cleanup(): Promise<void> {
@@ -100,7 +113,7 @@ export class RemoteMemoryProvider implements MemoryProvider {
 		return this.parseResponse<T>(response);
 	}
 
-	private async get<T>(path: string): Promise<T> {
+	private async fetch<T>(path: string): Promise<T> {
 		const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
 			method: 'GET',
 			headers: this.buildHeaders(),

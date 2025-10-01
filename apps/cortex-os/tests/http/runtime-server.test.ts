@@ -75,21 +75,32 @@ describe('Runtime HTTP Server', () => {
 		});
 
 		expect(createResponse.status).toBe(201);
-		const created = await createResponse.json();
-		expect(created.id).toBe('test-task-http-001');
-		expect(created.status).toBe('pending');
-		expect(created.title).toBe('HTTP Test Task');
+		const created = (await createResponse.json()) as {
+			task: Record<string, unknown>;
+			digest: string;
+		};
+		expect(created.task).toMatchObject({
+			id: 'test-task-http-001',
+			status: 'pending',
+			title: 'HTTP Test Task',
+			description: 'Testing task creation via HTTP API',
+		});
 
 		// GET /tasks/:id - Retrieve task
-		const getResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
+		const getResponse = await fetch(`${runtime.httpUrl}/v1/tasks/${created.task.id}`, {
 			headers: withAuthHeaders(),
 		});
 		expect(getResponse.status).toBe(200);
 
-		const retrieved = await getResponse.json();
-		expect(retrieved.id).toBe('test-task-http-001');
-		expect(retrieved.title).toBe('HTTP Test Task');
-		expect(retrieved.description).toBe('Testing task creation via HTTP API');
+		const retrieved = (await getResponse.json()) as {
+			task: Record<string, unknown>;
+			digest: string;
+		};
+		expect(retrieved.task).toMatchObject({
+			id: 'test-task-http-001',
+			title: 'HTTP Test Task',
+			description: 'Testing task creation via HTTP API',
+		});
 
 		// PUT /tasks/:id - Update task
 		const updatePayload = {
@@ -100,29 +111,39 @@ describe('Runtime HTTP Server', () => {
 			},
 		};
 
-		const updateResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
+		const updateResponse = await fetch(`${runtime.httpUrl}/v1/tasks/${created.task.id}`, {
 			method: 'PUT',
 			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
-			body: JSON.stringify(updatePayload),
+			body: JSON.stringify({ patch: updatePayload, expectedDigest: created.digest }),
 		});
 
 		expect(updateResponse.status).toBe(200);
-		const updated = await updateResponse.json();
-		expect(updated.status).toBe('in-progress');
-		expect(updated.metadata.updated_via).toBe('http_test');
+		const updated = (await updateResponse.json()) as {
+			task: Record<string, unknown>;
+			digest: string;
+		};
+		expect(updated.task).toMatchObject({
+			id: 'test-task-http-001',
+			status: 'in-progress',
+		});
+		expect((updated.task as any).metadata.updated_via).toBe('http_test');
 
 		// GET /tasks - List tasks
-		const listResponse = await fetch(`${runtime.httpUrl}/tasks`, {
+		const listResponse = await fetch(`${runtime.httpUrl}/v1/tasks`, {
 			headers: withAuthHeaders(),
 		});
 		expect(listResponse.status).toBe(200);
 
-		const tasks = await listResponse.json();
-		expect(Array.isArray(tasks)).toBe(true);
-		expect(tasks.find((t: any) => t.id === 'test-task-http-001')).toBeDefined();
+		const tasksPayload = (await listResponse.json()) as {
+			tasks: { record: Record<string, unknown> }[];
+		};
+		expect(Array.isArray(tasksPayload.tasks)).toBe(true);
+		expect(
+			tasksPayload.tasks.find((entry) => entry.record.id === 'test-task-http-001')?.record,
+		).toBeDefined();
 
 		// DELETE /tasks/:id - Delete task
-		const deleteResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
+		const deleteResponse = await fetch(`${runtime.httpUrl}/v1/tasks/${created.task.id}`, {
 			method: 'DELETE',
 			headers: withAuthHeaders(),
 		});
@@ -130,7 +151,7 @@ describe('Runtime HTTP Server', () => {
 		expect(deleteResponse.status).toBe(204);
 
 		// Verify deletion
-		const getDeletedResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
+		const getDeletedResponse = await fetch(`${runtime.httpUrl}/v1/tasks/${created.task.id}`, {
 			headers: withAuthHeaders(),
 		});
 		expect(getDeletedResponse.status).toBe(404);
@@ -164,28 +185,37 @@ describe('Runtime HTTP Server', () => {
 			},
 		};
 
-		const createResponse = await fetch(`${runtime.httpUrl}/profiles`, {
+		const createResponse = await fetch(`${runtime.httpUrl}/v1/profiles`, {
 			method: 'POST',
 			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
-			body: JSON.stringify(profilePayload),
+			body: JSON.stringify({ profile: profilePayload }),
 		});
 
 		expect(createResponse.status).toBe(201);
-		const created = await createResponse.json();
-		expect(created.id).toBe('test-profile-http-001');
-		expect(created.scopes).toEqual(['read', 'write']);
+		const created = (await createResponse.json()) as {
+			profile: Record<string, unknown>;
+			digest: string;
+		};
+		expect(created.profile).toMatchObject({
+			id: 'test-profile-http-001',
+			label: 'HTTP Test Profile',
+			scopes: ['read', 'write'],
+		});
 
 		// GET /profiles/:id - Retrieve profile
-		const getResponse = await fetch(`${runtime.httpUrl}/profiles/${created.id}`, {
+		const getResponse = await fetch(`${runtime.httpUrl}/v1/profiles/${created.profile.id}`, {
 			headers: withAuthHeaders(),
 		});
 		expect(getResponse.status).toBe(200);
 
-		const retrieved = await getResponse.json();
-		expect(retrieved.label).toBe('HTTP Test Profile');
+		const retrieved = (await getResponse.json()) as {
+			profile: Record<string, unknown>;
+			digest: string;
+		};
+		expect(retrieved.profile.label).toBe('HTTP Test Profile');
 
 		// Cleanup
-		await fetch(`${runtime.httpUrl}/profiles/${created.id}`, {
+		await fetch(`${runtime.httpUrl}/v1/profiles/${created.profile.id}`, {
 			method: 'DELETE',
 			headers: withAuthHeaders(),
 		});
@@ -193,13 +223,13 @@ describe('Runtime HTTP Server', () => {
 
 	it('should handle error cases gracefully', async () => {
 		// GET non-existent task
-		const notFoundResponse = await fetch(`${runtime.httpUrl}/tasks/non-existent-task`, {
+		const notFoundResponse = await fetch(`${runtime.httpUrl}/v1/tasks/non-existent-task`, {
 			headers: withAuthHeaders(),
 		});
 		expect(notFoundResponse.status).toBe(404);
 
 		// POST with invalid JSON
-		const invalidJsonResponse = await fetch(`${runtime.httpUrl}/tasks`, {
+		const invalidJsonResponse = await fetch(`${runtime.httpUrl}/v1/tasks`, {
 			method: 'POST',
 			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
 			body: 'invalid json content',
@@ -207,57 +237,80 @@ describe('Runtime HTTP Server', () => {
 		expect(invalidJsonResponse.status).toBe(400);
 
 		// POST with missing required fields
-		const invalidTaskResponse = await fetch(`${runtime.httpUrl}/tasks`, {
+		const missingIdResponse = await fetch(`${runtime.httpUrl}/v1/tasks`, {
 			method: 'POST',
 			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
-			body: JSON.stringify({ title: 'Missing ID' }), // Missing id field
+			body: JSON.stringify({ task: { status: 'pending', title: 'Missing ID' } }),
 		});
-		expect(invalidTaskResponse.status).toBe(400);
+		expect(missingIdResponse.status).toBe(400);
 	});
 
 	it('should serve artifact management endpoints', async () => {
 		// POST /artifacts - Upload artifact
 		const artifactData = Buffer.from('Test artifact content');
-		const formData = new FormData();
-		formData.append('id', 'test-artifact-http-001');
-		formData.append('filename', 'test-file.txt');
-		formData.append('contentType', 'text/plain');
-		formData.append('taskId', 'related-task-001');
-		formData.append('file', new Blob([artifactData]), 'test-file.txt');
+		const artifactPayload = {
+			artifact: {
+				id: 'test-artifact-http-001',
+				filename: 'test-file.txt',
+				contentType: 'text/plain',
+				base64Payload: artifactData.toString('base64'),
+				taskId: 'related-task-001',
+				tags: ['log'],
+			},
+		};
 
-		const uploadResponse = await fetch(`${runtime.httpUrl}/artifacts`, {
+		const uploadResponse = await fetch(`${runtime.httpUrl}/v1/artifacts`, {
 			method: 'POST',
-			headers: withAuthHeaders(),
-			body: formData,
+			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+			body: JSON.stringify(artifactPayload),
 		});
 
 		expect(uploadResponse.status).toBe(201);
-		const uploadedArtifact = await uploadResponse.json();
-		expect(uploadedArtifact.id).toBe('test-artifact-http-001');
-		expect(uploadedArtifact.filename).toBe('test-file.txt');
+		const uploadedArtifact = (await uploadResponse.json()) as {
+			metadata: { id: string; filename: string };
+			digest: string;
+		};
+		expect(uploadedArtifact.metadata.id).toBe('test-artifact-http-001');
+		expect(uploadedArtifact.metadata.filename).toBe('test-file.txt');
 
 		// GET /artifacts/:id - Download artifact
-		const downloadResponse = await fetch(`${runtime.httpUrl}/artifacts/${uploadedArtifact.id}`, {
-			headers: withAuthHeaders(),
-		});
+		const downloadResponse = await fetch(
+			`${runtime.httpUrl}/v1/artifacts/${uploadedArtifact.metadata.id}`,
+			{
+				headers: withAuthHeaders(),
+			},
+		);
 		expect(downloadResponse.status).toBe(200);
-		expect(downloadResponse.headers.get('content-type')).toBe('text/plain');
 
-		const downloadedContent = await downloadResponse.text();
-		expect(downloadedContent).toBe('Test artifact content');
+		const downloaded = (await downloadResponse.json()) as {
+			metadata: { filename: string };
+			base64Payload: string;
+		};
+		expect(downloaded.metadata.filename).toBe('test-file.txt');
+		expect(Buffer.from(downloaded.base64Payload, 'base64').toString()).toBe(
+			'Test artifact content',
+		);
 
 		// GET /artifacts - List artifacts
-		const listResponse = await fetch(`${runtime.httpUrl}/artifacts?taskId=related-task-001`, {
+		const listResponse = await fetch(`${runtime.httpUrl}/v1/artifacts?taskId=related-task-001`, {
 			headers: withAuthHeaders(),
 		});
 		expect(listResponse.status).toBe(200);
 
-		const artifacts = await listResponse.json();
-		expect(Array.isArray(artifacts)).toBe(true);
-		expect(artifacts.find((a: any) => a.id === 'test-artifact-http-001')).toBeDefined();
+		const artifactsPayload = (await listResponse.json()) as {
+			artifacts: {
+				id: string;
+				filename: string;
+				contentType: string;
+			}[];
+		};
+		expect(Array.isArray(artifactsPayload.artifacts)).toBe(true);
+		expect(
+			artifactsPayload.artifacts.find((a) => a.id === 'test-artifact-http-001'),
+		).toBeDefined();
 
 		// Cleanup
-		await fetch(`${runtime.httpUrl}/artifacts/${uploadedArtifact.id}`, {
+		await fetch(`${runtime.httpUrl}/v1/artifacts/${uploadedArtifact.metadata.id}`, {
 			method: 'DELETE',
 			headers: withAuthHeaders(),
 		});
@@ -279,38 +332,50 @@ describe('Runtime HTTP Server', () => {
 			tags: ['http-test', 'integration'],
 		};
 
-		const createResponse = await fetch(`${runtime.httpUrl}/evidence`, {
+		const createResponse = await fetch(`${runtime.httpUrl}/v1/evidence`, {
 			method: 'POST',
 			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
-			body: JSON.stringify(evidencePayload),
+			body: JSON.stringify({ evidence: evidencePayload }),
 		});
 
 		expect(createResponse.status).toBe(201);
-		const created = await createResponse.json();
-		expect(created.id).toBe('test-evidence-http-001');
-		expect(created.type).toBe('test-result');
+		const created = (await createResponse.json()) as {
+			evidence: Record<string, unknown>;
+			digest: string;
+		};
+		expect(created.evidence).toMatchObject({
+			id: 'test-evidence-http-001',
+			type: 'test-result',
+		});
 
 		// GET /evidence/:id - Retrieve evidence
-		const getResponse = await fetch(`${runtime.httpUrl}/evidence/${created.id}`, {
+		const getResponse = await fetch(`${runtime.httpUrl}/v1/evidence/${created.evidence.id}`, {
 			headers: withAuthHeaders(),
 		});
 		expect(getResponse.status).toBe(200);
 
-		const retrieved = await getResponse.json();
-		expect(retrieved.payload.testName).toBe('HTTP Integration Test');
+		const retrieved = (await getResponse.json()) as {
+			evidence: { payload: { testName: string } };
+			digest: string;
+		};
+		expect(retrieved.evidence.payload.testName).toBe('HTTP Integration Test');
 
 		// GET /evidence - List evidence
-		const listResponse = await fetch(`${runtime.httpUrl}/evidence?taskId=related-task-002`, {
+		const listResponse = await fetch(`${runtime.httpUrl}/v1/evidence?taskId=related-task-002`, {
 			headers: withAuthHeaders(),
 		});
 		expect(listResponse.status).toBe(200);
 
-		const evidenceList = await listResponse.json();
-		expect(Array.isArray(evidenceList)).toBe(true);
-		expect(evidenceList.find((e: any) => e.id === 'test-evidence-http-001')).toBeDefined();
+		const evidenceList = (await listResponse.json()) as {
+			evidence: { record: { id: string } }[];
+		};
+		expect(Array.isArray(evidenceList.evidence)).toBe(true);
+		expect(
+			evidenceList.evidence.find((entry) => entry.record.id === 'test-evidence-http-001'),
+		).toBeDefined();
 
 		// Cleanup
-		await fetch(`${runtime.httpUrl}/evidence/${created.id}`, {
+		await fetch(`${runtime.httpUrl}/v1/evidence/${created.evidence.id}`, {
 			method: 'DELETE',
 			headers: withAuthHeaders(),
 		});

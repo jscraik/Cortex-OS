@@ -59,6 +59,6 @@ fi
 log "Using node: $NODE_BIN"
 log "Node version: $ACTUAL_NODE_VERSION"
 
-# Start the server with HTTP transport on port 3024
-log "Executing: FASTMCP_HOST=127.0.0.1 $NODE_BIN dist/index.js --transport http --port 3024 --host 127.0.0.1"
-FASTMCP_HOST=127.0.0.1 exec "$NODE_BIN" dist/index.js --transport http --port 3024 --host 127.0.0.1
+# Start the server with HTTP transport - uses PORT and MCP_HOST env vars from LaunchAgent
+log "Starting brAInwav FastMCP v3 server with PORT=${PORT:-3024} MCP_HOST=${MCP_HOST:-127.0.0.1}"
+exec "$NODE_BIN" dist/index.js

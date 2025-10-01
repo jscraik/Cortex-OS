@@ -46,12 +46,34 @@ export function createEventManager({
 		await appendFile(path, `${JSON.stringify(event)}\n`, 'utf-8');
 	}
 
+	function assertValidEvent(
+		event: Omit<RuntimeEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: string },
+	) {
+		if (!event || typeof event !== 'object') {
+			throw new TypeError('Runtime events require an object payload');
+		}
+
+		if (typeof event.type !== 'string' || event.type.trim().length === 0) {
+			throw new TypeError('Runtime events require a non-empty type');
+		}
+
+		if (
+			typeof event.data !== 'object' ||
+			event.data === null ||
+			Array.isArray(event.data)
+		) {
+			throw new TypeError('Runtime events require a data object payload');
+		}
+	}
+
 	async function emitEvent(
 		event: Omit<RuntimeEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: string },
 	) {
+		assertValidEvent(event);
+
 		const fullEvent: RuntimeEvent = {
 			id: event.id ?? randomUUID(),
-			type: event.type,
+			type: event.type.trim(),
 			data: event.data,
 			timestamp: event.timestamp ?? new Date().toISOString(),
 		};

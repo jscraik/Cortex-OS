@@ -34,7 +34,7 @@ This directory contains the working documentation and task artifacts for the com
 
 ## Architecture Diagram
 
-```
+```markdown
 ┌─────────────────────────────────────────────────────────────┐
 │                    Clients                                  │
 ├──────────┬──────────┬──────────┬──────────┬───────────────┤

@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
-import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
+import {
+  createMemoryProviderFromEnv,
+  type Memory,
+  type MemorySearchResult,
+} from '@cortex-os/memory-core';
 import {
   MemoryAnalysisInputSchema,
   MemoryRelationshipsInputSchema,
@@ -10,28 +14,49 @@ import {
 } from '@cortex-os/tool-spec';
 import { FastMCP } from 'fastmcp';
 import { pino } from 'pino';
+import { z } from 'zod';
 
-const logger = pino({ level: process.env.MEMORY_LOG_LEVEL || 'info' });
+const logger = pino({ level: process.env.MEMORY_LOG_LEVEL ?? 'info' });
 
-// Initialize memory provider
+const BRAND = {
+  prefix: 'brAInwav',
+  serverName: 'brAInwav Cortex Memory Server',
+  healthMessage: 'brAInwav service healthy',
+  connectLog: 'brAInwav MCP client connected',
+  disconnectLog: 'brAInwav MCP client disconnected',
+} as const;
+
+const DEFAULT_HTTP_HOST = process.env.MCP_HOST ?? '0.0.0.0';
+const DEFAULT_HTTP_ENDPOINT = process.env.MCP_HTTP_ENDPOINT ?? '/mcp';
+const MAX_TITLE_LENGTH = 100;
+
 const memoryProvider = createMemoryProviderFromEnv();
 
-// Create the FastMCP server with authentication
 const server = new FastMCP({
   name: 'brainwav-cortex-memory',
   version: '3.0.0',
   authenticate: async (req) => {
     const apiKey = process.env.MCP_API_KEY;
-    if (apiKey) {
-      const providedKey = Array.isArray(req.headers?.['x-api-key'])
-        ? req.headers['x-api-key'][0]
-        : req.headers?.['x-api-key'];
+    const header = req.headers?.['x-api-key'];
+    const providedKey = Array.isArray(header) ? header[0] : header;
 
-      if (providedKey !== apiKey) {
-        throw new Error('Invalid API key');
-      }
+    if (!apiKey) {
+      return {
+        user: req.headers?.['x-user-id'] || 'anonymous',
+        timestamp: new Date().toISOString(),
+        branding: BRAND.prefix,
+      };
     }
-    return { user: req.headers?.['x-user-id'] || 'anonymous' };
+
+    if (providedKey !== apiKey) {
+      throw new Error(`${BRAND.serverName} - Invalid API key`);
+    }
+
+    return {
+      user: req.headers?.['x-user-id'] || 'authenticated',
+      timestamp: new Date().toISOString(),
+      branding: BRAND.prefix,
+    };
   },
   ping: {
     enabled: true,
@@ -40,7 +65,49 @@ const server = new FastMCP({
   },
 });
 
-// Add memory.store tool
+const createSearchResponse = (memories: MemorySearchResult[]) => ({
+  content: [
+    {
+      type: 'text' as const,
+      text: JSON.stringify(
+        {
+          results: memories.map((memory, index) => ({
+            id: memory.id,
+            title: memory.content?.slice(0, MAX_TITLE_LENGTH) ?? `Memory ${index + 1}`,
+            url: `memory://cortex-os/${memory.id}`,
+          })),
+        },
+        null,
+        2,
+      ),
+    },
+  ],
+});
+
+const createFetchResponse = (memory: Memory, id: string) => ({
+  content: [
+    {
+      type: 'text' as const,
+      text: JSON.stringify(
+        {
+          id,
+          title: memory.content?.slice(0, MAX_TITLE_LENGTH) ?? `Memory ${id}`,
+          text: memory.content ?? 'No content available',
+          url: `memory://cortex-os/${id}`,
+          metadata: {
+            source: 'brainwav-cortex-memory',
+            tags: memory.tags,
+            importance: memory.importance,
+            domain: memory.domain,
+          },
+        },
+        null,
+        2,
+      ),
+    },
+  ],
+});
+
 server.addTool({
   name: 'memory.store',
   description: 'Store a memory with metadata and optional embedding',
@@ -49,23 +116,13 @@ server.addTool({
     idempotentHint: false,
     title: 'brAInwav Memory Storage',
   },
-  async execute(args, { reportProgress }) {
-    try {
-      await reportProgress({ progress: 0, total: 2 });
-      logger.info('Storing memory');
-
-      const result = await memoryProvider.store(args);
-
-      await reportProgress({ progress: 2, total: 2 });
-      return JSON.stringify(result, null, 2);
-    } catch (error) {
-      logger.error('Failed to store memory');
-      throw error;
-    }
+  async execute(args) {
+    logger.info({ branding: BRAND.prefix, tool: 'memory.store' }, 'brAInwav storing memory');
+    const result = await memoryProvider.store(args);
+    return JSON.stringify(result, null, 2);
   },
 });
 
-// Add memory.search tool
 server.addTool({
   name: 'memory.search',
   description: 'Search memories using semantic or keyword search',
@@ -75,23 +132,13 @@ server.addTool({
     idempotentHint: true,
     title: 'brAInwav Memory Search',
   },
-  async execute(args, { reportProgress }) {
-    try {
-      await reportProgress({ progress: 0, total: 2 });
-      logger.info('Searching memories');
-
-      const result = await memoryProvider.search(args);
-
-      await reportProgress({ progress: 2, total: 2 });
-      return JSON.stringify(result, null, 2);
-    } catch (error) {
-      logger.error('Failed to search memories');
-      throw error;
-    }
+  async execute(args) {
+    logger.info({ branding: BRAND.prefix, tool: 'memory.search' }, 'brAInwav searching memories');
+    const result = await memoryProvider.search(args);
+    return JSON.stringify(result, null, 2);
   },
 });
 
-// Add memory.analysis tool with streaming
 server.addTool({
   name: 'memory.analysis',
   description: 'Analyze memories with AI-powered insights (streaming)',
@@ -102,29 +149,22 @@ server.addTool({
     title: 'brAInwav Memory Analysis',
   },
   async execute(args, { streamContent, reportProgress }) {
-    try {
-      await streamContent({ type: 'text', text: 'Starting analysis...\n' });
-      await reportProgress({ progress: 0, total: 3 });
+    logger.info({ branding: BRAND.prefix, tool: 'memory.analysis' }, 'brAInwav analyzing memories');
+    await streamContent({ type: 'text', text: 'Starting analysis...\n' });
+    await reportProgress({ progress: 0, total: 3 });
 
-      logger.info('Analyzing memories');
+    await streamContent({ type: 'text', text: 'Processing memories...\n' });
+    await reportProgress({ progress: 1, total: 3 });
 
-      await streamContent({ type: 'text', text: 'Processing memories...\n' });
-      await reportProgress({ progress: 1, total: 3 });
+    const result = await memoryProvider.analysis(args);
 
-      const result = await memoryProvider.analysis(args);
+    await streamContent({ type: 'text', text: 'Analysis complete!\n' });
+    await reportProgress({ progress: 3, total: 3 });
 
-      await streamContent({ type: 'text', text: 'Analysis complete!\n' });
-      await reportProgress({ progress: 3, total: 3 });
-
-      return JSON.stringify(result, null, 2);
-    } catch (error) {
-      logger.error('Failed to analyze memories');
-      throw error;
-    }
+    return JSON.stringify(result, null, 2);
   },
 });
 
-// Add memory.relationships tool
 server.addTool({
   name: 'memory.relationships',
   description: 'Manage and query relationships between memories',
@@ -134,23 +174,13 @@ server.addTool({
     idempotentHint: false,
     title: 'brAInwav Memory Relationships',
   },
-  async execute(args, { reportProgress }) {
-    try {
-      await reportProgress({ progress: 0, total: 2 });
-      logger.info('Managing relationships');
-
-      const result = await memoryProvider.relationships(args);
-
-      await reportProgress({ progress: 2, total: 2 });
-      return JSON.stringify(result, null, 2);
-    } catch (error) {
-      logger.error('Failed to manage relationships');
-      throw error;
-    }
+  async execute(args) {
+    logger.info({ branding: BRAND.prefix, tool: 'memory.relationships' }, 'brAInwav managing relationships');
+    const result = await memoryProvider.relationships(args);
+    return JSON.stringify(result, null, 2);
   },
 });
 
-// Add memory.stats tool
 server.addTool({
   name: 'memory.stats',
   description: 'Get statistics and metrics about stored memories',
@@ -160,134 +190,128 @@ server.addTool({
     idempotentHint: true,
     title: 'brAInwav Memory Statistics',
   },
-  async execute(args, { reportProgress }) {
-    try {
-      await reportProgress({ progress: 0, total: 2 });
-      logger.info('Fetching statistics');
-
-      const result = await memoryProvider.stats(args);
-
-      await reportProgress({ progress: 2, total: 2 });
-      return JSON.stringify(result, null, 2);
-    } catch (error) {
-      logger.error('Failed to fetch statistics');
-      throw error;
-    }
+  async execute(args) {
+    logger.info({ branding: BRAND.prefix, tool: 'memory.stats' }, 'brAInwav fetching memory statistics');
+    const result = await memoryProvider.stats(args);
+    return JSON.stringify(result, null, 2);
   },
 });
 
-// Add resource for recent memories
-server.addResource({
-  uri: 'memory://recent',
-  name: 'Recent Memories',
-  mimeType: 'application/json',
-  description: 'List of recently stored memories',
-  async load() {
-    const result = await memoryProvider.search({
-      query: '*',
+server.addTool({
+  name: 'search',
+  description:
+    'Search for relevant documents and memories. Returns a list of results with id, title, and url for citation.',
+  parameters: z.object({
+    query: z.string().describe('Search query string'),
+  }),
+  annotations: {
+    readOnlyHint: true,
+    idempotentHint: true,
+    title: 'brAInwav Search (ChatGPT Compatible)',
+  },
+  async execute(args) {
+    logger.info({ branding: BRAND.prefix, tool: 'search', query: args.query }, 'brAInwav ChatGPT search request');
+    const searchResult = await memoryProvider.search({
+      query: args.query,
       search_type: 'hybrid',
       limit: 10,
       offset: 0,
       session_filter_mode: 'all',
-      score_threshold: 0,
-      hybrid_weight: 0.5,
+      score_threshold: 0.3,
+      hybrid_weight: 0.7,
     });
-    return {
-      uri: 'memory://recent',
-      mimeType: 'application/json',
-      text: JSON.stringify(result, null, 2),
-    };
+
+    return createSearchResponse(searchResult);
   },
 });
 
-// Add prompt template for memory analysis
-server.addPrompt({
-  name: 'analyze_domain',
-  description: 'Generate analysis prompt for a specific domain',
-  arguments: [
-    {
-      name: 'domain',
-      description: 'Domain to analyze',
-      required: true,
-    },
-    {
-      name: 'depth',
-      description: 'Analysis depth',
-      required: false,
-      enum: ['shallow', 'medium', 'deep'],
-    },
-  ],
-  async load(args) {
-    const depth = args.depth || 'medium';
-    return `Analyze all memories in domain "${args.domain}" with ${depth} analysis depth. Provide insights, patterns, and recommendations.`;
+server.addTool({
+  name: 'fetch',
+  description: 'Retrieve complete document content by ID for detailed analysis and citation.',
+  parameters: z.object({
+    id: z.string().describe('Unique identifier for the document to fetch'),
+  }),
+  annotations: {
+    readOnlyHint: true,
+    idempotentHint: true,
+    title: 'brAInwav Fetch (ChatGPT Compatible)',
+  },
+  async execute(args) {
+    logger.info({ branding: BRAND.prefix, tool: 'fetch', id: args.id }, 'brAInwav ChatGPT fetch request');
+    const memory = await memoryProvider.get(args.id);
+
+    if (!memory) {
+      throw new Error(`Document with ID "${args.id}" not found`);
+    }
+
+    return createFetchResponse(memory, args.id);
   },
 });
 
-// Server lifecycle events
-server.on('connect', (_event) => {
-  logger.info('brAInwav MCP client connected');
+server.on('connect', () => {
+  logger.info({ branding: BRAND.prefix }, BRAND.connectLog);
 });
 
-server.on('disconnect', (_event) => {
-  logger.info('brAInwav MCP client disconnected');
+server.on('disconnect', () => {
+  logger.info({ branding: BRAND.prefix }, BRAND.disconnectLog);
 });
 
-// Main entry point
 async function main(): Promise<void> {
-  const transport =
-    process.env.MCP_TRANSPORT || process.argv.includes('--transport')
-      ? process.argv[process.argv.indexOf('--transport') + 1]
-      : 'httpStream';
+  const parsedPort = Number.parseInt(process.env.PORT ?? '', 10);
+  const port = Number.isNaN(parsedPort) ? 3024 : parsedPort;
+  const host = DEFAULT_HTTP_HOST;
 
-  const portArg = process.argv.indexOf('--port');
-  const port = portArg >= 0 ? Number(process.argv[portArg + 1]) : Number(process.env.PORT || 3024);
+  await server.start({
+    transportType: 'httpStream',
+    httpStream: {
+      port,
+      host,
+      endpoint: DEFAULT_HTTP_ENDPOINT,
+      enableJsonResponse: true,
+      stateless: false,
+    },
+  });
 
-  if (transport === 'stdio') {
-    server.start({
-      transportType: 'stdio',
-    });
-    logger.info('brAInwav FastMCP v3 server started with STDIO transport');
-  } else {
-    server.start({
-      transportType: 'httpStream',
-      httpStream: {
-        port,
-        endpoint: '/sse',  // Changed from /mcp to /sse for ChatGPT compatibility
-      },
-    });
-    logger.info(`brAInwav FastMCP v3 server started with HTTP/SSE transport on port ${port} at /sse`);
-  }
+  logger.info(
+    { branding: BRAND.prefix, port, host, endpoint: DEFAULT_HTTP_ENDPOINT },
+    `${BRAND.prefix} FastMCP v3 server started with HTTP/SSE transport`,
+  );
+  logger.info(
+    { branding: BRAND.prefix },
+    `${BRAND.prefix} server ready for ChatGPT connections - CORS enabled by default`,
+  );
+  logger.info(
+    { branding: BRAND.prefix, port, host },
+    `${BRAND.healthMessage} - http://${host}:${port}/health`,
+  );
 
-  // Graceful shutdown handlers
   process.on('SIGINT', async () => {
-    logger.info('Received SIGINT - Shutting down brAInwav MCP server...');
+    logger.info({ branding: BRAND.prefix }, 'Received SIGINT - shutting down brAInwav MCP server');
     await server.stop();
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
-    logger.info('Received SIGTERM - Shutting down brAInwav MCP server...');
+    logger.info({ branding: BRAND.prefix }, 'Received SIGTERM - shutting down brAInwav MCP server');
     await server.stop();
     process.exit(0);
   });
 
-  logger.info('brAInwav FastMCP v3 server is running');
-
-  // Keep process alive - wait forever until signal received
-  await new Promise(() => { }); // Never resolves
+  logger.info({ branding: BRAND.prefix }, `${BRAND.prefix} FastMCP v3 server is running`);
 }
 
 main().catch((err) => {
-  logger.error('Failed to start brAInwav MCP server');
-  console.error(err);
+  logger.error({ branding: BRAND.prefix, err }, `${BRAND.prefix} failed to start MCP server`);
   process.exit(1);
 });
 
-// Catch unhandled errors
 process.on('uncaughtException', (err) => {
-  logger.error({ err }, 'Uncaught exception');
+  logger.error({ branding: BRAND.prefix, err }, 'Uncaught exception in brAInwav MCP server');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error({ reason, promise }, 'Unhandled rejection');
+  logger.error(
+    { branding: BRAND.prefix, reason, promise },
+    'Unhandled rejection in brAInwav MCP server',
+  );
 });

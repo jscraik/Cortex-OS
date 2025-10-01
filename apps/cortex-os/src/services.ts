@@ -1,4 +1,5 @@
 import { trace } from '@opentelemetry/api';
+import { provideOrchestration as coreProvideOrchestration } from '@cortex-os/orchestration';
 import { createMcpGateway, type McpGateway, type MemoriesLike } from './mcp/gateway.js';
 import { ArtifactRepository } from './persistence/artifact-repository.js';
 import { EvidenceRepository } from './persistence/evidence-repository.js';
