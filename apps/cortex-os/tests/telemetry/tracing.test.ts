@@ -1,19 +1,4 @@
-// Mock @opentelemetry/api types to avoid missing declaration file error
-const SpanStatusCode = { OK: 1, ERROR: 2 };
-const trace = {
-	getTracer: () => ({
-		startActiveSpan: <T>(_spanName: string, fn: (span: unknown) => T): T => {
-			const mockSpan = {
-				setAttribute: vi.fn(),
-				setStatus: vi.fn(),
-				recordException: vi.fn(),
-				end: vi.fn(),
-			};
-			return fn(mockSpan);
-		},
-	}),
-} as const;
-
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { createEventManager } from '../../src/events';
 import { createRuntimeHttpServer } from '../../src/http/runtime-server.js';

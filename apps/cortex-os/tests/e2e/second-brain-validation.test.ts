@@ -1,8 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
+import { prepareLoopbackAuth } from '../setup.global.js';
+
+let authHeader: string;
+
+const withAuthHeaders = (headers: Record<string, string> = {}) => {
+	if (!authHeader) {
+		throw new Error('Loopback auth header not prepared for second-brain runtime tests');
+	}
+	return { Authorization: authHeader, ...headers };
+};
 
 describe('brAInwav Second Brain End-to-End Validation', () => {
 	let runtime: RuntimeHandle;
+
+	beforeAll(async () => {
+		const { header } = await prepareLoopbackAuth();
+		authHeader = header;
+	});
 
 	beforeEach(async () => {
 		// Set test environment variables for random ports
@@ -28,7 +43,9 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		// Test that all core second brain components are functional
 
 		// 1. Verify runtime is healthy
-		const healthResponse = await fetch(`${runtime.httpUrl}/health`);
+		const healthResponse = await fetch(`${runtime.httpUrl}/health`, {
+			headers: withAuthHeaders(),
+		});
 		expect(healthResponse.status).toBe(200);
 
 		const health = await healthResponse.json();
@@ -53,7 +70,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 
 		// 4. Verify SSE events are working
 		const sseResponse = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
-			headers: { Accept: 'text/event-stream' },
+			headers: withAuthHeaders({ Accept: 'text/event-stream' }),
 		});
 		expect(sseResponse.status).toBe(200);
 		expect(sseResponse.headers.get('content-type')).toContain('text/event-stream');
@@ -236,7 +253,9 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		// Test monitoring and observability features
 
 		// 1. Verify health endpoint provides detailed status
-		const healthResponse = await fetch(`${runtime.httpUrl}/health`);
+		const healthResponse = await fetch(`${runtime.httpUrl}/health`, {
+			headers: withAuthHeaders(),
+		});
 		const health = await healthResponse.json();
 
 		expect(health.status).toBe('ok');
@@ -244,7 +263,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 
 		// 2. Verify SSE events for real-time monitoring
 		const sseResponse = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
-			headers: { Accept: 'text/event-stream' },
+			headers: withAuthHeaders({ Accept: 'text/event-stream' }),
 		});
 
 		expect(sseResponse.status).toBe(200);
@@ -289,7 +308,9 @@ async function waitForServicesReady(
 	while (Date.now() - start < timeoutMs) {
 		try {
 			// Test HTTP endpoint
-			const healthResponse = await fetch(`${runtime.httpUrl}/health`);
+			const healthResponse = await fetch(`${runtime.httpUrl}/health`, {
+				headers: withAuthHeaders(),
+			});
 			if (healthResponse.status !== 200) {
 				await new Promise((resolve) => setTimeout(resolve, 100));
 				continue;

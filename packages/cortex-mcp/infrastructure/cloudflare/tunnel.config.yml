@@ -5,8 +5,8 @@
 #  - Map a DNS hostname to this tunnel (cloudflared tunnel route dns cortex-mcp cortex-mcp.yourdomain.com)
 #  - Start: cloudflared tunnel --config ./packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml run cortex-mcp
 
-tunnel: 8109c0a4-6704-4119-b38e-5faa28f0903e
-credentials-file: /Users/jamiecraik/.cloudflared/8109c0a4-6704-4119-b38e-5faa28f0903e.json
+tunnel: af4eed03-2d4e-4683-8cb7-6d4b8e47b564
+credentials-file: /Users/jamiecraik/.cloudflared/af4eed03-2d4e-4683-8cb7-6d4b8e47b564.json
 
 ingress:
   # Public hostname for cortex-mcp via Cloudflare Tunnel

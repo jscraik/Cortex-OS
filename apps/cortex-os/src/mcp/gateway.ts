@@ -75,10 +75,11 @@ export interface GatewayDeps {
 	audit?: (event: Record<string, unknown>) => void;
 	security?: { allowTool?: (name: string) => boolean };
 	publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void; // optional A2A bus publisher
+	publishToolEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;
 }
 
 export class McpGateway {
-	private readonly deps: GatewayDeps;
+	private deps: GatewayDeps;
 	// In-memory workflow run persistence (simple ephemeral store)
 	private readonly workflowRuns: Map<
 		string,
@@ -111,36 +112,111 @@ export class McpGateway {
 		const def = getToolDefinition(name);
 		if (!def) return this.error('not_found', `Unknown tool: ${name}`);
 
-		// Security check
+		const correlationId = randomUUID();
+		const startedAt = new Date().toISOString();
+		const startedClock = performance.now();
+		const inputDigest = this.computeInputDigest(input);
+		this.publishToolStarted({
+			tool: name,
+			correlationId,
+			startedAt,
+			inputDigest,
+			session: this.getRuntimeSession(),
+		});
+
 		if (def.secure && this.deps.security && !this.deps.security.allowTool?.(name)) {
+			const durationMs = Math.round(performance.now() - startedClock);
+			this.publishToolCompleted({
+				tool: name,
+				correlationId,
+				finishedAt: new Date().toISOString(),
+				durationMs,
+				status: 'forbidden',
+				errorCode: 'forbidden',
+				errorMessage: `Access denied for tool: ${name}`,
+			});
+			this.audit(name, 'forbidden', durationMs, { correlationId });
 			return this.error('forbidden', `Access denied for tool: ${name}`);
 		}
 
-		// Rate limiting
-		if (!this.consumeRate(name)) return this.error('rate_limited', 'Rate limit exceeded');
+		if (!this.consumeRate(name)) {
+			const durationMs = Math.round(performance.now() - startedClock);
+			this.publishToolCompleted({
+				tool: name,
+				correlationId,
+				finishedAt: new Date().toISOString(),
+				durationMs,
+				status: 'rate_limited',
+				errorCode: 'rate_limited',
+				errorMessage: 'Rate limit exceeded',
+			});
+			this.audit(name, 'rate_limited', durationMs, { correlationId });
+			return this.error('rate_limited', 'Rate limit exceeded');
+		}
 
-		// Cache check (key = tool + JSON input) only for tools with cacheTtlMs and no side effects
 		const cacheKey = def.cacheTtlMs ? `${name}:${JSON.stringify(input)}` : undefined;
 		if (cacheKey) {
 			const entry = cache[cacheKey];
-			if (entry && entry.expires > Date.now()) return entry.value;
+			if (entry && entry.expires > Date.now()) {
+				const durationMs = Math.round(performance.now() - startedClock);
+				this.publishToolCompleted({
+					tool: name,
+					correlationId,
+					finishedAt: new Date().toISOString(),
+					durationMs,
+					status: 'success',
+					resultSource: 'cache',
+				});
+				this.audit(name, 'success', durationMs, {
+					correlationId,
+					resultSource: 'cache',
+				});
+				return entry.value;
+			}
 		}
 
-		const started = performance.now();
 		try {
 			const parsed = def.inputSchema.parse(input);
 			const result = await this.dispatch(name, parsed);
-			const output = def.outputSchema.parse(result); // ensure contract
+			const output = def.outputSchema.parse(result);
+
 			if (cacheKey && def.cacheTtlMs) {
 				cache[cacheKey] = {
 					value: output,
 					expires: Date.now() + def.cacheTtlMs,
 				};
 			}
-			this.audit(name, 'success', performance.now() - started, parsed);
+
+			const durationMs = Math.round(performance.now() - startedClock);
+			this.publishToolCompleted({
+				tool: name,
+				correlationId,
+				finishedAt: new Date().toISOString(),
+				durationMs,
+				status: 'success',
+				resultSource: 'direct',
+			});
+			this.audit(name, 'success', durationMs, {
+				correlationId,
+				resultSource: 'direct',
+				input: parsed,
+			});
 			return output;
 		} catch (err) {
-			return this.handleError(name, err, started);
+			const response = this.handleError(name, err, startedClock, correlationId);
+			const durationMs = Math.round(performance.now() - startedClock);
+			const errorCode = 'error' in response ? response.error.code : undefined;
+			const errorMessage = 'error' in response ? response.error.message : undefined;
+			this.publishToolCompleted({
+				tool: name,
+				correlationId,
+				finishedAt: new Date().toISOString(),
+				durationMs,
+				status: this.mapErrorCodeToStatus(errorCode),
+				errorCode,
+				errorMessage,
+			});
+			return response;
 		}
 	}
 
@@ -185,10 +261,11 @@ export class McpGateway {
 		}
 	}
 
-	private handleError(name: string, err: unknown, started: number) {
+	private handleError(name: string, err: unknown, started: number, correlationId?: string) {
 		if (err instanceof z.ZodError) {
 			this.audit(name, 'validation_error', performance.now() - started, {
 				issues: err.issues,
+				correlationId,
 			});
 			return this.error('validation_failed', 'Input validation failed', {
 				issues: err.issues,
@@ -196,6 +273,7 @@ export class McpGateway {
 		}
 		this.audit(name, 'error', performance.now() - started, {
 			error: err instanceof Error ? err.message : String(err),
+			correlationId,
 		});
 		return this.error('internal_error', err instanceof Error ? err.message : 'Unknown error');
 	}
@@ -248,6 +326,82 @@ export class McpGateway {
 			});
 		} catch {
 			/* swallow event bus errors */
+		}
+	}
+
+	setPublishers(publishers: {
+		publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;
+		publishToolEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;
+	}) {
+		this.deps = {
+			...this.deps,
+			publishMcpEvent: publishers.publishMcpEvent ?? this.deps.publishMcpEvent,
+			publishToolEvent: publishers.publishToolEvent ?? this.deps.publishToolEvent,
+		};
+	}
+
+	private publishToolStarted(event: {
+		tool: string;
+		correlationId: string;
+		startedAt: string;
+		inputDigest?: string;
+		session?: string;
+	}) {
+		try {
+			this.deps.publishToolEvent?.({
+				type: 'cortex.mcp.tool.execution.started',
+				payload: event,
+			});
+		} catch {
+			/* noop */
+		}
+	}
+
+	private publishToolCompleted(event: {
+		tool: string;
+		correlationId: string;
+		finishedAt: string;
+		durationMs: number;
+		status: 'success' | 'error' | 'rate_limited' | 'forbidden' | 'validation_failed';
+		resultSource?: 'cache' | 'direct';
+		errorCode?: string;
+		errorMessage?: string;
+	}) {
+		try {
+			this.deps.publishToolEvent?.({
+				type: 'cortex.mcp.tool.execution.completed',
+				payload: event,
+			});
+		} catch {
+			/* noop */
+		}
+	}
+
+	private computeInputDigest(input: unknown): string | undefined {
+		try {
+			return createHash('sha256').update(JSON.stringify(input ?? null)).digest('hex');
+		} catch {
+			return undefined;
+		}
+	}
+
+	private getRuntimeSession(): string | undefined {
+		const session = this.deps.config?.runtime?.sessionId;
+		return typeof session === 'string' ? session : undefined;
+	}
+
+	private mapErrorCodeToStatus(code?: string): 'success' | 'error' | 'rate_limited' | 'forbidden' | 'validation_failed' {
+		switch (code) {
+			case 'validation_failed':
+				return 'validation_failed';
+			case 'rate_limited':
+				return 'rate_limited';
+			case 'forbidden':
+				return 'forbidden';
+			case undefined:
+				return 'error';
+			default:
+				return code === 'internal_error' ? 'error' : 'error';
 		}
 	}
 

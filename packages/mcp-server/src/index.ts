@@ -1,287 +1,293 @@
 #!/usr/bin/env node
 
-import { randomUUID } from 'node:crypto';
-import { createMemoryProviderFromEnv, type MemoryProvider } from '@cortex-os/memory-core';
-import { TOOL_SPECS } from '@cortex-os/tool-spec';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import cors from 'cors';
-import express from 'express';
+import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
+import {
+  MemoryAnalysisInputSchema,
+  MemoryRelationshipsInputSchema,
+  MemorySearchInputSchema,
+  MemoryStatsInputSchema,
+  MemoryStoreInputSchema,
+} from '@cortex-os/tool-spec';
+import { FastMCP } from 'fastmcp';
 import { pino } from 'pino';
 
-const logger = pino({ level: 'info' });
+const logger = pino({ level: process.env.MEMORY_LOG_LEVEL || 'info' });
 
-interface McpServerConfig {
-	transport: 'stdio' | 'http';
-	port?: number;
-	host?: string;
-}
+// Initialize memory provider
+const memoryProvider = createMemoryProviderFromEnv();
 
-class DualMcpServer {
-	private server: Server;
-	private provider: MemoryProvider;
-	private config: McpServerConfig;
-	private httpServer?: any;
-	private httpTransport?: StreamableHTTPServerTransport;
+// Create the FastMCP server with authentication
+const server = new FastMCP({
+  name: 'brainwav-cortex-memory',
+  version: '3.0.0',
+  authenticate: async (req) => {
+    const apiKey = process.env.MCP_API_KEY;
+    if (apiKey) {
+      const providedKey = Array.isArray(req.headers?.['x-api-key'])
+        ? req.headers['x-api-key'][0]
+        : req.headers?.['x-api-key'];
 
-	constructor(config: McpServerConfig) {
-		this.config = config;
-		this.provider = createMemoryProviderFromEnv();
-		this.server = new Server(
-			{
-				name: 'cortex-memory',
-				version: '0.1.0',
-			},
-			{
-				capabilities: {
-					tools: {},
-				},
-			},
-		);
+      if (providedKey !== apiKey) {
+        throw new Error('Invalid API key');
+      }
+    }
+    return { user: req.headers?.['x-user-id'] || 'anonymous' };
+  },
+  ping: {
+    enabled: true,
+    intervalMs: 20000,
+    logLevel: 'debug',
+  },
+});
 
-		this.setupTools();
-		this.setupErrorHandling();
-	}
+// Add memory.store tool
+server.addTool({
+  name: 'memory.store',
+  description: 'Store a memory with metadata and optional embedding',
+  parameters: MemoryStoreInputSchema,
+  annotations: {
+    idempotentHint: false,
+    title: 'brAInwav Memory Storage',
+  },
+  async execute(args, { reportProgress }) {
+    try {
+      await reportProgress({ progress: 0, total: 2 });
+      logger.info('Storing memory');
 
-	private setupTools(): void {
-		const specs = Object.values(TOOL_SPECS);
+      const result = await memoryProvider.store(args);
 
-		(this.server as any).setRequestHandler('tools/list', async () => ({
-			tools: specs.map((spec) => ({
-				name: spec.name,
-				description: spec.description,
-				inputSchema: spec.schema,
-			})),
-		}));
+      await reportProgress({ progress: 2, total: 2 });
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      logger.error('Failed to store memory');
+      throw error;
+    }
+  },
+});
 
-		(this.server as any).setRequestHandler('tools/call', async (request: any) => {
-			const spec = TOOL_SPECS[request.params.name];
-			if (!spec) {
-				throw new Error(`Unknown tool: ${request.params.name}`);
-			}
+// Add memory.search tool
+server.addTool({
+  name: 'memory.search',
+  description: 'Search memories using semantic or keyword search',
+  parameters: MemorySearchInputSchema,
+  annotations: {
+    readOnlyHint: true,
+    idempotentHint: true,
+    title: 'brAInwav Memory Search',
+  },
+  async execute(args, { reportProgress }) {
+    try {
+      await reportProgress({ progress: 0, total: 2 });
+      logger.info('Searching memories');
 
-			try {
-				spec.zodSchema.parse(request.params.arguments);
-				const result = await this.handleToolCall(spec.name, request.params.arguments);
+      const result = await memoryProvider.search(args);
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(result, null, 2),
-						},
-					],
-				};
-			} catch (error) {
-				logger.error('Tool call failed', {
-					tool: spec.name,
-					error: (error as Error).message,
-				});
+      await reportProgress({ progress: 2, total: 2 });
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      logger.error('Failed to search memories');
+      throw error;
+    }
+  },
+});
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify({
-								error: {
-									code: 'INTERNAL_ERROR',
-									message: (error as Error).message,
-								},
-							}),
-						},
-					],
-					isError: true,
-				};
-			}
-		});
-	}
+// Add memory.analysis tool with streaming
+server.addTool({
+  name: 'memory.analysis',
+  description: 'Analyze memories with AI-powered insights (streaming)',
+  parameters: MemoryAnalysisInputSchema,
+  annotations: {
+    streamingHint: true,
+    readOnlyHint: true,
+    title: 'brAInwav Memory Analysis',
+  },
+  async execute(args, { streamContent, reportProgress }) {
+    try {
+      await streamContent({ type: 'text', text: 'Starting analysis...\n' });
+      await reportProgress({ progress: 0, total: 3 });
 
-	private async handleToolCall(toolName: string, args: any): Promise<any> {
-		switch (toolName) {
-			case 'memory.store':
-				return await this.provider.store(args);
+      logger.info('Analyzing memories');
 
-			case 'memory.search':
-				return await this.provider.search(args);
+      await streamContent({ type: 'text', text: 'Processing memories...\n' });
+      await reportProgress({ progress: 1, total: 3 });
 
-			case 'memory.analysis':
-				return await this.provider.analysis(args);
+      const result = await memoryProvider.analysis(args);
 
-			case 'memory.relationships':
-				return await this.provider.relationships(args);
+      await streamContent({ type: 'text', text: 'Analysis complete!\n' });
+      await reportProgress({ progress: 3, total: 3 });
 
-			case 'memory.stats':
-				return await this.provider.stats(args);
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      logger.error('Failed to analyze memories');
+      throw error;
+    }
+  },
+});
 
-			default:
-				throw new Error(`Unknown tool: ${toolName}`);
-		}
-	}
+// Add memory.relationships tool
+server.addTool({
+  name: 'memory.relationships',
+  description: 'Manage and query relationships between memories',
+  parameters: MemoryRelationshipsInputSchema,
+  annotations: {
+    destructiveHint: true,
+    idempotentHint: false,
+    title: 'brAInwav Memory Relationships',
+  },
+  async execute(args, { reportProgress }) {
+    try {
+      await reportProgress({ progress: 0, total: 2 });
+      logger.info('Managing relationships');
 
-	private setupErrorHandling(): void {
-		this.server.onerror = (error) => logger.error('MCP Server error', error);
-		process.on('SIGINT', async () => {
-			logger.info('Shutting down MCP server...');
-			await this.stop();
-			process.exit(0);
-		});
-	}
+      const result = await memoryProvider.relationships(args);
 
-	private setupHttpServer(): void {
-		if (this.config.transport === 'http') {
-			const app = express();
-			app.use(cors());
-			app.use(express.json());
+      await reportProgress({ progress: 2, total: 2 });
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      logger.error('Failed to manage relationships');
+      throw error;
+    }
+  },
+});
 
-			// Health check endpoint
-			app.get('/healthz', async (_req, res) => {
-				try {
-					const health = await this.provider.healthCheck();
-					res.status(health.healthy ? 200 : 503).json(health);
-				} catch (error) {
-					res.status(503).json({
-						healthy: false,
-						error: (error as Error).message,
-					});
-				}
-			});
+// Add memory.stats tool
+server.addTool({
+  name: 'memory.stats',
+  description: 'Get statistics and metrics about stored memories',
+  parameters: MemoryStatsInputSchema,
+  annotations: {
+    readOnlyHint: true,
+    idempotentHint: true,
+    title: 'brAInwav Memory Statistics',
+  },
+  async execute(args, { reportProgress }) {
+    try {
+      await reportProgress({ progress: 0, total: 2 });
+      logger.info('Fetching statistics');
 
-			// Readiness check
-			app.get('/readyz', async (_req, res) => {
-				const health = await this.provider.healthCheck();
-				res.status(health.healthy ? 200 : 503).json(health);
-			});
+      const result = await memoryProvider.stats(args);
 
-			// MCP HTTP endpoint (streamable)
-			app.post('/mcp', async (req, res) => {
-				await this.httpTransport?.handleRequest(req, res, req.body);
-			});
+      await reportProgress({ progress: 2, total: 2 });
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      logger.error('Failed to fetch statistics');
+      throw error;
+    }
+  },
+});
 
-			app.get('/mcp/stream', async (req, res) => {
-				await this.httpTransport?.handleRequest(req, res);
-			});
+// Add resource for recent memories
+server.addResource({
+  uri: 'memory://recent',
+  name: 'Recent Memories',
+  mimeType: 'application/json',
+  description: 'List of recently stored memories',
+  async load() {
+    const result = await memoryProvider.search({
+      query: '*',
+      search_type: 'hybrid',
+      limit: 10,
+      offset: 0,
+      session_filter_mode: 'all',
+      score_threshold: 0,
+      hybrid_weight: 0.5,
+    });
+    return {
+      uri: 'memory://recent',
+      mimeType: 'application/json',
+      text: JSON.stringify(result, null, 2),
+    };
+  },
+});
 
-			app.delete('/mcp/session', async (req, res) => {
-				await this.httpTransport?.handleRequest(req, res);
-			});
+// Add prompt template for memory analysis
+server.addPrompt({
+  name: 'analyze_domain',
+  description: 'Generate analysis prompt for a specific domain',
+  arguments: [
+    {
+      name: 'domain',
+      description: 'Domain to analyze',
+      required: true,
+    },
+    {
+      name: 'depth',
+      description: 'Analysis depth',
+      required: false,
+      enum: ['shallow', 'medium', 'deep'],
+    },
+  ],
+  async load(args) {
+    const depth = args.depth || 'medium';
+    return `Analyze all memories in domain "${args.domain}" with ${depth} analysis depth. Provide insights, patterns, and recommendations.`;
+  },
+});
 
-			const port = this.config.port || 9600;
-			const host = this.config.host || '127.0.0.1';
+// Server lifecycle events
+server.on('connect', (_event) => {
+  logger.info('brAInwav MCP client connected');
+});
 
-			this.httpServer = app.listen(port, host, () => {
-				logger.info(`MCP HTTP server listening on http://${host}:${port}`);
-			});
-		}
-	}
+server.on('disconnect', (_event) => {
+  logger.info('brAInwav MCP client disconnected');
+});
 
-	async start(): Promise<void> {
-		logger.info('Starting MCP server', { transport: this.config.transport });
-
-		if (this.config.transport === 'stdio') {
-			const transport = new StdioServerTransport();
-			await this.server.connect(transport);
-			logger.info('MCP STDIO server started');
-		} else {
-			if (this.httpTransport) {
-				throw new Error('HTTP transport already initialized');
-			}
-			this.httpTransport = new StreamableHTTPServerTransport({
-				sessionIdGenerator: () => randomUUID(),
-			});
-			await this.server.connect(this.httpTransport);
-			this.setupHttpServer();
-		}
-	}
-
-	async stop(): Promise<void> {
-		if (this.httpServer) {
-			await new Promise<void>((resolve, reject) => {
-				this.httpServer.close((err: any) => {
-					if (err) reject(err);
-					else resolve();
-				});
-			});
-		}
-
-		await this.httpTransport?.close?.();
-		await this.provider.close?.();
-		logger.info('MCP server stopped');
-	}
-}
-
-// Parse command line arguments
-function parseArgs(): McpServerConfig {
-	const args = process.argv.slice(2);
-	const config: McpServerConfig = {
-		transport: 'stdio',
-	};
-
-	for (let i = 0; i < args.length; i++) {
-		switch (args[i]) {
-			case '--transport':
-				config.transport = args[++i] as 'stdio' | 'http';
-				break;
-			case '--port':
-				config.port = parseInt(args[++i], 10);
-				break;
-			case '--host':
-				config.host = args[++i];
-				break;
-			case '--help':
-			case '-h':
-				console.log(`
-Cortex Memory MCP Server
-
-Usage:
-  mcp-server [options]
-
-Options:
-  --transport <type>    Transport type: stdio (default) or http
-  --port <number>       Port for HTTP transport (default: 9600)
-  --host <address>      Host for HTTP transport (default: 127.0.0.1)
-  --help, -h           Show this help message
-
-Environment Variables:
-  MEMORY_DB_PATH        SQLite database path (default: ./data/unified-memories.db)
-  QDRANT_URL           Qdrant URL (optional, enables vector search)
-  QDRANT_API_KEY       Qdrant API key (optional)
-  QDRANT_COLLECTION    Qdrant collection name (default: local_memory_v1)
-  EMBED_DIM            Embedding dimension (default: 384)
-  SIMILARITY           Similarity metric: Cosine, Euclidean, Dot (default: Cosine)
-  MEMORY_LOG_LEVEL     Log level: silent, error, warn, info, debug (default: info)
-
-Examples:
-  # Run with STDIO transport (for Claude Desktop)
-  mcp-server --transport stdio
-
-  # Run with HTTP transport
-  mcp-server --transport http --port 9600
-
-  # Run with HTTP on all interfaces
-  mcp-server --transport http --host 0.0.0.0 --port 9600
-        `);
-				process.exit(0);
-		}
-	}
-
-	return config;
-}
-
-// Start the server
+// Main entry point
 async function main(): Promise<void> {
-	try {
-		const config = parseArgs();
-		const server = new DualMcpServer(config);
-		await server.start();
-	} catch (error) {
-		logger.error('Failed to start MCP server', { error: (error as Error).message });
-		process.exit(1);
-	}
+  const transport =
+    process.env.MCP_TRANSPORT || process.argv.includes('--transport')
+      ? process.argv[process.argv.indexOf('--transport') + 1]
+      : 'httpStream';
+
+  const portArg = process.argv.indexOf('--port');
+  const port = portArg >= 0 ? Number(process.argv[portArg + 1]) : Number(process.env.PORT || 3024);
+
+  if (transport === 'stdio') {
+    server.start({
+      transportType: 'stdio',
+    });
+    logger.info('brAInwav FastMCP v3 server started with STDIO transport');
+  } else {
+    server.start({
+      transportType: 'httpStream',
+      httpStream: {
+        port,
+        endpoint: '/sse',  // Changed from /mcp to /sse for ChatGPT compatibility
+      },
+    });
+    logger.info(`brAInwav FastMCP v3 server started with HTTP/SSE transport on port ${port} at /sse`);
+  }
+
+  // Graceful shutdown handlers
+  process.on('SIGINT', async () => {
+    logger.info('Received SIGINT - Shutting down brAInwav MCP server...');
+    await server.stop();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    logger.info('Received SIGTERM - Shutting down brAInwav MCP server...');
+    await server.stop();
+    process.exit(0);
+  });
+
+  logger.info('brAInwav FastMCP v3 server is running');
+
+  // Keep process alive - wait forever until signal received
+  await new Promise(() => { }); // Never resolves
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-	main();
-}
+main().catch((err) => {
+  logger.error('Failed to start brAInwav MCP server');
+  console.error(err);
+  process.exit(1);
+});
 
-export { DualMcpServer };
+// Catch unhandled errors
+process.on('uncaughtException', (err) => {
+  logger.error({ err }, 'Uncaught exception');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error({ reason, promise }, 'Unhandled rejection');
+});

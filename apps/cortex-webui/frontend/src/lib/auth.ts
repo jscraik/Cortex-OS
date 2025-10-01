@@ -1,30 +1,39 @@
-import { createAuthClient } from '@better-auth/react';
+import { createAuthClient } from 'better-auth/react'; // Use React client for hooks
+
+// Define user interface based on better-auth standard user structure
+interface User {
+	id: string;
+	email: string;
+	name: string;
+	image?: string;
+	emailVerified: boolean;
+	role?: string;
+	permissions?: string[];
+}
 
 // Create Better Auth client
 export const authClient = createAuthClient({
 	baseURL:
 		process.env.NODE_ENV === 'production'
-			? 'https://your-domain.com/api/auth'
-			: 'http://localhost:3001/api/auth',
-
-	// Configure plugins
-	plugins: {
-		// Add any additional plugins here
-	},
+			? 'https://your-domain.com'
+			: 'http://localhost:3001',
 });
+
+// Extract commonly used methods from authClient
+export const { useSession, signIn, signUp, signOut } = authClient;
 
 // Authentication hooks
 export const useAuth = () => {
-	const data = authClient.useSession();
-	const user = data.data?.user;
-	const session = data.data?.session;
-	const isPending = data.isPending;
-	const error = data.error;
+	const session = useSession();
+	const user = session.data?.user;
+	const sessionData = session.data?.session;
+	const isPending = session.isPending;
+	const error = session.error;
 
 	return {
 		user,
-		session,
-		isAuthenticated: !!user && !!session,
+		session: sessionData,
+		isAuthenticated: !!user && !!sessionData,
 		isPending,
 		error,
 		// Authentication actions
@@ -32,16 +41,12 @@ export const useAuth = () => {
 		signUp: authClient.signUp,
 		signOut: authClient.signOut,
 		// OAuth methods
-		signInWithOAuth: authClient.signIn.oauth,
-		// Session management
-		refreshSession: authClient.refreshSession,
+		signInWithOAuth: authClient.signIn.social,
 		// Password management
-		updatePassword: authClient.updatePassword,
-		forgotPassword: authClient.forgotPassword,
+		forgotPassword: authClient.forgetPassword,
 		resetPassword: authClient.resetPassword,
+		changePassword: authClient.changePassword,
 		// Account management
-		updateProfile: authClient.updateProfile,
-		linkAccount: authClient.linkAccount,
 		unlinkAccount: authClient.unlinkAccount,
 	};
 };
@@ -84,21 +89,21 @@ export const authUtils = {
 	/**
 	 * Check if user has specific role
 	 */
-	hasRole: (user: any, role: string): boolean => {
+	hasRole: (user: User | null | undefined, role: string): boolean => {
 		return user?.role === role;
 	},
 
 	/**
 	 * Check if user has specific permission
 	 */
-	hasPermission: (user: any, permission: string): boolean => {
+	hasPermission: (user: User | null | undefined, permission: string): boolean => {
 		return user?.permissions?.includes(permission) || false;
 	},
 
 	/**
 	 * Format user display name
 	 */
-	getDisplayName: (user: any): string => {
+	getDisplayName: (user: User | null | undefined): string => {
 		if (!user) return '';
 		return user.name || user.email || 'Unknown User';
 	},
@@ -106,14 +111,14 @@ export const authUtils = {
 	/**
 	 * Get user avatar URL
 	 */
-	getAvatarUrl: (user: any): string | null => {
-		return user?.image || user?.avatar || null;
+	getAvatarUrl: (user: User | null | undefined): string | null => {
+		return user?.image || null;
 	},
 
 	/**
 	 * Check if email is verified
 	 */
-	isEmailVerified: (user: any): boolean => {
+	isEmailVerified: (user: User | null | undefined): boolean => {
 		return user?.emailVerified || false;
 	},
 };
@@ -135,12 +140,12 @@ export type AuthErrorType = keyof typeof AUTH_ERRORS;
 // Authentication event handlers
 export const createAuthEventHandlers = () => {
 	return {
-		onSuccess: (data: any) => {
+		onSuccess: (data: unknown) => {
 			console.log('Authentication successful:', data);
 			// You can emit custom events here
 			window.dispatchEvent(new CustomEvent('auth:success', { detail: data }));
 		},
-		onError: (error: any) => {
+		onError: (error: unknown) => {
 			console.error('Authentication error:', error);
 			window.dispatchEvent(new CustomEvent('auth:error', { detail: error }));
 		},

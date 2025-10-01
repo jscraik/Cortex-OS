@@ -361,7 +361,11 @@ const securityToolComplianceMetadata: Record<string, ToolComplianceMetadata> = {
 	},
 };
 
-const securityMcpTools: ToolDefinition[] = (cortexSecMcpTools as CortexSecMcpTool[]).map((tool) => {
+const securityToolsSource = Array.isArray(cortexSecMcpTools)
+	? (cortexSecMcpTools as CortexSecMcpTool[])
+	: [];
+
+const securityMcpTools: ToolDefinition[] = securityToolsSource.map((tool) => {
 	const outputSchema = securityToolOutputSchemas[tool.name];
 	if (!outputSchema) {
 		throw new Error(

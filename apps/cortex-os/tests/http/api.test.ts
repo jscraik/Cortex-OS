@@ -8,7 +8,7 @@ import { ArtifactRepository } from '../../src/persistence/artifact-repository.js
 import { EvidenceRepository } from '../../src/persistence/evidence-repository.js';
 import { ProfileRepository } from '../../src/persistence/profile-repository.js';
 import { TaskRepository } from '../../src/persistence/task-repository.js';
-import { initializeAuth } from '../../src/security/auth.js';
+import { prepareLoopbackAuth } from '../setup.global.js';
 
 interface ApiServerContext {
 	server: ReturnType<typeof createRuntimeHttpServer>;
@@ -33,9 +33,8 @@ beforeEach(async () => {
 		evidence: new EvidenceRepository(),
 	});
 	const { port } = await server.listen(0, '127.0.0.1');
-	// Initialize auth and capture the bearer token
-	const token = await initializeAuth();
-	context = { server, baseUrl: `http://127.0.0.1:${port}`, authHeader: `Bearer ${token.token}` };
+	const { header } = await prepareLoopbackAuth();
+	context = { server, baseUrl: `http://127.0.0.1:${port}`, authHeader: header };
 });
 
 afterEach(async () => {

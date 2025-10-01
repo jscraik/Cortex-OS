@@ -20,6 +20,12 @@
 					"coverage": true
 				}
 			}
+		},
+		"memories-guard": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "pnpm vitest run simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts"
+			}
 		}
 	},
 	"tags": [

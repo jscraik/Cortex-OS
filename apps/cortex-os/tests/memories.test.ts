@@ -1,19 +1,30 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { provideMemories } from '../src/services.js';
 
 describe('memories service', () => {
 	test('saves and retrieves a memory', async () => {
 		const service = provideMemories();
-		const now = new Date().toISOString();
+		const createdAt = new Date().toISOString();
 		const saved = await service.save({
-			id: '1',
-			kind: 'note',
-			text: 'hello',
-			createdAt: now,
-			updatedAt: now,
-			provenance: { source: 'user' },
+			id: 'memory-1',
+			content: 'hello cortex memory',
+			importance: 7,
+			tags: ['demo'],
+			metadata: { createdAt, createdBy: 'test' },
 		});
-		const fetched = await service.get('1');
+
+		expect(saved.id).toBe('memory-1');
+		expect(saved.content).toBe('hello cortex memory');
+		expect(saved.importance).toBe(7);
+		expect(saved.tags).toEqual(['demo']);
+		expect(saved.metadata?.remoteId).toMatch(/^remote-/);
+		const fetched = await service.get('memory-1');
 		expect(fetched).toEqual(saved);
+
+		const fetchStub = (globalThis as any).__memoryFetchStub as ReturnType<typeof vi.fn>;
+		expect(fetchStub).toHaveBeenCalledWith(
+			`${process.env.LOCAL_MEMORY_BASE_URL}/memory/store`,
+			expect.objectContaining({ method: 'POST' }),
+		);
 	});
 });

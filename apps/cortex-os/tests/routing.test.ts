@@ -7,7 +7,11 @@ describe('routing', () => {
 		const spy = vi.spyOn(healthHandler, 'handle');
 		wiring.on(healthHandler.type, healthHandler.handle);
 
-		await wiring.publish('cortex.health.check', {});
+		await wiring.publish('cortex.health.check', {
+			status: 'healthy',
+			timestamp: Date.now(),
+			version: 'test',
+		});
 		expect(spy).toHaveBeenCalled();
 		spy.mockRestore();
 	});

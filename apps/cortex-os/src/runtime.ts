@@ -1,7 +1,10 @@
+import { createObservabilityBus, OBSERVABILITY_EVENT_TYPES } from '@cortex-os/observability';
 import { z } from 'zod';
+import type { Envelope as A2AEnvelope } from './boot/a2a.js';
 import { wireA2A } from './boot/a2a.js';
 import { container } from './boot.js';
 import { createEventManager, type EventManager } from './events';
+import { setA2aPublishers } from './services.js';
 import { createRuntimeHttpServer } from './http/runtime-server.js';
 import { createMcpHttpServer } from './mcp/server.js';
 import type { ArtifactRepository } from './persistence/artifact-repository.js';
@@ -18,9 +21,21 @@ export interface RuntimeHandle {
 }
 
 export async function startRuntime(): Promise<RuntimeHandle> {
+	const wiring = wireA2A();
+	setA2aPublishers({
+		publishMcpEvent: wiring.publishMcpEvent,
+		publishToolEvent: wiring.publishToolEvent,
+	});
+
+	const observabilityBus = createObservabilityBus({ source: 'urn:cortex-os:runtime' });
+
 	const memories = container.get(TOKENS.Memories);
 	const orchestration = container.get(TOKENS.Orchestration);
 	const mcpGateway = container.get(TOKENS.MCPGateway);
+	mcpGateway.setPublishers({
+		publishMcpEvent: wiring.publishMcpEvent,
+		publishToolEvent: wiring.publishToolEvent,
+	});
 	const taskRepository = container.get<TaskRepository>(TOKENS.TaskRepository);
 	const profileRepository = container.get<ProfileRepository>(TOKENS.ProfileRepository);
 	const artifactRepository = container.get<ArtifactRepository>(TOKENS.ArtifactRepository);
@@ -33,12 +48,7 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 
 	const _orchestration = orchestration;
 
-	const { publish } = (() => {
-		const wiring = wireA2A();
-		return {
-			publish: wiring.publish,
-		};
-	})();
+	const publish = wiring.publish;
 
 	const envSchema = z.object({
 		CORTEX_HTTP_PORT: z.coerce.number().int().min(0).max(65535).default(7439),
@@ -65,6 +75,88 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 		evidence: evidenceRepository,
 	});
 	const eventManager = createEventManager({ httpServer });
+
+	const forwardToolEvent = async (envelope: A2AEnvelope) => {
+		await eventManager.emitEvent({
+			id: envelope.id,
+			type: envelope.type,
+			data: envelope.payload,
+			timestamp: envelope.occurredAt,
+		});
+		await publishObservabilityToolEvent(envelope);
+	};
+
+	const publishObservabilityToolEvent = async (envelope: A2AEnvelope) => {
+		const safePublish = async (fn: () => Promise<void>) => {
+			try {
+				await fn();
+			} catch (error) {
+				console.warn('cortex-os observability publish failed', error);
+			}
+		};
+
+		if (envelope.type === 'cortex.mcp.tool.execution.started') {
+			const payload = envelope.payload as {
+				tool: string;
+				correlationId: string;
+				startedAt: string;
+				session?: string;
+				inputDigest?: string;
+			};
+			await safePublish(() =>
+				observabilityBus.publish(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED, {
+					traceId: payload.correlationId,
+					operationName: payload.tool,
+					service: 'cortex-os/mcp-gateway',
+					startTime: payload.startedAt,
+					tags: {
+						session: payload.session ?? 'unknown',
+						inputDigest: payload.inputDigest ?? 'unknown',
+					},
+				}),
+			);
+			return;
+		}
+
+		if (envelope.type === 'cortex.mcp.tool.execution.completed') {
+			const payload = envelope.payload as {
+				tool: string;
+				correlationId: string;
+				finishedAt: string;
+				durationMs: number;
+				status: 'success' | 'error' | 'rate_limited' | 'forbidden' | 'validation_failed';
+				resultSource?: 'cache' | 'direct';
+				errorCode?: string;
+				errorMessage?: string;
+			};
+			await safePublish(() =>
+				observabilityBus.publish(OBSERVABILITY_EVENT_TYPES.TRACE_COMPLETED, {
+					traceId: payload.correlationId,
+					duration: Math.max(0, payload.durationMs),
+					status: payload.status === 'success' ? 'success' : 'error',
+					completedAt: payload.finishedAt,
+				}),
+			);
+			await safePublish(() =>
+				observabilityBus.publish(OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED, {
+					name: 'mcp.tool.execution',
+					value: 1,
+					type: 'counter',
+					timestamp: payload.finishedAt,
+					tags: {
+						tool: payload.tool,
+						status: payload.status,
+						resultSource: payload.resultSource ?? 'unknown',
+						errorCode: payload.errorCode ?? 'none',
+					},
+				}),
+			);
+		}
+	};
+
+	await wiring.on('cortex.mcp.tool.execution.started', forwardToolEvent);
+	await wiring.on('cortex.mcp.tool.execution.completed', forwardToolEvent);
+
 	const { port: boundHttpPort } = await httpServer.listen(httpPort, httpHost);
 	const httpUrl = `http://${httpHost}:${boundHttpPort}`;
 

@@ -1,8 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
+import { prepareLoopbackAuth } from '../setup.global.js';
+
+let authHeader: string;
+
+const withAuthHeaders = (headers: Record<string, string> = {}) => {
+	if (!authHeader) {
+		throw new Error('Loopback auth header not prepared for runtime HTTP tests');
+	}
+	return { Authorization: authHeader, ...headers };
+};
 
 describe('Runtime HTTP Server', () => {
 	let runtime: RuntimeHandle;
+
+	beforeAll(async () => {
+		const { header } = await prepareLoopbackAuth();
+		authHeader = header;
+	});
 
 	beforeEach(async () => {
 		// Set test environment variables for random ports
@@ -22,7 +37,9 @@ describe('Runtime HTTP Server', () => {
 	});
 
 	it('should serve health check endpoint', async () => {
-		const response = await fetch(`${runtime.httpUrl}/health`);
+		const response = await fetch(`${runtime.httpUrl}/health`, {
+			headers: withAuthHeaders(),
+		});
 
 		expect(response.status).toBe(200);
 
@@ -53,7 +70,7 @@ describe('Runtime HTTP Server', () => {
 
 		const createResponse = await fetch(`${runtime.httpUrl}/v1/tasks`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
 			body: JSON.stringify(createTaskPayload),
 		});
 
@@ -64,7 +81,9 @@ describe('Runtime HTTP Server', () => {
 		expect(created.title).toBe('HTTP Test Task');
 
 		// GET /tasks/:id - Retrieve task
-		const getResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`);
+		const getResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
+			headers: withAuthHeaders(),
+		});
 		expect(getResponse.status).toBe(200);
 
 		const retrieved = await getResponse.json();
@@ -83,7 +102,7 @@ describe('Runtime HTTP Server', () => {
 
 		const updateResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
 			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
+			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
 			body: JSON.stringify(updatePayload),
 		});
 
@@ -93,7 +112,9 @@ describe('Runtime HTTP Server', () => {
 		expect(updated.metadata.updated_via).toBe('http_test');
 
 		// GET /tasks - List tasks
-		const listResponse = await fetch(`${runtime.httpUrl}/tasks`);
+		const listResponse = await fetch(`${runtime.httpUrl}/tasks`, {
+			headers: withAuthHeaders(),
+		});
 		expect(listResponse.status).toBe(200);
 
 		const tasks = await listResponse.json();
@@ -103,23 +124,26 @@ describe('Runtime HTTP Server', () => {
 		// DELETE /tasks/:id - Delete task
 		const deleteResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
 			method: 'DELETE',
+			headers: withAuthHeaders(),
 		});
 
 		expect(deleteResponse.status).toBe(204);
 
 		// Verify deletion
-		const getDeletedResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`);
+		const getDeletedResponse = await fetch(`${runtime.httpUrl}/tasks/${created.id}`, {
+			headers: withAuthHeaders(),
+		});
 		expect(getDeletedResponse.status).toBe(404);
 	});
 
 	it('should handle CORS for web UI integration', async () => {
 		const response = await fetch(`${runtime.httpUrl}/health`, {
 			method: 'OPTIONS',
-			headers: {
+			headers: withAuthHeaders({
 				Origin: 'http://localhost:3000',
 				'Access-Control-Request-Method': 'GET',
 				'Access-Control-Request-Headers': 'Content-Type',
-			},
+			}),
 		});
 
 		// Check CORS headers are present
@@ -142,7 +166,7 @@ describe('Runtime HTTP Server', () => {
 
 		const createResponse = await fetch(`${runtime.httpUrl}/profiles`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
 			body: JSON.stringify(profilePayload),
 		});
 
@@ -152,25 +176,32 @@ describe('Runtime HTTP Server', () => {
 		expect(created.scopes).toEqual(['read', 'write']);
 
 		// GET /profiles/:id - Retrieve profile
-		const getResponse = await fetch(`${runtime.httpUrl}/profiles/${created.id}`);
+		const getResponse = await fetch(`${runtime.httpUrl}/profiles/${created.id}`, {
+			headers: withAuthHeaders(),
+		});
 		expect(getResponse.status).toBe(200);
 
 		const retrieved = await getResponse.json();
 		expect(retrieved.label).toBe('HTTP Test Profile');
 
 		// Cleanup
-		await fetch(`${runtime.httpUrl}/profiles/${created.id}`, { method: 'DELETE' });
+		await fetch(`${runtime.httpUrl}/profiles/${created.id}`, {
+			method: 'DELETE',
+			headers: withAuthHeaders(),
+		});
 	});
 
 	it('should handle error cases gracefully', async () => {
 		// GET non-existent task
-		const notFoundResponse = await fetch(`${runtime.httpUrl}/tasks/non-existent-task`);
+		const notFoundResponse = await fetch(`${runtime.httpUrl}/tasks/non-existent-task`, {
+			headers: withAuthHeaders(),
+		});
 		expect(notFoundResponse.status).toBe(404);
 
 		// POST with invalid JSON
 		const invalidJsonResponse = await fetch(`${runtime.httpUrl}/tasks`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
 			body: 'invalid json content',
 		});
 		expect(invalidJsonResponse.status).toBe(400);
@@ -178,7 +209,7 @@ describe('Runtime HTTP Server', () => {
 		// POST with missing required fields
 		const invalidTaskResponse = await fetch(`${runtime.httpUrl}/tasks`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
 			body: JSON.stringify({ title: 'Missing ID' }), // Missing id field
 		});
 		expect(invalidTaskResponse.status).toBe(400);
@@ -196,6 +227,7 @@ describe('Runtime HTTP Server', () => {
 
 		const uploadResponse = await fetch(`${runtime.httpUrl}/artifacts`, {
 			method: 'POST',
+			headers: withAuthHeaders(),
 			body: formData,
 		});
 
@@ -205,7 +237,9 @@ describe('Runtime HTTP Server', () => {
 		expect(uploadedArtifact.filename).toBe('test-file.txt');
 
 		// GET /artifacts/:id - Download artifact
-		const downloadResponse = await fetch(`${runtime.httpUrl}/artifacts/${uploadedArtifact.id}`);
+		const downloadResponse = await fetch(`${runtime.httpUrl}/artifacts/${uploadedArtifact.id}`, {
+			headers: withAuthHeaders(),
+		});
 		expect(downloadResponse.status).toBe(200);
 		expect(downloadResponse.headers.get('content-type')).toBe('text/plain');
 
@@ -213,7 +247,9 @@ describe('Runtime HTTP Server', () => {
 		expect(downloadedContent).toBe('Test artifact content');
 
 		// GET /artifacts - List artifacts
-		const listResponse = await fetch(`${runtime.httpUrl}/artifacts?taskId=related-task-001`);
+		const listResponse = await fetch(`${runtime.httpUrl}/artifacts?taskId=related-task-001`, {
+			headers: withAuthHeaders(),
+		});
 		expect(listResponse.status).toBe(200);
 
 		const artifacts = await listResponse.json();
@@ -221,7 +257,10 @@ describe('Runtime HTTP Server', () => {
 		expect(artifacts.find((a: any) => a.id === 'test-artifact-http-001')).toBeDefined();
 
 		// Cleanup
-		await fetch(`${runtime.httpUrl}/artifacts/${uploadedArtifact.id}`, { method: 'DELETE' });
+		await fetch(`${runtime.httpUrl}/artifacts/${uploadedArtifact.id}`, {
+			method: 'DELETE',
+			headers: withAuthHeaders(),
+		});
 	});
 
 	it('should serve evidence management endpoints', async () => {
@@ -242,7 +281,7 @@ describe('Runtime HTTP Server', () => {
 
 		const createResponse = await fetch(`${runtime.httpUrl}/evidence`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
 			body: JSON.stringify(evidencePayload),
 		});
 
@@ -252,14 +291,18 @@ describe('Runtime HTTP Server', () => {
 		expect(created.type).toBe('test-result');
 
 		// GET /evidence/:id - Retrieve evidence
-		const getResponse = await fetch(`${runtime.httpUrl}/evidence/${created.id}`);
+		const getResponse = await fetch(`${runtime.httpUrl}/evidence/${created.id}`, {
+			headers: withAuthHeaders(),
+		});
 		expect(getResponse.status).toBe(200);
 
 		const retrieved = await getResponse.json();
 		expect(retrieved.payload.testName).toBe('HTTP Integration Test');
 
 		// GET /evidence - List evidence
-		const listResponse = await fetch(`${runtime.httpUrl}/evidence?taskId=related-task-002`);
+		const listResponse = await fetch(`${runtime.httpUrl}/evidence?taskId=related-task-002`, {
+			headers: withAuthHeaders(),
+		});
 		expect(listResponse.status).toBe(200);
 
 		const evidenceList = await listResponse.json();
@@ -267,12 +310,17 @@ describe('Runtime HTTP Server', () => {
 		expect(evidenceList.find((e: any) => e.id === 'test-evidence-http-001')).toBeDefined();
 
 		// Cleanup
-		await fetch(`${runtime.httpUrl}/evidence/${created.id}`, { method: 'DELETE' });
+		await fetch(`${runtime.httpUrl}/evidence/${created.id}`, {
+			method: 'DELETE',
+			headers: withAuthHeaders(),
+		});
 	});
 
 	it('should provide observability endpoints', async () => {
 		// GET /metrics - Prometheus metrics
-		const metricsResponse = await fetch(`${runtime.httpUrl}/metrics`);
+		const metricsResponse = await fetch(`${runtime.httpUrl}/metrics`, {
+			headers: withAuthHeaders(),
+		});
 		expect(metricsResponse.status).toBe(200);
 		expect(metricsResponse.headers.get('content-type')).toContain('text/plain');
 
@@ -285,7 +333,7 @@ describe('Runtime HTTP Server', () => {
 
 		// GET /v1/events - Server-sent events endpoint
 		const eventsResponse = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
-			headers: { Accept: 'text/event-stream' },
+			headers: withAuthHeaders({ Accept: 'text/event-stream' }),
 		});
 
 		expect(eventsResponse.status).toBe(200);

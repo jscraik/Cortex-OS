@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from typing import Any
-from uuid import uuid4
+from typing import Any, cast
 
 import httpx
 from tenacity import AsyncRetrying, RetryError, stop_after_attempt, wait_exponential
@@ -53,7 +51,7 @@ class LocalMemoryAdapter:
         json_body: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        url = f"{self.base_url}/{path.lstrip('/')}"
+        url = f"{self.base_url.rstrip('/')}/{path.lstrip('/')}"
 
         async def _perform() -> dict[str, Any]:
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
@@ -69,7 +67,40 @@ class LocalMemoryAdapter:
                 response.raise_for_status()
                 if not response.content:
                     return {}
-                return response.json()
+                payload = cast(dict[str, Any], response.json())
+                if isinstance(payload, dict) and "success" in payload:
+                    if not payload.get("success", False):
+                        error = payload.get("error")
+                        message: str | None = None
+                        if isinstance(error, dict):
+                            if error.get("message"):
+                                message = str(error["message"])
+                            elif error.get("code"):
+                                message = str(error["code"])
+                        elif error:
+                            message = str(error)
+                        if not message and payload.get("message"):
+                            message = str(payload["message"])
+                        if not message:
+                            message = "Local Memory request failed"
+                        raise MemoryAdapterError(message)
+                    data = payload.get("data")
+                    meta: dict[str, Any] = {}
+                    for key in ("count", "total", "next", "prev"):
+                        if key in payload:
+                            meta[key] = payload[key]
+                    if data is None:
+                        if "message" in payload:
+                            return {**meta, "message": payload["message"]} if meta else {"message": payload["message"]}
+                        return meta
+                    if isinstance(data, dict):
+                        return {**data, **meta}
+                    if isinstance(data, list):
+                        result = {"results": data}
+                        result.update(meta)
+                        return result
+                    return {"data": data, **meta}
+                return payload
 
         try:
             if self.retries == 0:
@@ -99,7 +130,7 @@ class LocalMemoryAdapter:
             "tags": tags or [],
             "metadata": metadata or {},
         }
-        result = await self._request("POST", "/memories", json_body=payload)
+        result = await self._request("POST", "/memory/store", json_body=payload)
         return sanitize_output(result)
 
     async def search(
@@ -110,17 +141,40 @@ class LocalMemoryAdapter:
         kind: str | None,
         tags: list[str] | None,
     ) -> dict[str, Any]:
-        params = {"q": query or "", "limit": limit}
+        payload = {
+            "query": query,
+            "search_type": "semantic" if not tags else "hybrid",
+            "limit": limit,
+            "tags": tags or [],
+        }
         if kind:
-            params["kind"] = kind
-        if tags:
-            params["tags"] = ",".join(tags)
-        result = await self._request("GET", "/memories/search", params=params)
+            payload["domain"] = kind
+        result = await self._request("POST", "/memory/search", json_body=payload)
+        if isinstance(result, list):
+            return sanitize_output({
+                "results": result,
+                "total_found": len(result),
+            })
+        if isinstance(result, dict):
+            output = dict(result)
+            if "results" in output and isinstance(output["results"], list):
+                total = output.pop("count", None)
+                if total is None:
+                    total = output.get("total_found")
+                if total is None:
+                    total = len(output["results"])
+                output["total_found"] = total or 0
+                return sanitize_output(output)
+            data_results = output.get("data")
+            if isinstance(data_results, list):
+                total = output.get("count", len(data_results))
+                return sanitize_output({"results": data_results, "total_found": total})
+            return sanitize_output(output)
         return sanitize_output(result)
 
     async def get(self, memory_id: str) -> dict[str, Any] | None:
         try:
-            result = await self._request("GET", f"/memories/{memory_id}")
+            result = await self._request("GET", f"/memory/store/{memory_id}")
             return sanitize_output(result)
         except MemoryAdapterError:
             logger.warning("Memory %s not found", memory_id)
@@ -128,165 +182,31 @@ class LocalMemoryAdapter:
 
     async def delete(self, memory_id: str) -> bool:
         try:
-            await self._request("DELETE", f"/memories/{memory_id}")
+            await self._request("DELETE", f"/memory/store/{memory_id}")
             return True
         except MemoryAdapterError:
             return False
 
+    async def analysis(self, payload: dict[str, Any]) -> dict[str, Any]:
+        result = await self._request("POST", "/memory/analysis", json_body=payload)
+        return sanitize_output(result)
 
-class InMemoryMemoryAdapter:
-    """Fallback adapter storing memories in-process for resilience."""
+    async def relationships(self, payload: dict[str, Any]) -> dict[str, Any]:
+        result = await self._request("POST", "/memory/relationships", json_body=payload)
+        return sanitize_output(result)
 
-    def __init__(self) -> None:
-        self._records: dict[str, dict[str, Any]] = {}
-        self._lock = asyncio.Lock()
+    async def stats(self, payload: dict[str, Any]) -> dict[str, Any]:
+        result = await self._request("POST", "/memory/stats", json_body=payload)
+        return sanitize_output(result)
 
-    async def store(
-        self,
-        *,
-        kind: str,
-        text: str,
-        tags: list[str] | None,
-        metadata: dict[str, Any] | None,
-    ) -> dict[str, Any]:
-        record = sanitize_output(
-            {
-                "id": str(uuid4()),
-                "kind": kind,
-                "text": text,
-                "tags": tags or [],
-                "metadata": metadata or {},
-            }
-        )
-        await self.upsert(record)
-        return record
+    async def health(self) -> dict[str, Any]:
+        result = await self._request("GET", "/memory/health")
+        return sanitize_output(result)
 
-    async def upsert(self, record: dict[str, Any]) -> None:
-        async with self._lock:
-            record_id = str(record.get("id") or uuid4())
-            clean = sanitize_output(
-                {
-                    "id": record_id,
-                    "kind": record.get("kind", "note"),
-                    "text": record.get("text", ""),
-                    "tags": record.get("tags", []),
-                    "metadata": record.get("metadata", {}),
-                }
-            )
-            self._records[record_id] = clean
+    async def cleanup(self) -> dict[str, Any]:
+        result = await self._request("POST", "/memory/cleanup")
+        return sanitize_output(result)
 
-    async def search(
-        self,
-        *,
-        query: str,
-        limit: int,
-        kind: str | None,
-        tags: list[str] | None,
-    ) -> dict[str, Any]:
-        async with self._lock:
-            lowered = (query or "").lower()
-            results: list[dict[str, Any]] = []
-            for record in self._records.values():
-                if kind and record.get("kind") != kind:
-                    continue
-                if tags and not set(tags).issubset(set(record.get("tags", []))):
-                    continue
-                if lowered and lowered not in record.get("text", "").lower():
-                    continue
-                results.append(record)
-            return {
-                "query": query,
-                "results": sanitize_output(results[:limit]),
-                "total_found": len(results),
-            }
-
-    async def get(self, memory_id: str) -> dict[str, Any] | None:
-        async with self._lock:
-            record = self._records.get(memory_id)
-            return sanitize_output(record) if record else None
-
-    async def delete(self, memory_id: str) -> bool:
-        async with self._lock:
-            return self._records.pop(memory_id, None) is not None
-
-
-class ResilientMemoryAdapter:
-    """Attempts primary adapter first, falling back to in-memory storage."""
-
-    def __init__(
-        self,
-        *,
-        primary: LocalMemoryAdapter | None,
-        fallback: InMemoryMemoryAdapter,
-    ) -> None:
-        self.primary = primary
-        self.fallback = fallback
-
-    async def store(
-        self,
-        *,
-        kind: str,
-        text: str,
-        tags: list[str] | None,
-        metadata: dict[str, Any] | None,
-    ) -> dict[str, Any]:
-        if self.primary is not None:
-            try:
-                record = await self.primary.store(
-                    kind=kind, text=text, tags=tags, metadata=metadata
-                )
-                await self.fallback.upsert(record)
-                return record
-            except MemoryAdapterError as exc:
-                logger.warning(
-                    "Local Memory REST adapter failed, using in-process fallback: %s",
-                    exc,
-                )
-        return await self.fallback.store(
-            kind=kind, text=text, tags=tags, metadata=metadata
-        )
-
-    async def search(
-        self,
-        *,
-        query: str,
-        limit: int,
-        kind: str | None,
-        tags: list[str] | None,
-    ) -> dict[str, Any]:
-        if self.primary is not None:
-            try:
-                return await self.primary.search(
-                    query=query, limit=limit, kind=kind, tags=tags
-                )
-            except MemoryAdapterError as exc:
-                logger.warning(
-                    "Falling back to in-process memory search: %s", exc
-                )
-        return await self.fallback.search(
-            query=query, limit=limit, kind=kind, tags=tags
-        )
-
-    async def get(self, memory_id: str) -> dict[str, Any] | None:
-        if self.primary is not None:
-            try:
-                value = await self.primary.get(memory_id)
-                if value is not None:
-                    return value
-            except MemoryAdapterError as exc:
-                logger.warning(
-                    "Primary memory get failed, using fallback: %s", exc
-                )
-        return await self.fallback.get(memory_id)
-
-    async def delete(self, memory_id: str) -> bool:
-        deleted = False
-        if self.primary is not None:
-            try:
-                deleted = await self.primary.delete(memory_id)
-            except MemoryAdapterError as exc:
-                logger.warning(
-                    "Primary memory delete failed, trying fallback: %s", exc
-                )
-        fallback_deleted = await self.fallback.delete(memory_id)
-        return deleted or fallback_deleted
+    async def optimize(self) -> dict[str, Any]:
+        result = await self._request("POST", "/memory/optimize")
+        return sanitize_output(result)

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { startRuntime } from '../src/runtime.js';
+import { prepareLoopbackAuth } from './setup.global.js';
 
 interface RunningRuntime {
 	httpUrl: string;
@@ -10,6 +11,15 @@ interface RunningRuntime {
 	};
 }
 
+let authHeader: string;
+
+const withAuthHeaders = (headers: Record<string, string> = {}) => {
+	if (!authHeader) {
+		throw new Error('Loopback auth header not prepared for runtime bootstrap tests');
+	}
+	return { Authorization: authHeader, ...headers };
+};
+
 describe('runtime bootstrap (integration)', () => {
 	let runtime: RunningRuntime;
 
@@ -17,6 +27,8 @@ describe('runtime bootstrap (integration)', () => {
 		process.env.CORTEX_HTTP_PORT = '0';
 		process.env.CORTEX_MCP_MANAGER_PORT = '0';
 
+		const { header } = await prepareLoopbackAuth();
+		authHeader = header;
 		runtime = (await startRuntime()) as unknown as RunningRuntime;
 	});
 
@@ -27,7 +39,9 @@ describe('runtime bootstrap (integration)', () => {
 	});
 
 	test('exposes a health endpoint', async () => {
-		const res = await fetch(`${runtime.httpUrl}/health`);
+		const res = await fetch(`${runtime.httpUrl}/health`, {
+			headers: withAuthHeaders(),
+		});
 		expect(res.status).toBe(200);
 		const body = await res.json();
 		expect(body).toMatchObject({ status: 'ok' });
@@ -43,7 +57,7 @@ describe('runtime bootstrap (integration)', () => {
 
 	test('streams runtime events over SSE', async () => {
 		const response = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
-			headers: { Accept: 'text/event-stream' },
+			headers: withAuthHeaders({ Accept: 'text/event-stream' }),
 		});
 
 		expect(response.status).toBe(200);

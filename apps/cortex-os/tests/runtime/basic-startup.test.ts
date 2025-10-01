@@ -1,9 +1,24 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { RuntimeHandle } from '../../src/runtime.js';
 import { startRuntime } from '../../src/runtime.js';
+import { prepareLoopbackAuth } from '../setup.global.js';
+
+let authHeader: string;
+
+const withAuthHeaders = (headers: Record<string, string> = {}) => {
+	if (!authHeader) {
+		throw new Error('Loopback auth header not prepared for basic runtime tests');
+	}
+	return { Authorization: authHeader, ...headers };
+};
 
 describe('brAInwav Cortex-OS Basic Runtime', () => {
 	let runtime: RuntimeHandle;
+
+	beforeAll(async () => {
+		const { header } = await prepareLoopbackAuth();
+		authHeader = header;
+	});
 
 	beforeEach(async () => {
 		// Set test environment variables
@@ -40,7 +55,9 @@ describe('brAInwav Cortex-OS Basic Runtime', () => {
 	it('should provide functional HTTP endpoint', async () => {
 		runtime = await startRuntime();
 
-		const response = await fetch(`${runtime.httpUrl}/health`);
+		const response = await fetch(`${runtime.httpUrl}/health`, {
+			headers: withAuthHeaders(),
+		});
 		expect(response.status).toBe(200);
 
 		const health = await response.json();
@@ -86,7 +103,9 @@ describe('brAInwav Cortex-OS Basic Runtime', () => {
 		runtime = await startRuntime();
 
 		// Ensure runtime is running
-		const healthResponse = await fetch(`${runtime.httpUrl}/health`);
+		const healthResponse = await fetch(`${runtime.httpUrl}/health`, {
+			headers: withAuthHeaders(),
+		});
 		expect(healthResponse.status).toBe(200);
 
 		// Stop should not throw and should complete successfully

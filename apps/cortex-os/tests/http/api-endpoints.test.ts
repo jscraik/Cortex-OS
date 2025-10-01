@@ -1,8 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
+import { prepareLoopbackAuth } from '../setup.global.js';
+
+let authHeader: string;
+
+const withAuthHeaders = (headers: Record<string, string> = {}) => {
+	if (!authHeader) {
+		throw new Error('Loopback auth header not prepared for runtime HTTP endpoint tests');
+	}
+	return { Authorization: authHeader, ...headers };
+};
 
 describe('brAInwav HTTP API Endpoints (Working Implementation)', () => {
 	let runtime: RuntimeHandle;
+
+	beforeAll(async () => {
+		const { header } = await prepareLoopbackAuth();
+		authHeader = header;
+	});
 
 	beforeEach(async () => {
 		// Set test environment variables for random ports
@@ -22,7 +37,9 @@ describe('brAInwav HTTP API Endpoints (Working Implementation)', () => {
 	});
 
 	it('should serve health endpoint successfully', async () => {
-		const response = await fetch(`${runtime.httpUrl}/health`);
+		const response = await fetch(`${runtime.httpUrl}/health`, {
+			headers: withAuthHeaders(),
+		});
 
 		expect(response.status).toBe(200);
 
@@ -35,7 +52,7 @@ describe('brAInwav HTTP API Endpoints (Working Implementation)', () => {
 
 	it('should serve SSE events endpoint', async () => {
 		const response = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
-			headers: { Accept: 'text/event-stream' },
+			headers: withAuthHeaders({ Accept: 'text/event-stream' }),
 		});
 
 		expect(response.status).toBe(200);
@@ -66,7 +83,9 @@ describe('brAInwav HTTP API Endpoints (Working Implementation)', () => {
 
 	it('should provide meaningful error responses', async () => {
 		// Test 404 for unknown routes
-		const notFoundResponse = await fetch(`${runtime.httpUrl}/unknown-endpoint`);
+		const notFoundResponse = await fetch(`${runtime.httpUrl}/unknown-endpoint`, {
+			headers: withAuthHeaders(),
+		});
 		expect(notFoundResponse.status).toBe(404);
 
 		const notFoundError = await notFoundResponse.json();

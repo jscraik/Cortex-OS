@@ -103,6 +103,7 @@
       }
     }
   },
+  "nxCloudId": "68b56409c98235f690fdfefd",
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx-cloud",
@@ -115,7 +116,6 @@
           "lint",
           "typecheck"
         ],
-        "accessToken": "${NX_CLOUD_ACCESS_TOKEN}",
         "distributedTaskExecution": true,
         "retryableOperations": [
           "test",

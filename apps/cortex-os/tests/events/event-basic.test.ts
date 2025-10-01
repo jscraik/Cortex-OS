@@ -1,8 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
+import { prepareLoopbackAuth } from '../setup.global.js';
+
+let authHeader: string;
+
+const withAuthHeaders = (headers: Record<string, string> = {}) => {
+	if (!authHeader) {
+		throw new Error('Loopback auth header not prepared for basic event tests');
+	}
+	return { Authorization: authHeader, ...headers };
+};
 
 describe('brAInwav Event System Basic Functionality', () => {
 	let runtime: RuntimeHandle;
+
+	beforeAll(async () => {
+		const { header } = await prepareLoopbackAuth();
+		authHeader = header;
+	});
 
 	beforeEach(async () => {
 		// Set test environment variables for random ports
@@ -36,7 +51,7 @@ describe('brAInwav Event System Basic Functionality', () => {
 
 	it('should work with SSE endpoint', async () => {
 		const response = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
-			headers: { Accept: 'text/event-stream' },
+			headers: withAuthHeaders({ Accept: 'text/event-stream' }),
 		});
 
 		expect(response.status).toBe(200);

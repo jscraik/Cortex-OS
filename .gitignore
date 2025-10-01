@@ -1,19 +1,23 @@
+# Dependencies
 node_modules/
+.pnpm-store/
+node_modules/.pnpm/
+
+# Build artifacts
 .nx/
 dist/
 target/
-.venv/
-.mcp-quick-venv/
-.uv/
-.tmp/
-**/.tmp/
-.cache/
-apps/cortex-webui/open-webui/
-
-# Build artifacts
 *.tsbuildinfo
 *.d.ts.map
 *.js.map
+*.bin
+*.rlib
+*.dylib
+out/
+public/
+!packages/observability/dist/
+
+# Python build artifacts
 *.pyc
 __pycache__/
 .coverage
@@ -22,6 +26,18 @@ coverage.xml
 coverage/
 htmlcov/
 **/htmlcov/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+.venv*/
+.venv311/
+.mcp-quick-venv/
+.uv/
+.uv-cache/
+.covenv/
 
 # Environment files
 .env
@@ -35,31 +51,26 @@ htmlcov/
 .env.test
 
 # Temporary and cache files
+.tmp/
+**/.tmp/
 tmp/
-.venv-*/
-comparisons/
+.cache/
 *.heapsnapshot
 tmp_*
 test_*.py
 testfile*.txt
 temp_*.txt
-.uv-cache/
-
-# Build artifacts
-*.tsbuildinfo
-*.d.ts.map
-*.js.map
-*.pyc
-__pycache__/
-.coverage
-coverage.xml
-**/coverage/
-coverage/
-htmlcov/
-**/htmlcov/
-*.bin
-persistence-test-*.db*
+*.tmp
+*.temp
+*.bak
 .swcrc
+
+# Data and API files
+data/api-keys.json
+
+# Performance and test output
+performance-history.json
+reports/test-out/
 
 # Generated reports and analysis files
 dependency-graph.json
@@ -73,16 +84,21 @@ semgrep-results.json
 detects
 
 # Development and testing artifacts
-.covenv/
 .eng/
 .cursor/
 .vitest-tmp-*/
 dist-test/
-out/
-public/
+comparisons/
+persistence-test-*.db*
+.hypothesis/
+.playwright-mcp/
+.vitest-tmp-docs/
+.vitest-tmp-target/
+.rollup.cache/
+
 # Upstream mirrors / vendored external references for cortex-codex (kept locally only)
 apps/cortex-codex/external/
-!packages/observability/dist/
+apps/cortex-webui/open-webui/
 
 # Docusaurus build/cache artifacts (exclude generated site outputs)
 website/.docusaurus/
@@ -95,55 +111,30 @@ apps/cortex-codex/rustc-ice-*.txt
 pnpm-lock.conflicted
 pnpm-lock.yaml.bak
 
-# Misc backup & transient files
-*.bak
-.covenv/
-# Additional files to ignore
-.covenv/
-.hypothesis/
-.playwright-mcp/
-.vitest-tmp-docs/
-.vitest-tmp-target/
-htmlcov/
-public/
+# Infrastructure configurations
+infra/mcp/*.plist
+
+# Package-specific directories
+packages/mcp-server/bin/
+packages/mcp-server/data/
+packages/mcp-server/docs/
+
+# Memory logs
+.memory/logs/*.jsonl
+
+# Misc files
 report/
 UPSTREAM_REF
-pnpm-lock.yaml.bak
-.venv311/
-.memory/logs/*.jsonl
-*.heapsnapshot
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
-
-# Nx configuration with sensitive tokens
-nx.json
 
 # Logs
 logs/
 logs/*.log
-
-# Additional cache and temporary files
-.ruff_cache/
-.mypy_cache/
-.pytest_cache/
-.hypothesis/
-.rollup.cache/
 
 # Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Virtual environments
-.venv*/
-.venv311/
-
-# Rust build artifacts
-*.rlib
-*.dylib
-
-# Temporary files
-*.tmp
-*.temp
 

@@ -15,12 +15,14 @@
 - [ ] **Phase 8**: Legacy Code Removal & Migration (Day 11)
 - [ ] **Phase 9**: Final Integration & Documentation (Day 12)
 
-### Status Snapshot (2025-09-30)
+### Status Snapshot (2025-10-01)
 
-- Phase 2 remains in progress: legacy adapters in `packages/memories` now throw via `legacyMemoryAdapterRemoved`; `packages/memories/src/adapters/hybrid-search.ts` was converted to a guard on 2025-09-30, leaving Python and enforcement work outstanding.
-- Python `packages/cortex-mcp` continues to host a full server implementation with no deprecation notice or proxy shim; the package must either emit a clear deprecation message or forward every request to the HTTP memory-core before Phase 2.2 can close out.
-- `apps/cortex-os` does not yet emit `tool.execution.started/completed` A2A events; integration work is still required before we can check off Phase 2.3 and the downstream MCP tooling in Phase 3.
-- The `examples/memories-mlx` demo now targets `@cortex-os/memory-core`, the guard runs clean (no allowlist) via `pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`; the `simple-tests` Nx project now exists, but `pnpm nx test simple-tests` fails earlier on pre-existing build errors (`@cortex-os/hooks`, `@cortex-os/model-gateway`, `a2a`), so Smart Nx wiring remains pending.
+- Phase 2.1 closed on 2025-10-01: duplicate adapters under `packages/memories` and `packages/rag` remain removed and are enforced by `simple-tests/no-memories-import.test.ts` and `simple-tests/rag-adapters-removed.test.ts`.
+- `LocalMemoryAdapter` now proxies every memory-core REST endpoint (store/search/get/delete/analysis/relationships/stats/health/cleanup/optimize) and returns FastMCP v3 response envelopes; `InMemoryMemoryAdapter`/`ResilientMemoryAdapter` were removed along with the `CORTEX_MCP_ALLOW_INPROCESS_MEMORY` escape hatch.
+- `apps/cortex-os` `provideMemories()` instantiates the Remote Memory service against `LOCAL_MEMORY_BASE_URL`; tests currently rely on a fetch stub that covers store/search only, so analysis/relationship/stats paths still need end-to-end coverage.
+- `packages/cortex-mcp/tests/test_unit_components.py` and `packages/cortex-mcp/tests/test_server_configuration.py` were updated for the `{ success, data, count }` payloads; rerun with `uv run pytest ...` once virtualenv deps (e.g., `pyjwt`) are present.
+- `apps/cortex-os` emits `cortex.mcp.tool.execution.started/completed` events via the A2A bus; remaining Phase 2.3 verification blockers are seeding loopback auth for runtime HTTP tests, hardening `eventManager.emitEvent` validation, and deciding on the memory-core stub vs service strategy.
+- Guard targets (`pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`, `pnpm nx run simple-tests:memories-guard`) stay green; unrelated simple-tests suites still fail on legacy scripts.
 
 ## Critical Architecture Deltas
 
@@ -251,23 +253,48 @@ On startup, toolkit resolves tool scripts in priority order:
 - [x] Remove/strip `packages/memories/src/adapters/store.qdrant.ts`
 - [x] Remove `packages/memories/src/adapters/hybrid-search.ts`
   - 2025-09-30: Replaced with a legacy guard that throws via `legacyMemoryAdapterRemoved` to enforce use of memory-core.
-- [ ] Remove/strip `packages/rag/src/adapters/*`
-  - 2025-09-30: Verify removal of any resurrected adapters under `packages/rag/src/` as part of cleanup.
+- [x] Remove/strip `packages/rag/src/adapters/*`
+  - 2025-10-01: Directory no longer exists; `simple-tests/rag-adapters-removed.test.ts` enforces absence to prevent regressions.
 - [x] Remove `packages/rag-integration.ts`
 
 #### 2.2 Refactor Python Cortex-MCP
 
 - [x] Deprecate `packages/cortex-mcp` (Python)
-  - 2025-09-30: Module import now emits a DeprecationWarning and runtime requires `LOCAL_MEMORY_BASE_URL`, with `CORTEX_MCP_ALLOW_INPROCESS_MEMORY` as a temporary escape hatch.
-- [ ] Or refactor to proxy to memory-core HTTP endpoint
-- [ ] Remove separate LocalMemoryAdapter
-- [ ] Ensure no duplicate memory logic
+  - 2025-09-30: Module import now emits a DeprecationWarning and runtime requires `LOCAL_MEMORY_BASE_URL`; the temporary `CORTEX_MCP_ALLOW_INPROCESS_MEMORY` escape hatch was removed on 2025-10-01.
+- [x] Refactor to proxy to memory-core HTTP endpoint
+  - 2025-10-01: `LocalMemoryAdapter` now forwards store/search/get/delete/analysis/relationships/stats/health/cleanup/optimize calls to the REST API using FastMCP success wrappers.
+- [x] Remove in-process fallback path
+  - 2025-10-01: Removed `InMemoryMemoryAdapter`, `ResilientMemoryAdapter`, and `CORTEX_MCP_ALLOW_INPROCESS_MEMORY`; HTTP proxy is now mandatory.
+- [x] Ensure no duplicate memory logic
+  - 2025-10-01: Python package delegates exclusively to memory-core; legacy helpers deleted with the fallback path.
 
 #### 2.3 Update Apps to Use A2A
 
-- [ ] Replace mock bus in `apps/cortex-os` with proper A2A core
-- [ ] Add A2A event emissions around agent operations
-- [ ] Ensure memory requests go through MCP hub
+- [x] Replace mock bus in `apps/cortex-os` with proper A2A core
+  - 2025-10-01: `wireA2A()` now builds on `@cortex-os/a2a-core` buses, schema registry, and ACLs without legacy stubs.
+- [x] Add A2A event emissions around agent operations
+  - 2025-09-30: MCP tool lifecycle now publishes `cortex.mcp.tool.execution.*` envelopes onto the bus and runtime event manager; observability export remains.
+- [x] Ensure memory requests go through MCP hub
+  - 2025-10-01: `provideMemories()` wraps the Local Memory REST API via `LOCAL_MEMORY_BASE_URL`, with tests stubbing outbound fetch to enforce HTTP proxying.
+
+##### 2.3.1 Loopback Authentication for Runtime HTTP Tests
+
+- [ ] Generate a loopback token during test bootstrap (`apps/cortex-os/tests/setup.global.ts`) and export helpers for HTTP suites.
+- [ ] Update all runtime HTTP tests (e.g., `apps/cortex-os/tests/http/runtime-server.test.ts`) to send the header `Authorization: Bearer <loopback-token>`.
+- [ ] Verify `pnpm --filter @apps/cortex-os test` now exercises authenticated paths instead of failing 401/404.
+
+##### 2.3.2 Event Manager Validation Hardening
+
+- [ ] Guard `apps/cortex-os/src/events/event-manager.ts` so `emitEvent` enforces required `type` and `payload` structure.
+- [ ] Add negative/positive unit coverage in `apps/cortex-os/tests/events/event-manager.test.ts` (or create the suite) ensuring malformed events throw.
+- [ ] Re-run focused tests (`pnpm vitest apps/cortex-os/tests/events/event-manager.test.ts --runInBand`) to confirm behavior.
+
+##### 2.3.3 Memory-Core Test Strategy
+
+- [ ] Adopt production-faithful coverage by launching the real memory-core service via Testcontainers (no synthetic stubs beyond network mocking safeguards).
+- [ ] Add fixtures that provision memory-core with loopback auth, run migrations, and expose the base URL to runtime HTTP tests.
+- [ ] Ensure teardown cleans containers and secrets; cache images where CI allows to keep runtimes acceptable.
+- [ ] Update regression suites so Phase 2.3 closes with end-to-end coverage for analysis/relationships/stats/health using the live service.
 
 #### 2.4 Create Tests
 
@@ -275,7 +302,7 @@ On startup, toolkit resolves tool scripts in priority order:
   - [x] Fail on direct imports from `packages/memories`
     - 2025-09-30: Guard runs via `pnpm vitest simple-tests/no-memories-import.test.ts --config simple-tests/vitest.config.ts`, blocking both package and relative imports with no allowlist.
 - [x] Fail on direct imports from `packages/rag`
-    - 2025-09-30: Covered by the same guard; Nx project `simple-tests` added to bring the check under Smart Nx once the upstream build failures (`@cortex-os/hooks`, `@cortex-os/model-gateway`, `a2a`) are resolved.
+  - 2025-09-30: Covered by the same guard; use `pnpm nx run simple-tests:memories-guard` in Smart Nx until the broader simple-tests suite is stabilized.
   - [ ] Ensure all ops go through `LocalMemoryProvider`
 
 - [ ] Write A2A integration tests for `apps/cortex-os`
@@ -297,6 +324,30 @@ On startup, toolkit resolves tool scripts in priority order:
 
 ### Implementation Tasks
 
+#### 3.0 ChatGPT Integration (stdio Transport)
+
+- [x] Create `scripts/start-mcp-server-stdio.sh` for ChatGPT connector
+  - 2025-10-01: Completed. Script launches MCP server in stdio mode for ChatGPT integration.
+- [x] Document ChatGPT MCP configuration in `packages/mcp-server/docs/chatgpt-integration.md`
+  - 2025-10-01: Completed. Full integration guide with troubleshooting and architecture details.
+- [x] Add `start:stdio` script to `packages/mcp-server/package.json`
+  - 2025-10-01: Already exists. Runs: `node dist/index.js --transport stdio`
+
+**ChatGPT Configuration Example:**
+
+```json
+{
+  "mcpServers": {
+    "cortex-mcp": {
+      "command": "/Users/jamiecraik/.Cortex-OS/scripts/start-mcp-server-stdio.sh",
+      "env": {
+        "LOCAL_MEMORY_BASE_URL": "http://localhost:3028/api/v1"
+      }
+    }
+  }
+}
+```
+
 #### 3.1 Register MCP Tools
 
 - [ ] Create `packages/mcp-server/src/mcp/agent-toolkit-tools.ts`
@@ -306,13 +357,15 @@ On startup, toolkit resolves tool scripts in priority order:
   - `agent_toolkit_codemod`
   - `agent_toolkit_validate`
   - `agent_toolkit_codemap`
+  - 2025-10-01: Core memory server now runs on FastMCP v3 (TypeScript). Agent toolkit integration still pending; existing memory.* tools run through FastMCP. ChatGPT stdio integration complete.
 
 #### 3.2 Implement A2A Event Emission
 
-- [ ] Update `createAgentToolkit()` to emit events
-- [ ] Emit `tool.execution.started` with correlation ID
-- [ ] Emit `tool.execution.completed` with results
-- [ ] Include tool name and session in events
+- [x] Update `createAgentToolkit()` to emit events
+- [x] Emit `tool.execution.started` with correlation ID
+- [x] Emit `tool.execution.completed` with results
+- [x] Include tool name and session in events
+  - 2025-10-01: `apps/cortex-os` now publishes `cortex.mcp.tool.execution.*` envelopes and records them via the runtime event manager; observability export remains to be wired.
 
 #### 3.3 Add Memory Persistence
 
@@ -320,6 +373,7 @@ On startup, toolkit resolves tool scripts in priority order:
 - [ ] Persist diagnostics summaries to Local Memory
 - [ ] Use `MEMORIES_SHORT_STORE=local` by default
 - [ ] Use `LOCAL_MEMORY_BASE_URL` when set
+  - 2025-10-01: FastMCP server exposes typed sessions (requestCount, lastAccess); need to persist/inspect via Local Memory.
 
 #### 3.4 Implement Token Budget
 
@@ -336,6 +390,7 @@ On startup, toolkit resolves tool scripts in priority order:
 - [ ] Handle concurrent operations safely
 - [ ] Add 30 second timeout
 - [ ] Preserve context across retries
+  - 2025-10-01: FastMCP provides context hooks (progress, logging); resilience still manual.
 
 #### 3.6 Create Tests
 
@@ -350,11 +405,12 @@ On startup, toolkit resolves tool scripts in priority order:
 #### 3.7 Verification
 
 - [ ] All agent-toolkit MCP tools registered
-- [ ] A2A events emitted for all operations
+- [x] A2A events emitted for all operations (runtime tool envelopes flowing)
 - [ ] Session metadata persisted to Local Memory
 - [ ] Token budget enforced
 - [ ] Circuit breaker and retry working
 - [ ] CLI validates configuration
+  - 2025-10-01: Need snapshot tests covering new FastMCP prompts/resources and event telemetry.
 
 ---
 

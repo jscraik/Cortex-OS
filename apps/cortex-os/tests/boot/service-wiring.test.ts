@@ -43,12 +43,13 @@ describe('Service Container Wiring', () => {
 		const testRecord = {
 			id: 'test-memory-1',
 			content: 'Test memory content',
-			timestamp: new Date().toISOString(),
+			metadata: { createdAt: new Date().toISOString() },
 		};
 
 		// Save a record
 		const saved = await memories.save(testRecord);
 		expect(saved.id).toBe('test-memory-1');
+		expect(saved.metadata?.remoteId).toMatch(/^remote-/);
 
 		// Retrieve the record
 		const retrieved = await memories.get('test-memory-1');

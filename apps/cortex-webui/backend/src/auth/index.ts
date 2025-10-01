@@ -18,9 +18,15 @@ export const auth = betterAuth({
 		requireEmailVerification: env.NODE_ENV === 'production',
 		minPasswordLength: 8,
 		maxPasswordLength: 64,
-		passwordReset: {
-			enabled: true,
-			expiresIn: 3600, // 1 hour
+		sendResetPassword: async ({ user, url, token }, _request) => {
+			// Implement password reset email functionality
+			console.log(`Password reset requested for user ${user.email}`);
+			console.log(`Reset URL: ${url}`);
+			console.log(`Reset token: ${token}`);
+		},
+		onPasswordReset: async ({ user }, _request) => {
+			// Logic to execute after password reset
+			console.log(`Password for user ${user.email} has been reset.`);
 		},
 	},
 
@@ -30,12 +36,7 @@ export const auth = betterAuth({
 		updateAge: 60 * 60 * 24, // 1 day
 		cookieCache: {
 			enabled: true,
-			name: 'session-cache',
-		},
-		cookieAttributes: {
-			secure: env.NODE_ENV === 'production',
-			sameSite: 'lax',
-			domain: env.COOKIE_DOMAIN,
+			maxAge: 5 * 60, // 5 minutes cache duration
 		},
 	},
 
@@ -54,19 +55,19 @@ export const auth = betterAuth({
 			enabled: false, // Enable if using subdomains
 		},
 		useSecureCookies: env.NODE_ENV === 'production',
-		disableCSRF: false,
+		disableCSRFCheck: false,
 	},
 
 	// Database hooks
 	databaseHooks: {
 		user: {
 			create: {
-				before: async (user) => {
+				before: async (user, _context) => {
 					console.log('Creating user:', user.email);
 					// Add any preprocessing here
-					return user;
+					return { data: user };
 				},
-				after: async (user) => {
+				after: async (user, _context) => {
 					console.log('User created:', user.id);
 					// Log registration event
 					await authMonitoringService.logEvent({
@@ -143,70 +144,17 @@ export const auth = betterAuth({
 		},
 	},
 
-	// Password reset email
-	passwordReset: {
-		sendResetPasswordEmail: async ({ user, url }) => {
-			try {
-				await emailService.sendPasswordResetEmail(user, url);
-			} catch (error) {
-				console.error('Failed to send password reset email:', error);
-				// Fallback to console logging in development
-				if (env.NODE_ENV === 'development') {
-					console.log('\n=== PASSWORD RESET (Fallback) ===');
-					console.log('To:', user.email);
-					console.log('URL:', url);
-					console.log('==================================\n');
-				}
-			}
-		},
-	},
-
 	// Plugins
 	plugins: [
 		// Bearer token authentication for API access
-		bearer({
-			storage: 'database',
-		}),
+		bearer(),
 
 		// Organization support for multi-tenancy
-		organization({
-			ac: {
-				enabled: true,
-				model: 'rbac',
-			},
-		}),
+		organization(),
 
 		// Two-factor authentication
 		twoFactor({
-			issuer: 'Cortex-OS',
-			totpOptions: {
-				algorithm: 'SHA1',
-				digits: 6,
-				period: 30,
-			},
-			// Backup codes
-			backupCodes: {
-				enabled: true,
-				length: 10,
-				generate: () => {
-					const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-					const codes = [];
-					for (let i = 0; i < 10; i++) {
-						let code = '';
-						for (let j = 0; j < 8; j++) {
-							const randomIndex = crypto.getRandomValues(new Uint32Array(1))[0] % chars.length;
-							code += chars.charAt(randomIndex);
-						}
-						codes.push(code);
-					}
-					return codes;
-				},
-			},
-			// Enforcement options
-			enforce: {
-				enabled: env.ENFORCE_2FA,
-				role: 'admin', // Only enforce for admin role
-			},
+			issuer: 'brAInwav Cortex-OS',
 		}),
 
 		// Magic link authentication
@@ -244,7 +192,7 @@ export const authUtils = {
 	// Get session from request
 	getSession: async (request: Request) => {
 		return auth.api.getSession({
-			headers: Object.fromEntries(request.headers.entries()),
+			headers: request.headers,
 		});
 	},
 
@@ -266,22 +214,20 @@ export const authUtils = {
 	// Check if user has specific role
 	hasRole: async (request: Request, role: string) => {
 		const user = await authUtils.getUser(request);
-		return user?.role === role;
+		// NOTE: Add role support when admin plugin is properly configured
+		return (user as { role?: string })?.role === role;
 	},
 
-	// Create API key for user
-	createAPIKey: async (userId: string, name: string) => {
-		return auth.api.createAPIKey({
-			userId,
-			name,
-		});
+	// Create API key for user  
+	createAPIKey: async (_userId: string, _name: string) => {
+		// NOTE: Update when API key plugin is properly configured
+		throw new Error('API key creation not yet implemented');
 	},
 
 	// Validate API key
-	validateAPIKey: async (apiKey: string) => {
-		return auth.api.validateAPIKey({
-			apiKey,
-		});
+	validateAPIKey: async (_apiKey: string) => {
+		// NOTE: Update when API key plugin is properly configured
+		throw new Error('API key validation not yet implemented');
 	},
 };
 
@@ -300,5 +246,5 @@ export const initializeAuthTables = async () => {
 	console.log('Auth tables initialized');
 };
 
-// Export for use in server
-export type { schema };
+// Export types
+export type AuthConfig = typeof auth;

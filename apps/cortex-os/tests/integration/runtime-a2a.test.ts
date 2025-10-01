@@ -1,6 +1,6 @@
 import { createEnvelope } from '@cortex-os/a2a-contracts';
 import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock runtime
 const mockRuntime = {
@@ -12,6 +12,9 @@ const mockRuntime = {
 	stop: vi.fn(),
 };
 
+const randomUuid = () =>
+	globalThis.crypto?.randomUUID?.() ?? '00000000-0000-4000-8000-000000000000';
+
 // Mock startRuntime function
 vi.mock('../../src/runtime', () => ({
 	startRuntime: () => mockRuntime,
@@ -20,6 +23,14 @@ vi.mock('../../src/runtime', () => ({
 import { startRuntime } from '../../src/runtime.js';
 
 describe('Cortex-OS Runtime A2A Integration', () => {
+	beforeEach(() => {
+		mockRuntime.a2a.publish.mockReset();
+		mockRuntime.a2a.bind.mockReset();
+		mockRuntime.start.mockReset();
+		mockRuntime.stop.mockReset();
+		mockRuntime.a2a.publish.mockResolvedValue(undefined);
+	});
+
 	it('should start runtime with functional A2A messaging', async () => {
 		const runtime = await startRuntime();
 
@@ -36,7 +47,7 @@ describe('Cortex-OS Runtime A2A Integration', () => {
 		});
 
 		// Should not throw errors
-		await expect(runtime.a2a.publish(envelope)).resolves.not.toThrow();
+		await expect(runtime.a2a.publish(envelope)).resolves.toBeUndefined();
 
 		expect(runtime.a2a.publish).toHaveBeenCalledWith(envelope);
 
@@ -100,8 +111,8 @@ describe('Cortex-OS Runtime A2A Integration', () => {
 				'x-request-id': 'test-123',
 				authorization: 'Bearer test-token',
 			},
-			correlationId: 'corr-123',
-			causationId: 'cause-123',
+			correlationId: randomUuid(),
+			causationId: randomUuid(),
 		});
 
 		// Capture the envelope passed to publish

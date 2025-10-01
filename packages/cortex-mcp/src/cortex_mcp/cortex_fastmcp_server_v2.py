@@ -16,12 +16,7 @@ from fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from .adapters.memory_adapter import (
-    InMemoryMemoryAdapter,
-    LocalMemoryAdapter,
-    MemoryAdapterError,
-    ResilientMemoryAdapter,
-)
+from .adapters.memory_adapter import LocalMemoryAdapter, MemoryAdapterError
 from .adapters.search_adapter import CortexSearchAdapter, SearchAdapterError
 from .auth.jwt_auth import JWTAuthenticator, create_authenticator_from_env
 from .config import MCPSettings
@@ -117,41 +112,24 @@ def _resolve_adapters(
 
 def _build_memory_adapter(
     *, settings: MCPSettings, overrides: dict[str, Any]
-) -> LocalMemoryAdapter | ResilientMemoryAdapter | None:
+) -> LocalMemoryAdapter | None:
     override = overrides.get("memory")
     if override is not None:
         return override
 
-    allow_fallback = (
-        os.getenv("CORTEX_MCP_ALLOW_INPROCESS_MEMORY", "false").lower()
-        in {"1", "true", "yes"}
-    )
-    if not settings.local_memory_base_url and not allow_fallback:
+    if not settings.local_memory_base_url:
         raise RuntimeError(
             "LOCAL_MEMORY_BASE_URL is required for cortex-mcp. Configure the "
-            "@cortex-os/memory-core HTTP endpoint or set "
-            "CORTEX_MCP_ALLOW_INPROCESS_MEMORY=1 as a temporary legacy escape hatch."
+            "@cortex-os/memory-core HTTP endpoint."
         )
 
-    primary: LocalMemoryAdapter | None = None
-    if settings.local_memory_base_url:  # pragma: no cover - runtime HTTP wiring
-        primary = LocalMemoryAdapter(
-            base_url=str(settings.local_memory_base_url),
-            api_key=settings.local_memory_api_key,
-            namespace=settings.local_memory_namespace,
-            timeout_seconds=settings.http_timeout_seconds,
-            retries=settings.http_retries,
-        )
-        return ResilientMemoryAdapter(
-            primary=primary,
-            fallback=InMemoryMemoryAdapter(),
-        )
-
-    logger.warning(
-        "In-process memory fallback enabled via CORTEX_MCP_ALLOW_INPROCESS_MEMORY. "
-        "This path is deprecated and will be removed."
+    return LocalMemoryAdapter(
+        base_url=str(settings.local_memory_base_url),
+        api_key=settings.local_memory_api_key,
+        namespace=settings.local_memory_namespace,
+        timeout_seconds=settings.http_timeout_seconds,
+        retries=settings.http_retries,
     )
-    return ResilientMemoryAdapter(primary=None, fallback=InMemoryMemoryAdapter())
 
 
 def _resolve_auth_bundle(overrides: dict[str, Any] | None) -> AuthBundle:

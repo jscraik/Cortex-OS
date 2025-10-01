@@ -6,7 +6,8 @@ A modern, accessible web interface for AI models with real-time chat capabilitie
 
 - Real-time chat interface with streaming responses
 - Support for multiple AI models (OpenAI, Anthropic, local models)
-- User authentication and session management
+- Modern authentication system using Better Auth
+- User session management and OAuth providers
 - Conversation history and management
 - File upload and processing
 - Dark/light theme support
@@ -40,9 +41,9 @@ cortex-webui/
 
 - Node.js with TypeScript
 - Express web framework
-- SQLite for data storage
+- Better Auth for authentication and session management
+- SQLite for data storage with Drizzle ORM
 - WebSocket for real-time communication
-- JWT for authentication
 - Multer for file uploads
 
 ## Getting Started
@@ -117,9 +118,13 @@ The backend provides a RESTful API with the following main endpoints:
 
 ### Authentication
 
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
+- `POST /api/auth/sign-up/email` - Register a new user with email/password
+- `POST /api/auth/sign-in/email` - Login user with email/password
+- `POST /api/auth/sign-in/social` - OAuth login (GitHub, Google, etc.)
+- `POST /api/auth/sign-out` - Logout user
+- `GET /api/auth/session` - Get current session
+- `POST /api/auth/forget-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password with token
 
 ### Conversations
 
@@ -149,7 +154,7 @@ The backend provides a RESTful API with the following main endpoints:
 Real-time communication is available through WebSocket:
 
 - **Endpoint**: `ws://localhost:3001/ws`
-- **Authentication**: Pass JWT token as query parameter `?token=YOUR_JWT_TOKEN`
+- **Authentication**: Uses Better Auth session cookies for authentication
 
 ## Testing
 

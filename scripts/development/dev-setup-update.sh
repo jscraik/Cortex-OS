@@ -3,25 +3,37 @@
 
 set -euo pipefail
 
-echo "🔄 Updating DevContainer..."
+echo "[brAInwav] 🔄 Updating DevContainer..."
 
 cd /opt/cortex-home
 
-# Update dependencies
-echo "Updating dependencies..."
-pnpm update
+# Update dependencies (opt-in)
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ]; then
+	echo "[brAInwav] Updating dependencies (full mode)..."
+	pnpm update || true
+else
+	echo "[brAInwav] Skipping pnpm update (set CORTEX_DEV_FULL=1 to enable)"
+fi
 
-# Update mise tools
-echo "Updating mise tools..."
-mise install
+# Update mise tools (opt-in)
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ]; then
+	echo "[brAInwav] Updating mise tools (full mode)..."
+	mise install || true
+else
+	echo "[brAInwav] Skipping mise install (set CORTEX_DEV_FULL=1 to enable)"
+fi
 
-# Clean caches
-echo "Cleaning caches..."
-pnpm store prune
-pnpm nx reset
+# Clean caches (quick)
+echo "[brAInwav] Cleaning caches..."
+pnpm store prune || true
+pnpm nx reset || true
 
-# Rebuild if needed
-echo "Rebuilding packages..."
-pnpm build
+# Rebuild (opt-in)
+if [ "${CORTEX_DEV_FULL:-0}" = "1" ]; then
+	echo "[brAInwav] Rebuilding packages (full mode)..."
+	pnpm build || true
+else
+	echo "[brAInwav] Skipping rebuild (set CORTEX_DEV_FULL=1 to enable)"
+fi
 
-echo "✅ Update complete!"
+echo "[brAInwav] ✅ Update complete!"

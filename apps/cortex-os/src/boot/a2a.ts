@@ -1,5 +1,6 @@
-import { randomUUID } from 'node:crypto';
-import { EventEmitter } from 'node:events';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
+import { CORTEX_OS_EVENT_SOURCE, createCortexOsBus } from '../a2a.js';
 
 export interface Envelope {
 	id: string;
@@ -18,41 +19,69 @@ export interface Handler {
 
 export interface A2AWiring {
 	publish: (type: string, payload: Record<string, unknown>, source?: string) => Promise<void>;
-	on: (type: string, handler: Handler['handle']) => void;
+	on: (
+		type: string,
+		handler: Handler['handle'],
+	) => Promise<() => Promise<void>>;
 	emit: (envelope: Envelope) => void;
+	publishMcpEvent: (evt: { type: string; payload: Record<string, unknown> }) => Promise<void>;
+	publishToolEvent: (evt: { type: string; payload: Record<string, unknown> }) => Promise<void>;
 }
 
 export function wireA2A(): A2AWiring {
-	const emitter = new EventEmitter();
-
-	const emit = (envelope: Envelope) => {
-		emitter.emit(envelope.type, envelope);
-	};
+	const { bus } = createCortexOsBus();
 
 	const publish = async (
 		type: string,
 		payload: Record<string, unknown>,
-		source = 'urn:cortex-os:runtime',
+		source = CORTEX_OS_EVENT_SOURCE,
 	) => {
-		const envelope: Envelope = {
-			id: randomUUID(),
+		const envelope = createEnvelope({
 			type,
-			payload,
 			source,
-			occurredAt: new Date().toISOString(),
-			ttlMs: 60_000,
-			headers: {},
-		};
-		emit(envelope);
+			data: payload,
+		});
+		await bus.publish(envelope as A2AEventEnvelope);
 	};
 
-	const on = (type: string, handler: Handler['handle']) => {
-		emitter.on(type, (env: Envelope) => {
-			void handler(env);
+	const on = async (type: string, handler: Handler['handle']) => {
+		const unsubscribe = await bus.bind([
+			{
+				type,
+				handle: async (msg: A2AEventEnvelope) => {
+					const envelope: Envelope = {
+						id: msg.id,
+						type: msg.type,
+						payload: (msg.data as Record<string, unknown>) ?? {},
+						source: msg.source,
+						occurredAt: msg.time ?? new Date().toISOString(),
+						ttlMs: msg.ttlMs ?? 60_000,
+						headers: msg.headers ?? {},
+					};
+					await handler(envelope);
+				},
+			},
+		]);
+		return unsubscribe;
+	};
+
+	const emit = (envelope: Envelope) => {
+		void publish(envelope.type, envelope.payload, envelope.source);
+	};
+
+	const publishMcpEvent = async (evt: { type: string; payload: Record<string, unknown> }) => {
+		await publish('cortex.mcp.event', {
+			type: evt.type,
+			payload: evt.payload,
+			timestamp: Date.now(),
 		});
 	};
 
-	return { publish, on, emit };
+	const publishToolEvent = async (evt: { type: string; payload: Record<string, unknown> }) => {
+		await publish(evt.type, evt.payload);
+	};
+
+	return { publish, on, emit, publishMcpEvent, publishToolEvent };
 }
 
 export const healthHandler: Handler = {

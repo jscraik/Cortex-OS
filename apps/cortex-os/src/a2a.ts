@@ -39,11 +39,40 @@ export const CortexOsServiceEventSchema = z.object({
 	details: z.record(z.unknown()).optional(),
 });
 
+const toolExecutionStatusSchema = z.enum([
+	'success',
+	'error',
+	'rate_limited',
+	'forbidden',
+	'validation_failed',
+]);
+
+export const CortexOsToolExecutionStartedSchema = z.object({
+	tool: z.string(),
+	correlationId: z.string().uuid(),
+	startedAt: z.string().datetime(),
+	inputDigest: z.string().optional(),
+	session: z.string().optional(),
+});
+
+export const CortexOsToolExecutionCompletedSchema = z.object({
+	tool: z.string(),
+	correlationId: z.string().uuid(),
+	finishedAt: z.string().datetime(),
+	durationMs: z.number().nonnegative(),
+	status: toolExecutionStatusSchema,
+	resultSource: z.enum(['cache', 'direct']).optional(),
+	errorCode: z.string().optional(),
+	errorMessage: z.string().optional(),
+});
+
 const DEFAULT_CORTEX_OS_ACL: TopicACL = {
 	'cortex.health.check': { publish: true, subscribe: true },
 	'cortex.mcp.event': { publish: true, subscribe: true },
 	'cortex.config.change': { publish: true, subscribe: true },
 	'cortex.service.status': { publish: true, subscribe: true },
+	'cortex.mcp.tool.execution.started': { publish: true, subscribe: true },
+	'cortex.mcp.tool.execution.completed': { publish: true, subscribe: true },
 };
 
 function registerCortexOsSchema(
@@ -131,6 +160,39 @@ export function createCortexOsSchemaRegistry(): SchemaRegistry {
 				action: 'start',
 				status: 'running',
 				timestamp: Date.now(),
+			},
+		],
+	);
+
+	registerCortexOsSchema(
+		registry,
+		'cortex.mcp.tool.execution.started',
+		CortexOsToolExecutionStartedSchema,
+		'Records the start of an MCP tool execution',
+		['mcp', 'tool', 'runtime'],
+		[
+			{
+				tool: 'system.status',
+				correlationId: '00000000-0000-4000-8000-000000000000',
+				startedAt: new Date().toISOString(),
+				inputDigest: 'sha256:demo',
+			},
+		],
+	);
+
+	registerCortexOsSchema(
+		registry,
+		'cortex.mcp.tool.execution.completed',
+		CortexOsToolExecutionCompletedSchema,
+		'Records the completion of an MCP tool execution',
+		['mcp', 'tool', 'runtime'],
+		[
+			{
+				tool: 'system.status',
+				correlationId: '00000000-0000-4000-8000-000000000001',
+				finishedAt: new Date().toISOString(),
+				durationMs: 12,
+				status: 'success',
 			},
 		],
 	);

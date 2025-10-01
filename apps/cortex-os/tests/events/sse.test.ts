@@ -4,6 +4,16 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { getStatePath } from '../../src/platform/xdg.js';
 import { startRuntime } from '../../src/runtime.js';
+import { prepareLoopbackAuth } from '../setup.global.js';
+
+let authHeader: string;
+
+const withAuthHeaders = (headers: Record<string, string> = {}) => {
+	if (!authHeader) {
+		throw new Error('Loopback auth header not prepared for SSE tests');
+	}
+	return { Authorization: authHeader, ...headers };
+};
 
 interface RuntimeHandle {
 	httpUrl: string;
@@ -22,6 +32,8 @@ beforeAll(async () => {
 	tempDir = await mkdtemp(join(root, 'events-'));
 	process.env.XDG_CONFIG_HOME = join(tempDir, 'config');
 	process.env.XDG_STATE_HOME = join(tempDir, 'state');
+	const { header } = await prepareLoopbackAuth();
+	authHeader = header;
 	runtime = (await startRuntime()) as RuntimeHandle;
 });
 
@@ -35,7 +47,7 @@ afterAll(async () => {
 describe('runtime event stream', () => {
 	test('broadcasts emitted events over SSE', async () => {
 		const response = await fetch(`${runtime.httpUrl}/v1/events?stream=sse`, {
-			headers: { Accept: 'text/event-stream' },
+			headers: withAuthHeaders({ Accept: 'text/event-stream' }),
 		});
 		expect(response.status).toBe(200);
 		const reader = response.body?.getReader();

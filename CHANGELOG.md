@@ -9,6 +9,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### MCP Server FastMCP v3 Advanced Features Implementation (2025-10-01)
+
+- **UPGRADED**: `@cortex-os/mcp-server` to FastMCP v3.18.0 with ALL advanced features
+  - **Tool Annotations** (v3): Added semantic hints for all 5 tools
+    - `memory.store`: `idempotentHint: false`, `title: 'brAInwav Memory Storage'`
+    - `memory.search`: `readOnlyHint: true`, `idempotentHint: true`
+    - `memory.analysis`: `streamingHint: true`, `readOnlyHint: true`
+    - `memory.relationships`: `destructiveHint: true`, `idempotentHint: false`
+    - `memory.stats`: `readOnlyHint: true`, `idempotentHint: true`
+  - **Streaming Output** (v3): `memory.analysis` tool uses `streamContent()` for real-time progress
+  - **Progress Reporting** (v2/v3): Corrected all tools to use `{ progress, total }` object format
+  - **Typed Session Management** (v2): `MemorySessionData extends Record<string, unknown>`
+    - Session tracking: `requestCount`, `userId`, `lastAccess` timestamp
+  - **Authentication Middleware** (v2): API key validation via `authenticate` hook
+    - Supports `x-api-key` header with array/string handling
+  - **Resource Definitions** (v3): Added `memory://recent` resource with `load` function
+  - **Prompt Templates** (v3): Added `analyze_domain` prompt with `enum` auto-completion
+    - Auto-complete values: `['shallow', 'medium', 'deep']` for depth parameter
+  - **Event Listeners** (v2): `connect` and `disconnect` events with brAInwav logging
+  - **HTTP Streaming Transport** (v3): `httpStream` with health check at `/health`
+  - **Structured Returns** (v2/v3): All tools return `JSON.stringify()` strings (not objects)
+- **DEPENDENCIES**: Added all required FastMCP v3 peer dependencies
+  - `@standard-schema/spec ^1.0.0` - Schema specification support
+  - `execa ^9.6.0` - Process execution utilities
+  - `file-type ^21.0.0` - MIME type detection
+  - `fuse.js ^7.1.0` - Fuzzy search capabilities
+  - `mcp-proxy ^5.5.4` - Proxy server support
+  - `pino ^9.5.0` - Production logging (upgraded from 8.16.0)
+  - `strict-event-emitter-types ^2.0.0` - Type-safe event emitters
+  - `undici ^7.13.0` - HTTP client
+  - `uri-templates ^0.2.0` - URI template support
+  - `xsschema ^0.3.5` - Extended schema support
+  - `yargs ^18.0.0` - CLI argument parsing
+  - `zod-to-json-schema ^3.24.6` - Zod to JSON Schema conversion
+- **DOCUMENTATION**: Created comprehensive `FASTMCP_V3_FEATURES.md`
+  - Complete API reference for all v3 features
+  - Migration guide from v1 → v3
+  - Performance characteristics and security considerations
+  - Usage examples for tools, resources, and prompts
+  - Future enhancements: resource templates, prompt argument auto-completion
+
+#### MCP Server FastMCP v3 Migration (2025-10-01)
+
+- **MIGRATED**: `@cortex-os/mcp-server` to FastMCP v3.18.0 from manual @modelcontextprotocol/sdk
+  - Reduced codebase by ~30% (242 lines vs ~350 lines)
+  - Direct Zod schema usage in tool registration (no manual JSON Schema conversion)
+  - Built-in health check endpoint at `/health` for HTTP transport
+  - Built-in ready check endpoint at `/ready` with stateless mode support
+  - Context-aware logging with `log` parameter in tool execution
+- **RETAINED**: All 5 memory tools with identical functionality
+  - `memory.store` - Store memories with metadata
+  - `memory.search` - Semantic/keyword/hybrid search  
+  - `memory.analysis` - Extract insights and patterns
+  - `memory.relationships` - Manage memory connections
+  - `memory.stats` - Get usage statistics
+- **IMPROVED**: Code quality and maintainability
+  - Reduced parseArgs cognitive complexity from 19 to below threshold
+  - Cleaner transport management (STDIO and HTTP Stream)
+  - Better error handling patterns with try/catch in tool handlers
+  - brAInwav branding maintained in all system outputs
+
 #### cortex-code Vendor Sync (ddfb7eb5481646861c4ce5661a8f20df70962a3c)
 
 - **NEW**: Synced with upstream openai/codex repository bringing major architectural improvements
