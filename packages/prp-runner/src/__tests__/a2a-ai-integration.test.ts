@@ -12,7 +12,7 @@ vi.mock('@cortex-os/a2a', () => ({
 	TransportProtocol: { HTTP: 'HTTP' },
 }));
 
-import { TransportProtocol } from '@cortex-os/a2a-contracts/agents';
+import { TransportProtocol } from '@cortex-os/a2a-contracts';
 import { A2A_AI_SKILLS, A2AAIAgent, a2aAIAgent, createA2AAIAgent } from '../a2a-ai-agent.js';
 
 // Mock A2A types since package might not be available in test environment

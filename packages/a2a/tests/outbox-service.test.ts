@@ -1,4 +1,4 @@
-import { OutboxMessageStatus } from '@cortex-os/a2a-contracts/outbox-types';
+import { OutboxMessageStatus } from '@cortex-os/a2a-contracts';
 import { describe, expect, it } from 'vitest';
 import { InMemoryOutboxRepository } from '../src/in-memory-outbox-repository.js';
 import { createInMemoryOutboxService } from '../src/outbox-service.js';

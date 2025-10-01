@@ -1,4 +1,4 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import { connect, type NatsConnection, StringCodec } from 'nats';
 
 export interface NatsTransportOptions {
@@ -20,7 +20,7 @@ export async function createNatsTransport(options: NatsTransportOptions): Promis
 		async publish(envelope: Envelope): Promise<void> {
 			const subject = `${prefix}.${envelope.type}`;
 			const payload = codec.encode(JSON.stringify(envelope));
-			await nc.publish(subject, payload);
+			nc.publish(subject, payload);
 			await nc.flush();
 		},
 		async close(): Promise<void> {

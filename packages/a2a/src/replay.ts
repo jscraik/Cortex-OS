@@ -1,5 +1,5 @@
-import type { OutboxRepository } from '@cortex-os/a2a-contracts/outbox-types';
-import { OutboxMessageStatus } from '@cortex-os/a2a-contracts/outbox-types';
+import type { OutboxRepository } from '@cortex-os/a2a-contracts';
+import { OutboxMessageStatus } from '@cortex-os/a2a-contracts';
 export interface ReplayOptions {
 	batchSize?: number;
 	onBeforeReplay?: (id: string) => void | Promise<void>;

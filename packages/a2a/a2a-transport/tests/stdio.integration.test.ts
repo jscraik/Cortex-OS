@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts';
 import { describe, expect, it } from 'vitest';
 import { stdio } from '../src/stdio.js';
 
@@ -12,10 +12,10 @@ describe('stdio transport', () => {
 		writeFileSync(
 			scriptPath,
 			`process.stdin.on('data', d => {\n` +
-				`  const m = JSON.parse(d.toString());\n` +
-				`  process.stdout.write(JSON.stringify(m)+'\\n');\n` +
-				`});\n` +
-				`setInterval(() => {}, 1000);\n`,
+			`  const m = JSON.parse(d.toString());\n` +
+			`  process.stdout.write(JSON.stringify(m)+'\\n');\n` +
+			`});\n` +
+			`setInterval(() => {}, 1000);\n`,
 		);
 		const transport = stdio('node', [scriptPath]);
 		const pid = transport.pid;

@@ -1,4 +1,4 @@
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts';
 import { describe, expect, it } from 'vitest';
 import { CORTEX_OS_EVENT_SOURCE, createCortexOsBus } from '../../src/a2a.js';
 

@@ -3,7 +3,7 @@
  * Tests systematic improvements to error handling
  */
 
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 let stdio: typeof import('../stdio').stdio;
@@ -117,7 +117,7 @@ describe('Stdio Transport', () => {
 
 		it('should log warnings for invalid JSON', () => {
 			// Mock console.warn to verify logging
-			const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 			const mockChild = {
 				stdout: { on: vi.fn(), removeAllListeners: vi.fn() },
@@ -149,7 +149,7 @@ describe('Stdio Transport', () => {
 		});
 
 		it('should handle empty lines gracefully', () => {
-			const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 			const mockChild = {
 				stdout: { on: vi.fn(), removeAllListeners: vi.fn() },

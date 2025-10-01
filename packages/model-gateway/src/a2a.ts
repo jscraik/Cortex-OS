@@ -1,5 +1,5 @@
-import { SchemaCompatibility } from '@cortex-os/a2a-contracts/schema-registry-types';
-import type { TopicACL } from '@cortex-os/a2a-contracts/topic-acl';
+import type { TopicACL } from '@cortex-os/a2a-contracts';
+import { SchemaCompatibility } from '@cortex-os/a2a-contracts';
 import { type BusOptions, createBus } from '@cortex-os/a2a-core/bus';
 import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
 import type { Transport } from '@cortex-os/a2a-core/transport';

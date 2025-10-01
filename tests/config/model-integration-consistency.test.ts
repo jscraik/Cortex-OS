@@ -20,8 +20,8 @@ const mlxKeys = new Set<string>([
 const allowedExternal = new Set(['deepseek-coder', 'phi4-mini-reasoning']);
 
 function normalize(model: string): string {
-	if (model.startsWith('mixtral-8x7b')) return 'mixtral';
 	if (model.startsWith('qwen3-coder')) return 'qwen3-coder';
+	if (model.startsWith('mixtral-8x7b')) return 'mixtral-8x7b';
 	return model.split(':')[0];
 }
 

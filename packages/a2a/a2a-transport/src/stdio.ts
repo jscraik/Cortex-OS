@@ -1,6 +1,6 @@
-import { spawn } from 'node:child_process';
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import type { Transport } from '@cortex-os/a2a-core/transport';
+import { spawn } from 'node:child_process';
 
 // Simple logger to avoid circular dependency with @cortex-os/observability
 const createSimpleLogger = (component: string) => ({

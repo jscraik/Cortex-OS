@@ -1,5 +1,5 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '@cortex-os/a2a-contracts';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
 import { createA2AOutboxIntegration } from './outbox-integration.js';
 

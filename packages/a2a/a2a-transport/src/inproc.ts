@@ -1,4 +1,4 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import type { Transport } from '@cortex-os/a2a-core/transport';
 
 export function inproc(): Transport {

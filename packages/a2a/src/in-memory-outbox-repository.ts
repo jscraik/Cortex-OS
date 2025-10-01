@@ -2,7 +2,7 @@ import {
 	type OutboxMessage,
 	OutboxMessageStatus,
 	type OutboxRepository,
-} from '@cortex-os/a2a-contracts/outbox-types';
+} from '@cortex-os/a2a-contracts';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -51,25 +51,23 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 	}
 
 	async findByStatus(status: OutboxMessageStatus, limit?: number): Promise<OutboxMessage[]> {
-		const messages = Array.from(this.messages.values())
-			.filter((msg) => msg.status === status)
-			.slice(0, limit);
+		const all = Array.from(this.messages.values()).filter((msg) => msg.status === status);
+		const messages = typeof limit === 'number' ? all.slice(0, limit) : all.slice(0);
 
 		return Promise.resolve(messages);
 	}
 
 	async findReadyForRetry(limit?: number): Promise<OutboxMessage[]> {
 		const now = new Date();
-		const messages = Array.from(this.messages.values())
-			.filter(
-				(msg) =>
-					msg.status === OutboxMessageStatus.FAILED &&
-					msg.retryCount < (msg.maxRetries || 3) &&
-					(!msg.nextRetryAt || new Date(msg.nextRetryAt) <= now),
-			)
-			.slice(0, limit);
+		const allRetry = Array.from(this.messages.values()).filter(
+			(msg) =>
+				msg.status === OutboxMessageStatus.FAILED &&
+				msg.retryCount < (msg.maxRetries || 3) &&
+				(!msg.nextRetryAt || new Date(msg.nextRetryAt) <= now),
+		);
+		const messagesForRetry = typeof limit === 'number' ? allRetry.slice(0, limit) : allRetry.slice(0);
 
-		return Promise.resolve(messages);
+		return Promise.resolve(messagesForRetry);
 	}
 
 	async findByAggregate(aggregateType: string, aggregateId: string): Promise<OutboxMessage[]> {

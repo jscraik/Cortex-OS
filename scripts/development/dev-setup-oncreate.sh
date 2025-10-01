@@ -51,10 +51,29 @@ ensure_user_cache_permissions() {
     done
 }
 
+resolve_pnpm_command() {
+    local npm_root
+
+    npm_root=$(npm root -g 2>/dev/null || true)
+    if [ -n "$npm_root" ] && [ -f "$npm_root/pnpm/bin/pnpm.cjs" ]; then
+        echo "node" "$npm_root/pnpm/bin/pnpm.cjs"
+        return
+    fi
+
+    if command -v pnpm >/dev/null 2>&1; then
+        echo "pnpm"
+        return
+    fi
+
+    log_error "[brAInwav] pnpm binary not found"
+    exit 1
+}
+
 # Set up environment
 export NODE_ENV=development
 export CORTEX_HOME=/opt/cortex-home
 export AGENT_TOOLKIT_TOOLS_DIR=$CORTEX_HOME/tools/agent-toolkit
+export CI=${CI:-true}
 
 log_info "[brAInwav] Setting up workspace..."
 
@@ -62,14 +81,19 @@ log_info "[brAInwav] Ensuring cache ownership for dev user..."
 mkdir -p "$HOME/.npm"
 ensure_user_cache_permissions "$HOME/.npm" "$HOME/.local/share/pnpm" "$HOME/.pnpm-store"
 
+PNPM_CMD=($(resolve_pnpm_command))
+log_info "[brAInwav] Using pnpm command: ${PNPM_CMD[*]}"
+
 # Install dependencies (fast path by default)
 log_info "[brAInwav] Installing Node.js dependencies (fast path)..."
 cd $CORTEX_HOME
-pnpm install --frozen-lockfile --prefer-offline || {
-    log_warn "pnpm install failed, trying with corepack..."
-    corepack enable
-    pnpm install --frozen-lockfile --prefer-offline
-}
+if ! "${PNPM_CMD[@]}" install --frozen-lockfile --prefer-offline; then
+    log_warn "[brAInwav] pnpm install failed, retrying with --force"
+    if ! "${PNPM_CMD[@]}" install --frozen-lockfile --prefer-offline --force; then
+        log_error "[brAInwav] pnpm install failed after retry"
+        exit 1
+    fi
+fi
 
 # Trust mise configuration (non-fatal and quick)
 log_info "[brAInwav] Configuring mise..."

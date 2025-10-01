@@ -1,4 +1,4 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import { expectTypeOf, test } from 'vitest';
 import type { ReliableOutboxPublisher } from '../src/outbox.js';
 

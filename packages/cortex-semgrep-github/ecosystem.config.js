@@ -18,10 +18,8 @@ module.exports = {
 			env: {
 				NODE_ENV: 'development',
 				PORT: 3002,
-				GITHUB_TOKEN:
-					'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',
-				WEBHOOK_SECRET:
-					'fbff2764d54286c03dc1c084503fc10e98fbbd2c2b3882580e3655a407fa0dfa4df6a03be0433b71a90ab79fbc422e1499dac330ecb1bcadbbd8d3f764b3ef20',
+				GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
+				WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || '',
 				SEMGREP_APP_ID: process.env.SEMGREP_APP_ID || '',
 				SEMGREP_PRIVATE_KEY: process.env.SEMGREP_PRIVATE_KEY || '',
 			},

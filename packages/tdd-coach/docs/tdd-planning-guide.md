@@ -1,8 +1,9 @@
 # TDD Planning Guide - Real-Time Production Gates
 
-**brAInwav Development Standards**
+## brAInwav Development Standards
 
-This guide defines the comprehensive Test-Driven Development planning methodology for achieving 95/95 coverage with real-time execution and production readiness enforcement.
+This guide defines the comprehensive Test-Driven Development planning methodology for achieving
+95/95 coverage with real-time execution and production readiness enforcement.
 
 ## Table of Contents
 
@@ -55,31 +56,31 @@ Score each item 0, 0.5, or 1. Gate requires ≥95% (19/20 points minimum).
 
 ### Resilience & Reliability (Items 5-8)
 
-5. **Retries with jitter + circuit breaker** - Exponential backoff, failure isolation
-6. **Idempotency for external effects** - Safe retry mechanisms, idempotency keys
-7. **Well-structured logs** - Request IDs, user/session IDs, structured format
-8. **Metrics coverage** - Key counters, gauges, histograms; RED/USE methodology
+1. **Retries with jitter + circuit breaker** - Exponential backoff, failure isolation
+2. **Idempotency for external effects** - Safe retry mechanisms, idempotency keys
+3. **Well-structured logs** - Request IDs, user/session IDs, structured format
+4. **Metrics coverage** - Key counters, gauges, histograms; RED/USE methodology
 
 ### Observability & Operations (Items 9-12)
 
-9. **Distributed tracing** - Spans around I/O and business operations
-10. **Dashboards + alerts tied to SLOs** - Actionable alerts, SLO-based monitoring
-11. **Graceful shutdown** - SIGTERM handling, connection draining
-12. **Resource limits** - Memory/CPU monitoring, OOM protection, resource quotas
+1. **Distributed tracing** - Spans around I/O and business operations
+2. **Dashboards + alerts tied to SLOs** - Actionable alerts, SLO-based monitoring
+3. **Graceful shutdown** - SIGTERM handling, connection draining
+4. **Resource limits** - Memory/CPU monitoring, OOM protection, resource quotas
 
 ### Deployment & Security (Items 13-16)
 
-13. **Migrations tested** - Both forward and rollback scenarios validated
-14. **Rollback/canary strategy** - Documented and scriptable deployment strategies
-15. **SBOM & signatures** - Software Bill of Materials, artifact signing, supply chain security
-16. **Chaos/fault injection** - Timeout testing, 5xx responses, partial failure scenarios
+1. **Migrations tested** - Both forward and rollback scenarios validated
+2. **Rollback/canary strategy** - Documented and scriptable deployment strategies
+3. **SBOM & signatures** - Software Bill of Materials, artifact signing, supply chain security
+4. **Chaos/fault injection** - Timeout testing, 5xx responses, partial failure scenarios
 
 ### Environment & Process (Items 17-20)
 
-17. **Staging ≈ prod parity** - Ephemeral environments for PRs, production-like staging
-18. **Runbooks** - Oncall procedures, incident playbooks, paging policies
-19. **Data privacy** - PII handling, retention policies, GDPR compliance
-20. **Dependency audit** - Clean vulnerability scans, update policies defined
+1. **Staging ≈ prod parity** - Ephemeral environments for PRs, production-like staging
+2. **Runbooks** - Oncall procedures, incident playbooks, paging policies
+3. **Data privacy** - PII handling, retention policies, GDPR compliance
+4. **Dependency audit** - Clean vulnerability scans, update policies defined
 
 **Score Calculation**: `achieved_points / 20 ≥ 0.95`
 
@@ -461,24 +462,24 @@ Each package is considered complete when it achieves:
 
 ### Foundation Building (Week 2-3)
 
-5. **Missing test matrix**: Convert gaps into TDD tasks with specific acceptance criteria
-6. **Operational tests**: Add infrastructure, health check, and resilience testing
-7. **Security integration**: Vulnerability scanning, secrets detection, SBOM generation
-8. **Performance baseline**: Establish load testing and SLO measurement
+1. **Missing test matrix**: Convert gaps into TDD tasks with specific acceptance criteria
+2. **Operational tests**: Add infrastructure, health check, and resilience testing
+3. **Security integration**: Vulnerability scanning, secrets detection, SBOM generation
+4. **Performance baseline**: Establish load testing and SLO measurement
 
 ### Production Readiness (Week 4+)
 
-9. **Gate enforcement**: Ratcheting thresholds with automatic quality improvements
-10. **Fault injection**: Chaos testing and failure scenario validation
-11. **End-to-end validation**: Complete user journey testing in ephemeral environments
-12. **Monitoring integration**: Dashboards, alerts, and observability tied to SLOs
+1. **Gate enforcement**: Ratcheting thresholds with automatic quality improvements
+2. **Fault injection**: Chaos testing and failure scenario validation
+3. **End-to-end validation**: Complete user journey testing in ephemeral environments
+4. **Monitoring integration**: Dashboards, alerts, and observability tied to SLOs
 
 ### Continuous Improvement
 
-13. **Coverage ratcheting**: Automatic threshold increases based on green build streaks
-14. **Flake elimination**: Zero-tolerance policy with immediate fix requirements
-15. **Performance monitoring**: Continuous SLO validation with automated regression detection
-16. **Security updates**: Automated dependency updates with compatibility testing
+1. **Coverage ratcheting**: Automatic threshold increases based on green build streaks
+2. **Flake elimination**: Zero-tolerance policy with immediate fix requirements
+3. **Performance monitoring**: Continuous SLO validation with automated regression detection
+4. **Security updates**: Automated dependency updates with compatibility testing
 
 ## Implementation Scripts
 
@@ -757,6 +758,9 @@ These commands leverage the planning methodology defined in this guide to provid
 
 ## Conclusion
 
-This TDD planning methodology ensures that brAInwav development achieves not just high test coverage, but genuine production readiness with real-time performance characteristics. The combination of strict quality gates, operational readiness criteria, and comprehensive automation creates a development process that delivers reliable, secure, and performant software.
+This TDD planning methodology ensures that brAInwav development achieves not just high test coverage,
+but genuine production readiness with real-time performance characteristics. The combination of strict
+TDD, operational validation, and CI-enforced gates helps teams maintain high quality at scale.
 
-By following this guide, development teams can achieve the demanding 95/95 coverage targets while building systems that operate reliably in production environments with minimal operational overhead.
+By following this guide, development teams can achieve the demanding 95/95 coverage targets while
+building systems that operate reliably in production environments with minimal operational overhead.

@@ -2,7 +2,7 @@ import { Readable } from 'node:stream';
 import type { TaskResult } from './protocol.js';
 import type { TaskManager } from './task-manager.js';
 
-type TaskEventName = 'taskCompleted' | 'taskFailed' | 'taskCancelled' | 'taskRunning';
+export type TaskEventName = 'taskCompleted' | 'taskFailed' | 'taskCancelled' | 'taskRunning';
 
 export interface TaskEventStreamOptions {
 	events?: TaskEventName[];

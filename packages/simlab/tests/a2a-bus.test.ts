@@ -1,4 +1,4 @@
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { describe, expect, it } from 'vitest';
 import { createSimlabBus } from '../src/a2a.js';
 import { createSimLabEvent, SIMLAB_EVENT_SOURCE } from '../src/events/simlab-events.js';

@@ -1,4 +1,4 @@
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { z } from 'zod';
 
 /**

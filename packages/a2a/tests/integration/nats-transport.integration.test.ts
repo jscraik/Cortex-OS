@@ -1,6 +1,6 @@
 /// <reference path="../types/external.d.ts" />
 
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, test } from 'vitest';
 import { createNatsTransport } from '../../src/transport/nats-transport.js';

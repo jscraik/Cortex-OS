@@ -1,4 +1,4 @@
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
 import { describe, expect, it } from 'vitest';
 import { createTddCoachBus } from '../src/a2a.js';
 import { createTddCoachEvent, TDD_COACH_EVENT_SOURCE } from '../src/events/tdd-coach-events.js';

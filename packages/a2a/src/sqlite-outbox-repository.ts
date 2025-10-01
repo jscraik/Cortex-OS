@@ -1,7 +1,7 @@
 import {
-	type OutboxMessage,
-	OutboxMessageStatus,
-	type OutboxRepository,
+    type OutboxMessage,
+    OutboxMessageStatus,
+    type OutboxRepository,
 } from '@cortex-os/a2a-contracts/outbox-types';
 import { v4 as uuidv4 } from 'uuid';
 

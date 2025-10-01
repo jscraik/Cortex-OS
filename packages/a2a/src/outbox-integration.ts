@@ -1,17 +1,18 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
+	type Envelope,
 	type OutboxConfig,
 	type OutboxMessage,
 	OutboxMessageStatus,
 	type OutboxProcessingResult,
 	type OutboxRepository,
-} from '@cortex-os/a2a-contracts/outbox-types';
-import { DeadLetterQueue, InMemoryDeadLetterStore } from '@cortex-os/a2a-core/dlq';
+} from '@cortex-os/a2a-contracts';
 import {
 	createReliableOutboxProcessor,
+	DeadLetterQueue,
 	EnhancedOutbox,
+	InMemoryDeadLetterStore,
 	ReliableOutboxPublisher,
-} from '@cortex-os/a2a-core/outbox';
+} from '@cortex-os/a2a-core';
 import { withSpan } from '@cortex-os/telemetry';
 
 /**

@@ -4,13 +4,13 @@
 import { expect, test } from 'vitest';
 
 test('a2a-contracts outbox-types export works', async () => {
-	const { OutboxMessageStatus } = await import('@cortex-os/a2a-contracts/outbox-types');
+	const { OutboxMessageStatus } = await import('@cortex-os/a2a-contracts');
 	expect(OutboxMessageStatus.PENDING).toBe('PENDING');
 	expect(OutboxMessageStatus.PUBLISHED).toBe('PUBLISHED');
 });
 
 test('a2a-contracts envelope export works', async () => {
-	const { createEnvelope } = await import('@cortex-os/a2a-contracts/envelope');
+	const { createEnvelope } = await import('@cortex-os/a2a-contracts');
 	const envelope = createEnvelope({
 		type: 'test.event',
 		source: 'urn:test',

@@ -56,7 +56,7 @@ export default defineConfig({
 	test: {
 		environment: 'node',
 		include: ['./tests/**/*.test.ts'],
-		setupFiles: ['tests/setup.global.ts'],
+		setupFiles: [resolve(appsSourceRoot, 'tests/setup.global.ts')],
 		coverage: {
 			provider: 'v8',
 			reporter: ['text-summary', 'json-summary'],

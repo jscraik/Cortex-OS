@@ -1,9 +1,10 @@
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
-import { SchemaCompatibility } from '@cortex-os/a2a-contracts/schema-registry-types';
 import {
+	createEnvelope,
+	type Envelope,
 	PredefinedSchemas,
+	SchemaCompatibility,
 	SchemaValidationUtils,
-} from '@cortex-os/a2a-contracts/schema-validation-utils';
+} from '@cortex-os/a2a-contracts';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
 import { inproc } from '@cortex-os/a2a-transport/inproc';

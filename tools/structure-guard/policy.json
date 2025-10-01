@@ -35,7 +35,12 @@
     "**/.eng/**",
     "**/.cursor/**",
     "**/.vitest-tmp-*/**",
-    "**/dist-test/**"
+    "**/dist-test/**",
+    "**/.uv-cache/**",
+    "**/.memory/logs/**",
+    "**/persistence-test-*.db*",
+    "**/*.db-shm",
+    "**/*.db-wal"
   ],
   "allowedPaths": {
     "apps": [
@@ -176,6 +181,9 @@
     "comparisons",
     "contracts",
     "logs",
+    "tasks",
+    "website",
+    ".devcontainer",
     ".github",
     ".changeset",
     ".husky",
@@ -298,7 +306,15 @@
     "EXEMPTION_NOTICE.md",
     "pnpm-lock.yaml.bak",
     "pnpm-lock.conflicted",
-    ".coverage"
+    ".coverage",
+    ".syncignore",
+    "ports.env",
+    "issues.json",
+    "performance-history.json",
+    "UPSTREAM_REF",
+    "review.md",
+    "mcpServer.mcp.config.usrlocal.Pieces",
+    "data"
   ],
   "filePatterns": {
     "typescript": {
@@ -528,7 +544,12 @@
     "flake.nix",
     "pnpm-lock.yaml.bak",
     ".markdownlintignore",
-    ".prettierrc"
+    ".prettierrc",
+    "tasks/**/*",
+    "website/**/*",
+    ".devcontainer/**/*",
+    "..bfg-report/**/*",
+    ".pnpm-store/**/*"
   ],
   "deniedGlobs": [
     "**/*.secret",
@@ -589,7 +610,11 @@
       "@cortex-os/evidence-runner**",
       "@cortex-os/lib**",
       "@cortex-os/database-types**",
-      "@cortex-os/mcp**"
+      "@cortex-os/mcp**",
+      "@cortex-os/prp-types**",
+      "@cortex-os/memory-core**",
+      "@cortex-os/tool-spec**",
+      "@cortex-os/agent-contracts**"
     ]
   },
   "enforcement": {

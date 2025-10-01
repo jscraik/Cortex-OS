@@ -1,4 +1,4 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import {
 	DeadLetterQueue,
 	type DeadLetterStore,
@@ -16,8 +16,8 @@ describe('Telemetry integration', () => {
 			enqueue: vi.fn().mockResolvedValue(undefined),
 			updateCircuitBreaker: vi.fn().mockResolvedValue(undefined),
 			dequeueBatch: async () => [],
-			requeue: async () => {},
-			remove: async () => {},
+			requeue: async () => { },
+			remove: async () => { },
 			findByCorrelationId: async () => [],
 			findByQuarantineLevel: async () => [],
 			findByErrorCategory: async () => [],

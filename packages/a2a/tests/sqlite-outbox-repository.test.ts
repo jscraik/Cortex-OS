@@ -1,4 +1,4 @@
-import { OutboxMessageStatus } from '@cortex-os/a2a-contracts/outbox-types';
+import { OutboxMessageStatus } from '@cortex-os/a2a-contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SqliteOutboxRepository } from '../src/sqlite-outbox-repository.js';
 

@@ -1,5 +1,5 @@
-import type { TopicACL } from '@cortex-os/a2a-contracts/topic-acl';
-import { createTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import type { TopicACL } from '@cortex-os/a2a-contracts';
+import { createTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts';
 import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 import type { Authenticator } from './auth/authenticator.js';
 import type { LoadManager } from './backpressure/load-manager.js';

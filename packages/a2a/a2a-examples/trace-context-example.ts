@@ -1,6 +1,5 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
-import { addBaggage, createTraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import type { Envelope } from '@cortex-os/a2a-contracts';
+import { addBaggage, createEnvelope, createTraceContext } from '@cortex-os/a2a-contracts';
 import { createBus } from '@cortex-os/a2a-core/bus';
 
 // Helper function to create child messages with trace context propagation
@@ -45,7 +44,7 @@ export async function runTraceContextExample() {
 	const handlers = [
 		{
 			type: ORDER_CREATED_TYPE,
-			handle: async (msg: import('@cortex-os/a2a-contracts/envelope').Envelope) => {
+			handle: async (msg: Envelope) => {
 				console.warn('📦 Order Created Handler:');
 				console.warn(`   Message ID: ${msg.id}`);
 				console.warn(`   Trace Context: ${msg.traceparent || 'none'}`);
@@ -71,7 +70,7 @@ export async function runTraceContextExample() {
 		},
 		{
 			type: PAYMENT_PROCESSED_TYPE,
-			handle: async (msg: import('@cortex-os/a2a-contracts/envelope').Envelope) => {
+			handle: async (msg: Envelope) => {
 				console.warn('💰 Payment Processed Handler:');
 				console.warn(`   Message ID: ${msg.id}`);
 				console.warn(`   Trace Context: ${msg.traceparent || 'none'}`);
@@ -100,7 +99,7 @@ export async function runTraceContextExample() {
 		},
 		{
 			type: SHIPPING_SCHEDULED_TYPE,
-			handle: async (msg: import('@cortex-os/a2a-contracts/envelope').Envelope) => {
+			handle: async (msg: Envelope) => {
 				console.warn('📬 Shipping Scheduled Handler:');
 				console.warn(`   Message ID: ${msg.id}`);
 				console.warn(`   Trace Context: ${msg.traceparent || 'none'}`);

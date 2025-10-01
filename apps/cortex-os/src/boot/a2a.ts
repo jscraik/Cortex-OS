@@ -1,4 +1,4 @@
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope } from '@cortex-os/a2a-contracts';
 import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 import { CORTEX_OS_EVENT_SOURCE, createCortexOsBus } from '../a2a.js';
 
@@ -38,7 +38,7 @@ export function wireA2A(): A2AWiring {
 			source,
 			data: payload,
 		});
-		await bus.publish(envelope as A2AEventEnvelope);
+		await bus.publish(envelope);
 	};
 
 	const on = async (type: string, handler: Handler['handle']) => {
@@ -83,5 +83,5 @@ export function wireA2A(): A2AWiring {
 
 export const healthHandler: Handler = {
 	type: 'cortex.health.check',
-	handle: async () => {},
+	handle: async () => { },
 };

@@ -70,15 +70,32 @@ function sanitizeValue(value: unknown): unknown {
  * Sanitizes an A2A event envelope by removing malicious content while preserving
  * safe fields and the overall structure. Ensures brAInwav branding is maintained.
  */
-export function sanitizeEventEnvelope(envelope: A2AEventEnvelope): A2AEventEnvelope {
-	return {
-		id: envelope.id,
-		type: envelope.type,
-		source: envelope.source,
-		timestamp: envelope.timestamp,
-		data: sanitizeValue(envelope.data),
-		metadata: envelope.metadata
-			? (sanitizeValue(envelope.metadata) as A2AEventEnvelope['metadata'])
-			: undefined,
-	};
+export function sanitizeEventEnvelope(envelope: unknown): unknown {
+	if (!envelope || typeof envelope !== 'object') return envelope;
+
+	type EnvelopeLike = Record<string, unknown>;
+	const e = envelope as EnvelopeLike;
+
+	// A2A envelope shape (new schema)
+	if ('event' in e) {
+		const clone = JSON.parse(JSON.stringify(e)) as EnvelopeLike;
+		clone['event'] = sanitizeValue(e['event']);
+		if (clone['metadata']) {
+			clone['metadata'] = sanitizeValue(e['metadata']);
+		}
+		return clone as A2AEventEnvelope;
+	}
+
+	// Legacy CloudEvent-like shape
+	if ('data' in e) {
+		const clone = JSON.parse(JSON.stringify(e)) as EnvelopeLike;
+		clone['data'] = sanitizeValue(e['data']);
+		if (clone['metadata']) {
+			clone['metadata'] = sanitizeValue(e['metadata']);
+		}
+		return clone;
+	}
+
+	// Unknown shape: attempt a best-effort deep sanitize
+	return sanitizeValue(e);
 }
