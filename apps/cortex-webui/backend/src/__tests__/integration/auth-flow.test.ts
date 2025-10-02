@@ -4,10 +4,10 @@ import type { drizzle } from 'drizzle-orm/better-sqlite3';
 import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as schema from '../../db/schema.js';
-import { betterAuthInstance } from '../../test/auth-config.js';
-import { createTestDatabase } from '../../test/database.js';
-import { createTestUser } from '../../test/utils.js';
+import * as schema from '../../db/schema.ts';
+import { betterAuthInstance } from '../../test/auth-config.ts';
+import { createTestDatabase } from '../../test/database.ts';
+import { createTestUser } from '../../test/utils.ts';
 
 const app = express();
 app.use(express.json());

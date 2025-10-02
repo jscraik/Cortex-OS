@@ -2,9 +2,9 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { betterAuthInstance } from '../../test/auth-config.js';
-import { createTestUser, testDb } from '../../test/database.js';
-import { authTestScenarios } from '../../test/utils.js';
+import { betterAuthInstance } from '../../test/auth-config.ts';
+import { createTestUser, testDb } from '../../test/database.ts';
+import { authTestScenarios } from '../../test/utils.ts';
 
 const app = express();
 app.use(express.json());

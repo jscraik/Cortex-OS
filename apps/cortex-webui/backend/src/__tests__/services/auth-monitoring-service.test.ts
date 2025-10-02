@@ -4,19 +4,19 @@ const emitAuthEventMock = vi.fn();
 const dbInsertMock = vi.fn();
 const warnMock = vi.fn();
 
-vi.mock('../../services/externalMonitoringService.js', () => ({
+vi.mock('../../services/externalMonitoringService.ts', () => ({
 	externalMonitoringService: {
 		emitAuthEvent: emitAuthEventMock,
 	},
 }));
 
-vi.mock('../../db/index.js', () => ({
+vi.mock('../../db/index.ts', () => ({
 	db: {
 		insert: dbInsertMock,
 	},
 }));
 
-vi.mock('../../utils/logger.js', () => ({
+vi.mock('../../utils/logger.ts', () => ({
 	__esModule: true,
 	default: {
 		info: vi.fn(),
@@ -45,7 +45,7 @@ describe('authMonitoringService integration', () => {
 
 	it('delegates auth events to external monitoring service', async () => {
 		emitAuthEventMock.mockResolvedValueOnce(undefined);
-		const { authMonitoringService } = await import('../../services/authMonitoringService.js');
+		const { authMonitoringService } = await import('../../services/authMonitoringService.ts');
 
 		await authMonitoringService.logSuccessfulLogin('user-777', '198.51.100.10', 'TestAgent/2.0');
 
@@ -64,7 +64,7 @@ describe('authMonitoringService integration', () => {
 	it('swallows external monitoring errors and logs warning', async () => {
 		const error = new Error('network down');
 		emitAuthEventMock.mockRejectedValueOnce(error);
-		const { authMonitoringService } = await import('../../services/authMonitoringService.js');
+		const { authMonitoringService } = await import('../../services/authMonitoringService.ts');
 
 		await expect(
 			authMonitoringService.logFailedLogin('user@example.com', '203.0.113.5', 'Mozilla/5.0'),

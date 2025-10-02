@@ -53,7 +53,7 @@ if (!existsSync(contractsRoot)) {
 
 function findEventFiles(): string[] {
 	const files = walk(contractsRoot);
-	return files.filter((f) => f.endsWith('events.ts'));
+	return files.filter((f) => f.endsWith('events'));
 }
 
 function extractSchemas(file: string): SchemaRef[] {
@@ -85,7 +85,7 @@ describe('contracts: schema coverage', () => {
 
 	// Map schema -> test files referencing it
 	const testDir = path.join(root, 'contracts', 'tests');
-	const testFiles = walk(testDir).filter((f) => f.endsWith('.test.ts'));
+	const testFiles = walk(testDir).filter((f) => f.endsWith('.test'));
 
 	const testContentCache: Record<string, string> = {};
 	const hasReference = (schema: SchemaRef): boolean => {

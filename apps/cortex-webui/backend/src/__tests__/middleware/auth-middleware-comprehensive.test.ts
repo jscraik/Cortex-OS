@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../../server.js';
+import { createApp } from '../../server.ts';
 import {
 	betterAuth,
 	optionalBetterAuth,
@@ -11,7 +11,7 @@ import {
 	authRateLimit,
 	authCORS,
 	betterAuthErrorHandler
-} from '../../middleware/better-auth.js';
+} from '../../middleware/better-auth';
 
 describe('Authentication Middleware Comprehensive Tests', () => {
 	let app: any;

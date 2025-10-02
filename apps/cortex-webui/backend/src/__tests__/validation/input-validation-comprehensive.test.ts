@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../../server.js';
+import { createApp } from '../../server.ts';
 import { z } from 'zod';
 import {
 	validateRequestBody,
 	validateRequestQuery,
 	validateRequestParams
-} from '../../middleware/validation.js';
+} from '../../middleware/validation.ts';
 import express from 'express';
 
 describe('Input Validation Comprehensive Tests', () => {
