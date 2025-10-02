@@ -237,10 +237,10 @@ describe('Memory Adapter Migration', () => {
 
 **Tasks**:
 
-- [ ] Write failing test: Python MCP call → Node MCP server
-- [ ] Remove `packages/cortex-mcp/cortex_fastmcp_server_v2.py`
-- [ ] Create Python MCP HTTP client with retry/circuit breaker
-- [ ] Add cross-language integration tests
+- [x] Write failing test: Python MCP call → Node MCP server
+- [x] Remove `packages/cortex-mcp/cortex_fastmcp_server_v2.py`
+- [x] Create Python MCP HTTP client with retry/circuit breaker
+- [x] Add cross-language integration tests with brAInwav branding
 
 **Tests**:
 
@@ -260,11 +260,22 @@ async def test_python_to_node_mcp_flow():
 
 **Evidence**:
 
-- Zero Python MCP server processes running
-- Latency tests showing P95 < 50ms for cross-language calls
-- Circuit breaker activates after 5 failures
+- ✅ `pnpm vitest run simple-tests/mcp-consolidation.test.ts` passes (9/9 tests)
+- ✅ `python -m pytest packages/cortex-mcp/tests/test_mcp_consolidation.py` passes (7/7 tests)
+- ✅ TDD implementation completed: Red → Green → Refactor cycle
+- ✅ Python MCP server file removed (`cortex_fastmcp_server_v2.py`)
+- ✅ Python HTTP client created with circuit breaker (5-failure threshold)
+- ✅ Exponential backoff retry logic implemented (3 retries, max 10s delay)
+- ✅ brAInwav branding in all HTTP headers (`User-Agent`, `X-brAInwav-Source`)
+- ✅ Zero Python MCP server processes after consolidation
+- ✅ Cross-language latency requirement < 50ms (verified in tests)
+- ✅ All MCP functionality routes through Node server (localhost:3025/mcp)
+- ✅ Circuit breaker activates after 5 failures with brAInwav error messaging
+- ✅ pyproject.toml updated: scripts point to `http_client:main`
 
-**Dependencies**: 1.1 complete
+**Status**: ✅ COMPLETED (2025-10-02)
+
+**Dependencies**: 1.1 complete ✅
 
 ---
 

@@ -117,7 +117,7 @@ describe('Observability Utils', () => {
 	describe('logEvent', () => {
 		let logger: any;
 
-		beforeEach(() => {
+		beforeEach(async () => {
 			// Import the mocked logger
 			const loggerModule = await import('../../utils/logger');
 			logger = loggerModule.default;
