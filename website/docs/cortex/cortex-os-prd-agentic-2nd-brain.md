@@ -5,13 +5,13 @@ sidebar_label: Cortex Os Prd Agentic 2nd Brain
 
 # docs/prd/cortex-os-agentic-second-brain.prd.md
 
-# Cortex-OS PRD - Agentic Second Brain
+# Cortex-OS PRD — Agentic Second Brain
 
 Version: 1.1 • Date: 2025-08-30 • Owner: Jamie • Status: Implementation
 
 ## 0. Objective
 
-Build a governed, local-first "agentic second brain" that plans, simulates, executes, proves, and teaches. One ASBR-lite runtime (the brain) coordinates agents, tools, and memories with **MLX-first** execution and policy-routed parity to **Ollama** and **frontier APIs**.
+Build a governed, local-first “agentic second brain” that plans, simulates, executes, proves, and teaches. One ASBR-lite runtime (the brain) coordinates agents, tools, and memories with **MLX-first** execution and policy-routed parity to **Ollama** and **frontier APIs**.
 
 ## 1. Vision and Mission
 
@@ -74,11 +74,11 @@ Host macOS:
   apps/cortex-py (MLX servers) → http://localhost:8081  [Metal]
   Optional Ollama host at :11434
 
-4. Scope - Surfaces and Packages (complete)
+4. Scope — Surfaces and Packages (complete)
 
 4.1 Applications (apps/*)
 
-apps/cortex-os - ASBR-lite brain
+apps/cortex-os — ASBR-lite brain
  • Vision: One governed runtime.
  • Mission: Wire services, enforce contracts, route, prove.
  • Must: DI, contract registry, policy router, OTEL, provenance, structure-guard.
@@ -86,42 +86,42 @@ apps/cortex-os - ASBR-lite brain
  • Nice: Admin health/routing UI.
  • Use cases: start workflow; route capability; emit lifecycle events.
 
-apps/cortex-cli - Command line
+apps/cortex-cli — Command line
  • Vision: Fast local control.
  • Mission: Invoke workflows, subagents, diagnostics.
  • Must: cortex agents|use|do, --plain A11y.
  • Should: TUI for events/replay.
  • Nice: Scriptable macros.
 
-apps/cortex-web - Web UI
+apps/cortex-web — Web UI
  • Vision: Visual cockpit.
  • Mission: Runs, traces, policies, evidence.
  • Must: Runs list; trace viewer; evidence; A11y.
  • Should: Policy editor; subagent manager.
  • Nice: Sim dashboard.
 
-apps/cortex-marketplace - MCP marketplace UI
+apps/cortex-marketplace — MCP marketplace UI
  • Vision: Safe tool discovery.
  • Mission: Browse, vet, install MCP servers/templates.
  • Must: Catalog; signature status; scopes.
  • Should: Ratings; provenance.
  • Nice: Sandbox test.
 
-apps/cortex-marketplace-api - Marketplace backend
+apps/cortex-marketplace-api — Marketplace backend
  • Vision: Curated registry API.
  • Mission: Serve signed manifests and schema-checked listings.
  • Must: List/detail; signature metadata.
  • Should: Abuse controls; quotas.
  • Nice: CVE alerts.
 
-apps/api - Public REST/Webhooks
+apps/api — Public REST/Webhooks
  • Vision: Stable external API.
  • Mission: Ingress for jobs and webhooks.
  • Must: Auth; rate-limit; Problem+JSON.
  • Should: Async job status.
  • Nice: Signed webhook retries.
 
-apps/cortex-py - MLX servers (host-native)
+apps/cortex-py — MLX servers (host-native)
  • Vision: High-efficiency MLX.
  • Mission: embed/chat/rerank with guards and cache.
  • Must: Thermal/memory guards; KV cache; batch; healthz.
@@ -130,7 +130,7 @@ apps/cortex-py - MLX servers (host-native)
 
 4.2 Packages (packages/*)
 
-packages/asbr - Cerebrum
+packages/asbr — Cerebrum
  • Vision: Meta-agent layer.
  • Mission: plan(), critique(), simulate(), replay().
  • Must: simulation gates; plan approval.
@@ -138,56 +138,56 @@ packages/asbr - Cerebrum
  • Nice: curriculum builder.
  • Use cases: planning with proof criteria; replay on correction.
 
-packages/agents - Single-focus agents
+packages/agents — Single-focus agents
  • Vision: Focused executors.
  • Mission: Business flows with proofs.
  • Must: code-analysis; test-gen; docs.
  • Should: golden outputs; streaming.
  • Nice: interactive corrections.
 
-packages/orchestration - Functional workflows
+packages/orchestration — Functional workflows
  • Vision: Deterministic pipelines.
  • Mission: seq/parallel/conditional/loop; hooks.
  • Must: pure runners; timeouts; retries.
  • Should: compensation; cancel.
  • Nice: typed DSL.
 
-packages/a2a - Event bus
+packages/a2a — Event bus
  • Vision: Reliable pub/sub.
  • Mission: CloudEvents; outbox; DLQ; idempotency; correlation IDs.
  • Must: schema validation; at-least-once.
  • Should: topic ACLs; redaction.
  • Nice: replay helpers.
 
-packages/a2a-services - Bus middleware
+packages/a2a-services — Bus middleware
  • Vision: Shared controls.
  • Mission: rate limits; quotas; schema registry client.
  • Must: validators; limiter.
  • Should: quotas per agent.
  • Nice: burst smoothing.
 
-packages/memories - Memory stores
+packages/memories — Memory stores
  • Vision: Durable evolving memory.
  • Mission: short/long stores with provenance.
  • Must: KV/doc; TTL; encryption; namespaces.
  • Should: consolidation jobs; vectors.
  • Nice: decay heuristics.
 
-packages/rag - Retrieval
+packages/rag — Retrieval
  • Vision: Evidence-first retrieval.
  • Mission: ingest; retrieve; rerank; cite.
  • Must: chunkers; retriever iface; rerank via gateway.
  • Should: bundles with citations.
  • Nice: freshness routing.
 
-packages/model-gateway - Vendor-neutral ML API
+packages/model-gateway — Vendor-neutral ML API
  • Vision: One endpoint for many models.
  • Mission: /chat|/embeddings|/rerank across MLX/Ollama/Frontier.
  • Must: parity contracts; circuit breakers; sticky sessions.
  • Should: VRAM/token budgets; health/quality scores.
  • Nice: multi-GPU sharding.
 
-packages/mcp - MCP Suite (big)
+packages/mcp — MCP Suite (big)
  • Vision: First-class tool protocol for Cortex-OS.
  • Mission: Clients, types, auth, tracing, policy, error model.
  • Must: stdio|http|sse clients; capability discovery; allowlist; retries/backoff; OTEL spans; Problem+JSON mapping; JSON Schema validation.
@@ -195,84 +195,84 @@ packages/mcp - MCP Suite (big)
  • Nice: per-tool cost/latency meters.
  • Use cases: call external tool; attach evidence; enforce scopes.
 
-packages/mcp-bridge - Transport bridge
+packages/mcp-bridge — Transport bridge
  • Vision: Cross-transport glue.
  • Mission: stdio↔HTTP/SSE bridging with flow control.
  • Must: streaming; backpressure.
  • Should: TLS mTLS option.
  • Nice: edge cache.
 
-packages/mcp-registry - Server registry
+packages/mcp-registry — Server registry
  • Vision: Source of truth for tools.
  • Mission: registry.yaml + HTTP index with capability search.
  • Must: signature info; schema refs.
  • Should: health cache.
  • Nice: policy hints.
 
-packages/mcp-server - Server scaffolds
+packages/mcp-server — Server scaffolds
  • Vision: Fast MCP server authoring.
  • Mission: TS/Py templates with tests.
  • Must: health; schema guards; examples.
  • Should: codegen from schemas.
  • Nice: adapters.
 
-packages/kernel - Core kernel (MVP)
+packages/kernel — Core kernel (MVP)
  • Vision: Minimal primitives.
  • Mission: types; DI tokens; errors; config; clocks.
  • Must: ULID; Problem+JSON; config loader.
  • Should: feature flags.
  • Nice: virtual time.
 
-packages/mvp - MVP utilities
+packages/mvp — MVP utilities
  • Vision: Opinionated foundations.
  • Mission: guards; serializers; helpers.
  • Must: input guards; sanitizer.
  • Should: perf counters.
  • Nice: adapters.
 
-packages/mvp-core - Shared core logic
+packages/mvp-core — Shared core logic
  • Vision: Cross-feature basics.
  • Mission: DTOs; constants.
  • Must: stable DTOs; SemVer.
  • Should: deprecations file.
  • Nice: codemods.
 
-packages/mvp-server - Minimal server shell
+packages/mvp-server — Minimal server shell
  • Vision: Drop-in HTTP shell.
  • Mission: consistent bootstrap; health/ready.
  • Must: graceful shutdown; metrics.
  • Should: CORS policy.
  • Nice: config UI.
 
-packages/prp-runner - Plan·Reason·Program pipelines
+packages/prp-runner — Plan·Reason·Program pipelines
  • Vision: PRP executor.
  • Mission: run PRP graphs with checkpoints.
  • Must: step replay; evidence attach.
  • Should: diffs; partial rollback.
  • Nice: auto-summaries.
 
-packages/registry - Schema registry svc/client
+packages/registry — Schema registry svc/client
  • Vision: Contract authority.
  • Mission: serve/validate JSON Schemas.
  • Must: AJV validation; versioning.
  • Should: hash pins; provenance.
  • Nice: UI browser.
 
-packages/security - Security kit
+packages/security — Security kit
  • Vision: Default-deny.
  • Mission: RBAC/ABAC; egress allowlist; secrets.
  • Must: deny-by-default egress; per-tool RBAC.
  • Should: per-subagent scopes.
  • Nice: sandbox profiles.
 
-packages/simlab-mono - Simulation lab
+packages/simlab-mono — Simulation lab
  • Vision: Safety via simulation.
  • Mission: dry-run plans; compare vs actual.
  • Must: what-if runs; metrics.
  • Should: failure injectors.
  • Nice: auto test generation.
 
-packages/observability - Traces/logs/metrics
+packages/observability — Traces/logs/metrics
  • Vision: Explain every run.
  • Mission: OTEL + ULIDs; redaction.
  • Must: span propagation; P50/P95/P99; error budget calc.
@@ -308,9 +308,9 @@ FR-11 MCP suite enforces allowlists and schemas on every tool call.
 
 7.1 Model Gateway (localhost:8081)
 
-POST /chat       {input, policy, session} -&gt; {output, evidence[], provider}
-POST /embeddings {texts[], modelHint?}    -&gt; {vectors[], dims, provider}
-POST /rerank     {query, items[]}         -&gt; {scores[], provider}
+POST /chat       {input, policy, session} -> {output, evidence[], provider}
+POST /embeddings {texts[], modelHint?}    -> {vectors[], dims, provider}
+POST /rerank     {query, items[]}         -> {scores[], provider}
 
 7.2 Error model (Problem+JSON)
 
@@ -334,7 +334,7 @@ context: { window: project, include_paths: ["src/**","tests/**"] }
 
 7.5 MCP call contract (client perspective)
 
-callTool(serverId, toolId, input) -&gt; { ok: true, data } | { ok: false, problem: ProblemJson }
+callTool(serverId, toolId, input) -> { ok: true, data } | { ok: false, problem: ProblemJson }
 Constraints: toolId allowlisted; input validated by JSON Schema; OTEL span required.
 
 8. Data Models
@@ -369,9 +369,9 @@ Constraints: toolId allowlisted; input validated by JSON Schema; OTEL span requi
 
 13. Rollout Plan
 
-P1 (Wk 1-2): Contracts; ASBR-lite; Router; Model Gateway+MLX; A2A outbox/DLQ; OTEL.
-P2 (Wk 3-4): Ollama+Frontier adapters; three agents; privacy pin; Cloudflare edge.
-P3 (Wk 5-6): Cerebrum simulate/replay; RAG bundles with citations; dashboards; policy hot-reload.
+P1 (Wk 1–2): Contracts; ASBR-lite; Router; Model Gateway+MLX; A2A outbox/DLQ; OTEL.
+P2 (Wk 3–4): Ollama+Frontier adapters; three agents; privacy pin; Cloudflare edge.
+P3 (Wk 5–6): Cerebrum simulate/replay; RAG bundles with citations; dashboards; policy hot-reload.
 
 14. Governance & CI Gates
  • .cortex/ is SoT: rules, policy, schemas, gates.
@@ -411,7 +411,7 @@ K8s
 
 17. Risks, Traps, Mitigations
  • MCP overhead in tight loops → keep inner loops in-process via Gateway.
- • "99.9%" on single box → scope SLO properly; avoid HA claims.
+ • “99.9%” on single box → scope SLO properly; avoid HA claims.
  • Contract drift → schema registry + CI contract tests.
  • Frontier cost creep → cost ceilings + edge egress policy.
  • Thermal throttling → breaker + backoff + sticky away from MLX.
@@ -437,7 +437,7 @@ Before merging provider adapters or Cloudflare bindings, verify current SDKs, Wo
 
 ⸻
 
-Appendix A: Subagents live in .cortex/agents/*.md with YAML frontmatter. They inherit tools unless restricted. Policies control privacy, cost ceilings, and target latency. Cerebrum selects automatically or via CLI cortex use &lt;name&gt;.
+Appendix A: Subagents live in .cortex/agents/*.md with YAML frontmatter. They inherit tools unless restricted. Policies control privacy, cost ceilings, and target latency. Cerebrum selects automatically or via CLI cortex use <name>.
 
 ```
 
@@ -485,7 +485,7 @@ Providers: MLX ▸ Ollama ▸ Frontier APIs
 ▼
 ┌─────────────────────────┐
 │ SimLab │
-│ • Run "what-if" trials │
+│ • Run “what-if” trials │
 │ • Compare vs actual │
 └─────────────────────────┘
 
@@ -496,11 +496,11 @@ Cloudflare Workers/Queues/Tunnels (egress allowlist)
 │
 ▼
 ┌───────────────────────────────────────────────────────────────┐
-│ Docker Desktop (native engine on macOS/WSL) │ ← brAInwav standard runtime; low overhead with virtiofs file sharing.
+│ OrbStack (lightweight Linux VM with shared kernel) │ ← Docker engine inside VM; low overhead, WSL2-like. [oai_citation:0‡docs.orbstack.dev](https://docs.orbstack.dev/architecture)
 │ │
-│ Host networking: containers ⇄ macOS via localhost │ ← Use default docker context; `host.docker.internal` bridges to host services.
-│ VirtioFS bind mounts: prefer volumes for hot I/O │ ← Combine docker volumes + caching for best throughput.
-│ Apple Silicon emulation: Rosetta/QEMU fallback │ ← Use multi-arch images; avoid x86-only builds when possible.
+│ Host networking: containers ⇄ macOS via localhost │ ← --net host supported on mac; no host.docker.internal needed. [oai_citation:1‡docs.orbstack.dev](https://docs.orbstack.dev/docker/host-networking)
+│ VirtioFS: fast bind mounts; prefer volumes for hot I/O │ ← VirtioFS + tuning; volumes faster than bind mounts. [oai_citation:2‡docs.orbstack.dev](https://docs.orbstack.dev/architecture)
+│ Rosetta: fast x86 emulation on Apple Silicon │ ← Faster than QEMU for x86. [oai_citation:3‡docs.orbstack.dev](https://docs.orbstack.dev/architecture)
 │ │
 │ Containers (one service per image) │
 │ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐

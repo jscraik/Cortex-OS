@@ -81,9 +81,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		process.env.AUTH_MONITORING_WEBHOOK_URL = 'https://hooks.brainwav.dev/analytics';
 		process.env.AUTH_MONITORING_TIMEOUT_MS = '2000';
 
-		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService'
-		);
+		const { externalMonitoringService } = await import('../../services/externalMonitoringService');
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
 
@@ -135,9 +133,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		process.env.AUTH_MONITORING_NEW_RELIC_ACCOUNT_ID = '12345';
 		process.env.AUTH_MONITORING_NEW_RELIC_INSERT_KEY = 'nr-key';
 
-		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService'
-		);
+		const { externalMonitoringService } = await import('../../services/externalMonitoringService');
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
 
@@ -152,9 +148,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 	it('warns and skips webhook dispatch when configured with non-HTTPS URL', async () => {
 		process.env.AUTH_MONITORING_WEBHOOK_URL = 'http://hooks.brainwav.dev/insecure';
 
-		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService'
-		);
+		const { externalMonitoringService } = await import('../../services/externalMonitoringService');
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
 
@@ -171,9 +165,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 
 		fetchSpy.mockResolvedValueOnce(mockFetchResponse(500, false));
 
-		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService'
-		);
+		const { externalMonitoringService } = await import('../../services/externalMonitoringService');
 
 		await expect(externalMonitoringService.emitAuthEvent(sampleEvent)).resolves.toBeUndefined();
 

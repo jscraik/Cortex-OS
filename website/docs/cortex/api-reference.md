@@ -7,7 +7,7 @@ sidebar_label: Api Reference
 
 The runtime exposes REST and event APIs.
 
-- **REST API** - served from `apps/api`, default port 3000.
+- **REST API** – served from `apps/api`, default port 3000.
   - Authentication via bearer tokens (`AUTH_TOKEN`).
   - Key endpoints: `/health`, `/agents`, `/events`.
 - **SDKs**

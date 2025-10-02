@@ -1,9 +1,13 @@
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
+const packageRoot = fileURLToPath(new URL('.', import.meta.url));
+const repoRoot = resolve(packageRoot, '..', '..');
+
 export default defineConfig({
-	plugins: [tsconfigPaths({ projects: ['../../tsconfig.json'] })],
+	plugins: [tsconfigPaths({ projects: [resolve(repoRoot, 'tsconfig.json')] })],
 	test: {
 		globals: true,
 		environment: 'node',

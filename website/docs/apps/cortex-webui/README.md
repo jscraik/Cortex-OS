@@ -11,11 +11,11 @@ Welcome to the Cortex WebUI documentation. This section provides a complete guid
 
 | Feature | Status |
 | --- | --- |
-| Real-time chat with WebSocket updates |  |
-| User authentication and session management |  |
-| File upload and management |  |
-| Multi-provider AI integration |  |
-| Audit logging and monitoring |  |
+| Real-time chat with WebSocket updates | ![Status: Stable](https://img.shields.io/badge/status-stable-brightgreen) |
+| User authentication and session management | ![Status: Stable](https://img.shields.io/badge/status-stable-brightgreen) |
+| File upload and management | ![Status: Stable](https://img.shields.io/badge/status-stable-brightgreen) |
+| Multi-provider AI integration | ![Status: Planned](https://img.shields.io/badge/status-planned-lightgrey) |
+| Audit logging and monitoring | ![Status: Planned](https://img.shields.io/badge/status-planned-lightgrey) |
 
 ## Documentation Index
 

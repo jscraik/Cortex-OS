@@ -1,3 +1,4 @@
+import type { Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authUtils } from '../../auth';
@@ -9,7 +10,7 @@ vi.mock('../../services/oauthService');
 vi.mock('../../auth');
 
 describe('OAuthController', () => {
-	let app: any;
+	let app: Express;
 
 	beforeEach(() => {
 		app = createApp();

@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import type { Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
@@ -7,7 +8,7 @@ import { authMonitoringService } from '../../src/services/authMonitoringService'
 import { emailService } from '../../src/services/emailService';
 
 describe('Auth Integration Tests', () => {
-	let app: any;
+	let app: Express;
 	let server: any;
 
 	beforeAll(async () => {

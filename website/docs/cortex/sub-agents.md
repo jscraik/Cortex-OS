@@ -70,10 +70,10 @@ cortex use code-reviewer --on HEAD~1..HEAD
 
 ## File locations
 
-| Type | Location | Scope | Priority |
+| Type        | Location            | Scope                         | Priority |
 | :---------- | :------------------ | :---------------------------- | :------- |
-| **Project** | `.cortex/agents/` | Available in current project | Highest |
-| **User** | `~/.cortex/agents/` | Available across all projects | Lower |
+| **Project** | `.cortex/agents/`   | Available in current project  | Highest  |
+| **User**    | `~/.cortex/agents/` | Available across all projects | Lower    |
 
 Name conflicts resolve to **project** first.
 
@@ -119,18 +119,18 @@ Behavior:
 
 ### Field reference
 
-| Field | Req | Description |
+| Field                        | Req | Description                                          |
 | :--------------------------- | :-: | :--------------------------------------------------- |
-| `name` | ✔ | Lowercase kebab-case unique id |
-| `description` | ✔ | When and why to invoke |
-| `tools` | - | Comma-sep MCP tool ids (omit to inherit all allowed) |
-| `policies.privacy` | - | `true` forces **MLX/local** only |
-| `policies.cost_ceiling_usd` | - | Max cloud spend per call |
-| `policies.target_latency_ms` | - | Hint for router |
-| `policies.evidence_required` | - | Require proofs and citations |
-| `routing.capability` | ✔ | e.g., `chat-completion`, `text-embedding`, `rerank` |
-| `routing.fallbacks` | - | Ordered provider fallbacks |
-| `context.*` | - | Context window and include lists |
+| `name`                       | ✔  | Lowercase kebab-case unique id                       |
+| `description`                | ✔  | When and why to invoke                               |
+| `tools`                      |  –  | Comma-sep MCP tool ids (omit to inherit all allowed) |
+| `policies.privacy`           |  –  | `true` forces **MLX/local** only                     |
+| `policies.cost_ceiling_usd`  |  –  | Max cloud spend per call                             |
+| `policies.target_latency_ms` |  –  | Hint for router                                      |
+| `policies.evidence_required` |  –  | Require proofs and citations                         |
+| `routing.capability`         | ✔  | e.g., `chat-completion`, `text-embedding`, `rerank`  |
+| `routing.fallbacks`          |  –  | Ordered provider fallbacks                           |
+| `context.*`                  |  –  | Context window and include lists                     |
 
 ---
 
@@ -152,8 +152,8 @@ Tip: `cortex agents edit &lt;name&gt;` provides an interactive tool picker from 
 ```bash
 cortex agents                 # list, status, precedence
 cortex agents new             # create interactive
-cortex agents edit &lt;name&gt;     # edit prompt, tools, policies
-cortex agents rm &lt;name&gt;       # delete
+cortex agents edit <name>     # edit prompt, tools, policies
+cortex agents rm <name>       # delete
 cortex agents doctor          # validate schemas and tool bindings
 ```
 

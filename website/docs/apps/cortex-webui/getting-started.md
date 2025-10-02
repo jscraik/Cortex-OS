@@ -9,8 +9,8 @@ Follow these steps to run Cortex WebUI locally.
 
 ## Prerequisites
 
-- Node.js ≥ 16
-- pnpm ≥ 7
+- Node.js >= 16
+- pnpm >= 7
 - Git
 
 ## Installation

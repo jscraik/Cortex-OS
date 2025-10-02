@@ -10,6 +10,7 @@ A modern, accessible web interface for AI models with real-time chat capabilitie
 - User session management and OAuth providers
 - Conversation history and management
 - File upload and processing
+- **Multimodal AI Processing**: Support for images, audio, PDFs, and cross-modal search
 - Dark/light theme support
 - Responsive design for desktop and mobile
 - Accessibility compliant (WCAG 2.1 AA)
@@ -45,6 +46,9 @@ cortex-webui/
 - SQLite for data storage with Drizzle ORM
 - WebSocket for real-time communication
 - Multer for file uploads
+- Sharp for image processing
+- Vector embeddings and semantic search
+- Multimodal AI processing services
 
 ## Getting Started
 
@@ -149,12 +153,71 @@ The backend provides a RESTful API with the following main endpoints:
 - `POST /api/files/upload` - Upload a file
 - `DELETE /api/files/:id` - Delete a file
 
+### Multimodal Processing
+
+- `POST /api/multimodal/upload` - Upload and process multimodal documents (images, audio, PDFs)
+- `GET /api/multimodal/documents` - List all multimodal documents
+- `GET /api/multimodal/documents/:id` - Get details of a specific document
+- `DELETE /api/multimodal/documents/:id` - Delete a multimodal document
+- `POST /api/multimodal/search` - Search across all multimodal content
+- `GET /api/multimodal/stats` - Get comprehensive multimodal usage statistics
+
 ## WebSocket API
 
 Real-time communication is available through WebSocket:
 
 - **Endpoint**: `ws://localhost:3001/ws`
 - **Authentication**: Uses Better Auth session cookies for authentication
+
+## Multimodal Features
+
+The Cortex WebUI now supports comprehensive multimodal AI processing with the following capabilities:
+
+### Supported File Formats
+
+- **Images**: PNG, JPG, JPEG, WebP, GIF (max 50MB)
+- **Audio**: MP3, WAV, M4A, OGG, FLAC (max 500MB, max 4 hours)
+- **PDFs**: PDF (max 200MB, max 200 pages)
+
+### Processing Features
+
+#### Image Processing
+- OCR text extraction
+- Computer vision analysis and object detection
+- Metadata extraction (dimensions, format, EXIF data)
+- Thumbnail and resized image generation
+
+#### Audio Processing
+- Speech-to-text transcription
+- Speaker diarization (identifying different speakers)
+- Timestamp preservation for audio segments
+- Waveform generation for visualization
+
+#### PDF with Images
+- Text and image extraction from PDF pages
+- Layout preservation and structure analysis
+- OCR on extracted images
+- Page-by-page content organization
+
+### Cross-Modal Search
+
+The multimodal system provides unified semantic search across all content types:
+
+- Search across text, images, audio transcripts, and PDF content
+- Advanced filtering by modality, date range, file size, duration
+- Citations and source attribution for search results
+- Real-time search performance monitoring
+
+### Integration with RAG
+
+The multimodal content integrates seamlessly with the existing RAG (Retrieval-Augmented Generation) system:
+
+- Unified embeddings for all modalities
+- Cross-modal content retrieval
+- Enhanced context for AI responses
+- Comprehensive citation tracking
+
+For detailed API documentation, see [`docs/multimodal-api-documentation.md`](docs/multimodal-api-documentation.md)
 
 ## Testing
 

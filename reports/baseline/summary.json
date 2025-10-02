@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2025-10-02T01:02:21.739Z",
+  "coverage": {
+    "generatedAt": "2025-10-02T01:02:21.738Z",
+    "line": {
+      "percentage": 96.2,
+      "available": true,
+      "source": "out/coverage-summary.json",
+      "covered": 962,
+      "total": 1000
+    },
+    "branch": {
+      "percentage": 95.1,
+      "available": true,
+      "source": "out/coverage-summary.json",
+      "covered": 951,
+      "total": 1000
+    },
+    "mutation": {
+      "percentage": 82.5,
+      "available": true,
+      "source": "out/mutation.json"
+    }
+  },
+  "codemap": {
+    "available": true,
+    "source": "out/codemap.json",
+    "nodes": 120,
+    "edges": 180,
+    "files": 25
+  },
+  "packageAudit": {
+    "available": true,
+    "source": "out/package-audit.json",
+    "critical": 0,
+    "high": 0,
+    "moderate": 1,
+    "low": 4
+  },
+  "flakes": {
+    "available": true,
+    "source": "out/flake-metrics.json",
+    "flakeRate": 0.007,
+    "averageDurationMs": 285,
+    "testRuns": 420
+  }
+}

@@ -13,8 +13,8 @@ pnpm install
 ```
 
 ## Development
-- `pnpm build` - compile sources
-- `pnpm test` - run tests
-- `pnpm docs:verify` - lint documentation
+- `pnpm build` – compile sources
+- `pnpm test` – run tests
+- `pnpm docs:verify` – lint documentation
 
-Follow the repository's [CONTRIBUTING](/docs/references/contributing guidelines and maintain 95% test coverage.
+Follow the repository's [CONTRIBUTING](../../../CONTRIBUTING.md) guidelines and maintain 95% test coverage.

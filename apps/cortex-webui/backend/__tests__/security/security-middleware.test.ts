@@ -52,7 +52,7 @@ describe('Security Middleware Tests', () => {
 			query: {},
 			params: {},
 			ip: '127.0.0.1',
-			session: {} as any,
+			session: {} as { [key: string]: unknown },
 		};
 
 		mockRes = {
@@ -119,7 +119,7 @@ describe('Security Middleware Tests', () => {
 			};
 			mockReq.session = {
 				csrfToken: 'valid-token',
-			} as any;
+			} as { csrfToken: string };
 
 			await customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
 
@@ -133,7 +133,7 @@ describe('Security Middleware Tests', () => {
 			};
 			mockReq.session = {
 				csrfToken: 'valid-token',
-			} as any;
+			} as { csrfToken: string };
 
 			await customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
 
@@ -245,7 +245,7 @@ describe('Security Middleware Tests', () => {
 			const regenerateMock = vi.fn();
 			mockReq.session = {
 				regenerate: regenerateMock,
-			} as any;
+			} as { regenerate: () => void };
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
 
@@ -260,7 +260,7 @@ describe('Security Middleware Tests', () => {
 				cookie: {
 					maxAge: undefined,
 				},
-			} as any;
+			} as { touch: () => void; cookie: { maxAge?: number } };
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
 

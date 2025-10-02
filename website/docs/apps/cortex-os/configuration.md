@@ -8,9 +8,9 @@ sidebar_label: Configuration
 Configuration is driven entirely by environment variables:
 
 ## Storage
-- `MEMORIES_SHORT_STORE` - `memory | sqlite | prisma | local`
-- `MEMORIES_LONG_STORE` - `memory | sqlite | prisma | local`
-- `MEMORIES_SQLITE_PATH` - path to SQLite DB
+- `MEMORIES_SHORT_STORE` – `memory | sqlite | prisma | local`
+- `MEMORIES_LONG_STORE` – `memory | sqlite | prisma | local`
+- `MEMORIES_SQLITE_PATH` – path to SQLite DB
 - `LOCAL_MEMORY_BASE_URL`, `LOCAL_MEMORY_API_KEY`, `LOCAL_MEMORY_NAMESPACE`
 
 ## Encryption
@@ -20,7 +20,7 @@ Configuration is driven entirely by environment variables:
 - `MEMORIES_ENCRYPT_VECTORS`, `MEMORIES_ENCRYPT_TAGS`
 
 ## Embedder
-- `MEMORIES_EMBEDDER` - `noop | mlx | ollama`
+- `MEMORIES_EMBEDDER` – `noop | mlx | ollama`
 - MLX: `MLX_MODEL`, `MLX_SERVICE_URL`, `MLX_MODELS_DIR`, `PYTHON_EXEC`, `PYTHONPATH`
 - Ollama: `OLLAMA_BASE_URL`, `OLLAMA_MODEL`
 

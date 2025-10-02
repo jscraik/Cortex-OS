@@ -28,6 +28,17 @@ export interface AuthenticatedRequest extends Request {
 	session?: AuthenticatedSession;
 }
 
+type PrismaUserRecord = {
+	id: string;
+	email: string | null;
+	name: string | null;
+	emailVerified: Date | boolean | null;
+	image: string | null;
+	twoFactorEnabled?: boolean | null;
+	createdAt: Date;
+	updatedAt: Date;
+} | null;
+
 const sessionDelegate = (prisma as unknown as Record<string, unknown>).session as
 	| undefined
 	| {
@@ -41,7 +52,7 @@ const sessionDelegate = (prisma as unknown as Record<string, unknown>).session a
 				expiresAt: Date;
 				createdAt: Date;
 				userAgent: string | null;
-				user: Record<string, unknown> | null;
+				user: PrismaUserRecord;
 			} | null>;
 			findMany: (args: {
 				where: { userId: string };
@@ -105,7 +116,7 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
 			return res.status(401).json({ error: 'Session expired' });
 		}
 
-		const formattedUser = formatUserRecord(sessionRecord.user as any);
+		const formattedUser = formatUserRecord(sessionRecord.user);
 		if (!formattedUser) {
 			return res.status(401).json({ error: 'User record missing' });
 		}
@@ -153,7 +164,7 @@ export const optionalAuth = async (
 			return next();
 		}
 
-		req.user = formatUserRecord(sessionRecord.user as any) ?? undefined;
+		req.user = formatUserRecord(sessionRecord.user) ?? undefined;
 		req.session = sanitizeSession(sessionRecord);
 		return next();
 	} catch (error) {

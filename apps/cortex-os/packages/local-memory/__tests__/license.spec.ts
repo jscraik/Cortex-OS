@@ -61,7 +61,7 @@ describe('LicenseManager', () => {
 
 		it('should reject license with missing required fields', () => {
 			const invalidLicense = { ...validLicense };
-			delete (invalidLicense as any).licenseKey;
+			delete (invalidLicense as Record<string, unknown>).licenseKey;
 			expect(() => LicenseSchema.parse(invalidLicense)).toThrow();
 		});
 	});
@@ -93,11 +93,11 @@ describe('LicenseManager', () => {
 
 			vi.mocked(exec).mockImplementation((command, callback) => {
 				if (command.includes('op --version')) {
-					callback?.(null, { stdout: '2.0.0', stderr: '' } as any);
+					callback?.(null, '2.0.0', '');
 				} else if (command.includes('op item get')) {
-					callback?.(null, { stdout: JSON.stringify(mockOpResponse), stderr: '' } as any);
+					callback?.(null, JSON.stringify(mockOpResponse), '');
 				}
-				return {} as any;
+				return undefined;
 			});
 
 			const license = await manager.getLicense();
@@ -106,11 +106,8 @@ describe('LicenseManager', () => {
 
 		it('should fall back when 1Password CLI is not available', async () => {
 			vi.mocked(exec).mockImplementation((_command, callback) => {
-				callback?.(new Error('op: command not found'), {
-					stdout: '',
-					stderr: 'command not found',
-				} as any);
-				return {} as any;
+				callback?.(new Error('op: command not found'), '', 'command not found');
+				return undefined;
 			});
 
 			vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(validLicense));
@@ -134,11 +131,11 @@ describe('LicenseManager', () => {
 
 			vi.mocked(exec).mockImplementation((command, callback) => {
 				if (command.includes('op --version')) {
-					callback?.(null, { stdout: '2.0.0', stderr: '' } as any);
+					callback?.(null, '2.0.0', '');
 				} else if (command.includes('op item get')) {
-					callback?.(null, { stdout: JSON.stringify(mockOpResponse), stderr: '' } as any);
+					callback?.(null, JSON.stringify(mockOpResponse), '');
 				}
-				return {} as any;
+				return undefined;
 			});
 
 			const license = await manager.getLicense();
@@ -151,8 +148,8 @@ describe('LicenseManager', () => {
 	describe('Fallback File Support', () => {
 		it('should load license from fallback file', async () => {
 			vi.mocked(exec).mockImplementation((_command, callback) => {
-				callback?.(new Error('op: command not found'), { stdout: '', stderr: '' } as any);
-				return {} as any;
+				callback?.(new Error('op: command not found'), '', '');
+				return undefined;
 			});
 
 			vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(validLicense));
@@ -163,11 +160,11 @@ describe('LicenseManager', () => {
 
 		it('should handle missing fallback file gracefully', async () => {
 			vi.mocked(exec).mockImplementation((_command, callback) => {
-				callback?.(new Error('op: command not found'), { stdout: '', stderr: '' } as any);
-				return {} as any;
+				callback?.(new Error('op: command not found'), '', '');
+				return undefined;
 			});
 
-			const fileError = new Error('File not found') as any;
+			const fileError = Object.assign(new Error('File not found'), { code: 'ENOENT' });
 			fileError.code = 'ENOENT';
 			vi.mocked(fs.readFile).mockRejectedValue(fileError);
 
@@ -218,11 +215,11 @@ describe('LicenseManager', () => {
 		it('should store license in 1Password CLI', async () => {
 			vi.mocked(exec).mockImplementation((command, callback) => {
 				if (command.includes('op --version')) {
-					callback?.(null, { stdout: '2.0.0', stderr: '' } as any);
+					callback?.(null, '2.0.0', '');
 				} else if (command.includes('op item create')) {
-					callback?.(null, { stdout: 'Item created', stderr: '' } as any);
+					callback?.(null, 'Item created', '');
 				}
-				return {} as any;
+				return undefined;
 			});
 
 			await expect(manager.storeLicense(validLicense)).resolves.not.toThrow();
@@ -230,8 +227,8 @@ describe('LicenseManager', () => {
 
 		it('should throw error when 1Password CLI is not available for storage', async () => {
 			vi.mocked(exec).mockImplementation((_command, callback) => {
-				callback?.(new Error('op: command not found'), { stdout: '', stderr: '' } as any);
-				return {} as any;
+				callback?.(new Error('op: command not found'), '', '');
+				return undefined;
 			});
 
 			await expect(manager.storeLicense(validLicense)).rejects.toThrow(
@@ -276,7 +273,7 @@ describe('LicenseManager', () => {
 			});
 
 			// Override cache duration for testing
-			(shortCacheManager as any).cacheDurationMs = 1; // 1ms
+			(shortCacheManager as { cacheDurationMs: number }).cacheDurationMs = 1; // 1ms
 
 			process.env.TEST_LICENSE_DATA = JSON.stringify(validLicense);
 
@@ -294,8 +291,8 @@ describe('LicenseManager', () => {
 	describe('Error Handling', () => {
 		it('should provide descriptive error messages', async () => {
 			vi.mocked(exec).mockImplementation((_command, callback) => {
-				callback?.(new Error('op: command not found'), { stdout: '', stderr: '' } as any);
-				return {} as any;
+				callback?.(new Error('op: command not found'), '', '');
+				return undefined;
 			});
 
 			const fileError = new Error('Permission denied');

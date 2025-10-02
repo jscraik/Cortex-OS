@@ -9,12 +9,8 @@ This guide summarizes common deployment configurations for the `@cortex-os/memor
 
 ## Store Backends (Short- and Long-Term)
 
-- `MEMORIES_SHORT_STORE`: `qdrant | local | sqlite | external-sqlite | prisma | memory`
-  (defaults to `qdrant` when `QDRANT_URL` is set, otherwise `memory`)
-- `MEMORIES_LONG_STORE`: `memory | sqlite | external-sqlite | prisma | local | qdrant`
-  (default: `sqlite`)
-- `MEMORIES_FALLBACK_STORE`: `sqlite | external-sqlite | local | memory` (overrides the
-  automatic fallback used when Qdrant is unavailable)
+- `MEMORIES_SHORT_STORE`: `memory | sqlite | prisma | local` (default: `memory`)
+- `MEMORIES_LONG_STORE`: `memory | sqlite | prisma | local` (default: `sqlite`)
 
 SQLite options:
 
@@ -32,8 +28,8 @@ Enable at-rest encryption per namespace:
 - `MEMORIES_ENCRYPTION_SECRET`: enables encryption when set
 - `MEMORIES_ENCRYPTION_NAMESPACES`: comma-separated exact matches
 - `MEMORIES_ENCRYPTION_REGEX`: regex pattern (e.g., `^sec:`)
-- `MEMORIES_ENCRYPT_VECTORS&#61;true|false`: encrypt vectors (JSON)
-- `MEMORIES_ENCRYPT_TAGS&#61;true|false`: encrypt tags (JSON)
+- `MEMORIES_ENCRYPT_VECTORS=true|false`: encrypt vectors (JSON)
+- `MEMORIES_ENCRYPT_TAGS=true|false`: encrypt tags (JSON)
 
 ## Embedder Selection
 
@@ -55,7 +51,7 @@ Ollama options:
 
 ## Decay Scoring
 
-- `MEMORIES_DECAY_ENABLED&#61;true|false`
+- `MEMORIES_DECAY_ENABLED=true|false`
 - `MEMORIES_DECAY_HALFLIFE_MS`: half-life in milliseconds
 
 ## Putting It Together
@@ -73,9 +69,7 @@ export const memoryService = createMemoryService(store, embedder);
 Example runnable script: `examples/memories-mlx/ingest-and-search.ts` (uses `MLX_EMBED_BASE_URL` or `MLX_SERVICE_URL`).
 
 ## Docker Compose
-
 A minimal container setup:
-
 ```yaml
 services:
   neo4j:
@@ -85,9 +79,7 @@ services:
     image: qdrant/qdrant:latest
     ports: ["6333:6333"]
 ```
-
 Start services:
-
 ```bash
 docker compose up -d neo4j qdrant
 ```

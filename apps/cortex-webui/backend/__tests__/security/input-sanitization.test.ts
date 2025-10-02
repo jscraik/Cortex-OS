@@ -269,7 +269,9 @@ describe('Input Sanitization Tests', () => {
 
 	describe('Error Handling', () => {
 		it('should handle circular references gracefully', async () => {
-			const circular: any = { name: '<script>alert("xss")</script>test' };
+			const circular: { name: string; self?: unknown } = {
+				name: '<script>alert("xss")</script>test',
+			};
 			circular.self = circular;
 
 			mockReq.body = circular;

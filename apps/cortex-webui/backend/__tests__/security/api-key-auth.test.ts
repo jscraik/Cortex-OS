@@ -62,8 +62,8 @@ describe('API Key Authentication Tests', () => {
 
 		it('should handle empty or null API key', () => {
 			expect(validateApiKeyFormat('')).toBe(false);
-			expect(validateApiKeyFormat(null as any)).toBe(false);
-			expect(validateApiKeyFormat(undefined as any)).toBe(false);
+			expect(validateApiKeyFormat(null as unknown as string)).toBe(false);
+			expect(validateApiKeyFormat(undefined as unknown as string)).toBe(false);
 		});
 	});
 
@@ -268,7 +268,7 @@ describe('API Key Authentication Tests', () => {
 		it('should handle malformed headers gracefully', async () => {
 			mockReq.headers = {
 				'x-api-key': Buffer.from('invalid-buffer').toString(),
-				'content-type': null as any,
+				'content-type': null as unknown as string,
 			};
 
 			await apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);

@@ -21,7 +21,8 @@ describe('memories service', () => {
 		const fetched = await service.get('memory-1');
 		expect(fetched).toEqual(saved);
 
-		const fetchStub = (globalThis as any).__memoryFetchStub as ReturnType<typeof vi.fn>;
+		const fetchStub = (globalThis as { __memoryFetchStub?: ReturnType<typeof vi.fn> })
+			.__memoryFetchStub as ReturnType<typeof vi.fn>;
 		expect(fetchStub).toHaveBeenCalledWith(
 			`${process.env.LOCAL_MEMORY_BASE_URL}/memory/store`,
 			expect.objectContaining({ method: 'POST' }),

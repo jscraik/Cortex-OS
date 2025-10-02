@@ -1,0 +1,8 @@
+{
+  "available": true,
+  "source": "out/package-audit.json",
+  "critical": 0,
+  "high": 0,
+  "moderate": 1,
+  "low": 4
+}

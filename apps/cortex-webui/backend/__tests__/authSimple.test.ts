@@ -56,7 +56,7 @@ describe('JWT Functions', () => {
 		delete process.env.JWT_SECRET;
 
 		expect(() => {
-			jwt.sign({ userId: 'test' }, undefined as any);
+			jwt.sign({ userId: 'test' }, undefined as unknown as string);
 		}).toThrow();
 	});
 });

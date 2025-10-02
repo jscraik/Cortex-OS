@@ -20,5 +20,4 @@ pnpm add @cortex-os/memories
 import { MemoryStore } from '@cortex-os/memories';
 const store = new MemoryStore();
 await store.upsert({ id: 'greeting', text: 'hello' });
-
 ```

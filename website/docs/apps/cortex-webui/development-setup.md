@@ -23,12 +23,12 @@ Before you begin, ensure you have the following installed:
    ```bash
    git clone &lt;repository-url&gt;
    cd cortex-webui
-```
+   ```
 
 2. Install root dependencies:
    ```bash
    pnpm install
-```
+   ```
 
 ## Backend Setup
 
@@ -36,19 +36,19 @@ Before you begin, ensure you have the following installed:
 
    ```bash
    cd backend
-```
+   ```
 
 2. Install backend dependencies:
 
    ```bash
    pnpm install
-```
+   ```
 
 3. Create a `.env` file from the example:
 
    ```bash
    cp .env.example .env
-```
+   ```
 
 4. Configure the `.env` file:
 
@@ -63,12 +63,12 @@ Before you begin, ensure you have the following installed:
 
    ```bash
    mkdir -p data
-```
+   ```
 
 6. Start the backend development server:
    ```bash
    pnpm dev
-```
+   ```
 
 The backend server will start on port 3001.
 
@@ -78,19 +78,19 @@ The backend server will start on port 3001.
 
    ```bash
    cd frontend
-```
+   ```
 
 2. Install frontend dependencies:
 
    ```bash
    pnpm install
-```
+   ```
 
 3. Create a `.env` file from the example:
 
    ```bash
    cp .env.example .env
-```
+   ```
 
 4. Configure the `.env` file:
 
@@ -101,7 +101,7 @@ The backend server will start on port 3001.
 5. Start the frontend development server:
    ```bash
    pnpm dev
-```
+   ```
 
 The frontend server will start on port 3000.
 
@@ -112,7 +112,7 @@ To run both frontend and backend simultaneously:
 1. From the root directory:
    ```bash
    pnpm dev
-```
+   ```
 
 This will start both servers concurrently.
 
@@ -137,12 +137,12 @@ The database includes the following tables:
 
    ```bash
    cd backend
-```
+   ```
 
 2. Run tests:
    ```bash
    pnpm test
-```
+   ```
 
 ### Frontend Testing
 
@@ -150,12 +150,12 @@ The database includes the following tables:
 
    ```bash
    cd frontend
-```
+   ```
 
 2. Run tests:
    ```bash
    pnpm test
-```
+   ```
 
 ## Linting
 
@@ -216,13 +216,13 @@ To develop with Docker:
 
    ```bash
    docker-compose build
-```
+   ```
 
 2. Start the services:
 
    ```bash
    docker-compose up
-```
+   ```
 
 3. Access the application:
    - Frontend: http://localhost:3000
@@ -300,7 +300,7 @@ If you encounter dependency issues:
 
    ```bash
    pnpm store prune
-```
+   ```
 
 2. Remove node_modules directories:
 
@@ -308,12 +308,12 @@ If you encounter dependency issues:
    rm -rf node_modules
    rm -rf frontend/node_modules
    rm -rf backend/node_modules
-```
+   ```
 
 3. Reinstall dependencies:
    ```bash
    pnpm install
-```
+   ```
 
 ## Code Quality
 

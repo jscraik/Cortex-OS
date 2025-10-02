@@ -1,3 +1,4 @@
+import type { Express } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../server';
@@ -23,7 +24,7 @@ vi.mock('../../services/authMonitoringService', () => ({
 }));
 
 describe('Better Auth Integration Tests', () => {
-	let app: any;
+	let app: Express;
 
 	beforeEach(async () => {
 		app = createApp();

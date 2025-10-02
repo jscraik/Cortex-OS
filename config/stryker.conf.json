@@ -10,6 +10,11 @@
         "configFile": "vitest.config.ts",
         "coverageAnalysis": "off"
     },
+    "reporters": [
+        "clear-text",
+        "progress",
+        "json"
+    ],
     "checkers": [
         "typescript"
     ],

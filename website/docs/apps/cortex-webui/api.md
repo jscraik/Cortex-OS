@@ -342,7 +342,7 @@ The WebSocket API provides real-time communication capabilities.
        "conversationId": "string"
      }
    }
-```
+   ```
 
 #### Server to Client
 
@@ -353,7 +353,7 @@ The WebSocket API provides real-time communication capabilities.
      "type": "welcome",
      "payload": "string"
    }
-```
+   ```
 
 2. **message**: Receive a message
 
@@ -367,7 +367,7 @@ The WebSocket API provides real-time communication capabilities.
        "createdAt": "string"
      }
    }
-```
+   ```
 
 3. **typing**: User is typing
    ```json
@@ -378,7 +378,7 @@ The WebSocket API provides real-time communication capabilities.
        "conversationId": "string"
      }
    }
-```
+   ```
 
 ## Error Responses
 

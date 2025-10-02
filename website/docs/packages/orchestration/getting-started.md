@@ -9,7 +9,7 @@ sidebar_label: Getting Started
 - Node.js 18+
 - Python 3.10+
 - pnpm or npm
-- Optional: MLX and Ollama services for embeddings
+- Optional: external embedding providers (configure via your app)
 
 ## Installation
 ```bash
@@ -24,5 +24,4 @@ pip install -r requirements.txt
 import { createEngine } from '@cortex-os/orchestration';
 const engine = await createEngine();
 await engine.initialize();
-
 ```

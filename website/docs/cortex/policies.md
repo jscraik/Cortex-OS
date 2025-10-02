@@ -14,8 +14,8 @@ The ASBR-lite runtime enforces governance via a policy router. Policies are conf
 
 ## Files
 
-- `policies.yaml` - high-level enable/disable and parameters
-- `mcp-allowlist.yaml` - list of allowed MCP tools/endpoints
+- `policies.yaml` — high-level enable/disable and parameters
+- `mcp-allowlist.yaml` — list of allowed MCP tools/endpoints
 
 ## Example: `policies.yaml`
 

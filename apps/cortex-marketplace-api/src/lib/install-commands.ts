@@ -65,8 +65,7 @@ function generateCortexMcpCommand(server: ServerManifest): InstallCommand | null
 	if (server.install?.['cortex-mcp']) {
 		return {
 			client: 'cortex-mcp',
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			command: (server.install as any)['cortex-mcp'],
+			command: server.install['cortex-mcp'],
 			description: 'cortex-mcp CLI install string',
 		};
 	}

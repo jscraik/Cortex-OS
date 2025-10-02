@@ -37,6 +37,7 @@ describe('Service Container Wiring', () => {
 	});
 
 	it('should provide functional memory service', async () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Test file checking service interface
 		const memories = container.get(TOKENS.Memories) as any;
 
 		// Test basic memory operations
@@ -58,7 +59,7 @@ describe('Service Container Wiring', () => {
 	});
 
 	it('should provide functional orchestration service', () => {
-		const orchestration = container.get(TOKENS.Orchestration) as any;
+		const orchestration = container.get(TOKENS.Orchestration);
 
 		// Verify orchestration has expected structure
 		expect(orchestration).toHaveProperty('config');
@@ -77,10 +78,10 @@ describe('Service Container Wiring', () => {
 	});
 
 	it('should provide repository services with correct interfaces', () => {
-		const taskRepo = container.get(TOKENS.TaskRepository) as any;
-		const profileRepo = container.get(TOKENS.ProfileRepository) as any;
-		const artifactRepo = container.get(TOKENS.ArtifactRepository) as any;
-		const evidenceRepo = container.get(TOKENS.EvidenceRepository) as any;
+		const taskRepo = container.get(TOKENS.TaskRepository);
+		const profileRepo = container.get(TOKENS.ProfileRepository);
+		const artifactRepo = container.get(TOKENS.ArtifactRepository);
+		const evidenceRepo = container.get(TOKENS.EvidenceRepository);
 
 		// Verify all repositories have expected CRUD methods
 		expect(typeof taskRepo.save).toBe('function');

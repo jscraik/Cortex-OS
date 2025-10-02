@@ -126,7 +126,9 @@ describe('Runtime HTTP Server', () => {
 			id: 'test-task-http-001',
 			status: 'in-progress',
 		});
-		expect((updated.task as any).metadata.updated_via).toBe('http_test');
+		expect((updated.task as { metadata?: { updated_via?: string } }).metadata?.updated_via).toBe(
+			'http_test',
+		);
 
 		// GET /tasks - List tasks
 		const listResponse = await fetch(`${runtime.httpUrl}/v1/tasks`, {

@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { MemoriesLike } from '../../src/mcp/gateway.js';
 import { createMcpGateway } from '../../src/mcp/gateway.js';
 
 const baseDeps = {
-	memories: {} as any,
+	memories: {} as MemoriesLike,
 	orchestration: { config: {} },
 	config: { runtime: {} },
 };

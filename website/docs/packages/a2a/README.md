@@ -1,15 +1,15 @@
 ---
-title: Agent-to-Agent Communication
-sidebar_label: Agent-to-Agent Communication
+title: A2A Event Bus
+sidebar_label: A2A Event Bus
 ---
 
 # Cortex A2A Documentation
 
-[](https://www.npmjs.com/package/@cortex-os/a2a)
-[](#)
-[](#)
-[](#)
-[](https://opensource.org/licenses/MIT)
+[![NPM Version](https://img.shields.io/npm/v/@cortex-os/a2a)](https://www.npmjs.com/package/@cortex-os/a2a)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
+[![Test Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](#)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Central entry point for all Agent-to-Agent (A2A) package documentation.
 

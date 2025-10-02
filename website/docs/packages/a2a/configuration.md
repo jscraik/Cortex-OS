@@ -11,7 +11,6 @@ Configuration is code-first. Transport selection and options are passed when cre
 import { createBus } from '@cortex-os/a2a';
 import { http } from '@cortex-os/a2a/http';
 
-
 const bus = createBus(http({ baseUrl: process.env.A2A_HTTP_URL }));
 ```
 

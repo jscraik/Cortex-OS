@@ -164,5 +164,9 @@ describe('Quality Gate Enforcement', () => {
 		expect(result.passed).toBe(true);
 		expect(result.violations).toHaveLength(0);
 		expect(result.summary.production_ready).toBe(true);
+
+		it('should enforce coverage ratchet thresholds via baseline metrics', async () => {
+			throw new Error('TODO: implement coverage ratchet enforcement test');
+		});
 	});
 });

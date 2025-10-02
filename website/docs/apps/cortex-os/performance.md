@@ -5,5 +5,5 @@ sidebar_label: Performance
 
 # Performance & Benchmarking
 
-- Use `NODE_ENV&#61;production` for optimized builds.
+- Use `NODE_ENV=production` for optimized builds.
 - Adjust `MEMORIES_DECAY_HALFLIFE_MS` to balance retention and performance.

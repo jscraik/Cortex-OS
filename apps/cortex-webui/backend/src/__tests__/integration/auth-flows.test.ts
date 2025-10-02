@@ -1,9 +1,10 @@
+import type { Express } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../server';
 
 describe('Authentication Integration Flows', () => {
-	let app: any;
+	let app: Express;
 	let userEmail: string;
 	let userPassword: string;
 

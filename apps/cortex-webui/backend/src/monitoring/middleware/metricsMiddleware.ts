@@ -1,8 +1,8 @@
 // Metrics Collection Middleware for brAInwav Cortex WebUI
 // Automatic HTTP request metrics collection
 
-import type { NextFunction, Request, Response } from 'express';
 import { performance } from 'node:perf_hooks';
+import type { NextFunction, Request, Response } from 'express';
 import { MetricsService } from '../services/metricsService.js';
 
 interface RequestWithMetrics extends Request {

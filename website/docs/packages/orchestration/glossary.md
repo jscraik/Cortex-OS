@@ -6,6 +6,6 @@ sidebar_label: Glossary
 # Glossary
 
 - **HITL**: Human-in-the-loop approval flow.
-- **MLX**: Lightweight model execution engine.
+Glossary notes: Package now strictly supports LangGraph-based orchestration.
 - **Checkpoint**: Saved workflow state for replay or recovery.
 - **Execution Plan**: Structured phases assigning agents to tasks.

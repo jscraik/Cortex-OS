@@ -37,7 +37,7 @@ describe('brAInwav MCP Basic Functionality', () => {
 		const response = await fetch(`${runtime.mcpUrl}/tools`);
 		const tools = await response.json();
 
-		const toolNames = tools.tools.map((tool: any) => tool.name);
+		const toolNames = tools.tools.map((tool: { name: string }) => tool.name);
 
 		// Check for expected system tools
 		expect(toolNames).toContain('system.status');
@@ -90,12 +90,15 @@ describe('brAInwav MCP Basic Functionality', () => {
 		const response = await fetch(`${runtime.mcpUrl}/tools`);
 		const tools = await response.json();
 
-		const toolsByCategory = tools.tools.reduce((acc: Record<string, any[]>, tool: any) => {
-			const category = tool.name.split('.')[0];
-			if (!acc[category]) acc[category] = [];
-			acc[category].push(tool);
-			return acc;
-		}, {});
+		const toolsByCategory = tools.tools.reduce(
+			(acc: Record<string, { name: string }[]>, tool: { name: string }) => {
+				const category = tool.name.split('.')[0];
+				if (!acc[category]) acc[category] = [];
+				acc[category].push(tool);
+				return acc;
+			},
+			{},
+		);
 
 		// Should have system category
 		expect(toolsByCategory.system).toBeDefined();

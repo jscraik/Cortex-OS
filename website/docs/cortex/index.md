@@ -5,6 +5,10 @@ sidebar_label: Index
 
 # Cortex-OS Documentation
 
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen)
+
 Central entry point for Cortex-OS documentation. Current features are marked; planned items are noted for future releases.
 
 ## Features

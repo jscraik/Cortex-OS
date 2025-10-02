@@ -95,14 +95,14 @@ describe('Event Manager', () => {
 		// Test with missing type
 		const invalidEvent1 = {
 			data: { message: 'Missing type' },
-		} as any;
+		} as Omit<RuntimeEvent, 'type'>;
 
 		await expect(runtime.events.emitEvent(invalidEvent1)).rejects.toThrow();
 
 		// Test with missing data
 		const invalidEvent2 = {
 			type: 'test.missing.data',
-		} as any;
+		} as Omit<RuntimeEvent, 'data'>;
 
 		await expect(runtime.events.emitEvent(invalidEvent2)).rejects.toThrow();
 	});
@@ -111,7 +111,7 @@ describe('Event Manager', () => {
 		const invalidEvent = {
 			type: null,
 			data: null,
-		} as any;
+		} as { type: null; data: null };
 
 		// Should reject but not crash the runtime
 		await expect(runtime.events.emitEvent(invalidEvent)).rejects.toThrow();

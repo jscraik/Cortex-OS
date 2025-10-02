@@ -94,7 +94,7 @@ Frontier APIs:
 
    - Buildx multi-arch. Cosign sign. Syft SBOM. OSV/CodeQL/gitleaks gates.
 
-# Answer to "packages inside cortex-os container?"
+# Answer to “packages inside cortex-os container?”
 
 No. Do not nest services. Each **service** gets its own image. **Packages** are libraries bundled into the images that use them. Only create another container if it exposes a networked API or consumes A2A independently.
 

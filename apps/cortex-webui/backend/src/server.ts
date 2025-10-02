@@ -1,11 +1,11 @@
 // Composable server factory for Cortex WebUI backend
 // Refactored from monolithic bootstrap to testable factory pattern.
 
+import http, { type Server as HttpServer } from 'node:http';
+import path from 'node:path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Express } from 'express';
-import http, { type Server as HttpServer } from 'node:http';
-import path from 'node:path';
 import { WebSocketServer } from 'ws';
 import {
 	createHealthCheckRoutes,
@@ -53,6 +53,16 @@ import {
 } from './controllers/fileController.js';
 import { createMessage, getMessagesByConversationId } from './controllers/messageController.js';
 import { getModelById, getModels } from './controllers/modelController.js';
+// Import multimodal controllers
+import {
+	deleteMultimodalDocument,
+	getMultimodalDocument,
+	getMultimodalStats,
+	listMultimodalDocuments,
+	multimodalUploadMiddleware,
+	searchMultimodal,
+	uploadMultimodalDocument,
+} from './controllers/multimodalController.js';
 // Import controllers
 import { OAuthController } from './controllers/oauthController.js';
 import { getChatTools } from './controllers/toolController.js';
@@ -197,6 +207,30 @@ export const createApp = (): Express => {
 		parseDocument,
 	);
 	app.get(`${API_BASE_PATH}/documents/supported-types`, getSupportedTypes);
+
+	// Multimodal document processing endpoints
+	app.post(
+		`${API_BASE_PATH}/multimodal/upload`,
+		authenticateToken,
+		customCsrfProtection,
+		multimodalUploadMiddleware.single('file'),
+		uploadMultimodalDocument,
+	);
+	app.get(`${API_BASE_PATH}/multimodal/documents`, authenticateToken, listMultimodalDocuments);
+	app.get(`${API_BASE_PATH}/multimodal/documents/:id`, authenticateToken, getMultimodalDocument);
+	app.delete(
+		`${API_BASE_PATH}/multimodal/documents/:id`,
+		authenticateToken,
+		customCsrfProtection,
+		deleteMultimodalDocument,
+	);
+	app.post(
+		`${API_BASE_PATH}/multimodal/search`,
+		authenticateToken,
+		customCsrfProtection,
+		searchMultimodal,
+	);
+	app.get(`${API_BASE_PATH}/multimodal/stats`, authenticateToken, getMultimodalStats);
 
 	// MCP tool execution (initial HTTP binding) - with API key authentication
 	app.post(`${API_BASE_PATH}/mcp/execute`, apiKeyAuth, mcpExecuteHandler);

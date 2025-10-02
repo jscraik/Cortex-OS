@@ -154,24 +154,20 @@ Direct imports between feature packages are forbidden.
 - Where: packages/a2a (see also packages/a2a-services)
 - How (illustrative)
 
-```ts
+  // packages/a2a/src/bus.ts
+  export type Event = "github.push"|"rag.ingest"|"memories.ttl.expired";
+  export interface Bus { publish&lt;T&gt;(type:Event,payload:T): Promise<void>`; on&lt;T&gt;(type:Event,fn:(p:T)=&gt;`Promise<void>`):void; }
+  export const bus: Bus = null as any; // impl with queue + backpressure
+  export const publish = bus.publish.bind(bus);
+  export const on = bus.on.bind(bus);
 
-// packages/a2a/src/bus.ts
-export type Event = "github.push"|"rag.ingest"|"memories.ttl.expired";
-export interface Bus { publish<T>(type:Event,payload:T): Promise<void>`; on<T>(type:Event,fn:(p:T)=>`Promise<void>`):void; }
-export const bus: Bus = null as any; // impl with queue + backpressure
-export const publish = bus.publish.bind(bus);
-export const on = bus.on.bind(bus);
-
-// packages/rag/src/handlers/onGithubPush.ts
-import { on } from "@cortex-os/a2a"; // or local import depending on package name
-on<{repo:string;commit:string}>("github.push", async (e) ⇒ {
-// schedule ingest pipeline
-});
+  // packages/rag/src/handlers/onGithubPush.ts
+  import { on } from "@cortex-os/a2a"; // or local import depending on package name
+  on<{repo:string;commit:string}>("github.push", async (e) => {
+  // schedule ingest pipeline
+  });
 
 Result: RAG reacts to GitHub without knowing GitHub or agents.
-```
-
 
 ### 2) Service Interfaces via ASBR (sync request/response)
 
@@ -180,35 +176,31 @@ Result: RAG reacts to GitHub without knowing GitHub or agents.
 - Where: Interfaces live in packages/mvp (types). Implementations live inside each feature package. ASBR wires them at boot.
 - How (illustrative)
 
-```ts
+  // packages/mvp/src/contracts/memories.ts
+  export interface Memories {
+  put(k:string,v:unknown,ttl?:number): Promise<void>`;
+  get&lt;T=unknown&gt;(k:string):`Promise<T|null>`;
+  }
+  export const TOKENS = { Memories: Symbol("Memories") };
 
-// packages/mvp/src/contracts/memories.ts
-export interface Memories {
-put(k:string,v:unknown,ttl?:number): Promise<void>`;
-get<T=unknown>(k:string):`Promise<T|null>`;
-}
-export const TOKENS = { Memories: Symbol("Memories") };
+  // packages/memories/src/service.ts
+  import { Memories } from "@cortex-os/mvp/contracts/memories";
+  export class MemoriesService implements Memories { // impl omitted }
+  export const provideMemories = () => new MemoriesService();
 
-// packages/memories/src/service.ts
-import { Memories } from "@cortex-os/mvp/contracts/memories";
-export class MemoriesService implements Memories { // impl omitted }
-export const provideMemories = () ⇒ new MemoriesService();
+  // apps/cortex-os/src/boot.ts (ASBR)
+  import { TOKENS, Memories } from "@cortex-os/mvp/contracts/memories";
+  import { provideMemories } from "@cortex-os/memories/service";
+  import { container } from "./di";
+  container.bind&lt;Memories&gt;(TOKENS.Memories).toConstantValue(provideMemories());
 
-// apps/cortex-os/src/boot.ts (ASBR)
-import { TOKENS, Memories } from "@cortex-os/mvp/contracts/memories";
-import { provideMemories } from "@cortex-os/memories/service";
-import { container } from "./di";
-container.bind<Memories>(TOKENS.Memories).toConstantValue(provideMemories());
-
-// packages/orchestration/src/plan.ts
-import { inject } from "@cortex-os/mvp/di";
-import { TOKENS, Memories } from "@cortex-os/mvp/contracts/memories";
-const memories = inject<Memories>(TOKENS.Memories);
-export async function planTask(id:string){ await memories.put(`plan:${id}`, {status:"queued"}); }
+  // packages/orchestration/src/plan.ts
+  import { inject } from "@cortex-os/mvp/di";
+  import { TOKENS, Memories } from "@cortex-os/mvp/contracts/memories";
+  const memories = inject&lt;Memories&gt;(TOKENS.Memories);
+  export async function planTask(id:string){ await memories.put(`plan:${id}`, {status:"queued"}); }
 
 Result: Orchestration uses Memories through an interface, not a concrete package.
-```
-
 
 ### 3) MCP Tools (side-effects and integrations)
 
@@ -217,17 +209,13 @@ Result: Orchestration uses Memories through an interface, not a concrete package
 - Where: packages/mcp
 - How (illustrative)
 
-```ts
-
-// packages/agents/src/tools/searchPRs.ts
-import { useTool } from "@cortex-os/mcp";
-export async function searchPRs(repo:string, q:string){
-return useTool("github","search.code").invoke({repo,q});
-}
+  // packages/agents/src/tools/searchPRs.ts
+  import { useTool } from "@cortex-os/mcp";
+  export async function searchPRs(repo:string, q:string){
+  return useTool("github","search.code").invoke({repo,q});
+  }
 
 Result: Agents interact with GitHub via MCP, not other packages.
-```
-
 
 ---
 
@@ -243,7 +231,7 @@ Result: Agents interact with GitHub via MCP, not other packages.
 
 ## Ordered steps to enforce
 
-1. Add DI container to ASBR. Register each feature's service against a token.
+1. Add DI container to ASBR. Register each feature’s service against a token.
 2. Move public contracts to packages/mvp/contracts/\*. Export from package root.
 3. Add A2A event catalog with strict typing and lint rule for allowed events.
 4. Block deep imports via ESLint rule and CI script.

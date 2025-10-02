@@ -5,6 +5,8 @@ sidebar_label: Index
 
 # Cortex Marketplace Documentation
 
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-18%2B-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-unknown-lightgrey)
+
 ## Overview
 
 The Cortex Marketplace API enables discovery and management of MCP (Model Context Protocol) servers across multiple registries. It provides secure, rate-limited endpoints and Swagger documentation for easy exploration.

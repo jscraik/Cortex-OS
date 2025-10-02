@@ -23,7 +23,7 @@ FRONTEND_URL=http://localhost:3000
 `frontend/.env`
 
 ```env
-VITE_API_BASE_URL&#61;http://localhost:3001/api
+VITE_API_BASE_URL=http://localhost:3001/api
 ```
 
 Configuration files follow the standard `.env` format and should be kept out of version control.

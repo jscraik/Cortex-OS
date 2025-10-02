@@ -31,5 +31,4 @@ const pipeline = new RAGPipeline({ embedder, store });
 
 await pipeline.ingest([{ id: 'doc-1', text: 'Hello world' }]);
 const results = await pipeline.retrieve('world');
-
 ```

@@ -1,5 +1,8 @@
 import * as path from 'node:path';
 import { defineConfig } from 'vitest/config';
+import { resolveCoverageThresholds } from './vitest.config';
+
+const coverageThresholds = resolveCoverageThresholds();
 
 export default defineConfig({
 	// Prevent Vitest from auto-loading root vitest.workspace.ts when using this config
@@ -19,7 +22,7 @@ export default defineConfig({
 		name: 'simple-tests',
 		coverage: {
 			provider: 'v8',
-			reporter: ['text', 'json', 'lcov'],
+			reporter: ['text', 'json', 'json-summary', 'lcov'],
 			include: [
 				'simple-tests/agent-isolation-sandbox-impl.ts',
 				'libs/typescript/contracts/src/sandbox-audit-events.ts',
@@ -27,10 +30,10 @@ export default defineConfig({
 				'scripts/ci/baseline-metrics.ts',
 			],
 			thresholds: {
-				statements: 80,
-				branches: 70,
-				functions: 80,
-				lines: 80,
+				statements: coverageThresholds.statements,
+				branches: coverageThresholds.branches,
+				functions: coverageThresholds.functions,
+				lines: coverageThresholds.lines,
 			},
 		},
 	},

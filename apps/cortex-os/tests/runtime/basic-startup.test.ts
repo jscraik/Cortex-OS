@@ -112,7 +112,7 @@ describe('brAInwav Cortex-OS Basic Runtime', () => {
 		await expect(runtime.stop()).resolves.toBeUndefined();
 
 		// Mark runtime as stopped to prevent cleanup in afterEach
-		runtime = undefined as any;
+		runtime = undefined as RuntimeHandle | undefined;
 	});
 });
 

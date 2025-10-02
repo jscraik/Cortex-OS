@@ -16,14 +16,14 @@ await pipeline.ingest([
 
 ## Retrieve Answers
 ```typescript
-const hits &#61; await pipeline.retrieve('What is Cortex-OS?');
+const hits = await pipeline.retrieve('What is Cortex-OS?');
 ```
 - Adjust `topK` and `minScore` in options for precision.
 - Recent documents win when scores are similar.
 
 ## Multi-Modal Queries
 ```typescript
-const result &#61; await pipeline.retrieveMultiModal({
+const result = await pipeline.retrieveMultiModal({
   textQuery: 'architecture',
   imageQuery: buffer,
   weights: { text: 0.8, image: 0.2 }
@@ -32,5 +32,3 @@ const result &#61; await pipeline.retrieveMultiModal({
 
 ## Custom Strategies
 Implement a `RetrievalStrategy` and pass via the `retrievalStrategy` option to override default retrieval behavior.
-
-```

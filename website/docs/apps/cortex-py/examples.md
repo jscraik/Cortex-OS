@@ -9,7 +9,6 @@ sidebar_label: Examples
 ```python
 from apps.cortex-py.src.mlx.embedding_generator import MLXEmbeddingGenerator
 
-
 gen = MLXEmbeddingGenerator()
 vec = gen.generate_embedding("sample")
 print(len(vec))

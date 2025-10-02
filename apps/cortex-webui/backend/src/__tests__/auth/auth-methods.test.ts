@@ -11,7 +11,7 @@ app.use(express.json());
 app.use('/api/auth/*', betterAuthInstance.handler);
 
 describe('Authentication Methods', () => {
-	let db: any;
+	let db: unknown;
 
 	beforeEach(async () => {
 		// Setup fresh database for each test

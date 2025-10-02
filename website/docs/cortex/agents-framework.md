@@ -15,9 +15,8 @@ graph TD
     CLI["CLI / API / IDE / MCP client"]
   end
 
-
   subgraph Orchestrator["@cortex-os/agents Orchestrator"]
-    WF["Workflow Builder&lt;br/&gt;seq/parallel + dependsOn&lt;br/&gt;timeouts, retries"]
+    WF["Workflow `Builder&lt;br/&gt;`seq/parallel + dependsOn<br/>timeouts, retries"]
     OA["Agent Adapter Layer"]
   end
 
@@ -29,14 +28,14 @@ graph TD
   end
 
   subgraph Providers["Providers (Local-first)"]
-    MLX["MLX Provider&lt;br/&gt;(chat/text-gen)"]
-    FBC["Fallback Chain&lt;br/&gt;(circuit breaker + retries)"]
-    MCP["MCP Provider&lt;br/&gt;(text-generation, tools)"]
+    MLX["MLX `Provider&lt;br/&gt;`(chat/text-gen)"]
+    FBC["Fallback `Chain&lt;br/&gt;`(circuit breaker + retries)"]
+    MCP["MCP `Provider&lt;br/&gt;`(text-generation, tools)"]
   end
 
   subgraph ModelGateway["Model Gateway"]
-    EMB["/embeddings&lt;br/&gt;MLX → Ollama → MCP"]
-    RER["/rerank&lt;br/&gt;Qwen3-MLX → Ollama → MCP"]
+    EMB["/embeddings<br/>MLX → Ollama → MCP"]
+    RER["/rerank<br/>Qwen3-MLX → Ollama → MCP"]
   end
 
   subgraph Events["A2A / Outbox"]
@@ -44,30 +43,30 @@ graph TD
     OUT["JSONL Outbox + DLQ"]
   end
 
-  CLI --&gt; WF
-  WF --&gt; OA
-  OA --&gt; CA
-  OA --&gt; TG
-  OA --&gt; DOC
-  OA --&gt; SEC
+  CLI --> WF
+  WF --> OA
+  OA --> CA
+  OA --> TG
+  OA --> DOC
+  OA --> SEC
 
-  CA --&gt; MLX
-  TG --&gt; MLX
-  DOC --&gt; MLX
-  SEC --&gt; MLX
+  CA --> MLX
+  TG --> MLX
+  DOC --> MLX
+  SEC --> MLX
 
-  MLX --&gt; FBC
-  FBC --&gt; MCP
+  MLX --> FBC
+  FBC --> MCP
 
-  CA -.optional RAG.-&gt; EMB
-  DOC -.optional RAG.-&gt; EMB
+  CA -.optional RAG.-> EMB
+  DOC -.optional RAG.-> EMB
 
-  EMB --&gt; RER
+  EMB --> RER
 
-  SEC --&gt;|Dependabot load/assess| A2A
-  WF --&gt;|workflow.started/completed| A2A
-  Agents --&gt;|agent.started/completed/failed| A2A
-  A2A --&gt; OUT
+  SEC -->|Dependabot load/assess| A2A
+  WF -->|workflow.started/completed| A2A
+  Agents -->|agent.started/completed/failed| A2A
+  A2A --> OUT
 ```
 
 ## Workflow Execution (Sequential/Parallel)
@@ -81,24 +80,23 @@ sequenceDiagram
   participant AG3 as Agent: Documentation
   participant BUS as A2A Event Bus
 
-
-  U-&gt;&gt;ORCH: submit workflow (tasks + deps)
-  ORCH-&gt;&gt;BUS: workflow.started
-  ORCH-&gt;&gt;AG1: execute(input, timeout)
-  AG1--&gt;&gt;BUS: agent.started
-  AG1-&gt;&gt;AG1: call provider (MLX → Fallback)
-  AG1--&gt;&gt;BUS: agent.completed
-  ORCH-&gt;&gt;AG2: execute(dependsOn: AG1)
-  AG2--&gt;&gt;BUS: agent.started
-  AG2-&gt;&gt;AG2: call provider (MLX → Fallback)
-  AG2--&gt;&gt;BUS: agent.completed
+  U->>ORCH: submit workflow (tasks + deps)
+  ORCH->>BUS: workflow.started
+  ORCH->>AG1: execute(input, timeout)
+  AG1-->>BUS: agent.started
+  AG1->>AG1: call provider (MLX → Fallback)
+  AG1-->>BUS: agent.completed
+  ORCH->>AG2: execute(dependsOn: AG1)
+  AG2-->>BUS: agent.started
+  AG2->>AG2: call provider (MLX → Fallback)
+  AG2-->>BUS: agent.completed
   par optional
-    ORCH-&gt;&gt;AG3: execute(parallel)
-    AG3--&gt;&gt;BUS: agent.started
-    AG3-&gt;&gt;AG3: provider call
-    AG3--&gt;&gt;BUS: agent.completed
+    ORCH->>AG3: execute(parallel)
+    AG3-->>BUS: agent.started
+    AG3->>AG3: provider call
+    AG3-->>BUS: agent.completed
   end
-  ORCH-&gt;&gt;BUS: workflow.completed (metrics)
+  ORCH->>BUS: workflow.completed (metrics)
 ```
 
 ## Security Guard (LlamaGuard + Dependabot)
@@ -111,34 +109,33 @@ sequenceDiagram
   participant DEP as Dependabot Loader
   participant BUS as A2A Bus
 
-
-  ORCH-&gt;&gt;SEC: execute({content, phase, context})
-  SEC--&gt;&gt;BUS: agent.started
-  SEC-&gt;&gt;DEP: load .github/dependabot.yml
-  DEP--&gt;&gt;SEC: { projects[] }
-  SEC--&gt;&gt;BUS: security.dependabot_config_loaded
-  SEC-&gt;&gt;LG: policy JSON eval (system+prompt)
-  LG--&gt;&gt;SEC: { decision, risk, labels, findings }
-  SEC-&gt;&gt;SEC: assess dependabot (weak schedules, score)
-  SEC--&gt;&gt;BUS: security.dependabot_assessed
-  SEC--&gt;&gt;BUS: agent.completed (metrics)
+  ORCH->>SEC: execute({content, phase, context})
+  SEC-->>BUS: agent.started
+  SEC->>DEP: load .github/dependabot.yml
+  DEP-->>SEC: { projects[] }
+  SEC-->>BUS: security.dependabot_config_loaded
+  SEC->>LG: policy JSON eval (system+prompt)
+  LG-->>SEC: { decision, risk, labels, findings }
+  SEC->>SEC: assess dependabot (weak schedules, score)
+  SEC-->>BUS: security.dependabot_assessed
+  SEC-->>BUS: agent.completed (metrics)
 ```
 
 ## Memories: Two‑Stage Retrieval with Rerank
 
 ```mermaid
 flowchart TD
-  Q["Query text / vector"] --&gt;|embed (if text)| EMB[/Model Gateway /embeddings/]
+  Q["Query text / vector"] -->|embed (if text)| EMB[/Model Gateway /embeddings/]
   subgraph Store["SQLite Store (memories)"]
     ANN["Initial Candidate Fetch (vector/recency)"]
     R1["TopN candidates"]
   end
-  EMB --&gt; ANN
-  Q --&gt; ANN
-  ANN --&gt; R1
-  R1 --&gt;|/rerank (Qwen3 MLX primary)| RER[/Model Gateway /rerank/]
-  RER --&gt; TOPK["TopK reranked"]
-  TOPK --&gt; OUT["Emit rerank.completed (JSONL Outbox / A2A)"]
+  EMB --> ANN
+  Q --> ANN
+  ANN --> R1
+  R1 -->|/rerank (Qwen3 MLX primary)| RER[/Model Gateway /rerank/]
+  RER --> TOPK["TopK reranked"]
+  TOPK --> OUT["Emit rerank.completed (JSONL Outbox / A2A)"]
 ```
 
 ## Provider Selection & Fallbacks
@@ -150,22 +147,21 @@ flowchart LR
     A2["Fallback Chain"]
     A3["MCP Provider"]
   end
-  A1 --&gt; A2 --&gt; A3
-
+  A1 --> A2 --> A3
 
   subgraph Embeddings["/embeddings (Gateway)"]
     E1["MLX primary"]
     E2["Ollama fallback"]
     E3["MCP fallback"]
   end
-  E1 --&gt; E2 --&gt; E3
+  E1 --> E2 --> E3
 
   subgraph Rerank["/rerank (Gateway)"]
     R1["Qwen3 Reranker (MLX)"]
     R2["Ollama fallback"]
     R3["MCP fallback"]
   end
-  R1 --&gt; R2 --&gt; R3
+  R1 --> R2 --> R3
 ```
 
 ## Event Types (selected)
@@ -195,5 +191,3 @@ Events are CloudEvents 1.0 compatible and published to the A2A bus and/or JSONL 
 ---
 
 This architecture is local‑first (MLX), with graceful fallbacks to Ollama and MCP, and aligns with OWASP LLM‑10 and PRD governance (CloudEvents, provenance, deterministic tests).
-
-```

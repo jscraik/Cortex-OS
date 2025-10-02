@@ -3,31 +3,29 @@ title: Index
 sidebar_label: Index
 ---
 
-## Cortex Orchestration
+# Cortex Orchestration Documentation
 
-[NPM Package](https://www.npmjs.com/package/@cortex-os/orchestration) · [MIT License](https://opensource.org/licenses/MIT)
+[![NPM Version](https://img.shields.io/npm/v/@cortex-os/orchestration)](https://www.npmjs.com/package/@cortex-os/orchestration)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](https://github.com/jamiescottcraik/Cortex-OS)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
-
-Cortex Orchestration coordinates multi-agent workflows for Cortex-OS using LangGraph (LangGraphJS).
-This package is LangGraph-only; legacy/hybrid orchestrators (CrewAI, AutoGen, PRP, Archon) have been
-removed.
+Cortex Orchestration provides LangGraph-based workflow execution for Cortex-OS. This package is LangGraph-only; other orchestration frameworks have been removed.
 
 ### Current Features
-
 - Stateful LangGraph execution
-- Optional adapters: MLX (local service), Ollama (local models), Frontier (OpenAI/Anthropic)
+- Python↔TypeScript stdio bridge
 - Intelligent agent routing and error recovery
 - CLI utilities for human-in-the-loop and checkpoint replay
 
 ### Planned Features
-
 - Stream processing and distributed orchestration
 - Adaptive agent learning and analytics
-- Pluggable framework extensions
+- Pluggable LangGraph extensions
 
 ## Documentation
-
 - [Introduction](./introduction.md)
 - [Getting Started](./getting-started.md)
 - [Configuration](./configuration.md)

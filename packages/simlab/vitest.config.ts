@@ -1,9 +1,13 @@
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
+const packageRoot = fileURLToPath(new URL('.', import.meta.url));
+const repoRoot = resolve(packageRoot, '..', '..');
+
 export default defineConfig({
-	plugins: [tsconfigPaths({ projects: ['../../tsconfig.json'] })],
+	plugins: [tsconfigPaths({ projects: [resolve(repoRoot, 'tsconfig.json')] })],
 	resolve: {
 		alias: {
 			'@cortex-os/a2a-core': resolve(__dirname, '../a2a/a2a-core/src'),

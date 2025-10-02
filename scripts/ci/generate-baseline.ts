@@ -1,5 +1,5 @@
 #!/usr/bin/env ts-node
-import { generateBaselineReport } from './baseline-metrics';
+import { generateBaselineReport } from './baseline-metrics.ts';
 
 interface CliOptions {
 	metricsDir?: string;

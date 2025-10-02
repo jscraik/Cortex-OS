@@ -71,43 +71,42 @@ pip install torch transformers numpy
 ### Core Python Dependencies
 
 ```txt
-```
 # Core ML dependencies
-torch&gt;=2.0.0
-transformers&gt;=4.30.0
-numpy&gt;=1.21.0
+torch>=2.0.0
+transformers>=4.30.0
+numpy>=1.21.0
 
 # MLX dependencies (Apple Silicon only)
-mlx&gt;=0.0.10
-mlx-lm&gt;=0.1.0
+mlx>=0.0.10
+mlx-lm>=0.1.0
 
 # Document processing dependencies
-pdfplumber&gt;=0.9.0
-python-docx&gt;=0.8.11
-python-pptx&gt;=0.6.21
-openpyxl&gt;=3.1.0
-beautifulsoup4&gt;=4.12.0
-lxml&gt;=4.9.0
+pdfplumber>=0.9.0
+python-docx>=0.8.11
+python-pptx>=0.6.21
+openpyxl>=3.1.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
 
 # OCR dependencies
-pytesseract&gt;=0.3.10
-Pillow&gt;=9.0.0
+pytesseract>=0.3.10
+Pillow>=9.0.0
 
 # Audio processing dependencies
-openai-whisper&gt;=20231106
-pydub&gt;=0.25.1
+openai-whisper>=20231106
+pydub>=0.25.1
 
 # Web crawling dependencies
-requests&gt;=2.31.0
-selenium&gt;=4.15.0
-playwright&gt;=1.40.0
+requests>=2.31.0
+selenium>=4.15.0
+playwright>=1.40.0
 
 # Code analysis dependencies
-tree-sitter&gt;=0.20.0
-tree-sitter-languages&gt;=1.8.0
+tree-sitter>=0.20.0
+tree-sitter-languages>=1.8.0
 
 # Graph database dependencies
-neo4j&gt;=5.14.0
+neo4j>=5.14.0
 ```
 
 ### Installing Optional Dependencies
@@ -369,7 +368,7 @@ pnpm docs:check
 
    # Reinstall dependencies
    pip install -r requirements.txt
-```
+   ```
 
 2. **MLX Not Available**
 
@@ -377,7 +376,7 @@ pnpm docs:check
    # MLX is only available on Apple Silicon Macs
    # Use Ollama fallback for other platforms
    export MODEL_BACKEND=ollama
-```
+   ```
 
 3. **Graph Database Connection Issues**
 
@@ -387,7 +386,7 @@ pnpm docs:check
 
    # Start database if not running
    docker start memgraph-container
-```
+   ```
 
 4. **Insufficient Storage for Models**
 
@@ -397,7 +396,7 @@ pnpm docs:check
 
    # Clear model cache if needed
    rm -rf ~/.cache/huggingface/
-```
+   ```
 
 ### Getting Help
 
@@ -412,5 +411,3 @@ pnpm docs:check
 2. Run the initial test suite to verify setup
 3. Begin implementation of Phase 1 components
 4. Update this document as new dependencies are added
-
-```

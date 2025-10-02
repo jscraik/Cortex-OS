@@ -11,7 +11,7 @@ Vendor-neutral. Local-first. Deterministic. Governed via ASBR. Accessibility-awa
 
 Key constraint: No cross-feature imports. Communication only via A2A events, DI service interfaces, or MCP tools.
 
-## apps/cortex-os - ASBR-lite brain
+## apps/cortex-os — ASBR-lite brain
 
 Application invariants, step context, and system gatekeeping interact inside the Cortex-OS runtime to anchor the core responsibilities of the ASBR-lite brain:
 

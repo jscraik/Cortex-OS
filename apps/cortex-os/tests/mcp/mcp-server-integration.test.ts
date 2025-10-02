@@ -30,7 +30,7 @@ describe('MCP Server Integration', () => {
 		expect(tools.tools.length).toBeGreaterThan(0);
 
 		// Check for expected system tools
-		const toolNames = tools.tools.map((tool: any) => tool.name);
+		const toolNames = tools.tools.map((tool: { name: string }) => tool.name);
 		expect(toolNames).toContain('system.status');
 		expect(toolNames).toContain('orchestration.run_workflow');
 		expect(toolNames).toContain('config.get');
@@ -225,7 +225,7 @@ describe('MCP Server Integration', () => {
 		const response = await fetch(`${runtime.mcpUrl}/tools`);
 		const tools = await response.json();
 
-		const toolNames = tools.tools.map((tool: any) => tool.name);
+		const toolNames = tools.tools.map((tool: { name: string }) => tool.name);
 
 		// While memory search tools might not be directly exposed,
 		// the MCP gateway should have access to the memory system

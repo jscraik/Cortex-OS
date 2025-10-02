@@ -1,20 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Express } from 'express';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { authenticateAPIKey, optionalBetterAuth, requireRole } from '../../middleware/better-auth';
 import { createApp } from '../../server';
-import {
-	betterAuth,
-	optionalBetterAuth,
-	requireRole,
-	authenticateAPIKey,
-	hybridAuth,
-	validateSession,
-	authRateLimit,
-	authCORS,
-	betterAuthErrorHandler
-} from '../../middleware/better-auth';
 
 describe('Authentication Middleware Comprehensive Tests', () => {
-	let app: any;
+	let app: Express;
 
 	beforeEach(() => {
 		app = createApp();
@@ -58,9 +49,7 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		});
 
 		it('should reject requests without valid session', async () => {
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'Authentication required');
 			expect(response.body).toHaveProperty('message', 'Please log in to access this resource');
@@ -69,20 +58,18 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		it('should handle session validation errors gracefully', async () => {
 			// Mock session validation to throw an error
 			const mockAuthUtils = {
-				getSession: vi.fn().mockRejectedValue(new Error('Database connection failed'))
+				getSession: vi.fn().mockRejectedValue(new Error('Database connection failed')),
 			};
 
 			vi.doMock('../../auth', () => ({
 				auth: {
 					api: {
-						getSession: mockAuthUtils.getSession
-					}
-				}
+						getSession: mockAuthUtils.getSession,
+					},
+				},
 			}));
 
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(500);
+			const response = await request(app).get('/api/auth/session').expect(500);
 
 			expect(response.body).toHaveProperty('error', 'Internal server error');
 			expect(response.body).toHaveProperty('message', 'Authentication service unavailable');
@@ -95,13 +82,11 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 			app.get('/test-optional', optionalBetterAuth, (req, res) => {
 				res.json({
 					authenticated: !!req.user,
-					user: req.user || null
+					user: req.user || null,
 				});
 			});
 
-			const response = await request(app)
-				.get('/test-optional')
-				.expect(200);
+			const response = await request(app).get('/test-optional').expect(200);
 
 			expect(response.body).toHaveProperty('authenticated', false);
 			expect(response.body).toHaveProperty('user', null);
@@ -140,22 +125,17 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 
 		it('should handle authentication errors gracefully', async () => {
 			// Mock authentication to throw an error
-			const mockAuthUtils = {
-				getSession: vi.fn().mockRejectedValue(new Error('Auth service down'))
+			const _mockAuthUtils = {
+				getSession: vi.fn().mockRejectedValue(new Error('Auth service down')),
 			};
 
 			// The optional middleware should not fail the request
 			const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 			// Test should pass through even if auth service fails
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401); // Still returns 401 because that's the session endpoint behavior
+			const _response = await request(app).get('/api/auth/session').expect(401); // Still returns 401 because that's the session endpoint behavior
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				'Optional Better Auth error:',
-				expect.any(Error)
-			);
+			expect(consoleSpy).toHaveBeenCalledWith('Optional Better Auth error:', expect.any(Error));
 
 			consoleSpy.mockRestore();
 		});
@@ -169,16 +149,19 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 			});
 
 			// Mock user with admin role
-			app.use('/test-admin-mock', (req, res, next) => {
-				req.user = { id: '1', email: 'admin@brainwav.ai', role: 'admin' };
-				next();
-			}, requireRole('admin'), (req, res) => {
-				res.json({ message: 'Admin access granted', user: req.user });
-			});
+			app.use(
+				'/test-admin-mock',
+				(req, _res, next) => {
+					req.user = { id: '1', email: 'admin@brainwav.ai', role: 'admin' };
+					next();
+				},
+				requireRole('admin'),
+				(req, res) => {
+					res.json({ message: 'Admin access granted', user: req.user });
+				},
+			);
 
-			const response = await request(app)
-				.get('/test-admin-mock')
-				.expect(200);
+			const response = await request(app).get('/test-admin-mock').expect(200);
 
 			expect(response.body).toHaveProperty('message', 'Admin access granted');
 			expect(response.body.user).toHaveProperty('role', 'admin');
@@ -186,61 +169,71 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 
 		it('should allow access to users with any of multiple required roles', async () => {
 			// Test with multiple roles
-			app.get('/test-multiple-roles', (req, res, next) => {
-				req.user = { id: '1', email: 'user@brainwav.ai', role: 'editor' };
-				next();
-			}, requireRole(['admin', 'editor', 'moderator']), (req, res) => {
-				res.json({ message: 'Access granted', user: req.user });
-			});
+			app.get(
+				'/test-multiple-roles',
+				(req, _res, next) => {
+					req.user = { id: '1', email: 'user@brainwav.ai', role: 'editor' };
+					next();
+				},
+				requireRole(['admin', 'editor', 'moderator']),
+				(req, res) => {
+					res.json({ message: 'Access granted', user: req.user });
+				},
+			);
 
-			const response = await request(app)
-				.get('/test-multiple-roles')
-				.expect(200);
+			const response = await request(app).get('/test-multiple-roles').expect(200);
 
 			expect(response.body).toHaveProperty('message', 'Access granted');
 			expect(response.body.user).toHaveProperty('role', 'editor');
 		});
 
 		it('should reject users without required role', async () => {
-			app.get('/test-admin-only', (req, res, next) => {
-				req.user = { id: '1', email: 'user@brainwav.ai', role: 'user' };
-				next();
-			}, requireRole('admin'), (req, res) => {
-				res.json({ message: 'Should not reach here' });
-			});
+			app.get(
+				'/test-admin-only',
+				(req, _res, next) => {
+					req.user = { id: '1', email: 'user@brainwav.ai', role: 'user' };
+					next();
+				},
+				requireRole('admin'),
+				(_req, res) => {
+					res.json({ message: 'Should not reach here' });
+				},
+			);
 
-			const response = await request(app)
-				.get('/test-admin-only')
-				.expect(403);
+			const response = await request(app).get('/test-admin-only').expect(403);
 
 			expect(response.body).toHaveProperty('error', 'Insufficient permissions');
-			expect(response.body).toHaveProperty('message', 'You do not have permission to access this resource');
+			expect(response.body).toHaveProperty(
+				'message',
+				'You do not have permission to access this resource',
+			);
 		});
 
 		it('should reject unauthenticated users', async () => {
-			app.get('/test-admin-unauth', requireRole('admin'), (req, res) => {
+			app.get('/test-admin-unauth', requireRole('admin'), (_req, res) => {
 				res.json({ message: 'Should not reach here' });
 			});
 
-			const response = await request(app)
-				.get('/test-admin-unauth')
-				.expect(401);
+			const response = await request(app).get('/test-admin-unauth').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'Authentication required');
 			expect(response.body).toHaveProperty('message', 'Please log in to access this resource');
 		});
 
 		it('should handle role authorization errors gracefully', async () => {
-			app.get('/test-admin-error', (req, res, next) => {
-				// Mock an error during role check
-				throw new Error('Role service unavailable');
-			}, requireRole('admin'), (req, res) => {
-				res.json({ message: 'Should not reach here' });
-			});
+			app.get(
+				'/test-admin-error',
+				(_req, _res, _next) => {
+					// Mock an error during role check
+					throw new Error('Role service unavailable');
+				},
+				requireRole('admin'),
+				(_req, res) => {
+					res.json({ message: 'Should not reach here' });
+				},
+			);
 
-			const response = await request(app)
-				.get('/test-admin-error')
-				.expect(500);
+			const response = await request(app).get('/test-admin-error').expect(500);
 
 			expect(response.body).toHaveProperty('error', 'Internal server error');
 			expect(response.body).toHaveProperty('message', 'Authorization service unavailable');
@@ -257,7 +250,7 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 				res.json({
 					message: 'API key authentication successful',
 					user: req.user,
-					apiKey: req.apiKey
+					apiKey: req.apiKey,
 				});
 			});
 
@@ -270,20 +263,21 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		});
 
 		it('should reject requests without API key', async () => {
-			app.get('/test-api-key-required', authenticateAPIKey, (req, res) => {
+			app.get('/test-api-key-required', authenticateAPIKey, (_req, res) => {
 				res.json({ message: 'Should not reach here' });
 			});
 
-			const response = await request(app)
-				.get('/test-api-key-required')
-				.expect(401);
+			const response = await request(app).get('/test-api-key-required').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'API key required');
-			expect(response.body).toHaveProperty('message', 'Please provide an API key in the X-API-Key header');
+			expect(response.body).toHaveProperty(
+				'message',
+				'Please provide an API key in the X-API-Key header',
+			);
 		});
 
 		it('should reject requests with invalid API key', async () => {
-			app.get('/test-api-key-invalid', authenticateAPIKey, (req, res) => {
+			app.get('/test-api-key-invalid', authenticateAPIKey, (_req, res) => {
 				res.json({ message: 'Should not reach here' });
 			});
 
@@ -299,11 +293,11 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		it('should handle API key authentication errors gracefully', async () => {
 			// Mock API key validation to throw an error
 			const mockAuthUtils = {
-				validateAPIKey: vi.fn().mockRejectedValue(new Error('API key service down'))
+				validateAPIKey: vi.fn().mockRejectedValue(new Error('API key service down')),
 			};
 
 			vi.doMock('../../auth', () => ({
-				authUtils: mockAuthUtils
+				authUtils: mockAuthUtils,
 			}));
 
 			const response = await request(app)
@@ -351,31 +345,28 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		it('should fallback to legacy JWT when Better Auth fails', async () => {
 			// This would test the fallback mechanism
 			// In a real scenario, this would involve creating JWT tokens and testing fallback
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'Authentication required');
 		});
 
 		it('should reject requests with no valid authentication', async () => {
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'Authentication required');
-			expect(response.body).toHaveProperty('message', 'Please provide a valid authentication token');
+			expect(response.body).toHaveProperty(
+				'message',
+				'Please provide a valid authentication token',
+			);
 		});
 
 		it('should handle hybrid authentication errors gracefully', async () => {
 			// Mock both authentication methods to fail
-			const mockAuthUtils = {
-				getSession: vi.fn().mockRejectedValue(new Error('Auth service down'))
+			const _mockAuthUtils = {
+				getSession: vi.fn().mockRejectedValue(new Error('Auth service down')),
 			};
 
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'Authentication required');
 		});
@@ -424,9 +415,7 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		});
 
 		it('should reject requests without session token', async () => {
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'No session token provided');
 			expect(response.body).toHaveProperty('message', 'Please provide a session token');
@@ -435,9 +424,7 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		it('should handle expired sessions', async () => {
 			// This would test session expiration logic
 			// In a real scenario, this would involve creating expired sessions
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'No active session');
 		});
@@ -447,12 +434,10 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		it('should allow requests within rate limit', async () => {
 			// Make a few requests within the limit
 			for (let i = 0; i < 3; i++) {
-				const response = await request(app)
-					.post('/api/auth/sign-in')
-					.send({
-						email: 'test@brainwav.ai',
-						password: 'wrong-password',
-					});
+				const response = await request(app).post('/api/auth/sign-in').send({
+					email: 'test@brainwav.ai',
+					password: 'wrong-password',
+				});
 
 				// Should be allowed for first few attempts
 				expect([200, 400]).toContain(response.status);
@@ -464,12 +449,10 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 			const responses = [];
 			for (let i = 0; i < 10; i++) {
 				responses.push(
-					await request(app)
-						.post('/api/auth/sign-in')
-						.send({
-							email: 'test@brainwav.ai',
-							password: 'wrong-password',
-						})
+					await request(app).post('/api/auth/sign-in').send({
+						email: 'test@brainwav.ai',
+						password: 'wrong-password',
+					}),
 				);
 			}
 
@@ -482,12 +465,10 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		it('should include retry-after information', async () => {
 			// Trigger rate limiting
 			for (let i = 0; i < 8; i++) {
-				await request(app)
-					.post('/api/auth/sign-in')
-					.send({
-						email: 'test@brainwav.ai',
-						password: 'wrong-password',
-					});
+				await request(app).post('/api/auth/sign-in').send({
+					email: 'test@brainwav.ai',
+					password: 'wrong-password',
+				});
 			}
 
 			const response = await request(app)
@@ -531,9 +512,7 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 		});
 
 		it('should include appropriate CORS headers', async () => {
-			const response = await request(app)
-				.options('/api/auth/sign-in')
-				.expect(200);
+			const response = await request(app).options('/api/auth/sign-in').expect(200);
 
 			expect(response.headers).toHaveProperty('access-control-allow-credentials', 'true');
 			expect(response.headers['access-control-allow-headers']).toContain('Content-Type');
@@ -575,9 +554,7 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 
 		it('should handle generic errors without exposing details', async () => {
 			// Mock an unexpected error
-			const response = await request(app)
-				.get('/api/auth/nonexistent-endpoint')
-				.expect(404);
+			const response = await request(app).get('/api/auth/nonexistent-endpoint').expect(404);
 
 			// Should return generic error message
 			expect(response.body).toHaveProperty('error');
@@ -586,9 +563,7 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 
 	describe('Security Headers in Authentication', () => {
 		it('should include security headers in auth responses', async () => {
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			expect(response.headers).toHaveProperty('x-content-type-options');
 			expect(response.headers).toHaveProperty('x-frame-options');
@@ -596,12 +571,10 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 
 		it('should handle CSRF protection', async () => {
 			// Test that CSRF protection is working
-			const response = await request(app)
-				.post('/api/auth/sign-in')
-				.send({
-					email: 'test@brainwav.ai',
-					password: 'password',
-				});
+			const response = await request(app).post('/api/auth/sign-in').send({
+				email: 'test@brainwav.ai',
+				password: 'password',
+			});
 
 			// Should include CSRF-related headers or tokens
 			expect(response.status).toBeDefined();
@@ -610,18 +583,14 @@ describe('Authentication Middleware Comprehensive Tests', () => {
 
 	describe('brAInwav Branding in Authentication', () => {
 		it('should include brAInwav branding in error responses', async () => {
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			const responseStr = JSON.stringify(response.body);
 			expect(responseStr).toMatch(/brAInwav/i);
 		});
 
 		it('should use brAInwav security policies', async () => {
-			const response = await request(app)
-				.get('/api/auth/session')
-				.expect(401);
+			const response = await request(app).get('/api/auth/session').expect(401);
 
 			// Should include brAInwav security headers
 			expect(response.headers).toBeDefined();

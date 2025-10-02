@@ -107,16 +107,15 @@ Each PRP phase is an agentic pipeline step with explicit machine-checkable gates
 
 ```mermaid
 stateDiagram-v2
-    [*] --&gt; Strategy
-    Strategy --&gt; Build: ✅ All Strategy Gates
-    Strategy --&gt; [*]: ❌ Blocker
+    [*] --> Strategy
+    Strategy --> Build: ✅ All Strategy Gates
+    Strategy --> [*]: ❌ Blocker
 
+    Build --> Evaluation: ✅ All Build Gates
+    Build --> Strategy: ❌ Recycle
 
-    Build --&gt; Evaluation: ✅ All Build Gates
-    Build --&gt; Strategy: ❌ Recycle
-
-    Evaluation --&gt; [*]: ✅ Ship
-    Evaluation --&gt; Strategy: ❌ Recycle
+    Evaluation --> [*]: ✅ Ship
+    Evaluation --> Strategy: ❌ Recycle
 ```
 
 ## Trends & Risk Mitigation

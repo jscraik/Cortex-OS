@@ -51,8 +51,8 @@ describe('auth schema guard', () => {
 			expect(result.pendingMigrations).toEqual(['20240202020202_new_field']);
 			expect(result.forwardScriptPath).toBeDefined();
 			expect(result.rollbackScriptPath).toBeDefined();
-			const forward = await readFile(result.forwardScriptPath!, 'utf8');
-			const rollback = await readFile(result.rollbackScriptPath!, 'utf8');
+			const forward = await readFile(result.forwardScriptPath as string, 'utf8');
+			const rollback = await readFile(result.rollbackScriptPath as string, 'utf8');
 			expect(forward).toContain('-- forward script');
 			expect(rollback).toContain('-- rollback script');
 		} finally {

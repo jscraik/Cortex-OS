@@ -14,7 +14,7 @@ const execAsync = promisify(exec);
  * with proper platform guards for brAInwav production readiness.
  */
 describe('Thermal Guard Production - Phase 9 Production Readiness', () => {
-	let pythonProcess: any;
+	let pythonProcess: { pid?: number; kill: () => void } | undefined;
 
 	beforeAll(async () => {
 		// Ensure Python environment is available

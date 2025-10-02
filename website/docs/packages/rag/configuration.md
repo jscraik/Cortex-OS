@@ -26,7 +26,7 @@ Load this file and pass it to `RAGPipeline`.
 
 ## Environment Variables
 | Variable | Description |
-| --- | --- |
+|---|---|
 | `RAG_EMBED_ENDPOINT` | Override embedder HTTP endpoint |
 | `RAG_MAX_CONTEXT` | Maximum tokens per query context |
 | `RAG_LOG_LEVEL` | Verbose logging when set to `debug` |

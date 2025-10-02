@@ -32,6 +32,28 @@ export const initializeDatabase = async () => {
 		"CREATE TABLE IF NOT EXISTS files (id TEXT PRIMARY KEY, filename TEXT NOT NULL, original_name TEXT NOT NULL, mimetype TEXT NOT NULL, size INTEGER NOT NULL, path TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER DEFAULT (strftime('%s', 'now')), updated_at INTEGER DEFAULT (strftime('%s', 'now')))",
 	);
 
+	// Create RAG document storage tables
+	await dbInstance.exec(
+		"CREATE TABLE IF NOT EXISTS rag_documents (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, filename TEXT NOT NULL, original_name TEXT NOT NULL, mime_type TEXT NOT NULL, size INTEGER NOT NULL, total_chunks INTEGER NOT NULL, processed INTEGER DEFAULT 0, processing_status TEXT DEFAULT 'pending' CHECK(processing_status IN ('pending', 'processing', 'completed', 'failed')), processing_error TEXT, metadata TEXT, created_at INTEGER DEFAULT (strftime('%s', 'now')), updated_at INTEGER DEFAULT (strftime('%s', 'now')))",
+	);
+	await dbInstance.exec(
+		"CREATE TABLE IF NOT EXISTS rag_document_chunks (id TEXT PRIMARY KEY, document_id TEXT NOT NULL, content TEXT NOT NULL, chunk_index INTEGER NOT NULL, start_page INTEGER, end_page INTEGER, token_count INTEGER, embedding TEXT, metadata TEXT, created_at INTEGER DEFAULT (strftime('%s', 'now')), FOREIGN KEY (document_id) REFERENCES rag_documents(id) ON DELETE CASCADE)",
+	);
+
+	// Create indexes for performance
+	await dbInstance.exec(
+		'CREATE INDEX IF NOT EXISTS idx_rag_documents_user_id ON rag_documents(user_id)',
+	);
+	await dbInstance.exec(
+		'CREATE INDEX IF NOT EXISTS idx_rag_documents_status ON rag_documents(processing_status)',
+	);
+	await dbInstance.exec(
+		'CREATE INDEX IF NOT EXISTS idx_rag_document_chunks_document_id ON rag_document_chunks(document_id)',
+	);
+	await dbInstance.exec(
+		'CREATE INDEX IF NOT EXISTS idx_rag_document_chunks_chunk_index ON rag_document_chunks(document_id, chunk_index)',
+	);
+
 	dbInitialized = true;
 	console.log('Database initialized successfully');
 };

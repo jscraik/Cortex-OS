@@ -23,5 +23,4 @@ export REGISTRIES='{"official":"https://registry.cortex-os.dev"}'
 export CACHE_DIR=~/.cache/cortex-marketplace
 export CACHE_TTL=3600
 pnpm --filter @cortex-os/marketplace-api start
-
 ```

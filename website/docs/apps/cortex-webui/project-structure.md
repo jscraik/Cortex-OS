@@ -145,5 +145,3 @@ The application can be deployed using:
 ## Environment Variables
 
 Each component has its own `.env.example` file that should be copied to `.env` and configured appropriately.
-
-```

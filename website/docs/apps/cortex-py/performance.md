@@ -5,7 +5,7 @@ sidebar_label: Performance
 
 # Performance & Benchmarking
 
-Use the CLI's verbose flag to measure load times:
+Use the CLI’s verbose flag to measure load times:
 ```bash
 python -m apps.cortex-py.src.mlx.embedding_generator "test" --verbose
 ```

@@ -14,4 +14,4 @@ sidebar_label: Troubleshooting
 - **Missing documents**: ensure `ingest` resolved without errors.
 
 ## Performance
-- Enable debug logging (`RAG_LOG_LEVEL&#61;debug`) to inspect pipeline stages.
+- Enable debug logging (`RAG_LOG_LEVEL=debug`) to inspect pipeline stages.

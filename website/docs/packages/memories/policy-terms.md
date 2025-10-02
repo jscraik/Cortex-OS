@@ -10,4 +10,4 @@ Use of `@cortex-os/memories` is governed by the MIT License. By integrating the 
 - Avoid storing illegal or abusive content.
 - Comply with applicable privacy regulations.
 
-See [LICENSE](../../../LICENSE) for full terms and the repository's [Code of Conduct](/docs/references/code-of-conduct.
+See [LICENSE](../../../LICENSE) for full terms and the repository's [Code of Conduct](../../../CODE_OF_CONDUCT.md).

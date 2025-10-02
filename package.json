@@ -315,7 +315,8 @@
     "brainwav:guard": "bash scripts/brainwav-production-guard.sh",
     "test:contracts": "vitest tests/contracts/openapi-sync.spec.ts",
     "test:mcp": "vitest packages/mcp-core/tests/tools-contract.spec.ts",
-    "baseline:collect": "ts-node --transpile-only scripts/ci/generate-baseline.ts"
+    "baseline:collect": "ts-node --transpile-only scripts/ci/generate-baseline.ts",
+    "baseline:prepare": "ts-node --transpile-only scripts/ci/prepare-baseline.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.61.0",

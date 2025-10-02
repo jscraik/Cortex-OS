@@ -6,7 +6,7 @@ sidebar_label: Roadmap
 # Roadmap
 
 | Status | Feature | Notes |
-| --- | --- | --- |
+|---|---|---|
 | 🚧 | Streaming ingestion | Real-time updates via message queues |
 | 🚧 | Distributed storage | Sharded vector stores across nodes |
 | 🚧 | Analytics dashboard | Query performance metrics |

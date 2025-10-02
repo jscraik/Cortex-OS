@@ -3,18 +3,12 @@ title: Providers Setup
 sidebar_label: Providers Setup
 ---
 
-## Providers & Setup
+# Providers & Setup
 
-## MLX
-
-- Start MLX service and set `MLX_SERVICE_URL`.
-- Optionally configure `MLX_CACHE_DIR` for model storage.
+This package is LangGraph-only. Configure your providers (e.g., Ollama) separately as needed.
 
 ## Ollama
-
 - Install Ollama and set `OLLAMA_URL`.
 
-## Frontier Models (Optional)
-
-- Configure environment for your provider of choice (e.g., OpenAI or Anthropic).
-- Set the appropriate API key and base URL env vars.
+## LangGraph
+- Ensure Python dependencies are installed via `requirements.txt`.

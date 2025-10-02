@@ -1,5 +1,8 @@
+import type { OrchestrationFacade } from '@cortex-os/orchestration';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import type { TaskRepository } from '../../src/persistence/task-repository.js';
 import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
+import type { MemoryService } from '../../src/services.js';
 import { prepareLoopbackAuth } from '../setup.global.js';
 
 let authHeader: string;
@@ -90,7 +93,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		const { container } = await import('../../src/boot');
 		const { TOKENS } = await import('../../src/tokens');
 
-		const memories = container.get(TOKENS.Memories) as any;
+		const memories = container.get(TOKENS.Memories) as MemoryService;
 		expect(memories).toBeDefined();
 
 		// Test basic memory operations
@@ -111,7 +114,9 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		// Retrieve memory
 		const retrievedMemory = await memories.get('second-brain-test-memory');
 		expect(retrievedMemory).toBeDefined();
-		expect(retrievedMemory.content).toBe('This is a test memory for second brain validation');
+		if (retrievedMemory) {
+			expect(retrievedMemory.content).toBe('This is a test memory for second brain validation');
+		}
 	});
 
 	it('should provide brAInwav orchestration capabilities', async () => {
@@ -120,7 +125,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		const { container } = await import('../../src/boot');
 		const { TOKENS } = await import('../../src/tokens');
 
-		const orchestration = container.get(TOKENS.Orchestration) as any;
+		const orchestration = container.get(TOKENS.Orchestration) as OrchestrationFacade;
 		expect(orchestration).toBeDefined();
 		expect(orchestration.config).toBeDefined();
 
@@ -128,13 +133,15 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);
 		const tools = await toolsResponse.json();
 
-		const orchestrationTools = tools.tools.filter((tool: any) =>
+		const orchestrationTools = tools.tools.filter((tool: { name: string }) =>
 			tool.name.startsWith('orchestration.'),
 		);
 
 		expect(orchestrationTools.length).toBeGreaterThan(0);
 		expect(
-			orchestrationTools.some((tool: any) => tool.name === 'orchestration.list_workflows'),
+			orchestrationTools.some(
+				(tool: { name: string }) => tool.name === 'orchestration.list_workflows',
+			),
 		).toBe(true);
 	});
 
@@ -145,7 +152,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		const { TOKENS } = await import('../../src/tokens');
 
 		// Test task repository
-		const taskRepo = container.get(TOKENS.TaskRepository) as any;
+		const taskRepo = container.get(TOKENS.TaskRepository) as TaskRepository;
 		const testTask = {
 			id: 'e2e-test-task',
 			title: 'End-to-End Test Task',
@@ -163,10 +170,12 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 
 		const retrievedTask = await taskRepo.get('e2e-test-task');
 		expect(retrievedTask).toBeDefined();
-		expect(retrievedTask.record.title).toBe('End-to-End Test Task');
+		if (retrievedTask) {
+			expect(retrievedTask.record.title).toBe('End-to-End Test Task');
+		}
 
 		// Test profile repository
-		const profileRepo = container.get(TOKENS.ProfileRepository) as any;
+		const profileRepo = container.get(TOKENS.ProfileRepository);
 		const testProfile = {
 			id: 'e2e-test-profile',
 			label: 'E2E Test Profile',
@@ -191,7 +200,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		const { container } = await import('../../src/boot');
 		const { TOKENS } = await import('../../src/tokens');
 
-		const memories = container.get(TOKENS.Memories) as any;
+		const memories = container.get(TOKENS.Memories) as MemoryService;
 		const workflowMemory = {
 			id: 'workflow-memory-001',
 			content: 'Integrated workflow test for second brain functionality',
@@ -205,7 +214,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		await memories.save(workflowMemory);
 
 		// 2. Create a related task
-		const taskRepo = container.get(TOKENS.TaskRepository) as any;
+		const taskRepo = container.get(TOKENS.TaskRepository) as TaskRepository;
 		const workflowTask = {
 			id: 'workflow-task-001',
 			title: 'Process Workflow Memory',
@@ -233,16 +242,24 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		// 4. Verify all components are working together
 		const retrievedMemory = await memories.get('workflow-memory-001');
 		expect(retrievedMemory).toBeDefined();
-		expect(retrievedMemory.content).toContain('Integrated workflow test');
+		if (retrievedMemory) {
+			expect(retrievedMemory.content).toContain('Integrated workflow test');
+		}
 
 		const retrievedTask = await taskRepo.get('workflow-task-001');
 		expect(retrievedTask).toBeDefined();
-		expect(retrievedTask.record.metadata.related_memory).toBe('workflow-memory-001');
+		if (retrievedTask) {
+			expect((retrievedTask.record.metadata as { related_memory?: string }).related_memory).toBe(
+				'workflow-memory-001',
+			);
+		}
 
 		// 5. Verify system status through MCP
 		const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);
 		const tools = await toolsResponse.json();
-		const systemTools = tools.tools.filter((tool: any) => tool.name.startsWith('system.'));
+		const systemTools = tools.tools.filter((tool: { name: string }) =>
+			tool.name.startsWith('system.'),
+		);
 		expect(systemTools.length).toBeGreaterThan(0);
 
 		// Cleanup
@@ -278,7 +295,7 @@ describe('brAInwav Second Brain End-to-End Validation', () => {
 		const tools = await toolsResponse.json();
 
 		const monitoringTools = tools.tools.filter(
-			(tool: any) => tool.name.includes('status') || tool.name.includes('resources'),
+			(tool: { name: string }) => tool.name.includes('status') || tool.name.includes('resources'),
 		);
 
 		expect(monitoringTools.length).toBeGreaterThan(0);

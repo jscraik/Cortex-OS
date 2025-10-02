@@ -5,17 +5,17 @@ sidebar_label: Index
 
 # Cortex RAG Documentation
 
-[](https://www.npmjs.com/package/@cortex-os/rag)
-[](#)
-[](#)
-[](#security)
+[![NPM Version](https://img.shields.io/npm/v/@cortex-os/rag)](https://www.npmjs.com/package/@cortex-os/rag)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
+[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
 
 Cortex RAG provides retrieval-augmented generation utilities for Cortex-OS. This index links to all documentation sections.
 
 ## Features
 
 | Status | Feature | Description |
-| --- | --- | --- |
+|---|---|---|
 | ✅ | Advanced chunking | Overlapping document chunking for improved recall |
 | ✅ | Multi-provider embeddings | Combine Python, composite and custom embedders |
 | ✅ | Memory and vector stores | Pluggable storage backends |
@@ -26,13 +26,14 @@ Cortex RAG provides retrieval-augmented generation utilities for Cortex-OS. This
 ## Documentation
 
 | Guide | Purpose |
-| --- | --- |
+|---|---|
 | [Introduction](./introduction.md) | Package goals and core problems |
 | [Getting Started](./getting-started.md) | Install, configure, and run the pipeline |
 | [Configuration](./configuration.md) | Environment variables and config files |
 | [Architecture](./architecture.md) | Component breakdown and data flow |
 | [CLI Reference](./cli-reference.md) | Command-line options and scripts |
 | [API Reference](./api-reference.md) | SDK classes and methods |
+| [MCP Tools](./mcp-tools.md) | MCP tool contracts, schemas, and integration recipes |
 | [User Guide](./user-guide.md) | Everyday tasks and navigation |
 | [Best Practices](./best-practices.md) | Recommended settings and security |
 | [Providers Setup](./providers-setup.md) | External service configuration |

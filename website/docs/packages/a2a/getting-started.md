@@ -25,5 +25,4 @@ import { createEnvelope } from '@cortex-os/a2a-core/envelope';
 
 const bus = createBus(inproc());
 await bus.publish(createEnvelope({ type: 'demo.event', data: {} }));
-
 ```

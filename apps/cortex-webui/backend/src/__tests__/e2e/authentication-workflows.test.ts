@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Express } from 'express';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../server';
 
 // Mock external dependencies
@@ -23,7 +24,7 @@ vi.mock('../../services/authMonitoringService', () => ({
 }));
 
 describe('End-to-End Authentication Workflows', () => {
-	let app: any;
+	let app: Express;
 	let testUser: any;
 
 	beforeEach(async () => {
@@ -117,23 +118,14 @@ describe('End-to-End Authentication Workflows', () => {
 			expect(logoutResponse.body).toHaveProperty('success', true);
 
 			// Step 6: Verify session is invalidated
-			await request(app)
-				.get('/api/auth/session')
-				.set('Cookie', sessionCookie)
-				.expect(401);
+			await request(app).get('/api/auth/session').set('Cookie', sessionCookie).expect(401);
 
-			await request(app)
-				.get('/api/auth/user')
-				.set('Cookie', sessionCookie)
-				.expect(401);
+			await request(app).get('/api/auth/user').set('Cookie', sessionCookie).expect(401);
 		});
 
 		it('should handle session timeout and automatic logout', async () => {
 			// Register and login user
-			await request(app)
-				.post('/api/auth/sign-up')
-				.send(testUser)
-				.expect(200);
+			await request(app).post('/api/auth/sign-up').send(testUser).expect(200);
 
 			const loginResponse = await request(app)
 				.post('/api/auth/sign-in')
@@ -146,10 +138,7 @@ describe('End-to-End Authentication Workflows', () => {
 			const sessionCookie = loginResponse.headers['set-cookie'];
 
 			// Access protected endpoint
-			await request(app)
-				.get('/api/auth/session')
-				.set('Cookie', sessionCookie)
-				.expect(200);
+			await request(app).get('/api/auth/session').set('Cookie', sessionCookie).expect(200);
 
 			// Simulate session timeout by waiting (in real scenario, this would be handled by server)
 			// For testing, we'll test that the middleware properly validates session existence
@@ -167,10 +156,7 @@ describe('End-to-End Authentication Workflows', () => {
 	describe('Password Recovery Workflow', () => {
 		it('should handle complete password reset flow', async () => {
 			// Register user first
-			await request(app)
-				.post('/api/auth/sign-up')
-				.send(testUser)
-				.expect(200);
+			await request(app).post('/api/auth/sign-up').send(testUser).expect(200);
 
 			// Step 1: Request password reset
 			const forgotPasswordResponse = await request(app)
@@ -181,7 +167,10 @@ describe('End-to-End Authentication Workflows', () => {
 				.expect(200);
 
 			expect(forgotPasswordResponse.body).toHaveProperty('success', true);
-			expect(forgotPasswordResponse.body).toHaveProperty('message', 'Password reset email sent if email exists');
+			expect(forgotPasswordResponse.body).toHaveProperty(
+				'message',
+				'Password reset email sent if email exists',
+			);
 
 			// Step 2: Verify email service was called
 			const { emailService } = await import('../../services/emailService');
@@ -189,7 +178,7 @@ describe('End-to-End Authentication Workflows', () => {
 				expect.objectContaining({
 					email: testUser.email,
 				}),
-				expect.any(String)
+				expect.any(String),
 			);
 
 			// Step 3: Attempt password reset with token
@@ -238,7 +227,7 @@ describe('End-to-End Authentication Workflows', () => {
 			const { emailService } = await import('../../services/emailService');
 			expect(emailService.sendMagicLink).toHaveBeenCalledWith(
 				'magic-link-test@brainwav.ai',
-				expect.any(String)
+				expect.any(String),
 			);
 
 			// Step 3: Test that the user can be created via magic link flow
@@ -249,35 +238,27 @@ describe('End-to-End Authentication Workflows', () => {
 	describe('OAuth Authentication Workflows', () => {
 		it('should provide OAuth URLs for all configured providers', async () => {
 			// Test GitHub OAuth
-			const githubResponse = await request(app)
-				.get('/api/auth/oauth/github')
-				.expect(200);
+			const githubResponse = await request(app).get('/api/auth/oauth/github').expect(200);
 
 			expect(githubResponse.body).toHaveProperty('url');
 			expect(githubResponse.body.url).toContain('github.com');
 			expect(githubResponse.body.url).toContain('signin');
 
 			// Test Google OAuth
-			const googleResponse = await request(app)
-				.get('/api/auth/oauth/google')
-				.expect(200);
+			const googleResponse = await request(app).get('/api/auth/oauth/google').expect(200);
 
 			expect(googleResponse.body).toHaveProperty('url');
 			expect(googleResponse.body.url).toContain('google.com');
 
 			// Test Discord OAuth
-			const discordResponse = await request(app)
-				.get('/api/auth/oauth/discord')
-				.expect(200);
+			const discordResponse = await request(app).get('/api/auth/oauth/discord').expect(200);
 
 			expect(discordResponse.body).toHaveProperty('url');
 			expect(discordResponse.body.url).toContain('discord.com');
 		});
 
 		it('should handle unsupported OAuth providers gracefully', async () => {
-			const response = await request(app)
-				.get('/api/auth/oauth/unsupported-provider')
-				.expect(200);
+			const response = await request(app).get('/api/auth/oauth/unsupported-provider').expect(200);
 
 			expect(response.body).toHaveProperty('url');
 			// Better Auth should handle this gracefully
@@ -289,10 +270,7 @@ describe('End-to-End Authentication Workflows', () => {
 
 		beforeEach(async () => {
 			// Create and authenticate user
-			await request(app)
-				.post('/api/auth/sign-up')
-				.send(testUser)
-				.expect(200);
+			await request(app).post('/api/auth/sign-up').send(testUser).expect(200);
 
 			const loginResponse = await request(app)
 				.post('/api/auth/sign-in')
@@ -355,10 +333,7 @@ describe('End-to-End Authentication Workflows', () => {
 
 		beforeEach(async () => {
 			// Create and authenticate user
-			await request(app)
-				.post('/api/auth/sign-up')
-				.send(testUser)
-				.expect(200);
+			await request(app).post('/api/auth/sign-up').send(testUser).expect(200);
 
 			const loginResponse = await request(app)
 				.post('/api/auth/sign-in')
@@ -387,9 +362,7 @@ describe('End-to-End Authentication Workflows', () => {
 		});
 
 		it('should reject 2FA operations for unauthenticated users', async () => {
-			const response = await request(app)
-				.post('/api/auth/2fa/enable')
-				.expect(401);
+			const response = await request(app).post('/api/auth/2fa/enable').expect(401);
 
 			expect(response.body).toHaveProperty('error', 'Authentication required');
 		});
@@ -400,10 +373,7 @@ describe('End-to-End Authentication Workflows', () => {
 
 		beforeEach(async () => {
 			// Create and authenticate user
-			await request(app)
-				.post('/api/auth/sign-up')
-				.send(testUser)
-				.expect(200);
+			await request(app).post('/api/auth/sign-up').send(testUser).expect(200);
 
 			const loginResponse = await request(app)
 				.post('/api/auth/sign-in')
@@ -426,9 +396,7 @@ describe('End-to-End Authentication Workflows', () => {
 			expect(Array.isArray(orgListResponse.body)).toBe(true);
 
 			// Step 2: Should reject organization access without authentication
-			const unauthorizedResponse = await request(app)
-				.get('/api/auth/organizations')
-				.expect(401);
+			const unauthorizedResponse = await request(app).get('/api/auth/organizations').expect(401);
 
 			expect(unauthorizedResponse.body).toHaveProperty('error', 'Authentication required');
 		});
@@ -506,11 +474,15 @@ describe('End-to-End Authentication Workflows', () => {
 			const errorScenarios = [
 				() => request(app).get('/api/auth/session').expect(401),
 				() => request(app).post('/api/auth/sign-in').send({}).expect(400),
-				() => request(app).post('/api/auth/sign-up').send({
-					name: 'Test',
-					email: 'invalid',
-					password: '123',
-				}).expect(400),
+				() =>
+					request(app)
+						.post('/api/auth/sign-up')
+						.send({
+							name: 'Test',
+							email: 'invalid',
+							password: '123',
+						})
+						.expect(400),
 			];
 
 			for (const scenario of errorScenarios) {
@@ -522,20 +494,20 @@ describe('End-to-End Authentication Workflows', () => {
 
 		it('should handle concurrent authentication requests', async () => {
 			// Create multiple concurrent login requests
-			const loginPromises = Array(5).fill(0).map(() =>
-				request(app)
-					.post('/api/auth/sign-in')
-					.send({
+			const loginPromises = Array(5)
+				.fill(0)
+				.map(() =>
+					request(app).post('/api/auth/sign-in').send({
 						email: testUser.email,
 						password: testUser.password,
-					})
-			);
+					}),
+				);
 
 			// Wait for all requests to complete
 			const responses = await Promise.all(loginPromises);
 
 			// All requests should succeed
-			responses.forEach(response => {
+			responses.forEach((response) => {
 				expect([200, 400]).toContain(response.status); // 200 for success, 400 for rate limiting
 			});
 		});
@@ -544,10 +516,7 @@ describe('End-to-End Authentication Workflows', () => {
 	describe('Integration with brAInwav Services', () => {
 		it('should integrate with A2A event publishing', async () => {
 			// Register a new user
-			await request(app)
-				.post('/api/auth/sign-up')
-				.send(testUser)
-				.expect(200);
+			await request(app).post('/api/auth/sign-up').send(testUser).expect(200);
 
 			// Verify A2A integration was called
 			const { webUIBusIntegration } = await import('../../services/a2a-integration');
@@ -568,10 +537,7 @@ describe('End-to-End Authentication Workflows', () => {
 			const { authMonitoringService } = await import('../../services/authMonitoringService');
 
 			// Register user
-			await request(app)
-				.post('/api/auth/sign-up')
-				.send(testUser)
-				.expect(200);
+			await request(app).post('/api/auth/sign-up').send(testUser).expect(200);
 
 			// Login user
 			await request(app)
@@ -610,7 +576,7 @@ describe('End-to-End Authentication Workflows', () => {
 				expect.objectContaining({
 					email: testUser.email,
 				}),
-				expect.any(String)
+				expect.any(String),
 			);
 		});
 	});
