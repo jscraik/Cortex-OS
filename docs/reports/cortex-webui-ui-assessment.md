@@ -22,7 +22,7 @@
 - **Password Recovery:** `ForgotPasswordForm` shows success and error states; `ResetPasswordForm` validates tokens and enforces minimum password length before redirecting back to login.【F:apps/cortex-webui/frontend/src/components/Auth/ForgotPasswordForm.tsx†L34-L91】【F:apps/cortex-webui/frontend/src/components/Auth/ResetPasswordForm.tsx†L12-L127】
 
 ### Settings
-- Presents appearance, model selection, and API key storage options with optimistic status messaging. Theme toggling relies on a pill switch.【F:apps/cortex-webui/frontend/src/components/Settings/SettingsPage.tsx†L12-L109】【F:apps/cortex-webui/frontend/src/components/Settings/ThemeSwitcher.tsx†L4-L21】
+- Presents appearance, model selection, and API key storage options with optimistic status messaging. Theme toggling relies on a pill switch.【F:apps/cortex-webui/frontend/src/pages/SettingsPage.tsx†L12-L109】【F:apps/cortex-webui/frontend/src/components/Settings/ThemeSwitcher.tsx†L4-L21】
 
 ### Profile & Security
 - Tabbed interface splits profile editing from security features. Profile form includes avatar preview, contact details, and account metadata. Security tab bundles OAuth account linking, password change, and a toggleable (state-only) two-factor section.【F:apps/cortex-webui/frontend/src/pages/ProfilePage.tsx†L14-L221】【F:apps/cortex-webui/frontend/src/components/Auth/ProfileForm.tsx†L17-L155】【F:apps/cortex-webui/frontend/src/components/Auth/OAuthLinking.tsx†L8-L119】
