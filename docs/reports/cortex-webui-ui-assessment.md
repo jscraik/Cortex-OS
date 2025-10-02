@@ -42,40 +42,12 @@ flowchart LR
 ### Authentication Flow
 ```mermaid
 flowchart TB
-    Entry[Landing
-    (Redirects based on auth)] --> LoginCard[Login Card
-    • Email/Password
-    • OAuth Buttons
-    • Forgot Link]
+    Entry[Landing<br/>(Redirects based on auth)] --> LoginCard[Login Card<br/>• Email/Password<br/>• OAuth Buttons<br/>• Forgot Link]
     LoginCard --> RegisterSwitch["Don't have an account? Register"]
-    RegisterSwitch --> RegisterCard[Registration Card
-    • Name/Email
-    • Password + Confirm
-    • OAuth Sign-up]
+    RegisterSwitch --> RegisterCard[Registration Card<br/>• Name/Email<br/>• Password + Confirm<br/>• OAuth Sign-up]
     LoginCard --> ForgotLink[Forgot Password]
-    ForgotLink --> ResetRequest[Reset Request Form
-    • Email Field
-    • Success Banner]
-    ResetRequest --> ResetCard[Reset Form
-    • Token Validation
-    • New Password Inputs]
-```
-
-### Profile & Settings Surfaces
-```mermaid
-flowchart LR
-    Tabs[Profile Header + Tabs] --> ProfileTab[Profile Tab
-    • Avatar Preview
-    • Name & Email
-    • Account Metadata]
-    Tabs --> SecurityTab[Security Tab
-    • OAuth Connections
-    • Password Change Form
-    • 2FA Toggle]
-    SettingsPage[Settings Page
-    • Theme Switcher
-    • Model Dropdown
-    • API Key Input]
+    ForgotLink --> ResetRequest[Reset Request Form<br/>• Email Field<br/>• Success Banner]
+    ResetRequest --> ResetCard[Reset Form<br/>• Token Validation<br/>• New Password Inputs]
 ```
 
 ## Interaction Notes
