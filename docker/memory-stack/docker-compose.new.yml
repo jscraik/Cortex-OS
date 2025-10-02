@@ -1,7 +1,7 @@
 version: "3.9"
 
 x-health: &curl-health
-  test: ["CMD", "sh", "-c", "curl -fsS $HEALTH_URL || exit 1"]
+  test: ["CMD", "sh", "-c", "curl -fsS $$HEALTH_URL || exit 1"]
   interval: 10s
   timeout: 2s
   retries: 5
@@ -22,10 +22,9 @@ services:
       - "6333:6333"             # local dev
     environment:
       - QDRANT__SERVICE__GRPC_PORT=6334
+      - HEALTH_URL=http://localhost:6333/collections
     healthcheck:
       <<: *curl-health
-      environment:
-        HEALTH_URL: http://localhost:6333/collections
 
   # Local-Memory service (REST) – acts as Memory-Core API
   local-memory:
@@ -52,12 +51,11 @@ services:
       - MEMORY_MAX_LIMIT=100
       - MEMORY_DEFAULT_THRESHOLD=0.5
       - MEMORY_HYBRID_WEIGHT=0.6
+      - HEALTH_URL=http://localhost:3028/healthz
     volumes:
       - memories_data:/data
     healthcheck:
       <<: *curl-health
-      environment:
-        HEALTH_URL: http://localhost:3028/healthz
 
   # MCP hub (stdio + http/streamable), registers memory.* and agent_toolkit_*
   cortex-mcp:
@@ -84,14 +82,13 @@ services:
       - NODE_ENV=production
       - MEMORY_LOG_LEVEL=info
       - LOG_FORMAT=json
+      - HEALTH_URL=http://localhost:9600/healthz
     volumes:
       - memories_data:/data
       # Bind your host toolkit directory into the container
       - /Users/jamiecraik/.Cortex-OS:/opt/cortex-home:ro
     healthcheck:
       <<: *curl-health
-      environment:
-        HEALTH_URL: http://localhost:9600/healthz
 
   # (Optional) REST façade – only if you keep a separate thin API
   # You can drop this if local-memory already is your REST API.
@@ -113,12 +110,11 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION=local_memory_v1
       - MEMORY_LOG_LEVEL=info
+      - HEALTH_URL=http://localhost:9700/healthz
     volumes:
       - memories_data:/data
     healthcheck:
       <<: *curl-health
-      environment:
-        HEALTH_URL: http://localhost:9700/healthz
 
   # (Optional) reverse proxy for remote MCP (TLS)
   # Enable only if you want to expose cortex-mcp:9600 publicly.

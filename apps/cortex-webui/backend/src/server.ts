@@ -58,6 +58,13 @@ import { listWebuiMcpTools, mcpExecuteHandler } from './mcp/tools.js';
 // Import middleware
 import { authenticateToken } from './middleware/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
+// Security middleware for Phase 1.2 hardening
+import {
+	applySecurityMiddleware,
+	customCsrfProtection,
+	apiKeyAuth,
+	securityErrorHandler
+} from './middleware/security.js';
 // Better Auth routes
 import { setupBetterAuthRoutes } from './routes/better-auth-routes.js';
 // Import services
@@ -83,10 +90,18 @@ export const createApp = (): Express => {
 	app.use(express.urlencoded({ extended: true }));
 	app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-	// Health (lightweight contract endpoint)
-	app.get('/health', (_req, res) => {
-		res.json({ status: 'OK', timestamp: new Date().toISOString() });
-	});
+	// Apply brAInwav security middleware (Phase 1.2 hardening)
+	applySecurityMiddleware(app);
+
+	// Apply metrics collection middleware
+	import { metricsMiddleware, createHealthCheckRoutes, createMetricsRoutes } from './monitoring/index.js';
+	app.use(metricsMiddleware());
+
+	// Health Check Routes (comprehensive monitoring)
+	app.use('/health', createHealthCheckRoutes());
+
+	// Metrics Routes (with API key authentication)
+	app.use('/metrics', createMetricsRoutes());
 
 	// API Routes
 	// Better Auth routes
@@ -111,6 +126,7 @@ export const createApp = (): Express => {
 	app.post(
 		`${API_BASE_PATH}/conversations`,
 		authenticateToken,
+		customCsrfProtection,
 		ConversationController.createConversation,
 	);
 	app.get(
@@ -121,11 +137,13 @@ export const createApp = (): Express => {
 	app.put(
 		`${API_BASE_PATH}/conversations/:id`,
 		authenticateToken,
+		customCsrfProtection,
 		ConversationController.updateConversation,
 	);
 	app.delete(
 		`${API_BASE_PATH}/conversations/:id`,
 		authenticateToken,
+		customCsrfProtection,
 		ConversationController.deleteConversation,
 	);
 
@@ -137,44 +155,48 @@ export const createApp = (): Express => {
 	app.post(
 		`${API_BASE_PATH}/conversations/:conversationId/messages`,
 		authenticateToken,
+		customCsrfProtection,
 		createMessage,
 	);
 
 	app.get(`${API_BASE_PATH}/models`, getModels);
 	app.get(`${API_BASE_PATH}/models/:id`, getModelById);
 	app.get(`${API_BASE_PATH}/models/ui`, getUiModels);
-	app.post(`${API_BASE_PATH}/crawl`, postCrawl);
+	app.post(`${API_BASE_PATH}/crawl`, customCsrfProtection, postCrawl);
 
 	app.get(`${API_BASE_PATH}/chat/:sessionId`, getChatSession);
-	app.post(`${API_BASE_PATH}/chat/:sessionId/messages`, postChatMessage);
+	app.post(`${API_BASE_PATH}/chat/:sessionId/messages`, customCsrfProtection, postChatMessage);
 	app.get(`${API_BASE_PATH}/chat/:sessionId/stream`, streamChatSSE);
 	app.get(`${API_BASE_PATH}/chat/:sessionId/tools`, getChatTools);
 
 	app.get(`${API_BASE_PATH}/context-map`, getContextMap);
 	app.get(`${API_BASE_PATH}/approvals`, getApprovals);
-	app.post(`${API_BASE_PATH}/approvals`, postApproval);
+	app.post(`${API_BASE_PATH}/approvals`, customCsrfProtection, postApproval);
 
-	app.post(`${API_BASE_PATH}/files/upload`, authenticateToken, uploadMiddleware, uploadFileHandler);
-	app.delete(`${API_BASE_PATH}/files/:id`, authenticateToken, deleteFileHandler);
+	app.post(`${API_BASE_PATH}/files/upload`, authenticateToken, customCsrfProtection, uploadMiddleware, uploadFileHandler);
+	app.delete(`${API_BASE_PATH}/files/:id`, authenticateToken, customCsrfProtection, deleteFileHandler);
 
 	app.post(
 		`${API_BASE_PATH}/documents/parse`,
 		authenticateToken,
+		customCsrfProtection,
 		documentUploadMiddleware.single('document'),
 		parseDocument,
 	);
 	app.get(`${API_BASE_PATH}/documents/supported-types`, getSupportedTypes);
 
-	// MCP tool execution (initial HTTP binding)
-	app.post(`${API_BASE_PATH}/mcp/execute`, mcpExecuteHandler);
-	app.get(`${API_BASE_PATH}/mcp/tools`, (_req, res) => {
+	// MCP tool execution (initial HTTP binding) - with API key authentication
+	app.post(`${API_BASE_PATH}/mcp/execute`, apiKeyAuth, mcpExecuteHandler);
+	app.get(`${API_BASE_PATH}/mcp/tools`, apiKeyAuth, (_req, res) => {
 		res.json({
 			tools: listWebuiMcpTools(),
 			timestamp: new Date().toISOString(),
+			brand: 'brAInwav'
 		});
 	});
 
-	// Error handling last
+	// Error handling last - with brAInwav security error handler
+	app.use(securityErrorHandler);
 	app.use(errorHandler);
 	return app;
 };

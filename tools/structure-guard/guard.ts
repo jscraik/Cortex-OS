@@ -106,6 +106,7 @@ await (async () => {
 						'logs',
 						'services',
 						'.cortex',
+						'.eng',
 						'.github',
 						'.changeset',
 						'.husky',

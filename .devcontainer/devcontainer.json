@@ -74,7 +74,13 @@
     "MEMORY_LOG_LEVEL": "debug",
     "LOG_FORMAT": "pretty",
     "MISE_ENV": "development",
-    "CORTEX_DEV_FULL": "1"
+    "CORTEX_DEV_FULL": "1",
+    "MEMORIES_SHORT_STORE": "local",
+    "MEMORIES_ADAPTER": "local",
+    "LOCAL_MEMORY_BASE_URL": "http://localhost:3028/api/v1",
+    "LOCAL_MEMORY_PORT": "3028",
+    "LOCAL_MEMORY_MODE": "dual",
+    "QDRANT_URL": "http://qdrant:6333"
   },
   // VS Code specific settings
   "customizations": {

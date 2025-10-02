@@ -13,6 +13,7 @@ export default defineConfig({
 			'services/orchestration/tests/**/*.spec.ts',
 			'services/memories/tests/**/*.spec.ts',
 			'services/agents/tests/**/*.spec.ts',
+			'scripts/ci/__tests__/**/*.test.ts',
 		],
 		globals: true,
 		name: 'simple-tests',
@@ -22,6 +23,8 @@ export default defineConfig({
 			include: [
 				'simple-tests/agent-isolation-sandbox-impl.ts',
 				'libs/typescript/contracts/src/sandbox-audit-events.ts',
+				'scripts/ci/quality-gate-enforcer.ts',
+				'scripts/ci/baseline-metrics.ts',
 			],
 			thresholds: {
 				statements: 80,

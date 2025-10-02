@@ -58,6 +58,7 @@ vi.mock('node:fs', () => ({
 				},
 				allowedRootEntries: [
 					'.cortex',
+					'.eng',
 					'apps',
 					'packages',
 					'libs',

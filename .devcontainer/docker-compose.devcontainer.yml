@@ -1,6 +1,7 @@
 services:
   # Main development container
   devcontainer:
+    platform: linux/amd64
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -11,6 +12,8 @@ services:
       - ~/.ssh:/home/vscode/.ssh:ro
       - ~/.gitconfig:/home/vscode/.gitconfig:ro
       - ~/.npmrc:/home/vscode/.npmrc:ro
+      - ../.secrets:/opt/brAInwav-secrets:ro
+      - local_memory_data:/home/vscode/.local-memory
     environment:
       - NODE_ENV=development
       - CORTEX_HOME=/opt/cortex-home
@@ -84,3 +87,4 @@ volumes:
   qdrant_data:
   redis_data:
   postgres_data:
+  local_memory_data:

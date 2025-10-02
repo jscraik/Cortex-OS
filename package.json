@@ -314,7 +314,8 @@
     "memory:quick": "node scripts/memory-snapshot-runner.mjs --interval 1500 --label quick -- -- node scripts/vitest-safe.mjs run --reporter=dot --passWithNoTests --changed --maxTests=20 || true",
     "brainwav:guard": "bash scripts/brainwav-production-guard.sh",
     "test:contracts": "vitest tests/contracts/openapi-sync.spec.ts",
-    "test:mcp": "vitest packages/mcp-core/tests/tools-contract.spec.ts"
+    "test:mcp": "vitest packages/mcp-core/tests/tools-contract.spec.ts",
+    "baseline:collect": "ts-node --transpile-only scripts/ci/generate-baseline.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.61.0",

@@ -67,6 +67,7 @@ temp_*.txt
 
 # Data and API files
 data/api-keys.json
+.secrets/
 
 # Performance and test output
 performance-history.json
@@ -84,7 +85,8 @@ semgrep-results.json
 detects
 
 # Development and testing artifacts
-.eng/
+.eng/*
+!.eng/quality_gate.json
 .cursor/
 .vitest-tmp-*/
 dist-test/

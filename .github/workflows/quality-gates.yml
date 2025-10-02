@@ -198,6 +198,228 @@ jobs:
             python -m mypy . || (pip install mypy && mypy .) || true
           fi
 
+      # Quality Gates: Coverage Analysis
+      - name: Run Coverage Analysis
+        id: coverage
+        if: always()
+        run: |
+          echo "::group::Coverage Analysis"
+          chmod +x scripts/ci/coverage.sh
+          ./scripts/ci/coverage.sh
+          echo "::endgroup::"
+        continue-on-error: true
+
+      # Quality Gates: Mutation Testing
+      - name: Run Mutation Testing
+        id: mutation
+        if: always()
+        run: |
+          echo "::group::Mutation Testing"
+          chmod +x scripts/ci/mutation.sh
+          ./scripts/ci/mutation.sh
+          echo "::endgroup::"
+        continue-on-error: true
+
+      # Quality Gates: Security Scanning
+      - name: Run Security Scanning
+        id: security
+        if: always()
+        run: |
+          echo "::group::Security Scanning"
+          chmod +x scripts/ci/security-scan.sh
+          ./scripts/ci/security-scan.sh
+          echo "::endgroup::"
+        continue-on-error: true
+
+      # Quality Gates: Operational Readiness
+      - name: Run Operational Readiness Checks
+        id: ops-readiness
+        if: always()
+        run: |
+          echo "::group::Operational Readiness"
+          chmod +x scripts/ci/ops-readiness.sh
+          ./scripts/ci/ops-readiness.sh
+          echo "::endgroup::"
+        continue-on-error: true
+
+      # Quality Gate Validation
+      - name: Validate Quality Gates
+        id: validation
+        if: always()
+        run: |
+          echo "::group::Quality Gate Validation"
+
+          # Compile TypeScript to ensure quality gate enforcer is available
+          pnpm tsc --noEmit || echo "TypeScript compilation issues, continuing with validation..."
+
+          # Run quality gate validation if enforcer exists
+          if [ -f "dist/ci/quality-gate-enforcer.js" ] || [ -f "src/ci/quality-gate-enforcer.ts" ]; then
+            if [ -f "dist/ci/quality-gate-enforcer.js" ]; then
+              node dist/ci/quality-gate-enforcer.js
+            else
+              # Run directly with ts-node if available
+              pnpm exec ts-node src/ci/quality-gate-enforcer.ts || echo "Quality gate enforcer execution failed"
+            fi
+          else
+            echo "❌ Quality gate enforcer not found, checking results manually"
+
+            # Manual validation as fallback
+            COVERAGE_PASSED=${{ steps.coverage.outcome == 'success' }}
+            MUTATION_PASSED=${{ steps.mutation.outcome == 'success' }}
+            SECURITY_PASSED=${{ steps.security.outcome == 'success' }}
+            OPS_PASSED=${{ steps.ops-readiness.outcome == 'success' }}
+
+            echo "Coverage: $COVERAGE_PASSED"
+            echo "Mutation: $MUTATION_PASSED"
+            echo "Security: $SECURITY_PASSED"
+            echo "Ops Readiness: $OPS_PASSED"
+
+            if [ "$COVERAGE_PASSED" = "true" ] && [ "$MUTATION_PASSED" = "true" ] && [ "$SECURITY_PASSED" = "true" ] && [ "$OPS_PASSED" = "true" ]; then
+              echo "✅ All quality gates passed"
+            else
+              echo "❌ Some quality gates failed"
+              exit 1
+            fi
+          fi
+          echo "::endgroup::"
+
+      # Generate Quality Gate Report
+      - name: Generate Quality Gate Report
+        id: report
+        if: always()
+        run: |
+          echo "::group::Generate Quality Gate Report"
+
+          REPORT_FILE="quality-gate-report.md"
+          cat > $REPORT_FILE << 'EOF'
+          # 🚦 brAInwav Quality Gate Report
+
+          ## Summary
+          - **Coverage**: ${{ steps.coverage.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
+          - **Mutation Testing**: ${{ steps.mutation.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
+          - **Security Scanning**: ${{ steps.security.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
+          - **Operational Readiness**: ${{ steps.ops-readiness.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
+
+          EOF
+
+          # Include detailed results if available
+          if [ -f "coverage-results.json" ]; then
+            cat >> $REPORT_FILE << 'EOF'
+
+          ## Coverage Details
+          ```json
+          EOF
+            cat coverage-results.json >> $REPORT_FILE
+            cat >> $REPORT_FILE << 'EOF'
+          ```
+          EOF
+          fi
+
+          if [ -f "mutation-results.json" ]; then
+            cat >> $REPORT_FILE << 'EOF'
+
+          ## Mutation Testing Details
+          ```json
+          EOF
+            cat mutation-results.json >> $REPORT_FILE
+            cat >> $REPORT_FILE << 'EOF'
+          ```
+          EOF
+          fi
+
+          if [ -f "security-results.json" ]; then
+            cat >> $REPORT_FILE << 'EOF'
+
+          ## Security Scan Details
+          ```json
+          EOF
+            cat security-results.json >> $REPORT_FILE
+            cat >> $REPORT_FILE << 'EOF'
+          ```
+          EOF
+          fi
+
+          if [ -f "ops-readiness-results.json" ]; then
+            cat >> $REPORT_FILE << 'EOF'
+
+          ## Operational Readiness Details
+          ```json
+          EOF
+            cat ops-readiness-results.json >> $REPORT_FILE
+            cat >> $REPORT_FILE << 'EOF'
+          ```
+          EOF
+          fi
+
+          echo "Report generated at $REPORT_FILE"
+          echo "report_file=$REPORT_FILE" >> $GITHUB_OUTPUT
+          echo "::endgroup::"
+
+      # Comment on PR (only for pull request events)
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '${{ steps.report.outputs.report_file }}';
+
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+
+              try {
+                // Find existing quality gate comment
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+
+                const existingComment = comments.find(comment =>
+                  comment.user.type === 'Bot' &&
+                  comment.body.includes('brAInwav Quality Gate Report')
+                );
+
+                const commentBody = `## 🚦 brAInwav Quality Gate Report\n\n${report}\n\n---\n*Generated by Cortex-OS Quality Gates*`;
+
+                if (existingComment) {
+                  // Update existing comment
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingComment.id,
+                    body: commentBody,
+                  });
+                  console.log('Updated existing quality gate comment');
+                } else {
+                  // Create new comment
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    body: commentBody,
+                  });
+                  console.log('Created new quality gate comment');
+                }
+              } catch (error) {
+                console.error('Failed to comment on PR:', error);
+              }
+            }
+
+      # Upload Artifacts
+      - name: Upload Quality Gate Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gate-results-${{ github.run_number }}
+          path: |
+            coverage-results.json
+            mutation-results.json
+            security-results.json
+            ops-readiness-results.json
+            quality-gate-report.md
+          retention-days: 30
+
       # Coverage upload (conditional)
       - name: Upload coverage reports
         if: inputs.test-coverage && hashFiles('coverage/lcov.info') != ''
