@@ -1,5 +1,5 @@
-import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 import { EventEmitter } from 'node:events';
+import type { A2AEventEnvelope } from '@cortex-os/a2a-events';
 
 export interface MCPClientOptions {
 	serverUrl: string;
@@ -76,10 +76,7 @@ export class MCPStreamingClient extends EventEmitter {
 			this.emit('connected');
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : String(error);
-			throw this.createBrAInwavError(
-				`brAInwav MCP connection failed: ${msg}`,
-				'CONNECTION_FAILED',
-			);
+			throw this.createBrAInwavError(`brAInwav MCP connection failed: ${msg}`, 'CONNECTION_FAILED');
 		}
 	}
 

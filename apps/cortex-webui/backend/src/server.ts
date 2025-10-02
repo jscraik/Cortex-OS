@@ -1,12 +1,17 @@
 // Composable server factory for Cortex WebUI backend
 // Refactored from monolithic bootstrap to testable factory pattern.
 
-import http, { type Server as HttpServer } from 'node:http';
-import path from 'node:path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Express } from 'express';
+import http, { type Server as HttpServer } from 'node:http';
+import path from 'node:path';
 import { WebSocketServer } from 'ws';
+import {
+	createHealthCheckRoutes,
+	createMetricsRoutes,
+	metricsMiddleware,
+} from './monitoring/index.js';
 
 dotenv.config();
 
@@ -60,11 +65,11 @@ import { authenticateToken } from './middleware/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
 // Security middleware for Phase 1.2 hardening
 import {
+	apiKeyAuth,
 	applySecurityMiddleware,
 	customCsrfProtection,
-	apiKeyAuth,
-	securityErrorHandler
-} from './middleware/security.js';
+	securityErrorHandler,
+} from './middleware/security';
 // Better Auth routes
 import { setupBetterAuthRoutes } from './routes/better-auth-routes.js';
 // Import services
@@ -93,11 +98,8 @@ export const createApp = (): Express => {
 	// Apply brAInwav security middleware (Phase 1.2 hardening)
 	applySecurityMiddleware(app);
 
-	// Apply metrics collection middleware
-	import { metricsMiddleware, createHealthCheckRoutes, createMetricsRoutes } from './monitoring/index.js';
-	app.use(metricsMiddleware());
-
-	// Health Check Routes (comprehensive monitoring)
+	// Apply metrics collection middleware (import moved to top)
+	app.use(metricsMiddleware()); // Health Check Routes (comprehensive monitoring)
 	app.use('/health', createHealthCheckRoutes());
 
 	// Metrics Routes (with API key authentication)
@@ -173,8 +175,19 @@ export const createApp = (): Express => {
 	app.get(`${API_BASE_PATH}/approvals`, getApprovals);
 	app.post(`${API_BASE_PATH}/approvals`, customCsrfProtection, postApproval);
 
-	app.post(`${API_BASE_PATH}/files/upload`, authenticateToken, customCsrfProtection, uploadMiddleware, uploadFileHandler);
-	app.delete(`${API_BASE_PATH}/files/:id`, authenticateToken, customCsrfProtection, deleteFileHandler);
+	app.post(
+		`${API_BASE_PATH}/files/upload`,
+		authenticateToken,
+		customCsrfProtection,
+		uploadMiddleware,
+		uploadFileHandler,
+	);
+	app.delete(
+		`${API_BASE_PATH}/files/:id`,
+		authenticateToken,
+		customCsrfProtection,
+		deleteFileHandler,
+	);
 
 	app.post(
 		`${API_BASE_PATH}/documents/parse`,
@@ -191,7 +204,7 @@ export const createApp = (): Express => {
 		res.json({
 			tools: listWebuiMcpTools(),
 			timestamp: new Date().toISOString(),
-			brand: 'brAInwav'
+			brand: 'brAInwav',
 		});
 	});
 

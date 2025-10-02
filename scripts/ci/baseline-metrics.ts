@@ -283,9 +283,7 @@ function buildCoverageMetric(
 	};
 }
 
-function buildMutationMetric(
-	mutationResult: { data: any; source: string } | null,
-): BaselineMetric {
+function buildMutationMetric(mutationResult: { data: any; source: string } | null): BaselineMetric {
 	if (!mutationResult?.data) {
 		return {
 			percentage: 0,
@@ -335,8 +333,8 @@ function coerceNumber(value: unknown): number | null {
 function isFileNotFound(error: unknown): boolean {
 	return Boolean(
 		error &&
-		typeof error === 'object' &&
-		'name' in error &&
-		(error as NodeJS.ErrnoException).code === 'ENOENT',
+			typeof error === 'object' &&
+			'name' in error &&
+			(error as NodeJS.ErrnoException).code === 'ENOENT',
 	);
 }

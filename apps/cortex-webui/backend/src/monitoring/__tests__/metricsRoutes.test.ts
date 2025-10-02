@@ -1,9 +1,9 @@
 // Test suite for Metrics API Routes
 // Comprehensive testing for metrics endpoints with security and brAInwav branding
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMetricsRoutes } from '../metricsRoutes.js';
 import { MetricsService } from '../services/metricsService.js';
 
@@ -59,28 +59,25 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 		});
 
 		it('should require API key authentication', async () => {
-			await request(app)
-				.get('/metrics')
-				.expect(401);
+			await request(app).get('/metrics').expect(401);
 
-			await request(app)
-				.get('/metrics')
-				.set('X-API-Key', 'invalid-key')
-				.expect(401);
+			await request(app).get('/metrics').set('X-API-Key', 'invalid-key').expect(401);
 		});
 
 		it('should accept API key via query parameter', async () => {
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
-			const response = await request(app)
-				.get('/metrics?api_key=test-api-key')
-				.expect(200);
+			const response = await request(app).get('/metrics?api_key=test-api-key').expect(200);
 
 			expect(response.text).toContain('test_metric');
 		});
 
 		it('should accept API key via Authorization header', async () => {
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
 			const response = await request(app)
 				.get('/metrics')
@@ -147,14 +144,9 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 		});
 
 		it('should require API key authentication for JSON endpoint', async () => {
-			await request(app)
-				.get('/metrics/json')
-				.expect(401);
+			await request(app).get('/metrics/json').expect(401);
 
-			await request(app)
-				.get('/metrics/json')
-				.set('X-API-Key', 'invalid-key')
-				.expect(401);
+			await request(app).get('/metrics/json').set('X-API-Key', 'invalid-key').expect(401);
 		});
 
 		it('should include metadata in JSON response', async () => {
@@ -195,20 +187,13 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 		});
 
 		it('should require API key for collection endpoint', async () => {
-			await request(app)
-				.post('/metrics/collect')
-				.expect(401);
+			await request(app).post('/metrics/collect').expect(401);
 
-			await request(app)
-				.post('/metrics/collect')
-				.set('X-API-Key', 'invalid-key')
-				.expect(401);
+			await request(app).post('/metrics/collect').set('X-API-Key', 'invalid-key').expect(401);
 		});
 
 		it('should handle collection errors gracefully', async () => {
-			mockMetricsService.collectMetrics.mockRejectedValue(
-				new Error('Collection failed')
-			);
+			mockMetricsService.collectMetrics.mockRejectedValue(new Error('Collection failed'));
 
 			const response = await request(app)
 				.post('/metrics/collect')
@@ -234,10 +219,7 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 			];
 
 			for (const invalidKey of invalidKeys) {
-				await request(app)
-					.get('/metrics')
-					.set('X-API-Key', invalidKey)
-					.expect(401);
+				await request(app).get('/metrics').set('X-API-Key', invalidKey).expect(401);
 			}
 		});
 
@@ -245,21 +227,19 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 			// Mock environment variable
 			process.env.METRICS_API_KEY = 'valid-env-key';
 
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
-			await request(app)
-				.get('/metrics')
-				.set('X-API-Key', 'valid-env-key')
-				.expect(200);
+			await request(app).get('/metrics').set('X-API-Key', 'valid-env-key').expect(200);
 
-			await request(app)
-				.get('/metrics')
-				.set('X-API-Key', 'invalid-env-key')
-				.expect(401);
+			await request(app).get('/metrics').set('X-API-Key', 'invalid-env-key').expect(401);
 		});
 
 		it('should include security headers in responses', async () => {
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
 			const response = await request(app)
 				.get('/metrics')
@@ -277,58 +257,36 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 			// This would require implementing rate limiting middleware
 			// For now, just test that multiple failed attempts are handled consistently
 			for (let i = 0; i < 10; i++) {
-				await request(app)
-					.get('/metrics')
-					.set('X-API-Key', 'wrong-key')
-					.expect(401);
+				await request(app).get('/metrics').set('X-API-Key', 'wrong-key').expect(401);
 			}
 		});
 	});
 
 	describe('HTTP Method Support', () => {
 		it('should only allow GET for metrics endpoints', async () => {
-			await request(app)
-				.post('/metrics')
-				.set('X-API-Key', 'test-api-key')
-				.expect(405);
+			await request(app).post('/metrics').set('X-API-Key', 'test-api-key').expect(405);
 
-			await request(app)
-				.put('/metrics')
-				.set('X-API-Key', 'test-api-key')
-				.expect(405);
+			await request(app).put('/metrics').set('X-API-Key', 'test-api-key').expect(405);
 
-			await request(app)
-				.delete('/metrics')
-				.set('X-API-Key', 'test-api-key')
-				.expect(405);
+			await request(app).delete('/metrics').set('X-API-Key', 'test-api-key').expect(405);
 
-			await request(app)
-				.patch('/metrics')
-				.set('X-API-Key', 'test-api-key')
-				.expect(405);
+			await request(app).patch('/metrics').set('X-API-Key', 'test-api-key').expect(405);
 		});
 
 		it('should only allow POST for collect endpoint', async () => {
-			await request(app)
-				.get('/metrics/collect')
-				.set('X-API-Key', 'test-api-key')
-				.expect(405);
+			await request(app).get('/metrics/collect').set('X-API-Key', 'test-api-key').expect(405);
 
-			await request(app)
-				.put('/metrics/collect')
-				.set('X-API-Key', 'test-api-key')
-				.expect(405);
+			await request(app).put('/metrics/collect').set('X-API-Key', 'test-api-key').expect(405);
 
-			await request(app)
-				.delete('/metrics/collect')
-				.set('X-API-Key', 'test-api-key')
-				.expect(405);
+			await request(app).delete('/metrics/collect').set('X-API-Key', 'test-api-key').expect(405);
 		});
 	});
 
 	describe('Content Type Handling', () => {
 		it('should return text/plain for Prometheus format', async () => {
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
 			const response = await request(app)
 				.get('/metrics')
@@ -350,7 +308,9 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 		});
 
 		it('should handle Accept header negotiation', async () => {
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 			mockMetricsService.getMetricsJson.mockReturnValue({});
 
 			// Prefer JSON when Accept header includes it
@@ -401,7 +361,9 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 				.expect(200); // Should ignore unknown params
 
 			// Test with multiple auth methods (should use header first)
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
 			const response = await request(app)
 				.get('/metrics?api_key=query-key')
@@ -412,19 +374,19 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 		});
 
 		it('should handle concurrent requests safely', async () => {
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
 			// Make multiple concurrent requests
 			const promises = Array.from({ length: 10 }, () =>
-				request(app)
-					.get('/metrics')
-					.set('X-API-Key', 'test-api-key')
+				request(app).get('/metrics').set('X-API-Key', 'test-api-key'),
 			);
 
 			const responses = await Promise.all(promises);
 
 			// All should succeed
-			responses.forEach(response => {
+			responses.forEach((response) => {
 				expect(response.status).toBe(200);
 				expect(response.text).toContain('test_metric');
 			});
@@ -433,9 +395,7 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 
 	describe('Response Format and Standards', () => {
 		it('should include brAInwav branding in error responses', async () => {
-			const response = await request(app)
-				.get('/metrics')
-				.expect(401);
+			const response = await request(app).get('/metrics').expect(401);
 
 			expect(response.body).toMatchObject({
 				error: expect.any(String),
@@ -445,7 +405,9 @@ http_request_duration_seconds_bucket{method="GET",route="/api/test",le="+Inf",se
 		});
 
 		it('should include consistent timestamp format', async () => {
-			mockMetricsService.getMetrics.mockReturnValue('# HELP test_metric Test metric\ntest_metric 1');
+			mockMetricsService.getMetrics.mockReturnValue(
+				'# HELP test_metric Test metric\ntest_metric 1',
+			);
 
 			const response = await request(app)
 				.get('/metrics/json')

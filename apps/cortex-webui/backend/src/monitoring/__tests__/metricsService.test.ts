@@ -1,9 +1,9 @@
 // Test suite for Metrics Collection Service
 // Comprehensive testing for Prometheus metrics with brAInwav branding
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { MetricsService } from '../services/metricsService.js';
 import { register } from 'prom-client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MetricsService } from '../services/metricsService.js';
 
 describe('MetricsService', () => {
 	let metricsService: MetricsService;
@@ -54,15 +54,23 @@ describe('MetricsService', () => {
 			metricsService.recordHttpRequest('GET', '/api/users', 500, 200);
 
 			const metrics = metricsService.getMetrics();
-			expect(metrics).toContain('http_requests_total{method="GET",route="/api/users",status_code="200"} 1');
-			expect(metrics).toContain('http_requests_total{method="POST",route="/api/users",status_code="201"} 1');
-			expect(metrics).toContain('http_requests_total{method="GET",route="/api/users",status_code="404"} 1');
-			expect(metrics).toContain('http_requests_total{method="GET",route="/api/users",status_code="500"} 1');
+			expect(metrics).toContain(
+				'http_requests_total{method="GET",route="/api/users",status_code="200"} 1',
+			);
+			expect(metrics).toContain(
+				'http_requests_total{method="POST",route="/api/users",status_code="201"} 1',
+			);
+			expect(metrics).toContain(
+				'http_requests_total{method="GET",route="/api/users",status_code="404"} 1',
+			);
+			expect(metrics).toContain(
+				'http_requests_total{method="GET",route="/api/users",status_code="500"} 1',
+			);
 		});
 
 		it('should track request duration percentiles', () => {
 			const durations = [10, 50, 100, 200, 500, 1000];
-			durations.forEach(duration => {
+			durations.forEach((duration) => {
 				metricsService.recordHttpRequest('GET', '/api/test', 200, duration);
 			});
 
@@ -79,7 +87,7 @@ describe('MetricsService', () => {
 				'GET',
 				'/api/very/long/route/name/with/many/segments/that/exceeds/normal/lengths',
 				200,
-				50
+				50,
 			);
 
 			// Test with zero response time
@@ -179,7 +187,9 @@ describe('MetricsService', () => {
 			metricsService.recordDatabaseQuery(operation, table, duration, success);
 
 			const metrics = metricsService.getMetrics();
-			expect(metrics).toContain('database_queries_total{operation="INSERT",table="orders",success="false"} 1');
+			expect(metrics).toContain(
+				'database_queries_total{operation="INSERT",table="orders",success="false"} 1',
+			);
 		});
 	});
 

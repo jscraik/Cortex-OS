@@ -1,6 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import type { A2AOutboxIntegration } from '@cortex-os/a2a';
 import type { Envelope } from '@cortex-os/a2a-contracts';
-import { randomUUID } from 'node:crypto';
 import type {
 	A2AEventPublisher,
 	A2AEventPublisherConfig,

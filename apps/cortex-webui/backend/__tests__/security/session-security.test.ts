@@ -1,11 +1,10 @@
 // Session Security Tests for Cortex WebUI backend
 // TDD implementation for session hardening and security
 
-import type { Request, Response, NextFunction } from 'express';
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
-
-import { enhanceSessionSecurity, generateCsrfTokenMiddleware } from '../src/middleware/security.js';
+import type { NextFunction, Request, Response } from 'express';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getSecurityConfig } from '../src/config/security.js';
+import { enhanceSessionSecurity, generateCsrfTokenMiddleware } from '../src/middleware/security.js';
 
 describe('Session Security Tests', () => {
 	let mockReq: Partial<Request>;
@@ -16,13 +15,13 @@ describe('Session Security Tests', () => {
 		mockReq = {
 			headers: {},
 			ip: '127.0.0.1',
-			session: {} as any
+			session: {} as any,
 		};
 
 		mockRes = {
 			status: vi.fn().mockReturnThis(),
 			json: vi.fn(),
-			cookie: vi.fn()
+			cookie: vi.fn(),
 		};
 
 		mockNext = vi.fn();
@@ -38,7 +37,7 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				regenerate: regenerateMock,
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -51,30 +50,26 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				regenerate: vi.fn((callback: Function) => callback(null)),
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
 
 			const config = getSecurityConfig();
-			expect(mockRes.cookie).toHaveBeenCalledWith(
-				config.session.cookieName,
-				expect.any(String),
-				{
-					httpOnly: true,
-					secure: config.session.secureCookie,
-					sameSite: 'strict',
-					maxAge: config.session.timeoutMinutes * 60 * 1000,
-					brand: config.brand.name
-				}
-			);
+			expect(mockRes.cookie).toHaveBeenCalledWith(config.session.cookieName, expect.any(String), {
+				httpOnly: true,
+				secure: config.session.secureCookie,
+				sameSite: 'strict',
+				maxAge: config.session.timeoutMinutes * 60 * 1000,
+				brand: config.brand.name,
+			});
 		});
 
 		it('should set session timeout for security', async () => {
 			const touchMock = vi.fn();
 			mockReq.session = {
 				touch: touchMock,
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -91,7 +86,7 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				regenerate: regenerateMock,
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -139,8 +134,8 @@ describe('Session Security Tests', () => {
 					httpOnly: true,
 					secure: true,
 					sameSite: 'strict',
-					brand: config.brand.name
-				})
+					brand: config.brand.name,
+				}),
 			);
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -165,8 +160,8 @@ describe('Session Security Tests', () => {
 				expect.any(String),
 				expect.any(String),
 				expect.objectContaining({
-					maxAge: 60 * 60 * 1000 // 1 hour
-				})
+					maxAge: 60 * 60 * 1000, // 1 hour
+				}),
 			);
 		});
 
@@ -191,7 +186,7 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				touch: touchMock,
 				cookie: { maxAge: 300000 }, // 5 minutes
-				regenerated: true
+				regenerated: true,
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -206,7 +201,7 @@ describe('Session Security Tests', () => {
 			const config = getSecurityConfig();
 			const expiredSession = {
 				cookie: { maxAge: -1 }, // Expired
-				touch: vi.fn()
+				touch: vi.fn(),
 			} as any;
 
 			mockReq.session = expiredSession;
@@ -224,7 +219,7 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				regenerate: vi.fn((callback: Function) => callback(null)),
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -235,8 +230,8 @@ describe('Session Security Tests', () => {
 				expect.objectContaining({
 					httpOnly: true, // Prevent JavaScript access
 					secure: true, // Only over HTTPS
-					sameSite: 'strict' // Prevent CSRF
-				})
+					sameSite: 'strict', // Prevent CSRF
+				}),
 			);
 
 			process.env.NODE_ENV = 'test';
@@ -246,7 +241,7 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				regenerate: vi.fn((callback: Function) => callback(null)),
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -255,7 +250,7 @@ describe('Session Security Tests', () => {
 			expect(mockRes.cookie).toHaveBeenCalledWith(
 				config.session.cookieName,
 				expect.any(String),
-				expect.any(Object)
+				expect.any(Object),
 			);
 			expect(config.session.cookieName).toContain('brAInwav');
 		});
@@ -265,7 +260,7 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				regenerate: vi.fn((callback: Function) => callback(null)),
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -274,8 +269,8 @@ describe('Session Security Tests', () => {
 				expect.any(String),
 				expect.any(String),
 				expect.objectContaining({
-					secure: false
-				})
+					secure: false,
+				}),
 			);
 
 			process.env.SESSION_SECURE_COOKIE = 'true';
@@ -286,12 +281,12 @@ describe('Session Security Tests', () => {
 		it('should preserve existing security context during session enhancement', async () => {
 			mockReq.securityContext = {
 				apiKeyValid: true,
-				inputSanitized: true
+				inputSanitized: true,
 			};
 
 			mockReq.session = {
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -304,7 +299,7 @@ describe('Session Security Tests', () => {
 		it('should handle session security without existing security context', async () => {
 			mockReq.session = {
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -316,10 +311,10 @@ describe('Session Security Tests', () => {
 	describe('Session Regeneration Security', () => {
 		it('should prevent session fixation attacks', async () => {
 			const oldSessionId = 'old-session-id';
-			let regenerateCallback: Function;
+			let _regenerateCallback: Function;
 
 			const regenerateMock = vi.fn((callback: Function) => {
-				regenerateCallback = callback;
+				_regenerateCallback = callback;
 				// Simulate async session regeneration
 				setTimeout(() => callback(null), 0);
 			});
@@ -328,7 +323,7 @@ describe('Session Security Tests', () => {
 				id: oldSessionId,
 				regenerate: regenerateMock,
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			const promise = enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -349,7 +344,7 @@ describe('Session Security Tests', () => {
 				regenerate: regenerateMock,
 				touch: vi.fn(),
 				cookie: { maxAge: undefined },
-				regenerated: true
+				regenerated: true,
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -371,12 +366,12 @@ describe('Session Security Tests', () => {
 				touch: vi.fn().mockImplementation(() => {
 					throw new Error('Session touch failed');
 				}),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			// Should not throw an error
 			await expect(
-				enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext)
+				enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext),
 			).resolves.not.toThrow();
 
 			expect(mockNext).toHaveBeenCalled();
@@ -385,11 +380,11 @@ describe('Session Security Tests', () => {
 		it('should handle missing session methods gracefully', async () => {
 			mockReq.session = {
 				// Missing regenerate and touch methods
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await expect(
-				enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext)
+				enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext),
 			).resolves.not.toThrow();
 
 			expect(mockNext).toHaveBeenCalled();
@@ -399,12 +394,12 @@ describe('Session Security Tests', () => {
 	describe('Integration with Other Security Features', () => {
 		it('should work after input sanitization', async () => {
 			mockReq.securityContext = {
-				inputSanitized: true
+				inputSanitized: true,
 			};
 
 			mockReq.session = {
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -415,12 +410,12 @@ describe('Session Security Tests', () => {
 
 		it('should work with API key authentication', async () => {
 			mockReq.securityContext = {
-				apiKeyValid: true
+				apiKeyValid: true,
 			};
 
 			mockReq.session = {
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -435,7 +430,7 @@ describe('Session Security Tests', () => {
 			mockReq.session = {
 				regenerate: vi.fn((callback: Function) => callback(null)),
 				touch: vi.fn(),
-				cookie: { maxAge: undefined }
+				cookie: { maxAge: undefined },
 			} as any;
 
 			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
@@ -445,8 +440,8 @@ describe('Session Security Tests', () => {
 				expect.any(String),
 				expect.any(String),
 				expect.objectContaining({
-					brand: config.brand.name
-				})
+					brand: config.brand.name,
+				}),
 			);
 		});
 
@@ -459,7 +454,7 @@ describe('Session Security Tests', () => {
 			expect(mockRes.cookie).toHaveBeenCalledWith(
 				config.csrf.cookieName,
 				expect.any(String),
-				expect.any(Object)
+				expect.any(Object),
 			);
 			expect(config.csrf.cookieName).toContain('brAInwav');
 		});

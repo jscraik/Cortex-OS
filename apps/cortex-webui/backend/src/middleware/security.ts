@@ -1,16 +1,15 @@
 // Security middleware for Cortex WebUI backend
 // Phase 1.2 security hardening with brAInwav standards
 
-import type { Request, Response, NextFunction } from 'express';
-import helmet from 'helmet';
 import DOMPurify from 'dompurify';
+import type { NextFunction, Request, Response } from 'express';
+import helmet from 'helmet';
 import { JSDOM } from 'jsdom';
 import {
+	generateCsrfToken,
 	getSecurityConfig,
 	validateApiKeyFormat,
-	generateCsrfToken,
 	validateCsrfToken,
-	buildCspHeader
 } from '../config/security.js';
 
 // Initialize DOMPurify with JSDOM
@@ -38,40 +37,45 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
 
 	// Apply helmet with custom configuration
 	helmet({
-		contentSecurityPolicy: config.headers.enableCSP ? {
-			directives: {
-				defaultSrc: ["'self'"],
-				scriptSrc: config.csp.scriptSrc.split(' '),
-				styleSrc: config.csp.styleSrc.split(' '),
-				imgSrc: config.csp.imgSrc.split(' '),
-				connectSrc: config.csp.connectSrc.split(' '),
-				fontSrc: config.csp.fontSrc.split(' '),
-				objectSrc: config.csp.objectSrc.split(' '),
-				mediaSrc: config.csp.mediaSrc.split(' '),
-				frameSrc: config.csp.frameSrc.split(' '),
-				frameAncestors: config.csp.frameAncestors.split(' '),
-				baseUri: config.csp.baseUri.split(' '),
-				formAction: config.csp.formAction.split(' '),
-				blockAllMixedContent: [],
-				upgradeInsecureRequests: []
+		contentSecurityPolicy: config.headers.enableCSP
+			? {
+				directives: {
+					defaultSrc: ["'self'"],
+					scriptSrc: config.csp.scriptSrc.split(' '),
+					styleSrc: config.csp.styleSrc.split(' '),
+					imgSrc: config.csp.imgSrc.split(' '),
+					connectSrc: config.csp.connectSrc.split(' '),
+					fontSrc: config.csp.fontSrc.split(' '),
+					objectSrc: config.csp.objectSrc.split(' '),
+					mediaSrc: config.csp.mediaSrc.split(' '),
+					frameSrc: config.csp.frameSrc.split(' '),
+					frameAncestors: config.csp.frameAncestors.split(' '),
+					baseUri: config.csp.baseUri.split(' '),
+					formAction: config.csp.formAction.split(' '),
+					blockAllMixedContent: [],
+					upgradeInsecureRequests: [],
+				},
 			}
-		} : false,
+			: false,
 		hsts: {
 			maxAge: config.headers.hstsMaxAge,
 			includeSubDomains: true,
-			preload: true
+			preload: true,
 		},
 		frameguard: {
-			action: config.headers.xFrameOptions as any
+			action: config.headers.xFrameOptions as any,
 		},
 		noSniff: true,
 		xssFilter: true,
 		referrerPolicy: {
-			policy: config.headers.referrerPolicy as any
-		}
+			policy: config.headers.referrerPolicy as any,
+		},
 	})(req, res, () => {
 		// Add brAInwav branding headers
-		res.setHeader(config.brand.securityPolicyHeader, `${config.brand.name}-secured-v${config.brand.version}`);
+		res.setHeader(
+			config.brand.securityPolicyHeader,
+			`${config.brand.name}-secured-v${config.brand.version}`,
+		);
 		res.setHeader('X-BrAInwav-Security-Enabled', 'true');
 		res.setHeader('X-BrAInwav-Security-Timestamp', new Date().toISOString());
 
@@ -94,20 +98,22 @@ export const customCsrfProtection = (req: Request, res: Response, next: NextFunc
 	}
 
 	// For state-changing methods, require CSRF token
-	const csrfToken = req.headers[config.csrf.tokenHeader.toLowerCase() as keyof typeof req.headers] as string;
+	const csrfToken = req.headers[
+		config.csrf.tokenHeader.toLowerCase() as keyof typeof req.headers
+	] as string;
 	const sessionToken = req.session?.csrfToken;
 
 	if (!csrfToken) {
 		return res.status(403).json({
 			error: `${config.brand.errorPrefix}: CSRF token required`,
-			brand: config.brand.name
+			brand: config.brand.name,
 		});
 	}
 
 	if (!validateCsrfToken(csrfToken, sessionToken || '')) {
 		return res.status(403).json({
 			error: `${config.brand.errorPrefix}: Invalid CSRF token`,
-			brand: config.brand.name
+			brand: config.brand.name,
 		});
 	}
 
@@ -115,7 +121,11 @@ export const customCsrfProtection = (req: Request, res: Response, next: NextFunc
 };
 
 // CSRF Token Generation Middleware
-export const generateCsrfTokenMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+export const generateCsrfTokenMiddleware = (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): void => {
 	const config = getSecurityConfig();
 
 	if (!config.csrf.enabled) {
@@ -135,7 +145,7 @@ export const generateCsrfTokenMiddleware = (req: Request, res: Response, next: N
 			secure: config.session.secureCookie,
 			sameSite: 'strict',
 			maxAge: 60 * 60 * 1000, // 1 hour
-			brand: config.brand.name
+			brand: config.brand.name,
 		});
 	}
 
@@ -166,7 +176,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
 					// Sanitize against XSS attacks
 					sanitized[key] = purify.sanitize(value, {
 						ALLOWED_TAGS: [],
-						ALLOWED_ATTR: []
+						ALLOWED_ATTR: [],
 					});
 				}
 			} else if (typeof value === 'object' && value !== null) {
@@ -204,7 +214,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
 		console.error('brAInwav Input Sanitization Error:', error);
 		return res.status(400).json({
 			error: `${config.brand.errorPrefix}: Input sanitization failed`,
-			brand: config.brand.name
+			brand: config.brand.name,
 		});
 	}
 };
@@ -217,19 +227,21 @@ export const apiKeyAuth = (req: Request, res: Response, next: NextFunction): voi
 		return next();
 	}
 
-	const apiKey = req.headers[config.apiKey.headerName.toLowerCase() as keyof typeof req.headers] as string;
+	const apiKey = req.headers[
+		config.apiKey.headerName.toLowerCase() as keyof typeof req.headers
+	] as string;
 
 	if (!apiKey) {
 		return res.status(401).json({
 			error: `${config.brand.errorPrefix}: API key required`,
-			brand: config.brand.name
+			brand: config.brand.name,
 		});
 	}
 
 	if (!validateApiKeyFormat(apiKey)) {
 		return res.status(401).json({
 			error: `${config.brand.errorPrefix}: Invalid API key format`,
-			brand: config.brand.name
+			brand: config.brand.name,
 		});
 	}
 
@@ -266,7 +278,7 @@ export const enhanceSessionSecurity = (req: Request, res: Response, next: NextFu
 					secure: config.session.secureCookie,
 					sameSite: 'strict',
 					maxAge: config.session.timeoutMinutes * 60 * 1000,
-					brand: config.brand.name
+					brand: config.brand.name,
 				});
 
 				next();
@@ -290,13 +302,12 @@ export const validateRequestSize = (req: Request, res: Response, next: NextFunct
 	const config = getSecurityConfig();
 
 	// Check content-length header if available
-	const contentLength = parseInt(req.headers['content-length'] || '0');
-
+	const contentLength = parseInt(req.headers['content-length'] || '0', 10);
 	if (contentLength > config.validation.maxRequestSize) {
 		return res.status(413).json({
 			error: `${config.brand.errorPrefix}: Request size exceeds limit`,
 			brand: config.brand.name,
-			maxSize: config.validation.maxRequestSize
+			maxSize: config.validation.maxRequestSize,
 		});
 	}
 
@@ -320,21 +331,24 @@ export const securityLogger = (req: Request, res: Response, next: NextFunction):
 			userAgent: req.headers['user-agent'],
 			apiKeyValid: req.securityContext?.apiKeyValid,
 			inputSanitized: req.securityContext?.inputSanitized,
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
 		});
 	}
 
 	// Override end to log response
 	const originalEnd = res.end;
-	res.end = function(...args: any[]) {
+	res.end = function (...args: any[]) {
 		const duration = Date.now() - startTimestamp;
 
 		if (res.statusCode >= 400) {
-			console.warn(`brAInwav Security Warning - Response: ${res.statusCode} ${req.method} ${req.path}`, {
-				duration,
-				ip: req.ip,
-				timestamp: new Date().toISOString()
-			});
+			console.warn(
+				`brAInwav Security Warning - Response: ${res.statusCode} ${req.method} ${req.path}`,
+				{
+					duration,
+					ip: req.ip,
+					timestamp: new Date().toISOString(),
+				},
+			);
 		}
 
 		return originalEnd.apply(this, args);
@@ -344,7 +358,12 @@ export const securityLogger = (req: Request, res: Response, next: NextFunction):
 };
 
 // Error Handler for Security Violations
-export const securityErrorHandler = (error: Error, req: Request, res: Response, next: NextFunction): void => {
+export const securityErrorHandler = (
+	error: Error,
+	req: Request,
+	res: Response,
+	_next: NextFunction,
+): void => {
 	const config = getSecurityConfig();
 
 	// Log security error
@@ -354,32 +373,33 @@ export const securityErrorHandler = (error: Error, req: Request, res: Response, 
 		path: req.path,
 		method: req.method,
 		ip: req.ip,
-		timestamp: new Date().toISOString()
+		timestamp: new Date().toISOString(),
 	});
 
 	// Don't expose internal errors to client
-	const isSecurityError = error.message.includes(config.brand.name) ||
-						   error.message.includes('CSRF') ||
-						   error.message.includes('API key') ||
-						   error.message.includes('sanitization');
+	const isSecurityError =
+		error.message.includes(config.brand.name) ||
+		error.message.includes('CSRF') ||
+		error.message.includes('API key') ||
+		error.message.includes('sanitization');
 
 	if (isSecurityError) {
 		return res.status(403).json({
 			error: error.message,
-			brand: config.brand.name
+			brand: config.brand.name,
 		});
 	}
 
 	// For other errors, don't expose details
 	res.status(500).json({
 		error: `${config.brand.errorPrefix}: Internal security error`,
-		brand: config.brand.name
+		brand: config.brand.name,
 	});
 };
 
 // Comprehensive Security Middleware Chain
 export const applySecurityMiddleware = (app: any): void => {
-	const config = getSecurityConfig();
+	const _config = getSecurityConfig();
 
 	// Apply security headers first
 	app.use(securityHeaders);
@@ -404,12 +424,6 @@ export const applySecurityMiddleware = (app: any): void => {
 };
 
 export {
-	securityHeaders as helmet,
-	customCsrfProtection as csrfProtection,
-	sanitizeInput as xssProtection,
-	apiKeyAuth,
-	enhanceSessionSecurity,
-	validateRequestSize,
-	securityLogger,
-	securityErrorHandler
+	apiKeyAuth, customCsrfProtection as csrfProtection, enhanceSessionSecurity, securityHeaders as helmet, securityErrorHandler, securityLogger, validateRequestSize, sanitizeInput as xssProtection
 };
+

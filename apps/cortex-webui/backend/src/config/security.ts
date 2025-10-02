@@ -5,17 +5,20 @@ import { z } from 'zod';
 
 const securityEnvSchema = z.object({
 	// API Key Configuration
-	BRAINWAV_API_KEY: z.string()
+	BRAINWAV_API_KEY: z
+		.string()
 		.min(32, 'brAInwav API key must be at least 32 characters')
 		.regex(/^brainwav-/, 'brAInwav API key must start with "brainwav-"'),
 
 	// CSRF Protection
-	CSRF_SECRET: z.string()
+	CSRF_SECRET: z
+		.string()
 		.min(32, 'CSRF secret must be at least 32 characters')
 		.default('brainwav-default-csrf-secret-change-in-production'),
 
 	// Session Security
-	SESSION_SECRET: z.string()
+	SESSION_SECRET: z
+		.string()
 		.min(32, 'Session secret must be at least 32 characters')
 		.default('brainwav-default-session-secret-change-in-production'),
 
@@ -47,7 +50,9 @@ const securityEnvSchema = z.object({
 	// CORS Security
 	ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
 	ALLOWED_METHODS: z.string().default('GET,POST,PUT,DELETE,OPTIONS'),
-	ALLOWED_HEADERS: z.string().default('Content-Type,Authorization,X-API-Key,X-Requested-With,X-CSRF-Token'),
+	ALLOWED_HEADERS: z
+		.string()
+		.default('Content-Type,Authorization,X-API-Key,X-Requested-With,X-CSRF-Token'),
 
 	// Content Security Policy
 	CSP_SCRIPT_SRC: z.string().default("'self' 'unsafe-inline' 'unsafe-eval'"),
@@ -66,13 +71,24 @@ const securityEnvSchema = z.object({
 	X_FRAME_OPTIONS: z.enum(['DENY', 'SAMEORIGIN', 'ALLOW-FROM']).default('DENY'),
 	X_CONTENT_TYPE_OPTIONS: z.string().default('nosniff'),
 	X_XSS_PROTECTION: z.string().default('1; mode=block'),
-	REFERRER_POLICY: z.enum(['no-referrer', 'no-referrer-when-downgrade', 'origin', 'origin-when-cross-origin', 'same-origin', 'strict-origin', 'strict-origin-when-cross-origin', 'unsafe-url']).default('strict-origin-when-cross-origin'),
+	REFERRER_POLICY: z
+		.enum([
+			'no-referrer',
+			'no-referrer-when-downgrade',
+			'origin',
+			'origin-when-cross-origin',
+			'same-origin',
+			'strict-origin',
+			'strict-origin-when-cross-origin',
+			'unsafe-url',
+		])
+		.default('strict-origin-when-cross-origin'),
 
 	// Feature Flags
 	ENABLE_API_KEY_AUTH: z.coerce.boolean().default(true),
 	ENABLE_CSRF_PROTECTION: z.coerce.boolean().default(true),
 	ENABLE_INPUT_SANITIZATION: z.coerce.boolean().default(true),
-	ENABLE_SESSION_HARDENING: z.coerce.boolean().default(true)
+	ENABLE_SESSION_HARDENING: z.coerce.boolean().default(true),
 });
 
 export type SecurityEnv = z.infer<typeof securityEnvSchema>;
@@ -95,7 +111,7 @@ export const getSecurityConfig = () => {
 			headerName: env.API_KEY_HEADER_NAME,
 			secretKey: env.BRAINWAV_API_KEY,
 			expiryHours: env.API_KEY_EXPIRY_HOURS,
-			enabled: env.ENABLE_API_KEY_AUTH
+			enabled: env.ENABLE_API_KEY_AUTH,
 		},
 
 		// CSRF Protection
@@ -103,7 +119,7 @@ export const getSecurityConfig = () => {
 			secret: env.CSRF_SECRET,
 			enabled: env.ENABLE_CSRF_PROTECTION,
 			tokenHeader: 'X-CSRF-Token',
-			cookieName: '__Secure-brAInwav-CSRF'
+			cookieName: '__Secure-brAInwav-CSRF',
 		},
 
 		// Session Security
@@ -112,7 +128,7 @@ export const getSecurityConfig = () => {
 			timeoutMinutes: env.SESSION_TIMEOUT_MINUTES,
 			secureCookie: env.SESSION_SECURE_COOKIE,
 			cookieName: '__Secure-brAInwav-Session',
-			enabled: env.ENABLE_SESSION_HARDENING
+			enabled: env.ENABLE_SESSION_HARDENING,
 		},
 
 		// Security Headers
@@ -123,7 +139,7 @@ export const getSecurityConfig = () => {
 			xFrameOptions: env.X_FRAME_OPTIONS,
 			xContentTypeOptions: env.X_CONTENT_TYPE_OPTIONS,
 			xXssProtection: env.X_XSS_PROTECTION,
-			referrerPolicy: env.REFERRER_POLICY
+			referrerPolicy: env.REFERRER_POLICY,
 		},
 
 		// Content Security Policy
@@ -138,33 +154,33 @@ export const getSecurityConfig = () => {
 			frameSrc: env.CSP_FRAME_SRC,
 			frameAncestors: env.CSP_FRAME_ANCESTORS,
 			baseUri: env.CSP_BASE_URI,
-			formAction: env.CSP_FORM_ACTION
+			formAction: env.CSP_FORM_ACTION,
 		},
 
 		// Input Validation
 		validation: {
 			maxRequestSize: env.MAX_REQUEST_SIZE,
 			maxFieldLength: env.MAX_FIELD_LENGTH,
-			enabled: env.ENABLE_INPUT_SANITIZATION
+			enabled: env.ENABLE_INPUT_SANITIZATION,
 		},
 
 		// CORS Security
 		cors: {
-			allowedOrigins: env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()),
-			allowedMethods: env.ALLOWED_METHODS.split(',').map(method => method.trim()),
-			allowedHeaders: env.ALLOWED_HEADERS.split(',').map(header => header.trim())
+			allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()),
+			allowedMethods: env.ALLOWED_METHODS.split(',').map((method) => method.trim()),
+			allowedHeaders: env.ALLOWED_HEADERS.split(',').map((header) => header.trim()),
 		},
 
 		// Security Rate Limiting
 		rateLimit: {
 			windowMs: env.SECURITY_RATE_LIMIT_WINDOW,
-			maxAttempts: env.SECURITY_RATE_LIMIT_MAX
+			maxAttempts: env.SECURITY_RATE_LIMIT_MAX,
 		},
 
 		// Security Monitoring
 		monitoring: {
 			enabled: env.ENABLE_SECURITY_LOGGING,
-			logLevel: env.SECURITY_LOG_LEVEL
+			logLevel: env.SECURITY_LOG_LEVEL,
 		},
 
 		// Branding
@@ -172,8 +188,8 @@ export const getSecurityConfig = () => {
 			name: 'brAInwav',
 			version: '1.0',
 			securityPolicyHeader: 'X-BrAInwav-Security-Policy',
-			errorPrefix: 'brAInwav Security Error'
-		}
+			errorPrefix: 'brAInwav Security Error',
+		},
 	} as const;
 };
 
@@ -186,7 +202,7 @@ export const validateApiKeyFormat = (apiKey: string): boolean => {
 
 // Helper function to generate CSRF token
 export const generateCsrfToken = (): string => {
-	const config = getSecurityConfig();
+	const _config = getSecurityConfig();
 	const timestamp = Date.now().toString();
 	const random = Math.random().toString(36).substring(2);
 	return `${timestamp}-${random}`;
@@ -216,7 +232,7 @@ export const buildCspHeader = (): string => {
 		`base-uri ${csp.baseUri}`,
 		`form-action ${csp.formAction}`,
 		`block-all-mixed-content`,
-		`upgrade-insecure-requests`
+		`upgrade-insecure-requests`,
 	].join('; ');
 };
 

@@ -1,7 +1,7 @@
 // Integration test for security middleware
 // Simple test to verify basic functionality works
 
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { getSecurityConfig } from '../src/config/security.js';
 
 describe('Security Configuration Tests', () => {

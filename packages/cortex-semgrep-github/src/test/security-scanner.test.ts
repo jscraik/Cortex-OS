@@ -328,7 +328,7 @@ describe('Security Scanner', () => {
 
 			// The cleanup should not propagate errors
 			await expect(
-				fs.rm('/tmp/test', { recursive: true, force: true }).catch(() => { }),
+				fs.rm('/tmp/test', { recursive: true, force: true }).catch(() => {}),
 			).resolves.toBeUndefined();
 		});
 	});

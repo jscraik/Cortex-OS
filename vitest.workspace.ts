@@ -70,9 +70,9 @@ type ModuleExports = Record<string, unknown> | undefined;
 
 const workspaceRoot = dirname(fileURLToPath(import.meta.url));
 
-const workspaceProjects = (
-	await Promise.all(PROJECT_PATHS.map(loadProjectConfig))
-).filter(isWorkspaceProject);
+const workspaceProjects = (await Promise.all(PROJECT_PATHS.map(loadProjectConfig))).filter(
+	isWorkspaceProject,
+);
 
 export default defineWorkspace(workspaceProjects);
 
@@ -113,9 +113,7 @@ function extractConfig(moduleExports: ModuleExports): WorkspaceProject | null {
 		.filter((value) => value && typeof value === 'object')
 		.map((value) => value as WorkspaceProject);
 
-	return (
-		candidates.find((value) => value && typeof value === 'object' && 'test' in value) ?? null
-	);
+	return candidates.find((value) => value && typeof value === 'object' && 'test' in value) ?? null;
 }
 
 function mergeWithDefaults(base: WorkspaceProject): WorkspaceProject {
@@ -139,8 +137,6 @@ function mergeWithDefaults(base: WorkspaceProject): WorkspaceProject {
 	};
 }
 
-function isWorkspaceProject(
-	value: WorkspaceProject | null,
-): value is WorkspaceProject {
+function isWorkspaceProject(value: WorkspaceProject | null): value is WorkspaceProject {
 	return value !== null;
 }

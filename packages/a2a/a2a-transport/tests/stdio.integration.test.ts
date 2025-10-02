@@ -12,10 +12,10 @@ describe('stdio transport', () => {
 		writeFileSync(
 			scriptPath,
 			`process.stdin.on('data', d => {\n` +
-			`  const m = JSON.parse(d.toString());\n` +
-			`  process.stdout.write(JSON.stringify(m)+'\\n');\n` +
-			`});\n` +
-			`setInterval(() => {}, 1000);\n`,
+				`  const m = JSON.parse(d.toString());\n` +
+				`  process.stdout.write(JSON.stringify(m)+'\\n');\n` +
+				`});\n` +
+				`setInterval(() => {}, 1000);\n`,
 		);
 		const transport = stdio('node', [scriptPath]);
 		const pid = transport.pid;

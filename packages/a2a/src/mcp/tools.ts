@@ -247,8 +247,16 @@ export function createA2AEventStreamSubscribeTool(
 					};
 				}
 
-				const defaultEvents: import('../streaming.js').TaskEventName[] = ['taskCompleted', 'taskFailed', 'taskCancelled', 'taskRunning'];
-				const requestedEvents = params.events && params.events.length > 0 ? (params.events as import('../streaming.js').TaskEventName[]) : defaultEvents;
+				const defaultEvents: import('../streaming.js').TaskEventName[] = [
+					'taskCompleted',
+					'taskFailed',
+					'taskCancelled',
+					'taskRunning',
+				];
+				const requestedEvents =
+					params.events && params.events.length > 0
+						? (params.events as import('../streaming.js').TaskEventName[])
+						: defaultEvents;
 				const eventFilter = new Set(requestedEvents);
 
 				const since = params.since ? new Date(params.since) : null;

@@ -2,7 +2,7 @@
 // Prometheus-style metrics with comprehensive monitoring
 
 import { performance } from 'node:perf_hooks';
-import { register, Counter, Histogram, Gauge, collectDefaultMetrics, Registry } from 'prom-client';
+import { Counter, collectDefaultMetrics, Gauge, Histogram, Registry, register } from 'prom-client';
 
 export interface MetricLabels {
 	[key: string]: string;
@@ -269,12 +269,15 @@ export class MetricsService {
 	// Custom Metrics
 	public incrementCounter(name: string, labels: MetricLabels = {}): void {
 		if (!this.customCounters.has(name)) {
-			this.customCounters.set(name, new Counter({
-				name: this.sanitizeMetricName(name),
-				help: `Custom counter metric: ${name}`,
-				labelNames: Object.keys(labels),
-				registers: [this.registry],
-			}));
+			this.customCounters.set(
+				name,
+				new Counter({
+					name: this.sanitizeMetricName(name),
+					help: `Custom counter metric: ${name}`,
+					labelNames: Object.keys(labels),
+					registers: [this.registry],
+				}),
+			);
 		}
 
 		const counter = this.customCounters.get(name)!;
@@ -283,12 +286,15 @@ export class MetricsService {
 
 	public setGauge(name: string, value: number, labels: MetricLabels = {}): void {
 		if (!this.customGauges.has(name)) {
-			this.customGauges.set(name, new Gauge({
-				name: this.sanitizeMetricName(name),
-				help: `Custom gauge metric: ${name}`,
-				labelNames: Object.keys(labels),
-				registers: [this.registry],
-			}));
+			this.customGauges.set(
+				name,
+				new Gauge({
+					name: this.sanitizeMetricName(name),
+					help: `Custom gauge metric: ${name}`,
+					labelNames: Object.keys(labels),
+					registers: [this.registry],
+				}),
+			);
 		}
 
 		const gauge = this.customGauges.get(name)!;
@@ -297,13 +303,16 @@ export class MetricsService {
 
 	public recordHistogram(name: string, value: number, labels: MetricLabels = {}): void {
 		if (!this.customHistograms.has(name)) {
-			this.customHistograms.set(name, new Histogram({
-				name: this.sanitizeMetricName(name),
-				help: `Custom histogram metric: ${name}`,
-				labelNames: Object.keys(labels),
-				buckets: [0.1, 0.5, 1, 5, 10, 50],
-				registers: [this.registry],
-			}));
+			this.customHistograms.set(
+				name,
+				new Histogram({
+					name: this.sanitizeMetricName(name),
+					help: `Custom histogram metric: ${name}`,
+					labelNames: Object.keys(labels),
+					buckets: [0.1, 0.5, 1, 5, 10, 50],
+					registers: [this.registry],
+				}),
+			);
 		}
 
 		const histogram = this.customHistograms.get(name)!;
@@ -369,7 +378,6 @@ export class MetricsService {
 			const cpuUsage = process.cpuUsage();
 			const cpuPercent = (cpuUsage.user + cpuUsage.system) / 1000000; // Convert to seconds
 			this.recordCpuUsage(cpuPercent);
-
 		} catch (error) {
 			console.error('Error collecting metrics:', error);
 		} finally {
@@ -408,10 +416,7 @@ export class MetricsService {
 
 	private sanitizeMetricLabel(label: string): string {
 		// Sanitize metric label values
-		return label
-			.replace(/"/g, '\\"')
-			.replace(/\n/g, '\\n')
-			.replace(/\\/g, '\\\\');
+		return label.replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\\/g, '\\\\');
 	}
 
 	public getRegistry(): Registry {

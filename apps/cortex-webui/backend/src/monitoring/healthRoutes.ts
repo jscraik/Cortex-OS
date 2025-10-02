@@ -1,15 +1,15 @@
 // Health Check API Routes for brAInwav Cortex WebUI
 // Comprehensive health endpoints with proper security headers
 
-import { type Router, type Request, type Response } from 'express';
-import { HealthService } from './services/healthService.js';
+import type { Request, Response, Router } from 'express';
 import logger from '../utils/logger.js';
+import { HealthService } from './services/healthService.js';
 
 export function createHealthCheckRoutes(): Router {
 	const router = Router();
 
 	// Basic health check endpoint (lightweight, always responds 200 if server is running)
-	router.get('/', (req: Request, res: Response) => {
+	router.get('/', (_req: Request, res: Response) => {
 		const response = {
 			status: 'OK',
 			timestamp: new Date().toISOString(),
@@ -20,8 +20,8 @@ export function createHealthCheckRoutes(): Router {
 
 		res.set({
 			'Cache-Control': 'no-cache, no-store, must-revalidate',
-			'Pragma': 'no-cache',
-			'Expires': '0',
+			Pragma: 'no-cache',
+			Expires: '0',
 			'X-Content-Type-Options': 'nosniff',
 			'X-Frame-Options': 'DENY',
 		});
@@ -30,7 +30,7 @@ export function createHealthCheckRoutes(): Router {
 	});
 
 	// Readiness probe endpoint (checks if all dependencies are ready)
-	router.get('/ready', async (req: Request, res: Response) => {
+	router.get('/ready', async (_req: Request, res: Response) => {
 		try {
 			const healthService = HealthService.getInstance();
 			const readinessResult = await healthService.checkReadiness();
@@ -47,8 +47,8 @@ export function createHealthCheckRoutes(): Router {
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -70,8 +70,8 @@ export function createHealthCheckRoutes(): Router {
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -81,7 +81,7 @@ export function createHealthCheckRoutes(): Router {
 	});
 
 	// Liveness probe endpoint (checks if application is alive)
-	router.get('/live', async (req: Request, res: Response) => {
+	router.get('/live', async (_req: Request, res: Response) => {
 		try {
 			const healthService = HealthService.getInstance();
 			const livenessResult = await healthService.checkLiveness();
@@ -98,8 +98,8 @@ export function createHealthCheckRoutes(): Router {
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -121,8 +121,8 @@ export function createHealthCheckRoutes(): Router {
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -132,20 +132,24 @@ export function createHealthCheckRoutes(): Router {
 	});
 
 	// Detailed health check endpoint (comprehensive system health report)
-	router.get('/detailed', async (req: Request, res: Response) => {
+	router.get('/detailed', async (_req: Request, res: Response) => {
 		try {
 			const healthService = HealthService.getInstance();
 			const detailedHealth = await healthService.getDetailedHealth();
 
-			const statusCode = detailedHealth.status === 'healthy' ? 200 :
-								detailedHealth.status === 'degraded' ? 200 : 503;
+			const statusCode =
+				detailedHealth.status === 'healthy'
+					? 200
+					: detailedHealth.status === 'degraded'
+						? 200
+						: 503;
 
 			const response = detailedHealth;
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -171,8 +175,8 @@ export function createHealthCheckRoutes(): Router {
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -182,7 +186,7 @@ export function createHealthCheckRoutes(): Router {
 	});
 
 	// Handle unsupported methods for all health endpoints
-	router.all('/', (req: Request, res: Response) => {
+	router.all('/', (_req: Request, res: Response) => {
 		res.set('Allow', 'GET');
 		res.status(405).json({
 			error: 'Method not allowed',
@@ -191,7 +195,7 @@ export function createHealthCheckRoutes(): Router {
 		});
 	});
 
-	router.all('/ready', (req: Request, res: Response) => {
+	router.all('/ready', (_req: Request, res: Response) => {
 		res.set('Allow', 'GET');
 		res.status(405).json({
 			error: 'Method not allowed',
@@ -200,7 +204,7 @@ export function createHealthCheckRoutes(): Router {
 		});
 	});
 
-	router.all('/live', (req: Request, res: Response) => {
+	router.all('/live', (_req: Request, res: Response) => {
 		res.set('Allow', 'GET');
 		res.status(405).json({
 			error: 'Method not allowed',
@@ -209,7 +213,7 @@ export function createHealthCheckRoutes(): Router {
 		});
 	});
 
-	router.all('/detailed', (req: Request, res: Response) => {
+	router.all('/detailed', (_req: Request, res: Response) => {
 		res.set('Allow', 'GET');
 		res.status(405).json({
 			error: 'Method not allowed',

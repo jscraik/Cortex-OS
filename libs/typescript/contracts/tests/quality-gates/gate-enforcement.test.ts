@@ -1,8 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { promises as fs } from 'fs';
-import os from 'os';
-import path from 'path';
-import { runQualityGateEnforcement, QualityGateResult } from '../../scripts/ci/quality-gate-enforcer';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+	type QualityGateResult,
+	runQualityGateEnforcement,
+} from '../../scripts/ci/quality-gate-enforcer';
 
 interface SeedOptions {
 	coverage?: {
@@ -140,7 +143,11 @@ describe('Quality Gate Enforcement', () => {
 		const result: QualityGateResult = await runQualityGateEnforcement(contractPath, metricsDir);
 
 		expect(result.passed).toBe(false);
-		expect(result.violations.some((message) => message.includes('Line coverage') && message.includes('94.0%'))).toBe(true);
+		expect(
+			result.violations.some(
+				(message) => message.includes('Line coverage') && message.includes('94.0%'),
+			),
+		).toBe(true);
 		expect(result.violations.some((message) => message.includes('brAInwav standard'))).toBe(true);
 	});
 

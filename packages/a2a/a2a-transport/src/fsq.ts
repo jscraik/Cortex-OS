@@ -1,8 +1,8 @@
-import type { Envelope } from '@cortex-os/a2a-contracts';
-import type { Transport } from '@cortex-os/a2a-core/transport';
 import { promises as fs, mkdirSync } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
+import type { Envelope } from '@cortex-os/a2a-contracts';
+import type { Transport } from '@cortex-os/a2a-core/transport';
 
 export function fsQueue(queueName = 'default'): Transport {
 	const dir = join(os.homedir(), '.cortex', 'a2a', queueName);

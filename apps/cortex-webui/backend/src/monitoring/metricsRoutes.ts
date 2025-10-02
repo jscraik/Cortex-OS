@@ -1,10 +1,10 @@
 // Metrics API Routes for brAInwav Cortex WebUI
 // Secure metrics endpoints with API key authentication
 
-import { type Router, type Request, type Response } from 'express';
+import type { Request, Response, Router } from 'express';
 import { register } from 'prom-client';
-import { MetricsService } from './services/metricsService.js';
 import logger from '../../utils/logger.js';
+import { MetricsService } from './services/metricsService.js';
 
 interface AuthenticatedRequest extends Request {
 	apiKey?: string;
@@ -55,7 +55,7 @@ export function createMetricsRoutes(): Router {
 	router.use(validateApiKey);
 
 	// Prometheus-formatted metrics endpoint
-	router.get('/', (req: AuthenticatedRequest, res: Response) => {
+	router.get('/', (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const metricsService = MetricsService.getInstance();
 			const metrics = metricsService.getMetrics();
@@ -63,8 +63,8 @@ export function createMetricsRoutes(): Router {
 			res.set({
 				'Content-Type': register.contentType,
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -86,7 +86,7 @@ export function createMetricsRoutes(): Router {
 	});
 
 	// JSON-formatted metrics endpoint
-	router.get('/json', (req: AuthenticatedRequest, res: Response) => {
+	router.get('/json', (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const metricsService = MetricsService.getInstance();
 			const metricsJson = metricsService.getMetricsJson();
@@ -102,8 +102,8 @@ export function createMetricsRoutes(): Router {
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -125,7 +125,7 @@ export function createMetricsRoutes(): Router {
 	});
 
 	// Manual metrics collection endpoint
-	router.post('/collect', async (req: AuthenticatedRequest, res: Response) => {
+	router.post('/collect', async (_req: AuthenticatedRequest, res: Response) => {
 		try {
 			const metricsService = MetricsService.getInstance();
 			await metricsService.collectMetrics();
@@ -138,8 +138,8 @@ export function createMetricsRoutes(): Router {
 
 			res.set({
 				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Pragma': 'no-cache',
-				'Expires': '0',
+				Pragma: 'no-cache',
+				Expires: '0',
 				'X-Content-Type-Options': 'nosniff',
 				'X-Frame-Options': 'DENY',
 			});
@@ -161,7 +161,7 @@ export function createMetricsRoutes(): Router {
 	});
 
 	// Handle unsupported methods for all metrics endpoints
-	router.all('/', (req: Request, res: Response) => {
+	router.all('/', (_req: Request, res: Response) => {
 		res.set('Allow', 'GET');
 		res.status(405).json({
 			error: 'Method not allowed',
@@ -170,7 +170,7 @@ export function createMetricsRoutes(): Router {
 		});
 	});
 
-	router.all('/json', (req: Request, res: Response) => {
+	router.all('/json', (_req: Request, res: Response) => {
 		res.set('Allow', 'GET');
 		res.status(405).json({
 			error: 'Method not allowed',
@@ -179,7 +179,7 @@ export function createMetricsRoutes(): Router {
 		});
 	});
 
-	router.all('/collect', (req: Request, res: Response) => {
+	router.all('/collect', (_req: Request, res: Response) => {
 		res.set('Allow', 'POST');
 		res.status(405).json({
 			error: 'Method not allowed',
@@ -189,7 +189,7 @@ export function createMetricsRoutes(): Router {
 	});
 
 	// Handle 404 for unknown routes
-	router.use((req: Request, res: Response) => {
+	router.use((_req: Request, res: Response) => {
 		res.status(404).json({
 			error: 'Not Found',
 			timestamp: new Date().toISOString(),

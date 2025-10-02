@@ -1,12 +1,12 @@
 // Test suite for Health Check API
 // Comprehensive testing for all health endpoints with brAInwav branding
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHealthCheckRoutes } from '../healthRoutes.js';
-import { HealthService } from '../services/healthService.js';
 import type { HealthCheckResult } from '../services/healthService.js';
+import { HealthService } from '../services/healthService.js';
 
 // Mock HealthService
 vi.mock('../services/healthService.js');
@@ -41,24 +41,19 @@ describe('Health Check API', () => {
 
 	describe('GET /health', () => {
 		it('should return basic health status', async () => {
-			const response = await request(app)
-				.get('/health')
-				.expect('Content-Type', /json/)
-				.expect(200);
+			const response = await request(app).get('/health').expect('Content-Type', /json/).expect(200);
 
 			expect(response.body).toMatchObject({
 				status: 'OK',
 				timestamp: expect.any(String),
 				brand: 'brAInwav',
-				service: 'cortex-webui'
+				service: 'cortex-webui',
 			});
 			expect(new Date(response.body.timestamp)).toBeValidDate();
 		});
 
 		it('should handle CORS properly', async () => {
-			const response = await request(app)
-				.get('/health')
-				.expect(200);
+			const response = await request(app).get('/health').expect(200);
 
 			expect(response.headers['access-control-allow-origin']).toBeDefined();
 		});
@@ -101,7 +96,7 @@ describe('Health Check API', () => {
 						status: 'fail',
 						message: 'Connection failed',
 						componentId: 'database',
-						componentType: 'datastore'
+						componentType: 'datastore',
 					},
 				},
 				timestamp: new Date().toISOString(),
@@ -135,7 +130,7 @@ describe('Health Check API', () => {
 						observedValue: 1200,
 						observedUnit: 'ms',
 						componentId: 'database',
-						componentType: 'datastore'
+						componentType: 'datastore',
 					},
 					filesystem: { status: 'pass', componentId: 'filesystem', componentType: 'system' },
 				},
@@ -162,7 +157,7 @@ describe('Health Check API', () => {
 
 		it('should handle health check service errors gracefully', async () => {
 			mockHealthService.performHealthCheck.mockRejectedValue(
-				new Error('Health service unavailable')
+				new Error('Health service unavailable'),
 			);
 
 			const response = await request(app)
@@ -232,7 +227,7 @@ describe('Health Check API', () => {
 						observedValue: 45,
 						observedUnit: 'ms',
 						componentId: 'database',
-						componentType: 'datastore'
+						componentType: 'datastore',
 					},
 					filesystem: { status: 'pass', componentId: 'filesystem', componentType: 'system' },
 					memory: {
@@ -241,7 +236,7 @@ describe('Health Check API', () => {
 						observedValue: 65,
 						observedUnit: '%',
 						componentId: 'memory',
-						componentType: 'system'
+						componentType: 'system',
 					},
 					diskSpace: { status: 'pass', componentId: 'diskspace', componentType: 'system' },
 					environment: { status: 'pass', componentId: 'environment', componentType: 'system' },
@@ -282,9 +277,7 @@ describe('Health Check API', () => {
 
 			mockHealthService.performHealthCheck.mockResolvedValue(mockHealthResult);
 
-			const response = await request(app)
-				.get('/health/detailed')
-				.expect(200);
+			const response = await request(app).get('/health/detailed').expect(200);
 
 			expect(response.body.performance).toBeDefined();
 			expect(response.body.performance).toMatchObject({
@@ -297,9 +290,7 @@ describe('Health Check API', () => {
 
 	describe('Response Headers and Security', () => {
 		it('should include security headers in health responses', async () => {
-			const response = await request(app)
-				.get('/health')
-				.expect(200);
+			const response = await request(app).get('/health').expect(200);
 
 			expect(response.headers).toMatchObject({
 				'x-content-type-options': 'nosniff',
@@ -308,9 +299,7 @@ describe('Health Check API', () => {
 		});
 
 		it('should include cache control headers to prevent caching', async () => {
-			const response = await request(app)
-				.get('/health/ready')
-				.expect(200);
+			const response = await request(app).get('/health/ready').expect(200);
 
 			expect(response.headers['cache-control']).toBe('no-cache, no-store, must-revalidate');
 			expect(response.headers['pragma']).toBe('no-cache');
@@ -318,25 +307,17 @@ describe('Health Check API', () => {
 		});
 
 		it('should handle invalid HTTP methods gracefully', async () => {
-			await request(app)
-				.post('/health')
-				.expect(405);
+			await request(app).post('/health').expect(405);
 
-			await request(app)
-				.put('/health/ready')
-				.expect(405);
+			await request(app).put('/health/ready').expect(405);
 
-			await request(app)
-				.delete('/health/live')
-				.expect(405);
+			await request(app).delete('/health/live').expect(405);
 		});
 	});
 
 	describe('Error Handling', () => {
 		it('should handle malformed requests gracefully', async () => {
-			const response = await request(app)
-				.get('/health/invalid')
-				.expect(404);
+			const response = await request(app).get('/health/invalid').expect(404);
 
 			expect(response.body).toMatchObject({
 				error: 'Not Found',
@@ -347,14 +328,13 @@ describe('Health Check API', () => {
 
 		it('should handle service timeouts gracefully', async () => {
 			mockHealthService.performHealthCheck.mockImplementation(
-				() => new Promise((_, reject) =>
-					setTimeout(() => reject(new Error('Health check timeout')), 100)
-				)
+				() =>
+					new Promise((_, reject) =>
+						setTimeout(() => reject(new Error('Health check timeout')), 100),
+					),
 			);
 
-			const response = await request(app)
-				.get('/health/ready')
-				.expect(503);
+			const response = await request(app).get('/health/ready').expect(503);
 
 			expect(response.body).toMatchObject({
 				status: 'not ready',

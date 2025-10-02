@@ -65,7 +65,8 @@ export class InMemoryOutboxRepository implements OutboxRepository {
 				msg.retryCount < (msg.maxRetries || 3) &&
 				(!msg.nextRetryAt || new Date(msg.nextRetryAt) <= now),
 		);
-		const messagesForRetry = typeof limit === 'number' ? allRetry.slice(0, limit) : allRetry.slice(0);
+		const messagesForRetry =
+			typeof limit === 'number' ? allRetry.slice(0, limit) : allRetry.slice(0);
 
 		return Promise.resolve(messagesForRetry);
 	}

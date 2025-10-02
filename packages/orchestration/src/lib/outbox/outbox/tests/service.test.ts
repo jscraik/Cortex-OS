@@ -1,7 +1,7 @@
+import type { Server } from 'node:http';
 import type { Envelope } from '@cortex-os/a2a-contracts';
 import { send } from '@cortex-os/a2a-core/send';
 import axios from 'axios';
-import type { Server } from 'node:http';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createTestService } from '../src/service.js';
 

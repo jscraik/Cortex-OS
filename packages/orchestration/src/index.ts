@@ -92,17 +92,15 @@ export {
 	createHookAwareDispatcher,
 	createUnifiedToolSystem,
 } from './langgraph/tool-system.js';
-
-export {
-	type OrchestrationFacade,
-	provideOrchestration,
-	OrchestrationService,
-} from './service.js';
-
 export {
 	type ComplianceEvaluationResult,
 	SecurityCoordinator,
 } from './security/security-coordinator.js';
+export {
+	type OrchestrationFacade,
+	OrchestrationService,
+	provideOrchestration,
+} from './service.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {

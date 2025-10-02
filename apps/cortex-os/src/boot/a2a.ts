@@ -83,5 +83,5 @@ export function wireA2A(): A2AWiring {
 
 export const healthHandler: Handler = {
 	type: 'cortex.health.check',
-	handle: async () => { },
+	handle: async () => {},
 };

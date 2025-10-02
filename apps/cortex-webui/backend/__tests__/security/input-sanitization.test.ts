@@ -1,11 +1,10 @@
 // Input Sanitization Tests for Cortex WebUI backend
 // TDD implementation for XSS protection and input validation
 
-import type { Request, Response, NextFunction } from 'express';
-import { describe, expect, it, beforeEach, vi } from 'vitest';
-
-import { sanitizeInput } from '../src/middleware/security.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getSecurityConfig } from '../src/config/security.js';
+import { sanitizeInput } from '../src/middleware/security.js';
 
 describe('Input Sanitization Tests', () => {
 	let mockReq: Partial<Request>;
@@ -18,12 +17,12 @@ describe('Input Sanitization Tests', () => {
 			body: {},
 			query: {},
 			params: {},
-			ip: '127.0.0.1'
+			ip: '127.0.0.1',
 		};
 
 		mockRes = {
 			status: vi.fn().mockReturnThis(),
-			json: vi.fn()
+			json: vi.fn(),
 		};
 
 		mockNext = vi.fn();
@@ -34,7 +33,7 @@ describe('Input Sanitization Tests', () => {
 			const maliciousBody = {
 				name: '<script>alert("xss")</script>Test Name',
 				description: 'Normal description',
-				content: '<div>Some <script>malicious()</script> content</div>'
+				content: '<div>Some <script>malicious()</script> content</div>',
 			};
 
 			mockReq.body = maliciousBody;
@@ -61,7 +60,7 @@ describe('Input Sanitization Tests', () => {
 				'<video><source onerror="alert(\'xss\')">',
 				'<audio src="x" onerror="alert(\'xss\')">',
 				'<details open ontoggle="alert(\'xss\')">',
-				'<marquee onstart="alert(\'xss\')">test</marquee>'
+				'<marquee onstart="alert(\'xss\')">test</marquee>',
 			];
 
 			for (const attack of xssAttacks) {
@@ -82,7 +81,7 @@ describe('Input Sanitization Tests', () => {
 			const maliciousQuery = {
 				search: '<script>alert("xss")</script>search term',
 				filter: 'category<script>alert("xss")</script>',
-				page: '1'
+				page: '1',
 			};
 
 			mockReq.query = maliciousQuery;
@@ -98,7 +97,7 @@ describe('Input Sanitization Tests', () => {
 		it('should sanitize URL parameters', async () => {
 			const maliciousParams = {
 				id: '<script>alert("xss")</script>123',
-				category: 'test<script>alert("xss")</script>category'
+				category: 'test<script>alert("xss")</script>category',
 			};
 
 			mockReq.params = maliciousParams;
@@ -116,7 +115,7 @@ describe('Input Sanitization Tests', () => {
 			const htmlContent = {
 				title: '<h1>Big Title</h1>',
 				content: '<p>This is <strong>important</strong> and <em>emphasized</em></p>',
-				nested: '<div><ul><li>Item 1</li><li>Item 2</li></ul></div>'
+				nested: '<div><ul><li>Item 1</li><li>Item 2</li></ul></div>',
 			};
 
 			mockReq.body = htmlContent;
@@ -133,7 +132,7 @@ describe('Input Sanitization Tests', () => {
 			const contentWithTags = {
 				message: '<p>Hello <span style="color: red">World</span>!</p>',
 				code: '<code>console.log("test")</code>',
-				link: '<a href="https://example.com">Click here</a>'
+				link: '<a href="https://example.com">Click here</a>',
 			};
 
 			mockReq.body = contentWithTags;
@@ -157,8 +156,8 @@ describe('Input Sanitization Tests', () => {
 				long: longString,
 				nested: {
 					short: 'normal',
-					long: longString
-				}
+					long: longString,
+				},
 			};
 
 			mockReq.body = longContent;
@@ -197,8 +196,8 @@ describe('Input Sanitization Tests', () => {
 				array: [1, 2, '<script>alert("xss")</script>3'],
 				nested: {
 					string: '<script>alert("xss")</script>nested',
-					number: 3.14
-				}
+					number: 3.14,
+				},
 			};
 
 			mockReq.body = mixedData;
@@ -220,7 +219,7 @@ describe('Input Sanitization Tests', () => {
 			const now = new Date();
 			const dataWithDates = {
 				createdAt: now,
-				stringDate: '<script>alert("xss")</script>2023-01-01'
+				stringDate: '<script>alert("xss")</script>2023-01-01',
 			};
 
 			mockReq.body = dataWithDates;
@@ -240,28 +239,20 @@ describe('Input Sanitization Tests', () => {
 					'normal item',
 					'<script>alert("xss")</script>malicious item',
 					'<div>html content</div>',
-					42
+					42,
 				],
 				nestedArrays: [
 					['<script>alert("xss")</script>nested 1', 'normal'],
-					['<div>nested 2</div>']
-				]
+					['<div>nested 2</div>'],
+				],
 			};
 
 			mockReq.body = maliciousArray;
 
 			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
-			expect(mockReq.body.items).toEqual([
-				'normal item',
-				'malicious item',
-				'html content',
-				42
-			]);
-			expect(mockReq.body.nestedArrays).toEqual([
-				['nested 1', 'normal'],
-				['nested 2']
-			]);
+			expect(mockReq.body.items).toEqual(['normal item', 'malicious item', 'html content', 42]);
+			expect(mockReq.body.nestedArrays).toEqual([['nested 1', 'normal'], ['nested 2']]);
 			expect(mockNext).toHaveBeenCalled();
 		});
 
@@ -304,7 +295,7 @@ describe('Input Sanitization Tests', () => {
 			expect(mockRes.status).toHaveBeenCalledWith(400);
 			expect(mockRes.json).toHaveBeenCalledWith({
 				error: 'brAInwav Security Error: Input sanitization failed',
-				brand: 'brAInwav'
+				brand: 'brAInwav',
 			});
 			expect(mockNext).not.toHaveBeenCalled();
 
@@ -319,7 +310,7 @@ describe('Input Sanitization Tests', () => {
 			process.env.ENABLE_INPUT_SANITIZATION = 'false';
 
 			const maliciousContent = {
-				content: '<script>alert("xss")</script>malicious'
+				content: '<script>alert("xss")</script>malicious',
 			};
 
 			mockReq.body = maliciousContent;
@@ -348,7 +339,7 @@ describe('Input Sanitization Tests', () => {
 		it('should preserve existing security context', async () => {
 			mockReq.securityContext = {
 				apiKeyValid: true,
-				csrfToken: 'existing-token'
+				csrfToken: 'existing-token',
 			};
 
 			mockReq.body = { content: 'test content' };
@@ -368,10 +359,10 @@ describe('Input Sanitization Tests', () => {
 				level1: {
 					level2: {
 						level3: {
-							data: '<script>alert("xss")</script>'.repeat(100)
-						}
-					}
-				}
+							data: '<script>alert("xss")</script>'.repeat(100),
+						},
+					},
+				},
 			};
 
 			mockReq.body = largeObject;
@@ -390,7 +381,7 @@ describe('Input Sanitization Tests', () => {
 				unicode: 'Hello 世界 <script>alert("xss")</script>',
 				htmlEntities: '&lt;script&gt;alert("xss")&lt;/script&gt;',
 				urlEncoded: '%3Cscript%3Ealert%28%22xss%22%29%3C%2Fscript%3E',
-				mixed: 'Test <b>bold</b> &amp; <script>alert("xss")</script> end'
+				mixed: 'Test <b>bold</b> &amp; <script>alert("xss")</script> end',
 			};
 
 			mockReq.body = specialChars;
@@ -420,7 +411,7 @@ describe('Input Sanitization Tests', () => {
 
 			expect(mockRes.json).toHaveBeenCalledWith({
 				error: 'brAInwav Security Error: Input sanitization failed',
-				brand: 'brAInwav'
+				brand: 'brAInwav',
 			});
 
 			DOMPurify.sanitize = originalSanitize;

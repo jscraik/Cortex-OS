@@ -1,4 +1,9 @@
-import type { Envelope, OutboxConfig, OutboxProcessingResult, OutboxRepository } from '@cortex-os/a2a-contracts';
+import type {
+	Envelope,
+	OutboxConfig,
+	OutboxProcessingResult,
+	OutboxRepository,
+} from '@cortex-os/a2a-contracts';
 import { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
 import { createA2AOutboxIntegration } from './outbox-integration.js';
 

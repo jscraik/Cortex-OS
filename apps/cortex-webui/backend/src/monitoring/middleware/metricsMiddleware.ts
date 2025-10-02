@@ -1,7 +1,7 @@
 // Metrics Collection Middleware for brAInwav Cortex WebUI
 // Automatic HTTP request metrics collection
 
-import { type Request, type Response, type NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { performance } from 'node:perf_hooks';
 import { MetricsService } from '../services/metricsService.js';
 
@@ -10,7 +10,11 @@ interface RequestWithMetrics extends Request {
 	_route?: string;
 }
 
-export function metricsMiddleware(): (req: RequestWithMetrics, res: Response, next: NextFunction) => void {
+export function metricsMiddleware(): (
+	req: RequestWithMetrics,
+	res: Response,
+	next: NextFunction,
+) => void {
 	return (req: RequestWithMetrics, res: Response, next: NextFunction): void => {
 		// Record start time
 		req._startTime = performance.now();
@@ -39,16 +43,10 @@ function recordMetrics(req: RequestWithMetrics, res: Response): void {
 		const method = req.method || 'UNKNOWN';
 
 		// Record HTTP request metrics
-		metricsService.recordHttpRequest(
-			method,
-			route,
-			res.statusCode,
-			responseTime,
-		);
+		metricsService.recordHttpRequest(method, route, res.statusCode, responseTime);
 
 		// Record additional metrics for specific endpoints
 		recordEndpointSpecificMetrics(metricsService, req, res, responseTime);
-
 	} catch (error) {
 		// Log error but don't let metrics collection break the request
 		console.error('Error recording metrics:', error);
@@ -63,7 +61,10 @@ function getSanitizedRoute(route: string): string {
 
 	// Replace dynamic segments with placeholder patterns
 	let sanitized = cleanRoute
-		.replace(/\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g, '/:id') // UUIDs
+		.replace(
+			/\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g,
+			'/:id',
+		) // UUIDs
 		.replace(/\/\d+/g, '/:id') // Numeric IDs
 		.replace(/\/[a-fA-F0-9]{24}/g, '/:id') // MongoDB ObjectIDs
 		.replace(/\/[^/]+\.[^/]+$/g, '/:file') // Files with extensions
@@ -72,9 +73,8 @@ function getSanitizedRoute(route: string): string {
 	// Limit route length to prevent metric explosion
 	if (sanitized.length > 100) {
 		const segments = sanitized.split('/').slice(0, 5);
-		sanitized = segments.join('/') + '/...';
+		sanitized = `${segments.join('/')}/...`;
 	}
-
 	return sanitized || '/';
 }
 
@@ -107,7 +107,11 @@ function recordEndpointSpecificMetrics(
 	}
 
 	// Database operation metrics (simplified - in a real app you'd track actual DB operations)
-	if (route.includes('/conversations') || route.includes('/messages') || route.includes('/documents')) {
+	if (
+		route.includes('/conversations') ||
+		route.includes('/messages') ||
+		route.includes('/documents')
+	) {
 		const operation = extractDatabaseOperation(method, route);
 		const table = extractTableFromRoute(route);
 		const success = res.statusCode < 500;
@@ -120,7 +124,7 @@ function extractAuthProvider(req: RequestWithMetrics): string {
 	const route = req._route || req.path || '';
 
 	if (route.includes('/oauth')) {
-		const providerMatch = route.match(/\/oauth\/([^\/]+)/);
+		const providerMatch = route.match(/\/oauth\/([^/]+)/);
 		return providerMatch ? providerMatch[1] : 'oauth';
 	}
 
@@ -133,12 +137,18 @@ function extractAuthProvider(req: RequestWithMetrics): string {
 
 function getAuthFailureReason(statusCode: number): string {
 	switch (statusCode) {
-		case 400: return 'invalid_request';
-		case 401: return 'invalid_credentials';
-		case 403: return 'forbidden';
-		case 429: return 'rate_limited';
-		case 500: return 'server_error';
-		default: return 'unknown';
+		case 400:
+			return 'invalid_request';
+		case 401:
+			return 'invalid_credentials';
+		case 403:
+			return 'forbidden';
+		case 429:
+			return 'rate_limited';
+		case 500:
+			return 'server_error';
+		default:
+			return 'unknown';
 	}
 }
 
@@ -168,7 +178,7 @@ export function recordCustomMetric(
 	value?: number,
 	labels?: Record<string, string>,
 ): (req: Request, res: Response, next: NextFunction) => void {
-	return (req: Request, res: Response, next: NextFunction): void => {
+	return (_req: Request, _res: Response, next: NextFunction): void => {
 		try {
 			const metricsService = MetricsService.getInstance();
 

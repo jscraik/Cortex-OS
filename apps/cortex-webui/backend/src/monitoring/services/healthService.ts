@@ -194,7 +194,7 @@ export class HealthService {
 			// Check critical dependencies for readiness
 			const criticalChecks = ['database', 'filesystem', 'environment'];
 			const failedChecks = criticalChecks.filter(
-				check => healthResult.checks[check]?.status === 'fail'
+				(check) => healthResult.checks[check]?.status === 'fail',
 			);
 
 			if (failedChecks.length > 0) {
@@ -249,7 +249,8 @@ export class HealthService {
 
 			// Check if event loop is responsive
 			const eventLoopLag = await this.measureEventLoopLag();
-			if (eventLoopLag > 10000) { // 10 seconds
+			if (eventLoopLag > 10000) {
+				// 10 seconds
 				return {
 					status: 'not alive',
 					timestamp: new Date().toISOString(),
@@ -539,10 +540,9 @@ export class HealthService {
 			// This could include external APIs, external databases, etc.
 			// For now, we'll just check if we can resolve external hostnames
 
-			const externalServices = [
-				process.env.EXTERNAL_API_URL,
-				process.env.AUTH_PROVIDER_URL,
-			].filter(Boolean);
+			const externalServices = [process.env.EXTERNAL_API_URL, process.env.AUTH_PROVIDER_URL].filter(
+				Boolean,
+			);
 
 			if (externalServices.length === 0) {
 				return {
