@@ -3,8 +3,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSecurityConfig } from '../src/config/security.js';
-import { enhanceSessionSecurity, generateCsrfTokenMiddleware } from '../src/middleware/security.js';
+import { getSecurityConfig } from '../src/config/security.ts';
+import { enhanceSessionSecurity, generateCsrfTokenMiddleware } from '../src/middleware/security.ts';
 
 interface MockRequest extends Partial<Request> {
 	session?: { [key: string]: unknown };

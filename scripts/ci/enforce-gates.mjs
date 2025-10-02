@@ -190,18 +190,24 @@ class BrAInwavQualityGateEnforcer {
 	 * @param {Object} mutation
 	 * @returns {void}
 	 */
-	validateCoverageThresholds(coverage, mutation) {
+	validateCoverageThresholds(normalizedCoverage, mutation) {
 		const { coverage: coverageConfig } = this.contract;
+		const lineCoverage = normalizedCoverage.line;
+		const branchCoverage = normalizedCoverage.branch;
 
-		if (coverage.line < coverageConfig.line) {
+		if (!Number.isFinite(lineCoverage)) {
+			this.violations.push('Line coverage percentage missing from coverage metrics');
+		} else if (lineCoverage < coverageConfig.line) {
 			this.violations.push(
-				`Line coverage ${coverage.line.toFixed(1)}% < required ${coverageConfig.line}% (brAInwav standard)`,
+				`Line coverage ${lineCoverage.toFixed(1)}% < required ${coverageConfig.line}% (brAInwav standard)`,
 			);
 		}
 
-		if (coverage.branch < coverageConfig.branch) {
+		if (!Number.isFinite(branchCoverage)) {
+			this.violations.push('Branch coverage percentage missing from coverage metrics');
+		} else if (branchCoverage < coverageConfig.branch) {
 			this.violations.push(
-				`Branch coverage ${coverage.branch.toFixed(1)}% < required ${coverageConfig.branch}% (brAInwav standard)`,
+				`Branch coverage ${branchCoverage.toFixed(1)}% < required ${coverageConfig.branch}% (brAInwav standard)`,
 			);
 		}
 
@@ -210,6 +216,91 @@ class BrAInwavQualityGateEnforcer {
 				`Mutation score ${mutation.score.toFixed(1)}% < required ${coverageConfig.mutation_score}% (prevents vacuous tests)`,
 			);
 		}
+	}
+
+	normalizeCoveragePercentages(coverage) {
+		return {
+			line: this.extractCoveragePercentage(coverage, 'line'),
+			branch: this.extractCoveragePercentage(coverage, 'branch'),
+		};
+	}
+
+	extractCoveragePercentage(coverage, key) {
+		if (!coverage) {
+			return Number.NaN;
+		}
+		const direct = coverage[key];
+		if (typeof direct === 'number') {
+			return direct;
+		}
+		if (direct && typeof direct === 'object' && typeof direct.percentage === 'number') {
+			return direct.percentage;
+		}
+		const pluralKey = key === 'line' ? 'lines' : 'branches';
+		const pluralValue = coverage[pluralKey];
+		if (typeof pluralValue === 'number') {
+			return pluralValue;
+		}
+		if (pluralValue && typeof pluralValue === 'object' && typeof pluralValue.percentage === 'number') {
+			return pluralValue.percentage;
+		}
+		return Number.NaN;
+	}
+
+	validateCoverageRatchet(normalizedCoverage) {
+		const ratchet = this.contract?.coverage?.ratchet;
+		if (!ratchet) {
+			return;
+		}
+
+		const baselinePath = path.isAbsolute(ratchet.baseline_path)
+			? ratchet.baseline_path
+			: path.resolve(path.dirname(this.contractPath), ratchet.baseline_path);
+
+		let snapshot;
+		try {
+			snapshot = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+		} catch (error) {
+			this.violations.push(
+				`Coverage ratchet baseline missing or invalid at ${baselinePath}: ${error.message}`
+			);
+			return;
+		}
+
+		const baselineLine = this.extractBaselinePercentage(snapshot, 'line');
+		const baselineBranch = this.extractBaselinePercentage(snapshot, 'branch');
+		const allowedLineDrop = ratchet.line_slack_percent ?? 0;
+		const allowedBranchDrop = ratchet.branch_slack_percent ?? 0;
+
+		if (typeof baselineLine === 'number' && Number.isFinite(normalizedCoverage.line) && normalizedCoverage.line < baselineLine - allowedLineDrop) {
+			this.violations.push(
+				`Line coverage ${normalizedCoverage.line.toFixed(1)}% < ratchet baseline ${baselineLine.toFixed(1)}% (allowable drop ${allowedLineDrop.toFixed(1)}%)`,
+			);
+		}
+
+		if (typeof baselineBranch === 'number' && Number.isFinite(normalizedCoverage.branch) && normalizedCoverage.branch < baselineBranch - allowedBranchDrop) {
+			this.violations.push(
+				`Branch coverage ${normalizedCoverage.branch.toFixed(1)}% < ratchet baseline ${baselineBranch.toFixed(1)}% (allowable drop ${allowedBranchDrop.toFixed(1)}%)`,
+			);
+		}
+	}
+
+	extractBaselinePercentage(snapshot, key) {
+		if (!snapshot) {
+			return null;
+		}
+		const direct = snapshot[key];
+		if (typeof direct === 'number') {
+			return direct;
+		}
+		if (direct && typeof direct === 'object' && typeof direct.percentage === 'number') {
+			return direct.percentage;
+		}
+		const alias = key === 'line' ? snapshot.lines : snapshot.branches;
+		if (alias && typeof alias === 'object' && typeof alias.percentage === 'number') {
+			return alias.percentage;
+		}
+		return null;
 	}
 
 	/**
@@ -221,11 +312,16 @@ class BrAInwavQualityGateEnforcer {
 		const coverage = this.loadCoverageMetrics();
 		if (!coverage) return;
 
+		const normalizedCoverage = this.normalizeCoveragePercentages(coverage);
 		const mutation = this.loadMutationMetrics();
-		this.validateCoverageThresholds(coverage, mutation);
 
+		this.validateCoverageRatchet(normalizedCoverage);
+		this.validateCoverageThresholds(normalizedCoverage, mutation);
+
+		const lineDisplay = Number.isFinite(normalizedCoverage.line) ? normalizedCoverage.line.toFixed(1) : 'N/A';
+		const branchDisplay = Number.isFinite(normalizedCoverage.branch) ? normalizedCoverage.branch.toFixed(1) : 'N/A';
 		console.log(
-			`[brAInwav] Coverage: ${coverage.line.toFixed(1)}% line, ${coverage.branch.toFixed(1)}% branch, ${mutation.score.toFixed(1)}% mutation`,
+			`[brAInwav] Coverage: ${lineDisplay}% line, ${branchDisplay}% branch, ${mutation.score.toFixed(1)}% mutation`,
 		);
 	}
 

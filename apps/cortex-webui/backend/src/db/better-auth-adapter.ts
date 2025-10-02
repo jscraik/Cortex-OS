@@ -5,10 +5,10 @@ import type { MemoryAdapter } from './memory-adapter.js';
 
 export const createBetterAuthAdapter = async () => {
 	// Import from the existing database initialization
-	const { ensureDbInitialized } = await import('./index');
+	const { initializeDatabase } = await import('./index');
 
 	// Ensure database is initialized
-	await ensureDbInitialized();
+	await initializeDatabase();
 
 	// Import the database instance
 	const { db } = await import('./index');

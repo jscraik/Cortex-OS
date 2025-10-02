@@ -458,7 +458,9 @@ export class McpSecurityManager extends EventEmitter {
 			const keysToDelete = Array.from(this.rateLimitMap.keys()).filter((key) =>
 				key.startsWith(`user:${userId}`),
 			);
-			keysToDelete.forEach((key) => this.rateLimitMap.delete(key));
+			keysToDelete.forEach((key) => {
+				this.rateLimitMap.delete(key);
+			});
 		} else {
 			this.rateLimitMap.clear();
 		}

@@ -14,6 +14,7 @@
     "ci:agent-toolkit:validate": "node scripts/agent-toolkit.mjs validate:project \"**/*.{ts,tsx,js,jsx,py,rs}\"",
     "toolkit:validate": "node scripts/run-toolkit-validate.mjs",
     "codemap": "python3 scripts/codemap.py --repo . --out out/codemap.json --md out/codemap.md",
+    "tdd:watch": "node packages/tdd-coach/dist/cli/tdd-coach.js validate --workspace . --watch",
     "ci:memory:enforce": "node tools/validators/enforce-local-memory.mjs",
     "nx:project:guard": "node tools/validators/nx-project-guard.mjs",
     "nx:project:fix": "node tools/validators/nx-project-guard.mjs --fix",
@@ -316,7 +317,8 @@
     "test:contracts": "vitest tests/contracts/openapi-sync.spec.ts",
     "test:mcp": "vitest packages/mcp-core/tests/tools-contract.spec.ts",
     "baseline:collect": "ts-node --transpile-only scripts/ci/generate-baseline.ts",
-    "baseline:prepare": "ts-node --transpile-only scripts/ci/prepare-baseline.ts"
+    "baseline:prepare": "ts-node --transpile-only scripts/ci/prepare-baseline.ts",
+    "baseline:refresh": "COVERAGE_THRESHOLD_GLOBAL=0 COVERAGE_THRESHOLD_LINES=0 COVERAGE_THRESHOLD_BRANCHES=0 COVERAGE_THRESHOLD_FUNCTIONS=0 VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 pnpm test:smart --coverage && pnpm baseline:collect"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.61.0",
@@ -340,6 +342,7 @@
     "crawlee": "^3.15.0",
     "dayjs": "^1.11.18",
     "dotenv": "^16.4.5",
+    "eventsource": "^4.0.0",
     "execa": "^9.6.0",
     "express-rate-limit": "^8.1.0",
     "fuse.js": "^7.0.0",
@@ -366,6 +369,7 @@
     "@biomejs/biome": "2.2.2",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@cortex-os/tdd-coach": "workspace:*",
     "@cyclonedx/bom": "^4.1.0",
     "@esbuild/darwin-arm64": "^0.25.10",
     "@eslint/js": "^9.35.0",

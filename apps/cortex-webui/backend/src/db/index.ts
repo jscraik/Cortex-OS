@@ -4,6 +4,7 @@ import type { memoryAdapter } from './memory-adapter.js';
 // Use memory adapter to avoid native dependency issues
 let dbInstance: ReturnType<typeof memoryAdapter>;
 let drizzleDbInstance: ReturnType<typeof drizzleMemoryAdapter>;
+let dbInitialized = false;
 
 // Initialize database with tables
 export const initializeDatabase = async () => {

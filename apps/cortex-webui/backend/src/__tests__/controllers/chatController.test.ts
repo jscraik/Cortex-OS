@@ -3,28 +3,28 @@
 
 import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getChatSession, postChatMessage, streamChatSSE } from '../controllers/chatController.js';
+import { getChatSession, postChatMessage, streamChatSSE } from '../controllers/chatController.ts';
 
 // Mock dependencies
-vi.mock('../services/chatGateway.js', () => ({
+vi.mock('../services/chatGateway.ts', () => ({
 	streamChat: vi.fn(),
 }));
 
-vi.mock('../services/chatStore.js', () => ({
+vi.mock('../services/chatStore.ts', () => ({
 	addMessage: vi.fn(),
 	getSession: vi.fn(),
 	setModel: vi.fn(),
 }));
 
-vi.mock('../utils/observability.js', () => ({
+vi.mock('../utils/observability.ts', () => ({
 	logEvent: vi.fn(),
 	makeStartEvent: vi.fn(() => ({ type: 'start' })),
 	makeDoneEvent: vi.fn(() => ({ type: 'done' })),
 }));
 
-import { streamChat } from '../services/chatGateway.js';
-import { addMessage, getSession, setModel } from '../services/chatStore.js';
-import { logEvent } from '../utils/observability.js';
+import { streamChat } from '../services/chatGateway.ts';
+import { addMessage, getSession, setModel } from '../services/chatStore.ts';
+import { logEvent } from '../utils/observability.ts';
 
 describe('Chat Controller', () => {
 	let mockRequest: Partial<Request>;

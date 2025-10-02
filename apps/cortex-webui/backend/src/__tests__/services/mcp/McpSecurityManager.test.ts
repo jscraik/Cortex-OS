@@ -5,9 +5,9 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { McpSecurityManager } from '../../../services/mcp/McpSecurityManager.js';
-import type { ExecutionRequest } from '../../../services/mcp/McpToolExecutor.js';
-import type { McpToolRegistration } from '../../../services/mcp/McpToolRegistry.js';
+import { McpSecurityManager } from '../../../services/mcp/McpSecurityManager.ts';
+import type { ExecutionRequest } from '../../../services/mcp/McpToolExecutor.ts';
+import type { McpToolRegistration } from '../../../services/mcp/McpToolRegistry.ts';
 
 describe('McpSecurityManager', () => {
 	let securityManager: McpSecurityManager;

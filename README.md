@@ -280,12 +280,14 @@ governance boundaries, comprehensive testing, and security practices.
 ### 🎯 Key Features
 
 - **🤖 AI Agent Orchestration** – Multi-agent workflows with A2A communication
-- **🔌 MCP Integration** – Standardized tool integration via MCP
-- **🛡️ Security First** – OWASP compliance, SBOM generation, vulnerability scanning
-- **📊 Observability** – Monitoring, tracing, analytics hooks
-- **🏗️ Governed Architecture** – Import boundaries (ESLint + Nx)
-- **🧪 Quality Gates** – 65% branch coverage (PR gate) + 90% test coverage targets & automated scans
-- **🚀 Production Ready** – Docker deployment & CI/CD pipelines
+- **🧠 Multimodal AI Processing** – Comprehensive support for images, audio, PDFs with OCR, vision analysis, and cross-modal search
+- **🔍 Advanced RAG System** – Retrieval-Augmented Generation with unified embeddings and citation tracking
+- **🔌 MCP Integration** – Standardized tool integration via MCP with FastMCP v3 advanced features
+- **🛡️ Security First** – OWASP compliance, OAuth 2.1 + PKCE, SBOM generation, vulnerability scanning
+- **📊 Comprehensive Observability** – OpenTelemetry instrumentation, monitoring, tracing, analytics hooks
+- **🏗️ Governed Architecture** – Import boundaries (ESLint + Nx), strict architectural rules
+- **🧪 Quality Gates & TDD** – 95/95 coverage targets, mutation testing ≥80%, automated TDD coach integration
+- **🚀 Production Ready** – Docker deployment, CI/CD pipelines, health checks, graceful shutdown
 - **🎯 Reality Filter** – Truthfulness verification and accuracy validation for all AI agents
 
 ---
@@ -428,9 +430,13 @@ Full guide: [Python Integration](./docs/python-integration.md)
 | ------------------ | ---------------------------- | ----------------------------------------------- |
 | `cortex-ai-github` | AI-powered GitHub automation | [README](./packages/cortex-ai-github/README.md) |
 | `cortex-code`      | Terminal user interface      | [README](./apps/cortex-code/README.md)          |
+| `cortex-webui`     | Modern web dashboard         | [README](./apps/cortex-webui/README.md)         |
 | `a2a`              | Agent-to-agent communication | [README](./packages/a2a/README.md)              |
 | `mcp`              | Model Context Protocol       | [README](./packages/mcp/README.md)              |
+| `memories`         | State management & local memory | [README](./packages/memories/README.md)         |
+| `rag`              | Retrieval-Augmented Generation | [README](./packages/rag/README.md)              |
 | `orchestration`    | Multi-agent workflows        | [README](./packages/orchestration/README.md)    |
+| `tdd-coach`        | Test-driven development tools | [README](./packages/tdd-coach/README.md)        |
 
 ---
 
@@ -509,6 +515,11 @@ pnpm badges:generate
 # Run mutation tests, enforce threshold, then regenerate badges
 pnpm mutation:enforce
 pnpm badges:generate
+
+# TDD Coach integration for real-time validation
+make tdd-setup
+make tdd-validate
+make tdd-watch
 ```
 
 Scripts:

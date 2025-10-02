@@ -1,14 +1,21 @@
+import type { Server } from 'node:http';
 import { createServer } from 'node:http';
 import type { Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { auth } from '../../src/auth';
+import { auth } from '../../auth';
 import { createApp } from '../../src/server';
 import { authMonitoringService } from '../../src/services/authMonitoringService';
 
+// Plugin interface for better-auth plugins
+interface BetterAuthPlugin {
+	id: string;
+	[key: string]: unknown;
+}
+
 describe('Better Auth Integration Tests', () => {
 	let app: Express;
-	let server: any;
+	let server: Server;
 
 	beforeAll(async () => {
 		// Create Express app
@@ -62,7 +69,9 @@ describe('Better Auth Integration Tests', () => {
 			const authConfig = auth.$;
 			expect(authConfig.plugins).toBeDefined();
 
-			const twoFactorPlugin = authConfig.plugins.find((plugin: any) => plugin.id === 'twoFactor');
+			const twoFactorPlugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'twoFactor',
+			);
 			expect(twoFactorPlugin).toBeDefined();
 		});
 
@@ -167,7 +176,9 @@ describe('Better Auth Integration Tests', () => {
 	describe('Two-Factor Authentication Features', () => {
 		it('should have backup codes configured', () => {
 			const authConfig = auth.$;
-			const twoFactorPlugin = authConfig.plugins.find((plugin: any) => plugin.id === 'twoFactor');
+			const twoFactorPlugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'twoFactor',
+			);
 
 			expect(twoFactorPlugin.backupCodes).toBeDefined();
 			expect(twoFactorPlugin.backupCodes.enabled).toBe(true);
@@ -175,7 +186,9 @@ describe('Better Auth Integration Tests', () => {
 
 		it('should have enforcement options', () => {
 			const authConfig = auth.$;
-			const twoFactorPlugin = authConfig.plugins.find((plugin: any) => plugin.id === 'twoFactor');
+			const twoFactorPlugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'twoFactor',
+			);
 
 			expect(twoFactorPlugin.enforce).toBeDefined();
 		});
@@ -184,7 +197,9 @@ describe('Better Auth Integration Tests', () => {
 	describe('Organization Support', () => {
 		it('should have organization plugin configured', () => {
 			const authConfig = auth.$;
-			const orgPlugin = authConfig.plugins.find((plugin: any) => plugin.id === 'organization');
+			const orgPlugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'organization',
+			);
 
 			expect(orgPlugin).toBeDefined();
 			expect(orgPlugin.ac).toBeDefined();
@@ -195,7 +210,9 @@ describe('Better Auth Integration Tests', () => {
 	describe('Bearer Token Support', () => {
 		it('should have bearer token plugin configured', () => {
 			const authConfig = auth.$;
-			const bearerPlugin = authConfig.plugins.find((plugin: any) => plugin.id === 'bearer');
+			const bearerPlugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'bearer',
+			);
 
 			expect(bearerPlugin).toBeDefined();
 			expect(bearerPlugin.storage).toBe('database');
@@ -205,7 +222,9 @@ describe('Better Auth Integration Tests', () => {
 	describe('Passkey/WebAuthn Support', () => {
 		it('should have passkey plugin configured', () => {
 			const authConfig = auth.$;
-			const passkeyPlugin = authConfig.plugins.find((plugin: any) => plugin.id === 'passkey');
+			const passkeyPlugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'passkey',
+			);
 
 			expect(passkeyPlugin).toBeDefined();
 			expect(passkeyPlugin.rpName).toBe('Cortex-OS');
@@ -215,7 +234,9 @@ describe('Better Auth Integration Tests', () => {
 	describe('Magic Link Support', () => {
 		it('should have magic link plugin configured', () => {
 			const authConfig = auth.$;
-			const magicLinkPlugin = authConfig.plugins.find((plugin: any) => plugin.id === 'magicLink');
+			const magicLinkPlugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'magicLink',
+			);
 
 			expect(magicLinkPlugin).toBeDefined();
 			expect(magicLinkPlugin.expiresIn).toBe(3600);
@@ -225,7 +246,9 @@ describe('Better Auth Integration Tests', () => {
 	describe('OAuth2 Plugin', () => {
 		it('should have OAuth2 plugin configured', () => {
 			const authConfig = auth.$;
-			const oauth2Plugin = authConfig.plugins.find((plugin: any) => plugin.id === 'oauth2');
+			const oauth2Plugin = authConfig.plugins.find(
+				(plugin: BetterAuthPlugin) => plugin.id === 'oauth2',
+			);
 
 			expect(oauth2Plugin).toBeDefined();
 		});

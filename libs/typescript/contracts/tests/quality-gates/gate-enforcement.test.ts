@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
 	type QualityGateResult,
 	runQualityGateEnforcement,
-} from '../../scripts/ci/quality-gate-enforcer';
+} from '../../../../../scripts/ci/quality-gate-enforcer';
 
 interface SeedOptions {
 	coverage?: {

@@ -3,8 +3,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { validateApiKeyFormat } from '../src/config/security.js';
-import { apiKeyAuth } from '../src/middleware/security.js';
+import { validateApiKeyFormat } from '../src/config/security.ts';
+import { apiKeyAuth } from '../src/middleware/security.ts';
 
 // Mock environment variables
 const originalEnv = process.env;

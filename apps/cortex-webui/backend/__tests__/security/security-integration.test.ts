@@ -2,7 +2,7 @@
 // Simple test to verify basic functionality works
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getSecurityConfig } from '../src/config/security.js';
+import { getSecurityConfig } from '../src/config/security.ts';
 
 describe('Security Configuration Tests', () => {
 	beforeEach(() => {

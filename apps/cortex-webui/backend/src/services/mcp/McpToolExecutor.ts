@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import logger from '../utils/logger.js';
 import type { McpSecurityManager } from './McpSecurityManager.js';
-import type { ExecutionContext, McpToolRegistration, ResourceLimits } from './McpToolRegistry.js';
+import type { ExecutionContext, McpToolRegistration } from './McpToolRegistry.js';
 import { mcpToolRegistry } from './McpToolRegistry.js';
 
 export interface ExecutionRequest {
@@ -183,7 +183,7 @@ export class McpToolExecutor extends EventEmitter {
 		timeout: number,
 		signal: AbortSignal,
 	): Promise<unknown> {
-		return new Promise(async (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			// Handle abort
 			const handleAbort = () => {
 				reject(new Error(McpExecutionError.TIMEOUT_ERROR));
@@ -196,30 +196,34 @@ export class McpToolExecutor extends EventEmitter {
 
 			signal.addEventListener('abort', handleAbort);
 
-			// Set timeout
+			// Set timeout - abort the signal by creating a controller
+			const abortController = new AbortController();
 			const timeoutHandle = setTimeout(() => {
 				abortController.abort();
 				reject(new Error(McpExecutionError.TIMEOUT_ERROR));
 			}, timeout);
 
-			try {
-				// Validate input parameters
-				const validatedParams = tool.schema.inputSchema.parse(params);
+			(async () => {
+				try {
+					// Validate input parameters
+					const validatedParams = tool.schema.inputSchema.parse(params);
 
-				// Execute tool
-				const result = await tool.handler(validatedParams, context);
+					// Execute tool
+					const result = await tool.handler(validatedParams, context);
 
-				// Validate output
-				const validatedResult = tool.schema.outputSchema.parse(result);
+					// Validate output
+					const validatedResult = tool.schema.outputSchema.parse(result);
 
-				clearTimeout(timeoutHandle);
-				signal.removeEventListener('abort', handleAbort);
-				resolve(validatedResult);
-			} catch (error) {
-				clearTimeout(timeoutHandle);
-				signal.removeEventListener('abort', handleAbort);
-				reject(error);
-			}
+					clearTimeout(timeoutHandle);
+					signal.removeEventListener('abort', handleAbort);
+					resolve(validatedResult);
+				} catch (error) {
+					clearTimeout(timeoutHandle);
+					signal.removeEventListener('abort', handleAbort);
+					const errorObj = error instanceof Error ? error : new Error(String(error));
+					reject(errorObj);
+				}
+			})();
 		});
 	}
 

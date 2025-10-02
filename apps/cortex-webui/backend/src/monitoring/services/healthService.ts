@@ -6,7 +6,7 @@ import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import { getDatabase } from '../../utils/database.js';
-import logger from '../../utils/logger.js';
+import logger from '../utils/logger';
 
 export interface HealthCheckResult {
 	status: 'healthy' | 'degraded' | 'unhealthy';

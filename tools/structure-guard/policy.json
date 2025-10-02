@@ -217,6 +217,7 @@
     "renovate.json",
     "cliff.toml",
     "commitlint.config.cjs",
+    "Justfile",
     "semantic-release.config.js",
     "ecosystem.config.cjs",
     "ecosystem.config.js",

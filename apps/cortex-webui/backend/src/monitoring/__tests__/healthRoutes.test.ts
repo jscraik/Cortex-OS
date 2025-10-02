@@ -4,12 +4,12 @@
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createHealthCheckRoutes } from '../healthRoutes.js';
-import type { HealthCheckResult } from '../services/healthService.js';
-import { HealthService } from '../services/healthService.js';
+import { createHealthCheckRoutes } from '../healthRoutes.ts';
+import type { HealthCheckResult } from '../services/healthService.ts';
+import { HealthService } from '../services/healthService.ts';
 
 // Mock HealthService
-vi.mock('../services/healthService.js');
+vi.mock('../services/healthService.ts');
 
 describe('Health Check API', () => {
 	let app: express.Application;

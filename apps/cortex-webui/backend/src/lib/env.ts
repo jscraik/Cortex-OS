@@ -61,7 +61,9 @@ export function validateEnvironment() {
 
 	if (warnings.length > 0) {
 		console.warn('⚠️  OAuth provider configuration warnings:');
-		warnings.forEach((warning) => console.warn(`   ${warning}`));
+		warnings.forEach((warning) => {
+			console.warn(`   ${warning}`);
+		});
 	}
 
 	return result.data;

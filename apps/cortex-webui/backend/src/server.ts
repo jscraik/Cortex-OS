@@ -7,11 +7,27 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Express } from 'express';
 import { WebSocketServer } from 'ws';
+import { cacheLongTerm, cacheMediumTerm } from './middleware/cacheMiddleware.js';
+import {
+	createCompressionMiddleware,
+	createPerformanceHealthMiddleware,
+	createRequestLoggingMiddleware,
+	createResponseSizeMiddleware,
+	createSlowDownMiddleware,
+	createSmartRateLimitMiddleware,
+	createTimeoutMiddleware,
+	rateLimitConfigs,
+} from './middleware/performanceMiddleware.js';
+import { createStaticCacheMiddleware } from './middleware/staticCacheMiddleware.js';
 import {
 	createHealthCheckRoutes,
 	createMetricsRoutes,
 	metricsMiddleware,
 } from './monitoring/index.js';
+import { advancedMetricsService } from './monitoring/services/advancedMetricsService.js';
+import { cacheService } from './services/cacheService.js';
+import { databaseService } from './services/databaseService.js';
+import { createMemoryMonitoringMiddleware } from './services/memoryService.js';
 
 dotenv.config();
 
@@ -102,17 +118,63 @@ export const createApp = (): Express => {
 	const app = express();
 	const corsOptions = getCorsOptions();
 
+	// Apply core middleware first
 	app.use(cors(corsOptions));
-	app.use(express.json());
-	app.use(express.urlencoded({ extended: true }));
-	app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+	app.use(express.json({ limit: '10mb' }));
+	app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+	// Performance monitoring and optimization middleware
+	app.use(createMemoryMonitoringMiddleware());
+	app.use(createRequestLoggingMiddleware());
+	app.use(createResponseSizeMiddleware());
+	app.use(metricsMiddleware());
+
+	// Advanced compression with Brotli support
+	app.use(
+		createCompressionMiddleware({
+			threshold: 1024,
+			level: 6,
+		}),
+	);
+
+	// Rate limiting (configurable per endpoint)
+	app.use('/api', createSmartRateLimitMiddleware(rateLimitConfigs.api));
+	app.use('/api/auth', rateLimitConfigs.auth);
+	app.use('/api/upload', rateLimitConfigs.upload);
+	app.use('/api/search', ...rateLimitConfigs.search);
+
+	// Progressive slowdown for approaching limits
+	app.use(
+		'/api',
+		createSlowDownMiddleware({
+			delayAfter: 80,
+			delayMs: 200,
+			maxDelayMs: 3000,
+		}),
+	);
+
+	// Request timeout
+	app.use('/api', createTimeoutMiddleware(30000)); // 30 seconds
+
+	// Static asset serving with CDN headers
+	app.use(
+		'/uploads',
+		createStaticCacheMiddleware({
+			rootDir: path.join(__dirname, '../uploads'),
+			maxAge: 86400, // 24 hours
+			immutableMaxAge: 31536000, // 1 year for versioned assets
+			cdnHeaders: true,
+			brotli: true,
+			gzip: true,
+		}),
+	);
 
 	// Apply brAInwav security middleware (Phase 1.2 hardening)
 	applySecurityMiddleware(app);
 
-	// Apply metrics collection middleware (import moved to top)
-	app.use(metricsMiddleware()); // Health Check Routes (comprehensive monitoring)
+	// Enhanced health check routes
 	app.use('/health', createHealthCheckRoutes());
+	app.use('/health/performance', createPerformanceHealthMiddleware());
 
 	// Metrics Routes (with API key authentication)
 	app.use('/metrics', createMetricsRoutes());
@@ -173,9 +235,9 @@ export const createApp = (): Express => {
 		createMessage,
 	);
 
-	app.get(`${API_BASE_PATH}/models`, getModels);
-	app.get(`${API_BASE_PATH}/models/:id`, getModelById);
-	app.get(`${API_BASE_PATH}/models/ui`, getUiModels);
+	app.get(`${API_BASE_PATH}/models`, cacheMediumTerm(), getModels);
+	app.get(`${API_BASE_PATH}/models/:id`, cacheMediumTerm(), getModelById);
+	app.get(`${API_BASE_PATH}/models/ui`, cacheLongTerm(), getUiModels);
 	app.post(`${API_BASE_PATH}/crawl`, customCsrfProtection, postCrawl);
 
 	app.get(`${API_BASE_PATH}/chat/:sessionId`, getChatSession);
@@ -288,6 +350,13 @@ export const createServer = (): ServerComponents => {
 			validateEnvironment();
 			logger.info('init:env_validation');
 
+			// Initialize performance services
+			await cacheService.connect();
+			logger.info('init:cache_service');
+
+			await databaseService.initialize();
+			logger.info('init:database_service');
+
 			await initializeDatabaseAsync();
 			logger.info('init:database');
 
@@ -298,6 +367,24 @@ export const createServer = (): ServerComponents => {
 			logger.info('init:default_models');
 			initializeUploadDirectory();
 			logger.info('init:upload_dir');
+
+			// Initialize advanced metrics service
+			advancedMetricsService.registerSLO({
+				name: 'api-response-time',
+				target: { p95Latency: 500 },
+				window: 300,
+				alertThreshold: 20,
+			});
+
+			advancedMetricsService.registerSLO({
+				name: 'api-error-rate',
+				target: { errorRate: 0.5 },
+				window: 300,
+				alertThreshold: 50,
+			});
+
+			logger.info('init:metrics_service');
+
 			await new Promise<void>((resolve, reject) => {
 				server.on('error', (err: Error) => {
 					logger.error('server:listen:error', {
@@ -312,6 +399,9 @@ export const createServer = (): ServerComponents => {
 						env: nodeEnv,
 						apiBase: API_BASE_PATH,
 						wsPath: WS_BASE_PATH,
+						performanceOptimizations: true,
+						cachingEnabled: true,
+						monitoringEnabled: true,
 					});
 					resolve();
 				});

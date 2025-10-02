@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import tailwindTypography from '@tailwindcss/typography';
+
 export default {
 	// Include JS/TS and CSS files plus the public HTML so utility classes
 	// referenced inside CSS via `@apply` (like in `src/globals.css`) are
@@ -7,5 +9,5 @@ export default {
 	theme: {
 		extend: {},
 	},
-	plugins: [],
+	plugins: [tailwindTypography],
 };

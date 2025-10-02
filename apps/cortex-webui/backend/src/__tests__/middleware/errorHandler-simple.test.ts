@@ -3,21 +3,34 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { errorHandler, HttpError } from '../middleware/errorHandler';
+import { z } from 'zod';
+import { errorHandler, HttpError } from '../../middleware/errorHandler';
+
+// Mock types for proper typing
+interface MockRequest extends Partial<Request> {
+	path: string;
+	method: string;
+	ip: string;
+}
+
+interface MockResponse extends Partial<Response> {
+	status: ReturnType<typeof vi.fn>;
+	json: ReturnType<typeof vi.fn>;
+}
 
 // Mock logger
-vi.mock('../utils/logger', () => ({
+vi.mock('../../utils/logger', () => ({
 	logger: {
 		error: vi.fn(),
 	},
 	logError: vi.fn(),
 }));
 
-import { logError } from '../utils/logger';
+import { logError } from '../../utils/logger';
 
 describe('Error Handler Middleware - Simple Tests', () => {
-	let mockRequest: Partial<Request>;
-	let mockResponse: Partial<Response>;
+	let mockRequest: MockRequest;
+	let mockResponse: MockResponse;
 	let mockNext: NextFunction;
 
 	beforeEach(() => {
@@ -113,16 +126,16 @@ describe('Error Handler Middleware - Simple Tests', () => {
 	describe('Zod Validation Error Handling', () => {
 		it('should handle Zod validation errors', () => {
 			// Arrange
-			const schema = require('zod').z.object({
-				email: require('zod').z.string().email(),
-				age: require('zod').z.number().min(18),
+			const schema = z.object({
+				email: z.string().email(),
+				age: z.number().min(18),
 			});
 
-			let validationError;
+			let validationError: Error | undefined;
 			try {
 				schema.parse({ email: 'invalid-email', age: 15 });
 			} catch (error) {
-				validationError = error;
+				validationError = error as Error;
 			}
 
 			// Act
@@ -144,13 +157,13 @@ describe('Error Handler Middleware - Simple Tests', () => {
 
 		it('should handle multiple validation errors', () => {
 			// Arrange
-			const schema = require('zod').z.object({
-				name: require('zod').z.string().min(2),
-				email: require('zod').z.string().email(),
-				age: require('zod').z.number().min(18).max(120),
+			const schema = z.object({
+				name: z.string().min(2),
+				email: z.string().email(),
+				age: z.number().min(18).max(120),
 			});
 
-			let validationError;
+			let validationError: Error | undefined;
 			try {
 				schema.parse({
 					name: 'a', // Too short
@@ -158,7 +171,7 @@ describe('Error Handler Middleware - Simple Tests', () => {
 					age: 15, // Too young
 				});
 			} catch (error) {
-				validationError = error;
+				validationError = error as Error;
 			}
 
 			// Act
@@ -250,7 +263,7 @@ describe('Error Handler Middleware - Simple Tests', () => {
 
 			// Act
 			errorHandler(
-				nonErrorValue as any,
+				nonErrorValue as unknown as Error,
 				mockRequest as Request,
 				mockResponse as Response,
 				mockNext,
@@ -266,7 +279,12 @@ describe('Error Handler Middleware - Simple Tests', () => {
 
 		it('should handle null errors', () => {
 			// Act
-			errorHandler(null as any, mockRequest as Request, mockResponse as Response, mockNext);
+			errorHandler(
+				null as unknown as Error,
+				mockRequest as Request,
+				mockResponse as Response,
+				mockNext,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -349,7 +367,7 @@ describe('Error Handler Middleware - Simple Tests', () => {
 		it('should handle logging failures gracefully', () => {
 			// Arrange
 			const error = new Error('Test error');
-			(logError as any).mockImplementation(() => {
+			vi.mocked(logError).mockImplementation(() => {
 				throw new Error('Logging failed');
 			});
 

@@ -14,6 +14,7 @@ export interface QualityContract {
 		line: number;
 		branch: number;
 		mutation_score: number;
+		ratchet?: CoverageRatchetConfig;
 	};
 	security: {
 		max_critical: number;
@@ -31,6 +32,20 @@ export interface QualityContract {
 		graceful_shutdown_max_seconds: number;
 		circuit_breaker_required: boolean;
 	};
+}
+
+
+export interface CoverageRatchetConfig {
+	baseline_path: string;
+	line_slack_percent?: number;
+	branch_slack_percent?: number;
+}
+
+export interface BaselineCoverageSnapshot {
+	line?: { percentage?: number } | number;
+	branch?: { percentage?: number } | number;
+	lines?: { percentage?: number };
+	branches?: { percentage?: number };
 }
 
 export interface CoverageMetrics {
@@ -198,6 +213,8 @@ export class QualityGateEnforcer {
 
 		const { coverage: coverageConfig } = this.contract!;
 
+		await this.validateCoverageRatchet(coverage);
+
 		// Validate line coverage
 		if (coverage.lines.percentage < coverageConfig.line) {
 			this.violations.push(
@@ -222,6 +239,60 @@ export class QualityGateEnforcer {
 		console.log(
 			`[brAInwav] Coverage: ${coverage.lines.percentage.toFixed(1)}% line, ${coverage.branches.percentage.toFixed(1)}% branch, ${mutationScore.toFixed(1)}% mutation`,
 		);
+	}
+
+	private async validateCoverageRatchet(coverage: CoverageMetrics): Promise<void> {
+		const ratchet = this.contract?.coverage?.ratchet;
+		if (!ratchet) {
+			return;
+		}
+
+		const baselinePath = path.isAbsolute(ratchet.baseline_path)
+			? ratchet.baseline_path
+			: path.resolve(path.dirname(this.contractPath), ratchet.baseline_path);
+
+		let snapshot: BaselineCoverageSnapshot;
+		try {
+			const raw = await fs.readFile(baselinePath, 'utf8');
+			snapshot = JSON.parse(raw) as BaselineCoverageSnapshot;
+		} catch (error) {
+			this.violations.push(
+				`Coverage ratchet baseline missing or invalid at ${baselinePath}: ${(error as Error).message}`,
+			);
+			return;
+		}
+
+		const baselineLine = this.extractBaselinePercentage(snapshot, 'line');
+		const baselineBranch = this.extractBaselinePercentage(snapshot, 'branch');
+		const allowedLineDrop = ratchet.line_slack_percent ?? 0;
+		const allowedBranchDrop = ratchet.branch_slack_percent ?? 0;
+
+		if (typeof baselineLine === 'number' && coverage.lines.percentage < baselineLine - allowedLineDrop) {
+			this.violations.push(
+				`Line coverage ${coverage.lines.percentage.toFixed(1)}% < ratchet baseline ${baselineLine.toFixed(1)}% (allowable drop ${allowedLineDrop.toFixed(1)}%)`,
+			);
+		}
+
+		if (typeof baselineBranch === 'number' && coverage.branches.percentage < baselineBranch - allowedBranchDrop) {
+			this.violations.push(
+				`Branch coverage ${coverage.branches.percentage.toFixed(1)}% < ratchet baseline ${baselineBranch.toFixed(1)}% (allowable drop ${allowedBranchDrop.toFixed(1)}%)`,
+			);
+		}
+	}
+
+	private extractBaselinePercentage(snapshot: BaselineCoverageSnapshot, key: 'line' | 'branch'): number | null {
+		const direct = snapshot[key];
+		if (typeof direct === 'number') {
+			return direct;
+		}
+		if (direct && typeof direct === 'object' && typeof direct.percentage === 'number') {
+			return direct.percentage;
+		}
+		const alias = key === 'line' ? snapshot.lines : snapshot.branches;
+		if (alias && typeof alias === 'object' && typeof alias.percentage === 'number') {
+			return alias.percentage;
+		}
+		return null;
 	}
 
 	/**

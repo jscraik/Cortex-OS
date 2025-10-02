@@ -6,13 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type AuthRequest, authenticateToken } from '../middleware/auth';
 
 // Mock dependencies
-vi.mock('../services/authService.js', () => ({
+vi.mock('../services/authService.ts', () => ({
 	AuthService: {
 		verifyToken: vi.fn(),
 	},
 }));
 
-vi.mock('../services/userService.js', () => ({
+vi.mock('../services/userService.ts', () => ({
 	UserService: {
 		getUserById: vi.fn(),
 	},
@@ -133,6 +133,8 @@ describe('Authentication Middleware', () => {
 				id: 'user123',
 				email: 'test@example.com',
 				name: 'Test User',
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
 			};
 
 			mockRequest.headers = {
@@ -140,7 +142,7 @@ describe('Authentication Middleware', () => {
 			};
 
 			vi.mocked(AuthService.verifyToken).mockReturnValue(decodedToken);
-			vi.mocked(UserService.getUserById).mockReturnValue(mockUser as any);
+			vi.mocked(UserService.getUserById).mockReturnValue(mockUser);
 
 			// Act
 			await authenticateToken(mockRequest as AuthRequest, mockResponse as Response, mockNext);

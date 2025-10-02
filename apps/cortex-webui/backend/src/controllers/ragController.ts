@@ -1,12 +1,17 @@
-import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import type { Request, Response } from 'express';
+import type { Express, Request, Response } from 'express';
 import multer from 'multer';
+import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import { mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { ragDocumentChunks, ragDocuments } from '../db/schema.js';
 import { documentProcessingService } from '../services/documentProcessingService.js';
 import { embeddingService } from '../services/embeddingService.js';
+import { pdfWithImagesService } from '../services/pdfWithImagesService.js';
 import { vectorSearchService } from '../services/vectorSearchService.js';
 import type {
 	DocumentProcessingError,
@@ -20,8 +25,16 @@ import logger from '../utils/logger.js';
 // File size limits (100MB for RAG documents)
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
-// Multer configuration for RAG document uploads
-const storage = multer.memoryStorage();
+const RAG_UPLOAD_DIR = join(tmpdir(), 'cortex-webui', 'rag');
+mkdirSync(RAG_UPLOAD_DIR, { recursive: true });
+
+const sanitizeFilename = (name: string): string => name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+// Multer configuration for RAG document uploads (disk-based)
+const storage = multer.diskStorage({
+	destination: (_req, _file, cb) => cb(null, RAG_UPLOAD_DIR),
+	filename: (_req, file, cb) => cb(null, `${Date.now()}-${sanitizeFilename(file.originalname)}`),
+});
 export const ragDocumentUploadMiddleware = multer({
 	storage,
 	limits: {
@@ -82,6 +95,8 @@ export async function uploadRAGDocument(req: Request, res: Response) {
 		return res.status(401).json(createErrorResponse('Authentication required'));
 	}
 
+	let filePath: string | undefined;
+
 	try {
 		// Validate request
 		const validatedData = uploadDocumentSchema.parse(req.body);
@@ -90,39 +105,53 @@ export async function uploadRAGDocument(req: Request, res: Response) {
 			return res.status(400).json(createErrorResponse('No file provided'));
 		}
 
+		const file = req.file;
+		filePath = (file as Express.Multer.File & { path?: string }).path;
+		if (!filePath) {
+			return res.status(500).json(createErrorResponse('Upload staging path unavailable'));
+		}
+
 		logger.info('rag:upload_start', {
-			filename: req.file.originalname,
-			fileSize: req.file.size,
+			filename: file.originalname,
+			fileSize: file.size,
 			userId,
 			brand: 'brAInwav',
 		});
 
-		// Parse document content - we need to implement this directly since parseDocument expects Express response
-		let documentData;
+		let documentData: Record<string, unknown>;
+
+		const fileSource = {
+			path: filePath,
+			size: file.size,
+			mimeType: file.mimetype,
+		};
+
 		try {
-			const file = req.file;
 			const fileName = file.originalname;
 			const mimeType = file.mimetype;
-			const buffer = file.buffer;
 
 			// Re-implement parsing logic from documentController
 			if (mimeType.includes('pdf') || fileName.toLowerCase().endsWith('.pdf')) {
-				const pdf = await import('pdf-parse');
-				const data = await pdf(buffer);
+				const pdfResult = await pdfWithImagesService.processPdfWithImages(
+					fileSource,
+					file.originalname,
+					{ enableOCR: false, enableVisionAnalysis: false },
+				);
+
 				documentData = {
 					type: 'pdf',
-					text: data.text || '',
+					text: pdfResult.metadata.pages.map((page) => page.text ?? '').join('\n\n'),
 					fileName,
-					fileSize: buffer.length,
-					pages: data.numpages,
+					fileSize: file.size,
+					pages: pdfResult.metadata.pages.length,
 					metadata: {
-						title: data.info?.Title,
-						author: data.info?.Author,
-						subject: data.info?.Subject,
-						creator: data.info?.Creator,
-						producer: data.info?.Producer,
-						creationDate: data.info?.CreationDate ? new Date(data.info.CreationDate) : undefined,
-						modDate: data.info?.ModDate ? new Date(data.info.ModDate) : undefined,
+						title: pdfResult.metadata.title,
+						author: pdfResult.metadata.author,
+						subject: pdfResult.metadata.subject,
+						creator: pdfResult.metadata.creator,
+						producer: pdfResult.metadata.producer,
+						creationDate: pdfResult.metadata.creationDate,
+						modDate: pdfResult.metadata.modificationDate,
 					},
 				};
 			} else if (
@@ -131,7 +160,7 @@ export async function uploadRAGDocument(req: Request, res: Response) {
 				fileName.toLowerCase().endsWith('.md') ||
 				fileName.toLowerCase().endsWith('.markdown')
 			) {
-				const text = buffer.toString('utf-8');
+				const text = await fs.readFile(filePath, 'utf-8');
 				const fileType =
 					fileName.toLowerCase().endsWith('.md') || fileName.toLowerCase().endsWith('.markdown')
 						? 'markdown'
@@ -140,7 +169,7 @@ export async function uploadRAGDocument(req: Request, res: Response) {
 					type: fileType,
 					text,
 					fileName,
-					fileSize: buffer.length,
+					fileSize: file.size,
 					metadata: {
 						encoding: 'utf-8',
 						lines: text.split('\n').length,
@@ -264,6 +293,10 @@ export async function uploadRAGDocument(req: Request, res: Response) {
 		};
 
 		return res.status(500).json(errorResponse);
+	} finally {
+		if (filePath) {
+			await fs.unlink(filePath).catch(() => undefined);
+		}
 	}
 }
 

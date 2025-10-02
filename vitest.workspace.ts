@@ -37,6 +37,7 @@ const PROJECT_PATHS = [
 	'apps/cortex-os/vitest.config.ts',
 	'apps/api/vitest.config.ts',
 	'apps/cortex-webui/vitest.config.ts',
+	'apps/cortex-webui/backend/vitest.config.ts',
 	'packages/a2a/vitest.config.ts',
 	'packages/a2a-services/schema-registry/vitest.config.ts',
 	'packages/a2a-services/common/vitest.config.ts',

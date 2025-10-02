@@ -22,7 +22,7 @@ export class ImageProcessingService {
 	 * Process uploaded image and extract comprehensive metadata
 	 */
 	async processImage(
-		buffer: Buffer,
+		source: Buffer | { path: string; size: number },
 		filename: string,
 		options: MultimodalProcessingOptions = {},
 	): Promise<{
@@ -35,28 +35,27 @@ export class ImageProcessingService {
 		try {
 			logger.info('image:processing_start', {
 				filename,
-				fileSize: buffer.length,
+				fileSize: this.getFileSize(source),
 				enableOCR: options.enableOCR ?? true,
 				enableVisionAnalysis: options.enableVisionAnalysis ?? true,
 				brand: 'brAInwav',
 			});
 
 			// Validate image
-			await this.validateImage(buffer, filename);
+			await this.validateImage(source, filename);
 
 			// Extract basic image metadata
-			const imageMetadata = await this.extractImageMetadata(buffer, filename);
+			const imageMetadata = await this.extractImageMetadata(source, filename);
 
 			// Process image for storage and analysis
-			const { resizedBuffer, thumbnailBuffer } = await this.prepareImageForProcessing(
-				buffer,
-				options,
-			);
+			const { resizedBuffer, thumbnailBuffer } = await this.prepareImageForProcessing(source, options);
 
 			// Perform OCR if enabled
 			if (options.enableOCR !== false) {
 				try {
-					const ocrResult = await this.performOCR(resizedBuffer || buffer);
+					const ocrResult = await this.performOCR(
+						resizedBuffer || (await this.createWorkingBuffer(source)),
+					);
 					imageMetadata.ocrText = ocrResult;
 				} catch (ocrError) {
 					logger.warn('image:ocr_failed', {
@@ -72,7 +71,7 @@ export class ImageProcessingService {
 			if (options.enableVisionAnalysis !== false) {
 				try {
 					const visionResult = await this.performVisionAnalysis(
-						resizedBuffer || buffer,
+						resizedBuffer || (await this.createWorkingBuffer(source)),
 						options.visionModel,
 					);
 					imageMetadata.visionAnalysis = visionResult;
@@ -118,17 +117,17 @@ export class ImageProcessingService {
 	/**
 	 * Validate image file format and size
 	 */
-	private async validateImage(buffer: Buffer, _filename: string): Promise<void> {
-		// Check file size
-		if (buffer.length > this.maxImageSize) {
+	private async validateImage(source: Buffer | { path: string; size: number }, _filename: string): Promise<void> {
+		const fileSize = this.getFileSize(source);
+		if (fileSize > this.maxImageSize) {
 			throw new Error(
-				`Image file size ${Math.round(buffer.length / 1024 / 1024)}MB exceeds maximum allowed size of ${Math.round(this.maxImageSize / 1024 / 1024)}MB`,
+				`Image file size ${Math.round(fileSize / 1024 / 1024)}MB exceeds maximum allowed size of ${Math.round(this.maxImageSize / 1024 / 1024)}MB`,
 			);
 		}
 
 		// Check if it's actually an image
 		try {
-			const metadata = await sharp(buffer).metadata();
+			const metadata = await sharp(this.getSharpSource(source)).metadata();
 
 			if (!metadata.format || !this.supportedFormats.includes(metadata.format)) {
 				throw new Error(
@@ -157,8 +156,11 @@ export class ImageProcessingService {
 	/**
 	 * Extract comprehensive image metadata using Sharp
 	 */
-	private async extractImageMetadata(buffer: Buffer, filename: string): Promise<ImageMetadata> {
-		const metadata = await sharp(buffer).metadata();
+	private async extractImageMetadata(
+		source: Buffer | { path: string; size: number },
+		filename: string,
+	): Promise<ImageMetadata> {
+		const metadata = await sharp(this.getSharpSource(source)).metadata();
 
 		const imageMetadata: ImageMetadata = {
 			width: metadata.width || 0,
@@ -186,8 +188,8 @@ export class ImageProcessingService {
 	/**
 	 * Extract EXIF data from image
 	 */
-	private async extractExifData(buffer: Buffer): Promise<ExifData | undefined> {
-		const metadata = await sharp(buffer).metadata();
+	private async extractExifData(source: Buffer | { path: string; size: number }): Promise<ExifData | undefined> {
+		const metadata = await sharp(this.getSharpSource(source)).metadata();
 
 		if (!metadata.exif) {
 			return undefined;
@@ -222,7 +224,7 @@ export class ImageProcessingService {
 	 * Prepare image for processing (resize for analysis, create thumbnail)
 	 */
 	private async prepareImageForProcessing(
-		buffer: Buffer,
+		source: Buffer | { path: string; size: number },
 		_options: MultimodalProcessingOptions,
 	): Promise<{
 		resizedBuffer?: Buffer;
@@ -233,11 +235,12 @@ export class ImageProcessingService {
 			thumbnailBuffer?: Buffer;
 		} = {};
 
-		const metadata = await sharp(buffer).metadata();
+		const sharpSource = this.getSharpSource(source);
+		const metadata = await sharp(sharpSource).metadata();
 
 		// Create resized version for OCR/vision analysis (max 1024px)
 		if ((metadata.width && metadata.width > 1024) || (metadata.height && metadata.height > 1024)) {
-			result.resizedBuffer = await sharp(buffer)
+			result.resizedBuffer = await sharp(sharpSource)
 				.resize(1024, 1024, {
 					fit: 'inside',
 					withoutEnlargement: true,
@@ -247,7 +250,7 @@ export class ImageProcessingService {
 		}
 
 		// Create thumbnail (max 200px)
-		result.thumbnailBuffer = await sharp(buffer)
+		result.thumbnailBuffer = await sharp(sharpSource)
 			.resize(200, 200, {
 				fit: 'inside',
 				withoutEnlargement: true,
@@ -338,6 +341,23 @@ export class ImageProcessingService {
 			default:
 				return 'JPEG'; // Default fallback
 		}
+	}
+
+	private getFileSize(source: Buffer | { path: string; size: number }): number {
+		return Buffer.isBuffer(source) ? source.length : source.size;
+	}
+
+	private getSharpSource(source: Buffer | { path: string; size: number }): Buffer | string {
+		return Buffer.isBuffer(source) ? source : source.path;
+	}
+
+	private async createWorkingBuffer(source: Buffer | { path: string; size: number }): Promise<Buffer> {
+		return Buffer.isBuffer(source)
+			? source
+			: sharp(source.path)
+				.resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+				.png({ quality: 90 })
+				.toBuffer();
 	}
 
 	/**

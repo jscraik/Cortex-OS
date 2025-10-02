@@ -72,8 +72,8 @@ all = ["cortex-mcp[dev,security,performance,docs]"]
 
 
 [project.scripts]
-mcp-server = "cortex_mcp.cortex_fastmcp_server_v2:main"
-cortex-mcp = "cortex_mcp.cortex_fastmcp_server_v2:main"
+mcp-client = "cortex_mcp.http_client:main"
+cortex-mcp = "cortex_mcp.http_client:main"
 
 [project.urls]
 Homepage = "https://github.com/cortex-os/cortex-mcp"
@@ -95,7 +95,7 @@ minversion = "7.0"
 addopts = [
   "--strict-markers",
   "--strict-config",
-  "--cov=cortex_mcp.cortex_fastmcp_server_v2",
+  "--cov=cortex_mcp.http_client",
   "--cov=cortex_mcp.adapters",
   "--cov=cortex_mcp.auth.jwt_auth",
   "--cov=cortex_mcp.middleware.rate_limiter",

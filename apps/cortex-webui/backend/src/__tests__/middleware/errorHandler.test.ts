@@ -4,17 +4,33 @@
 import type { NextFunction, Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { errorHandler, HttpError } from '../middleware/errorHandler.js';
+import {
+	errorHandler,
+	HttpError,
+	AppError,
+	ValidationError,
+	AuthenticationError,
+	AuthorizationError,
+	NotFoundError,
+	ConflictError,
+	RateLimitError,
+	DatabaseError,
+	ExternalServiceError,
+	notFoundHandler,
+	validationErrorHandler,
+	asyncErrorHandler,
+	customErrorHandler,
+} from '../middleware/errorHandler.ts';
 
 // Mock logger
-vi.mock('../utils/logger.js', () => ({
+vi.mock('../utils/logger.ts', () => ({
 	logger: {
 		error: vi.fn(),
 	},
 	logError: vi.fn(),
 }));
 
-import { logError, logger } from '../utils/logger.js';
+import { logError, logger } from '../utils/logger.ts';
 
 describe('Error Handler Middleware', () => {
 	let mockRequest: Partial<Request>;
@@ -564,6 +580,296 @@ describe('Error Handler Middleware', () => {
 			// Assert
 			expect(error.stack).toBeDefined();
 			expect(error.stack).toContain('HttpError');
+		});
+	});
+
+	describe('Specialized Error Classes', () => {
+		describe('AppError Class', () => {
+			it('should create AppError with default values', () => {
+				const error = new AppError('Test error');
+				expect(error.message).toBe('Test error');
+				expect(error.statusCode).toBe(500);
+				expect(error.isOperational).toBe(true);
+				expect(error.code).toBeUndefined();
+			});
+
+			it('should create AppError with custom status code', () => {
+				const error = new AppError('Not found', 404);
+				expect(error.statusCode).toBe(404);
+			});
+
+			it('should create AppError with code', () => {
+				const error = new AppError('Validation failed', 400, 'VALIDATION_ERROR');
+				expect(error.code).toBe('VALIDATION_ERROR');
+			});
+
+			it('should serialize to JSON', () => {
+				const error = new AppError('Test error', 400, 'TEST_ERROR');
+				const json = error.toJSON();
+				expect(json).toEqual({
+					message: 'Test error',
+					statusCode: 400,
+					code: 'TEST_ERROR',
+					isOperational: true,
+				});
+			});
+		});
+
+		describe('ValidationError', () => {
+			it('should create validation error with details', () => {
+				const details = [
+					{ field: 'email', message: 'Invalid email format' },
+					{ field: 'password', message: 'Password too short' },
+				];
+				const error = new ValidationError('Validation failed', details);
+
+				expect(error.statusCode).toBe(400);
+				expect(error.code).toBe('VALIDATION_ERROR');
+				expect(error.details).toEqual(details);
+			});
+		});
+
+		describe('AuthenticationError', () => {
+			it('should create authentication error', () => {
+				const error = new AuthenticationError('Invalid credentials');
+				expect(error.statusCode).toBe(401);
+				expect(error.code).toBe('AUTHENTICATION_ERROR');
+			});
+		});
+
+		describe('AuthorizationError', () => {
+			it('should create authorization error', () => {
+				const error = new AuthorizationError('Access denied');
+				expect(error.statusCode).toBe(403);
+				expect(error.code).toBe('AUTHORIZATION_ERROR');
+			});
+		});
+
+		describe('NotFoundError', () => {
+			it('should create not found error', () => {
+				const error = new NotFoundError('Resource not found');
+				expect(error.statusCode).toBe(404);
+				expect(error.code).toBe('NOT_FOUND_ERROR');
+			});
+		});
+
+		describe('ConflictError', () => {
+			it('should create conflict error', () => {
+				const error = new ConflictError('Resource already exists');
+				expect(error.statusCode).toBe(409);
+				expect(error.code).toBe('CONFLICT_ERROR');
+			});
+		});
+
+		describe('RateLimitError', () => {
+			it('should create rate limit error', () => {
+				const error = new RateLimitError('Too many requests');
+				expect(error.statusCode).toBe(429);
+				expect(error.code).toBe('RATE_LIMIT_ERROR');
+			});
+		});
+
+		describe('DatabaseError', () => {
+			it('should create database error', () => {
+				const error = new DatabaseError('Database connection failed');
+				expect(error.statusCode).toBe(500);
+				expect(error.code).toBe('DATABASE_ERROR');
+			});
+		});
+
+		describe('ExternalServiceError', () => {
+			it('should create external service error', () => {
+				const error = new ExternalServiceError('External API unavailable');
+				expect(error.statusCode).toBe(502);
+				expect(error.code).toBe('EXTERNAL_SERVICE_ERROR');
+			});
+		});
+	});
+
+	describe('Advanced Error Handler Features', () => {
+		it('should handle AppError correctly', () => {
+			const error = new AppError('Test error', 400, 'TEST_ERROR');
+			errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockResponse.status).toHaveBeenCalledWith(400);
+			expect(mockResponse.json).toHaveBeenCalledWith({
+				success: false,
+				error: {
+					message: 'Test error',
+					code: 'TEST_ERROR',
+					statusCode: 400,
+				},
+				timestamp: expect.any(String),
+				path: '/test',
+			});
+		});
+
+		it('should include correlation ID if present', () => {
+			mockRequest.headers = { 'x-correlation-id': 'test-correlation-id' };
+			const error = new AppError('Test error');
+
+			errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockResponse.json).toHaveBeenCalledWith(
+				expect.objectContaining({
+					correlationId: 'test-correlation-id',
+				})
+			);
+		});
+
+		it('should handle ValidationError with details', () => {
+			const details = [{ field: 'email', message: 'Invalid email' }];
+			const error = new ValidationError('Validation failed', details);
+			errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockResponse.status).toHaveBeenCalledWith(400);
+			expect(mockResponse.json).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: expect.objectContaining({
+						message: 'Validation failed',
+						code: 'VALIDATION_ERROR',
+						statusCode: 400,
+						details,
+					}),
+				})
+			);
+		});
+	});
+
+	describe('notFoundHandler', () => {
+		it('should return 404 for unknown routes', () => {
+			notFoundHandler(mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockResponse.status).toHaveBeenCalledWith(404);
+			expect(mockResponse.json).toHaveBeenCalledWith({
+				success: false,
+				error: {
+					message: `Route ${mockRequest.method} ${mockRequest.path} not found`,
+					code: 'NOT_FOUND',
+					statusCode: 404,
+				},
+				timestamp: expect.any(String),
+				path: mockRequest.path,
+			});
+		});
+	});
+
+	describe('validationErrorHandler', () => {
+		it('should handle validation errors from express-validator', () => {
+			const validationErrors = [
+				{
+					type: 'field',
+					value: 'invalid-email',
+					msg: 'Invalid email format',
+					path: 'email',
+					location: 'body',
+				},
+				{
+					type: 'field',
+					value: '',
+					msg: 'Password is required',
+					path: 'password',
+					location: 'body',
+				},
+			];
+
+			const error = new Error('Validation failed') as any;
+			error.errors = validationErrors;
+
+			validationErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockResponse.status).toHaveBeenCalledWith(400);
+			expect(mockResponse.json).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: expect.objectContaining({
+						message: 'Validation failed',
+						code: 'VALIDATION_ERROR',
+						statusCode: 400,
+						details: [
+							{ field: 'email', message: 'Invalid email format' },
+							{ field: 'password', message: 'Password is required' },
+						],
+					}),
+				})
+			);
+		});
+
+		it('should handle empty validation errors', () => {
+			const error = new Error('Validation failed') as any;
+			error.errors = [];
+
+			validationErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockNext).toHaveBeenCalledWith(error);
+		});
+
+		it('should handle non-validation errors', () => {
+			const error = new Error('Regular error');
+
+			validationErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockNext).toHaveBeenCalledWith(error);
+		});
+	});
+
+	describe('asyncErrorHandler', () => {
+		it('should catch errors from async functions', async () => {
+			const asyncFn = vi.fn().mockRejectedValue(new Error('Async error'));
+			const wrappedFn = asyncErrorHandler(asyncFn);
+
+			await wrappedFn(mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+		});
+
+		it('should pass through successful async functions', async () => {
+			const asyncFn = vi.fn().mockResolvedValue({ success: true });
+			const wrappedFn = asyncErrorHandler(asyncFn);
+
+			await wrappedFn(mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockNext).not.toHaveBeenCalled();
+		});
+
+		it('should preserve error context', async () => {
+			const customError = new AuthenticationError('Unauthorized');
+			const asyncFn = vi.fn().mockRejectedValue(customError);
+			const wrappedFn = asyncErrorHandler(asyncFn);
+
+			await wrappedFn(mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockNext).toHaveBeenCalledWith(customError);
+		});
+	});
+
+	describe('customErrorHandler', () => {
+		it('should handle specific error types', () => {
+			const handlers = new Map([
+				['ValidationError', vi.fn()],
+				['AuthenticationError', vi.fn()],
+			]);
+
+			const error = new ValidationError('Custom validation error');
+			const wrappedHandler = customErrorHandler(handlers);
+
+			wrappedHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(handlers.get('ValidationError')).toHaveBeenCalledWith(
+				error,
+				mockRequest,
+				mockResponse,
+				mockNext
+			);
+		});
+
+		it('should fall back to default error handler', () => {
+			const handlers = new Map();
+			const error = new Error('Unhandled error');
+			const wrappedHandler = customErrorHandler(handlers);
+
+			wrappedHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+			expect(mockNext).toHaveBeenCalledWith(error);
 		});
 	});
 });

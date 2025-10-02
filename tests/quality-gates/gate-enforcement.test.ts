@@ -19,18 +19,25 @@ describe('Quality Gate Enforcement', () => {
 	let tempDir: string;
 	let contractPath: string;
 	let metricsDir: string;
+	let baselineCoveragePath: string;
 
 	beforeEach(async () => {
 		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'quality-gates-'));
 		contractPath = path.join(tempDir, 'quality_gate.json');
 		metricsDir = path.join(tempDir, 'metrics');
 		await fs.mkdir(metricsDir, { recursive: true });
+		baselineCoveragePath = path.join(tempDir, 'coverage-baseline.json');
 
 		const contract = {
 			coverage: {
 				line: 95,
 				branch: 95,
 				mutation_score: 80,
+				ratchet: {
+					baseline_path: baselineCoveragePath,
+					line_slack_percent: 0.2,
+					branch_slack_percent: 0.2,
+				},
 			},
 			security: {
 				max_critical: 0,
@@ -51,6 +58,11 @@ describe('Quality Gate Enforcement', () => {
 		};
 
 		await fs.writeFile(contractPath, JSON.stringify(contract, null, 2));
+		const baselineCoverage = {
+			line: { percentage: 96 },
+			branch: { percentage: 95.5 },
+		};
+		await fs.writeFile(baselineCoveragePath, JSON.stringify(baselineCoverage, null, 2));
 
 		vi.spyOn(console, 'log').mockImplementation(() => {});
 		vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -166,7 +178,12 @@ describe('Quality Gate Enforcement', () => {
 		expect(result.summary.production_ready).toBe(true);
 	});
 
-	it('should enforce coverage ratchet thresholds via baseline metrics', () => {
-		throw new Error('TODO: implement coverage ratchet enforcement test');
+	it('should enforce coverage ratchet thresholds via baseline metrics', async () => {
+		await seedMetrics({ coverage: { lines: 95.5, branches: 95 } });
+
+		const result: QualityGateResult = await runQualityGateEnforcement(contractPath, metricsDir);
+
+		expect(result.passed).toBe(false);
+		expect(result.violations.some((message) => message.includes('ratchet baseline'))).toBe(true);
 	});
 });

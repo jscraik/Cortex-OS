@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2025-10-02T01:02:21.738Z",
+  "generatedAt": "2025-10-02T21:35:49.295Z",
   "line": {
-    "percentage": 96.2,
+    "percentage": 29.98,
     "available": true,
     "source": "out/coverage-summary.json",
-    "covered": 962,
-    "total": 1000
+    "covered": 224,
+    "total": 747
   },
   "branch": {
-    "percentage": 95.1,
+    "percentage": 63.23,
     "available": true,
     "source": "out/coverage-summary.json",
-    "covered": 951,
-    "total": 1000
+    "covered": 43,
+    "total": 68
   },
   "mutation": {
     "percentage": 82.5,

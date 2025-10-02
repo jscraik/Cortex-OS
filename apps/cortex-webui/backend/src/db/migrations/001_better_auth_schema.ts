@@ -1,7 +1,7 @@
-import type Database from 'better-sqlite3';
+import type { Database } from 'better-sqlite3';
 
 // Migration to create Better Auth compatible schema
-export const up = async (db: Database) => {
+export const up = async (db: Database.Database) => {
 	// Enable foreign keys
 	db.pragma('foreign_keys = ON');
 
@@ -167,7 +167,7 @@ export const up = async (db: Database) => {
 	console.log('Better Auth schema migration completed');
 };
 
-export const down = async (db: Database) => {
+export const down = async (db: Database.Database) => {
 	// Drop tables in reverse order to respect foreign keys
 	await db.exec(`DROP TABLE IF EXISTS two_factor;`);
 	await db.exec(`DROP TABLE IF EXISTS passkey;`);
@@ -183,7 +183,7 @@ export const down = async (db: Database) => {
 };
 
 // Helper function to run migration
-export const runMigration = async (db: Database) => {
+export const runMigration = async (db: Database.Database) => {
 	try {
 		await up(db);
 		console.log('Better Auth migration completed successfully');

@@ -14,8 +14,8 @@ import {
 } from '../db/schema.js';
 import type {
 	MultimodalCitation,
+	MultimodalPreview,
 	MultimodalSearchRequest,
-	MultimodalSearchResponse,
 	MultimodalSearchResult,
 } from '../types/multimodal.js';
 import type { Citation, SearchRequest, SearchResponse, VectorSearchResult } from '../types/rag.js';
@@ -240,7 +240,7 @@ export class VectorSearchService {
 			documentId: chunk.documentId,
 			documentName: chunk.document.originalName,
 			filename: chunk.document.filename,
-			page: chunk.startPage,
+			page: chunk.startPage ?? undefined,
 			text: chunk.content,
 			score: similarity,
 			startChar: chunk.metadata ? JSON.parse(chunk.metadata).startChar : undefined,
@@ -254,8 +254,8 @@ export class VectorSearchService {
 			content: chunk.content,
 			score: similarity,
 			chunkIndex: chunk.chunkIndex,
-			startPage: chunk.startPage,
-			endPage: chunk.endPage,
+			startPage: chunk.startPage ?? undefined,
+			endPage: chunk.endPage ?? undefined,
 			citations: [citation],
 			metadata: chunk.metadata ? JSON.parse(chunk.metadata) : undefined,
 		};
@@ -487,7 +487,14 @@ export class VectorSearchService {
 	async searchMultimodal(
 		request: MultimodalSearchRequest,
 		userId: string,
-	): Promise<MultimodalSearchResponse> {
+	): Promise<{
+		results: MultimodalSearchResult[];
+		total: number;
+		query: string;
+		processingTime: number;
+		filters: MultimodalSearchRequest['filters'];
+		modalities?: string[];
+	}> {
 		const startTime = Date.now();
 
 		try {
@@ -521,7 +528,7 @@ export class VectorSearchService {
 					continue;
 				}
 
-				const result = await this.formatMultimodalSearchResult(chunk, similarity);
+				const result = await this.formatMultimodalSearchResult(chunk, similarity, !!request.includeContent);
 				searchResults.push(result);
 			}
 
@@ -531,7 +538,14 @@ export class VectorSearchService {
 
 			const processingTime = Date.now() - startTime;
 
-			const response: MultimodalSearchResponse = {
+			const response: {
+				results: MultimodalSearchResult[];
+				total: number;
+				query: string;
+				processingTime: number;
+				filters: MultimodalSearchRequest['filters'];
+				modalities?: string[];
+			} = {
 				results: limitedResults,
 				total: searchResults.length,
 				query: request.query,
@@ -567,7 +581,24 @@ export class VectorSearchService {
 	private async getMultimodalCandidateChunks(
 		request: MultimodalSearchRequest,
 		userId: string,
-	): Promise<Array<MultimodalChunk & { document: MultimodalDocument }>> {
+	): Promise<
+		Array<
+			MultimodalChunk &
+			Pick<
+				MultimodalDocument,
+				| 'filename'
+				| 'originalName'
+				| 'mimeType'
+				| 'size'
+				| 'processed'
+				| 'processingStatus'
+				| 'processingError'
+				| 'metadata'
+				| 'createdAt'
+				| 'updatedAt'
+			>
+		>
+	> {
 		// Start with base query
 		let queryBuilder = db
 			.select({
@@ -591,7 +622,6 @@ export class VectorSearchService {
 				filename: multimodalDocuments.filename,
 				originalName: multimodalDocuments.originalName,
 				mimeType: multimodalDocuments.mimeType,
-				modality: multimodalDocuments.modality,
 				size: multimodalDocuments.size,
 				processed: multimodalDocuments.processed,
 				processingStatus: multimodalDocuments.processingStatus,
@@ -612,13 +642,26 @@ export class VectorSearchService {
 			.limit(request.limit || 100);
 
 		// Apply modality filter
+		type ChunkModality = 'text' | 'image' | 'audio_transcript' | 'video_frame' | 'pdf_page_image';
+		let mappedModalities: ChunkModality[] | undefined;
 		if (request.modalities && request.modalities.length > 0) {
+			// Map external modalities to chunk modality values used in the DB
+			const modalityMap: Record<string, ChunkModality> = {
+				text: 'text',
+				image: 'image',
+				audio: 'audio_transcript',
+				video: 'video_frame',
+				pdf_with_images: 'pdf_page_image',
+			};
+			mappedModalities = request.modalities
+				.map((m) => modalityMap[m])
+				.filter((m): m is ChunkModality => !!m);
 			queryBuilder = queryBuilder.where(
 				and(
 					eq(multimodalDocuments.userId, userId),
 					eq(multimodalDocuments.processed, true),
 					sql`LENGTH(${multimodalChunks.embedding}) > 0`,
-					inArray(multimodalChunks.modality, request.modalities),
+					inArray(multimodalChunks.modality, mappedModalities),
 				),
 			);
 		}
@@ -668,25 +711,38 @@ export class VectorSearchService {
 				const baseCondition =
 					request.modalities && request.modalities.length > 0
 						? and(
-								eq(multimodalDocuments.userId, userId),
-								eq(multimodalDocuments.processed, true),
-								sql`LENGTH(${multimodalChunks.embedding}) > 0`,
-								inArray(multimodalChunks.modality, request.modalities),
-								...filterConditions,
-							)
+							eq(multimodalDocuments.userId, userId),
+							eq(multimodalDocuments.processed, true),
+							sql`LENGTH(${multimodalChunks.embedding}) > 0`,
+							inArray(multimodalChunks.modality, mappedModalities ?? []),
+							...filterConditions,
+						)
 						: and(
-								eq(multimodalDocuments.userId, userId),
-								eq(multimodalDocuments.processed, true),
-								sql`LENGTH(${multimodalChunks.embedding}) > 0`,
-								...filterConditions,
-							);
+							eq(multimodalDocuments.userId, userId),
+							eq(multimodalDocuments.processed, true),
+							sql`LENGTH(${multimodalChunks.embedding}) > 0`,
+							...filterConditions,
+						);
 
 				queryBuilder = queryBuilder.where(baseCondition);
 			}
 		}
 
 		return (await queryBuilder.execute()) as Array<
-			MultimodalChunk & { document: MultimodalDocument }
+			MultimodalChunk &
+			Pick<
+				MultimodalDocument,
+				| 'filename'
+				| 'originalName'
+				| 'mimeType'
+				| 'size'
+				| 'processed'
+				| 'processingStatus'
+				| 'processingError'
+				| 'metadata'
+				| 'createdAt'
+				| 'updatedAt'
+			>
 		>;
 	}
 
@@ -694,24 +750,40 @@ export class VectorSearchService {
 	 * Format multimodal search result with citations
 	 */
 	private async formatMultimodalSearchResult(
-		chunk: MultimodalChunk & { document: MultimodalDocument },
+		chunk: MultimodalChunk &
+			Pick<
+				MultimodalDocument,
+				| 'filename'
+				| 'originalName'
+				| 'mimeType'
+				| 'size'
+				| 'processed'
+				| 'processingStatus'
+				| 'processingError'
+				| 'metadata'
+				| 'createdAt'
+				| 'updatedAt'
+			>,
 		similarity: number,
+		includeContent: boolean,
 	): Promise<MultimodalSearchResult> {
 		const citation: MultimodalCitation = {
 			documentId: chunk.documentId,
 			documentName: chunk.originalName,
 			filename: chunk.filename,
 			modality: chunk.modality,
-			page: chunk.startPage,
-			timestamp: chunk.startTime,
+			page: chunk.startPage ?? undefined,
+			timestamp: chunk.startTime ?? undefined,
 			text: chunk.content,
 			score: similarity,
 		};
 
 		// Add modality-specific information
-		let preview;
+		let preview: MultimodalPreview;
 		switch (chunk.modality) {
 			case 'image':
+			// fallthrough: same handling as pdf_page_image
+			case 'pdf_page_image':
 				preview = {
 					type: 'image' as const,
 					content: chunk.content,
@@ -722,13 +794,7 @@ export class VectorSearchService {
 					type: 'audio_waveform' as const,
 					content: chunk.content,
 					duration: chunk.endTime && chunk.startTime ? chunk.endTime - chunk.startTime : undefined,
-					timestamp: chunk.startTime,
-				};
-				break;
-			case 'pdf_page_image':
-				preview = {
-					type: 'image' as const,
-					content: chunk.content,
+					timestamp: chunk.startTime ?? undefined,
 				};
 				break;
 			default:
@@ -738,20 +804,24 @@ export class VectorSearchService {
 				};
 		}
 
+		let contentForResult = chunk.content;
+		if (!includeContent) {
+			const truncated = chunk.content.substring(0, 500);
+			contentForResult = truncated + (chunk.content.length > 500 ? '...' : '');
+		}
+
 		return {
 			id: chunk.id,
 			documentId: chunk.documentId,
 			filename: chunk.filename,
 			modality: chunk.modality,
-			content: request.includeContent
-				? chunk.content
-				: chunk.content.substring(0, 500) + (chunk.content.length > 500 ? '...' : ''),
+			content: contentForResult,
 			score: similarity,
 			chunkIndex: chunk.chunkIndex,
-			startPage: chunk.startPage,
-			endPage: chunk.endPage,
-			startTime: chunk.startTime,
-			endTime: chunk.endTime,
+			startPage: chunk.startPage ?? undefined,
+			endPage: chunk.endPage ?? undefined,
+			startTime: chunk.startTime ?? undefined,
+			endTime: chunk.endTime ?? undefined,
 			citations: [citation],
 			metadata: chunk.metadata ? JSON.parse(chunk.metadata) : undefined,
 			preview,

@@ -96,8 +96,8 @@ export class DrizzleMemoryAdapterImpl implements DrizzleMemoryAdapter {
 							.filter((k) => k !== 'id')
 							.map(() => '?')
 							.join(', ')})`,
-						id,
-						...Object.values(values).filter((_v: any, i: number) => i !== 0 || !values.id),
+	id,
+						...(Object.values(values).filter((_v: any, i: number) => i !== 0 || !values.id) as any[]),
 					);
 					return [{ id, ...values }];
 				},
@@ -127,7 +127,7 @@ export class DrizzleMemoryAdapterImpl implements DrizzleMemoryAdapter {
 								.join(', ');
 							await this.db.run(
 								`UPDATE ${tableName} SET ${setClause} WHERE id = ?`,
-								...Object.values(values),
+								...(Object.values(values) as any[]),
 								record.id,
 							);
 						}

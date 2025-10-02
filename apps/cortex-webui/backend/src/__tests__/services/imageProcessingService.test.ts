@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { imageProcessingService } from '../../services/imageProcessingService.js';
-import type { MultimodalProcessingOptions } from '../../types/multimodal.js';
-import logger from '../../utils/logger.js';
+import { imageProcessingService } from '../../services/imageProcessingService.ts';
+import type { MultimodalProcessingOptions } from '../../types/multimodal.ts';
 
 // Mock logger to avoid noise in tests
-vi.mock('../../utils/logger.js', () => ({
+vi.mock('../../utils/logger.ts', () => ({
 	default: {
 		info: vi.fn(),
 		error: vi.fn(),

@@ -420,7 +420,7 @@ describe('End-to-End Authentication Workflows', () => {
 
 			for (const endpoint of endpoints) {
 				const response = await request(app)
-					[endpoint.method.toLowerCase()](endpoint.path)
+				[endpoint.method.toLowerCase()](endpoint.path)
 					.expect(200);
 
 				// Check for brAInwav security headers

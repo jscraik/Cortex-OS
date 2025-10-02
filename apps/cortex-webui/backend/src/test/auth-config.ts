@@ -209,4 +209,4 @@ export const authHelpers = {
 	},
 };
 
-export { betterAuthInstance as auth, authHelpers };
+export { betterAuthInstance as auth };

@@ -3,7 +3,12 @@
     "line": 95,
     "branch": 95,
     "changed_code_only": true,
-    "mutation_score": 80
+    "mutation_score": 80,
+    "ratchet": {
+      "baseline_path": "reports/baseline/coverage.json",
+      "line_slack_percent": 0.2,
+      "branch_slack_percent": 0.2
+    }
   },
   "tests": {
     "flake_rate_max_percent": 1,

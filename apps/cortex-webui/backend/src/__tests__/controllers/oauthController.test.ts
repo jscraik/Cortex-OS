@@ -5,6 +5,15 @@ import { authUtils } from '../../auth';
 import { createApp } from '../../server';
 import { OAuthService } from '../../services/oauthService';
 
+// Session interface for testing
+interface TestSession {
+	userId: string;
+	user: {
+		id: string;
+		email: string;
+	};
+}
+
 // Mock OAuthService
 vi.mock('../../services/oauthService');
 vi.mock('../../auth');
@@ -151,7 +160,7 @@ describe('OAuthController', () => {
 				},
 			];
 
-			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as any);
+			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as TestSession);
 			vi.mocked(OAuthService.getUserAccounts).mockResolvedValue(mockAccounts);
 
 			const response = await request(app)
@@ -188,7 +197,7 @@ describe('OAuthController', () => {
 				linked: true,
 			};
 
-			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as any);
+			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as TestSession);
 			vi.mocked(OAuthService.isProviderEnabled).mockReturnValue(true);
 			vi.mocked(OAuthService.linkAccount).mockResolvedValue(mockResult);
 
@@ -226,7 +235,7 @@ describe('OAuthController', () => {
 				user: { id: 'user123', email: 'user@example.com' },
 			};
 
-			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as any);
+			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as TestSession);
 			vi.mocked(OAuthService.unlinkAccount).mockResolvedValue(true);
 
 			const response = await request(app)
@@ -248,7 +257,7 @@ describe('OAuthController', () => {
 				user: { id: 'user123', email: 'user@example.com' },
 			};
 
-			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as any);
+			vi.mocked(authUtils.getSession).mockResolvedValue(mockSession as TestSession);
 			vi.mocked(OAuthService.unlinkAccount).mockResolvedValue(false);
 
 			const response = await request(app)

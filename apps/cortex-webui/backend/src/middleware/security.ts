@@ -32,30 +32,31 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
 	const config = getSecurityConfig();
 
 	if (!config.headers.enabled) {
-		return next();
+		next();
+		return;
 	}
 
 	// Apply helmet with custom configuration
 	helmet({
 		contentSecurityPolicy: config.headers.enableCSP
 			? {
-					directives: {
-						defaultSrc: ["'self'"],
-						scriptSrc: config.csp.scriptSrc.split(' '),
-						styleSrc: config.csp.styleSrc.split(' '),
-						imgSrc: config.csp.imgSrc.split(' '),
-						connectSrc: config.csp.connectSrc.split(' '),
-						fontSrc: config.csp.fontSrc.split(' '),
-						objectSrc: config.csp.objectSrc.split(' '),
-						mediaSrc: config.csp.mediaSrc.split(' '),
-						frameSrc: config.csp.frameSrc.split(' '),
-						frameAncestors: config.csp.frameAncestors.split(' '),
-						baseUri: config.csp.baseUri.split(' '),
-						formAction: config.csp.formAction.split(' '),
-						blockAllMixedContent: [],
-						upgradeInsecureRequests: [],
-					},
-				}
+				directives: {
+					defaultSrc: ["'self'"],
+					scriptSrc: config.csp.scriptSrc.split(' '),
+					styleSrc: config.csp.styleSrc.split(' '),
+					imgSrc: config.csp.imgSrc.split(' '),
+					connectSrc: config.csp.connectSrc.split(' '),
+					fontSrc: config.csp.fontSrc.split(' '),
+					objectSrc: config.csp.objectSrc.split(' '),
+					mediaSrc: config.csp.mediaSrc.split(' '),
+					frameSrc: config.csp.frameSrc.split(' '),
+					frameAncestors: config.csp.frameAncestors.split(' '),
+					baseUri: config.csp.baseUri.split(' '),
+					formAction: config.csp.formAction.split(' '),
+					blockAllMixedContent: [],
+					upgradeInsecureRequests: [],
+				},
+			}
 			: false,
 		hsts: {
 			maxAge: config.headers.hstsMaxAge,
@@ -88,13 +89,15 @@ export const customCsrfProtection = (req: Request, res: Response, next: NextFunc
 	const config = getSecurityConfig();
 
 	if (!config.csrf.enabled) {
-		return next();
+		next();
+		return;
 	}
 
 	// Skip CSRF for safe HTTP methods
 	const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
 	if (safeMethods.includes(req.method?.toUpperCase() || '')) {
-		return next();
+		next();
+		return;
 	}
 
 	// For state-changing methods, require CSRF token
@@ -104,17 +107,19 @@ export const customCsrfProtection = (req: Request, res: Response, next: NextFunc
 	const sessionToken = req.session?.csrfToken;
 
 	if (!csrfToken) {
-		return res.status(403).json({
+		res.status(403).json({
 			error: `${config.brand.errorPrefix}: CSRF token required`,
 			brand: config.brand.name,
 		});
+		return;
 	}
 
 	if (!validateCsrfToken(csrfToken, sessionToken || '')) {
-		return res.status(403).json({
+		res.status(403).json({
 			error: `${config.brand.errorPrefix}: Invalid CSRF token`,
 			brand: config.brand.name,
 		});
+		return;
 	}
 
 	next();
@@ -129,7 +134,8 @@ export const generateCsrfTokenMiddleware = (
 	const config = getSecurityConfig();
 
 	if (!config.csrf.enabled) {
-		return next();
+		next();
+		return;
 	}
 
 	// Generate CSRF token if not present in session
@@ -157,7 +163,8 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
 	const config = getSecurityConfig();
 
 	if (!config.validation.enabled) {
-		return next();
+		next();
+		return;
 	}
 
 	const sanitizeObject = (obj: any): any => {
@@ -212,10 +219,11 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
 		next();
 	} catch (error) {
 		console.error('brAInwav Input Sanitization Error:', error);
-		return res.status(400).json({
+		res.status(400).json({
 			error: `${config.brand.errorPrefix}: Input sanitization failed`,
 			brand: config.brand.name,
 		});
+		return;
 	}
 };
 
@@ -224,7 +232,8 @@ export const apiKeyAuth = (req: Request, res: Response, next: NextFunction): voi
 	const config = getSecurityConfig();
 
 	if (!config.apiKey.enabled) {
-		return next();
+		next();
+		return;
 	}
 
 	const apiKey = req.headers[
@@ -232,17 +241,19 @@ export const apiKeyAuth = (req: Request, res: Response, next: NextFunction): voi
 	] as string;
 
 	if (!apiKey) {
-		return res.status(401).json({
+		res.status(401).json({
 			error: `${config.brand.errorPrefix}: API key required`,
 			brand: config.brand.name,
 		});
+		return;
 	}
 
 	if (!validateApiKeyFormat(apiKey)) {
-		return res.status(401).json({
+		res.status(401).json({
 			error: `${config.brand.errorPrefix}: Invalid API key format`,
 			brand: config.brand.name,
 		});
+		return;
 	}
 
 	// Mark request as API authenticated
@@ -257,7 +268,8 @@ export const enhanceSessionSecurity = (req: Request, res: Response, next: NextFu
 	const config = getSecurityConfig();
 
 	if (!config.session.enabled) {
-		return next();
+		next();
+		return;
 	}
 
 	try {
@@ -304,11 +316,12 @@ export const validateRequestSize = (req: Request, res: Response, next: NextFunct
 	// Check content-length header if available
 	const contentLength = parseInt(req.headers['content-length'] || '0', 10);
 	if (contentLength > config.validation.maxRequestSize) {
-		return res.status(413).json({
+		res.status(413).json({
 			error: `${config.brand.errorPrefix}: Request size exceeds limit`,
 			brand: config.brand.name,
 			maxSize: config.validation.maxRequestSize,
 		});
+		return;
 	}
 
 	next();
@@ -319,7 +332,8 @@ export const securityLogger = (req: Request, res: Response, next: NextFunction):
 	const config = getSecurityConfig();
 
 	if (!config.monitoring.enabled) {
-		return next();
+		next();
+		return;
 	}
 
 	const startTimestamp = Date.now();
@@ -384,10 +398,11 @@ export const securityErrorHandler = (
 		error.message.includes('sanitization');
 
 	if (isSecurityError) {
-		return res.status(403).json({
+		res.status(403).json({
 			error: error.message,
 			brand: config.brand.name,
 		});
+		return;
 	}
 
 	// For other errors, don't expose details
@@ -423,13 +438,6 @@ export const applySecurityMiddleware = (app: any): void => {
 	// to routes that need them, not globally to avoid breaking health checks, etc.
 };
 
-export {
-	apiKeyAuth,
-	customCsrfProtection as csrfProtection,
-	enhanceSessionSecurity,
-	securityHeaders as helmet,
-	securityErrorHandler,
-	securityLogger,
-	validateRequestSize,
-	sanitizeInput as xssProtection,
-};
+// Re-export commonly used functions with convenient aliases
+export { customCsrfProtection as csrfProtection, sanitizeInput as xssProtection };
+

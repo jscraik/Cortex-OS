@@ -3,8 +3,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSecurityConfig } from '../src/config/security.js';
-import { sanitizeInput } from '../src/middleware/security.js';
+import { getSecurityConfig } from '../src/config/security.ts';
+import { sanitizeInput } from '../src/middleware/security.ts';
 
 describe('Input Sanitization Tests', () => {
 	let mockReq: Partial<Request>;

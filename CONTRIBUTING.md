@@ -230,15 +230,148 @@ interface AgentConfig {
 }
 ```
 
-## 🧪 Testing Requirements
+## 🧪 TDD & Testing Requirements
+
+### Test-Driven Development (TDD)
+
+**Mandatory TDD Implementation** for all new code:
+
+1. **Red-Green-Refactor Cycle**: Write failing test first, then implement code
+2. **Test-First Approach**: All new features must start with failing tests
+3. **TDD Coach Integration**: Use automated TDD validation and coaching
+
+#### TDD Workflow
+
+```bash
+# Initialize TDD environment (run once)
+make tdd-setup
+
+# During development - continuous validation
+make tdd-watch          # Watch mode for real-time feedback
+
+# Before commits - validate TDD compliance
+make tdd-validate        # Validate staged files
+make tdd-status          # Check overall compliance
+
+# Run comprehensive TDD validation
+make tdd-validate-all    # Validate entire codebase
+```
+
+#### TDD Coach Usage
+
+```typescript
+// TDD Coach provides real-time coaching suggestions
+// Install the TDD Coach CLI
+pnpm add -D @cortex-os/tdd-coach
+
+// Get coaching for test-first development
+tdd-coach coach --file src/services/newService.ts
+
+// Validate TDD compliance
+tdd-coach validate --strict
+
+// Generate test scaffolding
+tdd-coach scaffold --type service --name newService
+```
 
 ### Coverage Requirements
 
-- **Minimum Coverage**: 90% for statements, branches, functions, and lines
+- **Minimum Coverage**: 95% for statements, branches, functions, and lines (upgraded from 90%)
+- **Mutation Testing**: ≥80% mutation score required
 - **Security Tests**: All security-related code must have dedicated tests
 - **Integration Tests**: Multi-package interactions must be tested
+- **TDD Compliance**: ≥90% test-first commits ratio
+
+#### Quality Gate Enforcement
+
+```bash
+# Coverage ratcheting - ensures coverage never decreases
+pnpm coverage:ratchet     # Enforce coverage improvements
+
+# Mutation testing for test quality
+pnpm mutation:test        # Run mutation testing
+pnpm mutation:enforce     # Enforce mutation score thresholds
+
+# Quality gate validation
+pnpm quality:gate         # Run all quality gates
+make quality:report       # Generate comprehensive quality report
+```
 
 ### Testing Patterns
+
+#### TDD Test Examples
+
+**Test-First Development Example:**
+
+```typescript
+// 1. RED: Write failing test first
+describe('ImageProcessor', () => {
+  describe('processImage', () => {
+    it('should extract text from image using OCR', async () => {
+      const mockImage = createMockImage('test-image.png');
+      const processor = new ImageProcessor();
+
+      const result = await processor.processImage(mockImage, {
+        enableOCR: true
+      });
+
+      expect(result.ocrText).toContain('Sample text');
+      expect(result.metadata.width).toBe(1920);
+      expect(result.metadata.height).toBe(1080);
+    });
+
+    it('should handle unsupported image formats', async () => {
+      const mockImage = createMockImage('test.xyz');
+      const processor = new ImageProcessor();
+
+      await expect(
+        processor.processImage(mockImage)
+      ).rejects.toThrow('Unsupported file format');
+    });
+  });
+});
+
+// 2. GREEN: Implement minimal code to pass tests
+export const processImage = async (
+  image: ImageFile,
+  options: ProcessingOptions = {}
+): Promise<ProcessedImage> => {
+  if (!isSupportedFormat(image)) {
+    throw new Error('Unsupported file format');
+  }
+
+  const metadata = await extractMetadata(image);
+  let ocrText = '';
+
+  if (options.enableOCR) {
+    ocrText = await performOCR(image);
+  }
+
+  return {
+    ocrText,
+    metadata,
+    processedAt: new Date().toISOString()
+  };
+};
+
+// 3. REFACTOR: Improve code while maintaining test coverage
+export const processImage = async (
+  image: ImageFile,
+  options: ProcessingOptions = {}
+): Promise<ProcessedImage> => {
+  const validation = validateImageInput(image);
+  if (!validation.isValid) {
+    throw new UnsupportedFormatError(validation.reason);
+  }
+
+  const [metadata, ocrText] = await Promise.all([
+    extractImageMetadata(image),
+    options.enableOCR ? performOCRWithRetry(image) : Promise.resolve('')
+  ]);
+
+  return createProcessedImageResult(metadata, ocrText);
+};
+```
 
 #### Unit Tests
 
@@ -298,20 +431,78 @@ describe('DataProcessingWorkflow', () => {
 ### Running Tests
 
 ```bash
-# Run all tests
-pnpm test
+# TDD-first development workflow
+make tdd-watch          # Continuous validation during development
+make tdd-validate        # Validate TDD compliance before commits
+make tdd-status          # Check current TDD status
 
-# Run tests with coverage
-pnpm test:coverage
+# Traditional test commands
+pnpm test               # Run all tests
+pnpm test:coverage      # Run tests with coverage (95% minimum)
+pnpm test:integration   # Run integration tests
+pnpm test:security      # Run security tests
+pnpm test:e2e          # Run end-to-end tests
 
-# Run specific package tests
-pnpm test --filter=@cortex-os/a2a
+# Mutation testing for test quality
+pnpm mutation:test      # Run mutation testing
+pnpm mutation:enforce   # Enforce ≥80% mutation score
 
-# Run integration tests
-pnpm test:integration
+# Quality gate validation
+pnpm quality:gate       # Run all quality gates
+make quality:report     # Generate comprehensive quality report
+```
 
-# Run security tests
-pnpm test:security
+### Multimodal Testing
+
+```typescript
+// Example: Multimodal processing test
+describe('MultimodalProcessor', () => {
+  describe('processImage', () => {
+    it('should extract OCR text and perform vision analysis', async () => {
+      const testImage = createTestImage('test-landscape.jpg');
+      const processor = new MultimodalProcessor();
+
+      const result = await processor.processImage(testImage, {
+        enableOCR: true,
+        enableVisionAnalysis: true
+      });
+
+      expect(result.ocrText).toBeDefined();
+      expect(result.visionAnalysis.objects).toHaveLengthGreaterThan(0);
+      expect(result.metadata.format).toBe('JPEG');
+    });
+
+    it('should handle audio transcription with speaker diarization', async () => {
+      const testAudio = createTestAudio('meeting.mp3');
+      const processor = new MultimodalProcessor();
+
+      const result = await processor.processAudio(testAudio, {
+        enableTranscription: true,
+        enableSpeakerDiarization: true
+      });
+
+      expect(result.transcript).toContain('Speaker 1:');
+      expect(result.speakers).toHaveLengthGreaterThan(0);
+      expect(result.duration).toBeGreaterThan(0);
+    });
+  });
+
+  describe('crossModalSearch', () => {
+    it('should search across text, image, and audio content', async () => {
+      const processor = new MultimodalProcessor();
+
+      const results = await processor.search({
+        query: 'mountain photography techniques',
+        modalities: ['text', 'image', 'audio_transcript'],
+        limit: 10
+      });
+
+      expect(results).toHaveLengthGreaterThan(0);
+      expect(results[0].score).toBeGreaterThan(0.7);
+      expect(results.some(r => r.modality === 'image')).toBe(true);
+    });
+  });
+});
 ```
 
 ## 🔒 Security Guidelines
@@ -536,8 +727,13 @@ git commit -m "security(core): implement input sanitization"
 #### 1. **Before Creating PR**
 
 ```bash
-# Ensure all tests pass
-pnpm test
+# TDD validation (mandatory)
+make tdd-validate        # Validate TDD compliance
+make tdd-status          # Check TDD status
+
+# Ensure all tests pass with 95%+ coverage
+pnpm test:coverage      # Run tests with coverage validation
+pnpm mutation:enforce   # Ensure ≥80% mutation score
 
 # Run linting and formatting
 pnpm lint
@@ -551,6 +747,9 @@ pnpm build
 
 # Check structure compliance
 pnpm structure:validate
+
+# Quality gate validation
+pnpm quality:gate       # Run all quality gates
 ```
 
 #### 2. **PR Title and Description**
@@ -572,12 +771,15 @@ Brief description of what this PR accomplishes.
 - New features added
 - Bug fixes included
 
-## Testing
+## Testing & Quality
 
-- [ ] Unit tests added/updated
+- [ ] TDD-first development followed
+- [ ] Unit tests added/updated (95%+ coverage)
 - [ ] Integration tests added/updated
+- [ ] Mutation testing completed (≥80% score)
 - [ ] Manual testing completed
 - [ ] Security testing performed
+- [ ] Quality gates passing
 
 ## Documentation
 

@@ -40,6 +40,14 @@ const _use = (..._args: unknown[]): void => {};
 export class PrismaStore implements MemoryStore {
 	constructor(private readonly prisma: PrismaLike) {}
 
+	/**
+	 * @deprecated Direct database access is deprecated. Use REST API instead.
+	 * @throws {Error} Always throws to prevent direct DB access
+	 */
+	directDBQuery(query: string): Promise<never> {
+		return Promise.reject(new Error('Direct DB access deprecated - use REST API'));
+	}
+
 	async upsert(m: Memory, _namespace = 'default'): Promise<Memory> {
 		_use(_namespace);
 		const saved = await this.prisma.memory.upsert({

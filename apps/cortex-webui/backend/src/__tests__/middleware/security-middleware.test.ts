@@ -13,7 +13,7 @@ import {
 	securityHeaders,
 	securityLogger,
 	validateRequestSize,
-} from '../middleware/security.js';
+} from '../middleware/security.ts';
 
 // Mock DOMPurify
 vi.mock('dompurify', () => ({
@@ -33,7 +33,7 @@ vi.mock('helmet', () => ({
 }));
 
 // Mock security config
-vi.mock('../config/security.js', () => ({
+vi.mock('../config/security.ts', () => ({
 	getSecurityConfig: vi.fn(() => ({
 		headers: {
 			enabled: true,
@@ -91,7 +91,7 @@ vi.mock('../config/security.js', () => ({
 	validateCsrfToken: vi.fn(() => true),
 }));
 
-import { getSecurityConfig } from '../config/security.js';
+import { getSecurityConfig } from '../config/security.ts';
 
 describe('Security Middleware', () => {
 	let mockRequest: Partial<Request>;

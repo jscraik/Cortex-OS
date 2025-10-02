@@ -5,15 +5,16 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import type { Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.js';
-import { runMultimodalMigration } from '../setup/multimodal-migration.js';
+import { createApp } from '../../server.ts';
+import { runMultimodalMigration } from '../setup/multimodal-migration.ts';
 
 // Mock external services for testing
-vi.mock('../../services/imageProcessingService.js', () => ({
+
+vi.mock('../../services/imageProcessingService.ts', () => ({
 	imageProcessingService: {
 		processImage: vi
 			.fn()
-			.mockImplementation(async (buffer: Buffer, filename: string, options: any) => ({
+			.mockImplementation(async (input: Buffer | { size: number }, filename: string, options: any) => ({
 				metadata: {
 					width: 800,
 					height: 600,
@@ -35,19 +36,19 @@ vi.mock('../../services/imageProcessingService.js', () => ({
 							}
 						: undefined,
 				},
-				resizedBuffer: Buffer.from('resized-image'),
-				thumbnailBuffer: Buffer.from('thumbnail-image'),
+				resizedBuffer: Buffer.isBuffer(input) ? Buffer.from('resized-image') : Buffer.from('resized-image'),
+				thumbnailBuffer: Buffer.isBuffer(input) ? Buffer.from('thumbnail-image') : Buffer.from('thumbnail-image'),
 			})),
 		isFormatSupported: vi.fn().mockReturnValue(true),
 		generateImageHash: vi.fn().mockResolvedValue('test-image-hash'),
 	},
 }));
 
-vi.mock('../../services/audioTranscriptionService.js', () => ({
+vi.mock('../../services/audioTranscriptionService.ts', () => ({
 	audioTranscriptionService: {
 		processAudio: vi
 			.fn()
-			.mockImplementation(async (buffer: Buffer, filename: string, options: any) => ({
+			.mockImplementation(async (input: Buffer | { size: number }, filename: string, options: any) => ({
 				metadata: {
 					duration: 120,
 					format: 'MP3',
@@ -110,11 +111,11 @@ vi.mock('../../services/audioTranscriptionService.js', () => ({
 	},
 }));
 
-vi.mock('../../services/pdfWithImagesService.js', () => ({
+vi.mock('../../services/pdfWithImagesService.ts', () => ({
 	pdfWithImagesService: {
 		processPdfWithImages: vi
 			.fn()
-			.mockImplementation(async (buffer: Buffer, filename: string, options: any) => ({
+			.mockImplementation(async (input: Buffer | { size: number }, filename: string, options: any) => ({
 				metadata: {
 					title: 'Test PDF Document',
 					pages: [
@@ -172,7 +173,7 @@ vi.mock('../../services/pdfWithImagesService.js', () => ({
 	},
 }));
 
-vi.mock('../../services/vectorSearchService.js', () => ({
+vi.mock('../../services/vectorSearchService.ts', () => ({
 	vectorSearchService: {
 		indexMultimodalDocuments: vi.fn().mockResolvedValue(undefined),
 		searchMultimodal: vi.fn().mockImplementation(async (request: any, userId: string) => ({

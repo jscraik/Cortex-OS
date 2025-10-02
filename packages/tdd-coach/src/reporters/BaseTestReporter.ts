@@ -39,11 +39,13 @@ export abstract class BaseTestReporter implements TestReporter {
 	protected executeCommand(
 		command: string,
 		args: string[],
+		options: { env?: NodeJS.ProcessEnv } = {},
 	): Promise<{ stdout: string; stderr: string }> {
 		return new Promise((resolve, reject) => {
 			const proc = spawn(command, args, {
 				cwd: this.config.workspaceRoot,
 				stdio: 'pipe',
+				env: options.env ?? process.env,
 			});
 
 			let stdout = '';

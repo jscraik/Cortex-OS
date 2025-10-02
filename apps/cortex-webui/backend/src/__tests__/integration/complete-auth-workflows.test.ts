@@ -4,10 +4,10 @@ import type { Express } from 'express';
 
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.js';
+import { createApp } from '../../server.ts';
 
 // Mock dependencies
-vi.mock('../../services/authService.js', () => ({
+vi.mock('../../services/authService.ts', () => ({
 	AuthService: {
 		verifyToken: vi.fn(),
 		generateToken: vi.fn(() => 'mock-jwt-token'),
@@ -15,7 +15,7 @@ vi.mock('../../services/authService.js', () => ({
 	},
 }));
 
-vi.mock('../../services/userService.js', () => ({
+vi.mock('../../services/userService.ts', () => ({
 	UserService: {
 		getUserById: vi.fn(),
 		getUserByEmail: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('../../services/userService.js', () => ({
 	},
 }));
 
-vi.mock('../../config/security.js', () => ({
+vi.mock('../../config/security.ts', () => ({
 	getSecurityConfig: vi.fn(() => ({
 		headers: { enabled: false }, // Disabled for testing
 		csrf: { enabled: false }, // Disabled for testing
@@ -87,7 +87,7 @@ vi.mock('../../auth', () => ({
 	authHandler: vi.fn(),
 }));
 
-import { UserService } from '../../services/userService.js';
+import { UserService } from '../../services/userService.ts';
 
 describe('Complete Authentication Workflows Integration Tests', () => {
 	let app: Express;

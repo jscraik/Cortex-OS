@@ -3,8 +3,8 @@
 
 import type { Request, Response, Router } from 'express';
 import { register } from 'prom-client';
-import logger from '../../utils/logger.js';
-import { MetricsService } from './services/metricsService.js';
+import { logger } from '../utils/logger';
+import { MetricsService } from './metricsService';
 
 interface AuthenticatedRequest extends Request {
 	apiKey?: string;

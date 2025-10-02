@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-10-02T21:36:38.252267+00:00",
+  "exitstatus": 0,
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "nodeid": "tests::sample",
+      "outcome": "passed",
+      "duration": 0.12
+    },
+    {
+      "nodeid": "tests/test_tdd_coach_plugin.py::test_tdd_coach_plugin_writes_session_snapshot",
+      "outcome": "passed",
+      "duration": 0.0003287500003352761
+    }
+  ]
+}

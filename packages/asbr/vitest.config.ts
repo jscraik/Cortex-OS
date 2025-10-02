@@ -24,7 +24,10 @@ export default defineConfig({
 		exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**'],
 		testTimeout: 30000,
 		hookTimeout: 10000,
-		setupFiles: ['tests/utils/write-guard.ts', 'tests/setup.global.ts'],
+		setupFiles: [
+			resolve(__dirname, 'tests/utils/write-guard.ts'),
+			resolve(__dirname, 'tests/setup.global.ts'),
+		],
 	},
 	resolve: {
 		alias: {

@@ -84,6 +84,37 @@ else
   log_info "Skipping structure:validate (large change set or no JS/TS changes)"
 fi
 
+###########################################
+# 2b. TDD Coach staged validation         #
+###########################################
+if command_exists_timeout "pnpm"; then
+  STAGED_ARRAY=()
+    while IFS= read -r file; do
+      if [ -n "$file" ]; then
+        STAGED_ARRAY+=("$file")
+      fi
+    done <<< "$STAGED_FILES"
+
+    if [ ${#STAGED_ARRAY[@]} -gt 0 ]; then
+      log_info "Running TDD Coach validation on staged files"
+      TDD_FILES=$(printf '%s ' "${STAGED_ARRAY[@]}")
+      if [ -n "${TDD_FILES// /}" ]; then
+          if FILES="$TDD_FILES" make tdd-validate; then
+              log_ok "TDD Coach validation passed"
+          else
+              log_error "TDD Coach validation failed"
+              exit 1
+          fi
+      else
+          log_info "No staged files detected for TDD Coach validation"
+      fi
+  else
+      log_info "No staged files detected for TDD Coach validation"
+  fi
+  else
+  log_warn "pnpm unavailable - skipping TDD Coach validation"
+fi
+
 ############################################
 # 3. Targeted affected test smoke (fast)  #
 ############################################

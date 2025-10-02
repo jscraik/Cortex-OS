@@ -321,7 +321,7 @@ else:
 						});
 					}
 				});
-			} catch (_error) {}
+			} catch (_error) { }
 		}
 
 		if (placeholderViolations.length > 0) {

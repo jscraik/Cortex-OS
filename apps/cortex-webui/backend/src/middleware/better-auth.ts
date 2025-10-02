@@ -293,7 +293,7 @@ export const authRateLimit = (
 };
 
 // CORS middleware for auth endpoints
-export const authCORS = (req: Request, res: Response, next: NextFunction) => {
+export const authCORS = (req: Request, res: Response, next: NextFunction): void => {
 	res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:5173');
 	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 	res.setHeader(
@@ -303,7 +303,8 @@ export const authCORS = (req: Request, res: Response, next: NextFunction) => {
 	res.setHeader('Access-Control-Allow-Credentials', 'true');
 
 	if (req.method === 'OPTIONS') {
-		return res.status(200).end();
+		res.status(200).end();
+		return;
 	}
 
 	next();
@@ -315,23 +316,25 @@ export const betterAuthErrorHandler = (
 	_req: Request,
 	res: Response,
 	_next: NextFunction,
-) => {
+): void => {
 	console.error('Better Auth middleware error:', error);
 
 	// Handle Better Auth specific errors
 	if (error.name === 'BetterAuthError') {
-		return res.status(400).json({
+		res.status(400).json({
 			error: error.message,
 			code: error.code,
 		});
+		return;
 	}
 
 	// Handle validation errors
 	if (error.name === 'ValidationError') {
-		return res.status(400).json({
+		res.status(400).json({
 			error: 'Validation error',
 			details: error.errors,
 		});
+		return;
 	}
 
 	// Default error response

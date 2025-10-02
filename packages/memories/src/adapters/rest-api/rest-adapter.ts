@@ -54,18 +54,23 @@ export class RestApiClient implements RestApiAdapter {
 	}
 
 	/**
-	 * Check if the API is healthy
+	 * Check if the API is healthy with brAInwav branding
 	 */
 	async healthCheck(): Promise<HealthCheckResponse> {
 		const resp = await this.makeRequest<HealthCheckResponse>({
 			method: 'GET',
 			path: '/health',
 		});
-		return resp.data;
+
+		// Add brAInwav branding to health response
+		return {
+			...resp.data,
+			status: `brAInwav memory-core: ${resp.data.status || 'healthy'}`,
+		};
 	}
 
 	/**
-	 * Create a new memory
+	 * Create a new memory with brAInwav branding
 	 */
 	async createMemory(request: MemoryCreateRequest): Promise<MemoryCreateResponse> {
 		const namespace = this.resolveNamespace(request.namespace);
@@ -76,12 +81,20 @@ export class RestApiClient implements RestApiAdapter {
 			method: 'POST',
 			path: `/api/v1/memories`,
 			body: {
-				memory: request.memory,
+				memory: {
+					...request.memory,
+					// Add brAInwav provenance tracking
+					provenance: {
+						...request.memory.provenance,
+						source: request.memory.provenance?.source || 'system',
+						actor: request.memory.provenance?.actor || 'brAInwav-memory-core',
+					},
+				},
 				namespace,
 			},
 		});
 
-		// Return the memory with proper timestamps
+		// Return the memory with proper timestamps and brAInwav branding
 		return {
 			memory: {
 				...response.data.memory,
@@ -215,7 +228,8 @@ export class RestApiClient implements RestApiAdapter {
 		const defaultHeaders: Record<string, string> = {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
-			'User-Agent': 'cortex-os-memories/1.0.0',
+			'User-Agent': 'brAInwav-cortex-os-memories/1.0.0',
+			'X-brAInwav-Source': 'memory-adapter',
 		};
 
 		if (this.config.enableCompression) {

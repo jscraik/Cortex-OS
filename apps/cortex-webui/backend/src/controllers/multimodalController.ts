@@ -1,20 +1,21 @@
-import { randomUUID } from 'node:crypto';
-import { and, desc, eq, inArray } from 'drizzle-orm';
-import type { Request, Response } from 'express';
+import { and, desc, eq } from 'drizzle-orm';
+import type { Express, Request, Response } from 'express';
 import multer from 'multer';
+import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import { mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { multimodalChunks, multimodalDocuments } from '../db/schema.js';
 import { audioTranscriptionService } from '../services/audioTranscriptionService.js';
 import { documentProcessingService } from '../services/documentProcessingService.js';
-import { embeddingService } from '../services/embeddingService.js';
 import { imageProcessingService } from '../services/imageProcessingService.js';
 import { pdfWithImagesService } from '../services/pdfWithImagesService.js';
 import { vectorSearchService } from '../services/vectorSearchService.js';
 import type {
 	MultimodalErrorResponse,
-	MultimodalProcessingStatus,
-	MultimodalSearchRequest,
 	MultimodalSearchResponse,
 	MultimodalStats,
 	MultimodalSummary,
@@ -22,11 +23,21 @@ import type {
 } from '../types/multimodal.js';
 import logger from '../utils/logger.js';
 
-// File size limits (500MB for multimodal content)
-const MAX_FILE_SIZE = 500 * 1024 * 1024;
+// File size limits (200MB for multimodal content)
+const MAX_FILE_SIZE = 200 * 1024 * 1024;
 
-// Multer configuration for multimodal uploads
-const storage = multer.memoryStorage();
+const MULTIMODAL_UPLOAD_DIR = join(tmpdir(), 'cortex-webui', 'multimodal');
+mkdirSync(MULTIMODAL_UPLOAD_DIR, { recursive: true });
+
+const sanitizeFilename = (name: string): string => name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+// Multer configuration for multimodal uploads (disk-based to avoid high RSS spikes)
+const storage = multer.diskStorage({
+	destination: (_req, _file, cb) => cb(null, MULTIMODAL_UPLOAD_DIR),
+	filename: (_req, file, cb) => {
+		cb(null, `${Date.now()}-${sanitizeFilename(file.originalname)}`);
+	},
+});
 export const multimodalUploadMiddleware = multer({
 	storage,
 	limits: {
@@ -142,6 +153,11 @@ export async function uploadMultimodalDocument(req: Request, res: Response) {
 		}
 
 		const file = req.file;
+		const filePath = (file as Express.Multer.File & { path?: string }).path;
+		if (!filePath) {
+			return res.status(500).json(createErrorResponse('Upload staging path unavailable'));
+		}
+
 		const startTime = Date.now();
 
 		logger.info('multimodal:upload_start', {
@@ -152,136 +168,134 @@ export async function uploadMultimodalDocument(req: Request, res: Response) {
 			brand: 'brAInwav',
 		});
 
-		// Determine modality
-		const modality = determineModality(file.mimetype, file.originalname);
-
-		// Create document record
-		const documentId = randomUUID();
-		const documentRecord = {
-			id: documentId,
-			userId,
-			filename: `${randomUUID()}_${file.originalname}`,
-			originalName: file.originalname,
-			mimeType: file.mimetype,
-			modality,
+		const fileSource = {
+			path: filePath,
 			size: file.size,
-			totalChunks: 0, // Will be updated after processing
-			processed: false,
-			processingStatus: 'processing' as const,
-			metadata: '{}', // Will be updated after processing
+			mimeType: file.mimetype,
 		};
-
-		await db.insert(multimodalDocuments).values(documentRecord);
-
-		// Process document based on modality
-		let processResult;
-		let chunks = [];
-
-		switch (modality) {
-			case 'image':
-				processResult = await imageProcessingService.processImage(
-					file.buffer,
-					file.originalname,
-					validatedData.options,
-				);
-				chunks = await createImageChunks(processResult, documentId);
-				break;
-
-			case 'audio':
-				processResult = await audioTranscriptionService.processAudio(
-					file.buffer,
-					file.originalname,
-					validatedData.options,
-				);
-				chunks = await createAudioChunks(processResult, documentId);
-				break;
-
-			case 'pdf_with_images':
-				processResult = await pdfWithImagesService.processPdfWithImages(
-					file.buffer,
-					file.originalname,
-					validatedData.options,
-				);
-				chunks = await createPdfWithImagesChunks(processResult, documentId);
-				break;
-
-			default:
-				throw new Error(`Unsupported modality: ${modality}`);
-		}
-
-		// Save chunks to database
-		const chunkRecords = chunks.map((chunk) => ({
-			id: randomUUID(),
-			documentId,
-			content: chunk.content,
-			chunkIndex: chunk.chunkIndex,
-			modality: chunk.modality,
-			startPage: chunk.startPage,
-			endPage: chunk.endPage,
-			startTime: chunk.startTime,
-			endTime: chunk.endTime,
-			tokenCount: documentProcessingService.estimateTokenCount(chunk.content),
-			metadata: JSON.stringify(chunk.metadata || {}),
-		}));
-
-		await db.insert(multimodalChunks).values(chunkRecords);
-
-		// Generate embeddings for chunks
-		const chunksWithEmbeddings = chunkRecords.map((chunk, index) => ({
-			...chunk,
-			...chunks[index],
-		}));
 
 		try {
-			await vectorSearchService.indexMultimodalDocuments(chunksWithEmbeddings);
-		} catch (embeddingError) {
-			logger.error('multimodal:embedding_failed', {
+			const modality = determineModality(file.mimetype, file.originalname);
+
+			const documentId = randomUUID();
+			const documentRecord = {
+				id: documentId,
+				userId,
+				filename: `${randomUUID()}_${file.originalname}`,
+				originalName: file.originalname,
+				mimeType: file.mimetype,
+				modality,
+				size: file.size,
+				totalChunks: 0,
+				processed: false,
+				processingStatus: 'processing' as const,
+				metadata: '{}',
+			};
+
+			await db.insert(multimodalDocuments).values(documentRecord);
+
+			let processResult: Record<string, unknown>;
+			let chunks: any[] = [];
+
+			switch (modality) {
+				case 'image':
+					processResult = await imageProcessingService.processImage(
+						fileSource,
+						file.originalname,
+						validatedData.options,
+					);
+					chunks = await createImageChunks(processResult, documentId);
+					break;
+				case 'audio':
+					processResult = await audioTranscriptionService.processAudio(
+						fileSource,
+						file.originalname,
+						validatedData.options,
+					);
+					chunks = await createAudioChunks(processResult, documentId);
+					break;
+				case 'pdf_with_images':
+					processResult = await pdfWithImagesService.processPdfWithImages(
+						fileSource,
+						file.originalname,
+						validatedData.options,
+					);
+					chunks = await createPdfWithImagesChunks(processResult, documentId);
+					break;
+				default:
+					throw new Error(`Unsupported modality: ${modality}`);
+			}
+
+			const chunkRecords = chunks.map((chunk) => ({
+				id: randomUUID(),
 				documentId,
-				error: embeddingError instanceof Error ? embeddingError.message : 'Unknown error',
+				content: chunk.content,
+				chunkIndex: chunk.chunkIndex,
+				modality: chunk.modality,
+				startPage: chunk.startPage,
+				endPage: chunk.endPage,
+				startTime: chunk.startTime,
+				endTime: chunk.endTime,
+				tokenCount: documentProcessingService.estimateTokenCount(chunk.content),
+				metadata: JSON.stringify(chunk.metadata || {}),
+			}));
+
+			await db.insert(multimodalChunks).values(chunkRecords);
+
+			const chunksWithEmbeddings = chunkRecords.map((chunk, index) => ({
+				...chunk,
+				...chunks[index],
+			}));
+
+			try {
+				await vectorSearchService.indexMultimodalDocuments(chunksWithEmbeddings);
+			} catch (embeddingError) {
+				logger.error('multimodal:embedding_failed', {
+					documentId,
+					error: embeddingError instanceof Error ? embeddingError.message : 'Unknown error',
+					brand: 'brAInwav',
+				});
+			}
+
+			await db
+				.update(multimodalDocuments)
+				.set({
+					totalChunks: chunks.length,
+					processed: true,
+					processingStatus: 'completed',
+					metadata: JSON.stringify(processResult.metadata),
+					updatedAt: new Date(),
+				})
+				.where(eq(multimodalDocuments.id, documentId));
+
+			const summary = createProcessingSummary(modality, processResult, chunks);
+			const processingTime = Date.now() - startTime;
+
+			const result: MultimodalUploadResult = {
+				documentId,
+				filename: file.originalname,
+				modality,
+				status: 'success',
+				chunksCreated: chunks.length,
+				processingTime,
+				summary,
+				brand: 'brAInwav',
+			};
+
+			logger.info('multimodal:upload_complete', {
+				documentId,
+				filename: file.originalname,
+				modality,
+				chunksCreated: chunks.length,
+				processingTime,
+				userId,
 				brand: 'brAInwav',
 			});
-			// Don't fail the upload, just mark as non-indexed
+
+			return res.json(result);
+		} finally {
+			await fs.unlink(filePath).catch(() => undefined);
 		}
-
-		// Update document record
-		await db
-			.update(multimodalDocuments)
-			.set({
-				totalChunks: chunks.length,
-				processed: true,
-				processingStatus: 'completed',
-				metadata: JSON.stringify(processResult.metadata),
-				updatedAt: new Date(),
-			})
-			.where(eq(multimodalDocuments.id, documentId));
-
-		// Create summary
-		const summary = createProcessingSummary(modality, processResult, chunks);
-
-		const processingTime = Date.now() - startTime;
-
-		const result: MultimodalUploadResult = {
-			documentId,
-			filename: file.originalname,
-			modality,
-			status: 'success',
-			chunksCreated: chunks.length,
-			processingTime,
-			summary,
-			brand: 'brAInwav',
-		};
-
-		logger.info('multimodal:upload_complete', {
-			documentId,
-			filename: file.originalname,
-			modality,
-			chunksCreated: chunks.length,
-			processingTime,
-			userId,
-			brand: 'brAInwav',
-		});
-
-		return res.json(result);
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 		logger.error('multimodal:upload_failed', {
@@ -712,7 +726,7 @@ async function createPdfWithImagesChunks(processResult: any, documentId: string)
 function createProcessingSummary(
 	modality: string,
 	processResult: any,
-	chunks: any[],
+	_chunks: any[],
 ): MultimodalSummary {
 	const summary: MultimodalSummary = {};
 

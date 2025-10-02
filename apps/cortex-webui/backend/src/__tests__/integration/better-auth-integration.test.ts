@@ -34,11 +34,7 @@ describe('Better Auth Integration Tests', () => {
 
 	afterEach(async () => {
 		// Cleanup test data
-		try {
-			// Clean up any created users if possible
-		} catch (error) {
-			console.warn('Cleanup error:', error);
-		}
+		// Note: Actual cleanup logic would be implemented here if needed
 	});
 
 	describe('User Registration Flow', () => {

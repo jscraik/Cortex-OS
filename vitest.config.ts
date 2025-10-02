@@ -59,7 +59,7 @@ export default defineConfig({
 			},
 		},
 		// Ensure built artifacts never get swept into discovery
-		exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', 'tests/**'],
+		exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**'],
 		// Quality gates: enforce coverage thresholds across all projects
 		coverage: {
 			provider: 'v8',
@@ -90,7 +90,7 @@ export default defineConfig({
 			// Test execution is handled by project-specific configurations
 		},
 		projects: ['vitest.basic.config.ts'],
-		setupFiles: ['tests/setup/vitest.setup.ts'],
+		setupFiles: ['tests/setup/vitest.setup.ts', 'tests/tdd-setup.ts'],
 		// Quality gates enforcement
 		passWithNoTests: false,
 		outputFile: {

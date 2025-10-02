@@ -30,6 +30,8 @@ type LocalDocEnvelope = {
 function toHeaders(apiKey?: string) {
 	const h: Record<string, string> = {
 		'content-type': 'application/json',
+		'user-agent': 'brAInwav-local-memory-adapter/1.0.0',
+		'x-brainwav-source': 'local-memory-store',
 	};
 	if (apiKey) h.authorization = `Bearer ${apiKey}`;
 	return h;

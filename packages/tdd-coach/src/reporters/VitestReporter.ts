@@ -36,7 +36,7 @@ export class VitestReporter extends BaseTestReporter {
 			return this.createMockTestResults(filePaths);
 		}
 
-		const args = ['test', '--reporter=json'];
+		const args = ['vitest', 'run', '--reporter=json', '--config', 'vitest.basic.config.ts', '--runInBand'];
 
 		if (filePaths && filePaths.length > 0) {
 			// Validate that test files exist before trying to run them
@@ -58,7 +58,8 @@ export class VitestReporter extends BaseTestReporter {
 		}
 
 		try {
-			const { stdout } = await this.executeCommand('pnpm', args);
+			const env = this.createVitestEnvironment();
+			const { stdout } = await this.executeCommand('pnpm', args, { env });
 			return this.parseVitestOutput(stdout);
 		} catch (error) {
 			console.error('Vitest execution failed:', error);
@@ -67,11 +68,12 @@ export class VitestReporter extends BaseTestReporter {
 	}
 
 	async watchTests(callback: (results: TestResult[]) => void): Promise<void> {
-		const args = ['test', '--watch', '--reporter=json'];
+		const args = ['vitest', '--watch', '--reporter=json', '--config', 'vitest.basic.config.ts'];
 
 		const proc = spawn('pnpm', args, {
 			cwd: this.config.workspaceRoot,
 			stdio: 'pipe',
+			env: this.createVitestEnvironment(),
 		});
 
 		let buffer = '';
@@ -128,6 +130,25 @@ export class VitestReporter extends BaseTestReporter {
 		if (state === 'pass') return 'pass';
 		if (state === 'fail') return 'fail';
 		return 'skip';
+	}
+
+	private createVitestEnvironment(): NodeJS.ProcessEnv {
+		const env = { ...process.env };
+		env.VITEST_MAX_THREADS = env.VITEST_MAX_THREADS ?? '1';
+		env.VITEST_MIN_THREADS = env.VITEST_MIN_THREADS ?? '1';
+		env.VITEST_MAX_FORKS = env.VITEST_MAX_FORKS ?? '1';
+		env.VITEST_MIN_FORKS = env.VITEST_MIN_FORKS ?? '1';
+		env.COVERAGE_THRESHOLD_GLOBAL = env.COVERAGE_THRESHOLD_GLOBAL ?? '0';
+		env.COVERAGE_THRESHOLD_LINES = env.COVERAGE_THRESHOLD_LINES ?? '0';
+		env.COVERAGE_THRESHOLD_BRANCHES = env.COVERAGE_THRESHOLD_BRANCHES ?? '0';
+		env.COVERAGE_THRESHOLD_FUNCTIONS = env.COVERAGE_THRESHOLD_FUNCTIONS ?? '0';
+		const existingNodeOptions = env.NODE_OPTIONS ?? '';
+		if (!existingNodeOptions.includes('--max-old-space-size')) {
+			env.NODE_OPTIONS = ['--max-old-space-size=2048', existingNodeOptions].filter(Boolean).join(' ').trim();
+		} else {
+			env.NODE_OPTIONS = existingNodeOptions;
+		}
+		return env;
 	}
 
 	private parseVitestOutput(output: string): TestResult[] {

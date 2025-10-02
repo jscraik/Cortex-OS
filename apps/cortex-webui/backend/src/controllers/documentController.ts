@@ -1,16 +1,26 @@
-import type { Request, Response } from 'express';
+import type { Express, Request, Response } from 'express';
 import multer from 'multer';
-import pdf from 'pdf-parse';
+import { mkdirSync, promises as fs } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { DocumentParseResult } from '../types/document.js';
+import { pdfWithImagesService } from '../services/pdfWithImagesService.js';
 import logger from '../utils/logger.js';
 
-// File size limits (50MB for documents)
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const MAX_PAGES = 100;
-const MAX_TEXT_LENGTH = 50000;
+const MAX_TEXT_LENGTH = 50_000;
 
-// Multer configuration for document uploads
-const storage = multer.memoryStorage();
+const DOCUMENT_UPLOAD_DIR = join(tmpdir(), 'cortex-webui', 'documents');
+mkdirSync(DOCUMENT_UPLOAD_DIR, { recursive: true });
+
+const sanitizeFilename = (name: string): string => name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+const storage = multer.diskStorage({
+	destination: (_req, _file, cb) => cb(null, DOCUMENT_UPLOAD_DIR),
+	filename: (_req, file, cb) => cb(null, `${Date.now()}-${sanitizeFilename(file.originalname)}`),
+});
+
 export const documentUploadMiddleware = multer({
 	storage,
 	limits: {
@@ -27,17 +37,7 @@ export const documentUploadMiddleware = multer({
 			'image/webp',
 		];
 
-		const allowedExtensions = [
-			'.pdf',
-			'.txt',
-			'.md',
-			'.markdown',
-			'.jpg',
-			'.jpeg',
-			'.png',
-			'.gif',
-			'.webp',
-		];
+		const allowedExtensions = ['.pdf', '.txt', '.md', '.markdown', '.jpg', '.jpeg', '.png', '.gif', '.webp'];
 		const extension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
 
 		if (allowedMimes.includes(file.mimetype) || allowedExtensions.includes(extension)) {
@@ -49,36 +49,24 @@ export const documentUploadMiddleware = multer({
 });
 
 export async function parseDocument(req: Request, res: Response) {
+	if (!req.file) {
+		return res.status(400).json({ error: 'No file provided' });
+	}
+
+	const file = req.file;
+	const filePath = (file as Express.Multer.File & { path?: string }).path;
+	if (!filePath) {
+		return res.status(500).json({ error: 'Temporary upload path unavailable' });
+	}
+
+	const fileSource = {
+		path: filePath,
+		size: file.size,
+		mimeType: file.mimetype,
+	};
+
 	try {
-		if (!req.file) {
-			return res.status(400).json({ error: 'No file provided' });
-		}
-		const file = req.file;
-		const fileName = file.originalname;
-		const mimeType = file.mimetype;
-		const buffer = file.buffer;
-		let result: DocumentParseResult;
-		if (mimeType.includes('pdf') || fileName.toLowerCase().endsWith('.pdf')) {
-			result = await parsePDF(buffer, fileName);
-		} else if (
-			mimeType.startsWith('text/') ||
-			fileName.toLowerCase().endsWith('.txt') ||
-			fileName.toLowerCase().endsWith('.md') ||
-			fileName.toLowerCase().endsWith('.markdown')
-		) {
-			result = await parseTextFile(buffer, fileName);
-		} else if (mimeType.startsWith('image/')) {
-			result = await parseImageFile(buffer, fileName);
-		} else {
-			try {
-				result = await parseTextFile(buffer, fileName);
-			} catch {
-				return res.status(400).json({
-					error: 'Unsupported file type',
-					supportedTypes: ['PDF', 'TXT', 'MD', 'Images (JPG, PNG, GIF, WebP)'],
-				});
-			}
-		}
+		const result = await parseByType(fileSource, file.originalname, file.mimetype);
 		return res.json(result);
 	} catch (error) {
 		logger.error('document:parse_failed', { error });
@@ -86,7 +74,122 @@ export async function parseDocument(req: Request, res: Response) {
 		const status =
 			errorMessage.includes('Invalid PDF') || errorMessage.includes('Unsupported') ? 400 : 500;
 		return res.status(status).json({ error: 'Document parsing failed', message: errorMessage });
+	} finally {
+		await fs.unlink(filePath).catch(() => undefined);
 	}
+}
+
+async function parseByType(
+	source: { path: string; size: number; mimeType: string },
+	fileName: string,
+	mimeType: string,
+): Promise<DocumentParseResult> {
+	if (mimeType.includes('pdf') || fileName.toLowerCase().endsWith('.pdf')) {
+		return parsePdfDocument(source, fileName);
+	}
+
+	if (
+		mimeType.startsWith('text/') ||
+		fileName.toLowerCase().endsWith('.txt') ||
+		fileName.toLowerCase().endsWith('.md') ||
+		fileName.toLowerCase().endsWith('.markdown')
+	) {
+		return parseTextFile(source, fileName);
+	}
+
+	if (mimeType.startsWith('image/')) {
+		return parseImageFile(source, fileName, mimeType);
+	}
+
+	throw new Error('Unsupported file type');
+}
+
+async function parsePdfDocument(
+	source: { path: string; size: number },
+	fileName: string,
+): Promise<DocumentParseResult> {
+	const pdfResult = await pdfWithImagesService.processPdfWithImages(source, fileName, {
+		enableOCR: false,
+		enableVisionAnalysis: false,
+	});
+
+	const rawText = pdfResult.pages.map((page) => page.text ?? '').join('\n\n');
+	const truncated = rawText.length > MAX_TEXT_LENGTH;
+	const text = truncated
+		? `${rawText.slice(0, MAX_TEXT_LENGTH)}\n\n[Content truncated due to length]`
+		: rawText;
+
+	return {
+		type: 'pdf',
+		text,
+		fileName,
+		fileSize: source.size,
+		pages: pdfResult.pages.length,
+		originalLength: rawText.length,
+		truncated,
+		metadata: {
+			title: pdfResult.metadata.title,
+			author: pdfResult.metadata.author,
+			subject: pdfResult.metadata.subject,
+			creator: pdfResult.metadata.creator,
+			producer: pdfResult.metadata.producer,
+			creationDate: pdfResult.metadata.creationDate,
+			modDate: pdfResult.metadata.modificationDate,
+		},
+	};
+}
+
+async function parseTextFile(
+	source: { path: string; size: number },
+	fileName: string,
+): Promise<DocumentParseResult> {
+	const buffer = await fs.readFile(source.path, 'utf-8');
+	let text = buffer.toString();
+	const originalLength = text.length;
+
+	if (text.length > MAX_TEXT_LENGTH) {
+		text = `${text.slice(0, MAX_TEXT_LENGTH)}\n\n[Content truncated due to length]`;
+	}
+
+	const fileType =
+		fileName.toLowerCase().endsWith('.md') || fileName.toLowerCase().endsWith('.markdown') ? 'markdown' : 'text';
+
+	return {
+		type: fileType,
+		text,
+		fileName,
+		fileSize: source.size,
+		originalLength,
+		truncated: originalLength > MAX_TEXT_LENGTH,
+		metadata: {
+			encoding: 'utf-8',
+			lines: text.split('\n').length,
+		},
+	};
+}
+
+async function parseImageFile(
+	source: { path: string; size: number },
+	fileName: string,
+	mimeType: string,
+): Promise<DocumentParseResult> {
+	const base64 = await fileToBase64(source.path);
+
+	return {
+		type: 'image',
+		text: `[Image: ${fileName}]`,
+		fileName,
+		fileSize: source.size,
+		base64: `data:${mimeType};base64,${base64}`,
+		metadata: {
+			mimeType,
+		},
+	};
+}
+
+async function fileToBase64(path: string): Promise<string> {
+	const data = await fs.readFile(path);
+	return data.toString('base64');
 }
 
 export async function getSupportedTypes(_req: Request, res: Response) {
@@ -98,143 +201,4 @@ export async function getSupportedTypes(_req: Request, res: Response) {
 		maxTextLength: MAX_TEXT_LENGTH,
 	};
 	return res.json(supportedTypes);
-}
-
-/**
- * Parse PDF document
- */
-async function parsePDF(buffer: Buffer, fileName: string): Promise<DocumentParseResult> {
-	try {
-		const data = await pdf(buffer);
-
-		// Narrow pdf-parse info type (library doesn't export a detailed TS interface for all optional fields)
-		// Keep optional so absence of metadata doesn't cause runtime errors
-		interface PdfDocumentInfo {
-			Title?: string;
-			Author?: string;
-			Subject?: string;
-			Creator?: string;
-			Producer?: string;
-			CreationDate?: string;
-			ModDate?: string;
-		}
-		const info: PdfDocumentInfo | undefined = (data as { info?: PdfDocumentInfo }).info;
-
-		// Check page limit
-		if (data.numpages > MAX_PAGES) {
-			throw new Error(`PDF has ${data.numpages} pages, maximum allowed is ${MAX_PAGES}`);
-		}
-
-		let text = data.text || '';
-
-		// Truncate if too long
-		const originalLength = text.length;
-		if (text.length > MAX_TEXT_LENGTH) {
-			text = `${text.slice(0, MAX_TEXT_LENGTH)}\n\n[Content truncated due to length]`;
-		}
-
-		return {
-			type: 'pdf',
-			text,
-			fileName,
-			fileSize: buffer.length,
-			pages: data.numpages,
-			originalLength,
-			truncated: originalLength > MAX_TEXT_LENGTH,
-			metadata: {
-				title: info?.Title,
-				author: info?.Author,
-				subject: info?.Subject,
-				creator: info?.Creator,
-				producer: info?.Producer,
-				creationDate: info?.CreationDate ? new Date(info.CreationDate) : undefined,
-				modDate: info?.ModDate ? new Date(info.ModDate) : undefined,
-			},
-		};
-	} catch (error) {
-		throw new Error(
-			`PDF parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-		);
-	}
-}
-
-/**
- * Parse text file (TXT, MD, Markdown)
- */
-async function parseTextFile(buffer: Buffer, fileName: string): Promise<DocumentParseResult> {
-	try {
-		let text = buffer.toString('utf-8');
-		const originalLength = text.length;
-
-		// Truncate if too long
-		if (text.length > MAX_TEXT_LENGTH) {
-			text = `${text.slice(0, MAX_TEXT_LENGTH)}\n\n[Content truncated due to length]`;
-		}
-
-		const fileType =
-			fileName.toLowerCase().endsWith('.md') || fileName.toLowerCase().endsWith('.markdown')
-				? 'markdown'
-				: 'text';
-
-		return {
-			type: fileType,
-			text,
-			fileName,
-			fileSize: buffer.length,
-			originalLength,
-			truncated: originalLength > MAX_TEXT_LENGTH,
-			metadata: {
-				encoding: 'utf-8',
-				lines: text.split('\n').length,
-			},
-		};
-	} catch (error) {
-		throw new Error(
-			`Text file parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-		);
-	}
-}
-
-/**
- * Parse image file (for vision models)
- */
-async function parseImageFile(buffer: Buffer, fileName: string): Promise<DocumentParseResult> {
-	try {
-		// Convert to base64 for vision models
-		const base64 = buffer.toString('base64');
-		const mimeType = getMimeTypeFromFileName(fileName);
-
-		return {
-			type: 'image',
-			text: `[Image: ${fileName}]`,
-			fileName,
-			fileSize: buffer.length,
-			base64: `data:${mimeType};base64,${base64}`,
-			metadata: {
-				mimeType,
-				width: undefined, // Could be extracted with image libraries if needed
-				height: undefined,
-			},
-		};
-	} catch (error) {
-		throw new Error(
-			`Image parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-		);
-	}
-}
-
-/**
- * Get MIME type from file extension
- */
-function getMimeTypeFromFileName(fileName: string): string {
-	const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-	const mimeTypes: Record<string, string> = {
-		'.jpg': 'image/jpeg',
-		'.jpeg': 'image/jpeg',
-		'.png': 'image/png',
-		'.gif': 'image/gif',
-		'.webp': 'image/webp',
-	};
-
-	return mimeTypes[extension] || 'application/octet-stream';
 }

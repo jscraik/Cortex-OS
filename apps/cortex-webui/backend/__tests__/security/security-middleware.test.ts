@@ -11,7 +11,7 @@ import {
 	enhanceSessionSecurity,
 	sanitizeInput,
 	securityHeaders,
-} from '../src/middleware/security.js';
+} from '../src/middleware/security.ts';
 
 // Mock dependencies
 vi.mock('helmet', () => ({

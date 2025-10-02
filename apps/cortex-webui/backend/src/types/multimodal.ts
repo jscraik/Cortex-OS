@@ -75,7 +75,7 @@ export interface DetectedObject {
 	label: string;
 	confidence: number;
 	boundingBox: BoundingBox;
-	attributes?: Record<string, any>;
+	attributes?: Record<string, unknown>;
 }
 
 export interface BoundingBox {
@@ -153,7 +153,7 @@ export interface ExtractedImage {
 	width: number;
 	height: number;
 	format: string;
-	base64Data?: string;
+	base64Data: string;
 	ocrText?: string;
 	visionAnalysis?: VisionAnalysisResult;
 	caption?: string;

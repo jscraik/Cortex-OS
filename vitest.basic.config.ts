@@ -17,6 +17,7 @@ export default defineConfig({
 			'services/memories/tests/**/*.spec.ts',
 			'services/agents/tests/**/*.spec.ts',
 			'scripts/ci/__tests__/**/*.test.ts',
+			'tests/tdd-coach/**/*.test.ts',
 		],
 		globals: true,
 		name: 'simple-tests',

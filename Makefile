@@ -69,7 +69,7 @@ tdd-plan:
 tdd-enforce:
 	@echo "[brAInwav] Enforcing TDD practices with brAInwav quality standards..."
 	# Run TDD Coach validation
-	tdd-coach validate --quality-gates || echo "[brAInwav] Install @cortex-os/tdd-coach for TDD enforcement"
+	node packages/tdd-coach/dist/cli/tdd-coach.js validate --quality-gates || echo "[brAInwav] Install @cortex-os/tdd-coach for TDD enforcement"
 	# Enforce quality gates
 	node scripts/ci/enforce-gates.mjs
 	@echo "[brAInwav] TDD enforcement complete"
@@ -78,8 +78,17 @@ tdd-enforce:
 .PHONY: tdd-status
 tdd-status:
 	@echo "[brAInwav] Checking TDD status with operational readiness..."
-	tdd-coach status --ops-readiness || echo "[brAInwav] Install @cortex-os/tdd-coach for TDD status"
+	node packages/tdd-coach/dist/cli/tdd-coach.js status --ops-readiness || echo "[brAInwav] Install @cortex-os/tdd-coach for TDD status"
 	@echo "[brAInwav] TDD status check complete"
+
+# Validate specific files (expects FILES env)
+.PHONY: tdd-validate
+tdd-validate:
+	@if [ -z "$(FILES)" ]; then \
+		echo "[brAInwav] Usage: FILES=\"src/file.test.ts src/file.ts\" make tdd-validate"; \
+		exit 1; \
+	fi
+	node packages/tdd-coach/dist/cli/tdd-coach.js validate --workspace . --files $(FILES) --non-blocking
 
 # === MCP Development ===
 

@@ -49,12 +49,14 @@ program
 	.option('-f, --files <files...>', 'Files to validate')
 	.option('--watch', 'Watch for changes and validate continuously')
 	.option('--quality-gates', 'Enforce brAInwav quality gates during validation')
+	.option('--non-blocking', 'Exit successfully even when the coach blocks the change')
 	.action(
 		async (options: {
 			workspace: string;
 			files?: string[];
 			watch?: boolean;
 			qualityGates?: boolean;
+			nonBlocking?: boolean;
 		}): Promise<void> => {
 			try {
 				const coach: TDDCoach = createTDDCoach({
@@ -70,7 +72,10 @@ program
 					console.log('[brAInwav] Starting TDD Coach in watch mode...');
 					await startWatchMode(coach);
 				} else if (options.files) {
-					await validateFiles(coach, options.files, options.qualityGates || false);
+					await validateFiles(coach, options.files, {
+						qualityGates: options.qualityGates || false,
+						nonBlocking: options.nonBlocking || false,
+					});
 				} else {
 					console.log('[brAInwav] No files specified for validation');
 					process.exit(1);
@@ -264,10 +269,15 @@ const runQualityGatesIfRequested = async (qualityGates: boolean): Promise<void> 
  * @param {boolean} qualityGates
  * @returns {Promise<void>}
  */
+interface ValidateOptions {
+	qualityGates?: boolean;
+	nonBlocking?: boolean;
+}
+
 const validateFiles = async (
 	coach: TDDCoach,
 	files: string[],
-	qualityGates: boolean = false,
+	options: ValidateOptions = {},
 ): Promise<void> => {
 	const changeSet: ChangeSet = _createChangeSetForValidation(files);
 
@@ -276,10 +286,14 @@ const validateFiles = async (
 	});
 
 	logValidationResults(response);
-	await runQualityGatesIfRequested(qualityGates);
+	await runQualityGatesIfRequested(options.qualityGates ?? false);
 
-	// Exit with error code if validation failed
+	// Exit with error code if validation failed (unless non-blocking is enabled)
 	if (!response.allowed) {
+		if (options.nonBlocking) {
+			console.log('[brAInwav] Non-blocking mode enabled: treating coaching block as advisory.');
+			return;
+		}
 		process.exit(1);
 	}
 };

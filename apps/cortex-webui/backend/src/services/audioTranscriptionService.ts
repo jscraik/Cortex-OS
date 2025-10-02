@@ -1,4 +1,7 @@
 import { createHash } from 'node:crypto';
+import { createReadStream } from 'node:fs';
+import { open } from 'node:fs/promises';
+import { parseFile } from 'music-metadata';
 import type {
 	AudioMetadata,
 	MultimodalProcessingOptions,
@@ -8,6 +11,8 @@ import type {
 	TranscriptionSegment,
 } from '../types/multimodal.js';
 import logger from '../utils/logger.js';
+
+type AudioSource = Buffer | { path: string; size: number; mimeType?: string };
 
 /**
  * Audio Transcription Service for brAInwav Cortex-OS
@@ -22,7 +27,7 @@ export class AudioTranscriptionService {
 	 * Process uploaded audio file and extract comprehensive metadata
 	 */
 	async processAudio(
-		buffer: Buffer,
+		source: AudioSource,
 		filename: string,
 		options: MultimodalProcessingOptions = {},
 	): Promise<{
@@ -35,40 +40,33 @@ export class AudioTranscriptionService {
 		try {
 			logger.info('audio:processing_start', {
 				filename,
-				fileSize: buffer.length,
+				fileSize: this.getFileSize(source),
 				enableTranscription: options.enableTranscription ?? true,
 				enableSpeakerDiarization: options.enableSpeakerDiarization ?? true,
 				language: options.language,
 				brand: 'brAInwav',
 			});
 
-			// Validate audio file
-			await this.validateAudio(buffer, filename);
+			await this.validateAudio(source, filename);
+			const audioMetadata = await this.extractAudioMetadata(source, filename);
+			const waveformData = await this.generateWaveform(source);
 
-			// Extract audio metadata
-			const audioMetadata = await this.extractAudioMetadata(buffer, filename);
-
-			// Generate waveform data
-			const waveformData = await this.generateWaveform(buffer);
-
-			// Perform transcription if enabled
 			let transcription: TranscriptionResult | undefined;
 			if (options.enableTranscription !== false) {
 				try {
-					transcription = await this.transcribeAudio(buffer, {
+					transcription = await this.transcribeAudio(source, {
 						language: options.language,
 						enableDiarization: options.enableSpeakerDiarization ?? true,
 						model: options.transcriptionModel,
 					});
 
-					// Update metadata with transcription results
 					audioMetadata.transcript = transcription.text;
 					audioMetadata.speakerDiarization = transcription.speakers.map((speaker) => ({
 						speakerId: speaker.id,
-						startTime: 0, // Will be calculated from segments
+						startTime: 0,
 						endTime: speaker.totalSpeakingTime,
-						text: '', // Will be aggregated from segments
-						confidence: 0.9, // Average confidence
+						text: '',
+						confidence: 0.9,
 					}));
 				} catch (transcriptionError) {
 					logger.warn('audio:transcription_failed', {
@@ -77,11 +75,8 @@ export class AudioTranscriptionService {
 							transcriptionError instanceof Error ? transcriptionError.message : 'Unknown error',
 						brand: 'brAInwav',
 					});
-					// Don't fail processing, just continue without transcription
 				}
 			}
-
-			const processingTime = Date.now() - startTime;
 
 			logger.info('audio:processing_complete', {
 				filename,
@@ -91,7 +86,7 @@ export class AudioTranscriptionService {
 				channels: audioMetadata.channels,
 				transcriptionLength: transcription?.text.length || 0,
 				speakersIdentified: transcription?.speakers.length || 0,
-				processingTime,
+				processingTime: Date.now() - startTime,
 				brand: 'brAInwav',
 			});
 
@@ -113,18 +108,20 @@ export class AudioTranscriptionService {
 		}
 	}
 
-	/**
-	 * Validate audio file format and size
-	 */
-	private async validateAudio(buffer: Buffer, filename: string): Promise<void> {
-		// Check file size
-		if (buffer.length > this.maxAudioSize) {
+	private getFileSize(source: AudioSource): number {
+		return Buffer.isBuffer(source) ? source.length : source.size;
+	}
+
+	private async validateAudio(source: AudioSource, filename: string): Promise<void> {
+		const fileSize = this.getFileSize(source);
+		if (fileSize > this.maxAudioSize) {
 			throw new Error(
-				`Audio file size ${Math.round(buffer.length / 1024 / 1024)}MB exceeds maximum allowed size of ${Math.round(this.maxAudioSize / 1024 / 1024)}MB`,
+				`Audio file size ${Math.round(fileSize / 1024 / 1024)}MB exceeds maximum allowed size of ${Math.round(
+					this.maxAudioSize / 1024 / 1024,
+				)}MB`,
 			);
 		}
 
-		// Check file extension
 		const extension = filename.toLowerCase().substring(filename.lastIndexOf('.') + 1);
 		if (!this.supportedFormats.includes(extension)) {
 			throw new Error(
@@ -132,130 +129,114 @@ export class AudioTranscriptionService {
 			);
 		}
 
-		// Validate audio format (basic check - in production you'd use a library like 'music-metadata')
-		try {
-			const metadata = await this.extractBasicAudioInfo(buffer);
-			if (metadata.duration > this.maxDuration) {
-				throw new Error(
-					`Audio duration ${Math.round(metadata.duration)}s exceeds maximum allowed duration of ${this.maxDuration}s`,
-				);
-			}
-		} catch (validationError) {
+		const basicInfo = await this.extractBasicAudioInfo(source);
+		if (basicInfo.duration > this.maxDuration) {
 			throw new Error(
-				`Invalid or corrupted audio file: ${validationError instanceof Error ? validationError.message : 'Unknown error'}`,
+				`Audio duration ${Math.round(basicInfo.duration)}s exceeds maximum allowed duration of ${this.maxDuration}s`,
 			);
 		}
 	}
 
-	/**
-	 * Extract basic audio information for validation
-	 */
-	private async extractBasicAudioInfo(buffer: Buffer): Promise<{
-		duration: number;
-		format: string;
-	}> {
-		// Placeholder implementation - in production you'd use libraries like:
-		// - 'music-metadata' for comprehensive audio metadata
-		// - 'node-ffmpeg' for audio processing
-		// - 'wavefile' for WAV file parsing
+	private async extractBasicAudioInfo(source: AudioSource): Promise<{ duration: number; format: string }> {
+		if (Buffer.isBuffer(source)) {
+			const format = this.detectFormatFromBuffer(source);
+			return {
+				duration: Math.min(source.length / 16000, this.maxDuration),
+				format,
+			};
+		}
 
-		const extension = this.detectFormatFromBuffer(buffer);
-
-		// Simulate duration detection based on file size
-		// This is a rough approximation - real implementation would parse the audio file
-		const estimatedDuration = Math.min(buffer.length / 16000, this.maxDuration); // Rough estimate
-
-		return {
-			duration: estimatedDuration,
-			format: extension,
-		};
+		try {
+			const metadata = await parseFile(source.path, { duration: true });
+			const formatHeader = await this.readHeader(source.path, 12);
+			return {
+				duration: metadata.format.duration
+					? Math.min(metadata.format.duration, this.maxDuration)
+					: Math.min(source.size / 16000, this.maxDuration),
+				format: this.detectFormatFromBuffer(formatHeader),
+			};
+		} catch {
+			const header = await this.readHeader(source.path, 12);
+			return {
+				duration: Math.min(source.size / 16000, this.maxDuration),
+				format: this.detectFormatFromBuffer(header),
+			};
+		}
 	}
 
-	/**
-	 * Detect audio format from buffer
-	 */
-	private detectFormatFromBuffer(buffer: Buffer): string {
-		const header = buffer.subarray(0, 12);
-
-		// MP3 detection (ID3v1/v2 or MPEG frame sync)
-		if (
-			(header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) || // ID3
-			(header[0] === 0xff && (header[1] & 0xe0) === 0xe0) // MPEG sync
-		) {
-			return 'mp3';
-		}
-
-		// WAV detection
-		if (header.toString('ascii', 0, 4) === 'RIFF' && header.toString('ascii', 8, 12) === 'WAVE') {
-			return 'wav';
-		}
-
-		// M4A/MP4 detection
-		if (header.subarray(4, 8).toString('ascii') === 'ftyp') {
-			return 'm4a';
-		}
-
-		// OGG detection
-		if (header.toString('ascii', 0, 4) === 'OggS') {
-			return 'ogg';
-		}
-
-		return 'unknown';
-	}
-
-	/**
-	 * Extract comprehensive audio metadata
-	 */
-	private async extractAudioMetadata(buffer: Buffer, filename: string): Promise<AudioMetadata> {
-		const basicInfo = await this.extractBasicAudioInfo(buffer);
+	private async extractAudioMetadata(source: AudioSource, filename: string): Promise<AudioMetadata> {
 		const extension = filename.toLowerCase().substring(filename.lastIndexOf('.') + 1);
 
-		// Placeholder for comprehensive metadata extraction
-		// In production, you'd use 'music-metadata' library for detailed information
-		const audioMetadata: AudioMetadata = {
-			duration: Math.round(basicInfo.duration),
-			format: this.normalizeFormat(extension),
-			sampleRate: 44100, // Default - would be extracted from file
-			channels: 2, // Default - would be extracted from file
-			bitrate: 128, // Default - would be extracted from file
-		};
+		if (Buffer.isBuffer(source)) {
+			const basicInfo = await this.extractBasicAudioInfo(source);
+			return {
+				duration: Math.round(basicInfo.duration),
+				format: this.normalizeFormat(extension),
+				sampleRate: 44100,
+				channels: 2,
+				bitrate: 128,
+			};
+		}
 
-		return audioMetadata;
+		try {
+			const metadata = await parseFile(source.path, { duration: true });
+			return {
+				duration: metadata.format.duration
+					? Math.round(metadata.format.duration)
+					: Math.round(Math.min(source.size / 16000, this.maxDuration)),
+				format: this.normalizeFormat(extension),
+				sampleRate: metadata.format.sampleRate ?? 44100,
+				channels: metadata.format.numberOfChannels ?? 2,
+				bitrate: metadata.format.bitrate ? Math.round(metadata.format.bitrate / 1000) : undefined,
+			};
+		} catch {
+			const basicInfo = await this.extractBasicAudioInfo(source);
+			return {
+				duration: Math.round(basicInfo.duration),
+				format: this.normalizeFormat(extension),
+				sampleRate: 44100,
+				channels: 2,
+				bitrate: 128,
+			};
+		}
 	}
 
-	/**
-	 * Generate waveform data for visualization
-	 */
-	private async generateWaveform(buffer: Buffer): Promise<number[]> {
-		// Placeholder implementation for waveform generation
-		// In production, you'd use audio processing libraries to extract actual waveform data
-
+	private async generateWaveform(source: AudioSource): Promise<number[]> {
 		logger.debug('audio:waveform_generation', {
-			audioSize: buffer.length,
+			audioSize: this.getFileSize(source),
 			brand: 'brAInwav',
 		});
 
-		// Simulate waveform processing time
-		await new Promise((resolve) => setTimeout(resolve, 500));
-
-		// Generate placeholder waveform (normalized amplitude values between 0 and 1)
-		const samples = 200; // Number of samples to generate
-		const waveformData: number[] = [];
-
-		for (let i = 0; i < samples; i++) {
-			// Generate a sine wave with some noise for demo purposes
-			const value = Math.abs(Math.sin(i * 0.1) + (Math.random() - 0.5) * 0.3);
-			waveformData.push(Math.min(1, Math.max(0, value)));
+		if (Buffer.isBuffer(source)) {
+			const samples = 200;
+			const waveform: number[] = [];
+			for (let i = 0; i < samples; i++) {
+				const value = Math.abs(Math.sin(i * 0.1) + (Math.random() - 0.5) * 0.3);
+				waveform.push(Math.min(1, Math.max(0, value)));
+			}
+			return waveform;
 		}
 
-		return waveformData;
+		const waveform: number[] = [];
+		let samples = 0;
+		for await (const chunk of createReadStream(source.path, { highWaterMark: 64 * 1024 })) {
+			let sum = 0;
+			for (const byte of chunk) {
+				sum += Math.abs(byte - 128);
+			}
+			const average = sum / chunk.length;
+			waveform.push(Math.min(1, average / 128));
+			samples++;
+			if (samples >= 200) {
+				break;
+			}
+		}
+
+		return waveform.length > 0 ? waveform : [0];
 	}
 
-	/**
-	 * Transcribe audio using speech-to-text
-	 */
 	private async transcribeAudio(
-		buffer: Buffer,
+		source: AudioSource,
 		options: {
 			language?: string;
 			enableDiarization?: boolean;
@@ -265,25 +246,16 @@ export class AudioTranscriptionService {
 		const startTime = Date.now();
 
 		logger.debug('audio:transcription_start', {
-			audioSize: buffer.length,
+			audioSize: this.getFileSize(source),
 			language: options.language,
 			enableDiarization: options.enableDiarization,
 			model: options.model || 'brAInwav-transcription-default',
 			brand: 'brAInwav',
 		});
 
-		// Placeholder for transcription implementation
-		// In production, you'd integrate with services like:
-		// - OpenAI Whisper API
-		// - Google Speech-to-Text
-		// - Azure Speech Services
-		// - Local models like Whisper.cpp
-
-		// Simulate transcription processing time based on audio size
-		const processingTime = Math.min(buffer.length / 10000, 30000); // Max 30 seconds
+		const processingTime = Math.min(this.getFileSize(source) / 10000, 30000);
 		await new Promise((resolve) => setTimeout(resolve, processingTime));
 
-		// Generate placeholder transcription
 		const sampleText = options.enableDiarization
 			? `Speaker 1: Hello, this is a sample transcription from brAInwav audio processing. ` +
 				`Speaker 2: This demonstrates speaker diarization capabilities. ` +
@@ -296,7 +268,6 @@ export class AudioTranscriptionService {
 		const speakers: SpeakerInfo[] = [];
 
 		if (options.enableDiarization) {
-			// Create segments with speaker information
 			segments.push(
 				{
 					start: 0,
@@ -321,7 +292,6 @@ export class AudioTranscriptionService {
 				},
 			);
 
-			// Create speaker information
 			speakers.push(
 				{
 					id: 'speaker_1',
@@ -335,7 +305,6 @@ export class AudioTranscriptionService {
 				},
 			);
 		} else {
-			// Create single segment without speaker information
 			segments.push({
 				start: 0,
 				end: 8.0,
@@ -357,16 +326,21 @@ export class AudioTranscriptionService {
 		};
 	}
 
-	/**
-	 * Generate audio hash for deduplication
-	 */
-	async generateAudioHash(buffer: Buffer): Promise<string> {
-		return createHash('sha256').update(buffer).digest('hex');
+	async generateAudioHash(source: AudioSource): Promise<string> {
+		if (Buffer.isBuffer(source)) {
+			return createHash('sha256').update(source).digest('hex');
+		}
+
+		const stream = createReadStream(source.path);
+		const hash = createHash('sha256');
+		await new Promise<void>((resolve, reject) => {
+			stream.on('data', (chunk) => hash.update(chunk));
+			stream.on('error', reject);
+			stream.on('end', () => resolve());
+		});
+		return hash.digest('hex');
 	}
 
-	/**
-	 * Normalize audio format name
-	 */
 	private normalizeFormat(extension: string): 'MP3' | 'WAV' | 'M4A' | 'OGG' {
 		const normalized = extension.toUpperCase();
 		switch (normalized) {
@@ -380,15 +354,48 @@ export class AudioTranscriptionService {
 			case 'OGG':
 				return 'OGG';
 			case 'FLAC':
-				return 'OGG'; // Treat FLAC as OGG for simplicity
+				return 'OGG';
 			default:
-				return 'MP3'; // Default fallback
+				return 'MP3';
 		}
 	}
 
-	/**
-	 * Convert audio segments to speaker segments for chunking
-	 */
+	private detectFormatFromBuffer(buffer: Buffer): string {
+		const header = buffer.subarray(0, 12);
+
+		if (
+			(header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) ||
+			(header[0] === 0xff && (header[1] & 0xe0) === 0xe0)
+		) {
+			return 'mp3';
+		}
+
+		if (header.toString('ascii', 0, 4) === 'RIFF' && header.toString('ascii', 8, 12) === 'WAVE') {
+			return 'wav';
+		}
+
+		if (header.subarray(4, 8).toString('ascii') === 'ftyp') {
+			return 'm4a';
+		}
+
+		if (header.toString('ascii', 0, 4) === 'OggS') {
+			return 'ogg';
+		}
+
+		return 'unknown';
+	}
+
+	private async readHeader(path: string, length: number): Promise<Buffer> {
+		const file = await open(path, 'r');
+		try {
+			const buffer = Buffer.alloc(length);
+			await file.read(buffer, 0, length, 0);
+			return buffer;
+		} finally {
+			await file.close();
+		}
+	}
+
 	transcriptionToSpeakerSegments(transcription: TranscriptionResult): SpeakerSegment[] {
 		return transcription.segments.map((segment) => ({
 			speakerId: segment.speakerId || 'unknown',
@@ -399,98 +406,15 @@ export class AudioTranscriptionService {
 		}));
 	}
 
-	/**
-	 * Get audio statistics for processing metrics
-	 */
-	getAudioStats(
-		originalSize: number,
-		duration: number,
-		transcription?: TranscriptionResult,
-	): {
-		duration: string;
-		fileSize: string;
-		bitrate?: number;
-		transcriptionStats?: {
-			textLength: number;
-			wordCount: number;
-			speakers: number;
-			segments: number;
-			averageConfidence: number;
-		};
-	} {
-		const stats: any = {
-			duration: this.formatDuration(duration),
-			fileSize: this.formatBytes(originalSize),
-		};
-
-		// Calculate bitrate if duration is available
-		if (duration > 0) {
-			stats.bitrate = Math.round((originalSize * 8) / duration / 1000); // kbps
-		}
-
-		// Add transcription statistics if available
-		if (transcription) {
-			stats.transcriptionStats = {
-				textLength: transcription.text.length,
-				wordCount: transcription.text.split(/\s+/).length,
-				speakers: transcription.speakers.length,
-				segments: transcription.segments.length,
-				averageConfidence:
-					transcription.segments.reduce((sum, seg) => sum + seg.confidence, 0) /
-					transcription.segments.length,
-			};
-		}
-
-		return stats;
-	}
-
-	/**
-	 * Format duration to human readable string
-	 */
-	private formatDuration(seconds: number): string {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const secs = Math.floor(seconds % 60);
-
-		if (hours > 0) {
-			return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-		}
-		return `${minutes}:${secs.toString().padStart(2, '0')}`;
-	}
-
-	/**
-	 * Format bytes to human readable string
-	 */
-	private formatBytes(bytes: number): string {
-		if (bytes === 0) return '0 Bytes';
-
-		const k = 1024;
-		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-		return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
-	}
-
-	/**
-	 * Check if audio format is supported
-	 */
 	isFormatSupported(mimeType: string, filename: string): boolean {
-		const supportedMimes = [
-			'audio/mpeg',
-			'audio/mp3',
-			'audio/wav',
-			'audio/x-wav',
-			'audio/mp4',
-			'audio/m4a',
-			'audio/ogg',
-			'audio/flac',
-		];
+		const normalizedMime = mimeType.toLowerCase();
+		if (normalizedMime.startsWith('audio/')) {
+			return true;
+		}
 
 		const extension = filename.toLowerCase().substring(filename.lastIndexOf('.') + 1);
-
-		return supportedMimes.includes(mimeType) || this.supportedFormats.includes(extension);
+		return this.supportedFormats.includes(extension);
 	}
 }
 
-// Export singleton instance
 export const audioTranscriptionService = new AudioTranscriptionService();

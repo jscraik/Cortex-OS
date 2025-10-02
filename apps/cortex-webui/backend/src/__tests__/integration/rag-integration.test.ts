@@ -1,17 +1,52 @@
-import type { Express } from 'express';
+import type { Express, NextFunction, Request, Response } from 'express';
 import request from 'supertest';
+import type { Mock } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.js';
+import { createApp } from '../../server.ts';
+
+// Extend Request interface for user property
+interface AuthenticatedRequest extends Request {
+	user?: { id: string; email: string };
+}
+
+// Mock service types using Vitest Mock
+type MockDocumentProcessingService = {
+	processDocument: Mock;
+	estimateTokenCount: Mock;
+};
+
+type MockVectorSearchService = {
+	indexDocuments: Mock;
+	search: Mock;
+	deleteDocument: Mock;
+	getDocument: Mock;
+	listUserDocuments: Mock;
+	getSearchStats: Mock;
+};
+
+type MockEmbeddingService = {
+	generateEmbeddings: Mock;
+	generateEmbedding: Mock;
+	getEmbeddingDimensions: Mock;
+	getCacheStats: Mock;
+};
+
+type MockDatabase = {
+	select: Mock;
+	insert: Mock;
+	update: Mock;
+	delete: Mock;
+};
 
 // Mock the services
-vi.mock('../../services/documentProcessingService.js', () => ({
+vi.mock('../../services/documentProcessingService.ts', () => ({
 	documentProcessingService: {
 		processDocument: vi.fn(),
 		estimateTokenCount: vi.fn(),
 	},
 }));
 
-vi.mock('../../services/vectorSearchService.js', () => ({
+vi.mock('../../services/vectorSearchService.ts', () => ({
 	vectorSearchService: {
 		indexDocuments: vi.fn(),
 		search: vi.fn(),
@@ -22,7 +57,7 @@ vi.mock('../../services/vectorSearchService.js', () => ({
 	},
 }));
 
-vi.mock('../../services/embeddingService.js', () => ({
+vi.mock('../../services/embeddingService.ts', () => ({
 	embeddingService: {
 		generateEmbedding: vi.fn(),
 		generateEmbeddings: vi.fn(),
@@ -32,7 +67,7 @@ vi.mock('../../services/embeddingService.js', () => ({
 }));
 
 // Mock the database
-vi.mock('../../db/index.js', () => ({
+vi.mock('../../db/index.ts', () => ({
 	db: {
 		insert: vi.fn(),
 		select: vi.fn(),
@@ -43,10 +78,10 @@ vi.mock('../../db/index.js', () => ({
 
 describe('RAG Integration Tests', () => {
 	let app: Express;
-	let mockDocumentProcessingService: any;
-	let mockVectorSearchService: any;
-	let mockEmbeddingService: any;
-	let mockDb: any;
+	let mockDocumentProcessingService: MockDocumentProcessingService;
+	let mockVectorSearchService: MockVectorSearchService;
+	let mockEmbeddingService: MockEmbeddingService;
+	let mockDb: MockDatabase;
 
 	beforeEach(async () => {
 		app = createApp();
@@ -57,9 +92,9 @@ describe('RAG Integration Tests', () => {
 		const embeddingModule = await import('../../services/embeddingService.js');
 		const dbModule = await import('../../db/index.js');
 
-		mockDocumentProcessingService = documentProcessingModule.documentProcessingService;
-		mockVectorSearchService = vectorSearchModule.vectorSearchService;
-		mockEmbeddingService = embeddingModule.embeddingService;
+		mockDocumentProcessingService = vi.mocked(documentProcessingModule.documentProcessingService);
+		mockVectorSearchService = vi.mocked(vectorSearchModule.vectorSearchService);
+		mockEmbeddingService = vi.mocked(embeddingModule.embeddingService);
 		mockDb = dbModule.db;
 
 		// Reset all mocks
@@ -198,7 +233,7 @@ describe('RAG Integration Tests', () => {
 
 		// Setup auth middleware mock
 		vi.doMock('../../middleware/auth.js', () => ({
-			authenticateToken: (req: any, _res: any, next: any) => {
+			authenticateToken: (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
 				req.user = { id: 'user1', email: 'test@example.com' };
 				next();
 			},
@@ -206,7 +241,7 @@ describe('RAG Integration Tests', () => {
 
 		// Setup CSRF protection mock
 		vi.doMock('../../middleware/security', () => ({
-			customCsrfProtection: (_req: any, _res: any, next: any) => next(),
+			customCsrfProtection: (_req: Request, _res: Response, next: NextFunction) => next(),
 		}));
 	});
 
@@ -519,7 +554,20 @@ describe('RAG Integration Tests', () => {
 			];
 
 			for (const endpoint of endpoints) {
-				const response = await request(app)[endpoint.method](endpoint.path).expect(401);
+				let response: request.Response;
+				switch (endpoint.method) {
+					case 'get':
+						response = await request(app).get(endpoint.path).expect(401);
+						break;
+					case 'post':
+						response = await request(app).post(endpoint.path).expect(401);
+						break;
+					case 'delete':
+						response = await request(app).delete(endpoint.path).expect(401);
+						break;
+					default:
+						throw new Error(`Unsupported method: ${endpoint.method}`);
+				}
 				expect(response.body).toMatchObject({
 					error: expect.any(String),
 				});
