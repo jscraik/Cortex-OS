@@ -127,7 +127,7 @@ const sampleSearchInput: AgentToolkitSearchInput = {
 };
 
 const sampleValidationInput: AgentToolkitValidationInput = {
-	files: ['src/index.ts'],
+	files: ['src/index'],
 };
 
 async function importSearchAdapters() {

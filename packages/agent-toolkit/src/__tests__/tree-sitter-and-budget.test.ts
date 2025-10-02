@@ -18,7 +18,7 @@ describe('Tree-sitter feature flag and budget trimming', () => {
 	it('does not attempt Tree-sitter when disabled', async () => {
 		delete process.env.CORTEX_TS_BOUNDARIES;
 		const dir = await mkdtemp(join(tmpdir(), 'atk-'));
-		const f = join(dir, 'demo.ts');
+		const f = join(dir, 'demo');
 		await writeFile(f, 'export function a() { return 1 }');
 		const ctx = await buildChunkedContext({
 			files: [f],
@@ -33,7 +33,7 @@ describe('Tree-sitter feature flag and budget trimming', () => {
 		process.env.CORTEX_TS_BOUNDARIES = '1';
 		process.env.CORTEX_TS_GRAMMAR_TS = '/nonexistent/typescript.wasm'; // will fallback
 		const dir = await mkdtemp(join(tmpdir(), 'atk-'));
-		const f = join(dir, 'demo.ts');
+		const f = join(dir, 'demo');
 		await writeFile(f, 'export function b() { return 2 }');
 		const ctx = await buildChunkedContext({
 			files: [f],

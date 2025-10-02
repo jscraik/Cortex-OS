@@ -8,7 +8,7 @@ import { SimplePRPGraph } from '../src/graph-simple.js';
 import { createInitialPRPState, generateDeterministicHash } from '../src/state.js';
 
 describe('Hash Function Refactoring Verification', () => {
-	it('should use the same hash function in both state.ts and graph-simple.ts', () => {
+	it('should use the same hash function in both state.ts and graph-simple', () => {
 		const blueprint = {
 			title: 'Refactoring Test',
 			description: 'Test that both files use the same hash function',

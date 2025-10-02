@@ -191,7 +191,7 @@ describe('Security Validation', () => {
 	describe('validateFilePath', () => {
 		it('accepts valid file paths', () => {
 			const validPaths = [
-				'src/index.ts',
+				'src/index',
 				'components/Button.tsx',
 				'tests/unit/auth.test.js',
 				'package.json',

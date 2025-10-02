@@ -36,7 +36,7 @@ describe('MCP Bridge Smoke Tests - Phase 8 Integration', () => {
 				sources: [
 					{
 						type: 'file' as const,
-						path: '/src/evidence-enhancer.ts',
+						path: '/src/evidence-enhancer',
 						content: 'export class EvidenceEnhancer { /* implementation */ }',
 					},
 				],
@@ -72,7 +72,7 @@ describe('MCP Bridge Smoke Tests - Phase 8 Integration', () => {
 				sources: [
 					{
 						type: 'file' as const,
-						path: '/test/error.ts',
+						path: '/test/error',
 						content: 'console.log("test");',
 					},
 				],

@@ -28,7 +28,7 @@ describe('Agent Toolkit Contracts', () => {
 			},
 			results: [
 				{
-					file: 'test.ts',
+					file: 'test',
 					line: 42,
 					text: 'test code',
 				},
@@ -38,7 +38,7 @@ describe('Agent Toolkit Contracts', () => {
 		const result = AgentToolkitSearchResultSchema.parse(validSearchResult);
 		expect(result.tool).toBe('ripgrep');
 		expect(result.results).toHaveLength(1);
-		expect(result.results?.[0]?.file).toBe('test.ts');
+		expect(result.results?.[0]?.file).toBe('test');
 	});
 
 	it('should validate codemod input schema', () => {
@@ -55,12 +55,12 @@ describe('Agent Toolkit Contracts', () => {
 
 	it('should validate validation input schema', () => {
 		const validValidationInput = {
-			files: ['test1.ts', 'test2.js', 'test3.py'],
+			files: ['test1', 'test2.js', 'test3.py'],
 		};
 
 		const result = AgentToolkitValidationInputSchema.parse(validValidationInput);
 		expect(result.files).toHaveLength(3);
-		expect(result.files).toContain('test1.ts');
+		expect(result.files).toContain('test1');
 	});
 
 	it('should reject invalid search input', () => {
@@ -104,7 +104,7 @@ describe('Agent Toolkit Contracts', () => {
 			},
 			results: [
 				{
-					file: 'test.ts',
+					file: 'test',
 					line: 42,
 					text: 'test code',
 				},
@@ -129,7 +129,7 @@ describe('Agent Toolkit Contracts', () => {
 
 	it('should validate validation input schema', () => {
 		const validValidationInput = {
-			files: ['test1.ts', 'test2.js', 'test3.py'],
+			files: ['test1', 'test2.js', 'test3.py'],
 		};
 
 		const result = AgentToolkitValidationInputSchema.parse(validValidationInput);

@@ -1,22 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../../server.ts';
+import { createApp } from '../../server';
 
 // Mock external dependencies
-vi.mock('../../services/emailService.ts', () => ({
+vi.mock('../../services/emailService', () => ({
 	emailService: {
 		sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
 		sendMagicLink: vi.fn().mockResolvedValue(undefined),
 	},
 }));
 
-vi.mock('../../services/a2a-integration.ts', () => ({
+vi.mock('../../services/a2a-integration', () => ({
 	webUIBusIntegration: {
 		publishUserEvent: vi.fn().mockResolvedValue(undefined),
 	},
 }));
 
-vi.mock('../../services/authMonitoringService.ts', () => ({
+vi.mock('../../services/authMonitoringService', () => ({
 	authMonitoringService: {
 		logEvent: vi.fn().mockResolvedValue(undefined),
 	},
@@ -60,7 +60,7 @@ describe('End-to-End Authentication Workflows', () => {
 			expect(registerResponse.body.user).not.toHaveProperty('password');
 
 			// Verify brAInwav monitoring was called for registration
-			const { authMonitoringService } = await import('../../services/authMonitoringService.ts');
+			const { authMonitoringService } = await import('../../services/authMonitoringService');
 			expect(authMonitoringService.logEvent).toHaveBeenCalledWith({
 				userId: expect.any(String),
 				eventType: 'register',
@@ -184,7 +184,7 @@ describe('End-to-End Authentication Workflows', () => {
 			expect(forgotPasswordResponse.body).toHaveProperty('message', 'Password reset email sent if email exists');
 
 			// Step 2: Verify email service was called
-			const { emailService } = await import('../../services/emailService.ts');
+			const { emailService } = await import('../../services/emailService');
 			expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
 				expect.objectContaining({
 					email: testUser.email,
@@ -235,7 +235,7 @@ describe('End-to-End Authentication Workflows', () => {
 			expect(magicLinkResponse.body).toHaveProperty('message', 'Magic link sent if email exists');
 
 			// Step 2: Verify email service was called
-			const { emailService } = await import('../../services/emailService.ts');
+			const { emailService } = await import('../../services/emailService');
 			expect(emailService.sendMagicLink).toHaveBeenCalledWith(
 				'magic-link-test@brainwav.ai',
 				expect.any(String)
@@ -550,7 +550,7 @@ describe('End-to-End Authentication Workflows', () => {
 				.expect(200);
 
 			// Verify A2A integration was called
-			const { webUIBusIntegration } = await import('../../services/a2a-integration.ts');
+			const { webUIBusIntegration } = await import('../../services/a2a-integration');
 			expect(webUIBusIntegration.publishUserEvent).toHaveBeenCalledWith({
 				sessionId: expect.stringMatching(/^auth-/),
 				userId: expect.any(String),
@@ -565,7 +565,7 @@ describe('End-to-End Authentication Workflows', () => {
 		});
 
 		it('should integrate with auth monitoring service', async () => {
-			const { authMonitoringService } = await import('../../services/authMonitoringService.ts');
+			const { authMonitoringService } = await import('../../services/authMonitoringService');
 
 			// Register user
 			await request(app)
@@ -595,7 +595,7 @@ describe('End-to-End Authentication Workflows', () => {
 		});
 
 		it('should integrate with email service', async () => {
-			const { emailService } = await import('../../services/emailService.ts');
+			const { emailService } = await import('../../services/emailService');
 
 			// Request password reset
 			await request(app)

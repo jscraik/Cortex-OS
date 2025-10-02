@@ -8,7 +8,7 @@ let app: Application;
 
 // Mock semgrep scanner internals to simulate findings processing
 const mockRunSemgrepScan = vi.fn(async () => [
-	{ ruleId: 'xss', severity: 'HIGH', file: 'src/a.ts', startLine: 10, message: 'Potential XSS' },
+	{ ruleId: 'xss', severity: 'HIGH', file: 'src/a', startLine: 10, message: 'Potential XSS' },
 ]);
 vi.mock('../../src/lib/semgrep-scanner.js', () => ({
 	runSemgrepScan: mockRunSemgrepScan,

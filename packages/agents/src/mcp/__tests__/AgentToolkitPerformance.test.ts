@@ -350,7 +350,7 @@ describe('Agent Toolkit Performance Optimization for Large-Scale Operations', ()
 		it('should validate performance at enterprise scale', async () => {
 			// Simulate validating large enterprise project
 			const enterpriseFiles = Array.from({ length: 500 }, (_, i) => {
-				const fileTypes = ['.js', '.ts', '.java', '.py', '.scala', '.go'];
+				const fileTypes = ['.js', '', '.java', '.py', '.scala', '.go'];
 				const fileType = fileTypes[i % fileTypes.length];
 				return `/enterprise/monorepo/services/service_${Math.floor(i / 20)}/src/component_${i}${fileType}`;
 			});

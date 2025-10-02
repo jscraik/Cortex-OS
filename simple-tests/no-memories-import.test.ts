@@ -18,7 +18,7 @@ const IGNORED_DIR_SEGMENTS = new Set([
 	'website',
 	'packages/memories',
 	'packages/rag',
-	'simple-tests/no-memories-import.test.ts',
+	'simple-tests/no-memories-import.test',
 ]);
 
 interface ForbiddenPattern {

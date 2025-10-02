@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { runPRPWorkflow } from '../../src/runner.js';
 
 vi.mock('@cortex-os/orchestration', async () => {
-	const mod = await import('../../../orchestration/src/langgraph/spool.ts');
+	const mod = await import('../../../orchestration/src/langgraph/spool');
 	return { runSpool: mod.runSpool };
 });
 

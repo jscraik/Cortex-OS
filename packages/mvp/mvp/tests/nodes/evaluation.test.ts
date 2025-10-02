@@ -77,7 +77,7 @@ describe('EvaluationNode', () => {
 			// Mock file system for test files
 			const mockGlob = vi
 				.fn()
-				.mockResolvedValueOnce(['src/utils.test.ts', 'src/api.test.ts'])
+				.mockResolvedValueOnce(['src/utils.test', 'src/api.test'])
 				.mockResolvedValueOnce([]);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
@@ -130,7 +130,7 @@ describe('EvaluationNode', () => {
 		});
 
 		it('should fail TDD validation with insufficient coverage', async () => {
-			const mockGlob = vi.fn().mockResolvedValue(['src/basic.test.ts']);
+			const mockGlob = vi.fn().mockResolvedValue(['src/basic.test']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			(fs.existsSync as Mock).mockReturnValue(true);
@@ -186,7 +186,7 @@ describe('EvaluationNode', () => {
 		});
 
 		it('should detect TDD evidence in git history', async () => {
-			const mockGlob = vi.fn().mockResolvedValue(['src/app.test.ts']);
+			const mockGlob = vi.fn().mockResolvedValue(['src/app.test']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			mockExec((cmd, _options, callback) => {
@@ -231,7 +231,7 @@ describe('EvaluationNode', () => {
 							null,
 							JSON.stringify([
 								{
-									filePath: '/project/src/app.ts',
+									filePath: '/project/src/app',
 									messages: [
 										{
 											ruleId: 'complexity',
@@ -256,7 +256,7 @@ describe('EvaluationNode', () => {
 				}
 			});
 
-			const mockGlob = vi.fn().mockResolvedValue(['src/app.ts', 'src/utils.ts']);
+			const mockGlob = vi.fn().mockResolvedValue(['src/app', 'src/utils']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			const result = await evaluationNode.execute(mockState);
@@ -271,7 +271,7 @@ describe('EvaluationNode', () => {
 		});
 
 		it('should analyze code complexity', async () => {
-			const mockGlob = vi.fn().mockResolvedValue(['src/complex.ts']);
+			const mockGlob = vi.fn().mockResolvedValue(['src/complex']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			(fs.readFileSync as Mock).mockReturnValue(`
@@ -304,7 +304,7 @@ describe('EvaluationNode', () => {
 		});
 
 		it('should find TODO/FIXME comments', async () => {
-			const mockGlob = vi.fn().mockResolvedValue(['src/app.ts']);
+			const mockGlob = vi.fn().mockResolvedValue(['src/app']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			(fs.readFileSync as Mock).mockReturnValue(`
@@ -372,7 +372,7 @@ describe('EvaluationNode', () => {
 
 		it('should provide actionable recommendations', async () => {
 			// Mock high complexity and security issues
-			const mockGlob = vi.fn().mockResolvedValue(['src/app.ts']);
+			const mockGlob = vi.fn().mockResolvedValue(['src/app']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			(fs.readFileSync as Mock).mockReturnValue(`
@@ -627,7 +627,7 @@ describe('EvaluationNode', () => {
 	describe('overall evaluation', () => {
 		it('should pass evaluation with all gates satisfied', async () => {
 			// Mock comprehensive successful state
-			const mockGlob = vi.fn().mockResolvedValue(['test1.test.ts', 'test2.test.ts']);
+			const mockGlob = vi.fn().mockResolvedValue(['test1.test', 'test2.test']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			(fs.existsSync as Mock).mockReturnValue(true);

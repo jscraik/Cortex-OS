@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Explicit .ts extension to ensure Vitest loads the TypeScript implementation (avoids legacy .mjs)
-import { PolicyHotReloader } from './policy-hot-reloader-impl.ts';
+import { PolicyHotReloader } from './policy-hot-reloader-impl';
 import { waitFor } from './test-utils.js';
 
 /**
@@ -19,16 +19,16 @@ describe('PolicyHotReloader', () => {
 	const mockInitialPolicy = {
 		version: '1.0.0',
 		allowedPaths: ['src/**/*'],
-		allowedGlobs: ['**/*.ts', '**/*.js'],
-		deniedGlobs: ['**/*.test.ts'],
+		allowedGlobs: ['**/*', '**/*.js'],
+		deniedGlobs: ['**/*.test'],
 		protectedFiles: ['package.json'],
 	};
 
 	const mockUpdatedPolicy = {
 		version: '1.1.0',
 		allowedPaths: ['src/**/*', 'lib/**/*'],
-		allowedGlobs: ['**/*.ts', '**/*.js', '**/*.json'],
-		deniedGlobs: ['**/*.test.ts', '**/*.spec.ts'],
+		allowedGlobs: ['**/*', '**/*.js', '**/*.json'],
+		deniedGlobs: ['**/*.test', '**/*.spec'],
 		protectedFiles: ['package.json', 'tsconfig.json'],
 	};
 
@@ -73,7 +73,7 @@ describe('PolicyHotReloader', () => {
 			expect(updatedPolicy.version).toBe('1.1.0');
 			expect(updatedPolicy.allowedPaths).toContain('lib/**/*');
 			expect(updatedPolicy.allowedGlobs).toContain('**/*.json');
-			expect(updatedPolicy.deniedGlobs).toContain('**/*.spec.ts');
+			expect(updatedPolicy.deniedGlobs).toContain('**/*.spec');
 			expect(updatedPolicy.protectedFiles).toContain('tsconfig.json');
 
 			// Cleanup

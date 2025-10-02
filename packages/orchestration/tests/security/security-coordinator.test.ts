@@ -36,7 +36,7 @@ describe('SecurityCoordinator', () => {
 				violationId: 'v-critical',
 				standard: 'nist' as const,
 				rule: 'SC-7',
-				file: 'src/security.ts',
+				file: 'src/security',
 				severity: 'high' as const,
 				violatedAt: new Date().toISOString(),
 			},

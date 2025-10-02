@@ -60,7 +60,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 				sources: [
 					{
 						type: 'file' as const,
-						path: '/src/auth.ts',
+						path: '/src/auth',
 						content: 'export function authenticate(user: User) { return true; }',
 					},
 				],
@@ -213,7 +213,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 				sources: [
 					{
 						type: 'file' as const,
-						path: '/src/performance.ts',
+						path: '/src/performance',
 						content: 'export const MAX_LATENCY = 100; // milliseconds',
 					},
 				],

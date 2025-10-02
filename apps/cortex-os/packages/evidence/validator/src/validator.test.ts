@@ -35,7 +35,7 @@ describe('Evidence Validator', () => {
 			const hash = createHash('sha256').update(textRange).digest('hex');
 
 			const finding: Finding = {
-				path: 'sample.ts',
+				path: 'sample',
 				start,
 				end,
 				claim: 'This file starts with an export statement',
@@ -53,7 +53,7 @@ describe('Evidence Validator', () => {
 
 		it('should detect invalid file path', async () => {
 			const finding: Finding = {
-				path: 'non-existent-file.ts',
+				path: 'non-existent-file',
 				start: 0,
 				end: 10,
 				claim: 'This file does not exist',
@@ -63,13 +63,13 @@ describe('Evidence Validator', () => {
 			const result = await validator.validateFinding(finding);
 
 			expect(result.isValid).toBe(false);
-			expect(result.errors).toContain('File does not exist: non-existent-file.ts');
+			expect(result.errors).toContain('File does not exist: non-existent-file');
 			expect(result.metadata.fileExists).toBe(false);
 		});
 
 		it('should detect invalid range', async () => {
 			const finding: Finding = {
-				path: 'sample.ts',
+				path: 'sample',
 				start: 1000,
 				end: 2000,
 				claim: 'This range exceeds file content',
@@ -85,7 +85,7 @@ describe('Evidence Validator', () => {
 
 		it('should detect invalid hash', async () => {
 			const finding: Finding = {
-				path: 'sample.ts',
+				path: 'sample',
 				start: 0,
 				end: 6,
 				claim: 'This has the wrong hash',
@@ -101,7 +101,7 @@ describe('Evidence Validator', () => {
 
 		it('should handle range where start > end', async () => {
 			const finding: Finding = {
-				path: 'sample.ts',
+				path: 'sample',
 				start: 10,
 				end: 5,
 				claim: 'Invalid range',
@@ -120,7 +120,7 @@ describe('Evidence Validator', () => {
 	describe('Batch Validation', () => {
 		it('should validate multiple findings', async () => {
 			// Let's use the validator's own generateFinding method to create findings with correct hashes
-			const sampleFinding = await validator.generateFinding('sample.ts', 0, 26, 'Export statement');
+			const sampleFinding = await validator.generateFinding('sample', 0, 26, 'Export statement');
 			const readmeFinding = await validator.generateFinding('readme.md', 0, 14, 'Heading');
 
 			const findings: Finding[] = [sampleFinding, readmeFinding];
@@ -147,14 +147,14 @@ describe('Evidence Validator', () => {
 		it('should provide collection summary', async () => {
 			const findings: Finding[] = [
 				{
-					path: 'sample.ts',
+					path: 'sample',
 					start: 0,
 					end: 6,
 					claim: 'Export statement',
 					hash: createHash('sha256').update('export').digest('hex'),
 				},
 				{
-					path: 'non-existent.ts',
+					path: 'non-existent',
 					start: 0,
 					end: 5,
 					claim: 'Missing file',
@@ -186,7 +186,7 @@ describe('Evidence Validator', () => {
 			const permissiveValidator = new EvidenceValidator(permissiveConfig);
 
 			const finding: Finding = {
-				path: 'missing-file.ts',
+				path: 'missing-file',
 				start: 0,
 				end: 5,
 				claim: 'Missing file test',

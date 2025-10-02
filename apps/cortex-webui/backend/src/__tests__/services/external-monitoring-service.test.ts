@@ -11,7 +11,7 @@ vi.mock('@cortex-os/telemetry', () => ({
 const warnSpy = vi.fn();
 const infoSpy = vi.fn();
 
-vi.mock('../../utils/logger.ts', () => ({
+vi.mock('../../utils/logger', () => ({
 	__esModule: true,
 	default: {
 		info: infoSpy,
@@ -82,7 +82,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		process.env.AUTH_MONITORING_TIMEOUT_MS = '2000';
 
 		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService.ts'
+			'../../services/externalMonitoringService'
 		);
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
@@ -136,7 +136,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		process.env.AUTH_MONITORING_NEW_RELIC_INSERT_KEY = 'nr-key';
 
 		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService.ts'
+			'../../services/externalMonitoringService'
 		);
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
@@ -153,7 +153,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		process.env.AUTH_MONITORING_WEBHOOK_URL = 'http://hooks.brainwav.dev/insecure';
 
 		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService.ts'
+			'../../services/externalMonitoringService'
 		);
 
 		await externalMonitoringService.emitAuthEvent(sampleEvent);
@@ -172,7 +172,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 		fetchSpy.mockResolvedValueOnce(mockFetchResponse(500, false));
 
 		const { externalMonitoringService } = await import(
-			'../../services/externalMonitoringService.ts'
+			'../../services/externalMonitoringService'
 		);
 
 		await expect(externalMonitoringService.emitAuthEvent(sampleEvent)).resolves.toBeUndefined();
@@ -194,7 +194,7 @@ describe('externalMonitoringService.emitAuthEvent', () => {
 			);
 
 			const { externalMonitoringService } = await import(
-				'../../services/externalMonitoringService.ts'
+				'../../services/externalMonitoringService'
 			);
 
 			const emitPromise = externalMonitoringService.emitAuthEvent(sampleEvent);

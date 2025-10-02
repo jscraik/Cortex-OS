@@ -25,7 +25,7 @@ describe('EvidenceEnhancer - TDD RED Phase', () => {
 				sources: [
 					{
 						type: 'file',
-						path: '/src/performance/metrics.ts',
+						path: '/src/performance/metrics',
 						content: 'export const SLA_TARGET = 95; // percent uptime',
 					},
 				],
@@ -74,7 +74,7 @@ describe('EvidenceEnhancer - TDD RED Phase', () => {
 				sources: [
 					{
 						type: 'file',
-						path: '/src/search/engine.ts',
+						path: '/src/search/engine',
 						content: 'export class SearchEngine { search(query: string): Result[] { return []; } }',
 					},
 				],
@@ -122,7 +122,7 @@ describe('EvidenceEnhancer - TDD RED Phase', () => {
 				sources: [
 					{
 						type: 'file',
-						path: '/src/utils/validation.ts',
+						path: '/src/utils/validation',
 						content:
 							'export function validate(input: string): boolean { return input.length > 0; }',
 					},
@@ -222,7 +222,7 @@ describe('EvidenceEnhancer - TDD RED Phase', () => {
 				sources: [
 					{
 						type: 'file',
-						path: '/src/error-handler.ts',
+						path: '/src/error-handler',
 						content: 'export function handleError(error: Error): void { console.log(error); }',
 					},
 				],
@@ -247,7 +247,7 @@ describe('EvidenceEnhancer - TDD RED Phase', () => {
 				sources: [
 					{
 						type: 'file',
-						path: '/src/search/engine.ts',
+						path: '/src/search/engine',
 						content: 'export class SearchEngine { search(query: string): Result[] { return []; } }',
 					},
 				],
@@ -269,7 +269,7 @@ describe('EvidenceEnhancer - TDD RED Phase', () => {
 				sources: [
 					{
 						type: 'file',
-						path: '/src/large-function.ts',
+						path: '/src/large-function',
 						content: 'export function largeFunction() { /* 100+ lines */ }',
 					},
 				],

@@ -21,7 +21,7 @@ vi.mock('fastify', () => {
 	};
 });
 
-vi.mock('./lib/applyAuditPolicy.ts', () => ({
+vi.mock('./lib/applyAuditPolicy', () => ({
 	applyAuditPolicy: vi.fn().mockResolvedValue(undefined),
 }));
 

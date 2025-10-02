@@ -10,7 +10,7 @@ describe('Test Runner Optimization', () => {
 			maxMemory: 512 * 1024 * 1024,
 			timeout: 30_000,
 			bail: true,
-			patterns: ['tests/memory/memory-profile.test.ts'],
+			patterns: ['tests/memory/memory-profile.test'],
 		});
 
 		expect(result.success).toBe(true);

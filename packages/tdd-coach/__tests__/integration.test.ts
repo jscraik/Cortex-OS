@@ -31,7 +31,7 @@ describe('TDD Coach Integration', () => {
 		const testFileChange: ChangeSet = {
 			files: [
 				{
-					path: 'src/example.test.ts',
+					path: 'src/example.test',
 					status: 'modified',
 					diff: '+  it("should validate TDD", () => { expect(false).toBe(true); });',
 					linesAdded: 1,
@@ -61,7 +61,7 @@ describe('TDD Coach Integration', () => {
 		const implementationChange: ChangeSet = {
 			files: [
 				{
-					path: 'src/implementation.ts',
+					path: 'src/implementation',
 					status: 'modified',
 					diff: '+  function newFeature() { return "implemented"; }',
 					linesAdded: 1,

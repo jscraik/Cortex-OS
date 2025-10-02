@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSecurityConfig } from '../../config/security.ts';
+import { getSecurityConfig } from '../../config/security';
 import {
 	apiKeyAuth,
 	applySecurityMiddleware,

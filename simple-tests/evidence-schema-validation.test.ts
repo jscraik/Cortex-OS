@@ -259,7 +259,7 @@ describe('Evidence Schema Validation TDD', () => {
 			const attachment: EvidenceAttachment = {
 				id: 'att-code-001',
 				type: 'code_snippet',
-				name: 'example.ts',
+				name: 'example',
 				mimeType: 'text/typescript',
 				size: 1024,
 				checksum: 'sha256:d2d2d2d2d2d2d2d2',

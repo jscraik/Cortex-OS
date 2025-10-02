@@ -51,7 +51,7 @@ describe('Structure Guard Policy Schema', () => {
 					maxFilesWithOverride: 100,
 				},
 				protectedFiles: [],
-				allowedGlobs: ['**/*.ts', '**/*.js'],
+				allowedGlobs: ['**/*', '**/*.js'],
 				deniedGlobs: ['**/*.secret', '**/*.key'],
 				importRules: {
 					bannedPatterns: [],

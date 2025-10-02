@@ -20,7 +20,7 @@ describe('TDD Coach A2A bus integration', () => {
 		const payload = {
 			cycleId: 'cycle-001',
 			testId: 'test-123',
-			testFile: 'tests/example.test.ts',
+			testFile: 'tests/example.test',
 			testName: 'should guide developers',
 			description: 'ensures the AI suggests tests first',
 			complexity: 'medium' as const,

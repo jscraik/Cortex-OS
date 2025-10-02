@@ -240,7 +240,7 @@ describe('nO Architecture Contracts', () => {
 				type: 'request' as const,
 				content: {
 					action: 'analyze',
-					parameters: { file: 'test.ts' },
+					parameters: { file: 'test' },
 				},
 				timestamp: new Date().toISOString(),
 				priority: 'normal' as const,

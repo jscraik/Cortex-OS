@@ -18,7 +18,7 @@ describe('StructureValidator', () => {
 		describe('Application Placement Rules', () => {
 			it('should allow applications in apps/ directory', () => {
 				const validPaths = [
-					'apps/my-app/src/index.ts',
+					'apps/my-app/src/index',
 					'apps/web-ui/package.json',
 					'apps/cli-tool/bin/cli.js',
 				];
@@ -32,7 +32,7 @@ describe('StructureValidator', () => {
 
 			it('should flag applications outside apps/ directory', () => {
 				const invalidPaths = [
-					'packages/my-app/src/index.ts',
+					'packages/my-app/src/index',
 					'libs/web-ui/package.json',
 					'src/cli-tool.js',
 				];
@@ -48,7 +48,7 @@ describe('StructureValidator', () => {
 		describe('Package Placement Rules', () => {
 			it('should allow packages in packages/ directory', () => {
 				const validPaths = [
-					'packages/feature-auth/src/auth.ts',
+					'packages/feature-auth/src/auth',
 					'packages/module-payment/index.js',
 					'packages/package-core/package.json',
 				];
@@ -62,7 +62,7 @@ describe('StructureValidator', () => {
 
 			it('should flag packages outside packages/ directory', () => {
 				const invalidPaths = [
-					'apps/feature-auth/src/auth.ts',
+					'apps/feature-auth/src/auth',
 					'libs/module-payment/index.js',
 					'src/package-core.js',
 				];
@@ -78,11 +78,11 @@ describe('StructureValidator', () => {
 		describe('TypeScript Organization', () => {
 			it('should allow TypeScript files in proper locations', () => {
 				const validPaths = [
-					'apps/my-app/src/index.ts',
-					'packages/core/lib/utils.ts',
-					'libs/shared/types.ts',
-					'scripts/build.ts',
-					'tests/unit/auth.test.ts',
+					'apps/my-app/src/index',
+					'packages/core/lib/utils',
+					'libs/shared/types',
+					'scripts/build',
+					'tests/unit/auth.test',
 				];
 
 				validPaths.forEach((path) => {
@@ -93,7 +93,7 @@ describe('StructureValidator', () => {
 			});
 
 			it('should flag TypeScript files in root directory', () => {
-				const invalidPaths = ['index.ts', 'app.ts', 'config.ts'];
+				const invalidPaths = ['index', 'app', 'config'];
 
 				invalidPaths.forEach((path) => {
 					const violations = validator.validateFile(path);
@@ -104,17 +104,17 @@ describe('StructureValidator', () => {
 
 			it('should validate TypeScript naming conventions', () => {
 				const validNames = [
-					'apps/test/index.ts',
-					'packages/core/utils.ts',
-					'libs/shared/my-component.ts',
-					'scripts/build-tool.ts',
+					'apps/test/index',
+					'packages/core/utils',
+					'libs/shared/my-component',
+					'scripts/build-tool',
 				];
 
 				const invalidNames = [
-					'apps/test/Index.ts', // PascalCase not allowed
-					'packages/core/Utils.ts',
-					'libs/shared/my_component.ts', // underscore mixed with hyphen
-					'scripts/buildTool.ts', // camelCase not allowed
+					'apps/test/Index', // PascalCase not allowed
+					'packages/core/Utils',
+					'libs/shared/my_component', // underscore mixed with hyphen
+					'scripts/buildTool', // camelCase not allowed
 				];
 
 				validNames.forEach((path) => {
@@ -152,10 +152,10 @@ describe('StructureValidator', () => {
 		describe('Test File Placement', () => {
 			it('should allow test files in proper locations', () => {
 				const validPaths = [
-					'tests/unit/auth.test.ts',
+					'tests/unit/auth.test',
 					'tests/integration/api.spec.js',
-					'apps/my-app/src/auth.test.ts',
-					'packages/core/lib/utils.spec.ts',
+					'apps/my-app/src/auth.test',
+					'packages/core/lib/utils.spec',
 				];
 
 				validPaths.forEach((path) => {
@@ -169,8 +169,8 @@ describe('StructureValidator', () => {
 		describe('Deep Nesting Prevention', () => {
 			it('should flag excessively nested files', () => {
 				const deepPaths = [
-					'apps/my-app/src/components/forms/fields/input/validators/email/index.ts', // 7+ levels
-					'packages/core/lib/utils/helpers/formatters/dates/iso/converter.ts', // 8+ levels
+					'apps/my-app/src/components/forms/fields/input/validators/email/index', // 7+ levels
+					'packages/core/lib/utils/helpers/formatters/dates/iso/converter', // 8+ levels
 				];
 
 				deepPaths.forEach((path) => {
@@ -182,9 +182,9 @@ describe('StructureValidator', () => {
 
 			it('should allow reasonable nesting levels', () => {
 				const reasonablePaths = [
-					'apps/my-app/src/components/Button.ts', // 4 levels
-					'packages/core/lib/utils/format.ts', // 4 levels
-					'libs/shared/types/api.ts', // 3 levels
+					'apps/my-app/src/components/Button', // 4 levels
+					'packages/core/lib/utils/format', // 4 levels
+					'libs/shared/types/api', // 3 levels
 				];
 
 				reasonablePaths.forEach((path) => {
@@ -198,38 +198,38 @@ describe('StructureValidator', () => {
 
 	describe('Path Suggestions', () => {
 		it('should suggest correct paths for misplaced applications', () => {
-			const violations = validator.validateFile('src/my-app.ts');
+			const violations = validator.validateFile('src/my-app');
 			const appViolations = violations.filter((v) => v.rule === 'applications-placement');
 
 			if (appViolations.length > 0) {
-				expect(appViolations[0].suggestedPath).toBe('apps/my-app.ts');
+				expect(appViolations[0].suggestedPath).toBe('apps/my-app');
 			}
 		});
 
 		it('should suggest correct paths for misplaced packages', () => {
-			const violations = validator.validateFile('src/feature-auth.ts');
+			const violations = validator.validateFile('src/feature-auth');
 			const packageViolations = violations.filter((v) => v.rule === 'packages-placement');
 
 			if (packageViolations.length > 0) {
-				expect(packageViolations[0].suggestedPath).toBe('packages/feature-auth.ts');
+				expect(packageViolations[0].suggestedPath).toBe('packages/feature-auth');
 			}
 		});
 
 		it('should suggest correct paths for misplaced TypeScript files', () => {
-			const violations = validator.validateFile('utils.ts');
+			const violations = validator.validateFile('utils');
 			const tsViolations = violations.filter((v) => v.rule === 'typescript-organization');
 
 			if (tsViolations.length > 0) {
-				expect(tsViolations[0].suggestedPath).toBe('src/utils.ts');
+				expect(tsViolations[0].suggestedPath).toBe('src/utils');
 			}
 		});
 
 		it('should suggest test directory for test files', () => {
-			const violations = validator.validateFile('auth.test.ts');
+			const violations = validator.validateFile('auth.test');
 			const testViolations = violations.filter((v) => v.rule === 'typescript-organization');
 
 			if (testViolations.length > 0) {
-				expect(testViolations[0].suggestedPath).toBe('tests/auth.test.ts');
+				expect(testViolations[0].suggestedPath).toBe('tests/auth.test');
 			}
 		});
 	});
@@ -237,11 +237,11 @@ describe('StructureValidator', () => {
 	describe('Repository Analysis', () => {
 		it('should calculate correct scores for clean repositories', () => {
 			const cleanFiles = [
-				'apps/web-ui/src/index.ts',
-				'packages/auth/lib/auth.ts',
-				'libs/shared/types.ts',
+				'apps/web-ui/src/index',
+				'packages/auth/lib/auth',
+				'libs/shared/types',
 				'docs/README.md',
-				'tests/auth.test.ts',
+				'tests/auth.test',
 			];
 
 			const result = validator.analyzeRepository(cleanFiles);
@@ -255,10 +255,10 @@ describe('StructureValidator', () => {
 
 		it('should calculate scores with penalties for violations', () => {
 			const messyFiles = [
-				'index.ts', // Root TS file - error (10 points)
+				'index', // Root TS file - error (10 points)
 				'my-app.js', // Root app file - error (10 points)
 				'docs/very/deep/nested/file/structure.md', // Deep nesting - warning (5 points)
-				'apps/web-ui/src/Component.ts', // Naming violation - warning (5 points)
+				'apps/web-ui/src/Component', // Naming violation - warning (5 points)
 			];
 
 			const result = validator.analyzeRepository(messyFiles);
@@ -271,8 +271,8 @@ describe('StructureValidator', () => {
 
 		it('should count auto-fixable violations correctly', () => {
 			const files = [
-				'src/my-app.ts', // Auto-fixable: move to apps/
-				'lib/feature.ts', // Auto-fixable: move to packages/
+				'src/my-app', // Auto-fixable: move to apps/
+				'lib/feature', // Auto-fixable: move to packages/
 				'script.sh', // Auto-fixable: move to scripts/
 			];
 
@@ -306,10 +306,10 @@ describe('StructureValidator', () => {
 		it('should handle empty rule sets gracefully', () => {
 			const emptyValidator = new StructureValidator([]);
 
-			const violations = emptyValidator.validateFile('anywhere/any-file.ts');
+			const violations = emptyValidator.validateFile('anywhere/any-file');
 			expect(violations).toHaveLength(0);
 
-			const result = emptyValidator.analyzeRepository(['file1.ts', 'file2.js']);
+			const result = emptyValidator.analyzeRepository(['file1', 'file2.js']);
 			expect(result.score).toBe(100);
 			expect(result.violations).toHaveLength(0);
 		});
@@ -344,8 +344,8 @@ describe('StructureValidator', () => {
 
 		it('should handle special characters in file paths', () => {
 			const specialPaths = [
-				'apps/my-app/src/file with spaces.ts',
-				'packages/core/lib/file@special.ts',
+				'apps/my-app/src/file with spaces',
+				'packages/core/lib/file@special',
 				'docs/guide[1].md',
 			];
 

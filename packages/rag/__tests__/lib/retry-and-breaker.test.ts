@@ -28,7 +28,7 @@ describe('withRetry', () => {
 
 		const jitterSpy = vi.fn();
 
-		const { withRetry } = await import('../../src/lib/retry.ts');
+		const { withRetry } = await import('../../src/lib/retry');
 		const result = await withRetry(op, {
 			maxAttempts: 3,
 			baseDelayMs: 100,
@@ -49,7 +49,7 @@ describe('withRetry', () => {
 		const { sleep } = fakeSleepFactory();
 		const op = vi.fn().mockRejectedValue(new Error('always'));
 
-		const { withRetry } = await import('../../src/lib/retry.ts');
+		const { withRetry } = await import('../../src/lib/retry');
 		await expect(withRetry(op, { maxAttempts: 3, baseDelayMs: 10, sleep })).rejects.toThrow(
 			'always',
 		);
@@ -62,7 +62,7 @@ describe('CircuitBreaker', () => {
 		const now = { t: 0 };
 		const nowFn = () => now.t;
 
-		const { CircuitBreaker } = await import('../../src/lib/circuit-breaker.ts');
+		const { CircuitBreaker } = await import('../../src/lib/circuit-breaker');
 		const cb = new CircuitBreaker({ failureThreshold: 2, resetTimeoutMs: 100, now: nowFn });
 
 		const failing = vi.fn(async () => {

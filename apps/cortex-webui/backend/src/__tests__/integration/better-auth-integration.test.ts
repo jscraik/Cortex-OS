@@ -1,22 +1,22 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.ts';
+import { createApp } from '../../server';
 
 // Mock external dependencies
-vi.mock('../../services/emailService.ts', () => ({
+vi.mock('../../services/emailService', () => ({
 	emailService: {
 		sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
 		sendMagicLink: vi.fn().mockResolvedValue(undefined),
 	},
 }));
 
-vi.mock('../../services/a2a-integration.ts', () => ({
+vi.mock('../../services/a2a-integration', () => ({
 	webUIBusIntegration: {
 		publishUserEvent: vi.fn().mockResolvedValue(undefined),
 	},
 }));
 
-vi.mock('../../services/authMonitoringService.ts', () => ({
+vi.mock('../../services/authMonitoringService', () => ({
 	authMonitoringService: {
 		logEvent: vi.fn().mockResolvedValue(undefined),
 	},
@@ -56,7 +56,7 @@ describe('Better Auth Integration Tests', () => {
 			expect(response.body.user).not.toHaveProperty('password');
 
 			// Verify brAInwav monitoring was called
-			const { authMonitoringService } = await import('../../services/authMonitoringService.ts');
+			const { authMonitoringService } = await import('../../services/authMonitoringService');
 			expect(authMonitoringService.logEvent).toHaveBeenCalledWith({
 				userId: expect.any(String),
 				eventType: 'register',
@@ -133,7 +133,7 @@ describe('Better Auth Integration Tests', () => {
 			expect(response.headers).toHaveProperty('set-cookie');
 
 			// Verify brAInwav monitoring was called
-			const { authMonitoringService } = await import('../../services/authMonitoringService.ts');
+			const { authMonitoringService } = await import('../../services/authMonitoringService');
 			expect(authMonitoringService.logEvent).toHaveBeenCalledWith({
 				userId: expect.any(String),
 				eventType: 'login',
@@ -327,7 +327,7 @@ describe('Better Auth Integration Tests', () => {
 			expect(response.body).toHaveProperty('message', 'Magic link sent if email exists');
 
 			// Verify email service was called
-			const { emailService } = await import('../../services/emailService.ts');
+			const { emailService } = await import('../../services/emailService');
 			expect(emailService.sendMagicLink).toHaveBeenCalledWith(testEmail, expect.any(String));
 		});
 	});

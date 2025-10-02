@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { MLXAdapter } from '../src/adapters/mlx-adapter.ts';
-import { OllamaAdapter } from '../src/adapters/ollama-adapter.ts';
-import { ModelRouter } from '../src/model-router.ts';
+import { MLXAdapter } from '../src/adapters/mlx-adapter';
+import { OllamaAdapter } from '../src/adapters/ollama-adapter';
+import { ModelRouter } from '../src/model-router';
 
-vi.mock('../src/adapters/mlx-adapter.ts');
-vi.mock('../src/adapters/ollama-adapter.ts');
+vi.mock('../src/adapters/mlx-adapter');
+vi.mock('../src/adapters/ollama-adapter');
 
 describe('ModelRouter available models exposure (MLX)', () => {
 	let router: ModelRouter;

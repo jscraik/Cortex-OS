@@ -14,7 +14,7 @@ async function listRouteFiles(dir: string): Promise<string[]> {
 		const entryPath = path.join(dir, entry.name);
 		if (entry.isDirectory()) {
 			files.push(...(await listRouteFiles(entryPath)));
-		} else if (entry.isFile() && entry.name.endsWith('.ts')) {
+		} else if (entry.isFile() && entry.name.endsWith('')) {
 			files.push(entryPath);
 		}
 	}

@@ -26,7 +26,7 @@ const SAMPLE_MUTATION = {
 const SAMPLE_CODEMAP = {
 	nodeCount: 240,
 	edgeCount: 420,
-	files: [{ id: 'a.ts' }, { id: 'b.ts' }, { id: 'c.ts' }],
+	files: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
 };
 
 const SAMPLE_PACKAGE_AUDIT = {

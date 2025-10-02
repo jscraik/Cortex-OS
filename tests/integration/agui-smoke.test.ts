@@ -70,7 +70,7 @@ describe('AGUI Integration Smoke Test', () => {
 		};
 
 		// NOTE(brAInwav): Uncomment when SSE server is available
-		// const { AGUISSEServer } = await import('../servers/src/agui-sse/server.ts');
+		// const { AGUISSEServer } = await import('../servers/src/agui-sse/server');
 		// expect(typeof AGUISSEServer).toBe('function');
 
 		expect(mockSSEConfig.port).toBe(3023);

@@ -51,7 +51,7 @@ const createStubExecutor = (matches: Array<{ file: string }>): ToolExecutor => (
 describe('UseCases context integration', () => {
 	it('multiSearchWithContext builds context when files exist', async () => {
 		const dir = await mkdtemp(join(tmpdir(), 'atk-'));
-		const fileA = join(dir, 'a.ts');
+		const fileA = join(dir, 'a');
 		const fileB = join(dir, 'b.py');
 		await writeFile(fileA, 'export function one() { return 1 }');
 		await writeFile(fileB, 'def two():\n    return 2\n');
@@ -66,7 +66,7 @@ describe('UseCases context integration', () => {
 
 	it('validateProjectSmart returns report and optional context', async () => {
 		const dir = await mkdtemp(join(tmpdir(), 'atk-'));
-		const f1 = join(dir, 'x.ts');
+		const f1 = join(dir, 'x');
 		const f2 = join(dir, 'y.py');
 		await writeFile(f1, 'export const x = 1');
 		await writeFile(f2, 'def y():\n    return 3\n');

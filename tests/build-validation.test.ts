@@ -81,7 +81,7 @@ class BuildValidationSuite {
 					const isMatch =
 						(pattern === '**/project.json' && entry === 'project.json') ||
 						(pattern === '**/package.json' && entry === 'package.json') ||
-						(pattern === '**/*.{ts,tsx}' && /\.(ts|tsx)$/.test(entry) && !entry.endsWith('.d.ts'));
+						(pattern === '**/*.{ts,tsx}' && /\.(ts|tsx)$/.test(entry) && !entry.endsWith('.d'));
 
 					if (isMatch) {
 						files.push(fullPath);

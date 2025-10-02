@@ -132,7 +132,7 @@ describe('Agent Toolkit Integration', () => {
 		});
 
 		it('should categorize files correctly', async () => {
-			const files = ['test.ts', 'script.js', 'main.py', 'lib.rs'];
+			const files = ['test', 'script.js', 'main.py', 'lib.rs'];
 
 			// This will likely fail in test environment due to shell script dependencies
 			// but we can test the file categorization logic by mocking

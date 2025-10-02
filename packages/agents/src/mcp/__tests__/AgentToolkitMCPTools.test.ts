@@ -204,7 +204,7 @@ describe('AgentToolkitMCPTools', () => {
 
 		it('should execute validation successfully', async () => {
 			const validateTool = agentToolkitMCPTools.validate();
-			const input = { files: ['/src/file1.js', '/src/file2.ts'] };
+			const input = { files: ['/src/file1.js', '/src/file2'] };
 
 			const result = await validateTool.handler(input);
 
@@ -284,7 +284,7 @@ describe('AgentToolkitMCPTools', () => {
 			it('should execute multiple validations in parallel', async () => {
 				const fileBatches = [
 					['/src/file1.js', '/src/file2.js'],
-					['/src/file3.ts', '/src/file4.ts'],
+					['/src/file3', '/src/file4'],
 				];
 
 				const startTime = Date.now();

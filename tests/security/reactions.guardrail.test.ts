@@ -10,9 +10,9 @@ import { describe, expect, it } from 'vitest';
 describe('Guardrails: only supported GitHub reactions are used', () => {
 	it('no unsupported reaction strings appear in server code', () => {
 		const files = [
-			join(process.cwd(), 'packages/cortex-ai-github/src/server/webhook-server.ts'),
-			join(process.cwd(), 'packages/cortex-semgrep-github/src/server/app.ts'),
-			join(process.cwd(), 'packages/cortex-structure-github/src/server/app.ts'),
+			join(process.cwd(), 'packages/cortex-ai-github/src/server/webhook-server'),
+			join(process.cwd(), 'packages/cortex-semgrep-github/src/server/app'),
+			join(process.cwd(), 'packages/cortex-structure-github/src/server/app'),
 		];
 
 		const unsupportedTokens = ['gear', 'x', 'warning'];

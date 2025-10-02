@@ -122,7 +122,7 @@ describe('Agent Toolkit Integration', () => {
 
 	describe('File categorization', () => {
 		it('should categorize files correctly', () => {
-			const files = ['test.ts', 'script.js', 'main.py', 'lib.rs'];
+			const files = ['test', 'script.js', 'main.py', 'lib.rs'];
 
 			// Test file categorization logic
 			expect(files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/))).toHaveLength(2);

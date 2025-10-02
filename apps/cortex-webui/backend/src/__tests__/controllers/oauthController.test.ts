@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authUtils } from '../../auth';
-import { createApp } from '../../server.ts';
-import { OAuthService } from '../../services/oauthService.ts';
+import { createApp } from '../../server';
+import { OAuthService } from '../../services/oauthService';
 
 // Mock OAuthService
 vi.mock('../../services/oauthService');

@@ -33,7 +33,7 @@ describe('Structure Guard ESLint Rule', () => {
                 // In apps/cortex-os/packages/agents/src/index.ts
                 import { something } from '../memories/src/domain/memory';
               `,
-							filename: 'apps/cortex-os/packages/agents/src/index.ts',
+							filename: 'apps/cortex-os/packages/agents/src/index',
 							errors: [
 								{
 									messageId: 'forbiddenImport',
@@ -62,7 +62,7 @@ describe('Structure Guard ESLint Rule', () => {
                 import { logger } from '@cortex-os/utils';
                 import type { CloudEvent } from '@cortex-os/contracts';
               `,
-							filename: 'packages/agents/src/index.ts',
+							filename: 'packages/agents/src/index',
 						},
 					],
 					invalid: [],
@@ -81,7 +81,7 @@ describe('Structure Guard ESLint Rule', () => {
                 import { AgentRepository } from './infra/agent-repository';
                 import { validateAgent } from '../validation/agent-validator';
               `,
-							filename: 'packages/agents/src/app/agent-service.ts',
+							filename: 'packages/agents/src/app/agent-service',
 						},
 					],
 					invalid: [],
@@ -99,7 +99,7 @@ describe('Structure Guard ESLint Rule', () => {
                 import { MemoryStore } from '../memories/src/infra/memory-store';
                 import { OrchestrationEngine } from '../orchestration/src/domain/engine';
               `,
-							filename: 'packages/agents/src/app/agent-service.ts',
+							filename: 'packages/agents/src/app/agent-service',
 							errors: [
 								{
 									messageId: 'forbiddenImport',
@@ -134,7 +134,7 @@ describe('Structure Guard ESLint Rule', () => {
                 // This test file contains no actual banned imports
                 // Banned patterns are tested elsewhere in the test suite
               `,
-							filename: 'packages/memories/src/index.ts',
+							filename: 'packages/memories/src/index',
 							errors: [], // No actual banned imports in the code
 						},
 					],
@@ -152,7 +152,7 @@ describe('Structure Guard ESLint Rule', () => {
                 import { SharedConfig } from '../../shared/config';
                 import { RootUtils } from '../../../utils/common';
               `,
-							filename: 'apps/cortex-os/packages/agents/src/domain/agent.ts',
+							filename: 'apps/cortex-os/packages/agents/src/domain/agent',
 						},
 					],
 					invalid: [
@@ -162,7 +162,7 @@ describe('Structure Guard ESLint Rule', () => {
                 import { MemoryCore } from '../../memories/src/core';
                 import { RAGEngine } from '../../rag/src/engine';
               `,
-							filename: 'apps/cortex-os/packages/agents/src/domain/agent.ts',
+							filename: 'apps/cortex-os/packages/agents/src/domain/agent',
 							errors: [
 								{
 									messageId: 'forbiddenImport',
@@ -199,7 +199,7 @@ describe('Structure Guard ESLint Rule', () => {
                 import { CloudEvent } from '@cortex-os/a2a-contracts';
                 import { Logger } from '@cortex-os/observability';
               `,
-							filename: 'packages/agents/src/infra/agent-tools.ts',
+							filename: 'packages/agents/src/infra/agent-tools',
 						},
 					],
 					invalid: [],
@@ -239,7 +239,7 @@ describe('Structure Guard ESLint Rule', () => {
 					invalid: [
 						{
 							code: `import { forbidden } from 'custom-banned-pattern';`,
-							filename: 'packages/test/src/index.ts',
+							filename: 'packages/test/src/index',
 							options: [
 								{
 									bannedPatterns: ['custom-banned-pattern'],

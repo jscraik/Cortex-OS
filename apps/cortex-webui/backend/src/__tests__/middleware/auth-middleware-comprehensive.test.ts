@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../../server.ts';
+import { createApp } from '../../server';
 import {
 	betterAuth,
 	optionalBetterAuth,

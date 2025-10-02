@@ -64,7 +64,7 @@ describe('AgentToolkitMCPTools typed event emissions', () => {
 
 		const tool = tools.getTool('agent_toolkit_validate');
 		expect(tool).toBeTruthy();
-		const res = await tool?.handler({ files: ['packages/agents/src/mcp/AgentToolkitMCPTools.ts'] });
+		const res = await tool?.handler({ files: ['packages/agents/src/mcp/AgentToolkitMCPTools'] });
 		expect(typeof res.success).toBe('boolean');
 
 		expect(findEvent(events, 'agent_toolkit.execution.started')).toBeTruthy();
