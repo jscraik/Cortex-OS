@@ -1,3 +1,4 @@
+import type { Server } from 'node:http';
 import { createServer } from 'node:http';
 import type { Express } from 'express';
 import request from 'supertest';
@@ -9,7 +10,7 @@ import { emailService } from '../../src/services/emailService';
 
 describe('Auth Integration Tests', () => {
 	let app: Express;
-	let server: any;
+	let server: Server;
 
 	beforeAll(async () => {
 		// Create Express app

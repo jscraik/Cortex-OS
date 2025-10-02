@@ -82,6 +82,8 @@ import {
 } from './middleware/security';
 // Better Auth routes
 import { setupBetterAuthRoutes } from './routes/better-auth-routes.js';
+// Import MCP routes
+import mcpRoutes from './routes/mcpRoutes.js';
 // Import services
 import { initializeUploadDirectory } from './services/fileService.js';
 import { initializeDefaultModels } from './services/modelService.js';
@@ -241,6 +243,9 @@ export const createApp = (): Express => {
 			brand: 'brAInwav',
 		});
 	});
+
+	// Comprehensive MCP tool management API routes
+	app.use(`${API_BASE_PATH}/mcp`, mcpRoutes);
 
 	// Error handling last - with brAInwav security error handler
 	app.use(securityErrorHandler);

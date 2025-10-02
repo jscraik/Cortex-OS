@@ -53,7 +53,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.getConversationsByUserId).mockResolvedValue(mockConversations);
 
 			// Act
-			await ConversationController.getConversations(mockRequest as any, mockResponse as Response);
+			await ConversationController.getConversations(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(ConversationService.getConversationsByUserId).toHaveBeenCalledWith('user-123');
@@ -68,7 +71,10 @@ describe('Conversation Controller', () => {
 			);
 
 			// Act
-			await ConversationController.getConversations(mockRequest as any, mockResponse as Response);
+			await ConversationController.getConversations(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -80,7 +86,10 @@ describe('Conversation Controller', () => {
 			mockRequest.user = undefined;
 
 			// Act
-			await ConversationController.getConversations(mockRequest as any, mockResponse as Response);
+			await ConversationController.getConversations(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
@@ -105,7 +114,7 @@ describe('Conversation Controller', () => {
 
 			// Act
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 
@@ -121,7 +130,7 @@ describe('Conversation Controller', () => {
 
 			// Act
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 
@@ -141,7 +150,7 @@ describe('Conversation Controller', () => {
 
 			// Act
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 
@@ -163,7 +172,7 @@ describe('Conversation Controller', () => {
 
 			// Act
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 
@@ -179,7 +188,7 @@ describe('Conversation Controller', () => {
 
 			// Act
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 
@@ -197,7 +206,7 @@ describe('Conversation Controller', () => {
 
 			// Act
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 
@@ -221,7 +230,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.createConversation).mockResolvedValue(createdConversation);
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(ConversationService.createConversation).toHaveBeenCalledWith(
@@ -239,7 +251,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = invalidData;
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -256,7 +271,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = { title: longTitle };
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -272,7 +290,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = { title: 'Valid Title' };
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
@@ -287,7 +308,10 @@ describe('Conversation Controller', () => {
 			);
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -317,7 +341,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.updateConversation).mockResolvedValue(updatedConversation);
 
 			// Act
-			await ConversationController.updateConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.updateConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(ConversationService.getConversationById).toHaveBeenCalledWith(validConversationId);
@@ -334,7 +361,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = { title: 'Valid Title' };
 
 			// Act
-			await ConversationController.updateConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.updateConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -350,7 +380,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = { title: ''.repeat(101) }; // Too long
 
 			// Act
-			await ConversationController.updateConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.updateConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -367,7 +400,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.getConversationById).mockResolvedValue(null);
 
 			// Act
-			await ConversationController.updateConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.updateConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(404);
@@ -387,7 +423,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.getConversationById).mockResolvedValue(otherUserConversation);
 
 			// Act
-			await ConversationController.updateConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.updateConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(403);
@@ -412,7 +451,10 @@ describe('Conversation Controller', () => {
 			});
 
 			// Act
-			await ConversationController.updateConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.updateConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(ConversationService.updateConversation).toHaveBeenCalledWith(
@@ -439,7 +481,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.deleteConversation).mockResolvedValue(undefined);
 
 			// Act
-			await ConversationController.deleteConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.deleteConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(ConversationService.getConversationById).toHaveBeenCalledWith(validConversationId);
@@ -455,7 +500,10 @@ describe('Conversation Controller', () => {
 			mockRequest.params = { id: 'invalid-uuid' };
 
 			// Act
-			await ConversationController.deleteConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.deleteConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -471,7 +519,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.getConversationById).mockResolvedValue(null);
 
 			// Act
-			await ConversationController.deleteConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.deleteConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(404);
@@ -490,7 +541,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.getConversationById).mockResolvedValue(otherUserConversation);
 
 			// Act
-			await ConversationController.deleteConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.deleteConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(403);
@@ -512,7 +566,10 @@ describe('Conversation Controller', () => {
 			);
 
 			// Act
-			await ConversationController.deleteConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.deleteConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -526,7 +583,10 @@ describe('Conversation Controller', () => {
 			mockRequest.user = undefined;
 
 			// Act
-			await ConversationController.getConversations(mockRequest as any, mockResponse as Response);
+			await ConversationController.getConversations(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
@@ -545,7 +605,7 @@ describe('Conversation Controller', () => {
 
 			// Test GET
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 			expect(mockResponse.status).toHaveBeenCalledWith(403);
@@ -553,12 +613,18 @@ describe('Conversation Controller', () => {
 			// Reset and test PUT
 			vi.clearAllMocks();
 			mockRequest.body = { title: 'Updated' };
-			await ConversationController.updateConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.updateConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 			expect(mockResponse.status).toHaveBeenCalledWith(403);
 
 			// Reset and test DELETE
 			vi.clearAllMocks();
-			await ConversationController.deleteConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.deleteConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 			expect(mockResponse.status).toHaveBeenCalledWith(403);
 		});
 
@@ -571,7 +637,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = maliciousInput;
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert - Should pass through validation (XSS prevention handled elsewhere)
 			expect(mockResponse.status).not.toHaveBeenCalledWith(400);
@@ -585,7 +654,7 @@ describe('Conversation Controller', () => {
 
 			// Act
 			await ConversationController.getConversationById(
-				mockRequest as any,
+				mockRequest as Request,
 				mockResponse as Response,
 			);
 
@@ -604,7 +673,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = undefined;
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -620,7 +692,10 @@ describe('Conversation Controller', () => {
 			mockRequest.body = { title: extremelyLongTitle };
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -643,7 +718,10 @@ describe('Conversation Controller', () => {
 			vi.mocked(ConversationService.createConversation).mockResolvedValue(createdConversation);
 
 			// Act
-			await ConversationController.createConversation(mockRequest as any, mockResponse as Response);
+			await ConversationController.createConversation(
+				mockRequest as Request,
+				mockResponse as Response,
+			);
 
 			// Assert
 			expect(mockResponse.status).toHaveBeenCalledWith(201);

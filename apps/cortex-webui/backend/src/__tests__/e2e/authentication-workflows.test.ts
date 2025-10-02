@@ -23,9 +23,15 @@ vi.mock('../../services/authMonitoringService', () => ({
 	},
 }));
 
+interface TestUser {
+	name: string;
+	email: string;
+	password: string;
+}
+
 describe('End-to-End Authentication Workflows', () => {
 	let app: Express;
-	let testUser: any;
+	let testUser: TestUser;
 
 	beforeEach(async () => {
 		app = createApp();

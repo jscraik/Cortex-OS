@@ -2,12 +2,12 @@
  * Tests for McpSecurityManager
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { McpSecurityManager } from '../../../services/mcp/McpSecurityManager.js';
-import type { McpToolRegistration } from '../../../services/mcp/McpToolRegistry.js';
 import type { ExecutionRequest } from '../../../services/mcp/McpToolExecutor.js';
+import type { McpToolRegistration } from '../../../services/mcp/McpToolRegistry.js';
 
 describe('McpSecurityManager', () => {
 	let securityManager: McpSecurityManager;
@@ -47,7 +47,7 @@ describe('McpSecurityManager', () => {
 			const request = createExecutionRequest();
 
 			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
-				/Tool is blocked by security policy/
+				/Tool is blocked by security policy/,
 			);
 		});
 	});
@@ -65,7 +65,7 @@ describe('McpSecurityManager', () => {
 
 			// Next request should be rate limited
 			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
-				/Rate limit exceeded/
+				/Rate limit exceeded/,
 			);
 		});
 
@@ -101,7 +101,7 @@ describe('McpSecurityManager', () => {
 
 			// User1 should be rate limited
 			await expect(securityManager.validateExecution(request1, mockTool)).rejects.toThrow(
-				/Rate limit exceeded/
+				/Rate limit exceeded/,
 			);
 
 			// User2 should still be able to make requests
@@ -132,7 +132,9 @@ describe('McpSecurityManager', () => {
 				context: { permissions: ['read', 'write', 'admin'] },
 			});
 
-			await expect(securityManager.validateExecution(request, toolWithPermissions)).resolves.not.toThrow();
+			await expect(
+				securityManager.validateExecution(request, toolWithPermissions),
+			).resolves.not.toThrow();
 		});
 
 		it('should deny access without required permissions', async () => {
@@ -145,7 +147,7 @@ describe('McpSecurityManager', () => {
 			});
 
 			await expect(securityManager.validateExecution(request, toolWithPermissions)).rejects.toThrow(
-				/Insufficient permissions/
+				/Insufficient permissions/,
 			);
 		});
 
@@ -158,7 +160,9 @@ describe('McpSecurityManager', () => {
 				context: { permissions: ['admin'] },
 			});
 
-			await expect(securityManager.validateExecution(request, toolWithPermissions)).resolves.not.toThrow();
+			await expect(
+				securityManager.validateExecution(request, toolWithPermissions),
+			).resolves.not.toThrow();
 		});
 
 		it('should work with permission checking disabled', async () => {
@@ -172,7 +176,9 @@ describe('McpSecurityManager', () => {
 				context: { permissions: [] },
 			});
 
-			await expect(securityManager.validateExecution(request, toolWithPermissions)).resolves.not.toThrow();
+			await expect(
+				securityManager.validateExecution(request, toolWithPermissions),
+			).resolves.not.toThrow();
 		});
 	});
 
@@ -191,7 +197,7 @@ describe('McpSecurityManager', () => {
 			});
 
 			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
-				/Input validation failed/
+				/Input validation failed/,
 			);
 		});
 
@@ -203,7 +209,7 @@ describe('McpSecurityManager', () => {
 			});
 
 			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
-				/Payload too large/
+				/Payload too large/,
 			);
 		});
 
@@ -215,7 +221,7 @@ describe('McpSecurityManager', () => {
 			});
 
 			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
-				/Potentially dangerous content detected/
+				/Potentially dangerous content detected/,
 			);
 		});
 
@@ -227,7 +233,7 @@ describe('McpSecurityManager', () => {
 			});
 
 			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
-				/Path traversal attempt detected/
+				/Path traversal attempt detected/,
 			);
 		});
 
@@ -253,7 +259,7 @@ describe('McpSecurityManager', () => {
 			});
 
 			await expect(securityManager.validateExecution(request, toolWithLimits)).rejects.toThrow(
-				/Requested timeout .* exceeds tool limit/
+				/Requested timeout .* exceeds tool limit/,
 			);
 		});
 
@@ -266,7 +272,9 @@ describe('McpSecurityManager', () => {
 				timeout: 5000, // Within tool limit
 			});
 
-			await expect(securityManager.validateExecution(request, toolWithLimits)).resolves.not.toThrow();
+			await expect(
+				securityManager.validateExecution(request, toolWithLimits),
+			).resolves.not.toThrow();
 		});
 
 		it('should work with resource limits disabled', async () => {
@@ -280,7 +288,9 @@ describe('McpSecurityManager', () => {
 				timeout: 10000, // Exceeds tool limit
 			});
 
-			await expect(securityManager.validateExecution(request, toolWithLimits)).resolves.not.toThrow();
+			await expect(
+				securityManager.validateExecution(request, toolWithLimits),
+			).resolves.not.toThrow();
 		});
 	});
 
@@ -292,12 +302,7 @@ describe('McpSecurityManager', () => {
 
 			await securityManager.validateExecution(request, mockTool);
 
-			expect(auditSpy).toHaveBeenCalledWith(
-				'access_attempt',
-				expect.any(Object),
-				mockTool,
-				{}
-			);
+			expect(auditSpy).toHaveBeenCalledWith('access_attempt', expect.any(Object), mockTool, {});
 		});
 
 		it('should log access granted', async () => {
@@ -311,7 +316,7 @@ describe('McpSecurityManager', () => {
 				'access_granted',
 				expect.any(Object),
 				mockTool,
-				expect.objectContaining({ validationTime: expect.any(Number) })
+				expect.objectContaining({ validationTime: expect.any(Number) }),
 			);
 		});
 
@@ -332,7 +337,7 @@ describe('McpSecurityManager', () => {
 				'access_denied',
 				expect.any(Object),
 				mockTool,
-				expect.objectContaining({ reason: expect.any(String) })
+				expect.objectContaining({ reason: expect.any(String) }),
 			);
 		});
 
@@ -406,7 +411,9 @@ describe('McpSecurityManager', () => {
 });
 
 // Helper functions
-function createMockTool(overrides: Partial<McpToolRegistration['metadata']> = {}): McpToolRegistration {
+function createMockTool(
+	overrides: Partial<McpToolRegistration['metadata']> = {},
+): McpToolRegistration {
 	const id = randomUUID();
 	const name = `test-tool-${id.substring(0, 8)}`;
 

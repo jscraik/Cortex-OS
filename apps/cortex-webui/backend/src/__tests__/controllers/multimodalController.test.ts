@@ -6,9 +6,24 @@ import { multimodalChunks, multimodalDocuments } from '../../db/schema.js';
 import { createApp } from '../../server.js';
 import { audioTranscriptionService } from '../../services/audioTranscriptionService.js';
 import { imageProcessingService } from '../../services/imageProcessingService.js';
-import { pdfWithImagesService } from '../../services/pdfWithImagesService.js';
 import { vectorSearchService } from '../../services/vectorSearchService.js';
-import logger from '../../utils/logger.js';
+
+// Database mock interfaces
+interface MockDbInsert {
+	values: () => { execute: () => Promise<void> };
+}
+
+interface MockDbUpdate {
+	set: () => { where: () => { execute: () => Promise<void> } };
+}
+
+interface MockDbDelete {
+	where: () => { execute: () => Promise<void> };
+}
+
+interface MockDbSelect {
+	from: () => { where: () => { execute: () => Promise<unknown[]> } };
+}
 
 // Mock logger to avoid noise in tests
 vi.mock('../../utils/logger.js', () => ({
@@ -78,7 +93,7 @@ describe('Multimodal Controller', () => {
 			values: vi.fn().mockReturnValue({
 				execute: vi.fn().mockResolvedValue(undefined),
 			}),
-		} as any);
+		} as MockDbInsert);
 
 		vi.mocked(db.update).mockReturnValue({
 			set: vi.fn().mockReturnValue({
@@ -86,13 +101,13 @@ describe('Multimodal Controller', () => {
 					execute: vi.fn().mockResolvedValue(undefined),
 				}),
 			}),
-		} as any);
+		} as MockDbUpdate);
 
 		vi.mocked(db.delete).mockReturnValue({
 			where: vi.fn().mockReturnValue({
 				execute: vi.fn().mockResolvedValue(undefined),
 			}),
-		} as any);
+		} as MockDbDelete);
 	});
 
 	describe('POST /api/multimodal/upload', () => {
@@ -116,13 +131,13 @@ describe('Multimodal Controller', () => {
 				thumbnailBuffer: Buffer.from('thumbnail-image'),
 			});
 
-			const mockDbSelect = vi.mocked(db.select).mockReturnValue({
+			const _mockDbSelect = vi.mocked(db.select).mockReturnValue({
 				from: vi.fn().mockReturnValue({
 					where: vi.fn().mockReturnValue({
 						limit: vi.fn().mockResolvedValue([]),
 					}),
 				}),
-			} as any);
+			} as MockDbSelect);
 
 			// Act
 			const response = await request(app)
@@ -289,7 +304,7 @@ describe('Multimodal Controller', () => {
 						orderBy: vi.fn().mockResolvedValue(mockDocuments),
 					}),
 				}),
-			} as any);
+			} as MockDbSelect);
 
 			// Act
 			const response = await request(app)
@@ -429,7 +444,7 @@ describe('Multimodal Controller', () => {
 						]),
 					}),
 				}),
-			} as any);
+			} as MockDbSelect);
 
 			// Mock chunks query
 			vi.mocked(db.select).mockReturnValue({
@@ -443,7 +458,7 @@ describe('Multimodal Controller', () => {
 						}),
 					}),
 				}),
-			} as any);
+			} as MockDbSelect);
 
 			// Mock processing status query
 			vi.mocked(db.select).mockReturnValue({
@@ -455,7 +470,7 @@ describe('Multimodal Controller', () => {
 						]),
 					}),
 				}),
-			} as any);
+			} as MockDbSelect);
 
 			// Act
 			const response = await request(app)
@@ -505,7 +520,7 @@ describe('Multimodal Controller', () => {
 						limit: vi.fn().mockResolvedValue([{ id: documentId }]),
 					}),
 				}),
-			} as any);
+			} as MockDbSelect);
 
 			// Act
 			const response = await request(app)
@@ -534,7 +549,7 @@ describe('Multimodal Controller', () => {
 						limit: vi.fn().mockResolvedValue([]),
 					}),
 				}),
-			} as any);
+			} as MockDbSelect);
 
 			// Act
 			const response = await request(app)
