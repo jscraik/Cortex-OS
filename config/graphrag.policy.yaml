@@ -1,0 +1,354 @@
+# brAInwav GraphRAG Policy Configuration
+# 
+# This configuration defines the operational parameters for the GraphRAG system
+# within Cortex-OS, ensuring optimal performance while maintaining brAInwav
+# branding compliance and system reliability.
+
+graphrag:
+  # Core service configuration
+  enabled: true
+  service_name: "brAInwav GraphRAG"
+  version: "1.0.0"
+  
+  # Vector database configuration (Qdrant - existing brAInwav stack)
+  vector_db:
+    provider: "qdrant"
+    url: "${QDRANT_URL:-qdrant:6333}"
+    collection: "local_memory_v1"  # Existing collection from memory stack
+    api_key: "${QDRANT_API_KEY:-}"  # Optional API key
+    dimensions: 1024  # Match embedding model dimensions
+    
+    # Hybrid search configuration
+    hybrid_search:
+      enabled: true
+      dense_weight: 0.7  # 70% dense vector weight
+      sparse_weight: 0.3  # 30% sparse/keyword weight (future)
+      fusion_method: "qdrant_native"  # Use Qdrant's built-in capabilities
+      
+    # Performance tuning
+    performance:
+      query_timeout_ms: 30000
+      max_retries: 3
+      connection_pool_size: 10
+      batch_size: 100
+  
+  # Graph expansion configuration
+  expansion:
+    # Allowed edge types for traversal
+    allowed_edges:
+      - "IMPORTS"           # Code imports/dependencies
+      - "DEPENDS_ON"        # Package dependencies  
+      - "IMPLEMENTS_CONTRACT" # Service-contract relationships
+      - "CALLS_TOOL"        # Tool usage relationships
+      - "EMITS_EVENT"       # Event emission patterns
+      - "EXPOSES_PORT"      # Service port exposure
+      - "REFERENCES_DOC"    # Documentation references
+      - "DECIDES_WITH"      # ADR decision rationale
+    
+    # Expansion limits to prevent graph explosion
+    limits:
+      max_hops: 1                    # Maximum graph traversal hops
+      max_neighbors_per_node: 20     # Cap neighbors to prevent hub dominance
+      max_total_nodes: 200           # Total nodes in expansion
+      max_edges_per_query: 500       # Maximum edges to traverse
+      
+    # Edge weighting strategy
+    edge_weights:
+      default_weight: 1.0
+      boost_factors:
+        "IMPLEMENTS_CONTRACT": 1.5   # Boost contract relationships
+        "REFERENCES_DOC": 1.3        # Boost documentation links
+        "DEPENDS_ON": 1.2            # Boost dependency relationships
+      
+  # Query processing limits
+  query_limits:
+    max_context_chunks: 24           # Maximum chunks in final context
+    max_concurrent_queries: 5        # Rate limiting
+    query_timeout_ms: 350            # Pre-LLM timeout target
+    max_question_length: 1000        # Input validation
+    min_relevance_threshold: 0.6     # Minimum similarity score
+    
+  # Result formatting and branding
+  response:
+    include_brainwav_branding: true
+    brainwav_attribution: "brAInwav Cortex-OS GraphRAG"
+    include_citations: true
+    include_metadata: true
+    
+    # Citation formatting
+    citations:
+      include_line_numbers: true
+      include_relevance_scores: true
+      include_node_types: true
+      brainwav_indexed_flag: true
+      
+    # Metadata inclusion
+    metadata:
+      include_retrieval_timing: true
+      include_graph_statistics: true
+      include_brainwav_source: true
+      include_query_parameters: true
+
+# Graph ingestion configuration
+ingestion:
+  # Source scanning configuration
+  sources:
+    # Use Agent Toolkit for repo analysis
+    agent_toolkit:
+      enabled: true
+      tools_path: "${HOME}/.Cortex-OS/tools/agent-toolkit"
+      parallel_workers: 4
+      timeout_ms: 300000
+      
+    # Dependency analysis
+    dependency_analysis:
+      enabled: true
+      use_dependency_cruiser: true
+      config_path: ".dependency-cruiser.js"
+      include_dev_dependencies: false
+      
+    # Package/service discovery
+    package_discovery:
+      enabled: true
+      scan_patterns:
+        - "packages/*"
+        - "apps/*" 
+        - "libs/*"
+        - "services/*"
+      exclude_patterns:
+        - "node_modules"
+        - "dist"
+        - ".git"
+        
+  # Node type extraction rules
+  node_extraction:
+    PACKAGE:
+      patterns: ["packages/*", "apps/*", "libs/*"]
+      key_pattern: "{relative_path}"
+      metadata_fields: ["package_json", "readme", "dependencies"]
+      
+    SERVICE:
+      patterns: ["services/*", "apps/*"]
+      key_pattern: "service:{name}"
+      metadata_fields: ["dockerfile", "config", "endpoints"]
+      
+    CONTRACT:
+      patterns: ["libs/typescript/contracts/**/*.ts", "contracts/**/*"]
+      key_pattern: "contract:{filename}"
+      metadata_fields: ["schema", "validation", "version"]
+      
+    TOOL:
+      patterns: ["packages/*/tools/*", "tools/*", "packages/agent-toolkit/**/*"]
+      key_pattern: "tool:{name}"
+      metadata_fields: ["description", "parameters", "usage"]
+      
+    ADR:
+      patterns: ["docs/**/*.md", "project-documentation/**/*.md"]
+      key_pattern: "doc:{path}"
+      metadata_fields: ["title", "status", "date", "decision"]
+      
+    API:
+      patterns: ["**/*api*.ts", "**/*endpoint*.ts", "**/*route*.ts"]
+      key_pattern: "api:{path}:{method}"
+      metadata_fields: ["methods", "params", "responses"]
+      
+  # Edge extraction configuration
+  edge_extraction:
+    IMPORTS:
+      source: "dependency_cruiser"
+      filters: ["import", "require", "dynamic-import"]
+      weight_calculation: "frequency_based"
+      
+    IMPLEMENTS_CONTRACT:
+      source: "agent_toolkit_search"
+      pattern: "implements|extends.*Contract|.*Schema"
+      weight_calculation: "confidence_based"
+      
+    CALLS_TOOL:
+      source: "agent_toolkit_search"
+      pattern: "agentToolkit\\.|createAgentToolkit|toolkit\\."
+      weight_calculation: "usage_frequency"
+      
+    EXPOSES_PORT:
+      source: "config_parser"
+      patterns: ["PORT", "localhost:\\d+", "0\\.0\\.0\\.0:\\d+"]
+      weight_calculation: "static"
+      
+    REFERENCES_DOC:
+      source: "agent_toolkit_search"
+      pattern: "\\[.*\\]\\(.*\\.md\\)|see docs/|documentation/"
+      weight_calculation: "link_strength"
+      
+  # Ingestion performance
+  performance:
+    batch_size: 1000
+    parallel_workers: 4
+    timeout_ms: 300000
+    affected_only: true  # Use Nx affected for incremental updates
+    max_file_size_mb: 10
+    
+  # Error handling
+  error_handling:
+    continue_on_error: true
+    max_retries: 3
+    retry_delay_ms: 1000
+    log_failures: true
+    failure_log_path: "./data/ingestion-failures.jsonl"
+
+# brAInwav branding requirements
+branding:
+  # Core branding configuration
+  enabled: true
+  brand_name: "brAInwav"
+  service_attribution: "brAInwav Cortex-OS GraphRAG"
+  
+  # Output branding
+  include_in_responses: true
+  include_in_logs: true
+  include_in_events: true
+  include_in_health_checks: true
+  
+  # Event emission branding
+  a2a_events:
+    enabled: true
+    source_prefix: "brAInwav.memory-core.graphrag"
+    include_brand_headers: true
+    headers:
+      "brainwav-brand": "brAInwav"
+      "brainwav-service": "GraphRAG"
+      "brainwav-version": "1.0.0"
+      
+  # Health check branding
+  health_checks:
+    include_branding: true
+    branding_fields:
+      - "brainwav_source"
+      - "brainwav_powered"
+      - "brainwav_service"
+
+# Observability and monitoring
+observability:
+  # A2A event emission
+  events:
+    enabled: true
+    emit_query_events: true
+    emit_ingestion_events: true
+    emit_health_events: true
+    emit_error_events: true
+    
+    # Event types
+    query_events:
+      - "graphrag.query.started"
+      - "graphrag.query.completed" 
+      - "graphrag.query.failed"
+      
+    ingestion_events:
+      - "graphrag.ingestion.started"
+      - "graphrag.ingestion.completed"
+      - "graphrag.ingestion.failed"
+      - "graphrag.ingestion.node_created"
+      - "graphrag.ingestion.edge_created"
+      
+  # Metrics collection
+  metrics:
+    enabled: true
+    track_query_latency: true
+    track_graph_statistics: true
+    track_error_rates: true
+    track_brainwav_branded_queries: true
+    
+    # Performance SLOs
+    slos:
+      query_p95_latency_ms: 350
+      query_success_rate: 0.99
+      ingestion_throughput_nodes_per_minute: 1000
+      graph_selectivity_median_neighbors: 12
+      
+  # Logging configuration
+  logging:
+    level: "INFO"
+    include_brainwav_prefix: true
+    log_format: "json"
+    include_query_content: false  # Privacy
+    include_performance_metrics: true
+    
+# Security and privacy
+security:
+  # Input validation
+  input_validation:
+    enabled: true
+    max_query_length: 1000
+    sanitize_inputs: true
+    reject_malicious_patterns: true
+    
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    max_queries_per_minute: 60
+    max_queries_per_hour: 1000
+    per_user_limits: true
+    
+  # Data privacy
+  privacy:
+    log_queries: false           # Don't log sensitive content
+    log_results: false           # Don't log response content
+    include_user_info: false     # No PII in logs
+    anonymize_metrics: true      # Aggregate metrics only
+    
+  # Graph data protection
+  graph_security:
+    validate_edge_traversal: true
+    prevent_unauthorized_access: true
+    audit_graph_operations: true
+
+# Development and testing
+development:
+  # Debug configuration
+  debug:
+    enabled: false
+    verbose_logging: false
+    include_query_traces: false
+    export_graph_visualizations: false
+    
+  # Testing configuration  
+  testing:
+    enable_test_mode: false
+    use_mock_embeddings: false
+    synthetic_graph_data: false
+    performance_benchmarks: true
+    
+  # Local development
+  local_dev:
+    hot_reload: true
+    auto_ingestion: false
+    reduced_limits: true
+    mock_a2a_events: false
+
+# Environment-specific overrides
+environments:
+  development:
+    query_limits:
+      max_context_chunks: 10
+      max_concurrent_queries: 2
+    logging:
+      level: "DEBUG"
+    branding:
+      include_dev_suffix: true
+      
+  staging:
+    observability:
+      events:
+        emit_all_events: true
+    security:
+      rate_limiting:
+        max_queries_per_minute: 30
+        
+  production:
+    performance:
+      query_timeout_ms: 30000
+    security:
+      input_validation:
+        strict_mode: true
+    observability:
+      logging:
+        level: "WARN"

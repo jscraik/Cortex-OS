@@ -187,3 +187,88 @@ model AuthAuditLog {
   @@index([userId])
   @@index([sessionId])
 }
+
+// GraphRAG Schema Extensions for brAInwav Cortex-OS
+// These models enable graph-based knowledge representation
+// Compatible with PostgreSQL + LanceDB hybrid architecture
+
+enum GraphNodeType {
+  PACKAGE
+  SERVICE
+  AGENT
+  TOOL
+  CONTRACT
+  EVENT
+  DOC
+  ADR
+  FILE
+  API
+  PORT
+}
+
+enum GraphEdgeType {
+  IMPORTS            // FILE|PACKAGE -> FILE|PACKAGE
+  IMPLEMENTS_CONTRACT // SERVICE|PACKAGE -> CONTRACT
+  CALLS_TOOL         // AGENT|SERVICE -> TOOL
+  EMITS_EVENT        // SERVICE|AGENT -> EVENT
+  EXPOSES_PORT       // SERVICE -> PORT
+  REFERENCES_DOC     // CODE|CONTRACT|SERVICE -> DOC|ADR
+  DEPENDS_ON         // PACKAGE|SERVICE -> PACKAGE|SERVICE
+  DECIDES_WITH       // ADR -> DOC (rationale/explanation)
+}
+
+model GraphNode {
+  id        String         @id @default(cuid())
+  type      GraphNodeType
+  key       String         // stable key e.g., "packages/agent-toolkit", "apps/cortex-os"
+  label     String         // human-readable name
+  meta      Json?          // flexible metadata storage
+  chunks    ChunkRef[]     // links to vector chunks
+  outgoing  GraphEdge[]    @relation("outgoingEdges")
+  incoming  GraphEdge[]    @relation("incomingEdges")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([type, key])
+  @@index([type, key])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model GraphEdge {
+  id        String        @id @default(cuid())
+  type      GraphEdgeType
+  srcId     String        // source node ID
+  dstId     String        // destination node ID
+  weight    Float?        @default(1.0) // edge strength/confidence
+  meta      Json?         // additional edge metadata
+  createdAt DateTime      @default(now())
+
+  src       GraphNode     @relation("outgoingEdges", fields: [srcId], references: [id], onDelete: Cascade)
+  dst       GraphNode     @relation("incomingEdges", fields: [dstId], references: [id], onDelete: Cascade)
+
+  @@index([srcId, type, dstId])
+  @@index([type])
+  @@index([srcId])
+  @@index([dstId])
+  @@index([createdAt])
+}
+
+model ChunkRef {
+  id           String   @id @default(cuid())
+  nodeId       String   // reference to GraphNode
+  qdrantId     String   // Qdrant point-id for the chunk (existing collection: local_memory_v1)
+  path         String   // repo path of the source file
+  lineStart    Int?     // starting line number
+  lineEnd      Int?     // ending line number
+  meta         Json?    // chunk-specific metadata
+  createdAt    DateTime @default(now())
+
+  node         GraphNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@index([nodeId])
+  @@index([qdrantId])
+  @@index([path])
+  @@index([createdAt])
+  @@unique([nodeId, qdrantId]) // prevent duplicate chunk refs
+}
