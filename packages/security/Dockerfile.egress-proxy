@@ -1,0 +1,68 @@
+# brAInwav Egress Proxy Container
+# Provides secure egress filtering with policy enforcement
+
+FROM node:20-alpine AS base
+
+# Install security updates and required packages
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
+    curl \
+    tini \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S brainwav && \
+    adduser -S -u 1001 -G brainwav brainwav
+
+WORKDIR /app
+
+# Copy package files
+COPY packages/security/package.json ./
+COPY packages/security/src ./src/
+
+# Install dependencies
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# Build TypeScript
+RUN npm run build
+
+# Create directories for logs and policies
+RUN mkdir -p /app/logs /app/policies && \
+    chown -R brainwav:brainwav /app
+
+# Copy health check script
+COPY <<EOF /app/healthcheck.sh
+#!/bin/sh
+# brAInwav Egress Proxy Health Check
+curl -f http://localhost:8888/health || exit 1
+echo "brAInwav egress proxy healthy"
+EOF
+
+RUN chmod +x /app/healthcheck.sh
+
+# Switch to non-root user
+USER brainwav
+
+# Expose egress proxy port
+EXPOSE 8888
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD /app/healthcheck.sh
+
+# Use tini for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Start the brAInwav egress proxy
+CMD ["node", "dist/egress-proxy.js"]
+
+# Labels with brAInwav branding
+LABEL \
+    org.opencontainers.image.title="brAInwav Egress Proxy" \
+    org.opencontainers.image.description="Policy-enforced egress proxy for AI security" \
+    org.opencontainers.image.vendor="brAInwav" \
+    org.opencontainers.image.source="https://github.com/jamiescottcraik/Cortex-OS" \
+    com.brainwav.service="egress-proxy" \
+    com.brainwav.tier="security" \
+    com.brainwav.version="1.0.0"

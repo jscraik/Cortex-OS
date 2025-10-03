@@ -1,0 +1,107 @@
+# brAInwav Security Enhancement for macOS Development
+# Extends existing docker-compose.yml with security proxy and enhanced MCP
+
+version: '3.8'
+
+services:
+  # brAInwav Egress Security Proxy
+  brainwav-egress-proxy:
+    build:
+      context: ../packages/security
+      dockerfile: Dockerfile.egress-proxy
+    ports:
+      - '8888:8888'  # Egress proxy port
+      - '8889:8889'  # Health check port
+    environment:
+      - NODE_ENV=development
+      - BRAINWAV_POLICY_MODE=permissive  # Relaxed for dev
+      - BRAINWAV_AUDIT_ENABLED=true
+      - BRAINWAV_LOG_LEVEL=debug
+      - BRAINWAV_EGRESS_PORT=8888
+      - BRAINWAV_MAX_REQUEST_SIZE=10485760  # 10MB
+      - BRAINWAV_MAX_RESPONSE_SIZE=52428800  # 50MB
+      - BRAINWAV_TIMEOUT=30000  # 30 seconds
+    volumes:
+      - ../config/security-policies:/app/policies:ro
+      - brainwav_egress_logs:/app/logs
+    networks:
+      - cortex-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8889/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "brainwav.service=egress-proxy"
+      - "brainwav.environment=development"
+      - "brainwav.version=1.0.0"
+
+  # Enhanced MCP Server with brAInwav Security
+  cortex-mcp-enhanced:
+    build:
+      context: ../packages/mcp-server
+      dockerfile: Dockerfile.enhanced
+    ports:
+      - '3025:3024'  # Use different port to avoid conflict
+    environment:
+      - NODE_ENV=development
+      - HTTP_PROXY=http://brainwav-egress-proxy:8888
+      - HTTPS_PROXY=http://brainwav-egress-proxy:8888
+      - NO_PROXY=localhost,127.0.0.1,host.docker.internal
+      - BRAINWAV_SECURITY_ENABLED=true
+      - BRAINWAV_POLICY_MODE=development
+      - BRAINWAV_AUDIT_MODE=true
+      - BRAINWAV_BLOCK_ON_VIOLATION=false  # Don't block in dev
+      - MLX_ENDPOINT=http://host.docker.internal:8080  # Native macOS MLX
+      - MEMORY_LOG_LEVEL=debug
+      - MCP_EGRESS_ALLOWLIST=localhost,127.0.0.1,api.github.com,registry.npmjs.org
+    depends_on:
+      brainwav-egress-proxy:
+        condition: service_healthy
+    networks:
+      - cortex-network
+    volumes:
+      - brainwav_mcp_logs:/app/logs
+      - ../config:/app/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3024/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    labels:
+      - "brainwav.service=mcp-server" 
+      - "brainwav.security=enhanced"
+      - "brainwav.environment=development"
+
+  # brAInwav Security Dashboard (Optional)
+  brainwav-security-dashboard:
+    image: nginx:alpine
+    ports:
+      - '8890:80'
+    volumes:
+      - ../packages/security/dashboard:/usr/share/nginx/html:ro
+      - ./nginx/brainwav-security.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - cortex-network
+    restart: unless-stopped
+    labels:
+      - "brainwav.service=security-dashboard"
+      - "brainwav.environment=development"
+
+volumes:
+  brainwav_egress_logs:
+    driver: local
+    labels:
+      brainwav.data: "egress-logs"
+  brainwav_mcp_logs:
+    driver: local
+    labels:
+      brainwav.data: "mcp-logs"
+
+networks:
+  cortex-network:
+    external: true  # Use existing network from main compose

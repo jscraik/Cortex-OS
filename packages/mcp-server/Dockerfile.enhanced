@@ -1,0 +1,96 @@
+# brAInwav Enhanced MCP Server
+# Includes security policy engine and enhanced observability
+
+FROM node:20-alpine AS base
+
+# Install security updates and required packages
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
+    curl \
+    tini \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S brainwav && \
+    adduser -S -u 1001 -G brainwav brainwav
+
+WORKDIR /app
+
+# Copy package files from workspace root first
+COPY package.json pnpm-workspace.yaml ./
+COPY packages/mcp-server/package.json ./packages/mcp-server/
+COPY packages/security/package.json ./packages/security/
+COPY packages/memory-core/package.json ./packages/memory-core/
+COPY packages/tool-spec/package.json ./packages/tool-spec/
+
+# Install all workspace dependencies
+RUN npm install -g pnpm && \
+    pnpm install --frozen-lockfile
+
+# Copy source code
+COPY packages/mcp-server/src ./packages/mcp-server/src/
+COPY packages/mcp-server/tsconfig.json ./packages/mcp-server/
+COPY packages/security/src ./packages/security/src/
+COPY packages/security/tsconfig.json ./packages/security/
+
+# Build the packages
+RUN cd packages/security && pnpm build && \
+    cd ../mcp-server && pnpm build
+
+# Create directories for logs and config
+RUN mkdir -p /app/logs /app/config && \
+    chown -R brainwav:brainwav /app
+
+# Copy health check script
+COPY <<EOF /app/healthcheck.sh
+#!/bin/sh
+# brAInwav Enhanced MCP Server Health Check
+curl -f http://localhost:3024/health || exit 1
+echo "brAInwav MCP server healthy"
+EOF
+
+RUN chmod +x /app/healthcheck.sh
+
+# Copy startup script with brAInwav branding
+COPY <<EOF /app/start.sh
+#!/bin/sh
+# brAInwav Enhanced MCP Server Startup
+
+echo "brAInwav: Starting enhanced MCP server..."
+echo "brAInwav: Security enabled: \${BRAINWAV_SECURITY_ENABLED:-true}"
+echo "brAInwav: Policy mode: \${BRAINWAV_POLICY_MODE:-development}"
+echo "brAInwav: Audit mode: \${BRAINWAV_AUDIT_MODE:-true}"
+
+# Start the enhanced MCP server
+cd packages/mcp-server
+exec node dist/index.js --transport http --port 3024 --host 0.0.0.0
+EOF
+
+RUN chmod +x /app/start.sh
+
+# Switch to non-root user
+USER brainwav
+
+# Expose MCP server port
+EXPOSE 3024
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
+    CMD /app/healthcheck.sh
+
+# Use tini for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Start the brAInwav enhanced MCP server
+CMD ["/app/start.sh"]
+
+# Labels with brAInwav branding
+LABEL \
+    org.opencontainers.image.title="brAInwav Enhanced MCP Server" \
+    org.opencontainers.image.description="Model Context Protocol server with brAInwav security enhancements" \
+    org.opencontainers.image.vendor="brAInwav" \
+    org.opencontainers.image.source="https://github.com/jamiescottcraik/Cortex-OS" \
+    com.brainwav.service="mcp-server" \
+    com.brainwav.tier="core" \
+    com.brainwav.version="1.0.0" \
+    com.brainwav.features="security-enhanced,policy-engine,audit-logging"
