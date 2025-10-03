@@ -1,0 +1,124 @@
+{
+    "version": "1.0.0",
+    "metadata": {
+        "name": "brAInwav Development Security Policy",
+        "created": "2025-01-15T12:00:00Z",
+        "author": "brAInwav Security Team",
+        "org": "brAInwav"
+    },
+    "tools": {
+        "web_search": {
+            "allowedDomains": [
+                "*.google.com",
+                "*.bing.com",
+                "*.duckduckgo.com",
+                "api.github.com"
+            ],
+            "maxRequestSize": 2097152,
+            "requireApproval": false,
+            "timebudget": 60,
+            "memoryLimit": 1024,
+            "contentTypes": [
+                "application/json",
+                "text/html",
+                "text/plain"
+            ],
+            "rateLimits": {
+                "requestsPerMinute": 20,
+                "requestsPerHour": 200
+            }
+        },
+        "github_api": {
+            "allowedDomains": [
+                "api.github.com",
+                "raw.githubusercontent.com"
+            ],
+            "maxRequestSize": 1048576,
+            "requireApproval": false,
+            "timebudget": 30,
+            "memoryLimit": 512,
+            "contentTypes": [
+                "application/json",
+                "text/plain"
+            ],
+            "rateLimits": {
+                "requestsPerMinute": 30,
+                "requestsPerHour": 300
+            }
+        },
+        "npm_registry": {
+            "allowedDomains": [
+                "registry.npmjs.org",
+                "npm.pkg.github.com"
+            ],
+            "maxRequestSize": 524288,
+            "requireApproval": false,
+            "timebudget": 15,
+            "memoryLimit": 256,
+            "contentTypes": [
+                "application/json"
+            ],
+            "rateLimits": {
+                "requestsPerMinute": 15,
+                "requestsPerHour": 150
+            }
+        },
+        "code_execution": {
+            "allowedDomains": [],
+            "maxRequestSize": 65536,
+            "requireApproval": true,
+            "timebudget": 120,
+            "memoryLimit": 2048,
+            "contentTypes": [
+                "text/plain",
+                "application/json"
+            ],
+            "rateLimits": {
+                "requestsPerMinute": 10,
+                "requestsPerHour": 50
+            }
+        }
+    },
+    "egress": {
+        "defaultAction": "allow",
+        "allowlist": [
+            "localhost",
+            "127.0.0.1",
+            "api.github.com",
+            "raw.githubusercontent.com",
+            "registry.npmjs.org",
+            "npm.pkg.github.com",
+            "api.openai.com",
+            "api.anthropic.com",
+            "*.google.com",
+            "*.bing.com",
+            "*.duckduckgo.com"
+        ],
+        "blocklist": [
+            "169.254.169.254",
+            "metadata.google.internal",
+            "169.254.169.251"
+        ],
+        "maxResponseSize": 52428800,
+        "allowedPorts": [
+            80,
+            443,
+            8080,
+            3000,
+            3001,
+            8000
+        ]
+    },
+    "audit": {
+        "logAllRequests": true,
+        "redactPII": true,
+        "retentionDays": 30,
+        "includeRequestBody": false,
+        "includeBrAInwavBranding": true
+    },
+    "enforcement": {
+        "mode": "permissive",
+        "maxViolationsBeforeBlock": 20,
+        "violationTimeout": 1800
+    }
+}

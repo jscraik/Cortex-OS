@@ -228,6 +228,14 @@ export {
 } from './events/agent-toolkit-events.js';
 // MCP Integration
 export { createAgentToolkitMcpTools } from './mcp/tools.js';
+// Resilient execution (Phase 3.5)
+export {
+	type CircuitBreakerOptions,
+	createResilientExecutor,
+	type ResilientExecutor,
+	type ResilientExecutorOptions,
+	type RetryOptions,
+} from './resilience/ResilientExecutor.js';
 export {
 	type BuildContextOptions,
 	buildChunkedContext,
@@ -252,6 +260,13 @@ export {
 	type SessionContextOptions,
 	type ToolCallRecord,
 } from './session/SessionContextManager.js';
+// Session persistence (Phase 3.3)
+export {
+	createSessionPersistence,
+	type SessionMetadata,
+	type SessionPersistence,
+	type SessionPersistenceOptions,
+} from './session/SessionPersistence.js';
 export {
 	createTokenBudget,
 	type TokenBudget,

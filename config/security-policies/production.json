@@ -1,0 +1,89 @@
+{
+    "version": "1.0.0",
+    "metadata": {
+        "name": "brAInwav Production Security Policy",
+        "created": "2025-01-15T12:00:00Z",
+        "author": "brAInwav Security Team",
+        "org": "brAInwav"
+    },
+    "tools": {
+        "web_search": {
+            "allowedDomains": [
+                "api.github.com",
+                "registry.npmjs.org"
+            ],
+            "maxRequestSize": 1048576,
+            "requireApproval": false,
+            "timebudget": 30,
+            "memoryLimit": 512,
+            "contentTypes": [
+                "application/json",
+                "text/plain"
+            ],
+            "rateLimits": {
+                "requestsPerMinute": 10,
+                "requestsPerHour": 100
+            }
+        },
+        "github_api": {
+            "allowedDomains": [
+                "api.github.com"
+            ],
+            "maxRequestSize": 524288,
+            "requireApproval": false,
+            "timebudget": 15,
+            "memoryLimit": 256,
+            "contentTypes": [
+                "application/json"
+            ],
+            "rateLimits": {
+                "requestsPerMinute": 15,
+                "requestsPerHour": 150
+            }
+        },
+        "code_execution": {
+            "allowedDomains": [],
+            "maxRequestSize": 32768,
+            "requireApproval": true,
+            "timebudget": 60,
+            "memoryLimit": 1024,
+            "contentTypes": [
+                "text/plain"
+            ],
+            "rateLimits": {
+                "requestsPerMinute": 3,
+                "requestsPerHour": 20
+            }
+        }
+    },
+    "egress": {
+        "defaultAction": "deny",
+        "allowlist": [
+            "api.github.com",
+            "registry.npmjs.org"
+        ],
+        "blocklist": [
+            "169.254.169.254",
+            "metadata.google.internal",
+            "169.254.169.251",
+            "localhost",
+            "127.0.0.1"
+        ],
+        "maxResponseSize": 10485760,
+        "allowedPorts": [
+            443
+        ]
+    },
+    "audit": {
+        "logAllRequests": true,
+        "redactPII": true,
+        "retentionDays": 365,
+        "includeRequestBody": true,
+        "includeBrAInwavBranding": true
+    },
+    "enforcement": {
+        "mode": "enforcing",
+        "maxViolationsBeforeBlock": 3,
+        "violationTimeout": 300
+    }
+}
