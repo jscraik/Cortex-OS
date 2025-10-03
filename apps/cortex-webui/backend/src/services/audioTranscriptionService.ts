@@ -137,7 +137,9 @@ export class AudioTranscriptionService {
 		}
 	}
 
-	private async extractBasicAudioInfo(source: AudioSource): Promise<{ duration: number; format: string }> {
+	private async extractBasicAudioInfo(
+		source: AudioSource,
+	): Promise<{ duration: number; format: string }> {
 		if (Buffer.isBuffer(source)) {
 			const format = this.detectFormatFromBuffer(source);
 			return {
@@ -164,7 +166,10 @@ export class AudioTranscriptionService {
 		}
 	}
 
-	private async extractAudioMetadata(source: AudioSource, filename: string): Promise<AudioMetadata> {
+	private async extractAudioMetadata(
+		source: AudioSource,
+		filename: string,
+	): Promise<AudioMetadata> {
 		const extension = filename.toLowerCase().substring(filename.lastIndexOf('.') + 1);
 
 		if (Buffer.isBuffer(source)) {

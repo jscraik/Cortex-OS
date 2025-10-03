@@ -55,7 +55,7 @@ export interface McpServer {
 }
 
 // JSON-RPC 2.0 message schemas
-const initializeRequestSchema = z.object({
+const _initializeRequestSchema = z.object({
 	jsonrpc: z.literal('2.0'),
 	id: z.union([z.string(), z.number()]),
 	method: z.literal('initialize'),
@@ -73,14 +73,14 @@ const initializeRequestSchema = z.object({
 	}),
 });
 
-const listToolsRequestSchema = z.object({
+const _listToolsRequestSchema = z.object({
 	jsonrpc: z.literal('2.0'),
 	id: z.union([z.string(), z.number()]),
 	method: z.literal('tools/list'),
 	params: z.object({}).optional(),
 });
 
-const callToolRequestSchema = z.object({
+const _callToolRequestSchema = z.object({
 	jsonrpc: z.literal('2.0'),
 	id: z.union([z.string(), z.number()]),
 	method: z.literal('tools/call'),
@@ -378,7 +378,7 @@ export class McpProtocolIntegration extends EventEmitter {
 			throw new Error(`No connection to server: ${serverId}`);
 		}
 
-		const messageStr = JSON.stringify(message) + '\n';
+		const messageStr = `${JSON.stringify(message)}\n`;
 
 		if (connection === 'http') {
 			// HTTP transport: use fetch
@@ -592,7 +592,7 @@ export class McpProtocolIntegration extends EventEmitter {
 		}
 
 		// Clear pending requests
-		for (const [id, pending] of this.pendingRequests) {
+		for (const [_id, pending] of this.pendingRequests) {
 			clearTimeout(pending.timeout);
 			pending.reject(new Error('Server shutting down'));
 		}

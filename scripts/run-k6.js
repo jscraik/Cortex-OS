@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -47,6 +47,8 @@ if (!result.success) {
 }
 
 if (!result.success) {
-	console.error('[k6-runner] Unable to execute k6. Install k6 (https://grafana.com/docs/k6/latest/) or ensure Docker is available.');
+	console.error(
+		'[k6-runner] Unable to execute k6. Install k6 (https://grafana.com/docs/k6/latest/) or ensure Docker is available.',
+	);
 	process.exit(1);
 }

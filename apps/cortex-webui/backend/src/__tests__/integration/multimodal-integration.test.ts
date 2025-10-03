@@ -14,31 +14,37 @@ vi.mock('../../services/imageProcessingService.ts', () => ({
 	imageProcessingService: {
 		processImage: vi
 			.fn()
-			.mockImplementation(async (input: Buffer | { size: number }, filename: string, options: any) => ({
-				metadata: {
-					width: 800,
-					height: 600,
-					format: 'JPEG',
-					ocrText: options.enableOCR ? 'Sample OCR text from image' : undefined,
-					visionAnalysis: options.enableVisionAnalysis
-						? {
-								description: 'Sample vision analysis',
-								objects: [
-									{
-										label: 'test object',
-										confidence: 0.9,
-										boundingBox: { x: 0, y: 0, width: 100, height: 100 },
-									},
-								],
-								confidence: 0.9,
-								analysisModel: 'test-model',
-								processedAt: new Date(),
-							}
-						: undefined,
-				},
-				resizedBuffer: Buffer.isBuffer(input) ? Buffer.from('resized-image') : Buffer.from('resized-image'),
-				thumbnailBuffer: Buffer.isBuffer(input) ? Buffer.from('thumbnail-image') : Buffer.from('thumbnail-image'),
-			})),
+			.mockImplementation(
+				async (input: Buffer | { size: number }, _filename: string, options: any) => ({
+					metadata: {
+						width: 800,
+						height: 600,
+						format: 'JPEG',
+						ocrText: options.enableOCR ? 'Sample OCR text from image' : undefined,
+						visionAnalysis: options.enableVisionAnalysis
+							? {
+									description: 'Sample vision analysis',
+									objects: [
+										{
+											label: 'test object',
+											confidence: 0.9,
+											boundingBox: { x: 0, y: 0, width: 100, height: 100 },
+										},
+									],
+									confidence: 0.9,
+									analysisModel: 'test-model',
+									processedAt: new Date(),
+								}
+							: undefined,
+					},
+					resizedBuffer: Buffer.isBuffer(input)
+						? Buffer.from('resized-image')
+						: Buffer.from('resized-image'),
+					thumbnailBuffer: Buffer.isBuffer(input)
+						? Buffer.from('thumbnail-image')
+						: Buffer.from('thumbnail-image'),
+				}),
+			),
 		isFormatSupported: vi.fn().mockReturnValue(true),
 		generateImageHash: vi.fn().mockResolvedValue('test-image-hash'),
 	},
@@ -48,64 +54,72 @@ vi.mock('../../services/audioTranscriptionService.ts', () => ({
 	audioTranscriptionService: {
 		processAudio: vi
 			.fn()
-			.mockImplementation(async (input: Buffer | { size: number }, filename: string, options: any) => ({
-				metadata: {
-					duration: 120,
-					format: 'MP3',
-					sampleRate: 44100,
-					channels: 2,
-					transcript: options.enableTranscription ? 'Sample transcription text' : undefined,
-					speakerDiarization:
-						options.enableTranscription && options.enableSpeakerDiarization
-							? [
-									{
-										speakerId: 'speaker_1',
-										startTime: 0,
-										endTime: 60,
-										text: 'Part 1',
-										confidence: 0.9,
-									},
-									{
-										speakerId: 'speaker_2',
-										startTime: 60,
-										endTime: 120,
-										text: 'Part 2',
-										confidence: 0.85,
-									},
-								]
-							: undefined,
-				},
-				transcription: options.enableTranscription
-					? {
-							text: 'Sample transcription text with speaker diarization',
-							segments: options.enableSpeakerDiarization
+			.mockImplementation(
+				async (_input: Buffer | { size: number }, _filename: string, options: any) => ({
+					metadata: {
+						duration: 120,
+						format: 'MP3',
+						sampleRate: 44100,
+						channels: 2,
+						transcript: options.enableTranscription ? 'Sample transcription text' : undefined,
+						speakerDiarization:
+							options.enableTranscription && options.enableSpeakerDiarization
 								? [
-										{ start: 0, end: 5, text: 'Sample', speakerId: 'speaker_1', confidence: 0.95 },
 										{
-											start: 5,
-											end: 10,
-											text: 'transcription',
+											speakerId: 'speaker_1',
+											startTime: 0,
+											endTime: 60,
+											text: 'Part 1',
+											confidence: 0.9,
+										},
+										{
 											speakerId: 'speaker_2',
-											confidence: 0.88,
+											startTime: 60,
+											endTime: 120,
+											text: 'Part 2',
+											confidence: 0.85,
 										},
 									]
-								: [{ start: 0, end: 10, text: 'Sample transcription text', confidence: 0.92 }],
-							speakers: options.enableSpeakerDiarization
-								? [
-										{ id: 'speaker_1', segments: 1, totalSpeakingTime: 5 },
-										{ id: 'speaker_2', segments: 1, totalSpeakingTime: 5 },
-									]
-								: [],
-							processingTime: 2000,
-							model: 'test-model',
-							confidence: 0.92,
-							language: 'en',
-						}
-					: undefined,
-				waveformData: Array(200)
-					.fill(0)
-					.map(() => Math.random()),
-			})),
+								: undefined,
+					},
+					transcription: options.enableTranscription
+						? {
+								text: 'Sample transcription text with speaker diarization',
+								segments: options.enableSpeakerDiarization
+									? [
+											{
+												start: 0,
+												end: 5,
+												text: 'Sample',
+												speakerId: 'speaker_1',
+												confidence: 0.95,
+											},
+											{
+												start: 5,
+												end: 10,
+												text: 'transcription',
+												speakerId: 'speaker_2',
+												confidence: 0.88,
+											},
+										]
+									: [{ start: 0, end: 10, text: 'Sample transcription text', confidence: 0.92 }],
+								speakers: options.enableSpeakerDiarization
+									? [
+											{ id: 'speaker_1', segments: 1, totalSpeakingTime: 5 },
+											{ id: 'speaker_2', segments: 1, totalSpeakingTime: 5 },
+										]
+									: [],
+								processingTime: 2000,
+								model: 'test-model',
+								confidence: 0.92,
+								language: 'en',
+							}
+						: undefined,
+					waveformData: Array(200)
+						.fill(0)
+						.map(() => Math.random()),
+				}),
+			),
 		isFormatSupported: vi.fn().mockReturnValue(true),
 		generateAudioHash: vi.fn().mockResolvedValue('test-audio-hash'),
 	},
@@ -115,9 +129,29 @@ vi.mock('../../services/pdfWithImagesService.ts', () => ({
 	pdfWithImagesService: {
 		processPdfWithImages: vi
 			.fn()
-			.mockImplementation(async (input: Buffer | { size: number }, filename: string, options: any) => ({
-				metadata: {
-					title: 'Test PDF Document',
+			.mockImplementation(
+				async (_input: Buffer | { size: number }, _filename: string, _options: any) => ({
+					metadata: {
+						title: 'Test PDF Document',
+						pages: [
+							{
+								pageNumber: 1,
+								text: 'Page 1 content',
+								images: [],
+								layout: { hasText: true, hasImages: false },
+							},
+							{
+								pageNumber: 2,
+								text: 'Page 2 content',
+								images: [],
+								layout: { hasText: true, hasImages: false },
+							},
+						],
+						totalImages: 0,
+						totalText: 100,
+						hasEmbeddedImages: false,
+						layoutPreserved: true,
+					},
 					pages: [
 						{
 							pageNumber: 1,
@@ -132,27 +166,9 @@ vi.mock('../../services/pdfWithImagesService.ts', () => ({
 							layout: { hasText: true, hasImages: false },
 						},
 					],
-					totalImages: 0,
-					totalText: 100,
-					hasEmbeddedImages: false,
-					layoutPreserved: true,
-				},
-				pages: [
-					{
-						pageNumber: 1,
-						text: 'Page 1 content',
-						images: [],
-						layout: { hasText: true, hasImages: false },
-					},
-					{
-						pageNumber: 2,
-						text: 'Page 2 content',
-						images: [],
-						layout: { hasText: true, hasImages: false },
-					},
-				],
-				extractedImages: [],
-			})),
+					extractedImages: [],
+				}),
+			),
 		createLayoutAwareChunks: vi.fn().mockReturnValue([
 			{
 				content: 'Page 1 content',
@@ -176,7 +192,7 @@ vi.mock('../../services/pdfWithImagesService.ts', () => ({
 vi.mock('../../services/vectorSearchService.ts', () => ({
 	vectorSearchService: {
 		indexMultimodalDocuments: vi.fn().mockResolvedValue(undefined),
-		searchMultimodal: vi.fn().mockImplementation(async (request: any, userId: string) => ({
+		searchMultimodal: vi.fn().mockImplementation(async (request: any, _userId: string) => ({
 			results: [
 				{
 					id: 'chunk-1',
@@ -227,7 +243,7 @@ describe('Multimodal Integration Tests', () => {
 
 		// Mock authentication middleware to return a test user
 		vi.doMock('../../middleware/auth.js', () => ({
-			authenticateToken: (req: any, res: any, next: any) => {
+			authenticateToken: (req: any, _res: any, next: any) => {
 				req.user = { id: 'test-user-id' };
 				next();
 			},
@@ -235,7 +251,7 @@ describe('Multimodal Integration Tests', () => {
 
 		// Mock security middleware
 		vi.doMock('../../middleware/security.ts', () => ({
-			customCsrfProtection: (req: any, res: any, next: any) => next(),
+			customCsrfProtection: (_req: any, _res: any, next: any) => next(),
 		}));
 
 		app = createApp();
@@ -398,7 +414,7 @@ describe('Multimodal Integration Tests', () => {
 				extractedImages: 0,
 			});
 
-			const documentId = uploadResponse.body.documentId;
+			const _documentId = uploadResponse.body.documentId;
 
 			// Search across PDF content
 			const searchResponse = await request(app)

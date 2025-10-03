@@ -3,17 +3,17 @@
  * Goal: Achieve 95% coverage on authentication paths
  */
 
-import type { Express, Request, Response, NextFunction } from 'express';
+import type { Express, NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.ts';
 import {
-	authenticateAPIKey,
 	authCORS,
+	authenticateAPIKey,
 	betterAuthErrorHandler,
 	optionalBetterAuth,
 	requireRole,
 } from '../../middleware/better-auth.ts';
+import { createApp } from '../../server.ts';
 
 // Mock dependencies
 vi.mock('../../lib/env.ts', () => ({
@@ -51,21 +51,13 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				'x-api-key': validApiKey,
 			};
 
-			await authenticateAPIKey(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalledWith();
 		});
 
 		it('should reject requests with missing API key', async () => {
-			await authenticateAPIKey(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -79,11 +71,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				'x-api-key': 'invalid-key',
 			};
 
-			await authenticateAPIKey(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -97,11 +85,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				'x-api-key': 'error-inducing-key',
 			};
 
-			await authenticateAPIKey(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(500);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -165,12 +149,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				code: 'INVALID_CREDENTIALS',
 			};
 
-			betterAuthErrorHandler(
-				error,
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			betterAuthErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -188,12 +167,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				],
 			};
 
-			betterAuthErrorHandler(
-				error,
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			betterAuthErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(400);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -205,12 +179,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 		it('should handle generic errors', () => {
 			const error = new Error('Database connection failed');
 
-			betterAuthErrorHandler(
-				error,
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			betterAuthErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(500);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -223,17 +192,9 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 			const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			const error = new Error('Test error');
 
-			betterAuthErrorHandler(
-				error,
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			betterAuthErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				'Better Auth middleware error:',
-				error,
-			);
+			expect(consoleSpy).toHaveBeenCalledWith('Better Auth middleware error:', error);
 
 			consoleSpy.mockRestore();
 		});
@@ -241,11 +202,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 
 	describe('optionalBetterAuth', () => {
 		it('should pass through requests without auth header', async () => {
-			await optionalBetterAuth(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await optionalBetterAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalledWith();
 		});
@@ -256,11 +213,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				cookie: sessionCookie,
 			};
 
-			await optionalBetterAuth(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await optionalBetterAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -270,11 +223,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				cookie: 'auth-session=invalid-session',
 			};
 
-			await optionalBetterAuth(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await optionalBetterAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 			expect(mockRequest.user).toBeUndefined();
@@ -286,11 +235,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				cookie: cookies,
 			};
 
-			await optionalBetterAuth(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await optionalBetterAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -305,11 +250,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 			};
 
 			const adminMiddleware = requireRole('admin');
-			await adminMiddleware(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await adminMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -322,11 +263,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 			};
 
 			const adminMiddleware = requireRole('admin');
-			await adminMiddleware(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await adminMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(403);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -337,11 +274,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 
 		it('should deny access without user', async () => {
 			const adminMiddleware = requireRole('admin');
-			await adminMiddleware(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await adminMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
 			expect(mockResponse.json).toHaveBeenCalledWith({
@@ -357,11 +290,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 			};
 
 			const middleware = requireRole('admin', 'moderator');
-			await middleware(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -374,11 +303,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 			};
 
 			const adminMiddleware = requireRole('admin');
-			await adminMiddleware(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await adminMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -387,12 +312,10 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 	describe('Integration Tests', () => {
 		it('should handle complete auth flow through API', async () => {
 			// Test login endpoint
-			const loginResponse = await request(app)
-				.post('/api/auth/login')
-				.send({
-					email: 'admin@example.com',
-					password: 'admin123',
-				});
+			const loginResponse = await request(app).post('/api/auth/login').send({
+				email: 'admin@example.com',
+				password: 'admin123',
+			});
 
 			// Should get session cookie
 			expect(loginResponse.headers['set-cookie']).toBeDefined();
@@ -418,18 +341,13 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				.expect(201);
 
 			// Use API key to access protected endpoint
-			const response = await request(app)
-				.get('/api/v1/data')
-				.set('X-API-Key', apiKey)
-				.expect(200);
+			const response = await request(app).get('/api/v1/data').set('X-API-Key', apiKey).expect(200);
 
 			expect(response.body).toBeDefined();
 		});
 
 		it('should handle CORS preflight correctly', async () => {
-			const response = await request(app)
-				.options('/api/auth/login')
-				.expect(200);
+			const response = await request(app).options('/api/auth/login').expect(200);
 
 			expect(response.headers['access-control-allow-origin']).toBeDefined();
 			expect(response.headers['access-control-allow-methods']).toBeDefined();
@@ -441,27 +359,19 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 		it('should handle malformed headers gracefully', async () => {
 			mockRequest.headers = {
 				'x-api-key': '',
-				'authorization': 'Bearer malformed.jwt.token',
-				'cookie': 'invalid-cookie-format',
+				authorization: 'Bearer malformed.jwt.token',
+				cookie: 'invalid-cookie-format',
 			};
 
-			await authenticateAPIKey(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
 		});
 
 		it('should handle concurrent requests', async () => {
-			const promises = Array(10).fill(null).map(() =>
-				optionalBetterAuth(
-					mockRequest as Request,
-					mockResponse as Response,
-					mockNext,
-				)
-			);
+			const promises = Array(10)
+				.fill(null)
+				.map(() => optionalBetterAuth(mockRequest as Request, mockResponse as Response, mockNext));
 
 			await Promise.all(promises);
 			expect(mockNext).toHaveBeenCalledTimes(10);
@@ -473,11 +383,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				'x-api-key': longApiKey,
 			};
 
-			await authenticateAPIKey(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
 		});
@@ -490,11 +396,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				'x-api-key': maliciousKey,
 			};
 
-			await authenticateAPIKey(
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			await authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockResponse.status).toHaveBeenCalledWith(401);
 		});
@@ -506,12 +408,7 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 				code: 'DB_ERROR',
 			};
 
-			betterAuthErrorHandler(
-				error,
-				mockRequest as Request,
-				mockResponse as Response,
-				mockNext,
-			);
+			betterAuthErrorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
 			// Error should be returned as-is since it's a BetterAuthError
 			// In production, you might want to sanitize these
@@ -528,13 +425,9 @@ describe('Better Auth Middleware - Comprehensive Tests', () => {
 			};
 
 			// Simulate rate limit
-			const promises = Array(100).fill(null).map(() =>
-				authenticateAPIKey(
-					mockRequest as Request,
-					mockResponse as Response,
-					mockNext,
-				)
-			);
+			const promises = Array(100)
+				.fill(null)
+				.map(() => authenticateAPIKey(mockRequest as Request, mockResponse as Response, mockNext));
 
 			await Promise.all(promises);
 

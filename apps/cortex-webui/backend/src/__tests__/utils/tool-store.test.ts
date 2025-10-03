@@ -58,7 +58,7 @@ describe('Tool Store Utils', () => {
 			const event = addToolEvent(sessionId, {
 				name: 'tool-with-id',
 				id: customId,
-				status: 'start'
+				status: 'start',
 			});
 
 			expect(event.id).toBe(customId);
@@ -70,8 +70,8 @@ describe('Tool Store Utils', () => {
 				name: 'sensitive-tool',
 				args: {
 					apiKey: 'secret-key-123',
-					publicData: 'this is public'
-				}
+					publicData: 'this is public',
+				},
 			});
 
 			expect(event.args?.apiKey).toBe('[REDACTED]');
@@ -85,7 +85,7 @@ describe('Tool Store Utils', () => {
 				apiKey: 'secret-key',
 				token: 'auth-token',
 				normalField: 'normal-value',
-				password: 'user-password'
+				password: 'user-password',
 			};
 
 			const redacted = redactArgs(args);
@@ -99,7 +99,7 @@ describe('Tool Store Utils', () => {
 		it('should redact email addresses', () => {
 			const args = {
 				message: 'Send to user@example.com',
-				text: 'Contact support@company.org for help'
+				text: 'Contact support@company.org for help',
 			};
 
 			const redacted = redactArgs(args);
@@ -111,7 +111,7 @@ describe('Tool Store Utils', () => {
 		it('should redact bearer tokens', () => {
 			const args = {
 				headerValue: 'Bearer abc123def456',
-				dataString: 'Bearer token789'
+				dataString: 'Bearer token789',
 			};
 
 			const redacted = redactArgs(args);
@@ -125,10 +125,10 @@ describe('Tool Store Utils', () => {
 				config: {
 					apiKey: 'nested-key',
 					settings: {
-						token: 'deep-token'
-					}
+						token: 'deep-token',
+					},
 				},
-				safe: 'value'
+				safe: 'value',
 			};
 
 			const redacted = redactArgs(args);
@@ -140,10 +140,7 @@ describe('Tool Store Utils', () => {
 
 		it('should handle arrays', () => {
 			const args = {
-				items: [
-					{ apiKey: 'key1', value: 'val1' },
-					{ normalField: 'val2' }
-				]
+				items: [{ apiKey: 'key1', value: 'val1' }, { normalField: 'val2' }],
 			};
 
 			const redacted = redactArgs(args);
@@ -168,7 +165,7 @@ describe('Tool Store Utils', () => {
 				boolean: true,
 				null: null,
 				undefined: undefined,
-				string: 'normal string'
+				string: 'normal string',
 			};
 
 			const redacted = redactArgs(args);
@@ -180,7 +177,7 @@ describe('Tool Store Utils', () => {
 			const args = {
 				APIKEY: 'uppercase-key',
 				Secret_Value: 'mixed-case-secret',
-				authTOKEN: 'another-token'
+				authTOKEN: 'another-token',
 			};
 
 			const redacted = redactArgs(args);

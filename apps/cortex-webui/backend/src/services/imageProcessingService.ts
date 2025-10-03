@@ -48,7 +48,10 @@ export class ImageProcessingService {
 			const imageMetadata = await this.extractImageMetadata(source, filename);
 
 			// Process image for storage and analysis
-			const { resizedBuffer, thumbnailBuffer } = await this.prepareImageForProcessing(source, options);
+			const { resizedBuffer, thumbnailBuffer } = await this.prepareImageForProcessing(
+				source,
+				options,
+			);
 
 			// Perform OCR if enabled
 			if (options.enableOCR !== false) {
@@ -117,7 +120,10 @@ export class ImageProcessingService {
 	/**
 	 * Validate image file format and size
 	 */
-	private async validateImage(source: Buffer | { path: string; size: number }, _filename: string): Promise<void> {
+	private async validateImage(
+		source: Buffer | { path: string; size: number },
+		_filename: string,
+	): Promise<void> {
 		const fileSize = this.getFileSize(source);
 		if (fileSize > this.maxImageSize) {
 			throw new Error(
@@ -188,7 +194,9 @@ export class ImageProcessingService {
 	/**
 	 * Extract EXIF data from image
 	 */
-	private async extractExifData(source: Buffer | { path: string; size: number }): Promise<ExifData | undefined> {
+	private async extractExifData(
+		source: Buffer | { path: string; size: number },
+	): Promise<ExifData | undefined> {
 		const metadata = await sharp(this.getSharpSource(source)).metadata();
 
 		if (!metadata.exif) {
@@ -351,13 +359,15 @@ export class ImageProcessingService {
 		return Buffer.isBuffer(source) ? source : source.path;
 	}
 
-	private async createWorkingBuffer(source: Buffer | { path: string; size: number }): Promise<Buffer> {
+	private async createWorkingBuffer(
+		source: Buffer | { path: string; size: number },
+	): Promise<Buffer> {
 		return Buffer.isBuffer(source)
 			? source
 			: sharp(source.path)
-				.resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-				.png({ quality: 90 })
-				.toBuffer();
+					.resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+					.png({ quality: 90 })
+					.toBuffer();
 	}
 
 	/**

@@ -383,7 +383,7 @@ export class McpAiIntegration extends EventEmitter {
 	 * Find tools suitable for multimodal processing
 	 */
 	private async findMultimodalTools(
-		modality: string,
+		_modality: string,
 		preferredTools?: string[],
 	): Promise<Array<McpToolRegistry['tools']['get']>> {
 		const allTools = mcpToolRegistry.listTools();
@@ -442,7 +442,7 @@ export class McpAiIntegration extends EventEmitter {
 	 */
 	private prepareToolParameters(
 		request: MultimodalToolRequest,
-		tool: McpToolRegistry['tools']['get'],
+		_tool: McpToolRegistry['tools']['get'],
 	): Record<string, unknown> {
 		const baseParams: Record<string, unknown> = {};
 

@@ -25,10 +25,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 					password: 'SecurePass123!',
 				};
 
-				const response = await request(app)
-					.post('/api/auth/sign-up')
-					.send(userData)
-					.expect(201);
+				const response = await request(app).post('/api/auth/sign-up').send(userData).expect(201);
 
 				expect(response.body).toHaveProperty('user');
 				expect(response.body.user.email).toBe(userData.email);
@@ -42,10 +39,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 					password: 'SecurePass123!',
 				};
 
-				const response = await request(app)
-					.post('/api/auth/sign-up')
-					.send(userData)
-					.expect(400);
+				const response = await request(app).post('/api/auth/sign-up').send(userData).expect(400);
 
 				expect(response.body).toHaveProperty('error');
 				expect(response.body.error).toContain('email');
@@ -58,10 +52,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 					password: '123',
 				};
 
-				const response = await request(app)
-					.post('/api/auth/sign-up')
-					.send(userData)
-					.expect(400);
+				const response = await request(app).post('/api/auth/sign-up').send(userData).expect(400);
 
 				expect(response.body).toHaveProperty('error');
 			});
@@ -74,16 +65,10 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 				};
 
 				// First registration
-				await request(app)
-					.post('/api/auth/sign-up')
-					.send(userData)
-					.expect(201);
+				await request(app).post('/api/auth/sign-up').send(userData).expect(201);
 
 				// Second registration with same email
-				const response = await request(app)
-					.post('/api/auth/sign-up')
-					.send(userData)
-					.expect(409);
+				const response = await request(app).post('/api/auth/sign-up').send(userData).expect(409);
 
 				expect(response.body).toHaveProperty('error');
 				expect(response.body.error).toContain('already exists');
@@ -97,10 +82,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 					password: 'admin123',
 				};
 
-				const response = await request(app)
-					.post('/api/auth/login')
-					.send(credentials)
-					.expect(200);
+				const response = await request(app).post('/api/auth/login').send(credentials).expect(200);
 
 				expect(response.body).toHaveProperty('user');
 				expect(response.headers['set-cookie']).toBeDefined();
@@ -112,10 +94,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 					password: 'wrongpassword',
 				};
 
-				const response = await request(app)
-					.post('/api/auth/login')
-					.send(credentials)
-					.expect(401);
+				const response = await request(app).post('/api/auth/login').send(credentials).expect(401);
 
 				expect(response.body).toHaveProperty('error');
 				expect(response.body.error).toContain('Invalid credentials');
@@ -127,19 +106,13 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 					password: 'somepassword',
 				};
 
-				const response = await request(app)
-					.post('/api/auth/login')
-					.send(credentials)
-					.expect(401);
+				const response = await request(app).post('/api/auth/login').send(credentials).expect(401);
 
 				expect(response.body).toHaveProperty('error');
 			});
 
 			it('should handle missing fields', async () => {
-				const response = await request(app)
-					.post('/api/auth/login')
-					.send({})
-					.expect(400);
+				const response = await request(app).post('/api/auth/login').send({}).expect(400);
 
 				expect(response.body).toHaveProperty('error');
 				expect(response.body.error).toContain('required');
@@ -149,12 +122,10 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 		describe('POST /api/auth/logout', () => {
 			it('should logout authenticated user', async () => {
 				// First login
-				const loginResponse = await request(app)
-					.post('/api/auth/login')
-					.send({
-						email: 'admin@example.com',
-						password: 'admin123',
-					});
+				const loginResponse = await request(app).post('/api/auth/login').send({
+					email: 'admin@example.com',
+					password: 'admin123',
+				});
 
 				const sessionCookie = loginResponse.headers['set-cookie'][0];
 
@@ -168,9 +139,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 			});
 
 			it('should handle logout without session', async () => {
-				const response = await request(app)
-					.post('/api/auth/logout')
-					.expect(401);
+				const response = await request(app).post('/api/auth/logout').expect(401);
 
 				expect(response.body).toHaveProperty('error');
 			});
@@ -179,12 +148,10 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 		describe('GET /api/auth/me', () => {
 			it('should return current user info', async () => {
 				// Login first
-				const loginResponse = await request(app)
-					.post('/api/auth/login')
-					.send({
-						email: 'admin@example.com',
-						password: 'admin123',
-					});
+				const loginResponse = await request(app).post('/api/auth/login').send({
+					email: 'admin@example.com',
+					password: 'admin123',
+				});
 
 				const sessionCookie = loginResponse.headers['set-cookie'][0];
 
@@ -201,9 +168,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 			});
 
 			it('should require authentication', async () => {
-				const response = await request(app)
-					.get('/api/auth/me')
-					.expect(401);
+				const response = await request(app).get('/api/auth/me').expect(401);
 
 				expect(response.body).toHaveProperty('error');
 			});
@@ -215,12 +180,10 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 
 		beforeEach(async () => {
 			// Authenticate as admin
-			const loginResponse = await request(app)
-				.post('/api/auth/login')
-				.send({
-					email: 'admin@example.com',
-					password: 'admin123',
-				});
+			const loginResponse = await request(app).post('/api/auth/login').send({
+				email: 'admin@example.com',
+				password: 'admin123',
+			});
 			authCookie = loginResponse.headers['set-cookie'][0];
 		});
 
@@ -249,9 +212,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 			});
 
 			it('should reject unauthenticated requests', async () => {
-				const response = await request(app)
-					.get('/api/v1/users')
-					.expect(401);
+				const response = await request(app).get('/api/v1/users').expect(401);
 
 				expect(response.body).toHaveProperty('error');
 			});
@@ -286,12 +247,10 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 
 			it('should prevent updating other users without admin role', async () => {
 				// Login as regular user
-				const userLogin = await request(app)
-					.post('/api/auth/login')
-					.send({
-						email: 'user@example.com',
-						password: 'user123',
-					});
+				const userLogin = await request(app).post('/api/auth/login').send({
+					email: 'user@example.com',
+					password: 'user123',
+				});
 
 				const userCookie = userLogin.headers['set-cookie'][0];
 
@@ -318,9 +277,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 
 			it('should prevent self-deletion', async () => {
 				// Get current user ID
-				const meResponse = await request(app)
-					.get('/api/auth/me')
-					.set('Cookie', authCookie);
+				const meResponse = await request(app).get('/api/auth/me').set('Cookie', authCookie);
 
 				const userId = meResponse.body.user.id;
 
@@ -339,12 +296,10 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 		let authCookie: string;
 
 		beforeEach(async () => {
-			const loginResponse = await request(app)
-				.post('/api/auth/login')
-				.send({
-					email: 'user@example.com',
-					password: 'user123',
-				});
+			const loginResponse = await request(app).post('/api/auth/login').send({
+				email: 'user@example.com',
+				password: 'user123',
+			});
 			authCookie = loginResponse.headers['set-cookie'][0];
 		});
 
@@ -377,15 +332,12 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 
 			it('should handle rate limiting', async () => {
 				const message = { message: 'Test message' };
-				const promises = Array(20).fill(null).map(() =>
-					request(app)
-						.post('/api/v1/chat')
-						.set('Cookie', authCookie)
-						.send(message)
-				);
+				const promises = Array(20)
+					.fill(null)
+					.map(() => request(app).post('/api/v1/chat').set('Cookie', authCookie).send(message));
 
 				const responses = await Promise.all(promises);
-				const rateLimitedResponse = responses.find(r => r.status === 429);
+				const rateLimitedResponse = responses.find((r) => r.status === 429);
 				expect(rateLimitedResponse).toBeDefined();
 			});
 		});
@@ -408,7 +360,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 					.expect(200);
 
 				expect(response.body).toHaveProperty('conversations');
-				response.body.conversations.forEach(conv => {
+				response.body.conversations.forEach((conv) => {
 					expect(conv.active).toBe(true);
 				});
 			});
@@ -437,12 +389,10 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 		let authCookie: string;
 
 		beforeEach(async () => {
-			const loginResponse = await request(app)
-				.post('/api/auth/login')
-				.send({
-					email: 'user@example.com',
-					password: 'user123',
-				});
+			const loginResponse = await request(app).post('/api/auth/login').send({
+				email: 'user@example.com',
+				password: 'user123',
+			});
 			authCookie = loginResponse.headers['set-cookie'][0];
 		});
 
@@ -527,9 +477,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 	describe('Health and Status Endpoints', () => {
 		describe('GET /health', () => {
 			it('should return health status', async () => {
-				const response = await request(app)
-					.get('/health')
-					.expect(200);
+				const response = await request(app).get('/health').expect(200);
 
 				expect(response.body).toHaveProperty('status');
 				expect(response.body).toHaveProperty('timestamp');
@@ -539,9 +487,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 
 		describe('GET /ready', () => {
 			it('should return readiness status', async () => {
-				const response = await request(app)
-					.get('/ready')
-					.expect(200);
+				const response = await request(app).get('/ready').expect(200);
 
 				expect(response.body).toHaveProperty('ready');
 				expect(response.body).toHaveProperty('checks');
@@ -550,9 +496,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 
 		describe('GET /live', () => {
 			it('should return liveness status', async () => {
-				const response = await request(app)
-					.get('/live')
-					.expect(200);
+				const response = await request(app).get('/live').expect(200);
 
 				expect(response.body).toHaveProperty('alive');
 				expect(response.body.alive).toBe(true);
@@ -562,9 +506,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 
 	describe('Error Handling', () => {
 		it('should handle 404 for unknown endpoints', async () => {
-			const response = await request(app)
-				.get('/api/unknown/endpoint')
-				.expect(404);
+			const response = await request(app).get('/api/unknown/endpoint').expect(404);
 
 			expect(response.body).toHaveProperty('error');
 			expect(response.body.error).toContain('Not found');
@@ -585,10 +527,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 				data: 'x'.repeat(2 * 1024 * 1024), // 2MB
 			};
 
-			const response = await request(app)
-				.post('/api/v1/test')
-				.send(largePayload)
-				.expect(413);
+			const response = await request(app).post('/api/v1/test').send(largePayload).expect(413);
 
 			expect(response.body).toHaveProperty('error');
 		});
@@ -600,10 +539,7 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 				message: '<script>alert("xss")</script>',
 			};
 
-			const response = await request(app)
-				.post('/api/v1/chat')
-				.send(maliciousPayload)
-				.expect(401); // Unauthorized because no auth
+			const response = await request(app).post('/api/v1/chat').send(maliciousPayload).expect(401); // Unauthorized because no auth
 
 			// Response should not contain unescaped script
 			expect(response.body.error || '').not.toContain('<script>');
@@ -644,9 +580,9 @@ describe('API Endpoints - Complete Coverage Tests', () => {
 		});
 
 		it('should handle concurrent requests', async () => {
-			const promises = Array(50).fill(null).map(() =>
-				request(app).get('/health').expect(200)
-			);
+			const promises = Array(50)
+				.fill(null)
+				.map(() => request(app).get('/health').expect(200));
 
 			const start = Date.now();
 			await Promise.all(promises);

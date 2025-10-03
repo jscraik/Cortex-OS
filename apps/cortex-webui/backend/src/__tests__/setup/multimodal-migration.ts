@@ -2,7 +2,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { sql } from 'drizzle-orm/sqlite-core';
 import type { Kysely } from 'kysely';
 
 const __filename = fileURLToPath(import.meta.url);

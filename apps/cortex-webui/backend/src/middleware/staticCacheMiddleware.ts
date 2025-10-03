@@ -1,10 +1,10 @@
 // Static Asset Caching Middleware for brAInwav Cortex WebUI
 // High-performance static asset serving with CDN headers and compression
 
-import type { NextFunction, Request, Response } from 'express';
 import type { Stats } from 'node:fs';
 import { createReadStream, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
+import type { NextFunction, Request, Response } from 'express';
 import { cacheService } from '../services/cacheService.js';
 
 export interface StaticCacheConfig {

@@ -64,7 +64,6 @@ export class BatchService {
 		transactionRollbacks: 0,
 	};
 	private jobTimes: number[] = [];
-	private metricsService: MetricsService;
 	private cleanupInterval?: NodeJS.Timeout;
 
 	private constructor() {
@@ -390,7 +389,7 @@ export class BatchService {
 
 		const totalTime = Array.from(this.jobs.values())
 			.filter((job) => job.status === 'completed' && job.startTime && job.endTime)
-			.reduce((sum, job) => sum + (job.endTime!.getTime() - job.startTime!.getTime()), 0);
+			.reduce((sum, job) => sum + (job.endTime?.getTime() - job.startTime?.getTime()), 0);
 
 		if (totalTime > 0) {
 			this.stats.operationsPerSecond = (totalOperations * 1000) / totalTime;
@@ -522,7 +521,7 @@ export class BatchService {
 	): Promise<BatchJob> {
 		const operations: BatchOperation[] = conditions.map((where) => {
 			const whereClause = Object.entries(where)
-				.map(([key, value]) => `${key} = ?`)
+				.map(([key, _value]) => `${key} = ?`)
 				.join(' AND ');
 			const query = `DELETE FROM ${table} WHERE ${whereClause}`;
 			const parameters = Object.values(where);

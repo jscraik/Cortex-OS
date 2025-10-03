@@ -36,7 +36,14 @@ export class VitestReporter extends BaseTestReporter {
 			return this.createMockTestResults(filePaths);
 		}
 
-		const args = ['vitest', 'run', '--reporter=json', '--config', 'vitest.basic.config.ts', '--runInBand'];
+		const args = [
+			'vitest',
+			'run',
+			'--reporter=json',
+			'--config',
+			'vitest.basic.config.ts',
+			'--runInBand',
+		];
 
 		if (filePaths && filePaths.length > 0) {
 			// Validate that test files exist before trying to run them
@@ -144,7 +151,10 @@ export class VitestReporter extends BaseTestReporter {
 		env.COVERAGE_THRESHOLD_FUNCTIONS = env.COVERAGE_THRESHOLD_FUNCTIONS ?? '0';
 		const existingNodeOptions = env.NODE_OPTIONS ?? '';
 		if (!existingNodeOptions.includes('--max-old-space-size')) {
-			env.NODE_OPTIONS = ['--max-old-space-size=2048', existingNodeOptions].filter(Boolean).join(' ').trim();
+			env.NODE_OPTIONS = ['--max-old-space-size=2048', existingNodeOptions]
+				.filter(Boolean)
+				.join(' ')
+				.trim();
 		} else {
 			env.NODE_OPTIONS = existingNodeOptions;
 		}

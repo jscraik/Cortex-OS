@@ -5,21 +5,21 @@ import type { NextFunction, Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
-	errorHandler,
-	HttpError,
 	AppError,
-	ValidationError,
 	AuthenticationError,
 	AuthorizationError,
-	NotFoundError,
+	asyncErrorHandler,
 	ConflictError,
-	RateLimitError,
+	customErrorHandler,
 	DatabaseError,
 	ExternalServiceError,
+	errorHandler,
+	HttpError,
+	NotFoundError,
 	notFoundHandler,
+	RateLimitError,
+	ValidationError,
 	validationErrorHandler,
-	asyncErrorHandler,
-	customErrorHandler,
 } from '../middleware/errorHandler.ts';
 
 // Mock logger
@@ -713,7 +713,7 @@ describe('Error Handler Middleware', () => {
 			expect(mockResponse.json).toHaveBeenCalledWith(
 				expect.objectContaining({
 					correlationId: 'test-correlation-id',
-				})
+				}),
 			);
 		});
 
@@ -731,7 +731,7 @@ describe('Error Handler Middleware', () => {
 						statusCode: 400,
 						details,
 					}),
-				})
+				}),
 			);
 		});
 	});
@@ -790,7 +790,7 @@ describe('Error Handler Middleware', () => {
 							{ field: 'password', message: 'Password is required' },
 						],
 					}),
-				})
+				}),
 			);
 		});
 
@@ -858,7 +858,7 @@ describe('Error Handler Middleware', () => {
 				error,
 				mockRequest,
 				mockResponse,
-				mockNext
+				mockNext,
 			);
 		});
 

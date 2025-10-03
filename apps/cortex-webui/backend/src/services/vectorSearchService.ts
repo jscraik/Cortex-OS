@@ -528,7 +528,11 @@ export class VectorSearchService {
 					continue;
 				}
 
-				const result = await this.formatMultimodalSearchResult(chunk, similarity, !!request.includeContent);
+				const result = await this.formatMultimodalSearchResult(
+					chunk,
+					similarity,
+					!!request.includeContent,
+				);
 				searchResults.push(result);
 			}
 
@@ -584,19 +588,19 @@ export class VectorSearchService {
 	): Promise<
 		Array<
 			MultimodalChunk &
-			Pick<
-				MultimodalDocument,
-				| 'filename'
-				| 'originalName'
-				| 'mimeType'
-				| 'size'
-				| 'processed'
-				| 'processingStatus'
-				| 'processingError'
-				| 'metadata'
-				| 'createdAt'
-				| 'updatedAt'
-			>
+				Pick<
+					MultimodalDocument,
+					| 'filename'
+					| 'originalName'
+					| 'mimeType'
+					| 'size'
+					| 'processed'
+					| 'processingStatus'
+					| 'processingError'
+					| 'metadata'
+					| 'createdAt'
+					| 'updatedAt'
+				>
 		>
 	> {
 		// Start with base query
@@ -711,18 +715,18 @@ export class VectorSearchService {
 				const baseCondition =
 					request.modalities && request.modalities.length > 0
 						? and(
-							eq(multimodalDocuments.userId, userId),
-							eq(multimodalDocuments.processed, true),
-							sql`LENGTH(${multimodalChunks.embedding}) > 0`,
-							inArray(multimodalChunks.modality, mappedModalities ?? []),
-							...filterConditions,
-						)
+								eq(multimodalDocuments.userId, userId),
+								eq(multimodalDocuments.processed, true),
+								sql`LENGTH(${multimodalChunks.embedding}) > 0`,
+								inArray(multimodalChunks.modality, mappedModalities ?? []),
+								...filterConditions,
+							)
 						: and(
-							eq(multimodalDocuments.userId, userId),
-							eq(multimodalDocuments.processed, true),
-							sql`LENGTH(${multimodalChunks.embedding}) > 0`,
-							...filterConditions,
-						);
+								eq(multimodalDocuments.userId, userId),
+								eq(multimodalDocuments.processed, true),
+								sql`LENGTH(${multimodalChunks.embedding}) > 0`,
+								...filterConditions,
+							);
 
 				queryBuilder = queryBuilder.where(baseCondition);
 			}
@@ -730,19 +734,19 @@ export class VectorSearchService {
 
 		return (await queryBuilder.execute()) as Array<
 			MultimodalChunk &
-			Pick<
-				MultimodalDocument,
-				| 'filename'
-				| 'originalName'
-				| 'mimeType'
-				| 'size'
-				| 'processed'
-				| 'processingStatus'
-				| 'processingError'
-				| 'metadata'
-				| 'createdAt'
-				| 'updatedAt'
-			>
+				Pick<
+					MultimodalDocument,
+					| 'filename'
+					| 'originalName'
+					| 'mimeType'
+					| 'size'
+					| 'processed'
+					| 'processingStatus'
+					| 'processingError'
+					| 'metadata'
+					| 'createdAt'
+					| 'updatedAt'
+				>
 		>;
 	}
 

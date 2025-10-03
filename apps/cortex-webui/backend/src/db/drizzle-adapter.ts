@@ -96,8 +96,10 @@ export class DrizzleMemoryAdapterImpl implements DrizzleMemoryAdapter {
 							.filter((k) => k !== 'id')
 							.map(() => '?')
 							.join(', ')})`,
-	id,
-						...(Object.values(values).filter((_v: any, i: number) => i !== 0 || !values.id) as any[]),
+						id,
+						...(Object.values(values).filter(
+							(_v: any, i: number) => i !== 0 || !values.id,
+						) as any[]),
 					);
 					return [{ id, ...values }];
 				},

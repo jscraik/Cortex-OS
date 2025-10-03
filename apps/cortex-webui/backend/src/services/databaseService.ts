@@ -490,9 +490,9 @@ export class DatabaseService {
 		const paramHash =
 			parameters.length > 0
 				? require('node:crypto')
-					.createHash('sha256')
-					.update(JSON.stringify(parameters))
-					.digest('hex')
+						.createHash('sha256')
+						.update(JSON.stringify(parameters))
+						.digest('hex')
 				: 'no-params';
 		return `query:${queryHash}:${paramHash}`;
 	}

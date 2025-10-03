@@ -6,7 +6,7 @@
  * to guide the removal of direct database access
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Memory } from '../src/domain/types.js';
 
 describe('Memory Adapter Migration - Phase 1.1', () => {

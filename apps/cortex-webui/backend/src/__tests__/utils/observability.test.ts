@@ -1,7 +1,11 @@
 // Observability utility tests
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatStreamEventSchema } from '../../utils/observability';
-import { logEvent, makeDoneEvent, makeStartEvent } from '../../utils/observability';
+import {
+	ChatStreamEventSchema,
+	logEvent,
+	makeDoneEvent,
+	makeStartEvent,
+} from '../../utils/observability';
 
 // Mock logger
 vi.mock('../../utils/logger', () => ({
@@ -21,7 +25,7 @@ describe('Observability Utils', () => {
 			const input = {
 				sessionId: 'session-123',
 				model: 'gpt-4',
-				lastUserId: 'user-456'
+				lastUserId: 'user-456',
 			};
 
 			const event = makeStartEvent(input);
@@ -39,7 +43,7 @@ describe('Observability Utils', () => {
 			const input = {
 				sessionId: '',
 				model: 'gpt-4',
-				lastUserId: 'user-456'
+				lastUserId: 'user-456',
 			};
 
 			expect(() => makeStartEvent(input)).toThrow();
@@ -49,7 +53,7 @@ describe('Observability Utils', () => {
 			const input = {
 				sessionId: 'session-789',
 				model: 'claude-3',
-				lastUserId: 'user-999'
+				lastUserId: 'user-999',
 			};
 
 			const event = makeStartEvent(input);
@@ -66,7 +70,7 @@ describe('Observability Utils', () => {
 				messageId: 'msg-456',
 				durationMs: 1500,
 				tokenCount: 250,
-				textSize: 1000
+				textSize: 1000,
 			};
 
 			const event = makeDoneEvent(input);
@@ -90,7 +94,7 @@ describe('Observability Utils', () => {
 				messageId: 'msg-456',
 				durationMs: -1,
 				tokenCount: 0,
-				textSize: 100
+				textSize: 100,
 			};
 
 			expect(() => makeDoneEvent(input)).toThrow();
@@ -103,7 +107,7 @@ describe('Observability Utils', () => {
 				messageId: 'msg-456',
 				durationMs: 0,
 				tokenCount: 0,
-				textSize: 0
+				textSize: 0,
 			};
 
 			const event = makeDoneEvent(input);
@@ -127,17 +131,20 @@ describe('Observability Utils', () => {
 			const event = makeStartEvent({
 				sessionId: 'session-123',
 				model: 'gpt-4',
-				lastUserId: 'user-456'
+				lastUserId: 'user-456',
 			});
 
 			logEvent(event);
 
-			expect(logger.info).toHaveBeenCalledWith('obs:event', expect.objectContaining({
-				evt: 'chat.stream.start',
-				sessionId: 'session-123',
-				model: 'gpt-4',
-				lastUserId: 'user-456'
-			}));
+			expect(logger.info).toHaveBeenCalledWith(
+				'obs:event',
+				expect.objectContaining({
+					evt: 'chat.stream.start',
+					sessionId: 'session-123',
+					model: 'gpt-4',
+					lastUserId: 'user-456',
+				}),
+			);
 		});
 
 		it('should log valid done events', async () => {
@@ -147,26 +154,29 @@ describe('Observability Utils', () => {
 				messageId: 'msg-456',
 				durationMs: 1500,
 				tokenCount: 250,
-				textSize: 1000
+				textSize: 1000,
 			});
 
 			logEvent(event);
 
-			expect(logger.info).toHaveBeenCalledWith('obs:event', expect.objectContaining({
-				evt: 'chat.stream.done',
-				sessionId: 'session-123',
-				model: 'gpt-4',
-				messageId: 'msg-456',
-				durationMs: 1500,
-				tokenCount: 250,
-				textSize: 1000
-			}));
+			expect(logger.info).toHaveBeenCalledWith(
+				'obs:event',
+				expect.objectContaining({
+					evt: 'chat.stream.done',
+					sessionId: 'session-123',
+					model: 'gpt-4',
+					messageId: 'msg-456',
+					durationMs: 1500,
+					tokenCount: 250,
+					textSize: 1000,
+				}),
+			);
 		});
 
 		it('should log warnings for invalid events', () => {
 			const invalidEvent = {
 				evt: 'invalid.event.type',
-				sessionId: 'session-123'
+				sessionId: 'session-123',
 			} as any;
 
 			logEvent(invalidEvent);
@@ -178,7 +188,7 @@ describe('Observability Utils', () => {
 			const malformedEvent = {
 				evt: 'chat.stream.start',
 				// Missing required sessionId
-				model: 'gpt-4'
+				model: 'gpt-4',
 			} as any;
 
 			logEvent(malformedEvent);

@@ -20,7 +20,10 @@ async function logPreflightStatus(): Promise<void> {
 		console.log('[brAInwav] Pre-test TDD status check');
 		console.log(statusOutput);
 	} catch (error) {
-		console.warn('[brAInwav] TDD preflight warning', error instanceof Error ? error.message : error);
+		console.warn(
+			'[brAInwav] TDD preflight warning',
+			error instanceof Error ? error.message : error,
+		);
 	}
 }
 

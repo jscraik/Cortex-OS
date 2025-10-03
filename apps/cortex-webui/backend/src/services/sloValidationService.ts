@@ -797,4 +797,3 @@ export const sloValidationService = SLOValidationService.getInstance();
 
 // Export types
 export type { SLOHistory, SLOReport, SLOTargets };
-

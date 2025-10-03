@@ -34,7 +34,6 @@ export interface QualityContract {
 	};
 }
 
-
 export interface CoverageRatchetConfig {
 	baseline_path: string;
 	line_slack_percent?: number;
@@ -267,20 +266,29 @@ export class QualityGateEnforcer {
 		const allowedLineDrop = ratchet.line_slack_percent ?? 0;
 		const allowedBranchDrop = ratchet.branch_slack_percent ?? 0;
 
-		if (typeof baselineLine === 'number' && coverage.lines.percentage < baselineLine - allowedLineDrop) {
+		if (
+			typeof baselineLine === 'number' &&
+			coverage.lines.percentage < baselineLine - allowedLineDrop
+		) {
 			this.violations.push(
 				`Line coverage ${coverage.lines.percentage.toFixed(1)}% < ratchet baseline ${baselineLine.toFixed(1)}% (allowable drop ${allowedLineDrop.toFixed(1)}%)`,
 			);
 		}
 
-		if (typeof baselineBranch === 'number' && coverage.branches.percentage < baselineBranch - allowedBranchDrop) {
+		if (
+			typeof baselineBranch === 'number' &&
+			coverage.branches.percentage < baselineBranch - allowedBranchDrop
+		) {
 			this.violations.push(
 				`Branch coverage ${coverage.branches.percentage.toFixed(1)}% < ratchet baseline ${baselineBranch.toFixed(1)}% (allowable drop ${allowedBranchDrop.toFixed(1)}%)`,
 			);
 		}
 	}
 
-	private extractBaselinePercentage(snapshot: BaselineCoverageSnapshot, key: 'line' | 'branch'): number | null {
+	private extractBaselinePercentage(
+		snapshot: BaselineCoverageSnapshot,
+		key: 'line' | 'branch',
+	): number | null {
 		const direct = snapshot[key];
 		if (typeof direct === 'number') {
 			return direct;

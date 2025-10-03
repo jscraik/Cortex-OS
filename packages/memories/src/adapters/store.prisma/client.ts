@@ -44,7 +44,7 @@ export class PrismaStore implements MemoryStore {
 	 * @deprecated Direct database access is deprecated. Use REST API instead.
 	 * @throws {Error} Always throws to prevent direct DB access
 	 */
-	directDBQuery(query: string): Promise<never> {
+	directDBQuery(_query: string): Promise<never> {
 		return Promise.reject(new Error('Direct DB access deprecated - use REST API'));
 	}
 

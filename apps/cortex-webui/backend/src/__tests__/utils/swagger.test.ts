@@ -1,5 +1,5 @@
 // Swagger configuration tests
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { swaggerSpec } from '../../utils/swagger';
 
 describe('Swagger Configuration', () => {

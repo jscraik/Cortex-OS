@@ -248,7 +248,7 @@ export async function executeTool(req: Request, res: Response): Promise<void> {
  * GET /api/v1/mcp/servers
  * List registered MCP servers
  */
-export async function listServers(req: Request, res: Response): Promise<void> {
+export async function listServers(_req: Request, res: Response): Promise<void> {
 	try {
 		const servers = protocolIntegration.listServers();
 
@@ -458,7 +458,7 @@ export async function callServerTool(req: Request, res: Response): Promise<void>
  * GET /api/v1/mcp/stats
  * Get MCP system statistics
  */
-export async function getStats(req: Request, res: Response): Promise<void> {
+export async function getStats(_req: Request, res: Response): Promise<void> {
 	try {
 		const registryStats = toolRegistry.getStats();
 		const executionStats = toolExecutor.getStats();

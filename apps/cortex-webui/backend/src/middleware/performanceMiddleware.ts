@@ -1,12 +1,12 @@
 // Performance Middleware for brAInwav Cortex WebUI
 // Advanced compression, rate limiting, and request optimization
 
-import type { NextFunction, Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
-import SlowDown from 'express-slow-down';
 import { createHash } from 'node:crypto';
 import type { Transform } from 'node:stream';
 import { constants, createBrotliCompress, createDeflate, createGzip } from 'node:zlib';
+import type { NextFunction, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
+import SlowDown from 'express-slow-down';
 import { MetricsService } from '../monitoring/services/metricsService.js';
 import { cacheService } from '../services/cacheService.js';
 
@@ -80,7 +80,7 @@ export const createCompressionMiddleware = (options: CompressionOptions = {}) =>
 		const originalEnd = res.end;
 		const originalWriteHead = res.writeHead;
 
-		let compressed = false;
+		let _compressed = false;
 		let stream: Transform | null = null;
 
 		// Choose compression method based on Accept-Encoding header
@@ -93,7 +93,7 @@ export const createCompressionMiddleware = (options: CompressionOptions = {}) =>
 				chunkSize: opts.chunkSize,
 			});
 			res.setHeader('Content-Encoding', 'br');
-			compressed = true;
+			_compressed = true;
 		} else if (acceptEncoding.includes('gzip')) {
 			// Gzip compression
 			stream = createGzip({
@@ -104,7 +104,7 @@ export const createCompressionMiddleware = (options: CompressionOptions = {}) =>
 				strategy: opts.strategy,
 			});
 			res.setHeader('Content-Encoding', 'gzip');
-			compressed = true;
+			_compressed = true;
 		} else if (acceptEncoding.includes('deflate')) {
 			// Deflate compression
 			stream = createDeflate({
@@ -115,7 +115,7 @@ export const createCompressionMiddleware = (options: CompressionOptions = {}) =>
 				strategy: opts.strategy,
 			});
 			res.setHeader('Content-Encoding', 'deflate');
-			compressed = true;
+			_compressed = true;
 		}
 
 		if (!stream) {
@@ -353,7 +353,7 @@ export const createRequestLoggingMiddleware = (
 					contentType: contentType || 'unknown',
 					ip: req.ip,
 					userAgent: req.get('User-Agent'),
-					compressed: req.compressionStream ? true : false,
+					compressed: !!req.compressionStream,
 				};
 
 				if (opts.logHeaders) {
@@ -440,7 +440,7 @@ export const createResponseSizeMiddleware = () => {
 
 // Health check with performance metrics
 export const createPerformanceHealthMiddleware = () => {
-	return async (req: Request, res: Response): Promise<void> => {
+	return async (_req: Request, res: Response): Promise<void> => {
 		try {
 			const metricsService = MetricsService.getInstance();
 			const metrics = await metricsService.getMetrics();
@@ -534,7 +534,7 @@ function generateSmartKey(req: Request): string {
 	const apiKey = req.headers['x-api-key'] as string;
 	const ip = req.ip || req.connection.remoteAddress || 'unknown';
 
-	if (user && user.id) {
+	if (user?.id) {
 		// Authenticated user - use user ID
 		return `user:${user.id}`;
 	} else if (apiKey) {

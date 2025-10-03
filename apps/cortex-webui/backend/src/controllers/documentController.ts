@@ -1,10 +1,10 @@
-import type { Express, Request, Response } from 'express';
-import multer from 'multer';
-import { mkdirSync, promises as fs } from 'node:fs';
+import { promises as fs, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { DocumentParseResult } from '../types/document.js';
+import type { Express, Request, Response } from 'express';
+import multer from 'multer';
 import { pdfWithImagesService } from '../services/pdfWithImagesService.js';
+import type { DocumentParseResult } from '../types/document.js';
 import logger from '../utils/logger.js';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -37,7 +37,17 @@ export const documentUploadMiddleware = multer({
 			'image/webp',
 		];
 
-		const allowedExtensions = ['.pdf', '.txt', '.md', '.markdown', '.jpg', '.jpeg', '.png', '.gif', '.webp'];
+		const allowedExtensions = [
+			'.pdf',
+			'.txt',
+			'.md',
+			'.markdown',
+			'.jpg',
+			'.jpeg',
+			'.png',
+			'.gif',
+			'.webp',
+		];
 		const extension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
 
 		if (allowedMimes.includes(file.mimetype) || allowedExtensions.includes(extension)) {
@@ -152,7 +162,9 @@ async function parseTextFile(
 	}
 
 	const fileType =
-		fileName.toLowerCase().endsWith('.md') || fileName.toLowerCase().endsWith('.markdown') ? 'markdown' : 'text';
+		fileName.toLowerCase().endsWith('.md') || fileName.toLowerCase().endsWith('.markdown')
+			? 'markdown'
+			: 'text';
 
 	return {
 		type: fileType,

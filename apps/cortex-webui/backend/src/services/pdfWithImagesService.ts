@@ -4,7 +4,6 @@ import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import type {
 	ExtractedImage,
-	LayoutInfo,
 	MultimodalProcessingOptions,
 	PdfPage,
 	PdfWithImagesMetadata,
@@ -73,11 +72,7 @@ type VisionAnalysisResult = {
  * Streams PDF content via pdf.js to avoid loading whole files into memory
  */
 export class PdfWithImagesService {
-	private readonly maxFileSize = 200 * 1024 * 1024; // 200MB
 	private readonly maxPages = 200;
-	private readonly maxImages = 500;
-
-	private pdfLibPromise: Promise<PdfJsLib> | null = null;
 
 	async processPdfWithImages(
 		source: PdfSource,

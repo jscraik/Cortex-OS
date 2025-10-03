@@ -11,8 +11,8 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 	describe('Python to Node MCP Integration', () => {
 		it('should fail when Python MCP server still exists', async () => {
 			// This test should initially fail, then pass after removal
-			const fs = await import('fs');
-			const path = await import('path');
+			const fs = await import('node:fs');
+			const path = await import('node:path');
 			const pythonServerPath = path.resolve(
 				process.cwd(),
 				'packages/cortex-mcp/src/cortex_mcp/cortex_fastmcp_server_v2.py',

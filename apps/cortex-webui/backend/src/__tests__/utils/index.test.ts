@@ -5,85 +5,76 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-	hashPassword,
-	comparePassword,
-	generateJWT,
-	verifyJWT,
-	generateSecureToken,
-	sanitizeString,
-	validateEmail,
-	validatePassword,
-	formatBytes,
-	parseUrl,
-	extractDomain,
-	generateSlug,
-	truncateText,
-	camelToSnake,
-	snakeToCamel,
-	deepClone,
-	debounce,
-	throttle,
-retry,
-	formatDate,
-	parseDate,
-	isDateValid,
-	calculateAge,
-	getDateRange,
-	arrayToObject,
-	objectToArray,
-	groupBy,
-	uniqueArray,
-	shuffleArray,
-	sortBy,
-	pickObject,
-	omitObject,
-	mergeObjects,
-	compareObjects,
-	isEmpty,
-	isNil,
-	isString,
-	isNumber,
-	isBoolean,
-	isObject,
-	isArray,
-	isFunction,
-	cloneDeep,
-	escapeRegex,
-	unescapeRegex,
-	generateUUID,
- isValidUUID,
-	calculateChecksum,
- encodeBase64,
-	decodeBase64,
-	formatCurrency,
-	parseNumber,
-	roundToDecimal,
-	interpolate,
-	stripHtml,
-	pluck,
-	sumBy,
 	avgBy,
-	maxBy,
-	minBy,
+	calculateAge,
+	calculateChecksum,
+	camelToSnake,
+	capitalize,
+	comparePassword,
 	countBy,
- partitionBy,
+	debounce,
+	deburr,
+	decodeBase64,
+	deepClone,
+	encodeBase64,
+	escapeRegex,
 	flatMap,
-	zip,
-	zipObject,
+	formatBytes,
+	formatCurrency,
+	formatDate,
+	generateJWT,
+	generateSecureToken,
+	generateSlug,
+	generateUUID,
+	getDateRange,
+	groupBy,
+	hashPassword,
+	interpolate,
+	isArray,
+	isBoolean,
+	isDateValid,
+	isEmpty,
+	isFunction,
+	isNil,
+	isNumber,
+	isObject,
+	isString,
+	isValidUUID,
+	kebabCase,
+	maxBy,
+	mergeObjects,
+	minBy,
+	omitObject,
+	padEnd,
+	padStart,
+	parseDate,
+	parseNumber,
+	parseUrl,
+	partitionBy,
+	pascalCase,
+	pickObject,
+	pluck,
 	range,
 	repeat,
-	padStart,
-	padEnd,
-	trimStart,
-	trimEnd,
-	capitalize,
-	uncapitalize,
-	kebabCase,
-	pascalCase,
+	retry,
+	roundToDecimal,
+	sanitizeString,
+	shuffleArray,
+	snakeToCamel,
+	sortBy,
 	startCase,
+	stripHtml,
+	sumBy,
 	swapCase,
 	template,
-	deburr,
+	throttle,
+	truncateText,
+	uniqueArray,
+	validateEmail,
+	validatePassword,
+	verifyJWT,
+	zip,
+	zipObject,
 } from '../utils/index.ts';
 
 describe('Utility Functions', () => {
@@ -188,7 +179,7 @@ describe('Utility Functions', () => {
 				const options = {
 					issuer: 'test-issuer',
 					audience: 'test-audience',
-					expiresIn: '7d'
+					expiresIn: '7d',
 				};
 				const token = generateJWT(payload, options);
 
@@ -314,7 +305,7 @@ describe('Utility Functions', () => {
 			it('should handle edge cases', () => {
 				expect(validateEmail('')).toBe(false);
 				expect(validateEmail('a@b.c')).toBe(true); // Minimal valid email
-				expect(validateEmail('a'.repeat(64) + '@' + 'b'.repeat(63) + '.com')).toBe(true); // Max lengths
+				expect(validateEmail(`${'a'.repeat(64)}@${'b'.repeat(63)}.com`)).toBe(true); // Max lengths
 			});
 		});
 
@@ -560,14 +551,17 @@ describe('Utility Functions', () => {
 				];
 				const grouped = groupBy(arr, 'category');
 				expect(grouped).toEqual({
-					A: [{ category: 'A', value: 1 }, { category: 'A', value: 3 }],
+					A: [
+						{ category: 'A', value: 1 },
+						{ category: 'A', value: 3 },
+					],
 					B: [{ category: 'B', value: 2 }],
 				});
 			});
 
 			it('should group by function', () => {
 				const arr = [1, 2, 3, 4, 5];
-				const grouped = groupBy(arr, (n) => n % 2 === 0 ? 'even' : 'odd');
+				const grouped = groupBy(arr, (n) => (n % 2 === 0 ? 'even' : 'odd'));
 				expect(grouped).toEqual({
 					even: [2, 4],
 					odd: [1, 3, 5],
@@ -604,7 +598,7 @@ describe('Utility Functions', () => {
 					{ name: 'Bob', age: 35 },
 				];
 				const sorted = sortBy(arr, 'age');
-				expect(sorted.map(x => x.age)).toEqual([25, 30, 35]);
+				expect(sorted.map((x) => x.age)).toEqual([25, 30, 35]);
 			});
 
 			it('should sort by function', () => {
@@ -676,7 +670,8 @@ describe('Utility Functions', () => {
 
 		describe('retry', () => {
 			it('should retry on failure', async () => {
-				const fn = vi.fn()
+				const fn = vi
+					.fn()
 					.mockRejectedValueOnce(new Error('Failed'))
 					.mockRejectedValueOnce(new Error('Failed'))
 					.mockResolvedValue('success');
@@ -690,8 +685,7 @@ describe('Utility Functions', () => {
 			it('should throw after max attempts', async () => {
 				const fn = vi.fn().mockRejectedValue(new Error('Failed'));
 
-				await expect(retry(fn, { attempts: 3, delay: 10 }))
-					.rejects.toThrow('Failed');
+				await expect(retry(fn, { attempts: 3, delay: 10 })).rejects.toThrow('Failed');
 				expect(fn).toHaveBeenCalledTimes(3);
 			});
 		});
@@ -851,9 +845,9 @@ describe('Utility Functions', () => {
 	describe('Math Utilities', () => {
 		describe('roundToDecimal', () => {
 			it('should round to specified decimals', () => {
-				expect(roundToDecimal(3.14159, 2)).toBe(3.14);
+				expect(roundToDecimal(Math.PI, 2)).toBe(3.14);
 				expect(roundToDecimal(3.145, 2)).toBe(3.15);
-				expect(roundToDecimal(3, 2)).toBe(3.00);
+				expect(roundToDecimal(3, 2)).toBe(3.0);
 			});
 		});
 
@@ -933,7 +927,7 @@ describe('Utility Functions', () => {
 		describe('isFunction', () => {
 			it('should check if value is function', () => {
 				expect(isFunction(() => {})).toBe(true);
-				expect(isFunction(function() {})).toBe(true);
+				expect(isFunction(() => {})).toBe(true);
 				expect(isFunction({})).toBe(false);
 			});
 		});
@@ -1002,7 +996,7 @@ describe('Utility Functions', () => {
 		describe('flatMap', () => {
 			it('should map and flatten array', () => {
 				const arr = [[1, 2], [3, 4], [5]];
-				const result = flatMap(arr, x => x);
+				const result = flatMap(arr, (x) => x);
 				expect(result).toEqual([1, 2, 3, 4, 5]);
 			});
 		});
@@ -1010,12 +1004,19 @@ describe('Utility Functions', () => {
 		describe('zip', () => {
 			it('should zip arrays together', () => {
 				const result = zip([1, 2], ['a', 'b'], [true, false]);
-				expect(result).toEqual([[1, 'a', true], [2, 'b', false]]);
+				expect(result).toEqual([
+					[1, 'a', true],
+					[2, 'b', false],
+				]);
 			});
 
 			it('should handle different lengths', () => {
 				const result = zip([1, 2, 3], ['a', 'b']);
-				expect(result).toEqual([[1, 'a'], [2, 'b'], [3, undefined]]);
+				expect(result).toEqual([
+					[1, 'a'],
+					[2, 'b'],
+					[3, undefined],
+				]);
 			});
 		});
 
@@ -1059,7 +1060,7 @@ describe('Utility Functions', () => {
 				const arr = [
 					{ type: 'fruit', name: 'apple' },
 					{ type: 'fruit', name: 'banana' },
-					{ type: 'vegetable', name: 'carrot' }
+					{ type: 'vegetable', name: 'carrot' },
 				];
 				const result = countBy(arr, 'type');
 				expect(result).toEqual({ fruit: 2, vegetable: 1 });
@@ -1132,7 +1133,7 @@ describe('Utility Functions', () => {
 				const arr = [
 					{ name: 'John', age: 30 },
 					{ name: 'Jane', age: 25 },
-					{ name: 'Bob', age: 35 }
+					{ name: 'Bob', age: 35 },
 				];
 				expect(pluck(arr, 'name')).toEqual(['John', 'Jane', 'Bob']);
 			});

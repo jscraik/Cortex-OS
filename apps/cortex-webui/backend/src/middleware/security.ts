@@ -40,23 +40,23 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
 	helmet({
 		contentSecurityPolicy: config.headers.enableCSP
 			? {
-				directives: {
-					defaultSrc: ["'self'"],
-					scriptSrc: config.csp.scriptSrc.split(' '),
-					styleSrc: config.csp.styleSrc.split(' '),
-					imgSrc: config.csp.imgSrc.split(' '),
-					connectSrc: config.csp.connectSrc.split(' '),
-					fontSrc: config.csp.fontSrc.split(' '),
-					objectSrc: config.csp.objectSrc.split(' '),
-					mediaSrc: config.csp.mediaSrc.split(' '),
-					frameSrc: config.csp.frameSrc.split(' '),
-					frameAncestors: config.csp.frameAncestors.split(' '),
-					baseUri: config.csp.baseUri.split(' '),
-					formAction: config.csp.formAction.split(' '),
-					blockAllMixedContent: [],
-					upgradeInsecureRequests: [],
-				},
-			}
+					directives: {
+						defaultSrc: ["'self'"],
+						scriptSrc: config.csp.scriptSrc.split(' '),
+						styleSrc: config.csp.styleSrc.split(' '),
+						imgSrc: config.csp.imgSrc.split(' '),
+						connectSrc: config.csp.connectSrc.split(' '),
+						fontSrc: config.csp.fontSrc.split(' '),
+						objectSrc: config.csp.objectSrc.split(' '),
+						mediaSrc: config.csp.mediaSrc.split(' '),
+						frameSrc: config.csp.frameSrc.split(' '),
+						frameAncestors: config.csp.frameAncestors.split(' '),
+						baseUri: config.csp.baseUri.split(' '),
+						formAction: config.csp.formAction.split(' '),
+						blockAllMixedContent: [],
+						upgradeInsecureRequests: [],
+					},
+				}
 			: false,
 		hsts: {
 			maxAge: config.headers.hstsMaxAge,
@@ -440,4 +440,3 @@ export const applySecurityMiddleware = (app: any): void => {
 
 // Re-export commonly used functions with convenient aliases
 export { customCsrfProtection as csrfProtection, sanitizeInput as xssProtection };
-

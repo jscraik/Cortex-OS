@@ -32,16 +32,14 @@ interface CoachLike {
 		lastUpdate: string;
 		coaching: string;
 	}>;
-	validateChange: (
-		request: {
-			proposedChanges: ChangeSetLike;
-			currentContext?: {
-				activeFiles: string[];
-				recentCommits: string[];
-				branchName?: string;
-			};
-		},
-	) => Promise<TddValidationResponseLike>;
+	validateChange: (request: {
+		proposedChanges: ChangeSetLike;
+		currentContext?: {
+			activeFiles: string[];
+			recentCommits: string[];
+			branchName?: string;
+		};
+	}) => Promise<TddValidationResponseLike>;
 }
 
 export interface StatusOptions {

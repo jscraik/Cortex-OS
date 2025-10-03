@@ -241,7 +241,11 @@ class BrAInwavQualityGateEnforcer {
 		if (typeof pluralValue === 'number') {
 			return pluralValue;
 		}
-		if (pluralValue && typeof pluralValue === 'object' && typeof pluralValue.percentage === 'number') {
+		if (
+			pluralValue &&
+			typeof pluralValue === 'object' &&
+			typeof pluralValue.percentage === 'number'
+		) {
 			return pluralValue.percentage;
 		}
 		return Number.NaN;
@@ -262,7 +266,7 @@ class BrAInwavQualityGateEnforcer {
 			snapshot = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
 		} catch (error) {
 			this.violations.push(
-				`Coverage ratchet baseline missing or invalid at ${baselinePath}: ${error.message}`
+				`Coverage ratchet baseline missing or invalid at ${baselinePath}: ${error.message}`,
 			);
 			return;
 		}
@@ -272,13 +276,21 @@ class BrAInwavQualityGateEnforcer {
 		const allowedLineDrop = ratchet.line_slack_percent ?? 0;
 		const allowedBranchDrop = ratchet.branch_slack_percent ?? 0;
 
-		if (typeof baselineLine === 'number' && Number.isFinite(normalizedCoverage.line) && normalizedCoverage.line < baselineLine - allowedLineDrop) {
+		if (
+			typeof baselineLine === 'number' &&
+			Number.isFinite(normalizedCoverage.line) &&
+			normalizedCoverage.line < baselineLine - allowedLineDrop
+		) {
 			this.violations.push(
 				`Line coverage ${normalizedCoverage.line.toFixed(1)}% < ratchet baseline ${baselineLine.toFixed(1)}% (allowable drop ${allowedLineDrop.toFixed(1)}%)`,
 			);
 		}
 
-		if (typeof baselineBranch === 'number' && Number.isFinite(normalizedCoverage.branch) && normalizedCoverage.branch < baselineBranch - allowedBranchDrop) {
+		if (
+			typeof baselineBranch === 'number' &&
+			Number.isFinite(normalizedCoverage.branch) &&
+			normalizedCoverage.branch < baselineBranch - allowedBranchDrop
+		) {
 			this.violations.push(
 				`Branch coverage ${normalizedCoverage.branch.toFixed(1)}% < ratchet baseline ${baselineBranch.toFixed(1)}% (allowable drop ${allowedBranchDrop.toFixed(1)}%)`,
 			);
@@ -318,8 +330,12 @@ class BrAInwavQualityGateEnforcer {
 		this.validateCoverageRatchet(normalizedCoverage);
 		this.validateCoverageThresholds(normalizedCoverage, mutation);
 
-		const lineDisplay = Number.isFinite(normalizedCoverage.line) ? normalizedCoverage.line.toFixed(1) : 'N/A';
-		const branchDisplay = Number.isFinite(normalizedCoverage.branch) ? normalizedCoverage.branch.toFixed(1) : 'N/A';
+		const lineDisplay = Number.isFinite(normalizedCoverage.line)
+			? normalizedCoverage.line.toFixed(1)
+			: 'N/A';
+		const branchDisplay = Number.isFinite(normalizedCoverage.branch)
+			? normalizedCoverage.branch.toFixed(1)
+			: 'N/A';
 		console.log(
 			`[brAInwav] Coverage: ${lineDisplay}% line, ${branchDisplay}% branch, ${mutation.score.toFixed(1)}% mutation`,
 		);

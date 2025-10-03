@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 /**
  * brAInwav Cortex-OS Agentic Workflow E2E Tests

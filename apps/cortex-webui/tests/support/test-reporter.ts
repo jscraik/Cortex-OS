@@ -1,6 +1,6 @@
-import { FullResult, TestCase, TestResult } from '@playwright/test/reporter';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { FullResult, TestCase, TestResult } from '@playwright/test/reporter';
 
 /**
  * brAInwav Cortex-OS Custom Test Reporter
@@ -16,222 +16,236 @@ import path from 'node:path';
  */
 
 interface BrAInwavTestResult {
-  testId: string;
-  title: string;
-  status: 'passed' | 'failed' | 'skipped';
-  duration: number;
-  browser: string;
-  category: string;
-  error?: string;
-  screenshot?: string;
-  video?: string;
+	testId: string;
+	title: string;
+	status: 'passed' | 'failed' | 'skipped';
+	duration: number;
+	browser: string;
+	category: string;
+	error?: string;
+	screenshot?: string;
+	video?: string;
 }
 
 interface BrAInwavReport {
-  metadata: {
-    testName: string;
-    timestamp: string;
-    duration: number;
-    environment: string;
-    version: string;
-    brand: string;
-  };
-  summary: {
-    total: number;
-    passed: number;
-    failed: number;
-    skipped: number;
-    passRate: number;
-    averageDuration: number;
-  };
-  results: BrAInwavTestResult[];
-  categories: Record<string, {
-    total: number;
-    passed: number;
-    failed: number;
-    passRate: number;
-  }>;
-  browsers: Record<string, {
-    total: number;
-    passed: number;
-    failed: number;
-    passRate: number;
-  }>;
-  performance: {
-    slowestTests: Array<{
-      title: string;
-      duration: number;
-      category: string;
-    }>;
-    averageDuration: number;
-    totalDuration: number;
-  };
-  accessibility: {
-    totalViolations: number;
-    violationsByCategory: Record<string, number>;
-    criticalIssues: number;
-  };
-  security: {
-    totalTests: number;
-    passed: number;
-    failed: number;
-    vulnerabilities: string[];
-  };
+	metadata: {
+		testName: string;
+		timestamp: string;
+		duration: number;
+		environment: string;
+		version: string;
+		brand: string;
+	};
+	summary: {
+		total: number;
+		passed: number;
+		failed: number;
+		skipped: number;
+		passRate: number;
+		averageDuration: number;
+	};
+	results: BrAInwavTestResult[];
+	categories: Record<
+		string,
+		{
+			total: number;
+			passed: number;
+			failed: number;
+			passRate: number;
+		}
+	>;
+	browsers: Record<
+		string,
+		{
+			total: number;
+			passed: number;
+			failed: number;
+			passRate: number;
+		}
+	>;
+	performance: {
+		slowestTests: Array<{
+			title: string;
+			duration: number;
+			category: string;
+		}>;
+		averageDuration: number;
+		totalDuration: number;
+	};
+	accessibility: {
+		totalViolations: number;
+		violationsByCategory: Record<string, number>;
+		criticalIssues: number;
+	};
+	security: {
+		totalTests: number;
+		passed: number;
+		failed: number;
+		vulnerabilities: string[];
+	};
 }
 
 class BrAInwavTestReporter {
-  private results: BrAInwavTestResult[] = [];
-  private startTime: number = Date.now();
-  private testSuites: Set<string> = new Set();
+	private results: BrAInwavTestResult[] = [];
+	private startTime: number = Date.now();
+	private testSuites: Set<string> = new Set();
 
-  async onTestEnd(test: TestCase, result: TestResult): Promise<void> {
-    const browserName = test.parent.project()?.name || 'unknown';
-    const category = this.extractCategory(test.title);
+	async onTestEnd(test: TestCase, result: TestResult): Promise<void> {
+		const browserName = test.parent.project()?.name || 'unknown';
+		const category = this.extractCategory(test.title);
 
-    const testResult: BrAInwavTestResult = {
-      testId: test.id,
-      title: test.title,
-      status: result.status === 'passed' ? 'passed' :
-              result.status === 'failed' ? 'failed' : 'skipped',
-      duration: result.duration,
-      browser: browserName,
-      category,
-      error: result.error?.message,
-      screenshot: result.attachments.find(a => a.name.includes('screenshot'))?.path,
-      video: result.attachments.find(a => a.name.includes('video'))?.path
-    };
+		const testResult: BrAInwavTestResult = {
+			testId: test.id,
+			title: test.title,
+			status:
+				result.status === 'passed' ? 'passed' : result.status === 'failed' ? 'failed' : 'skipped',
+			duration: result.duration,
+			browser: browserName,
+			category,
+			error: result.error?.message,
+			screenshot: result.attachments.find((a) => a.name.includes('screenshot'))?.path,
+			video: result.attachments.find((a) => a.name.includes('video'))?.path,
+		};
 
-    this.results.push(testResult);
-    this.testSuites.add(category);
-  }
+		this.results.push(testResult);
+		this.testSuites.add(category);
+	}
 
-  async onEnd(result: FullResult): Promise<void> {
-    const endTime = Date.now();
-    const totalDuration = endTime - this.startTime;
+	async onEnd(_result: FullResult): Promise<void> {
+		const endTime = Date.now();
+		const totalDuration = endTime - this.startTime;
 
-    const report = this.generateReport(totalDuration);
+		const report = this.generateReport(totalDuration);
 
-    // Generate reports
-    await this.generateHTMLReport(report);
-    await this.generateJSONReport(report);
-    await this.generateMarkdownReport(report);
-    await this.generateJunitReport(report);
+		// Generate reports
+		await this.generateHTMLReport(report);
+		await this.generateJSONReport(report);
+		await this.generateMarkdownReport(report);
+		await this.generateJunitReport(report);
 
-    console.log('\n🧠 brAInwav Cortex-OS Test Report Generated');
-    console.log('='.repeat(50));
-    console.log(`Total Tests: ${report.summary.total}`);
-    console.log(`Passed: ${report.summary.passed} (${report.summary.passRate.toFixed(1)}%)`);
-    console.log(`Failed: ${report.summary.failed}`);
-    console.log(`Skipped: ${report.summary.skipped}`);
-    console.log(`Duration: ${(totalDuration / 1000).toFixed(2)}s`);
-    console.log('='.repeat(50));
-  }
+		console.log('\n🧠 brAInwav Cortex-OS Test Report Generated');
+		console.log('='.repeat(50));
+		console.log(`Total Tests: ${report.summary.total}`);
+		console.log(`Passed: ${report.summary.passed} (${report.summary.passRate.toFixed(1)}%)`);
+		console.log(`Failed: ${report.summary.failed}`);
+		console.log(`Skipped: ${report.summary.skipped}`);
+		console.log(`Duration: ${(totalDuration / 1000).toFixed(2)}s`);
+		console.log('='.repeat(50));
+	}
 
-  private extractCategory(testTitle: string): string {
-    if (testTitle.includes('Authentication')) return 'Authentication';
-    if (testTitle.includes('Document')) return 'Document Processing';
-    if (testTitle.includes('Workflow')) return 'Agentic Workflows';
-    if (testTitle.includes('API')) return 'API Integration';
-    if (testTitle.includes('Accessibility')) return 'Accessibility';
-    if (testTitle.includes('Performance')) return 'Performance';
-    if (testTitle.includes('Security')) return 'Security';
-    return 'General';
-  }
+	private extractCategory(testTitle: string): string {
+		if (testTitle.includes('Authentication')) return 'Authentication';
+		if (testTitle.includes('Document')) return 'Document Processing';
+		if (testTitle.includes('Workflow')) return 'Agentic Workflows';
+		if (testTitle.includes('API')) return 'API Integration';
+		if (testTitle.includes('Accessibility')) return 'Accessibility';
+		if (testTitle.includes('Performance')) return 'Performance';
+		if (testTitle.includes('Security')) return 'Security';
+		return 'General';
+	}
 
-  private generateReport(totalDuration: number): BrAInwavReport {
-    const passed = this.results.filter(r => r.status === 'passed').length;
-    const failed = this.results.filter(r => r.status === 'failed').length;
-    const skipped = this.results.filter(r => r.status === 'skipped').length;
-    const total = this.results.length;
+	private generateReport(totalDuration: number): BrAInwavReport {
+		const passed = this.results.filter((r) => r.status === 'passed').length;
+		const failed = this.results.filter((r) => r.status === 'failed').length;
+		const skipped = this.results.filter((r) => r.status === 'skipped').length;
+		const total = this.results.length;
 
-    // Category statistics
-    const categories: Record<string, { total: number; passed: number; failed: number; passRate: number }> = {};
-    const testCategories = new Set(this.results.map(r => r.category));
+		// Category statistics
+		const categories: Record<
+			string,
+			{ total: number; passed: number; failed: number; passRate: number }
+		> = {};
+		const testCategories = new Set(this.results.map((r) => r.category));
 
-    testCategories.forEach(category => {
-      const categoryResults = this.results.filter(r => r.category === category);
-      const catPassed = categoryResults.filter(r => r.status === 'passed').length;
-      const catFailed = categoryResults.filter(r => r.status === 'failed').length;
-      const catTotal = categoryResults.length;
+		testCategories.forEach((category) => {
+			const categoryResults = this.results.filter((r) => r.category === category);
+			const catPassed = categoryResults.filter((r) => r.status === 'passed').length;
+			const catFailed = categoryResults.filter((r) => r.status === 'failed').length;
+			const catTotal = categoryResults.length;
 
-      categories[category] = {
-        total: catTotal,
-        passed: catPassed,
-        failed: catFailed,
-        passRate: catTotal > 0 ? (catPassed / catTotal) * 100 : 0
-      };
-    });
+			categories[category] = {
+				total: catTotal,
+				passed: catPassed,
+				failed: catFailed,
+				passRate: catTotal > 0 ? (catPassed / catTotal) * 100 : 0,
+			};
+		});
 
-    // Browser statistics
-    const browsers: Record<string, { total: number; passed: number; failed: number; passRate: number }> = {};
-    const testBrowsers = new Set(this.results.map(r => r.browser));
+		// Browser statistics
+		const browsers: Record<
+			string,
+			{ total: number; passed: number; failed: number; passRate: number }
+		> = {};
+		const testBrowsers = new Set(this.results.map((r) => r.browser));
 
-    testBrowsers.forEach(browser => {
-      const browserResults = this.results.filter(r => r.browser === browser);
-      const browserPassed = browserResults.filter(r => r.status === 'passed').length;
-      const browserFailed = browserResults.filter(r => r.status === 'failed').length;
-      const browserTotal = browserResults.length;
+		testBrowsers.forEach((browser) => {
+			const browserResults = this.results.filter((r) => r.browser === browser);
+			const browserPassed = browserResults.filter((r) => r.status === 'passed').length;
+			const browserFailed = browserResults.filter((r) => r.status === 'failed').length;
+			const browserTotal = browserResults.length;
 
-      browsers[browser] = {
-        total: browserTotal,
-        passed: browserPassed,
-        failed: browserFailed,
-        passRate: browserTotal > 0 ? (browserPassed / browserTotal) * 100 : 0
-      };
-    });
+			browsers[browser] = {
+				total: browserTotal,
+				passed: browserPassed,
+				failed: browserFailed,
+				passRate: browserTotal > 0 ? (browserPassed / browserTotal) * 100 : 0,
+			};
+		});
 
-    // Performance metrics
-    const sortedByDuration = [...this.results].sort((a, b) => b.duration - a.duration);
-    const slowestTests = sortedByDuration.slice(0, 10).map(test => ({
-      title: test.title,
-      duration: test.duration,
-      category: test.category
-    }));
+		// Performance metrics
+		const sortedByDuration = [...this.results].sort((a, b) => b.duration - a.duration);
+		const slowestTests = sortedByDuration.slice(0, 10).map((test) => ({
+			title: test.title,
+			duration: test.duration,
+			category: test.category,
+		}));
 
-    const averageDuration = total > 0 ?
-      this.results.reduce((sum, r) => sum + r.duration, 0) / total : 0;
+		const averageDuration =
+			total > 0 ? this.results.reduce((sum, r) => sum + r.duration, 0) / total : 0;
 
-    return {
-      metadata: {
-        testName: 'brAInwav Cortex-OS E2E Test Suite',
-        timestamp: new Date().toISOString(),
-        duration: totalDuration,
-        environment: process.env.NODE_ENV || 'test',
-        version: '1.0.0',
-        brand: 'brAInwav'
-      },
-      summary: {
-        total,
-        passed,
-        failed,
-        skipped,
-        passRate: total > 0 ? (passed / total) * 100 : 0,
-        averageDuration
-      },
-      results: this.results,
-      categories,
-      browsers,
-      performance: {
-        slowestTests,
-        averageDuration,
-        totalDuration
-      },
-      accessibility: {
-        totalViolations: 0, // Would be populated from actual accessibility tests
-        violationsByCategory: {},
-        criticalIssues: 0
-      },
-      security: {
-        totalTests: this.results.filter(r => r.category === 'Security').length,
-        passed: this.results.filter(r => r.category === 'Security' && r.status === 'passed').length,
-        failed: this.results.filter(r => r.category === 'Security' && r.status === 'failed').length,
-        vulnerabilities: [] // Would be populated from actual security tests
-      }
-    };
-  }
+		return {
+			metadata: {
+				testName: 'brAInwav Cortex-OS E2E Test Suite',
+				timestamp: new Date().toISOString(),
+				duration: totalDuration,
+				environment: process.env.NODE_ENV || 'test',
+				version: '1.0.0',
+				brand: 'brAInwav',
+			},
+			summary: {
+				total,
+				passed,
+				failed,
+				skipped,
+				passRate: total > 0 ? (passed / total) * 100 : 0,
+				averageDuration,
+			},
+			results: this.results,
+			categories,
+			browsers,
+			performance: {
+				slowestTests,
+				averageDuration,
+				totalDuration,
+			},
+			accessibility: {
+				totalViolations: 0, // Would be populated from actual accessibility tests
+				violationsByCategory: {},
+				criticalIssues: 0,
+			},
+			security: {
+				totalTests: this.results.filter((r) => r.category === 'Security').length,
+				passed: this.results.filter((r) => r.category === 'Security' && r.status === 'passed')
+					.length,
+				failed: this.results.filter((r) => r.category === 'Security' && r.status === 'failed')
+					.length,
+				vulnerabilities: [], // Would be populated from actual security tests
+			},
+		};
+	}
 
-  private async generateHTMLReport(report: BrAInwavReport): Promise<void> {
-    const htmlTemplate = `
+	private async generateHTMLReport(report: BrAInwavReport): Promise<void> {
+		const htmlTemplate = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -303,7 +317,9 @@ class BrAInwavTestReporter {
         <div class="section">
             <h2>📊 Test Categories</h2>
             <div class="section-content">
-                ${Object.entries(report.categories).map(([category, stats]) => `
+                ${Object.entries(report.categories)
+									.map(
+										([category, stats]) => `
                     <div class="category-card">
                         <div class="category-header">
                             <span class="category-name">${category}</span>
@@ -317,7 +333,9 @@ class BrAInwavTestReporter {
                             <div class="progress-fill" style="width: ${stats.passRate}%"></div>
                         </div>
                     </div>
-                `).join('')}
+                `,
+									)
+									.join('')}
             </div>
         </div>
 
@@ -335,7 +353,9 @@ class BrAInwavTestReporter {
                         </tr>
                     </thead>
                     <tbody>
-                        ${Object.entries(report.browsers).map(([browser, stats]) => `
+                        ${Object.entries(report.browsers)
+													.map(
+														([browser, stats]) => `
                             <tr>
                                 <td>${browser}</td>
                                 <td>${stats.total}</td>
@@ -343,7 +363,9 @@ class BrAInwavTestReporter {
                                 <td class="status-failed">${stats.failed}</td>
                                 <td>${stats.passRate.toFixed(1)}%</td>
                             </tr>
-                        `).join('')}
+                        `,
+													)
+													.join('')}
                     </tbody>
                 </table>
             </div>
@@ -362,13 +384,17 @@ class BrAInwavTestReporter {
                         </tr>
                     </thead>
                     <tbody>
-                        ${report.performance.slowestTests.map(test => `
+                        ${report.performance.slowestTests
+													.map(
+														(test) => `
                             <tr>
                                 <td>${test.title}</td>
                                 <td>${test.category}</td>
                                 <td>${test.duration.toFixed(2)}ms</td>
                             </tr>
-                        `).join('')}
+                        `,
+													)
+													.join('')}
                     </tbody>
                 </table>
                 <p style="margin-top: 20px;">
@@ -392,7 +418,9 @@ class BrAInwavTestReporter {
                         </tr>
                     </thead>
                     <tbody>
-                        ${report.results.map(result => `
+                        ${report.results
+													.map(
+														(result) => `
                             <tr>
                                 <td>${result.title}</td>
                                 <td>${result.category}</td>
@@ -400,7 +428,9 @@ class BrAInwavTestReporter {
                                 <td class="status-${result.status}">${result.status.toUpperCase()}</td>
                                 <td>${result.duration.toFixed(2)}ms</td>
                             </tr>
-                        `).join('')}
+                        `,
+													)
+													.join('')}
                     </tbody>
                 </table>
             </div>
@@ -414,19 +444,19 @@ class BrAInwavTestReporter {
 </body>
 </html>`;
 
-    const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.html');
-    fs.writeFileSync(reportPath, htmlTemplate);
-    console.log(`📄 HTML report generated: ${reportPath}`);
-  }
+		const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.html');
+		fs.writeFileSync(reportPath, htmlTemplate);
+		console.log(`📄 HTML report generated: ${reportPath}`);
+	}
 
-  private async generateJSONReport(report: BrAInwavReport): Promise<void> {
-    const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.json');
-    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    console.log(`📊 JSON report generated: ${reportPath}`);
-  }
+	private async generateJSONReport(report: BrAInwavReport): Promise<void> {
+		const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.json');
+		fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+		console.log(`📊 JSON report generated: ${reportPath}`);
+	}
 
-  private async generateMarkdownReport(report: BrAInwavReport): Promise<void> {
-    const markdown = `
+	private async generateMarkdownReport(report: BrAInwavReport): Promise<void> {
+		const markdown = `
 # ${report.metadata.brand} ${report.metadata.testName}
 
 ## Executive Summary
@@ -441,23 +471,31 @@ class BrAInwavTestReporter {
 
 ## Test Categories
 
-${Object.entries(report.categories).map(([category, stats]) => `
+${Object.entries(report.categories)
+	.map(
+		([category, stats]) => `
 ### ${category}
 - Total: ${stats.total}
 - Passed: ${stats.passed}
 - Failed: ${stats.failed}
 - Pass Rate: ${stats.passRate.toFixed(1)}%
-`).join('')}
+`,
+	)
+	.join('')}
 
 ## Browser Compatibility
 
-${Object.entries(report.browsers).map(([browser, stats]) => `
+${Object.entries(report.browsers)
+	.map(
+		([browser, stats]) => `
 ### ${browser}
 - Total Tests: ${stats.total}
 - Passed: ${stats.passed}
 - Failed: ${stats.failed}
 - Pass Rate: ${stats.passRate.toFixed(1)}%
-`).join('')}
+`,
+	)
+	.join('')}
 
 ## Performance Metrics
 
@@ -466,9 +504,13 @@ ${Object.entries(report.browsers).map(([browser, stats]) => `
 
 ### Slowest Tests
 
-${report.performance.slowestTests.map((test, index) => `
+${report.performance.slowestTests
+	.map(
+		(test, index) => `
 ${index + 1}. ${test.title} (${test.category}) - ${test.duration.toFixed(2)}ms
-`).join('')}
+`,
+	)
+	.join('')}
 
 ## Security Tests
 
@@ -486,13 +528,13 @@ ${index + 1}. ${test.title} (${test.category}) - ${test.duration.toFixed(2)}ms
 *Report generated by ${report.metadata.brand} Testing Framework*
 `;
 
-    const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.md');
-    fs.writeFileSync(reportPath, markdown);
-    console.log(`📝 Markdown report generated: ${reportPath}`);
-  }
+		const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.md');
+		fs.writeFileSync(reportPath, markdown);
+		console.log(`📝 Markdown report generated: ${reportPath}`);
+	}
 
-  private async generateJunitReport(report: BrAInwavReport): Promise<void> {
-    const junitXml = `<?xml version="1.0" encoding="UTF-8"?>
+	private async generateJunitReport(report: BrAInwavReport): Promise<void> {
+		const junitXml = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="${report.metadata.testName}"
            tests="${report.summary.total}"
            failures="${report.summary.failed}"
@@ -504,23 +546,31 @@ ${index + 1}. ${test.title} (${test.category}) - ${test.duration.toFixed(2)}ms
     <property name="version" value="${report.metadata.version}"/>
     <property name="brand" value="${report.metadata.brand}"/>
   </properties>
-  ${report.results.map(result => `
+  ${report.results
+		.map(
+			(result) => `
   <testcase classname="${result.category}"
             name="${result.title}"
             time="${(result.duration / 1000).toFixed(3)}"
             browser="${result.browser}">
-    ${result.status === 'failed' ? `
+    ${
+			result.status === 'failed'
+				? `
     <failure message="${result.error || 'Test failed'}">
       ${result.error || 'Test execution failed'}
-    </failure>` : ''}
+    </failure>`
+				: ''
+		}
     ${result.status === 'skipped' ? '<skipped/>' : ''}
-  </testcase>`).join('')}
+  </testcase>`,
+		)
+		.join('')}
 </testsuite>`;
 
-    const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.xml');
-    fs.writeFileSync(reportPath, junitXml);
-    console.log(`📋 JUnit XML report generated: ${reportPath}`);
-  }
+		const reportPath = path.join(process.cwd(), 'test-results', 'brAInwav-test-report.xml');
+		fs.writeFileSync(reportPath, junitXml);
+		console.log(`📋 JUnit XML report generated: ${reportPath}`);
+	}
 }
 
 export default BrAInwavTestReporter;

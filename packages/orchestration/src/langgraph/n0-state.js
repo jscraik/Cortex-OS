@@ -1,0 +1,96 @@
+import { z } from 'zod';
+export const N0SessionSchema = z.object({
+	id: z.string().min(1),
+	model: z.string().min(1),
+	user: z.string().min(1),
+	cwd: z.string().min(1),
+	brainwavSession: z.string().min(1).optional(),
+});
+export const N0BudgetSchema = z.object({
+	tokens: z.number().int().nonnegative(),
+	timeMs: z.number().int().nonnegative(),
+	depth: z.number().int().nonnegative(),
+});
+export const N0StateSchema = z.object({
+	input: z.string().default(''),
+	session: N0SessionSchema,
+	ctx: z.record(z.unknown()).optional(),
+	messages: z.array(z.custom()).optional(),
+	output: z.string().optional(),
+	budget: N0BudgetSchema.optional(),
+});
+export function createInitialN0State(input, session, overrides = {}) {
+	const draft = {
+		input,
+		session,
+		ctx: overrides.ctx,
+		messages: overrides.messages,
+		output: overrides.output,
+		budget: overrides.budget,
+	};
+	return N0StateSchema.parse(draft);
+}
+export function mergeN0State(base, patch) {
+	return N0StateSchema.parse({
+		...base,
+		...patch,
+		ctx: patch.ctx ? { ...base.ctx, ...patch.ctx } : base.ctx,
+		budget: patch.budget ?? base.budget,
+	});
+}
+export async function compactN0State(state, options = {}) {
+	const messages = state.messages ?? [];
+	const configuredMax = Math.max(0, options.maxMessages ?? 120);
+	if (messages.length <= configuredMax) {
+		return { state, removed: 0, skipped: false };
+	}
+	let allowCompaction = true;
+	let effectiveMax = configuredMax;
+	if (options.hooks) {
+		const hookCtx = {
+			event: 'PreCompact',
+			tool: {
+				name: 'memory.compact',
+				input: {
+					totalMessages: messages.length,
+					maxMessages: configuredMax,
+				},
+			},
+			session: options.session,
+			cwd: options.session?.cwd ?? process.cwd(),
+			user: options.session?.user ?? 'system',
+			tags: options.tags ?? ['memory', 'compaction'],
+		};
+		const hookResults = await options.hooks.run('PreCompact', hookCtx);
+		for (const result of hookResults) {
+			if (result.action === 'deny') {
+				allowCompaction = false;
+				break;
+			}
+			if (result.action === 'allow' && 'input' in result && result.input) {
+				const override = Number(result.input.maxMessages);
+				if (!Number.isNaN(override) && override > 0) {
+					effectiveMax = Math.floor(override);
+				}
+			}
+		}
+	}
+	if (!allowCompaction || messages.length <= effectiveMax) {
+		return { state, removed: 0, skipped: !allowCompaction };
+	}
+	const retainHead = Math.max(0, options.retainHead ?? 1);
+	const head = retainHead > 0 ? messages.slice(0, retainHead) : [];
+	const tailCount = Math.max(effectiveMax - head.length, 0);
+	const tail = tailCount > 0 ? messages.slice(messages.length - tailCount) : [];
+	const trimmed = [...head, ...tail];
+	const removed = messages.length - trimmed.length;
+	return {
+		state: {
+			...state,
+			messages: trimmed,
+		},
+		removed,
+		skipped: false,
+	};
+}
+//# sourceMappingURL=n0-state.js.map

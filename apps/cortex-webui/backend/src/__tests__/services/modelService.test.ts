@@ -80,7 +80,7 @@ describe('Model Service', () => {
 			const model = createModel(input);
 
 			expect(model.id).toMatch(/^model_\d+$/);
-			expect(typeof parseInt(model.id.split('_')[1])).toBe('number');
+			expect(typeof parseInt(model.id.split('_')[1], 10)).toBe('number');
 		});
 
 		it('should create timestamps in ISO format', () => {

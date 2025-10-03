@@ -64,9 +64,7 @@ describe('Database Service', () => {
 				};
 				vi.mocked(db.select).mockReturnValue(mockSelect as any);
 
-				await expect(databaseService.findById('users', '123')).rejects.toThrow(
-					'Connection failed',
-				);
+				await expect(databaseService.findById('users', '123')).rejects.toThrow('Connection failed');
 			});
 		});
 
@@ -269,7 +267,7 @@ describe('Database Service', () => {
 				isolationLevel: 'READ_COMMITTED',
 			};
 
-			const result = await databaseService.transaction(async (tx) => {
+			const result = await databaseService.transaction(async (_tx) => {
 				const user = await databaseService.findById('users', '1');
 				await databaseService.update('users', '1', { balance: 90 });
 				return user;
@@ -295,7 +293,7 @@ describe('Database Service', () => {
 				await databaseService.transaction(async () => {
 					throw new Error('Transaction failed');
 				});
-			} catch (error) {
+			} catch (_error) {
 				// Expected
 			}
 
@@ -362,11 +360,7 @@ describe('Database Service', () => {
 				.execute();
 
 			expect(result).toEqual(mockRecords);
-			expect(mockSelect.leftJoin).toHaveBeenCalledWith(
-				'profiles',
-				'users.id',
-				'profiles.userId',
-			);
+			expect(mockSelect.leftJoin).toHaveBeenCalledWith('profiles', 'users.id', 'profiles.userId');
 		});
 	});
 
@@ -405,9 +399,9 @@ describe('Database Service', () => {
 			vi.mocked(db.select).mockReturnValue(mockSelect as any);
 
 			// Simulate concurrent requests
-			const promises = Array(10).fill(null).map(() =>
-				databaseService.findMany('users', { active: true })
-			);
+			const promises = Array(10)
+				.fill(null)
+				.map(() => databaseService.findMany('users', { active: true }));
 
 			const results = await Promise.all(promises);
 
@@ -426,9 +420,7 @@ describe('Database Service', () => {
 			};
 			vi.mocked(db.select).mockReturnValue(mockSelect as any);
 
-			await expect(databaseService.findById('users', '1')).rejects.toThrow(
-				'Connection timeout',
-			);
+			await expect(databaseService.findById('users', '1')).rejects.toThrow('Connection timeout');
 		});
 
 		it('should handle constraint violations', async () => {
@@ -439,7 +431,7 @@ describe('Database Service', () => {
 			vi.mocked(db.insert).mockReturnValue(mockInsert as any);
 
 			await expect(
-				databaseService.create('users', { email: 'duplicate@example.com' })
+				databaseService.create('users', { email: 'duplicate@example.com' }),
 			).rejects.toThrow('UNIQUE constraint failed');
 		});
 
@@ -450,9 +442,9 @@ describe('Database Service', () => {
 			};
 			vi.mocked(db.insert).mockReturnValue(mockInsert as any);
 
-			await expect(
-				databaseService.create('posts', { userId: 'non-existent' })
-			).rejects.toThrow('FOREIGN KEY constraint failed');
+			await expect(databaseService.create('posts', { userId: 'non-existent' })).rejects.toThrow(
+				'FOREIGN KEY constraint failed',
+			);
 		});
 	});
 

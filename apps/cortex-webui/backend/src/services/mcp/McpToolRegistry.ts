@@ -5,9 +5,7 @@
  * for MCP tools with comprehensive metadata and schema validation.
  */
 
-import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import type { Request, Response } from 'express';
 import { z } from 'zod';
 import logger from '../utils/logger.js';
 
@@ -260,7 +258,7 @@ export class McpToolRegistry extends EventEmitter {
 
 		if (options.tags && options.tags.length > 0) {
 			results = results.filter((tool) =>
-				options.tags!.some((tag) => tool.metadata.tags.includes(tag)),
+				options.tags?.some((tag) => tool.metadata.tags.includes(tag)),
 			);
 		}
 

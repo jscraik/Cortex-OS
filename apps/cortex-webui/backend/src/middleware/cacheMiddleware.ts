@@ -1,8 +1,8 @@
 // Response Caching Middleware for brAInwav Cortex WebUI
 // High-performance HTTP response caching with Redis
 
-import type { NextFunction, Request, Response } from 'express';
 import crypto from 'node:crypto';
+import type { NextFunction, Request, Response } from 'express';
 import { cacheService } from '../services/cacheService.js';
 
 export interface CacheMiddlewareOptions {
