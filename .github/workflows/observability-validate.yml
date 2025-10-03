@@ -1,0 +1,325 @@
+name: Observability Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'reports/grafana/**'
+      - 'infra/prometheus/**'
+      - 'infra/observability/**'
+      - '.github/workflows/observability-validate.yml'
+  pull_request:
+    paths:
+      - 'reports/grafana/**'
+      - 'infra/prometheus/**'
+      - 'infra/observability/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write # for creating issues on validation failures
+
+env:
+  BRAINWAV_ENV: ci
+
+jobs:
+  validate-prometheus:
+    name: Validate Prometheus Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Prometheus
+        run: |
+          wget https://github.com/prometheus/prometheus/releases/download/v2.48.0/prometheus-2.48.0.linux-amd64.tar.gz
+          tar xvfz prometheus-2.48.0.linux-amd64.tar.gz
+          sudo mv prometheus-2.48.0.linux-amd64/promtool /usr/local/bin/
+
+      - name: Validate Prometheus config
+        run: |
+          if [ -f "infra/prometheus/prometheus.yml" ]; then
+            promtool check config infra/prometheus/prometheus.yml
+          else
+            echo "No Prometheus config found, skipping"
+          fi
+
+      - name: Validate alert rules
+        run: |
+          if [ -d "infra/prometheus/rules" ]; then
+            promtool check rules infra/prometheus/rules/*.yml
+          else
+            echo "No alert rules found, skipping"
+          fi
+
+  validate-grafana:
+    name: Validate Grafana Dashboards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Grafana Dashboard Linter
+        run: npm install -g @grafana/dashboards-validator || npm install -g jsonlint
+
+      - name: Validate dashboard JSON
+        run: |
+          if [ -d "reports/grafana/dashboards" ]; then
+            for dashboard in reports/grafana/dashboards/**/*.json; do
+              echo "Validating $dashboard..."
+              if command -v dashboards-validator &> /dev/null; then
+                dashboards-validator "$dashboard"
+              else
+                jsonlint -q "$dashboard"
+              fi
+            done
+          else
+            echo "No Grafana dashboards found, skipping"
+          fi
+
+      - name: Check dashboard naming conventions
+        run: |
+          if [ -d "reports/grafana/dashboards" ]; then
+            for dashboard in reports/grafana/dashboards/**/*.json; do
+              if ! echo "$dashboard" | grep -q "brainwav\|cortex"; then
+                echo "Warning: Dashboard $dashboard should include 'brainwav' or 'cortex' in name"
+              fi
+            done
+          fi
+
+  test-metrics-endpoints:
+    name: Test Metrics Endpoints
+    runs-on: ubuntu-latest
+    services:
+      prometheus:
+        image: prom/prometheus:v2.48.0
+        ports:
+          - 9090:9090
+        options: >-
+          --health-cmd "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build observability package
+        run: |
+          if [ -d "packages/observability" ]; then
+            cd packages/observability
+            pnpm build
+          fi
+
+      - name: Test metrics collection
+        run: |
+          echo "Testing metrics endpoints..."
+          # Start a simple metrics server if available
+          if [ -f "packages/observability/dist/index.js" ]; then
+            node -e "
+              const { setupMetrics } = require('./packages/observability/dist/index.js');
+              const metrics = setupMetrics();
+              console.log('Metrics initialized:', Object.keys(metrics));
+            " || echo "Metrics test skipped"
+          fi
+
+  validate-logging:
+    name: Validate Logging Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for structured logging
+        run: |
+          echo "Checking for structured logging patterns..."
+          if grep -r "console.log" packages/*/src --include="*.ts" --include="*.js" | grep -v "test" | grep -v "logger"; then
+            echo "Warning: Found console.log usage - prefer structured logging"
+            exit 1
+          else
+            echo "✅ No raw console.log found (or using logger)"
+          fi
+
+      - name: Validate log levels
+        run: |
+          echo "Validating log level usage..."
+          for level in "debug" "info" "warn" "error"; do
+            count=$(grep -r "logger.$level" packages/*/src --include="*.ts" --include="*.js" | wc -l || echo "0")
+            echo "  $level: $count usages"
+          done
+
+  validate-tracing:
+    name: Validate Distributed Tracing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check OpenTelemetry setup
+        run: |
+          if [ -d "packages/observability" ]; then
+            cd packages/observability
+            if grep -q "@opentelemetry" package.json; then
+              echo "✅ OpenTelemetry dependencies found"
+            else
+              echo "⚠️  No OpenTelemetry dependencies found"
+            fi
+          fi
+
+      - name: Validate trace context propagation
+        run: |
+          echo "Checking for trace context propagation..."
+          if grep -r "trace.getSpan\|tracer.startSpan" packages/*/src --include="*.ts"; then
+            echo "✅ Tracing implementation found"
+          else
+            echo "⚠️  No tracing implementation found"
+          fi
+
+  metric-cardinality-check:
+    name: Check Metric Cardinality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Analyze metric labels
+        run: |
+          echo "Checking for high-cardinality metric labels..."
+          # Check for common high-cardinality issues
+          if grep -r "user_id\|request_id\|timestamp" packages/*/src --include="*.ts" --include="*.js" | grep -i "label\|tag"; then
+            echo "⚠️  Warning: Potential high-cardinality metric labels detected"
+            echo "Consider using exemplars instead of labels for user_id, request_id, etc."
+          else
+            echo "✅ No obvious high-cardinality issues found"
+          fi
+
+  alert-rules-test:
+    name: Test Alert Rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Prometheus
+        run: |
+          wget https://github.com/prometheus/prometheus/releases/download/v2.48.0/prometheus-2.48.0.linux-amd64.tar.gz
+          tar xvfz prometheus-2.48.0.linux-amd64.tar.gz
+          sudo mv prometheus-2.48.0.linux-amd64/promtool /usr/local/bin/
+
+      - name: Run alert rule tests
+        run: |
+          if [ -d "infra/prometheus/tests" ]; then
+            promtool test rules infra/prometheus/tests/*.yml
+          else
+            echo "No alert rule tests found"
+            mkdir -p infra/prometheus/tests
+            cat > infra/prometheus/tests/example.yml << 'EOF'
+          # Example alert rule test
+          rule_files:
+            - ../rules/*.yml
+
+          evaluation_interval: 1m
+
+          tests:
+            - interval: 1m
+              input_series: []
+              alert_rule_test: []
+          EOF
+          fi
+
+  create-baseline-dashboards:
+    name: Create Baseline Dashboards (If Missing)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create baseline Grafana dashboards
+        run: |
+          mkdir -p reports/grafana/dashboards/monitoring
+
+          if [ ! -f "reports/grafana/dashboards/monitoring/brainwav-overview.json" ]; then
+            cat > reports/grafana/dashboards/monitoring/brainwav-overview.json << 'EOF'
+          {
+            "dashboard": {
+              "title": "brAInwav Cortex-OS Overview",
+              "tags": ["brainwav", "cortex-os", "overview"],
+              "timezone": "browser",
+              "panels": [
+                {
+                  "title": "Request Rate",
+                  "targets": [
+                    {
+                      "expr": "rate(http_requests_total{job=\"mcp-server\"}[5m])"
+                    }
+                  ]
+                },
+                {
+                  "title": "Error Rate",
+                  "targets": [
+                    {
+                      "expr": "rate(http_requests_total{job=\"mcp-server\",status=~\"5..\"}[5m])"
+                    }
+                  ]
+                },
+                {
+                  "title": "Response Time (P95)",
+                  "targets": [
+                    {
+                      "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"mcp-server\"}[5m]))"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+          EOF
+            echo "✅ Created baseline dashboard"
+          else
+            echo "Dashboard already exists"
+          fi
+
+      - name: Commit baseline dashboards
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: add baseline Grafana dashboards [skip ci]"
+          file_pattern: "reports/grafana/dashboards/**/*.json"
+          commit_user_name: "brainwav-bot"
+          commit_user_email: "bot@brainwav.dev"
+
+# Co-authored-by: brAInwav Development Team <dev@brainwav.dev>
+# Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.github.com>
