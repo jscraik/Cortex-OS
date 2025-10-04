@@ -11,20 +11,20 @@ const forbiddenMotifs = [
 ];
 
 const allowlist: RegExp[] = [
-	/tests\/regression\/__fixtures__/, // baseline fixtures
-	/packages\/commands\/(tests|__fixtures__)/,
-	/packages\/agents\/tests/,
-	/packages\/agents\/.*\.md$/,
-	/packages\/hooks\/src\/__tests__/,
-	/packages\/orchestration\/tests/,
-	/apps\/.*\/tests/, // Phase 9: apps directory tests included in regression allowlist
-	/apps\/.*\/.*\.test\./, // Phase 9: apps directory test files
-	/apps\/.*\/.*\.spec\./, // Phase 9: apps directory spec files
-	/apps\/.*\/__tests__/, // Phase 9: apps directory test folders
-	/\.spec\./,
-	/\.test\./,
-	/__tests__/,
-	/simple-tests/,
+	/^tests\/regression\/__fixtures__\/.*$/, // baseline fixtures
+	/^packages\/commands\/(?:tests|__fixtures__)\/.*$/,
+	/^packages\/agents\/tests\/.*$/,
+	/^packages\/agents\/[^/]*\.md$/,
+	/^packages\/hooks\/src\/__tests__\/.*$/,
+	/^packages\/orchestration\/tests\/.*$/,
+	/^apps\/[^/]+\/tests\/.*$/, // Phase 9: apps directory tests included in regression allowlist
+	/^apps\/[^/]+\/[^/]*\.test\./, // Phase 9: apps directory test files
+	/^apps\/[^/]+\/[^/]*\.spec\./, // Phase 9: apps directory spec files
+	/^apps\/[^/]+\/__tests__\/.*$/, // Phase 9: apps directory test folders
+	/^[^/]*\.spec\./,
+	/^[^/]*\.test\./,
+	/^[^/]*__tests__\/.*$/,
+	/^simple-tests\/.*$/,
 ];
 
 const monitoredRoots = [

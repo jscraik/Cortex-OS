@@ -28,14 +28,14 @@ describe('Observability A2A bus', () => {
 			startTime: new Date().toISOString(),
 			tags: { env: 'test' },
 		} as TraceCreatedEvent;
-        
+
 		await bus.publish(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED, payload);
 
 		expect(received).toHaveLength(1);
-	expect(received[0].type).toBe(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED);
-	// Narrow the union so TypeScript knows the payload has `service`
-	const data = received[0].data as TraceCreatedEvent;
-	expect(data.service).toBe('analytics');
+		expect(received[0].type).toBe(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED);
+		// Narrow the union so TypeScript knows the payload has `service`
+		const data = received[0].data as TraceCreatedEvent;
+		expect(data.service).toBe('analytics');
 
 		await unsubscribe();
 	});
@@ -43,20 +43,20 @@ describe('Observability A2A bus', () => {
 	it('rejects invalid payloads', async () => {
 		const bus = createObservabilityBus();
 
-			type LocalMetricPayload = { name: string; value: number; type: 'gauge' };
+		type LocalMetricPayload = { name: string; value: number; type: 'gauge' };
 
-			const invalidPayload: LocalMetricPayload = {
-				name: 'latency',
-				value: 42,
-				type: 'gauge',
-				// Missing required timestamp should fail validation
-			};
-			await expect(
-				// intentionally bypass compile-time types to test runtime validation by narrowing to a minimal publish signature
-				(bus as unknown as { publish: (type: string, payload: unknown) => Promise<unknown> }).publish(
-					OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED,
-					invalidPayload,
-				),
-			).rejects.toThrow();
+		const invalidPayload: LocalMetricPayload = {
+			name: 'latency',
+			value: 42,
+			type: 'gauge',
+			// Missing required timestamp should fail validation
+		};
+		await expect(
+			// intentionally bypass compile-time types to test runtime validation by narrowing to a minimal publish signature
+			(bus as unknown as { publish: (type: string, payload: unknown) => Promise<unknown> }).publish(
+				OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED,
+				invalidPayload,
+			),
+		).rejects.toThrow();
 	});
 });

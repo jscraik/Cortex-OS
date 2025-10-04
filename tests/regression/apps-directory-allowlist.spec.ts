@@ -26,24 +26,23 @@ describe('Apps Directory Placeholder Regression - Phase 9 Production Readiness',
 
 	const allowedPaths = [
 		// Test files are allowed to have placeholders
-		/.*\/tests?\/.*/,
-		/.*\/__tests__\/.*/,
-		/.*\.test\.(ts|js|tsx|jsx)$/,
-		/.*\.spec\.(ts|js|tsx|jsx)$/,
+		/^(?:.*\/)?tests?\/.*$/,
+		/^(?:.*\/)?__tests__\/.*$/,
+		/^.*\.(?:test|spec)\.(?:ts|js|tsx|jsx)$/,
 		// Documentation files can have TODO sections
-		/.*\.md$/,
-		/.*README.*/,
-		/.*CHANGELOG.*/,
+		/^.*\.md$/,
+		/^.*README.*$/,
+		/^.*CHANGELOG.*$/,
 		// Configuration files may have placeholder comments
-		/.*config\.(ts|js|json)$/,
-		/.*\.config\.(ts|js|json)$/,
+		/^.*config\.(?:ts|js|json)$/,
+		/^.*\.config\.(?:ts|js|json)$/,
 		// Example files can contain placeholders
-		/.*\/examples?\/.*/,
-		/.*\/demo.*\/.*/,
+		/^(?:.*\/)?examples?\/.*$/,
+		/^(?:.*\/)?demo[^/]*\/.*$/,
 		// Development tools
-		/.*vitest\..*$/,
-		/.*tsconfig\..*$/,
-		/.*eslint\..*$/,
+		/^.*vitest\.[^.]+$/,
+		/^.*tsconfig\.[^.]+$/,
+		/^.*eslint\.[^.]+$/,
 	];
 
 	it('should validate apps directory is included in production readiness review', async () => {
@@ -73,6 +72,11 @@ describe('Apps Directory Placeholder Regression - Phase 9 Production Readiness',
 			[];
 
 		for (const file of sourceFiles) {
+			// Prevent ReDoS by limiting input length
+			if (file.length > 1000) {
+				continue; // Skip extremely long file paths
+			}
+
 			// Check if file is in allowed paths
 			const isAllowed = allowedPaths.some((pattern) => {
 				if (pattern instanceof RegExp) {

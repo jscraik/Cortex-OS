@@ -3,9 +3,9 @@ import path from 'node:path';
 
 const defaultForbiddenTokens: readonly string[] = ['TODO:', 'Mock', 'not yet implemented'];
 const defaultAllowlist: readonly RegExp[] = [
-	/docs\//,
-	/README\.md$/,
-	/tests\/regression\/__fixtures__\/placeholder-baseline\.json$/,
+	/^docs\/.*$/,
+	/^README\.md$/,
+	/^tests\/regression\/__fixtures__\/placeholder-baseline\.json$/,
 ];
 const defaultIncludedExtensions: readonly string[] = [
 	'.ts',
@@ -65,7 +65,27 @@ const defaultIgnoredDirectories: readonly string[] = [
 type PlaceholderResult = { file: string; token: string };
 
 function isAllowed(file: string, allowlist: readonly RegExp[]): boolean {
-	return allowlist.some((regex) => regex.test(file));
+	// Prevent ReDoS by limiting input length
+	if (file.length > 1000) {
+		return false;
+	}
+
+	// Add timeout to prevent long-running regex operations
+	const startTime = Date.now();
+	const timeoutMs = 100; // 100ms timeout per regex operation
+
+	return allowlist.some((regex) => {
+		try {
+			// Check timeout before each regex test
+			if (Date.now() - startTime > timeoutMs) {
+				return false;
+			}
+			return regex.test(file);
+		} catch {
+			// If regex throws an error (e.g., due to complexity), treat as not allowed
+			return false;
+		}
+	});
 }
 
 interface ScanOptions {
