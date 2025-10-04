@@ -22,7 +22,7 @@ agent = Agent(name="Assistant", instructions="Be concise.")
 session = SQLiteSession("conversation_123", "conversation_history.db")
 
 runner = Runner()
-out1 = runner.run(agent, "Hey, remember this fact:", session=session)
+out1 = runner.run(agent, "Hey, remember this fact: the build ID is 42", session=session)
 out2 = runner.run(agent, "What did I just tell you?", session=session)
 print(out2.output_text)
 ```
