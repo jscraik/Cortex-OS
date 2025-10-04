@@ -326,9 +326,76 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	// Simple embedding generation (placeholder - replace with actual embedding model)
+	// WARNING: Mock embeddings - not production ready - violates brAInwav production standards
 	private async generateEmbedding(text: string): Promise<number[]> {
-		// This is a mock implementation
-		// In production, integrate with Ollama, OpenAI, or local embedding model
+		// brAInwav Production Standard: Real embeddings required
+		const mlxBaseUrl = process.env.MLX_EMBED_BASE_URL;
+		const ollamaBaseUrl = process.env.OLLAMA_BASE_URL;
+		
+		// MLX embedding service (preferred)
+		if (mlxBaseUrl) {
+			try {
+				const response = await fetch(`${mlxBaseUrl}/embed`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'User-Agent': 'brAInwav-Memory-Core/1.0'
+					},
+					body: JSON.stringify({ text })
+				});
+				
+				if (!response.ok) {
+					throw new MemoryProviderError('NETWORK', `brAInwav MLX embed failed: ${response.status}`, { status: response.status });
+				}
+				
+				const { embedding } = await response.json();
+				if (!Array.isArray(embedding)) {
+					throw new MemoryProviderError('INTERNAL', 'brAInwav: Invalid embed payload from MLX service');
+				}
+				return embedding;
+			} catch (error) {
+				logger.warn('brAInwav MLX embedding failed, trying fallback', { error: (error as Error).message });
+			}
+		}
+		
+		// Ollama fallback (OpenAI-compatible)
+		if (ollamaBaseUrl) {
+			try {
+				const response = await fetch(`${ollamaBaseUrl}/embeddings`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': 'Bearer ollama',
+						'User-Agent': 'brAInwav-Memory-Core/1.0'
+					},
+					body: JSON.stringify({
+						model: process.env.OLLAMA_MODEL || 'mxbai-embed-large',
+						input: text
+					})
+				});
+				
+				if (!response.ok) {
+					throw new MemoryProviderError('NETWORK', `brAInwav Ollama embed failed: ${response.status}`, { status: response.status });
+				}
+				
+				const data = await response.json();
+				const embedding = data?.data?.[0]?.embedding;
+				if (!Array.isArray(embedding)) {
+					throw new MemoryProviderError('INTERNAL', 'brAInwav: Invalid embed payload from Ollama service');
+				}
+				return embedding;
+			} catch (error) {
+				logger.warn('brAInwav Ollama embedding failed', { error: (error as Error).message });
+			}
+		}
+		
+		// STRICT MODE: Fail rather than use mock embeddings in production
+		if (process.env.NODE_ENV === 'production') {
+			throw new MemoryProviderError('INTERNAL', 'brAInwav: Embedding backend not configured - mock embeddings forbidden in production');
+		}
+		
+		// Development fallback with warning
+		logger.warn('brAInwav: Using mock embeddings - NOT SUITABLE FOR PRODUCTION');
 		const dim = this.config.embedDim || 384;
 		const embedding = new Array(dim).fill(0);
 
