@@ -60,7 +60,7 @@
       "enabled": true,
       "requiredChecks": [
         "coverage",
-        "mutation", 
+        "mutation",
         "performance",
         "security",
         "operationalReadiness"
@@ -81,12 +81,22 @@
   },
   "exemptions": {
     "testFiles": {
-      "patterns": ["**/*.test.ts", "**/*.spec.ts", "**/test/**/*"],
-      "appliedThresholds": ["complexityThreshold"]
+      "patterns": [
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "**/test/**/*"
+      ],
+      "appliedThresholds": [
+        "complexityThreshold"
+      ]
     },
     "legacyCode": {
-      "patterns": ["legacy/**/*"],
-      "appliedThresholds": ["maxFunctionLength"],
+      "patterns": [
+        "legacy/**/*"
+      ],
+      "appliedThresholds": [
+        "maxFunctionLength"
+      ],
       "expiryDate": "2025-12-31"
     }
   }
