@@ -214,7 +214,7 @@ async function createQdrantClient(): Promise<QdrantClient | null> {
         dense: { size: 128, distance: 'Cosine' },
       },
       sparse_vectors: {
-        sparse: {},
+        sparse: { index_type: 'plain' },
       },
     });
   }
