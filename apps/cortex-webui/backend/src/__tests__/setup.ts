@@ -1,6 +1,14 @@
 // Test setup file for Vitest
 import { vi } from 'vitest';
 
+import { vitestCommonEnv } from '../../vitest.env';
+
+for (const [key, value] of Object.entries(vitestCommonEnv) as [string, string][]) {
+	if (process.env[key] === undefined) {
+		process.env[key] = value;
+	}
+}
+
 // Mock external dependencies
 vi.mock('openai', () => ({
 	OpenAI: vi.fn().mockImplementation(() => ({

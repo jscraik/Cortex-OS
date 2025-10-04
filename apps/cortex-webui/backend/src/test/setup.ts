@@ -1,6 +1,13 @@
 import { cleanup } from '@testing-library/react';
 import { vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
+import { vitestCommonEnv } from '../../vitest.env';
+
+for (const [key, value] of Object.entries(vitestCommonEnv) as [string, string][]) {
+	if (process.env[key] === undefined) {
+		process.env[key] = value;
+	}
+}
 
 // Mock environment variables for tests
 process.env.NODE_ENV = 'test';

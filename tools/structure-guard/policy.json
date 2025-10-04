@@ -616,7 +616,10 @@
       "@cortex-os/prp-types**",
       "@cortex-os/memory-core**",
       "@cortex-os/tool-spec**",
-      "@cortex-os/agent-contracts**"
+      "@cortex-os/agent-contracts**",
+      "@cortex-os/commands**",
+      "@cortex-os/security**",
+      "@cortex-os/tdd-coach**"
     ]
   },
   "enforcement": {
