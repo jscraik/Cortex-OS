@@ -352,6 +352,7 @@
         "LICENSE",
         "CHANGELOG.md",
         "**/*.txt",
+        "bin/**/*",
         "docs/**/*",
         "a2a-examples/**",
         "a2a-python-workers/**",
