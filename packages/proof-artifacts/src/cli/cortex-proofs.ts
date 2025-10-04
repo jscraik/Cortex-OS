@@ -25,21 +25,34 @@ const writeEnvelope = (filePath: string, envelope: ProofEnvelope) => {
   writeFileSync(filePath, `${JSON.stringify(envelope, null, 2)}\n`);
 };
 
-const runCreate = (options: Record<string, unknown>) => {
-  const artifactPath = resolvePath(options.artifact as string);
-  const outputPath = resolvePath((options.out as string) ?? `${artifactPath}.proof.json`);
+interface CreateOptions {
+  artifact: string;
+  out?: string;
+  mime: string;
+  context: string;
+  sealedRef?: string;
+  evidence: string;
+  runtime: string;
+  trace?: string;
+  policy?: string;
+  bundle?: string[];
+}
+
+const runCreate = (options: CreateOptions) => {
+  const artifactPath = resolvePath(options.artifact);
+  const outputPath = resolvePath(options.out ?? `${artifactPath}.proof.json`);
   const envelope = createProofEnvelope({
     artifactPath,
-    artifactMime: options.mime as string,
-    publicContext: parseJson<Record<string, unknown>>(options.context as string, 'context'),
+    artifactMime: options.mime,
+    publicContext: parseJson<Record<string, unknown>>(options.context, 'context'),
     sealedContextRef: options.sealedRef
-      ? parseJson(options.sealedRef as string, 'sealedRef')
+      ? parseJson(options.sealedRef, 'sealedRef')
       : undefined,
-    evidence: parseJson(options.evidence as string, 'evidence'),
-    runtime: parseJson(options.runtime as string, 'runtime'),
-    trace: options.trace ? parseJson(options.trace as string, 'trace') : undefined,
-    policyReceipts: options.policy ? parseJson(options.policy as string, 'policy') : undefined,
-    bundlePaths: (options.bundle as string[] | undefined)?.map((entry) => resolvePath(entry))
+    evidence: parseJson(options.evidence, 'evidence'),
+    runtime: parseJson(options.runtime, 'runtime'),
+    trace: options.trace ? parseJson(options.trace, 'trace') : undefined,
+    policyReceipts: options.policy ? parseJson(options.policy, 'policy') : undefined,
+    bundlePaths: options.bundle?.map((entry) => resolvePath(entry))
   });
   writeEnvelope(outputPath, envelope);
   console.log(`brAInwav: proof created at ${outputPath}`);
