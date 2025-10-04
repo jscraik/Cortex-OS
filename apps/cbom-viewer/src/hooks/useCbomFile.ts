@@ -23,6 +23,7 @@ export function useCbomFile(): HookState {
 			const input = window.document.createElement('input');
 			input.type = 'file';
 			input.accept = 'application/json';
+			input.setAttribute('aria-label', 'Select CBOM JSON file');
 			inputRef.current = input;
 		}
 		return inputRef.current;
