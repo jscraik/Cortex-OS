@@ -54,7 +54,7 @@ export function validateUrl(
 			['localhost', '127.0.0.1', '::1'].includes(hostname) ||
 			hostname.startsWith('192.168.') ||
 			hostname.startsWith('10.') ||
-			(hostname.startsWith('172.') && /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname));
+			(hostname.startsWith('172.') && /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname));
 
 		if (isLocalhost && !allowLocalhost) {
 			return {

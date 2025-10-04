@@ -7,7 +7,7 @@ declare module 'eventsource' {
 
 	export class EventSource {
 		constructor(url: string, options?: EventSourceOptions);
-		addEventListener(type: string, handler: (ev: any) => void): void;
+		addEventListener(type: string, handler: (ev: Event) => void): void;
 		close(): void;
 	}
 

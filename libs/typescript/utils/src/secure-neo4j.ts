@@ -203,29 +203,42 @@ export class SecureNeo4j {
 	// Validate properties to prevent injection
 	private validateProperties(props: Record<string, unknown>) {
 		for (const [key, value] of Object.entries(props)) {
-			// Validate property keys
-			const keySchema = validateNeo4jInput.label(key);
-			if (!keySchema.success) {
-				throw new Error(`Invalid property key: ${key}`);
-			}
+			this.validatePropertyKey(key);
+			this.validatePropertyValue(key, value);
+		}
+	}
 
-			// Validate property values
-			if (typeof value === 'string') {
-				// Prevent very long strings that could be used for DoS
-				if (value.length > 10000) {
-					throw new Error(`Property value too long for key: ${key}`);
-				}
+	private validatePropertyKey(key: string) {
+		const keySchema = validateNeo4jInput.label(key);
+		if (!keySchema.success) {
+			throw new Error(`Invalid property key: ${key}`);
+		}
+	}
 
-				// Prevent dangerous patterns in strings
-				if (/[;'"`<>(){}]/.test(value)) {
-					throw new Error(`Invalid characters in property value for key: ${key}`);
-				}
-			} else if (typeof value === 'object' && value !== null) {
-				// Recursively validate nested objects using type guard
-				if (this.isRecord(value)) {
-					this.validateProperties(value);
-				}
-			}
+	private validatePropertyValue(key: string, value: unknown) {
+		if (typeof value === 'string') {
+			this.validateStringProperty(key, value);
+		} else if (typeof value === 'object' && value !== null) {
+			this.validateObjectProperty(value);
+		}
+	}
+
+	private validateStringProperty(key: string, value: string) {
+		// Prevent very long strings that could be used for DoS
+		if (value.length > 10000) {
+			throw new Error(`Property value too long for key: ${key}`);
+		}
+
+		// Prevent dangerous patterns in strings
+		if (/[;'"`<>(){}]/.test(value)) {
+			throw new Error(`Invalid characters in property value for key: ${key}`);
+		}
+	}
+
+	private validateObjectProperty(value: object) {
+		// Recursively validate nested objects using type guard
+		if (this.isRecord(value)) {
+			this.validateProperties(value);
 		}
 	}
 
