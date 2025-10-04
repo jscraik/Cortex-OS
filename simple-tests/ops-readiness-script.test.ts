@@ -37,6 +37,7 @@ describe('ops-readiness.sh', () => {
 			encoding: 'utf-8',
 		});
 
+		expect(stdout).toContain('Test mode active - skipping jq installation');
 		expect(stdout).toContain('Operational Readiness Summary');
 		expect(existsSync(resultsPath)).toBe(true);
 

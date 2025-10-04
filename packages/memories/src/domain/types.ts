@@ -1,6 +1,17 @@
 // Use plain string for IDs to avoid redundant aliases per lint rules
 // Note: Use plain `string` for IDs across the codebase (lint rule forbids redundant aliases)
 
+/**
+ * Modality enum for multimodal memory support (Phase 3.1)
+ * Supports text, image, audio, and video content types
+ */
+export enum Modality {
+	TEXT = 'TEXT',
+	IMAGE = 'IMAGE',
+	AUDIO = 'AUDIO',
+	VIDEO = 'VIDEO',
+}
+
 export interface MemoryPolicy {
 	read?: string[];
 	write?: string[];
@@ -30,6 +41,11 @@ export interface Memory {
 	embeddingModel?: string;
 	// Additional metadata for integration adapters (RAG, MCP, etc.)
 	metadata?: Record<string, unknown>;
+	// Multimodal support (Phase 3.1)
+	modality?: Modality;
+	content?: Buffer;
+	contentType?: string;
+	contentSize?: number;
 }
 
 export interface CacheManager {

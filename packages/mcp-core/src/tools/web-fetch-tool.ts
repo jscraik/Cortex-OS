@@ -1,3 +1,4 @@
+import { isPrivateHostname, safeFetch } from '@cortex-os/utils';
 import { z } from 'zod';
 import type { McpTool, ToolExecutionContext } from '../tools.js';
 import { ToolExecutionError } from '../tools.js';
@@ -66,6 +67,7 @@ export class WebFetchTool implements McpTool<WebFetchInput, WebFetchResult> {
 			}
 
 			// Prepare fetch options
+			const controller = new AbortController();
 			const fetchOptions: RequestInit = {
 				method: input.method,
 				headers: {
@@ -73,7 +75,7 @@ export class WebFetchTool implements McpTool<WebFetchInput, WebFetchResult> {
 					...input.headers,
 				},
 				redirect: input.followRedirects ? 'follow' : 'manual',
-				signal: AbortSignal.timeout(input.timeout),
+				signal: controller.signal,
 			};
 
 			// Add body for appropriate methods
@@ -88,16 +90,20 @@ export class WebFetchTool implements McpTool<WebFetchInput, WebFetchResult> {
 			}
 
 			// Handle context signal
+			const timeoutSignal = AbortSignal.timeout(input.timeout);
 			if (context?.signal) {
-				const combinedSignal = AbortSignal.any([
-					context.signal,
-					AbortSignal.timeout(input.timeout),
-				]);
-				fetchOptions.signal = combinedSignal;
+				fetchOptions.signal = AbortSignal.any([context.signal, timeoutSignal, controller.signal]);
+			} else {
+				fetchOptions.signal = timeoutSignal;
 			}
 
-			// Make the request
-			const response = await fetch(input.url, fetchOptions);
+			// Make the request using safe fetch
+			const response = await safeFetch(input.url, {
+				allowedHosts: [new URL(input.url).hostname.toLowerCase()],
+				allowedProtocols: [new URL(input.url).protocol],
+				allowLocalhost: false,
+				fetchOptions,
+			});
 			const responseTime = Date.now() - startTime;
 
 			// Extract response headers

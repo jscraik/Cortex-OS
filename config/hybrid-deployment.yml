@@ -1,7 +1,7 @@
 # brAInwav Cortex-OS Hybrid Model Deployment Configuration
 # Ensures MLX-first routing with Ollama Cloud conjunction is deployment ready
 
-version: '3.8'
+version: "3.8"
 
 x-brainwav-labels: &brainwav-labels
   brainwav.cortex.company: "brAInwav"
@@ -9,33 +9,32 @@ x-brainwav-labels: &brainwav-labels
   brainwav.cortex.mlx-first: "true"
   brainwav.cortex.ollama-cloud: "enabled"
 
-x-common-environment: &common-environment
-  # MLX Configuration
+x-common-environment: &common-environment # MLX Configuration
   MLX_BASE_URL: "${MLX_HOST_URL:-http://host.docker.internal:8081}"
   MLX_CACHE_DIR: "/Volumes/ExternalSSD/ai-cache/huggingface"
   MLX_MODEL_PATH: "/Volumes/ExternalSSD/ai-models"
-  
+
   # Ollama Configuration
   OLLAMA_BASE_URL: "${OLLAMA_URL:-http://localhost:11434}"
   OLLAMA_CLOUD_ENABLED: "true"
-  
+
   # Model Gateway Configuration
   MODEL_GATEWAY_URL: "http://localhost:8080"
-  
+
   # Hybrid Strategy Configuration
   CORTEX_HYBRID_MODE: "performance"
   CORTEX_MLX_FIRST_PRIORITY: "100"
   CORTEX_PRIVACY_MODE: "${PRIVACY_MODE:-false}"
   CORTEX_CONJUNCTION_ENABLED: "true"
-  
+
   # brAInwav Branding
   CORTEX_COMPANY: "brAInwav"
   CORTEX_LOG_PREFIX: "brAInwav Cortex-OS:"
-  
+
   # Health Check URLs
   MLX_HEALTH_URL: "http://host.docker.internal:8081/health"
   OLLAMA_HEALTH_URL: "http://localhost:11434/api/tags"
-  
+
 services:
   # Model Gateway - Central hybrid routing hub
   model-gateway:
@@ -141,7 +140,7 @@ volumes:
       type: none
       o: bind
       device: /Volumes/ExternalSSD/ai-cache
-  
+
   model-data:
     driver: local
     driver_opts:

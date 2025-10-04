@@ -169,8 +169,8 @@ main() {
         exit 1
     fi
 
-    # Install jq if not available
-    if ! command -v jq &> /dev/null; then
+    # Install jq if not available (skip in test mode to avoid system installs during unit tests)
+    if [[ "$TEST_MODE" != "1" ]] && ! command -v jq &> /dev/null; then
         echo "📦 Installing jq for JSON processing..."
         if command -v apt-get &> /dev/null; then
             sudo apt-get update && sudo apt-get install -y jq
@@ -181,6 +181,8 @@ main() {
         else
             echo "⚠️ Cannot install jq. Continuing without JSON validation..."
         fi
+    elif [[ "$TEST_MODE" == "1" ]]; then
+        echo "🧪 Test mode active - skipping jq installation"
     fi
 
     # Create ops report directory

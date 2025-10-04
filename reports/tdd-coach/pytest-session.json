@@ -1,22 +1,392 @@
 {
-  "timestamp": "2025-10-02T21:36:38.252267+00:00",
-  "exitstatus": 0,
+  "timestamp": "2025-10-04T13:04:19.377368+00:00",
+  "exitstatus": 1,
   "summary": {
-    "total": 2,
-    "passed": 2,
-    "failed": 0,
+    "total": 76,
+    "passed": 70,
+    "failed": 6,
     "skipped": 0
   },
   "results": [
     {
-      "nodeid": "tests::sample",
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_clip_embedder_initializes",
       "outcome": "passed",
-      "duration": 0.12
+      "duration": 0.0007709169876761734
     },
     {
-      "nodeid": "tests/test_tdd_coach_plugin.py::test_tdd_coach_plugin_writes_session_snapshot",
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_clip_embedder_with_custom_model",
       "outcome": "passed",
-      "duration": 0.0003287500003352761
+      "duration": 5.308300023898482e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_clip_embedder_loads_model_lazily",
+      "outcome": "passed",
+      "duration": 4.3791020289063454e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_fast_test_mode_enabled",
+      "outcome": "passed",
+      "duration": 4.287500632926822e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_generate_embedding_from_bytes",
+      "outcome": "failed",
+      "duration": 6.641896665998502
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_generate_embedding_from_pil_image",
+      "outcome": "passed",
+      "duration": 4.7679928340076
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_embedding_is_normalized",
+      "outcome": "failed",
+      "duration": 4.673640374996467
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_reject_invalid_image_data",
+      "outcome": "passed",
+      "duration": 4.7152848330151755
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_reject_empty_image_data",
+      "outcome": "passed",
+      "duration": 4.069174332980765
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBatchEmbedding::test_generate_batch_embeddings",
+      "outcome": "failed",
+      "duration": 4.094145250011934
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBatchEmbedding::test_batch_embeddings_consistent",
+      "outcome": "failed",
+      "duration": 3.6830422500206623
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBackendSelection::test_prefer_mlx_on_darwin",
+      "outcome": "passed",
+      "duration": 3.7163504170021042
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBackendSelection::test_fallback_to_pytorch",
+      "outcome": "passed",
+      "duration": 3.661485958000412
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestModelInfo::test_get_model_info_before_loading",
+      "outcome": "passed",
+      "duration": 5.366600817069411e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestModelInfo::test_get_model_info_after_loading",
+      "outcome": "failed",
+      "duration": 3.7039405409886967
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestIntegrationWithValidation::test_validate_then_embed_workflow",
+      "outcome": "failed",
+      "duration": 3.973652625019895
+    },
+    {
+      "nodeid": "tests/multimodal/test_clip_embedder.py::TestIntegrationWithValidation::test_reject_non_image_modality",
+      "outcome": "passed",
+      "duration": 3.822455291985534
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_png_from_magic_number",
+      "outcome": "passed",
+      "duration": 5.8125006034970284e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_jpeg_from_magic_number",
+      "outcome": "passed",
+      "duration": 4.604097921401262e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_mp3_from_magic_number",
+      "outcome": "passed",
+      "duration": 4.049998824484646e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_mp4_from_magic_number",
+      "outcome": "passed",
+      "duration": 3.8749974919483066e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_reject_unknown_file_type",
+      "outcome": "passed",
+      "duration": 5.270799738354981e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_reject_empty_file",
+      "outcome": "passed",
+      "duration": 4.612500197254121e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_accept_image_under_limit",
+      "outcome": "passed",
+      "duration": 4.016701132059097e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_reject_image_over_limit",
+      "outcome": "passed",
+      "duration": 4.7999987145885825e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_accept_audio_under_limit",
+      "outcome": "passed",
+      "duration": 3.8708007195964456e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_reject_audio_over_limit",
+      "outcome": "passed",
+      "duration": 4.7250010538846254e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_reject_video_over_limit",
+      "outcome": "passed",
+      "duration": 4.1791005060076714e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.jpg-True]",
+      "outcome": "passed",
+      "duration": 4.125002305954695e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.jpeg-True]",
+      "outcome": "passed",
+      "duration": 3.875000402331352e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.png-True]",
+      "outcome": "passed",
+      "duration": 3.745901631191373e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.gif-True]",
+      "outcome": "passed",
+      "duration": 3.8541998947039247e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.webp-True]",
+      "outcome": "passed",
+      "duration": 4.0166982216760516e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.bmp-True]",
+      "outcome": "passed",
+      "duration": 3.7708989111706614e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.tiff-True]",
+      "outcome": "passed",
+      "duration": 3.795800148509443e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.exe-False]",
+      "outcome": "passed",
+      "duration": 6.508402293547988e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.pdf-False]",
+      "outcome": "passed",
+      "duration": 5.633299588225782e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.doc-False]",
+      "outcome": "passed",
+      "duration": 4.641700070351362e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.mp3-True]",
+      "outcome": "passed",
+      "duration": 4.1624996811151505e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.wav-True]",
+      "outcome": "passed",
+      "duration": 3.9457983803004026e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.ogg-True]",
+      "outcome": "passed",
+      "duration": 3.820800338871777e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.flac-True]",
+      "outcome": "passed",
+      "duration": 4.2625004425644875e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.m4a-True]",
+      "outcome": "passed",
+      "duration": 3.9207981899380684e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.aac-True]",
+      "outcome": "passed",
+      "duration": 4.0915998397395015e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.mp4-False]",
+      "outcome": "passed",
+      "duration": 4.837499000132084e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.avi-False]",
+      "outcome": "passed",
+      "duration": 4.5958993723616004e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mp4-True]",
+      "outcome": "passed",
+      "duration": 3.9708014810457826e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.avi-True]",
+      "outcome": "passed",
+      "duration": 3.9000005926936865e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mov-True]",
+      "outcome": "passed",
+      "duration": 4.154100315645337e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mkv-True]",
+      "outcome": "passed",
+      "duration": 3.820800338871777e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.webm-True]",
+      "outcome": "passed",
+      "duration": 3.920801100321114e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.jpg-False]",
+      "outcome": "passed",
+      "duration": 4.512499435804784e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mp3-False]",
+      "outcome": "passed",
+      "duration": 4.325000918470323e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_validate_complete_image_file",
+      "outcome": "passed",
+      "duration": 5.8542005717754364e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_reject_mismatched_modality",
+      "outcome": "passed",
+      "duration": 5.7249999372288585e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_reject_corrupt_file",
+      "outcome": "passed",
+      "duration": 4.0709011955186725e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_validate_returns_metadata",
+      "outcome": "passed",
+      "duration": 4.68340003862977e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_exact_size_limit_accepted",
+      "outcome": "passed",
+      "duration": 3.2082985853776336e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_one_byte_over_limit_rejected",
+      "outcome": "passed",
+      "duration": 4.3791980715468526e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_case_insensitive_extension_matching",
+      "outcome": "passed",
+      "duration": 5.516698001883924e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_extension_without_leading_dot",
+      "outcome": "passed",
+      "duration": 6.187500548548996e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestModalityEnum::test_text_modality_is_default",
+      "outcome": "passed",
+      "duration": 4.516699118539691e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestModalityEnum::test_all_modalities_defined",
+      "outcome": "passed",
+      "duration": 4.658300895243883e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestModalityEnum::test_modality_enum_is_exhaustive",
+      "outcome": "passed",
+      "duration": 0.00011995798558928072
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_content_field",
+      "outcome": "passed",
+      "duration": 4.195800283923745e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_content_type_field",
+      "outcome": "passed",
+      "duration": 5.3750001825392246e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_content_size_field",
+      "outcome": "passed",
+      "duration": 4.762501339428127e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_modality_field",
+      "outcome": "passed",
+      "duration": 3.654201282188296e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[TEXT]",
+      "outcome": "passed",
+      "duration": 4.845901275984943e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[IMAGE]",
+      "outcome": "passed",
+      "duration": 5.6541990488767624e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[AUDIO]",
+      "outcome": "passed",
+      "duration": 4.116701893508434e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[VIDEO]",
+      "outcome": "passed",
+      "duration": 7.700000423938036e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_defaults_to_text",
+      "outcome": "passed",
+      "duration": 4.370900569483638e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestBinaryContentStorage::test_store_image_content_as_bytes",
+      "outcome": "passed",
+      "duration": 4.0000013541430235e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestBinaryContentStorage::test_content_field_is_optional",
+      "outcome": "passed",
+      "duration": 4.033400909975171e-05
+    },
+    {
+      "nodeid": "tests/multimodal/test_schema_extension.py::TestBackwardCompatibility::test_existing_memory_without_modality_still_valid",
+      "outcome": "passed",
+      "duration": 3.700001980178058e-05
     }
   ]
 }

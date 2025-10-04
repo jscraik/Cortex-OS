@@ -1,18 +1,30 @@
 generator client { provider = "prisma-client-js" }
 datasource db    { provider = "postgresql", url = env("DATABASE_URL") }
 
+enum Modality {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
 model Memory {
-  id             String   @id
+  id             String    @id
   kind           String
   text           String?
   vector         Float[]?
   tags           String[]
   ttl            String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   provenance     Json
   policy         Json?
   embeddingModel String?
+  modality       Modality  @default(TEXT)
+  content        Bytes?
+  contentType    String?
+  contentSize    Int?
   @@index([kind])
   @@index([embeddingModel])
+  @@index([modality])
 }

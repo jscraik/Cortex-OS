@@ -65,7 +65,7 @@
     }
   },
   "[dockercompose]": {
-    "editor.defaultFormatter": "docker.docker",
+    "editor.defaultFormatter": "redhat.vscode-yaml",
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit"
     }
