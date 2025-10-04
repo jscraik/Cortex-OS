@@ -6,7 +6,7 @@ import sys as _sys
 from pathlib import Path as _Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -246,5 +246,107 @@ def create_app(
             "model_details": hybrid_config.required_models,
             "validation": hybrid_config.validate_models(),
         }
+
+    @app.post("/embed/multimodal", responses={422: {"model": ErrorResponse}})
+    async def embed_multimodal(
+        file: UploadFile = File(...),
+        modality: str = Form(...),
+        normalize: str = Form("true"),
+    ):
+        """
+        Generate embeddings for multimodal content (images, audio, video).
+        
+        brAInwav Multimodal Embedding Endpoint - Phase 3.1.4
+        """
+        try:
+            # Read file content
+            content = await file.read()
+            
+            # Validate modality
+            from multimodal.types import Modality
+            
+            try:
+                mod = Modality[modality.upper()]
+            except KeyError:
+                return _validation_error(
+                    f"brAInwav: Invalid modality '{modality}'. "
+                    f"Must be one of: TEXT, IMAGE, AUDIO, VIDEO",
+                    code="INVALID_MODALITY"
+                )
+            
+            # Validate file
+            from multimodal.validation import validate_multimodal_file, ValidationError
+            
+            try:
+                validation_result = validate_multimodal_file(
+                    content=content,
+                    filename=file.filename or "upload",
+                    modality=mod,
+                )
+            except ValidationError as e:
+                return _validation_error(str(e), code="VALIDATION_ERROR")
+            
+            # Generate embedding based on modality
+            import time
+            start_time = time.time()
+            
+            if mod == Modality.IMAGE:
+                from multimodal.clip_embedder import CLIPEmbedder, EmbeddingError
+                
+                try:
+                    embedder = CLIPEmbedder()
+                    should_normalize = normalize.lower() in ["true", "1", "yes"]
+                    embedding = embedder.generate_image_embedding(
+                        content, normalize=should_normalize
+                    )
+                except EmbeddingError as e:
+                    return _validation_error(str(e), code="EMBEDDING_ERROR")
+            else:
+                # Audio/Video not yet implemented (Phase 3.1.5)
+                return _validation_error(
+                    f"brAInwav: {modality} embedding not yet implemented. "
+                    "Currently only IMAGE is supported.",
+                    code="NOT_IMPLEMENTED"
+                )
+            
+            processing_time = time.time() - start_time
+            
+            # Publish A2A event
+            import asyncio
+            try:
+                event = create_mlx_embedding_event(
+                    request_id=f"multimodal_{int(time.time() * 1000)}",
+                    text_count=1,
+                    total_chars=len(content),
+                    processing_time=processing_time,
+                    model_used="clip-vit-base-patch32",
+                    dimension=len(embedding),
+                    success=True,
+                )
+                asyncio.create_task(a2a.publish(event))
+            except Exception as e:
+                logger.warning(f"Failed to publish A2A multimodal event: {e}")
+            
+            # Return response with brAInwav branding
+            return {
+                "embedding": embedding,
+                "modality": modality.upper(),
+                "mime_type": validation_result["mime_type"],
+                "size": validation_result["size"],
+                "processing_time_ms": int(processing_time * 1000),
+                "message": f"brAInwav: {modality.upper()} embedding generated successfully",
+            }
+            
+        except Exception as e:
+            logger.exception("Multimodal embedding failed: %s", e)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": f"brAInwav: Multimodal embedding failed - {str(e)}",
+                    }
+                },
+            )
 
     return app
