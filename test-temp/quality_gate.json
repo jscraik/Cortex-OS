@@ -1,0 +1,23 @@
+{
+  "coverage": {
+    "line": 95,
+    "branch": 90,
+    "mutation_score": 80
+  },
+  "security": {
+    "max_critical": 0,
+    "max_high": 0,
+    "secrets_scan_required": true,
+    "sbom_required": true
+  },
+  "ops_readiness_min": 0.95,
+  "performance": {
+    "p95_latency_ms_max": 500,
+    "error_rate_pct_max": 0.5,
+    "throughput_min_rps": 50
+  },
+  "reliability": {
+    "graceful_shutdown_max_seconds": 30,
+    "circuit_breaker_required": true
+  }
+}
