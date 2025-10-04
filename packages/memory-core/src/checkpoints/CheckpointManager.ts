@@ -112,7 +112,7 @@ export class CheckpointManager {
                                 meta.createdAt,
                                 meta.score ?? null,
                                 meta.labels ? JSON.stringify(meta.labels) : null,
-                                meta.sizeBytes ?? stateJson.length,
+                                meta.sizeBytes,
                                 digest,
                                 stateJson,
                                 JSON.stringify(meta),
