@@ -81,7 +81,7 @@ export class AgentHandler {
 
                         const executeResponse: ExecuteAgentResponse = {
                                 agentId: request.agentId,
-                                response: agentResult.data,
+                                response: String(agentResult.data),
                                 timestamp,
                                 status,
                                 error,
