@@ -100,12 +100,14 @@ class MemoryRestApi {
 					timestamp: new Date().toISOString(),
 					version: '0.1.0',
 					details: health.details,
+					branding: 'brAInwav Memory API'
 				});
 			} catch (error) {
 				res.status(503).json({
 					status: 'unhealthy',
 					timestamp: new Date().toISOString(),
-					error: (error as Error).message,
+					error: `brAInwav Memory API Error: ${(error as Error).message}`,
+					branding: 'brAInwav Memory API'
 				});
 			}
 		});
@@ -115,6 +117,7 @@ class MemoryRestApi {
 			res.status(health.healthy ? 200 : 503).json({
 				ready: health.healthy,
 				timestamp: new Date().toISOString(),
+				branding: 'brAInwav Memory API'
 			});
 		});
 
