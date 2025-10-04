@@ -97,7 +97,7 @@ if command_exists_timeout "pnpm"; then
 
     if [ ${#STAGED_ARRAY[@]} -gt 0 ]; then
       log_info "Running TDD Coach validation on staged files"
-      TDD_FILES=$(printf '%s ' "${STAGED_ARRAY[@]}")
+      TDD_FILES=$(printf '%q ' "${STAGED_ARRAY[@]}")
       if [ -n "${TDD_FILES// /}" ]; then
           if FILES="$TDD_FILES" make tdd-validate; then
               log_ok "TDD Coach validation passed"

@@ -69,7 +69,7 @@ This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScri
 - [x] Inventory existing automation by running `just scout "quality_gate" scripts/ci` and log findings in `reports/baseline/notes-2025-10-02.md`. *(Command wired through the root `Justfile`; PATH issues on 2025-10-02 are captured in the timestamped notes.)*
 - [x] Add pending/failing tests in `tests/quality-gates/gate-enforcement.test.ts`, `tests/tdd-coach/integration.test.ts`, and `apps/cortex-py/tests/test_tdd_coach_plugin.py` so initial state is red. *(Coverage ratchet suite now exercises ratchet baseline enforcement.)*
 - [x] Pre-create placeholder artifacts `reports/baseline/quality_gate.json` and `reports/baseline/ops-readiness.json` with TODO markers to unblock early drops.
-- [ ] Validate governance guard ahead of new files via `just verify changed.txt` (fails without `changed.txt`; blocked until file strategy is documented).
+- [x] Validate governance guard ahead of new files via `just verify changed.txt` (script now falls back to staged changes when `changed.txt` is absent; requires `git add` before running).
 - [x] Replace direct `pnpm exec tdd-coach` calls in `tests/tdd-coach/integration.test.ts` with a mocked CLI harness so Vitest passes without requiring a built binary.
 - [x] Backfill the missing `tests/tdd-setup.ts` bootstrap (or update `vitest.config.ts` references) to centralize Node-side TDD Coach wiring.
 - [x] Automate refreshing `reports/baseline/coverage.json` before gate enforcement so ratchet baselines stay in sync with current coverage. *(Use `pnpm baseline:refresh` to run the targeted coverage + baseline update pipeline.)*

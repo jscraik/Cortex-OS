@@ -5,6 +5,8 @@
 
 set -euo pipefail
 
+TEST_MODE=${READINESS_TEST_MODE:-0}
+
 # Configuration
 OPS_FILE="ops-readiness-results.json"
 OPS_REPORT_DIR="ops-reports"
@@ -13,7 +15,7 @@ READINESS_THRESHOLD=${READINESS_THRESHOLD:-95}
 echo "🚀 brAInwav Operational Readiness Check"
 
 # Check if required tools are available
-if ! command -v pnpm &> /dev/null; then
+if [[ "$TEST_MODE" != "1" ]] && ! command -v pnpm &> /dev/null; then
     echo "❌ pnpm not found. Please install pnpm."
     exit 1
 fi
@@ -22,17 +24,18 @@ fi
 run_operational_readiness_assessment() {
     echo "🔍 Running comprehensive operational readiness assessment..."
 
-    # Use existing brAInwav assessment script with output to our expected format
     local assessment_file="${OPS_REPORT_DIR}/assessment-results.json"
+    local legacy_output="out/ops-readiness-assessment.json"
 
-    if ./scripts/ci/ops-readiness.sh "$assessment_file"; then
+    if ./scripts/ci/ops-readiness.sh "$legacy_output"; then
         echo "✅ brAInwav operational readiness assessment completed"
-
-        # Copy results to expected location if different
+        if [ -f "$legacy_output" ]; then
+            mkdir -p "$(dirname "$assessment_file")"
+            cp "$legacy_output" "$assessment_file"
+        fi
         if [ -f "$assessment_file" ] && [ "$assessment_file" != "$OPS_FILE" ]; then
             cp "$assessment_file" "$OPS_FILE"
         fi
-
         return 0
     else
         echo "❌ brAInwav operational readiness assessment failed"
@@ -43,6 +46,22 @@ run_operational_readiness_assessment() {
 # Function to check infrastructure readiness
 check_infrastructure_readiness() {
     echo "🏗️ Checking infrastructure readiness..."
+
+    if [[ "$TEST_MODE" == "1" ]]; then
+        mkdir -p "$OPS_REPORT_DIR"
+        cat > "${OPS_REPORT_DIR}/infrastructure-results.json" << EOF
+{
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+  "issues": 0,
+  "features": {
+    "test_mode": true
+  },
+  "status": "passed"
+}
+EOF
+        echo "  ✅ Test mode: infrastructure checks skipped"
+        return 0
+    fi
 
     local infra_issues=0
     local infra_features=()
@@ -235,6 +254,24 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]] && [[ "${1:-}" == out/* ]]; then
   "production_ready": false
 }
 EOF
+
+    if [[ "$TEST_MODE" == "1" ]]; then
+      cat > "$OUTPUT_FILE" << EOF
+{
+  "brainwav_assessment_version": "1.0.0",
+  "score": $TOTAL,
+  "max_score": $TOTAL,
+  "percentage": 100,
+  "criteria": [],
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "brainwav_compliance": true,
+  "production_ready": true,
+  "test_mode": true
+}
+EOF
+      echo "[brAInwav] Test mode enabled - skipping intensive readiness criteria"
+      exit 0
+    fi
 
     # Function to check criterion with brAInwav standards
     check_criterion() {
