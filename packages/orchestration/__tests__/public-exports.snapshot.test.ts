@@ -23,6 +23,7 @@ describe('@cortex-os/orchestration public API', () => {
       "ORCHESTRATION_EVENT_SCHEMAS",
       "OrchestrationDefaults",
       "OrchestrationEventTypes",
+      "PolicyRouter",
       "SecurityCoordinator",
       "THERMAL_CTX_KEY",
       "ThermalEventSchema",
