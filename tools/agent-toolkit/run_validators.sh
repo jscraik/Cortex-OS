@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 file_list="$1"
+files=()
 
-if [[ ! -f "$file_list" ]]; then
-  echo "Error: File list '$file_list' does not exist or is not a regular file." >&2
-
-  exit 1
+if [[ -f "$file_list" ]]; then
+  mapfile -t files < "$file_list"
+else
+  if [[ "$file_list" == "changed.txt" ]]; then
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      mapfile -t files < <(git diff --name-only --cached)
+    fi
+    if [[ ${#files[@]} -eq 0 ]]; then
+      echo "Error: No staged changes detected for 'changed.txt'; run 'git add' before verification." >&2
+      exit 1
+    fi
+  else
+    echo "Error: File list '$file_list' does not exist or is not a regular file." >&2
+    exit 1
+  fi
 fi
-mapfile -t files < "$file_list"
 js=()
 py=()
 rs=()
