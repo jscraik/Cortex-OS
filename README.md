@@ -918,66 +918,23 @@ Built with ❤️ by the Cortex-OS Team
 
 ## Submodules
 
-This repository uses `git submodule` for certain external, read-only references.
+The repository no longer vendors external code via Git submodules. The
+`external/openai-codex` pointer has been removed and replaced with an explicit vendor
+workflow driven by `scripts/sync-cortex-code.sh`.
 
-Currently included:
-
-| Path                    | Upstream                              | Purpose                                                                                            |
-| ----------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `external/openai-codex` | <https://github.com/openai/codex.git> | Reference implementation; selectively copy patterns (no direct cross-imports in governed domains). |
-
-See overlay governance guide: [openai-codex overlay](./docs/submodules/openai-codex.md)
-
-### Working With Submodules
-
-Clone (including submodules):
+Inspect upstream changes without modifying the working tree:
 
 ```bash
-git clone --recurse-submodules https://github.com/jamiescottcraik/Cortex-OS.git
+./scripts/sync-cortex-code.sh
 ```
 
-If you already cloned without `--recurse-submodules`:
+Apply a vendor update from `openai/codex`:
 
 ```bash
-git submodule update --init --recursive
+./scripts/sync-cortex-code.sh --run
 ```
 
-Pull latest (root + all submodules):
-
-```bash
-git pull --recurse-submodules
-# Or explicitly
-git submodule update --remote --merge
-```
-
-Inspect status:
-
-```bash
-git submodule status
-```
-
-Pin a submodule to a newer upstream commit:
-
-```bash
-cd external/openai-codex
-git fetch origin
-git checkout <new-commit-or-tag>
-cd -
-git add external/openai-codex
-git commit -m "chore(submodule): bump openai-codex to <sha>"
-```
-
-Remove a submodule (example for `external/openai-codex`):
-
-```bash
-git submodule deinit -f external/openai-codex
-rm -rf .git/modules/external/openai-codex
-git rm -f external/openai-codex
-# Edit .gitmodules if other entries remain
-```
-
-> Governance: Do **not** import submodule code directly across feature boundaries.
-> Copy needed snippets into governed packages and add tests + attribution.
+For detailed guidance, see [`apps/cortex-code/UPSTREAM_SYNC.md`](apps/cortex-code/UPSTREAM_SYNC.md).
 
 ## MCP developer helpers
 

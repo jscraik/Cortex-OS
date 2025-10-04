@@ -1,10 +1,3 @@
-## brAInwav: cortex-code vendor sync
-.PHONY: vendor-cortex-code-dry vendor-cortex-code-run
-vendor-cortex-code-dry:
-	@./scripts/vendor-cortex-code.sh
-
-vendor-cortex-code-run:
-	@./scripts/vendor-cortex-code.sh --run
 # MCP TDD Enforcement Makefile
 # Standardized commands for MCP integration development
 # Co-authored-by: brAInwav Development Team

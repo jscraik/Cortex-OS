@@ -1,9 +1,3 @@
-# brAInwav cortex-code vendor sync helpers
-sync-dry:
-    @bash ../../scripts/vendor-cortex-code.sh
-
-sync-run:
-    @bash ../../scripts/vendor-cortex-code.sh --run
 set positional-arguments
 
 # Display help
