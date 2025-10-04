@@ -21,18 +21,21 @@ describe('Observability A2A bus', () => {
 			},
 		]);
 
-		const payload: TraceCreatedEvent = {
+		const payload = {
 			traceId: 'trace-1',
 			operationName: 'db.query',
 			service: 'analytics',
 			startTime: new Date().toISOString(),
 			tags: { env: 'test' },
-		};
+		} as TraceCreatedEvent;
+        
 		await bus.publish(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED, payload);
 
 		expect(received).toHaveLength(1);
-		expect(received[0].type).toBe(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED);
-		expect(received[0].data.service).toBe('analytics');
+	expect(received[0].type).toBe(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED);
+	// Narrow the union so TypeScript knows the payload has `service`
+	const data = received[0].data as TraceCreatedEvent;
+	expect(data.service).toBe('analytics');
 
 		await unsubscribe();
 	});

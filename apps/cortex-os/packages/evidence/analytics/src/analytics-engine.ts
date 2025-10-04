@@ -35,8 +35,7 @@ export class AnalyticsEngine extends EventEmitter {
 		super();
 		this.config = createAnalyticsConfig(config);
 		this.logger = pino({
-			name: 'orchestration-analytics-engine',
-			level: 'info',
+			name: 'orchestration-analytics-engine', level: 'info'
 		});
 
 		// Initialize components
@@ -58,11 +57,7 @@ export class AnalyticsEngine extends EventEmitter {
 
 			// Forward to optimization engine
 			this.optimizationEngine.addHistoricalData(
-				data.agentMetrics,
-				data.orchestrationMetrics,
-				[],
-				[],
-			);
+				data.agentMetrics, data.orchestrationMetrics, [], [], );
 
 			// Emit consolidated event
 			this.emit('dataCollected', data);
@@ -85,19 +80,19 @@ export class AnalyticsEngine extends EventEmitter {
 		// Error handling
 		this.metricsCollector.on('error', (error) => {
 			const message = safeErrorMessage(error);
-			this.logger.error('Metrics collector error', { error: message });
+			this.logger.error({ msg: 'Metrics collector error', error: message });
 			this.emit('error', error);
 		});
 
 		this.patternAnalyzer.on('error', (error) => {
 			const message = safeErrorMessage(error);
-			this.logger.error('Pattern analyzer error', { error: message });
+			this.logger.error({ msg: 'Pattern analyzer error', error: message });
 			this.emit('error', error);
 		});
 
 		this.optimizationEngine.on('error', (error) => {
 			const message = safeErrorMessage(error);
-			this.logger.error('Optimization engine error', { error: message });
+			this.logger.error({ msg: 'Optimization engine error', error: message });
 			this.emit('error', error);
 		});
 	}
@@ -107,12 +102,12 @@ export class AnalyticsEngine extends EventEmitter {
 	 */
 	async start(): Promise<void> {
 		if (this.isRunning) {
-			this.logger.warn('Analytics engine already running');
+			this.logger.warn({ msg: 'Analytics engine already running' });
 			return;
 		}
 
 		try {
-			this.logger.info('Starting orchestration analytics engine');
+			this.logger.info({ msg: 'Starting orchestration analytics engine' });
 
 			// Start all components
 			this.metricsCollector.startCollection();
@@ -120,11 +115,11 @@ export class AnalyticsEngine extends EventEmitter {
 			this.optimizationEngine.startOptimization();
 
 			this.isRunning = true;
-			this.logger.info('Analytics engine started successfully');
+			this.logger.info({ msg: 'Analytics engine started successfully' });
 			this.emit('started');
 		} catch (error) {
 			const message = safeErrorMessage(error);
-			this.logger.error('Failed to start analytics engine', { error: message });
+			this.logger.error({ msg: 'Failed to start analytics engine', error: message });
 			this.emit('error', error);
 			throw error;
 		}
@@ -135,12 +130,12 @@ export class AnalyticsEngine extends EventEmitter {
 	 */
 	async stop(): Promise<void> {
 		if (!this.isRunning) {
-			this.logger.warn('Analytics engine not running');
+			this.logger.warn({ msg: 'Analytics engine not running' });
 			return;
 		}
 
 		try {
-			this.logger.info('Stopping orchestration analytics engine');
+			this.logger.info({ msg: 'Stopping orchestration analytics engine' });
 
 			// Stop all components
 			this.metricsCollector.stopCollection();
@@ -148,11 +143,11 @@ export class AnalyticsEngine extends EventEmitter {
 			this.optimizationEngine.stopOptimization();
 
 			this.isRunning = false;
-			this.logger.info('Analytics engine stopped successfully');
+			this.logger.info({ msg: 'Analytics engine stopped successfully' });
 			this.emit('stopped');
 		} catch (error) {
 			const message = safeErrorMessage(error);
-			this.logger.error('Failed to stop analytics engine', { error: message });
+			this.logger.error({ msg: 'Failed to stop analytics engine', error: message });
 			this.emit('error', error);
 			throw error;
 		}
@@ -173,18 +168,13 @@ export class AnalyticsEngine extends EventEmitter {
 		const patternStats = this.patternAnalyzer.getAnalysisStatistics();
 
 		return {
-			timestamp: new Date(),
-			overview: {
-				totalOrchestrations: metricsStats.bufferedMetrics,
-				activeAgents: patternStats.storedData.patterns,
-				averagePerformance: 0.85, // Calculated from metrics
+			timestamp: new Date(), overview: {
+				totalOrchestrations: metricsStats.bufferedMetrics, activeAgents: patternStats.storedData.patterns, averagePerformance: 0.85, // Calculated from metrics
 				systemLoad: 0.65, // Calculated from resource utilization
-			},
-			agentStatuses: [], // Would be populated from metrics
-			performanceMetrics: this.metricsCollector.getCurrentPerformanceMetrics(),
-			interactionGraph: [], // Would be generated from patterns
+			}, agentStatuses: [], // Would be populated from metrics
+			performanceMetrics: this.metricsCollector.getCurrentPerformanceMetrics(), interactionGraph: [], // Would be generated from patterns
 			alerts: [], // Would be generated based on thresholds
-			recommendations: this.optimizationEngine.getRecommendations().slice(0, 10),
+			recommendations: this.optimizationEngine.getRecommendations().slice(0, 10)
 		};
 	}
 
@@ -193,13 +183,9 @@ export class AnalyticsEngine extends EventEmitter {
 	 */
 	getStatistics() {
 		return {
-			isRunning: this.isRunning,
-			config: this.config,
-			components: {
-				metricsCollector: this.metricsCollector.getCollectionStatistics(),
-				patternAnalyzer: this.patternAnalyzer.getAnalysisStatistics(),
-				optimizationEngine: this.optimizationEngine.getOptimizationStatistics(),
-			},
+			isRunning: this.isRunning, config: this.config, components: {
+				metricsCollector: this.metricsCollector.getCollectionStatistics(), patternAnalyzer: this.patternAnalyzer.getAnalysisStatistics(), optimizationEngine: this.optimizationEngine.getOptimizationStatistics()
+			}
 		};
 	}
 
@@ -208,7 +194,7 @@ export class AnalyticsEngine extends EventEmitter {
 	 */
 	async cleanup(): Promise<void> {
 		try {
-			this.logger.info('Cleaning up analytics engine');
+			this.logger.info({ msg: 'Cleaning up analytics engine' });
 
 			// Stop if running
 			if (this.isRunning) {
@@ -223,12 +209,10 @@ export class AnalyticsEngine extends EventEmitter {
 			// Remove event listeners
 			this.removeAllListeners();
 
-			this.logger.info('Analytics engine cleanup completed');
+			this.logger.info({ msg: 'Analytics engine cleanup completed' });
 		} catch (error) {
 			const message = safeErrorMessage(error);
-			this.logger.error('Error during analytics engine cleanup', {
-				error: message,
-			});
+			this.logger.error({ msg: 'Error during analytics engine cleanup', error: message });
 			throw error;
 		}
 	}

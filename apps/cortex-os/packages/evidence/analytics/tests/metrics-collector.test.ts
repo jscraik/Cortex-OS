@@ -236,7 +236,7 @@ describe('MetricsCollector', () => {
 			const initialErrors = initialStats.collectionErrors;
 
 			// Mock collectMetrics to throw an error
-			const _collectMetricsSpy = vi
+			const collectMetricsSpy = vi
 				.spyOn(testCollector, 'collectMetrics')
 				.mockRejectedValue(new Error('Test error'));
 
@@ -250,7 +250,7 @@ describe('MetricsCollector', () => {
 			expect(finalStats.collectionErrors).toBe(initialErrors);
 
 			// Restore original method
-			testCollector.collectMetrics = originalCollectMetrics;
+			collectMetricsSpy.mockRestore();
 			await testCollector.cleanup();
 		});
 

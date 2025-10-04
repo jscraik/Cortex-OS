@@ -36,7 +36,6 @@ export class LocalMemoryAuthHandler {
 	async getAuthorizationCode(): Promise<string> {
 		try {
 			const authEndpoint = this.getAuthEndpoint();
-			const _authUrl = this.buildAuthUrl(authEndpoint);
 
 			// In a real implementation, this would:
 			// 1. Open browser to authUrl
@@ -103,28 +102,7 @@ export class LocalMemoryAuthHandler {
 		}
 	}
 
-	/**
-	 * Build authorization URL with PKCE parameters
-	 */
-	private buildAuthUrl(baseUrl: string): string {
-		const params = new URLSearchParams({
-			response_type: 'code',
-			client_id: this.authOptions.clientId,
-			redirect_uri: this.authOptions.redirectUri,
-			code_challenge_method: 'S256',
-		});
-
-		if (this.authOptions.scope) {
-			params.set('scope', this.authOptions.scope);
-		}
-
-		if (this.authOptions.state) {
-			params.set('state', this.authOptions.state);
-		}
-
-		return `${baseUrl}?${params.toString()}`;
-	}
-
+	
 	/**
 	 * Get authorization endpoint
 	 */

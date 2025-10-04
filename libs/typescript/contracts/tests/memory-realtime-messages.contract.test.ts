@@ -47,7 +47,7 @@ describe('Realtime memory message contracts', () => {
 
 		const outbound = RealtimeMemoryOutboundMessageSchema.parse(outboundMessage);
 		const queued = RealtimeMemoryQueuedMessageSchema.parse({
-			namespace: outbound.namespace,
+			namespace: ((outbound as unknown) as { namespace?: string }).namespace,
 			payload: outbound,
 			timestamp: iso(),
 		});

@@ -110,7 +110,6 @@ pnpm-lock.yaml.bak
 infra/mcp/*.plist
 
 # Package-specific directories
-packages/mcp-server/bin/
 packages/mcp-server/data/
 packages/mcp-server/docs/
 

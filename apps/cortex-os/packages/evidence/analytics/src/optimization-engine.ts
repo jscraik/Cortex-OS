@@ -13,13 +13,7 @@ import { EventEmitter } from 'node:events';
 import { Matrix } from 'ml-matrix';
 import pino, { type Logger } from 'pino';
 import type {
-	AgentMetrics,
-	AnalyticsConfig,
-	InteractionPattern,
-	OptimizationRecommendation,
-	OrchestrationMetrics,
-	PredictiveModel,
-	WorkflowBottleneck,
+	AgentMetrics, AnalyticsConfig, InteractionPattern, OptimizationRecommendation, OrchestrationMetrics, PredictiveModel, WorkflowBottleneck
 } from './types.js';
 
 /**
@@ -59,8 +53,7 @@ export class OptimizationEngine extends EventEmitter {
 		super();
 		this.config = config;
 		this.logger = pino({
-			name: 'orchestration-optimization-engine',
-			level: 'info',
+			name: 'orchestration-optimization-engine', level: 'info'
 		});
 
 		this.initializeOptimization();
@@ -70,10 +63,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Initialize optimization engine
 	 */
 	private initializeOptimization(): void {
-		this.logger.info('Initializing optimization engine', {
-			optimizationRecommendations: this.config.analysis.optimizationRecommendations,
-			predictiveModeling: this.config.analysis.predictiveModeling,
-		});
+		this.logger.info({ msg: 'Initializing optimization engine', optimizationRecommendations: this.config.analysis.optimizationRecommendations, predictiveModeling: this.config.analysis.predictiveModeling });
 
 		if (this.config.analysis.optimizationRecommendations) {
 			this.startOptimization();
@@ -89,7 +79,7 @@ export class OptimizationEngine extends EventEmitter {
 	 */
 	startOptimization(): void {
 		if (this.isOptimizing) {
-			this.logger.warn('Optimization already running');
+			this.logger.warn({ msg: 'Optimization already running' });
 			return;
 		}
 
@@ -98,14 +88,12 @@ export class OptimizationEngine extends EventEmitter {
 		// Start periodic optimization
 		this.optimizationInterval = setInterval(() => {
 			this.generateOptimizationRecommendations().catch((error) => {
-				this.logger.error('Error during optimization', {
-					error: error.message,
-				});
+				this.logger.error({ msg: 'Error during optimization', error: error instanceof Error ? error.message : String(error) });
 				this.optimizationErrors++;
 			});
 		}, this.config.collection.interval * 5); // Optimize less frequently
 
-		this.logger.info('Optimization engine started');
+		this.logger.info({ msg: 'Optimization engine started' });
 		this.emit('optimizationStarted');
 	}
 
@@ -114,7 +102,7 @@ export class OptimizationEngine extends EventEmitter {
 	 */
 	stopOptimization(): void {
 		if (!this.isOptimizing) {
-			this.logger.warn('Optimization not running');
+			this.logger.warn({ msg: 'Optimization not running' });
 			return;
 		}
 
@@ -125,7 +113,7 @@ export class OptimizationEngine extends EventEmitter {
 			this.optimizationInterval = undefined;
 		}
 
-		this.logger.info('Optimization engine stopped');
+		this.logger.info({ msg: 'Optimization engine stopped' });
 		this.emit('optimizationStopped');
 	}
 
@@ -136,57 +124,26 @@ export class OptimizationEngine extends EventEmitter {
 		try {
 			// Initialize performance prediction model
 			this.performanceModel = {
-				modelType: 'neural-network',
-				accuracy: 0.75, // Initial accuracy
-				predictions: [],
-				lastTrained: new Date(),
-				features: [
-					'agent_count',
-					'task_complexity',
-					'resource_utilization',
-					'interaction_frequency',
-					'framework_distribution',
-				],
-				recommendedActions: [],
+				modelType: 'neural-network', accuracy: 0.75, // Initial accuracy
+				predictions: [], lastTrained: new Date(), features: [
+					'agent_count', 'task_complexity', 'resource_utilization', 'interaction_frequency', 'framework_distribution', ], recommendedActions: []
 			};
 
 			// Initialize scaling prediction model
 			this.scalingModel = {
-				modelType: 'ensemble',
-				accuracy: 0.8,
-				predictions: [],
-				lastTrained: new Date(),
-				features: [
-					'current_load',
-					'historical_growth',
-					'resource_availability',
-					'bottleneck_frequency',
-					'agent_efficiency',
-				],
-				recommendedActions: [],
+				modelType: 'ensemble', accuracy: 0.8, predictions: [], lastTrained: new Date(), features: [
+					'current_load', 'historical_growth', 'resource_availability', 'bottleneck_frequency', 'agent_efficiency', ], recommendedActions: []
 			};
 
 			// Initialize resource optimization model
 			this.resourceModel = {
-				modelType: 'linear-regression',
-				accuracy: 0.85,
-				predictions: [],
-				lastTrained: new Date(),
-				features: [
-					'cpu_utilization',
-					'memory_usage',
-					'network_throughput',
-					'agent_distribution',
-					'task_patterns',
-				],
-				recommendedActions: [],
+				modelType: 'linear-regression', accuracy: 0.85, predictions: [], lastTrained: new Date(), features: [
+					'cpu_utilization', 'memory_usage', 'network_throughput', 'agent_distribution', 'task_patterns', ], recommendedActions: []
 			};
 
-			this.logger.info('Predictive models initialized');
+			this.logger.info({ msg: 'Predictive models initialized' });
 		} catch (error) {
-			this.logger.error('Error initializing predictive models', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Error initializing predictive models', error: error instanceof Error ? error.message : String(error) });
 		}
 	}
 
@@ -194,17 +151,9 @@ export class OptimizationEngine extends EventEmitter {
 	 * Add historical data for ML training
 	 */
 	addHistoricalData(
-		metrics: AgentMetrics[],
-		orchestrationMetrics: OrchestrationMetrics[],
-		patterns: InteractionPattern[],
-		bottlenecks: WorkflowBottleneck[],
-	): void {
+		metrics: AgentMetrics[], orchestrationMetrics: OrchestrationMetrics[], patterns: InteractionPattern[], bottlenecks: WorkflowBottleneck[], ): void {
 		this.performanceHistory.push({
-			timestamp: new Date(),
-			metrics,
-			orchestrationMetrics,
-			patterns,
-			bottlenecks,
+			timestamp: new Date(), metrics, orchestrationMetrics, patterns, bottlenecks
 		});
 
 		// Maintain history size
@@ -216,7 +165,7 @@ export class OptimizationEngine extends EventEmitter {
 		// Retrain models if enough data
 		if (this.performanceHistory.length % 100 === 0) {
 			this.retrainModels().catch((error) => {
-				this.logger.error('Error retraining models', { error: error.message });
+				this.logger.error({ msg: 'Error retraining models', error: error instanceof Error ? error.message : String(error) });
 			});
 		}
 	}
@@ -231,7 +180,7 @@ export class OptimizationEngine extends EventEmitter {
 
 			// Get latest data for analysis
 			if (this.performanceHistory.length === 0) {
-				this.logger.warn('No historical data available for optimization');
+				this.logger.warn({ msg: 'No historical data available for optimization' });
 				return [];
 			}
 
@@ -263,24 +212,16 @@ export class OptimizationEngine extends EventEmitter {
 
 			const optimizationTime = Date.now() - startTime;
 
-			this.logger.debug('Optimization completed', {
-				newRecommendations: newRecommendations.length,
-				totalRecommendations: this.recommendations.length,
-				optimizationTime,
-			});
+			this.logger.debug({ msg: 'Optimization completed', newRecommendations: newRecommendations.length, totalRecommendations: this.recommendations.length, optimizationTime });
 
 			// Emit optimization results
 			this.emit('recommendationsGenerated', {
-				recommendations: newRecommendations,
-				timestamp: new Date(),
-				optimizationTime,
+				recommendations: newRecommendations, timestamp: new Date(), optimizationTime
 			});
 
 			return newRecommendations;
 		} catch (error) {
-			this.logger.error('Failed to generate optimization recommendations', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Failed to generate optimization recommendations', error: error instanceof Error ? error.message : String(error) });
 			this.optimizationErrors++;
 			throw error;
 		}
@@ -290,8 +231,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Generate resource optimization recommendations
 	 */
 	private async generateResourceOptimizationRecommendations(
-		data: (typeof this.performanceHistory)[0],
-	): Promise<OptimizationRecommendation[]> {
+		data: (typeof this.performanceHistory)[0], ): Promise<OptimizationRecommendation[]> {
 		const recommendations: OptimizationRecommendation[] = [];
 
 		try {
@@ -301,96 +241,40 @@ export class OptimizationEngine extends EventEmitter {
 			// CPU optimization
 			if (resourceAnalysis.cpu.average > 80) {
 				recommendations.push({
-					id: `cpu-optimization-${Date.now()}`,
-					type: 'resource-allocation',
-					priority: 'high',
-					title: 'High CPU Utilization Detected',
-					description: `CPU utilization is averaging ${resourceAnalysis.cpu.average.toFixed(1)}%. Consider optimizing agent workload distribution.`,
-					expectedImpact: {
-						performanceGain: 25,
-						resourceSavings: 15,
-						reliabilityImprovement: 20,
-					},
-					implementation: {
-						difficulty: 'medium',
-						estimatedTime: 2,
-						requiredResources: ['infrastructure-team', 'monitoring-tools'],
-						steps: [
-							'Identify CPU-intensive agents',
-							'Implement load balancing',
-							'Scale horizontally if needed',
-							'Monitor performance improvements',
-						],
-					},
-					affectedAgents: this.getHighCpuAgents(data.metrics),
-					confidence: 0.85,
-					generatedAt: new Date(),
+					id: `cpu-optimization-${Date.now()}`, type: 'resource-allocation', priority: 'high', title: 'High CPU Utilization Detected', description: `CPU utilization is averaging ${resourceAnalysis.cpu.average.toFixed(1)}%. Consider optimizing agent workload distribution.`, expectedImpact: {
+						performanceGain: 25, resourceSavings: 15, reliabilityImprovement: 20
+					}, implementation: {
+						difficulty: 'medium', estimatedTime: 2, requiredResources: ['infrastructure-team', 'monitoring-tools'], steps: [
+							'Identify CPU-intensive agents', 'Implement load balancing', 'Scale horizontally if needed', 'Monitor performance improvements', ]
+					}, affectedAgents: this.getHighCpuAgents(data.metrics), confidence: 0.85, generatedAt: new Date()
 				});
 			}
 
 			// Memory optimization
 			if (resourceAnalysis.memory.average > 85) {
 				recommendations.push({
-					id: `memory-optimization-${Date.now()}`,
-					type: 'resource-allocation',
-					priority: 'high',
-					title: 'High Memory Usage Detected',
-					description: `Memory usage is averaging ${resourceAnalysis.memory.average.toFixed(1)}%. Implement memory optimization strategies.`,
-					expectedImpact: {
-						performanceGain: 20,
-						resourceSavings: 25,
-						reliabilityImprovement: 30,
-					},
-					implementation: {
-						difficulty: 'medium',
-						estimatedTime: 3,
-						requiredResources: ['development-team', 'profiling-tools'],
-						steps: [
-							'Profile memory usage by agent',
-							'Implement memory pooling',
-							'Add garbage collection optimization',
-							'Monitor memory patterns',
-						],
-					},
-					affectedAgents: this.getHighMemoryAgents(data.metrics),
-					confidence: 0.8,
-					generatedAt: new Date(),
+					id: `memory-optimization-${Date.now()}`, type: 'resource-allocation', priority: 'high', title: 'High Memory Usage Detected', description: `Memory usage is averaging ${resourceAnalysis.memory.average.toFixed(1)}%. Implement memory optimization strategies.`, expectedImpact: {
+						performanceGain: 20, resourceSavings: 25, reliabilityImprovement: 30
+					}, implementation: {
+						difficulty: 'medium', estimatedTime: 3, requiredResources: ['development-team', 'profiling-tools'], steps: [
+							'Profile memory usage by agent', 'Implement memory pooling', 'Add garbage collection optimization', 'Monitor memory patterns', ]
+					}, affectedAgents: this.getHighMemoryAgents(data.metrics), confidence: 0.8, generatedAt: new Date()
 				});
 			}
 
 			// GPU optimization (if applicable)
 			if (resourceAnalysis.gpu && resourceAnalysis.gpu.average > 90) {
 				recommendations.push({
-					id: `gpu-optimization-${Date.now()}`,
-					type: 'resource-allocation',
-					priority: 'critical',
-					title: 'GPU Resource Saturation',
-					description: `GPU utilization is at ${resourceAnalysis.gpu.average.toFixed(1)}%. Immediate optimization required.`,
-					expectedImpact: {
-						performanceGain: 40,
-						resourceSavings: 20,
-						reliabilityImprovement: 25,
-					},
-					implementation: {
-						difficulty: 'hard',
-						estimatedTime: 5,
-						requiredResources: ['ml-team', 'gpu-infrastructure'],
-						steps: [
-							'Analyze GPU workload patterns',
-							'Implement model quantization',
-							'Add GPU memory management',
-							'Consider multi-GPU scaling',
-						],
-					},
-					affectedAgents: this.getGpuIntensiveAgents(data.metrics),
-					confidence: 0.9,
-					generatedAt: new Date(),
+					id: `gpu-optimization-${Date.now()}`, type: 'resource-allocation', priority: 'critical', title: 'GPU Resource Saturation', description: `GPU utilization is at ${resourceAnalysis.gpu.average.toFixed(1)}%. Immediate optimization required.`, expectedImpact: {
+						performanceGain: 40, resourceSavings: 20, reliabilityImprovement: 25
+					}, implementation: {
+						difficulty: 'hard', estimatedTime: 5, requiredResources: ['ml-team', 'gpu-infrastructure'], steps: [
+							'Analyze GPU workload patterns', 'Implement model quantization', 'Add GPU memory management', 'Consider multi-GPU scaling', ]
+					}, affectedAgents: this.getGpuIntensiveAgents(data.metrics), confidence: 0.9, generatedAt: new Date()
 				});
 			}
 		} catch (error) {
-			this.logger.error('Error generating resource optimization recommendations', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Error generating resource optimization recommendations', error: error instanceof Error ? error.message : String(error) });
 		}
 
 		return recommendations;
@@ -400,8 +284,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Generate workflow optimization recommendations
 	 */
 	private async generateWorkflowOptimizationRecommendations(
-		data: (typeof this.performanceHistory)[0],
-	): Promise<OptimizationRecommendation[]> {
+		data: (typeof this.performanceHistory)[0], ): Promise<OptimizationRecommendation[]> {
 		const recommendations: OptimizationRecommendation[] = [];
 
 		try {
@@ -410,31 +293,12 @@ export class OptimizationEngine extends EventEmitter {
 
 			if (workflowEfficiency < 0.7) {
 				recommendations.push({
-					id: `workflow-restructure-${Date.now()}`,
-					type: 'workflow-restructure',
-					priority: 'medium',
-					title: 'Workflow Efficiency Below Optimal',
-					description: `Current workflow efficiency is ${(workflowEfficiency * 100).toFixed(1)}%. Consider restructuring agent coordination patterns.`,
-					expectedImpact: {
-						performanceGain: 30,
-						resourceSavings: 10,
-						reliabilityImprovement: 20,
-					},
-					implementation: {
-						difficulty: 'medium',
-						estimatedTime: 4,
-						requiredResources: ['architecture-team', 'agents'],
-						steps: [
-							'Map current workflow patterns',
-							'Identify inefficient coordination points',
-							'Redesign agent interaction patterns',
-							'Implement gradual workflow changes',
-							'Monitor efficiency improvements',
-						],
-					},
-					affectedAgents: data.metrics.map((m) => m.agentId),
-					confidence: 0.75,
-					generatedAt: new Date(),
+					id: `workflow-restructure-${Date.now()}`, type: 'workflow-restructure', priority: 'medium', title: 'Workflow Efficiency Below Optimal', description: `Current workflow efficiency is ${(workflowEfficiency * 100).toFixed(1)}%. Consider restructuring agent coordination patterns.`, expectedImpact: {
+						performanceGain: 30, resourceSavings: 10, reliabilityImprovement: 20
+					}, implementation: {
+						difficulty: 'medium', estimatedTime: 4, requiredResources: ['architecture-team', 'agents'], steps: [
+							'Map current workflow patterns', 'Identify inefficient coordination points', 'Redesign agent interaction patterns', 'Implement gradual workflow changes', 'Monitor efficiency improvements', ]
+					}, affectedAgents: data.metrics.map((m) => m.agentId), confidence: 0.75, generatedAt: new Date()
 				});
 			}
 
@@ -443,36 +307,16 @@ export class OptimizationEngine extends EventEmitter {
 
 			if (parallelizationOpportunities.length > 0) {
 				recommendations.push({
-					id: `parallelization-${Date.now()}`,
-					type: 'workflow-restructure',
-					priority: 'medium',
-					title: 'Parallelization Opportunities Identified',
-					description: `Found ${parallelizationOpportunities.length} opportunities to parallelize sequential operations.`,
-					expectedImpact: {
-						performanceGain: 35,
-						resourceSavings: 5,
-						reliabilityImprovement: 15,
-					},
-					implementation: {
-						difficulty: 'medium',
-						estimatedTime: 3,
-						requiredResources: ['development-team'],
-						steps: [
-							'Analyze dependencies between operations',
-							'Implement parallel execution paths',
-							'Add synchronization points',
-							'Test parallel workflows',
-						],
-					},
-					affectedAgents: parallelizationOpportunities,
-					confidence: 0.8,
-					generatedAt: new Date(),
+					id: `parallelization-${Date.now()}`, type: 'workflow-restructure', priority: 'medium', title: 'Parallelization Opportunities Identified', description: `Found ${parallelizationOpportunities.length} opportunities to parallelize sequential operations.`, expectedImpact: {
+						performanceGain: 35, resourceSavings: 5, reliabilityImprovement: 15
+					}, implementation: {
+						difficulty: 'medium', estimatedTime: 3, requiredResources: ['development-team'], steps: [
+							'Analyze dependencies between operations', 'Implement parallel execution paths', 'Add synchronization points', 'Test parallel workflows', ]
+					}, affectedAgents: parallelizationOpportunities, confidence: 0.8, generatedAt: new Date()
 				});
 			}
 		} catch (error) {
-			this.logger.error('Error generating workflow optimization recommendations', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Error generating workflow optimization recommendations', error: error instanceof Error ? error.message : String(error) });
 		}
 
 		return recommendations;
@@ -482,8 +326,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Generate scaling recommendations
 	 */
 	private async generateScalingRecommendations(
-		data: (typeof this.performanceHistory)[0],
-	): Promise<OptimizationRecommendation[]> {
+		data: (typeof this.performanceHistory)[0], ): Promise<OptimizationRecommendation[]> {
 		const recommendations: OptimizationRecommendation[] = [];
 
 		try {
@@ -493,25 +336,11 @@ export class OptimizationEngine extends EventEmitter {
 
 				if (scalingPrediction.shouldScale) {
 					recommendations.push({
-						id: `scaling-${Date.now()}`,
-						type: 'agent-scaling',
-						priority: scalingPrediction.urgency,
-						title: `Agent Scaling Required - ${scalingPrediction.direction}`,
-						description: scalingPrediction.description,
-						expectedImpact: {
-							performanceGain: scalingPrediction.expectedImprovement,
-							resourceSavings: scalingPrediction.direction === 'down' ? 20 : -10,
-							reliabilityImprovement: 25,
-						},
-						implementation: {
-							difficulty: 'easy',
-							estimatedTime: 1,
-							requiredResources: ['infrastructure-team'],
-							steps: scalingPrediction.steps,
-						},
-						affectedAgents: scalingPrediction.affectedAgents,
-						confidence: scalingPrediction.confidence,
-						generatedAt: new Date(),
+						id: `scaling-${Date.now()}`, type: 'agent-scaling', priority: scalingPrediction.urgency, title: `Agent Scaling Required - ${scalingPrediction.direction}`, description: scalingPrediction.description, expectedImpact: {
+							performanceGain: scalingPrediction.expectedImprovement, resourceSavings: scalingPrediction.direction === 'down' ? 20 : -10, reliabilityImprovement: 25
+						}, implementation: {
+							difficulty: 'easy', estimatedTime: 1, requiredResources: ['infrastructure-team'], steps: scalingPrediction.steps
+						}, affectedAgents: scalingPrediction.affectedAgents, confidence: scalingPrediction.confidence, generatedAt: new Date()
 					});
 				}
 			}
@@ -521,36 +350,16 @@ export class OptimizationEngine extends EventEmitter {
 
 			if (loadImbalance.severity > 0.3) {
 				recommendations.push({
-					id: `load-balancing-${Date.now()}`,
-					type: 'agent-scaling',
-					priority: 'medium',
-					title: 'Agent Load Imbalance Detected',
-					description: `Load distribution imbalance severity: ${(loadImbalance.severity * 100).toFixed(1)}%`,
-					expectedImpact: {
-						performanceGain: 20,
-						resourceSavings: 15,
-						reliabilityImprovement: 30,
-					},
-					implementation: {
-						difficulty: 'medium',
-						estimatedTime: 2,
-						requiredResources: ['orchestration-team'],
-						steps: [
-							'Implement dynamic load balancing',
-							'Add agent health monitoring',
-							'Configure automatic failover',
-							'Test load distribution',
-						],
-					},
-					affectedAgents: loadImbalance.overloadedAgents,
-					confidence: 0.85,
-					generatedAt: new Date(),
+					id: `load-balancing-${Date.now()}`, type: 'agent-scaling', priority: 'medium', title: 'Agent Load Imbalance Detected', description: `Load distribution imbalance severity: ${(loadImbalance.severity * 100).toFixed(1)}%`, expectedImpact: {
+						performanceGain: 20, resourceSavings: 15, reliabilityImprovement: 30
+					}, implementation: {
+						difficulty: 'medium', estimatedTime: 2, requiredResources: ['orchestration-team'], steps: [
+							'Implement dynamic load balancing', 'Add agent health monitoring', 'Configure automatic failover', 'Test load distribution', ]
+					}, affectedAgents: loadImbalance.overloadedAgents, confidence: 0.85, generatedAt: new Date()
 				});
 			}
 		} catch (error) {
-			this.logger.error('Error generating scaling recommendations', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Error generating scaling recommendations', error: error instanceof Error ? error.message : String(error) });
 		}
 
 		return recommendations;
@@ -560,8 +369,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Generate bottleneck resolution recommendations
 	 */
 	private async generateBottleneckResolutionRecommendations(
-		data: (typeof this.performanceHistory)[0],
-	): Promise<OptimizationRecommendation[]> {
+		data: (typeof this.performanceHistory)[0], ): Promise<OptimizationRecommendation[]> {
 		const recommendations: OptimizationRecommendation[] = [];
 
 		try {
@@ -588,9 +396,7 @@ export class OptimizationEngine extends EventEmitter {
 				}
 			}
 		} catch (error) {
-			this.logger.error('Error generating bottleneck resolution recommendations', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Error generating bottleneck resolution recommendations', error: error instanceof Error ? error.message : String(error) });
 		}
 
 		return recommendations;
@@ -600,33 +406,14 @@ export class OptimizationEngine extends EventEmitter {
 	 * Create agent overload resolution recommendation
 	 */
 	private createAgentOverloadRecommendation(
-		bottleneck: WorkflowBottleneck,
-	): OptimizationRecommendation {
+		bottleneck: WorkflowBottleneck, ): OptimizationRecommendation {
 		return {
-			id: `agent-overload-resolution-${bottleneck.id}`,
-			type: 'bottleneck-resolution',
-			priority: bottleneck.severity === 'critical' ? 'critical' : 'high',
-			title: `Resolve Agent Overload: ${bottleneck.location}`,
-			description: `Agent ${bottleneck.location} is experiencing overload with average delay of ${bottleneck.averageDelay}ms.`,
-			expectedImpact: {
-				performanceGain: 40,
-				resourceSavings: 5,
-				reliabilityImprovement: 35,
-			},
-			implementation: {
-				difficulty: 'medium',
-				estimatedTime: 2,
-				requiredResources: ['infrastructure-team', 'monitoring-tools'],
-				steps: [
-					'Scale agent horizontally',
-					'Implement request queuing',
-					'Add circuit breaker pattern',
-					'Monitor agent performance',
-				],
-			},
-			affectedAgents: bottleneck.impactScope,
-			confidence: 0.9,
-			generatedAt: new Date(),
+			id: `agent-overload-resolution-${bottleneck.id}`, type: 'bottleneck-resolution', priority: bottleneck.severity === 'critical' ? 'critical' : 'high', title: `Resolve Agent Overload: ${bottleneck.location}`, description: `Agent ${bottleneck.location} is experiencing overload with average delay of ${bottleneck.averageDelay}ms.`, expectedImpact: {
+				performanceGain: 40, resourceSavings: 5, reliabilityImprovement: 35
+			}, implementation: {
+				difficulty: 'medium', estimatedTime: 2, requiredResources: ['infrastructure-team', 'monitoring-tools'], steps: [
+					'Scale agent horizontally', 'Implement request queuing', 'Add circuit breaker pattern', 'Monitor agent performance', ]
+			}, affectedAgents: bottleneck.impactScope, confidence: 0.9, generatedAt: new Date()
 		};
 	}
 
@@ -634,33 +421,14 @@ export class OptimizationEngine extends EventEmitter {
 	 * Create communication lag resolution recommendation
 	 */
 	private createCommunicationLagRecommendation(
-		bottleneck: WorkflowBottleneck,
-	): OptimizationRecommendation {
+		bottleneck: WorkflowBottleneck, ): OptimizationRecommendation {
 		return {
-			id: `communication-lag-resolution-${bottleneck.id}`,
-			type: 'bottleneck-resolution',
-			priority: 'medium',
-			title: `Resolve Communication Lag: ${bottleneck.location}`,
-			description: `Communication bottleneck detected with ${bottleneck.averageDelay}ms average delay.`,
-			expectedImpact: {
-				performanceGain: 25,
-				resourceSavings: 10,
-				reliabilityImprovement: 20,
-			},
-			implementation: {
-				difficulty: 'medium',
-				estimatedTime: 3,
-				requiredResources: ['network-team', 'development-team'],
-				steps: [
-					'Optimize message serialization',
-					'Implement message compression',
-					'Add connection pooling',
-					'Monitor network performance',
-				],
-			},
-			affectedAgents: bottleneck.impactScope,
-			confidence: 0.75,
-			generatedAt: new Date(),
+			id: `communication-lag-resolution-${bottleneck.id}`, type: 'bottleneck-resolution', priority: 'medium', title: `Resolve Communication Lag: ${bottleneck.location}`, description: `Communication bottleneck detected with ${bottleneck.averageDelay}ms average delay.`, expectedImpact: {
+				performanceGain: 25, resourceSavings: 10, reliabilityImprovement: 20
+			}, implementation: {
+				difficulty: 'medium', estimatedTime: 3, requiredResources: ['network-team', 'development-team'], steps: [
+					'Optimize message serialization', 'Implement message compression', 'Add connection pooling', 'Monitor network performance', ]
+			}, affectedAgents: bottleneck.impactScope, confidence: 0.75, generatedAt: new Date()
 		};
 	}
 
@@ -668,33 +436,14 @@ export class OptimizationEngine extends EventEmitter {
 	 * Create resource contention resolution recommendation
 	 */
 	private createResourceContentionRecommendation(
-		bottleneck: WorkflowBottleneck,
-	): OptimizationRecommendation {
+		bottleneck: WorkflowBottleneck, ): OptimizationRecommendation {
 		return {
-			id: `resource-contention-resolution-${bottleneck.id}`,
-			type: 'bottleneck-resolution',
-			priority: 'high',
-			title: `Resolve Resource Contention: ${bottleneck.location}`,
-			description: `Resource contention causing ${bottleneck.averageDelay}ms delays.`,
-			expectedImpact: {
-				performanceGain: 30,
-				resourceSavings: 20,
-				reliabilityImprovement: 25,
-			},
-			implementation: {
-				difficulty: 'medium',
-				estimatedTime: 3,
-				requiredResources: ['infrastructure-team'],
-				steps: [
-					'Implement resource pooling',
-					'Add resource scheduling',
-					'Optimize resource allocation',
-					'Monitor resource usage',
-				],
-			},
-			affectedAgents: bottleneck.impactScope,
-			confidence: 0.8,
-			generatedAt: new Date(),
+			id: `resource-contention-resolution-${bottleneck.id}`, type: 'bottleneck-resolution', priority: 'high', title: `Resolve Resource Contention: ${bottleneck.location}`, description: `Resource contention causing ${bottleneck.averageDelay}ms delays.`, expectedImpact: {
+				performanceGain: 30, resourceSavings: 20, reliabilityImprovement: 25
+			}, implementation: {
+				difficulty: 'medium', estimatedTime: 3, requiredResources: ['infrastructure-team'], steps: [
+					'Implement resource pooling', 'Add resource scheduling', 'Optimize resource allocation', 'Monitor resource usage', ]
+			}, affectedAgents: bottleneck.impactScope, confidence: 0.8, generatedAt: new Date()
 		};
 	}
 
@@ -702,33 +451,14 @@ export class OptimizationEngine extends EventEmitter {
 	 * Create dependency wait resolution recommendation
 	 */
 	private createDependencyWaitRecommendation(
-		bottleneck: WorkflowBottleneck,
-	): OptimizationRecommendation {
+		bottleneck: WorkflowBottleneck, ): OptimizationRecommendation {
 		return {
-			id: `dependency-wait-resolution-${bottleneck.id}`,
-			type: 'bottleneck-resolution',
-			priority: 'medium',
-			title: `Resolve Dependency Wait: ${bottleneck.location}`,
-			description: `Dependency wait causing ${bottleneck.averageDelay}ms delays.`,
-			expectedImpact: {
-				performanceGain: 35,
-				resourceSavings: 5,
-				reliabilityImprovement: 30,
-			},
-			implementation: {
-				difficulty: 'medium',
-				estimatedTime: 4,
-				requiredResources: ['architecture-team'],
-				steps: [
-					'Analyze dependency graph',
-					'Implement dependency caching',
-					'Add async processing',
-					'Optimize dependency order',
-				],
-			},
-			affectedAgents: bottleneck.impactScope,
-			confidence: 0.7,
-			generatedAt: new Date(),
+			id: `dependency-wait-resolution-${bottleneck.id}`, type: 'bottleneck-resolution', priority: 'medium', title: `Resolve Dependency Wait: ${bottleneck.location}`, description: `Dependency wait causing ${bottleneck.averageDelay}ms delays.`, expectedImpact: {
+				performanceGain: 35, resourceSavings: 5, reliabilityImprovement: 30
+			}, implementation: {
+				difficulty: 'medium', estimatedTime: 4, requiredResources: ['architecture-team'], steps: [
+					'Analyze dependency graph', 'Implement dependency caching', 'Add async processing', 'Optimize dependency order', ]
+			}, affectedAgents: bottleneck.impactScope, confidence: 0.7, generatedAt: new Date()
 		};
 	}
 
@@ -758,9 +488,7 @@ export class OptimizationEngine extends EventEmitter {
 			// Fallback to rule-based approach if model not available
 			return this.ruleBasedScalingPrediction(features, data);
 		} catch (error) {
-			this.logger.error('Error in ML scaling prediction', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Error in ML scaling prediction', error: error instanceof Error ? error.message : String(error) });
 			// Fallback to conservative rule-based prediction
 			return this.ruleBasedScalingPrediction(this.extractScalingFeatures(data), data);
 		}
@@ -783,9 +511,7 @@ export class OptimizationEngine extends EventEmitter {
 		const errorRate =
 			metrics.reduce((sum, m) => sum + m.errorCount, 0) /
 			Math.max(
-				1,
-				metrics.reduce((sum, m) => sum + m.taskCount, 0),
-			);
+				1, metrics.reduce((sum, m) => sum + m.taskCount, 0), );
 		const avgResponseTime = metrics.reduce((sum, m) => sum + m.responseTime, 0) / metrics.length;
 		const activeAgentCount = metrics.filter((m) => m.availability > 0.8).length;
 
@@ -797,20 +523,14 @@ export class OptimizationEngine extends EventEmitter {
 						recentHistory.map(
 							(h) =>
 								h.metrics.reduce(
-									(sum, m) => sum + (m.resourceUsage.cpu + m.resourceUsage.memory) / 2,
-									0,
-								) / h.metrics.length,
-						),
-					)
+									(sum, m) => sum + (m.resourceUsage.cpu + m.resourceUsage.memory) / 2, 0, ) / h.metrics.length, ), )
 				: 0;
 
 		const throughputTrend =
 			recentHistory.length > 1
 				? this.calculateTrend(
 						recentHistory.map(
-							(h) => h.metrics.reduce((sum, m) => sum + m.throughput, 0) / h.metrics.length,
-						),
-					)
+							(h) => h.metrics.reduce((sum, m) => sum + m.throughput, 0) / h.metrics.length, ), )
 				: 0;
 
 		return [
@@ -877,9 +597,7 @@ export class OptimizationEngine extends EventEmitter {
 				confidence: Math.max(result[0], result[1]), // Confidence is max probability
 			};
 		} catch (error) {
-			this.logger.error('Error in ML model inference', {
-				error: error.message,
-			});
+			this.logger.error({ msg: 'Error in ML model inference', error: error instanceof Error ? error.message : String(error) });
 			throw error;
 		}
 	}
@@ -897,13 +615,10 @@ export class OptimizationEngine extends EventEmitter {
 		// For now, using reasonable initialization
 		return {
 			inputToHidden: Matrix.random(8, 4, {
-				random: () => (Math.random() - 0.5) * 0.5,
-			}),
-			hiddenBias: Matrix.zeros(1, 4),
-			hiddenToOutput: Matrix.random(4, 2, {
-				random: () => (Math.random() - 0.5) * 0.5,
-			}),
-			outputBias: Matrix.zeros(1, 2),
+				random: () => (Math.random() - 0.5) * 0.5
+			}), hiddenBias: Matrix.zeros(1, 4), hiddenToOutput: Matrix.random(4, 2, {
+				random: () => (Math.random() - 0.5) * 0.5
+			}), outputBias: Matrix.zeros(1, 2)
 		};
 	}
 
@@ -911,10 +626,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Interpret ML model prediction results
 	 */
 	private interpretScalingPrediction(
-		prediction: { scaleUp: number; scaleDown: number; confidence: number },
-		data: (typeof this.performanceHistory)[0],
-		features: number[],
-	): {
+		prediction: { scaleUp: number; scaleDown: number; confidence: number }, data: (typeof this.performanceHistory)[0], features: number[], ): {
 		shouldScale: boolean;
 		direction: 'up' | 'down';
 		urgency: 'low' | 'medium' | 'high' | 'critical';
@@ -937,51 +649,22 @@ export class OptimizationEngine extends EventEmitter {
 						: 'medium';
 
 			return {
-				shouldScale: true,
-				direction: 'up',
-				urgency,
-				description: `ML model predicts scaling up needed (confidence: ${(prediction.confidence * 100).toFixed(1)}%). High resource utilization and performance degradation detected.`,
-				expectedImprovement: Math.round(30 + prediction.confidence * 20),
-				steps: [
-					'Add additional agent instances',
-					'Configure automatic load balancing',
-					'Monitor scaling effectiveness',
-					'Adjust scaling thresholds based on results',
-				],
-				affectedAgents: data.metrics
+				shouldScale: true, direction: 'up', urgency, description: `ML model predicts scaling up needed (confidence: ${(prediction.confidence * 100).toFixed(1)}%). High resource utilization and performance degradation detected.`, expectedImprovement: Math.round(30 + prediction.confidence * 20), steps: [
+					'Add additional agent instances', 'Configure automatic load balancing', 'Monitor scaling effectiveness', 'Adjust scaling thresholds based on results', ], affectedAgents: data.metrics
 					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 > 0.8)
-					.map((m) => m.agentId),
-				confidence: prediction.confidence,
+					.map((m) => m.agentId), confidence: prediction.confidence
 			};
 		} else if (shouldScaleDown) {
 			return {
-				shouldScale: true,
-				direction: 'down',
-				urgency: 'low',
-				description: `ML model suggests scaling down opportunity (confidence: ${(prediction.confidence * 100).toFixed(1)}%). Low resource utilization detected.`,
-				expectedImprovement: Math.round(10 + prediction.confidence * 10),
-				steps: [
-					'Identify underutilized agents',
-					'Gracefully remove instances',
-					'Monitor performance impact',
-					'Adjust scaling thresholds',
-				],
-				affectedAgents: data.metrics
+				shouldScale: true, direction: 'down', urgency: 'low', description: `ML model suggests scaling down opportunity (confidence: ${(prediction.confidence * 100).toFixed(1)}%). Low resource utilization detected.`, expectedImprovement: Math.round(10 + prediction.confidence * 10), steps: [
+					'Identify underutilized agents', 'Gracefully remove instances', 'Monitor performance impact', 'Adjust scaling thresholds', ], affectedAgents: data.metrics
 					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 < 0.3)
-					.map((m) => m.agentId),
-				confidence: prediction.confidence,
+					.map((m) => m.agentId), confidence: prediction.confidence
 			};
 		}
 
 		return {
-			shouldScale: false,
-			direction: 'up',
-			urgency: 'low',
-			description: `ML model indicates current scaling is appropriate (confidence: ${(prediction.confidence * 100).toFixed(1)}%)`,
-			expectedImprovement: 0,
-			steps: [],
-			affectedAgents: [],
-			confidence: prediction.confidence,
+			shouldScale: false, direction: 'up', urgency: 'low', description: `ML model indicates current scaling is appropriate (confidence: ${(prediction.confidence * 100).toFixed(1)}%)`, expectedImprovement: 0, steps: [], affectedAgents: [], confidence: prediction.confidence
 		};
 	}
 
@@ -989,9 +672,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Rule-based scaling prediction fallback
 	 */
 	private ruleBasedScalingPrediction(
-		features: number[],
-		data: (typeof this.performanceHistory)[0],
-	): {
+		features: number[], data: (typeof this.performanceHistory)[0], ): {
 		shouldScale: boolean;
 		direction: 'up' | 'down';
 		urgency: 'low' | 'medium' | 'high' | 'critical';
@@ -1006,51 +687,22 @@ export class OptimizationEngine extends EventEmitter {
 
 		if (avgLoad > 0.8 || errorRate > 0.1) {
 			return {
-				shouldScale: true,
-				direction: 'up',
-				urgency: avgLoad > 0.9 ? 'critical' : 'high',
-				description: `Rule-based analysis: High system load (${(avgLoad * 100).toFixed(1)}%) and error rate (${(errorRate * 100).toFixed(1)}%) indicate scaling up is needed.`,
-				expectedImprovement: 35,
-				steps: [
-					'Add additional agent instances',
-					'Configure load balancing',
-					'Monitor scaling effectiveness',
-					'Adjust scaling parameters',
-				],
-				affectedAgents: data.metrics
+				shouldScale: true, direction: 'up', urgency: avgLoad > 0.9 ? 'critical' : 'high', description: `Rule-based analysis: High system load (${(avgLoad * 100).toFixed(1)}%) and error rate (${(errorRate * 100).toFixed(1)}%) indicate scaling up is needed.`, expectedImprovement: 35, steps: [
+					'Add additional agent instances', 'Configure load balancing', 'Monitor scaling effectiveness', 'Adjust scaling parameters', ], affectedAgents: data.metrics
 					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 > 0.8)
-					.map((m) => m.agentId),
-				confidence: 0.75,
+					.map((m) => m.agentId), confidence: 0.75
 			};
 		} else if (avgLoad < 0.3 && errorRate < 0.01) {
 			return {
-				shouldScale: true,
-				direction: 'down',
-				urgency: 'low',
-				description: `Rule-based analysis: Low system load (${(avgLoad * 100).toFixed(1)}%) suggests opportunity to scale down and save resources.`,
-				expectedImprovement: 15,
-				steps: [
-					'Identify underutilized agents',
-					'Gracefully remove instances',
-					'Monitor performance impact',
-					'Adjust scaling thresholds',
-				],
-				affectedAgents: data.metrics
+				shouldScale: true, direction: 'down', urgency: 'low', description: `Rule-based analysis: Low system load (${(avgLoad * 100).toFixed(1)}%) suggests opportunity to scale down and save resources.`, expectedImprovement: 15, steps: [
+					'Identify underutilized agents', 'Gracefully remove instances', 'Monitor performance impact', 'Adjust scaling thresholds', ], affectedAgents: data.metrics
 					.filter((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 200 < 0.2)
-					.map((m) => m.agentId),
-				confidence: 0.65,
+					.map((m) => m.agentId), confidence: 0.65
 			};
 		}
 
 		return {
-			shouldScale: false,
-			direction: 'up',
-			urgency: 'low',
-			description: 'Rule-based analysis: Current scaling is appropriate',
-			expectedImprovement: 0,
-			steps: [],
-			affectedAgents: [],
-			confidence: 0.6,
+			shouldScale: false, direction: 'up', urgency: 'low', description: 'Rule-based analysis: Current scaling is appropriate', expectedImprovement: 0, steps: [], affectedAgents: [], confidence: 0.6
 		};
 	}
 
@@ -1072,20 +724,15 @@ export class OptimizationEngine extends EventEmitter {
 
 		return {
 			cpu: {
-				average: cpuUsages.reduce((sum, cpu) => sum + cpu, 0) / cpuUsages.length,
-				peak: Math.max(...cpuUsages),
-			},
-			memory: {
-				average: memoryUsages.reduce((sum, mem) => sum + mem, 0) / memoryUsages.length,
-				peak: Math.max(...memoryUsages),
-			},
-			gpu:
+				average: cpuUsages.reduce((sum, cpu) => sum + cpu, 0) / cpuUsages.length, peak: Math.max(...cpuUsages)
+			}, memory: {
+				average: memoryUsages.reduce((sum, mem) => sum + mem, 0) / memoryUsages.length, peak: Math.max(...memoryUsages)
+			}, gpu:
 				gpuUsages.length > 0
 					? {
-							average: gpuUsages.reduce((sum, gpu) => sum + gpu, 0) / gpuUsages.length,
-							peak: Math.max(...gpuUsages),
+							average: gpuUsages.reduce((sum, gpu) => sum + gpu, 0) / gpuUsages.length, peak: Math.max(...gpuUsages)
 						}
-					: undefined,
+					: undefined
 		};
 	}
 
@@ -1173,39 +820,31 @@ export class OptimizationEngine extends EventEmitter {
 	 */
 	private async retrainModels(): Promise<void> {
 		try {
-			this.logger.info('Retraining ML models with new data', {
-				dataPoints: this.performanceHistory.length,
-			});
+			this.logger.info({ msg: 'Retraining ML models with new data', dataPoints: this.performanceHistory.length });
 
 			// In a real implementation, this would retrain actual ML models
 			// For now, we'll just update model accuracy based on data volume
 			if (this.performanceModel) {
 				this.performanceModel.accuracy = Math.min(
-					0.95,
-					0.6 + (this.performanceHistory.length / 1000) * 0.35,
-				);
+					0.95, 0.6 + (this.performanceHistory.length / 1000) * 0.35, );
 				this.performanceModel.lastTrained = new Date();
 			}
 
 			if (this.scalingModel) {
 				this.scalingModel.accuracy = Math.min(
-					0.9,
-					0.65 + (this.performanceHistory.length / 1000) * 0.25,
-				);
+					0.9, 0.65 + (this.performanceHistory.length / 1000) * 0.25, );
 				this.scalingModel.lastTrained = new Date();
 			}
 
 			if (this.resourceModel) {
 				this.resourceModel.accuracy = Math.min(
-					0.92,
-					0.7 + (this.performanceHistory.length / 1000) * 0.22,
-				);
+					0.92, 0.7 + (this.performanceHistory.length / 1000) * 0.22, );
 				this.resourceModel.lastTrained = new Date();
 			}
 
-			this.logger.info('ML models retrained successfully');
+			this.logger.info({ msg: 'ML models retrained successfully' });
 		} catch (error) {
-			this.logger.error('Error retraining ML models', { error: error.message });
+			this.logger.error({ msg: 'Error retraining ML models', error: error instanceof Error ? error.message : String(error) });
 		}
 	}
 
@@ -1227,8 +866,7 @@ export class OptimizationEngine extends EventEmitter {
 	markAsImplemented(recommendationId: string): void {
 		this.implementedRecommendations.add(recommendationId);
 		this.emit('recommendationImplemented', {
-			recommendationId,
-			timestamp: new Date(),
+			recommendationId, timestamp: new Date()
 		});
 	}
 
@@ -1236,8 +874,7 @@ export class OptimizationEngine extends EventEmitter {
 	 * Get all recommendations
 	 */
 	getRecommendations(
-		priority?: OptimizationRecommendation['priority'],
-	): OptimizationRecommendation[] {
+		priority?: OptimizationRecommendation['priority'], ): OptimizationRecommendation[] {
 		let filtered = [...this.recommendations];
 
 		if (priority) {
@@ -1256,9 +893,7 @@ export class OptimizationEngine extends EventEmitter {
 		resource?: PredictiveModel;
 	} {
 		return {
-			performance: this.performanceModel,
-			scaling: this.scalingModel,
-			resource: this.resourceModel,
+			performance: this.performanceModel, scaling: this.scalingModel, resource: this.resourceModel
 		};
 	}
 
@@ -1274,16 +909,9 @@ export class OptimizationEngine extends EventEmitter {
 		modelAccuracies: Record<string, number>;
 	} {
 		return {
-			isOptimizing: this.isOptimizing,
-			recommendationsGenerated: this.recommendationsGenerated,
-			implementedRecommendations: this.implementedRecommendations.size,
-			lastOptimizationTime: this.lastOptimizationTime,
-			optimizationErrors: this.optimizationErrors,
-			modelAccuracies: {
-				performance: this.performanceModel?.accuracy || 0,
-				scaling: this.scalingModel?.accuracy || 0,
-				resource: this.resourceModel?.accuracy || 0,
-			},
+			isOptimizing: this.isOptimizing, recommendationsGenerated: this.recommendationsGenerated, implementedRecommendations: this.implementedRecommendations.size, lastOptimizationTime: this.lastOptimizationTime, optimizationErrors: this.optimizationErrors, modelAccuracies: {
+				performance: this.performanceModel?.accuracy || 0, scaling: this.scalingModel?.accuracy || 0, resource: this.resourceModel?.accuracy || 0
+			}
 		};
 	}
 
@@ -1297,7 +925,7 @@ export class OptimizationEngine extends EventEmitter {
 		this.recommendationsGenerated = 0;
 		this.optimizationErrors = 0;
 
-		this.logger.info('Optimization data cleared');
+		this.logger.info({ msg: 'Optimization data cleared' });
 		this.emit('optimizationDataCleared');
 	}
 
@@ -1309,7 +937,7 @@ export class OptimizationEngine extends EventEmitter {
 		this.clearOptimizationData();
 		this.removeAllListeners();
 
-		this.logger.info('Optimization engine cleanup completed');
+		this.logger.info({ msg: 'Optimization engine cleanup completed' });
 	}
 }
 

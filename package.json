@@ -223,6 +223,8 @@
     "carbon:build": "./scripts/carbon-monitoring/carbon-aware-build.mjs pnpm run build",
     "carbon:test": "./scripts/carbon-monitoring/carbon-aware-build.mjs pnpm run test",
     "carbon:dashboard": "echo 'Grafana Dashboard: http://localhost:3001 (admin/cortex123)'",
+    "test:live": "vitest run --testNamePattern=^(?!\\[RED\\])",
+    "test:red": "vitest run --testNamePattern=\\[RED\\]",
     "obs:dashboard:export": "node scripts/observability/export-rag-dashboard.mjs",
     "ci:dashboards": "pnpm obs:dashboard:export",
     "deploy:production": "./scripts/deploy-production.sh",

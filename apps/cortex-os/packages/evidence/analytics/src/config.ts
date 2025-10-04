@@ -25,7 +25,7 @@ export const defaultAnalyticsConfig: AnalyticsConfig = {
 		patternDetection: true,
 		anomalyDetection: true,
 		predictiveModeling: true,
-		optimizationRecommendations: true,
+		optimizationRecommendations: true
 	},
 	visualization: {
 		realTimeUpdates: true,
@@ -39,15 +39,15 @@ export const defaultAnalyticsConfig: AnalyticsConfig = {
 			memory_utilization: 85,
 			error_rate: 0.05,
 			response_time: 2000,
-			throughput_drop: 0.3,
+			throughput_drop: 0.3
 		},
-		notificationChannels: ['console', 'websocket'],
+		notificationChannels: ['console', 'websocket']
 	},
 	storage: {
 		backend: 'memory',
 		compressionEnabled: false,
-		encryptionEnabled: false,
-	},
+		encryptionEnabled: false
+	}
 };
 
 /**
@@ -57,22 +57,22 @@ export function createAnalyticsConfig(overrides: Partial<AnalyticsConfig> = {}):
 	return {
 		collection: {
 			...defaultAnalyticsConfig.collection,
-			...overrides.collection,
+			...overrides.collection
 		},
 		analysis: { ...defaultAnalyticsConfig.analysis, ...overrides.analysis },
 		visualization: {
 			...defaultAnalyticsConfig.visualization,
-			...overrides.visualization,
+			...overrides.visualization
 		},
 		alerts: {
 			...defaultAnalyticsConfig.alerts,
 			...overrides.alerts,
 			thresholds: {
 				...defaultAnalyticsConfig.alerts.thresholds,
-				...overrides.alerts?.thresholds,
-			},
+				...overrides.alerts?.thresholds
+			}
 		},
-		storage: { ...defaultAnalyticsConfig.storage, ...overrides.storage },
+		storage: { ...defaultAnalyticsConfig.storage, ...overrides.storage }
 	};
 }
 

@@ -19,7 +19,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "cortex-asbr": "dist/cli.js"
+    "cortex-asbr": "bin/cortex-asbr.js"
   },
   "exports": {
     ".": {
@@ -37,6 +37,7 @@
     }
   },
   "files": [
+    "bin",
     "dist",
     "README.md"
   ],
