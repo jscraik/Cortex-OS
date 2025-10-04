@@ -759,10 +759,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 		if (input.labels && input.labels.length > 0) {
 			for (const label of input.labels) {
 				conditions.push(`EXISTS (
-	SELECT 1
-	FROM json_each(memories.metadata, '$.labels') AS label
-	WHERE label.value = ?
-      )`);
+					SELECT 1
+					FROM json_each(memories.metadata, '$.labels') AS label
+					WHERE label.value = ?
+				)`);
 				params.push(label);
 			}
 		}
