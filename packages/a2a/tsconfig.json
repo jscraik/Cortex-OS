@@ -32,7 +32,8 @@
         "a2a-transport/dist/*"
       ],
       "@cortex-os/observability": [
-        "../observability/dist/index.d.ts"
+        "../observability/dist/index.d.ts",
+        "../observability/src/index.ts"
       ],
       "@cortex-os/telemetry": [
         "../../libs/typescript/telemetry/dist/index.d.ts"
