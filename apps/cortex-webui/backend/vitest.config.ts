@@ -1,6 +1,14 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { defineConfig } from 'vitest/config';
 
+import { vitestCommonEnv } from './vitest.env';
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
+	root: projectRoot,
 	test: {
 		environment: 'node',
 		include: [
@@ -10,17 +18,8 @@ export default defineConfig({
 			'test/**/*.{test,spec,contract}.ts',
 		],
 		globals: true,
-		setupFiles: ['./src/__tests__/setup.ts'],
-		env: {
-			NODE_ENV: 'test',
-			DATABASE_PATH: ':memory:',
-			DATABASE_URL: 'sqlite::memory:',
-			JWT_SECRET: 'test-jwt-secret-key-for-testing-only-32-chars',
-			BETTER_AUTH_SECRET: 'test-better-auth-secret-for-testing-only-32-chars',
-			LOG_LEVEL: 'error',
-			OPENAI_API_KEY: 'test-key',
-			ANTHROPIC_API_KEY: 'test-key',
-		},
+		setupFiles: [resolve(projectRoot, 'src/__tests__/setup.ts')],
+		env: vitestCommonEnv,
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json-summary', 'lcov', 'html'],
