@@ -3,6 +3,7 @@
  * Uses the local Ollama HTTP API with deterministic fallbacks for tests.
  */
 
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import type { ChatResponse, Message } from './types.js';
 
 export interface OllamaAdapterApi {
@@ -46,15 +47,22 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 
 	const defaultModel = process.env.OLLAMA_DEFAULT_MODEL || 'nomic-embed-text';
 	const baseUrl = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
+	const parsedUrl = new URL(baseUrl);
+	const allowedHosts = [parsedUrl.hostname.toLowerCase()];
+	const allowedProtocols = [parsedUrl.protocol];
+	const allowLocalhost = isPrivateHostname(parsedUrl.hostname);
 
 	const fetchJson = async <T>(endpoint: string, body?: unknown): Promise<T> => {
-		const res = await fetch(`${baseUrl}${endpoint}`, {
-			method: body ? 'POST' : 'GET',
-			headers: { 'content-type': 'application/json' },
-			body: body ? JSON.stringify(body) : undefined,
+		return safeFetchJson<T>(`${baseUrl}${endpoint}`, {
+			allowedHosts,
+			allowedProtocols,
+			allowLocalhost,
+			fetchOptions: {
+				method: body ? 'POST' : 'GET',
+				headers: { 'content-type': 'application/json' },
+				body: body ? JSON.stringify(body) : undefined,
+			},
 		});
-		if (!res.ok) throw new Error(`${endpoint} ${res.status}`);
-		return (await res.json()) as T;
 	};
 
 	const fallbackEmbedding = (text: string): number[] => {

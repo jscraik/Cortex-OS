@@ -138,21 +138,10 @@
 - [x] Create integration tests with MCP client
 - [x] Document cortex-py MCP tools
 
-### Task 3.2: cortex-webui App MCP Integration ✅
-
-- [x] Create TypeScript MCP client integration
-- [x] Implement UI interaction tools
-- [x] Implement visualization tools
-- [x] Add proper error handling and validation
-- [x] Write unit tests for all webui tools
-- [x] Create integration tests with MCP client
-- [x] Document webui MCP tools
-
-### Task 3.3: api App MCP Integration ✅
+### Task 3.3: cortex-os App MCP Integration ✅
 
 - [x] Create TypeScript MCP server implementation
-- [x] Implement REST API tools
-- [x] Implement webhook handling tools
+- [x] Implement system operations tools
 - [x] Add proper error handling and validation
 - [x] Write unit tests for all API tools
 - [x] Create integration tests with MCP client

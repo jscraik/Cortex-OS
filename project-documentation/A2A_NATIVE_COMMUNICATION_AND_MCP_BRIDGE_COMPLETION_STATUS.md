@@ -57,8 +57,6 @@
 - [x] ✅ **@cortex-os/rag** - `createRagBus`
 - [x] ✅ **@cortex-os/simlab** - `createSimlabBus`
 - [x] ✅ **@cortex-os/tdd-coach** - `createTddCoachBus`
-- [x] ✅ **apps/api** - Real A2A core integration
-- [x] ✅ **apps/cortex-webui** - Backend A2A integration
 - [x] ✅ **apps/cortex-py** - A2A core via stdio bridge
 - [x] ✅ **apps/cortex-code** - Native A2A integration with Rust bridge
 
@@ -139,7 +137,6 @@
    - **Estimated effort**: 1-2 days
 
 3. **App Frontend Integration**
-   - ⚠️ apps/cortex-webui: Backend complete, frontend React integration needed
    - ⚠️ apps/cortex-code: Frontend integration needed
    - **Estimated effort**: 2-3 days per app
 
@@ -193,12 +190,7 @@
 
 ### Week 3-4: Frontend Integration
 
-1. **apps/cortex-webui frontend React integration**
-   - Add React components for A2A communication
-   - Implement real-time event streaming
-   - User interface for MCP tool interaction
-
-2. **apps/cortex-code frontend integration**
+1. **apps/cortex-code frontend integration**
    - Integrate A2A communication into UI
    - Add MCP tool access
    - Real-time updates

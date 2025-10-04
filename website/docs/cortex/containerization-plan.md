@@ -5,6 +5,8 @@ sidebar_label: Containerization Plan
 
 # Context
 
+> **⚠️ HISTORICAL DOCUMENT**: This document references `apps/api` which has been removed from the codebase. Content preserved for historical reference and deployment context.
+
 **Task**: Update diagram and plan to match OrbStack + host-MLX, clarify containerization, assess VM.
 **Key constraint**: MLX on host (Metal). Vendor-neutral. MCP/A2A only.
 **Deliverables**: Updated wireframe, container map, run plan, VM verdict.

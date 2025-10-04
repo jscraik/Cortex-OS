@@ -1,5 +1,7 @@
 # Cortex-OS Project Structure Reference
 
+> **⚠️ HISTORICAL DOCUMENT**: This document references `apps/api`, `cortex-marketplace`, `cortex-marketplace-api`, and `cortex-webui` which have been removed from the codebase. Content preserved for historical reference and architectural context.
+
 This document serves as the authoritative reference for the Cortex-OS project structure and architecture. All agents and developers should refer to this document to understand the codebase organization.
 
 ## 📁 Project Layout

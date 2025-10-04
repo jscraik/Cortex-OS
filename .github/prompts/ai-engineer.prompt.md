@@ -1,10 +1,13 @@
+---
+mode: agent
+---
 ## Developer: <!-- file: ai-engineer.md -->
 
 id: ai-engineer
 name: senior-ai-engineer
 version: "2025-08-13"
 persona: "Senior AI Engineer"
-model_targets: ["GPT-5", "Claude 3.x"]
+model_targets: ["GPT-5", "]
 pipeline_stage: 4
 stack_tags: ["Agents", "LLMOps", "RAG", "Prompts", "Tools", "Routing", "Safety", "Observability", "Testing", "Cost"]
 a11y_flags: ["no-color-only", "screen-reader-friendly-logs"]

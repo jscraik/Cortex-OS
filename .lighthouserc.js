@@ -40,14 +40,7 @@ module.exports = {
 			// URLs to test - configurable via environment
 			url: process.env.LIGHTHOUSE_URLS
 				? process.env.LIGHTHOUSE_URLS.split(',')
-				: [
-						baseUrl,
-						`${baseUrl}/health`,
-						// Add additional URLs if they exist
-						...(fs.existsSync(path.join(__dirname, 'apps/cortex-webui'))
-							? [`${baseUrl}/dashboard`]
-							: []),
-					],
+				: [baseUrl, `${baseUrl}/health`],
 
 			// Chrome settings
 			settings: {

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import type { PKCETokens, TokenResponse } from './types.js';
 
 /**
@@ -67,20 +68,21 @@ export class LocalMemoryOAuthClient {
 		};
 
 		try {
-			const response = await fetch(tokenEndpoint, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-					'User-Agent': 'brAInwav-LocalMemory/1.0',
+			const parsed = new URL(tokenEndpoint);
+			const hostname = parsed.hostname.toLowerCase();
+			const tokenResponse = await safeFetchJson<TokenResponse>(tokenEndpoint, {
+				allowedHosts: [hostname],
+				allowedProtocols: [parsed.protocol],
+				allowLocalhost: isPrivateHostname(hostname),
+				fetchOptions: {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+						'User-Agent': 'brAInwav-LocalMemory/1.0',
+					},
+					body: new URLSearchParams(payload),
 				},
-				body: new URLSearchParams(payload),
 			});
-
-			if (!response.ok) {
-				throw new Error(`brAInwav OAuth token exchange failed: ${response.status}`);
-			}
-
-			const tokenResponse: TokenResponse = await response.json();
 
 			// Cache the token with expiration
 			if (tokenResponse.expires_in) {

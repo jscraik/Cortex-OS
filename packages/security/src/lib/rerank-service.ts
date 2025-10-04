@@ -1,3 +1,4 @@
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import { z } from 'zod';
 
 export interface Candidate {
@@ -14,20 +15,26 @@ export async function callRerankService(
 	query: string,
 	candidates: Candidate[],
 ): Promise<Candidate[]> {
-	const res = await fetch(`${baseUrl}/rerank`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ query, candidates }),
-	});
+	const parsed = new URL(baseUrl);
 
-	if (!res.ok) {
-		throw new Error(`Rerank failed: ${res.status} ${res.statusText}`);
+	try {
+		const json = await safeFetchJson<unknown>(`${baseUrl}/rerank`, {
+			allowedHosts: [parsed.hostname.toLowerCase()],
+			allowedProtocols: [parsed.protocol],
+			allowLocalhost: isPrivateHostname(parsed.hostname),
+			fetchOptions: {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ query, candidates }),
+			},
+		});
+		const data = responseSchema.parse(json);
+		if (data.scores.length !== candidates.length) {
+			throw new Error('Service returned mismatched scores');
+		}
+		return candidates.map((c, i) => ({ ...c, score: data.scores[i] }));
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`Rerank failed: ${message}`);
 	}
-
-	const json = await res.json();
-	const data = responseSchema.parse(json);
-	if (data.scores.length !== candidates.length) {
-		throw new Error('Service returned mismatched scores');
-	}
-	return candidates.map((c, i) => ({ ...c, score: data.scores[i] }));
 }

@@ -66,9 +66,9 @@ const response = await fetch(`${agentInfo.telemetryEndpoint}/metrics`);
 ### Remaining Security Tasks
 
 1. Review other SSRF findings in:
-   - Deprecated reference: `apps/cortex-cli/src/commands/mcp/marketplace-client.ts`
-   - `apps/cortex-marketplace-api/src/registry.ts`
-   - `apps/cortex-web/app/mvp/map/page.tsx`
+   - Deprecated reference (app removed)
+   - Deleted apps/cortex-marketplace-api (app removed)
+   - Deleted apps/cortex-web (app removed)
 
 2. Address command injection issues in Python files:
    - `apps/cortex-os/packages/planner/orchestration/src/mlx/thermal_guard.py`

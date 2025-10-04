@@ -1,5 +1,7 @@
 # Changelog
 
+> **⚠️ HISTORICAL NOTE**: This changelog contains references to deleted apps (`apps/api`, `cortex-marketplace`, `cortex-marketplace-api`, `cortex-webui`) which were removed from the codebase in October 2025. Historical entries have been preserved for reference.
+
 All notable changes to brAInwav Cortex-OS will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

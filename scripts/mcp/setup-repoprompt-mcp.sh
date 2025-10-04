@@ -178,18 +178,6 @@ REPOPROMPT_MCP_CONFIG='{
   }
 }'
 
-# Add to cortex-webui configuration
-if [[ -d "apps/cortex-webui" ]]; then
-    echo "$REPOPROMPT_MCP_CONFIG" > apps/cortex-webui/repoprompt-mcp.json
-    echo "✅ brAInwav Cortex-OS: Added RepPrompt to cortex-webui"
-fi
-
-# Add to cortex-code configuration  
-if [[ -d "apps/cortex-code" ]]; then
-    echo "$REPOPROMPT_MCP_CONFIG" > apps/cortex-code/repoprompt-mcp.json
-    echo "✅ brAInwav Cortex-OS: Added RepPrompt to cortex-code"
-fi
-
 echo "🎯 brAInwav Cortex-OS: RepPrompt MCP integration complete"
 EOF
 

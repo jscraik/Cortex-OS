@@ -8,10 +8,6 @@
     "token": "TODO:"
   },
   {
-    "file": "apps/api/src/server.ts",
-    "token": "TODO:"
-  },
-  {
     "file": "apps/cortex-code/core/src/default_client.rs",
     "token": "Mock"
   },
@@ -36,10 +32,6 @@
     "token": "Mock"
   },
   {
-    "file": "apps/cortex-marketplace/src/mcp/tools.ts",
-    "token": "TODO:"
-  },
-  {
     "file": "apps/cortex-os/packages/evidence/analytics/src/agent-trace-collector.ts",
     "token": "Mock"
   },
@@ -57,50 +49,6 @@
   },
   {
     "file": "apps/cortex-py/smoke_test.py",
-    "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-webui/backend/src/auth/index.ts",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-webui/backend/src/db/mock.ts",
-    "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-webui/backend/src/services/authMonitoringService.ts",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-webui/backend/src/services/emailService.ts",
-    "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/MessageInput/Commands/Knowledge.tsx",
-    "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/MessageInput/Commands/Models.tsx",
-    "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/MessageInput/Commands/Prompts.tsx",
-    "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Message.tsx",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Messages.tsx",
-    "token": "TODO:"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/SearchModal.tsx",
-    "token": "Mock"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Layout/SearchModal.tsx",
     "token": "Mock"
   },
   {

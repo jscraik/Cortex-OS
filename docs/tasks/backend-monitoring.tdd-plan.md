@@ -1,8 +1,10 @@
 # backend-monitoring.tdd-plan.md
 
+> **⚠️ HISTORICAL DOCUMENT**: This file references `apps/cortex-webui/backend` which has been removed from the codebase. Retained for historical reference and learning purposes.
+
 ## Context & Goals
 
-- Deliver `externalMonitoringService` for `apps/cortex-webui/backend` that emits brAInwav-branded authentication events.
+- Deliver `externalMonitoringService` for deleted backend that emits brAInwav-branded authentication events.
    Target destinations include Prometheus, Datadog, New Relic, and an optional webhook.
 - Replace the existing TODO in `authMonitoringService.emitToMonitoringSystems` with a concrete integration.
    Ensure current in-memory counters remain intact.
@@ -81,7 +83,7 @@
 
 ### Phase 5: Documentation & Governance
 
-- Document environment variables in `apps/cortex-webui/backend/README.md`.
+- Document environment variables in backend README (app removed).
 - Add CHANGELOG entry summarizing the new outbound monitoring capability.
 - Run full quality gates (`lint`, `test`, `docs:lint`, `security:scan`, `structure:validate`).
 

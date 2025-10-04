@@ -57,7 +57,7 @@ For each capability, we map status and integration approach consistent with ASBR
   - Client: React (Next.js) chat with SSE streaming; markdown render; math typesetting.
   - Multi-model per message via request headers/body to gateway.
 - Status:
-  - Gateway: partial via ASBR; confirm endpoints in `apps/api` (planned) or expose through `apps/cortex-os` interfaces.
+  - Gateway: partial via ASBR; expose through `apps/cortex-os` interfaces.
   - UI: to be implemented in `apps/cortex-web/app/chat` (new).
 
 ### 2) RAG document library and citations

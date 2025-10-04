@@ -7,6 +7,7 @@ export * from './node-event-source.js';
 export * from './port-utils.js';
 export * from './rng.js';
 export * from './safe-fetch.js';
+export * from './safe-fetch-json.js';
 export * from './secure-neo4j.js';
 export * from './timeout.js';
 export * as TypeGuards from './type-guards.js';

@@ -41,8 +41,6 @@ cd Cortex-OS
 
 # Copy environment templates
 cp .env.example .env
-cp apps/cortex-webui/backend/.env.example apps/cortex-webui/backend/.env
-cp apps/cortex-webui/frontend/.env.example apps/cortex-webui/frontend/.env
 
 # Generate secure secrets
 JWT_SECRET=$(openssl rand -hex 32)
@@ -95,8 +93,6 @@ kubectl create secret generic cortex-secrets \
 kubectl apply -f k8s/persistent-volumes.yaml
 kubectl apply -f k8s/database.yaml
 kubectl apply -f k8s/mcp-server.yaml
-kubectl apply -f k8s/cortex-webui-backend.yaml
-kubectl apply -f k8s/cortex-webui-frontend.yaml
 kubectl apply -f k8s/services.yaml
 kubectl apply -f k8s/ingress.yaml
 
@@ -382,76 +378,12 @@ make compliance:report
 
 ## Scaling Configuration
 
-### Horizontal Pod Autoscaler
-
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: cortex-webui-backend-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: cortex-webui-backend
-  minReplicas: 2
-  maxReplicas: 20
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Percent
-        value: 10
-        periodSeconds: 60
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-      - type: Percent
-        value: 50
-        periodSeconds: 60
-```
-
 ### Resource Requirements
 
 ```yaml
-# Cortex WebUI Backend
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: cortex-webui-backend
-spec:
-  template:
-    spec:
-      containers:
-      - name: backend
-        image: cortex-os/webui-backend:latest
-        resources:
-          requests:
-            cpu: 500m
-            memory: 512Mi
-          limits:
-            cpu: 2000m
-            memory: 2Gi
-        env:
-        - name: NODE_OPTIONS
-          value: "--max-old-space-size=1536"
-
 # MCP Server
 apiVersion: apps/v1
-kind: Deployment
+kind: deployment
 metadata:
   name: mcp-server
 spec:
@@ -624,7 +556,7 @@ spec:
 kubectl get pods -n cortex-os
 
 # View logs
-kubectl logs -n cortex-os deployment/cortex-webui-backend
+kubectl logs -n cortex-os deployment/cortex-os
 
 # Check resource usage
 kubectl top pods -n cortex-os
@@ -699,7 +631,7 @@ pnpm mutation:test
 curl http://prometheus:9090/api/v1/query?query=brainwav_request_duration_seconds
 
 # View application logs
-kubectl logs -n cortex-os deployment/cortex-webui-backend --tail=100
+kubectl logs -n cortex-os deployment/cortex-os --tail=100
 
 # Check resource usage
 kubectl describe pod -n cortex-os <pod-name>

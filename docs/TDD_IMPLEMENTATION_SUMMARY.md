@@ -1,12 +1,14 @@
-# TDD Implementation Plan - Final Summary
+# TDD Implementation Plan - Final Summary (HISTORICAL)
 
-**Project**: brAInwav Cortex WebUI
+> **Note**: This document describes historical work on the cortex-webui application which has been removed from the codebase. Retained for reference purposes only.
+
+**Project**: brAInwav Cortex WebUI (REMOVED)
 **Timeline**: October 2025 (12 weeks)
-**Status**: ✅ Complete
+**Status**: ✅ Complete (App since removed)
 
 ## Executive Summary
 
-This document summarizes the successful completion of the 12-week TDD Implementation Plan that transformed the cortex-webui from a functional prototype into a production-ready, AI-enhanced platform following brAInwav development standards.
+This document summarizes the completion of the 12-week TDD Implementation Plan that transformed the cortex-webui from a functional prototype into a production-ready, AI-enhanced platform following brAInwav development standards. The application has since been removed from the codebase.
 
 ## 🎯 Objectives Achieved
 

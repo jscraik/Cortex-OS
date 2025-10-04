@@ -38,7 +38,7 @@ For the full detailed diagram and extended explanation see
 
 | Category           | Purpose                 | Examples                                                 |
 | ------------------ | ----------------------- | -------------------------------------------------------- |
-| Applications       | Entry points & UX       | `cortex-os`, `cortex-webui`, `cortex-code`, ~~`cortex-cli`~~ (deprecated) |
+| Applications       | Entry points & UX       | `cortex-os`, `cortex-code`, ~~`cortex-cli`~~ (deprecated) |
 | Communication      | Messaging + tool bridge | `a2a`, `mcp`, `orchestration`                            |
 | Intelligence       | AI / reasoning          | `agents`, `rag`                                          |
 | Data & State       | Persistence & retrieval | `memories`, `registry`                                   |

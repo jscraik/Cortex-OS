@@ -7,6 +7,7 @@ const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
  */
 
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
+import { isPrivateHostname, safeFetch } from '@cortex-os/utils';
 // Using global WHATWG fetch; remove Undici-specific Agent to simplify typing for dts build
 import { z } from 'zod';
 import {
@@ -80,6 +81,9 @@ export class SpiffeClient {
 	private readonly baseUrl: string;
 	private readonly timeout = 10000;
 	private readonly config: TrustDomainConfig;
+	private readonly allowedHosts: string[];
+	private readonly allowedProtocols: string[];
+	private readonly allowLocalhost: boolean;
 	private readonly certificateCache: Map<string, { bundle: CertificateBundle; expiresAt: number }> =
 		new Map();
 	private readonly certificateTtl: number;
@@ -89,6 +93,10 @@ export class SpiffeClient {
 		this.config = config;
 		this.certificateTtl = certificateTtl;
 		this.baseUrl = `https://${config.spireServerAddress}:${config.spireServerPort}`;
+		const parsed = new URL(this.baseUrl);
+		this.allowedHosts = [parsed.hostname.toLowerCase()];
+		this.allowedProtocols = [parsed.protocol];
+		this.allowLocalhost = isPrivateHostname(parsed.hostname);
 
 		// (Optional) If mutual TLS to SPIRE server is required via node https Agent, introduce it here.
 	}
@@ -97,28 +105,26 @@ export class SpiffeClient {
 	 * Perform a fetch request with timeout support
 	 */
 	private async fetchWithTimeout(path: string, init?: RequestInit): Promise<Response> {
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-		try {
-			const response = await fetch(`${this.baseUrl}${path}`, {
+		const headers = new Headers(init?.headers ?? {});
+		headers.set('Content-Type', 'application/json');
+		const response = await safeFetch(`${this.baseUrl}${path}`, {
+			allowedHosts: this.allowedHosts,
+			allowedProtocols: this.allowedProtocols,
+			allowLocalhost: this.allowLocalhost,
+			timeout: this.timeout,
+			fetchOptions: {
 				...init,
-				signal: controller.signal,
-				headers: {
-					'Content-Type': 'application/json',
-					...(init?.headers || {}),
-				},
-			});
-			// Provide a minimal bytes() polyfill if absent (some environments use undici Response with bytes method)
-			if (!(response as any).bytes) {
-				(response as any).bytes = async () => {
-					const arrayBuffer = await response.arrayBuffer();
-					return Buffer.from(arrayBuffer);
-				};
-			}
-			return response;
-		} finally {
-			clearTimeout(timeoutId);
+				headers,
+			},
+		});
+		// Provide a minimal bytes() polyfill if absent (some environments use undici Response with bytes method)
+		if (!(response as any).bytes) {
+			(response as any).bytes = async () => {
+				const arrayBuffer = await response.arrayBuffer();
+				return Buffer.from(arrayBuffer);
+			};
 		}
+		return response;
 	}
 
 	/**

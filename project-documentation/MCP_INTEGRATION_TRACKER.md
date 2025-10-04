@@ -31,18 +31,14 @@ This document tracks the MCP integration status across all Cortex-OS packages an
 
 | App | Status | Tools Count | Notes |
 |-----|--------|-------------|-------|
-| cortex-code | ✅ Complete | 5 | File operations, search, patch, analysis, echo tools |
-| cortex-marketplace | ⚠️ Minimal | Integration | MCP marketplace integration |
 | cortex-py | ✅ Complete | 5+ | MLX servers with MCP tools |
-| cortex-webui | ✅ Complete | 4+ | Web UI with MCP integration |
-| api | ✅ Complete | 3 | Backend API with MCP tools |
 | cortex-os | ✅ Complete | 11 | OS-level operations and orchestration |
 
 ## Overall Progress
 
 - **Packages**: 18/20 with complete MCP integration (90%)
-- **Apps**: 5/6 with complete MCP integration (83%)
-- **Total**: 23/26 components with complete integration (88.5%)
+- **Apps**: 2/2 with complete MCP integration (100%)
+- **Total**: 20/22 components with complete integration (90.9%)
 
 ## Detailed Progress by Component Type
 
@@ -58,11 +54,9 @@ This document tracks the MCP integration status across all Cortex-OS packages an
 - Partial/Minimal: 0/16 (0%)
 - Not Started: 0/16 (0%)
 
-### Applications (6)
+### Applications (2)
 
-- Complete: 5/6 (83%)
-- Partial/Minimal: 1/6 (17%)
-- Not Started: 0/6 (0%)
+- Complete: 2/2 (100%)
 
 ## Next Steps
 
@@ -71,27 +65,6 @@ This document tracks the MCP integration status across all Cortex-OS packages an
 1. **mcp-registry** - Implement server discovery and registration (Task 3.3)
 2. **cortex-mcp** - Implement main MCP package tools (Task 3.4)
 3. **kernel** - Adapter complete; consider expanding integration (e.g., dynamic tool registration, end-to-end tests)
-
-### Priority 2: Enhance App Implementations
-
-1. **cortex-marketplace** - Enhance marketplace integration with more tools
-
-## Cortex-Code MCP Tools
-
-The cortex-code app now provides a comprehensive set of 5 MCP tools implemented in Rust:
-
-### File Operations Tool (`file_operations`)
-
-- **read** - Read file contents
-- **write** - Write content to files  
-- **list** - List directory contents
-- **create_dir** - Create directories
-
-### File Search Tool (`file_search`)
-
-- Pattern-based file searching with fuzzy matching
-- Directory scoping and result limits
-- Integrated with cortex-code's file-search capabilities
 
 ### Apply Patch Tool (`apply_patch`)
 

@@ -32,8 +32,7 @@ function parseArgs(): Options {
 	const root = path.resolve(rootArg ?? process.cwd());
 	const maxStr = get('--max', '3000') ?? '3000';
 	const maxFiles = Number.parseInt(maxStr, 10);
-	const ignoreCsv =
-		get('--ignore', 'node_modules,.git,.pnpm,dist,build,.next,coverage,apps/api/.venv') ?? '';
+	const ignoreCsv = get('--ignore', 'node_modules,.git,.pnpm,dist,build,.next,coverage') ?? '';
 	const ignore = ignoreCsv
 		.split(',')
 		.map((s) => s.trim())

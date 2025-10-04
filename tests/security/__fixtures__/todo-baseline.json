@@ -1,5 +1,4 @@
 [
-
   {
     "file": "apps/cortex-code/core/src/client_common.rs",
     "line": 146,
@@ -184,16 +183,6 @@
     "file": "apps/cortex-os/packages/ingest/src/dispatch.ts",
     "line": 100,
     "text": "// TODO: parse by MIME (pdf, html, markdown, text) with size and time budgets; emit SSE events"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Message.tsx",
-    "line": 6,
-    "text": "// TODO: Fix import path when shared types are properly set up"
-  },
-  {
-    "file": "apps/cortex-webui/frontend/src/components/Chat/Messages/Messages.tsx",
-    "line": 7,
-    "text": "// TODO: Unify message shape across codebase (createdAt/timestamp)"
   },
   {
     "file": "packages/agents/examples/agent-toolkit-demo.ts",

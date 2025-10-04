@@ -45,7 +45,7 @@ This note documents what Cortex-OS can learn from Open WebUI while remaining Apa
 
 ## Milestones
 
-1. OpenAI-compatible API surface (read-only chat) exposed by `apps/api/` through ASBR.
+1. OpenAI-compatible API surface (read-only chat) exposed through ASBR.
 2. RAG service MVP with doc library and embeddings search events.
 3. MCP/BYOF function tools with sandboxed execution and contracts.
 4. RBAC/SCIM provider and policy checks integrated into ASBR.

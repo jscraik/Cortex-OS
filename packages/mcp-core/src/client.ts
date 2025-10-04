@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { isPrivateHostname, safeFetch, safeFetchJson } from '@cortex-os/utils';
 import type WebSocket from 'ws';
 import { z } from 'zod';
 import type { ServerInfo } from './contracts.js';
@@ -75,25 +76,30 @@ export async function createEnhancedClient(
 				throw new Error('endpoint required for http transports');
 			}
 			const endpoint = server.endpoint; // safe after guard
+			const parsed = new URL(endpoint);
+			const baseOptions = {
+				allowedHosts: [parsed.hostname.toLowerCase()],
+				allowedProtocols: [parsed.protocol],
+				allowLocalhost: isPrivateHostname(parsed.hostname),
+				timeout: server.requestTimeoutMs ?? si.requestTimeoutMs,
+			};
 			return {
 				async callTool(input) {
 					if (closed) throw new ClientClosedError();
 					const payload = ToolRequestSchema.parse(input);
 					return await withTimeout(
-						(async () => {
-							const res = await fetch(endpoint, {
-								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json',
-									...(server.headers ?? {}),
+						(async () =>
+							safeFetchJson(endpoint, {
+								...baseOptions,
+								fetchOptions: {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										...(server.headers ?? {}),
+									},
+									body: JSON.stringify(payload),
 								},
-								body: JSON.stringify(payload),
-							});
-							if (!res.ok) {
-								throw new Error(`HTTP ${res.status}`);
-							}
-							return await res.json();
-						})(),
+							}))(),
 						si.requestTimeoutMs,
 						'HTTP tool call',
 					);
@@ -103,13 +109,16 @@ export async function createEnhancedClient(
 					// lightweight round-trip: POST minimal ping payload; ignore body content
 					await withTimeout(
 						(async () => {
-							const res = await fetch(endpoint, {
-								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json',
-									...(server.headers ?? {}),
+							const res = await safeFetch(endpoint, {
+								...baseOptions,
+								fetchOptions: {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										...(server.headers ?? {}),
+									},
+									body: JSON.stringify({ name: 'ping' }),
 								},
-								body: JSON.stringify({ name: 'ping' }),
 							});
 							if (!res.ok) throw new Error(`HTTP ${res.status}`);
 							await res.text();

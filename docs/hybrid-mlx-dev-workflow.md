@@ -94,7 +94,7 @@ Environment variables: `MLX_HOST`, `MLX_PORT`, `EMBEDDINGS_MODEL`, `EMBEDDINGS_D
 
 ## Default Service Groups
 - Core: `nats`, `grafana`, `loki`, `tempo`
-- App: `model-gateway`, `mcp-registry`, `cortex-webui`, `api`
+- App: `model-gateway`, `mcp-registry`
 
 ## Networking Reference
 

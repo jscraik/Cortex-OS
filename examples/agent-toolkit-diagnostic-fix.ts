@@ -18,7 +18,7 @@ async function main() {
 	// Example 1: Using DiagnosticsService to analyze errors
 	console.log('1. Analyzing diagnostics with DiagnosticsService...');
 	const diagnostics = await toolkit.diagnostics.analyze({
-		include: ['packages/agent-toolkit', 'apps/api'],
+		include: ['packages/agent-toolkit', 'apps/cortex-os'],
 		exclude: ['node_modules', 'dist'],
 		severity: ['error'],
 	});
@@ -46,7 +46,7 @@ async function main() {
 				},
 			},
 		],
-		files: ['apps/api/src/**/*.ts', 'packages/agent-toolkit/src/**/*.ts'],
+		files: ['apps/*/src/**/*.ts', 'packages/agent-toolkit/src/**/*.ts'],
 	});
 
 	console.log(`Applied ${semgrepFixes.length} semgrep fixes`);
@@ -95,7 +95,7 @@ async function main() {
 	// Example 6: Validate fixes
 	console.log('\n6. Validating fixes...');
 	const validation = await toolkit.validation.run({
-		targets: ['packages/agent-toolkit', 'apps/api'],
+		targets: ['packages/agent-toolkit', 'apps/cortex-os'],
 		checks: ['typescript', 'imports', 'exports'],
 	});
 

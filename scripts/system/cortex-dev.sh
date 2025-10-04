@@ -120,7 +120,7 @@ start_containers() {
     fi
 
     local default_core=(nats grafana loki tempo)
-    local default_app=(model-gateway mcp-registry cortex-webui api)
+    local default_app=(model-gateway mcp-registry)
     local targets=()
     if [[ ${#SERVICES[@]} -eq 0 ]]; then
         targets=("${default_core[@]}" "${default_app[@]}")
@@ -279,8 +279,6 @@ show_logs() {
         echo "  nats             - NATS message broker"
         echo "  model-gateway    - Model gateway service"
         echo "  mcp-registry     - MCP registry service"
-        echo "  cortex-webui     - Web UI"
-        echo "  api              - API service"
         echo "  grafana          - Grafana monitoring"
         echo "  loki             - Loki log aggregation"
         echo "  tempo            - Tempo tracing"
@@ -332,7 +330,7 @@ health_check() {
     
     # Check containers
     cd "$COMPOSE_DIR"
-    local services=("nats" "model-gateway" "mcp-registry" "cortex-webui" "api")
+    local services=("nats" "model-gateway" "mcp-registry")
     
     for service in "${services[@]}"; do
         if docker compose -f docker-compose.dev.yml ps "$service" --format json 2>/dev/null | jq -r '.[0].State' 2>/dev/null | grep -q "running"; then

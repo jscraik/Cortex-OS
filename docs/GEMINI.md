@@ -10,21 +10,21 @@ The project is a TypeScript-based monorepo managed with pnpm workspaces and Nx. 
 
 ### Key Technologies
 
-*   **Runtime:** Node.js (>=20)
-*   **Package Manager:** pnpm (v9.9.0)
-*   **Build System:** Nx
-*   **Language:** TypeScript
-*   **Testing:** Vitest, Playwright
-*   **Linting & Formatting:** ESLint, Biome
-*   **Security:** Semgrep
-*   **CI/CD:** GitHub Actions
+* **Runtime:** Node.js (>=20)
+* **Package Manager:** pnpm (v9.9.0)
+* **Build System:** Nx
+* **Language:** TypeScript
+* **Testing:** Vitest, Playwright
+* **Linting & Formatting:** ESLint, Biome
+* **Security:** Semgrep
+* **CI/CD:** GitHub Actions
 
 ## Building and Running
 
 ### Prerequisites
 
-*   Node.js >= 20
-*   pnpm v9.9.0
+* Node.js >= 20
+* pnpm v9.9.0
 
 ### Installation
 
@@ -40,9 +40,6 @@ pnpm dev
 
 # Start TUI interface
 cd apps/cortex-tui && cargo run
-
-# Start web interface
-cd apps/cortex-webui && pnpm dev
 
 # Start AI GitHub App
 cd packages/cortex-ai-github && pnpm dev
@@ -74,9 +71,9 @@ pnpm security:scan
 
 The monorepo is organized into three main directories:
 
-*   `apps`: Contains user-facing applications, such as the CLI, TUI, and web UI.
-*   `libs`: Contains shared libraries and contracts used across multiple packages.
-*   `packages`: Contains the core functionality of the system, organized by feature.
+* `apps`: Contains user-facing applications, such as the CLI, TUI, and web UI.
+* `libs`: Contains shared libraries and contracts used across multiple packages.
+* `packages`: Contains the core functionality of the system, organized by feature.
 
 ### Governance
 
@@ -104,10 +101,10 @@ AGENTS.md is authoritative for structure and behavior. Deviations are blocked by
 
 Define agent roles across MCP, A2A, RAG, and Simlab domains:
 
-- **MCP Agents**: Model Context Protocol handlers for external tool integration
-- **A2A Agents**: Agent-to-Agent communication coordinators
-- **RAG Agents**: Retrieval-Augmented Generation processors for knowledge queries
-- **Simlab Agents**: Simulation environment controllers
+* **MCP Agents**: Model Context Protocol handlers for external tool integration
+* **A2A Agents**: Agent-to-Agent communication coordinators
+* **RAG Agents**: Retrieval-Augmented Generation processors for knowledge queries
+* **Simlab Agents**: Simulation environment controllers
 
 Each role has explicit responsibilities and operational limits defined in their respective modules.
 
@@ -115,10 +112,10 @@ Each role has explicit responsibilities and operational limits defined in their 
 
 Strict domain separation with controlled interfaces:
 
-- No direct cross-domain imports (`src/` or `dist/`)
-- Communication through defined message contracts only
-- Shared utilities via common interfaces
-- Clear separation of concerns between agent types
+* No direct cross-domain imports (`src/` or `dist/`)
+* Communication through defined message contracts only
+* Shared utilities via common interfaces
+* Clear separation of concerns between agent types
 
 ### Inputs
 
@@ -133,36 +130,36 @@ const inputSchema = z.object({
 });
 ```
 
-- Deterministic seeds for reproducible behavior
-- Resource caps to prevent runaway execution
-- JSON schema validation for external inputs
+* Deterministic seeds for reproducible behavior
+* Resource caps to prevent runaway execution
+* JSON schema validation for external inputs
 
 ### Outputs
 
 Standardized output formats:
 
-- Default: Human-readable text with context
-- `--json` flag: Machine-readable JSON with metadata
-- ISO-8601 timestamps for all temporal data
-- Structured error responses with error codes
+* Default: Human-readable text with context
+* `--json` flag: Machine-readable JSON with metadata
+* ISO-8601 timestamps for all temporal data
+* Structured error responses with error codes
 
 ### Memory
 
 Bounded and deterministic memory management:
 
-- Interface-based memory stores (no direct persistence access)
-- Configurable memory limits per agent type
-- Deterministic cleanup and garbage collection
-- State serialization for agent persistence
+* Interface-based memory stores (no direct persistence access)
+* Configurable memory limits per agent type
+* Deterministic cleanup and garbage collection
+* State serialization for agent persistence
 
 ### Governance
 
 Enforcement through automated checks:
 
-- `.cortex` control-centre validation in CI pipeline
-- Pre-commit hooks for agent contract compliance
-- Schema validation for agent configurations
-- Documentation synchronization checks
+* `.cortex` control-centre validation in CI pipeline
+* Pre-commit hooks for agent contract compliance
+* Schema validation for agent configurations
+* Documentation synchronization checks
 
 ---
 
@@ -178,32 +175,32 @@ Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** - a go
 
 The project uses `.cortex/` as the **governance hub** and single source of truth for all policies, rules, and validation:
 
-- **`.cortex/rules/`**: Human-readable governance policies (RULES_OF_AI.md, AGENTS.md, etc.)
-- **`.cortex/schemas/`**: JSON schemas for validation (policy, workflow, task, memory schemas)
-- **`.cortex/gates/`**: Enforcement scripts and validation tools
-- **`.cortex/docs/`**: Authoritative architectural documentation
-- **`.cortex/library/`**: Reusable packs, blueprints, and patterns
+* **`.cortex/rules/`**: Human-readable governance policies (RULES_OF_AI.md, AGENTS.md, etc.)
+* **`.cortex/schemas/`**: JSON schemas for validation (policy, workflow, task, memory schemas)
+* **`.cortex/gates/`**: Enforcement scripts and validation tools
+* **`.cortex/docs/`**: Authoritative architectural documentation
+* **`.cortex/library/`**: Reusable packs, blueprints, and patterns
 
 ### Architecture
 
 #### ASBR Runtime Structure
 
-- **Location**: `apps/cortex-os/`
-- **Role**: Main application runtime that orchestrates feature packages
-- **Entry**: `apps/cortex-os/src/index.ts` → `runtime.ts`
+* **Location**: `apps/cortex-os/`
+* **Role**: Main application runtime that orchestrates feature packages
+* **Entry**: `apps/cortex-os/src/index.ts` → `runtime.ts`
 
 #### Feature Packages (Domain Logic)
 
-- **Location**: `packages/`
-- **Key Packages**:
-  - `a2a/` - Agent-to-Agent JSON-RPC 2.0 communication
-  - `mcp/` - Model Context Protocol integration and plugin system
-  - `orchestration/` - Multi-agent workflow coordination
-  - `memories/` - Long-term state management with Neo4j/Qdrant
-  - `rag/` - Retrieval-Augmented Generation with embeddings
-  - `agents/` - Agent implementations and enhanced behaviors
-  - `asbr/` - Core ASBR reasoning logic
-  - `simlab/` - Simulation environment for testing
+* **Location**: `packages/`
+* **Key Packages**:
+  * `a2a/` - Agent-to-Agent JSON-RPC 2.0 communication
+  * `mcp/` - Model Context Protocol integration and plugin system
+  * `orchestration/` - Multi-agent workflow coordination
+  * `memories/` - Long-term state management with Neo4j/Qdrant
+  * `rag/` - Retrieval-Augmented Generation with embeddings
+  * `agents/` - Agent implementations and enhanced behaviors
+  * `asbr/` - Core ASBR reasoning logic
+  * `simlab/` - Simulation environment for testing
 
 #### Communication Patterns
 
@@ -338,12 +335,12 @@ pnpm simlab:report
 
 ### Package Manager & Build System
 
-- **Package Manager**: `pnpm@9.0.0` (required)
-- **Monorepo Tools**: Nx + Turbo (hybrid approach)
-- **Nx Workspace**: Configured in `nx.json` with project-specific `project.json` files
-- **Turbo Pipeline**: Configured in `turbo.json` for task orchestration
-- **pnpm Workspace**: Defined in `pnpm-workspace.yaml`
-- **Node Version**: `>=20.0.0`
+* **Package Manager**: `pnpm@9.0.0` (required)
+* **Monorepo Tools**: Nx + Turbo (hybrid approach)
+* **Nx Workspace**: Configured in `nx.json` with project-specific `project.json` files
+* **Turbo Pipeline**: Configured in `turbo.json` for task orchestration
+* **pnpm Workspace**: Defined in `pnpm-workspace.yaml`
+* **Node Version**: `>=20.0.0`
 
 #### Workspace Structure
 
@@ -363,9 +360,9 @@ packages:
 
 Each project has a `project.json` file defining its build targets, dependencies, and tags:
 
-- **Applications** (`apps/`): Tagged with `scope:app`, `type:app`
-- **Feature Libraries** (`packages/`): Tagged with specific scopes (`scope:a2a`, `scope:mcp`, etc.)
-- **Shared Libraries** (`libs/`): Tagged with `type:shared`
+* **Applications** (`apps/`): Tagged with `scope:app`, `type:app`
+* **Feature Libraries** (`packages/`): Tagged with specific scopes (`scope:a2a`, `scope:mcp`, etc.)
+* **Shared Libraries** (`libs/`): Tagged with `type:shared`
 
 #### Nx Dependency Constraints
 
@@ -425,24 +422,24 @@ import { RAGPipeline } from '@cortex-os/rag/pipeline';
 
 #### Test Organization
 
-- **Root Config**: `vitest.config.ts` (orchestrates all projects)
-- **Workspace Config**: `vitest.workspace.ts`
-- **Package Configs**: Each package has its own `vitest.config.ts`
-- **Coverage**: 90% threshold enforced globally
+* **Root Config**: `vitest.config.ts` (orchestrates all projects)
+* **Workspace Config**: `vitest.workspace.ts`
+* **Package Configs**: Each package has its own `vitest.config.ts`
+* **Coverage**: 90% threshold enforced globally
 
 #### Test Types
 
-- **Unit**: Package-specific tests in `tests/` directories
-- **Integration**: `tests/integration/` - multi-package interactions
-- **E2E**: End-to-end scenarios via `test:integration:e2e`
-- **Security**: `tests/security/` - OWASP compliance testing
-- **Accessibility**: WCAG 2.2 AA compliance testing
+* **Unit**: Package-specific tests in `tests/` directories
+* **Integration**: `tests/integration/` - multi-package interactions
+* **E2E**: End-to-end scenarios via `test:integration:e2e`
+* **Security**: `tests/security/` - OWASP compliance testing
+* **Accessibility**: WCAG 2.2 AA compliance testing
 
 ### Quality Gates
 
-- **Coverage**: 90% statements/branches/functions/lines required
-- **Security**: Semgrep scanning with custom OWASP, LLM, and MITRE ATLAS rulesets
-- **Type Safety**: TypeScript strict mode (relaxed in base config)
+* **Coverage**: 90% statements/branches/functions/lines required
+* **Security**: Semgrep scanning with custom OWASP, LLM, and MITRE ATLAS rulesets
+* **Type Safety**: TypeScript strict mode (relaxed in base config)
 -- **Import Boundaries**: ESLint enforced architectural rules
 
 ### Security Considerations
@@ -451,42 +448,42 @@ import { RAGPipeline } from '@cortex-os/rag/pipeline';
 
 The project uses Semgrep with multiple custom rulesets in `.semgrep/`:
 
-- **`owasp-precise.yaml`**: Focused OWASP Top-10 2021 rules (ERROR severity)
-  - SQL/Command/Code injection detection
-  - Server-Side Request Forgery (SSRF) prevention
-  - Direct execution vulnerabilities
-- **`owasp-top-10-improved.yaml`**: Comprehensive OWASP Top-10 coverage
-  - Broken Access Control (A01)
-  - Cryptographic Failures (A02) - weak hashing, ECB mode
-  - All injection types (A03)
-  - Insecure Design patterns (A04)
-  - Security Misconfigurations (A05) - debug mode, dev environment
-  - Authentication Failures (A07) - credential storage issues
-  - Data Integrity Failures (A08) - eval(), Function() usage
-  - Logging/Monitoring issues (A09) - secret leakage in logs
-  - SSRF vulnerabilities (A10)
+* **`owasp-precise.yaml`**: Focused OWASP Top-10 2021 rules (ERROR severity)
+  * SQL/Command/Code injection detection
+  * Server-Side Request Forgery (SSRF) prevention
+  * Direct execution vulnerabilities
+* **`owasp-top-10-improved.yaml`**: Comprehensive OWASP Top-10 coverage
+  * Broken Access Control (A01)
+  * Cryptographic Failures (A02) - weak hashing, ECB mode
+  * All injection types (A03)
+  * Insecure Design patterns (A04)
+  * Security Misconfigurations (A05) - debug mode, dev environment
+  * Authentication Failures (A07) - credential storage issues
+  * Data Integrity Failures (A08) - eval(), Function() usage
+  * Logging/Monitoring issues (A09) - secret leakage in logs
+  * SSRF vulnerabilities (A10)
 
-- **`owasp-llm-top-ten.yaml`**: LLM-specific security rules
-  - Hardcoded secrets detection
-  - Prompt injection prevention
-  - Unsafe code execution patterns
+* **`owasp-llm-top-ten.yaml`**: LLM-specific security rules
+  * Hardcoded secrets detection
+  * Prompt injection prevention
+  * Unsafe code execution patterns
 
-- **`mitre-atlas.yaml`**: MITRE ATLAS framework for ML security
-  - Extends the public MITRE ATLAS ruleset
+* **`mitre-atlas.yaml`**: MITRE ATLAS framework for ML security
+  * Extends the public MITRE ATLAS ruleset
 
 #### OWASP Compliance
 
-- LLM Top-10 validation in `packages/asbr/src/security/`
-- Prompt injection guards in A2A communication
-- Input sanitization and output validation
-- Security regression testing
+* LLM Top-10 validation in `packages/asbr/src/security/`
+* Prompt injection guards in A2A communication
+* Input sanitization and output validation
+* Security regression testing
 
 #### Capabilities & Boundaries
 
-- MCP tools run in sandboxed environments
-- Network egress controls for testing (`MCP_NETWORK_EGRESS=disabled`)
-- Workload identity and mTLS in production deployments
-- Secret management via `packages/a2a/src/security/secure-secret-manager.ts`
+* MCP tools run in sandboxed environments
+* Network egress controls for testing (`MCP_NETWORK_EGRESS=disabled`)
+* Workload identity and mTLS in production deployments
+* Secret management via `packages/a2a/src/security/secure-secret-manager.ts`
 
 ### Governance & Validation Framework
 
@@ -496,22 +493,22 @@ The `.cortex/` directory serves as the governance hub with these key components:
 
 ##### Rules & Policies
 
-- **`RULES_OF_AI.md`**: Fundamental AI ethics and behavior principles
-- **`AGENTS.md`**: Agent workflow specifications and role definitions
-- **Policy schemas**: Machine-readable governance (agents, tools, repository policies)
+* **`RULES_OF_AI.md`**: Fundamental AI ethics and behavior principles
+* **`AGENTS.md`**: Agent workflow specifications and role definitions
+* **Policy schemas**: Machine-readable governance (agents, tools, repository policies)
 
 ##### Validation Gates
 
-- **`validate-structure.ts`**: Project structure compliance
-- **`validate-policies.ts`**: Policy adherence checking
-- **`validate-docs.ts`**: Documentation consistency
-- **`validate-context.ts`**: Context and schema validation
+* **`validate-structure.ts`**: Project structure compliance
+* **`validate-policies.ts`**: Policy adherence checking
+* **`validate-docs.ts`**: Documentation consistency
+* **`validate-context.ts`**: Context and schema validation
 
 ##### Library & Patterns
 
-- **`library/packs/`**: Reusable patterns (auth, database, frontend, security, testing)
-- **`library/blueprints/`**: Architectural templates
-- **`library/personas/`**: Agent behavior definitions
+* **`library/packs/`**: Reusable patterns (auth, database, frontend, security, testing)
+* **`library/blueprints/`**: Architectural templates
+* **`library/personas/`**: Agent behavior definitions
 
 #### Validation Flow
 
@@ -544,20 +541,20 @@ Code Changes → .cortex gates → CI validation → Runtime enforcement
 
 #### Common Issues
 
-- **Import Errors**: Check ESLint restricted paths rules in `eslint.config.js` and Nx dependency constraints in `nx.json`
-- **Governance Violations**: Review `.cortex/gates/` validation output and policy compliance
-- **Structure Issues**: Run `pnpm structure:validate` and check `.cortex/docs/project-structure.md`
-- **Test Failures**: Review coverage thresholds and missing test configs
-- **Build Issues**: Verify Turbo cache with `turbo run build --force`
-- **MCP Problems**: Check `pnpm mcp:smoke` and connection configs
+* **Import Errors**: Check ESLint restricted paths rules in `eslint.config.js` and Nx dependency constraints in `nx.json`
+* **Governance Violations**: Review `.cortex/gates/` validation output and policy compliance
+* **Structure Issues**: Run `pnpm structure:validate` and check `.cortex/docs/project-structure.md`
+* **Test Failures**: Review coverage thresholds and missing test configs
+* **Build Issues**: Verify Turbo cache with `turbo run build --force`
+* **MCP Problems**: Check `pnpm mcp:smoke` and connection configs
 
 #### Logs & Monitoring
 
-- Test results: `junit.xml` and `test-results.json`
-- Coverage reports: Generated in `coverage/` directory
-- Security reports: `security-reports/` and `atlas-reports/`
-- Semgrep CI reports: `reports/semgrep-results.json`
-- Carbon tracking: `carbon-metrics/` (if enabled)
+* Test results: `junit.xml` and `test-results.json`
+* Coverage reports: Generated in `coverage/` directory
+* Security reports: `security-reports/` and `atlas-reports/`
+* Semgrep CI reports: `reports/semgrep-results.json`
+* Carbon tracking: `carbon-metrics/` (if enabled)
 
 This architecture enables scalable, maintainable AI agent systems while enforcing clear boundaries and comprehensive quality gates.
 

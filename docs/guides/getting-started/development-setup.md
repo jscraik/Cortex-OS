@@ -136,7 +136,6 @@ pnpm dev
 
 # Start specific applications
 cd apps/cortex-code && cargo run        # TUI interface
-cd apps/cortex-webui && pnpm dev       # Web interface
 ```
 
 ### GitHub Apps Management

@@ -7,6 +7,7 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import { isPrivateHostname, safeFetch } from '@cortex-os/utils';
 import { type JwtPayload, sign, verify } from 'jsonwebtoken';
 import { securityMetrics } from '../monitoring/prometheus-metrics.js';
 
@@ -56,6 +57,17 @@ export class OAuthProvider {
 		this.jwtSecret = jwtSecret;
 	}
 
+	private buildSafeOptions(url: string, init: RequestInit, timeout = 15000) {
+		const parsed = new URL(url);
+		return {
+			allowedHosts: [parsed.hostname.toLowerCase()],
+			allowedProtocols: [parsed.protocol],
+			allowLocalhost: isPrivateHostname(parsed.hostname),
+			timeout,
+			fetchOptions: init,
+		};
+	}
+
 	/**
 	 * Generate authorization URL for OAuth flow
 	 */
@@ -82,21 +94,24 @@ export class OAuthProvider {
 		try {
 			const tokenEndpoint = this.config.tokenEndpoint || `${this.config.issuer}/oauth2/token`;
 
-			const response = await fetch(tokenEndpoint, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-					Authorization: `Basic ${Buffer.from(
-						`${this.config.clientId}:${this.config.clientSecret}`,
-					).toString('base64')}`,
-				},
-				body: new URLSearchParams({
-					grant_type: 'authorization_code',
-					code,
-					redirect_uri: this.config.redirectUri,
-					client_id: this.config.clientId,
+			const response = await safeFetch(
+				tokenEndpoint,
+				this.buildSafeOptions(tokenEndpoint, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+						Authorization: `Basic ${Buffer.from(
+							`${this.config.clientId}:${this.config.clientSecret}`,
+						).toString('base64')}`,
+					},
+					body: new URLSearchParams({
+						grant_type: 'authorization_code',
+						code,
+						redirect_uri: this.config.redirectUri,
+						client_id: this.config.clientId,
+					}),
 				}),
-			});
+			);
 
 			if (!response.ok) {
 				const error = await response.text();
@@ -183,19 +198,22 @@ export class OAuthProvider {
 		try {
 			const tokenEndpoint = this.config.tokenEndpoint || `${this.config.issuer}/oauth2/token`;
 
-			const response = await fetch(tokenEndpoint, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-					Authorization: `Basic ${Buffer.from(
-						`${this.config.clientId}:${this.config.clientSecret}`,
-					).toString('base64')}`,
-				},
-				body: new URLSearchParams({
-					grant_type: 'refresh_token',
-					refresh_token: refreshToken,
+			const response = await safeFetch(
+				tokenEndpoint,
+				this.buildSafeOptions(tokenEndpoint, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+						Authorization: `Basic ${Buffer.from(
+							`${this.config.clientId}:${this.config.clientSecret}`,
+						).toString('base64')}`,
+					},
+					body: new URLSearchParams({
+						grant_type: 'refresh_token',
+						refresh_token: refreshToken,
+					}),
 				}),
-			});
+			);
 
 			if (!response.ok) {
 				const error = await response.text();
@@ -237,11 +255,14 @@ export class OAuthProvider {
 		try {
 			const userInfoEndpoint = this.config.userInfoEndpoint || `${this.config.issuer}/userinfo`;
 
-			const response = await fetch(userInfoEndpoint, {
-				headers: {
-					Authorization: `Bearer ${accessToken}`,
-				},
-			});
+			const response = await safeFetch(
+				userInfoEndpoint,
+				this.buildSafeOptions(userInfoEndpoint, {
+					headers: {
+						Authorization: `Bearer ${accessToken}`,
+					},
+				}),
+			);
 
 			if (!response.ok) {
 				const error = await response.text();
@@ -312,19 +333,22 @@ export class OAuthProvider {
 			if (refreshToken) {
 				const revokeEndpoint = `${this.config.issuer}/oauth2/revoke`;
 
-				await fetch(revokeEndpoint, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
-						Authorization: `Basic ${Buffer.from(
-							`${this.config.clientId}:${this.config.clientSecret}`,
-						).toString('base64')}`,
-					},
-					body: new URLSearchParams({
-						token: refreshToken,
-						token_type_hint: 'refresh_token',
+				await safeFetch(
+					revokeEndpoint,
+					this.buildSafeOptions(revokeEndpoint, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded',
+							Authorization: `Basic ${Buffer.from(
+								`${this.config.clientId}:${this.config.clientSecret}`,
+							).toString('base64')}`,
+						},
+						body: new URLSearchParams({
+							token: refreshToken,
+							token_type_hint: 'refresh_token',
+						}),
 					}),
-				});
+				);
 			}
 
 			// In a real implementation, you would add the token to a blacklist

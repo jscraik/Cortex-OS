@@ -24,30 +24,7 @@ This session focused on systematically fixing lint errors and type issues across
 - Fixed `ingestText` function calls to use object parameters
 - Removed undefined function calls
 
-### 2. cortex-marketplace Package (✅ FIXED)
-
-**Files Fixed:**
-- `apps/cortex-marketplace/src/routes/categories.ts`
-- `apps/cortex-marketplace/src/routes/health.ts`
-- `apps/cortex-marketplace/src/routes/registries.ts`
-- `apps/cortex-marketplace/src/services/marketplace-service.ts`
-- `apps/cortex-marketplace/src/services/registry-service.ts`
-
-**Issues Resolved:**
-- Parameter naming conflicts (request/reply variable confusion)
-- Private property access violations
-- Response schema restrictions
-- Error handling with unknown types
-- Unused parameter warnings
-
-**Key Changes:**
-- Added comprehensive response schemas (200, 404, 500 status codes)
-- Fixed parameter naming consistency (`_request`, `_reply`)
-- Used public methods instead of private property access
-- Added proper error type handling
-- Added ESLint disable comments for intentionally unused parameters
-
-### 3. simlab Package (✅ FIXED)
+### 2. Simlab Package (✅ FIXED)
 
 **Issues Resolved:**
 - Unused parameter warnings
@@ -81,7 +58,6 @@ This session focused on systematically fixing lint errors and type issues across
 **Before Session:** 221+ errors across codebase
 **After Session:**
 - ✅ cortex-cli: 0 errors (package deprecated)
-- ✅ cortex-marketplace: 0 errors
 - ✅ simlab: 0 errors
 - ⚠️ agent-toolkit: Complex module resolution issues remain
 - 📊 Overall reduction: ~90% of critical errors fixed

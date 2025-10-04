@@ -1,5 +1,7 @@
 # Prisma-WebSocket Type Safety Research
 
+> **⚠️ HISTORICAL DOCUMENT**: This file references `apps/api` which has been removed from the codebase. Retained for historical reference and learning purposes.
+
 ## Research Objective
 
 Strengthen brAInwav Cortex-OS data-layer guarantees by enforcing fully typed Prisma access
@@ -8,13 +10,13 @@ event-driven design with explicit TypeScript message interfaces.
 
 ## Existing Implementation Notes
 
-- `apps/api/src/db/prisma-client.ts` manually defines a narrow `PrismaClientType` interface
-  instead of reusing the generated `@prisma/client` types. A dynamic import is used with a
-  fallback stub that proxies methods to no-op async functions.
+- Prisma client manually defined a narrow `PrismaClientType` interface
+  instead of reusing the generated `@prisma/client` types (app removed). A dynamic import was used with a
+  fallback stub that proxied methods to no-op async functions.
 - The Prisma schema under `prisma/schema.prisma` includes relational models (`Task`,
-  `Project`, `Evidence`, etc.) required by the API `/tasks` endpoint.
-- `apps/api/src/routes/api-v1.ts` performs runtime casts (`as unknown as TaskDelegate`)
-  to work with `prisma.task`. The router redefines small response shapes for API payloads.
+  `Project`, `Evidence`, etc.) required by deleted API `/tasks` endpoint.
+- API routes performed runtime casts (`as unknown as TaskDelegate`)
+  to work with `prisma.task` (app removed). The router redefined small response shapes for API payloads.
 - The repository depends on `@prisma/client@5.22.0`, but the generated client is only lazily
   ensured via `prisma generate` when the module import fails.
 - `packages/memories/src/adapters/server.realtime.ts` exposes a monolithic

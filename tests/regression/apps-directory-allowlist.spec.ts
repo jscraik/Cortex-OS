@@ -53,8 +53,8 @@ describe('Apps Directory Placeholder Regression - Phase 9 Production Readiness',
 
 		expect(appDirectories.length).toBeGreaterThan(0);
 
-		// Expected apps from Phase 9 plan
-		const expectedApps = ['api', 'cortex-marketplace', 'cortex-os', 'cortex-py'];
+		// Expected apps
+		const expectedApps = ['cortex-os', 'cortex-py'];
 
 		for (const expectedApp of expectedApps) {
 			expect(appDirectories.some((dir) => dir.startsWith(expectedApp))).toBe(true);
@@ -123,18 +123,8 @@ All placeholder implementations must be completed for production readiness.`,
 		expect(violations).toHaveLength(0);
 	});
 
-	it('should validate critical Phase 9 components are production ready', async () => {
+	it('should validate critical components are production ready', async () => {
 		const criticalChecks = [
-			{
-				app: 'api',
-				file: 'tests/routing-completeness.test.ts',
-				description: 'API routing completeness test exists',
-			},
-			{
-				app: 'cortex-marketplace',
-				file: 'tests/mcp-implementation.test.ts',
-				description: 'MCP implementation test exists',
-			},
 			{
 				app: 'cortex-os',
 				file: 'tests/metrics-reality.test.ts',

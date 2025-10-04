@@ -1,17 +1,19 @@
 # 🔒 Security & Workflow Enhancement Summary
 
+> **⚠️ HISTORICAL NOTE**: Some security issues referenced deleted apps (cortex-marketplace-api, cortex-cli, cortex-web). References preserved for historical context.
+
 ## 🎯 Objectives Completed
 
 ### ✅ Security Issues Addressed (20 → 0 Critical Findings)
 
 #### 1. Server-Side Request Forgery (SSRF) Vulnerabilities Fixed
 
-- Deprecated reference: `apps/cortex-cli/src/commands/mcp/marketplace-client.ts`
+- Deprecated reference (app removed)
   - Added `validateMarketplaceUrl()` function with domain allowlisting
   - Protected `fetchRegistry()` method with URL validation
   - Allowlisted domains: marketplace.cortex-os.com, registry.cortex-os.com, localhost
 
-- **apps/cortex-marketplace-api/src/registry.ts**
+- **Deleted apps/cortex-marketplace-api** (app removed)
   - Added `validateRegistryUrl()` function
   - Protected registry fetch operations
   - Allowlisted domains: registry.cortex-os.dev, marketplace.cortex-os.com

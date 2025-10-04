@@ -98,16 +98,9 @@ persistence-test-*.db*
 .vitest-tmp-target/
 .rollup.cache/
 
-# Upstream mirrors / vendored external references for cortex-codex (kept locally only)
-apps/cortex-codex/external/
-apps/cortex-webui/open-webui/
-
 # Docusaurus build/cache artifacts (exclude generated site outputs)
 website/.docusaurus/
 website/build/
-
-# Rust compiler ICE diagnostic dumps
-apps/cortex-codex/rustc-ice-*.txt
 
 # Lockfile conflict & backups
 pnpm-lock.conflicted

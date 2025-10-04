@@ -68,18 +68,12 @@ Agents SHOULD prefix invasive operations with:
 
 CI can call `pnpm memory:budget` after strategic stages (post-install, post-build, post-test) and aggregate results as part of a governance gate.
 
-### Fixed Recursive Build Issue (cortex-webui)
-The original cause of process proliferation was apps/cortex-webui using `-w backend` patterns that triggered recursive pnpm workspace re-entry. Fixed by replacing with explicit `--filter cortex-webui-backend` calls.
+### Future Hardening Ideas (Not Yet Implemented)
+- Add a daemon health checker rejecting stale `.nx` daemon socket entries.
+- Introduce a lightweight lock around `pnpm install` to prevent accidental parallel installs.
+- Persist sampler peak summary to an artifact and plot rolling averages.
 
-Before (problematic):
-```json
-"build": "pnpm run build -w backend && pnpm run build -w frontend"
-```
-
-After (fixed):
-```json
-"build": "pnpm --filter cortex-webui-backend run build && pnpm --filter cortex-webui-frontend run build"
-```
+**Updated: 2025-09-13**
 
 ### Future Hardening Ideas (Not Yet Implemented)
 - Add a daemon health checker rejecting stale `.nx` daemon socket entries.

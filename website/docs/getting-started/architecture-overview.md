@@ -39,7 +39,7 @@ High-level view of Cortex-OS structure, principles, and communication patterns.
 
 | Category           | Purpose                 | Examples                                                 |
 | ------------------ | ----------------------- | -------------------------------------------------------- |
-| Applications       | Entry points & UX       | `cortex-os`, `cortex-webui`, `cortex-code` |
+| Applications       | Entry points & UX       | `cortex-os`, `cortex-code` |
 | Communication      | Messaging + tool bridge | `a2a`, `mcp`, `orchestration`                            |
 | Intelligence       | AI / reasoning          | `agents`, `rag`                                          |
 | Data & State       | Persistence & retrieval | `memories`, `registry`                                   |

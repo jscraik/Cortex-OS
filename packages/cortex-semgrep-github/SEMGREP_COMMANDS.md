@@ -39,7 +39,7 @@ Scans specific files or directories matching the pattern
 
 ```bash
 @semgrep scan --files "src/**/*.ts"
-@semgrep scan --files "apps/api/"
+@semgrep scan --files "apps/cortex-os/"
 ```
 
 #### `@semgrep scan --severity <level>`

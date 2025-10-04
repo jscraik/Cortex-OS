@@ -32,7 +32,6 @@ AGUI enables agents to dynamically create, modify, and interact with user interf
                                                           │              │
                                                           │ - EventSource│
                                                           │ - React/Vue  │
-                                                          │ - WebUI      │
                                                           │ - Custom     │
                                                           └──────────────┘
 ```
@@ -401,4 +400,3 @@ import { createAguiComponentRenderedEvent } from '@cortex-os/contracts/agui';
 - [A2A Integration Guide](../packages/a2a/README.md)
 - [MCP Tools Reference](../packages/mcp/README.md)
 - [Event Bus Architecture](../docs/architecture/event-bus.md)
-- [WebUI Integration](../apps/cortex-webui/README.md)

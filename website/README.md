@@ -17,12 +17,6 @@ All AI agent documentation has been updated to include Phase 6: Reality Filter, 
 
 Updated files include: `AGENTS.md`, `CLAUDE.md`, `QWEN.md`, `GEMINI.md`, `copilot-instructions.md`, and `RULES_OF_AI.md`.
 
-### Prisma Client Hardening
-
-- Documented the 2025-09-27 brAInwav fix that stabilizes the `apps/api` Prisma
-  bootstrap so `pnpm --filter @cortex-os/api build` remains reliable with
-  aligned logging configuration and fallback delegates.
-
 ### Cortex MCP Production Hardening
 
 - Added deployment runbook updates covering the new Cortex/Local Memory adapters,

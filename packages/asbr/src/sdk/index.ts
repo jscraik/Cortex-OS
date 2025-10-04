@@ -21,7 +21,7 @@ import type {
 	TaskRef,
 	UnsubscribeFunction,
 } from '@cortex-os/asbr-schemas';
-import { NodeEventSource } from '@cortex-os/utils';
+import { isPrivateHostname, NodeEventSource, safeFetch } from '@cortex-os/utils';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -33,6 +33,9 @@ export class ASBRClient {
 	private token?: string;
 	private eventSubscriptions = new Map<string, Set<(event: AsbrEvent) => void>>();
 	private eventStreams = new Map<string, NodeEventSource>();
+	private readonly allowedHosts: string[];
+	private readonly allowedProtocols: string[];
+	private readonly allowLocalhost: boolean;
 
 	constructor(
 		options: {
@@ -42,6 +45,10 @@ export class ASBRClient {
 	) {
 		this.baseUrl = options.baseUrl || 'http://127.0.0.1:7439';
 		this.token = options.token;
+		const parsed = new URL(this.baseUrl);
+		this.allowedHosts = [parsed.hostname.toLowerCase()];
+		this.allowedProtocols = [parsed.protocol];
+		this.allowLocalhost = isPrivateHostname(parsed.hostname);
 	}
 
 	/**
@@ -216,9 +223,14 @@ export class ASBRClient {
 			headers.set('Authorization', `Bearer ${this.token}`);
 		}
 
-		const response = await fetch(url, {
-			...init,
-			headers,
+		const response = await safeFetch(url, {
+			allowedHosts: this.allowedHosts,
+			allowedProtocols: this.allowedProtocols,
+			allowLocalhost: this.allowLocalhost,
+			fetchOptions: {
+				...init,
+				headers,
+			},
 		});
 
 		if (!response.ok) {

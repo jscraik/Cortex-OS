@@ -31,7 +31,7 @@ devcontainer exec --workspace-folder . bash
 
 - **Node.js 22.12.0** - Primary runtime
 - **pnpm 10.4.0** - Package manager
-- **Rust 1.80.1** - For cortex-codex
+- **Rust 1.80.1** - For Rust components
 - **Python 3.12.6** - For cortex-py
 - **Docker CLI** - For container operations
 - **mise** - Tool version management

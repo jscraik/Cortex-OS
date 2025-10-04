@@ -266,8 +266,6 @@ export const DOCS_STRUCTURE: Record<string, Record<string, string>> = {
 	apps: {
 		'cortex-os': 'Core Runtime',
 		'cortex-py': 'Python Integration',
-		'cortex-webui': 'Web Interface',
-		'cortex-marketplace': 'Marketplace',
 	},
 	packages: {
 		a2a: 'A2A Event Bus',

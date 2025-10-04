@@ -1,31 +1,11 @@
 [
 	{
-		"name": "api",
-		"out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-api.out"
-	},
-	{
-		"name": "cortex-cli",
-		"out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-cortex-cli.out"
-	},
-	{
-		"name": "cortex-marketplace",
-		"out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-cortex-marketplace.out"
-	},
-	{
-		"name": "cortex-marketplace-api",
-		"out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-cortex-marketplace-api.out"
-	},
-	{
 		"name": "cortex-os",
 		"out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-cortex-os.out"
 	},
 	{
 		"name": "cortex-py",
 		"out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-cortex-py.out"
-	},
-	{
-		"name": "cortex-web",
-		"out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-cortex-web.out"
 	},
 	{
 		"name": "vscode-extension",

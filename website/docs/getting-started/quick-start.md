@@ -47,12 +47,10 @@ pnpm dev
 # Terminal UI (Rust) – in a separate shell
 cd apps/cortex-code && cargo run
 
-# Web UI
-cd apps/cortex-webui && pnpm dev
-
 # GitHub Apps (diagnose + launch)
 ./github-apps-diagnostic.sh
 ./start-github-apps.sh
+```
 ./free-ports.sh all   # Free ports if blocked
 ```
 

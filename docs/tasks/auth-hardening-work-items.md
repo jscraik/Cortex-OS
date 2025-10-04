@@ -1,5 +1,7 @@
 # Auth Hardening – Work Items
 
+> **⚠️ HISTORICAL DOCUMENT**: This file references `apps/api` which has been removed from the codebase. Retained for historical reference and learning purposes.
+
 Created: 2025-09-27
 Owner: brAInwav Development Team
 
@@ -13,7 +15,7 @@ Vitest fails to execute targeted auth suites because `vitest.workspace.ts` does 
 ### WI-001 Tasks
 
 - Audit `vitest.workspace.ts` to ensure it exports an object via `defineWorkspace` or an equivalent helper.
-- Validate that `pnpm vitest run --config vitest.workspace.ts apps/api/tests/auth/features.spec.ts` discovers and runs the suite.
+- Validate that `pnpm vitest run --config vitest.workspace.ts` discovers and runs auth suites (app removed).
 - Document the fix in `tasks/auth-hardening-summary.md` and capture any required developer instructions in `README.md`.
 
 ### WI-001 Acceptance Criteria

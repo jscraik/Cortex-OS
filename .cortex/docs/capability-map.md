@@ -1,5 +1,7 @@
 # Capability map: Four roles, one OS (ASBR-governed)
 
+> **⚠️ HISTORICAL DOCUMENT**: This document references `apps/api` which has been removed from the codebase. Content preserved for historical reference and architectural context.
+
 Principles
 
 Vendor-neutral. Local-first. Deterministic. Governed via ASBR. Accessibility-aware.

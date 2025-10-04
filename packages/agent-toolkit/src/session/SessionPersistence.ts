@@ -5,6 +5,7 @@
  * for cross-session context and audit trails.
  */
 
+import { isPrivateHostname, safeFetch } from '@cortex-os/utils';
 import type { ToolCallRecord } from './SessionContextManager.js';
 
 export interface SessionMetadata {
@@ -33,40 +34,54 @@ export interface SessionPersistenceOptions {
  */
 export const createSessionPersistence = (opts: SessionPersistenceOptions) => {
 	const enabled = opts.enabled !== false;
-	const headers: HeadersInit = {
+	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',
 	};
 
 	if (opts.apiKey) {
-		headers['Authorization'] = `Bearer ${opts.apiKey}`;
+		headers.Authorization = `Bearer ${opts.apiKey}`;
 	}
+
+	const parsedBase = new URL(opts.baseUrl);
+	const safeOptions = {
+		allowedHosts: [parsedBase.hostname.toLowerCase()],
+		allowedProtocols: [parsedBase.protocol],
+		allowLocalhost: isPrivateHostname(parsedBase.hostname),
+	};
+
+	const post = async (path: string, payload: unknown) => {
+		return safeFetch(`${opts.baseUrl}${path}`, {
+			...safeOptions,
+			fetchOptions: {
+				method: 'POST',
+				headers: { ...headers },
+				body: JSON.stringify(payload),
+			},
+		});
+	};
 
 	const storeSessionMetadata = async (metadata: SessionMetadata): Promise<void> => {
 		if (!enabled) return;
 
 		try {
-			const response = await fetch(`${opts.baseUrl}/store`, {
-				method: 'POST',
-				headers,
-				body: JSON.stringify({
-					content: `brAInwav agent-toolkit session: ${metadata.sessionId}`,
-					importance: 7,
-					tags: [
-						'agent-toolkit',
-						'session',
-						`session:${metadata.sessionId}`,
-						...(metadata.tags || []),
-					],
-					domain: 'agent-sessions',
-					namespace: opts.namespace || metadata.namespace || 'agent-toolkit',
-					metadata: {
-						sessionId: metadata.sessionId,
-						startedAt: metadata.startedAt,
-						lastActivityAt: metadata.lastActivityAt,
-						toolCallCount: metadata.toolCallCount,
-						totalTokens: metadata.totalTokens,
-					},
-				}),
+			const response = await post('/store', {
+				content: `brAInwav agent-toolkit session: ${metadata.sessionId}`,
+				importance: 7,
+				tags: [
+					'agent-toolkit',
+					'session',
+					`session:${metadata.sessionId}`,
+					...(metadata.tags || []),
+				],
+				domain: 'agent-sessions',
+				namespace: opts.namespace || metadata.namespace || 'agent-toolkit',
+				metadata: {
+					sessionId: metadata.sessionId,
+					startedAt: metadata.startedAt,
+					lastActivityAt: metadata.lastActivityAt,
+					toolCallCount: metadata.toolCallCount,
+					totalTokens: metadata.totalTokens,
+				},
 			});
 
 			if (!response.ok) {
@@ -100,25 +115,21 @@ export const createSessionPersistence = (opts: SessionPersistenceOptions) => {
 				},
 			};
 
-			const response = await fetch(`${opts.baseUrl}/store`, {
-				method: 'POST',
-				headers,
-				body: JSON.stringify({
-					content: `brAInwav agent-toolkit session ${sessionId} summary: ${summary.totalCalls} tool calls, ${summary.totalTokens} tokens`,
-					importance: 6,
-					tags: [
-						'agent-toolkit',
-						'session-summary',
-						`session:${sessionId}`,
-						...Object.keys(summary.byKind).map((kind) => `tool:${kind}`),
-					],
-					domain: 'agent-diagnostics',
-					namespace: opts.namespace || 'agent-toolkit',
-					metadata: {
-						sessionId,
-						summary,
-					},
-				}),
+			const response = await post('/store', {
+				content: `brAInwav agent-toolkit session ${sessionId} summary: ${summary.totalCalls} tool calls, ${summary.totalTokens} tokens`,
+				importance: 6,
+				tags: [
+					'agent-toolkit',
+					'session-summary',
+					`session:${sessionId}`,
+					...Object.keys(summary.byKind).map((kind) => `tool:${kind}`),
+				],
+				domain: 'agent-diagnostics',
+				namespace: opts.namespace || 'agent-toolkit',
+				metadata: {
+					sessionId,
+					summary,
+				},
 			});
 
 			if (!response.ok) {
@@ -141,25 +152,21 @@ export const createSessionPersistence = (opts: SessionPersistenceOptions) => {
 		if (!enabled) return;
 
 		try {
-			const response = await fetch(`${opts.baseUrl}/store`, {
-				method: 'POST',
-				headers,
-				body: JSON.stringify({
-					content: `brAInwav agent-toolkit diagnostics for session ${sessionId}: ${diagnostics.errors} errors, ${diagnostics.warnings} warnings`,
-					importance: diagnostics.errors > 0 ? 9 : 5,
-					tags: [
-						'agent-toolkit',
-						'diagnostics',
-						`session:${sessionId}`,
-						diagnostics.errors > 0 ? 'has-errors' : 'clean',
-					],
-					domain: 'agent-diagnostics',
-					namespace: opts.namespace || 'agent-toolkit',
-					metadata: {
-						sessionId,
-						diagnostics,
-					},
-				}),
+			const response = await post('/store', {
+				content: `brAInwav agent-toolkit diagnostics for session ${sessionId}: ${diagnostics.errors} errors, ${diagnostics.warnings} warnings`,
+				importance: diagnostics.errors > 0 ? 9 : 5,
+				tags: [
+					'agent-toolkit',
+					'diagnostics',
+					`session:${sessionId}`,
+					diagnostics.errors > 0 ? 'has-errors' : 'clean',
+				],
+				domain: 'agent-diagnostics',
+				namespace: opts.namespace || 'agent-toolkit',
+				metadata: {
+					sessionId,
+					diagnostics,
+				},
 			});
 
 			if (!response.ok) {
@@ -178,21 +185,17 @@ export const createSessionPersistence = (opts: SessionPersistenceOptions) => {
 		}
 
 		try {
-			const response = await fetch(`${opts.baseUrl}/search`, {
-				method: 'POST',
-				headers,
-				body: JSON.stringify({
-					query: `session:${sessionId}`,
-					namespace: opts.namespace || 'agent-toolkit',
-					limit: 50,
-				}),
+			const response = await post('/search', {
+				query: `session:${sessionId}`,
+				namespace: opts.namespace || 'agent-toolkit',
+				limit: 50,
 			});
 
 			if (!response.ok) {
 				return { success: false };
 			}
 
-			const result = await response.json();
+			const result = (await response.json()) as { data?: unknown[] };
 			return {
 				success: true,
 				data: result.data || [],

@@ -29,7 +29,6 @@ class BrainwavDependencyFixer {
 				'@cortex-os/rag-store',
 				'@cortex-os/simlab',
 			],
-			'cortex-webui-backend': ['@cortex-os/a2a-transport'],
 			'@cortex-os/contracts': [
 				'@cortex-os/a2a-contracts',
 				'@cortex-os/asbr',
@@ -76,7 +75,6 @@ class BrainwavDependencyFixer {
 		// Map package names to their package.json locations
 		const packagePaths = {
 			'@cortex-os/app': 'apps/cortex-os/package.json',
-			'cortex-webui-backend': 'apps/cortex-webui/backend/package.json',
 			'@cortex-os/contracts': 'libs/typescript/contracts/package.json',
 			'@cortex-os/a2a-core': 'packages/a2a/a2a-core/package.json',
 			'@cortex-os/a2a': 'packages/a2a/package.json',

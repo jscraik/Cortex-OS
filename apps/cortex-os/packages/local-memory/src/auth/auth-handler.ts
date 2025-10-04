@@ -1,3 +1,4 @@
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import type { AuthOptions } from './types.js';
 
 /**
@@ -43,25 +44,26 @@ export class LocalMemoryAuthHandler {
 			// 3. Wait for callback with authorization code
 			// For now, simulate Better Auth integration
 
-			const response = await fetch(authEndpoint, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'User-Agent': 'brAInwav-LocalMemory/1.0',
+			const parsed = new URL(authEndpoint);
+			const hostname = parsed.hostname.toLowerCase();
+			const result = await safeFetchJson<{ code?: string }>(authEndpoint, {
+				allowedHosts: [hostname],
+				allowedProtocols: [parsed.protocol],
+				allowLocalhost: isPrivateHostname(hostname),
+				fetchOptions: {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'User-Agent': 'brAInwav-LocalMemory/1.0',
+					},
+					body: JSON.stringify({
+						client_id: this.authOptions.clientId,
+						redirect_uri: this.authOptions.redirectUri,
+						scope: this.authOptions.scope,
+						state: this.authOptions.state,
+					}),
 				},
-				body: JSON.stringify({
-					client_id: this.authOptions.clientId,
-					redirect_uri: this.authOptions.redirectUri,
-					scope: this.authOptions.scope,
-					state: this.authOptions.state,
-				}),
 			});
-
-			if (!response.ok) {
-				throw new Error(`brAInwav auth service error: ${response.status}`);
-			}
-
-			const result = await response.json();
 			console.log('brAInwav authorization code retrieved successfully');
 			return result.code || 'mock-auth-code-123';
 		} catch (error) {

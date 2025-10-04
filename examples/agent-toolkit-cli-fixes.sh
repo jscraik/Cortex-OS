@@ -24,10 +24,11 @@ npx agent-toolkit diagnostics analyze \
 
 # 3. Apply semgrep fixes for common patterns
 echo "3. Applying semgrep fixes..."
-npx agent-toolkit semgrep fix \
-  --pattern "createId(" \
-  --fix "import { createId } from '@cortex-os/a2a-core';" \
-  --files "apps/api/src/**/*.ts"
+# Example pattern fix (apps/api removed)
+# npx agent-toolkit semgrep fix \
+#   --pattern "createId(" \
+#   --fix "import { createId } from '@cortex-os/a2a-core';" \
+#   --files "apps/*/src/**/*.ts"
 
 npx agent-toolkit semgrep fix \
   --pattern "export default" \

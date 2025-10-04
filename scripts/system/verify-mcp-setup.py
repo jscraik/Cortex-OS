@@ -5,7 +5,7 @@ Checks the status of MCP integration across all Cortex-OS packages and apps.
 """
 
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any
 
 # Constants
 TS_PATTERN = "**/*.ts"
@@ -19,7 +19,7 @@ MINIMAL = "Minimal"
 def check_tool_content(file_path: Path) -> bool:
     """Check if a file contains tool implementations."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
             # Look for actual tool definitions
             if any(
@@ -48,7 +48,7 @@ def check_tool_content(file_path: Path) -> bool:
                 or "struct.*Tool" in content
             ):
                 return True
-    except (IOError, OSError, UnicodeDecodeError):
+    except (OSError, UnicodeDecodeError):
         pass
     return False
 
@@ -58,16 +58,16 @@ def check_mcp_client_usage(package_path: Path) -> bool:
     try:
         src_files = list(package_path.rglob("src/**/*.ts"))
         for src_file in src_files:
-            with open(src_file, "r", encoding="utf-8") as f:
+            with open(src_file, encoding="utf-8") as f:
                 content = f.read()
                 if "MCP" in content and ("import" in content or "from" in content):
                     return True
-    except (IOError, OSError, UnicodeDecodeError):
+    except (OSError, UnicodeDecodeError):
         pass
     return False
 
 
-def check_app_specific_features(app: str, app_path: Path) -> Dict[str, bool]:
+def check_app_specific_features(app: str, app_path: Path) -> dict[str, bool]:
     """Check for app-specific MCP features."""
     features = {
         "has_mcp_gateway": False,
@@ -80,37 +80,18 @@ def check_app_specific_features(app: str, app_path: Path) -> Dict[str, bool]:
         try:
             src_files = list(app_path.rglob("src/**/*.ts"))
             for src_file in src_files:
-                with open(src_file, "r", encoding="utf-8") as f:
+                with open(src_file, encoding="utf-8") as f:
                     content = f.read()
                     if "MCPGateway" in content or "provideMCP" in content:
                         features["has_mcp_gateway"] = True
                         break
-        except (IOError, OSError, UnicodeDecodeError):
-            pass
-
-    elif app == "cortex-code":
-        # Check for MCP client
-        mcp_client_path = app_path / "mcp-client"
-        if mcp_client_path.exists():
-            features["has_mcp_client"] = True
-
-    elif app == "cortex-marketplace":
-        # Check for MCP references
-        try:
-            src_files = list(app_path.rglob(TS_PATTERN))
-            for src_file in src_files:
-                with open(src_file, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    if "MCP" in content or "mcp" in content:
-                        features["has_mcp_marketplace"] = True
-                        break
-        except (IOError, OSError, UnicodeDecodeError):
+        except (OSError, UnicodeDecodeError):
             pass
 
     return features
 
 
-def check_package_mcp_integration(package: str, base_path: Path) -> Dict[str, Any]:
+def check_package_mcp_integration(package: str, base_path: Path) -> dict[str, Any]:
     """Check MCP integration for a single package."""
     package_path = Path(base_path) / "packages" / package
 
@@ -159,7 +140,7 @@ def check_package_mcp_integration(package: str, base_path: Path) -> Dict[str, An
     }
 
 
-def check_app_mcp_integration(app: str, base_path: Path) -> Dict[str, Any]:
+def check_app_mcp_integration(app: str, base_path: Path) -> dict[str, Any]:
     """Check MCP integration for a single app."""
     app_path = Path(base_path) / "apps" / app
 
@@ -206,7 +187,7 @@ def check_app_mcp_integration(app: str, base_path: Path) -> Dict[str, Any]:
 
 def check_mcp_integration(
     base_path: Path,
-) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Check MCP integration status for all packages and apps."""
 
     # Define packages and apps
@@ -234,11 +215,7 @@ def check_mcp_integration(
     ]
 
     apps = [
-        "cortex-code",
-        "cortex-marketplace",
         "cortex-py",
-        "cortex-webui",
-        "api",
         "cortex-os",
     ]
 
@@ -254,7 +231,7 @@ def check_mcp_integration(
     return package_status, app_status
 
 
-def print_packages_with_integration(package_status: Dict[str, Dict[str, Any]]) -> None:
+def print_packages_with_integration(package_status: dict[str, dict[str, Any]]) -> None:
     """Print packages with MCP integration."""
     print("\n✅ Packages with MCP Integration:")
     complete_packages = [
@@ -271,7 +248,7 @@ def print_packages_with_integration(package_status: Dict[str, Dict[str, Any]]) -
         print(f"  ⚠️  {package:<20} - Partial MCP integration")
 
 
-def print_packages_with_tools(package_status: Dict[str, Dict[str, Any]]) -> None:
+def print_packages_with_tools(package_status: dict[str, dict[str, Any]]) -> None:
     """Print packages with actual tool implementations."""
     print("\n🔧 Packages with Actual MCP Tool Implementations:")
     tool_packages = [
@@ -286,7 +263,7 @@ def print_packages_with_tools(package_status: Dict[str, Dict[str, Any]]) -> None
             print(f"  ⚠️  {package:<20} - MCP client integration")
 
 
-def print_missing_packages(package_status: Dict[str, Dict[str, Any]]) -> None:
+def print_missing_packages(package_status: dict[str, dict[str, Any]]) -> None:
     """Print packages missing MCP integration."""
     print("\n❌ Packages Missing MCP Integration:")
     missing_packages = [
@@ -303,7 +280,7 @@ def print_missing_packages(package_status: Dict[str, Dict[str, Any]]) -> None:
         print(f"  ❌ {package:<20} - {reason}")
 
 
-def print_apps_with_integration(app_status: Dict[str, Dict[str, Any]]) -> None:
+def print_apps_with_integration(app_status: dict[str, dict[str, Any]]) -> None:
     """Print apps with MCP integration."""
     print("\n✅ Apps with MCP Integration:")
     complete_apps = [
@@ -327,7 +304,7 @@ def print_apps_with_integration(app_status: Dict[str, Dict[str, Any]]) -> None:
         print(f"  ⚠️  {app:<20} - {status_detail}")
 
 
-def print_apps_with_tools(app_status: Dict[str, Dict[str, Any]]) -> None:
+def print_apps_with_tools(app_status: dict[str, dict[str, Any]]) -> None:
     """Print apps with actual implementations."""
     print("\n🔧 Apps with Actual MCP Implementations:")
     tool_apps = [
@@ -346,7 +323,7 @@ def print_apps_with_tools(app_status: Dict[str, Dict[str, Any]]) -> None:
             print(f"  ⚠️  {app:<20} - MCP marketplace integration")
 
 
-def print_missing_apps(app_status: Dict[str, Dict[str, Any]]) -> None:
+def print_missing_apps(app_status: dict[str, dict[str, Any]]) -> None:
     """Print apps missing MCP integration."""
     print("\n❌ Apps Missing MCP Integration:")
     missing_apps = [
@@ -364,22 +341,18 @@ def print_missing_apps(app_status: Dict[str, Dict[str, Any]]) -> None:
 
 
 def print_summary(
-    package_status: Dict[str, Dict[str, Any]], app_status: Dict[str, Dict[str, Any]]
+    package_status: dict[str, dict[str, Any]], app_status: dict[str, dict[str, Any]]
 ) -> None:
     """Print integration summary and recommendations."""
     total_packages = len(
-        [
-            pkg
-            for pkg in package_status.keys()
-            if package_status[pkg]["status"] != NOT_FOUND
-        ]
+        [pkg for pkg in package_status if package_status[pkg]["status"] != NOT_FOUND]
     )
     integrated_packages = len(
         [pkg for pkg, status in package_status.items() if status["status"] == COMPLETE]
     )
 
     total_apps = len(
-        [app for app in app_status.keys() if app_status[app]["status"] != NOT_FOUND]
+        [app for app in app_status if app_status[app]["status"] != NOT_FOUND]
     )
     integrated_apps = len(
         [app for app, status in app_status.items() if status["status"] == COMPLETE]
@@ -409,7 +382,7 @@ def print_summary(
 
 
 def print_status_report(
-    package_status: Dict[str, Dict[str, Any]], app_status: Dict[str, Dict[str, Any]]
+    package_status: dict[str, dict[str, Any]], app_status: dict[str, dict[str, Any]]
 ) -> None:
     """Print a formatted status report."""
     print("🔍 MCP Integration Status Verification")

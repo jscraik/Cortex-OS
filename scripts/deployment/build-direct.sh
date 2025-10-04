@@ -104,7 +104,6 @@ main() {
         "packages/simlab"
         "packages/prp-runner"
         "apps/cortex-os"
-        "apps/api"
         "apps/cortex-py"
         "apps/mvp"
         "apps/asbr"

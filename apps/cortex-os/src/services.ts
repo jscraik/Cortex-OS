@@ -1,4 +1,5 @@
 import { provideOrchestration as coreProvideOrchestration } from '@cortex-os/orchestration';
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import { trace } from '@opentelemetry/api';
 import { createMcpGateway, type McpGateway, type MemoriesLike } from './mcp/gateway.js';
 import { ArtifactRepository } from './persistence/artifact-repository.js';
@@ -77,6 +78,17 @@ function buildStorePayload(input: MemoryCreateInput) {
 	};
 }
 
+function deriveSafeFetchOptions(baseUrl: string, fetchImpl: typeof fetch) {
+	const parsed = new URL(baseUrl);
+	const hostname = parsed.hostname.toLowerCase();
+	return {
+		allowedHosts: [hostname],
+		allowedProtocols: [parsed.protocol],
+		allowLocalhost: isPrivateHostname(hostname),
+		fetchImpl,
+	};
+}
+
 async function performMemoryRequest(options: {
 	baseUrl: string;
 	fetchImpl: typeof fetch;
@@ -86,20 +98,17 @@ async function performMemoryRequest(options: {
 	body?: Record<string, unknown>;
 }): Promise<unknown> {
 	const { baseUrl, fetchImpl, apiKey, method, path, body } = options;
-	const response = await fetchImpl(`${baseUrl}${path}`, {
+	const requestInit: RequestInit = {
 		method,
 		headers: buildHeaders(apiKey),
 		body: body ? JSON.stringify(body) : undefined,
+	};
+	return safeFetchJson(`${baseUrl}${path}`, {
+		...deriveSafeFetchOptions(baseUrl, fetchImpl),
+		fetchOptions: requestInit,
+		allowEmptyResponse: true,
+		emptyResponseValue: {} as unknown,
 	});
-	if (!response.ok) {
-		throw new Error(`Local Memory request failed: ${response.status} ${response.statusText}`);
-	}
-	if (response.status === 204) return {};
-	try {
-		return await response.json();
-	} catch {
-		return {};
-	}
 }
 
 export interface MemoryCreateInput {

@@ -32,13 +32,7 @@ class BrainwavImportFixer {
 				pattern: /import.*from ['"]@cortex-os\/a2a-contracts.*['"];?/g,
 				replacement: "import { ContractEvent } from '@cortex-os/contracts';",
 				description: 'Replace a2a-contracts with contracts interface',
-				targetDirs: ['apps/cortex-webui/backend', 'libs/typescript/contracts'],
-			},
-			{
-				pattern: /import.*from ['"]@cortex-os\/a2a-transport.*['"];?/g,
-				replacement: "import { A2ATransport } from '@cortex-os/a2a-core';",
-				description: 'Replace a2a-transport with a2a-core interface',
-				targetDirs: ['apps/cortex-webui/backend'],
+				targetDirs: ['libs/typescript/contracts'],
 			},
 			{
 				pattern: /import.*from ['"]@cortex-os\/mcp-registry.*['"];?/g,

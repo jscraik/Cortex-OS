@@ -16,7 +16,6 @@ This document lists the current GitHub Actions workflows and highlights shared s
 - contracts-coverage.yml
 - control-centre.yml
 - cortex-agent.yml
-- cortex-codex-ci.yml
 - cortex-gates.yml
 - cortex-review.yml
 - cortex-tui-ci.yml

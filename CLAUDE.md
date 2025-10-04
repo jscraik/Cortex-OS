@@ -238,19 +238,6 @@ pnpm structure:validate  # Governance/import boundary checks
 pnpm nx graph           # Visualize dependency graph
 ```
 
-### Rust Development (Cortex-Codex)
-```bash
-# Run Rust tests
-pnpm codex:test
-pnpm codex:test:unit        # Unit tests only
-pnpm codex:test:integration # Integration tests only
-pnpm codex:coverage:xtask   # Generate coverage report
-
-# TUI development
-pnpm tui:dev         # Watch mode with plain theme
-pnpm tui:dev:rich    # Watch mode with rich theme
-```
-
 ### Python Development
 ```bash
 # Dependency management (uv)

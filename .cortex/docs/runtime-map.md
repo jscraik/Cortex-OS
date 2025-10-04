@@ -1,5 +1,7 @@
 # Cortex-OS Runtime Map (ASBR-hosted)
 
+> **⚠️ HISTORICAL DOCUMENT**: This document references `apps/api` which has been removed from the codebase. Content preserved for historical reference and runtime architecture context.
+
                  ┌───────────────────────────────┐
                  │        ASBR Runtime           │
                  │         apps/cortex-os        │

@@ -103,65 +103,6 @@ services:
       brainwav.cortex.tier: "application"
     restart: unless-stopped
 
-  # API Service with hybrid integration
-  cortex-api:
-    container_name: brainwav_cortex_api
-    build:
-      context: ../
-      dockerfile: apps/api/Dockerfile
-    environment:
-      <<: *common-environment
-      API_PORT: "8000"
-    ports:
-      - "${API_PORT:-8000}:8000"
-    depends_on:
-      model-gateway:
-        condition: service_healthy
-    volumes:
-      - ../config:/app/config:ro
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 15s
-    labels:
-      <<: *brainwav-labels
-      brainwav.cortex.service: "api"
-      brainwav.cortex.tier: "service"
-    restart: unless-stopped
-
-  # Web UI with hybrid model access
-  cortex-webui:
-    container_name: brainwav_cortex_webui
-    build:
-      context: ../
-      dockerfile: apps/cortex-webui/Dockerfile
-    environment:
-      <<: *common-environment
-      NEXT_PUBLIC_API_URL: "http://localhost:8000"
-      NEXT_PUBLIC_MODEL_GATEWAY_URL: "http://localhost:8080"
-    ports:
-      - "${WEBUI_PORT:-3000}:3000"
-    depends_on:
-      cortex-api:
-        condition: service_healthy
-      model-gateway:
-        condition: service_healthy
-    volumes:
-      - ../config:/app/config:ro
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    labels:
-      <<: *brainwav-labels
-      brainwav.cortex.service: "webui"
-      brainwav.cortex.tier: "frontend"
-    restart: unless-stopped
-
   # Model Health Monitor
   model-health-monitor:
     container_name: brainwav_model_health_monitor

@@ -1,31 +1,11 @@
 [
   {
-    "name": "api",
-    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-api.out"
-  },
-  {
-    "name": "cortex-code",
-    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-code.out"
-  },
-  {
-    "name": "cortex-marketplace",
-    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-marketplace.out"
-  },
-  {
-    "name": "cortex-marketplace-api",
-    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-marketplace-api.out"
-  },
-  {
     "name": "cortex-os",
     "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-os.out"
   },
   {
     "name": "cortex-py",
     "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-py.out"
-  },
-  {
-    "name": "cortex-webui",
-    "out": "/Users/jamiecraik/.Cortex-OS/reports/eslint-sonar-cortex-webui.out"
   },
   {
     "name": "a2a",

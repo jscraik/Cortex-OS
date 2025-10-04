@@ -30,13 +30,8 @@ This directory contains the main applications and user-facing components of the 
 
 ## Directory Structure
 
-- `/apps/api/` - REST API server for Cortex-OS services
-- `/apps/cortex-code/` - Rust Codex workspace providing the CLI, TUI, and supporting tooling
-- `/apps/cortex-marketplace/` - Frontend for the Cortex-OS marketplace
-- `/apps/cortex-marketplace-api/` - API backend for the marketplace
 - `/apps/cortex-os/` - **Main ASBR Runtime** - Coordinates feature packages and provides CLI/HTTP/UI interfaces
 - `/apps/cortex-py/` - Python bindings and utilities for Cortex-OS
-- `/apps/cortex-webui/` - Web-based user interface for Cortex-OS
 
 ## Application Overview
 
@@ -44,35 +39,14 @@ This directory contains the main applications and user-facing components of the 
 
 #### ASBR Runtime (`cortex-os`)
 
-The main application that coordinates feature packages and provides the primary interfaces for Cortex-OS. This is the central orchestrator that mounts feature packages via dependency injection.
-
-#### CLI (`cortex-cli`)
-
-Command-line interface providing direct access to Cortex-OS functionality, including agent management, memory operations, and system administration.
-
-#### Web UI (`cortex-webui`)
-
-Modern web-based interface for interacting with Cortex-OS, featuring real-time monitoring, agent configuration, and system management capabilities.
-
-### Development Tools
-
-#### Codex Workspace (`cortex-code`)
-
-Rust-based workspace that packages the Codex CLI/TUI along with shared crates for sandboxing, providers, and integrations.
-
-### Integration & APIs
-
-#### REST API (`api`)
-
-RESTful API server exposing Cortex-OS functionality to external applications and services.
-
-#### Marketplace (`cortex-marketplace` & `cortex-marketplace-api`)
-
-Platform for discovering, sharing, and managing Cortex-OS agents, tools, and extensions.
+The main application that coordinates feature packages and provides the primary interfaces
+for Cortex-OS. This is the central orchestrator that mounts feature packages via dependency
+injection.
 
 #### Python Bindings (`cortex-py`)
 
-Python libraries and utilities for integrating Cortex-OS with Python-based workflows and applications.
+Python libraries and utilities for integrating Cortex-OS with Python-based workflows and
+applications.
 
 ## Architecture Principles
 

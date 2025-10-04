@@ -2,6 +2,8 @@
 
 # Cortex-OS PRD — Agentic Second Brain
 
+> **⚠️ HISTORICAL DOCUMENT**: This PRD references `apps/api`, `cortex-marketplace`, and `cortex-marketplace-api` which have been removed from the codebase. Content preserved for historical reference and product vision context.
+
 Version: 1.1 • Date: 2025-08-30 • Owner: Jamie • Status: Implementation
 
 ## 0. Objective

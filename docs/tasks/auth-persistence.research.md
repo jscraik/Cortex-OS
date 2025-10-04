@@ -1,17 +1,19 @@
 # Auth Persistence Investigation
 
+> **⚠️ HISTORICAL DOCUMENT**: This file references `apps/api` which has been removed from the codebase. Retained for historical reference and learning purposes.
+
 ## Objective
 
-Ensure the Better Auth persistence suite runs against a real Postgres/Prisma backend without falling back to in-memory or Kysely adapters.
+Ensure the Better Auth persistence suite runs against a real Postgres/Prisma backend without falling back to in-memory or Kysely adapters (app removed).
 
 ## Current Findings
 
-- The Vitest persistence spec spins up Postgres via Testcontainers and now reaches the Better Auth router.
-  Route rewrites from `/auth/register` to `/auth/sign-up/email` are working.
-- Requests still fail with `TypeError: db2.selectFrom is not a function` inside Better Auth, indicating the
-  runtime thinks it was given a Kysely-style database instead of a Prisma adapter.
-- `apps/api/src/auth/config.ts` passes `new DatabaseAdapter()` into `betterAuth({ database })`. The class
-  returns a plain object with CRUD helpers but **not** the adapter factory Better Auth expects.
+- The Vitest persistence spec spins up Postgres via Testcontainers and reaches the Better Auth router (app removed).
+  Route rewrites from `/auth/register` to `/auth/sign-up/email` were working.
+- Requests failed with `TypeError: db2.selectFrom is not a function` inside Better Auth, indicating the
+  runtime thought it was given a Kysely-style database instead of a Prisma adapter.
+- Auth config passed `new DatabaseAdapter()` into `betterAuth({ database })` (app removed). The class
+  returned a plain object with CRUD helpers but **not** the adapter factory Better Auth expects.
 - Better Auth's published Prisma adapter (`better-auth/dist/adapters/prisma-adapter`) wraps the Prisma client
   and exposes `adapterId`, `usePlural`, transactions, and other metadata. Our custom adapter bypasses this,
   so Better Auth defaults to the Kysely path and calls `.selectFrom()`.
@@ -35,8 +37,7 @@ Ensure the Better Auth persistence suite runs against a real Postgres/Prisma bac
 
 ## Next Steps
 
-- Refactor `DatabaseAdapter` to expose a Better Auth adapter factory, likely via composition around `prismaAdapter`.
-- Update `apps/api/src/auth/config.ts` to pass the factory instead of the helper class instance.
-- Rerun `pnpm vitest --run --config apps/api/vitest.config.ts tests/auth/persistence.spec.ts` to confirm the
-  persistence spec reaches the Prisma backend and passes.
+- Refactor `DatabaseAdapter` to expose a Better Auth adapter factory, likely via composition around `prismaAdapter` (app removed).
+- Update auth config to pass the factory instead of the helper class instance (app removed).
+- Rerun persistence spec to confirm the integration reaches the Prisma backend and passes (app removed).
 - Add regression coverage if needed to lock in adapter wiring.

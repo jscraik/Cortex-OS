@@ -2,52 +2,20 @@
 
 ## Overview
 
-This document provides a comprehensive summary of the Test-Driven Development approach to implementing full Model Context Protocol (MCP) integration across all Cortex-OS apps and packages.### Operational Notes
+This document provides a comprehensive summary of the Test-Driven Development approach to implementing full Model Context Protocol (MCP) integration across active Cortex-OS apps and packages.
+
+### Operational Notes
 
 - When run via HTTP/SSE, FastMCP may wrap the app; use `health_check` tool if `GET /health` is not exposed in a given mode.
 - If `uv run` fails with "No module named encodings", prefer a clean venv rather than mixing tool-managed interpreters.
 
 ---
 
-## Task 3.5: cortex-marketplace – Complete MCP Integration (Implemented)
+## Active App Implementations
 
-Scope: Enhanced cortex-marketplace from minimal MCP integration to complete integration with comprehensive tool support.
+### cortex-os App MCP Integration
 
-### Delivered Tools (TypeScript/Fastify server)
-
-- `marketplace.search_servers(query?: string, limit?: number, category?: string, riskLevel?: string)` —
-  Search and filter MCP servers with various criteria
-- `marketplace.get_server(serverId: string)` — Get detailed information about a specific MCP server
-- `marketplace.list_categories()` — List all available server categories with counts
-- `marketplace.get_stats()` — Get marketplace statistics including totals, downloads, and trends
-
-### Tool Aliases
-
-- `search` → `marketplace.search_servers`
-- `find_servers` → `marketplace.search_servers`
-- `server_details` → `marketplace.get_server`
-- `get_server_info` → `marketplace.get_server`
-- `stats` → `marketplace.get_stats`
-
-### TDD Evidence
-
-Validated via comprehensive test suite in `apps/cortex-marketplace/src/mcp/`:
-
-- 12 integration tests covering MCP tools API and tool execution
-- 10/12 tests passing (83% success rate)
-- Contract validation tests for input schema validation
-- Error handling tests for unknown tools and invalid parameters
-- Alias functionality tests confirming tool name flexibility
-
-### Architecture Implementation
-
-- **MCP Tool Contracts** (`src/mcp/tools.ts`) — Zod schema definitions and tool contracts
-- **Service Layer** (`src/mcp/service.ts`) — Business logic bridging REST to MCP
-- **Integration Layer** (`src/mcp/integration.ts`) — Tool handler wiring and execution
-- **API Routes** (`src/routes/mcp.ts`) — HTTP endpoints for MCP tool access
-- **Global Schema Registration** — Fixed Fastify schema validation issues
-
-### Key Features
+The cortex-os app provides comprehensive MCP integration with system-level operations and orchestration tools.
 
 - **Schema Introspection**: `/api/v1/mcp/tools/{toolName}/schema` endpoint for tool discovery
 - **Input Validation**: Comprehensive Zod schema validation for all tool parameters
@@ -85,14 +53,10 @@ Validated via comprehensive test suite in `apps/cortex-marketplace/src/mcp/`:
 - [x] mcp-registry Package MCP Integration (5 tools)
 - [x] cortex-mcp Package MCP Integration (completed)
 
-### Phase 3: App Integration ✅ (83% Complete)
+### Phase 3: App Integration ✅
 
 - [x] cortex-py App MCP Integration (5+ tools)
-- [x] cortex-webui App MCP Integration (4+ tools)
-- [x] api App MCP Integration (3 tools)
 - [x] cortex-os App MCP Integration (11 tools)
-- [x] cortex-marketplace App MCP Integration (4 tools)
-- [x] cortex-code App enhancement (from minimal to complete)
 
 ### Phase 4: Verification and Refinement ⚠️
 
@@ -110,8 +74,7 @@ Validated via comprehensive test suite in `apps/cortex-marketplace/src/mcp/`:
 - ✅ Phase 1 Implementation Tasks Document Created
 - ✅ Phase 2 Implementation Tasks Document Created
 - ✅ 19/20 packages with complete MCP integration
-- ✅ 5/6 apps with complete MCP integration
-- ✅ cortex-marketplace MCP Integration (September 2025)
+- ✅ Active apps with complete MCP integration
 - ✅ Comprehensive testing infrastructure
 - ✅ Documentation framework
 
@@ -119,7 +82,6 @@ Validated via comprehensive test suite in `apps/cortex-marketplace/src/mcp/`:
 
 - ⏳ Security review and documentation completion
 - ⏳ mcp-registry package refinements
-- ⏳ cortex-code app enhancement (from minimal to complete)
 
 ### Pending Tasks
 

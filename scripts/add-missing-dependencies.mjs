@@ -25,7 +25,6 @@ class BrainwavMissingDependencyAdder {
 		// Missing dependencies from import scanner - filtered to only existing packages
 		this.missingDependencies = {
 			'@cortex-os/app': ['@cortex-os/utils', '@cortex-os/simlab'],
-			'cortex-webui-backend': ['@cortex-os/a2a-transport'],
 			'@cortex-os/contracts': [
 				'@cortex-os/a2a-contracts',
 				'@cortex-os/asbr',

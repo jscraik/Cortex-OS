@@ -66,8 +66,9 @@ async function fixCriticalIssues() {
 	console.log('🔧 Fix 3: Type Compatibility Issues\n');
 
 	// Use type inference to fix compatibility issues
+	// Example with apps/api removed
 	await toolkit.types.fixCompatibility({
-		files: ['apps/api/src/**/*.ts'],
+		files: ['apps/*/src/**/*.ts'],
 		strategies: ['explicit-type-annotations', 'interface-expansion', 'generic-constraints'],
 	});
 

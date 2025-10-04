@@ -98,13 +98,13 @@ Clean up duplicate headings:
 -# @cortex-os/agents
 ```
 
-## 7. Fix Environment Configuration References
+## 7. Fix Environment Configuration References (App Removed)
 
-Clarify missing file references:
+Note: This referenced a deleted app (cortex-webui).
 
 ```diff  
---- a/apps/cortex-webui/README.md
-+++ b/apps/cortex-webui/README.md
+--- a/apps/cortex-webui/README.md (DELETED)
++++ b/apps/cortex-webui/README.md (DELETED)
 @@ -34,1 +34,1 @@
 -Set the following environment variables (see repo `.env.example`):
 +Set the following environment variables (create `.env` file in project root):

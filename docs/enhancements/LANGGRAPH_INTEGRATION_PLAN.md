@@ -199,37 +199,6 @@ Each phase documents:
 
 ---
 
-## Phase 4 – API Server & Auth Hardening
-
-| Test | Status | Action |
-| --- | --- | --- |
-| `apps/api/tests/routing/apiRoutes.spec.ts` | ✅ passes | Keep snapshots aligned with Prisma payloads |
-| `apps/api/tests/auth/persistence.spec.ts` | ✅ passes | Runs against Prisma-backed Postgres via OrbStack/TestContainers |
-| `apps/api/tests/auth/features.spec.ts` | ✅ passes | Exercises profile update, session revoke, 2FA, and passkey flows |
-
-### Phase 4 Implementation
-
-#### Work Completed
-- ✅ Shipped the Prisma-backed Better Auth adapter in `apps/api/src/auth/database-adapter.ts`, aligning session persistence with the production database.
-- ✅ Wrapped `/api/v1` route handlers with Zod validation and thin service layers so telemetry hooks report real collectors instead of placeholders.
-- ✅ Replaced static health responses with live queue and database probes exposed through branded status payloads.
-
-#### Fixes Outstanding
-- [x] Harden migration rollback flows for the auth schema to protect shared development databases when new fields land. (Implemented via `apps/api/src/auth/schema-guard.ts` and exercised by `apps/api/tests/auth/schema-guard.spec.ts`.)
-
-### Phase 4 Validation
-
-- `pnpm prisma:migrate:dev --preview-feature --name auth-hardening`
-- `pnpm --filter @cortex-os/api exec vitest run tests/auth/persistence.spec.ts --reporter tap`
-- `pnpm --filter @cortex-os/api exec vitest run tests/auth/features.spec.ts --reporter tap`
-- `./scripts/verify-hybrid-env.sh --json`
-
-### Phase 4 Blockers
-
-- CI runners must expose an OrbStack-compatible Docker socket (or set `TESTCONTAINERS_DAEMON_URL`) so the Postgres-backed specs stay enabled.
-
----
-
 ## Phase 5 – Master Agent Execution & Health
 
 | Test | Status | Action |
@@ -363,28 +332,23 @@ Each phase documents:
 
 | Test | Status | Action |
 | --- | --- | --- |
-| `apps/api/tests/routing-completeness.test.ts` | ✅ done | Guard fails when TODO routes reappear |
-| `apps/cortex-marketplace/tests/mcp-implementation.test.ts` | ✅ done | Validates nine MCP tools return real data |
 | `apps/cortex-os/tests/metrics-reality.test.ts` | ✅ done | Ensures metrics use deterministic system probes |
 | `apps/cortex-py/tests/thermal-guard-production.test.ts` | ✅ done | Verifies cross-platform thermal monitoring |
 
 ### Phase 9 Implementation
 
 #### Work Completed
-- [x] Added routing completeness guardrail covering all Express route modules with TODO detection.
-- [x] Exercised Marketplace MCP toolchain end-to-end with deterministic registries and error wiring.
 - [x] Replaced simulated orchestration metrics with concrete Node system probes and deterministic fixtures.
 - [x] Delivered cross-platform cortex-py thermal monitor with fallback logic and event generation helpers.
 
 #### Fixes Outstanding
-- [x] Implement end-to-end Marketplace MCP service integrations, including credential rotation and error handling for each tool.
 - [x] Replace simulated metrics in `apps/cortex-os` with concrete system probes (CPU, memory, GPU) and enforce deterministic fixtures for tests.
 - [x] Extend `apps/cortex-py` with cross-platform thermal monitoring guarded by platform detection and fail-safe fallbacks.
 
 ### Phase 9 Validation
 
-- Placeholder regression allowlist now covers the new metrics and routing suites; integrate targeted runs into CI.
-- Execute focused Vitest/Pytest commands (`apps/api`, `apps/cortex-marketplace`, `apps/cortex-os`, `apps/cortex-py`) as part of release gating.
+- Placeholder regression allowlist now covers the new metrics suites; integrate targeted runs into CI.
+- Execute focused Vitest/Pytest commands (`apps/cortex-os`, `apps/cortex-py`) as part of release gating.
 
 ### Phase 9 Blockers
 
@@ -541,14 +505,12 @@ Each phase documents:
 | --- | --- | --- |
 | `packages/orchestration/tests/streaming/langgraph-astream.test.ts` | ⚪ todo | LangGraph StateGraph streaming to WebSocket clients with brAInwav telemetry |
 | `packages/orchestration/tests/streaming/state-events.test.ts` | ⚪ todo | Real-time state updates via A2A events with proper error handling |
-| `apps/cortex-webui/tests/langgraph-streaming.test.ts` | ⚪ todo | UI receives LangGraph workflow updates with brAInwav branding |
 | `packages/orchestration/tests/streaming/checkpoint-streaming.test.ts` | ⚪ todo | Stream checkpoint events during workflow execution |
 
 ### Phase 15 Implementation
 
 - Implement `StateGraph.astream()` and `StateGraph.astream_events()` integration with WebSocket infrastructure
 - Create streaming middleware that emits brAInwav-branded events to A2A event bus
-- Build real-time UI components that display LangGraph workflow progress with proper error states
 - Integrate LangGraph streaming with existing observability infrastructure and structured logging
 - Ensure all streaming outputs include brAInwav attribution and proper telemetry context
 

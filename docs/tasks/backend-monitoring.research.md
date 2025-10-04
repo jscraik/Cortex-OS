@@ -1,8 +1,10 @@
 # backend-monitoring.research.md
 
+> **⚠️ HISTORICAL DOCUMENT**: This file references `apps/cortex-webui/backend` which has been removed from the codebase. Retained for historical reference and learning purposes.
+
 ## Research Objective
 
-- Close the TODO in `apps/cortex-webui/backend/src/services/authMonitoringService.ts` by emitting brAInwav-branded authentication events.
+- Close the TODO in deleted backend by emitting brAInwav-branded authentication events.
   Downstream monitoring systems include Prometheus, Datadog, New Relic, and an optional custom webhook.
 - Preserve current in-memory metrics while extending reach to external observability platforms without introducing placeholders or mock integrations.
 
@@ -91,7 +93,7 @@
 - [ ] Create `src/services/externalMonitoringService.ts` with configuration loader and `emitAuthEvent` implementation.
 - [ ] Add unit tests under `__tests__/services/externalMonitoringService.test.ts`.
 - [ ] Wire the service into `authMonitoringService.emitToMonitoringSystems` and adjust existing tests.
-- [ ] Document env vars in `apps/cortex-webui/backend/README.md` and update `CHANGELOG.md` if required.
+- [ ] Document env vars in backend README (app removed) and update `CHANGELOG.md` if required.
 
 ## Open Questions & Follow-ups
 

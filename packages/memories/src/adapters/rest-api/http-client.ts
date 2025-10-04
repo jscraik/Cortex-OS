@@ -1,3 +1,4 @@
+import { isPrivateHostname, safeFetch } from '@cortex-os/utils';
 import type { AuthManager } from './auth-manager.js';
 import type { ApiResponse, AuthMethod, HttpClient, RequestOptions, RestApiError } from './types.js';
 
@@ -21,23 +22,25 @@ export class FetchHttpClient implements HttpClient {
 		const controller = new AbortController();
 		this.controller = controller;
 
-		const timeoutId = setTimeout(() => {
-			controller.abort();
-		}, timeoutMs);
-
 		try {
 			const url = this.buildUrl(options.path, options.query);
 			const headers = await this.buildHeaders(options.headers);
 			const body = this.buildBody(options.body);
 
-			const response = await fetch(url, {
-				method: options.method,
-				headers,
-				body,
-				signal: controller.signal,
-			});
+			const { allowedHosts, allowedProtocols, allowLocalhost } = this.deriveUrlPolicies(url);
 
-			clearTimeout(timeoutId);
+			const response = await safeFetch(url, {
+				allowedHosts,
+				allowedProtocols,
+				allowLocalhost,
+				controller,
+				timeout: timeoutMs,
+				fetchOptions: {
+					method: options.method,
+					headers: this.headersToObject(headers),
+					body,
+				},
+			});
 
 			const responseData = await this.parseResponse<T>(response, options.responseType);
 
@@ -49,8 +52,9 @@ export class FetchHttpClient implements HttpClient {
 				timestamp: new Date().toISOString(),
 			};
 		} catch (error) {
-			clearTimeout(timeoutId);
 			throw this.handleError(error);
+		} finally {
+			this.controller = undefined;
 		}
 	}
 
@@ -189,6 +193,24 @@ export class FetchHttpClient implements HttpClient {
 			default:
 				return await response.json();
 		}
+	}
+
+	private deriveUrlPolicies(url: string) {
+		const parsed = new URL(url);
+		const hostname = parsed.hostname.toLowerCase();
+		return {
+			allowedHosts: [hostname],
+			allowedProtocols: [parsed.protocol],
+			allowLocalhost: isPrivateHostname(hostname),
+		};
+	}
+
+	private headersToObject(headers: Headers): Record<string, string> {
+		const result: Record<string, string> = {};
+		headers.forEach((value, key) => {
+			result[key] = value;
+		});
+		return result;
 	}
 
 	/**

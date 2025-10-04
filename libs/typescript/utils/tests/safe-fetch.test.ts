@@ -93,13 +93,17 @@ describe('safeFetch', () => {
 	it('should reject invalid URLs', async () => {
 		const url = 'http://malicious.com';
 
-		await expect(safeFetch(url)).rejects.toThrow('Safe fetch blocked');
+		await expect(safeFetch(url)).rejects.toThrow('[brAInwav] Safe fetch blocked');
 		expect(mockFetch).not.toHaveBeenCalled();
 	});
 
 	it('should reject localhost IPs for security', async () => {
-		await expect(safeFetch('http://127.0.0.1:8080/api')).rejects.toThrow('Safe fetch blocked');
-		await expect(safeFetch('http://192.168.1.1/api')).rejects.toThrow('Safe fetch blocked');
+		await expect(safeFetch('http://127.0.0.1:8080/api')).rejects.toThrow(
+			'[brAInwav] Safe fetch blocked',
+		);
+		await expect(safeFetch('http://192.168.1.1/api')).rejects.toThrow(
+			'[brAInwav] Safe fetch blocked',
+		);
 		expect(mockFetch).not.toHaveBeenCalled();
 	});
 
@@ -189,7 +193,7 @@ describe('security regression tests', () => {
 		];
 
 		for (const url of maliciousUrls) {
-			await expect(safeFetch(url)).rejects.toThrow();
+			await expect(safeFetch(url)).rejects.toThrow('[brAInwav] Safe fetch blocked');
 		}
 
 		expect(mockFetch).not.toHaveBeenCalled();

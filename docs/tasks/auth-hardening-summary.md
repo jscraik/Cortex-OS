@@ -1,8 +1,10 @@
 # Auth Hardening Summary
 
+> **⚠️ HISTORICAL DOCUMENT**: This file references `apps/api` which has been removed from the codebase. Retained for historical reference and learning purposes.
+
 ## Overview
 
-Implemented persistence-backed multi-factor authentication and passkey support for the brAInwav Cortex-OS API.
+Implemented persistence-backed multi-factor authentication and passkey support for the brAInwav Cortex-OS API (now removed).
 All endpoints now route through production-ready services with Postgres/Prisma storage and official Better Auth adapters.
 
 ## Key Changes
@@ -10,14 +12,14 @@ All endpoints now route through production-ready services with Postgres/Prisma s
 - Replaced stubbed 2FA handlers with `twoFactorService` that issues TOTP secrets, verifies codes, and manages hashed backup codes in Prisma.
 - Added `passkeyService` to register and authenticate WebAuthn credentials using the Better Auth context while
   persisting credential metadata (credential ID, public key, transports, sign count).
-- Updated `apps/api/src/routes/auth.ts` to delegate every 2FA and passkey route to the new services and to return brAInwav-branded error messaging.
-- Extended `apps/api/tests/auth/features.spec.ts` to exercise the full lifecycle for TOTP setup, invalid code handling,
+- Updated auth routes to delegate every 2FA and passkey route to the new services and to return brAInwav-branded error messaging (app removed).
+- Extended auth feature tests to exercise the full lifecycle for TOTP setup, invalid code handling,
   backup code redemption, passkey registration, and passkey authentication.
 
 ## Validation
 
-- Persistence suite: `pnpm vitest run --config vitest.workspace.ts apps/api/tests/auth/persistence.spec.ts`
-- Feature suite (requires workspace config): `pnpm vitest run --config vitest.workspace.ts apps/api/tests/auth/features.spec.ts`
+- Persistence suite: `pnpm vitest run --config vitest.workspace.ts` (test files removed)
+- Feature suite (requires workspace config): `pnpm vitest run --config vitest.workspace.ts` (test files removed)
 - Both suites rely on the Testcontainers-backed Postgres instance and the official Better Auth Prisma adapter.
 
 ## Follow-Up

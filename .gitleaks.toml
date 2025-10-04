@@ -3,27 +3,26 @@
 # See: https://github.com/gitleaks/gitleaks#configuration
 
 [allowlist]
-  description = "Global allowlist for non-secret placeholders and ignored paths"
-  paths = [
-    "node_modules",
-    "dist",
-    "coverage",
-    "htmlcov",
-    "packages/.*/coverage",
-    "libs/.*/coverage",
-    ".venv",
-    ".venv-.*",
-    ".uv",
+description = "Global allowlist for non-secret placeholders and ignored paths"
+paths = [
+  "node_modules",
+  "dist",
+  "coverage",
+  "htmlcov",
+  "packages/.*/coverage",
+  "libs/.*/coverage",
+  ".venv",
+  ".venv-.*",
+  ".uv",
   ".tmp",
-    "logs",
-    "apps/cortex-webui/open-webui",
-  ]
-  regexes = [
-    "http://localhost:11434/v1",
-    "ollama",  # local placeholder api key
-    "[A-Za-z0-9._%+-]+@cortex-os\\.dev",
-    "BEGIN LICENSE",  # license blocks
-  ]
+  "logs",
+]
+regexes = [
+  "http://localhost:11434/v1",
+  "ollama",                            # local placeholder api key
+  "[A-Za-z0-9._%+-]+@cortex-os\\.dev",
+  "BEGIN LICENSE",                     # license blocks
+]
 
 # (Optional) Example custom rule override placeholder for future sensitive patterns.
 # [[rules]]

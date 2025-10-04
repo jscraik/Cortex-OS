@@ -1,5 +1,7 @@
 # Final brAInwav Cortex-OS TDD Plan
 
+> **⚠️ HISTORICAL DOCUMENT**: This plan references `apps/api` which has been removed from the codebase. Content preserved for historical reference and implementation insights.
+
 <!-- markdownlint-disable MD013 -->
 
 **Objective**: Eliminate every placeholder, mock, and TODO listed in the comprehensive blockers audit and prove production readiness with automated tests that prevent regressions. Enforce brAInwav production standards across all 50 components (7 apps + 43 packages).
@@ -184,19 +186,13 @@ Add these suites to `pnpm test:full` pipeline and require green before release.
 
 ### Tests to author first — Critical Apps Production Blockers
 
-1. `apps/api/tests/routing-completeness.spec.ts`
-   - Assert all core API routes are implemented; fail if TODO comments found in routing.
-2. `apps/cortex-marketplace/tests/mcp-implementation.spec.ts`
-   - Verify all 9 MCP tools return real responses; fail if placeholder "will be wired" text found.
-3. `apps/cortex-os/tests/metrics-reality.spec.ts`
+1. `apps/cortex-os/tests/metrics-reality.spec.ts`
    - Validate metrics contain real system data; fail if Math.random() patterns detected.
-4. `apps/cortex-py/tests/thermal-guard-production.spec.ts`
+2. `apps/cortex-py/tests/thermal-guard-production.spec.ts`
    - Ensure thermal monitoring works on all platforms; allow mock only in test environments.
 
 ### Implementation pairing — Critical Apps Production Blockers
 
-- Complete API routing implementation in `apps/api/src/server.ts`
-- Implement real MarketplaceMcpService integration for all 9 placeholder tools
 - Replace Math.random() metrics with actual system monitoring calls
 - Implement cross-platform thermal monitoring with real hardware integration
 

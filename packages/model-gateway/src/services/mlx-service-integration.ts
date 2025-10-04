@@ -3,6 +3,7 @@
  * Provides seamless integration between TypeScript and Python MLX service
  */
 
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import { z } from 'zod';
 
 // Request/Response schemas for type safety
@@ -47,6 +48,9 @@ export interface MLXServiceConfig {
 export class MLXServiceIntegration {
 	private config: MLXServiceConfig;
 	private readonly serviceName = 'brAInwav Cortex-OS MLX Bridge';
+	private readonly allowedHosts: string[];
+	private readonly allowedProtocols: string[];
+	private readonly allowLocalhost: boolean;
 
 	constructor(config: Partial<MLXServiceConfig> = {}) {
 		this.config = {
@@ -56,6 +60,11 @@ export class MLXServiceIntegration {
 			backoffMultiplier: config.backoffMultiplier || 2,
 			maxBackoffDelay: config.maxBackoffDelay || 10000,
 		};
+		const parsed = new URL(this.config.baseUrl);
+		const hostname = parsed.hostname.toLowerCase();
+		this.allowedHosts = [hostname];
+		this.allowedProtocols = [parsed.protocol];
+		this.allowLocalhost = isPrivateHostname(hostname);
 	}
 
 	/**
@@ -63,8 +72,8 @@ export class MLXServiceIntegration {
 	 */
 	async isAvailable(): Promise<boolean> {
 		try {
-			const response = await this.makeRequest('/health', 'GET', undefined, 5000);
-			return response.ok;
+			await this.performRequest<unknown>('/health', 'GET', undefined, { timeout: 5000 });
+			return true;
 		} catch (error) {
 			console.warn(`${this.serviceName}: MLX service not available:`, error);
 			return false;
@@ -76,12 +85,13 @@ export class MLXServiceIntegration {
 	 */
 	async getHealth(): Promise<MLXHealthResponse> {
 		try {
-			const response = await this.makeRequest('/health', 'GET');
-			const data = await response.json();
+			const data = await this.performRequest<unknown>('/health', 'GET');
 			return MLXHealthResponseSchema.parse(data);
 		} catch (error) {
 			console.error(`${this.serviceName}: Failed to get health status:`, error);
-			throw new Error(`MLX service health check failed: ${error}`);
+			throw new Error(
+				`MLX service health check failed: ${error instanceof Error ? error.message : error}`,
+			);
 		}
 	}
 
@@ -93,8 +103,11 @@ export class MLXServiceIntegration {
 		const validatedRequest = MLXEmbeddingRequestSchema.parse(request);
 
 		try {
-			const response = await this.makeRequestWithRetry('/embeddings', 'POST', validatedRequest);
-			const data = await response.json();
+			const data = await this.performRequestWithRetry<unknown>(
+				'/embeddings',
+				'POST',
+				validatedRequest,
+			);
 
 			// Validate response
 			const validatedResponse = MLXEmbeddingResponseSchema.parse(data);
@@ -130,8 +143,7 @@ export class MLXServiceIntegration {
 	 */
 	async getAvailableModels(): Promise<string[]> {
 		try {
-			const response = await this.makeRequest('/models', 'GET');
-			const data = await response.json();
+			const data = await this.performRequest<Record<string, unknown>>('/models', 'GET');
 
 			// Extract model names from response
 			if (data.models && Array.isArray(data.models)) {
@@ -188,52 +200,44 @@ export class MLXServiceIntegration {
 	/**
 	 * Make HTTP request with timeout
 	 */
-	private async makeRequest(
+	private async performRequest<T>(
 		endpoint: string,
-		method: 'GET' | 'POST' = 'GET',
+		method: 'GET' | 'POST',
 		body?: unknown,
-		timeout?: number,
-	): Promise<Response> {
-		const url = `${this.config.baseUrl}${endpoint}`;
-		const requestTimeout = timeout || this.config.timeout;
-
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
-
-		try {
-			const response = await fetch(url, {
-				method,
-				headers: {
-					'Content-Type': 'application/json',
-					'User-Agent': this.serviceName,
-				},
-				body: body ? JSON.stringify(body) : undefined,
-				signal: controller.signal,
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-			}
-
-			return response;
-		} finally {
-			clearTimeout(timeoutId);
+		options: { timeout?: number; allowEmptyResponse?: boolean; emptyResponseValue?: T } = {},
+	): Promise<T> {
+		const headers: Record<string, string> = {
+			'User-Agent': this.serviceName,
+		};
+		if (body !== undefined) {
+			headers['Content-Type'] = 'application/json';
 		}
+
+		return safeFetchJson<T>(`${this.config.baseUrl}${endpoint}`, {
+			allowedHosts: this.allowedHosts,
+			allowedProtocols: this.allowedProtocols,
+			allowLocalhost: this.allowLocalhost,
+			timeout: options.timeout ?? this.config.timeout,
+			fetchOptions: {
+				method,
+				headers,
+				body: body !== undefined ? JSON.stringify(body) : undefined,
+			},
+			allowEmptyResponse: options.allowEmptyResponse,
+			emptyResponseValue: options.emptyResponseValue,
+		});
 	}
 
-	/**
-	 * Make request with exponential backoff retry
-	 */
-	private async makeRequestWithRetry(
+	private async performRequestWithRetry<T>(
 		endpoint: string,
-		method: 'GET' | 'POST' = 'GET',
+		method: 'GET' | 'POST',
 		body?: unknown,
-	): Promise<Response> {
+	): Promise<T> {
 		let lastError: Error;
 
 		for (let attempt = 0; attempt <= this.config.retries; attempt++) {
 			try {
-				return await this.makeRequest(endpoint, method, body);
+				return await this.performRequest<T>(endpoint, method, body);
 			} catch (error) {
 				lastError = error instanceof Error ? error : new Error(String(error));
 

@@ -2,13 +2,13 @@
 
 ## Executive Summary
 
-This document provides a comprehensive technical review of all 35 packages and 7 apps in the Cortex-OS system, evaluating their actual implementation status of A2A (Agent-to-Agent) native communication and A2A MCP (Model Context Protocol) bridge integration. This analysis is based on direct codebase examination and corrects significant discrepancies found in previous documentation.
+This document provides a comprehensive technical review of all packages and apps in the Cortex-OS system, evaluating their actual implementation status of A2A (Agent-to-Agent) native communication and A2A MCP (Model Context Protocol) bridge integration. This analysis is based on direct codebase examination and corrects significant discrepancies found in previous documentation.
 
 **CRITICAL FINDING**: Previous documentation significantly overstated A2A implementation progress. The true status shows much fewer packages with full native A2A implementation than claimed.
 
 ## CORRECTED IMPLEMENTATION STATUS
 
-### ✅ **FULLY IMPLEMENTED A2A NATIVE COMMUNICATION** (16 packages)
+### ✅ **FULLY IMPLEMENTED A2A NATIVE COMMUNICATION** (15 packages)
 
 These packages use `createBus` from `@cortex-os/a2a-core` with proper publish/subscribe patterns:
 
@@ -24,9 +24,7 @@ These packages use `createBus` from `@cortex-os/a2a-core` with proper publish/su
 10. **@cortex-os/rag** ✅ - `createRagBus` with full A2A integration (157 lines)
 11. **@cortex-os/simlab** ✅ - `createSimlabBus` with full A2A integration (154 lines)
 12. **@cortex-os/tdd-coach** ✅ - `createTddCoachBus` with full A2A integration (148 lines)
-13. **apps/cortex-webui** ✅ - Backend A2A integration service (WebSocket streaming)
-14. **apps/api** ✅ - Real A2A core integration via `createApiBus` pattern
-15. **apps/cortex-py** ✅ - Real A2A core integration via stdio bridge pattern
+13. **apps/cortex-py** ✅ - Real A2A core integration via stdio bridge pattern
 
 ### ⚠️ **PARTIAL A2A IMPLEMENTATION** (2 packages)
 
@@ -65,10 +63,8 @@ These packages have A2A dependencies but incomplete bus integration:
 - @cortex-os/registry
 - @cortex-os/services
 
-**Apps Missing A2A Implementation** (3 apps):
+**Apps Missing A2A Implementation** (1 app):
 
-- apps/cortex-marketplace  
-- apps/cortex-marketplace-api
 - apps/cortex-os
 
 ### ✅ **MCP BRIDGE IMPLEMENTATION STATUS**
@@ -217,11 +213,9 @@ export class ApiBusIntegration {
 ### Phase 2: ⚠️ **IN PROGRESS** - App A2A Integration
 
 1. **@cortex-os/agents** ⚠️ **HIGH PRIORITY** - Complete createAgentsBus function for full A2A integration
-2. **apps/api** ⚠️ **HIGH PRIORITY** - Replace mock `ApiBusIntegration` (670 lines) with real A2A core
-3. **apps/cortex-py** ⚠️ **HIGH PRIORITY** - Replace HTTP transport with TypeScript A2A core integration
-4. **apps/cortex-code** ❌ **PRIORITY** - Add native A2A integration (Rust)
-5. **apps/cortex-os** ❌ **PRIORITY** - Replace mock `createBus` with real A2A core
-6. **apps/cortex-webui frontend** ❌ **OPTIONAL** - Add React frontend A2A integration (backend already complete)
+2. **apps/cortex-py** ⚠️ **HIGH PRIORITY** - Replace HTTP transport with TypeScript A2A core integration
+3. **apps/cortex-code** ❌ **PRIORITY** - Add native A2A integration (Rust)
+4. **apps/cortex-os** ❌ **PRIORITY** - Replace mock `createBus` with real A2A core
 
 ### Phase 3: Complete Package Coverage
 

@@ -5,6 +5,7 @@ import type {
 	MemoryStatsInput,
 	MemoryStoreInput,
 } from '@cortex-os/tool-spec';
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import type {
 	Memory,
 	MemoryAnalysisResult,
@@ -36,11 +37,19 @@ export class RemoteMemoryProvider implements MemoryProvider {
 	private readonly baseUrl: string;
 	private readonly apiKey?: string;
 	private readonly fetchImpl: typeof fetch;
+	private readonly allowedHosts: string[];
+	private readonly allowedProtocols: string[];
+	private readonly allowLocalhost: boolean;
 
 	constructor(options: RemoteMemoryProviderOptions) {
 		this.baseUrl = options.baseUrl.replace(/\/$/, '');
 		this.apiKey = options.apiKey;
 		this.fetchImpl = options.fetchImpl ?? fetch;
+		const parsed = new URL(this.baseUrl);
+		const hostname = parsed.hostname.toLowerCase();
+		this.allowedHosts = [hostname];
+		this.allowedProtocols = [parsed.protocol];
+		this.allowLocalhost = isPrivateHostname(hostname);
 	}
 
 	async store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }> {
@@ -104,33 +113,28 @@ export class RemoteMemoryProvider implements MemoryProvider {
 	}
 
 	private async post<T>(path: string, body: unknown): Promise<T> {
-		const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+		return this.request<T>(path, {
 			method: 'POST',
 			headers: this.buildHeaders(),
 			body: JSON.stringify(body),
 		});
-
-		return this.parseResponse<T>(response);
 	}
 
 	private async fetch<T>(path: string): Promise<T> {
-		const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+		return this.request<T>(path, {
 			method: 'GET',
 			headers: this.buildHeaders(),
 		});
-
-		return this.parseResponse<T>(response);
 	}
 
-	private async parseResponse<T>(response: Response): Promise<T> {
-		if (!response.ok) {
-			const message = `${response.status} ${response.statusText}`;
-			throw new MemoryProviderError('NETWORK', message, {
-				status: response.status,
-			});
-		}
-
-		const payload = (await response.json()) as RemoteResponse<T>;
+	private async request<T>(path: string, init: RequestInit): Promise<T> {
+		const payload = await safeFetchJson<RemoteResponse<T>>(`${this.baseUrl}${path}`, {
+			allowedHosts: this.allowedHosts,
+			allowedProtocols: this.allowedProtocols,
+			allowLocalhost: this.allowLocalhost,
+			fetchImpl: this.fetchImpl,
+			fetchOptions: init,
+		});
 
 		if (payload.error) {
 			throw new MemoryProviderError(

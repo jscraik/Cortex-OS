@@ -3,7 +3,7 @@
   "areas": {
     "production": {
       "score": 65,
-      "evidence": ["apps/cortex-webui/app/mvp/chat/page.tsx:270-278"],
+      "evidence": ["apps/cortex-os/packages/mvp/src/chat/page.tsx:270-278"],
       "risks": ["Node dependencies not installed; test coverage unknown"],
       "actions": ["Install dependencies and run full test suite to verify ≥95% coverage"]
     },
@@ -21,7 +21,7 @@
     },
     "accessibility": {
       "score": 80,
-      "evidence": ["apps/cortex-webui/app/mvp/chat/page.tsx:270-278"],
+      "evidence": ["apps/cortex-os/packages/mvp/src/chat/page.tsx:270-278"],
       "risks": ["Accessibility test suite not executed"],
       "actions": ["Run pa11y and axe audits"]
     },

@@ -1,3 +1,5 @@
+import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
+
 export interface TokenInfo {
 	accessToken: string;
 	refreshToken?: string;
@@ -130,33 +132,33 @@ export class AuthManager {
 			throw new Error('Token URL is required for token refresh');
 		}
 
-		const response = await fetch(this.config.tokenUrl, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
+		const parsedUrl = new URL(this.config.tokenUrl);
+		const hostname = parsedUrl.hostname.toLowerCase();
+
+		const data = await safeFetchJson<Record<string, any>>(this.config.tokenUrl, {
+			allowedHosts: [hostname],
+			allowedProtocols: [parsedUrl.protocol],
+			allowLocalhost: isPrivateHostname(hostname),
+			timeout: 30000,
+			fetchOptions: {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					grant_type: 'refresh_token',
+					refresh_token: this.token?.refreshToken,
+					client_id: this.config?.clientId,
+					client_secret: this.config?.clientSecret,
+					scope: this.config?.scopes?.join(' '),
+				}),
 			},
-			body: JSON.stringify({
-				grant_type: 'refresh_token',
-				refresh_token: this.token?.refreshToken,
-				client_id: this.config?.clientId,
-				client_secret: this.config?.clientSecret,
-				scope: this.config?.scopes?.join(' '),
-			}),
-			// Add timeout to prevent hanging
-			signal: AbortSignal.timeout(30000),
 		});
-
-		if (!response.ok) {
-			const error = await response.text();
-			throw new Error(`Token refresh failed: ${response.status} ${error}`);
-		}
-
-		const data = await response.json();
 
 		return {
 			accessToken: data.access_token,
 			refreshToken: data.refresh_token || this.token?.refreshToken,
-			expiresAt: Date.now() + data.expires_in * 1000,
+			expiresAt: Date.now() + (data.expires_in ?? 0) * 1000,
 			tokenType: data.token_type === 'bearer' ? 'bearer' : 'api-key',
 		};
 	}
