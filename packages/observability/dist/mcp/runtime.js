@@ -1,4 +1,5 @@
 import { createObservabilityEvent } from '../events/observability-events.js';
+import { securePivot } from '../utils/secure-random.js';
 import {
 	EvaluateAlertInputSchema,
 	GenerateDashboardInputSchema,
@@ -142,7 +143,7 @@ function quickselect(arr, k) {
 		right = arr.length - 1;
 	while (left <= right) {
 		// Choose a random pivot
-		const pivotIndex = left + Math.floor(Math.random() * (right - left + 1));
+		const pivotIndex = securePivot(left, right);
 		const pivotValue = arr[pivotIndex];
 		// Partition
 		let i = left,

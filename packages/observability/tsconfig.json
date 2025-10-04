@@ -2,7 +2,7 @@
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
 		"outDir": "dist",
-		"rootDir": "src",
+		"rootDir": ".",
 		"composite": true,
 		"noEmit": false,
 		"declaration": true,
@@ -17,11 +17,11 @@
 	},
 	"include": [
 		"src/**/*",
-		"src/shims/**/*.d.ts"
+		"src/shims/**/*.d.ts",
+		"tests/**/*"
 	],
 	"exclude": [
 		"dist",
-		"node_modules",
-		"tests"
+		"node_modules"
 	]
 }

@@ -1,0 +1,10 @@
+{
+  "name": "vitest-sonar-reporter",
+  "version": "0.1.0",
+  "description": "Minimal Sonar-compatible reporter vendored for brAInwav Vitest runs.",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  }
+}

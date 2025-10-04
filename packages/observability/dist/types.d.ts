@@ -71,9 +71,9 @@ export declare const LogEntrySchema: z.ZodObject<
 	{
 		message: string;
 		timestamp: string;
+		runId: string;
 		level: 'error' | 'trace' | 'debug' | 'info' | 'warn' | 'fatal';
 		component: string;
-		runId: string;
 		traceContext?:
 			| {
 					runId: string;
@@ -87,9 +87,9 @@ export declare const LogEntrySchema: z.ZodObject<
 	{
 		message: string;
 		timestamp: string;
+		runId: string;
 		level: 'error' | 'trace' | 'debug' | 'info' | 'warn' | 'fatal';
 		component: string;
-		runId: string;
 		traceContext?:
 			| {
 					runId: string;

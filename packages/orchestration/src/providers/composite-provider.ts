@@ -7,6 +7,7 @@ import { EventEmitter } from 'node:events';
 import { z } from 'zod';
 import { CircuitBreaker } from '../lib/circuit-breaker.js';
 import { selectMLXModel, selectOllamaModel } from '../lib/model-selection.js';
+import type { MLXAdapterApi } from '../master-agent-loop/mlx-service-bridge.js';
 
 /**
  * Model request schemas
@@ -48,7 +49,7 @@ export const EmbeddingResponseSchema = z.object({
 	model: z.string(),
 	provider: z.string(),
 	processingTime: z.number(),
-	tokensUsed: z.number().optional(),
+	tokensUsed: z.record(z.unknown()).optional(),
 });
 
 export const ChatResponseSchema = z.object({
@@ -72,6 +73,13 @@ export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 export type RerankResponse = z.infer<typeof RerankResponseSchema>;
 
 /**
+ * OpenAI API response types
+ */
+interface OpenAIEmbeddingItem {
+	embedding: number[];
+}
+
+/**
  * Provider interface
  */
 export interface ModelProvider {
@@ -91,7 +99,7 @@ class MLXProvider implements ModelProvider {
 	private readonly circuitBreaker: CircuitBreaker;
 
 	constructor(
-		private readonly mlxService: unknown, // MLXServiceBridge instance
+		private readonly mlxService: MLXAdapterApi,
 		private readonly healthCheckInterval = 30000, // 30 seconds
 	) {
 		this.circuitBreaker = new CircuitBreaker('mlx-provider', {
@@ -129,7 +137,7 @@ class MLXProvider implements ModelProvider {
 			// Generate embeddings for each text
 			const embeddings: number[][] = [];
 			for (const text of request.texts) {
-				const result = await (this.mlxService as any).generateEmbedding({
+				const result = await this.mlxService.generateEmbedding({
 					text,
 					model: request.model,
 				});
@@ -151,7 +159,7 @@ class MLXProvider implements ModelProvider {
 		return this.circuitBreaker.execute(async () => {
 			const startTime = Date.now();
 
-			const result = await (this.mlxService as any).generateChat({
+			const result = await this.mlxService.generateChat({
 				messages: request.messages,
 				model: request.model,
 				max_tokens: request.maxTokens,
@@ -173,11 +181,7 @@ class MLXProvider implements ModelProvider {
 		return this.circuitBreaker.execute(async () => {
 			const startTime = Date.now();
 
-			const result = await (this.mlxService as any).rerank(
-				request.query,
-				request.documents,
-				request.model,
-			);
+			const result = await this.mlxService.rerank(request.query, request.documents, request.model);
 
 			const processingTime = Date.now() - startTime;
 
@@ -387,7 +391,7 @@ class OpenAIProvider implements ModelProvider {
 			const processingTime = Date.now() - startTime;
 
 			return {
-				embeddings: data.data.map((item: any) => item.embedding),
+				embeddings: data.data.map((item: OpenAIEmbeddingItem) => item.embedding),
 				model: data.model,
 				provider: this.name,
 				processingTime,

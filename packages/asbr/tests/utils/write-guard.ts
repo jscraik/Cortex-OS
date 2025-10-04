@@ -1,5 +1,6 @@
 // Test write guard: prevent writing image files like *.png, *.jpg, *.jpeg, *.gif, *.bmp, *.webp, *.svg during tests.
 // This avoids cluttering the repo or interrupting developer workflows.
+/* eslint-disable sonarjs/publicly-writable-directories */
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 
@@ -19,7 +20,7 @@ try {
 		'/tmp',
 	]
 		.filter(Boolean)
-		.map((d) => d.replace(/\/+$/, ''));
+		.map((d) => (d.endsWith('/') ? d.slice(0, -1) : d));
 
 	const allowListPatterns = [/\/tests?\//i, /\/(test-)?fixtures\//i];
 

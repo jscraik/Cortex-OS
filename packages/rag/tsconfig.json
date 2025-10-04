@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "composite": true,
     "module": "ESNext",
@@ -21,7 +21,9 @@
   },
   "include": [
     "src",
-    "scripts"
+    "scripts",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ],
   "exclude": [
     "dist",

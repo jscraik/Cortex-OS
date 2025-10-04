@@ -65,7 +65,7 @@ export declare const QueryTracesInputSchema: z.ZodObject<
 		limit: number;
 		service?: string | undefined;
 		startTime?: string | undefined;
-		status?: 'success' | 'error' | undefined;
+		status?: 'error' | 'success' | undefined;
 		tags?: Record<string, string> | undefined;
 		operation?: string | undefined;
 		endTime?: string | undefined;
@@ -73,7 +73,7 @@ export declare const QueryTracesInputSchema: z.ZodObject<
 	{
 		service?: string | undefined;
 		startTime?: string | undefined;
-		status?: 'success' | 'error' | undefined;
+		status?: 'error' | 'success' | undefined;
 		tags?: Record<string, string> | undefined;
 		operation?: string | undefined;
 		endTime?: string | undefined;
@@ -98,7 +98,7 @@ export declare const GetMetricsInputSchema: z.ZodObject<
 		name?: string | undefined;
 		endTime?: string | undefined;
 		labels?: Record<string, string> | undefined;
-		aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+		aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 	},
 	{
 		startTime?: string | undefined;
@@ -106,7 +106,7 @@ export declare const GetMetricsInputSchema: z.ZodObject<
 		endTime?: string | undefined;
 		limit?: number | undefined;
 		labels?: Record<string, string> | undefined;
-		aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+		aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 	}
 >;
 export declare const SearchLogsInputSchema: z.ZodObject<
@@ -152,10 +152,9 @@ export declare const SearchLogsInputSchema: z.ZodObject<
 		traceId?: string | undefined;
 		startTime?: string | undefined;
 		tags?: Record<string, string> | undefined;
-		endTime?: string | undefined;
+		runId?: string | undefined;
 		level?: 'error' | 'trace' | 'debug' | 'info' | 'warn' | 'fatal' | undefined;
 		component?: string | undefined;
-		runId?: string | undefined;
 		traceContext?:
 			| {
 					runId: string;
@@ -164,17 +163,16 @@ export declare const SearchLogsInputSchema: z.ZodObject<
 					parentSpanId?: string | undefined;
 			  }
 			| undefined;
+		endTime?: string | undefined;
 		query?: string | undefined;
 	},
 	{
 		traceId?: string | undefined;
 		startTime?: string | undefined;
 		tags?: Record<string, string> | undefined;
-		endTime?: string | undefined;
-		limit?: number | undefined;
+		runId?: string | undefined;
 		level?: 'error' | 'trace' | 'debug' | 'info' | 'warn' | 'fatal' | undefined;
 		component?: string | undefined;
-		runId?: string | undefined;
 		traceContext?:
 			| {
 					runId: string;
@@ -183,6 +181,8 @@ export declare const SearchLogsInputSchema: z.ZodObject<
 					parentSpanId?: string | undefined;
 			  }
 			| undefined;
+		endTime?: string | undefined;
+		limit?: number | undefined;
 		query?: string | undefined;
 	}
 >;
@@ -202,13 +202,13 @@ export declare const EvaluateAlertInputSchema: z.ZodObject<
 				{
 					startTime?: string | undefined;
 					endTime?: string | undefined;
-					aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+					aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 					metric?: string | undefined;
 				},
 				{
 					startTime?: string | undefined;
 					endTime?: string | undefined;
-					aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+					aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 					metric?: string | undefined;
 				}
 			>
@@ -222,7 +222,7 @@ export declare const EvaluateAlertInputSchema: z.ZodObject<
 			| {
 					startTime?: string | undefined;
 					endTime?: string | undefined;
-					aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+					aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 					metric?: string | undefined;
 			  }
 			| undefined;
@@ -233,7 +233,7 @@ export declare const EvaluateAlertInputSchema: z.ZodObject<
 			| {
 					startTime?: string | undefined;
 					endTime?: string | undefined;
-					aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+					aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 					metric?: string | undefined;
 			  }
 			| undefined;
@@ -338,7 +338,7 @@ export declare function validateObservabilityToolInput(
 			tags: Record<string, string> | undefined;
 			limit: number;
 			service?: string | undefined;
-			status?: 'success' | 'error' | undefined;
+			status?: 'error' | 'success' | undefined;
 			operation?: string | undefined;
 	  }
 	| {
@@ -347,7 +347,7 @@ export declare function validateObservabilityToolInput(
 			labels: Record<string, string> | undefined;
 			limit: number;
 			name?: string | undefined;
-			aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+			aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 	  }
 	| {
 			startTime: string | undefined;
@@ -355,9 +355,9 @@ export declare function validateObservabilityToolInput(
 			tags: Record<string, string> | undefined;
 			limit: number;
 			traceId?: string | undefined;
+			runId?: string | undefined;
 			level?: 'error' | 'trace' | 'debug' | 'info' | 'warn' | 'fatal' | undefined;
 			component?: string | undefined;
-			runId?: string | undefined;
 			traceContext?:
 				| {
 						runId: string;
@@ -373,7 +373,7 @@ export declare function validateObservabilityToolInput(
 				| {
 						startTime: string | undefined;
 						endTime: string | undefined;
-						aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | undefined;
+						aggregation?: 'min' | 'max' | 'sum' | 'avg' | 'count' | undefined;
 						metric?: string | undefined;
 				  }
 				| undefined;

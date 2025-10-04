@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -34,16 +34,19 @@
     ]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "vitest.config.ts",
+    "tests/config/vitest.integration.config.ts"
   ],
   "exclude": [
     "dist",
     "node_modules",
-    "tests",
     "**/*.test.ts",
     "**/*.spec.ts"
   ],
   "references": [
-    { "path": "../../libs/typescript/asbr-schemas" }
+    {
+      "path": "../../libs/typescript/asbr-schemas"
+    }
   ]
 }

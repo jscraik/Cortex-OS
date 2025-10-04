@@ -9,11 +9,11 @@ export function deepMerge<T extends Record<string, unknown>>(base: T, override: 
 		if (Array.isArray(current) && Array.isArray(value)) {
 			(result[key] as unknown[]) = [...current, ...value];
 		} else if (
-			value !== null &&
+			value != null &&
+			current != null &&
 			typeof value === 'object' &&
-			!Array.isArray(value) &&
-			current !== null &&
 			typeof current === 'object' &&
+			!Array.isArray(value) &&
 			!Array.isArray(current)
 		) {
 			result[key] = deepMerge(

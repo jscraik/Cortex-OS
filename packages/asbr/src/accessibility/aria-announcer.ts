@@ -117,11 +117,16 @@ export class AriaAnnouncer {
 			case 'minimal':
 				message = `Error: ${error}`;
 				break;
-			case 'verbose':
-				message = `Error encountered${context ? ` in ${context}` : ''}: ${error}. Please review and take appropriate action.`;
+			case 'verbose': {
+				const contextPart = context ? ` in ${context}` : '';
+				message = `Error encountered${contextPart}: ${error}. Please review and take appropriate action.`;
 				break;
-			default:
-				message = `Error${context ? ` in ${context}` : ''}: ${error}`;
+			}
+			default: {
+				const contextPart = context ? ` in ${context}` : '';
+				message = `Error${contextPart}: ${error}`;
+				break;
+			}
 		}
 
 		this.queueAnnouncement(message, 'assertive', profileId);
@@ -145,11 +150,16 @@ export class AriaAnnouncer {
 			case 'minimal':
 				message = `${action} completed`;
 				break;
-			case 'verbose':
-				message = `Success: ${action} has been completed successfully${result ? `. Result: ${result}` : ''}.`;
+			case 'verbose': {
+				const resultPart = result ? `. Result: ${result}` : '';
+				message = `Success: ${action} has been completed successfully${resultPart}.`;
 				break;
-			default:
-				message = `${action} completed${result ? `: ${result}` : ''}`;
+			}
+			default: {
+				const resultPart = result ? `: ${result}` : '';
+				message = `${action} completed${resultPart}`;
+				break;
+			}
 		}
 
 		this.queueAnnouncement(message, 'polite', profileId);

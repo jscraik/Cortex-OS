@@ -119,7 +119,8 @@ export class ASBRClient {
 			});
 		}
 
-		const url = `/v1/artifacts${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+		const searchParamsString = searchParams.toString();
+		const url = searchParamsString ? `/v1/artifacts?${searchParamsString}` : '/v1/artifacts';
 		const response = await this.fetch(url);
 		const data: ListArtifactsResponse = await response.json();
 		return data.artifacts;
@@ -133,7 +134,7 @@ export class ASBRClient {
 		const url = 'id' in profile ? `/v1/profiles/${profile.id}` : '/v1/profiles';
 
 		const request: CreateProfileRequest = {
-			profile: 'id' in profile ? profile : profile,
+			profile,
 		};
 
 		const response = await this.fetch(url, {
@@ -305,7 +306,7 @@ export class ASBRClient {
 class TaskRefImpl implements TaskRef {
 	public readonly id: string;
 	public readonly status: Task['status'];
-	private client: ASBRClient;
+	private readonly client: ASBRClient;
 	private readonly eventListeners = new Set<(event: AsbrEvent) => void>();
 
 	constructor(task: Task, client: ASBRClient) {
@@ -386,11 +387,12 @@ export function createTaskInput(
  */
 export function createIdempotencyKey(input: TaskInput): string {
 	// Create a deterministic key based on task input
+	const sortedScopes = input.scopes.slice().sort((a, b) => a.localeCompare(b));
 	const key = JSON.stringify({
 		title: input.title,
 		brief: input.brief,
 		inputs: input.inputs,
-		scopes: input.scopes.sort(),
+		scopes: sortedScopes,
 	});
 	const hash = createHash('sha256').update(key).digest('hex');
 	return hash.slice(0, 32);

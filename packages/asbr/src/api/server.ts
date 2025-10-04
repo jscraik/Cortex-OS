@@ -40,6 +40,16 @@ interface TokenBucket {
 	lastRefill: number;
 }
 
+/**
+ * Express router layer interface for route introspection
+ */
+interface ExpressRouterLayer {
+	route?: {
+		path: string;
+		methods: Record<string, boolean>;
+	};
+}
+
 export interface ASBRServerOptions {
 	port?: number;
 	host?: string;
@@ -65,10 +75,10 @@ export function createASBRServer(options: ASBRServerOptions = {}): ASBRServer {
 		start: instance.start.bind(instance),
 		stop: instance.stop.bind(instance),
 		get app() {
-			return (instance as any).app as express.Application;
+			return instance.getApp();
 		},
 		get server() {
-			return (instance as any).server as Server | undefined;
+			return instance.getServer();
 		},
 	};
 }
@@ -117,6 +127,20 @@ class ASBRServerClass {
 		this.setupMiddleware();
 		this.setupRoutes();
 		this.setupCacheCleanup();
+	}
+
+	/**
+	 * Get the Express application instance
+	 */
+	getApp(): express.Application {
+		return this.app;
+	}
+
+	/**
+	 * Get the HTTP server instance
+	 */
+	getServer(): Server | undefined {
+		return this.server;
 	}
 
 	private isValidTraceparent(tp: string): boolean {
@@ -286,28 +310,25 @@ class ASBRServerClass {
 		this.app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 			logError('API Error', { error });
 
-			if (error instanceof ValidationError) {
-				res.status(error.statusCode).json({
-					error: error.message,
-					code: error.code,
-					details: error.details,
+			const sendErrorResponse = (
+				statusCode: number,
+				message: string,
+				code: string,
+				details?: unknown,
+			) => {
+				res.status(statusCode).json({
+					error: message,
+					code,
+					details,
 				});
-			} else if (error instanceof AuthorizationError) {
-				res.status(error.statusCode).json({
-					error: error.message,
-					code: error.code,
-					details: error.details,
-				});
+			};
+
+			if (error instanceof ValidationError || error instanceof AuthorizationError) {
+				sendErrorResponse(error.statusCode, error.message, error.code, error.details);
 			} else if (error instanceof NotFoundError) {
-				res.status(404).json({
-					error: error.message,
-					code: error.code,
-				});
+				sendErrorResponse(404, error.message, error.code);
 			} else {
-				res.status(500).json({
-					error: 'Internal server error',
-					code: 'INTERNAL_ERROR',
-				});
+				sendErrorResponse(500, 'Internal server error', 'INTERNAL_ERROR');
 			}
 		});
 	}
@@ -618,18 +639,27 @@ class ASBRServerClass {
 	}
 
 	private async getServiceMap(_req: Request, res: Response): Promise<void> {
-		const stack: any[] = ((this.app as unknown as any).router?.stack ?? []) as any[];
+		const stack: ExpressRouterLayer[] =
+			(this.app as unknown as { router?: { stack?: ExpressRouterLayer[] } }).router?.stack ?? [];
 		const routes = stack
-			.filter((layer: any) => layer.route && typeof layer.route.path === 'string')
-			.filter((layer: any) => layer.route.path.startsWith('/v1'))
-			.map((layer: any) => ({
-				path: layer.route.path,
-				methods: Object.keys(layer.route.methods).map((m) => m.toUpperCase()),
-				version: (() => {
-					const match = layer.route.path.match(/^\/(v\d+)\b/);
-					return match ? match[1] : '';
-				})(),
-			}));
+			.filter(
+				(
+					layer: ExpressRouterLayer,
+				): layer is ExpressRouterLayer & { route: NonNullable<ExpressRouterLayer['route']> } =>
+					layer.route !== undefined && typeof layer.route.path === 'string',
+			)
+			.filter((layer) => layer.route.path.startsWith('/v1'))
+			.map((layer) => {
+				const route = layer.route;
+				return {
+					path: route.path,
+					methods: Object.keys(route.methods).map((m) => m.toUpperCase()),
+					version: (() => {
+						const match = /^\/(v\d+)\b/.exec(route.path);
+						return match ? match[1] : '';
+					})(),
+				};
+			});
 
 		const serviceMap: ServiceMap = ServiceMapSchema.parse({ routes });
 		res.json(serviceMap);
@@ -658,7 +688,7 @@ class ASBRServerClass {
 					this.server.maxConnections = 1000; // Limit concurrent connections
 				}
 
-				this.io = new IOServer(this.server!, { transports: ['websocket'] });
+				this.io = new IOServer(this.server, { transports: ['websocket'] });
 				const manager = await getEventManager();
 				manager.attachIO(this.io);
 

@@ -12,11 +12,12 @@ export function resolveIdempotency(
 ): { key: string; existingTask?: Task } {
 	let key = providedKey;
 	if (!key) {
+		const sortedScopes = input.scopes.slice().sort((a, b) => a.localeCompare(b));
 		const base = JSON.stringify({
 			title: input.title,
 			brief: input.brief,
 			inputs: input.inputs,
-			scopes: input.scopes.sort(),
+			scopes: sortedScopes,
 		});
 		key = createHash('sha256').update(base).digest('hex').substring(0, 16);
 	}

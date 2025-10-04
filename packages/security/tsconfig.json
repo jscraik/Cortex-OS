@@ -6,7 +6,7 @@
     "moduleResolution": "node",
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "baseUrl": ".",
     "emitDeclarationOnly": false,
     "paths": {
@@ -28,12 +28,13 @@
     ]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "test/**/*"
   ],
   "exclude": [
     "dist",
-    "node_modules",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "node_modules"
   ]
 }

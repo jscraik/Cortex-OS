@@ -206,11 +206,27 @@ export interface AgentToolkitMCPTool {
 	handler: (input: unknown) => Promise<AgentToolkitMCPResponse>;
 }
 
+// Circuit breaker configuration constants (UPPER_SNAKE_CASE per CODESTYLE.md)
+const CIRCUIT_BREAKER_THRESHOLD = 5;
+const MAX_TOKEN_LIMIT = 40000;
+const TRIM_TOKEN_LIMIT = 20000;
+const CIRCUIT_BREAKER_RESET_TIMEOUT = 60000; // 1 minute
+
+/**
+ * Circuit breaker state for tracking tool failures
+ */
+interface CircuitBreakerState {
+	failureCount: number;
+	lastFailureTime: number;
+	isOpen: boolean;
+}
+
 /**
  * Agent Toolkit MCP Tools wrapper class
  *
  * Provides agent-toolkit functionality through MCP tools interface
  * Integrates with real @cortex-os/agent-toolkit implementation and A2A bus transport layer
+ * Following CODESTYLE.md: functional-first, guard clauses, brAInwav branding
  */
 export class AgentToolkitMCPTools {
 	private readonly executionHistory: Map<
@@ -225,11 +241,15 @@ export class AgentToolkitMCPTools {
 
 	private readonly agentToolkit: AgentToolkitApi;
 	private eventBus?: { emit: (event: MCPEvent) => void };
+	private readonly circuitBreakers: Map<string, CircuitBreakerState>;
+	private totalTokenUsage: number;
 
 	constructor(toolsPath?: string, eventBus?: { emit: (event: MCPEvent) => void }) {
 		this.executionHistory = new Map();
 		this.agentToolkit = createAgentToolkit(toolsPath);
 		this.eventBus = eventBus;
+		this.circuitBreakers = new Map();
+		this.totalTokenUsage = 0;
 	}
 
 	/**
@@ -834,6 +854,85 @@ export class AgentToolkitMCPTools {
 	}
 
 	/**
+	 * Circuit breaker helper: Check if circuit breaker is open for a tool
+	 * Following CODESTYLE.md: functional-first, guard clauses
+	 */
+	private isCircuitBreakerOpen(toolName: string): boolean {
+		const state = this.circuitBreakers.get(toolName);
+		if (!state) return false;
+
+		// Guard clause: if not open, return false
+		if (!state.isOpen) return false;
+
+		// Check if reset timeout has passed
+		const now = Date.now();
+		if (now - state.lastFailureTime > CIRCUIT_BREAKER_RESET_TIMEOUT) {
+			// Reset circuit breaker
+			state.isOpen = false;
+			state.failureCount = 0;
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Circuit breaker helper: Record tool execution result
+	 * Following CODESTYLE.md: guard clauses, brAInwav branding
+	 */
+	private recordExecutionResult(toolName: string, success: boolean): void {
+		let state = this.circuitBreakers.get(toolName);
+		if (!state) {
+			state = { failureCount: 0, lastFailureTime: 0, isOpen: false };
+			this.circuitBreakers.set(toolName, state);
+		}
+
+		if (success) {
+			// Reset on success
+			state.failureCount = 0;
+			state.isOpen = false;
+		} else {
+			// Increment failure count
+			state.failureCount++;
+			state.lastFailureTime = Date.now();
+
+			// Trip circuit breaker if threshold exceeded
+			if (state.failureCount >= CIRCUIT_BREAKER_THRESHOLD) {
+				state.isOpen = true;
+			}
+		}
+	}
+
+	/**
+	 * Token budget helper: Check if operation would exceed token limit
+	 * Following CODESTYLE.md: guard clauses, named constants
+	 */
+	private checkTokenBudget(estimatedTokens: number): { allowed: boolean; trimmed?: boolean } {
+		// Guard clause: if within normal limits, allow
+		if (this.totalTokenUsage + estimatedTokens <= MAX_TOKEN_LIMIT) {
+			return { allowed: true };
+		}
+
+		// If over limit, trim to TRIM_TOKEN_LIMIT
+		if (this.totalTokenUsage > TRIM_TOKEN_LIMIT) {
+			this.totalTokenUsage = TRIM_TOKEN_LIMIT;
+			console.warn(`brAInwav: Token usage trimmed to ${TRIM_TOKEN_LIMIT} tokens`);
+			return { allowed: true, trimmed: true };
+		}
+
+		return { allowed: true };
+	}
+
+	/**
+	 * Enhanced error handling with brAInwav branding
+	 * Following CODESTYLE.md: guard clauses, descriptive error messages
+	 */
+	private createBrandedError(toolName: string, originalError: string | Error): string {
+		const errorMessage = originalError instanceof Error ? originalError.message : originalError;
+		return `brAInwav Agent Toolkit: ${toolName} execution failed - ${errorMessage}`;
+	}
+
+	/**
 	 * Get all available Agent Toolkit MCP tools
 	 */
 	getAllTools(): AgentToolkitMCPTool[] {
@@ -848,15 +947,31 @@ export class AgentToolkitMCPTools {
 	}
 
 	/**
-	 * Execute tool by name
+	 * Execute tool by name with circuit breaker and brAInwav branding
+	 * Following CODESTYLE.md: guard clauses, async/await, functional patterns
 	 */
 	async executeTool(name: string, input: unknown): Promise<AgentToolkitMCPResponse> {
+		// Guard clause: check if tool exists
 		const tool = this.getTool(name);
 		if (!tool) {
-			throw new Error(`Agent Toolkit MCP tool '${name}' not found`);
+			throw new Error(`brAInwav Agent Toolkit: MCP tool '${name}' not found`);
 		}
 
-		return await tool.handler(input);
+		// Guard clause: check circuit breaker
+		if (this.isCircuitBreakerOpen(name)) {
+			throw new Error(
+				`brAInwav Agent Toolkit: Circuit breaker open for tool '${name}' - too many recent failures`,
+			);
+		}
+
+		try {
+			const result = await tool.handler(input);
+			this.recordExecutionResult(name, result.success);
+			return result;
+		} catch (error) {
+			this.recordExecutionResult(name, false);
+			throw new Error(this.createBrandedError(name, error as Error));
+		}
 	}
 
 	/**

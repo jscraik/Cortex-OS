@@ -111,40 +111,40 @@ export class DiffValidator {
 	validateMultiFileDiff(fileDiffs: FileDiff[]): ValidationResult {
 		const errors: string[] = [];
 		const warnings: string[] = [];
-		let validFiles = 0;
-		let invalidFiles = 0;
-		let skippedFiles = 0;
 
-		// Check for duplicate paths
+		this.checkForDuplicatePaths(fileDiffs, errors);
+		const stats = this.validateEachFileDiff(fileDiffs, errors, warnings);
+		this.checkDiffIntegrity(fileDiffs, warnings);
+
+		return {
+			isValid: errors.length === 0,
+			errors,
+			warnings,
+			reproducible: this.areDigestsReproducible(fileDiffs),
+			digestsMatch: this.validateAllDigests(fileDiffs),
+			stats,
+		};
+	}
+
+	private checkForDuplicatePaths(fileDiffs: FileDiff[], errors: string[]): void {
 		const paths = fileDiffs.map((f) => f.path);
 		const duplicates = paths.filter((path, index) => paths.indexOf(path) !== index);
 		if (duplicates.length > 0) {
 			errors.push(`Duplicate file paths: ${duplicates.join(', ')}`);
 		}
+	}
 
-		// Validate each file diff
+	private validateEachFileDiff(
+		fileDiffs: FileDiff[],
+		errors: string[],
+		_warnings: string[],
+	): { totalFiles: number; validFiles: number; invalidFiles: number; skippedFiles: number } {
+		let validFiles = 0;
+		let invalidFiles = 0;
+		let skippedFiles = 0;
+
 		for (const fileDiff of fileDiffs) {
-			const fileErrors: string[] = [];
-
-			// Basic validation
-			if (!fileDiff.path) {
-				fileErrors.push('Missing file path');
-			}
-
-			if (!fileDiff.diff) {
-				fileErrors.push('Missing diff content');
-			}
-
-			// Validate diff format
-			if (fileDiff.diff && !this.isValidUnifiedDiff(fileDiff.diff.diff)) {
-				fileErrors.push(`Invalid diff format for ${fileDiff.path}`);
-			}
-
-			// Check operation consistency
-			if (fileDiff.operation === 'rename' && (!fileDiff.oldPath || !fileDiff.newPath)) {
-				fileErrors.push(`Rename operation missing old/new paths for ${fileDiff.path}`);
-			}
-
+			const fileErrors = this.validateSingleFileDiff(fileDiff);
 			if (fileErrors.length > 0) {
 				errors.push(...fileErrors);
 				invalidFiles++;
@@ -157,26 +157,48 @@ export class DiffValidator {
 			}
 		}
 
-		// Check overall diff integrity
-		const sortedPaths = fileDiffs.map((f) => f.path).sort();
+		return {
+			totalFiles: fileDiffs.length,
+			validFiles,
+			invalidFiles,
+			skippedFiles,
+		};
+	}
+
+	private validateSingleFileDiff(fileDiff: FileDiff): string[] {
+		const fileErrors: string[] = [];
+
+		// Basic validation
+		if (!fileDiff.path) {
+			fileErrors.push('Missing file path');
+		}
+
+		if (!fileDiff.diff) {
+			fileErrors.push('Missing diff content');
+		}
+
+		// Validate diff format
+		if (fileDiff.diff && !this.isValidUnifiedDiff(fileDiff.diff.diff)) {
+			fileErrors.push(`Invalid diff format for ${fileDiff.path}`);
+		}
+
+		// Check operation consistency
+		if (fileDiff.operation === 'rename' && (!fileDiff.oldPath || !fileDiff.newPath)) {
+			fileErrors.push(`Rename operation missing old/new paths for ${fileDiff.path}`);
+		}
+
+		return fileErrors;
+	}
+
+	private checkDiffIntegrity(fileDiffs: FileDiff[], warnings: string[]): void {
+		const sortedPaths = fileDiffs
+			.map((f) => f.path)
+			.slice()
+			.sort((a, b) => a.localeCompare(b));
 		const expectedOrder = [...sortedPaths];
 		if (JSON.stringify(sortedPaths) !== JSON.stringify(expectedOrder)) {
 			warnings.push('Files not in deterministic order');
 		}
-
-		return {
-			isValid: errors.length === 0,
-			errors,
-			warnings,
-			reproducible: this.areDigestsReproducible(fileDiffs),
-			digestsMatch: this.validateAllDigests(fileDiffs),
-			stats: {
-				totalFiles: fileDiffs.length,
-				validFiles,
-				invalidFiles,
-				skippedFiles,
-			},
-		};
 	}
 
 	/**
@@ -313,7 +335,7 @@ export class DiffValidator {
 				hasFileHeader = true;
 			} else if (line.startsWith('@@')) {
 				hasHunkHeader = true;
-			} else if (line.length > 0 && !line.match(/^[ +\-\\]/)) {
+			} else if (line.length > 0 && !/^[ +\-\\]/.exec(line)) {
 				// Invalid line format
 				return false;
 			}
@@ -366,9 +388,7 @@ export class DiffValidator {
 		const result = [...lines];
 		let lineOffset = 0;
 
-		for (let i = 0; i < diffLines.length; i++) {
-			const line = diffLines[i];
-
+		for (const line of diffLines) {
 			if (line.startsWith('@@')) {
 				// Parse hunk header - use RegExp.exec for better performance
 				const match = /@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);

@@ -71,13 +71,13 @@ export declare const TraceCompletedEventSchema: z.ZodObject<
 	z.ZodTypeAny,
 	{
 		traceId: string;
-		status: 'success' | 'error';
+		status: 'error' | 'success';
 		duration: number;
 		completedAt: string;
 	},
 	{
 		traceId: string;
-		status: 'success' | 'error';
+		status: 'error' | 'success';
 		duration: number;
 		completedAt: string;
 	}
@@ -169,13 +169,13 @@ export declare const OBSERVABILITY_EVENT_SCHEMAS: {
 		z.ZodTypeAny,
 		{
 			traceId: string;
-			status: 'success' | 'error';
+			status: 'error' | 'success';
 			duration: number;
 			completedAt: string;
 		},
 		{
 			traceId: string;
-			status: 'success' | 'error';
+			status: 'error' | 'success';
 			duration: number;
 			completedAt: string;
 		}

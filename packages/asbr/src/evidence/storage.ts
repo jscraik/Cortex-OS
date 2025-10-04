@@ -156,59 +156,106 @@ export class EvidenceStorage {
 		const evidenceBaseDir = getDataPath('evidence');
 
 		if (!(await pathExists(evidenceBaseDir))) {
-			return { evidence: [], total: 0, hasMore: false };
+			return this.getEmptyQueryResult();
 		}
 
-		const results: Evidence[] = [];
+		return this.performEvidenceQuery(evidenceBaseDir, query);
+	}
 
+	private getEmptyQueryResult(): { evidence: Evidence[]; total: number; hasMore: boolean } {
+		return { evidence: [], total: 0, hasMore: false };
+	}
+
+	private async performEvidenceQuery(
+		evidenceBaseDir: string,
+		query: EvidenceQuery,
+	): Promise<{ evidence: Evidence[]; total: number; hasMore: boolean }> {
 		try {
-			const dateDirs = await readdir(evidenceBaseDir);
-			const filteredDirs = this.filterDateDirs(dateDirs, query.dateRange);
+			const allEvidence = await this.collectAllEvidence(evidenceBaseDir, query);
+			const filteredEvidence = this.applyQueryFilters(allEvidence, query);
+			const sortedEvidence = this.sortEvidenceByDate(filteredEvidence);
 
-			for (const dateDir of filteredDirs) {
-				const dateDirPath = join(evidenceBaseDir, dateDir);
-				const files = await readdir(dateDirPath);
-
-				for (const file of files) {
-					if (!file.endsWith('.json')) continue;
-
-					const evidenceId = file.replace('.json', '');
-
-					// Skip if specific IDs requested and this isn't one
-					if (query.ids && !query.ids.includes(evidenceId)) {
-						continue;
-					}
-
-					const filepath = join(dateDirPath, file);
-					const evidence = await this.loadEvidenceFile(filepath);
-
-					// Apply filters
-					if (this.matchesQuery(evidence, query)) {
-						results.push(evidence);
-					}
-				}
-			}
-
-			// Sort by creation date (newest first)
-			results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-			const total = results.length;
-			const offset = query.offset || 0;
-			const limit = query.limit || 50;
-
-			const paginatedResults = results.slice(offset, offset + limit);
-			const hasMore = offset + limit < total;
-
-			return {
-				evidence: paginatedResults,
-				total,
-				hasMore,
-			};
+			return this.paginateResults(sortedEvidence, query);
 		} catch (error) {
 			throw new ValidationError(
 				`Failed to query evidence: ${error instanceof Error ? error.message : String(error)}`,
 			);
 		}
+	}
+
+	private async collectAllEvidence(
+		evidenceBaseDir: string,
+		query: EvidenceQuery,
+	): Promise<Evidence[]> {
+		const results: Evidence[] = [];
+		const dateDirs = await readdir(evidenceBaseDir);
+		const filteredDirs = this.filterDateDirs(dateDirs, query.dateRange);
+
+		for (const dateDir of filteredDirs) {
+			const dateDirPath = join(evidenceBaseDir, dateDir);
+			await this.collectEvidenceFromDateDir(dateDirPath, query, results);
+		}
+
+		return results;
+	}
+
+	private async collectEvidenceFromDateDir(
+		dateDirPath: string,
+		query: EvidenceQuery,
+		results: Evidence[],
+	): Promise<void> {
+		const files = await readdir(dateDirPath);
+
+		for (const file of files) {
+			if (!file.endsWith('.json')) continue;
+
+			const evidenceId = file.replace('.json', '');
+
+			// Skip if specific IDs requested and this isn't one
+			if (query.ids && !query.ids.includes(evidenceId)) {
+				continue;
+			}
+
+			const filepath = join(dateDirPath, file);
+			const evidence = await this.loadEvidenceFile(filepath);
+
+			// Apply filters
+			if (this.matchesQuery(evidence, query)) {
+				results.push(evidence);
+			}
+		}
+	}
+
+	private applyQueryFilters(evidence: Evidence[], query: EvidenceQuery): Evidence[] {
+		return evidence.filter((e) => this.matchesQuery(e, query));
+	}
+
+	private sortEvidenceByDate(evidence: Evidence[]): Evidence[] {
+		return evidence.sort(
+			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+		);
+	}
+
+	private paginateResults(
+		evidence: Evidence[],
+		query: EvidenceQuery,
+	): {
+		evidence: Evidence[];
+		total: number;
+		hasMore: boolean;
+	} {
+		const total = evidence.length;
+		const offset = query.offset || 0;
+		const limit = query.limit || 50;
+
+		const paginatedResults = evidence.slice(offset, offset + limit);
+		const hasMore = offset + limit < total;
+
+		return {
+			evidence: paginatedResults,
+			total,
+			hasMore,
+		};
 	}
 
 	/**
@@ -335,7 +382,7 @@ export class EvidenceStorage {
 
 		try {
 			const dateDirs = await readdir(evidenceBaseDir);
-			dateDirs.sort();
+			dateDirs.sort((a, b) => a.localeCompare(b));
 
 			if (dateDirs.length > 0) {
 				oldestDate = dateDirs[0];

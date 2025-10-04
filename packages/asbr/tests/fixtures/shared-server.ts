@@ -38,10 +38,8 @@ export async function stopSharedServer() {
 // Auto-shutdown when process exits
 process.on('exit', () => {
 	if (sharedServer) {
-		try {
-			sharedServer.stop();
-		} catch {
+		sharedServer.stop().catch(() => {
 			/* ignore */
-		}
+		});
 	}
 });

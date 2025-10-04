@@ -13,17 +13,17 @@
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
 		"skipLibCheck": true,
-		"rootDir": "src",
+		"rootDir": ".",
 		"outDir": "dist"
 	},
 	"include": [
 		"src",
-		"prisma"
+		"prisma",
+		"tests/**/*"
 	],
 	"exclude": [
 		"dist",
 		"node_modules",
-		"tests",
 		"src/tools"
 	]
 }

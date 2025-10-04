@@ -32,11 +32,13 @@ export interface DiffResult {
 	};
 }
 
+export type FileOperation = 'add' | 'delete' | 'modify' | 'rename';
+
 export interface FileDiff {
 	path: string;
 	oldPath?: string;
 	newPath?: string;
-	operation: 'add' | 'delete' | 'modify' | 'rename';
+	operation: FileOperation;
 	diff: DiffResult;
 }
 

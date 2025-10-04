@@ -1,9 +1,18 @@
 {
 	"extends": "./tsconfig.lib.json",
 	"compilerOptions": {
-		"types": ["vitest"],
+		"types": [
+			"vitest"
+		],
 		"outDir": "./dist"
 	},
-	"include": ["src/**/*.ts"],
-	"exclude": ["dist", "node_modules"]
+	"include": [
+		"src/**/*.ts",
+		"**/*.test.ts",
+		"**/*.spec.ts"
+	],
+	"exclude": [
+		"dist",
+		"node_modules"
+	]
 }

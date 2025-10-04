@@ -1,4 +1,3 @@
-/// <reference types="vitest" />
 import { describe, expect, it } from 'vitest';
 import { createCounter, meter, tracer, withSpan } from './index.js';
 

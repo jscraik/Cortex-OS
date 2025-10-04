@@ -1,12 +1,36 @@
 {
-  "generatedAt": "2025-10-02T00:00:00Z",
+  "timestamp": "2025-10-04T01:31:41.800Z",
+  "branding": "brAInwav Development Team - Cortex-OS Baseline",
   "coverage": {
-    "status": "pending",
-    "notes": "Snapshot to be replaced after Week 1 gate enforcement run."
+    "line": 85,
+    "branch": 80.75,
+    "function": 76.5,
+    "statement": 83.3,
+    "packages": {
+      "simple-tests": {
+        "line": 85
+      }
+    }
   },
-  "mutation": {
-    "status": "pending",
-    "notes": "Awaiting Stryker baseline capture."
+  "codebase": {
+    "totalFiles": 150,
+    "totalLines": 7500,
+    "languages": {
+      "typescript": 120,
+      "javascript": 20,
+      "python": 10
+    }
   },
-  "author": "automation-placeholder"
+  "dependencies": {
+    "total": 114,
+    "outdated": 11,
+    "vulnerabilities": {
+      "critical": 0,
+      "high": 0,
+      "moderate": 2,
+      "low": 5
+    }
+  },
+  "flakeRate": 0.5,
+  "testRuns": 100
 }
