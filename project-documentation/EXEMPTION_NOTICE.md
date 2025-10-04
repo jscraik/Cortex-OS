@@ -7,9 +7,9 @@ Summary
 
 Temporary Deviations
 
-- Workspace composition: added two extension crates instead of modifying upstream crates directly.
-  - `apps/cortex-codex/chat-cli-plus` (new bin `codex-chat`) – hosts Chat streaming CLI behavior decoupled from `codex-core` internals.
-  - `apps/cortex-codex/providers-ext` – façade for provider abstractions; will become the new home for provider selection/registry logic.
+- Workspace composition: the codex-rs workspace now lives under `apps/cortex-code/`.
+  - `apps/cortex-code/cli` (bin `codex`) hosts the streaming CLI experience decoupled from shared `core` logic.
+  - `apps/cortex-code/core` continues to expose provider abstractions while we migrate the remaining registries from legacy crates.
 - Test hardening: sanitized environment in MCP tests to avoid `.env` leakage that could set `OPENAI_API_KEY` during CI.
   - Ensures hermetic behavior regardless of developer/local environment.
 - UI shape stability: normalized trailing whitespace in a TUI markdown shape test to avoid environment-dependent diffs while preserving rendering semantics.
@@ -40,4 +40,4 @@ Planned Follow-ups
 Contact
 
 - Owners: Cortex‑OS Engineering
-- Context: tracked in `apps/cortex-codex/TASK_TRACKER.md`.
+- Context: tracked in `project-documentation/cortex-code/TASKS.md`.

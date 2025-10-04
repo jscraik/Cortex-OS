@@ -277,13 +277,13 @@ cargo llvm-cov --workspace --lcov --output-path target/coverage/lcov.info --html
 
 This produces:
 
-- `apps/cortex-codex/target/coverage/lcov.info` (CI/IDE ingestion)
-- `apps/cortex-codex/target/coverage/html/` (human browsable report)
+- `apps/cortex-code/target/coverage/lcov.info` (CI/IDE ingestion)
+- `apps/cortex-code/target/coverage/html/` (human browsable report)
 
 Open the HTML report via:
 
 ```shell
-open apps/cortex-codex/target/coverage/html/index.html
+open apps/cortex-code/target/coverage/html/index.html
 ```
 
 Install the tool once with:
@@ -297,7 +297,7 @@ pnpm codex:install:coverage-tools   # installs cargo-llvm-cov
 During development you can narrow to a single crate or test:
 
 ```shell
-cd apps/cortex-codex
+cd apps/cortex-code
 cargo test -p core stream_mode
 ```
 
@@ -315,23 +315,6 @@ Install `cargo-llvm-cov` (idempotent):
 pnpm codex:install:coverage-tools
 ```
 
-### xtask Automation
-
-We ship an `xtask` helper crate (`apps/cortex-codex/xtask`) with subcommands:
-
-```shell
-pnpm codex:coverage:xtask            # cargo llvm-cov run (lcov + html)
-pnpm codex:coverage:report           # cargo llvm-cov --no-run (re-generate reports)
-cd apps/cortex-codex/xtask && cargo run -- doctor  # tool availability summary
-```
-
-Pass extra test filters after `--`:
-
-```shell
-cd apps/cortex-codex/xtask
-cargo run -- coverage -- stream_mode
-```
-
 ### CI Artifact (Example Snippet)
 
 Add a job step (GitHub Actions example) to persist `lcov.info` + HTML:
@@ -343,13 +326,13 @@ Add a job step (GitHub Actions example) to persist `lcov.info` + HTML:
   uses: actions/upload-artifact@v4
   with:
     name: codex-coverage-lcov
-    path: apps/cortex-codex/target/coverage/lcov.info
+    path: apps/cortex-code/target/coverage/lcov.info
 - name: Upload coverage html
   if: always()
   uses: actions/upload-artifact@v4
   with:
     name: codex-coverage-html
-    path: apps/cortex-codex/target/coverage/html
+    path: apps/cortex-code/target/coverage/html
 ```
 
 ### Future Improvements

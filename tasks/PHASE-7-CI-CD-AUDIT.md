@@ -58,7 +58,7 @@
 
 ### Specialized
 - ✅ `cortex-code-sync.yml` - Code sync
-- ✅ `cortex-codex-ci.yml` - Codex CI
+- ✅ `cortex-code-ci.yml` - Codex CI
 - ✅ `cortex-agent.yml` - Agent workflows
 - ✅ `cortex-gates.yml` - Cortex gates
 - ✅ `mcp-nightly.yml` - MCP testing

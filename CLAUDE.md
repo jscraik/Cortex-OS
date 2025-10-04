@@ -184,7 +184,7 @@ Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) 
 
 ### Language Support
 - **TypeScript/JavaScript**: Primary development language with strict typing
-- **Rust**: Performance-critical components in `apps/cortex-codex/` (Cargo workspace)
+- **Rust**: Performance-critical components in `apps/cortex-code/` (Cargo workspace)
 - **Python**: ML/AI workflows in `apps/cortex-py/` with uv dependency management
 
 ## Development Commands

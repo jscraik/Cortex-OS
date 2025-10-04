@@ -63,13 +63,13 @@ for tool in grcov cargo-llvm-cov llvm-profdata llvm-cov; do
 done
 
 echo
-echo "Codex workspace edition declarations (unique values):"
-grep -R "^edition = \"" apps/cortex-codex --include "Cargo.toml" | cut -d'=' -f2 | tr -d ' "' | sort -u || true
+echo "Cortex Code workspace edition declarations (unique values):"
+grep -R "^edition = \"" apps/cortex-code --include "Cargo.toml" | cut -d'=' -f2 | tr -d ' "' | sort -u || true
 
 echo
 echo "Suggested next steps:"
 echo "  rustup toolchain install nightly --component clippy rustfmt rust-src"
-echo "  rustup override set nightly (inside apps/cortex-codex)"
+echo "  rustup override set nightly (inside apps/cortex-code)"
 echo "  pnpm codex:test:unit"
 
 echo "[codex:doctor] Done"

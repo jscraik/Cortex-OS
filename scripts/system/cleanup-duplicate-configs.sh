@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CANONICAL_CONFIG="$REPO_ROOT/apps/cortex-codex/core/src/config.rs"
+CANONICAL_CONFIG="$REPO_ROOT/apps/cortex-code/core/src/config.rs"
 
 echo "🔍 Scanning for duplicate config.rs files..."
 
