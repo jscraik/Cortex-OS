@@ -1,0 +1,42 @@
+{
+  "name": "@cortex-os/cbom",
+  "version": "0.1.0",
+  "description": "Context Bill of Materials instrumentation for Cortex-OS",
+  "type": "module",
+  "private": false,
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "cortex-cbom": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "pnpm biome check .",
+    "test": "vitest run -c vitest.config.ts",
+    "typecheck": "tsc --noEmit",
+    "record": "pnpm build && node dist/cli/index.js record",
+    "attest": "pnpm build && node dist/cli/index.js attest",
+    "verify": "pnpm build && node dist/cli/index.js verify",
+    "export": "pnpm build && node dist/cli/index.js export"
+  },
+  "dependencies": {
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/observability": "workspace:*",
+    "@cortex-os/rag": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-trace-base": "^2.1.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "commander": "^13.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

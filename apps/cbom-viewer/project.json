@@ -1,0 +1,34 @@
+{
+  "name": "@cortex-os/cbom-viewer",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/cbom-viewer/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "options": {
+        "configFile": "apps/cbom-viewer/vite.config.ts",
+        "outputPath": "dist/apps/cbom-viewer"
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "options": {
+        "configFile": "apps/cbom-viewer/vite.config.ts"
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "configFile": "apps/cbom-viewer/vite.config.ts",
+        "passWithNoTests": false
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm biome check apps/cbom-viewer/src"
+      }
+    }
+  }
+}
