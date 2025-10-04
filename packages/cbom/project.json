@@ -1,0 +1,110 @@
+{
+  "name": "@cortex-os/cbom",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/cbom/src",
+  "projectType": "library",
+  "tags": ["domain:observability", "compliance"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{workspaceRoot}/dist/packages/cbom"],
+      "options": {
+        "tsConfig": "packages/cbom/tsconfig.build.json",
+        "main": "packages/cbom/src/index.ts",
+        "outputPath": "dist/packages/cbom"
+      }
+    },
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "packages/cbom/tsconfig.json",
+        "noEmit": true
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @cortex-os/cbom lint"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/scripts/vitest-safe.mjs",
+          "run",
+          "-c",
+          "{workspaceRoot}/packages/cbom/vitest.config.ts",
+          "--reporter=dot"
+        ]
+      },
+      "outputs": ["{projectRoot}/coverage"]
+    },
+    "record": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/reports/cbom/latest.cbom.json"],
+      "options": {
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/dist/packages/cbom/cli/index.js",
+          "record",
+          "--output",
+          "{workspaceRoot}/reports/cbom/latest.cbom.json"
+        ],
+        "forwardAllArgs": true
+      }
+    },
+    "attest": {
+      "dependsOn": ["build", "record"],
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/reports/cbom/latest.intoto.json"],
+      "options": {
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/dist/packages/cbom/cli/index.js",
+          "attest",
+          "--input",
+          "{workspaceRoot}/reports/cbom/latest.cbom.json",
+          "--bundle",
+          "{workspaceRoot}/reports/cbom/latest.intoto.json"
+        ],
+        "forwardAllArgs": true
+      }
+    },
+    "verify": {
+      "dependsOn": ["attest"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/dist/packages/cbom/cli/index.js",
+          "verify",
+          "--bundle",
+          "{workspaceRoot}/reports/cbom/latest.intoto.json"
+        ],
+        "forwardAllArgs": true
+      }
+    },
+    "export": {
+      "dependsOn": ["build", "record"],
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/reports/cbom/latest.cyclonedx.json"],
+      "options": {
+        "command": "node",
+        "args": [
+          "{workspaceRoot}/dist/packages/cbom/cli/index.js",
+          "export",
+          "--input",
+          "{workspaceRoot}/reports/cbom/latest.cbom.json",
+          "--format",
+          "cyclonedx-mlbom",
+          "--output",
+          "{workspaceRoot}/reports/cbom/latest.cyclonedx.json"
+        ],
+        "forwardAllArgs": true
+      }
+    }
+  }
+}

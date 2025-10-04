@@ -1,0 +1,377 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cortex-os.dev/schemas/cbom.schema.json",
+  "title": "Cortex Context Bill of Materials",
+  "type": "object",
+  "required": ["version", "run", "context", "decisions", "artifacts", "policies"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.\\d+$"
+    },
+    "run": {
+      "$ref": "#/$defs/run"
+    },
+    "context": {
+      "$ref": "#/$defs/context"
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      },
+      "minItems": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/policy"
+      }
+    },
+    "retention": {
+      "$ref": "#/$defs/retention"
+    }
+  },
+  "$defs": {
+    "run": {
+      "type": "object",
+      "required": ["id", "startedAt", "completedAt", "digest"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^run:[a-z0-9-]{6,}$"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
+        }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "required": ["platform", "nodeVersion"],
+      "properties": {
+        "platform": {
+          "type": "string"
+        },
+        "nodeVersion": {
+          "type": "string"
+        },
+        "git": {
+          "type": "object",
+          "required": ["commit", "branch"],
+          "properties": {
+            "commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{7,40}$"
+            },
+            "branch": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "required": ["tools", "rag", "files"],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/toolCall"
+          }
+        },
+        "rag": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ragRetrieval"
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filePointer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "toolCall": {
+      "type": "object",
+      "required": ["id", "name", "inputHash", "outputPointer"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^tool:[a-z0-9-]{4,}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "inputHash": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        },
+        "outputPointer": {
+          "type": "string"
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^evid:[a-z0-9-]{8,}$"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ragRetrieval": {
+      "type": "object",
+      "required": ["id", "index", "queryHash"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^rag:[a-z0-9-]{6,}$"
+        },
+        "index": {
+          "type": "string"
+        },
+        "queryHash": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ragResult"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ragResult": {
+      "type": "object",
+      "required": ["pointer", "score", "chunkHash"],
+      "properties": {
+        "pointer": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "chunkHash": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "filePointer": {
+      "type": "object",
+      "required": ["path", "hash", "redacted"],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        },
+        "redacted": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": ["id", "name", "timestamp"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dec:[a-z0-9-]{6,}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "spanId": {
+          "type": "string"
+        },
+        "traceId": {
+          "type": "string"
+        },
+        "model": {
+          "$ref": "#/$defs/model"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceRef"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceRef"
+          }
+        },
+        "determinism": {
+          "$ref": "#/$defs/determinism"
+        }
+      },
+      "additionalProperties": false
+    },
+    "model": {
+      "type": "object",
+      "required": ["provider", "name"],
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "topP": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "digest": {
+          "type": ["string", "null"],
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        },
+        "digestUnavailabilityReason": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceRef": {
+      "type": "object",
+      "required": ["evidenceId"],
+      "properties": {
+        "evidenceId": {
+          "type": "string",
+          "pattern": "^evid:[a-z0-9-]{8,}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["id", "type", "hash", "pointer"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^artifact:[a-z0-9-]{6,}$"
+        },
+        "type": {
+          "type": "string"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        },
+        "pointer": {
+          "type": "string"
+        },
+        "redacted": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^policy:[a-z0-9-]{6,}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pass", "fail", "waived"]
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^evid:[a-z0-9-]{8,}$"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "determinism": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["deterministic", "best-effort", "non-deterministic"]
+        },
+        "seed": {
+          "type": ["string", "null"]
+        },
+        "explanation": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "retention": {
+      "type": "object",
+      "required": ["duration", "policy"],
+      "properties": {
+        "duration": {
+          "type": "string",
+          "pattern": "^P.*$"
+        },
+        "policy": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

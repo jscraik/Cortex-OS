@@ -1,0 +1,113 @@
+{
+  "version": "1.0.0",
+  "run": {
+    "id": "run:sample01",
+    "startedAt": "2024-01-01T00:00:00.000Z",
+    "completedAt": "2024-01-01T00:05:00.000Z",
+    "digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "environment": {
+      "platform": "linux",
+      "nodeVersion": "v20.18.0",
+      "git": {
+        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "branch": "main"
+      }
+    }
+  },
+  "context": {
+    "tools": [
+      {
+        "id": "tool:rag-retrieve",
+        "name": "rag.retrieve",
+        "inputHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "outputPointer": "redacted://tool-call",
+        "evidenceIds": [
+          "evid:111111111111"
+        ]
+      }
+    ],
+    "rag": [
+      {
+        "id": "rag:chunk-search",
+        "index": "kb/default",
+        "queryHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "results": [
+          {
+            "pointer": "file://docs/overview.md#L10-L20",
+            "score": 0.92,
+            "chunkHash": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+          }
+        ]
+      }
+    ],
+    "files": [
+      {
+        "path": "/workspace/docs/overview.md",
+        "hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "redacted": true
+      }
+    ]
+  },
+  "decisions": [
+    {
+      "id": "dec:bootstrap",
+      "name": "cbom.record",
+      "timestamp": "2024-01-01T00:00:00.000Z",
+      "determinism": {
+        "mode": "deterministic",
+        "seed": null,
+        "explanation": "bootstrap-capture"
+      }
+    },
+    {
+      "id": "dec:planner",
+      "name": "generate-plan",
+      "timestamp": "2024-01-01T00:02:00.000Z",
+      "spanId": "span123",
+      "traceId": "trace123",
+      "model": {
+        "provider": "openai",
+        "name": "gpt-4.1",
+        "version": "2024-01-01",
+        "temperature": 0,
+        "topP": 1,
+        "digest": null,
+        "digestUnavailabilityReason": "provider-did-not-supply-digest"
+      },
+      "inputs": [
+        { "evidenceId": "evid:111111111111" }
+      ],
+      "outputs": [
+        { "evidenceId": "evid:222222222222" }
+      ],
+      "determinism": {
+        "mode": "best-effort",
+        "seed": "42",
+        "explanation": "temperature=0"
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "artifact:plan-v1",
+      "type": "text/markdown",
+      "hash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "pointer": "redacted://plan.md",
+      "redacted": true
+    }
+  ],
+  "policies": [
+    {
+      "id": "policy:semgrep",
+      "name": "semgrep-ci",
+      "status": "pass",
+      "evidenceIds": [
+        "evid:333333333333"
+      ]
+    }
+  ],
+  "retention": {
+    "duration": "P6M",
+    "policy": "default-eu-ai-act"
+  }
+}
