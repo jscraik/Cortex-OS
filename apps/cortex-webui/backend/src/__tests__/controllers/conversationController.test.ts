@@ -3,11 +3,11 @@
 
 import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversationController } from '../controllers/conversationController.ts';
-import { ConversationService } from '../services/conversationService.ts';
+import { ConversationController } from '../../controllers/conversationController';
+import { ConversationService } from '../../services/conversationService';
 
 // Mock dependencies
-vi.mock('../services/conversationService.ts', () => ({
+vi.mock('../../services/conversationService', () => ({
 	ConversationService: {
 		getConversationsByUserId: vi.fn(),
 		getConversationById: vi.fn(),

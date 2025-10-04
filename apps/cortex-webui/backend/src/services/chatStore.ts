@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatSession } from '@shared/types/chat';
+import type { ChatMessage, ChatSession } from '../types/chat';
 
 declare global {
 	// Using var for global declaration is required

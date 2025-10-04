@@ -5,12 +5,12 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import type { Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.ts';
-import { runMultimodalMigration } from '../setup/multimodal-migration.ts';
+import { createApp } from '../../server';
+import { runMultimodalMigration } from '../setup/multimodal-migration';
 
 // Mock external services for testing
 
-vi.mock('../../services/imageProcessingService.ts', () => ({
+vi.mock('../../services/imageProcessingService', () => ({
 	imageProcessingService: {
 		processImage: vi
 			.fn()
@@ -50,7 +50,7 @@ vi.mock('../../services/imageProcessingService.ts', () => ({
 	},
 }));
 
-vi.mock('../../services/audioTranscriptionService.ts', () => ({
+vi.mock('../../services/audioTranscriptionService', () => ({
 	audioTranscriptionService: {
 		processAudio: vi
 			.fn()
@@ -125,7 +125,7 @@ vi.mock('../../services/audioTranscriptionService.ts', () => ({
 	},
 }));
 
-vi.mock('../../services/pdfWithImagesService.ts', () => ({
+vi.mock('../../services/pdfWithImagesService', () => ({
 	pdfWithImagesService: {
 		processPdfWithImages: vi
 			.fn()
@@ -189,7 +189,7 @@ vi.mock('../../services/pdfWithImagesService.ts', () => ({
 	},
 }));
 
-vi.mock('../../services/vectorSearchService.ts', () => ({
+vi.mock('../../services/vectorSearchService', () => ({
 	vectorSearchService: {
 		indexMultimodalDocuments: vi.fn().mockResolvedValue(undefined),
 		searchMultimodal: vi.fn().mockImplementation(async (request: any, _userId: string) => ({
@@ -250,7 +250,7 @@ describe('Multimodal Integration Tests', () => {
 		}));
 
 		// Mock security middleware
-		vi.doMock('../../middleware/security.ts', () => ({
+		vi.doMock('../../middleware/security', () => ({
 			customCsrfProtection: (_req: any, _res: any, next: any) => next(),
 		}));
 

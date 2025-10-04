@@ -67,6 +67,17 @@
       "@cortex-os/lib": [
         "src/lib/index.ts"
       ],
+      "@cortex-os/security": [
+        "packages/security/dist/index.d.ts",
+        "packages/security/dist/index.js"
+      ],
+      "@cortex-os/security/*": [
+        "packages/security/dist/*"
+      ],
+      "@cortex-os/security/policy": [
+        "packages/security/dist/policy/index.d.ts",
+        "packages/security/dist/policy/index.js"
+      ],
       "@cortex-os/rag": [
         "packages/rag/src/index.ts"
       ],

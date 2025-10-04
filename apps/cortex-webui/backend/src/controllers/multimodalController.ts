@@ -3,11 +3,12 @@ import { promises as fs, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { and, desc, eq } from 'drizzle-orm';
-import type { Express, Request, Response } from 'express';
+import type { Express, Response } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { multimodalChunks, multimodalDocuments } from '../db/schema.js';
+import type { AuthRequest } from '../middleware/better-auth.js';
 import { audioTranscriptionService } from '../services/audioTranscriptionService.js';
 import { documentProcessingService } from '../services/documentProcessingService.js';
 import { imageProcessingService } from '../services/imageProcessingService.js';
@@ -137,7 +138,7 @@ const multimodalSearchSchema = z.object({
 /**
  * Upload and process multimodal document
  */
-export async function uploadMultimodalDocument(req: Request, res: Response) {
+export async function uploadMultimodalDocument(req: AuthRequest, res: Response) {
 	const userId = req.user?.id;
 	if (!userId) {
 		return res.status(401).json(createErrorResponse('Authentication required'));
@@ -313,7 +314,7 @@ export async function uploadMultimodalDocument(req: Request, res: Response) {
 /**
  * List multimodal documents for user
  */
-export async function listMultimodalDocuments(req: Request, res: Response) {
+export async function listMultimodalDocuments(req: AuthRequest, res: Response) {
 	const userId = req.user?.id;
 	if (!userId) {
 		return res.status(401).json(createErrorResponse('Authentication required'));
@@ -358,7 +359,7 @@ export async function listMultimodalDocuments(req: Request, res: Response) {
 /**
  * Get multimodal document details
  */
-export async function getMultimodalDocument(req: Request, res: Response) {
+export async function getMultimodalDocument(req: AuthRequest, res: Response) {
 	const userId = req.user?.id;
 	if (!userId) {
 		return res.status(401).json(createErrorResponse('Authentication required'));
@@ -409,7 +410,7 @@ export async function getMultimodalDocument(req: Request, res: Response) {
 /**
  * Delete multimodal document
  */
-export async function deleteMultimodalDocument(req: Request, res: Response) {
+export async function deleteMultimodalDocument(req: AuthRequest, res: Response) {
 	const userId = req.user?.id;
 	if (!userId) {
 		return res.status(401).json(createErrorResponse('Authentication required'));
@@ -461,7 +462,7 @@ export async function deleteMultimodalDocument(req: Request, res: Response) {
 /**
  * Search across multimodal content
  */
-export async function searchMultimodal(req: Request, res: Response) {
+export async function searchMultimodal(req: AuthRequest, res: Response) {
 	const userId = req.user?.id;
 	if (!userId) {
 		return res.status(401).json(createErrorResponse('Authentication required'));
@@ -495,7 +496,7 @@ export async function searchMultimodal(req: Request, res: Response) {
 /**
  * Get multimodal statistics
  */
-export async function getMultimodalStats(req: Request, res: Response) {
+export async function getMultimodalStats(req: AuthRequest, res: Response) {
 	const userId = req.user?.id;
 	if (!userId) {
 		return res.status(401).json(createErrorResponse('Authentication required'));

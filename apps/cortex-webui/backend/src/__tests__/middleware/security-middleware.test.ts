@@ -13,7 +13,7 @@ import {
 	securityHeaders,
 	securityLogger,
 	validateRequestSize,
-} from '../middleware/security.ts';
+} from '../../middleware/security';
 
 // Mock DOMPurify
 vi.mock('dompurify', () => ({
@@ -33,7 +33,7 @@ vi.mock('helmet', () => ({
 }));
 
 // Mock security config
-vi.mock('../config/security.ts', () => ({
+vi.mock('../../config/security', () => ({
 	getSecurityConfig: vi.fn(() => ({
 		headers: {
 			enabled: true,
@@ -91,7 +91,7 @@ vi.mock('../config/security.ts', () => ({
 	validateCsrfToken: vi.fn(() => true),
 }));
 
-import { getSecurityConfig } from '../config/security.ts';
+import { getSecurityConfig } from '../../config/security';
 
 describe('Security Middleware', () => {
 	let mockRequest: Partial<Request>;
@@ -396,7 +396,7 @@ describe('Security Middleware', () => {
 		it('should reject requests with invalid API key format', () => {
 			// Arrange
 			mockRequest.headers = { 'x-api-key': 'invalid-key' };
-			vi.mocked(require('../config/security.js').validateApiKeyFormat).mockReturnValueOnce(false);
+			vi.mocked(require('../../config/security.js').validateApiKeyFormat).mockReturnValueOnce(false);
 
 			// Act
 			apiKeyAuth(mockRequest as Request, mockResponse as Response, mockNext);
@@ -413,7 +413,7 @@ describe('Security Middleware', () => {
 			// Arrange
 			const validApiKey = 'brainwav-valid-api-key-123456789';
 			mockRequest.headers = { 'x-api-key': validApiKey };
-			vi.mocked(require('../config/security.js').validateApiKeyFormat).mockReturnValueOnce(true);
+			vi.mocked(require('../../config/security.js').validateApiKeyFormat).mockReturnValueOnce(true);
 
 			// Act
 			apiKeyAuth(mockRequest as Request, mockResponse as Response, mockNext);

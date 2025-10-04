@@ -54,6 +54,11 @@ export interface ExecutionContext {
 	correlationId: string;
 	timestamp: string;
 	permissions: string[];
+	tenant?: string;
+	capabilityTokens?: string[];
+	budgetProfile?: string;
+	requestCost?: number;
+	requestDurationMs?: number;
 }
 
 export interface ToolRegistryStats {

@@ -1,12 +1,12 @@
 import type { Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../db/index.ts';
-import { multimodalChunks, multimodalDocuments } from '../../db/schema.ts';
-import { createApp } from '../../server.ts';
-import { audioTranscriptionService } from '../../services/audioTranscriptionService.ts';
-import { imageProcessingService } from '../../services/imageProcessingService.ts';
-import { vectorSearchService } from '../../services/vectorSearchService.ts';
+import { db } from '../../db/index';
+import { multimodalChunks, multimodalDocuments } from '../../db/schema';
+import { createApp } from '../../server';
+import { audioTranscriptionService } from '../../services/audioTranscriptionService';
+import { imageProcessingService } from '../../services/imageProcessingService';
+import { vectorSearchService } from '../../services/vectorSearchService';
 
 // Database mock interfaces
 interface MockDbInsert {
@@ -26,7 +26,7 @@ interface MockDbSelect {
 }
 
 // Mock logger to avoid noise in tests
-vi.mock('../../utils/logger.ts', () => ({
+vi.mock('../../utils/logger', () => ({
 	default: {
 		info: vi.fn(),
 		error: vi.fn(),
@@ -36,28 +36,28 @@ vi.mock('../../utils/logger.ts', () => ({
 }));
 
 // Mock services
-vi.mock('../../services/imageProcessingService.ts', () => ({
+vi.mock('../../services/imageProcessingService', () => ({
 	imageProcessingService: {
 		processImage: vi.fn(),
 		isFormatSupported: vi.fn().mockReturnValue(true),
 	},
 }));
 
-vi.mock('../../services/audioTranscriptionService.ts', () => ({
+vi.mock('../../services/audioTranscriptionService', () => ({
 	audioTranscriptionService: {
 		processAudio: vi.fn(),
 		isFormatSupported: vi.fn().mockReturnValue(true),
 	},
 }));
 
-vi.mock('../../services/pdfWithImagesService.ts', () => ({
+vi.mock('../../services/pdfWithImagesService', () => ({
 	pdfWithImagesService: {
 		processPdfWithImages: vi.fn(),
 		createLayoutAwareChunks: vi.fn().mockReturnValue([]),
 	},
 }));
 
-vi.mock('../../services/vectorSearchService.ts', () => ({
+vi.mock('../../services/vectorSearchService', () => ({
 	vectorSearchService: {
 		indexMultimodalDocuments: vi.fn(),
 		searchMultimodal: vi.fn(),
@@ -65,14 +65,14 @@ vi.mock('../../services/vectorSearchService.ts', () => ({
 	},
 }));
 
-vi.mock('../../services/documentProcessingService.ts', () => ({
+vi.mock('../../services/documentProcessingService', () => ({
 	documentProcessingService: {
 		estimateTokenCount: vi.fn().mockReturnValue(100),
 	},
 }));
 
 // Mock database
-vi.mock('../../db/index.ts', () => ({
+vi.mock('../../db/index', () => ({
 	db: {
 		insert: vi.fn(),
 		select: vi.fn(),

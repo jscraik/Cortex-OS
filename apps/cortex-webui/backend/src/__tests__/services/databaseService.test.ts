@@ -4,15 +4,15 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../db/index.ts';
+import { db } from '../../db';
 import {
 	databaseService,
 	type QueryOptions,
 	type TransactionOptions,
-} from '../services/databaseService.ts';
+} from '../../services/databaseService';
 
 // Mock the database
-vi.mock('../db/index.ts', () => ({
+vi.mock('../../db', () => ({
 	db: {
 		select: vi.fn(),
 		insert: vi.fn(),

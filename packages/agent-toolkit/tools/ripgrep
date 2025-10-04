@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# brAInwav Agent-Toolkit: ripgrep wrapper
+# Resolves ripgrep from system PATH
+set -euo pipefail
+
+exec rg "$@"

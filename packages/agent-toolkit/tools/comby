@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# brAInwav Agent-Toolkit: comby wrapper
+# Resolves comby from system PATH
+set -euo pipefail
+
+exec comby "$@"

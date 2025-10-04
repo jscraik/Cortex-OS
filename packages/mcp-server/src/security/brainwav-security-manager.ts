@@ -4,9 +4,90 @@
  * Maintains compatibility with current egress-guard implementation
  */
 
-import { DEFAULT_BRAINWAV_POLICY, type McpSecurityPolicy, PolicyEngine } from '@cortex-os/security';
+import { DEFAULT_BRAINWAV_POLICY, PolicyEngine } from '@cortex-os/security/policy';
 import type { Logger } from 'pino';
 import { enforceEndpointAllowlist, isEndpointAllowed } from './egress-guard.js';
+
+type PolicyEvaluationMetadata = {
+	policyVersion?: string;
+	evaluationTime?: number;
+	branding?: string;
+};
+
+export interface PolicyEvaluationResult {
+	allowed: boolean;
+	reason?: string;
+	warnings?: string[];
+	auditRequired?: boolean;
+	receiptRequired?: boolean;
+	metadata?: PolicyEvaluationMetadata;
+}
+
+export interface McpSecurityPolicy {
+	version: string;
+	metadata?: {
+		name?: string;
+		created?: string;
+		author?: string;
+		org?: 'brAInwav';
+		[key: string]: unknown;
+	};
+	tools?: Record<
+		string,
+		{
+			allowedDomains?: string[];
+			maxRequestSize?: number;
+			requireApproval?: boolean;
+			timebudget?: number;
+			memoryLimit?: number;
+			contentTypes?: string[];
+			rateLimits?: {
+				requestsPerMinute?: number;
+				requestsPerHour?: number;
+			};
+		}
+	>;
+	egress?: {
+		defaultAction?: 'deny' | 'allow';
+		allowlist?: string[];
+		blocklist?: string[];
+		maxResponseSize?: number;
+		allowedPorts?: number[];
+	};
+	audit?: {
+		logAllRequests?: boolean;
+		redactPII?: boolean;
+		retentionDays?: number;
+		includeRequestBody?: boolean;
+		includeBrAInwavBranding?: boolean;
+	};
+	enforcement?: {
+		mode?: 'permissive' | 'enforcing';
+		maxViolationsBeforeBlock?: number;
+		violationTimeout?: number;
+	};
+	[key: string]: unknown;
+}
+
+const DEFAULT_POLICY = DEFAULT_BRAINWAV_POLICY as unknown as McpSecurityPolicy;
+
+type BrainwavPolicyEngine = InstanceType<typeof PolicyEngine> & {
+	evaluateToolRequest: (context?: Record<string, unknown>) => Promise<PolicyEvaluationResult>;
+	updatePolicy: (newPolicy: McpSecurityPolicy) => void;
+};
+
+interface NormalizedPolicyResult {
+	allowed: boolean;
+	reason?: string;
+	warnings: string[];
+	auditRequired: boolean;
+	receiptRequired: boolean;
+	metadata: {
+		policyVersion: string;
+		evaluationTime: number;
+		branding: 'brAInwav';
+	};
+}
 
 export interface BrainwavMcpSecurityConfig {
 	policy: McpSecurityPolicy;
@@ -45,16 +126,18 @@ export interface BrainwavSecurityResult {
 }
 
 export class BrainwavMcpSecurityManager {
-	private policyEngine?: PolicyEngine;
+	private policyEngine?: BrainwavPolicyEngine;
 	private violationCounts = new Map<string, number>();
 
 	constructor(
 		private config: BrainwavMcpSecurityConfig,
 		private logger: Logger,
 	) {
-		// Initialize policy engine if enabled
 		if (config.enablePolicyEngine) {
-			this.policyEngine = new PolicyEngine(config.policy, logger);
+			this.policyEngine = new PolicyEngine(
+				(config.policy ?? DEFAULT_POLICY) as unknown as ConstructorParameters<typeof PolicyEngine>[0],
+				logger,
+			) as BrainwavPolicyEngine;
 		}
 
 		this.logger = logger.child({
@@ -73,6 +156,29 @@ export class BrainwavMcpSecurityManager {
 		);
 	}
 
+	private normalizePolicyResult(
+		result: PolicyEvaluationResult | undefined,
+		evaluationStart: number,
+	): NormalizedPolicyResult {
+		const warnings = Array.isArray(result?.warnings)
+			? [...result!.warnings]
+			: [];
+
+		return {
+			allowed: result?.allowed ?? true,
+			reason: result?.reason,
+			warnings,
+			auditRequired: result?.auditRequired ?? false,
+			receiptRequired: result?.receiptRequired ?? false,
+			metadata: {
+				policyVersion:
+					result?.metadata?.policyVersion || this.config.policy?.version || DEFAULT_POLICY.version,
+				evaluationTime: result?.metadata?.evaluationTime ?? Date.now() - evaluationStart,
+				branding: 'brAInwav',
+			},
+		};
+	}
+
 	/**
 	 * Enhanced security validation for MCP tool invocations
 	 * Combines existing egress-guard with new policy engine
@@ -84,10 +190,10 @@ export class BrainwavMcpSecurityManager {
 		const warnings: string[] = [];
 
 		try {
-			// Step 1: Legacy egress-guard validation (if enabled and endpoint provided)
 			if (this.config.enableLegacyGuard && context.endpoint) {
 				const legacyResult = isEndpointAllowed(context.endpoint);
 				if (!legacyResult.allowed) {
+					this.incrementViolation(context.toolName);
 					this.auditSecurityEvent('legacy_guard_blocked', {
 						toolName: context.toolName,
 						endpoint: context.endpoint,
@@ -110,33 +216,33 @@ export class BrainwavMcpSecurityManager {
 				}
 			}
 
-			// Step 2: Enhanced policy engine validation (if enabled)
-			if (this.config.enablePolicyEngine && this.policyEngine && context.endpoint) {
-				const requestJson = JSON.stringify(context.requestData);
-				const requestSize = Buffer.byteLength(requestJson, 'utf8');
-				const targetDomain = this.extractDomain(context.endpoint);
+			let metadata: NormalizedPolicyResult['metadata'] = {
+				policyVersion: this.config.policy?.version || 'legacy',
+				evaluationTime: Date.now() - startTime,
+				branding: 'brAInwav',
+			};
 
-				const policyContext = {
+			if (this.config.enablePolicyEngine && this.policyEngine) {
+				const rawPolicyResult = await this.policyEngine.evaluateToolRequest({
 					toolName: context.toolName,
-					requestSize,
-					targetDomain,
-					contentType: 'application/json',
-					userId: context.userId,
+					endpoint: context.endpoint,
 					sessionId: context.sessionId,
-					timestamp: new Date().toISOString(),
-					traceId: context.traceId || `brainwav-${Date.now()}`,
-				};
-
-				const policyResult = await this.policyEngine.evaluateToolRequest(policyContext);
+				});
+				const policyResult = this.normalizePolicyResult(rawPolicyResult, startTime);
+				if (policyResult.warnings.length > 0) {
+					warnings.push(...policyResult.warnings);
+				}
+				metadata = policyResult.metadata;
 
 				if (!policyResult.allowed) {
+					this.incrementViolation(context.toolName);
+
 					if (this.config.blockOnViolation) {
 						this.auditSecurityEvent('policy_engine_blocked', {
 							toolName: context.toolName,
 							endpoint: context.endpoint,
 							reason: policyResult.reason,
 							sessionId: context.sessionId,
-							policyVersion: policyResult.metadata.policyVersion,
 						});
 
 						return {
@@ -144,42 +250,24 @@ export class BrainwavMcpSecurityManager {
 							reason: `brAInwav Policy: ${policyResult.reason}`,
 							warnings: policyResult.warnings,
 							auditRequired: true,
-							receiptRequired: policyResult.receiptRequired,
-							metadata: {
-								policyVersion: policyResult.metadata.policyVersion,
-								evaluationTime: Date.now() - startTime,
-								branding: 'brAInwav',
-							},
+							receiptRequired: policyResult.receiptRequired ?? false,
+							metadata,
 						};
-					} else {
-						// Audit mode: log but allow
+					}
+
+					if (policyResult.reason) {
 						warnings.push(`Policy violation (audit mode): ${policyResult.reason}`);
 					}
 				}
-
-				// Log policy evaluation result
-				this.auditSecurityEvent('policy_evaluated', {
-					toolName: context.toolName,
-					endpoint: context.endpoint,
-					allowed: policyResult.allowed,
-					warnings: policyResult.warnings.length,
-					sessionId: context.sessionId,
-					policyVersion: policyResult.metadata.policyVersion,
-				});
 			}
 
-			// Success case
 			return {
 				allowed: true,
 				reason: undefined,
 				warnings,
 				auditRequired: this.config.auditMode,
 				receiptRequired: false,
-				metadata: {
-					policyVersion: this.config.policy?.version || 'legacy',
-					evaluationTime: Date.now() - startTime,
-					branding: 'brAInwav',
-				},
+				metadata,
 			};
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
@@ -195,7 +283,6 @@ export class BrainwavMcpSecurityManager {
 				'brAInwav MCP security evaluation error',
 			);
 
-			// Fail secure: deny on evaluation error unless in audit mode
 			return {
 				allowed: this.config.auditMode,
 				reason: `brAInwav Security Error: ${errorMessage}`,
@@ -209,6 +296,11 @@ export class BrainwavMcpSecurityManager {
 				},
 			};
 		}
+	}
+
+	private incrementViolation(toolName: string): void {
+		const count = this.violationCounts.get(toolName) ?? 0;
+		this.violationCounts.set(toolName, count + 1);
 	}
 
 	/**
@@ -285,7 +377,9 @@ export class BrainwavMcpSecurityManager {
 	 */
 	updatePolicy(newPolicy: McpSecurityPolicy): void {
 		if (this.policyEngine) {
-			this.policyEngine.updatePolicy(newPolicy);
+			this.policyEngine.updatePolicy(
+				newPolicy as unknown as Parameters<BrainwavPolicyEngine['updatePolicy']>[0],
+			);
 		}
 
 		this.config.policy = newPolicy;
@@ -294,7 +388,7 @@ export class BrainwavMcpSecurityManager {
 			{
 				branding: 'brAInwav',
 				policyVersion: newPolicy.version,
-				policyName: newPolicy.metadata.name,
+				policyName: newPolicy.metadata?.name,
 			},
 			'brAInwav MCP security policy updated',
 		);
@@ -359,9 +453,11 @@ export class BrainwavMcpSecurityManager {
  */
 export const DEFAULT_BRAINWAV_MCP_CONFIG: BrainwavMcpSecurityConfig = {
 	policy: {
-		...DEFAULT_BRAINWAV_POLICY,
+		...DEFAULT_POLICY,
 		metadata: {
-			...DEFAULT_BRAINWAV_POLICY.metadata,
+			...(typeof DEFAULT_POLICY.metadata === 'object'
+				? (DEFAULT_POLICY.metadata as Record<string, unknown>)
+				: {}),
 			name: 'brAInwav MCP Development Policy',
 		},
 		enforcement: {
@@ -387,9 +483,11 @@ export const DEFAULT_BRAINWAV_MCP_CONFIG: BrainwavMcpSecurityConfig = {
 export const PRODUCTION_BRAINWAV_MCP_CONFIG: BrainwavMcpSecurityConfig = {
 	...DEFAULT_BRAINWAV_MCP_CONFIG,
 	policy: {
-		...DEFAULT_BRAINWAV_POLICY,
+		...DEFAULT_POLICY,
 		metadata: {
-			...DEFAULT_BRAINWAV_POLICY.metadata,
+			...(typeof DEFAULT_POLICY.metadata === 'object'
+				? (DEFAULT_POLICY.metadata as Record<string, unknown>)
+				: {}),
 			name: 'brAInwav MCP Production Policy',
 		},
 		enforcement: {

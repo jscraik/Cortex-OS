@@ -74,6 +74,7 @@ This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScri
 - [x] Backfill the missing `tests/tdd-setup.ts` bootstrap (or update `vitest.config.ts` references) to centralize Node-side TDD Coach wiring.
 - [x] Automate refreshing `reports/baseline/coverage.json` before gate enforcement so ratchet baselines stay in sync with current coverage. *(Use `pnpm baseline:refresh` to run the targeted coverage + baseline update pipeline.)*
 - [x] Document `make tdd-validate`, the Vitest coverage ratchet flow, and baseline generation steps in `docs/development/baseline-metrics.md` and the Day 5 retro artifacts. *(Documented 2025-10-02 in `docs/development/baseline-metrics.md` and annotated baseline notes.)*
+- [x] Add integration coverage for the FastMCP HTTP transport and `/health` endpoint (stateless HTTP stream harness + initialize/tools handshake).
 - [ ] Expand `pnpm baseline:refresh` to run full smart-suite coverage once the broader Vitest set is green so the ratchet reflects production numbers.
 
 ---

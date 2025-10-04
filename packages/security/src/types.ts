@@ -5,6 +5,67 @@
 
 import { z } from 'zod';
 
+// ---------------------------------------------------------------------------
+// Capability Tokens & Budgets
+// ---------------------------------------------------------------------------
+
+export const CapabilityTokenClaimsSchema = z.object({
+	iss: z.string(),
+	jti: z.string(),
+	tenant: z.string(),
+	action: z.string(),
+	resourcePrefix: z.string(),
+	maxCost: z.number().nonnegative().optional(),
+	budgetProfile: z.string().optional(),
+	metadata: z.record(z.string(), z.unknown()).optional(),
+	iat: z.number().int(),
+	exp: z.number().int(),
+});
+
+export type CapabilityTokenClaims = z.infer<typeof CapabilityTokenClaimsSchema>;
+
+export interface CapabilityDescriptor {
+	tenant: string;
+	action: string;
+	resourcePrefix: string;
+	maxCost?: number;
+	budgetProfile?: string;
+	claims: CapabilityTokenClaims;
+}
+
+export const BudgetProfileSchema = z.object({
+	name: z.string(),
+	maxTotalReq: z.number().int().nonnegative().optional(),
+	maxTotalDurationMs: z.number().int().nonnegative().optional(),
+	maxTotalCost: z.number().nonnegative().optional(),
+});
+
+export type BudgetProfile = z.infer<typeof BudgetProfileSchema>;
+
+export const BudgetUsageSchema = z.object({
+	totalReq: z.number().int().nonnegative(),
+	totalDurationMs: z.number().int().nonnegative().optional(),
+	totalCost: z.number().nonnegative().optional(),
+	updatedAt: z.string(),
+});
+
+export type BudgetUsage = z.infer<typeof BudgetUsageSchema>;
+
+export interface BudgetReconciliationInput {
+	profile: BudgetProfile;
+	current: BudgetUsage;
+	requestCost?: number;
+	requestDurationMs?: number;
+}
+
+export interface BudgetReconciliationResult {
+	withinLimits: boolean;
+	reason?: 'max_total_req_exceeded' | 'max_total_duration_exceeded' | 'max_total_cost_exceeded';
+	projectedUsage: BudgetUsage;
+}
+
+// ---------------------------------------------------------------------------
+
 // SPIFFE ID Schema
 export const SpiffeIdSchema = z
 	.string()
@@ -139,6 +200,20 @@ export class SecurityError extends Error {
 	) {
 		super(message);
 		this.name = 'SecurityError';
+	}
+}
+
+export class CapabilityTokenError extends SecurityError {
+	constructor(message: string, details?: Record<string, unknown>) {
+		super(message, 'CAPABILITY_TOKEN_ERROR', undefined, details);
+		this.name = 'CapabilityTokenError';
+	}
+}
+
+export class BudgetError extends SecurityError {
+	constructor(message: string, details?: Record<string, unknown>) {
+		super(message, 'BUDGET_ERROR', undefined, details);
+		this.name = 'BudgetError';
 	}
 }
 

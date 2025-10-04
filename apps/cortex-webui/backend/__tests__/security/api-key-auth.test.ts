@@ -3,8 +3,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { validateApiKeyFormat } from '../src/config/security.ts';
-import { apiKeyAuth } from '../src/middleware/security.ts';
+import { validateApiKeyFormat } from '../../src/config/security';
+import { apiKeyAuth } from '../../src/middleware/security';
 
 // Mock environment variables
 const originalEnv = process.env;
@@ -236,9 +236,9 @@ describe('API Key Authentication Tests', () => {
 
 			for (const testCase of testCases) {
 				mockReq.headers = testCase.headers;
-				mockNext.mockClear();
-				mockRes.status.mockClear();
-				mockRes.json.mockClear();
+				vi.mocked(mockNext).mockClear();
+				vi.mocked(mockRes.status).mockClear();
+				vi.mocked(mockRes.json).mockClear();
 
 				await apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);
 

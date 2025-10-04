@@ -8,7 +8,7 @@ import {
 	validateRequestBody,
 	validateRequestParams,
 	validateRequestQuery,
-} from '../middleware/validation.ts';
+} from '../../middleware/validation';
 
 describe('Validation Middleware', () => {
 	let mockRequest: Partial<Request>;

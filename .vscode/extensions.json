@@ -55,5 +55,8 @@
 		"upstash.context7-mcp",
 		"yzhang.markdown-all-in-one",
 		"meshintelligenttechnologiesinc.pieces-vscode"
+	],
+	"unwantedRecommendations": [
+		"ms-vscode.vscode-eslint"
 	]
 }

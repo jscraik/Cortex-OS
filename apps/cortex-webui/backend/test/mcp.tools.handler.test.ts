@@ -1,7 +1,8 @@
 /// <reference types="vitest" />
+import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { __setMcpRateLimitForTests } from '../src/mcp/tools.ts';
-import { createServer } from '../src/server.ts';
+import { __setMcpRateLimitForTests } from '../src/mcp/tools';
+import { createServer } from '../src/server';
 
 // Basic tests for MCP tool execution endpoint
 // These are smoke tests; more exhaustive contract tests live under contracts/tests

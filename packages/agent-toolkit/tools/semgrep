@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# brAInwav Agent-Toolkit: semgrep wrapper
+# Resolves semgrep from system PATH
+set -euo pipefail
+
+exec semgrep "$@"

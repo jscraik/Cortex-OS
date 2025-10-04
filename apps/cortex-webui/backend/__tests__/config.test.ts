@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { loadConfig } from '../src/config/config.ts';
+import { loadConfig } from '../src/config/config';
 
 describe('config validation', () => {
 	const originalEnv = { ...process.env };

@@ -1,0 +1,213 @@
+name: brAInwav Phase 7 - CI/CD Enforcement
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  memory-architecture-enforcement:
+    name: Memory Architecture Enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Run memory enforcement checks
+        run: bash scripts/ci/memory-enforce.test.sh
+
+  agent-toolkit-validation:
+    name: Agent-Toolkit Integration Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build agent-toolkit
+        run: pnpm --filter @cortex-os/agent-toolkit build
+
+      - name: Run agent-toolkit validation
+        run: bash scripts/ci/agent-toolkit-validate.test.sh
+
+  tools-path-validation:
+    name: Tools Path Resolution Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tools path validation
+        run: bash scripts/ci/tools-path-validation.test.sh
+
+  phase-3-verification:
+    name: Phase 3 Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+          - 6334:6334
+        options: >-
+          --health-cmd "curl -f http://localhost:6333/healthz || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: |
+          pnpm --filter @cortex-os/agent-toolkit build
+          pnpm --filter @cortex-os/memory-core build
+
+      - name: Run Phase 3 verification tests
+        run: pnpm --filter @cortex-os/testing test src/integration/phase3-verification.test.ts
+        env:
+          QDRANT_URL: http://localhost:6333
+
+  memory-core-integration:
+    name: Memory-Core Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+          - 6334:6334
+        options: >-
+          --health-cmd "curl -f http://localhost:6333/healthz || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm --filter @cortex-os/memory-core build
+
+      - name: Run memory-core integration tests
+        run: pnpm --filter @cortex-os/testing test src/integration/memory-core-full.test.ts
+        env:
+          QDRANT_URL: http://localhost:6333
+
+  mcp-stabilization:
+    name: MCP Stabilization Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: |
+          pnpm --filter @cortex-os/memory-core build
+          pnpm --filter @cortex-os/mcp-server build
+
+      - name: Run MCP stabilization tests
+        run: pnpm --filter @cortex-os/testing test src/integration/mcp-stabilization.test.ts
+
+  enforcement-summary:
+    name: Enforcement Summary
+    runs-on: ubuntu-latest
+    needs:
+      - memory-architecture-enforcement
+      - agent-toolkit-validation
+      - tools-path-validation
+      - phase-3-verification
+      - memory-core-integration
+      - mcp-stabilization
+    if: always()
+    steps:
+      - name: Check all enforcement jobs
+        run: |
+          echo "🎉 brAInwav Phase 7 CI/CD Enforcement Complete!"
+          echo ""
+          echo "✅ Memory Architecture: ${{ needs.memory-architecture-enforcement.result }}"
+          echo "✅ Agent-Toolkit: ${{ needs.agent-toolkit-validation.result }}"
+          echo "✅ Tools Path: ${{ needs.tools-path-validation.result }}"
+          echo "✅ Phase 3 Tests: ${{ needs.phase-3-verification.result }}"
+          echo "✅ Memory-Core Tests: ${{ needs.memory-core-integration.result }}"
+          echo "✅ MCP Tests: ${{ needs.mcp-stabilization.result }}"
+
+      - name: Fail if any job failed
+        if: |
+          needs.memory-architecture-enforcement.result == 'failure' ||
+          needs.agent-toolkit-validation.result == 'failure' ||
+          needs.tools-path-validation.result == 'failure' ||
+          needs.phase-3-verification.result == 'failure' ||
+          needs.memory-core-integration.result == 'failure' ||
+          needs.mcp-stabilization.result == 'failure'
+        run: exit 1

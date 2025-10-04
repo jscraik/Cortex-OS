@@ -12,11 +12,11 @@ import {
 	betterAuthErrorHandler,
 	optionalBetterAuth,
 	requireRole,
-} from '../../middleware/better-auth.ts';
-import { createApp } from '../../server.ts';
+} from '../../middleware/better-auth';
+import { createApp } from '../../server';
 
 // Mock dependencies
-vi.mock('../../lib/env.ts', () => ({
+vi.mock('../../lib/env', () => ({
 	FRONTEND_URL: 'http://localhost:5173',
 	JWT_SECRET: 'test-secret',
 }));

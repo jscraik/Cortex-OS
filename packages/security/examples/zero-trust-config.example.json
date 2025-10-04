@@ -1,0 +1,225 @@
+{
+    "branding": {
+        "organization": "brAInwav",
+        "version": "1.0.0",
+        "environment": "production"
+    },
+    "a2a_gateway": {
+        "capability_secret": "${BRAINWAV_CAPABILITY_SECRET}",
+        "policy_wasm_path": "./packages/security/policy/opa/compiled/security_policy.wasm",
+        "mtls_config": {
+            "ca_cert_path": "${BRAINWAV_CA_CERT_PATH}",
+            "cert_path": "${BRAINWAV_CERT_PATH}",
+            "key_path": "${BRAINWAV_KEY_PATH}"
+        },
+        "audit_config": {
+            "enabled": true,
+            "tamper_evident": true,
+            "sink_url": "${BRAINWAV_AUDIT_SINK_URL}"
+        },
+        "circuit_breaker": {
+            "failure_threshold": 5,
+            "recovery_timeout_ms": 30000
+        },
+        "branding": {
+            "organization": "brAInwav Zero-Trust Gateway",
+            "version": "1.0.0"
+        }
+    },
+    "capability_issuer": {
+        "capability_secret": "${BRAINWAV_CAPABILITY_SECRET}",
+        "default_ttl_seconds": 300,
+        "max_ttl_seconds": 3600,
+        "budget_profiles": {
+            "basic": {
+                "maxTotalReq": 1000,
+                "maxTotalCost": 10.0,
+                "maxTotalDurationMs": 300000
+            },
+            "premium": {
+                "maxTotalReq": 10000,
+                "maxTotalCost": 100.0,
+                "maxTotalDurationMs": 1800000
+            },
+            "admin": {
+                "maxTotalReq": 100000,
+                "maxTotalCost": 1000.0,
+                "maxTotalDurationMs": 3600000
+            }
+        },
+        "agent_limits": {
+            "agent.development": {
+                "max_capabilities": 5,
+                "max_cost": 1.0
+            },
+            "agent.production": {
+                "max_capabilities": 20,
+                "max_cost": 50.0
+            },
+            "agent.admin": {
+                "max_capabilities": 100,
+                "max_cost": 500.0
+            }
+        }
+    },
+    "execution_isolation": {
+        "type": "gvisor",
+        "cpu_limit": 2,
+        "memory_limit": 1024,
+        "timeout_seconds": 30,
+        "network_enabled": false,
+        "filesystem_mode": "readonly",
+        "security_options": [
+            "no-new-privileges:true",
+            "seccomp:default",
+            "apparmor:brainwav-sandbox"
+        ]
+    },
+    "mcp_server": {
+        "name": "brainwav-secure-mcp",
+        "version": "1.0.0",
+        "host": "0.0.0.0",
+        "port": 3000,
+        "api_key": "${BRAINWAV_MCP_API_KEY}"
+    },
+    "tool_configurations": {
+        "memory.search": {
+            "requires_sandbox": false,
+            "risk_level": "low",
+            "required_capabilities": [
+                "invoke:tool.memory-search"
+            ]
+        },
+        "memory.store": {
+            "requires_sandbox": false,
+            "risk_level": "medium",
+            "required_capabilities": [
+                "invoke:tool.memory-store"
+            ]
+        },
+        "file.read": {
+            "requires_sandbox": true,
+            "risk_level": "medium",
+            "required_capabilities": [
+                "invoke:tool.file-read"
+            ]
+        },
+        "file.write": {
+            "requires_sandbox": true,
+            "risk_level": "high",
+            "required_capabilities": [
+                "invoke:tool.file-write"
+            ]
+        },
+        "shell.command": {
+            "requires_sandbox": true,
+            "risk_level": "high",
+            "required_capabilities": [
+                "invoke:tool.shell",
+                "attestation:code-review"
+            ]
+        },
+        "code.execution": {
+            "requires_sandbox": true,
+            "risk_level": "high",
+            "required_capabilities": [
+                "invoke:tool.code-execution",
+                "attestation:security-review"
+            ]
+        }
+    },
+    "audit_system": {
+        "log_file_path": "/var/log/brainwav/audit.jsonl",
+        "state_file_path": "/var/lib/brainwav/audit-state.json",
+        "telemetry_enabled": true,
+        "telemetry_service_name": "brainwav-audit-system",
+        "max_records_per_file": 100000,
+        "compress_rotated_files": true
+    },
+    "observability": {
+        "opentelemetry": {
+            "service_name": "brainwav-zero-trust-gateway",
+            "service_version": "1.0.0",
+            "endpoint": "${OTEL_EXPORTER_OTLP_ENDPOINT}",
+            "headers": {
+                "authorization": "Bearer ${OTEL_EXPORTER_OTLP_HEADERS}"
+            }
+        },
+        "metrics": {
+            "enabled": true,
+            "port": 9090,
+            "path": "/metrics"
+        },
+        "logging": {
+            "level": "info",
+            "format": "json",
+            "branding_required": true
+        }
+    },
+    "security_policies": {
+        "tenant_isolation": {
+            "enabled": true,
+            "enforce_strict_boundaries": true
+        },
+        "time_based_access": {
+            "enabled": true,
+            "business_hours": {
+                "start": 6,
+                "end": 22,
+                "timezone": "UTC"
+            }
+        },
+        "resource_restrictions": {
+            "production_resources": {
+                "require_attestation": true,
+                "elevated_audit": true
+            },
+            "sensitive_resources": {
+                "require_multi_factor": true,
+                "mandatory_approval": true
+            }
+        },
+        "rate_limiting": {
+            "enabled": true,
+            "rules": {
+                "safe_tools": {
+                    "requests_per_minute": 60,
+                    "burst_limit": 10
+                },
+                "medium_risk_tools": {
+                    "requests_per_minute": 30,
+                    "burst_limit": 5
+                },
+                "high_risk_tools": {
+                    "requests_per_minute": 10,
+                    "burst_limit": 2
+                }
+            }
+        }
+    },
+    "deployment": {
+        "environment": "production",
+        "replicas": 3,
+        "health_checks": {
+            "liveness_probe": "/health/live",
+            "readiness_probe": "/health/ready",
+            "startup_probe": "/health/startup"
+        },
+        "resources": {
+            "requests": {
+                "cpu": "500m",
+                "memory": "512Mi"
+            },
+            "limits": {
+                "cpu": "2000m",
+                "memory": "2Gi"
+            }
+        },
+        "autoscaling": {
+            "enabled": true,
+            "min_replicas": 2,
+            "max_replicas": 10,
+            "target_cpu_utilization": 70
+        }
+    }
+}

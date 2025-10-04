@@ -22,7 +22,7 @@ const logger = pino({ level: process.env.MEMORY_LOG_LEVEL ?? 'info' });
 const BRAND = {
 	prefix: 'brAInwav',
 	serverName: 'brAInwav Cortex Memory Server',
-	healthMessage: 'brAInwav service healthy',
+	healthMessage: 'brAInwav Cortex Memory Server - Operational',
 	connectLog: 'brAInwav MCP client connected',
 	disconnectLog: 'brAInwav MCP client disconnected',
 } as const;
@@ -75,6 +75,12 @@ const server = new FastMCP({
 		enabled: true,
 		intervalMs: 20000,
 		logLevel: 'debug',
+	},
+	health: {
+		enabled: true,
+		message: BRAND.healthMessage,
+		path: '/health',
+		status: 200,
 	},
 });
 

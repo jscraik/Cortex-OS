@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { EmbeddingService } from '../../services/embeddingService.ts';
+import { EmbeddingService } from '../../services/embeddingService';
 
 describe('EmbeddingService', () => {
 	let service: EmbeddingService;

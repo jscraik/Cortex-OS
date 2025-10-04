@@ -32,6 +32,9 @@ export * from './mtls/index.js';
 export * from './spiffe/index.js';
 // Types and Interfaces
 export * from './types.js';
+// Capability Tokens & Budgets
+export * from './capabilities/capability-token.js';
+export * from './budget/budget-manager.js';
 // Security Utilities
 export * from './utils/index.js';
 // Workload Identity Management

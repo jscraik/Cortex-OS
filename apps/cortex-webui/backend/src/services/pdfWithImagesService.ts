@@ -158,14 +158,11 @@ export class PdfWithImagesService {
 	}
 
 	private async getPdfJs(): Promise<PdfJsLib> {
-		ts
 		// Use require to align with CommonJS module configuration
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		 
 		const pdfjsLib: PdfJsLib = require('pdfjs-dist/legacy/build/pdf.js');
 		pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
 		return pdfjsLib;
-	});
-		return this.pdfLibPromise;
 	}
 
 	private getMetaString(md: PdfMetadata['metadata'] | undefined, key: string): string | undefined {
@@ -173,7 +170,7 @@ export class PdfWithImagesService {
 	return typeof val === 'string' ? val : undefined;
 }
 
-	private async validatePdfFile(source: PdfSource, filename: string): Promise < void> {
+	private async validatePdfFile(source: PdfSource, filename: string): Promise<void> {
 	const size = Buffer.isBuffer(source) ? source.length : source.size;
 	if(size > this.maxFileSize) {
 	throw new Error(

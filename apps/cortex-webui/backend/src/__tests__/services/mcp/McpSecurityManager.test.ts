@@ -3,17 +3,37 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { BudgetError, CapabilityTokenError, CapabilityTokenIssuer } from '@cortex-os/security';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { McpSecurityManager } from '../../../services/mcp/McpSecurityManager.ts';
-import type { ExecutionRequest } from '../../../services/mcp/McpToolExecutor.ts';
-import type { McpToolRegistration } from '../../../services/mcp/McpToolRegistry.ts';
+import { McpSecurityManager } from '../../../services/mcp/McpSecurityManager';
+import type { ExecutionRequest } from '../../../services/mcp/McpToolExecutor';
+import type { McpToolRegistration } from '../../../services/mcp/McpToolRegistry';
+
+const TEST_CAPABILITY_SECRET = 'unit-test-secret';
+const TEST_TENANT = 'unit-test-tenant';
+const TEST_BUDGET_PROFILE = 'unit-test-profile';
+
+let testBudgetDir: string;
+let budgetFilePath: string;
+let capabilityIssuer: CapabilityTokenIssuer;
+let defaultCapabilityToken: string;
 
 describe('McpSecurityManager', () => {
 	let securityManager: McpSecurityManager;
 	let mockTool: McpToolRegistration;
 
 	beforeEach(() => {
+		testBudgetDir = mkdtempSync(path.join(tmpdir(), 'mcp-security-'));
+		budgetFilePath = path.join(testBudgetDir, 'budget.yml');
+		writeFileSync(
+			budgetFilePath,
+			`budgets:\n  ${TEST_BUDGET_PROFILE}:\n    max_total_req: 100\n    max_total_duration_ms: 600000\n`,
+		);
+
 		securityManager = new McpSecurityManager({
 			maxRequestsPerMinute: 5,
 			maxRequestsPerHour: 10,
@@ -22,13 +42,20 @@ describe('McpSecurityManager', () => {
 			enablePermissionCheck: true,
 			enableResourceLimits: true,
 			enableAuditLogging: true,
+			capabilitySecret: TEST_CAPABILITY_SECRET,
+			budgetFilePath,
+			budgetProfile: TEST_BUDGET_PROFILE,
 		});
 
+		capabilityIssuer = new CapabilityTokenIssuer(TEST_CAPABILITY_SECRET);
 		mockTool = createMockTool();
+		defaultCapabilityToken = issueCapabilityToken(mockTool);
 	});
 
 	afterEach(() => {
 		securityManager.clearRateLimits();
+		rmSync(testBudgetDir, { recursive: true, force: true });
+		vi.useRealTimers();
 	});
 
 	describe('Security Validation', () => {
@@ -49,6 +76,74 @@ describe('McpSecurityManager', () => {
 			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
 				/Tool is blocked by security policy/,
 			);
+		});
+	});
+
+	describe('Capability Tokens and Budgets', () => {
+		it('should require a capability token', async () => {
+			const request = createExecutionRequest({
+				context: { capabilityTokens: [] },
+			});
+
+			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
+				CapabilityTokenError,
+			);
+		});
+
+		it('should reject expired capability tokens', async () => {
+			const baseTime = new Date('2025-01-01T00:00:00Z');
+			vi.useFakeTimers();
+			vi.setSystemTime(baseTime);
+
+			const expiredToken = issueCapabilityToken(mockTool, { ttlSeconds: 1 });
+			vi.setSystemTime(new Date(baseTime.getTime() + 120_000));
+
+			const request = createExecutionRequest({
+				context: { capabilityTokens: [expiredToken] },
+			});
+
+			await expect(securityManager.validateExecution(request, mockTool)).rejects.toThrow(
+				CapabilityTokenError,
+			);
+		});
+
+		it('should allow execution with valid capability token', async () => {
+			const request = createExecutionRequest();
+			await expect(securityManager.validateExecution(request, mockTool)).resolves.not.toThrow();
+		});
+
+		it('should enforce budget limits', async () => {
+			const tightDir = mkdtempSync(path.join(tmpdir(), 'mcp-budget-tight-'));
+			const tightBudgetFile = path.join(tightDir, 'budget.yml');
+			writeFileSync(
+				tightBudgetFile,
+				`budgets:\n  tight:\n    max_total_req: 1\n`,
+			);
+
+			const tightManager = new McpSecurityManager({
+				maxRequestsPerMinute: 5,
+				maxRequestsPerHour: 10,
+				enableRateLimiting: true,
+				enableInputValidation: true,
+				enablePermissionCheck: true,
+				enableResourceLimits: true,
+				enableAuditLogging: true,
+				capabilitySecret: TEST_CAPABILITY_SECRET,
+				budgetFilePath: tightBudgetFile,
+				budgetProfile: 'tight',
+			});
+			const tightToken = issueCapabilityToken(mockTool, { budgetProfile: 'tight' });
+			const request = createExecutionRequest({
+				context: { capabilityTokens: [tightToken], budgetProfile: 'tight' },
+			});
+
+			try {
+				await tightManager.validateExecution(request, mockTool);
+				await expect(tightManager.validateExecution(request, mockTool)).rejects.toThrow(BudgetError);
+			} finally {
+				tightManager.clearRateLimits();
+				rmSync(tightDir, { recursive: true, force: true });
+			}
 		});
 	});
 
@@ -127,9 +222,13 @@ describe('McpSecurityManager', () => {
 			const toolWithPermissions = createMockTool({
 				permissions: ['read', 'write'],
 			});
-
+			const token = issueCapabilityToken(toolWithPermissions);
 			const request = createExecutionRequest({
-				context: { permissions: ['read', 'write', 'admin'] },
+				toolId: toolWithPermissions.metadata.id,
+				context: {
+					permissions: ['read', 'write', 'admin'],
+					capabilityTokens: [token],
+				},
 			});
 
 			await expect(
@@ -141,9 +240,10 @@ describe('McpSecurityManager', () => {
 			const toolWithPermissions = createMockTool({
 				permissions: ['admin', 'write'],
 			});
-
+			const token = issueCapabilityToken(toolWithPermissions);
 			const request = createExecutionRequest({
-				context: { permissions: ['read'] },
+				toolId: toolWithPermissions.metadata.id,
+				context: { permissions: ['read'], capabilityTokens: [token] },
 			});
 
 			await expect(securityManager.validateExecution(request, toolWithPermissions)).rejects.toThrow(
@@ -155,9 +255,10 @@ describe('McpSecurityManager', () => {
 			const toolWithPermissions = createMockTool({
 				permissions: ['super-secret'],
 			});
-
+			const token = issueCapabilityToken(toolWithPermissions);
 			const request = createExecutionRequest({
-				context: { permissions: ['admin'] },
+				toolId: toolWithPermissions.metadata.id,
+				context: { permissions: ['admin'], capabilityTokens: [token] },
 			});
 
 			await expect(
@@ -171,9 +272,10 @@ describe('McpSecurityManager', () => {
 			const toolWithPermissions = createMockTool({
 				permissions: ['admin-only'],
 			});
-
+			const token = issueCapabilityToken(toolWithPermissions);
 			const request = createExecutionRequest({
-				context: { permissions: [] },
+				toolId: toolWithPermissions.metadata.id,
+				context: { permissions: [], capabilityTokens: [token] },
 			});
 
 			await expect(
@@ -253,9 +355,11 @@ describe('McpSecurityManager', () => {
 			const toolWithLimits = createMockTool({
 				resourceLimits: { maxExecutionTime: 5000 },
 			});
-
+			const token = issueCapabilityToken(toolWithLimits);
 			const request = createExecutionRequest({
 				timeout: 10000, // Exceeds tool limit
+				toolId: toolWithLimits.metadata.id,
+				context: { capabilityTokens: [token] },
 			});
 
 			await expect(securityManager.validateExecution(request, toolWithLimits)).rejects.toThrow(
@@ -267,9 +371,11 @@ describe('McpSecurityManager', () => {
 			const toolWithLimits = createMockTool({
 				resourceLimits: { maxExecutionTime: 10000 },
 			});
-
+			const token = issueCapabilityToken(toolWithLimits);
 			const request = createExecutionRequest({
 				timeout: 5000, // Within tool limit
+				toolId: toolWithLimits.metadata.id,
+				context: { capabilityTokens: [token] },
 			});
 
 			await expect(
@@ -283,9 +389,11 @@ describe('McpSecurityManager', () => {
 			const toolWithLimits = createMockTool({
 				resourceLimits: { maxExecutionTime: 1000 },
 			});
-
+			const token = issueCapabilityToken(toolWithLimits);
 			const request = createExecutionRequest({
 				timeout: 10000, // Exceeds tool limit
+				toolId: toolWithLimits.metadata.id,
+				context: { capabilityTokens: [token] },
 			});
 
 			await expect(
@@ -449,18 +557,41 @@ function createMockTool(
 	};
 }
 
+function issueCapabilityToken(
+	tool: McpToolRegistration,
+	options: { tenant?: string; ttlSeconds?: number; budgetProfile?: string } = {},
+): string {
+	const tenant = options.tenant ?? TEST_TENANT;
+	const budgetProfile = options.budgetProfile ?? TEST_BUDGET_PROFILE;
+	return capabilityIssuer.issue({
+		tenant,
+		action: `tool.execute.${tool.metadata.name}`,
+		resourcePrefix: `mcp/tools/${tool.metadata.id}`,
+		budgetProfile,
+		ttlSeconds: options.ttlSeconds ?? 300,
+	}).token;
+}
+
 function createExecutionRequest(overrides: Partial<ExecutionRequest> = {}): ExecutionRequest {
+	const contextOverrides = overrides.context ?? {};
+	const capabilityTokens =
+		contextOverrides.capabilityTokens ?? [defaultCapabilityToken];
+	const tenant = contextOverrides.tenant ?? TEST_TENANT;
 	return {
-		toolId: randomUUID(),
-		params: { input: 'test input' },
+		toolId: overrides.toolId ?? mockTool.metadata.id,
+		params: overrides.params ?? { input: 'test input' },
 		context: {
-			userId: overrides.context?.userId || 'test-user',
-			sessionId: overrides.context?.sessionId || 'test-session',
-			correlationId: overrides.context?.correlationId || randomUUID(),
-			timestamp: new Date().toISOString(),
-			permissions: overrides.context?.permissions || [],
+			userId: contextOverrides.userId ?? 'test-user',
+			sessionId: contextOverrides.sessionId ?? 'test-session',
+			correlationId: contextOverrides.correlationId ?? randomUUID(),
+			timestamp: contextOverrides.timestamp ?? new Date().toISOString(),
+			permissions: contextOverrides.permissions ?? [],
+			tenant,
+			capabilityTokens,
+			budgetProfile: contextOverrides.budgetProfile ?? TEST_BUDGET_PROFILE,
+			requestCost: contextOverrides.requestCost,
+			requestDurationMs: contextOverrides.requestDurationMs,
 		},
 		timeout: overrides.timeout,
-		...overrides,
 	};
 }

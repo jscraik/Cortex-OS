@@ -2,7 +2,7 @@ import type { Express, NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import type { Mock } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.ts';
+import { createApp } from '../../server';
 
 // Extend Request interface for user property
 interface AuthenticatedRequest extends Request {
@@ -39,14 +39,14 @@ type MockDatabase = {
 };
 
 // Mock the services
-vi.mock('../../services/documentProcessingService.ts', () => ({
+vi.mock('../../services/documentProcessingService', () => ({
 	documentProcessingService: {
 		processDocument: vi.fn(),
 		estimateTokenCount: vi.fn(),
 	},
 }));
 
-vi.mock('../../services/vectorSearchService.ts', () => ({
+vi.mock('../../services/vectorSearchService', () => ({
 	vectorSearchService: {
 		indexDocuments: vi.fn(),
 		search: vi.fn(),
@@ -57,7 +57,7 @@ vi.mock('../../services/vectorSearchService.ts', () => ({
 	},
 }));
 
-vi.mock('../../services/embeddingService.ts', () => ({
+vi.mock('../../services/embeddingService', () => ({
 	embeddingService: {
 		generateEmbedding: vi.fn(),
 		generateEmbeddings: vi.fn(),
@@ -67,7 +67,7 @@ vi.mock('../../services/embeddingService.ts', () => ({
 }));
 
 // Mock the database
-vi.mock('../../db/index.ts', () => ({
+vi.mock('../../db/index', () => ({
 	db: {
 		insert: vi.fn(),
 		select: vi.fn(),

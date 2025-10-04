@@ -73,21 +73,25 @@ function collectTsFiles(dir: string, files: string[] = []): string[] {
 }
 
 describe('Repository does not import @cortex-os/memories', () => {
-	it('fails when active code imports legacy memories package', () => {
-		const files = collectTsFiles(repoRoot);
-		const offenders: string[] = [];
-		for (const file of files) {
-			const content = readFileSync(file, 'utf-8');
-			const relPath = relative(repoRoot, file).replace(/\\/g, '/');
+	it(
+		'fails when active code imports legacy memories package',
+		{ timeout: 30000 },
+		() => {
+			const files = collectTsFiles(repoRoot);
+			const offenders: string[] = [];
+			for (const file of files) {
+				const content = readFileSync(file, 'utf-8');
+				const relPath = relative(repoRoot, file).replace(/\\/g, '/');
 
-			const hits = FORBIDDEN_IMPORT_PATTERNS.filter((pattern) => pattern.test(content));
-			if (hits.length > 0) {
-				offenders.push(`${relPath} → ${hits.map((hit) => hit.id).join(', ')}`);
+				const hits = FORBIDDEN_IMPORT_PATTERNS.filter((pattern) => pattern.test(content));
+				if (hits.length > 0) {
+					offenders.push(`${relPath} → ${hits.map((hit) => hit.id).join(', ')}`);
+				}
 			}
-		}
-		expect(
-			offenders,
-			`Legacy memories/rag imports found: ${offenders.join(', ') || 'none'}`,
-		).toEqual([]);
-	});
+			expect(
+				offenders,
+				`Legacy memories/rag imports found: ${offenders.join(', ') || 'none'}`,
+			).toEqual([]);
+		},
+	);
 });

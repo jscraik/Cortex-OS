@@ -3,6 +3,7 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { BetterAuthRequest } from '../../src/middleware/better-auth';
 
 // Import middleware to be tested
 import {
@@ -11,7 +12,7 @@ import {
 	enhanceSessionSecurity,
 	sanitizeInput,
 	securityHeaders,
-} from '../src/middleware/security.ts';
+} from '../../src/middleware/security';
 
 // Mock dependencies
 vi.mock('helmet', () => ({
@@ -41,7 +42,7 @@ vi.mock('crypto', () => ({
 }));
 
 describe('Security Middleware Tests', () => {
-	let mockReq: Partial<Request>;
+	let mockReq: Partial<BetterAuthRequest>;
 	let mockRes: Partial<Response>;
 	let mockNext: NextFunction;
 
@@ -67,7 +68,7 @@ describe('Security Middleware Tests', () => {
 
 	describe('Security Headers Middleware', () => {
 		it('should set brAInwav-branded security headers', async () => {
-			await securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+			securityHeaders(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
 			expect(mockRes.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
@@ -80,7 +81,7 @@ describe('Security Middleware Tests', () => {
 		});
 
 		it('should include brAInwav branding in security policy header', async () => {
-			await securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+			securityHeaders(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.setHeader).toHaveBeenCalledWith(
 				'X-BrAInwav-Security-Policy',
@@ -94,7 +95,7 @@ describe('Security Middleware Tests', () => {
 			mockReq.method = 'POST';
 			mockReq.headers = {};
 
-			await customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
+			customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.status).toHaveBeenCalledWith(403);
 			expect(mockRes.json).toHaveBeenCalledWith({
@@ -107,7 +108,7 @@ describe('Security Middleware Tests', () => {
 		it('should allow GET requests without CSRF token', async () => {
 			mockReq.method = 'GET';
 
-			await customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
+			customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -121,7 +122,7 @@ describe('Security Middleware Tests', () => {
 				csrfToken: 'valid-token',
 			} as { csrfToken: string };
 
-			await customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
+			customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -135,7 +136,7 @@ describe('Security Middleware Tests', () => {
 				csrfToken: 'valid-token',
 			} as { csrfToken: string };
 
-			await customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
+			customCsrfProtection(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.status).toHaveBeenCalledWith(403);
 			expect(mockRes.json).toHaveBeenCalledWith({
@@ -153,7 +154,7 @@ describe('Security Middleware Tests', () => {
 			};
 			mockReq.body = maliciousInput;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.name).toBe('Test'); // Script tag should be removed
 			expect(mockReq.body.description).toBe('Safe description'); // Safe content unchanged
@@ -167,7 +168,7 @@ describe('Security Middleware Tests', () => {
 			};
 			mockReq.query = maliciousQuery;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.query.search).toBe('query'); // Script tag removed
 			expect(mockReq.query.page).toBe('1'); // Safe content unchanged
@@ -180,7 +181,7 @@ describe('Security Middleware Tests', () => {
 				description: undefined,
 			};
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.name).toBeNull();
 			expect(mockReq.body.description).toBeUndefined();
@@ -192,7 +193,7 @@ describe('Security Middleware Tests', () => {
 		it('should reject requests without API key', async () => {
 			mockReq.headers = {};
 
-			await apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);
+			apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.status).toHaveBeenCalledWith(401);
 			expect(mockRes.json).toHaveBeenCalledWith({
@@ -207,7 +208,7 @@ describe('Security Middleware Tests', () => {
 				'x-api-key': 'invalid-key',
 			};
 
-			await apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);
+			apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.status).toHaveBeenCalledWith(401);
 			expect(mockRes.json).toHaveBeenCalledWith({
@@ -222,7 +223,7 @@ describe('Security Middleware Tests', () => {
 				'x-api-key': 'brainwav-test-key-12345',
 			};
 
-			await apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);
+			apiKeyAuth(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
@@ -230,7 +231,7 @@ describe('Security Middleware Tests', () => {
 
 	describe('Session Security Enhancement', () => {
 		it('should set secure session cookie flags', async () => {
-			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
+			enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.cookie).toHaveBeenCalledWith('__Secure-brAInwav-Session', expect.any(String), {
 				httpOnly: true,
@@ -247,7 +248,7 @@ describe('Security Middleware Tests', () => {
 				regenerate: regenerateMock,
 			} as { regenerate: () => void };
 
-			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
+			enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(regenerateMock).toHaveBeenCalled();
 			expect(mockNext).toHaveBeenCalled();
@@ -262,7 +263,7 @@ describe('Security Middleware Tests', () => {
 				},
 			} as { touch: () => void; cookie: { maxAge?: number } };
 
-			await enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
+			enhanceSessionSecurity(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.session.cookie.maxAge).toBe(30 * 60 * 1000);
 			expect(mockNext).toHaveBeenCalled();
@@ -278,7 +279,7 @@ describe('Security Middleware Tests', () => {
 				role: 'user',
 			};
 
-			await securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+			securityHeaders(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 			expect(mockReq.user).toBeDefined();
@@ -292,7 +293,7 @@ describe('Security Middleware Tests', () => {
 				remaining: 99,
 			};
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 			expect(mockReq.rateLimit).toBeDefined();

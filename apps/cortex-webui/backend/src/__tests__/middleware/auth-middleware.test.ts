@@ -3,23 +3,23 @@
 
 import type { NextFunction, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type AuthRequest, authenticateToken } from '../middleware/auth';
+import { type AuthRequest, authenticateToken } from '../../middleware/auth';
 
 // Mock dependencies
-vi.mock('../services/authService.ts', () => ({
+vi.mock('../../services/authService', () => ({
 	AuthService: {
 		verifyToken: vi.fn(),
 	},
 }));
 
-vi.mock('../services/userService.ts', () => ({
+vi.mock('../../services/userService', () => ({
 	UserService: {
 		getUserById: vi.fn(),
 	},
 }));
 
-import { AuthService } from '../services/authService';
-import { UserService } from '../services/userService';
+import { AuthService } from '../../services/authService';
+import { UserService } from '../../services/userService';
 
 describe('Authentication Middleware', () => {
 	let mockRequest: Partial<AuthRequest>;

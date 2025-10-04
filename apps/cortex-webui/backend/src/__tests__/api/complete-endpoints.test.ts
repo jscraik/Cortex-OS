@@ -6,7 +6,7 @@
 import type { Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../server.ts';
+import { createApp } from '../../server';
 
 describe('API Endpoints - Complete Coverage Tests', () => {
 	let app: Express;

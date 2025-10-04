@@ -4,9 +4,9 @@ import type { Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../db';
-import { createApp } from '../../src/server';
-import { authMonitoringService } from '../../src/services/authMonitoringService';
-import { emailService } from '../../src/services/emailService';
+import { createApp } from '../../server';
+import { authMonitoringService } from '../../services/authMonitoringService';
+import { emailService } from '../../services/emailService';
 
 describe('Auth Integration Tests', () => {
 	let app: Express;

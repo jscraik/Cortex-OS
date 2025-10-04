@@ -7,6 +7,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
+import { CapabilityTokenError, CapabilityTokenValidator, DEFAULT_BRAINWAV_POLICY, PolicyEngine, BudgetManager, BudgetLedger, BudgetError, type CapabilityDescriptor } from '@cortex-os/security';
 import { z } from 'zod';
 import logger from '../utils/logger.js';
 import type { ExecutionRequest } from './McpToolExecutor.js';
@@ -26,6 +27,9 @@ export interface SecurityConfig {
 	blockedTools: string[];
 	adminRoles: string[];
 	defaultTimeout: number; // ms
+	capabilitySecret?: string;
+	budgetFilePath?: string;
+	budgetProfile?: string;
 }
 
 // Permission levels
@@ -76,6 +80,9 @@ const securityConfigSchema = z.object({
 	blockedTools: z.array(z.string()).default([]),
 	adminRoles: z.array(z.string()).default(['admin', 'superadmin']),
 	defaultTimeout: z.number().int().min(1000).max(300000).default(30000),
+ 	capabilitySecret: z.string().optional(),
+ 	budgetFilePath: z.string().optional(),
+ 	budgetProfile: z.string().optional(),
 });
 
 export class McpSecurityManager extends EventEmitter {
@@ -83,10 +90,39 @@ export class McpSecurityManager extends EventEmitter {
 	private rateLimitMap = new Map<string, RateLimitEntry>();
 	private auditLog: AuditLogEntry[] = [];
 	private readonly MAX_AUDIT_ENTRIES = 10000;
+ 	private readonly capabilityValidator: CapabilityTokenValidator;
+ 	private readonly budgetManager: BudgetManager;
+ 	private readonly budgetLedger: BudgetLedger;
+ 	private readonly policyEngine: PolicyEngine;
+ 	private readonly defaultBudgetProfile: string;
 
 	constructor(config: Partial<SecurityConfig> = {}) {
 		super();
 		this.config = securityConfigSchema.parse(config);
+
+		const capabilitySecret =
+			this.config.capabilitySecret ||
+			process.env.MCP_CAPABILITY_SECRET ||
+			process.env.CAPABILITY_TOKEN_SECRET ||
+			'builtin-development-cap-secret';
+		this.capabilityValidator = new CapabilityTokenValidator(capabilitySecret);
+
+		const budgetFilePath =
+			this.config.budgetFilePath ||
+			process.env.MCP_BUDGET_FILE ||
+			'.budget.yml';
+		this.budgetManager = new BudgetManager({
+			budgetFilePath,
+			clock: () => Date.now(),
+		});
+		this.budgetLedger = new BudgetLedger(this.budgetManager, () => Date.now());
+		this.defaultBudgetProfile =
+			this.config.budgetProfile || process.env.MCP_BUDGET_PROFILE || 'quick';
+
+		this.policyEngine = new PolicyEngine({
+			logger,
+			policy: DEFAULT_BRAINWAV_POLICY,
+		});
 	}
 
 	/**
@@ -127,6 +163,8 @@ export class McpSecurityManager extends EventEmitter {
 				await this.checkResourceLimits(request, tool);
 			}
 
+			await this.evaluatePolicyContext(request, tool);
+
 			// Log successful access
 			await this.logAccess('access_granted', request, tool, {
 				validationTime: Date.now() - startTime,
@@ -139,6 +177,126 @@ export class McpSecurityManager extends EventEmitter {
 			});
 			throw error;
 		}
+	}
+
+	private async evaluatePolicyContext(request: ExecutionRequest, tool: McpToolRegistration): Promise<void> {
+		const context = request.context;
+		const tenant = context.tenant || 'anonymous';
+		const action = `tool.execute.${tool.metadata.name}`;
+		const resource = `mcp/tools/${tool.metadata.id}`;
+		const capabilityDescriptors = this.buildCapabilityDescriptors(context, action, resource, tenant);
+
+		const primaryProfileName =
+			capabilityDescriptors.find((descriptor) => descriptor.budgetProfile)?.budgetProfile || context.budgetProfile || this.defaultBudgetProfile;
+
+		let budgetProfile;
+		try {
+			budgetProfile = this.budgetManager.getProfile(primaryProfileName);
+		} catch (error) {
+			logger.warn('brAInwav MCP Security: missing budget profile, using fallback', {
+				profile: primaryProfileName,
+				error: error instanceof Error ? error.message : error,
+			});
+			budgetProfile = {
+				name: primaryProfileName,
+				maxTotalReq: undefined,
+				maxTotalDurationMs: undefined,
+				maxTotalCost: undefined,
+			};
+		}
+
+		const tenantKey = `${tenant}:${budgetProfile.name}`;
+		const currentUsage = this.budgetLedger.getUsage(tenantKey);
+
+		const policyResult = await this.policyEngine.evaluateToolRequest({
+			tenant,
+			action,
+			resource,
+			capabilities: capabilityDescriptors,
+			budget: budgetProfile,
+			currentUsage,
+			requiresAudit: this.config.enableAuditLogging,
+			requestCost: context.requestCost,
+			requestDurationMs: context.requestDurationMs,
+			requestUnits: 1,
+			warnings: [],
+			decisionId: context.correlationId,
+		});
+
+		if (!policyResult.allowed) {
+			throw new CapabilityTokenError(
+				`brAInwav Policy Denied: ${policyResult.reason ?? 'capability evaluation failed'}`,
+				{ tenant, action, resource },
+			);
+		}
+
+		const budgetEvaluation = this.budgetLedger.record({
+			profileName: budgetProfile.name,
+			tenantKey,
+			requestUnits: 1,
+			requestCost: context.requestCost,
+			requestDurationMs: context.requestDurationMs,
+		});
+
+		if (!budgetEvaluation.withinLimits) {
+			const reason = budgetEvaluation.reason ?? 'budget_exceeded';
+			throw new BudgetError(`brAInwav Budget Violation: ${reason}`, {
+				tenant,
+				budgetProfile: budgetProfile.name,
+				reason,
+			});
+		}
+
+		await this.logAccess('policy_evaluated', request, tool, {
+			policyHash: policyResult.metadata.policyHash,
+			policyVersion: policyResult.metadata.policyVersion,
+			tenant,
+			budgetProfile: budgetProfile.name,
+		});
+	}
+
+	private buildCapabilityDescriptors(
+		context: ExecutionContext,
+		action: string,
+		resource: string,
+		tenant: string,
+	): CapabilityDescriptor[] {
+		const tokens = context.capabilityTokens ?? [];
+		const descriptors: CapabilityDescriptor[] = [];
+
+		if (tokens.length > 0) {
+			for (const token of tokens) {
+				try {
+					const descriptor = this.capabilityValidator.verify(token, {
+						expectedTenant: tenant,
+						requiredAction: action,
+						requiredResourcePrefix: resource,
+					});
+					descriptors.push(descriptor);
+				} catch (error) {
+					if (error instanceof CapabilityTokenError) {
+						logger.warn('brAInwav MCP Security: capability token validation failed', {
+							reason: error.message,
+						});
+						throw error;
+					}
+					throw error;
+				}
+			}
+		}
+
+		if (descriptors.length === 0) {
+			throw new CapabilityTokenError('Capability token required for MCP tool execution', {
+				tenant,
+				action,
+				resource,
+			});
+		}
+
+		return descriptors.map((descriptor) => ({
+			...descriptor,
+			budgetProfile: descriptor.budgetProfile || context.budgetProfile || this.defaultBudgetProfile,
+		}));
 	}
 
 	/**

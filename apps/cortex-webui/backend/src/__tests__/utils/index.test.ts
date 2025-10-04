@@ -75,7 +75,7 @@ import {
 	verifyJWT,
 	zip,
 	zipObject,
-} from '../utils/index.ts';
+} from '../../utils/index';
 
 describe('Utility Functions', () => {
 	describe('Security Utilities', () => {

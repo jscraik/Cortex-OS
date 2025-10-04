@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { execSync } from 'node:child_process';
 import { existsSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';

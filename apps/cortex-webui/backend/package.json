@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node -r dotenv/config dist/backend/src/server.js",
     "test": "node ../../../scripts/vitest-safe.mjs run",
+    "test:mcp-security": "node ../../../scripts/vitest-safe.mjs run --config vitest.mcp-security.config.ts",
     "lint": "eslint \"src/**/*.ts\" --report-unused-disable-directives --max-warnings 0",
     "test:safe": "node ../../../scripts/vitest-safe.mjs run"
   },
@@ -47,6 +48,7 @@
   "devDependencies": {
     "@eslint/js": "^9.35.0",
     "@testing-library/jest-dom": "^6.8.0",
+    "@cortex-os/security": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.2",

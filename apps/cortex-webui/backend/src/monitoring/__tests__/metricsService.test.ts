@@ -3,7 +3,7 @@
 
 import { register } from 'prom-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MetricsService } from '../services/metricsService.ts';
+import { MetricsService } from '../services/metricsService';
 
 describe('MetricsService', () => {
 	let metricsService: MetricsService;

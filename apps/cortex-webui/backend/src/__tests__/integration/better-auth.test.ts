@@ -4,8 +4,8 @@ import type { Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { auth } from '../../auth';
-import { createApp } from '../../src/server';
-import { authMonitoringService } from '../../src/services/authMonitoringService';
+import { createApp } from '../../server';
+import { authMonitoringService } from '../../services/authMonitoringService';
 
 // Plugin interface for better-auth plugins
 interface BetterAuthPlugin {

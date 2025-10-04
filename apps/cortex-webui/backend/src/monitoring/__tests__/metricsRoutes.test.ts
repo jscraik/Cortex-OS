@@ -4,8 +4,8 @@
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createMetricsRoutes } from '../metricsRoutes.ts';
-import { MetricsService } from '../services/metricsService.ts';
+import { createMetricsRoutes } from '../metricsRoutes';
+import { MetricsService } from '../services/metricsService';
 
 describe('Metrics API Routes', () => {
 	let app: express.Application;

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { addToolEvent, getToolEvents, redactArgs } from '../src/utils/tool-store.ts';
+import { addToolEvent, getToolEvents, redactArgs } from '../src/utils/tool-store';
 
 describe('tool-store', () => {
 	afterEach(() => {

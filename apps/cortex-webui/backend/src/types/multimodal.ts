@@ -233,6 +233,15 @@ export interface MultimodalSearchRequest {
 	filters?: MultimodalSearchFilters;
 }
 
+export interface MultimodalSearchResponse {
+	results: MultimodalSearchResult[];
+	total: number;
+	query: string;
+	processingTime: number;
+	filters?: MultimodalSearchFilters;
+	modalities?: string[];
+}
+
 export interface MultimodalSearchFilters {
 	mimeType?: string[];
 	minDuration?: number;
@@ -287,6 +296,19 @@ export interface MultimodalPreview {
 	thumbnail?: string;
 	duration?: number;
 	timestamp?: number;
+}
+
+export interface ChunkMetadata {
+	page?: number;
+	tokenCount?: number;
+	embedding?: string;
+	fileSize?: number;
+	format?: string;
+	duration?: number;
+	width?: number;
+	height?: number;
+	channelCount?: number;
+	sampleRate?: number;
 }
 
 export interface MultimodalStats {

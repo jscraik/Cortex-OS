@@ -3,8 +3,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSecurityConfig } from '../src/config/security.ts';
-import { sanitizeInput } from '../src/middleware/security.ts';
+import { getSecurityConfig } from '../../src/config/security';
+import { sanitizeInput } from '../../src/middleware/security';
 
 describe('Input Sanitization Tests', () => {
 	let mockReq: Partial<Request>;
@@ -38,7 +38,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = maliciousBody;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.name).toBe('Test Name');
 			expect(mockReq.body.description).toBe('Normal description');
@@ -65,9 +65,9 @@ describe('Input Sanitization Tests', () => {
 
 			for (const attack of xssAttacks) {
 				mockReq.body = { content: attack };
-				mockNext.mockClear();
+				vi.mocked(mockNext).mockClear();
 
-				await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+				sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 				expect(mockNext).toHaveBeenCalled();
 				expect(mockReq.body.content).not.toContain('<script');
@@ -86,7 +86,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.query = maliciousQuery;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.query.search).toBe('search term');
 			expect(mockReq.query.filter).toBe('category');
@@ -102,7 +102,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.params = maliciousParams;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.params.id).toBe('123');
 			expect(mockReq.params.category).toBe('testcategory');
@@ -120,7 +120,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = htmlContent;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.title).toBe('Big Title');
 			expect(mockReq.body.content).toBe('This is important and emphasized');
@@ -137,7 +137,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = contentWithTags;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.message).toBe('Hello World!');
 			expect(mockReq.body.code).toBe('console.log("test")');
@@ -162,7 +162,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = longContent;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.short).toBe('normal content');
 			expect(mockReq.body.long.length).toBe(config.validation.maxFieldLength);
@@ -178,7 +178,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = { content: exactLength };
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.content.length).toBe(maxLength);
 			expect(mockNext).toHaveBeenCalled();
@@ -202,7 +202,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = mixedData;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.string).toBe('test');
 			expect(mockReq.body.number).toBe(42);
@@ -224,7 +224,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = dataWithDates;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.createdAt).toBe(now);
 			expect(mockReq.body.stringDate).toBe('2023-01-01');
@@ -249,7 +249,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = maliciousArray;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.items).toEqual(['normal item', 'malicious item', 'html content', 42]);
 			expect(mockReq.body.nestedArrays).toEqual([['nested 1', 'normal'], ['nested 2']]);
@@ -259,7 +259,7 @@ describe('Input Sanitization Tests', () => {
 		it('should handle empty arrays', async () => {
 			mockReq.body = { items: [], nested: { empty: [] } };
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.body.items).toEqual([]);
 			expect(mockReq.body.nested.empty).toEqual([]);
@@ -276,7 +276,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = circular;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			// Should not throw an error and should handle it gracefully
 			expect(mockNext).toHaveBeenCalled();
@@ -284,7 +284,7 @@ describe('Input Sanitization Tests', () => {
 
 		it('should return error when sanitization fails', async () => {
 			// Mock DOMPurify to throw an error
-			const { DOMPurify } = await import('dompurify');
+			const { default: DOMPurify } = await import('dompurify');
 			const originalSanitize = DOMPurify.sanitize;
 			DOMPurify.sanitize = vi.fn(() => {
 				throw new Error('Sanitization failed');
@@ -292,7 +292,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = { content: 'test content' };
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.status).toHaveBeenCalledWith(400);
 			expect(mockRes.json).toHaveBeenCalledWith({
@@ -317,7 +317,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = maliciousContent;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			// Content should remain unchanged
 			expect(mockReq.body.content).toBe('<script>alert("xss")</script>malicious');
@@ -332,7 +332,7 @@ describe('Input Sanitization Tests', () => {
 		it('should set inputSanitized flag in security context', async () => {
 			mockReq.body = { content: 'test content' };
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.securityContext?.inputSanitized).toBe(true);
 			expect(mockNext).toHaveBeenCalled();
@@ -346,7 +346,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = { content: 'test content' };
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockReq.securityContext?.apiKeyValid).toBe(true);
 			expect(mockReq.securityContext?.csrfToken).toBe('existing-token');
@@ -370,7 +370,7 @@ describe('Input Sanitization Tests', () => {
 			mockReq.body = largeObject;
 
 			const startTime = Date.now();
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 			const endTime = Date.now();
 
 			expect(mockNext).toHaveBeenCalled();
@@ -388,7 +388,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = specialChars;
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 			expect(mockReq.body.unicode).not.toContain('<script>');
@@ -401,7 +401,7 @@ describe('Input Sanitization Tests', () => {
 	describe('BrAInwav Branding', () => {
 		it('should include brAInwav branding in error messages', async () => {
 			// Mock DOMPurify to throw an error
-			const { DOMPurify } = await import('dompurify');
+			const { default: DOMPurify } = await import('dompurify');
 			const originalSanitize = DOMPurify.sanitize;
 			DOMPurify.sanitize = vi.fn(() => {
 				throw new Error('Test error');
@@ -409,7 +409,7 @@ describe('Input Sanitization Tests', () => {
 
 			mockReq.body = { content: 'test' };
 
-			await sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+			sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
 			expect(mockRes.json).toHaveBeenCalledWith({
 				error: 'brAInwav Security Error: Input sanitization failed',

@@ -20,17 +20,17 @@ import {
 	RateLimitError,
 	ValidationError,
 	validationErrorHandler,
-} from '../middleware/errorHandler.ts';
+} from '../../middleware/errorHandler';
 
 // Mock logger
-vi.mock('../utils/logger.ts', () => ({
+vi.mock('../../utils/logger', () => ({
 	logger: {
 		error: vi.fn(),
 	},
 	logError: vi.fn(),
 }));
 
-import { logError, logger } from '../utils/logger.ts';
+import { logError, logger } from '../../utils/logger';
 
 describe('Error Handler Middleware', () => {
 	let mockRequest: Partial<Request>;

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DocumentProcessingService } from '../../services/documentProcessingService.ts';
-import type { DocumentParseResult } from '../../types/document.ts';
-import type { ChunkOptions, DocumentChunk } from '../../types/rag.ts';
+import { DocumentProcessingService } from '../../services/documentProcessingService';
+import type { DocumentParseResult } from '../../types/document';
+import type { ChunkOptions, DocumentChunk } from '../../types/rag';
 
 describe('DocumentProcessingService', () => {
 	let service: DocumentProcessingService;

@@ -3,28 +3,29 @@
 
 import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getChatSession, postChatMessage, streamChatSSE } from '../controllers/chatController.ts';
+import type { ChatSession, ChatMessage } from '../../types/chat';
+import { getChatSession, postChatMessage, streamChatSSE } from '../../controllers/chatController';
 
 // Mock dependencies
-vi.mock('../services/chatGateway.ts', () => ({
+vi.mock('../../services/chatGateway', () => ({
 	streamChat: vi.fn(),
 }));
 
-vi.mock('../services/chatStore.ts', () => ({
+vi.mock('../../services/chatStore', () => ({
 	addMessage: vi.fn(),
 	getSession: vi.fn(),
 	setModel: vi.fn(),
 }));
 
-vi.mock('../utils/observability.ts', () => ({
+vi.mock('../../utils/observability', () => ({
 	logEvent: vi.fn(),
 	makeStartEvent: vi.fn(() => ({ type: 'start' })),
 	makeDoneEvent: vi.fn(() => ({ type: 'done' })),
 }));
 
-import { streamChat } from '../services/chatGateway.ts';
-import { addMessage, getSession, setModel } from '../services/chatStore.ts';
-import { logEvent } from '../utils/observability.ts';
+import { streamChat } from '../../services/chatGateway';
+import { addMessage, getSession, setModel } from '../../services/chatStore';
+import { logEvent } from '../../utils/observability';
 
 describe('Chat Controller', () => {
 	let mockRequest: Partial<Request>;
@@ -63,13 +64,15 @@ describe('Chat Controller', () => {
 		it('should return chat session successfully', async () => {
 			// Arrange
 			const sessionId = 'session-123';
-			const mockSession = {
+			const mockSession: ChatSession = {
 				id: sessionId,
 				modelId: 'gpt-4',
 				messages: [
-					{ id: 'msg-1', role: 'user', content: 'Hello' },
-					{ id: 'msg-2', role: 'assistant', content: 'Hi there!' },
+					{ id: 'msg-1', role: 'user', content: 'Hello', createdAt: '2024-01-01T00:00:00Z' },
+					{ id: 'msg-2', role: 'assistant', content: 'Hi there!', createdAt: '2024-01-01T00:00:01Z' },
 				],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:01Z',
 			};
 
 			mockRequest.params = { sessionId };
@@ -86,7 +89,13 @@ describe('Chat Controller', () => {
 		it('should handle non-existent session gracefully', async () => {
 			// Arrange
 			const sessionId = 'non-existent-session';
-			const emptySession = { id: sessionId, modelId: null, messages: [] };
+			const emptySession: ChatSession = {
+				id: sessionId,
+				modelId: null,
+				messages: [],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
+			};
 
 			mockRequest.params = { sessionId };
 			vi.mocked(getSession).mockReturnValue(emptySession);
@@ -249,14 +258,16 @@ describe('Chat Controller', () => {
 
 		it('should stream chat response successfully', async () => {
 			// Arrange
-			const mockSession = {
+			const mockSession: ChatSession = {
 				id: sessionId,
 				modelId: 'gpt-4',
 				messages: [
-					{ id: 'msg-1', role: 'user', content: 'Hello' },
-					{ id: 'msg-2', role: 'assistant', content: 'Hi there!' },
-					{ id: 'msg-3', role: 'user', content: 'How are you?' },
+					{ id: 'msg-1', role: 'user', content: 'Hello', createdAt: '2024-01-01T00:00:00Z' },
+					{ id: 'msg-2', role: 'assistant', content: 'Hi there!', createdAt: '2024-01-01T00:00:01Z' },
+					{ id: 'msg-3', role: 'user', content: 'How are you?', createdAt: '2024-01-01T00:00:02Z' },
 				],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:02Z',
 			};
 
 			const mockStreamResponse = {
@@ -307,10 +318,12 @@ describe('Chat Controller', () => {
 
 		it('should handle session with no user messages', async () => {
 			// Arrange
-			const emptySession = {
+			const emptySession: ChatSession = {
 				id: sessionId,
 				modelId: 'gpt-4',
 				messages: [],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
 			};
 
 			mockRequest.params = { sessionId };
@@ -327,10 +340,12 @@ describe('Chat Controller', () => {
 
 		it('should handle streaming errors gracefully', async () => {
 			// Arrange
-			const mockSession = {
+			const mockSession: ChatSession = {
 				id: sessionId,
 				modelId: 'gpt-4',
-				messages: [{ id: 'msg-1', role: 'user', content: 'Hello' }],
+				messages: [{ id: 'msg-1', role: 'user', content: 'Hello', createdAt: '2024-01-01T00:00:00Z' }],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
 			};
 
 			const streamError = new Error('Model connection failed');
@@ -353,10 +368,12 @@ describe('Chat Controller', () => {
 			// Arrange
 			process.env.CHAT_OBSERVABILITY = '1';
 
-			const mockSession = {
+			const mockSession: ChatSession = {
 				id: sessionId,
 				modelId: 'gpt-4',
-				messages: [{ id: 'msg-1', role: 'user', content: 'Hello' }],
+				messages: [{ id: 'msg-1', role: 'user', content: 'Hello', createdAt: '2024-01-01T00:00:00Z' }],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
 			};
 
 			mockRequest.params = { sessionId };
@@ -373,10 +390,12 @@ describe('Chat Controller', () => {
 
 		it('should use default model when session has no modelId', async () => {
 			// Arrange
-			const mockSession = {
+			const mockSession: ChatSession = {
 				id: sessionId,
 				modelId: null,
-				messages: [{ id: 'msg-1', role: 'user', content: 'Hello' }],
+				messages: [{ id: 'msg-1', role: 'user', content: 'Hello', createdAt: '2024-01-01T00:00:00Z' }],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
 			};
 
 			mockRequest.params = { sessionId };
@@ -397,17 +416,19 @@ describe('Chat Controller', () => {
 
 		it('should add assistant message to session after streaming', async () => {
 			// Arrange
-			const mockSession = {
+			const mockSession: ChatSession = {
 				id: sessionId,
 				modelId: 'gpt-4',
-				messages: [{ id: 'msg-1', role: 'user', content: 'Hello' }],
+				messages: [{ id: 'msg-1', role: 'user', content: 'Hello', createdAt: '2024-01-01T00:00:00Z' }],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
 			};
 
-			const mockResponse = { text: 'Hello! How can I help you?' };
+			const mockChatResponse = { text: 'Hello! How can I help you?' };
 
 			mockRequest.params = { sessionId };
 			vi.mocked(getSession).mockReturnValue(mockSession);
-			vi.mocked(streamChat).mockResolvedValue(mockResponse);
+			vi.mocked(streamChat).mockResolvedValue(mockChatResponse);
 
 			// Act
 			await streamChatSSE(mockRequest as Request, mockResponse as Response);
@@ -422,6 +443,8 @@ describe('Chat Controller', () => {
 	});
 
 	describe('brAInwav Security Standards', () => {
+		const sessionId = 'session-123';
+
 		it('should prevent content injection in chat messages', async () => {
 			// Arrange
 			const maliciousContent = '<script>alert("xss")</script>';
@@ -482,10 +505,12 @@ describe('Chat Controller', () => {
 
 		it('should handle streaming connection timeouts', async () => {
 			// Arrange
-			const mockSession = {
+			const mockSession: ChatSession = {
 				id: sessionId,
 				modelId: 'gpt-4',
-				messages: [{ id: 'msg-1', role: 'user', content: 'Hello' }],
+				messages: [{ id: 'msg-1', role: 'user', content: 'Hello', createdAt: '2024-01-01T00:00:00Z' }],
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z',
 			};
 
 			mockRequest.params = { sessionId };
@@ -528,6 +553,8 @@ describe('Chat Controller', () => {
 	});
 
 	describe('Performance and Edge Cases', () => {
+		const sessionId = 'session-123';
+
 		it('should handle concurrent message additions', async () => {
 			// Arrange
 			const messageData = {

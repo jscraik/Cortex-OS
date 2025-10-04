@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { busMetrics } from '@cortex-os/a2a-core/metrics';
 import request from 'supertest';
 import { createService } from '../../src/service.js';

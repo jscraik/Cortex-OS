@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { audioTranscriptionService } from '../../services/audioTranscriptionService.ts';
-import type { MultimodalProcessingOptions } from '../../types/multimodal.ts';
+import { audioTranscriptionService } from '../../services/audioTranscriptionService';
+import type { MultimodalProcessingOptions } from '../../types/multimodal';
 
 // Mock logger to avoid noise in tests
-vi.mock('../../utils/logger.ts', () => ({
+vi.mock('../../utils/logger', () => ({
 	default: {
 		info: vi.fn(),
 		error: vi.fn(),

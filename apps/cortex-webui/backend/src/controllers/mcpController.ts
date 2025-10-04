@@ -5,6 +5,7 @@
  * including tool execution, server registration, and monitoring.
  */
 
+import { BudgetError, CapabilityTokenError } from '@cortex-os/security';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { McpProtocolIntegration } from '../services/mcp/McpProtocolIntegration.js';
@@ -49,12 +50,53 @@ const listToolsSchema = z.object({
 
 // Helper function to get user context
 function getUserContext(req: Request) {
+	const tenantHeader = req.header('x-brainwav-tenant') || req.header('x-tenant');
+	const tenantBody = (req.body as any)?.tenant;
+	const tenant =
+		typeof tenantBody === 'string' && tenantBody.length > 0
+			? tenantBody
+			: tenantHeader || (req as any).user?.tenant;
+
+	const capabilityHeader = req.header('x-brainwav-capability');
+	const headerTokens = capabilityHeader
+		? capabilityHeader
+			.split(',')
+			.map((value) => value.trim())
+			.filter(Boolean)
+		: [];
+	const bodyTokens = Array.isArray((req.body as any)?.capabilityTokens)
+		? ((req.body as any).capabilityTokens as unknown[])
+			.filter((token): token is string => typeof token === 'string' && token.length > 0)
+		: [];
+	const capabilityTokens = [...headerTokens, ...bodyTokens];
+
+	const budgetProfileHeader = req.header('x-brainwav-budget-profile') || req.header('x-budget-profile');
+	const budgetProfileBody = (req.body as any)?.budgetProfile;
+	const budgetProfile =
+		typeof budgetProfileBody === 'string' && budgetProfileBody.length > 0
+			? budgetProfileBody
+			: budgetProfileHeader;
+
+	const parseNumber = (value: unknown): number | undefined => {
+		const numberValue = Number(value);
+		return Number.isFinite(numberValue) ? numberValue : undefined;
+	};
+
+	const requestCost = parseNumber((req.body as any)?.requestCost) ?? parseNumber(req.header('x-brainwav-request-cost'));
+	const requestDurationMs =
+		parseNumber((req.body as any)?.requestDurationMs) ?? parseNumber(req.header('x-brainwav-request-duration'));
+
 	return {
 		userId: (req as any).user?.id,
 		sessionId: (req as any).sessionId,
 		permissions: (req as any).user?.permissions || [],
 		ipAddress: req.ip,
 		userAgent: req.get('User-Agent'),
+		tenant,
+		capabilityTokens,
+		budgetProfile,
+		requestCost,
+		requestDurationMs,
 	};
 }
 
@@ -215,6 +257,11 @@ export async function executeTool(req: Request, res: Response): Promise<void> {
 				correlationId: (req.body as any).correlationId || crypto.randomUUID(),
 				timestamp: new Date().toISOString(),
 				permissions: userContext.permissions,
+				tenant: userContext.tenant,
+				capabilityTokens: userContext.capabilityTokens,
+				budgetProfile: userContext.budgetProfile,
+				requestCost: userContext.requestCost,
+				requestDurationMs: userContext.requestDurationMs,
 			},
 			timeout: body.timeout,
 		};
@@ -228,10 +275,38 @@ export async function executeTool(req: Request, res: Response): Promise<void> {
 			timestamp: new Date().toISOString(),
 		});
 	} catch (error) {
+		const timestamp = new Date().toISOString();
 		logger.error('brAInwav MCP: Failed to execute tool', {
 			toolId: req.params.id,
 			error: error instanceof Error ? error.message : 'Unknown error',
 		});
+
+		if (error instanceof CapabilityTokenError) {
+			res.status(403).json({
+				success: false,
+				error: {
+					code: 'CAPABILITY_DENIED',
+					message: error.message,
+					details: error.details ? [JSON.stringify(error.details)] : undefined,
+				},
+				timestamp,
+			});
+			return;
+		}
+
+		if (error instanceof BudgetError) {
+			res.status(429).json({
+				success: false,
+				error: {
+					code: 'BUDGET_EXCEEDED',
+					message: error.message,
+					details: error.details ? [JSON.stringify(error.details)] : undefined,
+				},
+				timestamp,
+			});
+			return;
+		}
+
 		res.status(400).json({
 			success: false,
 			error: {
@@ -239,7 +314,7 @@ export async function executeTool(req: Request, res: Response): Promise<void> {
 				message: 'Failed to execute tool',
 				details: error instanceof Error ? [error.message] : ['Unknown error'],
 			},
-			timestamp: new Date().toISOString(),
+			timestamp,
 		});
 	}
 }
@@ -419,6 +494,10 @@ export async function disconnectServer(req: Request, res: Response): Promise<voi
 		});
 	}
 }
+
+export const __testHooks = {
+	toolRegistry,
+};
 
 /**
  * POST /api/v1/mcp/servers/:id/tools/:toolName/call

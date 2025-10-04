@@ -8,7 +8,7 @@ import { z } from 'zod';
 import {
 	type McpToolRegistration,
 	McpToolRegistry,
-} from '../../../services/mcp/McpToolRegistry.ts';
+} from '../../../services/mcp/McpToolRegistry';
 
 describe('McpToolRegistry', () => {
 	let registry: McpToolRegistry;
