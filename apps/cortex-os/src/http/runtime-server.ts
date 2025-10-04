@@ -566,7 +566,7 @@ function parseRoutingMetadata(value: unknown): Record<string, unknown> | undefin
 
 function mapRoutingError(error: unknown): HttpError | undefined {
 	if (!(error instanceof Error)) return undefined;
-	const message = error.message ?? '';
+	const message = error.message;
 	if (message === 'routing_policy:not_loaded') {
 		return new HttpError(503, 'Routing policy not loaded', 'ROUTING_POLICY_NOT_LOADED');
 	}
