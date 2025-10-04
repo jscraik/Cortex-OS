@@ -1,3 +1,6 @@
+import { createProofEnvelope } from '@cortex-os/proof-artifacts';
+import type { ProofEnvelope as ExecutionProofEnvelope, ProofEvidence, ProofPolicyReceipt, ProofRuntime, ProofTrace } from '@cortex-os/proof-artifacts';
+
 /**
  * Proof System (Module B)
  * Provides creation, finalization, verification, and persistence of execution proofs.
@@ -392,6 +395,41 @@ export const queryProofs = (store: ProofStore, opts: ProofQueryOptions = {}): Pr
 };
 
 // Governance summary helper
+export interface ExportExecutionProofEnvelopeOptions {
+        artifactPath: string;
+        artifactMime?: string;
+        publicContext: Record<string, unknown>;
+        sealedContextRef?: { uri: string; sha256: string };
+        evidence?: ProofEvidence[];
+        runtime: ProofRuntime;
+        trace?: ProofTrace;
+        policyReceipts?: ProofPolicyReceipt[];
+        bundlePaths?: string[];
+}
+
+export const exportExecutionProofEnvelope = (
+        artifact: ProofArtifact,
+        options: ExportExecutionProofEnvelopeOptions,
+): ExecutionProofEnvelope => {
+        return createProofEnvelope({
+                artifactPath: options.artifactPath,
+                artifactMime: options.artifactMime ?? 'application/json',
+                publicContext: {
+                        ...options.publicContext,
+                        kernelProofId: artifact.id,
+                        kernelDigest: artifact.digest.value,
+                        kernelDigestAlgo: artifact.digest.algo,
+                        kernelTimestamp: artifact.timestamp,
+                },
+                sealedContextRef: options.sealedContextRef,
+                evidence: options.evidence ?? [],
+                runtime: options.runtime,
+                trace: options.trace,
+                policyReceipts: options.policyReceipts,
+                bundlePaths: options.bundlePaths,
+        });
+};
+
 export const summarizeProof = (artifact: ProofArtifact) => ({
 	id: artifact.id,
 	seed: artifact.seed,

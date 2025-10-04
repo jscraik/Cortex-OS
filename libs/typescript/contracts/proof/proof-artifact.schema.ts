@@ -49,3 +49,149 @@ export const proofArtifactAnyVersionSchema = z.union([
 ]);
 
 export type ProofArtifactAnyVersion = z.infer<typeof proofArtifactAnyVersionSchema>;
+
+const sha256Regex = /^[0-9a-f]{64}$/;
+
+const proofEvidenceFileSchema = z
+        .object({
+                type: z.literal('file'),
+                path: z.string(),
+                blobSha256: z.string().regex(sha256Regex),
+                commit: z.string().optional(),
+                lines: z
+                        .object({
+                                start: z.number().int().min(1),
+                                end: z.number().int().min(1),
+                        })
+                        .optional(),
+                quote: z.string().optional(),
+                quoteSha256: z.string().regex(sha256Regex).optional(),
+        })
+        .strict();
+
+const proofEvidenceUrlSchema = z
+        .object({
+                type: z.literal('url'),
+                href: z.string().url(),
+                selector: z.string().optional(),
+                snapshot: z
+                        .object({
+                                bodySha256: z.string().regex(sha256Regex),
+                                retrievedAt: z.string().datetime(),
+                        })
+                        .optional(),
+                quote: z.string().optional(),
+                quoteSha256: z.string().regex(sha256Regex).optional(),
+        })
+        .strict();
+
+export const proofEnvelopeV020Schema = z
+        .object({
+                proofSpec: z.literal('cortex-os/proof-artifact'),
+                specVersion: z.literal('0.2.0'),
+                id: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/),
+                issuedAt: z.string().datetime(),
+                actor: z
+                        .object({
+                                agent: z.string(),
+                                role: z.string(),
+                                runId: z.string().optional(),
+                        })
+                        .strict(),
+                artifact: z
+                        .object({
+                                uri: z.string().url(),
+                                mime: z.string(),
+                                contentHash: z
+                                        .object({
+                                                alg: z.literal('sha256'),
+                                                hex: z.string().regex(sha256Regex),
+                                        })
+                                        .strict(),
+                        })
+                        .strict(),
+                bundle: z
+                        .object({
+                                files: z.array(
+                                        z
+                                                .object({
+                                                        uri: z.string().url(),
+                                                        sha256: z.string().regex(sha256Regex),
+                                                })
+                                                .strict(),
+                                ),
+                                merkleRoot: z.string().regex(sha256Regex).optional(),
+                        })
+                        .strict()
+                        .optional(),
+                context: z
+                        .object({
+                                public: z.record(z.string(), z.unknown()),
+                                sealedRef: z
+                                        .object({
+                                                uri: z.string().url(),
+                                                sha256: z.string().regex(sha256Regex),
+                                        })
+                                        .strict()
+                                        .optional(),
+                        })
+                        .strict(),
+                evidence: z.array(z.union([proofEvidenceFileSchema, proofEvidenceUrlSchema])),
+                runtime: z
+                        .object({
+                                model: z.string(),
+                                parameters: z.record(z.string(), z.unknown()).optional(),
+                                tooling: z.record(z.string(), z.string()).optional(),
+                        })
+                        .strict(),
+                trace: z
+                        .object({
+                                otel: z
+                                        .object({
+                                                traceId: z.string().regex(/^[0-9a-f]{32}$/),
+                                                rootSpanId: z.string().regex(/^[0-9a-f]{16}$/).optional(),
+                                        })
+                                        .strict(),
+                        })
+                        .strict()
+                        .optional(),
+                policyReceipts: z
+                        .array(
+                                z
+                                        .object({
+                                                name: z.string(),
+                                                status: z.enum(['pass', 'fail', 'warn']),
+                                                checks: z.array(z.string()).optional(),
+                                                sbom: z.string().optional(),
+                                        })
+                                        .strict(),
+                        )
+                        .optional(),
+                attestations: z
+                        .array(
+                                z
+                                        .object({
+                                                type: z.literal('in-toto'),
+                                                predicateType: z.string().url(),
+                                                statement: z.string(),
+                                                signing: z
+                                                        .object({
+                                                                method: z.literal('sigstore-cosign'),
+                                                                issuer: z.string(),
+                                                        })
+                                                        .strict(),
+                                        })
+                                        .strict(),
+                        )
+                        .optional(),
+        })
+        .strict();
+
+export type ProofEnvelopeV020 = z.infer<typeof proofEnvelopeV020Schema>;
+
+export const proofEnvelopeUnionSchema = z.union([
+        proofEnvelopeV020Schema,
+]);
+
+export type ProofEnvelopeAnyVersion = z.infer<typeof proofEnvelopeUnionSchema>;
+
